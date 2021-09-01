@@ -18,12 +18,12 @@ namespace H.LowCode.Render.WasmHost
             var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
             //HTML
-            //builder.AddHtmlTheme();
-            //builder.AddHtmlRenderEngine();
+            builder.AddHtmlTheme();
+            builder.AddHtmlRenderEngine();
 
             //AntBlazor
-            builder.AddAntBlazorProTheme();
-            builder.AddAntBlazorRenderEngine();
+            //builder.AddAntBlazorProTheme();
+            //builder.AddAntBlazorRenderEngine();
 
             await builder.Build().RunAsync();
         }

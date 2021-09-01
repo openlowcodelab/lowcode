@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using AntDesign;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
 using Newtonsoft.Json.Schema;
 using System;
@@ -26,7 +27,13 @@ namespace H.LowCode.RenderEngine.AntBlazor.DataEntryComponent
 
         public override void Render(RenderTreeBuilder builder, string keys, JSchema jsonSchema, Func<JSchema, RenderFragment> func)
         {
-            throw new NotImplementedException();
+            builder.OpenElement(10, "div");
+            builder.AddAttribute(11, "class", "");
+            builder.AddContent(12, $"{jsonSchema.Title}：");
+            builder.CloseElement();
+
+            builder.OpenComponent(10, typeof(Select<string, string>));
+            builder.CloseComponent();
         }
     }
 }

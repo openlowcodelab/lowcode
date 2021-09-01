@@ -26,7 +26,7 @@ namespace H.LowCode.RenderEngine.AntBlazor.DataEntryComponent
         {
             builder.OpenElement(0, "div");
             builder.AddAttribute(1, "class", "");          
-            builder.AddContent(3, $"{jsonSchema.Title}：");
+            builder.AddContent(2, $"{jsonSchema.Title}：");
             builder.CloseElement();
 
             builder.OpenComponent(0, typeof(Input<string>));
