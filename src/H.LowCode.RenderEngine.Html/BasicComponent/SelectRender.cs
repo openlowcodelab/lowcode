@@ -9,7 +9,7 @@ using System.Text;
 
 namespace H.LowCode.RenderEngine.Html.BasicComponent
 {
-    internal class InputMultiSelectRender : ElementRenderBase
+    internal class SelectRender : ElementRenderBase
     {
         public override bool CanRender(JSchema jsonSchema)
         {
@@ -18,7 +18,7 @@ namespace H.LowCode.RenderEngine.Html.BasicComponent
 
             if (jsonSchema.ExtensionData.TryGetValue("widget", out var widget))
             {
-                if(string.Equals(widget.ToString(), "multiSelect", StringComparison.OrdinalIgnoreCase))
+                if(string.Equals(widget.ToString(), "select", StringComparison.OrdinalIgnoreCase))
                 return true;
             }
             return false;
@@ -36,8 +36,7 @@ namespace H.LowCode.RenderEngine.Html.BasicComponent
             builder.CloseElement();
 
             builder.OpenElement(0, "select");
-            builder.AddAttribute(1, "multiple", "multiple");
-            builder.AddAttribute(2, "class", "field-value");
+            builder.AddAttribute(1, "class", "field-value");
 
             jsonSchema.ExtensionData.TryGetValue("enumNames", out JToken enumNames);
             var names = enumNames.ToObject<string[]>();

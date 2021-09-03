@@ -1,6 +1,7 @@
 ﻿using AntDesign;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
+using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Schema;
 using System;
 using System.Collections.Generic;
@@ -26,7 +27,23 @@ namespace H.LowCode.RenderEngine.AntBlazor.DataEntryComponent
 
         public override void Render(RenderTreeBuilder builder, string key, JSchema jsonSchema, Func<JSchema, RenderFragment> func)
         {
-            builder.OpenComponent(0, typeof(Input<string>));
+            builder.OpenElement(0, "div");
+            builder.AddAttribute(1, "class", "");
+            builder.AddContent(3, $"{jsonSchema.Title}：");
+            builder.CloseElement();
+
+            builder.OpenComponent(0, typeof(RadioGroup<string>));
+
+            jsonSchema.ExtensionData.TryGetValue("enumNames", out JToken enumNames);
+            var names = enumNames.ToObject<string[]>();
+            for (int i = 0; i < jsonSchema.Enum.Count; i++)
+            {
+                builder.OpenComponent(i * 3 + 5, typeof(Radio<string>));
+                builder.AddAttribute(i * 3 + 6, "Value", jsonSchema.Enum[i].ToObject<string>());
+                builder.AddContent(i * 3 + 7, names[i]);
+                builder.CloseComponent();
+            }
+
             builder.CloseComponent();
         }
     }

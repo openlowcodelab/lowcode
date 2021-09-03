@@ -20,7 +20,12 @@ namespace H.LowCode.RenderEngine.AntBlazor.DataEntryComponent
 
         public override void Render(RenderTreeBuilder builder, string key, JSchema jsonSchema, Func<JSchema, RenderFragment> func)
         {
-            builder.OpenComponent(0, typeof(Input<string>));
+            builder.OpenElement(0, "div");
+            builder.AddAttribute(1, "class", "");
+            builder.AddContent(3, $"{jsonSchema.Title}：");
+            builder.CloseElement();
+
+            builder.OpenComponent(0, typeof(InputNumber<int>));
             builder.CloseComponent();
         }
     }

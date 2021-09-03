@@ -17,21 +17,27 @@ namespace H.LowCode.RenderEngine.AntBlazor.DataEntryComponent
                 return false;
 
             jsonSchema.ExtensionData.TryGetValue("widget", out var widget);
-            if (string.IsNullOrEmpty(jsonSchema.Format) && widget == null)
+            if (widget == null && (string.IsNullOrEmpty(jsonSchema.Format) ||
+                string.Equals(jsonSchema.Format, "textarea", StringComparison.OrdinalIgnoreCase)))
                 return true;
+
             return false;
         }
 
         public override void Render(RenderTreeBuilder builder, string key, JSchema jsonSchema, Func<JSchema, RenderFragment> func)
         {
             builder.OpenElement(0, "div");
-            builder.AddAttribute(1, "class", "");          
-            builder.AddContent(2, $"{jsonSchema.Title}：");
+            builder.AddAttribute(1, "class", "");
+            builder.AddContent(3, $"{jsonSchema.Title}：");
             builder.CloseElement();
 
-            builder.OpenComponent(0, typeof(Input<string>));
+            if (string.Equals(jsonSchema.Format, "textarea", StringComparison.OrdinalIgnoreCase))
+                builder.OpenComponent(0, typeof(TextArea));
+            else
+                builder.OpenComponent(0, typeof(Input<string>));
+
             builder.AddAttribute(1, "Placeholder", jsonSchema.Title);
-            if(jsonSchema.ExtensionData.TryGetValue("required", out var required))
+            if (jsonSchema.ExtensionData.TryGetValue("required", out var required))
                 builder.AddAttribute(2, "required", "required");
             builder.CloseComponent();
         }
