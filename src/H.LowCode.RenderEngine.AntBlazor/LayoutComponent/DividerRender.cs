@@ -8,7 +8,7 @@ using System.Text;
 
 namespace H.LowCode.RenderEngine.AntBlazor.LayoutComponent
 {
-    internal class DividerRender : ElementRenderBase
+    internal class DividerRender : ComponentRenderBase
     {
         public override bool CanRender(JSchema jsonSchema)
         {

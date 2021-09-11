@@ -9,7 +9,7 @@ using System.Text;
 
 namespace H.LowCode.RenderEngine.Html.BasicComponent
 {
-    internal class InputMultiCheckboxRender : ElementRenderBase
+    internal class InputMultiCheckboxRender : ComponentRenderBase
     {
         public override bool CanRender(JSchema jsonSchema)
         {

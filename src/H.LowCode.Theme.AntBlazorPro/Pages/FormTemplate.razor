@@ -1,43 +1,54 @@
-﻿@page "/form/{Id}"
+﻿@page "/form/{PageId}/{DataId}"
+
+@using H.LowCode.Render.Model
 
 @inject HttpClient Http
 @inject IRender render
-
-<style scoped>
-.field {
-    width: 100%;
-    height: 40px;
-    margin: 5px 10px;
-    display: inline-block;
-}
-
-    .field .field-label {
-        width: 100px;
-        display: inline-block;
-        text-align: right;
-    }
-
-    .field .field-value {
-        height: 30px;
-        width: 380px;
-    }
-</style>
-
-<h3>Form Template</h3>
 
 @RenderFragment
 
 @code {
     [Parameter]
-    public string Id { get; set; }
+    public string PageId { get; set; }
+
+    [Parameter]
+    public string DataId { get; set; }
 
     public RenderFragment RenderFragment { get; set; }
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
-        var jSchema = await Http.GetFromJsonAsync<object>($"jsonschema/form/{Id}.json?_={DateTime.Now.Ticks}");
+        // 渲染组件
+        await RenderComponentAsync();
+    }
+
+    //protected override async Task OnAfterRenderAsync(bool firstRender)
+    //{
+    //    // 渲染表单数据
+    //    await RenderFormDataAsync();
+    //}
+
+    /// <summary>
+    /// 渲染组件
+    /// </summary>
+    /// <returns></returns>
+    private async Task RenderComponentAsync()
+    {
+        var jSchema = await Http.GetFromJsonAsync<object>($"jsonschema/form/{PageId}.json?_={DateTime.Now.Ticks}");
         var jsonSchema = JSchema.Parse(jSchema.ToString());
 
         RenderFragment = render.Render(jsonSchema, PageRenderType.Form);
+    }
+
+    /// <summary>
+    /// 渲染表单数据
+    /// </summary>
+    /// <returns></returns>
+    private async Task RenderFormDataAsync()
+    {
+        string serverUrl = "http://localhost:5005";
+
+        var formData = await Http.PostAsJsonAsync<FormModel>($"{serverUrl}/GetFormData?id={DataId}", null);
+
     }
 }

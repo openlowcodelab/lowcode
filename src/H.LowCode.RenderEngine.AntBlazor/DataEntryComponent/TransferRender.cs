@@ -9,7 +9,7 @@ using System.Text;
 
 namespace H.LowCode.RenderEngine.AntBlazor.DataEntryComponent
 {
-    internal class TransferRender : ElementRenderBase
+    internal class TransferRender : ComponentRenderBase
     {
         public override bool CanRender(JSchema jsonSchema)
         {

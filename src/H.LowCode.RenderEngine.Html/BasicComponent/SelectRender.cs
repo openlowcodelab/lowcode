@@ -9,7 +9,7 @@ using System.Text;
 
 namespace H.LowCode.RenderEngine.Html.BasicComponent
 {
-    internal class SelectRender : ElementRenderBase
+    internal class SelectRender : ComponentRenderBase
     {
         public override bool CanRender(JSchema jsonSchema)
         {

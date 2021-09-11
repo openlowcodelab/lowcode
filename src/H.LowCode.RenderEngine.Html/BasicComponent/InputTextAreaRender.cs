@@ -8,7 +8,7 @@ using System.Text;
 
 namespace H.LowCode.RenderEngine.Html.BasicComponent
 {
-    internal class InputTextAreaRender : ElementRenderBase
+    internal class InputTextAreaRender : ComponentRenderBase
     {
         public override bool CanRender(JSchema jsonSchema)
         {

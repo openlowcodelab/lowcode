@@ -9,7 +9,7 @@ using System.Text;
 
 namespace H.LowCode.RenderEngine.AntBlazor.DataEntryComponent
 {
-    internal class DatePickerRender : ElementRenderBase
+    internal class DatePickerRender : ComponentRenderBase
     {
         public override bool CanRender(JSchema jsonSchema)
         {

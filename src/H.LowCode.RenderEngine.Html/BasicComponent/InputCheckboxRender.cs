@@ -8,7 +8,7 @@ using System.Text;
 
 namespace H.LowCode.RenderEngine.Html.BasicComponent
 {
-    internal class InputCheckboxRender : ElementRenderBase
+    internal class InputCheckboxRender : ComponentRenderBase
     {
         public override bool CanRender(JSchema jsonSchema)
         {

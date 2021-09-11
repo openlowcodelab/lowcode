@@ -8,7 +8,7 @@ using System.Text;
 
 namespace H.LowCode.RenderEngine.AntBlazor.LayoutComponent
 {
-    internal class GridRender : ElementRenderBase
+    internal class GridRender : ComponentRenderBase
     {
         public override bool CanRender(JSchema jsonSchema)
         {

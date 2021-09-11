@@ -8,7 +8,7 @@ using System.Text;
 
 namespace H.LowCode.RenderEngine.AntBlazor.OtherComponent
 {
-    internal class CustomHtmlRender : ElementRenderBase
+    internal class CustomHtmlRender : ComponentRenderBase
     {
         public override bool CanRender(JSchema jsonSchema)
         {

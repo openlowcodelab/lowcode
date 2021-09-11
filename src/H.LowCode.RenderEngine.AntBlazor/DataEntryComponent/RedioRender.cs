@@ -10,7 +10,7 @@ using System.Text;
 
 namespace H.LowCode.RenderEngine.AntBlazor.DataEntryComponent
 {
-    internal class RedioRender : ElementRenderBase
+    internal class RedioRender : ComponentRenderBase
     {
         public override bool CanRender(JSchema jsonSchema)
         {

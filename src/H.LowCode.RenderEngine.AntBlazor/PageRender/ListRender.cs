@@ -11,7 +11,7 @@ namespace H.LowCode.RenderEngine.AntBlazor.PageRender
     internal class ListRender : AntBlazorRender
     {
         private static bool _isInitElementRenders = false;
-        private static List<ElementRenderBase> _elementRenders = new List<ElementRenderBase>();
+        private static List<ComponentRenderBase> _elementRenders = new List<ComponentRenderBase>();
 
         public ListRender()
         {
@@ -51,10 +51,10 @@ namespace H.LowCode.RenderEngine.AntBlazor.PageRender
             if (_isInitElementRenders)
                 return;
 
-            var types = typeof(AntBlazorRender).Assembly.GetTypes().Where(t => typeof(ElementRenderBase).IsAssignableFrom(t));
+            var types = typeof(AntBlazorRender).Assembly.GetTypes().Where(t => typeof(ComponentRenderBase).IsAssignableFrom(t));
             foreach (var elementType in types)
             {
-                _elementRenders.Add((ElementRenderBase)Activator.CreateInstance(elementType));
+                _elementRenders.Add((ComponentRenderBase)Activator.CreateInstance(elementType));
             }
 
             _isInitElementRenders = true;

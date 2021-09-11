@@ -9,7 +9,7 @@ using System.Text;
 
 namespace H.LowCode.RenderEngine.Html.BasicComponent
 {
-    internal class InputRadioRender : ElementRenderBase
+    internal class InputRadioRender : ComponentRenderBase
     {
         public override bool CanRender(JSchema jsonSchema)
         {

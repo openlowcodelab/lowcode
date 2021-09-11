@@ -1,0 +1,66 @@
+﻿@inherits LayoutComponentBase
+
+<AntDesign.ProLayout.BasicLayout 
+    Logo="@("logo.png")"
+    MenuData="_menuData">
+    <RightContentRender>
+        @*<AntDesign.Pro.Template.Components.RightContent />*@
+        RightContent
+    </RightContentRender>
+    <ChildContent>
+        @Body
+    </ChildContent>
+    <FooterRender>
+        <FooterView Copyright="2021 H.LowCode" Links="Links"></FooterView>
+    </FooterRender>
+</AntDesign.ProLayout.BasicLayout>
+<SettingDrawer />
+
+@code
+{
+    private readonly MenuDataItem[] _menuData =
+    {
+        new MenuDataItem
+        {
+            Path = "/myapp",
+            Name = "首页",
+            Key = "home"
+        },
+        new MenuDataItem
+        {
+            Path = "/myapp/bookadd",
+            Name = "书籍录入",
+            Key = "myapp-bookapp-add",
+        },
+        new MenuDataItem
+        {
+            Path = "/myapp/booklend",
+            Name = "我要借书",
+            Key = "myapp-bookapp-lend",
+        },
+        new MenuDataItem
+        {
+            Path = "/myapp/bookgiveback",
+            Name = "我要还书",
+            Key = "myapp-bookapp-giveback",
+        }
+    };
+
+    public LinkItem[] Links { get; set; } =
+    {
+        new LinkItem
+        {
+            Key = "Ant Design Blazor",
+            Title = "Ant Design Blazor",
+            Href = "https://antblazor.com",
+            BlankTarget = true,
+        },
+        new LinkItem
+        {
+            Key = "XRender",
+            Title = "XRender",
+            Href = "https://x-render.gitee.io/",
+            BlankTarget = true,
+        }
+    };
+}

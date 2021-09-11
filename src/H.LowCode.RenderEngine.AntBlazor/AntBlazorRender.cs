@@ -9,7 +9,7 @@ namespace H.LowCode.RenderEngine.AntBlazor
     {
         public RenderFragment Render(JSchema jsonSchema, PageRenderType pageRenderType)
         {
-            RenderFragment renderFragment = null;
+            RenderFragment renderFragment;
             switch (pageRenderType)
             {
                 case PageRenderType.Form:

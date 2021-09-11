@@ -10,7 +10,7 @@ namespace H.LowCode.RenderEngine.Html.PageRender
     internal class FormRender : HtmlRender
     {
         private static bool _isInitElementRenders = false;
-        private static List<ElementRenderBase> _elementRenders = new List<ElementRenderBase>();
+        private static List<ComponentRenderBase> _elementRenders = new List<ComponentRenderBase>();
 
         public FormRender()
         {
@@ -50,10 +50,10 @@ namespace H.LowCode.RenderEngine.Html.PageRender
             if (_isInitElementRenders)
                 return;
 
-            var types = typeof(HtmlRender).Assembly.GetTypes().Where(t => typeof(ElementRenderBase).IsAssignableFrom(t));
+            var types = typeof(HtmlRender).Assembly.GetTypes().Where(t => typeof(ComponentRenderBase).IsAssignableFrom(t));
             foreach (var elementType in types)
             {
-                _elementRenders.Add((ElementRenderBase)Activator.CreateInstance(elementType));
+                _elementRenders.Add((ComponentRenderBase)Activator.CreateInstance(elementType));
             }
 
             _isInitElementRenders = true;

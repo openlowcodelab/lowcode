@@ -8,7 +8,7 @@ using System.Text;
 
 namespace H.LowCode.RenderEngine
 {
-    public abstract class ElementRenderBase
+    public abstract class ComponentRenderBase
     {
         public abstract void Render(RenderTreeBuilder builder, string key, JSchema jsonSchema, Func<JSchema, RenderFragment> func);
 

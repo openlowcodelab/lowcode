@@ -10,7 +10,7 @@ using System.Text;
 
 namespace H.LowCode.RenderEngine.AntBlazor.DataEntryComponent
 {
-    internal class CheckboxRender : ElementRenderBase
+    internal class CheckboxRender : ComponentRenderBase
     {
         public override bool CanRender(JSchema jsonSchema)
         {

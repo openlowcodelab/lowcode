@@ -8,7 +8,7 @@ using System.Text;
 
 namespace H.LowCode.RenderEngine.AntBlazor.GeneralComponent
 {
-    internal class TypographyRender : ElementRenderBase
+    internal class TypographyRender : ComponentRenderBase
     {
         public override bool CanRender(JSchema jsonSchema)
         {

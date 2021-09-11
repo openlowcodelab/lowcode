@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace H.LowCode.RenderEngine.AntBlazor.DataEntryComponent
 {
-    internal class SelectRender : ElementRenderBase
+    internal class SelectRender : ComponentRenderBase
     {
         public override bool CanRender(JSchema jsonSchema)
         {
