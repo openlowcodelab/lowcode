@@ -1,0 +1,39 @@
+﻿@inherits LayoutComponentBase
+@inject NavigationManager NavigationManager
+
+<AntDesign.Layout Class="layout">
+    <Header Style="background-color: white;">
+        <a href="/"> 《 返回 </a>
+        <Menu Theme="MenuTheme.Light" Mode="MenuMode.Horizontal" DefaultSelectedKeys=@(new[]{"2"})>
+            <MenuItem Key="1">PC</MenuItem>
+            <MenuItem Key="2">Mobile</MenuItem>
+        </Menu>
+    </Header>
+    <Content>
+        @Body
+    </Content>
+    <Footer Style="text-align: center; ">
+        <FooterView Copyright="2021 H.LowCode" Links="Links"></FooterView>
+    </Footer>
+</AntDesign.Layout>
+
+@code
+{
+    public LinkItem[] Links { get; set; } =
+    {
+        new LinkItem
+        {
+            Key = "Ant Design Blazor",
+            Title = "Ant Design Blazor",
+            Href = "https://antblazor.com",
+            BlankTarget = true,
+        },
+        new LinkItem
+        {
+            Key = "XRender",
+            Title = "XRender",
+            Href = "https://x-render.gitee.io/",
+            BlankTarget = true,
+        }
+    };
+}

@@ -1,0 +1,31 @@
+@inject DragDropService DragDropService
+@using System.Text
+@implements IDisposable
+
+<div @ondragover:preventDefault @ondragover="()=> { }" @ondragenter:preventDefault @ondragenter="()=> { }" @ondrop="()=>OnDrop()" @ondrop:preventDefault ondragstart="event.dataTransfer.setData('text', event.target.id);" 
+     @ondrop:stopPropagation @ondragenter:stopPropagation @ondragend:stopPropagation
+     @ondragover:stopPropagation @ondragleave:stopPropagation @ondragstart:stopPropagation 
+     style="@Style">
+
+    @foreach (var item in Items)
+    {
+        if (Items.IndexOf(item) == 0)
+        {
+            <div @ondrop:stopPropagation></div>
+        }
+
+        <div draggable="true"
+             @ondragstart="()=>OnDragStart(item)"
+             @ondragend="()=>OnDragEnd()"
+             @ondragenter="()=>OnDragEnter(item)"
+             @ondragleave="()=>OnDragLeave()">
+
+            @{
+                if (ChildContent != null)
+                {
+                    @ChildContent(item);
+                }
+            }
+        </div>
+    }
+</div>

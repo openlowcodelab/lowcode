@@ -1,0 +1,57 @@
+﻿@inject DragDropService DragDropService
+
+@foreach(var item in DragItems)
+{
+    <DragItem DragDropItem="item" OnItemDrop="OnItemDrop" OnItemClick="OnItemClick"></DragItem>
+}
+
+@code {
+    private List<DragDropItem> DragItems;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        DragItems = new List<DragDropItem>()
+        {
+            new DragDropItem(){
+                Title = "文本框",
+                ComponentType = "input",
+                DropRenderFragment = (builder) =>
+                {
+                    builder.OpenComponent(1, typeof(Input<string>));
+                    builder.CloseComponent();
+                }
+            },
+            new DragDropItem(){
+                Title = "下拉框",
+                ComponentType = "select",
+                DropRenderFragment = (builder) =>
+                {
+                    builder.OpenComponent(0, typeof(Select<string, string>));
+                    builder.CloseComponent();
+                }
+            },
+            new DragDropItem(){
+                Title = "日期",
+                ComponentType = "datepicker",
+                DropRenderFragment = (builder) =>
+                {
+                    builder.OpenComponent(0, typeof(DatePicker<DateTime?>));
+                    builder.AddAttribute(1, "Picker", DatePickerType.Date);
+                    builder.CloseComponent();
+                }
+            }
+        };
+    }
+
+    public void OnItemDrop(DragDropItem item)
+    {
+        DragDropService.CurrentDragItem = item;
+    }
+
+    public void OnItemClick(DragDropItem item)
+    {
+        //TODO 设置单击添加控件
+        DragDropService.Add(item);
+    }
+}

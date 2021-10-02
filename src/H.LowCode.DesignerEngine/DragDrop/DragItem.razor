@@ -1,0 +1,29 @@
+﻿<div draggable="true" @ondragstart="()=>OnDragStart(DragDropItem)" @onclick="()=>OnClick(DragDropItem)"
+    style="width: 7.2rem; height: 2.2rem; margin: 4px; cursor: pointer;
+    display: flex; justify-content: center; align-items: center; color: #333; background-color: #f5f7fa;">
+    @DragDropItem.Title
+</div>
+
+@code
+{
+    [Parameter]
+    public DragDropItem DragDropItem{ get; set; }
+
+    [Parameter]
+    public Action<DragDropItem> OnItemDrop { get; set; }
+
+    [Parameter]
+    public Action<DragDropItem> OnItemClick { get; set; }
+
+    private void OnDragStart(DragDropItem item)
+    {
+        item.Guid = Guid.Empty;
+        OnItemDrop.Invoke(item);
+    }
+
+    private void OnClick(DragDropItem item)
+    {
+        item.Guid = Guid.Empty;
+        OnItemClick.Invoke(item);
+    }
+}

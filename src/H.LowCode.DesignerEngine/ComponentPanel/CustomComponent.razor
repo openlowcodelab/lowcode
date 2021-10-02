@@ -1,0 +1,39 @@
+﻿@inject DragDropService DragDropService
+
+@foreach(var item in DragItems)
+{
+    <DragItem DragDropItem="item" OnItemDrop="OnItemDrop"></DragItem>
+}
+
+@code {
+    internal List<DragDropItem> DragItems = new List<DragDropItem>()
+        {
+            new DragDropItem(){
+                Title = "用户选择",
+                DropRenderFragment = (builder) => {
+                    builder.OpenComponent(0, typeof(Input<string>));
+                    builder.CloseComponent();
+                }
+            },
+            new DragDropItem(){
+                Title = "行政区划",
+                DropRenderFragment = (builder) => {
+                    builder.OpenComponent(0, typeof(Input<string>));
+                    builder.CloseComponent();
+                }
+            },
+            new DragDropItem(){
+                Title = "地图",
+                DropRenderFragment = (builder) => {
+                    builder.OpenComponent(0, typeof(Input<string>));
+                    builder.CloseComponent();
+                }
+            }
+        };
+
+        
+    public void OnItemDrop(DragDropItem item)
+    {
+        DragDropService.CurrentDragItem = item;
+    }
+}

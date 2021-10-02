@@ -1,0 +1,61 @@
+﻿@page "/myapp/{AppCode}/{NavCode}/design"
+
+@layout DesignerLayout
+@inject DragDropService DragDropService
+
+<AntDesign.Layout>
+    <Sider Style="flex: auto; max-width: max-content; min-width: 200px;" Theme="SiderTheme.Light">
+        <Tabs DefaultActiveKey="1">
+            <TabPane Key="1" Tab="基础组件">
+                <BasicComponent></BasicComponent>
+            </TabPane>
+            <TabPane Key="2" Tab="自定义组件">
+                <CustomComponent></CustomComponent>
+            </TabPane>
+        </Tabs>
+    </Sider>
+    <Content>
+        <DragDropZone Items="ComponentItems" Style="margin:10px; height:700px;">
+            <DropItem DragDropItem="context" Style="width:50%; float:left;" OnItemClick="OnItemClick"></DropItem>
+        </DragDropZone>
+    </Content>
+    <Sider Style="flex: auto; max-width: max-content; min-width: 200px;" Theme="SiderTheme.Light">
+        <Tabs DefaultActiveKey="1">
+            <TabPane Key="1" Tab="组件属性">
+                <label>名称：</label>
+                <Input Placeholder="名称" TValue="string" />
+            </TabPane>
+            <TabPane Key="2" Tab="页面属性">
+                <label>布局：</label>
+                <RadioGroup TValue="string">
+                    <Radio RadioButton Value="2">两列</Radio>
+                    <Radio RadioButton Value="3">三列</Radio>
+                    <Radio RadioButton Value="0">自适应</Radio>
+                </RadioGroup>
+            </TabPane>
+        </Tabs>
+    </Sider>
+</AntDesign.Layout>
+
+@code
+{
+    [Parameter]
+    public string AppCode { get; set; }
+    
+    [Parameter]
+    public string NavCode { get; set; }
+
+    [Parameter]
+    public List<DragDropItem> ComponentItems { get; set; } = new List<DragDropItem>();
+
+    private void OnItemClick(DragDropItem item)
+    {
+        //TODO 设置选中高亮
+        DragDropService.CurrentSelectItem.Style = "border:1px dashed #dddddd;";
+
+        item.Style = "border:1px solid #1890ff;";
+        DragDropService.CurrentSelectItem = item;
+
+        StateHasChanged();
+    }
+}

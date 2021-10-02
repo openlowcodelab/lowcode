@@ -1,0 +1,23 @@
+﻿<div style="display:flex; height:80px; margin:2px 0px; padding: 20px 8px 5px 8px; border:1px dashed #dddddd; background-color:#ffffff; 
+        @Style @DragDropItem.Style"
+    @onclick="()=>OnClick(DragDropItem)">
+    <div style="width: 80px;">@DragDropItem.Title ：</div>
+    <div style="width: 100%;">@DragDropItem.DropRenderFragment</div>
+</div>
+
+@code
+{
+    [Parameter]
+    public DragDropItem DragDropItem { get; set; }
+
+    [Parameter]
+    public Action<DragDropItem> OnItemClick{ get; set; }
+
+    [Parameter]
+    public string Style { get; set; }
+
+    private void OnClick(DragDropItem item)
+    {
+        OnItemClick.Invoke(item);
+    }
+}
