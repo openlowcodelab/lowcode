@@ -2,7 +2,7 @@
 
 @foreach(var item in DragItems)
 {
-    <DragItem DragDropItem="item" OnItemDrop="OnItemDrop"></DragItem>
+    <DragItem DragDropItem="item" OnItemDragStart="OnItemDragStart"></DragItem>
 }
 
 @code {
@@ -31,8 +31,7 @@
             }
         };
 
-        
-    public void OnItemDrop(DragDropItem item)
+    public void OnItemDragStart(DragDropItem item)
     {
         DragDropService.CurrentDragItem = item;
     }

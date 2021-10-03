@@ -7,10 +7,31 @@ using Microsoft.AspNetCore.Components.Web;
 using System.Text;
 using System.Threading;
 
-namespace H.LowCode.DesignerEngine.DragDrop
+namespace H.LowCode.DesignerEngine.DesignPanel
 {
     public partial class DragDropZone
     {
+        #region Parameter
+        [Parameter]
+        public Action<DragDropItem> DragEnd { get; set; }
+
+        [Parameter]
+        public EventCallback<DragDropItem> OnItemDrop { get; set; }
+
+        [Parameter]
+        public Action OnDragDropZoneClick { get; set; }
+
+        [Parameter]
+        public IList<DragDropItem> Items { get; set; }
+
+        [Parameter]
+        public RenderFragment<DragDropItem> ChildContent { get; set; }
+
+        [Parameter]
+        public string Style { get; set; }
+        #endregion
+
+        #region Event
         protected override bool ShouldRender()
         {
             return DragDropService.ShouldRender;
@@ -38,7 +59,7 @@ namespace H.LowCode.DesignerEngine.DragDrop
                 return;
             
             DragDropService.DragTargetItem = item;
-            SwapItem(DragDropService.DragTargetItem, currentDragItem);
+            //SwapItem(DragDropService.DragTargetItem, currentDragItem);
 
             DragDropService.ShouldRender = true;
             StateHasChanged();
@@ -61,21 +82,7 @@ namespace H.LowCode.DesignerEngine.DragDrop
             StateHasChanged();
             DragDropService.ShouldRender = false;
         }
-
-        [Parameter]
-        public Action<DragDropItem> DragEnd { get; set; }
-
-        [Parameter]
-        public EventCallback<DragDropItem> OnItemDrop { get; set; }
-
-        [Parameter]
-        public IList<DragDropItem> Items { get; set; }
-
-        [Parameter]
-        public RenderFragment<DragDropItem> ChildContent { get; set; }
-
-        [Parameter]
-        public string Style { get; set; }
+        #endregion
 
         private bool IsDropAllowed()
         {
@@ -94,9 +101,8 @@ namespace H.LowCode.DesignerEngine.DragDrop
             var currentDragItem = DragDropService.CurrentDragItem;
 
             //源拖拽区才新增，目标拖拽区只移动
-            if (currentDragItem.Guid == Guid.Empty)
+            if (currentDragItem.IsDropItem == false)
             {
-                currentDragItem.Guid = Guid.NewGuid();
                 Items.Add(currentDragItem);
             }
             else
@@ -107,6 +113,11 @@ namespace H.LowCode.DesignerEngine.DragDrop
             DragDropService.Reset();
             StateHasChanged();
             OnItemDrop.InvokeAsync(currentDragItem);
+        }
+
+        private void OnClick()
+        {
+            OnDragDropZoneClick.Invoke();
         }
 
         private void SwapItem(DragDropItem dragOverItem, DragDropItem currentDragItem)

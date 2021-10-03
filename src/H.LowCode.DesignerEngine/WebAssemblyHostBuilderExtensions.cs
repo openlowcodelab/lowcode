@@ -1,4 +1,4 @@
-﻿using H.LowCode.DesignerEngine.DragDrop;
+﻿using H.LowCode.DesignerEngine.DesignPanel;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using System;

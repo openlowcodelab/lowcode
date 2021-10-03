@@ -1,0 +1,52 @@
+﻿@inject DragDropService DragDropService
+
+<DragDropZone Items="ComponentItems" Style="margin:10px; height:700px;" OnDragDropZoneClick="OnDragDropZoneClick">
+    <DropItem DragDropItem="context" Style="width:50%; float:left;" OnItemClick="OnItemClick"></DropItem>
+</DragDropZone>
+
+@code {
+    [Parameter]
+    public List<DragDropItem> ComponentItems { get; set; } = new List<DragDropItem>();
+
+    protected override void OnInitialized()
+    {
+        RegisterEventDispatcher();
+
+        base.OnInitialized();
+    }
+
+    private void RegisterEventDispatcher()
+    {
+        //订阅左侧组件面板中的组件点击事件
+        BlazorEventDispatcher.AddAction("designerengine.dragitem.onclick", (value) =>
+        {
+            ComponentItems.Add((DragDropItem)value);
+            StateHasChanged();
+        });
+        
+        //订阅设计面板取消选中事件
+        BlazorEventDispatcher.AddAction("designerengine.dropitem.onblur", (value) =>
+        {
+            //取消选中项
+            if (DragDropService.CurrentSelectItem != null)
+                DragDropService.CurrentSelectItem.IsSelected = false;
+            StateHasChanged();
+        });
+    }
+
+    private void OnItemClick(DragDropItem item)
+    {
+        //取消上一个选中，设置当前选中项
+        if (DragDropService.CurrentSelectItem != null)
+            DragDropService.CurrentSelectItem.IsSelected = false;
+        item.IsSelected = true;
+        DragDropService.CurrentSelectItem = item;
+
+        StateHasChanged();
+    }
+
+    private void OnDragDropZoneClick()
+    {
+        BlazorEventDispatcher.Dispatch("designerengine.dropitem.onblur", null);
+    }
+}

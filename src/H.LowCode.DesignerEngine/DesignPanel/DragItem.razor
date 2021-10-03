@@ -10,20 +10,18 @@
     public DragDropItem DragDropItem{ get; set; }
 
     [Parameter]
-    public Action<DragDropItem> OnItemDrop { get; set; }
-
-    [Parameter]
-    public Action<DragDropItem> OnItemClick { get; set; }
+    public Action<DragDropItem> OnItemDragStart { get; set; }
 
     private void OnDragStart(DragDropItem item)
     {
-        item.Guid = Guid.Empty;
-        OnItemDrop.Invoke(item);
+        DragDropItem dropItem = item.Clone();
+        OnItemDragStart.Invoke(dropItem);
     }
 
     private void OnClick(DragDropItem item)
     {
-        item.Guid = Guid.Empty;
-        OnItemClick.Invoke(item);
+        //发送事件，通知订阅此事件的其他组件更新状态
+        DragDropItem dropItem = item.Clone();
+        BlazorEventDispatcher.Dispatch("designerengine.dragitem.onclick", dropItem);
     }
 }

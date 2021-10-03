@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace H.LowCode.DesignerEngine.Models
+namespace H.LowCode.DesignerEngine.PropertyPanel
 {
-    internal class PagePropertyModel
+    public class PagePropertyBaseModel
     {
     }
 }

@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace H.LowCode.DesignerEngine.Models
+namespace H.LowCode.DesignerEngine.Render
 {
-    internal class ComponentPropertyModel
+    internal class DesignPageRender
     {
     }
 }

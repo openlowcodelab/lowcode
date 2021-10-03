@@ -1,0 +1,37 @@
+﻿<div style="@Style" class="dragdrop-item @ClassMapper.Class" @onclick="()=>OnClick(DragDropItem)" @onclick:stopPropagation>
+    <div style="width: 80px;">@DragDropItem.Title ：</div>
+    <div style="width: 100%;">@DragDropItem.DropRenderFragment</div>
+</div>
+
+@code
+{
+    [Parameter]
+    public DragDropItem DragDropItem { get; set; }
+
+    [Parameter]
+    public Action<DragDropItem> OnItemClick{ get; set; }
+
+    [Parameter]
+    public string Style { get; set; }
+    
+    protected ClassMapper ClassMapper { get; } = new ClassMapper();
+    
+    protected override void OnInitialized()
+    {
+        SetClassMap();
+
+        base.OnInitialized();
+    }
+
+    private void SetClassMap()
+    {
+        ClassMapper.Clear()
+            .If("dragdrop-item-selected", () => DragDropItem.IsSelected);
+    }
+
+    private void OnClick(DragDropItem item)
+    {
+        OnItemClick.Invoke(item);
+        BlazorEventDispatcher.Dispatch("designerengine.dropitem.onclick", item);
+    }
+}

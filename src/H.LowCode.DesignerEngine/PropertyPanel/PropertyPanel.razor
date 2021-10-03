@@ -1,0 +1,49 @@
+﻿<Tabs DefaultActiveKey="2" @bind-ActiveKey="@ActiveTabKey" Style="width:250px;">
+    @if (ShowPropertyPanel)
+    {
+        <TabPane Key="1" Tab="组件属性">
+            <ComponentProperty Model="componentPropertyModel" DragDropItem="@DragDropItem"></ComponentProperty>
+        </TabPane>
+    }
+    <TabPane Key="2" Tab="页面属性">
+        <PageProperty Model="pagePropertyModel"></PageProperty>
+    </TabPane>
+</Tabs>
+
+@code {
+    public bool ShowPropertyPanel { get; set; }
+
+    public DragDropItem DragDropItem { get; set; }
+
+    private string ActiveTabKey { get; set; } = "2";
+
+    private ComponentPropertyBaseModel componentPropertyModel = new ComponentPropertyBaseModel();
+    private PagePropertyBaseModel pagePropertyModel = new PagePropertyBaseModel();
+
+    protected override void OnInitialized()
+    {
+        RegisterEventDispatcher();
+        base.OnInitialized();
+    }
+
+    private void RegisterEventDispatcher()
+    {
+        //订阅设计面板中的组件点击事件
+        BlazorEventDispatcher.AddAction("designerengine.dropitem.onclick", (value) =>
+        {
+            DragDropItem = (DragDropItem)value;
+            ShowPropertyPanel = true;
+            ActiveTabKey = "1";
+            StateHasChanged();
+        });
+
+        //订阅设计面板取消选中事件
+        BlazorEventDispatcher.AddAction("designerengine.dropitem.onblur", (value) =>
+        {
+            DragDropItem = null;
+            ShowPropertyPanel = true;
+            ActiveTabKey = "2";
+            StateHasChanged();
+        });
+    }
+}

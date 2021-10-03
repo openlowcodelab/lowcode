@@ -1,0 +1,24 @@
+﻿@page "/myapp/{AppCode}/{NavCode}/design"
+
+@layout DesignerLayout
+
+<AntDesign.Layout>
+    <Sider Style="flex: auto; max-width: max-content; min-width: 200px;" Theme="SiderTheme.Light">
+        <ComponentPanel></ComponentPanel>
+    </Sider>
+    <Content>
+        <DesignPanel></DesignPanel>
+    </Content>
+    <Sider Style="flex: auto; max-width: max-content; min-width: 200px;" Theme="SiderTheme.Light">
+        <PropertyPanel></PropertyPanel>
+    </Sider>
+</AntDesign.Layout>
+
+@code
+{
+    [Parameter]
+    public string AppCode { get; set; }
+    
+    [Parameter]
+    public string NavCode { get; set; }
+}

@@ -2,7 +2,7 @@
 
 @foreach(var item in DragItems)
 {
-    <DragItem DragDropItem="item" OnItemDrop="OnItemDrop" OnItemClick="OnItemClick"></DragItem>
+    <DragItem DragDropItem="item" OnItemDragStart="OnItemDragStart"></DragItem>
 }
 
 @code {
@@ -44,14 +44,9 @@
         };
     }
 
-    public void OnItemDrop(DragDropItem item)
+    public void OnItemDragStart(DragDropItem item)
     {
+        //设置当前拖拽项
         DragDropService.CurrentDragItem = item;
-    }
-
-    public void OnItemClick(DragDropItem item)
-    {
-        //TODO 设置单击添加控件
-        DragDropService.Add(item);
     }
 }

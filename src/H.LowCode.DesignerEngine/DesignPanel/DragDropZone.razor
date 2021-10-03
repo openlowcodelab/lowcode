@@ -2,9 +2,11 @@
 @using System.Text
 @implements IDisposable
 
-<div @ondragover:preventDefault @ondragover="()=> { }" @ondragenter:preventDefault @ondragenter="()=> { }" @ondrop="()=>OnDrop()" @ondrop:preventDefault ondragstart="event.dataTransfer.setData('text', event.target.id);" 
-     @ondrop:stopPropagation @ondragenter:stopPropagation @ondragend:stopPropagation
+<div @ondragover:preventDefault @ondragover="()=> { }" @ondragenter:preventDefault @ondragenter="()=> { }" 
+     @ondrop:preventDefault ondragstart="event.dataTransfer.setData('text', event.target.id);" 
+     @ondrop:stopPropagation @ondragenter:stopPropagation @ondragend:stopPropagation 
      @ondragover:stopPropagation @ondragleave:stopPropagation @ondragstart:stopPropagation 
+     @ondrop="()=>OnDrop()" @onclick="OnClick" 
      style="@Style">
 
     @foreach (var item in Items)
