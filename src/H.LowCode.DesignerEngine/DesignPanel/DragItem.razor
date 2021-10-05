@@ -1,27 +1,26 @@
-﻿<div draggable="true" @ondragstart="()=>OnDragStart(DragDropItem)" @onclick="()=>OnClick(DragDropItem)"
-    style="width: 7.2rem; height: 2.2rem; margin: 4px; cursor: pointer;
-    display: flex; justify-content: center; align-items: center; color: #333; background-color: #f5f7fa;">
-    @DragDropItem.Title
+﻿<div draggable="true" class="dragitem" @ondragstart="()=>OnDragStart(DragDropModel)" @onclick="()=>OnClick(DragDropModel)">
+    @DragDropModel.Title
 </div>
 
 @code
 {
     [Parameter]
-    public DragDropItem DragDropItem{ get; set; }
+    public DragDropModel DragDropModel{ get; set; }
 
     [Parameter]
-    public Action<DragDropItem> OnItemDragStart { get; set; }
+    public Action<DragDropModel> OnItemDragStart { get; set; }
 
-    private void OnDragStart(DragDropItem item)
+    private void OnDragStart(DragDropModel model)
     {
-        DragDropItem dropItem = item.Clone();
-        OnItemDragStart.Invoke(dropItem);
+        DragDropModel dropModel = model.Clone();
+        OnItemDragStart.Invoke(dropModel);
     }
 
-    private void OnClick(DragDropItem item)
+    private void OnClick(DragDropModel model)
     {
         //发送事件，通知订阅此事件的其他组件更新状态
-        DragDropItem dropItem = item.Clone();
-        BlazorEventDispatcher.Dispatch("designerengine.dragitem.onclick", dropItem);
+        DragDropModel dropModel = model.Clone();
+        dropModel.IsDropModel = true;
+        BlazorEventDispatcher.Dispatch("designerengine.dragitem.onclick", dropModel);
     }
 }

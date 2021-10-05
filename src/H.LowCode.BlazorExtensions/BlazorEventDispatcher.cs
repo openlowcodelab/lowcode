@@ -23,7 +23,8 @@ namespace H.LowCode.BlazorExtensions
             }
             else
             {
-                throw new Exception($"event key{key} has existed");
+                _actions[key] += action;
+                //throw new Exception($"event key{key} has existed");
             }
         }
 

@@ -1,19 +1,19 @@
 ﻿@inject DragDropService DragDropService
 
-@foreach(var item in DragItems)
+@foreach(var model in DragModels)
 {
-    <DragItem DragDropItem="item" OnItemDragStart="OnItemDragStart"></DragItem>
+    <DragItem DragDropModel="model" OnItemDragStart="OnItemDragStart"></DragItem>
 }
 
 @code {
-    private List<DragDropItem> DragItems;
+    private List<DragDropModel> DragModels;
 
     protected override void OnInitialized()
     {
         base.OnInitialized();
-        DragItems = new List<DragDropItem>()
+        DragModels = new List<DragDropModel>()
         {
-            new DragDropItem(){
+            new DragDropModel(){
                 Title = "文本框",
                 ComponentType = "input",
                 DropRenderFragment = (builder) =>
@@ -22,7 +22,7 @@
                     builder.CloseComponent();
                 }
             },
-            new DragDropItem(){
+            new DragDropModel(){
                 Title = "下拉框",
                 ComponentType = "select",
                 DropRenderFragment = (builder) =>
@@ -31,7 +31,7 @@
                     builder.CloseComponent();
                 }
             },
-            new DragDropItem(){
+            new DragDropModel(){
                 Title = "日期",
                 ComponentType = "datepicker",
                 DropRenderFragment = (builder) =>
@@ -44,9 +44,9 @@
         };
     }
 
-    public void OnItemDragStart(DragDropItem item)
+    public void OnItemDragStart(DragDropModel model)
     {
         //设置当前拖拽项
-        DragDropService.CurrentDragItem = item;
+        DragDropService.CurrentDragModel = model;
     }
 }

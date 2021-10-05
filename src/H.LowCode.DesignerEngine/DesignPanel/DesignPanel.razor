@@ -1,13 +1,44 @@
 ﻿@inject DragDropService DragDropService
+@implements IDisposable
 
-<DragDropZone Items="ComponentItems" Style="margin:10px; height:700px;" OnDragDropZoneClick="OnDragDropZoneClick">
-    <DropItem DragDropItem="context" Style="width:50%; float:left;" OnItemClick="OnItemClick"></DropItem>
-</DragDropZone>
+<div class="designpage @Class" style="margin:0px 10px 5px; @Style" 
+    @onclick="OnClick" 
+    @ondrop="()=>OnDrop()" @ondrop:stopPropagation 
+    @ondragstart:stopPropagation ondragstart="event.dataTransfer.setData('text', event.target.id);" 
+    @ondragenter:stopPropagation 
+    @ondragover:preventDefault @ondragover:stopPropagation 
+    @ondragleave:stopPropagation 
+    @ondragend:stopPropagation>
+
+    @foreach (var item in DropModels)
+    {
+        <DropItem @ref="currentDropItem" DragDropModel="item" Style="width:50%; float:left;" 
+            OnItemClick="OnItemClick" OnItemDelete="OnItemDelete" OnItemCopy="OnItemCopy">
+        </DropItem>
+    }
+</div>
 
 @code {
+    #region Parameter
     [Parameter]
-    public List<DragDropItem> ComponentItems { get; set; } = new List<DragDropItem>();
+    public EventCallback<DragDropModel> OnItemDrop { get; set; }
 
+    [Parameter]
+    public List<DragDropModel> DropModels { get; set; } = new List<DragDropModel>();
+
+    [Parameter]
+    public Action OnDragDropZoneClick { get; set; }
+
+    [Parameter]
+    public string Class { get; set; }
+
+    [Parameter]
+    public string Style { get; set; }
+    #endregion
+
+    private DropItem currentDropItem { get; set; }
+
+    #region Event
     protected override void OnInitialized()
     {
         RegisterEventDispatcher();
@@ -15,12 +46,71 @@
         base.OnInitialized();
     }
 
+    private void OnDrop()
+    {
+        var currentDragModel = DragDropService.CurrentDragModel;
+
+        //源拖拽区才新增，目标拖拽区只移动
+        DragDropService.DropItem_DragEnd();
+        if (currentDragModel.IsDropModel == false)
+        {
+            DragDropService.DragItem_DragEnd(DropModels, currentDragModel);
+        }
+        else
+        {
+            DropItemSorting(DragDropService.DragTargetModel, currentDragModel);
+        }
+
+        StateHasChanged();
+        OnItemDrop.InvokeAsync(currentDragModel);
+    }
+
+    private void OnClick()
+    {
+        BlazorEventDispatcher.Dispatch("designerengine.dropitem.onblur", null);
+    }
+
+    private void OnItemClick(DragDropModel model)
+    {
+        //取消上一个选中，设置当前选中项
+        if (DragDropService.LastSelectedModel != null)
+            DragDropService.LastSelectedModel.IsSelected = false;
+
+        model.IsSelected = true;
+        DragDropService.LastSelectedModel = model;
+
+        StateHasChanged();
+    }
+
+    private void OnItemDelete(DragDropModel model)
+    {
+        //将下一个设为选中
+        int index = DropModels.IndexOf(model);
+        if (DropModels.Count > 1)
+        {
+            int next = index + 1 >= DropModels.Count ? index -1 : index + 1;
+            DropModels[next].IsSelected = true;
+            DragDropService.LastSelectedModel = DropModels[next];
+        }
+        DropModels.Remove(model);
+        StateHasChanged();
+    }
+
+    private void OnItemCopy(DragDropModel model)
+    {
+        model.IsSelected = false;
+        DragDropService.DragItem_DragEnd(DropModels, model, true);
+        StateHasChanged();
+    }
+    #endregion
+
+    #region
     private void RegisterEventDispatcher()
     {
         //订阅左侧组件面板中的组件点击事件
         BlazorEventDispatcher.AddAction("designerengine.dragitem.onclick", (value) =>
         {
-            ComponentItems.Add((DragDropItem)value);
+            DragDropService.DragItem_DragEnd(DropModels, (DragDropModel)value);
             StateHasChanged();
         });
         
@@ -28,25 +118,41 @@
         BlazorEventDispatcher.AddAction("designerengine.dropitem.onblur", (value) =>
         {
             //取消选中项
-            if (DragDropService.CurrentSelectItem != null)
-                DragDropService.CurrentSelectItem.IsSelected = false;
+            if (DragDropService.LastSelectedModel != null)
+                DragDropService.LastSelectedModel.IsSelected = false;
             StateHasChanged();
         });
     }
 
-    private void OnItemClick(DragDropItem item)
+    /// <summary>
+    /// 排序
+    /// </summary>
+    /// <param name="dragOverModel"></param>
+    /// <param name="currentDragModel"></param>
+    private void DropItemSorting(DragDropModel dragOverModel, DragDropModel currentDragModel)
     {
-        //取消上一个选中，设置当前选中项
-        if (DragDropService.CurrentSelectItem != null)
-            DragDropService.CurrentSelectItem.IsSelected = false;
-        item.IsSelected = true;
-        DragDropService.CurrentSelectItem = item;
+        if (dragOverModel == null)
+            return;
+        
+        var indexDraggedOverItem = DropModels.IndexOf(dragOverModel);
 
-        StateHasChanged();
+        //先移除，再插入对应位置
+        DropModels.Remove(currentDragModel);
+        DropModels.Insert(indexDraggedOverItem, currentDragModel);
+
+        //var indexActiveItem = DropModels.IndexOf(currentDragModel);
+        //if (indexDraggedOverItem > -1)
+        //{
+        //    //交换位置
+        //    DragDropModel tmp = DropModels[indexDraggedOverItem];
+        //    DropModels[indexDraggedOverItem] = DropModels[indexActiveItem];
+        //    DropModels[indexActiveItem] = tmp;
+        //}
     }
 
-    private void OnDragDropZoneClick()
+    public void Dispose()
     {
-        BlazorEventDispatcher.Dispatch("designerengine.dropitem.onblur", null);
+        DragDropService.Reset();
     }
+    #endregion
 }

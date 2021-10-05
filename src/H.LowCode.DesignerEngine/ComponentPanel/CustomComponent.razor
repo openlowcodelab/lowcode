@@ -2,27 +2,27 @@
 
 @foreach(var item in DragItems)
 {
-    <DragItem DragDropItem="item" OnItemDragStart="OnItemDragStart"></DragItem>
+    <DragItem DragDropModel="item" OnItemDragStart="OnItemDragStart"></DragItem>
 }
 
 @code {
-    internal List<DragDropItem> DragItems = new List<DragDropItem>()
+    internal List<DragDropModel> DragItems = new List<DragDropModel>()
         {
-            new DragDropItem(){
+            new DragDropModel(){
                 Title = "用户选择",
                 DropRenderFragment = (builder) => {
                     builder.OpenComponent(0, typeof(Input<string>));
                     builder.CloseComponent();
                 }
             },
-            new DragDropItem(){
+            new DragDropModel(){
                 Title = "行政区划",
                 DropRenderFragment = (builder) => {
                     builder.OpenComponent(0, typeof(Input<string>));
                     builder.CloseComponent();
                 }
             },
-            new DragDropItem(){
+            new DragDropModel(){
                 Title = "地图",
                 DropRenderFragment = (builder) => {
                     builder.OpenComponent(0, typeof(Input<string>));
@@ -31,8 +31,8 @@
             }
         };
 
-    public void OnItemDragStart(DragDropItem item)
+    public void OnItemDragStart(DragDropModel model)
     {
-        DragDropService.CurrentDragItem = item;
+        DragDropService.CurrentDragModel = model;
     }
 }

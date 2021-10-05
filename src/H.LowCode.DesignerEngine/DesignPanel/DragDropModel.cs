@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace H.LowCode.DesignerEngine.DesignPanel
 {
-    public class DragDropItem
+    public class DragDropModel
     {
-        public DragDropItem()
+        public DragDropModel()
         {
             Guid = Guid.NewGuid();
         }
@@ -24,14 +24,20 @@ namespace H.LowCode.DesignerEngine.DesignPanel
 
         public string ComponentType { get; set; }
 
-        public bool IsSelected {  get; set; }
+        public bool IsSelected { get; internal set; }
 
-        public bool IsDropItem {  get; set; }
+        public double Opacity { get; internal set; } = 1;
 
-        public DragDropItem Clone()
+        public string ModelStyle {  get; internal set; }
+
+        /// <summary>
+        /// 是否由组件面板拖拽而来
+        /// </summary>
+        public bool IsDropModel {  get; set; }
+
+        public DragDropModel Clone()
         {
-            DragDropItem clone = new DragDropItem();
-            clone.IsDropItem = true;
+            DragDropModel clone = new DragDropModel();
             clone.Name = Name;
             clone.Title = Title;
             clone.DropRenderFragment = DropRenderFragment;

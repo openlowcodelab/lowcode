@@ -1,7 +1,7 @@
 ﻿@inherits LayoutComponentBase
 @inject NavigationManager NavigationManager
 
-<AntDesign.Layout Class="layout">
+<AntDesign.Layout Class="layout designpage">
     <Header Style="background-color: white;">
         <a href="/"> 《 返回 </a>
         <Menu Theme="MenuTheme.Light" Mode="MenuMode.Horizontal" DefaultSelectedKeys=@(new[]{"2"})>
@@ -9,7 +9,7 @@
             <MenuItem Key="2">Mobile</MenuItem>
         </Menu>
     </Header>
-    <Content>
+    <Content Class="designpage">
         @Body
     </Content>
     @*<Footer Style="text-align: center; ">
