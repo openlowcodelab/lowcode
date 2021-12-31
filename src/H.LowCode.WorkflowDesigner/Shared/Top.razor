@@ -1,0 +1,39 @@
+﻿@inherits LayoutComponentBase
+
+<div>
+	<div class="fd-nav">
+		<div class="fd-nav-left">
+			<div class="fd-nav-back" @click="toReturn"><i class="anticon anticon-left"></i></div>
+			<div class="fd-nav-title">{{workFlowDef.name}}</div>
+		</div>
+		<!-- <div class="fd-nav-center">
+            <div class="fd-nav-container">
+                <div class="ghost-bar" style="transform: translateX(300px);"></div>
+                <div class="fd-nav-item"><span class="order-num">1</span>基础设置</div>
+                <div class="fd-nav-item"><span class="order-num">2</span>表单设计</div>
+                <div class="fd-nav-item active"><span class="order-num">3</span>流程设计</div>
+                <div class="fd-nav-item"><span class="order-num">4</span>高级设置</div>
+            </div>
+        </div> -->
+		<div class="fd-nav-right">
+			<!-- <button type="button" class="ant-btn button-preview"><span>预 览</span></button> -->
+			<button type="button" class="ant-btn button-publish" @click="saveSet"><span>发 布</span></button>
+		</div>
+	</div>
+	<div class="fd-nav-content">
+		<section class="dingflow-design">
+			<div class="zoom">
+				<div :class="'zoom-out'+ (nowVal==50?' disabled':'')" @click="zoomSize(1)"></div>
+				<span>{{nowVal}}%</span>
+				<div :class="'zoom-in'+ (nowVal==300?' disabled':'')" @click="zoomSize(2)"></div>
+			</div>
+			<div class="box-scale" id="box-scale" :style="'transform: scale('+nowVal/100+'); transform-origin: 50% 0px 0px;'">
+				@Body
+				<div class="end-node">
+					<div class="end-node-circle"></div>
+					<div class="end-node-text">流程结束</div>
+				</div>
+			</div>
+		</section>
+	</div>
+</div>

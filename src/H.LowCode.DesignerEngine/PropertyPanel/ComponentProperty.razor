@@ -1,13 +1,29 @@
 ﻿@if (DragDropModel != null)
 {
-    <label>ID <span style="font-size:10px; color:gray;">(字段名称/英文)</span>：</label>
-    <Input TValue="string" @bind-Value="@DragDropModel.Name" />
-    <label>标题：</label>
-    <Input TValue="string" @bind-Value="@DragDropModel.Title" />
-    <label>默认值：</label>
-    <Input TValue="string" @bind-Value="@Model.DefaultValue" />
-    <label>必填：</label>
-    <Checkbox @bind-Value="@Model.IsRequired" />
+    <div class="componentproperty-item">
+        <label>ID <span style="font-size:10px; color:gray;">(字段名称/英文)</span>：</label>
+        <Input TValue="string" @bind-Value="@DragDropModel.Name" />
+    </div>
+    <div class="componentproperty-item">
+        <label>标题：</label>
+        <Input TValue="string" @bind-Value="@DragDropModel.Title" />
+    </div>
+    <div class="componentproperty-item">
+        <label>默认值：</label>
+        <Input TValue="string" @bind-Value="@Model.DefaultValue" />
+    </div>
+    <div class="componentproperty-item">
+        <label>必填：</label>
+        <Checkbox @bind-Value="@Model.IsRequired" />
+    </div>
+    <div class="componentproperty-item">
+        <label>元素宽度：</label>
+        <Slider TValue="double" @bind-Value="@Model.ItemWidth" DefaultValue="180" Max="300" />
+    </div>
+    <div class="componentproperty-item">
+        <label>标签宽度：</label>
+        <Slider TValue="double" @bind-Value="@Model.LabelWidth" DefaultValue="180" Max="300" />
+    </div>
 }
 
 @code {

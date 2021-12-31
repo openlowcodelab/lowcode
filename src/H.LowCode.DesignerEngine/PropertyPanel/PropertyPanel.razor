@@ -2,7 +2,7 @@
     @if (ShowPropertyPanel)
     {
         <TabPane Key="1" Tab="组件属性">
-            <ComponentProperty Model="componentPropertyModel" DragDropModel="@DragDropModel"></ComponentProperty>
+            <ComponentProperty Model="@DragDropModel.ComponentPropertyModel" DragDropModel="@DragDropModel"></ComponentProperty>
         </TabPane>
     }
     <TabPane Key="2" Tab="页面属性">
@@ -17,7 +17,6 @@
 
     private string ActiveTabKey { get; set; } = "2";
 
-    private ComponentPropertyBaseModel componentPropertyModel = new ComponentPropertyBaseModel();
     private PagePropertyBaseModel pagePropertyModel = new PagePropertyBaseModel();
 
     protected override void OnInitialized()

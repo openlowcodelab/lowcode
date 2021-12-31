@@ -1,0 +1,37 @@
+﻿@*条件节点*@
+<div class="add-node-btn-box">
+    <div class="add-node-btn">
+        <el-popover placement="right-start" v-model="visible">
+            <div class="add-node-popover-body">
+                <a class="add-node-popover-item approver" @click="AddNode(1)">
+                    <div class="item-wrapper">
+                        <span class="iconfont"></span>
+                    </div>
+                    <p>审批人</p>
+                </a>
+                <a class="add-node-popover-item notifier" @click="AddNode(2)">
+                    <div class="item-wrapper">
+                        <span class="iconfont"></span>
+                    </div>
+                    <p>抄送人</p>
+                </a>
+                <a class="add-node-popover-item condition" @click="AddNode(4)">
+                    <div class="item-wrapper">
+                        <span class="iconfont"></span>
+                    </div>
+                    <p>条件分支</p>
+                </a>
+            </div>
+            <button class="btn" type="button" slot="reference">
+                <span class="iconfont"></span>
+            </button>
+        </el-popover>
+    </div>
+</div>
+
+@code {
+    private void AddNode(int nodeType)
+    {
+        
+    }
+}

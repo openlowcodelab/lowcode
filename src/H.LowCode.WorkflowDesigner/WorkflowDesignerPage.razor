@@ -1,0 +1,16 @@
+﻿@page "/workflowdesigner"
+
+<StartNode></StartNode>
+
+@code {
+	[Parameter]
+	public List<NodeModelBase> Nodes { get; set; } = new List<NodeModelBase>()
+	{
+		new StartNodeModel(){ },
+		new ApproveModel(){ },
+		new ApproveModel(){ },
+		new CarbonCopyModel(){ }
+	};
+
+
+}

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using H.LowCode.DesignerEngine.PropertyPanel;
+using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
@@ -21,6 +22,11 @@ namespace H.LowCode.DesignerEngine.DesignPanel
         /// 拖拽目标对象
         /// </summary>
         public DragDropModel DragTargetModel { get; set; }
+
+        /// <summary>
+        /// 页面属性
+        /// </summary>
+        public PagePropertyBaseModel PagePropertyModel { get; set; } = new PagePropertyBaseModel();
 
         public void Reset()
         {
