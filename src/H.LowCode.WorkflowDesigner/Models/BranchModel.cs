@@ -7,13 +7,9 @@ using System.Threading.Tasks;
 namespace H.LowCode.WorkflowDesigner.Models
 {
     /// <summary>
-    /// 发起人节点
+    /// 审核人节点
     /// </summary>
-    internal class StartNodeModel : NodeModelBase
+    internal class BranchModel : NodeModelBase
     {
-        public StartNodeModel()
-        {
-            NodeType = NodeTypeEnum.Start;
-        }
     }
 }

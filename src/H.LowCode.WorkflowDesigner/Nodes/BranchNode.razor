@@ -1,0 +1,25 @@
+﻿@*添加条件按钮*@
+<button class="add-branch" @onclick="()=>AddBranchNode()">添加条件</button>
+
+@*遍历条件子节点*@
+@foreach(var conditionNode in Node.ConditionNodes)
+{
+    <NodeWrap Node="@conditionNode"></NodeWrap>
+}
+
+@*遍历普通子节点*@
+@foreach(var childNode in Node.ChildNodes)
+{
+    <NodeWrap Node="@childNode"></NodeWrap>
+}
+
+
+@code {
+    [Parameter]
+    public NodeModelBase Node { get; set; }
+
+    private void AddBranchNode()
+    {
+        
+    }
+}

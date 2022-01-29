@@ -13,22 +13,29 @@ namespace H.LowCode.WorkflowDesigner.Models
     {
         public NodeModelBase()
         {
-            ChildrenNodes = new List<NodeModelBase>();
+            ChildNodes = new List<NodeModelBase>();
+            ConditionNodes = new List<NodeModelBase>();
         }
 
         public string Id { get; set; }
 
-        public string Name {  get; set; }
+        public string NodeName {  get; set; }
 
         public NodeTypeEnum NodeType {  get; set; }
 
-        public List<NodeModelBase> ChildrenNodes {  get; set; }
+        public bool IsInput { get; set; }
+
+        public List<NodeModelBase> ChildNodes {  get; set; }
+
+        public List<NodeModelBase> ConditionNodes { get; set; }
     }
 
     public enum NodeTypeEnum
     {
-        ApproveNodeType,
-        CarbonCopyNodeType,
-        ConditionNodeType
+        Start = 0,
+        Approve = 1,
+        CarbonCopy = 2,
+        Condition = 3,
+        Branch = 4
     }
 }

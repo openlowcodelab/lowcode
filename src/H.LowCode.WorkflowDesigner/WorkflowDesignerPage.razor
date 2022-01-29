@@ -1,16 +1,40 @@
-﻿@page "/workflowdesigner"
+﻿@page "/"
 
-<StartNode></StartNode>
+<NodeWrap Node="@Node"></NodeWrap>
+<EndNode></EndNode>
 
 @code {
-	[Parameter]
-	public List<NodeModelBase> Nodes { get; set; } = new List<NodeModelBase>()
+	public NodeModelBase Node = new StartNodeModel()
 	{
-		new StartNodeModel(){ },
-		new ApproveModel(){ },
-		new ApproveModel(){ },
-		new CarbonCopyModel(){ }
+		NodeName = "发起人",
+		NodeType = NodeTypeEnum.Start,
+		ChildNodes =
+		{
+			new ApproveModel()
+			{
+				NodeName = "审核人", NodeType = NodeTypeEnum.Approve,
+				ChildNodes = new List<NodeModelBase>()
+				{
+					new BranchModel(){ 
+						NodeName = "路由", NodeType = NodeTypeEnum.Branch,
+						ChildNodes = new List<NodeModelBase>()
+						{
+							new CarbonCopyModel(){ NodeName = "抄送人", NodeType = NodeTypeEnum.CarbonCopy }
+						},
+						ConditionNodes = new List<NodeModelBase>()
+						{
+							new ConditionModel(){
+								NodeName = "条件1", NodeType = NodeTypeEnum.Condition, 
+								ChildNodes = new List<NodeModelBase>()
+								{
+									new ApproveModel(){ NodeName = "审核人", NodeType = NodeTypeEnum.Approve }
+								} 
+							},
+							new ConditionModel(){ NodeName = "条件2", NodeType = NodeTypeEnum.Condition }
+						}
+					}
+				}
+			}
+		}
 	};
-
-
 }

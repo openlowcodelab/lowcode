@@ -1,42 +1,49 @@
-﻿@*添加节点按钮*@
+﻿@page "/add"
+
+@*添加节点按钮*@
 <div class="add-node-btn-box">
     <div class="add-node-btn">
-        <span>
-            <div role="tooltip" id="el-popover-3392" aria-hidden="true" class="el-popover el-popper" tabindex="0"
-                style="display: none;">
+        <el-popover placement="right-start">
+            @if (IsShowPopover)
+            {
                 <div class="add-node-popover-body">
-                    <a class="add-node-popover-item approver">
+                    <a class="add-node-popover-item approver" @onclick="()=>AddNode(NodeTypeEnum.Approve)">
                         <div class="item-wrapper">
-                            <span class="iconfont"></span>
+                            <span class="iconfont"></span>
                         </div>
                         <p>审批人</p>
                     </a>
-                    <a class="add-node-popover-item notifier">
+                    <a class="add-node-popover-item notifier" @onclick="()=>AddNode(NodeTypeEnum.CarbonCopy)">
                         <div class="item-wrapper">
-                            <span class="iconfont"></span>
+                            <span class="iconfont"></span>
                         </div>
                         <p>抄送人</p>
                     </a>
-                    <a class="add-node-popover-item condition">
+                    <a class="add-node-popover-item condition" @onclick="()=>AddNode(NodeTypeEnum.Condition)">
                         <div class="item-wrapper">
-                            <span class="iconfont"></span>
+                            <span class="iconfont"></span>
                         </div>
                         <p>条件分支</p>
                     </a>
                 </div>
-            </div>
-            <span class="el-popover__reference-wrapper">
-                <button type="button" class="btn el-popover__reference" aria-describedby="el-popover-3392" tabindex="0">
-                    <span class="iconfont"></span>
-                </button>
-            </span>
-        </span>
+            }
+            <button class="btn" type="button" slot="reference" @onclick="()=>ShowPopover()">
+                <span class="iconfont"></span>
+            </button>
+        </el-popover>
     </div>
 </div>
 
 @code {
-    private void ShowAddNodePanel()
+    private bool IsShowPopover = false;
+
+    private void ShowPopover()
     {
-        
+        IsShowPopover = !IsShowPopover;
+    }
+
+    private void AddNode(NodeTypeEnum nodeType)
+    {
+
     }
 }

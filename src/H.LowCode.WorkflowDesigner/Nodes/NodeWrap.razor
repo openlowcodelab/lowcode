@@ -1,0 +1,41 @@
+﻿@*
+ 节点说明：
+  1、根节点只有1个，即 StartNode
+  2、每个节点的下级节点有两类：普通节点（ChildNodes）和条件节点（ConditionNodes）
+  3、若下级节点为普通节点时，只有一条垂直连线
+  4、若下级节点为条件节点时，多余“添加条件”按钮，连线需特殊处理
+*@
+
+<div>
+    @if (Node.NodeType == NodeTypeEnum.Start)
+    {
+        <StartNode Node="@Node"></StartNode>
+    }
+    else if (Node.NodeType == NodeTypeEnum.Approve)
+    {
+        <ApproveNode Node="@Node"></ApproveNode>
+    }
+    else if (Node.NodeType == NodeTypeEnum.CarbonCopy)
+    {
+        <CarbonCopyNode Node="@Node"></CarbonCopyNode>
+    }
+    else if (Node.NodeType == NodeTypeEnum.Condition)
+    {
+        <ConditionNode Node="@Node"></ConditionNode>
+    }
+    else if (Node.NodeType == NodeTypeEnum.Branch)
+    {
+        <BranchNode Node="@Node"></BranchNode>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public NodeModelBase Node { get; set; }
+
+    private void ShowSettingPanel()
+    {
+        
+    }
+
+}

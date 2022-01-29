@@ -3,21 +3,26 @@
     <div>
         <div class="title" style="background: rgb(50, 150, 250);"><span class="iconfont"
                 style="display: none;"></span><span class="iconfont"></span>
-            <!---->
-            <!----><span class="editable-title">抄送人</span><i class="anticon anticon-close close"></i>
+            <span class="editable-title">抄送人</span><i class="anticon anticon-close close"></i>
         </div>
         <div class="content">
-            <!---->
-            <!---->
             <div class="text">
-                <!---->
                 发起人自选
             </div><i class="anticon anticon-right arrow"></i>
         </div>
-        <!---->
     </div>
 </div>
+<AddNodeButton></AddNodeButton>
+
+@*遍历普通子节点*@
+@foreach(var childNode in Node.ChildNodes)
+{
+    <NodeWrap Node="@childNode"></NodeWrap>
+}
 
 @code {
+    [Parameter]
+    public NodeModelBase Node { get; set; }
+
     
 }
