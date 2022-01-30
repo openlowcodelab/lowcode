@@ -1,18 +1,28 @@
 ﻿@*添加条件按钮*@
-<button class="add-branch" @onclick="()=>AddBranchNode()">添加条件</button>
-
-@*遍历条件子节点*@
-@foreach(var conditionNode in Node.ConditionNodes)
-{
-    <NodeWrap Node="@conditionNode"></NodeWrap>
-}
-
-@*遍历普通子节点*@
-@foreach(var childNode in Node.ChildNodes)
-{
-    <NodeWrap Node="@childNode"></NodeWrap>
-}
-
+<div class="branch-box-wrap">
+    <div class="branch-box">
+        <button class="add-branch" @onclick="()=>AddBranchNode()">添加条件</button>
+        @*遍历条件子节点*@
+        @foreach(var conditionNode in Node.ConditionNodes)
+        {
+            <div class="col-box">
+                <NodeWrap Node="@conditionNode"></NodeWrap>
+                
+                @if (conditionNode == Node.ConditionNodes.First())
+                {
+                    <div class="top-left-cover-line"></div>
+                    <div class="bottom-left-cover-line"></div>
+                }
+                else if (conditionNode == Node.ConditionNodes.Last())
+                {
+                    <div class="top-right-cover-line"></div>
+                    <div class="bottom-right-cover-line"></div>
+                }
+            </div>
+        }
+    </div>
+    <AddNodeButton></AddNodeButton>
+</div>
 
 @code {
     [Parameter]

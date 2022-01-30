@@ -1,45 +1,47 @@
-﻿@page "/add"
-
-@*添加节点按钮*@
+﻿@*添加节点按钮*@
 <div class="add-node-btn-box">
     <div class="add-node-btn">
-        <el-popover placement="right-start">
-            @if (IsShowPopover)
-            {
+        @if (IsShowPopover)
+        {
+            <div role="tooltip" aria-hidden="false" class="el-popover el-popper" tabindex="0"
+                style="position: fixed; transform-origin: left center; z-index: 9999; @PopoverStype" x-placement="right-start">
                 <div class="add-node-popover-body">
-                    <a class="add-node-popover-item approver" @onclick="()=>AddNode(NodeTypeEnum.Approve)">
+                    <a class="add-node-popover-item approver">
                         <div class="item-wrapper">
                             <span class="iconfont"></span>
                         </div>
                         <p>审批人</p>
                     </a>
-                    <a class="add-node-popover-item notifier" @onclick="()=>AddNode(NodeTypeEnum.CarbonCopy)">
+                    <a class="add-node-popover-item notifier">
                         <div class="item-wrapper">
                             <span class="iconfont"></span>
                         </div>
                         <p>抄送人</p>
                     </a>
-                    <a class="add-node-popover-item condition" @onclick="()=>AddNode(NodeTypeEnum.Condition)">
+                    <a class="add-node-popover-item condition">
                         <div class="item-wrapper">
                             <span class="iconfont"></span>
                         </div>
                         <p>条件分支</p>
                     </a>
                 </div>
-            }
-            <button class="btn" type="button" slot="reference" @onclick="()=>ShowPopover()">
-                <span class="iconfont"></span>
-            </button>
-        </el-popover>
+                <div x-arrow="" class="popper__arrow" style="top: 8px;"></div>
+            </div>
+        }
+        <button class="btn" type="button" slot="reference" @onclick="ShowPopover">
+            <span class="iconfont"></span>
+        </button>
     </div>
 </div>
 
 @code {
     private bool IsShowPopover = false;
+    private string PopoverStype = "";
 
-    private void ShowPopover()
+    private void ShowPopover(MouseEventArgs e)
     {
         IsShowPopover = !IsShowPopover;
+        PopoverStype = $"top: {e.ClientY - 80}px; left: {e.ClientX + 20}px;";
     }
 
     private void AddNode(NodeTypeEnum nodeType)
