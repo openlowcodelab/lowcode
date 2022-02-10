@@ -1,6 +1,6 @@
 ﻿@page "/form/{PageId}/{DataId}"
 
-@using H.LowCode.Render.Model
+@using H.LowCode.Metadata
 
 @inject HttpClient Http
 @inject IRender render
@@ -48,7 +48,7 @@
     {
         string serverUrl = "http://localhost:5005";
 
-        var formData = await Http.PostAsJsonAsync<FormModel>($"{serverUrl}/GetFormData?id={DataId}", null);
+        var formData = await Http.PostAsJsonAsync<FormMetadata>($"{serverUrl}/GetFormData?id={DataId}", null);
 
     }
 }

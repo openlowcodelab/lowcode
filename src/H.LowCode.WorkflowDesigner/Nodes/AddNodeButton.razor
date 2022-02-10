@@ -28,7 +28,7 @@
                 <div x-arrow="" class="popper__arrow" style="top: 8px;"></div>
             </div>
         }
-        <button class="btn" type="button" slot="reference" @onclick="ShowPopover">
+        <button class="btn" type="button" slot="reference" @onclick="ShowPopover" @onblur="OnBlur">
             <span class="iconfont"></span>
         </button>
     </div>
@@ -42,6 +42,11 @@
     {
         IsShowPopover = !IsShowPopover;
         PopoverStype = $"top: {e.ClientY - 80}px; left: {e.ClientX + 20}px;";
+    }
+
+    private void OnBlur()
+    {
+        IsShowPopover = false;
     }
 
     private void AddNode(NodeTypeEnum nodeType)

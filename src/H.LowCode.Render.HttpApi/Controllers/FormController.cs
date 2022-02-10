@@ -1,4 +1,4 @@
-﻿using H.LowCode.Render.Model;
+﻿using H.LowCode.Metadata;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
@@ -22,7 +22,7 @@ namespace H.LowCode.Render.WebApi.Controllers
         [HttpGet]
         public object GetFormData(string id)
         {
-            return new FormModel();
+            return new FormMetadata();
         }
 
         [HttpPost]

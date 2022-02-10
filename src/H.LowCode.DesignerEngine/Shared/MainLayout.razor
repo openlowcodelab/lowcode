@@ -2,9 +2,8 @@
 
 <AntDesign.ProLayout.BasicLayout 
     Logo="@("logo.png")"
-    MenuData="_menuData">
+    MenuData="_menuData" SplitMenus="true">
     <RightContentRender>
-        @*<AntDesign.Pro.Template.Components.RightContent />*@
         RightContent
     </RightContentRender>
     <ChildContent>
@@ -22,27 +21,42 @@
     {
         new MenuDataItem
         {
-            Path = "/myapp",
-            Name = "首页",
-            Key = "home"
+            Path = "/page",
+            Name = "页面",
+            Key = "page",
+            Children = new MenuDataItem[]
+            {
+                new MenuDataItem
+                {
+                    Path = "/myapp",
+                    Name = "首页",
+                    Key = "home"
+                },
+                new MenuDataItem
+                {
+                    Path = "/myapp/bookapp/bookadd",
+                    Name = "书籍录入",
+                    Key = "myapp-bookapp-add",
+                },
+                new MenuDataItem
+                {
+                    Path = "/myapp/bookapp/booklend",
+                    Name = "我要借书",
+                    Key = "myapp-bookapp-lend",
+                },
+                new MenuDataItem
+                {
+                    Path = "/myapp/bookapp/bookgiveback",
+                    Name = "我要还书",
+                    Key = "myapp-bookapp-giveback",
+                }
+            }
         },
         new MenuDataItem
         {
-            Path = "/myapp/bookapp/bookadd",
-            Name = "书籍录入",
-            Key = "myapp-bookapp-add",
-        },
-        new MenuDataItem
-        {
-            Path = "/myapp/bookapp/booklend",
-            Name = "我要借书",
-            Key = "myapp-bookapp-lend",
-        },
-        new MenuDataItem
-        {
-            Path = "/myapp/bookapp/bookgiveback",
-            Name = "我要还书",
-            Key = "myapp-bookapp-giveback",
+            Path = "/datasource",
+            Name = "数据源",
+            Key = "datasource"
         }
     };
 
