@@ -1,0 +1,95 @@
+﻿@inherits LayoutComponentBase
+
+<AntDesign.ProLayout.BasicLayout 
+    Logo="@("logo.png")"
+    MenuData="_menuData" SplitMenus="true">
+    <RightContentRender>
+        RightContent
+    </RightContentRender>
+    <ChildContent>
+        @Body
+    </ChildContent>
+    <FooterRender>
+        <FooterView Copyright="2021 H.LowCode" Links="Links"></FooterView>
+    </FooterRender>
+</AntDesign.ProLayout.BasicLayout>
+<SettingDrawer />
+
+@code
+{
+    private readonly MenuDataItem[] _menuData =
+    {
+        new MenuDataItem
+        {
+            Path = "/page",
+            Name = "页面",
+            Key = "page",
+            Children = new MenuDataItem[]
+            {
+                new MenuDataItem
+                {
+                    Path = "/myapp",
+                    Name = "首页",
+                    Key = "home"
+                },
+                new MenuDataItem
+                {
+                    Path = "/myapp/bookapp/bookadd",
+                    Name = "书籍录入",
+                    Key = "myapp-bookapp-add",
+                },
+                new MenuDataItem
+                {
+                    Path = "/myapp/bookapp/booklend",
+                    Name = "我要借书",
+                    Key = "myapp-bookapp-lend",
+                },
+                new MenuDataItem
+                {
+                    Path = "/myapp/bookapp/bookgiveback",
+                    Name = "我要还书",
+                    Key = "myapp-bookapp-giveback",
+                }
+            }
+        },
+        new MenuDataItem
+        {
+            Path = "/datasource",
+            Name = "数据源",
+            Key = "datasource",
+            Children = new MenuDataItem[]
+            {
+                new MenuDataItem
+                {
+                    Path = "/datasource/table",
+                    Name = "数据表",
+                    Key = "datasource-table"
+                },
+                new MenuDataItem
+                {
+                    Path = "/datasource/sharedata",
+                    Name = "跨应用",
+                    Key = "datasource-sharedata",
+                }
+            }
+        }
+    };
+
+    public LinkItem[] Links { get; set; } =
+    {
+        new LinkItem
+        {
+            Key = "Ant Design Blazor",
+            Title = "Ant Design Blazor",
+            Href = "https://antblazor.com",
+            BlankTarget = true,
+        },
+        new LinkItem
+        {
+            Key = "XRender",
+            Title = "XRender",
+            Href = "https://x-render.gitee.io/",
+            BlankTarget = true,
+        }
+    };
+}
