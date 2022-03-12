@@ -22,7 +22,7 @@ namespace H.LowCode.Render.WebApi.Controllers
         [HttpGet]
         public object GetFormData(string id)
         {
-            return new FormMetadata();
+            return new FormJsonSchema();
         }
 
         [HttpPost]

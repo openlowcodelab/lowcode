@@ -1,4 +1,4 @@
-﻿@page "/myapp/{AppCode}/{NavCode}/design"
+﻿@page "/designer/{AppId}/{PageId}"
 
 @layout DesignerLayout
 
@@ -17,8 +17,8 @@
 @code
 {
     [Parameter]
-    public string AppCode { get; set; }
+    public string AppId { get; set; }
     
     [Parameter]
-    public string NavCode { get; set; }
+    public string PageId { get; set; }
 }

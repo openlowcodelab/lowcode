@@ -1,9 +1,10 @@
-﻿using H.LowCode.DesignerEngine.PropertyPanel;
+﻿using H.LowCode.DesignerEngine.DesignPanel;
+using H.LowCode.DesignerEngine.PropertyPanel;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-namespace H.LowCode.DesignerEngine.DesignPanel
+namespace H.LowCode.DesignerEngine.Services
 {
     internal class DragDropService
     {

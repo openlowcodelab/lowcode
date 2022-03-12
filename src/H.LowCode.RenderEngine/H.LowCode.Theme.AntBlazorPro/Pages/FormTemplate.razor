@@ -48,7 +48,7 @@
     {
         string serverUrl = "http://localhost:5005";
 
-        var formData = await Http.PostAsJsonAsync<FormMetadata>($"{serverUrl}/GetFormData?id={DataId}", null);
+        var formData = await Http.PostAsJsonAsync<FormJsonSchema>($"{serverUrl}/GetFormData?id={DataId}", null);
 
     }
 }

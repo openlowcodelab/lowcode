@@ -1,6 +1,6 @@
-﻿@page "/myapp/{AppCode}/{NavCode}"
+﻿@page "/myapp/{AppId}/{PageId}"
 
-@layout MainLayout
+@layout MyAppLayout
 @using AntDesign.TableModels
 @using System.ComponentModel
 
@@ -51,10 +51,10 @@
 
 @code {
     [Parameter]
-    public string AppCode { get; set; }
+    public string AppId { get; set; }
     
     [Parameter]
-    public string NavCode { get; set; }
+    public string PageId { get; set; }
 
     PageListModel[] pageListModels;
 
@@ -99,7 +99,7 @@
             {
                 PageCode = index.ToString(),
                 PageName = $"page{index}",
-                PageUrl = $"myapp/{AppCode}/{NavCode}/design"
+                PageUrl = $"designer/{AppId}/{PageId}"
             };
         }).ToArray());
     }
