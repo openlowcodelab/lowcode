@@ -3,39 +3,17 @@
 @inject NavigationManager NavigationManager
 @inject HttpClient HttpClient
 
-<AntDesign.Layout Class="layout designpage">
-    <Header Style="background-color: white; padding:0 20px;">
-        <div style="float:left;">
-            <a href="javascript:void(0)"> @("<") 返回 </a>
-        </div>
-        @*<div style="text-align:center;">
-            <Menu Theme="MenuTheme.Light" Mode="MenuMode.Horizontal" DefaultSelectedKeys=@(new[]{"2"})>
-                <MenuItem Key="1">PC</MenuItem>
-                <MenuItem Key="2">Mobile</MenuItem>
-            </Menu>
-        </div>*@
-        <div style="float:right;">
-            <Button>预览</Button>
-            <Button Type="primary" OnClick="() => SaveMetadata()">保存</Button>
-        </div>
-    </Header>
+<Layout Class="layout designpage">
     <Content Class="designpage">
         @Body
     </Content>
     @*<Footer Style="text-align: center; ">
         <FooterView Copyright="2021 H.LowCode" Links="Links"></FooterView>
     </Footer>*@
-</AntDesign.Layout>
+</Layout>
 
 @code
 {
-    public void SaveMetadata()
-    {
-        string jsonData = "";
-        var httpContent = new StringContent(jsonData, Encoding.UTF8, "application/json");
-        HttpClient.PostAsync("/Designer/SaveMetadata", httpContent);
-    }
-
     public LinkItem[] Links { get; set; } =
     {
         new LinkItem

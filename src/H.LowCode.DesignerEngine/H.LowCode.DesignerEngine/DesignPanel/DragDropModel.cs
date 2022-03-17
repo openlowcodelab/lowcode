@@ -1,5 +1,6 @@
 ﻿using H.LowCode.DesignerEngine.PropertyPanel;
 using Microsoft.AspNetCore.Components;
+using Newtonsoft.Json.Schema;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,16 +12,13 @@ namespace H.LowCode.DesignerEngine.DesignPanel
     {
         public DragDropModel()
         {
-            Guid = Guid.NewGuid();
         }
 
-        public Guid Guid { get; private set; }
-
-        public string Name { get; set; }
-
-        public string Title { get; set; }
+        public JSchema ComponentJSchema { get; set; }
 
         public RenderFragment DropRenderFragment { get; set; }
+
+        public string Name { get; set; }
 
         public string ComponentType { get; set; }
 
@@ -46,8 +44,7 @@ namespace H.LowCode.DesignerEngine.DesignPanel
                 throw new NullReferenceException($"the property [{nameof(ComponentPropertyModel)}] is null");
 
             DragDropModel clone = new DragDropModel();
-            clone.Name = Name;
-            clone.Title = Title;
+            clone.ComponentJSchema = ComponentJSchema;
             clone.DropRenderFragment = DropRenderFragment;
             clone.ComponentType = ComponentType;
             return clone;

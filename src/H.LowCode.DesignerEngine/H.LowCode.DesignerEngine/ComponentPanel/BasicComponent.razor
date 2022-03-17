@@ -14,7 +14,7 @@
         DragModels = new List<DragDropModel>()
         {
             new DragDropModel(){
-                Title = "输入框",
+                ComponentJSchema = new Newtonsoft.Json.Schema.JSchema(){ Title = "输入框", Type = JSchemaType.String },
                 ComponentType = "input",
                 DropRenderFragment = (builder) =>
                 {
@@ -23,7 +23,7 @@
                 }
             },
             new DragDropModel(){
-                Title = "大输入框",
+                ComponentJSchema = new Newtonsoft.Json.Schema.JSchema(){ Title = "大输入框" },
                 ComponentType = "textarea",
                 DropRenderFragment = (builder) =>
                 {
@@ -33,7 +33,7 @@
                 }
             },
             new DragDropModel(){
-                Title = "日期选择",
+                ComponentJSchema = new Newtonsoft.Json.Schema.JSchema(){ Title = "日期选择" },
                 ComponentType = "datepicker",
                 DropRenderFragment = (builder) =>
                 {
@@ -43,7 +43,7 @@
                 }
             },
             new DragDropModel(){
-                Title = "数字输入框",
+                ComponentJSchema = new Newtonsoft.Json.Schema.JSchema(){ Title = "数字输入框", Type = JSchemaType.Integer},
                 ComponentType = "inputnumber",
                 DropRenderFragment = (builder) =>
                 {
@@ -52,7 +52,7 @@
                 }
             },
             new DragDropModel(){
-                Title = "是否选择",
+                ComponentJSchema = new Newtonsoft.Json.Schema.JSchema(){ Title = "是否选择" },
                 ComponentType = "checkbox",
                 DropRenderFragment = (builder) =>
                 {
@@ -61,7 +61,7 @@
                 }
             },
             new DragDropModel(){
-                Title = "是否switch",
+                ComponentJSchema = new Newtonsoft.Json.Schema.JSchema(){ Title = "是否switch" },
                 ComponentType = "switch",
                 DropRenderFragment = (builder) =>
                 {
@@ -70,7 +70,7 @@
                 }
             },
             new DragDropModel(){
-                Title = "下拉选择",
+                ComponentJSchema = new Newtonsoft.Json.Schema.JSchema(){ Title = "下拉选择" },
                 ComponentType = "radio",
                 DropRenderFragment = (builder) =>
                 {
@@ -79,16 +79,7 @@
                 }
             },
             new DragDropModel(){
-                Title = "点击选择",
-                ComponentType = "datepicker",
-                DropRenderFragment = (builder) =>
-                {
-                    builder.OpenComponent(0, typeof(Checkbox));
-                    builder.CloseComponent();
-                }
-            },
-            new DragDropModel(){
-                Title = "HTML",
+                ComponentJSchema = new Newtonsoft.Json.Schema.JSchema(){ Title = "HTML" },
                 ComponentType = "html",
                 DropRenderFragment = (builder) =>
                 {

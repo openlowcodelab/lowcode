@@ -9,21 +9,24 @@
     internal List<DragDropModel> DragItems = new List<DragDropModel>()
         {
             new DragDropModel(){
-                Title = "用户选择",
+                ComponentJSchema = new JSchema(){ Title = "用户选择" },
+                ComponentType = "userselect",
                 DropRenderFragment = (builder) => {
                     builder.OpenComponent(0, typeof(Input<string>));
                     builder.CloseComponent();
                 }
             },
             new DragDropModel(){
-                Title = "行政区划",
+                ComponentJSchema = new JSchema(){ Title = "行政区划" },
+                ComponentType = "region",
                 DropRenderFragment = (builder) => {
                     builder.OpenComponent(0, typeof(Input<string>));
                     builder.CloseComponent();
                 }
             },
             new DragDropModel(){
-                Title = "地图",
+                ComponentJSchema = new JSchema(){ Title = "地图" },
+                ComponentType = "map",
                 DropRenderFragment = (builder) => {
                     builder.OpenComponent(0, typeof(Input<string>));
                     builder.CloseComponent();
