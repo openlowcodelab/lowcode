@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace H.LowCode.JsonSchemaExtensions
+namespace H.Extensions.Json.Schema
 {
     public static class JsonExtensions
     {
@@ -32,7 +32,7 @@ namespace H.LowCode.JsonSchemaExtensions
         public static T FromJson<T>(this string input)
         {
             if (string.IsNullOrEmpty(input))
-                return default(T);
+                return default;
             return JsonConvert.DeserializeObject<T>(input);
         }
     }

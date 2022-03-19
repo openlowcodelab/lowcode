@@ -1,8 +1,6 @@
-﻿using H.LowCode.JsonSchemaExtensions;
+﻿using H.Extensions.Json.Schema;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Schema;
-using System;
 using System.Text;
 
 namespace H.LowCode.Designer.HttpApi.Controllers
@@ -19,7 +17,7 @@ namespace H.LowCode.Designer.HttpApi.Controllers
 
         [HttpPost]
         [Route("SaveMetadata")]
-        public void SaveMetadata(JSchema jsonSchema)
+        public void SaveMetadata([FromBody]JSchema jsonSchema)
         {
             string filePath = @"D:\temp.json";
             System.IO.File.WriteAllText(filePath, jsonSchema.ToJson(), Encoding.UTF8);

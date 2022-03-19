@@ -1,8 +1,9 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
-    <ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
   <ItemGroup>
@@ -11,15 +12,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\H.LowCode.DesignerEngine\H.LowCode.Designer.Admin\H.LowCode.Designer.Admin.csproj" />
+    <ProjectReference Include="..\..\H.LowCode.DesignerEngine\H.LowCode.DesignerEngine\H.LowCode.DesignerEngine.csproj" />
     <ProjectReference Include="..\H.LowCode.RenderEngine.AntBlazor\H.LowCode.RenderEngine.AntBlazor.csproj" />
     <ProjectReference Include="..\H.LowCode.RenderEngine.Html\H.LowCode.RenderEngine.Html.csproj" />
-    <ProjectReference Include="..\H.LowCode.RenderEngine\H.LowCode.RenderEngine.csproj" />
     <ProjectReference Include="..\H.LowCode.Theme.AntBlazorPro\H.LowCode.Theme.AntBlazorPro.csproj" />
     <ProjectReference Include="..\H.LowCode.Theme.Html\H.LowCode.Theme.Html.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" />
   </ItemGroup>
 
 </Project>

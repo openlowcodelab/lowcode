@@ -49,8 +49,9 @@
         JSchema rootJSchema = GetRootJsonSchema();
         //string jsonData = rootJSchema.ToJson();
         //var httpContent = new StringContent(jsonData);
-        var jsonContent = JsonContent.Create(rootJSchema);
-        var result = await HttpClient.PostAsync("api/Designer/SaveMetadata", jsonContent);
+        //var jsonContent = JsonContent.Create(rootJSchema, typeof(JSchema));
+        //var result = await HttpClient.PostAsync("api/Designer/SaveMetadata", jsonContent);
+        var result = await HttpClient.PostAsJsonAsync("api/Designer/SaveMetadata", rootJSchema);
         if (result.StatusCode == HttpStatusCode.OK)
         {
             var responseJson = await result.Content.ReadAsStringAsync();

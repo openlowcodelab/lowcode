@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace H.LowCode.BlazorExtensions
+namespace H.LowCode.Blazor.Utility
 {
     public static class BlazorEventDispatcher
     {
