@@ -1,6 +1,8 @@
 ﻿@page "/designer/{AppId}/{PageId}"
 @using System.Net.Http.Json
 @using System.Net
+@using System.Text.Json.Serialization
+@using H.Extensions.Json.Schema
 
 @layout DesignerLayout
 @inject HttpClient HttpClient
@@ -47,11 +49,19 @@
     public async void SaveMetadata()
     {
         JSchema rootJSchema = GetRootJsonSchema();
-        //string jsonData = rootJSchema.ToJson();
-        //var httpContent = new StringContent(jsonData);
-        //var jsonContent = JsonContent.Create(rootJSchema, typeof(JSchema));
-        //var result = await HttpClient.PostAsync("api/Designer/SaveMetadata", jsonContent);
-        var result = await HttpClient.PostAsJsonAsync("api/Designer/SaveMetadata", rootJSchema);
+
+        //PostAsJsonAsync
+        //var result = await HttpClient.PostAsJsonAsync("api/Designer/SaveMetadata", rootJSchema);
+        
+        string jsonData = rootJSchema.ToJson();
+        //PostAsync
+        var httpContent = new FormUrlEncodedContent(new List<KeyValuePair<string, string>>() { new KeyValuePair<string, string>("jsonSchema", jsonData) });
+        var result = await HttpClient.PostAsync("api/Designer/SaveMetadata", httpContent);
+        
+        //PostAsync
+        //var httpContent2 = new StringContent(jsonData, Encoding.UTF8, "application/json");
+        //var result2 = await HttpClient.PostAsync("api/Designer/SaveMetadata2", httpContent2);
+
         if (result.StatusCode == HttpStatusCode.OK)
         {
             var responseJson = await result.Content.ReadAsStringAsync();

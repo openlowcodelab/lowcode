@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace H.LowCode.Render.WebApi.Controllers
+namespace H.LowCode.Render.HttpApi.Controllers
 {
     [ApiController]
     [Route("[controller]")]
