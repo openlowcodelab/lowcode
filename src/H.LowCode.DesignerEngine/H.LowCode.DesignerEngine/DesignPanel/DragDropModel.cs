@@ -1,4 +1,4 @@
-﻿using H.LowCode.DesignerEngine.PropertyPanel;
+﻿using H.LowCode.DesignerEngine.ComponentPropertyModels;
 using Microsoft.AspNetCore.Components;
 using Newtonsoft.Json.Schema;
 using System;
@@ -36,17 +36,20 @@ namespace H.LowCode.DesignerEngine.DesignPanel
         /// <summary>
         /// 组件属性
         /// </summary>
-        public ComponentPropertyBaseModel ComponentPropertyModel { get; private set; } = new ComponentPropertyBaseModel();
+        public ComponentPropertyModelBase ComponentPropertyModel { get; internal set; }
 
         public DragDropModel Clone()
         {
             if(ComponentPropertyModel == null)
                 throw new NullReferenceException($"the property [{nameof(ComponentPropertyModel)}] is null");
 
-            DragDropModel clone = new DragDropModel();
-            clone.ComponentJSchema = ComponentJSchema;
-            clone.DropRenderFragment = DropRenderFragment;
-            clone.ComponentType = ComponentType;
+            DragDropModel clone = new()
+            {
+                ComponentJSchema = ComponentJSchema,
+                DropRenderFragment = DropRenderFragment,
+                ComponentType = ComponentType,
+                ComponentPropertyModel = ComponentPropertyModel
+            };
             return clone;
         }
     }

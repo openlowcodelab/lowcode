@@ -1,7 +1,7 @@
 ﻿@inject DragDropService DragDropService
 @implements IDisposable
 
-<div class="designpage @Class" style="margin:0px 10px 5px; @Style" 
+<div class="designpage @Class" style="margin:5px; @Style" 
     @onclick="OnClick" 
     @ondrop="()=>OnDrop()" @ondrop:stopPropagation 
     @ondragstart:stopPropagation ondragstart="event.dataTransfer.setData('text', event.target.id);" 

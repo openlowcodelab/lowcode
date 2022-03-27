@@ -4,22 +4,15 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace H.LowCode.DesignerEngine.PropertyPanel
+namespace H.LowCode.DesignerEngine.ComponentPropertyModels
 {
-    public class ComponentPropertyBaseModel
+    public abstract class ComponentPropertyModelBase
     {
         public string ID { get; set; }
 
-        public string Title {  get; set; }
-
-        /// <summary>
-        /// 字段描述
-        /// </summary>
-        public string Description {  get; set; }
+        public bool IsRequired {  get; set; }
 
         public string DefaultValue { get; set; }
-
-        public bool IsRequired {  get; set; }
 
         /// <summary>
         /// 元素宽度
@@ -31,6 +24,6 @@ namespace H.LowCode.DesignerEngine.PropertyPanel
         /// </summary>
         public double LabelWidth { get; set; } = 180;
 
-
+        public abstract bool IsShowProperty(string propertyName);
     }
 }

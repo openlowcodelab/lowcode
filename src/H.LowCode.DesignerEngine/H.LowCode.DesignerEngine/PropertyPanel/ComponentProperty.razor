@@ -9,27 +9,88 @@
         <Input TValue="string" @bind-Value="@DragDropModel.ComponentJSchema.Title" />
     </div>
     <div class="componentproperty-item">
-        <label>默认值：</label>
-        <Input TValue="string" @bind-Value="@Model.DefaultValue" />
+        <label>描述：</label>
+        <Input TValue="string" @bind-Value="@DragDropModel.ComponentJSchema.Description" />
     </div>
     <div class="componentproperty-item">
-        <label>必填：</label>
-        <Checkbox @bind-Value="@Model.IsRequired" />
+        <label>默认值：</label>
+        <Input TValue="string" @bind-Value="@DragDropModel.ComponentPropertyModel.DefaultValue" />
     </div>
+    if (DragDropModel.ComponentPropertyModel.IsShowProperty("IsRequired"))
+    {
+        <div class="componentproperty-item">
+            <label>必填：</label>
+            <Checkbox @bind-Value="@DragDropModel.ComponentPropertyModel.IsRequired" />
+        </div>
+    }
+    @*"type": "string"*@
+    if(DragDropModel.ComponentJSchema.Type == JSchemaType.String)
+    {
+        if (DragDropModel.ComponentPropertyModel.IsShowProperty("MaximumLength"))
+        {
+            <div class="componentproperty-item">
+                <label>最大长度：</label>
+                <Input @bind-Value="@DragDropModel.ComponentJSchema.MaximumLength" />
+            </div>
+        }
+        if (DragDropModel.ComponentPropertyModel.IsShowProperty("MinimumLength"))
+        {
+            <div class="componentproperty-item">
+                <label>最小长度：</label>
+                <Input @bind-Value="@DragDropModel.ComponentJSchema.MinimumLength" />
+            </div>
+        }
+        if (DragDropModel.ComponentPropertyModel.IsShowProperty("Pattern"))
+        {
+            <div class="componentproperty-item">
+                <label>Pattern：</label>
+                <Input @bind-Value="@DragDropModel.ComponentJSchema.Pattern" />
+            </div>
+        }
+        if (DragDropModel.ComponentPropertyModel.IsShowProperty("Format"))
+        {
+            <div class="componentproperty-item">
+                <label>Format：</label>
+                <Input @bind-Value="@DragDropModel.ComponentJSchema.Format" />
+            </div>
+        }
+    }
+    @*"type": "integer"*@
+    @*"type": "number"*@
+    if (DragDropModel.ComponentJSchema.Type == JSchemaType.Integer || DragDropModel.ComponentJSchema.Type == JSchemaType.Number)
+    {
+        if (DragDropModel.ComponentPropertyModel.IsShowProperty("Maximum"))
+        {
+            <div class="componentproperty-item">
+                <label>最大值：</label>
+                <Input @bind-Value="@DragDropModel.ComponentJSchema.Maximum" />
+            </div>
+        }
+        if (DragDropModel.ComponentPropertyModel.IsShowProperty("Minimum"))
+        {
+            <div class="componentproperty-item">
+                <label>最小值：</label>
+                <Input @bind-Value="@DragDropModel.ComponentJSchema.Minimum" />
+            </div>
+        }
+    }
+    @*"type": "array"*@
+    @*if(DragDropModel.ComponentJSchema.Type == JSchemaType.Array)
+    {
+        
+    }*@
+    @*自定义*@
     <div class="componentproperty-item">
         <label>元素宽度：</label>
-        <Slider TValue="double" @bind-Value="@Model.ItemWidth" DefaultValue="180" Max="300" />
+        <Slider TValue="double" @bind-Value="@DragDropModel.ComponentPropertyModel.ItemWidth" DefaultValue="180" Max="300" />
     </div>
     <div class="componentproperty-item">
         <label>标签宽度：</label>
-        <Slider TValue="double" @bind-Value="@Model.LabelWidth" DefaultValue="180" Max="300" />
+        <Slider TValue="double" @bind-Value="@DragDropModel.ComponentPropertyModel.LabelWidth" DefaultValue="180" Max="300" />
     </div>
 }
 
 @code {
     [Parameter]
     public DragDropModel DragDropModel { get; set; }
-
-    [Parameter]
-    public ComponentPropertyBaseModel Model { get; set; }
 }

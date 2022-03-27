@@ -9,6 +9,17 @@
     internal List<DragDropModel> DragItems = new List<DragDropModel>()
         {
             new DragDropModel(){
+                ComponentJSchema = new Newtonsoft.Json.Schema.JSchema(){ Title = "HTML" },
+                ComponentType = "html",
+                ComponentPropertyModel = new HtmlPropertyModel(),
+                DropRenderFragment = (builder) =>
+                {
+                    builder.OpenComponent(0, typeof(TextArea));
+                    builder.AddAttribute(1, "style", "height:55px;");
+                    builder.CloseComponent();
+                }
+            },
+            new DragDropModel(){
                 ComponentJSchema = new JSchema(){ Title = "用户选择" },
                 ComponentType = "userselect",
                 DropRenderFragment = (builder) => {
