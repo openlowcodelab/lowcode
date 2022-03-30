@@ -1,3 +1,4 @@
+using H.LowCode.WorkflowDesigner;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -5,7 +6,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace H.LowCode.WorkflowDesigner.WasmHost
+namespace H.LowCode.WorkflowEngine.WasmHost
 {
     public class Program
     {
