@@ -1,8 +1,6 @@
-﻿using H.LowCode.DesignEngine.DesignPanel;
-using H.LowCode.DesignEngine.PropertyPanel;
-using System;
+﻿using H.LowCode.DesignEngine.PropertyPanel;
+using H.LowCode.Metadata.Components;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 
 namespace H.LowCode.DesignEngine.Services
 {
@@ -12,47 +10,47 @@ namespace H.LowCode.DesignEngine.Services
         /// 最后选中对象
         /// （当 DropItem 失去焦点时，即页面上没有任何项被选中，LastSelectedModel 仍有值）
         /// </summary>
-        public DragDropModel LastSelectedModel { get; set; }
+        public ComponentSchema LastSelectedComponent { get; set; }
 
         /// <summary>
         /// 被拖拽对象
         /// </summary>
-        public DragDropModel CurrentDragModel { get; set; }
+        public ComponentSchema CurrentDragComponent { get; set; }
 
         /// <summary>
         /// 拖拽目标对象
         /// </summary>
-        public DragDropModel DragTargetModel { get; set; }
+        public ComponentSchema DragTargetComponent { get; set; }
 
         /// <summary>
         /// 页面属性
         /// </summary>
-        public PagePropertyBaseModel PagePropertyModel { get; set; } = new PagePropertyBaseModel();
+        public PagePropertySchema PagePropertySchema { get; set; } = new PagePropertySchema();
 
         public void Reset()
         {
-            LastSelectedModel = default;
-            CurrentDragModel = default;
-            DragTargetModel = default;
+            LastSelectedComponent = default;
+            CurrentDragComponent = default;
+            DragTargetComponent = default;
         }
 
-        public void DragItem_DragEnd(IList<DragDropModel> DropModels, DragDropModel model, bool isSelected = false)
+        public void DragItem_DragEnd(IList<ComponentSchema> ComponentSchemas, ComponentSchema componentSchemas, bool isSelected = false)
         {
-            var dropModel = model.Clone();
-            dropModel.IsDropModel = true;
+            var dropComponentSchemas = componentSchemas.Clone();
+            dropComponentSchemas.IsDroppedFromComponentPanel = true;
             if (isSelected)
             {
-                dropModel.IsSelected = isSelected;
-                LastSelectedModel = dropModel;
+                dropComponentSchemas.IsSelected = isSelected;
+                LastSelectedComponent = dropComponentSchemas;
             }
-            DropModels.Add(dropModel);
+            ComponentSchemas.Add(dropComponentSchemas);
         }
 
         public void DropItem_DragEnd()
         {
-            CurrentDragModel.Opacity = 1;
-            CurrentDragModel.ModelStyle = string.Empty;
-            DragTargetModel.ModelStyle = string.Empty;
+            CurrentDragComponent.Opacity = 1;
+            CurrentDragComponent.Style = string.Empty;
+            DragTargetComponent.Style = string.Empty;
         }
     }
 }

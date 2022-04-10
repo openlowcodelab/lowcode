@@ -1,26 +1,26 @@
-﻿<div draggable="true" class="dragitem" @ondragstart="()=>OnDragStart(DragDropModel)" @onclick="()=>OnClick(DragDropModel)">
-    @DragDropModel.ComponentJSchema.Title
+﻿<div draggable="true" class="dragitem" @ondragstart="()=>OnDragStart(ComponentSchema)" @onclick="()=>OnClick(ComponentSchema)">
+    @ComponentSchema.ComponentJSchema.Title
 </div>
 
 @code
 {
     [Parameter]
-    public DragDropModel DragDropModel{ get; set; }
+    public ComponentSchema ComponentSchema{ get; set; }
 
     [Parameter]
-    public Action<DragDropModel> OnItemDragStart { get; set; }
+    public Action<ComponentSchema> OnItemDragStart { get; set; }
 
-    private void OnDragStart(DragDropModel model)
+    private void OnDragStart(ComponentSchema componentSchema)
     {
-        DragDropModel dropModel = model.Clone();
-        OnItemDragStart.Invoke(dropModel);
+        ComponentSchema dragComponentSchema = componentSchema.Clone();
+        OnItemDragStart.Invoke(dragComponentSchema);
     }
 
-    private void OnClick(DragDropModel model)
+    private void OnClick(ComponentSchema componentSchema)
     {
         //发送事件，通知订阅此事件的其他组件更新状态
-        DragDropModel dropModel = model.Clone();
-        dropModel.IsDropModel = true;
-        BlazorEventDispatcher.Dispatch("designerengine.dragitem.onclick", dropModel);
+        ComponentSchema clickComponentSchema = componentSchema.Clone();
+        clickComponentSchema.IsDroppedFromComponentPanel = true;
+        BlazorEventDispatcher.Dispatch("designerengine.dragitem.onclick", clickComponentSchema);
     }
 }

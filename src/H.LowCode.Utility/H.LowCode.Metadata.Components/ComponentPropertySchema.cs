@@ -4,13 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace H.LowCode.DesignEngine.Components.PropertyModels
+namespace H.LowCode.Metadata.Components
 {
-    public abstract class ComponentPropertyModelBase
+    public abstract class ComponentPropertySchema
     {
         public string ID { get; set; }
 
-        public bool IsRequired {  get; set; }
+        public bool IsRequired { get; set; }
 
         public string DefaultValue { get; set; }
 

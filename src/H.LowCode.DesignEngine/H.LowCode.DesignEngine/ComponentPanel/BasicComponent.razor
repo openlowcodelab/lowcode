@@ -1,31 +1,31 @@
 ﻿@inject DragDropService DragDropService
 
 <Title Level="4">基础组件</Title>
-@foreach(var model in _basicDragModels)
+@foreach(var model in _basicDragComponents)
 {
-    <DragItem DragDropModel="model" OnItemDragStart="OnItemDragStart"></DragItem>
+    <DragItem ComponentSchema="model" OnItemDragStart="OnItemDragStart"></DragItem>
 }
 
 <Divider />
 
 <Title Level="4">高级组件</Title>
-@*@foreach(var model in _seniorDragModels)
+@*@foreach(var model in _seniorDragComponents)
 {
-    <DragItem DragDropModel="model" OnItemDragStart="OnItemDragStart"></DragItem>
+    <DragItem ComponentSchema="model" OnItemDragStart="OnItemDragStart"></DragItem>
 }*@
 
 <Divider />
 
 <Title Level="4">布局组件</Title>
-@*@foreach(var model in _layoutDragModels)
+@*@foreach(var model in _layoutDragComponents)
 {
-    <DragItem DragDropModel="model" OnItemDragStart="OnItemDragStart"></DragItem>
+    <DragItem ComponentSchema="model" OnItemDragStart="OnItemDragStart"></DragItem>
 }*@
 
 @code {
-    private List<DragDropModel> _basicDragModels;
-    private List<DragDropModel> _seniorDragModels;
-    private List<DragDropModel> _layoutDragModels;
+    private List<ComponentSchema> _basicDragComponents;
+    private List<ComponentSchema> _seniorDragComponents;
+    private List<ComponentSchema> _layoutDragComponents;
 
     protected override void OnInitialized()
     {
@@ -38,22 +38,22 @@
 
     private void InitBasicComponents()
     {
-        _basicDragModels = new List<DragDropModel>()
+        _basicDragComponents = new List<ComponentSchema>()
         {
-            new DragDropModel(){
+            new ComponentSchema(){
                 ComponentJSchema = new Newtonsoft.Json.Schema.JSchema(){ Title = "输入框", Type = JSchemaType.String },
                 ComponentType = "input",
-                ComponentPropertyModel = new InputPropertyModel(),
+                ComponentPropertySchema = new InputPropertyModel(),
                 DropRenderFragment = (builder) =>
                 {
                     builder.OpenComponent(1, typeof(Input<string>));
                     builder.CloseComponent();
                 }
             },
-            new DragDropModel(){
+            new ComponentSchema(){
                 ComponentJSchema = new Newtonsoft.Json.Schema.JSchema(){ Title = "大输入框" },
                 ComponentType = "textarea",
-                ComponentPropertyModel = new TextareaPropertyModel(),
+                ComponentPropertySchema = new TextareaPropertyModel(),
                 DropRenderFragment = (builder) =>
                 {
                     builder.OpenComponent(0, typeof(TextArea));
@@ -61,10 +61,10 @@
                     builder.CloseComponent();
                 }
             },
-            new DragDropModel(){
+            new ComponentSchema(){
                 ComponentJSchema = new Newtonsoft.Json.Schema.JSchema(){ Title = "日期选择" },
                 ComponentType = "datepicker",
-                ComponentPropertyModel = new DatePickerPropertyModel(),
+                ComponentPropertySchema = new DatePickerPropertyModel(),
                 DropRenderFragment = (builder) =>
                 {
                     builder.OpenComponent(0, typeof(DatePicker<DateTime?>));
@@ -72,40 +72,40 @@
                     builder.CloseComponent();
                 }
             },
-            new DragDropModel(){
+            new ComponentSchema(){
                 ComponentJSchema = new Newtonsoft.Json.Schema.JSchema(){ Title = "数字输入框", Type = JSchemaType.Integer},
                 ComponentType = "inputnumber",
-                ComponentPropertyModel = new InputNumberPropertyModel(),
+                ComponentPropertySchema = new InputNumberPropertyModel(),
                 DropRenderFragment = (builder) =>
                 {
                     builder.OpenComponent(0, typeof(AntDesign.InputNumber<int>));
                     builder.CloseComponent();
                 }
             },
-            new DragDropModel(){
+            new ComponentSchema(){
                 ComponentJSchema = new Newtonsoft.Json.Schema.JSchema(){ Title = "是否选择" },
                 ComponentType = "checkbox",
-                ComponentPropertyModel = new CheckboxPropertyModel(),
+                ComponentPropertySchema = new CheckboxPropertyModel(),
                 DropRenderFragment = (builder) =>
                 {
                     builder.OpenComponent(0, typeof(Select<string, string>));
                     builder.CloseComponent();
                 }
             },
-            new DragDropModel(){
+            new ComponentSchema(){
                 ComponentJSchema = new Newtonsoft.Json.Schema.JSchema(){ Title = "是否switch" },
                 ComponentType = "switch",
-                ComponentPropertyModel = new SwitchPropertyModel(),
+                ComponentPropertySchema = new SwitchPropertyModel(),
                 DropRenderFragment = (builder) =>
                 {
                     builder.OpenComponent(0, typeof(Switch));
                     builder.CloseComponent();
                 }
             },
-            new DragDropModel(){
+            new ComponentSchema(){
                 ComponentJSchema = new Newtonsoft.Json.Schema.JSchema(){ Title = "下拉选择" },
                 ComponentType = "radio",
-                ComponentPropertyModel = new RadioPropertyModel(),
+                ComponentPropertySchema = new RadioPropertyModel(),
                 DropRenderFragment = (builder) =>
                 {
                     builder.OpenComponent(0, typeof(Radio<string>));
@@ -117,22 +117,22 @@
 
     private void InitSeniorComponents()
     {
-        _seniorDragModels = new List<DragDropModel>()
+        _seniorDragComponents = new List<ComponentSchema>()
         {
-            new DragDropModel(){
+            new ComponentSchema(){
                 ComponentJSchema = new Newtonsoft.Json.Schema.JSchema(){ Title = "折叠面板", Type = JSchemaType.String },
                 ComponentType = "collapse",
-                ComponentPropertyModel = new CollapsePropertyModel(),
+                ComponentPropertySchema = new CollapsePropertyModel(),
                 DropRenderFragment = (builder) =>
                 {
                     builder.OpenComponent(1, typeof(Collapse));
                     builder.CloseComponent();
                 }
             },
-            new DragDropModel(){
+            new ComponentSchema(){
                 ComponentJSchema = new Newtonsoft.Json.Schema.JSchema(){ Title = "上传" },
                 ComponentType = "upload",
-                ComponentPropertyModel = new UploadPropertyModel(),
+                ComponentPropertySchema = new UploadPropertyModel(),
                 DropRenderFragment = (builder) =>
                 {
                     builder.OpenComponent(0, typeof(Upload));
@@ -144,32 +144,32 @@
 
     private void InitLayoutComponents()
     {
-        _layoutDragModels = new List<DragDropModel>()
+        _layoutDragComponents = new List<ComponentSchema>()
         {
-            new DragDropModel(){
+            new ComponentSchema(){
                 ComponentJSchema = new Newtonsoft.Json.Schema.JSchema(){ Title = "分割线", Type = JSchemaType.String },
                 ComponentType = "divider",
-                ComponentPropertyModel = new DividerPropertyModel(),
+                ComponentPropertySchema = new DividerPropertyModel(),
                 DropRenderFragment = (builder) =>
                 {
                     builder.OpenComponent(1, typeof(Divider));
                     builder.CloseComponent();
                 }
             },
-            new DragDropModel(){
+            new ComponentSchema(){
                 ComponentJSchema = new Newtonsoft.Json.Schema.JSchema(){ Title = "栅格" },
                 ComponentType = "grid",
-                ComponentPropertyModel = new GridPropertyModel(),
+                ComponentPropertySchema = new GridPropertyModel(),
                 DropRenderFragment = (builder) =>
                 {
                     //builder.OpenComponent(0, typeof());
                     //builder.CloseComponent();
                 }
             },
-            new DragDropModel(){
+            new ComponentSchema(){
                 ComponentJSchema = new Newtonsoft.Json.Schema.JSchema(){ Title = "布局" },
                 ComponentType = "layout",
-                ComponentPropertyModel = new LayoutPropertyModel(),
+                ComponentPropertySchema = new LayoutPropertyModel(),
                 DropRenderFragment = (builder) =>
                 {
                     //builder.OpenComponent(0, typeof());
@@ -179,9 +179,9 @@
         };
     }
 
-    public void OnItemDragStart(DragDropModel model)
+    public void OnItemDragStart(ComponentSchema model)
     {
         //设置当前拖拽项
-        DragDropService.CurrentDragModel = model;
+        DragDropService.CurrentDragComponent = model;
     }
 }

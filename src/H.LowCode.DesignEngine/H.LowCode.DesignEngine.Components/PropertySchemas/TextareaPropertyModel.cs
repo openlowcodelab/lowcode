@@ -1,12 +1,13 @@
-﻿using System;
+﻿using H.LowCode.Metadata.Components;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace H.LowCode.DesignEngine.Components.PropertyModels
+namespace H.LowCode.DesignEngine.Components.PropertySchemas
 {
-    internal class TextareaPropertyModel : ComponentPropertyModelBase
+    public class TextareaPropertyModel : ComponentPropertySchema
     {
         private static readonly List<string> _properties = new() { "MaximumLength", "MinimumLength" };
 

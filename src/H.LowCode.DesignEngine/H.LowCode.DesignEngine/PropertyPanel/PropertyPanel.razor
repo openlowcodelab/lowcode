@@ -2,22 +2,22 @@
     @if (ShowPropertyPanel)
     {
         <TabPane Key="1" Tab="组件属性">
-            <ComponentProperty DragDropModel="@DragDropModel"></ComponentProperty>
+            <ComponentProperty ComponentSchema="@ComponentSchema"></ComponentProperty>
         </TabPane>
     }
     <TabPane Key="2" Tab="页面属性">
-        <PageProperty Model="pagePropertyModel"></PageProperty>
+        <PageProperty PagePropertySchema="pagePropertySchema"></PageProperty>
     </TabPane>
 </Tabs>
 
 @code {
     public bool ShowPropertyPanel { get; set; }
 
-    public DragDropModel DragDropModel { get; set; }
+    public ComponentSchema ComponentSchema { get; set; }
 
     private string ActiveTabKey { get; set; } = "2";
 
-    private PagePropertyBaseModel pagePropertyModel = new PagePropertyBaseModel();
+    private PagePropertySchema pagePropertySchema = new PagePropertySchema();
 
     protected override void OnInitialized()
     {
@@ -30,7 +30,7 @@
         //订阅设计面板中的组件点击事件
         BlazorEventDispatcher.AddAction("designerengine.dropitem.onclick", (value) =>
         {
-            DragDropModel = (DragDropModel)value;
+            ComponentSchema = (ComponentSchema)value;
             ShowPropertyPanel = true;
             ActiveTabKey = "1";
             StateHasChanged();
@@ -39,7 +39,7 @@
         //订阅设计面板取消选中事件
         BlazorEventDispatcher.AddAction("designerengine.dropitem.onblur", (value) =>
         {
-            DragDropModel = null;
+            ComponentSchema = null;
             ShowPropertyPanel = false;
             ActiveTabKey = "2";
             StateHasChanged();

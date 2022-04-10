@@ -2,16 +2,16 @@
 
 @foreach(var item in DragItems)
 {
-    <DragItem DragDropModel="item" OnItemDragStart="OnItemDragStart"></DragItem>
+    <DragItem ComponentSchema="item" OnItemDragStart="OnItemDragStart"></DragItem>
 }
 
 @code {
-    internal List<DragDropModel> DragItems = new List<DragDropModel>()
+    internal List<ComponentSchema> DragItems = new List<ComponentSchema>()
         {
-            new DragDropModel(){
+            new ComponentSchema(){
                 ComponentJSchema = new Newtonsoft.Json.Schema.JSchema(){ Title = "HTML" },
                 ComponentType = "html",
-                ComponentPropertyModel = new HtmlPropertyModel(),
+                ComponentPropertySchema = new HtmlPropertyModel(),
                 DropRenderFragment = (builder) =>
                 {
                     builder.OpenComponent(0, typeof(TextArea));
@@ -19,7 +19,7 @@
                     builder.CloseComponent();
                 }
             },
-            new DragDropModel(){
+            new ComponentSchema(){
                 ComponentJSchema = new JSchema(){ Title = "用户选择" },
                 ComponentType = "userselect",
                 DropRenderFragment = (builder) => {
@@ -27,7 +27,7 @@
                     builder.CloseComponent();
                 }
             },
-            new DragDropModel(){
+            new ComponentSchema(){
                 ComponentJSchema = new JSchema(){ Title = "行政区划" },
                 ComponentType = "region",
                 DropRenderFragment = (builder) => {
@@ -35,7 +35,7 @@
                     builder.CloseComponent();
                 }
             },
-            new DragDropModel(){
+            new ComponentSchema(){
                 ComponentJSchema = new JSchema(){ Title = "地图" },
                 ComponentType = "map",
                 DropRenderFragment = (builder) => {
@@ -45,8 +45,8 @@
             }
         };
 
-    public void OnItemDragStart(DragDropModel model)
+    public void OnItemDragStart(ComponentSchema componentSchema)
     {
-        DragDropService.CurrentDragModel = model;
+        DragDropService.CurrentDragComponent = componentSchema;
     }
 }

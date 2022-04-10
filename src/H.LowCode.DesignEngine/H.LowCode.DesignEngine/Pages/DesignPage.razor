@@ -28,7 +28,7 @@
             <ComponentPanel></ComponentPanel>
         </Sider>
         <Content Class="designpage">
-            <DesignPanel DropModels="@DropModels"></DesignPanel>
+            <DesignPanel ComponentSchemas="@ComponentSchemas"></DesignPanel>
         </Content>
         <Sider Class="designpage" Style="flex: auto; max-width: max-content; min-width: 250px;" Theme="SiderTheme.Light">
             <PropertyPanel></PropertyPanel>
@@ -44,7 +44,7 @@
     [Parameter]
     public string PageId { get; set; }
 
-    private List<DragDropModel> DropModels = new List<DragDropModel>();
+    private List<ComponentSchema> ComponentSchemas = new List<ComponentSchema>();
 
     public async void SaveMetadata()
     {
@@ -72,9 +72,9 @@
     {
         JSchema rootJSchema = new JSchema();
         rootJSchema.Type = JSchemaType.Object;
-        foreach(var dropModel in DropModels)
+        foreach(var dropComponent in ComponentSchemas)
         {
-            rootJSchema.Properties[dropModel.Name] = dropModel.ComponentJSchema;
+            rootJSchema.Properties[dropComponent.Name] = dropComponent.ComponentJSchema;
         }
         return rootJSchema;
     }

@@ -1,14 +1,15 @@
-﻿using System;
+﻿using H.LowCode.Metadata.Components;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace H.LowCode.DesignEngine.PropertyModels
+namespace H.LowCode.DesignEngine.Components.PropertySchemas
 {
-    internal class InputNumberPropertyModel : ComponentPropertyModelBase
+    public class InputPropertyModel : ComponentPropertySchema
     {
-        private static readonly List<string> _properties = new() { "Maximum", "Minimum" };
+        private static readonly List<string> _properties = new() { "MaximumLength", "MinimumLength", "Pattern", "Format" };
 
         public override bool IsShowProperty(string propertyName)
         {

@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace H.LowCode.DesignEngine.PropertyPanel
+namespace H.LowCode.Metadata.Components
 {
-    public class PagePropertyBaseModel
+    public class PagePropertySchema
     {
         /// <summary>
         /// 页面布局（一列、二列、三列）
@@ -21,7 +21,7 @@ namespace H.LowCode.DesignEngine.PropertyPanel
 
     public enum PageLayoutEnum
     {
-        OneColumn = 0, 
+        OneColumn = 0,
         TwoColumn = 1,
         ThreeColumn = 2
     }

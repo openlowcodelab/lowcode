@@ -10,9 +10,9 @@
     @ondragleave:stopPropagation 
     @ondragend:stopPropagation>
 
-    @foreach (var item in DropModels)
+    @foreach (var component in ComponentSchemas)
     {
-        <DropItem @ref="currentDropItem" DragDropModel="item" Style="width:50%; float:left;" 
+        <DropItem @ref="currentDropItem" ComponentSchema="component" Style="width:50%; float:left;" 
             OnItemClick="OnItemClick" OnItemDelete="OnItemDelete" OnItemCopy="OnItemCopy">
         </DropItem>
     }
@@ -21,10 +21,10 @@
 @code {
     #region Parameter
     [Parameter]
-    public EventCallback<DragDropModel> OnItemDrop { get; set; }
+    public EventCallback<ComponentSchema> OnItemDrop { get; set; }
 
     [Parameter]
-    public List<DragDropModel> DropModels { get; set; } = new List<DragDropModel>();
+    public List<ComponentSchema> ComponentSchemas { get; set; } = new List<ComponentSchema>();
 
     [Parameter]
     public Action OnDragDropZoneClick { get; set; }
@@ -48,21 +48,21 @@
 
     private void OnDrop()
     {
-        var currentDragModel = DragDropService.CurrentDragModel;
+        var currentDragComponent = DragDropService.CurrentDragComponent;
 
         //源拖拽区才新增，目标拖拽区只移动
         DragDropService.DropItem_DragEnd();
-        if (currentDragModel.IsDropModel == false)
+        if (currentDragComponent.IsDroppedFromComponentPanel == false)
         {
-            DragDropService.DragItem_DragEnd(DropModels, currentDragModel);
+            DragDropService.DragItem_DragEnd(ComponentSchemas, currentDragComponent);
         }
         else
         {
-            DropItemSorting(DragDropService.DragTargetModel, currentDragModel);
+            DropItemSorting(DragDropService.DragTargetComponent, currentDragComponent);
         }
 
         StateHasChanged();
-        OnItemDrop.InvokeAsync(currentDragModel);
+        OnItemDrop.InvokeAsync(currentDragComponent);
     }
 
     private void OnClick()
@@ -70,36 +70,36 @@
         BlazorEventDispatcher.Dispatch("designerengine.dropitem.onblur", null);
     }
 
-    private void OnItemClick(DragDropModel model)
+    private void OnItemClick(ComponentSchema componentSchema)
     {
         //取消上一个选中，设置当前选中项
-        if (DragDropService.LastSelectedModel != null)
-            DragDropService.LastSelectedModel.IsSelected = false;
+        if (DragDropService.LastSelectedComponent != null)
+            DragDropService.LastSelectedComponent.IsSelected = false;
 
-        model.IsSelected = true;
-        DragDropService.LastSelectedModel = model;
+        componentSchema.IsSelected = true;
+        DragDropService.LastSelectedComponent = componentSchema;
 
         StateHasChanged();
     }
 
-    private void OnItemDelete(DragDropModel model)
+    private void OnItemDelete(ComponentSchema componentSchema)
     {
         //将下一个设为选中
-        int index = DropModels.IndexOf(model);
-        if (DropModels.Count > 1)
+        int index = ComponentSchemas.IndexOf(componentSchema);
+        if (ComponentSchemas.Count > 1)
         {
-            int next = index + 1 >= DropModels.Count ? index -1 : index + 1;
-            DropModels[next].IsSelected = true;
-            DragDropService.LastSelectedModel = DropModels[next];
+            int next = index + 1 >= ComponentSchemas.Count ? index -1 : index + 1;
+            ComponentSchemas[next].IsSelected = true;
+            DragDropService.LastSelectedComponent = ComponentSchemas[next];
         }
-        DropModels.Remove(model);
+        ComponentSchemas.Remove(componentSchema);
         StateHasChanged();
     }
 
-    private void OnItemCopy(DragDropModel model)
+    private void OnItemCopy(ComponentSchema componentSchema)
     {
-        model.IsSelected = false;
-        DragDropService.DragItem_DragEnd(DropModels, model, true);
+        componentSchema.IsSelected = false;
+        DragDropService.DragItem_DragEnd(ComponentSchemas, componentSchema, true);
         StateHasChanged();
     }
     #endregion
@@ -110,7 +110,7 @@
         //订阅左侧组件面板中的组件点击事件
         BlazorEventDispatcher.AddAction("designerengine.dragitem.onclick", (value) =>
         {
-            DragDropService.DragItem_DragEnd(DropModels, (DragDropModel)value);
+            DragDropService.DragItem_DragEnd(ComponentSchemas, (ComponentSchema)value);
             StateHasChanged();
         });
         
@@ -118,8 +118,8 @@
         BlazorEventDispatcher.AddAction("designerengine.dropitem.onblur", (value) =>
         {
             //取消选中项
-            if (DragDropService.LastSelectedModel != null)
-                DragDropService.LastSelectedModel.IsSelected = false;
+            if (DragDropService.LastSelectedComponent != null)
+                DragDropService.LastSelectedComponent.IsSelected = false;
             StateHasChanged();
         });
     }
@@ -127,26 +127,26 @@
     /// <summary>
     /// 排序
     /// </summary>
-    /// <param name="dragOverModel"></param>
-    /// <param name="currentDragModel"></param>
-    private void DropItemSorting(DragDropModel dragOverModel, DragDropModel currentDragModel)
+    /// <param name="dragOverComponent"></param>
+    /// <param name="currentDragComponent"></param>
+    private void DropItemSorting(ComponentSchema dragOverComponent, ComponentSchema currentDragComponent)
     {
-        if (dragOverModel == null)
+        if (dragOverComponent == null)
             return;
         
-        var indexDraggedOverItem = DropModels.IndexOf(dragOverModel);
+        var indexDraggedOverItem = ComponentSchemas.IndexOf(dragOverComponent);
 
         //先移除，再插入对应位置
-        DropModels.Remove(currentDragModel);
-        DropModels.Insert(indexDraggedOverItem, currentDragModel);
+        ComponentSchemas.Remove(currentDragComponent);
+        ComponentSchemas.Insert(indexDraggedOverItem, currentDragComponent);
 
-        //var indexActiveItem = DropModels.IndexOf(currentDragModel);
+        //var indexActiveItem = ComponentSchemas.IndexOf(currentDragComponent);
         //if (indexDraggedOverItem > -1)
         //{
         //    //交换位置
-        //    DragDropModel tmp = DropModels[indexDraggedOverItem];
-        //    DropModels[indexDraggedOverItem] = DropModels[indexActiveItem];
-        //    DropModels[indexActiveItem] = tmp;
+        //    ComponentSchema tmp = ComponentSchemas[indexDraggedOverItem];
+        //    ComponentSchemas[indexDraggedOverItem] = ComponentSchemas[indexActiveItem];
+        //    DropMoComponentSchemasdels[indexActiveItem] = tmp;
         //}
     }
 
