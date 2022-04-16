@@ -7,7 +7,7 @@ namespace H.LowCode.Metadata.Components
     {
         public JSchema ComponentJSchema { get; set; }
 
-        public RenderFragment DropRenderFragment { get; set; }
+        public RenderFragment ComponentRenderFragment { get; set; }
 
         public string Name { get; set; }
 
@@ -37,7 +37,7 @@ namespace H.LowCode.Metadata.Components
             ComponentSchema clone = new()
             {
                 ComponentJSchema = ComponentJSchema,
-                DropRenderFragment = DropRenderFragment,
+                ComponentRenderFragment = ComponentRenderFragment,
                 ComponentType = ComponentType,
                 ComponentPropertySchema = ComponentPropertySchema
             };

@@ -1,12 +1,30 @@
-﻿<Tabs DefaultActiveKey="1" Class="designpage" Style="width:250px; padding:0px 8px;">
-    <TabPane Key="1" Tab="常用组件">
-        <BasicComponent></BasicComponent>
+﻿@using Microsoft.Extensions.DependencyInjection
+@inject IEnumerable<IComponentProvider> ComponentProviders
+@inject DragDropService DragDropService
+
+<Tabs DefaultActiveKey="1" Class="designpage" Style="width:250px; padding:0px 8px;">
+    <TabPane Key="1" Tab="组件库">
+        @foreach (var componentProvider in ComponentProviders)
+        {
+            <div style="display: inline-block; padding-bottom: 20px;">
+                <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:5px 0;">@componentProvider.Title</div>
+                @foreach (var component in componentProvider.LoadComponent())
+                {
+                    <DragItem ComponentSchema="component" OnItemDragStart="OnItemDragStart"></DragItem>
+                }
+            </div>
+        }
     </TabPane>
-    <TabPane Key="2" Tab="自定义组件">
-        <CustomComponent></CustomComponent>
+    <TabPane Key="2" Tab="页面库">
+        
     </TabPane>
 </Tabs>
 
 @code {
 
+    public void OnItemDragStart(ComponentSchema componentSchema)
+    {
+        //设置当前拖拽项
+        DragDropService.CurrentDragComponent = componentSchema;
+    }
 }
