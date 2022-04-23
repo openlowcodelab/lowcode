@@ -5,7 +5,10 @@ namespace H.LowCode.Metadata.Components
 {
     public class ComponentSchema
     {
-        public JSchema ComponentJSchema { get; set; }
+        /// <summary>
+        /// 
+        /// </summary>
+        public JSchema ComponentJsonSchema { get; set; }
 
         public RenderFragment ComponentRenderFragment { get; set; }
 
@@ -36,7 +39,7 @@ namespace H.LowCode.Metadata.Components
 
             ComponentSchema clone = new()
             {
-                ComponentJSchema = ComponentJSchema,
+                ComponentJsonSchema = ComponentJsonSchema,
                 ComponentRenderFragment = ComponentRenderFragment,
                 ComponentType = ComponentType,
                 ComponentPropertySchema = ComponentPropertySchema

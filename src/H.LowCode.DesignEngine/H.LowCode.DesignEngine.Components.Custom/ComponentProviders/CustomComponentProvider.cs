@@ -14,7 +14,7 @@ namespace H.LowCode.DesignEngine.Components.Custom.ComponentProviders
             List<ComponentSchema> components = new List<ComponentSchema>()
             {
                 new ComponentSchema(){
-                    ComponentJSchema = new JSchema(){ Title = "HTML" },
+                    ComponentJsonSchema = new JSchema(){ Title = "HTML" },
                     ComponentType = "html",
                     ComponentPropertySchema = new HtmlPropertyModel(),
                     ComponentRenderFragment = (builder) =>
@@ -25,7 +25,7 @@ namespace H.LowCode.DesignEngine.Components.Custom.ComponentProviders
                     }
                 },
                 new ComponentSchema(){
-                    ComponentJSchema = new JSchema(){ Title = "用户选择" },
+                    ComponentJsonSchema = new JSchema(){ Title = "用户选择" },
                     ComponentType = "userselect",
                     ComponentRenderFragment = (builder) => {
                         builder.OpenComponent(0, typeof(Input<string>));
@@ -33,7 +33,7 @@ namespace H.LowCode.DesignEngine.Components.Custom.ComponentProviders
                     }
                 },
                 new ComponentSchema(){
-                    ComponentJSchema = new JSchema(){ Title = "行政区划" },
+                    ComponentJsonSchema = new JSchema(){ Title = "行政区划" },
                     ComponentType = "region",
                     ComponentRenderFragment = (builder) => {
                         builder.OpenComponent(0, typeof(Input<string>));
@@ -41,7 +41,7 @@ namespace H.LowCode.DesignEngine.Components.Custom.ComponentProviders
                     }
                 },
                 new ComponentSchema(){
-                    ComponentJSchema = new JSchema(){ Title = "地图" },
+                    ComponentJsonSchema = new JSchema(){ Title = "地图" },
                     ComponentType = "map",
                     ComponentRenderFragment = (builder) => {
                         builder.OpenComponent(0, typeof(Input<string>));

@@ -1,13 +1,12 @@
-﻿using H.Extensions.Json.Schema;
+﻿using H.Ddd.HttpApi;
+using H.Extensions.Json.Schema;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Schema;
 using System.Text;
 
 namespace H.LowCode.Designer.HttpApi.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class DesignerController : ControllerBase
+    public class DesignerController : ControllerApiBase
     {
         [HttpGet]
         public string Get()
@@ -29,7 +28,7 @@ namespace H.LowCode.Designer.HttpApi.Controllers
         /// <param name="jsonSchema"></param>
         [HttpPost]
         [Route("SaveMetadata2")]
-        public void SaveMetadata2([FromBody]JSchema jsonSchema)
+        public void SaveMetadata2([FromBody] JSchema jsonSchema)
         {
             string filePath = @"D:\temp.json";
             System.IO.File.WriteAllText(filePath, jsonSchema.ToJson(), Encoding.UTF8);

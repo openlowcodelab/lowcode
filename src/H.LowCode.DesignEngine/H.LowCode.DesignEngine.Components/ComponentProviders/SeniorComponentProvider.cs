@@ -14,7 +14,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
             List<ComponentSchema> components = new List<ComponentSchema>()
             {
                 new ComponentSchema(){
-                    ComponentJSchema = new JSchema(){ Title = "折叠面板", Type = JSchemaType.String },
+                    ComponentJsonSchema = new JSchema(){ Title = "折叠面板", Type = JSchemaType.String },
                     ComponentType = "collapse",
                     ComponentPropertySchema = new CollapsePropertyModel(),
                     ComponentRenderFragment = (builder) =>
@@ -24,7 +24,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                     }
                 },
                 new ComponentSchema(){
-                    ComponentJSchema = new JSchema(){ Title = "上传" },
+                    ComponentJsonSchema = new JSchema(){ Title = "上传" },
                     ComponentType = "upload",
                     ComponentPropertySchema = new UploadPropertyModel(),
                     ComponentRenderFragment = (builder) =>

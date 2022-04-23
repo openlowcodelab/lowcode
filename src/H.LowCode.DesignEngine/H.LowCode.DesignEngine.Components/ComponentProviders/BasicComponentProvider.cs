@@ -14,7 +14,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
             List<ComponentSchema> components = new List<ComponentSchema>()
             {
                 new ComponentSchema(){
-                    ComponentJSchema = new JSchema(){ Title = "输入框", Type = JSchemaType.String },
+                    ComponentJsonSchema = new JSchema(){ Title = "输入框", Type = JSchemaType.String },
                     ComponentType = "input",
                     ComponentPropertySchema = new InputPropertyModel(),
                     ComponentRenderFragment = (builder) =>
@@ -24,7 +24,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                     }
                 },
                 new ComponentSchema(){
-                    ComponentJSchema = new JSchema(){ Title = "大输入框" },
+                    ComponentJsonSchema = new JSchema(){ Title = "大输入框" },
                     ComponentType = "textarea",
                     ComponentPropertySchema = new TextareaPropertyModel(),
                     ComponentRenderFragment = (builder) =>
@@ -35,7 +35,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                     }
                 },
                 new ComponentSchema(){
-                    ComponentJSchema = new JSchema(){ Title = "日期选择" },
+                    ComponentJsonSchema = new JSchema(){ Title = "日期选择" },
                     ComponentType = "datepicker",
                     ComponentPropertySchema = new DatePickerPropertyModel(),
                     ComponentRenderFragment = (builder) =>
@@ -46,7 +46,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                     }
                 },
                 new ComponentSchema(){
-                    ComponentJSchema = new JSchema(){ Title = "数字输入框", Type = JSchemaType.Integer},
+                    ComponentJsonSchema = new JSchema(){ Title = "数字输入框", Type = JSchemaType.Integer},
                     ComponentType = "inputnumber",
                     ComponentPropertySchema = new InputNumberPropertyModel(),
                     ComponentRenderFragment = (builder) =>
@@ -56,7 +56,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                     }
                 },
                 new ComponentSchema(){
-                    ComponentJSchema = new JSchema(){ Title = "是否选择" },
+                    ComponentJsonSchema = new JSchema(){ Title = "是否选择" },
                     ComponentType = "checkbox",
                     ComponentPropertySchema = new CheckboxPropertyModel(),
                     ComponentRenderFragment = (builder) =>
@@ -66,7 +66,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                     }
                 },
                 new ComponentSchema(){
-                    ComponentJSchema = new JSchema(){ Title = "是否switch" },
+                    ComponentJsonSchema = new JSchema(){ Title = "是否switch" },
                     ComponentType = "switch",
                     ComponentPropertySchema = new SwitchPropertyModel(),
                     ComponentRenderFragment = (builder) =>
@@ -76,7 +76,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                     }
                 },
                 new ComponentSchema(){
-                    ComponentJSchema = new JSchema(){ Title = "下拉选择" },
+                    ComponentJsonSchema = new JSchema(){ Title = "下拉选择" },
                     ComponentType = "radio",
                     ComponentPropertySchema = new RadioPropertyModel(),
                     ComponentRenderFragment = (builder) =>

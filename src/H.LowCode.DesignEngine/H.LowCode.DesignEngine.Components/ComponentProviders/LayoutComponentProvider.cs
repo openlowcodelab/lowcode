@@ -14,7 +14,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
             List<ComponentSchema> components = new List<ComponentSchema>()
             {
                 new ComponentSchema(){
-                    ComponentJSchema = new JSchema(){ Title = "分割线", Type = JSchemaType.String },
+                    ComponentJsonSchema = new JSchema(){ Title = "分割线", Type = JSchemaType.String },
                     ComponentType = "divider",
                     ComponentPropertySchema = new DividerPropertyModel(),
                     ComponentRenderFragment = (builder) =>
@@ -24,7 +24,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                     }
                 },
                 new ComponentSchema(){
-                    ComponentJSchema = new JSchema(){ Title = "栅格" },
+                    ComponentJsonSchema = new JSchema(){ Title = "栅格" },
                     ComponentType = "grid",
                     ComponentPropertySchema = new GridPropertyModel(),
                     ComponentRenderFragment = (builder) =>
@@ -34,7 +34,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                     }
                 },
                 new ComponentSchema(){
-                    ComponentJSchema = new JSchema(){ Title = "布局" },
+                    ComponentJsonSchema = new JSchema(){ Title = "布局" },
                     ComponentType = "layout",
                     ComponentPropertySchema = new LayoutPropertyModel(),
                     ComponentRenderFragment = (builder) =>
