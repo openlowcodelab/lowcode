@@ -18,9 +18,9 @@ namespace H.LowCode.DesignEngine.Services
         public ComponentSchema CurrentDragComponent { get; set; }
 
         /// <summary>
-        /// 拖拽目标对象
+        /// 最后一次拖拽到上面的对象
         /// </summary>
-        public ComponentSchema DragTargetComponent { get; set; }
+        public ComponentSchema LastDragOverComponent { get; set; }
 
         /// <summary>
         /// 页面属性
@@ -31,7 +31,7 @@ namespace H.LowCode.DesignEngine.Services
         {
             LastSelectedComponent = default;
             CurrentDragComponent = default;
-            DragTargetComponent = default;
+            LastDragOverComponent = default;
         }
 
         public void DragItem_DragEnd(IList<ComponentSchema> ComponentSchemas, ComponentSchema componentSchemas, bool isSelected = false)
@@ -50,7 +50,7 @@ namespace H.LowCode.DesignEngine.Services
         {
             CurrentDragComponent.Opacity = 1;
             CurrentDragComponent.Style = string.Empty;
-            DragTargetComponent.Style = string.Empty;
+            LastDragOverComponent.Style = string.Empty;
         }
     }
 }

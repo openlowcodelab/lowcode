@@ -1,3 +1,5 @@
+using H.LowCode.Designer.HttpApi;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -5,6 +7,8 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddApplication<DesignerHttpApiModule>();
 
 var app = builder.Build();
 

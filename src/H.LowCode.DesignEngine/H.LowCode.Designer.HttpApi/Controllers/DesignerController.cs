@@ -1,13 +1,19 @@
 ﻿using H.Ddd.HttpApi;
-using H.Extensions.Json.Schema;
+using H.LowCode.Designer.Application.Abstraction.AppService;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Schema;
-using System.Text;
 
 namespace H.LowCode.Designer.HttpApi.Controllers
 {
     public class DesignerController : ControllerApiBase
     {
+        private IDesignerAppService _designerAppService;
+
+        public DesignerController(IDesignerAppService designerAppService)
+        {
+            _designerAppService = designerAppService;
+        }
+
         [HttpGet]
         public string Get()
         {
@@ -18,8 +24,7 @@ namespace H.LowCode.Designer.HttpApi.Controllers
         [Route("SaveMetadata")]
         public void SaveMetadata([FromForm] string jsonSchema)
         {
-            string filePath = @"D:\temp.json";
-            System.IO.File.WriteAllText(filePath, jsonSchema, Encoding.UTF8);
+            _designerAppService.SaveMetadata(jsonSchema);
         }
 
         /// <summary>
@@ -30,8 +35,7 @@ namespace H.LowCode.Designer.HttpApi.Controllers
         [Route("SaveMetadata2")]
         public void SaveMetadata2([FromBody] JSchema jsonSchema)
         {
-            string filePath = @"D:\temp.json";
-            System.IO.File.WriteAllText(filePath, jsonSchema.ToJson(), Encoding.UTF8);
+            _designerAppService.SaveMetadata2(jsonSchema);
         }
     }
 }

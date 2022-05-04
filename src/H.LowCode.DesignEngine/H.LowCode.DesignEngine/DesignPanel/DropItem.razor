@@ -1,6 +1,6 @@
 ﻿@inject DragDropService DragDropService
 
-<div style="opacity:@ComponentSchema.Opacity; @Style @ComponentSchema.Style">
+<div style="height:85px; opacity:@ComponentSchema.Opacity; @Style @ComponentSchema.Style">
     <div class="dropitem @ClassMapper.Class" 
         @ondragstart="()=>OnDragStart(ComponentSchema)" 
         @ondragenter="()=>OnDragEnter(ComponentSchema)" 
@@ -41,7 +41,7 @@
 
     [Parameter]
     public Action<ComponentSchema> OnItemClick { get; set; }
-    
+
     [Parameter]
     public Action<ComponentSchema> OnItemDelete { get; set; }
 
@@ -52,7 +52,7 @@
     public string Style { get; set; }
 
     protected ClassMapper ClassMapper { get; } = new ClassMapper();
-    
+
     protected override void OnInitialized()
     {
         SetClassMap();
@@ -66,51 +66,55 @@
             .If("dropitem-selected", () => ComponentSchema.IsSelected);
     }
 
-    private void OnClick(ComponentSchema componentSchema)
+    private void OnClick(ComponentSchema clickComponentSchema)
     {
-        OnItemClick.Invoke(componentSchema);
-        BlazorEventDispatcher.Dispatch("designerengine.dropitem.onclick", componentSchema);
+        OnItemClick.Invoke(clickComponentSchema);
+        BlazorEventDispatcher.Dispatch("designerengine.dropitem.onclick", clickComponentSchema);
     }
 
-    private void OnDragStart(ComponentSchema componentSchema)
+    private void OnDragStart(ComponentSchema dragStartComponentSchema)
     {
-        componentSchema.Opacity = 0.2;
-        DragDropService.CurrentDragComponent = componentSchema;
-        //StateHasChanged();
+        dragStartComponentSchema.Opacity = 0.2;
+        DragDropService.CurrentDragComponent = dragStartComponentSchema;
     }
 
-    private void OnDragEnter(ComponentSchema componentSchema)
+    private void OnDragEnter(ComponentSchema dragEnterComponentSchema)
     {
-        var dragDargetComponent = DragDropService.DragTargetComponent;
-        if (componentSchema.Equals(dragDargetComponent))
+        //如果当前被拖拽的组件和拖拽到上面的组件是同一个，直接返回
+        if (DragDropService.CurrentDragComponent == dragEnterComponentSchema)
             return;
 
-        DragDropService.DragTargetComponent = componentSchema;
+        if (DragDropService.LastDragOverComponent != null && dragEnterComponentSchema == DragDropService.LastDragOverComponent)
+            return;
 
-        //StateHasChanged();
+        DragDropService.LastDragOverComponent = dragEnterComponentSchema;
     }
 
-    private void OnDragOver(ComponentSchema componentSchema, DragEventArgs dragEventArgs)
+    private void OnDragOver(ComponentSchema dragOverComponentSchema, DragEventArgs dragEventArgs)
     {
-        Task.Delay(500);
-
-        if (DragDropService.CurrentDragComponent == componentSchema)
+        //如果当前被拖拽的组件和拖拽到上面的组件是同一个，直接返回
+        if (DragDropService.CurrentDragComponent == dragOverComponentSchema)
             return;
+
+        //如果拖拽到上面的组件和上一个组件是同一个，直接返回
+        //if (DragDropService.LastDragOverComponent != null && DragDropService.LastDragOverComponent == dragOverComponentSchema)
+        //    return;
 
         //设置移动位置样式，拖拽到目标元素上半部分时，上方添加红色边框，下半部分时下方添加红色边框
-        if (dragEventArgs.OffsetY < 30)
-            ComponentSchema.Style = "border-top: red solid 3px;";
-        else
-            ComponentSchema.Style = "border-bottom: red solid 3px;";
-
-        //StateHasChanged();
+        //if (dragEventArgs.OffsetY < 30)
+        //    dragOverComponentSchema.Style = "border-top: 3px solid red;";
+        //else
+        //    dragOverComponentSchema.Style = "border-bottom: 3px solid red;";
+        dragOverComponentSchema.Style = "border-bottom: 2px dashed #1890ff;";
     }
 
     private void OnDragLeave()
     {
+        //如果当前被拖拽的组件和拖拽到上面的组件是同一个，直接返回
+        if (DragDropService.CurrentDragComponent == ComponentSchema)
+            return;
+
         ComponentSchema.Style = string.Empty;
-        
-        //StateHasChanged();
     }
 
     private void OnDelete(ComponentSchema componentSchema)

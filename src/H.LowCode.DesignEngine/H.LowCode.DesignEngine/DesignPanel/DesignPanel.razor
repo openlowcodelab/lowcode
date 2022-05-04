@@ -3,7 +3,7 @@
 
 <div class="designpage @Class" style="margin:5px; @Style" 
     @onclick="OnClick" 
-    @ondrop="()=>OnDrop()" @ondrop:stopPropagation 
+    @ondrop="OnDrop" @ondrop:stopPropagation 
     @ondragstart:stopPropagation ondragstart="event.dataTransfer.setData('text', event.target.id);" 
     @ondragenter:stopPropagation 
     @ondragover:preventDefault @ondragover:stopPropagation 
@@ -58,7 +58,7 @@
         }
         else
         {
-            DropItemSorting(DragDropService.DragTargetComponent, currentDragComponent);
+            DropItemSorting(DragDropService.LastDragOverComponent, currentDragComponent);
         }
 
         StateHasChanged();
