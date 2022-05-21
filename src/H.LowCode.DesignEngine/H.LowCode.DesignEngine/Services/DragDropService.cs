@@ -34,7 +34,7 @@ namespace H.LowCode.DesignEngine.Services
             LastDragOverComponent = default;
         }
 
-        public void DragItem_DragEnd(IList<ComponentSchema> ComponentSchemas, ComponentSchema componentSchemas, bool isSelected = false)
+        public void DragItem_Add(IList<ComponentSchema> ComponentSchemas, ComponentSchema componentSchemas, bool isSelected = false)
         {
             var dropComponentSchemas = componentSchemas.Clone();
             dropComponentSchemas.IsDroppedFromComponentPanel = true;

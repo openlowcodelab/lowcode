@@ -28,6 +28,11 @@ namespace H.LowCode.Metadata.Components
         public bool IsDroppedFromComponentPanel { get; set; }
 
         /// <summary>
+        /// 拖拽到后面（true：后面  false：前面）
+        /// </summary>
+        public bool IsDroppedToBack { get; set; }
+
+        /// <summary>
         /// 组件属性
         /// </summary>
         public ComponentPropertySchema ComponentPropertySchema { get; set; }

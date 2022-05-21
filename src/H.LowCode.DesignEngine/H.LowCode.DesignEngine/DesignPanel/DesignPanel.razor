@@ -54,7 +54,7 @@
         DragDropService.DropItem_DragEnd();
         if (currentDragComponent.IsDroppedFromComponentPanel == false)
         {
-            DragDropService.DragItem_DragEnd(ComponentSchemas, currentDragComponent);
+            DragDropService.DragItem_Add(ComponentSchemas, currentDragComponent);
         }
         else
         {
@@ -99,7 +99,7 @@
     private void OnItemCopy(ComponentSchema componentSchema)
     {
         componentSchema.IsSelected = false;
-        DragDropService.DragItem_DragEnd(ComponentSchemas, componentSchema, true);
+        DragDropService.DragItem_Add(ComponentSchemas, componentSchema, true);
         StateHasChanged();
     }
     #endregion
@@ -110,15 +110,15 @@
         //订阅左侧组件面板中的组件点击事件
         BlazorEventDispatcher.AddAction("designerengine.dragitem.onclick", (value) =>
         {
-            DragDropService.DragItem_DragEnd(ComponentSchemas, (ComponentSchema)value);
+            DragDropService.DragItem_Add(ComponentSchemas, (ComponentSchema)value);
             StateHasChanged();
         });
-        
+
         //订阅设计面板取消选中事件
         BlazorEventDispatcher.AddAction("designerengine.dropitem.onblur", (value) =>
         {
-            //取消选中项
-            if (DragDropService.LastSelectedComponent != null)
+        //取消选中项
+        if (DragDropService.LastSelectedComponent != null)
                 DragDropService.LastSelectedComponent.IsSelected = false;
             StateHasChanged();
         });
@@ -133,21 +133,22 @@
     {
         if (dragOverComponent == null)
             return;
-        
+
+        if (currentDragComponent == DragDropService.LastDragOverComponent)
+            return;
+
         var indexDraggedOverItem = ComponentSchemas.IndexOf(dragOverComponent);
+        if (dragOverComponent.IsDroppedToBack == false)
+            indexDraggedOverItem -= 1;
+
+        if (indexDraggedOverItem < 0)
+            indexDraggedOverItem = 0;
+        if (indexDraggedOverItem > ComponentSchemas.Count)
+            indexDraggedOverItem = ComponentSchemas.Count - 1;
 
         //先移除，再插入对应位置
         ComponentSchemas.Remove(currentDragComponent);
         ComponentSchemas.Insert(indexDraggedOverItem, currentDragComponent);
-
-        //var indexActiveItem = ComponentSchemas.IndexOf(currentDragComponent);
-        //if (indexDraggedOverItem > -1)
-        //{
-        //    //交换位置
-        //    ComponentSchema tmp = ComponentSchemas[indexDraggedOverItem];
-        //    ComponentSchemas[indexDraggedOverItem] = ComponentSchemas[indexActiveItem];
-        //    DropMoComponentSchemasdels[indexActiveItem] = tmp;
-        //}
     }
 
     public void Dispose()
