@@ -7,13 +7,13 @@ using System.Threading.Tasks;
 
 namespace H.LowCode.DesignEngine.Components.PropertySchemas
 {
-    public class CheckboxPropertyModel : ComponentPropertySchema
+    public class SpacePropertyModel : ComponentPropertySchema
     {
-        private static readonly List<string> _properties = new() {  };
+        private static readonly List<string> _properties = new() { };
 
-        public bool IsShowProperty(string propertyName)
+        public override bool IsShowProperty(string propertyName)
         {
-            if(_properties.Contains(propertyName))
+            if (_properties.Contains(propertyName))
                 return true;
             return false;
         }

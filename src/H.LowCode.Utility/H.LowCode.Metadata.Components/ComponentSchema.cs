@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using H.Extensions.System;
+using Microsoft.AspNetCore.Components;
 using Newtonsoft.Json.Schema;
 
 namespace H.LowCode.Metadata.Components
@@ -44,10 +45,10 @@ namespace H.LowCode.Metadata.Components
 
             ComponentSchema clone = new()
             {
-                ComponentJsonSchema = ComponentJsonSchema,
+                ComponentJsonSchema = ObjectExtension<JSchema, JSchema>.DeepClone(ComponentJsonSchema),
                 ComponentRenderFragment = ComponentRenderFragment,
                 ComponentType = ComponentType,
-                ComponentPropertySchema = ComponentPropertySchema
+                ComponentPropertySchema = ObjectExtension<ComponentPropertySchema, ComponentPropertySchema>.DeepClone(ComponentPropertySchema)
             };
             return clone;
         }

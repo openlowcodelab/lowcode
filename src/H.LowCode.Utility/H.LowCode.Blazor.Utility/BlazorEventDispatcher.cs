@@ -15,7 +15,7 @@ namespace H.LowCode.Blazor.Utility
             _actions = new Dictionary<string, Action<object>>();
         }
 
-        public static void AddAction(string key, Action<object> action)
+        public static void RegisterEvent(string key, Action<object> action)
         {
             if (!_actions.ContainsKey(key))
             {
@@ -28,7 +28,7 @@ namespace H.LowCode.Blazor.Utility
             }
         }
 
-        public static void RemoveAction(string key)
+        public static void RemoveEvent(string key)
         {
             if (_actions.ContainsKey(key))
             {

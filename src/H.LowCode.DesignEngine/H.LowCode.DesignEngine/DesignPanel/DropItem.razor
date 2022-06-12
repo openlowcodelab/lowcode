@@ -1,6 +1,7 @@
 ﻿@inject DragDropService DragDropService
 
-<div class="dropitem-box" style="opacity:@ComponentSchema.Opacity; @Style">
+<div class="dropitem-box" style="float:left; opacity:@ComponentSchema.Opacity; width: @(ComponentSchema.ComponentPropertySchema.ItemWidth/24*100)% 
+        @ComponentSchema.ComponentPropertySchema.CustomStyle">
     <div class="dropitem @DropItemClassMapper.Class" style="@ComponentSchema.Style"
         @ondragstart="OnDragStart" 
         @ondragenter="OnDragEnter" 
@@ -48,14 +49,13 @@
     [Parameter]
     public Action<ComponentSchema> OnItemCopy { get; set; }
 
-    [Parameter]
-    public string Style{ get; set; }
-
     protected ClassMapper DropItemClassMapper { get; } = new ClassMapper();
 
     protected override void OnInitialized()
     {
+        RegisterEventDispatcher();
         SetClassMap();
+        InitData();
 
         base.OnInitialized();
     }
@@ -64,6 +64,12 @@
     {
         DropItemClassMapper.Clear()
             .If("dropitem-selected", () => ComponentSchema.IsSelected);
+    }
+
+    private void InitData()
+    {
+        ComponentSchema.Name = $"{ComponentSchema.ComponentType}_{Random.Shared.Next(100, 999)}";
+        ComponentSchema.ComponentJsonSchema.Title = $"{ComponentSchema.ComponentJsonSchema.Title}{Random.Shared.Next(10, 99)}";
     }
 
     private void OnClick()
@@ -86,11 +92,13 @@
     private void OnDragOver(DragEventArgs dragEventArgs)
     {
         //设置移动位置样式，拖拽到目标元素上半部分时，上方添加红色边框，下半部分时下方添加红色边框
-        if (dragEventArgs.OffsetY < 30){
+        if (dragEventArgs.OffsetY < 30)
+        {
             ComponentSchema.Style = "border-top: 2px dashed #1890ff;";
             ComponentSchema.IsDroppedToBack = false;
         }
-        else{
+        else
+        {
             ComponentSchema.Style = "border-bottom: 2px dashed #1890ff;";
             ComponentSchema.IsDroppedToBack = true;
         }
@@ -113,5 +121,14 @@
     private void OnCopy()
     {
         OnItemCopy.Invoke(ComponentSchema);
+    }
+
+    private void RegisterEventDispatcher()
+    {
+        //订阅属性面板中的事件
+        BlazorEventDispatcher.RegisterEvent("designerengine.componentproperty.onchange", (value) =>
+        {
+            StateHasChanged();
+        });
     }
 }

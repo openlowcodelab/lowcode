@@ -7,7 +7,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
 {
     public class SeniorComponentProvider : IComponentProvider
     {
-        public string Title { get; set; } = "布局组件";
+        public string Title { get; set; } = "高级组件";
 
         public IEnumerable<ComponentSchema> LoadComponent()
         {
