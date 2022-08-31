@@ -14,7 +14,7 @@ namespace H.LowCode.Designer.Repository.MongoDB
     {
         public override void ConfigureServices(ServiceConfigurationContext context)
         {
-            context.Services.AddScoped<IDesignerRepository, DesignerMongoDBRepository>();
+            //context.Services.AddScoped<IDesignerRepository, DesignerMongoDBRepository>();
         }
     }
 }

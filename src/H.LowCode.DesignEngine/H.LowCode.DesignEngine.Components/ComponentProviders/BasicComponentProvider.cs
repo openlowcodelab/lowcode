@@ -24,7 +24,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                     }
                 },
                 new ComponentSchema(){
-                    ComponentJsonSchema = new JSchema(){ Title = "大输入框" },
+                    ComponentJsonSchema = new JSchema(){ Title = "大输入框", Type = JSchemaType.String },
                     ComponentType = "textarea",
                     ComponentPropertySchema = new TextareaPropertyModel(),
                     ComponentRenderFragment = (builder) =>
@@ -35,7 +35,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                     }
                 },
                 new ComponentSchema(){
-                    ComponentJsonSchema = new JSchema(){ Title = "日期选择" },
+                    ComponentJsonSchema = new JSchema(){ Title = "日期选择", Type = JSchemaType.String },
                     ComponentType = "datepicker",
                     ComponentPropertySchema = new DatePickerPropertyModel(),
                     ComponentRenderFragment = (builder) =>
@@ -56,7 +56,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                     }
                 },
                 new ComponentSchema(){
-                    ComponentJsonSchema = new JSchema(){ Title = "是否选择" },
+                    ComponentJsonSchema = new JSchema(){ Title = "是否选择", Type = JSchemaType.Boolean },
                     ComponentType = "checkbox",
                     ComponentPropertySchema = new CheckboxPropertyModel(),
                     ComponentRenderFragment = (builder) =>
@@ -66,7 +66,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                     }
                 },
                 new ComponentSchema(){
-                    ComponentJsonSchema = new JSchema(){ Title = "是否switch" },
+                    ComponentJsonSchema = new JSchema(){ Title = "是否switch", Type = JSchemaType.Boolean },
                     ComponentType = "switch",
                     ComponentPropertySchema = new SwitchPropertyModel(),
                     ComponentRenderFragment = (builder) =>
