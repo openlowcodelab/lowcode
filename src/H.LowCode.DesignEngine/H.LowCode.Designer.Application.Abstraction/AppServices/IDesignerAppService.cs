@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json.Schema;
 
-namespace H.LowCode.Designer.Application.Abstraction.AppService
+namespace H.LowCode.Designer.Application.Abstraction.AppServices
 {
     public interface IDesignerAppService
     {

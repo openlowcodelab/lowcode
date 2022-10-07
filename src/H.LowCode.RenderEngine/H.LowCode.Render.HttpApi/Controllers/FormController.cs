@@ -1,22 +1,14 @@
-﻿using H.LowCode.Metadata;
+﻿using H.Ddd.HttpApi;
+using H.LowCode.Metadata;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace H.LowCode.Render.HttpApi.Controllers
 {
-    [ApiController]
-    [Route("[controller]")]
-    public class FormController : ControllerBase
+    public class FormController : ControllerApiBase
     {
-        private readonly ILogger<FormController> _logger;
-
-        public FormController(ILogger<FormController> logger)
+        public FormController()
         {
-            _logger = logger;
         }
 
         [HttpGet]
