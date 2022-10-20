@@ -1,11 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
-  <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-  </PropertyGroup>
-
+	<Import Project="..\..\global.props" />
+  <Import Project="..\..\lowcode.props" />
 
   <ItemGroup>
     <SupportedPlatform Include="browser" />
@@ -18,7 +14,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\H.LowCode.Utility\H.LowCode.Metadata.Components\H.LowCode.Metadata.Components.csproj" />
+    <ProjectReference Include="..\..\H.LowCode.Common\H.LowCode.Metadata.Components\H.LowCode.Metadata.Components.csproj" />
+    <ProjectReference Include="..\..\H.LowCode.Common\H.LowCode.Metadata\H.LowCode.Metadata.csproj" />
   </ItemGroup>
 
 </Project>

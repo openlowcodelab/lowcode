@@ -1,15 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<Import Project="..\..\global.props" />
 
   <ItemGroup>
-    <ProjectReference Include="..\..\H.Ddd\H.Ddd.Application.Abstraction\H.Ddd.Application.Abstraction.csproj" />
-    <ProjectReference Include="..\..\H.Ddd\H.Ddd.Application\H.Ddd.Application.csproj" />
-    <ProjectReference Include="..\..\H.Ddd\H.Ddd.Domain.Abstraction\H.Ddd.Domain.Abstraction.csproj" />
+    <PackageReference Include="H.Ddd.Application" Version="0.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\H.LowCode.Render.Application.Abstraction\H.LowCode.Render.Application.Abstraction.csproj" />
   </ItemGroup>
 

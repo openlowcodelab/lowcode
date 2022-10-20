@@ -2,19 +2,22 @@
 @implements IDisposable
 
 <div class="designpage @Class" style="margin:5px; @Style" 
-    @onclick="OnClick" 
-    @ondrop="OnDrop" @ondrop:stopPropagation 
-    @ondragstart:stopPropagation ondragstart="event.dataTransfer.setData('text', event.target.id);" 
-    @ondragenter:stopPropagation 
-    @ondragover:preventDefault @ondragover:stopPropagation 
-    @ondragleave:stopPropagation 
-    @ondragend:stopPropagation>
+    @onclick="OnClick" @ondrop="OnDrop"
+    ondragstart="event.dataTransfer.setData('text', event.target.id);" 
+    @ondrop:stopPropagation @ondragstart:stopPropagation @ondragenter:stopPropagation 
+    @ondragover:preventDefault @ondragover:stopPropagation @ondragleave:stopPropagation @ondragend:stopPropagation>
 
-    @foreach (var component in ComponentSchemas)
+    @if(ComponentSchemas == null || ComponentSchemas.Count == 0)
     {
-        <DropItem @ref="currentDropItem" ComponentSchema="component" 
-            OnItemClick="OnItemClick" OnItemDelete="OnItemDelete" OnItemCopy="OnItemCopy">
-        </DropItem>
+        
+    }
+    else {
+        @foreach (var component in ComponentSchemas)
+        {
+            <DropItem @ref="currentDropItem" ComponentSchema="component" 
+                OnItemClick="OnItemClick" OnItemDelete="OnItemDelete" OnItemCopy="OnItemCopy">
+            </DropItem>
+        }
     }
 </div>
 
@@ -52,6 +55,7 @@
 
         //源拖拽区才新增，目标拖拽区只移动
         DragDropService.DropItem_DragEnd();
+
         if (currentDragComponent.IsDroppedFromComponentPanel == false)
         {
             DragDropService.DragItem_Add(ComponentSchemas, currentDragComponent);

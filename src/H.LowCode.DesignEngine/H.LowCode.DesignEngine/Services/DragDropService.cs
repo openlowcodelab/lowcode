@@ -50,7 +50,8 @@ namespace H.LowCode.DesignEngine.Services
         {
             CurrentDragComponent.Opacity = 1;
             CurrentDragComponent.Style = string.Empty;
-            LastDragOverComponent.Style = string.Empty;
+            if (LastDragOverComponent != null)
+                LastDragOverComponent.Style = string.Empty;
         }
     }
 }

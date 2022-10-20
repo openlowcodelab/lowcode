@@ -1,6 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
-  <PropertyGroup>
+	<Import Project="..\..\lowcode.props" />
+
+	<PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
 
@@ -13,14 +15,13 @@
 	<PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="6.0.2" />
 	<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="6.0.2" />
 	<PackageReference Include="AntDesign.ProLayout" Version="0.1.10" />
-	<PackageReference Include="Newtonsoft.Json.Schema" Version="3.0.14" />
 	<PackageReference Include="System.Net.Http.Json" Version="6.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\H.LowCode.Utility\H.LowCode.Blazor.Utility\H.LowCode.Blazor.Utility.csproj" />
-    <ProjectReference Include="..\..\H.LowCode.Utility\H.LowCode.Metadata.Components\H.LowCode.Metadata.Components.csproj" />
-    <ProjectReference Include="..\..\H.LowCode.Utility\H.LowCode.Metadata\H.LowCode.Metadata.csproj" />
+    <ProjectReference Include="..\..\H.LowCode.Common\H.LowCode.Metadata.Components\H.LowCode.Metadata.Components.csproj" />
+    <ProjectReference Include="..\..\H.LowCode.Common\H.LowCode.Metadata\H.LowCode.Metadata.csproj" />
+    <ProjectReference Include="..\..\H.LowCode.Utils\H.LowCode.Blazor.Utility\H.LowCode.Blazor.Utility.csproj" />
   </ItemGroup>
 
 </Project>

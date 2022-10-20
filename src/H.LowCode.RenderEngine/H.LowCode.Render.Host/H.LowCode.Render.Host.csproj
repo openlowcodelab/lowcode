@@ -1,10 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
-  <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-  </PropertyGroup>
+	<Import Project="..\..\global.props" />
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="6.0.2" />
@@ -12,7 +8,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\H.Extensions\H.Extensions.Json\H.Extensions.Json.csproj" />
     <ProjectReference Include="..\H.LowCode.Render.HttpApi\H.LowCode.Render.HttpApi.csproj" />
     <ProjectReference Include="..\H.LowCode.Render.WasmHost\H.LowCode.Render.WasmHost.csproj" />
   </ItemGroup>

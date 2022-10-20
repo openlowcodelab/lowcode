@@ -1,19 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<Import Project="..\..\global.props" />
 
 	<ItemGroup>
+		<PackageReference Include="H.Ddd.HttpApi" Version="0.1.0" />
 		<PackageReference Include="Volo.Abp.Core" Version="5.2.1" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\..\H.Ddd\H.Ddd.HttpApi\H.Ddd.HttpApi.csproj" />
-		<ProjectReference Include="..\..\H.Extensions\H.Extensions.Json\H.Extensions.Json.csproj" />
-		<ProjectReference Include="..\..\H.LowCode.Utility\H.LowCode.Metadata\H.LowCode.Metadata.csproj" />
+		<ProjectReference Include="..\..\H.LowCode.Common\H.LowCode.Metadata\H.LowCode.Metadata.csproj" />
 		<ProjectReference Include="..\H.LowCode.Render.Application\H.LowCode.Render.Application.csproj" />
 	</ItemGroup>
 

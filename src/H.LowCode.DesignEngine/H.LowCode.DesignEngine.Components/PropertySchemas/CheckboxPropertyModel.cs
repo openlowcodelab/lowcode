@@ -11,7 +11,7 @@ namespace H.LowCode.DesignEngine.Components.PropertySchemas
     {
         private static readonly List<string> _properties = new() {  };
 
-        public bool IsShowProperty(string propertyName)
+        public override bool IsShowProperty(string propertyName)
         {
             if(_properties.Contains(propertyName))
                 return true;
