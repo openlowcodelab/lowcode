@@ -31,21 +31,29 @@ namespace H.LowCode.Schema
 
         public string Style { get; set; }
 
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public bool IsRequired { get; set; }
 
-        public bool? ReadOnly { get; set; }
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public bool ReadOnly { get; set; }
 
         public string DefaultValue { get; set; }
 
-        /// <summary>
-        /// 组件宽度
-        /// </summary>
-        public double ItemWidth { get; set; } = 12;
+        public string[] Enum { get; set; }
+
+        public string[] EnumNames { get; set; }
 
         /// <summary>
-        /// 标签宽度
+        /// 组件宽度（默认 12）
         /// </summary>
-        public double LabelWidth { get; set; } = 180;
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public int ItemWidth { get; set; }
+
+        /// <summary>
+        /// 标签宽度（默认 180 px）
+        /// </summary>
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public int LabelWidth { get; set; }
 
         /// <summary>
         /// 自定义样式

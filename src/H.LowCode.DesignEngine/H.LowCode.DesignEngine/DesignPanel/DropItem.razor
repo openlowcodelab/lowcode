@@ -1,6 +1,6 @@
 ﻿@inject DragDropService DragDropService
 
-<div class="dropitem-box" style="float:left; opacity:@ComponentSchema.Opacity; width: @(ComponentSchema.ComponentPropertySchema.ItemWidth/24*100)% 
+<div class="dropitem-box" style="float:left; opacity:@ComponentSchema.Opacity; width: @(_itemWidth)% 
         @ComponentSchema.ComponentPropertySchema.CustomStyle">
     <div class="dropitem @DropItemClassMapper.Class" style="@ComponentSchema.ComponentPropertySchema.Style"
         @ondragstart="OnDragStart" 
@@ -51,6 +51,8 @@
 
     protected ClassMapper DropItemClassMapper { get; } = new ClassMapper();
 
+    private double _itemWidth;
+
     protected override void OnInitialized()
     {
         RegisterEventDispatcher();
@@ -69,6 +71,8 @@
     private void InitData()
     {
         ComponentSchema.ComponentPropertySchema.Name = $"{ComponentSchema.ComponentType}_{Random.Shared.Next(100, 999)}";
+
+        _itemWidth = (ComponentSchema.ComponentPropertySchema.ItemWidth <= 0 ? 12 : ComponentSchema.ComponentPropertySchema.ItemWidth) / 24.00 * 100;
     }
 
     private void OnClick()

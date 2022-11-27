@@ -83,11 +83,11 @@
 @*自定义*@
 <div class="componentproperty-item">
     <label>组件宽度：</label>
-    <Slider TValue="double" @bind-Value="@ComponentSchema.ComponentPropertySchema.ItemWidth" DefaultValue="12" Min="4" Max="24" OnChange="(value) => OnPropertyChange()" />
+    <Slider TValue="int" @bind-Value="@ComponentSchema.ComponentPropertySchema.ItemWidth" DefaultValue="12" Min="4" Max="24" OnChange="(value) => OnPropertyChange()" />
 </div>
 <div class="componentproperty-item">
     <label>标签宽度：</label>
-    <Slider TValue="double" @bind-Value="@ComponentSchema.ComponentPropertySchema.LabelWidth" DefaultValue="180" Min="4" Max="300" OnChange="(value) => OnPropertyChange()" />
+    <Slider TValue="int" @bind-Value="@ComponentSchema.ComponentPropertySchema.LabelWidth" DefaultValue="180" Min="4" Max="300" OnChange="(value) => OnPropertyChange()" />
 </div>
 
 @code {
