@@ -21,21 +21,9 @@ namespace H.LowCode.Designer.HttpApi.Controllers
         }
 
         [HttpPost]
-        [Route("SaveMetadata")]
-        public void SaveMetadata([FromForm] string jsonSchema)
+        public void SaveMetadata([FromForm] string pageSchema)
         {
-            _designerAppService.SaveMetadata(jsonSchema);
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="jsonSchema"></param>
-        [HttpPost]
-        [Route("SaveMetadata2")]
-        public void SaveMetadata2([FromBody] JSchema jsonSchema)
-        {
-            _designerAppService.SaveMetadata2(jsonSchema);
+            _designerAppService.SaveMetadata(pageSchema);
         }
     }
 }

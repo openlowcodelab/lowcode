@@ -14,9 +14,18 @@
     else {
         @foreach (var component in ComponentSchemas)
         {
-            <DropItem @ref="currentDropItem" ComponentSchema="component" 
-                OnItemClick="OnItemClick" OnItemDelete="OnItemDelete" OnItemCopy="OnItemCopy">
-            </DropItem>
+            if (component.ComponentCategory == ComponentCategory.Basic)
+            {
+                <DropItem @ref="currentDropItem" ComponentSchema="component" 
+                    OnItemClick="OnItemClick" OnItemDelete="OnItemDelete" OnItemCopy="OnItemCopy">
+                </DropItem>
+            }
+            else if (component.ComponentCategory == ComponentCategory.Layout)
+            {
+                <DropItem @ref="currentDropItem" ComponentSchema="component" 
+                    OnItemClick="OnItemClick" OnItemDelete="OnItemDelete" OnItemCopy="OnItemCopy">
+                </DropItem>
+            }
         }
     }
 </div>

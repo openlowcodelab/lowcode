@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace H.LowCode.Metadata.Components
+namespace H.LowCode.Schema
 {
     public class PagePropertySchema
     {

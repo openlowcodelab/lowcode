@@ -1,5 +1,5 @@
 ﻿using H.Ddd.HttpApi;
-using H.LowCode.Metadata;
+using H.LowCode.Schema;
 using Microsoft.AspNetCore.Mvc;
 using System;
 
@@ -14,7 +14,7 @@ namespace H.LowCode.Render.HttpApi.Controllers
         [HttpGet]
         public object GetFormData(string id)
         {
-            return new FormJsonSchema();
+            return new PageSchema();
         }
 
         [HttpPost]

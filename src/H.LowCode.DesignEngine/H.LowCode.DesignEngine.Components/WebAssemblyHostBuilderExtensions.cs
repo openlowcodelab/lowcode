@@ -1,5 +1,5 @@
 ﻿using H.LowCode.DesignEngine.Components.ComponentProviders;
-using H.LowCode.Metadata.Components;
+using H.LowCode.Schema;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 

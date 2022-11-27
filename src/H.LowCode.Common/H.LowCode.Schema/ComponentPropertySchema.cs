@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace H.LowCode.Metadata.Components
+namespace H.LowCode.Schema
 {
     public class ComponentPropertySchema
     {

@@ -2,18 +2,39 @@
 using Microsoft.AspNetCore.Components;
 using Newtonsoft.Json.Schema;
 
-namespace H.LowCode.Metadata.Components
+namespace H.LowCode.Schema
 {
     public class ComponentSchema
     {
-        /// <summary>
-        /// 
-        /// </summary>
+        public string Name { get; set; }
+
+        //public double? Maximum { get; set; }
+
+        //public double? Minimum { get; set; }
+
+        //public long? MaximumLength { get; set; }
+
+        //public long? MinimumLength { get; set; }
+
+        //public bool? ReadOnly { get; set; }
+        
+        //public string Title { get; set; }
+
+        //public string Description { get; set; }
+        
+        //public string Format { get; set; }
+        
+        //public string Id { get; set; }
+
+        //public IList<string> Required { get; }
+
+        //public IDictionary<string, JSchema> Properties { get; }
+
         public JSchema ComponentJsonSchema { get; set; }
 
         public RenderFragment ComponentRenderFragment { get; set; }
 
-        public string Name { get; set; }
+        public ComponentCategory ComponentCategory { get; set; } = ComponentCategory.Basic;
 
         public string ComponentType { get; set; }
 
@@ -45,12 +66,19 @@ namespace H.LowCode.Metadata.Components
 
             ComponentSchema clone = new()
             {
-                ComponentJsonSchema = ObjectExtension<JSchema, JSchema>.DeepClone(ComponentJsonSchema),
+                ComponentJsonSchema = ComponentJsonSchema.DeepClone(),
                 ComponentRenderFragment = ComponentRenderFragment,
                 ComponentType = ComponentType,
-                ComponentPropertySchema = ObjectExtension<ComponentPropertySchema, ComponentPropertySchema>.DeepClone(ComponentPropertySchema)
+                ComponentPropertySchema = ComponentPropertySchema.DeepClone()
             };
             return clone;
         }
+    }
+
+    public enum ComponentCategory
+    {
+        Basic,
+        Layout,
+        Custom
     }
 }

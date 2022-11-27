@@ -9,10 +9,5 @@ namespace H.LowCode.Designer.Repository.MongoDB.Repositories
         {
             throw new NotImplementedException();
         }
-
-        public void SaveMetadata2(JSchema jsonSchema)
-        {
-            throw new NotImplementedException();
-        }
     }
 }

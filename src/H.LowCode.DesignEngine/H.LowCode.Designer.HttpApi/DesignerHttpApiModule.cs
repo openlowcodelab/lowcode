@@ -1,10 +1,6 @@
 ﻿using H.LowCode.Designer.Application;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Runtime.Loader;
 using Volo.Abp.Modularity;
 
 namespace H.LowCode.Designer.HttpApi
@@ -14,6 +10,7 @@ namespace H.LowCode.Designer.HttpApi
     {
         public override void ConfigureServices(ServiceConfigurationContext context)
         {
+            context.Services.AddControllers().AddApplicationPart(typeof(DesignerHttpApiModule).Assembly);
         }
     }
 }

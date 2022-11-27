@@ -1,6 +1,6 @@
 ﻿using AntDesign;
 using H.LowCode.DesignEngine.Components.PropertySchemas;
-using H.LowCode.Metadata.Components;
+using H.LowCode.Schema;
 using Newtonsoft.Json.Schema;
 
 namespace H.LowCode.DesignEngine.Components.ComponentProviders
@@ -16,7 +16,8 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                 new ComponentSchema(){
                     ComponentJsonSchema = new JSchema(){ Title = "Grid 栅格" },
                     ComponentType = "grid",
-                    ComponentPropertySchema = new GridPropertyModel(),
+                    Style = "background-color: #ffffff00",
+                    ComponentPropertySchema = new GridPropertyModel(){ ItemWidth = 24 },
                     ComponentRenderFragment = (builder) =>
                     {
                         //builder.OpenComponent(0, typeof());
@@ -26,7 +27,8 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                 new ComponentSchema(){
                     ComponentJsonSchema = new JSchema(){ Title = "Layout 布局" },
                     ComponentType = "layout",
-                    ComponentPropertySchema = new LayoutPropertyModel(),
+                    Style = "background-color: #ffffff00",
+                    ComponentPropertySchema = new LayoutPropertyModel(){ ItemWidth = 24 },
                     ComponentRenderFragment = (builder) =>
                     {
                         //builder.OpenComponent(0, typeof());
@@ -36,7 +38,8 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                 new ComponentSchema(){
                     ComponentJsonSchema = new JSchema(){ Title = "表格布局" },
                     ComponentType = "table",
-                    ComponentPropertySchema = new LayoutPropertyModel(),
+                    Style = "background-color: #ffffff00",
+                    ComponentPropertySchema = new LayoutPropertyModel(){ ItemWidth = 24 },
                     ComponentRenderFragment = (builder) =>
                     {
                         //builder.OpenComponent(0, typeof());
@@ -46,20 +49,10 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                 new ComponentSchema(){
                     ComponentJsonSchema = new JSchema(){ Title = "分割线", Type = JSchemaType.String },
                     ComponentType = "divider",
-                    ComponentPropertySchema = new DividerPropertyModel(),
+                    ComponentPropertySchema = new DividerPropertyModel(){ ItemWidth = 24 },
                     ComponentRenderFragment = (builder) =>
                     {
                         builder.OpenComponent(1, typeof(Divider));
-                        builder.CloseComponent();
-                    }
-                },
-                new ComponentSchema(){
-                    ComponentJsonSchema = new JSchema(){ Title = "间距", Type = JSchemaType.String },
-                    ComponentType = "space",
-                    ComponentPropertySchema = new SpacePropertyModel(),
-                    ComponentRenderFragment = (builder) =>
-                    {
-                        builder.OpenComponent(1, typeof(Space));
                         builder.CloseComponent();
                     }
                 }

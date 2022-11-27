@@ -2,7 +2,7 @@
 @using System.Net.Http.Json
 @using System.Net
 @using System.Text.Json.Serialization
-@using H.Extensions.Json.Schema
+@using H.Extensions.System
 
 @layout DesignerLayout
 @inject HttpClient HttpClient
@@ -48,16 +48,16 @@
 
     public async void SaveMetadata()
     {
-        JSchema rootJSchema = GetRootJsonSchema();
+        PageSchema pageSchema = GetPageSchema();
 
         //PostAsJsonAsync
-        //var result = await HttpClient.PostAsJsonAsync("api/Designer/SaveMetadata", rootJSchema);
-        
-        string jsonData = rootJSchema.ToJson();
+        //var result = await HttpClient.PostAsJsonAsync("api/Designer/SaveMetadata", pageSchema);
+
+        string jsonData = pageSchema.ToJson();
         //PostAsync
-        var httpContent = new FormUrlEncodedContent(new List<KeyValuePair<string, string>>() { new KeyValuePair<string, string>("jsonSchema", jsonData) });
+        var httpContent = new FormUrlEncodedContent(new List<KeyValuePair<string, string>>() { new KeyValuePair<string, string>("pageSchema", jsonData) });
         var result = await HttpClient.PostAsync("api/Designer/SaveMetadata", httpContent);
-        
+
         //PostAsync
         //var httpContent2 = new StringContent(jsonData, Encoding.UTF8, "application/json");
         //var result2 = await HttpClient.PostAsync("api/Designer/SaveMetadata2", httpContent2);
@@ -68,14 +68,19 @@
         }
     }
 
-    private JSchema GetRootJsonSchema()
+    private PageSchema GetPageSchema()
     {
-        JSchema rootJSchema = new JSchema();
-        rootJSchema.Type = JSchemaType.Object;
-        foreach(var dropComponent in ComponentSchemas)
+        PageSchema pageSchema = new PageSchema();
+        pageSchema.DataSource = new DataSource() { DataSourceType = DataSourceType.Api };
+
+        JSchema jsonSchema = new JSchema();
+        jsonSchema.Type = JSchemaType.Object;
+        foreach(var componentSchema in ComponentSchemas)
         {
-            rootJSchema.Properties[dropComponent.Name] = dropComponent.ComponentJsonSchema;
+            jsonSchema.Properties[componentSchema.Name] = componentSchema.ComponentJsonSchema;
         }
-        return rootJSchema;
+
+        pageSchema.PageContentSchema = jsonSchema;
+        return pageSchema;
     }
 }

@@ -1,6 +1,6 @@
 ﻿using AntDesign;
 using H.LowCode.DesignEngine.Components.Custom.PropertySchemas;
-using H.LowCode.Metadata.Components;
+using H.LowCode.Schema;
 using Newtonsoft.Json.Schema;
 
 namespace H.LowCode.DesignEngine.Components.Custom.ComponentProviders

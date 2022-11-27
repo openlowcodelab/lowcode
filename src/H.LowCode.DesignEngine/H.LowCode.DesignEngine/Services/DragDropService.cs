@@ -1,5 +1,5 @@
 ﻿using H.LowCode.DesignEngine.PropertyPanel;
-using H.LowCode.Metadata.Components;
+using H.LowCode.Schema;
 using System.Collections.Generic;
 
 namespace H.LowCode.DesignEngine.Services

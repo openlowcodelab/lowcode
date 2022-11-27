@@ -17,10 +17,5 @@ namespace H.LowCode.Designer.Application.AppServices
         {
             _designerDomainService.SaveMetadata(jsonSchema);
         }
-
-        public void SaveMetadata2(JSchema jsonSchema)
-        {
-            _designerDomainService.SaveMetadata2(jsonSchema);
-        }
     }
 }
