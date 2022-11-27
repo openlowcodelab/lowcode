@@ -1,7 +1,5 @@
 ﻿using AntDesign;
-using H.LowCode.DesignEngine.Components.PropertySchemas;
 using H.LowCode.Schema;
-using Newtonsoft.Json.Schema;
 
 namespace H.LowCode.DesignEngine.Components.ComponentProviders
 {
@@ -13,47 +11,56 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
         {
             List<ComponentSchema> components = new List<ComponentSchema>()
             {
-                new ComponentSchema(){
-                    ComponentJsonSchema = new JSchema(){ Title = "Grid 栅格" },
-                    ComponentType = "grid",
-                    Style = "background-color: #ffffff00",
-                    ComponentPropertySchema = new GridPropertyModel(){ ItemWidth = 24 },
+                new ComponentSchema(ComponentType:"grid"){
                     ComponentRenderFragment = (builder) =>
                     {
                         //builder.OpenComponent(0, typeof());
                         //builder.CloseComponent();
+                    },
+                    ComponentPropertySchema = new ComponentPropertySchema()
+                    {
+                        Title = "Grid 栅格",
+                        Style = "background-color: #ffffff00",
+                        ItemWidth = 24
                     }
                 },
-                new ComponentSchema(){
-                    ComponentJsonSchema = new JSchema(){ Title = "Layout 布局" },
-                    ComponentType = "layout",
-                    Style = "background-color: #ffffff00",
-                    ComponentPropertySchema = new LayoutPropertyModel(){ ItemWidth = 24 },
+                new ComponentSchema(ComponentType:"layout"){
                     ComponentRenderFragment = (builder) =>
                     {
                         //builder.OpenComponent(0, typeof());
                         //builder.CloseComponent();
+                    },
+                    ComponentPropertySchema = new ComponentPropertySchema()
+                    {
+                        Title = "Layout 布局",
+                        Style = "background-color: #ffffff00",
+                        ItemWidth = 24
                     }
                 },
-                new ComponentSchema(){
-                    ComponentJsonSchema = new JSchema(){ Title = "表格布局" },
-                    ComponentType = "table",
-                    Style = "background-color: #ffffff00",
-                    ComponentPropertySchema = new LayoutPropertyModel(){ ItemWidth = 24 },
+                new ComponentSchema(ComponentType:"table"){
                     ComponentRenderFragment = (builder) =>
                     {
                         //builder.OpenComponent(0, typeof());
                         //builder.CloseComponent();
+                    },
+                    ComponentPropertySchema = new ComponentPropertySchema()
+                    {
+                        Title = "表格布局",
+                        Style = "background-color: #ffffff00",
+                        ItemWidth = 24
                     }
                 },
-                new ComponentSchema(){
-                    ComponentJsonSchema = new JSchema(){ Title = "分割线", Type = JSchemaType.String },
-                    ComponentType = "divider",
-                    ComponentPropertySchema = new DividerPropertyModel(){ ItemWidth = 24 },
+                new ComponentSchema(ComponentType:"divider"){
                     ComponentRenderFragment = (builder) =>
                     {
                         builder.OpenComponent(1, typeof(Divider));
                         builder.CloseComponent();
+                    },
+                    ComponentPropertySchema = new ComponentPropertySchema()
+                    {
+                        Title = "分割线",
+                        ComponentValueType = ComponentValueType.String,
+                        ItemWidth = 24
                     }
                 }
             };

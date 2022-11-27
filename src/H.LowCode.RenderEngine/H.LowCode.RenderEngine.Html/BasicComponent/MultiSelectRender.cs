@@ -1,19 +1,14 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Schema;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using H.LowCode.Schema;
 
 namespace H.LowCode.RenderEngine.Html.BasicComponent
 {
     internal class MultiSelectRender : ComponentRenderBase
     {
-        public override bool CanRender(JSchema jsonSchema)
+        public override bool CanRender(ComponentPropertySchema jsonSchema)
         {
-            if (jsonSchema.Type != JSchemaType.String)
+            if (jsonSchema.ComponentValueType != ComponentValueType.String)
                 return false;
 
             if (jsonSchema.ExtensionData.TryGetValue("widget", out var widget))
@@ -24,11 +19,11 @@ namespace H.LowCode.RenderEngine.Html.BasicComponent
             return false;
         }
 
-        public override void Render(RenderTreeBuilder builder, string key, JSchema jsonSchema, Func<JSchema, RenderFragment> func)
+        public override void Render(RenderTreeBuilder builder, string key, ComponentPropertySchema jsonSchema, Func<PageSchema, RenderFragment> func)
         {
             builder.OpenElement(0, "div");
             builder.AddAttribute(1, "class", "field-label");
-            if (jsonSchema.Required.Count > 0)
+            if (jsonSchema.IsRequired)
             {
                 builder.AddMarkupContent(2, "<span style='color:red;'>*</span>");
             }
@@ -39,15 +34,15 @@ namespace H.LowCode.RenderEngine.Html.BasicComponent
             builder.AddAttribute(1, "multiple", "multiple");
             builder.AddAttribute(2, "class", "field-value");
 
-            jsonSchema.ExtensionData.TryGetValue("enumNames", out JToken enumNames);
-            var names = enumNames.ToObject<string[]>();
-            for (int i = 0; i < jsonSchema.Enum.Count; i++)
-            {
-                builder.OpenElement(i * 3 + 5, "option");
-                builder.AddAttribute(i * 3 + 6, "value", jsonSchema.Enum[i]);
-                builder.AddContent(i * 3 + 7, names[i]);
-                builder.CloseElement();
-            }
+            //jsonSchema.ExtensionData.TryGetValue("enumNames", out JToken enumNames);
+            //var names = enumNames.ToObject<string[]>();
+            //for (int i = 0; i < jsonSchema.Enum.Count; i++)
+            //{
+            //    builder.OpenElement(i * 3 + 5, "option");
+            //    builder.AddAttribute(i * 3 + 6, "value", jsonSchema.Enum[i]);
+            //    builder.AddContent(i * 3 + 7, names[i]);
+            //    builder.CloseElement();
+            //}
 
             builder.CloseElement();
         }

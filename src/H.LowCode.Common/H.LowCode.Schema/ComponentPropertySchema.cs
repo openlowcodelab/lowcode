@@ -1,15 +1,39 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
+﻿using H.Extensions.System;
+using Microsoft.AspNetCore.Components;
+using H.LowCode.Schema;
+using System.Text.Json.Serialization;
 
 namespace H.LowCode.Schema
 {
     public class ComponentPropertySchema
     {
+        public string Id { get; set; }
+
+        public string Name { get; set; }
+
+        public string Title { get; set; }
+
+        public string Description { get; set; }
+
+        public double? Maximum { get; set; }
+
+        public double? Minimum { get; set; }
+
+        public long? MaximumLength { get; set; }
+
+        public long? MinimumLength { get; set; }
+
+        public string Pattern { get; set; }
+
+        public ComponentValueType ComponentValueType { get; set; }
+
+        public string Format { get; set; }
+
+        public string Style { get; set; }
+
         public bool IsRequired { get; set; }
+
+        public bool? ReadOnly { get; set; }
 
         public string DefaultValue { get; set; }
 
@@ -28,14 +52,20 @@ namespace H.LowCode.Schema
         /// </summary>
         public string CustomStyle { get; set; }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="propertyName"></param>
-        /// <returns></returns>
-        public virtual bool IsShowProperty(string propertyName)
-        {
-            return false;
-        }
+        public IDictionary<string, ComponentPropertySchema> Properties { get; }
+
+        public IDictionary<string, string> ExtensionData { get; }
+    }
+
+    public enum ComponentValueType
+    {
+        None,
+        String,
+        Number,
+        Integer,
+        Boolean,
+        Object,
+        Array,
+        Null
     }
 }

@@ -1,8 +1,8 @@
-﻿using Newtonsoft.Json.Schema;
+﻿using System;
 
 namespace H.LowCode.Schema
 {
-    public abstract class BaseSchema : JSchema
+    public abstract class BaseSchema
     {
 
     }

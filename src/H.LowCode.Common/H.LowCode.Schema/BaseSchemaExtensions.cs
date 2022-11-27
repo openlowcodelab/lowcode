@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json.Schema;
+﻿using System;
 
 namespace H.LowCode.Schema
 {

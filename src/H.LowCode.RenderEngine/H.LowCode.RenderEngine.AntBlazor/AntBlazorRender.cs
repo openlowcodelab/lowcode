@@ -1,13 +1,13 @@
 ﻿using H.LowCode.RenderEngine.AntBlazor.PageRender;
 using Microsoft.AspNetCore.Components;
-using Newtonsoft.Json.Schema;
+using H.LowCode.Schema;
 using System;
 
 namespace H.LowCode.RenderEngine.AntBlazor
 {
     public class AntBlazorRender : IRender
     {
-        public RenderFragment Render(JSchema jsonSchema, PageRenderType pageRenderType)
+        public RenderFragment Render(PageSchema jsonSchema, PageRenderType pageRenderType)
         {
             RenderFragment renderFragment;
             switch (pageRenderType)

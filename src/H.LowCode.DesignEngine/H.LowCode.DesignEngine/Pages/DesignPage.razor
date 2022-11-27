@@ -71,16 +71,8 @@
     private PageSchema GetPageSchema()
     {
         PageSchema pageSchema = new PageSchema();
+        pageSchema.ComponentSchemas = ComponentSchemas.Select(t => t.ComponentPropertySchema).ToList();
         pageSchema.DataSource = new DataSource() { DataSourceType = DataSourceType.Api };
-
-        JSchema jsonSchema = new JSchema();
-        jsonSchema.Type = JSchemaType.Object;
-        foreach(var componentSchema in ComponentSchemas)
-        {
-            jsonSchema.Properties[componentSchema.Name] = componentSchema.ComponentJsonSchema;
-        }
-
-        pageSchema.PageContentSchema = jsonSchema;
         return pageSchema;
     }
 }

@@ -2,7 +2,7 @@
 
 <div class="dropitem-box" style="float:left; opacity:@ComponentSchema.Opacity; width: @(ComponentSchema.ComponentPropertySchema.ItemWidth/24*100)% 
         @ComponentSchema.ComponentPropertySchema.CustomStyle">
-    <div class="dropitem @DropItemClassMapper.Class" style="@ComponentSchema.Style"
+    <div class="dropitem @DropItemClassMapper.Class" style="@ComponentSchema.ComponentPropertySchema.Style"
         @ondragstart="OnDragStart" 
         @ondragenter="OnDragEnter" 
         @ondragover:preventDefault @ondragover:stopPropagation @ondragover="(e)=>OnDragOver(e)" 
@@ -30,7 +30,7 @@
                 </div>
             </div>
         }
-        <div class="dropitem-title">@ComponentSchema.ComponentJsonSchema.Title ：</div>
+        <div class="dropitem-title">@ComponentSchema.ComponentPropertySchema.Title ：</div>
         <div class="dropitem-div">@ComponentSchema.ComponentRenderFragment</div>
     </div>
 </div>
@@ -68,7 +68,7 @@
 
     private void InitData()
     {
-        ComponentSchema.Name = $"{ComponentSchema.ComponentType}_{Random.Shared.Next(100, 999)}";
+        ComponentSchema.ComponentPropertySchema.Name = $"{ComponentSchema.ComponentType}_{Random.Shared.Next(100, 999)}";
     }
 
     private void OnClick()
@@ -93,12 +93,12 @@
         //设置移动位置样式，拖拽到目标元素上半部分时，上方添加红色边框，下半部分时下方添加红色边框
         if (dragEventArgs.OffsetY < 30)
         {
-            ComponentSchema.Style = "border-top: 2px dashed #1890ff;";
+            ComponentSchema.ComponentPropertySchema.Style = "border-top: 2px dashed #1890ff;";
             ComponentSchema.IsDroppedToBack = false;
         }
         else
         {
-            ComponentSchema.Style = "border-bottom: 2px dashed #1890ff;";
+            ComponentSchema.ComponentPropertySchema.Style = "border-bottom: 2px dashed #1890ff;";
             ComponentSchema.IsDroppedToBack = true;
         }
     }
@@ -109,7 +109,7 @@
         if (DragDropService.CurrentDragComponent == ComponentSchema)
             return;
 
-        ComponentSchema.Style = string.Empty;
+        ComponentSchema.ComponentPropertySchema.Style = string.Empty;
     }
 
     private void OnDelete()

@@ -1,6 +1,6 @@
 ﻿using H.LowCode.RenderEngine.Html.BasicComponent;
 using Microsoft.AspNetCore.Components;
-using Newtonsoft.Json.Schema;
+using H.LowCode.Schema;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,24 +17,24 @@ namespace H.LowCode.RenderEngine.Html.PageRender
             InitElementRenders();
         }
 
-        public RenderFragment Render(JSchema jsonSchema)
+        public RenderFragment Render(PageSchema jsonSchema)
         {
             return CreateDynamicComponent(jsonSchema);
         }
 
-        private RenderFragment CreateDynamicComponent(JSchema jsonSchema) => builder =>
+        private RenderFragment CreateDynamicComponent(PageSchema jsonSchema) => builder =>
         {
-            foreach (var kv in jsonSchema.Properties)
+            foreach (var componentSchema in jsonSchema.ComponentSchemas)
             {
                 //bool isCanRender = false;
                 foreach (var elementRender in _elementRenders)
                 {
-                    if (!elementRender.CanRender(kv.Value))
+                    if (!elementRender.CanRender(componentSchema))
                         continue;
 
                     builder.OpenElement(0, "div");
                     builder.AddAttribute(1, "class", "field");
-                    elementRender.Render(builder, kv.Key, kv.Value, CreateDynamicComponent);
+                    elementRender.Render(builder, componentSchema.Name, componentSchema, CreateDynamicComponent);
                     builder.CloseElement();
 
                     //isCanRender = true;

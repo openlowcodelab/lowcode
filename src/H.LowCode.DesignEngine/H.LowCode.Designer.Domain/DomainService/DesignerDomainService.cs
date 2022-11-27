@@ -1,6 +1,5 @@
 ﻿using H.LowCode.Designer.Repository;
 using H.LowCode.Designer.Repository.Abstraction;
-using Newtonsoft.Json.Schema;
 
 namespace H.LowCode.Designer.Domain.DomainService
 {

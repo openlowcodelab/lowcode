@@ -1,19 +1,15 @@
 ﻿using AntDesign;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
-using Newtonsoft.Json.Schema;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using H.LowCode.Schema;
 
 namespace H.LowCode.RenderEngine.AntBlazor.DataEntryComponent
 {
     internal class DatePickerRender : ComponentRenderBase
     {
-        public override bool CanRender(JSchema jsonSchema)
+        public override bool CanRender(ComponentPropertySchema jsonSchema)
         {
-            if (jsonSchema.Type != JSchemaType.String)
+            if (jsonSchema.ComponentValueType != ComponentValueType.String)
                 return false;
 
             if (string.Equals(jsonSchema.Format, "date", StringComparison.OrdinalIgnoreCase))
@@ -22,7 +18,7 @@ namespace H.LowCode.RenderEngine.AntBlazor.DataEntryComponent
             return false;
         }
 
-        public override void Render(RenderTreeBuilder builder, string key, JSchema jsonSchema, Func<JSchema, RenderFragment> func)
+        public override void Render(RenderTreeBuilder builder, string key, ComponentPropertySchema jsonSchema, Func<PageSchema, RenderFragment> func)
         {
             builder.OpenElement(0, "div");
             builder.AddAttribute(1, "class", "");

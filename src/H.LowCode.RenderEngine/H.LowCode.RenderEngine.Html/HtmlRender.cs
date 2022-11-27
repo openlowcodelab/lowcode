@@ -1,17 +1,12 @@
 ﻿using H.LowCode.RenderEngine.Html.PageRender;
 using Microsoft.AspNetCore.Components;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Schema;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using H.LowCode.Schema;
 
 namespace H.LowCode.RenderEngine.Html
 {
     public class HtmlRender : IRender
     {
-        public RenderFragment Render(JSchema jsonSchema, PageRenderType pageRenderType)
+        public RenderFragment Render(PageSchema jsonSchema, PageRenderType pageRenderType)
         {
             RenderFragment renderFragment = null;
             switch (pageRenderType)

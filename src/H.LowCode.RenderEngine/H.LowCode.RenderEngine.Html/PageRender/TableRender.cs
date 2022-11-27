@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
-using Newtonsoft.Json.Schema;
+using H.LowCode.Schema;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +10,7 @@ namespace H.LowCode.RenderEngine.Html.PageRender
 {
     public class TableRender
     {
-        public RenderFragment Render(JSchema jsonSchema)
+        public RenderFragment Render(PageSchema jsonSchema)
         {
             throw new NotImplementedException();
         }

@@ -1,20 +1,20 @@
 ﻿<div class="componentproperty-item">
     <label>Name <span style="font-size:10px; color:gray;">(字段名称/英文)</span>：</label>
-    <Input TValue="string" @bind-Value="@ComponentSchema.Name" OnChange="(value) => OnPropertyChange()" />
+    <Input TValue="string" @bind-Value="@ComponentSchema.ComponentPropertySchema.Name" OnChange="(value) => OnPropertyChange()" />
 </div>
 <div class="componentproperty-item">
     <label>标题：</label>
-    <Input TValue="string" @bind-Value="@ComponentSchema.ComponentJsonSchema.Title" OnChange="(value) => OnPropertyChange()" />
+    <Input TValue="string" @bind-Value="@ComponentSchema.ComponentPropertySchema.Title" OnChange="(value) => OnPropertyChange()" />
 </div>
 <div class="componentproperty-item">
     <label>描述：</label>
-    <Input TValue="string" @bind-Value="@ComponentSchema.ComponentJsonSchema.Description" />
+    <Input TValue="string" @bind-Value="@ComponentSchema.ComponentPropertySchema.Description" />
 </div>
 <div class="componentproperty-item">
     <label>默认值：</label>
     <Input TValue="string" @bind-Value="@ComponentSchema.ComponentPropertySchema.DefaultValue" />
 </div>
-@if (ComponentSchema.ComponentPropertySchema.IsShowProperty("IsRequired"))
+@if (ComponentSchema.IsShowProperty("IsRequired"))
 {
     <div class="componentproperty-item">
         <label>必填：</label>
@@ -23,59 +23,59 @@
 }
 
 @*"type": "string"*@
-@if(ComponentSchema.ComponentJsonSchema.Type == JSchemaType.String)
+@if(ComponentSchema.ComponentPropertySchema.ComponentValueType == ComponentValueType.String)
 {
-    if (ComponentSchema.ComponentPropertySchema.IsShowProperty("MaximumLength"))
+    if (ComponentSchema.IsShowProperty("MaximumLength"))
     {
         <div class="componentproperty-item">
             <label>最大长度：</label>
-            <Input TValue="long?" @bind-Value="@ComponentSchema.ComponentJsonSchema.MaximumLength" OnChange="(value) => OnPropertyChange()" />
+            <Input TValue="long?" @bind-Value="@ComponentSchema.ComponentPropertySchema.MaximumLength" OnChange="(value) => OnPropertyChange()" />
         </div>
     }
-    if (ComponentSchema.ComponentPropertySchema.IsShowProperty("MinimumLength"))
+    if (ComponentSchema.IsShowProperty("MinimumLength"))
     {
         <div class="componentproperty-item">
             <label>最小长度：</label>
-            <Input TValue="long?" @bind-Value="@ComponentSchema.ComponentJsonSchema.MinimumLength" OnChange="(value) => OnPropertyChange()" />
+            <Input TValue="long?" @bind-Value="@ComponentSchema.ComponentPropertySchema.MinimumLength" OnChange="(value) => OnPropertyChange()" />
         </div>
     }
-    if (ComponentSchema.ComponentPropertySchema.IsShowProperty("Pattern"))
+    if (ComponentSchema.IsShowProperty("Pattern"))
     {
         <div class="componentproperty-item">
             <label>Pattern：</label>
-            <Input TValue="string" @bind-Value="@ComponentSchema.ComponentJsonSchema.Pattern" OnChange="(value) => OnPropertyChange()" />
+            <Input TValue="string" @bind-Value="@ComponentSchema.ComponentPropertySchema.Pattern" OnChange="(value) => OnPropertyChange()" />
         </div>
     }
-    if (ComponentSchema.ComponentPropertySchema.IsShowProperty("Format"))
+    if (ComponentSchema.IsShowProperty("Format"))
     {
         <div class="componentproperty-item">
             <label>Format：</label>
-            <Input TValue="string" @bind-Value="@ComponentSchema.ComponentJsonSchema.Format" OnChange="(value) => OnPropertyChange()" />
+            <Input TValue="string" @bind-Value="@ComponentSchema.ComponentPropertySchema.Format" OnChange="(value) => OnPropertyChange()" />
         </div>
     }
 }
 
 @*"type": "integer"*@
 @*"type": "number"*@
-@if (ComponentSchema.ComponentJsonSchema.Type == JSchemaType.Integer || ComponentSchema.ComponentJsonSchema.Type == JSchemaType.Number)
+@if (ComponentSchema.ComponentPropertySchema.ComponentValueType == ComponentValueType.Integer || ComponentSchema.ComponentPropertySchema.ComponentValueType == ComponentValueType.Number)
 {
-    if (ComponentSchema.ComponentPropertySchema.IsShowProperty("Maximum"))
+    if (ComponentSchema.IsShowProperty("Maximum"))
     {
         <div class="componentproperty-item">
             <label>最大值：</label>
-            <Input TValue="double?" @bind-Value="@ComponentSchema.ComponentJsonSchema.Maximum" OnChange="(value) => OnPropertyChange()" />
+            <Input TValue="double?" @bind-Value="@ComponentSchema.ComponentPropertySchema.Maximum" OnChange="(value) => OnPropertyChange()" />
         </div>
     }
-    if (ComponentSchema.ComponentPropertySchema.IsShowProperty("Minimum"))
+    if (ComponentSchema.IsShowProperty("Minimum"))
     {
         <div class="componentproperty-item">
             <label>最小值：</label>
-            <Input TValue="double?" @bind-Value="@ComponentSchema.ComponentJsonSchema.Minimum" OnChange="(value) => OnPropertyChange()" />
+            <Input TValue="double?" @bind-Value="@ComponentSchema.ComponentPropertySchema.Minimum" OnChange="(value) => OnPropertyChange()" />
         </div>
     }
 }
 @*"type": "array"*@
-@*if(ComponentSchema.ComponentJSchema.Type == JSchemaType.Array)
+@*if(ComponentSchema.ComponentValueType == ComponentValueType.Array)
 {
         
 }*@

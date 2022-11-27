@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
-using Newtonsoft.Json.Schema;
+using H.LowCode.Schema;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,31 +18,27 @@ namespace H.LowCode.RenderEngine.AntBlazor.PageRender
             InitElementRenders();
         }
 
-        public RenderFragment Render(JSchema jsonSchema)
+        public RenderFragment Render(PageSchema jsonSchema)
         {
             return CreateDynamicComponent(jsonSchema);
         }
 
-        private RenderFragment CreateDynamicComponent(JSchema jsonSchema) => builder =>
+        private RenderFragment CreateDynamicComponent(PageSchema jsonSchema) => builder =>
         {
-            foreach (var kv in jsonSchema.Properties)
+            foreach (var componentSchema in jsonSchema.ComponentSchemas)
             {
-                //bool isCanRender = false;
                 foreach (var elementRender in _elementRenders)
                 {
-                    if (!elementRender.CanRender(kv.Value))
+                    if (!elementRender.CanRender(componentSchema))
                         continue;
 
                     builder.OpenElement(0, "div");
                     builder.AddAttribute(1, "class", "field");
-                    elementRender.Render(builder, kv.Key, kv.Value, CreateDynamicComponent);
+                    elementRender.Render(builder, componentSchema.Name, componentSchema, CreateDynamicComponent);
                     builder.CloseElement();
 
-                    //isCanRender = true;
-                    break;  //可渲染的组件只有一个，渲染后结束遍历, 其他 ElementRender 不再判断是否可渲染
+                    break;
                 }
-                //if (!isCanRender)
-                //    throw new ArgumentOutOfRangeException($"参数不合法");
             }
         };
 

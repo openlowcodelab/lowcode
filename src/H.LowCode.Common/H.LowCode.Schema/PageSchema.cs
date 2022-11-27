@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json.Schema;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace H.LowCode.Schema
 {
@@ -9,12 +8,22 @@ namespace H.LowCode.Schema
         public string Version { get; set; } = "1.0.0";
 
         [JsonPropertyName("c")]
-        public JSchema PageContentSchema { get; set; }
+        public IList<ComponentPropertySchema> ComponentSchemas { get; set; }
+
+        [JsonPropertyName("p")]
+        public PagePropertySchema PagePropertySchema { get; set; }
 
         [JsonPropertyName("d")]
         public DataSource DataSource { get; set; }
 
-        [JsonPropertyName("i18n")]
-        public BaseSchema I18n { get; set; }
+        [JsonPropertyName("i")]
+        public I18n I18n { get; set; }
+    }
+
+    public struct I18n
+    {
+        public string Name { get; set; }
+
+        public IDictionary<string, string> Properties { get; set; }
     }
 }

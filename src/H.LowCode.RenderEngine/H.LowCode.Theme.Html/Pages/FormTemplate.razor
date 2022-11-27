@@ -1,5 +1,7 @@
 ﻿@page "/form/{Id}"
 
+@using H.Extensions.System
+
 @inject HttpClient Http
 @inject IRender render
 
@@ -35,9 +37,8 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var jSchema = await Http.GetFromJsonAsync<object>($"jsonschema/form/{Id}.json?_={DateTime.Now.Ticks}");
-        var jsonSchema = JSchema.Parse(jSchema.ToString());
-
-        RenderFragment = render.Render(jsonSchema, PageRenderType.Form);
+        var pageSchema = await Http.GetFromJsonAsync<PageSchema>($"jsonschema/form/{Id}.json?_={DateTime.Now.Ticks}");
+        
+        RenderFragment = render.Render(pageSchema, PageRenderType.Form);
     }
 }

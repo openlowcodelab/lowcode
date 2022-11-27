@@ -1,7 +1,5 @@
 ﻿using AntDesign;
-using H.LowCode.DesignEngine.Components.Custom.PropertySchemas;
 using H.LowCode.Schema;
-using Newtonsoft.Json.Schema;
 
 namespace H.LowCode.DesignEngine.Components.Custom.ComponentProviders
 {
@@ -13,39 +11,47 @@ namespace H.LowCode.DesignEngine.Components.Custom.ComponentProviders
         {
             List<ComponentSchema> components = new List<ComponentSchema>()
             {
-                new ComponentSchema(){
-                    ComponentJsonSchema = new JSchema(){ Title = "HTML" },
-                    ComponentType = "html",
-                    ComponentPropertySchema = new HtmlPropertyModel(),
+                new ComponentSchema(ComponentType:"html"){
+                    SupportProperties = new List<string>(){ "MaximumLength", "MinimumLength" },
                     ComponentRenderFragment = (builder) =>
                     {
                         builder.OpenComponent(0, typeof(TextArea));
                         builder.AddAttribute(1, "style", "height:55px;");
                         builder.CloseComponent();
+                    },
+                    ComponentPropertySchema = new ComponentPropertySchema()
+                    {
+                        Title = "HTML"
                     }
                 },
-                new ComponentSchema(){
-                    ComponentJsonSchema = new JSchema(){ Title = "用户选择" },
-                    ComponentType = "userselect",
+                new ComponentSchema(ComponentType:"userselect"){
                     ComponentRenderFragment = (builder) => {
                         builder.OpenComponent(0, typeof(Input<string>));
                         builder.CloseComponent();
+                    },
+                    ComponentPropertySchema = new ComponentPropertySchema()
+                    {
+                        Title = "用户选择"
                     }
                 },
-                new ComponentSchema(){
-                    ComponentJsonSchema = new JSchema(){ Title = "行政区划" },
-                    ComponentType = "region",
+                new ComponentSchema(ComponentType:"region"){
                     ComponentRenderFragment = (builder) => {
                         builder.OpenComponent(0, typeof(Input<string>));
                         builder.CloseComponent();
+                    },
+                    ComponentPropertySchema = new ComponentPropertySchema()
+                    {
+                        Title = "行政区划"
                     }
                 },
-                new ComponentSchema(){
-                    ComponentJsonSchema = new JSchema(){ Title = "地图" },
-                    ComponentType = "map",
+                new ComponentSchema(ComponentType:"map"){
                     ComponentRenderFragment = (builder) => {
                         builder.OpenComponent(0, typeof(Input<string>));
                         builder.CloseComponent();
+                    },
+                    ComponentPropertySchema = new ComponentPropertySchema()
+                    {
+                        Title = "地图"
                     }
                 }
             };

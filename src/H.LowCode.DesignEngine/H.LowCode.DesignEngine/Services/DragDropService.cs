@@ -49,9 +49,9 @@ namespace H.LowCode.DesignEngine.Services
         public void DropItem_DragEnd()
         {
             CurrentDragComponent.Opacity = 1;
-            CurrentDragComponent.Style = string.Empty;
+            CurrentDragComponent.ComponentPropertySchema.Style = string.Empty;
             if (LastDragOverComponent != null)
-                LastDragOverComponent.Style = string.Empty;
+                LastDragOverComponent.ComponentPropertySchema.Style = string.Empty;
         }
     }
 }

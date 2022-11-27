@@ -20,7 +20,7 @@ namespace H.LowCode.Render.HttpApi.Controllers
         [HttpPost]
         public void Save(string jsonData)
         {
-            //JSchema jSchema = new JSchema();
+            //PageSchema pageSchema = new PageSchema();
             //JsonSchemaHelper.ValidateJsonSchema(jsonSchema, jsonData);
         }
     }

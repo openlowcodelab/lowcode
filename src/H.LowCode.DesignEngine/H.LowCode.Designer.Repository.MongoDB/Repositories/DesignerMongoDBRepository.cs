@@ -1,5 +1,4 @@
 ﻿using H.LowCode.Designer.Repository.Abstraction;
-using Newtonsoft.Json.Schema;
 
 namespace H.LowCode.Designer.Repository.MongoDB.Repositories
 {

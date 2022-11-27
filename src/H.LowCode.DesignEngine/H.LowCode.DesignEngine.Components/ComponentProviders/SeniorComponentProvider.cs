@@ -1,7 +1,5 @@
 ﻿using AntDesign;
-using H.LowCode.DesignEngine.Components.PropertySchemas;
 using H.LowCode.Schema;
-using Newtonsoft.Json.Schema;
 
 namespace H.LowCode.DesignEngine.Components.ComponentProviders
 {
@@ -13,24 +11,27 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
         {
             List<ComponentSchema> components = new List<ComponentSchema>()
             {
-                new ComponentSchema(){
-                    ComponentJsonSchema = new JSchema(){ Title = "折叠面板", Type = JSchemaType.String },
-                    ComponentType = "collapse",
-                    ComponentPropertySchema = new CollapsePropertyModel(),
+                new ComponentSchema(ComponentType:"collapse"){
                     ComponentRenderFragment = (builder) =>
                     {
                         builder.OpenComponent(1, typeof(Collapse));
                         builder.CloseComponent();
+                    },
+                    ComponentPropertySchema = new ComponentPropertySchema()
+                    {
+                        Title = "折叠面板",
+                        ComponentValueType = ComponentValueType.String
                     }
                 },
-                new ComponentSchema(){
-                    ComponentJsonSchema = new JSchema(){ Title = "上传" },
-                    ComponentType = "upload",
-                    ComponentPropertySchema = new UploadPropertyModel(),
+                new ComponentSchema(ComponentType:"upload"){
                     ComponentRenderFragment = (builder) =>
                     {
                         builder.OpenComponent(0, typeof(Upload));
                         builder.CloseComponent();
+                    },
+                    ComponentPropertySchema = new ComponentPropertySchema()
+                    {
+                        Title = "上传"
                     }
                 }
             };

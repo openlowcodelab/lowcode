@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
-using Newtonsoft.Json.Schema;
+using H.LowCode.Schema;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,12 +10,12 @@ namespace H.LowCode.RenderEngine.AntBlazor.LayoutComponent
 {
     internal class SpaceRender : ComponentRenderBase
     {
-        public override bool CanRender(JSchema jsonSchema)
+        public override bool CanRender(ComponentPropertySchema jsonSchema)
         {
             return false;
         }
 
-        public override void Render(RenderTreeBuilder builder, string keys, JSchema jsonSchema, Func<JSchema, RenderFragment> func)
+        public override void Render(RenderTreeBuilder builder, string keys, ComponentPropertySchema jsonSchema, Func<PageSchema, RenderFragment> func)
         {
             throw new NotImplementedException();
         }

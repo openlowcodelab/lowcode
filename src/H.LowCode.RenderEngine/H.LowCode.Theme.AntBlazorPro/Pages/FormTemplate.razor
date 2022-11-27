@@ -34,10 +34,9 @@
     /// <returns></returns>
     private async Task RenderComponentAsync()
     {
-        var jSchema = await Http.GetFromJsonAsync<object>($"jsonschema/form/{PageId}.json?_={DateTime.Now.Ticks}");
-        var jsonSchema = JSchema.Parse(jSchema.ToString());
+        var pageSchema = await Http.GetFromJsonAsync<PageSchema>($"jsonschema/form/{PageId}.json?_={DateTime.Now.Ticks}");
 
-        RenderFragment = render.Render(jsonSchema, PageRenderType.Form);
+        RenderFragment = render.Render(pageSchema, PageRenderType.Form);
     }
 
     /// <summary>
