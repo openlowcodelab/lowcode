@@ -5,6 +5,9 @@ using System.Text.Json.Serialization;
 
 namespace H.LowCode.Schema
 {
+    /// <summary>
+    /// 组件属性（参考 JsonSchema）
+    /// </summary>
     public class ComponentPropertySchema
     {
         public string Id { get; set; }
@@ -46,8 +49,14 @@ namespace H.LowCode.Schema
         /// <summary>
         /// 组件宽度（默认 12）
         /// </summary>
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-        public int ItemWidth { get; set; }
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public double? ItemWidth { get; set; }
+
+        /// <summary>
+        /// 组件高度（默认 85 px）
+        /// </summary>
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public double? ItemHeight { get; set; }
 
         /// <summary>
         /// 标签宽度（默认 180 px）

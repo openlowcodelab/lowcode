@@ -15,35 +15,37 @@ namespace H.LowCode.Blazor.Utility
             _actions = new Dictionary<string, Action<object>>();
         }
 
-        public static void RegisterEvent(string key, Action<object> action)
+        public static void RegisterEvent(string eventName, Action<object> action)
         {
-            if (!_actions.ContainsKey(key))
+            if (!_actions.ContainsKey(eventName))
             {
-                _actions.Add(key, action);
+                _actions.Add(eventName, action);
             }
             else
             {
-                _actions[key] += action;
-                //throw new Exception($"event key{key} has existed");
+                _actions[eventName] += action;
             }
         }
 
-        public static void RemoveEvent(string key)
+        public static void RemoveEvent(string eventName)
         {
-            if (_actions.ContainsKey(key))
+            if (_actions.ContainsKey(eventName))
             {
-                _actions.Remove(key);
+                _actions.Remove(eventName);
             }
         }
 
-        public static void Dispatch(string key, object value)
+        public static void Trigger(string eventName, object param)
         {
-            if (_actions.ContainsKey(key))
+            if (_actions.ContainsKey(eventName))
             {
-                var act = _actions[key];
-                act.Invoke(value);
+                var action = _actions[eventName];
+                action.Invoke(param);
             }
-
+            else
+            {
+                throw new Exception($"event name [{eventName}] is not exist");
+            }
         }
     }
 }

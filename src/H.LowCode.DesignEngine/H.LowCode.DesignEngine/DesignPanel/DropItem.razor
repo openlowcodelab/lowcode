@@ -1,6 +1,6 @@
 ﻿@inject DragDropService DragDropService
 
-<div class="dropitem-box" style="float:left; opacity:@ComponentSchema.Opacity; width: @(_itemWidth)% 
+<div class="dropitem-box" style="float:left; opacity:@ComponentSchema.Opacity; width: @(_itemWidth)%; min-height: @(_itemHeight)px; 
         @ComponentSchema.ComponentPropertySchema.CustomStyle">
     <div class="dropitem @DropItemClassMapper.Class" style="@ComponentSchema.ComponentPropertySchema.Style"
         @ondragstart="OnDragStart" 
@@ -30,8 +30,11 @@
                 </div>
             </div>
         }
-        <div class="dropitem-title">@ComponentSchema.ComponentPropertySchema.Title ：</div>
-        <div class="dropitem-div">@ComponentSchema.ComponentRenderFragment</div>
+        @if (ComponentSchema.IsHiddenTitle == false)
+        {
+            <div class="dropitem-title">@ComponentSchema.ComponentPropertySchema.Title ：</div>
+        }
+        <div class="dropitem-div">@ComponentSchema.RenderFragment</div>
     </div>
 </div>
 
@@ -52,6 +55,7 @@
     protected ClassMapper DropItemClassMapper { get; } = new ClassMapper();
 
     private double _itemWidth;
+    private double _itemHeight;
 
     protected override void OnInitialized()
     {
@@ -72,13 +76,14 @@
     {
         ComponentSchema.ComponentPropertySchema.Name = $"{ComponentSchema.ComponentType}_{Random.Shared.Next(100, 999)}";
 
-        _itemWidth = (ComponentSchema.ComponentPropertySchema.ItemWidth <= 0 ? 12 : ComponentSchema.ComponentPropertySchema.ItemWidth) / 24.00 * 100;
+        _itemWidth = (ComponentSchema.ComponentPropertySchema.ItemWidth.HasValue == false ? 12 : ComponentSchema.ComponentPropertySchema.ItemWidth.Value) / 24 * 100;
+        _itemHeight = ComponentSchema.ComponentPropertySchema.ItemHeight.HasValue == false ? 85 : ComponentSchema.ComponentPropertySchema.ItemHeight.Value;
     }
 
     private void OnClick()
     {
         OnItemClick.Invoke(ComponentSchema);
-        BlazorEventDispatcher.Dispatch("designerengine.dropitem.onclick", ComponentSchema);
+        BlazorEventDispatcher.Trigger("designerengine.dropitem.onclick", ComponentSchema);
     }
 
     private void OnDragStart()
@@ -129,7 +134,7 @@
     private void RegisterEventDispatcher()
     {
         //订阅属性面板中的事件
-        BlazorEventDispatcher.RegisterEvent("designerengine.componentproperty.onchange", (value) =>
+        BlazorEventDispatcher.RegisterEvent("designerengine.basicproperty.onchange", (value) =>
         {
             StateHasChanged();
         });

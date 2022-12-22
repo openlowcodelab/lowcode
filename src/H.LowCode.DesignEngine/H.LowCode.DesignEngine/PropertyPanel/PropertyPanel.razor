@@ -1,11 +1,17 @@
-﻿<Tabs DefaultActiveKey="2" @bind-ActiveKey="@ActiveTabKey" Class="designpage" Style="width:250px; padding:0px 8px;">
+﻿<Tabs DefaultActiveKey="tab_page" @bind-ActiveKey="@ActiveTabKey" Class="designpage" Style="width:250px; padding:0px 8px;">
     @if (ShowPropertyPanel)
     {
-        <TabPane Key="1" Tab="组件属性">
-            <ComponentProperty ComponentSchema="@ComponentSchema"></ComponentProperty>
+        <TabPane Key="tab_property" Tab="属性">
+            <BasicProperty ComponentSchema="@ComponentSchema"></BasicProperty>
+        </TabPane>
+        <TabPane Key="tab_style" Tab="样式">
+            <StyleProperty ComponentSchema="@ComponentSchema"></StyleProperty>
+        </TabPane>
+        <TabPane Key="tab_event" Tab="事件">
+            <EventProperty ComponentSchema="@ComponentSchema"></EventProperty>
         </TabPane>
     }
-    <TabPane Key="2" Tab="页面属性">
+    <TabPane Key="tab_page" Tab="页面">
         <PageProperty PagePropertySchema="pagePropertySchema"></PageProperty>
     </TabPane>
 </Tabs>
@@ -15,7 +21,7 @@
 
     public ComponentSchema ComponentSchema { get; set; }
 
-    private string ActiveTabKey { get; set; } = "2";
+    private string ActiveTabKey { get; set; } = "tab_page";
 
     private PagePropertySchema pagePropertySchema = new PagePropertySchema();
 
@@ -32,7 +38,7 @@
         {
             ComponentSchema = (ComponentSchema)value;
             ShowPropertyPanel = true;
-            ActiveTabKey = "1";
+            ActiveTabKey = "tab_property";
             StateHasChanged();
         });
 
@@ -41,7 +47,7 @@
         {
             ComponentSchema = null;
             ShowPropertyPanel = false;
-            ActiveTabKey = "2";
+            ActiveTabKey = "tab_page";
             StateHasChanged();
         });
     }

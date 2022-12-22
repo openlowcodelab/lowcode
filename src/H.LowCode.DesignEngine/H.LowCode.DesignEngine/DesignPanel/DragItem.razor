@@ -21,6 +21,6 @@
         //发送事件，通知订阅此事件的其他组件更新状态
         ComponentSchema clickComponentSchema = ComponentSchema.Clone();
         clickComponentSchema.IsDroppedFromComponentPanel = true;
-        BlazorEventDispatcher.Dispatch("designerengine.dragitem.onclick", clickComponentSchema);
+        BlazorEventDispatcher.Trigger("designerengine.dragitem.onclick", clickComponentSchema);
     }
 }

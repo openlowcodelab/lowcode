@@ -13,7 +13,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
             {
                 new ComponentSchema(ComponentType:"input"){
                     SupportProperties = new List<string>() { "MaximumLength", "MinimumLength", "Pattern", "Format" },
-                    ComponentRenderFragment = (builder) =>
+                    RenderFragment = (builder) =>
                     {
                         builder.OpenComponent(1, typeof(Input<string>));
                         builder.CloseComponent();
@@ -25,7 +25,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                 },
                 new ComponentSchema(ComponentType:"textarea"){
                     SupportProperties = new List<string>(){ "MaximumLength", "MinimumLength" },
-                    ComponentRenderFragment = (builder) =>
+                    RenderFragment = (builder) =>
                     {
                         builder.OpenComponent(0, typeof(TextArea));
                         builder.AddAttribute(1, "style", "height:50px;");
@@ -37,7 +37,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                     }
                 },
                 new ComponentSchema(ComponentType:"datepicker"){
-                    ComponentRenderFragment = (builder) =>
+                    RenderFragment = (builder) =>
                     {
                         builder.OpenComponent(0, typeof(DatePicker<DateTime?>));
                         builder.AddAttribute(1, "Picker", DatePickerType.Date);
@@ -50,7 +50,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                 },
                 new ComponentSchema(ComponentType:"inputnumber"){
                     SupportProperties = new List<string>{ "Maximum", "Minimum" },
-                    ComponentRenderFragment = (builder) =>
+                    RenderFragment = (builder) =>
                     {
                         builder.OpenComponent(0, typeof(AntDesign.InputNumber<int>));
                         builder.CloseComponent();
@@ -61,7 +61,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                     }
                 },
                 new ComponentSchema(ComponentType:"checkbox"){
-                    ComponentRenderFragment = (builder) =>
+                    RenderFragment = (builder) =>
                     {
                         builder.OpenComponent(0, typeof(Select<string, string>));
                         builder.CloseComponent();
@@ -72,7 +72,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                     }
                 },
                 new ComponentSchema(ComponentType:"switch"){
-                    ComponentRenderFragment = (builder) =>
+                    RenderFragment = (builder) =>
                     {
                         builder.OpenComponent(0, typeof(Switch));
                         builder.CloseComponent();
@@ -83,7 +83,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                     }
                 },
                 new ComponentSchema(ComponentType:"radio"){
-                    ComponentRenderFragment = (builder) =>
+                    RenderFragment = (builder) =>
                     {
                         builder.OpenComponent(0, typeof(Radio<string>));
                         builder.CloseComponent();

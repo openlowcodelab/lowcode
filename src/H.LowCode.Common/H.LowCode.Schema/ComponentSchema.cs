@@ -45,7 +45,14 @@ namespace H.LowCode.Schema
         public IList<string> SupportProperties{get;set;}
 
         [JsonIgnore]
-        public RenderFragment ComponentRenderFragment { get; set; }
+        public RenderFragment RenderFragment { get; set; }
+
+        /// <summary>
+        /// 是否隐藏标题
+        /// </summary>
+        public bool IsHiddenTitle { get; set; }
+
+        public IList<ComponentSchema> ChildrenComponentSchema { get; set; }
 
         /// <summary>
         /// 
@@ -65,7 +72,7 @@ namespace H.LowCode.Schema
         public ComponentSchema Clone()
         {
             ComponentSchema componentSchema = this.DeepClone();
-            componentSchema.ComponentRenderFragment = this.ComponentRenderFragment;
+            componentSchema.RenderFragment = this.RenderFragment;
             return componentSchema;
         }
     }

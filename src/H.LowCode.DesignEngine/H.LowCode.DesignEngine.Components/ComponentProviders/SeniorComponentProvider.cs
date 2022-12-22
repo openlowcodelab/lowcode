@@ -11,27 +11,15 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
         {
             List<ComponentSchema> components = new List<ComponentSchema>()
             {
-                new ComponentSchema(ComponentType:"collapse"){
-                    ComponentRenderFragment = (builder) =>
-                    {
-                        builder.OpenComponent(1, typeof(Collapse));
-                        builder.CloseComponent();
-                    },
-                    ComponentPropertySchema = new ComponentPropertySchema()
-                    {
-                        Title = "折叠面板",
-                        ComponentValueType = ComponentValueType.String
-                    }
-                },
                 new ComponentSchema(ComponentType:"upload"){
-                    ComponentRenderFragment = (builder) =>
+                    RenderFragment = (builder) =>
                     {
-                        builder.OpenComponent(0, typeof(Upload));
-                        builder.CloseComponent();
+                        //builder.OpenComponent(0, typeof(Upload));
+                        //builder.CloseComponent();
                     },
                     ComponentPropertySchema = new ComponentPropertySchema()
                     {
-                        Title = "上传"
+                        Title = "附件"
                     }
                 }
             };
