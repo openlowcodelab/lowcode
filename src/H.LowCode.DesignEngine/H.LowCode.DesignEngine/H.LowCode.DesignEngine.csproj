@@ -1,25 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
-
-	<Import Project="..\..\lowcode.props" />
-
-	<PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-  </PropertyGroup>
+	
+	<Import Project="..\..\global.props" />
 
   <ItemGroup>
     <SupportedPlatform Include="browser" />
   </ItemGroup>
 
   <ItemGroup>
-	<PackageReference Include="AntDesign" Version="0.12.6" />
-	<PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="6.0.10" />
-	<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="6.0.10" />
-	<PackageReference Include="AntDesign.ProLayout" Version="0.12.4" />
-	<PackageReference Include="System.Net.Http.Json" Version="6.0.0" />
+	<PackageReference Include="AntDesign" Version="0.14.3" />
+	<PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="7.0.3" />
+	<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="7.0.3" />
+	<PackageReference Include="AntDesign.ProLayout" Version="0.13.1" />
+	<PackageReference Include="System.Net.Http.Json" Version="7.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\H.LowCode.Common\H.LowCode.Schema\H.LowCode.Schema.csproj" />
+    <ProjectReference Include="..\..\H.LowCode.Common\H.LowCode.Metadata\H.LowCode.Metadata.csproj" />
     <ProjectReference Include="..\..\H.LowCode.Utils\H.LowCode.Blazor.Utility\H.LowCode.Blazor.Utility.csproj" />
   </ItemGroup>
 

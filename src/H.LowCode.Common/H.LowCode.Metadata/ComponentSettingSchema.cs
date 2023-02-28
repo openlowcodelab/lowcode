@@ -1,14 +1,14 @@
 ﻿using H.Extensions.System;
 using Microsoft.AspNetCore.Components;
-using H.LowCode.Schema;
+using H.LowCode.Metadata;
 using System.Text.Json.Serialization;
 
-namespace H.LowCode.Schema
+namespace H.LowCode.Metadata
 {
     /// <summary>
     /// 组件属性（参考 JsonSchema）
     /// </summary>
-    public class ComponentPropertySchema
+    public class ComponentSettingSchema
     {
         public string Id { get; set; }
 
@@ -69,9 +69,9 @@ namespace H.LowCode.Schema
         /// </summary>
         public string CustomStyle { get; set; }
 
-        public IDictionary<string, ComponentPropertySchema> Properties { get; }
-
         public IDictionary<string, string> ExtensionData { get; }
+
+        public IDictionary<string, ComponentExtensionPropertySchema> ExtensionProperties { get; set; }
     }
 
     public enum ComponentValueType
@@ -84,5 +84,12 @@ namespace H.LowCode.Schema
         Object,
         Array,
         Null
+    }
+
+    public class ComponentExtensionPropertySchema
+    {
+        public string Label { get; set; }
+
+        public object Value { get; set; }
     }
 }

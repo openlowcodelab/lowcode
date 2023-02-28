@@ -1,13 +1,13 @@
 ﻿using AntDesign;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
-using H.LowCode.Schema;
+using H.LowCode.Metadata;
 
 namespace H.LowCode.RenderEngine.AntBlazor.DataEntryComponent
 {
     internal class CheckboxRender : ComponentRenderBase
     {
-        public override bool CanRender(ComponentPropertySchema jsonSchema)
+        public override bool CanRender(ComponentSettingSchema jsonSchema)
         {
             if (jsonSchema.ComponentValueType != ComponentValueType.String)
                 return false;
@@ -23,7 +23,7 @@ namespace H.LowCode.RenderEngine.AntBlazor.DataEntryComponent
             return false;
         }
 
-        public override void Render(RenderTreeBuilder builder, string key, ComponentPropertySchema jsonSchema, Func<PageSchema, RenderFragment> func)
+        public override void Render(RenderTreeBuilder builder, string key, ComponentSettingSchema jsonSchema, Func<PageSchema, RenderFragment> func)
         {
             builder.OpenElement(0, "div");
             builder.AddAttribute(1, "class", "");

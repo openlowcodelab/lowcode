@@ -2,17 +2,17 @@
     @if (ShowPropertyPanel)
     {
         <TabPane Key="tab_property" Tab="属性">
-            <BasicProperty ComponentSchema="@ComponentSchema"></BasicProperty>
+            <PropertySetting ComponentSchema="@ComponentSchema"></PropertySetting>
         </TabPane>
         <TabPane Key="tab_style" Tab="样式">
-            <StyleProperty ComponentSchema="@ComponentSchema"></StyleProperty>
+            <StyleSetting ComponentSchema="@ComponentSchema"></StyleSetting>
         </TabPane>
-        <TabPane Key="tab_event" Tab="事件">
-            <EventProperty ComponentSchema="@ComponentSchema"></EventProperty>
+        <TabPane Key="tab_action" Tab="动作">
+            <ActionSetting ComponentSchema="@ComponentSchema"></ActionSetting>
         </TabPane>
     }
     <TabPane Key="tab_page" Tab="页面">
-        <PageProperty PagePropertySchema="pagePropertySchema"></PageProperty>
+        <PageSetting PagePropertySchema="pagePropertySchema"></PageSetting>
     </TabPane>
 </Tabs>
 
@@ -23,7 +23,7 @@
 
     private string ActiveTabKey { get; set; } = "tab_page";
 
-    private PagePropertySchema pagePropertySchema = new PagePropertySchema();
+    private PageSettingSchema pagePropertySchema = new PageSettingSchema();
 
     protected override void OnInitialized()
     {

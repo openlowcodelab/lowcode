@@ -1,5 +1,4 @@
-﻿using H.LowCode.DesignEngine.PropertyPanel;
-using H.LowCode.Schema;
+﻿using H.LowCode.Metadata;
 using System.Collections.Generic;
 
 namespace H.LowCode.DesignEngine.Services
@@ -25,7 +24,7 @@ namespace H.LowCode.DesignEngine.Services
         /// <summary>
         /// 页面属性
         /// </summary>
-        public PagePropertySchema PagePropertySchema { get; set; } = new PagePropertySchema();
+        public PageSettingSchema PagePropertySchema { get; set; } = new PageSettingSchema();
 
         public void Reset()
         {

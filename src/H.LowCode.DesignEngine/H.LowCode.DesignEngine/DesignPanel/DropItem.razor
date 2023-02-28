@@ -1,6 +1,6 @@
 ﻿@inject DragDropService DragDropService
 
-<div class="dropitem-box" style="float:left; opacity:@ComponentSchema.Opacity; width: @(_itemWidth)%; min-height: @(_itemHeight)px; 
+<div class="dropitem-box" style="@Style; float:left; opacity:@ComponentSchema.Opacity; width: @(_itemWidth)%; min-height: @(_itemHeight)px;
         @ComponentSchema.ComponentPropertySchema.CustomStyle">
     <div class="dropitem @DropItemClassMapper.Class" style="@ComponentSchema.ComponentPropertySchema.Style"
         @ondragstart="OnDragStart" 
@@ -51,6 +51,9 @@
 
     [Parameter]
     public Action<ComponentSchema> OnItemCopy { get; set; }
+
+    [Parameter]
+    public string Style { get; set; }
 
     protected ClassMapper DropItemClassMapper { get; } = new ClassMapper();
 

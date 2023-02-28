@@ -1,5 +1,5 @@
 ﻿using AntDesign;
-using H.LowCode.Schema;
+using H.LowCode.Metadata;
 
 namespace H.LowCode.DesignEngine.Components.ComponentProviders
 {
@@ -17,7 +17,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                         //builder.OpenComponent(0, typeof(Upload));
                         //builder.CloseComponent();
                     },
-                    ComponentPropertySchema = new ComponentPropertySchema()
+                    ComponentPropertySchema = new ComponentSettingSchema()
                     {
                         Title = "附件"
                     }

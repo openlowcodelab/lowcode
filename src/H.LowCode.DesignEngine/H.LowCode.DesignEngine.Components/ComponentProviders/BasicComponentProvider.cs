@@ -1,5 +1,5 @@
 ﻿using AntDesign;
-using H.LowCode.Schema;
+using H.LowCode.Metadata;
 
 namespace H.LowCode.DesignEngine.Components.ComponentProviders
 {
@@ -18,7 +18,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                         builder.OpenComponent(1, typeof(Input<string>));
                         builder.CloseComponent();
                     },
-                    ComponentPropertySchema = new ComponentPropertySchema(){
+                    ComponentPropertySchema = new ComponentSettingSchema(){
                         Title = "输入框",
                         ComponentValueType = ComponentValueType.String
                     }
@@ -31,7 +31,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                         builder.AddAttribute(1, "style", "height:50px;");
                         builder.CloseComponent();
                     },
-                    ComponentPropertySchema= new ComponentPropertySchema(){
+                    ComponentPropertySchema= new ComponentSettingSchema(){
                         Title = "大输入框",
                         ComponentValueType = ComponentValueType.String
                     }
@@ -43,7 +43,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                         builder.AddAttribute(1, "Picker", DatePickerType.Date);
                         builder.CloseComponent();
                     },
-                    ComponentPropertySchema = new ComponentPropertySchema(){
+                    ComponentPropertySchema = new ComponentSettingSchema(){
                         Title = "日期选择",
                         ComponentValueType = ComponentValueType.String
                     }
@@ -55,7 +55,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                         builder.OpenComponent(0, typeof(AntDesign.InputNumber<int>));
                         builder.CloseComponent();
                     },
-                    ComponentPropertySchema = new ComponentPropertySchema(){
+                    ComponentPropertySchema = new ComponentSettingSchema(){
                         Title = "数字输入框",
                         ComponentValueType = ComponentValueType.Integer
                     }
@@ -66,7 +66,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                         builder.OpenComponent(0, typeof(Select<string, string>));
                         builder.CloseComponent();
                     },
-                    ComponentPropertySchema = new ComponentPropertySchema(){
+                    ComponentPropertySchema = new ComponentSettingSchema(){
                         Title = "是否选择",
                     ComponentValueType = ComponentValueType.Boolean
                     }
@@ -77,7 +77,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                         builder.OpenComponent(0, typeof(Switch));
                         builder.CloseComponent();
                     },
-                    ComponentPropertySchema = new ComponentPropertySchema(){
+                    ComponentPropertySchema = new ComponentSettingSchema(){
                         Title = "是否switch",
                         ComponentValueType = ComponentValueType.Boolean
                     }
@@ -88,7 +88,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                         builder.OpenComponent(0, typeof(Radio<string>));
                         builder.CloseComponent();
                     },
-                    ComponentPropertySchema = new ComponentPropertySchema(){
+                    ComponentPropertySchema = new ComponentSettingSchema(){
                         Title = "下拉选择"
                     }
                 }

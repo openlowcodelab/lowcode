@@ -16,13 +16,13 @@
         {
             if (component.ComponentCategory == ComponentCategory.Basic)
             {
-                <DropItem @ref="currentDropItem" ComponentSchema="component" 
-                    OnItemClick="OnItemClick" OnItemDelete="OnItemDelete" OnItemCopy="OnItemCopy">
+                <DropItem Style="@Style" @ref="currentDropItem" ComponentSchema="component"
+              OnItemClick="OnItemClick" OnItemDelete="OnItemDelete" OnItemCopy="OnItemCopy">
                 </DropItem>
             }
             else if (component.ComponentCategory == ComponentCategory.Layout)
             {
-                <DropItem @ref="currentDropItem" ComponentSchema="component" 
+                <DropItem Style="@Style" @ref="currentDropItem" ComponentSchema="component" 
                     OnItemClick="OnItemClick" OnItemDelete="OnItemDelete" OnItemCopy="OnItemCopy">
                 </DropItem>
             }
@@ -36,7 +36,7 @@
     public EventCallback<ComponentSchema> OnItemDrop { get; set; }
 
     [Parameter]
-    public List<ComponentSchema> ComponentSchemas { get; set; } = new List<ComponentSchema>();
+    public IList<ComponentSchema> ComponentSchemas { get; set; } = new List<ComponentSchema>();
 
     [Parameter]
     public Action OnDragDropZoneClick { get; set; }

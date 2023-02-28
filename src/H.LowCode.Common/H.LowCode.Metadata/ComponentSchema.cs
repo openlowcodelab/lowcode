@@ -1,9 +1,9 @@
 ﻿using H.Extensions.System;
 using Microsoft.AspNetCore.Components;
-using H.LowCode.Schema;
+using H.LowCode.Metadata;
 using System.Text.Json.Serialization;
 
-namespace H.LowCode.Schema
+namespace H.LowCode.Metadata
 {
     public class ComponentSchema
     {
@@ -19,7 +19,7 @@ namespace H.LowCode.Schema
 
         public ComponentCategory ComponentCategory { get; set; } = ComponentCategory.Basic;
 
-        public ComponentPropertySchema ComponentPropertySchema { get; set; }
+        public ComponentSettingSchema ComponentPropertySchema { get; set; }
 
         [JsonIgnore]
         public bool IsSelected { get; set; }

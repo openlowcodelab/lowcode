@@ -1,6 +1,6 @@
 ﻿using AntDesign;
 using H.LowCode.DesignEngine.Components.Components;
-using H.LowCode.Schema;
+using H.LowCode.Metadata;
 
 namespace H.LowCode.DesignEngine.Components.ComponentProviders
 {
@@ -17,26 +17,30 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                     RenderFragment = (builder) =>
                     {
                         builder.OpenComponent(0, typeof(GridContainer));
-                        builder.AddAttribute(1, "Rows", 3);
-                        builder.AddAttribute(2, "Cols", 2);
+                        //builder.AddAttribute(1, "Rows", 1);
+                        //builder.AddAttribute(2, "Cols", 2);
                         builder.CloseComponent();
                     },
-                    ComponentPropertySchema = new ComponentPropertySchema()
+                    ComponentPropertySchema = new ComponentSettingSchema()
                     {
                         Title = "Grid 栅格",
-                        Style = "background-color: #ffffff00;",
+                        Style = "background-color: #ffffff00; height: auto;",
                         ItemWidth = 24,
-                        ItemHeight = 200
+                        ExtensionProperties = new Dictionary<string, ComponentExtensionPropertySchema>(){
+                            { "rows", new ComponentExtensionPropertySchema() { Label = "行数", Value = 1 } },
+                            { "cols", new ComponentExtensionPropertySchema(){ Label = "列数", Value = 2 } }
+                        }
                     }
                 },
                 new ComponentSchema(ComponentType:"layout"){
                     IsHiddenTitle = true,
+                    SupportProperties = new List<string>() { "MaximumLength", "MinimumLength", "Pattern", "Format" },
                     RenderFragment = (builder) =>
                     {
                         //builder.OpenComponent(0, typeof());
                         //builder.CloseComponent();
                     },
-                    ComponentPropertySchema = new ComponentPropertySchema()
+                    ComponentPropertySchema = new ComponentSettingSchema()
                     {
                         Title = "Layout 布局",
                         Style = "background-color: #ffffff00",

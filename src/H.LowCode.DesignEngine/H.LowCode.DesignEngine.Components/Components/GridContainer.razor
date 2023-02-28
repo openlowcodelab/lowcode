@@ -1,16 +1,18 @@
-﻿@using H.LowCode.Schema
+﻿@using H.LowCode.Metadata
 
-@for (var i = 0; i < Rows; i++)
-{
-    <GridRow Style="min-height:85px;">
-        @for (var i = 0; i < Cols; i++)
-       {
-            <GridCol Span="@(24/Cols)">
-                <ContainerBase ComponentSchemas="@ComponentSchemas"></ContainerBase>
-            </GridCol>
-       }
-    </GridRow>
-}
+<div style="height: auto;">
+    @for (var i = 0; i < Rows; i++)
+    {
+        <GridRow Style="min-height:85px; height: auto;">
+            @for (var i = 0; i < Cols; i++)
+           {
+                <GridCol Span="@(24/Cols)">
+                    <ContainerBase ComponentSchemas="@ComponentSchemas"></ContainerBase>
+                </GridCol>
+           }
+        </GridRow>
+    }
+</div>
 
 @code {
     [Parameter]
@@ -21,4 +23,21 @@
 
     [Parameter]
     public IList<ComponentSchema> ComponentSchemas { get; set; }
+
+    protected override void OnInitialized()
+    {
+        RegisterEventDispatcher();
+
+        base.OnInitialized();
+    }
+
+    private void RegisterEventDispatcher()
+    {
+        //订阅属性面板中的事件
+        BlazorEventDispatcher.RegisterEvent("designerengine.basicproperty.onchange", (value) =>
+        {
+            Rows = Random.Shared.Next(1, 4);
+            StateHasChanged();
+        });
+    }
 }

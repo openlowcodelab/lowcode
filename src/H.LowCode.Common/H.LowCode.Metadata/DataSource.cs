@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace H.LowCode.Schema
+namespace H.LowCode.Metadata
 {
     public class DataSource
     {

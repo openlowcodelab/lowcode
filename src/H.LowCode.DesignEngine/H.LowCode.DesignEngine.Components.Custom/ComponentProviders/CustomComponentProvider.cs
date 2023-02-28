@@ -1,5 +1,5 @@
 ﻿using AntDesign;
-using H.LowCode.Schema;
+using H.LowCode.Metadata;
 
 namespace H.LowCode.DesignEngine.Components.Custom.ComponentProviders
 {
@@ -19,7 +19,7 @@ namespace H.LowCode.DesignEngine.Components.Custom.ComponentProviders
                         builder.AddAttribute(1, "style", "height:55px;");
                         builder.CloseComponent();
                     },
-                    ComponentPropertySchema = new ComponentPropertySchema()
+                    ComponentPropertySchema = new ComponentSettingSchema()
                     {
                         Title = "HTML"
                     }
@@ -29,7 +29,7 @@ namespace H.LowCode.DesignEngine.Components.Custom.ComponentProviders
                         builder.OpenComponent(0, typeof(Input<string>));
                         builder.CloseComponent();
                     },
-                    ComponentPropertySchema = new ComponentPropertySchema()
+                    ComponentPropertySchema = new ComponentSettingSchema()
                     {
                         Title = "用户选择"
                     }
@@ -39,7 +39,7 @@ namespace H.LowCode.DesignEngine.Components.Custom.ComponentProviders
                         builder.OpenComponent(0, typeof(Input<string>));
                         builder.CloseComponent();
                     },
-                    ComponentPropertySchema = new ComponentPropertySchema()
+                    ComponentPropertySchema = new ComponentSettingSchema()
                     {
                         Title = "行政区划"
                     }
@@ -49,7 +49,7 @@ namespace H.LowCode.DesignEngine.Components.Custom.ComponentProviders
                         builder.OpenComponent(0, typeof(Input<string>));
                         builder.CloseComponent();
                     },
-                    ComponentPropertySchema = new ComponentPropertySchema()
+                    ComponentPropertySchema = new ComponentSettingSchema()
                     {
                         Title = "地图"
                     }
