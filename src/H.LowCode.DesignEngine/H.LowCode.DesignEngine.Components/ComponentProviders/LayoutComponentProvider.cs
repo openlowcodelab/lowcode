@@ -14,9 +14,10 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
             {
                 new ComponentSchema(ComponentType:"grid"){
                     IsHiddenTitle = true,
+                    ComponentCategory = ComponentCategory.Layout,
                     RenderFragment = (builder) =>
                     {
-                        builder.OpenComponent(0, typeof(GridContainer));
+                        builder.OpenComponent(0, typeof(GridLayout));
                         //builder.AddAttribute(1, "Rows", 1);
                         //builder.AddAttribute(2, "Cols", 2);
                         builder.CloseComponent();
@@ -34,6 +35,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                 },
                 new ComponentSchema(ComponentType:"layout"){
                     IsHiddenTitle = true,
+                    ComponentCategory = ComponentCategory.Layout,
                     SupportProperties = new List<string>() { "MaximumLength", "MinimumLength", "Pattern", "Format" },
                     RenderFragment = (builder) =>
                     {

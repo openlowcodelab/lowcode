@@ -1,13 +1,14 @@
 ﻿@inject DragDropService DragDropService
 
-<div class="dropitem-box" style="@Style; float:left; opacity:@ComponentSchema.Opacity; width: @(_itemWidth)%; min-height: @(_itemHeight)px;
+<div class="dropitem-box" style="@Style; float:left; opacity:@ComponentSchema.Opacity; width: @(_itemWidth)%; @(_itemHeight) min-height: @(_itemMinHeight)px;
         @ComponentSchema.ComponentPropertySchema.CustomStyle">
     <div class="dropitem @DropItemClassMapper.Class" style="@ComponentSchema.ComponentPropertySchema.Style"
-        @ondragstart="OnDragStart" 
-        @ondragenter="OnDragEnter" 
-        @ondragover:preventDefault @ondragover:stopPropagation @ondragover="(e)=>OnDragOver(e)" 
-        @ondragleave="OnDragLeave" 
-        @onclick="OnClick" @onclick:stopPropagation>
+         @ondragstart="OnDragStart" @ondragstart:stopPropagation @ondragstart:preventDefault
+         @ondragenter="OnDragEnter" @ondragenter:stopPropagation @ondragenter:preventDefault
+         @ondragover="OnDragOver" @ondragover:stopPropagation @ondragover:preventDefault
+         @ondragleave="OnDragLeave" @ondragleave:stopPropagation @ondragleave:preventDefault
+         @onclick="OnClick" @onclick:stopPropagation>
+
         @if (ComponentSchema.IsSelected)
         {
             <div draggable="true" class="dropitem-icon-move">
@@ -53,12 +54,16 @@
     public Action<ComponentSchema> OnItemCopy { get; set; }
 
     [Parameter]
+    public DropItemType DropItemType{ get; set; }
+
+    [Parameter]
     public string Style { get; set; }
 
     protected ClassMapper DropItemClassMapper { get; } = new ClassMapper();
 
     private double _itemWidth;
-    private double _itemHeight;
+    private string _itemHeight;
+    private double _itemMinHeight;
 
     protected override void OnInitialized()
     {
@@ -80,7 +85,14 @@
         ComponentSchema.ComponentPropertySchema.Name = $"{ComponentSchema.ComponentType}_{Random.Shared.Next(100, 999)}";
 
         _itemWidth = (ComponentSchema.ComponentPropertySchema.ItemWidth.HasValue == false ? 12 : ComponentSchema.ComponentPropertySchema.ItemWidth.Value) / 24 * 100;
-        _itemHeight = ComponentSchema.ComponentPropertySchema.ItemHeight.HasValue == false ? 85 : ComponentSchema.ComponentPropertySchema.ItemHeight.Value;
+        if (DropItemType == DropItemType.Component)
+        {
+            _itemMinHeight = ComponentSchema.ComponentPropertySchema.ItemHeight.HasValue == false ? 85 : ComponentSchema.ComponentPropertySchema.ItemHeight.Value;
+        }
+        else
+        {
+            _itemHeight = "height: auto;";
+        }
     }
 
     private void OnClick()
@@ -110,7 +122,7 @@
         }
         else
         {
-            ComponentSchema.ComponentPropertySchema.Style = "border-bottom: 2px dashed #1890ff;";
+            ComponentSchema.ComponentPropertySchema.Style = "border-bottom: 2px dashed #1890ff; height: auto;";
             ComponentSchema.IsDroppedToBack = true;
         }
     }

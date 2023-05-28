@@ -6,8 +6,8 @@
         <GridRow Style="min-height:85px; height: auto;">
             @for (var i = 0; i < Cols; i++)
            {
-                <GridCol Span="@(24/Cols)">
-                    <ContainerBase ComponentSchemas="@ComponentSchemas"></ContainerBase>
+                <GridCol Span="@(24/Cols)" Style="width:100%; background-color:#f4f4f4; border: 1px dashed #ded9d9;">
+                    <ComponentContainer></ComponentContainer>
                 </GridCol>
            }
         </GridRow>
@@ -20,9 +20,6 @@
 
     [Parameter]
     public int Cols { get; set; } = 2;
-
-    [Parameter]
-    public IList<ComponentSchema> ComponentSchemas { get; set; }
 
     protected override void OnInitialized()
     {

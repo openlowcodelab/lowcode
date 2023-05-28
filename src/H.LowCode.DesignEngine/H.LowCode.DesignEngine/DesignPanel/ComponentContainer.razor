@@ -1,0 +1,187 @@
+﻿@inject DragDropService DragDropService
+@implements IDisposable
+
+<div class="@Class" style="height:100%; @Style" ondragstart="event.dataTransfer.setData('text', event.target.id);"
+     @onclick="OnClick" @onclick:stopPropagation
+     @ondrop="OnDrop" @ondrop:stopPropagation
+     @ondragover="OnDragOver">
+
+    @if(ComponentSchemas == null || ComponentSchemas.Count == 0)
+    {
+        
+    }
+    else {
+        @foreach (var component in ComponentSchemas)
+        {
+            DropItemType dropItemType = DropItemType.Component;
+            if (component.ComponentCategory == ComponentCategory.Layout)
+            {
+                dropItemType = DropItemType.Layout;
+            }
+            <DropItem DropItemType="@dropItemType" Style="@Style" @ref="currentDropItem" ComponentSchema="component" OnItemClick="OnItemClick" OnItemDelete="OnItemDelete" OnItemCopy="OnItemCopy">
+            </DropItem>
+        }
+    }
+</div>
+
+@code {
+    #region Parameter
+    [Parameter]
+    public EventCallback<ComponentSchema> OnItemDrop { get; set; }
+
+    [Parameter]
+    public IList<ComponentSchema> ComponentSchemas { get; set; }
+
+    [Parameter]
+    public ComponentSchema ParentComponentSchema { get; set; }
+
+    [Parameter]
+    public Action OnDragDropZoneClick { get; set; }
+
+    [Parameter]
+    public string Class { get; set; }
+
+    [Parameter]
+    public string Style { get; set; }
+
+    [Parameter]
+    public bool IsRootContainer{ get; set; }
+    #endregion
+
+    private DropItem currentDropItem { get; set; }
+
+    #region Event
+    protected override void OnInitialized()
+    {
+        Init();
+        RegisterEventDispatcher();
+
+        base.OnInitialized();
+    }
+
+    private void OnDrop()
+    {
+        var currentDragComponent = DragDropService.CurrentDragComponent;
+
+        //源拖拽区才新增，目标拖拽区只移动
+        DragDropService.DropItem_DragEnd();
+
+        if (currentDragComponent.IsDroppedFromComponentPanel == false)
+        {
+            DragDropService.DragItem_Add(ComponentSchemas, currentDragComponent);
+        }
+        else
+        {
+            DropItemSorting(DragDropService.LastDragOverComponent, currentDragComponent);
+        }
+
+        StateHasChanged();
+        OnItemDrop.InvokeAsync(currentDragComponent);
+    }
+
+    private void OnDragOver(DragEventArgs dragEventArgs)
+    {
+        //Style = "border: 2px dashed #1890ff;";
+    }
+
+    private void OnClick()
+    {
+        BlazorEventDispatcher.Trigger("designerengine.dropitem.onblur", null);
+    }
+
+    private void OnItemClick(ComponentSchema componentSchema)
+    {
+        //取消上一个选中，设置当前选中项
+        if (DragDropService.LastSelectedComponent != null)
+            DragDropService.LastSelectedComponent.IsSelected = false;
+
+        componentSchema.IsSelected = true;
+        DragDropService.LastSelectedComponent = componentSchema;
+
+        StateHasChanged();
+    }
+
+    private void OnItemDelete(ComponentSchema componentSchema)
+    {
+        //将下一个设为选中
+        int index = ComponentSchemas.IndexOf(componentSchema);
+        if (ComponentSchemas.Count > 1)
+        {
+            int next = index + 1 >= ComponentSchemas.Count ? index -1 : index + 1;
+            ComponentSchemas[next].IsSelected = true;
+            DragDropService.LastSelectedComponent = ComponentSchemas[next];
+        }
+        ComponentSchemas.Remove(componentSchema);
+        StateHasChanged();
+    }
+
+    private void OnItemCopy(ComponentSchema componentSchema)
+    {
+        componentSchema.IsSelected = false;
+        DragDropService.DragItem_Add(ComponentSchemas, componentSchema, true);
+        StateHasChanged();
+    }
+    #endregion
+
+    #region
+    private void Init()
+    {
+        if (ComponentSchemas == null)
+            ComponentSchemas = new List<ComponentSchema>();
+    }
+
+    private void RegisterEventDispatcher()
+    {
+        if (IsRootContainer)
+        {
+            //订阅左侧组件面板中的组件点击事件
+            BlazorEventDispatcher.RegisterEvent("designerengine.dragitem.onclick", (value) =>
+            {
+                DragDropService.DragItem_Add(ComponentSchemas, (ComponentSchema)value);
+                StateHasChanged();
+            });
+        }
+
+        //订阅设计面板取消选中事件
+        BlazorEventDispatcher.RegisterEvent("designerengine.dropitem.onblur", (value) =>
+        {
+        //取消选中项
+        if (DragDropService.LastSelectedComponent != null)
+                DragDropService.LastSelectedComponent.IsSelected = false;
+            StateHasChanged();
+        });
+    }
+
+    /// <summary>
+    /// 排序
+    /// </summary>
+    /// <param name="dragOverComponent"></param>
+    /// <param name="currentDragComponent"></param>
+    private void DropItemSorting(ComponentSchema dragOverComponent, ComponentSchema currentDragComponent)
+    {
+        if (dragOverComponent == null)
+            return;
+
+        if (currentDragComponent == DragDropService.LastDragOverComponent)
+            return;
+
+        var indexDraggedOverItem = ComponentSchemas.IndexOf(dragOverComponent);
+        if (dragOverComponent.IsDroppedToBack == false)
+            indexDraggedOverItem -= 1;
+
+        if (indexDraggedOverItem < 0)
+            indexDraggedOverItem = 0;
+        if (indexDraggedOverItem > ComponentSchemas.Count)
+            indexDraggedOverItem = ComponentSchemas.Count - 1;
+
+        //先移除，再插入对应位置
+        ComponentSchemas.Remove(currentDragComponent);
+        ComponentSchemas.Insert(indexDraggedOverItem, currentDragComponent);
+    }
+
+    public void Dispose()
+    {
+        DragDropService.Reset();
+    }
+    #endregion
+}

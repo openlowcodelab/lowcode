@@ -21,11 +21,6 @@ namespace H.LowCode.DesignEngine.Services
         /// </summary>
         public ComponentSchema LastDragOverComponent { get; set; }
 
-        /// <summary>
-        /// 页面属性
-        /// </summary>
-        public PageSettingSchema PagePropertySchema { get; set; } = new PageSettingSchema();
-
         public void Reset()
         {
             LastSelectedComponent = default;
