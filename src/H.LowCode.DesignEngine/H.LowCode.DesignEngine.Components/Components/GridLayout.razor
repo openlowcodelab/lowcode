@@ -31,7 +31,7 @@
     private void RegisterEventDispatcher()
     {
         //订阅属性面板中的事件
-        BlazorEventDispatcher.RegisterEvent("designerengine.basicproperty.onchange", (value) =>
+        BlazorEventDispatcher.RegisterEvent("designengine.propertysetting.onchange", (value) =>
         {
             Rows = Random.Shared.Next(1, 4);
             StateHasChanged();

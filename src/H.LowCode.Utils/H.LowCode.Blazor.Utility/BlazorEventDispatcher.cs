@@ -7,7 +7,7 @@ namespace H.LowCode.Blazor.Utility
     {
         /// <summary>
         /// key 格式建议(小写)：{组件库名称}.{组件名称}.{事件名称}
-        /// 如：designerengine.dragitem.onclick
+        /// 如：designengine.dragitem.onclick
         /// </summary>
         private static Dictionary<string, Action<object>> _actions;
         static BlazorEventDispatcher()

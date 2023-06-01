@@ -1,4 +1,5 @@
 ﻿using H.LowCode.Metadata;
+using Microsoft.AspNetCore.Components.Web;
 using System.Collections.Generic;
 
 namespace H.LowCode.DesignEngine.Services
@@ -46,6 +47,18 @@ namespace H.LowCode.DesignEngine.Services
             CurrentDragComponent.ComponentPropertySchema.Style = string.Empty;
             if (LastDragOverComponent != null)
                 LastDragOverComponent.ComponentPropertySchema.Style = string.Empty;
+        }
+
+        public void DragItem_Effect_Move(DragEventArgs dragEventArgs)
+        {
+            dragEventArgs.DataTransfer.DropEffect = "move";
+            
+        }
+
+        public void DragItem_Copy(DragEventArgs dragEventArgs)
+        {
+            dragEventArgs.DataTransfer.DropEffect = "copy";
+
         }
     }
 }

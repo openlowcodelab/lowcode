@@ -2,15 +2,12 @@
 @implements IDisposable
 
 <div class="@Class" style="height:100%; @Style" ondragstart="event.dataTransfer.setData('text', event.target.id);"
-     @onclick="OnClick" @onclick:stopPropagation
-     @ondrop="OnDrop" @ondrop:stopPropagation
-     @ondragover="OnDragOver">
+     @onclick="OnClick"
+     @ondrop="OnDrop" @ondrop:preventDefault @ondrop:stopPropagation
+     @ondragover="OnDragOver" @ondragover:preventDefault @ondragover:stopPropagation>
 
-    @if(ComponentSchemas == null || ComponentSchemas.Count == 0)
+    @if(ComponentSchemas != null)
     {
-        
-    }
-    else {
         @foreach (var component in ComponentSchemas)
         {
             DropItemType dropItemType = DropItemType.Component;
@@ -86,7 +83,7 @@
 
     private void OnClick()
     {
-        BlazorEventDispatcher.Trigger("designerengine.dropitem.onblur", null);
+        BlazorEventDispatcher.Trigger("designengine.dropitem.onblur", null);
     }
 
     private void OnItemClick(ComponentSchema componentSchema)
@@ -135,7 +132,7 @@
         if (IsRootContainer)
         {
             //订阅左侧组件面板中的组件点击事件
-            BlazorEventDispatcher.RegisterEvent("designerengine.dragitem.onclick", (value) =>
+            BlazorEventDispatcher.RegisterEvent("designengine.dragitem.onclick", (value) =>
             {
                 DragDropService.DragItem_Add(ComponentSchemas, (ComponentSchema)value);
                 StateHasChanged();
@@ -143,7 +140,7 @@
         }
 
         //订阅设计面板取消选中事件
-        BlazorEventDispatcher.RegisterEvent("designerengine.dropitem.onblur", (value) =>
+        BlazorEventDispatcher.RegisterEvent("designengine.dropitem.onblur", (value) =>
         {
         //取消选中项
         if (DragDropService.LastSelectedComponent != null)

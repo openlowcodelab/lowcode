@@ -1,4 +1,6 @@
-﻿<div draggable="true" class="dragitem" @ondragstart="()=>OnDragStart()" @onclick="()=>OnClick()">
+﻿@inject DragDropService DragDropService
+
+<div draggable="true" class="dragitem" @ondragstart="OnDragStart" @onclick="OnClick">
     @ComponentSchema.ComponentPropertySchema.Title
 </div>
 
@@ -10,7 +12,7 @@
     [Parameter]
     public Action<ComponentSchema> OnItemDragStart { get; set; }
 
-    private void OnDragStart()
+    private void OnDragStart(DragEventArgs dragEventArgs)
     {
         ComponentSchema dragComponentSchema = ComponentSchema.Clone();
         OnItemDragStart.Invoke(dragComponentSchema);
@@ -21,6 +23,6 @@
         //发送事件，通知订阅此事件的其他组件更新状态
         ComponentSchema clickComponentSchema = ComponentSchema.Clone();
         clickComponentSchema.IsDroppedFromComponentPanel = true;
-        BlazorEventDispatcher.Trigger("designerengine.dragitem.onclick", clickComponentSchema);
+        BlazorEventDispatcher.Trigger("designengine.dragitem.onclick", clickComponentSchema);
     }
 }
