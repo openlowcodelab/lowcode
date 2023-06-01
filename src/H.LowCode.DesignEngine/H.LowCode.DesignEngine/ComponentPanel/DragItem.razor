@@ -9,13 +9,11 @@
     [Parameter]
     public ComponentSchema ComponentSchema{ get; set; }
 
-    [Parameter]
-    public Action<ComponentSchema> OnItemDragStart { get; set; }
-
     private void OnDragStart(DragEventArgs dragEventArgs)
     {
         ComponentSchema dragComponentSchema = ComponentSchema.Clone();
-        OnItemDragStart.Invoke(dragComponentSchema);
+        //设置当前拖拽项
+        DragDropService.CurrentDragComponent = dragComponentSchema;
     }
 
     private void OnClick()

@@ -3,10 +3,10 @@
 <div class="dropitem-box" style="@Style; float:left; opacity:@ComponentSchema.Opacity; width: @(_itemWidth)%; @(_itemHeight) min-height: @(_itemMinHeight)px;
         @ComponentSchema.ComponentPropertySchema.CustomStyle">
     <div class="dropitem @DropItemClassMapper.Class" style="@ComponentSchema.ComponentPropertySchema.Style"
-         @ondragstart="OnDragStart" @ondragstart:stopPropagation @ondragstart:preventDefault
-         @ondragenter="OnDragEnter" @ondragenter:stopPropagation @ondragenter:preventDefault
+         @ondragstart="OnDragStart"
+         @ondragenter="OnDragEnter"
          @ondragover="OnDragOver" @ondragover:stopPropagation @ondragover:preventDefault
-         @ondragleave="OnDragLeave" @ondragleave:stopPropagation @ondragleave:preventDefault
+         @ondragleave="OnDragLeave"
          @onclick="OnClick" @onclick:stopPropagation>
 
         @if (ComponentSchema.IsSelected)
@@ -31,8 +31,7 @@
     </div>
 </div>
 
-@code
-{
+@code {
     [Parameter]
     public ComponentSchema ComponentSchema { get; set; }
 
@@ -46,7 +45,7 @@
     public Action<ComponentSchema> OnItemCopy { get; set; }
 
     [Parameter]
-    public DropItemType DropItemType{ get; set; }
+    public DropItemType DropItemType { get; set; }
 
     [Parameter]
     public string Style { get; set; }
@@ -141,6 +140,17 @@
 
     private void RegisterEventDispatcher()
     {
+        //订阅设计面板中的组件点击事件
+        BlazorEventDispatcher.RegisterEvent("designengine.dropitem.onclick", (value) =>
+        {
+            //取消选中项
+            if (DragDropService.LastSelectedComponent != ComponentSchema)
+            {
+                ComponentSchema.IsSelected = false;
+                StateHasChanged();
+            }
+        });
+
         //订阅属性面板中的事件
         BlazorEventDispatcher.RegisterEvent("designengine.propertysetting.onchange", (value) =>
         {

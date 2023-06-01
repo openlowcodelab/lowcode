@@ -1,21 +1,21 @@
 ﻿@inject DragDropService DragDropService
 @implements IDisposable
 
-<div class="@Class" style="height:100%; @Style" ondragstart="event.dataTransfer.setData('text', event.target.id);"
+<div class="@ComponentContainerSchema.Class" style="height:100%; @ComponentContainerSchema.Style" ondragstart="event.dataTransfer.setData('text', event.target.id);"
      @onclick="OnClick"
      @ondrop="OnDrop" @ondrop:preventDefault @ondrop:stopPropagation
      @ondragover="OnDragOver" @ondragover:preventDefault @ondragover:stopPropagation>
-
-    @if(ComponentSchemas != null)
+     
+    @if (ComponentContainerSchema != null)
     {
-        @foreach (var component in ComponentSchemas)
+        @foreach (var component in ComponentContainerSchema.ComponentSchemas)
         {
             DropItemType dropItemType = DropItemType.Component;
             if (component.ComponentCategory == ComponentCategory.Layout)
             {
                 dropItemType = DropItemType.Layout;
             }
-            <DropItem DropItemType="@dropItemType" Style="@Style" @ref="currentDropItem" ComponentSchema="component" OnItemClick="OnItemClick" OnItemDelete="OnItemDelete" OnItemCopy="OnItemCopy">
+            <DropItem DropItemType="@dropItemType" Style="@ComponentContainerSchema.Style" @ref="currentDropItem" ComponentSchema="component" OnItemClick="OnItemClick" OnItemDelete="OnItemDelete" OnItemCopy="OnItemCopy">
             </DropItem>
         }
     }
@@ -24,25 +24,7 @@
 @code {
     #region Parameter
     [Parameter]
-    public EventCallback<ComponentSchema> OnItemDrop { get; set; }
-
-    [Parameter]
-    public IList<ComponentSchema> ComponentSchemas { get; set; }
-
-    [Parameter]
-    public ComponentSchema ParentComponentSchema { get; set; }
-
-    [Parameter]
-    public Action OnDragDropZoneClick { get; set; }
-
-    [Parameter]
-    public string Class { get; set; }
-
-    [Parameter]
-    public string Style { get; set; }
-
-    [Parameter]
-    public bool IsRootContainer{ get; set; }
+    public ComponentContainerSchema ComponentContainerSchema { get; set; }
     #endregion
 
     private DropItem currentDropItem { get; set; }
@@ -65,7 +47,7 @@
 
         if (currentDragComponent.IsDroppedFromComponentPanel == false)
         {
-            DragDropService.DragItem_Add(ComponentSchemas, currentDragComponent);
+            DragDropService.DragItem_Add(ComponentContainerSchema.ComponentSchemas, currentDragComponent);
         }
         else
         {
@@ -73,7 +55,6 @@
         }
 
         StateHasChanged();
-        OnItemDrop.InvokeAsync(currentDragComponent);
     }
 
     private void OnDragOver(DragEventArgs dragEventArgs)
@@ -101,21 +82,21 @@
     private void OnItemDelete(ComponentSchema componentSchema)
     {
         //将下一个设为选中
-        int index = ComponentSchemas.IndexOf(componentSchema);
-        if (ComponentSchemas.Count > 1)
+        int index = ComponentContainerSchema.ComponentSchemas.IndexOf(componentSchema);
+        if (ComponentContainerSchema.ComponentSchemas.Count > 1)
         {
-            int next = index + 1 >= ComponentSchemas.Count ? index -1 : index + 1;
-            ComponentSchemas[next].IsSelected = true;
-            DragDropService.LastSelectedComponent = ComponentSchemas[next];
+            int next = index + 1 >= ComponentContainerSchema.ComponentSchemas.Count ? index - 1 : index + 1;
+            ComponentContainerSchema.ComponentSchemas[next].IsSelected = true;
+            DragDropService.LastSelectedComponent = ComponentContainerSchema.ComponentSchemas[next];
         }
-        ComponentSchemas.Remove(componentSchema);
+        ComponentContainerSchema.ComponentSchemas.Remove(componentSchema);
         StateHasChanged();
     }
 
     private void OnItemCopy(ComponentSchema componentSchema)
     {
         componentSchema.IsSelected = false;
-        DragDropService.DragItem_Add(ComponentSchemas, componentSchema, true);
+        DragDropService.DragItem_Add(ComponentContainerSchema.ComponentSchemas, componentSchema, true);
         StateHasChanged();
     }
     #endregion
@@ -123,29 +104,21 @@
     #region
     private void Init()
     {
-        if (ComponentSchemas == null)
-            ComponentSchemas = new List<ComponentSchema>();
+        if (ComponentContainerSchema == null)
+            ComponentContainerSchema = new ComponentContainerSchema();
     }
 
     private void RegisterEventDispatcher()
     {
-        if (IsRootContainer)
-        {
-            //订阅左侧组件面板中的组件点击事件
-            BlazorEventDispatcher.RegisterEvent("designengine.dragitem.onclick", (value) =>
-            {
-                DragDropService.DragItem_Add(ComponentSchemas, (ComponentSchema)value);
-                StateHasChanged();
-            });
-        }
-
         //订阅设计面板取消选中事件
         BlazorEventDispatcher.RegisterEvent("designengine.dropitem.onblur", (value) =>
         {
-        //取消选中项
-        if (DragDropService.LastSelectedComponent != null)
+            //取消选中项
+            if (DragDropService.LastSelectedComponent != null)
+            {
                 DragDropService.LastSelectedComponent.IsSelected = false;
-            StateHasChanged();
+                StateHasChanged();
+            }
         });
     }
 
@@ -162,18 +135,18 @@
         if (currentDragComponent == DragDropService.LastDragOverComponent)
             return;
 
-        var indexDraggedOverItem = ComponentSchemas.IndexOf(dragOverComponent);
+        var indexDraggedOverItem = ComponentContainerSchema.ComponentSchemas.IndexOf(dragOverComponent);
         if (dragOverComponent.IsDroppedToBack == false)
             indexDraggedOverItem -= 1;
 
         if (indexDraggedOverItem < 0)
             indexDraggedOverItem = 0;
-        if (indexDraggedOverItem > ComponentSchemas.Count)
-            indexDraggedOverItem = ComponentSchemas.Count - 1;
+        if (indexDraggedOverItem > ComponentContainerSchema.ComponentSchemas.Count)
+            indexDraggedOverItem = ComponentContainerSchema.ComponentSchemas.Count - 1;
 
         //先移除，再插入对应位置
-        ComponentSchemas.Remove(currentDragComponent);
-        ComponentSchemas.Insert(indexDraggedOverItem, currentDragComponent);
+        ComponentContainerSchema.ComponentSchemas.Remove(currentDragComponent);
+        ComponentContainerSchema.ComponentSchemas.Insert(indexDraggedOverItem, currentDragComponent);
     }
 
     public void Dispose()

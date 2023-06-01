@@ -28,7 +28,7 @@
             <ComponentPanel></ComponentPanel>
         </Sider>
         <Content Class="designpage">
-            <DesignPanel RootComponentSchemas="@RootComponentSchemas"></DesignPanel>
+            <DesignPanel RootComponentContainerSchema="@RootComponentContainerSchema"></DesignPanel>
         </Content>
         <Sider Class="designpage" Style="flex: auto; max-width: max-content; min-width: 250px;" Theme="SiderTheme.Light">
             <SettingPanel></SettingPanel>
@@ -44,7 +44,7 @@
     [Parameter]
     public string PageId { get; set; }
 
-    private List<ComponentSchema> RootComponentSchemas = new List<ComponentSchema>();
+    private ComponentContainerSchema RootComponentContainerSchema = new ComponentContainerSchema();
 
     public async void SaveMetadata()
     {
@@ -71,7 +71,7 @@
     private PageSchema GetPageSchema()
     {
         PageSchema pageSchema = new PageSchema();
-        pageSchema.ComponentSchemas = RootComponentSchemas.Select(t => t.ComponentPropertySchema).ToList();
+        pageSchema.ComponentSchemas = RootComponentContainerSchema.ComponentSchemas.Select(t => t.ComponentPropertySchema).ToList();
         pageSchema.DataSource = new DataSource() { DataSourceType = DataSourceType.Api };
         return pageSchema;
     }

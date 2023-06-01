@@ -1,10 +1,29 @@
-﻿<div class="designpage" style="margin:5px; height:100%; height:100%;">
-    <ComponentContainer ComponentSchemas="@RootComponentSchemas" IsRootContainer="true"></ComponentContainer>
+﻿@inject DragDropService DragDropService
+
+<div class="designpage" style="margin:5px; height:100%; height:100%;">
+    <ComponentContainer ComponentContainerSchema="@RootComponentContainerSchema"></ComponentContainer>
 </div>
 
 @code {
     #region Parameter
     [Parameter]
-    public IList<ComponentSchema> RootComponentSchemas { get; set; } = new List<ComponentSchema>();
+    public ComponentContainerSchema RootComponentContainerSchema{ get; set; }
     #endregion
+
+    protected override void OnInitialized()
+    {
+        RegisterEventDispatcher();
+
+        base.OnInitialized();
+    }
+
+    private void RegisterEventDispatcher()
+    {
+        //订阅左侧组件面板中的组件点击事件
+        BlazorEventDispatcher.RegisterEvent("designengine.dragitem.onclick", (value) =>
+        {
+            DragDropService.DragItem_Add(RootComponentContainerSchema.ComponentSchemas, (ComponentSchema)value);
+            StateHasChanged();
+        });
+    }
 }
