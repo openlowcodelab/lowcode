@@ -17,7 +17,7 @@ namespace H.LowCode.DesignEngine
         {
             builder.Services.AddAntDesign();
 
-            builder.Services.AddScoped(typeof(DragDropService));
+            builder.Services.AddScoped(typeof(DragDropStateService));
         }
     }
 }

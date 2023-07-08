@@ -12,7 +12,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
             List<ComponentSchema> components = new List<ComponentSchema>()
             {
                 new ComponentSchema(ComponentType:"upload"){
-                    RenderFragment = (builder) =>
+                    RenderFragment = (componentSchema) =>  (builder) =>
                     {
                         //builder.OpenComponent(0, typeof(Upload));
                         //builder.CloseComponent();

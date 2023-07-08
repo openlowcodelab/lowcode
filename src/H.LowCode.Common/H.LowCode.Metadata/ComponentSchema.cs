@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Components;
 using H.LowCode.Metadata;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Components.Rendering;
 
 namespace H.LowCode.Metadata
 {
@@ -45,7 +46,7 @@ namespace H.LowCode.Metadata
         public IList<string> SupportProperties{get;set;}
 
         [JsonIgnore]
-        public RenderFragment RenderFragment { get; set; }
+        public RenderFragment<ComponentSchema> RenderFragment { get; set; }
 
         /// <summary>
         /// 是否隐藏标题

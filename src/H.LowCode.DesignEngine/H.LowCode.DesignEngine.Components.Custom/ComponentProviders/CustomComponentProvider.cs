@@ -13,7 +13,7 @@ namespace H.LowCode.DesignEngine.Components.Custom.ComponentProviders
             {
                 new ComponentSchema(ComponentType:"html"){
                     SupportProperties = new List<string>(){ "MaximumLength", "MinimumLength" },
-                    RenderFragment = (builder) =>
+                    RenderFragment = (componentSchema) =>  (builder) =>
                     {
                         builder.OpenComponent(0, typeof(TextArea));
                         builder.AddAttribute(1, "style", "height:55px;");
@@ -25,7 +25,7 @@ namespace H.LowCode.DesignEngine.Components.Custom.ComponentProviders
                     }
                 },
                 new ComponentSchema(ComponentType:"userselect"){
-                    RenderFragment = (builder) => {
+                    RenderFragment = (componentSchema) =>  (builder) => {
                         builder.OpenComponent(0, typeof(Input<string>));
                         builder.CloseComponent();
                     },
@@ -35,7 +35,7 @@ namespace H.LowCode.DesignEngine.Components.Custom.ComponentProviders
                     }
                 },
                 new ComponentSchema(ComponentType:"region"){
-                    RenderFragment = (builder) => {
+                    RenderFragment = (componentSchema) =>  (builder) => {
                         builder.OpenComponent(0, typeof(Input<string>));
                         builder.CloseComponent();
                     },
@@ -45,7 +45,7 @@ namespace H.LowCode.DesignEngine.Components.Custom.ComponentProviders
                     }
                 },
                 new ComponentSchema(ComponentType:"map"){
-                    RenderFragment = (builder) => {
+                    RenderFragment = (componentSchema) =>  (builder) => {
                         builder.OpenComponent(0, typeof(Input<string>));
                         builder.CloseComponent();
                     },

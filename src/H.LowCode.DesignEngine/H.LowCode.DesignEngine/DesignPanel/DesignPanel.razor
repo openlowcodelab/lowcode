@@ -1,7 +1,7 @@
-﻿@inject DragDropService DragDropService
+﻿@inject DragDropStateService DragDropStateService
 
 <div class="designpage" style="margin:5px; height:100%; height:100%;">
-    <ComponentContainer ComponentContainerSchema="@RootComponentContainerSchema"></ComponentContainer>
+    <ComponentContainer ParentComponentContainerSchema="@RootComponentContainerSchema"></ComponentContainer>
 </div>
 
 @code {
@@ -12,18 +12,13 @@
 
     protected override void OnInitialized()
     {
-        RegisterEventDispatcher();
+        Init();
 
         base.OnInitialized();
     }
 
-    private void RegisterEventDispatcher()
+    private void Init()
     {
-        //订阅左侧组件面板中的组件点击事件
-        BlazorEventDispatcher.RegisterEvent("designengine.dragitem.onclick", (value) =>
-        {
-            DragDropService.DragItem_Add(RootComponentContainerSchema.ComponentSchemas, (ComponentSchema)value);
-            StateHasChanged();
-        });
+        DragDropStateService.RootComponentContainerSchema = RootComponentContainerSchema;
     }
 }

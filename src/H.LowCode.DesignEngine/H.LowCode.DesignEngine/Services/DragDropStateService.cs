@@ -4,7 +4,10 @@ using System.Collections.Generic;
 
 namespace H.LowCode.DesignEngine.Services
 {
-    internal class DragDropService
+    /// <summary>
+    /// 拖拽状态服务
+    /// </summary>
+    internal class DragDropStateService
     {
         /// <summary>
         /// 最后选中对象
@@ -22,6 +25,16 @@ namespace H.LowCode.DesignEngine.Services
         /// </summary>
         public ComponentSchema LastDragOverComponent { get; set; }
 
+        /// <summary>
+        /// 父级
+        /// </summary>
+        public ComponentContainerSchema RootComponentContainerSchema { get; set; }
+
+        /// <summary>
+        /// 父级
+        /// </summary>
+        public ComponentContainerSchema ParentComponentContainerSchema { get; set; }
+        
         public void Reset()
         {
             LastSelectedComponent = default;
@@ -29,19 +42,19 @@ namespace H.LowCode.DesignEngine.Services
             LastDragOverComponent = default;
         }
 
-        public void DragItem_Add(IList<ComponentSchema> ComponentSchemas, ComponentSchema componentSchemas, bool isSelected = false)
+        public void DragItem_Add(IList<ComponentSchema> componentSchemas, ComponentSchema componentSchema, bool isSelected = false)
         {
-            var dropComponentSchemas = componentSchemas.Clone();
-            dropComponentSchemas.IsDroppedFromComponentPanel = true;
+            var dropComponentSchema = componentSchema.Clone();
+            dropComponentSchema.IsDroppedFromComponentPanel = true;
             if (isSelected)
             {
-                dropComponentSchemas.IsSelected = isSelected;
-                LastSelectedComponent = dropComponentSchemas;
+                dropComponentSchema.IsSelected = isSelected;
+                LastSelectedComponent = dropComponentSchema;
             }
-            ComponentSchemas.Add(dropComponentSchemas);
+            componentSchemas.Add(dropComponentSchema);
         }
 
-        public void DropItem_DragEnd()
+        public void DropItem_DragEnd_Style()
         {
             CurrentDragComponent.Opacity = 1;
             CurrentDragComponent.ComponentPropertySchema.Style = string.Empty;

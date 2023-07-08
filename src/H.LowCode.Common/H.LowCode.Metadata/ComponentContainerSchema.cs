@@ -17,6 +17,6 @@ namespace H.LowCode.Metadata
 
         public IList<ComponentSchema> ComponentSchemas { get; set; } = new List<ComponentSchema>();
 
-        public IList<ComponentContainerSchema> ChildComponentContainerSchema { get; set; }
+        public IList<ComponentContainerSchema> ChildComponentContainerSchema { get; set; } = new List<ComponentContainerSchema>();
     }
 }

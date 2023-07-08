@@ -1,4 +1,4 @@
-﻿@inject DragDropService DragDropService
+﻿@inject DragDropStateService DragDropStateService
 
 <div draggable="true" class="dragitem" @ondragstart="OnDragStart" @onclick="OnClick">
     @ComponentSchema.ComponentPropertySchema.Title
@@ -13,7 +13,7 @@
     {
         ComponentSchema dragComponentSchema = ComponentSchema.Clone();
         //设置当前拖拽项
-        DragDropService.CurrentDragComponent = dragComponentSchema;
+        DragDropStateService.CurrentDragComponent = dragComponentSchema;
     }
 
     private void OnClick()
