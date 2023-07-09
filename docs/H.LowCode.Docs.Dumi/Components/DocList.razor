@@ -1,0 +1,34 @@
+﻿<div class="__dumi-default-menu" data-mode="site" data-mobile-show="true">
+    <div class="__dumi-default-menu-inner">
+        <div class="__dumi-default-menu-header">
+            <a class="__dumi-default-menu-logo" href="/" style="background-image: url(&quot;https://user-images.githubusercontent.com/9554297/83762004-a0761b00-a6a9-11ea-83b4-9c8ff721d4b8.png&quot;);"></a>
+            <h1>myapp</h1>
+            <p></p>
+        </div>
+        <div class="__dumi-default-menu-mobile-area">
+            <ul class="__dumi-default-menu-nav-list">
+                @foreach (var menuItem in MenuItemInitializer.menuItems)
+                {
+                    <li><a href="@menuItem.Path">@menuItem.Title</a></li>
+                }
+            </ul>
+        </div>
+        <ul class="__dumi-default-menu-list">
+            @foreach (var item in DocItems)
+            {
+                <li>
+                    <a aria-current="page" class="@(item.IsActive ? "active" : string.Empty)" href="@item.Path">@item.Title</a>
+                </li>
+            }
+        </ul>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public IList<DocItem> DocItems { get; set; }
+
+    private string data_mobile_show = "false";
+
+
+}

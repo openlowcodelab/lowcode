@@ -1,0 +1,21 @@
+﻿<div class="markdown">
+    <h2 id="hello-myapp">
+        <a aria-hidden="true" tabindex="-1" href="/#hello-myapp"><span class="icon icon-link"></span></a>@MarkupString
+    </h2>
+</div>
+
+@code {
+    private string MarkupString { get; set; }
+
+    protected override void OnInitialized()
+    {
+        string location = @"D:\H\code\H.LowCode\docs\H.LowCode.Docs.Dumi\Components";
+        string markdownFilePath = Path.Combine(location, typeof(Markdown).Name, ".md");
+        if (File.Exists(markdownFilePath) == false)
+            return;
+
+        string MarkupString = MarkdownToHtml.GeneratorHtml(markdownFilePath);
+
+        base.OnInitialized();
+    }
+}

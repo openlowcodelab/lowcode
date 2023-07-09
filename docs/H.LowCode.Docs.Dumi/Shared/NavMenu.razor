@@ -5,8 +5,10 @@
         <div class="__dumi-default-search"><input class="__dumi-default-search-input" type="search" value="">
             <ul></ul>
         </div>
-        <span><a aria-current="page" class="active" href="/specification">Specification</a></span>
-        <span><a href="/introduction">Introduction</a></span>
+        @foreach (var item in MenuItemInitializer.menuItems)
+        {
+            <span><a aria-current="page" class="@(item.IsActive ? "active" : string.Empty)" href="@item.Path">@item.Title</a></span>
+        }
         <div class="__dumi-default-navbar-tool">
             <div class="__dumi-default-dark">
                 <div class="__dumi-default-dark-switch ">
