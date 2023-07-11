@@ -1,27 +1,21 @@
 ﻿@page "/introduce/quickstart"
 
-<DocList DocItems="@docItems"></DocList>
+<DocList></DocList>
 <SlugList SlugItems="@slugItems"></SlugList>
-<div class="__dumi-default-layout-content">
+<Content>
     <Markdown></Markdown>
-    <CodeBox Code="@Code"></CodeBox>
-    <div class="markdown">
+    <CodeBox>
+        @Code
+    </CodeBox>
+    <Markdown>
         <p>
             快速开始
         </p>
-    </div>
-    <div class="__dumi-default-layout-footer-meta">
-        <span data-updated-text="Last update: ">2023/7/5 15:05:45</span>
-    </div>
-</div>
+    </Markdown>
+    <DocFooter></DocFooter>
+</Content>
 
 @code {
-    private IList<DocItem> docItems = new List<DocItem>()
-    {
-        new DocItem(){ Path="/introduce", Title="文档站点开发" },
-        new DocItem(){ Path="/introduce/quickstart", Title="快速开始" }
-    };
-
     private IList<SlugItem> slugItems = new List<SlugItem>()
     {
         new SlugItem(){ Path="#dev1", Title="1" },

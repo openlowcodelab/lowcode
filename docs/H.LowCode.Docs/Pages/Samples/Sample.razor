@@ -1,4 +1,5 @@
-﻿@page "/sample/dragdrop"
+﻿@page "/sample"
+@attribute [MenuItem(Order:2)]
 
 <DocList></DocList>
 <SlugList SlugItems="@slugItems"></SlugList>
@@ -9,7 +10,7 @@
     </CodeBox>
     <Markdown>
         <p>
-            拖拽示例
+            文档编写示例
         </p>
     </Markdown>
     <DocFooter></DocFooter>
@@ -18,10 +19,10 @@
 @code {
     private IList<SlugItem> slugItems = new List<SlugItem>()
     {
-        new SlugItem(){ Path="#dragdrop1", Title="dragdrop1" },
-        new SlugItem(){ Path="#dragdrop2", Title="dragdrop2" },
-        new SlugItem(){ Path="#dragdrop3", Title="dragdrop3" }
+        new SlugItem(){ Path="#doc1", Title="doc1" },
+        new SlugItem(){ Path="#doc2", Title="doc2" },
+        new SlugItem(){ Path="#doc3", Title="doc3" }
     };
 
-    private string Code = "Code - 拖拽示例";
+    private string Code = "Code - 文档编写";
 }

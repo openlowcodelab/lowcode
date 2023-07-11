@@ -1,0 +1,29 @@
+﻿@page "/introduce"
+@attribute [MenuItem(Order:1)]
+
+<DocList></DocList>
+<SlugList SlugItems="@slugItems"></SlugList>
+<Content>
+    <Markdown FileName="Introduce.md" Type="@typeof(Introduce)"></Markdown>
+    <CodeBox>
+        @Code
+    </CodeBox>
+    <Markdown>
+        <p>
+            文档站点实现
+        </p>
+    </Markdown>
+    <Markdown FileName="Introduce.md" Type="@typeof(Introduce)"></Markdown>
+    <DocFooter></DocFooter>
+</Content>
+
+@code {
+    private IList<SlugItem> slugItems = new List<SlugItem>()
+    {
+        new SlugItem(){ Path="#dev1", Title="dev1" },
+        new SlugItem(){ Path="#dev2", Title="dev2" },
+        new SlugItem(){ Path="#dev3", Title="dev3" }
+    };
+
+    private string Code = "Code - 快速开始";
+}
