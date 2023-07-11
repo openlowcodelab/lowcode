@@ -1,19 +1,12 @@
-﻿using Markdig.Extensions.Yaml;
-using Markdig.Renderers;
-using Markdig.Syntax;
-using Markdig;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static System.Net.Mime.MediaTypeNames;
+﻿using Markdig;
 using System.Reflection;
 
 namespace H.LowCode.Docs.Dumi.Util
 {
     internal class MarkdownToHtml
     {
+        private static Assembly _assembly;
+
         internal static string ConvertToHtml(string fileName, Type type)
         {
             string markdownString = GetEmbeddedFile(fileName, type);
@@ -24,11 +17,14 @@ namespace H.LowCode.Docs.Dumi.Util
 
         private static string GetEmbeddedFile(string fileName, Type type)
         {
-            Assembly assembly = Assembly.GetAssembly(type);
+            if (_assembly == null)
+            {
+                _assembly = Assembly.GetAssembly(type);
+            }
             string resourceName = type.Namespace + "." + fileName;
 
-            assembly.GetManifestResourceStream(resourceName);
-            Stream stream = assembly.GetManifestResourceStream(resourceName);
+            _assembly.GetManifestResourceStream(resourceName);
+            Stream stream = _assembly.GetManifestResourceStream(resourceName);
             using var streamReader = new StreamReader(stream);
             var content = streamReader.ReadToEnd();
 
