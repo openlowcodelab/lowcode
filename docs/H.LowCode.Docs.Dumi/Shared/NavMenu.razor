@@ -2,12 +2,14 @@
     <button class="__dumi-default-navbar-toggle"></button>
     <a class="__dumi-default-navbar-logo" href="/" style="background-image: url(&quot;favicon.png&quot;);">H.LowCode</a>
     <nav>
-        <div class="__dumi-default-search"><input class="__dumi-default-search-input" type="search" value="">
+        <div class="__dumi-default-search">
+            <input class="__dumi-default-search-input" type="search" value="">
             <ul></ul>
         </div>
         @foreach (var item in MenuItemInitializer.menuItems)
         {
-            <span><a aria-current="page" class="@(item.IsActive ? "active" : string.Empty)" href="@item.Path">@item.Title</a></span>
+            string active = (ActivePath + "/").StartsWith(item.Path + "/") ? "active" : string.Empty;
+            <span><a aria-current="page" class="@active" href="@item.Path">@item.Title</a></span>
         }
         <div class="__dumi-default-navbar-tool">
             <div class="__dumi-default-dark">
@@ -22,3 +24,8 @@
         </div>
     </nav>
 </div>
+
+@code {
+    [Parameter]
+    public string ActivePath { get; set; }
+}

@@ -1,4 +1,6 @@
-﻿<div class="__dumi-default-menu" data-mode="site" data-mobile-show="true">
+﻿@inject NavigationManager NavigationManager;
+
+<div class="__dumi-default-menu" data-mode="site" data-mobile-show="true">
     <div class="__dumi-default-menu-inner">
         <div class="__dumi-default-menu-header">
             <a class="__dumi-default-menu-logo" href="/" style="background-image: url(&quot;https://user-images.githubusercontent.com/9554297/83762004-a0761b00-a6a9-11ea-83b4-9c8ff721d4b8.png&quot;);"></a>
@@ -16,8 +18,9 @@
         <ul class="__dumi-default-menu-list">
             @foreach (var item in DocItems)
             {
+                string active = string.Equals(item.Path, activeDoc) ? "active" : string.Empty;
                 <li>
-                    <a aria-current="page" class="@(item.IsActive ? "active" : string.Empty)" href="@item.Path">@item.Title</a>
+                    <a aria-current="page" class="@active" href="@item.Path">@item.Title</a>
                 </li>
             }
         </ul>
@@ -30,5 +33,12 @@
 
     private string data_mobile_show = "false";
 
+    private string activeDoc;
 
+    protected override void OnInitialized()
+    {
+        activeDoc = "/" + NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+
+        base.OnInitialized();
+    }
 }

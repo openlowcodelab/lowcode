@@ -12,8 +12,6 @@ namespace H.LowCode.Docs.Dumi.Model
 
         public string Path { get; set; }
 
-        public bool IsActive { get; set; }
-
         public int Order { get; set; }
     }
 }
