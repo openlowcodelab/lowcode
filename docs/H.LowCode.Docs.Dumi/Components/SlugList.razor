@@ -1,8 +1,11 @@
-﻿<ul role="slug-list" class="__dumi-default-layout-toc">
+﻿@inject NavigationManager NavigationManager;
+
+<ul role="slug-list" class="__dumi-default-layout-toc">
     @foreach (var item in SlugItems)
     {
+        string active = string.Equals(url + item.Path, activeSlug) ? "active" : string.Empty;
         <li title="@item.Title" data-depth="2">
-            <a href="@item.Path"><span>@item.Title</span></a>
+            <a href="@(url + item.Path)" class="@active" @onclick="() => OnSlugClick(url + item.Path)"><span>@item.Title</span></a>
         </li>
     }
 </ul>
@@ -10,4 +13,21 @@
 @code {
     [Parameter]
     public IList<SlugItem> SlugItems { get; set; }
+
+    private string url;
+    private string activeSlug;
+
+    protected override void OnInitialized()
+    {
+        url = NavigationManager.Uri;
+
+        base.OnInitialized();
+    }
+
+    private void OnSlugClick(string href)
+    {
+        activeSlug = href;
+
+        StateHasChanged();
+    }
 }

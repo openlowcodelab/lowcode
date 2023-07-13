@@ -8,7 +8,7 @@
         </div>
         @foreach (var item in MenuItemInitializer.menuItems)
         {
-            string active = (ActivePath + "/").StartsWith(item.Path + "/") ? "active" : string.Empty;
+            string active = ((ActivePath + "/").StartsWith(item.Path + "/") || (ActivePath + "#").StartsWith(item.Path + "#")) ? "active" : string.Empty;
             <span><a aria-current="page" class="@active" href="@item.Path">@item.Title</a></span>
         }
         <div class="__dumi-default-navbar-tool">
