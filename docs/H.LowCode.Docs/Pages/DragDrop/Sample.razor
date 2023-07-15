@@ -1,4 +1,4 @@
-﻿@page "/sample/dragdrop"
+﻿@page "/dragdrop/sample"
 
 <DocList></DocList>
 <SlugList SlugItems="@slugItems"></SlugList>
@@ -18,9 +18,10 @@
 @code {
     private IList<SlugItem> slugItems = new List<SlugItem>()
     {
-        new SlugItem(){ Path="#dragdrop1", Title="dragdrop1" },
-        new SlugItem(){ Path="#dragdrop2", Title="dragdrop2" },
-        new SlugItem(){ Path="#dragdrop3", Title="dragdrop3" }
+        new SlugItem(){ Path="#dragdrop1", Title="简单拖拽" },
+        new SlugItem(){ Path="#dragdrop2", Title="拖拽移动" },
+        new SlugItem(){ Path="#dragdrop3", Title="容器嵌套" },
+        new SlugItem(){ Path="#dragdrop4", Title="嵌套移动" }
     };
 
     private string Code = "Code - 拖拽示例";

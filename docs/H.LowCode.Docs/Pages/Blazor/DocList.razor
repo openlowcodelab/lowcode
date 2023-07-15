@@ -1,0 +1,10 @@
+﻿<DocMenu DocItems="@docItems"></DocMenu>
+
+@code {
+    private IList<DocItem> docItems = new List<DocItem>()
+    {
+        new DocItem(){ Path="/blazor", Title="Blazor 简介" },
+        new DocItem(){ Path="/blazor/i18ndev", Title="国际化实现" },
+        new DocItem(){ Path="/blazor/themedev", Title="主题实现" }
+    };
+}

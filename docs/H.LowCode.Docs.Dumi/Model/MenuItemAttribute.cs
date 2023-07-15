@@ -8,10 +8,17 @@ namespace H.LowCode.Docs.Dumi.Model
 {
     public class MenuItemAttribute : Attribute
     {
-        public MenuItemAttribute(int Order)
+        public MenuItemAttribute(string title, int order)
         {
-            this.Order = Order;
+            if(string.IsNullOrEmpty(title))
+            {
+                throw new ArgumentNullException(nameof(title));
+            }
+            this.Title = title;
+            this.Order = order;
         }
+
+        public string Title { get; set; }
 
         public int Order { get; set; }
     }

@@ -1,0 +1,13 @@
+﻿<DocMenu DocItems="@docItems"></DocMenu>
+
+@code {
+    private IList<DocItem> docItems = new List<DocItem>()
+    {
+        new DocItem(){ Path="/introduce", Title="简介" },
+        new DocItem(){ Path="/introduce/quickstart", Title="快速开始" },
+        new DocItem(){ Path="/introduce/i18n", Title="国际化" },
+        new DocItem(){ Path="/introduce/course", Title="使用教程" },
+        new DocItem(){ Path="/introduce/changelog", Title="更新日志" },
+        new DocItem(){ Path="/introduce/roadmap", Title="路线图" }
+    };
+}

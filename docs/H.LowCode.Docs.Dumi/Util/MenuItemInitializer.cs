@@ -35,7 +35,7 @@ namespace H.LowCode.Docs.Dumi.Util
                 MenuItem menuItem = new MenuItem()
                 {
                     Path = routeAttributes.First().Template,
-                    Title = pageType.Name,
+                    Title = menuItemAttribute.Title,
                     Order = menuItemAttribute.Order
                 };
                 menuItems.Add(menuItem);

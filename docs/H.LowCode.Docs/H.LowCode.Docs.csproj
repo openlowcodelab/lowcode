@@ -7,6 +7,14 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <None Remove="Pages\Blazor\I18nDev.md" />
+	  <None Remove="Pages\Blazor\Index.md" />
+	  <None Remove="Pages\Blazor\ThemeDev.md" />
+	  <None Remove="Pages\Introduce\ChangLog.md" />
+	  <None Remove="Pages\Introduce\Roadmap.md" />
+	</ItemGroup>
+
+	<ItemGroup>
     <SupportedPlatform Include="browser" />
   </ItemGroup>
 
@@ -16,10 +24,17 @@
 
   <ItemGroup>
     <Folder Include="wwwroot\" />
+    <Folder Include="i18n\" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\H.LowCode.Docs.Dumi\H.LowCode.Docs.Dumi.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="Pages\Introduce\ChangLog.razor">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </Content>
   </ItemGroup>
 
 </Project>
