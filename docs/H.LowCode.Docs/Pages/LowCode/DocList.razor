@@ -1,0 +1,11 @@
+﻿<DocMenu DocItems="@docItems"></DocMenu>
+
+@code {
+    private IList<DocItem> docItems = new List<DocItem>()
+    {
+        new DocItem(){ Path="/lowcode", Title="LowCode 简介" },
+        new DocItem(){ Path="/lowcode/htmldragdrop", Title="HTML Drag and Drop API" },
+        new DocItem(){ Path="/lowcode/dragdropsample", Title="拖拽示例" },
+        new DocItem(){ Path="/lowcode/pagedesigner", Title="页面设计器" }
+    };
+}

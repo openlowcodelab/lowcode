@@ -1,15 +1,15 @@
-﻿@page "/dragdrop/sample"
+﻿@page "/lowcode/pagedesigner"
 
 <DocList></DocList>
 <SlugList SlugItems="@slugItems"></SlugList>
 <Content>
-    <Markdown></Markdown>
+    <Markdown FileName="PageDesigner.md" Type="typeof(DocList)"></Markdown>
     <CodeBox>
         @Code
     </CodeBox>
     <Markdown>
         <p>
-            拖拽示例
+            页面设计器
         </p>
     </Markdown>
     <DocFooter></DocFooter>
@@ -24,5 +24,5 @@
         new SlugItem(){ Path="#dragdrop4", Title="嵌套移动" }
     };
 
-    private string Code = "Code - 拖拽示例";
+    private string Code = "页面设计器";
 }
