@@ -1,17 +1,10 @@
 ﻿using H.LowCode.Designer.Application.Abstraction.AppServices;
 using H.LowCode.Designer.Application.AppServices;
-using H.LowCode.Designer.Domain;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Volo.Abp.Modularity;
 
 namespace H.LowCode.Designer.Application
 {
-    [DependsOn(typeof(DomainServiceModule))]
     public class DesignerAppServiceModule : AbpModule
     {
         public override void ConfigureServices(ServiceConfigurationContext context)

@@ -1,21 +1,18 @@
 ﻿using H.LowCode.Designer.Application.Abstraction.AppServices;
-using H.LowCode.Designer.Repository;
-using System;
+using System.Text;
 
 namespace H.LowCode.Designer.Application.AppServices
 {
     public class DesignerAppService : IDesignerAppService
     {
-        private IDesignerDomainService _designerDomainService;
-
-        public DesignerAppService(IDesignerDomainService designerDomainService)
+        public DesignerAppService()
         {
-            _designerDomainService = designerDomainService;
         }
 
         public void SaveMetadata(string jsonSchema)
         {
-            _designerDomainService.SaveMetadata(jsonSchema);
+            string filePath = @"D:\temp.json";
+            File.WriteAllText(filePath, jsonSchema, Encoding.UTF8);
         }
     }
 }
