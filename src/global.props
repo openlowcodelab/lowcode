@@ -4,5 +4,12 @@
 	<ImplicitUsings>enable</ImplicitUsings>
 	<!--<Nullable>enable</Nullable>-->
     <Version>0.1.0</Version>
-  </PropertyGroup>	
+	<GeneratePackageOnBuild>False</GeneratePackageOnBuild>
+	<!-- Copyright -->
+	<Authors>H</Authors>
+	<Company>H</Company>
+  </PropertyGroup>
+	<Target Name="CopyPackage" AfterTargets="Pack">
+		<Copy SourceFiles="$(ProjectDir)bin\Debug\$(PackageId).$(PackageVersion).nupkg" DestinationFolder="D:\H\NuGetPackages" />
+	</Target>
 </Project>
