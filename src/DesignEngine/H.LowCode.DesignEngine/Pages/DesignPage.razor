@@ -28,9 +28,20 @@
         <Sider Style="flex: auto; max-width: max-content; min-width: 200px;" Theme="SiderTheme.Light">
             <ComponentPanel></ComponentPanel>
         </Sider>
-        <Content Class="designpage">
-            <DesignPanel RootComponentContainerSchema="@RootComponentContainerSchema"></DesignPanel>
-        </Content>
+        <Layout>
+            <Content Class="designpage">
+                <DesignPanel RootComponentContainerSchema="@RootComponentContainerSchema"></DesignPanel>
+            </Content>
+            @if ("form".Equals(PageType, StringComparison.OrdinalIgnoreCase))
+            {
+                <Footer Style="padding:10px 20px;">
+                    <div style="float:left;">
+                        <Button Type="primary">提交</Button>
+                        <Button>取消</Button>
+                    </div>
+                </Footer>
+            }
+        </Layout>
         <Sider Class="designpage" Style="flex: auto; max-width: max-content; min-width: 250px;" Theme="SiderTheme.Light">
             <SettingPanel></SettingPanel>
         </Sider>
@@ -44,6 +55,10 @@
 
     [Parameter]
     public string PageId { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "p")]
+    public string PageType { get; set; }
 
     private ComponentContainerSchema RootComponentContainerSchema = new ComponentContainerSchema();
 
