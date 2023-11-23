@@ -4,27 +4,24 @@ using H.LowCode.DesignEngine;
 using H.LowCode.RenderEngine.AntBlazor;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using H.LowCode.Sample.Admin;
+using H.LowCode.RenderEngine.Html;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
 #region DesignEngine
-// 设计器引擎
-builder.AddDesignerEngine();
-
-// 加载基础组件
-builder.AddBasicComponents();
-// 加载自定义组件
-builder.AddCustomComponents();
+builder.Services.AddApplication<DesignEngineModule>();
+builder.Services.AddApplication<DesignEngineComponentModule>();
+builder.Services.AddApplication<DesignEngineCustomComponentModule>();
 #endregion
 
 #region  RenderEngine
-//HTML
-//builder.AddHtmlTheme();
-//builder.AddHtmlRenderEngine();
+builder.Services.AddApplication<RenderEngineForAntBlazorModule>();
+builder.Services.AddApplication<RenderEngineForHtmlModule>();
+#endregion
 
-//AntBlazor
-builder.AddAntBlazorProTheme();
-builder.AddAntBlazorRenderEngine();
+#region Sample
+builder.Services.AddApplication<AdminSampleModule>();
+//builder.Services.AddApplication<HttpApiSampleModule>();  //不要依赖 HttpApi 项目,否则会报错：NETSDK1082	Microsoft.AspNetCore.App 没有运行时包可用于指定的 RuntimeIdentifier“browser-wasm”
 #endregion
 
 await builder.Build().RunAsync();

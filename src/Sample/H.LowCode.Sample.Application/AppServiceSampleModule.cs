@@ -5,7 +5,7 @@ using Volo.Abp.Modularity;
 
 namespace H.LowCode.Sample.Application
 {
-    public class SampleAppServiceModule : AbpModule
+    public class AppServiceSampleModule : AbpModule
     {
         public override void ConfigureServices(ServiceConfigurationContext context)
         {

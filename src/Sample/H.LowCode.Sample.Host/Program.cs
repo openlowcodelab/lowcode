@@ -1,5 +1,10 @@
+using H.LowCode.DesignEngine.Components.Custom;
+using H.LowCode.DesignEngine.Components;
+using H.LowCode.DesignEngine;
+using H.LowCode.RenderEngine.AntBlazor;
+using H.LowCode.RenderEngine.Html;
+using H.LowCode.Sample.Admin;
 using H.LowCode.Sample.Admin.Layout;
-using H.LowCode.Sample.Host.Client;
 using H.LowCode.Sample.Host.Components;
 using H.LowCode.Sample.HttpApi;
 
@@ -10,12 +15,20 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
 
-# region ant design
-builder.Services.AddAntDesign();
-# endregion
+#region DesignEngine
+builder.Services.AddApplication<DesignEngineModule>();
+builder.Services.AddApplication<DesignEngineComponentModule>();
+builder.Services.AddApplication<DesignEngineCustomComponentModule>();
+#endregion
 
-#region HttpApi
-builder.Services.AddApplication<SampleHttpApiModule>();
+#region  RenderEngine
+builder.Services.AddApplication<RenderEngineForAntBlazorModule>();
+builder.Services.AddApplication<RenderEngineForHtmlModule>();
+#endregion
+
+#region Sample
+builder.Services.AddApplication<AdminSampleModule>();
+builder.Services.AddApplication<HttpApiSampleModule>();
 #endregion
 
 var app = builder.Build();
@@ -40,6 +53,6 @@ app.UseAntiforgery();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()
-    .AddAdditionalAssemblies(typeof(Routes).Assembly, typeof(MainLayout).Assembly);
+    .AddAdditionalAssemblies(typeof(MainLayout).Assembly, typeof(H.LowCode.DesignEngine.Layout.DesignerLayout).Assembly);
 
 app.Run();

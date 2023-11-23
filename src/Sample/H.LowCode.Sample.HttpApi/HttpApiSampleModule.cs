@@ -1,16 +1,15 @@
 ﻿using H.LowCode.Sample.Application;
 using Microsoft.Extensions.DependencyInjection;
-using System.Runtime.Loader;
 using Volo.Abp.Modularity;
 
 namespace H.LowCode.Sample.HttpApi
 {
-    [DependsOn(typeof(SampleAppServiceModule))]
-    public class SampleHttpApiModule : AbpModule
+    [DependsOn(typeof(AppServiceSampleModule))]
+    public class HttpApiSampleModule : AbpModule
     {
         public override void ConfigureServices(ServiceConfigurationContext context)
         {
-            context.Services.AddControllers().AddApplicationPart(typeof(SampleHttpApiModule).Assembly);
+            context.Services.AddControllers().AddApplicationPart(typeof(HttpApiSampleModule).Assembly);
         }
     }
 }
