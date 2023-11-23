@@ -2,14 +2,17 @@
 
 	<Import Project="..\..\global.props" />
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\H.LowCode.Sample.Application\H.LowCode.Sample.Application.csproj" />
+	<ItemGroup>
+    <ProjectReference Include="..\..\DesignEngine\H.LowCode.DesignEngine.Components.Custom\H.LowCode.DesignEngine.Components.Custom.csproj" />
+    <ProjectReference Include="..\..\DesignEngine\H.LowCode.DesignEngine.Components\H.LowCode.DesignEngine.Components.csproj" />
+    <ProjectReference Include="..\..\DesignEngine\H.LowCode.DesignEngine\H.LowCode.DesignEngine.csproj" />
+    <ProjectReference Include="..\..\RenderEngine\H.LowCode.RenderEngine.AntBlazor\H.LowCode.RenderEngine.AntBlazor.csproj" />
+    <ProjectReference Include="..\..\RenderEngine\H.LowCode.RenderEngine.Html\H.LowCode.RenderEngine.Html.csproj" />
+    <ProjectReference Include="..\..\RenderEngine\H.LowCode.RenderEngine\H.LowCode.RenderEngine.csproj" />
+    <ProjectReference Include="..\H.LowCode.Sample.Admin\H.LowCode.Sample.Admin.csproj" />
+    <ProjectReference Include="..\H.LowCode.Sample.Host.Client\H.LowCode.Sample.Host.Client.csproj" />
     <ProjectReference Include="..\H.LowCode.Sample.HttpApi\H.LowCode.Sample.HttpApi.csproj" />
-    <ProjectReference Include="..\H.LowCode.Sample.WasmHost\H.LowCode.Sample.WasmHost.csproj" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" />
   </ItemGroup>
 
 </Project>

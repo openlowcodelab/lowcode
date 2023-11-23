@@ -1,10 +1,14 @@
-<Router AppAssembly="@typeof(MainLayout).Assembly" AdditionalAssemblies="@Assemblies" PreferExactMatches="@true">
+ï»¿@using System.Reflection
+@using H.LowCode.Sample.Admin.Layout
+
+<Router AppAssembly="@typeof(MainLayout).Assembly" AdditionalAssemblies="@Assemblies">
     <Found Context="routeData">
         <RouteView RouteData="@routeData" DefaultLayout="@DefaultLayout" />
+        <FocusOnNavigate RouteData="@routeData" Selector="h1" />
     </Found>
     <NotFound>
         <LayoutView Layout="@DefaultLayout">
-            <p>404£ºSorry, there's nothing at this address.</p>
+            <p>404ï¼šSorry, there's nothing at this address.</p>
         </LayoutView>
     </NotFound>
 </Router>
@@ -13,8 +17,7 @@
 {
     private Assembly[] Assemblies = new Assembly[]
     {
-        typeof(MainLayout).Assembly,
-        typeof(H.LowCode.DesignEngine.Shared.DesignerLayout).Assembly
+        typeof(DesignEngine.Layout.DesignerLayout).Assembly
     };
 
     private Type DefaultLayout = typeof(MainLayout);
