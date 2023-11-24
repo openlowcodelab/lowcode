@@ -1,82 +1,23 @@
 ﻿@inherits LayoutComponentBase
 
-<AntDesign.ProLayout.BasicLayout Logo="@("logo.png")" Title="H.LowCode" MenuData="_menuData">
-    <RightContentRender>
-        @*<AntDesign.Pro.Template.Components.RightContent />*@
-        RightContent
-    </RightContentRender>
-    <ChildContent>
-        @Body
-    </ChildContent>
-    <FooterRender>
-        <FooterView Copyright="@(DateTime.Now.Year + " H.LowCode")" Links="Links"></FooterView>
-    </FooterRender>
-</AntDesign.ProLayout.BasicLayout>
-<SettingDrawer />
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
 
-@code
-{
-    private readonly MenuDataItem[] _menuData =
-    {
-        new MenuDataItem
-        {
-            Path = "/",
-            Name = "首页",
-            Key = "home"
-        },
-        new MenuDataItem
-        {
-            Path = "/form/basicform/1",
-            Name = "基础表单",
-            Key = "basicform"
-        },
-        new MenuDataItem
-        {
-            Path = "/form/linkageform/2",
-            Name = "联动表单",
-            Key = "linkageform"
-        },
-        new MenuDataItem
-        {
-            Path = "/form/customform/3",
-            Name = "个性化表单",
-            Key = "customform"
-        },
-        new MenuDataItem
-        {
-            Path = "/form/validateform/4",
-            Name = "检验表单",
-            Key = "validateform"
-        },
-        new MenuDataItem
-        {
-            Path = "/form/complexform/5",
-            Name = "复杂表单",
-            Key = "complexform"
-        },
-        new MenuDataItem
-        {
-            Path = "/list",
-            Name = "列表",
-            Key = "list"
-        }
-    };
+    <main>
+        <div class="top-row px-4">
+            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+        </div>
 
-    public LinkItem[] Links { get; set; } =
-    {
-        new LinkItem
-        {
-            Key = "H.LowCode",
-            Title = "H.LowCode",
-            Href = "/",
-            BlankTarget = true,
-        },
-        new LinkItem
-        {
-            Key = "Ant Design Blazor",
-            Title = "Ant Design Blazor",
-            Href = "https://antblazor.com",
-            BlankTarget = true,
-        }
-    };
-}
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>
