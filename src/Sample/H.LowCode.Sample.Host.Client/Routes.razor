@@ -1,7 +1,6 @@
 ﻿@using System.Reflection
-@using H.LowCode.Sample.Admin.Layout
 
-<Router AppAssembly="@typeof(MainLayout).Assembly" AdditionalAssemblies="@Assemblies">
+<Router AppAssembly="@DefaultLayout.Assembly" AdditionalAssemblies="@Assemblies">
     <Found Context="routeData">
         <RouteView RouteData="@routeData" DefaultLayout="@DefaultLayout" />
         <FocusOnNavigate RouteData="@routeData" Selector="h1" />
@@ -17,8 +16,8 @@
 {
     private Assembly[] Assemblies = new Assembly[]
     {
-        typeof(DesignEngine.Layout.DesignEngineLayout).Assembly
+        typeof(H.LowCode.DesignEngine._Imports).Assembly
     };
 
-    private Type DefaultLayout = typeof(MainLayout);
+    private Type DefaultLayout = typeof(H.LowCode.Sample.Admin.Layout.MainLayout);
 }

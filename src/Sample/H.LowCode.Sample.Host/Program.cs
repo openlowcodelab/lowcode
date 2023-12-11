@@ -4,7 +4,6 @@ using H.LowCode.DesignEngine;
 using H.LowCode.RenderEngine.AntBlazor;
 using H.LowCode.RenderEngine.Html;
 using H.LowCode.Sample.Admin;
-using H.LowCode.Sample.Admin.Layout;
 using H.LowCode.Sample.Host.Components;
 using H.LowCode.Sample.HttpApi;
 
@@ -53,6 +52,6 @@ app.UseAntiforgery();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()
-    .AddAdditionalAssemblies(typeof(MainLayout).Assembly, typeof(H.LowCode.DesignEngine.Layout.DesignEngineLayout).Assembly);
+    .AddAdditionalAssemblies(typeof(H.LowCode.Sample.Admin._Imports).Assembly, typeof(H.LowCode.DesignEngine._Imports).Assembly);
 
 app.Run();
