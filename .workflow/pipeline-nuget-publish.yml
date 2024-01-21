@@ -1,0 +1,33 @@
+version: '1.0'
+name: pipeline-nuget-publish
+displayName: pipeline-nuget-publish
+triggers:
+  trigger: auto
+  push:
+    tags:
+      prefix:
+        - ''
+stages:
+  - name: stage-nuget-publish
+    displayName: nuget 推送到服务器
+    strategy: naturally
+    trigger: auto
+    executor: []
+    steps:
+      - step: build@dotnet
+        name: dotnet-nuget
+        displayName: dotnet-nuget
+        dotnetVersion: '6.0'
+        commands:
+          - '# input your command here'
+          - dotnet restore
+          - dotnet publish -c Release -o out
+        artifacts:
+          - name: BUILD_ARTIFACT
+            path:
+              - ./out
+        caches:
+          - ~/.nuget/packages
+        notify: []
+        strategy:
+          retry: '0'
