@@ -28,12 +28,12 @@ namespace H.LowCode.DesignEngine.Services
         /// <summary>
         /// 父级
         /// </summary>
-        public ComponentContainerSchema RootComponentContainerSchema { get; set; }
+        public DropItemContainerSchema RootDropItemContainerSchema { get; set; }
 
         /// <summary>
         /// 父级
         /// </summary>
-        public ComponentContainerSchema ParentComponentContainerSchema { get; set; }
+        public DropItemContainerSchema ParentDropItemContainerSchema { get; set; }
         
         public void Reset()
         {

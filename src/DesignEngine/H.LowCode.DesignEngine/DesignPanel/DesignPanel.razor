@@ -1,13 +1,13 @@
 ﻿@inject DragDropStateService DragDropStateService
 
 <div class="designpage" style="margin:5px; height:100%; height:100%;">
-    <ComponentContainer ParentComponentContainerSchema="@RootComponentContainerSchema"></ComponentContainer>
+    <DropItemContainer ParentDropItemContainerSchema="@RootDropItemContainerSchema"></DropItemContainer>
 </div>
 
 @code {
     #region Parameter
     [Parameter]
-    public ComponentContainerSchema RootComponentContainerSchema{ get; set; }
+    public DropItemContainerSchema RootDropItemContainerSchema{ get; set; }
     #endregion
 
     protected override void OnInitialized()
@@ -19,6 +19,6 @@
 
     private void Init()
     {
-        DragDropStateService.RootComponentContainerSchema = RootComponentContainerSchema;
+        DragDropStateService.RootDropItemContainerSchema = RootDropItemContainerSchema;
     }
 }

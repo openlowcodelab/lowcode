@@ -7,16 +7,16 @@ using System.Threading.Tasks;
 
 namespace H.LowCode.Metadata
 {
-    public class ComponentContainerSchema
+    public class DropItemContainerSchema
     {
         public string Class { get; set; }
 
         public string Style { get; set; }
 
-        public ComponentContainerSchema ParentComponentContainerSchema { get; set; }
+        public DropItemContainerSchema ParentDropItemContainerSchema { get; set; }
 
         public IList<ComponentSchema> ComponentSchemas { get; set; } = new List<ComponentSchema>();
 
-        public IList<ComponentContainerSchema> ChildComponentContainerSchema { get; set; } = new List<ComponentContainerSchema>();
+        public IList<DropItemContainerSchema> ChildDropItemContainerSchema { get; set; } = new List<DropItemContainerSchema>();
     }
 }

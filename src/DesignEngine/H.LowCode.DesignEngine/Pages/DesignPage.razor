@@ -30,7 +30,7 @@
         </Sider>
         <Layout>
             <Content Class="designpage">
-                <DesignPanel RootComponentContainerSchema="@RootComponentContainerSchema"></DesignPanel>
+                <DesignPanel RootDropItemContainerSchema="@RootDropItemContainerSchema"></DesignPanel>
             </Content>
             @if ("form".Equals(PageType, StringComparison.OrdinalIgnoreCase))
             {
@@ -60,7 +60,7 @@
     [SupplyParameterFromQuery(Name = "p")]
     public string PageType { get; set; }
 
-    private ComponentContainerSchema RootComponentContainerSchema = new ComponentContainerSchema();
+    private DropItemContainerSchema RootDropItemContainerSchema = new DropItemContainerSchema();
 
     public async void SaveMetadata()
     {
@@ -87,7 +87,7 @@
     private PageSchema GetPageSchema()
     {
         PageSchema pageSchema = new PageSchema();
-        pageSchema.ComponentSchemas = RootComponentContainerSchema.ComponentSchemas.Select(t => t.ComponentPropertySchema).ToList();
+        pageSchema.ComponentSchemas = RootDropItemContainerSchema.ComponentSchemas.Select(t => t.ComponentPropertySchema).ToList();
         pageSchema.DataSource = new DataSource() { DataSourceType = DataSourceType.Api };
         return pageSchema;
     }

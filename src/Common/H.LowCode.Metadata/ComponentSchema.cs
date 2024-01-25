@@ -53,7 +53,7 @@ namespace H.LowCode.Metadata
         /// </summary>
         public bool IsHiddenTitle { get; set; }
 
-        public ComponentContainerSchema ParentComponentContainerSchema { get; set; }
+        public DropItemContainerSchema ParentDropItemContainerSchema { get; set; }
 
         /// <summary>
         /// 
