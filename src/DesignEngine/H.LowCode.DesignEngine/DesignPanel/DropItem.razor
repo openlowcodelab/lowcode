@@ -1,13 +1,13 @@
 ﻿@inject DragDropStateService DragDropStateService
 
 <div class="dropitem-box" style="@Style; float:left; opacity:@ComponentSchema.Opacity; width: @(_itemWidth)%; @(_itemHeight) min-height: @(_itemMinHeight)px;
-        @ComponentSchema.ComponentPropertySchema.CustomStyle">
+    @ComponentSchema.ComponentPropertySchema.CustomStyle">
     <div class="dropitem @DropItemClassMapper.Class" style="@ComponentSchema.ComponentPropertySchema.Style"
+         @onclick="OnClick" @onclick:stopPropagation 
          @ondragstart="OnDragStart"
          @ondragenter="OnDragEnter"
          @ondragover="OnDragOver" @ondragover:stopPropagation @ondragover:preventDefault
-         @ondragleave="OnDragLeave"
-         @onclick="OnClick" @onclick:stopPropagation>
+         @ondragleave="OnDragLeave">
 
         @if (ComponentSchema.IsSelected)
         {
@@ -96,6 +96,8 @@
     {
         DragDropStateService.DragItem_Effect_Move(dragEventArgs);
         ComponentSchema.Opacity = 0.2;
+
+        //记录当前选中对象
         DragDropStateService.CurrentDragComponent = ComponentSchema;
     }
 
@@ -109,11 +111,13 @@
         //设置移动位置样式，拖拽到目标元素上半部分时，上方添加红色边框，下半部分时下方添加红色边框
         if (dragEventArgs.OffsetY < 30)
         {
+            Console.WriteLine($"top: OffsetY:{dragEventArgs.OffsetY}");
             ComponentSchema.ComponentPropertySchema.Style = "border-top: 2px dashed #1890ff;";
             ComponentSchema.IsDroppedToBack = false;
         }
         else
         {
+            Console.WriteLine($"bottom: OffsetY:{dragEventArgs.OffsetY}");
             ComponentSchema.ComponentPropertySchema.Style = "border-bottom: 2px dashed #1890ff; height: auto;";
             ComponentSchema.IsDroppedToBack = true;
         }

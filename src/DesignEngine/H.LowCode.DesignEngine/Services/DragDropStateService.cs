@@ -16,7 +16,7 @@ namespace H.LowCode.DesignEngine.Services
         public ComponentSchema LastSelectedComponent { get; set; }
 
         /// <summary>
-        /// 被拖拽对象
+        /// 当前被拖拽对象
         /// </summary>
         public ComponentSchema CurrentDragComponent { get; set; }
 

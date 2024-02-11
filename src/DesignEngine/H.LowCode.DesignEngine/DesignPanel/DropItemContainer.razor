@@ -96,11 +96,19 @@
             DropItemSorting(DragDropStateService.LastDragOverComponent, currentDragComponent);
         }
 
+        //如果跨 DropItemContainer 拖拽，则将组件从上一个 DropItemContainer 中移除
+        // if (DragDropStateService.CurrentDragComponent.ParentDropItemContainerSchema != _DropItemContainerSchema)
+        // {
+        //     DropItemContainerSchema oldDropItemContainerSchema = DragDropStateService.CurrentDragComponent.ParentDropItemContainerSchema;
+        //     oldDropItemContainerSchema.ComponentSchemas.Remove(DragDropStateService.CurrentDragComponent);
+        // }
+
         StateHasChanged();
     }
 
     private void OnDragOver(DragEventArgs dragEventArgs)
     {
+        Console.WriteLine($"OnDragOver:DropItemContainer");
         //Style = "border: 2px dashed #1890ff;";
     }
 
