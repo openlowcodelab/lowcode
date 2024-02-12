@@ -26,52 +26,34 @@ namespace H.LowCode.DesignEngine.Services
         public ComponentSchema LastDragOverComponent { get; set; }
 
         /// <summary>
-        /// 父级
+        /// 最后一次拖拽到上面的对象的时间
+        /// </summary>
+        public DateTime LastDragOverTime { get; set; } = DateTime.Now;
+
+        /// <summary>
+        /// 根 DropItemContainerSchema
         /// </summary>
         public DropItemContainerSchema RootDropItemContainerSchema { get; set; }
 
         /// <summary>
-        /// 父级
+        /// 当前拖拽到的容器
         /// </summary>
+        [Obsolete("ParentDropItemContainerSchema 不能作为全局对象")]
         public DropItemContainerSchema ParentDropItemContainerSchema { get; set; }
         
-        public void Reset()
+        public void ResetComponent()
         {
             LastSelectedComponent = default;
             CurrentDragComponent = default;
             LastDragOverComponent = default;
         }
 
-        public void DragItem_Add(IList<ComponentSchema> componentSchemas, ComponentSchema componentSchema, bool isSelected = false)
+        public void ResetComponentStyle()
         {
-            var dropComponentSchema = componentSchema.Clone();
-            dropComponentSchema.IsDroppedFromComponentPanel = true;
-            if (isSelected)
-            {
-                dropComponentSchema.IsSelected = isSelected;
-                LastSelectedComponent = dropComponentSchema;
-            }
-            componentSchemas.Add(dropComponentSchema);
-        }
-
-        public void DropItem_DragEnd_Style()
-        {
-            CurrentDragComponent.Opacity = 1;
+            //CurrentDragComponent.Opacity = 1;
             CurrentDragComponent.ComponentPropertySchema.Style = string.Empty;
             if (LastDragOverComponent != null)
                 LastDragOverComponent.ComponentPropertySchema.Style = string.Empty;
-        }
-
-        public void DragItem_Effect_Move(DragEventArgs dragEventArgs)
-        {
-            dragEventArgs.DataTransfer.DropEffect = "move";
-            
-        }
-
-        public void DragItem_Copy(DragEventArgs dragEventArgs)
-        {
-            dragEventArgs.DataTransfer.DropEffect = "copy";
-
         }
     }
 }

@@ -11,7 +11,7 @@ namespace H.LowCode.RenderEngine.AntBlazor.DataEntryComponent
 {
     internal class TransferRender : ComponentRenderBase
     {
-        public override bool CanRender(ComponentSettingSchema jsonSchema)
+        public override bool CanRender(ComponentPropertySchema jsonSchema)
         {
             if (jsonSchema.ComponentValueType != ComponentValueType.String)
                 return false;
@@ -22,7 +22,7 @@ namespace H.LowCode.RenderEngine.AntBlazor.DataEntryComponent
             return false;
         }
 
-        public override void Render(RenderTreeBuilder builder, string key, ComponentSettingSchema jsonSchema, Func<PageSchema, RenderFragment> func)
+        public override void Render(RenderTreeBuilder builder, string key, ComponentPropertySchema jsonSchema, Func<PageSchema, RenderFragment> func)
         {
             builder.OpenComponent(0, typeof(Input<string>));
             builder.CloseComponent();

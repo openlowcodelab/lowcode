@@ -20,7 +20,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                         builder.OpenComponent(0, typeof(GridLayout));
                         builder.CloseComponent();
                     },
-                    ComponentPropertySchema = new ComponentSettingSchema()
+                    ComponentPropertySchema = new ComponentPropertySchema()
                     {
                         Title = "Grid 栅格",
                         Style = "background-color: #ffffff00; height: auto;",
@@ -40,7 +40,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                         //builder.OpenComponent(0, typeof());
                         //builder.CloseComponent();
                     },
-                    ComponentPropertySchema = new ComponentSettingSchema()
+                    ComponentPropertySchema = new ComponentPropertySchema()
                     {
                         Title = "Layout 布局",
                         Style = "background-color: #ffffff00",

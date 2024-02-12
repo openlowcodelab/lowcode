@@ -7,7 +7,7 @@ namespace H.LowCode.RenderEngine.AntBlazor.DataEntryComponent
 {
     internal class DatePickerRender : ComponentRenderBase
     {
-        public override bool CanRender(ComponentSettingSchema jsonSchema)
+        public override bool CanRender(ComponentPropertySchema jsonSchema)
         {
             if (jsonSchema.ComponentValueType != ComponentValueType.String)
                 return false;
@@ -18,7 +18,7 @@ namespace H.LowCode.RenderEngine.AntBlazor.DataEntryComponent
             return false;
         }
 
-        public override void Render(RenderTreeBuilder builder, string key, ComponentSettingSchema jsonSchema, Func<PageSchema, RenderFragment> func)
+        public override void Render(RenderTreeBuilder builder, string key, ComponentPropertySchema jsonSchema, Func<PageSchema, RenderFragment> func)
         {
             builder.OpenElement(0, "div");
             builder.AddAttribute(1, "class", "");

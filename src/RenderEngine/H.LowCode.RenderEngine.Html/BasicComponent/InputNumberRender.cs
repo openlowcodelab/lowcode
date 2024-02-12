@@ -6,7 +6,7 @@ namespace H.LowCode.RenderEngine.Html.BasicComponent
 {
     internal class InputNumberRender : ComponentRenderBase
     {
-        public override bool CanRender(ComponentSettingSchema jsonSchema)
+        public override bool CanRender(ComponentPropertySchema jsonSchema)
         {
             if (jsonSchema.ComponentValueType != ComponentValueType.Number)
                 return true;
@@ -14,7 +14,7 @@ namespace H.LowCode.RenderEngine.Html.BasicComponent
             return false;
         }
 
-        public override void Render(RenderTreeBuilder builder, string key, ComponentSettingSchema jsonSchema, Func<PageSchema, RenderFragment> func)
+        public override void Render(RenderTreeBuilder builder, string key, ComponentPropertySchema jsonSchema, Func<PageSchema, RenderFragment> func)
         {
             builder.OpenElement(0, "div");
             builder.AddAttribute(1, "class", "field-label");

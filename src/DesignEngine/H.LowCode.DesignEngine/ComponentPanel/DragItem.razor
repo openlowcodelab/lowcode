@@ -9,18 +9,29 @@
     [Parameter]
     public ComponentSchema ComponentSchema{ get; set; }
 
-    private void OnDragStart(DragEventArgs dragEventArgs)
+    private void OnDragStart()
     {
-        ComponentSchema dragComponentSchema = ComponentSchema.Clone();
-        //设置当前拖拽项
-        DragDropStateService.CurrentDragComponent = dragComponentSchema;
+        AddComponentToDesignPanel(false);
     }
 
     private void OnClick()
     {
-        //发送事件，通知订阅此事件的其他组件更新状态
-        ComponentSchema clickComponentSchema = ComponentSchema.Clone();
-        clickComponentSchema.IsDroppedFromComponentPanel = true;
-        BlazorEventDispatcher.Trigger("designengine.dragitem.onclick", clickComponentSchema);
+        AddComponentToDesignPanel(true);
+    }
+
+    /// <summary>
+    /// 添加组件到 DesignPanel
+    /// </summary>
+    private void AddComponentToDesignPanel(bool isOnClick)
+    {
+        ComponentSchema componentSchema = ComponentSchema.DeepClone();
+        componentSchema.IsDroppedFromComponentPanel = true;
+        //设置当前拖拽项
+        DragDropStateService.CurrentDragComponent = componentSchema;
+        if (isOnClick)
+        {
+            //发送事件，通知订阅此事件的其他组件更新状态
+            BlazorEventDispatcher.Trigger("designengine.dragitem.onclick", componentSchema);
+        }
     }
 }

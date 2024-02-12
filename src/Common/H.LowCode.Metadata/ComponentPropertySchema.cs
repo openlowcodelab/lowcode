@@ -1,14 +1,11 @@
-﻿using H.Extensions.System;
-using Microsoft.AspNetCore.Components;
-using H.LowCode.Metadata;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace H.LowCode.Metadata
 {
     /// <summary>
-    /// 组件属性（参考 JsonSchema）
+    /// 组件属性
     /// </summary>
-    public class ComponentSettingSchema
+    public class ComponentPropertySchema
     {
         public string Id { get; set; }
 

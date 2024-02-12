@@ -8,7 +8,7 @@ namespace H.LowCode.Metadata
         public string Version { get; set; } = "1.0.0";
 
         [JsonPropertyName("c")]
-        public IList<ComponentSettingSchema> ComponentSchemas { get; set; }
+        public IList<ComponentPropertySchema> ComponentSchemas { get; set; }
 
         [JsonPropertyName("p")]
         public PageSettingSchema PagePropertySchema { get; set; }

@@ -18,7 +18,7 @@ namespace H.LowCode.Metadata
 
         public ComponentCategory ComponentCategory { get; set; } = ComponentCategory.Basic;
 
-        public ComponentSettingSchema ComponentPropertySchema { get; set; }
+        public ComponentPropertySchema ComponentPropertySchema { get; set; }
 
         [JsonIgnore]
         public bool IsSelected { get; set; }
@@ -68,9 +68,9 @@ namespace H.LowCode.Metadata
             return false;
         }
 
-        public ComponentSchema Clone()
+        public ComponentSchema DeepClone()
         {
-            ComponentSchema componentSchema = this.DeepClone();
+            ComponentSchema componentSchema = ObjectExtension.DeepClone(this);
             componentSchema.RenderFragment = this.RenderFragment;
             return componentSchema;
         }

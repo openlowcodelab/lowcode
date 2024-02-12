@@ -19,7 +19,7 @@ namespace H.LowCode.DesignEngine.Components.Custom.ComponentProviders
                         builder.AddAttribute(1, "style", "height:55px;");
                         builder.CloseComponent();
                     },
-                    ComponentPropertySchema = new ComponentSettingSchema()
+                    ComponentPropertySchema = new ComponentPropertySchema()
                     {
                         Title = "HTML"
                     }
@@ -29,7 +29,7 @@ namespace H.LowCode.DesignEngine.Components.Custom.ComponentProviders
                         builder.OpenComponent(0, typeof(Input<string>));
                         builder.CloseComponent();
                     },
-                    ComponentPropertySchema = new ComponentSettingSchema()
+                    ComponentPropertySchema = new ComponentPropertySchema()
                     {
                         Title = "用户选择"
                     }
@@ -39,7 +39,7 @@ namespace H.LowCode.DesignEngine.Components.Custom.ComponentProviders
                         builder.OpenComponent(0, typeof(Input<string>));
                         builder.CloseComponent();
                     },
-                    ComponentPropertySchema = new ComponentSettingSchema()
+                    ComponentPropertySchema = new ComponentPropertySchema()
                     {
                         Title = "行政区划"
                     }
@@ -49,7 +49,7 @@ namespace H.LowCode.DesignEngine.Components.Custom.ComponentProviders
                         builder.OpenComponent(0, typeof(Input<string>));
                         builder.CloseComponent();
                     },
-                    ComponentPropertySchema = new ComponentSettingSchema()
+                    ComponentPropertySchema = new ComponentPropertySchema()
                     {
                         Title = "地图"
                     }

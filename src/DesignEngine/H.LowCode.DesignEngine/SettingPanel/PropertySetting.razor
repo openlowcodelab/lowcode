@@ -12,14 +12,14 @@
         <label>描述：</label>
         <TextArea Value="@ComponentSchema.ComponentPropertySchema.Description" />
     </div>
-    @if (ComponentSchema.IsShowProperty(nameof(ComponentSettingSchema.DefaultValue)))
+    @if (ComponentSchema.IsShowProperty(nameof(ComponentPropertySchema.DefaultValue)))
     {
         <div class="propertysetting-item">
             <label>默认值：</label>
             <Input TValue="string" Value="@ComponentSchema.ComponentPropertySchema.DefaultValue" />
         </div>
     }
-    @if (ComponentSchema.IsShowProperty(nameof(ComponentSettingSchema.IsRequired)))
+    @if (ComponentSchema.IsShowProperty(nameof(ComponentPropertySchema.IsRequired)))
     {
         <div class="propertysetting-item">
             <label>必填：</label>
@@ -30,28 +30,28 @@
     @*"type": "string"*@
     @if (ComponentSchema.ComponentPropertySchema.ComponentValueType == ComponentValueType.String)
     {
-        if (ComponentSchema.IsShowProperty(nameof(ComponentSettingSchema.MaximumLength)))
+        if (ComponentSchema.IsShowProperty(nameof(ComponentPropertySchema.MaximumLength)))
         {
             <div class="propertysetting-item">
                 <label>最大长度：</label>
                 <Input TValue="long?" Value="@ComponentSchema.ComponentPropertySchema.MaximumLength" OnChange="(value) => OnPropertyChange()" />
             </div>
         }
-        if (ComponentSchema.IsShowProperty(nameof(ComponentSettingSchema.MinimumLength)))
+        if (ComponentSchema.IsShowProperty(nameof(ComponentPropertySchema.MinimumLength)))
         {
             <div class="propertysetting-item">
                 <label>最小长度：</label>
                 <Input TValue="long?" Value="@ComponentSchema.ComponentPropertySchema.MinimumLength" OnChange="(value) => OnPropertyChange()" />
             </div>
         }
-        if (ComponentSchema.IsShowProperty(nameof(ComponentSettingSchema.Pattern)))
+        if (ComponentSchema.IsShowProperty(nameof(ComponentPropertySchema.Pattern)))
         {
             <div class="propertysetting-item">
                 <label>Pattern：</label>
                 <Input TValue="string" Value="@ComponentSchema.ComponentPropertySchema.Pattern" OnChange="(value) => OnPropertyChange()" />
             </div>
         }
-        if (ComponentSchema.IsShowProperty(nameof(ComponentSettingSchema.Format)))
+        if (ComponentSchema.IsShowProperty(nameof(ComponentPropertySchema.Format)))
         {
             <div class="propertysetting-item">
                 <label>Format：</label>
@@ -64,14 +64,14 @@
     @*"type": "number"*@
     @if (ComponentSchema.ComponentPropertySchema.ComponentValueType == ComponentValueType.Integer || ComponentSchema.ComponentPropertySchema.ComponentValueType == ComponentValueType.Number)
     {
-        if (ComponentSchema.IsShowProperty(nameof(ComponentSettingSchema.Maximum)))
+        if (ComponentSchema.IsShowProperty(nameof(ComponentPropertySchema.Maximum)))
         {
             <div class="propertysetting-item">
                 <label>最大值：</label>
                 <Input TValue="double?" Value="@ComponentSchema.ComponentPropertySchema.Maximum" OnChange="(value) => OnPropertyChange()" />
             </div>
         }
-        if (ComponentSchema.IsShowProperty(nameof(ComponentSettingSchema.Minimum)))
+        if (ComponentSchema.IsShowProperty(nameof(ComponentPropertySchema.Minimum)))
         {
             <div class="propertysetting-item">
                 <label>最小值：</label>
@@ -85,14 +85,14 @@
 
 }*@
 
-    @if (ComponentSchema.IsShowProperty(nameof(ComponentSettingSchema.ItemWidth)))
+    @if (ComponentSchema.IsShowProperty(nameof(ComponentPropertySchema.ItemWidth)))
     {
         <div class="propertysetting-item">
             <label>组件宽度：</label>
             <Slider TValue="double?" Value="@ComponentSchema.ComponentPropertySchema.ItemWidth" DefaultValue="12" Min="4" Max="24" OnChange="(value) => OnPropertyChange()" />
         </div>
     }
-    @if (ComponentSchema.IsShowProperty(nameof(ComponentSettingSchema.LabelWidth)))
+    @if (ComponentSchema.IsShowProperty(nameof(ComponentPropertySchema.LabelWidth)))
     {
         <div class="propertysetting-item">
             <label>标签宽度：</label>

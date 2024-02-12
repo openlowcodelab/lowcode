@@ -10,12 +10,12 @@ namespace H.LowCode.RenderEngine.AntBlazor.LayoutComponent
 {
     internal class GridRender : ComponentRenderBase
     {
-        public override bool CanRender(ComponentSettingSchema jsonSchema)
+        public override bool CanRender(ComponentPropertySchema jsonSchema)
         {
             return false;
         }
 
-        public override void Render(RenderTreeBuilder builder, string keys, ComponentSettingSchema jsonSchema, Func<PageSchema, RenderFragment> func)
+        public override void Render(RenderTreeBuilder builder, string keys, ComponentPropertySchema jsonSchema, Func<PageSchema, RenderFragment> func)
         {
             throw new NotImplementedException();
         }

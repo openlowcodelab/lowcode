@@ -6,8 +6,8 @@ namespace H.LowCode.RenderEngine
 {
     public abstract class ComponentRenderBase
     {
-        public abstract void Render(RenderTreeBuilder builder, string key, ComponentSettingSchema jsonSchema, Func<PageSchema, RenderFragment> func);
+        public abstract void Render(RenderTreeBuilder builder, string key, ComponentPropertySchema jsonSchema, Func<PageSchema, RenderFragment> func);
 
-        public abstract bool CanRender(ComponentSettingSchema jsonSchema);
+        public abstract bool CanRender(ComponentPropertySchema jsonSchema);
     }
 }

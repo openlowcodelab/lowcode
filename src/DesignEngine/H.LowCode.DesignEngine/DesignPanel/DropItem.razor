@@ -6,7 +6,7 @@
          @onclick="OnClick" @onclick:stopPropagation 
          @ondragstart="OnDragStart"
          @ondragenter="OnDragEnter"
-         @ondragover="OnDragOver" @ondragover:stopPropagation @ondragover:preventDefault
+         @ondragover="OnDragOver" @ondragover:preventDefault @ondragover:stopPropagation
          @ondragleave="OnDragLeave">
 
         @if (ComponentSchema.IsSelected)
@@ -94,33 +94,41 @@
 
     private void OnDragStart(DragEventArgs dragEventArgs)
     {
-        DragDropStateService.DragItem_Effect_Move(dragEventArgs);
-        ComponentSchema.Opacity = 0.2;
+        //ComponentSchema.Opacity = 0.2;
 
         //记录当前选中对象
         DragDropStateService.CurrentDragComponent = ComponentSchema;
     }
 
-    private void OnDragEnter()
+    private void OnDragEnter(DragEventArgs dragEventArgs)
     {
+        Console.WriteLine("OnDragEnter");
+
         DragDropStateService.LastDragOverComponent = ComponentSchema;
     }
 
     private void OnDragOver(DragEventArgs dragEventArgs)
     {
+        if (DragDropStateService.CurrentDragComponent == ComponentSchema)
+            return;
+
+        if (DateTime.Now < DragDropStateService.LastDragOverTime.AddMilliseconds(200))
+            return;
+
         //设置移动位置样式，拖拽到目标元素上半部分时，上方添加红色边框，下半部分时下方添加红色边框
         if (dragEventArgs.OffsetY < 30)
         {
-            Console.WriteLine($"top: OffsetY:{dragEventArgs.OffsetY}");
+            //Console.WriteLine($"top: OffsetY:{dragEventArgs.OffsetY}");
             ComponentSchema.ComponentPropertySchema.Style = "border-top: 2px dashed #1890ff;";
             ComponentSchema.IsDroppedToBack = false;
         }
         else
         {
-            Console.WriteLine($"bottom: OffsetY:{dragEventArgs.OffsetY}");
+            //Console.WriteLine($"bottom: OffsetY:{dragEventArgs.OffsetY}");
             ComponentSchema.ComponentPropertySchema.Style = "border-bottom: 2px dashed #1890ff; height: auto;";
             ComponentSchema.IsDroppedToBack = true;
         }
+        DragDropStateService.LastDragOverTime = DateTime.Now;
     }
 
     private void OnDragLeave()

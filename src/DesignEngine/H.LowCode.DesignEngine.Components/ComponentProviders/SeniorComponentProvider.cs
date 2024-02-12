@@ -17,7 +17,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                         //builder.OpenComponent(0, typeof(Upload));
                         //builder.CloseComponent();
                     },
-                    ComponentPropertySchema = new ComponentSettingSchema()
+                    ComponentPropertySchema = new ComponentPropertySchema()
                     {
                         Title = "附件"
                     }
