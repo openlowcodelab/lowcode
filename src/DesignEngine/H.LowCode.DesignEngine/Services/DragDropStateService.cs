@@ -36,9 +36,8 @@ namespace H.LowCode.DesignEngine.Services
         public DropItemContainerSchema RootDropItemContainerSchema { get; set; }
 
         /// <summary>
-        /// 当前拖拽到的容器
+        /// TODO: 当前拖拽到的容器
         /// </summary>
-        [Obsolete("ParentDropItemContainerSchema 不能作为全局对象")]
         public DropItemContainerSchema ParentDropItemContainerSchema { get; set; }
         
         public void ResetComponent()

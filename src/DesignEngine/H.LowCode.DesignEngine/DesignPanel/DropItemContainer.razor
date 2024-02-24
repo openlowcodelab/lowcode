@@ -1,11 +1,12 @@
 ﻿@inject DragDropStateService DragDropStateService
 @implements IDisposable
 
-<div class="@_dropItemContainerSchema.Class" style="height:100%; @_dropItemContainerSchema.Style" ondragstart="event.dataTransfer.setData('text', event.target.id);"
+<div class="dropitemcontainer @_dropItemContainerSchema.Class" style="@_dropItemContainerSchema.Style"
      @onclick="OnClick"
-     @ondrop="OnDrop" @ondrop:preventDefault @ondrop:stopPropagation>
+     @ondrop="OnDrop" @ondrop:preventDefault @ondrop:stopPropagation
+     @ondragover="(e) => { }" @ondragover:preventDefault @ondragover:stopPropagation>
      
-    @if (_dropItemContainerSchema != null)
+    @if (_dropItemContainerSchema.ComponentSchemas.Any())
     {
         @foreach (var component in _dropItemContainerSchema.ComponentSchemas)
         {
@@ -14,7 +15,7 @@
             {
                 dropItemType = DropItemType.Layout;
             }
-            <DropItem DropItemType="@dropItemType" Style="@_dropItemContainerSchema.Style"
+            <DropItem DropItemType="@(dropItemType)" Style="@_dropItemContainerSchema.Style"
                       ComponentSchema="component" OnItemClick="OnItemClick" OnItemDelete="OnItemDelete" OnItemCopy="OnItemCopy" />
         }
     }
@@ -39,13 +40,18 @@
 
     private void Init()
     {
-        if (_dropItemContainerSchema == null)
+        if (_dropItemContainerSchema == null){
             _dropItemContainerSchema = new DropItemContainerSchema();
+            _dropItemContainerSchema.Refresh = Refresh;
+        }
+
         if (ParentDropItemContainerSchema == null)
             ParentDropItemContainerSchema = DragDropStateService.ParentDropItemContainerSchema;
 
         _dropItemContainerSchema.ParentDropItemContainerSchema = ParentDropItemContainerSchema;
-        ParentDropItemContainerSchema.ChildDropItemContainerSchema.Add(_dropItemContainerSchema);
+
+        if (ParentDropItemContainerSchema != null)
+            ParentDropItemContainerSchema.ChildDropItemContainerSchema.Add(_dropItemContainerSchema);
     }
 
     private void RegisterEventDispatcher()
@@ -57,7 +63,7 @@
             if (DragDropStateService.LastSelectedComponent != null)
             {
                 DragDropStateService.LastSelectedComponent.IsSelected = false;
-                StateHasChanged();
+                Refresh();
             }
         });
 
@@ -117,7 +123,7 @@
     {
         componentSchema.IsSelected = false;
         DragItem_Add(_dropItemContainerSchema.ComponentSchemas, componentSchema, true);
-        StateHasChanged();
+        Refresh();
     }
     #endregion
 
@@ -138,20 +144,21 @@
         }
         else  // 如果组件在 DesignPanel 内部拖拽
         {
-            //如果跨 DropItemContainer 拖拽，则移动同时设置顺序
-            if (componentSchema.ParentDropItemContainerSchema != _dropItemContainerSchema)
+            //是否跨 DropItemContainer 移动
+            bool isChangeContainer = (componentSchema.ParentDropItemContainerSchema.Equals(_dropItemContainerSchema) == false);
+            if (isChangeContainer)   //如果跨 DropItemContainer 拖拽，则移动同时设置顺序
             {
                 Console.WriteLine("change");
                 DragItem_Move(_dropItemContainerSchema, componentSchema.ParentDropItemContainerSchema, componentSchema);
             }
-            else // 如果在同一个 DropItemContainer 内拖拽，则移动顺序
+            else     // 如果在同一个 DropItemContainer 内拖拽，则移动顺序
             {
                 Console.WriteLine("sorting");
                 DropItem_Sorting(DragDropStateService.LastDragOverComponent, componentSchema);
             }
         }
 
-        StateHasChanged();
+        Refresh();
     }
 
     /// <summary>
@@ -162,7 +169,7 @@
     /// <param name="isSelected"></param>
     private void DragItem_Add(IList<ComponentSchema> componentSchemas, ComponentSchema componentSchema, bool isSelected = false)
     {
-        var dropComponentSchema = componentSchema.DeepClone();
+        var dropComponentSchema = componentSchema;//.DeepClone();
         dropComponentSchema.ParentDropItemContainerSchema = _dropItemContainerSchema;
         dropComponentSchema.IsDroppedFromComponentPanel = false;
         if (isSelected)
@@ -181,12 +188,13 @@
     /// <param name="componentSchema"></param>
     private void DragItem_Move(DropItemContainerSchema newDropItemContainerSchema, DropItemContainerSchema oldDropItemContainerSchema, ComponentSchema componentSchema)
     {
-        //变更 ParentDropItemContainerSchema，实现跨 DropItemContainer 移动
-        //componentSchema.ParentDropItemContainerSchema = newDropItemContainerSchema;
-
-        //当前 DropItemContainer 新增，上一个 DropItemContainer 移除
+        //当前 DropItemContainer 新增
+        componentSchema.ParentDropItemContainerSchema = newDropItemContainerSchema;
         DragItem_Add(newDropItemContainerSchema.ComponentSchemas, componentSchema);
+
+        //上一个 DropItemContainer 移除
         oldDropItemContainerSchema.ComponentSchemas.Remove(componentSchema);
+        oldDropItemContainerSchema.Refresh_StateChange();  //刷新上一个 DropItemContainer，使 Remove 立即生效
     }
 
     /// <summary>
@@ -214,6 +222,11 @@
         //先移除，再插入对应位置
         _dropItemContainerSchema.ComponentSchemas.Remove(currentDragComponent);
         _dropItemContainerSchema.ComponentSchemas.Insert(indexDraggedOverItem, currentDragComponent);
+    }
+
+    private void Refresh()
+    {
+        StateHasChanged();
     }
 
     public void Dispose()

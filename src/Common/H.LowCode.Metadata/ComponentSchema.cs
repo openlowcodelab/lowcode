@@ -71,7 +71,7 @@ namespace H.LowCode.Metadata
         public ComponentSchema DeepClone()
         {
             ComponentSchema componentSchema = ObjectExtension.DeepClone(this);
-            componentSchema.RenderFragment = this.RenderFragment;
+            componentSchema.RenderFragment = RenderFragment;
             return componentSchema;
         }
     }
