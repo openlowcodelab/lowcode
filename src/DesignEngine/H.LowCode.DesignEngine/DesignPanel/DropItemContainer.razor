@@ -10,13 +10,8 @@
     {
         @foreach (var component in _dropItemContainerSchema.ComponentSchemas)
         {
-            DropItemType dropItemType = DropItemType.Component;
-            if (component.ComponentCategory == ComponentCategory.Layout)
-            {
-                dropItemType = DropItemType.Layout;
-            }
-            <DropItem DropItemType="@(dropItemType)" Style="@_dropItemContainerSchema.Style"
-                      ComponentSchema="component" OnItemClick="OnItemClick" OnItemDelete="OnItemDelete" OnItemCopy="OnItemCopy" />
+            <DropItem Style="@(_dropItemContainerSchema.Style)" ComponentSchema="component"
+                OnItemClick="OnItemClick" OnItemDelete="OnItemDelete" OnItemCopy="OnItemCopy" />
         }
     }
 </div>

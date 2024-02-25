@@ -89,14 +89,14 @@
     {
         <div class="propertysetting-item">
             <label>组件宽度：</label>
-            <Slider TValue="double?" Value="@ComponentSchema.ComponentPropertySchema.ItemWidth" DefaultValue="12" Min="4" Max="24" OnChange="(value) => OnPropertyChange()" />
+            <Slider TValue="double" Value="@ComponentSchema.ComponentPropertySchema.ItemWidth" DefaultValue="12" Min="4" Max="24" OnChange="(value) => OnPropertyChange()" />
         </div>
     }
     @if (ComponentSchema.IsShowProperty(nameof(ComponentPropertySchema.LabelWidth)))
     {
         <div class="propertysetting-item">
             <label>标签宽度：</label>
-            <Slider TValue="double?" Value="@ComponentSchema.ComponentPropertySchema.LabelWidth" DefaultValue="180" Min="4" Max="300" OnChange="(value) => OnPropertyChange()" />
+            <Slider TValue="double" Value="@ComponentSchema.ComponentPropertySchema.LabelWidth" DefaultValue="180" Min="4" Max="300" OnChange="(value) => OnPropertyChange()" />
         </div>
     }
 

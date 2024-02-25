@@ -44,22 +44,22 @@ namespace H.LowCode.Metadata
         public string[] EnumNames { get; set; }
 
         /// <summary>
-        /// 组件宽度（默认 12）
+        /// 组件宽度（默认12：12/24*100 = 50%）
         /// </summary>
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public double? ItemWidth { get; set; }
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public double ItemWidth { get; set; } = 12;
 
         /// <summary>
         /// 组件高度（默认 85 px）
         /// </summary>
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public double? ItemHeight { get; set; }
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public double ItemHeight { get; set; } = 85;
 
         /// <summary>
         /// 标签宽度（默认 180 px）
         /// </summary>
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-        public int LabelWidth { get; set; }
+        public double LabelWidth { get; set; } = 180;
 
         /// <summary>
         /// 自定义样式

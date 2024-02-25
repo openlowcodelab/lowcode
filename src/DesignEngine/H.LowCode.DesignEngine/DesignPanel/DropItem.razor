@@ -1,6 +1,8 @@
 ﻿@inject DragDropStateService DragDropStateService
 
-<div class="dropitem-box" style="@Style; float:left; opacity:@ComponentSchema.Opacity; width: @(_itemWidth)%; @(_itemHeight) min-height: @(_itemMinHeight)px;
+<div class="dropitem-box @DropItemBoxClassMapper.Class" style="float:left; opacity:@ComponentSchema.Opacity; @Style
+    width: @(ComponentSchema.ComponentPropertySchema.ItemWidth/24*100)%;
+    min-height: @(ComponentSchema.ComponentPropertySchema.ItemHeight)px;
     @ComponentSchema.ComponentPropertySchema.CustomStyle">
     <div class="dropitem @DropItemClassMapper.Class" style="@ComponentSchema.ComponentPropertySchema.Style"
          @onclick="OnClick" @onclick:stopPropagation 
@@ -45,16 +47,10 @@
     public Action<ComponentSchema> OnItemCopy { get; set; }
 
     [Parameter]
-    public DropItemType DropItemType { get; set; }
-
-    [Parameter]
     public string Style { get; set; }
 
+    protected ClassMapper DropItemBoxClassMapper { get; } = new ClassMapper();
     protected ClassMapper DropItemClassMapper { get; } = new ClassMapper();
-
-    private double _itemWidth;
-    private string _itemHeight;
-    private double _itemMinHeight;
 
     protected override void OnInitialized()
     {
@@ -69,21 +65,15 @@
     {
         DropItemClassMapper.Clear()
             .If("dropitem-selected", () => ComponentSchema.IsSelected);
+
+        Console.WriteLine($"ItemHeight: {ComponentSchema.ComponentPropertySchema.ItemHeight}");
+        DropItemBoxClassMapper.Clear()
+            .If("dropitem-box-layout", () => ComponentSchema.ComponentCategory != ComponentCategory.Basic);
     }
 
     private void InitData()
     {
         ComponentSchema.ComponentPropertySchema.Name = $"{ComponentSchema.ComponentType}_{Random.Shared.Next(100, 999)}";
-
-        _itemWidth = (ComponentSchema.ComponentPropertySchema.ItemWidth.HasValue == false ? 12 : ComponentSchema.ComponentPropertySchema.ItemWidth.Value) / 24 * 100;
-        if (DropItemType == DropItemType.Component)
-        {
-            _itemMinHeight = ComponentSchema.ComponentPropertySchema.ItemHeight.HasValue == false ? 85 : ComponentSchema.ComponentPropertySchema.ItemHeight.Value;
-        }
-        else
-        {
-            _itemHeight = "height: auto;";
-        }
     }
 
     private void OnClick()
