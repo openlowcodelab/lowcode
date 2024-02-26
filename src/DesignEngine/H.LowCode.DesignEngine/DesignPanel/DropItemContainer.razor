@@ -1,7 +1,7 @@
 ﻿@inject DragDropStateService DragDropStateService
 @implements IDisposable
 
-<div class="dropitemcontainer @_dropItemContainerSchema.Class" style="@_dropItemContainerSchema.Style"
+<div id="@_dropItemContainerSchema.Id" class="dropitemcontainer @_dropItemContainerSchema.Class" style="@_dropItemContainerSchema.Style"
      @onclick="OnClick"
      @ondrop="OnDrop" @ondrop:preventDefault @ondrop:stopPropagation
      @ondragover="(e) => { }" @ondragover:preventDefault @ondragover:stopPropagation>
@@ -58,7 +58,7 @@
             if (DragDropStateService.LastSelectedComponent != null)
             {
                 DragDropStateService.LastSelectedComponent.IsSelected = false;
-                Refresh();
+                StateHasChanged();
             }
         });
 
@@ -118,7 +118,7 @@
     {
         componentSchema.IsSelected = false;
         DragItem_Add(_dropItemContainerSchema.ComponentSchemas, componentSchema, true);
-        Refresh();
+        StateHasChanged();
     }
     #endregion
 
@@ -153,7 +153,7 @@
             }
         }
 
-        Refresh();
+        StateHasChanged();
     }
 
     /// <summary>

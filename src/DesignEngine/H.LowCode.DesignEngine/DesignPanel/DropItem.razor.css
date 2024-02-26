@@ -12,9 +12,16 @@
     display: flex;
     height: 100%;
     margin: 1px;
-    padding: 20px 8px 5px 8px;
     border: #ffffff solid 2px;
     background-color: #ffffff;
+}
+
+.dropitem-container {
+    padding: 0;
+}
+
+.dropitem-component {
+    padding: 20px 8px 5px 8px;
 }
 
     .dropitem:not(.dropitem-selected):hover {
@@ -38,13 +45,18 @@
     padding-left: 25px;
 }
 
-.dropitem-div {
+.dropitem-div-component {
     width: 100%;
     padding-right: 50px;
 }
 
+.dropitem-div-container {
+    width: 100%;
+}
+
 .dropitem-icon-move {
     position: absolute;
+    z-index: 20;
     top: -2px;
     left: -2px;
     height: 24px;

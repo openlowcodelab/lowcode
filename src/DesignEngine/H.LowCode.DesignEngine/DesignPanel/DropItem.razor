@@ -29,7 +29,15 @@
         {
             <div class="dropitem-title">@ComponentSchema.ComponentPropertySchema.Title ：</div>
         }
-        <div class="dropitem-div">@ComponentSchema.RenderFragment(ComponentSchema)</div>
+
+        @if(ComponentSchema.ComponentCategory == ComponentCategory.Basic)
+        {
+            <div class="dropitem-div-component">@ComponentSchema.RenderFragment(ComponentSchema)</div>
+        }
+        else
+        {
+            <div class="dropitem-div-container">@ComponentSchema.RenderFragment(ComponentSchema)</div>
+        }
     </div>
 </div>
 
@@ -64,7 +72,9 @@
     private void SetClassMap()
     {
         DropItemClassMapper.Clear()
-            .If("dropitem-selected", () => ComponentSchema.IsSelected);
+            .If("dropitem-selected", () => ComponentSchema.IsSelected)
+            .If("dropitem-component", () => ComponentSchema.ComponentCategory == ComponentCategory.Basic)
+            .If("dropitem-container", () => ComponentSchema.ComponentCategory != ComponentCategory.Basic);
 
         Console.WriteLine($"ItemHeight: {ComponentSchema.ComponentPropertySchema.ItemHeight}");
         DropItemBoxClassMapper.Clear()
