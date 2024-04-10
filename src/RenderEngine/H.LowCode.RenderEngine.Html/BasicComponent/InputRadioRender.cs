@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
-using H.LowCode.Metadata;
+using H.LowCode.MetaSchema;
 
 namespace H.LowCode.RenderEngine.Html.BasicComponent
 {

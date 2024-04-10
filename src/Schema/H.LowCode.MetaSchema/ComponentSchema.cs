@@ -2,9 +2,9 @@
 using Microsoft.AspNetCore.Components;
 using System.Text.Json.Serialization;
 
-namespace H.LowCode.Metadata
+namespace H.LowCode.MetaSchema
 {
-    public class ComponentSchema
+    public class ComponentSchema : MetaSchema
     {
         public ComponentSchema(string ComponentType)
         {
@@ -51,7 +51,7 @@ namespace H.LowCode.Metadata
         /// </summary>
         public bool IsHiddenTitle { get; set; }
 
-        public DropItemContainerSchema ParentDropItemContainerSchema { get; set; }
+        public string ParentContainerId { get; set; }
 
         /// <summary>
         /// 

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace H.LowCode.Metadata
+namespace H.LowCode.MetaSchema
 {
     public interface IComponentProvider
     {

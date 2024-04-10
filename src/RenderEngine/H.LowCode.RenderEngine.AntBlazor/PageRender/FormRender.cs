@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
-using H.LowCode.Metadata;
+using H.LowCode.MetaSchema;
 
 namespace H.LowCode.RenderEngine.AntBlazor.PageRender
 {
@@ -20,16 +20,16 @@ namespace H.LowCode.RenderEngine.AntBlazor.PageRender
 
         private RenderFragment CreateDynamicComponent(PageSchema jsonSchema) => builder =>
         {
-            foreach (var componentSchema in jsonSchema.ComponentSchemas)
+            foreach (var component in jsonSchema.Components)
             {
                 foreach (var elementRender in _elementRenders)
                 {
-                    if (!elementRender.CanRender(componentSchema))
+                    if (!elementRender.CanRender(component.ComponentPropertySchema))
                         continue;
 
                     builder.OpenElement(0, "div");
                     builder.AddAttribute(1, "class", "field");
-                    elementRender.Render(builder, componentSchema.Name, componentSchema, CreateDynamicComponent);
+                    elementRender.Render(builder, component.ComponentPropertySchema.Name, component.ComponentPropertySchema, CreateDynamicComponent);
                     builder.CloseElement();
 
                     break;

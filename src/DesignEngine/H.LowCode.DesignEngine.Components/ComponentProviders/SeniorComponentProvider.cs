@@ -1,5 +1,5 @@
 ﻿using AntDesign;
-using H.LowCode.Metadata;
+using H.LowCode.MetaSchema;
 
 namespace H.LowCode.DesignEngine.Components.ComponentProviders
 {

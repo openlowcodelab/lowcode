@@ -1,14 +1,10 @@
 ﻿@inject DragDropStateService DragDropStateService
 
 <div class="designpage" style="margin:5px; height:100%; height:100%;">
-    <DropItemContainer ParentDropItemContainerSchema="@RootDropItemContainerSchema"></DropItemContainer>
+    <DropItemContainer IsRootContainer="true"></DropItemContainer>
 </div>
 
 @code {
-    #region Parameter
-    [Parameter]
-    public DropItemContainerSchema RootDropItemContainerSchema{ get; set; }
-    #endregion
 
     protected override void OnInitialized()
     {
@@ -19,6 +15,6 @@
 
     private void Init()
     {
-        DragDropStateService.RootDropItemContainerSchema = RootDropItemContainerSchema;
+        
     }
 }

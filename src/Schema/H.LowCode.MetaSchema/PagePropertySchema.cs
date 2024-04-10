@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace H.LowCode.Metadata
+namespace H.LowCode.MetaSchema
 {
-    public class PageSettingSchema
+    public class PagePropertySchema
     {
         /// <summary>
         /// 页面布局（一列、二列、三列）

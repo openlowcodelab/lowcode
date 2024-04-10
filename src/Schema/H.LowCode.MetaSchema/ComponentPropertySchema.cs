@@ -1,11 +1,11 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace H.LowCode.Metadata
+namespace H.LowCode.MetaSchema
 {
     /// <summary>
     /// 组件属性
     /// </summary>
-    public class ComponentPropertySchema
+    public class ComponentPropertySchema : MetaSchema
     {
         public string Id { get; set; }
 

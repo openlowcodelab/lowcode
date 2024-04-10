@@ -7,6 +7,7 @@
 
 @layout DesignEngineLayout
 @inject HttpClient HttpClient
+@inject DragDropStateService DragDropStateService
 
 <AntDesign.Layout Class="designpage" Style="padding:5px 2px 10px; background-color: #f7f7f7;">
     <Header Style="background-color: white; padding:0 20px;">
@@ -30,7 +31,7 @@
         </Sider>
         <Layout>
             <Content Class="designpage">
-                <DesignPanel RootDropItemContainerSchema="@RootDropItemContainerSchema"></DesignPanel>
+                <DesignPanel></DesignPanel>
             </Content>
             @if ("form".Equals(PageType, StringComparison.OrdinalIgnoreCase))
             {
@@ -60,8 +61,6 @@
     [SupplyParameterFromQuery(Name = "p")]
     public string PageType { get; set; }
 
-    private DropItemContainerSchema RootDropItemContainerSchema = new DropItemContainerSchema();
-
     public async void SaveMetadata()
     {
         PageSchema pageSchema = GetPageSchema();
@@ -70,6 +69,7 @@
         //var result = await HttpClient.PostAsJsonAsync("api/Designer/SaveMetadata", pageSchema);
 
         string jsonData = pageSchema.ToJson();
+
         //PostAsync
         var httpContent = new FormUrlEncodedContent(new List<KeyValuePair<string, string>>() { new KeyValuePair<string, string>("pageSchema", jsonData) });
         var result = await HttpClient.PostAsync("api/Designer/SaveMetadata", httpContent);
@@ -86,9 +86,11 @@
 
     private PageSchema GetPageSchema()
     {
+        var rootContainerSchema = DragDropStateService.RootContainerSchema;
+
         PageSchema pageSchema = new PageSchema();
-        pageSchema.ComponentSchemas = RootDropItemContainerSchema.ComponentSchemas.Select(t => t.ComponentPropertySchema).ToList();
-        pageSchema.DataSource = new DataSource() { DataSourceType = DataSourceType.Api };
+        pageSchema.Components = rootContainerSchema.Components;
+        pageSchema.DataSource = new DataSourceSchema() { DataSourceType = DataSourceType.API };
         return pageSchema;
     }
 }

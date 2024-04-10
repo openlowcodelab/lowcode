@@ -1,5 +1,5 @@
 ﻿using H.LowCode.DesignEngine.Components.ComponentProviders;
-using H.LowCode.Metadata;
+using H.LowCode.MetaSchema;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Modularity;
 

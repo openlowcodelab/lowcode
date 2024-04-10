@@ -1,6 +1,6 @@
 ﻿using H.LowCode.RenderEngine.Html.BasicComponent;
 using Microsoft.AspNetCore.Components;
-using H.LowCode.Metadata;
+using H.LowCode.MetaSchema;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,17 +24,17 @@ namespace H.LowCode.RenderEngine.Html.PageRender
 
         private RenderFragment CreateDynamicComponent(PageSchema jsonSchema) => builder =>
         {
-            foreach (var componentSchema in jsonSchema.ComponentSchemas)
+            foreach (var component in jsonSchema.Components)
             {
                 //bool isCanRender = false;
                 foreach (var elementRender in _elementRenders)
                 {
-                    if (!elementRender.CanRender(componentSchema))
+                    if (!elementRender.CanRender(component.ComponentPropertySchema))
                         continue;
 
                     builder.OpenElement(0, "div");
                     builder.AddAttribute(1, "class", "field");
-                    elementRender.Render(builder, componentSchema.Name, componentSchema, CreateDynamicComponent);
+                    elementRender.Render(builder, component.ComponentPropertySchema.Name, component.ComponentPropertySchema, CreateDynamicComponent);
                     builder.CloseElement();
 
                     //isCanRender = true;

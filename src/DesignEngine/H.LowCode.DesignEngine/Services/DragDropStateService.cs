@@ -1,6 +1,4 @@
-﻿using H.LowCode.Metadata;
-using Microsoft.AspNetCore.Components.Web;
-using System.Collections.Generic;
+﻿using H.LowCode.MetaSchema;
 
 namespace H.LowCode.DesignEngine.Services
 {
@@ -31,15 +29,37 @@ namespace H.LowCode.DesignEngine.Services
         public DateTime LastDragOverTime { get; set; } = DateTime.Now;
 
         /// <summary>
-        /// 根 DropItemContainerSchema
+        /// 根 ComponentContainerSchema
         /// </summary>
-        public DropItemContainerSchema RootDropItemContainerSchema { get; set; }
+        public ComponentContainerSchema RootContainerSchema { get; set; }
 
         /// <summary>
-        /// TODO: 当前拖拽到的容器
+        /// 最后一次拖拽到上面的容器
         /// </summary>
-        public DropItemContainerSchema ParentDropItemContainerSchema { get; set; }
+        public ComponentContainerSchema LastDropContainerSchema { get; set; }
         
+        public ComponentContainerSchema FindContainerSchemaById(string dropItemContainerId)
+        {
+            if(dropItemContainerId == RootContainerSchema.Id)
+                return RootContainerSchema;
+
+            return FindContainerSchemaByIdWithRecursion(dropItemContainerId, RootContainerSchema.Childrens);
+        }
+
+        private ComponentContainerSchema FindContainerSchemaByIdWithRecursion(string dropItemContainerId,
+            IList<ComponentContainerSchema> childrens)
+        {
+            foreach (var container in childrens)
+            {
+                if (container.Id == dropItemContainerId) return container;
+
+                var result = FindContainerSchemaByIdWithRecursion(dropItemContainerId, container.Childrens);
+
+                if (result != null) return result;
+            }
+            return null;
+        }
+
         public void ResetComponent()
         {
             LastSelectedComponent = default;

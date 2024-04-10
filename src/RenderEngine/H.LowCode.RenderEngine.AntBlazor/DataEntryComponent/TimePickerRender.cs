@@ -1,7 +1,7 @@
 ﻿using AntDesign;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
-using H.LowCode.Metadata;
+using H.LowCode.MetaSchema;
 using System;
 using System.Collections.Generic;
 using System.Linq;

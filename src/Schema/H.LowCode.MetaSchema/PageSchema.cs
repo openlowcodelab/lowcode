@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace H.LowCode.Metadata
+namespace H.LowCode.MetaSchema
 {
     public class PageSchema
     {
@@ -8,13 +8,13 @@ namespace H.LowCode.Metadata
         public string Version { get; set; } = "1.0.0";
 
         [JsonPropertyName("c")]
-        public IList<ComponentPropertySchema> ComponentSchemas { get; set; }
+        public IList<ComponentSchema> Components { get; set; }
 
         [JsonPropertyName("p")]
-        public PageSettingSchema PagePropertySchema { get; set; }
+        public PagePropertySchema PageProperty { get; set; }
 
         [JsonPropertyName("d")]
-        public DataSource DataSource { get; set; }
+        public DataSourceSchema DataSource { get; set; }
 
         [JsonPropertyName("i")]
         public I18n I18n { get; set; }

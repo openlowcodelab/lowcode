@@ -116,13 +116,13 @@
         //设置移动位置样式，拖拽到目标元素上半部分时，上方添加红色边框，下半部分时下方添加红色边框
         if (dragEventArgs.OffsetY < 30)
         {
-            //Console.WriteLine($"top: OffsetY:{dragEventArgs.OffsetY}");
+            Console.WriteLine($"top: OffsetY:{dragEventArgs.OffsetY}");
             ComponentSchema.ComponentPropertySchema.Style = "border-top: 2px dashed #1890ff;";
             ComponentSchema.IsDroppedToBack = false;
         }
         else
         {
-            //Console.WriteLine($"bottom: OffsetY:{dragEventArgs.OffsetY}");
+            Console.WriteLine($"bottom: OffsetY:{dragEventArgs.OffsetY}");
             ComponentSchema.ComponentPropertySchema.Style = "border-bottom: 2px dashed #1890ff; height: auto;";
             ComponentSchema.IsDroppedToBack = true;
         }

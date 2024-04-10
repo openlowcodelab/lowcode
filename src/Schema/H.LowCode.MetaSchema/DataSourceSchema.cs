@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace H.LowCode.Metadata
+namespace H.LowCode.MetaSchema
 {
-    public class DataSource
+    public class DataSourceSchema
     {
         public DataSourceType DataSourceType { get; set; }
 
@@ -11,7 +11,10 @@ namespace H.LowCode.Metadata
 
     public enum DataSourceType
     {
-        Database,
-        Api
+        Default,
+        API,
+        SQL,
+        Expression, //表达式
+        Fiexd  //固定值
     }
 }

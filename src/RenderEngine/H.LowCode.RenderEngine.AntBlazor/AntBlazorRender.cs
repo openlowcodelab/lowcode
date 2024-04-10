@@ -1,6 +1,6 @@
 ﻿using H.LowCode.RenderEngine.AntBlazor.PageRender;
 using Microsoft.AspNetCore.Components;
-using H.LowCode.Metadata;
+using H.LowCode.MetaSchema;
 using System;
 
 namespace H.LowCode.RenderEngine.AntBlazor
