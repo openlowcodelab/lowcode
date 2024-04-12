@@ -1,17 +1,17 @@
 ﻿@inject DragDropStateService DragDropStateService
 
-<div class="dropitem-box @DropItemBoxClassMapper.Class" style="float:left; opacity:@ComponentSchema.Opacity; @Style
-    width: @(ComponentSchema.ComponentPropertySchema.ItemWidth/24*100)%;
-    min-height: @(ComponentSchema.ComponentPropertySchema.ItemHeight)px;
-    @ComponentSchema.ComponentPropertySchema.CustomStyle">
-    <div class="dropitem @DropItemClassMapper.Class" style="@ComponentSchema.ComponentPropertySchema.Style"
+<div class="dropitem-box @DropItemBoxClassMapper.Class" style="float:left; opacity:@Component.Opacity; @Style
+    width: @(Component.ComponentPropertySchema.ItemWidth/24*100)%;
+    min-height: @(Component.ComponentPropertySchema.ItemHeight)px;
+    @Component.ComponentPropertySchema.CustomStyle">
+    <div class="dropitem @DropItemClassMapper.Class" style="@Component.ComponentPropertySchema.Style"
          @onclick="OnClick" @onclick:stopPropagation 
-         @ondragstart="OnDragStart"
-         @ondragenter="OnDragEnter"
+         @ondragstart="OnDragStart" @ondragstart:stopPropagation
+         @ondragenter="OnDragEnter" @ondragenter:stopPropagation
          @ondragover="OnDragOver" @ondragover:preventDefault @ondragover:stopPropagation
-         @ondragleave="OnDragLeave">
+         @ondragleave="OnDragLeave" @ondragleave:stopPropagation>
 
-        @if (ComponentSchema.IsSelected)
+        @if (Component.IsSelected)
         {
             <div draggable="true" class="dropitem-icon-move">
                 <Icon Type="drag" Theme="outline" />
@@ -25,25 +25,25 @@
                 </div>
             </div>
         }
-        @if (ComponentSchema.IsHiddenTitle == false)
+        @if (Component.IsHiddenTitle == false)
         {
-            <div class="dropitem-title">@ComponentSchema.ComponentPropertySchema.Title ：</div>
+            <div class="dropitem-title">@Component.ComponentPropertySchema.Title ：</div>
         }
 
-        @if(ComponentSchema.ComponentCategory == ComponentCategory.Basic)
+        @if (Component.ComponentCategory == ComponentCategory.Basic)
         {
-            <div class="dropitem-div-component">@ComponentSchema.RenderFragment(ComponentSchema)</div>
+            <div class="dropitem-div-component">@Component.RenderFragment(Component)</div>
         }
         else
         {
-            <div class="dropitem-div-container">@ComponentSchema.RenderFragment(ComponentSchema)</div>
+            <div class="dropitem-div-container">@Component.RenderFragment(Component)</div>
         }
     </div>
 </div>
 
 @code {
     [Parameter]
-    public ComponentSchema ComponentSchema { get; set; }
+    public ComponentSchema Component { get; set; }
 
     [Parameter]
     public Action<ComponentSchema> OnItemClick { get; set; }
@@ -60,92 +60,42 @@
     protected ClassMapper DropItemBoxClassMapper { get; } = new ClassMapper();
     protected ClassMapper DropItemClassMapper { get; } = new ClassMapper();
 
+    #region Init
     protected override void OnInitialized()
     {
-        RegisterEventDispatcher();
+        Init();
         SetClassMap();
-        InitData();
 
         base.OnInitialized();
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+            RegisterEventDispatcher();
+    }
+
+    private void Init()
+    {
+        if (Component == null)
+            throw new NullReferenceException(nameof(Component));
+
+        if (Component.RenderFragment == null)
+            throw new NullReferenceException(nameof(Component.RenderFragment));
+
+        Component.ComponentPropertySchema.Name = $"{Component.ComponentType}_{Random.Shared.Next(100, 999)}";
     }
 
     private void SetClassMap()
     {
         DropItemClassMapper.Clear()
-            .If("dropitem-selected", () => ComponentSchema.IsSelected)
-            .If("dropitem-component", () => ComponentSchema.ComponentCategory == ComponentCategory.Basic)
-            .If("dropitem-container", () => ComponentSchema.ComponentCategory != ComponentCategory.Basic);
+            .If("dropitem-selected", () => Component.IsSelected)
+            .If("dropitem-component", () => Component.ComponentCategory == ComponentCategory.Basic)
+            .If("dropitem-container", () => Component.ComponentCategory != ComponentCategory.Basic);
 
-        Console.WriteLine($"ItemHeight: {ComponentSchema.ComponentPropertySchema.ItemHeight}");
+        Console.WriteLine($"ItemHeight: {Component.ComponentPropertySchema.ItemHeight}");
         DropItemBoxClassMapper.Clear()
-            .If("dropitem-box-layout", () => ComponentSchema.ComponentCategory != ComponentCategory.Basic);
-    }
-
-    private void InitData()
-    {
-        ComponentSchema.ComponentPropertySchema.Name = $"{ComponentSchema.ComponentType}_{Random.Shared.Next(100, 999)}";
-    }
-
-    private void OnClick()
-    {
-        OnItemClick.Invoke(ComponentSchema);
-        BlazorEventDispatcher.Trigger("designengine.dropitem.onclick", ComponentSchema);
-    }
-
-    private void OnDragStart(DragEventArgs dragEventArgs)
-    {
-        //ComponentSchema.Opacity = 0.2;
-
-        //记录当前选中对象
-        DragDropStateService.CurrentDragComponent = ComponentSchema;
-    }
-
-    private void OnDragEnter(DragEventArgs dragEventArgs)
-    {
-        DragDropStateService.LastDragOverComponent = ComponentSchema;
-    }
-
-    private void OnDragOver(DragEventArgs dragEventArgs)
-    {
-        if (DragDropStateService.CurrentDragComponent == ComponentSchema)
-            return;
-
-        if (DateTime.Now < DragDropStateService.LastDragOverTime.AddMilliseconds(200))
-            return;
-
-        //设置移动位置样式，拖拽到目标元素上半部分时，上方添加红色边框，下半部分时下方添加红色边框
-        if (dragEventArgs.OffsetY < 30)
-        {
-            Console.WriteLine($"top: OffsetY:{dragEventArgs.OffsetY}");
-            ComponentSchema.ComponentPropertySchema.Style = "border-top: 2px dashed #1890ff;";
-            ComponentSchema.IsDroppedToBack = false;
-        }
-        else
-        {
-            Console.WriteLine($"bottom: OffsetY:{dragEventArgs.OffsetY}");
-            ComponentSchema.ComponentPropertySchema.Style = "border-bottom: 2px dashed #1890ff; height: auto;";
-            ComponentSchema.IsDroppedToBack = true;
-        }
-        DragDropStateService.LastDragOverTime = DateTime.Now;
-    }
-
-    private void OnDragLeave()
-    {
-        //如果当前被拖拽的组件和拖拽到上面的组件是同一个，直接返回
-        if (DragDropStateService.CurrentDragComponent == ComponentSchema)
-            return;
-
-        ComponentSchema.ComponentPropertySchema.Style = string.Empty;
-    }
-
-    private void OnDelete()
-    {
-        OnItemDelete.Invoke(ComponentSchema);
-    }
-
-    private void OnCopy()
-    {
-        OnItemCopy.Invoke(ComponentSchema);
+            .If("dropitem-box-layout", () => Component.ComponentCategory != ComponentCategory.Basic);
     }
 
     private void RegisterEventDispatcher()
@@ -154,9 +104,9 @@
         BlazorEventDispatcher.RegisterEvent("designengine.dropitem.onclick", (value) =>
         {
             //取消选中项
-            if (DragDropStateService.LastSelectedComponent != ComponentSchema)
+            if (DragDropStateService.LastSelectedComponent != Component)
             {
-                ComponentSchema.IsSelected = false;
+                Component.IsSelected = false;
                 StateHasChanged();
             }
         });
@@ -167,4 +117,71 @@
             StateHasChanged();
         });
     }
+    #endregion
+
+    #region Event
+    private void OnClick()
+    {
+        OnItemClick.Invoke(Component);
+        BlazorEventDispatcher.Trigger("designengine.dropitem.onclick", Component);
+    }
+
+    private void OnDragStart(DragEventArgs dragEventArgs)
+    {
+        //Component.Opacity = 0.2;
+
+        Console.WriteLine("drag component: " + Component.Id);
+
+        //记录当前选中对象
+        DragDropStateService.CurrentDragComponent = Component;
+    }
+
+    private void OnDragEnter(DragEventArgs dragEventArgs)
+    {
+        DragDropStateService.LastDragOverComponent = Component;
+    }
+
+    private void OnDragOver(DragEventArgs dragEventArgs)
+    {
+        if (ReferenceEquals(DragDropStateService.CurrentDragComponent, Component))
+            return;
+
+        if (DateTime.Now < DragDropStateService.LastDragOverTime.AddMilliseconds(200))
+            return;
+
+        //设置移动位置样式，拖拽到目标元素上半部分时，上方添加红色边框，下半部分时下方添加红色边框
+        if (dragEventArgs.OffsetY < 30)
+        {
+            Console.WriteLine($"top: OffsetY:{dragEventArgs.OffsetY}");
+            Component.ComponentPropertySchema.Style = "border-top: 2px dashed #1890ff;";
+            Component.IsDroppedToBack = false;
+        }
+        else
+        {
+            Console.WriteLine($"bottom: OffsetY:{dragEventArgs.OffsetY}");
+            Component.ComponentPropertySchema.Style = "border-bottom: 2px dashed #1890ff; height: auto;";
+            Component.IsDroppedToBack = true;
+        }
+        DragDropStateService.LastDragOverTime = DateTime.Now;
+    }
+
+    private void OnDragLeave()
+    {
+        //如果当前被拖拽的组件和拖拽到上面的组件是同一个，直接返回
+        if (ReferenceEquals(DragDropStateService.CurrentDragComponent, Component))
+            return;
+
+        Component.ComponentPropertySchema.Style = string.Empty;
+    }
+
+    private void OnDelete()
+    {
+        OnItemDelete.Invoke(Component);
+    }
+
+    private void OnCopy()
+    {
+        OnItemCopy.Invoke(Component);
+    }
+    #endregion
 }

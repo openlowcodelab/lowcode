@@ -10,14 +10,15 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
 
         public IEnumerable<ComponentSchema> LoadComponent()
         {
-            List<ComponentSchema> components = new List<ComponentSchema>()
-            {
+            List<ComponentSchema> components =
+            [
                 new ComponentSchema(ComponentType:"grid"){
                     IsHiddenTitle = true,
                     ComponentCategory = ComponentCategory.Layout,
                     RenderFragment = (componentSchema) =>  (builder) =>
                     {
                         builder.OpenComponent(0, typeof(GridLayout));
+                        builder.AddComponentParameter(0, "Component", componentSchema);
                         builder.CloseComponent();
                     },
                     ComponentPropertySchema = new ComponentPropertySchema()
@@ -38,6 +39,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                     RenderFragment = (componentSchema) =>  (builder) =>
                     {
                         //builder.OpenComponent(0, typeof());
+                        //builder.AddComponentParameter(0, "Component", componentSchema);
                         //builder.CloseComponent();
                     },
                     ComponentPropertySchema = new ComponentPropertySchema()
@@ -48,7 +50,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                         ItemHeight = 150
                     }
                 }
-            };
+            ];
             return components;
         }
     }

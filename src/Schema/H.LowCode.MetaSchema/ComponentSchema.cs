@@ -11,6 +11,8 @@ namespace H.LowCode.MetaSchema
             this.ComponentType = ComponentType;
         }
 
+        public Guid Id { get; set; } = Guid.NewGuid();
+
         /// <summary>
         /// 组件类型
         /// </summary>
@@ -20,6 +22,25 @@ namespace H.LowCode.MetaSchema
 
         public ComponentPropertySchema ComponentPropertySchema { get; set; }
 
+        /// <summary>
+        /// 是否隐藏标题
+        /// </summary>
+        public bool IsHiddenTitle { get; set; }
+
+        public Guid ParentId { get; set; }
+
+        /// <summary>
+        /// 支持的属性
+        /// </summary>
+        public IList<string> SupportProperties { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public IList<ComponentSchema> Childrens { get; set; } = [];
+
+        #region JsonIgnore Attributes
         [JsonIgnore]
         public bool IsSelected { get; set; }
 
@@ -38,20 +59,12 @@ namespace H.LowCode.MetaSchema
         [JsonIgnore]
         public bool IsDroppedToBack { get; set; }
 
-        /// <summary>
-        /// 支持的属性
-        /// </summary>
-        public IList<string> SupportProperties{get;set;}
-
         [JsonIgnore]
         public RenderFragment<ComponentSchema> RenderFragment { get; set; }
 
-        /// <summary>
-        /// 是否隐藏标题
-        /// </summary>
-        public bool IsHiddenTitle { get; set; }
-
-        public string ParentContainerId { get; set; }
+        [JsonIgnore]
+        public Action Refresh { get; set; }
+        #endregion
 
         /// <summary>
         /// 
@@ -70,9 +83,17 @@ namespace H.LowCode.MetaSchema
 
         public ComponentSchema DeepClone()
         {
-            ComponentSchema componentSchema = ObjectExtension.DeepClone(this);
-            componentSchema.RenderFragment = RenderFragment;
-            return componentSchema;
+            ComponentSchema component = ObjectExtension.DeepClone(this);
+            component.Id = Guid.NewGuid();
+            component.ParentId = Guid.Empty;
+            component.RenderFragment = RenderFragment;
+            component.Refresh = Refresh;
+            return component;
+        }
+
+        public void RefreshState()
+        {
+            if (Refresh != null) Refresh();
         }
     }
 
@@ -80,6 +101,6 @@ namespace H.LowCode.MetaSchema
     {
         Basic,
         Layout,
-        Custom
+        Container
     }
 }

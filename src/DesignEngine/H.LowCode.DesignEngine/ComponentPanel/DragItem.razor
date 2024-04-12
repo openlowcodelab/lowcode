@@ -24,14 +24,17 @@
     /// </summary>
     private void AddComponentToDesignPanel(bool isOnClick)
     {
-        ComponentSchema componentSchema = ComponentSchema.DeepClone();
-        componentSchema.IsDroppedFromComponentPanel = true;
-        //设置当前拖拽项
-        DragDropStateService.CurrentDragComponent = componentSchema;
+        ComponentSchema component = ComponentSchema.DeepClone();
+        component.IsDroppedFromComponentPanel = true;
         if (isOnClick)
         {
             //发送事件，通知订阅此事件的其他组件更新状态
-            BlazorEventDispatcher.Trigger("designengine.dragitem.onclick", componentSchema);
+            BlazorEventDispatcher.Trigger("designengine.dragitem.onclick", component);
+        }
+        else
+        {
+            //设置当前拖拽项
+            DragDropStateService.CurrentDragComponent = component;
         }
     }
 }

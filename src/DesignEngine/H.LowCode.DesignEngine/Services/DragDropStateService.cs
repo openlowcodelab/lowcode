@@ -29,31 +29,31 @@ namespace H.LowCode.DesignEngine.Services
         public DateTime LastDragOverTime { get; set; } = DateTime.Now;
 
         /// <summary>
-        /// 根 ComponentContainerSchema
+        /// 根 ComponentSchema
         /// </summary>
-        public ComponentContainerSchema RootContainerSchema { get; set; }
+        public ComponentSchema RootComponent { get; set; }
 
         /// <summary>
-        /// 最后一次拖拽到上面的容器
+        /// 最后一次拖拽到上面的组件
         /// </summary>
-        public ComponentContainerSchema LastDropContainerSchema { get; set; }
-        
-        public ComponentContainerSchema FindContainerSchemaById(string dropItemContainerId)
-        {
-            if(dropItemContainerId == RootContainerSchema.Id)
-                return RootContainerSchema;
+        public ComponentSchema LastDropComponent { get; set; }
 
-            return FindContainerSchemaByIdWithRecursion(dropItemContainerId, RootContainerSchema.Childrens);
+        #region method
+        public ComponentSchema FindComponentById(Guid componentId)
+        {
+            if(componentId == RootComponent.Id)
+                return RootComponent;
+
+            return FindComponentByIdRecursive(componentId, RootComponent.Childrens);
         }
 
-        private ComponentContainerSchema FindContainerSchemaByIdWithRecursion(string dropItemContainerId,
-            IList<ComponentContainerSchema> childrens)
+        private ComponentSchema FindComponentByIdRecursive(Guid componentId, IList<ComponentSchema> childrens)
         {
-            foreach (var container in childrens)
+            foreach (var component in childrens)
             {
-                if (container.Id == dropItemContainerId) return container;
+                if (component.Id == componentId) return component;
 
-                var result = FindContainerSchemaByIdWithRecursion(dropItemContainerId, container.Childrens);
+                var result = FindComponentByIdRecursive(componentId, component.Childrens);
 
                 if (result != null) return result;
             }
@@ -74,5 +74,6 @@ namespace H.LowCode.DesignEngine.Services
             if (LastDragOverComponent != null)
                 LastDragOverComponent.ComponentPropertySchema.Style = string.Empty;
         }
+        #endregion
     }
 }

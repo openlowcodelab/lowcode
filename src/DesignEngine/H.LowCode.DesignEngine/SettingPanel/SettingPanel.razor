@@ -25,10 +25,11 @@
 
     private PagePropertySchema pagePropertySchema = new PagePropertySchema();
 
-    protected override void OnInitialized()
+    #region Init
+    protected override void OnAfterRender(bool firstRender)
     {
-        RegisterEventDispatcher();
-        base.OnInitialized();
+        if (firstRender)
+            RegisterEventDispatcher();
     }
 
     private void RegisterEventDispatcher()
@@ -51,4 +52,5 @@
             StateHasChanged();
         });
     }
+    #endregion
 }

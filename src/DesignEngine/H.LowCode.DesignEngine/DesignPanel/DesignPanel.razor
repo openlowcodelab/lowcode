@@ -1,11 +1,10 @@
 ﻿@inject DragDropStateService DragDropStateService
 
 <div class="designpage" style="margin:5px; height:100%; height:100%;">
-    <DropItemContainer IsRootContainer="true"></DropItemContainer>
+    <DropItemContainer ParentComponent="@DragDropStateService.RootComponent"></DropItemContainer>
 </div>
 
 @code {
-
     protected override void OnInitialized()
     {
         Init();
@@ -15,6 +14,11 @@
 
     private void Init()
     {
-        
+        if (DragDropStateService.RootComponent == null)
+        {
+            var component = new ComponentSchema("root");
+            component.Refresh = StateHasChanged;
+            DragDropStateService.RootComponent = component;
+        }
     }
 }

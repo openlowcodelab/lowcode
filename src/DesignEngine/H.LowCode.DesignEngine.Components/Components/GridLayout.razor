@@ -1,13 +1,15 @@
 ﻿@using H.LowCode.MetaSchema
 
 <div style="height: auto;">
-    @for (var r = 0; r < Rows; r++)
+    @for (int r = 0; r < Rows; r++)
     {
+        int rr = r;
         <GridRow Style="min-height:85px; height: auto;">
-            @for (var c = 0; c < Cols; c++)
+           @for (int c = 0; c < Cols; c++)
            {
+                string key = $"container-{rr}-{c}";
                 <GridCol Span="@(24/Cols)" Style="width:100%; background-color:#f4f4f4; border: 1px dashed #ded9d9;">
-                    <DropItemContainer></DropItemContainer>
+                    <DropItemContainer ParentComponent="@CreatComponent(key)"></DropItemContainer>
                 </GridCol>
            }
         </GridRow>
@@ -16,16 +18,39 @@
 
 @code {
     [Parameter]
+    public ComponentSchema Component{ get; set; }
+
+    [Parameter]
     public int Rows { get; set; } = 2;
 
     [Parameter]
     public int Cols { get; set; } = 2;
 
+    private ComponentSchema _component;
+
+    /// <summary>
+    /// 本地缓存，避免每次重复创建
+    /// </summary>
+    private IDictionary<string, ComponentSchema> _childrens = new Dictionary<string, ComponentSchema>();
+
+    #region Init
     protected override void OnInitialized()
     {
-        RegisterEventDispatcher();
+        Init();
 
         base.OnInitialized();
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+            RegisterEventDispatcher();
+    }
+
+    private void Init()
+    {
+        if (_component == null)
+            _component = Component.DeepClone();
     }
 
     private void RegisterEventDispatcher()
@@ -36,5 +61,21 @@
             Rows = Random.Shared.Next(1, 4);
             StateHasChanged();
         });
+    }
+    #endregion
+
+    private ComponentSchema CreatComponent(string key)
+    {
+        if (_childrens.ContainsKey(key))
+            return _childrens[key];
+
+        var component = _component.DeepClone();
+        component.ComponentCategory = ComponentCategory.Container;
+        component.ParentId = Component.Id;
+        Component.Childrens.Add(component);
+
+        _childrens.Add(key, component);
+
+        return component;
     }
 }

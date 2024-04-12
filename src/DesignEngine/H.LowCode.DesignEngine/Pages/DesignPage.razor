@@ -86,10 +86,8 @@
 
     private PageSchema GetPageSchema()
     {
-        var rootContainerSchema = DragDropStateService.RootContainerSchema;
-
         PageSchema pageSchema = new PageSchema();
-        pageSchema.Components = rootContainerSchema.Components;
+        pageSchema.Components = DragDropStateService.RootComponent.Childrens;
         pageSchema.DataSource = new DataSourceSchema() { DataSourceType = DataSourceType.API };
         return pageSchema;
     }

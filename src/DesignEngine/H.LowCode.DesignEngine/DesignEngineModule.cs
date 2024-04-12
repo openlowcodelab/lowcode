@@ -9,7 +9,7 @@ namespace H.LowCode.DesignEngine
         public override void ConfigureServices(ServiceConfigurationContext context)
         {
             context.Services.AddAntDesign();
-            context.Services.AddScoped(typeof(DragDropStateService));
+            context.Services.AddSingleton(typeof(DragDropStateService));
         }
     }
 }
