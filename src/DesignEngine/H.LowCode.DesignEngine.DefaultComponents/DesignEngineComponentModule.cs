@@ -1,9 +1,9 @@
-﻿using H.LowCode.DesignEngine.Components.ComponentProviders;
+﻿using H.LowCode.DesignEngine.DefaultComponents.ComponentProviders;
 using H.LowCode.MetaSchema;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Modularity;
 
-namespace H.LowCode.DesignEngine.Components
+namespace H.LowCode.DesignEngine.DefaultComponents
 {
     [DependsOn(typeof(DesignEngineModule))]
     public class DesignEngineComponentModule : AbpModule

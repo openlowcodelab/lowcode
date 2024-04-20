@@ -1,0 +1,6 @@
+<Project>
+	<Target Name="PushNugetPackage" AfterTargets="Pack">
+		<!-- nuget 的 api_key 从本机环境变量 NUGET_API_KEY 中获取 -->
+		<Exec Command="dotnet nuget push $(ProjectDir)bin\Debug\$(PackageId).$(PackageVersion).nupkg -k $(NUGET_API_KEY) -s https://api.nuget.org/v3/index.json --skip-duplicate"></Exec>
+	</Target>
+</Project>

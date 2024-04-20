@@ -1,9 +1,9 @@
-﻿using H.LowCode.DesignEngine.Components.Custom.ComponentProviders;
+﻿using H.LowCode.DesignEngine.CustomComponents.ComponentProviders;
 using H.LowCode.MetaSchema;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Modularity;
 
-namespace H.LowCode.DesignEngine.Components.Custom
+namespace H.LowCode.DesignEngine.CustomComponents
 {
     public class DesignEngineCustomComponentModule : AbpModule
     {

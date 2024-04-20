@@ -1,8 +1,8 @@
 ﻿using AntDesign;
-using H.LowCode.DesignEngine.Components.Components;
+using H.LowCode.DesignEngine.DefaultComponents.Components;
 using H.LowCode.MetaSchema;
 
-namespace H.LowCode.DesignEngine.Components.ComponentProviders
+namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
 {
     public class LayoutComponentProvider : IComponentProvider
     {
@@ -17,7 +17,7 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                     ComponentCategory = ComponentCategory.Layout,
                     RenderFragment = (componentSchema) =>  (builder) =>
                     {
-                        builder.OpenComponent(0, typeof(GridLayout));
+                        builder.OpenComponent(0, typeof(GridContainer));
                         builder.AddComponentParameter(0, "Component", componentSchema);
                         builder.CloseComponent();
                     },
@@ -35,19 +35,20 @@ namespace H.LowCode.DesignEngine.Components.ComponentProviders
                 new ComponentSchema(ComponentType:"layout"){
                     IsHiddenTitle = true,
                     ComponentCategory = ComponentCategory.Layout,
-                    SupportProperties = new List<string>() { "MaximumLength", "MinimumLength", "Pattern", "Format" },
+                    SupportProperties = ["MaximumLength", "MinimumLength", "Pattern", "Format"],
                     RenderFragment = (componentSchema) =>  (builder) =>
                     {
-                        //builder.OpenComponent(0, typeof());
-                        //builder.AddComponentParameter(0, "Component", componentSchema);
-                        //builder.CloseComponent();
+                        builder.OpenComponent(0, typeof(LayoutContainer));
+                        builder.AddComponentParameter(0, "Component", componentSchema);
+                        builder.CloseComponent();
                     },
                     ComponentPropertySchema = new ComponentPropertySchema()
                     {
                         Title = "Layout 布局",
                         Style = "background-color: #ffffff00",
                         ItemWidth = 24,
-                        ItemHeight = 150
+                        ItemHeight = 150,
+                        CustomStyle = "height: 100%"
                     }
                 }
             ];

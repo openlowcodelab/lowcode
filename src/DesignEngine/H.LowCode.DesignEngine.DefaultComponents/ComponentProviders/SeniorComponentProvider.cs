@@ -1,7 +1,7 @@
 ﻿using AntDesign;
 using H.LowCode.MetaSchema;
 
-namespace H.LowCode.DesignEngine.Components.ComponentProviders
+namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
 {
     public class SeniorComponentProvider : IComponentProvider
     {

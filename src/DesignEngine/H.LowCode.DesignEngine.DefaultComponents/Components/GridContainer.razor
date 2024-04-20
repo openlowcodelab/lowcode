@@ -7,7 +7,7 @@
         <GridRow Style="min-height:85px; height: auto;">
            @for (int c = 0; c < Cols; c++)
            {
-                string key = $"container-{rr}-{c}";
+                string key = $"gridcontainer-{rr}-{c}";
                 <GridCol Span="@(24/Cols)" Style="width:100%; background-color:#f4f4f4; border: 1px dashed #ded9d9;">
                     <DropItemContainer ParentComponent="@CreatComponent(key)"></DropItemContainer>
                 </GridCol>
@@ -75,7 +75,6 @@
         Component.Childrens.Add(component);
 
         _childrens.Add(key, component);
-
         return component;
     }
 }

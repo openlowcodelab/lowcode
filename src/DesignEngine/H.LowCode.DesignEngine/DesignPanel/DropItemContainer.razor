@@ -132,12 +132,11 @@
     /// <summary>
     /// 新增 DragItem
     /// </summary>
-    /// <param name="componentSchemas"></param>
-    /// <param name="componentSchema"></param>
+    /// <param name="parentComponent"></param>
+    /// <param name="dragComponent"></param>
     /// <param name="isSelected"></param>
     private void DragItem_Add(ComponentSchema parentComponent, ComponentSchema dragComponent, bool isSelected = false)
     {
-        //var dropComponentSchema = dragComponent;//.DeepClone();
         dragComponent.ParentId = parentComponent.Id;
         dragComponent.IsDroppedFromComponentPanel = false;
         if (isSelected)
@@ -153,8 +152,8 @@
     /// <summary>
     /// 跨 DropItemContainer 移动 DropItem
     /// </summary>
-    /// <param name="newComponent"></param>
-    /// <param name="componentSchema"></param>
+    /// <param name="newParentComponent"></param>
+    /// <param name="dragComponent"></param>
     private void DragItem_Move(ComponentSchema newParentComponent, ComponentSchema dragComponent)
     {
         //上一个 DropItemContainer 移除

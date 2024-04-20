@@ -1,5 +1,5 @@
-using H.LowCode.DesignEngine.Components.Custom;
-using H.LowCode.DesignEngine.Components;
+using H.LowCode.DesignEngine.CustomComponents;
+using H.LowCode.DesignEngine.DefaultComponents;
 using H.LowCode.DesignEngine;
 using H.LowCode.RenderEngine.AntBlazor;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
@@ -21,7 +21,7 @@ builder.Services.AddApplication<RenderEngineForHtmlModule>();
 
 #region Sample
 builder.Services.AddApplication<AdminSampleModule>();
-//builder.Services.AddApplication<HttpApiSampleModule>();  //²»ÒªÒÀÀµ HttpApi ÏîÄ¿,·ñÔò»á±¨´í£ºNETSDK1082	Microsoft.AspNetCore.App Ã»ÓÐÔËÐÐÊ±°ü¿ÉÓÃÓÚÖ¸¶¨µÄ RuntimeIdentifier¡°browser-wasm¡±
+//builder.Services.AddApplication<HttpApiSampleModule>();  //ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ HttpApi ï¿½ï¿½Ä¿,ï¿½ï¿½ï¿½ï¿½á±¨ï¿½ï¿½ï¿½ï¿½NETSDK1082	Microsoft.AspNetCore.App Ã»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ RuntimeIdentifierï¿½ï¿½browser-wasmï¿½ï¿½
 #endregion
 
 await builder.Build().RunAsync();
