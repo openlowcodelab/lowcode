@@ -9,20 +9,20 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
 
         public IEnumerable<ComponentSchema> LoadComponent()
         {
-            List<ComponentSchema> components = new List<ComponentSchema>()
-            {
-                new ComponentSchema(ComponentType:"upload"){
+            List<ComponentSchema> components =
+            [
+                new(ComponentType:"upload"){
                     RenderFragment = (componentSchema) =>  (builder) =>
                     {
                         //builder.OpenComponent(0, typeof(Upload));
                         //builder.CloseComponent();
                     },
-                    ComponentPropertySchema = new ComponentPropertySchema()
+                    ComponentPropertySchema = new()
                     {
                         Title = "附件"
                     }
                 }
-            };
+            ];
             return components;
         }
     }

@@ -55,7 +55,7 @@
             //订阅左侧组件面板中的组件点击事件
             BlazorEventDispatcher.RegisterEvent("designengine.dragitem.onclick", (value) =>
             {
-                DropHandler((ComponentSchema)value);
+                DragDropHandler((ComponentSchema)value);
             });
         }
     }
@@ -64,7 +64,7 @@
     #region Event
     private void OnDrop()
     {
-        DropHandler(DragDropStateService.CurrentDragComponent);
+        DragDropHandler(DragDropStateService.CurrentDragComponent);
 
         //重置拖拽样式
         DragDropStateService.ResetComponentStyle();
@@ -89,7 +89,7 @@
 
     private void OnItemDelete(ComponentSchema componentSchema)
     {
-        DropItem_Remove(componentSchema);
+        DropItem_Remove(ParentComponent, componentSchema);
         StateHasChanged();
     }
 
@@ -106,7 +106,7 @@
     /// 拖动 ComponentSchema 释放时处理逻辑
     /// </summary>
     /// <param name="componentSchema"></param>
-    private void DropHandler(ComponentSchema componentSchema)
+    private void DragDropHandler(ComponentSchema componentSchema)
     {
         // 组件来源于 ComponentPanel，新增
         if (componentSchema.IsDroppedFromComponentPanel)
@@ -193,17 +193,17 @@
         ParentComponent.Childrens.Insert(indexDraggedOverItem, currentDragComponent);
     }
 
-    private void DropItem_Remove(ComponentSchema componentSchema)
+    private void DropItem_Remove(ComponentSchema parentComponent, ComponentSchema component)
     {
         //将下一个设为选中
-        int index = ParentComponent.Childrens.IndexOf(componentSchema);
-        if (ParentComponent.Childrens.Count > 1)
+        int index = parentComponent.Childrens.IndexOf(component);
+        if (parentComponent.Childrens.Count > 1)
         {
-            int next = index + 1 >= ParentComponent.Childrens.Count ? index - 1 : index + 1;
-            ParentComponent.Childrens[next].IsSelected = true;
-            DragDropStateService.LastSelectedComponent = ParentComponent.Childrens[next];
+            int next = index + 1 >= parentComponent.Childrens.Count ? index - 1 : index + 1;
+            parentComponent.Childrens[next].IsSelected = true;
+            DragDropStateService.LastSelectedComponent = parentComponent.Childrens[next];
         }
-        ParentComponent.Childrens.Remove(componentSchema);
+        parentComponent.Childrens.Remove(component);
     }
 
     public void Dispose()

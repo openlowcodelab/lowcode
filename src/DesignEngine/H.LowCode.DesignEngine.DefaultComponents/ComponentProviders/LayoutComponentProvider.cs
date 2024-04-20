@@ -12,7 +12,7 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
         {
             List<ComponentSchema> components =
             [
-                new ComponentSchema(ComponentType:"grid"){
+                new(ComponentType:"grid"){
                     IsHiddenTitle = true,
                     ComponentCategory = ComponentCategory.Layout,
                     RenderFragment = (componentSchema) =>  (builder) =>
@@ -21,7 +21,7 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                         builder.AddComponentParameter(0, "Component", componentSchema);
                         builder.CloseComponent();
                     },
-                    ComponentPropertySchema = new ComponentPropertySchema()
+                    ComponentPropertySchema = new()
                     {
                         Title = "Grid 栅格",
                         Style = "background-color: #ffffff00; height: auto;",
@@ -32,7 +32,7 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                         }
                     }
                 },
-                new ComponentSchema(ComponentType:"layout"){
+                new(ComponentType:"layout"){
                     IsHiddenTitle = true,
                     ComponentCategory = ComponentCategory.Layout,
                     SupportProperties = ["MaximumLength", "MinimumLength", "Pattern", "Format"],
@@ -42,7 +42,7 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                         builder.AddComponentParameter(0, "Component", componentSchema);
                         builder.CloseComponent();
                     },
-                    ComponentPropertySchema = new ComponentPropertySchema()
+                    ComponentPropertySchema = new()
                     {
                         Title = "Layout 布局",
                         Style = "background-color: #ffffff00",

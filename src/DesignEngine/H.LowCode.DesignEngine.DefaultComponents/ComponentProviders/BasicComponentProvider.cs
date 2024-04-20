@@ -9,90 +9,90 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
 
         public IEnumerable<ComponentSchema> LoadComponent()
         {
-            List<ComponentSchema> components = new List<ComponentSchema>()
-            {
-                new ComponentSchema(ComponentType:"input"){
-                    SupportProperties = new List<string>() { "MaximumLength", "MinimumLength", "Pattern", "Format" },
+            List<ComponentSchema> components =
+            [
+                new(ComponentType:"input"){
+                    SupportProperties = ["MaximumLength", "MinimumLength", "Pattern", "Format"],
                     RenderFragment = (componentSchema) =>  (builder) =>
                     {
                         builder.OpenComponent(1, typeof(Input<string>));
                         builder.CloseComponent();
                     },
-                    ComponentPropertySchema = new ComponentPropertySchema(){
+                    ComponentPropertySchema = new(){
                         Title = "输入框",
                         ComponentValueType = ComponentValueType.String
                     }
                 },
-                new ComponentSchema(ComponentType:"textarea"){
-                    SupportProperties = new List<string>(){ "MaximumLength", "MinimumLength" },
+                new(ComponentType:"textarea"){
+                    SupportProperties = ["MaximumLength", "MinimumLength"],
                     RenderFragment = (componentSchema) =>  (builder) =>
                     {
                         builder.OpenComponent(0, typeof(TextArea));
                         builder.AddAttribute(1, "style", "height:50px;");
                         builder.CloseComponent();
                     },
-                    ComponentPropertySchema= new ComponentPropertySchema(){
+                    ComponentPropertySchema= new(){
                         Title = "大输入框",
                         ComponentValueType = ComponentValueType.String
                     }
                 },
-                new ComponentSchema(ComponentType:"datepicker"){
+                new(ComponentType:"datepicker"){
                     RenderFragment = (componentSchema) =>  (builder) =>
                     {
                         builder.OpenComponent(0, typeof(DatePicker<DateTime?>));
                         builder.AddAttribute(1, "Picker", DatePickerType.Date);
                         builder.CloseComponent();
                     },
-                    ComponentPropertySchema = new ComponentPropertySchema(){
+                    ComponentPropertySchema = new(){
                         Title = "日期选择",
                         ComponentValueType = ComponentValueType.String
                     }
                 },
-                new ComponentSchema(ComponentType:"inputnumber"){
-                    SupportProperties = new List<string>{ "Maximum", "Minimum" },
+                new(ComponentType:"inputnumber"){
+                    SupportProperties = ["Maximum", "Minimum"],
                     RenderFragment = (componentSchema) =>  (builder) =>
                     {
                         builder.OpenComponent(0, typeof(AntDesign.InputNumber<int>));
                         builder.CloseComponent();
                     },
-                    ComponentPropertySchema = new ComponentPropertySchema(){
+                    ComponentPropertySchema = new(){
                         Title = "数字输入框",
                         ComponentValueType = ComponentValueType.Integer
                     }
                 },
-                new ComponentSchema(ComponentType:"checkbox"){
+                new(ComponentType:"checkbox"){
                     RenderFragment = (componentSchema) =>  (builder) =>
                     {
                         builder.OpenComponent(0, typeof(Select<string, string>));
                         builder.CloseComponent();
                     },
-                    ComponentPropertySchema = new ComponentPropertySchema(){
+                    ComponentPropertySchema = new(){
                         Title = "是否选择",
                     ComponentValueType = ComponentValueType.Boolean
                     }
                 },
-                new ComponentSchema(ComponentType:"switch"){
+                new(ComponentType:"switch"){
                     RenderFragment = (componentSchema) =>  (builder) =>
                     {
                         builder.OpenComponent(0, typeof(Switch));
                         builder.CloseComponent();
                     },
-                    ComponentPropertySchema = new ComponentPropertySchema(){
+                    ComponentPropertySchema = new(){
                         Title = "是否switch",
                         ComponentValueType = ComponentValueType.Boolean
                     }
                 },
-                new ComponentSchema(ComponentType:"radio"){
+                new(ComponentType:"radio"){
                     RenderFragment = (componentSchema) =>  (builder) =>
                     {
                         builder.OpenComponent(0, typeof(Radio<string>));
                         builder.CloseComponent();
                     },
-                    ComponentPropertySchema = new ComponentPropertySchema(){
+                    ComponentPropertySchema = new(){
                         Title = "下拉选择"
                     }
                 }
-            };
+            ];
             return components;
         }
     }

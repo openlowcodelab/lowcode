@@ -1,4 +1,5 @@
 ﻿using AntDesign;
+using H.LowCode.DesignEngine.CustomComponents.Components;
 using H.LowCode.MetaSchema;
 
 namespace H.LowCode.DesignEngine.CustomComponents.ComponentProviders
@@ -9,52 +10,61 @@ namespace H.LowCode.DesignEngine.CustomComponents.ComponentProviders
 
         public IEnumerable<ComponentSchema> LoadComponent()
         {
-            List<ComponentSchema> components = new List<ComponentSchema>()
-            {
-                new ComponentSchema(ComponentType:"html"){
-                    SupportProperties = new List<string>(){ "MaximumLength", "MinimumLength" },
+            List<ComponentSchema> components =
+            [
+                new(ComponentType:"lakexeditor"){
+                    SupportProperties = ["MaximumLength", "MinimumLength"],
                     RenderFragment = (componentSchema) =>  (builder) =>
                     {
-                        builder.OpenComponent(0, typeof(TextArea));
-                        builder.AddAttribute(1, "style", "height:55px;");
+                        builder.OpenComponent(0, typeof(LakexEditor));
                         builder.CloseComponent();
                     },
-                    ComponentPropertySchema = new ComponentPropertySchema()
+                    ComponentPropertySchema = new()
                     {
-                        Title = "HTML"
+                        Title = "LakexEditor"
                     }
                 },
-                new ComponentSchema(ComponentType:"userselect"){
+                new(ComponentType:"userselect"){
                     RenderFragment = (componentSchema) =>  (builder) => {
-                        builder.OpenComponent(0, typeof(Input<string>));
+                        builder.OpenComponent(0, typeof(UserSelect));
                         builder.CloseComponent();
                     },
-                    ComponentPropertySchema = new ComponentPropertySchema()
+                    ComponentPropertySchema = new()
                     {
                         Title = "用户选择"
                     }
                 },
-                new ComponentSchema(ComponentType:"region"){
+                new(ComponentType:"region"){
                     RenderFragment = (componentSchema) =>  (builder) => {
-                        builder.OpenComponent(0, typeof(Input<string>));
+                        builder.OpenComponent(0, typeof(Region));
                         builder.CloseComponent();
                     },
-                    ComponentPropertySchema = new ComponentPropertySchema()
+                    ComponentPropertySchema = new()
                     {
                         Title = "行政区划"
                     }
                 },
-                new ComponentSchema(ComponentType:"map"){
+                new(ComponentType:"gaodemap"){
                     RenderFragment = (componentSchema) =>  (builder) => {
-                        builder.OpenComponent(0, typeof(Input<string>));
+                        builder.OpenComponent(0, typeof(GaodeMap));
                         builder.CloseComponent();
                     },
-                    ComponentPropertySchema = new ComponentPropertySchema()
+                    ComponentPropertySchema = new()
                     {
-                        Title = "地图"
+                        Title = "高德地图"
+                    }
+                },
+                new(ComponentType:"baidumap"){
+                    RenderFragment = (componentSchema) =>  (builder) => {
+                        builder.OpenComponent(0, typeof(BaiduMap));
+                        builder.CloseComponent();
+                    },
+                    ComponentPropertySchema = new()
+                    {
+                        Title = "百度地图"
                     }
                 }
-            };
+            ];
             return components;
         }
     }
