@@ -13,12 +13,10 @@
     [Parameter]
     public ComponentSchema Component{ get; set; }
 
-    private ComponentSchema _component;
-
     /// <summary>
-    /// 本地缓存，避免每次重复创建
+    /// 保存初始的 Component，避免跟随 Component 变化
     /// </summary>
-    private IDictionary<string, ComponentSchema> _childrens = new Dictionary<string, ComponentSchema>();
+    private ComponentSchema _component;
 
     #region Init
     protected override void OnInitialized()
@@ -37,7 +35,7 @@
     private void Init()
     {
         if (_component == null)
-            _component = Component.DeepClone();
+            _component = Component.CreateNew();
     }
 
     private void RegisterEventDispatcher()
@@ -52,15 +50,23 @@
 
     private ComponentSchema CreatComponent(string key)
     {
-        if (_childrens.ContainsKey(key))
-            return _childrens[key];
+        if (Component.Childrens.Count >= 2)
+        {
+            return Component.Childrens.FirstOrDefault(t =>
+            {
+                if (t.ComponentPropertySchema.ExtensionData.ContainsKey(key))
+                    return true;
+                return false;
+            });
+        }
 
-        var component = _component.DeepClone();
+        var component = _component.CreateNew();
         component.ComponentCategory = ComponentCategory.Container;
+        component.ComponentPropertySchema.ExtensionData.Add(key, key);
         component.ParentId = Component.Id;
+
         Component.Childrens.Add(component);
 
-        _childrens.Add(key, component);
         return component;
     }
 }

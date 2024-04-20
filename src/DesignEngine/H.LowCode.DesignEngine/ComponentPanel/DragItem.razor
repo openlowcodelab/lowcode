@@ -24,7 +24,7 @@
     /// </summary>
     private void AddComponentToDesignPanel(bool isOnClick)
     {
-        ComponentSchema component = ComponentSchema.DeepClone();
+        ComponentSchema component = ComponentSchema.CreateNew();
         component.IsDroppedFromComponentPanel = true;
         if (isOnClick)
         {

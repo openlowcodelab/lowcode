@@ -66,7 +66,7 @@ namespace H.LowCode.MetaSchema
         /// </summary>
         public string CustomStyle { get; set; }
 
-        public IDictionary<string, string> ExtensionData { get; }
+        public IDictionary<string, string> ExtensionData { get; } = new Dictionary<string, string>();
 
         public IDictionary<string, ComponentExtensionPropertySchema> ExtensionProperties { get; set; }
     }

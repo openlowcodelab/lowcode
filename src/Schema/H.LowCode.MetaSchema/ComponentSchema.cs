@@ -84,10 +84,16 @@ namespace H.LowCode.MetaSchema
         public ComponentSchema DeepClone()
         {
             ComponentSchema component = ObjectExtension.DeepClone(this);
-            component.Id = Guid.NewGuid();
-            component.ParentId = Guid.Empty;
             component.RenderFragment = RenderFragment;
             component.Refresh = Refresh;
+            return component;
+        }
+
+        public ComponentSchema CreateNew()
+        {
+            ComponentSchema component = DeepClone();
+            component.Id = Guid.NewGuid();
+            component.ParentId = Guid.Empty;
             return component;
         }
 
