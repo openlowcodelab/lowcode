@@ -57,7 +57,7 @@ namespace H.LowCode.MetaSchema
         /// 拖拽到后面（true：后面  false：前面）
         /// </summary>
         [JsonIgnore]
-        public bool IsDroppedToBack { get; set; }
+        public bool IsDropAfter { get; set; }
 
         [JsonIgnore]
         public RenderFragment<ComponentSchema> RenderFragment { get; set; }
@@ -106,7 +106,6 @@ namespace H.LowCode.MetaSchema
     public enum ComponentCategory
     {
         Basic,
-        Layout,
         Container
     }
 }

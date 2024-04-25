@@ -1,9 +1,62 @@
-﻿@using H.LowCode.MetaSchema
+﻿@* 
+* 基于语雀编辑器：
+* https://www.yuque.com/yuque/developer/gfoax065u2v72isu
+*@
 
-<div style="height: auto;">
-    LakexEditor
-</div>
+@inject IJSRuntime JSRuntime
+
+<link rel="stylesheet" type="text/css" href="_content/H.LowCode.DesignEngine.CustomComponents/LakexEditor-1.24.0/doc.css" />
+<link rel="stylesheet" type="text/css" href="_content/H.LowCode.DesignEngine.CustomComponents/antd-4.24.13/antd.css" />
+
+<div id="lakexEditor" class="ne-doc-major-editor" style="height: auto"></div>
 
 @code {
-    
+    private Lazy<Task<IJSObjectReference>> moduleTask;
+
+    #region Init
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            RegisterEventDispatcher();
+
+            await LoadJSModule();
+        }
+    }
+
+    protected override bool ShouldRender()
+    {
+        return false;
+    }
+
+    private void RegisterEventDispatcher()
+    {
+        //订阅属性面板中的事件
+        BlazorEventDispatcher.RegisterEvent("designengine.propertysetting.onchange", (value) =>
+        {
+            StateHasChanged();
+        });
+    }
+
+    private async Task LoadJSModule()
+    {
+        await JSRuntime.InvokeAsync<IJSObjectReference>("import",
+           "./_content/H.LowCode.DesignEngine.CustomComponents/react-18/react.production.min.js");
+        await JSRuntime.InvokeAsync<IJSObjectReference>("import",
+           "./_content/H.LowCode.DesignEngine.CustomComponents/react-18/react-dom.production.min.js");
+        await JSRuntime.InvokeAsync<IJSObjectReference>("import",
+           "./_content/H.LowCode.DesignEngine.CustomComponents/LakexEditor-1.24.0/doc.umd.js");
+
+        moduleTask = new(() => JSRuntime.InvokeAsync<IJSObjectReference>("import",
+                "./_content/H.LowCode.DesignEngine.CustomComponents/LakexEditor-1.24.0/LakexEditor.js").AsTask());
+
+        var module = await moduleTask.Value;
+        await module.InvokeVoidAsync("initLakexEditor");
+    }
+    #endregion
 }

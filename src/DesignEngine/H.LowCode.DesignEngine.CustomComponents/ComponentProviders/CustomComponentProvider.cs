@@ -1,5 +1,4 @@
-﻿using AntDesign;
-using H.LowCode.DesignEngine.CustomComponents.Components;
+﻿using H.LowCode.DesignEngine.CustomComponents.Components;
 using H.LowCode.MetaSchema;
 
 namespace H.LowCode.DesignEngine.CustomComponents.ComponentProviders
@@ -13,7 +12,7 @@ namespace H.LowCode.DesignEngine.CustomComponents.ComponentProviders
             List<ComponentSchema> components =
             [
                 new(ComponentType:"lakexeditor"){
-                    SupportProperties = ["MaximumLength", "MinimumLength"],
+                    IsHiddenTitle = true,
                     RenderFragment = (componentSchema) =>  (builder) =>
                     {
                         builder.OpenComponent(0, typeof(LakexEditor));
@@ -21,49 +20,68 @@ namespace H.LowCode.DesignEngine.CustomComponents.ComponentProviders
                     },
                     ComponentPropertySchema = new()
                     {
-                        Title = "LakexEditor"
+                        Title = "LakexEditor",
+                        ItemWidth = 24,
+                        CustomStyle = "height: 100%",
+                        ComponentValueType = ComponentValueType.String
                     }
                 },
-                new(ComponentType:"userselect"){
-                    RenderFragment = (componentSchema) =>  (builder) => {
-                        builder.OpenComponent(0, typeof(UserSelect));
+                new(ComponentType:"monaco"){
+                    IsHiddenTitle = true,
+                    RenderFragment = (componentSchema) =>  (builder) =>
+                    {
+                        builder.OpenComponent(0, typeof(Monaco));
                         builder.CloseComponent();
                     },
                     ComponentPropertySchema = new()
                     {
-                        Title = "用户选择"
-                    }
-                },
-                new(ComponentType:"region"){
-                    RenderFragment = (componentSchema) =>  (builder) => {
-                        builder.OpenComponent(0, typeof(Region));
-                        builder.CloseComponent();
-                    },
-                    ComponentPropertySchema = new()
-                    {
-                        Title = "行政区划"
-                    }
-                },
-                new(ComponentType:"gaodemap"){
-                    RenderFragment = (componentSchema) =>  (builder) => {
-                        builder.OpenComponent(0, typeof(GaodeMap));
-                        builder.CloseComponent();
-                    },
-                    ComponentPropertySchema = new()
-                    {
-                        Title = "高德地图"
-                    }
-                },
-                new(ComponentType:"baidumap"){
-                    RenderFragment = (componentSchema) =>  (builder) => {
-                        builder.OpenComponent(0, typeof(BaiduMap));
-                        builder.CloseComponent();
-                    },
-                    ComponentPropertySchema = new()
-                    {
-                        Title = "百度地图"
+                        Title = "Monaco",
+                        ItemWidth = 24,
+                        ItemHeight = 150,
+                        CustomStyle = "height: 100%",
+                        ComponentValueType = ComponentValueType.String
                     }
                 }
+                //new(ComponentType:"userselect"){
+                //    RenderFragment = (componentSchema) =>  (builder) => {
+                //        builder.OpenComponent(0, typeof(UserSelect));
+                //        builder.CloseComponent();
+                //    },
+                //    ComponentPropertySchema = new()
+                //    {
+                //        Title = "用户选择"
+                //    }
+                //},
+                //new(ComponentType:"region"){
+                //    RenderFragment = (componentSchema) =>  (builder) => {
+                //        builder.OpenComponent(0, typeof(Region));
+                //        builder.CloseComponent();
+                //    },
+                //    ComponentPropertySchema = new()
+                //    {
+                //        Title = "行政区划"
+                //    }
+                //},
+                //new(ComponentType:"gaodemap"){
+                //    RenderFragment = (componentSchema) =>  (builder) => {
+                //        builder.OpenComponent(0, typeof(GaodeMap));
+                //        builder.CloseComponent();
+                //    },
+                //    ComponentPropertySchema = new()
+                //    {
+                //        Title = "高德地图"
+                //    }
+                //},
+                //new(ComponentType:"baidumap"){
+                //    RenderFragment = (componentSchema) =>  (builder) => {
+                //        builder.OpenComponent(0, typeof(BaiduMap));
+                //        builder.CloseComponent();
+                //    },
+                //    ComponentPropertySchema = new()
+                //    {
+                //        Title = "百度地图"
+                //    }
+                //}
             ];
             return components;
         }

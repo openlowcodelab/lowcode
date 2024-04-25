@@ -1,0 +1,49 @@
+﻿<Flex Gap="middle" Align="start" Vertical>
+    <Flex style="@_boxStyle" Justify="@_justify" Align="@_align">
+        <DropItemContainer ParentComponent="@_component"></DropItemContainer>
+    </Flex>
+</Flex>
+
+@code {
+    [Parameter]
+    public ComponentSchema Component{ get; set; }
+
+    /// <summary>
+    /// 保存初始的 Component，避免跟随 Component 变化
+    /// </summary>
+    private ComponentSchema _component;
+
+    private string _boxStyle = "width:100%;height:120px;border-radius:6px;border:1px solid #40a9ff;";
+    private string _justify;
+    private string _align;
+
+    #region Init
+    protected override void OnInitialized()
+    {
+        Init();
+
+        base.OnInitialized();
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+            RegisterEventDispatcher();
+    }
+
+    private void Init()
+    {
+        if (_component == null)
+            _component = Component.CreateNew();
+    }
+
+    private void RegisterEventDispatcher()
+    {
+        //订阅属性面板中的事件
+        BlazorEventDispatcher.RegisterEvent("designengine.propertysetting.onchange", (value) =>
+        {
+            StateHasChanged();
+        });
+    }
+    #endregion
+}

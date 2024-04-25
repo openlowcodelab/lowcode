@@ -80,6 +80,7 @@ namespace H.LowCode.MetaSchema
         Boolean,
         Object,
         Array,
+        Date,
         Null
     }
 

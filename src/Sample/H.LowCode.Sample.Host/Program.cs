@@ -52,6 +52,10 @@ app.UseAntiforgery();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()
-    .AddAdditionalAssemblies(typeof(H.LowCode.Sample.Admin._Imports).Assembly, typeof(H.LowCode.DesignEngine._Imports).Assembly);
+    .AddAdditionalAssemblies(typeof(H.LowCode.Sample.Admin._Imports).Assembly,
+        typeof(H.LowCode.DesignEngine._Imports).Assembly,
+        typeof(H.LowCode.RenderEngine.AntBlazor._Imports).Assembly
+        //typeof(H.LowCode.RenderEngine.Html._Imports).Assembly
+        );
 
 app.Run();

@@ -1,0 +1,52 @@
+﻿@page "/form/{PageId}/{DataId}"
+
+@inject HttpClient HttpClient
+@inject IRender Render
+@inject NavigationManager NavigationManager
+
+@RenderFragment
+
+@code {
+    [Parameter]
+    public string PageId { get; set; }
+
+    [Parameter]
+    public string DataId { get; set; }
+
+    public RenderFragment RenderFragment { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // 渲染组件
+        await PageRenderAsync();
+    }
+
+    //protected override async Task OnAfterRenderAsync(bool firstRender)
+    //{
+    //    // 渲染表单数据
+    //    await RenderFormDataAsync();
+    //}
+
+    /// <summary>
+    /// 渲染组件
+    /// </summary>
+    /// <returns></returns>
+    private async Task PageRenderAsync()
+    {
+        string url = $"{NavigationManager.BaseUri}jsonschema/form/{PageId}.json?_={DateTime.Now.Ticks}";
+        var pageSchema = await HttpClient.GetFromJsonAsync<PageSchema>(url);
+
+        RenderFragment = Render.Render(pageSchema, PageRenderType.Form);
+    }
+
+    /// <summary>
+    /// 渲染表单数据
+    /// </summary>
+    /// <returns></returns>
+    private async Task LoadDataAsync()
+    {
+        string url = $"{NavigationManager.BaseUri}form/LoadData?id={DataId}";
+
+        var formData = await HttpClient.PostAsJsonAsync<PageSchema>(url, null);
+    }
+}

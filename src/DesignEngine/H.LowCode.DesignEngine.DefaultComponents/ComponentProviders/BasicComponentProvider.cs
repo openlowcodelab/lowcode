@@ -23,6 +23,18 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                         ComponentValueType = ComponentValueType.String
                     }
                 },
+                new(ComponentType:"inputnumber"){
+                    SupportProperties = ["Maximum", "Minimum"],
+                    RenderFragment = (componentSchema) =>  (builder) =>
+                    {
+                        builder.OpenComponent(0, typeof(AntDesign.InputNumber<int>));
+                        builder.CloseComponent();
+                    },
+                    ComponentPropertySchema = new(){
+                        Title = "数字输入框",
+                        ComponentValueType = ComponentValueType.Integer
+                    }
+                },
                 new(ComponentType:"textarea"){
                     SupportProperties = ["MaximumLength", "MinimumLength"],
                     RenderFragment = (componentSchema) =>  (builder) =>
@@ -36,30 +48,6 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                         ComponentValueType = ComponentValueType.String
                     }
                 },
-                new(ComponentType:"datepicker"){
-                    RenderFragment = (componentSchema) =>  (builder) =>
-                    {
-                        builder.OpenComponent(0, typeof(DatePicker<DateTime?>));
-                        builder.AddAttribute(1, "Picker", DatePickerType.Date);
-                        builder.CloseComponent();
-                    },
-                    ComponentPropertySchema = new(){
-                        Title = "日期选择",
-                        ComponentValueType = ComponentValueType.String
-                    }
-                },
-                new(ComponentType:"inputnumber"){
-                    SupportProperties = ["Maximum", "Minimum"],
-                    RenderFragment = (componentSchema) =>  (builder) =>
-                    {
-                        builder.OpenComponent(0, typeof(AntDesign.InputNumber<int>));
-                        builder.CloseComponent();
-                    },
-                    ComponentPropertySchema = new(){
-                        Title = "数字输入框",
-                        ComponentValueType = ComponentValueType.Integer
-                    }
-                },
                 new(ComponentType:"checkbox"){
                     RenderFragment = (componentSchema) =>  (builder) =>
                     {
@@ -69,6 +57,49 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                     ComponentPropertySchema = new(){
                         Title = "是否选择",
                     ComponentValueType = ComponentValueType.Boolean
+                    }
+                },
+                new(ComponentType:"radio"){
+                    RenderFragment = (componentSchema) =>  (builder) =>
+                    {
+                        builder.OpenComponent(0, typeof(Radio<string>));
+                        builder.CloseComponent();
+                    },
+                    ComponentPropertySchema = new(){
+                        Title = "下拉选择"
+                    }
+                },
+                new(ComponentType:"select"){
+                    RenderFragment = (componentSchema) =>  (builder) =>
+                    {
+                        builder.OpenComponent(0, typeof(Select<string, string>));
+                        builder.CloseComponent();
+                    },
+                    ComponentPropertySchema = new(){
+                        Title = "选择器",
+                        ComponentValueType = ComponentValueType.String
+                    }
+                },
+                new(ComponentType:"autocomplete"){
+                    RenderFragment = (componentSchema) =>  (builder) =>
+                    {
+                        builder.OpenComponent(0, typeof(AutoComplete<string>));
+                        builder.CloseComponent();
+                    },
+                    ComponentPropertySchema = new(){
+                        Title = "自动完成",
+                        ComponentValueType = ComponentValueType.String
+                    }
+                },
+                new(ComponentType:"cascader"){
+                    RenderFragment = (componentSchema) =>  (builder) =>
+                    {
+                        builder.OpenComponent(0, typeof(Cascader));
+                        builder.CloseComponent();
+                    },
+                    ComponentPropertySchema = new(){
+                        Title = "级联选择",
+                        ComponentValueType = ComponentValueType.String
                     }
                 },
                 new(ComponentType:"switch"){
@@ -82,14 +113,38 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                         ComponentValueType = ComponentValueType.Boolean
                     }
                 },
-                new(ComponentType:"radio"){
+                new(ComponentType:"datepicker"){
                     RenderFragment = (componentSchema) =>  (builder) =>
                     {
-                        builder.OpenComponent(0, typeof(Radio<string>));
+                        builder.OpenComponent(0, typeof(DatePicker<DateTime?>));
+                        builder.AddAttribute(1, "Picker", DatePickerType.Date);
                         builder.CloseComponent();
                     },
                     ComponentPropertySchema = new(){
-                        Title = "下拉选择"
+                        Title = "日期选择",
+                        ComponentValueType = ComponentValueType.Date
+                    }
+                },
+                new(ComponentType:"timepicker"){
+                    RenderFragment = (componentSchema) =>  (builder) =>
+                    {
+                        builder.OpenComponent(0, typeof(TimePicker<DateTime?>));
+                        builder.CloseComponent();
+                    },
+                    ComponentPropertySchema = new(){
+                        Title = "时间选择",
+                        ComponentValueType = ComponentValueType.Date
+                    }
+                },
+                new(ComponentType:"button"){
+                    RenderFragment = (componentSchema) =>  (builder) =>
+                    {
+                        builder.OpenComponent(0, typeof(Button));
+                        builder.CloseComponent();
+                    },
+                    ComponentPropertySchema = new(){
+                        Title = "按钮",
+                        ComponentValueType = ComponentValueType.None
                     }
                 }
             ];

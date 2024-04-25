@@ -96,7 +96,7 @@
     private void OnItemCopy(ComponentSchema component)
     {
         component.IsSelected = false;
-        DragItem_Add(ParentComponent, component, true);
+        DragItem_Add(ParentComponent, component, DragDropStateService.CurrentDragComponent, true);
         StateHasChanged();
     }
     #endregion
@@ -111,12 +111,13 @@
         // 组件来源于 ComponentPanel，新增
         if (currentDragComponent.IsDroppedFromComponentPanel)
         {
-            DragItem_Add(ParentComponent, currentDragComponent);
+            DragItem_Add(ParentComponent, currentDragComponent, DragDropStateService.LastDragOverComponent);
         }
         else  // 组件在 DesignPanel 内部拖拽
         {
-            bool isInnerContainer = ReferenceEquals(ParentComponent, currentDragComponent);
-            if (isInnerContainer)     //同一个 DropItemContainer 内拖拽，排序
+            bool isSameContainer = ReferenceEquals(ParentComponent, currentDragComponent);
+            Console.WriteLine($"isSameContainer: {isSameContainer}");
+            if (isSameContainer)     //同一个 DropItemContainer 内拖拽，排序
             {
                 DropItem_Sorting(ParentComponent, currentDragComponent, DragDropStateService.LastDragOverComponent);
             }
@@ -127,6 +128,9 @@
         }
 
         StateHasChanged();
+
+        //拖拽释放后将 LastDragOverComponent 置空（避免下一次(如空白区或Copy按钮)拖拽无放置区时，读取到了上次的放置区）
+        DragDropStateService.LastDragOverComponent = null;
     }
 
     /// <summary>
@@ -135,23 +139,34 @@
     /// <param name="parentComponent"></param>
     /// <param name="dragComponent"></param>
     /// <param name="isSelected"></param>
-    private void DragItem_Add(ComponentSchema parentComponent, ComponentSchema dragComponent, bool isSelected = false)
+    private void DragItem_Add(ComponentSchema parentComponent, ComponentSchema currentDragComponent, ComponentSchema dragOverComponent, bool isSelected = false)
     {
-        dragComponent.ParentId = parentComponent.Id;
-        dragComponent.IsDroppedFromComponentPanel = false;
+        currentDragComponent.ParentId = parentComponent.Id;
+        currentDragComponent.IsDroppedFromComponentPanel = false;
 
         //容器内组件宽度始终100%填充 (除根容器外)
         if (ReferenceEquals(ParentComponent, DragDropStateService.RootComponent) == false)
-            dragComponent.ComponentPropertySchema.ItemWidth = 24;
+            currentDragComponent.ComponentPropertySchema.ItemWidth = 24;
 
         if (isSelected)
         {
-            dragComponent.IsSelected = isSelected;
-            DragDropStateService.LastSelectedComponent = dragComponent;
+            currentDragComponent.IsSelected = isSelected;
+            DragDropStateService.LastSelectedComponent = currentDragComponent;
         }
-        dragComponent.Refresh = StateHasChanged;
+        currentDragComponent.Refresh = StateHasChanged;
 
-        parentComponent.Childrens.Add(dragComponent);
+        //如果拖拽到放置区对象上方，按照顺序添加
+        if (dragOverComponent != null)
+        {
+            if (dragOverComponent.IsDropAfter)
+                parentComponent.Childrens.InsertAfter(dragOverComponent, currentDragComponent);
+            else
+                parentComponent.Childrens.InsertBefore(dragOverComponent, currentDragComponent);
+        }
+        else    //添加到末尾
+        {
+            parentComponent.Childrens.Add(currentDragComponent);
+        }
     }
 
     /// <summary>
@@ -169,10 +184,7 @@
 
         //当前 DropItemContainer 新增
         currentDragComponent.ParentId = newParentComponent.Id;
-        DragItem_Add(newParentComponent, currentDragComponent);
-
-        //排序
-        //DropItem_Sorting(newParentComponent, currentDragComponent, dragOverComponent);
+        DragItem_Add(newParentComponent, currentDragComponent, dragOverComponent);
     }
 
     /// <summary>
@@ -189,12 +201,10 @@
         if (currentDragComponent == DragDropStateService.LastDragOverComponent)
             return;
 
-        bool isBefore = false;
-
-        if (isBefore)
-            parentComponent.Childrens.InsertBefore(dragOverComponent, currentDragComponent);
-        else
+        if (dragOverComponent.IsDropAfter)
             parentComponent.Childrens.InsertAfter(dragOverComponent, currentDragComponent);
+        else
+            parentComponent.Childrens.InsertBefore(dragOverComponent, currentDragComponent);
 
         // var indexDraggedOverItem = parentComponent.Childrens.IndexOf(dragOverComponent);
         // if (dragOverComponent.IsDroppedToBack == false)

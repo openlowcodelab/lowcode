@@ -3,16 +3,16 @@
 <div class="dropitem-box @DropItemBoxClassMapper.Class" style="float:left; opacity:@Component.Opacity; @Style
     width: @(Component.ComponentPropertySchema.ItemWidth/24*100)%;
     min-height: @(Component.ComponentPropertySchema.ItemHeight)px;
-    @Component.ComponentPropertySchema.CustomStyle">
-    <div class="dropitem @DropItemClassMapper.Class" style="@Component.ComponentPropertySchema.Style @_tempEffectStyle"
-         @onclick="OnClick" @onclick:stopPropagation 
-         @ondragstart="OnDragStart" @ondragstart:stopPropagation
-         @ondragenter="OnDragEnter" @ondragenter:stopPropagation
-         @ondragover="OnDragOver" @ondragover:preventDefault @ondragover:stopPropagation
-         @ondragleave="OnDragLeave" @ondragleave:stopPropagation
-         @onmouseover="OnMouseOver" @onmouseover:stopPropagation
-         @onmouseout="OnMouseOut" @onmouseout:stopPropagation>
+    @Component.ComponentPropertySchema.CustomStyle"
+     @onclick="OnClick" @onclick:stopPropagation
+     @ondragstart="OnDragStart" @ondragstart:stopPropagation
+     @ondragenter="OnDragEnter" @ondragenter:stopPropagation
+     @ondragover="OnDragOver" @ondragover:preventDefault @ondragover:stopPropagation
+     @ondragleave="OnDragLeave" @ondragleave:stopPropagation
+     @onmouseover="OnMouseOver" @onmouseover:stopPropagation
+     @onmouseout="OnMouseOut" @onmouseout:stopPropagation>
 
+    <div class="dropitem @DropItemClassMapper.Class" style="@Component.ComponentPropertySchema.Style @_tempEffectStyle">
         @if (Component.IsSelected)
         {
             <div draggable="true" class="dropitem-icon-move">
@@ -152,21 +152,21 @@
         if (ReferenceEquals(DragDropStateService.CurrentDragComponent, Component))
             return;
 
-        if (DateTime.Now < DragDropStateService.LastDragOverTime.AddMilliseconds(200))
+        if (DateTime.Now < DragDropStateService.LastDragOverTime.AddMilliseconds(100))
             return;
 
-        //设置移动位置样式，拖拽到目标元素上半部分时，上方添加红色边框，下半部分时下方添加红色边框
+        //设置移动位置样式，拖拽到目标元素上半部分时，上方添加虚线边框，下半部分时下方添加虚线边框
         if (dragEventArgs.OffsetY < 30)
         {
-            Console.WriteLine($"top: OffsetY:{dragEventArgs.OffsetY}");
+            Console.WriteLine($"OnDragOver: top");
             _tempEffectStyle = "border-top: 2px dashed #1890ff;";
-            Component.IsDroppedToBack = false;
+            Component.IsDropAfter = false;
         }
         else
         {
-            Console.WriteLine($"bottom: OffsetY:{dragEventArgs.OffsetY}");
+            Console.WriteLine($"OnDragOver: bottom");
             _tempEffectStyle = "border-bottom: 2px dashed #1890ff; height: auto;";
-            Component.IsDroppedToBack = true;
+            Component.IsDropAfter = true;
         }
         DragDropStateService.LastDragOverTime = DateTime.Now;
     }
@@ -177,6 +177,7 @@
         if (ReferenceEquals(DragDropStateService.CurrentDragComponent, Component))
             return;
 
+        Console.WriteLine("OnDragLeave");
         _tempEffectStyle = string.Empty;
     }
 
