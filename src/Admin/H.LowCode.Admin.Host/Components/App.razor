@@ -1,0 +1,34 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    <link rel="stylesheet" href="app.css" />
+    <link rel="stylesheet" href="H.LowCode.Admin.Host.styles.css" />
+    <link rel="icon" type="image/png" href="logo.png" />
+    <link rel="apple-touch-icon" sizes="512x512" href="logo.png" />
+
+    <!-- Ant Design Pro Blazor Theme -->
+    <link href="_content/AntDesign/css/ant-design-blazor.css" rel="stylesheet" />
+    <script src="_content/AntDesign/js/ant-design-blazor.js"></script>
+    <link href="_content/AntDesign.ProLayout/css/ant-design-pro-layout-blazor.css" rel="stylesheet" />
+    <link href="manifest.json" rel="manifest" />
+
+    <!-- H.LowCode.Theme.Html, 与AntBlazorThemeModule同时只能加载一个 -->
+    @* <link href="_content/H.LowCode.Theme.Html/css/bootstrap/bootstrap.min.css" rel="stylesheet" /> *@
+    @* <link href="_content/H.LowCode.Theme.Html/css/app.css" rel="stylesheet" /> *@
+
+    <!-- DesignEngine -->
+    <link href="_content/H.LowCode.DesignEngine/designengine.css" rel="stylesheet" />
+    
+    <HeadOutlet @rendermode="@InteractiveAuto" />
+</head>
+
+<body>
+    <Routes @rendermode="@InteractiveAuto" />
+    <script src="_framework/blazor.web.js"></script>
+</body>
+
+</html>

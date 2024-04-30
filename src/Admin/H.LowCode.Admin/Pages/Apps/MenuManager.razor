@@ -1,0 +1,108 @@
+﻿@page "/myapp/menumanager/{AppId}"
+
+@layout MyAppLayout
+@using AntDesign.TableModels
+@using System.ComponentModel
+
+<h1>导航管理</h1>
+
+<Table @ref="table" TItem="MenuListModel" DataSource="@menuListModels" Total="_total" OnChange="OnChange"
+       @bind-PageIndex="_pageIndex" @bind-PageSize="_pageSize" @bind-SelectedRows="selectedRows">
+    <Selection Key="@(context.MenuKey)" />
+    <Column @bind-Field="@context.MenuKey" Sortable />
+    <Column @bind-Field="@context.MenuName" Format="yyyy-MM-dd" Sortable />
+    <Column @bind-Field="@context.MenuUrl" Sortable />
+    <ActionColumn Title="Acton">
+         <Space Size=@("middle")>
+             <SpaceItem>
+                 <a href="javascript:void(0)">Edit</a>
+             </SpaceItem>
+            <SpaceItem>
+                <a onclick="()=>Delete(@context.MenuKey)">Delete</a>
+            </SpaceItem>
+        </Space>
+    </ActionColumn>
+</Table>
+
+<br />
+<p>PageIndex: @_pageIndex | PageSize: @_pageSize | Total: @_total</p>
+
+<br />
+<h5>selections:</h5>
+@if (selectedRows != null && selectedRows.Any())
+{
+    <Button Danger Size="small" OnClick="@(e => { selectedRows = null; })">Clear</Button>
+
+    @foreach (var selected in selectedRows)
+    {
+        <Tag @key="selected.MenuKey" Closable OnClose="e=>RemoveSelection(selected.MenuKey)">@selected.MenuKey - @selected.MenuName</Tag>
+    }
+}
+
+<Button OnClick="()=> { _pageIndex--; }">Previous page</Button>
+<Button OnClick="()=> { _pageIndex++; }">Next Page</Button>
+
+@code {
+    [Parameter]
+    public string AppId { get; set; }
+
+    MenuListModel[] menuListModels;
+
+    IEnumerable<MenuListModel> selectedRows;
+    ITable table;
+
+    int _pageIndex = 1;
+    int _pageSize = 10;
+    int _total = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        menuListModels = await GetPageListAsync(1, 5);
+        _total = 5;
+    }
+
+    public class MenuListModel
+    {
+        [DisplayName("菜单key")]
+        public string MenuKey{ get; set; }
+
+        [DisplayName("菜单名称")]
+        public string MenuName { get; set; }
+
+        [DisplayName("菜单地址")]
+        public string MenuUrl { get; set; }
+    }
+    
+    public async Task OnChange(QueryModel<MenuListModel> queryModel)
+    {
+        await Task.Delay(100);
+        Console.WriteLine(JsonSerializer.Serialize(queryModel));
+    }
+
+    public Task<MenuListModel[]> GetPageListAsync(int pageIndex, int num)
+    {
+        var rng = new Random();
+        return Task.FromResult(Enumerable.Range((pageIndex - 1) * num + 1, num).Select(index =>
+        {
+            var temperatureC = rng.Next(-20, 55);
+            return new MenuListModel
+            {
+                MenuKey = index.ToString(),
+                MenuName = $"menu{index}",
+                MenuUrl = $"/{AppId}/PageId"
+            };
+        }).ToArray());
+    }
+
+    public void RemoveSelection(string pageCode)
+    {
+        var selected = selectedRows.Where(x => x.MenuKey != pageCode);
+        selectedRows = selected;
+    }
+
+    private void Delete(string pageCode)
+    {
+        menuListModels = menuListModels.Where(x => x.MenuKey != pageCode).ToArray();
+        _total = menuListModels.Length;
+    }
+}
