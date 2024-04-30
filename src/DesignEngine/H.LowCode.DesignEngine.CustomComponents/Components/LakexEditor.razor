@@ -8,14 +8,23 @@
 <link rel="stylesheet" type="text/css" href="_content/H.LowCode.DesignEngine.CustomComponents/LakexEditor-1.24.0/doc.css" />
 <link rel="stylesheet" type="text/css" href="_content/H.LowCode.DesignEngine.CustomComponents/antd-4.24.13/antd.css" />
 
-<div id="lakexEditor" class="ne-doc-major-editor" style="height: auto"></div>
+<div id="@_component.Id" class="ne-doc-major-editor" style="height: 100%"></div>
 
 @code {
+    [Parameter]
+    public ComponentSchema Component { get; set; }
+
+    /// <summary>
+    /// 保存初始的 Component，避免跟随 Component 变化
+    /// </summary>
+    private ComponentSchema _component;
+
     private Lazy<Task<IJSObjectReference>> moduleTask;
 
     #region Init
     protected override void OnInitialized()
     {
+        Init();
         base.OnInitialized();
     }
 
@@ -32,6 +41,12 @@
     protected override bool ShouldRender()
     {
         return false;
+    }
+
+    private void Init()
+    {
+        if (_component == null)
+            _component = Component.CopyNew();
     }
 
     private void RegisterEventDispatcher()
@@ -56,7 +71,7 @@
                 "./_content/H.LowCode.DesignEngine.CustomComponents/LakexEditor-1.24.0/LakexEditor.js").AsTask());
 
         var module = await moduleTask.Value;
-        await module.InvokeVoidAsync("initLakexEditor");
+        await module.InvokeVoidAsync("initLakexEditor", _component.Id);
     }
     #endregion
 }

@@ -1,5 +1,4 @@
-﻿using AntDesign;
-using H.LowCode.DesignEngine.DefaultComponents.Components;
+﻿using H.LowCode.DesignEngine.DefaultComponents.Components;
 using H.LowCode.MetaSchema;
 
 namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
@@ -15,33 +14,31 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                 new(ComponentType:"grid"){
                     IsHiddenTitle = true,
                     ComponentCategory = ComponentCategory.Container,
-                    RenderFragment = (componentSchema) =>  (builder) =>
+                    RenderFragment = (component) =>  (builder) =>
                     {
-                        builder.OpenComponent(0, typeof(GridContainer));
-                        builder.AddComponentParameter(0, "Component", componentSchema);
+                        builder.OpenComponent(0, typeof(GridWrap));
+                        builder.AddComponentParameter(1, "Component", component);
+                        builder.AddComponentParameter(2, "Rows", 2);
+                        builder.AddComponentParameter(3, "Cols", 2);
                         builder.CloseComponent();
                     },
-                    ComponentPropertySchema = new()
+                    ComponentProperty = new()
                     {
                         Title = "Grid 栅格",
                         Style = "background-color: #ffffff00; height: auto;",
-                        ItemWidth = 24,
-                        ExtensionProperties = new Dictionary<string, ComponentExtensionPropertySchema>(){
-                            { "rows", new() { Label = "行数", Value = 1 } },
-                            { "cols", new(){ Label = "列数", Value = 2 } }
-                        }
+                        ItemWidth = 24
                     }
                 },
                 new(ComponentType:"layout"){
                     IsHiddenTitle = true,
                     ComponentCategory = ComponentCategory.Container,
-                    RenderFragment = (componentSchema) =>  (builder) =>
+                    RenderFragment = (component) =>  (builder) =>
                     {
-                        builder.OpenComponent(0, typeof(LayoutContainer));
-                        builder.AddComponentParameter(0, "Component", componentSchema);
+                        builder.OpenComponent(0, typeof(LayoutWrap));
+                        builder.AddComponentParameter(1, "Component", component);
                         builder.CloseComponent();
                     },
-                    ComponentPropertySchema = new()
+                    ComponentProperty = new()
                     {
                         Title = "Layout 布局",
                         Style = "background-color: #ffffff00",
@@ -53,19 +50,19 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                 new(ComponentType:"flex"){
                     IsHiddenTitle = true,
                     ComponentCategory = ComponentCategory.Container,
-                    RenderFragment = (componentSchema) =>  (builder) =>
+                    RenderFragment = (component) =>  (builder) =>
                     {
-                        builder.OpenComponent(0, typeof(FlexContainer));
-                        builder.AddComponentParameter(0, "Component", componentSchema);
+                        builder.OpenComponent(0, typeof(FlexWrap));
+                        builder.AddComponentParameter(1, "Component", component);
                         builder.CloseComponent();
                     },
-                    ComponentPropertySchema = new()
+                    ComponentProperty = new()
                     {
                         Title = "Flex 布局",
-                        Style = "background-color: #ffffff00",
-                        ItemWidth = 24,
+                        Style = "background-color: #ffffff00; height: auto;",
+                        ItemWidth = 12,
                         ItemHeight = 150,
-                        CustomStyle = "height: 100%"
+                        CustomStyle = "height: auto"
                     }
                 }
             ];

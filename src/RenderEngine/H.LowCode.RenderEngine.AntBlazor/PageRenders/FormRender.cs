@@ -25,12 +25,12 @@ namespace H.LowCode.RenderEngine.AntBlazor.PageRenders
             {
                 foreach (var elementRender in _elementRenders)
                 {
-                    if (!elementRender.CanRender(component.ComponentPropertySchema))
+                    if (!elementRender.CanRender(component.ComponentProperty))
                         continue;
 
                     builder.OpenElement(0, "div");
                     builder.AddAttribute(1, "class", "field");
-                    elementRender.Render(builder, component.ComponentPropertySchema.Name, component.ComponentPropertySchema, CreateDynamicComponent);
+                    elementRender.Render(builder, component.ComponentProperty.Name, component.ComponentProperty, CreateDynamicComponent);
                     builder.CloseElement();
 
                     break;

@@ -1,0 +1,56 @@
+﻿<Descriptions Title="@Component.ComponentProperty.Title" Style="height:auto">
+    @for (int i = 0; i < ItemCount; i++)
+    {
+        <DescriptionsItem Title="@Component.ComponentProperty.Title" ContentStyle="font-weight: bold;">
+            @Component.ComponentProperty.Title
+        </DescriptionsItem>
+    }
+</Descriptions>
+
+@code {
+    [Parameter]
+    public ComponentSchema Component { get; set; }
+
+    [Parameter]
+    public int ItemCount{ get; set; }
+
+    /// <summary>
+    /// 保存初始的 Component，避免跟随 Component 变化
+    /// </summary>
+    private ComponentSchema _component;
+
+    #region Init
+    protected override void OnInitialized()
+    {
+        Init();
+
+        base.OnInitialized();
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+            RegisterEventDispatcher();
+    }
+
+    protected override bool ShouldRender()
+    {
+        return false;
+    }
+
+    private void Init()
+    {
+        if (_component == null)
+            _component = Component.CopyNew();
+    }
+
+    private void RegisterEventDispatcher()
+    {
+        //订阅属性面板中的事件
+        BlazorEventDispatcher.RegisterEvent("designengine.propertysetting.onchange", (value) =>
+        {
+            StateHasChanged();
+        });
+    }
+    #endregion
+}

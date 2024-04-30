@@ -13,12 +13,13 @@ namespace H.LowCode.DesignEngine.CustomComponents.ComponentProviders
             [
                 new(ComponentType:"lakexeditor"){
                     IsHiddenTitle = true,
-                    RenderFragment = (componentSchema) =>  (builder) =>
+                    RenderFragment = (component) =>  (builder) =>
                     {
                         builder.OpenComponent(0, typeof(LakexEditor));
+                        builder.AddComponentParameter(1, "Component", component);
                         builder.CloseComponent();
                     },
-                    ComponentPropertySchema = new()
+                    ComponentProperty = new()
                     {
                         Title = "LakexEditor",
                         ItemWidth = 24,
@@ -26,16 +27,17 @@ namespace H.LowCode.DesignEngine.CustomComponents.ComponentProviders
                         ComponentValueType = ComponentValueType.String
                     }
                 },
-                new(ComponentType:"monaco"){
+                new(ComponentType:"monacoeditor"){
                     IsHiddenTitle = true,
-                    RenderFragment = (componentSchema) =>  (builder) =>
+                    RenderFragment = (component) =>  (builder) =>
                     {
-                        builder.OpenComponent(0, typeof(Monaco));
+                        builder.OpenComponent(0, typeof(MonacoEditor));
+                        builder.AddComponentParameter(1, "Component", component);
                         builder.CloseComponent();
                     },
-                    ComponentPropertySchema = new()
+                    ComponentProperty = new()
                     {
-                        Title = "Monaco",
+                        Title = "MonacoEditor",
                         ItemWidth = 24,
                         ItemHeight = 150,
                         CustomStyle = "height: 100%",
@@ -43,7 +45,7 @@ namespace H.LowCode.DesignEngine.CustomComponents.ComponentProviders
                     }
                 }
                 //new(ComponentType:"userselect"){
-                //    RenderFragment = (componentSchema) =>  (builder) => {
+                //    RenderFragment = (component) =>  (builder) => {
                 //        builder.OpenComponent(0, typeof(UserSelect));
                 //        builder.CloseComponent();
                 //    },
@@ -53,7 +55,7 @@ namespace H.LowCode.DesignEngine.CustomComponents.ComponentProviders
                 //    }
                 //},
                 //new(ComponentType:"region"){
-                //    RenderFragment = (componentSchema) =>  (builder) => {
+                //    RenderFragment = (component) =>  (builder) => {
                 //        builder.OpenComponent(0, typeof(Region));
                 //        builder.CloseComponent();
                 //    },
@@ -63,7 +65,7 @@ namespace H.LowCode.DesignEngine.CustomComponents.ComponentProviders
                 //    }
                 //},
                 //new(ComponentType:"gaodemap"){
-                //    RenderFragment = (componentSchema) =>  (builder) => {
+                //    RenderFragment = (component) =>  (builder) => {
                 //        builder.OpenComponent(0, typeof(GaodeMap));
                 //        builder.CloseComponent();
                 //    },
@@ -73,7 +75,7 @@ namespace H.LowCode.DesignEngine.CustomComponents.ComponentProviders
                 //    }
                 //},
                 //new(ComponentType:"baidumap"){
-                //    RenderFragment = (componentSchema) =>  (builder) => {
+                //    RenderFragment = (component) =>  (builder) => {
                 //        builder.OpenComponent(0, typeof(BaiduMap));
                 //        builder.CloseComponent();
                 //    },

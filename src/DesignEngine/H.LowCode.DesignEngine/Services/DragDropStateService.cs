@@ -70,9 +70,9 @@ namespace H.LowCode.DesignEngine.Services
         public void ResetComponentStyle()
         {
             //CurrentDragComponent.Opacity = 1;
-            CurrentDragComponent.ComponentPropertySchema.Style = string.Empty;
+            CurrentDragComponent.ComponentProperty.Style = string.Empty;
             if (LastDragOverComponent != null)
-                LastDragOverComponent.ComponentPropertySchema.Style = string.Empty;
+                LastDragOverComponent.ComponentProperty.Style = string.Empty;
         }
         #endregion
     }

@@ -1,0 +1,87 @@
+﻿@inject IJSRuntime JSRuntime
+
+<StandaloneCodeEditor Id="my-editor-instance-id"
+    ConstructionOptions="EditorConstructionOptions"
+    OnDidChangeCursorPosition="EditorDidChangeCursorPosition"  />
+
+@code {
+    [Parameter]
+    public ComponentSchema Component { get; set; }
+
+    /// <summary>
+    /// 保存初始的 Component，避免跟随 Component 变化
+    /// </summary>
+    private ComponentSchema _component;
+
+    [Parameter]
+    public string Language { get; set; } = "javascript";
+
+    [Parameter]
+    public string Text { get; set; }
+
+    private Lazy<Task<IJSObjectReference>> moduleTask;
+
+    #region Init
+    protected override void OnInitialized()
+    {
+        Init();
+        base.OnInitialized();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            RegisterEventDispatcher();
+
+            await LoadJSModule();
+        }
+    }
+
+    protected override bool ShouldRender()
+    {
+        return false;
+    }
+
+    private void Init()
+    {
+        if (_component == null)
+            _component = Component.CopyNew();
+    }
+
+    private void RegisterEventDispatcher()
+    {
+        //订阅属性面板中的事件
+        BlazorEventDispatcher.RegisterEvent("designengine.propertysetting.onchange", (value) =>
+        {
+            StateHasChanged();
+        });
+    }
+
+    private async Task LoadJSModule()
+    {
+        // await JSRuntime.InvokeAsync<IJSObjectReference>("import",
+        //    "./_content/BlazorMonaco/jsInterop.js");
+        // await JSRuntime.InvokeAsync<IJSObjectReference>("import",
+        //    "./_content/BlazorMonaco/lib/monaco-editor/min/vs/loader.js");
+        // await JSRuntime.InvokeAsync<IJSObjectReference>("import",
+        //    "./_content/BlazorMonaco/lib/monaco-editor/min/vs/editor/editor.main.js");
+
+        moduleTask = new(() => JSRuntime.InvokeAsync<IJSObjectReference>("import",
+             "./_content/H.LowCode.DesignEngine.CustomComponents/MonacoEditor/monaco.js").AsTask());
+
+        var module = await moduleTask.Value;
+        await module.InvokeVoidAsync("initMonacoEditor");
+    }
+    #endregion
+
+    private StandaloneEditorConstructionOptions EditorConstructionOptions(StandaloneCodeEditor editor)
+    {
+        return new() { AutomaticLayout = true, Language = Language, Value = Text };
+    }
+
+    private void EditorDidChangeCursorPosition(CursorPositionChangedEvent eventArgs)
+    {
+        Console.WriteLine("EditorDidChangeCursorPosition");
+    }
+}

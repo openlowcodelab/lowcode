@@ -1,5 +1,6 @@
 ﻿using H.Extensions.System;
 using Microsoft.AspNetCore.Components;
+using System.ComponentModel;
 using System.Text.Json.Serialization;
 
 namespace H.LowCode.MetaSchema
@@ -20,7 +21,7 @@ namespace H.LowCode.MetaSchema
 
         public ComponentCategory ComponentCategory { get; set; } = ComponentCategory.Basic;
 
-        public ComponentPropertySchema ComponentPropertySchema { get; set; }
+        public ComponentPropertySchema ComponentProperty { get; set; }
 
         /// <summary>
         /// 是否隐藏标题
@@ -57,7 +58,7 @@ namespace H.LowCode.MetaSchema
         /// 拖拽到后面（true：后面  false：前面）
         /// </summary>
         [JsonIgnore]
-        public bool IsDropAfter { get; set; }
+        public bool IsDropedAfter { get; set; }
 
         [JsonIgnore]
         public RenderFragment<ComponentSchema> RenderFragment { get; set; }
@@ -80,27 +81,54 @@ namespace H.LowCode.MetaSchema
                 return true;
             return false;
         }
-
-        public ComponentSchema DeepClone()
+        
+        public ComponentSchema CopyNew()
         {
             ComponentSchema component = ObjectExtension.DeepClone(this);
-            component.RenderFragment = RenderFragment;
-            component.Refresh = Refresh;
-            return component;
-        }
 
-        public ComponentSchema CreateNew()
-        {
-            ComponentSchema component = DeepClone();
+            //Copy全新对象
             component.Id = Guid.NewGuid();
             component.ParentId = Guid.Empty;
+            component.IsSelected = false;
+
+            //手动赋值无法序列化属性
+            component.RenderFragment = RenderFragment;
+            component.Refresh = Refresh;
+
+            //避免子节点在 DeepClone 过程中，丢失 RenderFragment、Refresh 值
+            CopyNewRecursive(component, this);
+
             return component;
         }
 
         public void RefreshState()
         {
-            if (Refresh != null) Refresh();
+            Refresh?.Invoke();
+
+            //递归刷新子节点
+            //foreach(var child in Childrens)
+            //{
+            //    child.RefreshState();
+            //}
         }
+
+        #region private
+        private static void CopyNewRecursive(ComponentSchema newComponent, ComponentSchema oldComponent)
+        {
+            for (var i = 0; i < newComponent.Childrens.Count; i++)
+            {
+                var child = newComponent.Childrens[i];
+                child.Id = Guid.NewGuid();
+                child.ParentId = newComponent.Id;
+                child.IsSelected = false;
+
+                child.RenderFragment = oldComponent.Childrens[i].RenderFragment;
+                child.Refresh = oldComponent.Childrens[i].Refresh;
+
+                CopyNewRecursive(child, oldComponent.Childrens[i]);
+            }
+        }
+        #endregion
     }
 
     public enum ComponentCategory

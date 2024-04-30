@@ -1,7 +1,7 @@
 ﻿@inject DragDropStateService DragDropStateService
 
 <div draggable="true" class="dragitem" @ondragstart="OnDragStart" @onclick="OnClick">
-    @ComponentSchema.ComponentPropertySchema.Title
+    @ComponentSchema.ComponentProperty.Title
 </div>
 
 @code
@@ -24,7 +24,7 @@
     /// </summary>
     private void AddComponentToDesignPanel(bool isOnClick)
     {
-        ComponentSchema component = ComponentSchema.CreateNew();
+        ComponentSchema component = ComponentSchema.CopyNew();
         component.IsDroppedFromComponentPanel = true;
         if (isOnClick)
         {

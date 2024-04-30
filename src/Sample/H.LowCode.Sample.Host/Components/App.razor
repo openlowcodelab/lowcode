@@ -1,20 +1,22 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <base href="/" />
-        <link rel="icon" type="image/png" href="logo.png" />
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    <link rel="icon" type="image/png" href="logo.png" />
+    <!-- H.LowCode.Sample.Host -->
+    <link rel="stylesheet" href="app.css" />
+    <link rel="stylesheet" href="bootstrap/bootstrap.min.css" />
+    <link rel="stylesheet" href="H.LowCode.Sample.Host.styles.css" />
 
-        <!-- H.LowCode.Sample.Host -->
-        <link rel="stylesheet" href="app.css" />
-        <link rel="stylesheet" href="H.LowCode.Sample.Host.styles.css" />
-        <link rel="stylesheet" href="bootstrap/bootstrap.min.css" />
+    <!-- Ant Design Blazor (antblazor 库会动态引入,可无需引入,为避免在按需动态引入时样式渲染闪烁问题,此处提前引入) -->
+    <link href="_content/AntDesign/css/ant-design-blazor.css" rel="stylesheet" />
 
-        <HeadOutlet @rendermode="@InteractiveAuto" />
-    </head>
-    <body>
-        <Routes @rendermode="@InteractiveAuto" />
-        <script src="_framework/blazor.web.js"></script>
-    </body>
+    <HeadOutlet @rendermode="@InteractiveAuto" />
+</head>
+<body>
+    <Routes @rendermode="@InteractiveAuto" />
+    <script src="_framework/blazor.web.js"></script>
+</body>
 </html>

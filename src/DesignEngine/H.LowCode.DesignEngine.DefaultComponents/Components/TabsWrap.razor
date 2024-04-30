@@ -1,15 +1,21 @@
-﻿<Layout Style="height:100%">
-    <Sider Style="background: #f4f7fa; height:100%;">
-        <DropItemContainer ParentComponent="@CreatComponent("layoutcontainer-sider")"></DropItemContainer>
-    </Sider>
-    <Content Style="height: 100%;">
-        <DropItemContainer ParentComponent="@CreatComponent("layoutcontainer-content")"></DropItemContainer>
-    </Content>
-</Layout>
+﻿<Tabs OnChange="OnTabChange" Animated Style="width:100%; height: auto;">
+    @for (int i = 0; i < ItemCount; i++)
+    {
+        string key = $"tab-{i}";
+        <TabPane Tab="@key" Key="@key" Style="height: auto;">
+            <DropItemContainer ParentComponent="@CreatComponent(key)" Style="min-height:300px; height:auto; background: #f4f7fa;"></DropItemContainer>
+        </TabPane>
+    }
+</Tabs>
 
 @code {
     [Parameter]
-    public ComponentSchema Component{ get; set; }
+    public ComponentSchema Component { get; set; }
+
+    [Parameter]
+    public int ItemCount { get; set; }
+
+    private string _activeKey { get; set; }
 
     /// <summary>
     /// 保存初始的 Component，避免跟随 Component 变化
@@ -30,10 +36,15 @@
             RegisterEventDispatcher();
     }
 
+    protected override bool ShouldRender()
+    {
+        return false;
+    }
+
     private void Init()
     {
         if (_component == null)
-            _component = Component.CreateNew();
+            _component = Component.CopyNew();
     }
 
     private void RegisterEventDispatcher()
@@ -46,25 +57,33 @@
     }
     #endregion
 
+    #region
+    private void OnTabChange()
+    {
+
+    }
+    #endregion
+
+    #region
     private ComponentSchema CreatComponent(string key)
     {
-        if (Component.Childrens.Count >= 2)
-        {
-            return Component.Childrens.FirstOrDefault(t =>
+        var c = Component.Childrens.FirstOrDefault(t =>
             {
-                if (t.ComponentPropertySchema.ExtensionData.ContainsKey(key))
+                if (t.ComponentProperty.ExtensionData.ContainsKey(key))
                     return true;
                 return false;
             });
-        }
+        if (c != null)
+            return c;
 
-        var component = _component.CreateNew();
+        var component = _component.CopyNew();
         component.ComponentCategory = ComponentCategory.Container;
-        component.ComponentPropertySchema.ExtensionData.Add(key, key);
+        component.ComponentProperty.ExtensionData.Add(key, key);
         component.ParentId = Component.Id;
 
         Component.Childrens.Add(component);
 
         return component;
     }
+    #endregion
 }

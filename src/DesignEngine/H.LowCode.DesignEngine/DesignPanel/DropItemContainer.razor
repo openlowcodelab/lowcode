@@ -1,8 +1,9 @@
 ﻿@inject DragDropStateService DragDropStateService
 @implements IDisposable
 
-<div class="dropitemcontainer" @ondragover="(e)=>{}" @ondragover:preventDefault @ondragover:stopPropagation
-     @onclick="OnClick" @ondrop="OnDrop" @ondrop:preventDefault @ondrop:stopPropagation>
+<div class="dropitemcontainer" style="@Style" @onclick="OnClick"
+     @ondragover="(e)=>{}" @ondragover:preventDefault @ondragover:stopPropagation
+     @ondrop="OnDrop" @ondrop:preventDefault @ondrop:stopPropagation>
 
     @foreach (var component in ParentComponent.Childrens)
     {
@@ -14,6 +15,9 @@
     #region Parameter
     [Parameter]
     public ComponentSchema ParentComponent { get; set; }
+
+    [Parameter]
+    public string Style { get; set; }
     #endregion
 
     #region Init
@@ -95,8 +99,8 @@
 
     private void OnItemCopy(ComponentSchema component)
     {
-        component.IsSelected = false;
-        DragItem_Add(ParentComponent, component, DragDropStateService.CurrentDragComponent, true);
+        var newComponent = component.CopyNew();
+        DragItem_Add(ParentComponent, newComponent, null, false);
         StateHasChanged();
     }
     #endregion
@@ -146,7 +150,7 @@
 
         //容器内组件宽度始终100%填充 (除根容器外)
         if (ReferenceEquals(ParentComponent, DragDropStateService.RootComponent) == false)
-            currentDragComponent.ComponentPropertySchema.ItemWidth = 24;
+            currentDragComponent.ComponentProperty.ItemWidth = 24;
 
         if (isSelected)
         {
@@ -158,7 +162,7 @@
         //如果拖拽到放置区对象上方，按照顺序添加
         if (dragOverComponent != null)
         {
-            if (dragOverComponent.IsDropAfter)
+            if (dragOverComponent.IsDropedAfter)
                 parentComponent.Childrens.InsertAfter(dragOverComponent, currentDragComponent);
             else
                 parentComponent.Childrens.InsertBefore(dragOverComponent, currentDragComponent);
@@ -201,7 +205,7 @@
         if (currentDragComponent == DragDropStateService.LastDragOverComponent)
             return;
 
-        if (dragOverComponent.IsDropAfter)
+        if (dragOverComponent.IsDropedAfter)
             parentComponent.Childrens.InsertAfter(dragOverComponent, currentDragComponent);
         else
             parentComponent.Childrens.InsertBefore(dragOverComponent, currentDragComponent);
