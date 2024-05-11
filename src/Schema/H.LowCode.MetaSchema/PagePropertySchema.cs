@@ -5,20 +5,13 @@ namespace H.LowCode.MetaSchema
     public class PagePropertySchema
     {
         /// <summary>
-        /// 页面布局（一列、二列、三列）
+        /// 页面布局（1:一列、2:二列、3:三列、4:四列）
         /// </summary>
-        public PageLayoutEnum PageLayout { get; set; }
+        public int PageLayout { get; set; } = 2;
 
         /// <summary>
         /// 标题宽度
         /// </summary>
         public string TitleWidth { get; set; }
-    }
-
-    public enum PageLayoutEnum
-    {
-        OneColumn = 0,
-        TwoColumn = 1,
-        ThreeColumn = 2
     }
 }

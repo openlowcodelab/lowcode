@@ -3,7 +3,7 @@ using Volo.Abp.Modularity;
 
 namespace H.LowCode.Admin
 {
-    public class AdminModule : AbpModule
+    public class LowCodeAdminModule : AbpModule
     {
         public override void ConfigureServices(ServiceConfigurationContext context)
         {

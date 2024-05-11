@@ -5,7 +5,7 @@ using Volo.Abp.Modularity;
 namespace H.LowCode.Admin.HttpApi
 {
     [DependsOn(typeof(ProAdminAppServiceModule))]
-    public class AdminHttpApiModule : AbpModule
+    internal class AdminHttpApiModule : AbpModule
     {
         public override void ConfigureServices(ServiceConfigurationContext context)
         {

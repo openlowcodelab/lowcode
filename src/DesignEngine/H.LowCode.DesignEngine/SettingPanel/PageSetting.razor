@@ -1,14 +1,19 @@
 ﻿<div class="pagesetting-item">
     <label>布局：</label>
-    <RadioGroup TValue="int">
-        <Radio RadioButton Value="0">一列</Radio>
-        <Radio RadioButton Value="1">两列</Radio>
-        <Radio RadioButton Value="2">三列</Radio>
+    <RadioGroup TValue="int" Value="@PageProperty.PageLayout" ValueChanged="OnValueChange">
+        <Radio RadioButton Value="1">一列</Radio>
+        <Radio RadioButton Value="2">两列</Radio>
+        <Radio RadioButton Value="3">三列</Radio>
+        <Radio RadioButton Value="4">四列</Radio>
     </RadioGroup>
 </div>
 
 @code {
     [Parameter]
-    public PagePropertySchema PagePropertySchema { get; set; }
+    public PagePropertySchema PageProperty { get; set; }
 
+    private void OnValueChange()
+    {
+        
+    }
 }

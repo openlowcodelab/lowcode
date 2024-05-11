@@ -1,4 +1,6 @@
-﻿<Tabs DefaultActiveKey="tab_page" @bind-ActiveKey="@ActiveTabKey" Class="designpage" Style="width:250px; padding:0px 8px;">
+﻿@inject DragDropStateService DragDropStateService
+
+<Tabs DefaultActiveKey="tab_page" @bind-ActiveKey="@ActiveTabKey" Class="designpage" Style="width:250px; padding:0px 8px;">
     @if (ShowPropertyPanel)
     {
         <TabPane Key="tab_property" Tab="属性">
@@ -12,7 +14,7 @@
         </TabPane>
     }
     <TabPane Key="tab_page" Tab="页面">
-        <PageSetting PagePropertySchema="pagePropertySchema"></PageSetting>
+        <PageSetting PageProperty="@DragDropStateService.GlobalPageProperty"></PageSetting>
     </TabPane>
 </Tabs>
 
@@ -22,8 +24,6 @@
     public ComponentSchema ComponentSchema { get; set; }
 
     private string ActiveTabKey { get; set; } = "tab_page";
-
-    private PagePropertySchema pagePropertySchema = new PagePropertySchema();
 
     #region Init
     protected override void OnAfterRender(bool firstRender)

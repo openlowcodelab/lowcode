@@ -28,7 +28,7 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                     IsHiddenTitle = true,
                     RenderFragment = (component) =>  (builder) =>
                     {
-                        builder.OpenComponent(0, typeof(TreeSelect<string>));
+                        builder.OpenComponent(0, typeof(TreeSelect<string, string>));
                         builder.CloseComponent();
                     },
                     ComponentProperty = new()

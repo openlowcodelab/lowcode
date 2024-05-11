@@ -29,14 +29,18 @@ namespace H.LowCode.DesignEngine.Services
         public DateTime LastDragOverTime { get; set; } = DateTime.Now;
 
         /// <summary>
+        /// 最后一次拖拽到上面的组件
+        /// </summary>
+        public ComponentSchema LastDropComponent { get; set; }
+
+        #region 全局最终数据
+        /// <summary>
         /// 根 ComponentSchema
         /// </summary>
         public ComponentSchema RootComponent { get; set; }
 
-        /// <summary>
-        /// 最后一次拖拽到上面的组件
-        /// </summary>
-        public ComponentSchema LastDropComponent { get; set; }
+        public PagePropertySchema GlobalPageProperty { get; set; } = new PagePropertySchema();
+        #endregion
 
         #region method
         public ComponentSchema FindComponentById(Guid componentId)

@@ -34,7 +34,7 @@ namespace H.LowCode.RenderEngine.AntBlazor.ComponentRenders
             {
                 if (string.Equals(widget.ToString(), "checkboxs", StringComparison.OrdinalIgnoreCase))
                 {
-                    builder.OpenComponent(0, typeof(CheckboxGroup));
+                    builder.OpenComponent(0, typeof(CheckboxGroup<int>));
 
                     //jsonSchema.ExtensionData.TryGetValue("enumNames", out JToken enumNames);
                     //var names = enumNames.ToObject<string[]>();

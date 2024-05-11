@@ -1,4 +1,5 @@
 ﻿@using System.Reflection
+@using H.LowCode
 
 <Router AppAssembly="@DefaultLayout.Assembly" AdditionalAssemblies="@Assemblies">
     <Found Context="routeData">
@@ -12,13 +13,8 @@
     </NotFound>
 </Router>
 
-@code
-{
-    private Assembly[] Assemblies = new Assembly[]
-    {
-        typeof(H.LowCode.Theme.AntBlazorPro._Imports).Assembly,
-        typeof(H.LowCode.DesignEngine._Imports).Assembly
-    };
+@code{
+    private Assembly[] Assemblies = LowCodeGlobalVariables.AdditionalAssemblies;
 
-    private Type DefaultLayout = typeof(H.LowCode.Admin.Layout.ProAdminLayout);
+    private Type DefaultLayout = LowCodeGlobalVariables.LowCodeDefaultLayout;
 }
