@@ -1,126 +1,155 @@
-﻿@if (ComponentSchema != null)
+﻿
+<div class="propertysetting-item">
+    <label>Name <span style="font-size:10px; color:gray;">(字段名称/英文)</span>：</label>
+    <Input TValue="string" @bind-value="@Component.ComponentProperty.Name" OnChange="(value) => OnPropertyChange()" />
+</div>
+<div class="propertysetting-item">
+    <label>标题：</label>
+    <Input TValue="string" @bind-value="@Component.ComponentProperty.Title" OnChange="(value) => OnPropertyChange()" />
+</div>
+<div class="propertysetting-item">
+    <label>描述：</label>
+    <TextArea @bind-value="@Component.ComponentProperty.Description" />
+</div>
+@if (Component.ComponentProperty.IsShowProperty(nameof(ComponentPropertySchema.DefaultValue)))
 {
     <div class="propertysetting-item">
-        <label>Name <span style="font-size:10px; color:gray;">(字段名称/英文)</span>：</label>
-        <Input TValue="string" Value="@ComponentSchema.ComponentProperty.Name" OnChange="(value) => OnPropertyChange()" />
+        <label>默认值：</label>
+        <Input TValue="string" @bind-value="@Component.ComponentProperty.DefaultValue" />
     </div>
+}
+@if (Component.ComponentProperty.IsShowProperty(nameof(ComponentPropertySchema.IsRequired)))
+{
     <div class="propertysetting-item">
-        <label>标题：</label>
-        <Input TValue="string" Value="@ComponentSchema.ComponentProperty.Title" OnChange="(value) => OnPropertyChange()" />
+        <label>必填：</label>
+        <Checkbox @bind-Checked="@Component.ComponentProperty.IsRequired" OnChange="(value) => OnPropertyChange()" />
     </div>
-    <div class="propertysetting-item">
-        <label>描述：</label>
-        <TextArea Value="@ComponentSchema.ComponentProperty.Description" />
-    </div>
-    @if (ComponentSchema.IsShowProperty(nameof(ComponentPropertySchema.DefaultValue)))
+}
+
+@*"type": "string"*@
+@if (Component.ComponentProperty.ComponentValueType == ComponentValueType.String)
+{
+    if (Component.ComponentProperty.IsShowProperty(nameof(ComponentPropertySchema.MaximumLength)))
     {
         <div class="propertysetting-item">
-            <label>默认值：</label>
-            <Input TValue="string" Value="@ComponentSchema.ComponentProperty.DefaultValue" />
+            <label>最大长度：</label>
+            <Input TValue="long?" @bind-value="@Component.ComponentProperty.MaximumLength" OnChange="(value) => OnPropertyChange()" />
         </div>
     }
-    @if (ComponentSchema.IsShowProperty(nameof(ComponentPropertySchema.IsRequired)))
+    if (Component.ComponentProperty.IsShowProperty(nameof(ComponentPropertySchema.MinimumLength)))
     {
         <div class="propertysetting-item">
-            <label>必填：</label>
-            <Checkbox Value="@ComponentSchema.ComponentProperty.IsRequired" OnChange="(value) => OnPropertyChange()" />
+            <label>最小长度：</label>
+            <Input TValue="long?" @bind-value="@Component.ComponentProperty.MinimumLength" OnChange="(value) => OnPropertyChange()" />
         </div>
     }
-
-    @*"type": "string"*@
-    @if (ComponentSchema.ComponentProperty.ComponentValueType == ComponentValueType.String)
+    if (Component.ComponentProperty.IsShowProperty(nameof(ComponentPropertySchema.Pattern)))
     {
-        if (ComponentSchema.IsShowProperty(nameof(ComponentPropertySchema.MaximumLength)))
-        {
-            <div class="propertysetting-item">
-                <label>最大长度：</label>
-                <Input TValue="long?" Value="@ComponentSchema.ComponentProperty.MaximumLength" OnChange="(value) => OnPropertyChange()" />
-            </div>
-        }
-        if (ComponentSchema.IsShowProperty(nameof(ComponentPropertySchema.MinimumLength)))
-        {
-            <div class="propertysetting-item">
-                <label>最小长度：</label>
-                <Input TValue="long?" Value="@ComponentSchema.ComponentProperty.MinimumLength" OnChange="(value) => OnPropertyChange()" />
-            </div>
-        }
-        if (ComponentSchema.IsShowProperty(nameof(ComponentPropertySchema.Pattern)))
-        {
-            <div class="propertysetting-item">
-                <label>Pattern：</label>
-                <Input TValue="string" Value="@ComponentSchema.ComponentProperty.Pattern" OnChange="(value) => OnPropertyChange()" />
-            </div>
-        }
-        if (ComponentSchema.IsShowProperty(nameof(ComponentPropertySchema.Format)))
-        {
-            <div class="propertysetting-item">
-                <label>Format：</label>
-                <Input TValue="string" Value="@ComponentSchema.ComponentProperty.Format" OnChange="(value) => OnPropertyChange()" />
-            </div>
-        }
+        <div class="propertysetting-item">
+            <label>Pattern：</label>
+            <Input TValue="string" @bind-value="@Component.ComponentProperty.Pattern" OnChange="(value) => OnPropertyChange()" />
+        </div>
     }
-
-    @*"type": "integer"*@
-    @*"type": "number"*@
-    @if (ComponentSchema.ComponentProperty.ComponentValueType == ComponentValueType.Integer || ComponentSchema.ComponentProperty.ComponentValueType == ComponentValueType.Number)
+    if (Component.ComponentProperty.IsShowProperty(nameof(ComponentPropertySchema.Format)))
     {
-        if (ComponentSchema.IsShowProperty(nameof(ComponentPropertySchema.Maximum)))
-        {
-            <div class="propertysetting-item">
-                <label>最大值：</label>
-                <Input TValue="double?" Value="@ComponentSchema.ComponentProperty.Maximum" OnChange="(value) => OnPropertyChange()" />
-            </div>
-        }
-        if (ComponentSchema.IsShowProperty(nameof(ComponentPropertySchema.Minimum)))
-        {
-            <div class="propertysetting-item">
-                <label>最小值：</label>
-                <Input TValue="double?" Value="@ComponentSchema.ComponentProperty.Minimum" OnChange="(value) => OnPropertyChange()" />
-            </div>
-        }
+        <div class="propertysetting-item">
+            <label>Format：</label>
+            <Input TValue="string" @bind-value="@Component.ComponentProperty.Format" OnChange="(value) => OnPropertyChange()" />
+        </div>
     }
-    @*"type": "array"*@
-    @*if(ComponentSchema.ComponentValueType == ComponentValueType.Array)
+}
+
+@*"type": "integer"*@
+@*"type": "number"*@
+@if (Component.ComponentProperty.ComponentValueType == ComponentValueType.Integer || Component.ComponentProperty.ComponentValueType == ComponentValueType.Number)
+{
+    if (Component.ComponentProperty.IsShowProperty(nameof(ComponentPropertySchema.Maximum)))
+    {
+        <div class="propertysetting-item">
+            <label>最大值：</label>
+            <Input TValue="double?" @bind-value="@Component.ComponentProperty.Maximum" OnChange="(value) => OnPropertyChange()" />
+        </div>
+    }
+    if (Component.ComponentProperty.IsShowProperty(nameof(ComponentPropertySchema.Minimum)))
+    {
+        <div class="propertysetting-item">
+            <label>最小值：</label>
+            <Input TValue="double?" @bind-value="@Component.ComponentProperty.Minimum" OnChange="(value) => OnPropertyChange()" />
+        </div>
+    }
+}
+@*"type": "array"*@
+@*if(Component.ComponentValueType == ComponentValueType.Array)
 {
 
 }*@
 
-    @if (ComponentSchema.IsShowProperty(nameof(ComponentPropertySchema.ItemWidth)))
-    {
-        <div class="propertysetting-item">
-            <label>组件宽度：</label>
-            <Slider TValue="double" Value="@ComponentSchema.ComponentProperty.ItemWidth" DefaultValue="12" Min="4" Max="24" OnChange="(value) => OnPropertyChange()" />
-        </div>
-    }
-    @if (ComponentSchema.IsShowProperty(nameof(ComponentPropertySchema.LabelWidth)))
-    {
-        <div class="propertysetting-item">
-            <label>标签宽度：</label>
-            <Slider TValue="double" Value="@ComponentSchema.ComponentProperty.LabelWidth" DefaultValue="180" Min="4" Max="300" OnChange="(value) => OnPropertyChange()" />
-        </div>
-    }
+@if (Component.ComponentProperty.IsShowProperty(nameof(ComponentStyleSchema.ItemWidth)))
+{
+    <div class="propertysetting-item">
+        <label>组件宽度：</label>
+        <Slider TValue="double" Value="@Component.ComponentStyle.ItemWidth" DefaultValue="12" Min="4" Max="24" OnChange="(value) => OnPropertyChange()" />
+    </div>
+}
+@if (Component.ComponentProperty.IsShowProperty(nameof(ComponentStyleSchema.LabelWidth)))
+{
+    <div class="propertysetting-item">
+        <label>标签宽度：</label>
+        <Slider TValue="double" Value="@Component.ComponentStyle.LabelWidth" DefaultValue="180" Min="4" Max="300" OnChange="(value) => OnPropertyChange()" />
+    </div>
+}
 
-    @*自定义*@
-    @if (ComponentSchema.ComponentProperty.ExtensionProperties != null)
+@*自定义属性*@
+@if (Component.ComponentProperty.ExtensionProperties != null)
+{
+    foreach (var extensionProperty in Component.ComponentProperty.ExtensionProperties)
     {
-        foreach (var kv in ComponentSchema.ComponentProperty.ExtensionProperties)
-        {
-            <div class="propertysetting-item">
-                <label>@kv.Value.Label：</label>
-                <Input TValue="string" Value="@kv.Value.Value.ToString()" OnChange="(value) => OnPropertyChange()" />
-            </div>
-        }
+        <div class="propertysetting-item">
+            <label>@extensionProperty.Label：</label>
+            @if (extensionProperty.SettingItemType == SettingItemTypeEnum.Text)
+            {
+                <Input TValue="string" @bind-value="@extensionProperty.Value" OnChange="(value) => OnPropertyChange()" />
+            }
+            else if (extensionProperty.SettingItemType == SettingItemTypeEnum.Text_Int)
+            {
+                <Input TValue="int" @bind-value="@extensionProperty.Value" OnChange="(value) => OnPropertyChange()" />
+            }
+            else if (extensionProperty.SettingItemType == SettingItemTypeEnum.Radio)
+            {
+                    
+            }
+            else if (extensionProperty.SettingItemType == SettingItemTypeEnum.Checkbox)
+            {
+                <Checkbox @bind-checked="@extensionProperty.Value"></Checkbox>
+            }
+            else if (extensionProperty.SettingItemType == SettingItemTypeEnum.Select)
+            {
+
+            }
+            else if (extensionProperty.SettingItemType == SettingItemTypeEnum.Switch)
+            {
+
+            }
+            else if (extensionProperty.SettingItemType == SettingItemTypeEnum.Date)
+            {
+
+            }
+            else if (extensionProperty.SettingItemType == SettingItemTypeEnum.Textarea)
+            {
+
+            }
+
+            @if(!string.IsNullOrEmpty(extensionProperty.Description))
+            {
+                <div style="color:#c7c7c7">@extensionProperty.Description</div>
+            }
+        </div>
     }
 }
 
 @code {
     [Parameter]
-    public ComponentSchema ComponentSchema { get; set; }
-
-    protected override void OnParametersSet()
-    {
-        base.OnParametersSet();
-    }
+    public ComponentSchema Component { get; set; }
 
     private void OnPropertyChange()
     {

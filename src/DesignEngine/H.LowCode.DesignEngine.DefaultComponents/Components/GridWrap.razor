@@ -43,11 +43,6 @@
             RegisterEventDispatcher();
     }
 
-    protected override bool ShouldRender()
-    {
-        return false;
-    }
-
     private void Init()
     {
         if (_component == null)
@@ -78,7 +73,7 @@
         }
 
         var component = _component.CopyNew();
-        component.ComponentCategory = ComponentCategory.Container;
+        component.IsContainerComponent = true;
         component.ComponentProperty.ExtensionData.Add(key, key);
         component.ParentId = Component.Id;
 

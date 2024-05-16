@@ -1,19 +1,35 @@
-﻿<div>StyleSetting</div>
+﻿
+<div style="margin: 5px 15px 20px 10px;">
+    <label>布局：</label>
+    <RadioGroup TValue="string" @bind-Value="@Component.ComponentStyle.Display" OnChange="() => OnStyleChange()">
+        <Radio RadioButton Value="@("inline")">inline</Radio>
+        <Radio RadioButton Value="@("flex")">flex</Radio>
+        <Radio RadioButton Value="@("block")">block</Radio>
+        <Radio RadioButton Value="@("inline-block")">inline-block</Radio>
+        <Radio RadioButton Value="@("none")">none</Radio>
+    </RadioGroup>
+</div>
+<div style="margin: 5px 15px 20px 10px;">
+    <label>定位：</label>
+    <RadioGroup TValue="string" @bind-Value="Component.ComponentStyle.Position" OnChange="() => OnStyleChange()">
+        <Radio RadioButton Value="@("static")">static</Radio>
+        <Radio RadioButton Value="@("relative")">relative</Radio>
+        <Radio RadioButton Value="@("absolute")">absolute</Radio>
+        <Radio RadioButton Value="@("fixed")">fixed</Radio>
+        <Radio RadioButton Value="@("sticky")">sticky</Radio>
+    </RadioGroup>
+</div>
+<div style="margin: 5px 15px 20px 10px;">
+    <label>自定义样式：</label>
+    <TextArea @bind-value="@Component.ComponentStyle.CustomStyle" OnChange="() => OnStyleChange()" />
+</div>
 
 @code {
     [Parameter]
-    public ComponentSchema ComponentSchema { get; set; }
+    public ComponentSchema Component { get; set; }
 
-    protected override void OnParametersSet()
+    private void OnStyleChange()
     {
-        base.OnParametersSet();
-
-        if (ComponentSchema == null)
-            throw new NullReferenceException($"{ComponentSchema} is null");
-    }
-
-    private void OnPropertyChange()
-    {
-        BlazorEventDispatcher.Trigger("designengine.stylesetting.onchange", null);
+        BlazorEventDispatcher.Trigger("designengine.propertysetting.onchange", null);
     }
 }

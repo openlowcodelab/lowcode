@@ -11,8 +11,7 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
         {
             List<ComponentSchema> components =
             [
-                new(ComponentType:"input"){
-                    SupportProperties = ["MaximumLength", "MinimumLength", "Pattern", "Format"],
+                new("input"){
                     RenderFragment = (component) =>  (builder) =>
                     {
                         builder.OpenComponent(1, typeof(Input<string>));
@@ -20,11 +19,18 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                     },
                     ComponentProperty = new(){
                         Title = "输入框",
-                        ComponentValueType = ComponentValueType.String
+                        ComponentValueType = ComponentValueType.String,
+                        SupportProperties = ["MaximumLength", "MinimumLength", "Pattern", "Format"],
+                        ExtensionProperties =
+                            [
+                                new() { Label="最大长度", Value = 0, SettingItemType = SettingItemTypeEnum.Text_Int },
+                                new() { Label="是否只读", Value = false, SettingItemType = SettingItemTypeEnum.Checkbox },
+                                new() { Label="是否截断", Value = false, SettingItemType = SettingItemTypeEnum.Checkbox },
+                                new() { Label="输入提示", Value = "", SettingItemType = SettingItemTypeEnum.Text, Description = "placehoder 显示文字" }
+                            ]
                     }
                 },
-                new(ComponentType:"inputnumber"){
-                    SupportProperties = ["Maximum", "Minimum"],
+                new("inputnumber"){
                     RenderFragment = (component) =>  (builder) =>
                     {
                         builder.OpenComponent(0, typeof(InputNumber<int>));
@@ -32,11 +38,11 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                     },
                     ComponentProperty = new(){
                         Title = "数字输入框",
-                        ComponentValueType = ComponentValueType.Integer
+                        ComponentValueType = ComponentValueType.Integer,
+                        SupportProperties = ["Maximum", "Minimum"]
                     }
                 },
-                new(ComponentType:"textarea"){
-                    SupportProperties = ["MaximumLength", "MinimumLength"],
+                new("textarea"){
                     RenderFragment = (component) =>  (builder) =>
                     {
                         builder.OpenComponent(0, typeof(TextArea));
@@ -45,10 +51,11 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                     },
                     ComponentProperty= new(){
                         Title = "大输入框",
-                        ComponentValueType = ComponentValueType.String
+                        ComponentValueType = ComponentValueType.String,
+                        SupportProperties = ["MaximumLength", "MinimumLength"]
                     }
                 },
-                new(ComponentType:"checkbox"){
+                new("checkbox"){
                     RenderFragment = (component) =>  (builder) =>
                     {
                         builder.OpenComponent(0, typeof(Checkbox));
@@ -59,7 +66,7 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                     ComponentValueType = ComponentValueType.Boolean
                     }
                 },
-                new(ComponentType:"radio"){
+                new("radio"){
                     RenderFragment = (component) =>  (builder) =>
                     {
                         builder.OpenComponent(0, typeof(Radio<string>));
@@ -69,7 +76,7 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                         Title = "单选框"
                     }
                 },
-                new(ComponentType:"select"){
+                new("select"){
                     RenderFragment = (component) =>  (builder) =>
                     {
                         builder.OpenComponent(0, typeof(Select<string, string>));
@@ -80,7 +87,7 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                         ComponentValueType = ComponentValueType.String
                     }
                 },
-                new(ComponentType:"autocomplete"){
+                new("autocomplete"){
                     RenderFragment = (component) =>  (builder) =>
                     {
                         builder.OpenComponent(0, typeof(AutoComplete<string>));
@@ -91,7 +98,7 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                         ComponentValueType = ComponentValueType.String
                     }
                 },
-                new(ComponentType:"cascader"){
+                new("cascader"){
                     RenderFragment = (component) =>  (builder) =>
                     {
                         builder.OpenComponent(0, typeof(Cascader));
@@ -102,7 +109,7 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                         ComponentValueType = ComponentValueType.String
                     }
                 },
-                new(ComponentType:"switch"){
+                new("switch"){
                     RenderFragment = (component) =>  (builder) =>
                     {
                         builder.OpenComponent(0, typeof(Switch));
@@ -113,7 +120,7 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                         ComponentValueType = ComponentValueType.Boolean
                     }
                 },
-                new(ComponentType:"datepicker"){
+                new("datepicker"){
                     RenderFragment = (component) =>  (builder) =>
                     {
                         builder.OpenComponent(0, typeof(DatePicker<DateTime?>));
@@ -125,7 +132,7 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                         ComponentValueType = ComponentValueType.Date
                     }
                 },
-                new(ComponentType:"timepicker"){
+                new("timepicker"){
                     RenderFragment = (component) =>  (builder) =>
                     {
                         builder.OpenComponent(0, typeof(TimePicker<DateTime?>));
@@ -136,13 +143,13 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                         ComponentValueType = ComponentValueType.Date
                     }
                 },
-                new(ComponentType:"button"){
+                new("button"){
                     IsHiddenTitle = true,
                     RenderFragment = (component) =>  (builder) =>
                     {
                         builder.OpenComponent(0, typeof(Button));
                         builder.AddAttribute(1,  "Type", ButtonType.Default);
-                        builder.AddContent(2, component.ComponentProperty.Title);
+                        builder.AddContent(2, "按钮111");
                         builder.CloseComponent();
                     },
                     ComponentProperty = new(){

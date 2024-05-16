@@ -11,7 +11,7 @@ namespace H.LowCode.DesignEngine.CustomComponents.ComponentProviders
         {
             List<ComponentSchema> components =
             [
-                new(ComponentType:"lakexeditor"){
+                new("lakexeditor"){
                     IsHiddenTitle = true,
                     RenderFragment = (component) =>  (builder) =>
                     {
@@ -22,12 +22,15 @@ namespace H.LowCode.DesignEngine.CustomComponents.ComponentProviders
                     ComponentProperty = new()
                     {
                         Title = "LakexEditor",
-                        ItemWidth = 24,
-                        CustomStyle = "height: 100%",
                         ComponentValueType = ComponentValueType.String
+                    },
+                    ComponentStyle = new()
+                    {
+                        DefaultStyle = "height: 100%",
+                        ItemWidth = 24
                     }
                 },
-                new(ComponentType:"monacoeditor"){
+                new("monacoeditor"){
                     IsHiddenTitle = true,
                     RenderFragment = (component) =>  (builder) =>
                     {
@@ -38,13 +41,16 @@ namespace H.LowCode.DesignEngine.CustomComponents.ComponentProviders
                     ComponentProperty = new()
                     {
                         Title = "MonacoEditor",
+                        ComponentValueType = ComponentValueType.String
+                    },
+                    ComponentStyle = new()
+                    {
+                        DefaultStyle = "height: 100%",
                         ItemWidth = 24,
                         ItemHeight = 150,
-                        CustomStyle = "height: 100%",
-                        ComponentValueType = ComponentValueType.String
                     }
                 }
-                //new(ComponentType:"userselect"){
+                //new(component"userselect"){
                 //    RenderFragment = (component) =>  (builder) => {
                 //        builder.OpenComponent(0, typeof(UserSelect));
                 //        builder.CloseComponent();
@@ -54,7 +60,7 @@ namespace H.LowCode.DesignEngine.CustomComponents.ComponentProviders
                 //        Title = "用户选择"
                 //    }
                 //},
-                //new(ComponentType:"region"){
+                //new(component"region"){
                 //    RenderFragment = (component) =>  (builder) => {
                 //        builder.OpenComponent(0, typeof(Region));
                 //        builder.CloseComponent();
@@ -64,7 +70,7 @@ namespace H.LowCode.DesignEngine.CustomComponents.ComponentProviders
                 //        Title = "行政区划"
                 //    }
                 //},
-                //new(ComponentType:"gaodemap"){
+                //new(component"gaodemap"){
                 //    RenderFragment = (component) =>  (builder) => {
                 //        builder.OpenComponent(0, typeof(GaodeMap));
                 //        builder.CloseComponent();
@@ -74,7 +80,7 @@ namespace H.LowCode.DesignEngine.CustomComponents.ComponentProviders
                 //        Title = "高德地图"
                 //    }
                 //},
-                //new(ComponentType:"baidumap"){
+                //new(component"baidumap"){
                 //    RenderFragment = (component) =>  (builder) => {
                 //        builder.OpenComponent(0, typeof(BaiduMap));
                 //        builder.CloseComponent();

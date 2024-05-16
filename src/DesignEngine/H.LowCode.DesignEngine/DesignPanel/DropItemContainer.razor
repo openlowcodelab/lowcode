@@ -71,7 +71,7 @@
         DragDropHandler(DragDropStateService.CurrentDragComponent);
 
         //重置拖拽样式
-        DragDropStateService.ResetComponentStyle();
+        DragDropStateService.ResetDragStyle();
     }
 
     private void OnClick()
@@ -150,7 +150,7 @@
 
         //容器内组件宽度始终100%填充 (除根容器外)
         if (ReferenceEquals(ParentComponent, DragDropStateService.RootComponent) == false)
-            currentDragComponent.ComponentProperty.ItemWidth = 24;
+            currentDragComponent.ComponentStyle.ItemWidth = 24;
 
         if (isSelected)
         {

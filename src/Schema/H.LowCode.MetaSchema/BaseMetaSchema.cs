@@ -2,7 +2,7 @@
 
 namespace H.LowCode.MetaSchema
 {
-    public abstract class MetaSchema
+    public abstract class BaseMetaSchema
     {
 
     }

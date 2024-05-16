@@ -4,14 +4,17 @@
     @if (ShowPropertyPanel)
     {
         <TabPane Key="tab_property" Tab="属性">
-            <PropertySetting ComponentSchema="@ComponentSchema"></PropertySetting>
+            <PropertySetting Component="@Component"></PropertySetting>
         </TabPane>
         <TabPane Key="tab_style" Tab="样式">
-            <StyleSetting ComponentSchema="@ComponentSchema"></StyleSetting>
+            <StyleSetting Component="@Component"></StyleSetting>
         </TabPane>
-        <TabPane Key="tab_action" Tab="动作">
-            <ActionSetting ComponentSchema="@ComponentSchema"></ActionSetting>
-        </TabPane>
+        @if (Component.IsContainerComponent == false)
+        {
+            <TabPane Key="tab_action" Tab="事件">
+                <EventSetting Component="@Component"></EventSetting>
+            </TabPane>
+        }
     }
     <TabPane Key="tab_page" Tab="页面">
         <PageSetting PageProperty="@DragDropStateService.GlobalPageProperty"></PageSetting>
@@ -21,7 +24,7 @@
 @code {
     public bool ShowPropertyPanel { get; set; }
 
-    public ComponentSchema ComponentSchema { get; set; }
+    public ComponentSchema Component { get; set; }
 
     private string ActiveTabKey { get; set; } = "tab_page";
 
@@ -37,7 +40,7 @@
         //订阅设计面板中的组件点击事件
         BlazorEventDispatcher.RegisterEvent("designengine.dropitem.onclick", (value) =>
         {
-            ComponentSchema = (ComponentSchema)value;
+            Component = (ComponentSchema)value;
             ShowPropertyPanel = true;
             ActiveTabKey = "tab_property";
             StateHasChanged();
@@ -46,7 +49,7 @@
         //订阅设计面板取消选中事件
         BlazorEventDispatcher.RegisterEvent("designengine.dropitem.onblur", (value) =>
         {
-            ComponentSchema = null;
+            Component = null;
             ShowPropertyPanel = false;
             ActiveTabKey = "tab_page";
             StateHasChanged();

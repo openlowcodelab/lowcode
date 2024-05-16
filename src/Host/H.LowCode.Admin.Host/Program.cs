@@ -1,6 +1,5 @@
 using H.LowCode.Admin.Host.Components;
 using H.LowCode;
-using H.LowCode.Admin.HttpApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,6 +35,6 @@ app.UseAntiforgery();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()
-    .AddAdditionalAssemblies(LowCodeGlobalVariables.AdditionalAssemblies);
+    .AddAdditionalAssemblies(LowCodeGlobalVariables.AdditionalAssemblies);  //LowCode
 
 app.Run();

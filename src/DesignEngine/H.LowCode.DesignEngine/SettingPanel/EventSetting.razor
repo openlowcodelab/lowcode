@@ -1,0 +1,63 @@
+﻿<Space Direction="@DirectionVHType.Vertical" Style="width: 100%">
+    <SpaceItem>
+        <Dropdown Trigger="@(new Trigger[] { Trigger.Click })">
+            <Overlay>
+                <Menu>
+                    <MenuItem OnClick="AddStandardEvent">
+                        OnClick
+                    </MenuItem>
+                    <MenuItem OnClick="AddStandardEvent">
+                        OnFocus
+                    </MenuItem>
+                    <MenuItem OnClick="AddStandardEvent">
+                        OnBlur
+                    </MenuItem>
+                    <MenuItem OnClick="AddCustomEvent">
+                        自定义事件
+                    </MenuItem>
+                </Menu>
+            </Overlay>
+            <ChildContent>
+                <Button>新建事件 <Icon Type="down" /></Button>
+            </ChildContent>
+        </Dropdown>
+    </SpaceItem>
+</Space>
+
+<Modal Title="绑定行为: OnClick" @bind-Visible="@_visible">
+    <Tabs TabPosition="@TabPosition.Left" Animated>
+        <TabPane Tab="内置行为" Key="1" Style="min-height: 200px;">
+            <Select @bind-Value="@_selectedValue" Style="width: 120px;" TItemValue="string" TItem="string">
+                <SelectOptions>
+                    <SelectOption Value="@("submit")" Label="提交" />
+                    <SelectOption Value="@("reset")" Label="重置" />
+                    <SelectOption Value="@("opendialog")" Label="打开对话框" />
+                    <SelectOption Value="@("closedialog")" Label="关闭对话框" />
+                    <SelectOption Value="@("openpage")" Label="打开页面" />
+                    <SelectOption Value="@("reloaddata")" Label="重新加载数据" />
+                </SelectOptions>
+            </Select>
+        </TabPane>
+        <TabPane Tab="自定义行为" Key="2" Style="min-height: 200px;">
+            <TextArea></TextArea>
+        </TabPane>
+    </Tabs>
+</Modal>
+
+@code {
+    [Parameter]
+    public ComponentSchema Component { get; set; }
+
+    private bool _visible;
+    private string _selectedValue;
+
+    private void AddStandardEvent()
+    {
+        _visible = true;
+    }
+
+    private void AddCustomEvent()
+    {
+        _visible = true;
+    }
+}

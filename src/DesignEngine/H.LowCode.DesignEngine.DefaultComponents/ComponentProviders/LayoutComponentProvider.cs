@@ -11,9 +11,9 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
         {
             List<ComponentSchema> components =
             [
-                new(ComponentType:"grid"){
+                new("grid"){
                     IsHiddenTitle = true,
-                    ComponentCategory = ComponentCategory.Container,
+                    IsContainerComponent = true,
                     RenderFragment = (component) =>  (builder) =>
                     {
                         builder.OpenComponent(0, typeof(GridWrap));
@@ -24,14 +24,17 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                     },
                     ComponentProperty = new()
                     {
-                        Title = "Grid 栅格",
-                        Style = "background-color: #ffffff00; height: auto;",
+                        Title = "Grid 栅格"
+                    },
+                    ComponentStyle = new()
+                    {
+                        DefaultStyle = "background-color: #ffffff00; height: auto;",
                         ItemWidth = 24
                     }
                 },
-                new(ComponentType:"layout"){
+                new("layout"){
                     IsHiddenTitle = true,
-                    ComponentCategory = ComponentCategory.Container,
+                    IsContainerComponent = true,
                     RenderFragment = (component) =>  (builder) =>
                     {
                         builder.OpenComponent(0, typeof(LayoutWrap));
@@ -40,16 +43,18 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                     },
                     ComponentProperty = new()
                     {
-                        Title = "Layout 布局",
-                        Style = "background-color: #ffffff00",
+                        Title = "Layout 布局"
+                    },
+                    ComponentStyle = new()
+                    {
+                        DefaultStyle = "background-color: #ffffff00; height: 100%",
                         ItemWidth = 24,
-                        ItemHeight = 150,
-                        CustomStyle = "height: 100%"
+                        ItemHeight = 150
                     }
                 },
-                new(ComponentType:"flex"){
+                new("flex"){
                     IsHiddenTitle = true,
-                    ComponentCategory = ComponentCategory.Container,
+                    IsContainerComponent = true,
                     RenderFragment = (component) =>  (builder) =>
                     {
                         builder.OpenComponent(0, typeof(FlexWrap));
@@ -58,11 +63,13 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                     },
                     ComponentProperty = new()
                     {
-                        Title = "Flex 布局",
-                        Style = "background-color: #ffffff00; height: auto;",
-                        ItemWidth = 12,
-                        ItemHeight = 150,
-                        CustomStyle = "height: auto"
+                        Title = "Flex 布局"
+                    },
+                    ComponentStyle = new()
+                    {
+                        DefaultStyle = "background-color: #ffffff00; height: auto;",
+                        ItemWidth = 24,
+                        ItemHeight = 150
                     }
                 }
             ];

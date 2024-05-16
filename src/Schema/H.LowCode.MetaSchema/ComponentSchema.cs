@@ -1,43 +1,56 @@
 ﻿using H.Extensions.System;
 using Microsoft.AspNetCore.Components;
-using System.ComponentModel;
 using System.Text.Json.Serialization;
 
 namespace H.LowCode.MetaSchema
 {
-    public class ComponentSchema : MetaSchema
+    public class ComponentSchema : BaseMetaSchema
     {
-        public ComponentSchema(string ComponentType)
+        public ComponentSchema(string componentName)
         {
-            this.ComponentType = ComponentType;
+            ComponentName = componentName;
         }
 
         public Guid Id { get; set; } = Guid.NewGuid();
 
         /// <summary>
-        /// 组件类型
+        /// 组件名称
         /// </summary>
-        public string ComponentType { get; }
+        public string ComponentName { get; }
 
-        public ComponentCategory ComponentCategory { get; set; } = ComponentCategory.Basic;
+        public bool IsContainerComponent { get; set; }
 
-        public ComponentPropertySchema ComponentProperty { get; set; }
+        [JsonPropertyName("pid")]
+        public Guid ParentId { get; set; }
 
         /// <summary>
         /// 是否隐藏标题
         /// </summary>
+        [JsonPropertyName("t")]
         public bool IsHiddenTitle { get; set; }
 
-        public Guid ParentId { get; set; }
+        /// <summary>
+        /// 组件属性
+        /// </summary>
+        [JsonPropertyName("p")]
+        public ComponentPropertySchema ComponentProperty { get; set; }
 
         /// <summary>
-        /// 支持的属性
+        /// 组件样式
         /// </summary>
-        public IList<string> SupportProperties { get; set; }
+        [JsonPropertyName("s")]
+        public ComponentStyleSchema ComponentStyle { get; set; } = new();
 
         /// <summary>
         /// 
         /// </summary>
+        [JsonPropertyName("e")]
+        public ComponentEventSchema ComponentEvent { get; set; } = new();
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [JsonPropertyName("c")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public IList<ComponentSchema> Childrens { get; set; } = [];
 
@@ -47,6 +60,9 @@ namespace H.LowCode.MetaSchema
 
         [JsonIgnore]
         public double Opacity { get; set; } = 1;
+
+        [JsonIgnore]
+        public string DragEffectStyle { get; set; }
 
         /// <summary>
         /// 是否由组件面板拖拽而来
@@ -67,38 +83,23 @@ namespace H.LowCode.MetaSchema
         public Action Refresh { get; set; }
         #endregion
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="propertyName"></param>
-        /// <returns></returns>
-        public virtual bool IsShowProperty(string propertyName)
-        {
-            if (SupportProperties == null)
-                return false;
-
-            if (SupportProperties.Contains(propertyName))
-                return true;
-            return false;
-        }
-        
         public ComponentSchema CopyNew()
         {
-            ComponentSchema component = ObjectExtension.DeepClone(this);
+            ComponentSchema newComponent = ObjectExtension.DeepClone(this);
 
-            //Copy全新对象
-            component.Id = Guid.NewGuid();
-            component.ParentId = Guid.Empty;
-            component.IsSelected = false;
+            //Copy全新对象, Id 重新生成
+            newComponent.Id = Guid.NewGuid();
+            newComponent.ParentId = Guid.Empty;
+            newComponent.IsSelected = false;
 
             //手动赋值无法序列化属性
-            component.RenderFragment = RenderFragment;
-            component.Refresh = Refresh;
+            newComponent.RenderFragment = RenderFragment;
+            newComponent.Refresh = Refresh;
 
-            //避免子节点在 DeepClone 过程中，丢失 RenderFragment、Refresh 值
-            CopyNewRecursive(component, this);
+            //1.子节点 ParentId 重新赋值; 2.重新赋值序列化过程中丢失的 RenderFragment、Refresh 值
+            CopyNewRecursive(newComponent, this);
 
-            return component;
+            return newComponent;
         }
 
         public void RefreshState()
@@ -120,7 +121,6 @@ namespace H.LowCode.MetaSchema
                 var child = newComponent.Childrens[i];
                 child.Id = Guid.NewGuid();
                 child.ParentId = newComponent.Id;
-                child.IsSelected = false;
 
                 child.RenderFragment = oldComponent.Childrens[i].RenderFragment;
                 child.Refresh = oldComponent.Childrens[i].Refresh;
@@ -129,11 +129,5 @@ namespace H.LowCode.MetaSchema
             }
         }
         #endregion
-    }
-
-    public enum ComponentCategory
-    {
-        Basic,
-        Container
     }
 }

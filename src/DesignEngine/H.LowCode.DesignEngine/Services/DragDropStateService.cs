@@ -33,7 +33,7 @@ namespace H.LowCode.DesignEngine.Services
         /// </summary>
         public ComponentSchema LastDropComponent { get; set; }
 
-        #region 全局最终数据
+        #region 全局最终持久化数据
         /// <summary>
         /// 根 ComponentSchema
         /// </summary>
@@ -71,12 +71,11 @@ namespace H.LowCode.DesignEngine.Services
             LastDragOverComponent = default;
         }
 
-        public void ResetComponentStyle()
+        public void ResetDragStyle()
         {
-            //CurrentDragComponent.Opacity = 1;
-            CurrentDragComponent.ComponentProperty.Style = string.Empty;
-            if (LastDragOverComponent != null)
-                LastDragOverComponent.ComponentProperty.Style = string.Empty;
+            CurrentDragComponent.Opacity = 1;
+            LastDragOverComponent.DragEffectStyle = string.Empty;
+            //LastDragOverComponent.RefreshState();
         }
         #endregion
     }

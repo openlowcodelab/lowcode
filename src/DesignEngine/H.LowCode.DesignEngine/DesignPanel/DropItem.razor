@@ -1,9 +1,9 @@
 ﻿@inject DragDropStateService DragDropStateService
 
-<div class="dropitem-box @DropItemBoxClassMapper.Class" style="float:left; opacity:@Component.Opacity; @Style
-    width: @(Component.ComponentProperty.ItemWidth/24*100)%;
-    min-height: @(Component.ComponentProperty.ItemHeight)px;
-    @Component.ComponentProperty.CustomStyle"
+<div class="dropitem-box @DropItemBoxClassMapper.Class" style="float:left; opacity:@Component.Opacity;
+    width: @(Component.ComponentStyle.ItemWidth/24*100)%; min-height: @(Component.ComponentStyle.ItemHeight)px;
+     @Style @Component.ComponentStyle.Display @Component.ComponentStyle.Position
+     @Component.ComponentStyle.DefaultStyle @Component.ComponentStyle.CustomStyle"
      @onclick="OnClick" @onclick:stopPropagation
      @ondragstart="OnDragStart" @ondragstart:stopPropagation
      @ondragenter="OnDragEnter" @ondragenter:stopPropagation
@@ -12,7 +12,7 @@
      @onmouseover="OnMouseOver" @onmouseover:stopPropagation
      @onmouseout="OnMouseOut" @onmouseout:stopPropagation>
 
-    <div class="dropitem @DropItemClassMapper.Class" style="@Component.ComponentProperty.Style @_tempEffectStyle">
+    <div class="dropitem @DropItemClassMapper.Class" style="@Component.DragEffectStyle">
         @if (Component.IsSelected)
         {
             <div draggable="true" class="dropitem-icon-move">
@@ -32,13 +32,13 @@
             <div class="dropitem-title">@Component.ComponentProperty.Title ：</div>
         }
 
-        @if (Component.ComponentCategory == ComponentCategory.Basic)
+        @if (Component.IsContainerComponent)
         {
-            <div class="dropitem-div-component">@Component.RenderFragment(Component)</div>
+            <div class="dropitem-div-container">@Component.RenderFragment(Component)</div>
         }
         else
         {
-            <div class="dropitem-div-container">@Component.RenderFragment(Component)</div>
+            <div class="dropitem-div-component">@Component.RenderFragment(Component)</div>
         }
     </div>
 </div>
@@ -61,11 +61,6 @@
 
     protected ClassMapper DropItemBoxClassMapper { get; } = new ClassMapper();
     protected ClassMapper DropItemClassMapper { get; } = new ClassMapper();
-
-    /// <summary>
-    /// 过程中的临时拖拽效果样式
-    /// </summary>
-    private string _tempEffectStyle { get; set; }
 
     #region Init
     protected override void OnInitialized()
@@ -90,18 +85,18 @@
         if (Component.RenderFragment == null)
             throw new NullReferenceException(nameof(Component.RenderFragment));
 
-        Component.ComponentProperty.Name = $"{Component.ComponentType}_{Random.Shared.Next(100, 999)}";
+        Component.ComponentProperty.Name = $"{Component.ComponentName}_{Random.Shared.Next(100, 999)}";
     }
 
     private void SetClassMap()
     {
         DropItemClassMapper.Clear()
             .If("dropitem-selected", () => Component.IsSelected)
-            .If("dropitem-component", () => Component.ComponentCategory == ComponentCategory.Basic)
-            .If("dropitem-container", () => Component.ComponentCategory == ComponentCategory.Container);
+            .If("dropitem-component", () => Component.IsContainerComponent == false)
+            .If("dropitem-container", () => Component.IsContainerComponent);
 
         DropItemBoxClassMapper.Clear()
-            .If("dropitem-box-layout", () => Component.ComponentCategory == ComponentCategory.Container);
+            .If("dropitem-box-layout", () => Component.IsContainerComponent);
     }
 
     private void RegisterEventDispatcher()
@@ -128,7 +123,7 @@
     #region Event
     private void OnClick()
     {
-        _tempEffectStyle = string.Empty;
+        Component.DragEffectStyle = string.Empty;
 
         OnItemClick.Invoke(Component);
         BlazorEventDispatcher.Trigger("designengine.dropitem.onclick", Component);
@@ -136,7 +131,7 @@
 
     private void OnDragStart(DragEventArgs dragEventArgs)
     {
-        //Component.Opacity = 0.2;
+        Component.Opacity = 0.2;
 
         //记录当前选中对象
         DragDropStateService.CurrentDragComponent = Component;
@@ -158,13 +153,13 @@
         //设置移动位置样式，拖拽到目标元素上半部分时，上方添加虚线边框，下半部分时下方添加虚线边框
         if (dragEventArgs.OffsetY < 30)
         {
-            _tempEffectStyle = "border-top: 2px dashed #1890ff;";
+            Component.DragEffectStyle = "border-top: 2px dashed #1890ff;";
             Component.IsDropedAfter = false;
         }
         else
         {
             Console.WriteLine($"OnDragOver: bottom");
-            _tempEffectStyle = "border-bottom: 2px dashed #1890ff; height: auto;";
+            Component.DragEffectStyle = "border-bottom: 2px dashed #1890ff; height: auto;";
             Component.IsDropedAfter = true;
         }
         DragDropStateService.LastDragOverTime = DateTime.Now;
@@ -177,14 +172,14 @@
             return;
 
         Console.WriteLine("OnDragLeave");
-        _tempEffectStyle = string.Empty;
+        Component.DragEffectStyle = string.Empty;
     }
 
     private void OnMouseOver()
     {
         if (Component.IsSelected == false)
         {
-            _tempEffectStyle = "outline: #1890ff dashed 1.5px;";
+            Component.DragEffectStyle = "outline: #1890ff dashed 1.5px;";
         }
     }
 
@@ -192,7 +187,7 @@
     {
         if (Component.IsSelected == false)
         {
-            _tempEffectStyle = string.Empty;
+            Component.DragEffectStyle = string.Empty;
         }
     }
 

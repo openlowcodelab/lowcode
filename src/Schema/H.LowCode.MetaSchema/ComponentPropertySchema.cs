@@ -1,14 +1,13 @@
-﻿using System.Text.Json.Serialization;
+﻿using Microsoft.AspNetCore.Components;
+using System.Text.Json.Serialization;
 
 namespace H.LowCode.MetaSchema
 {
     /// <summary>
     /// 组件属性
     /// </summary>
-    public class ComponentPropertySchema : MetaSchema
+    public class ComponentPropertySchema : BaseMetaSchema
     {
-        public string Id { get; set; }
-
         public string Name { get; set; }
 
         public string Title { get; set; }
@@ -29,8 +28,6 @@ namespace H.LowCode.MetaSchema
 
         public string Format { get; set; }
 
-        public string Style { get; set; }
-
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public bool IsRequired { get; set; }
 
@@ -44,31 +41,35 @@ namespace H.LowCode.MetaSchema
         public string[] EnumNames { get; set; }
 
         /// <summary>
-        /// 组件宽度（默认12：12/24*100 = 50%）
+        /// 支持的属性
         /// </summary>
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-        public double ItemWidth { get; set; } = 12;
+        public IList<string> SupportProperties { get; set; }
+
+        public IList<SettingItemSchema> ExtensionProperties { get; set; }
 
         /// <summary>
-        /// 组件高度（默认 85 px）
+        /// TODO: 预计代替 ExtensionProperties, 由各组件自行定义
         /// </summary>
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-        public double ItemHeight { get; set; } = 85;
-
-        /// <summary>
-        /// 标签宽度（默认 180 px）
-        /// </summary>
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-        public double LabelWidth { get; set; } = 180;
-
-        /// <summary>
-        /// 自定义样式
-        /// </summary>
-        public string CustomStyle { get; set; }
+        //public IList<RenderFragment> ExtensionProperties { get; set; }
 
         public IDictionary<string, string> ExtensionData { get; } = new Dictionary<string, string>();
 
-        public IDictionary<string, ComponentExtensionPropertySchema> ExtensionProperties { get; set; }
+        #region method
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="propertyName"></param>
+        /// <returns></returns>
+        public virtual bool IsShowProperty(string propertyName)
+        {
+            if (SupportProperties == null)
+                return false;
+
+            if (SupportProperties.Contains(propertyName))
+                return true;
+            return false;
+        }
+        #endregion
     }
 
     public enum ComponentValueType
@@ -82,12 +83,5 @@ namespace H.LowCode.MetaSchema
         Array,
         Date,
         Null
-    }
-
-    public class ComponentExtensionPropertySchema
-    {
-        public string Label { get; set; }
-
-        public object Value { get; set; }
     }
 }

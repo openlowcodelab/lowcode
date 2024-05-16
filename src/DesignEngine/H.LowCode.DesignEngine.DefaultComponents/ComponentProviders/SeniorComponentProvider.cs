@@ -12,7 +12,7 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
         {
             List<ComponentSchema> components =
             [
-                new(ComponentType:"tree"){
+                new("tree"){
                     IsHiddenTitle = true,
                     RenderFragment = (component) =>  (builder) =>
                     {
@@ -24,7 +24,7 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                         Title = "树"
                     }
                 },
-                new(ComponentType:"treeselect"){
+                new("treeselect"){
                     IsHiddenTitle = true,
                     RenderFragment = (component) =>  (builder) =>
                     {
@@ -36,7 +36,7 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                         Title = "树选择器"
                     }
                 },
-                new(ComponentType:"tabs"){
+                new("tabs"){
                     IsHiddenTitle = true,
                     RenderFragment = (component) =>  (builder) =>
                     {
@@ -47,14 +47,16 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                     },
                     ComponentProperty = new()
                     {
-                        Title = "标签页",
-                        Style = "background-color: #ffffff00;",
+                        Title = "标签页"
+                    },
+                    ComponentStyle = new()
+                    {
+                        DefaultStyle = "background-color: #ffffff00; height: auto",
                         ItemWidth = 24,
-                        ItemHeight = 300,
-                        CustomStyle = "height: auto"
+                        ItemHeight = 300
                     }
                 },
-                new(ComponentType:"image"){
+                new("image"){
                     RenderFragment = (component) =>  (builder) =>
                     {
                         builder.OpenComponent(0, typeof(Image));
@@ -64,11 +66,14 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                     },
                     ComponentProperty = new()
                     {
-                        Title = "图片",
+                        Title = "图片"
+                    },
+                    ComponentStyle = new()
+                    {
                         ItemHeight = 200
                     }
                 },
-                new(ComponentType:"list"){
+                new("list"){
                     IsHiddenTitle = true,
                     RenderFragment = (component) =>  (builder) =>
                     {
@@ -80,7 +85,7 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                         Title = "List 列表"
                     }
                 },
-                new(ComponentType:"card"){
+                new("card"){
                     IsHiddenTitle = true,
                     RenderFragment = (component) =>  (builder) =>
                     {
@@ -90,11 +95,32 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                     },
                     ComponentProperty = new()
                     {
-                        Title = "卡片",
-                        CustomStyle = "height: auto"
+                        Title = "卡片"
+                    },
+                    ComponentStyle = new()
+                    {
+                        DefaultStyle = "height: auto"
                     }
                 },
-                new(ComponentType:"carousel"){
+                new("table"){
+                    IsHiddenTitle = true,
+                    RenderFragment = (component) =>  (builder) =>
+                    {
+                        builder.OpenComponent(0, typeof(TableWrap));
+                        builder.AddComponentParameter(1, "Component", component);
+                        builder.CloseComponent();
+                    },
+                    ComponentProperty = new()
+                    {
+                        Title = "表格"
+                    },
+                    ComponentStyle = new()
+                    {
+                        DefaultStyle = "height: auto",
+                        ItemWidth = 24
+                    }
+                },
+                new("carousel"){
                     IsHiddenTitle = true,
                     RenderFragment = (component) =>  (builder) =>
                     {
@@ -105,12 +131,15 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                     },
                     ComponentProperty = new()
                     {
-                        Title = "轮播图",
-                        ItemWidth = 24,
-                        CustomStyle = "height:auto"
+                        Title = "轮播图"
+                    },
+                    ComponentStyle = new()
+                    {
+                        DefaultStyle = "height:auto",
+                        ItemWidth = 24
                     }
                 },
-                new(ComponentType:"descriptions"){
+                new("descriptions"){
                     IsHiddenTitle = true,
                     RenderFragment = (component) =>  (builder) =>
                     {
@@ -121,11 +150,14 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                     },
                     ComponentProperty = new()
                     {
-                        Title = "描述列表",
-                        CustomStyle = "height: auto"
+                        Title = "描述列表"
+                    },
+                    ComponentStyle = new()
+                    {
+                        DefaultStyle = "height: auto"
                     }
                 },
-                new(ComponentType:"empty"){
+                new("empty"){
                     IsHiddenTitle = true,
                     RenderFragment = (component) =>  (builder) =>
                     {
@@ -134,9 +166,12 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                     },
                     ComponentProperty = new()
                     {
-                        Title = "空",
-                        ItemHeight = 150,
-                        CustomStyle = "height: auto"
+                        Title = "空"
+                    },
+                    ComponentStyle = new()
+                    {
+                        DefaultStyle = "height: auto",
+                        ItemHeight = 150
                     }
                 }
             ];
