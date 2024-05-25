@@ -73,9 +73,22 @@ namespace H.LowCode.DesignEngine.Services
 
         public void ResetDragStyle()
         {
-            CurrentDragComponent.Opacity = 1;
-            LastDragOverComponent.DragEffectStyle = string.Empty;
-            //LastDragOverComponent.RefreshState();
+            if (CurrentDragComponent != null)
+            {
+                CurrentDragComponent.Opacity = 1;
+            }
+
+            if (LastSelectedComponent != null)
+            {
+                LastSelectedComponent.IsSelected = false;
+                LastSelectedComponent.RefreshState();
+            }
+
+            if (LastDragOverComponent != null)
+            {
+                LastDragOverComponent.DragEffectStyle = string.Empty;
+                //LastDragOverComponent.RefreshState();
+            }
         }
         #endregion
     }

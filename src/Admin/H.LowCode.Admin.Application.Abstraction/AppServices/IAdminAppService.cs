@@ -2,8 +2,8 @@
 
 namespace H.LowCode.Admin.Application.Abstraction.AppServices
 {
-    public interface IDesignerAppService
+    public interface IAdminAppService
     {
-        void SaveMetadata(string jsonSchema);
+
     }
 }

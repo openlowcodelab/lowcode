@@ -5,11 +5,11 @@ using Volo.Abp.Modularity;
 
 namespace H.LowCode.Admin.Application
 {
-    public class ProAdminAppServiceModule : AbpModule
+    public class AdminApplicationModule : AbpModule
     {
         public override void ConfigureServices(ServiceConfigurationContext context)
         {
-            context.Services.AddScoped<IDesignerAppService, DesignerAppService>();
+            context.Services.AddScoped<IAdminAppService, AdminAppService>();
         }
     }
 }

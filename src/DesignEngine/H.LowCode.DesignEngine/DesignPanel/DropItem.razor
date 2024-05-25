@@ -2,7 +2,7 @@
 
 <div class="dropitem-box @DropItemBoxClassMapper.Class" style="float:left; opacity:@Component.Opacity;
     width: @(Component.ComponentStyle.ItemWidth/24*100)%; min-height: @(Component.ComponentStyle.ItemHeight)px;
-     @Style @Component.ComponentStyle.Display @Component.ComponentStyle.Position
+     @Style  position:@Component.ComponentStyle.Position;
      @Component.ComponentStyle.DefaultStyle @Component.ComponentStyle.CustomStyle"
      @onclick="OnClick" @onclick:stopPropagation
      @ondragstart="OnDragStart" @ondragstart:stopPropagation
@@ -71,12 +71,6 @@
         base.OnInitialized();
     }
 
-    protected override void OnAfterRender(bool firstRender)
-    {
-        if (firstRender)
-            RegisterEventDispatcher();
-    }
-
     private void Init()
     {
         if (Component == null)
@@ -98,32 +92,13 @@
         DropItemBoxClassMapper.Clear()
             .If("dropitem-box-layout", () => Component.IsContainerComponent);
     }
-
-    private void RegisterEventDispatcher()
-    {
-        //订阅设计面板中的组件点击事件
-        BlazorEventDispatcher.RegisterEvent("designengine.dropitem.onclick", (value) =>
-        {
-            //取消选中项
-            if (DragDropStateService.LastSelectedComponent != Component)
-            {
-                Component.IsSelected = false;
-                StateHasChanged();
-            }
-        });
-
-        //订阅属性面板中的事件
-        BlazorEventDispatcher.RegisterEvent("designengine.propertysetting.onchange", (value) =>
-        {
-            StateHasChanged();
-        });
-    }
     #endregion
 
     #region Event
     private void OnClick()
     {
         Component.DragEffectStyle = string.Empty;
+        //DragDropStateService.ResetDragStyle();
 
         OnItemClick.Invoke(Component);
         BlazorEventDispatcher.Trigger("designengine.dropitem.onclick", Component);

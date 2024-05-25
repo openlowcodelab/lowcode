@@ -1,28 +1,31 @@
-﻿<Space Direction="@DirectionVHType.Vertical" Style="width: 100%">
-    <SpaceItem>
-        <Dropdown Trigger="@(new Trigger[] { Trigger.Click })">
-            <Overlay>
-                <Menu>
-                    <MenuItem OnClick="AddStandardEvent">
-                        OnClick
-                    </MenuItem>
-                    <MenuItem OnClick="AddStandardEvent">
-                        OnFocus
-                    </MenuItem>
-                    <MenuItem OnClick="AddStandardEvent">
-                        OnBlur
-                    </MenuItem>
-                    <MenuItem OnClick="AddCustomEvent">
-                        自定义事件
-                    </MenuItem>
-                </Menu>
-            </Overlay>
-            <ChildContent>
-                <Button>新建事件 <Icon Type="down" /></Button>
-            </ChildContent>
-        </Dropdown>
-    </SpaceItem>
-</Space>
+﻿@if (Component != null)
+{
+    <Space Direction="@DirectionVHType.Vertical" Style="width: 100%">
+        <SpaceItem>
+            <Dropdown Trigger="@(new Trigger[] { Trigger.Click })">
+                <Overlay>
+                    <Menu>
+                        <MenuItem OnClick="AddStandardEvent">
+                            OnClick
+                        </MenuItem>
+                        <MenuItem OnClick="AddStandardEvent">
+                            OnFocus
+                        </MenuItem>
+                        <MenuItem OnClick="AddStandardEvent">
+                            OnBlur
+                        </MenuItem>
+                        <MenuItem OnClick="AddCustomEvent">
+                            自定义事件
+                        </MenuItem>
+                    </Menu>
+                </Overlay>
+                <ChildContent>
+                    <Button>新建事件 <Icon Type="down" /></Button>
+                </ChildContent>
+            </Dropdown>
+        </SpaceItem>
+    </Space>
+}
 
 <Modal Title="绑定行为: OnClick" @bind-Visible="@_visible">
     <Tabs TabPosition="@TabPosition.Left" Animated>

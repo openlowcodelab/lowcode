@@ -24,7 +24,7 @@
         </div>*@
         <div style="float:right;">
             <Button>预览</Button>
-            <Button Type="primary" OnClick="() => SaveMetadata()">保存</Button>
+            <Button Type="primary" OnClick="() => SaveMetaSchema()">保存</Button>
         </div>
     </Header>
     <AntDesign.Layout>
@@ -63,22 +63,27 @@
     [SupplyParameterFromQuery(Name = "p")]
     public string PageType { get; set; }
 
-    public async void SaveMetadata()
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        LoadPageSchema();
+    }
+
+    private async void SaveMetaSchema()
     {
         PageSchema pageSchema = GetPageSchema();
-
-        //PostAsJsonAsync
-        //var result = await HttpClient.PostAsJsonAsync("api/Designer/SaveMetadata", pageSchema);
-
-        string jsonData = pageSchema.ToJson();
+        string jsonSchema = pageSchema.ToJson();
 
         //PostAsync
-        var httpContent = new FormUrlEncodedContent(new List<KeyValuePair<string, string>>() { new KeyValuePair<string, string>("pageSchema", jsonData) });
-        var result = await HttpClient.PostAsync("api/Designer/SaveMetadata", httpContent);
-
-        //PostAsync
-        //var httpContent2 = new StringContent(jsonData, Encoding.UTF8, "application/json");
-        //var result2 = await HttpClient.PostAsync("api/Designer/SaveMetadata2", httpContent2);
+        var parameters = new List<KeyValuePair<string, string>>() 
+        {
+            new KeyValuePair<string, string>("appId", AppId),
+            new KeyValuePair<string, string>("pageId", PageId),
+            new KeyValuePair<string, string>("pageSchema", jsonSchema)
+        };
+        var httpContent = new FormUrlEncodedContent(parameters);
+        var result = await HttpClient.PostAsync("api/designengine/savepageschema", httpContent);
 
         if (result.StatusCode == HttpStatusCode.OK)
         {
@@ -86,10 +91,25 @@
         }
     }
 
+    private async void LoadPageSchema()
+    {
+        if (string.IsNullOrEmpty(AppId) || string.IsNullOrEmpty(PageId))
+            return;
+
+        var result = await HttpClient.GetAsync($"api/designengine/loadpageschema?appId={AppId}&pageId={PageId}");
+
+        if (result.StatusCode == HttpStatusCode.OK)
+        {
+            var responseJson = await result.Content.ReadAsStringAsync();
+
+        }
+    }
+
     private PageSchema GetPageSchema()
     {
         PageSchema pageSchema = new PageSchema();
         pageSchema.Components = DragDropStateService.RootComponent.Childrens;
+        pageSchema.PageProperty = DragDropStateService.GlobalPageProperty;
         pageSchema.DataSource = new DataSourceSchema() { DataSourceType = DataSourceType.API };
         return pageSchema;
     }

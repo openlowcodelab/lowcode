@@ -17,7 +17,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "H.LowCode.DesignEngine", "D
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "H.LowCode.DesignEngine.DefaultComponents", "DesignEngine\H.LowCode.DesignEngine.DefaultComponents\H.LowCode.DesignEngine.DefaultComponents.csproj", "{DAA21B11-65C7-4833-8EE7-9AD7FA90F7C1}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "H.LowCode.DesignEngine.CustomComponents", "DesignEngine\H.LowCode.DesignEngine.CustomComponents\H.LowCode.DesignEngine.CustomComponents.csproj", "{FF307136-5C92-40EC-833A-A95DA6C05CFF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "H.LowCode.DesignEngine.ExtensionComponents", "DesignEngine\H.LowCode.DesignEngine.ExtensionComponents\H.LowCode.DesignEngine.ExtensionComponents.csproj", "{FF307136-5C92-40EC-833A-A95DA6C05CFF}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".config", ".config", "{8B2D37CA-78EA-401B-B598-EFB3C7FD6517}"
 	ProjectSection(SolutionItems) = preProject
@@ -54,6 +54,18 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "H.LowCode", "Admin\H.LowCode\H.LowCode.csproj", "{B4932E08-44BD-4024-9FA3-0ECFC1050B7E}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "00Host", "00Host", "{0623DD9E-E9A6-47DB-90B3-5EF720F0ED3D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Server", "Server", "{B8524D2C-164A-46A1-83A3-5F47BC645B01}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "H.LowCode.DesignEngine.HttpApi", "DesignEngine\H.LowCode.DesignEngine.HttpApi\H.LowCode.DesignEngine.HttpApi.csproj", "{5D1C6279-8F86-4222-8EFB-0FEB692B6640}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "H.LowCode.DesignEngine.Application", "DesignEngine\H.LowCode.DesignEngine.Application\H.LowCode.DesignEngine.Application.csproj", "{2FEAC795-B93C-4164-8A4D-92B2F26F4994}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "H.LowCode.DesignEngine.Application.Abstraction", "DesignEngine\H.LowCode.DesignEngine.Application.Abstraction\H.LowCode.DesignEngine.Application.Abstraction.csproj", "{523063C9-59C7-49E4-A17F-B0A5E4247729}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "H.LowCode.DesignEngine.Abstraction", "DesignEngine\H.LowCode.DesignEngine.Abstraction\H.LowCode.DesignEngine.Abstraction.csproj", "{78087384-C445-47F5-BB2A-80CDA2132FF6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "H.LowCode.MetaSchema.DesignEngine", "Schema\H.LowCode.MetaSchema.DesignEngine\H.LowCode.MetaSchema.DesignEngine.csproj", "{58E0511C-8FF3-4F42-BAD0-BD7C76809298}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -121,6 +133,26 @@ Global
 		{B4932E08-44BD-4024-9FA3-0ECFC1050B7E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B4932E08-44BD-4024-9FA3-0ECFC1050B7E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B4932E08-44BD-4024-9FA3-0ECFC1050B7E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5D1C6279-8F86-4222-8EFB-0FEB692B6640}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5D1C6279-8F86-4222-8EFB-0FEB692B6640}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5D1C6279-8F86-4222-8EFB-0FEB692B6640}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5D1C6279-8F86-4222-8EFB-0FEB692B6640}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2FEAC795-B93C-4164-8A4D-92B2F26F4994}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2FEAC795-B93C-4164-8A4D-92B2F26F4994}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2FEAC795-B93C-4164-8A4D-92B2F26F4994}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2FEAC795-B93C-4164-8A4D-92B2F26F4994}.Release|Any CPU.Build.0 = Release|Any CPU
+		{523063C9-59C7-49E4-A17F-B0A5E4247729}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{523063C9-59C7-49E4-A17F-B0A5E4247729}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{523063C9-59C7-49E4-A17F-B0A5E4247729}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{523063C9-59C7-49E4-A17F-B0A5E4247729}.Release|Any CPU.Build.0 = Release|Any CPU
+		{78087384-C445-47F5-BB2A-80CDA2132FF6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{78087384-C445-47F5-BB2A-80CDA2132FF6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{78087384-C445-47F5-BB2A-80CDA2132FF6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{78087384-C445-47F5-BB2A-80CDA2132FF6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{58E0511C-8FF3-4F42-BAD0-BD7C76809298}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{58E0511C-8FF3-4F42-BAD0-BD7C76809298}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{58E0511C-8FF3-4F42-BAD0-BD7C76809298}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{58E0511C-8FF3-4F42-BAD0-BD7C76809298}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -143,6 +175,12 @@ Global
 		{62C8A338-DE31-418E-89BB-F64CB602B55B} = {5AB2ACFB-820B-417D-92FE-A5DCBD88B364}
 		{B06054CE-C840-45EF-96D8-DDA9DC66FB80} = {0623DD9E-E9A6-47DB-90B3-5EF720F0ED3D}
 		{B4932E08-44BD-4024-9FA3-0ECFC1050B7E} = {5AB2ACFB-820B-417D-92FE-A5DCBD88B364}
+		{B8524D2C-164A-46A1-83A3-5F47BC645B01} = {7E5B26AA-4F89-4B8C-B743-AE3F04C9DD58}
+		{5D1C6279-8F86-4222-8EFB-0FEB692B6640} = {B8524D2C-164A-46A1-83A3-5F47BC645B01}
+		{2FEAC795-B93C-4164-8A4D-92B2F26F4994} = {B8524D2C-164A-46A1-83A3-5F47BC645B01}
+		{523063C9-59C7-49E4-A17F-B0A5E4247729} = {B8524D2C-164A-46A1-83A3-5F47BC645B01}
+		{78087384-C445-47F5-BB2A-80CDA2132FF6} = {7E5B26AA-4F89-4B8C-B743-AE3F04C9DD58}
+		{58E0511C-8FF3-4F42-BAD0-BD7C76809298} = {4E9BFDA3-AFC6-41F3-817C-FD9E82322BDA}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {A8C26757-CDED-4779-94DE-C0D4929F64C2}

@@ -1,5 +1,5 @@
-﻿@using Microsoft.Extensions.DependencyInjection
-@inject IEnumerable<IComponentProvider> ComponentProviders
+﻿@inject IEnumerable<IComponentProvider> ComponentProviders
+@inject IEnumerable<IPageTemplateProvider> PageTemplateProviders
 @inject DragDropStateService DragDropStateService
 
 <Tabs TabPosition="@TabPosition.Left" DefaultActiveKey="1" Size="@TabSize.Small">
@@ -22,7 +22,16 @@
                     }
                 </TabPane>
                 <TabPane Key="12" Tab="页面库">
-
+                    @foreach (var pageTemplateProvider in PageTemplateProviders)
+                    {
+                        <div style="display: inline-block; padding-bottom: 20px;">
+                            <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:5px 0;">@pageTemplateProvider.Title</div>
+                            @foreach (var component in pageTemplateProvider.LoadPageTemplate())
+                            {
+                                <DragItem ComponentSchema="component"></DragItem>
+                            }
+                        </div>
+                    }
                 </TabPane>
             </Tabs>
         </ChildContent>

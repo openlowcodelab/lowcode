@@ -5,8 +5,8 @@
 
 @inject IJSRuntime JSRuntime
 
-<link rel="stylesheet" type="text/css" href="_content/H.LowCode.DesignEngine.CustomComponents/LakexEditor-1.24.0/doc.css" />
-<link rel="stylesheet" type="text/css" href="_content/H.LowCode.DesignEngine.CustomComponents/antd-4.24.13/antd.css" />
+<link rel="stylesheet" type="text/css" href="_content/H.LowCode.DesignEngine.ExtensionComponents/LakexEditor-1.24.0/doc.css" />
+<link rel="stylesheet" type="text/css" href="_content/H.LowCode.DesignEngine.ExtensionComponents/antd-4.24.13/antd.css" />
 
 <div id="@_component.Id" class="ne-doc-major-editor" style="height: 100%"></div>
 
@@ -32,8 +32,6 @@
     {
         if (firstRender)
         {
-            RegisterEventDispatcher();
-
             await LoadJSModule();
         }
     }
@@ -49,26 +47,17 @@
             _component = Component.CopyNew();
     }
 
-    private void RegisterEventDispatcher()
-    {
-        //订阅属性面板中的事件
-        BlazorEventDispatcher.RegisterEvent("designengine.propertysetting.onchange", (value) =>
-        {
-            StateHasChanged();
-        });
-    }
-
     private async Task LoadJSModule()
     {
         await JSRuntime.InvokeAsync<IJSObjectReference>("import",
-           "./_content/H.LowCode.DesignEngine.CustomComponents/react-18/react.production.min.js");
+           "./_content/H.LowCode.DesignEngine.ExtensionComponents/react-18/react.production.min.js");
         await JSRuntime.InvokeAsync<IJSObjectReference>("import",
-           "./_content/H.LowCode.DesignEngine.CustomComponents/react-18/react-dom.production.min.js");
+           "./_content/H.LowCode.DesignEngine.ExtensionComponents/react-18/react-dom.production.min.js");
         await JSRuntime.InvokeAsync<IJSObjectReference>("import",
-           "./_content/H.LowCode.DesignEngine.CustomComponents/LakexEditor-1.24.0/doc.umd.js");
+           "./_content/H.LowCode.DesignEngine.ExtensionComponents/LakexEditor-1.24.0/doc.umd.js");
 
         moduleTask = new(() => JSRuntime.InvokeAsync<IJSObjectReference>("import",
-                "./_content/H.LowCode.DesignEngine.CustomComponents/LakexEditor-1.24.0/LakexEditor.js").AsTask());
+                "./_content/H.LowCode.DesignEngine.ExtensionComponents/LakexEditor-1.24.0/LakexEditor.js").AsTask());
 
         var module = await moduleTask.Value;
         await module.InvokeVoidAsync("initLakexEditor", _component.Id);

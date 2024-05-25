@@ -1,11 +1,12 @@
-﻿using H.LowCode.DesignEngine.CustomComponents.Components;
+﻿using H.LowCode.DesignEngine.Abstraction;
+using H.LowCode.DesignEngine.ExtensionComponents.Components;
 using H.LowCode.MetaSchema;
 
-namespace H.LowCode.DesignEngine.CustomComponents.ComponentProviders
+namespace H.LowCode.DesignEngine.ExtensionComponents.ComponentProviders
 {
-    public class CustomComponentProvider : IComponentProvider
+    public class ExtensionComponentProvider : IComponentProvider
     {
-        public string Title { get; set; } = "自定义组件";
+        public string Title { get; set; } = "扩展组件";
 
         public IEnumerable<ComponentSchema> LoadComponent()
         {

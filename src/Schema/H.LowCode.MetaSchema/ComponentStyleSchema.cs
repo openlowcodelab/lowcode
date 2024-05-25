@@ -28,19 +28,9 @@ namespace H.LowCode.MetaSchema
         /// </summary>
         public string DefaultStyle { get; set; }
 
-        private string _display = "inline";
-        public string Display
-        {
-            get { return $"display:{_display}"; }
-            set { _display = value; }
-        }
+        public string Display { get; set; } = "inline";
 
-        private string _position = "static";
-        public string Position
-        {
-            get { return $"position:{_position}"; }
-            set { _position = value; }
-        }
+        public string Position { get; set; } = "static";
 
         /// <summary>
         /// 自定义样式

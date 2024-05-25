@@ -4,8 +4,11 @@ namespace H.LowCode.MetaSchema
 {
     public class PageSchema
     {
-        [JsonPropertyName("v")]
-        public string Version { get; set; } = "1.0.0";
+        [JsonPropertyName("id")]
+        public string PageId { get; set; }
+
+        [JsonPropertyName("t")]
+        public PageTypeEnum PageType { get; set; }
 
         [JsonPropertyName("c")]
         public IList<ComponentSchema> Components { get; set; }
@@ -18,6 +21,13 @@ namespace H.LowCode.MetaSchema
 
         [JsonPropertyName("i")]
         public I18n I18n { get; set; }
+    }
+
+    public enum PageTypeEnum
+    {
+        None,
+        Form,
+        Table
     }
 
     public struct I18n

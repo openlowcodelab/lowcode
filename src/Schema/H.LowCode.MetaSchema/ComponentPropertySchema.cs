@@ -41,16 +41,19 @@ namespace H.LowCode.MetaSchema
         public string[] EnumNames { get; set; }
 
         /// <summary>
-        /// 支持的属性
+        /// 支持的通用属性
         /// </summary>
         public IList<string> SupportProperties { get; set; }
 
-        public IList<SettingItemSchema> ExtensionProperties { get; set; }
+        /// <summary>
+        /// 扩展的简单属性
+        /// </summary>
+        public IList<PropertyItemSchema> ExtensionProperties { get; set; }
 
         /// <summary>
-        /// TODO: 预计代替 ExtensionProperties, 由各组件自行定义
+        /// 扩展的高级属性
         /// </summary>
-        //public IList<RenderFragment> ExtensionProperties { get; set; }
+        public RenderFragment RenderFragmentProperties { get; set; }
 
         public IDictionary<string, string> ExtensionData { get; } = new Dictionary<string, string>();
 
@@ -81,7 +84,6 @@ namespace H.LowCode.MetaSchema
         Boolean,
         Object,
         Array,
-        Date,
-        Null
+        Date
     }
 }

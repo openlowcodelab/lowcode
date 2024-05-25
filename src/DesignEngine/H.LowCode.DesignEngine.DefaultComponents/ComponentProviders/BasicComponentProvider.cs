@@ -1,5 +1,7 @@
 ﻿using AntDesign;
 using H.LowCode.MetaSchema;
+using Microsoft.AspNetCore.Components;
+using H.LowCode.DesignEngine.Abstraction;
 
 namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
 {
@@ -23,10 +25,10 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                         SupportProperties = ["MaximumLength", "MinimumLength", "Pattern", "Format"],
                         ExtensionProperties =
                             [
-                                new() { Label="最大长度", Value = 0, SettingItemType = SettingItemTypeEnum.Text_Int },
-                                new() { Label="是否只读", Value = false, SettingItemType = SettingItemTypeEnum.Checkbox },
-                                new() { Label="是否截断", Value = false, SettingItemType = SettingItemTypeEnum.Checkbox },
-                                new() { Label="输入提示", Value = "", SettingItemType = SettingItemTypeEnum.Text, Description = "placehoder 显示文字" }
+                                new() { Label="最大长度", IntValue = 0, SettingItemType = PropertyItemTypeEnum.Text_Int },
+                                new() { Label="是否只读", BoolValue = false, SettingItemType = PropertyItemTypeEnum.Checkbox },
+                                new() { Label="是否截断", BoolValue = false, SettingItemType = PropertyItemTypeEnum.Checkbox },
+                                new() { Label="输入提示", StringValue = "", SettingItemType = PropertyItemTypeEnum.Text, Description = "placehoder 显示文字" }
                             ]
                     }
                 },
@@ -148,13 +150,17 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                     RenderFragment = (component) =>  (builder) =>
                     {
                         builder.OpenComponent(0, typeof(Button));
-                        builder.AddAttribute(1,  "Type", ButtonType.Default);
-                        builder.AddContent(2, "按钮111");
+                        RenderFragment fragment = (builder) => builder.AddMarkupContent(1, component.ComponentProperty.Title);
+                        builder.AddComponentParameter(1, "ChildContent", fragment);
                         builder.CloseComponent();
                     },
                     ComponentProperty = new(){
                         Title = "按钮",
                         ComponentValueType = ComponentValueType.None
+                    },
+                    ComponentStyle = new()
+                    {
+                        ItemWidth = 2
                     }
                 }
             ];

@@ -1,18 +1,18 @@
 ﻿@inject DragDropStateService DragDropStateService
 
-<Tabs DefaultActiveKey="tab_page" @bind-ActiveKey="@ActiveTabKey" Class="designpage" Style="width:250px; padding:0px 8px;">
-    @if (ShowPropertyPanel)
+<Tabs DefaultActiveKey="tab_page" @bind-ActiveKey="@_activeTabKey" Class="designpage" Style="width:250px; padding:0px 8px;">
+    @if (_showPropertyPanel)
     {
         <TabPane Key="tab_property" Tab="属性">
-            <PropertySetting Component="@Component"></PropertySetting>
+            <PropertySetting Component="@_component"></PropertySetting>
         </TabPane>
         <TabPane Key="tab_style" Tab="样式">
-            <StyleSetting Component="@Component"></StyleSetting>
+            <StyleSetting Component="@_component"></StyleSetting>
         </TabPane>
-        @if (Component.IsContainerComponent == false)
+        @if (_component.IsContainerComponent == false)
         {
             <TabPane Key="tab_action" Tab="事件">
-                <EventSetting Component="@Component"></EventSetting>
+                <EventSetting Component="@_component"></EventSetting>
             </TabPane>
         }
     }
@@ -22,11 +22,11 @@
 </Tabs>
 
 @code {
-    public bool ShowPropertyPanel { get; set; }
+    private ComponentSchema _component { get; set; }
 
-    public ComponentSchema Component { get; set; }
+    private bool _showPropertyPanel { get; set; }
 
-    private string ActiveTabKey { get; set; } = "tab_page";
+    private string _activeTabKey { get; set; } = "tab_page";
 
     #region Init
     protected override void OnAfterRender(bool firstRender)
@@ -40,18 +40,18 @@
         //订阅设计面板中的组件点击事件
         BlazorEventDispatcher.RegisterEvent("designengine.dropitem.onclick", (value) =>
         {
-            Component = (ComponentSchema)value;
-            ShowPropertyPanel = true;
-            ActiveTabKey = "tab_property";
+            _component = (ComponentSchema)value;
+            _showPropertyPanel = true;
+            _activeTabKey = "tab_property";
             StateHasChanged();
         });
 
         //订阅设计面板取消选中事件
         BlazorEventDispatcher.RegisterEvent("designengine.dropitem.onblur", (value) =>
         {
-            Component = null;
-            ShowPropertyPanel = false;
-            ActiveTabKey = "tab_page";
+            _component = null;
+            _showPropertyPanel = false;
+            _activeTabKey = "tab_page";
             StateHasChanged();
         });
     }

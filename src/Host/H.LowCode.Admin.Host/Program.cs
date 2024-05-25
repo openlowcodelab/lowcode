@@ -1,5 +1,7 @@
 using H.LowCode.Admin.Host.Components;
 using H.LowCode;
+using H.LowCode.Admin.HttpApi;
+using H.LowCode.DesignEngine.HttpApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,7 +12,8 @@ builder.Services.AddRazorComponents()
 
 #region  LowCode
 builder.Services.AddLowCode();
-builder.Services.AddLowCodeHttpApi();
+builder.Services.AddAdminHttpApi();
+builder.Services.AddDesignEngineHttpApi();
 #endregion
 
 var app = builder.Build();

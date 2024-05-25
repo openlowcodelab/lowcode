@@ -1,6 +1,7 @@
-﻿using System;
+﻿using H.LowCode.MetaSchema;
+using System;
 
-namespace H.LowCode.MetaSchema
+namespace H.LowCode.DesignEngine.Abstraction
 {
     public interface IComponentProvider
     {

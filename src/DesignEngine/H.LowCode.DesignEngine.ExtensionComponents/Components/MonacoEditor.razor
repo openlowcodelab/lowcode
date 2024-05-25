@@ -32,8 +32,6 @@
     {
         if (firstRender)
         {
-            RegisterEventDispatcher();
-
             await LoadJSModule();
         }
     }
@@ -49,15 +47,6 @@
             _component = Component.CopyNew();
     }
 
-    private void RegisterEventDispatcher()
-    {
-        //订阅属性面板中的事件
-        BlazorEventDispatcher.RegisterEvent("designengine.propertysetting.onchange", (value) =>
-        {
-            StateHasChanged();
-        });
-    }
-
     private async Task LoadJSModule()
     {
         // await JSRuntime.InvokeAsync<IJSObjectReference>("import",
@@ -68,7 +57,7 @@
         //    "./_content/BlazorMonaco/lib/monaco-editor/min/vs/editor/editor.main.js");
 
         moduleTask = new(() => JSRuntime.InvokeAsync<IJSObjectReference>("import",
-             "./_content/H.LowCode.DesignEngine.CustomComponents/MonacoEditor/monaco.js").AsTask());
+             "./_content/H.LowCode.DesignEngine.ExtensionComponents/MonacoEditor/monaco.js").AsTask());
 
         var module = await moduleTask.Value;
         await module.InvokeVoidAsync("initMonacoEditor");

@@ -1,9 +1,9 @@
 ﻿<Layout Style="height:100%">
     <Sider Style="background: #f4f7fa; height:100%;">
-        <DropItemContainer ParentComponent="@CreatComponent("layoutcontainer-sider")"></DropItemContainer>
+        <DropItemContainer ContainerComponent="@CreatComponent("layoutcontainer-sider")"></DropItemContainer>
     </Sider>
     <Content Style="height: 100%;">
-        <DropItemContainer ParentComponent="@CreatComponent("layoutcontainer-content")"></DropItemContainer>
+        <DropItemContainer ContainerComponent="@CreatComponent("layoutcontainer-content")"></DropItemContainer>
     </Content>
 </Layout>
 
@@ -24,25 +24,10 @@
         base.OnInitialized();
     }
 
-    protected override void OnAfterRender(bool firstRender)
-    {
-        if (firstRender)
-            RegisterEventDispatcher();
-    }
-
     private void Init()
     {
         if (_component == null)
             _component = Component.CopyNew();
-    }
-
-    private void RegisterEventDispatcher()
-    {
-        //订阅属性面板中的事件
-        BlazorEventDispatcher.RegisterEvent("designengine.propertysetting.onchange", (value) =>
-        {
-            StateHasChanged();
-        });
     }
     #endregion
 

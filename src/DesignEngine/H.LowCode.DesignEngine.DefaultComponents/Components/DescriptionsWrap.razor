@@ -27,12 +27,6 @@
         base.OnInitialized();
     }
 
-    protected override void OnAfterRender(bool firstRender)
-    {
-        if (firstRender)
-            RegisterEventDispatcher();
-    }
-
     protected override bool ShouldRender()
     {
         return false;
@@ -42,15 +36,6 @@
     {
         if (_component == null)
             _component = Component.CopyNew();
-    }
-
-    private void RegisterEventDispatcher()
-    {
-        //订阅属性面板中的事件
-        BlazorEventDispatcher.RegisterEvent("designengine.propertysetting.onchange", (value) =>
-        {
-            StateHasChanged();
-        });
     }
     #endregion
 }

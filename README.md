@@ -1,12 +1,6 @@
 # H.LowCode
 
-#### 介绍
-1.  基于 json-schema 规范
-
-#### 使用说明
-
-1.  xxxx
-2.  xxxx
-3.  xxxx
-
+### 介绍
+* 低代码实验性项目
+* 基于 .NET 8.0 + Blazor 实现
 

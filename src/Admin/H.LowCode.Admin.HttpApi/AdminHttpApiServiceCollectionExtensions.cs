@@ -1,11 +1,10 @@
-﻿using H.LowCode.Admin.HttpApi;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 
-namespace H.LowCode
+namespace H.LowCode.Admin.HttpApi
 {
     public static class AdminHttpApiServiceCollectionExtensions
     {
-        public static void AddLowCodeHttpApi(this IServiceCollection services)
+        public static void AddAdminHttpApi(this IServiceCollection services)
         {
             services.AddApplication<AdminHttpApiModule>();
         }

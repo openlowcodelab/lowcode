@@ -2,11 +2,15 @@
 
 namespace H.LowCode.MetaSchema
 {
-    public class SettingItemSchema
+    public class PropertyItemSchema
     {
         public string Label { get; set; }
 
-        public object Value { get; set; }
+        public string StringValue { get; set; }
+
+        public bool BoolValue { get; set; }
+
+        public int IntValue { get; set; }
 
         public string Description { get; set; }
 
@@ -15,10 +19,10 @@ namespace H.LowCode.MetaSchema
         /// <summary>
         /// 设置项类型
         /// </summary>
-        public SettingItemTypeEnum SettingItemType { get; set; }
+        public PropertyItemTypeEnum SettingItemType { get; set; }
     }
 
-    public enum SettingItemTypeEnum
+    public enum PropertyItemTypeEnum
     {
         Text,
         Text_Int,
