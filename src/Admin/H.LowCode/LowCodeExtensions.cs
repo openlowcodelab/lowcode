@@ -15,7 +15,7 @@ namespace H.LowCode
             #region DesignEngine
             services.AddApplication<DesignEngineModule>();
             services.AddApplication<DefaultComponentModule>();
-            services.AddApplication<CustomComponentModule>();
+            services.AddApplication<ExtensionComponentModule>();
             #endregion
 
             #region  RenderEngine

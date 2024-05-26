@@ -1,8 +1,8 @@
 ﻿@inject IJSRuntime JSRuntime
 
-<StandaloneCodeEditor Id="my-editor-instance-id"
-    ConstructionOptions="EditorConstructionOptions"
-    OnDidChangeCursorPosition="EditorDidChangeCursorPosition"  />
+<link rel="stylesheet" type="text/css" href="_content/H.LowCode.DesignEngine.ExtensionComponents/MonacoEditor/editor/editor.main.css" />
+
+<div id="monaco-container" style="width:100%; height:100%;"></div>
 
 @code {
     [Parameter]
@@ -17,7 +17,10 @@
     public string Language { get; set; } = "javascript";
 
     [Parameter]
-    public string Text { get; set; }
+    public string Code { get; set; } = "function hello() { console.log('Hello, World!'); }";
+
+    [Parameter]
+    public string Theme { get; set; } = "vs-dark";
 
     private Lazy<Task<IJSObjectReference>> moduleTask;
 
@@ -32,7 +35,7 @@
     {
         if (firstRender)
         {
-            await LoadJSModule();
+            await LoadMonacoEditorAsync("monaco-container", Code, Language, Theme);
         }
     }
 
@@ -47,30 +50,13 @@
             _component = Component.CopyNew();
     }
 
-    private async Task LoadJSModule()
+    private async Task LoadMonacoEditorAsync(string containerId, string code, string language, string theme)
     {
-        // await JSRuntime.InvokeAsync<IJSObjectReference>("import",
-        //    "./_content/BlazorMonaco/jsInterop.js");
-        // await JSRuntime.InvokeAsync<IJSObjectReference>("import",
-        //    "./_content/BlazorMonaco/lib/monaco-editor/min/vs/loader.js");
-        // await JSRuntime.InvokeAsync<IJSObjectReference>("import",
-        //    "./_content/BlazorMonaco/lib/monaco-editor/min/vs/editor/editor.main.js");
-
         moduleTask = new(() => JSRuntime.InvokeAsync<IJSObjectReference>("import",
              "./_content/H.LowCode.DesignEngine.ExtensionComponents/MonacoEditor/monaco.js").AsTask());
 
         var module = await moduleTask.Value;
-        await module.InvokeVoidAsync("initMonacoEditor");
+        await module.InvokeVoidAsync("initMonacoEditor", containerId, code, language, theme);
     }
     #endregion
-
-    private StandaloneEditorConstructionOptions EditorConstructionOptions(StandaloneCodeEditor editor)
-    {
-        return new() { AutomaticLayout = true, Language = Language, Value = Text };
-    }
-
-    private void EditorDidChangeCursorPosition(CursorPositionChangedEvent eventArgs)
-    {
-        Console.WriteLine("EditorDidChangeCursorPosition");
-    }
 }

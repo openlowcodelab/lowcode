@@ -1,14 +1,19 @@
-﻿export function initMonacoEditor() {
-    const js1 = "_content/BlazorMonaco/jsInterop.js";
-    const js2 = "_content/BlazorMonaco/lib/monaco-editor/min/vs/loader.js";
-    const js3 = "_content/BlazorMonaco/lib/monaco-editor/min/vs/editor/editor.main.js";
+﻿export function initMonacoEditor(containerId, code, language, theme) {
+    const loaderUrl = "_content/H.LowCode.DesignEngine.ExtensionComponents/MonacoEditor/loader.min.js";
 
-    loadScript(js1, function () {
-        loadScript(js2, function () {
-            loadScript(js3);
+    loadScript(loaderUrl, function () {
+        //require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.30.1/min/vs' } });
+        require.config({ paths: { 'vs': '_content/H.LowCode.DesignEngine.ExtensionComponents/MonacoEditor' } });
+        require(['vs/editor/editor.main'], function () {
+            // 初始化编辑器
+            var editor = monaco.editor.create(document.getElementById(containerId), {
+                value: code,
+                language: language,
+                theme: theme // 可选择其他主题，如'vs'为默认的浅色主题
+            });
         });
     });
-}
+};
 
 function loadScript(url, callback) {
     if (document.querySelector('[src$="' + url + '"]')) {

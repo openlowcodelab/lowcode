@@ -46,9 +46,9 @@ namespace H.LowCode.DesignEngine.ExtensionComponents.ComponentProviders
                     },
                     ComponentStyle = new()
                     {
-                        DefaultStyle = "height: 100%",
                         ItemWidth = 24,
                         ItemHeight = 150,
+                        DefaultStyle = "height: 100%"
                     }
                 }
                 //new(component"userselect"){
