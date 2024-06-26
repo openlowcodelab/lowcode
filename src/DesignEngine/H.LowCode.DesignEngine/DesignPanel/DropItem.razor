@@ -34,11 +34,11 @@
 
         @if (Component.IsContainerComponent)
         {
-            <div class="dropitem-div-container">@Component.RenderFragment(Component)</div>
+            <div class="dropitem-div-container">@_componentFragment</div>
         }
         else
         {
-            <div class="dropitem-div-component">@Component.RenderFragment(Component)</div>
+            <div class="dropitem-div-component">@_componentFragment</div>
         }
     </div>
 </div>
@@ -62,6 +62,8 @@
     protected ClassMapper DropItemBoxClassMapper { get; } = new ClassMapper();
     protected ClassMapper DropItemClassMapper { get; } = new ClassMapper();
 
+    private RenderFragment _componentFragment;
+
     #region Init
     protected override void OnInitialized()
     {
@@ -76,10 +78,12 @@
         if (Component == null)
             throw new NullReferenceException(nameof(Component));
 
-        if (Component.RenderFragment == null)
-            throw new NullReferenceException(nameof(Component.RenderFragment));
+        // if (Component.RenderFragment == null)
+        //     throw new NullReferenceException(nameof(Component.RenderFragment));
 
         Component.ComponentProperty.Name = $"{Component.ComponentName}_{Random.Shared.Next(100, 999)}";
+
+        _componentFragment = RenderComponent();
     }
 
     private void SetClassMap()
@@ -92,6 +96,45 @@
         DropItemBoxClassMapper.Clear()
             .If("dropitem-box-layout", () => Component.IsContainerComponent);
     }
+
+    private RenderFragment RenderComponent() => builder =>
+    {
+        foreach (var fragment in Component.ComponentFragments)
+        {
+            if (fragment.FragmentEnum == FragmentEnum.Component)
+            {
+                Type type = Type.GetType(fragment.ComponentFragmentName);
+                builder.OpenComponent(fragment.Index, type);
+            }
+            else if (fragment.FragmentEnum == FragmentEnum.Attribute)
+            {
+                if (fragment.ValueType == ComponentValueType.Integer)
+                {
+                    builder.AddAttribute(fragment.Index, fragment.Name, fragment.IntValue);
+                }
+                else if (fragment.ValueType == ComponentValueType.String)
+                {
+                    if ("{self}".Equals(fragment.StringValue, StringComparison.OrdinalIgnoreCase))
+                        builder.AddAttribute(fragment.Index, fragment.Name, Component);
+                    else
+                        builder.AddAttribute(fragment.Index, fragment.Name, fragment.StringValue);
+                }
+            }
+            else if (fragment.FragmentEnum == FragmentEnum.Parameter)
+            {
+                if (fragment.ValueType == ComponentValueType.Integer)
+                    builder.AddComponentParameter(fragment.Index, fragment.Name, fragment.IntValue);
+                else if (fragment.ValueType == ComponentValueType.String)
+                {
+                    if ("{self}".Equals(fragment.StringValue, StringComparison.OrdinalIgnoreCase))
+                        builder.AddAttribute(fragment.Index, fragment.Name, Component);
+                    else
+                        builder.AddComponentParameter(fragment.Index, fragment.Name, fragment.StringValue);
+                }
+            }
+        }
+        builder.CloseComponent();
+    };
     #endregion
 
     #region Event

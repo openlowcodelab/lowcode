@@ -1,7 +1,64 @@
-﻿<div>FormTemplate</div>
+﻿@inherits DesignEngineComponentBase
+
+<DropItemContainer ContainerComponent="@CreatComponent("formcontainer")"></DropItemContainer>
+
+@* 表单提交、取消按钮 *@
+<DropItemContainer ContainerComponent="@CreatComponent_FormButton()"></DropItemContainer>
 
 @code {
-    [Parameter]
-    public ComponentSchema Component { get; set; }
+    protected ComponentSchema CreatComponent_FormButton()
+    {
+        var component = CreatComponent("formcontainer_buttom");
+        if (component.Childrens.Count != 0)
+            return component;
 
+        //设置自定义样式
+        component.ComponentStyle.DefaultStyle = "width: 200px; height: 85px; position:fixed; bottom:20px; right: 280px;";
+
+        ComponentSchema submitComponent = new("button")
+        {
+            IsHiddenTitle = true,
+            ComponentFragments =
+            [
+                        new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(ButtonWrap).GetFullNameWithAssemblyName() },
+                new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Text", ValueType = ComponentValueType.String, StringValue = "提交" }
+            ],
+            ComponentProperty = new()
+            {
+                Title = "提交",
+                ComponentValueType = ComponentValueType.None
+            },
+            ComponentStyle = new()
+            {
+                ItemWidth = 12,
+                ItemHeight = 40
+            }
+        };
+        submitComponent.ParentId = component.Id;
+        component.Childrens.Add(submitComponent);
+
+        ComponentSchema cancelComponent = new("button")
+            {
+                IsHiddenTitle = true,
+                ComponentFragments =
+                [
+                            new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(ButtonWrap).GetFullNameWithAssemblyName() },
+                    new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Text", ValueType = ComponentValueType.String, StringValue = "取消" }
+                ],
+                ComponentProperty = new()
+                {
+                    Title = "取消",
+                    ComponentValueType = ComponentValueType.None
+                },
+                ComponentStyle = new()
+                {
+                    ItemWidth = 12,
+                    ItemHeight = 40
+                }
+            };
+        cancelComponent.ParentId = component.Id;
+        component.Childrens.Add(cancelComponent);
+
+        return component;
+    }
 }

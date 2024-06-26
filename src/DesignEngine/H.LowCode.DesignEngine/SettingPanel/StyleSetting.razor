@@ -1,5 +1,16 @@
 ﻿@if (Component != null)
 {
+    <div class="propertysetting-item">
+        <label>组件宽度：</label>
+        <Slider TValue="double" Value="@Component.ComponentStyle.ItemWidth" DefaultValue="12" Min="4" Max="24" OnChange="(value) => OnStyleChange()" />
+    </div>
+    @if (Component.IsHiddenTitle == false)
+    {
+        <div class="propertysetting-item">
+            <label>标签宽度：</label>
+            <Slider TValue="double" Value="@Component.ComponentStyle.LabelWidth" DefaultValue="180" Min="4" Max="300" OnChange="(value) => OnStyleChange()" />
+        </div>
+    }
     <div style="margin: 5px 15px 20px 10px;">
         <label>布局：</label>
         <RadioGroup TValue="string" @bind-Value="@Component.ComponentStyle.Display" OnChange="() => OnStyleChange()">

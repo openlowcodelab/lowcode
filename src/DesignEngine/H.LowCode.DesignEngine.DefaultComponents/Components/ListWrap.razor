@@ -1,4 +1,6 @@
-﻿<AntList DataSource="@DataSource" TItem="ListItem">
+﻿@inherits DesignEngineComponentBase
+
+<AntList DataSource="@DataSource" TItem="ListItem">
     <ListItem OnClick="()=>OnItemClick(context.Title)">
         <ListItemMeta AvatarTemplate="avatar" Description="@context.Content">
             <TitleTemplate>
@@ -27,23 +29,10 @@
 
     private RenderFragment avatar = @<Avatar Src="https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png"></Avatar>;
 
-    #region Init
-    protected override void OnInitialized()
-    {
-        Init();
-
-        base.OnInitialized();
-    }
-
+    #region override
     protected override bool ShouldRender()
     {
         return false;
-    }
-
-    private void Init()
-    {
-        if (_component == null)
-            _component = Component.CopyNew();
     }
     #endregion
 
@@ -51,29 +40,6 @@
     private void OnItemClick(string title)
     {
 
-    }
-    #endregion
-
-    #region
-    private ComponentSchema CreatComponent(string key)
-    {
-        var c = Component.Childrens.FirstOrDefault(t =>
-            {
-                if (t.ComponentProperty.ExtensionData.ContainsKey(key))
-                    return true;
-                return false;
-            });
-        if (c != null)
-            return c;
-
-        var component = _component.CopyNew();
-        component.IsContainerComponent = true;
-        component.ComponentProperty.ExtensionData.Add(key, key);
-        component.ParentId = Component.Id;
-
-        Component.Childrens.Add(component);
-
-        return component;
     }
     #endregion
 

@@ -1,0 +1,45 @@
+﻿@using H.LowCode.MetaSchema
+
+@code {
+    [Parameter]
+    public ComponentSchema Component { get; set; }
+
+    /// <summary>
+    /// 保存初始的 Component，避免跟随 Component 变化
+    /// </summary>
+    private ComponentSchema _component;
+
+    protected override void OnInitialized()
+    {
+        Init();
+
+        base.OnInitialized();
+    }
+
+    private void Init()
+    {
+        if (_component == null)
+            _component = Component.CopyNew();
+    }
+
+    protected virtual ComponentSchema CreatComponent(string key)
+    {
+        var c = Component.Childrens.FirstOrDefault(t =>
+            {
+                if (t.ComponentProperty.ExtensionData.ContainsKey(key))
+                    return true;
+                return false;
+            });
+        if (c != null)
+            return c;
+
+        var component = _component.CopyNew();
+        component.IsContainerComponent = true;
+        component.ComponentProperty.ExtensionData.Add(key, key);
+        component.ParentId = Component.Id;
+
+        Component.Childrens.Add(component);
+
+        return component;
+    }
+}

@@ -15,11 +15,10 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
             [
                 new("tree"){
                     IsHiddenTitle = true,
-                    RenderFragment = (component) =>  (builder) =>
-                    {
-                        builder.OpenComponent(0, typeof(Tree<string>));
-                        builder.CloseComponent();
-                    },
+                    ComponentFragments =
+                    [
+                        new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(Tree<string>).GetFullNameWithAssemblyName() }
+                    ],
                     ComponentProperty = new()
                     {
                         Title = "树"
@@ -27,11 +26,10 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                 },
                 new("treeselect"){
                     IsHiddenTitle = true,
-                    RenderFragment = (component) =>  (builder) =>
-                    {
-                        builder.OpenComponent(0, typeof(TreeSelect<string, string>));
-                        builder.CloseComponent();
-                    },
+                    ComponentFragments =
+                    [
+                        new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(TreeSelect<string, string>).GetFullNameWithAssemblyName() }
+                    ],
                     ComponentProperty = new()
                     {
                         Title = "树选择器"
@@ -39,13 +37,12 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                 },
                 new("tabs"){
                     IsHiddenTitle = true,
-                    RenderFragment = (component) =>  (builder) =>
-                    {
-                        builder.OpenComponent(0, typeof(TabsWrap));
-                        builder.AddComponentParameter(1, "Component", component);
-                        builder.AddComponentParameter(2, "ItemCount", 3);
-                        builder.CloseComponent();
-                    },
+                    ComponentFragments =
+                    [
+                        new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(TabsWrap).GetFullNameWithAssemblyName() },
+                        new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Component", ValueType = ComponentValueType.String, StringValue = "{Self}" },
+                        new(){ Index = 2, FragmentEnum = FragmentEnum.Attribute, Name = "ItemCount", ValueType = ComponentValueType.Integer, IntValue = 3 },
+                    ],
                     ComponentProperty = new()
                     {
                         Title = "标签页"
@@ -58,13 +55,12 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                     }
                 },
                 new("image"){
-                    RenderFragment = (component) =>  (builder) =>
-                    {
-                        builder.OpenComponent(0, typeof(Image));
-                        builder.AddComponentParameter(1, "Width", "300px");
-                        builder.AddComponentParameter(2, "Src", "https://www.baidu.com/img/PCtm_d9c8750bed0b3c7d089fa7d55720d6cf.png");
-                        builder.CloseComponent();
-                    },
+                    ComponentFragments =
+                    [
+                        new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(Image).GetFullNameWithAssemblyName() },
+                        new(){ Index = 1, FragmentEnum = FragmentEnum.Attribute, Name = "Width", ValueType = ComponentValueType.String, StringValue = "300px" },
+                        new(){ Index = 2, FragmentEnum = FragmentEnum.Attribute, Name = "Src", ValueType = ComponentValueType.String, StringValue = "https://www.baidu.com/img/PCtm_d9c8750bed0b3c7d089fa7d55720d6cf.png" },
+                    ],
                     ComponentProperty = new()
                     {
                         Title = "图片"
@@ -76,11 +72,10 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                 },
                 new("list"){
                     IsHiddenTitle = true,
-                    RenderFragment = (component) =>  (builder) =>
-                    {
-                        builder.OpenComponent(0, typeof(AntList<string>));
-                        builder.CloseComponent();
-                    },
+                    ComponentFragments =
+                    [
+                        new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(AntList<string>).GetFullNameWithAssemblyName() }
+                    ],
                     ComponentProperty = new()
                     {
                         Title = "List 列表"
@@ -88,12 +83,11 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                 },
                 new("card"){
                     IsHiddenTitle = true,
-                    RenderFragment = (component) =>  (builder) =>
-                    {
-                        builder.OpenComponent(0, typeof(CardWrap));
-                        builder.AddComponentParameter(1, "Component", component);
-                        builder.CloseComponent();
-                    },
+                    ComponentFragments =
+                    [
+                        new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(CardWrap).GetFullNameWithAssemblyName() },
+                        new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Component", ValueType = ComponentValueType.String, StringValue = "{Self}" }
+                    ],
                     ComponentProperty = new()
                     {
                         Title = "卡片"
@@ -105,12 +99,11 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                 },
                 new("table"){
                     IsHiddenTitle = true,
-                    RenderFragment = (component) =>  (builder) =>
-                    {
-                        builder.OpenComponent(0, typeof(TableWrap));
-                        builder.AddComponentParameter(1, "Component", component);
-                        builder.CloseComponent();
-                    },
+                    ComponentFragments =
+                    [
+                        new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(TableWrap).GetFullNameWithAssemblyName() },
+                        new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Component", ValueType = ComponentValueType.String, StringValue = "{Self}" }
+                    ],
                     ComponentProperty = new()
                     {
                         Title = "表格"
@@ -123,13 +116,12 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                 },
                 new("carousel"){
                     IsHiddenTitle = true,
-                    RenderFragment = (component) =>  (builder) =>
-                    {
-                        builder.OpenComponent(0, typeof(CarouselWrap));
-                        builder.AddComponentParameter(1, "Component", component);
-                        builder.AddComponentParameter(2, "ItemCount", 4);
-                        builder.CloseComponent();
-                    },
+                    ComponentFragments =
+                    [
+                        new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(CarouselWrap).GetFullNameWithAssemblyName() },
+                        new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Component", ValueType = ComponentValueType.String, StringValue = "{Self}" },
+                        new(){ Index = 2, FragmentEnum = FragmentEnum.Attribute, Name = "ItemCount", ValueType = ComponentValueType.Integer, IntValue = 4 }
+                    ],
                     ComponentProperty = new()
                     {
                         Title = "轮播图"
@@ -142,13 +134,12 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                 },
                 new("descriptions"){
                     IsHiddenTitle = true,
-                    RenderFragment = (component) =>  (builder) =>
-                    {
-                        builder.OpenComponent(0, typeof(DescriptionsWrap));
-                        builder.AddComponentParameter(1, "Component", component);
-                        builder.AddComponentParameter(2, "ItemCount", 3);
-                        builder.CloseComponent();
-                    },
+                    ComponentFragments =
+                    [
+                        new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(DescriptionsWrap).GetFullNameWithAssemblyName() },
+                        new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Component", ValueType = ComponentValueType.String, StringValue = "{Self}" },
+                        new(){ Index = 2, FragmentEnum = FragmentEnum.Attribute, Name = "ItemCount", ValueType = ComponentValueType.Integer, IntValue = 3 }
+                    ],
                     ComponentProperty = new()
                     {
                         Title = "描述列表"
@@ -160,11 +151,10 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                 },
                 new("empty"){
                     IsHiddenTitle = true,
-                    RenderFragment = (component) =>  (builder) =>
-                    {
-                        builder.OpenComponent(0, typeof(Empty));
-                        builder.CloseComponent();
-                    },
+                    ComponentFragments =
+                    [
+                        new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(Empty).GetFullNameWithAssemblyName() }
+                    ],
                     ComponentProperty = new()
                     {
                         Title = "空"

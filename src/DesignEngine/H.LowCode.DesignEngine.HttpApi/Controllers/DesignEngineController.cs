@@ -1,5 +1,7 @@
 ﻿using H.Ddd.HttpApi;
+using H.Extensions.System;
 using H.LowCode.DesignEngine.Application.Abstraction.AppServices;
+using H.LowCode.MetaSchema;
 using Microsoft.AspNetCore.Mvc;
 
 namespace H.LowCode.DesignEngine.HttpApi.Controllers
@@ -14,21 +16,15 @@ namespace H.LowCode.DesignEngine.HttpApi.Controllers
         }
 
         [HttpGet]
-        public string Get()
-        {
-            return "ok";
-        }
-
-        [HttpPost]
-        public void SavePageSchema([FromForm] string appId, [FromForm] string pageId, [FromForm] string pageSchema)
-        {
-            _designEngineAppService.SavePageSchema(appId, pageId, pageSchema);
-        }
-
-        [HttpGet]
         public string GetPageSchema(string appId, string pageId)
         {
             return _designEngineAppService.GetPageSchema(appId, pageId);
+        }
+
+        [HttpPost]
+        public void SavePageSchema(PageSchema pageSchema)
+        {
+            _designEngineAppService.SavePageSchema(pageSchema.AppId, pageSchema.PageId, pageSchema.ToJson());
         }
     }
 }

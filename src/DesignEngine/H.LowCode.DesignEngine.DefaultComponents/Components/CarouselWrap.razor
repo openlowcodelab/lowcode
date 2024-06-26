@@ -1,4 +1,6 @@
-﻿<Carousel Style="height:160px; background: #364d79;">
+﻿@inherits DesignEngineComponentBase
+
+<Carousel Style="height:160px; background: #364d79;">
     @for (int i = 0; i < ItemCount; i++)
     {
         string key = $"CarouselSlick-{i}";
@@ -10,33 +12,12 @@
 
 @code {
     [Parameter]
-    public ComponentSchema Component { get; set; }
-
-    [Parameter]
     public int ItemCount { get; set; }
 
-    /// <summary>
-    /// 保存初始的 Component，避免跟随 Component 变化
-    /// </summary>
-    private ComponentSchema _component;
-
-    #region Init
-    protected override void OnInitialized()
-    {
-        Init();
-
-        base.OnInitialized();
-    }
-
+    #region override
     protected override bool ShouldRender()
     {
         return false;
-    }
-
-    private void Init()
-    {
-        if (_component == null)
-            _component = Component.CopyNew();
     }
     #endregion
 
@@ -44,29 +25,6 @@
     private void OnItemClick()
     {
 
-    }
-    #endregion
-
-    #region private
-    private ComponentSchema CreatComponent(string key)
-    {
-        var c = Component.Childrens.FirstOrDefault(t =>
-            {
-                if (t.ComponentProperty.ExtensionData.ContainsKey(key))
-                    return true;
-                return false;
-            });
-        if (c != null)
-            return c;
-
-        var component = _component.CopyNew();
-        component.IsContainerComponent = true;
-        component.ComponentProperty.ExtensionData.Add(key, key);
-        component.ParentId = Component.Id;
-
-        Component.Childrens.Add(component);
-
-        return component;
     }
     #endregion
 }

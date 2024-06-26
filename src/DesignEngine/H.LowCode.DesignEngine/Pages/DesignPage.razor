@@ -1,12 +1,8 @@
 ﻿@page "/designer/{AppId}/{PageId}"
 
-@using System.Net.Http.Json
-@using System.Net
-@using System.Text.Json.Serialization
-@using H.Extensions.System
-
 @layout DesignEngineLayout
 @inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
 @inject DragDropStateService DragDropStateService
 
 <link href="_content/H.LowCode.DesignEngine/designengine.css" rel="stylesheet" />
@@ -33,17 +29,8 @@
         </Sider>
         <Layout>
             <Content Class="designpage">
-                <DesignPanel></DesignPanel>
+                <DesignPanel @ref="_designPanel"></DesignPanel>
             </Content>
-            @if ("form".Equals(PageType, StringComparison.OrdinalIgnoreCase))
-            {
-                <Footer Style="padding:10px 20px;">
-                    <div style="float:left;">
-                        <Button Type="primary">提交</Button>
-                        <Button>取消</Button>
-                    </div>
-                </Footer>
-            }
         </Layout>
         <Sider Class="designpage" Style="flex: auto; max-width: max-content; min-width: 250px;" Theme="SiderTheme.Light">
             <SettingPanel></SettingPanel>
@@ -57,60 +44,58 @@
     public string AppId { get; set; }
 
     [Parameter]
-    public string PageId { get; set; }
+    public string PageId { get; set; } = "newpage";
 
-    [Parameter]
-    [SupplyParameterFromQuery(Name = "p")]
-    public string PageType { get; set; }
+    private DesignPanel _designPanel;
+    private PageSchema _pageSchema;
 
     protected override void OnInitialized()
     {
         base.OnInitialized();
 
+        HttpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+
         LoadPageSchema();
-    }
-
-    private async void SaveMetaSchema()
-    {
-        PageSchema pageSchema = GetPageSchema();
-        string jsonSchema = pageSchema.ToJson();
-
-        //PostAsync
-        var parameters = new List<KeyValuePair<string, string>>() 
-        {
-            new KeyValuePair<string, string>("appId", AppId),
-            new KeyValuePair<string, string>("pageId", PageId),
-            new KeyValuePair<string, string>("pageSchema", jsonSchema)
-        };
-        var httpContent = new FormUrlEncodedContent(parameters);
-        var result = await HttpClient.PostAsync("api/designengine/savepageschema", httpContent);
-
-        if (result.StatusCode == HttpStatusCode.OK)
-        {
-            var responseJson = await result.Content.ReadAsStringAsync();
-        }
     }
 
     private async void LoadPageSchema()
     {
-        if (string.IsNullOrEmpty(AppId) || string.IsNullOrEmpty(PageId))
+        if (string.Equals("newpage", PageId))
+        {
+            PageId = Guid.NewGuid().ToString();
             return;
+        }
 
-        var result = await HttpClient.GetAsync($"api/designengine/loadpageschema?appId={AppId}&pageId={PageId}");
+        _pageSchema = await HttpClient.GetFromJsonAsync<PageSchema>($"api/designengine/GetPageSchema?appId={AppId}&pageId={PageId}");
+
+        if (_designPanel != null)
+            _designPanel.Reload(_pageSchema);
+    }
+
+    private async void SaveMetaSchema()
+    {
+        PageSchema pageSchema = CreatePageSchema();
+        string jsonSchema = pageSchema.ToJson();
+
+        var content = new StringContent(jsonSchema, Encoding.UTF8, "application/json");
+        var result = await HttpClient.PostAsync($"api/designengine/savepageschema", content);
 
         if (result.StatusCode == HttpStatusCode.OK)
         {
             var responseJson = await result.Content.ReadAsStringAsync();
-
         }
     }
 
-    private PageSchema GetPageSchema()
+    private PageSchema CreatePageSchema()
     {
-        PageSchema pageSchema = new PageSchema();
-        pageSchema.Components = DragDropStateService.RootComponent.Childrens;
-        pageSchema.PageProperty = DragDropStateService.GlobalPageProperty;
-        pageSchema.DataSource = new DataSourceSchema() { DataSourceType = DataSourceType.API };
-        return pageSchema;
+        if (_pageSchema == null)
+            _pageSchema = new PageSchema();
+
+        _pageSchema.AppId = AppId;
+        _pageSchema.PageId = PageId;
+        _pageSchema.Components = DragDropStateService.RootComponent.Childrens;
+        _pageSchema.PageProperty = DragDropStateService.GlobalPageProperty;
+        _pageSchema.DataSource = new DataSourceSchema() { DataSourceType = DataSourceType.API };
+        return _pageSchema;
     }
 }

@@ -1,4 +1,6 @@
-﻿<Card Title="@Component.ComponentProperty.Title" Style="width:100%; height:auto">
+﻿@inherits DesignEngineComponentBase
+
+<Card Title="@Component.ComponentProperty.Title" Style="width:100%; height:auto">
     <Extra>
         <a>More</a>
     </Extra>
@@ -8,31 +10,10 @@
 </Card>
 
 @code {
-    [Parameter]
-    public ComponentSchema Component { get; set; }
-
-    /// <summary>
-    /// 保存初始的 Component，避免跟随 Component 变化
-    /// </summary>
-    private ComponentSchema _component;
-
-    #region Init
-    protected override void OnInitialized()
-    {
-        Init();
-
-        base.OnInitialized();
-    }
-
+    #region override
     protected override bool ShouldRender()
     {
         return false;
-    }
-
-    private void Init()
-    {
-        if (_component == null)
-            _component = Component.CopyNew();
     }
     #endregion
 
@@ -40,29 +21,6 @@
     private void OnTabChange()
     {
 
-    }
-    #endregion
-
-    #region
-    private ComponentSchema CreatComponent(string key)
-    {
-        var c = Component.Childrens.FirstOrDefault(t =>
-            {
-                if (t.ComponentProperty.ExtensionData.ContainsKey(key))
-                    return true;
-                return false;
-            });
-        if (c != null)
-            return c;
-
-        var component = _component.CopyNew();
-        component.IsContainerComponent = true;
-        component.ComponentProperty.ExtensionData.Add(key, key);
-        component.ParentId = Component.Id;
-
-        Component.Childrens.Add(component);
-
-        return component;
     }
     #endregion
 }

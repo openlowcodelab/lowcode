@@ -1,14 +1,15 @@
 ﻿export function initLakexEditor(lakexId) {
-    //const reactJs = "_content/H.LowCode.DesignEngine.ExtensionComponents/react-18/react.production.min.js";
-    //const reactDomJs = "_content/H.LowCode.DesignEngine.ExtensionComponents/react-18/react-dom.production.min.js";
-    //const lakexJs = "_content/H.LowCode.DesignEngine.ExtensionComponents/LakexEditor-1.24.0/doc.umd.js";
+    const reactJs = "_content/H.LowCode.DesignEngine.ExtensionComponents/react-18/react.production.min.js";
+    const reactDomJs = "_content/H.LowCode.DesignEngine.ExtensionComponents/react-18/react-dom.production.min.js";
+    const lakexJs = "_content/H.LowCode.DesignEngine.ExtensionComponents/LakexEditor-1.24.0/doc.umd.js";
 
-    //使用 JSRuntime.InvokeAsync 代替，此种方式亦有效
-    //loadScript(reactJs);
-    //loadScript(reactDomJs);
-    //loadScript(lakexJs, function () {
-        initEditor(lakexId);
-    //});
+    loadScript(reactJs, function () {
+        loadScript(reactDomJs, function () {
+            loadScript(lakexJs, function () {
+                initEditor(lakexId);
+            });
+        });
+    });
 }
 
 function initEditor(lakexId) {

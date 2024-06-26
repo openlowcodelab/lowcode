@@ -1,4 +1,5 @@
 ﻿using H.LowCode.DesignEngine.Abstraction;
+using H.LowCode.DesignEngine.DefaultComponents.Components;
 using H.LowCode.DesignEngine.ExtensionComponents.Components;
 using H.LowCode.MetaSchema;
 
@@ -14,12 +15,11 @@ namespace H.LowCode.DesignEngine.ExtensionComponents.ComponentProviders
             [
                 new("lakexeditor"){
                     IsHiddenTitle = true,
-                    RenderFragment = (component) =>  (builder) =>
-                    {
-                        builder.OpenComponent(0, typeof(LakexEditor));
-                        builder.AddComponentParameter(1, "Component", component);
-                        builder.CloseComponent();
-                    },
+                    ComponentFragments =
+                    [
+                        new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(LakexEditor).GetFullNameWithAssemblyName() },
+                        new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Component", ValueType = ComponentValueType.String, StringValue = "{Self}" }
+                    ],
                     ComponentProperty = new()
                     {
                         Title = "LakexEditor",
@@ -33,12 +33,11 @@ namespace H.LowCode.DesignEngine.ExtensionComponents.ComponentProviders
                 },
                 new("monacoeditor"){
                     IsHiddenTitle = true,
-                    RenderFragment = (component) =>  (builder) =>
-                    {
-                        builder.OpenComponent(0, typeof(MonacoEditor));
-                        builder.AddComponentParameter(1, "Component", component);
-                        builder.CloseComponent();
-                    },
+                    ComponentFragments =
+                    [
+                        new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(MonacoEditor).GetFullNameWithAssemblyName() },
+                        new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Component", ValueType = ComponentValueType.String, StringValue = "{Self}" }
+                    ],
                     ComponentProperty = new()
                     {
                         Title = "MonacoEditor",
@@ -50,43 +49,43 @@ namespace H.LowCode.DesignEngine.ExtensionComponents.ComponentProviders
                         ItemHeight = 150,
                         DefaultStyle = "height: 100%"
                     }
-                }
-                //new(component"userselect"){
-                //    RenderFragment = (component) =>  (builder) => {
-                //        builder.OpenComponent(0, typeof(UserSelect));
-                //        builder.CloseComponent();
-                //    },
-                //    ComponentPropertySchema = new()
+                },
+                //new("userselect"){
+                //    ComponentFragments =
+                //    [
+                //        new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(UserSelect) }
+                //    ],
+                //    ComponentProperty = new()
                 //    {
                 //        Title = "用户选择"
                 //    }
                 //},
-                //new(component"region"){
-                //    RenderFragment = (component) =>  (builder) => {
-                //        builder.OpenComponent(0, typeof(Region));
-                //        builder.CloseComponent();
-                //    },
-                //    ComponentPropertySchema = new()
+                //new("region"){
+                //    ComponentFragments =
+                //    [
+                //        new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(Region) }
+                //    ],
+                //    ComponentProperty = new()
                 //    {
                 //        Title = "行政区划"
                 //    }
                 //},
-                //new(component"gaodemap"){
-                //    RenderFragment = (component) =>  (builder) => {
-                //        builder.OpenComponent(0, typeof(GaodeMap));
-                //        builder.CloseComponent();
-                //    },
-                //    ComponentPropertySchema = new()
+                //new("gaodemap"){
+                //    ComponentFragments =
+                //    [
+                //        new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(GaodeMap) }
+                //    ],
+                //    ComponentProperty = new()
                 //    {
                 //        Title = "高德地图"
                 //    }
                 //},
-                //new(component"baidumap"){
-                //    RenderFragment = (component) =>  (builder) => {
-                //        builder.OpenComponent(0, typeof(BaiduMap));
-                //        builder.CloseComponent();
-                //    },
-                //    ComponentPropertySchema = new()
+                //new("baidumap"){
+                //    ComponentFragments =
+                //    [
+                //        new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(BaiduMap) }
+                //    ],
+                //    ComponentProperty = new()
                 //    {
                 //        Title = "百度地图"
                 //    }

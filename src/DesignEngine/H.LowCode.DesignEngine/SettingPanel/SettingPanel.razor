@@ -3,9 +3,12 @@
 <Tabs DefaultActiveKey="tab_page" @bind-ActiveKey="@_activeTabKey" Class="designpage" Style="width:250px; padding:0px 8px;">
     @if (_showPropertyPanel)
     {
-        <TabPane Key="tab_property" Tab="属性">
-            <PropertySetting Component="@_component"></PropertySetting>
-        </TabPane>
+        @if (_component.IsContainerComponent == false)
+        {
+            <TabPane Key="tab_property" Tab="属性">
+                <PropertySetting Component="@_component"></PropertySetting>
+            </TabPane>
+        }
         <TabPane Key="tab_style" Tab="样式">
             <StyleSetting Component="@_component"></StyleSetting>
         </TabPane>

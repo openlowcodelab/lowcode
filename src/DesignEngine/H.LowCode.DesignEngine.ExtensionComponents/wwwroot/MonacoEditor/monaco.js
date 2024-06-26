@@ -2,8 +2,10 @@
     const loaderUrl = "_content/H.LowCode.DesignEngine.ExtensionComponents/MonacoEditor/loader.min.js";
 
     loadScript(loaderUrl, function () {
-        //require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.30.1/min/vs' } });
-        require.config({ paths: { 'vs': '_content/H.LowCode.DesignEngine.ExtensionComponents/MonacoEditor' } });
+        //如果cdn加载速度较快的话,更推荐使用cdn
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.30.1/min/vs' } });
+        //require.config({ paths: { 'vs': '_content/H.LowCode.DesignEngine.ExtensionComponents/MonacoEditor' } });
+
         require(['vs/editor/editor.main'], function () {
             // 初始化编辑器
             var editor = monaco.editor.create(document.getElementById(containerId), {

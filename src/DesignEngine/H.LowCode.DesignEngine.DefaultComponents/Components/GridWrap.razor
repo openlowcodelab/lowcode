@@ -1,4 +1,6 @@
-﻿<div style="height: auto;">
+﻿@inherits DesignEngineComponentBase
+
+<div style="height: auto;">
     @for (int r = 0; r < Rows; r++)
     {
         int rr = r;
@@ -16,53 +18,8 @@
 
 @code {
     [Parameter]
-    public ComponentSchema Component{ get; set; }
-
-    [Parameter]
     public int Rows { get; set; }
 
     [Parameter]
     public int Cols { get; set; }
-
-    /// <summary>
-    /// 保存初始的 Component，避免跟随 Component 变化
-    /// </summary>
-    private ComponentSchema _component;
-
-    #region Init
-    protected override void OnInitialized()
-    {
-        Init();
-
-        base.OnInitialized();
-    }
-
-    private void Init()
-    {
-        if (_component == null)
-            _component = Component.CopyNew();
-    }
-    #endregion
-
-    private ComponentSchema CreatComponent(string key)
-    {
-        if (Component.Childrens.Count >= (Rows * Cols))
-        {
-            return Component.Childrens.FirstOrDefault(t =>
-            {
-                if (t.ComponentProperty.ExtensionData.ContainsKey(key))
-                    return true;
-                return false;
-            });
-        }
-
-        var component = _component.CopyNew();
-        component.IsContainerComponent = true;
-        component.ComponentProperty.ExtensionData.Add(key, key);
-        component.ParentId = Component.Id;
-
-        Component.Childrens.Add(component);
-
-        return component;
-    }
 }

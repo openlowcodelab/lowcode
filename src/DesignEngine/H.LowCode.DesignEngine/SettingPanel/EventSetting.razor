@@ -5,13 +5,13 @@
             <Dropdown Trigger="@(new Trigger[] { Trigger.Click })">
                 <Overlay>
                     <Menu>
-                        <MenuItem OnClick="AddStandardEvent">
+                        <MenuItem OnClick="AddEvent">
                             OnClick
                         </MenuItem>
-                        <MenuItem OnClick="AddStandardEvent">
+                        <MenuItem OnClick="AddEvent">
                             OnFocus
                         </MenuItem>
-                        <MenuItem OnClick="AddStandardEvent">
+                        <MenuItem OnClick="AddEvent">
                             OnBlur
                         </MenuItem>
                         <MenuItem OnClick="AddCustomEvent">
@@ -54,8 +54,9 @@
     private bool _visible;
     private string _selectedValue;
 
-    private void AddStandardEvent()
+    private void AddEvent()
     {
+        Console.WriteLine($"eventsetting-modal-visible:{_visible}");
         _visible = true;
     }
 

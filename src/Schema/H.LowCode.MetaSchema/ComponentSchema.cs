@@ -1,5 +1,4 @@
 ﻿using H.Extensions.System;
-using Microsoft.AspNetCore.Components;
 using System.Text.Json.Serialization;
 
 namespace H.LowCode.MetaSchema
@@ -54,6 +53,11 @@ namespace H.LowCode.MetaSchema
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public IList<ComponentSchema> Childrens { get; set; } = [];
 
+        /// <summary>
+        /// 单个组件的元素集合信息
+        /// </summary>
+        public IList<ComponentFragmentSchema> ComponentFragments { get; set; }
+
         #region JsonIgnore Attributes
         [JsonIgnore]
         public bool IsSelected { get; set; }
@@ -77,9 +81,6 @@ namespace H.LowCode.MetaSchema
         public bool IsDropedAfter { get; set; }
 
         [JsonIgnore]
-        public RenderFragment<ComponentSchema> RenderFragment { get; set; }
-
-        [JsonIgnore]
         public Action Refresh { get; set; }
         #endregion
 
@@ -93,7 +94,6 @@ namespace H.LowCode.MetaSchema
             newComponent.IsSelected = false;
 
             //手动赋值无法序列化属性
-            newComponent.RenderFragment = RenderFragment;
             newComponent.Refresh = Refresh;
 
             //1.子节点 ParentId 重新赋值; 2.重新赋值序列化过程中丢失的 RenderFragment、Refresh 值
@@ -122,7 +122,6 @@ namespace H.LowCode.MetaSchema
                 child.Id = Guid.NewGuid();
                 child.ParentId = newComponent.Id;
 
-                child.RenderFragment = oldComponent.Childrens[i].RenderFragment;
                 child.Refresh = oldComponent.Childrens[i].Refresh;
 
                 CopyNewRecursive(child, oldComponent.Childrens[i]);

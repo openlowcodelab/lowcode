@@ -49,12 +49,12 @@
 
     private async Task LoadJSModule()
     {
-        await JSRuntime.InvokeAsync<IJSObjectReference>("import",
-           "./_content/H.LowCode.DesignEngine.ExtensionComponents/react-18/react.production.min.js");
-        await JSRuntime.InvokeAsync<IJSObjectReference>("import",
-           "./_content/H.LowCode.DesignEngine.ExtensionComponents/react-18/react-dom.production.min.js");
-        await JSRuntime.InvokeAsync<IJSObjectReference>("import",
-           "./_content/H.LowCode.DesignEngine.ExtensionComponents/LakexEditor-1.24.0/doc.umd.js");
+        // await JSRuntime.InvokeAsync<IJSObjectReference>("import",
+        //    "./_content/H.LowCode.DesignEngine.ExtensionComponents/react-18/react.production.min.js");
+        // await JSRuntime.InvokeAsync<IJSObjectReference>("import",
+        //    "./_content/H.LowCode.DesignEngine.ExtensionComponents/react-18/react-dom.production.min.js");
+        // await JSRuntime.InvokeAsync<IJSObjectReference>("import",
+        //    "./_content/H.LowCode.DesignEngine.ExtensionComponents/LakexEditor-1.24.0/doc.umd.js");
 
         moduleTask = new(() => JSRuntime.InvokeAsync<IJSObjectReference>("import",
                 "./_content/H.LowCode.DesignEngine.ExtensionComponents/LakexEditor-1.24.0/LakexEditor.js").AsTask());

@@ -7,9 +7,9 @@
 @code {
     protected override void OnInitialized()
     {
-        Init();
-
         base.OnInitialized();
+
+        Init();
     }
 
     private void Init()
@@ -20,5 +20,12 @@
             component.Refresh = StateHasChanged;
             DragDropStateService.RootComponent = component;
         }
+    }
+
+    public void Reload(PageSchema pageSchema)
+    {
+        if (pageSchema != null)
+            DragDropStateService.RootComponent.Childrens = pageSchema.Components;
+        StateHasChanged();
     }
 }
