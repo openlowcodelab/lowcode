@@ -25,7 +25,6 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                     }
                 },
                 new("treeselect"){
-                    IsHiddenTitle = true,
                     ComponentFragments =
                     [
                         new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(TreeSelect<string, string>).GetFullNameWithAssemblyName() }

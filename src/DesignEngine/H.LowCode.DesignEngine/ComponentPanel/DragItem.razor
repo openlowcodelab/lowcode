@@ -6,6 +6,12 @@
 
 @code
 {
+    [CascadingParameter(Name = "appId")]
+    public string AppId { get; set; }
+
+    [CascadingParameter(Name = "pageId")]
+    public string PageId { get; set; }
+
     [Parameter]
     public ComponentSchema Component { get; set; }
 
@@ -37,7 +43,7 @@
         else
         {
             //设置当前拖拽项
-            DragDropStateService.CurrentDragComponent = component;
+            DragDropStateService.SetCurrentDragComponent(AppId, PageId, component);
         }
     }
 }

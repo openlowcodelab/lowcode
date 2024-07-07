@@ -10,16 +10,16 @@ namespace H.LowCode.MetaSchema
         [JsonPropertyName("id")]
         public string PageId { get; set; }
 
-        [JsonPropertyName("c")]
+        [JsonPropertyName("comps")]
         public IList<ComponentSchema> Components { get; set; }
 
-        [JsonPropertyName("p")]
+        [JsonPropertyName("pageprop")]
         public PagePropertySchema PageProperty { get; set; }
 
-        [JsonPropertyName("d")]
+        [JsonPropertyName("ds")]
         public DataSourceSchema DataSource { get; set; }
 
-        [JsonPropertyName("i")]
+        [JsonPropertyName("i18n")]
         public I18n I18n { get; set; }
     }
 

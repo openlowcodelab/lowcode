@@ -13,6 +13,12 @@
 
 @code {
     #region Parameter
+    [CascadingParameter(Name = "appId")]
+    public string AppId { get; set; }
+
+    [CascadingParameter(Name = "pageId")]
+    public string PageId { get; set; }
+
     [Parameter]
     public ComponentSchema ContainerComponent { get; set; }
 
@@ -43,7 +49,7 @@
     private void RegisterEventDispatcher()
     {
         //根容器订阅组件面板点击事件 - 向根容器添加组件
-        if (ReferenceEquals(ContainerComponent, DragDropStateService.RootComponent))
+        if (ReferenceEquals(ContainerComponent, DragDropStateService.GetRootComponent(AppId, PageId)))
         {
             //订阅左侧组件面板中的组件点击事件
             BlazorEventDispatcher.RegisterEvent("designengine.dragitem.onclick", (value) =>
@@ -57,17 +63,17 @@
     #region Event
     private void OnDrop()
     {
-        DragDropHandler(DragDropStateService.CurrentDragComponent);
+        DragDropHandler(DragDropStateService.GetCurrentDragComponent(AppId, PageId));
 
         //重置拖拽样式
-        DragDropStateService.ResetDragStyle();
+        DragDropStateService.ResetDragStyle(AppId, PageId);
     }
 
     private void OnClick()
     {
-        if (ReferenceEquals(ContainerComponent, DragDropStateService.RootComponent))
+        if (ReferenceEquals(ContainerComponent, DragDropStateService.GetRootComponent(AppId, PageId)))
         {
-            DragDropStateService.ResetDragStyle();
+            DragDropStateService.ResetDragStyle(AppId, PageId);
         }
 
         BlazorEventDispatcher.Trigger("designengine.dropitem.onblur", null);
@@ -76,16 +82,16 @@
     private void OnItemClick(ComponentSchema component)
     {
         //取消上一个选中，设置当前选中项
-        if (DragDropStateService.LastSelectedComponent != null)
+        if (DragDropStateService.GetLastSelectedComponent(AppId, PageId) != null)
         {
-            DragDropStateService.LastSelectedComponent.IsSelected = false;
-            DragDropStateService.LastSelectedComponent.RefreshState();
+            DragDropStateService.GetLastSelectedComponent(AppId, PageId).IsSelected = false;
+            DragDropStateService.GetLastSelectedComponent(AppId, PageId).RefreshState();
         }
 
         component.IsSelected = true;
         StateHasChanged();
 
-        DragDropStateService.LastSelectedComponent = component;
+        DragDropStateService.SetLastSelectedComponent(AppId, PageId, component);
     }
 
     private void OnItemDelete(ComponentSchema component)
@@ -112,7 +118,7 @@
         // 组件来源于 ComponentPanel，新增
         if (currentDragComponent.IsDroppedFromComponentPanel)
         {
-            DragItem_Add(ContainerComponent, currentDragComponent, DragDropStateService.LastDragOverComponent);
+            DragItem_Add(ContainerComponent, currentDragComponent, DragDropStateService.GetLastDragOverComponent(AppId, PageId));
         }
         else  // 组件在 DesignPanel 内部拖拽
         {
@@ -120,18 +126,18 @@
             Console.WriteLine($"isSameContainer: {isSameContainer}");
             if (isSameContainer)     //同一个 DropItemContainer 内拖拽，排序
             {
-                DropItem_Sorting(ContainerComponent, currentDragComponent, DragDropStateService.LastDragOverComponent);
+                DropItem_Sorting(ContainerComponent, currentDragComponent, DragDropStateService.GetLastDragOverComponent(AppId, PageId));
             }
             else   //跨 DropItemContainer 拖拽
             {
-                DragItem_Move(ContainerComponent, currentDragComponent, DragDropStateService.LastDragOverComponent);
+                DragItem_Move(ContainerComponent, currentDragComponent, DragDropStateService.GetLastDragOverComponent(AppId, PageId));
             }
         }
 
         StateHasChanged();
 
         //拖拽释放后将 LastDragOverComponent 置空（避免下一次(如空白区或Copy按钮)拖拽无放置区时，读取到了上次的放置区）
-        DragDropStateService.LastDragOverComponent = null;
+        DragDropStateService.SetLastDragOverComponent(AppId, PageId, null);
     }
 
     /// <summary>
@@ -146,13 +152,13 @@
         currentDragComponent.IsDroppedFromComponentPanel = false;
 
         //容器内组件宽度始终100%填充 (除根容器外)
-        if (ReferenceEquals(ContainerComponent, DragDropStateService.RootComponent) == false)
+        if (ReferenceEquals(ContainerComponent, DragDropStateService.GetRootComponent(AppId, PageId)) == false)
             currentDragComponent.ComponentStyle.ItemWidth = 24;
 
         if (isSelected)
         {
             currentDragComponent.IsSelected = isSelected;
-            DragDropStateService.LastSelectedComponent = currentDragComponent;
+            DragDropStateService.SetLastSelectedComponent(AppId, PageId, currentDragComponent);
         }
         currentDragComponent.Refresh = StateHasChanged;
 
@@ -179,7 +185,7 @@
     private void DragItem_Move(ComponentSchema newContainerComponent, ComponentSchema currentDragComponent, ComponentSchema dragOverComponent)
     {
         //上一个 DropItemContainer 移除
-        var oldContainerComponent = DragDropStateService.FindComponentById(currentDragComponent.ParentId);
+        var oldContainerComponent = DragDropStateService.FindComponentById(AppId, PageId, currentDragComponent.ParentId);
         oldContainerComponent.Childrens.Remove(currentDragComponent);
         oldContainerComponent.RefreshState();  //刷新上一个 DropItemContainer，使 Remove 立即生效
 
@@ -199,7 +205,7 @@
         if (dragOverComponent == null)
             return;
 
-        if (currentDragComponent == DragDropStateService.LastDragOverComponent)
+        if (currentDragComponent == DragDropStateService.GetLastDragOverComponent(AppId, PageId))
             return;
 
         if (dragOverComponent.IsDropedAfter)
@@ -230,14 +236,14 @@
         {
             int next = index + 1 >= containerComponent.Childrens.Count ? index - 1 : index + 1;
             containerComponent.Childrens[next].IsSelected = true;
-            DragDropStateService.LastSelectedComponent = containerComponent.Childrens[next];
+            DragDropStateService.SetLastSelectedComponent(AppId, PageId, containerComponent.Childrens[next]);
         }
         containerComponent.Childrens.Remove(component);
     }
 
     public void Dispose()
     {
-        DragDropStateService.ResetComponent();
+        DragDropStateService.ResetComponent(AppId, PageId);
     }
     #endregion
 }

@@ -7,14 +7,11 @@ namespace H.LowCode.MetaSchema
         [JsonPropertyName("id")]
         public string AppId { get; set; }
 
-        [JsonPropertyName("v")]
+        [JsonPropertyName("ver")]
         public string Version { get; set; }
 
-        [JsonPropertyName("p")]
+        [JsonPropertyName("pages")]
         public IList<PageSchema> Pages { get; set; }
-
-        [JsonPropertyName("ds")]
-        public IList<DataSourceSchema> DataSources { get; set; }
 
         [JsonPropertyName("state")]
         public PublishStateEnum PublishState { get; set; }

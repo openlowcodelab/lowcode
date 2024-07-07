@@ -15,8 +15,10 @@ namespace H.LowCode.MetaSchema
         /// <summary>
         /// 组件名称
         /// </summary>
+        [JsonPropertyName("name")]
         public string ComponentName { get; }
 
+        [JsonPropertyName("iscontainer")]
         public bool IsContainerComponent { get; set; }
 
         [JsonPropertyName("pid")]
@@ -25,37 +27,38 @@ namespace H.LowCode.MetaSchema
         /// <summary>
         /// 是否隐藏标题
         /// </summary>
-        [JsonPropertyName("t")]
+        [JsonPropertyName("hide")]
         public bool IsHiddenTitle { get; set; }
 
         /// <summary>
         /// 组件属性
         /// </summary>
-        [JsonPropertyName("p")]
+        [JsonPropertyName("compprop")]
         public ComponentPropertySchema ComponentProperty { get; set; }
 
         /// <summary>
         /// 组件样式
         /// </summary>
-        [JsonPropertyName("s")]
+        [JsonPropertyName("style")]
         public ComponentStyleSchema ComponentStyle { get; set; } = new();
 
         /// <summary>
         /// 
         /// </summary>
-        [JsonPropertyName("e")]
+        [JsonPropertyName("event")]
         public ComponentEventSchema ComponentEvent { get; set; } = new();
 
         /// <summary>
         /// 
         /// </summary>
-        [JsonPropertyName("c")]
+        [JsonPropertyName("childs")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public IList<ComponentSchema> Childrens { get; set; } = [];
 
         /// <summary>
-        /// 单个组件的元素集合信息
+        /// 组件渲染片段
         /// </summary>
+        [JsonPropertyName("fragment")]
         public IList<ComponentFragmentSchema> ComponentFragments { get; set; }
 
         #region JsonIgnore Attributes

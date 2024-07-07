@@ -44,6 +44,12 @@
 </div>
 
 @code {
+    [CascadingParameter(Name = "appId")]
+    public string AppId { get; set; }
+
+    [CascadingParameter(Name = "pageId")]
+    public string PageId { get; set; }
+
     [Parameter]
     public ComponentSchema Component { get; set; }
 
@@ -152,20 +158,20 @@
         Component.Opacity = 0.2;
 
         //记录当前选中对象
-        DragDropStateService.CurrentDragComponent = Component;
+        DragDropStateService.SetCurrentDragComponent(AppId, PageId, Component);
     }
-
+    
     private void OnDragEnter(DragEventArgs dragEventArgs)
     {
-        DragDropStateService.LastDragOverComponent = Component;
+        DragDropStateService.SetLastDragOverComponent(AppId, PageId, Component);
     }
 
     private void OnDragOver(DragEventArgs dragEventArgs)
     {
-        if (ReferenceEquals(DragDropStateService.CurrentDragComponent, Component))
+        if (ReferenceEquals(DragDropStateService.GetCurrentDragComponent(AppId, PageId), Component))
             return;
 
-        if (DateTime.Now < DragDropStateService.LastDragOverTime.AddMilliseconds(100))
+        if (DateTime.Now < DragDropStateService.GetLastDragOverTime(AppId, PageId).AddMilliseconds(100))
             return;
 
         //设置移动位置样式，拖拽到目标元素上半部分时，上方添加虚线边框，下半部分时下方添加虚线边框
@@ -180,13 +186,13 @@
             Component.DragEffectStyle = "border-bottom: 2px dashed #1890ff; height: auto;";
             Component.IsDropedAfter = true;
         }
-        DragDropStateService.LastDragOverTime = DateTime.Now;
+        DragDropStateService.SetLastDragOverTime(AppId, PageId, DateTime.Now);
     }
 
     private void OnDragLeave()
     {
         //如果当前被拖拽的组件和拖拽到上面的组件是同一个，直接返回
-        if (ReferenceEquals(DragDropStateService.CurrentDragComponent, Component))
+        if (ReferenceEquals(DragDropStateService.GetCurrentDragComponent(AppId, PageId), Component))
             return;
 
         Console.WriteLine("OnDragLeave");

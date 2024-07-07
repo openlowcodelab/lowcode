@@ -7,36 +7,40 @@
 
 <link href="_content/H.LowCode.DesignEngine/designengine.css" rel="stylesheet" />
 
-<AntDesign.Layout Class="designpage" Style="padding:5px 2px 10px; background-color: #f7f7f7;">
-    <Header Style="background-color: white; padding:0 20px;">
-        <div style="float:left;">
-            <a href="javascript:void(0)"> @("<") 返回 </a>
-        </div>
-        @*<div style="text-align:center;">
-            <Menu Theme="MenuTheme.Light" Mode="MenuMode.Horizontal" DefaultSelectedKeys=@(new[]{"2"})>
+<CascadingValue Value="AppId" Name="appId">
+    <CascadingValue Value="PageId" Name="pageId">
+        <AntDesign.Layout Class="designpage" Style="padding:5px 2px 10px; background-color: #f7f7f7;">
+            <Header Style="background-color: white; padding:0 20px;">
+                <div style="float:left;">
+                    <a href="javascript:void(0)"> @("<") 返回 </a>
+                </div>
+                @*<div style="text-align:center;">
+                <Menu Theme="MenuTheme.Light" Mode="MenuMode.Horizontal" DefaultSelectedKeys=@(new[]{"2"})>
                 <MenuItem Key="1">PC</MenuItem>
                 <MenuItem Key="2">Mobile</MenuItem>
-            </Menu>
-        </div>*@
-        <div style="float:right;">
-            <Button>预览</Button>
-            <Button Type="primary" OnClick="() => SaveMetaSchema()">保存</Button>
-        </div>
-    </Header>
-    <AntDesign.Layout>
-        <Sider Style="flex: auto; max-width: max-content; min-width: 200px;" Theme="SiderTheme.Light">
-            <ComponentPanel></ComponentPanel>
-        </Sider>
-        <Layout>
-            <Content Class="designpage">
-                <DesignPanel @ref="_designPanel"></DesignPanel>
-            </Content>
-        </Layout>
-        <Sider Class="designpage" Style="flex: auto; max-width: max-content; min-width: 250px;" Theme="SiderTheme.Light">
-            <SettingPanel></SettingPanel>
-        </Sider>
-    </AntDesign.Layout>
-</AntDesign.Layout>
+                </Menu>
+                </div>*@
+                <div style="float:right;">
+                    <Button>预览</Button>
+                    <Button Type="primary" OnClick="() => SaveMetaSchema()">保存</Button>
+                </div>
+            </Header>
+            <AntDesign.Layout>
+                <Sider Style="flex: auto; max-width: max-content; min-width: 200px;" Theme="SiderTheme.Light">
+                    <ComponentPanel></ComponentPanel>
+                </Sider>
+                <Layout>
+                    <Content Class="designpage">
+                        <DesignPanel @ref="_designPanel"></DesignPanel>
+                    </Content>
+                </Layout>
+                <Sider Class="designpage" Style="flex: auto; max-width: max-content; min-width: 250px;" Theme="SiderTheme.Light">
+                    <SettingPanel></SettingPanel>
+                </Sider>
+            </AntDesign.Layout>
+        </AntDesign.Layout>
+    </CascadingValue>
+</CascadingValue>
 
 @code
 {
@@ -93,9 +97,9 @@
 
         _pageSchema.AppId = AppId;
         _pageSchema.PageId = PageId;
-        _pageSchema.Components = DragDropStateService.RootComponent.Childrens;
-        _pageSchema.PageProperty = DragDropStateService.GlobalPageProperty;
-        _pageSchema.DataSource = new DataSourceSchema() { DataSourceType = DataSourceType.API };
+        _pageSchema.Components = DragDropStateService.GetRootComponent(AppId, PageId).Childrens;
+        _pageSchema.PageProperty = DragDropStateService.GetGlobalPageProperty(AppId, PageId);
+        _pageSchema.DataSource = new DataSourceSchema() { DataSourceType = DataSourceType.Default };
         return _pageSchema;
     }
 }

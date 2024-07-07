@@ -1,10 +1,16 @@
 ﻿@inject DragDropStateService DragDropStateService
 
 <div class="designpage" style="margin:5px; height:100%; height:100%; overflow-y: auto;">
-    <DropItemContainer ContainerComponent="@DragDropStateService.RootComponent"></DropItemContainer>
+    <DropItemContainer ContainerComponent="@DragDropStateService.GetRootComponent(AppId, PageId)"></DropItemContainer>
 </div>
 
 @code {
+    [CascadingParameter(Name = "appId")]
+    public string AppId { get; set; }
+
+    [CascadingParameter(Name = "pageId")]
+    public string PageId { get; set; }
+
     protected override void OnInitialized()
     {
         base.OnInitialized();
@@ -14,18 +20,18 @@
 
     private void Init()
     {
-        if (DragDropStateService.RootComponent == null)
+        if (DragDropStateService.GetRootComponent(AppId, PageId) == null)
         {
             var component = new ComponentSchema("root");
             component.Refresh = StateHasChanged;
-            DragDropStateService.RootComponent = component;
+            DragDropStateService.SetRootComponent(AppId, PageId, component);
         }
     }
 
     public void Reload(PageSchema pageSchema)
     {
-        if (pageSchema != null)
-            DragDropStateService.RootComponent.Childrens = pageSchema.Components;
+        if (pageSchema != null && DragDropStateService.GetRootComponent(AppId, PageId) != null)
+            DragDropStateService.GetRootComponent(AppId, PageId).Childrens = pageSchema.Components;
         StateHasChanged();
     }
 }

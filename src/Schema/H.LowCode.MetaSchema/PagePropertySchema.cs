@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.Json.Serialization;
 
 namespace H.LowCode.MetaSchema
 {
@@ -7,11 +8,13 @@ namespace H.LowCode.MetaSchema
         /// <summary>
         /// 页面布局（1:一列、2:二列、3:三列、4:四列）
         /// </summary>
+        [JsonPropertyName("playout")]
         public int PageLayout { get; set; } = 2;
 
         /// <summary>
         /// 标题宽度
         /// </summary>
+        [JsonPropertyName("titlew")]
         public string TitleWidth { get; set; }
     }
 }
