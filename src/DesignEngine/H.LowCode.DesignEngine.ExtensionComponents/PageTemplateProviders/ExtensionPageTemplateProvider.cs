@@ -15,6 +15,7 @@ namespace H.LowCode.DesignEngine.ExtensionComponents.ComponentProviders
             [
                 new("formtemplate"){
                     IsHiddenTitle = true,
+                    IsContainerComponent = true,
                     ComponentFragments =
                     [
                         new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(FormTemplate).GetFullNameWithAssemblyName() },
@@ -33,6 +34,7 @@ namespace H.LowCode.DesignEngine.ExtensionComponents.ComponentProviders
                 },
                 new("groupformtemplate"){
                     IsHiddenTitle = true,
+                    IsContainerComponent = true,
                     ComponentFragments =
                     [
                         new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(GroupFormTemplate).GetFullNameWithAssemblyName() },

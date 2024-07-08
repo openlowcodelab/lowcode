@@ -13,7 +13,6 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
             List<ComponentSchema> components =
             [
                 new("grid"){
-                    IsHiddenTitle = true,
                     IsContainerComponent = true,
                     ComponentFragments =
                     [
@@ -33,7 +32,6 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                     }
                 },
                 new("layout"){
-                    IsHiddenTitle = true,
                     IsContainerComponent = true,
                     ComponentFragments =
                     [
@@ -52,7 +50,6 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                     }
                 },
                 new("flex"){
-                    IsHiddenTitle = true,
                     IsContainerComponent = true,
                     ComponentFragments =
                     [

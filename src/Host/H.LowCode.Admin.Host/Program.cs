@@ -13,6 +13,8 @@ builder.Services.AddRazorComponents()
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddHttpClient();
+
 #region  LowCode
 builder.Services.AddLowCode();
 builder.Services.AddAdminHttpApi();

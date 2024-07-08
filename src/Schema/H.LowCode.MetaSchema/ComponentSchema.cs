@@ -10,31 +10,51 @@ namespace H.LowCode.MetaSchema
             ComponentName = componentName;
         }
 
+        #region 公共属性
+        [JsonPropertyName("id")]
         public Guid Id { get; set; } = Guid.NewGuid();
 
         /// <summary>
         /// 组件名称
         /// </summary>
-        [JsonPropertyName("name")]
+        [JsonPropertyName("n")]
         public string ComponentName { get; }
 
         [JsonPropertyName("iscontainer")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public bool IsContainerComponent { get; set; }
 
         [JsonPropertyName("pid")]
         public Guid ParentId { get; set; }
+        #endregion
 
+        #region 普通组件属性 (容器组件不需要)
         /// <summary>
         /// 是否隐藏标题
         /// </summary>
         [JsonPropertyName("hide")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public bool IsHiddenTitle { get; set; }
+
+        /// <summary>
+        /// 组件渲染片段
+        /// </summary>
+        [JsonPropertyName("fragment")]
+        public IList<ComponentFragmentSchema> ComponentFragments { get; set; }
 
         /// <summary>
         /// 组件属性
         /// </summary>
         [JsonPropertyName("compprop")]
         public ComponentPropertySchema ComponentProperty { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [JsonPropertyName("event")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public ComponentEventSchema ComponentEvent { get; set; } = new();
+        #endregion
 
         /// <summary>
         /// 组件样式
@@ -45,21 +65,9 @@ namespace H.LowCode.MetaSchema
         /// <summary>
         /// 
         /// </summary>
-        [JsonPropertyName("event")]
-        public ComponentEventSchema ComponentEvent { get; set; } = new();
-
-        /// <summary>
-        /// 
-        /// </summary>
         [JsonPropertyName("childs")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public IList<ComponentSchema> Childrens { get; set; } = [];
-
-        /// <summary>
-        /// 组件渲染片段
-        /// </summary>
-        [JsonPropertyName("fragment")]
-        public IList<ComponentFragmentSchema> ComponentFragments { get; set; }
 
         #region JsonIgnore Attributes
         [JsonIgnore]

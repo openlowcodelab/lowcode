@@ -1,6 +1,6 @@
 ﻿@page "/form/{PageId}/{DataId}"
 
-@inject HttpClient Http
+@inject IHttpClientFactory HttpClientFactory
 @inject IRender render
 
 @RenderFragment
@@ -32,7 +32,8 @@
     /// <returns></returns>
     private async Task RenderComponentAsync()
     {
-        var pageSchema = await Http.GetFromJsonAsync<PageSchema>($"jsonschema/form/{PageId}.json?_={DateTime.Now.Ticks}");
+        var httpClient = HttpClientFactory.CreateClient();
+        var pageSchema = await httpClient.GetFromJsonAsync<PageSchema>($"jsonschema/form/{PageId}.json?_={DateTime.Now.Ticks}");
 
         RenderFragment = render.Render(pageSchema, PageRenderType.Form);
     }
@@ -45,7 +46,8 @@
     {
         string serverUrl = "http://localhost:5005";
 
-        var formData = await Http.PostAsJsonAsync<PageSchema>($"{serverUrl}/GetFormData?id={DataId}", null);
+        var httpClient = HttpClientFactory.CreateClient();
+        var formData = await httpClient.PostAsJsonAsync<PageSchema>($"{serverUrl}/GetFormData?id={DataId}", null);
 
     }
 }

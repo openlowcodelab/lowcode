@@ -17,14 +17,23 @@
             <TabPane Key="tab_action" Tab="事件">
                 <EventSetting Component="@_component"></EventSetting>
             </TabPane>
+            <TabPane Key="tab_datasource" Tab="数据源">
+                <DataSourceSetting Component="@_component"></DataSourceSetting>
+            </TabPane>
         }
     }
     <TabPane Key="tab_page" Tab="页面">
-        <PageSetting PageProperty="@DragDropStateService.GlobalPageProperty"></PageSetting>
+        <PageSetting PageProperty="@DragDropStateService.GetGlobalPageProperty(AppId, PageId)"></PageSetting>
     </TabPane>
 </Tabs>
 
 @code {
+    [CascadingParameter(Name = "appId")]
+    public string AppId { get; set; }
+
+    [CascadingParameter(Name = "pageId")]
+    public string PageId { get; set; }
+
     private ComponentSchema _component { get; set; }
 
     private bool _showPropertyPanel { get; set; }

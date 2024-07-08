@@ -1,7 +1,7 @@
 ﻿@page "/designer/{AppId}/{PageId}"
 
 @layout DesignEngineLayout
-@inject HttpClient HttpClient
+@inject IHttpClientFactory HttpClientFactory
 @inject NavigationManager NavigationManager
 @inject DragDropStateService DragDropStateService
 
@@ -52,12 +52,11 @@
 
     private DesignPanel _designPanel;
     private PageSchema _pageSchema;
+    private bool _isNewPage;
 
     protected override void OnInitialized()
     {
         base.OnInitialized();
-
-        HttpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
 
         LoadPageSchema();
     }
@@ -66,11 +65,15 @@
     {
         if (string.Equals("newpage", PageId))
         {
+            _isNewPage = true;
             PageId = Guid.NewGuid().ToString();
             return;
         }
 
-        _pageSchema = await HttpClient.GetFromJsonAsync<PageSchema>($"api/designengine/GetPageSchema?appId={AppId}&pageId={PageId}");
+        var httpClient = HttpClientFactory.CreateClient();
+        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+
+        _pageSchema = await httpClient.GetFromJsonAsync<PageSchema>($"api/designengine/GetPageSchema?appId={AppId}&pageId={PageId}");
 
         if (_designPanel != null)
             _designPanel.Reload(_pageSchema);
@@ -82,11 +85,14 @@
         string jsonSchema = pageSchema.ToJson();
 
         var content = new StringContent(jsonSchema, Encoding.UTF8, "application/json");
-        var result = await HttpClient.PostAsync($"api/designengine/savepageschema", content);
 
-        if (result.StatusCode == HttpStatusCode.OK)
+        var httpClient = HttpClientFactory.CreateClient();
+        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+        var result = await httpClient.PostAsync($"api/designengine/savepageschema", content);
+
+        if (result.StatusCode == HttpStatusCode.OK && _isNewPage)
         {
-            var responseJson = await result.Content.ReadAsStringAsync();
+            NavigationManager.NavigateTo($"/designer/{AppId}/{PageId}");
         }
     }
 

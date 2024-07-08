@@ -4,7 +4,7 @@
         <label>组件宽度：</label>
         <Slider TValue="double" Value="@Component.ComponentStyle.ItemWidth" DefaultValue="12" Min="4" Max="24" OnChange="(value) => OnStyleChange()" />
     </div>
-    @if (Component.IsHiddenTitle == false)
+    @if (Component.IsHiddenTitle == false && Component.IsContainerComponent == false)
     {
         <div class="propertysetting-item">
             <label>标签宽度：</label>

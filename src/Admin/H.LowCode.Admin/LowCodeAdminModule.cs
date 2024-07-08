@@ -8,7 +8,6 @@ namespace H.LowCode.Admin
         public override void ConfigureServices(ServiceConfigurationContext context)
         {
             context.Services.AddAntDesign();
-            context.Services.AddScoped(sp => new HttpClient());
         }
     }
 }

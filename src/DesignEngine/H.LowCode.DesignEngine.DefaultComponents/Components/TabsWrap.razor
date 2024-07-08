@@ -5,7 +5,7 @@
     {
         string key = $"tab-{i}";
         <TabPane Tab="@key" Key="@key" Style="height: auto;">
-            <DropItemContainer ContainerComponent="@CreatComponent(key)" Style="min-height:300px; height:auto; background: #f4f7fa;"></DropItemContainer>
+            <DropItemContainer ContainerComponent="@CreateComponent(key, (component)=>{component.ComponentStyle.DefaultStyle="min-height:300px; height:auto; background: #f4f7fa;";})"></DropItemContainer>
         </TabPane>
     }
 </Tabs>

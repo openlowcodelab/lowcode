@@ -12,18 +12,23 @@ namespace H.LowCode.MetaSchema
         public FragmentEnum FragmentEnum { get; set; }
 
         [JsonPropertyName("fragname")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public string ComponentFragmentName { get; set; }
 
         [JsonPropertyName("n")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public string Name { get; set; }
 
         [JsonPropertyName("valtype")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public ComponentValueType ValueType { get; set; }
 
         [JsonPropertyName("intval")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public int IntValue { get; set; }
 
         [JsonPropertyName("strval")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public string StringValue { get; set; }
     }
 

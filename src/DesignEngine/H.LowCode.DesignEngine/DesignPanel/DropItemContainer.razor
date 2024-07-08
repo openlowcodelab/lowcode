@@ -1,7 +1,6 @@
 ﻿@inject DragDropStateService DragDropStateService
-@implements IDisposable
 
-<div class="dropitemcontainer" style="@Style @ContainerComponent.ComponentStyle.DefaultStyle" @onclick="OnClick"
+<div class="dropitemcontainer" style="@ContainerComponent.ComponentStyle.DefaultStyle" @onclick="OnClick"
      @ondragover="(e)=>{}" @ondragover:preventDefault @ondragover:stopPropagation
      @ondrop="OnDrop" @ondrop:preventDefault @ondrop:stopPropagation>
 

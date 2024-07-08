@@ -4,25 +4,7 @@
     [Parameter]
     public ComponentSchema Component { get; set; }
 
-    /// <summary>
-    /// 保存初始的 Component，避免跟随 Component 变化
-    /// </summary>
-    private ComponentSchema _component;
-
-    protected override void OnInitialized()
-    {
-        Init();
-
-        base.OnInitialized();
-    }
-
-    private void Init()
-    {
-        if (_component == null)
-            _component = Component.CopyNew();
-    }
-
-    protected virtual ComponentSchema CreatComponent(string key)
+    protected virtual ComponentSchema CreateComponent(string key, Action<ComponentSchema> action = null)
     {
         var c = Component.Childrens.FirstOrDefault(t =>
             {
@@ -33,12 +15,35 @@
         if (c != null)
             return c;
 
-        var component = _component.CopyNew();
-        component.IsContainerComponent = true;
-        component.ComponentProperty.ExtensionData.Add(key, key);
-        component.ParentId = Component.Id;
+        var component = CreateContainerComponent(key);
+
+        if(action != null) action(component);
 
         Component.Childrens.Add(component);
+
+        return component;
+    }
+
+    private ComponentSchema CreateContainerComponent(string name)
+    {
+        var component = new ComponentSchema(name);
+        component.Id = Guid.NewGuid();
+        component.Refresh = Component.Refresh;
+
+        component.ComponentFragments = [];
+        component.ComponentProperty = new();
+        component.ComponentStyle = new() { DefaultStyle = "height:100%; width:100;" };
+        component.ComponentEvent = default;
+        component.DragEffectStyle = default;
+        component.IsDropedAfter = default;
+        component.IsDroppedFromComponentPanel = default;
+        component.IsHiddenTitle = true;
+        component.IsSelected = default;
+        component.Opacity = default;
+
+        component.IsContainerComponent = true;
+        component.ComponentProperty.ExtensionData.Add(name, name);
+        component.ParentId = Component.Id;
 
         return component;
     }

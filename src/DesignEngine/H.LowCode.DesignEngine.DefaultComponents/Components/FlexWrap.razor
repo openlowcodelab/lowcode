@@ -1,5 +1,5 @@
 ﻿<Flex Gap="middle" Justify="@_justify" Align="@_align" Style="@_boxStyle">
-    <DropItemContainer ContainerComponent="@_component" Style="min-height:150px;width:100%;"></DropItemContainer>
+    <DropItemContainer ContainerComponent="@_component"></DropItemContainer>
 </Flex>
 
 @code {
@@ -27,6 +27,8 @@
     {
         if (_component == null)
             _component = Component.CopyNew();
+
+        _component.ComponentStyle.DefaultStyle = "min-height:150px;width:100%;";
     }
     #endregion
 }

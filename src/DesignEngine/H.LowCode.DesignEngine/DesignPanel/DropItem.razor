@@ -27,18 +27,19 @@
                 </div>
             </div>
         }
-        @if (Component.IsHiddenTitle == false)
+
+        @if (Component.IsHiddenTitle == false && Component.IsContainerComponent == false)
         {
             <div class="dropitem-title">@Component.ComponentProperty.Title ：</div>
         }
 
         @if (Component.IsContainerComponent)
         {
-            <div class="dropitem-div-container">@_componentFragment</div>
+            <div class="dropitem-div-container">@_renderFragment</div>
         }
         else
         {
-            <div class="dropitem-div-component">@_componentFragment</div>
+            <div class="dropitem-div-component">@_renderFragment</div>
         }
     </div>
 </div>
@@ -68,7 +69,7 @@
     protected ClassMapper DropItemBoxClassMapper { get; } = new ClassMapper();
     protected ClassMapper DropItemClassMapper { get; } = new ClassMapper();
 
-    private RenderFragment _componentFragment;
+    private RenderFragment _renderFragment;
 
     #region Init
     protected override void OnInitialized()
@@ -84,12 +85,9 @@
         if (Component == null)
             throw new NullReferenceException(nameof(Component));
 
-        // if (Component.RenderFragment == null)
-        //     throw new NullReferenceException(nameof(Component.RenderFragment));
-
         Component.ComponentProperty.Name = $"{Component.ComponentName}_{Random.Shared.Next(100, 999)}";
 
-        _componentFragment = RenderComponent();
+        _renderFragment = RenderComponent();
     }
 
     private void SetClassMap()

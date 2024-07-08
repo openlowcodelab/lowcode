@@ -10,8 +10,8 @@ namespace H.LowCode.MetaSchema
         [JsonPropertyName("ver")]
         public string Version { get; set; }
 
-        [JsonPropertyName("pages")]
-        public IList<PageSchema> Pages { get; set; }
+        [JsonPropertyName("menus")]
+        public IList<MenuSchema> Menus { get; set; }
 
         [JsonPropertyName("state")]
         public PublishStateEnum PublishState { get; set; }
