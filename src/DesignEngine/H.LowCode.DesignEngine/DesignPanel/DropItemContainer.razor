@@ -4,9 +4,19 @@
      @ondragover="(e)=>{}" @ondragover:preventDefault @ondragover:stopPropagation
      @ondrop="OnDrop" @ondrop:preventDefault @ondrop:stopPropagation>
 
-    @foreach (var component in ContainerComponent.Childrens)
+    @foreach (var comp in ContainerComponent.Childrens)
     {
-        <DropItem Component="component" OnItemClick="OnItemClick" OnItemDelete="OnItemDelete" OnItemCopy="OnItemCopy" />
+        @if (comp.IsTemplate == false)
+        {
+            <DropItem Component="comp" OnItemClick="OnItemClick" OnItemDelete="OnItemDelete" OnItemCopy="OnItemCopy" />
+        }
+        else
+        {
+            foreach (var c in comp.Childrens)
+            {
+                <ComponentItem Component="@c"></ComponentItem>
+            }
+        }
     }
 </div>
 

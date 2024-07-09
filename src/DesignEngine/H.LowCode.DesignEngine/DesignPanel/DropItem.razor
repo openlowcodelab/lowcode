@@ -2,7 +2,7 @@
 
 <div class="dropitem-box @DropItemBoxClassMapper.Class" style="float:left; opacity:@Component.Opacity;
     width: @(Component.ComponentStyle.ItemWidth/24*100)%; min-height: @(Component.ComponentStyle.ItemHeight)px;
-     @Style  position:@Component.ComponentStyle.Position;
+     position:@Component.ComponentStyle.Position;
      @Component.ComponentStyle.DefaultStyle @Component.ComponentStyle.CustomStyle"
      @onclick="OnClick" @onclick:stopPropagation
      @ondragstart="OnDragStart" @ondragstart:stopPropagation
@@ -28,19 +28,7 @@
             </div>
         }
 
-        @if (Component.IsHiddenTitle == false && Component.IsContainerComponent == false)
-        {
-            <div class="dropitem-title">@Component.ComponentProperty.Title ：</div>
-        }
-
-        @if (Component.IsContainerComponent)
-        {
-            <div class="dropitem-div-container">@_renderFragment</div>
-        }
-        else
-        {
-            <div class="dropitem-div-component">@_renderFragment</div>
-        }
+        <ComponentItem Component="@Component"></ComponentItem>
     </div>
 </div>
 
@@ -63,13 +51,8 @@
     [Parameter]
     public Action<ComponentSchema> OnItemCopy { get; set; }
 
-    [Parameter]
-    public string Style { get; set; }
-
     protected ClassMapper DropItemBoxClassMapper { get; } = new ClassMapper();
     protected ClassMapper DropItemClassMapper { get; } = new ClassMapper();
-
-    private RenderFragment _renderFragment;
 
     #region Init
     protected override void OnInitialized()
@@ -84,10 +67,6 @@
     {
         if (Component == null)
             throw new NullReferenceException(nameof(Component));
-
-        Component.ComponentProperty.Name = $"{Component.ComponentName}_{Random.Shared.Next(100, 999)}";
-
-        _renderFragment = RenderComponent();
     }
 
     private void SetClassMap()
@@ -100,45 +79,6 @@
         DropItemBoxClassMapper.Clear()
             .If("dropitem-box-layout", () => Component.IsContainerComponent);
     }
-
-    private RenderFragment RenderComponent() => builder =>
-    {
-        foreach (var fragment in Component.ComponentFragments)
-        {
-            if (fragment.FragmentEnum == FragmentEnum.Component)
-            {
-                Type type = Type.GetType(fragment.ComponentFragmentName);
-                builder.OpenComponent(fragment.Index, type);
-            }
-            else if (fragment.FragmentEnum == FragmentEnum.Attribute)
-            {
-                if (fragment.ValueType == ComponentValueType.Integer)
-                {
-                    builder.AddAttribute(fragment.Index, fragment.Name, fragment.IntValue);
-                }
-                else if (fragment.ValueType == ComponentValueType.String)
-                {
-                    if ("{self}".Equals(fragment.StringValue, StringComparison.OrdinalIgnoreCase))
-                        builder.AddAttribute(fragment.Index, fragment.Name, Component);
-                    else
-                        builder.AddAttribute(fragment.Index, fragment.Name, fragment.StringValue);
-                }
-            }
-            else if (fragment.FragmentEnum == FragmentEnum.Parameter)
-            {
-                if (fragment.ValueType == ComponentValueType.Integer)
-                    builder.AddComponentParameter(fragment.Index, fragment.Name, fragment.IntValue);
-                else if (fragment.ValueType == ComponentValueType.String)
-                {
-                    if ("{self}".Equals(fragment.StringValue, StringComparison.OrdinalIgnoreCase))
-                        builder.AddAttribute(fragment.Index, fragment.Name, Component);
-                    else
-                        builder.AddComponentParameter(fragment.Index, fragment.Name, fragment.StringValue);
-                }
-            }
-        }
-        builder.CloseComponent();
-    };
     #endregion
 
     #region Event

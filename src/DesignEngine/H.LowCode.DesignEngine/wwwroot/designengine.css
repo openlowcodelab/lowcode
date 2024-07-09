@@ -3,7 +3,29 @@
     height: 100%;
 }
 
-.designpage {
+.designpage, .designpanel, .componentpanel, .settingpanel {
     height: 100%;
-    /*overflow: auto;*/
 }
+
+    /* ====================== 覆盖 SettingPanel.razor 组件内 antdesign 默认样式 ========================== */
+    .settingpanel .ant-tabs-content, .settingpanel .ant-tabs-tabpane {
+        height: 100%;
+    }
+
+    /* ====================== 覆盖 ComponentPanel.razor 组件内 antdesign 默认样式 ========================== */
+    .componentpanel .ant-tabs-content, .componentpanel .ant-tabs-tabpane {
+        height: 100%;
+    }
+
+    .componentpanel .ant-tabs-tabpane{
+        padding-left:4px !important;
+    }
+    .componentpanel .ant-tabs-nav {
+        min-width:30px !important;
+    }
+    .componentpanel .ant-tabs-tab{
+        padding: 8px 4px !important;
+    }
+        .componentpanel .ant-tabs-tab + .ant-tabs-tab {
+            margin: 0 0 0 16px;
+        }

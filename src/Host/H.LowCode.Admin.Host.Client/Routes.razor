@@ -1,7 +1,4 @@
-﻿@using System.Reflection
-@using H.LowCode
-
-<Router AppAssembly="@DefaultLayout.Assembly" AdditionalAssemblies="@Assemblies">
+﻿<Router AppAssembly="@DefaultLayout.Assembly" AdditionalAssemblies="@Assemblies">
     <Found Context="routeData">
         <RouteView RouteData="@routeData" DefaultLayout="@DefaultLayout" />
         <FocusOnNavigate RouteData="@routeData" Selector="h1" />
@@ -12,6 +9,8 @@
         </LayoutView>
     </NotFound>
 </Router>
+
+<AntContainer />
 
 @code{
     private Assembly[] Assemblies = LowCodeGlobalVariables.AdditionalAssemblies;

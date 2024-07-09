@@ -1,6 +1,6 @@
 ﻿@inject DragDropStateService DragDropStateService
 
-<Tabs DefaultActiveKey="tab_page" @bind-ActiveKey="@_activeTabKey" Class="designpage" Style="width:250px; padding:0px 8px;">
+<Tabs DefaultActiveKey="tab_page" @bind-ActiveKey="@_activeTabKey" Class="settingpanel" Style="width:250px; padding:0px 8px;">
     @if (_showPropertyPanel)
     {
         @if (_component.IsContainerComponent == false)
@@ -16,9 +16,6 @@
         {
             <TabPane Key="tab_action" Tab="事件">
                 <EventSetting Component="@_component"></EventSetting>
-            </TabPane>
-            <TabPane Key="tab_datasource" Tab="数据源">
-                <DataSourceSetting Component="@_component"></DataSourceSetting>
             </TabPane>
         }
     }

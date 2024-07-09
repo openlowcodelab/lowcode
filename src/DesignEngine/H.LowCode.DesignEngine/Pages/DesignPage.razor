@@ -4,12 +4,13 @@
 @inject IHttpClientFactory HttpClientFactory
 @inject NavigationManager NavigationManager
 @inject DragDropStateService DragDropStateService
+@inject IMessageService _message
 
 <link href="_content/H.LowCode.DesignEngine/designengine.css" rel="stylesheet" />
 
 <CascadingValue Value="AppId" Name="appId">
     <CascadingValue Value="PageId" Name="pageId">
-        <AntDesign.Layout Class="designpage" Style="padding:5px 2px 10px; background-color: #f7f7f7;">
+        <AntDesign.Layout Class="designpage" Style="padding:0 2px; background-color: #f7f7f7;">
             <Header Style="background-color: white; padding:0 20px;">
                 <div style="float:left;">
                     <a href="javascript:void(0)"> @("<") 返回 </a>
@@ -26,7 +27,7 @@
                 </div>
             </Header>
             <AntDesign.Layout>
-                <Sider Style="flex: auto; max-width: max-content; min-width: 200px;" Theme="SiderTheme.Light">
+                <Sider Style="min-width: 200px; flex: auto; max-width: max-content;" Theme="SiderTheme.Light">
                     <ComponentPanel></ComponentPanel>
                 </Sider>
                 <Layout>
@@ -82,6 +83,12 @@
     private async void SaveMetaSchema()
     {
         PageSchema pageSchema = CreatePageSchema();
+        if (pageSchema.Components.Count == 0)
+        {
+            await _message.Warning("没有任何组件，禁止保存！");
+            return;
+        }
+
         string jsonSchema = pageSchema.ToJson();
 
         var content = new StringContent(jsonSchema, Encoding.UTF8, "application/json");
@@ -90,9 +97,19 @@
         httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
         var result = await httpClient.PostAsync($"api/designengine/savepageschema", content);
 
-        if (result.StatusCode == HttpStatusCode.OK && _isNewPage)
+        if (result.StatusCode == HttpStatusCode.OK)
         {
-            NavigationManager.NavigateTo($"/designer/{AppId}/{PageId}");
+            if (_isNewPage)
+            {
+                _isNewPage = false;
+                NavigationManager.NavigateTo($"/designer/{AppId}/{PageId}");
+            }
+
+            await _message.Success("保存成功！");
+        }
+        else
+        {
+            await _message.Error($"保存失败: {result.ReasonPhrase}");
         }
     }
 

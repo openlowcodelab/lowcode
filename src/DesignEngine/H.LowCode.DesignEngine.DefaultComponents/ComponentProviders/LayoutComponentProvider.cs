@@ -27,7 +27,7 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                     },
                     ComponentStyle = new()
                     {
-                        DefaultStyle = "background-color: #ffffff00; height: auto;",
+                        DefaultStyle = "width:100%; height: auto; background-color: #ffffff00;",
                         ItemWidth = 24
                     }
                 },
@@ -44,7 +44,7 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                     },
                     ComponentStyle = new()
                     {
-                        DefaultStyle = "background-color: #ffffff00; height: 100%",
+                        DefaultStyle = "width:100%; height:100%; background-color: #ffffff00;",
                         ItemWidth = 24,
                         ItemHeight = 150
                     }
@@ -62,7 +62,7 @@ namespace H.LowCode.DesignEngine.DefaultComponents.ComponentProviders
                     },
                     ComponentStyle = new()
                     {
-                        DefaultStyle = "background-color: #ffffff00; height: auto;",
+                        DefaultStyle = "width:100%; height:auto; background-color: #ffffff00;",
                         ItemWidth = 24,
                         ItemHeight = 150
                     }

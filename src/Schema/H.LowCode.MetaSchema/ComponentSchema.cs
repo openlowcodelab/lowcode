@@ -24,6 +24,10 @@ namespace H.LowCode.MetaSchema
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public bool IsContainerComponent { get; set; }
 
+        [JsonPropertyName("istemplate")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public bool IsTemplate { get; set; }
+
         [JsonPropertyName("pid")]
         public Guid ParentId { get; set; }
         #endregion
