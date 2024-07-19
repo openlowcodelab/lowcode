@@ -1,37 +1,55 @@
 ﻿@page "/admin/myapps"
 
-<Card Title="用例系统" Style="float:left; width:300px; margin:5px;">
-    <Extra>
-        <a href="/myapp/pagemanager/caseapp">管理</a>
-    </Extra>
-    <Body>
-        <p>展示不同类型页面案例</p>
-    </Body>
-</Card>
-<Card Title="测试系统" Style="float:left; width:300px; margin:5px;">
-    <Extra>
-        <a href="/myapp/pagemanager/testapp">管理</a>
-    </Extra>
-    <Body>
-        <p>测试不同页面设计场景</p>
-    </Body>
-</Card>
-<Card Title="图书管理系统" Style="float:left; width:300px; margin:5px;">
-    <Extra>
-        <a href="/myapp/pagemanager/appid">管理</a>
-    </Extra>
-    <Body>
-        <p>Card content</p>
-    </Body>
-</Card>
-<Card Title="学生管理系统" Style="float:left; width:300px; margin:5px;">
-    <Extra>
-        <a href="/myapp/pagemanager/appid">管理</a>
-    </Extra>
-    <Body>
-        <p>Card content</p>
-    </Body>
-</Card>
-<Card Bordered="true" Style="float:left; width:300px; margin:5px; height:142px;display: flex; align-items: center; justify-content: center;">
-    <a href="/myapp/create">新建应用</a>
-</Card>
+@inject IHttpClientFactory HttpClientFactory
+@inject NavigationManager NavigationManager
+
+<div style="width:80%; margin:auto;">
+    @if(_appSchemas != null){
+        @foreach (var app in _appSchemas)
+        {
+            <Card Title="@app.Name" Style="float:left; width:300px; margin:5px;">
+                <Extra>
+                    <a href="@($"/myapp/pagemanager/{app.Id}")" target="_blank">管理</a>
+                </Extra>
+                <Body>
+                    <p>@app.Description</p>
+                </Body>
+            </Card>
+        }
+    }
+    <Card Bordered="true" Style="float:left; width:300px; margin:5px; height:142px;display: flex; align-items: center; justify-content: center;">
+        <a href="javascript:void(0)" onclick="@(()=>{ _visible = true; })">创建应用</a>
+    </Card>
+</div>
+
+<Modal Title="创建应用" @bind-Visible="@_visible" Width="1100" Footer="null">
+    <AppCreate CreateAppAction="Reload"></AppCreate>
+</Modal>
+
+@code {
+    private IList<AppSchema> _appSchemas = [];
+    private bool _visible = false;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        LoadApps();
+    }
+
+    private async void LoadApps()
+    {
+        var httpClient = HttpClientFactory.CreateClient();
+        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+
+        _appSchemas = await httpClient.GetFromJsonAsync<IList<AppSchema>>($"api/designengine/getapps");
+        StateHasChanged();
+    }
+
+    private void Reload()
+    {
+        _visible = false;
+        LoadApps();
+        StateHasChanged();
+    }
+}

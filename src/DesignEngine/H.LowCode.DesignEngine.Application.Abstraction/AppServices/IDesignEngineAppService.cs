@@ -1,11 +1,22 @@
-﻿using System;
+﻿using H.LowCode.Admin.DTO;
+using H.LowCode.MetaSchema;
 
 namespace H.LowCode.DesignEngine.Application.Abstraction.AppServices
 {
     public interface IDesignEngineAppService
     {
-        string GetPageSchema(string appId, string pageId);
+        IList<AppSchema> GetApps();
 
-        void SavePageSchema(string appId, string pageId, string pageSchema);
+        void SaveApp(AppSchema app);
+
+        IList<MenuSchema> GetMenus(string appId);
+
+        void SaveMenu(MenuSchema menuSchema);
+
+        List<PageListModel> GetPages(string appId);
+
+        string GetPage(string appId, string pageId);
+
+        void SavePage(PageSchema pageSchema);
     }
 }

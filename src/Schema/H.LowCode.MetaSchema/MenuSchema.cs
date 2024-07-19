@@ -4,13 +4,16 @@ namespace H.LowCode.MetaSchema
 {
     public class MenuSchema
     {
-        [JsonPropertyName("id")]
-        public string MenuId { get; set; }
+        [JsonPropertyName("aid")]
+        public string AppId {  get; set; }
 
-        [JsonPropertyName("n")]
-        public string MenuName { get; set; }
+        [JsonPropertyName("id")]
+        public string Id { get; set; }
 
         [JsonPropertyName("t")]
-        public string MenuTitle { get; set; }
+        public string Title { get; set; }
+
+        [JsonPropertyName("icon")]
+        public string Icon {  get; set; }
     }
 }

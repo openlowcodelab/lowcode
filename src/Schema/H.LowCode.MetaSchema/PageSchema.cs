@@ -4,11 +4,14 @@ namespace H.LowCode.MetaSchema
 {
     public class PageSchema
     {
-        [JsonPropertyName("appid")]
+        [JsonPropertyName("aid")]
         public string AppId { get; set; }
 
         [JsonPropertyName("id")]
-        public string PageId { get; set; }
+        public string Id { get; set; }
+
+        [JsonPropertyName("n")]
+        public string Name { get; set; }
 
         [JsonPropertyName("comps")]
         public IList<ComponentSchema> Components { get; set; }

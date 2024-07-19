@@ -14,7 +14,11 @@
         {
             foreach (var c in comp.Childrens)
             {
-                <ComponentItem Component="@c"></ComponentItem>
+                <div style="width: @(c.ComponentStyle.ItemWidth/24*100)%; min-height: @(c.ComponentStyle.ItemHeight)px;
+                        @c.ComponentStyle.DefaultStyle @c.ComponentStyle.CustomStyle">
+                    <ComponentItem Component="@c"></ComponentItem>
+                </div>
+                @* <DropItem Component="c" OnItemClick="OnItemClick" OnItemDelete="OnItemDelete" OnItemCopy="OnItemCopy" /> *@
             }
         }
     }

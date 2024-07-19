@@ -23,7 +23,7 @@
                 </div>*@
                 <div style="float:right;">
                     <Button>预览</Button>
-                    <Button Type="primary" OnClick="() => SaveMetaSchema()">保存</Button>
+                    <Button Type="primary" OnClick="() => SavePageSchema()">保存</Button>
                 </div>
             </Header>
             <AntDesign.Layout>
@@ -74,13 +74,13 @@
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
 
-        _pageSchema = await httpClient.GetFromJsonAsync<PageSchema>($"api/designengine/GetPageSchema?appId={AppId}&pageId={PageId}");
+        _pageSchema = await httpClient.GetFromJsonAsync<PageSchema>($"api/designengine/getpage?appId={AppId}&pageId={PageId}");
 
         if (_designPanel != null)
             _designPanel.Reload(_pageSchema);
     }
 
-    private async void SaveMetaSchema()
+    private async void SavePageSchema()
     {
         PageSchema pageSchema = CreatePageSchema();
         if (pageSchema.Components.Count == 0)
@@ -95,7 +95,7 @@
 
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
-        var result = await httpClient.PostAsync($"api/designengine/savepageschema", content);
+        var result = await httpClient.PostAsync($"api/designengine/savepage", content);
 
         if (result.StatusCode == HttpStatusCode.OK)
         {
@@ -119,7 +119,7 @@
             _pageSchema = new PageSchema();
 
         _pageSchema.AppId = AppId;
-        _pageSchema.PageId = PageId;
+        _pageSchema.Id = PageId;
         _pageSchema.Components = DragDropStateService.GetRootComponent(AppId, PageId).Childrens;
         _pageSchema.PageProperty = DragDropStateService.GetGlobalPageProperty(AppId, PageId);
         _pageSchema.DataSource = new DataSourceSchema() { DataSourceType = DataSourceType.Default };

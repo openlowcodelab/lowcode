@@ -1,11 +1,34 @@
 ﻿@page "/admin/templatecenter"
 
-<h1>模板中心</h1>
+<style>
+    .center-div {
+        width: 80%;
+        margin: auto;
+    }
+</style>
 
-<p>应用模板</p>
-
-<p>主题模板</p>
-
-<p>页面模板</p>
-
-<p>自定义组件</p>
+<Carousel Class="center-div">
+    <CarouselSlick>
+        <h3>1</h3>
+    </CarouselSlick>
+    <CarouselSlick>
+        <h3>2</h3>
+    </CarouselSlick>
+    <CarouselSlick>
+        <h3>3</h3>
+    </CarouselSlick>
+    <CarouselSlick>
+        <h3>4</h3>
+    </CarouselSlick>
+</Carousel>
+<Tabs DefaultActiveKey="tab_template_app" Class="center-div" Centered Animated>
+    <TabPane Tab="应用模板" Key="tab_template_app">
+        <AppTemplates></AppTemplates>
+    </TabPane>
+    <TabPane Tab="组件库" Key="tab_template_complib">
+        自定义组件库
+    </TabPane>
+    <TabPane Tab="主题模板" Key="tab_template_theme">
+        主题模板
+    </TabPane>
+</Tabs>
