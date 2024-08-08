@@ -2,6 +2,7 @@ using H.LowCode.Admin.Host.Components;
 using H.LowCode;
 using H.LowCode.Admin.HttpApi;
 using H.LowCode.DesignEngine.HttpApi;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,7 +11,10 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
 
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+});
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddHttpClient();

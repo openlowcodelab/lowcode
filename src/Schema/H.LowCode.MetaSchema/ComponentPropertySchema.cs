@@ -34,14 +34,12 @@ namespace H.LowCode.MetaSchema
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public long? MinimumLength { get; set; }
 
-        [JsonPropertyName("pattern")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public string Pattern { get; set; }
 
         [JsonPropertyName("compvaltype")]
         public ComponentValueType ComponentValueType { get; set; }
 
-        [JsonPropertyName("format")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public string Format { get; set; }
 
@@ -49,7 +47,7 @@ namespace H.LowCode.MetaSchema
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public bool IsRequired { get; set; }
 
-        [JsonPropertyName("readonly")]
+        [JsonPropertyName("ro")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public bool ReadOnly { get; set; }
 
@@ -57,7 +55,6 @@ namespace H.LowCode.MetaSchema
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public string DefaultValue { get; set; }
 
-        [JsonPropertyName("enum")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public string[] Enum { get; set; }
 

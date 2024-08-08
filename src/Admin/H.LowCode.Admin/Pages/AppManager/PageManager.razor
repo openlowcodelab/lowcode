@@ -3,8 +3,6 @@
 @layout MyAppLayout
 @inject IHttpClientFactory HttpClientFactory
 @inject NavigationManager NavigationManager
-@inject IMessageService _message
-@inject IJSRuntime JS
 
 <div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
     <div style="text-align: left; width:250px;">
@@ -45,7 +43,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await GetPageListAsync(1, 50);
+        _pageListModels = await GetPageListAsync(1, 50);
         _total = 50;
     }
 
@@ -59,13 +57,8 @@
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
 
-        _pageListModels = await httpClient.GetFromJsonAsync<List<PageListModel>>($"api/designengine/getpages?appId={AppId}");
-        return _pageListModels;
-    }
-
-    private void CreatePage()
-    {
-        
+        var result = await httpClient.GetFromJsonAsync<List<PageListModel>>($"api/designengine/getpages?appId={AppId}");
+        return result;
     }
 
     private void DeletePage(string pageCode)

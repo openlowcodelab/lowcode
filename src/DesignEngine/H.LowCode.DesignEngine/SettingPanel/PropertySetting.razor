@@ -120,21 +120,21 @@
     {
         <div class="propertysetting-item">
             <label>API：</label>
-            <Input TValue="string" />
+            <Input TValue="string" @bind-Value="@Component.DataSource.Value" />
         </div>
     }
     else if ("2".Equals(_datasourceType))
     {
         <div class="propertysetting-item">
             <label>SQL：</label>
-            <TextArea />
+            <TextArea @bind-Value="@Component.DataSource.Value" />
         </div>
     }
     else if ("3".Equals(_datasourceType))
     {
         <div class="propertysetting-item">
             <label>表达式：</label>
-            <TextArea />
+            <TextArea @bind-Value="@Component.DataSource.Value" />
         </div>
     }
     else if ("4".Equals(_datasourceType))
@@ -145,61 +145,53 @@
         </div>
     }
 
-    <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:5px 0;">更多</div>
-    @if (Component != null)
+    @*扩展属性*@
+    @if (Component != null && Component.ComponentProperty.ExtensionProperties != null)
     {
-        @*扩展属性*@
-        @if (Component.ComponentProperty.ExtensionProperties != null)
+        <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:5px 0;">更多</div>
+
+        foreach (var extensionProperty in Component.ComponentProperty.ExtensionProperties)
         {
-            foreach (var extensionProperty in Component.ComponentProperty.ExtensionProperties)
-            {
-                <div class="propertysetting-item">
-                    <label>@extensionProperty.Label：</label>
-                    @if (extensionProperty.SettingItemType == PropertyItemTypeEnum.Text)
-                    {
-                        <Input TValue="string" @bind-value="@extensionProperty.StringValue" OnChange="(value) => OnPropertyChange()" />
-                    }
-                    else if (extensionProperty.SettingItemType == PropertyItemTypeEnum.Text_Int)
-                    {
-                        <Input TValue="int" @bind-value="@extensionProperty.IntValue" OnChange="(value) => OnPropertyChange()" />
-                    }
-                    else if (extensionProperty.SettingItemType == PropertyItemTypeEnum.Radio)
-                    {
+            <div class="propertysetting-item">
+                <label>@extensionProperty.Label：</label>
+                @if (extensionProperty.SettingItemType == PropertyItemTypeEnum.Text)
+                {
+                    <Input TValue="string" @bind-value="@extensionProperty.StringValue" OnChange="(value) => OnPropertyChange()" />
+                }
+                else if (extensionProperty.SettingItemType == PropertyItemTypeEnum.Text_Int)
+                {
+                    <Input TValue="int" @bind-value="@extensionProperty.IntValue" OnChange="(value) => OnPropertyChange()" />
+                }
+                else if (extensionProperty.SettingItemType == PropertyItemTypeEnum.Radio)
+                {
 
-                    }
-                    else if (extensionProperty.SettingItemType == PropertyItemTypeEnum.Checkbox)
-                    {
-                        <Checkbox @bind-checked="@extensionProperty.BoolValue"></Checkbox>
-                    }
-                    else if (extensionProperty.SettingItemType == PropertyItemTypeEnum.Select)
-                    {
+                }
+                else if (extensionProperty.SettingItemType == PropertyItemTypeEnum.Checkbox)
+                {
+                    <Checkbox @bind-checked="@extensionProperty.BoolValue"></Checkbox>
+                }
+                else if (extensionProperty.SettingItemType == PropertyItemTypeEnum.Select)
+                {
 
-                    }
-                    else if (extensionProperty.SettingItemType == PropertyItemTypeEnum.Switch)
-                    {
+                }
+                else if (extensionProperty.SettingItemType == PropertyItemTypeEnum.Switch)
+                {
 
-                    }
-                    else if (extensionProperty.SettingItemType == PropertyItemTypeEnum.Date)
-                    {
+                }
+                else if (extensionProperty.SettingItemType == PropertyItemTypeEnum.Date)
+                {
 
-                    }
-                    else if (extensionProperty.SettingItemType == PropertyItemTypeEnum.Textarea)
-                    {
+                }
+                else if (extensionProperty.SettingItemType == PropertyItemTypeEnum.Textarea)
+                {
 
-                    }
+                }
 
-                    @if (!string.IsNullOrEmpty(extensionProperty.Description))
-                    {
-                        <div style="color:#c7c7c7">@extensionProperty.Description</div>
-                    }
-                </div>
-            }
-        }
-
-        @* 高级 RenderFragment 属性 *@
-        @if (Component.ComponentProperty.RenderFragmentProperties != null)
-        {
-            @Component.ComponentProperty.RenderFragmentProperties
+                @if (!string.IsNullOrEmpty(extensionProperty.Description))
+                {
+                    <div style="color:#c7c7c7">@extensionProperty.Description</div>
+                }
+            </div>
         }
     }
 </div>
@@ -208,7 +200,7 @@
     [Parameter]
     public ComponentSchema Component { get; set; }
 
-    private string _datasourceType = "0";
+    private string _datasourceType { get; set; }
 
     private void OnPropertyChange()
     {

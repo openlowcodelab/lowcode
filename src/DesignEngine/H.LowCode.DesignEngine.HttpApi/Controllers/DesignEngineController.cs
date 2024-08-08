@@ -1,5 +1,4 @@
-﻿using H.Ddd.HttpApi;
-using H.Extensions.System;
+﻿using H.Extensions.System;
 using H.LowCode.Admin.DTO;
 using H.LowCode.DesignEngine.Application.Abstraction.AppServices;
 using H.LowCode.MetaSchema;
@@ -7,7 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace H.LowCode.DesignEngine.HttpApi.Controllers
 {
-    public class DesignEngineController : ControllerApiBase
+    [ApiController]
+    [Route("api/[controller]/[action]")]
+    public class DesignEngineController : ControllerBase
     {
         private IDesignEngineAppService _designAppService;
 

@@ -7,13 +7,15 @@ namespace H.LowCode.MetaSchema
         [JsonPropertyName("aid")]
         public string AppId {  get; set; }
 
-        [JsonPropertyName("id")]
         public string Id { get; set; }
 
         [JsonPropertyName("t")]
         public string Title { get; set; }
 
-        [JsonPropertyName("icon")]
         public string Icon {  get; set; }
+
+        public string MenuUrl { get; set; }
+
+        public int Order { get; set; }
     }
 }

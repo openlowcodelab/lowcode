@@ -1,10 +1,11 @@
-﻿using H.Ddd.HttpApi;
-using H.LowCode.Admin.Application.Abstraction.AppServices;
+﻿using H.LowCode.Admin.Application.Abstraction.AppServices;
 using Microsoft.AspNetCore.Mvc;
 
 namespace H.LowCode.Admin.HttpApi.Controllers
 {
-    public class AdminController : ControllerApiBase
+    [ApiController]
+    [Route("api/[controller]/[action]")]
+    public class AdminController : ControllerBase
     {
         private IAdminAppService _adminAppService;
 

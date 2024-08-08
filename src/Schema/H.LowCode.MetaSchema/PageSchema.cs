@@ -7,11 +7,13 @@ namespace H.LowCode.MetaSchema
         [JsonPropertyName("aid")]
         public string AppId { get; set; }
 
-        [JsonPropertyName("id")]
         public string Id { get; set; }
 
         [JsonPropertyName("n")]
         public string Name { get; set; }
+
+        [JsonPropertyName("pt")]
+        public PageTypeEnum PageType { get; set; }
 
         [JsonPropertyName("comps")]
         public IList<ComponentSchema> Components { get; set; }
@@ -22,15 +24,15 @@ namespace H.LowCode.MetaSchema
         [JsonPropertyName("ds")]
         public DataSourceSchema DataSource { get; set; }
 
-        [JsonPropertyName("i18n")]
         public I18n I18n { get; set; }
     }
 
     public enum PageTypeEnum
     {
-        None,
+        Normal,
         Form,
-        Table
+        Table,
+        Report
     }
 
     public struct I18n

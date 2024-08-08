@@ -6,13 +6,11 @@ namespace H.LowCode.MetaSchema
 {
     public class AppSchema
     {
-        [JsonPropertyName("id")]
         public string Id { get; set; }
 
         [JsonPropertyName("n")]
         public string Name { get; set; }
 
-        [JsonPropertyName("icon")]
         public string Icon { get; set; }
 
         [JsonPropertyName("pic")]
@@ -24,7 +22,6 @@ namespace H.LowCode.MetaSchema
         [JsonPropertyName("v")]
         public string Version { get; set; }
 
-        [JsonPropertyName("menus")]
         public IList<MenuSchema> Menus { get; set; }
 
         [JsonPropertyName("state")]

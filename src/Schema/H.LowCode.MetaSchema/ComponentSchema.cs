@@ -11,7 +11,6 @@ namespace H.LowCode.MetaSchema
         }
 
         #region 公共属性
-        [JsonPropertyName("id")]
         public Guid Id { get; set; } = Guid.NewGuid();
 
         /// <summary>
@@ -24,7 +23,6 @@ namespace H.LowCode.MetaSchema
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public bool IsContainerComponent { get; set; }
 
-        [JsonPropertyName("istemplate")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public bool IsTemplate { get; set; }
 
@@ -72,6 +70,9 @@ namespace H.LowCode.MetaSchema
         [JsonPropertyName("childs")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public IList<ComponentSchema> Childrens { get; set; } = [];
+
+        [JsonPropertyName("ds")]
+        public DataSourceSchema DataSource { get; set; }
 
         #region JsonIgnore Attributes
         [JsonIgnore]

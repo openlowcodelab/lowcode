@@ -5,13 +5,18 @@ namespace H.LowCode.MetaSchema
     public class DataSourceSchema
     {
         [JsonPropertyName("type")]
-        public DataSourceType DataSourceType { get; set; }
+        public DataSourceEnum DataSourceType { get; set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public string Value {  get; set; }
 
         [JsonPropertyName("vals")]
         public IDictionary<string, string> Values { get; set; }
     }
 
-    public enum DataSourceType
+    public enum DataSourceEnum
     {
         Default,
         API,

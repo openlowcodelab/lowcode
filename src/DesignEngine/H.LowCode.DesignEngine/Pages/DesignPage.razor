@@ -117,12 +117,12 @@
     {
         if (_pageSchema == null)
             _pageSchema = new PageSchema();
-
+        
         _pageSchema.AppId = AppId;
         _pageSchema.Id = PageId;
         _pageSchema.Components = DragDropStateService.GetRootComponent(AppId, PageId).Childrens;
         _pageSchema.PageProperty = DragDropStateService.GetGlobalPageProperty(AppId, PageId);
-        _pageSchema.DataSource = new DataSourceSchema() { DataSourceType = DataSourceType.Default };
+        _pageSchema.DataSource = new DataSourceSchema() { DataSourceType = DataSourceEnum.Default };
         return _pageSchema;
     }
 }

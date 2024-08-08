@@ -33,7 +33,6 @@ namespace H.LowCode.MetaSchema
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public string DefaultStyle { get; set; }
 
-        [JsonPropertyName("display")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
         public string Display { get; set; } = "inline";
 

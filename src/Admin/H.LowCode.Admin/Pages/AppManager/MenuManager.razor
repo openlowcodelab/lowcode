@@ -1,108 +1,152 @@
 ﻿@page "/myapp/menumanager/{AppId}"
 
 @layout MyAppLayout
-@using AntDesign.TableModels
-@using System.ComponentModel
+@inject IHttpClientFactory HttpClientFactory
+@inject NavigationManager NavigationManager
+@inject IMessageService Message
 
-<h1>导航管理</h1>
+<div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
+    <div style="text-align: left; width:250px;">
+        <Search Placeholder="菜单名称" OnSearch="()=>{}" />
+    </div>
+    <div style="text-align: right; width:80px; line-height:32px;">
+        <Button Type="@ButtonType.Primary" OnClick="@(()=>{ _visible = true; })">新建菜单</Button>
+    </div>
+</div>
 
-<Table @ref="table" TItem="MenuListModel" DataSource="@menuListModels" Total="_total" OnChange="OnChange"
+<Table @ref="@_table" TItem="MenuSchema" DataSource="@_menuList" Total="_total" OnChange="OnChange"
        @bind-PageIndex="_pageIndex" @bind-PageSize="_pageSize" @bind-SelectedRows="selectedRows">
-    <Selection Key="@(context.MenuKey)" />
-    <Column @bind-Field="@context.MenuKey" Sortable />
-    <Column @bind-Field="@context.MenuName" Format="yyyy-MM-dd" Sortable />
-    <Column @bind-Field="@context.MenuUrl" Sortable />
+    <Selection Key="@(context.Id)" />
+    <Column @bind-Field="@context.Id" Sortable />
+    <Column @bind-Field="@context.Title" Format="yyyy-MM-dd" Sortable />
+    <Column @bind-Field="@context.Icon" />
+    <Column @bind-Field="@context.MenuUrl" />
     <ActionColumn Title="Acton">
          <Space Size=@("middle")>
              <SpaceItem>
                  <a href="javascript:void(0)">Edit</a>
              </SpaceItem>
             <SpaceItem>
-                <a onclick="()=>Delete(@context.MenuKey)">Delete</a>
+                <a onclick="()=>Delete(@context.Id)">Delete</a>
             </SpaceItem>
         </Space>
     </ActionColumn>
 </Table>
 
-<br />
-<p>PageIndex: @_pageIndex | PageSize: @_pageSize | Total: @_total</p>
-
-<br />
-<h5>selections:</h5>
-@if (selectedRows != null && selectedRows.Any())
-{
-    <Button Danger Size="small" OnClick="@(e => { selectedRows = null; })">Clear</Button>
-
-    @foreach (var selected in selectedRows)
-    {
-        <Tag @key="selected.MenuKey" Closable OnClose="e=>RemoveSelection(selected.MenuKey)">@selected.MenuKey - @selected.MenuName</Tag>
-    }
-}
-
-<Button OnClick="()=> { _pageIndex--; }">Previous page</Button>
-<Button OnClick="()=> { _pageIndex++; }">Next Page</Button>
+<Modal Title="新建菜单" @bind-Visible="@_visible" OnOk="OnConfirm" OnCancel="OnCancel">
+    <Form Model="@_menuSchema" LabelColSpan="8" WrapperColSpan="16" OnFinish="OnFinish" @ref="@_form"
+          ValidateMode="@FormValidateMode.Complex" ValidateOnChange="true">
+        @* <FormItem Label="菜单标识" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
+            <Input @bind-Value="@context.Id" />
+        </FormItem> *@
+        <FormItem Label="菜单名称" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
+            <Input @bind-Value="@context.Title" />
+        </FormItem>
+        <FormItem Label="菜单图标" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
+            <Input @bind-Value="@context.Icon" />
+        </FormItem>
+        <FormItem Label="菜单地址" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
+            <Input @bind-Value="@context.MenuUrl" />
+        </FormItem>
+    </Form>
+</Modal>
 
 @code {
     [Parameter]
     public string AppId { get; set; }
 
-    MenuListModel[] menuListModels;
-
-    IEnumerable<MenuListModel> selectedRows;
-    ITable table;
+    private ITable _table;
+    private List<MenuSchema> _menuList;
+    IEnumerable<MenuSchema> selectedRows;
 
     int _pageIndex = 1;
     int _pageSize = 10;
     int _total = 0;
 
+    private bool _visible = false;
+    private Form<MenuSchema> _form;
+    private MenuSchema _menuSchema = new MenuSchema();
+
     protected override async Task OnInitializedAsync()
     {
-        menuListModels = await GetPageListAsync(1, 5);
+        _menuList = await GetPageListAsync(1, 5);
         _total = 5;
     }
 
-    public class MenuListModel
-    {
-        [DisplayName("菜单key")]
-        public string MenuKey{ get; set; }
-
-        [DisplayName("菜单名称")]
-        public string MenuName { get; set; }
-
-        [DisplayName("菜单地址")]
-        public string MenuUrl { get; set; }
-    }
-    
-    public async Task OnChange(QueryModel<MenuListModel> queryModel)
+    public async Task OnChange(QueryModel<MenuSchema> queryModel)
     {
         await Task.Delay(100);
-        Console.WriteLine(JsonSerializer.Serialize(queryModel));
     }
 
-    public Task<MenuListModel[]> GetPageListAsync(int pageIndex, int num)
+    public async Task<List<MenuSchema>> GetPageListAsync(int pageIndex, int num)
     {
-        var rng = new Random();
-        return Task.FromResult(Enumerable.Range((pageIndex - 1) * num + 1, num).Select(index =>
-        {
-            var temperatureC = rng.Next(-20, 55);
-            return new MenuListModel
-            {
-                MenuKey = index.ToString(),
-                MenuName = $"menu{index}",
-                MenuUrl = $"/{AppId}/PageId"
-            };
-        }).ToArray());
+        var httpClient = HttpClientFactory.CreateClient();
+        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+
+        var result = await httpClient.GetFromJsonAsync<List<MenuSchema>>($"api/designengine/getmenus?appId={AppId}");
+        return result;
     }
 
-    public void RemoveSelection(string pageCode)
+    private void CreateMenu()
     {
-        var selected = selectedRows.Where(x => x.MenuKey != pageCode);
-        selectedRows = selected;
+
     }
 
     private void Delete(string pageCode)
     {
-        menuListModels = menuListModels.Where(x => x.MenuKey != pageCode).ToArray();
-        _total = menuListModels.Length;
+
+    }
+
+    private async Task OnConfirm(MouseEventArgs e)
+    {
+        var validate = _form.Validate();
+        if (validate)
+        {
+            var result = await SaveMenuSchema();
+            if (result.StatusCode == HttpStatusCode.OK)
+            {
+                _visible = false;
+                _form.Submit();
+                await Message.Success("新建成功！");
+                _form.Reset();
+            }
+            else
+            {
+                _visible = true;
+                await Message.Error($"新建失败: {result.ReasonPhrase}");
+            }
+        }
+        else
+        {
+            _visible = true;
+        }
+    }
+
+    private void OnCancel(MouseEventArgs e)
+    {
+
+    }
+
+    private void OnFinish()
+    {
+        _table.ReloadData();
+    }
+
+
+    private async Task<HttpResponseMessage> SaveMenuSchema()
+    {
+        if (_menuSchema.Id.IsNullOrEmpty())
+            _menuSchema.Id = Guid.NewGuid().ToString();
+        _menuSchema.AppId = AppId;
+
+        string jsonSchema = _menuSchema.ToJson();
+
+        var content = new StringContent(jsonSchema, Encoding.UTF8, "application/json");
+
+        var httpClient = HttpClientFactory.CreateClient();
+        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+        var result = await httpClient.PostAsync($"api/designengine/savemenu", content);
+
+        return result;
     }
 }

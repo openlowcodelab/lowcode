@@ -8,7 +8,7 @@ namespace H.LowCode.DesignEngine.Application.AppServices
 {
     public class DesignEngineAppService : IDesignEngineAppService
     {
-        private static string baseDir = @"D:\H\code\OpenMetaApp\H.LowCode\meta";
+        private static string baseDir = @"D:\H\code\my\H.LowCode\meta";
         private static string appFileName_Format = @"{0}\{1}\{2}.json";
         private static string menuFileName_Format = @"{0}\{1}\menu\{2}.json";
         private static string pageFileName_Format = @"{0}\{1}\page\{2}.json";
