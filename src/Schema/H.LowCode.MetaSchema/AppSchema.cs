@@ -22,8 +22,6 @@ namespace H.LowCode.MetaSchema
         [JsonPropertyName("v")]
         public string Version { get; set; }
 
-        public IList<MenuSchema> Menus { get; set; }
-
         [JsonPropertyName("state")]
         public PublishStateEnum PublishState { get; set; }
 
