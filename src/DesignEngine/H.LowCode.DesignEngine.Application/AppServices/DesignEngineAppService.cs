@@ -1,10 +1,10 @@
 ﻿using H.Extensions.System;
 using H.LowCode.Admin.DTO;
-using H.LowCode.DesignEngine.Application.Abstraction.AppServices;
+using H.LowCode.DesignEngine.Application.Abstraction;
 using H.LowCode.MetaSchema;
 using System.Text;
 
-namespace H.LowCode.DesignEngine.Application.AppServices
+namespace H.LowCode.DesignEngine.Application
 {
     public class DesignEngineAppService : IDesignEngineAppService
     {
@@ -18,8 +18,9 @@ namespace H.LowCode.DesignEngine.Application.AppServices
 
         }
 
-        public IList<AppSchema> GetApps()
+        public async Task<IList<AppSchema>> GetAppsAsync()
         {
+            await Task.Delay(1);
             List<AppSchema> appSchemas = [];
 
             var directories = Directory.GetDirectories(baseDir);
@@ -39,8 +40,9 @@ namespace H.LowCode.DesignEngine.Application.AppServices
             return appSchemas;
         }
 
-        public void SaveApp(AppSchema app)
+        public async Task SaveAppAsync(AppSchema app)
         {
+            await Task.Delay(1);
             string fileName = string.Format(appFileName_Format, baseDir, app.Id, app.Id);
 
             string fileDirectory = Path.GetDirectoryName(fileName);
@@ -52,8 +54,30 @@ namespace H.LowCode.DesignEngine.Application.AppServices
             File.WriteAllText(fileName, app.ToJson(), Encoding.UTF8);
         }
 
-        public IList<MenuSchema> GetMenus(string appId)
+        public async Task<MenuSchema> GetMenuAsync(string appId, string menuId)
         {
+            await Task.Delay(1);
+            List<MenuSchema> list = [];
+
+            var menuFilePath = Path.Combine(baseDir, appId, "menu");
+            if (!Directory.Exists(menuFilePath))
+                return null;
+
+            var files = Directory.GetFiles(menuFilePath);
+            foreach (var fileName in files)
+            {
+                var menuSchemaJson = ReadAllText(fileName);
+                var menuSchema = menuSchemaJson.FromJson<MenuSchema>();
+
+                list.Add(menuSchema);
+            }
+
+            return list.Where(t => t.Id == menuId).FirstOrDefault();
+        }
+
+        public async Task<IList<MenuSchema>> GetMenusAsync(string appId)
+        {
+            await Task.Delay(1);
             List<MenuSchema> list = [];
 
             var menuFilePath = Path.Combine(baseDir, appId, "menu");
@@ -72,8 +96,9 @@ namespace H.LowCode.DesignEngine.Application.AppServices
             return list;
         }
 
-        public void SaveMenu(MenuSchema menuSchema)
+        public async Task SaveMenuAsync(MenuSchema menuSchema)
         {
+            await Task.Delay(1);
             string fileName = string.Format(menuFileName_Format, baseDir, menuSchema.AppId, menuSchema.Id);
 
             string fileDirectory = Path.GetDirectoryName(fileName);
@@ -83,8 +108,9 @@ namespace H.LowCode.DesignEngine.Application.AppServices
             File.WriteAllText(fileName, menuSchema.ToJson(), Encoding.UTF8);
         }
 
-        public List<PageListModel> GetPages(string appId)
+        public async Task<List<PageListModel>> GetPagesAsync(string appId)
         {
+            await Task.Delay(1);
             List<PageListModel> list = [];
 
             var pageFilePath = Path.Combine(baseDir, appId, "page");
@@ -109,15 +135,17 @@ namespace H.LowCode.DesignEngine.Application.AppServices
             return list;
         }
 
-        public string GetPage(string appId, string pageId)
+        public async Task<string> GetPageAsync(string appId, string pageId)
         {
+            await Task.Delay(1);
             string fileName = string.Format(pageFileName_Format, baseDir, appId, pageId);
 
             return ReadAllText(fileName);
         }
 
-        public void SavePage(PageSchema pageSchema)
+        public async Task SavePageAsync(PageSchema pageSchema)
         {
+            await Task.Delay(1);
             string fileName = string.Format(pageFileName_Format, baseDir, pageSchema.AppId, pageSchema.Id);
 
             string fileDirectory = Path.GetDirectoryName(fileName);

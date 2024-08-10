@@ -1,7 +1,7 @@
-﻿using H.LowCode.Admin.Application.Abstraction.AppServices;
+﻿using H.LowCode.Admin.Application.Abstraction;
 using Microsoft.AspNetCore.Mvc;
 
-namespace H.LowCode.Admin.HttpApi.Controllers
+namespace H.LowCode.Admin.HttpApi
 {
     [ApiController]
     [Route("api/[controller]/[action]")]

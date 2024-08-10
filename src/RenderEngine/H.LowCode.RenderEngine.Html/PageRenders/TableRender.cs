@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
 using H.LowCode.MetaSchema;
 
-namespace H.LowCode.RenderEngine.Html.PageRenders
+namespace H.LowCode.RenderEngine.Html
 {
     public class TableRender
     {

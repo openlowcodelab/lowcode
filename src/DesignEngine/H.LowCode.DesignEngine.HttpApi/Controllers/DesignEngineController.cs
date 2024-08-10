@@ -1,10 +1,10 @@
 ﻿using H.Extensions.System;
 using H.LowCode.Admin.DTO;
-using H.LowCode.DesignEngine.Application.Abstraction.AppServices;
+using H.LowCode.DesignEngine.Application.Abstraction;
 using H.LowCode.MetaSchema;
 using Microsoft.AspNetCore.Mvc;
 
-namespace H.LowCode.DesignEngine.HttpApi.Controllers
+namespace H.LowCode.DesignEngine.HttpApi
 {
     [ApiController]
     [Route("api/[controller]/[action]")]
@@ -18,45 +18,51 @@ namespace H.LowCode.DesignEngine.HttpApi.Controllers
         }
 
         [HttpGet]
-        public IList<AppSchema> GetApps()
+        public async Task<IList<AppSchema>> GetAppsAsync()
         {
-            return _designAppService.GetApps();
+            return await _designAppService.GetAppsAsync();
         }
 
         [HttpPost]
-        public void SaveApp(AppSchema app)
+        public async Task SaveAppAsync(AppSchema app)
         {
-            _designAppService.SaveApp(app);
+            await _designAppService.SaveAppAsync(app);
         }
 
         [HttpGet]
-        public IList<MenuSchema> GetMenus(string appId)
+        public async Task<MenuSchema> GetMenuAsync(string appId, string menuId)
         {
-            return _designAppService.GetMenus(appId);
+            return await _designAppService.GetMenuAsync(appId, menuId);
+        }
+
+        [HttpGet]
+        public async Task<IList<MenuSchema>> GetMenusAsync(string appId)
+        {
+            return await _designAppService.GetMenusAsync(appId);
         }
 
         [HttpPost]
-        public void SaveMenu(MenuSchema menuSchema)
+        public async Task SaveMenuAsync(MenuSchema menuSchema)
         {
-            _designAppService.SaveMenu(menuSchema);
+            await _designAppService.SaveMenuAsync(menuSchema);
         }
 
         [HttpGet]
-        public List<PageListModel> GetPages(string appId)
+        public async Task<List<PageListModel>> GetPagesAsync(string appId)
         {
-            return _designAppService.GetPages(appId);
+            return await _designAppService.GetPagesAsync(appId);
         }
 
         [HttpGet]
-        public string GetPage(string appId, string pageId)
+        public async Task<string> GetPageAsync(string appId, string pageId)
         {
-            return _designAppService.GetPage(appId, pageId);
+            return await _designAppService.GetPageAsync(appId, pageId);
         }
 
         [HttpPost]
-        public void SavePage(PageSchema pageSchema)
+        public async Task SavePageAsync(PageSchema pageSchema)
         {
-            _designAppService.SavePage(pageSchema);
+            await _designAppService.SavePageAsync(pageSchema);
         }
     }
 }

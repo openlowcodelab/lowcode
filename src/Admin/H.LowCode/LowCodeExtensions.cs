@@ -1,8 +1,8 @@
 ﻿using H.LowCode.Admin;
-using H.LowCode.DesignEngine.ExtensionComponents;
-using H.LowCode.DesignEngine.DefaultComponents;
 using H.LowCode.DesignEngine;
-using H.LowCode.RenderEngine.AntBlazor;
+using H.LowCode.Parts.DefaultComponents;
+using H.LowCode.Parts.DefaultComponents.Render;
+using H.LowCode.Parts.ExtensionComponents;
 using H.LowCode.Theme.AntBlazorPro;
 using Microsoft.Extensions.DependencyInjection;
 

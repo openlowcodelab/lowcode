@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+	<Import Project="..\..\global.props" />
+	<Import Project="..\..\nuget.props" />
+
+	<PropertyGroup>
+		<RootNamespace>H.LowCode.Parts.DefaultComponents</RootNamespace>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<SupportedPlatform Include="browser" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="AntDesign" />
+		<PackageReference Include="H.Util.Blazor" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
+		<PackageReference Include="Volo.Abp.Core" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\DesignEngine\H.LowCode.DesignEngine.Abstraction\H.LowCode.DesignEngine.Abstraction.csproj" />
+		<ProjectReference Include="..\..\DesignEngine\H.LowCode.DesignEngine\H.LowCode.DesignEngine.csproj" />
+		<ProjectReference Include="..\..\Schema\H.LowCode.MetaSchema\H.LowCode.MetaSchema.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Update="Components\ButtonWrap.razor">
+			<ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+		</Content>
+	</ItemGroup>
+
+</Project>

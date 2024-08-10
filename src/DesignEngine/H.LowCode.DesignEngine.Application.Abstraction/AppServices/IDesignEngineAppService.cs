@@ -1,22 +1,24 @@
 ﻿using H.LowCode.Admin.DTO;
 using H.LowCode.MetaSchema;
 
-namespace H.LowCode.DesignEngine.Application.Abstraction.AppServices
+namespace H.LowCode.DesignEngine.Application.Abstraction
 {
     public interface IDesignEngineAppService
     {
-        IList<AppSchema> GetApps();
+        Task<IList<AppSchema>> GetAppsAsync();
 
-        void SaveApp(AppSchema app);
+        Task SaveAppAsync(AppSchema app);
 
-        IList<MenuSchema> GetMenus(string appId);
+        Task<MenuSchema> GetMenuAsync(string appId, string menuId);
 
-        void SaveMenu(MenuSchema menuSchema);
+        Task<IList<MenuSchema>> GetMenusAsync(string appId);
 
-        List<PageListModel> GetPages(string appId);
+        Task SaveMenuAsync(MenuSchema menuSchema);
 
-        string GetPage(string appId, string pageId);
+        Task<List<PageListModel>> GetPagesAsync(string appId);
 
-        void SavePage(PageSchema pageSchema);
+        Task<string> GetPageAsync(string appId, string pageId);
+
+        Task SavePageAsync(PageSchema pageSchema);
     }
 }

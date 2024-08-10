@@ -1,6 +1,6 @@
 ﻿using H.LowCode.MetaSchema;
 
-namespace H.LowCode.DesignEngine.Services
+namespace H.LowCode.DesignEngine
 {
     /// <summary>
     /// 拖拽状态服务

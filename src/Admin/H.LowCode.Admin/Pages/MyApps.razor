@@ -3,32 +3,52 @@
 @inject IHttpClientFactory HttpClientFactory
 @inject NavigationManager NavigationManager
 
-<div style="width:80%; margin:auto;">
+<div style="width:80%; overflow: hidden; margin:auto; padding: 10px;">
+    <div style="display: flex; justify-content: space-between; margin: 0 0 8px 5px;">
+        <div style="text-align: left; width:250px;">
+            <Search Placeholder="应用名称" OnSearch="()=>{}" />
+        </div>
+        <div style="text-align: right; width:80px; line-height:32px; margin-right:10px;">
+            <Button Type="@ButtonType.Primary" OnClick="@(()=>{ _visible = true; })">创建应用</Button>
+        </div>
+    </div>
+
     @if(_appSchemas != null){
         @foreach (var app in _appSchemas)
         {
-            <Card Title="@app.Name" Style="float:left; width:300px; margin:5px;">
-                <Extra>
-                    <a href="@($"/myapp/pagemanager/{app.Id}")" target="_blank">管理</a>
-                </Extra>
-                <Body>
-                    <p>@app.Description</p>
-                </Body>
+            <Card Style="float:left; width:300px; margin:5px;" Bordered Cover="coverTemplate">
+                <ChildContent>
+                    <CardMeta AvatarTemplate="@avatarTemplate" Title="@app.Name" Description="@app.Description" />
+                </ChildContent>
+                <ActionTemplate>
+                    <CardAction>
+                        <a href="@($"/myapp/pagemanager/{app.Id}")" title="开发" target="_blank"><Icon Type="desktop" /></a>
+                    </CardAction>
+                    <CardAction>
+                        <a href="@($"{app.Id}/index")" title="访问" target="_blank"><Icon Type="global" /></a>
+                    </CardAction>
+                    <CardAction>
+                        <a href="javascript:void(0);"><Icon Type="ellipsis" /></a>
+                    </CardAction>
+                    <CardAction>
+                        <a href="@($"/myapp/appsettings/{app.Id}")" title="设置" target="_blank"><Icon Type="setting" /></a>
+                    </CardAction>
+                </ActionTemplate>
             </Card>
         }
     }
-    <Card Bordered="true" Style="float:left; width:300px; margin:5px; height:142px;display: flex; align-items: center; justify-content: center;">
-        <a href="javascript:void(0)" onclick="@(()=>{ _visible = true; })">创建应用</a>
-    </Card>
 </div>
 
 <Modal Title="创建应用" @bind-Visible="@_visible" Width="1100" Footer="null">
-    <AppCreate CreateAppAction="Reload"></AppCreate>
+    <AppCreate CreateAppAction="ReloadApps"></AppCreate>
 </Modal>
 
 @code {
     private IList<AppSchema> _appSchemas = [];
     private bool _visible = false;
+
+    RenderFragment avatarTemplate = @<Avatar src="https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png"></Avatar>;
+    RenderFragment coverTemplate = @<img alt="example" src="https://gw.alipayobjects.com/zos/rmsportal/JiqGstEfoWAOHiTxclqi.png" />;
 
     protected override void OnInitialized()
     {
@@ -46,7 +66,7 @@
         StateHasChanged();
     }
 
-    private void Reload()
+    private void ReloadApps()
     {
         _visible = false;
         LoadApps();

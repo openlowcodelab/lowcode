@@ -1,8 +1,7 @@
-﻿using H.LowCode.RenderEngine.Html.PageRenders;
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
 using H.LowCode.MetaSchema;
 
-namespace H.LowCode.RenderEngine.Html.Renders
+namespace H.LowCode.RenderEngine.Html
 {
     public class HtmlRender : IRender
     {

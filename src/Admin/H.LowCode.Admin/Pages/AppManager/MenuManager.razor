@@ -14,7 +14,7 @@
     </div>
 </div>
 
-<Table @ref="@_table" TItem="MenuSchema" DataSource="@_menuList" Total="_total" OnChange="OnChange"
+<Table @ref="@_table" TItem="MenuSchema" DataSource="@_menuList" Total="_total" OnChange="OnChangeAsync"
        @bind-PageIndex="_pageIndex" @bind-PageSize="_pageSize" @bind-SelectedRows="selectedRows">
     <Selection Key="@(context.Id)" />
     <Column @bind-Field="@context.Id" Sortable />
@@ -24,16 +24,16 @@
     <ActionColumn Title="Acton">
          <Space Size=@("middle")>
              <SpaceItem>
-                 <a href="javascript:void(0)">Edit</a>
+                 <a onclick="()=>Edit(@context.Id)">Edit</a>
              </SpaceItem>
             <SpaceItem>
-                <a onclick="()=>Delete(@context.Id)">Delete</a>
+                <a onclick="()=>Delete(@context.Id)" style="color:#ff4d4f">Delete</a>
             </SpaceItem>
         </Space>
     </ActionColumn>
 </Table>
 
-<Modal Title="新建菜单" @bind-Visible="@_visible" OnOk="OnConfirm" OnCancel="OnCancel">
+<Modal Title="新建菜单" @bind-Visible="@_visible" OnOk="OnConfirmAsync" OnCancel="OnCancel">
     <Form Model="@_menuSchema" LabelColSpan="8" WrapperColSpan="16" OnFinish="OnFinish" @ref="@_form"
           ValidateMode="@FormValidateMode.Complex" ValidateOnChange="true">
         @* <FormItem Label="菜单标识" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
@@ -73,7 +73,7 @@
         _total = 5;
     }
 
-    public async Task OnChange(QueryModel<MenuSchema> queryModel)
+    public async Task OnChangeAsync(QueryModel<MenuSchema> queryModel)
     {
         await Task.Delay(100);
     }
@@ -87,22 +87,32 @@
         return result;
     }
 
-    private void CreateMenu()
+    private async Task<MenuSchema> GetMenuAsync(string id)
     {
+        var httpClient = HttpClientFactory.CreateClient();
+        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
 
+        var result = await httpClient.GetFromJsonAsync<MenuSchema>($"api/designengine/getmenu?appId={AppId}&menuId={id}");
+        return result;
     }
 
-    private void Delete(string pageCode)
+    private async Task EditAsync(string id)
     {
-
+        _menuSchema = await GetMenuAsync(id);
+        _visible = true;
     }
 
-    private async Task OnConfirm(MouseEventArgs e)
+    private async Task DeleteAsync(string id)
+    {
+        await Task.Delay(1);
+    }
+
+    private async Task OnConfirmAsync(MouseEventArgs e)
     {
         var validate = _form.Validate();
         if (validate)
         {
-            var result = await SaveMenuSchema();
+            var result = await SaveMenuSchemaAsync();
             if (result.StatusCode == HttpStatusCode.OK)
             {
                 _visible = false;
@@ -133,7 +143,7 @@
     }
 
 
-    private async Task<HttpResponseMessage> SaveMenuSchema()
+    private async Task<HttpResponseMessage> SaveMenuSchemaAsync()
     {
         if (_menuSchema.Id.IsNullOrEmpty())
             _menuSchema.Id = Guid.NewGuid().ToString();

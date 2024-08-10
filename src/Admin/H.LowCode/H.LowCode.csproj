@@ -3,7 +3,11 @@
 	<Import Project="..\..\global.props" />
 	<Import Project="..\..\nuget.props" />
 
-  <ItemGroup>
+	<PropertyGroup>
+		<RootNamespace>H.LowCode</RootNamespace>
+	</PropertyGroup>
+
+	<ItemGroup>
     <SupportedPlatform Include="browser" />
   </ItemGroup>
 
@@ -13,12 +17,12 @@
   </ItemGroup>
 
   <ItemGroup>
+	<ProjectReference Include="..\..\Parts\H.LowCode.Parts.DefaultComponents.Render\H.LowCode.Parts.DefaultComponents.Render.csproj" />
+	<ProjectReference Include="..\..\Parts\H.LowCode.Parts.DefaultComponents\H.LowCode.Parts.DefaultComponents.csproj" />
+	<ProjectReference Include="..\..\Parts\H.LowCode.Parts.ExtensionComponents\H.LowCode.Parts.ExtensionComponents.csproj" />
 	<ProjectReference Include="..\H.LowCode.Admin\H.LowCode.Admin.csproj" />
 	<ProjectReference Include="..\..\DesignEngine\H.LowCode.DesignEngine\H.LowCode.DesignEngine.csproj" />
-	<ProjectReference Include="..\..\DesignEngine\H.LowCode.DesignEngine.ExtensionComponents\H.LowCode.DesignEngine.ExtensionComponents.csproj" />
-	<ProjectReference Include="..\..\DesignEngine\H.LowCode.DesignEngine.DefaultComponents\H.LowCode.DesignEngine.DefaultComponents.csproj" />
 	<ProjectReference Include="..\..\RenderEngine\H.LowCode.RenderEngine\H.LowCode.RenderEngine.csproj" />
-	<ProjectReference Include="..\..\RenderEngine\H.LowCode.RenderEngine.AntBlazor\H.LowCode.RenderEngine.AntBlazor.csproj" />
 	<ProjectReference Include="..\..\Theme\H.LowCode.Theme.AntBlazorPro\H.LowCode.Theme.AntBlazorPro.csproj" />
   </ItemGroup>
 	

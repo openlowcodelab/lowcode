@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Components.Rendering;
 using H.LowCode.MetaSchema;
 
-namespace H.LowCode.RenderEngine.Html.BasicComponent
+namespace H.LowCode.RenderEngine.Html
 {
     internal class MultiSelectRender : ComponentRenderBase
     {

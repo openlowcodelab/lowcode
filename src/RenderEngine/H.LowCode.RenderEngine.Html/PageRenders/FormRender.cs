@@ -1,8 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components;
 using H.LowCode.MetaSchema;
-using H.LowCode.RenderEngine.Html.Renders;
 
-namespace H.LowCode.RenderEngine.Html.PageRenders
+namespace H.LowCode.RenderEngine.Html
 {
     internal class FormRender : HtmlRender
     {

@@ -1,5 +1,4 @@
-﻿using H.LowCode.DesignEngine.Application.Abstraction.AppServices;
-using H.LowCode.DesignEngine.Application.AppServices;
+﻿using H.LowCode.DesignEngine.Application.Abstraction;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Modularity;
 
