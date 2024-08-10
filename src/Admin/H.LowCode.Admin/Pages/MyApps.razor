@@ -16,7 +16,7 @@
     @if(_appSchemas != null){
         @foreach (var app in _appSchemas)
         {
-            <Card Style="float:left; width:300px; margin:5px;" Bordered>
+            <Card Class="myapps" Style="float:left; width:300px; margin:5px;" Bordered>
                 <ChildContent>
                     <CardMeta AvatarTemplate="@avatarTemplate" Title="@app.Name" Description="@app.Description" />
                 </ChildContent>
@@ -28,7 +28,7 @@
                         <a href="@($"{app.Id}/index")" title="访问" target="_blank"><Icon Type="global" /></a>
                     </CardAction>
                     <CardAction>
-                        <a href="javascript:void(0);"><Icon Type="ellipsis" /></a>
+                        <a href="javascript:void(0);"><Icon Type="question-circle" /></a>
                     </CardAction>
                     <CardAction>
                         <a href="@($"/myapp/appsettings/{app.Id}")" title="设置" target="_blank"><Icon Type="setting" /></a>
@@ -47,7 +47,7 @@
     private IList<AppSchema> _appSchemas = [];
     private bool _visible = false;
 
-    RenderFragment avatarTemplate = @<Avatar src="https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png"></Avatar>;
+    RenderFragment avatarTemplate = @<Avatar Icon="appstore"></Avatar>;
     
     protected override void OnInitialized()
     {
