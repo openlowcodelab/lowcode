@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
 	<Import Project="..\..\global.props" />
-	<Import Project="..\..\nuget.props" />
+	<Import Project="..\..\nuget.publish.props" />
 
 	<PropertyGroup>
 		<RootNamespace>H.LowCode</RootNamespace>
@@ -17,13 +17,14 @@
   </ItemGroup>
 
   <ItemGroup>
-	<ProjectReference Include="..\..\Parts\H.LowCode.Parts.DefaultComponents.Render\H.LowCode.Parts.DefaultComponents.Render.csproj" />
-	<ProjectReference Include="..\..\Parts\H.LowCode.Parts.DefaultComponents\H.LowCode.Parts.DefaultComponents.csproj" />
-	<ProjectReference Include="..\..\Parts\H.LowCode.Parts.ExtensionComponents\H.LowCode.Parts.ExtensionComponents.csproj" />
+	<ProjectReference Include="..\..\DesignEngine\H.LowCode.DesignEngine.Admin\H.LowCode.DesignEngine.Admin.csproj" />
+	<ProjectReference Include="..\..\Parts\H.LowCode.ComponentParts.BasicComponents.Render\H.LowCode.ComponentParts.BasicComponents.Render.csproj" />
+	<ProjectReference Include="..\..\Parts\H.LowCode.ComponentParts.BasicComponents\H.LowCode.ComponentParts.BasicComponents.csproj" />
+	<ProjectReference Include="..\..\Parts\H.LowCode.ComponentParts.ExtensionComponents\H.LowCode.ComponentParts.ExtensionComponents.csproj" />
 	<ProjectReference Include="..\H.LowCode.Admin\H.LowCode.Admin.csproj" />
 	<ProjectReference Include="..\..\DesignEngine\H.LowCode.DesignEngine\H.LowCode.DesignEngine.csproj" />
 	<ProjectReference Include="..\..\RenderEngine\H.LowCode.RenderEngine\H.LowCode.RenderEngine.csproj" />
-	<ProjectReference Include="..\..\Theme\H.LowCode.Theme.AntBlazorPro\H.LowCode.Theme.AntBlazorPro.csproj" />
+	<ProjectReference Include="..\..\Parts\H.LowCode.ThemeParts.AntBlazor\H.LowCode.ThemeParts.AntBlazor.csproj" />
   </ItemGroup>
 	
 </Project>

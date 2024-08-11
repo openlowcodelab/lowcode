@@ -9,8 +9,9 @@ namespace H.LowCode
         public static readonly Assembly[] AdditionalAssemblies =
             [
                 typeof(Admin._Imports).Assembly,
-                typeof(Theme.AntBlazorPro._Imports).Assembly,
-                typeof(DesignEngine._Imports).Assembly
+                typeof(DesignEngine._Imports).Assembly,
+                typeof(DesignEngine.Admin._Imports).Assembly,
+                typeof(ThemeParts.AntBlazor._Imports).Assembly
             ];
     }
 }

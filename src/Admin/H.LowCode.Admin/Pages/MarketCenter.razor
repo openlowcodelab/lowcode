@@ -1,0 +1,44 @@
+﻿@page "/admin/marketcenter"
+
+<style>
+    .center-div {
+        width: 80%;
+        margin: auto;
+    }
+</style>
+
+<Carousel Class="center-div">
+    <CarouselSlick>
+        <h3>1</h3>
+    </CarouselSlick>
+    <CarouselSlick>
+        <h3>2</h3>
+    </CarouselSlick>
+    <CarouselSlick>
+        <h3>3</h3>
+    </CarouselSlick>
+    <CarouselSlick>
+        <h3>4</h3>
+    </CarouselSlick>
+</Carousel>
+<Tabs DefaultActiveKey="tab_market_app" Class="center-div" Centered Animated>
+    <TabPane Tab="应用模板" Key="tab_market_app">
+        <AppTemplates></AppTemplates>
+    </TabPane>
+    <TabPane Tab="组件库" Key="tab_market_complib">
+        自定义组件库
+    </TabPane>
+    <TabPane Tab="主题模板" Key="tab_market_theme">
+        主题模板
+    </TabPane>
+    <TabPane Tab="插件" Key="tab_market_plugin">
+        <Card Title="电子签章" Style="float:left; width:300px; margin:5px;">
+            <Extra>
+                <a href="#">查看</a>
+            </Extra>
+            <Body>
+                <p>Card content</p>
+            </Body>
+        </Card>
+    </TabPane>
+</Tabs>

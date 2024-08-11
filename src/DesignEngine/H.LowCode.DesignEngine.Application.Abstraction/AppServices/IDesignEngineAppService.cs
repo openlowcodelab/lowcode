@@ -1,4 +1,4 @@
-﻿using H.LowCode.Admin.DTO;
+﻿using H.LowCode.DesignEngine.Model;
 using H.LowCode.MetaSchema;
 
 namespace H.LowCode.DesignEngine.Application.Abstraction

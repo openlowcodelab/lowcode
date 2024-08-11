@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+	<Import Project="..\..\global.props" />
+	<Import Project="..\..\nuget.publish.props" />
+
+	<PropertyGroup>
+		<RootNamespace>H.LowCode.DesignEngine.Admin</RootNamespace>
+	</PropertyGroup>
+
+	<ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+	<ItemGroup>
+	<PackageReference Include="H.Util.Blazor" />
+	<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
+	<PackageReference Include="AntDesign.ProLayout" />
+	<PackageReference Include="Microsoft.Extensions.Http" />
+	<PackageReference Include="System.Net.Http.Json" />
+	<PackageReference Include="Volo.Abp.Core" />
+    <PackageReference Include="H.Extensions.System" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Schema\H.LowCode.MetaSchema\H.LowCode.MetaSchema.csproj" />
+    <ProjectReference Include="..\H.LowCode.DesignEngine.Model\H.LowCode.DesignEngine.Model.csproj" />
+  </ItemGroup>
+
+</Project>

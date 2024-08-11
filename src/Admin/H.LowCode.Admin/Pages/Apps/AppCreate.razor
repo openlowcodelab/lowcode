@@ -9,12 +9,12 @@
     </Card>
     <br/>
     <h3>从模板创建</h3>
-    <PopularAppTemplates></PopularAppTemplates>
+    <AppPopularTemplates></AppPopularTemplates>
 </div>
 
-<Modal Title="创建应用" @bind-Visible="@_visible" OnOk="OnConfirm" OnCancel="OnCancel">
+<Modal Title="创建应用" @bind-Visible="@_visible" OnOk="OnConfirm">
     <Form Model="@_appSchema" LabelColSpan="8" WrapperColSpan="16" OnFinish="OnFinish" @ref="@_form"
-          ValidateMode="@FormValidateMode.Complex" ValidateOnChange="true">
+          ValidateMode="@FormValidateMode.Rules" ValidateOnChange="true">
         <FormItem Label="应用标识" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
             <Input @bind-Value="@context.Id" />
         </FormItem>
@@ -62,11 +62,6 @@
         {
             _visible = true;
         }
-    }
-
-    private void OnCancel(MouseEventArgs e)
-    {
-        Console.WriteLine(e);
     }
 
     private void OnFinish()

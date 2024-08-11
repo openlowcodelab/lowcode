@@ -1,0 +1,66 @@
+﻿@* 
+* 基于语雀编辑器：
+* https://www.yuque.com/yuque/developer/gfoax065u2v72isu
+*@
+
+@inject IJSRuntime JSRuntime
+
+<link rel="stylesheet" type="text/css" href="_content/H.LowCode.ComponentParts.ExtensionComponents/LakexEditor-1.24.0/doc.css" />
+<link rel="stylesheet" type="text/css" href="_content/H.LowCode.ComponentParts.ExtensionComponents/antd-4.24.13/antd.css" />
+
+<div id="@_component.Id" class="ne-doc-major-editor" style="height: 100%"></div>
+
+@code {
+    [Parameter]
+    public ComponentSchema Component { get; set; }
+
+    /// <summary>
+    /// 保存初始的 Component，避免跟随 Component 变化
+    /// </summary>
+    private ComponentSchema _component;
+
+    private Lazy<Task<IJSObjectReference>> moduleTask;
+
+    #region Init
+    protected override void OnInitialized()
+    {
+        Init();
+        base.OnInitialized();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadJSModule();
+        }
+    }
+
+    protected override bool ShouldRender()
+    {
+        return false;
+    }
+
+    private void Init()
+    {
+        if (_component == null)
+            _component = Component.CopyNew();
+    }
+
+    private async Task LoadJSModule()
+    {
+        // await JSRuntime.InvokeAsync<IJSObjectReference>("import",
+        //    "./_content/H.LowCode.ComponentParts.ExtensionComponents/react-18/react.production.min.js");
+        // await JSRuntime.InvokeAsync<IJSObjectReference>("import",
+        //    "./_content/H.LowCode.ComponentParts.ExtensionComponents/react-18/react-dom.production.min.js");
+        // await JSRuntime.InvokeAsync<IJSObjectReference>("import",
+        //    "./_content/H.LowCode.ComponentParts.ExtensionComponents/LakexEditor-1.24.0/doc.umd.js");
+
+        moduleTask = new(() => JSRuntime.InvokeAsync<IJSObjectReference>("import",
+                "./_content/H.LowCode.ComponentParts.ExtensionComponents/LakexEditor-1.24.0/LakexEditor.js").AsTask());
+
+        var module = await moduleTask.Value;
+        await module.InvokeVoidAsync("initLakexEditor", _component.Id);
+    }
+    #endregion
+}

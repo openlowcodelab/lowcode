@@ -26,7 +26,7 @@ namespace H.LowCode.MetaSchema
         public PublishStateEnum PublishState { get; set; }
 
         [JsonPropertyName("platform")]
-        public SupportPlatformEnum[] SupportPlatforms { get; set; }
+        public SupportPlatformEnum[] SupportPlatforms { get; set; } = [0];
     }
 
     public enum PublishStateEnum

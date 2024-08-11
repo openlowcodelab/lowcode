@@ -1,0 +1,68 @@
+﻿@page "/myapp/pagemanager/{AppId}"
+
+@layout DesignEngineAdminLayout
+@inject IHttpClientFactory HttpClientFactory
+@inject NavigationManager NavigationManager
+
+<div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
+    <div style="text-align: left; width:250px;">
+        <Search Placeholder="页面名称" OnSearch="()=>{}" />
+    </div>
+    <div style="text-align: right; width:80px; line-height:32px;">
+        <a href="@($"/designer/{AppId}/newpage")" target="_blank" style="background: #1890ff; color: #fff; padding: 7px; border-radius: 2px;">新建页面</a>
+    </div>
+</div>
+
+<Table TItem="PageListModel" DataSource="@_pageListModels" PageSize="15" PageIndex="1" Total="_total" OnChange="OnChange"
+       @bind-SelectedRows="selectedRows" Style="height:100%;">
+    <Selection Key="@(context.PageId)" />
+    <Column @bind-Field="@context.PageId" />
+    <Column @bind-Field="@context.PageName" Sortable />
+    <Column @bind-Field="@context.PageState" Sortable />
+    <Column @bind-Field="@context.ModifiedTime" Format="yyyy-MM-dd HH:mm:ss" />
+    <ActionColumn Title="Acton">
+         <Space Size=@("middle")>
+             <SpaceItem>
+                <a href="@($"/designer/{AppId}/{context.PageId}")" target="_blank">Design</a>
+             </SpaceItem>
+            <SpaceItem>
+                <a onclick="@(()=>DeletePage(@context.PageId))" style="color:#ff4d4f">Delete</a>
+            </SpaceItem>
+        </Space>
+    </ActionColumn>
+</Table>
+
+@code {
+    [Parameter]
+    public string AppId { get; set; }
+
+    private List<PageListModel> _pageListModels;
+    IEnumerable<PageListModel> selectedRows;
+
+    int _total = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _pageListModels = await GetPageListAsync(1, 50);
+        _total = 50;
+    }
+
+    private async Task OnChange(QueryModel<PageListModel> queryModel)
+    {
+        await Task.Delay(100);
+    }
+
+    private async Task<List<PageListModel>> GetPageListAsync(int pageIndex, int pageSize)
+    {
+        var httpClient = HttpClientFactory.CreateClient();
+        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+
+        var result = await httpClient.GetFromJsonAsync<List<PageListModel>>($"api/designengine/getpages?appId={AppId}");
+        return result;
+    }
+
+    private void DeletePage(string pageCode)
+    {
+        
+    }
+}
