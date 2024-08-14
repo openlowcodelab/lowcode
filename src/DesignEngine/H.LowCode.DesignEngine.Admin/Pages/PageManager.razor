@@ -20,13 +20,13 @@
     <Column @bind-Field="@context.PageName" Sortable />
     <Column @bind-Field="@context.PageState" Sortable />
     <Column @bind-Field="@context.ModifiedTime" Format="yyyy-MM-dd HH:mm:ss" />
-    <ActionColumn Title="Acton">
+    <ActionColumn Title="操作">
          <Space Size=@("middle")>
              <SpaceItem>
-                <a href="@($"/designer/{AppId}/{context.PageId}")" target="_blank">Design</a>
+                <a href="@($"/designer/{AppId}/{context.PageId}")" target="_blank">设计</a>
              </SpaceItem>
             <SpaceItem>
-                <a onclick="@(()=>DeletePage(@context.PageId))" style="color:#ff4d4f">Delete</a>
+                <a onclick="@(()=>DeleteAsync(@context.PageId))" style="color:#ff4d4f">删除</a>
             </SpaceItem>
         </Space>
     </ActionColumn>
@@ -61,7 +61,7 @@
         return result;
     }
 
-    private void DeletePage(string pageCode)
+    private void DeleteAsync(string pageId)
     {
         
     }

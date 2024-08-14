@@ -1,0 +1,161 @@
+﻿@page "/myapp/datasource/{AppId}"
+
+@layout DesignEngineAdminLayout
+
+<Tabs DefaultActiveKey="tab_datasource_table" Animated>
+    <TabPane Tab="数据表" Key="tab_datasource_table">
+        <div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
+            <div style="text-align: left; width:250px;">
+                <Search Placeholder="表名、表中文名" OnSearch="()=>{}" />
+            </div>
+            <div style="text-align: right; width:80px; line-height:32px; margin: 0 22px 0 0;">
+                <Button Type="@ButtonType.Primary" OnClick="CreateTableAsync">新建数据表</Button>
+            </div>
+        </div>
+        <Table TItem="DataSourceSchema" DataSource="@_dataSourceTables" Total="_total"
+               @bind-PageIndex="@_pageIndex" @bind-PageSize="@_pageSize">
+            <Column Title="表名" @bind-Field="@context.Key" Sortable />
+            <Column Title="表中文名" @bind-Field="@context.Name" Sortable />
+            <Column Title="修改人" @bind-Field="@context.ModifiedUser" />
+            <Column Title="修改时间" @bind-Field="@context.ModifiedTime" Format="yyyy-MM-dd HH:mm:ss" />
+            <Column Title="发布状态" @bind-Field="@context.PublishStatus" />
+            <ActionColumn Title="操作">
+                <Space Size=@("middle")>
+                    <SpaceItem>
+                        <a onclick="@(()=>EditTableAsync(@context))">编辑</a>
+                    </SpaceItem>
+                    <SpaceItem>
+                        <a onclick="@(()=>DeleteAsync(@context.Id))" style="color:#ff4d4f">删除</a>
+                    </SpaceItem>
+                    <SpaceItem>
+                        <a onclick="@(()=>PublishAsync(@context.Id))" style="color:green">发布</a>
+                    </SpaceItem>
+                </Space>
+            </ActionColumn>
+        </Table>
+    </TabPane>
+
+    <TabPane Tab="API" Key="tab_datasource_api">
+        <div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
+            <div style="text-align: left; width:250px;">
+                <Search Placeholder="表名、表中文名" OnSearch="()=>{}" />
+            </div>
+            <div style="text-align: right; width:80px; line-height:32px;">
+                <Button Type="@ButtonType.Primary" OnClick="CreateAPIAsync">新建API</Button>
+            </div>
+        </div>
+        <Table TItem="DataSourceSchema" DataSource="@_dataSourceAPIs" Total="_total"
+               @bind-PageIndex="@_pageIndex" @bind-PageSize="@_pageSize">
+            <Column Title="API 标识" @bind-Field="@context.Key" Sortable />
+            <Column Title="API 中文名" @bind-Field="@context.Name" Sortable />
+            <Column Title="修改人" @bind-Field="@context.ModifiedUser" />
+            <Column Title="修改时间" @bind-Field="@context.ModifiedTime" Format="yyyy-MM-dd HH:mm:ss" />
+            <Column Title="发布状态" @bind-Field="@context.PublishStatus" />
+            <ActionColumn Title="操作">
+                <Space Size=@("middle")>
+                    <SpaceItem>
+                        <a onclick="@(()=>EditAPIAsync(@context))">编辑</a>
+                    </SpaceItem>
+                    <SpaceItem>
+                        <a onclick="@(()=>DeleteAsync(@context.Id))" style="color:#ff4d4f">删除</a>
+                    </SpaceItem>
+                    <SpaceItem>
+                        <a onclick="@(()=>PublishAsync(@context.Id))" style="color:green">发布</a>
+                    </SpaceItem>
+                </Space>
+            </ActionColumn>
+        </Table>
+    </TabPane>
+</Tabs>
+
+<Modal Title="@_modalTitle" @bind-Visible="@_visible" Width="1100">
+    @if (_currentDataSource != null)
+    {
+        if (_currentDataSource.DataSourceType == DataSourceEnum.Default)
+        {
+            <DataSourceTable DataSource="@_currentDataSource"></DataSourceTable>
+        }
+        else if (_currentDataSource.DataSourceType == DataSourceEnum.API)
+        {
+            <DataSourceAPI DataSource="@_currentDataSource"></DataSourceAPI>
+        }
+    }
+</Modal>
+
+@code {
+    [Parameter]
+    public string AppId { get; set; }
+
+    int _pageIndex = 1;
+    int _pageSize = 10;
+    int _total = 0;
+
+    private IEnumerable<DataSourceSchema> _dataSourceTables =
+    [
+        new (){ Key = "table1", Name="数据表1", DataSourceType = DataSourceEnum.Default,
+        DataSourceTableFields =
+        [
+          new(){ FieldKey = "field1", FieldName="字段1", FieldType = "varchar(50)" },
+          new(){ FieldKey = "field2", FieldName="字段2", FieldType = "varchar(50)" },
+          new(){ FieldKey = "field3", FieldName="字段3", FieldType = "varchar(50)" }
+        ] },
+    new (){ Key = "table2", Name="数据表2", DataSourceType = DataSourceEnum.Default }
+    ];
+
+    private IEnumerable<DataSourceSchema> _dataSourceAPIs = 
+    [
+        new (){ Key = "api1", Name="API1", DataSourceType = DataSourceEnum.API },
+    new (){ Key = "api2", Name="API2", DataSourceType = DataSourceEnum.API }
+    ];
+
+    private DataSourceSchema _currentDataSource;
+
+    private bool _visible;
+    private string _modalTitle;
+
+    private async Task CreateTableAsync()
+    {
+        await Task.Delay(1);
+        _currentDataSource = new();
+        _visible = true;
+        _modalTitle = "新建数据表";
+        StateHasChanged();
+    }
+
+    private async Task EditTableAsync(DataSourceSchema dataSource)
+    {
+        await Task.Delay(1);
+        _currentDataSource = dataSource;
+        _visible = true;
+        _modalTitle = "编辑数据表";
+        StateHasChanged();
+    }
+
+    private async Task CreateAPIAsync()
+    {
+        await Task.Delay(1);
+        _currentDataSource = new();
+        _visible = true;
+        _modalTitle = "新建 API";
+        StateHasChanged();
+    }
+
+    private async Task EditAPIAsync(DataSourceSchema dataSource)
+    {
+        await Task.Delay(1);
+        _currentDataSource = dataSource;
+        _visible = true;
+        _modalTitle = "编辑 API";
+        StateHasChanged();
+    }
+
+    private async Task DeleteAsync(string id)
+    {
+        await Task.Delay(1);
+    }
+
+    private async Task PublishAsync(string id)
+    {
+        await Task.Delay(1);
+    }
+}

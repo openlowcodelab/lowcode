@@ -9,7 +9,7 @@
     <div style="text-align: left; width:250px;">
         <Search Placeholder="菜单名称" OnSearch="()=>{}" />
     </div>
-    <div style="text-align: right; width:80px; line-height:32px;">
+    <div style="text-align: right; width:80px; line-height:32px; margin: 0 8px 0 0;">
         <Button Type="@ButtonType.Primary" OnClick="@(()=>{ _visible = true; })">新建菜单</Button>
     </div>
 </div>
@@ -17,17 +17,17 @@
 <Table @ref="@_table" TItem="MenuSchema" DataSource="@_menuList" Total="_total" OnChange="OnChangeAsync"
        @bind-PageIndex="_pageIndex" @bind-PageSize="_pageSize" @bind-SelectedRows="selectedRows">
     <Selection Key="@(context.Id)" />
-    <Column @bind-Field="@context.Id" Sortable />
-    <Column @bind-Field="@context.Title" Format="yyyy-MM-dd" Sortable />
-    <Column @bind-Field="@context.Icon" />
-    <Column @bind-Field="@context.MenuUrl" />
-    <ActionColumn Title="Acton">
+    <Column Title="菜单Id" @bind-Field="@context.Id" Sortable />
+    <Column Title="菜单名称" @bind-Field="@context.Title" Format="yyyy-MM-dd" Sortable />
+    <Column Title="菜单图标" @bind-Field="@context.Icon" />
+    <Column Title="菜单Url" @bind-Field="@context.MenuUrl" />
+    <ActionColumn Title="操作">
          <Space Size=@("middle")>
              <SpaceItem>
-                 <a onclick="()=>Edit(@context.Id)">Edit</a>
+                 <a onclick="@(()=>EditAsync(@context.Id))">编辑</a>
              </SpaceItem>
             <SpaceItem>
-                <a onclick="()=>Delete(@context.Id)" style="color:#ff4d4f">Delete</a>
+                <a onclick="@(()=>DeleteAsync(@context.Id))" style="color:#ff4d4f">删除</a>
             </SpaceItem>
         </Space>
     </ActionColumn>

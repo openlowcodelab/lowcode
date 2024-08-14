@@ -1,16 +1,16 @@
 ﻿@inherits LayoutComponentBase
 
-<AntDesign.ProLayout.BasicLayout Logo="@("logo.png")" Title="@AppId" MenuData="_menuData"
-    Layout="AntDesign.ProLayout.Layout.Mix">
+<link href="_content/H.LowCode.DesignEngine.Admin/designengineadmin.css" rel="stylesheet" />
+
+<AntDesign.ProLayout.BasicLayout Class="designengineadmin" Logo="@("logo.png")" Title="@AppId" MenuData="_menuData"
+    Layout="AntDesign.ProLayout.Layout.Side">
     <RightContentRender>
         RightContent
     </RightContentRender>
     <ChildContent>
         @Body
     </ChildContent>
-    <FooterRender>
-        <FooterView Copyright="@(DateTime.Now.Year + " H.LowCode")" Links="Links"></FooterView>
-    </FooterRender>
+    <FooterRender></FooterRender>
 </AntDesign.ProLayout.BasicLayout>
 <SettingDrawer />
 
@@ -86,15 +86,4 @@
             }
         ];
     }
-
-    public LinkItem[] Links { get; set; } =
-    {
-        new LinkItem
-        {
-            Key = "H.LowCode",
-            Title = "H.LowCode",
-            Href = "/",
-            BlankTarget = true,
-        }
-    };
 }
