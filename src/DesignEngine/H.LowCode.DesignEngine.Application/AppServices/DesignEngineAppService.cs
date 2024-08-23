@@ -23,6 +23,9 @@ namespace H.LowCode.DesignEngine.Application
             await Task.Delay(1);
             List<AppSchema> appSchemas = [];
 
+            if (Directory.Exists(baseDir) == false)
+                return appSchemas;
+
             var directories = Directory.GetDirectories(baseDir);
             foreach (var directory in directories)
             {
