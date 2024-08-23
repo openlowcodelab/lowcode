@@ -1,5 +1,6 @@
 ﻿@page "/admin/myapps"
 
+@layout ProAdminLayout
 @inject IHttpClientFactory HttpClientFactory
 @inject NavigationManager NavigationManager
 
@@ -49,26 +50,25 @@
 
     RenderFragment avatarTemplate = @<Avatar Icon="appstore"></Avatar>;
     
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         base.OnInitialized();
 
-        LoadApps();
+        await LoadAppsAsync();
     }
 
-    private async void LoadApps()
+    private async Task LoadAppsAsync()
     {
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
 
         _appSchemas = await httpClient.GetFromJsonAsync<IList<AppSchema>>($"api/designengine/getapps");
-        StateHasChanged();
     }
 
-    private void ReloadApps()
+    private async void ReloadApps()
     {
         _visible = false;
-        LoadApps();
+        await LoadAppsAsync();
         StateHasChanged();
     }
 }
