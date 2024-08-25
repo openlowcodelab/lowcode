@@ -1,11 +1,17 @@
-﻿<Descriptions Style="margin: 0 0 8px 0;">
-    <DescriptionsItem Title="Key"><Input @bind-Value="@DataSource.Key" Disabled="@(!DataSource.Key.IsNullOrEmpty())"></DescriptionsItem>
-    <DescriptionsItem Title="Name"><Input @bind-Value="@DataSource.Name"></Input></DescriptionsItem>
-    <DescriptionsItem Title="ModifiedUser"><Input @bind-Value="@DataSource.ModifiedUser" Disabled></DescriptionsItem>
-    <DescriptionsItem Title="ModifiedTime"><Input @bind-Value="@DataSource.ModifiedTime" Disabled></DescriptionsItem>
-    <DescriptionsItem Title="PublishStatus"><Input @bind-Value="@DataSource.PublishStatus" Disabled></DescriptionsItem>
+﻿@* 数据表基本信息 *@
+<Descriptions Style="margin: 0 0 8px 0;" Bordered>
+    <DescriptionsItem Title="表名">
+        <Input @bind-Value="@DataSource.Key" Disabled="@(!DataSource.Key.IsNullOrEmpty())">
+    </DescriptionsItem>
+    <DescriptionsItem Title="表中文名" Span="2">
+        <Input @bind-Value="@DataSource.Name"></Input>
+    </DescriptionsItem>
+    <DescriptionsItem Title="描述" Span="3">
+        <TextArea @bind-Value="@DataSource.Description" Rows="2"></TextArea>
+    </DescriptionsItem>
 </Descriptions>
 
+@* 字段列表 *@
 <div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
     <div style="text-align: left; width:250px;">
         <Search Placeholder="表名、表中文名" OnSearch="()=>{}" />

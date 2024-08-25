@@ -3,6 +3,7 @@
 @layout ProAdminLayout
 @inject IHttpClientFactory HttpClientFactory
 @inject NavigationManager NavigationManager
+@inject ComponentStateWrapper<IList<AppSchema>> State
 
 <div style="width:80%; overflow: hidden; margin:auto; padding: 10px;">
     <div style="display: flex; justify-content: space-between; margin: 0 0 8px 5px;">
@@ -14,8 +15,9 @@
         </div>
     </div>
 
-    @if(_appSchemas != null){
-        @foreach (var app in _appSchemas)
+    @if (State.Value != null)
+    {
+        @foreach (var app in State.Value)
         {
             <Card Class="myapps" Style="float:left; width:300px; margin:5px;" Bordered>
                 <ChildContent>
@@ -23,7 +25,7 @@
                 </ChildContent>
                 <ActionTemplate>
                     <CardAction>
-                        <a href="@($"/myapp/pagemanager/{app.Id}")" title="开发应用" target="_blank"><Icon Type="desktop" /></a>
+                        <a href="@($"/myapp/{app.Id}/pagemanager")" title="开发应用" target="_blank"><Icon Type="desktop" /></a>
                     </CardAction>
                     <CardAction>
                         <a href="@($"{app.Id}/index")" title="访问应用" target="_blank"><Icon Type="global" /></a>
@@ -32,7 +34,7 @@
                         <a href="javascript:void(0);"><Icon Type="question-circle" /></a>
                     </CardAction>
                     <CardAction>
-                        <a href="@($"/myapp/appsettings/{app.Id}")" title="应用设置" target="_blank"><Icon Type="setting" /></a>
+                        <a href="@($"/myapp/{app.Id}/appsettings")" title="应用设置" target="_blank"><Icon Type="setting" /></a>
                     </CardAction>
                 </ActionTemplate>
             </Card>
@@ -45,24 +47,28 @@
 </Modal>
 
 @code {
-    private IList<AppSchema> _appSchemas = [];
+    //private IList<AppSchema> _appSchemas = [];
     private bool _visible = false;
 
     RenderFragment avatarTemplate = @<Avatar Icon="appstore"></Avatar>;
-    
+
     protected override async Task OnInitializedAsync()
     {
-        base.OnInitialized();
+        if (State.Value is null)
+        {
+            State.Value = await LoadAppsAsync();
 
-        await LoadAppsAsync();
+            await base.OnInitializedAsync();
+        }
     }
 
-    private async Task LoadAppsAsync()
+    private async Task<IList<AppSchema>> LoadAppsAsync()
     {
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
 
-        _appSchemas = await httpClient.GetFromJsonAsync<IList<AppSchema>>($"api/designengine/getapps");
+        var result = await httpClient.GetFromJsonAsync<IList<AppSchema>>($"api/designengine/getapps");
+        return result;
     }
 
     private async void ReloadApps()

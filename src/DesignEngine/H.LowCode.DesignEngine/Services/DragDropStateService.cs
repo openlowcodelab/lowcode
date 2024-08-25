@@ -24,6 +24,19 @@ namespace H.LowCode.DesignEngine
             });
         }
 
+        public PageSchema GetPage(string appId, string pageId)
+        {
+            var stateSchema = GetStateSchema(appId, pageId);
+            return stateSchema?.Page;
+        }
+
+        public void SetPage(string appId, PageSchema page)
+        {
+            SetStateSchema(appId, page.Id, (stateSchema) => {
+                stateSchema.Page = page;
+            });
+        }
+
         public PagePropertySchema GetGlobalPageProperty(string appId, string pageId)
         {
             var stateSchema = GetStateSchema(appId, pageId);
@@ -193,6 +206,8 @@ namespace H.LowCode.DesignEngine
         /// 根 ComponentSchema
         /// </summary>
         public ComponentSchema RootComponent { get; set; }
+
+        public PageSchema Page { get; set; }
 
         public PagePropertySchema GlobalPageProperty { get; set; } = new PagePropertySchema();
 

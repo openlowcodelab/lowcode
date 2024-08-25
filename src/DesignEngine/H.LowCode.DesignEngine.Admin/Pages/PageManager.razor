@@ -1,8 +1,9 @@
-﻿@page "/myapp/pagemanager/{AppId}"
+﻿@page "/myapp/{AppId}/pagemanager"
 
 @layout DesignEngineAdminLayout
 @inject IHttpClientFactory HttpClientFactory
 @inject NavigationManager NavigationManager
+@inject ComponentStateWrapper<IList<PageListModel>> State
 
 <div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
     <div style="text-align: left; width:250px;">
@@ -13,7 +14,7 @@
     </div>
 </div>
 
-<Table TItem="PageListModel" DataSource="@_pageListModels" PageSize="15" PageIndex="1" Total="_total" OnChange="OnChange"
+<Table TItem="PageListModel" DataSource="@State.Value" PageSize="15" PageIndex="1" Total="_total" OnChange="OnChange"
        @bind-SelectedRows="selectedRows" Style="height:100%;">
     <Selection Key="@(context.PageId)" />
     <Column @bind-Field="@context.PageId" />
@@ -36,15 +37,21 @@
     [Parameter]
     public string AppId { get; set; }
 
-    private List<PageListModel> _pageListModels;
+    //private IList<PageListModel> _pageListModels;
     IEnumerable<PageListModel> selectedRows;
 
     int _total = 0;
 
     protected override async Task OnInitializedAsync()
     {
-        _pageListModels = await GetPageListAsync(1, 50);
-        _total = 50;
+        if (State.Value is null)
+        {
+            State.Value = await LoadPagesAsync(1, 50);
+
+            _total = 50;
+
+            await base.OnInitializedAsync();
+        }
     }
 
     private async Task OnChange(QueryModel<PageListModel> queryModel)
@@ -52,7 +59,7 @@
         await Task.Delay(100);
     }
 
-    private async Task<List<PageListModel>> GetPageListAsync(int pageIndex, int pageSize)
+    private async Task<IList<PageListModel>> LoadPagesAsync(int pageIndex, int pageSize)
     {
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);

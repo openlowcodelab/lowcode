@@ -16,13 +16,13 @@ namespace H.LowCode.MetaSchema
         public PageTypeEnum PageType { get; set; }
 
         [JsonPropertyName("comps")]
-        public IList<ComponentSchema> Components { get; set; }
+        public IList<ComponentSchema> Components { get; set; } = [];
 
         [JsonPropertyName("pageprop")]
-        public PagePropertySchema PageProperty { get; set; }
+        public PagePropertySchema PageProperty { get; set; } = new();
 
         [JsonPropertyName("ds")]
-        public DataSourceSchema DataSource { get; set; }
+        public DataSourceSchema DataSource { get; set; } = new();
 
         public I18n I18n { get; set; }
     }

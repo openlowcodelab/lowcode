@@ -1,8 +1,8 @@
-﻿@page "/myapp/datasource/{AppId}"
+﻿@page "/myapp/{AppId}/datasource"
 
 @layout DesignEngineAdminLayout
 
-<Tabs DefaultActiveKey="tab_datasource_table" Animated>
+<Tabs DefaultActiveKey="tab_datasource_table" OnChange="OnTabChange" Animated>
     <TabPane Tab="数据表" Key="tab_datasource_table">
         <div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
             <div style="text-align: left; width:250px;">
@@ -68,7 +68,7 @@
     </TabPane>
 </Tabs>
 
-<Modal Title="@_modalTitle" @bind-Visible="@_visible" Width="1100">
+<Modal Title="@_modalTitle" @bind-Visible="@_visible" Width="1100" Resizable="true" Draggable="true">
     @if (_currentDataSource != null)
     {
         if (_currentDataSource.DataSourceType == DataSourceEnum.Default)
@@ -113,10 +113,20 @@
     private bool _visible;
     private string _modalTitle;
 
+    private void OnTabChange(string tabKey)
+    {
+        if (tabKey == "tab_datasource_table")
+            _currentDataSource = new() { DataSourceType = DataSourceEnum.Default };
+        else if (tabKey == "tab_datasource_api")
+            _currentDataSource = new() { DataSourceType = DataSourceEnum.API };
+        else
+            _currentDataSource = new() { };
+    }
+
     private async Task CreateTableAsync()
     {
         await Task.Delay(1);
-        _currentDataSource = new();
+        _currentDataSource = new(){ DataSourceType = DataSourceEnum.Default };
         _visible = true;
         _modalTitle = "新建数据表";
         StateHasChanged();
@@ -134,7 +144,7 @@
     private async Task CreateAPIAsync()
     {
         await Task.Delay(1);
-        _currentDataSource = new();
+        _currentDataSource = new(){ DataSourceType = DataSourceEnum.API };
         _visible = true;
         _modalTitle = "新建 API";
         StateHasChanged();

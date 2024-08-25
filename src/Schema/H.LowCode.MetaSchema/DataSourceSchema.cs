@@ -11,6 +11,9 @@ namespace H.LowCode.MetaSchema
         [JsonPropertyName("n")]
         public string Name { get; set; }
 
+        [JsonPropertyName("desc")]
+        public string Description { get; set; }
+
         [JsonPropertyName("type")]
         public DataSourceEnum DataSourceType { get; set; }
 
@@ -20,24 +23,36 @@ namespace H.LowCode.MetaSchema
 
         public string PublishStatus { get; set; }
 
-        #region 以下属性仅一个有效，根据 DataSourceType 选用
+        #region 根据 DataSourceType 选用
+        /// <summary>
+        /// 数据表数据源
+        /// </summary>
         [JsonPropertyName("fields")]
         public List<DataSourceTableFieldSchema> DataSourceTableFields { get; set; } = [];
 
+        /// <summary>
+        /// API 数据源
+        /// </summary>
         [JsonPropertyName("api")]
         public DataSourceAPISchema DataSourceAPI { get; set; }
 
+        /// <summary>
+        /// 选项数据源
+        /// </summary>
         [JsonPropertyName("options")]
         public List<DataSourceOptionSchema> DataSourceOptions { get; set; } = [];
-        #endregion
 
         /// <summary>
         /// 
         /// </summary>
         public string Value { get; set; }
 
+        /// <summary>
+        /// 字典数据源
+        /// </summary>
         [JsonPropertyName("vals")]
         public IDictionary<string, string> Values { get; set; }
+        #endregion
     }
 
     public enum DataSourceEnum

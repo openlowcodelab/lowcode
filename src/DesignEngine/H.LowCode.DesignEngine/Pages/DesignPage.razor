@@ -5,6 +5,7 @@
 @inject NavigationManager NavigationManager
 @inject DragDropStateService DragDropStateService
 @inject IMessageService _message
+@inject ComponentStateWrapper<PageSchema> State
 
 <link href="_content/H.LowCode.DesignEngine/designengine.css" rel="stylesheet" />
 
@@ -55,19 +56,26 @@
     private PageSchema _pageSchema;
     private bool _isNewPage;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        base.OnInitialized();
+        if (State.Value is null)
+        {
+            await LoadPageSchemaAsync();
+            State.Value = _pageSchema;
+        }
 
-        LoadPageSchema();
+        await base.OnInitializedAsync();
     }
 
-    private async void LoadPageSchema()
+    private async Task LoadPageSchemaAsync()
     {
         if (string.Equals("newpage", PageId))
         {
             _isNewPage = true;
             PageId = Guid.NewGuid().ToString();
+            _pageSchema = new PageSchema() { Id = PageId };
+
+            DragDropStateService.SetPage(AppId, _pageSchema);
             return;
         }
 
@@ -77,7 +85,10 @@
         _pageSchema = await httpClient.GetFromJsonAsync<PageSchema>($"api/designengine/getpage?appId={AppId}&pageId={PageId}");
 
         if (_designPanel != null)
+        {
+            DragDropStateService.SetPage(AppId, _pageSchema);
             _designPanel.Reload(_pageSchema);
+        }
     }
 
     private async void SavePageSchema()

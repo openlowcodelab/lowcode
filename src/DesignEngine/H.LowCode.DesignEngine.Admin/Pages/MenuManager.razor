@@ -1,9 +1,10 @@
-﻿@page "/myapp/menumanager/{AppId}"
+﻿@page "/myapp/{AppId}/menumanager"
 
 @layout DesignEngineAdminLayout
 @inject IHttpClientFactory HttpClientFactory
 @inject NavigationManager NavigationManager
 @inject IMessageService Message
+@inject ComponentStateWrapper<IList<MenuSchema>> State
 
 <div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
     <div style="text-align: left; width:250px;">
@@ -14,7 +15,7 @@
     </div>
 </div>
 
-<Table @ref="@_table" TItem="MenuSchema" DataSource="@_menuList" Total="_total" OnChange="OnChangeAsync"
+<Table @ref="@_table" TItem="MenuSchema" DataSource="@State.Value" Total="_total" OnChange="OnChangeAsync"
        @bind-PageIndex="_pageIndex" @bind-PageSize="_pageSize" @bind-SelectedRows="selectedRows">
     <Selection Key="@(context.Id)" />
     <Column Title="菜单Id" @bind-Field="@context.Id" Sortable />
@@ -56,7 +57,7 @@
     public string AppId { get; set; }
 
     private ITable _table;
-    private List<MenuSchema> _menuList;
+    //private IList<MenuSchema> _menuList;
     IEnumerable<MenuSchema> selectedRows;
 
     int _pageIndex = 1;
@@ -69,8 +70,14 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _menuList = await GetPageListAsync(1, 5);
-        _total = 5;
+        if (State.Value is null)
+        {
+            State.Value = await GetMenuListAsync(1, 50);
+
+            _total = 5;
+
+            await base.OnInitializedAsync();
+        }
     }
 
     public async Task OnChangeAsync(QueryModel<MenuSchema> queryModel)
@@ -78,7 +85,7 @@
         await Task.Delay(100);
     }
 
-    public async Task<List<MenuSchema>> GetPageListAsync(int pageIndex, int num)
+    public async Task<IList<MenuSchema>> GetMenuListAsync(int pageIndex, int num)
     {
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);

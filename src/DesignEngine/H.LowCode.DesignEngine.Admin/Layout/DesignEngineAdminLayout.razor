@@ -1,7 +1,5 @@
 ﻿@inherits LayoutComponentBase
 
-<link href="_content/H.LowCode.DesignEngine.Admin/designengineadmin.css" rel="stylesheet" />
-
 <AntDesign.ProLayout.BasicLayout Class="designengineadmin" Logo="@("logo.png")" Title="@AppId" MenuData="_menuData"
     Layout="AntDesign.ProLayout.Layout.Side">
     <RightContentRender>
@@ -21,18 +19,12 @@
 
     private MenuDataItem[] _menuData;
 
-    protected override void OnInitialized()
-    {
-        base.OnInitialized();
-
-        Init();
-    }
-
-    private void Init()
+    protected override async Task OnInitializedAsync()
     {
         InitAppId();
-
         InitMenuData(AppId);
+
+        await base.OnInitializedAsync();
     }
 
     private void InitAppId()
@@ -51,35 +43,35 @@
         _menuData = [
             new MenuDataItem
             {
-                Path = $"/myapp/pagemanager/{appId}",
+                Path = $"/myapp/{appId}/pagemanager",
                 Name = "页面管理",
                 Icon = "profile",
                 Key = "page"
             },
             new MenuDataItem
             {
-                Path = $"/myapp/menumanager/{appId}",
+                Path = $"/myapp/{appId}/menumanager",
                 Name = "菜单管理",
                 Icon = "menu",
                 Key = "menu"
             },
             new MenuDataItem
             {
-                Path = $"/myapp/datasource/{appId}",
+                Path = $"/myapp/{appId}/datasource",
                 Name = "数据源",
                 Icon = "database",
                 Key = "datasource"
             },
             new MenuDataItem
             {
-                Path = $"/myapp/publish/{appId}",
+                Path = $"/myapp/{appId}/publish",
                 Name = "应用发布",
                 Icon = "cloud-upload",
                 Key = "publish"
             },
             new MenuDataItem
             {
-                Path = $"/myapp/appsettings/{appId}",
+                Path = $"/myapp/{appId}/appsettings",
                 Name = "应用设置",
                 Icon = "setting",
                 Key = "appsettings"

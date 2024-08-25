@@ -1,4 +1,4 @@
-﻿@inherits DesignEngineComponentBase
+﻿@inherits ContainerComponentBase
 
 <AntList DataSource="@DataSource" TItem="ListItem">
     <ListItem OnClick="()=>OnItemClick(context.Title)">
@@ -12,20 +12,12 @@
 
 @code {
     [Parameter]
-    public ComponentSchema Component { get; set; }
-
-    [Parameter]
     public IList<ListItem> DataSource { get; set; } = new List<ListItem>
     {
         new(){ Title="Ant Design Title 1", Content = "Ant Design, a design language for background applications, is refined by Ant UED Team" },
         new(){ Title="Ant Design Title 2", Content = "Ant Design, a design language for background applications, is refined by Ant UED Team" },
         new(){ Title="Ant Design Title 3", Content = "Ant Design, a design language for background applications, is refined by Ant UED Team" }
     };
-
-    /// <summary>
-    /// 保存初始的 Component，避免跟随 Component 变化
-    /// </summary>
-    private ComponentSchema _component;
 
     private RenderFragment avatar = @<Avatar Src="https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png"></Avatar>;
 

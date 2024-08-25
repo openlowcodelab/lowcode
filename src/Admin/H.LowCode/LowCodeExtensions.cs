@@ -5,6 +5,7 @@ using H.LowCode.ComponentParts.BasicComponents.Render;
 using H.LowCode.ComponentParts.ExtensionComponents;
 using H.LowCode.ThemeParts.AntBlazor;
 using Microsoft.Extensions.DependencyInjection;
+using H.Util.Blazor;
 
 namespace H.LowCode
 {
@@ -12,6 +13,8 @@ namespace H.LowCode
     {
         public static void AddLowCode(this IServiceCollection services)
         {
+            services.AddScoped(typeof(ComponentStateWrapper<>));
+
             #region DesignEngine
             services.AddApplication<DesignEngineModule>();
             services.AddApplication<DefaultComponentModule>();

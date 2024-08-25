@@ -1,6 +1,6 @@
 ﻿<div class="pagesetting-item">
     <label>布局：</label>
-    <RadioGroup TValue="int" Value="@PageProperty.PageLayout" ValueChanged="OnValueChange">
+    <RadioGroup TValue="int" Value="@Page.PageProperty.PageLayout" ValueChanged="OnValueChange">
         <Radio RadioButton Value="1">一列</Radio>
         <Radio RadioButton Value="2">两列</Radio>
         <Radio RadioButton Value="3">三列</Radio>
@@ -8,9 +8,46 @@
     </RadioGroup>
 </div>
 
+@* 表单页 *@
+<div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:5px 0;">数据源</div>
+<div class="propertysetting-item">
+    <label>类型：</label>
+    <SimpleSelect DefaultValue="0" @bind-Value="@_datasourceType">
+        <SelectOptions>
+            <SimpleSelectOption Value="0" Label="数据表"></SimpleSelectOption>
+            <SimpleSelectOption Value="1" Label="API"></SimpleSelectOption>
+        </SelectOptions>
+    </SimpleSelect>
+</div>
+
+@if ("0".Equals(_datasourceType))
+{
+    <div class="propertysetting-item">
+        <label>表：</label>
+        <div></div>
+    </div>
+}
+else if ("1".Equals(_datasourceType))
+{
+    <div class="propertysetting-item">
+        <label>API：</label>
+
+    </div>
+}
+
 @code {
     [Parameter]
-    public PagePropertySchema PageProperty { get; set; }
+    public PageSchema Page { get; set; }
+
+    private string _datasourceType { get; set; } = "0";
+
+    protected override void OnInitialized()
+    {
+        if (Page == null)
+            Page = new PageSchema();
+
+        base.OnInitialized();
+    }
 
     private void OnValueChange()
     {
