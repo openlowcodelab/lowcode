@@ -55,12 +55,12 @@
     protected ClassMapper DropItemClassMapper { get; } = new ClassMapper();
 
     #region Init
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         Init();
         SetClassMap();
 
-        base.OnInitialized();
+        await base.OnInitializedAsync();
     }
 
     private void Init()

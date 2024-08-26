@@ -21,11 +21,11 @@
 
     private MenuDataItem[] _menuData;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        base.OnInitialized();
-
         Init();
+
+        await base.OnInitializedAsync();
     }
 
     private void Init()

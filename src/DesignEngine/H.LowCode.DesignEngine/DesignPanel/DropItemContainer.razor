@@ -40,11 +40,11 @@
     #endregion
 
     #region Init
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         Init();
 
-        base.OnInitialized();
+        await base.OnInitializedAsync();
     }
 
     protected override void OnAfterRender(bool firstRender)

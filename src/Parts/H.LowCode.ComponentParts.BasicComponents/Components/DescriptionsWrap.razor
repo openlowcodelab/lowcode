@@ -20,11 +20,11 @@
     private ComponentSchema _component;
 
     #region Init
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         Init();
 
-        base.OnInitialized();
+        await base.OnInitializedAsync();
     }
 
     protected override bool ShouldRender()

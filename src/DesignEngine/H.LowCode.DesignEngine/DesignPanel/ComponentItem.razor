@@ -18,11 +18,11 @@ else
 
     private RenderFragment _renderFragment;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         Init();
 
-        base.OnInitialized();
+        await base.OnInitializedAsync();
     }
 
     private void Init()

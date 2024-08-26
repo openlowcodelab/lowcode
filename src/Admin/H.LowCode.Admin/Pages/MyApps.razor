@@ -3,7 +3,7 @@
 @layout ProAdminLayout
 @inject IHttpClientFactory HttpClientFactory
 @inject NavigationManager NavigationManager
-@inject ComponentStateWrapper<IList<AppSchema>> State
+@inject ComponentStateWrapper<MyApps, IList<AppSchema>> State
 
 <div style="width:80%; overflow: hidden; margin:auto; padding: 10px;">
     <div style="display: flex; justify-content: space-between; margin: 0 0 8px 5px;">
@@ -47,7 +47,6 @@
 </Modal>
 
 @code {
-    //private IList<AppSchema> _appSchemas = [];
     private bool _visible = false;
 
     RenderFragment avatarTemplate = @<Avatar Icon="appstore"></Avatar>;

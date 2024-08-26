@@ -16,11 +16,11 @@
     private string _align = "center";
 
     #region Init
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         Init();
 
-        base.OnInitialized();
+        await base.OnInitializedAsync();
     }
 
     private void Init()

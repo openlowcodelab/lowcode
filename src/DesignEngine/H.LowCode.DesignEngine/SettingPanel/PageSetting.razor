@@ -41,12 +41,12 @@ else if ("1".Equals(_datasourceType))
 
     private string _datasourceType { get; set; } = "0";
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         if (Page == null)
             Page = new PageSchema();
 
-        base.OnInitialized();
+        await base.OnInitializedAsync();
     }
 
     private void OnValueChange()

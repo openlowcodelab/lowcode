@@ -3,7 +3,7 @@
 @layout DesignEngineAdminLayout
 @inject IHttpClientFactory HttpClientFactory
 @inject NavigationManager NavigationManager
-@inject ComponentStateWrapper<IList<PageListModel>> State
+@inject ComponentStateWrapper<PageManager, IList<PageListModel>> State
 
 <div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
     <div style="text-align: left; width:250px;">
@@ -37,7 +37,6 @@
     [Parameter]
     public string AppId { get; set; }
 
-    //private IList<PageListModel> _pageListModels;
     IEnumerable<PageListModel> selectedRows;
 
     int _total = 0;

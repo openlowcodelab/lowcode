@@ -5,7 +5,7 @@
 @inject NavigationManager NavigationManager
 @inject DragDropStateService DragDropStateService
 @inject IMessageService _message
-@inject ComponentStateWrapper<PageSchema> State
+@inject ComponentStateWrapper<DesignPage, PageSchema> State
 
 <link href="_content/H.LowCode.DesignEngine/designengine.css" rel="stylesheet" />
 
@@ -62,9 +62,9 @@
         {
             await LoadPageSchemaAsync();
             State.Value = _pageSchema;
-        }
 
-        await base.OnInitializedAsync();
+            await base.OnInitializedAsync();
+        }
     }
 
     private async Task LoadPageSchemaAsync()

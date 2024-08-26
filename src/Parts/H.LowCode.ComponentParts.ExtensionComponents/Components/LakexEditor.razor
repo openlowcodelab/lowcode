@@ -22,10 +22,11 @@
     private Lazy<Task<IJSObjectReference>> moduleTask;
 
     #region Init
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         Init();
-        base.OnInitialized();
+
+        await base.OnInitializedAsync();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

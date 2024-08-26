@@ -1,8 +1,8 @@
 ﻿@inject DragDropStateService DragDropStateService
-@inject ComponentStateWrapper<bool?> State
+@inject ComponentStateWrapper<DesignPanel, ComponentSchema> State
 
 <div class="designpanel" style="margin:5px; height:100%; overflow-y: auto;">
-    <DropItemContainer ContainerComponent="@DragDropStateService.GetRootComponent(AppId, PageId)"></DropItemContainer>
+    <DropItemContainer ContainerComponent="@State.Value"></DropItemContainer>
 
     @if (PageType == (int)PageTypeEnum.Form)
     {
@@ -25,21 +25,22 @@
     {
         if(State.Value is null)
         {
-            Init();
-            State.Value = true;
-        }
+            State.Value = LoadRootComponent();
 
-        await base.OnInitializedAsync();
+            await base.OnInitializedAsync();
+        }
     }
 
-    private void Init()
+    private ComponentSchema LoadRootComponent()
     {
-        if (DragDropStateService.GetRootComponent(AppId, PageId) == null)
+        var rootComponent = DragDropStateService.GetRootComponent(AppId, PageId);
+        if (rootComponent == null)
         {
-            var component = new ComponentSchema("root");
-            component.Refresh = StateHasChanged;
-            DragDropStateService.SetRootComponent(AppId, PageId, component);
+            rootComponent = new ComponentSchema("root");
+            rootComponent.Refresh = StateHasChanged;
+            DragDropStateService.SetRootComponent(AppId, PageId, rootComponent);
         }
+        return rootComponent;
     }
 
     public void Reload(PageSchema pageSchema)

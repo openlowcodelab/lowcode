@@ -13,7 +13,7 @@ namespace H.LowCode
     {
         public static void AddLowCode(this IServiceCollection services)
         {
-            services.AddScoped(typeof(ComponentStateWrapper<>));
+            services.AddScoped(typeof(ComponentStateWrapper<,>));
 
             #region DesignEngine
             services.AddApplication<DesignEngineModule>();
