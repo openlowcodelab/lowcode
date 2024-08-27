@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<Import Project="..\..\global.props" />
+	<Import Project="..\..\nuget.publish.props" />
+
+	<PropertyGroup>
+		<RootNamespace>H.LowCode.RenderEngine.HttpApi</RootNamespace>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Volo.Abp.AspNetCore.Mvc" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\..\Schema\H.LowCode.MetaSchema\H.LowCode.MetaSchema.csproj" />
+	  <ProjectReference Include="..\H.LowCode.RenderEngine.Application.Abstraction\H.LowCode.RenderEngine.Application.Abstraction.csproj" />
+	  <ProjectReference Include="..\H.LowCode.RenderEngine.Application\H.LowCode.RenderEngine.Application.csproj" />
+	</ItemGroup>
+
+</Project>

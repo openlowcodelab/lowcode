@@ -11,24 +11,31 @@
         <Search Placeholder="菜单名称" OnSearch="()=>{}" />
     </div>
     <div style="text-align: right; width:80px; line-height:32px; margin: 0 8px 0 0;">
-        <Button Type="@ButtonType.Primary" OnClick="@(()=>{ _visible = true; })">新建菜单</Button>
+        <Button Type="@ButtonType.Primary" OnClick="@(()=> CreateAsync(string.Empty))">新建菜单</Button>
     </div>
 </div>
 
-<Table @ref="@_table" TItem="MenuSchema" DataSource="@State.Value" Total="_total" OnChange="OnChangeAsync"
+<Table @ref="@_table" TItem="MenuSchema" TreeChildren="item=>item.Childrens" DataSource="@State.Value" Total="_total" OnChange="OnChangeAsync"
        @bind-PageIndex="_pageIndex" @bind-PageSize="_pageSize" @bind-SelectedRows="selectedRows">
     <Selection Key="@(context.Id)" />
-    <Column Title="菜单Id" @bind-Field="@context.Id" Sortable />
+    @* <Column Title="菜单Id" @bind-Field="@context.Id" Sortable /> *@
     <Column Title="菜单名称" @bind-Field="@context.Title" Format="yyyy-MM-dd" Sortable />
-    <Column Title="菜单图标" @bind-Field="@context.Icon" />
-    <Column Title="菜单Url" @bind-Field="@context.MenuUrl" />
+    <Column Title="图标" @bind-Field="@context.Icon" />
+    <Column Title="类型" @bind-Field="@context.MenuType" Format="@(context.MenuType == 0 ?"菜单":"目录")" />
+    <Column Title="页面地址" @bind-Field="@context.MenuUrl" />
     <ActionColumn Title="操作">
          <Space Size=@("middle")>
-             <SpaceItem>
-                 <a onclick="@(()=>EditAsync(@context.Id))">编辑</a>
+            @if(context.MenuType == 1)
+            {
+                <SpaceItem>
+                    <a onclick="@(()=> CreateAsync(@context.Id))">新增子菜单</a>
+                </SpaceItem>
+            }
+            <SpaceItem>
+                 <a onclick="@(()=> EditAsync(@context.Id))">编辑</a>
              </SpaceItem>
             <SpaceItem>
-                <a onclick="@(()=>DeleteAsync(@context.Id))" style="color:#ff4d4f">删除</a>
+                <a onclick="@(()=> DeleteAsync(@context.Id))" style="color:#ff4d4f">删除</a>
             </SpaceItem>
         </Space>
     </ActionColumn>
@@ -40,15 +47,30 @@
         @* <FormItem Label="菜单标识" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
             <Input @bind-Value="@context.Id" />
         </FormItem> *@
+        @if (context.ParentId.IsNullOrEmpty() == false)
+        {
+            <FormItem Label="父级Id" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
+                <Input @bind-Value="@context.ParentId" Disabled />
+            </FormItem>
+        }
         <FormItem Label="菜单名称" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
             <Input @bind-Value="@context.Title" />
         </FormItem>
-        <FormItem Label="菜单图标" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
+        <FormItem Label="类型" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
+            <RadioGroup @bind-Value="@context.MenuType">
+                <Radio Value="0">菜单</Radio>
+                <Radio Value="1">目录</Radio>
+            </RadioGroup>
+        </FormItem>
+        <FormItem Label="图标" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
             <Input @bind-Value="@context.Icon" />
         </FormItem>
-        <FormItem Label="菜单地址" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
-            <Input @bind-Value="@context.MenuUrl" />
-        </FormItem>
+        @if (context.MenuType == 0)
+        {
+            <FormItem Label="页面地址" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
+                <Input @bind-Value="@context.MenuUrl" />
+            </FormItem>
+        }
     </Form>
 </Modal>
 
@@ -102,10 +124,21 @@
         return result;
     }
 
+    private void CreateAsync(string parentId)
+    {
+        _menuSchema = new MenuSchema();
+        _menuSchema.ParentId = parentId;
+        _visible = true;
+
+        StateHasChanged();
+    }
+
     private async Task EditAsync(string id)
     {
         _menuSchema = await GetMenuAsync(id);
         _visible = true;
+
+        StateHasChanged();
     }
 
     private async Task DeleteAsync(string id)

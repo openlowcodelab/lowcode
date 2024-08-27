@@ -43,11 +43,10 @@
 
     protected override async Task OnInitializedAsync()
     {
+        _total = 50;
         if (State.Value is null)
         {
             State.Value = await LoadPagesAsync(1, 50);
-
-            _total = 50;
 
             await base.OnInitializedAsync();
         }

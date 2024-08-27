@@ -1,6 +1,7 @@
 ﻿@inherits LayoutComponentBase
+@inject ComponentStateWrapper<DesignEngineAdminLayout, MenuDataItem[]> State
 
-<AntDesign.ProLayout.BasicLayout Class="designengineadmin" Logo="@("logo.png")" Title="@AppId" MenuData="_menuData"
+<AntDesign.ProLayout.BasicLayout Class="designengineadmin" Logo="@("logo.png")" Title="@AppId" MenuData="@State.Value"
     Layout="AntDesign.ProLayout.Layout.Side">
     <RightContentRender>
         RightContent
@@ -14,17 +15,20 @@
 
 @code
 {
-    [Parameter]
-    public string AppId { get; set; }
+    private string AppId { get; set; }
 
-    private MenuDataItem[] _menuData;
+    //private MenuDataItem[] _menuData;
 
     protected override async Task OnInitializedAsync()
     {
         InitAppId();
-        InitMenuData(AppId);
 
-        await base.OnInitializedAsync();
+        if (State.Value is null)
+        {
+            State.Value = InitMenuData(AppId);
+
+            await base.OnInitializedAsync();
+        }
     }
 
     private void InitAppId()
@@ -38,9 +42,9 @@
             throw new NullReferenceException(nameof(AppId));
     }
 
-    private void InitMenuData(string appId)
+    private MenuDataItem[] InitMenuData(string appId)
     {
-        _menuData = [
+        MenuDataItem[] menuData = [
             new MenuDataItem
             {
                 Path = $"/myapp/{appId}/pagemanager",
@@ -48,28 +52,28 @@
                 Icon = "profile",
                 Key = "page"
             },
-            new MenuDataItem
+        new MenuDataItem
             {
                 Path = $"/myapp/{appId}/menumanager",
                 Name = "菜单管理",
                 Icon = "menu",
                 Key = "menu"
             },
-            new MenuDataItem
+        new MenuDataItem
             {
                 Path = $"/myapp/{appId}/datasource",
                 Name = "数据源",
                 Icon = "database",
                 Key = "datasource"
             },
-            new MenuDataItem
+        new MenuDataItem
             {
                 Path = $"/myapp/{appId}/publish",
                 Name = "应用发布",
                 Icon = "cloud-upload",
                 Key = "publish"
             },
-            new MenuDataItem
+        new MenuDataItem
             {
                 Path = $"/myapp/{appId}/appsettings",
                 Name = "应用设置",
@@ -77,5 +81,6 @@
                 Key = "appsettings"
             }
         ];
+        return menuData;
     }
 }

@@ -2,6 +2,7 @@ using H.LowCode.Admin.Host.Components;
 using H.LowCode;
 using H.LowCode.Admin.HttpApi;
 using H.LowCode.DesignEngine.HttpApi;
+using H.LowCode.RenderEngine.HttpApi;
 using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,6 +24,7 @@ builder.Services.AddHttpClient();
 builder.Services.AddLowCode();
 builder.Services.AddAdminHttpApi();
 builder.Services.AddDesignEngineHttpApi();
+builder.Services.AddRenderEngineHttpApi();
 #endregion
 
 var app = builder.Build();
