@@ -3,27 +3,45 @@
 @layout ProAdminLayout
 
 <style>
-    .center-div {
-        width: 80%;
-        margin: auto;
+    .ant-carousel .slick-slide {
+        text-align: center;
+        height: 160px;
+        line-height: 160px;
+        overflow: hidden;
+    }
+    .ant-carousel {
+        margin: -24px -24px 10px -24px;
+    }
+    .slick-slide {
+        background-size: 100% 160px;
+        background-image: url(https://img.alicdn.com/imgextra/i2/O1CN01yp2QLE1eCw9HpYIy5_!!6000000003836-0-tps-3171-1784.jpg);
     }
 </style>
 
-<Carousel Class="center-div">
+<Carousel>
     <CarouselSlick>
-        <h3>1</h3>
+        <div>
+            应用模板
+        </div>
     </CarouselSlick>
     <CarouselSlick>
-        <h3>2</h3>
+        <div>
+            组件库
+        </div>
     </CarouselSlick>
     <CarouselSlick>
-        <h3>3</h3>
+        <div>
+            主题模板
+        </div>
     </CarouselSlick>
     <CarouselSlick>
-        <h3>4</h3>
+        <div>
+            插件
+        </div>
     </CarouselSlick>
 </Carousel>
-<Tabs DefaultActiveKey="tab_market_app" Class="center-div" Centered Animated>
+
+<Tabs DefaultActiveKey="tab_market_app" Centered Animated Style="width: 80%; margin: auto;">
     <TabPane Tab="应用模板" Key="tab_market_app">
         <AppTemplates></AppTemplates>
     </TabPane>
