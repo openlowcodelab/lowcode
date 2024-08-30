@@ -1,6 +1,10 @@
 ﻿@inherits LayoutComponentBase
 @inject ComponentStateWrapper<DesignEngineAdminLayout, MenuDataItem[]> State
 
+<PageTitle>@AppId</PageTitle>
+
+<link href="_content/H.LowCode.DesignEngine.Admin/designengineadmin.css" rel="stylesheet" />
+
 <AntDesign.ProLayout.BasicLayout Class="designengineadmin" Logo="@("logo.png")" Title="@AppId" MenuData="@State.Value"
     Layout="AntDesign.ProLayout.Layout.Side">
     <RightContentRender>
