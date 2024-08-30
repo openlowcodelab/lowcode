@@ -1,11 +1,12 @@
 ﻿@inherits LayoutComponentBase
 @inject ComponentStateWrapper<DesignEngineAdminLayout, MenuDataItem[]> State
+@inject ComponentStateWrapper<string, string> State2
 
-<PageTitle>@AppId</PageTitle>
+<PageTitle>@State2.Value</PageTitle>
 
 <link href="_content/H.LowCode.DesignEngine.Admin/designengineadmin.css" rel="stylesheet" />
 
-<AntDesign.ProLayout.BasicLayout Class="designengineadmin" Logo="@("logo.png")" Title="@AppId" MenuData="@State.Value"
+<AntDesign.ProLayout.BasicLayout Class="designengineadmin" Logo="@("logo.png")" Title="@State2.Value" MenuData="@State.Value"
     Layout="AntDesign.ProLayout.Layout.Side">
     <RightContentRender>
         RightContent
@@ -19,31 +20,34 @@
 
 @code
 {
-    private string AppId { get; set; }
+    //private string AppId { get; set; }
 
     //private MenuDataItem[] _menuData;
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
-        InitAppId();
-
         if (State.Value is null)
         {
-            State.Value = InitMenuData(AppId);
+            string appid = GetAppId();
+            State2.Value = appid;
+            State.Value = InitMenuData(appid);
 
-            await base.OnInitializedAsync();
+            base.OnInitialized();
         }
     }
 
-    private void InitAppId()
+    private string GetAppId()
     {
+        string appid = string.Empty;
         if ((this.Body.Target as RouteView)?.RouteData.RouteValues?.TryGetValue("AppId", out object appId) == true)
         {
-            AppId = appId?.ToString();
+            appid = appId?.ToString();
         }
 
-        if (string.IsNullOrEmpty(AppId))
-            throw new NullReferenceException(nameof(AppId));
+        if (string.IsNullOrEmpty(appid))
+            throw new NullReferenceException(nameof(appid));
+
+        return appid;
     }
 
     private MenuDataItem[] InitMenuData(string appId)
