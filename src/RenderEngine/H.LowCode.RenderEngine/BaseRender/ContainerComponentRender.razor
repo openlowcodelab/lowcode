@@ -1,6 +1,9 @@
 ﻿@namespace H.LowCode.RenderEngine
 
-<div>111</div>
+@foreach(var component in ContainerComponent.Childrens)
+{
+    <ComponentRender Component="@component"></ComponentRender>
+}
 
 @code {
     [CascadingParameter(Name = "appId")]
@@ -8,6 +11,9 @@
 
     [CascadingParameter(Name = "pageId")]
     public string PageId { get; set; }
+
+    [Parameter]
+    public ComponentSchema ContainerComponent { get; set; }
 
     protected override async Task OnInitializedAsync()
     {

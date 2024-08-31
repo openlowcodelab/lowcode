@@ -1,16 +1,16 @@
 ﻿@namespace H.LowCode.ComponentParts.ExtensionComponents
 
+@inject IJSRuntime JSRuntime
+
 @* 
 * 基于语雀编辑器：
 * https://www.yuque.com/yuque/developer/gfoax065u2v72isu
 *@
 
-@inject IJSRuntime JSRuntime
-
 <link rel="stylesheet" type="text/css" href="_content/H.LowCode.ComponentParts.ExtensionComponents/LakexEditor-1.24.0/doc.css" />
 <link rel="stylesheet" type="text/css" href="_content/H.LowCode.ComponentParts.ExtensionComponents/antd-4.24.13/antd.css" />
 
-<div id="@_component.Id" class="ne-doc-major-editor" style="height: 100%"></div>
+@* <div id="@_component.Id" class="ne-doc-major-editor" style="height: 100%"></div> *@
 
 @code {
     [Parameter]
@@ -35,7 +35,9 @@
     {
         if (firstRender)
         {
-            await LoadJSModule();
+            //await LoadJSModule();
+
+            await base.OnAfterRenderAsync(firstRender);
         }
     }
 

@@ -1,18 +1,10 @@
 ﻿@namespace H.LowCode.RenderEngine
 
-@if (Component.IsHiddenTitle == false && Component.IsContainerComponent == false)
+@if (Component.IsHiddenTitle == false)
 {
-    <div class="componentitem-title">@Component.ComponentProperty.Title ：</div>
+    <div class="renderengine-componentitem-title">@Component.ComponentProperty.Title ：</div>
 }
-
-@if (Component.IsContainerComponent)
-{
-    <div class="componentitem-div-container">@_renderFragment</div>
-}
-else
-{
-    <div class="componentitem-div-component">@_renderFragment</div>
-}
+<div class="renderengine-componentitem-div-component">@_renderFragment</div>
 
 @code {
     [Parameter]
@@ -31,8 +23,6 @@ else
     {
         if (Component == null)
             throw new NullReferenceException(nameof(Component));
-
-        Component.ComponentProperty.Name = $"{Component.ComponentName}_{Random.Shared.Next(100, 999)}";
 
         _renderFragment = RenderComponent();
     }
@@ -73,6 +63,8 @@ else
                 }
             }
         }
-        builder.CloseComponent();
+
+        if (Component.ComponentFragments.Count > 0)
+            builder.CloseComponent();
     };
 }

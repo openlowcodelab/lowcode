@@ -1,10 +1,29 @@
 ﻿@page "/{AppId}/{PageId}"
-
+@namespace H.LowCode.ThemeParts.AntBlazor
 @layout AntBlazorThemeLayout
+
 @inject IHttpClientFactory HttpClientFactory
 @inject NavigationManager NavigationManager
+@inject ComponentStateWrapper<MetaPage, PageSchema> State
 
-<h3>@PageId</h3>
+<CascadingValue Value="AppId" Name="appId">
+    <CascadingValue Value="PageId" Name="pageId">
+        @if (_pageSchema != null)
+        {
+            foreach (var component in _pageSchema.Components)
+            {
+                if (component.IsContainerComponent)
+                {
+                    <ContainerComponentRender ContainerComponent="@component"></ContainerComponentRender>
+                }
+                else
+                {
+                    <ComponentRender Component="@component"></ComponentRender>
+                }
+            }
+        }
+    </CascadingValue>
+</CascadingValue>
 
 @code {
     [Parameter]
@@ -13,10 +32,13 @@
     [Parameter]
     public string PageId { get; set; }
 
-    protected override Task OnInitializedAsync()
-    {
+    private PageSchema _pageSchema;
 
-        return base.OnInitializedAsync();
+    protected override async Task OnParametersSetAsync()
+    {
+        _pageSchema = await LoadPageSchemaAsync();
+        
+        await base.OnParametersSetAsync();
     }
 
     private async Task<PageSchema> LoadPageSchemaAsync()
