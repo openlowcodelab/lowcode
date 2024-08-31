@@ -4,7 +4,7 @@ namespace H.LowCode
 {
     public static class LowCodeGlobalVariables
     {
-        public static readonly Type LowCodeDefaultLayout = typeof(Admin.Layout.ProAdminLayout);
+        public static readonly Type LowCodeDefaultLayout = typeof(Admin.ProAdminLayout);
 
         public static readonly Assembly[] AdditionalAssemblies =
             [

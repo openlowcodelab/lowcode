@@ -1,0 +1,17 @@
+﻿@namespace H.LowCode.RenderEngine
+
+<div>111</div>
+
+@code {
+    [CascadingParameter(Name = "appId")]
+    public string AppId { get; set; }
+
+    [CascadingParameter(Name = "pageId")]
+    public string PageId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        await base.OnInitializedAsync();
+    }
+}

@@ -6,7 +6,8 @@
 
 <PageTitle>@State2.Value</PageTitle>
 
-<AntDesign.ProLayout.BasicLayout Logo="@("logo.png")" Title="@State2.Value" MenuData="@State.Value">
+<AntDesign.ProLayout.BasicLayout Logo="@("logo.png")" Title="@State2.Value" MenuData="@State.Value"
+    Layout="AntDesign.ProLayout.Layout.Side">
     <RightContentRender>
         @*<AntDesign.Pro.Template.Components.RightContent />*@
         RightContent
@@ -50,14 +51,16 @@
     private async Task<MenuDataItem[]> InitMenuDataAsync(string appId)
     {
         var menuList = await GetMenuListAsync(appId);
-        MenuDataItem[] menus = ConvertMenus(appId, menuList);
-        // menus.AddFirst(new MenuDataItem
-        //     {
-        //         Path = $"/{appId}/index",
-        //         Name = "首页",
-        //         Key = "home"
-        //     });
-        return menus;
+        MenuDataItem[] menuArr = ConvertMenus(appId, menuList);
+
+        var menus = menuArr.ToList();
+        menus.AddFirst(new MenuDataItem
+            {
+                Path = $"/{appId}/index",
+                Name = "首页",
+                Key = "home"
+            });
+        return menus.ToArray();
     }
 
     private async Task<IList<MenuSchema>> GetMenuListAsync(string appId)

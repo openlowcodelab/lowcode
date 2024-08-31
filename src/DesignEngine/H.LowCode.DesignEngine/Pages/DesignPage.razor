@@ -1,6 +1,7 @@
 ﻿@page "/designer/{AppId}/{PageId}"
-
+@namespace H.LowCode.DesignEngine
 @layout DesignEngineLayout
+
 @inject IHttpClientFactory HttpClientFactory
 @inject NavigationManager NavigationManager
 @inject DragDropStateService DragDropStateService
@@ -60,35 +61,42 @@
     {
         if (State.Value is null)
         {
-            await LoadPageSchemaAsync();
-            State.Value = _pageSchema;
+            State.Value = await LoadPageSchemaAsync();
 
             await base.OnInitializedAsync();
         }
+        else
+        {
+            _pageSchema = State.Value;
+            if (string.Equals("newpage", PageId))
+                PageId = _pageSchema.Id;
+        }
     }
 
-    private async Task LoadPageSchemaAsync()
+    private async Task<PageSchema> LoadPageSchemaAsync()
     {
         if (string.Equals("newpage", PageId))
         {
             _isNewPage = true;
             PageId = Guid.NewGuid().ToString();
-            _pageSchema = new PageSchema() { Id = PageId };
+            var page = new PageSchema() { Id = PageId, AppId = AppId };
 
-            DragDropStateService.SetPage(AppId, _pageSchema);
-            return;
+            DragDropStateService.SetPage(AppId, page);
+            return page;
         }
 
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
 
-        _pageSchema = await httpClient.GetFromJsonAsync<PageSchema>($"api/designengine/getpage?appId={AppId}&pageId={PageId}");
+        var pageSchema = await httpClient.GetFromJsonAsync<PageSchema>($"api/designengine/getpage?appId={AppId}&pageId={PageId}");
 
         if (_designPanel != null)
         {
-            DragDropStateService.SetPage(AppId, _pageSchema);
-            _designPanel.Reload(_pageSchema);
+            DragDropStateService.SetPage(AppId, pageSchema);
+            _designPanel.Reload(pageSchema);
         }
+
+        return pageSchema;
     }
 
     private async void SavePageSchema()
@@ -113,7 +121,7 @@
             if (_isNewPage)
             {
                 _isNewPage = false;
-                NavigationManager.NavigateTo($"/designer/{AppId}/{PageId}");
+                NavigationManager.NavigateTo($"/designer/{pageSchema.AppId}/{pageSchema.Id}");
             }
 
             await _message.Success("保存成功！");
@@ -127,11 +135,9 @@
     private PageSchema CreatePageSchema()
     {
         if (_pageSchema == null)
-            _pageSchema = new PageSchema();
-        
-        _pageSchema.AppId = AppId;
-        _pageSchema.Id = PageId;
-        _pageSchema.Components = DragDropStateService.GetRootComponent(AppId, PageId).Childrens;
+            throw new NullReferenceException(nameof(_pageSchema));
+
+        _pageSchema.Components = DragDropStateService.GetRootComponent(_pageSchema.AppId, _pageSchema.Id).Childrens;
         _pageSchema.PageProperty = DragDropStateService.GetGlobalPageProperty(AppId, PageId);
         _pageSchema.DataSource = new DataSourceSchema() { DataSourceType = DataSourceEnum.Default };
         return _pageSchema;

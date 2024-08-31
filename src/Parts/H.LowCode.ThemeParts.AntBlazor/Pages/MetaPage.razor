@@ -1,6 +1,8 @@
 ﻿@page "/{AppId}/{PageId}"
 
 @layout AntBlazorThemeLayout
+@inject IHttpClientFactory HttpClientFactory
+@inject NavigationManager NavigationManager
 
 <h3>@PageId</h3>
 
@@ -10,5 +12,19 @@
 
     [Parameter]
     public string PageId { get; set; }
-    
+
+    protected override Task OnInitializedAsync()
+    {
+
+        return base.OnInitializedAsync();
+    }
+
+    private async Task<PageSchema> LoadPageSchemaAsync()
+    {
+        var httpClient = HttpClientFactory.CreateClient();
+        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+
+        var pageSchema = await httpClient.GetFromJsonAsync<PageSchema>($"api/renderengine/getpage?appId={AppId}&pageId={PageId}");
+        return pageSchema;
+    }
 }
