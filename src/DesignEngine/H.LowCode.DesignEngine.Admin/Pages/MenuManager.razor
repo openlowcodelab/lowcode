@@ -15,11 +15,13 @@
     </div>
 </div>
 
-<Table @ref="@_table" TItem="MenuSchema" TreeChildren="item=>item.Childrens" DataSource="@State.Value" Total="_total" OnChange="OnChangeAsync"
+<Table @ref="@_table" TItem="MenuSchema" TreeChildren="item=>item.Childrens" DataSource="@State.Value"
+       Total="_total" OnChange="OnChangeAsync" DefaultExpandAllRows
        @bind-PageIndex="_pageIndex" @bind-PageSize="_pageSize" @bind-SelectedRows="selectedRows">
     <Selection Key="@(context.Id)" />
     @* <Column Title="菜单Id" @bind-Field="@context.Id" Sortable /> *@
     <Column Title="菜单名称" @bind-Field="@context.Title" Format="yyyy-MM-dd" Sortable />
+    <Column Title="排序" @bind-Field="@context.Order" />
     <Column Title="图标" @bind-Field="@context.Icon" />
     <Column Title="类型" @bind-Field="@context.MenuType" Format="@(context.MenuType == 0 ?"菜单":"目录")" />
     <Column Title="页面地址" @bind-Field="@context.MenuUrl" />
@@ -71,6 +73,9 @@
                 <Input @bind-Value="@context.MenuUrl" />
             </FormItem>
         }
+        <FormItem Label="排序">
+            <InputNumber @bind-Value="@context.Order" Min="0" DefaultValue="0"></InputNumber>
+        </FormItem>
     </Form>
 </Modal>
 
@@ -93,7 +98,7 @@
     {
         if (State.Value is null)
         {
-            State.Value = await GetMenuListAsync(1, 50);
+            State.Value = await GetMenuListAsync();
 
             _total = 5;
 
@@ -106,7 +111,7 @@
         await Task.Delay(100);
     }
 
-    public async Task<IList<MenuSchema>> GetMenuListAsync(int pageIndex, int num)
+    public async Task<IList<MenuSchema>> GetMenuListAsync()
     {
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
@@ -143,7 +148,11 @@
 
     private async Task DeleteAsync(string id)
     {
-        await Task.Delay(1);
+        var httpClient = HttpClientFactory.CreateClient();
+        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+
+        await httpClient.GetAsync($"api/designengine/deletemenu?appId={AppId}&menuId={id}");
+        await Message.Success("删除成功！");
     }
 
     private async Task OnConfirmAsync(MouseEventArgs e)
@@ -156,13 +165,13 @@
             {
                 _visible = false;
                 _form.Submit();
-                await Message.Success("新建成功！");
+                await Message.Success("保存成功！");
                 _form.Reset();
             }
             else
             {
                 _visible = true;
-                await Message.Error($"新建失败: {result.ReasonPhrase}");
+                await Message.Error($"保存失败: {result.ReasonPhrase}");
             }
         }
         else

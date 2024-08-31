@@ -15,6 +15,8 @@ namespace H.LowCode.DesignEngine.Application.Abstraction
 
         Task SaveMenuAsync(MenuSchema menuSchema);
 
+        Task DeleteMenuAsync(string appId, string menuId);
+
         Task<List<PageListModel>> GetPagesAsync(string appId);
 
         Task<string> GetPageAsync(string appId, string pageId);

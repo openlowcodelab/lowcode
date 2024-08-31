@@ -29,6 +29,6 @@ namespace H.LowCode.MetaSchema
         public int Order { get; set; }
 
         [JsonPropertyName("childs")]
-        public IList<MenuSchema> Childrens { get; set; }
+        public IList<MenuSchema> Childrens { get; set; } = [];
     }
 }

@@ -2,6 +2,7 @@
 using H.LowCode.DesignEngine.Application.Abstraction;
 using H.LowCode.DesignEngine.Model;
 using H.LowCode.MetaSchema;
+using System.Collections.Generic;
 using System.Text;
 
 namespace H.LowCode.DesignEngine.Application
@@ -60,28 +61,21 @@ namespace H.LowCode.DesignEngine.Application
         public async Task<MenuSchema> GetMenuAsync(string appId, string menuId)
         {
             await Task.Delay(1);
-            List<MenuSchema> list = [];
 
-            var menuFilePath = Path.Combine(baseDir, appId, "menu");
-            if (!Directory.Exists(menuFilePath))
+            var fileName = Path.Combine(baseDir, appId, "menu", $"{menuId}.json");
+            if (!File.Exists(fileName))
                 return null;
 
-            var files = Directory.GetFiles(menuFilePath);
-            foreach (var fileName in files)
-            {
-                var menuSchemaJson = ReadAllText(fileName);
-                var menuSchema = menuSchemaJson.FromJson<MenuSchema>();
+            var menuSchemaJson = ReadAllText(fileName);
+            var menuSchema = menuSchemaJson.FromJson<MenuSchema>();
 
-                list.Add(menuSchema);
-            }
-
-            return list.Where(t => t.Id == menuId).FirstOrDefault();
+            return menuSchema;
         }
 
         public async Task<IList<MenuSchema>> GetMenusAsync(string appId)
         {
             await Task.Delay(1);
-            List<MenuSchema> list = [];
+            IList<MenuSchema> list = [];
 
             var menuFilePath = Path.Combine(baseDir, appId, "menu");
             if (!Directory.Exists(menuFilePath))
@@ -96,6 +90,8 @@ namespace H.LowCode.DesignEngine.Application
                 list.Add(menuSchema);
             }
 
+            list = BuildTreeMenus(list);
+
             return list;
         }
 
@@ -109,6 +105,35 @@ namespace H.LowCode.DesignEngine.Application
                 Directory.CreateDirectory(fileDirectory);
 
             File.WriteAllText(fileName, menuSchema.ToJson(), Encoding.UTF8);
+        }
+
+        public async Task DeleteMenuAsync(string appId, string menuId)
+        {
+            await Task.Delay(1);
+
+            var fileName = Path.Combine(baseDir, appId, "menu", $"{menuId}.json");
+            if (!File.Exists(fileName))
+                return;
+
+            IList<MenuSchema> list = [];
+
+            var menuFilePath = Path.Combine(baseDir, appId, "menu");
+            if (!Directory.Exists(menuFilePath))
+                return;
+
+            var files = Directory.GetFiles(menuFilePath);
+            foreach (var file in files)
+            {
+                var menuSchemaJson = ReadAllText(file);
+                var menuSchema = menuSchemaJson.FromJson<MenuSchema>();
+
+                list.Add(menuSchema);
+            }
+
+            if (list.Any(t => t.ParentId == menuId))
+                throw new InvalidOperationException("存在子节点, 不允许删除!");
+
+            File.Delete(fileName);
         }
 
         public async Task<List<PageListModel>> GetPagesAsync(string appId)
@@ -164,6 +189,39 @@ namespace H.LowCode.DesignEngine.Application
                 throw new FileNotFoundException(fileName);
 
             return File.ReadAllText(fileName, Encoding.UTF8);
+        }
+
+        private static IList<MenuSchema> BuildTreeMenus(IList<MenuSchema> menus)
+        {
+            var treeMenus = new List<MenuSchema>();
+
+            var menuDic = new Dictionary<string, MenuSchema>();
+            foreach (var m in menus)
+            {
+                if (!menuDic.ContainsKey(m.Id))
+                    menuDic[m.Id] = m;
+            }
+
+            foreach (var menu in menus)
+            {
+                if (menu.ParentId.IsNullOrEmpty())
+                    treeMenus.Add(menu);
+                else
+                {
+                    if (menuDic.TryGetValue(menu.ParentId, out var parentMenu))
+                    {
+                        parentMenu.Childrens.Add(menu);
+                        parentMenu.Childrens = parentMenu.Childrens.OrderBy(t => t.Order).ToList();
+                    }
+                    else
+                        throw new KeyNotFoundException($"ParentId not found: {menu.ParentId}");
+                }
+            }
+
+            //排序
+            treeMenus = treeMenus.OrderBy(t => t.Order).ToList();
+
+            return treeMenus;
         }
     }
 }

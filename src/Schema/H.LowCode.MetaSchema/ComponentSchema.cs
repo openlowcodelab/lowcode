@@ -42,7 +42,7 @@ namespace H.LowCode.MetaSchema
         /// 组件渲染片段
         /// </summary>
         [JsonPropertyName("fragment")]
-        public IList<ComponentFragmentSchema> ComponentFragments { get; set; }
+        public IList<ComponentFragmentSchema> ComponentFragments { get; set; } = [];
 
         /// <summary>
         /// 组件属性

@@ -1,8 +1,12 @@
 ﻿@inherits LayoutComponentBase
+@inject IHttpClientFactory HttpClientFactory
+@inject NavigationManager NavigationManager
+@inject ComponentStateWrapper<AntBlazorThemeLayout, MenuDataItem[]> State
+@inject ComponentStateWrapper<string, string> State2
 
-<PageTitle>@AppId</PageTitle>
+<PageTitle>@State2.Value</PageTitle>
 
-<AntDesign.ProLayout.BasicLayout Logo="@("logo.png")" Title="@AppId" MenuData="_menuData">
+<AntDesign.ProLayout.BasicLayout Logo="@("logo.png")" Title="@State2.Value" MenuData="@State.Value">
     <RightContentRender>
         @*<AntDesign.Pro.Template.Components.RightContent />*@
         RightContent
@@ -10,99 +14,76 @@
     <ChildContent>
         @Body
     </ChildContent>
-    <FooterRender>
-        <FooterView Copyright="2021 H.LowCode" Links="Links"></FooterView>
-    </FooterRender>
+    <FooterRender></FooterRender>
 </AntDesign.ProLayout.BasicLayout>
 
 @code
 {
-    [Parameter]
-    public string AppId { get; set; }
-
-    private MenuDataItem[] _menuData;
+    // public string AppId { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        Init();
+        if (State.Value is null)
+        {
+            string appid = GetAppId();
+            State2.Value = appid;
+            State.Value = await InitMenuDataAsync(appid);
 
-        await base.OnInitializedAsync();
+            await base.OnInitializedAsync();
+        }
     }
 
-    private void Init()
+    private string GetAppId()
     {
-        InitAppId();
-
-        InitMenuData(AppId);
-    }
-
-    private void InitAppId()
-    {
+        string appid = string.Empty;
         if ((this.Body.Target as RouteView)?.RouteData.RouteValues?.TryGetValue("AppId", out object appId) == true)
         {
-            AppId = appId?.ToString();
+            appid = appId?.ToString();
         }
 
-        if (string.IsNullOrEmpty(AppId))
-            throw new NullReferenceException(nameof(AppId));
+        if (string.IsNullOrEmpty(appid))
+            throw new NullReferenceException(nameof(appid));
+
+        return appid;
     }
 
-    private void InitMenuData(string appId)
+    private async Task<MenuDataItem[]> InitMenuDataAsync(string appId)
     {
-        _menuData = [
-            new MenuDataItem
-            {
-                Path = $"/{appId}/index",
-                Name = "首页",
-                Key = "home"
-            },
-            new MenuDataItem
-            {
-                Path = $"/{appId}/1",
-                Name = "基础表单",
-                Key = "basicform"
-            },
-            new MenuDataItem
-            {
-                Path = $"/{appId}/2",
-                Name = "联动表单",
-                Key = "linkageform"
-            },
-            new MenuDataItem
-            {
-                Path = $"/{appId}/3",
-                Name = "个性化表单",
-                Key = "customform"
-            },
-            new MenuDataItem
-            {
-                Path = $"/{appId}/4",
-                Name = "检验表单",
-                Key = "validateform"
-            },
-            new MenuDataItem
-            {
-                Path = $"/{appId}/5",
-                Name = "复杂表单",
-                Key = "complexform"
-            },
-            new MenuDataItem
-            {
-                Path = $"/{appId}/6",
-                Name = "列表",
-                Key = "table"
-            }
-        ];
+        var menuList = await GetMenuListAsync(appId);
+        MenuDataItem[] menus = ConvertMenus(appId, menuList);
+        // menus.AddFirst(new MenuDataItem
+        //     {
+        //         Path = $"/{appId}/index",
+        //         Name = "首页",
+        //         Key = "home"
+        //     });
+        return menus;
     }
 
-    public LinkItem[] Links { get; set; } =
+    private async Task<IList<MenuSchema>> GetMenuListAsync(string appId)
     {
-        new LinkItem
+        var httpClient = HttpClientFactory.CreateClient();
+        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+
+        var result = await httpClient.GetFromJsonAsync<List<MenuSchema>>($"api/renderengine/getmenus?appId={appId}");
+        return result;
+    }
+
+    private MenuDataItem[] ConvertMenus(string appId, IList<MenuSchema> menuList)
+    {
+        var menus = new List<MenuDataItem>();
+        foreach (var menu in menuList)
         {
-            Key = "H.LowCode",
-            Title = "H.LowCode",
-            Href = "/",
-            BlankTarget = true,
+            var m = new MenuDataItem()
+                {
+                    Path = $"/{appId}/{menu.MenuUrl}",
+                    Name = menu.Title,
+                    Key = menu.Id
+                };
+            if (menu.Childrens.Count > 0)
+                m.Children = ConvertMenus(appId, menu.Childrens);
+            menus.Add(m);
         }
-    };
+        return menus.ToArray();
+    }
 }

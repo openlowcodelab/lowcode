@@ -67,14 +67,14 @@ namespace H.LowCode.MetaSchema
         /// </summary>
         [JsonPropertyName("supportprops")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-        public IList<string> SupportProperties { get; set; }
+        public IList<string> SupportProperties { get; set; } = [];
 
         /// <summary>
         /// 扩展的简单属性
         /// </summary>
         [JsonPropertyName("extprops")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-        public IList<PropertyItemSchema> ExtensionProperties { get; set; }
+        public IList<PropertyItemSchema> ExtensionProperties { get; set; } = [];
 
         /// <summary>
         /// 扩展的高级属性

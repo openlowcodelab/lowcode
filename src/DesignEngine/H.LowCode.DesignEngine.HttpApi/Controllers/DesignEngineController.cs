@@ -48,6 +48,12 @@ namespace H.LowCode.DesignEngine.HttpApi
         }
 
         [HttpGet]
+        public async Task DeleteMenuAsync(string appId, string menuId)
+        {
+            await _designAppService.DeleteMenuAsync(appId, menuId);
+        }
+
+        [HttpGet]
         public async Task<List<PageListModel>> GetPagesAsync(string appId)
         {
             return await _designAppService.GetPagesAsync(appId);
