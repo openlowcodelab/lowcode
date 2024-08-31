@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Text.Json.Serialization;
 
-namespace H.LowCode.MetaSchema
+namespace H.LowCode.MetaSchema;
+
+public class ComponentEventSchema
 {
-    public class ComponentEventSchema
-    {
-        
-    }
+    
 }

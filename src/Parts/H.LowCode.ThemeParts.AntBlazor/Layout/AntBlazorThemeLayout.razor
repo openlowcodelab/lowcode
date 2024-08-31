@@ -1,4 +1,6 @@
-﻿@inherits LayoutComponentBase
+﻿@namespace H.LowCode.ThemeParts.AntBlazor
+@inherits LayoutComponentBase
+
 @inject IHttpClientFactory HttpClientFactory
 @inject NavigationManager NavigationManager
 @inject ComponentStateWrapper<AntBlazorThemeLayout, MenuDataItem[]> State
@@ -20,8 +22,6 @@
 
 @code
 {
-    // public string AppId { get; set; }
-
     protected override async Task OnInitializedAsync()
     {
         if (State.Value is null)

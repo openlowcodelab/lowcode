@@ -1,11 +1,10 @@
 ﻿using System;
 
-namespace H.LowCode.RenderEngine
+namespace H.LowCode.RenderEngine;
+
+public enum PageRenderType
 {
-    public enum PageRenderType
-    {
-        Form,
-        Table,
-        Custom
-    }
+    Form,
+    Table,
+    Custom
 }

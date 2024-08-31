@@ -8,13 +8,12 @@ using System.Net.Http;
 using System.Text;
 using Volo.Abp.Modularity;
 
-namespace H.LowCode.ThemeParts.AntBlazor
+namespace H.LowCode.ThemeParts.AntBlazor;
+
+public class AntBlazorThemeModule : AbpModule
 {
-    public class AntBlazorThemeModule : AbpModule
+    public override void ConfigureServices(ServiceConfigurationContext context)
     {
-        public override void ConfigureServices(ServiceConfigurationContext context)
-        {
-            
-        }
+        
     }
 }

@@ -1,17 +1,16 @@
 ﻿using H.LowCode.MetaSchema;
 
-namespace H.LowCode.RenderEngine
+namespace H.LowCode.RenderEngine;
+
+public static class JsonSchemaHelper
 {
-    public static class JsonSchemaHelper
+    public static bool ValidateJsonSchema(PageSchema jsonSchema, string jsonData)
     {
-        public static bool ValidateJsonSchema(PageSchema jsonSchema, string jsonData)
-        {
-            if (jsonSchema == null)
-                return false;
+        if (jsonSchema == null)
+            return false;
 
-            // valid
+        // valid
 
-            return true;
-        }
+        return true;
     }
 }

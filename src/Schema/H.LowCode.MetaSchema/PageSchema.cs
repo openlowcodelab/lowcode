@@ -1,44 +1,43 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace H.LowCode.MetaSchema
+namespace H.LowCode.MetaSchema;
+
+public class PageSchema
 {
-    public class PageSchema
-    {
-        [JsonPropertyName("aid")]
-        public string AppId { get; set; }
+    [JsonPropertyName("aid")]
+    public string AppId { get; set; }
 
-        public string Id { get; set; }
+    public string Id { get; set; }
 
-        [JsonPropertyName("n")]
-        public string Name { get; set; }
+    [JsonPropertyName("n")]
+    public string Name { get; set; }
 
-        [JsonPropertyName("pt")]
-        public PageTypeEnum PageType { get; set; }
+    [JsonPropertyName("pt")]
+    public PageTypeEnum PageType { get; set; }
 
-        [JsonPropertyName("comps")]
-        public IList<ComponentSchema> Components { get; set; } = [];
+    [JsonPropertyName("comps")]
+    public IList<ComponentSchema> Components { get; set; } = [];
 
-        [JsonPropertyName("pageprop")]
-        public PagePropertySchema PageProperty { get; set; } = new();
+    [JsonPropertyName("pageprop")]
+    public PagePropertySchema PageProperty { get; set; } = new();
 
-        [JsonPropertyName("ds")]
-        public DataSourceSchema DataSource { get; set; } = new();
+    [JsonPropertyName("ds")]
+    public DataSourceSchema DataSource { get; set; } = new();
 
-        public I18n I18n { get; set; }
-    }
+    public I18n I18n { get; set; }
+}
 
-    public enum PageTypeEnum
-    {
-        Normal,
-        Form,
-        Table,
-        Report
-    }
+public enum PageTypeEnum
+{
+    Normal,
+    Form,
+    Table,
+    Report
+}
 
-    public struct I18n
-    {
-        public string Name { get; set; }
+public struct I18n
+{
+    public string Name { get; set; }
 
-        public IDictionary<string, string> Properties { get; set; }
-    }
+    public IDictionary<string, string> Properties { get; set; }
 }

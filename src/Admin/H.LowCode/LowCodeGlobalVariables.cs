@@ -1,17 +1,16 @@
 ﻿using System.Reflection;
 
-namespace H.LowCode
-{
-    public static class LowCodeGlobalVariables
-    {
-        public static readonly Type LowCodeDefaultLayout = typeof(Admin.ProAdminLayout);
+namespace H.LowCode;
 
-        public static readonly Assembly[] AdditionalAssemblies =
-            [
-                typeof(Admin._Imports).Assembly,
-                typeof(DesignEngine._Imports).Assembly,
-                typeof(DesignEngine.Admin._Imports).Assembly,
-                typeof(ThemeParts.AntBlazor._Imports).Assembly
-            ];
-    }
+public static class LowCodeGlobalVariables
+{
+    public static readonly Type LowCodeDefaultLayout = typeof(Admin.ProAdminLayout);
+
+    public static readonly Assembly[] AdditionalAssemblies =
+        [
+            typeof(Admin._Imports).Assembly,
+            typeof(DesignEngine._Imports).Assembly,
+            typeof(DesignEngine.Admin._Imports).Assembly,
+            typeof(ThemeParts.AntBlazor._Imports).Assembly
+        ];
 }

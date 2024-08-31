@@ -1,11 +1,10 @@
 ﻿using H.LowCode.MetaSchema;
 
-namespace H.LowCode.DesignEngine.Abstraction
-{
-    public interface IPageTemplateProvider
-    {
-        public string Title { get; set; }
+namespace H.LowCode.DesignEngine.Abstraction;
 
-        IEnumerable<ComponentSchema> LoadPageTemplate();
-    }
+public interface IPageTemplateProvider
+{
+    public string Title { get; set; }
+
+    IEnumerable<ComponentSchema> LoadPageTemplate();
 }
