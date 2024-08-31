@@ -1,4 +1,4 @@
-﻿using H.LowCode.Admin.Application.Abstraction;
+﻿using H.LowCode.Admin.Application.Contracts;
 using System.Text;
 
 namespace H.LowCode.Admin.Application

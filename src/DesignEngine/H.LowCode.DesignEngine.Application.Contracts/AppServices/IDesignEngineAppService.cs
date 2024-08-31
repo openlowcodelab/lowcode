@@ -1,7 +1,7 @@
 ﻿using H.LowCode.DesignEngine.Model;
 using H.LowCode.MetaSchema;
 
-namespace H.LowCode.DesignEngine.Application.Abstraction
+namespace H.LowCode.DesignEngine.Application.Contracts
 {
     public interface IDesignEngineAppService
     {

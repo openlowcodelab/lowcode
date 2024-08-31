@@ -1,7 +1,8 @@
 ﻿using H.Extensions.System;
-using H.LowCode.DesignEngine.Application.Abstraction;
+using H.LowCode.DesignEngine.Application.Contracts;
 using H.LowCode.DesignEngine.Model;
 using H.LowCode.MetaSchema;
+using Microsoft.Extensions.Options;
 using System.Collections.Generic;
 using System.Text;
 
@@ -9,14 +10,14 @@ namespace H.LowCode.DesignEngine.Application
 {
     public class DesignEngineAppService : IDesignEngineAppService
     {
-        private static string baseDir = @"D:\H\code\my\H.LowCode\meta";
+        private static string metaBaseDir;
         private static string appFileName_Format = @"{0}\{1}\{2}.json";
         private static string menuFileName_Format = @"{0}\{1}\menu\{2}.json";
         private static string pageFileName_Format = @"{0}\{1}\page\{2}.json";
 
-        public DesignEngineAppService()
+        public DesignEngineAppService(IOptions<MetaOption> metaOption)
         {
-
+            metaBaseDir = metaOption.Value.FileBasePath;
         }
 
         public async Task<IList<AppSchema>> GetAppsAsync()
@@ -24,14 +25,14 @@ namespace H.LowCode.DesignEngine.Application
             await Task.Delay(1);
             List<AppSchema> appSchemas = [];
 
-            if (Directory.Exists(baseDir) == false)
+            if (Directory.Exists(metaBaseDir) == false)
                 return appSchemas;
 
-            var directories = Directory.GetDirectories(baseDir);
+            var directories = Directory.GetDirectories(metaBaseDir);
             foreach (var directory in directories)
             {
                 DirectoryInfo dirInfo = new(directory);
-                var fileName = string.Format(appFileName_Format, baseDir, dirInfo.Name, dirInfo.Name);
+                var fileName = string.Format(appFileName_Format, metaBaseDir, dirInfo.Name, dirInfo.Name);
 
                 if (!File.Exists(fileName))
                     continue;
@@ -47,7 +48,7 @@ namespace H.LowCode.DesignEngine.Application
         public async Task SaveAppAsync(AppSchema app)
         {
             await Task.Delay(1);
-            string fileName = string.Format(appFileName_Format, baseDir, app.Id, app.Id);
+            string fileName = string.Format(appFileName_Format, metaBaseDir, app.Id, app.Id);
 
             string fileDirectory = Path.GetDirectoryName(fileName);
             if (Directory.Exists(fileDirectory))
@@ -62,7 +63,7 @@ namespace H.LowCode.DesignEngine.Application
         {
             await Task.Delay(1);
 
-            var fileName = Path.Combine(baseDir, appId, "menu", $"{menuId}.json");
+            var fileName = Path.Combine(metaBaseDir, appId, "menu", $"{menuId}.json");
             if (!File.Exists(fileName))
                 return null;
 
@@ -77,7 +78,7 @@ namespace H.LowCode.DesignEngine.Application
             await Task.Delay(1);
             IList<MenuSchema> list = [];
 
-            var menuFilePath = Path.Combine(baseDir, appId, "menu");
+            var menuFilePath = Path.Combine(metaBaseDir, appId, "menu");
             if (!Directory.Exists(menuFilePath))
                 return list;
 
@@ -98,7 +99,7 @@ namespace H.LowCode.DesignEngine.Application
         public async Task SaveMenuAsync(MenuSchema menuSchema)
         {
             await Task.Delay(1);
-            string fileName = string.Format(menuFileName_Format, baseDir, menuSchema.AppId, menuSchema.Id);
+            string fileName = string.Format(menuFileName_Format, metaBaseDir, menuSchema.AppId, menuSchema.Id);
 
             string fileDirectory = Path.GetDirectoryName(fileName);
             if (!Directory.Exists(fileDirectory))
@@ -111,13 +112,13 @@ namespace H.LowCode.DesignEngine.Application
         {
             await Task.Delay(1);
 
-            var fileName = Path.Combine(baseDir, appId, "menu", $"{menuId}.json");
+            var fileName = Path.Combine(metaBaseDir, appId, "menu", $"{menuId}.json");
             if (!File.Exists(fileName))
                 return;
 
             IList<MenuSchema> list = [];
 
-            var menuFilePath = Path.Combine(baseDir, appId, "menu");
+            var menuFilePath = Path.Combine(metaBaseDir, appId, "menu");
             if (!Directory.Exists(menuFilePath))
                 return;
 
@@ -141,7 +142,7 @@ namespace H.LowCode.DesignEngine.Application
             await Task.Delay(1);
             List<PageListModel> list = [];
 
-            var pageFilePath = Path.Combine(baseDir, appId, "page");
+            var pageFilePath = Path.Combine(metaBaseDir, appId, "page");
             if (!Directory.Exists(pageFilePath))
                 return list;
 
@@ -166,7 +167,7 @@ namespace H.LowCode.DesignEngine.Application
         public async Task<string> GetPageAsync(string appId, string pageId)
         {
             await Task.Delay(1);
-            string fileName = string.Format(pageFileName_Format, baseDir, appId, pageId);
+            string fileName = string.Format(pageFileName_Format, metaBaseDir, appId, pageId);
 
             return ReadAllText(fileName);
         }
@@ -174,7 +175,7 @@ namespace H.LowCode.DesignEngine.Application
         public async Task SavePageAsync(PageSchema pageSchema)
         {
             await Task.Delay(1);
-            string fileName = string.Format(pageFileName_Format, baseDir, pageSchema.AppId, pageSchema.Id);
+            string fileName = string.Format(pageFileName_Format, metaBaseDir, pageSchema.AppId, pageSchema.Id);
 
             string fileDirectory = Path.GetDirectoryName(fileName);
             if (!Directory.Exists(fileDirectory))

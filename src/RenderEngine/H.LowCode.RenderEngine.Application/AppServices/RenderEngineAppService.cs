@@ -1,6 +1,7 @@
 ﻿using H.Extensions.System;
 using H.LowCode.MetaSchema;
-using H.LowCode.RenderEngine.Application.Abstraction;
+using H.LowCode.RenderEngine.Application.Contracts;
+using Microsoft.Extensions.Options;
 using System.Text;
 using System.Xml.Linq;
 
@@ -8,14 +9,14 @@ namespace H.LowCode.RenderEngine.Application
 {
     public class RenderEngineAppService : IRenderEngineAppService
     {
-        private static string baseDir = @"D:\H\code\my\H.LowCode\meta";
+        private static string metaBaseDir;
         private static string appFileName_Format = @"{0}\{1}\{2}.json";
         private static string menuFileName_Format = @"{0}\{1}\menu\{2}.json";
         private static string pageFileName_Format = @"{0}\{1}\page\{2}.json";
 
-        public RenderEngineAppService()
+        public RenderEngineAppService(IOptions<MetaOption> metaOption)
         {
-
+            metaBaseDir = metaOption.Value.FileBasePath;
         }
 
         public async Task<IList<MenuSchema>> GetMenusAsync(string appId)
@@ -23,7 +24,7 @@ namespace H.LowCode.RenderEngine.Application
             await Task.Delay(1);
             IList<MenuSchema> list = [];
 
-            var menuFilePath = Path.Combine(baseDir, appId, "menu");
+            var menuFilePath = Path.Combine(metaBaseDir, appId, "menu");
             if (!Directory.Exists(menuFilePath))
                 return list;
 
@@ -44,7 +45,7 @@ namespace H.LowCode.RenderEngine.Application
         public async Task<string> GetPageAsync(string appId, string pageId)
         {
             await Task.Delay(1);
-            string fileName = string.Format(pageFileName_Format, baseDir, appId, pageId);
+            string fileName = string.Format(pageFileName_Format, metaBaseDir, appId, pageId);
 
             return ReadAllText(fileName);
         }

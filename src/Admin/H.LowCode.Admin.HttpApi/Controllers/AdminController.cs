@@ -1,4 +1,4 @@
-﻿using H.LowCode.Admin.Application.Abstraction;
+﻿using H.LowCode.Admin.Application.Contracts;
 using Microsoft.AspNetCore.Mvc;
 
 namespace H.LowCode.Admin.HttpApi

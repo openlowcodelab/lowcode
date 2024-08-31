@@ -1,6 +1,6 @@
 ﻿using H.LowCode.MetaSchema;
 
-namespace H.LowCode.RenderEngine.Application.Abstraction
+namespace H.LowCode.RenderEngine.Application.Contracts
 {
     public interface IRenderEngineAppService
     {

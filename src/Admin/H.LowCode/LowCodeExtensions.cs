@@ -6,6 +6,7 @@ using H.LowCode.ComponentParts.ExtensionComponents;
 using H.LowCode.ThemeParts.AntBlazor;
 using Microsoft.Extensions.DependencyInjection;
 using H.Util.Blazor;
+using Microsoft.Extensions.Configuration;
 
 namespace H.LowCode
 {
