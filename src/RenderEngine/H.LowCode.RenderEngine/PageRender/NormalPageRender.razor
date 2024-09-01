@@ -1,0 +1,19 @@
+﻿@namespace H.LowCode.RenderEngine
+
+@foreach (var component in Page.Components)
+{
+    if (component.IsContainerComponent)
+    {
+        <ContainerComponentRender ContainerComponent="@component"></ContainerComponentRender>
+    }
+    else
+    {
+        <ComponentRender Component="@component"></ComponentRender>
+    }
+}
+
+@code {
+    [Parameter]
+    public PageSchema Page { get; set; }
+
+}

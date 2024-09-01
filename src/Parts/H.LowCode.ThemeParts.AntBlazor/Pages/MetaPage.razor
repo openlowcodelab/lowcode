@@ -10,16 +10,17 @@
     <CascadingValue Value="PageId" Name="pageId">
         @if (_pageSchema != null)
         {
-            foreach (var component in _pageSchema.Components)
+            if(_pageSchema.PageType == PageTypeEnum.Normal)
             {
-                if (component.IsContainerComponent)
-                {
-                    <ContainerComponentRender ContainerComponent="@component"></ContainerComponentRender>
-                }
-                else
-                {
-                    <ComponentRender Component="@component"></ComponentRender>
-                }
+                <NormalPageRender Page="@_pageSchema"></NormalPageRender>
+            }
+            else if(_pageSchema.PageType == PageTypeEnum.Form)
+            {
+                <FormPageRender Page="@_pageSchema"></FormPageRender>
+            }
+            else
+            {
+                throw new NotImplementedException($"PageType: {_pageSchema.PageType}");
             }
         }
     </CascadingValue>

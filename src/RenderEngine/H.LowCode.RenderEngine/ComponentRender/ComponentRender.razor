@@ -1,10 +1,18 @@
 ﻿@namespace H.LowCode.RenderEngine
 
-@if (Component.IsHiddenTitle == false)
+@if (Component.IsHiddenTitle == false && Component.IsContainerComponent == false)
 {
     <div class="renderengine-componentitem-title">@Component.ComponentProperty.Title ：</div>
 }
-<div class="renderengine-componentitem-div-component">@_renderFragment</div>
+
+@if (Component.IsContainerComponent)
+{
+    <div class="renderengine-componentitem-div-container">@_renderFragment</div>
+}
+else
+{
+    <div class="renderengine-componentitem-div-component">@_renderFragment</div>
+}
 
 @code {
     [Parameter]
