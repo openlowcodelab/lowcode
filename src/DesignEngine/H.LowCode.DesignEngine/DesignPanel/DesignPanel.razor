@@ -1,17 +1,19 @@
 ﻿@namespace H.LowCode.DesignEngine
 
 @inject DragDropStateService DragDropStateService
-@inject ComponentStateWrapper<DesignPanel, ComponentSchema> State
 
-<div class="designpanel" style="margin:5px; height:100%; overflow-y: auto;">
-    <DropItemContainer ContainerComponent="@State.Value"></DropItemContainer>
+@if (_rootComponent != null)
+{
+    <div class="designpanel" style="margin:5px; height:100%; overflow-y: auto;">
+        <DropItemContainer ContainerComponent="@_rootComponent"></DropItemContainer>
 
-    @if (PageType == (int)PageTypeEnum.Form)
-    {
-        @* 表单提交、取消按钮 *@
-        <DropItemContainer ContainerComponent="@CreatComponent_FormButton()"></DropItemContainer>
-    }
-</div>
+        @if (PageType == (int)PageTypeEnum.Form)
+        {
+            @* 表单提交、取消按钮 *@
+            <DropItemContainer ContainerComponent="@CreatComponent_FormButton()"></DropItemContainer>
+        }
+    </div>
+}
 
 @code {
     [CascadingParameter(Name = "appId")]
@@ -23,14 +25,13 @@
     [SupplyParameterFromQuery(Name = "pt")]
     public int PageType { get; set; }
 
+    private ComponentSchema _rootComponent;
+
     protected override async Task OnInitializedAsync()
     {
-        if(State.Value is null)
-        {
-            State.Value = LoadRootComponent();
+        _rootComponent = LoadRootComponent();
 
-            await base.OnInitializedAsync();
-        }
+        await base.OnInitializedAsync();
     }
 
     private ComponentSchema LoadRootComponent()

@@ -8,7 +8,7 @@ namespace H.LowCode.DesignEngine;
 internal class DragDropStateService
 {
     #region 拖拽对象状态管理
-    private IDictionary<string, DropDropStateSchema> schemaStates = new Dictionary<string, DropDropStateSchema>();
+    private IDictionary<string, DragDropStateSchema> schemaStates = new Dictionary<string, DragDropStateSchema>();
     #endregion
 
     public ComponentSchema GetRootComponent(string appId, string pageId)
@@ -117,21 +117,21 @@ internal class DragDropStateService
     }
 
     #region method
-    private DropDropStateSchema GetStateSchema(string appId, string pageId)
+    private DragDropStateSchema GetStateSchema(string appId, string pageId)
     {
         string key = $"{appId}-{pageId}";
 
-        if (schemaStates.TryGetValue(key, out DropDropStateSchema value))
-            return value;
+        if (schemaStates.TryGetValue(key, out DragDropStateSchema schema))
+            return schema;
 
         return null;
     }
 
-    private void SetStateSchema(string appId, string pageId, Action<DropDropStateSchema> action)
+    private void SetStateSchema(string appId, string pageId, Action<DragDropStateSchema> action)
     {
         string key = $"{appId}-{pageId}";
 
-        if (schemaStates.TryGetValue(key, out DropDropStateSchema stateSchema))
+        if (schemaStates.TryGetValue(key, out DragDropStateSchema stateSchema))
             action(stateSchema);
         else
         {
@@ -200,7 +200,7 @@ internal class DragDropStateService
     #endregion
 }
 
-public class DropDropStateSchema
+public class DragDropStateSchema
 {
     /// <summary>
     /// 根 ComponentSchema

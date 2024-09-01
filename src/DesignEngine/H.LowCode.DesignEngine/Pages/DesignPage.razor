@@ -6,7 +6,6 @@
 @inject NavigationManager NavigationManager
 @inject DragDropStateService DragDropStateService
 @inject IMessageService _message
-@inject ComponentStateWrapper<DesignPage, PageSchema> State
 
 <link href="_content/H.LowCode.DesignEngine/designengine.css" rel="stylesheet" />
 
@@ -59,18 +58,9 @@
 
     protected override async Task OnInitializedAsync()
     {
-        if (State.Value is null)
-        {
-            State.Value = await LoadPageSchemaAsync();
+        _pageSchema = await LoadPageSchemaAsync();
 
-            await base.OnInitializedAsync();
-        }
-        else
-        {
-            _pageSchema = State.Value;
-            if (string.Equals("newpage", PageId))
-                PageId = _pageSchema.Id;
-        }
+        await base.OnInitializedAsync();
     }
 
     private async Task<PageSchema> LoadPageSchemaAsync()
