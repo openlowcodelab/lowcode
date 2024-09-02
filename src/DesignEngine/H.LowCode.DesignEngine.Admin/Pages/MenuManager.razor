@@ -16,17 +16,17 @@
     </div>
 </div>
 
-<Table @ref="@_table" TItem="MenuSchema" TreeChildren="item=>item.Childrens" DataSource="@State.Value"
-       Total="_total" OnChange="OnChangeAsync" DefaultExpandAllRows
+<Table TItem="MenuSchema" TreeChildren="item=>item.Childrens" DataSource="@State.Value"
+       Total="_total" DefaultExpandAllRows
        @bind-PageIndex="_pageIndex" @bind-PageSize="_pageSize" @bind-SelectedRows="selectedRows">
     <Selection Key="@(context.Id)" />
-    @* <Column Title="菜单Id" @bind-Field="@context.Id" Sortable /> *@
     <Column Title="菜单名称" @bind-Field="@context.Title" Format="yyyy-MM-dd" Sortable />
     <Column Title="排序" @bind-Field="@context.Order" />
     <Column Title="图标" @bind-Field="@context.Icon" />
     <Column Title="类型" @bind-Field="@context.MenuType" Format="@(context.MenuType == 0 ?"菜单":"目录")" />
-    <Column Title="页面地址" @bind-Field="@context.MenuUrl" />
-    <ActionColumn Title="操作">
+    <Column Title="跳转页面" @bind-Field="@context.MenuUrl" />
+    <Column Title="修改时间" @bind-Field="@context.ModifiedTime" Format="yyyy-MM-dd HH:mm:ss" />
+    <ActionColumn Title="操作" Width="200">
          <Space Size=@("middle")>
             @if(context.MenuType == 1)
             {
@@ -44,8 +44,8 @@
     </ActionColumn>
 </Table>
 
-<Modal Title="新建菜单" @bind-Visible="@_visible" OnOk="OnConfirmAsync" OnCancel="OnCancel">
-    <Form Model="@_menuSchema" LabelColSpan="8" WrapperColSpan="16" OnFinish="OnFinish" @ref="@_form"
+<Modal Title="新建菜单" @bind-Visible="@_visible" OnOk="OnConfirmAsync">
+    <Form Model="@_menuSchema" LabelColSpan="8" WrapperColSpan="16" OnFinish="OnFinishAsync" @ref="@_form"
           ValidateMode="@FormValidateMode.Complex" ValidateOnChange="true">
         @* <FormItem Label="菜单标识" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
             <Input @bind-Value="@context.Id" />
@@ -70,7 +70,7 @@
         </FormItem>
         @if (context.MenuType == 0)
         {
-            <FormItem Label="页面地址" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
+            <FormItem Label="跳转页面" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
                 <Input @bind-Value="@context.MenuUrl" />
             </FormItem>
         }
@@ -84,7 +84,6 @@
     [Parameter]
     public string AppId { get; set; }
 
-    private ITable _table;
     IEnumerable<MenuSchema> selectedRows;
 
     int _pageIndex = 1;
@@ -105,11 +104,6 @@
 
             await base.OnInitializedAsync();
         }
-    }
-
-    public async Task OnChangeAsync(QueryModel<MenuSchema> queryModel)
-    {
-        await Task.Delay(100);
     }
 
     public async Task<IList<MenuSchema>> GetMenuListAsync()
@@ -133,6 +127,8 @@
     private void CreateAsync(string parentId)
     {
         _menuSchema = new MenuSchema();
+        _menuSchema.Id = Guid.NewGuid().ToString();
+        _menuSchema.AppId = AppId;
         _menuSchema.ParentId = parentId;
         _visible = true;
 
@@ -181,23 +177,13 @@
         }
     }
 
-    private void OnCancel(MouseEventArgs e)
+    private async Task OnFinishAsync()
     {
-
+        State.Value = await GetMenuListAsync();
     }
-
-    private void OnFinish()
-    {
-        _table.ReloadData();
-    }
-
 
     private async Task<HttpResponseMessage> SaveMenuSchemaAsync()
     {
-        if (_menuSchema.Id.IsNullOrEmpty())
-            _menuSchema.Id = Guid.NewGuid().ToString();
-        _menuSchema.AppId = AppId;
-
         string jsonSchema = _menuSchema.ToJson();
 
         var content = new StringContent(jsonSchema, Encoding.UTF8, "application/json");

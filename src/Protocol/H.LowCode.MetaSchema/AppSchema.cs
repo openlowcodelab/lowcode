@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace H.LowCode.MetaSchema;
 
-public class AppSchema
+public class AppSchema : BaseMetaSchema
 {
     public string Id { get; set; }
 

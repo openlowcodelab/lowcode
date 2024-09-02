@@ -5,5 +5,5 @@ namespace H.LowCode.MetaSchema;
 
 public class ComponentEventSchema
 {
-    
+
 }

@@ -6,7 +6,7 @@ namespace H.LowCode.MetaSchema;
 /// <summary>
 /// 组件属性
 /// </summary>
-public class ComponentPropertySchema : BaseMetaSchema
+public class ComponentPropertySchema
 {
     [JsonPropertyName("n")]
     public string Name { get; set; }

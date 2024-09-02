@@ -1,18 +1,19 @@
-﻿using System.ComponentModel;
+﻿using H.LowCode.MetaSchema;
+using System;
 
 namespace H.LowCode.DesignEngine.Model;
 
 public class PageListModel
 {
-    [DisplayName("页面编码")]
     public string PageId { get; set; }
 
-    [DisplayName("页面名称")]
     public string PageName { get; set; }
 
-    [DisplayName("页面状态")]
-    public string PageState {  get; set; }
+    public int Order { get; set; }
 
-    [DisplayName("修改时间")]
+    public PageTypeEnum PageType { get; set; }
+
+    public int PublishState { get; set; }
+
     public DateTime ModifiedTime { get; set; }
 }

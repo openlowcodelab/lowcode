@@ -71,7 +71,7 @@
 <Modal Title="@_modalTitle" @bind-Visible="@_visible" Width="1100" Resizable="true" Draggable="true">
     @if (_currentDataSource != null)
     {
-        if (_currentDataSource.DataSourceType == DataSourceEnum.Default)
+        if (_currentDataSource.DataSourceType == DataSourceEnum.Table)
         {
             <DataSourceTable DataSource="@_currentDataSource"></DataSourceTable>
         }
@@ -92,14 +92,14 @@
 
     private IEnumerable<DataSourceSchema> _dataSourceTables =
     [
-        new (){ Key = "table1", Name="数据表1", DataSourceType = DataSourceEnum.Default,
+        new (){ Key = "table1", Name="数据表1", DataSourceType = DataSourceEnum.Table,
         DataSourceTableFields =
         [
           new(){ FieldKey = "field1", FieldName="字段1", FieldType = "varchar(50)" },
           new(){ FieldKey = "field2", FieldName="字段2", FieldType = "varchar(50)" },
           new(){ FieldKey = "field3", FieldName="字段3", FieldType = "varchar(50)" }
         ] },
-    new (){ Key = "table2", Name="数据表2", DataSourceType = DataSourceEnum.Default }
+    new (){ Key = "table2", Name="数据表2", DataSourceType = DataSourceEnum.Table }
     ];
 
     private IEnumerable<DataSourceSchema> _dataSourceAPIs = 
@@ -116,7 +116,7 @@
     private void OnTabChange(string tabKey)
     {
         if (tabKey == "tab_datasource_table")
-            _currentDataSource = new() { DataSourceType = DataSourceEnum.Default };
+            _currentDataSource = new() { DataSourceType = DataSourceEnum.Table };
         else if (tabKey == "tab_datasource_api")
             _currentDataSource = new() { DataSourceType = DataSourceEnum.API };
         else
@@ -126,7 +126,7 @@
     private async Task CreateTableAsync()
     {
         await Task.Delay(1);
-        _currentDataSource = new(){ DataSourceType = DataSourceEnum.Default };
+        _currentDataSource = new(){ DataSourceType = DataSourceEnum.Table };
         _visible = true;
         _modalTitle = "新建数据表";
         StateHasChanged();

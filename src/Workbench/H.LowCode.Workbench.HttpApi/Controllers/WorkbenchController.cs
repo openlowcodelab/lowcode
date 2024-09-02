@@ -22,8 +22,8 @@ public class WorkbenchController : ControllerBase
     }
 
     [HttpPost]
-    public async Task SaveAppAsync(AppSchema app)
+    public async Task SaveAppAsync(AppSchema appSchema)
     {
-        await _workbenchAppService.SaveAppAsync(app);
+        await _workbenchAppService.SaveAppAsync(appSchema);
     }
 }

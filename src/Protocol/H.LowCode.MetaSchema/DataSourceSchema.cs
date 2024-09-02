@@ -2,7 +2,7 @@
 
 namespace H.LowCode.MetaSchema;
 
-public class DataSourceSchema
+public class DataSourceSchema : BaseMetaSchema
 {
     public string Id { get; set; }
 
@@ -16,10 +16,6 @@ public class DataSourceSchema
 
     [JsonPropertyName("type")]
     public DataSourceEnum DataSourceType { get; set; }
-
-    public string ModifiedUser { get; set; }
-
-    public DateTime ModifiedTime { get; set; }
 
     public string PublishStatus { get; set; }
 
@@ -57,12 +53,13 @@ public class DataSourceSchema
 
 public enum DataSourceEnum
 {
-    Default,
-    API,
-    Options,
-    SQL,
-    Expression, //表达式
-    Fiexd  //固定值
+    None = 0,
+    Table = 1,
+    API = 2,
+    Options = 3,
+    SQL = 6,
+    Expression = 7, //表达式
+    Fiexd = 8  //固定值
 }
 
 public class DataSourceTableFieldSchema

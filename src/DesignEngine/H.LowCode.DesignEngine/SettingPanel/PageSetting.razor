@@ -1,58 +1,53 @@
 ﻿@namespace H.LowCode.DesignEngine
 
-<div class="pagesetting-item">
-    <label>布局：</label>
-    <RadioGroup TValue="int" Value="@Page.PageProperty.PageLayout" ValueChanged="OnValueChange">
-        <Radio RadioButton Value="1">一列</Radio>
-        <Radio RadioButton Value="2">两列</Radio>
-        <Radio RadioButton Value="3">三列</Radio>
-        <Radio RadioButton Value="4">四列</Radio>
-    </RadioGroup>
-</div>
-
-@* 表单页 *@
-<div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:5px 0;">数据源</div>
-<div class="propertysetting-item">
-    <label>类型：</label>
-    <SimpleSelect DefaultValue="0" @bind-Value="@_datasourceType">
-        <SelectOptions>
-            <SimpleSelectOption Value="0" Label="数据表"></SimpleSelectOption>
-            <SimpleSelectOption Value="1" Label="API"></SimpleSelectOption>
-        </SelectOptions>
-    </SimpleSelect>
-</div>
-
-@if ("0".Equals(_datasourceType))
+@if (Page != null)
 {
-    <div class="propertysetting-item">
-        <label>表：</label>
-        <div></div>
+    <div class="pagesetting-item">
+        <label>布局：</label>
+        <RadioGroup TValue="int" @bind-Value="@Page.PageProperty.PageLayout">
+            <Radio RadioButton Value="1">一列</Radio>
+            <Radio RadioButton Value="2">两列</Radio>
+            <Radio RadioButton Value="3">三列</Radio>
+            <Radio RadioButton Value="4">四列</Radio>
+        </RadioGroup>
     </div>
-}
-else if ("1".Equals(_datasourceType))
-{
-    <div class="propertysetting-item">
-        <label>API：</label>
 
+    @* 表单页 *@
+    <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:5px 0;">数据源</div>
+    <div class="propertysetting-item">
+        <label>类型：</label>
+        <RadioGroup DefaultValue="DataSourceEnum.None" TValue="DataSourceEnum" @bind-Value="@Page.DataSource.DataSourceType">
+            <Radio Value="DataSourceEnum.None">None</Radio>
+            <Radio Value="DataSourceEnum.Table">Table</Radio>
+            <Radio Value="DataSourceEnum.API">API</Radio>
+            <Radio Value="DataSourceEnum.Options">Options</Radio>
+            <Radio Value="DataSourceEnum.SQL">SQL</Radio>
+        </RadioGroup>
     </div>
+
+    @if (Page.DataSource.DataSourceType == DataSourceEnum.Table)
+    {
+        <div class="propertysetting-item">
+            <label>表：</label>
+            <div></div>
+        </div>
+    }
+    else if (Page.DataSource.DataSourceType == DataSourceEnum.API)
+    {
+        <div class="propertysetting-item">
+            <label>API：</label>
+
+        </div>
+    }
 }
 
 @code {
     [Parameter]
     public PageSchema Page { get; set; }
 
-    private string _datasourceType { get; set; } = "0";
-
     protected override async Task OnInitializedAsync()
     {
-        if (Page == null)
-            Page = new PageSchema();
 
         await base.OnInitializedAsync();
-    }
-
-    private void OnValueChange()
-    {
-        
     }
 }

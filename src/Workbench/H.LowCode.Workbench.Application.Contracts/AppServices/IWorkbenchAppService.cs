@@ -7,6 +7,6 @@ public interface IWorkbenchAppService
 {
     Task<IList<AppSchema>> GetAppsAsync();
 
-    Task SaveAppAsync(AppSchema app);
+    Task SaveAppAsync(AppSchema appSchema);
 
 }

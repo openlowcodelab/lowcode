@@ -2,7 +2,7 @@
 
 namespace H.LowCode.MetaSchema;
 
-public class PageSchema
+public class PageSchema : BaseMetaSchema
 {
     [JsonPropertyName("aid")]
     public string AppId { get; set; }
@@ -12,8 +12,17 @@ public class PageSchema
     [JsonPropertyName("n")]
     public string Name { get; set; }
 
+    [JsonPropertyName("order")]
+    public int Order { get; set; }
+
     [JsonPropertyName("pt")]
     public PageTypeEnum PageType { get; set; }
+
+    /// <summary>
+    /// 发布状态
+    /// </summary>
+    [JsonPropertyName("pubstate")]
+    public int PublishState { get; set; }
 
     [JsonPropertyName("comps")]
     public IList<ComponentSchema> Components { get; set; } = [];
@@ -29,10 +38,10 @@ public class PageSchema
 
 public enum PageTypeEnum
 {
-    Normal,
-    Form,
-    Table,
-    Report
+    Normal = 0,
+    Form = 1,
+    Table = 2,
+    Report = 5
 }
 
 public struct I18n

@@ -42,10 +42,12 @@ public class WorkbenchAppService : IWorkbenchAppService
         return appSchemas;
     }
 
-    public async Task SaveAppAsync(AppSchema app)
+    public async Task SaveAppAsync(AppSchema appSchema)
     {
+        appSchema.ModifiedTime = DateTime.UtcNow;
+
         await Task.Delay(1);
-        string fileName = string.Format(appFileName_Format, metaBaseDir, app.Id, app.Id);
+        string fileName = string.Format(appFileName_Format, metaBaseDir, appSchema.Id, appSchema.Id);
 
         string fileDirectory = Path.GetDirectoryName(fileName);
         if (Directory.Exists(fileDirectory))
@@ -53,7 +55,7 @@ public class WorkbenchAppService : IWorkbenchAppService
         else
             Directory.CreateDirectory(fileDirectory);
 
-        File.WriteAllText(fileName, app.ToJson(), Encoding.UTF8);
+        File.WriteAllText(fileName, appSchema.ToJson(), Encoding.UTF8);
     }
 
     private static string ReadAllText(string fileName)

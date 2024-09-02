@@ -24,7 +24,7 @@
                 </div>*@
                 <div style="float:right;">
                     <Button>预览</Button>
-                    <Button Type="primary" OnClick="() => SavePageSchema()">保存</Button>
+                    <Button Type="primary" OnClick="() => SavePageSchemaAsync()">保存</Button>
                 </div>
             </Header>
             <AntDesign.Layout>
@@ -50,7 +50,7 @@
     public string AppId { get; set; }
 
     [Parameter]
-    public string PageId { get; set; } = "newpage";
+    public string PageId { get; set; }
 
     private DesignPanel _designPanel;
     private PageSchema _pageSchema;
@@ -89,7 +89,7 @@
         return pageSchema;
     }
 
-    private async void SavePageSchema()
+    private async Task SavePageSchemaAsync()
     {
         PageSchema pageSchema = CreatePageSchema();
         if (pageSchema.Components.Count == 0)
@@ -129,7 +129,7 @@
 
         _pageSchema.Components = DragDropStateService.GetRootComponent(_pageSchema.AppId, _pageSchema.Id).Childrens;
         _pageSchema.PageProperty = DragDropStateService.GetGlobalPageProperty(AppId, PageId);
-        _pageSchema.DataSource = new DataSourceSchema() { DataSourceType = DataSourceEnum.Default };
+        _pageSchema.DataSource = new DataSourceSchema() { DataSourceType = DataSourceEnum.Table };
         return _pageSchema;
     }
 }

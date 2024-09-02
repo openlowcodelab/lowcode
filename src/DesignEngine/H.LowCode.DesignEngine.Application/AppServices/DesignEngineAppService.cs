@@ -59,6 +59,8 @@ public class DesignEngineAppService : IDesignEngineAppService
 
     public async Task SaveMenuAsync(MenuSchema menuSchema)
     {
+        menuSchema.ModifiedTime = DateTime.UtcNow;
+
         await Task.Delay(1);
         string fileName = string.Format(menuFileName_Format, metaBaseDir, menuSchema.AppId, menuSchema.Id);
 
@@ -116,11 +118,18 @@ public class DesignEngineAppService : IDesignEngineAppService
             PageListModel model = new()
             {
                 PageId = pageSchema.Id,
-                PageName = pageSchema.Name
+                PageName = pageSchema.Name,
+                Order = pageSchema.Order,
+                PageType = pageSchema.PageType,
+                PublishState = pageSchema.PublishState,
+                ModifiedTime = pageSchema.ModifiedTime
             };
 
             list.Add(model);
         }
+
+        //排序
+        list = list.OrderBy(t => t.Order).ToList();
 
         return list;
     }
@@ -135,6 +144,8 @@ public class DesignEngineAppService : IDesignEngineAppService
 
     public async Task SavePageAsync(PageSchema pageSchema)
     {
+        pageSchema.ModifiedTime = DateTime.UtcNow;
+
         await Task.Delay(1);
         string fileName = string.Format(pageFileName_Format, metaBaseDir, pageSchema.AppId, pageSchema.Id);
 
