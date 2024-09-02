@@ -22,7 +22,7 @@ builder.Services.AddHttpClient();
 
 #region  LowCode
 builder.Services.AddLowCode();
-builder.Services.AddAdminHttpApi();
+builder.Services.AddWorkbenchHttpApi();
 builder.Services.AddDesignEngineHttpApi();
 builder.Services.AddRenderEngineHttpApi();
 #endregion

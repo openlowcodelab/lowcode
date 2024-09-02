@@ -1,5 +1,5 @@
 ﻿@namespace H.LowCode.Workbench
-@layout ProAdminLayout
+@layout WorkbenchLayout
 
 @inject IHttpClientFactory HttpClientFactory
 @inject NavigationManager NavigationManager
@@ -82,7 +82,7 @@
 
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
-        var result = await httpClient.PostAsync($"api/designengine/saveapp", content);
+        var result = await httpClient.PostAsync($"api/workbench/saveapp", content);
 
         return result;
     }

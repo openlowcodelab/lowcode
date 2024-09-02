@@ -5,10 +5,13 @@ using Volo.Abp.Modularity;
 
 namespace H.LowCode.Workbench.Application;
 
-public class AdminApplicationModule : AbpModule
+public class WorkbenchApplicationModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
-        context.Services.AddScoped<IAdminAppService, AdminAppService>();
+        context.Services.AddScoped<IWorkbenchAppService, WorkbenchAppService>();
+
+        var configuration = context.Services.GetConfiguration();
+        context.Services.Configure<MetaOption>(configuration.GetSection(MetaOption.SectionName));
     }
 }

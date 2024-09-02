@@ -18,18 +18,6 @@ public class DesignEngineController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IList<AppSchema>> GetAppsAsync()
-    {
-        return await _designAppService.GetAppsAsync();
-    }
-
-    [HttpPost]
-    public async Task SaveAppAsync(AppSchema app)
-    {
-        await _designAppService.SaveAppAsync(app);
-    }
-
-    [HttpGet]
     public async Task<MenuSchema> GetMenuAsync(string appId, string menuId)
     {
         return await _designAppService.GetMenuAsync(appId, menuId);

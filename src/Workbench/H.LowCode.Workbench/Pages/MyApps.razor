@@ -1,6 +1,6 @@
 ﻿@page "/workbench/myapps"
 @namespace H.LowCode.Workbench
-@layout ProAdminLayout
+@layout WorkbenchLayout
 
 @inject IHttpClientFactory HttpClientFactory
 @inject NavigationManager NavigationManager
@@ -88,7 +88,7 @@
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
 
-        var result = await httpClient.GetFromJsonAsync<IList<AppSchema>>($"api/designengine/getapps");
+        var result = await httpClient.GetFromJsonAsync<IList<AppSchema>>($"api/workbench/getapps");
         return result;
     }
 

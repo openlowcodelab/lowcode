@@ -4,7 +4,7 @@ namespace H.LowCode;
 
 public static class LowCodeGlobalVariables
 {
-    public static readonly Type LowCodeDefaultLayout = typeof(Workbench.ProAdminLayout);
+    public static readonly Type LowCodeDefaultLayout = typeof(Workbench.WorkbenchLayout);
 
     public static readonly Assembly[] AdditionalAssemblies =
         [

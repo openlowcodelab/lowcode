@@ -5,10 +5,6 @@ namespace H.LowCode.DesignEngine.Application.Contracts;
 
 public interface IDesignEngineAppService
 {
-    Task<IList<AppSchema>> GetAppsAsync();
-
-    Task SaveAppAsync(AppSchema app);
-
     Task<MenuSchema> GetMenuAsync(string appId, string menuId);
 
     Task<IList<MenuSchema>> GetMenusAsync(string appId);

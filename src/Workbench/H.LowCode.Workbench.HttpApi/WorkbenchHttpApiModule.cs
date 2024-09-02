@@ -4,11 +4,11 @@ using Volo.Abp.Modularity;
 
 namespace H.LowCode.Workbench.HttpApi;
 
-[DependsOn(typeof(AdminApplicationModule))]
-internal class AdminHttpApiModule : AbpModule
+[DependsOn(typeof(WorkbenchApplicationModule))]
+internal class WorkbenchHttpApiModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
-        context.Services.AddControllers().AddApplicationPart(typeof(AdminHttpApiModule).Assembly);
+        context.Services.AddControllers().AddApplicationPart(typeof(WorkbenchHttpApiModule).Assembly);
     }
 }
