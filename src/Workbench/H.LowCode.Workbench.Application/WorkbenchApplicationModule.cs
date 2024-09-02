@@ -1,4 +1,5 @@
-﻿using H.LowCode.Workbench.Application.Contracts;
+﻿using H.LowCode.Configuration;
+using H.LowCode.Workbench.Application.Contracts;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Modularity;
