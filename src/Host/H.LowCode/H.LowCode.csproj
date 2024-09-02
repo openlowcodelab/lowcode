@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+	<Import Project="..\..\global.props" />
+	<Import Project="..\..\nuget.publish.props" />
+
+	<ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <ItemGroup>
+	<PackageReference Include="H.Util.Blazor" />
+	<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
+    <PackageReference Include="Volo.Abp.Core" />
+  </ItemGroup>
+
+  <ItemGroup>
+	<ProjectReference Include="..\..\DesignEngine\H.LowCode.DesignEngine.Admin\H.LowCode.DesignEngine.Admin.csproj" />
+	<ProjectReference Include="..\..\Parts\H.LowCode.ComponentParts.BasicComponents\H.LowCode.ComponentParts.BasicComponents.csproj" />
+	<ProjectReference Include="..\..\Parts\H.LowCode.ComponentParts.ExtensionComponents\H.LowCode.ComponentParts.ExtensionComponents.csproj" />
+	<ProjectReference Include="..\..\Workbench\H.LowCode.Workbench\H.LowCode.Workbench.csproj" />
+	<ProjectReference Include="..\..\DesignEngine\H.LowCode.DesignEngine\H.LowCode.DesignEngine.csproj" />
+	<ProjectReference Include="..\..\RenderEngine\H.LowCode.RenderEngine\H.LowCode.RenderEngine.csproj" />
+	<ProjectReference Include="..\..\Parts\H.LowCode.ThemeParts.AntBlazor\H.LowCode.ThemeParts.AntBlazor.csproj" />
+  </ItemGroup>
+	
+</Project>

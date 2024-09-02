@@ -1,0 +1,78 @@
+﻿@namespace H.LowCode.Workbench
+@inherits LayoutComponentBase
+
+<PageTitle>H.LowCode</PageTitle>
+
+<AntDesign.ProLayout.BasicLayout Logo="@("logo.png")" Title="H.LowCode" MenuData="_menuData"
+    Layout="AntDesign.ProLayout.Layout.Top">
+    <RightContentRender>
+        RightContent
+    </RightContentRender>
+    <ChildContent>
+        @Body
+    </ChildContent>
+    <FooterRender>
+        <FooterView Copyright="@(DateTime.Now.Year + " H.LowCode")" Links="Links"></FooterView>
+    </FooterRender>
+</AntDesign.ProLayout.BasicLayout>
+
+@code
+{
+    private readonly MenuDataItem[] _menuData =
+    {
+		//TODO 空 MenuDataItem 为了让前面有间隔
+        new MenuDataItem
+        {
+            Path = "",
+            Name = "",
+            Icon = "",
+            Key = ""
+        },
+        new MenuDataItem
+        {
+            Path = "",
+            Name = "",
+            Icon = "",
+            Key = ""
+        },
+        new MenuDataItem
+        {
+            Path = "/",
+            Name = "工作台",
+            Icon = "home",
+            Key = "home"
+        },
+        new MenuDataItem
+        {
+            Path = "/workbench/myapps",
+            Name = "我的应用",
+            Icon = "appstore",
+            Key = "myapps"
+        },
+        new MenuDataItem
+        {
+            Path = "/workbench/marketcenter",
+            Name = "生态中心",
+            Icon = "cloud",
+            Key = "marketcenter"
+        },
+        new MenuDataItem
+        {
+            Path = "/workbench/solutioncenter",
+            Name = "解决方案中心",
+            Icon = "deployment-unit",
+            Key = "solutioncenter"
+        }
+    };
+
+    private LinkItem[] Links { get; set; } =
+    {
+        new LinkItem
+        {
+            Key = "H.LowCode",
+            Title = "H.LowCode",
+            Href = "/",
+            BlankTarget = true,
+        }
+    };
+}
