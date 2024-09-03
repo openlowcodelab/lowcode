@@ -24,7 +24,7 @@ public class DesignEngineAppService : IDesignEngineAppService
     {
         await Task.Delay(1);
 
-        var fileName = Path.Combine(metaBaseDir, appId, "menu", $"{menuId}.json");
+        var fileName = string.Format(menuFileName_Format, metaBaseDir, appId, menuId);
         if (!File.Exists(fileName))
             return null;
 
@@ -75,7 +75,7 @@ public class DesignEngineAppService : IDesignEngineAppService
     {
         await Task.Delay(1);
 
-        var fileName = Path.Combine(metaBaseDir, appId, "menu", $"{menuId}.json");
+        var fileName = string.Format(menuFileName_Format, metaBaseDir, appId, menuId);
         if (!File.Exists(fileName))
             return;
 
@@ -154,6 +154,23 @@ public class DesignEngineAppService : IDesignEngineAppService
             Directory.CreateDirectory(fileDirectory);
 
         File.WriteAllText(fileName, pageSchema.ToJson(), Encoding.UTF8);
+    }
+
+    public async Task DeletePageAsync(string appId, string pageId)
+    {
+        await Task.Delay(1);
+
+        string fileName = string.Format(pageFileName_Format, metaBaseDir, appId, pageId);
+        if (!File.Exists(fileName))
+            return;
+
+        IList<MenuSchema> list = [];
+
+        var menuFilePath = Path.Combine(metaBaseDir, appId, "menu");
+        if (!Directory.Exists(menuFilePath))
+            return;
+
+        File.Delete(fileName);
     }
 
     private static string ReadAllText(string fileName)

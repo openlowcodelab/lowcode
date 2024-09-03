@@ -37,7 +37,7 @@
     <ActionColumn Title="操作" Width="180">
          <Space Size=@("middle")>
              <SpaceItem>
-                <a href="@($"/designer/{AppId}/{context.PageId}")" target="_blank">设计</a>
+                <a href="@($"/designer/{AppId}/{context.PageId}")" target="_blank" style="padding: 7px;border: solid #b7eb8f 1px;border-radius: 2px;line-height: 11px;height: 26px;display: block;background-color: #f6ffed;color: #389e0d;">设计</a>
             </SpaceItem>
             <SpaceItem>
                 <a onclick="@(()=> EditAsync(@context.PageId))">编辑</a>
@@ -132,13 +132,13 @@
         StateHasChanged();
     }
 
-    private void DeleteAsync(string pageId)
+    private async Task DeleteAsync(string pageId)
     {
-        //var httpClient = HttpClientFactory.CreateClient();
-        //httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+        var httpClient = HttpClientFactory.CreateClient();
+        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
 
-        //await httpClient.GetAsync($"api/designengine/deletepage?appId={AppId}&pageId={pageId}");
-        //await Message.Success("删除成功！");
+        await httpClient.GetAsync($"api/designengine/deletepage?appId={AppId}&pageId={pageId}");
+        await Message.Success("删除成功！");
     }
 
     private async Task OnConfirmAsync(MouseEventArgs e)

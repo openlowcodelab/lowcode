@@ -16,9 +16,8 @@
     </div>
 </div>
 
-<Table TItem="MenuSchema" TreeChildren="item=>item.Childrens" DataSource="@State.Value"
-       Total="_total" DefaultExpandAllRows
-       @bind-PageIndex="_pageIndex" @bind-PageSize="_pageSize" @bind-SelectedRows="selectedRows">
+<Table TItem="MenuSchema" TreeChildren="item=>item.Childrens" DataSource="@State.Value" @bind-SelectedRows="selectedRows"
+        HidePagination DefaultExpandAllRows>
     <Selection Key="@(context.Id)" />
     <Column Title="菜单名称" @bind-Field="@context.Title" Format="yyyy-MM-dd" Sortable />
     <Column Title="排序" @bind-Field="@context.Order" />
@@ -86,10 +85,6 @@
 
     IEnumerable<MenuSchema> selectedRows;
 
-    int _pageIndex = 1;
-    int _pageSize = 10;
-    int _total = 0;
-
     private bool _visible = false;
     private Form<MenuSchema> _form;
     private MenuSchema _menuSchema = new MenuSchema();
@@ -99,8 +94,6 @@
         if (State.Value is null)
         {
             State.Value = await GetMenuListAsync();
-
-            _total = 5;
 
             await base.OnInitializedAsync();
         }

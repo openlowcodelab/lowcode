@@ -18,4 +18,6 @@ public interface IDesignEngineAppService
     Task<string> GetPageAsync(string appId, string pageId);
 
     Task SavePageAsync(PageSchema pageSchema);
+
+    Task DeletePageAsync(string appId, string pageId);
 }

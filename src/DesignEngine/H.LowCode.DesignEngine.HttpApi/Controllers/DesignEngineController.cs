@@ -58,4 +58,10 @@ public class DesignEngineController : ControllerBase
     {
         await _designAppService.SavePageAsync(pageSchema);
     }
+
+    [HttpGet]
+    public async Task DeletePageAsync(string appId, string pageId)
+    {
+        await _designAppService.DeletePageAsync(appId, pageId);
+    }
 }
