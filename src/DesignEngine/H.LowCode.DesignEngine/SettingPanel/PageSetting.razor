@@ -4,7 +4,7 @@
 {
     <div class="pagesetting-item">
         <label>布局：</label>
-        <RadioGroup TValue="int" @bind-Value="@Page.PageProperty.PageLayout">
+        <RadioGroup TValue="int" @bind-Value="@Page.PageProperty.PageLayout" OnChange="OnChange">
             <Radio RadioButton Value="1">一列</Radio>
             <Radio RadioButton Value="2">两列</Radio>
             <Radio RadioButton Value="3">三列</Radio>
@@ -49,5 +49,10 @@
     {
 
         await base.OnInitializedAsync();
+    }
+
+    private void OnChange(int pageLayout)
+    {
+        BlazorEventDispatcher.Trigger("designengine.pagesetting.pagelayout.onchange", pageLayout);
     }
 }

@@ -3,7 +3,7 @@
 @inject DragDropStateService DragDropStateService
 
 <div class="dropitem-box @DropItemBoxClassMapper.Class" style="float:left; opacity:@Component.Opacity;
-    width: @(Component.ComponentStyle.ItemWidth/24*100)%; min-height: @(Component.ComponentStyle.ItemHeight)px;
+    width: @(IsInRootContainer ? 100/PageCascading.PageProperty.PageLayout : 100)%; min-height: @(Component.ComponentStyle.ItemHeight)px;
      position:@Component.ComponentStyle.Position;
      @Component.ComponentStyle.DefaultStyle @Component.ComponentStyle.CustomStyle"
      @onclick="OnClick" @onclick:stopPropagation
@@ -41,6 +41,12 @@
     [Parameter]
     public ComponentSchema Component { get; set; }
 
+    /// <summary>
+    /// 当前组件是否在根容器内
+    /// </summary>
+    [Parameter]
+    public bool IsInRootContainer { get; set; }
+
     [Parameter]
     public Action<ComponentSchema> OnItemClick { get; set; }
 
@@ -62,10 +68,29 @@
         await base.OnInitializedAsync();
     }
 
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+            RegisterEventDispatcher();
+    }
+
     private void Init()
     {
         if (Component == null)
             throw new NullReferenceException(nameof(Component));
+    }
+
+    private void RegisterEventDispatcher()
+    {
+        if (IsInRootContainer)
+        {
+            //订阅 PageSetting 中的组件点击事件
+            BlazorEventDispatcher.RegisterEvent("designengine.pagesetting.pagelayout.onchange", (value) =>
+            {
+                PageCascading.PageProperty.PageLayout = (int)value;
+                StateHasChanged();
+            });
+        }
     }
 
     private void SetClassMap()
