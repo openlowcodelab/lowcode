@@ -88,7 +88,7 @@
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
 
-        var result = await httpClient.GetFromJsonAsync<IList<AppSchema>>($"api/workbench/getapps");
+        var result = await httpClient.GetFromJsonAsync<IList<AppSchema>>($"api/designengine/getapps");
         return result;
     }
 

@@ -22,16 +22,13 @@
         }
     }
     <TabPane Key="tab_page" Tab="页面">
-        <PageSetting Page="@DragDropStateService.GetPage(AppId, PageId)"></PageSetting>
+        <PageSetting Page="@DragDropStateService.GetPage(PageCascading.AppId, PageCascading.PageId)"></PageSetting>
     </TabPane>
 </Tabs>
 
 @code {
-    [CascadingParameter(Name = "appId")]
-    public string AppId { get; set; }
-
-    [CascadingParameter(Name = "pageId")]
-    public string PageId { get; set; }
+    [CascadingParameter(Name = "pageCascading")]
+    public PageModel PageCascading { get; set; }
 
     private ComponentSchema _component { get; set; }
 

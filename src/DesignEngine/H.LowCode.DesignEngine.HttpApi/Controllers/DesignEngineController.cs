@@ -18,6 +18,24 @@ public class DesignEngineController : ControllerBase
     }
 
     [HttpGet]
+    public async Task<IList<AppSchema>> GetAppsAsync()
+    {
+        return await _designAppService.GetAppsAsync();
+    }
+
+    [HttpPost]
+    public async Task SaveAppAsync(AppSchema appSchema)
+    {
+        await _designAppService.SaveAppAsync(appSchema);
+    }
+
+    [HttpGet]
+    public async Task<AppSchema> GetAppAsync(string appId)
+    {
+        return await _designAppService.GetAppAsync(appId);
+    }
+
+    [HttpGet]
     public async Task<MenuSchema> GetMenuAsync(string appId, string menuId)
     {
         return await _designAppService.GetMenuAsync(appId, menuId);
@@ -48,7 +66,7 @@ public class DesignEngineController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<string> GetPageAsync(string appId, string pageId)
+    public async Task<PageSchema> GetPageAsync(string appId, string pageId)
     {
         return await _designAppService.GetPageAsync(appId, pageId);
     }

@@ -7,41 +7,41 @@
 @inject DragDropStateService DragDropStateService
 @inject IMessageService _message
 
+<PageTitle>@($"{_pageSchema.Name} - 页面设计器")</PageTitle>
+
 <link href="_content/H.LowCode.DesignEngine/designengine.css" rel="stylesheet" />
 
-<CascadingValue Value="AppId" Name="appId">
-    <CascadingValue Value="PageId" Name="pageId">
-        <AntDesign.Layout Class="designpage" Style="padding:0 2px; background-color: #f7f7f7;">
-            <Header Style="background-color: white; padding:0 20px;">
-                <div style="float:left;">
-                    <a href="javascript:void(0)"> @("<") 返回 </a>
-                </div>
-                @*<div style="text-align:center;">
-                <Menu Theme="MenuTheme.Light" Mode="MenuMode.Horizontal" DefaultSelectedKeys=@(new[]{"2"})>
-                <MenuItem Key="1">PC</MenuItem>
-                <MenuItem Key="2">Mobile</MenuItem>
-                </Menu>
-                </div>*@
-                <div style="float:right;">
-                    <Button>预览</Button>
-                    <Button Type="primary" OnClick="() => SavePageSchemaAsync()">保存</Button>
-                </div>
-            </Header>
-            <AntDesign.Layout>
-                <Sider Style="min-width: 200px; flex: auto; max-width: max-content;" Theme="SiderTheme.Light">
-                    <ComponentPanel></ComponentPanel>
-                </Sider>
-                <Layout>
-                    <Content Class="designpage">
-                        <DesignPanel @ref="_designPanel"></DesignPanel>
-                    </Content>
-                </Layout>
-                <Sider Class="designpage" Style="flex: auto; max-width: max-content; min-width: 250px;" Theme="SiderTheme.Light">
-                    <SettingPanel></SettingPanel>
-                </Sider>
-            </AntDesign.Layout>
+<CascadingValue Value="@_pageCascadingModel" Name="pageCascading">
+    <AntDesign.Layout Class="designpage" Style="padding:0 2px; background-color: #f7f7f7;">
+        <Header Style="background-color: white; padding:0 20px;">
+            <div style="float:left;">
+                <a href="javascript:void(0)"> @("<") 返回 </a>
+            </div>
+            @*<div style="text-align:center;">
+            <Menu Theme="MenuTheme.Light" Mode="MenuMode.Horizontal" DefaultSelectedKeys=@(new[]{"2"})>
+            <MenuItem Key="1">PC</MenuItem>
+            <MenuItem Key="2">Mobile</MenuItem>
+            </Menu>
+            </div>*@
+            <div style="float:right;">
+                <Button>预览</Button>
+                <Button Type="primary" OnClick="() => SavePageSchemaAsync()">保存</Button>
+            </div>
+        </Header>
+        <AntDesign.Layout>
+            <Sider Style="min-width: 200px; flex: auto; max-width: max-content;" Theme="SiderTheme.Light">
+                <ComponentPanel></ComponentPanel>
+            </Sider>
+            <Layout>
+                <Content Class="designpage">
+                    <DesignPanel @ref="_designPanel"></DesignPanel>
+                </Content>
+            </Layout>
+            <Sider Class="designpage" Style="flex: auto; max-width: max-content; min-width: 250px;" Theme="SiderTheme.Light">
+                <SettingPanel></SettingPanel>
+            </Sider>
         </AntDesign.Layout>
-    </CascadingValue>
+    </AntDesign.Layout>
 </CascadingValue>
 
 @code
@@ -54,11 +54,13 @@
 
     private DesignPanel _designPanel;
     private PageSchema _pageSchema;
+    private PageModel _pageCascadingModel;
     private bool _isNewPage;
 
     protected override async Task OnInitializedAsync()
     {
         _pageSchema = await LoadPageSchemaAsync();
+        SetPageModel(_pageSchema);
 
         await base.OnInitializedAsync();
     }
@@ -69,7 +71,7 @@
         {
             _isNewPage = true;
             PageId = Guid.NewGuid().ToString();
-            var page = new PageSchema() { Id = PageId, AppId = AppId };
+            var page = new PageSchema() { Id = PageId, AppId = AppId, Name = "newpage" };
 
             DragDropStateService.SetPage(AppId, page);
             return page;
@@ -131,5 +133,16 @@
         _pageSchema.PageProperty = DragDropStateService.GetGlobalPageProperty(AppId, PageId);
         _pageSchema.DataSource = new DataSourceSchema() { DataSourceType = DataSourceEnum.Table };
         return _pageSchema;
+    }
+
+    private void SetPageModel(PageSchema pageSchema)
+    {
+        _pageCascadingModel = new PageModel
+        {
+            AppId = pageSchema.AppId,
+            PageId = pageSchema.Id,
+            PageName = pageSchema.Name,
+            PageProperty = pageSchema.PageProperty
+        };
     }
 }

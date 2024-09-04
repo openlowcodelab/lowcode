@@ -1,40 +1,43 @@
 ﻿@namespace H.LowCode.DesignEngine.Admin
 @inherits LayoutComponentBase
 
+@inject IHttpClientFactory HttpClientFactory
+@inject NavigationManager NavigationManager
 @inject ComponentStateWrapper<DesignEngineAdminLayout, MenuDataItem[]> State
-@inject ComponentStateWrapper<string, string> State2
+@inject ComponentStateWrapper<AppSchema, AppSchema> State2
 
-<PageTitle>@State2.Value</PageTitle>
+<PageTitle>@State2.Value?.Name</PageTitle>
 
 <link href="_content/H.LowCode.DesignEngine.Admin/designengineadmin.css" rel="stylesheet" />
 
-<AntDesign.ProLayout.BasicLayout FixedHeader="true" Class="designengineadmin" Logo="@("logo.png")" Title="@State2.Value" MenuData="@State.Value"
-    Layout="AntDesign.ProLayout.Layout.Side">
-    <RightContentRender>
-        RightContent
-    </RightContentRender>
-    <ChildContent>
-        @Body
-    </ChildContent>
-    <FooterRender></FooterRender>
-</AntDesign.ProLayout.BasicLayout>
-<SettingDrawer />
+@if (State2.Value != null)
+{
+    <CascadingValue Value="@State2.Value" Name="appCascading">
+        <AntDesign.ProLayout.BasicLayout FixedHeader="true" Class="designengineadmin" Logo="@("logo.png")" Title="@State2.Value.Name" MenuData="@State.Value"
+            Layout="AntDesign.ProLayout.Layout.Side">
+            <RightContentRender>
+                RightContent
+            </RightContentRender>
+            <ChildContent>
+                @Body
+            </ChildContent>
+            <FooterRender></FooterRender>
+        </AntDesign.ProLayout.BasicLayout>
+        <SettingDrawer />
+    </CascadingValue>
+}
 
 @code
 {
-    //private string AppId { get; set; }
-
-    //private MenuDataItem[] _menuData;
-
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         if (State.Value is null)
         {
             string appid = GetAppId();
-            State2.Value = appid;
+            State2.Value = await GetAppSchemaAsync(appid);
             State.Value = InitMenuData(appid);
 
-            base.OnInitialized();
+            await base.OnInitializedAsync();
         }
     }
 
@@ -50,6 +53,15 @@
             throw new NullReferenceException(nameof(appid));
 
         return appid;
+    }
+
+    private async Task<AppSchema> GetAppSchemaAsync(string appId)
+    {
+        var httpClient = HttpClientFactory.CreateClient();
+        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+
+        var pageSchema = await httpClient.GetFromJsonAsync<AppSchema>($"api/designengine/getapp?appId={appId}");
+        return pageSchema;
     }
 
     private MenuDataItem[] InitMenuData(string appId)

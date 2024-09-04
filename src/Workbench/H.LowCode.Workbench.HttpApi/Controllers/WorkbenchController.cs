@@ -14,16 +14,4 @@ public class WorkbenchController : ControllerBase
     {
         _workbenchAppService = workbenchAppService;
     }
-
-    [HttpGet]
-    public async Task<IList<AppSchema>> GetAppsAsync()
-    {
-        return await _workbenchAppService.GetAppsAsync();
-    }
-
-    [HttpPost]
-    public async Task SaveAppAsync(AppSchema appSchema)
-    {
-        await _workbenchAppService.SaveAppAsync(appSchema);
-    }
 }

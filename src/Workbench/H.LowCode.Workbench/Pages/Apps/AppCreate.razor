@@ -82,7 +82,7 @@
 
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
-        var result = await httpClient.PostAsync($"api/workbench/saveapp", content);
+        var result = await httpClient.PostAsync($"api/designengine/saveapp", content);
 
         return result;
     }

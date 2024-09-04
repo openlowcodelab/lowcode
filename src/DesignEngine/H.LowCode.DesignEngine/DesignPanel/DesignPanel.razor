@@ -16,11 +16,8 @@
 }
 
 @code {
-    [CascadingParameter(Name = "appId")]
-    public string AppId { get; set; }
-
-    [CascadingParameter(Name = "pageId")]
-    public string PageId { get; set; }
+    [CascadingParameter(Name = "pageCascading")]
+    public PageModel PageCascading { get; set; }
 
     [SupplyParameterFromQuery(Name = "pt")]
     public int PageType { get; set; }
@@ -36,20 +33,20 @@
 
     private ComponentSchema LoadRootComponent()
     {
-        var rootComponent = DragDropStateService.GetRootComponent(AppId, PageId);
+        var rootComponent = DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId);
         if (rootComponent == null)
         {
             rootComponent = new ComponentSchema("root");
             rootComponent.Refresh = StateHasChanged;
-            DragDropStateService.SetRootComponent(AppId, PageId, rootComponent);
+            DragDropStateService.SetRootComponent(PageCascading.AppId, PageCascading.PageId, rootComponent);
         }
         return rootComponent;
     }
 
     public void Reload(PageSchema pageSchema)
     {
-        if (pageSchema != null && DragDropStateService.GetRootComponent(AppId, PageId) != null)
-            DragDropStateService.GetRootComponent(AppId, PageId).Childrens = pageSchema.Components;
+        if (pageSchema != null && DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId) != null)
+            DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId).Childrens = pageSchema.Components;
         StateHasChanged();
     }
 
@@ -95,7 +92,7 @@
 
     protected virtual ComponentSchema CreateComponent(string key, Action<ComponentSchema> action = null)
     {
-        var c = DragDropStateService.GetRootComponent(AppId, PageId).Childrens.FirstOrDefault(t =>
+        var c = DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId).Childrens.FirstOrDefault(t =>
             {
                 if (t.ComponentProperty.ExtensionData.ContainsKey(key))
                     return true;
@@ -108,7 +105,7 @@
 
         if (action != null) action(component);
 
-        DragDropStateService.GetRootComponent(AppId, PageId).Childrens.Add(component);
+        DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId).Childrens.Add(component);
 
         return component;
     }
@@ -132,7 +129,7 @@
 
         component.IsContainerComponent = true;
         component.ComponentProperty.ExtensionData.Add(name, name);
-        component.ParentId = DragDropStateService.GetRootComponent(AppId, PageId).Id;
+        component.ParentId = DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId).Id;
 
         return component;
     }
