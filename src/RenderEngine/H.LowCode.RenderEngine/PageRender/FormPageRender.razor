@@ -4,11 +4,11 @@
 {
     if (component.IsContainerComponent)
     {
-        <ContainerComponentRender ContainerComponent="@component"></ContainerComponentRender>
+        <ContainerComponentRender ContainerComponent="@component" IsRootContainer="true"></ContainerComponentRender>
     }
     else
     {
-        <ComponentRender Component="@component"></ComponentRender>
+        <ComponentRender Component="@component" IsInRootContainer="true"></ComponentRender>
     }
 }
 

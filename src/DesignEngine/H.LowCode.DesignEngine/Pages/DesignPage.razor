@@ -53,6 +53,7 @@
     public string PageId { get; set; }
 
     private DesignPanel _designPanel;
+
     private PageSchema _pageSchema;
     private PageModel _pageCascadingModel;
     private bool _isNewPage;
@@ -62,7 +63,7 @@
         _pageCascadingModel = new() { AppId = AppId, PageId = PageId, PageName = "..." };
 
         _pageSchema = await LoadPageSchemaAsync();
-        UpdatePageModel(_pageSchema);
+        SetPageModel(_pageSchema);
 
         await base.OnInitializedAsync();
     }
@@ -137,7 +138,7 @@
         return _pageSchema;
     }
 
-    private void UpdatePageModel(PageSchema pageSchema)
+    private void SetPageModel(PageSchema pageSchema)
     {
         _pageCascadingModel.PageName = pageSchema.Name;
         _pageCascadingModel.PageProperty = pageSchema.PageProperty;

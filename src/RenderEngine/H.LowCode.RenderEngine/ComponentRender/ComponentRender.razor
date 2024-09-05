@@ -1,22 +1,36 @@
 ﻿@namespace H.LowCode.RenderEngine
 
-@if (Component.IsHiddenTitle == false && Component.IsContainerComponent == false)
-{
-    <div class="renderengine-componentitem-title">@Component.ComponentProperty.Title ：</div>
-}
+<div class="componentitem-box" style="float:left; opacity:@Component.Opacity;
+    width: @(IsInRootContainer ? 100/PageCascading.PageProperty.PageLayout : 100)%; min-height: @(Component.ComponentStyle.ItemHeight)px;
+     position:@Component.ComponentStyle.Position;">
 
-@if (Component.IsContainerComponent)
-{
-    <div class="renderengine-componentitem-div-container">@_renderFragment</div>
-}
-else
-{
-    <div class="renderengine-componentitem-div-component">@_renderFragment</div>
-}
+    @if (Component.IsHiddenTitle == false && Component.IsContainerComponent == false)
+    {
+        <div class="renderengine-componentitem-title">@Component.ComponentProperty.Title ：</div>
+    }
+
+    @if (Component.IsContainerComponent)
+    {
+        <div class="renderengine-componentitem-div-container">@_renderFragment</div>
+    }
+    else
+    {
+        <div class="renderengine-componentitem-div-component">@_renderFragment</div>
+    }
+</div>
 
 @code {
     [Parameter]
     public ComponentSchema Component { get; set; }
+
+    [CascadingParameter(Name = "pageCascading")]
+    public PageModel PageCascading{ get; set; }
+
+    /// <summary>
+    /// 当前组件是否在根容器内
+    /// </summary>
+    [Parameter]
+    public bool IsInRootContainer { get; set; }
 
     private RenderFragment _renderFragment;
 

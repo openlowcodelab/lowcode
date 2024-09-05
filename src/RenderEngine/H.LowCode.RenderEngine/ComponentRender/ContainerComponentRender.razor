@@ -5,20 +5,17 @@
     {
         <div style="width: @(comp.ComponentStyle.ItemWidth/24*100)%; min-height: @(comp.ComponentStyle.ItemHeight)px;
                         @comp.ComponentStyle.DefaultStyle @comp.ComponentStyle.CustomStyle">
-            <ComponentRender Component="@comp"></ComponentRender>
+            <ComponentRender Component="@comp" IsInRootContainer="@IsRootContainer"></ComponentRender>
         </div>
     }
 </div>
 
 @code {
-    [CascadingParameter(Name = "appId")]
-    public string AppId { get; set; }
-
-    [CascadingParameter(Name = "pageId")]
-    public string PageId { get; set; }
-
     [Parameter]
     public ComponentSchema ContainerComponent { get; set; }
+
+    [Parameter]
+    public bool IsRootContainer{ get; set; }
 
     protected override async Task OnInitializedAsync()
     {

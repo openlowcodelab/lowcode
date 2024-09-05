@@ -6,24 +6,22 @@
 @inject NavigationManager NavigationManager
 @inject ComponentStateWrapper<MetaPage, PageSchema> State
 
-<CascadingValue Value="AppId" Name="appId">
-    <CascadingValue Value="PageId" Name="pageId">
-        @if (_pageSchema != null)
+<CascadingValue Value="@_pageCascadingModel" Name="pageCascading">
+    @if (_pageSchema != null)
+    {
+        if(_pageSchema.PageType == PageTypeEnum.Normal)
         {
-            if(_pageSchema.PageType == PageTypeEnum.Normal)
-            {
-                <NormalPageRender Page="@_pageSchema"></NormalPageRender>
-            }
-            else if(_pageSchema.PageType == PageTypeEnum.Form)
-            {
-                <FormPageRender Page="@_pageSchema"></FormPageRender>
-            }
-            else
-            {
-                throw new NotImplementedException($"PageType: {_pageSchema.PageType}");
-            }
+            <NormalPageRender Page="@_pageSchema"></NormalPageRender>
         }
-    </CascadingValue>
+        else if(_pageSchema.PageType == PageTypeEnum.Form)
+        {
+            <FormPageRender Page="@_pageSchema"></FormPageRender>
+        }
+        else
+        {
+            throw new NotImplementedException($"PageType: {_pageSchema.PageType}");
+        }
+    }
 </CascadingValue>
 
 @code {
@@ -34,10 +32,14 @@
     public string PageId { get; set; }
 
     private PageSchema _pageSchema;
+    private PageModel _pageCascadingModel;
 
     protected override async Task OnParametersSetAsync()
     {
+        _pageCascadingModel = new() { AppId = AppId, PageId = PageId, PageName = "..." };
+
         _pageSchema = await LoadPageSchemaAsync();
+        SetPageModel(_pageSchema);
         
         await base.OnParametersSetAsync();
     }
@@ -49,5 +51,11 @@
 
         var pageSchema = await httpClient.GetFromJsonAsync<PageSchema>($"api/renderengine/getpage?appId={AppId}&pageId={PageId}");
         return pageSchema;
+    }
+
+    private void SetPageModel(PageSchema pageSchema)
+    {
+        _pageCascadingModel.PageName = pageSchema.Name;
+        _pageCascadingModel.PageProperty = pageSchema.PageProperty;
     }
 }

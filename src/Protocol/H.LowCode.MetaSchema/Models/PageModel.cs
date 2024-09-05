@@ -1,7 +1,7 @@
 ﻿using H.LowCode.MetaSchema;
 using System;
 
-namespace H.LowCode.DesignEngine.Model;
+namespace H.LowCode.MetaSchema;
 
 public class PageModel
 {
