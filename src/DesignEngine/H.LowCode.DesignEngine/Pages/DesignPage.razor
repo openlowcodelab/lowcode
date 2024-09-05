@@ -7,7 +7,7 @@
 @inject DragDropStateService DragDropStateService
 @inject IMessageService _message
 
-<PageTitle>@($"{_pageSchema.Name} - 页面设计器")</PageTitle>
+<PageTitle>@($"{_pageCascadingModel.PageName} - 页面设计器")</PageTitle>
 
 <link href="_content/H.LowCode.DesignEngine/designengine.css" rel="stylesheet" />
 
@@ -59,8 +59,10 @@
 
     protected override async Task OnInitializedAsync()
     {
+        _pageCascadingModel = new() { AppId = AppId, PageId = PageId, PageName = "..." };
+
         _pageSchema = await LoadPageSchemaAsync();
-        SetPageModel(_pageSchema);
+        UpdatePageModel(_pageSchema);
 
         await base.OnInitializedAsync();
     }
@@ -71,10 +73,10 @@
         {
             _isNewPage = true;
             PageId = Guid.NewGuid().ToString();
-            var page = new PageSchema() { Id = PageId, AppId = AppId, Name = "newpage" };
+            var newPage = new PageSchema() { Id = PageId, AppId = AppId, Name = "newpage" };
 
-            DragDropStateService.SetPage(AppId, page);
-            return page;
+            DragDropStateService.SetPage(AppId, newPage);
+            return newPage;
         }
 
         var httpClient = HttpClientFactory.CreateClient();
@@ -135,14 +137,9 @@
         return _pageSchema;
     }
 
-    private void SetPageModel(PageSchema pageSchema)
+    private void UpdatePageModel(PageSchema pageSchema)
     {
-        _pageCascadingModel = new PageModel
-        {
-            AppId = pageSchema.AppId,
-            PageId = pageSchema.Id,
-            PageName = pageSchema.Name,
-            PageProperty = pageSchema.PageProperty
-        };
+        _pageCascadingModel.PageName = pageSchema.Name;
+        _pageCascadingModel.PageProperty = pageSchema.PageProperty;
     }
 }
