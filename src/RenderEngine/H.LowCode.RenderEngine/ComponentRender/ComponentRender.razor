@@ -1,23 +1,30 @@
 ﻿@namespace H.LowCode.RenderEngine
 
-<div class="componentitem-box" style="float:left; opacity:@Component.Opacity;
-    width: @(IsInRootContainer ? 100/PageCascading.PageProperty.PageLayout : 100)%; min-height: @(Component.ComponentStyle.ItemHeight)px;
-     position:@Component.ComponentStyle.Position;">
+@if (Component.IsContainerComponent)
+{
+    <ContainerComponentRender ContainerComponent="@Component"></ContainerComponentRender>
+}
+else
+{
+    <div class="renderengine-componentitem-box" style="float:left; opacity:@Component.Opacity; position:@Component.ComponentStyle.Position;
+        width: @(IsInRootContainer ? 100.00/PageCascading.PageLayout : 100)%;
+        min-height: @(Component.ComponentStyle.ItemHeight)px;">
 
-    @if (Component.IsHiddenTitle == false && Component.IsContainerComponent == false)
-    {
-        <div class="renderengine-componentitem-title">@Component.ComponentProperty.Title ：</div>
-    }
+        @if (Component.IsHiddenTitle == false && Component.IsContainerComponent == false)
+        {
+            <div class="renderengine-componentitem-title">@Component.ComponentProperty.Title ：</div>
+        }
 
-    @if (Component.IsContainerComponent)
-    {
-        <div class="renderengine-componentitem-div-container">@_renderFragment</div>
-    }
-    else
-    {
-        <div class="renderengine-componentitem-div-component">@_renderFragment</div>
-    }
-</div>
+        @if (Component.IsContainerComponent)
+        {
+            <div class="renderengine-componentitem-div-container">@_renderFragment</div>
+        }
+        else
+        {
+            <div class="renderengine-componentitem-div-component">@_renderFragment</div>
+        }
+    </div>
+}
 
 @code {
     [Parameter]

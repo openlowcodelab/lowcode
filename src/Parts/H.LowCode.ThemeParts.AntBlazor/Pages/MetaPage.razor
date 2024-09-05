@@ -6,6 +6,8 @@
 @inject NavigationManager NavigationManager
 @inject ComponentStateWrapper<MetaPage, PageSchema> State
 
+<PageTitle>@($"{_pageCascadingModel.PageName}")</PageTitle>
+
 <CascadingValue Value="@_pageCascadingModel" Name="pageCascading">
     @if (_pageSchema != null)
     {
@@ -40,7 +42,7 @@
 
         _pageSchema = await LoadPageSchemaAsync();
         SetPageModel(_pageSchema);
-        
+
         await base.OnParametersSetAsync();
     }
 
@@ -56,6 +58,6 @@
     private void SetPageModel(PageSchema pageSchema)
     {
         _pageCascadingModel.PageName = pageSchema.Name;
-        _pageCascadingModel.PageProperty = pageSchema.PageProperty;
+        _pageCascadingModel.PageLayout = pageSchema.PageProperty.PageLayout;
     }
 }

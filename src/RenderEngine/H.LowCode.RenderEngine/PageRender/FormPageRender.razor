@@ -2,14 +2,7 @@
 
 @foreach (var component in Page.Components)
 {
-    if (component.IsContainerComponent)
-    {
-        <ContainerComponentRender ContainerComponent="@component" IsRootContainer="true"></ContainerComponentRender>
-    }
-    else
-    {
-        <ComponentRender Component="@component" IsInRootContainer="true"></ComponentRender>
-    }
+    <ComponentRender Component="@component" IsInRootContainer="true"></ComponentRender>
 }
 
 @code {

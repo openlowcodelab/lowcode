@@ -1,11 +1,11 @@
 ﻿@namespace H.LowCode.RenderEngine
 
-<div class="dropitemcontainer" style="@ContainerComponent.ComponentStyle.DefaultStyle">
+<div class="renderengine-componentcontainer" style="@ContainerComponent.ComponentStyle.DefaultStyle">
     @foreach (var comp in ContainerComponent.Childrens)
     {
         <div style="width: @(comp.ComponentStyle.ItemWidth/24*100)%; min-height: @(comp.ComponentStyle.ItemHeight)px;
                         @comp.ComponentStyle.DefaultStyle @comp.ComponentStyle.CustomStyle">
-            <ComponentRender Component="@comp" IsInRootContainer="@IsRootContainer"></ComponentRender>
+            <ComponentRender Component="@comp"></ComponentRender>
         </div>
     }
 </div>
@@ -13,9 +13,6 @@
 @code {
     [Parameter]
     public ComponentSchema ContainerComponent { get; set; }
-
-    [Parameter]
-    public bool IsRootContainer{ get; set; }
 
     protected override async Task OnInitializedAsync()
     {
