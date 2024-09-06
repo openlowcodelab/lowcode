@@ -1,8 +1,6 @@
 ﻿@namespace H.LowCode.ThemeParts.AntBlazor
-@inherits LayoutComponentBase
+@inherits ThemePartLayoutBase
 
-@inject IHttpClientFactory HttpClientFactory
-@inject NavigationManager NavigationManager
 @inject ComponentStateWrapper<AntBlazorThemeLayout, MenuDataItem[]> State
 @inject ComponentStateWrapper<string, string> State2
 
@@ -26,50 +24,13 @@
     {
         if (State.Value is null)
         {
-            string appid = GetAppId();
+            string appid = base.GetAppId();
             State2.Value = appid;
-            State.Value = await InitMenuDataAsync(appid);
+            var menus = await base.GetMenusAsync(appid);
+            State.Value = ConvertMenus(appid, menus);
 
             await base.OnInitializedAsync();
         }
-    }
-
-    private string GetAppId()
-    {
-        string appid = string.Empty;
-        if ((this.Body.Target as RouteView)?.RouteData.RouteValues?.TryGetValue("AppId", out object appId) == true)
-        {
-            appid = appId?.ToString();
-        }
-
-        if (string.IsNullOrEmpty(appid))
-            throw new NullReferenceException(nameof(appid));
-
-        return appid;
-    }
-
-    private async Task<MenuDataItem[]> InitMenuDataAsync(string appId)
-    {
-        var menuList = await GetMenuListAsync(appId);
-        MenuDataItem[] menuArr = ConvertMenus(appId, menuList);
-
-        var menus = menuArr.ToList();
-        menus.AddFirst(new MenuDataItem
-            {
-                Path = $"/{appId}/index",
-                Name = "首页",
-                Key = "home"
-            });
-        return menus.ToArray();
-    }
-
-    private async Task<IList<MenuSchema>> GetMenuListAsync(string appId)
-    {
-        var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
-
-        var result = await httpClient.GetFromJsonAsync<List<MenuSchema>>($"api/renderengine/getmenus?appId={appId}");
-        return result;
     }
 
     private MenuDataItem[] ConvertMenus(string appId, IList<MenuSchema> menuList)
