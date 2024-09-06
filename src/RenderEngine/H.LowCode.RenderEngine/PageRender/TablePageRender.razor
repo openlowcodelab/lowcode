@@ -1,0 +1,12 @@
+﻿@namespace H.LowCode.RenderEngine
+
+@foreach (var component in Page.Components)
+{
+    <ComponentRender Component="@component" IsInRootContainer="true"></ComponentRender>
+}
+
+@code {
+    [Parameter]
+    public PageSchema Page { get; set; }
+
+}

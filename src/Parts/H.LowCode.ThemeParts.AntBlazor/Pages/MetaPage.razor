@@ -19,6 +19,10 @@
         {
             <FormPageRender Page="@_pageSchema"></FormPageRender>
         }
+        else if (_pageSchema.PageType == PageTypeEnum.Table)
+        {
+            <TablePageRender Page="@_pageSchema"></TablePageRender>
+        }
         else
         {
             throw new NotImplementedException($"PageType: {_pageSchema.PageType}");
