@@ -3,16 +3,16 @@
 
 @inject IHttpClientFactory HttpClientFactory
 @inject NavigationManager NavigationManager
-@inject ComponentStateWrapper<DesignEngineAdminLayout, MenuDataItem[]> State
-@inject ComponentStateWrapper<AppSchema, AppSchema> State2
+@inject ComponentStateWrapper<DesignEngineAdminLayout, MenuDataItem[]> MenuDataState
+@inject ComponentStateWrapper<AppSchema, AppSchema> AppSchemaState
 
 <link href="_content/H.LowCode.DesignEngine.Admin/designengineadmin.css" rel="stylesheet" />
 
-@if (State2.Value != null)
+@if (AppSchemaState.Value != null)
 {
-    <CascadingValue Value="@State2.Value" Name="appCascading">
-        <AntDesign.ProLayout.BasicLayout FixedHeader="true" Class="designengineadmin" Logo="@("logo.png")" Title="@State2.Value.Name" MenuData="@State.Value"
-            Layout="AntDesign.ProLayout.Layout.Side">
+    <CascadingValue Value="@AppSchemaState.Value" Name="appCascading">
+        <AntDesign.ProLayout.BasicLayout FixedHeader="true" Class="designengineadmin" Logo="@("logo.png")" Title="@AppSchemaState.Value.Name"
+                MenuData="@MenuDataState.Value" MenuAccordion="true" Layout="AntDesign.ProLayout.Layout.Side">
             <RightContentRender>
                 RightContent
             </RightContentRender>
@@ -29,11 +29,11 @@
 {
     protected override async Task OnInitializedAsync()
     {
-        if (State.Value is null)
+        if (MenuDataState.Value is null)
         {
             string appid = GetAppId();
-            State2.Value = await GetAppSchemaAsync(appid);
-            State.Value = InitMenuData(appid);
+            AppSchemaState.Value = await GetAppSchemaAsync(appid);
+            MenuDataState.Value = InitMenuData(appid);
 
             await base.OnInitializedAsync();
         }
@@ -85,6 +85,20 @@
                 Name = "数据源",
                 Icon = "database",
                 Key = "datasource"
+            },
+        new MenuDataItem
+            {
+                Path = $"/myapp/{appId}/integration",
+                Name = "集成",
+                Icon = "api",
+                Key = "integration"
+            },
+        new MenuDataItem
+            {
+                Path = $"/myapp/{appId}/autoflow",
+                Name = "自动化",
+                Icon = "deployment-unit",
+                Key = "autoflow"
             },
         new MenuDataItem
             {

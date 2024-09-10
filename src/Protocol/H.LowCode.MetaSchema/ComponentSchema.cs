@@ -74,7 +74,7 @@ public class ComponentSchema : BaseMetaSchema
     [JsonPropertyName("ds")]
     public DataSourceSchema DataSource { get; set; }
 
-    #region JsonIgnore Attributes
+    #region JsonIgnore Attributes   ======== 用于 DesignEngine, RenderEngine 不需要
     [JsonIgnore]
     public bool IsSelected { get; set; }
 

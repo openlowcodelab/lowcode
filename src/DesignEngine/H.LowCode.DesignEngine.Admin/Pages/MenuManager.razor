@@ -5,20 +5,20 @@
 @inject IHttpClientFactory HttpClientFactory
 @inject NavigationManager NavigationManager
 @inject IMessageService Message
-@inject ComponentStateWrapper<MenuManager, IList<MenuSchema>> State
+@inject ComponentStateWrapper<MenuManager, IList<MenuSchema>> MenuListState
 
 <PageTitle>菜单管理</PageTitle>
 
 <div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
-    <div style="text-align: left; width:250px;">
+    <div style="width:250px;">
         <Search Placeholder="菜单名称" OnSearch="()=>{}" />
     </div>
-    <div style="text-align: right; width:80px; line-height:32px; margin: 0 8px 0 0;">
+    <div style="width:80px; line-height:32px; margin: 0 8px 0 0;">
         <Button Type="@ButtonType.Primary" OnClick="@(()=> CreateAsync(string.Empty))">新建菜单</Button>
     </div>
 </div>
 
-<Table TItem="MenuSchema" TreeChildren="item=>item.Childrens" DataSource="@State.Value" @bind-SelectedRows="selectedRows"
+<Table TItem="MenuSchema" TreeChildren="item=>item.Childrens" DataSource="@MenuListState.Value" @bind-SelectedRows="selectedRows"
         HidePagination DefaultExpandAllRows>
     <Selection Key="@(context.Id)" />
     <Column Title="菜单名称" @bind-Field="@context.Title" Format="yyyy-MM-dd" Sortable />
@@ -93,9 +93,9 @@
 
     protected override async Task OnInitializedAsync()
     {
-        if (State.Value is null)
+        if (MenuListState.Value is null)
         {
-            State.Value = await GetMenuListAsync();
+            MenuListState.Value = await GetMenuListAsync();
 
             await base.OnInitializedAsync();
         }
@@ -174,7 +174,7 @@
 
     private async Task OnFinishAsync()
     {
-        State.Value = await GetMenuListAsync();
+        MenuListState.Value = await GetMenuListAsync();
     }
 
     private async Task<HttpResponseMessage> SaveMenuSchemaAsync()

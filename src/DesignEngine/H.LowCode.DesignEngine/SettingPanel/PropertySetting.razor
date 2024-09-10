@@ -155,14 +155,17 @@
         foreach (var extensionProperty in Component.ComponentProperty.ExtensionProperties)
         {
             <div class="propertysetting-item">
-                <label>@extensionProperty.Label：</label>
+                @if(extensionProperty.IsShowLabel){
+                    <label>@extensionProperty.Label：</label>
+                }
+
                 @if (extensionProperty.SettingItemType == PropertyItemTypeEnum.Text)
                 {
                     <Input TValue="string" @bind-value="@extensionProperty.StringValue" OnChange="(value) => OnPropertyChange()" />
                 }
                 else if (extensionProperty.SettingItemType == PropertyItemTypeEnum.Text_Int)
                 {
-                    <Input TValue="int" @bind-value="@extensionProperty.IntValue" OnChange="(value) => OnPropertyChange()" />
+                    <Input TValue="int?" @bind-value="@extensionProperty.IntValue" OnChange="(value) => OnPropertyChange()" />
                 }
                 else if (extensionProperty.SettingItemType == PropertyItemTypeEnum.Radio)
                 {
@@ -187,6 +190,10 @@
                 else if (extensionProperty.SettingItemType == PropertyItemTypeEnum.Textarea)
                 {
 
+                }
+                else if (extensionProperty.SettingItemType == PropertyItemTypeEnum.Table)
+                {
+                    <TablePropertyItem PropertyValue="@extensionProperty.StringValue"></TablePropertyItem>
                 }
 
                 @if (!string.IsNullOrEmpty(extensionProperty.Description))

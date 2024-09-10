@@ -1,13 +1,13 @@
 ﻿@namespace H.LowCode.ThemeParts.AntBlazor
 @inherits ThemePartLayoutBase
 
-@inject ComponentStateWrapper<AntBlazorThemeLayout, MenuDataItem[]> State
-@inject ComponentStateWrapper<string, string> State2
+@inject ComponentStateWrapper<AntBlazorThemeLayout, MenuDataItem[]> MenuDataState
+@inject ComponentStateWrapper<string, string> AppIdState
 
 <link href="_content/H.LowCode.ThemeParts.AntBlazor/renderengine.css" rel="stylesheet" />
 
-<AntDesign.ProLayout.BasicLayout FixedHeader="true" Class="renderengine" Logo="@("logo.png")" Title="@State2.Value" MenuData="@State.Value"
-    Layout="AntDesign.ProLayout.Layout.Side">
+<AntDesign.ProLayout.BasicLayout FixedHeader="true" Class="renderengine" Logo="@("logo.png")" Title="@AppIdState.Value"
+        MenuData="@MenuDataState.Value" MenuAccordion="true" Layout="AntDesign.ProLayout.Layout.Side">
     <RightContentRender>
         @*<AntDesign.Pro.Template.Components.RightContent />*@
         RightContent
@@ -22,12 +22,12 @@
 {
     protected override async Task OnInitializedAsync()
     {
-        if (State.Value is null)
+        if (MenuDataState.Value is null)
         {
             string appid = base.GetAppId();
-            State2.Value = appid;
+            AppIdState.Value = appid;
             var menus = await base.GetMenusAsync(appid);
-            State.Value = ConvertMenus(appid, menus);
+            MenuDataState.Value = ConvertMenus(appid, menus);
 
             await base.OnInitializedAsync();
         }
@@ -42,7 +42,8 @@
                 {
                     Path = $"/{appId}/{menu.MenuUrl}",
                     Name = menu.Title,
-                    Key = menu.Id
+                    Key = menu.Id,
+                    Icon = menu.Icon
                 };
             if (menu.Childrens.Count > 0)
                 m.Children = ConvertMenus(appId, menu.Childrens);

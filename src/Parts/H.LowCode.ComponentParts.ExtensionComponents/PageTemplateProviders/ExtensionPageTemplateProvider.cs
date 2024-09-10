@@ -41,7 +41,6 @@ public class ExtensionPageTemplateProvider : IPageTemplateProvider
                         },
                         ComponentStyle = new()
                         {
-                            ItemWidth = 12,
                             ItemHeight = 40,
                             DefaultStyle = "margin:0 8px; position:fixed; bottom:8px; right: 320px;"
                         }
@@ -61,7 +60,7 @@ public class ExtensionPageTemplateProvider : IPageTemplateProvider
                         },
                         ComponentStyle = new()
                         {
-                            ItemWidth = 12,
+                            ItemWidth = 24,
                             ItemHeight = 40,
                             DefaultStyle = "margin:0 8px; position:fixed; bottom:8px; right: 250px;"
                         }

@@ -16,7 +16,8 @@
         {
             foreach (var c in comp.Childrens)
             {
-                <div style="width: @(c.ComponentStyle.ItemWidth/24*100)%; min-height: @(c.ComponentStyle.ItemHeight)px;
+                <div style="min-height: @(c.ComponentStyle.ItemHeight)px;
+                        width: @((c.ComponentStyle.ItemWidth ?? 24)  /24 * 100)%;
                         @c.ComponentStyle.DefaultStyle @c.ComponentStyle.CustomStyle">
                     <ComponentItem Component="@c"></ComponentItem>
                 </div>

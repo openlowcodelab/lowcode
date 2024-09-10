@@ -99,12 +99,16 @@ public class SeniorComponentProvider : IComponentProvider
                 IsHiddenTitle = true,
                 ComponentFragments =
                 [
-                    new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(TableWrap).GetFullNameWithAssemblyName() },
+                    new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(LcTable).GetFullNameWithAssemblyName() },
                     new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Component", ValueType = ComponentValueType.String, StringValue = "{Self}" }
                 ],
                 ComponentProperty = new()
                 {
-                    Title = "表格"
+                    Title = "表格",
+                    ExtensionProperties =
+                    [
+                        new() { Label="表格列", IsShowLabel = false, StringValue = string.Empty, SettingItemType = PropertyItemTypeEnum.Table }
+                    ]
                 },
                 ComponentStyle = new()
                 {

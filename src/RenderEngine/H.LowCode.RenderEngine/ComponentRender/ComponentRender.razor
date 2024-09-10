@@ -6,9 +6,11 @@
 }
 else
 {
-    <div class="renderengine-componentitem-box" style="float:left; opacity:@Component.Opacity; position:@Component.ComponentStyle.Position;
-        width: @(IsInRootContainer ? 100.00/PageCascading.PageLayout : 100)%;
-        min-height: @(Component.ComponentStyle.ItemHeight)px;">
+    <div class="renderengine-componentitem-box" style="float:left;
+        position:@Component.ComponentStyle.Position;
+        width: @((Component.ComponentStyle.ItemWidth ?? (IsInRootContainer ? PageCascading.PageLayout/4 : 24))  /24 * 100)%;
+        min-height: @(Component.ComponentStyle.ItemHeight)px;
+        @Component.ComponentStyle.DefaultStyle @Component.ComponentStyle.CustomStyle">
 
         @if (Component.IsHiddenTitle == false && Component.IsContainerComponent == false)
         {

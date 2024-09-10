@@ -1,0 +1,129 @@
+﻿@namespace H.LowCode.ComponentParts.BasicComponents
+
+@using AntDesign.TableModels
+@using System.ComponentModel.DataAnnotations
+
+<Table @ref="table" TItem="Dictionary<string, object>" DataSource="@_models" Total="_total" @bind-PageIndex="_pageIndex" @bind-PageSize="_pageSize"
+       @bind-SelectedRows="_selectedRows" OnChange="OnChange" Size="TableSize.Small">
+    <TitleTemplate>
+        <Flex Justify="end" Gap="10">
+            <Button Type="primary" @onclick="CreateAsync">新增</Button>
+            <Button Disabled="!_selectedRows.Any()" Danger @onclick="DeleteSelectedAsync">删除选中</Button>
+        </Flex>
+    </TitleTemplate>
+    <ColumnDefinitions Context="row">
+        <Selection />
+        @foreach (var key in _models?.FirstOrDefault()?.Keys.ToArray() ?? new string[0])
+        {
+            var column = _columns.FirstOrDefault(t => string.Equals(t.Name, key, StringComparison.OrdinalIgnoreCase));
+            if (column != null)
+            {
+                <PropertyColumn Property="@(c=> c[key])" Title="@column.Title"></PropertyColumn>
+            }
+        }
+        <ActionColumn Title="操作" Width="120">
+            <Space Size=@("middle")>
+                <SpaceItem>
+                    <a @onclick="()=> EditAsync(row)">编辑</a>
+                </SpaceItem>
+                <SpaceItem>
+                    <a @onclick="()=> DeleteAsync(row)" style="color:#ff4d4f">删除</a>
+                </SpaceItem>
+            </Space>
+        </ActionColumn>
+    </ColumnDefinitions>
+</Table>
+
+@code {
+    [Parameter]
+    public ComponentSchema Component { get; set; }
+
+    private List<TableColumnSchema> _columns;
+    private List<Dictionary<string, object>> _models;
+
+    IEnumerable<Dictionary<string, object>> _selectedRows = [];
+    ITable table;
+
+    int _pageIndex = 1;
+    int _pageSize = 10;
+    int _total = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _columns = await GetTableColumesAsync();
+        _models = await GetTableDataAsync(1, 50);
+        _total = 50;
+    }
+
+    public async Task OnChange(QueryModel<Dictionary<string, object>> queryModel)
+    {
+        await Task.Delay(1);
+        Console.WriteLine(JsonSerializer.Serialize(queryModel));
+    }
+
+    private async Task<List<TableColumnSchema>> GetTableColumesAsync()
+    {
+        await Task.Delay(100);
+        var columns = new List<TableColumnSchema>()
+        {
+            new() { Name = "Id", Title = "Id" },
+            new() { Name = "Name", Title = "姓名" },
+            new() { Name = "Age", Title = "年龄" },
+            new() { Name = "xx", Title = "xx" }
+        };
+        return columns;
+    }
+
+    public async Task<List<Dictionary<string, object>>> GetTableDataAsync(int pageIndex, int pageSize)
+    {
+        await Task.Delay(100);
+        var list = new List<Dictionary<string, object>>()
+        {
+            new() {
+                { "id", "1" },
+                { "name" , "Name1" },
+                { "age" , 18 },
+                { "yy" , "yy" }
+            },
+            new() {
+                { "id", "2" },
+                { "name" , "Name2" },
+                { "age" , 19 },
+                { "yy" , "yy" }
+            },
+            new() {
+                { "id", "3" },
+                { "name" , "Name3" },
+                { "age" , 20 },
+                { "yy" , "yy" }
+            },
+            new() {
+                { "id", "3" },
+                { "name" , null },
+                { "age" , 20 }
+            }
+        };
+        return list;
+    }
+
+    public async Task CreateAsync()
+    {
+        await Task.Delay(100);
+    }
+
+    public async Task EditAsync(Dictionary<string, object> row)
+    {
+        string primaryKey = _columns.FirstOrDefault(t => t.IsPrimaryKey)?.Name;
+        await Task.Delay(100);
+    }
+
+    private async Task DeleteAsync(Dictionary<string, object> row)
+    {
+        await Task.Delay(100);
+    }
+
+    public async Task DeleteSelectedAsync()
+    {
+        await Task.Delay(100);
+    }
+}

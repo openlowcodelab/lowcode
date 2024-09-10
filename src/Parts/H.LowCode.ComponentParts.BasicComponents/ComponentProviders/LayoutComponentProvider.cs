@@ -43,7 +43,7 @@ public class LayoutComponentProvider : IComponentProvider
                 },
                 ComponentStyle = new()
                 {
-                    DefaultStyle = "width:100%; height:100%; background-color: #ffffff00;",
+                    DefaultStyle = "width:100%; height:auto; background-color: #ffffff00;",
                     ItemWidth = 24,
                     ItemHeight = 150
                 }

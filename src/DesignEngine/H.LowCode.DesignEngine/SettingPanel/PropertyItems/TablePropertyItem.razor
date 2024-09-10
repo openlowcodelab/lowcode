@@ -1,0 +1,47 @@
+﻿@namespace H.LowCode.DesignEngine
+
+<div style="display: flex; justify-content: space-between;">
+    <div>
+        表格列
+    </div>
+    <div style="text-align: center; width:22px;">
+        <a style="border: solid #c4c4c4 1px; line-height: 18px;height: 22px;display: block;background-color: #fafafa; color:#2c2c2c">+</a>
+    </div>
+</div>
+
+<hr color="#f6f6f6" />
+@foreach (var column in _columns)
+{
+    <div>
+        <span draggable="true" style="cursor: move; display: inline-block; width: 10px; margin: 0 auto; writing-mode: vertical-lr;">...</span>
+        <span style="display:inline-block; width:140px;">@column.Title</span>
+        <Icon Type="edit" Theme="outline" />
+        <Icon Type="delete" Theme="outline" />
+    </div>
+}
+<hr color="#f6f6f6" />
+
+@code {
+    [Parameter]
+    public string PropertyValue { get; set; }
+
+    private List<TableColumnSchema> _columns;
+
+    protected override void OnInitialized()
+    {
+        _columns = new List<TableColumnSchema>()
+        {
+            new() { Name = "Id", Title = "Id" },
+            new() { Name = "Name", Title = "姓名" },
+            new() { Name = "Age", Title = "年龄" },
+            new() { Name = "xx", Title = "xx" }
+        };
+
+        if (PropertyValue.IsNullOrEmpty() == false)
+        {
+            _columns = JsonSerializer.Deserialize<List<TableColumnSchema>>(PropertyValue);
+        }
+
+        base.OnInitialized();
+    }
+}

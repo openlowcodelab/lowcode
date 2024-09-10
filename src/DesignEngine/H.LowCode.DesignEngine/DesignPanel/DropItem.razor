@@ -3,9 +3,10 @@
 @inject DragDropStateService DragDropStateService
 
 <div class="dropitem-box @DropItemBoxClassMapper.Class" style="float:left; opacity:@Component.Opacity;
-    width: @(IsInRootContainer ? 100/PageCascading.PageLayout : 100)%; min-height: @(Component.ComponentStyle.ItemHeight)px;
-     position:@Component.ComponentStyle.Position;
-     @Component.ComponentStyle.DefaultStyle @Component.ComponentStyle.CustomStyle"
+        width: @((Component.ComponentStyle.ItemWidth ?? (IsInRootContainer ? PageCascading.PageLayout/4 : 24))  /24 * 100)%;
+        min-height: @(Component.ComponentStyle.ItemHeight)px;
+        position:@Component.ComponentStyle.Position;
+        @Component.ComponentStyle.DefaultStyle @Component.ComponentStyle.CustomStyle"
      @onclick="OnClick" @onclick:stopPropagation
      @ondragstart="OnDragStart" @ondragstart:stopPropagation
      @ondragenter="OnDragEnter" @ondragenter:stopPropagation

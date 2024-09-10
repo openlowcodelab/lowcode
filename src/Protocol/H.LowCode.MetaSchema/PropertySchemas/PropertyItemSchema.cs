@@ -5,20 +5,28 @@ namespace H.LowCode.MetaSchema;
 
 public class PropertyItemSchema
 {
+    [JsonPropertyName("n")]
+    public string Name { get; set; }
+
     [JsonPropertyName("label")]
     public string Label { get; set; }
 
+    [JsonPropertyName("showLabel")]
+    public bool IsShowLabel { get; set; } = true;
+
+    public int Sort { get; set; }
+
     [JsonPropertyName("strval")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string StringValue { get; set; }
 
     [JsonPropertyName("boolval")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public bool BoolValue { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? BoolValue { get; set; }
 
     [JsonPropertyName("intval")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public int IntValue { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? IntValue { get; set; }
 
     [JsonPropertyName("desc")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
@@ -41,5 +49,6 @@ public enum PropertyItemTypeEnum
     Switch,
     Date,
     Textarea,
-    Options
+    Options,
+    Table
 }
