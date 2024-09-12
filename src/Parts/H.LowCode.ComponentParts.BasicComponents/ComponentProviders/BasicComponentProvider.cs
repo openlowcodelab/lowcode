@@ -137,7 +137,7 @@ public class BasicComponentProvider : IComponentProvider
                 IsHiddenTitle = true,
                 ComponentFragments =
                 [
-                    new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(ButtonWrap).GetFullNameWithAssemblyName() },
+                    new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(LcButton).GetFullNameWithAssemblyName() },
                     new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Text", ValueType = ComponentValueType.String, StringValue = "按钮" }
                 ],
                 ComponentProperty = new(){

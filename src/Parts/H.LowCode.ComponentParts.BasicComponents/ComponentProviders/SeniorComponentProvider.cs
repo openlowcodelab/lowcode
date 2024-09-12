@@ -37,7 +37,7 @@ public class SeniorComponentProvider : IComponentProvider
                 IsHiddenTitle = true,
                 ComponentFragments =
                 [
-                    new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(TabsWrap).GetFullNameWithAssemblyName() },
+                    new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(LcTabs).GetFullNameWithAssemblyName() },
                     new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Component", ValueType = ComponentValueType.String, StringValue = "{Self}" },
                     new(){ Index = 2, FragmentEnum = FragmentEnum.Attribute, Name = "ItemCount", ValueType = ComponentValueType.Integer, IntValue = 3 },
                 ],
@@ -83,7 +83,7 @@ public class SeniorComponentProvider : IComponentProvider
                 IsHiddenTitle = true,
                 ComponentFragments =
                 [
-                    new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(CardWrap).GetFullNameWithAssemblyName() },
+                    new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(LcCard).GetFullNameWithAssemblyName() },
                     new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Component", ValueType = ComponentValueType.String, StringValue = "{Self}" }
                 ],
                 ComponentProperty = new()
@@ -120,7 +120,7 @@ public class SeniorComponentProvider : IComponentProvider
                 IsHiddenTitle = true,
                 ComponentFragments =
                 [
-                    new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(CarouselWrap).GetFullNameWithAssemblyName() },
+                    new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(LcCarousel).GetFullNameWithAssemblyName() },
                     new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Component", ValueType = ComponentValueType.String, StringValue = "{Self}" },
                     new(){ Index = 2, FragmentEnum = FragmentEnum.Attribute, Name = "ItemCount", ValueType = ComponentValueType.Integer, IntValue = 4 }
                 ],
@@ -138,7 +138,7 @@ public class SeniorComponentProvider : IComponentProvider
                 IsHiddenTitle = true,
                 ComponentFragments =
                 [
-                    new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(DescriptionsWrap).GetFullNameWithAssemblyName() },
+                    new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(LcDescriptions).GetFullNameWithAssemblyName() },
                     new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Component", ValueType = ComponentValueType.String, StringValue = "{Self}" },
                     new(){ Index = 2, FragmentEnum = FragmentEnum.Attribute, Name = "ItemCount", ValueType = ComponentValueType.Integer, IntValue = 3 }
                 ],
