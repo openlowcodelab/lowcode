@@ -116,7 +116,7 @@ public class BasicComponentProvider : IComponentProvider
                 ComponentFragments =
                 [
                     new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(DatePicker<DateTime?>).GetFullNameWithAssemblyName() },
-                    new(){ Index = 1, FragmentEnum = FragmentEnum.Attribute, Name = "Picker", ValueType = ComponentValueType.String, StringValue = DatePickerType.Date }
+                    new(){ Index = 1, FragmentEnum = FragmentEnum.Attribute, Name = "Picker", ValueType = ComponentValueType.Integer, IntValue = DatePickerType.Date.Value }
                 ],
                 ComponentProperty = new(){
                     Title = "日期选择",

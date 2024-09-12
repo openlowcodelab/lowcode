@@ -107,12 +107,12 @@ public class ComponentPropertySchema
 
 public enum ComponentValueType
 {
-    None,
-    String,
-    Number,
-    Integer,
-    Boolean,
-    Object,
-    Array,
-    Date
+    None = 0,
+    String = 1,
+    Number = 2,
+    Integer = 3,
+    Boolean = 4,
+    Object = 5,
+    Array = 6,
+    Date = 7
 }
