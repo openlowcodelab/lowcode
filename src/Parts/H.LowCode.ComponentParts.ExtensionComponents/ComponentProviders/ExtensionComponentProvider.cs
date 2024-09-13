@@ -1,4 +1,5 @@
-﻿using H.LowCode.DesignEngine.Abstraction;
+﻿using AntDesign;
+using H.LowCode.DesignEngine.Abstraction;
 using H.LowCode.MetaSchema;
 
 namespace H.LowCode.ComponentParts.ExtensionComponents;
@@ -15,7 +16,7 @@ public class ExtensionComponentProvider : IComponentProvider
                 IsHiddenTitle = true,
                 ComponentFragments =
                 [
-                    new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(LakexEditor).GetFullNameWithAssemblyName() },
+                    new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(LcLakexEditor).GetFullNameWithAssemblyName() },
                     new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Component", ValueType = ComponentValueType.String, StringValue = "{Self}" }
                 ],
                 ComponentProperty = new()
@@ -33,7 +34,7 @@ public class ExtensionComponentProvider : IComponentProvider
                 IsHiddenTitle = true,
                 ComponentFragments =
                 [
-                    new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(MonacoEditor).GetFullNameWithAssemblyName() },
+                    new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(LcMonacoEditor).GetFullNameWithAssemblyName() },
                     new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Component", ValueType = ComponentValueType.String, StringValue = "{Self}" }
                 ],
                 ComponentProperty = new()
@@ -51,7 +52,7 @@ public class ExtensionComponentProvider : IComponentProvider
             //new("userselect"){
             //    ComponentFragments =
             //    [
-            //        new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(UserSelect) }
+            //        new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(LcUserSelect) }
             //    ],
             //    ComponentProperty = new()
             //    {
@@ -61,7 +62,7 @@ public class ExtensionComponentProvider : IComponentProvider
             //new("region"){
             //    ComponentFragments =
             //    [
-            //        new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(Region) }
+            //        new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(LcRegion) }
             //    ],
             //    ComponentProperty = new()
             //    {
@@ -71,7 +72,7 @@ public class ExtensionComponentProvider : IComponentProvider
             //new("gaodemap"){
             //    ComponentFragments =
             //    [
-            //        new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(GaodeMap) }
+            //        new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(LcGaodeMap) }
             //    ],
             //    ComponentProperty = new()
             //    {
@@ -81,7 +82,7 @@ public class ExtensionComponentProvider : IComponentProvider
             //new("baidumap"){
             //    ComponentFragments =
             //    [
-            //        new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(BaiduMap) }
+            //        new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(LcBaiduMap) }
             //    ],
             //    ComponentProperty = new()
             //    {
