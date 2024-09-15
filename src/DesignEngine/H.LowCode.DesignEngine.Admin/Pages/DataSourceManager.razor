@@ -16,11 +16,11 @@
         </div>
         <Table TItem="DataSourceSchema" DataSource="@_dataSourceTables" Total="_total"
                @bind-PageIndex="@_pageIndex" @bind-PageSize="@_pageSize">
-            <Column Title="表名" @bind-Field="@context.Key" Sortable />
-            <Column Title="表中文名" @bind-Field="@context.Name" Sortable />
-            <Column Title="修改人" @bind-Field="@context.ModifiedUser" />
-            <Column Title="修改时间" @bind-Field="@context.ModifiedTime" Format="yyyy-MM-dd HH:mm:ss" />
-            <Column Title="发布状态" @bind-Field="@context.PublishStatus" />
+            <PropertyColumn Title="表名" Property="c=>c.Key" Sortable />
+            <PropertyColumn Title="表中文名" Property="c=>c.Name" Sortable />
+            <PropertyColumn Title="修改人" Property="c=>c.ModifiedUser" />
+            <PropertyColumn Title="修改时间" Property="c=>c.ModifiedTime" Format="yyyy-MM-dd HH:mm:ss" />
+            <PropertyColumn Title="发布状态" Property="c=>c.PublishStatus" />
             <ActionColumn Title="操作">
                 <Space Size=@("middle")>
                     <SpaceItem>
@@ -48,11 +48,11 @@
         </div>
         <Table TItem="DataSourceSchema" DataSource="@_dataSourceAPIs" Total="_total"
                @bind-PageIndex="@_pageIndex" @bind-PageSize="@_pageSize">
-            <Column Title="API 标识" @bind-Field="@context.Key" Sortable />
-            <Column Title="API 中文名" @bind-Field="@context.Name" Sortable />
-            <Column Title="修改人" @bind-Field="@context.ModifiedUser" />
-            <Column Title="修改时间" @bind-Field="@context.ModifiedTime" Format="yyyy-MM-dd HH:mm:ss" />
-            <Column Title="发布状态" @bind-Field="@context.PublishStatus" />
+            <PropertyColumn Title="API 标识" Property="c=>c.Key" Sortable />
+            <PropertyColumn Title="API 中文名" Property="c=>c.Name" Sortable />
+            <PropertyColumn Title="修改人" Property="c=>c.ModifiedUser" />
+            <PropertyColumn Title="修改时间" Property="c=>c.ModifiedTime" Format="yyyy-MM-dd HH:mm:ss" />
+            <PropertyColumn Title="发布状态" Property="c=>c.PublishStatus" />
             <ActionColumn Title="操作">
                 <Space Size=@("middle")>
                     <SpaceItem>

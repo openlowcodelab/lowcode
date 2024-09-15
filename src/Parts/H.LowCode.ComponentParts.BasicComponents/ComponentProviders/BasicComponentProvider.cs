@@ -1,6 +1,7 @@
 ﻿using AntDesign;
 using H.LowCode.MetaSchema;
 using H.LowCode.DesignEngine.Abstraction;
+using System.Text.Json;
 
 namespace H.LowCode.ComponentParts.BasicComponents;
 
@@ -21,13 +22,13 @@ public class BasicComponentProvider : IComponentProvider
                     Title = "输入框",
                     ComponentValueType = ComponentValueType.String,
                     SupportProperties = ["MaximumLength", "MinimumLength", "Pattern", "Format"],
-                    ExtensionProperties =
-                    [
-                        new() { Label="最大长度", IntValue = 0, SettingItemType = PropertyItemTypeEnum.Text_Int },
-                        new() { Label="是否只读", BoolValue = false, SettingItemType = PropertyItemTypeEnum.Checkbox },
-                        new() { Label="是否截断", BoolValue = false, SettingItemType = PropertyItemTypeEnum.Checkbox },
-                        new() { Label="输入提示", StringValue = "", SettingItemType = PropertyItemTypeEnum.Text, Description = "placehoder 显示文字" }
-                    ]
+                    ExtensionProperties = new Dictionary<string,PropertyItemSchema>
+                    {
+                        { "maxlength", new() { Label="最大长度", IntValue = 0, SettingItemType = PropertyItemTypeEnum.Text_Int } },
+                        { "isreadonly", new() { Label="是否只读", BoolValue = false, SettingItemType = PropertyItemTypeEnum.Checkbox } },
+                        { "isslice", new() { Label="是否截断", BoolValue = false, SettingItemType = PropertyItemTypeEnum.Checkbox } },
+                        { "tips", new() { Label="输入提示", StringValue = "", SettingItemType = PropertyItemTypeEnum.Text, Description = "placehoder 显示文字" } }
+                    }
                 }
             },
             new("inputnumber"){

@@ -17,7 +17,7 @@ public class RenderEngineAppService : IRenderEngineAppService
 
     public RenderEngineAppService(IOptions<MetaOption> metaOption)
     {
-        metaBaseDir = metaOption.Value.FileBasePath;
+        metaBaseDir = metaOption.Value.AppsFilePath;
     }
 
     public async Task<IList<MenuSchema>> GetMenusAsync(string appId)

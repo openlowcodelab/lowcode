@@ -97,49 +97,39 @@
     <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:5px 0;">数据源</div>
     <div class="propertysetting-item">
         <label>类型：</label>
-        <SimpleSelect DefaultValue="0" @bind-Value="@_datasourceType">
-            <SelectOptions>
-                <SimpleSelectOption Value="0" Label="Default"></SimpleSelectOption>
-                <SimpleSelectOption Value="1" Label="API"></SimpleSelectOption>
-                <SimpleSelectOption Value="2" Label="SQL"></SimpleSelectOption>
-                <SimpleSelectOption Value="3" Label="Expression"></SimpleSelectOption>
-                <SimpleSelectOption Value="4" Label="Fiexd"></SimpleSelectOption>
-            </SelectOptions>
-        </SimpleSelect>
+        <EnumSelect TEnum="@DataSourceEnum" @bind-Value="@Component.DataSource.DataSourceType">
+        </EnumSelect>
     </div>
 
-    @if (_datasourceType.IsNullOrEmpty())
-        _datasourceType = "0";
-
-    @if ("0".Equals(_datasourceType))
+    @if (Component.DataSource.DataSourceType == DataSourceEnum.Table)
     {
         <div class="propertysetting-item">
             <label>字段：</label>
             <div>@Component.ComponentProperty.Name</div>
         </div>
     }
-    else if ("1".Equals(_datasourceType))
+    else if (Component.DataSource.DataSourceType == DataSourceEnum.API)
     {
         <div class="propertysetting-item">
             <label>API：</label>
             <Input TValue="string" @bind-Value="@Component.DataSource.Value" />
         </div>
     }
-    else if ("2".Equals(_datasourceType))
+    else if (Component.DataSource.DataSourceType == DataSourceEnum.SQL)
     {
         <div class="propertysetting-item">
             <label>SQL：</label>
             <TextArea @bind-Value="@Component.DataSource.Value" />
         </div>
     }
-    else if ("3".Equals(_datasourceType))
+    else if (Component.DataSource.DataSourceType == DataSourceEnum.Expression)
     {
         <div class="propertysetting-item">
             <label>表达式：</label>
             <TextArea @bind-Value="@Component.DataSource.Value" />
         </div>
     }
-    else if ("4".Equals(_datasourceType))
+    else if (Component.DataSource.DataSourceType == DataSourceEnum.Fiexd)
     {
         <div class="propertysetting-item">
             <label>固定值：</label>
@@ -152,53 +142,54 @@
     {
         <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:5px 0;">更多</div>
 
-        foreach (var extensionProperty in Component.ComponentProperty.ExtensionProperties)
+        foreach (var extPropertyKV in Component.ComponentProperty.ExtensionProperties)
         {
             <div class="propertysetting-item">
-                @if(extensionProperty.IsShowLabel){
-                    <label>@extensionProperty.Label：</label>
+                @if (extPropertyKV.Value.IsShowLabel)
+                {
+                    <label>@extPropertyKV.Value.Label：</label>
                 }
 
-                @if (extensionProperty.SettingItemType == PropertyItemTypeEnum.Text)
+                @if (extPropertyKV.Value.SettingItemType == PropertyItemTypeEnum.Text)
                 {
-                    <Input TValue="string" @bind-value="@extensionProperty.StringValue" OnChange="(value) => OnPropertyChange()" />
+                    <Input TValue="string" @bind-value="@extPropertyKV.Value.StringValue" OnChange="(value) => OnPropertyChange()" />
                 }
-                else if (extensionProperty.SettingItemType == PropertyItemTypeEnum.Text_Int)
+                else if (extPropertyKV.Value.SettingItemType == PropertyItemTypeEnum.Text_Int)
                 {
-                    <Input TValue="int?" @bind-value="@extensionProperty.IntValue" OnChange="(value) => OnPropertyChange()" />
+                    <Input TValue="int?" @bind-value="@extPropertyKV.Value.IntValue" OnChange="(value) => OnPropertyChange()" />
                 }
-                else if (extensionProperty.SettingItemType == PropertyItemTypeEnum.Radio)
-                {
-
-                }
-                else if (extensionProperty.SettingItemType == PropertyItemTypeEnum.Checkbox)
-                {
-                    <Checkbox @bind-checked="@extensionProperty.BoolValue"></Checkbox>
-                }
-                else if (extensionProperty.SettingItemType == PropertyItemTypeEnum.Select)
+                else if (extPropertyKV.Value.SettingItemType == PropertyItemTypeEnum.Radio)
                 {
 
                 }
-                else if (extensionProperty.SettingItemType == PropertyItemTypeEnum.Switch)
+                else if (extPropertyKV.Value.SettingItemType == PropertyItemTypeEnum.Checkbox)
+                {
+                    <Checkbox @bind-checked="@extPropertyKV.Value.BoolValue"></Checkbox>
+                }
+                else if (extPropertyKV.Value.SettingItemType == PropertyItemTypeEnum.Select)
                 {
 
                 }
-                else if (extensionProperty.SettingItemType == PropertyItemTypeEnum.Date)
+                else if (extPropertyKV.Value.SettingItemType == PropertyItemTypeEnum.Switch)
                 {
 
                 }
-                else if (extensionProperty.SettingItemType == PropertyItemTypeEnum.Textarea)
+                else if (extPropertyKV.Value.SettingItemType == PropertyItemTypeEnum.Date)
                 {
 
                 }
-                else if (extensionProperty.SettingItemType == PropertyItemTypeEnum.Table)
+                else if (extPropertyKV.Value.SettingItemType == PropertyItemTypeEnum.Textarea)
                 {
-                    <TablePropertyItem PropertyValue="@extensionProperty.StringValue"></TablePropertyItem>
+
+                }
+                else if (extPropertyKV.Value.SettingItemType == PropertyItemTypeEnum.Table)
+                {
+                    <TablePropertyItem PropertyItemKV="@extPropertyKV" OnPropertyChange="OnExtensionPropertyChange"></TablePropertyItem>
                 }
 
-                @if (!string.IsNullOrEmpty(extensionProperty.Description))
+                @if (!string.IsNullOrEmpty(extPropertyKV.Value.Description))
                 {
-                    <div style="color:#c7c7c7">@extensionProperty.Description</div>
+                    <div style="color:#c7c7c7">@extPropertyKV.Value.Description</div>
                 }
             </div>
         }
@@ -209,10 +200,23 @@
     [Parameter]
     public ComponentSchema Component { get; set; }
 
-    private string _datasourceType { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+
+        await base.OnInitializedAsync();
+    }
 
     private void OnPropertyChange()
     {
         Component.RefreshState();
+    }
+
+    private void OnExtensionPropertyChange(string key, string propertyValue)
+    {
+        var contains = Component.ComponentProperty.ExtensionProperties.ContainsKey(key);
+        if (contains)
+        {
+            Component.ComponentProperty.ExtensionProperties[key].StringValue = propertyValue;
+        }
     }
 }

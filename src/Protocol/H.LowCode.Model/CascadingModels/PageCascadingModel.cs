@@ -1,10 +1,9 @@
-﻿using H.LowCode.MetaSchema;
-using System;
+﻿using System;
 using System.Text.Json.Serialization;
 
-namespace H.LowCode.MetaSchema;
+namespace H.LowCode.Model;
 
-public class PageModel
+public class PageCascadingModel
 {
     public string AppId { get; set; }
 

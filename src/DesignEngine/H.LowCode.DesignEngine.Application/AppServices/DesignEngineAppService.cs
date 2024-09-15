@@ -18,7 +18,7 @@ public class DesignEngineAppService : IDesignEngineAppService
 
     public DesignEngineAppService(IOptions<MetaOption> metaOption)
     {
-        metaBaseDir = metaOption.Value.FileBasePath;
+        metaBaseDir = metaOption.Value.AppsFilePath;
     }
 
     public async Task<IList<AppSchema>> GetAppsAsync()

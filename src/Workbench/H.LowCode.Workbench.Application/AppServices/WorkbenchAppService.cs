@@ -13,6 +13,6 @@ public class WorkbenchAppService : IWorkbenchAppService
 
     public WorkbenchAppService(IOptions<MetaOption> metaOption)
     {
-        metaBaseDir = metaOption.Value.FileBasePath;
+        metaBaseDir = metaOption.Value.AppsFilePath;
     }
 }

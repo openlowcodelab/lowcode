@@ -19,14 +19,13 @@
 </div>
 
 <Table TItem="MenuSchema" TreeChildren="item=>item.Childrens" DataSource="@MenuListState.Value" @bind-SelectedRows="selectedRows"
-        HidePagination DefaultExpandAllRows>
-    <Selection Key="@(context.Id)" />
-    <Column Title="菜单名称" @bind-Field="@context.Title" Format="yyyy-MM-dd" Sortable />
-    <Column Title="排序" @bind-Field="@context.Order" />
-    <Column Title="图标" @bind-Field="@context.Icon" />
-    <Column Title="类型" @bind-Field="@context.MenuType" Format="@(context.MenuType == 0 ?"菜单":"目录")" />
-    <Column Title="跳转页面" @bind-Field="@context.MenuUrl" />
-    <Column Title="修改时间" @bind-Field="@context.ModifiedTime" Format="yyyy-MM-dd HH:mm:ss" />
+       RowKey="x=>x.Id" HidePagination DefaultExpandAllRows>
+    <PropertyColumn Title="菜单名称" Property="c=>c.Title" Format="yyyy-MM-dd" Sortable />
+    <PropertyColumn Title="排序" Property="c=>c.Order" />
+    <PropertyColumn Title="图标" Property="c=>c.Icon" />
+    <PropertyColumn Title="类型" Property="c=>c.MenuType" Format="@(context.MenuType == 0 ?"菜单":"目录")" />
+    <PropertyColumn Title="跳转页面" Property="c=>c.MenuUrl" />
+    <PropertyColumn Title="修改时间" Property="c=>c.ModifiedTime" Format="yyyy-MM-dd HH:mm:ss" />
     <ActionColumn Title="操作" Width="200">
          <Space Size=@("middle")>
             @if(context.MenuType == 1)
@@ -48,9 +47,6 @@
 <Modal Title="新建菜单" @bind-Visible="@_visible" OnOk="OnConfirmAsync">
     <Form Model="@_menuSchema" LabelColSpan="8" WrapperColSpan="16" OnFinish="OnFinishAsync" @ref="@_form"
           ValidateMode="@FormValidateMode.Complex" ValidateOnChange="true">
-        @* <FormItem Label="菜单标识" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
-            <Input @bind-Value="@context.Id" />
-        </FormItem> *@
         @if (context.ParentId.IsNullOrEmpty() == false)
         {
             <FormItem Label="父级Id" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>

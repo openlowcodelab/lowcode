@@ -5,7 +5,7 @@
         表格列
     </div>
     <div style="text-align: center; width:22px;">
-        <a style="border: solid #c4c4c4 1px; line-height: 18px;height: 22px;display: block;background-color: #fafafa; color:#2c2c2c">+</a>
+        <a onclick="@(() => CreateColumn())" style="border: solid #c4c4c4 1px; line-height: 18px;height: 22px;display: block;background-color: #fafafa; color:#2c2c2c">+</a>
     </div>
 </div>
 
@@ -15,33 +15,166 @@
     <div>
         <span draggable="true" style="cursor: move; display: inline-block; width: 10px; margin: 0 auto; writing-mode: vertical-lr;">...</span>
         <span style="display:inline-block; width:140px;">@column.Title</span>
-        <Icon Type="edit" Theme="outline" />
-        <Icon Type="delete" Theme="outline" />
+        <Icon Type="edit" OnClick="@(() => EditColumn(column.Id))" Theme="outline" Style="cursor: pointer;" />
+        <Icon Type="delete" OnClick="@(() => DeleteColumn(column.Id))" Theme="outline" Style="cursor: pointer;" />
     </div>
 }
 <hr color="#f6f6f6" />
 
+<Modal Title="表格列" @bind-Visible="@_visible" OnOk="OnConfirm">
+    <Form Model="@_tableColumnSchema" OnFinish="OnFinish" @ref="_form"
+          ValidateMode="@FormValidateMode.Complex" ValidateOnChange="true" LabelColSpan="8" WrapperColSpan="16">
+        <FormItem Label="字段标识" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
+            <Input @bind-Value="@context.Name" />
+        </FormItem>
+        <FormItem Label="字段名称" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
+            <Input @bind-Value="@context.Title" />
+        </FormItem>
+        <FormItem Label="是否主键">
+            <RadioGroup TValue="bool" DefaultValue="false" @bind-Value="@context.IsPrimaryKey">
+                <Radio Value="false">否</Radio>
+                <Radio Value="true">是</Radio>
+            </RadioGroup>
+        </FormItem>
+        <FormItem Label="是否支持过滤">
+            <RadioGroup TValue="bool" DefaultValue="false" @bind-Value="@context.Filterable">
+                <Radio Value="false">否</Radio>
+                <Radio Value="true">是</Radio>
+            </RadioGroup>
+        </FormItem>
+        <FormItem Label="是否支持排序">
+            <RadioGroup TValue="bool" DefaultValue="false" @bind-Value="@context.Sortable">
+                <Radio Value="false">否</Radio>
+                <Radio Value="true">是</Radio>
+            </RadioGroup>
+        </FormItem>
+        <FormItem Label="排序">
+            <AntDesign.InputNumber @bind-Value="@context.Order" Min="0" DefaultValue="0"></AntDesign.InputNumber>
+        </FormItem>
+    </Form>
+</Modal>
+
 @code {
     [Parameter]
-    public string PropertyValue { get; set; }
+    public KeyValuePair<string, PropertyItemSchema> PropertyItemKV { get; set; }
 
-    private List<TableColumnSchema> _columns;
+    [Parameter]
+    public Action<string, string> OnPropertyChange { get; set; }
+
+    private List<TableColumnSchema> _columns = [];
+
+    private bool _visible;
+    private Form<TableColumnSchema> _form;
+    private bool _isCreate;
+    private TableColumnSchema _tableColumnSchema = new TableColumnSchema();
 
     protected override void OnInitialized()
     {
-        _columns = new List<TableColumnSchema>()
+        if (PropertyItemKV.Value.StringValue.IsNullOrEmpty() == false)
         {
-            new() { Name = "Id", Title = "Id" },
-            new() { Name = "Name", Title = "姓名" },
-            new() { Name = "Age", Title = "年龄" },
-            new() { Name = "xx", Title = "xx" }
-        };
-
-        if (PropertyValue.IsNullOrEmpty() == false)
+            _columns = JsonSerializer.Deserialize<List<TableColumnSchema>>(PropertyItemKV.Value.StringValue);
+        }
+        else
         {
-            _columns = JsonSerializer.Deserialize<List<TableColumnSchema>>(PropertyValue);
+            _columns = new List<TableColumnSchema>()
+            {
+                new() { Id = Guid.NewGuid().ToString(), Name = "Id", Title = "Id" },
+                new() { Id = Guid.NewGuid().ToString(), Name = "Name", Title = "姓名" },
+                new() { Id = Guid.NewGuid().ToString(), Name = "Age", Title = "年龄" }
+            };
         }
 
         base.OnInitialized();
+    }
+
+    private void CreateColumn()
+    {
+        _isCreate = true;
+        _visible = true;
+        _tableColumnSchema = new();
+        _tableColumnSchema.Id = Guid.NewGuid().ToString();
+
+        StateHasChanged();
+    }
+
+    private void EditColumn(string id)
+    {
+        _isCreate = false;
+        _visible = true;
+        _tableColumnSchema = _columns.First(t => t.Id == id);
+
+        StateHasChanged();
+    }
+
+    private void DeleteColumn(string id)
+    {
+        var column = _columns.First(t => t.Id == id);
+        _columns.Remove(column);
+
+        OnPropertyChanged();
+    }
+
+    private void OnConfirm(MouseEventArgs e)
+    {
+        var validate = _form.Validate();
+        if (validate)
+        {
+            var result = SaveTableColumnSchema();
+            if (result)
+            {
+                _visible = false;
+                _form.Submit();
+                _form.Reset();
+            }
+            else
+            {
+                _visible = true;
+            }
+        }
+        else
+        {
+            _visible = true;
+        }
+    }
+
+    private void OnFinish()
+    {
+        OnPropertyChanged();
+    }
+
+    private void OnPropertyChanged()
+    {
+        PropertyItemKV.Value.StringValue = _columns.ToJson();
+
+        OnPropertyChange?.Invoke(PropertyItemKV.Key, PropertyItemKV.Value.StringValue);
+    }
+
+    private bool SaveTableColumnSchema()
+    {
+        if (_isCreate)
+        {
+            TableColumnSchema column = new()
+                {
+                    Name = _tableColumnSchema.Name,
+                    Title = _tableColumnSchema.Title,
+                    IsPrimaryKey = _tableColumnSchema.IsPrimaryKey,
+                    Filterable = _tableColumnSchema.Filterable,
+                    Sortable = _tableColumnSchema.Sortable,
+                    Order = _tableColumnSchema.Order
+                };
+            _columns.Add(column);
+        }
+        else
+        {
+            //无需赋值
+            // var column = _columns.First(t => t.Id == _tableColumnSchema.Id);
+            // column.Name = _tableColumnSchema.Name;
+            // column.Title = _tableColumnSchema.Title;
+            // column.IsPrimaryKey = _tableColumnSchema.IsPrimaryKey;
+            // column.Filterable = _tableColumnSchema.Filterable;
+            // column.Sortable = _tableColumnSchema.Sortable;
+            // column.Order = _tableColumnSchema.Order;
+        }
+        return true;
     }
 }

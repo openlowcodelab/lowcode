@@ -1,6 +1,7 @@
 ﻿using AntDesign;
 using H.LowCode.MetaSchema;
 using H.LowCode.DesignEngine.Abstraction;
+using System.Text.Json;
 
 namespace H.LowCode.ComponentParts.BasicComponents;
 
@@ -106,9 +107,9 @@ public class SeniorComponentProvider : IComponentProvider
                 {
                     Title = "表格",
                     ExtensionProperties =
-                    [
-                        new() { Label="表格列", IsShowLabel = false, StringValue = string.Empty, SettingItemType = PropertyItemTypeEnum.Table }
-                    ]
+                    {
+                        { "tablecolumn", new() { Label="表格列", IsShowLabel = false, StringValue = string.Empty, SettingItemType = PropertyItemTypeEnum.Table } }
+                    }
                 },
                 ComponentStyle = new()
                 {

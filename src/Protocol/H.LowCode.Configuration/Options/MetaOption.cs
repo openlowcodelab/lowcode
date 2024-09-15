@@ -10,5 +10,7 @@ public class MetaOption
 {
     public const string SectionName = "meta";
 
-    public string FileBasePath { get; set; }
+    public string AppsFilePath { get; set; }
+
+    public  string PartsFilePath { get; set; }
 }

@@ -19,13 +19,12 @@
 </div>
 
 <Table TItem="PageListModel" DataSource="@PageListState.Value" PageSize="15" PageIndex="1" Total="_total"
-       @bind-SelectedRows="selectedRows" Style="height:100%;">
-    <Selection Key="@(context.PageId)" />
-    <Column Title="ID" @bind-Field="@context.PageId" Width="300" />
-    <Column Title="页面名称" @bind-Field="@context.PageName" Sortable />
-    <Column Title="排序" @bind-Field="@context.Order" />
-    <Column Title="类型" @bind-Field="@context.PageType" Sortable />
-    <Column Title="发布状态" @bind-Field="@context.PublishState">
+       @bind-SelectedRows="selectedRows" Style="height:100%;" RowKey="c=>c.PageId">
+    <PropertyColumn Title="ID" Property="c=>c.PageId" Width="300" />
+    <PropertyColumn Title="页面名称" Property="c=>c.PageName" Sortable />
+    <PropertyColumn Title="排序" Property="c=>c.Order" />
+    <PropertyColumn Title="类型" Property="c=>c.PageType" Sortable />
+    <PropertyColumn Title="发布状态" Property="c=>c.PublishState">
         @if(context.PublishState == 0)
         {
             <Tag Color="default">待发布</Tag>
@@ -34,8 +33,8 @@
         {
             <Tag Color="green">已发布</Tag>
         }
-    </Column>
-    <Column Title="修改时间" @bind-Field="@context.ModifiedTime" Format="yyyy-MM-dd HH:mm:ss" />
+    </PropertyColumn>
+    <PropertyColumn Title="修改时间" Property="c=>c.ModifiedTime" Format="yyyy-MM-dd HH:mm:ss" />
     <ActionColumn Title="操作" Width="180">
          <Space Size=@("middle")>
              <SpaceItem>

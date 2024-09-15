@@ -54,7 +54,7 @@ public class ComponentSchema : BaseMetaSchema
     /// 
     /// </summary>
     [JsonPropertyName("event")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public ComponentEventSchema ComponentEvent { get; set; } = new();
     #endregion
 
@@ -72,7 +72,8 @@ public class ComponentSchema : BaseMetaSchema
     public IList<ComponentSchema> Childrens { get; set; } = [];
 
     [JsonPropertyName("ds")]
-    public DataSourceSchema DataSource { get; set; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public DataSourceSchema DataSource { get; set; } = new();
 
     #region JsonIgnore Attributes   ======== 用于 DesignEngine, RenderEngine 不需要
     [JsonIgnore]

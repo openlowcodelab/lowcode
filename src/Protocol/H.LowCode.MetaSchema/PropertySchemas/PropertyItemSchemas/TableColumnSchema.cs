@@ -1,17 +1,26 @@
-﻿namespace H.LowCode.MetaSchema;
+﻿using System;
+using System.Text.Json.Serialization;
+
+namespace H.LowCode.MetaSchema;
 
 public class TableColumnSchema
 {
+    public string Id { get; set; }
+
+    [JsonPropertyName("n")]
     public string Name { get; set; }
 
+    [JsonPropertyName("t")]
     public string Title { get; set; }
 
+    [JsonPropertyName("pk")]
     public bool IsPrimaryKey { get; set; }
 
     /// <summary>
     /// 列顺序
     /// </summary>
-    public int Sort { get; set; }
+    [JsonPropertyName("")]
+    public int Order { get; set; }
 
     /// <summary>
     /// 是否支持过滤

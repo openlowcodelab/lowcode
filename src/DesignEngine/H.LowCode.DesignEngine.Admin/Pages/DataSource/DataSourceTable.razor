@@ -23,12 +23,12 @@
     </div>
 </div>
 <Table TItem="DataSourceTableFieldSchema" DataSource="@DataSource.DataSourceTableFields">
-    <Column Title="字段名" @bind-Field="@context.FieldKey" Sortable />
-    <Column Title="字段中文名" @bind-Field="@context.FieldName" Sortable />
-    <Column Title="字段类型" @bind-Field="@context.FieldType" />
-    <Column Title="是否主键" @bind-Field="@context.IsPrimaryKey" />
-    <Column Title="是否唯一" @bind-Field="@context.IsUnique" />
-    <Column Title="是否不可空" @bind-Field="@context.IsRequired" />
+    <PropertyColumn Title="字段名" Property="c=>c.FieldKey" Sortable />
+    <PropertyColumn Title="字段中文名" Property="c=>c.FieldName" Sortable />
+    <PropertyColumn Title="字段类型" Property="c=>c.FieldType" />
+    <PropertyColumn Title="是否主键" Property="c=>c.IsPrimaryKey" />
+    <PropertyColumn Title="是否唯一" Property="c=>c.IsUnique" />
+    <PropertyColumn Title="是否不可空" Property="c=>c.IsRequired" />
     <ActionColumn Title="操作">
         <Space Size=@("middle")>
             <SpaceItem>

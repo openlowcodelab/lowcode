@@ -74,7 +74,7 @@ public class ComponentPropertySchema
     /// </summary>
     [JsonPropertyName("extprops")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public IList<PropertyItemSchema> ExtensionProperties { get; set; } = [];
+    public IDictionary<string, PropertyItemSchema> ExtensionProperties { get; set; } = new Dictionary<string, PropertyItemSchema>();
 
     /// <summary>
     /// 扩展的高级属性
