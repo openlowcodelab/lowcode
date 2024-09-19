@@ -1,0 +1,191 @@
+﻿@namespace H.LowCode.PartsDesignEngine
+
+@inject DragDropStateService DragDropStateService
+
+<div class="dropitem-box @DropItemBoxClassMapper.Class" style="float:left; opacity:@Component.Opacity;
+        width: @((Component.ComponentStyle.ItemWidth ?? (IsInRootContainer ? 24/PageCascading.PageLayout : 24))  /24 * 100)%;
+        min-height: @(Component.ComponentStyle.ItemHeight)px;
+        position:@Component.ComponentStyle.Position;
+        @Component.ComponentStyle.DefaultStyle @Component.ComponentStyle.CustomStyle"
+     @onclick="OnClick" @onclick:stopPropagation
+     @ondragstart="OnDragStart" @ondragstart:stopPropagation
+     @ondragenter="OnDragEnter" @ondragenter:stopPropagation
+     @ondragover="OnDragOver" @ondragover:preventDefault @ondragover:stopPropagation
+     @ondragleave="OnDragLeave" @ondragleave:stopPropagation
+     @onmouseover="OnMouseOver" @onmouseover:stopPropagation
+     @onmouseout="OnMouseOut" @onmouseout:stopPropagation>
+
+    <div class="dropitem @DropItemClassMapper.Class" style="@Component.DragEffectStyle">
+        @if (Component.IsSelected)
+        {
+            <div draggable="true" class="dropitem-icon-move">
+                <Icon Type="drag" Theme="outline" />
+            </div>
+            <div class="dropitem-pointer-wrapper">
+                <div class="dropitem-pointer" @onclick="OnDelete">
+                    <Icon Type="delete" Theme="outline" />
+                </div>
+                <div class="dropitem-pointer" @onclick="OnCopy">
+                    <Icon Type="copy" Theme="outline" />
+                </div>
+            </div>
+        }
+
+        <ComponentItem Component="@Component"></ComponentItem>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter(Name = "pageCascading")]
+    public PageCascadingModel PageCascading { get; set; }
+
+    [Parameter]
+    public ComponentSchema Component { get; set; }
+
+    /// <summary>
+    /// 当前组件是否在根容器内
+    /// </summary>
+    [Parameter]
+    public bool IsInRootContainer { get; set; }
+
+    [Parameter]
+    public Action<ComponentSchema> OnItemClick { get; set; }
+
+    [Parameter]
+    public Action<ComponentSchema> OnItemDelete { get; set; }
+
+    [Parameter]
+    public Action<ComponentSchema> OnItemCopy { get; set; }
+
+    protected ClassMapper DropItemBoxClassMapper { get; } = new ClassMapper();
+    protected ClassMapper DropItemClassMapper { get; } = new ClassMapper();
+
+    #region Init
+    protected override async Task OnInitializedAsync()
+    {
+        Init();
+        SetClassMap();
+
+        await base.OnInitializedAsync();
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+            RegisterEventDispatcher();
+    }
+
+    private void Init()
+    {
+        if (Component == null)
+            throw new NullReferenceException(nameof(Component));
+    }
+
+    private void RegisterEventDispatcher()
+    {
+        if (IsInRootContainer)
+        {
+            //订阅 PageSetting 中的组件点击事件
+            BlazorEventDispatcher.RegisterEvent("designengine.pagesetting.pagelayout.onchange", (value) =>
+            {
+                PageCascading.PageLayout = (int)value;
+                StateHasChanged();
+            });
+        }
+    }
+
+    private void SetClassMap()
+    {
+        DropItemClassMapper.Clear()
+            .If("dropitem-selected", () => Component.IsSelected)
+            .If("dropitem-component", () => Component.IsContainerComponent == false)
+            .If("dropitem-container", () => Component.IsContainerComponent);
+
+        DropItemBoxClassMapper.Clear()
+            .If("dropitem-box-layout", () => Component.IsContainerComponent);
+    }
+    #endregion
+
+    #region Event
+    private void OnClick()
+    {
+        Component.DragEffectStyle = string.Empty;
+        //DragDropStateService.ResetDragStyle();
+
+        OnItemClick.Invoke(Component);
+        BlazorEventDispatcher.Trigger("designengine.dropitem.onclick", Component);
+    }
+
+    private void OnDragStart(DragEventArgs dragEventArgs)
+    {
+        Component.Opacity = 0.2;
+
+        //记录当前选中对象
+        DragDropStateService.SetCurrentDragComponent(PageCascading.AppId, PageCascading.PageId, Component);
+    }
+    
+    private void OnDragEnter(DragEventArgs dragEventArgs)
+    {
+        DragDropStateService.SetLastDragOverComponent(PageCascading.AppId, PageCascading.PageId, Component);
+    }
+
+    private void OnDragOver(DragEventArgs dragEventArgs)
+    {
+        if (ReferenceEquals(DragDropStateService.GetCurrentDragComponent(PageCascading.AppId, PageCascading.PageId), Component))
+            return;
+
+        if (DateTime.Now < DragDropStateService.GetLastDragOverTime(PageCascading.AppId, PageCascading.PageId).AddMilliseconds(100))
+            return;
+
+        //设置移动位置样式，拖拽到目标元素上半部分时，上方添加虚线边框，下半部分时下方添加虚线边框
+        if (dragEventArgs.OffsetY < 30)
+        {
+            Component.DragEffectStyle = "border-top: 2px dashed #1890ff;";
+            Component.IsDropedAfter = false;
+        }
+        else
+        {
+            Console.WriteLine($"OnDragOver: bottom");
+            Component.DragEffectStyle = "border-bottom: 2px dashed #1890ff; height: auto;";
+            Component.IsDropedAfter = true;
+        }
+        DragDropStateService.SetLastDragOverTime(PageCascading.AppId, PageCascading.PageId, DateTime.Now);
+    }
+
+    private void OnDragLeave()
+    {
+        //如果当前被拖拽的组件和拖拽到上面的组件是同一个，直接返回
+        if (ReferenceEquals(DragDropStateService.GetCurrentDragComponent(PageCascading.AppId, PageCascading.PageId), Component))
+            return;
+
+        Console.WriteLine("OnDragLeave");
+        Component.DragEffectStyle = string.Empty;
+    }
+
+    private void OnMouseOver()
+    {
+        if (Component.IsSelected == false)
+        {
+            Component.DragEffectStyle = "outline: #1890ff dashed 1.5px;";
+        }
+    }
+
+    private void OnMouseOut()
+    {
+        if (Component.IsSelected == false)
+        {
+            Component.DragEffectStyle = string.Empty;
+        }
+    }
+
+    private void OnDelete()
+    {
+        OnItemDelete.Invoke(Component);
+    }
+
+    private void OnCopy()
+    {
+        OnItemCopy.Invoke(Component);
+    }
+    #endregion
+}

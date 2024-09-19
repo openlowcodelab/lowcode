@@ -1,0 +1,40 @@
+﻿@namespace H.LowCode.PartsDesignEngine
+
+@inject DragDropStateService DragDropStateService
+
+@if (_rootComponent != null)
+{
+    <div class="designpanel" style="margin:5px; height:100%; overflow-y: auto;">
+        <DropItemContainer ContainerComponent="@_rootComponent" IsRootContainer="true"></DropItemContainer>
+    </div>
+}
+
+@code {
+    private ComponentSchema _rootComponent;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _rootComponent = LoadRootComponent();
+
+        await base.OnInitializedAsync();
+    }
+
+    private ComponentSchema LoadRootComponent()
+    {
+        ComponentSchema rootComponent = null;  //DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId);
+        if (rootComponent == null)
+        {
+            rootComponent = new ComponentSchema("root");
+            //rootComponent.Refresh = StateHasChanged;
+            //DragDropStateService.SetRootComponent(PageCascading.AppId, PageCascading.PageId, rootComponent);
+        }
+        return rootComponent;
+    }
+
+    public void Reload(PageSchema pageSchema)
+    {
+        // if (pageSchema != null && DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId) != null)
+        //     DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId).Childrens = pageSchema.Components;
+        StateHasChanged();
+    }
+}

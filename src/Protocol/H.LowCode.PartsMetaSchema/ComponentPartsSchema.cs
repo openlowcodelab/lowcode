@@ -3,14 +3,14 @@ using System.Text.Json.Serialization;
 
 namespace H.LowCode.PartsMetaSchema;
 
-public class ComponentPartsSchema : BaseMetaSchema
+public class ComponentPartsSchema : BasePartsMetaSchema
 {
     public ComponentPartsSchema(string componentName)
     {
         ComponentName = componentName;
     }
 
-    public Guid Id { get; set; } = Guid.NewGuid();
+    public string Id { get; set; } = Guid.NewGuid().ToString();
 
     /// <summary>
     /// 组件名称

@@ -1,0 +1,142 @@
+﻿@page "/designer/pageparts/{PartsId}"
+@namespace H.LowCode.PartsDesignEngine
+@layout PartsDesignEngineLayout
+
+@inject IHttpClientFactory HttpClientFactory
+@inject NavigationManager NavigationManager
+@inject DragDropStateService DragDropStateService
+@inject IMessageService _message
+
+<PageTitle>@($"{_pageCascadingModel.PageName} - 页面物料设计器")</PageTitle>
+
+<link href="_content/H.LowCode.PartsDesignEngine/partsdesignengine.css" rel="stylesheet" />
+
+<CascadingValue Value="@_pageCascadingModel" Name="pageCascading">
+    <AntDesign.Layout Class="designpage" Style="padding:0 2px; background-color: #f7f7f7;">
+        <Header Style="background-color: white; padding:0 20px;">
+            <div style="float:left;">
+                <a href="javascript:void(0)"> @("<") 返回 </a>
+            </div>
+            @*<div style="text-align:center;">
+            <Menu Theme="MenuTheme.Light" Mode="MenuMode.Horizontal" DefaultSelectedKeys=@(new[]{"2"})>
+            <MenuItem Key="1">PC</MenuItem>
+            <MenuItem Key="2">Mobile</MenuItem>
+            </Menu>
+            </div>*@
+            <div style="float:right;">
+                <Button>预览</Button>
+                <Button Type="primary" OnClick="() => SavePagePartsSchemaAsync()">保存</Button>
+            </div>
+        </Header>
+        <AntDesign.Layout>
+            <Sider Style="min-width: 200px; flex: auto; max-width: max-content;" Theme="SiderTheme.Light">
+                <ComponentPanel></ComponentPanel>
+            </Sider>
+            <Layout>
+                <Content Class="designpage">
+                    <PageDesignPanel @ref="_designPanel"></PageDesignPanel>
+                </Content>
+            </Layout>
+            <Sider Class="designpage" Style="flex: auto; max-width: max-content; min-width: 250px;" Theme="SiderTheme.Light">
+                <SettingPanel></SettingPanel>
+            </Sider>
+        </AntDesign.Layout>
+    </AntDesign.Layout>
+</CascadingValue>
+
+@code
+{
+    [Parameter]
+    public string PartsId { get; set; }
+
+    private PageDesignPanel _designPanel;
+
+    private PagePartsSchema _partsSchema;
+    private PageCascadingModel _pageCascadingModel;
+    private bool _isNewPage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _pageCascadingModel = new() { PageId = PartsId, PageName = "..." };
+
+        _partsSchema = await LoadPartsSchemaAsync();
+        SetPageModel(_partsSchema);
+
+        await base.OnInitializedAsync();
+    }
+
+    private async Task<PagePartsSchema> LoadPartsSchemaAsync()
+    {
+        if (string.Equals("newparts", PartsId))
+        {
+            _isNewPage = true;
+            PartsId = Guid.NewGuid().ToString();
+            var newPage = new PagePartsSchema() { Id = PartsId, Name = "newparts" };
+
+            //DragDropStateService.SetPage(AppId, newPage);
+            return newPage;
+        }
+
+        var httpClient = HttpClientFactory.CreateClient();
+        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+
+        var pageParts = await httpClient.GetFromJsonAsync<PagePartsSchema>($"api/partsdesignengine/getpageparts?partsId={PartsId}");
+
+        if (_designPanel != null)
+        {
+            //DragDropStateService.SetPage(AppId, pageParts);
+            //_designPanel.Reload(pageParts);
+        }
+
+        return pageParts;
+    }
+
+    private async Task SavePagePartsSchemaAsync()
+    {
+        PagePartsSchema pageParts = CreatePagePartsSchema();
+        if (pageParts.Components.Count == 0)
+        {
+            await _message.Warning("没有任何组件，禁止保存！");
+            return;
+        }
+
+        string jsonSchema = pageParts.ToJson();
+
+        var content = new StringContent(jsonSchema, Encoding.UTF8, "application/json");
+
+        var httpClient = HttpClientFactory.CreateClient();
+        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+        var result = await httpClient.PostAsync($"api/partsdesignengine/savepageparts", content);
+
+        if (result.StatusCode == HttpStatusCode.OK)
+        {
+            if (_isNewPage)
+            {
+                _isNewPage = false;
+                NavigationManager.NavigateTo($"/designer/pageparts/{pageParts.Id}");
+            }
+
+            await _message.Success("保存成功！");
+        }
+        else
+        {
+            await _message.Error($"保存失败: {result.ReasonPhrase}");
+        }
+    }
+
+    private PagePartsSchema CreatePagePartsSchema()
+    {
+        if (_partsSchema == null)
+            throw new NullReferenceException(nameof(_partsSchema));
+
+        //_partsSchema.Components = DragDropStateService.GetRootComponent(_partsSchema.AppId, _partsSchema.Id).Childrens;
+        //_partsSchema.PageProperty = DragDropStateService.GetGlobalPageProperty(AppId, PageId);
+        return _partsSchema;
+    }
+
+    private void SetPageModel(PagePartsSchema pageParts)
+    {
+        _pageCascadingModel.PageName = pageParts.Name;
+        //_pageCascadingModel.PageLayout = pageParts.PageProperty.PageLayout;
+    }
+}

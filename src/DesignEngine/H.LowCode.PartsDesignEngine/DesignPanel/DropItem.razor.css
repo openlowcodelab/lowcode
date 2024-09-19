@@ -1,0 +1,81 @@
+﻿.dropitem-box {
+    height: 85px;
+    border: #f0f2f5 solid 2px;
+}
+
+.dropitem-box-layout {
+    height: auto;
+}
+
+.dropitem {
+    position: relative;
+    display: flex;
+    height: 100%;
+    margin: 1px;
+    border: #ffffff solid 2px;
+    background-color: #ffffff;
+}
+
+    /* 无法阻止冒泡, 改用 onmouseover, onmouseout 实现 */
+    /*.dropitem:not(.dropitem-selected):hover {
+        outline: #1890ff dashed 1.5px;
+        pointer-events: auto;
+    }*/
+
+.dropitem-container {
+    padding: 0;
+}
+
+.dropitem-component {
+    padding: 20px 8px 5px 8px;
+}
+
+.dropitem-selected {
+    outline: #1890ff solid 2px;
+}
+
+.dropitem-border-top {
+    border-top: 2px dashed #1890ff;
+}
+
+.dropitem-border-bottom {
+    border-bottom: 2px dashed #1890ff;
+}
+
+.dropitem-icon-move {
+    position: absolute;
+    z-index: 20;
+    top: -2px;
+    left: -2px;
+    height: 24px;
+    width: 24px;
+    color: #fff;
+    background-color: #409eff;
+    cursor: move;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dropitem-pointer-wrapper {
+    position: absolute;
+    z-index: 20;
+    bottom: -2px;
+    right: -2px;
+    height: 24px;
+    border-top-left-radius: 8px;
+    background: #409eff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0 4px;
+}
+
+.dropitem-pointer {
+    color: #fff;
+    padding: 0 4px;
+}
+
+    .dropitem-pointer:hover {
+        cursor: pointer;
+    }
