@@ -5,6 +5,7 @@ namespace H.LowCode.MetaSchema;
 
 public class TableColumnSchema
 {
+    [JsonPropertyName("id")]
     public string Id { get; set; }
 
     [JsonPropertyName("n")]

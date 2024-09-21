@@ -1,6 +1,6 @@
 ﻿@namespace H.LowCode.DesignEngine
 
-@if (Component != null && Component.ComponentProperty.ExtensionProperties != null)
+@if (Component.ComponentProperty.ExtensionProperties != null)
 {
     <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:5px 0;">更多</div>
 
@@ -14,11 +14,11 @@
 
             @if (extPropertyKV.Value.SettingItemType == PropertyItemTypeEnum.Text)
             {
-                <Input TValue="string" @bind-value="@extPropertyKV.Value.StringValue" OnChange="(value) => OnPropertyChange()" />
+                <Input TValue="string" @bind-value="@extPropertyKV.Value.StringValue" OnChange="OnStringPropertyChange" />
             }
             else if (extPropertyKV.Value.SettingItemType == PropertyItemTypeEnum.Text_Int)
             {
-                <Input TValue="int?" @bind-value="@extPropertyKV.Value.IntValue" OnChange="(value) => OnPropertyChange()" />
+                <Input TValue="int?" @bind-value="@extPropertyKV.Value.IntValue" OnChange="OnIntPropertyChange" />
             }
             else if (extPropertyKV.Value.SettingItemType == PropertyItemTypeEnum.Radio)
             {
@@ -43,10 +43,6 @@
             else if (extPropertyKV.Value.SettingItemType == PropertyItemTypeEnum.Textarea)
             {
 
-            }
-            else if (extPropertyKV.Value.SettingItemType == PropertyItemTypeEnum.Table)
-            {
-                <TablePropertyItem PropertyItemKV="@extPropertyKV" OnPropertyChange="OnExtensionPropertyChange"></TablePropertyItem>
             }
 
             @if (!string.IsNullOrEmpty(extPropertyKV.Value.Description))
@@ -73,5 +69,15 @@
         {
             Component.ComponentProperty.ExtensionProperties[key].StringValue = propertyValue;
         }
+    }
+
+    private void OnStringPropertyChange(string value)
+    {
+
+    }
+
+    private void OnIntPropertyChange(int? value)
+    {
+        
     }
 }

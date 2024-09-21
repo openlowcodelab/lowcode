@@ -63,6 +63,18 @@ public class ComponentPropertySchema
     public string[] EnumNames { get; set; }
 
     /// <summary>
+    /// 选项类组件属性值
+    /// </summary>
+    [JsonPropertyName("ops")]
+    public string Options { get; set; }
+
+    /// <summary>
+    /// 表格类组件属性值
+    /// </summary>
+    [JsonPropertyName("cols")]
+    public string TableColumns { get; set; }
+
+    /// <summary>
     /// 支持的通用属性
     /// </summary>
     [JsonPropertyName("supportprops")]
@@ -114,5 +126,7 @@ public enum ComponentValueType
     Boolean = 4,
     Object = 5,
     Array = 6,
-    Date = 7
+    Date = 7,
+    Option = 8,
+    Table = 9
 }

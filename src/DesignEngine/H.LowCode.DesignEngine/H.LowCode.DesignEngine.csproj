@@ -2,10 +2,6 @@
 	
 	<Import Project="..\..\global.props" />
 	<Import Project="..\..\nuget.publish.props" />
-	<ItemGroup>
-	  <Content Remove="SettingPanel\PropertySettingItems\DataSourcePropertyItem.razor" />
-	  <Content Remove="SettingPanel\PropertySettingItems\ExtensionPropertyItem.razor" />
-	</ItemGroup>
 
   <ItemGroup>
     <SupportedPlatform Include="browser" />
@@ -29,24 +25,6 @@
 
   <ItemGroup>
     <PackageReference Include="H.Extensions.System" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <UpToDateCheckInput Remove="SettingPanel\PropertySettingItems\DataSourcePropertyItem.razor" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <_ContentIncludedByDefault Remove="SettingPanel\PropertySettingItems\DataSourcePropertyItem.razor" />
-    <_ContentIncludedByDefault Remove="SettingPanel\PropertySettingItems\ExtensionPropertyItem.razor" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="SettingPanel\PropertySettingItems\DataSourcePropertyItem.razor" />
-    <None Include="SettingPanel\PropertySettingItems\ExtensionPropertyItem.razor" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <UpToDateCheckInput Remove="SettingPanel\PropertySettingItems\ExtensionPropertyItem.razor" />
   </ItemGroup>
 
 </Project>

@@ -106,10 +106,7 @@ public class SeniorComponentProvider : IComponentProvider
                 ComponentProperty = new()
                 {
                     Title = "表格",
-                    ExtensionProperties =
-                    {
-                        { "tablecolumn", new() { Label="表格列", IsShowLabel = false, StringValue = string.Empty, SettingItemType = PropertyItemTypeEnum.Table } }
-                    }
+                    ComponentValueType = ComponentValueType.Table,
                 },
                 ComponentStyle = new()
                 {

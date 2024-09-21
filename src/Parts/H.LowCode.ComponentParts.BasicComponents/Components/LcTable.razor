@@ -3,7 +3,7 @@
 @using AntDesign.TableModels
 @using System.ComponentModel.DataAnnotations
 
-<Table @ref="table" TItem="Dictionary<string, object>" DataSource="@_models" Total="_total" @bind-PageIndex="_pageIndex" @bind-PageSize="_pageSize"
+<Table @ref="table" TItem="Dictionary<string, object>" DataSource="@_data" Total="_total" @bind-PageIndex="_pageIndex" @bind-PageSize="_pageSize"
        @bind-SelectedRows="_selectedRows" OnChange="OnChange" Size="TableSize.Small">
     <TitleTemplate>
         <Flex Justify="end" Gap="10">
@@ -13,7 +13,7 @@
     </TitleTemplate>
     <ColumnDefinitions Context="row">
         <Selection />
-        @foreach (var key in _models?.FirstOrDefault()?.Keys.ToArray() ?? new string[0])
+        @foreach (var key in _data?.FirstOrDefault()?.Keys.ToArray() ?? new string[0])
         {
             var column = _columns.FirstOrDefault(t => string.Equals(t.Name, key, StringComparison.OrdinalIgnoreCase));
             if (column != null)
@@ -39,7 +39,7 @@
     public ComponentSchema Component { get; set; }
 
     private List<TableColumnSchema> _columns;
-    private List<Dictionary<string, object>> _models;
+    private List<Dictionary<string, object>> _data;
 
     IEnumerable<Dictionary<string, object>> _selectedRows = [];
     ITable table;
@@ -50,8 +50,8 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _columns = await GetTableColumesAsync();
-        _models = await GetTableDataAsync(1, 50);
+        _columns = GetTableColumesAsync();
+        _data = await GetTableDataAsync(1, 50);
         _total = 50;
     }
 
@@ -61,31 +61,33 @@
         Console.WriteLine(JsonSerializer.Serialize(queryModel));
     }
 
-    private async Task<List<TableColumnSchema>> GetTableColumesAsync()
+    private List<TableColumnSchema> GetTableColumesAsync()
     {
-        await Task.Delay(100);
-        var columns = new List<TableColumnSchema>()
+        if (Component?.ComponentProperty == null || Component.ComponentProperty.TableColumns.IsNullOrEmpty()
+            || Component.ComponentProperty.TableColumns.Trim().Equals("[]"))
         {
-            new() { Name = "Id", Title = "Id" }
-        };
-        return columns;
+            var columns = new List<TableColumnSchema>()
+            {
+                new() { Id = Guid.NewGuid().ToString(), Name = "_temp", Title = "(待添加列)" }
+            };
+            return columns;
+        }
+
+        return JsonSerializer.Deserialize<List<TableColumnSchema>>(Component.ComponentProperty.TableColumns);
     }
 
     public async Task<List<Dictionary<string, object>>> GetTableDataAsync(int pageIndex, int pageSize)
     {
         await Task.Delay(100);
-        var list = new List<Dictionary<string, object>>()
+        var list = new List<Dictionary<string, object>>();
+        for (int i = 0; i < 3; i++)
         {
-            new() {
-                { "id", string.Empty }
-            },
-            new() {
-                { "id", string.Empty }
-            },
-            new() {
-                { "id", string.Empty }
+            Dictionary<string, object> row = new Dictionary<string, object>();
+            foreach(var col in _columns){
+                row.Add(col.Name, string.Empty);
             }
-        };
+            list.Add(row);
+        }
         return list;
     }
 

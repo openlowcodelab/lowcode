@@ -56,10 +56,10 @@
 
 @code {
     [Parameter]
-    public KeyValuePair<string, PropertyItemSchema> PropertyItemKV { get; set; }
+    public ComponentSchema Component { get; set; }
 
     [Parameter]
-    public Action<string, string> OnPropertyChange { get; set; }
+    public Action<string> OnTableColumnChange { get; set; }
 
     private List<TableColumnSchema> _columns = [];
 
@@ -70,9 +70,9 @@
 
     protected override void OnInitialized()
     {
-        if (PropertyItemKV.Value.StringValue.IsNullOrEmpty() == false)
+        if (Component.ComponentProperty?.TableColumns.IsNullOrEmpty() == false)
         {
-            _columns = JsonSerializer.Deserialize<List<TableColumnSchema>>(PropertyItemKV.Value.StringValue);
+            _columns = JsonSerializer.Deserialize<List<TableColumnSchema>>(Component.ComponentProperty.TableColumns);
         }
 
         base.OnInitialized();
@@ -135,9 +135,9 @@
 
     private void OnPropertyChanged()
     {
-        PropertyItemKV.Value.StringValue = _columns.ToJson();
+        Component.ComponentProperty.TableColumns = _columns.ToJson();
 
-        OnPropertyChange?.Invoke(PropertyItemKV.Key, PropertyItemKV.Value.StringValue);
+        //OnTableColumnChange?.Invoke(Component.ComponentProperty.TableColumns);
     }
 
     private bool SaveTableColumnSchema()
@@ -146,6 +146,7 @@
         {
             TableColumnSchema column = new()
                 {
+                    Id = _tableColumnSchema.Id,
                     Name = _tableColumnSchema.Name,
                     Title = _tableColumnSchema.Title,
                     IsPrimaryKey = _tableColumnSchema.IsPrimaryKey,
