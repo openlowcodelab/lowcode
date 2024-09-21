@@ -63,7 +63,7 @@
         _pageCascadingModel = new() { AppId = AppId, PageId = PageId, PageName = "..." };
 
         _pageSchema = await LoadPageSchemaAsync();
-        SetPageModel(_pageSchema);
+        SetPageCascadingModel(_pageSchema);
 
         await base.OnInitializedAsync();
     }
@@ -138,7 +138,7 @@
         return _pageSchema;
     }
 
-    private void SetPageModel(PageSchema pageSchema)
+    private void SetPageCascadingModel(PageSchema pageSchema)
     {
         _pageCascadingModel.PageName = pageSchema.Name;
         _pageCascadingModel.PageLayout = pageSchema.PageProperty.PageLayout;

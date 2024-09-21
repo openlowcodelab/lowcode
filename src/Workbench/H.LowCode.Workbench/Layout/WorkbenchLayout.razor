@@ -1,8 +1,16 @@
 ﻿@namespace H.LowCode.Workbench
 @inherits LayoutComponentBase
 
-<AntDesign.ProLayout.BasicLayout FixedHeader="true" Logo="@("logo.png")" Title="H.LowCode" MenuData="_menuData"
-    Layout="AntDesign.ProLayout.Layout.Top">
+<link href="_content/H.LowCode.Workbench/workbench.css" rel="stylesheet" />
+
+<style>
+    .ant-pro-top-nav-header-menu {
+        margin-left: 50px;
+    }
+</style>
+
+<AntDesign.ProLayout.BasicLayout Logo="@("logo.png")" Title="H.LowCode" MenuData="_menuData"
+        Layout="AntDesign.ProLayout.Layout.Top" FixedHeader="true">
     <RightContentRender>
         RightContent
     </RightContentRender>
@@ -18,21 +26,6 @@
 {
     private readonly MenuDataItem[] _menuData =
     {
-		//TODO 空 MenuDataItem 为了让前面有间隔
-        new MenuDataItem
-        {
-            Path = "",
-            Name = "",
-            Icon = "",
-            Key = ""
-        },
-        new MenuDataItem
-        {
-            Path = "",
-            Name = "",
-            Icon = "",
-            Key = ""
-        },
         new MenuDataItem
         {
             Path = "/",
