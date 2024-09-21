@@ -1,0 +1,50 @@
+﻿@namespace H.LowCode.PartsDesignEngine
+
+@if (Component != null)
+{
+    <div class="propertysetting-item">
+        <label>组件宽度：</label>
+        <Slider TValue="double?" Value="@Component.ComponentStyle.ItemWidth" Min="4" Max="24" OnChange="(value) => OnStyleChange()" />
+    </div>
+    @if (Component.IsHiddenTitle == false && Component.IsContainerComponent == false)
+    {
+        <div class="propertysetting-item">
+            <label>标签宽度：</label>
+            <Slider TValue="double" Value="@Component.ComponentStyle.LabelWidth" DefaultValue="180" Min="4" Max="300" OnChange="(value) => OnStyleChange()" />
+        </div>
+    }
+    <div style="margin: 5px 15px 20px 10px;">
+        <label>布局：</label>
+        <RadioGroup TValue="string" @bind-Value="@Component.ComponentStyle.Display" OnChange="() => OnStyleChange()">
+            <Radio RadioButton Value="@("inline")">inline</Radio>
+            <Radio RadioButton Value="@("flex")">flex</Radio>
+            <Radio RadioButton Value="@("block")">block</Radio>
+            <Radio RadioButton Value="@("inline-block")">inline-block</Radio>
+            <Radio RadioButton Value="@("none")">none</Radio>
+        </RadioGroup>
+    </div>
+    <div style="margin: 5px 15px 20px 10px;">
+        <label>定位：</label>
+        <RadioGroup TValue="string" @bind-Value="Component.ComponentStyle.Position" OnChange="() => OnStyleChange()">
+            <Radio RadioButton Value="@("static")">static</Radio>
+            <Radio RadioButton Value="@("relative")">relative</Radio>
+            <Radio RadioButton Value="@("absolute")">absolute</Radio>
+            <Radio RadioButton Value="@("fixed")">fixed</Radio>
+            <Radio RadioButton Value="@("sticky")">sticky</Radio>
+        </RadioGroup>
+    </div>
+    <div style="margin: 5px 15px 20px 10px;">
+        <label>自定义样式：</label>
+        <TextArea @bind-value="@Component.ComponentStyle.CustomStyle" OnChange="() => OnStyleChange()" Style="height: 150px;" />
+    </div>
+}
+
+@code {
+    [Parameter]
+    public ComponentSchema Component { get; set; }
+
+    private void OnStyleChange()
+    {
+        Component.RefreshState();
+    }
+}

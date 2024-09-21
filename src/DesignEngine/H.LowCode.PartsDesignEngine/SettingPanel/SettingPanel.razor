@@ -1,0 +1,58 @@
+﻿@namespace H.LowCode.PartsDesignEngine
+
+@inject DragDropStateService DragDropStateService
+
+<Tabs DefaultActiveKey="tab_page" @bind-ActiveKey="@_activeTabKey" Class="settingpanel" Style="width:250px; padding:0px 8px;">
+    @if (_showPropertyPanel)
+    {
+        @if (_component.IsContainerComponent == false)
+        {
+            <TabPane Key="tab_property" Tab="属性">
+                <PropertySetting Component="@_component"></PropertySetting>
+            </TabPane>
+        }
+        <TabPane Key="tab_style" Tab="样式">
+            <StyleSetting Component="@_component"></StyleSetting>
+        </TabPane>
+    }
+</Tabs>
+
+@code {
+    [CascadingParameter(Name = "pageCascading")]
+    public PageCascadingModel PageCascading { get; set; }
+
+    private ComponentSchema _component { get; set; }
+
+    private bool _showPropertyPanel { get; set; }
+
+    private string _activeTabKey { get; set; } = "tab_page";
+
+    #region Init
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+            RegisterEventDispatcher();
+    }
+
+    private void RegisterEventDispatcher()
+    {
+        //订阅设计面板中的组件点击事件
+        BlazorEventDispatcher.RegisterEvent("designengine.dropitem.onclick", (value) =>
+        {
+            _component = (ComponentSchema)value;
+            _showPropertyPanel = true;
+            _activeTabKey = "tab_property";
+            StateHasChanged();
+        });
+
+        //订阅设计面板取消选中事件
+        BlazorEventDispatcher.RegisterEvent("designengine.dropitem.onblur", (value) =>
+        {
+            _component = null;
+            _showPropertyPanel = false;
+            _activeTabKey = "tab_page";
+            StateHasChanged();
+        });
+    }
+    #endregion
+}

@@ -1,0 +1,43 @@
+﻿@namespace H.LowCode.PartsDesignEngine
+
+@inject IEnumerable<IComponentProvider> ComponentProviders
+@inject IEnumerable<IPageTemplateProvider> PageTemplateProviders
+
+<Tabs TabPosition="@TabPosition.Left" DefaultActiveKey="1" Class="componentpanel" Size="@TabSize.Small" Style="padding-left:8px;">
+    <TabPane Key="1">
+        <TabTemplate><span><Icon Type="appstore" /></span></TabTemplate>
+        <ChildContent>
+            <Tabs DefaultActiveKey="11" Class="componentpanel" Style="width:270px; padding:0px 4px;">
+                <TabPane Key="11" Tab="组件库">
+                    <div style="height:100%; overflow-y: auto;">
+                        @foreach (var componentProvider in ComponentProviders)
+                        {
+                            <div style="display: inline-block; padding-bottom: 20px;">
+                                <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:5px 0;">@componentProvider.Title</div>
+                                @foreach (var component in componentProvider.LoadComponent())
+                                {
+                                    <DragItem Component="component"></DragItem>
+                                }
+                            </div>
+                        }
+                    </div>
+                </TabPane>
+                <TabPane Key="12" Tab="页面库">
+                    <div style="height:100%; overflow-y: auto;">
+                        @foreach (var pageTemplateProvider in PageTemplateProviders)
+                        {
+                            <div style="display: inline-block; padding-bottom: 20px;">
+                                <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:5px 0;">@pageTemplateProvider.Title</div>
+                                @foreach (var component in pageTemplateProvider.LoadPageTemplate())
+                                {
+                                    @* Style="width: 14.1rem; height: 5rem;" *@
+                                    <DragItem Component="component"></DragItem>
+                                }
+                            </div>
+                        }
+                    </div>
+                </TabPane>
+            </Tabs>
+        </ChildContent>
+    </TabPane>
+</Tabs>

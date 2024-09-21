@@ -1,0 +1,130 @@
+﻿@page "/designer/componentparts/{PartsId}"
+@namespace H.LowCode.PartsDesignEngine
+@layout PartsDesignEngineLayout
+
+@inject IHttpClientFactory HttpClientFactory
+@inject NavigationManager NavigationManager
+@inject DragDropStateService DragDropStateService
+@inject IMessageService _message
+
+<PageTitle>@($"{PartsId} - 组件物料设计器")</PageTitle>
+
+<link href="_content/H.LowCode.PartsDesignEngine/partsdesignengine.css" rel="stylesheet" />
+
+<AntDesign.Layout Class="designpage" Style="padding:0 2px; background-color: #f7f7f7;">
+    <Header Style="background-color: white; padding:0 20px;">
+        <div style="float:left;">
+            <a href="javascript:void(0)"> @("<") 返回 </a>
+        </div>
+        @*<div style="text-align:center;">
+        <Menu Theme="MenuTheme.Light" Mode="MenuMode.Horizontal" DefaultSelectedKeys=@(new[]{"2"})>
+        <MenuItem Key="1">PC</MenuItem>
+        <MenuItem Key="2">Mobile</MenuItem>
+        </Menu>
+        </div>*@
+        <div style="float:right;">
+            <Button>预览</Button>
+            <Button Type="primary" OnClick="() => SaveComponentPartsSchemaAsync()">保存</Button>
+        </div>
+    </Header>
+    <AntDesign.Layout>
+        <Sider Style="min-width: 200px; flex: auto; max-width: max-content;" Theme="SiderTheme.Light">
+            <ComponentPanel></ComponentPanel>
+        </Sider>
+        <Layout>
+            <Content Class="designpage">
+                <ComponentDesignPanel @ref="_designPanel"></ComponentDesignPanel>
+            </Content>
+        </Layout>
+        <Sider Class="designpage" Style="flex: auto; max-width: max-content; min-width: 250px;" Theme="SiderTheme.Light">
+            <SettingPanel></SettingPanel>
+        </Sider>
+    </AntDesign.Layout>
+</AntDesign.Layout>
+
+@code
+{
+    [Parameter]
+    public string PartsId { get; set; }
+
+    private ComponentDesignPanel _designPanel;
+
+    private ComponentPartsSchema _partsSchema;
+    private bool _isNewPage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _partsSchema = await LoadPartsSchemaAsync();
+
+        await base.OnInitializedAsync();
+    }
+
+    private async Task<ComponentPartsSchema> LoadPartsSchemaAsync()
+    {
+        if (string.Equals("newparts", PartsId))
+        {
+            _isNewPage = true;
+            PartsId = Guid.NewGuid().ToString();
+            var newPage = new ComponentPartsSchema("newparts") { Id = PartsId };
+
+            //DragDropStateService.SetPage(AppId, newPage);
+            return newPage;
+        }
+
+        var httpClient = HttpClientFactory.CreateClient();
+        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+
+        var componentParts = await httpClient.GetFromJsonAsync<ComponentPartsSchema>($"api/partsdesignengine/getcomponentparts?partsId={PartsId}");
+
+        if (_designPanel != null)
+        {
+            //DragDropStateService.SetPage(AppId, componentParts);
+            //_designPanel.Reload(componentParts);
+        }
+
+        return componentParts;
+    }
+
+    private async Task SaveComponentPartsSchemaAsync()
+    {
+        ComponentPartsSchema componentParts = CreateComponentPartsSchema();
+        // if (componentParts.Components.Count == 0)
+        // {
+        //     await _message.Warning("没有任何组件，禁止保存！");
+        //     return;
+        // }
+
+        string jsonSchema = componentParts.ToJson();
+
+        var content = new StringContent(jsonSchema, Encoding.UTF8, "application/json");
+
+        var httpClient = HttpClientFactory.CreateClient();
+        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+        var result = await httpClient.PostAsync($"api/partsdesignengine/savecomponentparts", content);
+
+        if (result.StatusCode == HttpStatusCode.OK)
+        {
+            if (_isNewPage)
+            {
+                _isNewPage = false;
+                NavigationManager.NavigateTo($"/designer/componentparts/{componentParts.Id}");
+            }
+
+            await _message.Success("保存成功！");
+        }
+        else
+        {
+            await _message.Error($"保存失败: {result.ReasonPhrase}");
+        }
+    }
+
+    private ComponentPartsSchema CreateComponentPartsSchema()
+    {
+        if (_partsSchema == null)
+            throw new NullReferenceException(nameof(_partsSchema));
+
+        //_partsSchema.Components = DragDropStateService.GetRootComponent(_partsSchema.AppId, _partsSchema.Id).Childrens;
+        //_partsSchema.PageProperty = DragDropStateService.GetGlobalPageProperty(AppId, PageId);
+        return _partsSchema;
+    }
+}

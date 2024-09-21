@@ -1,0 +1,48 @@
+﻿@namespace H.LowCode.PartsDesignEngine
+
+@inject DragDropStateService DragDropStateService
+
+<div draggable="true" class="dragitem" style="@Style" @ondragstart="OnDragStart" @onclick="OnClick">
+    @Component.ComponentProperty.Title
+</div>
+
+@code
+{
+    [CascadingParameter(Name = "pageCascading")]
+    public PageCascadingModel PageCascading { get; set; }
+
+    [Parameter]
+    public ComponentSchema Component { get; set; }
+
+    [Parameter]
+    public string Style { get; set; }
+
+    private void OnDragStart()
+    {
+        AddComponentToDesignPanel(false);
+    }
+
+    private void OnClick()
+    {
+        AddComponentToDesignPanel(true);
+    }
+
+    /// <summary>
+    /// 添加组件到 DesignPanel
+    /// </summary>
+    private void AddComponentToDesignPanel(bool isOnClick)
+    {
+        ComponentSchema component = Component.CopyNew();
+        component.IsDroppedFromComponentPanel = true;
+        if (isOnClick)
+        {
+            //发送事件，通知订阅此事件的其他组件更新状态
+            BlazorEventDispatcher.Trigger("designengine.dragitem.onclick", component);
+        }
+        else
+        {
+            //设置当前拖拽项
+            DragDropStateService.SetCurrentDragComponent(PageCascading.AppId, PageCascading.PageId, component);
+        }
+    }
+}
