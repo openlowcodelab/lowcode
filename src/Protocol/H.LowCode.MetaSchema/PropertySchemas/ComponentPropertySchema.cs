@@ -121,12 +121,13 @@ public enum ComponentValueType
 {
     None = 0,
     String = 1,
-    Number = 2,
-    Integer = 3,
-    Boolean = 4,
-    Object = 5,
-    Array = 6,
-    Date = 7,
-    Option = 8,
-    Table = 9
+    Text = 2,
+    Integer = 6,
+    Double = 7,
+    Decimal = 8,
+    Boolean = 13,
+    Date = 15,
+    Array = 19,
+    Option = 23,
+    Table = 25
 }

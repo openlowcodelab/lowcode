@@ -7,7 +7,11 @@
         <BasicPropertyItem Component="@Component"></BasicPropertyItem>
 
         @* 数据源属性 *@
-        <DataSourcePropertyItem Component="@Component"></DataSourcePropertyItem>
+        @if (Component.ComponentProperty.ComponentValueType == ComponentValueType.Option
+            || Component.ComponentProperty.ComponentValueType == ComponentValueType.Table)
+        {
+            <DataSourcePropertyItem Component="@Component"></DataSourcePropertyItem>
+        }
 
         @*扩展属性*@
         <ExtensionPropertyItem Component="@Component"></ExtensionPropertyItem>
