@@ -66,10 +66,7 @@
         await Task.Delay(100);
         var columns = new List<TableColumnSchema>()
         {
-            new() { Name = "Id", Title = "Id" },
-            new() { Name = "Name", Title = "姓名" },
-            new() { Name = "Age", Title = "年龄" },
-            new() { Name = "xx", Title = "xx" }
+            new() { Name = "Id", Title = "Id" }
         };
         return columns;
     }
@@ -80,27 +77,13 @@
         var list = new List<Dictionary<string, object>>()
         {
             new() {
-                { "id", "1" },
-                { "name" , "Name1" },
-                { "age" , 18 },
-                { "yy" , "yy" }
+                { "id", string.Empty }
             },
             new() {
-                { "id", "2" },
-                { "name" , "Name2" },
-                { "age" , 19 },
-                { "yy" , "yy" }
+                { "id", string.Empty }
             },
             new() {
-                { "id", "3" },
-                { "name" , "Name3" },
-                { "age" , 20 },
-                { "yy" , "yy" }
-            },
-            new() {
-                { "id", "3" },
-                { "name" , null },
-                { "age" , 20 }
+                { "id", string.Empty }
             }
         };
         return list;

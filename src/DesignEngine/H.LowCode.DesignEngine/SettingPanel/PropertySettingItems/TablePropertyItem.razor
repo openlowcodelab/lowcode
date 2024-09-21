@@ -74,15 +74,6 @@
         {
             _columns = JsonSerializer.Deserialize<List<TableColumnSchema>>(PropertyItemKV.Value.StringValue);
         }
-        else
-        {
-            _columns = new List<TableColumnSchema>()
-            {
-                new() { Id = Guid.NewGuid().ToString(), Name = "Id", Title = "Id" },
-                new() { Id = Guid.NewGuid().ToString(), Name = "Name", Title = "姓名" },
-                new() { Id = Guid.NewGuid().ToString(), Name = "Age", Title = "年龄" }
-            };
-        }
 
         base.OnInitialized();
     }
