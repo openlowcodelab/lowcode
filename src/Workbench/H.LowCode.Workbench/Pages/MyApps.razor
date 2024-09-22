@@ -4,7 +4,7 @@
 
 @inject IHttpClientFactory HttpClientFactory
 @inject NavigationManager NavigationManager
-@inject ComponentStateWrapper<MyApps, IList<AppSchema>> State
+@inject ComponentStateWrapper<MyApps, IList<AppSchema>> MyAppsState
 
 <PageTitle>我的应用 - H.LowCode</PageTitle>
 
@@ -40,9 +40,9 @@
         </div>
     </div>
 
-    @if (State.Value != null)
+    @if (MyAppsState.Value != null)
     {
-        @foreach (var app in State.Value)
+        @foreach (var app in MyAppsState.Value)
         {
             <Card Class="myapps" Style="float:left; width:300px; margin:5px;" Bordered>
                 <ChildContent>
@@ -78,9 +78,9 @@
 
     protected override async Task OnInitializedAsync()
     {
-        if (State.Value is null)
+        if (MyAppsState.Value is null)
         {
-            State.Value = await LoadAppsAsync();
+            MyAppsState.Value = await LoadAppsAsync();
 
             await base.OnInitializedAsync();
         }

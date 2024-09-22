@@ -9,8 +9,6 @@
 
 <PageTitle>@($"{_pageCascadingModel.PageName} - 页面物料设计器")</PageTitle>
 
-<link href="_content/H.LowCode.PartsDesignEngine/partsdesignengine.css" rel="stylesheet" />
-
 <CascadingValue Value="@_pageCascadingModel" Name="pageCascading">
     <AntDesign.Layout Class="designpage" Style="padding:0 2px; background-color: #f7f7f7;">
         <Header Style="background-color: white; padding:0 20px;">
@@ -80,7 +78,7 @@
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
 
-        var pageParts = await httpClient.GetFromJsonAsync<PagePartsSchema>($"api/partsdesignengine/getpageparts?partsId={PartsId}");
+        var pageParts = await httpClient.GetFromJsonAsync<PagePartsSchema>($"api/pageparts/get?partsId={PartsId}");
 
         if (_designPanel != null)
         {
@@ -106,7 +104,7 @@
 
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
-        var result = await httpClient.PostAsync($"api/partsdesignengine/savepageparts", content);
+        var result = await httpClient.PostAsync($"api/pageparts/save", content);
 
         if (result.StatusCode == HttpStatusCode.OK)
         {

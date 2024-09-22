@@ -1,0 +1,56 @@
+﻿@namespace H.LowCode.Workbench
+@layout WorkbenchLayout
+
+@inject IHttpClientFactory HttpClientFactory
+@inject NavigationManager NavigationManager
+@inject IMessageService Message
+@inject ComponentStateWrapper<AppPartsList, IList<AppPartsSchema>> AppPartsState
+
+<div style="display: flex; justify-content: space-between; margin: 0 0 8px 5px;">
+    <div style="width:250px;">
+        <Search Placeholder="应用名称" OnSearch="()=>{}" />
+    </div>
+</div>
+
+<div style="margin:10px 5px;">
+    <Segmented Size="SegmentedSize.Large" Labels=@(new[]{"全部", "OA", "CRM", "ERP", "门户", "医疗", "教育", "酒店", "餐饮", "水务", "我的"}) />
+</div>
+
+<Card Title="图书管理系统" Style="float:left; width:300px; margin:5px;">
+    <Extra>
+        <a href="javascript:void(0)">使用</a>
+    </Extra>
+    <Body>
+        <p>Card content</p>
+    </Body>
+</Card>
+<Card Title="学生管理系统" Style="float:left; width:300px; margin:5px;">
+    <Extra>
+        <a href="javascript:void(0)">使用</a>
+    </Extra>
+    <Body>
+        <p>Card content</p>
+    </Body>
+</Card>
+
+@code {
+    
+    protected override async Task OnInitializedAsync()
+    {
+        if (AppPartsState.Value is null)
+        {
+            AppPartsState.Value = await LoadAppPartsAsync(1, 50);
+
+            await base.OnInitializedAsync();
+        }
+    }
+
+    private async Task<IList<AppPartsSchema>> LoadAppPartsAsync(int pageIndex, int pageSize)
+    {
+        var httpClient = HttpClientFactory.CreateClient();
+        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+
+        var result = await httpClient.GetFromJsonAsync<List<AppPartsSchema>>($"api/appparts/getlist");
+        return result;
+    }
+}

@@ -9,8 +9,6 @@
 
 <PageTitle>@($"{PartsId} - 组件物料设计器")</PageTitle>
 
-<link href="_content/H.LowCode.PartsDesignEngine/partsdesignengine.css" rel="stylesheet" />
-
 <AntDesign.Layout Class="designpage" Style="padding:0 2px; background-color: #f7f7f7;">
     <Header Style="background-color: white; padding:0 20px;">
         <div style="float:left;">
@@ -65,7 +63,7 @@
         {
             _isNewPage = true;
             PartsId = Guid.NewGuid().ToString();
-            var newPage = new ComponentPartsSchema("newparts") { Id = PartsId };
+            var newPage = new ComponentPartsSchema() { Id = PartsId };
 
             //DragDropStateService.SetPage(AppId, newPage);
             return newPage;
@@ -74,7 +72,7 @@
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
 
-        var componentParts = await httpClient.GetFromJsonAsync<ComponentPartsSchema>($"api/partsdesignengine/getcomponentparts?partsId={PartsId}");
+        var componentParts = await httpClient.GetFromJsonAsync<ComponentPartsSchema>($"api/componentparts/get?partsId={PartsId}");
 
         if (_designPanel != null)
         {
@@ -100,7 +98,7 @@
 
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
-        var result = await httpClient.PostAsync($"api/partsdesignengine/savecomponentparts", content);
+        var result = await httpClient.PostAsync($"api/componentparts/save", content);
 
         if (result.StatusCode == HttpStatusCode.OK)
         {

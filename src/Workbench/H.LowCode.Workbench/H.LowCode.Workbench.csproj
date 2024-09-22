@@ -17,11 +17,19 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\..\DesignEngine\H.LowCode.DesignEngine\H.LowCode.DesignEngine.csproj" />
+		<ProjectReference Include="..\..\Protocol\H.LowCode.Model\H.LowCode.Model.csproj" />
+		<ProjectReference Include="..\..\Protocol\H.LowCode.PartsMetaSchema\H.LowCode.PartsMetaSchema.csproj" />
 		<ProjectReference Include="..\..\RenderEngine\H.LowCode.RenderEngine\H.LowCode.RenderEngine.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="H.Extensions.System" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Content Update="Pages\Parts\ThemePartsList.razor">
+	    <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+	  </Content>
 	</ItemGroup>
 
 </Project>

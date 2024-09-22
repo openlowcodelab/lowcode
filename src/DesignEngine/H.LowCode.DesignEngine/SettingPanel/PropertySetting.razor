@@ -7,14 +7,18 @@
         <BasicPropertyItem Component="@Component"></BasicPropertyItem>
 
         @* 数据源属性 *@
-        @if (Component.ComponentProperty.ComponentValueType == ComponentValueType.Option
-            || Component.ComponentProperty.ComponentValueType == ComponentValueType.Table)
+        @if (Component.ComponentProperty.ComponentType == ComponentType.Option
+            || Component.ComponentProperty.ComponentType == ComponentType.Table)
         {
             <DataSourcePropertyItem Component="@Component"></DataSourcePropertyItem>
         }
 
         @*扩展属性*@
-        <ExtensionPropertyItem Component="@Component"></ExtensionPropertyItem>
+        @if (Component.ComponentProperty.ExtensionProperties != null
+            && Component.ComponentProperty.ExtensionProperties.Count > 0)
+        {
+            <ExtensionPropertyItem Component="@Component"></ExtensionPropertyItem>
+        }
     }
 </div>
 

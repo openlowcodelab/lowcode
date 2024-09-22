@@ -18,7 +18,7 @@
         @Body
     </ChildContent>
     <FooterRender>
-        <FooterView Copyright="@(DateTime.Now.Year + " H.LowCode")" Links="Links"></FooterView>
+        <FooterView Copyright="@($"2021 - {DateTime.Now.Year} H")" Links="Links"></FooterView>
     </FooterRender>
 </AntDesign.ProLayout.BasicLayout>
 
@@ -31,7 +31,7 @@
             Path = "/",
             Name = "工作台",
             Icon = "home",
-            Key = "home"
+            Key = "workbench"
         },
         new MenuDataItem
         {
@@ -42,17 +42,17 @@
         },
         new MenuDataItem
         {
-            Path = "/workbench/marketcenter",
-            Name = "生态中心",
-            Icon = "cloud",
-            Key = "marketcenter"
+            Path = "/workbench/partscenter",
+            Name = "物料中心",
+            Icon = "api",
+            Key = "partscenter"
         },
         new MenuDataItem
         {
-            Path = "/workbench/solutioncenter",
-            Name = "解决方案中心",
+            Path = "/workbench/solutions",
+            Name = "解决方案",
             Icon = "deployment-unit",
-            Key = "solutioncenter"
+            Key = "solutions"
         }
     };
 

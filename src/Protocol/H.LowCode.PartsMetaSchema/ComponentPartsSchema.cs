@@ -5,19 +5,15 @@ namespace H.LowCode.PartsMetaSchema;
 
 public class ComponentPartsSchema : BasePartsMetaSchema
 {
-    public ComponentPartsSchema(string componentName)
-    {
-        ComponentName = componentName;
-    }
-
     public string Id { get; set; } = Guid.NewGuid().ToString();
 
     /// <summary>
     /// 组件名称
     /// </summary>
+    [JsonRequired]
     [JsonPropertyName("n")]
-    public string ComponentName { get; }
-    
+    public string ComponentName { get; set; }
+
     /// <summary>
     /// 是否隐藏标题
     /// </summary>
@@ -52,4 +48,13 @@ public class ComponentPartsSchema : BasePartsMetaSchema
 
     [JsonPropertyName("ds")]
     public DataSourceSchema DataSource { get; set; }
+
+    [JsonPropertyName("order")]
+    public int Order { get; set; }
+
+    /// <summary>
+    /// 发布状态
+    /// </summary>
+    [JsonPropertyName("pubstate")]
+    public int PublishState { get; set; }
 }

@@ -37,6 +37,15 @@ public class ComponentPropertySchema
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public string Pattern { get; set; }
 
+    /// <summary>
+    /// 组件类型
+    /// </summary>
+    [JsonPropertyName("comptype")]
+    public ComponentType ComponentType { get; set; }
+
+    /// <summary>
+    /// 组件值类型
+    /// </summary>
     [JsonPropertyName("compvaltype")]
     public ComponentValueType ComponentValueType { get; set; }
 
@@ -117,17 +126,35 @@ public class ComponentPropertySchema
     #endregion
 }
 
+public enum ComponentType
+{
+    None = 0,
+    /// <summary>
+    /// 单值类 (如 input,textarea,datepicker,timepicker,switch,slider等)
+    /// </summary>
+    Single = 1,
+    /// <summary>
+    /// 选项类 (如 select,autocomplete,checkbox,radio,tree等)
+    /// </summary>
+    Option = 10,
+    /// <summary>
+    /// 表格类 (如 table 等)
+    /// </summary>
+    Table = 20
+}
+
 public enum ComponentValueType
 {
     None = 0,
     String = 1,
-    Text = 2,
+    Textarea = 2,
+    Text = 3,
     Integer = 6,
     Double = 7,
     Decimal = 8,
     Boolean = 13,
-    Date = 15,
-    Array = 19,
-    Option = 23,
-    Table = 25
+    Date = 18,
+    Array = 25,
+    Option = 30,
+    Table = 35
 }

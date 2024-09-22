@@ -1,0 +1,172 @@
+﻿@namespace H.LowCode.Workbench
+@layout WorkbenchLayout
+
+@inject IHttpClientFactory HttpClientFactory
+@inject NavigationManager NavigationManager
+@inject IMessageService Message
+@inject ComponentStateWrapper<PagePartsList, IList<PagePartsSchema>> PagePartsState
+
+<div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
+    <div style="width:250px;">
+        <Search Placeholder="页面名称" OnSearch="()=>{}" />
+    </div>
+    <div style="width:80px; line-height:32px; margin: 0 8px 0 0;">
+        <Button Type="@ButtonType.Primary" OnClick="@(()=> CreateAsync())">新建页面</Button>
+    </div>
+</div>
+
+<Table TItem="PagePartsSchema" DataSource="@PagePartsState.Value" PageSize="15" PageIndex="1" Total="_total"
+       @bind-SelectedRows="selectedRows" Style="height:100%;" RowKey="c=>c.Id">
+    <PropertyColumn Title="ID" Property="c=>c.Id" Width="300" />
+    <PropertyColumn Title="页面名称" Property="c=>c.Name" Sortable />
+    <PropertyColumn Title="排序" Property="c=>c.Order" />
+    <PropertyColumn Title="发布状态" Property="c=>c.PublishState">
+        @if (context.PublishState == 0)
+        {
+            <Tag Color="default">待发布</Tag>
+        }
+        else
+        {
+            <Tag Color="green">已发布</Tag>
+        }
+    </PropertyColumn>
+    <PropertyColumn Title="修改时间" Property="c=>c.ModifiedTime" Format="yyyy-MM-dd HH:mm:ss" />
+    <ActionColumn Title="操作" Width="180">
+        <Space Size=@("middle")>
+            <SpaceItem>
+                <a href="@($"/designer/pageparts/{context.Id}")" target="_blank" style="padding: 7px;border: solid #b7eb8f 1px;border-radius: 2px;line-height: 11px;height: 26px;display: block;background-color: #f6ffed;color: #389e0d;">设计</a>
+            </SpaceItem>
+            <SpaceItem>
+                <a onclick="@(()=> EditAsync(@context.Id))">编辑</a>
+            </SpaceItem>
+            <SpaceItem>
+                <a onclick="@(()=> DeleteAsync(@context.Id))" style="color:#ff4d4f">删除</a>
+            </SpaceItem>
+        </Space>
+    </ActionColumn>
+</Table>
+
+<Modal Title="新建组件" @bind-Visible="@_visible" OnOk="OnConfirmAsync">
+    <Form Model="@_partsSchema" LabelColSpan="8" WrapperColSpan="16" OnFinish="OnFinishAsync" @ref="@_form"
+          ValidateOnChange="true">
+        <FormItem Label="组件名称" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
+            <Input @bind-Value="@context.Name" />
+        </FormItem>
+        <FormItem Label="发布状态" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
+            <RadioGroup @bind-Value="@context.PublishState">
+                <Radio Value="0">待发布</Radio>
+                <Radio Value="1">已发布</Radio>
+            </RadioGroup>
+        </FormItem>
+        <FormItem Label="排序">
+            <InputNumber @bind-Value="@context.Order" Min="0" DefaultValue="0"></InputNumber>
+        </FormItem>
+    </Form>
+</Modal>
+
+@code {
+    IEnumerable<PagePartsSchema> selectedRows;
+    int _total = 0;
+
+    private bool _visible = false;
+    private Form<PagePartsSchema> _form;
+    private PagePartsSchema _partsSchema = new PagePartsSchema();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _total = 50;
+        if (PagePartsState.Value is null)
+        {
+            PagePartsState.Value = await LoadPagePartsAsync(1, 50);
+
+            await base.OnInitializedAsync();
+        }
+    }
+
+    private async Task<IList<PagePartsSchema>> LoadPagePartsAsync(int pageIndex, int pageSize)
+    {
+        var httpClient = HttpClientFactory.CreateClient();
+        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+
+        var result = await httpClient.GetFromJsonAsync<List<PagePartsSchema>>($"api/pageparts/getlist");
+        return result;
+    }
+
+    private async Task<PagePartsSchema> GetPageAsync(string partsId)
+    {
+        var httpClient = HttpClientFactory.CreateClient();
+        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+
+        var PagePartsSchema = await httpClient.GetFromJsonAsync<PagePartsSchema>($"api/pageparts/get?partsId={partsId}");
+        return PagePartsSchema;
+    }
+
+    private void CreateAsync()
+    {
+        _partsSchema = new PagePartsSchema();
+        _partsSchema.Id = Guid.NewGuid().ToString();
+        _visible = true;
+
+        StateHasChanged();
+    }
+
+    private async Task EditAsync(string id)
+    {
+        _partsSchema = await GetPageAsync(id);
+        _visible = true;
+
+        StateHasChanged();
+    }
+
+    private async Task DeleteAsync(string partsId)
+    {
+        var httpClient = HttpClientFactory.CreateClient();
+        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+
+        await httpClient.GetAsync($"api/pageparts/delete?partsId={partsId}");
+        await Message.Success("删除成功！");
+    }
+
+    private async Task OnConfirmAsync(MouseEventArgs e)
+    {
+        var validate = _form.Validate();
+        if (validate)
+        {
+            var result = await SavePagePartsSchemaAsync();
+            if (result.StatusCode == HttpStatusCode.OK)
+            {
+                _visible = false;
+                _form.Submit();
+                await Message.Success("保存成功！");
+                _form.Reset();
+            }
+            else
+            {
+                _visible = true;
+                await Message.Error($"保存失败: {result.ReasonPhrase}");
+            }
+        }
+        else
+        {
+            _visible = true;
+        }
+    }
+
+    private async Task OnFinishAsync()
+    {
+        PagePartsState.Value = await LoadPagePartsAsync(1, 50);
+    }
+
+    private async Task<HttpResponseMessage> SavePagePartsSchemaAsync()
+    {
+        string jsonSchema = _partsSchema.ToJson();
+
+        var content = new StringContent(jsonSchema, Encoding.UTF8, "application/json");
+
+        var httpClient = HttpClientFactory.CreateClient();
+        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+        var result = await httpClient.PostAsync($"api/pageparts/save", content);
+
+        return result;
+    }
+}
