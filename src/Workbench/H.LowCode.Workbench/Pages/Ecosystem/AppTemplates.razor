@@ -4,7 +4,7 @@
 @inject IHttpClientFactory HttpClientFactory
 @inject NavigationManager NavigationManager
 @inject IMessageService Message
-@inject ComponentStateWrapper<AppPartsList, IList<AppPartsSchema>> AppPartsState
+@inject ComponentStateWrapper<AppTemplates, IList<AppPartsSchema>> AppPartsState
 
 <div style="display: flex; justify-content: space-between; margin: 0 0 8px 5px;">
     <div style="width:250px;">
@@ -13,7 +13,7 @@
 </div>
 
 <div style="margin:10px 5px;">
-    <Segmented Size="SegmentedSize.Large" Labels=@(new[]{"全部", "OA", "CRM", "ERP", "门户", "医疗", "教育", "酒店", "餐饮", "水务", "我的"}) />
+    <Segmented Size="SegmentedSize.Large" Labels=@(new[]{"全部", "OA", "CRM", "ERP", "门户", "医疗", "教育", "酒店", "餐饮", "水务", "我公开的"}) />
 </div>
 
 <Card Title="图书管理系统" Style="float:left; width:300px; margin:5px;">

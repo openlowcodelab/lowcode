@@ -1,0 +1,71 @@
+﻿@page "/workbench/ecosystem"
+@namespace H.LowCode.Workbench
+@layout WorkbenchLayout
+
+@inject IHttpClientFactory HttpClientFactory
+@inject NavigationManager NavigationManager
+
+<PageTitle>生态中心 - H.LowCode</PageTitle>
+
+<Tabs DefaultActiveKey="tab_market_app" Centered Animated Style="width: 80%; margin: auto;">
+    <TabPane Tab="模板应用" Key="tab_parts_apps">
+        <AppTemplates></AppTemplates>
+    </TabPane>
+    <TabPane Tab="主题物料" Key="tab_parts_themes">
+        <ThemePartsList></ThemePartsList>
+    </TabPane>
+    <TabPane Tab="页面物料" Key="tab_parts_pages">
+        <PagePartsList></PagePartsList>
+    </TabPane>
+    <TabPane Tab="组件物料" Key="tab_parts_components">
+        <ComponentPartsList></ComponentPartsList>
+    </TabPane>
+    <TabPane Tab="API 库" Key="tab_market_apis">
+        <Card Title="钉钉 API" Style="float:left; width:300px; margin:5px;">
+            <Extra>
+                <a href="#">查看</a>
+            </Extra>
+            <Body>
+                <p>Card content</p>
+            </Body>
+        </Card>
+    </TabPane>
+    <TabPane Tab="插件" Key="tab_market_plugins">
+        <Card Title="微信支付" Style="float:left; width:300px; margin:5px;">
+            <Extra>
+                <a href="#">安装</a>
+            </Extra>
+            <Body>
+                <p>Card content</p>
+            </Body>
+        </Card>
+        <Card Title="支付宝" Style="float:left; width:300px; margin:5px;">
+            <Extra>
+                <a href="#">安装</a>
+            </Extra>
+            <Body>
+                <p>Card content</p>
+            </Body>
+        </Card>
+        <Card Title="ChatGPT" Style="float:left; width:300px; margin:5px;">
+            <Extra>
+                <a href="#">安装</a>
+            </Extra>
+            <Body>
+                <p>Card content</p>
+            </Body>
+        </Card>
+        <Card Title="电子签章" Style="float:left; width:300px; margin:5px;">
+            <Extra>
+                <a href="#">安装</a>
+            </Extra>
+            <Body>
+                <p>Card content</p>
+            </Body>
+        </Card>
+    </TabPane>
+</Tabs>
+
+@code {
+
+}
