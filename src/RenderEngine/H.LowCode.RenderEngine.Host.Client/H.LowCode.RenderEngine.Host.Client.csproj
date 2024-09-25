@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+	<Import Project="..\..\global.props" />
+
+	<PropertyGroup>
+    <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
+    <StaticWebAssetProjectMode>Default</StaticWebAssetProjectMode>
+  </PropertyGroup>
+	
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
+  </ItemGroup>
+	
+  <ItemGroup>
+    <ProjectReference Include="..\..\Parts\H.LowCode.ComponentParts.BasicComponents\H.LowCode.ComponentParts.BasicComponents.csproj" />
+    <ProjectReference Include="..\..\Parts\H.LowCode.ComponentParts.ExtensionComponents\H.LowCode.ComponentParts.ExtensionComponents.csproj" />
+    <ProjectReference Include="..\..\Parts\H.LowCode.ThemeParts.AntBlazor\H.LowCode.ThemeParts.AntBlazor.csproj" />
+    <ProjectReference Include="..\H.LowCode.RenderEngine\H.LowCode.RenderEngine.csproj" />
+  </ItemGroup>
+	
+</Project>
