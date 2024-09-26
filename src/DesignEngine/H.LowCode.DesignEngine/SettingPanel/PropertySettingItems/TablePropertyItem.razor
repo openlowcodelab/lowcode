@@ -8,9 +8,8 @@
         <a onclick="@(() => CreateColumn())" style="border: solid #c4c4c4 1px; line-height: 18px;height: 22px;display: block;background-color: #fafafa; color:#2c2c2c">+</a>
     </div>
 </div>
-
 <hr color="#f6f6f6" />
-@foreach (var column in _columns)
+@foreach (var column in _tableSchema.Columns)
 {
     <div>
         <span draggable="true" style="cursor: move; display: inline-block; width: 10px; margin: 0 auto; writing-mode: vertical-lr;">...</span>
@@ -21,9 +20,42 @@
 }
 <hr color="#f6f6f6" />
 
-<Modal Title="表格列" @bind-Visible="@_visible" OnOk="OnConfirm">
-    <Form Model="@_tableColumnSchema" OnFinish="OnFinish" @ref="_form"
-          ValidateMode="@FormValidateMode.Complex" ValidateOnChange="true" LabelColSpan="8" WrapperColSpan="16">
+<div style="display: flex; justify-content: space-between;">
+    <div>
+        表格按钮
+    </div>
+    <div style="text-align: center; width:22px;">
+        <a onclick="@(() => CreateButton())" style="border: solid #c4c4c4 1px; line-height: 18px;height: 22px;display: block;background-color: #fafafa; color:#2c2c2c">+</a>
+    </div>
+</div>
+<hr color="#f6f6f6" />
+@foreach (var btn in _tableSchema.Buttons)
+{
+    <div>
+        <span draggable="true" style="cursor: move; display: inline-block; width: 10px; margin: 0 auto; writing-mode: vertical-lr;">...</span>
+        <span style="display:inline-block; width:140px;">@btn.Title</span>
+        <Icon Type="edit" OnClick="@(() => EditButton(btn.Id))" Theme="outline" Style="cursor: pointer;" />
+        <Icon Type="delete" OnClick="@(() => DeleteButton(btn.Id))" Theme="outline" Style="cursor: pointer;" />
+    </div>
+    @* <div class="propertysetting-item">
+        <label>行为：</label>
+        <RadioGroup DefaultValue="ActionTypeEnum.None" TValue="ActionTypeEnum" @bind-Value="@btn.ActionSchema.ActionType">
+            <Radio Value="ActionTypeEnum.None">None</Radio>
+            <Radio Value="ActionTypeEnum.Modal">Modal</Radio>
+            <Radio Value="ActionTypeEnum.Self">Self</Radio>
+            <Radio Value="ActionTypeEnum.Blank">Blank</Radio>
+        </RadioGroup>
+    </div>
+    <div class="propertysetting-item">
+        <label>目标对象：</label>
+        <Input @bind-Value="@btn.TargetId"></Input>
+    </div> *@
+}
+<hr color="#f6f6f6" />
+
+<Modal Title="表格列" @bind-Visible="@_columnVisible" OnOk="OnColumnConfirm">
+    <Form Model="@_tableColumnSchema" OnFinish="OnColumnFinish" @ref="_columnForm"
+          ValidateOnChange="true" LabelColSpan="8" WrapperColSpan="16">
         <FormItem Label="字段标识" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
             <Input @bind-Value="@context.Name" />
         </FormItem>
@@ -54,25 +86,52 @@
     </Form>
 </Modal>
 
+<Modal Title="表格按钮" @bind-Visible="@_btnVisible" OnOk="OnButtonConfirm">
+    <Form Model="@_tableButtonSchema" OnFinish="OnButtonFinish" @ref="_btnForm"
+          ValidateOnChange="true" LabelColSpan="8" WrapperColSpan="16">
+        <FormItem Label="按钮标识" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
+            <Input @bind-Value="@context.Name" />
+        </FormItem>
+        <FormItem Label="按钮名称" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
+            <Input @bind-Value="@context.Title" />
+        </FormItem>
+        <FormItem Label="按钮行为">
+            <RadioGroup DefaultValue="ActionTypeEnum.None" TValue="ActionTypeEnum" @bind-Value="@context.ButtonAction.ActionType">
+                <Radio Value="ActionTypeEnum.None">None</Radio>
+                <Radio Value="ActionTypeEnum.Modal">Modal</Radio>
+                <Radio Value="ActionTypeEnum.Self">Self</Radio>
+                <Radio Value="ActionTypeEnum.Blank">Blank</Radio>
+            </RadioGroup>
+        </FormItem>
+        <FormItem Label="目标对象" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
+            <Input @bind-Value="@context.TargetId" />
+        </FormItem>
+        <FormItem Label="排序">
+            <AntDesign.InputNumber @bind-Value="@context.Order" Min="0" DefaultValue="0"></AntDesign.InputNumber>
+        </FormItem>
+    </Form>
+</Modal>
+
 @code {
     [Parameter]
     public ComponentSchema Component { get; set; }
 
     [Parameter]
-    public Action<string> OnTableColumnChange { get; set; }
+    public Action<string> OnTablePropertyChange { get; set; }
 
-    private List<TableColumnSchema> _columns = [];
+    private TablePropertySchema _tableSchema = new();
 
-    private bool _visible;
-    private Form<TableColumnSchema> _form;
-    private bool _isCreate;
+    #region Columns
+    private bool _columnVisible;
+    private Form<TableColumnSchema> _columnForm;
+    private bool _isColumnCreate;
     private TableColumnSchema _tableColumnSchema = new TableColumnSchema();
 
     protected override void OnInitialized()
     {
-        if (Component.ComponentProperty?.TableColumns.IsNullOrEmpty() == false)
+        if (Component.ComponentProperty?.TablePropertiess.IsNullOrEmpty() == false)
         {
-            _columns = JsonSerializer.Deserialize<List<TableColumnSchema>>(Component.ComponentProperty.TableColumns);
+            _tableSchema = JsonSerializer.Deserialize<TablePropertySchema>(Component.ComponentProperty.TablePropertiess);
         }
 
         base.OnInitialized();
@@ -80,8 +139,8 @@
 
     private void CreateColumn()
     {
-        _isCreate = true;
-        _visible = true;
+        _isColumnCreate = true;
+        _columnVisible = true;
         _tableColumnSchema = new();
         _tableColumnSchema.Id = Guid.NewGuid().ToString();
 
@@ -90,59 +149,52 @@
 
     private void EditColumn(string id)
     {
-        _isCreate = false;
-        _visible = true;
-        _tableColumnSchema = _columns.First(t => t.Id == id);
+        _isColumnCreate = false;
+        _columnVisible = true;
+        _tableColumnSchema = _tableSchema.Columns.First(t => t.Id == id);
 
         StateHasChanged();
     }
 
     private void DeleteColumn(string id)
     {
-        var column = _columns.First(t => t.Id == id);
-        _columns.Remove(column);
+        var column = _tableSchema.Columns.First(t => t.Id == id);
+        _tableSchema.Columns.Remove(column);
 
         OnPropertyChanged();
     }
 
-    private void OnConfirm(MouseEventArgs e)
+    private void OnColumnConfirm(MouseEventArgs e)
     {
-        var validate = _form.Validate();
+        var validate = _columnForm.Validate();
         if (validate)
         {
             var result = SaveTableColumnSchema();
             if (result)
             {
-                _visible = false;
-                _form.Submit();
-                _form.Reset();
+                _columnVisible = false;
+                _columnForm.Submit();
+                _columnForm.Reset();
             }
             else
             {
-                _visible = true;
+                _columnVisible = true;
             }
         }
         else
         {
-            _visible = true;
+            _columnVisible = true;
         }
     }
 
-    private void OnFinish()
+    private void OnColumnFinish()
     {
         OnPropertyChanged();
     }
 
-    private void OnPropertyChanged()
-    {
-        Component.ComponentProperty.TableColumns = _columns.ToJson();
-
-        //OnTableColumnChange?.Invoke(Component.ComponentProperty.TableColumns);
-    }
-
     private bool SaveTableColumnSchema()
     {
-        if (_isCreate)
+        if (_isColumnCreate)
         {
             TableColumnSchema column = new()
                 {
@@ -154,7 +206,7 @@
                     Sortable = _tableColumnSchema.Sortable,
                     Order = _tableColumnSchema.Order
                 };
-            _columns.Add(column);
+            _tableSchema.Columns.Add(column);
         }
         else
         {
@@ -168,5 +220,95 @@
             // column.Order = _tableColumnSchema.Order;
         }
         return true;
+    }
+    #endregion
+
+    #region Buttons
+    private bool _btnVisible;
+    private Form<TableButtonSchema> _btnForm;
+    private bool _isbtnCreate;
+    private TableButtonSchema _tableButtonSchema = new TableButtonSchema();
+
+    private void CreateButton()
+    {
+        _isbtnCreate = true;
+        _btnVisible = true;
+        _tableButtonSchema = new();
+        _tableButtonSchema.Id = Guid.NewGuid().ToString();
+
+        StateHasChanged();
+    }
+
+    private void EditButton(string id)
+    {
+        _isbtnCreate = false;
+        _btnVisible = true;
+        _tableButtonSchema = _tableSchema.Buttons.First(t => t.Id == id);
+
+        StateHasChanged();
+    }
+
+    private void DeleteButton(string id)
+    {
+        var btn = _tableSchema.Buttons.First(t => t.Id == id);
+        _tableSchema.Buttons.Remove(btn);
+
+        OnPropertyChanged();
+    }
+
+    private void OnButtonConfirm(MouseEventArgs e)
+    {
+        var validate = _btnForm.Validate();
+        if (validate)
+        {
+            var result = SaveTableButtonSchema();
+            if (result)
+            {
+                _btnVisible = false;
+                _btnForm.Submit();
+                _btnForm.Reset();
+            }
+            else
+            {
+                _btnVisible = true;
+            }
+        }
+        else
+        {
+            _btnVisible = true;
+        }
+    }
+
+    private void OnButtonFinish()
+    {
+        OnPropertyChanged();
+    }
+
+    private bool SaveTableButtonSchema()
+    {
+        if (_isbtnCreate)
+        {
+            TableButtonSchema btn = new()
+                {
+                    Id = _tableButtonSchema.Id,
+                    Name = _tableButtonSchema.Name,
+                    Title = _tableButtonSchema.Title,
+                    Order = _tableButtonSchema.Order
+                };
+            _tableSchema.Buttons.Add(btn);
+        }
+        else
+        {
+            //无需赋值
+        }
+        return true;
+    }
+    #endregion
+
+    private void OnPropertyChanged()
+    {
+        Component.ComponentProperty.TablePropertiess = _tableSchema.ToJson();
+
+        //OnTablePropertyChange?.Invoke(Component.ComponentProperty.TablePropertiess);
     }
 }

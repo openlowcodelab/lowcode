@@ -80,8 +80,8 @@ public class ComponentPropertySchema
     /// <summary>
     /// 表格类组件属性值
     /// </summary>
-    [JsonPropertyName("cols")]
-    public string TableColumns { get; set; }
+    [JsonPropertyName("tbprops")]
+    public string TablePropertiess { get; set; }
 
     /// <summary>
     /// 支持的通用属性
@@ -95,7 +95,7 @@ public class ComponentPropertySchema
     /// </summary>
     [JsonPropertyName("extprops")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public IDictionary<string, PropertyItemSchema> ExtensionProperties { get; set; } = new Dictionary<string, PropertyItemSchema>();
+    public IDictionary<string, PropertyItemSchema> ExtraProperties { get; set; } = new Dictionary<string, PropertyItemSchema>();
 
     /// <summary>
     /// 扩展的高级属性

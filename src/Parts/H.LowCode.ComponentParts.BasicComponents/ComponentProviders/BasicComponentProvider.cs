@@ -22,7 +22,7 @@ public class BasicComponentProvider : IComponentProvider
                     Title = "输入框",
                     ComponentValueType = ComponentValueType.String,
                     SupportProperties = ["MaximumLength", "MinimumLength", "Pattern", "Format"],
-                    ExtensionProperties = new Dictionary<string,PropertyItemSchema>
+                    ExtraProperties = new Dictionary<string,PropertyItemSchema>
                     {
                         { "maxlength", new() { Label="最大长度", IntValue = 0, SettingItemType = PropertyItemTypeEnum.Text_Int } },
                         { "isreadonly", new() { Label="是否只读", BoolValue = false, SettingItemType = PropertyItemTypeEnum.Checkbox } },

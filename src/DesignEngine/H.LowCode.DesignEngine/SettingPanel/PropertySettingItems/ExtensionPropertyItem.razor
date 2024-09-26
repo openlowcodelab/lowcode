@@ -2,7 +2,7 @@
 
 <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:30px 0 10px;">更多</div>
 
-@foreach (var extPropertyKV in Component.ComponentProperty.ExtensionProperties)
+@foreach (var extPropertyKV in Component.ComponentProperty.ExtraProperties)
 {
     <div class="propertysetting-item">
         @if (extPropertyKV.Value.IsShowLabel)
@@ -61,10 +61,10 @@
 
     private void OnExtensionPropertyChange(string key, string propertyValue)
     {
-        var contains = Component.ComponentProperty.ExtensionProperties.ContainsKey(key);
+        var contains = Component.ComponentProperty.ExtraProperties.ContainsKey(key);
         if (contains)
         {
-            Component.ComponentProperty.ExtensionProperties[key].StringValue = propertyValue;
+            Component.ComponentProperty.ExtraProperties[key].StringValue = propertyValue;
         }
     }
 

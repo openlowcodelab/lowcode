@@ -20,7 +20,7 @@ public class TableColumnSchema
     /// <summary>
     /// 列顺序
     /// </summary>
-    [JsonPropertyName("")]
+    [JsonPropertyName("order")]
     public int Order { get; set; }
 
     /// <summary>
