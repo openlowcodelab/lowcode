@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace H.LowCode.Configuration;
 
-public class MetaOption
+public class SiteOption
 {
-    public const string SectionName = "Meta";
+    public const string SectionName = "Sites";
 
-    public string AppsFilePath { get; set; }
+    public string AppId { get; set; }
 
-    public  string PartsFilePath { get; set; }
+    public string SiteUrl { get; set; }
 }

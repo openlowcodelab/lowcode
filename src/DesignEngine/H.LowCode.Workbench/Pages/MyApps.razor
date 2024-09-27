@@ -4,7 +4,7 @@
 
 @inject IHttpClientFactory HttpClientFactory
 @inject NavigationManager NavigationManager
-@inject ComponentStateWrapper<MyApps, IList<AppSchema>> MyAppsState
+@inject ComponentStateWrapper<MyApps, IList<AppListModel>> MyAppsState
 
 <PageTitle>我的应用 - H.LowCode</PageTitle>
 
@@ -53,7 +53,7 @@
                         <a href="@($"/myapp/{app.Id}/pagemanager")" title="开发应用" target="_blank"><Icon Type="desktop" /></a>
                     </CardAction>
                     <CardAction>
-                        <a href="@($"{app.Id}/index")" title="访问应用" target="_blank"><Icon Type="global" /></a>
+                        <a href="@($"{app.SiteUrl}/{app.Id}/index")" title="访问应用" target="_blank"><Icon Type="global" /></a>
                     </CardAction>
                     <CardAction>
                         <a href="javascript:void(0);"><Icon Type="question-circle" /></a>
@@ -86,12 +86,12 @@
         }
     }
 
-    private async Task<IList<AppSchema>> LoadAppsAsync()
+    private async Task<IList<AppListModel>> LoadAppsAsync()
     {
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
 
-        var result = await httpClient.GetFromJsonAsync<IList<AppSchema>>($"api/designengine/getapps");
+        var result = await httpClient.GetFromJsonAsync<IList<AppListModel>>($"api/designengine/getapps");
         return result;
     }
 

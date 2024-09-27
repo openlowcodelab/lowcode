@@ -1,8 +1,10 @@
 ﻿using H.Extensions.System;
+using H.LowCode.Configuration;
 using H.LowCode.DesignEngine.Application.Contracts;
 using H.LowCode.DesignEngine.Model;
 using H.LowCode.MetaSchema;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace H.LowCode.DesignEngine.HttpApi;
 
@@ -11,16 +13,25 @@ namespace H.LowCode.DesignEngine.HttpApi;
 public class DesignEngineController : ControllerBase
 {
     private IDesignEngineAppService _designAppService;
+    private IEnumerable<SiteOption> _sites;
 
-    public DesignEngineController(IDesignEngineAppService designEngineAppService)
+    public DesignEngineController(IDesignEngineAppService designEngineAppService, IOptions<List<SiteOption>> siteOptions)
     {
         _designAppService = designEngineAppService;
+        _sites = siteOptions.Value;
     }
 
     [HttpGet]
-    public async Task<IList<AppSchema>> GetAppsAsync()
+    public async Task<IList<AppListModel>> GetAppsAsync()
     {
-        return await _designAppService.GetAppsAsync();
+        var appSchemas = await _designAppService.GetAppsAsync();
+        return appSchemas.Select(x => new AppListModel
+        {
+            Id = x.Id,
+            SiteUrl = _sites.FirstOrDefault(t => t.AppId.Equals(x.Id, StringComparison.OrdinalIgnoreCase))?.SiteUrl,
+            Name = x.Name,
+            Description = x.Description
+        }).ToList();
     }
 
     [HttpPost]
