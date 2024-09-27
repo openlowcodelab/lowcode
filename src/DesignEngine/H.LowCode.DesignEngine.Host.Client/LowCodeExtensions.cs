@@ -4,7 +4,7 @@ using H.LowCode.ComponentParts.BasicComponents;
 using H.LowCode.ComponentParts.ExtensionComponents;
 using Microsoft.Extensions.DependencyInjection;
 using H.Util.Blazor;
-using H.LowCode.DesignEngine.Admin;
+using H.LowCode.MyApp;
 using H.LowCode.PartsDesignEngine;
 
 namespace H.LowCode.DesignEngine.Host.Client;
@@ -19,7 +19,7 @@ public static class LowCodeExtensions
 
         #region DesignEngine
         services.AddApplication<DesignEngineModule>();
-        services.AddApplication<DesignEngineAdminModule>();
+        services.AddApplication<MyAppModule>();
         services.AddApplication<PartsDesignEngineModule>();
         #endregion
 

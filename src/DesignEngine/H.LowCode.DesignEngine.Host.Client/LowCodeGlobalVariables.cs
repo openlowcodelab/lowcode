@@ -11,6 +11,6 @@ public static class LowCodeGlobalVariables
             typeof(Workbench._Imports).Assembly,
             typeof(DesignEngine._Imports).Assembly,
             typeof(PartsDesignEngine._Imports).Assembly,
-            typeof(DesignEngine.Admin._Imports).Assembly
+            typeof(MyApp._Imports).Assembly
         ];
 }

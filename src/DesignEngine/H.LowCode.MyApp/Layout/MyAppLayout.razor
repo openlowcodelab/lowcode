@@ -1,17 +1,17 @@
-﻿@namespace H.LowCode.DesignEngine.Admin
+﻿@namespace H.LowCode.MyApp
 @inherits LayoutComponentBase
 
 @inject IHttpClientFactory HttpClientFactory
 @inject NavigationManager NavigationManager
-@inject ComponentStateWrapper<DesignEngineAdminLayout, MenuDataItem[]> MenuDataState
+@inject ComponentStateWrapper<MyAppLayout, MenuDataItem[]> MenuDataState
 @inject ComponentStateWrapper<AppSchema, AppSchema> AppSchemaState
 
-<link href="_content/H.LowCode.DesignEngine.Admin/designengineadmin.css" rel="stylesheet" />
+<link href="_content/H.LowCode.MyApp/myapp.css" rel="stylesheet" />
 
 @if (AppSchemaState.Value != null)
 {
     <CascadingValue Value="@AppSchemaState.Value" Name="appCascading">
-        <AntDesign.ProLayout.BasicLayout FixedHeader="true" Class="designengineadmin" Logo="@("logo.png")" Title="@AppSchemaState.Value.Name"
+        <AntDesign.ProLayout.BasicLayout FixedHeader="true" Class="myapp" Logo="@("logo.png")" Title="@AppSchemaState.Value.Name"
                 MenuData="@MenuDataState.Value" MenuAccordion="true" Layout="AntDesign.ProLayout.Layout.Side">
             <RightContentRender>
                 RightContent
