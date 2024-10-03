@@ -1,5 +1,6 @@
 ﻿using H.LowCode.MetaSchema;
 using System;
+using System.Text.Json.Serialization;
 
 namespace H.LowCode.DesignEngine.Model;
 
@@ -13,7 +14,8 @@ public class PageListModel
 
     public PageTypeEnum PageType { get; set; }
 
-    public int PublishState { get; set; }
+    [JsonPropertyName("pubstatus")]
+    public int PublishStatus { get; set; }
 
     public DateTime ModifiedTime { get; set; }
 }

@@ -2,7 +2,7 @@
 
 namespace H.LowCode.MetaSchema;
 
-public class PageSchema : BaseMetaSchema
+public class PageSchema : MetaSchemaBase
 {
     [JsonPropertyName("aid")]
     public string AppId { get; set; }
@@ -21,8 +21,8 @@ public class PageSchema : BaseMetaSchema
     /// <summary>
     /// 发布状态
     /// </summary>
-    [JsonPropertyName("pubstate")]
-    public int PublishState { get; set; }
+    [JsonPropertyName("pubstatus")]
+    public int PublishStatus { get; set; }
 
     [JsonPropertyName("comps")]
     public IList<ComponentSchema> Components { get; set; } = [];

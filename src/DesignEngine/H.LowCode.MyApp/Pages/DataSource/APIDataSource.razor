@@ -1,0 +1,174 @@
+﻿@namespace H.LowCode.MyApp
+
+@inject IHttpClientFactory HttpClientFactory
+@inject NavigationManager NavigationManager
+@inject IMessageService Message
+@inject ComponentStateWrapper<APIDataSource, IList<DataSourceListModel>> APIListState
+
+<div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
+    <div style="width:250px;">
+        <Search Placeholder="API名称" OnSearch="()=>{}" />
+    </div>
+    <div style="width:80px; line-height:32px;">
+        <Button Type="@ButtonType.Primary" OnClick="CreateAsync">新建API</Button>
+    </div>
+</div>
+<Table TItem="DataSourceListModel" DataSource="@APIListState.Value" Total="_total"
+       @bind-PageIndex="@_pageIndex" @bind-PageSize="@_pageSize">
+    <PropertyColumn Title="名称" Property="c=>c.Name" Sortable />
+    <PropertyColumn Title="中文名" Property="c=>c.DisplayName" Sortable />
+    <PropertyColumn Title="修改人" Property="c=>c.ModifiedUser" />
+    <PropertyColumn Title="修改时间" Property="c=>c.ModifiedTime" Format="yyyy-MM-dd HH:mm:ss" />
+    <PropertyColumn Title="发布状态" Property="c=>c.PublishStatus" />
+    <ActionColumn Title="操作">
+        <Space Size=@("middle")>
+            <SpaceItem>
+                <a onclick="@(()=>EditAsync(@context.Id))">编辑</a>
+            </SpaceItem>
+            <SpaceItem>
+                <a onclick="@(()=>DeleteAsync(@context.Id))" style="color:#ff4d4f">删除</a>
+            </SpaceItem>
+            <SpaceItem>
+                <a onclick="@(()=>PublishAsync(@context.Id))" style="color:green">发布</a>
+            </SpaceItem>
+        </Space>
+    </ActionColumn>
+</Table>
+
+<Modal Title="新建 API" @bind-Visible="@_visible" OnOk="OnConfirmAsync">
+    <Form Model="@_dataSourceSchema" LabelColSpan="8" WrapperColSpan="16" OnFinish="OnFinishAsync" @ref="@_form"
+          ValidateMode="@FormValidateMode.Complex" ValidateOnChange="true">
+        <FormItem Label="API 名称" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
+            <Input @bind-Value="@context.Name" />
+        </FormItem>
+        <FormItem Label="发布状态" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
+            <RadioGroup @bind-Value="@context.PublishStatus">
+                <Radio Value="0">待发布</Radio>
+                <Radio Value="1">已发布</Radio>
+            </RadioGroup>
+        </FormItem>
+        <FormItem Label="排序">
+            <InputNumber @bind-Value="@context.Order" Min="0" DefaultValue="0"></InputNumber>
+        </FormItem>
+    </Form>
+</Modal>
+
+@code {
+    [Parameter]
+    public string AppId { get; set; }
+
+    int _pageIndex = 1;
+    int _pageSize = 10;
+    int _total = 0;
+
+    private bool _visible;
+    private string _modalTitle;
+    private Form<DataSourceSchema> _form;
+    private DataSourceSchema _dataSourceSchema = new DataSourceSchema();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _total = 50;
+        if (APIListState.Value is null)
+        {
+            APIListState.Value = await LoadDataSourcesAsync(1, 50);
+
+            await base.OnInitializedAsync();
+        }
+    }
+
+    private async Task<IList<DataSourceListModel>> LoadDataSourcesAsync(int pageIndex, int pageSize)
+    {
+        var httpClient = HttpClientFactory.CreateClient();
+        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+
+        var result = await httpClient.GetFromJsonAsync<List<DataSourceListModel>>($"api/datasource/getlist?appId={AppId}&dataSourceType=2");
+        return result;
+    }
+
+    private async Task<DataSourceSchema> GetDataSourceAsync(string dataSourceId)
+    {
+        var httpClient = HttpClientFactory.CreateClient();
+        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+
+        return await httpClient.GetFromJsonAsync<DataSourceSchema>($"api/datasource/get?appId={AppId}&id={dataSourceId}");
+    }
+
+    private async Task OnConfirmAsync(MouseEventArgs e)
+    {
+        var validate = _form.Validate();
+        if (validate)
+        {
+            var result = await SaveDataSourceSchemaAsync();
+            if (result.StatusCode == HttpStatusCode.OK)
+            {
+                _visible = false;
+                _form.Submit();
+                await Message.Success("保存成功！");
+                _form.Reset();
+            }
+            else
+            {
+                _visible = true;
+                await Message.Error($"保存失败: {result.ReasonPhrase}");
+            }
+        }
+        else
+        {
+            _visible = true;
+        }
+    }
+
+    private async Task OnFinishAsync()
+    {
+        APIListState.Value = await LoadDataSourcesAsync(1, 50);
+    }
+
+    private async Task<HttpResponseMessage> SaveDataSourceSchemaAsync()
+    {
+        string jsonSchema = _dataSourceSchema.ToJson();
+
+        var content = new StringContent(jsonSchema, Encoding.UTF8, "application/json");
+
+        var httpClient = HttpClientFactory.CreateClient();
+        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+        var result = await httpClient.PostAsync($"api/datasource/save?appId={AppId}", content);
+
+        return result;
+    }
+
+    private async Task CreateAsync()
+    {
+        await Task.Delay(1);
+        _dataSourceSchema = new() { Id = Guid.NewGuid().ToString(), AppId = AppId, DataSourceType = DataSourceTypeEnum.API };
+        _visible = true;
+        _modalTitle = "新建 API";
+
+        StateHasChanged();
+    }
+
+    private async Task EditAsync(string id)
+    {
+        await Task.Delay(1);
+        _visible = true;
+        _modalTitle = "编辑 API";
+        _dataSourceSchema = await GetDataSourceAsync(id);
+
+        StateHasChanged();
+    }
+
+    private async Task DeleteAsync(string id)
+    {
+        await Task.Delay(1);
+        var httpClient = HttpClientFactory.CreateClient();
+        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+
+        await httpClient.GetAsync($"api/datasource/delete?appId={AppId}&id={id}");
+        await Message.Success("删除成功！");
+    }
+
+    private async Task PublishAsync(string id)
+    {
+        await Task.Delay(1);
+    }
+}

@@ -19,8 +19,8 @@ public class AppPartsSchema : BasePartsMetaSchema
     [JsonPropertyName("v")]
     public string Version { get; set; }
 
-    [JsonPropertyName("state")]
-    public PublishStateEnum PublishState { get; set; }
+    [JsonPropertyName("pubstatus")]
+    public PublishStatusEnum PublishStatus { get; set; }
 
     [JsonPropertyName("platform")]
     public SupportPlatformEnum[] SupportPlatforms { get; set; } = [0];

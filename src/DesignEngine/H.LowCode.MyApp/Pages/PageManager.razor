@@ -24,8 +24,8 @@
     <PropertyColumn Title="页面名称" Property="c=>c.PageName" Sortable />
     <PropertyColumn Title="排序" Property="c=>c.Order" />
     <PropertyColumn Title="类型" Property="c=>c.PageType" Sortable />
-    <PropertyColumn Title="发布状态" Property="c=>c.PublishState">
-        @if(context.PublishState == 0)
+    <PropertyColumn Title="发布状态" Property="c=>c.PublishStatus">
+        @if(context.PublishStatus == 0)
         {
             <Tag Color="default">待发布</Tag>
         }
@@ -64,7 +64,7 @@
             </RadioGroup>
         </FormItem>
         <FormItem Label="发布状态" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
-            <RadioGroup @bind-Value="@context.PublishState">
+            <RadioGroup @bind-Value="@context.PublishStatus">
                 <Radio Value="0">待发布</Radio>
                 <Radio Value="1">已发布</Radio>
             </RadioGroup>
@@ -82,7 +82,7 @@
     IEnumerable<PageListModel> selectedRows;
     int _total = 0;
 
-    private bool _visible = false;
+    private bool _visible;
     private Form<PageSchema> _form;
     private PageSchema _pageSchema = new PageSchema();
 

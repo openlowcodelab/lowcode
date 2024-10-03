@@ -7,15 +7,6 @@ namespace H.LowCode.DesignEngine.HttpApi;
 
 [ApiController]
 [Route("api/[controller]/[action]")]
-public class AppPartsController : ControllerBase
+public abstract class DesignEngineControllerBase : ControllerBase
 {
-    public AppPartsController()
-    {
-    }
-
-    [HttpGet]
-    public async Task<IList<AppPartsSchema>> GetListAsync()
-    {
-        return new List<AppPartsSchema>();
-    }
 }

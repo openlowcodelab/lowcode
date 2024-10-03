@@ -78,7 +78,7 @@
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
 
-        var pageParts = await httpClient.GetFromJsonAsync<PagePartsSchema>($"api/pageparts/get?partsId={PartsId}");
+        var pageParts = await httpClient.GetFromJsonAsync<PagePartsSchema>($"api/parts/getpages?partsId={PartsId}");
 
         if (_designPanel != null)
         {
@@ -104,7 +104,7 @@
 
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
-        var result = await httpClient.PostAsync($"api/pageparts/save", content);
+        var result = await httpClient.PostAsync($"api/parts/savepage", content);
 
         if (result.StatusCode == HttpStatusCode.OK)
         {

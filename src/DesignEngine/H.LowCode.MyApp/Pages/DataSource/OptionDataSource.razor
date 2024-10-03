@@ -1,0 +1,79 @@
+﻿@namespace H.LowCode.MyApp
+
+<div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
+    <div style="width:250px;">
+        <Search Placeholder="选项名称" OnSearch="()=>{}" />
+    </div>
+    <div style="width:80px; line-height:32px;">
+        <Button Type="@ButtonType.Primary" OnClick="CreateAsync">新建选项</Button>
+    </div>
+</div>
+<Table TItem="DataSourceSchema" DataSource="@_dataSource" Total="_total"
+       @bind-PageIndex="@_pageIndex" @bind-PageSize="@_pageSize">
+    <PropertyColumn Title="名称" Property="c=>c.Name" Sortable />
+    <PropertyColumn Title="中文名" Property="c=>c.DisplayName" Sortable />
+    <PropertyColumn Title="修改人" Property="c=>c.ModifiedUser" />
+    <PropertyColumn Title="修改时间" Property="c=>c.ModifiedTime" Format="yyyy-MM-dd HH:mm:ss" />
+    <PropertyColumn Title="发布状态" Property="c=>c.PublishStatus" />
+    <ActionColumn Title="操作">
+        <Space Size=@("middle")>
+            <SpaceItem>
+                <a onclick="@(()=>EditAsync(@context))">编辑</a>
+            </SpaceItem>
+            <SpaceItem>
+                <a onclick="@(()=>DeleteAsync(@context.Id))" style="color:#ff4d4f">删除</a>
+            </SpaceItem>
+            <SpaceItem>
+                <a onclick="@(()=>PublishAsync(@context.Id))" style="color:green">发布</a>
+            </SpaceItem>
+        </Space>
+    </ActionColumn>
+</Table>
+
+@code {
+    [Parameter]
+    public string AppId { get; set; }
+
+    private IEnumerable<DataSourceSchema> _dataSource =
+    [
+        new (){ Name = "option1", DisplayName="Option1", DataSourceType = DataSourceTypeEnum.Option },
+        new (){ Name = "option2", DisplayName="Option2", DataSourceType = DataSourceTypeEnum.Option }
+    ];
+
+    private DataSourceSchema _currentDataSource;
+
+    int _pageIndex = 1;
+    int _pageSize = 10;
+    int _total = 0;
+
+    private bool _visible;
+    private string _modalTitle;
+
+    private async Task CreateAsync()
+    {
+        await Task.Delay(1);
+        _currentDataSource = new() { DataSourceType = DataSourceTypeEnum.Table };
+        _visible = true;
+        _modalTitle = "新建数据表";
+        StateHasChanged();
+    }
+
+    private async Task EditAsync(DataSourceSchema dataSource)
+    {
+        await Task.Delay(1);
+        _currentDataSource = dataSource;
+        _visible = true;
+        _modalTitle = "编辑数据表";
+        StateHasChanged();
+    }
+
+    private async Task DeleteAsync(string id)
+    {
+        await Task.Delay(1);
+    }
+
+    private async Task PublishAsync(string id)
+    {
+        await Task.Delay(1);
+    }
+}

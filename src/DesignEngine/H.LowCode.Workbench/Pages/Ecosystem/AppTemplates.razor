@@ -50,7 +50,7 @@
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
 
-        var result = await httpClient.GetFromJsonAsync<List<AppPartsSchema>>($"api/appparts/getlist");
+        var result = await httpClient.GetFromJsonAsync<List<AppPartsSchema>>($"api/parts/getapps");
         return result;
     }
 }

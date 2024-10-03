@@ -2,41 +2,48 @@
 
 namespace H.LowCode.MetaSchema;
 
-public class DataSourceSchema : BaseMetaSchema
+public class DataSourceSchema : MetaSchemaBase
 {
-    public string Id { get; set; }
+    [JsonPropertyName("aid")]
+    public string AppId { get; set; }
 
-    public string Key { get; set; }
+    public string Id { get; set; }
 
     [JsonPropertyName("n")]
     public string Name { get; set; }
 
+    [JsonPropertyName("disn")]
+    public string DisplayName { get; set; }
+
     [JsonPropertyName("desc")]
     public string Description { get; set; }
 
-    [JsonPropertyName("type")]
-    public DataSourceEnum DataSourceType { get; set; }
+    [JsonPropertyName("order")]
+    public int Order { get; set; }
 
-    public string PublishStatus { get; set; }
+    [JsonPropertyName("type")]
+    public DataSourceTypeEnum DataSourceType { get; set; }
+
+    public int PublishStatus { get; set; }
 
     #region 根据 DataSourceType 选用
     /// <summary>
     /// 数据表数据源
     /// </summary>
     [JsonPropertyName("fields")]
-    public List<DataSourceTableFieldSchema> DataSourceTableFields { get; set; } = [];
+    public List<TableFieldSchema> TableFields { get; set; } = [];
 
     /// <summary>
     /// API 数据源
     /// </summary>
     [JsonPropertyName("api")]
-    public DataSourceAPISchema DataSourceAPI { get; set; }
+    public APISchema API { get; set; }
 
     /// <summary>
     /// 选项数据源
     /// </summary>
-    [JsonPropertyName("options")]
-    public List<DataSourceOptionSchema> DataSourceOptions { get; set; } = [];
+    [JsonPropertyName("ops")]
+    public List<OptionSchema> Options { get; set; } = [];
 
     /// <summary>
     /// 
@@ -49,54 +56,4 @@ public class DataSourceSchema : BaseMetaSchema
     [JsonPropertyName("vals")]
     public IDictionary<string, string> Values { get; set; }
     #endregion
-}
-
-public enum DataSourceEnum
-{
-    None = 0,
-    Table = 1,
-    API = 2,
-    Options = 3,
-    SQL = 6,
-    Expression = 7, //表达式
-    Fiexd = 8  //固定值
-}
-
-public class DataSourceTableFieldSchema
-{
-    public string FieldKey { get; set; }
-
-    public string FieldName { get; set; }
-
-    public string FieldType { get; set; }
-
-    public bool IsPrimaryKey { get; set; }
-
-    public bool IsRequired { get; set; }
-
-    public bool IsUnique { get; set; }
-}
-
-public class DataSourceAPISchema
-{
-    public string BaseUrl { get; set; }
-
-    public string Path { get; set; }
-
-    public string Method { get; set; }
-
-    public IDictionary<string, string> Headers { get; set; }
-
-    public IDictionary<string, string> Queries { get; set; }
-
-    public string Body { get; set; }
-
-    public string Description { get; set; }
-}
-
-public class DataSourceOptionSchema
-{
-    public string OptionKey { get; set; }
-
-    public string OptionName { get; set; }
 }

@@ -2,7 +2,7 @@
 
 namespace H.LowCode.MetaSchema;
 
-public class MenuSchema : BaseMetaSchema
+public class MenuSchema : MetaSchemaBase
 {
     [JsonPropertyName("aid")]
     public string AppId {  get; set; }

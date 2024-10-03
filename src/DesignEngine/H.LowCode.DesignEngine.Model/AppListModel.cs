@@ -22,8 +22,8 @@ public class AppListModel
     [JsonPropertyName("desc")]
     public string Description { get; set; }
 
-    [JsonPropertyName("state")]
-    public PublishStateEnum PublishState { get; set; }
+    [JsonPropertyName("pubstatus")]
+    public PublishStatusEnum PublishStatus { get; set; }
 
     [JsonPropertyName("platform")]
     public SupportPlatformEnum[] SupportPlatforms { get; set; } = [0];

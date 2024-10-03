@@ -21,6 +21,7 @@ public class DesignEngineAppService : IDesignEngineAppService
         metaBaseDir = metaOption.Value.AppsFilePath;
     }
 
+    #region app
     public async Task<IList<AppSchema>> GetAppsAsync()
     {
         await Task.Delay(1);
@@ -48,6 +49,9 @@ public class DesignEngineAppService : IDesignEngineAppService
 
     public async Task SaveAppAsync(AppSchema appSchema)
     {
+        ArgumentNullException.ThrowIfNull(appSchema);
+        ArgumentException.ThrowIfNullOrEmpty(appSchema.Id);
+
         appSchema.ModifiedTime = DateTime.UtcNow;
 
         await Task.Delay(1);
@@ -70,7 +74,9 @@ public class DesignEngineAppService : IDesignEngineAppService
         var appSchemaJson = ReadAllText(fileName);
         return appSchemaJson.FromJson<AppSchema>();
     }
+    #endregion
 
+    #region menu
     public async Task<MenuSchema> GetMenuAsync(string appId, string menuId)
     {
         await Task.Delay(1);
@@ -90,11 +96,11 @@ public class DesignEngineAppService : IDesignEngineAppService
         await Task.Delay(1);
         IList<MenuSchema> list = [];
 
-        var menuFilePath = Path.Combine(metaBaseDir, appId, "menu");
-        if (!Directory.Exists(menuFilePath))
+        var menuFolder = Path.Combine(metaBaseDir, appId, "menu");
+        if (!Directory.Exists(menuFolder))
             return list;
 
-        var files = Directory.GetFiles(menuFilePath);
+        var files = Directory.GetFiles(menuFolder);
         foreach (var fileName in files)
         {
             var menuSchemaJson = ReadAllText(fileName);
@@ -110,6 +116,9 @@ public class DesignEngineAppService : IDesignEngineAppService
 
     public async Task SaveMenuAsync(MenuSchema menuSchema)
     {
+        ArgumentNullException.ThrowIfNull(menuSchema);
+        ArgumentException.ThrowIfNullOrEmpty(menuSchema.Id);
+
         menuSchema.ModifiedTime = DateTime.UtcNow;
 
         await Task.Delay(1);
@@ -132,11 +141,11 @@ public class DesignEngineAppService : IDesignEngineAppService
 
         IList<MenuSchema> list = [];
 
-        var menuFilePath = Path.Combine(metaBaseDir, appId, "menu");
-        if (!Directory.Exists(menuFilePath))
+        var menuFolder = Path.Combine(metaBaseDir, appId, "menu");
+        if (!Directory.Exists(menuFolder))
             return;
 
-        var files = Directory.GetFiles(menuFilePath);
+        var files = Directory.GetFiles(menuFolder);
         foreach (var file in files)
         {
             var menuSchemaJson = ReadAllText(file);
@@ -149,88 +158,6 @@ public class DesignEngineAppService : IDesignEngineAppService
             throw new InvalidOperationException("存在子节点, 不允许删除!");
 
         File.Delete(fileName);
-    }
-
-    public async Task<List<PageListModel>> GetPagesAsync(string appId)
-    {
-        await Task.Delay(1);
-        List<PageListModel> list = [];
-
-        var pageFilePath = Path.Combine(metaBaseDir, appId, "page");
-        if (!Directory.Exists(pageFilePath))
-            return list;
-
-        var files = Directory.GetFiles(pageFilePath);
-        foreach (var fileName in files)
-        {
-            var pageSchemaJson = ReadAllText(fileName);
-            var pageSchema = pageSchemaJson.FromJson<PageSchema>();
-
-            PageListModel model = new()
-            {
-                PageId = pageSchema.Id,
-                PageName = pageSchema.Name,
-                Order = pageSchema.Order,
-                PageType = pageSchema.PageType,
-                PublishState = pageSchema.PublishState,
-                ModifiedTime = pageSchema.ModifiedTime
-            };
-
-            list.Add(model);
-        }
-
-        //排序
-        list = list.OrderBy(t => t.Order).ToList();
-
-        return list;
-    }
-
-    public async Task<PageSchema> GetPageAsync(string appId, string pageId)
-    {
-        await Task.Delay(1);
-        string fileName = string.Format(pageFileName_Format, metaBaseDir, appId, pageId);
-
-        var pageSchemaJson = ReadAllText(fileName);
-        return pageSchemaJson.FromJson<PageSchema>();
-    }
-
-    public async Task SavePageAsync(PageSchema pageSchema)
-    {
-        pageSchema.ModifiedTime = DateTime.UtcNow;
-
-        await Task.Delay(1);
-        string fileName = string.Format(pageFileName_Format, metaBaseDir, pageSchema.AppId, pageSchema.Id);
-
-        string fileDirectory = Path.GetDirectoryName(fileName);
-        if (!Directory.Exists(fileDirectory))
-            Directory.CreateDirectory(fileDirectory);
-
-        File.WriteAllText(fileName, pageSchema.ToJson(), Encoding.UTF8);
-    }
-
-    public async Task DeletePageAsync(string appId, string pageId)
-    {
-        await Task.Delay(1);
-
-        string fileName = string.Format(pageFileName_Format, metaBaseDir, appId, pageId);
-        if (!File.Exists(fileName))
-            return;
-
-        IList<MenuSchema> list = [];
-
-        var menuFilePath = Path.Combine(metaBaseDir, appId, "menu");
-        if (!Directory.Exists(menuFilePath))
-            return;
-
-        File.Delete(fileName);
-    }
-
-    private static string ReadAllText(string fileName)
-    {
-        if (!File.Exists(fileName))
-            throw new FileNotFoundException(fileName);
-
-        return File.ReadAllText(fileName, Encoding.UTF8);
     }
 
     private static IList<MenuSchema> BuildTreeMenus(IList<MenuSchema> menus)
@@ -264,5 +191,91 @@ public class DesignEngineAppService : IDesignEngineAppService
         treeMenus = treeMenus.OrderBy(t => t.Order).ToList();
 
         return treeMenus;
+    }
+    #endregion
+
+    #region page
+    public async Task<List<PageListModel>> GetPagesAsync(string appId)
+    {
+        await Task.Delay(1);
+        List<PageListModel> list = [];
+
+        var pageFolder = Path.Combine(metaBaseDir, appId, "page");
+        if (!Directory.Exists(pageFolder))
+            return list;
+
+        var files = Directory.GetFiles(pageFolder);
+        foreach (var fileName in files)
+        {
+            var pageSchemaJson = ReadAllText(fileName);
+            var pageSchema = pageSchemaJson.FromJson<PageSchema>();
+
+            PageListModel model = new()
+            {
+                PageId = pageSchema.Id,
+                PageName = pageSchema.Name,
+                Order = pageSchema.Order,
+                PageType = pageSchema.PageType,
+                PublishStatus = pageSchema.PublishStatus,
+                ModifiedTime = pageSchema.ModifiedTime
+            };
+
+            list.Add(model);
+        }
+
+        //排序
+        list = list.OrderBy(t => t.Order).ToList();
+
+        return list;
+    }
+
+    public async Task<PageSchema> GetPageAsync(string appId, string pageId)
+    {
+        await Task.Delay(1);
+        string fileName = string.Format(pageFileName_Format, metaBaseDir, appId, pageId);
+
+        var pageSchemaJson = ReadAllText(fileName);
+        return pageSchemaJson.FromJson<PageSchema>();
+    }
+
+    public async Task SavePageAsync(PageSchema pageSchema)
+    {
+        ArgumentNullException.ThrowIfNull(pageSchema);
+        ArgumentException.ThrowIfNullOrEmpty(pageSchema.Id);
+
+        pageSchema.ModifiedTime = DateTime.UtcNow;
+
+        await Task.Delay(1);
+        string fileName = string.Format(pageFileName_Format, metaBaseDir, pageSchema.AppId, pageSchema.Id);
+
+        string fileDirectory = Path.GetDirectoryName(fileName);
+        if (!Directory.Exists(fileDirectory))
+            Directory.CreateDirectory(fileDirectory);
+
+        File.WriteAllText(fileName, pageSchema.ToJson(), Encoding.UTF8);
+    }
+
+    public async Task DeletePageAsync(string appId, string pageId)
+    {
+        await Task.Delay(1);
+
+        string fileName = string.Format(pageFileName_Format, metaBaseDir, appId, pageId);
+        if (!File.Exists(fileName))
+            return;
+
+        var pageFolder = Path.Combine(metaBaseDir, appId, "page");
+        if (!Directory.Exists(pageFolder))
+            return;
+
+        File.Delete(fileName);
+    }
+    #endregion
+
+    private static string ReadAllText(string fileName)
+    {
+        if (!File.Exists(fileName))
+            throw new FileNotFoundException(fileName);
+
+        return File.ReadAllText(fileName, Encoding.UTF8);
     }
 }

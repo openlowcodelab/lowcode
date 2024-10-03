@@ -8,9 +8,7 @@ using Microsoft.Extensions.Options;
 
 namespace H.LowCode.DesignEngine.HttpApi;
 
-[ApiController]
-[Route("api/[controller]/[action]")]
-public class DesignEngineController : ControllerBase
+public class DesignEngineController : DesignEngineControllerBase
 {
     private IDesignEngineAppService _designAppService;
     private IEnumerable<SiteOption> _sites;

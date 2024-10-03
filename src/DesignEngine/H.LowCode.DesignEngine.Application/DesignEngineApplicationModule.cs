@@ -10,6 +10,7 @@ public class DesignEngineApplicationModule : AbpModule
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         context.Services.AddScoped<IDesignEngineAppService, DesignEngineAppService>();
+        context.Services.AddScoped<IDataSourceAppService, DataSourceAppService>();
 
         var configuration = context.Services.GetConfiguration();
         context.Services.Configure<MetaOption>(configuration.GetSection(MetaOption.SectionName));

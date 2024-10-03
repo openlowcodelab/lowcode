@@ -20,8 +20,8 @@
     <PropertyColumn Title="ID" Property="c=>c.Id" Width="300" />
     <PropertyColumn Title="组件名称" Property="c=>c.Name" Sortable />
     <PropertyColumn Title="排序" Property="c=>c.Order" />
-    <PropertyColumn Title="发布状态" Property="c=>c.PublishState">
-        @if (context.PublishState == 0)
+    <PropertyColumn Title="发布状态" Property="c=>c.PublishStatus">
+        @if (context.PublishStatus == 0)
         {
             <Tag Color="default">待发布</Tag>
         }
@@ -53,7 +53,7 @@
             <Input @bind-Value="@context.ComponentName" />
         </FormItem>
         <FormItem Label="发布状态" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
-            <RadioGroup @bind-Value="@context.PublishState">
+            <RadioGroup @bind-Value="@context.PublishStatus">
                 <Radio Value="0">待发布</Radio>
                 <Radio Value="1">已发布</Radio>
             </RadioGroup>
@@ -88,7 +88,7 @@
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
 
-        var result = await httpClient.GetFromJsonAsync<List<ComponentPartsListModel>>($"api/componentparts/getlist");
+        var result = await httpClient.GetFromJsonAsync<List<ComponentPartsListModel>>($"api/parts/getcomponents");
         return result;
     }
 
@@ -97,7 +97,7 @@
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
 
-        var ComponentPartsSchema = await httpClient.GetFromJsonAsync<ComponentPartsSchema>($"api/componentparts/get?partsId={partsId}");
+        var ComponentPartsSchema = await httpClient.GetFromJsonAsync<ComponentPartsSchema>($"api/parts/getcomponent?partsId={partsId}");
         return ComponentPartsSchema;
     }
 
@@ -123,7 +123,7 @@
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
 
-        await httpClient.GetAsync($"api/componentparts/delete?partsId={partsId}");
+        await httpClient.GetAsync($"api/parts/deletecomponent?partsId={partsId}");
         await Message.Success("删除成功！");
     }
 
@@ -165,7 +165,7 @@
 
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
-        var result = await httpClient.PostAsync($"api/componentparts/save", content);
+        var result = await httpClient.PostAsync($"api/parts/savecomponent", content);
 
         return result;
     }

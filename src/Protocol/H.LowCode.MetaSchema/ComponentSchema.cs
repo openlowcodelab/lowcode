@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace H.LowCode.MetaSchema;
 
-public class ComponentSchema : BaseMetaSchema
+public class ComponentSchema : MetaSchemaBase
 {
     public ComponentSchema(string componentName)
     {

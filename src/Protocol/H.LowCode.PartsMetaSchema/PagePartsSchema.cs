@@ -19,8 +19,8 @@ public class PagePartsSchema : BasePartsMetaSchema
     /// <summary>
     /// 发布状态
     /// </summary>
-    [JsonPropertyName("pubstate")]
-    public int PublishState { get; set; }
+    [JsonPropertyName("pubstatus")]
+    public int PublishStatus { get; set; }
 
     [JsonPropertyName("comps")]
     public IList<ComponentPartsSchema> Components { get; set; } = [];

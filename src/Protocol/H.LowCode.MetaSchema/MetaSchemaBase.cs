@@ -2,7 +2,7 @@
 
 namespace H.LowCode.MetaSchema;
 
-public abstract class BaseMetaSchema
+public abstract class MetaSchemaBase
 {
     public string CreatedUser {  get; set; }
 

@@ -3,39 +3,39 @@
 <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:30px 0 10px;">数据源</div>
 <div class="propertysetting-item">
     <label>类型：</label>
-    <EnumSelect TEnum="@DataSourceEnum" @bind-Value="@Component.DataSource.DataSourceType">
+    <EnumSelect TEnum="@DataSourceTypeEnum" @bind-Value="@Component.DataSource.DataSourceType">
     </EnumSelect>
 </div>
 
-@if (Component.DataSource.DataSourceType == DataSourceEnum.Table)
+@if (Component.DataSource.DataSourceType == DataSourceTypeEnum.Table)
 {
     <div class="propertysetting-item">
         <label>字段：</label>
         <div>@Component.ComponentProperty.Name</div>
     </div>
 }
-else if (Component.DataSource.DataSourceType == DataSourceEnum.API)
+else if (Component.DataSource.DataSourceType == DataSourceTypeEnum.API)
 {
     <div class="propertysetting-item">
         <label>API：</label>
         <Input TValue="string" @bind-Value="@Component.DataSource.Value" />
     </div>
 }
-else if (Component.DataSource.DataSourceType == DataSourceEnum.SQL)
+else if (Component.DataSource.DataSourceType == DataSourceTypeEnum.SQL)
 {
     <div class="propertysetting-item">
         <label>SQL：</label>
         <TextArea @bind-Value="@Component.DataSource.Value" />
     </div>
 }
-else if (Component.DataSource.DataSourceType == DataSourceEnum.Expression)
+else if (Component.DataSource.DataSourceType == DataSourceTypeEnum.Expression)
 {
     <div class="propertysetting-item">
         <label>表达式：</label>
         <TextArea @bind-Value="@Component.DataSource.Value" />
     </div>
 }
-else if (Component.DataSource.DataSourceType == DataSourceEnum.Fiexd)
+else if (Component.DataSource.DataSourceType == DataSourceTypeEnum.Fiexd)
 {
     <div class="propertysetting-item">
         <label>固定值：</label>
