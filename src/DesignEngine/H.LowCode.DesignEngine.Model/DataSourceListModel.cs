@@ -14,12 +14,19 @@ public class DataSourceListModel
     [JsonPropertyName("disn")]
     public string DisplayName { get; set; }
 
+    /// <summary>
+    /// 额外信息
+    /// </summary>
+    [JsonPropertyName("extra")]
+    public string Extra { get; set; }
+
     public int Order { get; set; }
 
     [JsonPropertyName("type")]
     public DataSourceTypeEnum DataSourceType { get; set; }
 
-    public int PublishStatus { get; set; }
+    [JsonPropertyName("pubstatus")]
+    public bool PublishStatus { get; set; }
 
     public string ModifiedUser { get; set; }
 

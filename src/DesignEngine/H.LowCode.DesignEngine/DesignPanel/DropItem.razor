@@ -1,4 +1,5 @@
 ﻿@namespace H.LowCode.DesignEngine
+@inherits LowCodeComponentBase
 
 @inject DragDropStateService DragDropStateService
 
@@ -86,7 +87,7 @@
         if (IsInRootContainer)
         {
             //订阅 PageSetting 中的组件点击事件
-            BlazorEventDispatcher.RegisterEvent("designengine.pagesetting.pagelayout.onchange", (value) =>
+            BlazorEventDispatcher.Subscribe("designengine.pagesetting.pagelayout.onchange", (value) =>
             {
                 PageCascading.PageLayout = (int)value;
                 StateHasChanged();
@@ -113,7 +114,7 @@
         //DragDropStateService.ResetDragStyle();
 
         OnItemClick.Invoke(Component);
-        BlazorEventDispatcher.Trigger("designengine.dropitem.onclick", Component);
+        BlazorEventDispatcher.Publish("designengine.dropitem.onclick", Component);
     }
 
     private void OnDragStart(DragEventArgs dragEventArgs)

@@ -34,7 +34,7 @@ public class DataSourceAppService : IDataSourceAppService
             var dataSourceSchemaJson = ReadAllText(fileName);
             var dataSourceSchema = dataSourceSchemaJson.FromJson<DataSourceSchema>();
 
-            if(dataSourceSchema.DataSourceType != input.DataSourceType)
+            if (dataSourceSchema.DataSourceType != input.DataSourceType)
                 continue;
 
             DataSourceListModel model = new()
@@ -42,6 +42,8 @@ public class DataSourceAppService : IDataSourceAppService
                 Id = dataSourceSchema.Id,
                 Name = dataSourceSchema.Name,
                 DisplayName = dataSourceSchema.DisplayName,
+                Extra = dataSourceSchema.DataSourceType == DataSourceTypeEnum.API ?
+                        $"{dataSourceSchema.API.Method} {dataSourceSchema.API.Path}" : string.Empty,
                 Order = dataSourceSchema.Order,
                 DataSourceType = dataSourceSchema.DataSourceType,
                 PublishStatus = dataSourceSchema.PublishStatus,

@@ -1,5 +1,6 @@
 ﻿@page "/myapp/{AppId}/menumanager"
 @namespace H.LowCode.MyApp
+@inherits LowCodeComponentBase
 @layout MyAppLayout
 
 @inject IHttpClientFactory HttpClientFactory
@@ -49,25 +50,25 @@
           ValidateMode="@FormValidateMode.Complex" ValidateOnChange="true">
         @if (context.ParentId.IsNullOrEmpty() == false)
         {
-            <FormItem Label="父级Id" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
+            <FormItem Label="父级Id" Required>
                 <Input @bind-Value="@context.ParentId" Disabled />
             </FormItem>
         }
-        <FormItem Label="菜单名称" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
+        <FormItem Label="菜单名称" Required>
             <Input @bind-Value="@context.Title" />
         </FormItem>
-        <FormItem Label="类型" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
+        <FormItem Label="类型" Required>
             <RadioGroup @bind-Value="@context.MenuType">
                 <Radio Value="0">菜单</Radio>
                 <Radio Value="1">目录</Radio>
             </RadioGroup>
         </FormItem>
-        <FormItem Label="图标" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
+        <FormItem Label="图标" Required>
             <Input @bind-Value="@context.Icon" />
         </FormItem>
         @if (context.MenuType == 0)
         {
-            <FormItem Label="跳转页面" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
+            <FormItem Label="跳转页面" Required>
                 <Input @bind-Value="@context.MenuUrl" />
             </FormItem>
         }

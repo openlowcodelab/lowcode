@@ -1,7 +1,10 @@
-﻿@namespace H.LowCode.ComponentParts.BasicComponents
-
-@using AntDesign.TableModels
+﻿@using AntDesign.TableModels
 @using System.ComponentModel.DataAnnotations
+@using Microsoft.JSInterop
+@namespace H.LowCode.ComponentParts.BasicComponents
+@inherits LowCodeComponentBase
+
+@inject IJSRuntime JS
 
 <Table @ref="table" TItem="Dictionary<string, object>" DataSource="@_data" Total="_total" @bind-PageIndex="_pageIndex" @bind-PageSize="_pageSize"
        @bind-SelectedRows="_selectedRows" OnChange="OnChange" Size="TableSize.Small">
@@ -124,5 +127,13 @@
     public async Task ButtonActionAsync(string id)
     {
         await Task.Delay(100);
+        var btn = _tableSchema.Buttons.First(t => t.Id == id);
+        // if(btn.ButtonAction.ActionType == ActionTypeEnum.Blank)
+        // {
+        var pageUrl = $"https://localhost:5191/caseapp/{btn.TargetId}";
+
+        await JS.InvokeVoidAsync("open", pageUrl, "_blank");
+        //    await this.RedirectPageAsync(pageUrl);
+        // }
     }
 }

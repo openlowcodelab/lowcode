@@ -1,4 +1,5 @@
 ﻿@namespace H.LowCode.DesignEngine
+@inherits LowCodeComponentBase
 
 @inject DragDropStateService DragDropStateService
 
@@ -37,7 +38,7 @@
         if (isOnClick)
         {
             //发送事件，通知订阅此事件的其他组件更新状态
-            BlazorEventDispatcher.Trigger("designengine.dragitem.onclick", component);
+            BlazorEventDispatcher.Publish("designengine.dragitem.onclick", component);
         }
         else
         {

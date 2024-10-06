@@ -24,14 +24,15 @@ public class DataSourceSchema : MetaSchemaBase
     [JsonPropertyName("type")]
     public DataSourceTypeEnum DataSourceType { get; set; }
 
-    public int PublishStatus { get; set; }
+    [JsonPropertyName("pubstatus")]
+    public bool PublishStatus { get; set; }
 
     #region 根据 DataSourceType 选用
     /// <summary>
     /// 数据表数据源
     /// </summary>
     [JsonPropertyName("fields")]
-    public List<TableFieldSchema> TableFields { get; set; } = [];
+    public IList<TableFieldSchema> TableFields { get; set; } = [];
 
     /// <summary>
     /// API 数据源

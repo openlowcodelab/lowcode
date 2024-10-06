@@ -1,4 +1,5 @@
 ﻿@namespace H.LowCode.DesignEngine
+@inherits LowCodeComponentBase
 
 @inject DragDropStateService DragDropStateService
 
@@ -46,7 +47,7 @@
     private void RegisterEventDispatcher()
     {
         //订阅设计面板中的组件点击事件
-        BlazorEventDispatcher.RegisterEvent("designengine.dropitem.onclick", (value) =>
+        BlazorEventDispatcher.Subscribe("designengine.dropitem.onclick", (value) =>
         {
             _component = (ComponentSchema)value;
             _showPropertyPanel = true;
@@ -55,7 +56,7 @@
         });
 
         //订阅设计面板取消选中事件
-        BlazorEventDispatcher.RegisterEvent("designengine.dropitem.onblur", (value) =>
+        BlazorEventDispatcher.Subscribe("designengine.dropitem.onblur", (value) =>
         {
             _component = null;
             _showPropertyPanel = false;

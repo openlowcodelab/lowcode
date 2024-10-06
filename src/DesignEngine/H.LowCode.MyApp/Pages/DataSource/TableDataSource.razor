@@ -1,4 +1,5 @@
 ﻿@namespace H.LowCode.MyApp
+@inherits LowCodeComponentBase
 
 @inject IHttpClientFactory HttpClientFactory
 @inject NavigationManager NavigationManager
@@ -20,14 +21,7 @@
     <PropertyColumn Title="修改人" Property="c=>c.ModifiedUser" />
     <PropertyColumn Title="修改时间" Property="c=>c.ModifiedTime" Format="yyyy-MM-dd HH:mm:ss" />
     <PropertyColumn Title="发布状态" Property="c=>c.PublishStatus">
-        @if (context.PublishStatus == 0)
-        {
-            <Tag Color="default">待发布</Tag>
-        }
-        else
-        {
-            <Tag Color="green">已发布</Tag>
-        }
+        <Switch @bind-Checked="@context.PublishStatus" />
     </PropertyColumn>
     <ActionColumn Title="操作">
         <Space Size=@("middle")>
@@ -37,9 +31,6 @@
             <SpaceItem>
                 <a onclick="@(()=>DeleteAsync(@context.Id))" style="color:#ff4d4f">删除</a>
             </SpaceItem>
-            <SpaceItem>
-                <a onclick="@(()=>PublishAsync(@context.Id))" style="color:green">发布</a>
-            </SpaceItem>
         </Space>
     </ActionColumn>
 </Table>
@@ -48,13 +39,13 @@
     @* 数据表基本信息 *@
     <Descriptions Style="margin: 0 0 8px 0;" Bordered>
         <DescriptionsItem Title="表名">
-            <Input @bind-Value="@_currentDataSource.Name" Disabled="@(!_currentDataSource.Name.IsNullOrEmpty())">
+            <Input @bind-Value="@_dataSource.Name" Disabled="@(!_dataSource.Name.IsNullOrEmpty())">
         </DescriptionsItem>
         <DescriptionsItem Title="表中文名" Span="2">
-            <Input @bind-Value="@_currentDataSource.DisplayName"></Input>
+            <Input @bind-Value="@_dataSource.DisplayName"></Input>
         </DescriptionsItem>
         <DescriptionsItem Title="描述" Span="3">
-            <TextArea @bind-Value="@_currentDataSource.Description" Rows="2"></TextArea>
+            <TextArea @bind-Value="@_dataSource.Description" Rows="2"></TextArea>
         </DescriptionsItem>
     </Descriptions>
 
@@ -67,7 +58,7 @@
             <Button Type="@ButtonType.Primary" OnClick="CreateFieldAsync">新增字段</Button>
         </div>
     </div>
-    <Table TItem="TableFieldSchema" DataSource="@_currentDataSource.TableFields">
+    <Table TItem="TableFieldSchema" DataSource="@_dataSource.TableFields">
         <ChildContent Context="context">
             <PropertyColumn Title="字段名" Property="c => c.Name">
                 @if (!_fieldEditCache[context.Id].edit)
@@ -133,10 +124,10 @@
                     <Checkbox @bind-Checked="_fieldEditCache[context.Id].field.IsUnique"></Checkbox>
                 }
             </PropertyColumn>
-            <PropertyColumn Title="是否可空" Property="c => c.IsRequired">
+            <PropertyColumn Title="是否可空" Property="c => c.IsNull">
                 @if (!_fieldEditCache[context.Id].edit)
                 {
-                    @if (context.IsRequired)
+                    @if (context.IsNull)
                     {
                         <span>是</span>
                     }
@@ -147,7 +138,7 @@
                 }
                 else
                 {
-                    <Checkbox @bind-Checked="_fieldEditCache[context.Id].field.IsRequired"></Checkbox>
+                    <Checkbox @bind-Checked="_fieldEditCache[context.Id].field.IsNull"></Checkbox>
                 }
             </PropertyColumn>
             <ActionColumn Title="操作">
@@ -175,7 +166,7 @@
 
     IDictionary<string, (bool edit, TableFieldSchema field)> _fieldEditCache = new Dictionary<string, (bool edit, TableFieldSchema field)>();
 
-    private DataSourceSchema _currentDataSource;
+    private DataSourceSchema _dataSource;
 
     int _pageIndex = 1;
     int _pageSize = 10;
@@ -255,11 +246,11 @@
     private async Task<HttpResponseMessage> SaveDataSourceSchemaAsync()
     {
         //过滤空字段
-        _currentDataSource.TableFields = _currentDataSource.TableFields
+        _dataSource.TableFields = _dataSource.TableFields
             .Where(t => !t.Name.IsNullOrEmpty() && !t.DisplayName.IsNullOrEmpty())
             .ToList();
 
-        string jsonSchema = _currentDataSource.ToJson();
+        string jsonSchema = _dataSource.ToJson();
 
         var content = new StringContent(jsonSchema, Encoding.UTF8, "application/json");
 
@@ -273,7 +264,7 @@
     private async Task CreateAsync()
     {
         await Task.Delay(1);
-        _currentDataSource = new() { Id = Guid.NewGuid().ToString(), AppId = AppId, DataSourceType = DataSourceTypeEnum.Table };
+        _dataSource = new() { Id = Guid.NewGuid().ToString(), AppId = AppId, DataSourceType = DataSourceTypeEnum.Table };
         _visible = true;
         _modalTitle = "新建数据表";
 
@@ -285,7 +276,7 @@
         await Task.Delay(1);
         _visible = true;
         _modalTitle = "编辑数据表";
-        _currentDataSource = await GetDataSourceAsync(id);
+        _dataSource = await GetDataSourceAsync(id);
 
         StateHasChanged();
     }
@@ -309,12 +300,12 @@
     {
         await Task.Delay(1);
 
-        TableFieldSchema newField = new() { Id = Guid.NewGuid().ToString() };
+        TableFieldSchema newField = new() { Id = Guid.NewGuid().ToString(), IsNull = true };
 
         //添加编辑缓存
         _fieldEditCache[newField.Id] = (true, newField);
 
-        _currentDataSource.TableFields.Add(newField);
+        _dataSource.TableFields.Add(newField);
 
         //StateHasChanged();
     }
@@ -322,9 +313,9 @@
     private async Task SaveFieldAsync(string id)
     {
         await Task.Delay(1);
-        var index = _currentDataSource.TableFields.FindIndex(item => item.Id == id);
-        _currentDataSource.TableFields[index] = _fieldEditCache[id].field; // apply the copy to data source
-        _fieldEditCache[id] = (false, _currentDataSource.TableFields[index]); // don't affect rows in editing
+        var index = _dataSource.TableFields.FindIndex(item => item.Id == id);
+        _dataSource.TableFields[index] = _fieldEditCache[id].field; // apply the copy to data source
+        _fieldEditCache[id] = (false, _dataSource.TableFields[index]); // don't affect rows in editing
 
         StateHasChanged();
     }
@@ -347,7 +338,7 @@
     private async Task FieldCancelEditAsync(string id)
     {
         await Task.Delay(1);
-        var data = _currentDataSource.TableFields.FirstOrDefault(item => item.Id == id);
+        var data = _dataSource.TableFields.FirstOrDefault(item => item.Id == id);
         _fieldEditCache[id] = (false, data); // recovery
 
         StateHasChanged();

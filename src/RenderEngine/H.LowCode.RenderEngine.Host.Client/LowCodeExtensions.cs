@@ -1,4 +1,5 @@
-﻿using H.LowCode.ComponentParts.BasicComponents;
+﻿using H.LowCode.ComponentBase;
+using H.LowCode.ComponentParts.BasicComponents;
 using H.LowCode.ComponentParts.ExtensionComponents;
 using H.LowCode.ThemeParts.AntBlazor;
 using H.Util.Blazor;
@@ -20,5 +21,8 @@ public static class LowCodeExtensions
 
         //状态管理
         services.AddScoped(typeof(ComponentStateWrapper<,>));
+
+        //应用状态
+        services.AddSingleton(new LowCodeAppState(false));
     }
 }

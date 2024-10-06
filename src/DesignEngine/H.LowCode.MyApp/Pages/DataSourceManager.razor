@@ -1,19 +1,20 @@
-﻿@page "/myapp/{AppId}/datasource"
+﻿@page "/myapp/{AppId}/datasource/{DataSourceType?}"
 @namespace H.LowCode.MyApp
+@inherits LowCodeComponentBase
 @layout MyAppLayout
+
+@inject NavigationManager NavigationManager
 
 <PageTitle>数据源管理</PageTitle>
 
-<Tabs DefaultActiveKey="tab_datasource_table" Animated>
-    <TabPane Tab="数据表" Key="tab_datasource_table">
+<Tabs ActiveKey="@DataSourceType" OnChange="OnTabChange" Animated>
+    <TabPane Tab="数据表" Key="table">
         <TableDataSource AppId="@AppId"></TableDataSource>
     </TabPane>
-
-    <TabPane Tab="API" Key="tab_datasource_api">
+    <TabPane Tab="API" Key="api">
         <APIDataSource AppId="@AppId"></APIDataSource>
     </TabPane>
-
-    <TabPane Tab="选项" Key="tab_datasource_option">
+    <TabPane Tab="选项" Key="option">
         <OptionDataSource AppId="@AppId"></OptionDataSource>
     </TabPane>
 </Tabs>
@@ -21,4 +22,12 @@
 @code {
     [Parameter]
     public string AppId { get; set; }
+
+    [Parameter]
+    public string DataSourceType { get; set; } = "table";
+
+    private void OnTabChange(string key)
+    {
+        NavigationManager.NavigateTo($"/myapp/{AppId}/datasource/{key}");
+    }
 }

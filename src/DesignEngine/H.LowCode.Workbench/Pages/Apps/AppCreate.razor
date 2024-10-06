@@ -1,4 +1,5 @@
 ﻿@namespace H.LowCode.Workbench
+@inherits LowCodeComponentBase
 @layout WorkbenchLayout
 
 @inject IHttpClientFactory HttpClientFactory
@@ -18,10 +19,10 @@
 <Modal Title="创建应用" @bind-Visible="@_visible" OnOk="OnConfirm">
     <Form Model="@_appSchema" LabelColSpan="8" WrapperColSpan="16" OnFinish="OnFinish" @ref="@_form"
           ValidateMode="@FormValidateMode.Rules" ValidateOnChange="true">
-        <FormItem Label="应用标识" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
+        <FormItem Label="应用标识" Required>
             <Input @bind-Value="@context.Id" />
         </FormItem>
-        <FormItem Label="应用名称" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
+        <FormItem Label="应用名称" Required>
             <Input @bind-Value="@context.Name" />
         </FormItem>
         <FormItem Label="应用描述">

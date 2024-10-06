@@ -1,4 +1,5 @@
 ﻿@namespace H.LowCode.Workbench
+@inherits LowCodeComponentBase
 @layout WorkbenchLayout
 
 @inject IHttpClientFactory HttpClientFactory
@@ -20,17 +21,10 @@
     <PropertyColumn Title="ID" Property="c=>c.Id" Width="300" />
     <PropertyColumn Title="页面名称" Property="c=>c.Name" Sortable />
     <PropertyColumn Title="排序" Property="c=>c.Order" />
-    <PropertyColumn Title="发布状态" Property="c=>c.PublishStatus">
-        @if (context.PublishStatus == 0)
-        {
-            <Tag Color="default">待发布</Tag>
-        }
-        else
-        {
-            <Tag Color="green">已发布</Tag>
-        }
-    </PropertyColumn>
     <PropertyColumn Title="修改时间" Property="c=>c.ModifiedTime" Format="yyyy-MM-dd HH:mm:ss" />
+    <PropertyColumn Title="发布状态" Property="c=>c.PublishStatus">
+        <Switch @bind-Checked="@context.PublishStatus" />
+    </PropertyColumn>
     <ActionColumn Title="操作" Width="180">
         <Space Size=@("middle")>
             <SpaceItem>
@@ -49,10 +43,10 @@
 <Modal Title="新建组件" @bind-Visible="@_visible" OnOk="OnConfirmAsync">
     <Form Model="@_partsSchema" LabelColSpan="8" WrapperColSpan="16" OnFinish="OnFinishAsync" @ref="@_form"
           ValidateOnChange="true">
-        <FormItem Label="组件名称" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
+        <FormItem Label="组件名称" Required>
             <Input @bind-Value="@context.Name" />
         </FormItem>
-        <FormItem Label="发布状态" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
+        <FormItem Label="发布状态" Required>
             <RadioGroup @bind-Value="@context.PublishStatus">
                 <Radio Value="0">待发布</Radio>
                 <Radio Value="1">已发布</Radio>

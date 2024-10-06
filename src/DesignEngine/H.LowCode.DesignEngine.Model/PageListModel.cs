@@ -15,7 +15,7 @@ public class PageListModel
     public PageTypeEnum PageType { get; set; }
 
     [JsonPropertyName("pubstatus")]
-    public int PublishStatus { get; set; }
+    public bool PublishStatus { get; set; }
 
     public DateTime ModifiedTime { get; set; }
 }

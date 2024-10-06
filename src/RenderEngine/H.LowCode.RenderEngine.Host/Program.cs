@@ -2,6 +2,7 @@ using H.LowCode.RenderEngine.HttpApi;
 using H.LowCode.RenderEngine.Host.Client;
 using System.Text.Json;
 using H.LowCode.RenderEngine.Host.Components;
+using H.Util.Blazor;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +25,8 @@ builder.Services.AddRenderEngineHttpApi();
 #endregion
 
 var app = builder.Build();
+
+ServiceLocator.SetServiceProvider(app.Services);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

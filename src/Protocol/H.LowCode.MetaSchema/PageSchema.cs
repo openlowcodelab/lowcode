@@ -22,7 +22,7 @@ public class PageSchema : MetaSchemaBase
     /// 发布状态
     /// </summary>
     [JsonPropertyName("pubstatus")]
-    public int PublishStatus { get; set; }
+    public bool PublishStatus { get; set; }
 
     [JsonPropertyName("comps")]
     public IList<ComponentSchema> Components { get; set; } = [];

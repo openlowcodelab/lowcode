@@ -1,9 +1,10 @@
 ### 待办 
 #### 公共 
 * GUID 替换为 6位随机字符串，减少字符长度
-* 减少第三方包依赖（如 abp）
+* razor 项目减少第三方包依赖（如 abp）
 * 自身、第三方 版本更新产生的兼容问题
 * Auto 模式，页面调用2次问题优化
+* 添加 HttpClientInterceptor，实现调用 ApplicationService 时 Server 模式本地请求，WebAssembly 模式 http 请求代理
 
 #### DesignEngine
 

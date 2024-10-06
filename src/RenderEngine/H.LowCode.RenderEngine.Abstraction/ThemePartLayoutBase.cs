@@ -1,4 +1,5 @@
-﻿using H.LowCode.MetaSchema;
+﻿using H.LowCode.ComponentBase;
+using H.LowCode.MetaSchema;
 using Microsoft.AspNetCore.Components;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace H.LowCode.RenderEngine.Abstraction;
 
-public abstract class ThemePartLayoutBase : LayoutComponentBase
+public abstract class ThemePartLayoutBase : LowCodeLayoutComponentBase
 {
     [Inject]
     private IHttpClientFactory HttpClientFactory { get; set; }

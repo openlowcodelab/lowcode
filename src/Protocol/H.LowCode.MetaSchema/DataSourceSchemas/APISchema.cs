@@ -18,16 +18,58 @@ public class APISchema
     [JsonPropertyName("mth")]
     public string Method { get; set; }
 
-    [JsonPropertyName("hs")]
-    public IDictionary<string, string> Headers { get; set; }
-
-    [JsonPropertyName("ps")]
-    public IDictionary<string, string> Params { get; set; }
+    [JsonPropertyName("prs")]
+    public IList<APIQuerySchema> Queries { get; set; } = [];
 
     [JsonPropertyName("bd")]
-    public string Body { get; set; }
+    public APIBodySchema Body { get; set; }
+
+    [JsonPropertyName("hds")]
+    public IList<APIHeaderSchema> Headers { get; set; } = [];
 
     [JsonPropertyName("desc")]
     public string Description { get; set; }
 }
 
+public class APIQuerySchema
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; }
+
+    [JsonPropertyName("n")]
+    public string Name { get; set; }
+
+    [JsonPropertyName("t")]
+    public string Type { get; set; }
+
+    [JsonPropertyName("val")]
+    public string Value { get; set; }
+
+    [JsonPropertyName("desc")]
+    public string Description { get; set;}
+}
+
+public class APIBodySchema
+{
+    public string Type { get; set; }
+
+    public string Value { get; set; }
+}
+
+public class APIHeaderSchema
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; }
+
+    [JsonPropertyName("n")]
+    public string Name { get; set; }
+
+    [JsonPropertyName("t")]
+    public string Type { get; set; }
+
+    [JsonPropertyName("val")]
+    public string Value { get; set; }
+
+    [JsonPropertyName("desc")]
+    public string Description { get; set; }
+}

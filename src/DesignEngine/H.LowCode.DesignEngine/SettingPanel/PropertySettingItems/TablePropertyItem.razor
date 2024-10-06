@@ -1,4 +1,5 @@
 ﻿@namespace H.LowCode.DesignEngine
+@inherits LowCodeComponentBase
 
 <div style="display: flex; justify-content: space-between;">
     <div>
@@ -56,10 +57,10 @@
 <Modal Title="表格列" @bind-Visible="@_columnVisible" OnOk="OnColumnConfirm">
     <Form Model="@_tableColumnSchema" OnFinish="OnColumnFinish" @ref="_columnForm"
           ValidateOnChange="true" LabelColSpan="8" WrapperColSpan="16">
-        <FormItem Label="字段标识" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
+        <FormItem Label="字段标识" Required>
             <Input @bind-Value="@context.Name" />
         </FormItem>
-        <FormItem Label="字段名称" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
+        <FormItem Label="字段名称" Required>
             <Input @bind-Value="@context.Title" />
         </FormItem>
         <FormItem Label="是否主键">
@@ -89,10 +90,10 @@
 <Modal Title="表格按钮" @bind-Visible="@_btnVisible" OnOk="OnButtonConfirm">
     <Form Model="@_tableButtonSchema" OnFinish="OnButtonFinish" @ref="_btnForm"
           ValidateOnChange="true" LabelColSpan="8" WrapperColSpan="16">
-        <FormItem Label="按钮标识" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
+        <FormItem Label="按钮标识" Required>
             <Input @bind-Value="@context.Name" />
         </FormItem>
-        <FormItem Label="按钮名称" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
+        <FormItem Label="按钮名称" Required>
             <Input @bind-Value="@context.Title" />
         </FormItem>
         <FormItem Label="按钮行为">
@@ -103,7 +104,7 @@
                 <Radio Value="ActionTypeEnum.Blank">Blank</Radio>
             </RadioGroup>
         </FormItem>
-        <FormItem Label="目标对象" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
+        <FormItem Label="目标对象" Required>
             <Input @bind-Value="@context.TargetId" />
         </FormItem>
         <FormItem Label="排序">

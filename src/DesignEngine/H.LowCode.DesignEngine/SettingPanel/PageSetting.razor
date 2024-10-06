@@ -1,4 +1,5 @@
 ﻿@namespace H.LowCode.DesignEngine
+@inherits LowCodeComponentBase
 
 @if (Page != null)
 {
@@ -53,6 +54,6 @@
 
     private void OnChange(int pageLayout)
     {
-        BlazorEventDispatcher.Trigger("designengine.pagesetting.pagelayout.onchange", pageLayout);
+        BlazorEventDispatcher.Publish("designengine.pagesetting.pagelayout.onchange", pageLayout);
     }
 }

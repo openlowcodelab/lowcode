@@ -1,4 +1,5 @@
 ﻿@namespace H.LowCode.MyApp
+@inherits LowCodeComponentBase
 
 @inject IHttpClientFactory HttpClientFactory
 @inject NavigationManager NavigationManager
@@ -7,7 +8,7 @@
 
 <div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
     <div style="width:250px;">
-        <Search Placeholder="API名称" OnSearch="()=>{}" />
+        <Search Placeholder="API 名称" OnSearch="()=>{}" />
     </div>
     <div style="width:80px; line-height:32px;">
         <Button Type="@ButtonType.Primary" OnClick="CreateAsync">新建API</Button>
@@ -17,9 +18,12 @@
        @bind-PageIndex="@_pageIndex" @bind-PageSize="@_pageSize">
     <PropertyColumn Title="名称" Property="c=>c.Name" Sortable />
     <PropertyColumn Title="中文名" Property="c=>c.DisplayName" Sortable />
+    <PropertyColumn Title="请求地址" Property="c=>c.Extra" />
     <PropertyColumn Title="修改人" Property="c=>c.ModifiedUser" />
     <PropertyColumn Title="修改时间" Property="c=>c.ModifiedTime" Format="yyyy-MM-dd HH:mm:ss" />
-    <PropertyColumn Title="发布状态" Property="c=>c.PublishStatus" />
+    <PropertyColumn Title="发布状态" Property="c=>c.PublishStatus">
+        <Switch @bind-Checked="@context.PublishStatus" />
+    </PropertyColumn>
     <ActionColumn Title="操作">
         <Space Size=@("middle")>
             <SpaceItem>
@@ -28,24 +32,66 @@
             <SpaceItem>
                 <a onclick="@(()=>DeleteAsync(@context.Id))" style="color:#ff4d4f">删除</a>
             </SpaceItem>
-            <SpaceItem>
-                <a onclick="@(()=>PublishAsync(@context.Id))" style="color:green">发布</a>
-            </SpaceItem>
         </Space>
     </ActionColumn>
 </Table>
 
-<Modal Title="新建 API" @bind-Visible="@_visible" OnOk="OnConfirmAsync">
-    <Form Model="@_dataSourceSchema" LabelColSpan="8" WrapperColSpan="16" OnFinish="OnFinishAsync" @ref="@_form"
+<Modal Title="新建 API" @bind-Visible="@_visible" OnOk="OnConfirmAsync" Width="1100" Resizable="true" Draggable="true">
+    <Form Model="@_dataSource" LabelColSpan="3" OnFinish="OnFinishAsync" @ref="@_form"
           ValidateMode="@FormValidateMode.Complex" ValidateOnChange="true">
-        <FormItem Label="API 名称" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
+        <FormItem Label="API 名称" Required>
             <Input @bind-Value="@context.Name" />
         </FormItem>
-        <FormItem Label="发布状态" Rules=@(new FormValidationRule[]{ new FormValidationRule{ Required = true } })>
-            <RadioGroup @bind-Value="@context.PublishStatus">
-                <Radio Value="0">待发布</Radio>
-                <Radio Value="1">已发布</Radio>
-            </RadioGroup>
+        <FormItem Label="API 中文名" Required>
+            <Input @bind-Value="@context.DisplayName" />
+        </FormItem>
+        <FormItem Label="Path" Required>
+            <Input TValue="string" @bind-Value="@context.API.Path">
+                <AddOnBefore>
+                    <SimpleSelect DefaultValue="GET" @bind-Value="@context.API.Method" Style="width: 90px;">
+                        <SelectOptions>
+                        <SimpleSelectOption Value="GET" Label="GET"></SimpleSelectOption>
+                        <SimpleSelectOption Value="POST" Label="POST"></SimpleSelectOption>
+                        <SimpleSelectOption Value="PUT" Label="PUT"></SimpleSelectOption>
+                        <SimpleSelectOption Value="DELETE" Label="DELETE"></SimpleSelectOption>
+                        </SelectOptions>
+                    </SimpleSelect>
+                </AddOnBefore>
+            </Input>
+        </FormItem>
+        <FormItem Label="请求参数">
+            <Tabs DefaultActiveKey="api_queries" Animated>
+                <TabPane Tab="Query" Key="api_queries">
+                    @* Query 参数列表 *@
+                    <div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
+                        <div style="width:80px; line-height:32px; margin: 0 22px 0 0;">
+                            <Button Type="@ButtonType.Primary" OnClick="CreateQueryParamAsync">新增参数</Button>
+                        </div>
+                    </div>
+                    <Table TItem="APIQuerySchema" DataSource="@_dataSource.API.Queries">
+                        <ChildContent Context="tbContext">
+                            <PropertyColumn Title="参数名" Property="c => c.Name">
+                                <Input @bind-Value="@tbContext.Name" />
+                            </PropertyColumn>
+                            <PropertyColumn Title="类型" Property="c => c.Type">
+                                <Input @bind-Value="@tbContext.Type" />
+                            </PropertyColumn>
+                            <PropertyColumn Title="值" Property="c => c.Value">
+                                <Input @bind-Value="@tbContext.Value" />
+                            </PropertyColumn>
+                            <PropertyColumn Title="描述" Property="c => c.Description">
+                                <TextArea @bind-Value="@tbContext.Description"></TextArea>
+                            </PropertyColumn>
+                        </ChildContent>
+                    </Table>
+                </TabPane>
+                <TabPane Tab="Body" Key="api_body">
+                    
+                </TabPane>
+                <TabPane Tab="Headers" Key="api_headers">
+                    
+                </TabPane>
+            </Tabs>
         </FormItem>
         <FormItem Label="排序">
             <InputNumber @bind-Value="@context.Order" Min="0" DefaultValue="0"></InputNumber>
@@ -64,7 +110,7 @@
     private bool _visible;
     private string _modalTitle;
     private Form<DataSourceSchema> _form;
-    private DataSourceSchema _dataSourceSchema = new DataSourceSchema();
+    private DataSourceSchema _dataSource = new DataSourceSchema();
 
     protected override async Task OnInitializedAsync()
     {
@@ -91,7 +137,14 @@
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
 
-        return await httpClient.GetFromJsonAsync<DataSourceSchema>($"api/datasource/get?appId={AppId}&id={dataSourceId}");
+        var dataSourceSchema = await httpClient.GetFromJsonAsync<DataSourceSchema>($"api/datasource/get?appId={AppId}&id={dataSourceId}");
+        if (dataSourceSchema == null)
+            throw new NullReferenceException(nameof(dataSourceSchema));
+
+        if (dataSourceSchema.API == null)
+            dataSourceSchema.API = new();
+
+        return dataSourceSchema;
     }
 
     private async Task OnConfirmAsync(MouseEventArgs e)
@@ -126,7 +179,15 @@
 
     private async Task<HttpResponseMessage> SaveDataSourceSchemaAsync()
     {
-        string jsonSchema = _dataSourceSchema.ToJson();
+        //过滤空参数
+        _dataSource.API.Queries = _dataSource.API.Queries
+            .Where(t => !t.Name.IsNullOrEmpty() && !t.Type.IsNullOrEmpty())
+            .ToList();
+        _dataSource.API.Headers = _dataSource.API.Headers
+            .Where(t => !t.Name.IsNullOrEmpty() && !t.Type.IsNullOrEmpty())
+            .ToList();
+
+        string jsonSchema = _dataSource.ToJson();
 
         var content = new StringContent(jsonSchema, Encoding.UTF8, "application/json");
 
@@ -140,7 +201,9 @@
     private async Task CreateAsync()
     {
         await Task.Delay(1);
-        _dataSourceSchema = new() { Id = Guid.NewGuid().ToString(), AppId = AppId, DataSourceType = DataSourceTypeEnum.API };
+        _dataSource = new() { Id = Guid.NewGuid().ToString(), AppId = AppId, DataSourceType = DataSourceTypeEnum.API };
+        _dataSource.API = new();
+
         _visible = true;
         _modalTitle = "新建 API";
 
@@ -152,7 +215,7 @@
         await Task.Delay(1);
         _visible = true;
         _modalTitle = "编辑 API";
-        _dataSourceSchema = await GetDataSourceAsync(id);
+        _dataSource = await GetDataSourceAsync(id);
 
         StateHasChanged();
     }
@@ -171,4 +234,30 @@
     {
         await Task.Delay(1);
     }
+
+    #region QueryParam
+    private async Task CreateQueryParamAsync()
+    {
+        await Task.Delay(1);
+
+        APIQuerySchema newQuery = new() { Id = Guid.NewGuid().ToString() };
+
+        _dataSource.API.Queries.Add(newQuery);
+
+        //StateHasChanged();
+    }
+
+    private async Task SaveQueryParamAsync(string id)
+    {
+        await Task.Delay(1);
+        
+        StateHasChanged();
+    }
+
+    private async Task DeleteQueryParamAsync(string id)
+    {
+        await Task.Delay(1);
+
+    }
+    #endregion
 }

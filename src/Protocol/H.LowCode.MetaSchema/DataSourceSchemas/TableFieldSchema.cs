@@ -18,14 +18,17 @@ public record TableFieldSchema
     [JsonPropertyName("disn")]
     public string DisplayName { get; set; }
 
-    [JsonPropertyName("t")]
+    [JsonPropertyName("type")]
     public string Type { get; set; }
 
     [JsonPropertyName("pk")]
     public bool IsPrimaryKey { get; set; }
 
-    [JsonPropertyName("required")]
-    public bool IsRequired { get; set; }
+    /// <summary>
+    /// 是否可空
+    /// </summary>
+    [JsonPropertyName("nul")]
+    public bool IsNull { get; set; }
 
     [JsonPropertyName("unique")]
     public bool IsUnique { get; set; }
