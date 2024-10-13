@@ -19,20 +19,6 @@ public abstract class ThemePartLayoutBase : LowCodeLayoutComponentBase
     [Inject]
     private NavigationManager NavigationManager { get; set; }
 
-    protected string GetAppId()
-    {
-        string appid = string.Empty;
-        if ((this.Body.Target as RouteView)?.RouteData.RouteValues?.TryGetValue("AppId", out object appId) == true)
-        {
-            appid = appId?.ToString();
-        }
-
-        if (string.IsNullOrEmpty(appid))
-            throw new NullReferenceException(nameof(appid));
-
-        return appid;
-    }
-
     protected async Task<IList<MenuSchema>> GetMenusAsync(string appId)
     {
         var menus = await GetMenuListAsync(appId);
@@ -53,7 +39,7 @@ public abstract class ThemePartLayoutBase : LowCodeLayoutComponentBase
     private async Task<List<MenuSchema>> GetMenuListAsync(string appId)
     {
         var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+        httpClient.BaseAddress = base.GetBaseUri();
 
         var result = await httpClient.GetFromJsonAsync<List<MenuSchema>>($"api/renderengine/getmenus?appId={appId}");
         return result;

@@ -1,10 +1,9 @@
 ﻿@page "/myapp/{AppId}/menumanager"
 @namespace H.LowCode.MyApp
-@inherits LowCodeComponentBase
+@inherits LowCodePageComponentBase
 @layout MyAppLayout
 
 @inject IHttpClientFactory HttpClientFactory
-@inject NavigationManager NavigationManager
 @inject IMessageService Message
 @inject ComponentStateWrapper<MenuManager, IList<MenuSchema>> MenuListState
 
@@ -101,7 +100,7 @@
     public async Task<IList<MenuSchema>> GetMenuListAsync()
     {
         var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+        httpClient.BaseAddress = base.GetBaseUri();
 
         var result = await httpClient.GetFromJsonAsync<List<MenuSchema>>($"api/designengine/getmenus?appId={AppId}");
         return result;
@@ -110,7 +109,7 @@
     private async Task<MenuSchema> GetMenuAsync(string id)
     {
         var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+        httpClient.BaseAddress = base.GetBaseUri();
 
         var result = await httpClient.GetFromJsonAsync<MenuSchema>($"api/designengine/getmenu?appId={AppId}&menuId={id}");
         return result;
@@ -138,7 +137,7 @@
     private async Task DeleteAsync(string id)
     {
         var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+        httpClient.BaseAddress = base.GetBaseUri();
 
         await httpClient.GetAsync($"api/designengine/deletemenu?appId={AppId}&menuId={id}");
         await Message.Success("删除成功！");
@@ -181,7 +180,7 @@
         var content = new StringContent(jsonSchema, Encoding.UTF8, "application/json");
 
         var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+        httpClient.BaseAddress = base.GetBaseUri();
         var result = await httpClient.PostAsync($"api/designengine/savemenu", content);
 
         return result;

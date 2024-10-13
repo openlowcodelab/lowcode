@@ -3,7 +3,6 @@
 @layout WorkbenchLayout
 
 @inject IHttpClientFactory HttpClientFactory
-@inject NavigationManager NavigationManager
 @inject IMessageService Message
 @inject ComponentStateWrapper<AppTemplates, IList<AppPartsSchema>> AppPartsState
 
@@ -49,7 +48,7 @@
     private async Task<IList<AppPartsSchema>> LoadAppPartsAsync(int pageIndex, int pageSize)
     {
         var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+        httpClient.BaseAddress = base.GetBaseUri();
 
         var result = await httpClient.GetFromJsonAsync<List<AppPartsSchema>>($"api/parts/getapps");
         return result;

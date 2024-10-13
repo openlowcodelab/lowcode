@@ -1,10 +1,9 @@
 ﻿@page "/workbench/myapps"
 @namespace H.LowCode.Workbench
-@inherits LowCodeComponentBase
+@inherits LowCodePageComponentBase
 @layout WorkbenchLayout
 
 @inject IHttpClientFactory HttpClientFactory
-@inject NavigationManager NavigationManager
 @inject ComponentStateWrapper<MyApps, IList<AppListModel>> MyAppsState
 
 <PageTitle>我的应用 - H.LowCode</PageTitle>
@@ -90,7 +89,7 @@
     private async Task<IList<AppListModel>> LoadAppsAsync()
     {
         var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+        httpClient.BaseAddress = base.GetBaseUri();
 
         var result = await httpClient.GetFromJsonAsync<IList<AppListModel>>($"api/designengine/getapps");
         return result;

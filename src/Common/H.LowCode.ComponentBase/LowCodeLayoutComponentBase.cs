@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Components;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,11 +7,46 @@ using System.Threading.Tasks;
 
 namespace H.LowCode.ComponentBase;
 
-public abstract class LowCodeLayoutComponentBase : Microsoft.AspNetCore.Components.LayoutComponentBase
+/// <summary>
+/// 布局组件基类
+/// </summary>
+public abstract class LowCodeLayoutComponentBase : LayoutComponentBase
 {
+    [Inject]
+    private LowCodeAppState LowCodeAppState { get; set; }
+
+    [Inject]
+    private NavigationManager NavigationManager { get; set; }
+
     /// <summary>
     /// 
     /// </summary>
-    public bool IsDesignEngine { get; set; }
+    protected bool IsDesign
+    {
+        get
+        {
+            return LowCodeAppState.IsDesign;
+        }
+    }
 
+    protected Uri GetBaseUri()
+    {
+        return new Uri(NavigationManager.BaseUri);
+    }
+
+    protected string GetRouteValue(string name)
+    {
+        string routeValue = string.Empty;
+        if ((this.Body.Target as RouteView)?.RouteData.RouteValues?.TryGetValue(name, out object routeVal) == true)
+        {
+            routeValue = routeVal?.ToString() ?? string.Empty;
+        }
+
+        return routeValue;
+    }
+
+    protected string GetAppId()
+    {
+        return GetRouteValue("AppId");
+    }
 }

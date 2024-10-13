@@ -1,9 +1,7 @@
 ﻿@page "/myapp/{AppId}/datasource/{DataSourceType?}"
 @namespace H.LowCode.MyApp
-@inherits LowCodeComponentBase
+@inherits LowCodePageComponentBase
 @layout MyAppLayout
-
-@inject NavigationManager NavigationManager
 
 <PageTitle>数据源管理</PageTitle>
 
@@ -28,6 +26,6 @@
 
     private void OnTabChange(string key)
     {
-        NavigationManager.NavigateTo($"/myapp/{AppId}/datasource/{key}");
+        base.NavigateTo($"/myapp/{AppId}/datasource/{key}");
     }
 }

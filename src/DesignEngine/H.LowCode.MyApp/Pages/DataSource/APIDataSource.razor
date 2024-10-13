@@ -2,7 +2,6 @@
 @inherits LowCodeComponentBase
 
 @inject IHttpClientFactory HttpClientFactory
-@inject NavigationManager NavigationManager
 @inject IMessageService Message
 @inject ComponentStateWrapper<APIDataSource, IList<DataSourceListModel>> APIListState
 
@@ -126,7 +125,7 @@
     private async Task<IList<DataSourceListModel>> LoadDataSourcesAsync(int pageIndex, int pageSize)
     {
         var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+        httpClient.BaseAddress = base.GetBaseUri();
 
         var result = await httpClient.GetFromJsonAsync<List<DataSourceListModel>>($"api/datasource/getlist?appId={AppId}&dataSourceType=2");
         return result;
@@ -135,7 +134,7 @@
     private async Task<DataSourceSchema> GetDataSourceAsync(string dataSourceId)
     {
         var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+        httpClient.BaseAddress = base.GetBaseUri();
 
         var dataSourceSchema = await httpClient.GetFromJsonAsync<DataSourceSchema>($"api/datasource/get?appId={AppId}&id={dataSourceId}");
         if (dataSourceSchema == null)
@@ -192,7 +191,7 @@
         var content = new StringContent(jsonSchema, Encoding.UTF8, "application/json");
 
         var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+        httpClient.BaseAddress = base.GetBaseUri();
         var result = await httpClient.PostAsync($"api/datasource/save?appId={AppId}", content);
 
         return result;
@@ -224,7 +223,7 @@
     {
         await Task.Delay(1);
         var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+        httpClient.BaseAddress = base.GetBaseUri();
 
         await httpClient.GetAsync($"api/datasource/delete?appId={AppId}&id={id}");
         await Message.Success("删除成功！");

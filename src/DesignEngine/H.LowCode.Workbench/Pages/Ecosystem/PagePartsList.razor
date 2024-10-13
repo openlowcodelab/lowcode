@@ -3,7 +3,6 @@
 @layout WorkbenchLayout
 
 @inject IHttpClientFactory HttpClientFactory
-@inject NavigationManager NavigationManager
 @inject IMessageService Message
 @inject ComponentStateWrapper<PagePartsList, IList<PagePartsSchema>> PagePartsState
 
@@ -80,7 +79,7 @@
     private async Task<IList<PagePartsSchema>> LoadPagePartsAsync(int pageIndex, int pageSize)
     {
         var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+        httpClient.BaseAddress = base.GetBaseUri();
 
         var result = await httpClient.GetFromJsonAsync<List<PagePartsSchema>>($"api/parts/getpages");
         return result;
@@ -89,7 +88,7 @@
     private async Task<PagePartsSchema> GetPageAsync(string partsId)
     {
         var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+        httpClient.BaseAddress = base.GetBaseUri();
 
         var PagePartsSchema = await httpClient.GetFromJsonAsync<PagePartsSchema>($"api/parts/getpage?partsId={partsId}");
         return PagePartsSchema;
@@ -115,7 +114,7 @@
     private async Task DeleteAsync(string partsId)
     {
         var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+        httpClient.BaseAddress = base.GetBaseUri();
 
         await httpClient.GetAsync($"api/parts/deletepage?partsId={partsId}");
         await Message.Success("删除成功！");
@@ -158,7 +157,7 @@
         var content = new StringContent(jsonSchema, Encoding.UTF8, "application/json");
 
         var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+        httpClient.BaseAddress = base.GetBaseUri();
         var result = await httpClient.PostAsync($"api/parts/savepage", content);
 
         return result;

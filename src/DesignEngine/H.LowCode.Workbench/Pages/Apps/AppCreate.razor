@@ -3,7 +3,6 @@
 @layout WorkbenchLayout
 
 @inject IHttpClientFactory HttpClientFactory
-@inject NavigationManager NavigationManager
 @inject IMessageService _message
 
 <div style="width:100%; height: 500px; margin:auto;">
@@ -52,7 +51,7 @@
             {
                 _visible = false;
                 _form.Submit();
-                NavigationManager.NavigateTo($"/workbench/myapps");
+                base.NavigateTo($"/workbench/myapps");
                 await _message.Success("新建成功！");
                 _form.Reset();
             }
@@ -82,7 +81,7 @@
         var content = new StringContent(jsonSchema, Encoding.UTF8, "application/json");
 
         var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+        httpClient.BaseAddress = base.GetBaseUri();
         var result = await httpClient.PostAsync($"api/designengine/saveapp", content);
 
         return result;

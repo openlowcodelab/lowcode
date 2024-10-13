@@ -1,10 +1,9 @@
 ﻿@page "/myapp/{AppId}/pagemanager"
 @namespace H.LowCode.MyApp
-@inherits LowCodeComponentBase
+@inherits LowCodePageComponentBase
 @layout MyAppLayout
 
 @inject IHttpClientFactory HttpClientFactory
-@inject NavigationManager NavigationManager
 @inject IMessageService Message
 @inject ComponentStateWrapper<PageManager, IList<PageListModel>> PageListState
 
@@ -94,7 +93,7 @@
     private async Task<IList<PageListModel>> LoadPagesAsync(int pageIndex, int pageSize)
     {
         var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+        httpClient.BaseAddress = base.GetBaseUri();
 
         var result = await httpClient.GetFromJsonAsync<List<PageListModel>>($"api/designengine/getpages?appId={AppId}");
         return result;
@@ -103,7 +102,7 @@
     private async Task<PageSchema> GetPageAsync(string pageId)
     {
         var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+        httpClient.BaseAddress = base.GetBaseUri();
 
         var pageSchema = await httpClient.GetFromJsonAsync<PageSchema>($"api/designengine/getpage?appId={AppId}&pageId={pageId}");
         return pageSchema;
@@ -130,7 +129,7 @@
     private async Task DeleteAsync(string pageId)
     {
         var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+        httpClient.BaseAddress = base.GetBaseUri();
 
         await httpClient.GetAsync($"api/designengine/deletepage?appId={AppId}&pageId={pageId}");
         await Message.Success("删除成功！");
@@ -173,7 +172,7 @@
         var content = new StringContent(jsonSchema, Encoding.UTF8, "application/json");
 
         var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+        httpClient.BaseAddress = base.GetBaseUri();
         var result = await httpClient.PostAsync($"api/designengine/savepage", content);
 
         return result;

@@ -2,7 +2,6 @@
 @inherits LowCodeLayoutComponentBase
 
 @inject IHttpClientFactory HttpClientFactory
-@inject NavigationManager NavigationManager
 @inject ComponentStateWrapper<MyAppLayout, MenuDataItem[]> MenuDataState
 @inject ComponentStateWrapper<AppSchema, AppSchema> AppSchemaState
 
@@ -31,7 +30,7 @@
     {
         if (MenuDataState.Value is null)
         {
-            string appid = GetAppId();
+            string appid = base.GetAppId();
             AppSchemaState.Value = await GetAppSchemaAsync(appid);
             MenuDataState.Value = InitMenuData(appid);
 
@@ -39,24 +38,10 @@
         }
     }
 
-    private string GetAppId()
-    {
-        string appid = string.Empty;
-        if ((this.Body.Target as RouteView)?.RouteData.RouteValues?.TryGetValue("AppId", out object appId) == true)
-        {
-            appid = appId?.ToString();
-        }
-
-        if (string.IsNullOrEmpty(appid))
-            throw new NullReferenceException(nameof(appid));
-
-        return appid;
-    }
-
     private async Task<AppSchema> GetAppSchemaAsync(string appId)
     {
         var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+        httpClient.BaseAddress = base.GetBaseUri();
 
         var pageSchema = await httpClient.GetFromJsonAsync<AppSchema>($"api/designengine/getapp?appId={appId}");
         return pageSchema;

@@ -1,10 +1,9 @@
 ﻿@page "/designer/componentparts/{PartsId}"
 @namespace H.LowCode.PartsDesignEngine
-@inherits LowCodeComponentBase
+@inherits LowCodePageComponentBase
 @layout PartsDesignEngineLayout
 
 @inject IHttpClientFactory HttpClientFactory
-@inject NavigationManager NavigationManager
 @inject DragDropStateService DragDropStateService
 @inject IMessageService _message
 
@@ -71,7 +70,7 @@
         }
 
         var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+        httpClient.BaseAddress = base.GetBaseUri();
 
         var componentParts = await httpClient.GetFromJsonAsync<ComponentPartsSchema>($"api/parts/getcomponents?partsId={PartsId}");
 
@@ -98,7 +97,7 @@
         var content = new StringContent(jsonSchema, Encoding.UTF8, "application/json");
 
         var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = new Uri(NavigationManager.BaseUri);
+        httpClient.BaseAddress = base.GetBaseUri();
         var result = await httpClient.PostAsync($"api/parts/savecomponent", content);
 
         if (result.StatusCode == HttpStatusCode.OK)
@@ -106,7 +105,7 @@
             if (_isNewPage)
             {
                 _isNewPage = false;
-                NavigationManager.NavigateTo($"/designer/componentparts/{componentParts.Id}");
+                base.NavigateTo($"/designer/componentparts/{componentParts.Id}");
             }
 
             await _message.Success("保存成功！");
