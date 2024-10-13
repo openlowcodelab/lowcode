@@ -70,11 +70,11 @@
 
     private async Task<PageSchema> LoadPageSchemaAsync()
     {
-        if (string.Equals("newpage", PageId))
+        if (string.Equals("_empty", PageId))
         {
             _isNewPage = true;
-            PageId = Guid.NewGuid().ToString();
-            var newPage = new PageSchema() { Id = PageId, AppId = AppId, Name = "newpage" };
+            var newPage = new PageSchema(true) { AppId = AppId, Name = "newpage" };
+            PageId = newPage.Id;
 
             DragDropStateService.SetPage(AppId, newPage);
             return newPage;

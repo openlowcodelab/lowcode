@@ -20,7 +20,7 @@
 
 <Table TItem="PageListModel" DataSource="@PageListState.Value" PageSize="15" PageIndex="1" Total="_total"
        @bind-SelectedRows="selectedRows" Style="height:100%;" RowKey="c=>c.PageId">
-    <PropertyColumn Title="ID" Property="c=>c.PageId" Width="300" />
+    <PropertyColumn Title="ID" Property="c=>c.PageId" />
     <PropertyColumn Title="页面名称" Property="c=>c.PageName" Sortable />
     <PropertyColumn Title="排序" Property="c=>c.Order" />
     <PropertyColumn Title="类型" Property="c=>c.PageType" Sortable />
@@ -77,7 +77,7 @@
 
     private bool _visible;
     private Form<PageSchema> _form;
-    private PageSchema _pageSchema = new PageSchema();
+    private PageSchema _pageSchema = new PageSchema(true);
 
     protected override async Task OnInitializedAsync()
     {
@@ -110,8 +110,7 @@
 
     private void CreateAsync(string parentId)
     {
-        _pageSchema = new PageSchema();
-        _pageSchema.Id = Guid.NewGuid().ToString();
+        _pageSchema = new PageSchema(true);
         _pageSchema.AppId = AppId;
         _visible = true;
 

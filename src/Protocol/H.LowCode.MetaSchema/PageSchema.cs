@@ -1,9 +1,21 @@
-﻿using System.Text.Json.Serialization;
+﻿using H.Util.Ids;
+using System.Text.Json.Serialization;
 
 namespace H.LowCode.MetaSchema;
 
 public class PageSchema : MetaSchemaBase
 {
+    public PageSchema(bool isNewId)
+    {
+        if (isNewId)
+            Id = ShortIdGenerator.Generate();
+    }
+
+    public PageSchema()
+    {
+
+    }
+
     [JsonPropertyName("aid")]
     public string AppId { get; set; }
 

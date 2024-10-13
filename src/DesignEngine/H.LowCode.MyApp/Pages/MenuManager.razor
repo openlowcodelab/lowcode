@@ -24,7 +24,7 @@
     <PropertyColumn Title="排序" Property="c=>c.Order" />
     <PropertyColumn Title="图标" Property="c=>c.Icon" />
     <PropertyColumn Title="类型" Property="c=>c.MenuType" Format="@(context.MenuType == 0 ?"菜单":"目录")" />
-    <PropertyColumn Title="跳转页面" Property="c=>c.MenuUrl" />
+    <PropertyColumn Title="菜单地址" Property="c=>c.MenuUrl" />
     <PropertyColumn Title="修改时间" Property="c=>c.ModifiedTime" Format="yyyy-MM-dd HH:mm:ss" />
     <ActionColumn Title="操作" Width="200">
          <Space Size=@("middle")>
@@ -67,7 +67,7 @@
         </FormItem>
         @if (context.MenuType == 0)
         {
-            <FormItem Label="跳转页面" Required>
+            <FormItem Label="菜单地址" Required>
                 <Input @bind-Value="@context.MenuUrl" />
             </FormItem>
         }
@@ -85,7 +85,7 @@
 
     private bool _visible = false;
     private Form<MenuSchema> _form;
-    private MenuSchema _menuSchema = new MenuSchema();
+    private MenuSchema _menuSchema = new MenuSchema(true);
 
     protected override async Task OnInitializedAsync()
     {
@@ -117,8 +117,7 @@
 
     private void CreateAsync(string parentId)
     {
-        _menuSchema = new MenuSchema();
-        _menuSchema.Id = Guid.NewGuid().ToString();
+        _menuSchema = new MenuSchema(true);
         _menuSchema.AppId = AppId;
         _menuSchema.ParentId = parentId;
         _visible = true;
