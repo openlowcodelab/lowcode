@@ -30,8 +30,8 @@ public class TableButtonSchema
     [JsonPropertyName("order")]
     public int Order { get; set; }
 
-    [JsonPropertyName("btnAc")]
-    public ActionSchema ButtonAction { get; set; } = new();
+    [JsonPropertyName("actType")]
+    public ActionTypeEnum ActionType { get; set; } = new();
 
     /// <summary>
     /// 目标对象Id

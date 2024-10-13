@@ -17,9 +17,9 @@ public class LayoutComponentProvider : IComponentProvider
                 ComponentFragments =
                 [
                     new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(LcGrid).GetFullNameWithAssemblyName() },
-                    new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Component", ValueType = ComponentValueType.String, StringValue = "{Self}" },
-                    new(){ Index = 2, FragmentEnum = FragmentEnum.Attribute, Name = "Rows", ValueType = ComponentValueType.Integer, IntValue = 2 },
-                    new(){ Index = 3, FragmentEnum = FragmentEnum.Attribute, Name = "Cols", ValueType = ComponentValueType.Integer, IntValue = 2 }
+                    new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Component", ValueType = ComponentValueTypeEnum.String, StringValue = "{Self}" },
+                    new(){ Index = 2, FragmentEnum = FragmentEnum.Attribute, Name = "Rows", ValueType = ComponentValueTypeEnum.Integer, IntValue = 2 },
+                    new(){ Index = 3, FragmentEnum = FragmentEnum.Attribute, Name = "Cols", ValueType = ComponentValueTypeEnum.Integer, IntValue = 2 }
                 ],
                 ComponentProperty = new()
                 {
@@ -36,7 +36,7 @@ public class LayoutComponentProvider : IComponentProvider
                 ComponentFragments =
                 [
                     new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(LcLayout).GetFullNameWithAssemblyName() },
-                    new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Component", ValueType = ComponentValueType.String, StringValue = "{Self}" }
+                    new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Component", ValueType = ComponentValueTypeEnum.String, StringValue = "{Self}" }
                 ],
                 ComponentProperty = new()
                 {
@@ -54,7 +54,7 @@ public class LayoutComponentProvider : IComponentProvider
                 ComponentFragments =
                 [
                     new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(LcFlex).GetFullNameWithAssemblyName() },
-                    new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Component", ValueType = ComponentValueType.String, StringValue = "{Self}" }
+                    new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Component", ValueType = ComponentValueTypeEnum.String, StringValue = "{Self}" }
                 ],
                 ComponentProperty = new()
                 {

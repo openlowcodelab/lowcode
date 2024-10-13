@@ -36,14 +36,6 @@ public class PageSchema : MetaSchemaBase
     public I18n I18n { get; set; }
 }
 
-public enum PageTypeEnum
-{
-    Normal = 0,
-    Form = 1,
-    Table = 2,
-    Report = 5
-}
-
 public struct I18n
 {
     public string Name { get; set; }

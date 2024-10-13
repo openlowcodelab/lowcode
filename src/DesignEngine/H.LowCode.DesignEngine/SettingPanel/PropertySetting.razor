@@ -8,8 +8,7 @@
         <BasicPropertyItem Component="@Component"></BasicPropertyItem>
 
         @* 数据源属性 *@
-        @if (Component.ComponentProperty.ComponentType == ComponentType.Option
-            || Component.ComponentProperty.ComponentType == ComponentType.Table)
+        @if (Component.ComponentProperty.IsSupportDataSource)
         {
             <DataSourcePropertyItem Component="@Component"></DataSourcePropertyItem>
         }

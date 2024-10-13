@@ -1,7 +1,4 @@
-﻿@using AntDesign.TableModels
-@using System.ComponentModel.DataAnnotations
-@using Microsoft.JSInterop
-@namespace H.LowCode.ComponentParts.BasicComponents
+﻿@namespace H.LowCode.ComponentParts.BasicComponents
 @inherits LowCodeComponentBase
 
 @inject IJSRuntime JS
@@ -128,12 +125,16 @@
     {
         await Task.Delay(100);
         var btn = _tableSchema.Buttons.First(t => t.Id == id);
-        // if(btn.ButtonAction.ActionType == ActionTypeEnum.Blank)
-        // {
-        var pageUrl = $"https://localhost:5191/caseapp/{btn.TargetId}";
+        if (btn.ActionType == ActionTypeEnum.Blank)
+        {
+            string pageUrl = string.Empty;
+            if (IsDesign)
+                pageUrl = $"/designer/caseapp/{btn.TargetId}";
+            else
+                pageUrl = $"/caseapp/{btn.TargetId}";
 
-        await JS.InvokeVoidAsync("open", pageUrl, "_blank");
-        //    await this.RedirectPageAsync(pageUrl);
-        // }
+            await JS.InvokeVoidAsync("open", pageUrl, "_blank");
+            //    await this.RedirectPageAsync(pageUrl);
+        }
     }
 }

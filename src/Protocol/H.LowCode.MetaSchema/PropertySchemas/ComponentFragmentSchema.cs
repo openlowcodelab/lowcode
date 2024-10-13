@@ -21,7 +21,7 @@ public class ComponentFragmentSchema
 
     [JsonPropertyName("valtype")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public ComponentValueType ValueType { get; set; }
+    public ComponentValueTypeEnum ValueType { get; set; }
 
     [JsonPropertyName("intval")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]

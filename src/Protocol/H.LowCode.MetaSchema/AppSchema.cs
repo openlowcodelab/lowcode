@@ -27,20 +27,3 @@ public class AppSchema : MetaSchemaBase
     [JsonPropertyName("platform")]
     public SupportPlatformEnum[] SupportPlatforms { get; set; } = [0];
 }
-
-public enum PublishStatusEnum
-{
-    Development,
-    Approving,
-    Published
-}
-
-public enum SupportPlatformEnum
-{
-    [Display(Name = "Web")]
-    Web,
-    [Display(Name = "App")]
-    Mobile,
-    [Display(Name = "小程序")]
-    WXMiniApp
-}

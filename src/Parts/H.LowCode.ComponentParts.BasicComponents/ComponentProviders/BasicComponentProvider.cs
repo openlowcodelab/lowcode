@@ -20,7 +20,7 @@ public class BasicComponentProvider : IComponentProvider
                 ],
                 ComponentProperty = new(){
                     Title = "输入框",
-                    ComponentValueType = ComponentValueType.String,
+                    ComponentValueType = ComponentValueTypeEnum.String,
                     SupportProperties = ["MaximumLength", "MinimumLength", "Pattern", "Format"],
                     ExtraProperties = new Dictionary<string,PropertyItemSchema>
                     {
@@ -38,7 +38,7 @@ public class BasicComponentProvider : IComponentProvider
                 ],
                 ComponentProperty = new(){
                     Title = "数字输入框",
-                    ComponentValueType = ComponentValueType.Integer,
+                    ComponentValueType = ComponentValueTypeEnum.Integer,
                     SupportProperties = ["Maximum", "Minimum"]
                 }
             },
@@ -46,11 +46,11 @@ public class BasicComponentProvider : IComponentProvider
                 ComponentFragments =
                 [
                     new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(TextArea).GetFullNameWithAssemblyName()},
-                    new(){ Index = 1, FragmentEnum = FragmentEnum.Attribute, Name = "style", ValueType = ComponentValueType.String, StringValue = "height:50px;" }
+                    new(){ Index = 1, FragmentEnum = FragmentEnum.Attribute, Name = "style", ValueType = ComponentValueTypeEnum.String, StringValue = "height:50px;" }
                 ],
                 ComponentProperty= new(){
                     Title = "大输入框",
-                    ComponentValueType = ComponentValueType.String,
+                    ComponentValueType = ComponentValueTypeEnum.String,
                     SupportProperties = ["MaximumLength", "MinimumLength"]
                 }
             },
@@ -61,7 +61,8 @@ public class BasicComponentProvider : IComponentProvider
                 ],
                 ComponentProperty = new(){
                     Title = "多选框",
-                ComponentValueType = ComponentValueType.Boolean
+                    IsSupportDataSource = true,
+                    ComponentValueType = ComponentValueTypeEnum.Boolean
                 }
             },
             new("radio"){
@@ -70,7 +71,8 @@ public class BasicComponentProvider : IComponentProvider
                     new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(Radio<string>).GetFullNameWithAssemblyName()  }
                 ],
                 ComponentProperty = new(){
-                    Title = "单选框"
+                    Title = "单选框",
+                    IsSupportDataSource = true
                 }
             },
             new("select"){
@@ -80,7 +82,8 @@ public class BasicComponentProvider : IComponentProvider
                 ],
                 ComponentProperty = new(){
                     Title = "选择器",
-                    ComponentValueType = ComponentValueType.String
+                    IsSupportDataSource = true,
+                    ComponentValueType = ComponentValueTypeEnum.String
                 }
             },
             new("autocomplete"){
@@ -90,7 +93,8 @@ public class BasicComponentProvider : IComponentProvider
                 ],
                 ComponentProperty = new(){
                     Title = "自动完成",
-                    ComponentValueType = ComponentValueType.String
+                    IsSupportDataSource = true,
+                    ComponentValueType = ComponentValueTypeEnum.String
                 }
             },
             new("cascader"){
@@ -100,7 +104,8 @@ public class BasicComponentProvider : IComponentProvider
                 ],
                 ComponentProperty = new(){
                     Title = "级联选择",
-                    ComponentValueType = ComponentValueType.String
+                    IsSupportDataSource = true,
+                    ComponentValueType = ComponentValueTypeEnum.String
                 }
             },
             new("switch"){
@@ -110,18 +115,18 @@ public class BasicComponentProvider : IComponentProvider
                 ],
                 ComponentProperty = new(){
                     Title = "开关",
-                    ComponentValueType = ComponentValueType.Boolean
+                    ComponentValueType = ComponentValueTypeEnum.Boolean
                 }
             },
             new("datepicker"){
                 ComponentFragments =
                 [
                     new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(DatePicker<DateTime?>).GetFullNameWithAssemblyName() },
-                    new(){ Index = 1, FragmentEnum = FragmentEnum.Attribute, Name = "Picker", ValueType = ComponentValueType.Integer, IntValue = DatePickerType.Date.Value }
+                    new(){ Index = 1, FragmentEnum = FragmentEnum.Attribute, Name = "Picker", ValueType = ComponentValueTypeEnum.Integer, IntValue = DatePickerType.Date.Value }
                 ],
                 ComponentProperty = new(){
                     Title = "日期选择",
-                    ComponentValueType = ComponentValueType.Date
+                    ComponentValueType = ComponentValueTypeEnum.Date
                 }
             },
             new("timepicker"){
@@ -131,7 +136,7 @@ public class BasicComponentProvider : IComponentProvider
                 ],
                 ComponentProperty = new(){
                     Title = "时间选择",
-                    ComponentValueType = ComponentValueType.Date
+                    ComponentValueType = ComponentValueTypeEnum.Date
                 }
             },
             new("button"){
@@ -139,11 +144,11 @@ public class BasicComponentProvider : IComponentProvider
                 ComponentFragments =
                 [
                     new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(LcButton).GetFullNameWithAssemblyName() },
-                    new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Text", ValueType = ComponentValueType.String, StringValue = "按钮" }
+                    new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Text", ValueType = ComponentValueTypeEnum.String, StringValue = "按钮" }
                 ],
                 ComponentProperty = new(){
                     Title = "按钮",
-                    ComponentValueType = ComponentValueType.None
+                    ComponentValueType = ComponentValueTypeEnum.None
                 },
                 ComponentStyle = new()
                 {

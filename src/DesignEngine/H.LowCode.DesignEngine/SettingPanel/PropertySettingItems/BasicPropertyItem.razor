@@ -33,7 +33,7 @@
 }
 
 @*"type": "string"*@
-@if (Component.ComponentProperty.ComponentValueType == ComponentValueType.String)
+@if (Component.ComponentProperty.ComponentValueType == ComponentValueTypeEnum.String)
 {
     if (Component.ComponentProperty.IsShowProperty(nameof(ComponentPropertySchema.MaximumLength)))
     {
@@ -67,8 +67,8 @@
 
 @*"type": "integer"*@
 @*"type": "number"*@
-@if (Component.ComponentProperty.ComponentValueType == ComponentValueType.Integer
-              || Component.ComponentProperty.ComponentValueType == ComponentValueType.Double)
+@if (Component.ComponentProperty.ComponentValueType == ComponentValueTypeEnum.Integer
+              || Component.ComponentProperty.ComponentValueType == ComponentValueTypeEnum.Double)
 {
     if (Component.ComponentProperty.IsShowProperty(nameof(ComponentPropertySchema.Maximum)))
     {
@@ -92,7 +92,7 @@
 
 }*@
 
-@if(Component.ComponentProperty.ComponentValueType == ComponentValueType.Table)
+@if(Component.ComponentProperty.ComponentValueType == ComponentValueTypeEnum.Table)
 {
     <div class="propertysetting-item">
         @* <label>表格列：</label> *@

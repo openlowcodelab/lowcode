@@ -18,67 +18,7 @@ public class ExtensionPageTemplateProvider : IPageTemplateProvider
                 ComponentProperty = new()
                 {
                     Title = "基础表单",
-                    ComponentValueType = ComponentValueType.None
-                },
-                ComponentStyle = new()
-                {
-                    ItemWidth = 24,
-                    DefaultStyle = "height:100%"
-                },
-                Childrens = [
-                    new("button")
-                    {
-                        IsHiddenTitle = true,
-                        ComponentFragments =
-                        [
-                            new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(LcButton).GetFullNameWithAssemblyName() },
-                            new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Text", ValueType = ComponentValueType.String, StringValue = "提交" }
-                        ],
-                        ComponentProperty = new()
-                        {
-                            Title = "提交",
-                            ComponentValueType = ComponentValueType.None
-                        },
-                        ComponentStyle = new()
-                        {
-                            ItemHeight = 40,
-                            DefaultStyle = "margin:0 8px; position:fixed; bottom:8px; right: 320px;"
-                        }
-                    },
-                    new("button")
-                    {
-                        IsHiddenTitle = true,
-                        ComponentFragments =
-                        [
-                            new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(LcButton).GetFullNameWithAssemblyName() },
-                            new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Text", ValueType = ComponentValueType.String, StringValue = "取消" }
-                        ],
-                        ComponentProperty = new()
-                        {
-                            Title = "取消",
-                            ComponentValueType = ComponentValueType.None
-                        },
-                        ComponentStyle = new()
-                        {
-                            ItemWidth = 24,
-                            ItemHeight = 40,
-                            DefaultStyle = "margin:0 8px; position:fixed; bottom:8px; right: 250px;"
-                        }
-                    }
-                ]
-            },
-            new("groupformtemplate"){
-                IsHiddenTitle = true,
-                IsContainerComponent = true,
-                ComponentFragments =
-                [
-                    new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(GroupFormTemplate).GetFullNameWithAssemblyName() },
-                    new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Component", ValueType = ComponentValueType.String, StringValue = "{Self}" }
-                ],
-                ComponentProperty = new()
-                {
-                    Title = "分组表单",
-                    ComponentValueType = ComponentValueType.None
+                    ComponentValueType = ComponentValueTypeEnum.None
                 },
                 ComponentStyle = new()
                 {
@@ -90,46 +30,12 @@ public class ExtensionPageTemplateProvider : IPageTemplateProvider
                 IsHiddenTitle = true,
                 ComponentFragments =
                 [
-                    new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(TableTemplate).GetFullNameWithAssemblyName() }
+                    new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(LcTable).GetFullNameWithAssemblyName() }
                 ],
                 ComponentProperty = new()
                 {
-                    Title = "列表页面(Table)",
-                    ComponentValueType = ComponentValueType.None
-                },
-                ComponentStyle = new()
-                {
-                    ItemWidth = 24,
-                    DefaultStyle = "height:100%"
-                }
-            },
-            new("listtemplate"){
-                IsHiddenTitle = true,
-                ComponentFragments =
-                [
-                    new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(ListTemplate).GetFullNameWithAssemblyName() }
-                ],
-                ComponentProperty = new()
-                {
-                    Title = "列表页面(List)",
-                    ComponentValueType = ComponentValueType.None
-                },
-                ComponentStyle = new()
-                {
-                    ItemWidth = 24,
-                    DefaultStyle = "height:100%"
-                }
-            },
-            new("cardtemplate"){
-                IsHiddenTitle = true,
-                ComponentFragments =
-                [
-                    new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(CardTemplate).GetFullNameWithAssemblyName() }
-                ],
-                ComponentProperty = new()
-                {
-                    Title = "列表页面(Card)",
-                    ComponentValueType = ComponentValueType.None
+                    Title = "基础列表",
+                    ComponentValueType = ComponentValueTypeEnum.None
                 },
                 ComponentStyle = new()
                 {

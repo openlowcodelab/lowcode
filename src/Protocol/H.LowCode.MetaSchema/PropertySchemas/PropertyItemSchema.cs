@@ -38,17 +38,3 @@ public class PropertyItemSchema
     [JsonPropertyName("itemtype")]
     public PropertyItemTypeEnum SettingItemType { get; set; }
 }
-
-public enum PropertyItemTypeEnum
-{
-    Text,
-    Text_Int,
-    Radio,
-    Checkbox,
-    Select,
-    Switch,
-    Date,
-    Textarea,
-    Options,
-    Table
-}

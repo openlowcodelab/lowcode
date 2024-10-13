@@ -38,16 +38,16 @@ public class ComponentPropertySchema
     public string Pattern { get; set; }
 
     /// <summary>
-    /// 组件类型
+    /// 是否支持数据源属性
     /// </summary>
-    [JsonPropertyName("comptype")]
-    public ComponentType ComponentType { get; set; }
+    [JsonPropertyName("supds")]
+    public bool IsSupportDataSource { get; set; }
 
     /// <summary>
     /// 组件值类型
     /// </summary>
     [JsonPropertyName("compvaltype")]
-    public ComponentValueType ComponentValueType { get; set; }
+    public ComponentValueTypeEnum ComponentValueType { get; set; }
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public string Format { get; set; }
@@ -86,7 +86,7 @@ public class ComponentPropertySchema
     /// <summary>
     /// 支持的通用属性
     /// </summary>
-    [JsonPropertyName("supportprops")]
+    [JsonPropertyName("supprops")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public IList<string> SupportProperties { get; set; } = [];
 
@@ -124,37 +124,4 @@ public class ComponentPropertySchema
         return false;
     }
     #endregion
-}
-
-public enum ComponentType
-{
-    None = 0,
-    /// <summary>
-    /// 单值类 (如 input,textarea,datepicker,timepicker,switch,slider等)
-    /// </summary>
-    Single = 1,
-    /// <summary>
-    /// 选项类 (如 select,autocomplete,checkbox,radio,tree等)
-    /// </summary>
-    Option = 10,
-    /// <summary>
-    /// 表格类 (如 table 等)
-    /// </summary>
-    Table = 20
-}
-
-public enum ComponentValueType
-{
-    None = 0,
-    String = 1,
-    Textarea = 2,
-    Text = 3,
-    Integer = 6,
-    Double = 7,
-    Decimal = 8,
-    Boolean = 13,
-    Date = 18,
-    Array = 25,
-    Option = 30,
-    Table = 35
 }

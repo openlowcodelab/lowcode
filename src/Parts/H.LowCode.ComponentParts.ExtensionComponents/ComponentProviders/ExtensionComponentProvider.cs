@@ -17,12 +17,12 @@ public class ExtensionComponentProvider : IComponentProvider
                 ComponentFragments =
                 [
                     new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(LcLakexEditor).GetFullNameWithAssemblyName() },
-                    new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Component", ValueType = ComponentValueType.String, StringValue = "{Self}" }
+                    new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Component", ValueType = ComponentValueTypeEnum.String, StringValue = "{Self}" }
                 ],
                 ComponentProperty = new()
                 {
                     Title = "LakexEditor",
-                    ComponentValueType = ComponentValueType.String
+                    ComponentValueType = ComponentValueTypeEnum.String
                 },
                 ComponentStyle = new()
                 {
@@ -35,12 +35,12 @@ public class ExtensionComponentProvider : IComponentProvider
                 ComponentFragments =
                 [
                     new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(LcMonacoEditor).GetFullNameWithAssemblyName() },
-                    new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Component", ValueType = ComponentValueType.String, StringValue = "{Self}" }
+                    new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Component", ValueType = ComponentValueTypeEnum.String, StringValue = "{Self}" }
                 ],
                 ComponentProperty = new()
                 {
                     Title = "MonacoEditor",
-                    ComponentValueType = ComponentValueType.String
+                    ComponentValueType = ComponentValueTypeEnum.String
                 },
                 ComponentStyle = new()
                 {

@@ -21,7 +21,8 @@ public class SeniorComponentProvider : IComponentProvider
                 ],
                 ComponentProperty = new()
                 {
-                    Title = "树"
+                    Title = "树",
+                    IsSupportDataSource = true
                 }
             },
             new("treeselect"){
@@ -31,7 +32,8 @@ public class SeniorComponentProvider : IComponentProvider
                 ],
                 ComponentProperty = new()
                 {
-                    Title = "树选择器"
+                    Title = "树选择器",
+                    IsSupportDataSource = true
                 }
             },
             new("tabs"){
@@ -39,8 +41,8 @@ public class SeniorComponentProvider : IComponentProvider
                 ComponentFragments =
                 [
                     new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(LcTabs).GetFullNameWithAssemblyName() },
-                    new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Component", ValueType = ComponentValueType.String, StringValue = "{Self}" },
-                    new(){ Index = 2, FragmentEnum = FragmentEnum.Attribute, Name = "ItemCount", ValueType = ComponentValueType.Integer, IntValue = 3 },
+                    new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Component", ValueType = ComponentValueTypeEnum.String, StringValue = "{Self}" },
+                    new(){ Index = 2, FragmentEnum = FragmentEnum.Attribute, Name = "ItemCount", ValueType = ComponentValueTypeEnum.Integer, IntValue = 3 },
                 ],
                 ComponentProperty = new()
                 {
@@ -57,8 +59,8 @@ public class SeniorComponentProvider : IComponentProvider
                 ComponentFragments =
                 [
                     new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(Image).GetFullNameWithAssemblyName() },
-                    new(){ Index = 1, FragmentEnum = FragmentEnum.Attribute, Name = "Width", ValueType = ComponentValueType.String, StringValue = "300px" },
-                    new(){ Index = 2, FragmentEnum = FragmentEnum.Attribute, Name = "Src", ValueType = ComponentValueType.String, StringValue = "https://www.baidu.com/img/PCtm_d9c8750bed0b3c7d089fa7d55720d6cf.png" },
+                    new(){ Index = 1, FragmentEnum = FragmentEnum.Attribute, Name = "Width", ValueType = ComponentValueTypeEnum.String, StringValue = "300px" },
+                    new(){ Index = 2, FragmentEnum = FragmentEnum.Attribute, Name = "Src", ValueType = ComponentValueTypeEnum.String, StringValue = "https://www.baidu.com/img/PCtm_d9c8750bed0b3c7d089fa7d55720d6cf.png" },
                 ],
                 ComponentProperty = new()
                 {
@@ -77,7 +79,8 @@ public class SeniorComponentProvider : IComponentProvider
                 ],
                 ComponentProperty = new()
                 {
-                    Title = "List 列表"
+                    Title = "List 列表",
+                    IsSupportDataSource = true
                 }
             },
             new("card"){
@@ -85,11 +88,12 @@ public class SeniorComponentProvider : IComponentProvider
                 ComponentFragments =
                 [
                     new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(LcCard).GetFullNameWithAssemblyName() },
-                    new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Component", ValueType = ComponentValueType.String, StringValue = "{Self}" }
+                    new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Component", ValueType = ComponentValueTypeEnum.String, StringValue = "{Self}" }
                 ],
                 ComponentProperty = new()
                 {
-                    Title = "卡片"
+                    Title = "卡片",
+                    IsSupportDataSource = true
                 },
                 ComponentStyle = new()
                 {
@@ -101,12 +105,13 @@ public class SeniorComponentProvider : IComponentProvider
                 ComponentFragments =
                 [
                     new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(LcTable).GetFullNameWithAssemblyName() },
-                    new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Component", ValueType = ComponentValueType.String, StringValue = "{Self}" }
+                    new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Component", ValueType = ComponentValueTypeEnum.String, StringValue = "{Self}" }
                 ],
                 ComponentProperty = new()
                 {
                     Title = "表格",
-                    ComponentValueType = ComponentValueType.Table,
+                    IsSupportDataSource = true,
+                    ComponentValueType = ComponentValueTypeEnum.Table,
                 },
                 ComponentStyle = new()
                 {
@@ -119,12 +124,13 @@ public class SeniorComponentProvider : IComponentProvider
                 ComponentFragments =
                 [
                     new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(LcCarousel).GetFullNameWithAssemblyName() },
-                    new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Component", ValueType = ComponentValueType.String, StringValue = "{Self}" },
-                    new(){ Index = 2, FragmentEnum = FragmentEnum.Attribute, Name = "ItemCount", ValueType = ComponentValueType.Integer, IntValue = 4 }
+                    new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Component", ValueType = ComponentValueTypeEnum.String, StringValue = "{Self}" },
+                    new(){ Index = 2, FragmentEnum = FragmentEnum.Attribute, Name = "ItemCount", ValueType = ComponentValueTypeEnum.Integer, IntValue = 4 }
                 ],
                 ComponentProperty = new()
                 {
-                    Title = "轮播图"
+                    Title = "轮播图",
+                    IsSupportDataSource = true
                 },
                 ComponentStyle = new()
                 {
@@ -137,12 +143,13 @@ public class SeniorComponentProvider : IComponentProvider
                 ComponentFragments =
                 [
                     new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(LcDescriptions).GetFullNameWithAssemblyName() },
-                    new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Component", ValueType = ComponentValueType.String, StringValue = "{Self}" },
-                    new(){ Index = 2, FragmentEnum = FragmentEnum.Attribute, Name = "ItemCount", ValueType = ComponentValueType.Integer, IntValue = 3 }
+                    new(){ Index = 1, FragmentEnum = FragmentEnum.Parameter, Name = "Component", ValueType = ComponentValueTypeEnum.String, StringValue = "{Self}" },
+                    new(){ Index = 2, FragmentEnum = FragmentEnum.Attribute, Name = "ItemCount", ValueType = ComponentValueTypeEnum.Integer, IntValue = 3 }
                 ],
                 ComponentProperty = new()
                 {
-                    Title = "描述列表"
+                    Title = "描述列表",
+                    IsSupportDataSource = true
                 },
                 ComponentStyle = new()
                 {

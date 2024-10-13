@@ -38,19 +38,6 @@
         <Icon Type="edit" OnClick="@(() => EditButton(btn.Id))" Theme="outline" Style="cursor: pointer;" />
         <Icon Type="delete" OnClick="@(() => DeleteButton(btn.Id))" Theme="outline" Style="cursor: pointer;" />
     </div>
-    @* <div class="propertysetting-item">
-        <label>行为：</label>
-        <RadioGroup DefaultValue="ActionTypeEnum.None" TValue="ActionTypeEnum" @bind-Value="@btn.ActionSchema.ActionType">
-            <Radio Value="ActionTypeEnum.None">None</Radio>
-            <Radio Value="ActionTypeEnum.Modal">Modal</Radio>
-            <Radio Value="ActionTypeEnum.Self">Self</Radio>
-            <Radio Value="ActionTypeEnum.Blank">Blank</Radio>
-        </RadioGroup>
-    </div>
-    <div class="propertysetting-item">
-        <label>目标对象：</label>
-        <Input @bind-Value="@btn.TargetId"></Input>
-    </div> *@
 }
 <hr color="#f6f6f6" />
 
@@ -97,7 +84,7 @@
             <Input @bind-Value="@context.Title" />
         </FormItem>
         <FormItem Label="按钮行为">
-            <RadioGroup DefaultValue="ActionTypeEnum.None" TValue="ActionTypeEnum" @bind-Value="@context.ButtonAction.ActionType">
+            <RadioGroup DefaultValue="ActionTypeEnum.None" TValue="ActionTypeEnum" @bind-Value="@context.ActionType">
                 <Radio Value="ActionTypeEnum.None">None</Radio>
                 <Radio Value="ActionTypeEnum.Modal">Modal</Radio>
                 <Radio Value="ActionTypeEnum.Self">Self</Radio>
@@ -122,12 +109,6 @@
 
     private TablePropertySchema _tableSchema = new();
 
-    #region Columns
-    private bool _columnVisible;
-    private Form<TableColumnSchema> _columnForm;
-    private bool _isColumnCreate;
-    private TableColumnSchema _tableColumnSchema = new TableColumnSchema();
-
     protected override void OnInitialized()
     {
         if (Component.ComponentProperty?.TablePropertiess.IsNullOrEmpty() == false)
@@ -137,6 +118,19 @@
 
         base.OnInitialized();
     }
+
+    private void OnPropertyChanged()
+    {
+        Component.ComponentProperty.TablePropertiess = _tableSchema.ToJson();
+
+        //OnTablePropertyChange?.Invoke(Component.ComponentProperty.TablePropertiess);
+    }
+
+    #region Columns
+    private bool _columnVisible;
+    private Form<TableColumnSchema> _columnForm;
+    private bool _isColumnCreate;
+    private TableColumnSchema _tableColumnSchema = new TableColumnSchema();
 
     private void CreateColumn()
     {
@@ -197,16 +191,7 @@
     {
         if (_isColumnCreate)
         {
-            TableColumnSchema column = new()
-                {
-                    Id = _tableColumnSchema.Id,
-                    Name = _tableColumnSchema.Name,
-                    Title = _tableColumnSchema.Title,
-                    IsPrimaryKey = _tableColumnSchema.IsPrimaryKey,
-                    Filterable = _tableColumnSchema.Filterable,
-                    Sortable = _tableColumnSchema.Sortable,
-                    Order = _tableColumnSchema.Order
-                };
+            TableColumnSchema column = _tableColumnSchema.DeepClone();
             _tableSchema.Columns.Add(column);
         }
         else
@@ -289,13 +274,7 @@
     {
         if (_isbtnCreate)
         {
-            TableButtonSchema btn = new()
-                {
-                    Id = _tableButtonSchema.Id,
-                    Name = _tableButtonSchema.Name,
-                    Title = _tableButtonSchema.Title,
-                    Order = _tableButtonSchema.Order
-                };
+            TableButtonSchema btn = _tableButtonSchema.DeepClone();
             _tableSchema.Buttons.Add(btn);
         }
         else
@@ -305,11 +284,4 @@
         return true;
     }
     #endregion
-
-    private void OnPropertyChanged()
-    {
-        Component.ComponentProperty.TablePropertiess = _tableSchema.ToJson();
-
-        //OnTablePropertyChange?.Invoke(Component.ComponentProperty.TablePropertiess);
-    }
 }

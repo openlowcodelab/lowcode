@@ -70,11 +70,11 @@ else
             }
             else if (fragment.FragmentEnum == FragmentEnum.Attribute)
             {
-                if (fragment.ValueType == ComponentValueType.Integer)
+                if (fragment.ValueType == ComponentValueTypeEnum.Integer)
                 {
                     builder.AddAttribute(fragment.Index, fragment.Name, fragment.IntValue);
                 }
-                else if (fragment.ValueType == ComponentValueType.String)
+                else if (fragment.ValueType == ComponentValueTypeEnum.String)
                 {
                     if ("{self}".Equals(fragment.StringValue, StringComparison.OrdinalIgnoreCase))
                         builder.AddAttribute(fragment.Index, fragment.Name, Component);
@@ -84,9 +84,9 @@ else
             }
             else if (fragment.FragmentEnum == FragmentEnum.Parameter)
             {
-                if (fragment.ValueType == ComponentValueType.Integer)
+                if (fragment.ValueType == ComponentValueTypeEnum.Integer)
                     builder.AddComponentParameter(fragment.Index, fragment.Name, fragment.IntValue);
-                else if (fragment.ValueType == ComponentValueType.String)
+                else if (fragment.ValueType == ComponentValueTypeEnum.String)
                 {
                     if ("{self}".Equals(fragment.StringValue, StringComparison.OrdinalIgnoreCase))
                         builder.AddAttribute(fragment.Index, fragment.Name, Component);

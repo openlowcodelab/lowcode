@@ -7,12 +7,6 @@
 {
     <div class="designpanel" style="margin:5px; height:100%; overflow-y: auto;">
         <DropItemContainer ContainerComponent="@_rootComponent" IsRootContainer="true"></DropItemContainer>
-
-        @if (PageType == (int)PageTypeEnum.Form)
-        {
-            @* 表单提交、取消按钮 *@
-            <DropItemContainer ContainerComponent="@CreatComponent_FormButton()"></DropItemContainer>
-        }
     </div>
 }
 
@@ -49,89 +43,5 @@
         if (pageSchema != null && DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId) != null)
             DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId).Childrens = pageSchema.Components;
         StateHasChanged();
-    }
-
-    protected ComponentSchema CreatComponent_FormButton()
-    {
-        var component = CreateComponent("formcontainer_buttom");
-        if (component.Childrens.Count != 0)
-            return component;
-
-        //设置自定义样式
-        component.ComponentStyle.DefaultStyle = "width: 200px; height: 85px; position:fixed; bottom:20px; right: 280px;";
-
-        CreateButton("提交", component);
-        CreateButton("取消", component);
-
-        return component;
-    }
-
-    private ComponentSchema CreateButton(string title, ComponentSchema component)
-    {
-        ComponentSchema formComponent = new("button")
-            {
-                IsHiddenTitle = true,
-                ComponentFragments =
-                            [
-                                            new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(Input<string>).GetFullNameWithAssemblyName() }
-                            ],
-                ComponentProperty = new()
-                {
-                    Title = title,
-                    ComponentValueType = ComponentValueType.None
-                },
-                ComponentStyle = new()
-                {
-                    ItemWidth = 12,
-                    ItemHeight = 40
-                }
-            };
-        formComponent.ParentId = component.Id;
-        component.Childrens.Add(formComponent);
-        return formComponent;
-    }
-
-    protected virtual ComponentSchema CreateComponent(string key, Action<ComponentSchema> action = null)
-    {
-        var c = DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId).Childrens.FirstOrDefault(t =>
-            {
-                if (t.ComponentProperty.ExtensionData.ContainsKey(key))
-                    return true;
-                return false;
-            });
-        if (c != null)
-            return c;
-
-        var component = CreateContainerComponent(key);
-
-        if (action != null) action(component);
-
-        DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId).Childrens.Add(component);
-
-        return component;
-    }
-
-    private ComponentSchema CreateContainerComponent(string name)
-    {
-        var component = new ComponentSchema(name);
-        component.Id = Guid.NewGuid();
-        component.Refresh = StateHasChanged;
-
-        component.ComponentFragments = [];
-        component.ComponentProperty = new();
-        component.ComponentStyle = new() { DefaultStyle = "height:100%; width:100%;" };
-        component.ComponentEvent = default;
-        component.DragEffectStyle = default;
-        component.IsDropedAfter = default;
-        component.IsDroppedFromComponentPanel = default;
-        component.IsHiddenTitle = true;
-        component.IsSelected = default;
-        component.Opacity = default;
-
-        component.IsContainerComponent = true;
-        component.ComponentProperty.ExtensionData.Add(name, name);
-        component.ParentId = DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId).Id;
-
-        return component;
     }
 }

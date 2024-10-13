@@ -36,7 +36,7 @@
         }
 
         @*"type": "string"*@
-        @if (Component.ComponentProperty.ComponentValueType == ComponentValueType.String)
+        @if (Component.ComponentProperty.ComponentValueType == ComponentValueTypeEnum.String)
         {
             if (Component.ComponentProperty.IsShowProperty(nameof(ComponentPropertySchema.MaximumLength)))
             {
@@ -70,7 +70,7 @@
 
         @*"type": "integer"*@
         @*"type": "number"*@
-        @if (Component.ComponentProperty.ComponentValueType == ComponentValueType.Integer || Component.ComponentProperty.ComponentValueType == ComponentValueType.Double)
+        @if (Component.ComponentProperty.ComponentValueType == ComponentValueTypeEnum.Integer || Component.ComponentProperty.ComponentValueType == ComponentValueTypeEnum.Double)
         {
             if (Component.ComponentProperty.IsShowProperty(nameof(ComponentPropertySchema.Maximum)))
             {

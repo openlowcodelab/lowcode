@@ -4,9 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace H.LowCode.ComponentParts.BasicComponents;
+namespace H.LowCode.MetaSchema;
 
-public class LcTableExtensionProperty
+public enum PublishStatusEnum
 {
-
+    Development,
+    Approving,
+    Published
 }
