@@ -200,7 +200,7 @@
     private async Task CreateAsync()
     {
         await Task.Delay(1);
-        _dataSource = new() { Id = Guid.NewGuid().ToString(), AppId = AppId, DataSourceType = DataSourceTypeEnum.API };
+        _dataSource = new() { AppId = AppId, DataSourceType = DataSourceTypeEnum.API };
         _dataSource.API = new();
 
         _visible = true;

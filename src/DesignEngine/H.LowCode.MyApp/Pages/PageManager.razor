@@ -77,7 +77,7 @@
 
     private bool _visible;
     private Form<PageSchema> _form;
-    private PageSchema _pageSchema = new PageSchema(true);
+    private PageSchema _pageSchema = new PageSchema();
 
     protected override async Task OnInitializedAsync()
     {
@@ -110,7 +110,7 @@
 
     private void CreateAsync(string parentId)
     {
-        _pageSchema = new PageSchema(true);
+        _pageSchema = new PageSchema();
         _pageSchema.AppId = AppId;
         _visible = true;
 

@@ -5,19 +5,8 @@ namespace H.LowCode.MetaSchema;
 
 public class PageSchema : MetaSchemaBase
 {
-    public PageSchema(bool isNewId)
-    {
-        if (isNewId)
-            Id = ShortIdGenerator.Generate();
-    }
-
-    public PageSchema()
-    {
-
-    }
-
     [JsonPropertyName("aid")]
-    public string AppId { get; set; }
+    public string AppId { get; set; } = ShortIdGenerator.Generate();
 
     public string Id { get; set; }
 

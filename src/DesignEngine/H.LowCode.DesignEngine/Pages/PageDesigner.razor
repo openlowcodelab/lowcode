@@ -73,7 +73,7 @@
         if (string.Equals("_empty", PageId))
         {
             _isNewPage = true;
-            var newPage = new PageSchema(true) { AppId = AppId, Name = "newpage" };
+            var newPage = new PageSchema() { AppId = AppId, Name = "newpage" };
             PageId = newPage.Id;
 
             DragDropStateService.SetPage(AppId, newPage);

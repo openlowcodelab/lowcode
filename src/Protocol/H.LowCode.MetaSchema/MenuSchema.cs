@@ -5,23 +5,10 @@ namespace H.LowCode.MetaSchema;
 
 public class MenuSchema : MetaSchemaBase
 {
-    public MenuSchema(bool isNewId)
-    {
-        if (isNewId)
-        {
-            Id = ShortIdGenerator.Generate();
-        }
-    }
-
-    public MenuSchema()
-    {
-
-    }
-
     [JsonPropertyName("aid")]
     public string AppId {  get; set; }
 
-    public string Id { get; set; }
+    public string Id { get; set; } = ShortIdGenerator.Generate();
 
     [JsonPropertyName("pid")]
     public string ParentId { get; set; }

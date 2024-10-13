@@ -263,7 +263,7 @@
     private async Task CreateAsync()
     {
         await Task.Delay(1);
-        _dataSource = new() { Id = Guid.NewGuid().ToString(), AppId = AppId, DataSourceType = DataSourceTypeEnum.Table };
+        _dataSource = new() { AppId = AppId, DataSourceType = DataSourceTypeEnum.Table };
         _visible = true;
         _modalTitle = "新建数据表";
 

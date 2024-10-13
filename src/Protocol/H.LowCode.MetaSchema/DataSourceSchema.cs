@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using H.Util.Ids;
+using System.Text.Json.Serialization;
 
 namespace H.LowCode.MetaSchema;
 
@@ -7,7 +8,7 @@ public class DataSourceSchema : MetaSchemaBase
     [JsonPropertyName("aid")]
     public string AppId { get; set; }
 
-    public string Id { get; set; }
+    public string Id { get; set; } = ShortIdGenerator.Generate();
 
     [JsonPropertyName("n")]
     public string Name { get; set; }

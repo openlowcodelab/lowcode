@@ -85,7 +85,7 @@
 
     private bool _visible = false;
     private Form<MenuSchema> _form;
-    private MenuSchema _menuSchema = new MenuSchema(true);
+    private MenuSchema _menuSchema = new MenuSchema();
 
     protected override async Task OnInitializedAsync()
     {
@@ -117,7 +117,7 @@
 
     private void CreateAsync(string parentId)
     {
-        _menuSchema = new MenuSchema(true);
+        _menuSchema = new MenuSchema();
         _menuSchema.AppId = AppId;
         _menuSchema.ParentId = parentId;
         _visible = true;
