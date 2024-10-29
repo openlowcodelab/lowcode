@@ -123,10 +123,10 @@
                     <Checkbox @bind-Checked="_fieldEditCache[context.Id].field.IsUnique"></Checkbox>
                 }
             </PropertyColumn>
-            <PropertyColumn Title="是否可空" Property="c => c.IsNull">
+            <PropertyColumn Title="是否可空" Property="c => c.IsNullable">
                 @if (!_fieldEditCache[context.Id].edit)
                 {
-                    @if (context.IsNull)
+                    @if (context.IsNullable)
                     {
                         <span>是</span>
                     }
@@ -137,7 +137,7 @@
                 }
                 else
                 {
-                    <Checkbox @bind-Checked="_fieldEditCache[context.Id].field.IsNull"></Checkbox>
+                    <Checkbox @bind-Checked="_fieldEditCache[context.Id].field.IsNullable"></Checkbox>
                 }
             </PropertyColumn>
             <ActionColumn Title="操作">
@@ -299,7 +299,7 @@
     {
         await Task.Delay(1);
 
-        TableFieldSchema newField = new() { Id = Guid.NewGuid().ToString(), IsNull = true };
+        TableFieldSchema newField = new() { Id = Guid.NewGuid().ToString(), IsNullable = true };
 
         //添加编辑缓存
         _fieldEditCache[newField.Id] = (true, newField);

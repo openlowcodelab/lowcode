@@ -1,9 +1,7 @@
-﻿using H.Extensions.System;
-using H.LowCode.Configuration;
-using H.LowCode.DesignEngine.Application.Contracts;
+﻿using H.LowCode.DesignEngine.Application.Contracts;
 using H.LowCode.DesignEngine.Model;
+using H.LowCode.Domain;
 using H.LowCode.MetaSchema;
-using Microsoft.Extensions.Options;
 using System.Collections.Generic;
 using System.Text;
 
@@ -11,32 +9,20 @@ namespace H.LowCode.DesignEngine.Application;
 
 public class DataSourceAppService : IDataSourceAppService
 {
-    private static string metaBaseDir;
-    private static string dataSourceName_Format = @"{0}\{1}\datasource\{2}.json";
+    private IDataSourceDomainService _domainService;
 
-    public DataSourceAppService(IOptions<MetaOption> metaOption)
+    public DataSourceAppService(IDataSourceDomainService domainService)
     {
-        metaBaseDir = metaOption.Value.AppsFilePath;
+        _domainService = domainService;
     }
 
     public async Task<IList<DataSourceListModel>> GetListAsync(string appId, DataSourceInput input)
     {
-        await Task.Delay(1);
-        List<DataSourceListModel> list = [];
+        var dataSources = await _domainService.GetListAsync(appId);
 
-        var dataSourceFolder = Path.Combine(metaBaseDir, appId, "datasource");
-        if (!Directory.Exists(dataSourceFolder))
-            return list;
-
-        var files = Directory.GetFiles(dataSourceFolder);
-        foreach (var fileName in files)
+        List<DataSourceListModel> list = new List<DataSourceListModel>();
+        foreach (var dataSourceSchema in dataSources)
         {
-            var dataSourceSchemaJson = ReadAllText(fileName);
-            var dataSourceSchema = dataSourceSchemaJson.FromJson<DataSourceSchema>();
-
-            if (dataSourceSchema.DataSourceType != input.DataSourceType)
-                continue;
-
             DataSourceListModel model = new()
             {
                 Id = dataSourceSchema.Id,
@@ -49,23 +35,15 @@ public class DataSourceAppService : IDataSourceAppService
                 PublishStatus = dataSourceSchema.PublishStatus,
                 ModifiedTime = dataSourceSchema.ModifiedTime
             };
-
             list.Add(model);
         }
 
-        //排序
-        list = list.OrderBy(t => t.Order).ToList();
-
-        return list;
+        return list.Where(t => t.DataSourceType == input.DataSourceType).OrderBy(t => t.Order).ToList();
     }
 
     public async Task<DataSourceSchema> GetAsync(string appId, string id)
     {
-        await Task.Delay(1);
-        string fileName = string.Format(dataSourceName_Format, metaBaseDir, appId, id);
-
-        var dataSourceSchemaJson = ReadAllText(fileName);
-        return dataSourceSchemaJson.FromJson<DataSourceSchema>();
+        return await _domainService.GetAsync(appId, id);
     }
 
     public async Task SaveAsync(string appId, DataSourceSchema dataSourceSchema)
@@ -73,38 +51,11 @@ public class DataSourceAppService : IDataSourceAppService
         ArgumentNullException.ThrowIfNull(dataSourceSchema);
         ArgumentException.ThrowIfNullOrEmpty(dataSourceSchema.Id);
 
-        dataSourceSchema.ModifiedTime = DateTime.UtcNow;
-
-        await Task.Delay(1);
-        string fileName = string.Format(dataSourceName_Format, metaBaseDir, appId, dataSourceSchema.Id);
-
-        string fileDirectory = Path.GetDirectoryName(fileName);
-        if (!Directory.Exists(fileDirectory))
-            Directory.CreateDirectory(fileDirectory);
-
-        File.WriteAllText(fileName, dataSourceSchema.ToJson(), Encoding.UTF8);
+        await _domainService.SaveAsync(appId, dataSourceSchema);
     }
 
     public async Task DeleteAsync(string appId, string id)
     {
-        await Task.Delay(1);
-
-        string fileName = string.Format(dataSourceName_Format, metaBaseDir, appId, id);
-        if (!File.Exists(fileName))
-            return;
-
-        var dataSourceFolder = Path.Combine(metaBaseDir, appId, "datasource");
-        if (!Directory.Exists(dataSourceFolder))
-            return;
-
-        File.Delete(fileName);
-    }
-
-    private static string ReadAllText(string fileName)
-    {
-        if (!File.Exists(fileName))
-            throw new FileNotFoundException(fileName);
-
-        return File.ReadAllText(fileName, Encoding.UTF8);
+        await _domainService.DeleteAsync(appId, id);
     }
 }

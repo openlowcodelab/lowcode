@@ -33,7 +33,7 @@ public abstract class LowCodeComponentBase : Microsoft.AspNetCore.Components.Com
 
     protected Uri GetBaseUri()
     {
-        return new Uri( NavigationManager.BaseUri);
+        return new Uri(NavigationManager.BaseUri);
     }
 
     protected void NavigateTo([StringSyntax("Uri")] string uri, bool forceLoad = false)

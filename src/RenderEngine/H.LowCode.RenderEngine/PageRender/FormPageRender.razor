@@ -6,8 +6,18 @@
     <ComponentRender Component="@component" IsInRootContainer="true"></ComponentRender>
 }
 
+@* 保存、取消按钮 *@
+<div style="width: 200px; height: 85px; position:fixed; bottom:20px; right: 280px;">
+    <button>保存</button>
+    <button>取消</button>
+</div>
+
 @code {
     [Parameter]
     public PageSchema Page { get; set; }
 
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
 }

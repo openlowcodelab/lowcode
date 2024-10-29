@@ -28,7 +28,7 @@ public record TableFieldSchema
     /// 是否可空
     /// </summary>
     [JsonPropertyName("nul")]
-    public bool IsNull { get; set; }
+    public bool IsNullable { get; set; }
 
     [JsonPropertyName("unique")]
     public bool IsUnique { get; set; }

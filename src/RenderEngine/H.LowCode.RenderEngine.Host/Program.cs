@@ -3,6 +3,8 @@ using H.LowCode.RenderEngine.Host.Client;
 using System.Text.Json;
 using H.LowCode.RenderEngine.Host.Components;
 using H.Util.Blazor;
+using H.LowCode.EntityFrameworkCore;
+using H.LowCode.Repository.JsonFile;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,11 +24,15 @@ builder.Services.AddHttpClient();
 #region  LowCode
 builder.Services.AddRenderEngine();
 builder.Services.AddRenderEngineHttpApi();
+builder.Services.AddApplication<LowCodeEntityFrameworkCoreModule>();
+builder.Services.AddApplication<MetaJsonFileRepositoryModule>();
 #endregion
 
 var app = builder.Build();
 
 ServiceLocator.SetServiceProvider(app.Services);
+
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

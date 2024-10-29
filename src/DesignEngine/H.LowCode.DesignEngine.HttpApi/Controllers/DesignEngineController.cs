@@ -1,5 +1,4 @@
-﻿using H.Extensions.System;
-using H.LowCode.Configuration;
+﻿using H.LowCode.Configuration;
 using H.LowCode.DesignEngine.Application.Contracts;
 using H.LowCode.DesignEngine.Model;
 using H.LowCode.MetaSchema;
@@ -10,19 +9,26 @@ namespace H.LowCode.DesignEngine.HttpApi;
 
 public class DesignEngineController : DesignEngineControllerBase
 {
-    private IDesignEngineAppService _designAppService;
+    private IAppApplicationService _appApplicationService;
+    private IMenuAppService _menuAppService;
+    private IPageAppService _pageAppService;
     private IEnumerable<SiteOption> _sites;
 
-    public DesignEngineController(IDesignEngineAppService designEngineAppService, IOptions<List<SiteOption>> siteOptions)
+    public DesignEngineController(IAppApplicationService designEngineAppService,
+        IMenuAppService menuAppService,
+        IPageAppService pageAppService,
+        IOptions<List<SiteOption>> siteOptions)
     {
-        _designAppService = designEngineAppService;
+        _appApplicationService = designEngineAppService;
+        _menuAppService = menuAppService;
+        _pageAppService = pageAppService;
         _sites = siteOptions.Value;
     }
 
     [HttpGet]
     public async Task<IList<AppListModel>> GetAppsAsync()
     {
-        var appSchemas = await _designAppService.GetAppsAsync();
+        var appSchemas = await _appApplicationService.GetListAsync();
         return appSchemas.Select(x => new AppListModel
         {
             Id = x.Id,
@@ -35,60 +41,60 @@ public class DesignEngineController : DesignEngineControllerBase
     [HttpPost]
     public async Task SaveAppAsync(AppSchema appSchema)
     {
-        await _designAppService.SaveAppAsync(appSchema);
+        await _appApplicationService.SaveAsync(appSchema);
     }
 
     [HttpGet]
     public async Task<AppSchema> GetAppAsync(string appId)
     {
-        return await _designAppService.GetAppAsync(appId);
+        return await _appApplicationService.GetAsync(appId);
     }
 
     [HttpGet]
     public async Task<MenuSchema> GetMenuAsync(string appId, string menuId)
     {
-        return await _designAppService.GetMenuAsync(appId, menuId);
+        return await _menuAppService.GetAsync(appId, menuId);
     }
 
     [HttpGet]
     public async Task<IList<MenuSchema>> GetMenusAsync(string appId)
     {
-        return await _designAppService.GetMenusAsync(appId);
+        return await _menuAppService.GetListAsync(appId);
     }
 
     [HttpPost]
     public async Task SaveMenuAsync(MenuSchema menuSchema)
     {
-        await _designAppService.SaveMenuAsync(menuSchema);
+        await _menuAppService.SaveAsync(menuSchema);
     }
 
     [HttpGet]
     public async Task DeleteMenuAsync(string appId, string menuId)
     {
-        await _designAppService.DeleteMenuAsync(appId, menuId);
+        await _menuAppService.DeleteAsync(appId, menuId);
     }
 
     [HttpGet]
     public async Task<List<PageListModel>> GetPagesAsync(string appId)
     {
-        return await _designAppService.GetPagesAsync(appId);
+        return await _pageAppService.GetListAsync(appId);
     }
 
     [HttpGet]
     public async Task<PageSchema> GetPageAsync(string appId, string pageId)
     {
-        return await _designAppService.GetPageAsync(appId, pageId);
+        return await _pageAppService.GetAsync(appId, pageId);
     }
 
     [HttpPost]
     public async Task SavePageAsync(PageSchema pageSchema)
     {
-        await _designAppService.SavePageAsync(pageSchema);
+        await _pageAppService.SaveAsync(pageSchema);
     }
 
     [HttpGet]
     public async Task DeletePageAsync(string appId, string pageId)
     {
-        await _designAppService.DeletePageAsync(appId, pageId);
+        await _pageAppService.DeleteAsync(appId, pageId);
     }
 }

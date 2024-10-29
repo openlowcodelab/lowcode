@@ -6,5 +6,5 @@ public interface IRenderEngineAppService
 {
     Task<IList<MenuSchema>> GetMenusAsync(string appId);
 
-    Task<string> GetPageAsync(string appId, string pageId);
+    Task<PageSchema> GetPageAsync(string appId, string pageId);
 }

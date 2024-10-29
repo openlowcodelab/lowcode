@@ -23,7 +23,7 @@ public class RenderEngineController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<string> GetPageAsync(string appId, string pageId)
+    public async Task<PageSchema> GetPageAsync(string appId, string pageId)
     {
         return await _renderAppService.GetPageAsync(appId, pageId);
     }

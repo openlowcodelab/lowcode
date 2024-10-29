@@ -28,7 +28,7 @@ public class DataSourceSchema : MetaSchemaBase
     [JsonPropertyName("pubstatus")]
     public bool PublishStatus { get; set; }
 
-    #region 根据 DataSourceType 选用
+    #region DataSourceType=Table
     /// <summary>
     /// 数据表数据源
     /// </summary>
@@ -36,11 +36,20 @@ public class DataSourceSchema : MetaSchemaBase
     public IList<TableFieldSchema> TableFields { get; set; } = [];
 
     /// <summary>
+    /// 是否启用软删除
+    /// </summary>
+    public bool EnableSoftDelete { get; set; }
+    #endregion
+
+    #region DataSourceType=API
+    /// <summary>
     /// API 数据源
     /// </summary>
     [JsonPropertyName("api")]
     public APISchema API { get; set; }
+    #endregion
 
+    #region DataSourceType=Option
     /// <summary>
     /// 选项数据源
     /// </summary>
