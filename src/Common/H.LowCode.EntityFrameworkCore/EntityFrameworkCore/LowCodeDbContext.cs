@@ -58,18 +58,9 @@ public class LowCodeDbContext : DbContext
     /// 
     /// </summary>
     /// <param name="modelBuilder"></param>
-    protected override async void OnModelCreating(ModelBuilder modelBuilder)
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        base.OnModelCreating(modelBuilder);
-
-        var types = await _entityTypeManager.GetTypesAsync();
-        foreach (var type in types)
-        {
-            //var entityBuilder1 = modelBuilder.Entity(type)
-            //    .ToTable(type.Name).HasNoKey();
-        }
-
-        var dynamicEntities = await _entityTypeManager.LoadDynamicEntitiesAsync();
+        var dynamicEntities = _entityTypeManager.LoadDynamicEntities();
         for (var i = 0; i < dynamicEntities.Count(); i++)
         {
             var dynamicEntity = dynamicEntities[i];
@@ -90,6 +81,8 @@ public class LowCodeDbContext : DbContext
                 });
             }
         }
+
+        base.OnModelCreating(modelBuilder);
     }
 
     private void ConfigureProperties(EntityTypeBuilder entityBuilder, DynamicEntityInfo dynamicEntity, Type entityType)

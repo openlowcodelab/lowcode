@@ -30,44 +30,14 @@ public class EntityTypeManager
         _dataSourceDomainService = dataSourceDomainService;
     }
 
-    public async Task<List<Type>> GetTypesAsync()
-    {
-        InitDynamicAssembly();
-
-        int i = 1;
-
-        List<Type> types = [];
-        var typeName1 = $"tb_person{i++}";
-        var entityType1 = EntityFactory.CreateEntityType(_dynamicModule, typeName1, null);
-        types.Add(entityType1);
-
-        //var typeName2 = $"tb_test4";
-        //var entityTyp2 = EntityFactory.CreateEntityType(_dynamicModule, typeName2, null);
-        //types.Add(entityTyp2);
-
-        if (types.Count > 0)
-            return types;
-
-        var entities = await _dataSourceDomainService.GetAllEntitiesAsync("caseapp");
-
-        foreach (var entity in entities)
-        {
-            //定义子类，继承 EntityBase 基类
-            var entityType = EntityFactory.CreateEntityType(_dynamicModule, entity.Name, null);
-            types.Add(entityType);
-            return types;
-        }
-        return types;
-    }
-
-    public async Task<IReadOnlyList<DynamicEntityInfo>> LoadDynamicEntitiesAsync()
+    public IReadOnlyList<DynamicEntityInfo> LoadDynamicEntities()
     {
         InitDynamicAssembly();
 
         if(_dynamicEntities.Count > 0)
             return _dynamicEntities;
 
-        var entities = await _dataSourceDomainService.GetAllEntitiesAsync("caseapp");
+        var entities = _dataSourceDomainService.GetAllEntities("caseapp");
         foreach (var entity in entities)
         {
             var fields = entity.TableFields.Select(f => new DynamicEntityField()
