@@ -10,7 +10,7 @@ public interface IDataSourceDomainService : IDomainService
 
     Task<IList<DataSourceSchema>> GetAllApisAsync(string appId);
 
-    Task<IList<DataSourceSchema>> GetAllEntitiesAsync(string appId);
+    IEnumerable<DataSourceSchema> GetAllEntities(string appId);
 
     Task<DataSourceSchema> GetAsync(string appId, string id);
 

@@ -24,9 +24,9 @@ public class DataSourceDomainService : IDataSourceDomainService
         return list.Where(t => t.DataSourceType == DataSourceTypeEnum.API).ToList();
     }
 
-    public async Task<IList<DataSourceSchema>> GetAllEntitiesAsync(string appId)
+    public IEnumerable<DataSourceSchema> GetAllEntities(string appId)
     {
-        var list = await GetListAsync(appId);
+        var list = GetListAsync(appId).Result;
         return list.Where(t => t.DataSourceType == DataSourceTypeEnum.Table).ToList();
     }
 

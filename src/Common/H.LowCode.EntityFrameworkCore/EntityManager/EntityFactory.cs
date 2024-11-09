@@ -6,8 +6,6 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using H.LowCode.Domain;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace H.LowCode.EntityFrameworkCore;
 
@@ -35,11 +33,11 @@ public class EntityFactory
         var tb = mb.DefineType(entityTypeName, typeof(EntityBase));
 
         //定义属性
-        //foreach (var field in fields)
-        //{
-        //    //定义属性
-        //    tb.DefineField(field.Name, field.ClrType);
-        //}
+        foreach (var field in fields)
+        {
+            //定义属性
+            tb.DefineField(field.Name, field.ClrType);
+        }
 
         var entityType = tb.CreateType();
         return entityType;
