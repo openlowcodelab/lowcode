@@ -14,8 +14,6 @@ public abstract class EntityBase
 
     public string Id { get; set; }
 
-    public string EntityName { get; set; }
-
     ///// <summary>
     ///// 创建一个自定实体。
     ///// </summary>
