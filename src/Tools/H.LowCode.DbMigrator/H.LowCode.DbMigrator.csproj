@@ -3,22 +3,30 @@
 	<Import Project="..\..\global.props" />
 
 	<PropertyGroup>
-    <OutputType>Exe</OutputType>
-  </PropertyGroup>
+		<OutputType>Exe</OutputType>
+	</PropertyGroup>
 
-  <ItemGroup>    
-    <PackageReference Include="Serilog.Extensions.Logging" />
-    <PackageReference Include="Serilog.Sinks.Async" />
-    <PackageReference Include="Serilog.Sinks.File" />
-    <PackageReference Include="Serilog.Sinks.Console" />
-	<PackageReference Include="Serilog.Settings.Configuration" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" />
-	<PackageReference Include="Volo.Abp.Core" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Serilog.Extensions.Logging" />
+		<PackageReference Include="Serilog.Sinks.Async" />
+		<PackageReference Include="Serilog.Sinks.File" />
+		<PackageReference Include="Serilog.Sinks.Console" />
+		<PackageReference Include="Serilog.Settings.Configuration" />
+		<PackageReference Include="Microsoft.Extensions.Hosting" />
+		<PackageReference Include="Volo.Abp.Core" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\Common\H.LowCode.Configuration\H.LowCode.Configuration.csproj" />
-    <ProjectReference Include="..\..\Common\H.LowCode.EntityFrameworkCore\H.LowCode.EntityFrameworkCore.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\Common\H.LowCode.Configuration\H.LowCode.Configuration.csproj" />
+		<ProjectReference Include="..\..\Common\H.LowCode.EntityFrameworkCore\H.LowCode.EntityFrameworkCore.csproj" />
+		<ProjectReference Include="..\..\Common\H.LowCode.Repository.JsonFile\H.LowCode.Repository.JsonFile.csproj" />
+	</ItemGroup>
 
 </Project>

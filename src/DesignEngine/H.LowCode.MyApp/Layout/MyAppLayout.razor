@@ -43,7 +43,7 @@
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = base.GetBaseUri();
 
-        var pageSchema = await httpClient.GetFromJsonAsync<AppSchema>($"api/designengine/getapp?appId={appId}");
+        var pageSchema = await httpClient.GetFromJsonAsync<AppSchema>($"api/designer/getapp?appId={appId}");
         return pageSchema;
     }
 

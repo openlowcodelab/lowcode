@@ -9,7 +9,7 @@ using System.Xml.Linq;
 
 namespace H.LowCode.RenderEngine.Application;
 
-public class RenderEngineAppService : IRenderEngineAppService
+public class RenderEngineAppService : IMetaAppService
 {
     private IMenuDomainService _menuDomainService;
     private IPageDomainService _pageDomainService;

@@ -102,7 +102,7 @@
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = base.GetBaseUri();
 
-        var result = await httpClient.GetFromJsonAsync<List<MenuSchema>>($"api/designengine/getmenus?appId={AppId}");
+        var result = await httpClient.GetFromJsonAsync<List<MenuSchema>>($"api/designer/getmenus?appId={AppId}");
         return result;
     }
 
@@ -111,7 +111,7 @@
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = base.GetBaseUri();
 
-        var result = await httpClient.GetFromJsonAsync<MenuSchema>($"api/designengine/getmenu?appId={AppId}&menuId={id}");
+        var result = await httpClient.GetFromJsonAsync<MenuSchema>($"api/designer/getmenu?appId={AppId}&menuId={id}");
         return result;
     }
 
@@ -138,7 +138,7 @@
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = base.GetBaseUri();
 
-        await httpClient.GetAsync($"api/designengine/deletemenu?appId={AppId}&menuId={id}");
+        await httpClient.GetAsync($"api/designer/deletemenu?appId={AppId}&menuId={id}");
         await Message.Success("删除成功！");
     }
 
@@ -180,7 +180,7 @@
 
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = base.GetBaseUri();
-        var result = await httpClient.PostAsync($"api/designengine/savemenu", content);
+        var result = await httpClient.PostAsync($"api/designer/savemenu", content);
 
         return result;
     }

@@ -41,7 +41,7 @@ public abstract class ThemePartLayoutBase : LowCodeLayoutComponentBase
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = base.GetBaseUri();
 
-        var result = await httpClient.GetFromJsonAsync<List<MenuSchema>>($"api/renderengine/getmenus?appId={appId}");
+        var result = await httpClient.GetFromJsonAsync<List<MenuSchema>>($"api/meta/getmenus?appId={appId}");
         return result;
     }
 }

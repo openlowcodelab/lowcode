@@ -1,5 +1,6 @@
 ﻿using H.LowCode.Domain;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
@@ -35,21 +36,20 @@ public class LowCodeDbContext : DbContext
     {
         optionsBuilder.AddInterceptors(new ReadOnlySaveChangesInterceptor());
 
-        ////注册EFcore拦截器
-        ////optionsBuilder.AddInterceptors(new QueryWithNoLockDbCommandInterceptor());
+        //设置连接字符串
+        //optionsBuilder.UseSqlServer(_connectionInfo.ConnectionString);
 
-        ////表重复注册
-        //optionsBuilder.ReplaceService<IProviderConventionSetBuilder, CustomizeRelationalConventionSetBuilder>();
-        //optionsBuilder.ReplaceService<IModelValidator, CustomizeRelationalModelValidator>();
-        ////Linq查询扩展
-        //optionsBuilder.ReplaceService<IRelationalSqlTranslatingExpressionVisitorFactory,
-        //    CustomizeSqlTranslatingExpressionVisitorFactory>();
+        //注册EFcore拦截器，对需要With(NoLock)查询linq进行拦截修改Sql语句
+        optionsBuilder.AddInterceptors(new QueryWithNoLockDbCommandInterceptor());
+        //表重复注册
+        optionsBuilder.ReplaceService<IModelValidator, CustomizeRelationalModelValidator>();
+        //Linq查询扩展
+        //optionsBuilder.ReplaceService<IRelationalSqlTranslatingExpressionVisitorFactory, CustomizeSqlTranslatingExpressionVisitorFactory>();
 
-        ////Entity Attributes填充
+        //Entity Attributes填充
         //optionsBuilder.ReplaceService<IInternalEntityEntryFactory, CustomizeEntityEntryFactory>();
-        ////实体中不可空类型支持
-        //optionsBuilder.ReplaceService<IShapedQueryCompilingExpressionVisitorFactory,
-        //    CustomizeRelationalShapedQueryCompilingExpressionVisitorFactory>();
+        //实体中不可空类型支持
+        //optionsBuilder.ReplaceService<IShapedQueryCompilingExpressionVisitorFactory, CustomizeRelationalShapedQueryCompilingExpressionVisitorFactory>();
 
         base.OnConfiguring(optionsBuilder);
     }

@@ -83,7 +83,7 @@
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = base.GetBaseUri();
 
-        var pageSchema = await httpClient.GetFromJsonAsync<PageSchema>($"api/designengine/getpage?appId={AppId}&pageId={PageId}");
+        var pageSchema = await httpClient.GetFromJsonAsync<PageSchema>($"api/designer/getpage?appId={AppId}&pageId={PageId}");
 
         if (_designPanel != null)
         {
@@ -109,7 +109,7 @@
 
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = base.GetBaseUri();
-        var result = await httpClient.PostAsync($"api/designengine/savepage", content);
+        var result = await httpClient.PostAsync($"api/designer/savepage", content);
 
         if (result.StatusCode == HttpStatusCode.OK)
         {

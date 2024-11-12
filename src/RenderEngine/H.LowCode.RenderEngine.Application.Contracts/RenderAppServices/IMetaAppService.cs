@@ -2,7 +2,7 @@
 
 namespace H.LowCode.RenderEngine.Application.Contracts;
 
-public interface IRenderEngineAppService
+public interface IMetaAppService
 {
     Task<IList<MenuSchema>> GetMenusAsync(string appId);
 

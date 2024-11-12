@@ -55,7 +55,7 @@
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = base.GetBaseUri();
 
-        var pageSchema = await httpClient.GetFromJsonAsync<PageSchema>($"api/renderengine/getpage?appId={AppId}&pageId={PageId}");
+        var pageSchema = await httpClient.GetFromJsonAsync<PageSchema>($"api/meta/getpage?appId={AppId}&pageId={PageId}");
         return pageSchema;
     }
 

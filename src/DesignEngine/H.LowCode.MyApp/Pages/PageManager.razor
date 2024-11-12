@@ -95,7 +95,7 @@
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = base.GetBaseUri();
 
-        var result = await httpClient.GetFromJsonAsync<List<PageListModel>>($"api/designengine/getpages?appId={AppId}");
+        var result = await httpClient.GetFromJsonAsync<List<PageListModel>>($"api/designer/getpages?appId={AppId}");
         return result;
     }
 
@@ -104,7 +104,7 @@
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = base.GetBaseUri();
 
-        var pageSchema = await httpClient.GetFromJsonAsync<PageSchema>($"api/designengine/getpage?appId={AppId}&pageId={pageId}");
+        var pageSchema = await httpClient.GetFromJsonAsync<PageSchema>($"api/designer/getpage?appId={AppId}&pageId={pageId}");
         return pageSchema;
     }
 
@@ -130,7 +130,7 @@
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = base.GetBaseUri();
 
-        await httpClient.GetAsync($"api/designengine/deletepage?appId={AppId}&pageId={pageId}");
+        await httpClient.GetAsync($"api/designer/deletepage?appId={AppId}&pageId={pageId}");
         await Message.Success("删除成功！");
     }
 
@@ -172,7 +172,7 @@
 
         var httpClient = HttpClientFactory.CreateClient();
         httpClient.BaseAddress = base.GetBaseUri();
-        var result = await httpClient.PostAsync($"api/designengine/savepage", content);
+        var result = await httpClient.PostAsync($"api/designer/savepage", content);
 
         return result;
     }

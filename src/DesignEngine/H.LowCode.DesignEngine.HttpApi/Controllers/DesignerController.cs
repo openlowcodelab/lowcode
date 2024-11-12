@@ -7,14 +7,14 @@ using Microsoft.Extensions.Options;
 
 namespace H.LowCode.DesignEngine.HttpApi;
 
-public class DesignEngineController : DesignEngineControllerBase
+public class DesignerController : DesignEngineControllerBase
 {
     private IAppApplicationService _appApplicationService;
     private IMenuAppService _menuAppService;
     private IPageAppService _pageAppService;
     private IEnumerable<SiteOption> _sites;
 
-    public DesignEngineController(IAppApplicationService designEngineAppService,
+    public DesignerController(IAppApplicationService designEngineAppService,
         IMenuAppService menuAppService,
         IPageAppService pageAppService,
         IOptions<List<SiteOption>> siteOptions)

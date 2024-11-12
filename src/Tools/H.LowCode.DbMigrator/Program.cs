@@ -5,7 +5,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Serilog;
-using Serilog.Events;
 
 namespace H.LowCode.DbMigrator;
 
@@ -23,7 +22,7 @@ class Program
             .ConfigureLogging((context, logging) => logging.ClearProviders())
             .ConfigureServices((hostContext, services) =>
             {
-                services.AddHostedService<DbMigratorHostedService>();
+                services.AddHostedService<HostedService>();
             });
 
     private static void ConfigSerilog()
