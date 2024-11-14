@@ -1,4 +1,5 @@
-﻿using H.LowCode.DesignEngine.Application.Contracts;
+﻿using H.LowCode.Configuration;
+using H.LowCode.DesignEngine.Application.Contracts;
 using H.LowCode.Domain;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Modularity;
@@ -10,6 +11,9 @@ public class DesignEngineApplicationModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
+        var configuration = context.Services.GetConfiguration();
+        context.Services.Configure<List<SiteOption>>(configuration.GetSection(SiteOption.SectionName));
+
         context.Services.AddScoped<IAppApplicationService, AppApplicationService>();
         context.Services.AddScoped<IMenuAppService, MenuAppService>();
         context.Services.AddScoped<IPageAppService, PageAppService>();

@@ -5,7 +5,7 @@ using Volo.Abp.Modularity;
 namespace H.LowCode.RenderEngine.HttpApi;
 
 [DependsOn(typeof(RenderEngineApplicationModule))]
-internal class RenderEngineHttpApiModule : AbpModule
+public class RenderEngineHttpApiModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {

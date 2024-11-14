@@ -1,3 +1,4 @@
+using Autofac.Extensions.DependencyInjection;
 using H.LowCode.DesignEngine.Host.Client;
 using H.Util.Blazor;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
@@ -7,7 +8,9 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.Services.AddHttpClient();
 
 #region  LowCode
-builder.Services.AddDesignEngine();
+builder.ConfigureContainer(new AutofacServiceProviderFactory());
+
+builder.Services.AddApplication<DesignEngineHostClientModule>();
 #endregion
 
 var app = builder.Build();

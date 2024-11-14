@@ -8,7 +8,7 @@ public interface IDataSourceAppService : IApplicationService
 {
     Task<IList<DataSourceListModel>> GetListAsync(string appId, DataSourceInput input);
 
-    Task<DataSourceSchema> GetAsync(string appId, string id);
+    Task<DataSourceSchema> GetByIdAsync(string appId, string id);
 
     Task SaveAsync(string appId, DataSourceSchema dataSourceSchema);
 

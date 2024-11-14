@@ -10,11 +10,9 @@ namespace H.LowCode.EntityFrameworkCore;
 
 public class FormDataRepository : IFormDataRepository
 {
-    private LowCodeDbContext _dbContext;
-
-    public FormDataRepository(LowCodeDbContext dbContext)
+    public FormDataRepository()
     {
-        _dbContext = dbContext;
+
     }
 
     public Task<bool> Delete<TKey>(TKey id)
@@ -30,10 +28,5 @@ public class FormDataRepository : IFormDataRepository
     public Task<bool> Save(FormEntity entity)
     {
         throw new NotImplementedException();
-    }
-
-    public void Test()
-    {
-        _dbContext.Database.GetConnectionString();
     }
 }

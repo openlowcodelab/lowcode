@@ -23,7 +23,7 @@ public class MenuAppService : IMenuAppService
         return await _domainService.GetListAsync(appId);
     }
 
-    public async Task<MenuSchema> GetAsync(string appId, string menuId)
+    public async Task<MenuSchema> GetByIdAsync(string appId, string menuId)
     {
         return await _domainService.GetAsync(appId, menuId);
     }

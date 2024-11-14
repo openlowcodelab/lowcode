@@ -13,6 +13,4 @@ public interface IFormDataRepository
     Task<FormEntity> Get<TKey>(TKey id);
 
     Task<bool> Delete<TKey>(TKey id);
-
-    void Test();  //TODO: 测试
 }

@@ -1,10 +1,8 @@
-using H.LowCode.RenderEngine.HttpApi;
 using H.LowCode.RenderEngine.Host.Client;
 using System.Text.Json;
 using H.LowCode.RenderEngine.Host.Components;
 using H.Util.Blazor;
-using H.LowCode.EntityFrameworkCore;
-using H.LowCode.Repository.JsonFile;
+using H.LowCode.RenderEngine.Host;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,16 +20,15 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddHttpClient();
 
 #region  LowCode
-builder.Services.AddRenderEngine();
-builder.Services.AddRenderEngineHttpApi();
-builder.Services.AddApplication<LowCodeEntityFrameworkCoreModule>();
-builder.Services.AddApplication<MetaJsonFileRepositoryModule>();
+builder.Host.UseAutofac();
+
+builder.Services.AddApplication<RenderEngineHostModule>();
 #endregion
 
 var app = builder.Build();
 
 ServiceLocator.SetServiceProvider(app.Services);
-
+await app.InitializeApplicationAsync();
 
 
 // Configure the HTTP request pipeline.
@@ -61,4 +58,4 @@ app.MapRazorComponents<App>()
     .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(LowCodeGlobalVariables.AdditionalAssemblies);  //LowCode
 
-app.Run();
+await app.RunAsync();

@@ -23,7 +23,7 @@ public class DataSourceController : DesignEngineControllerBase
     [HttpGet]
     public async Task<DataSourceSchema> GetAsync(string appId, string id)
     {
-        return await _appService.GetAsync(appId, id);
+        return await _appService.GetByIdAsync(appId, id);
     }
 
     [HttpPost]

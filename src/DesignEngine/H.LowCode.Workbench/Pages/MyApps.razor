@@ -1,9 +1,11 @@
 ﻿@page "/workbench/myapps"
 @namespace H.LowCode.Workbench
+@using Microsoft.Extensions.Configuration
 @inherits LowCodePageComponentBase
 @layout WorkbenchLayout
 
-@inject IHttpClientFactory HttpClientFactory
+@inject IConfiguration Configuration
+@inject IAppApplicationService _appApplicationService
 @inject ComponentStateWrapper<MyApps, IList<AppListModel>> MyAppsState
 
 <PageTitle>我的应用 - H.LowCode</PageTitle>
@@ -35,7 +37,7 @@
                     <SelectOption Value="@("all")" Label="全部" />
                     <SelectOption Value="@("published")" Label="已发布" />
                     <SelectOption Value="@("unpublished")" Label="未发布" />
-	            </SelectOptions>
+                </SelectOptions>
             </Select>
         </div>
     </div>
@@ -88,11 +90,10 @@
 
     private async Task<IList<AppListModel>> LoadAppsAsync()
     {
-        var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = base.GetBaseUri();
+        var url = @Configuration["RemoteServices:DesignEngine:BaseUrl"];
+        Console.WriteLine($"RemoteServices: {url}");
 
-        var result = await httpClient.GetFromJsonAsync<IList<AppListModel>>($"api/designer/getapps");
-        return result;
+        return await _appApplicationService.GetAppsAsync();
     }
 
     private async void ReloadApps()

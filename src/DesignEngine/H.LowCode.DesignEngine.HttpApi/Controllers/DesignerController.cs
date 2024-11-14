@@ -12,30 +12,20 @@ public class DesignerController : DesignEngineControllerBase
     private IAppApplicationService _appApplicationService;
     private IMenuAppService _menuAppService;
     private IPageAppService _pageAppService;
-    private IEnumerable<SiteOption> _sites;
 
     public DesignerController(IAppApplicationService designEngineAppService,
         IMenuAppService menuAppService,
-        IPageAppService pageAppService,
-        IOptions<List<SiteOption>> siteOptions)
+        IPageAppService pageAppService)
     {
         _appApplicationService = designEngineAppService;
         _menuAppService = menuAppService;
         _pageAppService = pageAppService;
-        _sites = siteOptions.Value;
     }
 
     [HttpGet]
     public async Task<IList<AppListModel>> GetAppsAsync()
     {
-        var appSchemas = await _appApplicationService.GetListAsync();
-        return appSchemas.Select(x => new AppListModel
-        {
-            Id = x.Id,
-            SiteUrl = _sites.FirstOrDefault(t => t.AppId.Equals(x.Id, StringComparison.OrdinalIgnoreCase))?.SiteUrl,
-            Name = x.Name,
-            Description = x.Description
-        }).ToList();
+        return await _appApplicationService.GetAppsAsync();
     }
 
     [HttpPost]
@@ -47,13 +37,13 @@ public class DesignerController : DesignEngineControllerBase
     [HttpGet]
     public async Task<AppSchema> GetAppAsync(string appId)
     {
-        return await _appApplicationService.GetAsync(appId);
+        return await _appApplicationService.GetByIdAsync(appId);
     }
 
     [HttpGet]
     public async Task<MenuSchema> GetMenuAsync(string appId, string menuId)
     {
-        return await _menuAppService.GetAsync(appId, menuId);
+        return await _menuAppService.GetByIdAsync(appId, menuId);
     }
 
     [HttpGet]
@@ -83,7 +73,7 @@ public class DesignerController : DesignEngineControllerBase
     [HttpGet]
     public async Task<PageSchema> GetPageAsync(string appId, string pageId)
     {
-        return await _pageAppService.GetAsync(appId, pageId);
+        return await _pageAppService.GetByIdAsync(appId, pageId);
     }
 
     [HttpPost]

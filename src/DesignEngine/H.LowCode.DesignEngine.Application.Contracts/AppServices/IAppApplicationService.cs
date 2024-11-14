@@ -6,9 +6,11 @@ namespace H.LowCode.DesignEngine.Application.Contracts;
 
 public interface IAppApplicationService : IApplicationService
 {
+    Task<IList<AppListModel>> GetAppsAsync();
+
     Task<IList<AppSchema>> GetListAsync();
 
-    Task<AppSchema> GetAsync(string appId);
+    Task<AppSchema> GetByIdAsync(string appId);
 
     Task SaveAsync(AppSchema appSchema);
 }

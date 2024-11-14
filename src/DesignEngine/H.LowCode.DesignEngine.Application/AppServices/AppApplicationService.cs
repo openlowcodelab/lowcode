@@ -1,4 +1,4 @@
-﻿using H.Extensions.System;
+﻿using H.LowCode.Configuration;
 using H.LowCode.DesignEngine.Application.Contracts;
 using H.LowCode.DesignEngine.Model;
 using H.LowCode.Domain;
@@ -11,11 +11,27 @@ namespace H.LowCode.DesignEngine.Application;
 
 public class AppApplicationService : IAppApplicationService
 {
+    private IEnumerable<SiteOption> _sites;
+
     private IAppDomainService _domainService;
 
-    public AppApplicationService(IAppDomainService domainService)
+    public AppApplicationService(IAppDomainService domainService,
+        IOptions<List<SiteOption>> siteOptions)
     {
+        _sites = siteOptions.Value;
         _domainService = domainService;
+    }
+
+    public async Task<IList<AppListModel>> GetAppsAsync()
+    {
+        var appSchemas = await GetListAsync();
+        return appSchemas.Select(x => new AppListModel
+        {
+            Id = x.Id,
+            SiteUrl = _sites.FirstOrDefault(t => t.AppId.Equals(x.Id, StringComparison.OrdinalIgnoreCase))?.SiteUrl,
+            Name = x.Name,
+            Description = x.Description
+        }).ToList();
     }
 
     public async Task<IList<AppSchema>> GetListAsync()
@@ -23,7 +39,7 @@ public class AppApplicationService : IAppApplicationService
         return await _domainService.GetListAsync();
     }
 
-    public async Task<AppSchema> GetAsync(string appId)
+    public async Task<AppSchema> GetByIdAsync(string appId)
     {
         return await _domainService.GetAsync(appId);
     }

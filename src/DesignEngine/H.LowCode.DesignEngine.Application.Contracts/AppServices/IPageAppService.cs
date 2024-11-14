@@ -8,7 +8,7 @@ public interface IPageAppService : IApplicationService
 {
     Task<List<PageListModel>> GetListAsync(string appId);
 
-    Task<PageSchema> GetAsync(string appId, string pageId);
+    Task<PageSchema> GetByIdAsync(string appId, string pageId);
 
     Task SaveAsync(PageSchema pageSchema);
 

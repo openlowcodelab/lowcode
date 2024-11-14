@@ -7,13 +7,9 @@ public class AppDomainService : IAppDomainService
 {
     private readonly IAppRepository _repository;
 
-    public AppDomainService(IAppRepository repository,
-        IFormDataRepository formDataRepository
-        )
+    public AppDomainService(IAppRepository repository)
     {
         _repository = repository;
-
-        formDataRepository.Test();  //TODO: 测试
     }
 
     public async Task<IList<AppSchema>> GetListAsync()

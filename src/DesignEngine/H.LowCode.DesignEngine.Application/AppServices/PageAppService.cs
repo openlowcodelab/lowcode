@@ -23,7 +23,7 @@ public class PageAppService : IPageAppService
         return await _domainService.GetListAsync(appId);
     }
 
-    public async Task<PageSchema> GetAsync(string appId, string pageId)
+    public async Task<PageSchema> GetByIdAsync(string appId, string pageId)
     {
         return await _domainService.GetAsync(appId, pageId);
     }

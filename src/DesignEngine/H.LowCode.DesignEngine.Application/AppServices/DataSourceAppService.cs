@@ -41,7 +41,7 @@ public class DataSourceAppService : IDataSourceAppService
         return list.Where(t => t.DataSourceType == input.DataSourceType).OrderBy(t => t.Order).ToList();
     }
 
-    public async Task<DataSourceSchema> GetAsync(string appId, string id)
+    public async Task<DataSourceSchema> GetByIdAsync(string appId, string id)
     {
         return await _domainService.GetAsync(appId, id);
     }

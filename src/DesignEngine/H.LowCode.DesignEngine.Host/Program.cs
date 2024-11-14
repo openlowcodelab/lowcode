@@ -1,11 +1,8 @@
-using H.LowCode.DesignEngine.HttpApi;
 using H.LowCode.DesignEngine.Host.Client;
 using System.Text.Json;
 using H.LowCode.DesignEngine.Host.Components;
 using H.Util.Blazor;
-using Microsoft.Extensions.Hosting;
-using H.LowCode.Repository.JsonFile;
-using H.LowCode.EntityFrameworkCore;
+using H.LowCode.DesignEngine.Host;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,16 +20,15 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddHttpClient();
 
 #region  LowCode
-builder.Services.AddDesignEngine();
-builder.Services.AddDesignEngineHttpApi();
-builder.Services.AddApplication<LowCodeEntityFrameworkCoreModule>();
-builder.Services.AddApplication<MetaJsonFileRepositoryModule>();
+builder.Host.UseAutofac();
+
+builder.Services.AddApplication<DesignEngineHostModule>();
 #endregion
 
 var app = builder.Build();
 
 ServiceLocator.SetServiceProvider(app.Services);
-
+await app.InitializeApplicationAsync();
 
 
 // Configure the HTTP request pipeline.

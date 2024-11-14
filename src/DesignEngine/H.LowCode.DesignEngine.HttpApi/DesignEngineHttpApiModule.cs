@@ -7,7 +7,7 @@ using Volo.Abp.Modularity;
 namespace H.LowCode.DesignEngine.HttpApi;
 
 [DependsOn(typeof(DesignEngineApplicationModule))]
-internal class DesignEngineHttpApiModule : AbpModule
+public class DesignEngineHttpApiModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
