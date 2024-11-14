@@ -1,9 +1,6 @@
-﻿using H.LowCode.Domain;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,11 +17,13 @@ public class LowCodeDbContext : DbContext
 {
     public string AppId { get; private set; }
 
+    private DbContextOptions<LowCodeDbContext> _dbOptions;
     private EntityTypeManager _entityTypeManager;
 
     public LowCodeDbContext(DbContextOptions<LowCodeDbContext> options,
         EntityTypeManager entityTypeManager) : base(options)
     {
+        _dbOptions = options;
         _entityTypeManager = entityTypeManager;
     }
 
@@ -37,7 +36,7 @@ public class LowCodeDbContext : DbContext
         optionsBuilder.AddInterceptors(new ReadOnlySaveChangesInterceptor());
 
         //设置连接字符串
-        //optionsBuilder.UseSqlServer(_connectionInfo.ConnectionString);
+        //optionsBuilder.UseSqlServer("");
 
         //注册EFcore拦截器，对需要With(NoLock)查询linq进行拦截修改Sql语句
         optionsBuilder.AddInterceptors(new QueryWithNoLockDbCommandInterceptor());

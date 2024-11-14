@@ -23,7 +23,7 @@ public class EntityFrameworkCoreDbSchemaMigrator : IDbSchemaMigrator, ITransient
     public async Task MigrateAsync()
     {
         await _serviceProvider
-            .GetRequiredService<LowCodeDbContext>()
+            .GetRequiredService<DbMigratorDbContext>()
             .Database
             .MigrateAsync();
     }

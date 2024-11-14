@@ -27,11 +27,10 @@ class Program
 
     private static void ConfigSerilog()
     {
-        string settingFile = "appsettings.serilog.json";
-
         var builder = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile(settingFile, optional: true);
+            .AddJsonFile("appsettings.json", optional: false)
+            .AddJsonFile("appsettings.serilog.json", optional: true);
 
         var configuration = builder.Build();
         Log.Logger = new LoggerConfiguration()

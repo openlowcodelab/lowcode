@@ -12,16 +12,22 @@ using H.LowCode.Repository.JsonFile;
 
 namespace H.LowCode.DbMigrator;
 
-public class MigratorDbContextFactory : IDesignTimeDbContextFactory<LowCodeDbContext>
+/// <summary>
+/// 用于在命令行工具中生成迁移脚本: dotnet ef migrations add Initial --context MigratorDbContext
+/// </summary>
+public class MigratorDbContextFactory : IDesignTimeDbContextFactory<DbMigratorDbContext>
 {
-    public LowCodeDbContext CreateDbContext(string[] args)
+    public DbMigratorDbContext CreateDbContext(string[] args)
     {
-        var configuration = BuildConfiguration();
+        var configurationBuilder = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: false);
+        var configuration = configurationBuilder.Build();
 
         string migrationAssembly = typeof(Program).Namespace;
         var builder = new DbContextOptionsBuilder<LowCodeDbContext>()
             .UseSqlServer(configuration.GetConnectionString("Default"),
-            b=> b.MigrationsAssembly(migrationAssembly));
+            b => b.MigrationsAssembly(migrationAssembly));
 
         var services = new ServiceCollection();
         services.AddApplication<LowCodeDbMigratorModule>();
@@ -29,15 +35,6 @@ public class MigratorDbContextFactory : IDesignTimeDbContextFactory<LowCodeDbCon
         var serviceProvider = services.BuildServiceProvider();
         EntityTypeManager entityTypeManager = serviceProvider.GetService<EntityTypeManager>();
 
-        return new LowCodeDbContext(builder.Options, entityTypeManager);
-    }
-
-    private static IConfigurationRoot BuildConfiguration()
-    {
-        var builder = new ConfigurationBuilder()
-            .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile("appsettings.json", optional: false);
-
-        return builder.Build();
+        return new DbMigratorDbContext(builder.Options, entityTypeManager);
     }
 }
