@@ -1,11 +1,11 @@
 ﻿using H.LowCode.DesignEngine.Model;
 using H.LowCode.Domain.Repositories;
 using H.LowCode.MetaSchema;
-using Volo.Abp.DependencyInjection;
+using Volo.Abp.Domain.Services;
 
 namespace H.LowCode.Domain;
 
-public class PageDomainService : IPageDomainService, IScopedDependency
+public class PageDomainService : DomainService, IPageDomainService
 {
     private readonly IPageRepository _repository;
 

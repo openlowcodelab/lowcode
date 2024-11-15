@@ -1,5 +1,6 @@
 ﻿using H.LowCode.Configuration;
 using H.LowCode.DesignEngine.Application;
+using H.LowCode.DesignEngine.Application.Contracts;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Modularity;

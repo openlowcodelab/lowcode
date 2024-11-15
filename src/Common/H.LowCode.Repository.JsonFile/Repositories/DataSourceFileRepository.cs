@@ -1,15 +1,13 @@
 ﻿using H.LowCode.Configuration;
-using H.LowCode.DesignEngine.Model;
 using H.LowCode.Domain.Repositories;
 using H.LowCode.MetaSchema;
 using Microsoft.Extensions.Options;
 using System.Collections.Generic;
 using System.Text;
-using Volo.Abp.DependencyInjection;
 
 namespace H.LowCode.Repository.JsonFile;
 
-public class DataSourceFileRepository : FileRepositoryBase, IDataSourceRepository, IScopedDependency
+public class DataSourceFileRepository : FileRepositoryBase, IDataSourceRepository
 {
     private static string dataSourceName_Format = @"{0}\{1}\datasource\{2}.json";
 

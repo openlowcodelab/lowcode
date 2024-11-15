@@ -4,11 +4,10 @@ using H.LowCode.MetaSchema;
 using Microsoft.Extensions.Options;
 using System.Collections.Generic;
 using System.Text;
-using Volo.Abp.DependencyInjection;
 
 namespace H.LowCode.Repository.JsonFile;
 
-public class AppFileRepository : FileRepositoryBase, IAppRepository, IScopedDependency
+public class AppFileRepository : FileRepositoryBase, IAppRepository
 {
     private static string appFileName_Format = @"{0}\{1}\{2}.json";
 

@@ -1,28 +1,23 @@
-using Autofac.Extensions.DependencyInjection;
 using H.LowCode.DesignEngine.Host.Client;
 using H.Util.Blazor;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using System;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
-// 配置 HttpClient
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
-
-//注册 IHttpClientFactory
 //builder.Services.AddHttpClient();
-builder.Services.AddHttpClient("Default", client =>
-{
-    client.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress);  // 需要正确设置基础地址
-});
 
 #region  LowCode
-builder.ConfigureContainer(new AutofacServiceProviderFactory());
-
-builder.Services.AddApplication<DesignEngineHostClientModule>();
+var application = await builder.AddApplicationAsync<DesignEngineHostClientModule>(options =>
+{
+    options.UseAutofac();
+});
 #endregion
 
-var app = builder.Build();
+var host = builder.Build();
 
-ServiceLocator.SetServiceProvider(app.Services);
+await application.InitializeApplicationAsync(host.Services);
 
-await app.RunAsync();
+ServiceLocator.SetServiceProvider(host.Services);
+
+await host.RunAsync();

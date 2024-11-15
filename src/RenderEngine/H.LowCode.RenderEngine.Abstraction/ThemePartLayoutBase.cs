@@ -1,5 +1,6 @@
 ﻿using H.LowCode.ComponentBase;
 using H.LowCode.MetaSchema;
+using H.LowCode.RenderEngine.Application.Contracts;
 using Microsoft.AspNetCore.Components;
 using System;
 using System.Collections.Generic;
@@ -14,7 +15,7 @@ namespace H.LowCode.RenderEngine.Abstraction;
 public abstract class ThemePartLayoutBase : LowCodeLayoutComponentBase
 {
     [Inject]
-    private IHttpClientFactory HttpClientFactory { get; set; }
+    private IMetaAppService MetaAppService { get; set; }
 
     [Inject]
     private NavigationManager NavigationManager { get; set; }
@@ -36,12 +37,8 @@ public abstract class ThemePartLayoutBase : LowCodeLayoutComponentBase
         return menus;
     }
 
-    private async Task<List<MenuSchema>> GetMenuListAsync(string appId)
+    private async Task<IList<MenuSchema>> GetMenuListAsync(string appId)
     {
-        var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = base.GetBaseUri();
-
-        var result = await httpClient.GetFromJsonAsync<List<MenuSchema>>($"api/meta/getmenus?appId={appId}");
-        return result;
+        return await MetaAppService.GetMenusAsync(appId);
     }
 }

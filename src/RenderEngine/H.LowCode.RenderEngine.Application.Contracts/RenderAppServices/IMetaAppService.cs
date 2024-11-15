@@ -1,8 +1,9 @@
 ﻿using H.LowCode.MetaSchema;
+using Volo.Abp.Application.Services;
 
 namespace H.LowCode.RenderEngine.Application.Contracts;
 
-public interface IMetaAppService
+public interface IMetaAppService : IApplicationService
 {
     Task<IList<MenuSchema>> GetMenusAsync(string appId);
 

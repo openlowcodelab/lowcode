@@ -1,20 +1,22 @@
-using Autofac.Extensions.DependencyInjection;
 using H.LowCode.RenderEngine.Host.Client;
 using H.Util.Blazor;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
-builder.Services.AddHttpClient();
+//builder.Services.AddHttpClient();
 
 #region  LowCode
-builder.ConfigureContainer(new AutofacServiceProviderFactory());
-
-builder.Services.AddApplication<RenderEngineHostClientModule>();
+var application = await builder.AddApplicationAsync<RenderEngineHostClientModule>(options =>
+{
+    options.UseAutofac();
+});
 #endregion
 
-var app = builder.Build();
+var host = builder.Build();
 
-ServiceLocator.SetServiceProvider(app.Services);
+await application.InitializeApplicationAsync(host.Services);
 
-await app.RunAsync();
+ServiceLocator.SetServiceProvider(host.Services);
+
+await host.RunAsync();

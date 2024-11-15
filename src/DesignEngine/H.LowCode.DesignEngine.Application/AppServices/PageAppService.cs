@@ -7,12 +7,12 @@ using Microsoft.Extensions.Options;
 using System.Collections.Generic;
 using System.Text;
 using Volo.Abp;
-using Volo.Abp.DependencyInjection;
+using Volo.Abp.Application.Services;
 
 namespace H.LowCode.DesignEngine.Application;
 
 [RemoteService]
-public class PageAppService : IPageAppService, IScopedDependency
+public class PageAppService : ApplicationService, IPageAppService
 {
     private IPageDomainService _domainService;
 

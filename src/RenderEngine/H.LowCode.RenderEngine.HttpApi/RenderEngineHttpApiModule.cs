@@ -1,4 +1,5 @@
-﻿using H.LowCode.RenderEngine.Application;
+﻿using H.LowCode.Configuration;
+using H.LowCode.RenderEngine.Application;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Modularity;
 
@@ -10,5 +11,8 @@ public class RenderEngineHttpApiModule : AbpModule
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         context.Services.AddControllers().AddApplicationPart(typeof(RenderEngineHttpApiModule).Assembly);
+
+        var configuration = context.Services.GetConfiguration();
+        context.Services.Configure<List<SiteOption>>(configuration.GetSection(SiteOption.SectionName));
     }
 }

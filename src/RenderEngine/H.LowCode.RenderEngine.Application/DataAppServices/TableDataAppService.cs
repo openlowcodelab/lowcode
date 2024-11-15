@@ -5,11 +5,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Volo.Abp.DependencyInjection;
+using Volo.Abp;
+using Volo.Abp.Application.Services;
 
 namespace H.LowCode.RenderEngine.Application;
 
-public class TableDataAppService : ITableDataAppService, IScopedDependency
+[RemoteService]
+public class TableDataAppService : ApplicationService, ITableDataAppService
 {
     public TableDataAppService(ITableDataDomainService tableDataDomainService)
     {

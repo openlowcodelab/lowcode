@@ -7,12 +7,12 @@ using Microsoft.Extensions.Options;
 using System.Collections.Generic;
 using System.Text;
 using Volo.Abp;
-using Volo.Abp.DependencyInjection;
+using Volo.Abp.Application.Services;
 
 namespace H.LowCode.DesignEngine.Application;
 
 [RemoteService]
-public class MenuAppService : IMenuAppService, IScopedDependency
+public class MenuAppService : ApplicationService, IMenuAppService
 {
     private IMenuDomainService _domainService;
 

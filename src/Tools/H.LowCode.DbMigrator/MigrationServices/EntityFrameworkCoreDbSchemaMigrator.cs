@@ -6,11 +6,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Volo.Abp.DependencyInjection;
 
 namespace H.LowCode.DbMigrator;
 
-public class EntityFrameworkCoreDbSchemaMigrator : IDbSchemaMigrator, ITransientDependency
+public class EntityFrameworkCoreDbSchemaMigrator : IDbSchemaMigrator
 {
     private readonly IServiceProvider _serviceProvider;
 

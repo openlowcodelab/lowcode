@@ -1,8 +1,9 @@
 ﻿using H.LowCode.MetaSchema;
+using Volo.Abp.Application.Services;
 
 namespace H.LowCode.RenderEngine.Application.Contracts;
 
-public interface IFormDataAppService
+public interface IFormDataAppService : IApplicationService
 {
     Task<bool> Save(FormCreateOrUpdateDTO dto);
 

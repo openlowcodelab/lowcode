@@ -12,12 +12,15 @@ public class LowCodeEntityFrameworkCoreModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
+        context.Services.AddScoped<IFormDataRepository, FormDataRepository>();
+        context.Services.AddScoped<ITableDataRepository, TableDataRepository>();
+
+        context.Services.AddScoped(typeof(EntityTypeManager));
+
         context.Services.AddDbContext<LowCodeDbContext>(options =>
         {
             var connectionString = context.Services.GetConfiguration().GetConnectionString("Default");
             options.UseSqlServer(connectionString);
         });
-
-        context.Services.AddScoped(typeof(EntityTypeManager));
     }
 }

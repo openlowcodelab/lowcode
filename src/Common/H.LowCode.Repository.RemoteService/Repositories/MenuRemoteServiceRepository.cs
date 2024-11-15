@@ -4,11 +4,10 @@ using H.LowCode.MetaSchema;
 using Microsoft.Extensions.Options;
 using System.Collections.Generic;
 using System.Text;
-using Volo.Abp.DependencyInjection;
 
 namespace H.LowCode.Repository.RemoteService;
 
-public class MenuRemoteServiceRepository : RemoteServiceRepositoryBase, IMenuRepository, IScopedDependency
+public class MenuRemoteServiceRepository : RemoteServiceRepositoryBase, IMenuRepository
 {
     public MenuRemoteServiceRepository(IOptions<MetaOption> metaOption)
     {

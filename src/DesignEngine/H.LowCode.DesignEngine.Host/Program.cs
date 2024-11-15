@@ -22,7 +22,7 @@ builder.Services.AddHttpClient();
 #region  LowCode
 builder.Host.UseAutofac();
 
-builder.Services.AddApplication<DesignEngineHostModule>();
+await builder.AddApplicationAsync<DesignEngineHostModule>();
 #endregion
 
 var app = builder.Build();
@@ -58,4 +58,4 @@ app.MapRazorComponents<App>()
     .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(LowCodeGlobalVariables.AdditionalAssemblies);  //LowCode
 
-app.Run();
+await app.RunAsync();

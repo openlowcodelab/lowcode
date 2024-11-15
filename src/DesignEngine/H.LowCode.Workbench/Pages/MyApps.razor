@@ -6,7 +6,7 @@
 
 @inject IHttpClientFactory HttpClientFactory
 @inject IConfiguration Configuration
-@inject IAppApplicationService _appApplicationService
+@inject IAppApplicationService AppApplicationService
 @inject ComponentStateWrapper<MyApps, IList<AppListModel>> MyAppsState
 
 <PageTitle>我的应用 - H.LowCode</PageTitle>
@@ -92,15 +92,15 @@
     private async Task<IList<AppListModel>> LoadAppsAsync()
     {
         //TODO: 基于动态API代理存在问题
-        // var url = @Configuration["RemoteServices:DesignEngine:BaseUrl"];
-        // Console.WriteLine($"RemoteServices: {url}");
-        //return await _appApplicationService.GetAppsAsync();
+        var url = @Configuration["RemoteServices:DesignEngine:BaseUrl"];
+        Console.WriteLine($"RemoteServices: {url}");
+        return await AppApplicationService.GetAppsAsync();
 
-        var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = base.GetBaseUri();
+        // var httpClient = HttpClientFactory.CreateClient();
+        // httpClient.BaseAddress = base.GetBaseUri();
 
-        var result = await httpClient.GetFromJsonAsync<IList<AppListModel>>($"api/designer/getapps");
-        return result;
+        // var result = await httpClient.GetFromJsonAsync<IList<AppListModel>>($"api/designer/getapps");
+        // return result;
     }
 
     private async void ReloadApps()

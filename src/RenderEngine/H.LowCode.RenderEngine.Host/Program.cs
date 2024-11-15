@@ -22,7 +22,7 @@ builder.Services.AddHttpClient();
 #region  LowCode
 builder.Host.UseAutofac();
 
-builder.Services.AddApplication<RenderEngineHostModule>();
+await builder.AddApplicationAsync<RenderEngineHostModule>();
 #endregion
 
 var app = builder.Build();

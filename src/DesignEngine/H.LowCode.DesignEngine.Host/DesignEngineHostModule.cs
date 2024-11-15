@@ -5,6 +5,7 @@ using H.LowCode.DesignEngine.HttpApi;
 using H.LowCode.EntityFrameworkCore;
 using H.LowCode.Repository.JsonFile;
 using Microsoft.OpenApi.Models;
+using Volo.Abp.AspNetCore;
 using Volo.Abp.AspNetCore.Mvc;
 using Volo.Abp.Autofac;
 using Volo.Abp.Modularity;
@@ -15,7 +16,7 @@ namespace H.LowCode.DesignEngine.Host;
 [DependsOn(
     //abp
     typeof(AbpAutofacModule),
-    typeof(AbpAspNetCoreMvcModule),
+    typeof(AbpAspNetCoreModule),
     typeof(AbpSwashbuckleModule),
     //server
     typeof(DesignEngineHttpApiModule),
@@ -29,11 +30,11 @@ public class DesignEngineHostModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
-        ConfigureAutoApiControllers();
+        ConfigureConventionalControllers();
         ConfigureSwaggerServices(context.Services);
     }
 
-    private void ConfigureAutoApiControllers()
+    private void ConfigureConventionalControllers()
     {
         //动态API注册
         Configure<AbpAspNetCoreMvcOptions>(options =>
@@ -51,16 +52,9 @@ public class DesignEngineHostModule : AbpModule
             services.AddAbpSwaggerGen(
                 options =>
                 {
-                    var deliveryFile = Path.Combine(AppContext.BaseDirectory,
-                        $"{typeof(DesignEngineApplicationContractsModule).Namespace}.xml");
-                    if (File.Exists(deliveryFile))
-                        options.IncludeXmlComments(deliveryFile);
-
                     options.SwaggerDoc("v1", new OpenApiInfo { Title = "DesignEngine", Version = "v1" });
                     options.DocInclusionPredicate((docName, description) => true);
                     options.CustomSchemaIds(type => type.FullName);
-                    //options.HideAbpEndpoints();
-                    //options.SchemaFilter<HideAbpSchemaFilter>();
                 }
             );
         }
