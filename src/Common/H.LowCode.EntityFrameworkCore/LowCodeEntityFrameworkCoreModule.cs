@@ -19,8 +19,5 @@ public class LowCodeEntityFrameworkCoreModule : AbpModule
         });
 
         context.Services.AddScoped(typeof(EntityTypeManager));
-
-        context.Services.AddScoped<IFormDataRepository, FormDataRepository>();
-        context.Services.AddScoped<ITableDataRepository, TableDataRepository>();
     }
 }

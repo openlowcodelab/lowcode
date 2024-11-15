@@ -1,9 +1,10 @@
 ﻿using H.LowCode.Domain.Repositories;
 using H.LowCode.MetaSchema;
+using Volo.Abp.DependencyInjection;
 
 namespace H.LowCode.Domain;
 
-public class MenuDomainService : IMenuDomainService
+public class MenuDomainService : IMenuDomainService, IScopedDependency
 {
     private readonly IMenuRepository _repository;
 

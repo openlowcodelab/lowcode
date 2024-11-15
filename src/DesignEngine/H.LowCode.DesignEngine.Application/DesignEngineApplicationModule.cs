@@ -13,10 +13,5 @@ public class DesignEngineApplicationModule : AbpModule
     {
         var configuration = context.Services.GetConfiguration();
         context.Services.Configure<List<SiteOption>>(configuration.GetSection(SiteOption.SectionName));
-
-        context.Services.AddScoped<IAppApplicationService, AppApplicationService>();
-        context.Services.AddScoped<IMenuAppService, MenuAppService>();
-        context.Services.AddScoped<IPageAppService, PageAppService>();
-        context.Services.AddScoped<IDataSourceAppService, DataSourceAppService>();
     }
 }

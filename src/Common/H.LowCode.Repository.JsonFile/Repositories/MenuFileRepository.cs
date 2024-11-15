@@ -4,10 +4,11 @@ using H.LowCode.MetaSchema;
 using Microsoft.Extensions.Options;
 using System.Collections.Generic;
 using System.Text;
+using Volo.Abp.DependencyInjection;
 
 namespace H.LowCode.Repository.JsonFile;
 
-public class MenuFileRepository : FileRepositoryBase, IMenuRepository
+public class MenuFileRepository : FileRepositoryBase, IMenuRepository, IScopedDependency
 {
     private static string menuFileName_Format = @"{0}\{1}\menu\{2}.json";
 

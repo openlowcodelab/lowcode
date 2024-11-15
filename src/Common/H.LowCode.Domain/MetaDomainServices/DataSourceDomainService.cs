@@ -1,10 +1,11 @@
 ﻿using H.LowCode.DesignEngine.Model;
 using H.LowCode.Domain.Repositories;
 using H.LowCode.MetaSchema;
+using Volo.Abp.DependencyInjection;
 
 namespace H.LowCode.Domain;
 
-public class DataSourceDomainService : IDataSourceDomainService
+public class DataSourceDomainService : IDataSourceDomainService, IScopedDependency
 {
     private readonly IDataSourceRepository _repository;
 

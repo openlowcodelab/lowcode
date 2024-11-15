@@ -5,10 +5,11 @@ using H.LowCode.MetaSchema;
 using Microsoft.Extensions.Options;
 using System.Collections.Generic;
 using System.Text;
+using Volo.Abp.DependencyInjection;
 
 namespace H.LowCode.Repository.JsonFile;
 
-public class PageFileRepository : FileRepositoryBase, IPageRepository
+public class PageFileRepository : FileRepositoryBase, IPageRepository, IScopedDependency
 {
     private static string pageFileName_Format = @"{0}\{1}\page\{2}.json";
 

@@ -4,10 +4,13 @@ using H.LowCode.Domain;
 using H.LowCode.MetaSchema;
 using System.Collections.Generic;
 using System.Text;
+using Volo.Abp;
+using Volo.Abp.DependencyInjection;
 
 namespace H.LowCode.DesignEngine.Application;
 
-public class DataSourceAppService : IDataSourceAppService
+[RemoteService]
+public class DataSourceAppService : IDataSourceAppService, IScopedDependency
 {
     private IDataSourceDomainService _domainService;
 

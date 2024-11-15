@@ -1,6 +1,8 @@
-﻿namespace H.LowCode.Domain;
+﻿using Volo.Abp.DependencyInjection;
 
-public class MetaDomainService : IMetaDomainService
+namespace H.LowCode.Domain;
+
+public class MetaDomainService : IMetaDomainService, IScopedDependency
 {
 
 }

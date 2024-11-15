@@ -5,10 +5,11 @@ using H.LowCode.MetaSchema;
 using Microsoft.Extensions.Options;
 using System.Collections.Generic;
 using System.Text;
+using Volo.Abp.DependencyInjection;
 
 namespace H.LowCode.Repository.RemoteService;
 
-public class PageRemoteServiceRepository : RemoteServiceRepositoryBase, IPageRepository
+public class PageRemoteServiceRepository : RemoteServiceRepositoryBase, IPageRepository, IScopedDependency
 {
     public PageRemoteServiceRepository(IOptions<MetaOption> metaOption)
     {

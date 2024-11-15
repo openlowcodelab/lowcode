@@ -5,10 +5,11 @@ using H.LowCode.MetaSchema;
 using Microsoft.Extensions.Options;
 using System.Collections.Generic;
 using System.Text;
+using Volo.Abp.DependencyInjection;
 
 namespace H.LowCode.Repository.JsonFile;
 
-public class DataSourceFileRepository : FileRepositoryBase, IDataSourceRepository
+public class DataSourceFileRepository : FileRepositoryBase, IDataSourceRepository, IScopedDependency
 {
     private static string dataSourceName_Format = @"{0}\{1}\datasource\{2}.json";
 

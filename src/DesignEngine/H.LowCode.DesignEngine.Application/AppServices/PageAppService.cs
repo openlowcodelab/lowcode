@@ -6,10 +6,13 @@ using H.LowCode.MetaSchema;
 using Microsoft.Extensions.Options;
 using System.Collections.Generic;
 using System.Text;
+using Volo.Abp;
+using Volo.Abp.DependencyInjection;
 
 namespace H.LowCode.DesignEngine.Application;
 
-public class PageAppService : IPageAppService
+[RemoteService]
+public class PageAppService : IPageAppService, IScopedDependency
 {
     private IPageDomainService _domainService;
 

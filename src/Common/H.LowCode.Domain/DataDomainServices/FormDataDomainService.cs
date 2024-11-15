@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Volo.Abp.DependencyInjection;
 
 namespace H.LowCode.Domain;
 
-public class FormDataDomainService : IFormDataDomainService
+public class FormDataDomainService : IFormDataDomainService, IScopedDependency
 {
     public FormDataDomainService(IFormDataRepository formDataRepository)
     {

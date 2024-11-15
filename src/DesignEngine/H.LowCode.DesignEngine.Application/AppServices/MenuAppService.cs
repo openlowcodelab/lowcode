@@ -6,10 +6,13 @@ using H.LowCode.MetaSchema;
 using Microsoft.Extensions.Options;
 using System.Collections.Generic;
 using System.Text;
+using Volo.Abp;
+using Volo.Abp.DependencyInjection;
 
 namespace H.LowCode.DesignEngine.Application;
 
-public class MenuAppService : IMenuAppService
+[RemoteService]
+public class MenuAppService : IMenuAppService, IScopedDependency
 {
     private IMenuDomainService _domainService;
 

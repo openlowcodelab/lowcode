@@ -8,6 +8,7 @@ using H.LowCode.Workbench;
 using H.Util.Blazor;
 using Microsoft.Extensions.Options;
 using Volo.Abp.Autofac;
+using Volo.Abp.DependencyInjection;
 using Volo.Abp.Http.Client;
 using Volo.Abp.Modularity;
 
@@ -32,7 +33,7 @@ namespace H.LowCode.DesignEngine.Host.Client;
     )]
 public class DesignEngineHostClientModule : AbpModule
 {
-    public const string RemoteServiceName = "DesignEngine";
+    public const string RemoteServiceName = "Default";
 
     public override void ConfigureServices(ServiceConfigurationContext context)
     {

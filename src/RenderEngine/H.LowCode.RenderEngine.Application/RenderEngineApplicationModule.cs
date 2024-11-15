@@ -11,11 +11,6 @@ public class RenderEngineApplicationModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
-        context.Services.AddScoped<IMetaAppService, RenderEngineAppService>();
-
-        context.Services.AddScoped<IFormDataAppService, FormDataAppService>();
-        context.Services.AddScoped<ITableDataAppService, TableDataAppService>();
-
         var configuration = context.Services.GetConfiguration();
         context.Services.Configure<MetaOption>(configuration.GetSection(MetaOption.SectionName));
     }

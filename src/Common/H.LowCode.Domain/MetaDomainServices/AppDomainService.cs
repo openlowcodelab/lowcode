@@ -1,9 +1,10 @@
 ﻿using H.LowCode.Domain.Repositories;
 using H.LowCode.MetaSchema;
+using Volo.Abp.DependencyInjection;
 
 namespace H.LowCode.Domain;
 
-public class AppDomainService : IAppDomainService
+public class AppDomainService : IAppDomainService, IScopedDependency
 {
     private readonly IAppRepository _repository;
 

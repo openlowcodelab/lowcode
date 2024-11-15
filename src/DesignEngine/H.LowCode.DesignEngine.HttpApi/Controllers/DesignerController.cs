@@ -13,11 +13,11 @@ public class DesignerController : DesignEngineControllerBase
     private IMenuAppService _menuAppService;
     private IPageAppService _pageAppService;
 
-    public DesignerController(IAppApplicationService designEngineAppService,
+    public DesignerController(IAppApplicationService appApplicationService,
         IMenuAppService menuAppService,
         IPageAppService pageAppService)
     {
-        _appApplicationService = designEngineAppService;
+        _appApplicationService = appApplicationService;
         _menuAppService = menuAppService;
         _pageAppService = pageAppService;
     }

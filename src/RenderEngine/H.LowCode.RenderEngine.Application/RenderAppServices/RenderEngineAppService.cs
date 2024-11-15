@@ -6,10 +6,11 @@ using H.LowCode.RenderEngine.Application.Contracts;
 using Microsoft.Extensions.Options;
 using System.Text;
 using System.Xml.Linq;
+using Volo.Abp.DependencyInjection;
 
 namespace H.LowCode.RenderEngine.Application;
 
-public class RenderEngineAppService : IMetaAppService
+public class RenderEngineAppService : IMetaAppService, IScopedDependency
 {
     private IMenuDomainService _menuDomainService;
     private IPageDomainService _pageDomainService;

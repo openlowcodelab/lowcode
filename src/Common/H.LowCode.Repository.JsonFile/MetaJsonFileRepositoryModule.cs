@@ -11,11 +11,6 @@ public class MetaJsonFileRepositoryModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
-        context.Services.AddScoped<IAppRepository, AppFileRepository>();
-        context.Services.AddScoped<IMenuRepository, MenuFileRepository>();
-        context.Services.AddScoped<IPageRepository, PageFileRepository>();
-        context.Services.AddScoped<IDataSourceRepository, DataSourceFileRepository>();
-
         var configuration = context.Services.GetConfiguration();
         context.Services.Configure<MetaOption>(configuration.GetSection(MetaOption.SectionName));
     }

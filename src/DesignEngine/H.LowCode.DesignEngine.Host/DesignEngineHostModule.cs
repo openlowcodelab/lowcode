@@ -35,7 +35,7 @@ public class DesignEngineHostModule : AbpModule
 
     private void ConfigureAutoApiControllers()
     {
-        //动态API扫描
+        //动态API注册
         Configure<AbpAspNetCoreMvcOptions>(options =>
         {
             options.ConventionalControllers.Create(typeof(DesignEngineApplicationModule).Assembly);

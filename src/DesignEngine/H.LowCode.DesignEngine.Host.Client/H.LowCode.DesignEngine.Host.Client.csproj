@@ -2,14 +2,19 @@
 
 	<Import Project="..\..\global.props" />
 
-	<PropertyGroup>
+  <PropertyGroup>
     <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
     <StaticWebAssetProjectMode>Default</StaticWebAssetProjectMode>
+	<BlazorWebAssemblyLazyLoadAssemblies>true</BlazorWebAssemblyLazyLoadAssemblies>
+    <WasmEnableAot>false</WasmEnableAot>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
+    <PackageReference Include="System.Text.Json" />
+    <PackageReference Include="Volo.Abp.AspNetCore.Components.WebAssembly" />
     <PackageReference Include="Volo.Abp.Autofac.WebAssembly" />
+    <PackageReference Include="Volo.Abp.Http.Client" />
   </ItemGroup>
 	
   <ItemGroup>
