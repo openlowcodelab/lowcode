@@ -5,14 +5,14 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+using Volo.Abp.AspNetCore.Components;
 
 namespace H.LowCode.ComponentBase;
 
 /// <summary>
 /// 组件基类
 /// </summary>
-public abstract class LowCodeComponentBase : Microsoft.AspNetCore.Components.ComponentBase
+public abstract class LowCodeComponentBase : AbpComponentBase
 {
     [Inject]
     private LowCodeAppState LowCodeAppState { get; set; }

@@ -1,13 +1,13 @@
-﻿using H.LowCode.EntityFrameworkCore;
+﻿using H.LowCode.ComponentBase;
+using H.LowCode.ComponentParts.BasicComponents;
+using H.LowCode.ComponentParts.ExtensionComponents;
+using H.LowCode.EntityFrameworkCore;
 using H.LowCode.RenderEngine.Application;
-using H.LowCode.RenderEngine.Host.Client;
-using H.LowCode.RenderEngine.Host.Components;
-using H.LowCode.RenderEngine.HttpApi;
 using H.LowCode.Repository.JsonFile;
+using H.LowCode.ThemeParts.AntBlazor;
+using H.Util.Blazor;
 using Microsoft.OpenApi.Models;
-using System.Text.Json;
 using Volo.Abp;
-using Volo.Abp.AspNetCore;
 using Volo.Abp.AspNetCore.Mvc;
 using Volo.Abp.Autofac;
 using Volo.Abp.Modularity;
@@ -18,15 +18,20 @@ namespace H.LowCode.RenderEngine.Host;
 [DependsOn(
     //abp
     typeof(AbpAutofacModule),
-    typeof(AbpAspNetCoreModule),
+    typeof(AbpAspNetCoreMvcModule),
     typeof(AbpSwashbuckleModule),
-    //server
-    typeof(RenderEngineHttpApiModule),
+    //=====lowcode-server=====//
     typeof(RenderEngineApplicationModule),
     typeof(LowCodeEntityFrameworkCoreModule),
     typeof(MetaJsonFileRepositoryModule),
-    //web
-    typeof(RenderEngineHostClientModule)
+    //=====lowcode-web=====//
+    //RenderEngine
+    typeof(RenderEngineModule),
+    //ComponentParts
+    typeof(DefaultComponentModule),
+    typeof(ExtensionComponentModule),
+    //ThemeParts
+    typeof(AntBlazorThemeModule)
     )]
 public class RenderEngineHostModule : AbpModule
 {
@@ -34,6 +39,12 @@ public class RenderEngineHostModule : AbpModule
     {
         ConfigureConventionalControllers();
         ConfigureSwaggerServices(context.Services);
+
+        //状态管理
+        context.Services.AddScoped(typeof(ComponentStateWrapper<,>));
+
+        //应用状态
+        context.Services.AddSingleton(new LowCodeAppState(false));
     }
 
     public override void OnApplicationInitialization(ApplicationInitializationContext context)

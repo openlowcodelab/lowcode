@@ -3,6 +3,7 @@ using H.LowCode.DesignEngine.Application.Contracts;
 using H.LowCode.DesignEngine.Model;
 using H.LowCode.Domain;
 using H.LowCode.MetaSchema;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using System.Collections.Generic;
 using System.Text;
@@ -14,12 +15,7 @@ namespace H.LowCode.DesignEngine.Application;
 [RemoteService]
 public class PageAppService : ApplicationService, IPageAppService
 {
-    private IPageDomainService _domainService;
-
-    public PageAppService(IPageDomainService domainService)
-    {
-        _domainService = domainService;
-    }
+    private IPageDomainService _domainService => LazyServiceProvider.GetRequiredService<IPageDomainService>();
 
     public async Task<List<PageListModel>> GetListAsync(string appId)
     {
@@ -31,16 +27,18 @@ public class PageAppService : ApplicationService, IPageAppService
         return await _domainService.GetAsync(appId, pageId);
     }
 
-    public async Task SaveAsync(PageSchema pageSchema)
+    public async Task<bool> SaveAsync(PageSchema pageSchema)
     {
         ArgumentNullException.ThrowIfNull(pageSchema);
         ArgumentException.ThrowIfNullOrEmpty(pageSchema.Id);
 
         await _domainService.SaveAsync(pageSchema);
+        return true;
     }
 
-    public async Task DeleteAsync(string appId, string pageId)
+    public async Task<bool> DeleteAsync(string appId, string pageId)
     {
         await _domainService.DeleteAsync(appId, pageId);
+        return true;
     }
 }

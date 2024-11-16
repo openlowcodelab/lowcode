@@ -3,7 +3,7 @@
 @inherits LowCodePageComponentBase
 @layout MyAppLayout
 
-@inject IHttpClientFactory HttpClientFactory
+@inject IMenuAppService MenuAppService
 @inject IMessageService Message
 @inject ComponentStateWrapper<MenuManager, IList<MenuSchema>> MenuListState
 
@@ -19,7 +19,7 @@
 </div>
 
 <Table TItem="MenuSchema" TreeChildren="item=>item.Childrens" DataSource="@MenuListState.Value" @bind-SelectedRows="selectedRows"
-       RowKey="x=>x.Id" HidePagination DefaultExpandAllRows>
+RowKey="x=>x.Id" HidePagination DefaultExpandAllRows>
     <PropertyColumn Title="菜单名称" Property="c=>c.Title" Format="yyyy-MM-dd" Sortable />
     <PropertyColumn Title="排序" Property="c=>c.Order" />
     <PropertyColumn Title="图标" Property="c=>c.Icon" />
@@ -27,7 +27,7 @@
     <PropertyColumn Title="菜单地址" Property="c=>c.MenuUrl" />
     <PropertyColumn Title="修改时间" Property="c=>c.ModifiedTime" Format="yyyy-MM-dd HH:mm:ss" />
     <ActionColumn Title="操作" Width="200">
-         <Space Size=@("middle")>
+        <Space Size=@("middle")>
             @if(context.MenuType == 1)
             {
                 <SpaceItem>
@@ -35,8 +35,8 @@
                 </SpaceItem>
             }
             <SpaceItem>
-                 <a onclick="@(()=> EditAsync(@context.Id))">编辑</a>
-             </SpaceItem>
+                <a onclick="@(()=> EditAsync(@context.Id))">编辑</a>
+            </SpaceItem>
             <SpaceItem>
                 <a onclick="@(()=> DeleteAsync(@context.Id))" style="color:#ff4d4f">删除</a>
             </SpaceItem>
@@ -46,7 +46,7 @@
 
 <Modal Title="新建菜单" @bind-Visible="@_visible" OnOk="OnConfirmAsync">
     <Form Model="@_menuSchema" LabelColSpan="8" WrapperColSpan="16" OnFinish="OnFinishAsync" @ref="@_form"
-          ValidateMode="@FormValidateMode.Complex" ValidateOnChange="true">
+    ValidateOnChange="true">
         @if (context.ParentId.IsNullOrEmpty() == false)
         {
             <FormItem Label="父级Id" Required>
@@ -99,20 +99,12 @@
 
     public async Task<IList<MenuSchema>> GetMenuListAsync()
     {
-        var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = base.GetBaseUri();
-
-        var result = await httpClient.GetFromJsonAsync<List<MenuSchema>>($"api/designer/getmenus?appId={AppId}");
-        return result;
+        return await MenuAppService.GetListAsync(AppId);
     }
 
     private async Task<MenuSchema> GetMenuAsync(string id)
     {
-        var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = base.GetBaseUri();
-
-        var result = await httpClient.GetFromJsonAsync<MenuSchema>($"api/designer/getmenu?appId={AppId}&menuId={id}");
-        return result;
+        return await MenuAppService.GetByIdAsync(AppId, id);
     }
 
     private void CreateAsync(string parentId)
@@ -135,10 +127,8 @@
 
     private async Task DeleteAsync(string id)
     {
-        var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = base.GetBaseUri();
+        await MenuAppService.DeleteAsync(AppId, id);
 
-        await httpClient.GetAsync($"api/designer/deletemenu?appId={AppId}&menuId={id}");
         await Message.Success("删除成功！");
     }
 
@@ -147,18 +137,18 @@
         var validate = _form.Validate();
         if (validate)
         {
-            var result = await SaveMenuSchemaAsync();
-            if (result.StatusCode == HttpStatusCode.OK)
+            var isSuccess = await SaveMenuSchemaAsync();
+            if (isSuccess)
             {
                 _visible = false;
                 _form.Submit();
-                await Message.Success("保存成功！");
+                await Message.Success("保存成功");
                 _form.Reset();
             }
             else
             {
                 _visible = true;
-                await Message.Error($"保存失败: {result.ReasonPhrase}");
+                await Message.Error("保存失败");
             }
         }
         else
@@ -172,16 +162,8 @@
         MenuListState.Value = await GetMenuListAsync();
     }
 
-    private async Task<HttpResponseMessage> SaveMenuSchemaAsync()
+    private async Task<bool> SaveMenuSchemaAsync()
     {
-        string jsonSchema = _menuSchema.ToJson();
-
-        var content = new StringContent(jsonSchema, Encoding.UTF8, "application/json");
-
-        var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = base.GetBaseUri();
-        var result = await httpClient.PostAsync($"api/designer/savemenu", content);
-
-        return result;
+        return await MenuAppService.SaveAsync(_menuSchema);
     }
 }

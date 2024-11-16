@@ -9,6 +9,8 @@ namespace H.LowCode.EntityFrameworkCore;
 
 public class TableDataRepository : ITableDataRepository
 {
+    public bool? IsChangeTrackingEnabled => true;
+
     public TableDataRepository(LowCodeDbContext dbContext)
     {
     }

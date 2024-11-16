@@ -1,9 +1,8 @@
 ﻿using H.Extensions.System;
-using H.LowCode.Configuration;
 using H.LowCode.Domain;
 using H.LowCode.MetaSchema;
 using H.LowCode.RenderEngine.Application.Contracts;
-using Microsoft.Extensions.Options;
+using Microsoft.Extensions.DependencyInjection;
 using System.Text;
 using System.Xml.Linq;
 using Volo.Abp;
@@ -12,17 +11,10 @@ using Volo.Abp.Application.Services;
 namespace H.LowCode.RenderEngine.Application;
 
 [RemoteService]
-public class RenderEngineAppService : ApplicationService, IMetaAppService
+public class MetaAppService : ApplicationService, IMetaAppService
 {
-    private IMenuDomainService _menuDomainService;
-    private IPageDomainService _pageDomainService;
-
-    public RenderEngineAppService(IMenuDomainService menuDomainService,
-        IPageDomainService pageDomainService)
-    {
-        _menuDomainService = menuDomainService;
-        _pageDomainService = pageDomainService;
-    }
+    private IMenuDomainService _menuDomainService => LazyServiceProvider.GetRequiredService<IMenuDomainService>();
+    private IPageDomainService _pageDomainService => LazyServiceProvider.GetRequiredService<IPageDomainService>();
 
     public async Task<IList<MenuSchema>> GetMenusAsync(string appId)
     {

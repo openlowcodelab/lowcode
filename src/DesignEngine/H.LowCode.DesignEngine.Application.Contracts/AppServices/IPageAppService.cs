@@ -10,7 +10,7 @@ public interface IPageAppService : IApplicationService
 
     Task<PageSchema> GetByIdAsync(string appId, string pageId);
 
-    Task SaveAsync(PageSchema pageSchema);
+    Task<bool> SaveAsync(PageSchema pageSchema);
 
-    Task DeleteAsync(string appId, string pageId);
+    Task<bool> DeleteAsync(string appId, string pageId);
 }

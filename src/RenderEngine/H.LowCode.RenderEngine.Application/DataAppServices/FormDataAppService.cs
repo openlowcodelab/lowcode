@@ -1,5 +1,6 @@
 ﻿using H.LowCode.Domain;
 using H.LowCode.RenderEngine.Application.Contracts;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,14 +14,13 @@ namespace H.LowCode.RenderEngine.Application;
 [RemoteService]
 public class FormDataAppService : ApplicationService, IFormDataAppService
 {
-    public FormDataAppService(IFormDataDomainService formDataDomainService)
-    {
+    private IFormDataDomainService _formDataDomainService => LazyServiceProvider.GetRequiredService<IFormDataDomainService>();
 
-    }
-
-    public Task<FormDTO> Get<TKey>(TKey id)
+    public async Task<FormDTO> Get<TKey>(TKey id)
     {
-        throw new NotImplementedException();
+        var entity = await _formDataDomainService.Get(id);
+        var dto = ObjectMapper.Map<FormEntity, FormDTO>(entity);
+        return dto;
     }
 
     public Task<bool> Save(FormCreateOrUpdateDTO dto)

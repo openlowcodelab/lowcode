@@ -1,7 +1,6 @@
 using H.LowCode.DesignEngine.Host.Client;
 using H.Util.Blazor;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using System;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 

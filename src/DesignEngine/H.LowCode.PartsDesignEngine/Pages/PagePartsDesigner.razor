@@ -3,7 +3,6 @@
 @inherits LowCodePageComponentBase
 @layout PartsDesignEngineLayout
 
-@inject IHttpClientFactory HttpClientFactory
 @inject DragDropStateService DragDropStateService
 @inject IMessageService _message
 
@@ -75,10 +74,7 @@
             return newPage;
         }
 
-        var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = base.GetBaseUri();
-
-        var pageParts = await httpClient.GetFromJsonAsync<PagePartsSchema>($"api/parts/getpages?partsId={PartsId}");
+        PagePartsSchema pageParts = new();
 
         if (_designPanel != null)
         {
@@ -98,15 +94,8 @@
             return;
         }
 
-        string jsonSchema = pageParts.ToJson();
-
-        var content = new StringContent(jsonSchema, Encoding.UTF8, "application/json");
-
-        var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = base.GetBaseUri();
-        var result = await httpClient.PostAsync($"api/parts/savepage", content);
-
-        if (result.StatusCode == HttpStatusCode.OK)
+        var isSuccess = true;
+        if (isSuccess)
         {
             if (_isNewPage)
             {
@@ -118,7 +107,7 @@
         }
         else
         {
-            await _message.Error($"保存失败: {result.ReasonPhrase}");
+            await _message.Error("保存失败");
         }
     }
 

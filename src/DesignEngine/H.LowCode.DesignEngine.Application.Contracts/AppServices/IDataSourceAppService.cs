@@ -10,7 +10,7 @@ public interface IDataSourceAppService : IApplicationService
 
     Task<DataSourceSchema> GetByIdAsync(string appId, string id);
 
-    Task SaveAsync(string appId, DataSourceSchema dataSourceSchema);
+    Task<bool> SaveAsync(string appId, DataSourceSchema dataSourceSchema);
 
-    Task DeleteAsync(string appId, string id);
+    Task<bool> DeleteAsync(string appId, string id);
 }

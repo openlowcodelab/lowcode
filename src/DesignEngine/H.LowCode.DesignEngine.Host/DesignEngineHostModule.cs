@@ -1,11 +1,14 @@
-﻿using H.LowCode.DesignEngine.Application;
-using H.LowCode.DesignEngine.Application.Contracts;
-using H.LowCode.DesignEngine.Host.Client;
-using H.LowCode.DesignEngine.HttpApi;
+﻿using H.LowCode.ComponentBase;
+using H.LowCode.ComponentParts.BasicComponents;
+using H.LowCode.ComponentParts.ExtensionComponents;
+using H.LowCode.DesignEngine.Application;
 using H.LowCode.EntityFrameworkCore;
+using H.LowCode.MyApp;
+using H.LowCode.PartsDesignEngine;
 using H.LowCode.Repository.JsonFile;
+using H.LowCode.Workbench;
+using H.Util.Blazor;
 using Microsoft.OpenApi.Models;
-using Volo.Abp.AspNetCore;
 using Volo.Abp.AspNetCore.Mvc;
 using Volo.Abp.Autofac;
 using Volo.Abp.Modularity;
@@ -16,15 +19,22 @@ namespace H.LowCode.DesignEngine.Host;
 [DependsOn(
     //abp
     typeof(AbpAutofacModule),
-    typeof(AbpAspNetCoreModule),
+    typeof(AbpAspNetCoreMvcModule),
     typeof(AbpSwashbuckleModule),
-    //server
-    typeof(DesignEngineHttpApiModule),
+    //=====lowcode-server=====//
     typeof(DesignEngineApplicationModule),
     typeof(LowCodeEntityFrameworkCoreModule),
     typeof(MetaJsonFileRepositoryModule),
-    //web
-    typeof(DesignEngineHostClientModule)
+    //=====lowcode-web=====//
+    //Workbench
+    typeof(LowCodeWorkbenchModule),
+    //DesignEngine
+    typeof(DesignEngineModule),
+    typeof(MyAppModule),
+    typeof(PartsDesignEngineModule),
+    //ComponentParts
+    typeof(DefaultComponentModule),
+    typeof(ExtensionComponentModule)
     )]
 public class DesignEngineHostModule : AbpModule
 {
@@ -32,6 +42,12 @@ public class DesignEngineHostModule : AbpModule
     {
         ConfigureConventionalControllers();
         ConfigureSwaggerServices(context.Services);
+
+        //状态管理
+        context.Services.AddScoped(typeof(ComponentStateWrapper<,>));
+
+        //应用状态
+        context.Services.AddSingleton(new LowCodeAppState(true));
     }
 
     private void ConfigureConventionalControllers()

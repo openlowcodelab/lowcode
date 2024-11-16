@@ -2,7 +2,6 @@
 @inherits LowCodeComponentBase
 @layout WorkbenchLayout
 
-@inject IHttpClientFactory HttpClientFactory
 @inject IMessageService Message
 @inject ComponentStateWrapper<ComponentPartsList, IList<ComponentPartsListModel>> PageListState
 
@@ -16,7 +15,7 @@
 </div>
 
 <Table TItem="ComponentPartsListModel" DataSource="@PageListState.Value" PageSize="15" PageIndex="1" Total="_total"
-       @bind-SelectedRows="selectedRows" Style="height:100%;" RowKey="c=>c.Id">
+@bind-SelectedRows="selectedRows" Style="height:100%;" RowKey="c=>c.Id">
     <PropertyColumn Title="ID" Property="c=>c.Id" Width="300" />
     <PropertyColumn Title="组件名称" Property="c=>c.Name" Sortable />
     <PropertyColumn Title="排序" Property="c=>c.Order" />
@@ -41,7 +40,7 @@
 
 <Modal Title="新建组件" @bind-Visible="@_visible" OnOk="OnConfirmAsync">
     <Form Model="@_partsSchema" LabelColSpan="8" WrapperColSpan="16" OnFinish="OnFinishAsync" @ref="@_form"
-          ValidateOnChange="true">
+    ValidateOnChange="true">
         <FormItem Label="组件名称" Required>
             <Input @bind-Value="@context.ComponentName" />
         </FormItem>
@@ -78,19 +77,13 @@
 
     private async Task<IList<ComponentPartsListModel>> LoadComponentPartsAsync(int pageIndex, int pageSize)
     {
-        var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = base.GetBaseUri();
-
-        var result = await httpClient.GetFromJsonAsync<List<ComponentPartsListModel>>($"api/parts/getcomponents");
+        IList<ComponentPartsListModel> result = [];
         return result;
     }
 
     private async Task<ComponentPartsSchema> GetPageAsync(string partsId)
     {
-        var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = base.GetBaseUri();
-
-        var ComponentPartsSchema = await httpClient.GetFromJsonAsync<ComponentPartsSchema>($"api/parts/getcomponent?partsId={partsId}");
+        ComponentPartsSchema ComponentPartsSchema = new();
         return ComponentPartsSchema;
     }
 
@@ -113,10 +106,6 @@
 
     private async Task DeleteAsync(string partsId)
     {
-        var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = base.GetBaseUri();
-
-        await httpClient.GetAsync($"api/parts/deletecomponent?partsId={partsId}");
         await Message.Success("删除成功！");
     }
 
@@ -125,8 +114,8 @@
         var validate = _form.Validate();
         if (validate)
         {
-            var result = await SaveComponentPartsSchemaAsync();
-            if (result.StatusCode == HttpStatusCode.OK)
+            var isSuccess = await SaveComponentPartsSchemaAsync();
+            if (isSuccess)
             {
                 _visible = false;
                 _form.Submit();
@@ -136,7 +125,7 @@
             else
             {
                 _visible = true;
-                await Message.Error($"保存失败: {result.ReasonPhrase}");
+                await Message.Error("保存失败");
             }
         }
         else
@@ -150,16 +139,10 @@
         PageListState.Value = await LoadComponentPartsAsync(1, 50);
     }
 
-    private async Task<HttpResponseMessage> SaveComponentPartsSchemaAsync()
+    private async Task<bool> SaveComponentPartsSchemaAsync()
     {
-        string jsonSchema = _partsSchema.ToJson();
+        //string jsonSchema = _partsSchema.ToJson();
 
-        var content = new StringContent(jsonSchema, Encoding.UTF8, "application/json");
-
-        var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = base.GetBaseUri();
-        var result = await httpClient.PostAsync($"api/parts/savecomponent", content);
-
-        return result;
+        return true;
     }
 }

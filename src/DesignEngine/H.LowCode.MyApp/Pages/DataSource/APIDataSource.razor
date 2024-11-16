@@ -1,7 +1,7 @@
 ﻿@namespace H.LowCode.MyApp
 @inherits LowCodeComponentBase
 
-@inject IHttpClientFactory HttpClientFactory
+@inject IDataSourceAppService DataSourceAppService
 @inject IMessageService Message
 @inject ComponentStateWrapper<APIDataSource, IList<DataSourceListModel>> APIListState
 
@@ -14,7 +14,7 @@
     </div>
 </div>
 <Table TItem="DataSourceListModel" DataSource="@APIListState.Value" Total="_total"
-       @bind-PageIndex="@_pageIndex" @bind-PageSize="@_pageSize">
+@bind-PageIndex="@_pageIndex" @bind-PageSize="@_pageSize">
     <PropertyColumn Title="名称" Property="c=>c.Name" Sortable />
     <PropertyColumn Title="中文名" Property="c=>c.DisplayName" Sortable />
     <PropertyColumn Title="请求地址" Property="c=>c.Extra" />
@@ -37,7 +37,7 @@
 
 <Modal Title="新建 API" @bind-Visible="@_visible" OnOk="OnConfirmAsync" Width="1100" Resizable="true" Draggable="true">
     <Form Model="@_dataSource" LabelColSpan="3" OnFinish="OnFinishAsync" @ref="@_form"
-          ValidateMode="@FormValidateMode.Complex" ValidateOnChange="true">
+     ValidateOnChange="true">
         <FormItem Label="API 名称" Required>
             <Input @bind-Value="@context.Name" />
         </FormItem>
@@ -49,10 +49,10 @@
                 <AddOnBefore>
                     <SimpleSelect DefaultValue="GET" @bind-Value="@context.API.Method" Style="width: 90px;">
                         <SelectOptions>
-                        <SimpleSelectOption Value="GET" Label="GET"></SimpleSelectOption>
-                        <SimpleSelectOption Value="POST" Label="POST"></SimpleSelectOption>
-                        <SimpleSelectOption Value="PUT" Label="PUT"></SimpleSelectOption>
-                        <SimpleSelectOption Value="DELETE" Label="DELETE"></SimpleSelectOption>
+                            <SimpleSelectOption Value="GET" Label="GET"></SimpleSelectOption>
+                            <SimpleSelectOption Value="POST" Label="POST"></SimpleSelectOption>
+                            <SimpleSelectOption Value="PUT" Label="PUT"></SimpleSelectOption>
+                            <SimpleSelectOption Value="DELETE" Label="DELETE"></SimpleSelectOption>
                         </SelectOptions>
                     </SimpleSelect>
                 </AddOnBefore>
@@ -85,10 +85,10 @@
                     </Table>
                 </TabPane>
                 <TabPane Tab="Body" Key="api_body">
-                    
+
                 </TabPane>
                 <TabPane Tab="Headers" Key="api_headers">
-                    
+
                 </TabPane>
             </Tabs>
         </FormItem>
@@ -124,19 +124,12 @@
 
     private async Task<IList<DataSourceListModel>> LoadDataSourcesAsync(int pageIndex, int pageSize)
     {
-        var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = base.GetBaseUri();
-
-        var result = await httpClient.GetFromJsonAsync<List<DataSourceListModel>>($"api/datasource/getlist?appId={AppId}&dataSourceType=2");
-        return result;
+        return await DataSourceAppService.GetListAsync(AppId, new() { DataSourceType = DataSourceTypeEnum.API });
     }
 
     private async Task<DataSourceSchema> GetDataSourceAsync(string dataSourceId)
     {
-        var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = base.GetBaseUri();
-
-        var dataSourceSchema = await httpClient.GetFromJsonAsync<DataSourceSchema>($"api/datasource/get?appId={AppId}&id={dataSourceId}");
+        var dataSourceSchema = await DataSourceAppService.GetByIdAsync(AppId, dataSourceId);
         if (dataSourceSchema == null)
             throw new NullReferenceException(nameof(dataSourceSchema));
 
@@ -151,18 +144,18 @@
         var validate = _form.Validate();
         if (validate)
         {
-            var result = await SaveDataSourceSchemaAsync();
-            if (result.StatusCode == HttpStatusCode.OK)
+            try
             {
+                await SaveDataSourceSchemaAsync();
                 _visible = false;
                 _form.Submit();
                 await Message.Success("保存成功！");
                 _form.Reset();
             }
-            else
+            catch (Exception ex)
             {
                 _visible = true;
-                await Message.Error($"保存失败: {result.ReasonPhrase}");
+                await Message.Error($"保存失败: {ex.Message}");
             }
         }
         else
@@ -176,7 +169,7 @@
         APIListState.Value = await LoadDataSourcesAsync(1, 50);
     }
 
-    private async Task<HttpResponseMessage> SaveDataSourceSchemaAsync()
+    private async Task SaveDataSourceSchemaAsync()
     {
         //过滤空参数
         _dataSource.API.Queries = _dataSource.API.Queries
@@ -186,15 +179,7 @@
             .Where(t => !t.Name.IsNullOrEmpty() && !t.Type.IsNullOrEmpty())
             .ToList();
 
-        string jsonSchema = _dataSource.ToJson();
-
-        var content = new StringContent(jsonSchema, Encoding.UTF8, "application/json");
-
-        var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = base.GetBaseUri();
-        var result = await httpClient.PostAsync($"api/datasource/save?appId={AppId}", content);
-
-        return result;
+        await DataSourceAppService.SaveAsync(AppId, _dataSource);
     }
 
     private async Task CreateAsync()
@@ -221,11 +206,8 @@
 
     private async Task DeleteAsync(string id)
     {
-        await Task.Delay(1);
-        var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = base.GetBaseUri();
-
-        await httpClient.GetAsync($"api/datasource/delete?appId={AppId}&id={id}");
+        await DataSourceAppService.DeleteAsync(AppId, id);
+        
         await Message.Success("删除成功！");
     }
 

@@ -5,11 +5,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Volo.Abp.Domain.Repositories;
 
 namespace H.LowCode.EntityFrameworkCore;
 
 public class FormDataRepository : IFormDataRepository
 {
+    public bool? IsChangeTrackingEnabled => true;
+
     public FormDataRepository()
     {
 

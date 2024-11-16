@@ -6,7 +6,7 @@ using H.LowCode.MyApp;
 using H.LowCode.PartsDesignEngine;
 using H.LowCode.Workbench;
 using H.Util.Blazor;
-using Volo.Abp.Autofac;
+using Volo.Abp.Autofac.WebAssembly;
 using Volo.Abp.Http.Client;
 using Volo.Abp.Modularity;
 
@@ -14,11 +14,11 @@ namespace H.LowCode.DesignEngine.Host.Client;
 
 [DependsOn(
     //abp
-    typeof(AbpAutofacModule),
+    typeof(AbpAutofacWebAssemblyModule),
     //动态API代理
     typeof(AbpHttpClientModule),
     typeof(DesignEngineApplicationContractsModule),
-    //=====web=====//
+    //=====lowcode-web=====//
     //Workbench
     typeof(LowCodeWorkbenchModule),
     //DesignEngine
@@ -35,16 +35,21 @@ public class DesignEngineHostClientModule : AbpModule
 
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
-        //动态API代理
-        context.Services.AddHttpClientProxies(
-            typeof(DesignEngineApplicationContractsModule).Assembly,
-            RemoteServiceName
-        );
+        ConfigureHttpClientProxies(context);
 
         //状态管理
         context.Services.AddScoped(typeof(ComponentStateWrapper<,>));
 
         //应用状态
         context.Services.AddSingleton(new LowCodeAppState(true));
+    }
+
+    private void ConfigureHttpClientProxies(ServiceConfigurationContext context)
+    {
+        //动态API代理
+        context.Services.AddHttpClientProxies(
+            typeof(DesignEngineApplicationContractsModule).Assembly,
+            RemoteServiceName
+        );
     }
 }

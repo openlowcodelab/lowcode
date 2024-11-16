@@ -3,7 +3,7 @@
 @inherits LowCodePageComponentBase
 @layout AntBlazorThemeLayout
 
-@inject IHttpClientFactory HttpClientFactory
+@inject IMetaAppService MetaAppService
 @inject ComponentStateWrapper<MetaPage, PageSchema> State
 
 <PageTitle>@($"{_pageCascadingModel.PageName}")</PageTitle>
@@ -52,10 +52,7 @@
 
     private async Task<PageSchema> LoadPageSchemaAsync()
     {
-        var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = base.GetBaseUri();
-
-        var pageSchema = await httpClient.GetFromJsonAsync<PageSchema>($"api/meta/getpage?appId={AppId}&pageId={PageId}");
+        var pageSchema = await MetaAppService.GetPageAsync(AppId, PageId);
         return pageSchema;
     }
 

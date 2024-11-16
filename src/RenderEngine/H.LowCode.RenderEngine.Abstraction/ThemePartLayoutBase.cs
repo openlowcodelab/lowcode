@@ -2,6 +2,7 @@
 using H.LowCode.MetaSchema;
 using H.LowCode.RenderEngine.Application.Contracts;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,6 +20,9 @@ public abstract class ThemePartLayoutBase : LowCodeLayoutComponentBase
 
     [Inject]
     private NavigationManager NavigationManager { get; set; }
+
+    [Inject]
+    private IConfiguration Configuration { get; set; }
 
     protected async Task<IList<MenuSchema>> GetMenusAsync(string appId)
     {

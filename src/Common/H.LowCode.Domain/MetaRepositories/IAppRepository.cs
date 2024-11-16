@@ -3,7 +3,7 @@ using Volo.Abp.Domain.Repositories;
 
 namespace H.LowCode.Domain.Repositories;
 
-public interface IAppRepository : IRepository
+public interface IAppRepository
 {
     Task<IList<AppSchema>> GetListAsync();
 

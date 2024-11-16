@@ -3,7 +3,7 @@
 @inherits LowCodePageComponentBase
 @layout DesignEngineLayout
 
-@inject IHttpClientFactory HttpClientFactory
+@inject IPageAppService PageAppService
 @inject DragDropStateService DragDropStateService
 @inject IMessageService _message
 
@@ -80,10 +80,7 @@
             return newPage;
         }
 
-        var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = base.GetBaseUri();
-
-        var pageSchema = await httpClient.GetFromJsonAsync<PageSchema>($"api/designer/getpage?appId={AppId}&pageId={PageId}");
+        var pageSchema = await PageAppService.GetByIdAsync(AppId, PageId);
 
         if (_designPanel != null)
         {
@@ -103,15 +100,8 @@
             return;
         }
 
-        string jsonSchema = pageSchema.ToJson();
-
-        var content = new StringContent(jsonSchema, Encoding.UTF8, "application/json");
-
-        var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = base.GetBaseUri();
-        var result = await httpClient.PostAsync($"api/designer/savepage", content);
-
-        if (result.StatusCode == HttpStatusCode.OK)
+        var isSuccess = await PageAppService.SaveAsync(pageSchema);
+        if (isSuccess)
         {
             if (_isNewPage)
             {
@@ -119,11 +109,11 @@
                 base.NavigateTo($"/designer/{pageSchema.AppId}/{pageSchema.Id}");
             }
 
-            await _message.Success("保存成功！");
+            await _message.Success("保存成功");
         }
         else
         {
-            await _message.Error($"保存失败: {result.ReasonPhrase}");
+            await _message.Error($"保存失败");
         }
     }
 

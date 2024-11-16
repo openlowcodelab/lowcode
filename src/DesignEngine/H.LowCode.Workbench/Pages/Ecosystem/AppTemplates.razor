@@ -2,7 +2,6 @@
 @inherits LowCodeComponentBase
 @layout WorkbenchLayout
 
-@inject IHttpClientFactory HttpClientFactory
 @inject IMessageService Message
 @inject ComponentStateWrapper<AppTemplates, IList<AppPartsSchema>> AppPartsState
 
@@ -34,7 +33,7 @@
 </Card>
 
 @code {
-    
+
     protected override async Task OnInitializedAsync()
     {
         if (AppPartsState.Value is null)
@@ -47,10 +46,7 @@
 
     private async Task<IList<AppPartsSchema>> LoadAppPartsAsync(int pageIndex, int pageSize)
     {
-        var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = base.GetBaseUri();
-
-        var result = await httpClient.GetFromJsonAsync<List<AppPartsSchema>>($"api/parts/getapps");
+        IList<AppPartsSchema> result = [];
         return result;
     }
 }

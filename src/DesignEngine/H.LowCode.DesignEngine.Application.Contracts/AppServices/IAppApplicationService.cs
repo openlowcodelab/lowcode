@@ -12,5 +12,5 @@ public interface IAppApplicationService : IApplicationService
 
     Task<AppSchema> GetByIdAsync(string appId);
 
-    Task SaveAsync(AppSchema appSchema);
+    Task<bool> SaveAsync(AppSchema appSchema);
 }

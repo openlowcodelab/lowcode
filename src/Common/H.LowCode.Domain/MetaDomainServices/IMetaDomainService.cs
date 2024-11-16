@@ -1,6 +1,8 @@
-﻿namespace H.LowCode.Domain;
+﻿using Volo.Abp.Domain.Services;
 
-public interface IMetaDomainService
+namespace H.LowCode.Domain;
+
+public interface IMetaDomainService : IDomainService
 {
 
 }

@@ -1,7 +1,7 @@
 ﻿@namespace H.LowCode.MyApp
 @inherits LowCodeLayoutComponentBase
 
-@inject IHttpClientFactory HttpClientFactory
+@inject IAppApplicationService AppApplicationService
 @inject ComponentStateWrapper<MyAppLayout, MenuDataItem[]> MenuDataState
 @inject ComponentStateWrapper<AppSchema, AppSchema> AppSchemaState
 
@@ -11,7 +11,7 @@
 {
     <CascadingValue Value="@AppSchemaState.Value" Name="appCascading">
         <AntDesign.ProLayout.BasicLayout FixedHeader="true" Class="myapp" Logo="@("logo.png")" Title="@AppSchemaState.Value.Name"
-                MenuData="@MenuDataState.Value" MenuAccordion="true" Layout="AntDesign.ProLayout.Layout.Side">
+        MenuData="@MenuDataState.Value" MenuAccordion="true" Layout="AntDesign.ProLayout.Layout.Side">
             <RightContentRender>
                 RightContent
             </RightContentRender>
@@ -40,11 +40,7 @@
 
     private async Task<AppSchema> GetAppSchemaAsync(string appId)
     {
-        var httpClient = HttpClientFactory.CreateClient();
-        httpClient.BaseAddress = base.GetBaseUri();
-
-        var pageSchema = await httpClient.GetFromJsonAsync<AppSchema>($"api/designer/getapp?appId={appId}");
-        return pageSchema;
+        return await AppApplicationService.GetByIdAsync(appId);
     }
 
     private MenuDataItem[] InitMenuData(string appId)

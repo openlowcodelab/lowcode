@@ -9,7 +9,7 @@ public interface IMenuAppService : IApplicationService
 
     Task<MenuSchema> GetByIdAsync(string appId, string menuId);
 
-    Task SaveAsync(MenuSchema menuSchema);
+    Task<bool> SaveAsync(MenuSchema menuSchema);
 
-    Task DeleteAsync(string appId, string menuId);
+    Task<bool> DeleteAsync(string appId, string menuId);
 }

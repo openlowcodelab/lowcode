@@ -2,6 +2,7 @@
 using H.LowCode.DesignEngine.Model;
 using H.LowCode.Domain;
 using H.LowCode.MetaSchema;
+using Microsoft.Extensions.DependencyInjection;
 using System.Collections.Generic;
 using System.Text;
 using Volo.Abp;
@@ -12,12 +13,7 @@ namespace H.LowCode.DesignEngine.Application;
 [RemoteService]
 public class DataSourceAppService : ApplicationService, IDataSourceAppService
 {
-    private IDataSourceDomainService _domainService;
-
-    public DataSourceAppService(IDataSourceDomainService domainService)
-    {
-        _domainService = domainService;
-    }
+    private IDataSourceDomainService _domainService => LazyServiceProvider.GetRequiredService<IDataSourceDomainService>();
 
     public async Task<IList<DataSourceListModel>> GetListAsync(string appId, DataSourceInput input)
     {
@@ -49,16 +45,18 @@ public class DataSourceAppService : ApplicationService, IDataSourceAppService
         return await _domainService.GetAsync(appId, id);
     }
 
-    public async Task SaveAsync(string appId, DataSourceSchema dataSourceSchema)
+    public async Task<bool> SaveAsync(string appId, DataSourceSchema dataSourceSchema)
     {
         ArgumentNullException.ThrowIfNull(dataSourceSchema);
         ArgumentException.ThrowIfNullOrEmpty(dataSourceSchema.Id);
 
         await _domainService.SaveAsync(appId, dataSourceSchema);
+        return true;
     }
 
-    public async Task DeleteAsync(string appId, string id)
+    public async Task<bool> DeleteAsync(string appId, string id)
     {
         await _domainService.DeleteAsync(appId, id);
+        return true;
     }
 }

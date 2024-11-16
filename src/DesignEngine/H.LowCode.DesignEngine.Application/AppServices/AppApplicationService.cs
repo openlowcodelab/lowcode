@@ -3,6 +3,7 @@ using H.LowCode.DesignEngine.Application.Contracts;
 using H.LowCode.DesignEngine.Model;
 using H.LowCode.Domain;
 using H.LowCode.MetaSchema;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using System.Collections.Generic;
 using System.Text;
@@ -14,16 +15,9 @@ namespace H.LowCode.DesignEngine.Application;
 [RemoteService]
 public class AppApplicationService : ApplicationService, IAppApplicationService
 {
-    private IEnumerable<SiteOption> _sites;
+    private IEnumerable<SiteOption> _sites => LazyServiceProvider.GetRequiredService<IOptions<List<SiteOption>>>().Value;
 
-    private IAppDomainService _domainService;
-
-    public AppApplicationService(IAppDomainService domainService,
-        IOptions<List<SiteOption>> siteOptions)
-    {
-        _sites = siteOptions.Value;
-        _domainService = domainService;
-    }
+    private IAppDomainService _domainService => LazyServiceProvider.GetRequiredService<AppDomainService>();
 
     public async Task<IList<AppListModel>> GetAppsAsync()
     {
@@ -47,11 +41,12 @@ public class AppApplicationService : ApplicationService, IAppApplicationService
         return await _domainService.GetAsync(appId);
     }
 
-    public async Task SaveAsync(AppSchema appSchema)
+    public async Task<bool> SaveAsync(AppSchema appSchema)
     {
         ArgumentNullException.ThrowIfNull(appSchema);
         ArgumentException.ThrowIfNullOrEmpty(appSchema.Id);
 
         await _domainService.SaveAsync(appSchema);
+        return true;
     }
 }
