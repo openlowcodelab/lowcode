@@ -37,7 +37,7 @@ public class RenderEngineHostModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
-        ConfigureConventionalControllers();
+        ConfigureAutoApiControllers();
         ConfigureSwaggerServices(context.Services);
 
         //状态管理
@@ -52,7 +52,7 @@ public class RenderEngineHostModule : AbpModule
         
     }
 
-    private void ConfigureConventionalControllers()
+    private void ConfigureAutoApiControllers()
     {
         //动态API注册
         Configure<AbpAspNetCoreMvcOptions>(options =>

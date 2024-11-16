@@ -6,6 +6,7 @@ using H.LowCode.MyApp;
 using H.LowCode.PartsDesignEngine;
 using H.LowCode.Workbench;
 using H.Util.Blazor;
+using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Volo.Abp.Autofac.WebAssembly;
 using Volo.Abp.Http.Client;
 using Volo.Abp.Modularity;
@@ -35,6 +36,9 @@ public class DesignEngineHostClientModule : AbpModule
 
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
+        var environment = context.Services.GetSingletonInstance<IWebAssemblyHostEnvironment>();
+
+        ConfigureHttpClient(context, environment);
         ConfigureHttpClientProxies(context);
 
         //状态管理
@@ -42,6 +46,14 @@ public class DesignEngineHostClientModule : AbpModule
 
         //应用状态
         context.Services.AddSingleton(new LowCodeAppState(true));
+    }
+
+    private static void ConfigureHttpClient(ServiceConfigurationContext context, IWebAssemblyHostEnvironment environment)
+    {
+        context.Services.AddTransient(sp => new HttpClient
+        {
+            BaseAddress = new Uri(environment.BaseAddress)
+        });
     }
 
     private void ConfigureHttpClientProxies(ServiceConfigurationContext context)

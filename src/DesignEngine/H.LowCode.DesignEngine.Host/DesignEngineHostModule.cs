@@ -40,7 +40,7 @@ public class DesignEngineHostModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
-        ConfigureConventionalControllers();
+        ConfigureAutoApiControllers();
         ConfigureSwaggerServices(context.Services);
 
         //状态管理
@@ -50,7 +50,7 @@ public class DesignEngineHostModule : AbpModule
         context.Services.AddSingleton(new LowCodeAppState(true));
     }
 
-    private void ConfigureConventionalControllers()
+    private void ConfigureAutoApiControllers()
     {
         //动态API注册
         Configure<AbpAspNetCoreMvcOptions>(options =>

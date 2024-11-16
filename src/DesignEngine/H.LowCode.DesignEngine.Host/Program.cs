@@ -17,8 +17,6 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 });
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddHttpClient();
-
 #region  LowCode
 builder.Host.UseAutofac();
 
