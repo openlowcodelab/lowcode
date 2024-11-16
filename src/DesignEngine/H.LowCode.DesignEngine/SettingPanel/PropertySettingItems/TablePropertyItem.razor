@@ -84,12 +84,7 @@
             <Input @bind-Value="@context.Title" />
         </FormItem>
         <FormItem Label="按钮行为">
-            <RadioGroup DefaultValue="ActionTypeEnum.None" TValue="ActionTypeEnum" @bind-Value="@context.ActionType">
-                <Radio Value="ActionTypeEnum.None">None</Radio>
-                <Radio Value="ActionTypeEnum.Modal">Modal</Radio>
-                <Radio Value="ActionTypeEnum.Self">Self</Radio>
-                <Radio Value="ActionTypeEnum.Blank">Blank</Radio>
-            </RadioGroup>
+            <EnumRadioGroup TEnum="ActionTypeEnum" @bind-Value="@context.ActionType" Name="radio_actiontype"></EnumRadioGroup>
         </FormItem>
         <FormItem Label="目标对象" Required>
             <Input @bind-Value="@context.TargetId" />

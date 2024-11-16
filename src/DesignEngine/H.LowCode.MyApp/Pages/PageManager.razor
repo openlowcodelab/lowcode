@@ -50,16 +50,12 @@
             <Input @bind-Value="@context.Name" />
         </FormItem>
         <FormItem Label="类型" Required>
-            <RadioGroup DefaultValue="PageTypeEnum.Normal" TValue="PageTypeEnum" @bind-Value="@context.PageType">
-                <Radio Value="PageTypeEnum.Normal">普通</Radio>
-                <Radio Value="PageTypeEnum.Form">表单</Radio>
-                <Radio Value="PageTypeEnum.Table">列表</Radio>
-            </RadioGroup>
+            <EnumRadioGroup TEnum="PageTypeEnum" @bind-Value="@context.PageType" Name="radio_pageType"></EnumRadioGroup>
         </FormItem>
         <FormItem Label="发布状态" Required>
             <RadioGroup @bind-Value="@context.PublishStatus">
-                <Radio Value="0">待发布</Radio>
-                <Radio Value="1">已发布</Radio>
+                <Radio Value="false">待发布</Radio>
+                <Radio Value="true">已发布</Radio>
             </RadioGroup>
         </FormItem>
         <FormItem Label="排序">
