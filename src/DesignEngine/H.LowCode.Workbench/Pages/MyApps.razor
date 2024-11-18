@@ -6,7 +6,7 @@
 
 @inject IConfiguration Configuration
 @inject IAppApplicationService AppApplicationService
-@inject ComponentStateWrapper<MyApps, IList<AppListModel>> MyAppsState
+@inject ComponentState<MyApps, IList<AppListModel>> MyAppsState
 
 <PageTitle>我的应用 - H.LowCode</PageTitle>
 
@@ -42,9 +42,9 @@
         </div>
     </div>
 
-    @if (MyAppsState.Value != null)
+    @if (_appList != null)
     {
-        @foreach (var app in MyAppsState.Value)
+        @foreach (var app in _appList)
         {
             <Card Class="myapps" Style="float:left; width:300px; margin:5px;" Bordered>
                 <ChildContent>
@@ -74,18 +74,20 @@
 </Modal>
 
 @code {
+    private IList<AppListModel> _appList;
+
     private bool _visible = false;
 
     RenderFragment avatarTemplate = @<Avatar Icon="appstore"></Avatar>;
 
     protected override async Task OnInitializedAsync()
     {
-        if (MyAppsState.Value is null)
-        {
-            MyAppsState.Value = await LoadAppsAsync();
+        await base.OnInitializedAsync();
 
-            await base.OnInitializedAsync();
-        }
+        _appList = await MyAppsState.GetOrAddAsync(this, async () =>
+        {
+            return await LoadAppsAsync();
+        });
     }
 
     private async Task<IList<AppListModel>> LoadAppsAsync()

@@ -3,7 +3,7 @@
 
 @inject IDataSourceAppService DataSourceAppService
 @inject IMessageService Message
-@inject ComponentStateWrapper<APIDataSource, IList<DataSourceListModel>> APIListState
+@inject ComponentState<APIDataSource, IList<DataSourceListModel>> APIListState
 
 <div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
     <div style="width:250px;">
@@ -13,7 +13,7 @@
         <Button Type="@ButtonType.Primary" OnClick="CreateAsync">新建API</Button>
     </div>
 </div>
-<Table TItem="DataSourceListModel" DataSource="@APIListState.Value" Total="_total"
+<Table TItem="DataSourceListModel" DataSource="@_dataSourceList" Total="_total"
 @bind-PageIndex="@_pageIndex" @bind-PageSize="@_pageSize">
     <PropertyColumn Title="名称" Property="c=>c.Name" Sortable />
     <PropertyColumn Title="中文名" Property="c=>c.DisplayName" Sortable />
@@ -37,7 +37,7 @@
 
 <Modal Title="新建 API" @bind-Visible="@_visible" OnOk="OnConfirmAsync" Width="1100" Resizable="true" Draggable="true">
     <Form Model="@_dataSource" LabelColSpan="3" OnFinish="OnFinishAsync" @ref="@_form"
-     ValidateOnChange="true">
+    ValidateOnChange="true">
         <FormItem Label="API 名称" Required>
             <Input @bind-Value="@context.Name" />
         </FormItem>
@@ -109,17 +109,18 @@
     private bool _visible;
     private string _modalTitle;
     private Form<DataSourceSchema> _form;
+    private IList<DataSourceListModel> _dataSourceList;
     private DataSourceSchema _dataSource = new DataSourceSchema();
 
     protected override async Task OnInitializedAsync()
     {
-        _total = 50;
-        if (APIListState.Value is null)
-        {
-            APIListState.Value = await LoadDataSourcesAsync(1, 50);
+        await base.OnInitializedAsync();
 
-            await base.OnInitializedAsync();
-        }
+        _total = 50;
+        _dataSourceList = await APIListState.GetOrAddAsync(this, async () =>
+        {
+            return await LoadDataSourcesAsync(1, 50);
+        });
     }
 
     private async Task<IList<DataSourceListModel>> LoadDataSourcesAsync(int pageIndex, int pageSize)
@@ -166,7 +167,7 @@
 
     private async Task OnFinishAsync()
     {
-        APIListState.Value = await LoadDataSourcesAsync(1, 50);
+        _dataSourceList = await LoadDataSourcesAsync(1, 50);
     }
 
     private async Task SaveDataSourceSchemaAsync()

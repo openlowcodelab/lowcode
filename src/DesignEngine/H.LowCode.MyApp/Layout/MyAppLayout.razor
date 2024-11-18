@@ -2,16 +2,16 @@
 @inherits LowCodeLayoutComponentBase
 
 @inject IAppApplicationService AppApplicationService
-@inject ComponentStateWrapper<MyAppLayout, MenuDataItem[]> MenuDataState
-@inject ComponentStateWrapper<AppSchema, AppSchema> AppSchemaState
+@inject ComponentState<MyAppLayout, MenuDataItem[]> MenuDataState
+@inject ComponentState<AppSchema> AppState
 
 <link href="@Assets["_content/H.LowCode.MyApp/myapp.css"]" rel="stylesheet" />
 
-@if (AppSchemaState.Value != null)
+@if (_appSchema != null)
 {
-    <CascadingValue Value="@AppSchemaState.Value" Name="appCascading">
-        <AntDesign.ProLayout.BasicLayout FixedHeader="true" Class="myapp" Logo="@("logo.png")" Title="@AppSchemaState.Value.Name"
-        MenuData="@MenuDataState.Value" MenuAccordion="true" Layout="AntDesign.ProLayout.Layout.Side">
+    <CascadingValue Value="@_appSchema" Name="appCascading">
+        <AntDesign.ProLayout.BasicLayout FixedHeader="true" Class="myapp" Logo="@("logo.png")" Title="@_appSchema.Name"
+        MenuData="@_menuDataItems" MenuAccordion="true" Layout="AntDesign.ProLayout.Layout.Side">
             <RightContentRender>
                 RightContent
             </RightContentRender>
@@ -26,16 +26,22 @@
 
 @code
 {
+    private AppSchema _appSchema;
+    private MenuDataItem[] _menuDataItems;
+
     protected override async Task OnInitializedAsync()
     {
-        if (MenuDataState.Value is null)
-        {
-            string appid = base.GetAppId();
-            AppSchemaState.Value = await GetAppSchemaAsync(appid);
-            MenuDataState.Value = InitMenuData(appid);
+        await base.OnInitializedAsync();
 
-            await base.OnInitializedAsync();
-        }
+        _appSchema = await AppState.GetOrAddAsync(typeof(AppSchema), async () =>
+        {
+            return await GetAppSchemaAsync(AppId);
+        });
+
+        _menuDataItems = MenuDataState.GetOrAdd(this, () =>
+        {
+            return InitMenuData(AppId);
+        });
     }
 
     private async Task<AppSchema> GetAppSchemaAsync(string appId)

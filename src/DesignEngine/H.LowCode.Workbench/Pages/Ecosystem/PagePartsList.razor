@@ -3,7 +3,7 @@
 @layout WorkbenchLayout
 
 @inject IMessageService Message
-@inject ComponentStateWrapper<PagePartsList, IList<PagePartsSchema>> PagePartsState
+@inject ComponentState<PagePartsList, IList<PagePartsSchema>> PagePartsState
 
 <div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
     <div style="width:250px;">
@@ -14,7 +14,7 @@
     </div>
 </div>
 
-<Table TItem="PagePartsSchema" DataSource="@PagePartsState.Value" PageSize="15" PageIndex="1" Total="_total"
+<Table TItem="PagePartsSchema" DataSource="@_pagePartsList" PageSize="15" PageIndex="1" Total="_total"
 @bind-SelectedRows="selectedRows" Style="height:100%;" RowKey="c=>c.Id">
     <PropertyColumn Title="ID" Property="c=>c.Id" Width="300" />
     <PropertyColumn Title="页面名称" Property="c=>c.Name" Sortable />
@@ -62,17 +62,18 @@
 
     private bool _visible = false;
     private Form<PagePartsSchema> _form;
+    private IList<PagePartsSchema> _pagePartsList;
     private PagePartsSchema _partsSchema = new PagePartsSchema();
 
     protected override async Task OnInitializedAsync()
     {
-        _total = 50;
-        if (PagePartsState.Value is null)
-        {
-            PagePartsState.Value = await LoadPagePartsAsync(1, 50);
+        await base.OnInitializedAsync();
 
-            await base.OnInitializedAsync();
-        }
+        _total = 50;
+        _pagePartsList = await PagePartsState.GetOrAddAsync(this, async () =>
+        {
+            return await LoadPagePartsAsync(1, 50);
+        });
     }
 
     private async Task<IList<PagePartsSchema>> LoadPagePartsAsync(int pageIndex, int pageSize)
@@ -136,7 +137,7 @@
 
     private async Task OnFinishAsync()
     {
-        PagePartsState.Value = await LoadPagePartsAsync(1, 50);
+        _pagePartsList = await LoadPagePartsAsync(1, 50);
     }
 
     private async Task<bool> SavePagePartsSchemaAsync()

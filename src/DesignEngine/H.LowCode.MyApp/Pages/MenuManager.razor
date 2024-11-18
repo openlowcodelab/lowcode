@@ -5,7 +5,7 @@
 
 @inject IMenuAppService MenuAppService
 @inject IMessageService Message
-@inject ComponentStateWrapper<MenuManager, IList<MenuSchema>> MenuListState
+@inject ComponentState<MenuManager, IList<MenuSchema>> MenuListState
 
 <PageTitle>菜单管理</PageTitle>
 
@@ -18,7 +18,7 @@
     </div>
 </div>
 
-<Table TItem="MenuSchema" TreeChildren="item=>item.Childrens" DataSource="@MenuListState.Value" @bind-SelectedRows="selectedRows"
+<Table TItem="MenuSchema" TreeChildren="item=>item.Childrens" DataSource="@_menuList" @bind-SelectedRows="selectedRows"
 RowKey="x=>x.Id" HidePagination DefaultExpandAllRows>
     <PropertyColumn Title="菜单名称" Property="c=>c.Title" Format="yyyy-MM-dd" Sortable />
     <PropertyColumn Title="排序" Property="c=>c.Order" />
@@ -85,16 +85,18 @@ RowKey="x=>x.Id" HidePagination DefaultExpandAllRows>
 
     private bool _visible = false;
     private Form<MenuSchema> _form;
+
+    private IList<MenuSchema> _menuList;
     private MenuSchema _menuSchema = new MenuSchema();
 
     protected override async Task OnInitializedAsync()
     {
-        if (MenuListState.Value is null)
-        {
-            MenuListState.Value = await GetMenuListAsync();
+        await base.OnInitializedAsync();
 
-            await base.OnInitializedAsync();
-        }
+        _menuList = await MenuListState.GetOrAddAsync(this, async () =>
+        {
+            return await GetMenuListAsync();
+        });
     }
 
     public async Task<IList<MenuSchema>> GetMenuListAsync()
@@ -159,7 +161,7 @@ RowKey="x=>x.Id" HidePagination DefaultExpandAllRows>
 
     private async Task OnFinishAsync()
     {
-        MenuListState.Value = await GetMenuListAsync();
+        _menuList = await GetMenuListAsync();
     }
 
     private async Task<bool> SaveMenuSchemaAsync()

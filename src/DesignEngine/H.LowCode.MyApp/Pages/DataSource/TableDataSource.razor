@@ -3,7 +3,7 @@
 
 @inject IDataSourceAppService DataSourceAppService
 @inject IMessageService Message
-@inject ComponentStateWrapper<TableDataSource, IList<DataSourceListModel>> DataSourceListState
+@inject ComponentState<TableDataSource, IList<DataSourceListModel>> DataSourceListState
 
 <div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
     <div style="width:250px;">
@@ -13,7 +13,7 @@
         <Button Type="@ButtonType.Primary" OnClick="CreateAsync">新建数据表</Button>
     </div>
 </div>
-<Table TItem="DataSourceListModel" DataSource="@DataSourceListState.Value" Total="_total"
+<Table TItem="DataSourceListModel" DataSource="@_dataSourceList" Total="_total"
 @bind-PageIndex="@_pageIndex" @bind-PageSize="@_pageSize">
     <PropertyColumn Title="名称" Property="c=>c.Name" Sortable />
     <PropertyColumn Title="中文名" Property="c=>c.DisplayName" Sortable />
@@ -165,6 +165,7 @@
 
     IDictionary<string, (bool edit, TableFieldSchema field)> _fieldEditCache = new Dictionary<string, (bool edit, TableFieldSchema field)>();
 
+    private IList<DataSourceListModel> _dataSourceList;
     private DataSourceSchema _dataSource;
 
     int _pageIndex = 1;
@@ -176,13 +177,13 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _total = 50;
-        if (DataSourceListState.Value is null)
-        {
-            DataSourceListState.Value = await LoadDataSourcesAsync(1, 50);
+        await base.OnInitializedAsync();
 
-            await base.OnInitializedAsync();
-        }
+        _total = 50;
+        _dataSourceList = await DataSourceListState.GetOrAddAsync(this, async () =>
+        {
+            return await LoadDataSourcesAsync(1, 50);
+        });
     }
 
     private async Task<IList<DataSourceListModel>> LoadDataSourcesAsync(int pageIndex, int pageSize)
@@ -232,7 +233,7 @@
 
     private async Task OnFinishAsync()
     {
-        DataSourceListState.Value = await LoadDataSourcesAsync(1, 50);
+        _dataSourceList = await LoadDataSourcesAsync(1, 50);
     }
 
     private async Task<bool> SaveDataSourceSchemaAsync()

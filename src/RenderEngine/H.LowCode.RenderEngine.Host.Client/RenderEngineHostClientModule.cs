@@ -39,7 +39,8 @@ public class RenderEngineHostClientModule : AbpModule
         ConfigureHttpClientProxies(context);
 
         //状态管理
-        context.Services.AddScoped(typeof(ComponentStateWrapper<,>));
+        context.Services.AddScoped(typeof(ComponentState<>));
+        context.Services.AddScoped(typeof(ComponentState<,>));
 
         //应用状态
         context.Services.AddSingleton(new LowCodeAppState(false));

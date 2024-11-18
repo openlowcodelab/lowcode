@@ -2,6 +2,7 @@
 @inherits LowCodeComponentBase
 
 @inject DragDropStateService DragDropStateService
+@inject ComponentState<DesignPanel, ComponentSchema> RootComponentState
 
 @if (_rootComponent != null)
 {
@@ -21,9 +22,12 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _rootComponent = LoadRootComponent();
-
         await base.OnInitializedAsync();
+
+        _rootComponent = RootComponentState.GetOrAdd(this, () =>
+        {
+            return LoadRootComponent();
+        });
     }
 
     private ComponentSchema LoadRootComponent()
@@ -43,5 +47,10 @@
         if (pageSchema != null && DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId) != null)
             DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId).Childrens = pageSchema.Components;
         StateHasChanged();
+    }
+
+    public override string ToString()
+    {
+        return $"{base.ToString()}-{PageCascading.AppId}-{PageCascading.PageId}";
     }
 }

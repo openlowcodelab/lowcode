@@ -29,6 +29,20 @@ public abstract class LowCodeLayoutComponentBase : LayoutComponentBase
         }
     }
 
+    private string _appId;
+    protected string AppId
+    {
+        get
+        {
+            if (_appId.IsNullOrEmpty())
+            {
+                _appId = GetRouteValue("AppId");
+                return _appId;
+            }
+            return _appId;
+        }
+    }
+
     protected Uri GetBaseUri()
     {
         return new Uri(NavigationManager.BaseUri);
@@ -43,10 +57,5 @@ public abstract class LowCodeLayoutComponentBase : LayoutComponentBase
         }
 
         return routeValue;
-    }
-
-    protected string GetAppId()
-    {
-        return GetRouteValue("AppId");
     }
 }

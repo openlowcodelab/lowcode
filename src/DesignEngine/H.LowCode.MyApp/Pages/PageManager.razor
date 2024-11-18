@@ -5,7 +5,7 @@
 
 @inject IPageAppService PageAppService
 @inject IMessageService Message
-@inject ComponentStateWrapper<PageManager, IList<PageListModel>> PageListState
+@inject ComponentState<PageManager, IList<PageListModel>> PageListState
 
 <PageTitle>页面管理</PageTitle>
 
@@ -18,7 +18,7 @@
     </div>
 </div>
 
-<Table TItem="PageListModel" DataSource="@PageListState.Value" PageSize="15" PageIndex="1" Total="_total"
+<Table TItem="PageListModel" DataSource="@_pageList" PageSize="15" PageIndex="1" Total="_total"
 @bind-SelectedRows="selectedRows" Style="height:100%;" RowKey="c=>c.PageId">
     <PropertyColumn Title="ID" Property="c=>c.PageId" />
     <PropertyColumn Title="页面名称" Property="c=>c.PageName" Sortable />
@@ -73,17 +73,18 @@
 
     private bool _visible;
     private Form<PageSchema> _form;
+    private IList<PageListModel> _pageList;
     private PageSchema _pageSchema = new PageSchema();
 
     protected override async Task OnInitializedAsync()
     {
-        _total = 50;
-        if (PageListState.Value is null)
-        {
-            PageListState.Value = await LoadPagesAsync(1, 50);
+        await base.OnInitializedAsync();
 
-            await base.OnInitializedAsync();
-        }
+        _total = 50;
+        _pageList = await PageListState.GetOrAddAsync(this, async () =>
+        {
+            return await LoadPagesAsync(1, 50);
+        });
     }
 
     private async Task<IList<PageListModel>> LoadPagesAsync(int pageIndex, int pageSize)
@@ -147,7 +148,7 @@
 
     private async Task OnFinishAsync()
     {
-        PageListState.Value = await LoadPagesAsync(1, 50);
+        _pageList = await LoadPagesAsync(1, 50);
     }
 
     private async Task<bool> SavePageSchemaAsync()
