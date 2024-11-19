@@ -7,7 +7,7 @@ public interface IFormDataAppService : IApplicationService
 {
     Task<bool> Save(FormCreateOrUpdateDTO dto);
 
-    Task<FormDTO> Get<TKey>(TKey id);
+    Task<FormDataDTO> Get<TKey>(TKey id);
 
     Task<bool> Delete<TKey>(TKey id);
 }

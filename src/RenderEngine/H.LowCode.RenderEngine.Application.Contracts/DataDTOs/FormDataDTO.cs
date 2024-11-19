@@ -5,16 +5,20 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace H.LowCode.Domain;
+namespace H.LowCode.RenderEngine.Application.Contracts;
 
-public class FormEntity : EntityBase
+public class FormDataDTO : DTOBase
 {
-    public IEnumerable<FieldDataEntity> Fields { get; set; } = [];
+    public string FormId { get; set; }
+
+    public IEnumerable<FieldDataDTO> Fields { get; set; } = [];
+
+    public IDictionary<string, object> FormDatas { get; set; } = new Dictionary<string, object>();
 
     public IEnumerable<ValidationRuleSchema> ValidationRules { get; set; } = [];
 }
 
-public class FieldDataEntity
+public class FieldDataDTO
 {
     public string Id { get; set; }
 

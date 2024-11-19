@@ -14,6 +14,14 @@ public abstract class EntityBase
 
     public string Id { get; set; }
 
+    public DateTime CreatedTime { get; set; }
+
+    public string CreatedUser { get; set; }
+
+    public DateTime ModifiedTime { get; set; }
+
+    public string ModifiedUser { get; set; }
+
     ///// <summary>
     ///// 创建一个自定实体。
     ///// </summary>

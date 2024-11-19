@@ -16,10 +16,10 @@ public class FormDataAppService : ApplicationService, IFormDataAppService
 {
     private IFormDataDomainService _formDataDomainService => LazyServiceProvider.GetRequiredService<IFormDataDomainService>();
 
-    public async Task<FormDTO> Get<TKey>(TKey id)
+    public async Task<FormDataDTO> Get<TKey>(TKey id)
     {
         var entity = await _formDataDomainService.Get(id);
-        var dto = ObjectMapper.Map<FormEntity, FormDTO>(entity);
+        var dto = ObjectMapper.Map<FormEntity, FormDataDTO>(entity);
         return dto;
     }
 
