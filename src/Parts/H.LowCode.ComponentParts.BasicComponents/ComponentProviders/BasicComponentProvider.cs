@@ -89,7 +89,8 @@ public class BasicComponentProvider : IComponentProvider
             new("autocomplete"){
                 ComponentFragments =
                 [
-                    new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(AutoComplete<string>).GetFullNameWithAssemblyName() }
+                    new(){ Index = 0, FragmentEnum = FragmentEnum.Component, ComponentFragmentName = typeof(AutoComplete<string>).GetFullNameWithAssemblyName() },
+                    new(){ Index = 1, FragmentEnum = FragmentEnum.Attribute, Name = "Options", ValueType = ComponentValueTypeEnum.StringList, StringValues = [] }
                 ],
                 ComponentProperty = new(){
                     Title = "自动完成",

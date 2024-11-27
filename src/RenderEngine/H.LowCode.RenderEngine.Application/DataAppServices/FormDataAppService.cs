@@ -16,19 +16,20 @@ public class FormDataAppService : ApplicationService, IFormDataAppService
 {
     private IFormDataDomainService _formDataDomainService => LazyServiceProvider.GetRequiredService<IFormDataDomainService>();
 
-    public async Task<FormDataDTO> Get<TKey>(TKey id)
+    public async Task<FormDataDTO> GetAsync(string appId, string pageId, string dataId)
     {
-        var entity = await _formDataDomainService.Get(id);
+        var entity = await _formDataDomainService.GetAsync(appId, pageId, dataId);
         var dto = ObjectMapper.Map<FormEntity, FormDataDTO>(entity);
         return dto;
     }
 
-    public Task<bool> Save(FormCreateOrUpdateDTO dto)
+    public async Task<bool> SaveAsync(FormCreateOrUpdateDTO dto)
     {
-        throw new NotImplementedException();
+        return await _formDataDomainService.SaveAsync(null);
     }
-    public Task<bool> Delete<TKey>(TKey id)
+
+    public async Task<bool> DeleteAsync(string appId, string pageId, string id)
     {
-        throw new NotImplementedException();
+        return await _formDataDomainService.DeleteAsync(appId, pageId, id);
     }
 }

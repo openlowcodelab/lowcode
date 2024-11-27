@@ -1,13 +1,12 @@
-﻿using H.LowCode.MetaSchema;
-using Volo.Abp.Application.Services;
+﻿using Volo.Abp.Application.Services;
 
 namespace H.LowCode.RenderEngine.Application.Contracts;
 
 public interface IFormDataAppService : IApplicationService
 {
-    Task<bool> Save(FormCreateOrUpdateDTO dto);
+    Task<bool> SaveAsync(FormCreateOrUpdateDTO dto);
 
-    Task<FormDataDTO> Get<TKey>(TKey id);
+    Task<FormDataDTO> GetAsync(string appId, string pageId, string id);
 
-    Task<bool> Delete<TKey>(TKey id);
+    Task<bool> DeleteAsync(string appId, string pageId, string id);
 }

@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using H.LowCode.Domain;
+using JetBrains.Annotations;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
@@ -6,10 +8,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
-using Volo.Abp.Data;
 
 namespace H.LowCode.EntityFrameworkCore;
 
@@ -25,6 +25,88 @@ public class LowCodeDbContext : DbContext
     {
         _dbOptions = options;
         _entityTypeManager = entityTypeManager;
+    }
+
+    public async Task<bool> AddAsync(FormEntity formEntity)
+    {
+        var entityType = GetEntityType(formEntity.Name);
+        dynamic entity = Activator.CreateInstance(entityType);
+
+        foreach (var field in formEntity.Fields)
+        {
+            var propertyInfoName = entityType.GetProperty(field.Key);
+            propertyInfoName.SetValue(entity, field.Value);
+        }
+
+        Add(entity);
+        await SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> UpdateAsync(FormEntity formEntity)
+    {
+        var entityType = GetEntityType(formEntity.Name);
+        dynamic entity = Activator.CreateInstance(entityType);
+
+        foreach (var field in formEntity.Fields)
+        {
+            var propertyInfoName = entityType.GetProperty(field.Key);
+            propertyInfoName.SetValue(entity, field.Value);
+        }
+
+        Update(entity);
+        await SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<FormEntity> GetAsync(string tableName, string id)
+    {
+        var entityType = GetEntityType(tableName);
+        var entity = await FindAsync(entityType, id);
+        if (entity == null)
+            return null;
+
+        FormEntity formEntity = new FormEntity();
+        formEntity.Id = id;
+        foreach (var property in entityType.GetProperties())
+        {
+            var propertyValue = property.GetValue(entity);
+            formEntity.Fields[property.Name] = propertyValue;
+        }
+        return formEntity;
+    }
+
+    public int SaveChangesAsync(FormEntity formEntity)
+    {
+        var entityType = GetEntityType(formEntity.Name);
+
+        var entries = ChangeTracker.Entries().Where(e => e.Entity.GetType() == entityType);
+        foreach (var entry in entries)
+        {
+            if (entry.State == EntityState.Deleted)
+            {
+                // 这里可以添加删除逻辑，比如从数据库中实际删除记录
+            }
+            else if (entry.State == EntityState.Modified)
+            {
+                // 这里可以添加更新逻辑，比如更新数据库中的记录
+            }
+            else if (entry.State == EntityState.Added)
+            {
+                // 这里可以添加插入逻辑，比如插入新记录到数据库
+            }
+        }
+
+        return base.SaveChanges();
+    }
+
+    public Type GetEntityType(string tableName)
+    {
+        var entityTypes = this.Model.GetEntityTypes();
+        var entityType = entityTypes.FirstOrDefault(t => t.ClrType.Name == tableName);
+        if (entityType == null)
+            throw new ArgumentException($"Entity type '{tableName}' not found.");
+        return entityType.ClrType;
     }
 
     /// <summary>
@@ -86,30 +168,42 @@ public class LowCodeDbContext : DbContext
 
     private void ConfigureProperties(EntityTypeBuilder entityBuilder, DynamicEntityInfo dynamicEntity, Type entityType)
     {
-        var properties = entityType.GetProperties()?.ToList();
         foreach (var field in dynamicEntity.Fields)
         {
-            //不为空列
+            if(field.Name == dynamicEntity.PrimaryKey)
+            {
+                field.MaxLength = 50;
+                field.IsUnicode = false;
+                field.IsNullable = false;
+            }
+
+            //映射字段
+            PropertyBuilder propertyBuilder = entityBuilder.Property(field.ClrType, field.Name);
+
+            //映射字段类型
+            if (field.ClrType == typeof(string))
+            {
+                propertyBuilder.HasMaxLength(field.MaxLength ?? 50);
+                propertyBuilder.IsUnicode(field.IsUnicode ?? true);
+            }
+            else if (field.ClrType == typeof(int))
+            {
+                propertyBuilder.HasMaxLength(field.MaxLength ?? 10);
+            }
+            else if (field.ClrType == typeof(decimal))
+            {
+                propertyBuilder.HasPrecision(field.Precision ?? 12, field.Scale ?? 2);
+            }
+
+            if (field.DefaultValue != null)
+                propertyBuilder.HasDefaultValue(field.DefaultValue);
+
             if (!field.IsNullable)
-            {
-                entityBuilder.Property(field.ClrType, field.Name).IsRequired(true);
-            }
-            else
-            {
-                Type clrType = null;
-                if (field.ClrType.IsValueType)
-                {
-                    clrType = typeof(Nullable<>).MakeGenericType(field.ClrType);
-                }
-                entityBuilder.Property(clrType ?? field.ClrType, field.Name);
-            }
+                propertyBuilder.IsRequired();
 
-            //映射表字段
-            Microsoft.EntityFrameworkCore.Metadata.Builders.PropertyBuilder propertyBuilder = entityBuilder.Property(field.Name);
-            //TODO: HasMaxLength, IsUnicode 等待配置
+            if (!string.IsNullOrEmpty(field.Comment))
+                propertyBuilder.HasComment(field.Comment);
         }
-
-        properties?.ForEach(p => entityBuilder.Ignore(p.Name));
     }
 
     /// <summary>

@@ -28,6 +28,8 @@
         {
             return LoadRootComponent();
         });
+        //考虑预呈现场景,重新保存 rootComponent
+        DragDropStateService.SetRootComponent(PageCascading.AppId, PageCascading.PageId, _rootComponent);
     }
 
     private ComponentSchema LoadRootComponent()
@@ -37,7 +39,6 @@
         {
             rootComponent = new ComponentSchema("root");
             rootComponent.Refresh = StateHasChanged;
-            DragDropStateService.SetRootComponent(PageCascading.AppId, PageCascading.PageId, rootComponent);
         }
         return rootComponent;
     }

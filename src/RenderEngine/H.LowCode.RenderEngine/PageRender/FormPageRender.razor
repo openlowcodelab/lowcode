@@ -1,6 +1,8 @@
 ﻿@namespace H.LowCode.RenderEngine
 @inherits LowCodeComponentBase
 
+@inject IFormDataAppService FormDataAppService
+
 @foreach (var component in Page.Components)
 {
     <ComponentRender Component="@component" IsInRootContainer="true"></ComponentRender>
@@ -16,8 +18,13 @@
     [Parameter]
     public PageSchema Page { get; set; }
 
+    [Parameter]
+    public string DataId { get; set; }
+
+    private FormDataDTO formDTO;
+
     protected override async Task OnInitializedAsync()
     {
-        await base.OnInitializedAsync();
+        formDTO = await FormDataAppService.GetAsync(Page.AppId, Page.Id, DataId);
     }
 }

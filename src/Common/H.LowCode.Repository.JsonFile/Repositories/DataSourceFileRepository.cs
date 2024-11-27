@@ -17,7 +17,6 @@ public class DataSourceFileRepository : FileRepositoryBase, IDataSourceRepositor
 
     public async Task<IList<DataSourceSchema>> GetListAsync(string appId)
     {
-        await Task.Delay(1);
         List<DataSourceSchema> list = [];
 
         var dataSourceFolder = Path.Combine(_metaBaseDir, appId, "datasource");

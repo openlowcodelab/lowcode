@@ -32,7 +32,7 @@ public class PageSchema : MetaSchemaBase
     public PagePropertySchema PageProperty { get; set; } = new();
 
     [JsonPropertyName("ds")]
-    public DataSourceSchema DataSource { get; set; } = new();
+    public PageDataSourceSchema DataSource { get; set; } = new();
 
     public I18n I18n { get; set; }
 }

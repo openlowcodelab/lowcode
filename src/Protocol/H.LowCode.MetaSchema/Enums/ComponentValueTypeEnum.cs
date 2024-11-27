@@ -20,6 +20,7 @@ public enum ComponentValueTypeEnum
     Array = 25,
     Option = 30,
     Table = 35,
-    List = 36,
+    StringList = 36,
+    IntList = 37,
     Tree = 42
 }

@@ -58,7 +58,7 @@ public class RenderEngineHostClientModule : AbpModule
     {
         //动态API代理
         context.Services.AddHttpClientProxies(
-            typeof(DesignEngineApplicationContractsModule).Assembly,
+            typeof(RenderEngineApplicationContractsModule).Assembly,
             RemoteServiceName
         );
     }

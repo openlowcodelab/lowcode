@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.WebUtilities;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -39,5 +40,11 @@ public abstract class LowCodeComponentBase : AbpComponentBase
     protected void NavigateTo([StringSyntax("Uri")] string uri, bool forceLoad = false)
     {
         NavigationManager.NavigateTo(uri);
+    }
+
+    protected string GetQueryValue(string key)
+    {
+        var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+        return QueryHelpers.ParseQuery(uri.Query).GetValueOrDefault(key);
     }
 }

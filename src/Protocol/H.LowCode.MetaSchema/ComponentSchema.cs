@@ -73,7 +73,7 @@ public class ComponentSchema : MetaSchemaBase
 
     [JsonPropertyName("ds")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public DataSourceSchema DataSource { get; set; } = new();
+    public ComponentDataSourceSchema DataSource { get; set; } = new();
 
     #region JsonIgnore Attributes   ======== 用于 DesignEngine, RenderEngine 不需要
     [JsonIgnore]

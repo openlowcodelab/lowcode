@@ -30,6 +30,10 @@ public class ComponentFragmentSchema
     [JsonPropertyName("strval")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public string StringValue { get; set; }
+
+    [JsonPropertyName("strvals")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public List<string> StringValues { get; set; }
 }
 
 public enum FragmentEnum

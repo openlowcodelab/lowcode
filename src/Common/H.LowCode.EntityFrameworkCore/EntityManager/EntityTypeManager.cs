@@ -43,7 +43,7 @@ public class EntityTypeManager
             var fields = entity.TableFields.Select(f => new DynamicEntityField()
             {
                 Name = f.Name,
-                ClrType = FieldTypeMapping.GetFieldType(DbType.SqlServer, f.Type),
+                ClrType = FieldTypeMapping.GetFieldType(f.Type, f.IsNullable),
                 IsNullable = f.IsNullable
             });
 

@@ -1,0 +1,24 @@
+﻿@namespace H.LowCode.ThemeParts.AntBlazor
+@inherits LowCodeComponentBase
+
+<div class="renderengine-componentcontainer" style="@ContainerComponent.ComponentStyle.DefaultStyle">
+    @foreach (var comp in ContainerComponent.Childrens)
+    {
+        <div style="min-height: @(comp.ComponentStyle.ItemHeight)px;
+                width: @((comp.ComponentStyle.ItemWidth ?? 24)  /24 * 100)%;
+                @comp.ComponentStyle.DefaultStyle @comp.ComponentStyle.CustomStyle">
+            <FormComponentRender Component="@comp"></FormComponentRender>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public ComponentSchema ContainerComponent { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        await base.OnInitializedAsync();
+    }
+}

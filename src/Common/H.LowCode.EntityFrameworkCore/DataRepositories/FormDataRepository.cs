@@ -1,4 +1,5 @@
 ﻿using H.LowCode.Domain;
+using H.LowCode.MetaSchema;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -11,24 +12,30 @@ namespace H.LowCode.EntityFrameworkCore;
 
 public class FormDataRepository : IFormDataRepository
 {
+    private LowCodeDbContext _dbContext;
     public bool? IsChangeTrackingEnabled => true;
 
-    public FormDataRepository()
+    public FormDataRepository(LowCodeDbContext dbContext)
     {
-
+        _dbContext = dbContext;
     }
 
-    public Task<bool> Delete<TKey>(TKey id)
+    public async Task<bool> AddAsync(FormEntity entity)
+    {
+        return await _dbContext.AddAsync(entity);
+    }
+
+    public async Task<FormEntity> GetAsync(string tableName, string id)
+    {
+        return await _dbContext.GetAsync(tableName, id);
+    }
+
+    public Task<bool> UpdateAsync(FormEntity entity)
     {
         throw new NotImplementedException();
     }
 
-    public Task<FormEntity> Get<TKey>(TKey id)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<bool> Save(FormEntity entity)
+    public Task<bool> DeleteAsync(string entityName, string id)
     {
         throw new NotImplementedException();
     }

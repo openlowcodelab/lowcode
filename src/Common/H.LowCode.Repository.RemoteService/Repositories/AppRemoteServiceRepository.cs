@@ -16,17 +16,17 @@ public class AppRemoteServiceRepository : RemoteServiceRepositoryBase, IAppRepos
 
     public bool? IsChangeTrackingEnabled => false;
 
-    public Task<AppSchema> GetAsync(string appId)
+    public async Task<AppSchema> GetAsync(string appId)
     {
         throw new NotImplementedException();
     }
 
-    public Task<IList<AppSchema>> GetListAsync()
+    public async Task<IList<AppSchema>> GetListAsync()
     {
         throw new NotImplementedException();
     }
 
-    public Task SaveAsync(AppSchema appSchema)
+    public async Task SaveAsync(AppSchema appSchema)
     {
         throw new NotImplementedException();
     }

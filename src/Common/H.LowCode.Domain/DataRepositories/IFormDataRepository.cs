@@ -1,4 +1,5 @@
-﻿using System;
+﻿using H.LowCode.MetaSchema;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,9 +10,11 @@ namespace H.LowCode.Domain;
 
 public interface IFormDataRepository : IRepository
 {
-    Task<bool> Save(FormEntity entity);
+    Task<bool> AddAsync(FormEntity entity);
 
-    Task<FormEntity> Get<TKey>(TKey id);
+    Task<bool> UpdateAsync(FormEntity entity);
 
-    Task<bool> Delete<TKey>(TKey id);
+    Task<FormEntity> GetAsync(string entityName, string id);
+
+    Task<bool> DeleteAsync(string entityName, string id);
 }

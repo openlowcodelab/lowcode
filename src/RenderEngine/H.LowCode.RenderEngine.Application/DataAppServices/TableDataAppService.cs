@@ -16,7 +16,7 @@ public class TableDataAppService : ApplicationService, ITableDataAppService
 {
     private ITableDataDomainService _tableDataDomainService => LazyServiceProvider.GetRequiredService<ITableDataDomainService>();
 
-    public Task<TableGetListOutput> GetList(TableGetListInput input)
+    public async Task<TableGetListOutput> GetList(TableGetListInput input)
     {
         throw new NotImplementedException();
     }

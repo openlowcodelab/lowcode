@@ -9,33 +9,36 @@ namespace H.LowCode.EntityFrameworkCore;
 
 internal class FieldTypeMapping
 {
-    public static Type GetFieldType(DbType dbType, string fieldType)
+    public static Type GetFieldType(string fieldType, bool isNullable)
     {
-        if(dbType == DbType.SqlServer)
+        string type = $"{fieldType}{(isNullable ? "?" : string.Empty)}";
+        switch (fieldType)
         {
-            return GetSqlServerFieldType(fieldType);
+            case "char":
+            case "varchar":
+                return typeof(string);
+            case "bit":
+                return typeof(bool);
+            case "bit?":
+                return typeof(bool?);
+            case "int":
+                return typeof(int);
+            case "int?":
+                return typeof(int?);
+            case "long":
+                return typeof(long);
+            case "long?":
+                return typeof(long?);
+            case "decimal":
+                return typeof(decimal);
+            case "decimal?":
+                return typeof(decimal?);
+            case "datetime":
+                return typeof(DateTime);
+            case "datetime?":
+                return typeof(DateTime?);
+            default:
+                return typeof(string);
         }
-        else if(dbType == DbType.MySql)
-        {
-            return GetMySqlFieldType(fieldType);
-        }
-        throw new ValidationException($"not support dbType: {dbType}");
     }
-
-    private static Type GetSqlServerFieldType(string fieldType)
-    {
-        return typeof(string);
-    }
-
-    private static Type GetMySqlFieldType(string fieldType)
-    {
-        return typeof(string);
-    }
-}
-
-internal enum DbType
-{
-    SqlServer,
-    MySql,
-    PostgreSql
 }

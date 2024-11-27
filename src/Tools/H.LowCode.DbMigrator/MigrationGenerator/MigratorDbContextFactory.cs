@@ -13,7 +13,7 @@ using H.LowCode.Repository.JsonFile;
 namespace H.LowCode.DbMigrator;
 
 /// <summary>
-/// 用于在命令行工具中生成迁移脚本: dotnet ef migrations add Initial --context MigratorDbContext
+/// 用于在命令行工具中生成迁移脚本: dotnet ef migrations add Initial --context DbMigratorDbContext
 /// </summary>
 public class MigratorDbContextFactory : IDesignTimeDbContextFactory<DbMigratorDbContext>
 {

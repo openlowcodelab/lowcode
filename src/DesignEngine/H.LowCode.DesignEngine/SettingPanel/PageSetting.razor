@@ -19,14 +19,14 @@
         <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:30px 0 10px;">数据源</div>
         <div class="propertysetting-item">
             <label>类型：</label>
-            <EnumRadioGroup TEnum="DataSourceTypeEnum" @bind-Value="@Page.DataSource.DataSourceType" Name="radio_datasourcetype"></EnumRadioGroup>
+            <EnumRadioGroup TEnum="DataSourceTypeEnum" DefaultValue="DataSourceTypeEnum.Table" @bind-Value="@Page.DataSource.DataSourceType" Name="radio_datasourcetype"></EnumRadioGroup>
         </div>
 
         @if (Page.DataSource.DataSourceType == DataSourceTypeEnum.Table)
         {
             <div class="propertysetting-item">
                 <label>表：</label>
-                <div></div>
+                <Input TValue="string" @bind-value="@Page.DataSource.DataSourceValue" />
             </div>
         }
         else if (Page.DataSource.DataSourceType == DataSourceTypeEnum.API)

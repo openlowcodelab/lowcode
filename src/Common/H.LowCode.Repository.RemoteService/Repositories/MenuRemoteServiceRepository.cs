@@ -14,22 +14,22 @@ public class MenuRemoteServiceRepository : RemoteServiceRepositoryBase, IMenuRep
 
     }
 
-    public Task DeleteAsync(string appId, string menuId)
+    public async Task DeleteAsync(string appId, string menuId)
     {
         throw new NotImplementedException();
     }
 
-    public Task<MenuSchema> GetAsync(string appId, string menuId)
+    public async Task<MenuSchema> GetAsync(string appId, string menuId)
     {
         throw new NotImplementedException();
     }
 
-    public Task<IList<MenuSchema>> GetListAsync(string appId)
+    public async Task<IList<MenuSchema>> GetListAsync(string appId)
     {
         throw new NotImplementedException();
     }
 
-    public Task SaveAsync(MenuSchema menuSchema)
+    public async Task SaveAsync(MenuSchema menuSchema)
     {
         throw new NotImplementedException();
     }

@@ -113,21 +113,21 @@
     {
         <div class="propertysetting-item">
             <label>API：</label>
-            <Input TValue="string" @bind-Value="@Component.DataSource.Value" />
+            <Input TValue="string" @bind-Value="@Component.DataSource.DataSourceValue" />
         </div>
     }
     else if (Component.DataSource.DataSourceType == DataSourceTypeEnum.SQL)
     {
         <div class="propertysetting-item">
             <label>SQL：</label>
-            <TextArea @bind-Value="@Component.DataSource.Value" />
+            <TextArea @bind-Value="@Component.DataSource.DataSourceValue" />
         </div>
     }
     else if (Component.DataSource.DataSourceType == DataSourceTypeEnum.Expression)
     {
         <div class="propertysetting-item">
             <label>表达式：</label>
-            <TextArea @bind-Value="@Component.DataSource.Value" />
+            <TextArea @bind-Value="@Component.DataSource.DataSourceValue" />
         </div>
     }
     else if (Component.DataSource.DataSourceType == DataSourceTypeEnum.Fiexd)

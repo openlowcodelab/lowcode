@@ -15,22 +15,22 @@ public class DataSourceRemoteServiceRepository : RemoteServiceRepositoryBase, ID
 
     }
 
-    public Task DeleteAsync(string appId, string id)
+    public async Task DeleteAsync(string appId, string id)
     {
         throw new NotImplementedException();
     }
 
-    public Task<DataSourceSchema> GetAsync(string appId, string id)
+    public async Task<DataSourceSchema> GetAsync(string appId, string id)
     {
         throw new NotImplementedException();
     }
 
-    public Task<IList<DataSourceSchema>> GetListAsync(string appId)
+    public async Task<IList<DataSourceSchema>> GetListAsync(string appId)
     {
         throw new NotImplementedException();
     }
 
-    public Task SaveAsync(string appId, DataSourceSchema dataSourceSchema)
+    public async Task SaveAsync(string appId, DataSourceSchema dataSourceSchema)
     {
         throw new NotImplementedException();
     }

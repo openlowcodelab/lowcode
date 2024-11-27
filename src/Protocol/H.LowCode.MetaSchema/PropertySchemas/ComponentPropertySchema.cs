@@ -123,5 +123,26 @@ public class ComponentPropertySchema
             return true;
         return false;
     }
+
+    public virtual object GetDefaultValue()
+    {
+        switch (ComponentValueType)
+        {
+            case ComponentValueTypeEnum.Text:
+            case ComponentValueTypeEnum.String:
+            case ComponentValueTypeEnum.Textarea:
+                return default(string);
+            case ComponentValueTypeEnum.Boolean:
+                return default(bool);
+            case ComponentValueTypeEnum.Integer:
+            case ComponentValueTypeEnum.Double:
+            case ComponentValueTypeEnum.Decimal:
+                return default(int);
+            case ComponentValueTypeEnum.Date:
+                return default(DateTime);
+            default:
+                return null;
+        }
+    }
     #endregion
 }

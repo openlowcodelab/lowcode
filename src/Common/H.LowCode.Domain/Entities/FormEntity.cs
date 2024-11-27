@@ -9,18 +9,7 @@ namespace H.LowCode.Domain;
 
 public class FormEntity : EntityBase
 {
-    public IEnumerable<FieldDataEntity> Fields { get; set; } = [];
+    public string Name { get; set; }
 
-    public IEnumerable<ValidationRuleSchema> ValidationRules { get; set; } = [];
-}
-
-public class FieldDataEntity
-{
-    public string Id { get; set; }
-
-    public string Label { get; set; }
-
-    public string Type { get; protected set; }
-
-    public string Value { get; set; }
+    public IDictionary<string, object> Fields { get; set; } = new Dictionary<string, object>();
 }

@@ -1,0 +1,48 @@
+﻿@namespace H.LowCode.ThemeParts.AntBlazor
+@inherits LowCodeComponentBase
+
+@inject IFormDataAppService FormDataAppService
+
+@if (formDTO != null)
+{
+    <Form Model="@formDTO.Fields" OnFinish="OnFinish" OnFinishFailed="OnFinishFailed"
+    LabelColSpan="8" WrapperColSpan="16" ValidateOnChange>
+        @foreach (var component in Page.Components)
+        {
+            <FormComponentRender Component="@component" IsInRootContainer="true"></FormComponentRender>
+        }
+
+        <FormItem WrapperColOffset="8" WrapperColSpan="16">
+            <Button Type="@ButtonType.Primary" HtmlType="submit">
+                保存
+            </Button>
+            <Button HtmlType="button" Style="margin: 0 8px">
+                取消
+            </Button>
+        </FormItem>
+    </Form>
+}
+
+@code {
+    [Parameter]
+    public PageSchema Page { get; set; }
+
+    public string Id => GetQueryValue("id");
+
+    private FormDataDTO formDTO;
+
+    protected override async Task OnInitializedAsync()
+    {
+        formDTO = await FormDataAppService.GetAsync(Page.AppId, Page.Id, Id);
+    }
+
+    private void OnFinish(EditContext editContext)
+    {
+
+    }
+
+    private void OnFinishFailed(EditContext editContext)
+    {
+
+    }
+}

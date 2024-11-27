@@ -9,9 +9,9 @@ namespace H.LowCode.Domain;
 
 public interface IFormDataDomainService : IDomainService
 {
-    Task<bool> Save(FormEntity entity);
+    Task<bool> SaveAsync(FormEntity entity);
 
-    Task<FormEntity> Get<TKey>(TKey id);
+    Task<FormEntity> GetAsync(string appId, string pageId, string id);
 
-    Task<bool> Delete<TKey>(TKey id);
+    Task<bool> DeleteAsync(string appId, string pageId, string id);
 }

@@ -60,6 +60,10 @@ else
                     else
                         builder.AddAttribute(fragment.Index, fragment.Name, fragment.StringValue);
                 }
+                else if (fragment.ValueType == ComponentValueTypeEnum.StringList)
+                {
+                    builder.AddAttribute(fragment.Index, fragment.Name, fragment.StringValues);
+                }
             }
             else if (fragment.FragmentEnum == FragmentEnum.Parameter)
             {

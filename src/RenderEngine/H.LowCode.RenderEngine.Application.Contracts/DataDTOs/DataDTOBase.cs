@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace H.LowCode.RenderEngine.Application.Contracts;
 
-public abstract class DTOBase
+public abstract class DataDTOBase
 {
     public DateTime CreatedTime { get; set; }
 
