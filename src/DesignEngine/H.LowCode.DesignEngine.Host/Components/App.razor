@@ -21,12 +21,12 @@
 
     <link href="@Assets["manifest.json"]" rel="manifest" />
 
-    <HeadOutlet @rendermode="@InteractiveAuto" />
+    <HeadOutlet @rendermode="@(new InteractiveAutoRenderMode(prerender: false))" />
     <ImportMap />
 </head>
 
 <body>
-    <Routes @rendermode="@InteractiveAuto" />
+    <Routes @rendermode="@(new InteractiveAutoRenderMode(prerender: false))" />
     
     <script src="_framework/blazor.web.js"></script>
 </body>
