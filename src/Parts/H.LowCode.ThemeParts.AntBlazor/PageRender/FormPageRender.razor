@@ -7,7 +7,7 @@
 {
     <Form Model="@formDTO.Fields" @ref="@_form"
     OnFinish="OnFinishAsync" OnFinishFailed="OnFinishFailed"
-    LabelColSpan="8" WrapperColSpan="16" ValidateOnChange>
+    LabelColSpan="8" WrapperColSpan="16">
         @foreach (var component in Page.Components)
         {
             <FormComponentRender Component="@component" IsInRootContainer="true"></FormComponentRender>
