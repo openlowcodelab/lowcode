@@ -11,5 +11,5 @@ public class FormEntity : EntityBase
 {
     public string Name { get; set; }
 
-    public IDictionary<string, object> Fields { get; set; } = new Dictionary<string, object>();
+    public Dictionary<string, object> Fields { get; set; } = [];
 }

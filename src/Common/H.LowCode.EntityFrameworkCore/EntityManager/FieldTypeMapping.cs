@@ -11,15 +11,17 @@ internal class FieldTypeMapping
 {
     public static Type GetFieldType(string fieldType, bool isNullable)
     {
-        string type = $"{fieldType}{(isNullable ? "?" : string.Empty)}";
-        switch (fieldType)
+        string type = fieldType.ToLower();
+        if (fieldType != "char" && fieldType != "varchar")
+            type = $"{type}{(isNullable ? "?" : string.Empty)}";
+        switch (type)
         {
             case "char":
             case "varchar":
                 return typeof(string);
-            case "bit":
+            case "bool":
                 return typeof(bool);
-            case "bit?":
+            case "bool?":
                 return typeof(bool?);
             case "int":
                 return typeof(int);
@@ -38,7 +40,7 @@ internal class FieldTypeMapping
             case "datetime?":
                 return typeof(DateTime?);
             default:
-                return typeof(string);
+                throw new NotSupportedException($"not support type: {type}");
         }
     }
 }

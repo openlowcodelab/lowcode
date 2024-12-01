@@ -38,10 +38,10 @@ public class FormDataDomainService : DomainService, IFormDataDomainService
 
     public async Task<bool> SaveAsync(FormEntity entity)
     {
-        if (string.IsNullOrEmpty(entity.Id))
+        //if (string.IsNullOrEmpty(entity.Id))
             await _formDataRepository.AddAsync(entity);
-        else
-            await _formDataRepository.UpdateAsync(entity);
+        //else
+        //    await _formDataRepository.UpdateAsync(entity);
         return true;
     }
 

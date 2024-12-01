@@ -6,11 +6,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using H.LowCode.Domain;
-using Microsoft.Extensions.DependencyInjection;
 using System.ComponentModel.DataAnnotations;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using Volo.Abp.Domain.Entities;
 
 namespace H.LowCode.EntityFrameworkCore;
 

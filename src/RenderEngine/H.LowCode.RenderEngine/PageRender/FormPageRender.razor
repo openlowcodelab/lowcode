@@ -18,13 +18,12 @@
     [Parameter]
     public PageSchema Page { get; set; }
 
-    [Parameter]
-    public string DataId { get; set; }
+    public string Id => GetQueryValue("id");
 
     private FormDataDTO formDTO;
 
     protected override async Task OnInitializedAsync()
     {
-        formDTO = await FormDataAppService.GetAsync(Page.AppId, Page.Id, DataId);
+        formDTO = await FormDataAppService.GetAsync(Page.AppId, Page.Id, Id);
     }
 }

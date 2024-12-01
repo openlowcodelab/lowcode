@@ -67,7 +67,6 @@ public class LowCodeDbContext : DbContext
             return null;
 
         FormEntity formEntity = new FormEntity();
-        formEntity.Id = id;
         foreach (var property in entityType.GetProperties())
         {
             var propertyValue = property.GetValue(entity);

@@ -16,14 +16,14 @@ public class FormDataAppService : ApplicationService, IFormDataAppService
 {
     private IFormDataDomainService _formDataDomainService => LazyServiceProvider.GetRequiredService<IFormDataDomainService>();
 
-    public async Task<FormDataDTO> GetAsync(string appId, string pageId, string dataId)
+    public async Task<FormDataDTO> GetAsync(string appId, string pageId, string id)
     {
-        var entity = await _formDataDomainService.GetAsync(appId, pageId, dataId);
+        var entity = await _formDataDomainService.GetAsync(appId, pageId, id);
         var dto = ObjectMapper.Map<FormEntity, FormDataDTO>(entity);
         return dto;
     }
 
-    public async Task<bool> SaveAsync(FormCreateOrUpdateDTO dto)
+    public async Task<bool> SaveAsync(FormDataDTO dto)
     {
         return await _formDataDomainService.SaveAsync(null);
     }

@@ -9,11 +9,9 @@ namespace H.LowCode.RenderEngine.Application.Contracts;
 
 public class FormDataDTO : DataDTOBase
 {
-    public string Id { get; set; }
-
     public string Name { get; set; }
 
-    public IDictionary<string, object> Fields { get; set; } = new Dictionary<string, object>();
+    public Dictionary<string, object> Fields { get; set; } = [];
 
     public IList<ValidationRuleSchema> ValidationRules { get; set; } = [];
 }

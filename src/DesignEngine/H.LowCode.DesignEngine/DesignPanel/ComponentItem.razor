@@ -33,7 +33,8 @@ else
         if (Component == null)
             throw new NullReferenceException(nameof(Component));
 
-        Component.ComponentProperty.Name = $"{Component.ComponentName}_{Random.Shared.Next(100, 999)}";
+        if (string.IsNullOrEmpty(Component.ComponentProperty.Name))
+            Component.ComponentProperty.Name = $"{Component.ComponentName}_{Random.Shared.Next(100, 999)}";
 
         _renderFragment = RenderComponent();
     }
