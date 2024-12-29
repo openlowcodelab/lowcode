@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+	<Import Project="..\..\global.props" />
+	<Import Project="..\..\nuget.publish.props" />
+
+	<ItemGroup>
+		<SupportedPlatform Include="browser" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="AntDesign" />
+		<PackageReference Include="H.Util.Blazor" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
+		<PackageReference Include="Volo.Abp.Core" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\Common\H.LowCode.ComponentBase\H.LowCode.ComponentBase.csproj" />
+		<ProjectReference Include="..\..\DesignEngine\H.LowCode.DesignEngine.Abstraction\H.LowCode.DesignEngine.Abstraction.csproj" />
+		<ProjectReference Include="..\..\DesignEngine\H.LowCode.DesignEngine\H.LowCode.DesignEngine.csproj" />
+		<ProjectReference Include="..\..\Protocol\H.LowCode.MetaSchema\H.LowCode.MetaSchema.csproj" />
+		<ProjectReference Include="..\..\Common\H.LowCode.Model\H.LowCode.Model.csproj" />
+		<ProjectReference Include="..\..\Protocol\H.LowCode.PartsMetaSchema\H.LowCode.PartsMetaSchema.csproj" />
+	</ItemGroup>
+
+</Project>

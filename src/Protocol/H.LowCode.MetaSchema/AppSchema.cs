@@ -21,7 +21,7 @@ public class AppSchema : MetaSchemaBase
     [JsonPropertyName("v")]
     public string Version { get; set; }
 
-    [JsonPropertyName("pubstatus")]
+    [JsonPropertyName("pub")]
     public PublishStatusEnum PublishStatus { get; set; }
 
     [JsonPropertyName("platform")]

@@ -26,7 +26,9 @@
     <PropertyColumn Title="类型" Property="c=>c.PageType" Sortable />
     <PropertyColumn Title="修改时间" Property="c=>c.ModifiedTime" Format="yyyy-MM-dd HH:mm:ss" />
     <PropertyColumn Title="发布状态" Property="c=>c.PublishStatus">
-        <Switch @bind-Checked="@context.PublishStatus" />
+        <Tag Color="@(context.PublishStatus == 1 ? "Green" : "Gold")">
+            @(context.PublishStatus == 1 ? "已发布" : "待发布")
+        </Tag>
     </PropertyColumn>
     <ActionColumn Title="操作" Width="180">
         <Space Size=@("middle")>

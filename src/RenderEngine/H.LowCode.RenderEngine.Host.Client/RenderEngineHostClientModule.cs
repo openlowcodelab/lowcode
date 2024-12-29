@@ -1,9 +1,9 @@
 ﻿using H.LowCode.ComponentBase;
-using H.LowCode.ComponentParts.BasicComponents;
-using H.LowCode.ComponentParts.ExtensionComponents;
+using H.LowCode.Components.AntBlazor;
+using H.LowCode.Components.Extension;
 using H.LowCode.DesignEngine.Application.Contracts;
 using H.LowCode.RenderEngine.Application.Contracts;
-using H.LowCode.ThemeParts.AntBlazor;
+using H.LowCode.Themes.AntBlazor;
 using H.Util.Blazor;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Volo.Abp.Autofac.WebAssembly;

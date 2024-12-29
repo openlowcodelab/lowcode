@@ -1,10 +1,10 @@
 ﻿using H.LowCode.ComponentBase;
-using H.LowCode.ComponentParts.BasicComponents;
-using H.LowCode.ComponentParts.ExtensionComponents;
+using H.LowCode.Components.AntBlazor;
+using H.LowCode.Components.Extension;
 using H.LowCode.EntityFrameworkCore;
 using H.LowCode.RenderEngine.Application;
 using H.LowCode.Repository.JsonFile;
-using H.LowCode.ThemeParts.AntBlazor;
+using H.LowCode.Themes.AntBlazor;
 using H.Util.Blazor;
 using Microsoft.OpenApi.Models;
 using Volo.Abp;

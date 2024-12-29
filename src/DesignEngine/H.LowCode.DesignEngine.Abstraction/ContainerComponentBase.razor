@@ -3,14 +3,14 @@
 
 @code {
     [Parameter]
-    public ComponentSchema Component { get; set; }
+    public ComponentPartsSchema Component { get; set; }
 
-    protected virtual ComponentSchema CreateComponent(string key, Action<ComponentSchema> action = null)
+    protected virtual ComponentPartsSchema CreateComponent(string key, Action<ComponentPartsSchema> action = null)
     {
         var c = Component.Childrens.FirstOrDefault(t =>
             {
-                if (t.ComponentProperty.ExtensionData.ContainsKey(key))
-                    return true;
+                // if (t.Property.ExtensionData.ContainsKey(key))
+                //     return true;
                 return false;
             });
         if (c != null)
@@ -25,25 +25,25 @@
         return component;
     }
 
-    private ComponentSchema CreateContainerComponent(string name)
+    private ComponentPartsSchema CreateContainerComponent(string name)
     {
-        var component = new ComponentSchema(name);
-        component.Id = Guid.NewGuid();
+        var component = new ComponentPartsSchema();
+        component.Id = ShortIdGenerator.Generate();
         component.Refresh = Component.Refresh;
 
-        component.ComponentFragments = [];
-        component.ComponentProperty = new();
-        component.ComponentStyle = new() { DefaultStyle = "height:100%; width:100%;" };
-        component.ComponentEvent = default;
-        component.DragEffectStyle = default;
-        component.IsDropedAfter = default;
-        component.IsDroppedFromComponentPanel = default;
-        component.IsHiddenTitle = true;
-        component.IsSelected = default;
-        component.Opacity = default;
+        component.Fragment = new();
+        //component.Property.ExtraProperties = new Dictionary<string, PropertyItemSchema>();
+        component.Style = new() { DefaultStyle = "height:100%; width:100%;" };
+        component.Event = default;
+        component.DesignState.DragEffectStyle = default;
+        component.DesignState.IsDropedAfter = default;
+        component.DesignState.IsDroppedFromComponentPanel = default;
+        component.IsHiddenLabel = true;
+        component.DesignState.IsSelected = default;
+        component.DesignState.Opacity = default;
 
-        component.IsContainerComponent = true;
-        component.ComponentProperty.ExtensionData.Add(name, name);
+        component.IsContainer = true;
+        //component.Property.ExtensionData.Add(name, name);
         component.ParentId = Component.Id;
 
         return component;

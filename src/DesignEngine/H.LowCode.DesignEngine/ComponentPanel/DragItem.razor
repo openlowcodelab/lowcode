@@ -3,8 +3,8 @@
 
 @inject DragDropStateService DragDropStateService
 
-<div draggable="true" class="dragitem" style="@Style" @ondragstart="OnDragStart" @onclick="OnClick">
-    @Component.ComponentProperty.Title
+<div draggable="true" class="dragitem" @ondragstart="OnDragStart" @onclick="OnClick">
+    @Component.Label
 </div>
 
 @code
@@ -13,10 +13,7 @@
     public PageCascadingModel PageCascading { get; set; }
 
     [Parameter]
-    public ComponentSchema Component { get; set; }
-
-    [Parameter]
-    public string Style { get; set; }
+    public ComponentPartsSchema Component { get; set; }
 
     private void OnDragStart()
     {
@@ -33,8 +30,8 @@
     /// </summary>
     private void AddComponentToDesignPanel(bool isOnClick)
     {
-        ComponentSchema component = Component.CopyNew();
-        component.IsDroppedFromComponentPanel = true;
+        ComponentPartsSchema component = Component.CopyNew();
+        component.DesignState.IsDroppedFromComponentPanel = true;
         if (isOnClick)
         {
             //发送事件，通知订阅此事件的其他组件更新状态

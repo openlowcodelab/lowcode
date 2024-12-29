@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Services;
 
 namespace H.LowCode.Domain;
@@ -21,17 +22,21 @@ public class FormDataDomainService : DomainService, IFormDataDomainService
 
         string entityName = formPageSchema.DataSource.DataSourceValue;
 
-        var defaultEntity = new FormEntity()
+        if (string.IsNullOrEmpty(id) || string.Equals(id, "empty"))
         {
-            Name = entityName,
-            Fields = formPageSchema.Components.ToDictionary(key => key.ComponentProperty.Name, c => c.ComponentProperty.GetDefaultValue())
-        };
-        if (string.IsNullOrEmpty(id))
+            var defaultEntity = new FormEntity()
+            {
+                Name = entityName,
+                Fields = formPageSchema.Components
+                    .Where(t => t.IsContainer == false)
+                    .ToDictionary(key => key.Name, val => val.Fragment.GetDefaultValue())
+            };
             return defaultEntity;
+        }
 
         var entity = await _formDataRepository.GetAsync(entityName, id);
         if (entity == null)
-            return defaultEntity;
+            throw new EntityNotFoundException($"Entity {entityName} Not Found: {id}");
 
         return entity;
     }

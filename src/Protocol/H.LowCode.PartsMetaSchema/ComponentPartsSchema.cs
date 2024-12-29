@@ -1,53 +1,42 @@
 ﻿using H.LowCode.MetaSchema;
+using H.Util.Ids;
+using System.ComponentModel;
 using System.Text.Json.Serialization;
 
 namespace H.LowCode.PartsMetaSchema;
 
-public class ComponentPartsSchema : BasePartsMetaSchema
+public class ComponentPartsSchema : ComponentSchema
 {
-    public string Id { get; set; } = Guid.NewGuid().ToString();
-
     /// <summary>
-    /// 组件名称
+    /// 组件 Name
     /// </summary>
-    [JsonRequired]
-    [JsonPropertyName("n")]
+    [JsonPropertyName("cn")]
     public string ComponentName { get; set; }
 
     /// <summary>
-    /// 是否隐藏标题
+    /// 组件类型：1-原子组件  2-组合组件
     /// </summary>
-    [JsonPropertyName("hide")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public bool IsHiddenTitle { get; set; }
+    [JsonPropertyName("ct")]
+    public int ComponentType { get; set; }
 
     /// <summary>
-    /// 组件渲染片段
+    /// Property 分组
     /// </summary>
-    [JsonPropertyName("fragment")]
-    public IList<ComponentFragmentSchema> ComponentFragments { get; set; } = [];
-
-    /// <summary>
-    /// 组件属性
-    /// </summary>
-    [JsonPropertyName("compprop")]
-    public ComponentPropertySchema ComponentProperty { get; set; }
-
-    /// <summary>
-    /// 组件样式
-    /// </summary>
-    [JsonPropertyName("style")]
-    public ComponentStyleSchema ComponentStyle { get; set; } = new();
+    [JsonPropertyName("pgroups")]
+    public new IList<ComponentPartsPropertyGroupSchema> PropertyGroups { get; set; } = [];
 
     /// <summary>
     /// 
     /// </summary>
     [JsonPropertyName("childs")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public IList<ComponentSchema> Childrens { get; set; } = [];
+    public new IList<ComponentPartsSchema> Childrens { get; set; } = [];
 
-    [JsonPropertyName("ds")]
-    public DataSourceSchema DataSource { get; set; }
+    /// <summary>
+    /// 是否支持数据源属性
+    /// </summary>
+    [JsonPropertyName("sptds")]
+    public bool IsSupportDataSource { get; set; }
 
     [JsonPropertyName("order")]
     public int Order { get; set; }
@@ -55,6 +44,64 @@ public class ComponentPartsSchema : BasePartsMetaSchema
     /// <summary>
     /// 发布状态
     /// </summary>
-    [JsonPropertyName("pubstatus")]
+    [JsonPropertyName("pub")]
     public int PublishStatus { get; set; }
+
+    [JsonPropertyName("mt")]
+    public DateTime ModifiedTime { get; set; }
+
+    /// <summary>
+    /// 设计过程中的组件状态 (无需持久化)
+    /// </summary>
+    [JsonIgnore]
+    public ComponentDesignStateSchema DesignState { get; set; } = new();
+
+    [JsonIgnore]
+    public Action Refresh { get; set; }
+
+    public ComponentPartsSchema CopyNew()
+    {
+        ComponentPartsSchema newComponent = this.DeepClone();
+
+        //Copy全新对象, Id 重新生成
+        newComponent.Id = ShortIdGenerator.Generate();
+        newComponent.ParentId = string.Empty;
+        newComponent.Name = $"{newComponent.ComponentName}_{Random.Shared.Next(100, 999)}";
+        newComponent.DesignState.IsSelected = false;
+
+        //手动赋值无法序列化属性
+        newComponent.Refresh = Refresh;
+
+        //1.子节点 ParentId 重新赋值; 2.重新赋值序列化过程中丢失的 RenderFragment、Refresh 值
+        CopyNewRecursive(newComponent, this);
+
+        return newComponent;
+    }
+
+    public ComponentSchema ConvertToComponentSchema()
+    {
+        string json = this.ToJson();
+        return json.FromJson<ComponentSchema>();
+    }
+
+    public void RefreshState()
+    {
+        Refresh?.Invoke();
+    }
+
+    #region private
+    private static void CopyNewRecursive(ComponentPartsSchema newComponent, ComponentPartsSchema oldComponent)
+    {
+        for (var i = 0; i < newComponent.Childrens.Count; i++)
+        {
+            var child = newComponent.Childrens[i];
+            child.Id = ShortIdGenerator.Generate();
+            child.ParentId = newComponent.Id;
+
+            child.Refresh = oldComponent.Childrens[i].Refresh;
+
+            CopyNewRecursive(child, oldComponent.Childrens[i]);
+        }
+    }
+    #endregion
 }

@@ -14,8 +14,8 @@
                         @foreach (var componentProvider in ComponentProviders)
                         {
                             <div style="display: inline-block; padding-bottom: 20px;">
-                                <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:5px 0;">@componentProvider.Title</div>
-                                @foreach (var component in componentProvider.LoadComponent())
+                                <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:5px 0;">@componentProvider.Label</div>
+                                @foreach (var component in componentProvider.LoadComponents())
                                 {
                                     <DragItem Component="component"></DragItem>
                                 }
@@ -28,7 +28,7 @@
                         @foreach (var pageTemplateProvider in PageTemplateProviders)
                         {
                             <div style="display: inline-block; padding-bottom: 20px;">
-                                <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:5px 0;">@pageTemplateProvider.Title</div>
+                                <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:5px 0;">@pageTemplateProvider.Label</div>
                                 @foreach (var component in pageTemplateProvider.LoadPageTemplate())
                                 {
                                     @* Style="width: 14.1rem; height: 5rem;" *@

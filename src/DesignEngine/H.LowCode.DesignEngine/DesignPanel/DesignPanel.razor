@@ -1,8 +1,10 @@
 ﻿@namespace H.LowCode.DesignEngine
+@using System.Reflection
 @inherits LowCodeComponentBase
 
 @inject DragDropStateService DragDropStateService
-@inject ComponentState<DesignPanel, ComponentSchema> RootComponentState
+@inject IComponentPartsAppService ComponentPartsAppService
+@inject ComponentState<DesignPanel, ComponentPartsSchema> RootComponentState
 
 @if (_rootComponent != null)
 {
@@ -18,7 +20,7 @@
     [SupplyParameterFromQuery(Name = "pt")]
     public int PageType { get; set; }
 
-    private ComponentSchema _rootComponent;
+    private ComponentPartsSchema _rootComponent;
 
     protected override async Task OnInitializedAsync()
     {
@@ -32,24 +34,45 @@
         DragDropStateService.SetRootComponent(PageCascading.AppId, PageCascading.PageId, _rootComponent);
     }
 
-    private ComponentSchema LoadRootComponent()
+    private ComponentPartsSchema LoadRootComponent()
     {
         var rootComponent = DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId);
         if (rootComponent == null)
         {
-            rootComponent = new ComponentSchema("root");
+            rootComponent = new ComponentPartsSchema();
+            rootComponent.Name = "root";
             rootComponent.Refresh = StateHasChanged;
         }
         return rootComponent;
     }
 
-    public void Reload(PageSchema pageSchema)
+    public async Task ReloadAsync(PageSchema pageSchema)
     {
-        if (pageSchema != null && DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId) != null)
-            DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId).Childrens = pageSchema.Components;
+        var rootComponent = DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId);
+        if (pageSchema != null && rootComponent != null)
+        {
+            var componentPartses = new List<ComponentPartsSchema>();
+            foreach (var component in pageSchema.Components)
+            {
+                //组件实例 Schema
+                var json = component.ToJson();
+                var componentPartsInstance = json.FromJson<ComponentPartsSchema>();
+
+                //组件定义 Schema
+                var componentPartsDefine = await ComponentPartsAppService.GetByIdAsync(component.LibraryId, component.ComponentId);
+
+                ObjectMerger.Merge<ComponentPartsSchema>(componentPartsInstance, componentPartsDefine);
+                componentPartses.Add(componentPartsDefine);
+            }
+            rootComponent.Childrens = componentPartses;
+        }
         StateHasChanged();
     }
 
+    /// <summary>
+    /// 用于 RootComponentState 的 key（每个页面独立缓存）
+    /// </summary>
+    /// <returns></returns>
     public override string ToString()
     {
         return $"{base.ToString()}-{PageCascading.AppId}-{PageCascading.PageId}";

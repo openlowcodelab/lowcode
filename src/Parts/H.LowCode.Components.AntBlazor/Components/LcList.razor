@@ -1,0 +1,45 @@
+﻿@namespace H.LowCode.Components.AntBlazor
+@inherits ContainerComponentBase
+
+<AntList DataSource="@DataSource" TItem="ListItem">
+    <ListItem OnClick="()=>OnItemClick(context.Title)">
+        <ListItemMeta AvatarTemplate="avatar" Description="@context.Content">
+            <TitleTemplate>
+                <a href="https://antblazor.com">@context.Title</a>
+            </TitleTemplate>
+        </ListItemMeta>
+    </ListItem>
+</AntList>
+
+@code {
+    [Parameter]
+    public IList<ListItem> DataSource { get; set; } = new List<ListItem>
+    {
+        new(){ Title="Ant Design Title 1", Content = "Ant Design, a design language for background applications, is refined by Ant UED Team" },
+        new(){ Title="Ant Design Title 2", Content = "Ant Design, a design language for background applications, is refined by Ant UED Team" },
+        new(){ Title="Ant Design Title 3", Content = "Ant Design, a design language for background applications, is refined by Ant UED Team" }
+    };
+
+    private RenderFragment avatar = @<Avatar Src="https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png"></Avatar>;
+
+    #region override
+    protected override bool ShouldRender()
+    {
+        return false;
+    }
+    #endregion
+
+    #region
+    private void OnItemClick(string title)
+    {
+
+    }
+    #endregion
+
+    public class ListItem
+    {
+        public string Title { get; set; }
+
+        public string Content{ get; set; }
+    }
+}

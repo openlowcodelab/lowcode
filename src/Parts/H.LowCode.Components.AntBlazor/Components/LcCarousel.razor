@@ -1,0 +1,31 @@
+﻿@namespace H.LowCode.Components.AntBlazor
+@inherits ContainerComponentBase
+
+<Carousel Style="height:160px; background: #364d79;">
+    @for (int i = 0; i < ItemCount; i++)
+    {
+        string key = $"CarouselSlick-{i}";
+        <CarouselSlick Style="height:160px; background: #364d79;">
+            <h3>@key</h3>
+        </CarouselSlick>
+    }
+</Carousel>
+
+@code {
+    [Parameter]
+    public int ItemCount { get; set; }
+
+    #region override
+    protected override bool ShouldRender()
+    {
+        return false;
+    }
+    #endregion
+
+    #region event
+    private void OnItemClick()
+    {
+
+    }
+    #endregion
+}

@@ -3,29 +3,15 @@
 
 @inject DragDropStateService DragDropStateService
 
-<div class="dropitemcontainer" style="@ContainerComponent.ComponentStyle.DefaultStyle" @onclick="OnClick"
-     @ondragover="(e)=>{}" @ondragover:preventDefault @ondragover:stopPropagation
-     @ondrop="OnDrop" @ondrop:preventDefault @ondrop:stopPropagation>
+<div class="dropitemcontainer" style="@ContainerComponent.Style.DefaultStyle" @onclick="OnClick"
+    @ondragover="(e)=>{}" @ondragover:preventDefault @ondragover:stopPropagation
+    @ondrop="OnDrop" @ondrop:preventDefault @ondrop:stopPropagation>
 
     @foreach (var comp in ContainerComponent.Childrens)
     {
-        @if (comp.IsTemplate == false)
-        {
-            <DropItem Component="comp" IsInRootContainer="@IsRootContainer" OnItemClick="OnItemClick" OnItemDelete="OnItemDelete" OnItemCopy="OnItemCopy" />
-        }
-        else
-        {
-            foreach (var c in comp.Childrens)
-            {
-                <div style="min-height: @(c.ComponentStyle.ItemHeight)px;
-                        width: @((c.ComponentStyle.ItemWidth ?? 24)  /24 * 100)%;
-                        @c.ComponentStyle.DefaultStyle @c.ComponentStyle.CustomStyle">
-                    <ComponentItem Component="@c"></ComponentItem>
-                </div>
-                @* <DropItem Component="c" OnItemClick="OnItemClick" OnItemDelete="OnItemDelete" OnItemCopy="OnItemCopy" /> *@
-            }
-        }
+        <DropItem Component="comp" IsInRootContainer="@IsRootContainer" OnItemClick="OnItemClick" OnItemDelete="OnItemDelete" OnItemCopy="OnItemCopy" />
     }
+
 </div>
 
 @code {
@@ -34,7 +20,7 @@
     public PageCascadingModel PageCascading { get; set; }
 
     [Parameter]
-    public ComponentSchema ContainerComponent { get; set; }
+    public ComponentPartsSchema ContainerComponent { get; set; }
 
     [Parameter]
     public bool IsRootContainer { get; set; }
@@ -71,7 +57,7 @@
             //订阅 ComponentPanel 中的组件点击事件
             BlazorEventDispatcher.Subscribe("designengine.dragitem.onclick", (value) =>
             {
-                DragDropHandler((ComponentSchema)value);
+                DragDropHandler((ComponentPartsSchema)value);
             });
         }
     }
@@ -96,28 +82,29 @@
         BlazorEventDispatcher.Publish("designengine.dropitem.onblur", null);
     }
 
-    private void OnItemClick(ComponentSchema component)
+    private void OnItemClick(ComponentPartsSchema component)
     {
         //取消上一个选中，设置当前选中项
-        if (DragDropStateService.GetLastSelectedComponent(PageCascading.AppId, PageCascading.PageId) != null)
+        var lastSelectedComponent = DragDropStateService.GetLastSelectedComponent(PageCascading.AppId, PageCascading.PageId);
+        if (lastSelectedComponent != null)
         {
-            DragDropStateService.GetLastSelectedComponent(PageCascading.AppId, PageCascading.PageId).IsSelected = false;
-            DragDropStateService.GetLastSelectedComponent(PageCascading.AppId, PageCascading.PageId).RefreshState();
+            lastSelectedComponent.DesignState.IsSelected = false;
+            lastSelectedComponent.RefreshState();
         }
 
-        component.IsSelected = true;
+        component.DesignState.IsSelected = true;
         StateHasChanged();
 
         DragDropStateService.SetLastSelectedComponent(PageCascading.AppId, PageCascading.PageId, component);
     }
 
-    private void OnItemDelete(ComponentSchema component)
+    private void OnItemDelete(ComponentPartsSchema component)
     {
         DropItem_Remove(ContainerComponent, component);
         StateHasChanged();
     }
 
-    private void OnItemCopy(ComponentSchema component)
+    private void OnItemCopy(ComponentPartsSchema component)
     {
         var newComponent = component.CopyNew();
         DragItem_Add(ContainerComponent, newComponent, null, false);
@@ -127,13 +114,13 @@
 
     #region private
     /// <summary>
-    /// 拖动 ComponentSchema 释放时处理逻辑
+    /// 拖动组件释放时处理逻辑
     /// </summary>
     /// <param name="currentDragComponent"></param>
-    private void DragDropHandler(ComponentSchema currentDragComponent)
+    private void DragDropHandler(ComponentPartsSchema currentDragComponent)
     {
         // 组件来源于 ComponentPanel，新增
-        if (currentDragComponent.IsDroppedFromComponentPanel)
+        if (currentDragComponent.DesignState.IsDroppedFromComponentPanel)
         {
             DragItem_Add(ContainerComponent, currentDragComponent, DragDropStateService.GetLastDragOverComponent(PageCascading.AppId, PageCascading.PageId));
         }
@@ -163,14 +150,14 @@
     /// <param name="containerComponent"></param>
     /// <param name="currentDragComponent"></param>
     /// <param name="isSelected"></param>
-    private void DragItem_Add(ComponentSchema containerComponent, ComponentSchema currentDragComponent, ComponentSchema dragOverComponent, bool isSelected = false)
+    private void DragItem_Add(ComponentPartsSchema containerComponent, ComponentPartsSchema currentDragComponent, ComponentPartsSchema dragOverComponent, bool isSelected = false)
     {
         currentDragComponent.ParentId = containerComponent.Id;
-        currentDragComponent.IsDroppedFromComponentPanel = false;
+        currentDragComponent.DesignState.IsDroppedFromComponentPanel = false;
 
         if (isSelected)
         {
-            currentDragComponent.IsSelected = isSelected;
+            currentDragComponent.DesignState.IsSelected = isSelected;
             DragDropStateService.SetLastSelectedComponent(PageCascading.AppId, PageCascading.PageId, currentDragComponent);
         }
         currentDragComponent.Refresh = StateHasChanged;
@@ -178,7 +165,7 @@
         //如果拖拽到放置区对象上方，按照顺序添加
         if (dragOverComponent != null)
         {
-            if (dragOverComponent.IsDropedAfter)
+            if (dragOverComponent.DesignState.IsDropedAfter)
                 containerComponent.Childrens.InsertAfter(dragOverComponent, currentDragComponent);
             else
                 containerComponent.Childrens.InsertBefore(dragOverComponent, currentDragComponent);
@@ -195,7 +182,7 @@
     /// <param name="newContainerComponent"></param>
     /// <param name="currentDragComponent"></param>
     /// <param name="dragOverComponent"></param>
-    private void DragItem_Move(ComponentSchema newContainerComponent, ComponentSchema currentDragComponent, ComponentSchema dragOverComponent)
+    private void DragItem_Move(ComponentPartsSchema newContainerComponent, ComponentPartsSchema currentDragComponent, ComponentPartsSchema dragOverComponent)
     {
         //上一个 DropItemContainer 移除
         var oldContainerComponent = DragDropStateService.FindComponentById(PageCascading.AppId, PageCascading.PageId, currentDragComponent.ParentId);
@@ -213,7 +200,7 @@
     /// <param name="containerComponent"></param>
     /// <param name="currentDragComponent"></param>
     /// <param name="dragOverComponent"></param>
-    private void DropItem_Sorting(ComponentSchema containerComponent, ComponentSchema currentDragComponent, ComponentSchema dragOverComponent)
+    private void DropItem_Sorting(ComponentPartsSchema containerComponent, ComponentPartsSchema currentDragComponent, ComponentPartsSchema dragOverComponent)
     {
         if (dragOverComponent == null)
             return;
@@ -221,7 +208,7 @@
         if (currentDragComponent == DragDropStateService.GetLastDragOverComponent(PageCascading.AppId, PageCascading.PageId))
             return;
 
-        if (dragOverComponent.IsDropedAfter)
+        if (dragOverComponent.DesignState.IsDropedAfter)
             containerComponent.Childrens.InsertAfter(dragOverComponent, currentDragComponent);
         else
             containerComponent.Childrens.InsertBefore(dragOverComponent, currentDragComponent);
@@ -241,14 +228,14 @@
         // containerComponent.Childrens.Insert(indexDraggedOverItem, currentDragComponent);
     }
 
-    private void DropItem_Remove(ComponentSchema containerComponent, ComponentSchema component)
+    private void DropItem_Remove(ComponentPartsSchema containerComponent, ComponentPartsSchema component)
     {
         //将下一个设为选中
         int index = containerComponent.Childrens.IndexOf(component);
         if (containerComponent.Childrens.Count > 1)
         {
             int next = index + 1 >= containerComponent.Childrens.Count ? index - 1 : index + 1;
-            containerComponent.Childrens[next].IsSelected = true;
+            containerComponent.Childrens[next].DesignState.IsSelected = true;
             DragDropStateService.SetLastSelectedComponent(PageCascading.AppId, PageCascading.PageId, containerComponent.Childrens[next]);
         }
         containerComponent.Childrens.Remove(component);

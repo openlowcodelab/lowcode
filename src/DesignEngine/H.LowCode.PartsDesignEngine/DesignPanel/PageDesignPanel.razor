@@ -17,7 +17,7 @@
     [SupplyParameterFromQuery(Name = "pt")]
     public int PageType { get; set; }
 
-    private ComponentSchema _rootComponent;
+    private ComponentPartsSchema _rootComponent;
 
     protected override async Task OnInitializedAsync()
     {
@@ -26,13 +26,13 @@
         await base.OnInitializedAsync();
     }
 
-    private ComponentSchema LoadRootComponent()
+    private ComponentPartsSchema LoadRootComponent()
     {
         var rootComponent = DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId);
         if (rootComponent == null)
         {
-            rootComponent = new ComponentSchema("root");
-            rootComponent.Refresh = StateHasChanged;
+            rootComponent = new ComponentPartsSchema();
+            //rootComponent.Refresh = StateHasChanged;
             DragDropStateService.SetRootComponent(PageCascading.AppId, PageCascading.PageId, rootComponent);
         }
         return rootComponent;
@@ -40,8 +40,18 @@
 
     public void Reload(PageSchema pageSchema)
     {
-        if (pageSchema != null && DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId) != null)
-            DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId).Childrens = pageSchema.Components;
+        var rootComponent = DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId);
+        if (pageSchema != null && rootComponent != null)
+        {
+            var componentPartses = new List<ComponentPartsSchema>();
+            foreach (var component in pageSchema.Components)
+            {
+                string json = component.ToJson();
+                var componentParts = json.FromJson<ComponentPartsSchema>();
+                componentPartses.Add(componentParts);
+            }
+            rootComponent.Childrens = componentPartses;
+        }
         StateHasChanged();
     }
 }

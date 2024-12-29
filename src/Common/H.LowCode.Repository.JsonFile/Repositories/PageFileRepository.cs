@@ -85,10 +85,6 @@ public class PageFileRepository : FileRepositoryBase, IPageRepository
         if (!File.Exists(fileName))
             return;
 
-        var pageFolder = Path.Combine(_metaBaseDir, appId, "page");
-        if (!Directory.Exists(pageFolder))
-            return;
-
         File.Delete(fileName);
     }
 }

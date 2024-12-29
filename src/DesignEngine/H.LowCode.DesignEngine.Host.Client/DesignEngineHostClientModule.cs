@@ -1,6 +1,6 @@
 ﻿using H.LowCode.ComponentBase;
-using H.LowCode.ComponentParts.BasicComponents;
-using H.LowCode.ComponentParts.ExtensionComponents;
+using H.LowCode.Components.AntBlazor;
+using H.LowCode.Components.Extension;
 using H.LowCode.DesignEngine.Application.Contracts;
 using H.LowCode.MyApp;
 using H.LowCode.PartsDesignEngine;

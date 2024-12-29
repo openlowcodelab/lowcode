@@ -1,0 +1,54 @@
+﻿@namespace H.LowCode.Themes.AntBlazor
+@inherits LowCodeComponentBase
+
+@inject IFormDataAppService FormDataAppService
+
+@if (formDTO != null)
+{
+    Console.WriteLine($"formDTO: {_form?.Model?.ToJson()}");
+
+    <Form Model="@formDTO.Fields" @ref="@_form"
+    OnFinish="OnFinishAsync" OnFinishFailed="OnFinishFailed"
+    LabelColSpan="8" WrapperColSpan="16" ValidateOnChange>
+        @foreach (var component in Page.Components)
+        {
+            <FormComponentRender Component="@component" IsInRootContainer="true"></FormComponentRender>
+        }
+
+        <FormItem WrapperColOffset="8" WrapperColSpan="16" Style="clear:both;">
+            <Button Type="@ButtonType.Primary" HtmlType="submit">
+                保存
+            </Button>
+            <Button HtmlType="button" Style="margin: 0 8px">
+                取消
+            </Button>
+        </FormItem>
+    </Form>
+}
+
+@code {
+    [Parameter]
+    public PageSchema Page { get; set; }
+
+    private Form<Dictionary<string, object>> _form;
+    private string Id;
+    private FormDataDTO formDTO;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Id = GetQueryValue("id");
+        if (string.IsNullOrEmpty(Id))
+            Id = "empty";
+        formDTO = await FormDataAppService.GetAsync(Page.AppId, Page.Id, Id);
+    }
+
+    private async Task OnFinishAsync()
+    {
+        await FormDataAppService.SaveAsync(formDTO);
+    }
+
+    private void OnFinishFailed(EditContext editContext)
+    {
+
+    }
+}

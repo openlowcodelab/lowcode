@@ -6,7 +6,7 @@
 <Tabs DefaultActiveKey="tab_page" @bind-ActiveKey="@_activeTabKey" Class="settingpanel" Style="width:250px; padding:0px 8px;">
     @if (_showPropertyPanel)
     {
-        @if (_component.IsContainerComponent == false)
+        @if (_component.IsContainer == false)
         {
             <TabPane Key="tab_property" Tab="属性">
                 <PropertySetting Component="@_component"></PropertySetting>
@@ -22,7 +22,7 @@
     [CascadingParameter(Name = "pageCascading")]
     public PageCascadingModel PageCascading { get; set; }
 
-    private ComponentSchema _component { get; set; }
+    private ComponentPartsSchema _component { get; set; }
 
     private bool _showPropertyPanel { get; set; }
 
@@ -40,7 +40,7 @@
         //订阅设计面板中的组件点击事件
         BlazorEventDispatcher.Subscribe("designengine.dropitem.onclick", (value) =>
         {
-            _component = (ComponentSchema)value;
+            _component = (ComponentPartsSchema)value;
             _showPropertyPanel = true;
             _activeTabKey = "tab_property";
             StateHasChanged();

@@ -67,7 +67,7 @@
         if (string.Equals("newparts", PartsId))
         {
             _isNewPage = true;
-            PartsId = Guid.NewGuid().ToString();
+            PartsId = ShortIdGenerator.Generate();
             var newPage = new PagePartsSchema() { Id = PartsId, Name = "newparts" };
 
             //DragDropStateService.SetPage(AppId, newPage);

@@ -3,11 +3,11 @@
 
 @inject DragDropStateService DragDropStateService
 
-<div class="dropitem-box @DropItemBoxClassMapper.Class" style="float:left; opacity:@Component.Opacity;
-        width: @((Component.ComponentStyle.ItemWidth ?? (IsInRootContainer ? 24/PageCascading.PageLayout : 24))  /24 * 100)%;
-        min-height: @(Component.ComponentStyle.ItemHeight)px;
-        position:@Component.ComponentStyle.Position;
-        @Component.ComponentStyle.DefaultStyle @Component.ComponentStyle.CustomStyle"
+<div class="dropitem-box @DropItemBoxClassMapper.Class" style="float:left; opacity:@Component.DesignState.Opacity;
+        width: @((Component.Style.ItemWidth ?? (IsInRootContainer ? 24/PageCascading.PageLayout : 24))  /24 * 100)%;
+        min-height: @(Component.Style.ItemHeight)px;
+        position:@Component.Style.Position;
+        @Component.Style.DefaultStyle @Component.Style.CustomStyle"
      @onclick="OnClick" @onclick:stopPropagation
      @ondragstart="OnDragStart" @ondragstart:stopPropagation
      @ondragenter="OnDragEnter" @ondragenter:stopPropagation
@@ -16,8 +16,8 @@
      @onmouseover="OnMouseOver" @onmouseover:stopPropagation
      @onmouseout="OnMouseOut" @onmouseout:stopPropagation>
 
-    <div class="dropitem @DropItemClassMapper.Class" style="@Component.DragEffectStyle">
-        @if (Component.IsSelected)
+    <div class="dropitem @DropItemClassMapper.Class" style="@Component.DesignState.DragEffectStyle">
+        @if (Component.DesignState.IsSelected)
         {
             <div draggable="true" class="dropitem-icon-move">
                 <Icon Type="drag" Theme="outline" />
@@ -41,7 +41,7 @@
     public PageCascadingModel PageCascading { get; set; }
 
     [Parameter]
-    public ComponentSchema Component { get; set; }
+    public ComponentPartsSchema Component { get; set; }
 
     /// <summary>
     /// 当前组件是否在根容器内
@@ -50,13 +50,13 @@
     public bool IsInRootContainer { get; set; }
 
     [Parameter]
-    public Action<ComponentSchema> OnItemClick { get; set; }
+    public Action<ComponentPartsSchema> OnItemClick { get; set; }
 
     [Parameter]
-    public Action<ComponentSchema> OnItemDelete { get; set; }
+    public Action<ComponentPartsSchema> OnItemDelete { get; set; }
 
     [Parameter]
-    public Action<ComponentSchema> OnItemCopy { get; set; }
+    public Action<ComponentPartsSchema> OnItemCopy { get; set; }
 
     protected ClassMapper DropItemBoxClassMapper { get; } = new ClassMapper();
     protected ClassMapper DropItemClassMapper { get; } = new ClassMapper();
@@ -98,19 +98,19 @@
     private void SetClassMap()
     {
         DropItemClassMapper.Clear()
-            .If("dropitem-selected", () => Component.IsSelected)
-            .If("dropitem-component", () => Component.IsContainerComponent == false)
-            .If("dropitem-container", () => Component.IsContainerComponent);
+            .If("dropitem-selected", () => Component.DesignState.IsSelected)
+            .If("dropitem-component", () => Component.IsContainer == false)
+            .If("dropitem-container", () => Component.IsContainer);
 
         DropItemBoxClassMapper.Clear()
-            .If("dropitem-box-layout", () => Component.IsContainerComponent);
+            .If("dropitem-box-layout", () => Component.IsContainer);
     }
     #endregion
 
     #region Event
     private void OnClick()
     {
-        Component.DragEffectStyle = string.Empty;
+        Component.DesignState.DragEffectStyle = string.Empty;
         //DragDropStateService.ResetDragStyle();
 
         OnItemClick.Invoke(Component);
@@ -119,7 +119,7 @@
 
     private void OnDragStart(DragEventArgs dragEventArgs)
     {
-        Component.Opacity = 0.2;
+        Component.DesignState.Opacity = 0.2;
 
         //记录当前选中对象
         DragDropStateService.SetCurrentDragComponent(PageCascading.AppId, PageCascading.PageId, Component);
@@ -141,14 +141,14 @@
         //设置移动位置样式，拖拽到目标元素上半部分时，上方添加虚线边框，下半部分时下方添加虚线边框
         if (dragEventArgs.OffsetY < 30)
         {
-            Component.DragEffectStyle = "border-top: 2px dashed #1890ff;";
-            Component.IsDropedAfter = false;
+            Component.DesignState.DragEffectStyle = "border-top: 2px dashed #1890ff;";
+            Component.DesignState.IsDropedAfter = false;
         }
         else
         {
             Console.WriteLine($"OnDragOver: bottom");
-            Component.DragEffectStyle = "border-bottom: 2px dashed #1890ff; height: auto;";
-            Component.IsDropedAfter = true;
+            Component.DesignState.DragEffectStyle = "border-bottom: 2px dashed #1890ff; height: auto;";
+            Component.DesignState.IsDropedAfter = true;
         }
         DragDropStateService.SetLastDragOverTime(PageCascading.AppId, PageCascading.PageId, DateTime.Now);
     }
@@ -160,22 +160,22 @@
             return;
 
         Console.WriteLine("OnDragLeave");
-        Component.DragEffectStyle = string.Empty;
+        Component.DesignState.DragEffectStyle = string.Empty;
     }
 
     private void OnMouseOver()
     {
-        if (Component.IsSelected == false)
+        if (Component.DesignState.IsSelected == false)
         {
-            Component.DragEffectStyle = "outline: #1890ff dashed 1.5px;";
+            Component.DesignState.DragEffectStyle = "outline: #1890ff dashed 1.5px;";
         }
     }
 
     private void OnMouseOut()
     {
-        if (Component.IsSelected == false)
+        if (Component.DesignState.IsSelected == false)
         {
-            Component.DragEffectStyle = string.Empty;
+            Component.DesignState.DragEffectStyle = string.Empty;
         }
     }
 

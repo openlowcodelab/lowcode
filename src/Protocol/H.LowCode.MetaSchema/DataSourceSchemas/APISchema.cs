@@ -26,9 +26,6 @@ public class APISchema
 
     [JsonPropertyName("hds")]
     public IList<APIHeaderSchema> Headers { get; set; } = [];
-
-    [JsonPropertyName("desc")]
-    public string Description { get; set; }
 }
 
 public class APIQuerySchema

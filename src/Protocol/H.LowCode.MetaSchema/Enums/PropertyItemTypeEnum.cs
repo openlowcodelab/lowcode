@@ -8,6 +8,7 @@ namespace H.LowCode.MetaSchema;
 
 public enum PropertyItemTypeEnum
 {
+    None,
     Text,
     Text_Int,
     Radio,

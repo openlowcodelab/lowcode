@@ -11,10 +11,11 @@ public class PropertyItemSchema
     [JsonPropertyName("label")]
     public string Label { get; set; }
 
-    [JsonPropertyName("showLabel")]
-    public bool IsShowLabel { get; set; } = true;
+    [JsonPropertyName("desc")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public string Description { get; set; }
 
-    public int Sort { get; set; }
+    public int Order { get; set; }
 
     [JsonPropertyName("strval")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -28,9 +29,7 @@ public class PropertyItemSchema
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public int? IntValue { get; set; }
 
-    [JsonPropertyName("desc")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public string Description { get; set; }
+    public IDictionary<string, string> Options { get; set; }
 
     /// <summary>
     /// 设置项类型

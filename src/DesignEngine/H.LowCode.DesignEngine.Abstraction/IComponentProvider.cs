@@ -1,10 +1,13 @@
 ﻿using H.LowCode.MetaSchema;
+using H.LowCode.PartsMetaSchema;
 
 namespace H.LowCode.DesignEngine.Abstraction;
 
 public interface IComponentProvider
 {
-    public string Title { get; set; }
+    public string Name { get; }
 
-    IEnumerable<ComponentSchema> LoadComponent();
+    public string Label { get; }
+
+    IEnumerable<ComponentPartsSchema> LoadComponents();
 }

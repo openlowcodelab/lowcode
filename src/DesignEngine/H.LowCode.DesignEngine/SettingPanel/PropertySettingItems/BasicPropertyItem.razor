@@ -1,108 +1,32 @@
 ﻿@namespace H.LowCode.DesignEngine
 @inherits LowCodeComponentBase
 
-<div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:5px 0 10px;">基础</div>
-@if (Component.IsContainerComponent == false)
+@if (Component.IsContainer == false)
 {
     <div class="propertysetting-item">
         <label>Name <span style="font-size:10px; color:gray;">(字段名称/英文)</span>：</label>
-        <Input TValue="string" @bind-value="@Component.ComponentProperty.Name" OnChange="(value) => OnPropertyChange()" />
+        <Input TValue="string" @bind-value="@Component.Name" OnChange="(value) => OnPropertyChange()" />
     </div>
     <div class="propertysetting-item">
         <label>标题：</label>
-        <Input TValue="string" @bind-value="@Component.ComponentProperty.Title" OnChange="(value) => OnPropertyChange()" />
+        <Input TValue="string" @bind-value="@Component.Label" OnChange="(value) => OnPropertyChange()" />
     </div>
     <div class="propertysetting-item">
         <label>描述：</label>
-        <TextArea @bind-value="@Component.ComponentProperty.Description" />
-    </div>
-}
-@if (Component.ComponentProperty.IsShowProperty(nameof(ComponentPropertySchema.DefaultValue)))
-{
-    <div class="propertysetting-item">
-        <label>默认值：</label>
-        <Input TValue="string" @bind-value="@Component.ComponentProperty.DefaultValue" />
-    </div>
-}
-@if (Component.ComponentProperty.IsShowProperty(nameof(ComponentPropertySchema.IsRequired)))
-{
-    <div class="propertysetting-item">
-        <label>必填：</label>
-        <Checkbox @bind-Checked="@Component.ComponentProperty.IsRequired" OnChange="(value) => OnPropertyChange()" />
+        <TextArea @bind-value="@Component.Description" OnChange="(value) => OnPropertyChange()" />
     </div>
 }
 
-@*"type": "string"*@
-@if (Component.ComponentProperty.ComponentValueType == ComponentValueTypeEnum.String)
-{
-    if (Component.ComponentProperty.IsShowProperty(nameof(ComponentPropertySchema.MaximumLength)))
-    {
-        <div class="propertysetting-item">
-            <label>最大长度：</label>
-            <Input TValue="long?" @bind-value="@Component.ComponentProperty.MaximumLength" OnChange="(value) => OnPropertyChange()" />
-        </div>
-    }
-    if (Component.ComponentProperty.IsShowProperty(nameof(ComponentPropertySchema.MinimumLength)))
-    {
-        <div class="propertysetting-item">
-            <label>最小长度：</label>
-            <Input TValue="long?" @bind-value="@Component.ComponentProperty.MinimumLength" OnChange="(value) => OnPropertyChange()" />
-        </div>
-    }
-    if (Component.ComponentProperty.IsShowProperty(nameof(ComponentPropertySchema.Pattern)))
-    {
-        <div class="propertysetting-item">
-            <label>Pattern：</label>
-            <Input TValue="string" @bind-value="@Component.ComponentProperty.Pattern" OnChange="(value) => OnPropertyChange()" />
-        </div>
-    }
-    if (Component.ComponentProperty.IsShowProperty(nameof(ComponentPropertySchema.Format)))
-    {
-        <div class="propertysetting-item">
-            <label>Format：</label>
-            <Input TValue="string" @bind-value="@Component.ComponentProperty.Format" OnChange="(value) => OnPropertyChange()" />
-        </div>
-    }
-}
-
-@*"type": "integer"*@
-@*"type": "number"*@
-@if (Component.ComponentProperty.ComponentValueType == ComponentValueTypeEnum.Integer
-              || Component.ComponentProperty.ComponentValueType == ComponentValueTypeEnum.Double)
-{
-    if (Component.ComponentProperty.IsShowProperty(nameof(ComponentPropertySchema.Maximum)))
-    {
-        <div class="propertysetting-item">
-            <label>最大值：</label>
-            <Input TValue="double?" @bind-value="@Component.ComponentProperty.Maximum" OnChange="(value) => OnPropertyChange()" />
-        </div>
-    }
-    if (Component.ComponentProperty.IsShowProperty(nameof(ComponentPropertySchema.Minimum)))
-    {
-        <div class="propertysetting-item">
-            <label>最小值：</label>
-            <Input TValue="double?" @bind-value="@Component.ComponentProperty.Minimum" OnChange="(value) => OnPropertyChange()" />
-        </div>
-    }
-}
-
-@*"type": "array"*@
-@*if(Component.ComponentValueType == ComponentValueType.Array)
-{
-
-}*@
-
-@if(Component.ComponentProperty.ComponentValueType == ComponentValueTypeEnum.Table)
-{
-    <div class="propertysetting-item">
-        @* <label>表格列：</label> *@
-        <TablePropertyItem Component="@Component" OnTablePropertyChange="OnStringPropertyChange"></TablePropertyItem>
-    </div>
-}
+@* @if(Component.Property.ComponentValueType == ComponentValueTypeEnum.Table) *@
+@* { *@
+    @* <div class="propertysetting-item"> *@
+    @*     <TablePropertyItem Component="@Component" OnTablePropertyChange="OnStringPropertyChange"></TablePropertyItem> *@
+    @* </div> *@
+@* } *@
 
 @code {
     [Parameter]
-    public ComponentSchema Component { get; set; }
+    public ComponentPartsSchema Component { get; set; }
 
     protected override async Task OnInitializedAsync()
     {

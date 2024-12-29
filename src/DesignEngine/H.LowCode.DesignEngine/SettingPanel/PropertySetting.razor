@@ -8,23 +8,16 @@
         <BasicPropertyItem Component="@Component"></BasicPropertyItem>
 
         @* 数据源属性 *@
-        @if (Component.ComponentProperty.IsSupportDataSource)
-        {
-            <DataSourcePropertyItem Component="@Component"></DataSourcePropertyItem>
-        }
+        <DataSourcePropertyItem Component="@Component"></DataSourcePropertyItem>
 
         @*扩展属性*@
-        @if (Component.ComponentProperty.ExtraProperties != null
-            && Component.ComponentProperty.ExtraProperties.Count > 0)
-        {
-            <ExtensionPropertyItem Component="@Component"></ExtensionPropertyItem>
-        }
+        <ExtensionPropertyItem Component="@Component"></ExtensionPropertyItem>
     }
 </div>
 
 @code {
     [Parameter]
-    public ComponentSchema Component { get; set; }
+    public ComponentPartsSchema Component { get; set; }
 
     protected override async Task OnInitializedAsync()
     {

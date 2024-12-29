@@ -1,0 +1,33 @@
+﻿@namespace H.LowCode.Components.AntBlazor
+@inherits ContainerComponentBase
+
+<Tabs OnChange="OnTabChange" Animated Style="width:100%; height: auto;">
+    @for (int i = 0; i < ItemCount; i++)
+    {
+        string key = $"tab-{i}";
+        <TabPane Tab="@key" Key="@key" Style="height: auto;">
+            <DropItemContainer ContainerComponent="@CreateComponent(key, (component)=>{component.Style.DefaultStyle="min-height:300px; height:auto; background: #f4f7fa;";})"></DropItemContainer>
+        </TabPane>
+    }
+</Tabs>
+
+@code {
+    [Parameter]
+    public int ItemCount { get; set; }
+
+    private string _activeKey { get; set; }
+
+    #region override
+    protected override bool ShouldRender()
+    {
+        return false;
+    }
+    #endregion
+
+    #region
+    private void OnTabChange()
+    {
+
+    }
+    #endregion
+}

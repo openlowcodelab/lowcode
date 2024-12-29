@@ -222,7 +222,7 @@
     {
         await Task.Delay(1);
 
-        APIQuerySchema newQuery = new() { Id = Guid.NewGuid().ToString() };
+        APIQuerySchema newQuery = new() { Id = ShortIdGenerator.Generate() };
 
         _dataSource.API.Queries.Add(newQuery);
 

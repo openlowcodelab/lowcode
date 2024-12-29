@@ -281,7 +281,7 @@
     {
         await Task.Delay(1);
 
-        TableFieldSchema newField = new() { Id = Guid.NewGuid().ToString(), IsNullable = true };
+        TableFieldSchema newField = new() { Id = ShortIdGenerator.Generate(), IsNullable = true };
 
         //添加编辑缓存
         _fieldEditCache[newField.Id] = (true, newField);

@@ -2,6 +2,7 @@
 @inherits LowCodeComponentBase
 @layout WorkbenchLayout
 
+@inject IComponentPartsAppService ComponentPartsAppService
 @inject IMessageService Message
 @inject ComponentState<ComponentPartsList, IList<ComponentPartsListModel>> ComponentPartsListState
 
@@ -15,34 +16,68 @@
 </div>
 
 <Table TItem="ComponentPartsListModel" DataSource="@_componentPartsList" PageSize="15" PageIndex="1" Total="_total"
-@bind-SelectedRows="selectedRows" Style="height:100%;" RowKey="c=>c.Id">
-    <PropertyColumn Title="ID" Property="c=>c.Id" Width="300" />
-    <PropertyColumn Title="组件名称" Property="c=>c.Name" Sortable />
+       @bind-SelectedRows="selectedRows" Style="height:100%;" RowKey="c=>c.ComponentId">
+    @* <PropertyColumn Title="ComponentId" Property="c=>c.ComponentId" Width="300" /> *@
+    <PropertyColumn Title="Name" Property="c=>c.ComponentName" Sortable />
+    <PropertyColumn Title="组件名称" Property="c=>c.Label" />
+    <PropertyColumn Title="组件类型" Property="c=>c.ComponentType">
+        <Tag Color="@(context.ComponentType == 1 ? "Green" : "Gold")">
+            @(context.ComponentType == 1 ? "原子组件" : "组合组件")
+        </Tag>
+    </PropertyColumn>
+    <PropertyColumn Title="发布状态" Property="c=>c.PublishStatus">
+        <Tag Color="@(context.PublishStatus == 1 ? "Green" : "Gold")">
+            @(context.PublishStatus == 1 ? "已发布" : "待发布")
+        </Tag>
+    </PropertyColumn>
     <PropertyColumn Title="排序" Property="c=>c.Order" />
     <PropertyColumn Title="修改时间" Property="c=>c.ModifiedTime" Format="yyyy-MM-dd HH:mm:ss" />
-    <PropertyColumn Title="发布状态" Property="c=>c.PublishStatus">
-        <Switch @bind-Checked="@context.PublishStatus" />
-    </PropertyColumn>
     <ActionColumn Title="操作" Width="180">
         <Space Size=@("middle")>
             <SpaceItem>
-                <a href="@($"/designer/componentparts/{context.Id}")" target="_blank" style="padding: 7px;border: solid #b7eb8f 1px;border-radius: 2px;line-height: 11px;height: 26px;display: block;background-color: #f6ffed;color: #389e0d;">设计</a>
+                @if (context.ComponentType == 1)
+                {
+                    <a onclick="@(()=> EditAsync(@context.ComponentId))" style="color: #b7eb8f">设计</a>
+                }
+                else if(context.ComponentType == 2)
+                {
+                    <a href="@($"/designer/componentparts/{context.ComponentId}")" target="_blank" style="padding: 7px;border: solid #b7eb8f 1px;border-radius: 2px;line-height: 11px;height: 26px;display: block;background-color: #f6ffed;color: #389e0d;">设计</a>
+                }
+                else
+                {
+                    throw new NotSupportedException($"不支持的组件类型: {context.ComponentType}");
+                }
             </SpaceItem>
             <SpaceItem>
-                <a onclick="@(()=> EditAsync(@context.Id))">编辑</a>
+                <a onclick="@(()=> EditAsync(@context.ComponentId))">编辑</a>
             </SpaceItem>
             <SpaceItem>
-                <a onclick="@(()=> DeleteAsync(@context.Id))" style="color:#ff4d4f">删除</a>
+                <a onclick="@(()=> DeleteAsync(@context.ComponentId))" style="color:#ff4d4f">删除</a>
             </SpaceItem>
         </Space>
     </ActionColumn>
 </Table>
 
-<Modal Title="新建组件" @bind-Visible="@_visible" OnOk="OnConfirmAsync">
-    <Form Model="@_partsSchema" LabelColSpan="8" WrapperColSpan="16" OnFinish="OnFinishAsync" @ref="@_form"
-    ValidateOnChange="true">
-        <FormItem Label="组件名称" Required>
+<Modal Title="新建组件" @bind-Visible="@_formVisible" OnOk="OnConfirmAsync">
+    <Form Model="@_componentPartsSchema" OnFinish="OnFinishAsync" @ref="@_form"
+          ValidateOnChange="true" LabelColSpan="8" WrapperColSpan="16">
+        <FormItem Label="Library" Required>
+            <Input @bind-Value="@context.LibraryId" />
+        </FormItem>
+        <FormItem Label="Name" Required>
             <Input @bind-Value="@context.ComponentName" />
+        </FormItem>
+        <FormItem Label="组件名称" Required>
+            <Input @bind-Value="@context.Label" />
+        </FormItem>
+        <FormItem Label="组件类型" Required>
+            <RadioGroup @bind-Value="@context.ComponentType">
+                <Radio Value="1">原子组件</Radio>
+                <Radio Value="2">组合组件</Radio>
+            </RadioGroup>
+        </FormItem>
+        <FormItem Label="是否容器">
+            <Checkbox @bind-Checked="@context.IsContainer"></Checkbox>
         </FormItem>
         <FormItem Label="发布状态" Required>
             <RadioGroup @bind-Value="@context.PublishStatus">
@@ -54,16 +89,77 @@
             <InputNumber @bind-Value="@context.Order" Min="0" DefaultValue="0"></InputNumber>
         </FormItem>
     </Form>
+
+    @* Parameter 列表 *@
+    @* <div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
+        <div style="width:250px;">
+            <Search Placeholder="Name" OnSearch="()=>{}" />
+        </div>
+        <div style="width:80px; line-height:32px; margin: 0 22px 0 0;">
+            <Button Type="@ButtonType.Primary">新增 Parameter</Button>
+        </div>
+    </div>
+    <Table TItem="ComponentParameterFragmentSchema" DataSource="@_componentPartsSchema.Fragment.Parameters">
+        <ChildContent Context="context">
+            <PropertyColumn Title="Name" Property="c => c.Name">
+                @if (!_parameterEditCache[context.Name].edit)
+                {
+                    @context.Name
+                }
+                else
+                {
+                    <Input @bind-Value="_parameterEditCache[context.Name].parameter.Name" />
+                }
+            </PropertyColumn>
+            <PropertyColumn Title="ValueType" Property="c => c.ValueType">
+                @if (!_parameterEditCache[context.Name].edit)
+                {
+                    @context.ValueType
+                }
+                else
+                {
+                    <Input @bind-Value="_parameterEditCache[context.Name].parameter.ValueType" />
+                }
+            </PropertyColumn>
+            <PropertyColumn Title="字符串值" Property="c => c.StringValue">
+                @if (!_parameterEditCache[context.Name].edit)
+                {
+                    @context.StringValue
+                }
+                else
+                {
+                    <Input @bind-Value="_parameterEditCache[context.Name].parameter.StringValue" />
+                }
+            </PropertyColumn>
+            <ActionColumn Title="操作">
+                @if (!_parameterEditCache[@context.Name].edit)
+                {
+                    <a onclick="@(() => ParameterStartEdit(@context.Name))">编辑</a>
+                    <a onclick="@(() => DeleteParameterAsync(@context.Name))" style="color:#ff4d4f">删除</a>
+                }
+                else
+                {
+                    <a onclick="@(() => SaveParameterAsync(context.Name))" class="save">保存</a>
+                    <Popconfirm Title="确定取消吗?" OkText="确定" CancelText="取消"
+                                OnConfirm="() => ParameterCancelEditAsync(context.Name)">
+                        <a>取消</a>
+                    </Popconfirm>
+                }
+            </ActionColumn>
+        </ChildContent>
+    </Table> *@
 </Modal>
 
 @code {
     IEnumerable<ComponentPartsListModel> selectedRows;
     int _total = 0;
 
-    private bool _visible = false;
+    private bool _formVisible = false;
     private Form<ComponentPartsSchema> _form;
     private IList<ComponentPartsListModel> _componentPartsList;
-    private ComponentPartsSchema _partsSchema = new ComponentPartsSchema();
+    private ComponentPartsSchema _componentPartsSchema = new ComponentPartsSchema();
+
+    IDictionary<string, (bool edit, ComponentParameterFragmentSchema parameter)> _parameterEditCache = new Dictionary<string, (bool edit, ComponentParameterFragmentSchema parameter)>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -78,35 +174,42 @@
 
     private async Task<IList<ComponentPartsListModel>> LoadComponentPartsAsync(int pageIndex, int pageSize)
     {
-        IList<ComponentPartsListModel> result = [];
-        return result;
+        return await ComponentPartsAppService.GetListAsync("antdesign");
     }
 
-    private async Task<ComponentPartsSchema> GetPageAsync(string partsId)
+    private async Task<ComponentPartsSchema> GetComponentPartsAsync(string componentPartsId)
     {
-        ComponentPartsSchema ComponentPartsSchema = new();
-        return ComponentPartsSchema;
+        return await ComponentPartsAppService.GetByIdAsync("antdesign", componentPartsId);
     }
 
     private void CreateAsync()
     {
-        _partsSchema = new ComponentPartsSchema();
-        _partsSchema.Id = Guid.NewGuid().ToString();
-        _visible = true;
+        _componentPartsSchema = new ComponentPartsSchema();
+        _formVisible = true;
 
         StateHasChanged();
     }
 
-    private async Task EditAsync(string id)
+    private async Task DesignAsync(string componentId)
     {
-        _partsSchema = await GetPageAsync(id);
-        _visible = true;
+        _componentPartsSchema = await GetComponentPartsAsync(componentId);
+        _formVisible = true;
 
         StateHasChanged();
     }
 
-    private async Task DeleteAsync(string partsId)
+    private async Task EditAsync(string componentId)
     {
+        _componentPartsSchema = await GetComponentPartsAsync(componentId);
+        _formVisible = true;
+
+        StateHasChanged();
+    }
+
+    private async Task DeleteAsync(string componentPartsId)
+    {
+        await ComponentPartsAppService.DeleteAsync("antdesign", componentPartsId);
+
         await Message.Success("删除成功！");
     }
 
@@ -118,20 +221,20 @@
             var isSuccess = await SaveComponentPartsSchemaAsync();
             if (isSuccess)
             {
-                _visible = false;
+                _formVisible = false;
                 _form.Submit();
                 await Message.Success("保存成功！");
                 _form.Reset();
             }
             else
             {
-                _visible = true;
+                _formVisible = true;
                 await Message.Error("保存失败");
             }
         }
         else
         {
-            _visible = true;
+            _formVisible = true;
         }
     }
 
@@ -142,8 +245,57 @@
 
     private async Task<bool> SaveComponentPartsSchemaAsync()
     {
-        //string jsonSchema = _partsSchema.ToJson();
-
-        return true;
+        return await ComponentPartsAppService.SaveAsync(_componentPartsSchema);
     }
+
+    #region Parameter
+
+    private async Task CreateParameterAsync()
+    {
+        await Task.Delay(1);
+
+        ComponentParameterFragmentSchema newParameter = new();
+
+        //添加编辑缓存
+        _parameterEditCache[newParameter.Name] = (true, newParameter);
+
+        _componentPartsSchema.Fragment.Parameters.Add(newParameter);
+
+        //StateHasChanged();
+    }
+
+    private async Task SaveParameterAsync(string name)
+    {
+        await Task.Delay(1);
+        var index =  _componentPartsSchema.Fragment.Parameters.FindIndex(item => item.Name == name);
+        _componentPartsSchema.Fragment.Parameters[index] = _parameterEditCache[name].parameter; // apply the copy to data source
+        _parameterEditCache[name] = (false, _componentPartsSchema.Fragment.Parameters[index]); // don't affect rows in editing
+
+        StateHasChanged();
+    }
+
+    private async Task DeleteParameterAsync(string name)
+    {
+        await Task.Delay(1);
+
+    }
+
+    private async Task ParameterStartEdit(string name)
+    {
+        await Task.Delay(1);
+        var data = _parameterEditCache[name];
+        _parameterEditCache[name] = (true, data.parameter with { }); // add a copy in cache
+
+        StateHasChanged();
+    }
+
+    private async Task ParameterCancelEditAsync(string name)
+    {
+        await Task.Delay(1);
+        var data = _componentPartsSchema.Fragment.Parameters.FirstOrDefault(item => item.Name == name);
+        _parameterEditCache[name] = (false, data); // recovery
+
+        StateHasChanged();
+    }
+    #endregion
 }

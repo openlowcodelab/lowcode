@@ -97,7 +97,7 @@
 
 @code {
     [Parameter]
-    public ComponentSchema Component { get; set; }
+    public ComponentPartsSchema Component { get; set; }
 
     [Parameter]
     public Action<string> OnTablePropertyChange { get; set; }
@@ -106,19 +106,19 @@
 
     protected override void OnInitialized()
     {
-        if (Component.ComponentProperty?.TablePropertiess.IsNullOrEmpty() == false)
-        {
-            _tableSchema = JsonSerializer.Deserialize<TablePropertySchema>(Component.ComponentProperty.TablePropertiess);
-        }
+        // if (Component.Property?.TablePropertiess.IsNullOrEmpty() == false)
+        // {
+        //     _tableSchema = JsonSerializer.Deserialize<TablePropertySchema>(Component.Property.TablePropertiess);
+        // }
 
         base.OnInitialized();
     }
 
     private void OnPropertyChanged()
     {
-        Component.ComponentProperty.TablePropertiess = _tableSchema.ToJson();
+        //Component.Property.TablePropertiess = _tableSchema.ToJson();
 
-        //OnTablePropertyChange?.Invoke(Component.ComponentProperty.TablePropertiess);
+        //OnTablePropertyChange?.Invoke(Component.Property.TablePropertiess);
     }
 
     #region Columns
@@ -132,7 +132,7 @@
         _isColumnCreate = true;
         _columnVisible = true;
         _tableColumnSchema = new();
-        _tableColumnSchema.Id = Guid.NewGuid().ToString();
+        _tableColumnSchema.Id = ShortIdGenerator.Generate();
 
         StateHasChanged();
     }
@@ -215,7 +215,7 @@
         _isbtnCreate = true;
         _btnVisible = true;
         _tableButtonSchema = new();
-        _tableButtonSchema.Id = Guid.NewGuid().ToString();
+        _tableButtonSchema.Id = ShortIdGenerator.Generate();
 
         StateHasChanged();
     }

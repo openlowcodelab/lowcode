@@ -1,0 +1,141 @@
+﻿@namespace H.LowCode.Components.AntBlazor
+@inherits LowCodeComponentBase
+
+@inject IJSRuntime JS
+
+<Table @ref="table" TItem="Dictionary<string, object>" DataSource="@_data" Total="_total" @bind-PageIndex="_pageIndex" @bind-PageSize="_pageSize"
+@bind-SelectedRows="_selectedRows" OnChange="OnChange" Size="TableSize.Small">
+    <TitleTemplate>
+        <Flex Justify="end" Gap="10">
+            @if(_tableSchema.Buttons.Count == 0)
+            {
+                <Button Type="primary" @onclick="CreateAsync">新增</Button>
+                <Button Disabled="!_selectedRows.Any()" Danger @onclick="DeleteSelectedAsync">删除选中</Button>
+            }
+            @foreach (var btn in _tableSchema.Buttons)
+            {
+                <Button Type="@btn.ButtonType" Disabled="@btn.Disabled" @onclick="@(() => ButtonActionAsync(btn.Id))">@btn.Title</Button>
+            }
+        </Flex>
+    </TitleTemplate>
+    <ColumnDefinitions Context="row">
+        <Selection />
+        @foreach (var key in _data?.FirstOrDefault()?.Keys.ToArray() ?? new string[0])
+        {
+            var column = _tableSchema.Columns.FirstOrDefault(t => string.Equals(t.Name, key, StringComparison.OrdinalIgnoreCase));
+            if (column != null)
+            {
+                <PropertyColumn Property="@(c=> c[key])" Title="@column.Title"></PropertyColumn>
+            }
+        }
+        <ActionColumn Title="操作" Width="120">
+            <Space Size=@("middle")>
+                <SpaceItem>
+                    <a @onclick="()=> EditAsync(row)">编辑</a>
+                </SpaceItem>
+                <SpaceItem>
+                    <a @onclick="()=> DeleteAsync(row)" style="color:#ff4d4f">删除</a>
+                </SpaceItem>
+            </Space>
+        </ActionColumn>
+    </ColumnDefinitions>
+</Table>
+
+@code {
+    [Parameter]
+    public ComponentPartsSchema Component { get; set; }
+
+    private TablePropertySchema _tableSchema = new();
+    private List<Dictionary<string, object>> _data;
+
+    IEnumerable<Dictionary<string, object>> _selectedRows = [];
+    ITable table;
+
+    int _pageIndex = 1;
+    int _pageSize = 10;
+    int _total = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _tableSchema = GetTableSchemaAsync();
+        _data = await GetTableDataAsync(1, 50);
+        _total = 50;
+    }
+
+    public async Task OnChange(QueryModel<Dictionary<string, object>> queryModel)
+    {
+        await Task.Delay(1);
+        Console.WriteLine(JsonSerializer.Serialize(queryModel));
+    }
+
+    private TablePropertySchema GetTableSchemaAsync()
+    {
+        // if (Component?.Property == null || Component.Property.TablePropertiess.IsNullOrEmpty()
+        //     || Component.Property.TablePropertiess.Trim().Equals("[]"))
+        // {
+        //     var tableSchema = new TablePropertySchema();
+        //     tableSchema.Columns = new List<TableColumnSchema>()
+        //     {
+        //         new() { Name = "_temp", Title = "(待添加列)" }
+        //     };
+        //     return tableSchema;
+        // }
+
+        // return JsonSerializer.Deserialize<TablePropertySchema>(Component.Property.TablePropertiess);
+        return null;
+    }
+
+    public async Task<List<Dictionary<string, object>>> GetTableDataAsync(int pageIndex, int pageSize)
+    {
+        await Task.Delay(100);
+        var list = new List<Dictionary<string, object>>();
+        for (int i = 0; i < 3; i++)
+        {
+            Dictionary<string, object> row = new Dictionary<string, object>();
+            foreach (var col in _tableSchema.Columns)
+            {
+                row.Add(col.Name, string.Empty);
+            }
+            list.Add(row);
+        }
+        return list;
+    }
+
+    public async Task CreateAsync()
+    {
+        await Task.Delay(100);
+    }
+
+    public async Task EditAsync(Dictionary<string, object> row)
+    {
+        string primaryKey = _tableSchema.Columns.FirstOrDefault(t => t.IsPrimaryKey)?.Name;
+        await Task.Delay(100);
+    }
+
+    private async Task DeleteAsync(Dictionary<string, object> row)
+    {
+        await Task.Delay(100);
+    }
+
+    public async Task DeleteSelectedAsync()
+    {
+        await Task.Delay(100);
+    }
+
+    public async Task ButtonActionAsync(string id)
+    {
+        await Task.Delay(100);
+        var btn = _tableSchema.Buttons.First(t => t.Id == id);
+        if (btn.ActionType == ActionTypeEnum.Blank)
+        {
+            string pageUrl = string.Empty;
+            if (IsDesign)
+                pageUrl = $"/designer/caseapp/{btn.TargetId}";
+            else
+                pageUrl = $"/caseapp/{btn.TargetId}";
+
+            await JS.InvokeVoidAsync("open", pageUrl, "_blank");
+            //    await this.RedirectPageAsync(pageUrl);
+        }
+    }
+}

@@ -1,0 +1,86 @@
+﻿@namespace H.LowCode.Themes.AntBlazor
+@inherits LowCodeComponentBase
+
+@if (Component.IsContainer)
+{
+    <ContainerComponentRender ContainerComponent="@Component"></ContainerComponentRender>
+}
+else
+{
+    <div class="renderengine-componentitem-box" style="float:left;
+        position:@Component.Style.Position;
+        width: @((Component.Style.ItemWidth ?? (IsInRootContainer ? 24/PageCascading.PageLayout : 24))  /24 * 100)%;
+        min-width:85px; min-height: @(Component.Style.ItemHeight)px;
+        @Component.Style.DefaultStyle @Component.Style.CustomStyle">
+
+        @if (Component.IsHiddenLabel == false && Component.IsContainer == false)
+        {
+            <div class="renderengine-componentitem-title">@Component.Label ：</div>
+        }
+
+        @if (Component.IsContainer)
+        {
+            <div class="renderengine-componentitem-div-container">@_renderFragment</div>
+        }
+        else
+        {
+            <div class="renderengine-componentitem-div-component">@_renderFragment</div>
+        }
+    </div>
+}
+
+@code {
+    [Parameter]
+    public ComponentSchema Component { get; set; }
+
+    [CascadingParameter(Name = "pageCascading")]
+    public PageCascadingModel PageCascading{ get; set; }
+
+    /// <summary>
+    /// 当前组件是否在根容器内
+    /// </summary>
+    [Parameter]
+    public bool IsInRootContainer { get; set; }
+
+    private RenderFragment _renderFragment;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Init();
+
+        await base.OnInitializedAsync();
+    }
+
+    private void Init()
+    {
+        if (Component == null)
+            throw new NullReferenceException(nameof(Component));
+
+        _renderFragment = RenderComponent();
+    }
+
+    private RenderFragment RenderComponent() => builder =>
+    {
+        int index = 0;
+        Type type = Type.GetType(Component.Fragment.FullTypeName);
+        builder.OpenComponent(index++, type);
+        //Parameters
+        foreach (var attr in Component.Fragment.Parameters)
+        {
+            if (attr.ValueType == ComponentValueTypeEnum.Integer)
+                builder.AddComponentParameter(index++, attr.Name, attr.IntValue);
+            else if (attr.ValueType == ComponentValueTypeEnum.String)
+            {
+                if ("{self}".Equals(attr.StringValue, StringComparison.OrdinalIgnoreCase))
+                    builder.AddAttribute(index++, attr.Name, Component);
+                else
+                    builder.AddComponentParameter(index++, attr.Name, attr.StringValue);
+            }
+            else
+            {
+                throw new NotSupportedException($"{attr.ValueType}");
+            }
+        }
+        builder.CloseComponent();
+    };
+}

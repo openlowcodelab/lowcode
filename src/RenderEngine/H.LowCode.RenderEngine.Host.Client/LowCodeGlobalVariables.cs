@@ -1,4 +1,4 @@
-﻿using H.LowCode.ThemeParts.AntBlazor;
+﻿using H.LowCode.Themes.AntBlazor;
 using System.Reflection;
 
 namespace H.LowCode.RenderEngine.Host.Client;
@@ -9,6 +9,6 @@ public static class LowCodeGlobalVariables
 
     public static readonly Assembly[] AdditionalAssemblies =
         [
-            typeof(ThemeParts.AntBlazor._Imports).Assembly
+            typeof(Themes.AntBlazor._Imports).Assembly
         ];
 }

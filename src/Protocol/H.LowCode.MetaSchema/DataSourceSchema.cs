@@ -25,7 +25,7 @@ public class DataSourceSchema : MetaSchemaBase
     [JsonPropertyName("type")]
     public DataSourceTypeEnum DataSourceType { get; set; }
 
-    [JsonPropertyName("pubstatus")]
+    [JsonPropertyName("pub")]
     public bool PublishStatus { get; set; }
 
     #region DataSourceType=Table
@@ -54,7 +54,7 @@ public class DataSourceSchema : MetaSchemaBase
     /// 选项数据源
     /// </summary>
     [JsonPropertyName("ops")]
-    public List<OptionSchema> Options { get; set; } = [];
+    public IDictionary<string, string> Options { get; set; }
 
     /// <summary>
     /// 

@@ -11,7 +11,7 @@
 }
 
 @code {
-    private ComponentSchema _rootComponent;
+    private ComponentPartsSchema _rootComponent;
 
     protected override async Task OnInitializedAsync()
     {
@@ -20,12 +20,12 @@
         await base.OnInitializedAsync();
     }
 
-    private ComponentSchema LoadRootComponent()
+    private ComponentPartsSchema LoadRootComponent()
     {
-        ComponentSchema rootComponent = null;  //DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId);
+        ComponentPartsSchema rootComponent = null;  //DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId);
         if (rootComponent == null)
         {
-            rootComponent = new ComponentSchema("root");
+            rootComponent = new ComponentPartsSchema();
             //rootComponent.Refresh = StateHasChanged;
             //DragDropStateService.SetRootComponent(PageCascading.AppId, PageCascading.PageId, rootComponent);
         }

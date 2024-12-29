@@ -22,11 +22,8 @@ public class PageSchema : MetaSchemaBase
     /// <summary>
     /// 发布状态
     /// </summary>
-    [JsonPropertyName("pubstatus")]
-    public bool PublishStatus { get; set; }
-
-    [JsonPropertyName("comps")]
-    public IList<ComponentSchema> Components { get; set; } = [];
+    [JsonPropertyName("pub")]
+    public int PublishStatus { get; set; }
 
     [JsonPropertyName("pageprop")]
     public PagePropertySchema PageProperty { get; set; } = new();
@@ -34,12 +31,6 @@ public class PageSchema : MetaSchemaBase
     [JsonPropertyName("ds")]
     public PageDataSourceSchema DataSource { get; set; } = new();
 
-    public I18n I18n { get; set; }
-}
-
-public struct I18n
-{
-    public string Name { get; set; }
-
-    public IDictionary<string, string> Properties { get; set; }
+    [JsonPropertyName("comps")]
+    public IList<ComponentSchema> Components { get; set; } = [];
 }

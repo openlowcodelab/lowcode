@@ -1,52 +1,54 @@
 ﻿@namespace H.LowCode.DesignEngine
 @inherits LowCodeComponentBase
 
-<div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:30px 0 10px;">数据源</div>
-<div class="propertysetting-item">
-    <label>类型：</label>
-    <EnumSelect TEnum="@DataSourceTypeEnum" @bind-Value="@Component.DataSource.DataSourceType">
-    </EnumSelect>
-</div>
+@if (Component.IsSupportDataSource){
+    <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:30px 0 10px;">数据源</div>
+    <div class="propertysetting-item">
+        <label>类型：</label>
+        <EnumSelect TEnum="@DataSourceTypeEnum" @bind-Value="@Component.DataSource.DataSourceType">
+        </EnumSelect>
+    </div>
 
-@if (Component.DataSource.DataSourceType == DataSourceTypeEnum.Table)
-{
-    <div class="propertysetting-item">
-        <label>字段：</label>
-        <div>@Component.ComponentProperty.Name</div>
-    </div>
-}
-else if (Component.DataSource.DataSourceType == DataSourceTypeEnum.API)
-{
-    <div class="propertysetting-item">
-        <label>API：</label>
-        <Input TValue="string" @bind-Value="@Component.DataSource.DataSourceValue" />
-    </div>
-}
-else if (Component.DataSource.DataSourceType == DataSourceTypeEnum.SQL)
-{
-    <div class="propertysetting-item">
-        <label>SQL：</label>
-        <TextArea @bind-Value="@Component.DataSource.DataSourceValue" />
-    </div>
-}
-else if (Component.DataSource.DataSourceType == DataSourceTypeEnum.Expression)
-{
-    <div class="propertysetting-item">
-        <label>表达式：</label>
-        <TextArea @bind-Value="@Component.DataSource.DataSourceValue" />
-    </div>
-}
-else if (Component.DataSource.DataSourceType == DataSourceTypeEnum.Fiexd)
-{
-    <div class="propertysetting-item">
-        <label>固定值：</label>
-        <TextArea />
-    </div>
+    @if (Component.DataSource.DataSourceType == DataSourceTypeEnum.Table)
+    {
+        <div class="propertysetting-item">
+            <label>字段：</label>
+            <div>@Component.Name</div>
+        </div>
+    }
+    else if (Component.DataSource.DataSourceType == DataSourceTypeEnum.API)
+    {
+        <div class="propertysetting-item">
+            <label>API：</label>
+            <Input TValue="string" @bind-Value="@Component.DataSource.DataSourceValue" />
+        </div>
+    }
+    else if (Component.DataSource.DataSourceType == DataSourceTypeEnum.SQL)
+    {
+        <div class="propertysetting-item">
+            <label>SQL：</label>
+            <TextArea @bind-Value="@Component.DataSource.DataSourceValue" />
+        </div>
+    }
+    else if (Component.DataSource.DataSourceType == DataSourceTypeEnum.Expression)
+    {
+        <div class="propertysetting-item">
+            <label>表达式：</label>
+            <TextArea @bind-Value="@Component.DataSource.DataSourceValue" />
+        </div>
+    }
+    else if (Component.DataSource.DataSourceType == DataSourceTypeEnum.Fiexd)
+    {
+        <div class="propertysetting-item">
+            <label>固定值：</label>
+            <TextArea />
+        </div>
+    }
 }
 
 @code {
     [Parameter]
-    public ComponentSchema Component { get; set; }
+    public ComponentPartsSchema Component { get; set; }
 
     protected override async Task OnInitializedAsync()
     {

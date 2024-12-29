@@ -1,60 +1,64 @@
 ﻿@namespace H.LowCode.DesignEngine
 @inherits LowCodeComponentBase
 
-<div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:30px 0 10px;">更多</div>
-
-@foreach (var extPropertyKV in Component.ComponentProperty.ExtraProperties)
+@foreach (var group in Component.PropertyGroups)
 {
-    <div class="propertysetting-item">
-        @if (extPropertyKV.Value.IsShowLabel)
-        {
-            <label>@extPropertyKV.Value.Label：</label>
-        }
+    if(!string.IsNullOrEmpty(group.DisplayName)){
+        <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:30px 0 10px;">
+            @group.DisplayName
+        </div>
+    }
 
-        @if (extPropertyKV.Value.SettingItemType == PropertyItemTypeEnum.Text)
-        {
-            <Input TValue="string" @bind-value="@extPropertyKV.Value.StringValue" OnChange="OnStringPropertyChange" />
-        }
-        else if (extPropertyKV.Value.SettingItemType == PropertyItemTypeEnum.Text_Int)
-        {
-            <Input TValue="int?" @bind-value="@extPropertyKV.Value.IntValue" OnChange="OnIntPropertyChange" />
-        }
-        else if (extPropertyKV.Value.SettingItemType == PropertyItemTypeEnum.Radio)
-        {
+    foreach (var property in group.Properties)
+    {
+        <div class="propertysetting-item">
+            <label>@property.DisplayName：</label>
 
-        }
-        else if (extPropertyKV.Value.SettingItemType == PropertyItemTypeEnum.Checkbox)
-        {
-            //TODO
-            @* <Checkbox @bind-checked="@extPropertyKV.Value.BoolValue"></Checkbox> *@
-        }
-        else if (extPropertyKV.Value.SettingItemType == PropertyItemTypeEnum.Select)
-        {
+            @if (property.PropertyItemType == PropertyItemTypeEnum.Text)
+            {
+                <Input TValue="string" @bind-value="@property.StringValue" OnChange="OnStringPropertyChange" />
+            }
+            else if (property.PropertyItemType == PropertyItemTypeEnum.Text_Int)
+            {
+                <Input TValue="int?" @bind-value="@property.IntValue" OnChange="OnIntPropertyChange" />
+            }
+            else if (property.PropertyItemType == PropertyItemTypeEnum.Radio)
+            {
 
-        }
-        else if (extPropertyKV.Value.SettingItemType == PropertyItemTypeEnum.Switch)
-        {
+            }
+            else if (property.PropertyItemType == PropertyItemTypeEnum.Checkbox)
+            {
+                //TODO
+                @* <Checkbox @bind-checked="@property.BoolValue"></Checkbox> *@
+            }
+            else if (property.PropertyItemType == PropertyItemTypeEnum.Select)
+            {
 
-        }
-        else if (extPropertyKV.Value.SettingItemType == PropertyItemTypeEnum.Date)
-        {
+            }
+            else if (property.PropertyItemType == PropertyItemTypeEnum.Switch)
+            {
 
-        }
-        else if (extPropertyKV.Value.SettingItemType == PropertyItemTypeEnum.Textarea)
-        {
+            }
+            else if (property.PropertyItemType == PropertyItemTypeEnum.Date)
+            {
 
-        }
+            }
+            else if (property.PropertyItemType == PropertyItemTypeEnum.Textarea)
+            {
 
-        @if (!string.IsNullOrEmpty(extPropertyKV.Value.Description))
-        {
-            <div style="color:#c7c7c7">@extPropertyKV.Value.Description</div>
-        }
-    </div>
+            }
+
+            @if (!string.IsNullOrEmpty(property.Description))
+            {
+                <div style="color:#c7c7c7">@property.Description</div>
+            }
+        </div>
+    }
 }
 
 @code {
     [Parameter]
-    public ComponentSchema Component { get; set; }
+    public ComponentPartsSchema Component { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -63,10 +67,18 @@
 
     private void OnExtensionPropertyChange(string key, string propertyValue)
     {
-        var contains = Component.ComponentProperty.ExtraProperties.ContainsKey(key);
-        if (contains)
+        ComponentPropertySchema property = null;
+        Component.PropertyGroups.ForEach(t =>
         {
-            Component.ComponentProperty.ExtraProperties[key].StringValue = propertyValue;
+            t.Properties.ForEach(p =>
+            {
+                if (string.Equals(p.Name, key))
+                    property = p;
+            });
+        });
+        if (property != null)
+        {
+            property.StringValue = propertyValue;
         }
     }
 

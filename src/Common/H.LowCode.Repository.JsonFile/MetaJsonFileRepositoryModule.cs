@@ -16,6 +16,8 @@ public class MetaJsonFileRepositoryModule : AbpModule
         context.Services.AddScoped<IPageRepository, PageFileRepository>();
         context.Services.AddScoped<IDataSourceRepository, DataSourceFileRepository>();
 
+        context.Services.AddScoped<IComponentPartsRepository, ComponentPartsRepository>();
+
         var configuration = context.Services.GetConfiguration();
         context.Services.Configure<MetaOption>(configuration.GetSection(MetaOption.SectionName));
     }

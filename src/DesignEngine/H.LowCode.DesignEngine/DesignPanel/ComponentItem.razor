@@ -1,23 +1,32 @@
 ﻿@namespace H.LowCode.DesignEngine
 @inherits LowCodeComponentBase
 
-@if (Component.IsHiddenTitle == false && Component.IsContainerComponent == false)
+@if (Component != null && _renderFragment != null)
 {
-    <div class="designengine-componentitem-title">@Component.ComponentProperty.Title ：</div>
-}
+    @if (Component.IsHiddenLabel == false && Component.IsContainer == false)
+    {
+        <div class="designengine-componentitem-title">@Component.Label：</div>
+    }
 
-@if (Component.IsContainerComponent)
-{
-    <div class="designengine-componentitem-div-container">@_renderFragment</div>
-}
-else
-{
-    <div class="designengine-componentitem-div-component">@_renderFragment</div>
+    @if (Component.IsContainer)
+    {
+        <div class="designengine-componentitem-div-container">@_renderFragment</div>
+    }
+    else
+    {
+        <div class="designengine-componentitem-div-component">
+            @_renderFragment
+            @if (!string.IsNullOrEmpty(Component.Description))
+            {
+                <div style="color:#c7c7c7">@Component.Description</div>
+            }
+        </div>
+    }
 }
 
 @code {
     [Parameter]
-    public ComponentSchema Component { get; set; }
+    public ComponentPartsSchema Component { get; set; }
 
     private RenderFragment _renderFragment;
 
@@ -33,54 +42,34 @@ else
         if (Component == null)
             throw new NullReferenceException(nameof(Component));
 
-        if (string.IsNullOrEmpty(Component.ComponentProperty.Name))
-            Component.ComponentProperty.Name = $"{Component.ComponentName}_{Random.Shared.Next(100, 999)}";
+        if (string.IsNullOrEmpty(Component.Name))
+            Component.Name = $"{Component.ComponentName}_{Random.Shared.Next(100, 999)}";
 
         _renderFragment = RenderComponent();
     }
-
+ 
     private RenderFragment RenderComponent() => builder =>
     {
-        foreach (var fragment in Component.ComponentFragments)
+        int index = 0;
+        Type type = Type.GetType(Component.Fragment.FullTypeName);
+        builder.OpenComponent(index++, type);
+        //Parameters
+        foreach (var attr in Component.Fragment.Parameters)
         {
-            if (fragment.FragmentEnum == FragmentEnum.Component)
+            if (attr.ValueType == ComponentValueTypeEnum.Integer)
+                builder.AddComponentParameter(index++, attr.Name, attr.IntValue);
+            else if (attr.ValueType == ComponentValueTypeEnum.String)
             {
-                Type type = Type.GetType(fragment.ComponentFragmentName);
-                builder.OpenComponent(fragment.Index, type);
+                if ("{self}".Equals(attr.StringValue, StringComparison.OrdinalIgnoreCase))
+                    builder.AddAttribute(index++, attr.Name, Component);
+                else
+                    builder.AddComponentParameter(index++, attr.Name, attr.StringValue);
             }
-            else if (fragment.FragmentEnum == FragmentEnum.Attribute)
+            else
             {
-                if (fragment.ValueType == ComponentValueTypeEnum.Integer)
-                {
-                    builder.AddAttribute(fragment.Index, fragment.Name, fragment.IntValue);
-                }
-                else if (fragment.ValueType == ComponentValueTypeEnum.String)
-                {
-                    if ("{self}".Equals(fragment.StringValue, StringComparison.OrdinalIgnoreCase))
-                        builder.AddAttribute(fragment.Index, fragment.Name, Component);
-                    else
-                        builder.AddAttribute(fragment.Index, fragment.Name, fragment.StringValue);
-                }
-                else if (fragment.ValueType == ComponentValueTypeEnum.StringList)
-                {
-                    builder.AddAttribute(fragment.Index, fragment.Name, fragment.StringValues);
-                }
-            }
-            else if (fragment.FragmentEnum == FragmentEnum.Parameter)
-            {
-                if (fragment.ValueType == ComponentValueTypeEnum.Integer)
-                    builder.AddComponentParameter(fragment.Index, fragment.Name, fragment.IntValue);
-                else if (fragment.ValueType == ComponentValueTypeEnum.String)
-                {
-                    if ("{self}".Equals(fragment.StringValue, StringComparison.OrdinalIgnoreCase))
-                        builder.AddAttribute(fragment.Index, fragment.Name, Component);
-                    else
-                        builder.AddComponentParameter(fragment.Index, fragment.Name, fragment.StringValue);
-                }
+                throw new NotSupportedException($"{attr.ValueType}");
             }
         }
-
-        if (Component.ComponentFragments.Count > 0)
-            builder.CloseComponent();
+        builder.CloseComponent();
     };
 }
