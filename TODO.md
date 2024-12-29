@@ -1,13 +1,18 @@
 ### 待办 
 #### 公共 
-* GUID 替换为 6位随机字符串，减少字符长度
-* razor 项目减少第三方包依赖（如 abp）
+* [已解决]GUID 替换为 6位随机字符串，减少字符长度
+* [不处理]razor 项目减少第三方包依赖（如 abp）
 * 自身、第三方 版本更新产生的兼容问题
-* Auto 模式，页面调用2次问题优化
-* 添加 HttpClientInterceptor，实现调用 ApplicationService 时 Server 模式本地请求，WebAssembly 模式 http 请求代理
+* [已解决]Auto 模式，页面调用2次问题优化
+* [已解决]添加 HttpClientInterceptor，实现调用 ApplicationService 时 Server 模式本地请求，WebAssembly 模式 http 请求代理
+
 
 #### DesignEngine
-
+* 设计通用的组件物料结构，并加载到设计器
+** 当前存在问题：
+*** 组件类型为固定值，无法变更
+*** 组件物料支持新设置项后，历史元数据中的属性设置看不到
+* 将组件分为原子组件、物料组件，物料组件使用 json 格式存储，并进行渲染
 
 #### RenderEngine
 
