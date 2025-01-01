@@ -23,7 +23,6 @@ public class ComponentPartsRepository : PartsFileRepositoryBase, IComponentParts
 
     public async Task<List<ComponentPartsListModel>> GetListAsync(string libraryId)
     {
-        await Task.Delay(1);
         List<ComponentPartsListModel> list = [];
 
         var componentPartsFolder = Path.Combine(_metaBaseDir, "componentParts", libraryId);
@@ -33,6 +32,9 @@ public class ComponentPartsRepository : PartsFileRepositoryBase, IComponentParts
         var files = Directory.GetFiles(componentPartsFolder);
         foreach (var fileName in files)
         {
+            if (fileName.EndsWith($"{libraryId}.json"))
+                continue;
+
             var componentPartsSchemaJson = ReadAllText(fileName);
             if (string.IsNullOrWhiteSpace(componentPartsSchemaJson))
                 continue;
@@ -60,12 +62,11 @@ public class ComponentPartsRepository : PartsFileRepositoryBase, IComponentParts
         //排序
         list = list.OrderBy(t => t.Order).ToList();
 
-        return list;
+        return await Task.FromResult(list);
     }
 
     public async Task<List<ComponentPartsSchema>> GetAllComponentsAsync(string libraryId)
     {
-        await Task.Delay(1);
         List<ComponentPartsSchema> list = [];
 
         var componentPartsFolder = Path.Combine(_metaBaseDir, "componentParts", libraryId);
@@ -90,16 +91,16 @@ public class ComponentPartsRepository : PartsFileRepositoryBase, IComponentParts
         //排序
         list = list.OrderBy(t => t.Order).ToList();
 
-        return list;
+        return await Task.FromResult(list);
     }
 
     public async Task<ComponentPartsSchema> GetByIdAsync(string libraryId, string componentId)
     {
-        await Task.Delay(1);
         string fileName = string.Format(componentPartsFileName_Format, _metaBaseDir, libraryId, componentId);
 
         var componentPartsSchemaJson = ReadAllText(fileName);
-        return componentPartsSchemaJson.FromJson<ComponentPartsSchema>();
+        var componentParts = componentPartsSchemaJson.FromJson<ComponentPartsSchema>();
+        return await Task.FromResult(componentParts);
     }
 
     public async Task<bool> SaveAsync(ComponentPartsSchema componentParts)
@@ -109,7 +110,6 @@ public class ComponentPartsRepository : PartsFileRepositoryBase, IComponentParts
 
         componentParts.ModifiedTime = DateTime.UtcNow;
 
-        await Task.Delay(1);
         string fileName = string.Format(componentPartsFileName_Format, _metaBaseDir, componentParts.LibraryId, componentParts.ComponentId);
 
         string fileDirectory = Path.GetDirectoryName(fileName);
@@ -117,18 +117,16 @@ public class ComponentPartsRepository : PartsFileRepositoryBase, IComponentParts
             Directory.CreateDirectory(fileDirectory);
 
         File.WriteAllText(fileName, componentParts.ToJson(), Encoding.UTF8);
-        return true;
+        return await Task.FromResult(true);
     }
 
     public async Task<bool> DeleteAsync(string libraryId, string componentId)
     {
-        await Task.Delay(1);
-
         string fileName = string.Format(componentPartsFileName_Format, _metaBaseDir, libraryId, componentId);
         if (!File.Exists(fileName))
             return false;
 
         File.Delete(fileName);
-        return true;
+        return await Task.FromResult(true);
     }
 }

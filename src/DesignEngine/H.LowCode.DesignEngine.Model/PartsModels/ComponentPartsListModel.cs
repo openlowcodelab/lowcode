@@ -26,6 +26,7 @@ public class ComponentPartsListModel
     /// <summary>
     /// 组件类型：1-原子组件  2-组合组件
     /// </summary>
+    [JsonPropertyName("ct")]
     public int ComponentType { get; set; }
 
     /// <summary>

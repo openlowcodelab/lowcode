@@ -19,7 +19,6 @@ public class PageFileRepository : FileRepositoryBase, IPageRepository
 
     public async Task<List<PageListModel>> GetListAsync(string appId)
     {
-        await Task.Delay(1);
         List<PageListModel> list = [];
 
         var pageFolder = Path.Combine(_metaBaseDir, appId, "page");
@@ -48,16 +47,16 @@ public class PageFileRepository : FileRepositoryBase, IPageRepository
         //排序
         list = list.OrderBy(t => t.Order).ToList();
 
-        return list;
+        return await Task.FromResult(list);
     }
 
     public async Task<PageSchema> GetAsync(string appId, string pageId)
     {
-        await Task.Delay(1);
         string fileName = string.Format(pageFileName_Format, _metaBaseDir, appId, pageId);
 
         var pageSchemaJson = ReadAllText(fileName);
-        return pageSchemaJson.FromJson<PageSchema>();
+        var pageSchema = pageSchemaJson.FromJson<PageSchema>();
+        return await Task.FromResult(pageSchema);
     }
 
     public async Task SaveAsync(PageSchema pageSchema)
@@ -67,7 +66,6 @@ public class PageFileRepository : FileRepositoryBase, IPageRepository
 
         pageSchema.ModifiedTime = DateTime.UtcNow;
 
-        await Task.Delay(1);
         string fileName = string.Format(pageFileName_Format, _metaBaseDir, pageSchema.AppId, pageSchema.Id);
 
         string fileDirectory = Path.GetDirectoryName(fileName);
@@ -75,16 +73,16 @@ public class PageFileRepository : FileRepositoryBase, IPageRepository
             Directory.CreateDirectory(fileDirectory);
 
         File.WriteAllText(fileName, pageSchema.ToJson(), Encoding.UTF8);
+        await Task.CompletedTask;
     }
 
     public async Task DeleteAsync(string appId, string pageId)
     {
-        await Task.Delay(1);
-
         string fileName = string.Format(pageFileName_Format, _metaBaseDir, appId, pageId);
         if (!File.Exists(fileName))
             return;
 
         File.Delete(fileName);
+        await Task.CompletedTask;
     }
 }

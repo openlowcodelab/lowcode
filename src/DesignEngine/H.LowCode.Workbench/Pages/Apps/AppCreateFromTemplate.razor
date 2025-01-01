@@ -1,0 +1,43 @@
+﻿@namespace H.LowCode.Workbench
+@inherits LowCodeComponentBase
+@layout WorkbenchLayout
+
+@inject IAppApplicationService AppApplicationService
+@inject IMessageService _message
+
+<div style="width:100%; height: 500px; margin:auto;">
+    <h3>基础创建</h3>
+    <Card Bordered="true" Style="width:300px; margin:5px;">
+        <a href="javascript:void(0)" onclick="@(()=>{ _visible = true; })">创建空白应用</a>
+    </Card>
+    <br/>
+    <h3>从模板创建</h3>
+    <AppPopularTemplates></AppPopularTemplates>
+</div>
+
+<Modal Title="创建应用" @bind-Visible="@_visible" OnOk="OnConfirm">
+    <AppForm OnSubmit="Submit" @ref="@_appForm"></AppForm>
+</Modal>
+
+@code {
+    [Parameter]
+    public Action OnSubmit { get; set; }
+
+    private bool _visible = false;
+    private AppForm _appForm;
+
+    private async Task OnConfirm(MouseEventArgs e)
+    {
+        _visible = true;
+        await _appForm.SubmitAsync();
+    }
+
+    private void Submit()
+    {
+        _visible = false;
+        StateHasChanged();
+
+        if (OnSubmit != null)
+            OnSubmit();
+    }
+}

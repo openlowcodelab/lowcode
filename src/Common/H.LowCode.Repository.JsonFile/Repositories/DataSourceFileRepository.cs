@@ -40,11 +40,11 @@ public class DataSourceFileRepository : FileRepositoryBase, IDataSourceRepositor
 
     public async Task<DataSourceSchema> GetAsync(string appId, string id)
     {
-        await Task.Delay(1);
         string fileName = string.Format(dataSourceName_Format, _metaBaseDir, appId, id);
 
         var dataSourceSchemaJson = ReadAllText(fileName);
-        return dataSourceSchemaJson.FromJson<DataSourceSchema>();
+        var dataSource = dataSourceSchemaJson.FromJson<DataSourceSchema>();
+        return await Task.FromResult(dataSource);
     }
 
     public async Task SaveAsync(string appId, DataSourceSchema dataSourceSchema)
@@ -54,7 +54,6 @@ public class DataSourceFileRepository : FileRepositoryBase, IDataSourceRepositor
 
         dataSourceSchema.ModifiedTime = DateTime.UtcNow;
 
-        await Task.Delay(1);
         string fileName = string.Format(dataSourceName_Format, _metaBaseDir, appId, dataSourceSchema.Id);
 
         string fileDirectory = Path.GetDirectoryName(fileName);
@@ -62,12 +61,11 @@ public class DataSourceFileRepository : FileRepositoryBase, IDataSourceRepositor
             Directory.CreateDirectory(fileDirectory);
 
         File.WriteAllText(fileName, dataSourceSchema.ToJson(), Encoding.UTF8);
+        await Task.CompletedTask;
     }
 
     public async Task DeleteAsync(string appId, string id)
     {
-        await Task.Delay(1);
-
         string fileName = string.Format(dataSourceName_Format, _metaBaseDir, appId, id);
         if (!File.Exists(fileName))
             return;
@@ -77,5 +75,6 @@ public class DataSourceFileRepository : FileRepositoryBase, IDataSourceRepositor
             return;
 
         File.Delete(fileName);
+        await Task.CompletedTask;
     }
 }

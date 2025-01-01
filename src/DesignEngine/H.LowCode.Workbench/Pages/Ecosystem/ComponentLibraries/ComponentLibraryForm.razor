@@ -1,0 +1,64 @@
+﻿@namespace H.LowCode.Workbench
+@inherits LowCodeComponentBase
+@layout WorkbenchLayout
+
+@inject IComponentLibraryAppService ComponentLibraryAppService
+@inject IMessageService _message
+
+<Form Model="@ComponentLibrary" @ref="@_form"
+ValidateOnChange="true" LabelColSpan="8" WrapperColSpan="16">
+    <FormItem Label="组件库标识" Required>
+        <Input @bind-Value="@context.LibraryId" />
+    </FormItem>
+    <FormItem Label="组件库名称" Required>
+        <Input @bind-Value="@context.LibraryName" />
+    </FormItem>
+    <FormItem Label="组件库描述">
+        <TextArea @bind-Value="@context.Description" />
+    </FormItem>
+    <FormItem Label="支持平台">
+        <EnumCheckboxGroup TEnum="SupportPlatformEnum" @bind-Value="@context.SupportPlatforms"></EnumCheckboxGroup>
+    </FormItem>
+</Form>
+
+@code {
+    [Parameter]
+    public ComponentLibrarySchema ComponentLibrary { get; set; }
+
+    private Form<ComponentLibrarySchema> _form;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        if (ComponentLibrary == null)
+            ComponentLibrary = new();
+    }
+
+    public async Task<bool> SubmitAsync()
+    {
+        var success = await SaveComponentLibrarySchema();
+        return success;
+    }
+
+    private async Task<bool> SaveComponentLibrarySchema()
+    {
+        bool isSuccess = false;
+        var validate = _form.Validate();
+        if (validate)
+        {
+            isSuccess = await ComponentLibraryAppService.SaveAsync(ComponentLibrary);
+            if (isSuccess)
+            {
+                _form.Submit();
+                await _message.Success("新建成功！");
+                _form.Reset();
+            }
+            else
+            {
+                await _message.Error("新建失败");
+            }
+        }
+        return isSuccess;
+    }
+}

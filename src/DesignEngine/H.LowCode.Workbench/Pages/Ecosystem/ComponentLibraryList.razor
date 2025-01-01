@@ -1,0 +1,101 @@
+﻿@namespace H.LowCode.Workbench
+@inherits LowCodeComponentBase
+@layout WorkbenchLayout
+
+@inject IComponentLibraryAppService ComponentLibraryAppService
+@inject ComponentState<ComponentLibraryList, IList<ComponentLibrarySchema>> ComponentLibrariesState
+
+<div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
+    <div style="width:250px;">
+        <Search Placeholder="组件库名称" OnSearch="()=>{}" />
+    </div>
+    <div style="width:80px; line-height:32px; margin: 0 8px 0 0;">
+        <Button Type="@ButtonType.Primary" OnClick="@(()=> CreateComponentLibrary())">创建组件库</Button>
+    </div>
+</div>
+
+<div style="margin:10px 5px;">
+    <Segmented Size="SegmentedSize.Large" Labels=@(new[]{"全部", "我的"}) />
+</div>
+
+@if (_componentLibraryList != null)
+{
+    @foreach (var componentLibrary in _componentLibraryList)
+    {
+        <Card Class="myapps" Style="float:left; width:300px; margin:5px;" Bordered>
+            <ChildContent>
+                <CardMeta AvatarTemplate="@avatarTemplate" Title="@componentLibrary.LibraryName" Description="@componentLibrary.Description" Style="height: 60px;" />
+            </ChildContent>
+            <ActionTemplate>
+                <CardAction>
+                    <a href="@($"/workbench/ecosystem/componentlibraries?libId={componentLibrary.LibraryId}")" title="组件列表"><Icon Type="unordered-list" /></a>
+                </CardAction>
+                <CardAction>
+                    <a onclick="@(() =>EditComponentLibrary(componentLibrary.LibraryId))" title="编辑"><Icon Type="edit" /></a>
+                </CardAction>
+                <CardAction>
+                    <a href="javascript:void(0);"><Icon Type="question-circle" /></a>
+                </CardAction>
+                <CardAction>
+                    <a href="javascript:void(0);" title="设置"><Icon Type="setting" /></a>
+                </CardAction>
+            </ActionTemplate>
+        </Card>
+    }
+}
+
+<Modal Title="创建组件库" @bind-Visible="@_visible" OnOk="OnConfirm">
+    <ComponentLibraryForm ComponentLibrary="_currentComponentLibrary" @ref="@_componentLibraryForm"></ComponentLibraryForm>
+</Modal>
+
+@code {
+    private IList<ComponentLibrarySchema> _componentLibraryList;
+    private ComponentLibrarySchema _currentComponentLibrary;
+
+    private bool _visible = false;
+    private ComponentLibraryForm _componentLibraryForm;
+
+    RenderFragment avatarTemplate = @<Avatar Icon="appstore"></Avatar>;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        _componentLibraryList = await ComponentLibrariesState.GetOrAddAsync(this, async () =>
+        {
+            return await LoadComponentLibrariesAsync();
+        });
+    }
+
+    private async Task<IList<ComponentLibrarySchema>> LoadComponentLibrariesAsync()
+    {
+        return await ComponentLibraryAppService.GetListAsync();
+    }
+
+    private async Task OnConfirm(MouseEventArgs e)
+    {
+        _visible = true;
+        var success = await _componentLibraryForm.SubmitAsync();
+        if (success)
+        {
+            _visible = false;
+            await LoadComponentLibrariesAsync();
+
+            StateHasChanged();
+        }
+    }
+
+    private void CreateComponentLibrary()
+    {
+        _currentComponentLibrary = new();
+        _visible = true;
+        StateHasChanged();
+    }
+
+    private void EditComponentLibrary(string libraryId)
+    {
+        _currentComponentLibrary = _componentLibraryList.FirstOrDefault(x => x.LibraryId == libraryId);
+        _visible = true;
+        StateHasChanged();
+    }
+}

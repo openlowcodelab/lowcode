@@ -18,8 +18,6 @@ public class MenuFileRepository : FileRepositoryBase, IMenuRepository
 
     public async Task<MenuSchema> GetAsync(string appId, string menuId)
     {
-        await Task.Delay(1);
-
         var fileName = string.Format(menuFileName_Format, _metaBaseDir, appId, menuId);
         if (!File.Exists(fileName))
             return null;
@@ -27,12 +25,11 @@ public class MenuFileRepository : FileRepositoryBase, IMenuRepository
         var menuSchemaJson = ReadAllText(fileName);
         var menuSchema = menuSchemaJson.FromJson<MenuSchema>();
 
-        return menuSchema;
+        return await Task.FromResult(menuSchema);
     }
 
     public async Task<IList<MenuSchema>> GetListAsync(string appId)
     {
-        await Task.Delay(1);
         IList<MenuSchema> list = [];
 
         var menuFolder = Path.Combine(_metaBaseDir, appId, "menu");
@@ -50,7 +47,7 @@ public class MenuFileRepository : FileRepositoryBase, IMenuRepository
 
         list = BuildTreeMenus(list);
 
-        return list;
+        return await Task.FromResult(list);
     }
 
     public async Task SaveAsync(MenuSchema menuSchema)
@@ -60,7 +57,6 @@ public class MenuFileRepository : FileRepositoryBase, IMenuRepository
 
         menuSchema.ModifiedTime = DateTime.UtcNow;
 
-        await Task.Delay(1);
         string fileName = string.Format(menuFileName_Format, _metaBaseDir, menuSchema.AppId, menuSchema.Id);
 
         string fileDirectory = Path.GetDirectoryName(fileName);
@@ -68,12 +64,11 @@ public class MenuFileRepository : FileRepositoryBase, IMenuRepository
             Directory.CreateDirectory(fileDirectory);
 
         File.WriteAllText(fileName, menuSchema.ToJson(), Encoding.UTF8);
+        await Task.CompletedTask;
     }
 
     public async Task DeleteAsync(string appId, string menuId)
     {
-        await Task.Delay(1);
-
         var fileName = string.Format(menuFileName_Format, _metaBaseDir, appId, menuId);
         if (!File.Exists(fileName))
             return;
@@ -97,6 +92,7 @@ public class MenuFileRepository : FileRepositoryBase, IMenuRepository
             throw new InvalidOperationException("存在子节点, 不允许删除!");
 
         File.Delete(fileName);
+        await Task.CompletedTask;
     }
 
     private static IList<MenuSchema> BuildTreeMenus(IList<MenuSchema> menus)

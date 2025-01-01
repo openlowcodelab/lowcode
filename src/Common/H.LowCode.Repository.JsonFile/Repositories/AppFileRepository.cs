@@ -18,7 +18,6 @@ public class AppFileRepository : FileRepositoryBase, IAppRepository
 
     public async Task<IList<AppSchema>> GetListAsync()
     {
-        await Task.Delay(1);
         List<AppSchema> appSchemas = [];
 
         if (Directory.Exists(_metaBaseDir) == false)
@@ -38,7 +37,7 @@ public class AppFileRepository : FileRepositoryBase, IAppRepository
             appSchemas.Add(appSchema);
         }
 
-        return appSchemas;
+        return await Task.FromResult(appSchemas);
     }
 
     public async Task SaveAsync(AppSchema appSchema)
@@ -48,24 +47,22 @@ public class AppFileRepository : FileRepositoryBase, IAppRepository
 
         appSchema.ModifiedTime = DateTime.UtcNow;
 
-        await Task.Delay(1);
         string fileName = string.Format(appFileName_Format, _metaBaseDir, appSchema.Id, appSchema.Id);
 
         string fileDirectory = Path.GetDirectoryName(fileName);
-        if (Directory.Exists(fileDirectory))
-            throw new InvalidOperationException("应用已存在！");
-        else
+        if (!Directory.Exists(fileDirectory))
             Directory.CreateDirectory(fileDirectory);
 
         File.WriteAllText(fileName, appSchema.ToJson(), Encoding.UTF8);
+        await Task.CompletedTask;
     }
 
     public async Task<AppSchema> GetAsync(string appId)
     {
-        await Task.Delay(1);
         string fileName = string.Format(appFileName_Format, _metaBaseDir, appId, appId);
 
         var appSchemaJson = ReadAllText(fileName);
-        return appSchemaJson.FromJson<AppSchema>();
+        var appSchema = appSchemaJson.FromJson<AppSchema>();
+        return await Task.FromResult(appSchema);
     }
 }

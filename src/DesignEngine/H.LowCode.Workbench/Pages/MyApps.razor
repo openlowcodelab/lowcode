@@ -17,7 +17,7 @@
                 <span style="color:#c0baba;">你可以从这里开始创建应用～</span>
             </div>
             <div style="width:80px; margin-right:10px;">
-                <Button Type="@ButtonType.Primary" OnClick="@(()=>{ _visible = true; })">创建应用</Button>
+                <Button Type="@ButtonType.Primary" OnClick="CreateApp">创建应用</Button>
             </div>
         </div>
     </div>
@@ -56,7 +56,7 @@
                         <a href="@($"{app.SiteUrl}/{app.Id}/index")" title="访问应用" target="_blank"><Icon Type="global" /></a>
                     </CardAction>
                     <CardAction>
-                        <a href="javascript:void(0);"><Icon Type="question-circle" /></a>
+                        <a onclick="@(() =>EditApp(app.Id))" title="编辑"><Icon Type="edit" /></a>
                     </CardAction>
                     <CardAction>
                         <a href="@($"/myapp/{app.Id}/appsettings")" title="应用设置" target="_blank"><Icon Type="setting" /></a>
@@ -67,14 +67,21 @@
     }
 </div>
 
-<Modal Title="创建应用" @bind-Visible="@_visible" Width="1100" Footer="null">
-    <AppCreate CreateAppAction="ReloadApps"></AppCreate>
+<Modal Title="创建应用" @bind-Visible="@_createVisible" Width="1100" Footer="null">
+    <AppCreateFromTemplate OnSubmit="ReloadApps"></AppCreateFromTemplate>
+</Modal>
+
+<Modal Title="编辑应用" @bind-Visible="@_editVisible" OnOk="OnConfirm">
+    <AppForm AppSchema="_currentApp" OnSubmit="ReloadApps" @ref="@_appForm"></AppForm>
 </Modal>
 
 @code {
     private IList<AppListModel> _appList;
+    private AppSchema _currentApp;
 
-    private bool _visible = false;
+    private bool _createVisible = false;
+    private bool _editVisible = false;
+    private AppForm _appForm;
 
     RenderFragment avatarTemplate = @<Avatar Icon="appstore"></Avatar>;
 
@@ -93,10 +100,31 @@
         return await AppApplicationService.GetAppsAsync();
     }
 
+    private async Task OnConfirm(MouseEventArgs e)
+    {
+        await _appForm.SubmitAsync();
+    }
+
     private async void ReloadApps()
     {
-        _visible = false;
+        _createVisible = false;
+        _editVisible = false;
         await LoadAppsAsync();
+
+        StateHasChanged();
+    }
+
+    private void CreateApp()
+    {
+        _currentApp = new();
+        _createVisible = true;
+        StateHasChanged();
+    }
+
+    private async Task EditApp(string id)
+    {
+        _currentApp = await AppApplicationService.GetByIdAsync(id);
+        _editVisible = true;
         StateHasChanged();
     }
 }
