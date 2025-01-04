@@ -6,34 +6,15 @@ namespace H.LowCode.MetaSchema;
 public class ComponentFragmentSchema
 {
     /// <summary>
-    /// 默认组件类型完整限定名，如 AntDesign.Input`1[System.String], AntDesign
-    /// </summary>
-    [JsonPropertyName("dtn")]
-    public string DefaultFullTypeName { get; set; }
-
-    private string _fullTypeName;
-    /// <summary>
     /// 组件类型完整限定名
     /// </summary>
-    [JsonPropertyName("tn")]
-    public string FullTypeName
-    {
-        get
-        {
-            if (string.IsNullOrEmpty(_fullTypeName))
-                return DefaultFullTypeName;
-            return _fullTypeName;
-        }
-        set
-        {
-            _fullTypeName = value;
-        }
-    }
+    [JsonPropertyName("t")]
+    public virtual string FullTypeName { get; set; }
 
-    [JsonPropertyName("tm")]
-    public string TModel { get; set; }
+    [JsonPropertyName("valt")]
+    public string ValueType { get; set; }
 
-    [JsonPropertyName("tops")]
+    [JsonPropertyName("ts")]
     public IDictionary<string, string> FullTypeOptions { get; set; }
 
     [JsonPropertyName("params")]
@@ -45,7 +26,10 @@ public class ComponentFragmentSchema
 
     public object GetDefaultValue()
     {
-        Type type = Type.GetType(TModel);
+        if (string.IsNullOrEmpty(ValueType))
+            return null;
+
+        Type type = Type.GetType(ValueType);
         // 值类型
         if (type.IsValueType && Nullable.GetUnderlyingType(type) == null)
         {

@@ -54,7 +54,7 @@ public class DataSourceSchema : MetaSchemaBase
     /// 选项数据源
     /// </summary>
     [JsonPropertyName("ops")]
-    public IDictionary<string, string> Options { get; set; }
+    public OptionSchema[] Options { get; set; }
 
     /// <summary>
     /// 

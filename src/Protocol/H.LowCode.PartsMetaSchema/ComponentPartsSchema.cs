@@ -20,6 +20,12 @@ public class ComponentPartsSchema : ComponentSchema
     public int ComponentType { get; set; }
 
     /// <summary>
+    /// 组件渲染 Fragment
+    /// </summary>
+    [JsonPropertyName("frag")]
+    public new ComponentPartsFragmentSchema Fragment { get; set; }
+
+    /// <summary>
     /// Property 分组
     /// </summary>
     [JsonPropertyName("pgroups")]

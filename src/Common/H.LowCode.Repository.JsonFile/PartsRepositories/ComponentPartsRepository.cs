@@ -76,6 +76,9 @@ public class ComponentPartsRepository : PartsFileRepositoryBase, IComponentParts
         var files = Directory.GetFiles(componentPartsFolder);
         foreach (var fileName in files)
         {
+            if (fileName.EndsWith($"{libraryId}.json"))
+                continue;
+
             var componentPartsSchemaJson = ReadAllText(fileName);
             if (string.IsNullOrWhiteSpace(componentPartsSchemaJson))
                 continue;
@@ -109,6 +112,11 @@ public class ComponentPartsRepository : PartsFileRepositoryBase, IComponentParts
         ArgumentException.ThrowIfNullOrEmpty(componentParts.Id);
 
         componentParts.ModifiedTime = DateTime.UtcNow;
+
+        // 组件定义中使用 DefaultFullTypeName 即可，无需保存 FullTypeName
+        // 组件保存 json 文件时，强制设置 FullTypeName 为 null
+        if(componentParts.Fragment != null)
+            componentParts.Fragment.FullTypeName = null;
 
         string fileName = string.Format(componentPartsFileName_Format, _metaBaseDir, componentParts.LibraryId, componentParts.ComponentId);
 

@@ -28,7 +28,7 @@
             </ChildContent>
             <ActionTemplate>
                 <CardAction>
-                    <a href="@($"/workbench/ecosystem/componentlibraries?libId={componentLibrary.LibraryId}")" title="组件列表"><Icon Type="unordered-list" /></a>
+                    <a onclick="@(() => GoToComponentPartsList(componentLibrary.LibraryId))" title="组件列表"><Icon Type="unordered-list" /></a>
                 </CardAction>
                 <CardAction>
                     <a onclick="@(() =>EditComponentLibrary(componentLibrary.LibraryId))" title="编辑"><Icon Type="edit" /></a>
@@ -49,6 +49,9 @@
 </Modal>
 
 @code {
+    [Parameter]
+    public Action Refresh { get; set; }
+
     private IList<ComponentLibrarySchema> _componentLibraryList;
     private ComponentLibrarySchema _currentComponentLibrary;
 
@@ -79,7 +82,7 @@
         if (success)
         {
             _visible = false;
-            await LoadComponentLibrariesAsync();
+            _componentLibraryList = await LoadComponentLibrariesAsync();
 
             StateHasChanged();
         }
@@ -97,5 +100,15 @@
         _currentComponentLibrary = _componentLibraryList.FirstOrDefault(x => x.LibraryId == libraryId);
         _visible = true;
         StateHasChanged();
+    }
+
+    private void GoToComponentPartsList(string libraryId)
+    {
+        NavigateTo($"/workbench/ecosystem/componentlibraries?libId={libraryId}");
+
+        if (Refresh != null)
+        {
+            Refresh();
+        }
     }
 }

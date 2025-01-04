@@ -15,11 +15,11 @@
     <TabPane Tab="组件库" Key="componentlibraries">
         @if (string.IsNullOrEmpty(LibraryId))
         {
-            <ComponentLibraryList></ComponentLibraryList>
+            <ComponentLibraryList Refresh="Refresh"></ComponentLibraryList>
         }
         else
         {
-            <ComponentPartsList LibraryId="@LibraryId"></ComponentPartsList>
+            <ComponentPartsList LibraryId="@LibraryId" Refresh="Refresh"></ComponentPartsList>
         }
     </TabPane>
     <TabPane Tab="页面库" Key="pages">
@@ -78,4 +78,9 @@
     private string LibraryId => GetQueryValue("libId");
 
     private string _tabKey => Tab ?? "apps";
+
+    private void Refresh()
+    {
+        StateHasChanged();
+    }
 }

@@ -56,7 +56,7 @@ public class ComponentSchema
     /// 组件渲染 Fragment
     /// </summary>
     [JsonPropertyName("frag")]
-    public ComponentFragmentSchema Fragment { get; set; }
+    public virtual ComponentFragmentSchema Fragment { get; set; }
 
     /// <summary>
     /// Property 分组

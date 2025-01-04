@@ -39,7 +39,7 @@ public abstract class LowCodeComponentBase : AbpComponentBase
 
     protected void NavigateTo([StringSyntax("Uri")] string uri, bool forceLoad = false)
     {
-        NavigationManager.NavigateTo(uri);
+        NavigationManager.NavigateTo(uri, forceLoad);
     }
 
     protected string GetQueryValue(string key)

@@ -8,7 +8,7 @@
 
 <div style="margin: 0 0 8px 0;">
     <div style="width:60px; float: left;">
-        <a href="@("/workbench/ecosystem/componentlibraries")"><Icon Type="rollback" />返回</a>
+        <a onclick ="@(() => GoToComponentLibraryList())"><Icon Type="rollback" />返回</a>
     </div>
     <div style="width:250px; float: left;">
         <Search Placeholder="组件名称" OnSearch="()=>{}" />
@@ -20,7 +20,7 @@
 </div>
 
 <Table TItem="ComponentPartsListModel" DataSource="@_componentPartsList" PageSize="15" PageIndex="1" Total="_total"
-       @bind-SelectedRows="selectedRows" Style="height:100%;" RowKey="c=>c.ComponentId">
+@bind-SelectedRows="selectedRows" Style="height:100%;" RowKey="c=>c.ComponentId">
     @* <PropertyColumn Title="ComponentId" Property="c=>c.ComponentId" Width="300" /> *@
     <PropertyColumn Title="Name" Property="c=>c.ComponentName" Sortable />
     <PropertyColumn Title="组件名称" Property="c=>c.Label" />
@@ -64,7 +64,7 @@
 
 <Modal Title="新建组件" @bind-Visible="@_formVisible" OnOk="OnConfirmAsync">
     <Form Model="@_componentPartsSchema" OnFinish="OnFinishAsync" @ref="@_form"
-          ValidateOnChange="true" LabelColSpan="8" WrapperColSpan="16">
+    ValidateOnChange="true" LabelColSpan="8" WrapperColSpan="16">
         <FormItem Label="Library" Required>
             <Input @bind-Value="@context.LibraryId" />
         </FormItem>
@@ -158,6 +158,9 @@
     [Parameter]
     public string LibraryId { get; set; }
 
+    [Parameter]
+    public Action Refresh { get; set; }
+
     IEnumerable<ComponentPartsListModel> selectedRows;
     int _total = 0;
 
@@ -192,6 +195,7 @@
     private void CreateAsync()
     {
         _componentPartsSchema = new ComponentPartsSchema();
+        _componentPartsSchema.LibraryId = LibraryId;
         _formVisible = true;
 
         StateHasChanged();
@@ -253,6 +257,16 @@
     private async Task<bool> SaveComponentPartsSchemaAsync()
     {
         return await ComponentPartsAppService.SaveAsync(_componentPartsSchema);
+    }
+
+    private void GoToComponentLibraryList()
+    {
+        NavigateTo("/workbench/ecosystem/componentlibraries");
+
+        if (Refresh != null)
+        {
+            Refresh();
+        }
     }
 
     #region Parameter

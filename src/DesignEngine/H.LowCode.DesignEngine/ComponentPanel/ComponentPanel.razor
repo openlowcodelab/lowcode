@@ -1,7 +1,9 @@
 ﻿@namespace H.LowCode.DesignEngine
 @inherits LowCodeComponentBase
 
+@inject IComponentLibraryAppService ComponentLibraryAppService
 @inject IComponentPartsAppService ComponentPartsAppService
+@* @inject ComponentState<ComponentPanel, IList<ComponentLibrarySchema>> ComponentLibrariesState *@
 @inject ComponentState<ComponentPanel, IList<ComponentPartsSchema>> ComponentPartsListState
 
 <Tabs TabPosition="@TabPosition.Left" DefaultActiveKey="1" Class="componentpanel" Size="@TabSize.Small" Style="padding-left:8px;">
@@ -11,17 +13,25 @@
             <Tabs DefaultActiveKey="11" Class="componentpanel" Style="width:270px; padding:0px 4px;">
                 <TabPane Key="11" Tab="组件库">
                     <div style="height:100%; overflow-y: auto;">
+                        @* @if (_componentLibraries != null)
+                        {
+                            @foreach (var componentLibrary in _componentLibraries)
+                            {
+                                <div style="display: inline-block; padding-bottom: 20px;">
+                                    <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:5px 0;">@componentLibrary.LibraryName</div>
+
+                                    @foreach (var component in LoadComponentParts(componentLibrary.LibraryId))
+                                    {
+                                        <DragItem Component="component"></DragItem>
+                                    }
+                                </div>
+                            }
+                        } *@
                         @if (_componentPartsList != null)
                         {
                             @foreach (var component in _componentPartsList)
                             {
-                                @* <div style="display: inline-block; padding-bottom: 20px;"> *@
-                                @* <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:5px 0;">@componentProvider.Label</div> *@
-                                @* @foreach (var component in componentProvider.LoadComponents()) *@
-                                @* { *@
                                 <DragItem Component="component"></DragItem>
-                                @* } *@
-                                @* </div> *@
                             }
                         }
                     </div>
@@ -58,19 +68,29 @@
 </Tabs>
 
 @code {
+    private IList<ComponentLibrarySchema> _componentLibraries;
     private IList<ComponentPartsSchema> _componentPartsList;
-    
+
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
 
+        // _componentLibraries = await ComponentLibrariesState.GetOrAddAsync(this, async () =>
+        // {
+        //     return await LoadComponentLibraries();
+        // });
         _componentPartsList = await ComponentPartsListState.GetOrAddAsync(this, async () =>
         {
-            return await LoadComponentPartsAsync(1, 1000);
+            return await LoadComponentPartsAsync();
         });
     }
 
-    private async Task<IList<ComponentPartsSchema>> LoadComponentPartsAsync(int pageIndex, int pageSize)
+    private async Task<IList<ComponentLibrarySchema>> LoadComponentLibraries()
+    {
+        return await ComponentLibraryAppService.GetListAsync();
+    }
+
+    private async Task<IList<ComponentPartsSchema>> LoadComponentPartsAsync()
     {
         return await ComponentPartsAppService.GetAllComponentsAsync("antdesign");
     }

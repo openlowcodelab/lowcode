@@ -44,15 +44,18 @@
 
         if (string.IsNullOrEmpty(Component.Name))
             Component.Name = $"{Component.ComponentName}_{Random.Shared.Next(100, 999)}";
+        if (string.IsNullOrEmpty(Component.Fragment.FullTypeName))
+            Component.Fragment.FullTypeName = Component.Fragment.DefaultFullTypeName;
 
         _renderFragment = RenderComponent();
     }
- 
+
     private RenderFragment RenderComponent() => builder =>
     {
         int index = 0;
         Type type = Type.GetType(Component.Fragment.FullTypeName);
         builder.OpenComponent(index++, type);
+
         //Parameters
         foreach (var attr in Component.Fragment.Parameters)
         {
