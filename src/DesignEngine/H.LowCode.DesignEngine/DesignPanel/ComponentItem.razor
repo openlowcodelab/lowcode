@@ -1,5 +1,5 @@
 ﻿@namespace H.LowCode.DesignEngine
-@inherits LowCodeComponentBase
+@inherits LowCodeDynamicComponentBase
 
 @if (Component != null && _renderFragment != null)
 {
@@ -47,19 +47,33 @@
         if (string.IsNullOrEmpty(Component.Fragment.FullTypeName))
             Component.Fragment.FullTypeName = Component.Fragment.DefaultFullTypeName;
 
-        _renderFragment = RenderComponent();
+        _renderFragment = CreateComponent();
     }
 
-    private RenderFragment RenderComponent() => builder =>
+    protected RenderFragment CreateComponent() => builder =>
     {
+        //GetRenderTreeBuilder(Component, builder);
+
+        Type componentType = Type.GetType(Component.Fragment.FullTypeName);
+        if (componentType == null)
+            throw new NotSupportedException($"{Component.Fragment.FullTypeName}");
+
         int index = 0;
-        Type type = Type.GetType(Component.Fragment.FullTypeName);
-        builder.OpenComponent(index++, type);
+        builder.OpenComponent(index++, componentType);
 
         //Parameters
         foreach (var attr in Component.Fragment.Parameters)
         {
-            if (attr.ValueType == ComponentValueTypeEnum.Integer)
+            if (attr.Name == "Value" && SupportsValueBinding(componentType))
+            {
+                builder.AddAttribute(1, "Value", attr.Value);
+                builder.AddAttribute(2, "ValueChanged", EventCallback.Factory.Create(this, (object newValue) =>
+                {
+                    attr.Value = newValue;
+                    ValueChanged.InvokeAsync(newValue);
+                }));
+            }
+            else if (attr.ValueType == ComponentValueTypeEnum.Integer)
                 builder.AddComponentParameter(index++, attr.Name, attr.IntValue);
             else if (attr.ValueType == ComponentValueTypeEnum.String)
             {
@@ -75,4 +89,13 @@
         }
         builder.CloseComponent();
     };
+
+    private bool SupportsValueBinding(Type componentType)
+    {
+        // Check if the component has a "Value" parameter and a "ValueChanged" parameter
+        var valueProperty = componentType.GetProperty("Value");
+        var valueChangedProperty = componentType.GetProperty("ValueChanged");
+
+        return valueProperty != null && valueChangedProperty != null;
+    }
 }

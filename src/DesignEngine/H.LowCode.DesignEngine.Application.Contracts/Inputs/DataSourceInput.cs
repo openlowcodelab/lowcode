@@ -11,5 +11,5 @@ namespace H.LowCode.DesignEngine.Application.Contracts;
 public class DataSourceInput //: PagedResultRequestDto
 {
     [JsonRequired]
-    public DataSourceTypeEnum DataSourceType { get; set; }
+    public ComponentDataSourceTypeEnum DataSourceType { get; set; }
 }

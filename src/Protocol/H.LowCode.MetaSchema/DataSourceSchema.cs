@@ -23,7 +23,7 @@ public class DataSourceSchema : MetaSchemaBase
     public int Order { get; set; }
 
     [JsonPropertyName("type")]
-    public DataSourceTypeEnum DataSourceType { get; set; }
+    public ComponentDataSourceTypeEnum DataSourceType { get; set; }
 
     [JsonPropertyName("pub")]
     public bool PublishStatus { get; set; }
