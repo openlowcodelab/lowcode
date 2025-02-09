@@ -1,8 +1,6 @@
 ﻿@namespace H.LowCode.DesignEngine
 @inherits LowCodeComponentBase
 
-@inject DragDropStateService DragDropStateService
-
 <Tabs DefaultActiveKey="tab_page" ActiveKey="@_activeTabKey" Class="settingpanel" Style="width:250px; padding:0px 8px;">
     @if (_showPropertyPanel)
     {
@@ -23,13 +21,13 @@
         }
     }
     <TabPane Key="tab_page" Tab="页面">
-        <PageSetting Page="@DragDropStateService.GetPage(PageCascading.AppId, PageCascading.PageId)"></PageSetting>
+        <PageSetting Page="@Page"></PageSetting>
     </TabPane>
 </Tabs>
 
 @code {
-    [CascadingParameter(Name = "pageCascading")]
-    public PageCascadingModel PageCascading { get; set; }
+    [Parameter]
+    public PageSchema Page { get; set; }
 
     private ComponentPartsSchema _component { get; set; }
 
@@ -51,9 +49,8 @@
         {
             _component = (ComponentPartsSchema)value;
             _showPropertyPanel = true;
-            //_activeTabKey = "tab_property";
-            StateHasChanged();
             _activeTabKey = "tab_property";
+            StateHasChanged();
         });
 
         //订阅设计面板取消选中事件

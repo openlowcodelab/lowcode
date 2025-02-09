@@ -27,7 +27,7 @@ public class DataSourceAppService : ApplicationService, IDataSourceAppService
                 Id = dataSourceSchema.Id,
                 Name = dataSourceSchema.Name,
                 DisplayName = dataSourceSchema.DisplayName,
-                Extra = dataSourceSchema.DataSourceType == DataSourceTypeEnum.API ?
+                Extra = dataSourceSchema.DataSourceType == ComponentDataSourceTypeEnum.API ?
                         $"{dataSourceSchema.API.Method} {dataSourceSchema.API.Path}" : string.Empty,
                 Order = dataSourceSchema.Order,
                 DataSourceType = dataSourceSchema.DataSourceType,

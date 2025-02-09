@@ -125,7 +125,7 @@
 
     private async Task<IList<DataSourceListModel>> LoadDataSourcesAsync(int pageIndex, int pageSize)
     {
-        return await DataSourceAppService.GetListAsync(AppId, new() { DataSourceType = DataSourceTypeEnum.API });
+        return await DataSourceAppService.GetListAsync(AppId, new() { DataSourceType = ComponentDataSourceTypeEnum.API });
     }
 
     private async Task<DataSourceSchema> GetDataSourceAsync(string dataSourceId)
@@ -186,7 +186,7 @@
     private async Task CreateAsync()
     {
         await Task.Delay(1);
-        _dataSource = new() { AppId = AppId, DataSourceType = DataSourceTypeEnum.API };
+        _dataSource = new() { AppId = AppId, DataSourceType = ComponentDataSourceTypeEnum.API };
         _dataSource.API = new();
 
         _visible = true;

@@ -25,7 +25,7 @@
             </div>*@
             <div style="float:right;">
                 <Button>预览</Button>
-                <Button Type="primary" OnClick="() => SavePageSchemaAsync()">保存</Button>
+                <Button Type="ButtonType.Primary" OnClick="() => SavePageSchemaAsync()">保存</Button>
             </div>
         </Header>
         <AntDesign.Layout>
@@ -38,7 +38,7 @@
                 </Content>
             </Layout>
             <Sider Class="designpage" Style="flex: auto; max-width: max-content; min-width: 250px;" Theme="SiderTheme.Light">
-                <SettingPanel></SettingPanel>
+                <SettingPanel Page="_pageSchema"></SettingPanel>
             </Sider>
         </AntDesign.Layout>
     </AntDesign.Layout>
@@ -131,7 +131,6 @@
             components.Add(component);
         }
         _pageSchema.Components = components;
-        _pageSchema.PageProperty = DragDropStateService.GetGlobalPageProperty(AppId, PageId);
         return _pageSchema;
     }
 

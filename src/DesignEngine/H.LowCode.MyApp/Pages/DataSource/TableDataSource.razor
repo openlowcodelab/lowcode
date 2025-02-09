@@ -188,7 +188,7 @@
 
     private async Task<IList<DataSourceListModel>> LoadDataSourcesAsync(int pageIndex, int pageSize)
     {
-        return await DataSourceAppService.GetListAsync(AppId, new() { DataSourceType = DataSourceTypeEnum.Table });
+        return await DataSourceAppService.GetListAsync(AppId, new() { DataSourceType = ComponentDataSourceTypeEnum.Table });
     }
 
     private async Task<DataSourceSchema> GetDataSourceAsync(string dataSourceId)
@@ -249,7 +249,7 @@
     private async Task CreateAsync()
     {
         await Task.Delay(1);
-        _dataSource = new() { AppId = AppId, DataSourceType = DataSourceTypeEnum.Table };
+        _dataSource = new() { AppId = AppId, DataSourceType = ComponentDataSourceTypeEnum.Table };
         _visible = true;
         _modalTitle = "新建数据表";
 

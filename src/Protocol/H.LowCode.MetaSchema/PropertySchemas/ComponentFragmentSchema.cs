@@ -46,6 +46,9 @@ public record ComponentParameterFragmentSchema
     [JsonPropertyName("n")]
     public string Name { get; set; }
 
+    [JsonPropertyName("val")]
+    public object Value { get; set; }
+
     [JsonPropertyName("valt")]
     public ComponentValueTypeEnum ValueType { get; set; }
 

@@ -39,8 +39,8 @@
 
     private IEnumerable<DataSourceSchema> _dataSource =
     [
-        new (){ Name = "option1", DisplayName="Option1", DataSourceType = DataSourceTypeEnum.Option },
-        new (){ Name = "option2", DisplayName="Option2", DataSourceType = DataSourceTypeEnum.Option }
+        new (){ Name = "option1", DisplayName="Option1", DataSourceType = ComponentDataSourceTypeEnum.Option },
+        new (){ Name = "option2", DisplayName="Option2", DataSourceType = ComponentDataSourceTypeEnum.Option }
     ];
 
     private DataSourceSchema _currentDataSource;
@@ -55,7 +55,7 @@
     private async Task CreateAsync()
     {
         await Task.Delay(1);
-        _currentDataSource = new() { DataSourceType = DataSourceTypeEnum.Table };
+        _currentDataSource = new() { DataSourceType = ComponentDataSourceTypeEnum.Table };
         _visible = true;
         _modalTitle = "新建数据表";
         StateHasChanged();

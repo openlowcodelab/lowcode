@@ -1,5 +1,5 @@
 ﻿@namespace H.LowCode.Themes.AntBlazor
-@inherits LowCodeComponentBase
+@inherits LowCodeDynamicComponentBase
 
 @if (Component.IsContainer)
 {
@@ -31,7 +31,7 @@ else
 
 @code {
     [Parameter]
-    public ComponentSchema Component { get; set; }
+    public virtual ComponentSchema Component { get; set; }
 
     [CascadingParameter(Name = "pageCascading")]
     public PageCascadingModel PageCascading{ get; set; }
@@ -56,31 +56,11 @@ else
         if (Component == null)
             throw new NullReferenceException(nameof(Component));
 
-        _renderFragment = RenderComponent();
+        _renderFragment = CreateComponent();
     }
 
-    private RenderFragment RenderComponent() => builder =>
+    protected RenderFragment CreateComponent() => builder =>
     {
-        int index = 0;
-        Type type = Type.GetType(Component.Fragment.FullTypeName);
-        builder.OpenComponent(index++, type);
-        //Parameters
-        foreach (var attr in Component.Fragment.Parameters)
-        {
-            if (attr.ValueType == ComponentValueTypeEnum.Integer)
-                builder.AddComponentParameter(index++, attr.Name, attr.IntValue);
-            else if (attr.ValueType == ComponentValueTypeEnum.String)
-            {
-                if ("{self}".Equals(attr.StringValue, StringComparison.OrdinalIgnoreCase))
-                    builder.AddAttribute(index++, attr.Name, Component);
-                else
-                    builder.AddComponentParameter(index++, attr.Name, attr.StringValue);
-            }
-            else
-            {
-                throw new NotSupportedException($"{attr.ValueType}");
-            }
-        }
-        builder.CloseComponent();
+        GetRenderTreeBuilder(Component, builder);
     };
 }

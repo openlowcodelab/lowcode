@@ -38,19 +38,6 @@ internal class DragDropStateService
         });
     }
 
-    public PagePropertySchema GetGlobalPageProperty(string appId, string pageId)
-    {
-        var stateSchema = GetStateSchema(appId, pageId);
-        return stateSchema?.GlobalPageProperty;
-    }
-
-    public void SetGlobalPageProperty(string appId, string pageId, PagePropertySchema globalPageProperty)
-    {
-        SetStateSchema(appId, pageId, (stateSchema) => {
-            stateSchema.GlobalPageProperty = globalPageProperty;
-        });
-    }
-
     public ComponentPartsSchema GetLastSelectedComponent(string appId, string pageId)
     {
         var stateSchema = GetStateSchema(appId, pageId);
@@ -209,8 +196,6 @@ public class DragDropStateSchema
     public ComponentPartsSchema RootComponent { get; set; }
 
     public PageSchema Page { get; set; }
-
-    public PagePropertySchema GlobalPageProperty { get; set; } = new PagePropertySchema();
 
     /// <summary>
     /// 最后选中对象

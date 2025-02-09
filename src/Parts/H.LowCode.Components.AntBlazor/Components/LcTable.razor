@@ -6,15 +6,15 @@
 <Table @ref="table" TItem="Dictionary<string, object>" DataSource="@_data" Total="_total" @bind-PageIndex="_pageIndex" @bind-PageSize="_pageSize"
 @bind-SelectedRows="_selectedRows" OnChange="OnChange" Size="TableSize.Small">
     <TitleTemplate>
-        <Flex Justify="end" Gap="10">
+        <Flex Justify="FlexJustify.End" Gap="FlexGap.Middle">
             @if(_tableSchema.Buttons.Count == 0)
             {
-                <Button Type="primary" @onclick="CreateAsync">新增</Button>
+                <Button Type="ButtonType.Primary" @onclick="CreateAsync">新增</Button>
                 <Button Disabled="!_selectedRows.Any()" Danger @onclick="DeleteSelectedAsync">删除选中</Button>
             }
             @foreach (var btn in _tableSchema.Buttons)
             {
-                <Button Type="@btn.ButtonType" Disabled="@btn.Disabled" @onclick="@(() => ButtonActionAsync(btn.Id))">@btn.Title</Button>
+                <Button Type="@(btn.ButtonType.GetEnum<ButtonType>())" Disabled="@btn.Disabled" @onclick="@(() => ButtonActionAsync(btn.Id))">@btn.Title</Button>
             }
         </Flex>
     </TitleTemplate>

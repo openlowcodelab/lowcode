@@ -21,13 +21,13 @@ public class DataSourceDomainService : DomainService, IDataSourceDomainService
     public async Task<IList<DataSourceSchema>> GetAllApisAsync(string appId)
     {
         var list = await GetListAsync(appId);
-        return list.Where(t => t.DataSourceType == DataSourceTypeEnum.API).ToList();
+        return list.Where(t => t.DataSourceType == ComponentDataSourceTypeEnum.API).ToList();
     }
 
     public IEnumerable<DataSourceSchema> GetAllEntities(string appId)
     {
         var list = GetListAsync(appId).Result;
-        return list.Where(t => t.DataSourceType == DataSourceTypeEnum.Table).ToList();
+        return list.Where(t => t.DataSourceType == ComponentDataSourceTypeEnum.Table).ToList();
     }
 
     public async Task<DataSourceSchema> GetAsync(string appId, string id)

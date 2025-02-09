@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 namespace H.LowCode.MetaSchema;
 
 /// <summary>
-/// 数据源类型
+/// 组件数据源类型
 /// </summary>
-public enum DataSourceTypeEnum
+public enum ComponentDataSourceTypeEnum
 {
     None = 0,
     Table = 1,

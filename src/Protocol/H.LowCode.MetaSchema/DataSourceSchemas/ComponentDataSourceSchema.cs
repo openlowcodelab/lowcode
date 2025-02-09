@@ -10,7 +10,7 @@ namespace H.LowCode.MetaSchema;
 public class ComponentDataSourceSchema
 {
     [JsonPropertyName("dst")]
-    public DataSourceTypeEnum DataSourceType { get; set; }
+    public ComponentDataSourceTypeEnum DataSourceType { get; set; }
 
     [JsonPropertyName("dsid")]
     public string DataSourceId { get; set; }
