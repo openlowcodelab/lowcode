@@ -28,7 +28,7 @@ namespace H.LowCode.DbMigrator.Migrations
                     f_field10 = table.Column<DateTime>(type: "datetime2", nullable: true),
                     f_field11 = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
                     f_field12 = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    Id = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    f_field13 = table.Column<DateTime>(type: "datetime2", nullable: true),
                     CreatedTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     CreatedUser = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ModifiedTime = table.Column<DateTime>(type: "datetime2", nullable: false),
