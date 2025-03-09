@@ -20,8 +20,8 @@ public class LowCodeDbMigratorModule : AbpModule
 
         context.Services.AddTransient<IDbSchemaMigrator, EntityFrameworkCoreDbSchemaMigrator>();
 
-        //使用 DbMigratorDbContext 而不是 LowCodeDbContext 的原因为需要指定迁移程序集，但又不想在 LowCodeDbContext 中指定迁移程序集。
-        context.Services.AddDbContext<DbMigratorDbContext>(options =>
+        //使用 MigratorDbContext 而不是 LowCodeDbContext 的原因为需要指定迁移程序集，但又不想在 LowCodeDbContext 中指定迁移程序集。
+        context.Services.AddDbContext<MigratorDbContext>(options =>
         {
             var connectionString = context.Services.GetConfiguration().GetConnectionString("Default");
             string migrationAssembly = typeof(LowCodeEntityFrameworkCoreModule).Namespace;

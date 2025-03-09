@@ -13,21 +13,23 @@ using H.LowCode.Repository.JsonFile;
 namespace H.LowCode.DbMigrator;
 
 /// <summary>
-/// 用于在命令行工具中生成迁移脚本: dotnet ef migrations add Initial --context DbMigratorDbContext
+/// 通过 dotnet ef 命令生成迁移脚本时, dotnet ef tools 会读取 IDesignTimeDbContextFactory<TContext> 实现类注册 DbContext
+/// 命令: dotnet ef migrations add <MigrationName> --context MigratorDbContext  (注意: 需要指定 --context 为 MigratorDbContext)
 /// </summary>
-public class MigratorDbContextFactory : IDesignTimeDbContextFactory<DbMigratorDbContext>
+public class MigratorDbContextFactory : IDesignTimeDbContextFactory<MigratorDbContext>
 {
-    public DbMigratorDbContext CreateDbContext(string[] args)
+    public MigratorDbContext CreateDbContext(string[] args)
     {
         var configurationBuilder = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json", optional: false);
         var configuration = configurationBuilder.Build();
 
+        //此处使用的是 LowCodeDbContext, 默认生成的迁移文件会在 LowCodeDbContext 所在的程序集(H.LowCode.EntityFrameworkCore)中
+        //需通过 MigrationsAssembly 指定迁移文件生成到 "H.LowCode.DbMigrator" 程序集中
         string migrationAssembly = typeof(Program).Namespace;
         var builder = new DbContextOptionsBuilder<LowCodeDbContext>()
-            .UseSqlServer(configuration.GetConnectionString("Default"),
-            b => b.MigrationsAssembly(migrationAssembly));
+            .UseSqlServer(configuration.GetConnectionString("Default"), b => b.MigrationsAssembly(migrationAssembly));
 
         var services = new ServiceCollection();
         services.AddApplication<LowCodeDbMigratorModule>();
@@ -35,6 +37,6 @@ public class MigratorDbContextFactory : IDesignTimeDbContextFactory<DbMigratorDb
         var serviceProvider = services.BuildServiceProvider();
         EntityTypeManager entityTypeManager = serviceProvider.GetService<EntityTypeManager>();
 
-        return new DbMigratorDbContext(builder.Options, entityTypeManager);
+        return new MigratorDbContext(builder.Options, entityTypeManager);
     }
 }
