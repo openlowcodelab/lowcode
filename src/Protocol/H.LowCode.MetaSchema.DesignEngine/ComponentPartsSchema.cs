@@ -3,7 +3,7 @@ using H.Util.Ids;
 using System.ComponentModel;
 using System.Text.Json.Serialization;
 
-namespace H.LowCode.PartsMetaSchema;
+namespace H.LowCode.MetaSchema.DesignEngine;
 
 public class ComponentPartsSchema : ComponentSchema
 {

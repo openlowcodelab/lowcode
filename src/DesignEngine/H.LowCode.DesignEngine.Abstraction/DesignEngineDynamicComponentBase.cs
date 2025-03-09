@@ -6,7 +6,7 @@ using System.Text;
 using H.LowCode.MetaSchema;
 using System.Reflection;
 using H.LowCode.ComponentBase;
-using H.LowCode.PartsMetaSchema;
+using H.LowCode.MetaSchema.DesignEngine;
 
 namespace H.LowCode.DesignEngine.Abstraction;
 

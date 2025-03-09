@@ -2,7 +2,7 @@
 using H.LowCode.DesignEngine.Model;
 using H.LowCode.Domain.Repositories;
 using H.LowCode.MetaSchema;
-using H.LowCode.PartsMetaSchema;
+using H.LowCode.MetaSchema.DesignEngine;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;

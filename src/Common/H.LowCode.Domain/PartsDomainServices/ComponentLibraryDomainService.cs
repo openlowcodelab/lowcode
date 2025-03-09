@@ -1,6 +1,6 @@
 ﻿using H.LowCode.DesignEngine.Model;
 using H.LowCode.Domain.Repositories;
-using H.LowCode.PartsMetaSchema;
+using H.LowCode.MetaSchema.DesignEngine;
 using System;
 using System.Collections.Generic;
 using System.Linq;

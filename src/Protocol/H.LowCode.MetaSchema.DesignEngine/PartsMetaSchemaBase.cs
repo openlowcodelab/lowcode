@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace H.LowCode.PartsMetaSchema;
+namespace H.LowCode.MetaSchema.DesignEngine;
 
 public abstract class PartsMetaSchemaBase
 {
