@@ -1,0 +1,39 @@
+﻿@page "/workbench/myparts/{Tab?}"
+@namespace H.LowCode.Workbench
+@inherits LowCodePageComponentBase
+@layout WorkbenchLayout
+
+<PageTitle>我的物料 - H.LowCode</PageTitle>
+
+<Tabs DefaultActiveKey="apps" ActiveKey="@_tabKey" Centered Animated Style="width: 80%; margin: auto;">
+    <TabPane Tab="应用模板" Key="apps">
+        <AppPartsList></AppPartsList>
+    </TabPane>
+    <TabPane Tab="组件库" Key="componentlibraries">
+        @if (string.IsNullOrEmpty(LibraryId))
+        {
+            <ComponentLibraryList Refresh="Refresh"></ComponentLibraryList>
+        }
+        else
+        {
+            <ComponentPartsList LibraryId="@LibraryId" Refresh="Refresh"></ComponentPartsList>
+        }
+    </TabPane>
+    <TabPane Tab="页面库" Key="pages">
+        <PageLibraryList></PageLibraryList>
+    </TabPane>
+</Tabs>
+
+@code {
+    [Parameter]
+    public string Tab { get; set; }
+
+    private string LibraryId => GetQueryValue("libId");
+
+    private string _tabKey => Tab ?? "apps";
+
+    private void Refresh()
+    {
+        StateHasChanged();
+    }
+}
