@@ -1,7 +1,7 @@
 ﻿using H.LowCode.MetaSchema;
 using System.Text.Json.Serialization;
 
-namespace H.LowCode.PartsMetaSchema;
+namespace H.LowCode.MetaSchema.DesignEngine;
 
 public class PagePartsSchema : PageSchema
 {

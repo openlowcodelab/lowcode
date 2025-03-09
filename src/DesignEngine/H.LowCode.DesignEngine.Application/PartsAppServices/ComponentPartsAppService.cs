@@ -1,7 +1,7 @@
 ﻿using H.LowCode.DesignEngine.Application.Contracts;
 using H.LowCode.DesignEngine.Model;
 using H.LowCode.Domain;
-using H.LowCode.PartsMetaSchema;
+using H.LowCode.MetaSchema.DesignEngine;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;

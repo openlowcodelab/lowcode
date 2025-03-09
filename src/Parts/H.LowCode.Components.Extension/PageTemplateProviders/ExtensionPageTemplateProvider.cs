@@ -1,7 +1,7 @@
 ﻿//using H.LowCode.DesignEngine.Abstraction;
 //using H.LowCode.MetaSchema;
 //using H.LowCode.Components.AntBlazor;
-//using H.LowCode.PartsMetaSchema;
+//using H.LowCode.MetaSchema.DesignEngine;
 
 //namespace H.LowCode.Components.Extension;
 

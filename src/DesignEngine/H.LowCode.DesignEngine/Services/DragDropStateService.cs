@@ -1,5 +1,5 @@
 ﻿using H.LowCode.MetaSchema;
-using H.LowCode.PartsMetaSchema;
+using H.LowCode.MetaSchema.DesignEngine;
 
 namespace H.LowCode.DesignEngine;
 

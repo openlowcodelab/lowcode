@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace H.LowCode.PartsMetaSchema;
+namespace H.LowCode.MetaSchema.DesignEngine;
 
 public class ComponentPartsEventSchema
 {
