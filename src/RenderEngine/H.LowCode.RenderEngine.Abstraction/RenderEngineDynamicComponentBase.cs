@@ -5,10 +5,11 @@ using System.Linq;
 using System.Text;
 using H.LowCode.MetaSchema;
 using System.Reflection;
+using H.LowCode.ComponentBase;
 
-namespace H.LowCode.ComponentBase;
+namespace H.LowCode.RenderEngine.Abstraction;
 
-public abstract class LowCodeDynamicComponentBase : LowCodeComponentBase
+public abstract class RenderEngineDynamicComponentBase : LowCodeComponentBase
 {
     protected virtual RenderFragment RenderComponent(ComponentFragmentSchema componentFragment)
     {

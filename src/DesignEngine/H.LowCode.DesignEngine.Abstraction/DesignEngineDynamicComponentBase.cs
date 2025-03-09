@@ -8,9 +8,9 @@ using System.Reflection;
 using H.LowCode.ComponentBase;
 using H.LowCode.PartsMetaSchema;
 
-namespace H.LowCode.DesignEngine;
+namespace H.LowCode.DesignEngine.Abstraction;
 
-public abstract class LowCodePartsDynamicComponentBase : LowCodeComponentBase
+public abstract class DesignEngineDynamicComponentBase : LowCodeComponentBase
 {
     protected virtual RenderFragment RenderComponent(ComponentPartsFragmentSchema componentFragment)
     {

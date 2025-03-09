@@ -1,0 +1,25 @@
+﻿@namespace H.LowCode.Workbench
+@inherits LowCodeComponentBase
+@layout WorkbenchLayout
+
+<div style="display: flex; justify-content: space-between; margin: 0 0 8px 5px;">
+    <div style="width:250px;">
+        <Search Placeholder="api 名称" OnSearch="()=>{}" />
+    </div>
+</div>
+
+<Card Title="钉钉 API" Style="float:left; width:300px; margin:5px;">
+    <Extra>
+        <a href="#">查看</a>
+    </Extra>
+    <Body>
+        <p>Card content</p>
+    </Body>
+</Card>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+}

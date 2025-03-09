@@ -5,17 +5,13 @@
 @inject IComponentLibraryAppService ComponentLibraryAppService
 @inject ComponentState<ComponentLibraryList, IList<ComponentLibrarySchema>> ComponentLibrariesState
 
-<div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
+<div style="display: flex; justify-content: space-between; margin: 0 0 8px 5px;">
     <div style="width:250px;">
         <Search Placeholder="组件库名称" OnSearch="()=>{}" />
     </div>
     <div style="width:80px; line-height:32px; margin: 0 8px 0 0;">
         <Button Type="@ButtonType.Primary" OnClick="@(()=> CreateComponentLibrary())">创建组件库</Button>
     </div>
-</div>
-
-<div style="margin:10px 5px;">
-    <Segmented Size="SegmentedSize.Large" Labels=@(new[]{"全部", "我的"}) />
 </div>
 
 @if (_componentLibraryList != null)
@@ -104,7 +100,7 @@
 
     private void GoToComponentPartsList(string libraryId)
     {
-        NavigateTo($"/workbench/ecosystem/componentlibraries?libId={libraryId}");
+        NavigateTo($"/workbench/myparts/componentlibraries?libId={libraryId}");
 
         if (Refresh != null)
         {
