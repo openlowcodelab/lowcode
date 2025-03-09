@@ -14,3 +14,11 @@
 ### 版本规则
 * 正式版本: 遵循语义化版本 2.0 规范 (v0.0.1)
 * 非正式版本: v0.0.1-preview.1
+
+### 开发
+#### 生成迁移
+在 H.LowCode.DbMigrator 项目中执行以下命令，添加迁移文件：
+dotnet ef migrations add <MigrationName>
+
+#### 应用迁移
+运行 H.LowCode.DbMigrator

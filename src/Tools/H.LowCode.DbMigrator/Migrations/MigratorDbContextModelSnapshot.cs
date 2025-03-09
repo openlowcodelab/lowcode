@@ -4,23 +4,20 @@ using H.LowCode.DbMigrator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
 namespace H.LowCode.DbMigrator.Migrations
 {
-    [DbContext(typeof(DbMigratorDbContext))]
-    [Migration("20241130053405_Initial")]
-    partial class Initial
+    [DbContext(typeof(MigratorDbContext))]
+    partial class MigratorDbContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.0")
+                .HasAnnotation("ProductVersion", "9.0.1")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -36,9 +33,6 @@ namespace H.LowCode.DbMigrator.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("CreatedUser")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Id")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("ModifiedTime")
@@ -64,6 +58,9 @@ namespace H.LowCode.DbMigrator.Migrations
                         .HasMaxLength(50)
                         .IsUnicode(true)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime?>("f_field13")
+                        .HasColumnType("datetime2");
 
                     b.Property<int>("f_field2")
                         .HasMaxLength(10)
