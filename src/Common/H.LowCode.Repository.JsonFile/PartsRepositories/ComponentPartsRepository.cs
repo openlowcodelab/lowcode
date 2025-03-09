@@ -113,10 +113,10 @@ public class ComponentPartsRepository : PartsFileRepositoryBase, IComponentParts
 
         componentParts.ModifiedTime = DateTime.UtcNow;
 
-        // 组件定义中使用 DefaultFullTypeName 即可，无需保存 FullTypeName
-        // 组件保存 json 文件时，强制设置 FullTypeName 为 null
+        // 组件定义中使用 DefaultTypeName 即可，无需保存 TypeName
+        // 组件保存 json 文件时，强制设置 TypeName 为 null
         if(componentParts.Fragment != null)
-            componentParts.Fragment.FullTypeName = null;
+            componentParts.Fragment.TypeName = null;
 
         string fileName = string.Format(componentPartsFileName_Format, _metaBaseDir, componentParts.LibraryId, componentParts.ComponentId);
 

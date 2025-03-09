@@ -2,13 +2,17 @@
 @inherits LowCodeComponentBase
 
 <div class="renderengine-componentcontainer" style="@ContainerComponent.Style.DefaultStyle">
-    @foreach (var comp in ContainerComponent.Childrens)
+    @if (ContainerComponent.Childrens != null)
     {
-        <div style="min-height: @(comp.Style.ItemHeight)px;
+        foreach (var comp in ContainerComponent.Childrens)
+        {
+            <div style="min-height: @(comp.Style.ItemHeight)px;
                 width: @((comp.Style.ItemWidth ?? 24)  /24 * 100)%;
                 @comp.Style.DefaultStyle @comp.Style.CustomStyle">
-            <ComponentRender Component="@comp"></ComponentRender>
-        </div>
+                <ComponentRender Component="@comp"></ComponentRender>
+            </div>
+        }
+
     }
 </div>
 

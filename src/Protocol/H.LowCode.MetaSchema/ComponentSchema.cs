@@ -82,7 +82,7 @@ public class ComponentSchema
     /// </summary>
     [JsonPropertyName("childs")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public IList<ComponentSchema> Childrens { get; set; } = [];
+    public ComponentSchema[] Childrens { get; set; }
 
     [JsonPropertyName("ds")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

@@ -5,20 +5,22 @@ using System.Linq;
 using System.Text;
 using H.LowCode.MetaSchema;
 using System.Reflection;
+using H.LowCode.ComponentBase;
+using H.LowCode.PartsMetaSchema;
 
-namespace H.LowCode.ComponentBase;
+namespace H.LowCode.DesignEngine;
 
-public abstract class LowCodeDynamicComponentBase : LowCodeComponentBase
+public abstract class LowCodePartsDynamicComponentBase : LowCodeComponentBase
 {
-    protected virtual RenderFragment RenderComponent(ComponentFragmentSchema componentFragment)
+    protected virtual RenderFragment RenderComponent(ComponentPartsFragmentSchema componentFragment)
     {
         ArgumentNullException.ThrowIfNull(componentFragment);
 
         return builder =>
         {
-            Type componentType = Type.GetType(componentFragment.TypeName, true);
+            Type componentType = Type.GetType(componentFragment.DefaultTypeName, true);
             if (componentType == null)
-                throw new NotSupportedException($"{componentFragment.TypeName}");
+                throw new NotSupportedException($"{componentFragment.DefaultTypeName}");
 
             int index = 0;
             builder.OpenComponent(index++, componentType);

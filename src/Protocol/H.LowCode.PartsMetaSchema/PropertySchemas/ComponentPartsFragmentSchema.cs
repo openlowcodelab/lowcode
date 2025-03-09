@@ -11,19 +11,23 @@ namespace H.LowCode.PartsMetaSchema;
 public class ComponentPartsFragmentSchema : ComponentFragmentSchema
 {
     /// <summary>
-    /// 默认组件类型完整限定名，如 "AntDesign.Input`1[System.String], AntDesign"
+    /// 默认组件类型名，如 "AntDesign.Input`1[System.String], AntDesign"
     /// </summary>
     [JsonPropertyName("dt")]
-    public string DefaultFullTypeName { get; set; }
+    public string DefaultTypeName { get; set; }
 
     /// <summary>
-    /// 组件类型完整限定名
+    /// 组件类型名
     /// </summary>
     /// <remarks>
-    /// 组件定义中使用 DefaultFullTypeName 即可，无需保存 FullTypeName
-    /// 组件保存 json 文件时，强制设置 FullTypeName 为 null
+    /// 组件定义中使用 DefaultTypeName 即可，无需保存 TypeName
+    /// 组件保存 json 文件时，强制设置 TypeName 为 null
     /// </remarks>
     [JsonPropertyName("t")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public override string FullTypeName { get; set; }
+    public override string TypeName { get; set; }
+
+    [JsonPropertyName("childs")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public new ComponentPartsFragmentSchema[] Childrens { get; set; }
 }

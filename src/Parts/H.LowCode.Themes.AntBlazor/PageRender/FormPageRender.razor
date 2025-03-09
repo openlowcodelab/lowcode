@@ -5,7 +5,7 @@
 
 @if (formDTO != null)
 {
-    <Form Model="@formDTO.Fields" @ref="@_form"
+    <Form Model="formDTO.Fields"
     OnFinish="OnFinishAsync" OnFinishFailed="OnFinishFailed"
     LabelColSpan="8" WrapperColSpan="16">
         @foreach (var component in Page.Components)
@@ -13,7 +13,7 @@
             <FormComponentRender Component="@component" IsInRootContainer="true"></FormComponentRender>
         }
 
-        <FormItem WrapperColOffset="8" WrapperColSpan="16" Style="clear:both;">
+        <FormItem WrapperColOffset="8" WrapperColSpan="16" Style="clear:both; padding-top: 15px;">
             <Button Type="@ButtonType.Primary" HtmlType="submit">
                 保存
             </Button>
@@ -28,7 +28,6 @@
     [Parameter]
     public PageSchema Page { get; set; }
 
-    private Form<Dictionary<string, object>> _form;
     private string Id;
     private FormDataDTO formDTO;
 
@@ -38,10 +37,6 @@
         if (string.IsNullOrEmpty(Id))
             Id = "empty";
         formDTO = await FormDataAppService.GetAsync(Page.AppId, Page.Id, Id);
-
-        Console.WriteLine($"==============={RendererInfo.Name}");
-        Console.WriteLine($"==============={Page.Components.ToJson()}");
-        Console.WriteLine($"==============={formDTO.ToJson()}");
     }
 
     private async Task OnFinishAsync()
