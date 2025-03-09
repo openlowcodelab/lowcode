@@ -36,11 +36,6 @@ else
         if (string.IsNullOrEmpty(Component.Name))
             Component.Name = $"{Component.Name}_{Random.Shared.Next(100, 999)}";
 
-        _renderFragment = CreateComponent();
+        _renderFragment = RenderComponent(Component.Fragment);
     }
-
-    protected RenderFragment CreateComponent() => builder =>
-    {
-        GetRenderTreeBuilder(Component, builder);
-    };
 }

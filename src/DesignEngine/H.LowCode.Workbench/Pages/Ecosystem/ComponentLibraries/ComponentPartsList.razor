@@ -1,4 +1,8 @@
-﻿@namespace H.LowCode.Workbench
+﻿@using System.Text.Encodings.Web
+@using System.Text.Unicode
+
+@namespace H.LowCode.Workbench
+
 @inherits LowCodeComponentBase
 @layout WorkbenchLayout
 
@@ -37,28 +41,18 @@
     <PropertyColumn Title="排序" Property="c=>c.Order" />
     <PropertyColumn Title="修改时间" Property="c=>c.ModifiedTime" Format="yyyy-MM-dd HH:mm:ss" />
     <ActionColumn Title="操作" Width="180">
-        <Space Size=@("middle")>
-            <SpaceItem>
-                @if (context.ComponentType == 1)
-                {
-                    <a onclick="@(()=> EditAsync(@context.ComponentId))" style="color: #b7eb8f">设计</a>
-                }
-                else if(context.ComponentType == 2)
-                {
-                    <a href="@($"/designer/componentparts/{context.ComponentId}")" target="_blank" style="padding: 7px;border: solid #b7eb8f 1px;border-radius: 2px;line-height: 11px;height: 26px;display: block;background-color: #f6ffed;color: #389e0d;">设计</a>
-                }
-                else
-                {
-                    throw new NotSupportedException($"不支持的组件类型: {context.ComponentType}");
-                }
-            </SpaceItem>
-            <SpaceItem>
-                <a onclick="@(()=> EditAsync(@context.ComponentId))">编辑</a>
-            </SpaceItem>
-            <SpaceItem>
-                <a onclick="@(()=> DeleteAsync(@context.ComponentId))" style="color:#ff4d4f">删除</a>
-            </SpaceItem>
-        </Space>
+        @if (context.ComponentType == 1)
+        {
+            <a onclick="@(()=> EditAsync(@context.ComponentId))" style="color: #55c201">编辑</a>
+
+            <a onclick="@(()=> TextEditAsync(@context.ComponentId))">Json编辑</a>
+        }
+        else if (context.ComponentType == 2)
+        {
+            <a href="@($"/designer/componentparts/{context.ComponentId}")" target="_blank" style="padding: 7px;border: solid #b7eb8f 1px;border-radius: 2px;line-height: 11px;height: 26px;display: block;background-color: #f6ffed;color: #389e0d;">设计</a>
+        }
+
+        <a onclick="@(()=> DeleteAsync(@context.ComponentId))" style="color:#ff4d4f">删除</a>
     </ActionColumn>
 </Table>
 
@@ -93,65 +87,11 @@
             <InputNumber @bind-Value="@context.Order" Min="0" DefaultValue="0"></InputNumber>
         </FormItem>
     </Form>
+</Modal>
 
-    @* Parameter 列表 *@
-    @* <div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
-        <div style="width:250px;">
-            <Search Placeholder="Name" OnSearch="()=>{}" />
-        </div>
-        <div style="width:80px; line-height:32px; margin: 0 22px 0 0;">
-            <Button Type="@ButtonType.Primary">新增 Parameter</Button>
-        </div>
-    </div>
-    <Table TItem="ComponentParameterFragmentSchema" DataSource="@_componentPartsSchema.Fragment.Parameters">
-        <ChildContent Context="context">
-            <PropertyColumn Title="Name" Property="c => c.Name">
-                @if (!_parameterEditCache[context.Name].edit)
-                {
-                    @context.Name
-                }
-                else
-                {
-                    <Input @bind-Value="_parameterEditCache[context.Name].parameter.Name" />
-                }
-            </PropertyColumn>
-            <PropertyColumn Title="ValueType" Property="c => c.ValueType">
-                @if (!_parameterEditCache[context.Name].edit)
-                {
-                    @context.ValueType
-                }
-                else
-                {
-                    <Input @bind-Value="_parameterEditCache[context.Name].parameter.ValueType" />
-                }
-            </PropertyColumn>
-            <PropertyColumn Title="字符串值" Property="c => c.StringValue">
-                @if (!_parameterEditCache[context.Name].edit)
-                {
-                    @context.StringValue
-                }
-                else
-                {
-                    <Input @bind-Value="_parameterEditCache[context.Name].parameter.StringValue" />
-                }
-            </PropertyColumn>
-            <ActionColumn Title="操作">
-                @if (!_parameterEditCache[@context.Name].edit)
-                {
-                    <a onclick="@(() => ParameterStartEdit(@context.Name))">编辑</a>
-                    <a onclick="@(() => DeleteParameterAsync(@context.Name))" style="color:#ff4d4f">删除</a>
-                }
-                else
-                {
-                    <a onclick="@(() => SaveParameterAsync(context.Name))" class="save">保存</a>
-                    <Popconfirm Title="确定取消吗?" OkText="确定" CancelText="取消"
-                                OnConfirm="() => ParameterCancelEditAsync(context.Name)">
-                        <a>取消</a>
-                    </Popconfirm>
-                }
-            </ActionColumn>
-        </ChildContent>
-    </Table> *@
+<Modal Title="组件Json文本编辑" @bind-Visible="@_textFormVisible" OnOk="OnTextFormConfirmAsync"
+     Width="600" MaxBodyHeight="700">
+    <TextArea @bind-value="@_textFormValue" MinRows="5" Style="width: 100%;"></TextArea>
 </Modal>
 
 @code {
@@ -168,6 +108,9 @@
     private Form<ComponentPartsSchema> _form;
     private IList<ComponentPartsListModel> _componentPartsList;
     private ComponentPartsSchema _componentPartsSchema = new ComponentPartsSchema();
+
+    private bool _textFormVisible = false;
+    private string _textFormValue;
 
     IDictionary<string, (bool edit, ComponentParameterFragmentSchema parameter)> _parameterEditCache = new Dictionary<string, (bool edit, ComponentParameterFragmentSchema parameter)>();
 
@@ -217,11 +160,27 @@
         StateHasChanged();
     }
 
+    private async Task TextEditAsync(string componentId)
+    {
+        _componentPartsSchema = await GetComponentPartsAsync(componentId);
+
+        JsonSerializerOptions jsonSerializerOptions = new JsonSerializerOptions()
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            Encoder = JavaScriptEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.CjkUnifiedIdeographs),
+            WriteIndented = true
+        };
+        _textFormValue = JsonSerializer.Serialize(_componentPartsSchema, jsonSerializerOptions);
+        _textFormVisible = true;
+
+        StateHasChanged();
+    }
+
     private async Task DeleteAsync(string componentPartsId)
     {
-        await ComponentPartsAppService.DeleteAsync(LibraryId, componentPartsId);
+        //await ComponentPartsAppService.DeleteAsync(LibraryId, componentPartsId);
 
-        await Message.Success("删除成功！");
+        await Message.Success("模拟删除成功！");
     }
 
     private async Task OnConfirmAsync(MouseEventArgs e)
@@ -254,6 +213,24 @@
         _componentPartsList = await LoadComponentPartsAsync(1, 50);
     }
 
+    private async Task OnTextFormConfirmAsync(MouseEventArgs e)
+    {
+        _componentPartsSchema = _textFormValue.FromJson<ComponentPartsSchema>();
+        var isSuccess = await SaveComponentPartsSchemaAsync();
+        if (isSuccess)
+        {
+            _textFormVisible = false;
+            _componentPartsList = await LoadComponentPartsAsync(1, 50);
+
+            await Message.Success("保存成功！");
+        }
+        else
+        {
+            _textFormVisible = true;
+            await Message.Error("保存失败");
+        }
+    }
+
     private async Task<bool> SaveComponentPartsSchemaAsync()
     {
         return await ComponentPartsAppService.SaveAsync(_componentPartsSchema);
@@ -280,7 +257,7 @@
         //添加编辑缓存
         _parameterEditCache[newParameter.Name] = (true, newParameter);
 
-        _componentPartsSchema.Fragment.Parameters.Add(newParameter);
+        _componentPartsSchema.Fragment.Attributes.Append(newParameter);
 
         //StateHasChanged();
     }
@@ -288,9 +265,9 @@
     private async Task SaveParameterAsync(string name)
     {
         await Task.Delay(1);
-        var index =  _componentPartsSchema.Fragment.Parameters.FindIndex(item => item.Name == name);
-        _componentPartsSchema.Fragment.Parameters[index] = _parameterEditCache[name].parameter; // apply the copy to data source
-        _parameterEditCache[name] = (false, _componentPartsSchema.Fragment.Parameters[index]); // don't affect rows in editing
+        var index =  _componentPartsSchema.Fragment.Attributes.FindIndex(item => item.Name == name);
+        _componentPartsSchema.Fragment.Attributes[index] = _parameterEditCache[name].parameter; // apply the copy to data source
+        _parameterEditCache[name] = (false, _componentPartsSchema.Fragment.Attributes[index]); // don't affect rows in editing
 
         StateHasChanged();
     }
@@ -313,7 +290,7 @@
     private async Task ParameterCancelEditAsync(string name)
     {
         await Task.Delay(1);
-        var data = _componentPartsSchema.Fragment.Parameters.FirstOrDefault(item => item.Name == name);
+        var data = _componentPartsSchema.Fragment.Attributes.FirstOrDefault(item => item.Name == name);
         _parameterEditCache[name] = (false, data); // recovery
 
         StateHasChanged();

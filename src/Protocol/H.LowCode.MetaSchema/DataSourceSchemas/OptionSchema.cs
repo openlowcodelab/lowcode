@@ -9,8 +9,8 @@ namespace H.LowCode.MetaSchema;
 
 public class OptionSchema
 {
-    [JsonPropertyName("k")]
-    public string Key { get; set; }
+    [JsonPropertyName("l")]
+    public string Label { get; set; }
 
     [JsonPropertyName("v")]
     public string Value { get; set; }

@@ -56,11 +56,6 @@ else
         if (Component == null)
             throw new NullReferenceException(nameof(Component));
 
-        _renderFragment = CreateComponent();
+        _renderFragment = RenderComponent(Component.Fragment);
     }
-
-    protected RenderFragment CreateComponent() => builder =>
-    {
-        GetRenderTreeBuilder(Component, builder);
-    };
 }

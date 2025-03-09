@@ -6,19 +6,20 @@ namespace H.LowCode.MetaSchema;
 public class ComponentFragmentSchema
 {
     /// <summary>
-    /// 组件类型完整限定名
+    /// 组件类型名
     /// </summary>
     [JsonPropertyName("t")]
-    public virtual string FullTypeName { get; set; }
+    public virtual string TypeName { get; set; }
 
     [JsonPropertyName("valt")]
     public string ValueType { get; set; }
 
-    [JsonPropertyName("ts")]
-    public IDictionary<string, string> FullTypeOptions { get; set; }
+    [JsonPropertyName("attrs")]
+    public ComponentParameterFragmentSchema[] Attributes { get; set; } = [];
 
-    [JsonPropertyName("params")]
-    public IList<ComponentParameterFragmentSchema> Parameters { get; set; } = [];
+    [JsonPropertyName("childs")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public virtual ComponentFragmentSchema[] Childrens { get; set; }
 
     [JsonPropertyName("content")]
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
