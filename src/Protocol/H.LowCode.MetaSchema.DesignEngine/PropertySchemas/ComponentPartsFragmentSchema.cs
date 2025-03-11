@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace H.LowCode.MetaSchema.DesignEngine;
 
-public class ComponentPartsFragmentSchema : ComponentFragmentSchema
+public class ComponentPartsFragmentSchema : ComponentFragmentSchemaBase
 {
     /// <summary>
     /// 默认组件类型名，如 "AntDesign.Input`1[System.String], AntDesign"

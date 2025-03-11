@@ -93,9 +93,9 @@
     int _total = 0;
 
     private bool _visible;
-    private Form<PageSchema> _form;
+    private Form<PagePartsSchema> _form;
     private IList<PageListModel> _pageList;
-    private PageSchema _pageSchema = new PageSchema();
+    private PagePartsSchema _pageSchema = new PagePartsSchema();
 
     protected override async Task OnInitializedAsync()
     {
@@ -113,14 +113,14 @@
         return await PageAppService.GetListAsync(AppId);
     }
 
-    private async Task<PageSchema> GetPageAsync(string pageId)
+    private async Task<PagePartsSchema> GetPageAsync(string pageId)
     {
         return await PageAppService.GetByIdAsync(AppId, pageId);
     }
 
     private void CreateAsync(string parentId)
     {
-        _pageSchema = new PageSchema();
+        _pageSchema = new PagePartsSchema();
         _pageSchema.AppId = AppId;
         _visible = true;
 

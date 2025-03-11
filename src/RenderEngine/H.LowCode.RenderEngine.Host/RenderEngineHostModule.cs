@@ -1,9 +1,9 @@
 ﻿using H.LowCode.ComponentBase;
 using H.LowCode.Components.AntBlazor;
 using H.LowCode.Components.Extension;
-using H.LowCode.EntityFrameworkCore;
 using H.LowCode.RenderEngine.Application;
-using H.LowCode.Repository.JsonFile;
+using H.LowCode.RenderEngine.EntityFrameworkCore;
+using H.LowCode.RenderEngine.Repository.JsonFile;
 using H.LowCode.Themes.AntBlazor;
 using H.Util.Blazor;
 using Microsoft.OpenApi.Models;
@@ -22,8 +22,8 @@ namespace H.LowCode.RenderEngine.Host;
     typeof(AbpSwashbuckleModule),
     //=====lowcode-server=====//
     typeof(RenderEngineApplicationModule),
-    typeof(LowCodeEntityFrameworkCoreModule),
-    typeof(MetaJsonFileRepositoryModule),
+    typeof(RenderEngineEntityFrameworkCoreModule),
+    typeof(RenderEngineJsonFileRepositoryModule),
     //=====lowcode-web=====//
     //RenderEngine
     typeof(RenderEngineModule),

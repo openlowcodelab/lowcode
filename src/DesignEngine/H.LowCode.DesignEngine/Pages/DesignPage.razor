@@ -54,7 +54,7 @@
 
     private DesignPanel _designPanel;
 
-    private PageSchema _pageSchema;
+    private PagePartsSchema _pageSchema;
     private PageCascadingModel _pageCascadingModel;
     private bool _isNewPage;
 
@@ -68,12 +68,12 @@
         await base.OnInitializedAsync();
     }
 
-    private async Task<PageSchema> LoadPageSchemaAsync()
+    private async Task<PagePartsSchema> LoadPageSchemaAsync()
     {
         if (string.Equals("_new", PageId))
         {
             _isNewPage = true;
-            var newPage = new PageSchema() { AppId = AppId, Name = "newpage" };
+            var newPage = new PagePartsSchema() { AppId = AppId, Name = "newpage" };
             PageId = newPage.Id;
 
             DragDropStateService.SetPage(AppId, newPage);
@@ -93,7 +93,7 @@
 
     private async Task SavePageSchemaAsync()
     {
-        PageSchema pageSchema = CreatePageSchema();
+        PagePartsSchema pageSchema = CreatePageSchema();
         if (pageSchema.Components.Count == 0)
         {
             await _message.Warning("没有任何组件，禁止保存！");
@@ -117,12 +117,12 @@
         }
     }
 
-    private PageSchema CreatePageSchema()
+    private PagePartsSchema CreatePageSchema()
     {
         if (_pageSchema == null)
             throw new NullReferenceException(nameof(_pageSchema));
 
-        var components = new List<ComponentSchema>();
+        var components = new List<ComponentPartsSchema>();
         var partsComponents = DragDropStateService.GetRootComponent(_pageSchema.AppId, _pageSchema.Id).Childrens;
         foreach (var partsComponent in partsComponents)
         {
@@ -134,7 +134,7 @@
         return _pageSchema;
     }
 
-    private void SetPageCascadingModel(PageSchema pageSchema)
+    private void SetPageCascadingModel(PagePartsSchema pageSchema)
     {
         _pageCascadingModel.PageName = pageSchema.Name;
         _pageCascadingModel.PageLayout = pageSchema.PageProperty.PageLayout;

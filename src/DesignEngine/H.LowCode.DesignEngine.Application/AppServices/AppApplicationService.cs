@@ -1,14 +1,14 @@
 ﻿using H.LowCode.Configuration;
 using H.LowCode.DesignEngine.Application.Contracts;
 using H.LowCode.DesignEngine.Model;
-using H.LowCode.Domain;
-using H.LowCode.MetaSchema;
+using H.LowCode.DesignEngine.Domain;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using System.Collections.Generic;
 using System.Text;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
+using H.LowCode.MetaSchema.DesignEngine;
 
 namespace H.LowCode.DesignEngine.Application;
 
@@ -31,17 +31,17 @@ public class AppApplicationService : ApplicationService, IAppApplicationService
         }).ToList();
     }
 
-    public async Task<IList<AppSchema>> GetListAsync()
+    public async Task<IList<AppPartsSchema>> GetListAsync()
     {
         return await _domainService.GetListAsync();
     }
 
-    public async Task<AppSchema> GetByIdAsync(string appId)
+    public async Task<AppPartsSchema> GetByIdAsync(string appId)
     {
         return await _domainService.GetAsync(appId);
     }
 
-    public async Task<bool> SaveAsync(AppSchema appSchema)
+    public async Task<bool> SaveAsync(AppPartsSchema appSchema)
     {
         ArgumentNullException.ThrowIfNull(appSchema);
         ArgumentException.ThrowIfNullOrEmpty(appSchema.Id);

@@ -1,12 +1,11 @@
 ﻿using H.LowCode.Configuration;
-using H.LowCode.DesignEngine.Application.Contracts;
-using H.LowCode.Domain;
+using H.LowCode.DesignEngine.Domain;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Modularity;
 
 namespace H.LowCode.DesignEngine.Application;
 
-[DependsOn(typeof(LowCodeDomainModule))]
+[DependsOn(typeof(DesignEngineDomainModule))]
 public class DesignEngineApplicationModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)

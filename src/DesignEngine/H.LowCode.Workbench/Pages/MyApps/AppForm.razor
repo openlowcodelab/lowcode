@@ -23,12 +23,12 @@ ValidateOnChange="true">
 
 @code {
     [Parameter]
-    public AppSchema AppSchema { get; set; }
+    public AppPartsSchema AppSchema { get; set; }
 
     [Parameter]
     public Action OnSubmit { get; set; }
 
-    private Form<AppSchema> _form;
+    private Form<AppPartsSchema> _form;
 
     protected override async Task OnInitializedAsync()
     {
