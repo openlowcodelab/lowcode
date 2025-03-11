@@ -6,6 +6,7 @@ using System.Text;
 using H.LowCode.MetaSchema;
 using System.Reflection;
 using H.LowCode.ComponentBase;
+using H.LowCode.MetaSchema.RenderEngine;
 
 namespace H.LowCode.RenderEngine.Abstraction;
 

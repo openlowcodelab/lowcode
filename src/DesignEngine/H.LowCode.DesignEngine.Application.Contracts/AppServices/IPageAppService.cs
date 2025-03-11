@@ -1,5 +1,5 @@
 ﻿using H.LowCode.DesignEngine.Model;
-using H.LowCode.MetaSchema;
+using H.LowCode.MetaSchema.DesignEngine;
 using Volo.Abp.Application.Services;
 
 namespace H.LowCode.DesignEngine.Application.Contracts;
@@ -8,9 +8,9 @@ public interface IPageAppService : IApplicationService
 {
     Task<List<PageListModel>> GetListAsync(string appId);
 
-    Task<PageSchema> GetByIdAsync(string appId, string pageId);
+    Task<PagePartsSchema> GetByIdAsync(string appId, string pageId);
 
-    Task<bool> SaveAsync(PageSchema pageSchema);
+    Task<bool> SaveAsync(PagePartsSchema pageSchema);
 
     Task<bool> DeleteAsync(string appId, string pageId);
 }

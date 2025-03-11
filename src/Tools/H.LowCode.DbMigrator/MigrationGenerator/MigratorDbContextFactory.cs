@@ -6,9 +6,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using H.LowCode.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using H.LowCode.Repository.JsonFile;
+using H.LowCode.DesignEngine.EntityFrameworkCore;
+using H.LowCode.DesignEngine.Repository.JsonFile;
 
 namespace H.LowCode.DbMigrator;
 
@@ -25,15 +25,15 @@ public class MigratorDbContextFactory : IDesignTimeDbContextFactory<MigratorDbCo
             .AddJsonFile("appsettings.json", optional: false);
         var configuration = configurationBuilder.Build();
 
-        //此处使用的是 LowCodeDbContext, 默认生成的迁移文件会在 LowCodeDbContext 所在的程序集(H.LowCode.EntityFrameworkCore)中
+        //此处使用的是 DesignEngineDbContext, 默认生成的迁移文件会在 DesignEngineDbContext 所在的程序集(H.LowCode.EntityFrameworkCore)中
         //需通过 MigrationsAssembly 指定迁移文件生成到 "H.LowCode.DbMigrator" 程序集中
         string migrationAssembly = typeof(Program).Namespace;
-        var builder = new DbContextOptionsBuilder<LowCodeDbContext>()
+        var builder = new DbContextOptionsBuilder<DesignEngineDbContext>()
             .UseSqlServer(configuration.GetConnectionString("Default"), b => b.MigrationsAssembly(migrationAssembly));
 
         var services = new ServiceCollection();
         services.AddApplication<LowCodeDbMigratorModule>();
-        services.AddApplication<MetaJsonFileRepositoryModule>();
+        services.AddApplication<DesignEngineJsonFileRepositoryModule>();
         var serviceProvider = services.BuildServiceProvider();
         EntityTypeManager entityTypeManager = serviceProvider.GetService<EntityTypeManager>();
 

@@ -1,10 +1,8 @@
-﻿using H.Extensions.System;
-using H.LowCode.DesignEngine.Application.Contracts;
+﻿using H.LowCode.DesignEngine.Application.Contracts;
+using H.LowCode.DesignEngine.Domain;
 using H.LowCode.DesignEngine.Model;
-using H.LowCode.Domain;
-using H.LowCode.MetaSchema;
+using H.LowCode.MetaSchema.DesignEngine;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using System.Collections.Generic;
 using System.Text;
 using Volo.Abp;
@@ -22,12 +20,12 @@ public class PageAppService : ApplicationService, IPageAppService
         return await _domainService.GetListAsync(appId);
     }
 
-    public async Task<PageSchema> GetByIdAsync(string appId, string pageId)
+    public async Task<PagePartsSchema> GetByIdAsync(string appId, string pageId)
     {
-        return await _domainService.GetAsync(appId, pageId);
+        return await _domainService.GetByIdAsync(appId, pageId);
     }
 
-    public async Task<bool> SaveAsync(PageSchema pageSchema)
+    public async Task<bool> SaveAsync(PagePartsSchema pageSchema)
     {
         ArgumentNullException.ThrowIfNull(pageSchema);
         ArgumentException.ThrowIfNullOrEmpty(pageSchema.Id);

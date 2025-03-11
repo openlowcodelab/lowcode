@@ -46,7 +46,7 @@
         return rootComponent;
     }
 
-    public async Task ReloadAsync(PageSchema pageSchema)
+    public async Task ReloadAsync(PagePartsSchema pageSchema)
     {
         var rootComponent = DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId);
         if (pageSchema != null && rootComponent != null)

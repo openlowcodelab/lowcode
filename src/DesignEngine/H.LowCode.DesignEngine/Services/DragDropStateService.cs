@@ -25,13 +25,13 @@ internal class DragDropStateService
         });
     }
 
-    public PageSchema GetPage(string appId, string pageId)
+    public PagePartsSchema GetPage(string appId, string pageId)
     {
         var stateSchema = GetStateSchema(appId, pageId);
         return stateSchema?.Page;
     }
 
-    public void SetPage(string appId, PageSchema page)
+    public void SetPage(string appId, PagePartsSchema page)
     {
         SetStateSchema(appId, page.Id, (stateSchema) => {
             stateSchema.Page = page;
@@ -195,7 +195,7 @@ public class DragDropStateSchema
     /// </summary>
     public ComponentPartsSchema RootComponent { get; set; }
 
-    public PageSchema Page { get; set; }
+    public PagePartsSchema Page { get; set; }
 
     /// <summary>
     /// 最后选中对象

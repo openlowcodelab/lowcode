@@ -5,7 +5,7 @@ using System.Text.Json.Serialization;
 
 namespace H.LowCode.MetaSchema.DesignEngine;
 
-public class ComponentPartsSchema : ComponentSchema
+public class ComponentPartsSchema : ComponentSchemaBase
 {
     /// <summary>
     /// 组件 Name
@@ -84,10 +84,10 @@ public class ComponentPartsSchema : ComponentSchema
         return newComponent;
     }
 
-    public ComponentSchema ConvertToComponentSchema()
+    public ComponentPartsSchema ConvertToComponentSchema()
     {
         string json = this.ToJson();
-        return json.FromJson<ComponentSchema>();
+        return json.FromJson<ComponentPartsSchema>();
     }
 
     public void RefreshState()

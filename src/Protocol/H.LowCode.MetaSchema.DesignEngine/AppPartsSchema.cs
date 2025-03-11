@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace H.LowCode.MetaSchema.DesignEngine;
 
-public class AppPartsSchema : AppSchema
+public class AppPartsSchema : AppSchemaBase
 {
     
 }

@@ -3,7 +3,7 @@
 
 @inject IAppApplicationService AppApplicationService
 @inject ComponentState<MyAppLayout, MenuDataItem[]> MenuDataState
-@inject ComponentState<AppSchema> AppState
+@inject ComponentState<AppPartsSchema> AppState
 
 <link href="@Assets["_content/H.LowCode.MyApp/myapp.css"]" rel="stylesheet" />
 
@@ -26,14 +26,14 @@
 
 @code
 {
-    private AppSchema _appSchema;
+    private AppPartsSchema _appSchema;
     private MenuDataItem[] _menuDataItems;
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
 
-        _appSchema = await AppState.GetOrAddAsync(typeof(AppSchema), async () =>
+        _appSchema = await AppState.GetOrAddAsync(typeof(AppPartsSchema), async () =>
         {
             return await GetAppSchemaAsync(AppId);
         });
@@ -44,7 +44,7 @@
         });
     }
 
-    private async Task<AppSchema> GetAppSchemaAsync(string appId)
+    private async Task<AppPartsSchema> GetAppSchemaAsync(string appId)
     {
         return await AppApplicationService.GetByIdAsync(appId);
     }
