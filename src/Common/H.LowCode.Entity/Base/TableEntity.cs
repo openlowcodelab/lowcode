@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace H.LowCode.RenderEngine.Domain;
+namespace H.LowCode.Entity;
 
 internal class TableEntity : EntityBase
 {

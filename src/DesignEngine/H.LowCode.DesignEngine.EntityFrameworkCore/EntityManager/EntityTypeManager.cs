@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.ComponentModel.DataAnnotations;
+using H.LowCode.Entity;
 using H.LowCode.DesignEngine.Domain;
 
 namespace H.LowCode.DesignEngine.EntityFrameworkCore;

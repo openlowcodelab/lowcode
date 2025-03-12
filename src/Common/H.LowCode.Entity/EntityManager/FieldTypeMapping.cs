@@ -5,9 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace H.LowCode.DesignEngine.EntityFrameworkCore;
+namespace H.LowCode.Entity;
 
-internal class FieldTypeMapping
+public class FieldTypeMapping
 {
     public static Type GetFieldType(string fieldType, bool isNullable)
     {

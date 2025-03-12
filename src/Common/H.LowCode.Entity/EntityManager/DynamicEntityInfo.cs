@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace H.LowCode.RenderEngine.EntityFrameworkCore;
+namespace H.LowCode.Entity;
 
 public class DynamicEntityInfo
 {

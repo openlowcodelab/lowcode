@@ -1,5 +1,4 @@
-﻿using JetBrains.Annotations;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
@@ -8,7 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace H.LowCode.RenderEngine.EntityFrameworkCore;
+namespace System.Reflection.Emit;
 
 /// <summary>
 /// Emit扩展
@@ -22,10 +21,8 @@ internal static class EmitExtension
     /// <param name="assemblyName">程序集名称</param>
     /// <param name="options"></param>
     /// <returns>动态程序集</returns>
-    /// <exception cref="ArgumentNullException">assemblyName为空</exception>
-    [NotNull]
-    public static AssemblyBuilder CreateDynamicAssembly([NotNull] string assemblyName,
-        [NotNull] AssemblyCreateOptions options)
+    public static AssemblyBuilder CreateDynamicAssembly(string assemblyName,
+        AssemblyCreateOptions options)
     {
         if (string.IsNullOrEmpty(assemblyName))
             throw new ArgumentNullException(nameof(assemblyName));
@@ -64,10 +61,8 @@ internal static class EmitExtension
     /// <param name="assemblyBuilder">动态程序集</param>
     /// <param name="moduleName">模块名</param>
     /// <returns>动态程序集中的模块</returns>
-    /// <exception cref="ArgumentNullException">assemblyBuilder或moduleName为空</exception>
-    [NotNull]
-    public static ModuleBuilder CreateModule([NotNull] this AssemblyBuilder assemblyBuilder,
-        [NotNull] string moduleName)
+    public static ModuleBuilder CreateModule(this AssemblyBuilder assemblyBuilder,
+        string moduleName)
     {
         if (assemblyBuilder == null)
             throw new ArgumentNullException(nameof(assemblyBuilder));
@@ -89,12 +84,8 @@ internal static class EmitExtension
     /// <param name="baseType"></param>
     /// <param name="interfaceTypes"></param>
     /// <returns></returns>
-    /// <exception cref="ArgumentNullException">moduleBuilder或typeName或baseType为空时</exception>
-    [NotNull]
-    public static TypeBuilder DefineType([NotNull] this ModuleBuilder moduleBuilder,
-        [NotNull] string typeName,
-        [NotNull] Type baseType,
-        [CanBeNull][ItemNotNull] IEnumerable<Type> interfaceTypes = null)
+    public static TypeBuilder DefineType(this ModuleBuilder moduleBuilder,
+        string typeName, Type baseType, IEnumerable<Type> interfaceTypes = null)
     {
         if (moduleBuilder == null)
             throw new ArgumentNullException(nameof(moduleBuilder));
@@ -127,11 +118,9 @@ internal static class EmitExtension
     /// <param name="propertyName"></param>
     /// <param name="propertyType"></param>
     /// <returns></returns>
-    /// <exception cref="ArgumentNullException">typeBuilder或propertyName或propertyType为空</exception>
-    [NotNull]
-    public static PropertyBuilder DefineField([NotNull] this TypeBuilder typeBuilder,
-        [NotNull] string propertyName,
-        [NotNull] Type propertyType)
+    public static PropertyBuilder DefineField(this TypeBuilder typeBuilder,
+        string propertyName,
+        Type propertyType)
     {
         if (typeBuilder == null)
             throw new ArgumentNullException(nameof(typeBuilder));
@@ -218,9 +207,8 @@ internal static class EmitExtension
     /// <param name="typeBuilder">动态类型</param>
     /// <param name="attributeType">Attribute类型</param>
     /// <returns></returns>
-    /// <exception cref="InvalidOperationException">typeBuilder或attributeType为空</exception>
-    public static TypeBuilder AddCustomAttribute([NotNull] this TypeBuilder typeBuilder,
-        [NotNull] Type attributeType)
+    public static TypeBuilder AddCustomAttribute(this TypeBuilder typeBuilder,
+        Type attributeType)
     {
         if (typeBuilder == null)
             throw new ArgumentNullException(nameof(typeBuilder));
@@ -236,9 +224,8 @@ internal static class EmitExtension
     /// <param name="propertyBuilder">动态属性</param>
     /// <param name="attributeType">Attribute类型</param>
     /// <returns></returns>
-    /// <exception cref="InvalidOperationException">propertyBuilder或attributeType为空</exception>
-    public static PropertyBuilder AddCustomAttribute([NotNull] this PropertyBuilder propertyBuilder,
-        [NotNull] Type attributeType)
+    public static PropertyBuilder AddCustomAttribute(this PropertyBuilder propertyBuilder,
+        Type attributeType)
     {
         if (propertyBuilder == null)
             throw new ArgumentNullException(nameof(propertyBuilder));
@@ -254,9 +241,8 @@ internal static class EmitExtension
     /// <param name="fieldBuilder">动态字段</param>
     /// <param name="attributeType">Attribute类型</param>
     /// <returns></returns>
-    /// <exception cref="InvalidOperationException">fieldBuilder或attributeType为空</exception>
-    public static FieldBuilder AddCustomAttribute([NotNull] this FieldBuilder fieldBuilder,
-        [NotNull] Type attributeType)
+    public static FieldBuilder AddCustomAttribute(this FieldBuilder fieldBuilder,
+        Type attributeType)
     {
         if (fieldBuilder == null)
             throw new ArgumentNullException(nameof(fieldBuilder));
@@ -266,7 +252,7 @@ internal static class EmitExtension
         return fieldBuilder;
     }
 
-    private static CustomAttributeBuilder CreateCustomAttribute([NotNull] Type attributeType)
+    private static CustomAttributeBuilder CreateCustomAttribute(Type attributeType)
     {
         if (attributeType == null)
             throw new ArgumentNullException(nameof(attributeType));
@@ -284,8 +270,8 @@ internal static class EmitExtension
     /// <summary>
     /// 获取类型的无参数构造函数委托
     /// </summary>
-    public static ObjectActivatorDelegate GetActivatorProxyFunc([NotNull] this Type type,
-        [CanBeNull] DelegateMethodCreateOptions options = null)
+    public static ObjectActivatorDelegate GetActivatorProxyFunc(this Type type,
+        DelegateMethodCreateOptions options = null)
     {
         if (type == null)
             throw new ArgumentNullException(nameof(type));
