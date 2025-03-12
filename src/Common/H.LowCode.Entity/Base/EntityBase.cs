@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace H.LowCode.DesignEngine.Domain;
+namespace H.LowCode.Entity;
 
 public abstract class EntityBase
 {

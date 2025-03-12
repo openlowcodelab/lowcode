@@ -4,9 +4,8 @@ using System.Reflection.Emit;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
-using H.LowCode.DesignEngine.Domain;
 
-namespace H.LowCode.DesignEngine.EntityFrameworkCore;
+namespace H.LowCode.Entity;
 
 public class EntityFactory
 {

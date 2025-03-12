@@ -1,4 +1,5 @@
 ﻿using H.LowCode.DesignEngine.Domain;
+using H.LowCode.Entity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;

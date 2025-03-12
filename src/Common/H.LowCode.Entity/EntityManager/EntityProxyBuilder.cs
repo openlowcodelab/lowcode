@@ -6,9 +6,8 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
-using H.LowCode.DesignEngine.Domain;
 
-namespace H.LowCode.DesignEngine.EntityFrameworkCore;
+namespace H.LowCode.Entity;
 
 public class EntityProxyBuilder
 {
