@@ -57,10 +57,10 @@
         @if (context.PageType == PageTypeEnum.Form)
         {
             <FormItem Label="数据源类型" Required>
-                <EnumRadioGroup TEnum="PageDataSourceTypeEnum" DefaultValue="PageDataSourceTypeEnum.Table" @bind-Value="@context.DataSource.DataSourceType" Name="radio_datasourcetype"></EnumRadioGroup>
+                <EnumRadioGroup TEnum="PageDataSourceTypeEnum" DefaultValue="PageDataSourceTypeEnum.DB" @bind-Value="@context.DataSource.DataSourceType" Name="radio_datasourcetype"></EnumRadioGroup>
             </FormItem>
 
-            @if (context.DataSource.DataSourceType == PageDataSourceTypeEnum.Table)
+            @if (context.DataSource.DataSourceType == PageDataSourceTypeEnum.DB)
             {
                 <FormItem Label="表" Required>
                     <Input TValue="string" @bind-value="@context.DataSource.DataSourceValue" />

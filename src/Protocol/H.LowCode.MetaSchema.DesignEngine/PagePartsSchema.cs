@@ -6,5 +6,5 @@ namespace H.LowCode.MetaSchema.DesignEngine;
 public class PagePartsSchema : PageSchemaBase
 {
     [JsonPropertyName("comps")]
-    public new IList<ComponentPartsSchema> Components { get; set; } = [];
+    public IList<ComponentPartsSchema> Components { get; set; } = [];
 }

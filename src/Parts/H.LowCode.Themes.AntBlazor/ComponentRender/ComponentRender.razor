@@ -56,6 +56,6 @@ else
         if (Component == null)
             throw new NullReferenceException(nameof(Component));
 
-        _renderFragment = RenderComponent(Component.Fragment);
+        _renderFragment = RenderComponent(Component.IsSupportDataSource, Component.DataSource, Component.Fragment);
     }
 }

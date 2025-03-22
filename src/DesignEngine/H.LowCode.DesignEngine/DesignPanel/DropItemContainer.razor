@@ -106,7 +106,7 @@
 
     private void OnItemCopy(ComponentPartsSchema component)
     {
-        var newComponent = component.CopyNew();
+        var newComponent = component.DeepClone();
         DragItem_Add(ContainerComponent, newComponent, null, false);
         StateHasChanged();
     }

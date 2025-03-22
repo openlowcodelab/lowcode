@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace H.LowCode.MetaSchema;
 
-public enum PropertyItemTypeEnum
+public enum ComponentAttributeItemTypeEnum
 {
     None,
     Text,

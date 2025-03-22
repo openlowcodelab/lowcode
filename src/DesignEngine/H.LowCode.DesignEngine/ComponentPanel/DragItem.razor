@@ -30,7 +30,7 @@
     /// </summary>
     private void AddComponentToDesignPanel(bool isOnClick)
     {
-        ComponentPartsSchema component = Component.CopyNew();
+        ComponentPartsSchema component = Component.DeepClone();
         component.DesignState.IsDroppedFromComponentPanel = true;
         if (isOnClick)
         {

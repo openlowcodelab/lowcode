@@ -3,60 +3,73 @@
 
 @if (Component.IsSupportDataSource){
     <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:30px 0 10px;">数据源</div>
-    <div class="propertysetting-item">
-        <label>类型：</label>
-        <EnumSelect TEnum="@ComponentDataSourceTypeEnum" @bind-Value="@Component.DataSource.DataSourceType">
-        </EnumSelect>
-    </div>
 
-    @if (Component.DataSource.DataSourceType == ComponentDataSourceTypeEnum.Table)
+    if (Component.DataSource.DataSourceGroupType == ComponentDataSourceGroupTypeEnum.General)
     {
         <div class="propertysetting-item">
             <label>字段：</label>
             <div>@Component.Name</div>
         </div>
     }
-    else if (Component.DataSource.DataSourceType == ComponentDataSourceTypeEnum.API)
+    else if (Component.DataSource.DataSourceGroupType == ComponentDataSourceGroupTypeEnum.Option)
     {
-        <div class="propertysetting-item">
-            <label>API：</label>
-            <Input TValue="string" @bind-Value="@Component.DataSource.DataSourceValue" />
-        </div>
+        <Button Type="ButtonType.Default" OnClick="ShowDataSourceOptionModelAsync">
+            配置数据源
+        </Button>
     }
-    else if (Component.DataSource.DataSourceType == ComponentDataSourceTypeEnum.SQL)
-    {
+    else{
         <div class="propertysetting-item">
-            <label>SQL：</label>
-            <TextArea @bind-Value="@Component.DataSource.DataSourceValue" />
-        </div>
-    }
-    else if (Component.DataSource.DataSourceType == ComponentDataSourceTypeEnum.Expression)
-    {
-        <div class="propertysetting-item">
-            <label>表达式：</label>
-            <TextArea @bind-Value="@Component.DataSource.DataSourceValue" />
-        </div>
-    }
-    else if (Component.DataSource.DataSourceType == ComponentDataSourceTypeEnum.Fiexd)
-    {
-        <div class="propertysetting-item">
-            <label>固定值：</label>
-            <TextArea />
+            <label>不支持的数据源类型</label>
         </div>
     }
 }
 
+<Modal Title="配置数据源" @bind-Visible="@_dataSourceOptionVisible"
+    OnOk="OnConfirmAsync" Width="1000">
+    <OptionDataSourceSetting @bind-DataSource="Component.DataSource"></OptionDataSourceSetting>
+</Modal>
+
 @code {
     [Parameter]
     public ComponentPartsSchema Component { get; set; }
+
+    private bool _dataSourceOptionVisible;
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
     }
 
-    private void OnPropertyChange()
+    private void ShowDataSourceOptionModelAsync()
     {
-        Component.RefreshState();
+        _dataSourceOptionVisible = true;
+    }
+
+    private async Task OnConfirmAsync(MouseEventArgs e)
+    {
+        var validate = true;
+        if (validate)
+        {
+            var isSuccess = await SaveComponentDataSourceAsync();
+            if (isSuccess)
+            {
+                _dataSourceOptionVisible = false;
+                await Message.Success("保存成功！");
+            }
+            else
+            {
+                _dataSourceOptionVisible = true;
+                await Message.Error("保存失败");
+            }
+        }
+        else
+        {
+            _dataSourceOptionVisible = true;
+        }
+    }
+
+    private async Task<bool> SaveComponentDataSourceAsync()
+    {
+        return await Task.FromResult(true);
     }
 }

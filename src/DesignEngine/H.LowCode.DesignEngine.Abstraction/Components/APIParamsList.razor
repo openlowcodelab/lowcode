@@ -1,0 +1,118 @@
+﻿@namespace H.LowCode.DesignEngine.Abstraction
+@inherits LowCodeComponentBase
+
+@if (APIParams != null)
+{
+    <div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
+        <div style="width:250px;">
+            <Search OnSearch="()=>{}" />
+        </div>
+        <div style="width:80px; line-height:32px; margin: 0 22px 0 0;">
+            <Button Type="@ButtonType.Primary" OnClick="CreateRowAsync">新增参数</Button>
+        </div>
+    </div>
+
+    <Table TItem="APIParamSchema" DataSource="@APIParams">
+        <ChildContent Context="context">
+            <PropertyColumn Title="参数名" Property="c => c.Name">
+                @if (!_optionEditCache[context.Id].edit)
+                {
+                    @context.Name
+                }
+                else
+                {
+                    <Input @bind-Value="_optionEditCache[context.Id].param.Name" />
+                }
+            </PropertyColumn>
+            <PropertyColumn Title="类型" Property="c => c.Type">
+                @if (!_optionEditCache[context.Id].edit)
+                {
+                    @context.Type
+                }
+                else
+                {
+                    <Input @bind-Value="_optionEditCache[context.Id].param.Type" />
+                }
+            </PropertyColumn>
+            <ActionColumn Title="操作">
+                @if (!_optionEditCache[@context.Id].edit)
+                {
+                    <a onclick="@(() => RowStartEdit(@context.Id))">编辑</a>
+                    <a onclick="@(() => RowDeleteAsync(@context.Id))" style="color:#ff4d4f">删除</a>
+                }
+                else
+                {
+                    <a onclick="@(() => RowSaveAsync(context.Id))" class="save">保存</a>
+                    <Popconfirm Title="确定取消吗?" OkText="确定" CancelText="取消"
+                                OnConfirm="() => RowCancelEditAsync(context.Id)">
+                        <a>取消</a>
+                    </Popconfirm>
+                }
+            </ActionColumn>
+        </ChildContent>
+    </Table>
+}
+
+@code {
+    [Parameter]
+    public IList<APIParamSchema> APIParams { get; set; }
+
+    IDictionary<string, (bool edit, APIParamSchema param)> _optionEditCache = new Dictionary<string, (bool edit, APIParamSchema param)>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (APIParams == null)
+        {
+            APIParams = [];
+        }
+
+        await base.OnInitializedAsync();
+    }
+
+    private async Task CreateRowAsync()
+    {
+        await Task.Delay(1);
+
+        APIParamSchema newParam = new();
+
+        //添加编辑缓存
+        _optionEditCache[newParam.Id] = (true, newParam);
+
+        APIParams.Add(newParam);
+
+        //StateHasChanged();
+    }
+
+    private async Task RowSaveAsync(string id)
+    {
+        await Task.Delay(1);
+        var index = APIParams.FindIndex(item => item.Id == id);
+        APIParams[index] = _optionEditCache[id].param;
+        _optionEditCache[id] = (false, APIParams[index]);
+
+        StateHasChanged();
+    }
+
+    private async Task RowDeleteAsync(string id)
+    {
+        await Task.Delay(1);
+    }
+
+    private async Task RowStartEdit(string id)
+    {
+        await Task.Delay(1);
+        var data = _optionEditCache[id];
+        _optionEditCache[id] = (true, data.param with { });
+
+        StateHasChanged();
+    }
+
+    private async Task RowCancelEditAsync(string id)
+    {
+        await Task.Delay(1);
+        var data = APIParams.FirstOrDefault(item => item.Id == id);
+        _optionEditCache[id] = (false, data);
+
+        StateHasChanged();
+    }
+}

@@ -24,10 +24,8 @@ public class ComponentPartsFragmentSchema : ComponentFragmentSchemaBase
     /// 组件保存 json 文件时，强制设置 TypeName 为 null
     /// </remarks>
     [JsonPropertyName("t")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public override string TypeName { get; set; }
 
     [JsonPropertyName("childs")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public new ComponentPartsFragmentSchema[] Childrens { get; set; }
+    public ComponentPartsFragmentSchema[] Childrens { get; set; }
 }

@@ -122,15 +122,7 @@
         if (_pageSchema == null)
             throw new NullReferenceException(nameof(_pageSchema));
 
-        var components = new List<ComponentPartsSchema>();
-        var partsComponents = DragDropStateService.GetRootComponent(_pageSchema.AppId, _pageSchema.Id).Childrens;
-        foreach (var partsComponent in partsComponents)
-        {
-            var component = partsComponent.ConvertToComponentSchema();
-            
-            components.Add(component);
-        }
-        _pageSchema.Components = components;
+        _pageSchema.Components = DragDropStateService.GetRootComponent(_pageSchema.AppId, _pageSchema.Id).Childrens;
         return _pageSchema;
     }
 

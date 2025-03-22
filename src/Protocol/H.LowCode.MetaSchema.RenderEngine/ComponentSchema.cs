@@ -10,12 +10,14 @@ public class ComponentSchema : ComponentSchemaBase
     /// 组件渲染 Fragment
     /// </summary>
     [JsonPropertyName("frag")]
-    public new ComponentFragmentSchema Fragment { get; set; }
+    public ComponentFragmentSchema Fragment { get; set; }
+
+    [JsonPropertyName("ds")]
+    public ComponentDataSourceSchema DataSource { get; set; } = new();
 
     /// <summary>
     /// 
     /// </summary>
     [JsonPropertyName("childs")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public new ComponentSchema[] Childrens { get; set; }
+    public ComponentSchema[] Childrens { get; set; }
 }

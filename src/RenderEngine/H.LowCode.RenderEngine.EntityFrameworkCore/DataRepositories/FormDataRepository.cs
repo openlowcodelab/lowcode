@@ -31,13 +31,13 @@ public class FormDataRepository : IFormDataRepository
         return await _dbContext.GetAsync(tableName, id);
     }
 
-    public Task<bool> UpdateAsync(FormEntity entity)
+    public async Task<bool> UpdateAsync(FormEntity entity)
     {
-        throw new NotImplementedException();
+        return await _dbContext.UpdateAsync(entity);
     }
 
-    public Task<bool> DeleteAsync(string entityName, string id)
+    public async Task<bool> DeleteAsync(string entityName, string id)
     {
-        throw new NotImplementedException();
+        return await _dbContext.DeleteAsync(entityName, id);
     }
 }

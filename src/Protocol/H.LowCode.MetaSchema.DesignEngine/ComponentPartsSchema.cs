@@ -8,6 +8,19 @@ namespace H.LowCode.MetaSchema.DesignEngine;
 public class ComponentPartsSchema : ComponentSchemaBase
 {
     /// <summary>
+    /// 组件Id
+    /// </summary>
+    /// <remarks>一类组件唯一Id</remarks>
+    [JsonPropertyName("compid")]
+    public string ComponentId { get; set; } = ShortIdGenerator.Generate();
+
+    /// <summary>
+    /// 组件库Id
+    /// </summary>
+    [JsonPropertyName("libid")]
+    public string LibraryId { get; set; }
+
+    /// <summary>
     /// 组件 Name
     /// </summary>
     [JsonPropertyName("cn")]
@@ -23,26 +36,22 @@ public class ComponentPartsSchema : ComponentSchemaBase
     /// 组件渲染 Fragment
     /// </summary>
     [JsonPropertyName("frag")]
-    public new ComponentPartsFragmentSchema Fragment { get; set; }
+    public ComponentPartsFragmentSchema Fragment { get; set; }
+
+    [JsonPropertyName("ds")]
+    public ComponentPartsDataSourceSchema DataSource { get; set; } = new();
 
     /// <summary>
-    /// Property 分组
+    /// Attribute定义分组
     /// </summary>
-    [JsonPropertyName("pgroups")]
-    public new IList<ComponentPartsPropertyGroupSchema> PropertyGroups { get; set; } = [];
+    [JsonPropertyName("attrdefgroups")]
+    public IList<ComponentPartsAttributeDefineGroupSchema> AttributeDefineGroups { get; set; } = [];
 
     /// <summary>
     /// 
     /// </summary>
     [JsonPropertyName("childs")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public new IList<ComponentPartsSchema> Childrens { get; set; } = [];
-
-    /// <summary>
-    /// 是否支持数据源属性
-    /// </summary>
-    [JsonPropertyName("sptds")]
-    public bool IsSupportDataSource { get; set; }
+    public IList<ComponentPartsSchema> Childrens { get; set; } = [];
 
     [JsonPropertyName("order")]
     public int Order { get; set; }
@@ -56,6 +65,7 @@ public class ComponentPartsSchema : ComponentSchemaBase
     [JsonPropertyName("mt")]
     public DateTime ModifiedTime { get; set; }
 
+    #region 仅设计过程使用
     /// <summary>
     /// 设计过程中的组件状态 (无需持久化)
     /// </summary>
@@ -65,9 +75,16 @@ public class ComponentPartsSchema : ComponentSchemaBase
     [JsonIgnore]
     public Action Refresh { get; set; }
 
-    public ComponentPartsSchema CopyNew()
+    public void RefreshState()
     {
-        ComponentPartsSchema newComponent = this.DeepClone();
+        Refresh?.Invoke();
+    }
+    #endregion
+
+    #region DeepClone
+    public ComponentPartsSchema DeepClone()
+    {
+        ComponentPartsSchema newComponent = ObjectExtension.DeepClone(this);
 
         //Copy全新对象, Id 重新生成
         newComponent.Id = ShortIdGenerator.Generate();
@@ -79,24 +96,12 @@ public class ComponentPartsSchema : ComponentSchemaBase
         newComponent.Refresh = Refresh;
 
         //1.子节点 ParentId 重新赋值; 2.重新赋值序列化过程中丢失的 RenderFragment、Refresh 值
-        CopyNewRecursive(newComponent, this);
+        DeepCloneRecursive(newComponent, this);
 
         return newComponent;
     }
 
-    public ComponentPartsSchema ConvertToComponentSchema()
-    {
-        string json = this.ToJson();
-        return json.FromJson<ComponentPartsSchema>();
-    }
-
-    public void RefreshState()
-    {
-        Refresh?.Invoke();
-    }
-
-    #region private
-    private static void CopyNewRecursive(ComponentPartsSchema newComponent, ComponentPartsSchema oldComponent)
+    private static void DeepCloneRecursive(ComponentPartsSchema newComponent, ComponentPartsSchema oldComponent)
     {
         for (var i = 0; i < newComponent.Childrens.Count; i++)
         {
@@ -106,8 +111,38 @@ public class ComponentPartsSchema : ComponentSchemaBase
 
             child.Refresh = oldComponent.Childrens[i].Refresh;
 
-            CopyNewRecursive(child, oldComponent.Childrens[i]);
+            DeepCloneRecursive(child, oldComponent.Childrens[i]);
         }
     }
     #endregion
+
+    public ComponentPartsSchema ConvertToComponentSchema()
+    {
+        string json = this.ToJson();
+        return json.FromJson<ComponentPartsSchema>();
+    }
+
+    /// <summary>
+    /// 将组件物料定义合并到组件实例
+    /// </summary>
+    /// <param name="componentPartsDefine"></param>
+    /// <returns></returns>
+    public void MergeComponentPartsDefine(ComponentPartsSchema componentPartsDefine)
+    {
+        if (componentPartsDefine == null)
+        {
+            return;
+        }
+
+        //TODO
+        //this.Fragment = componentPartsDefine.Fragment;
+        //this.Style = componentPartsDefine.Style;
+        this.AttributeDefineGroups = componentPartsDefine.AttributeDefineGroups;
+        this.IsSupportDataSource = componentPartsDefine.IsSupportDataSource;
+        
+        foreach (var child in this.Childrens)
+        {
+            child.MergeComponentPartsDefine(componentPartsDefine);
+        }
+    }
 }

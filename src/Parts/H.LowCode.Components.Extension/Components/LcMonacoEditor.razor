@@ -53,7 +53,7 @@
     private void Init()
     {
         if (_component == null)
-            _component = Component.CopyNew();
+            _component = Component.DeepClone();
     }
 
     private async Task LoadMonacoEditorAsync(string containerId, string code, string language, string theme)

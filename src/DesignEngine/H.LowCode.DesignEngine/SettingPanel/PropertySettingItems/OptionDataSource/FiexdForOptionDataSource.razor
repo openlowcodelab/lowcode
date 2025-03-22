@@ -1,0 +1,129 @@
+﻿@namespace H.LowCode.DesignEngine
+@inherits LowCodeComponentBase
+
+<div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
+    <div style="width:250px;">
+        <Search OnSearch="()=>{}" />
+    </div>
+    <div style="width:80px; line-height:32px; margin: 0 22px 0 0;">
+        <Button Type="@ButtonType.Primary" OnClick="CreateRowAsync">新增选项</Button>
+    </div>
+</div>
+
+@if (DataSource != null)
+{
+    <Table TItem="OptionDataSourceSchema" DataSource="@DataSource">
+        <ChildContent Context="context">
+            <PropertyColumn Title="选项名" Property="c => c.Label">
+                @if (!_optionEditCache[context.Id].edit)
+                {
+                    @context.Label
+                }
+                else
+                {
+                    <Input @bind-Value="_optionEditCache[context.Id].option.Label" />
+                }
+            </PropertyColumn>
+            <PropertyColumn Title="选项值" Property="c => c.Value">
+                @if (!_optionEditCache[context.Id].edit)
+                {
+                    @context.Value
+                }
+                else
+                {
+                    <Input @bind-Value="_optionEditCache[context.Id].option.Value" />
+                }
+            </PropertyColumn>
+            <ActionColumn Title="操作">
+                @if (!_optionEditCache[@context.Id].edit)
+                {
+                    <a onclick="@(() => RowStartEdit(@context.Id))">编辑</a>
+                    <a onclick="@(() => RowDeleteAsync(@context.Id))" style="color:#ff4d4f">删除</a>
+                }
+                else
+                {
+                    <a onclick="@(() => RowSaveAsync(context.Id))" class="save">保存</a>
+                    <Popconfirm Title="确定取消吗?" OkText="确定" CancelText="取消"
+                    OnConfirm="() => RowCancelEditAsync(context.Id)">
+                        <a>取消</a>
+                    </Popconfirm>
+                }
+            </ActionColumn>
+        </ChildContent>
+    </Table>
+}
+
+@code {
+    [Parameter]
+    public IList<OptionDataSourceSchema> DataSource { get; set; }
+
+    [Parameter]
+    public EventCallback<IList<OptionDataSourceSchema>> DataSourceChanged { get; set; }
+
+    IDictionary<string, (bool edit, OptionDataSourceSchema option)> _optionEditCache = new Dictionary<string, (bool edit, OptionDataSourceSchema option)>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (DataSource == null)
+        {
+            DataSource = [];
+        }
+
+        //初始化缓存
+        DataSource.ForEach(item =>
+        {
+            _optionEditCache[item.Id] = (false, item);
+        });
+
+        await base.OnInitializedAsync();
+    }
+
+    private async Task CreateRowAsync()
+    {
+        await Task.Delay(1);
+
+        OptionDataSourceSchema newOption = new();
+
+        //添加编辑缓存
+        _optionEditCache[newOption.Id] = (true, newOption);
+
+        DataSource.Add(newOption);
+
+        //StateHasChanged();
+    }
+
+    private async Task RowSaveAsync(string id)
+    {
+        await Task.Delay(1);
+        var index = DataSource.FindIndex(item => item.Id == id);
+        DataSource[index] = _optionEditCache[id].option;
+        _optionEditCache[id] = (false, DataSource[index]);
+
+        StateHasChanged();
+
+        await DataSourceChanged.InvokeAsync(DataSource);
+    }
+
+    private async Task RowDeleteAsync(string id)
+    {
+        await Task.Delay(1);
+    }
+
+    private async Task RowStartEdit(string id)
+    {
+        await Task.Delay(1);
+        var data = _optionEditCache[id];
+        _optionEditCache[id] = (true, data.option with { });
+
+        StateHasChanged();
+    }
+
+    private async Task RowCancelEditAsync(string id)
+    {
+        await Task.Delay(1);
+        var data = DataSource.FirstOrDefault(item => item.Id == id);
+        _optionEditCache[id] = (false, data); // recovery
+
+        StateHasChanged();
+    }
+}

@@ -1,10 +1,15 @@
 ﻿@namespace H.LowCode.DesignEngine
 @inherits LowCodeComponentBase
 
-@if (Component.IsContainer == false)
+@if (Component.IsContainer)
+{
+    <span style="font-size:10px; color:gray; margin-left:10px;">组件标识：@Component.ComponentId</span>
+}
+else
 {
     <div class="propertysetting-item">
-        <label>Name <span style="font-size:10px; color:gray;">(字段名称/英文)</span>：</label>
+        <label>Name<span style="font-size:10px; color:gray;"> (字段名称/英文)</span>：</label>
+        <label style="float:right; color:gray;">@Component.ComponentId</label>
         <Input TValue="string" @bind-value="@Component.Name" OnChange="(value) => OnPropertyChange()" />
     </div>
     <div class="propertysetting-item">

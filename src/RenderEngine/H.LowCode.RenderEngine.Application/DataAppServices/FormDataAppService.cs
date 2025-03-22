@@ -8,6 +8,7 @@ using System.Text;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
 using H.LowCode.Entity;
+using Volo.Abp.Domain.Entities;
 
 namespace H.LowCode.RenderEngine.Application;
 
@@ -25,7 +26,8 @@ public class FormDataAppService : ApplicationService, IFormDataAppService
 
     public async Task<bool> SaveAsync(FormDataDTO dto)
     {
-        return await _formDataDomainService.SaveAsync(null);
+        var entity = ObjectMapper.Map<FormDataDTO, FormEntity>(dto);
+        return await _formDataDomainService.SaveAsync(entity);
     }
 
     public async Task<bool> DeleteAsync(string appId, string pageId, string id)

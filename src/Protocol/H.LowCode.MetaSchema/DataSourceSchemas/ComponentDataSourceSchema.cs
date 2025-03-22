@@ -9,8 +9,14 @@ namespace H.LowCode.MetaSchema;
 
 public class ComponentDataSourceSchema
 {
+    [JsonPropertyName("dsgt")]
+    public ComponentDataSourceGroupTypeEnum DataSourceGroupType { get; set; }
+
     [JsonPropertyName("dst")]
     public ComponentDataSourceTypeEnum DataSourceType { get; set; }
+
+    [JsonPropertyName("dsft")]
+    public string DataSourceFragmentType { get; set; }
 
     [JsonPropertyName("dsid")]
     public string DataSourceId { get; set; }
@@ -20,4 +26,22 @@ public class ComponentDataSourceSchema
 
     [JsonPropertyName("dsv")]
     public string DataSourceValue { get; set; }
+
+    /// <summary>
+    /// 固定选项数据源
+    /// </summary>
+    [JsonPropertyName("fxopds")]
+    public IList<OptionDataSourceSchema> FiexdOptionDataSource { get; set; }
+
+    /// <summary>
+    /// API选项数据源
+    /// </summary>
+    [JsonPropertyName("apiopds")]
+    public APIDataSourceSchema APIOptionDataSource { get; set; }
+
+    /// <summary>
+    /// SQL选项数据源
+    /// </summary>
+    [JsonPropertyName("sqlopds")]
+    public SQLDataSourceSchema SQLOptionDataSource { get; set; }
 }

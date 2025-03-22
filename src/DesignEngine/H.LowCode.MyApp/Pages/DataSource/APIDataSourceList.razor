@@ -3,7 +3,7 @@
 
 @inject IDataSourceAppService DataSourceAppService
 @inject IMessageService Message
-@inject ComponentState<APIDataSource, IList<DataSourceListModel>> APIListState
+@inject ComponentState<APIDataSourceList, IList<DataSourceListModel>> APIListState
 
 <div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
     <div style="width:250px;">
@@ -44,53 +44,8 @@
         <FormItem Label="API 中文名" Required>
             <Input @bind-Value="@context.DisplayName" />
         </FormItem>
-        <FormItem Label="Path" Required>
-            <Input TValue="string" @bind-Value="@context.API.Path">
-                <AddOnBefore>
-                    <SimpleSelect DefaultValue="GET" @bind-Value="@context.API.Method" Style="width: 90px;">
-                        <SelectOptions>
-                            <SimpleSelectOption Value="GET" Label="GET"></SimpleSelectOption>
-                            <SimpleSelectOption Value="POST" Label="POST"></SimpleSelectOption>
-                            <SimpleSelectOption Value="PUT" Label="PUT"></SimpleSelectOption>
-                            <SimpleSelectOption Value="DELETE" Label="DELETE"></SimpleSelectOption>
-                        </SelectOptions>
-                    </SimpleSelect>
-                </AddOnBefore>
-            </Input>
-        </FormItem>
-        <FormItem Label="请求参数">
-            <Tabs DefaultActiveKey="api_queries" Animated>
-                <TabPane Tab="Query" Key="api_queries">
-                    @* Query 参数列表 *@
-                    <div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
-                        <div style="width:80px; line-height:32px; margin: 0 22px 0 0;">
-                            <Button Type="@ButtonType.Primary" OnClick="CreateQueryParamAsync">新增参数</Button>
-                        </div>
-                    </div>
-                    <Table TItem="APIQuerySchema" DataSource="@_dataSource.API.Queries">
-                        <ChildContent Context="tbContext">
-                            <PropertyColumn Title="参数名" Property="c => c.Name">
-                                <Input @bind-Value="@tbContext.Name" />
-                            </PropertyColumn>
-                            <PropertyColumn Title="类型" Property="c => c.Type">
-                                <Input @bind-Value="@tbContext.Type" />
-                            </PropertyColumn>
-                            <PropertyColumn Title="值" Property="c => c.Value">
-                                <Input @bind-Value="@tbContext.Value" />
-                            </PropertyColumn>
-                            <PropertyColumn Title="描述" Property="c => c.Description">
-                                <TextArea @bind-Value="@tbContext.Description"></TextArea>
-                            </PropertyColumn>
-                        </ChildContent>
-                    </Table>
-                </TabPane>
-                <TabPane Tab="Body" Key="api_body">
-
-                </TabPane>
-                <TabPane Tab="Headers" Key="api_headers">
-
-                </TabPane>
-            </Tabs>
+        <FormItem Label="API 参数">
+            <APIDataSource DataSource="_dataSource.API"></APIDataSource>
         </FormItem>
         <FormItem Label="排序">
             <InputNumber @bind-Value="@context.Order" Min="0" DefaultValue="0"></InputNumber>
@@ -186,8 +141,12 @@
     private async Task CreateAsync()
     {
         await Task.Delay(1);
-        _dataSource = new() { AppId = AppId, DataSourceType = ComponentDataSourceTypeEnum.API };
-        _dataSource.API = new();
+        _dataSource = new()
+        {
+            AppId = AppId,
+            DataSourceType = ComponentDataSourceTypeEnum.API,
+            API = new()
+        };
 
         _visible = true;
         _modalTitle = "新建 API";
@@ -222,7 +181,7 @@
     {
         await Task.Delay(1);
 
-        APIQuerySchema newQuery = new() { Id = ShortIdGenerator.Generate() };
+        APIParamSchema newQuery = new() { Id = ShortIdGenerator.Generate() };
 
         _dataSource.API.Queries.Add(newQuery);
 
