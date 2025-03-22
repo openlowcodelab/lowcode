@@ -7,14 +7,20 @@ using H.LowCode.MetaSchema;
 using System.Reflection;
 using H.LowCode.ComponentBase;
 using H.LowCode.MetaSchema.RenderEngine;
+using Microsoft.AspNetCore.Components.Rendering;
 
 namespace H.LowCode.RenderEngine.Abstraction;
 
 public abstract class RenderEngineDynamicComponentBase : LowCodeComponentBase
 {
-    protected virtual RenderFragment RenderComponent(ComponentFragmentSchema componentFragment)
+    protected virtual RenderFragment RenderComponent(
+        bool isSupportDataSource, ComponentDataSourceSchema dataSource,
+        ComponentFragmentSchema componentFragment)
     {
         ArgumentNullException.ThrowIfNull(componentFragment);
+
+        if (string.IsNullOrEmpty(componentFragment.TypeName))
+            throw new ArgumentNullException(nameof(componentFragment.TypeName));
 
         return builder =>
         {
@@ -71,7 +77,7 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeComponentBase
                         //if ("{self}".Equals(prop.StringValue, StringComparison.OrdinalIgnoreCase))
                         //    builder.AddAttribute(index++, prop.Name, component);
                         //else
-                            builder.AddAttribute(index++, prop.Name, prop.StringValue);
+                        builder.AddAttribute(index++, prop.Name, prop.StringValue);
                     }
                     else
                     {
@@ -80,22 +86,84 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeComponentBase
                 }
             }
 
-            //渲染子组件
-            var childrens = componentFragment.Childrens;
-            var hasChildren = childrens != null && childrens.Length > 0;
-            if (hasChildren)
+            //渲染 ChildContent
+            if (isSupportDataSource)
             {
-                builder.AddAttribute(index++, "ChildContent", (RenderFragment)(childBuilder =>
-                {
-                    foreach (var child in componentFragment.Childrens)
-                    {
-                        childBuilder.AddContent(index++, RenderComponent(child));
-                    }
-                }));
+                RenderDataSource(dataSource, builder, index);
+            }
+            else
+            {
+                RenderChildrens(componentFragment, builder, index);
             }
 
             builder.CloseComponent();
         };
+    }
+
+    private void RenderDataSource(ComponentDataSourceSchema dataSource,
+        RenderTreeBuilder builder, int index)
+    {
+        if (dataSource == null)
+            return;
+
+        if (dataSource.DataSourceGroupType == ComponentDataSourceGroupTypeEnum.Option)
+        {
+
+            switch (dataSource.DataSourceType)
+            {
+                case ComponentDataSourceTypeEnum.Fiexd:
+                    RenderOptionDataSource(dataSource, builder, index);
+                    break;
+                case ComponentDataSourceTypeEnum.SQL:
+                    break;
+                case ComponentDataSourceTypeEnum.API:
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    private void RenderOptionDataSource(ComponentDataSourceSchema dataSource,
+        RenderTreeBuilder builder, int index)
+    {
+        if (dataSource.FiexdOptionDataSource != null && dataSource.FiexdOptionDataSource.Count > 0)
+        {
+            builder.AddAttribute(index++, "ChildContent", (RenderFragment)(childBuilder =>
+            {
+                Type childComponentType = Type.GetType(dataSource.DataSourceFragmentType, true);
+                foreach (var option in dataSource.FiexdOptionDataSource)
+                {
+                    childBuilder.OpenComponent(index++, childComponentType);
+
+                    childBuilder.AddAttribute(index++, "Value", option.Value);
+                    //childBuilder.AddContent(index++, option.Label);
+                    childBuilder.AddAttribute(index++, "ChildContent", (RenderFragment)((cb) =>
+                    {
+                        cb.AddContent(index++, option.Label);
+                    }));
+
+                    childBuilder.CloseComponent();
+                }
+            }));
+        }
+    }
+
+    private void RenderChildrens(ComponentFragmentSchema componentFragment,
+        RenderTreeBuilder builder, int index)
+    {
+        var childrens = componentFragment.Childrens;
+        var hasChildren = childrens != null && childrens.Length > 0;
+        if (hasChildren)
+        {
+            builder.AddAttribute(index++, "ChildContent", (RenderFragment)(childBuilder =>
+            {
+                foreach (var child in componentFragment.Childrens)
+                {
+                    childBuilder.AddContent(index++, RenderComponent(false, null, child));
+                }
+            }));
+        }
     }
 
     private bool SupportsValueBinding(Type componentType)

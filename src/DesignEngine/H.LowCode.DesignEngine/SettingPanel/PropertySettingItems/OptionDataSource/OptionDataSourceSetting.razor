@@ -1,0 +1,47 @@
+﻿@namespace H.LowCode.DesignEngine
+@inherits LowCodeComponentBase
+
+@if (DataSource != null)
+{
+    <div class="propertysetting-item">
+        <label>数据源类型：</label>
+        <RadioGroup DefaultValue="ComponentDataSourceTypeEnum.Fiexd"
+            @bind-Value="@DataSource.DataSourceType">
+            <Radio AutoFocus="true" Value="ComponentDataSourceTypeEnum.Fiexd">固定值</Radio>
+            <Radio AutoFocus="true" Value="ComponentDataSourceTypeEnum.SQL">SQL</Radio>
+            <Radio AutoFocus="true" Value="ComponentDataSourceTypeEnum.API">API</Radio>
+        </RadioGroup>
+    </div>
+
+    if (DataSource.DataSourceType == ComponentDataSourceTypeEnum.Fiexd)
+    {
+        <FiexdForOptionDataSource @bind-DataSource="DataSource.FiexdOptionDataSource"></FiexdForOptionDataSource>
+    }
+    else if (DataSource.DataSourceType == ComponentDataSourceTypeEnum.SQL)
+    {
+        <SQLForOptionDataSource @bind-DataSource="DataSource.SQLOptionDataSource"></SQLForOptionDataSource>
+    }
+    else if (DataSource.DataSourceType == ComponentDataSourceTypeEnum.API)
+    {
+        <APIDataSource @bind-DataSource="DataSource.APIOptionDataSource"></APIDataSource>
+    }
+    else
+    {
+        <div class="propertysetting-item">
+            <label>不支持的选项数据源类型：</label>
+        </div>
+    }
+}
+
+@code {
+    [Parameter]
+    public ComponentPartsDataSourceSchema DataSource { get; set; }
+
+    [Parameter]
+    public EventCallback<ComponentPartsDataSourceSchema> DataSourceChanged { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+}

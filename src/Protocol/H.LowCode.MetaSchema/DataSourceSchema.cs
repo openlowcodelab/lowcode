@@ -46,7 +46,7 @@ public class DataSourceSchema : MetaSchemaBase
     /// API 数据源
     /// </summary>
     [JsonPropertyName("api")]
-    public APISchema API { get; set; }
+    public APIDataSourceSchema API { get; set; }
     #endregion
 
     #region DataSourceType=Option
@@ -54,7 +54,7 @@ public class DataSourceSchema : MetaSchemaBase
     /// 选项数据源
     /// </summary>
     [JsonPropertyName("ops")]
-    public OptionSchema[] Options { get; set; }
+    public OptionDataSourceSchema[] Options { get; set; }
 
     /// <summary>
     /// 

@@ -30,7 +30,4 @@ public abstract class PageSchemaBase : MetaSchemaBase
 
     [JsonPropertyName("ds")]
     public PageDataSourceSchema DataSource { get; set; } = new();
-
-    [JsonPropertyName("comps")]
-    public virtual IList<ComponentSchemaBase> Components { get; set; } = [];
 }

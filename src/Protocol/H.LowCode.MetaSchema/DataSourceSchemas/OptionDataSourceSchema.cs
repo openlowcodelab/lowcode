@@ -1,4 +1,5 @@
-﻿using System;
+﻿using H.Util.Ids;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -7,8 +8,11 @@ using System.Threading.Tasks;
 
 namespace H.LowCode.MetaSchema;
 
-public class OptionSchema
+public record OptionDataSourceSchema
 {
+    [JsonIgnore]
+    public string Id { get; set; } = ShortIdGenerator.Generate();
+
     [JsonPropertyName("l")]
     public string Label { get; set; }
 

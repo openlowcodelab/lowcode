@@ -12,7 +12,7 @@ namespace H.LowCode.MetaSchema;
 public enum ComponentDataSourceTypeEnum
 {
     None = 0,
-    Table = 1,
+    DB = 1,
     API = 2,
     Option = 3,
     SQL = 6,

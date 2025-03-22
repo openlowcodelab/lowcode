@@ -13,19 +13,6 @@ public abstract class ComponentSchemaBase
     [JsonPropertyName("id")]
     public string Id { get; set; } = ShortIdGenerator.Generate();
 
-    /// <summary>
-    /// 组件库Id
-    /// </summary>
-    [JsonPropertyName("libid")]
-    public string LibraryId { get; set; }
-
-    /// <summary>
-    /// 组件Id
-    /// </summary>
-    /// <remarks>一类组件唯一Id</remarks>
-    [JsonPropertyName("compid")]
-    public string ComponentId { get; set; } = ShortIdGenerator.Generate();
-
     [JsonPropertyName("pid")]
     public string ParentId { get; set; }
 
@@ -39,11 +26,9 @@ public abstract class ComponentSchemaBase
     /// 是否隐藏标题
     /// </summary>
     [JsonPropertyName("hlb")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public bool IsHiddenLabel { get; set; }
 
     [JsonPropertyName("desc")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public string Description { get; set; }
 
     /// <summary>
@@ -53,16 +38,10 @@ public abstract class ComponentSchemaBase
     public bool IsContainer { get; set; }
 
     /// <summary>
-    /// 组件渲染 Fragment
+    /// 是否支持数据源属性
     /// </summary>
-    [JsonPropertyName("frag")]
-    public virtual ComponentFragmentSchemaBase Fragment { get; set; }
-
-    /// <summary>
-    /// Property 分组
-    /// </summary>
-    [JsonPropertyName("pgroups")]
-    public IList<ComponentPropertyGroupSchema> PropertyGroups { get; set; } = [];
+    [JsonPropertyName("sptds")]
+    public bool IsSupportDataSource { get; set; }
 
     /// <summary>
     /// 组件样式
@@ -74,17 +53,5 @@ public abstract class ComponentSchemaBase
     /// 
     /// </summary>
     [JsonPropertyName("ev")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public ComponentEventSchema Event { get; set; } = new();
-    
-    /// <summary>
-    /// 
-    /// </summary>
-    [JsonPropertyName("childs")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public virtual ComponentSchemaBase[] Childrens { get; set; }
-
-    [JsonPropertyName("ds")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public ComponentDataSourceSchema DataSource { get; set; } = new();
 }

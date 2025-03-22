@@ -12,6 +12,6 @@ namespace H.LowCode.MetaSchema;
 public enum PageDataSourceTypeEnum
 {
     None = 0,
-    Table = 1,
+    DB = 1,
     API = 2
 }

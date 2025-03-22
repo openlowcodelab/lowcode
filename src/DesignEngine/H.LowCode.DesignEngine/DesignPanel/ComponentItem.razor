@@ -47,6 +47,6 @@
         if (string.IsNullOrEmpty(Component.Fragment.TypeName))
             Component.Fragment.TypeName = Component.Fragment.DefaultTypeName;
 
-        _renderFragment = RenderComponent(Component.Fragment);
+        _renderFragment = RenderComponent(Component.IsSupportDataSource, Component.DataSource, Component.Fragment);
     }
 }

@@ -10,12 +10,12 @@ namespace System;
 
 public static class ObjectMerger
 {
-    public static void Merge<T>(T source, T target) where T : class
+    public static void Merge(Type type, object source, object target)
     {
         if (target == null || source == null)
             throw new ArgumentNullException(target == null ? nameof(target) : nameof(source));
 
-        var properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
         foreach (var property in properties)
         {
@@ -32,17 +32,21 @@ public static class ObjectMerger
                 // 处理集合类型属性
                 MergeCollections(property, target, sourcePropertyValue);
             }
+            else if (IsArrayType(property.PropertyType))
+            {
+                MergeArray(property, target, sourcePropertyValue);
+            }
             else if (property.PropertyType.IsClass && property.PropertyType != typeof(string))
             {
                 // 递归处理引用类型属性 (不含string)
                 var targetPropertyValue = property.GetValue(target);
                 if (targetPropertyValue == null)
                 {
-                    targetPropertyValue = Activator.CreateInstance<T>();
+                    targetPropertyValue = Activator.CreateInstance(property.PropertyType);
                     property.SetValue(target, targetPropertyValue);
                 }
 
-                Merge(sourcePropertyValue, targetPropertyValue);
+                Merge(property.PropertyType, sourcePropertyValue, targetPropertyValue);
             }
             else
             {
@@ -97,7 +101,7 @@ public static class ObjectMerger
                 var targetElement = targetCollection[i];
                 if (elementType.IsClass && elementType != typeof(string))
                 {
-                    Merge(targetElement as dynamic, sourceElement);
+                    Merge(elementType, targetElement as dynamic, sourceElement);
                 }
                 else
                 {
@@ -110,6 +114,54 @@ public static class ObjectMerger
                 targetCollection.Add(sourceElement);
             }
         }
+    }
+
+    private static bool IsArrayType(Type type)
+    {
+        return type.IsArray;
+    }
+
+    private static void MergeArray(PropertyInfo property, object target, object sourceArray)
+    {
+        var targetType = property.PropertyType;
+        var elementType = GetElementType(targetType);
+
+        var targetArray = property.GetValue(target) as Array;
+        if (targetArray == null)
+        {
+            targetArray = Array.CreateInstance(elementType, ((Array)sourceArray).Length);
+            property.SetValue(target, targetArray);
+        }
+
+        var sourceArrayLength = ((Array)sourceArray).Length;
+        var targetArrayLength = targetArray.Length;
+        var newArray = Array.CreateInstance(elementType, Math.Max(sourceArrayLength, targetArrayLength));
+
+        Array.Copy(targetArray, newArray, targetArrayLength);
+
+        for (int i = 0; i < sourceArrayLength; i++)
+        {
+            var sourceElement = ((Array)sourceArray).GetValue(i);
+            if (i < targetArrayLength)
+            {
+                var targetElement = targetArray.GetValue(i);
+                if (elementType.IsClass && elementType != typeof(string))
+                {
+                    Merge(elementType, targetElement, sourceElement);
+                    newArray.SetValue(targetElement, i);
+                }
+                else
+                {
+                    newArray.SetValue(sourceElement, i);
+                }
+            }
+            else
+            {
+                newArray.SetValue(sourceElement, i);
+            }
+        }
+
+        property.SetValue(target, newArray);
     }
 
     private static Type GetElementType(Type collectionType)

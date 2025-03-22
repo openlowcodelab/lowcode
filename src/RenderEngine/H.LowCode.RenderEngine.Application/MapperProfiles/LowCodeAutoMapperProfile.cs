@@ -14,5 +14,6 @@ public class LowCodeAutoMapperProfile : Profile
     public LowCodeAutoMapperProfile()
     {
         CreateMap<FormEntity, FormDataDTO>();
+        CreateMap<FormDataDTO, FormEntity>();
     }
 }

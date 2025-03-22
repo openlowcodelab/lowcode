@@ -15,14 +15,9 @@ public abstract class ComponentFragmentSchemaBase
     public string ValueType { get; set; }
 
     [JsonPropertyName("attrs")]
-    public ComponentParameterFragmentSchema[] Attributes { get; set; } = [];
-
-    [JsonPropertyName("childs")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public virtual ComponentFragmentSchemaBase[] Childrens { get; set; }
+    public ComponentAttributeFragmentSchema[] Attributes { get; set; } = [];
 
     [JsonPropertyName("content")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public string Content { get; set; }
 
     public object GetDefaultValue()
@@ -42,7 +37,7 @@ public abstract class ComponentFragmentSchemaBase
     }
 }
 
-public record ComponentParameterFragmentSchema
+public record ComponentAttributeFragmentSchema
 {
     [JsonPropertyName("n")]
     public string Name { get; set; }
@@ -54,14 +49,11 @@ public record ComponentParameterFragmentSchema
     public ComponentValueTypeEnum ValueType { get; set; }
 
     [JsonPropertyName("intv")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public int IntValue { get; set; }
 
     [JsonPropertyName("strv")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public string StringValue { get; set; }
 
     [JsonPropertyName("strvs")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public List<string> StringValues { get; set; }
 }

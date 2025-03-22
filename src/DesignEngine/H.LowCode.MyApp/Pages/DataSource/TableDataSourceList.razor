@@ -3,7 +3,7 @@
 
 @inject IDataSourceAppService DataSourceAppService
 @inject IMessageService Message
-@inject ComponentState<TableDataSource, IList<DataSourceListModel>> DataSourceListState
+@inject ComponentState<TableDataSourceList, IList<DataSourceListModel>> DataSourceListState
 
 <div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
     <div style="width:250px;">
@@ -188,7 +188,7 @@
 
     private async Task<IList<DataSourceListModel>> LoadDataSourcesAsync(int pageIndex, int pageSize)
     {
-        return await DataSourceAppService.GetListAsync(AppId, new() { DataSourceType = ComponentDataSourceTypeEnum.Table });
+        return await DataSourceAppService.GetListAsync(AppId, new() { DataSourceType = ComponentDataSourceTypeEnum.DB });
     }
 
     private async Task<DataSourceSchema> GetDataSourceAsync(string dataSourceId)
@@ -249,7 +249,7 @@
     private async Task CreateAsync()
     {
         await Task.Delay(1);
-        _dataSource = new() { AppId = AppId, DataSourceType = ComponentDataSourceTypeEnum.Table };
+        _dataSource = new() { AppId = AppId, DataSourceType = ComponentDataSourceTypeEnum.DB };
         _visible = true;
         _modalTitle = "新建数据表";
 

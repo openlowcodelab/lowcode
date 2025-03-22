@@ -44,7 +44,9 @@ public class RenderEngineDbContext : DbContext
     public async Task<bool> UpdateAsync(FormEntity formEntity)
     {
         var entityType = GetEntityType(formEntity.Name);
-        dynamic entity = Activator.CreateInstance(entityType);
+        var entity = await FindAsync(entityType, formEntity.Id);
+        if (entity == null)
+            return false;
 
         foreach (var field in formEntity.Fields)
         {
@@ -71,6 +73,18 @@ public class RenderEngineDbContext : DbContext
             formEntity.Fields[property.Name] = propertyValue;
         }
         return formEntity;
+    }
+
+    public async Task<bool> DeleteAsync(string entityName, string id)
+    {
+        var entityType = GetEntityType(entityName);
+        var entity = await FindAsync(entityType, id);
+        if (entity == null)
+            return false;
+
+        Remove(entity);
+        await SaveChangesAsync();
+        return true;
     }
 
     public int SaveChangesAsync(FormEntity formEntity)

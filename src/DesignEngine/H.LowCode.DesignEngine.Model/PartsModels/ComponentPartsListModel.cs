@@ -33,7 +33,6 @@ public class ComponentPartsListModel
     /// 是否为容器组件
     /// </summary>
     [JsonPropertyName("container")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public bool IsContainer { get; set; }
 
     [JsonPropertyName("order")]

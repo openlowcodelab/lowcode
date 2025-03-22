@@ -112,7 +112,7 @@
     private bool _textFormVisible = false;
     private string _textFormValue;
 
-    IDictionary<string, (bool edit, ComponentParameterFragmentSchema parameter)> _parameterEditCache = new Dictionary<string, (bool edit, ComponentParameterFragmentSchema parameter)>();
+    IDictionary<string, (bool edit, ComponentAttributeFragmentSchema parameter)> _parameterEditCache = new Dictionary<string, (bool edit, ComponentAttributeFragmentSchema parameter)>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -252,7 +252,7 @@
     {
         await Task.Delay(1);
 
-        ComponentParameterFragmentSchema newParameter = new();
+        ComponentAttributeFragmentSchema newParameter = new();
 
         //添加编辑缓存
         _parameterEditCache[newParameter.Name] = (true, newParameter);

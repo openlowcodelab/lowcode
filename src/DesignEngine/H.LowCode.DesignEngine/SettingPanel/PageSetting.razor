@@ -19,10 +19,10 @@
         <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:30px 0 10px;">数据源</div>
         <div class="propertysetting-item">
             <label>类型：</label>
-            <EnumRadioGroup TEnum="PageDataSourceTypeEnum" DefaultValue="PageDataSourceTypeEnum.Table" @bind-Value="@Page.DataSource.DataSourceType" Name="radio_datasourcetype"></EnumRadioGroup>
+            <EnumRadioGroup TEnum="PageDataSourceTypeEnum" @bind-Value="@Page.DataSource.DataSourceType" Name="radio_datasourcetype"></EnumRadioGroup>
         </div>
 
-        @if (Page.DataSource.DataSourceType == PageDataSourceTypeEnum.Table)
+        @if (Page.DataSource.DataSourceType == PageDataSourceTypeEnum.DB)
         {
             <div class="propertysetting-item">
                 <label>表：</label>
