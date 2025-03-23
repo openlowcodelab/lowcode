@@ -1,11 +1,10 @@
 ﻿@page "/designer/{AppId}/{PageId}"
 @namespace H.LowCode.DesignEngine
-@inherits LowCodePageComponentBase
+@inherits DesignEngineLowCodePageComponentBase
 @layout DesignEngineLayout
 
 @inject IPageAppService PageAppService
 @inject DragDropStateService DragDropStateService
-@inject IMessageService _message
 
 <PageTitle>@($"{_pageCascadingModel.PageName} - 页面设计器")</PageTitle>
 
@@ -96,7 +95,7 @@
         PagePartsSchema pageSchema = CreatePageSchema();
         if (pageSchema.Components.Count == 0)
         {
-            await _message.Warning("没有任何组件，禁止保存！");
+            await Message.Warning("没有任何组件，禁止保存！");
             return;
         }
 
@@ -109,11 +108,11 @@
                 base.NavigateTo($"/designer/{pageSchema.AppId}/{pageSchema.Id}");
             }
 
-            await _message.Success("保存成功");
+            await Message.Success("保存成功");
         }
         else
         {
-            await _message.Error($"保存失败");
+            await Message.Error($"保存失败");
         }
     }
 

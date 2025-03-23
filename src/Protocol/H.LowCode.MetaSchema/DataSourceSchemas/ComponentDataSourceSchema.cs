@@ -7,16 +7,19 @@ using System.Threading.Tasks;
 
 namespace H.LowCode.MetaSchema;
 
-public class ComponentDataSourceSchema
+public abstract class ComponentDataSourceSchemaBase
 {
+    /// <summary>
+    /// 数据源分组类型
+    /// </summary>
     [JsonPropertyName("dsgt")]
     public ComponentDataSourceGroupTypeEnum DataSourceGroupType { get; set; }
 
+    /// <summary>
+    /// 数据源类型
+    /// </summary>
     [JsonPropertyName("dst")]
     public ComponentDataSourceTypeEnum DataSourceType { get; set; }
-
-    [JsonPropertyName("dsft")]
-    public string DataSourceFragmentType { get; set; }
 
     [JsonPropertyName("dsid")]
     public string DataSourceId { get; set; }

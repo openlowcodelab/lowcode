@@ -1,10 +1,9 @@
 ﻿@page "/designer/componentparts/{PartsId}"
 @namespace H.LowCode.PartsDesignEngine
-@inherits LowCodePageComponentBase
+@inherits DesignEngineLowCodePageComponentBase
 @layout PartsDesignEngineLayout
 
 @inject DragDropStateService DragDropStateService
-@inject IMessageService _message
 
 <PageTitle>@($"{PartsId} - 组件物料设计器")</PageTitle>
 
@@ -90,11 +89,11 @@
                 base.NavigateTo($"/designer/componentparts/{componentParts.ComponentId}");
             }
 
-            await _message.Success("保存成功！");
+            await Message.Success("保存成功！");
         }
         else
         {
-            await _message.Error("保存失败");
+            await Message.Error("保存失败");
         }
     }
 

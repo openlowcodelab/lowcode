@@ -33,17 +33,20 @@ WrapperColSpan="16">
         <Switch></Switch>
     </FormItem>
     <FormItem Name="Field6">
-        @* <RadioGroup TValue="string"> *@
-        @*     <Radio Value="@("op1")">选项1</Radio> *@
-        @*     <Radio Value="@("op2")">选项2</Radio> *@
-        @* </RadioGroup> *@
-        @_renderFragment
+        <RadioGroup TValue="string">
+            <Radio Value="@("op1")">选项1</Radio>
+            <Radio Value="@("op2")">选项2</Radio>
+        </RadioGroup>
     </FormItem>
     <FormItem Name="Field7">
         <Input TValue="string"></Input>
     </FormItem>
     <FormItem Name="Field8">
-        <Input TValue="string"></Input>
+        @* <CheckboxGroup TValue="string"> *@
+        @*     <Checkbox Label="ck1">选项11</Checkbox> *@
+        @*     <Checkbox Label="字段8">选项22</Checkbox> *@
+        @* </CheckboxGroup> *@
+        @_renderFragment
     </FormItem>
 
     <FormItem WrapperColOffset="8" WrapperColSpan="16">
@@ -63,7 +66,7 @@ WrapperColSpan="16">
         ["Field5"] = true,  //switch
         ["Field6"] = "字段6",  //radio
         ["Field7"] = "字段7",
-        ["Field8"] = "字段8",
+        ["Field8"] = new string[] { "字段8" }
     };
 
     protected override void OnInitialized()
@@ -92,25 +95,23 @@ WrapperColSpan="16">
     {
         return builder =>
         {
-            builder.OpenComponent<RadioGroup<string>>(0);
-            builder.AddAttribute(1, "TValue", typeof(string));
+            builder.OpenComponent<CheckboxGroup<string>>(0);
+            //builder.AddAttribute(1, "TValue", typeof(string));
             builder.AddAttribute(2, "ChildContent", (RenderFragment)((childBuilder) =>
             {
-                childBuilder.OpenComponent<Radio<string>>(3);
-                childBuilder.AddAttribute(4, "Value", "op1");
-                //childBuilder.AddContent(5, "选项1");
+                childBuilder.OpenComponent<Checkbox>(3);
+                childBuilder.AddAttribute(4, "Label", "op1");
                 childBuilder.AddAttribute(5, "ChildContent", (RenderFragment)((cb) =>
                 {
-                    cb.AddContent(6, "op1");
+                    cb.AddContent(6, "ck1");
                 }));
                 childBuilder.CloseComponent();
 
-                childBuilder.OpenComponent<Radio<string>>(6);
-                childBuilder.AddAttribute(7, "Value", "op2");
-                //childBuilder.AddContent(8, "选项2");
+                childBuilder.OpenComponent<Checkbox>(6);
+                childBuilder.AddAttribute(7, "Label", "op2");
                 childBuilder.AddAttribute(8, "ChildContent", (RenderFragment)((cb) =>
                 {
-                    cb.AddContent(9, "op2");
+                    cb.AddContent(9, "字段8");
                 }));
                 childBuilder.CloseComponent();
             }));

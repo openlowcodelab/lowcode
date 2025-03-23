@@ -35,6 +35,12 @@ public class ComponentPartsListModel
     [JsonPropertyName("container")]
     public bool IsContainer { get; set; }
 
+    /// <summary>
+    /// 是否支持数据源
+    /// </summary>
+    [JsonPropertyName("sptds")]
+    public bool IsSupportDataSource { get; set; }
+
     [JsonPropertyName("order")]
     public int Order { get; set; }
 

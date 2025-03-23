@@ -1,5 +1,5 @@
 ﻿@namespace H.LowCode.DesignEngine.Abstraction
-@inherits LowCodeComponentBase
+@inherits DesignEngineLowCodeComponentBase
 
 @if (APIParams != null)
 {
@@ -12,7 +12,8 @@
         </div>
     </div>
 
-    <Table TItem="APIParamSchema" DataSource="@APIParams">
+    <Table TItem="APIParamSchema" DataSource="@APIParams"
+            HidePagination="true">
         <ChildContent Context="context">
             <PropertyColumn Title="参数名" Property="c => c.Name">
                 @if (!_optionEditCache[context.Id].edit)

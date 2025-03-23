@@ -139,7 +139,9 @@ public class ComponentPartsSchema : ComponentSchemaBase
         //this.Style = componentPartsDefine.Style;
         this.AttributeDefineGroups = componentPartsDefine.AttributeDefineGroups;
         this.IsSupportDataSource = componentPartsDefine.IsSupportDataSource;
-        
+        if (componentPartsDefine?.DataSource?.DataSourceFragment != null)
+            this.DataSource.DataSourceFragment = componentPartsDefine.DataSource.DataSourceFragment;
+
         foreach (var child in this.Childrens)
         {
             child.MergeComponentPartsDefine(componentPartsDefine);

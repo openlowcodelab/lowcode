@@ -1,9 +1,8 @@
 ﻿@namespace H.LowCode.Workbench
-@inherits LowCodeComponentBase
+@inherits DesignEngineLowCodeComponentBase
 @layout WorkbenchLayout
 
 @inject IComponentLibraryAppService ComponentLibraryAppService
-@inject IMessageService _message
 
 <Form Model="@ComponentLibrary" @ref="@_form"
 ValidateOnChange="true" LabelColSpan="8" WrapperColSpan="16">
@@ -51,12 +50,12 @@ ValidateOnChange="true" LabelColSpan="8" WrapperColSpan="16">
             if (isSuccess)
             {
                 _form.Submit();
-                await _message.Success("新建成功！");
+                await Message.Success("新建成功！");
                 _form.Reset();
             }
             else
             {
-                await _message.Error("新建失败");
+                await Message.Error("新建失败");
             }
         }
         return isSuccess;

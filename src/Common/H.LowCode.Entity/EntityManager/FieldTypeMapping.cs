@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace H.LowCode.Entity;
 
@@ -12,8 +10,10 @@ public class FieldTypeMapping
     public static Type GetFieldType(string fieldType, bool isNullable)
     {
         string type = fieldType.ToLower();
-        if (fieldType != "char" && fieldType != "varchar")
+        if (fieldType != "char" && fieldType != "varchar"
+            && fieldType != "varchar[]")
             type = $"{type}{(isNullable ? "?" : string.Empty)}";
+
         switch (type)
         {
             case "char":
@@ -39,6 +39,8 @@ public class FieldTypeMapping
                 return typeof(DateTime);
             case "datetime?":
                 return typeof(DateTime?);
+            case "varchar[]":
+                return typeof(string[]);
             default:
                 throw new NotSupportedException($"not support type: {type}");
         }
