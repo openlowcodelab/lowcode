@@ -28,20 +28,33 @@ public abstract class ComponentSchemaBase
     [JsonPropertyName("hlb")]
     public bool IsHiddenLabel { get; set; }
 
-    [JsonPropertyName("desc")]
-    public string Description { get; set; }
-
     /// <summary>
     /// 是否为容器组件
     /// </summary>
     [JsonPropertyName("container")]
     public bool IsContainer { get; set; }
 
+    private bool _isSupportDataSource;
     /// <summary>
-    /// 是否支持数据源属性
+    /// 是否支持数据源
     /// </summary>
     [JsonPropertyName("sptds")]
-    public bool IsSupportDataSource { get; set; }
+    public bool IsSupportDataSource
+    {
+        get
+        {
+            if (IsContainer)
+                return false;
+            return _isSupportDataSource;
+        }
+        set
+        {
+            if (IsContainer)
+                _isSupportDataSource = false;
+            else
+                _isSupportDataSource = value;
+        }
+    }
 
     /// <summary>
     /// 组件样式
@@ -54,4 +67,7 @@ public abstract class ComponentSchemaBase
     /// </summary>
     [JsonPropertyName("ev")]
     public ComponentEventSchema Event { get; set; } = new();
+
+    [JsonPropertyName("desc")]
+    public string Description { get; set; }
 }

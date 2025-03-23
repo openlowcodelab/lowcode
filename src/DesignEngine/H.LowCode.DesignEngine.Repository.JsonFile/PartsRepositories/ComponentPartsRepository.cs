@@ -50,6 +50,7 @@ public class ComponentPartsRepository : PartsFileRepositoryBase, IComponentParts
                 ComponentName = componentPartsSchema.ComponentName,
                 ComponentType = componentPartsSchema.ComponentType,
                 IsContainer = componentPartsSchema.IsContainer,
+                IsSupportDataSource = componentPartsSchema.IsSupportDataSource,
                 Label = componentPartsSchema.Label,
                 Order = componentPartsSchema.Order,
                 ModifiedTime = componentPartsSchema.ModifiedTime,

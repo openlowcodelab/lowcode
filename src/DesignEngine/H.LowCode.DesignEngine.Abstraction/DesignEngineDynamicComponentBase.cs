@@ -5,16 +5,15 @@ using System.Linq;
 using System.Text;
 using H.LowCode.MetaSchema;
 using System.Reflection;
-using H.LowCode.ComponentBase;
 using H.LowCode.MetaSchema.DesignEngine;
 using Microsoft.AspNetCore.Components.Rendering;
 
 namespace H.LowCode.DesignEngine.Abstraction;
 
-public abstract class DesignEngineDynamicComponentBase : LowCodeComponentBase
+public abstract class DesignEngineDynamicComponentBase : DesignEngineLowCodeComponentBase
 {
     protected virtual RenderFragment RenderComponent(
-        bool isSupportDataSource, ComponentDataSourceSchema dataSource,
+        bool isSupportDataSource, ComponentPartsDataSourceSchema dataSource,
         ComponentPartsFragmentSchema componentFragment)
     {
         ArgumentNullException.ThrowIfNull(componentFragment);
@@ -100,7 +99,7 @@ public abstract class DesignEngineDynamicComponentBase : LowCodeComponentBase
         };
     }
 
-    private void RenderDataSource(ComponentDataSourceSchema dataSource,
+    private void RenderDataSource(ComponentPartsDataSourceSchema dataSource,
         RenderTreeBuilder builder, int index)
     {
         if (dataSource == null)
@@ -124,19 +123,25 @@ public abstract class DesignEngineDynamicComponentBase : LowCodeComponentBase
         }
     }
 
-    private void RenderOptionDataSource(ComponentDataSourceSchema dataSource,
+    private void RenderOptionDataSource(ComponentPartsDataSourceSchema dataSource,
         RenderTreeBuilder builder, int index)
     {
         if (dataSource.FiexdOptionDataSource != null && dataSource.FiexdOptionDataSource.Count > 0)
         {
             builder.AddAttribute(index++, "ChildContent", (RenderFragment)(childBuilder =>
             {
-                Type childComponentType = Type.GetType(dataSource.DataSourceFragmentType, true);
+                if (string.IsNullOrEmpty(dataSource.DataSourceFragment.TypeName))
+                    throw new ArgumentNullException(nameof(dataSource.DataSourceFragment.TypeName));
+
+                Type childComponentType = Type.GetType(dataSource.DataSourceFragment.TypeName, true);
                 foreach (var option in dataSource.FiexdOptionDataSource)
                 {
                     childBuilder.OpenComponent(index++, childComponentType);
+                    foreach (var fragAttr in dataSource.DataSourceFragment.Attributes)
+                    {
+                        childBuilder.AddAttribute(index++, fragAttr.Name, option.Value);
+                    }
 
-                    childBuilder.AddAttribute(index++, "Value", option.Value);
                     //childBuilder.AddContent(index++, option.Label);
                     childBuilder.AddAttribute(index++, "ChildContent", (RenderFragment)((cb) =>
                     {

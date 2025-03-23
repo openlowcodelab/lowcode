@@ -1,13 +1,9 @@
-﻿@using System.Text.Encodings.Web
-@using System.Text.Unicode
+﻿@namespace H.LowCode.Workbench
 
-@namespace H.LowCode.Workbench
-
-@inherits LowCodeComponentBase
+@inherits DesignEngineLowCodeComponentBase
 @layout WorkbenchLayout
 
 @inject IComponentPartsAppService ComponentPartsAppService
-@inject IMessageService Message
 @inject ComponentState<ComponentPartsList, IList<ComponentPartsListModel>> ComponentPartsListState
 
 <div style="margin: 0 0 8px 0;">
@@ -23,8 +19,9 @@
     <div style="clear:both;"></div>
 </div>
 
-<Table TItem="ComponentPartsListModel" DataSource="@_componentPartsList" PageSize="15" PageIndex="1" Total="_total"
-@bind-SelectedRows="selectedRows" Style="height:100%;" RowKey="c=>c.ComponentId">
+<Table TItem="ComponentPartsListModel" DataSource="@_componentPartsList"
+@bind-SelectedRows="selectedRows" RowKey="c=>c.ComponentId"
+HidePagination="true" Style="height:100%;">
     @* <PropertyColumn Title="ComponentId" Property="c=>c.ComponentId" Width="300" /> *@
     <PropertyColumn Title="Name" Property="c=>c.ComponentName" Sortable />
     <PropertyColumn Title="组件名称" Property="c=>c.Label" />
@@ -33,8 +30,20 @@
             @(context.ComponentType == 1 ? "原子组件" : "组合组件")
         </Tag>
     </PropertyColumn>
+    <PropertyColumn Title="是否容器" Property="c=>c.IsContainer">
+        @if (context.IsContainer)
+        {
+            <Tag Color="@("Gold")">是</Tag>
+        }
+    </PropertyColumn>
+    <PropertyColumn Title="是否支持数据源" Property="c=>c.IsSupportDataSource">
+        @if (context.IsSupportDataSource)
+        {
+            <Tag Color="@("Gold")">是</Tag>
+        }
+    </PropertyColumn>
     <PropertyColumn Title="发布状态" Property="c=>c.PublishStatus">
-        <Tag Color="@(context.PublishStatus == 1 ? "Green" : "Gold")">
+        <Tag Color="@(context.PublishStatus == 1 ? "Green" : "Gray")">
             @(context.PublishStatus == 1 ? "已发布" : "待发布")
         </Tag>
     </PropertyColumn>
@@ -56,41 +65,70 @@
     </ActionColumn>
 </Table>
 
-<Modal Title="新建组件" @bind-Visible="@_formVisible" OnOk="OnConfirmAsync">
+<Modal Title="组件设计" @bind-Visible="@_formVisible" OnOk="OnConfirmAsync"
+Width="1200">
     <Form Model="@_componentPartsSchema" OnFinish="OnFinishAsync" @ref="@_form"
-    ValidateOnChange="true" LabelColSpan="8" WrapperColSpan="16">
-        <FormItem Label="Library" Required>
-            <Input @bind-Value="@context.LibraryId" />
-        </FormItem>
-        <FormItem Label="Name" Required>
-            <Input @bind-Value="@context.ComponentName" />
-        </FormItem>
-        <FormItem Label="组件名称" Required>
-            <Input @bind-Value="@context.Label" />
-        </FormItem>
-        <FormItem Label="组件类型" Required>
-            <RadioGroup @bind-Value="@context.ComponentType">
-                <Radio Value="1">原子组件</Radio>
-                <Radio Value="2">组合组件</Radio>
-            </RadioGroup>
-        </FormItem>
-        <FormItem Label="是否容器">
-            <Checkbox @bind-Checked="@context.IsContainer"></Checkbox>
-        </FormItem>
-        <FormItem Label="发布状态" Required>
-            <RadioGroup @bind-Value="@context.PublishStatus">
-                <Radio Value="0">待发布</Radio>
-                <Radio Value="1">已发布</Radio>
-            </RadioGroup>
-        </FormItem>
-        <FormItem Label="排序">
-            <InputNumber @bind-Value="@context.Order" Min="0" DefaultValue="0"></InputNumber>
-        </FormItem>
+    ValidateOnChange="true" WrapperColSpan="16" LabelColSpan="8">
+        <div style="width:60%; float: left;">
+            <FormItem Label="组件库标识" Style="width:48%; float:left;">
+                <Input Disabled @bind-Value="@context.LibraryId" />
+            </FormItem>
+            <FormItem Label="组件标识" Style="width:48%; float:left;">
+                <Input Disabled @bind-Value="@context.ComponentId" />
+            </FormItem>
+            <FormItem Label="组件名称" Required Style="width:48%; float:left;">
+                <Input @bind-Value="@context.ComponentName" />
+            </FormItem>
+            <FormItem Label="组件中文名" Required Style="width:48%; float:left;">
+                <Input @bind-Value="@context.Label" />
+            </FormItem>
+            <FormItem Label="组件类型" Required Style="width:48%; float:left;">
+                <RadioGroup @bind-Value="@context.ComponentType">
+                    <Radio Value="1">原子组件</Radio>
+                    <Radio Value="2">组合组件</Radio>
+                </RadioGroup>
+            </FormItem>
+            <FormItem Label="容器组件" Style="width:48%; float:left;">
+                <Switch @bind-Checked="@context.IsContainer"></Switch>
+            </FormItem>
+            @if (context.IsContainer == false)
+            {
+                <FormItem Label="支持数据源" Style="width:48%; float:left;">
+                    <Switch @bind-Checked="@context.IsSupportDataSource"></Switch>
+                </FormItem>
+                @if (context.IsSupportDataSource)
+                {
+                    <FormItem Label="数据源分类" Style="width:48%; float:left;">
+                        <EnumRadioGroup TEnum="ComponentDataSourceGroupTypeEnum"
+                        @bind-Value="@context.DataSource.DataSourceGroupType"></EnumRadioGroup>
+                    </FormItem>
+                    <FormItem Label="数据源" WrapperColSpan="20" LabelColSpan="4" Style="width:95%; float:left;">
+                        <TextArea @bind-Value="@_textDataSource" Rows="16"></TextArea>
+                    </FormItem>
+                }
+            }
+            <FormItem Label="排序" Style="width:48%; float:left;">
+                <InputNumber @bind-Value="@context.Order" Min="0" DefaultValue="0"></InputNumber>
+            </FormItem>
+            <FormItem Label="发布状态" Required Style="width:48%; float:left;">
+                <RadioGroup @bind-Value="@context.PublishStatus">
+                    <Radio Value="0">待发布</Radio>
+                    <Radio Value="1">已发布</Radio>
+                </RadioGroup>
+            </FormItem>
+        </div>
+        <div style="width:40%; float: left;">
+            <span>组件 RenderFragment: </span>
+            <FormItem Required WrapperColSpan="24">
+                <TextArea @bind-Value="@_textComponentFragment" Rows="25"></TextArea>
+            </FormItem>
+        </div>
+        <div style="clear:both;"></div>
     </Form>
 </Modal>
 
 <Modal Title="组件Json文本编辑" @bind-Visible="@_textFormVisible" OnOk="OnTextFormConfirmAsync"
-     Width="600" MaxBodyHeight="700">
+Width="600" MaxBodyHeight="700">
     <TextArea @bind-value="@_textFormValue" MinRows="5" Style="width: 100%;"></TextArea>
 </Modal>
 
@@ -102,10 +140,11 @@
     public Action Refresh { get; set; }
 
     IEnumerable<ComponentPartsListModel> selectedRows;
-    int _total = 0;
 
     private bool _formVisible = false;
     private Form<ComponentPartsSchema> _form;
+    private string _textComponentFragment;
+    private string _textDataSource;
     private IList<ComponentPartsListModel> _componentPartsList;
     private ComponentPartsSchema _componentPartsSchema = new ComponentPartsSchema();
 
@@ -118,21 +157,23 @@
     {
         await base.OnInitializedAsync();
 
-        _total = 50;
         _componentPartsList = await ComponentPartsListState.GetOrAddAsync(this, async () =>
         {
-            return await LoadComponentPartsAsync(1, 50);
+            return await LoadComponentPartsAsync();
         });
     }
 
-    private async Task<IList<ComponentPartsListModel>> LoadComponentPartsAsync(int pageIndex, int pageSize)
+    private async Task<IList<ComponentPartsListModel>> LoadComponentPartsAsync()
     {
         return await ComponentPartsAppService.GetListAsync(LibraryId);
     }
 
     private async Task<ComponentPartsSchema> GetComponentPartsAsync(string componentPartsId)
     {
-        return await ComponentPartsAppService.GetByIdAsync(LibraryId, componentPartsId);
+        var component = await ComponentPartsAppService.GetByIdAsync(LibraryId, componentPartsId);
+        _textComponentFragment = component.Fragment.ToJson(writeIndented: true);
+        _textDataSource = component.DataSource?.ToJson(writeIndented: true);
+        return component;
     }
 
     private void CreateAsync()
@@ -164,13 +205,7 @@
     {
         _componentPartsSchema = await GetComponentPartsAsync(componentId);
 
-        JsonSerializerOptions jsonSerializerOptions = new JsonSerializerOptions()
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            Encoder = JavaScriptEncoder.Create(UnicodeRanges.BasicLatin, UnicodeRanges.CjkUnifiedIdeographs),
-            WriteIndented = true
-        };
-        _textFormValue = JsonSerializer.Serialize(_componentPartsSchema, jsonSerializerOptions);
+        _textFormValue = _componentPartsSchema.ToJson(writeIndented: true);
         _textFormVisible = true;
 
         StateHasChanged();
@@ -188,6 +223,8 @@
         var validate = _form.Validate();
         if (validate)
         {
+            _componentPartsSchema.Fragment = _textComponentFragment.FromJson<ComponentPartsFragmentSchema>();
+            _componentPartsSchema.DataSource = _textDataSource.FromJson<ComponentPartsDataSourceSchema>();
             var isSuccess = await SaveComponentPartsSchemaAsync();
             if (isSuccess)
             {
@@ -210,7 +247,7 @@
 
     private async Task OnFinishAsync()
     {
-        _componentPartsList = await LoadComponentPartsAsync(1, 50);
+        _componentPartsList = await LoadComponentPartsAsync();
     }
 
     private async Task OnTextFormConfirmAsync(MouseEventArgs e)
@@ -220,7 +257,7 @@
         if (isSuccess)
         {
             _textFormVisible = false;
-            _componentPartsList = await LoadComponentPartsAsync(1, 50);
+            _componentPartsList = await LoadComponentPartsAsync();
 
             await Message.Success("保存成功！");
         }

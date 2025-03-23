@@ -1,5 +1,5 @@
 ﻿@namespace H.LowCode.Themes.AntBlazor
-@inherits LowCodeComponentBase
+@inherits RenderEngineLowCodeComponentBase
 
 @inject IFormDataAppService FormDataAppService
 
@@ -41,7 +41,11 @@
 
     private async Task OnFinishAsync()
     {
-        await FormDataAppService.SaveAsync(formDTO);
+        var success = await FormDataAppService.SaveAsync(formDTO);
+        if (success)
+            await Message.Success("保存成功");
+        else
+            await Message.Error("保存失败");
     }
 
     private void OnFinishFailed(EditContext editContext)

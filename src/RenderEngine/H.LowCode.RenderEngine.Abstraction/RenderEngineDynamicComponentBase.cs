@@ -5,13 +5,12 @@ using System.Linq;
 using System.Text;
 using H.LowCode.MetaSchema;
 using System.Reflection;
-using H.LowCode.ComponentBase;
 using H.LowCode.MetaSchema.RenderEngine;
 using Microsoft.AspNetCore.Components.Rendering;
 
 namespace H.LowCode.RenderEngine.Abstraction;
 
-public abstract class RenderEngineDynamicComponentBase : LowCodeComponentBase
+public abstract class RenderEngineDynamicComponentBase : RenderEngineLowCodeComponentBase
 {
     protected virtual RenderFragment RenderComponent(
         bool isSupportDataSource, ComponentDataSourceSchema dataSource,
@@ -131,12 +130,18 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeComponentBase
         {
             builder.AddAttribute(index++, "ChildContent", (RenderFragment)(childBuilder =>
             {
-                Type childComponentType = Type.GetType(dataSource.DataSourceFragmentType, true);
+                if (string.IsNullOrEmpty(dataSource.DataSourceFragment.TypeName))
+                    throw new ArgumentNullException(nameof(dataSource.DataSourceFragment.TypeName));
+
+                Type childComponentType = Type.GetType(dataSource.DataSourceFragment.TypeName, true);
                 foreach (var option in dataSource.FiexdOptionDataSource)
                 {
                     childBuilder.OpenComponent(index++, childComponentType);
+                    foreach(var fragAttr in dataSource.DataSourceFragment.Attributes)
+                    {
+                        childBuilder.AddAttribute(index++, fragAttr.Name, option.Value);
+                    }
 
-                    childBuilder.AddAttribute(index++, "Value", option.Value);
                     //childBuilder.AddContent(index++, option.Label);
                     childBuilder.AddAttribute(index++, "ChildContent", (RenderFragment)((cb) =>
                     {

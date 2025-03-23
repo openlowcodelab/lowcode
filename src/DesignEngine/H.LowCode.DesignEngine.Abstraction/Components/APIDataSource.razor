@@ -1,5 +1,5 @@
 ﻿@namespace H.LowCode.DesignEngine.Abstraction
-@inherits LowCodeComponentBase
+@inherits DesignEngineLowCodeComponentBase
 
 @if (DataSource != null)
 {
@@ -26,11 +26,15 @@
         <TabPane Tab="Body">
             <label>数据类型：</label>
             <EnumRadioGroup TEnum="APIBodyTypeEnum" @bind-Value="@DataSource.Body.DataType"></EnumRadioGroup>
-            @if (DataSource.Body.DataType == APIBodyTypeEnum.Json
+            @if(DataSource.Body.DataType == APIBodyTypeEnum.None)
+            {
+                <TextArea Disabled Rows="10" Style="margin-top:10px;" />
+            }
+            else if (DataSource.Body.DataType == APIBodyTypeEnum.Json
               || DataSource.Body.DataType == APIBodyTypeEnum.Text
               || DataSource.Body.DataType == APIBodyTypeEnum.Raw)
             {
-                <TextArea @bind-Value="@DataSource.Body.Value" Rows="20"
+                <TextArea @bind-Value="@DataSource.Body.Value" Rows="10"
                     Style="margin-top:10px;" />
             }
             else if (DataSource.Body.DataType == APIBodyTypeEnum.Multipart)
