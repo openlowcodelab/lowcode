@@ -58,19 +58,8 @@ public static class ObjectMerger
 
     private static bool IsDefaultValue(Type type, object value)
     {
-        // 对于值类型，比较其默认值
-        if (type.IsValueType && Nullable.GetUnderlyingType(type) == null)
-        {
-            return Equals(value, Activator.CreateInstance(type));
-        }
-
-        // 对于引用类型，null 或者空字符串视为默认值
-        if (value == null || (type == typeof(string) && string.IsNullOrEmpty((string)value)))
-        {
-            return true;
-        }
-
-        return false;
+        var defaultValue = type.GetDefaultValue();
+        return value == defaultValue;
     }
 
     private static bool IsCollectionType(Type type)

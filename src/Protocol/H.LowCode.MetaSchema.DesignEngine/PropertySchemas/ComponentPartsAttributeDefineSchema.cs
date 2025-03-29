@@ -8,11 +8,8 @@ using System.Threading.Tasks;
 
 namespace H.LowCode.MetaSchema.DesignEngine;
 
-public class ComponentPartsAttributeDefineSchema
+public class ComponentPartsAttributeDefineSchema : ComponentAttributeDefineSchemaBase
 {
-    [JsonPropertyName("n")]
-    public string Name { get; set; }
-
     [JsonPropertyName("disn")]
     public string DisplayName { get; set; }
 
@@ -21,12 +18,6 @@ public class ComponentPartsAttributeDefineSchema
     /// </summary>
     [JsonPropertyName("pt")]
     public ComponentAttributeItemTypeEnum AttributeItemType { get; set; }
-
-    /// <summary>
-    /// 组件值类型
-    /// </summary>
-    [JsonPropertyName("compvaltype")]
-    public ComponentValueTypeEnum ComponentValueType { get; set; }
 
     [JsonPropertyName("required")]
     public bool IsRequired { get; set; }
@@ -37,15 +28,54 @@ public class ComponentPartsAttributeDefineSchema
     [JsonPropertyName("dftval")]
     public object DefaultValue { get; set; }
 
-    [JsonPropertyName("strval")]
-    public string StringValue { get; set; }
-
-    [JsonPropertyName("boolval")]
-    public bool? BoolValue { get; set; }
-
-    [JsonPropertyName("intval")]
-    public int? IntValue { get; set; }
-
     [JsonPropertyName("ops")]
     public Dictionary<string, object> Options { get; }
+
+    [JsonIgnore]
+    public string StringValue
+    {
+        get
+        {
+            return AttributeValue?.ToString();
+        }
+        set
+        {
+            if (value == null)
+                return;
+
+            AttributeValue = value;
+        }
+    }
+
+    [JsonIgnore]
+    public int IntValue
+    {
+        get
+        {
+            if (AttributeValue == null)
+                return default;
+
+            return (int)AttributeValue;
+        }
+        set
+        {
+            AttributeValue = value;
+        }
+    }
+
+    [JsonIgnore]
+    public bool BoolValue
+    {
+        get
+        {
+            if (AttributeValue == null)
+                return default;
+
+            return (bool)AttributeValue;
+        }
+        set
+        {
+            AttributeValue = value;
+        }
+    }
 }

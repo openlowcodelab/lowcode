@@ -1,58 +1,60 @@
 ﻿@namespace H.LowCode.DesignEngine
 @inherits DesignEngineLowCodeComponentBase
 
-@foreach (var group in Component.AttributeDefineGroups)
-{
-    if(!string.IsNullOrEmpty(group.DisplayName)){
-        <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:30px 0 10px;">
-            @group.DisplayName
-        </div>
-    }
-
-    foreach (var attrDefine in group.AttributeDefines)
+@if(Component?.AttributeDefineGroups != null){
+    foreach (var group in Component.AttributeDefineGroups)
     {
-        <div class="propertysetting-item">
-            <label>@attrDefine.DisplayName：</label>
+        if(!string.IsNullOrEmpty(group.GroupName)){
+            <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:30px 0 10px;">
+                @group.GroupName
+            </div>
+        }
 
-            @if (attrDefine.AttributeItemType == ComponentAttributeItemTypeEnum.Text)
-            {
-                <Input TValue="string" @bind-value="@attrDefine.StringValue" OnChange="OnStringPropertyChange" />
-            }
-            else if (attrDefine.AttributeItemType == ComponentAttributeItemTypeEnum.Text_Int)
-            {
-                <Input TValue="int?" @bind-value="@attrDefine.IntValue" OnChange="OnIntPropertyChange" />
-            }
-            else if (attrDefine.AttributeItemType == ComponentAttributeItemTypeEnum.Radio)
-            {
+        foreach (var attrDefine in group.AttributeDefines)
+        {
+            <div class="propertysetting-item">
+                <label>@attrDefine.DisplayName：</label>
 
-            }
-            else if (attrDefine.AttributeItemType == ComponentAttributeItemTypeEnum.Checkbox)
-            {
-                //TODO
-                @* <Checkbox @bind-checked="@property.BoolValue"></Checkbox> *@
-            }
-            else if (attrDefine.AttributeItemType == ComponentAttributeItemTypeEnum.Select)
-            {
+                @if (attrDefine.AttributeItemType == ComponentAttributeItemTypeEnum.Input)
+                {
+                    <Input TValue="string" @bind-value="@attrDefine.StringValue" OnChange="OnStringPropertyChange" />
+                }
+                else if (attrDefine.AttributeItemType == ComponentAttributeItemTypeEnum.InputNumber)
+                {
+                    <AntDesign.InputNumber TValue="int" @bind-value="@attrDefine.IntValue" OnChange="OnIntPropertyChange" />
+                }
+                else if (attrDefine.AttributeItemType == ComponentAttributeItemTypeEnum.Radio)
+                {
 
-            }
-            else if (attrDefine.AttributeItemType == ComponentAttributeItemTypeEnum.Switch)
-            {
+                }
+                else if (attrDefine.AttributeItemType == ComponentAttributeItemTypeEnum.Checkbox)
+                {
+                    //TODO
+                    @* <Checkbox @bind-checked="@property.BoolValue"></Checkbox> *@
+                }
+                else if (attrDefine.AttributeItemType == ComponentAttributeItemTypeEnum.Select)
+                {
 
-            }
-            else if (attrDefine.AttributeItemType == ComponentAttributeItemTypeEnum.Date)
-            {
+                }
+                else if (attrDefine.AttributeItemType == ComponentAttributeItemTypeEnum.Switch)
+                {
+                    <Switch @bind-Checked="@attrDefine.BoolValue"></Switch>
+                }
+                else if (attrDefine.AttributeItemType == ComponentAttributeItemTypeEnum.Date)
+                {
 
-            }
-            else if (attrDefine.AttributeItemType == ComponentAttributeItemTypeEnum.Textarea)
-            {
+                }
+                else if (attrDefine.AttributeItemType == ComponentAttributeItemTypeEnum.Textarea)
+                {
 
-            }
+                }
 
-            @if (!string.IsNullOrEmpty(attrDefine.Description))
-            {
-                <div style="color:#c7c7c7">@attrDefine.Description</div>
-            }
-        </div>
+                @if (!string.IsNullOrEmpty(attrDefine.Description))
+                {
+                    <div style="color:#c7c7c7">@attrDefine.Description</div>
+                }
+            </div>
+        }
     }
 }
 
@@ -72,7 +74,7 @@
         {
             t.AttributeDefines.ForEach(p =>
             {
-                if (string.Equals(p.Name, key))
+                if (string.Equals(p.AttributeName, key))
                     attrDefine = p;
             });
         });
@@ -87,7 +89,7 @@
 
     }
 
-    private void OnIntPropertyChange(int? value)
+    private void OnIntPropertyChange(int value)
     {
         
     }
