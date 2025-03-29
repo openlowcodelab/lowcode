@@ -1,0 +1,74 @@
+﻿@namespace H.LowCode.DesignEngine.Abstraction
+@inherits DesignEngineLowCodeComponentBase
+
+@if (DataSource != null)
+{
+    <AntDesign.Input TValue="string" @bind-Value="@DataSource.Path">
+        <AddOnBefore>
+            <SimpleSelect DefaultValue="GET" @bind-Value="@DataSource.Method"
+            Style="width: 100px;">
+                <SelectOptions>
+                    <SimpleSelectOption Value="GET" Label="GET"></SimpleSelectOption>
+                    <SimpleSelectOption Value="POST" Label="POST"></SimpleSelectOption>
+                    <SimpleSelectOption Value="PUT" Label="PUT"></SimpleSelectOption>
+                    <SimpleSelectOption Value="DELETE" Label="DELETE"></SimpleSelectOption>
+                </SelectOptions>
+            </SimpleSelect>
+        </AddOnBefore>
+    </AntDesign.Input>
+    <Tabs>
+        <TabPane Tab="Query">
+            <APIParamsList APIParams="@DataSource.Queries"></APIParamsList>
+        </TabPane>
+        <TabPane Tab="Headers">
+            <APIParamsList APIParams="@DataSource.Headers"></APIParamsList>
+        </TabPane>
+        <TabPane Tab="Body">
+            <label>数据类型：</label>
+            <EnumRadioGroup TEnum="APIBodyTypeEnum" @bind-Value="@DataSource.Body.DataType"></EnumRadioGroup>
+            @if(DataSource.Body.DataType == APIBodyTypeEnum.None)
+            {
+                <TextArea Disabled Rows="10" Style="margin-top:10px;" />
+            }
+            else if (DataSource.Body.DataType == APIBodyTypeEnum.Json
+              || DataSource.Body.DataType == APIBodyTypeEnum.Text
+              || DataSource.Body.DataType == APIBodyTypeEnum.Raw)
+            {
+                <TextArea @bind-Value="@DataSource.Body.Value" Rows="10"
+                    Style="margin-top:10px;" />
+            }
+            else if (DataSource.Body.DataType == APIBodyTypeEnum.Multipart)
+            {
+                <APIParamsList APIParams="@DataSource.Body.MultipartParams"></APIParamsList>
+            }
+            else if (DataSource.Body.DataType == APIBodyTypeEnum.Baniry)
+            {
+                
+            }
+        </TabPane>
+        <TabPane Tab="Auth">
+
+        </TabPane>
+        <TabPane Tab="设置">
+
+        </TabPane>
+    </Tabs>
+}
+
+@code {
+    [Parameter]
+    public APIDataSourceSchema DataSource { get; set; }
+
+    [Parameter]
+    public EventCallback<APIDataSourceSchema> DataSourceChanged { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (DataSource == null)
+        {
+            DataSource = new();
+        }
+
+        await base.OnInitializedAsync();
+    }
+}

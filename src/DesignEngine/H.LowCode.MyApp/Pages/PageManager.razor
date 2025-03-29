@@ -1,10 +1,9 @@
 ﻿@page "/myapp/{AppId}/pagemanager"
 @namespace H.LowCode.MyApp
-@inherits LowCodePageComponentBase
+@inherits DesignEngineLowCodePageComponentBase
 @layout MyAppLayout
 
 @inject IPageAppService PageAppService
-@inject IMessageService Message
 @inject ComponentState<PageManager, IList<PageListModel>> PageListState
 
 <PageTitle>页面管理</PageTitle>
@@ -26,7 +25,9 @@
     <PropertyColumn Title="类型" Property="c=>c.PageType" Sortable />
     <PropertyColumn Title="修改时间" Property="c=>c.ModifiedTime" Format="yyyy-MM-dd HH:mm:ss" />
     <PropertyColumn Title="发布状态" Property="c=>c.PublishStatus">
-        <Switch @bind-Checked="@context.PublishStatus" />
+        <Tag Color="@(context.PublishStatus == 1 ? "Green" : "Gold")">
+            @(context.PublishStatus == 1 ? "已发布" : "待发布")
+        </Tag>
     </PropertyColumn>
     <ActionColumn Title="操作" Width="180">
         <Space Size=@("middle")>
@@ -52,10 +53,29 @@
         <FormItem Label="类型" Required>
             <EnumRadioGroup TEnum="PageTypeEnum" @bind-Value="@context.PageType" Name="radio_pageType"></EnumRadioGroup>
         </FormItem>
+        @if (context.PageType == PageTypeEnum.Form)
+        {
+            <FormItem Label="数据源类型" Required>
+                <EnumRadioGroup TEnum="PageDataSourceTypeEnum" DefaultValue="PageDataSourceTypeEnum.DB" @bind-Value="@context.DataSource.DataSourceType" Name="radio_datasourcetype"></EnumRadioGroup>
+            </FormItem>
+
+            @if (context.DataSource.DataSourceType == PageDataSourceTypeEnum.DB)
+            {
+                <FormItem Label="表" Required>
+                    <Input TValue="string" @bind-value="@context.DataSource.DataSourceValue" />
+                </FormItem>
+            }
+            else if (context.DataSource.DataSourceType == PageDataSourceTypeEnum.API)
+            {
+                <FormItem Label="API" Required>
+                    
+                </FormItem>
+            }
+        }
         <FormItem Label="发布状态" Required>
             <RadioGroup @bind-Value="@context.PublishStatus">
-                <Radio Value="false">待发布</Radio>
-                <Radio Value="true">已发布</Radio>
+                <Radio Value="0">待发布</Radio>
+                <Radio Value="1">已发布</Radio>
             </RadioGroup>
         </FormItem>
         <FormItem Label="排序">
@@ -72,9 +92,9 @@
     int _total = 0;
 
     private bool _visible;
-    private Form<PageSchema> _form;
+    private Form<PagePartsSchema> _form;
     private IList<PageListModel> _pageList;
-    private PageSchema _pageSchema = new PageSchema();
+    private PagePartsSchema _pageSchema = new PagePartsSchema();
 
     protected override async Task OnInitializedAsync()
     {
@@ -92,14 +112,14 @@
         return await PageAppService.GetListAsync(AppId);
     }
 
-    private async Task<PageSchema> GetPageAsync(string pageId)
+    private async Task<PagePartsSchema> GetPageAsync(string pageId)
     {
         return await PageAppService.GetByIdAsync(AppId, pageId);
     }
 
     private void CreateAsync(string parentId)
     {
-        _pageSchema = new PageSchema();
+        _pageSchema = new PagePartsSchema();
         _pageSchema.AppId = AppId;
         _visible = true;
 

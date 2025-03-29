@@ -1,11 +1,11 @@
 ﻿using H.LowCode.ComponentBase;
-using H.LowCode.ComponentParts.BasicComponents;
-using H.LowCode.ComponentParts.ExtensionComponents;
+using H.LowCode.Components.AntBlazor;
+using H.LowCode.Components.Extension;
 using H.LowCode.DesignEngine.Application;
-using H.LowCode.EntityFrameworkCore;
+using H.LowCode.DesignEngine.EntityFrameworkCore;
+using H.LowCode.DesignEngine.Repository.JsonFile;
 using H.LowCode.MyApp;
 using H.LowCode.PartsDesignEngine;
-using H.LowCode.Repository.JsonFile;
 using H.LowCode.Workbench;
 using H.Util.Blazor;
 using Microsoft.OpenApi.Models;
@@ -23,8 +23,8 @@ namespace H.LowCode.DesignEngine.Host;
     typeof(AbpSwashbuckleModule),
     //=====lowcode-server=====//
     typeof(DesignEngineApplicationModule),
-    typeof(LowCodeEntityFrameworkCoreModule),
-    typeof(MetaJsonFileRepositoryModule),
+    typeof(DesignEngineEntityFrameworkCoreModule),
+    typeof(DesignEngineJsonFileRepositoryModule),
     //=====lowcode-web=====//
     //Workbench
     typeof(LowCodeWorkbenchModule),

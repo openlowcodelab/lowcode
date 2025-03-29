@@ -1,10 +1,9 @@
 ﻿@page "/designer/componentparts/{PartsId}"
 @namespace H.LowCode.PartsDesignEngine
-@inherits LowCodePageComponentBase
+@inherits DesignEngineLowCodePageComponentBase
 @layout PartsDesignEngineLayout
 
 @inject DragDropStateService DragDropStateService
-@inject IMessageService _message
 
 <PageTitle>@($"{PartsId} - 组件物料设计器")</PageTitle>
 
@@ -13,15 +12,9 @@
         <div style="float:left;">
             <a href="javascript:void(0)"> @("<") 返回 </a>
         </div>
-        @*<div style="text-align:center;">
-        <Menu Theme="MenuTheme.Light" Mode="MenuMode.Horizontal" DefaultSelectedKeys=@(new[]{"2"})>
-        <MenuItem Key="1">PC</MenuItem>
-        <MenuItem Key="2">Mobile</MenuItem>
-        </Menu>
-        </div>*@
         <div style="float:right;">
             <Button>预览</Button>
-            <Button Type="primary" OnClick="() => SaveComponentPartsSchemaAsync()">保存</Button>
+            <Button Type="ButtonType.Primary" OnClick="() => SaveComponentPartsSchemaAsync()">保存</Button>
         </div>
     </Header>
     <AntDesign.Layout>
@@ -61,8 +54,8 @@
         if (string.Equals("newparts", PartsId))
         {
             _isNewPage = true;
-            PartsId = Guid.NewGuid().ToString();
-            var newPage = new ComponentPartsSchema() { Id = PartsId };
+            PartsId = ShortIdGenerator.Generate();
+            var newPage = new ComponentPartsSchema() { };
 
             //DragDropStateService.SetPage(AppId, newPage);
             return newPage;
@@ -93,14 +86,14 @@
             if (_isNewPage)
             {
                 _isNewPage = false;
-                base.NavigateTo($"/designer/componentparts/{componentParts.Id}");
+                base.NavigateTo($"/designer/componentparts/{componentParts.ComponentId}");
             }
 
-            await _message.Success("保存成功！");
+            await Message.Success("保存成功！");
         }
         else
         {
-            await _message.Error("保存失败");
+            await Message.Error("保存失败");
         }
     }
 

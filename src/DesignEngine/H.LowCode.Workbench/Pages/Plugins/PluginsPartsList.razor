@@ -1,0 +1,49 @@
+﻿@namespace H.LowCode.Workbench
+@inherits DesignEngineLowCodeComponentBase
+@layout WorkbenchLayout
+
+<div style="display: flex; justify-content: space-between; margin: 0 0 8px 5px;">
+    <div style="width:250px;">
+        <Search Placeholder="插件名称" OnSearch="()=>{}" />
+    </div>
+</div>
+
+<Card Title="微信支付" Style="float:left; width:300px; margin:5px;">
+    <Extra>
+        <a href="#">安装</a>
+    </Extra>
+    <Body>
+        <p>Card content</p>
+    </Body>
+</Card>
+<Card Title="支付宝" Style="float:left; width:300px; margin:5px;">
+    <Extra>
+        <a href="#">安装</a>
+    </Extra>
+    <Body>
+        <p>Card content</p>
+    </Body>
+</Card>
+<Card Title="ChatGPT" Style="float:left; width:300px; margin:5px;">
+    <Extra>
+        <a href="#">安装</a>
+    </Extra>
+    <Body>
+        <p>Card content</p>
+    </Body>
+</Card>
+<Card Title="电子签章" Style="float:left; width:300px; margin:5px;">
+    <Extra>
+        <a href="#">安装</a>
+    </Extra>
+    <Body>
+        <p>Card content</p>
+    </Body>
+</Card>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+}

@@ -1,5 +1,4 @@
-﻿using H.LowCode.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -22,7 +21,7 @@ public class EntityFrameworkCoreDbSchemaMigrator : IDbSchemaMigrator
     public async Task MigrateAsync()
     {
         await _serviceProvider
-            .GetRequiredService<DbMigratorDbContext>()
+            .GetRequiredService<MigratorDbContext>()
             .Database
             .MigrateAsync();
     }

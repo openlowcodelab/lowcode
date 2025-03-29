@@ -1,6 +1,6 @@
 ﻿using H.LowCode.DesignEngine.Application.Contracts;
 using H.LowCode.DesignEngine.Model;
-using H.LowCode.Domain;
+using H.LowCode.DesignEngine.Domain;
 using H.LowCode.MetaSchema;
 using Microsoft.Extensions.DependencyInjection;
 using System.Collections.Generic;
@@ -27,7 +27,7 @@ public class DataSourceAppService : ApplicationService, IDataSourceAppService
                 Id = dataSourceSchema.Id,
                 Name = dataSourceSchema.Name,
                 DisplayName = dataSourceSchema.DisplayName,
-                Extra = dataSourceSchema.DataSourceType == DataSourceTypeEnum.API ?
+                Extra = dataSourceSchema.DataSourceType == ComponentDataSourceTypeEnum.API ?
                         $"{dataSourceSchema.API.Method} {dataSourceSchema.API.Path}" : string.Empty,
                 Order = dataSourceSchema.Order,
                 DataSourceType = dataSourceSchema.DataSourceType,

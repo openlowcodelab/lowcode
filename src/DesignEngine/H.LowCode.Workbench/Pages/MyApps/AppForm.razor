@@ -1,0 +1,69 @@
+﻿@namespace H.LowCode.Workbench
+@inherits DesignEngineLowCodeComponentBase
+@layout WorkbenchLayout
+
+@inject IAppApplicationService AppApplicationService
+
+<Form Model="@AppSchema" LabelColSpan="8" WrapperColSpan="16" @ref="@_form"
+ValidateOnChange="true">
+    <FormItem Label="应用标识" Required>
+        <Input @bind-Value="@context.Id" />
+    </FormItem>
+    <FormItem Label="应用名称" Required>
+        <Input @bind-Value="@context.Name" />
+    </FormItem>
+    <FormItem Label="应用描述">
+        <TextArea @bind-Value="@context.Description" />
+    </FormItem>
+    <FormItem Label="支持平台">
+        <EnumCheckboxGroup TEnum="SupportPlatformEnum" @bind-Value="@context.SupportPlatforms"></EnumCheckboxGroup>
+    </FormItem>
+</Form>
+
+@code {
+    [Parameter]
+    public AppPartsSchema AppSchema { get; set; }
+
+    [Parameter]
+    public Action OnSubmit { get; set; }
+
+    private Form<AppPartsSchema> _form;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        if (AppSchema == null)
+            AppSchema = new();
+    }
+
+    public async Task SubmitAsync()
+    {
+        var success = await SaveAppSchema();
+
+        if (success && OnSubmit != null)
+            OnSubmit();
+    }
+
+    private async Task<bool> SaveAppSchema()
+    {
+        bool isSuccess = false;
+        var validate = _form.Validate();
+        if (validate)
+        {
+            isSuccess = await AppApplicationService.SaveAsync(AppSchema);
+            if (isSuccess)
+            {
+                _form.Submit();
+                //base.NavigateTo($"/workbench/myapps");
+                await Message.Success("新建成功！");
+                _form.Reset();
+            }
+            else
+            {
+                await Message.Error("新建失败");
+            }
+        }
+        return isSuccess;
+    }
+}

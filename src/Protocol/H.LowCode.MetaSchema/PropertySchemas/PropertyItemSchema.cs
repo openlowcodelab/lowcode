@@ -11,30 +11,25 @@ public class PropertyItemSchema
     [JsonPropertyName("label")]
     public string Label { get; set; }
 
-    [JsonPropertyName("showLabel")]
-    public bool IsShowLabel { get; set; } = true;
+    [JsonPropertyName("desc")]
+    public string Description { get; set; }
 
-    public int Sort { get; set; }
+    public int Order { get; set; }
 
     [JsonPropertyName("strval")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string StringValue { get; set; }
 
     [JsonPropertyName("boolval")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? BoolValue { get; set; }
 
     [JsonPropertyName("intval")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public int? IntValue { get; set; }
 
-    [JsonPropertyName("desc")]
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-    public string Description { get; set; }
+    public IDictionary<string, string> Options { get; set; }
 
-    /// <summary>
-    /// 设置项类型
-    /// </summary>
-    [JsonPropertyName("itemtype")]
-    public PropertyItemTypeEnum SettingItemType { get; set; }
+    ///// <summary>
+    ///// 设置项类型
+    ///// </summary>
+    //[JsonPropertyName("itemtype")]
+    //public ComponentAttributeItemTypeEnum SettingItemType { get; set; }
 }

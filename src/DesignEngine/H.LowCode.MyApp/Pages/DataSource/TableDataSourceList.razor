@@ -1,0 +1,326 @@
+﻿@namespace H.LowCode.MyApp
+@inherits DesignEngineLowCodeComponentBase
+
+@inject IDataSourceAppService DataSourceAppService
+@inject ComponentState<TableDataSourceList, IList<DataSourceListModel>> DataSourceListState
+
+<div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
+    <div style="width:250px;">
+        <Search Placeholder="表名、表中文名" OnSearch="()=>{}" />
+    </div>
+    <div style="width:80px; line-height:32px; margin: 0 22px 0 0;">
+        <Button Type="@ButtonType.Primary" OnClick="CreateAsync">新建数据表</Button>
+    </div>
+</div>
+<Table TItem="DataSourceListModel" DataSource="@_dataSourceList" Total="_total"
+@bind-PageIndex="@_pageIndex" @bind-PageSize="@_pageSize">
+    <PropertyColumn Title="名称" Property="c=>c.Name" Sortable />
+    <PropertyColumn Title="中文名" Property="c=>c.DisplayName" Sortable />
+    <PropertyColumn Title="修改人" Property="c=>c.ModifiedUser" />
+    <PropertyColumn Title="修改时间" Property="c=>c.ModifiedTime" Format="yyyy-MM-dd HH:mm:ss" />
+    <PropertyColumn Title="发布状态" Property="c=>c.PublishStatus">
+        <Switch @bind-Checked="@context.PublishStatus" />
+    </PropertyColumn>
+    <ActionColumn Title="操作">
+        <Space Size=@("middle")>
+            <SpaceItem>
+                <a onclick="@(()=>EditAsync(@context.Id))">编辑</a>
+            </SpaceItem>
+            <SpaceItem>
+                <a onclick="@(()=>DeleteAsync(@context.Id))" style="color:#ff4d4f">删除</a>
+            </SpaceItem>
+        </Space>
+    </ActionColumn>
+</Table>
+
+<Modal Title="@_modalTitle" @bind-Visible="@_visible" OnOk="OnConfirmAsync" Width="1100" Resizable="true" Draggable="true">
+    @* 数据表基本信息 *@
+    <Descriptions Style="margin: 0 0 8px 0;" Bordered>
+        <DescriptionsItem Title="表名">
+            <Input @bind-Value="@_dataSource.Name" Disabled="@(!_dataSource.Name.IsNullOrEmpty())">
+        </DescriptionsItem>
+        <DescriptionsItem Title="表中文名" Span="2">
+            <Input @bind-Value="@_dataSource.DisplayName"></Input>
+        </DescriptionsItem>
+        <DescriptionsItem Title="描述" Span="3">
+            <TextArea @bind-Value="@_dataSource.Description" Rows="2"></TextArea>
+        </DescriptionsItem>
+    </Descriptions>
+
+    @* 字段列表 *@
+    <div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
+        <div style="width:250px;">
+            <Search Placeholder="字段名" OnSearch="()=>{}" />
+        </div>
+        <div style="width:80px; line-height:32px; margin: 0 22px 0 0;">
+            <Button Type="@ButtonType.Primary" OnClick="CreateFieldAsync">新增字段</Button>
+        </div>
+    </div>
+    <Table TItem="TableFieldSchema" DataSource="@_dataSource.TableFields">
+        <ChildContent Context="context">
+            <PropertyColumn Title="字段名" Property="c => c.Name">
+                @if (!_fieldEditCache[context.Id].edit)
+                {
+                    @context.Name
+                }
+                else
+                {
+                    <Input @bind-Value="_fieldEditCache[context.Id].field.Name" />
+                }
+            </PropertyColumn>
+            <PropertyColumn Title="字段中文名" Property="c => c.DisplayName">
+                @if (!_fieldEditCache[context.Id].edit)
+                {
+                    @context.DisplayName
+                }
+                else
+                {
+                    <Input @bind-Value="_fieldEditCache[context.Id].field.DisplayName" />
+                }
+            </PropertyColumn>
+            <PropertyColumn Title="字段类型" Property="c => c.Type">
+                @if (!_fieldEditCache[context.Id].edit)
+                {
+                    @context.Type
+                }
+                else
+                {
+                    <Input @bind-Value="_fieldEditCache[context.Id].field.Type" />
+                }
+            </PropertyColumn>
+            <PropertyColumn Title="是否主键" Property="c => c.IsPrimaryKey">
+                @if (!_fieldEditCache[context.Id].edit)
+                {
+                    @if (context.IsPrimaryKey)
+                    {
+                        <span style="color:#ff4d4f;">是</span>
+                    }
+                    else
+                    {
+                        <span>否</span>
+                    }
+                }
+                else
+                {
+                    <Checkbox @bind-Checked="_fieldEditCache[context.Id].field.IsPrimaryKey"></Checkbox>
+                }
+            </PropertyColumn>
+            <PropertyColumn Title="是否唯一" Property="c => c.IsUnique">
+                @if (!_fieldEditCache[context.Id].edit)
+                {
+                    @if(context.IsUnique)
+                    {
+                        <span style="color:#ff4d4f;">是</span>
+                    }
+                    else
+                    {
+                        <span>否</span>
+                    }
+                }
+                else
+                {
+                    <Checkbox @bind-Checked="_fieldEditCache[context.Id].field.IsUnique"></Checkbox>
+                }
+            </PropertyColumn>
+            <PropertyColumn Title="是否可空" Property="c => c.IsNullable">
+                @if (!_fieldEditCache[context.Id].edit)
+                {
+                    @if (context.IsNullable)
+                    {
+                        <span>是</span>
+                    }
+                    else
+                    {
+                        <span style="color:#ff4d4f;">否</span>
+                    }
+                }
+                else
+                {
+                    <Checkbox @bind-Checked="_fieldEditCache[context.Id].field.IsNullable"></Checkbox>
+                }
+            </PropertyColumn>
+            <ActionColumn Title="操作">
+                @if (!_fieldEditCache[@context.Id].edit)
+                {
+                    <a onclick="@(() => FieldStartEdit(@context.Id))">编辑</a>
+                    <a onclick="@(() => DeleteFieldAsync(@context.Id))" style="color:#ff4d4f">删除</a>
+                }
+                else
+                {
+                    <a onclick="@(() => SaveFieldAsync(context.Id))" class="save">保存</a>
+                    <Popconfirm Title="确定取消吗?" OkText="确定" CancelText="取消"
+                    OnConfirm="() => FieldCancelEditAsync(context.Id)">
+                        <a>取消</a>
+                    </Popconfirm>
+                }
+            </ActionColumn>
+        </ChildContent>
+    </Table>
+</Modal>
+
+@code {
+    [Parameter]
+    public string AppId { get; set; }
+
+    IDictionary<string, (bool edit, TableFieldSchema field)> _fieldEditCache = new Dictionary<string, (bool edit, TableFieldSchema field)>();
+
+    private IList<DataSourceListModel> _dataSourceList;
+    private DataSourceSchema _dataSource;
+
+    int _pageIndex = 1;
+    int _pageSize = 10;
+    int _total = 0;
+
+    private bool _visible;
+    private string _modalTitle;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        _total = 50;
+        _dataSourceList = await DataSourceListState.GetOrAddAsync(this, async () =>
+        {
+            return await LoadDataSourcesAsync(1, 50);
+        });
+    }
+
+    private async Task<IList<DataSourceListModel>> LoadDataSourcesAsync(int pageIndex, int pageSize)
+    {
+        return await DataSourceAppService.GetListAsync(AppId, new() { DataSourceType = ComponentDataSourceTypeEnum.DB });
+    }
+
+    private async Task<DataSourceSchema> GetDataSourceAsync(string dataSourceId)
+    {
+        var dataSourceSchema = await DataSourceAppService.GetByIdAsync(AppId, dataSourceId);
+
+        //初始化缓存
+        dataSourceSchema.TableFields.ForEach(item =>
+        {
+            _fieldEditCache[item.Id] = (false, item);
+        });
+
+        return dataSourceSchema;
+    }
+
+    private async Task OnConfirmAsync(MouseEventArgs e)
+    {
+        // var validate = _form.Validate();
+        // if (validate)
+        // {
+        var isSuccess = await SaveDataSourceSchemaAsync();
+        if (isSuccess)
+        {
+            _visible = false;
+            //_form.Submit();
+            await Message.Success("保存成功");
+            //_form.Reset();
+
+            //StateHasChanged();
+        }
+        else
+        {
+            _visible = true;
+            await Message.Error($"保存失败");
+        }
+        // }
+        // else
+        // {
+        //     _visible = true;
+        // }
+    }
+
+    private async Task OnFinishAsync()
+    {
+        _dataSourceList = await LoadDataSourcesAsync(1, 50);
+    }
+
+    private async Task<bool> SaveDataSourceSchemaAsync()
+    {
+        //过滤空字段
+        _dataSource.TableFields = _dataSource.TableFields
+            .Where(t => !t.Name.IsNullOrEmpty() && !t.DisplayName.IsNullOrEmpty())
+            .ToList();
+
+        return await DataSourceAppService.SaveAsync(AppId, _dataSource);
+    }
+
+    private async Task CreateAsync()
+    {
+        await Task.Delay(1);
+        _dataSource = new() { AppId = AppId, DataSourceType = ComponentDataSourceTypeEnum.DB };
+        _visible = true;
+        _modalTitle = "新建数据表";
+
+        StateHasChanged();
+    }
+
+    private async Task EditAsync(string id)
+    {
+        _visible = true;
+        _modalTitle = "编辑数据表";
+        _dataSource = await GetDataSourceAsync(id);
+
+        StateHasChanged();
+    }
+
+    private async Task DeleteAsync(string id)
+    {
+        await DataSourceAppService.DeleteAsync(AppId, id);
+
+        await Message.Success("删除成功！");
+    }
+
+    private async Task PublishAsync(string id)
+    {
+        await Task.Delay(1);
+    }
+
+    private async Task CreateFieldAsync()
+    {
+        await Task.Delay(1);
+
+        TableFieldSchema newField = new() { Id = ShortIdGenerator.Generate(), IsNullable = true };
+
+        //添加编辑缓存
+        _fieldEditCache[newField.Id] = (true, newField);
+
+        _dataSource.TableFields.Add(newField);
+
+        //StateHasChanged();
+    }
+
+    private async Task SaveFieldAsync(string id)
+    {
+        await Task.Delay(1);
+        var index = _dataSource.TableFields.FindIndex(item => item.Id == id);
+        _dataSource.TableFields[index] = _fieldEditCache[id].field; // apply the copy to data source
+        _fieldEditCache[id] = (false, _dataSource.TableFields[index]); // don't affect rows in editing
+
+        StateHasChanged();
+    }
+
+    private async Task DeleteFieldAsync(string id)
+    {
+        await Task.Delay(1);
+
+    }
+
+    private async Task FieldStartEdit(string id)
+    {
+        await Task.Delay(1);
+        var data = _fieldEditCache[id];
+        _fieldEditCache[id] = (true, data.field with { }); // add a copy in cache
+
+        StateHasChanged();
+    }
+
+    private async Task FieldCancelEditAsync(string id)
+    {
+        await Task.Delay(1);
+        var data = _dataSource.TableFields.FirstOrDefault(item => item.Id == id);
+        _fieldEditCache[id] = (false, data); // recovery
+
+        StateHasChanged();
+    }
+}

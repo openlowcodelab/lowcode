@@ -1,72 +1,86 @@
 ﻿@namespace H.LowCode.DesignEngine
-@inherits LowCodeComponentBase
+@inherits DesignEngineLowCodeComponentBase
 
-<div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:30px 0 10px;">更多</div>
-
-@foreach (var extPropertyKV in Component.ComponentProperty.ExtraProperties)
-{
-    <div class="propertysetting-item">
-        @if (extPropertyKV.Value.IsShowLabel)
-        {
-            <label>@extPropertyKV.Value.Label：</label>
-        }
-
-        @if (extPropertyKV.Value.SettingItemType == PropertyItemTypeEnum.Text)
-        {
-            <Input TValue="string" @bind-value="@extPropertyKV.Value.StringValue" OnChange="OnStringPropertyChange" />
-        }
-        else if (extPropertyKV.Value.SettingItemType == PropertyItemTypeEnum.Text_Int)
-        {
-            <Input TValue="int?" @bind-value="@extPropertyKV.Value.IntValue" OnChange="OnIntPropertyChange" />
-        }
-        else if (extPropertyKV.Value.SettingItemType == PropertyItemTypeEnum.Radio)
-        {
-
-        }
-        else if (extPropertyKV.Value.SettingItemType == PropertyItemTypeEnum.Checkbox)
-        {
-            //TODO
-            @* <Checkbox @bind-checked="@extPropertyKV.Value.BoolValue"></Checkbox> *@
-        }
-        else if (extPropertyKV.Value.SettingItemType == PropertyItemTypeEnum.Select)
-        {
-
-        }
-        else if (extPropertyKV.Value.SettingItemType == PropertyItemTypeEnum.Switch)
-        {
-
-        }
-        else if (extPropertyKV.Value.SettingItemType == PropertyItemTypeEnum.Date)
-        {
-
-        }
-        else if (extPropertyKV.Value.SettingItemType == PropertyItemTypeEnum.Textarea)
-        {
-
+@if(Component?.AttributeDefineGroups != null){
+    foreach (var group in Component.AttributeDefineGroups)
+    {
+        if(!string.IsNullOrEmpty(group.GroupName)){
+            <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:30px 0 10px;">
+                @group.GroupName
+            </div>
         }
 
-        @if (!string.IsNullOrEmpty(extPropertyKV.Value.Description))
+        foreach (var attrDefine in group.AttributeDefines)
         {
-            <div style="color:#c7c7c7">@extPropertyKV.Value.Description</div>
+            <div class="propertysetting-item">
+                <label>@attrDefine.DisplayName：</label>
+
+                @if (attrDefine.AttributeItemType == ComponentAttributeItemTypeEnum.Input)
+                {
+                    <Input TValue="string" @bind-value="@attrDefine.StringValue" OnChange="OnStringPropertyChange" />
+                }
+                else if (attrDefine.AttributeItemType == ComponentAttributeItemTypeEnum.InputNumber)
+                {
+                    <AntDesign.InputNumber TValue="int" @bind-value="@attrDefine.IntValue" OnChange="OnIntPropertyChange" />
+                }
+                else if (attrDefine.AttributeItemType == ComponentAttributeItemTypeEnum.Radio)
+                {
+
+                }
+                else if (attrDefine.AttributeItemType == ComponentAttributeItemTypeEnum.Checkbox)
+                {
+                    //TODO
+                    @* <Checkbox @bind-checked="@property.BoolValue"></Checkbox> *@
+                }
+                else if (attrDefine.AttributeItemType == ComponentAttributeItemTypeEnum.Select)
+                {
+
+                }
+                else if (attrDefine.AttributeItemType == ComponentAttributeItemTypeEnum.Switch)
+                {
+                    <Switch @bind-Checked="@attrDefine.BoolValue"></Switch>
+                }
+                else if (attrDefine.AttributeItemType == ComponentAttributeItemTypeEnum.Date)
+                {
+
+                }
+                else if (attrDefine.AttributeItemType == ComponentAttributeItemTypeEnum.Textarea)
+                {
+
+                }
+
+                @if (!string.IsNullOrEmpty(attrDefine.Description))
+                {
+                    <div style="color:#c7c7c7">@attrDefine.Description</div>
+                }
+            </div>
         }
-    </div>
+    }
 }
 
 @code {
     [Parameter]
-    public ComponentSchema Component { get; set; }
+    public ComponentPartsSchema Component { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
     }
 
-    private void OnExtensionPropertyChange(string key, string propertyValue)
+    private void OnExtensionPropertyChange(string key, string attrDefineValue)
     {
-        var contains = Component.ComponentProperty.ExtraProperties.ContainsKey(key);
-        if (contains)
+        ComponentPartsAttributeDefineSchema attrDefine = null;
+        Component.AttributeDefineGroups.ForEach(t =>
         {
-            Component.ComponentProperty.ExtraProperties[key].StringValue = propertyValue;
+            t.AttributeDefines.ForEach(p =>
+            {
+                if (string.Equals(p.AttributeName, key))
+                    attrDefine = p;
+            });
+        });
+        if (attrDefine != null)
+        {
+            attrDefine.StringValue = attrDefineValue;
         }
     }
 
@@ -75,7 +89,7 @@
 
     }
 
-    private void OnIntPropertyChange(int? value)
+    private void OnIntPropertyChange(int value)
     {
         
     }

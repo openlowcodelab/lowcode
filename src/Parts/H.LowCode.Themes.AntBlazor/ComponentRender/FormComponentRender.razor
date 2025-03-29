@@ -1,0 +1,56 @@
+﻿@namespace H.LowCode.Themes.AntBlazor
+@inherits RenderEngineDynamicComponentBase
+
+@if (Component.IsContainer)
+{
+    <FormContainerComponentRender ContainerComponent="@Component"></FormContainerComponentRender>
+}
+else
+{
+    <div class="renderengine-componentitem-box" style="float:left;
+        position:@Component.Style.Position;
+        width: @((Component.Style.ItemWidth ?? (IsInRootContainer ? 24/PageCascading.PageLayout : 24))  /24 * 100)%;
+        min-width:85px; min-height: @(Component.Style.ItemHeight)px;
+        @Component.Style.DefaultStyle @Component.Style.CustomStyle">
+
+        <FormItem Name="@Component.Name"
+        Label="@(Component.IsHiddenLabel ? string.Empty : Component.Label)"
+        Style="width:100%">
+
+            <div class="renderengine-componentitem-div-component">@_renderFragment</div>
+
+        </FormItem>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public ComponentSchema Component { get; set; }
+
+    [CascadingParameter(Name = "pageCascading")]
+    public PageCascadingModel PageCascading{ get; set; }
+
+    /// <summary>
+    /// 当前组件是否在根容器内
+    /// </summary>
+    [Parameter]
+    public bool IsInRootContainer { get; set; }
+
+    private RenderFragment _renderFragment;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Init();
+
+        await base.OnInitializedAsync();
+    }
+
+    private void Init()
+    {
+        if (Component == null)
+            throw new NullReferenceException(nameof(Component));
+
+        _renderFragment = RenderComponent(Component.Id, Component.IsSupportDataSource,
+            Component.DataSource, Component.Fragment);
+    }
+}

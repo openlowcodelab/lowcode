@@ -1,10 +1,9 @@
 ﻿@page "/designer/pageparts/{PartsId}"
 @namespace H.LowCode.PartsDesignEngine
-@inherits LowCodePageComponentBase
+@inherits DesignEngineLowCodePageComponentBase
 @layout PartsDesignEngineLayout
 
 @inject DragDropStateService DragDropStateService
-@inject IMessageService _message
 
 <PageTitle>@($"{_pageCascadingModel.PageName} - 页面物料设计器")</PageTitle>
 
@@ -22,7 +21,7 @@
             </div>*@
             <div style="float:right;">
                 <Button>预览</Button>
-                <Button Type="primary" OnClick="() => SavePagePartsSchemaAsync()">保存</Button>
+                <Button Type="ButtonType.Primary" OnClick="() => SavePagePartsSchemaAsync()">保存</Button>
             </div>
         </Header>
         <AntDesign.Layout>
@@ -67,7 +66,7 @@
         if (string.Equals("newparts", PartsId))
         {
             _isNewPage = true;
-            PartsId = Guid.NewGuid().ToString();
+            PartsId = ShortIdGenerator.Generate();
             var newPage = new PagePartsSchema() { Id = PartsId, Name = "newparts" };
 
             //DragDropStateService.SetPage(AppId, newPage);
@@ -90,7 +89,7 @@
         PagePartsSchema pageParts = CreatePagePartsSchema();
         if (pageParts.Components.Count == 0)
         {
-            await _message.Warning("没有任何组件，禁止保存！");
+            await Message.Warning("没有任何组件，禁止保存！");
             return;
         }
 
@@ -103,11 +102,11 @@
                 base.NavigateTo($"/designer/pageparts/{pageParts.Id}");
             }
 
-            await _message.Success("保存成功！");
+            await Message.Success("保存成功！");
         }
         else
         {
-            await _message.Error("保存失败");
+            await Message.Error("保存失败");
         }
     }
 

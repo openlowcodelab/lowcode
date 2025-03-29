@@ -1,60 +1,122 @@
 ﻿@namespace H.LowCode.DesignEngine
-@inherits LowCodeComponentBase
+@inherits DesignEngineLowCodeComponentBase
 
-<div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:30px 0 10px;">数据源</div>
-<div class="propertysetting-item">
-    <label>类型：</label>
-    <EnumSelect TEnum="@DataSourceTypeEnum" @bind-Value="@Component.DataSource.DataSourceType">
-    </EnumSelect>
-</div>
+@if (Component.IsSupportDataSource){
+    <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:30px 0 10px;">数据源</div>
 
-@if (Component.DataSource.DataSourceType == DataSourceTypeEnum.Table)
-{
-    <div class="propertysetting-item">
-        <label>字段：</label>
-        <div>@Component.ComponentProperty.Name</div>
-    </div>
+    if (Component.DataSource.DataSourceGroupType == ComponentDataSourceGroupTypeEnum.General)
+    {
+        <div class="propertysetting-item">
+            <label>字段：</label>
+            <div>@Component.Name</div>
+        </div>
+    }
+    else if (Component.DataSource.DataSourceGroupType == ComponentDataSourceGroupTypeEnum.Option)
+    {
+        <Button Type="ButtonType.Default" OnClick="ShowOptionDataSourceModelAsync">
+            配置数据源
+        </Button>
+    }
+    else if (Component.DataSource.DataSourceGroupType == ComponentDataSourceGroupTypeEnum.Option)
+    {
+        
+    }
+    else{
+        <div class="propertysetting-item">
+            <label>不支持的数据源类型</label>
+        </div>
+    }
 }
-else if (Component.DataSource.DataSourceType == DataSourceTypeEnum.API)
-{
-    <div class="propertysetting-item">
-        <label>API：</label>
-        <Input TValue="string" @bind-Value="@Component.DataSource.DataSourceValue" />
-    </div>
-}
-else if (Component.DataSource.DataSourceType == DataSourceTypeEnum.SQL)
-{
-    <div class="propertysetting-item">
-        <label>SQL：</label>
-        <TextArea @bind-Value="@Component.DataSource.DataSourceValue" />
-    </div>
-}
-else if (Component.DataSource.DataSourceType == DataSourceTypeEnum.Expression)
-{
-    <div class="propertysetting-item">
-        <label>表达式：</label>
-        <TextArea @bind-Value="@Component.DataSource.DataSourceValue" />
-    </div>
-}
-else if (Component.DataSource.DataSourceType == DataSourceTypeEnum.Fiexd)
-{
-    <div class="propertysetting-item">
-        <label>固定值：</label>
-        <TextArea />
-    </div>
-}
+
+<Modal Title="配置数据源" @bind-Visible="@_optionDataSourceVisible"
+       OnOk="OnOptionDataSourceConfirmAsync" Width="1000">
+    <OptionDataSourceSetting @bind-DataSource="Component.DataSource"></OptionDataSourceSetting>
+</Modal>
+
+<Modal Title="配置数据源" @bind-Visible="@_treeDataSourceVisible"
+       OnOk="OnTreeDataSourceConfirmAsync" Width="1000">
+    <TreeDataSourceSetting @bind-DataSource="Component.DataSource"></TreeDataSourceSetting>
+</Modal>
 
 @code {
     [Parameter]
-    public ComponentSchema Component { get; set; }
+    public ComponentPartsSchema Component { get; set; }
+
+    private bool _optionDataSourceVisible;
+    private bool _treeDataSourceVisible;
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
     }
 
-    private void OnPropertyChange()
+    #region OptionDataSource
+    private void ShowOptionDataSourceModelAsync()
     {
-        Component.RefreshState();
+        _optionDataSourceVisible = true;
     }
+
+    private async Task OnOptionDataSourceConfirmAsync(MouseEventArgs e)
+    {
+        var validate = true;
+        if (validate)
+        {
+            var isSuccess = await SaveOptionDataSourceAsync();
+            if (isSuccess)
+            {
+                _optionDataSourceVisible = false;
+                await Message.Success("保存成功！");
+            }
+            else
+            {
+                _optionDataSourceVisible = true;
+                await Message.Error("保存失败");
+            }
+        }
+        else
+        {
+            _optionDataSourceVisible = true;
+        }
+    }
+
+    private async Task<bool> SaveOptionDataSourceAsync()
+    {
+        return await Task.FromResult(true);
+    }
+    #endregion
+
+    #region TreeDataSource
+    private void ShowTreeDataSourceModelAsync()
+    {
+        _treeDataSourceVisible = true;
+    }
+
+    private async Task OnTreeDataSourceConfirmAsync(MouseEventArgs e)
+    {
+        var validate = true;
+        if (validate)
+        {
+            var isSuccess = await SaveTreeDataSourceAsync();
+            if (isSuccess)
+            {
+                _treeDataSourceVisible = false;
+                await Message.Success("保存成功！");
+            }
+            else
+            {
+                _treeDataSourceVisible = true;
+                await Message.Error("保存失败");
+            }
+        }
+        else
+        {
+            _treeDataSourceVisible = true;
+        }
+    }
+
+    private async Task<bool> SaveTreeDataSourceAsync()
+    {
+        return await Task.FromResult(true);
+    }
+    #endregion
 }

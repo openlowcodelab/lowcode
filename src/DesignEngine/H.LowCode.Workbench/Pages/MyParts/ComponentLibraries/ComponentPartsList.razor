@@ -1,0 +1,347 @@
+﻿@namespace H.LowCode.Workbench
+
+@inherits DesignEngineLowCodeComponentBase
+@layout WorkbenchLayout
+
+@inject IComponentPartsAppService ComponentPartsAppService
+@inject ComponentState<ComponentPartsList, IList<ComponentPartsListModel>> ComponentPartsListState
+
+<div style="margin: 0 0 8px 0;">
+    <div style="width:60px; float: left;">
+        <a onclick ="@(() => GoToComponentLibraryList())"><Icon Type="rollback" />返回</a>
+    </div>
+    <div style="width:250px; float: left;">
+        <Search Placeholder="组件名称" OnSearch="()=>{}" />
+    </div>
+    <div style="width:80px; float: right; line-height:32px; margin: 0 8px 0 0;">
+        <Button Type="@ButtonType.Primary" OnClick="@(()=> CreateAsync())">新建组件</Button>
+    </div>
+    <div style="clear:both;"></div>
+</div>
+
+<Table TItem="ComponentPartsListModel" DataSource="@_componentPartsList"
+@bind-SelectedRows="selectedRows" RowKey="c=>c.ComponentId"
+HidePagination="true" Style="height:100%;">
+    @* <PropertyColumn Title="ComponentId" Property="c=>c.ComponentId" Width="300" /> *@
+    <PropertyColumn Title="Name" Property="c=>c.ComponentName" Sortable />
+    <PropertyColumn Title="组件名称" Property="c=>c.Label" />
+    <PropertyColumn Title="组件类型" Property="c=>c.ComponentType">
+        <Tag Color="@(context.ComponentType == 1 ? "Green" : "Gold")">
+            @(context.ComponentType == 1 ? "原子组件" : "组合组件")
+        </Tag>
+    </PropertyColumn>
+    <PropertyColumn Title="是否容器" Property="c=>c.IsContainer">
+        @if (context.IsContainer)
+        {
+            <Tag Color="@("Gold")">是</Tag>
+        }
+    </PropertyColumn>
+    <PropertyColumn Title="是否支持数据源" Property="c=>c.IsSupportDataSource">
+        @if (context.IsSupportDataSource)
+        {
+            <Tag Color="@("Gold")">是</Tag>
+        }
+    </PropertyColumn>
+    <PropertyColumn Title="发布状态" Property="c=>c.PublishStatus">
+        <Tag Color="@(context.PublishStatus == 1 ? "Green" : "Gray")">
+            @(context.PublishStatus == 1 ? "已发布" : "待发布")
+        </Tag>
+    </PropertyColumn>
+    <PropertyColumn Title="排序" Property="c=>c.Order" />
+    <PropertyColumn Title="修改时间" Property="c=>c.ModifiedTime" Format="yyyy-MM-dd HH:mm:ss" />
+    <ActionColumn Title="操作" Width="180">
+        @if (context.ComponentType == 1)
+        {
+            <a onclick="@(()=> EditAsync(@context.ComponentId))" style="color: #55c201">编辑</a>
+
+            <a onclick="@(()=> TextEditAsync(@context.ComponentId))">Json编辑</a>
+        }
+        else if (context.ComponentType == 2)
+        {
+            <a href="@($"/designer/componentparts/{context.ComponentId}")" target="_blank" style="padding: 7px;border: solid #b7eb8f 1px;border-radius: 2px;line-height: 11px;height: 26px;display: block;background-color: #f6ffed;color: #389e0d;">设计</a>
+        }
+
+        <a onclick="@(()=> DeleteAsync(@context.ComponentId))" style="color:#ff4d4f">删除</a>
+    </ActionColumn>
+</Table>
+
+<Modal Title="组件设计" @bind-Visible="@_formVisible" OnOk="OnConfirmAsync"
+Width="1200">
+    <Form Model="@_componentPartsSchema" OnFinish="OnFinishAsync" @ref="@_form"
+          ValidateOnChange="true" LabelColSpan="8" WrapperColSpan="16">
+        <div style="width:60%; float: left;">
+            <FormItem Label="组件库标识" Style="width:45%; float:left;">
+                <Input Disabled @bind-Value="@context.LibraryId" />
+            </FormItem>
+            <FormItem Label="组件标识" Style="width:52%; float:left;">
+                <Input Disabled @bind-Value="@context.ComponentId" />
+            </FormItem>
+            <FormItem Label="组件名称" Required Style="width:45%; float:left;">
+                <Input @bind-Value="@context.ComponentName" />
+            </FormItem>
+            <FormItem Label="组件中文名" Required Style="width:52%; float:left;">
+                <Input @bind-Value="@context.Label" />
+            </FormItem>
+            <FormItem Label="组件类型" Required Style="width:45%; float:left;">
+                <RadioGroup @bind-Value="@context.ComponentType">
+                    <Radio Value="1">原子组件</Radio>
+                    <Radio Value="2">组合组件</Radio>
+                </RadioGroup>
+            </FormItem>
+            <FormItem Label="容器组件" Style="width:52%; float:left;">
+                <Switch @bind-Checked="@context.IsContainer"></Switch>
+            </FormItem>
+            @if (context.IsContainer == false)
+            {
+                <FormItem Label="支持数据源" Style="width:45%; float:left;">
+                    <Switch @bind-Checked="@context.IsSupportDataSource"></Switch>
+                </FormItem>
+                @if (context.IsSupportDataSource)
+                {
+                    <FormItem Label="数据源分类" Style="width:52%; float:left;">
+                        <EnumRadioGroup TEnum="ComponentDataSourceGroupTypeEnum" 
+                            @bind-Value="@context.DataSource.DataSourceGroupType"></EnumRadioGroup>
+                    </FormItem>
+                }
+            }
+            <span style="width:97%; float:left;">组件 RenderFragment: </span>
+            <FormItem Required WrapperColSpan="24" Style="width:97%; float:left;">
+                <TextArea @bind-Value="@_textComponentFragment" Rows="20"></TextArea>
+            </FormItem>
+            <FormItem Label="排序" Style="width:45%; float:left;">
+                <InputNumber @bind-Value="@context.Order" Min="0" DefaultValue="0"></InputNumber>
+            </FormItem>
+            <FormItem Label="发布状态" Required Style="width:52%; float:left;">
+                <RadioGroup @bind-Value="@context.PublishStatus">
+                    <Radio Value="0">待发布</Radio>
+                    <Radio Value="1">已发布</Radio>
+                </RadioGroup>
+            </FormItem>
+        </div>
+        <div style="width:40%; float: left;">
+            <span>组件属性: </span>
+            <FormItem WrapperColSpan="24">
+                <TextArea @bind-Value="@_textAttributeDefineGroups" Rows="18"></TextArea>
+            </FormItem>
+            @if (context.IsContainer == false && context.IsSupportDataSource)
+            {
+                <span>数据源: </span>
+                <FormItem WrapperColSpan="24">
+                    <TextArea @bind-Value="@_textDataSource" Rows="11"></TextArea>
+                </FormItem>
+            }
+        </div>
+        <div style="clear:both;"></div>
+    </Form>
+</Modal>
+
+<Modal Title="组件Json文本编辑" @bind-Visible="@_textFormVisible" OnOk="OnTextFormConfirmAsync"
+Width="600" MaxBodyHeight="700">
+    <TextArea @bind-value="@_textFormValue" MinRows="5" Style="width: 100%;"></TextArea>
+</Modal>
+
+@code {
+    [Parameter]
+    public string LibraryId { get; set; }
+
+    [Parameter]
+    public Action Refresh { get; set; }
+
+    IEnumerable<ComponentPartsListModel> selectedRows;
+
+    private bool _formVisible = false;
+    private Form<ComponentPartsSchema> _form;
+    private string _textComponentFragment;
+    private string _textDataSource;
+    private string _textAttributeDefineGroups;
+    private IList<ComponentPartsListModel> _componentPartsList;
+    private ComponentPartsSchema _componentPartsSchema = new ComponentPartsSchema();
+
+    private bool _textFormVisible = false;
+    private string _textFormValue;
+
+    IDictionary<string, (bool edit, ComponentAttributeFragmentSchema parameter)> _parameterEditCache = new Dictionary<string, (bool edit, ComponentAttributeFragmentSchema parameter)>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        _componentPartsList = await ComponentPartsListState.GetOrAddAsync(this, async () =>
+        {
+            return await LoadComponentPartsAsync();
+        });
+    }
+
+    private async Task<IList<ComponentPartsListModel>> LoadComponentPartsAsync()
+    {
+        return await ComponentPartsAppService.GetListAsync(LibraryId);
+    }
+
+    private async Task<ComponentPartsSchema> GetComponentPartsAsync(string componentPartsId)
+    {
+        var component = await ComponentPartsAppService.GetByIdAsync(LibraryId, componentPartsId);
+        _textComponentFragment = component.Fragment.ToJson(writeIndented: true);
+        _textDataSource = component.DataSource?.ToJson(writeIndented: true);
+        _textAttributeDefineGroups = component.AttributeDefineGroups?.ToJson(writeIndented: true);
+        return component;
+    }
+
+    private void CreateAsync()
+    {
+        _componentPartsSchema = new ComponentPartsSchema();
+        _componentPartsSchema.LibraryId = LibraryId;
+        _formVisible = true;
+
+        StateHasChanged();
+    }
+
+    private async Task DesignAsync(string componentId)
+    {
+        _componentPartsSchema = await GetComponentPartsAsync(componentId);
+        _formVisible = true;
+
+        StateHasChanged();
+    }
+
+    private async Task EditAsync(string componentId)
+    {
+        _componentPartsSchema = await GetComponentPartsAsync(componentId);
+        _formVisible = true;
+
+        StateHasChanged();
+    }
+
+    private async Task TextEditAsync(string componentId)
+    {
+        _componentPartsSchema = await GetComponentPartsAsync(componentId);
+
+        _textFormValue = _componentPartsSchema.ToJson(writeIndented: true);
+        _textFormVisible = true;
+
+        StateHasChanged();
+    }
+
+    private async Task DeleteAsync(string componentPartsId)
+    {
+        //await ComponentPartsAppService.DeleteAsync(LibraryId, componentPartsId);
+
+        await Message.Success("模拟删除成功！");
+    }
+
+    private async Task OnConfirmAsync(MouseEventArgs e)
+    {
+        var validate = _form.Validate();
+        if (validate)
+        {
+            _componentPartsSchema.Fragment = _textComponentFragment.FromJson<ComponentPartsFragmentSchema>();
+            _componentPartsSchema.DataSource = _textDataSource.FromJson<ComponentPartsDataSourceSchema>();
+            _componentPartsSchema.AttributeDefineGroups = _textAttributeDefineGroups.FromJson<ComponentPartsAttributeDefineGroupSchema[]>();
+            var isSuccess = await SaveComponentPartsSchemaAsync();
+            if (isSuccess)
+            {
+                _formVisible = false;
+                _form.Submit();
+                await Message.Success("保存成功！");
+                _form.Reset();
+            }
+            else
+            {
+                _formVisible = true;
+                await Message.Error("保存失败");
+            }
+        }
+        else
+        {
+            _formVisible = true;
+        }
+    }
+
+    private async Task OnFinishAsync()
+    {
+        _componentPartsList = await LoadComponentPartsAsync();
+    }
+
+    private async Task OnTextFormConfirmAsync(MouseEventArgs e)
+    {
+        _componentPartsSchema = _textFormValue.FromJson<ComponentPartsSchema>();
+        var isSuccess = await SaveComponentPartsSchemaAsync();
+        if (isSuccess)
+        {
+            _textFormVisible = false;
+            _componentPartsList = await LoadComponentPartsAsync();
+
+            await Message.Success("保存成功！");
+        }
+        else
+        {
+            _textFormVisible = true;
+            await Message.Error("保存失败");
+        }
+    }
+
+    private async Task<bool> SaveComponentPartsSchemaAsync()
+    {
+        return await ComponentPartsAppService.SaveAsync(_componentPartsSchema);
+    }
+
+    private void GoToComponentLibraryList()
+    {
+        NavigateTo("/workbench/myparts/componentlibraries");
+
+        if (Refresh != null)
+        {
+            Refresh();
+        }
+    }
+
+    #region Parameter
+
+    private async Task CreateParameterAsync()
+    {
+        await Task.Delay(1);
+
+        ComponentAttributeFragmentSchema newParameter = new();
+
+        //添加编辑缓存
+        _parameterEditCache[newParameter.AttributeName] = (true, newParameter);
+
+        _componentPartsSchema.Fragment.Attributes.Append(newParameter);
+
+        //StateHasChanged();
+    }
+
+    private async Task SaveParameterAsync(string name)
+    {
+        await Task.Delay(1);
+        var index =  _componentPartsSchema.Fragment.Attributes.FindIndex(item => item.AttributeName == name);
+        _componentPartsSchema.Fragment.Attributes[index] = _parameterEditCache[name].parameter; // apply the copy to data source
+        _parameterEditCache[name] = (false, _componentPartsSchema.Fragment.Attributes[index]); // don't affect rows in editing
+
+        StateHasChanged();
+    }
+
+    private async Task DeleteParameterAsync(string name)
+    {
+        await Task.Delay(1);
+
+    }
+
+    private async Task ParameterStartEdit(string name)
+    {
+        await Task.Delay(1);
+        var data = _parameterEditCache[name];
+        _parameterEditCache[name] = (true, data.parameter with { }); // add a copy in cache
+
+        StateHasChanged();
+    }
+
+    private async Task ParameterCancelEditAsync(string name)
+    {
+        await Task.Delay(1);
+        var data = _componentPartsSchema.Fragment.Attributes.FirstOrDefault(item => item.AttributeName == name);
+        _parameterEditCache[name] = (false, data); // recovery
+
+        StateHasChanged();
+    }
+    #endregion
+}

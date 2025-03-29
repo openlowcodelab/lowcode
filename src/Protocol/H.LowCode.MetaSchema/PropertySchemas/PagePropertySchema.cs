@@ -16,4 +16,7 @@ public class PagePropertySchema
     /// </summary>
     [JsonPropertyName("titlew")]
     public string TitleWidth { get; set; }
+
+    [JsonPropertyName("ds")]
+    public PageDataSourceSchema DataSource { get; set; } = new();
 }

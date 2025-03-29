@@ -1,9 +1,9 @@
 ﻿@namespace H.LowCode.DesignEngine
-@inherits LowCodeComponentBase
+@inherits DesignEngineLowCodeComponentBase
 
 @if (Component != null)
 {
-    <Space Direction="@DirectionVHType.Vertical" Style="width: 100%">
+    <Space Direction="@SpaceDirection.Vertical" Style="width: 100%">
         <SpaceItem>
             <Dropdown Trigger="@(new Trigger[] { Trigger.Click })">
                 <Overlay>
@@ -52,7 +52,7 @@
 
 @code {
     [Parameter]
-    public ComponentSchema Component { get; set; }
+    public ComponentPartsSchema Component { get; set; }
 
     private bool _visible;
     private string _selectedValue;
