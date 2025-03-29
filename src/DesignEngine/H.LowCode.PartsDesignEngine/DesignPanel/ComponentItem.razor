@@ -36,6 +36,7 @@ else
         if (string.IsNullOrEmpty(Component.Name))
             Component.Name = $"{Component.Name}_{Random.Shared.Next(100, 999)}";
 
-        _renderFragment = RenderComponent(Component.IsSupportDataSource, Component.DataSource, Component.Fragment);
+        _renderFragment = RenderComponent(Component.Id, Component.IsSupportDataSource,
+            Component.DataSource, Component.Fragment);
     }
 }

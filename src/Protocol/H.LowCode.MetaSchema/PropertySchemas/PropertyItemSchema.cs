@@ -27,9 +27,9 @@ public class PropertyItemSchema
 
     public IDictionary<string, string> Options { get; set; }
 
-    /// <summary>
-    /// 设置项类型
-    /// </summary>
-    [JsonPropertyName("itemtype")]
-    public ComponentAttributeItemTypeEnum SettingItemType { get; set; }
+    ///// <summary>
+    ///// 设置项类型
+    ///// </summary>
+    //[JsonPropertyName("itemtype")]
+    //public ComponentAttributeItemTypeEnum SettingItemType { get; set; }
 }

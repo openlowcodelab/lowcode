@@ -26,34 +26,21 @@ public abstract class ComponentFragmentSchemaBase
             return null;
 
         Type type = Type.GetType(ValueType);
-        // 值类型
-        if (type.IsValueType && Nullable.GetUnderlyingType(type) == null)
-        {
-            return Activator.CreateInstance(type);
-        }
-
-        // 引用类型
-        return null;
+        return type.GetDefaultValue();
     }
 }
 
 public record ComponentAttributeFragmentSchema
 {
-    [JsonPropertyName("n")]
-    public string Name { get; set; }
+    [JsonPropertyName("attrn")]
+    public string AttributeName { get; set; }
 
-    [JsonPropertyName("val")]
-    public object Value { get; set; }
+    /// <summary>
+    /// 组件属性值 clr 类型
+    /// </summary>
+    [JsonPropertyName("attrt")]
+    public string AttributeClrType { get; set; }
 
-    [JsonPropertyName("valt")]
-    public ComponentValueTypeEnum ValueType { get; set; }
-
-    [JsonPropertyName("intv")]
-    public int IntValue { get; set; }
-
-    [JsonPropertyName("strv")]
-    public string StringValue { get; set; }
-
-    [JsonPropertyName("strvs")]
-    public List<string> StringValues { get; set; }
+    [JsonPropertyName("attrv")]
+    public object AttributeValue { get; set; }
 }

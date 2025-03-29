@@ -45,7 +45,7 @@ public class ComponentPartsSchema : ComponentSchemaBase
     /// Attribute定义分组
     /// </summary>
     [JsonPropertyName("attrdefgroups")]
-    public IList<ComponentPartsAttributeDefineGroupSchema> AttributeDefineGroups { get; set; } = [];
+    public ComponentPartsAttributeDefineGroupSchema[] AttributeDefineGroups { get; set; } = [];
 
     /// <summary>
     /// 

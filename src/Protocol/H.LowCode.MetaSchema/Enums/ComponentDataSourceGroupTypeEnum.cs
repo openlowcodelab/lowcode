@@ -12,5 +12,6 @@ namespace H.LowCode.MetaSchema;
 public enum ComponentDataSourceGroupTypeEnum
 {
     General = 0,
-    Option = 1
+    Option = 1,
+    Tree
 }

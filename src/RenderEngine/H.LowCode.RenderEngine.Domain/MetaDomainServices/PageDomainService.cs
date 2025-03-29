@@ -15,6 +15,19 @@ public class PageDomainService : DomainService, IPageDomainService
 
     async Task<PageSchema> IPageDomainService.GetAsync(string appId, string pageId)
     {
-        return await _repository.GetAsync(appId, pageId);
+        var pageSchema = await _repository.GetAsync(appId, pageId);
+
+        if (pageSchema?.Components != null)
+        {
+            foreach (var component in pageSchema.Components)
+            {
+                if (component == null)
+                    continue;
+
+                component.MergeAttributeDefineToFragment();
+            }
+        }
+
+        return pageSchema;
     }
 }
