@@ -29,14 +29,20 @@ public class ComponentPartsAttributeDefineSchema : ComponentAttributeDefineSchem
     public object DefaultValue { get; set; }
 
     [JsonPropertyName("ops")]
-    public Dictionary<string, object> Options { get; }
+    public Dictionary<string, object> Options { get; set; }
 
     [JsonIgnore]
     public string StringValue
     {
         get
         {
-            return AttributeValue?.ToString();
+            if (AttributeValue == null)
+                return default;
+
+            if(AttributeClrType != "System.String")
+                return default;
+
+            return AttributeValue.ToString();
         }
         set
         {
@@ -55,6 +61,9 @@ public class ComponentPartsAttributeDefineSchema : ComponentAttributeDefineSchem
             if (AttributeValue == null)
                 return default;
 
+            if (AttributeClrType != "System.Int32")
+                return default;
+
             return (int)AttributeValue;
         }
         set
@@ -69,6 +78,9 @@ public class ComponentPartsAttributeDefineSchema : ComponentAttributeDefineSchem
         get
         {
             if (AttributeValue == null)
+                return default;
+
+            if (AttributeClrType != "System.Boolean")
                 return default;
 
             return (bool)AttributeValue;

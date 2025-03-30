@@ -54,21 +54,36 @@
             var componentPartsList = new List<ComponentPartsSchema>();
             foreach (var component in pageSchema.Components)
             {
-                //组件实例 Schema
-                var json = component.ToJson();
-                var componentPartsInstance = json.FromJson<ComponentPartsSchema>();
+                await MergeComponentPartsDefineRecursive(component);
 
-                //组件定义 Schema
-                var componentPartsDefine = await ComponentPartsAppService.GetByIdAsync(component.LibraryId,
-                    component.ComponentId);
-
-                //组件实例与组件定义合并,保证历史组件实例升级到最新组件特性
-                componentPartsInstance.MergeComponentPartsDefine(componentPartsDefine);
-                componentPartsList.Add(componentPartsInstance);
+                componentPartsList.Add(component);
             }
             rootComponent.Childrens = componentPartsList;
         }
         StateHasChanged();
+    }
+
+    /// <summary>
+    /// 递归合并组件定义中的属性
+    /// </summary>
+    /// <param name="component"></param>
+    /// <returns></returns>
+    private async Task MergeComponentPartsDefineRecursive(ComponentPartsSchema component)
+    {
+        //组件定义 Schema
+        var componentPartsDefine = await ComponentPartsAppService.GetByIdAsync(component.LibraryId,
+            component.ComponentId);
+
+        //组件实例与组件定义合并,保证历史组件实例升级到最新组件特性
+        component.MergeComponentPartsDefine(componentPartsDefine);
+
+        if (component.Childrens != null && component.Childrens.Count > 0)
+        {
+            foreach (var child in component.Childrens)
+            {
+                await MergeComponentPartsDefineRecursive(child);
+            }
+        }
     }
 
     /// <summary>

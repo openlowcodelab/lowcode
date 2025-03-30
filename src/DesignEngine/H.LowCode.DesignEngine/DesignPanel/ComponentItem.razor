@@ -47,14 +47,7 @@
         if (string.IsNullOrEmpty(Component.Fragment.TypeName))
             Component.Fragment.TypeName = Component.Fragment.DefaultTypeName;
 
-        try
-        {
-            _renderFragment = RenderComponent(Component.Id, Component.IsSupportDataSource,
+        _renderFragment = RenderComponent(Component.Id, Component.IsSupportDataSource,
                 Component.DataSource, Component.Fragment);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.Message);
-        }
     }
 }

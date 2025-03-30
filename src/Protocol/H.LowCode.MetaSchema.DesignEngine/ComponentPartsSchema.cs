@@ -45,7 +45,7 @@ public class ComponentPartsSchema : ComponentSchemaBase
     /// Attribute定义分组
     /// </summary>
     [JsonPropertyName("attrdefgroups")]
-    public ComponentPartsAttributeDefineGroupSchema[] AttributeDefineGroups { get; set; } = [];
+    public IEnumerable<ComponentPartsAttributeDefineGroupSchema> AttributeDefineGroups { get; set; } = [];
 
     /// <summary>
     /// 
@@ -137,14 +137,36 @@ public class ComponentPartsSchema : ComponentSchemaBase
         //TODO
         //this.Fragment = componentPartsDefine.Fragment;
         //this.Style = componentPartsDefine.Style;
-        this.AttributeDefineGroups = componentPartsDefine.AttributeDefineGroups;
+
+        //属性合并
+        if (componentPartsDefine.AttributeDefineGroups != null)
+        {
+            foreach (var attrDefineGroup in componentPartsDefine.AttributeDefineGroups)
+            {
+                if(attrDefineGroup.AttributeDefines == null)
+                    continue;
+                
+                foreach (var attrDefine in attrDefineGroup.AttributeDefines)
+                {
+                    var attr = this.AttributeDefineGroups.SelectMany(a => a.AttributeDefines)
+                        .FirstOrDefault(a => a.AttributeName == attrDefine.AttributeName);
+
+                    if (attr != null)
+                    {
+                        attr.DisplayName = attrDefine.DisplayName;
+                        attr.AttributeItemType = attrDefine.AttributeItemType;
+                        attr.IsRequired = attrDefine.IsRequired;
+                        attr.Description = attrDefine.Description;
+                        attr.DefaultValue = attrDefine.DefaultValue;
+                        attr.Options = attrDefine.Options;
+                    }
+                }
+            }
+        }
+
+        //数据源合并
         this.IsSupportDataSource = componentPartsDefine.IsSupportDataSource;
         if (componentPartsDefine?.DataSource?.DataSourceFragment != null)
             this.DataSource.DataSourceFragment = componentPartsDefine.DataSource.DataSourceFragment;
-
-        foreach (var child in this.Childrens)
-        {
-            child.MergeComponentPartsDefine(componentPartsDefine);
-        }
     }
 }
