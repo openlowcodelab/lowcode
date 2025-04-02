@@ -101,6 +101,9 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
                 childBuilder.OpenComponent(index++, childComponentType);
                 foreach (var fragAttr in dataSource.DataSourceFragment.Attributes)
                 {
+                    if (string.IsNullOrEmpty(fragAttr.AttributeName))
+                        throw new NullReferenceException($"componentId={componentId}, {nameof(fragAttr.AttributeName)} is null");
+
                     childBuilder.AddAttribute(index++, fragAttr.AttributeName, option.Value);
                 }
 

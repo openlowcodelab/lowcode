@@ -3,6 +3,7 @@
 @using System.Reflection
 
 @namespace H.LowCode.Themes.AntBlazor
+@inherits RenderEngineLowCodeComponentBase
 
 <Form Model="@model"
 OnFinish="OnFinish"
@@ -24,29 +25,31 @@ WrapperColSpan="16">
     @*     <InputNumber TValue=""></InputNumber> *@
     @* </FormItem> *@
     <FormItem Name="Field3">
-        <Input TValue="string"></Input>
+        <Input TValue="string" Disabled="true"></Input>
     </FormItem>
     <FormItem Name="Field4">
         <Checkbox></Checkbox>
     </FormItem>
     <FormItem Name="Field5">
-        <Switch></Switch>
+        @* <Switch></Switch> *@
+        @_switchRenderFragment
     </FormItem>
     <FormItem Name="Field6">
-        <RadioGroup TValue="string">
-            <Radio Value="@("op1")">选项1</Radio>
-            <Radio Value="@("op2")">选项2</Radio>
-        </RadioGroup>
+        @* <RadioGroup TValue="string"> *@
+        @*     <Radio Value="@("op1")">选项1</Radio> *@
+        @*     <Radio Value="@("op2")">选项2</Radio> *@
+        @* </RadioGroup> *@
+        @_radioRenderFragment
     </FormItem>
     <FormItem Name="Field7">
         <Input TValue="string"></Input>
     </FormItem>
     <FormItem Name="Field8">
         @* <CheckboxGroup TValue="string"> *@
-        @*     <Checkbox Label="ck1">选项11</Checkbox> *@
-        @*     <Checkbox Label="字段8">选项22</Checkbox> *@
+        @*     <Checkbox Label="ck1">选项1</Checkbox> *@
+        @*     <Checkbox Label="ck2">选项2</Checkbox> *@
         @* </CheckboxGroup> *@
-        @_renderFragment
+        @_checkboxRenderFragment
     </FormItem>
 
     <FormItem WrapperColOffset="8" WrapperColSpan="16">
@@ -71,7 +74,10 @@ WrapperColSpan="16">
 
     protected override void OnInitialized()
     {
-        _renderFragment = RenderFragmentTest();
+        _radioRenderFragment = RadioRenderFragmentTest();
+        _checkboxRenderFragment = CheckboxRenderFragmentTest();
+        _switchRenderFragment = SwitchRenderFragmentTest();
+
         base.OnInitialized();
     }
 
@@ -90,8 +96,8 @@ WrapperColSpan="16">
         Console.WriteLine($"Failed:{model.ToJson()}");
     }
 
-    private RenderFragment _renderFragment;
-    private RenderFragment RenderFragmentTest()
+    private RenderFragment _checkboxRenderFragment;
+    private RenderFragment CheckboxRenderFragmentTest()
     {
         return builder =>
         {
@@ -100,21 +106,72 @@ WrapperColSpan="16">
             builder.AddAttribute(2, "ChildContent", (RenderFragment)((childBuilder) =>
             {
                 childBuilder.OpenComponent<Checkbox>(3);
-                childBuilder.AddAttribute(4, "Label", "op1");
+                childBuilder.AddAttribute(4, "Label", "ck1");
                 childBuilder.AddAttribute(5, "ChildContent", (RenderFragment)((cb) =>
                 {
-                    cb.AddContent(6, "ck1");
+                    cb.AddContent(6, "选项1");
                 }));
                 childBuilder.CloseComponent();
 
                 childBuilder.OpenComponent<Checkbox>(6);
-                childBuilder.AddAttribute(7, "Label", "op2");
+                childBuilder.AddAttribute(7, "Label", "ck2");
                 childBuilder.AddAttribute(8, "ChildContent", (RenderFragment)((cb) =>
                 {
-                    cb.AddContent(9, "字段8");
+                    cb.AddContent(9, "选项2");
                 }));
                 childBuilder.CloseComponent();
             }));
+            builder.CloseComponent();
+        };
+    }
+
+    private RenderFragment _radioRenderFragment;
+    private RenderFragment RadioRenderFragmentTest()
+    {
+        return builder =>
+        {
+            builder.OpenComponent<RadioGroup<string>>(0);
+            builder.AddAttribute(1, "TValue", typeof(string));
+            builder.AddAttribute(2, "ChildContent", (RenderFragment)((childBuilder) =>
+            {
+                childBuilder.OpenComponent<Radio<string>>(3);
+                childBuilder.AddAttribute(4, "Value", "op1");
+                //childBuilder.AddContent(5, "选项1");
+                childBuilder.AddAttribute(5, "ChildContent", (RenderFragment)((cb) =>
+                {
+                    cb.AddContent(6, "选项1");
+                }));
+                childBuilder.CloseComponent();
+
+                childBuilder.OpenComponent<Radio<string>>(6);
+                childBuilder.AddAttribute(7, "Value", "op2");
+                //childBuilder.AddContent(8, "选项2");
+                childBuilder.AddAttribute(8, "ChildContent", (RenderFragment)((cb) =>
+                {
+                    cb.AddContent(9, "选项2");
+                }));
+                childBuilder.CloseComponent();
+            }));
+            builder.CloseComponent();
+        };
+    }
+
+    private RenderFragment InputRenderFragmentTest()
+    {
+        return builder =>
+        {
+            builder.OpenComponent<Input<string>>(0);
+            builder.AddAttribute(1, "TValue", typeof(string));
+            builder.CloseComponent();
+        };
+    }
+
+    private RenderFragment _switchRenderFragment;
+    private RenderFragment SwitchRenderFragmentTest()
+    {
+        return builder =>
+        {
+            builder.OpenComponent<Switch>(0);
             builder.CloseComponent();
         };
     }

@@ -6,7 +6,6 @@ using System.Text;
 using H.LowCode.MetaSchema;
 using System.Reflection;
 using Microsoft.AspNetCore.Components.Rendering;
-using System.ComponentModel;
 using System.Text.Json;
 
 namespace H.LowCode.ComponentBase;
@@ -27,39 +26,61 @@ public abstract class LowCodeDynamicComponentBase : LowCodeComponentBase
         string componentId, Type componentType,
         ComponentAttributeFragmentSchema[] attributes)
     {
+        if (attributes == null || attributes.Length == 0)
+            return;
+
         foreach (var attr in attributes)
         {
-            var propertyInfo = componentType.GetProperty(attr.AttributeName);
-            if (propertyInfo == null)
-                continue;
-
-            if (propertyInfo.PropertyType == typeof(RenderFragment))
-            {
-                // 处理 RenderFragment 属性（如 ChildContent）
-                builder.AddAttribute(index++, attr.AttributeName, (RenderFragment)(childBuilder =>
-                {
-                    childBuilder.AddContent(index++, attr.AttributeValue?.ToString());
-                }));
-            }
-            else if (propertyInfo.PropertyType == typeof(EventCallback))
-            {
-                // 处理事件回调属性
-                var method = GetType().GetMethod(attr.AttributeValue?.ToString(), BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-                if (method != null)
-                {
-                    var delegateType = typeof(EventCallback);
-                    var eventCallback = Delegate.CreateDelegate(delegateType, this, method);
-                    builder.AddAttribute(index++, attr.AttributeName, eventCallback);
-                }
-            }
-            else
-            {
-                //设置普通属性
-                RenderComponentSimpleAttribute(builder, index, componentId, componentType, attr);
-            }
+            RenderComponentAttribute(builder, index, componentId, componentType, attr);
         }
     }
 
+    private void RenderComponentAttribute(RenderTreeBuilder builder, int index,
+        string componentId, Type componentType,
+        ComponentAttributeFragmentSchema attr)
+    {
+        ArgumentNullException.ThrowIfNull(attr);
+        ArgumentNullException.ThrowIfNullOrWhiteSpace(attr.AttributeName);
+
+        var propertyInfo = componentType.GetProperty(attr.AttributeName);
+        if (propertyInfo == null)
+            return;
+
+        if (propertyInfo.PropertyType == typeof(RenderFragment))
+        {
+            //渲染 RenderFragment 属性（如 ChildContent）
+            builder.AddAttribute(index++, attr.AttributeName, (RenderFragment)(childBuilder =>
+            {
+                childBuilder.AddContent(index++, attr.AttributeValue?.ToString());
+            }));
+        }
+        else if (propertyInfo.PropertyType == typeof(EventCallback))
+        {
+            //渲染事件回调属性
+            var method = GetType().GetMethod(attr.AttributeValue?.ToString(), BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+            if (method != null)
+            {
+                var delegateType = typeof(EventCallback);
+                var eventCallback = Delegate.CreateDelegate(delegateType, this, method);
+                builder.AddAttribute(index++, attr.AttributeName, eventCallback);
+            }
+        }
+        else
+        {
+            //渲染简单属性
+            RenderComponentSimpleAttribute(builder, index, componentId, componentType, attr);
+        }
+    }
+
+    /// <summary>
+    /// 渲染简单属性
+    /// </summary>
+    /// <param name="builder"></param>
+    /// <param name="index"></param>
+    /// <param name="componentId"></param>
+    /// <param name="componentType"></param>
+    /// <param name="attr"></param>
+    /// <exception cref="NullReferenceException"></exception>
     private void RenderComponentSimpleAttribute(RenderTreeBuilder builder, int index,
         string componentId, Type componentType,
         ComponentAttributeFragmentSchema attr)
@@ -88,24 +109,30 @@ public abstract class LowCodeDynamicComponentBase : LowCodeComponentBase
     {
         ArgumentNullException.ThrowIfNull(typeName);
 
+        var type = Type.GetType(typeName);
         if (value == null)
         {
-            var type = Type.GetType(typeName);
             return type.GetDefaultValue();
         }
 
-        var valueElement = (JsonElement)value;
-        return typeName switch
+        if (value is JsonElement valueElement)
         {
-            "System.Int32" => valueElement.GetInt32(),
-            "System.Boolean" => valueElement.GetBoolean(),
-            "System.String" => valueElement.GetString(),
-            "System.Double" => valueElement.GetDouble(),
-            "System.Decimal" => valueElement.GetDecimal(),
-            "System.DateTime" => valueElement.GetDateTime(),
-            "System.Int64" => valueElement.GetInt64(),
-            _ => throw new NotSupportedException($"Type '{typeName}' is not supported.")
-        };
+            return typeName switch
+            {
+                "System.Int32" => valueElement.GetInt32(),
+                "System.Boolean" => valueElement.GetBoolean(),
+                "System.String" => valueElement.GetString(),
+                "System.Double" => valueElement.GetDouble(),
+                "System.Decimal" => valueElement.GetDecimal(),
+                "System.DateTime" => valueElement.GetDateTime(),
+                "System.Int64" => valueElement.GetInt64(),
+                _ => throw new NotSupportedException($"Type '{typeName}' is not supported.")
+            };
+        }
+        else
+        {
+            return type.GetDefaultValue();
+        }
     }
 
     private bool SupportsValueBinding(Type componentType)
