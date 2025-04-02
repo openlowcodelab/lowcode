@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
@@ -39,10 +40,15 @@ public class ComponentPartsAttributeDefineSchema : ComponentAttributeDefineSchem
             if (AttributeValue == null)
                 return default;
 
-            if(AttributeClrType != "System.String")
+            if (AttributeClrType != "System.String")
                 return default;
 
-            return AttributeValue.ToString();
+            if (AttributeValue is JsonElement valueElement)
+                return valueElement.GetString();
+            else if (AttributeValue is string s)
+                return s;
+
+            return default;
         }
         set
         {
@@ -64,7 +70,12 @@ public class ComponentPartsAttributeDefineSchema : ComponentAttributeDefineSchem
             if (AttributeClrType != "System.Int32")
                 return default;
 
-            return (int)AttributeValue;
+            if (AttributeValue is JsonElement valueElement)
+                return valueElement.GetInt32();
+            else if (AttributeValue is Int32 i)
+                return i;
+
+            return default;
         }
         set
         {
@@ -83,7 +94,12 @@ public class ComponentPartsAttributeDefineSchema : ComponentAttributeDefineSchem
             if (AttributeClrType != "System.Boolean")
                 return default;
 
-            return (bool)AttributeValue;
+            if (AttributeValue is JsonElement valueElement)
+                return valueElement.GetBoolean();
+            else if (AttributeValue is Boolean bol)
+                return bol;
+
+            return default;
         }
         set
         {
