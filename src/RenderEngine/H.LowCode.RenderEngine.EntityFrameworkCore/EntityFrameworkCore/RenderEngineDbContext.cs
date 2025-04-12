@@ -10,6 +10,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Text.Json;
+using Volo.Abp.Domain.Entities;
 
 namespace H.LowCode.RenderEngine.EntityFrameworkCore;
 
@@ -48,7 +49,7 @@ public class RenderEngineDbContext : DbContext
         var entityType = GetEntityType(formEntity.Name);
         var entity = await FindAsync(entityType, formEntity.Id);
         if (entity == null)
-            return false;
+            throw new EntityNotFoundException($"entitytype={entityType}, id={formEntity.Id}");
 
         foreach (var field in formEntity.Fields)
         {

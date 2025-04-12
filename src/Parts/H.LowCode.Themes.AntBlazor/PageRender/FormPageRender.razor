@@ -46,39 +46,10 @@
             return await FormDataAppService.GetAsync(Page.AppId, Page.Id, Id);
         });
 
-        InitFormData();
-    }
-
-    private void InitFormData()
-    {
-        _fieldDictData = new Dictionary<string, object>();
         if (_formDTO?.Fields == null)
-        {
-            return;
-        }
-
-        foreach (var field in _formDTO.Fields)
-        {
-            if (string.IsNullOrEmpty(field.Name) || string.IsNullOrEmpty(field.TypeName))
-            {
-                continue;
-            }
-
-            var fieldType = Type.GetType(field.TypeName);
-            if (fieldType == null)
-                throw new NotSupportedException(field.Name);
-
-            if (field.Value == null)
-            {
-                _fieldDictData.Add(field.Name, fieldType.GetDefaultValue());
-            }
-            else
-            {
-                //RendererInfo.Name 为 WebAssembly 时 field.Value 为 JsonElement, 所以需要转换
-                var realValue = field.Value.ConvertToRealType(fieldType);
-                _fieldDictData.Add(field.Name, realValue);
-            }
-        }
+            _fieldDictData = new Dictionary<string, object>();
+        else
+            _fieldDictData = _formDTO.Fields.ToDictionary(x => x.Name, x => x.Value);
     }
 
     private async Task OnFinishAsync()

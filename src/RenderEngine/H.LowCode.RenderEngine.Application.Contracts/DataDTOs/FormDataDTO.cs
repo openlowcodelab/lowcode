@@ -20,7 +20,30 @@ public class FormFieldDTO
 {
     public string Name { get; set; }
 
-    public string TypeName { get; set; }
+    /// <summary>
+    /// Value 值的类型
+    /// </summary>
+    /// <remarks>init 用于控制允许在 AutoMapper 场景赋值, 不允许外部赋值</remarks>
+    public string TypeName { get; init; }
 
-    public object Value { get; set; }
+    private object _value;
+    public object Value
+    {
+        get
+        {
+            if (string.IsNullOrEmpty(TypeName))
+                return new InvalidDataException($"TypeName is null or empty, field={this.ToJson()}");
+
+            var type = Type.GetType(TypeName);
+            if (type == null)
+                throw new InvalidDataException($"Type '{TypeName}' not found, field={this.ToJson()}");
+
+            var realValue = _value.ConvertToRealType(type);
+            return realValue;
+        }
+        set
+        {
+            _value = value;
+        }
+    }
 }
