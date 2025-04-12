@@ -11,7 +11,16 @@ public class FormDataDTO : DataDTOBase
 {
     public string Name { get; set; }
 
-    public Dictionary<string, object> Fields { get; set; } = [];
+    public IList<FormFieldDTO> Fields { get; set; }
 
     public IList<ValidationRuleSchema> ValidationRules { get; set; } = [];
+}
+
+public class FormFieldDTO
+{
+    public string Name { get; set; }
+
+    public string TypeName { get; set; }
+
+    public object Value { get; set; }
 }

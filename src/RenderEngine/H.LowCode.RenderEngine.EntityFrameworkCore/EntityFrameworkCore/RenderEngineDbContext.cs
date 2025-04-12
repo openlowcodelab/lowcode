@@ -3,11 +3,13 @@ using H.LowCode.RenderEngine.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Microsoft.VisualBasic.FileIO;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
+using System.Text.Json;
 
 namespace H.LowCode.RenderEngine.EntityFrameworkCore;
 
@@ -32,7 +34,7 @@ public class RenderEngineDbContext : DbContext
 
         foreach (var field in formEntity.Fields)
         {
-            var propertyInfoName = entityType.GetProperty(field.Key);
+            var propertyInfoName = entityType.GetProperty(field.Name);
             propertyInfoName.SetValue(entity, field.Value);
         }
 
@@ -50,7 +52,7 @@ public class RenderEngineDbContext : DbContext
 
         foreach (var field in formEntity.Fields)
         {
-            var propertyInfoName = entityType.GetProperty(field.Key);
+            var propertyInfoName = entityType.GetProperty(field.Name);
             propertyInfoName.SetValue(entity, field.Value);
         }
 
@@ -70,7 +72,14 @@ public class RenderEngineDbContext : DbContext
         foreach (var property in entityType.GetProperties())
         {
             var propertyValue = property.GetValue(entity);
-            formEntity.Fields[property.Name] = propertyValue;
+
+            var field = new FormFieldEntity
+            {
+                Name = property.Name,
+                TypeName = property.PropertyType.FullName,
+                Value = propertyValue
+            };
+            formEntity.Fields.Add(field);
         }
         return formEntity;
     }

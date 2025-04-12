@@ -7,6 +7,7 @@ using H.LowCode.MetaSchema;
 using System.Reflection;
 using Microsoft.AspNetCore.Components.Rendering;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 
 namespace H.LowCode.ComponentBase;
 
@@ -40,11 +41,18 @@ public abstract class LowCodeDynamicComponentBase : LowCodeComponentBase
         ComponentAttributeFragmentSchema attr)
     {
         ArgumentNullException.ThrowIfNull(attr);
-        ArgumentNullException.ThrowIfNullOrWhiteSpace(attr.AttributeName);
+
+        if (string.IsNullOrEmpty(attr.AttributeName))
+            throw new NullReferenceException($"{nameof(attr.AttributeName)} is empty");
 
         var propertyInfo = componentType.GetProperty(attr.AttributeName);
         if (propertyInfo == null)
             return;
+
+        if (attr.AttributeValue == null)
+        {
+            Logger.LogWarning($"componentId={componentId}, {nameof(attr.AttributeValue)} is null");
+        }
 
         if (propertyInfo.PropertyType == typeof(RenderFragment))
         {
@@ -98,41 +106,12 @@ public abstract class LowCodeDynamicComponentBase : LowCodeComponentBase
         if (attr.AttributeClrType.IsNullOrEmpty())
             throw new NullReferenceException($"componentId={componentId}, {nameof(attr.AttributeClrType)}");
 
-        var attrValue = ConvertValue(attr.AttributeClrType, attr.AttributeValue);
-        if (attrValue != null)
-        {
-            builder.AddAttribute(index++, attr.AttributeName, attrValue);
-        }
-    }
+        var attrType = Type.GetType(attr.AttributeClrType, true);
+        if (attrType == null)
+            throw new NullReferenceException($"componentId={componentId}, {nameof(attr.AttributeClrType)} '{attr.AttributeClrType}' is not a valid type");
 
-    private static object ConvertValue(string typeName, object value)
-    {
-        ArgumentNullException.ThrowIfNull(typeName);
-
-        var type = Type.GetType(typeName);
-        if (value == null)
-        {
-            return type.GetDefaultValue();
-        }
-
-        if (value is JsonElement valueElement)
-        {
-            return typeName switch
-            {
-                "System.Int32" => valueElement.GetInt32(),
-                "System.Boolean" => valueElement.GetBoolean(),
-                "System.String" => valueElement.GetString(),
-                "System.Double" => valueElement.GetDouble(),
-                "System.Decimal" => valueElement.GetDecimal(),
-                "System.DateTime" => valueElement.GetDateTime(),
-                "System.Int64" => valueElement.GetInt64(),
-                _ => throw new NotSupportedException($"Type '{typeName}' is not supported.")
-            };
-        }
-        else
-        {
-            return type.GetDefaultValue();
-        }
+        var realValue = attr.AttributeValue.ConvertToRealType(attrType);
+        builder.AddAttribute(index++, attr.AttributeName, realValue);
     }
 
     private bool SupportsValueBinding(Type componentType)

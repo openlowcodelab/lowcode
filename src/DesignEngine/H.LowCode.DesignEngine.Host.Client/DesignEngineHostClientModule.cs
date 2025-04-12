@@ -28,7 +28,9 @@ namespace H.LowCode.DesignEngine.Host.Client;
     typeof(PartsDesignEngineModule),
     //ComponentParts
     typeof(DefaultComponentModule),
-    typeof(ExtensionComponentModule)
+    typeof(ExtensionComponentModule),
+    //ComponentBase
+    typeof(LowCodeComponentBaseModule)
     )]
 public class DesignEngineHostClientModule : AbpModule
 {
@@ -40,10 +42,6 @@ public class DesignEngineHostClientModule : AbpModule
 
         ConfigureHttpClient(context, environment);
         ConfigureHttpClientProxies(context);
-
-        //状态管理
-        context.Services.AddScoped(typeof(ComponentState<>));
-        context.Services.AddScoped(typeof(ComponentState<,>));
 
         //应用状态
         context.Services.AddSingleton(new LowCodeAppState(true));

@@ -24,4 +24,28 @@ public class MetaAppService : ApplicationService, IMetaAppService
     {
         return await _pageDomainService.GetAsync(appId, pageId);
     }
+
+    /// <summary>
+    /// 获取页面, 并将页面的组件定义合并到组件中
+    /// </summary>
+    /// <param name="appId"></param>
+    /// <param name="pageId"></param>
+    /// <returns></returns>
+    public async Task<PageSchema> GetPageWithDefineAsync(string appId, string pageId)
+    {
+        var pageSchema = await _pageDomainService.GetAsync(appId, pageId);
+
+        if (pageSchema?.Components != null)
+        {
+            foreach (var component in pageSchema.Components)
+            {
+                if (component == null)
+                    continue;
+
+                component.MergeAttributeDefineToFragment();
+            }
+        }
+
+        return pageSchema;
+    }
 }

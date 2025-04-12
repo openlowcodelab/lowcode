@@ -38,9 +38,10 @@
             return await GetAppSchemaAsync(AppId);
         });
 
-        _menuDataItems = MenuDataState.GetOrAdd(this, () =>
+        _menuDataItems = await MenuDataState.GetOrAddAsync(this, async () =>
         {
-            return InitMenuData(AppId);
+            var menus = InitMenuData(AppId);
+            return await Task.FromResult(menus);
         });
     }
 

@@ -24,7 +24,9 @@ namespace H.LowCode.RenderEngine.Host.Client;
     typeof(DefaultComponentModule),
     typeof(ExtensionComponentModule),
     //ThemeParts
-    typeof(AntBlazorThemeModule)
+    typeof(AntBlazorThemeModule),
+    //ComponentBase
+    typeof(LowCodeComponentBaseModule)
     )]
 public class RenderEngineHostClientModule : AbpModule
 {
@@ -36,10 +38,6 @@ public class RenderEngineHostClientModule : AbpModule
 
         ConfigureHttpClient(context, environment);
         ConfigureHttpClientProxies(context);
-
-        //状态管理
-        context.Services.AddScoped(typeof(ComponentState<>));
-        context.Services.AddScoped(typeof(ComponentState<,>));
 
         //应用状态
         context.Services.AddSingleton(new LowCodeAppState(false));

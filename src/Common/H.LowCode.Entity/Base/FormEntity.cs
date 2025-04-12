@@ -12,15 +12,20 @@ public class FormEntity : EntityBase
 
     public string Name { get; set; }
 
-    public Dictionary<string, object> Fields { get; set; } = [];
+    public IList<FormFieldEntity> Fields { get; set; } = [];
 
     private string GetPrimaryKey()
     {
         string primaryFieldName = "f_id";
-        var bol = Fields.ContainsKey(primaryFieldName);
-        if (bol == false)
-            return null;
+        var field = Fields?.FirstOrDefault(t => string.Equals(t.Name, primaryFieldName));
 
-        return Fields[primaryFieldName]?.ToString();
+        return field.Name;
     }
+}
+
+public class FormFieldEntity
+{
+    public string Name { get; set; }
+    public string TypeName { get; set; }
+    public object Value { get; set; }
 }

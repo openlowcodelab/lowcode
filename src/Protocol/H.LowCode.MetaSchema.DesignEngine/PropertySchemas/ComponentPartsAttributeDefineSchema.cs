@@ -37,18 +37,7 @@ public class ComponentPartsAttributeDefineSchema : ComponentAttributeDefineSchem
     {
         get
         {
-            if (AttributeValue == null)
-                return default;
-
-            if (AttributeClrType != "System.String")
-                return default;
-
-            if (AttributeValue is JsonElement valueElement)
-                return valueElement.GetString();
-            else if (AttributeValue is string s)
-                return s;
-
-            return default;
+            return AttributeValue.ConvertToRealType(typeof(string))?.ToString();
         }
         set
         {
@@ -64,18 +53,7 @@ public class ComponentPartsAttributeDefineSchema : ComponentAttributeDefineSchem
     {
         get
         {
-            if (AttributeValue == null)
-                return default;
-
-            if (AttributeClrType != "System.Int32")
-                return default;
-
-            if (AttributeValue is JsonElement valueElement)
-                return valueElement.GetInt32();
-            else if (AttributeValue is Int32 i)
-                return i;
-
-            return default;
+            return (int)AttributeValue.ConvertToRealType(typeof(int));
         }
         set
         {
@@ -88,18 +66,7 @@ public class ComponentPartsAttributeDefineSchema : ComponentAttributeDefineSchem
     {
         get
         {
-            if (AttributeValue == null)
-                return default;
-
-            if (AttributeClrType != "System.Boolean")
-                return default;
-
-            if (AttributeValue is JsonElement valueElement)
-                return valueElement.GetBoolean();
-            else if (AttributeValue is Boolean bol)
-                return bol;
-
-            return default;
+            return (bool)AttributeValue.ConvertToRealType(typeof(bool));
         }
         set
         {

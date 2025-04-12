@@ -5,6 +5,7 @@
 
 @inject IPageAppService PageAppService
 @inject DragDropStateService DragDropStateService
+@inject ComponentState<DesignPage, PagePartsSchema> PagePartsSchemaState
 
 <PageTitle>@($"{_pageCascadingModel.PageName} - 页面设计器")</PageTitle>
 
@@ -33,7 +34,7 @@
             </Sider>
             <Layout>
                 <Content Class="designpage">
-                    <DesignPanel @ref="_designPanel"></DesignPanel>
+                    <DesignPanel Components="@_pageSchema.Components"></DesignPanel>
                 </Content>
             </Layout>
             <Sider Class="designpage" Style="flex: auto; max-width: max-content; min-width: 250px;" Theme="SiderTheme.Light">
@@ -51,8 +52,6 @@
     [Parameter]
     public string PageId { get; set; }
 
-    private DesignPanel _designPanel;
-
     private PagePartsSchema _pageSchema;
     private PageCascadingModel _pageCascadingModel;
     private bool _isNewPage;
@@ -61,7 +60,10 @@
     {
         _pageCascadingModel = new() { AppId = AppId, PageId = PageId, PageName = "..." };
 
-        _pageSchema = await LoadPageSchemaAsync();
+        _pageSchema = await PagePartsSchemaState.GetOrAddAsync(this, async () =>
+        {
+            return await LoadPageSchemaAsync();
+        });
         SetPageCascadingModel(_pageSchema);
 
         await base.OnInitializedAsync();
@@ -79,13 +81,8 @@
             return newPage;
         }
 
-        var pageSchema = await PageAppService.GetByIdAsync(AppId, PageId);
-
-        if (_designPanel != null)
-        {
-            DragDropStateService.SetPage(AppId, pageSchema);
-            await _designPanel.ReloadAsync(pageSchema);
-        }
+        var pageSchema = await PageAppService.GetByIdWithDefineAsync(AppId, PageId);
+        DragDropStateService.SetPage(AppId, pageSchema);
 
         return pageSchema;
     }
@@ -129,5 +126,14 @@
     {
         _pageCascadingModel.PageName = pageSchema.Name;
         _pageCascadingModel.PageLayout = pageSchema.PageProperty.PageLayout;
+    }
+
+    /// <summary>
+    /// 用于 PagePartsSchemaState 的 key（每个页面独立缓存）
+    /// </summary>
+    /// <returns></returns>
+    public override string ToString()
+    {
+        return $"{base.ToString()}-{AppId}-{PageId}";
     }
 }

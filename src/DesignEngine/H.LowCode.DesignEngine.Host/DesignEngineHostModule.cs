@@ -34,7 +34,9 @@ namespace H.LowCode.DesignEngine.Host;
     typeof(PartsDesignEngineModule),
     //ComponentParts
     typeof(DefaultComponentModule),
-    typeof(ExtensionComponentModule)
+    typeof(ExtensionComponentModule),
+    //ComponentBase
+    typeof(LowCodeComponentBaseModule)
     )]
 public class DesignEngineHostModule : AbpModule
 {
@@ -42,10 +44,6 @@ public class DesignEngineHostModule : AbpModule
     {
         ConfigureAutoApiControllers();
         ConfigureSwaggerServices(context.Services);
-
-        //状态管理
-        context.Services.AddScoped(typeof(ComponentState<>));
-        context.Services.AddScoped(typeof(ComponentState<,>));
 
         //应用状态
         context.Services.AddSingleton(new LowCodeAppState(true));

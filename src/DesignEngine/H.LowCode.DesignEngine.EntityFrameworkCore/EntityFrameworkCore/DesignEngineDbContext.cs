@@ -33,7 +33,7 @@ public class DesignEngineDbContext : DbContext
 
         foreach (var field in formEntity.Fields)
         {
-            var propertyInfoName = entityType.GetProperty(field.Key);
+            var propertyInfoName = entityType.GetProperty(field.Name);
             propertyInfoName.SetValue(entity, field.Value);
         }
 
@@ -49,7 +49,7 @@ public class DesignEngineDbContext : DbContext
 
         foreach (var field in formEntity.Fields)
         {
-            var propertyInfoName = entityType.GetProperty(field.Key);
+            var propertyInfoName = entityType.GetProperty(field.Name);
             propertyInfoName.SetValue(entity, field.Value);
         }
 
@@ -69,7 +69,14 @@ public class DesignEngineDbContext : DbContext
         foreach (var property in entityType.GetProperties())
         {
             var propertyValue = property.GetValue(entity);
-            formEntity.Fields[property.Name] = propertyValue;
+
+            var field = new FormFieldEntity()
+            {
+                Name = property.Name,
+                TypeName = property.PropertyType.FullName,
+                Value = propertyValue
+            };
+            formEntity.Fields.Add(field);
         }
         return formEntity;
     }

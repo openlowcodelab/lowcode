@@ -1,9 +1,11 @@
 ﻿using H.LowCode.Entity;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Services;
@@ -28,9 +30,13 @@ public class FormDataDomainService : DomainService, IFormDataDomainService
             var defaultEntity = new FormEntity()
             {
                 Name = entityName,
-                Fields = formPageSchema.Components
-                    .Where(t => t.IsContainer == false)
-                    .ToDictionary(key => key.Name, val => val.Fragment.GetDefaultValue())
+                Fields = formPageSchema.Components.Where(t => t.IsContainer == false)
+                    .Select(t => new FormFieldEntity()
+                    {
+                        Name = t.Name,
+                        TypeName = t.Fragment.ValueType,
+                        Value = t.Fragment.GetDefaultValue()
+                    }).ToList()
             };
             return defaultEntity;
         }

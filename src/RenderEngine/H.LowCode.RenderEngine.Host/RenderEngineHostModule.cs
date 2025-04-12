@@ -31,7 +31,9 @@ namespace H.LowCode.RenderEngine.Host;
     typeof(DefaultComponentModule),
     typeof(ExtensionComponentModule),
     //ThemeParts
-    typeof(AntBlazorThemeModule)
+    typeof(AntBlazorThemeModule),
+    //ComponentBase
+    typeof(LowCodeComponentBaseModule)
     )]
 public class RenderEngineHostModule : AbpModule
 {
@@ -39,10 +41,6 @@ public class RenderEngineHostModule : AbpModule
     {
         ConfigureAutoApiControllers();
         ConfigureSwaggerServices(context.Services);
-
-        //状态管理
-        context.Services.AddScoped(typeof(ComponentState<>));
-        context.Services.AddScoped(typeof(ComponentState<,>));
 
         //应用状态
         context.Services.AddSingleton(new LowCodeAppState(false));

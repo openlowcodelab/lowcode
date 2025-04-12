@@ -1,6 +1,16 @@
 <Project>
+	<PropertyGroup>
+		<!-- 在编译时生成 NuGet 包 -->
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<!-- Nuget 包输出路径 -->
+		<PackageOutputPath>D:\H\NuGetPackages</PackageOutputPath>
+		<!-- 生成 NuGet 包时自动复制依赖项 -->
+		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+	</PropertyGroup>
+
+	<!-- 项目打包时, 上传到 nuget 官方仓库 -->
 	<Target Name="PushNugetPackage" AfterTargets="Pack">
 		<!-- nuget 的 api_key 从本机环境变量 NUGET_API_KEY 中获取 -->
-		<Exec Command="dotnet nuget push $(ProjectDir)bin\Debug\$(PackageId).$(PackageVersion).nupkg -k $(NUGET_API_KEY) -s https://api.nuget.org/v3/index.json --skip-duplicate"></Exec>
+		<Exec Condition="'$(NUGET_PUSH)' == 'true'" Command="dotnet nuget push $(ProjectDir)bin\Debug\$(PackageId).$(PackageVersion).nupkg -k $(NUGET_API_KEY) -s https://api.nuget.org/v3/index.json --skip-duplicate"></Exec>
 	</Target>
 </Project>
