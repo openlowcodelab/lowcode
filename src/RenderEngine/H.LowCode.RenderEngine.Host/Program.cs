@@ -17,7 +17,6 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
 });
-builder.Services.AddSwaggerGen();
 
 // ÆôÓÃÏìÓ¦Ñ¹Ëõ
 builder.Services.AddResponseCompression(options =>
@@ -47,8 +46,6 @@ await app.InitializeApplicationAsync();
 if (app.Environment.IsDevelopment())
 {
     app.UseWebAssemblyDebugging();
-    app.UseSwagger();
-    app.UseSwaggerUI();
 }
 else
 {
