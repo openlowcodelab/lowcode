@@ -23,7 +23,7 @@ public class FormDataDomainService : DomainService, IFormDataDomainService
 
         string entityName = formPageSchema.DataSource.DataSourceValue;
 
-        if (string.IsNullOrEmpty(id) || string.Equals(id, "empty"))
+        if (string.IsNullOrEmpty(id))
         {
             var defaultEntity = new FormEntity()
             {

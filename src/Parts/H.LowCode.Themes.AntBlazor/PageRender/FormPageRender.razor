@@ -38,9 +38,6 @@
         await base.OnInitializedAsync();
 
         Id = GetQueryValue("id");
-        if (string.IsNullOrEmpty(Id))
-            Id = "empty";
-
         _formDTO = await FormDataState.GetOrAddAsync(this, async () =>
         {
             return await FormDataAppService.GetAsync(Page.AppId, Page.Id, Id);
