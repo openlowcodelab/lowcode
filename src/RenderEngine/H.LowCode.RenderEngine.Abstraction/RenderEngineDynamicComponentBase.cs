@@ -8,6 +8,7 @@ using H.LowCode.MetaSchema.RenderEngine;
 using Microsoft.AspNetCore.Components.Rendering;
 using H.LowCode.ComponentBase;
 using AntDesign;
+using System.ComponentModel;
 
 namespace H.LowCode.RenderEngine.Abstraction;
 
@@ -16,41 +17,49 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
     [Inject]
     protected new IMessageService Message { get; set; }
 
-    protected virtual RenderFragment RenderComponent(
+    protected virtual RenderFragment RenderComponent(ComponentSchema component)
+        => builder =>
+    {
+        if (component == null || component.Fragment == null)
+            throw new NullReferenceException($"{nameof(component)} or {nameof(component.Fragment)} is null");
+
+        int index = 0;
+        RenderComponentRecursive(component.Id, component.IsSupportDataSource,
+            component.DataSource, component.Fragment, builder, index);
+    };
+
+    private void RenderComponentRecursive(
         string componentId, bool isSupportDataSource, ComponentDataSourceSchema dataSource,
-        ComponentFragmentSchema componentFragment)
+        ComponentFragmentSchema componentFragment,
+        RenderTreeBuilder builder, int index)
     {
         ArgumentNullException.ThrowIfNull(componentFragment);
 
         if (string.IsNullOrEmpty(componentFragment.TypeName))
             throw new NullReferenceException($"componentId={componentId}, {nameof(componentFragment.TypeName)}");
 
-        return builder =>
+        Type componentType = Type.GetType(componentFragment.TypeName, true);
+        if (componentType == null)
+            throw new NullReferenceException($"componentId={componentId}, type={componentFragment.TypeName}");
+
+        builder.OpenComponent(index++, componentType);
+
+        //渲染属性
+        RenderComponentAttributes(builder, index, componentId, componentType,
+            componentFragment.Attributes);
+
+        if (isSupportDataSource)
         {
-            Type componentType = Type.GetType(componentFragment.TypeName, true);
-            if (componentType == null)
-                throw new NullReferenceException($"componentId={componentId}, type={componentFragment.TypeName}");
+            //渲染数据源
+            RenderDataSource(componentId, dataSource, builder, index);
+        }
+        else if (componentFragment.HasChildren)
+        {
+            //渲染 ChildContent
+            RenderChildFragments(componentId, componentFragment, builder, index);
+        }
 
-            int index = 0;
-            builder.OpenComponent(index++, componentType);
-
-            //渲染属性
-            RenderComponentAttributes(builder, index, componentId, componentType,
-                componentFragment.Attributes);
-
-            if (isSupportDataSource)
-            {
-                //渲染数据源
-                RenderDataSource(componentId, dataSource, builder, index);
-            }
-            else if (componentFragment.HasChildren)
-            {
-                //渲染 ChildContent
-                RenderChildrens(componentId, componentFragment, builder, index);
-            }
-
-            builder.CloseComponent();
-        };
+        builder.CloseComponent();
     }
 
     private void RenderDataSource(string componentId,
@@ -116,7 +125,7 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
         }));
     }
 
-    private void RenderChildrens(string componentId, ComponentFragmentSchema componentFragment,
+    private void RenderChildFragments(string componentId, ComponentFragmentSchema componentFragment,
         RenderTreeBuilder builder, int index)
     {
         if (componentFragment.HasChildren == false)
@@ -124,9 +133,10 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
 
         builder.AddAttribute(index++, "ChildContent", (RenderFragment)(childBuilder =>
         {
-            foreach (var child in componentFragment.Childrens)
+            foreach (var childFragment in componentFragment.ChildFragments)
             {
-                childBuilder.AddContent(index++, RenderComponent(componentId, false, null, child));
+                RenderComponentRecursive(componentId, false,
+                    null, childFragment, childBuilder, index);
             }
         }));
     }

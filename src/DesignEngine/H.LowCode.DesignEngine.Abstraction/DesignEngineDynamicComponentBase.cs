@@ -11,21 +11,22 @@ namespace H.LowCode.DesignEngine.Abstraction;
 public abstract class DesignEngineDynamicComponentBase : LowCodeDynamicComponentBase
 {
     protected virtual RenderFragment RenderComponent(ComponentPartsSchema component)
+        => builder =>
     {
-        if(component == null || component.Fragment == null)
+        if (component == null || component.Fragment == null)
             throw new NullReferenceException($"{nameof(component)} or {nameof(component.Fragment)} is null");
 
         int index = 0;
-        return RenderComponentRecursive(component.Id, component.IsSupportDataSource,
-            component, component.DataSource, component.Fragment, index);
-    }
+        RenderComponentRecursive(component.Id, component.IsSupportDataSource,
+            component, component.DataSource, component.Fragment, builder, index);
+    };
 
-    private RenderFragment RenderComponentRecursive(
+    private void RenderComponentRecursive(
         string componentId, bool isSupportDataSource,
         ComponentPartsSchema component,
         ComponentPartsDataSourceSchema dataSource,
         ComponentPartsFragmentSchema componentFragment,
-        int index)
+        RenderTreeBuilder builder, int index)
     {
         //TypeName 为空时，使用 DefaultTypeName
         if (string.IsNullOrEmpty(componentFragment.TypeName))
@@ -34,34 +35,31 @@ public abstract class DesignEngineDynamicComponentBase : LowCodeDynamicComponent
         if (string.IsNullOrEmpty(componentFragment.TypeName))
             throw new NullReferenceException($"componentId={componentId}, {nameof(componentFragment.TypeName)}");
 
-        return builder =>
+        Type componentType = Type.GetType(componentFragment.TypeName, true);
+        if (componentType == null)
+            throw new NullReferenceException($"componentId={componentId}, type={componentFragment.TypeName}");
+
+        builder.OpenComponent(index++, componentType);
+
+        //渲染属性
+        RenderComponentAttributes(builder, index, componentId, componentType,
+            componentFragment.Attributes);
+
+        //渲染 ChildContent
+        if (isSupportDataSource)
         {
-            Type componentType = Type.GetType(componentFragment.TypeName, true);
-            if (componentType == null)
-                throw new NullReferenceException($"componentId={componentId}, type={componentFragment.TypeName}");
+            RenderDataSource(componentId, dataSource, builder, index);
+        }
+        else if (componentFragment.HasChildFragment)
+        {
+            RenderChildFragments(componentId, component, componentFragment, builder, index);
+        }
+        else if (componentFragment.Content.IsNullOrWhiteSpace() == false)
+        {
+            RenderContent(componentId, component, componentFragment, builder, index);
+        }
 
-            builder.OpenComponent(index++, componentType);
-
-            //渲染属性
-            RenderComponentAttributes(builder, index, componentId, componentType,
-                componentFragment.Attributes);
-
-            //渲染 ChildContent
-            if (isSupportDataSource)
-            {
-                RenderDataSource(componentId, dataSource, builder, index);
-            }
-            else if (componentFragment.HasChildFragment)
-            {
-                RenderChildrens(componentId, component, componentFragment, builder, index);
-            }
-            else if (componentFragment.Content.IsNullOrWhiteSpace() == false)
-            {
-                RenderContent(componentId, component, componentFragment, builder, index);
-            }
-
-            builder.CloseComponent();
-        };
+        builder.CloseComponent();
     }
 
     #region 渲染数据源
@@ -129,7 +127,7 @@ public abstract class DesignEngineDynamicComponentBase : LowCodeDynamicComponent
     #endregion
 
     #region 渲染子节点
-    private void RenderChildrens(string componentId,
+    private void RenderChildFragments(string componentId,
         ComponentPartsSchema component,
         ComponentPartsFragmentSchema componentFragment,
         RenderTreeBuilder builder, int index)
@@ -141,9 +139,8 @@ public abstract class DesignEngineDynamicComponentBase : LowCodeDynamicComponent
         {
             foreach (var childFragment in componentFragment.ChildFragments)
             {
-                var fragment = RenderComponentRecursive(componentId, false,
-                    component, null, childFragment, index);
-                childBuilder.AddContent(index++, fragment);
+                RenderComponentRecursive(componentId, false,
+                    component, null, childFragment, childBuilder, index);
             }
         }));
     }

@@ -28,12 +28,12 @@ public class ComponentStyleSchema
     /// <summary>
     /// 默认样式
     /// </summary>
-    [JsonPropertyName("dsty")]
+    [JsonPropertyName("dfstl")]
     public string DefaultStyle { get; set; }
 
     /// <summary>
     /// 自定义样式
     /// </summary>
-    [JsonPropertyName("csty")]
+    [JsonPropertyName("ctstl")]
     public string CustomStyle { get; set; }
 }
