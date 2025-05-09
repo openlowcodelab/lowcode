@@ -8,7 +8,7 @@ namespace H.LowCode.MetaSchema.DesignEngine;
 public class ComponentPartsSchema : ComponentSchemaBase
 {
     /// <summary>
-    /// 组件Id
+    /// 组件物料Id
     /// </summary>
     /// <remarks>一类组件唯一Id</remarks>
     [JsonPropertyName("compid")]

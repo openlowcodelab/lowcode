@@ -5,7 +5,7 @@
 {
     <div class="pagesetting-item">
         <label>布局：</label>
-        <RadioGroup TValue="int" @bind-Value="@Page.PageProperty.PageLayout" OnChange="OnChange">
+        <RadioGroup TValue="int" @bind-Value="@Page.PageProperty.PageLayout" OnChange="OnLayoutChange">
             <Radio RadioButton Value="1">一列</Radio>
             <Radio RadioButton Value="2">两列</Radio>
             <Radio RadioButton Value="3">三列</Radio>
@@ -37,6 +37,12 @@
             </div>
         }
     }
+
+    <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:30px 0 10px;">其它</div>
+    <div class="pagesetting-item">
+        <label>自定义样式：</label>
+        <TextArea @bind-value="@Page.PageProperty.CustomStyle" OnChange="OnStyleChange" Style="height: 150px;" />
+    </div>
 }
 
 @code {
@@ -48,8 +54,13 @@
         await base.OnInitializedAsync();
     }
 
-    private void OnChange(int pageLayout)
+    private void OnLayoutChange(int pageLayout)
     {
         BlazorEventDispatcher.Publish("designengine.pagesetting.pagelayout.onchange", pageLayout);
+    }
+
+    private void OnStyleChange(string customStyle)
+    {
+        
     }
 }

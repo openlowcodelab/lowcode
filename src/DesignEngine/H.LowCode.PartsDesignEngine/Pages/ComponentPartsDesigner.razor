@@ -44,9 +44,9 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _partsSchema = await LoadPartsSchemaAsync();
-
         await base.OnInitializedAsync();
+
+        _partsSchema = await LoadPartsSchemaAsync();
     }
 
     private async Task<ComponentPartsSchema> LoadPartsSchemaAsync()

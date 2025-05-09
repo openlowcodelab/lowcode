@@ -1,51 +1,47 @@
-﻿@namespace H.LowCode.DesignEngine.Abstraction
-@inherits DesignEngineLowCodeComponentBase
+﻿@* @namespace H.LowCode.DesignEngine.Abstraction *@
+@* @inherits DesignEngineLowCodeComponentBase *@
 
-@code {
-    [Parameter]
-    public ComponentPartsSchema Component { get; set; }
+@* @code { *@
+@*     [Parameter] *@
+@*     public ComponentPartsSchema Component { get; set; } *@
 
-    protected virtual ComponentPartsSchema CreateComponent(string key, Action<ComponentPartsSchema> action = null)
-    {
-        var c = Component.Childrens.FirstOrDefault(t =>
-            {
-                // if (t.Property.ExtensionData.ContainsKey(key))
-                //     return true;
-                return false;
-            });
-        if (c != null)
-            return c;
+@*     protected virtual ComponentPartsSchema CreateComponent(string key, Action<ComponentPartsSchema> action = null) *@
+@*     { *@
+@*         var c = Component.Childrens.FirstOrDefault(t => *@
+@*             { *@
+@*                 return false; *@
+@*             }); *@
+@*         if (c != null) *@
+@*             return c; *@
 
-        var component = CreateContainerComponent(key);
+@*         var component = CreateContainerComponent(key); *@
 
-        if(action != null) action(component);
+@*         if(action != null) action(component); *@
 
-        Component.Childrens.Add(component);
+@*         Component.Childrens.Add(component); *@
 
-        return component;
-    }
+@*         return component; *@
+@*     } *@
 
-    private ComponentPartsSchema CreateContainerComponent(string name)
-    {
-        var component = new ComponentPartsSchema();
-        component.Id = ShortIdGenerator.Generate();
-        component.Refresh = Component.Refresh;
+@*     private ComponentPartsSchema CreateContainerComponent(string name) *@
+@*     { *@
+@*         var component = new ComponentPartsSchema(); *@
+@*         component.Id = ShortIdGenerator.Generate(); *@
+@*         component.Refresh = Component.Refresh; *@
 
-        component.Fragment = new();
-        //component.Property.ExtraProperties = new Dictionary<string, PropertyItemSchema>();
-        component.Style = new() { DefaultStyle = "height:100%; width:100%;" };
-        component.Event = default;
-        component.DesignState.DragEffectStyle = default;
-        component.DesignState.IsDropedAfter = default;
-        component.DesignState.IsDroppedFromComponentPanel = default;
-        component.IsHiddenLabel = true;
-        component.DesignState.IsSelected = default;
-        component.DesignState.Opacity = default;
+@*         component.Fragment = new(); *@
+@*         component.Style = new() { DefaultStyle = "height:100%; width:100%;" }; *@
+@*         component.Event = default; *@
+@*         component.DesignState.DragEffectStyle = default; *@
+@*         component.DesignState.IsDropedAfter = default; *@
+@*         component.DesignState.IsDroppedFromComponentPanel = default; *@
+@*         component.IsHiddenLabel = true; *@
+@*         component.DesignState.IsSelected = default; *@
+@*         component.DesignState.Opacity = default; *@
 
-        component.IsContainer = true;
-        //component.Property.ExtensionData.Add(name, name);
-        component.ParentId = Component.Id;
+@*         component.IsContainer = true; *@
+@*         component.ParentId = Component.Id; *@
 
-        return component;
-    }
-}
+@*         return component; *@
+@*     } *@
+@* } *@

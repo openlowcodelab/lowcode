@@ -43,7 +43,7 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
                 //渲染数据源
                 RenderDataSource(componentId, dataSource, builder, index);
             }
-            else
+            else if (componentFragment.HasChildren)
             {
                 //渲染 ChildContent
                 RenderChildrens(componentId, componentFragment, builder, index);
@@ -119,11 +119,7 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
     private void RenderChildrens(string componentId, ComponentFragmentSchema componentFragment,
         RenderTreeBuilder builder, int index)
     {
-        var childrens = componentFragment?.Childrens;
-        if (childrens == null)
-            return;
-
-        if (childrens.Length == 0)
+        if (componentFragment.HasChildren == false)
             return;
 
         builder.AddAttribute(index++, "ChildContent", (RenderFragment)(childBuilder =>

@@ -64,6 +64,8 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await base.OnInitializedAsync();
+
         if (DataSource == null)
         {
             DataSource = [];
@@ -74,8 +76,6 @@
         {
             _optionEditCache[item.Id] = (false, item);
         });
-
-        await base.OnInitializedAsync();
     }
 
     private async Task CreateRowAsync()

@@ -1,11 +1,9 @@
 ﻿using H.LowCode.ComponentBase;
-using H.LowCode.Components.AntBlazor;
-using H.LowCode.Components.Extension;
+using H.LowCode.Components.Defaults;
 using H.LowCode.DesignEngine.Application.Contracts;
 using H.LowCode.MyApp;
 using H.LowCode.PartsDesignEngine;
 using H.LowCode.Workbench;
-using H.Util.Blazor;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Volo.Abp.Autofac.WebAssembly;
 using Volo.Abp.Http.Client;
@@ -26,9 +24,8 @@ namespace H.LowCode.DesignEngine.Host.Client;
     typeof(DesignEngineModule),
     typeof(MyAppModule),
     typeof(PartsDesignEngineModule),
-    //ComponentParts
-    typeof(DefaultComponentModule),
-    typeof(ExtensionComponentModule),
+    //Components
+    typeof(LowCodeDefaultComponentModule),
     //ComponentBase
     typeof(LowCodeComponentBaseModule)
     )]

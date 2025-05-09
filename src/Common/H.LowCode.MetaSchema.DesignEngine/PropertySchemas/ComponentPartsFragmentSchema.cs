@@ -1,10 +1,7 @@
-﻿using H.LowCode.MetaSchema;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace H.LowCode.MetaSchema.DesignEngine;
 
@@ -27,5 +24,15 @@ public class ComponentPartsFragmentSchema : ComponentFragmentSchemaBase
     public override string TypeName { get; set; }
 
     [JsonPropertyName("childs")]
-    public ComponentPartsFragmentSchema[] Childrens { get; set; }
+    public ComponentPartsFragmentSchema[] ChildFragments { get; set; }
+
+    public bool HasChildFragment
+    {
+        get
+        {
+            if (ChildFragments == null || ChildFragments.Length == 0)
+                return false;
+            return true;
+        }
+    }
 }

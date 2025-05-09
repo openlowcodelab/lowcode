@@ -17,6 +17,21 @@ public class PagePropertySchema
     [JsonPropertyName("titlew")]
     public string TitleWidth { get; set; }
 
+    /// <summary>
+    /// 默认样式
+    /// </summary>
+    [JsonPropertyName("dsty")]
+    public string DefaultStyle { get; set; }
+
+    /// <summary>
+    /// 自定义样式
+    /// </summary>
+    [JsonPropertyName("csty")]
+    public string CustomStyle { get; set; }
+
+    /// <summary>
+    /// 页面数据源
+    /// </summary>
     [JsonPropertyName("ds")]
     public PageDataSourceSchema DataSource { get; set; } = new();
 }

@@ -29,20 +29,20 @@ public class ComponentPartsStyleSchema
     [JsonPropertyName("labelw")]
     public double LabelWidth { get; set; } = 180;
 
-    /// <summary>
-    /// 默认样式
-    /// </summary>
-    [JsonPropertyName("defstyle")]
-    public string DefaultStyle { get; set; }
-
     public string Display { get; set; } = "inline";
 
     [JsonPropertyName("pos")]
     public string Position { get; set; } = "static";
 
     /// <summary>
+    /// 默认样式
+    /// </summary>
+    [JsonPropertyName("dsty")]
+    public string DefaultStyle { get; set; }
+
+    /// <summary>
     /// 自定义样式
     /// </summary>
-    [JsonPropertyName("cusstyle")]
+    [JsonPropertyName("csty")]
     public string CustomStyle { get; set; }
 }

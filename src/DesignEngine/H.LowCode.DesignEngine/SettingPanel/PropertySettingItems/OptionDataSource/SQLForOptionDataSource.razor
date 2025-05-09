@@ -15,11 +15,11 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await base.OnInitializedAsync();
+
         if (DataSource == null)
         {
             DataSource = new();
         }
-
-        await base.OnInitializedAsync();
     }
 }

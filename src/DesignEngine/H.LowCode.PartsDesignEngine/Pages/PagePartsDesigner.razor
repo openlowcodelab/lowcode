@@ -53,15 +53,15 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await base.OnInitializedAsync();
+
         _pageCascadingModel = new() { PageId = PartsId, PageName = "..." };
 
-        _partsSchema = await LoadPartsSchemaAsync();
+        _partsSchema = LoadPartsSchemaAsync();
         SetPageModel(_partsSchema);
-
-        await base.OnInitializedAsync();
     }
 
-    private async Task<PagePartsSchema> LoadPartsSchemaAsync()
+    private PagePartsSchema LoadPartsSchemaAsync()
     {
         if (string.Equals("newparts", PartsId))
         {

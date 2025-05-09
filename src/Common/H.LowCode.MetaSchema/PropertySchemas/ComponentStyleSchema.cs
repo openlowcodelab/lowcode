@@ -10,7 +10,7 @@ public class ComponentStyleSchema
     /// </summary>
     /// <remarks>有效值为4-24，如 12/24*100 = 50%。有值以当前值为准,无值以页面布局为准</remarks>
     [JsonPropertyName("itemw")]
-    public double? ItemWidth { get; set; }
+    public double ItemWidth { get; set; } = 4;
 
     /// <summary>
     /// 组件高度 (单位:px)
@@ -28,17 +28,12 @@ public class ComponentStyleSchema
     /// <summary>
     /// 默认样式
     /// </summary>
-    [JsonPropertyName("defstyle")]
+    [JsonPropertyName("dsty")]
     public string DefaultStyle { get; set; }
-
-    public string Display { get; set; } = "inline";
-
-    [JsonPropertyName("pos")]
-    public string Position { get; set; } = "static";
 
     /// <summary>
     /// 自定义样式
     /// </summary>
-    [JsonPropertyName("cusstyle")]
+    [JsonPropertyName("csty")]
     public string CustomStyle { get; set; }
 }

@@ -1,6 +1,5 @@
 ﻿using H.LowCode.ComponentBase;
-using H.LowCode.Components.AntBlazor;
-using H.LowCode.Components.Extension;
+using H.LowCode.Components.Defaults;
 using H.LowCode.RenderEngine.Application.Contracts;
 using H.LowCode.Themes.AntBlazor;
 using H.Util.Blazor;
@@ -20,10 +19,9 @@ namespace H.LowCode.RenderEngine.Host.Client;
     //=====lowcode-web=====//
     //RenderEngine
     typeof(RenderEngineModule),
-    //ComponentParts
-    typeof(DefaultComponentModule),
-    typeof(ExtensionComponentModule),
-    //ThemeParts
+    //Components
+    typeof(LowCodeDefaultComponentModule),
+    //Themes
     typeof(AntBlazorThemeModule),
     //ComponentBase
     typeof(LowCodeComponentBaseModule)

@@ -1,6 +1,5 @@
 ﻿using H.LowCode.ComponentBase;
-using H.LowCode.Components.AntBlazor;
-using H.LowCode.Components.Extension;
+using H.LowCode.Components.Defaults;
 using H.LowCode.DesignEngine.Application;
 using H.LowCode.DesignEngine.EntityFrameworkCore;
 using H.LowCode.DesignEngine.Repository.JsonFile;
@@ -28,9 +27,8 @@ namespace H.LowCode.DesignEngine.Host;
     typeof(DesignEngineModule),
     typeof(MyAppModule),
     typeof(PartsDesignEngineModule),
-    //ComponentParts
-    typeof(DefaultComponentModule),
-    typeof(ExtensionComponentModule),
+    //Components
+    typeof(LowCodeDefaultComponentModule),
     //ComponentBase
     typeof(LowCodeComponentBaseModule)
     )]
