@@ -225,7 +225,7 @@ Width="600" MaxBodyHeight="700">
     {
         //await ComponentPartsAppService.DeleteAsync(LibraryId, componentPartsId);
 
-        await Message.Success("模拟删除成功！");
+        Message.Success("模拟删除成功！");
     }
 
     private async Task OnConfirmAsync(MouseEventArgs e)
@@ -241,13 +241,13 @@ Width="600" MaxBodyHeight="700">
             {
                 _formVisible = false;
                 _form.Submit();
-                await Message.Success("保存成功！");
+                Message.Success("保存成功！");
                 _form.Reset();
             }
             else
             {
                 _formVisible = true;
-                await Message.Error("保存失败");
+                Message.Error("保存失败");
             }
         }
         else
@@ -270,12 +270,12 @@ Width="600" MaxBodyHeight="700">
             _textFormVisible = false;
             _componentPartsList = await LoadComponentPartsAsync();
 
-            await Message.Success("保存成功！");
+            Message.Success("保存成功！");
         }
         else
         {
             _textFormVisible = true;
-            await Message.Error("保存失败");
+            Message.Error("保存失败");
         }
     }
 

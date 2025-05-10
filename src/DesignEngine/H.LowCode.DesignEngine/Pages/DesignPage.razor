@@ -92,7 +92,7 @@
         PagePartsSchema pageSchema = CreatePageSchema();
         if (pageSchema.Components.Count == 0)
         {
-            await Message.Warning("没有任何组件，禁止保存！");
+            Message.Warning("没有任何组件，禁止保存！");
             return;
         }
 
@@ -105,11 +105,11 @@
                 base.NavigateTo($"/designer/{pageSchema.AppId}/{pageSchema.Id}");
             }
 
-            await Message.Success("保存成功");
+            Message.Success("保存成功");
         }
         else
         {
-            await Message.Error($"保存失败");
+            Message.Error($"保存失败");
         }
     }
 

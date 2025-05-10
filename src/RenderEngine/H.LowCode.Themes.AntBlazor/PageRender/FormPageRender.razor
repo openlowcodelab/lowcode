@@ -60,9 +60,9 @@
         }
         var success = await FormDataAppService.SaveAsync(_formDTO);
         if (success)
-            await Message.Success("保存成功");
+            Message.Success("保存成功");
         else
-            await Message.Error("保存失败");
+            Message.Error("保存失败");
     }
 
     private void OnFinishFailed(EditContext editContext)

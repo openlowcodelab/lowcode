@@ -138,7 +138,7 @@
     {
         await PageAppService.DeleteAsync(AppId, pageId);
 
-        await Message.Success("删除成功！");
+        Message.Success("删除成功！");
     }
 
     private async Task OnConfirmAsync(MouseEventArgs e)
@@ -151,13 +151,13 @@
             {
                 _visible = false;
                 _form.Submit();
-                await Message.Success("保存成功！");
+                Message.Success("保存成功！");
                 _form.Reset();
             }
             else
             {
                 _visible = true;
-                await Message.Error("保存失败");
+                Message.Error("保存失败");
             }
         }
         else

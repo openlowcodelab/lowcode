@@ -104,13 +104,13 @@
                 await SaveDataSourceSchemaAsync();
                 _visible = false;
                 _form.Submit();
-                await Message.Success("保存成功！");
+                Message.Success("保存成功！");
                 _form.Reset();
             }
             catch (Exception ex)
             {
                 _visible = true;
-                await Message.Error($"保存失败: {ex.Message}");
+                Message.Error($"保存失败: {ex.Message}");
             }
         }
         else
@@ -167,7 +167,7 @@
     {
         await DataSourceAppService.DeleteAsync(AppId, id);
         
-        await Message.Success("删除成功！");
+        Message.Success("删除成功！");
     }
 
     private async Task PublishAsync(string id)
