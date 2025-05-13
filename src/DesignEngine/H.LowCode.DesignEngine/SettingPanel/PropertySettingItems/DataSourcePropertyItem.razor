@@ -65,12 +65,12 @@
             if (isSuccess)
             {
                 _optionDataSourceVisible = false;
-                //Message.Success("保存成功！");
+                //await Message.SuccessAsync("保存成功！");
             }
             else
             {
                 _optionDataSourceVisible = true;
-                //Message.Error("保存失败");
+                //await Message.ErrorAsync("保存失败");
             }
         }
         else
@@ -100,12 +100,12 @@
             if (isSuccess)
             {
                 _treeDataSourceVisible = false;
-                Message.Success("保存成功！");
+                await Message.SuccessAsync("保存成功！");
             }
             else
             {
                 _treeDataSourceVisible = true;
-                Message.Error("保存失败");
+                await Message.ErrorAsync("保存失败");
             }
         }
         else

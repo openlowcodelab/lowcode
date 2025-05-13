@@ -50,12 +50,12 @@ ValidateOnChange="true" LabelColSpan="8" WrapperColSpan="16">
             if (isSuccess)
             {
                 _form.Submit();
-                Message.Success("新建成功！");
+                await Message.SuccessAsync("新建成功！");
                 _form.Reset();
             }
             else
             {
-                Message.Error("新建失败");
+                await Message.ErrorAsync("新建失败");
             }
         }
         return isSuccess;
