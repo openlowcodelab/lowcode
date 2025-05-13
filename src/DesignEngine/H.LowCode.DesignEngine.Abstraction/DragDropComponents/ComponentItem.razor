@@ -37,10 +37,15 @@
         Init();
     }
 
+    protected override bool ShouldRender()
+    {
+        return false;
+    }
+
     private void Init()
     {
-        if (Component == null)
-            throw new NullReferenceException(nameof(Component));
+        if (Component == null || Component.Fragment == null)
+            throw new NullReferenceException($"{nameof(Component)} or {nameof(Component.Fragment)} is null");
 
         if (string.IsNullOrEmpty(Component.Name))
             Component.Name = $"{Component.ComponentName}_{Random.Shared.Next(100, 999)}";

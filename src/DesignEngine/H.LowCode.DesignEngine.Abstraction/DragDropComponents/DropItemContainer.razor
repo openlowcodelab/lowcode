@@ -119,10 +119,11 @@
     /// <param name="currentDragComponent"></param>
     private void DragDropHandler(ComponentPartsSchema currentDragComponent)
     {
+        var dragOverComponent = DragDropStateService.GetLastDragOverComponent(PageCascading.AppId, PageCascading.PageId);
         // 组件来源于 ComponentPanel，新增
         if (currentDragComponent.DesignState.IsDroppedFromComponentPanel)
         {
-            DragItem_Add(ContainerComponent, currentDragComponent, DragDropStateService.GetLastDragOverComponent(PageCascading.AppId, PageCascading.PageId));
+            DragItem_Add(ContainerComponent, currentDragComponent, dragOverComponent);
         }
         else  // 组件在 DesignPanel 内部拖拽
         {
@@ -130,11 +131,11 @@
             Console.WriteLine($"isSameContainer: {isSameContainer}");
             if (isSameContainer)     //同一个 DropItemContainer 内拖拽，排序
             {
-                DropItem_Sorting(ContainerComponent, currentDragComponent, DragDropStateService.GetLastDragOverComponent(PageCascading.AppId, PageCascading.PageId));
+                DropItem_Sorting(ContainerComponent, currentDragComponent, dragOverComponent);
             }
             else   //跨 DropItemContainer 拖拽
             {
-                DragItem_Move(ContainerComponent, currentDragComponent, DragDropStateService.GetLastDragOverComponent(PageCascading.AppId, PageCascading.PageId));
+                DragItem_Move(ContainerComponent, currentDragComponent, dragOverComponent);
             }
         }
 

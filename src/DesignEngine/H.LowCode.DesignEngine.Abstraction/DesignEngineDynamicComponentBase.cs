@@ -155,35 +155,38 @@ public abstract class DesignEngineDynamicComponentBase : LowCodeDynamicComponent
         if (componentFragment.Content.IsNullOrWhiteSpace())
             return;
 
-        builder.AddAttribute(index++, "ChildContent", (RenderFragment)(childBuilder =>
+        if (string.Equals(componentFragment.Content, $"$({nameof(DropItemContainer)})",
+            StringComparison.OrdinalIgnoreCase))
         {
-            if (string.Equals(componentFragment.Content, "$(DropItemContainer)",
-                StringComparison.OrdinalIgnoreCase))
-            {
-                var containerComponent =
-                    RenderContainerComponent(component, $"container-{component.Id}-{index++}");
+            //TODO: 此处 containerComponentId 不能保证唯一性, 待优化
+            var containerComponentId = $"container-{component.Id}-{componentFragment.DefaultTypeName.GetHashCode()}";
+            var (containerComponent, needAdd) = RenderContainerComponent(component, containerComponentId);
+            if (needAdd == false)
+                return;
 
+            builder.AddAttribute(index++, "ChildContent", (RenderFragment)(childBuilder =>
+            {
                 childBuilder.OpenComponent<DropItemContainer>(index++);
                 childBuilder.AddAttribute(index++, "ContainerComponent", containerComponent);
                 childBuilder.CloseComponent();
-            }
-            else
+            }));
+        }
+        else
+        {
+            builder.AddAttribute(index++, "ChildContent", (RenderFragment)(childBuilder =>
             {
                 childBuilder.AddMarkupContent(index++, componentFragment.Content);
-            }
-        }));
+            }));
+        }
     }
     #endregion
 
     #region 渲染组件内的 DropItemContainer
-    private ComponentPartsSchema RenderContainerComponent(ComponentPartsSchema component, string key, Action<ComponentPartsSchema> action = null)
+    private (ComponentPartsSchema, bool) RenderContainerComponent(ComponentPartsSchema component, string key, Action<ComponentPartsSchema> action = null)
     {
-        var c = component.Childrens.FirstOrDefault(t =>
-        {
-            return false;
-        });
-        if (c != null)
-            return c;
+        var exist = component.Childrens?.Any(t => t.Id == key);
+        if (exist.HasValue && exist.Value)
+            return (null, false);
 
         var containerComponent = RenderChildContainerComponent(component, key);
 
@@ -191,13 +194,13 @@ public abstract class DesignEngineDynamicComponentBase : LowCodeDynamicComponent
 
         component.Childrens.Add(containerComponent);
 
-        return containerComponent;
+        return (containerComponent, true);
     }
 
-    private ComponentPartsSchema RenderChildContainerComponent(ComponentPartsSchema component, string name)
+    private ComponentPartsSchema RenderChildContainerComponent(ComponentPartsSchema component, string key)
     {
         var newComponent = new ComponentPartsSchema();
-        newComponent.Id = ShortIdGenerator.Generate();
+        newComponent.Id = key;
         newComponent.Refresh = component.Refresh;
 
         newComponent.Fragment = new();
