@@ -96,19 +96,27 @@
             return;
         }
 
-        var isSuccess = await PageAppService.SaveAsync(pageSchema);
-        if (isSuccess)
+        try
         {
-            if (_isNewPage)
+            var isSuccess = await PageAppService.SaveAsync(pageSchema);
+            if (isSuccess)
             {
-                _isNewPage = false;
-                base.NavigateTo($"/designer/{pageSchema.AppId}/{pageSchema.Id}");
-            }
+                if (_isNewPage)
+                {
+                    _isNewPage = false;
+                    base.NavigateTo($"/designer/{pageSchema.AppId}/{pageSchema.Id}");
+                }
 
-            await Message.SuccessAsync("保存成功");
+                await Message.SuccessAsync("保存成功");
+            }
+            else
+            {
+                await Message.ErrorAsync($"保存失败");
+            }
         }
-        else
+        catch (Exception ex)
         {
+            Logger.LogError(ex, $"保存页面失败，{ex.Message}");
             await Message.ErrorAsync($"保存失败");
         }
     }

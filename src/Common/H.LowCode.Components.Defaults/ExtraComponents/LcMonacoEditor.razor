@@ -9,12 +9,12 @@
 
 @code {
     [Parameter]
-    public ComponentPartsSchema Component { get; set; }
+    public ComponentSchemaBase Component { get; set; }
 
     /// <summary>
     /// 保存初始的 Component，避免跟随 Component 变化
     /// </summary>
-    private ComponentPartsSchema _component;
+    private ComponentSchemaBase _component;
 
     [Parameter]
     public string Language { get; set; } = "javascript";

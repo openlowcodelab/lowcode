@@ -43,7 +43,7 @@
 
 @code {
     [Parameter]
-    public ComponentPartsSchema Component { get; set; }
+    public ComponentDataSourceSchemaBase DataSource { get; set; }
 
     private TablePropertySchema _tableSchema = new();
     private List<Dictionary<string, object>> _data;
@@ -70,7 +70,7 @@
 
     private TablePropertySchema GetTableSchemaAsync()
     {
-        var dataSource = Component.DataSource?.DataSourceValue;
+        var dataSource = DataSource?.DataSourceValue;
         if (dataSource.IsNullOrWhiteSpace() || dataSource.Trim().Equals("[]"))
         {
             var tableSchema = new TablePropertySchema();

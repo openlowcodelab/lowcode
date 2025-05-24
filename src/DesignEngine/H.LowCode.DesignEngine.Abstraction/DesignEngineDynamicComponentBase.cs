@@ -87,7 +87,7 @@ public abstract class DesignEngineDynamicComponentBase : LowCodeDynamicComponent
         }
         else if (dataSource.DataSourceGroupType == ComponentDataSourceGroupTypeEnum.Table)
         {
-            builder.AddAttribute(index++, "Component", component);
+            builder.AddAttribute(index++, "DataSource", component.DataSource);
         }
     }
 

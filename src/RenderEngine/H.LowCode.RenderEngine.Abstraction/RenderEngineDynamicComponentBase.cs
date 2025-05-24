@@ -1,14 +1,10 @@
 ﻿using Microsoft.AspNetCore.Components;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using H.LowCode.MetaSchema;
 using H.LowCode.MetaSchema.RenderEngine;
 using Microsoft.AspNetCore.Components.Rendering;
 using H.LowCode.ComponentBase;
 using AntDesign;
-using System.ComponentModel;
 
 namespace H.LowCode.RenderEngine.Abstraction;
 
@@ -25,11 +21,13 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
 
         int index = 0;
         RenderComponentRecursive(component.Id, component.IsSupportDataSource,
-            component.DataSource, component.Fragment, builder, index);
+            component, component.DataSource, component.Fragment, builder, index);
     };
 
     private void RenderComponentRecursive(
-        string componentId, bool isSupportDataSource, ComponentDataSourceSchema dataSource,
+        string componentId, bool isSupportDataSource,
+        ComponentSchema component,
+        ComponentDataSourceSchema dataSource,
         ComponentFragmentSchema componentFragment,
         RenderTreeBuilder builder, int index)
     {
@@ -51,18 +49,19 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
         if (isSupportDataSource)
         {
             //渲染数据源
-            RenderDataSource(componentId, dataSource, builder, index);
+            RenderDataSource(componentId, component, dataSource, builder, index);
         }
         else if (componentFragment.HasChildren)
         {
             //渲染 ChildContent
-            RenderChildFragments(componentId, componentFragment, builder, index);
+            RenderChildFragments(componentId, component, componentFragment, builder, index);
         }
 
         builder.CloseComponent();
     }
 
     private void RenderDataSource(string componentId,
+        ComponentSchema component,
         ComponentDataSourceSchema dataSource,
         RenderTreeBuilder builder, int index)
     {
@@ -83,6 +82,10 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
                 default:
                     break;
             }
+        }
+        else if (dataSource.DataSourceGroupType == ComponentDataSourceGroupTypeEnum.Table)
+        {
+            builder.AddAttribute(index++, "DataSource", component.DataSource);
         }
     }
 
@@ -125,7 +128,9 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
         }));
     }
 
-    private void RenderChildFragments(string componentId, ComponentFragmentSchema componentFragment,
+    private void RenderChildFragments(string componentId,
+        ComponentSchema component,
+        ComponentFragmentSchema componentFragment,
         RenderTreeBuilder builder, int index)
     {
         if (componentFragment.HasChildren == false)
@@ -136,7 +141,7 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
             foreach (var childFragment in componentFragment.ChildFragments)
             {
                 RenderComponentRecursive(componentId, false,
-                    null, childFragment, childBuilder, index);
+                    component, null, childFragment, childBuilder, index);
             }
         }));
     }
