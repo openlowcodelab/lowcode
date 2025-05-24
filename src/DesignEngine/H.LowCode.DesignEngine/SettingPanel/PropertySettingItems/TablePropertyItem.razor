@@ -97,7 +97,7 @@
 
 @code {
     [Parameter]
-    public ComponentPartsSchema Component { get; set; }
+    public ComponentPartsDataSourceSchema DataSource { get; set; }
 
     [Parameter]
     public Action<string> OnTablePropertyChange { get; set; }
@@ -106,19 +106,17 @@
 
     protected override void OnInitialized()
     {
-        // if (Component.Property?.TablePropertiess.IsNullOrEmpty() == false)
-        // {
-        //     _tableSchema = JsonSerializer.Deserialize<TablePropertySchema>(Component.Property.TablePropertiess);
-        // }
-
-        base.OnInitialized();
+        if (DataSource?.DataSourceValue.IsNullOrEmpty() == false)
+        {
+            _tableSchema = DataSource.DataSourceValue.FromJson<TablePropertySchema>();
+        }
     }
 
     private void OnPropertyChanged()
     {
-        //Component.Property.TablePropertiess = _tableSchema.ToJson();
+        DataSource.DataSourceValue = _tableSchema.ToJson();
 
-        //OnTablePropertyChange?.Invoke(Component.Property.TablePropertiess);
+        OnTablePropertyChange?.Invoke(DataSource.DataSourceValue);
     }
 
     #region Columns

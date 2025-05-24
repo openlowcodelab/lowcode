@@ -20,8 +20,6 @@ public abstract class LowCodeDynamicComponentBase : LowCodeComponentBase
     /// <param name="componentId"></param>
     /// <param name="componentType"></param>
     /// <param name="attributes"></param>
-    /// <exception cref="NullReferenceException"></exception>
-    /// <exception cref="NotSupportedException"></exception>
     protected virtual void RenderComponentAttributes(RenderTreeBuilder builder, int index,
         string componentId, Type componentType,
         ComponentAttributeFragmentSchema[] attributes)

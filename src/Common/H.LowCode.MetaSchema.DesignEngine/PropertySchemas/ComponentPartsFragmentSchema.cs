@@ -26,6 +26,7 @@ public class ComponentPartsFragmentSchema : ComponentFragmentSchemaBase
     [JsonPropertyName("childs")]
     public ComponentPartsFragmentSchema[] ChildFragments { get; set; }
 
+    [JsonIgnore]
     public bool HasChildFragment
     {
         get

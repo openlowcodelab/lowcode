@@ -1,0 +1,22 @@
+<Project>
+	<PropertyGroup>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	</PropertyGroup>
+
+	<!-- 开发环境配置环境变量, 如 NUGET_LOCAL_PATH=D:\ProgramData\NuGetPackages -->
+	<Target Name="CopyPackageToLocal" AfterTargets="Pack" Condition="'$(NUGET_LOCAL_PATH)' != ''">
+		<MakeDir Directories="$(NUGET_LOCAL_PATH)"
+				 Condition="!Exists('$(NUGET_LOCAL_PATH)')" />
+
+		<Copy SourceFiles="$(PackageOutputPath)$(PackageId).$(PackageVersion).nupkg"
+			  DestinationFiles="$(NUGET_LOCAL_PATH)\$(PackageId).$(PackageVersion).nupkg" />
+
+		<Message Text="已复制包到本地目录: $(NUGET_LOCAL_PATH)" Importance="high" />
+	</Target>
+
+	<!-- CI 环境配置环境变量后自动上传 nuget 包 -->
+	<Target Name="PushNugetPackage" AfterTargets="Pack" Condition="'$(NUGET_PUSH)' == 'true'">
+		<!-- nuget 的 api_key 从本机环境变量 NUGET_API_KEY 中获取 -->
+		<Exec Command="dotnet nuget push $(PackageOutputPath)$(PackageId).$(PackageVersion).nupkg -k $(NUGET_API_KEY) -s https://api.nuget.org/v3/index.json --skip-duplicate"></Exec>
+	</Target>
+</Project>

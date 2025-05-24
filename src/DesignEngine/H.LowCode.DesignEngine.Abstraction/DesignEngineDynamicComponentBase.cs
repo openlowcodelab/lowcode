@@ -4,7 +4,6 @@ using H.LowCode.MetaSchema;
 using H.LowCode.MetaSchema.DesignEngine;
 using Microsoft.AspNetCore.Components.Rendering;
 using H.LowCode.ComponentBase;
-using H.Util.Ids;
 
 namespace H.LowCode.DesignEngine.Abstraction;
 
@@ -48,7 +47,7 @@ public abstract class DesignEngineDynamicComponentBase : LowCodeDynamicComponent
         //渲染 ChildContent
         if (isSupportDataSource)
         {
-            RenderDataSource(componentId, dataSource, builder, index);
+            RenderDataSource(componentId, component, dataSource, builder, index);
         }
         else if (componentFragment.HasChildFragment)
         {
@@ -63,7 +62,8 @@ public abstract class DesignEngineDynamicComponentBase : LowCodeDynamicComponent
     }
 
     #region 渲染数据源
-    private void RenderDataSource(string componentId, 
+    private void RenderDataSource(string componentId,
+        ComponentPartsSchema component,
         ComponentPartsDataSourceSchema dataSource,
         RenderTreeBuilder builder, int index)
     {
@@ -84,6 +84,10 @@ public abstract class DesignEngineDynamicComponentBase : LowCodeDynamicComponent
                 default:
                     break;
             }
+        }
+        else if (dataSource.DataSourceGroupType == ComponentDataSourceGroupTypeEnum.Table)
+        {
+            builder.AddAttribute(index++, "Component", component);
         }
     }
 

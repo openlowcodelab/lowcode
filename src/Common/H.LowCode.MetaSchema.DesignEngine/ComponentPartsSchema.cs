@@ -1,6 +1,4 @@
-﻿using H.LowCode.MetaSchema;
-using H.Util.Ids;
-using System.ComponentModel;
+﻿using H.Util.Ids;
 using System.Text.Json.Serialization;
 
 namespace H.LowCode.MetaSchema.DesignEngine;

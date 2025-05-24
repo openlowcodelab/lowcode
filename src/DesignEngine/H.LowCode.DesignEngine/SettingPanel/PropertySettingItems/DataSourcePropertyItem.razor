@@ -13,13 +13,25 @@
     }
     else if (Component.DataSource.DataSourceGroupType == ComponentDataSourceGroupTypeEnum.Option)
     {
-        <Button Type="ButtonType.Default" OnClick="ShowOptionDataSourceModelAsync">
+        <Button Type="ButtonType.Default" OnClick="() => ShowOptionDataSourceModal()">
             配置数据源
         </Button>
     }
-    else if (Component.DataSource.DataSourceGroupType == ComponentDataSourceGroupTypeEnum.Option)
+    else if (Component.DataSource.DataSourceGroupType == ComponentDataSourceGroupTypeEnum.Table)
     {
-        
+        <div class="propertysetting-item">
+            <TablePropertyItem DataSource="Component.DataSource" OnTablePropertyChange="OnDataSourcePropertyChange"></TablePropertyItem>
+        </div>
+
+        <Button Type="ButtonType.Default" OnClick="() => ShowTableDataSourceModal()">
+            配置数据源
+        </Button>
+    }
+    else if (Component.DataSource.DataSourceGroupType == ComponentDataSourceGroupTypeEnum.Tree)
+    {
+        <Button Type="ButtonType.Default" OnClick="() => ShowTreeDataSourceModal()">
+            配置数据源
+        </Button>
     }
     else{
         <div class="propertysetting-item">
@@ -29,13 +41,13 @@
 }
 
 <Modal Title="配置数据源" @bind-Visible="@_optionDataSourceVisible"
-       OnOk="OnOptionDataSourceConfirmAsync" Width="1000">
+       OnOk="()=>OnDataSourceConfirmAsync(_optionDataSourceVisible, SaveOptionDataSourceAsync)" Width="1000">
     <OptionDataSourceSetting @bind-DataSource="Component.DataSource"></OptionDataSourceSetting>
 </Modal>
 
-<Modal Title="配置数据源" @bind-Visible="@_treeDataSourceVisible"
-       OnOk="OnTreeDataSourceConfirmAsync" Width="1000">
-    <TreeDataSourceSetting @bind-DataSource="Component.DataSource"></TreeDataSourceSetting>
+<Modal Title="配置数据源" @bind-Visible="@_tableDataSourceVisible"
+       OnOk="()=>OnDataSourceConfirmAsync(_tableDataSourceVisible, SaveTableDataSourceAsync)" Width="1000">
+    <TableDataSourceSetting @bind-DataSource="Component.DataSource"></TableDataSourceSetting>
 </Modal>
 
 @code {
@@ -43,6 +55,7 @@
     public ComponentPartsSchema Component { get; set; }
 
     private bool _optionDataSourceVisible;
+    private bool _tableDataSourceVisible;
     private bool _treeDataSourceVisible;
 
     protected override async Task OnInitializedAsync()
@@ -50,32 +63,56 @@
         await base.OnInitializedAsync();
     }
 
-    #region OptionDataSource
-    private void ShowOptionDataSourceModelAsync()
+    private void ShowOptionDataSourceModal()
     {
         _optionDataSourceVisible = true;
     }
 
+    private void ShowTableDataSourceModal()
+    {
+        _tableDataSourceVisible = true;
+    }
+
+    private void ShowTreeDataSourceModal()
+    {
+        _treeDataSourceVisible = true;
+    }
+
     private async Task OnOptionDataSourceConfirmAsync(MouseEventArgs e)
+    {
+        await Task.CompletedTask;
+    }
+
+    private async Task OnTableDataSourceConfirmAsync(MouseEventArgs e)
+    {
+        await Task.CompletedTask;
+    }
+
+    private async Task OnTreeDataSourceConfirmAsync(MouseEventArgs e)
+    {
+        await Task.CompletedTask;
+    }
+
+    private async Task OnDataSourceConfirmAsync(bool dataSourceVisible, Func<Task<bool>> saveDataSourceAsync)
     {
         var validate = true;
         if (validate)
         {
-            var isSuccess = await SaveOptionDataSourceAsync();
+            var isSuccess = await saveDataSourceAsync();
             if (isSuccess)
             {
-                _optionDataSourceVisible = false;
+                dataSourceVisible = false;
                 //await Message.SuccessAsync("保存成功！");
             }
             else
             {
-                _optionDataSourceVisible = true;
+                dataSourceVisible = true;
                 //await Message.ErrorAsync("保存失败");
             }
         }
         else
         {
-            _optionDataSourceVisible = true;
+            dataSourceVisible = true;
         }
     }
 
@@ -83,40 +120,19 @@
     {
         return await Task.FromResult(true);
     }
-    #endregion
 
-    #region TreeDataSource
-    private void ShowTreeDataSourceModelAsync()
+    private async Task<bool> SaveTableDataSourceAsync()
     {
-        _treeDataSourceVisible = true;
-    }
-
-    private async Task OnTreeDataSourceConfirmAsync(MouseEventArgs e)
-    {
-        var validate = true;
-        if (validate)
-        {
-            var isSuccess = await SaveTreeDataSourceAsync();
-            if (isSuccess)
-            {
-                _treeDataSourceVisible = false;
-                await Message.SuccessAsync("保存成功！");
-            }
-            else
-            {
-                _treeDataSourceVisible = true;
-                await Message.ErrorAsync("保存失败");
-            }
-        }
-        else
-        {
-            _treeDataSourceVisible = true;
-        }
+        return await Task.FromResult(true);
     }
 
     private async Task<bool> SaveTreeDataSourceAsync()
     {
         return await Task.FromResult(true);
     }
-    #endregion
+
+    private void OnDataSourcePropertyChange(string value)
+    {
+        Component.RefreshState();
+    }
 }

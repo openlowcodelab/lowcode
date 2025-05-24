@@ -13,5 +13,6 @@ public enum ComponentDataSourceGroupTypeEnum
 {
     General = 0,
     Option = 1,
-    Tree
+    Table = 2,
+    Tree = 3
 }

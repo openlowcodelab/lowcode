@@ -5,25 +5,20 @@
 {
     <div class="propertysetting-item">
         <label>数据源类型：</label>
-        <RadioGroup DefaultValue="ComponentDataSourceTypeEnum.Fiexd"
-            @bind-Value="@DataSource.DataSourceType">
-            <Radio AutoFocus="true" Value="ComponentDataSourceTypeEnum.Fiexd">固定值</Radio>
-            <Radio AutoFocus="true" Value="ComponentDataSourceTypeEnum.SQL">SQL</Radio>
+        <RadioGroup DefaultValue="ComponentDataSourceTypeEnum.API"
+                    @bind-Value="@DataSource.DataSourceType">
             <Radio AutoFocus="true" Value="ComponentDataSourceTypeEnum.API">API</Radio>
+            <Radio AutoFocus="true" Value="ComponentDataSourceTypeEnum.SQL">SQL</Radio>
         </RadioGroup>
     </div>
-
-    if (DataSource.DataSourceType == ComponentDataSourceTypeEnum.Fiexd)
+    
+    if (DataSource.DataSourceType == ComponentDataSourceTypeEnum.API)
     {
-        <FiexdForOptionDataSource @bind-DataSource="DataSource.FiexdOptionDataSource"></FiexdForOptionDataSource>
+        <APIDataSource @bind-DataSource="DataSource.APIOptionDataSource"></APIDataSource>
     }
     else if (DataSource.DataSourceType == ComponentDataSourceTypeEnum.SQL)
     {
         <SQLForOptionDataSource @bind-DataSource="DataSource.SQLOptionDataSource"></SQLForOptionDataSource>
-    }
-    else if (DataSource.DataSourceType == ComponentDataSourceTypeEnum.API)
-    {
-        <APIDataSource @bind-DataSource="DataSource.APIOptionDataSource"></APIDataSource>
     }
     else
     {

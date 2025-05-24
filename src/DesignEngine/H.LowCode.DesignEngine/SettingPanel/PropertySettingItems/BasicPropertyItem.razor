@@ -22,13 +22,6 @@ else
     </div>
 }
 
-@* @if(Component.Property.ComponentValueType == ComponentValueTypeEnum.Table) *@
-@* { *@
-    @* <div class="propertysetting-item"> *@
-    @*     <TablePropertyItem Component="@Component" OnTablePropertyChange="OnStringPropertyChange"></TablePropertyItem> *@
-    @* </div> *@
-@* } *@
-
 @code {
     [Parameter]
     public ComponentPartsSchema Component { get; set; }
@@ -39,11 +32,6 @@ else
     }
 
     private void OnPropertyChange()
-    {
-        Component.RefreshState();
-    }
-
-    private void OnStringPropertyChange(string value)
     {
         Component.RefreshState();
     }

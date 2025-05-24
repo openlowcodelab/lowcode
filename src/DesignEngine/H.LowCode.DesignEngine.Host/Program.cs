@@ -22,8 +22,6 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 builder.Services.AddResponseCompression(options =>
 {
     options.Providers.Add<BrotliCompressionProvider>();
-    options.Providers.Add<GzipCompressionProvider>();
-    options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(new[] { "image/svg+xml" });
 });
 builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
 {
