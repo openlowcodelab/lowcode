@@ -51,6 +51,12 @@ public class ComponentPartsSchema : ComponentSchemaBase
     [JsonPropertyName("childs")]
     public IList<ComponentPartsSchema> Childrens { get; set; } = [];
 
+    /// <summary>
+    /// 组件支持的事件
+    /// </summary>
+    [JsonPropertyName("sptevs")]
+    public string[] SupportEvents { get; set; }
+
     [JsonPropertyName("order")]
     public int Order { get; set; }
 

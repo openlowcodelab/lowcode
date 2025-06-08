@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace H.LowCode.MetaSchema;
 
-public abstract class MetaSchemaBase
+public abstract class MetaSchemaBase : StateHasChangeSchema
 {
     [JsonPropertyName("cu")]
     public string CreatedUser {  get; set; }

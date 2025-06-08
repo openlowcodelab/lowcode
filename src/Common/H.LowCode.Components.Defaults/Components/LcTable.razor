@@ -7,14 +7,9 @@
 @bind-SelectedRows="_selectedRows" OnChange="OnChange" Size="TableSize.Small">
     <TitleTemplate>
         <Flex Justify="FlexJustify.End" Gap="FlexGap.Middle">
-            @if(_tableSchema.Buttons.Count == 0)
-            {
-                <Button Type="ButtonType.Primary" @onclick="CreateAsync">新增</Button>
-                <Button Disabled="!_selectedRows.Any()" Danger @onclick="DeleteSelectedAsync">删除选中</Button>
-            }
             @foreach (var btn in _tableSchema.Buttons)
             {
-                <Button Type="@(btn.ButtonType.GetEnum<ButtonType>())" Disabled="@btn.Disabled" @onclick="@(() => ButtonActionAsync(btn.Id))">@btn.Title</Button>
+                <Button Type="@((ButtonType)btn.ButtonType)" Disabled="@btn.Disabled" @onclick="@(() => ButtonActionAsync(btn.Id))">@btn.Title</Button>
             }
         </Flex>
     </TitleTemplate>
@@ -45,6 +40,9 @@
     [Parameter]
     public ComponentDataSourceSchemaBase DataSource { get; set; }
 
+    [CascadingParameter(Name = "pageCascading")]
+    public PageCascadingModel PageCascading { get; set; }
+
     private TablePropertySchema _tableSchema = new();
     private List<Dictionary<string, object>> _data;
 
@@ -57,9 +55,26 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _tableSchema = GetTableSchemaAsync();
+        await base.OnInitializedAsync();
+
+        Init();
         _data = await GetTableDataAsync(1, 50);
         _total = 50;
+    }
+
+    protected override bool ShouldRender()
+    {
+        //if (StateKey == DataSource.StateKey)
+        //    return false;
+
+        Init();
+        return true;
+    }
+
+    private void Init()
+    {
+        _tableSchema = GetTableSchemaAsync();
+        StateKey = DataSource.StateKey;
     }
 
     public async Task OnChange(QueryModel<Dictionary<string, object>> queryModel)
@@ -73,15 +88,24 @@
         var dataSource = DataSource?.DataSourceValue;
         if (dataSource.IsNullOrWhiteSpace() || dataSource.Trim().Equals("[]"))
         {
-            var tableSchema = new TablePropertySchema();
+            var defaultTableSchema = new TablePropertySchema();
+            defaultTableSchema.Columns = new List<TableColumnSchema>()
+            {
+                new() { Name = "_temp", Title = "(待添加列)" }
+            };
+            return defaultTableSchema;
+        }
+
+        var tableSchema = dataSource.FromJson<TablePropertySchema>();
+        if(tableSchema.Columns.Any() == false)
+        {
             tableSchema.Columns = new List<TableColumnSchema>()
             {
                 new() { Name = "_temp", Title = "(待添加列)" }
             };
-            return tableSchema;
         }
 
-        return dataSource.FromJson<TablePropertySchema>();
+        return tableSchema;
     }
 
     public async Task<List<Dictionary<string, object>>> GetTableDataAsync(int pageIndex, int pageSize)
@@ -100,11 +124,6 @@
         return list;
     }
 
-    public async Task CreateAsync()
-    {
-        await Task.Delay(100);
-    }
-
     public async Task EditAsync(Dictionary<string, object> row)
     {
         string primaryKey = _tableSchema.Columns.FirstOrDefault(t => t.IsPrimaryKey)?.Name;
@@ -116,25 +135,53 @@
         await Task.Delay(100);
     }
 
-    public async Task DeleteSelectedAsync()
-    {
-        await Task.Delay(100);
-    }
-
     public async Task ButtonActionAsync(string id)
     {
-        await Task.Delay(100);
         var btn = _tableSchema.Buttons.First(t => t.Id == id);
-        if (btn.ActionType == ActionTypeEnum.Blank)
+        foreach(var e in btn.Events)
         {
-            string pageUrl = string.Empty;
-            if (IsDesign)
-                pageUrl = $"/designer/caseapp/{btn.TargetId}";
-            else
-                pageUrl = $"/caseapp/{btn.TargetId}";
-
-            await JS.InvokeVoidAsync("open", pageUrl, "_blank");
-            //    await this.RedirectPageAsync(pageUrl);
+            if (e.EventHandlerType == EventHandlerTypeEnum.Page)
+            {
+                switch ((EventPageHandlerTypeEnum)e.EventActionType)
+                {
+                    case EventPageHandlerTypeEnum.Modal:
+                        await ButtonActionToWithModalAsync(e);
+                        break;
+                    case EventPageHandlerTypeEnum.Self:
+                        await ButtonActionToWithSelfAsync(e);
+                        break;
+                    case EventPageHandlerTypeEnum.Blank:
+                        await ButtonActionToWithBlankAsync(e);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            else if (e.EventHandlerType == EventHandlerTypeEnum.Custom)
+            {
+                await JS.InvokeVoidAsync("eval", e.EventHandler);
+            }
         }
+    }
+
+    private async Task ButtonActionToWithModalAsync(EventSchema e)
+    {
+
+    }
+
+    private async Task ButtonActionToWithSelfAsync(EventSchema e)
+    {
+
+    }
+
+    private async Task ButtonActionToWithBlankAsync(EventSchema e)
+    {
+        string pageUrl = string.Empty;
+        if (IsDesign)
+            pageUrl = $"/designer/{PageCascading.AppId}/{e.EventHandler}";
+        else
+            pageUrl = $"/{PageCascading.AppId}/{e.EventHandler}";
+
+        await JS.InvokeVoidAsync("open", pageUrl, "_blank");
     }
 }

@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace H.LowCode.MetaSchema;
 
-public abstract class ComponentSchemaBase
+public abstract class ComponentSchemaBase : StateHasChangeSchema
 {
     /// <summary>
     /// 组件实例Id
@@ -62,10 +62,10 @@ public abstract class ComponentSchemaBase
     public ComponentStyleSchema Style { get; set; } = new();
 
     /// <summary>
-    /// 
+    /// 事件
     /// </summary>
-    [JsonPropertyName("ev")]
-    public ComponentEventSchema Event { get; set; } = new();
+    [JsonPropertyName("evs")]
+    public EventSchema Events { get; set; }
 
     [JsonPropertyName("desc")]
     public string Description { get; set; }

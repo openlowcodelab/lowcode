@@ -1,0 +1,91 @@
+﻿@namespace H.LowCode.DesignEngine.Abstraction
+@inherits DesignEngineLowCodeComponentBase
+
+<Layout Style="height: 550px;">
+    <Sider Style="background:#ffffff">
+        <Tree TItem="string" OnSelect="OnSelect"
+              DefaultSelectedKey="@_firstNodeKey"
+                Style="height:100%; border:solid 1px #e8e8e8; padding-top:5px; margin-right:5px;">
+            @foreach(var ev in Events)
+            {
+                <TreeNode Title="@ev.EventName" Key="@ev.EventName"></TreeNode>
+            }
+        </Tree>
+    </Sider>
+    <Layout Style="background:#ffffff">
+        <Content>
+            <div class="propertysetting-item">
+                <label>事件类型：</label>
+                <RadioGroup DefaultValue="EventHandlerTypeEnum.None"
+                            @bind-Value="@_currentEvent.EventHandlerType">
+                    <Radio AutoFocus="true" Value="EventHandlerTypeEnum.None">无操作</Radio>
+                    <Radio Value="EventHandlerTypeEnum.Page">打开页面</Radio>
+                    <Radio Value="EventHandlerTypeEnum.Data">操作数据</Radio>
+                    <Radio Value="EventHandlerTypeEnum.Custom">自定义</Radio>
+                </RadioGroup>
+            </div>
+
+            @if (_currentEvent.EventHandlerType == EventHandlerTypeEnum.Page)
+            {
+                <div class="propertysetting-item">
+                    <label>页面打开方式：</label>
+                    <RadioGroup @bind-Value="@_currentEvent.EventActionType">
+                        <Radio Value="11">弹窗</Radio>
+                        <Radio Value="12">当前页</Radio>
+                        <Radio Value="13">新标签页</Radio>
+                    </RadioGroup>
+                </div>
+                <div class="propertysetting-item">
+                    <label>选择页面：</label>
+                    <Input @bind-Value="@_currentEvent.EventHandler" />
+                </div>
+            }
+            else if (_currentEvent.EventHandlerType == EventHandlerTypeEnum.Data)
+            {
+                <div class="propertysetting-item">
+                    <label>数据操作方式：</label>
+                    <RadioGroup @bind-Value="@_currentEvent.EventActionType">
+                        <Radio Value="31">重新加载</Radio>
+                        <Radio Value="32">删除</Radio>
+                        <Radio Value="33">删除选中</Radio>
+                    </RadioGroup>
+                </div>
+            }
+            else if (_currentEvent.EventHandlerType == EventHandlerTypeEnum.Custom)
+            {
+                <div class="propertysetting-item" style="height:503px;">
+                    <TextArea @bind-value="@_currentEvent.EventHandler" Style="height:100%;" />
+                </div>
+            }
+        </Content>
+    </Layout>
+</Layout>
+
+@code {
+    [Parameter]
+    public IList<EventSchema> Events { get; set; }
+
+    private string _firstNodeKey;
+    private EventSchema _currentEvent = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        if (Events == null)
+        {
+            Events = [];
+        }
+
+        _firstNodeKey = Events.FirstOrDefault()?.EventName ?? string.Empty;
+    }
+
+    private void OnSelect(TreeEventArgs<string> args)
+    {
+        var ev = Events.FirstOrDefault(e => e.EventName == args.Node.Key);
+        if (ev != null)
+        {
+            _currentEvent = ev;
+        }
+    }
+}

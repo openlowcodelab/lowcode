@@ -36,6 +36,7 @@
         <span draggable="true" style="cursor: move; display: inline-block; width: 10px; margin: 0 auto; writing-mode: vertical-lr;">...</span>
         <span style="display:inline-block; width:140px;">@btn.Title</span>
         <Icon Type="edit" OnClick="@(() => EditButton(btn.Id))" Theme="IconThemeType.Outline" Style="cursor: pointer;" />
+        <Icon Type="thunderbolt" OnClick="@(() => EditButtonEvent(btn.Id))" Theme="IconThemeType.Outline" Style="cursor: pointer;" />
         <Icon Type="delete" OnClick="@(() => DeleteButton(btn.Id))" Theme="IconThemeType.Outline" Style="cursor: pointer;" />
     </div>
 }
@@ -83,16 +84,24 @@
         <FormItem Label="按钮名称" Required>
             <Input @bind-Value="@context.Title" />
         </FormItem>
-        <FormItem Label="按钮行为">
-            <EnumRadioGroup TEnum="ActionTypeEnum" @bind-Value="@context.ActionType" Name="radio_actiontype"></EnumRadioGroup>
-        </FormItem>
-        <FormItem Label="目标对象" Required>
-            <Input @bind-Value="@context.TargetId" />
+        <FormItem Label="按钮类型" Required>
+            <RadioGroup DefaultValue="0" @bind-Value="@context.ButtonType">
+                <Radio AutoFocus="true" Value="0">Default</Radio>
+                <Radio Value="1">Primary</Radio>
+                <Radio Value="2">Dashed</Radio>
+                <Radio Value="3">Link</Radio>
+                <Radio Value="4">Text</Radio>
+            </RadioGroup>
         </FormItem>
         <FormItem Label="排序">
             <AntDesign.InputNumber @bind-Value="@context.Order" Min="0" DefaultValue="0"></AntDesign.InputNumber>
         </FormItem>
     </Form>
+</Modal>
+
+<Modal Title="配置事件" @bind-Visible="@_btnEventVisible"
+       OnOk="()=>OnButtonEventConfirm()" Width="1000">
+    <EventList Events="@_btnEvents"></EventList>
 </Modal>
 
 @code {
@@ -104,20 +113,40 @@
 
     private TablePropertySchema _tableSchema = new();
 
+    #region Init
     protected override void OnInitialized()
+    {
+        Init();
+    }
+
+    protected override bool ShouldRender()
+    {
+        if (StateKey != DataSource.StateKey)
+        {
+            Init();
+        }
+        return true;
+    }
+
+    private void Init()
     {
         if (DataSource?.DataSourceValue.IsNullOrEmpty() == false)
         {
             _tableSchema = DataSource.DataSourceValue.FromJson<TablePropertySchema>();
         }
+        StateKey = DataSource.StateKey;
     }
 
     private void OnPropertyChanged()
     {
         DataSource.DataSourceValue = _tableSchema.ToJson();
 
+        //重新渲染表格列
+        DataSource.ChangeStateKey();
+
         OnTablePropertyChange?.Invoke(DataSource.DataSourceValue);
     }
+    #endregion
 
     #region Columns
     private bool _columnVisible;
@@ -132,7 +161,7 @@
         _tableColumnSchema = new();
         _tableColumnSchema.Id = ShortIdGenerator.Generate();
 
-        StateHasChanged();
+        //StateHasChanged();
     }
 
     private void EditColumn(string id)
@@ -141,7 +170,7 @@
         _columnVisible = true;
         _tableColumnSchema = _tableSchema.Columns.First(t => t.Id == id);
 
-        StateHasChanged();
+        //StateHasChanged();
     }
 
     private void DeleteColumn(string id)
@@ -149,7 +178,7 @@
         var column = _tableSchema.Columns.First(t => t.Id == id);
         _tableSchema.Columns.Remove(column);
 
-        OnPropertyChanged();
+        //OnPropertyChanged();
     }
 
     private void OnColumnConfirm(MouseEventArgs e)
@@ -162,6 +191,8 @@
             {
                 _columnVisible = false;
                 _columnForm.Submit();
+
+                OnPropertyChanged();
                 _columnForm.Reset();
             }
             else
@@ -190,13 +221,6 @@
         else
         {
             //无需赋值
-            // var column = _columns.First(t => t.Id == _tableColumnSchema.Id);
-            // column.Name = _tableColumnSchema.Name;
-            // column.Title = _tableColumnSchema.Title;
-            // column.IsPrimaryKey = _tableColumnSchema.IsPrimaryKey;
-            // column.Filterable = _tableColumnSchema.Filterable;
-            // column.Sortable = _tableColumnSchema.Sortable;
-            // column.Order = _tableColumnSchema.Order;
         }
         return true;
     }
@@ -215,7 +239,7 @@
         _tableButtonSchema = new();
         _tableButtonSchema.Id = ShortIdGenerator.Generate();
 
-        StateHasChanged();
+        //StateHasChanged();
     }
 
     private void EditButton(string id)
@@ -245,6 +269,8 @@
             {
                 _btnVisible = false;
                 _btnForm.Submit();
+
+                OnPropertyChanged();
                 _btnForm.Reset();
             }
             else
@@ -260,7 +286,6 @@
 
     private void OnButtonFinish()
     {
-        OnPropertyChanged();
     }
 
     private bool SaveTableButtonSchema()
@@ -275,6 +300,35 @@
             //无需赋值
         }
         return true;
+    }
+    #endregion
+
+    #region Button Events
+    private bool _btnEventVisible;
+    private IList<EventSchema> _btnEvents = new List<EventSchema>();
+
+    private void EditButtonEvent(string id)
+    {
+        _btnEventVisible = true;
+        _tableButtonSchema = _tableSchema.Buttons.First(t => t.Id == id);
+        _btnEvents = _tableButtonSchema.Events ?? [];
+        foreach (var ev in _tableButtonSchema.SupportEvents)
+        {
+            var any = _btnEvents.Any(t => string.Equals(t.EventName, ev, StringComparison.OrdinalIgnoreCase));
+            if (any)
+                continue;
+            _btnEvents.Add(new() { EventName = ev });
+        }
+
+        StateHasChanged();
+    }
+
+    private void OnButtonEventConfirm()
+    {
+        _tableButtonSchema.Events = _btnEvents;
+        _btnEventVisible = false;
+
+        OnPropertyChanged();
     }
     #endregion
 }

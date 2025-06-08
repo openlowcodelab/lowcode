@@ -34,15 +34,19 @@
     {
         await base.OnInitializedAsync();
 
-        Init();
+        _renderFragment = GetRenderFragment();
     }
 
     protected override bool ShouldRender()
     {
-        return false;
+        if(StateKey == Component.StateKey)
+            return false;
+
+        _renderFragment = GetRenderFragment();
+        return true;
     }
 
-    private void Init()
+    private RenderFragment GetRenderFragment()
     {
         if (Component == null || Component.Fragment == null)
             throw new NullReferenceException($"{nameof(Component)} or {nameof(Component.Fragment)} is null");
@@ -52,6 +56,7 @@
         if (string.IsNullOrEmpty(Component.Fragment.TypeName))
             Component.Fragment.TypeName = Component.Fragment.DefaultTypeName;
 
-        _renderFragment = RenderComponent(Component);
+        StateKey = Component.StateKey;
+        return RenderComponent(Component);
     }
 }

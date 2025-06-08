@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace H.LowCode.MetaSchema;
 
-public abstract class ComponentDataSourceSchemaBase
+public abstract class ComponentDataSourceSchemaBase : StateHasChangeSchema
 {
     /// <summary>
     /// 数据源分组类型

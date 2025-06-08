@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.WebUtilities;
-using System;
 using System.Diagnostics.CodeAnalysis;
 using Volo.Abp.AspNetCore.Components;
 
@@ -16,6 +15,11 @@ public abstract class LowCodeComponentBase : AbpComponentBase
 
     [Inject]
     private NavigationManager NavigationManager { get; set; }
+
+    /// <summary>
+    /// 组件状态标识 (用于 ShouldRender 判断)
+    /// </summary>
+    protected string StateKey { get; set; }
 
     /// <summary>
     /// 
