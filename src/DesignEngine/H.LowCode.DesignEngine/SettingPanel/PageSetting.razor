@@ -43,7 +43,18 @@
         <label>自定义样式：</label>
         <TextArea @bind-value="@Page.PageProperty.CustomStyle" OnChange="OnStyleChange" Style="height: 150px;" />
     </div>
+
+    @*事件属性*@
+    <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:30px 0 10px;">事件</div>
+    <Button Type="ButtonType.Default" OnClick="() => ShowEventModal()">
+        配置事件
+    </Button>
 }
+
+<Modal Title="配置事件" @bind-Visible="@_eventVisible"
+       OnOk="()=>OnEventConfirm()" Width="1000">
+    <EventList Events="@_eventList"></EventList>
+</Modal>
 
 @code {
     [Parameter]
@@ -62,5 +73,28 @@
     private void OnStyleChange(string customStyle)
     {
         
+    }
+
+    private bool _eventVisible;
+    private IList<EventSchema> _eventList;
+
+    private void ShowEventModal()
+    {
+        _eventList = Page.Events ?? [];
+        foreach (var ev in Page.SupportEvents)
+        {
+            var any = _eventList.Any(t => string.Equals(t.EventName, ev, StringComparison.OrdinalIgnoreCase));
+            if (any)
+                continue;
+            _eventList.Add(new() { EventName = ev });
+        }
+
+        _eventVisible = true;
+    }
+
+    private void OnEventConfirm()
+    {
+        Page.Events = _eventList;
+        _eventVisible = false;
     }
 }

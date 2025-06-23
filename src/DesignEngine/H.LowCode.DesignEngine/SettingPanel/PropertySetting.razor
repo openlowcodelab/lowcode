@@ -12,6 +12,12 @@
 
         @*扩展属性*@
         <ExtensionPropertyItem Component="@Component"></ExtensionPropertyItem>
+
+        @*事件属性*@
+        @if (Component.SupportEvents != null && Component.SupportEvents.Any())
+        {
+            <EventPropertyItem Component="@Component"></EventPropertyItem>
+        }
     }
 </div>
 

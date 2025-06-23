@@ -31,4 +31,10 @@ public abstract class PageSchemaBase : MetaSchemaBase
 
     [JsonPropertyName("ds")]
     public PageDataSourceSchema DataSource { get; set; } = new();
+
+    /// <summary>
+    /// 事件
+    /// </summary>
+    [JsonPropertyName("evs")]
+    public IList<EventSchema> Events { get; set; }
 }

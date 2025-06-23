@@ -15,4 +15,6 @@ public interface IPageAppService : IApplicationService
     Task<bool> SaveAsync(PagePartsSchema pageSchema);
 
     Task<bool> DeleteAsync(string appId, string pageId);
+
+    Task<ComponentPartsSchema> GetPageComponentAsync(string appId, string pageId, string componentId);
 }

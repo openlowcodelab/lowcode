@@ -4,6 +4,7 @@ using H.LowCode.DesignEngine.Model;
 using H.LowCode.MetaSchema.DesignEngine;
 using Microsoft.Extensions.DependencyInjection;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Text;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
@@ -81,5 +82,29 @@ public class PageAppService : ApplicationService, IPageAppService
                 await MergeComponentPartsDefineRecursive(child);
             }
         }
+    }
+
+    public async Task<ComponentPartsSchema> GetPageComponentAsync(string appId, string pageId, string componentId)
+    {
+        var page = await GetByIdAsync(appId, pageId);
+        if (page == null)
+        {
+            throw new BusinessException("Page not found.");
+        }
+
+        if (page.Components == null || page.Components.Count == 0)
+        {
+            throw new BusinessException("Page Component not found.");
+        }
+
+        var component = page.Components.FirstOrDefault(c => c.Id == componentId);
+        if (component == null)
+        {
+            throw new BusinessException($"Component with ID {componentId} not found in page {pageId}.");
+        }
+
+        await MergeComponentPartsDefineRecursive(component);
+
+        return component;
     }
 }

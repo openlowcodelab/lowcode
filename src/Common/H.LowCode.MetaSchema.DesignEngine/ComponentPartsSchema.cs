@@ -19,8 +19,9 @@ public class ComponentPartsSchema : ComponentSchemaBase
     public string LibraryId { get; set; }
 
     /// <summary>
-    /// 组件 Name
+    /// 组件物料Name
     /// </summary>
+    /// <remarks>一类组件唯一Name</remarks>
     [JsonPropertyName("cn")]
     public string ComponentName { get; set; }
 
@@ -138,9 +139,10 @@ public class ComponentPartsSchema : ComponentSchemaBase
             return;
         }
 
-        //TODO
+        //基础属性合并
         //this.Fragment = componentPartsDefine.Fragment;
         //this.Style = componentPartsDefine.Style;
+        this.SupportEvents = componentPartsDefine.SupportEvents;
 
         //属性合并
         if (componentPartsDefine.AttributeDefineGroups != null)

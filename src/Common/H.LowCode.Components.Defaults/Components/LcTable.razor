@@ -7,9 +7,9 @@
 @bind-SelectedRows="_selectedRows" OnChange="OnChange" Size="TableSize.Small">
     <TitleTemplate>
         <Flex Justify="FlexJustify.End" Gap="FlexGap.Middle">
-            @foreach (var btn in _tableSchema.Buttons)
+            @foreach (var topBtn in _tableSchema.TopButtons)
             {
-                <Button Type="@((ButtonType)btn.ButtonType)" Disabled="@btn.Disabled" @onclick="@(() => ButtonActionAsync(btn.Id))">@btn.Title</Button>
+                <Button Type="@((ButtonType)topBtn.ButtonType)" Disabled="@topBtn.Disabled" @onclick="@(() => ButtonActionAsync(topBtn))">@topBtn.Title</Button>
             }
         </Flex>
     </TitleTemplate>
@@ -23,16 +23,19 @@
                 <PropertyColumn Property="@(c=> c[key])" Title="@column.Title"></PropertyColumn>
             }
         }
-        <ActionColumn Title="操作" Width="120">
-            <Space Size=@("middle")>
-                <SpaceItem>
-                    <a @onclick="()=> EditAsync(row)">编辑</a>
-                </SpaceItem>
-                <SpaceItem>
-                    <a @onclick="()=> DeleteAsync(row)" style="color:#ff4d4f">删除</a>
-                </SpaceItem>
-            </Space>
-        </ActionColumn>
+        @if (_tableSchema.RowButtons != null && _tableSchema.RowButtons.Any())
+        {
+            <ActionColumn Title="操作" Width="120">
+                <Space Size=@("middle")>
+                    @foreach (var rowBtn in _tableSchema.RowButtons)
+                    {
+                        <SpaceItem>
+                            <a @onclick="@(() => ButtonActionAsync(rowBtn))">@rowBtn.Title</a>
+                        </SpaceItem>
+                    }
+                </Space>
+            </ActionColumn>
+        }
     </ColumnDefinitions>
 </Table>
 
@@ -135,15 +138,27 @@
         await Task.Delay(100);
     }
 
-    public async Task ButtonActionAsync(string id)
+    public async Task ButtonActionAsync(TableButtonSchema btn)
     {
-        var btn = _tableSchema.Buttons.First(t => t.Id == id);
         foreach(var e in btn.Events)
         {
-            if (e.EventHandlerType == EventHandlerTypeEnum.Page)
+            if (e.EventHandlerType == EventTargetTypeEnum.None)
+                continue;
+
+            if (e.EventHandlerType == EventTargetTypeEnum.Page)
             {
-                switch ((EventPageHandlerTypeEnum)e.EventActionType)
+                if (string.IsNullOrEmpty(e.EventTargetId))
+                    continue;
+
+                if (string.IsNullOrEmpty(e.EventTargetAction))
+                    continue;
+
+                var pageHandler = e.EventTargetAction.GetEnum<EventPageHandlerTypeEnum>();
+                switch (pageHandler)
                 {
+                    case EventPageHandlerTypeEnum.Refresh:
+                        
+                        break;
                     case EventPageHandlerTypeEnum.Modal:
                         await ButtonActionToWithModalAsync(e);
                         break;
@@ -157,9 +172,13 @@
                         break;
                 }
             }
-            else if (e.EventHandlerType == EventHandlerTypeEnum.Custom)
+            else if (e.EventHandlerType == EventTargetTypeEnum.Custom)
             {
-                await JS.InvokeVoidAsync("eval", e.EventHandler);
+                if (e.EventCustomLanguage == EventCustomLanguageEnum.None
+                    || string.IsNullOrEmpty(e.EventCustomScript))
+                    continue;
+
+                await JS.InvokeVoidAsync("eval", e.EventCustomScript);
             }
         }
     }
@@ -178,9 +197,9 @@
     {
         string pageUrl = string.Empty;
         if (IsDesign)
-            pageUrl = $"/designer/{PageCascading.AppId}/{e.EventHandler}";
+            pageUrl = $"/designer/{PageCascading.AppId}/{e.EventTargetId}";
         else
-            pageUrl = $"/{PageCascading.AppId}/{e.EventHandler}";
+            pageUrl = $"/{PageCascading.AppId}/{e.EventTargetId}";
 
         await JS.InvokeVoidAsync("open", pageUrl, "_blank");
     }

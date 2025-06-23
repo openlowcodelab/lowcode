@@ -11,6 +11,15 @@ public class TablePropertySchema
     [JsonPropertyName("searchs")]
     public IList<TableSearchItemSchema> SearchItems { get; set; } = [];
 
-    [JsonPropertyName("btns")]
-    public IList<TableButtonSchema> Buttons { get; set; } = [];
+    /// <summary>
+    /// 列表上方按钮
+    /// </summary>
+    [JsonPropertyName("tbtns")]
+    public IList<TableButtonSchema> TopButtons { get; set; } = [];
+
+    /// <summary>
+    /// 表格行按钮
+    /// </summary>
+    [JsonPropertyName("rbtns")]
+    public IList<TableButtonSchema> RowButtons { get; set; } = [];
 }

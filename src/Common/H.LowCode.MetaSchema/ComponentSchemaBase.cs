@@ -65,7 +65,13 @@ public abstract class ComponentSchemaBase : StateHasChangeSchema
     /// 事件
     /// </summary>
     [JsonPropertyName("evs")]
-    public EventSchema Events { get; set; }
+    public IList<EventSchema> Events { get; set; }
+
+    /// <summary>
+    /// 事件消费
+    /// </summary>
+    [JsonPropertyName("evcs")]
+    public IList<EventConsumeSchema> EventConsumes { get; set; }
 
     [JsonPropertyName("desc")]
     public string Description { get; set; }
