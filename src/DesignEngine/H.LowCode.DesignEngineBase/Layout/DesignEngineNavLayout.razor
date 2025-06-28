@@ -1,0 +1,85 @@
+﻿@namespace H.LowCode.DesignEngineBase
+@inherits LowCodeLayoutComponentBase
+
+<style>
+    .ant-layout {
+        background-color: #f6f6f6 !important;
+    }
+
+    .ant-pro-top-nav-header-menu {
+        margin-left: 50px;
+    }
+</style>
+
+<AntDesign.ProLayout.BasicLayout Logo="@("logo.png")" Title="OpenLowCodeLab" MenuData="_menuData"
+                                 Layout="AntDesign.ProLayout.Layout.Top" FixedHeader="true">
+    <RightContentRender>
+        RightContent
+    </RightContentRender>
+    <ChildContent>
+        @Body
+    </ChildContent>
+    <FooterRender>
+        <FooterView Copyright="@($"2021 - {DateTime.Now.Year} H")" Links="Links"></FooterView>
+    </FooterRender>
+</AntDesign.ProLayout.BasicLayout>
+
+@code
+{
+    private readonly MenuDataItem[] _menuData =
+    {
+        new MenuDataItem
+        {
+            Path = "/workbench",
+            Name = "工作台",
+            Icon = "home",
+            Key = "workbench"
+        },
+        new MenuDataItem
+        {
+            Path = "/myapps",
+            Name = "我的应用",
+            Icon = "appstore",
+            Key = "myapps"
+        },
+        new MenuDataItem
+        {
+            Path = "/myparts",
+            Name = "我的物料",
+            Icon = "api",
+            Key = "myparts"
+        },
+        new MenuDataItem
+        {
+            Path = "/ecosystems",
+            Name = "生态中心",
+            Icon = "cloud",
+            Key = "ecosystems"
+        },
+        new MenuDataItem
+        {
+            Path = "/solutions",
+            Name = "解决方案",
+            Icon = "deployment-unit",
+            Key = "solutions"
+        },
+        new MenuDataItem
+        {
+            Path = "/docs",
+            Name = "文档中心",
+            Icon = "question-circle",
+            Key = "docs"
+        }
+    };
+
+    private LinkItem[] Links { get; set; } =
+    {
+        new LinkItem
+        {
+            Key = "OpenLowCodeLab",
+            Title = "OpenLowCodeLab",
+            Href = "/",
+            BlankTarget = true,
+        }
+    };
+}

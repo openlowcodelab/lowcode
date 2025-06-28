@@ -36,7 +36,7 @@
         <span draggable="true" style="cursor: move; display: inline-block; width: 10px; margin: 0 auto; writing-mode: vertical-lr;">...</span>
         <span style="display:inline-block; width:140px;">@topBtn.Title</span>
         <Icon Type="edit" OnClick="@(() => EditButton(topBtn.Id, true))" Theme="IconThemeType.Outline" Style="cursor: pointer;" />
-        <Icon Type="thunderbolt" OnClick="@(() => EditButtonEvent(topBtn.Id))" Theme="IconThemeType.Outline" Style="cursor: pointer;" />
+        <Icon Type="thunderbolt" OnClick="@(() => EditButtonEvent(topBtn.Id, true))" Theme="IconThemeType.Outline" Style="cursor: pointer;" />
         <Icon Type="delete" OnClick="@(() => DeleteButton(topBtn.Id, true))" Theme="IconThemeType.Outline" Style="cursor: pointer;" />
     </div>
 }
@@ -57,7 +57,7 @@
         <span draggable="true" style="cursor: move; display: inline-block; width: 10px; margin: 0 auto; writing-mode: vertical-lr;">...</span>
         <span style="display:inline-block; width:140px;">@rowBtn.Title</span>
         <Icon Type="edit" OnClick="@(() => EditButton(rowBtn.Id, false))" Theme="IconThemeType.Outline" Style="cursor: pointer;" />
-        <Icon Type="thunderbolt" OnClick="@(() => EditButtonEvent(rowBtn.Id))" Theme="IconThemeType.Outline" Style="cursor: pointer;" />
+        <Icon Type="thunderbolt" OnClick="@(() => EditButtonEvent(rowBtn.Id, false))" Theme="IconThemeType.Outline" Style="cursor: pointer;" />
         <Icon Type="delete" OnClick="@(() => DeleteButton(rowBtn.Id, false))" Theme="IconThemeType.Outline" Style="cursor: pointer;" />
     </div>
 }
@@ -259,7 +259,7 @@
         _btnVisible = true;
         _isbtnCreate = true;
         _isTopBtn = isTopBtn;
-        
+
         _tableButtonSchema = new();
         _tableButtonSchema.Id = ShortIdGenerator.Generate();
 
@@ -286,12 +286,16 @@
 
     private void DeleteButton(string id, bool isTopBtn)
     {
-        var btn = _tableSchema.TopButtons.First(t => t.Id == id);
-
         if (isTopBtn)
+        {
+            var btn = _tableSchema.TopButtons.First(t => t.Id == id);
             _tableSchema.TopButtons.Remove(btn);
+        }
         else
+        {
+            var btn = _tableSchema.RowButtons.First(t => t.Id == id);
             _tableSchema.RowButtons.Remove(btn);
+        }
 
         OnPropertyChanged();
     }
@@ -352,10 +356,19 @@
     private bool _btnEventVisible;
     private IList<EventSchema> _btnEvents;
 
-    private void EditButtonEvent(string id)
+    private void EditButtonEvent(string id, bool isTopBtn)
     {
         _btnEventVisible = true;
-        _tableButtonSchema = _tableSchema.TopButtons.First(t => t.Id == id);
+
+        if (isTopBtn)
+        {
+            _tableButtonSchema = _tableSchema.TopButtons.First(t => t.Id == id);
+        }
+        else
+        {
+            _tableButtonSchema = _tableSchema.RowButtons.First(t => t.Id == id);
+        }
+
         _btnEvents = _tableButtonSchema.Events ?? [];
         foreach (var ev in _tableButtonSchema.SupportEvents)
         {

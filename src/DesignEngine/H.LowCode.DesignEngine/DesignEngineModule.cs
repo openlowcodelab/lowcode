@@ -1,4 +1,4 @@
-﻿using H.LowCode.DesignEngine.Abstraction;
+﻿using H.LowCode.DesignEngineBase;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Modularity;
 
