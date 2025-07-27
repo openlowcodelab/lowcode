@@ -1,19 +1,14 @@
-﻿using Microsoft.AspNetCore.Components;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using AntDesign;
+using H.LowCode.ComponentBase;
+using Microsoft.AspNetCore.Components;
 
 namespace H.LowCode.DesignEngineBase;
 
 /// <summary>
 /// 页面组件基类
 /// </summary>
-public abstract class DesignEngineLowCodePageComponentBase : DesignEngineLowCodeComponentBase
+public abstract class DesignEngineLowCodePageComponentBase : LowCodePageComponentBase
 {
-    protected static T GetQueryValue<T>(string name)
-    {
-        return default;
-    }
+    [Inject]
+    protected new IMessageService Message { get; set; }
 }

@@ -38,6 +38,11 @@ public class EventSchema
     [JsonPropertyName("ecs")]
     public string EventCustomScript { get; set; }
     #endregion
+
+    /// <summary>
+    /// 事件参数
+    /// </summary>
+    public IDictionary<string, string> EventArgs { get; set; }
 }
 
 public class EventConsumeSchema

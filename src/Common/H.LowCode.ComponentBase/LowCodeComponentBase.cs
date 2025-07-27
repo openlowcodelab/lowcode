@@ -14,7 +14,7 @@ public abstract class LowCodeComponentBase : AbpComponentBase
     private LowCodeAppState LowCodeAppState { get; set; }
 
     [Inject]
-    private NavigationManager NavigationManager { get; set; }
+    protected NavigationManager NavigationManager { get; set; }
 
     /// <summary>
     /// 组件状态标识 (用于 ShouldRender 判断)
