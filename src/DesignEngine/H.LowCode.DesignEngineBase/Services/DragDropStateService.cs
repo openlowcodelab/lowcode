@@ -170,6 +170,8 @@ public class DragDropStateService
         if (stateSchema.CurrentDragComponent != null)
         {
             stateSchema.CurrentDragComponent.DesignState.Opacity = 1;
+            stateSchema.CurrentDragComponent.DesignState.AnimationTransform = string.Empty;
+            stateSchema.CurrentDragComponent.DesignState.IsAnimating = false;
         }
 
         if (stateSchema.LastSelectedComponent != null)
@@ -181,7 +183,20 @@ public class DragDropStateService
         if (stateSchema.LastDragOverComponent != null)
         {
             stateSchema.LastDragOverComponent.DesignState.DragEffectStyle = string.Empty;
+            stateSchema.LastDragOverComponent.DesignState.AnimationTransform = string.Empty;
+            stateSchema.LastDragOverComponent.DesignState.IsAnimating = false;
             //stateSchema.LastDragOverComponent.RefreshState();
+        }
+
+        // 重置根组件下所有子组件的动画状态
+        if (stateSchema.RootComponent?.Childrens != null)
+        {
+            foreach (var child in stateSchema.RootComponent.Childrens)
+            {
+                child.DesignState.AnimationTransform = string.Empty;
+                child.DesignState.IsAnimating = false;
+                child.RefreshState();
+            }
         }
     }
     #endregion

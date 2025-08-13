@@ -33,4 +33,16 @@ public class ComponentDesignStateSchema
     /// </summary>
     [JsonIgnore]
     public bool IsDropedAfter { get; set; }
+
+    /// <summary>
+    /// 动画变换样式（用于平滑让位动画）
+    /// </summary>
+    [JsonIgnore]
+    public string AnimationTransform { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 是否正在进行让位动画
+    /// </summary>
+    [JsonIgnore]
+    public bool IsAnimating { get; set; }
 }

@@ -1,11 +1,12 @@
-﻿@namespace H.LowCode.DesignEngineBase
+@namespace H.LowCode.DesignEngineBase
 @inherits DesignEngineLowCodeComponentBase
 
 @inject DragDropStateService DragDropStateService
 
-<div class="dropitem-box @DropItemBoxClassMapper.Class" style="float:left; opacity:@Component.DesignState.Opacity;
+<div class="dropitem-box @DropItemBoxClassMapper.Class" draggable="true" style="float:left; opacity:@Component.DesignState.Opacity;
         width: @((Component.Style.ItemWidth > 4 ? Component.Style.ItemWidth : (IsInRootContainer ? 24/PageCascading.PageLayout : 24))  /24 * 100)%;
         min-height: @(Component.Style.ItemHeight)px;
+        transform: @Component.DesignState.AnimationTransform;
         @Component.Style.DefaultStyle @Component.Style.CustomStyle"
      @onclick="OnClick" @onclick:stopPropagation
      @ondragstart="OnDragStart" @ondragstart:stopPropagation
@@ -102,7 +103,8 @@
             .If("dropitem-container", () => Component.IsContainer);
 
         DropItemBoxClassMapper.Clear()
-            .If("dropitem-box-layout", () => Component.IsContainer);
+            .If("dropitem-box-layout", () => Component.IsContainer)
+            .If("dropitem-animating", () => Component.DesignState.IsAnimating);
     }
     #endregion
 
@@ -110,7 +112,11 @@
     private void OnClick()
     {
         Component.DesignState.DragEffectStyle = string.Empty;
-        //DragDropStateService.ResetDragStyle();
+        Component.DesignState.AnimationTransform = string.Empty;
+        Component.DesignState.IsAnimating = false;
+
+        //重置所有组件的动画状态
+        ResetAllAnimationStates();
 
         OnItemClick.Invoke(Component);
         BlazorEventDispatcher.Publish("designengine.dropitem.onclick", Component);
@@ -118,12 +124,16 @@
 
     private void OnDragStart(DragEventArgs dragEventArgs)
     {
-        Component.DesignState.Opacity = 0.2;
+        // 隐藏被拖拽组件，避免与让位组件重叠
+        Component.DesignState.Opacity = 0;
 
         //记录当前选中对象
         DragDropStateService.SetCurrentDragComponent(PageCascading.AppId, PageCascading.PageId, Component);
+
+        //重置所有组件的动画状态
+        ResetAllAnimationStates();
     }
-    
+
     private void OnDragEnter(DragEventArgs dragEventArgs)
     {
         DragDropStateService.SetLastDragOverComponent(PageCascading.AppId, PageCascading.PageId, Component);
@@ -131,25 +141,31 @@
 
     private void OnDragOver(DragEventArgs dragEventArgs)
     {
-        if (ReferenceEquals(DragDropStateService.GetCurrentDragComponent(PageCascading.AppId, PageCascading.PageId), Component))
+        var currentDragComponent = DragDropStateService.GetCurrentDragComponent(PageCascading.AppId, PageCascading.PageId);
+        if (ReferenceEquals(currentDragComponent, Component))
             return;
 
-        if (DateTime.Now < DragDropStateService.GetLastDragOverTime(PageCascading.AppId, PageCascading.PageId).AddMilliseconds(100))
-            return;
+        // var lastDragOverComponent = DragDropStateService.GetLastDragOverComponent(PageCascading.AppId, PageCascading.PageId);
+        // if (ReferenceEquals(lastDragOverComponent, Component))
+        //     return;
 
         //设置移动位置样式，拖拽到目标元素上半部分时，上方添加虚线边框，下半部分时下方添加虚线边框
-        if (dragEventArgs.OffsetY < 30)
-        {
-            Component.DesignState.DragEffectStyle = "border-top: 2px dashed #1890ff;";
-            Component.DesignState.IsDropedAfter = false;
-        }
-        else
-        {
-            Console.WriteLine($"OnDragOver: bottom");
-            Component.DesignState.DragEffectStyle = "border-bottom: 2px dashed #1890ff; height: auto;";
-            Component.DesignState.IsDropedAfter = true;
-        }
-        DragDropStateService.SetLastDragOverTime(PageCascading.AppId, PageCascading.PageId, DateTime.Now);
+        // if (dragEventArgs.OffsetY < 30)
+        // {
+        //     Component.DesignState.DragEffectStyle = "border-top: 2px dashed #1890ff;";
+        //     Component.DesignState.IsDropedAfter = false;
+        // }
+        // else
+        // {
+        //     Console.WriteLine($"OnDragOver: bottom");
+        //     Component.DesignState.DragEffectStyle = "border-bottom: 2px dashed #1890ff; height: auto;";
+        //     Component.DesignState.IsDropedAfter = true;
+        // }
+
+        //触发让位动画
+        TriggerSiblingAnimation();
+
+        //DragDropStateService.SetLastDragOverTime(PageCascading.AppId, PageCascading.PageId, DateTime.Now);
     }
 
     private void OnDragLeave()
@@ -160,6 +176,9 @@
 
         Console.WriteLine("OnDragLeave");
         Component.DesignState.DragEffectStyle = string.Empty;
+
+        //清理让位动画
+        //ClearSiblingAnimation();
     }
 
     private void OnMouseOver()
@@ -186,6 +205,109 @@
     private void OnCopy()
     {
         OnItemCopy.Invoke(Component);
+    }
+    #endregion
+
+    #region Animation Methods
+    /// <summary>
+    /// 重置所有组件的动画状态
+    /// </summary>
+    private void ResetAllAnimationStates()
+    {
+        // var rootComponent = DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId);
+        // if (rootComponent?.Childrens != null)
+        // {
+        //     foreach (var child in rootComponent.Childrens)
+        //     {
+        //         child.DesignState.AnimationTransform = string.Empty;
+        //         child.DesignState.IsAnimating = false;
+        //         child.RefreshState();
+        //     }
+        // }
+    }
+
+    /// <summary>
+    /// 触发兄弟组件的让位动画
+    /// </summary>
+    private void TriggerSiblingAnimation()
+    {
+        var rootComponent = DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId);
+        var currentDragComponent = DragDropStateService.GetCurrentDragComponent(PageCascading.AppId, PageCascading.PageId);
+
+        if (rootComponent?.Childrens == null || currentDragComponent == null)
+            return;
+
+        var overIndex = rootComponent.Childrens.IndexOf(Component);
+        var dragIndex = rootComponent.Childrens.IndexOf(currentDragComponent);
+
+        if (overIndex == -1 || dragIndex == -1)
+            return;
+
+        // 动态计算组件实际宽度（包括边距）
+        var itemWidthPercent = Component.Style.ItemWidth > 4 ? Component.Style.ItemWidth : (IsInRootContainer ? 24/PageCascading.PageLayout : 24);
+        var containerWidth = 1200; // 假设容器宽度，实际应该从DOM获取
+        var itemWidth = (int)(itemWidthPercent / 24.0 * containerWidth) + 10; // 10px 为边距
+
+        foreach (var child in rootComponent.Childrens)
+        {
+            if (ReferenceEquals(child, currentDragComponent))
+                continue;
+
+            var childIndex = rootComponent.Childrens.IndexOf(child);
+            var shouldMove = false;
+            var moveDistance = 0;
+
+            //判断是否需要让位以及让位方向 (区间内的组件才需要移动)
+            if (dragIndex > overIndex)    //往前拖拽，向右让位移动
+            {
+                if (childIndex >= overIndex && childIndex < dragIndex)
+                {
+                    shouldMove = true;
+                    moveDistance = itemWidth;
+                }
+            }
+            else    //往后拖拽，向左让位移动
+            {
+                if (childIndex > dragIndex && childIndex <= overIndex)
+                {
+                    shouldMove = true;
+                    moveDistance = -itemWidth;
+                }
+            }
+
+            if (shouldMove)
+            {
+                child.DesignState.AnimationTransform = $"translateX({moveDistance}px)";
+                child.DesignState.IsAnimating = true;
+            }
+            // else
+            // {
+            //     child.DesignState.AnimationTransform = string.Empty;
+            //     child.DesignState.IsAnimating = false;
+            // }
+
+            // child.RefreshState();
+        }
+    }
+
+    /// <summary>
+    /// 清理兄弟组件的让位动画
+    /// </summary>
+    private void ClearSiblingAnimation()
+    {
+        // var rootComponent = DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId);
+        // if (rootComponent?.Childrens != null)
+        // {
+        //     foreach (var child in rootComponent.Childrens)
+        //     {
+        //         if (!ReferenceEquals(child, DragDropStateService.GetCurrentDragComponent(PageCascading.AppId, PageCascading.PageId)))
+        //         {
+        //             child.DesignState.AnimationTransform = string.Empty;
+        //             child.DesignState.IsAnimating = false;
+        //             child.RefreshState();
+        //         }
+        //     }
+        // }
     }
     #endregion
 }
