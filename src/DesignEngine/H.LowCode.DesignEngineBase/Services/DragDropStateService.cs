@@ -169,7 +169,6 @@ public class DragDropStateService
 
         if (stateSchema.CurrentDragComponent != null)
         {
-            stateSchema.CurrentDragComponent.DesignState.Opacity = 1;
             stateSchema.CurrentDragComponent.DesignState.AnimationTransform = string.Empty;
             stateSchema.CurrentDragComponent.DesignState.IsAnimating = false;
         }

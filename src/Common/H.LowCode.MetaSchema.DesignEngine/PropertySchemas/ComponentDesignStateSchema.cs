@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace H.LowCode.MetaSchema.DesignEngine;
 
@@ -17,9 +13,6 @@ public class ComponentDesignStateSchema
     public bool IsSelected { get; set; }
 
     [JsonIgnore]
-    public double Opacity { get; set; } = 1;
-
-    [JsonIgnore]
     public string DragEffectStyle { get; set; }
 
     /// <summary>
@@ -27,12 +20,6 @@ public class ComponentDesignStateSchema
     /// </summary>
     [JsonIgnore]
     public bool IsDroppedFromComponentPanel { get; set; }
-
-    /// <summary>
-    /// 拖拽到后面（true：后面  false：前面）
-    /// </summary>
-    [JsonIgnore]
-    public bool IsDropedAfter { get; set; }
 
     /// <summary>
     /// 动画变换样式（用于平滑让位动画）

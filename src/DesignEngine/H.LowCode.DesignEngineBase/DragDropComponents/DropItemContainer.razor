@@ -69,12 +69,6 @@
         var currentDragComponent = DragDropStateService.GetCurrentDragComponent(PageCascading.AppId, PageCascading.PageId);
         DragDropHandler(currentDragComponent);
 
-        // 恢复被拖拽组件的透明度
-        if (currentDragComponent != null)
-        {
-            currentDragComponent.DesignState.Opacity = 1;
-        }
-
         //重置拖拽样式和动画状态
         DragDropStateService.ResetDragStyle(PageCascading.AppId, PageCascading.PageId);
         ResetAllAnimationStates();
@@ -84,13 +78,6 @@
     {
         if (IsRootContainer)
         {
-            // 恢复被拖拽组件的透明度（处理拖拽取消的情况）
-            var currentDragComponent = DragDropStateService.GetCurrentDragComponent(PageCascading.AppId, PageCascading.PageId);
-            if (currentDragComponent != null)
-            {
-                currentDragComponent.DesignState.Opacity = 1;
-            }
-            
             DragDropStateService.ResetDragStyle(PageCascading.AppId, PageCascading.PageId);
         }
 

@@ -1,9 +1,13 @@
 @namespace H.LowCode.DesignEngineBase
 @inherits DesignEngineLowCodeComponentBase
+@implements IAsyncDisposable
 
 @inject DragDropStateService DragDropStateService
+@inject IJSRuntime JSRuntime
 
-<div class="dropitem-box @DropItemBoxClassMapper.Class" draggable="true" style="float:left; opacity:@Component.DesignState.Opacity;
+<div @ref="itemRef" class="dropitem-box @DropItemBoxClassMapper.Class"
+    draggable="@Component.DesignState.IsSelected"
+     style="float:left;
         width: @((Component.Style.ItemWidth > 4 ? Component.Style.ItemWidth : (IsInRootContainer ? 24/PageCascading.PageLayout : 24))  /24 * 100)%;
         min-height: @(Component.Style.ItemHeight)px;
         transform: @Component.DesignState.AnimationTransform;
@@ -13,8 +17,10 @@
      @ondragenter="OnDragEnter" @ondragenter:stopPropagation
      @ondragover="OnDragOver" @ondragover:preventDefault @ondragover:stopPropagation
      @ondragleave="OnDragLeave" @ondragleave:stopPropagation
+     @ondragend="OnDragEnd" @ondragend:stopPropagation
      @onmouseover="OnMouseOver" @onmouseover:stopPropagation
-     @onmouseout="OnMouseOut" @onmouseout:stopPropagation>
+     @onmouseout="OnMouseOut" @onmouseout:stopPropagation
+     @onmousemove=OnMouseMove @onmousemove:stopPropagation>
 
     <div class="dropitem @DropItemClassMapper.Class" style="@Component.DesignState.DragEffectStyle">
         @if (Component.DesignState.IsSelected)
@@ -61,6 +67,13 @@
     protected ClassMapper DropItemBoxClassMapper { get; } = new ClassMapper();
     protected ClassMapper DropItemClassMapper { get; } = new ClassMapper();
 
+    private ElementReference itemRef;
+    private DragDropElementDimensions dimensions;
+
+    private bool isDragging = false;
+    private double dragX = 0;
+    private double dragY = 0;
+
     #region Init
     protected override async Task OnInitializedAsync()
     {
@@ -70,10 +83,25 @@
         SetClassMap();
     }
 
-    protected override void OnAfterRender(bool firstRender)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
+        {
+            await UpdateDimensions();
             RegisterEventDispatcher();
+        }
+    }
+
+    private async Task UpdateDimensions()
+    {
+        try
+        {
+            dimensions = await JSRuntime.InvokeAsync<DragDropElementDimensions>("elementUtils.getDimensions", itemRef);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error getting element dimensions: {ex.Message}");
+        }
     }
 
     private void Init()
@@ -124,8 +152,8 @@
 
     private void OnDragStart(DragEventArgs dragEventArgs)
     {
-        // 隐藏被拖拽组件，避免与让位组件重叠
-        Component.DesignState.Opacity = 0;
+        //标记正在拖拽中
+        isDragging = true;
 
         //记录当前选中对象
         DragDropStateService.SetCurrentDragComponent(PageCascading.AppId, PageCascading.PageId, Component);
@@ -145,36 +173,28 @@
         if (ReferenceEquals(currentDragComponent, Component))
             return;
 
-        // var lastDragOverComponent = DragDropStateService.GetLastDragOverComponent(PageCascading.AppId, PageCascading.PageId);
-        // if (ReferenceEquals(lastDragOverComponent, Component))
-        //     return;
+        var lastDragOverComponent = DragDropStateService.GetLastDragOverComponent(PageCascading.AppId, PageCascading.PageId);
 
-        //设置移动位置样式，拖拽到目标元素上半部分时，上方添加虚线边框，下半部分时下方添加虚线边框
-        // if (dragEventArgs.OffsetY < 30)
-        // {
-        //     Component.DesignState.DragEffectStyle = "border-top: 2px dashed #1890ff;";
-        //     Component.DesignState.IsDropedAfter = false;
-        // }
-        // else
-        // {
-        //     Console.WriteLine($"OnDragOver: bottom");
-        //     Component.DesignState.DragEffectStyle = "border-bottom: 2px dashed #1890ff; height: auto;";
-        //     Component.DesignState.IsDropedAfter = true;
-        // }
+        // 只有当拖拽到不同组件时才触发让位动画，避免连续拖拽问题
+        if (!ReferenceEquals(lastDragOverComponent, Component))
+        {
+            // 先清理之前的动画状态
+            ClearSiblingAnimation();
 
-        //触发让位动画
+            // 更新最后拖拽经过的组件
+            DragDropStateService.SetLastDragOverComponent(PageCascading.AppId, PageCascading.PageId, Component);
+        }
+
         TriggerSiblingAnimation();
-
-        //DragDropStateService.SetLastDragOverTime(PageCascading.AppId, PageCascading.PageId, DateTime.Now);
     }
 
     private void OnDragLeave()
     {
         //如果当前被拖拽的组件和拖拽到上面的组件是同一个，直接返回
-        if (ReferenceEquals(DragDropStateService.GetCurrentDragComponent(PageCascading.AppId, PageCascading.PageId), Component))
+        var currentDragComponent = DragDropStateService.GetCurrentDragComponent(PageCascading.AppId, PageCascading.PageId);
+        if (ReferenceEquals(currentDragComponent, Component))
             return;
 
-        Console.WriteLine("OnDragLeave");
         Component.DesignState.DragEffectStyle = string.Empty;
 
         //清理让位动画
@@ -194,6 +214,29 @@
         if (Component.DesignState.IsSelected == false)
         {
             Component.DesignState.DragEffectStyle = string.Empty;
+        }
+    }
+
+    private void OnMouseMove(MouseEventArgs e)
+    {
+        if (!isDragging)
+            return;
+
+        var newMoveX = e.MovementX;
+        var newMoveY = e.MovementY;
+
+        // 只有当鼠标位置有明显变化时才更新（减少不必要的重绘）
+        var deltaX = Math.Abs(newMoveX - dragX);
+        var deltaY = Math.Abs(newMoveY - dragX);
+
+        if (deltaX > 5 || deltaY > 5) // 5px 的阈值
+        {
+            dragX = newMoveX;
+            dragX = newMoveY;
+
+            // 计算拖拽过程中的悬停位置
+            var currentDragComponent = DragDropStateService.GetCurrentDragComponent(PageCascading.AppId, PageCascading.PageId);
+            currentDragComponent.DesignState.AnimationTransform = $"translate({newMoveX}px, {newMoveY}px)";
         }
     }
 
@@ -231,6 +274,8 @@
     /// </summary>
     private void TriggerSiblingAnimation()
     {
+        if (dimensions == null) return;
+
         var rootComponent = DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId);
         var currentDragComponent = DragDropStateService.GetCurrentDragComponent(PageCascading.AppId, PageCascading.PageId);
 
@@ -243,10 +288,9 @@
         if (overIndex == -1 || dragIndex == -1)
             return;
 
-        // 动态计算组件实际宽度（包括边距）
-        var itemWidthPercent = Component.Style.ItemWidth > 4 ? Component.Style.ItemWidth : (IsInRootContainer ? 24/PageCascading.PageLayout : 24);
-        var containerWidth = 1200; // 假设容器宽度，实际应该从DOM获取
-        var itemWidth = (int)(itemWidthPercent / 24.0 * containerWidth) + 10; // 10px 为边距
+        // 计算每行可容纳的组件数量
+        var itemsPerRow = Math.Floor(dimensions.ContainerWidth / dimensions.ActualWidth);
+        if (itemsPerRow < 1) itemsPerRow = 1;
 
         foreach (var child in rootComponent.Childrens)
         {
@@ -255,39 +299,83 @@
 
             var childIndex = rootComponent.Childrens.IndexOf(child);
             var shouldMove = false;
-            var moveDistance = 0;
+            var moveDistanceX = 0.0;
+            var moveDistanceY = 0.0;
 
-            //判断是否需要让位以及让位方向 (区间内的组件才需要移动)
-            if (dragIndex > overIndex)    //往前拖拽，向右让位移动
+            // 计算行位置
+            var currentRow = Math.Floor(childIndex / itemsPerRow);
+            var overRow = Math.Floor(overIndex / itemsPerRow);
+            var dragRow = Math.Floor(dragIndex / itemsPerRow);
+
+            if (dragIndex > overIndex)    //往前拖拽
             {
                 if (childIndex >= overIndex && childIndex < dragIndex)
                 {
                     shouldMove = true;
-                    moveDistance = itemWidth;
+
+                    if (currentRow == overRow)
+                    {
+                        // 同行移动
+                        moveDistanceX = dimensions.ActualWidth;
+                    }
+                    else
+                    {
+                        // 跨行移动
+                        moveDistanceX = -(itemsPerRow - 1) * dimensions.ActualWidth;
+                        moveDistanceY = dimensions.ActualHeight;
+                    }
                 }
             }
-            else    //往后拖拽，向左让位移动
+            else    //往后拖拽
             {
                 if (childIndex > dragIndex && childIndex <= overIndex)
                 {
                     shouldMove = true;
-                    moveDistance = -itemWidth;
+
+                    if (currentRow == overRow)
+                    {
+                        // 同行移动
+                        moveDistanceX = -dimensions.ActualWidth;
+                    }
+                    else
+                    {
+                        // 跨行移动
+                        moveDistanceX = (itemsPerRow - 1) * dimensions.ActualWidth;
+                        moveDistanceY = -dimensions.ActualHeight;
+                    }
                 }
             }
 
             if (shouldMove)
             {
-                child.DesignState.AnimationTransform = $"translateX({moveDistance}px)";
+                if (moveDistanceY != 0)
+                {
+                    child.DesignState.AnimationTransform = $"translate({moveDistanceX}px, {moveDistanceY}px)";
+                }
+                else
+                {
+                    child.DesignState.AnimationTransform = $"translateX({moveDistanceX}px)";
+                }
                 child.DesignState.IsAnimating = true;
+                //child.RefreshState();
             }
-            // else
-            // {
-            //     child.DesignState.AnimationTransform = string.Empty;
-            //     child.DesignState.IsAnimating = false;
-            // }
-
-            // child.RefreshState();
         }
+    }
+
+    private void OnDragEnd(DragEventArgs e)
+    {
+        isDragging = false;
+        dragX = 0;
+        dragY = 0;
+
+        Component.DesignState.DragEffectStyle = string.Empty;
+        Component.DesignState.AnimationTransform = string.Empty;
+        Component.DesignState.IsAnimating = false;
+        
+        //重置所有组件的动画状态
+        ResetAllAnimationStates();
+        
+        StateHasChanged();
     }
 
     /// <summary>
@@ -310,4 +398,19 @@
         // }
     }
     #endregion
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            if (IsInRootContainer)
+            {
+                BlazorEventDispatcher.Remove("designengine.pagesetting.pagelayout.onchange");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error disposing DropItem: {ex.Message}");
+        }
+    }
 }
