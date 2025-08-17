@@ -14,7 +14,7 @@
         @Component.Style.DefaultStyle @Component.Style.CustomStyle"
      @onclick="OnClick" @onclick:stopPropagation
      @ondragstart="OnDragStart" @ondragstart:stopPropagation
-     @ondragenter="OnDragEnter" @ondragenter:stopPropagation
+     @ondragenter="OnDragEnter" @ondragenter:preventDefault @ondragenter:stopPropagation
      @ondragover="OnDragOver" @ondragover:preventDefault @ondragover:stopPropagation
      @ondragleave="OnDragLeave" @ondragleave:stopPropagation
      @ondragend="OnDragEnd" @ondragend:stopPropagation
