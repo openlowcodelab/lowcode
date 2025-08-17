@@ -71,8 +71,10 @@
     private DragDropElementDimensions dimensions;
 
     private bool isDragging = false;
-    private double dragX = 0;
-    private double dragY = 0;
+    private double initialX = 0;
+    private double initialY = 0;
+    private double dragOffsetX = 0;
+    private double dragOffsetY = 0;
 
     #region Init
     protected override async Task OnInitializedAsync()
@@ -201,6 +203,24 @@
         //ClearSiblingAnimation();
     }
 
+    private void OnDragEnd(DragEventArgs e)
+    {
+        isDragging = false;
+        initialX = 0;
+        initialY = 0;
+        dragOffsetX = 0;
+        dragOffsetY = 0;
+
+        Component.DesignState.DragEffectStyle = string.Empty;
+        Component.DesignState.AnimationTransform = string.Empty;
+        Component.DesignState.IsAnimating = false;
+
+        //重置所有组件的动画状态
+        ResetAllAnimationStates();
+
+        StateHasChanged();
+    }
+
     private void OnMouseOver()
     {
         if (Component.DesignState.IsSelected == false)
@@ -222,22 +242,13 @@
         if (!isDragging)
             return;
 
-        var newMoveX = e.MovementX;
-        var newMoveY = e.MovementY;
+        // 计算相对于初始位置的偏移量
+        dragOffsetX += e.MovementX;
+        dragOffsetY += e.MovementY;
 
-        // 只有当鼠标位置有明显变化时才更新（减少不必要的重绘）
-        var deltaX = Math.Abs(newMoveX - dragX);
-        var deltaY = Math.Abs(newMoveY - dragX);
-
-        if (deltaX > 5 || deltaY > 5) // 5px 的阈值
-        {
-            dragX = newMoveX;
-            dragX = newMoveY;
-
-            // 计算拖拽过程中的悬停位置
-            var currentDragComponent = DragDropStateService.GetCurrentDragComponent(PageCascading.AppId, PageCascading.PageId);
-            currentDragComponent.DesignState.AnimationTransform = $"translate({newMoveX}px, {newMoveY}px)";
-        }
+        // 更新组件的变换样式，使其跟随鼠标移动
+        Component.DesignState.AnimationTransform = $"translate({dragOffsetX}px, {dragOffsetY}px)";
+        Component.DesignState.IsAnimating = true;
     }
 
     private void OnDelete()
@@ -302,18 +313,14 @@
             var moveDistanceX = 0.0;
             var moveDistanceY = 0.0;
 
-            // 计算行位置
-            var currentRow = Math.Floor(childIndex / itemsPerRow);
-            var overRow = Math.Floor(overIndex / itemsPerRow);
-            var dragRow = Math.Floor(dragIndex / itemsPerRow);
-
-            if (dragIndex > overIndex)    //往前拖拽
+            if (dragIndex > overIndex)    //往前拖拽,向后移动
             {
                 if (childIndex >= overIndex && childIndex < dragIndex)
                 {
                     shouldMove = true;
 
-                    if (currentRow == overRow)
+                    var isChangeRow = (childIndex + 1) % itemsPerRow == 0;
+                    if (!isChangeRow)
                     {
                         // 同行移动
                         moveDistanceX = dimensions.ActualWidth;
@@ -326,13 +333,14 @@
                     }
                 }
             }
-            else    //往后拖拽
+            else    //往后拖拽,向前移动
             {
                 if (childIndex > dragIndex && childIndex <= overIndex)
                 {
                     shouldMove = true;
 
-                    if (currentRow == overRow)
+                    var isChangeRow = (childIndex + 1) % itemsPerRow == 1;
+                    if (!isChangeRow)
                     {
                         // 同行移动
                         moveDistanceX = -dimensions.ActualWidth;
@@ -360,22 +368,6 @@
                 //child.RefreshState();
             }
         }
-    }
-
-    private void OnDragEnd(DragEventArgs e)
-    {
-        isDragging = false;
-        dragX = 0;
-        dragY = 0;
-
-        Component.DesignState.DragEffectStyle = string.Empty;
-        Component.DesignState.AnimationTransform = string.Empty;
-        Component.DesignState.IsAnimating = false;
-        
-        //重置所有组件的动画状态
-        ResetAllAnimationStates();
-        
-        StateHasChanged();
     }
 
     /// <summary>
