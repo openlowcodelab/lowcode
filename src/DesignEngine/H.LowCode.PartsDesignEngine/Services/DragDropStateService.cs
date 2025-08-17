@@ -228,7 +228,7 @@ public class DragDropStateSchema
 
     /// <summary>
     /// 最后选中对象
-    /// （当 DropItem 失去焦点时，即页面上没有任何项被选中，LastSelectedModel 仍有值）
+    /// （当 DraggableItem 失去焦点时，即页面上没有任何项被选中，LastSelectedModel 仍有值）
     /// </summary>
     public ComponentPartsSchema LastSelectedComponent { get; set; }
 

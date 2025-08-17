@@ -159,7 +159,7 @@ public abstract class DesignEngineDynamicComponentBase : LowCodeDynamicComponent
         if (componentFragment.Content.IsNullOrWhiteSpace())
             return;
 
-        if (string.Equals(componentFragment.Content, $"$({nameof(DropItemContainer)})",
+        if (string.Equals(componentFragment.Content, $"$({nameof(DraggableContainer)})",
             StringComparison.OrdinalIgnoreCase))
         {
             //TODO: 此处 containerComponentId 不能保证唯一性, 待优化
@@ -170,7 +170,7 @@ public abstract class DesignEngineDynamicComponentBase : LowCodeDynamicComponent
 
             builder.AddAttribute(index++, "ChildContent", (RenderFragment)(childBuilder =>
             {
-                childBuilder.OpenComponent<DropItemContainer>(index++);
+                childBuilder.OpenComponent<DraggableContainer>(index++);
                 childBuilder.AddAttribute(index++, "ContainerComponent", containerComponent);
                 childBuilder.CloseComponent();
             }));
@@ -185,7 +185,7 @@ public abstract class DesignEngineDynamicComponentBase : LowCodeDynamicComponent
     }
     #endregion
 
-    #region 渲染组件内的 DropItemContainer
+    #region 渲染组件内的 DraggableContainer
     private (ComponentPartsSchema, bool) RenderContainerComponent(ComponentPartsSchema component, string key, Action<ComponentPartsSchema> action = null)
     {
         var exist = component.Childrens?.Any(t => t.Id == key);

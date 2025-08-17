@@ -50,7 +50,7 @@
     private void RegisterEventDispatcher()
     {
         //订阅设计面板中的组件点击事件
-        BlazorEventDispatcher.Subscribe("designengine.dropitem.onclick", (value) =>
+        BlazorEventDispatcher.Subscribe("designengine.draggableitem.onclick", (value) =>
         {
             _component = (ComponentPartsSchema)value;
             _showPropertyPanel = true;
@@ -59,7 +59,7 @@
         });
 
         //订阅设计面板取消选中事件
-        BlazorEventDispatcher.Subscribe("designengine.dropitem.onblur", (value) =>
+        BlazorEventDispatcher.Subscribe("designengine.draggableitem.onblur", (value) =>
         {
             _component = null;
             _showPropertyPanel = false;

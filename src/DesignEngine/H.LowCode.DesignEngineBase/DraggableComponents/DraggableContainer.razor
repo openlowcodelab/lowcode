@@ -3,7 +3,7 @@
 
 @inject DragDropStateService DragDropStateService
 
-<div class="dropitemcontainer"
+<div class="draggablecontainer"
     style="@ContainerComponent.Style.DefaultStyle"
     @onclick="OnClick"
     @ondragover="(e)=>{}" @ondragover:preventDefault @ondragover:stopPropagation
@@ -11,7 +11,7 @@
 
     @foreach (var comp in ContainerComponent.Childrens)
     {
-        <DropItem Component="comp" IsInRootContainer="@IsRootContainer" OnItemClick="OnItemClick" OnItemDelete="OnItemDelete" OnItemCopy="OnItemCopy" />
+        <DraggableItem Component="comp" IsInRootContainer="@IsRootContainer" OnItemClick="OnItemClick" OnItemDelete="OnItemDelete" OnItemCopy="OnItemCopy" />
     }
 
 </div>
@@ -83,7 +83,7 @@
             DragDropStateService.ResetDragStyle(PageCascading.AppId, PageCascading.PageId);
         }
 
-        BlazorEventDispatcher.Publish("designengine.dropitem.onblur", null);
+        BlazorEventDispatcher.Publish("designengine.draggableitem.onblur", null);
     }
 
     private void OnItemClick(ComponentPartsSchema component)
@@ -104,7 +104,7 @@
 
     private void OnItemDelete(ComponentPartsSchema component)
     {
-        DropItem_Remove(ContainerComponent, component);
+        DraggableItem_Remove(ContainerComponent, component);
         StateHasChanged();
     }
 
@@ -133,11 +133,11 @@
         {
             //bool isSameContainer = ReferenceEquals(ContainerComponent, currentDragComponent);
             bool isInnerContainer = ContainerComponent.Childrens.Any(t => t.Id == currentDragComponent.Id);
-            if (isInnerContainer)     //在 DropItemContainer 内拖拽，排序
+            if (isInnerContainer)     //在 DraggableContainer 内拖拽，排序
             {
-                DropItem_Sorting(ContainerComponent, currentDragComponent, dragOverComponent);
+                DraggableItem_Sorting(ContainerComponent, currentDragComponent, dragOverComponent);
             }
-            else   //跨 DropItemContainer 拖拽
+            else   //跨 DraggableContainer 拖拽
             {
                 DragItem_Move(ContainerComponent, currentDragComponent, dragOverComponent);
             }
@@ -182,19 +182,19 @@
     }
 
     /// <summary>
-    /// 跨 DropItemContainer 移动 DropItem
+    /// 跨 DraggableContainer 移动 DraggableItem
     /// </summary>
     /// <param name="newContainerComponent"></param>
     /// <param name="currentDragComponent"></param>
     /// <param name="dragOverComponent"></param>
     private void DragItem_Move(ComponentPartsSchema newContainerComponent, ComponentPartsSchema currentDragComponent, ComponentPartsSchema dragOverComponent)
     {
-        //上一个 DropItemContainer 移除
+        //上一个 DraggableContainer 移除
         var oldContainerComponent = DragDropStateService.FindComponentById(PageCascading.AppId, PageCascading.PageId, currentDragComponent.ParentId);
         oldContainerComponent.Childrens.Remove(currentDragComponent);
-        oldContainerComponent.RefreshState();  //刷新上一个 DropItemContainer，使 Remove 立即生效
+        oldContainerComponent.RefreshState();  //刷新上一个 DraggableContainer，使 Remove 立即生效
 
-        //当前 DropItemContainer 新增
+        //当前 DraggableContainer 新增
         currentDragComponent.ParentId = newContainerComponent.Id;
         DragItem_Add(newContainerComponent, currentDragComponent, dragOverComponent);
     }
@@ -205,7 +205,7 @@
     /// <param name="containerComponent"></param>
     /// <param name="currentDragComponent"></param>
     /// <param name="dragOverComponent"></param>
-    private void DropItem_Sorting(ComponentPartsSchema containerComponent, ComponentPartsSchema currentDragComponent, ComponentPartsSchema dragOverComponent)
+    private void DraggableItem_Sorting(ComponentPartsSchema containerComponent, ComponentPartsSchema currentDragComponent, ComponentPartsSchema dragOverComponent)
     {
         if (dragOverComponent == null)
             return;
@@ -221,7 +221,7 @@
         containerComponent.Childrens.Insert(overIndex, currentDragComponent);
     }
 
-    private void DropItem_Remove(ComponentPartsSchema containerComponent, ComponentPartsSchema component)
+    private void DraggableItem_Remove(ComponentPartsSchema containerComponent, ComponentPartsSchema component)
     {
         //将下一个设为选中
         int index = containerComponent.Childrens.IndexOf(component);
