@@ -1,7 +1,8 @@
-﻿.draggableitem-box {
+.draggableitem-box {
     height: 85px;
     border: #f0f2f5 solid 2px;
     transition: transform 0.3s ease-in-out;
+    will-change: transform;
 }
 
 .draggableitem-box-layout {
@@ -10,6 +11,7 @@
 
 .draggableitem-animating {
     transition: transform 0.3s ease-in-out;
+    will-change: transform;
 }
 
 .draggableitem {
@@ -19,6 +21,9 @@
     margin: 1px;
     border: #ffffff solid 2px;
     background-color: #ffffff;
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    perspective: 1000px;
 }
 
     /* 无法阻止冒泡, 改用 onmouseover, onmouseout 实现 */
