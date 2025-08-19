@@ -165,12 +165,8 @@
 
         //记录当前选中对象
         DragDropStateService.SetCurrentDragComponent(PageCascading.AppId, PageCascading.PageId, Component);
-
         //重置所有组件的动画状态
         ResetAllAnimationStates();
-
-        // 立即更新组件状态以应用 z-index 样式
-        StateHasChanged();
     }
 
     private void OnDragEnter(DragEventArgs dragEventArgs)
@@ -229,12 +225,8 @@
         Component.DesignState.DragEffectStyle = string.Empty;
         Component.DesignState.AnimationTransform = string.Empty;
         Component.DesignState.IsAnimating = false;
-
         //重置所有组件的动画状态
         ResetAllAnimationStates();
-
-        // 强制更新组件状态以清理 will-change 和 z-index 属性
-        StateHasChanged();
     }
 
     private void OnMouseOver()
@@ -271,9 +263,6 @@
         var currentDragComponent = DragDropStateService.GetCurrentDragComponent(PageCascading.AppId, PageCascading.PageId);
         currentDragComponent.DesignState.AnimationTransform = $"translate3d({dragOffsetX}px, {dragOffsetY}px, 0)";
         currentDragComponent.DesignState.IsAnimating = true;
-        
-        // 使用 RequestAnimationFrame 优化渲染性能
-        //StateHasChanged();
     }
 
     private void OnDelete()
