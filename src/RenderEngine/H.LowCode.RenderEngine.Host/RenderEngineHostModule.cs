@@ -1,4 +1,4 @@
-﻿using H.LowCode.ComponentBase;
+using H.LowCode.ComponentBase;
 using H.LowCode.Components.Defaults;
 using H.LowCode.RenderEngine.Application;
 using H.LowCode.RenderEngine.EntityFrameworkCore;

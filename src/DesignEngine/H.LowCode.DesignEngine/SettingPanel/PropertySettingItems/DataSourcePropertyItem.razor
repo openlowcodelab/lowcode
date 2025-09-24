@@ -1,4 +1,4 @@
-﻿@namespace H.LowCode.DesignEngine
+@namespace H.LowCode.DesignEngine
 @inherits DesignEngineLowCodeComponentBase
 
 @if (Component.IsSupportDataSource){
@@ -19,13 +19,13 @@
     }
     else if (Component.DataSource.DataSourceGroupType == ComponentDataSourceGroupTypeEnum.Table)
     {
-        <div class="propertysetting-item">
-            <TablePropertyItem DataSource="Component.DataSource" OnTablePropertyChange="OnDataSourcePropertyChange"></TablePropertyItem>
-        </div>
-
         <Button Type="ButtonType.Default" OnClick="() => ShowTableDataSourceModal()">
             配置数据源
         </Button>
+
+        <div class="propertysetting-item">
+            <TablePropertyItem DataSource="Component.DataSource" OnTablePropertyChange="OnDataSourcePropertyChange"></TablePropertyItem>
+        </div>
     }
     else if (Component.DataSource.DataSourceGroupType == ComponentDataSourceGroupTypeEnum.Tree)
     {
@@ -47,16 +47,19 @@
 
 <Modal Title="配置数据源" @bind-Visible="@_tableDataSourceVisible"
        OnOk="()=>OnDataSourceConfirmAsync(_tableDataSourceVisible, SaveTableDataSourceAsync)" Width="1000">
-    <TableDataSourceSetting @bind-DataSource="Component.DataSource"></TableDataSourceSetting>
+    <TableDataSourceSetting @bind-DataSource="Component.DataSource" AppId="@PageCascading.AppId"></TableDataSourceSetting>
 </Modal>
 
 @code {
+    [CascadingParameter(Name = "pageCascading")]
+    public PageCascadingModel PageCascading { get; set; }
+
     [Parameter]
     public ComponentPartsSchema Component { get; set; }
 
-    private bool _optionDataSourceVisible;
-    private bool _tableDataSourceVisible;
-    private bool _treeDataSourceVisible;
+    private bool _optionDataSourceVisible = false;
+    private bool _tableDataSourceVisible = false;
+    private bool _treeDataSourceVisible = false;
 
     protected override async Task OnInitializedAsync()
     {

@@ -1,7 +1,10 @@
-﻿@namespace H.LowCode.Components.Defaults
+@namespace H.LowCode.Components.Defaults
 @inherits LowCodeComponentBase
+@using H.LowCode.MetaSchema
+@using H.LowCode.ComponentBase.Services
 
 @inject IJSRuntime JS
+@inject ITableDataProvider TableDataProvider
 
 <Table @ref="table" TItem="Dictionary<string, object>" DataSource="@_data" Total="_total" @bind-PageIndex="_pageIndex" @bind-PageSize="_pageSize"
 @bind-SelectedRows="_selectedRows" OnChange="OnChange" Size="TableSize.Small">
@@ -61,8 +64,7 @@
         await base.OnInitializedAsync();
 
         Init();
-        _data = await GetTableDataAsync(1, 50);
-        _total = 50;
+        await LoadDataAsync();
     }
 
     protected override bool ShouldRender()
@@ -82,8 +84,13 @@
 
     public async Task OnChange(QueryModel<Dictionary<string, object>> queryModel)
     {
-        await Task.Delay(1);
-        Console.WriteLine(queryModel.ToJson());
+        _pageIndex = queryModel.PageIndex;
+        _pageSize = queryModel.PageSize;
+
+        // 重新加载数据
+        await LoadDataAsync();
+
+        StateHasChanged();
     }
 
     private TablePropertySchema GetTableSchemaAsync()
@@ -108,24 +115,40 @@
             };
         }
 
+        Console.WriteLine($"列表列头: {tableSchema.Columns.ToJson()}");
+
         return tableSchema;
     }
 
-    public async Task<List<Dictionary<string, object>>> GetTableDataAsync(int pageIndex, int pageSize)
+    private async Task LoadDataAsync()
     {
-        await Task.Delay(100);
-        var list = new List<Dictionary<string, object>>();
-        for (int i = 0; i < 3; i++)
+        try
         {
-            Dictionary<string, object> row = new Dictionary<string, object>();
-            foreach (var col in _tableSchema.Columns)
+            var request = new TableDataRequest
             {
-                row.Add(col.Name, string.Empty);
-            }
-            list.Add(row);
+                AppId = PageCascading?.AppId,
+                PageId = PageCascading?.PageId,
+                DataSourceId = DataSource?.DataSourceId,
+                PageIndex = _pageIndex,
+                PageSize = _pageSize
+            };
+
+            var result = await TableDataProvider.GetTableDataAsync(request);
+            _data = result.Items;
+            _total = result.TotalCount;
+
+            Console.WriteLine($"列表数据: {result.ToJson()}");
         }
-        return list;
+        catch (Exception ex)
+        {
+            // 出错时使用空数据
+            _data = new List<Dictionary<string, object>>();
+            _total = 0;
+            Console.WriteLine($"加载数据失败: {ex.Message}");
+        }
     }
+
+
 
     public async Task EditAsync(Dictionary<string, object> row)
     {

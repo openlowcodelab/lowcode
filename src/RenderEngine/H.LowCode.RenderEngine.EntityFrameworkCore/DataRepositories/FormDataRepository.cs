@@ -1,4 +1,4 @@
-﻿using H.LowCode.Entity;
+using H.LowCode.Entity;
 using H.LowCode.MetaSchema;
 using H.LowCode.RenderEngine.Domain;
 using Microsoft.EntityFrameworkCore;
@@ -13,31 +13,35 @@ namespace H.LowCode.RenderEngine.EntityFrameworkCore;
 
 public class FormDataRepository : IFormDataRepository
 {
-    private RenderEngineDbContext _dbContext;
+    private readonly IDbContextFactory<RenderEngineDbContext> _dbContextFactory;
     public bool? IsChangeTrackingEnabled => true;
 
-    public FormDataRepository(RenderEngineDbContext dbContext)
+    public FormDataRepository(IDbContextFactory<RenderEngineDbContext> dbContextFactory)
     {
-        _dbContext = dbContext;
+        _dbContextFactory = dbContextFactory;
     }
 
     public async Task<bool> AddAsync(FormEntity entity)
     {
-        return await _dbContext.AddAsync(entity);
+        using var dbContext = await _dbContextFactory.CreateDbContextAsync();
+        return await dbContext.AddAsync(entity);
     }
 
     public async Task<FormEntity> GetAsync(string tableName, string id)
     {
-        return await _dbContext.GetAsync(tableName, id);
+        using var dbContext = await _dbContextFactory.CreateDbContextAsync();
+        return await dbContext.GetAsync(tableName, id);
     }
 
     public async Task<bool> UpdateAsync(FormEntity entity)
     {
-        return await _dbContext.UpdateAsync(entity);
+        using var dbContext = await _dbContextFactory.CreateDbContextAsync();
+        return await dbContext.UpdateAsync(entity);
     }
 
     public async Task<bool> DeleteAsync(string entityName, string id)
     {
-        return await _dbContext.DeleteAsync(entityName, id);
+        using var dbContext = await _dbContextFactory.CreateDbContextAsync();
+        return await dbContext.DeleteAsync(entityName, id);
     }
 }

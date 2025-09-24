@@ -1,4 +1,4 @@
-﻿using H.LowCode.RenderEngine.Domain;
+using H.LowCode.RenderEngine.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,6 +17,14 @@ public class RenderEngineEntityFrameworkCoreModule : AbpModule
 
         context.Services.AddScoped(typeof(EntityTypeManager));
 
+        // 注册 DbContext 工厂，确保每次使用都创建新的实例，避免并发访问问题
+        context.Services.AddDbContextFactory<RenderEngineDbContext>(options =>
+        {
+            var connectionString = context.Services.GetConfiguration().GetConnectionString("Default");
+            options.UseSqlServer(connectionString);
+        });
+
+        // 保持原有的 DbContext 注册方式作为备用
         context.Services.AddDbContext<RenderEngineDbContext>(options =>
         {
             var connectionString = context.Services.GetConfiguration().GetConnectionString("Default");

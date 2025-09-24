@@ -1,5 +1,7 @@
-﻿using H.LowCode.Configuration;
+using H.LowCode.Configuration;
 using H.LowCode.RenderEngine.Domain;
+using H.LowCode.ComponentBase.Services;
+using H.LowCode.RenderEngine.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.Modularity;
@@ -23,5 +25,8 @@ public class RenderEngineApplicationModule : AbpModule
         {
             options.AddMaps<RenderEngineApplicationModule>();
         });
+
+        // 注册渲染引擎专用的表格数据提供者，覆盖默认实现
+        context.Services.AddTransient<ITableDataProvider, RenderEngineTableDataProvider>();
     }
 }

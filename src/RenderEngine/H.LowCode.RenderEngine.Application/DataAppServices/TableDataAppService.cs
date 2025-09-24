@@ -1,4 +1,4 @@
-﻿using H.LowCode.RenderEngine.Domain;
+using H.LowCode.RenderEngine.Domain;
 using H.LowCode.RenderEngine.Application.Contracts;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -18,6 +18,6 @@ public class TableDataAppService : ApplicationService, ITableDataAppService
 
     public async Task<TableGetListOutput> GetList(TableGetListInput input)
     {
-        throw new NotImplementedException();
+        return await _tableDataDomainService.GetListAsync(input);
     }
 }

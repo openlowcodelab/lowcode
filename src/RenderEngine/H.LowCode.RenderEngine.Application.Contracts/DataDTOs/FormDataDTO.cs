@@ -1,4 +1,4 @@
-﻿using H.LowCode.MetaSchema;
+using H.LowCode.MetaSchema;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -32,14 +32,21 @@ public class FormFieldDTO
         get
         {
             if (string.IsNullOrEmpty(TypeName))
-                return new InvalidDataException($"TypeName is null or empty, field={this.ToJson()}");
+                throw new InvalidDataException($"TypeName is null or empty, field={this.ToJson()}");
 
             var type = Type.GetType(TypeName);
             if (type == null)
                 throw new InvalidDataException($"Type '{TypeName}' not found, field={this.ToJson()}");
 
-            var realValue = _value.ConvertToRealType(type);
-            return realValue;
+            try
+            {
+                var realValue = _value.ConvertToRealType(type);
+                return realValue;
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidDataException($"Failed to convert value '{_value}' to type '{TypeName}', field={this.ToJson()}", ex);
+            }
         }
         set
         {
