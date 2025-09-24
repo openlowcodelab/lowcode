@@ -1,8 +1,8 @@
-using H.LowCode.ComponentBase.Services;
+using H.LowCode.Application.Contracts;
 using H.LowCode.RenderEngine.Application.Contracts;
 using H.LowCode.RenderEngine.Domain;
 
-namespace H.LowCode.RenderEngine.Application.Services;
+namespace H.LowCode.RenderEngine.Application.DataAppServices;
 
 /// <summary>
 /// 渲染引擎表格数据提供者

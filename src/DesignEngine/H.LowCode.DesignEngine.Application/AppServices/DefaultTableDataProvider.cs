@@ -1,4 +1,5 @@
 #nullable enable
+using H.LowCode.Application.Contracts;
 using H.LowCode.MetaSchema;
 
 namespace H.LowCode.ComponentBase.Services;

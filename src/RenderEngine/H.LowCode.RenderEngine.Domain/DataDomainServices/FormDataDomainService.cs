@@ -293,7 +293,7 @@ public class FormDataDomainService : DomainService, IFormDataDomainService
             // 尝试转换值以验证类型兼容性
             if (field.Value != null)
             {
-                Convert.ChangeType(field.Value, fieldType);
+                //Convert.ChangeType(field.Value, fieldType);
             }
         }
         catch (Exception ex)

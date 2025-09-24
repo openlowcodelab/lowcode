@@ -1,10 +1,10 @@
 using H.LowCode.Configuration;
 using H.LowCode.RenderEngine.Domain;
-using H.LowCode.ComponentBase.Services;
-using H.LowCode.RenderEngine.Application.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.Modularity;
+using H.LowCode.RenderEngine.Application.DataAppServices;
+using H.LowCode.Application.Contracts;
 
 namespace H.LowCode.RenderEngine.Application;
 

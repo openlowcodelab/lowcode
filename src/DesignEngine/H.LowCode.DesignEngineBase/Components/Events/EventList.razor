@@ -1,4 +1,4 @@
-﻿@namespace H.LowCode.DesignEngineBase
+@namespace H.LowCode.DesignEngineBase
 @inherits DesignEngineLowCodeComponentBase
 
 @inject IPageAppService PageAppService
@@ -51,6 +51,46 @@
                 </div>
                 <div class="propertysetting-item">
                     <label>设置参数：</label>
+                    <div style="margin-top: 10px;">
+                        <label style="font-size: 12px; color: #666;">固定参数：</label>
+                        @if (_currentEvent.EventArgs == null)
+                        {
+                            _currentEvent.EventArgs = new Dictionary<string, string>();
+                        }
+                        @foreach (var arg in _currentEvent.EventArgs.ToList())
+                        {
+                            var currentKey = arg.Key;
+                            var currentValue = arg.Value;
+                            <div style="display: flex; margin-bottom: 5px; align-items: center;">
+                                <Input Value="@currentKey" Placeholder="参数名" Style="width: 100px; margin-right: 5px;" 
+                                       OnChange="@((string value) => UpdateEventArgKey(currentKey, value))" />
+                                <Input Value="@currentValue" Placeholder="参数值" Style="width: 120px; margin-right: 5px;" 
+                                       OnChange="@((string value) => UpdateEventArgValue(currentKey, value))" />
+                                <Button Size="ButtonSize.Small" Type="ButtonType.Text" OnClick="() => RemoveEventArg(currentKey)">删除</Button>
+                            </div>
+                        }
+                        <Button Size="ButtonSize.Small" Type="ButtonType.Dashed" OnClick="AddEventArg">添加固定参数</Button>
+                    </div>
+                    <div style="margin-top: 15px;">
+                        <label style="font-size: 12px; color: #666;">行数据参数映射：</label>
+                        @if (_currentEvent.RowDataParams == null)
+                        {
+                            _currentEvent.RowDataParams = new Dictionary<string, string>();
+                        }
+                        @foreach (var param in _currentEvent.RowDataParams.ToList())
+                        {
+                            var currentKey = param.Key;
+                            var currentValue = param.Value;
+                            <div style="display: flex; margin-bottom: 5px; align-items: center;">
+                                <Input Value="@currentKey" Placeholder="URL参数名" Style="width: 100px; margin-right: 5px;" 
+                                       OnChange="@((string value) => UpdateRowDataParamKey(currentKey, value))" />
+                                <Input Value="@currentValue" Placeholder="行数据字段名" Style="width: 120px; margin-right: 5px;" 
+                                       OnChange="@((string value) => UpdateRowDataParamValue(currentKey, value))" />
+                                <Button Size="ButtonSize.Small" Type="ButtonType.Text" OnClick="() => RemoveRowDataParam(currentKey)">删除</Button>
+                            </div>
+                        }
+                        <Button Size="ButtonSize.Small" Type="ButtonType.Dashed" OnClick="AddRowDataParam">添加行数据参数</Button>
+                    </div>
                 </div>
             }
             else if (_currentEvent.EventHandlerType == EventTargetTypeEnum.Component)
@@ -167,5 +207,79 @@
     {
         var component = await PageAppService.GetPageComponentAsync(PageCascading.AppId, PageCascading.PageId, componentId);
         _componentEventTargetActions = component?.EventConsumes?.ToArray() ?? [];
+    }
+
+    private void AddEventArg()
+    {
+        if (_currentEvent.EventArgs == null)
+        {
+            _currentEvent.EventArgs = new Dictionary<string, string>();
+        }
+        
+        var newKey = $"param{_currentEvent.EventArgs.Count + 1}";
+        _currentEvent.EventArgs[newKey] = "";
+    }
+
+    private void RemoveEventArg(string key)
+    {
+        if (_currentEvent.EventArgs != null && _currentEvent.EventArgs.ContainsKey(key))
+        {
+            _currentEvent.EventArgs.Remove(key);
+        }
+    }
+
+    private void AddRowDataParam()
+    {
+        if (_currentEvent.RowDataParams == null)
+        {
+            _currentEvent.RowDataParams = new Dictionary<string, string>();
+        }
+        
+        var newKey = $"param{_currentEvent.RowDataParams.Count + 1}";
+        _currentEvent.RowDataParams[newKey] = "";
+    }
+
+    private void RemoveRowDataParam(string key)
+    {
+        if (_currentEvent.RowDataParams != null && _currentEvent.RowDataParams.ContainsKey(key))
+        {
+            _currentEvent.RowDataParams.Remove(key);
+        }
+    }
+
+    private void UpdateEventArgKey(string oldKey, string newKey)
+    {
+        if (_currentEvent.EventArgs != null && _currentEvent.EventArgs.ContainsKey(oldKey) && !string.IsNullOrEmpty(newKey) && newKey != oldKey)
+        {
+            var value = _currentEvent.EventArgs[oldKey];
+            _currentEvent.EventArgs.Remove(oldKey);
+            _currentEvent.EventArgs[newKey] = value;
+        }
+    }
+
+    private void UpdateEventArgValue(string key, string value)
+    {
+        if (_currentEvent.EventArgs != null && _currentEvent.EventArgs.ContainsKey(key))
+        {
+            _currentEvent.EventArgs[key] = value ?? "";
+        }
+    }
+
+    private void UpdateRowDataParamKey(string oldKey, string newKey)
+    {
+        if (_currentEvent.RowDataParams != null && _currentEvent.RowDataParams.ContainsKey(oldKey) && !string.IsNullOrEmpty(newKey) && newKey != oldKey)
+        {
+            var value = _currentEvent.RowDataParams[oldKey];
+            _currentEvent.RowDataParams.Remove(oldKey);
+            _currentEvent.RowDataParams[newKey] = value;
+        }
+    }
+
+    private void UpdateRowDataParamValue(string key, string value)
+    {
+        if (_currentEvent.RowDataParams != null && _currentEvent.RowDataParams.ContainsKey(key))
+        {
+            _currentEvent.RowDataParams[key] = value ?? "";
+        }
     }
 }

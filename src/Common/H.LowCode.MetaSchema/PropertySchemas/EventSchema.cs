@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Text.Json.Serialization;
 
 namespace H.LowCode.MetaSchema;
@@ -43,6 +43,12 @@ public class EventSchema
     /// 事件参数
     /// </summary>
     public IDictionary<string, string> EventArgs { get; set; }
+
+    /// <summary>
+    /// 行数据参数映射 (key: URL参数名, value: 行数据字段名)
+    /// </summary>
+    [JsonPropertyName("rowparams")]
+    public IDictionary<string, string> RowDataParams { get; set; }
 }
 
 public class EventConsumeSchema

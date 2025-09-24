@@ -1,7 +1,7 @@
 @namespace H.LowCode.Components.Defaults
 @inherits LowCodeComponentBase
+@using H.LowCode.Application.Contracts
 @using H.LowCode.MetaSchema
-@using H.LowCode.ComponentBase.Services
 
 @inject IJSRuntime JS
 @inject ITableDataProvider TableDataProvider
@@ -33,7 +33,7 @@
                     @foreach (var rowBtn in _tableSchema.RowButtons)
                     {
                         <SpaceItem>
-                            <a @onclick="@(() => ButtonActionAsync(rowBtn))">@rowBtn.Title</a>
+                            <a @onclick="@(() => ButtonActionAsync(rowBtn, row))">@rowBtn.Title</a>
                         </SpaceItem>
                     }
                 </Space>
@@ -161,7 +161,7 @@
         await Task.Delay(100);
     }
 
-    public async Task ButtonActionAsync(TableButtonSchema btn)
+    public async Task ButtonActionAsync(TableButtonSchema btn, Dictionary<string, object> rowData = null)
     {
         foreach(var e in btn.Events)
         {
@@ -183,13 +183,13 @@
                         
                         break;
                     case EventPageHandlerTypeEnum.Modal:
-                        await ButtonActionToWithModalAsync(e);
+                        await ButtonActionToWithModalAsync(e, rowData);
                         break;
                     case EventPageHandlerTypeEnum.Self:
-                        await ButtonActionToWithSelfAsync(e);
+                        await ButtonActionToWithSelfAsync(e, rowData);
                         break;
                     case EventPageHandlerTypeEnum.Blank:
-                        await ButtonActionToWithBlankAsync(e);
+                        await ButtonActionToWithBlankAsync(e, rowData);
                         break;
                     default:
                         break;
@@ -206,17 +206,17 @@
         }
     }
 
-    private async Task ButtonActionToWithModalAsync(EventSchema e)
+    private async Task ButtonActionToWithModalAsync(EventSchema e, Dictionary<string, object> rowData = null)
     {
 
     }
 
-    private async Task ButtonActionToWithSelfAsync(EventSchema e)
+    private async Task ButtonActionToWithSelfAsync(EventSchema e, Dictionary<string, object> rowData = null)
     {
 
     }
 
-    private async Task ButtonActionToWithBlankAsync(EventSchema e)
+    private async Task ButtonActionToWithBlankAsync(EventSchema e, Dictionary<string, object> rowData = null)
     {
         string pageUrl = string.Empty;
         if (IsDesign)
@@ -224,6 +224,51 @@
         else
             pageUrl = $"/{PageCascading.AppId}/{e.EventTargetId}";
 
+        // 添加URL参数
+        pageUrl = BuildUrlWithParameters(pageUrl, e, rowData);
+
         await JS.InvokeVoidAsync("open", pageUrl, "_blank");
+    }
+
+    private string BuildUrlWithParameters(string baseUrl, EventSchema eventSchema, Dictionary<string, object> rowData)
+    {
+        var parameters = new List<string>();
+
+        // 添加事件配置中的参数
+        if (eventSchema.EventArgs != null && eventSchema.EventArgs.Any())
+        {
+            foreach (var arg in eventSchema.EventArgs)
+            {
+                parameters.Add($"{arg.Key}={Uri.EscapeDataString(arg.Value?.ToString() ?? "")}");
+            }
+        }
+
+        // 添加行数据参数（根据配置映射）
+        if (rowData != null && rowData.Any() && eventSchema.RowDataParams != null && eventSchema.RowDataParams.Any())
+        {
+            foreach (var paramMapping in eventSchema.RowDataParams)
+            {
+                var urlParamName = paramMapping.Key;
+                var rowFieldName = paramMapping.Value;
+                
+                // 检查行数据中是否包含指定字段
+                if (rowData.ContainsKey(rowFieldName))
+                {
+                    // 避免与EventArgs中的参数重复
+                    if (eventSchema.EventArgs == null || !eventSchema.EventArgs.ContainsKey(urlParamName))
+                    {
+                        parameters.Add($"{urlParamName}={Uri.EscapeDataString(rowData[rowFieldName]?.ToString() ?? "")}");
+                    }
+                }
+            }
+        }
+
+        if (parameters.Any())
+        {
+            var separator = baseUrl.Contains("?") ? "&" : "?";
+            return $"{baseUrl}{separator}{string.Join("&", parameters)}";
+        }
+
+        return baseUrl;
     }
 }

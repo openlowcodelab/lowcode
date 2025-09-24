@@ -1,12 +1,11 @@
-#nullable enable
-using H.LowCode.MetaSchema;
+using Volo.Abp;
 
-namespace H.LowCode.ComponentBase.Services;
+namespace H.LowCode.Application.Contracts;
 
 /// <summary>
 /// 表格数据提供者接口
 /// </summary>
-public interface ITableDataProvider
+public interface ITableDataProvider : IRemoteService
 {
     /// <summary>
     /// 获取表格数据

@@ -1,4 +1,6 @@
-﻿using H.LowCode.Configuration;
+﻿using H.LowCode.Application.Contracts;
+using H.LowCode.ComponentBase.Services;
+using H.LowCode.Configuration;
 using H.LowCode.DesignEngine.Domain;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Modularity;
@@ -12,5 +14,8 @@ public class DesignEngineApplicationModule : AbpModule
     {
         var configuration = context.Services.GetConfiguration();
         context.Services.Configure<List<SiteOption>>(configuration.GetSection(SiteOption.SectionName));
+
+        // 注册默认的表格数据提供者
+        context.Services.AddTransient<ITableDataProvider, DefaultTableDataProvider>();
     }
 }
