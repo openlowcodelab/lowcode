@@ -1,23 +1,24 @@
+using H.LowCode.Application.Contracts;
 using H.LowCode.RenderEngine.Domain;
-using H.LowCode.RenderEngine.Application.Contracts;
-using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Volo.Abp;
+using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
 
 namespace H.LowCode.RenderEngine.Application;
 
-[RemoteService]
+/// <summary>
+/// 渲染引擎表格数据提供者
+/// </summary>
 public class TableDataAppService : ApplicationService, ITableDataAppService
 {
-    private ITableDataDomainService _tableDataDomainService => LazyServiceProvider.GetRequiredService<ITableDataDomainService>();
+    private readonly ITableDataRepository _tableDataRepository;
 
-    public async Task<TableGetListOutput> GetList(TableGetListInput input)
+    public TableDataAppService(ITableDataRepository tableDataRepository)
     {
-        return await _tableDataDomainService.GetListAsync(input);
+        _tableDataRepository = tableDataRepository;
+    }
+
+    public async Task<PagedResultDto<Dictionary<string, object>>> GetListAsync(TableDataInput input)
+    {
+        return await _tableDataRepository.GetListAsync(input);
     }
 }

@@ -1,8 +1,8 @@
-﻿using H.LowCode.ComponentBase;
+﻿using H.LowCode.Application.Contracts;
+using H.LowCode.ComponentBase;
 using H.LowCode.Components.Defaults;
 using H.LowCode.RenderEngine.Application.Contracts;
 using H.LowCode.Themes.AntBlazor;
-using H.Util.Blazor;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Volo.Abp.Autofac.WebAssembly;
 using Volo.Abp.Http.Client;
@@ -54,6 +54,10 @@ public class RenderEngineHostClientModule : AbpModule
         //动态API代理
         context.Services.AddHttpClientProxies(
             typeof(RenderEngineApplicationContractsModule).Assembly,
+            RemoteServiceName
+        );
+        context.Services.AddHttpClientProxies(
+            typeof(LowCodeApplicationContractsModule).Assembly,
             RemoteServiceName
         );
     }

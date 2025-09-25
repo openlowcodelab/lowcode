@@ -23,4 +23,14 @@ public class DataSourceRemoteServiceRepository : RemoteServiceRepositoryBase, ID
     {
         throw new NotImplementedException();
     }
+
+    public Task<IList<DataSourceSchema>> GetAllApisAsync(string appId)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IEnumerable<DataSourceSchema> GetAllEntities(string appId)
+    {
+        throw new NotImplementedException();
+    }
 }

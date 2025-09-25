@@ -1,10 +1,8 @@
 @namespace H.LowCode.Components.Defaults
 @inherits LowCodeComponentBase
-@using H.LowCode.Application.Contracts
-@using H.LowCode.MetaSchema
 
 @inject IJSRuntime JS
-@inject ITableDataProvider TableDataProvider
+@inject ITableDataAppService TableDataAppService
 
 <Table @ref="table" TItem="Dictionary<string, object>" DataSource="@_data" Total="_total" @bind-PageIndex="_pageIndex" @bind-PageSize="_pageSize"
 @bind-SelectedRows="_selectedRows" OnChange="OnChange" Size="TableSize.Small">
@@ -124,18 +122,18 @@
     {
         try
         {
-            var request = new TableDataRequest
+            var request = new TableDataInput
             {
                 AppId = PageCascading?.AppId,
                 PageId = PageCascading?.PageId,
                 DataSourceId = DataSource?.DataSourceId,
-                PageIndex = _pageIndex,
-                PageSize = _pageSize
+                SkipCount = (_pageIndex - 1) * _pageSize,
+                MaxResultCount = _pageSize
             };
 
-            var result = await TableDataProvider.GetTableDataAsync(request);
-            _data = result.Items;
-            _total = result.TotalCount;
+            var result = await TableDataAppService.GetListAsync(request);
+            _data = result.Items.ToList();
+            _total = (int)result.TotalCount;
 
             Console.WriteLine($"列表数据: {result.ToJson()}");
         }

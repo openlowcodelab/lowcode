@@ -1,16 +1,13 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using H.LowCode.Application.Contracts;
 using System.Reflection;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using Volo.Abp.Modularity;
 using Volo.Abp.Validation;
 
 namespace H.LowCode.DesignEngine.Application.Contracts;
 
+[DependsOn(
+    typeof(LowCodeApplicationContractsModule)
+    )]
 public class DesignEngineApplicationContractsModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)

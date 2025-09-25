@@ -1,4 +1,5 @@
-﻿using H.LowCode.ComponentBase;
+﻿using H.LowCode.Application.Contracts;
+using H.LowCode.ComponentBase;
 using H.LowCode.Components.Defaults;
 using H.LowCode.DesignEngine.Application.Contracts;
 using H.LowCode.MyApp;
@@ -57,6 +58,10 @@ public class DesignEngineHostClientModule : AbpModule
         //动态API代理
         context.Services.AddHttpClientProxies(
             typeof(DesignEngineApplicationContractsModule).Assembly,
+            RemoteServiceName
+        );
+        context.Services.AddHttpClientProxies(
+            typeof(LowCodeApplicationContractsModule).Assembly,
             RemoteServiceName
         );
     }

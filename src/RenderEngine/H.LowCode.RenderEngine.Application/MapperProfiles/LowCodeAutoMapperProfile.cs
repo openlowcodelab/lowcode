@@ -1,11 +1,6 @@
 ﻿using AutoMapper;
-using H.LowCode.RenderEngine.Application.Contracts;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using H.LowCode.Entity;
+using H.LowCode.Application.Contracts;
 
 namespace H.LowCode.RenderEngine.Application;
 
@@ -13,10 +8,10 @@ public class LowCodeAutoMapperProfile : Profile
 {
     public LowCodeAutoMapperProfile()
     {
-        CreateMap<FormEntity, FormDataDTO>();
-        CreateMap<FormDataDTO, FormEntity>();
+        CreateMap<FormEntity, FormDataDto>();
+        CreateMap<FormDataDto, FormEntity>();
 
-        CreateMap<FormFieldEntity, FormFieldDTO>();
-        CreateMap<FormFieldDTO, FormFieldEntity>();
+        CreateMap<FormFieldEntity, FormFieldDto>();
+        CreateMap<FormFieldDto, FormFieldEntity>();
     }
 }

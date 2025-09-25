@@ -2,9 +2,9 @@
 @inherits RenderEngineLowCodeComponentBase
 
 @inject IFormDataAppService FormDataAppService
-@inject ComponentState<FormPageRender, FormDataDTO> FormDataState
+@inject ComponentState<FormPageRender, FormDataDto> FormDataState
 
-@if (_formDTO != null)
+@if (_formDto != null)
 {
     <Form Model="_fieldDictData"
     OnFinish="OnFinishAsync" OnFinishFailed="OnFinishFailed"
@@ -30,7 +30,7 @@
     public PageSchema Page { get; set; }
 
     private string Id;
-    private FormDataDTO _formDTO;
+    private FormDataDto _formDto;
     private IDictionary<string, object> _fieldDictData;
 
     protected override async Task OnInitializedAsync()
@@ -38,27 +38,27 @@
         await base.OnInitializedAsync();
 
         Id = GetQueryValue("id");
-        _formDTO = await FormDataState.GetOrAddAsync(this, async () =>
+        _formDto = await FormDataState.GetOrAddAsync(this, async () =>
         {
             return await FormDataAppService.GetAsync(Page.AppId, Page.Id, Id);
         });
 
-        if (_formDTO?.Fields == null)
+        if (_formDto?.Fields == null)
             _fieldDictData = new Dictionary<string, object>();
         else
-            _fieldDictData = _formDTO.Fields.ToDictionary(x => x.Name, x => x.Value);
+            _fieldDictData = _formDto.Fields.ToDictionary(x => x.Name, x => x.Value);
     }
 
     private async Task OnFinishAsync()
     {
-        foreach (var field in _formDTO.Fields)
+        foreach (var field in _formDto.Fields)
         {
             if (!_fieldDictData.ContainsKey(field.Name))
                 continue;
 
             field.Value = _fieldDictData[field.Name];
         }
-        var success = await FormDataAppService.SaveAsync(_formDTO);
+        var success = await FormDataAppService.SaveAsync(_formDto);
         if (success)
             await Message.SuccessAsync("保存成功");
         else

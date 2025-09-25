@@ -46,4 +46,16 @@ public class DataSourceFileRepository : FileRepositoryBase, IDataSourceRepositor
         var dataSource = dataSourceSchemaJson.FromJson<DataSourceSchema>();
         return await Task.FromResult(dataSource);
     }
+
+    public async Task<IList<DataSourceSchema>> GetAllApisAsync(string appId)
+    {
+        var list = await GetListAsync(appId);
+        return list.Where(t => t.DataSourceType == ComponentDataSourceTypeEnum.API).ToList();
+    }
+
+    public IEnumerable<DataSourceSchema> GetAllEntities(string appId)
+    {
+        var list = GetListAsync(appId).Result;
+        return list.Where(t => t.DataSourceType == ComponentDataSourceTypeEnum.DB).ToList();
+    }
 }

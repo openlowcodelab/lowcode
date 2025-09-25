@@ -2,6 +2,7 @@
 using H.LowCode.MetaSchema.RenderEngine;
 using H.LowCode.RenderEngine.Application.Contracts;
 using H.LowCode.RenderEngine.Domain;
+using H.LowCode.RenderEngine.Domain.Repositories;
 using Microsoft.Extensions.DependencyInjection;
 using System.Text;
 using Volo.Abp;
@@ -12,17 +13,17 @@ namespace H.LowCode.RenderEngine.Application;
 [RemoteService]
 public class MetaAppService : ApplicationService, IMetaAppService
 {
-    private IMenuDomainService _menuDomainService => LazyServiceProvider.GetRequiredService<IMenuDomainService>();
-    private IPageDomainService _pageDomainService => LazyServiceProvider.GetRequiredService<IPageDomainService>();
+    private IMenuRepository _menuRepository => LazyServiceProvider.GetRequiredService<IMenuRepository>();
+    private IPageRepository _pageRepository => LazyServiceProvider.GetRequiredService<IPageRepository>();
 
     public async Task<IList<MenuSchema>> GetMenusAsync(string appId)
     {
-        return await _menuDomainService.GetListAsync(appId);
+        return await _menuRepository.GetListAsync(appId);
     }
 
     public async Task<PageSchema> GetPageAsync(string appId, string pageId)
     {
-        return await _pageDomainService.GetAsync(appId, pageId);
+        return await _pageRepository.GetAsync(appId, pageId);
     }
 
     /// <summary>
@@ -33,7 +34,7 @@ public class MetaAppService : ApplicationService, IMetaAppService
     /// <returns></returns>
     public async Task<PageSchema> GetPageWithDefineAsync(string appId, string pageId)
     {
-        var pageSchema = await _pageDomainService.GetAsync(appId, pageId);
+        var pageSchema = await _pageRepository.GetAsync(appId, pageId);
 
         if (pageSchema?.Components != null)
         {
