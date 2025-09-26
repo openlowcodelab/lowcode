@@ -100,4 +100,94 @@ public class TableDataRepository : ITableDataRepository
             TotalCount = totalCount
         };
     }
+
+    /// <summary>
+    /// 删除数据
+    /// </summary>
+    /// <param name="request">删除请求参数</param>
+    public async Task DeleteAsync(TableDataDeleteInput request)
+    {
+        var dataSource = await _dataSourceRepository.GetAsync(request.AppId, request.DataSourceId);
+        if (dataSource == null)
+        {
+            throw new ArgumentException($"数据源不存在: {request.DataSourceId}");
+        }
+
+        // 使用 DbContextFactory 创建新的 DbContext 实例，确保线程安全
+        using var dbContext = await _dbContextFactory.CreateDbContextAsync();
+
+        // 获取实体类型（使用数据源名称）
+        var entityType = dbContext.GetEntityType(dataSource.Name);
+
+        // 根据ID查找要删除的实体
+        var entity = await dbContext.FindAsync(entityType, request.Id);
+        if (entity == null)
+        {
+            throw new ArgumentException($"要删除的记录不存在: {request.Id}");
+        }
+
+        // 删除实体
+        dbContext.Remove(entity);
+        await dbContext.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// 更新数据
+    /// </summary>
+    /// <param name="request">更新请求参数</param>
+    public async Task UpdateAsync(TableDataUpdateInput request)
+    {
+        var dataSource = await _dataSourceRepository.GetAsync(request.AppId, request.DataSourceId);
+        if (dataSource == null)
+        {
+            throw new ArgumentException($"数据源不存在: {request.DataSourceId}");
+        }
+
+        // 使用 DbContextFactory 创建新的 DbContext 实例，确保线程安全
+        using var dbContext = await _dbContextFactory.CreateDbContextAsync();
+
+        // 获取实体类型（使用数据源名称）
+        var entityType = dbContext.GetEntityType(dataSource.Name);
+
+        // 根据ID查找要更新的实体
+        var entity = await dbContext.FindAsync(entityType, request.Id);
+        if (entity == null)
+        {
+            throw new ArgumentException($"要更新的记录不存在: {request.Id}");
+        }
+
+        // 更新实体属性
+        if (request.UpdateData != null && request.UpdateData.Any())
+        {
+            var properties = entityType.GetProperties();
+            foreach (var updateField in request.UpdateData)
+            {
+                var property = properties.FirstOrDefault(p => 
+                    string.Equals(p.Name, updateField.Key, StringComparison.OrdinalIgnoreCase));
+                
+                if (property != null && property.CanWrite)
+                {
+                    // 类型转换
+                    var value = updateField.Value;
+                    if (value != null && value.GetType() != property.PropertyType)
+                    {
+                        try
+                        {
+                            value = Convert.ChangeType(value, property.PropertyType);
+                        }
+                        catch
+                        {
+                            // 转换失败时跳过该字段
+                            continue;
+                        }
+                    }
+                    
+                    property.SetValue(entity, value);
+                }
+            }
+        }
+
+        // 保存更改
+        await dbContext.SaveChangesAsync();
+    }
 }

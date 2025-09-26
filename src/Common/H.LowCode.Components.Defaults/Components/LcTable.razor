@@ -21,7 +21,22 @@
             var column = _tableSchema.Columns.FirstOrDefault(t => string.Equals(t.Name, key, StringComparison.OrdinalIgnoreCase));
             if (column != null)
             {
-                <PropertyColumn Property="@(c=> c[key])" Title="@column.Title"></PropertyColumn>
+                <PropertyColumn Property="@(c=> c[key])" Title="@column.Title">
+                    @{
+                        var primaryKeyColumn = _tableSchema.Columns.FirstOrDefault(t => t.IsPrimaryKey);
+                        var primaryKeyValue = primaryKeyColumn != null && row.ContainsKey(primaryKeyColumn.Name) 
+                            ? row[primaryKeyColumn.Name]?.ToString() : null;
+                        var isEditing = !string.IsNullOrEmpty(primaryKeyValue) && _editingRows.ContainsKey(primaryKeyValue);
+                    }
+                    @if (isEditing && !column.IsPrimaryKey)
+                    {
+                        <Input @bind-Value="@_editingRows[primaryKeyValue][key]" />
+                    }
+                    else
+                    {
+                        @row[key]
+                    }
+                </PropertyColumn>
             }
         }
         @if (_tableSchema.RowButtons != null && _tableSchema.RowButtons.Any())
@@ -56,6 +71,10 @@
     int _pageIndex = 1;
     int _pageSize = 10;
     int _total = 0;
+
+    // 编辑状态管理
+    private Dictionary<string, Dictionary<string, object>> _editingRows = new();
+    private Dictionary<string, Dictionary<string, object>> _originalRows = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -120,43 +139,32 @@
 
     private async Task LoadDataAsync()
     {
+        var request = new TableDataInput
+        {
+            AppId = PageCascading?.AppId,
+            PageId = PageCascading?.PageId,
+            DataSourceId = DataSource?.DataSourceId,
+            SkipCount = (_pageIndex - 1) * _pageSize,
+            MaxResultCount = _pageSize
+        };
+
         try
         {
-            var request = new TableDataInput
-            {
-                AppId = PageCascading?.AppId,
-                PageId = PageCascading?.PageId,
-                DataSourceId = DataSource?.DataSourceId,
-                SkipCount = (_pageIndex - 1) * _pageSize,
-                MaxResultCount = _pageSize
-            };
+            Console.WriteLine($"列表数据开始加载: {RendererInfo.Name}, {request.ToJson()}");
 
             var result = await TableDataAppService.GetListAsync(request);
             _data = result.Items.ToList();
             _total = (int)result.TotalCount;
 
-            Console.WriteLine($"列表数据: {result.ToJson()}");
+            Console.WriteLine($"列表数据加载成功: {result.ToJson()}");
         }
         catch (Exception ex)
         {
             // 出错时使用空数据
             _data = new List<Dictionary<string, object>>();
             _total = 0;
-            Console.WriteLine($"加载数据失败: {ex.Message}");
+            Console.WriteLine($"列表加载数据失败: {RendererInfo.Name}, {request.ToJson()}, {ex.Message}");
         }
-    }
-
-
-
-    public async Task EditAsync(Dictionary<string, object> row)
-    {
-        string primaryKey = _tableSchema.Columns.FirstOrDefault(t => t.IsPrimaryKey)?.Name;
-        await Task.Delay(100);
-    }
-
-    private async Task DeleteAsync(Dictionary<string, object> row)
-    {
-        await Task.Delay(100);
     }
 
     public async Task ButtonActionAsync(TableButtonSchema btn, Dictionary<string, object> rowData = null)
@@ -200,6 +208,10 @@
                     continue;
 
                 await JS.InvokeVoidAsync("eval", e.EventCustomScript);
+            }
+            else if (e.EventHandlerType == EventTargetTypeEnum.Data)
+            {
+                await HandleDataActionAsync(e.EventDataActionType, rowData);
             }
         }
     }
@@ -268,5 +280,294 @@
         }
 
         return baseUrl;
+    }
+
+    private async Task HandleDataActionAsync(EventDataActionTypeEnum actionType, Dictionary<string, object> rowData)
+    {
+        switch (actionType)
+        {
+            case EventDataActionTypeEnum.EditRow:
+                await EditRowAsync(rowData);
+                break;
+            case EventDataActionTypeEnum.DeleteRow:
+                await DeleteRowAsync(rowData);
+                break;
+            case EventDataActionTypeEnum.SaveRow:
+                await SaveRowAsync(rowData);
+                break;
+            case EventDataActionTypeEnum.CancelEdit:
+                await CancelEditAsync(rowData);
+                break;
+            case EventDataActionTypeEnum.AddRow:
+                await AddRowAsync();
+                break;
+            case EventDataActionTypeEnum.RefreshData:
+                await RefreshDataAsync();
+                break;
+            default:
+                break;
+        }
+    }
+
+    private async Task EditRowAsync(Dictionary<string, object> rowData)
+    {
+        try
+        {
+            // 获取主键字段
+            var primaryKeyColumn = _tableSchema.Columns.FirstOrDefault(t => t.IsPrimaryKey);
+            if (primaryKeyColumn == null)
+            {
+                Console.WriteLine("编辑失败: 未找到主键字段");
+                return;
+            }
+
+            // 获取主键值
+            if (!rowData.ContainsKey(primaryKeyColumn.Name))
+            {
+                Console.WriteLine($"编辑失败: 行数据中未找到主键字段 {primaryKeyColumn.Name}");
+                return;
+            }
+
+            var primaryKeyValue = rowData[primaryKeyColumn.Name]?.ToString();
+            if (string.IsNullOrEmpty(primaryKeyValue))
+            {
+                Console.WriteLine("编辑失败: 主键值为空");
+                return;
+            }
+
+            // 如果已经在编辑状态，则不重复进入编辑
+            if (_editingRows.ContainsKey(primaryKeyValue))
+            {
+                return;
+            }
+
+            // 保存原始数据副本
+            _originalRows[primaryKeyValue] = new Dictionary<string, object>(rowData);
+
+            // 创建编辑数据副本
+            _editingRows[primaryKeyValue] = new Dictionary<string, object>(rowData);
+
+            Console.WriteLine($"开始编辑行: ID={primaryKeyValue}");
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"编辑行失败: {ex.Message}");
+        }
+
+        await Task.CompletedTask;
+    }
+
+    private async Task DeleteRowAsync(Dictionary<string, object> row)
+    {
+        try
+        {
+            // 获取主键字段
+            var primaryKeyColumn = _tableSchema.Columns.FirstOrDefault(t => t.IsPrimaryKey);
+            if (primaryKeyColumn == null)
+            {
+                Console.WriteLine("删除失败: 未找到主键字段");
+                return;
+            }
+
+            // 获取主键值
+            if (!row.ContainsKey(primaryKeyColumn.Name))
+            {
+                Console.WriteLine($"删除失败: 行数据中未找到主键字段 {primaryKeyColumn.Name}");
+                return;
+            }
+
+            var primaryKeyValue = row[primaryKeyColumn.Name]?.ToString();
+            if (string.IsNullOrEmpty(primaryKeyValue))
+            {
+                Console.WriteLine("删除失败: 主键值为空");
+                return;
+            }
+
+            // 构建删除请求
+            var deleteRequest = new TableDataDeleteInput
+            {
+                AppId = PageCascading?.AppId,
+                PageId = PageCascading?.PageId,
+                DataSourceId = DataSource?.DataSourceId,
+                Id = primaryKeyValue,
+                RowData = row
+            };
+
+            // 调用删除服务
+            await TableDataAppService.DeleteAsync(deleteRequest);
+
+            // 删除成功后重新加载数据
+            await LoadDataAsync();
+
+            Console.WriteLine($"删除成功: ID={primaryKeyValue}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"删除失败: {ex.Message}");
+        }
+    }
+
+    private async Task SaveRowAsync(Dictionary<string, object> rowData)
+    {
+        try
+        {
+            // 获取主键字段
+            var primaryKeyColumn = _tableSchema.Columns.FirstOrDefault(t => t.IsPrimaryKey);
+            if (primaryKeyColumn == null)
+            {
+                Console.WriteLine("保存失败: 未找到主键字段");
+                return;
+            }
+
+            // 获取主键值
+            if (!rowData.ContainsKey(primaryKeyColumn.Name))
+            {
+                Console.WriteLine($"保存失败: 行数据中未找到主键字段 {primaryKeyColumn.Name}");
+                return;
+            }
+
+            var primaryKeyValue = rowData[primaryKeyColumn.Name]?.ToString();
+            if (string.IsNullOrEmpty(primaryKeyValue))
+            {
+                Console.WriteLine("保存失败: 主键值为空");
+                return;
+            }
+
+            // 检查是否在编辑状态
+            if (!_editingRows.ContainsKey(primaryKeyValue))
+            {
+                Console.WriteLine("保存失败: 该行不在编辑状态");
+                return;
+            }
+
+            var editingData = _editingRows[primaryKeyValue];
+            var originalData = _originalRows[primaryKeyValue];
+
+            // 找出变更的字段
+            var updateData = new Dictionary<string, object>();
+            foreach (var kvp in editingData)
+            {
+                if (!originalData.ContainsKey(kvp.Key) || 
+                    !Equals(originalData[kvp.Key], kvp.Value))
+                {
+                    updateData[kvp.Key] = kvp.Value;
+                }
+            }
+
+            // 如果有变更，则调用更新服务
+            if (updateData.Any())
+            {
+                var updateRequest = new TableDataUpdateInput
+                {
+                    AppId = PageCascading?.AppId,
+                    PageId = PageCascading?.PageId,
+                    DataSourceId = DataSource?.DataSourceId,
+                    Id = primaryKeyValue,
+                    RowData = originalData,
+                    UpdateData = updateData
+                };
+
+                await TableDataAppService.UpdateAsync(updateRequest);
+
+                // 更新本地数据
+                var dataIndex = _data.FindIndex(d => d.ContainsKey(primaryKeyColumn.Name) && 
+                    d[primaryKeyColumn.Name]?.ToString() == primaryKeyValue);
+                if (dataIndex >= 0)
+                {
+                    _data[dataIndex] = new Dictionary<string, object>(editingData);
+                }
+
+                Console.WriteLine($"保存成功: ID={primaryKeyValue}, 更新字段: {string.Join(", ", updateData.Keys)}");
+            }
+            else
+            {
+                Console.WriteLine($"无变更，跳过保存: ID={primaryKeyValue}");
+            }
+
+            // 退出编辑状态
+            _editingRows.Remove(primaryKeyValue);
+            _originalRows.Remove(primaryKeyValue);
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"保存行失败: {ex.Message}");
+        }
+    }
+
+    private async Task CancelEditAsync(Dictionary<string, object> rowData)
+    {
+        try
+        {
+            // 获取主键字段
+            var primaryKeyColumn = _tableSchema.Columns.FirstOrDefault(t => t.IsPrimaryKey);
+            if (primaryKeyColumn == null)
+            {
+                Console.WriteLine("取消编辑失败: 未找到主键字段");
+                return;
+            }
+
+            // 获取主键值
+            if (!rowData.ContainsKey(primaryKeyColumn.Name))
+            {
+                Console.WriteLine($"取消编辑失败: 行数据中未找到主键字段 {primaryKeyColumn.Name}");
+                return;
+            }
+
+            var primaryKeyValue = rowData[primaryKeyColumn.Name]?.ToString();
+            if (string.IsNullOrEmpty(primaryKeyValue))
+            {
+                Console.WriteLine("取消编辑失败: 主键值为空");
+                return;
+            }
+
+            // 检查是否在编辑状态
+            if (!_editingRows.ContainsKey(primaryKeyValue))
+            {
+                Console.WriteLine("取消编辑失败: 该行不在编辑状态");
+                return;
+            }
+
+            // 清除编辑状态
+            _editingRows.Remove(primaryKeyValue);
+            _originalRows.Remove(primaryKeyValue);
+
+            Console.WriteLine($"取消编辑: ID={primaryKeyValue}");
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"取消编辑失败: {ex.Message}");
+        }
+
+        await Task.CompletedTask;
+    }
+
+    private async Task AddRowAsync()
+    {
+        // TODO: 实现添加行功能
+        Console.WriteLine("添加新行");
+    }
+
+    private async Task RefreshDataAsync()
+    {
+        try
+        {
+            // 清除所有编辑状态
+            _editingRows.Clear();
+            _originalRows.Clear();
+
+            // 重新加载数据
+            await LoadDataAsync();
+
+            Console.WriteLine("刷新数据成功");
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"刷新数据失败: {ex.Message}");
+        }
     }
 }

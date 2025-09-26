@@ -21,4 +21,14 @@ public class TableDataAppService : ApplicationService, ITableDataAppService
     {
         return await _tableDataRepository.GetListAsync(input);
     }
+
+    public async Task DeleteAsync(TableDataDeleteInput request)
+    {
+        await _tableDataRepository.DeleteAsync(request);
+    }
+
+    public async Task UpdateAsync(TableDataUpdateInput request)
+    {
+        await _tableDataRepository.UpdateAsync(request);
+    }
 }

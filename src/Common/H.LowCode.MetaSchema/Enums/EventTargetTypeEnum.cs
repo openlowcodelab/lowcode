@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace H.LowCode.MetaSchema;
 
@@ -7,6 +7,7 @@ public enum EventTargetTypeEnum
     None = 0,
     Page = 10, //打开页面
     Component = 30, //组件
+    Data = 40, //数据操作
     Custom = 99, // 自定义事件
 }
 

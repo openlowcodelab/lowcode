@@ -24,6 +24,7 @@
                     <Radio AutoFocus="true" Value="EventTargetTypeEnum.None">无</Radio>
                     <Radio Value="EventTargetTypeEnum.Page">页面</Radio>
                     <Radio Value="EventTargetTypeEnum.Component">组件</Radio>
+                    <Radio Value="EventTargetTypeEnum.Data">数据</Radio>
                     <Radio Value="EventTargetTypeEnum.Custom">自定义</Radio>
                 </RadioGroup>
             </div>
@@ -115,6 +116,20 @@
                         {
                             <Radio Value="@eventAction.EventName">@eventAction.EventDisplayName</Radio>
                         }
+                    </RadioGroup>
+                </div>
+            }
+            else if (_currentEvent.EventHandlerType == EventTargetTypeEnum.Data)
+            {
+                <div class="propertysetting-item">
+                    <label>选择操作：</label>
+                    <RadioGroup @bind-Value="@_currentEvent.EventDataActionType">
+                        <Radio Value="EventDataActionTypeEnum.EditRow">编辑行</Radio>
+                        <Radio Value="EventDataActionTypeEnum.DeleteRow">删除行</Radio>
+                        <Radio Value="EventDataActionTypeEnum.SaveRow">保存行</Radio>
+                        <Radio Value="EventDataActionTypeEnum.CancelEdit">取消编辑</Radio>
+                        <Radio Value="EventDataActionTypeEnum.AddRow">添加行</Radio>
+                        <Radio Value="EventDataActionTypeEnum.RefreshData">刷新数据</Radio>
                     </RadioGroup>
                 </div>
             }

@@ -39,6 +39,14 @@ public class EventSchema
     public string EventCustomScript { get; set; }
     #endregion
 
+    #region 数据操作事件
+    /// <summary>
+    /// 数据操作类型
+    /// </summary>
+    [JsonPropertyName("edat")]
+    public EventDataActionTypeEnum EventDataActionType { get; set; }
+    #endregion
+
     /// <summary>
     /// 事件参数
     /// </summary>
