@@ -35,11 +35,25 @@
 * 菜单
 菜单功能的核心数据结构由 MenuSchema 类定义，该类继承自 MetaSchemaBase，用于描述菜单项的组织方式和行为特性。
 
-#### 设计引擎
-##### 物料
+### 元数据
+元数据的定义包含在项目 H.LowCode.MetaSchema (基础元数据据结构定义)、H.LowCode.MetaSchema.DesignEngine (基于 H.LowCode.MetaSchema，扩展出设计引擎特有属性)、H.LowCode.Schema.RenderEngine (基于 H.LowCode.MetaSchema，包含渲染引擎特有属性)。
+设计引擎通过可视化界面设计并使用 H.LowCode.MetaSchema.DesignEngine 项目中的元数据定义序列化生成 json 文件，然后右渲染引擎将 json 反序列化为 H.LowCode.MetaSchema.RenderEngine 中的元数据定义，再绑定到页面中渲染出页面。
+
+#### 主要的元数据定义
+* AppSchemaBase：应用的元数据定义，包含应用的名称、标识、图标、描述等基本信息。
+* PageSchemaBase：页面的元数据定义，包含页面的类型、布局配置、事件处理机制、组件树结构以及状态管理。
+* * PagePartsSchema: 设计时页面的元数据定义
+* * PageSchema: 运行时页面的元数据定义
+* ComponentSchemaBase：组件的元数据定义，包含组件的结构、属性、样式和事件。
+* * ComponentPartsSchema: 设计时组件定义
+* * ComponentSchema: 运行时组件定义
+* MenuSchema：菜单的元数据定义，包含菜单项的组织方式和行为特性。
+
+### 设计引擎
+#### 物料
 物料的管理对应 H.LowCode.PartsDesignEngine 项目, 物料主要包含组件、主题等，物料的元数据定义在 H.LowCode.MetaSchema.DesignEngine 项目中。
 
-##### 页面设计器
+#### 页面设计器
 页面设计器用于设计页面，基于已有物料进行拖拽、配置、事件绑定等操作，最终生成页面的元数据文件。
 
 页面设计器位于 H.LowCode.DesignEngine 项目的 DesignPage 页面，包含 ComponentPanel（物料库）、DesignPanel（设计区域）、SettingPanel（配置面板）三个部分。
@@ -50,7 +64,7 @@
  * * DraggableItem 包裹的是 DraggableItem 组件，DraggableItem 组件的子组件为真实组件，例如 Button、Input 等。DraggableItem 将组件元数据动态渲染为真实组件，从而实现基于 json 元数据动态渲染页面的效果。
 * 配置面板：对选中的组件进行属性、样式和事件的配置。
 
-#### 渲染引擎
+### 渲染引擎
 渲染引擎负责根据页面的元数据文件，动态生成 Blazor 组件树，并在前端页面中渲染出来。渲染引擎位于 H.LowCode.RenderEngine 项目中，主要负责以下几个方面的功能：
 * 元数据解析：读取页面的元数据文件，解析出组件、样式、事件等信息。
 * 组件渲染：根据解析出的元数据，动态创建 Blazor 组件实例，并将其添加到组件树中。
