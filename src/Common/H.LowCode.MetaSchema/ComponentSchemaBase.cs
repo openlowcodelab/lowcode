@@ -75,4 +75,7 @@ public abstract class ComponentSchemaBase : StateHasChangeSchema
 
     [JsonPropertyName("desc")]
     public string Description { get; set; }
+
+    [JsonPropertyName("v")]
+    public string Version { get; set; }
 }

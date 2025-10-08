@@ -1,0 +1,75 @@
+@namespace H.LowCode.PartsDesignEngine
+@inherits DesignEngineLowCodeComponentBase
+
+<div class="api-datasource-editor">
+    <Card Title="API数据源配置" Size="CardSize.Small">
+        <ChildContent>
+            <Row Gutter="16">
+                <Col Span="12">
+                    <FormItem Label="API地址" Required>
+                        <Input @bind-Value="@DataSource.Path" Placeholder="https://api.example.com/data" />
+                    </FormItem>
+                </Col>
+                <Col Span="12">
+                    <FormItem Label="请求方法">
+                        <Select TItem="string" TItemValue="string" @bind-Value="@DataSource.Method">
+                            <SelectOption TItem="string" TItemValue="string" Value="@("GET")">GET</SelectOption>
+                            <SelectOption TItem="string" TItemValue="string" Value="@("POST")">POST</SelectOption>
+                            <SelectOption TItem="string" TItemValue="string" Value="@("PUT")">PUT</SelectOption>
+                            <SelectOption TItem="string" TItemValue="string" Value="@("DELETE")">DELETE</SelectOption>
+(                        </Select>
+                    </FormItem>
+                </Col>
+            </Row>
+            <FormItem Label="请求头">
+                <APIParamsList APIParams="@DataSource.Headers" />
+            </FormItem>
+            <FormItem Label="请求参数">
+                <APIParamsList APIParams="@DataSource.Queries" />
+            </FormItem>
+            <FormItem Label="请求体">
+                <TextArea @bind-Value="@DataSource.Body.Value" Rows="4" Placeholder="JSON格式的请求体（POST/PUT请求时使用）" />
+            </FormItem>
+        </ChildContent>
+    </Card>
+</div>
+
+@code {
+    [Parameter]
+    public APIDataSourceSchema DataSource { get; set; }
+    
+    [Parameter]
+    public EventCallback<APIDataSourceSchema> DataSourceChanged { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        if (DataSource == null)
+        {
+            DataSource = new APIDataSourceSchema
+            {
+                Method = "GET",
+                Headers = new List<APIParamSchema>(),
+                Queries = new List<APIParamSchema>(),
+                Body = new APIBodySchema()
+            };
+        }
+        if (DataSource.Headers == null)
+        {
+            DataSource.Headers = new List<APIParamSchema>();
+        }
+        if (DataSource.Queries == null)
+        {
+            DataSource.Queries = new List<APIParamSchema>();
+        }
+        if (DataSource.Body == null)
+        {
+            DataSource.Body = new APIBodySchema();
+        }
+    }
+
+    private async Task NotifyChange()
+    {
+        await DataSourceChanged.InvokeAsync(DataSource);
+        StateHasChanged();
+    }
+}

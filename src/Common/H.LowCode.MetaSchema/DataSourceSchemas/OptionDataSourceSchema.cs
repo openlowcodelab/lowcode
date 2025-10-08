@@ -1,4 +1,4 @@
-﻿using H.Util.Ids;
+using H.Util.Ids;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,4 +18,16 @@ public record OptionDataSourceSchema
 
     [JsonPropertyName("v")]
     public string Value { get; set; }
+
+    [JsonPropertyName("s")]
+    public bool IsSelected { get; set; }
+
+    [JsonPropertyName("o")]
+    public int Order { get; set; }
+
+    [JsonPropertyName("g")]
+    public string Group { get; set; }
+
+    [JsonPropertyName("d")]
+    public string Description { get; set; }
 }

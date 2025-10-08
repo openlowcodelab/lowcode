@@ -1,0 +1,305 @@
+@namespace H.LowCode.PartsDesignEngine
+@inherits DesignEngineLowCodeComponentBase
+@using System.Text.Json
+
+<div class="object-array-editor">
+    <Card Title="@Title" Style="margin-bottom: 16px;">
+        <Extra>
+            <Space>
+                <Button Type="@ButtonType.Primary" Size="@ButtonSize.Small" 
+                        OnClick="AddItem" Icon="plus">添加项</Button>
+                @if (ShowJsonEditor)
+                {
+                    <Button Type="@ButtonType.Default" Size="@ButtonSize.Small" 
+                            OnClick="ToggleJsonMode" Icon="@(_isJsonMode ? "form" : "code")">
+                        @(_isJsonMode ? "表单模式" : "JSON模式")
+                    </Button>
+                }
+            </Space>
+        </Extra>
+        <ChildContent>
+            @if (_isJsonMode && ShowJsonEditor)
+            {
+                <FormItem Label="JSON编辑">
+                    <TextArea Value="@_jsonValue" 
+                              Rows="10" 
+                              @onchange="@OnJsonChange"
+                              Placeholder="请输入有效的JSON数组" />
+                </FormItem>
+                @if (!string.IsNullOrEmpty(_jsonError))
+                {
+                    <Alert Type="@AlertType.Error" Message="@_jsonError" Style="margin-top: 8px;" />
+                }
+            }
+            else
+            {
+                @if (Items != null && Items.Any())
+                {
+                    @for (int index = 0; index < Items.Count; index++)
+                    {
+                        var item = Items[index];
+                        var currentIndex = index;
+                        
+                        <Card Size="@CardSize.Small" Style="margin-bottom: 8px;">
+                            <TitleTemplate>
+                                <span>@($"{ItemDisplayName} {index + 1}")</span>
+                            </TitleTemplate>
+                            <Extra>
+                                <Space>
+                                    @if (index > 0)
+                                    {
+                                        <Button Type="@ButtonType.Text" Icon="up" Size="@ButtonSize.Small" 
+                                                OnClick="() => MoveUp(currentIndex)" Title="上移">
+                                        </Button>
+                                    }
+                                    @if (index < Items.Count - 1)
+                                    {
+                                        <Button Type="@ButtonType.Text" Icon="down" Size="@ButtonSize.Small" 
+                                                OnClick="() => MoveDown(currentIndex)" Title="下移">
+                                        </Button>
+                                    }
+                                    <Button Type="@ButtonType.Text" Icon="copy" Size="@ButtonSize.Small" 
+                                            OnClick="() => DuplicateItem(currentIndex)" Title="复制">
+                                    </Button>
+                                    <Button Type="@ButtonType.Text" Icon="delete" Size="@ButtonSize.Small" 
+                                            OnClick="() => RemoveItem(currentIndex)" Danger Title="删除">
+                                    </Button>
+                                </Space>
+                            </Extra>
+                            <ChildContent>
+                                @if (ItemTemplate != null)
+                                {
+                                    @ItemTemplate((item, currentIndex))
+                                }
+                                else
+                                {
+                                    @* 默认的JSON编辑器 *@
+                                    <FormItem Label="JSON数据">
+                                        <TextArea Value="@GetItemJson(item)" 
+                                                  @onchange="@((e) => UpdateItemFromJson(currentIndex, e.Value?.ToString()))"
+                                                  Rows="5" 
+                                                  Placeholder="请输入有效的JSON对象" />
+                                    </FormItem>
+                                }
+                            </ChildContent>
+                        </Card>
+                    }
+                }
+                else
+                {
+                    <AntDesign.Empty Description="@("暂无数据,点击上方按钮添加项")" />
+                }
+            }
+        </ChildContent>
+    </Card>
+</div>
+
+@code {
+    [Parameter]
+    public string Title { get; set; } = "对象数组编辑器";
+    
+    [Parameter]
+    public string ItemDisplayName { get; set; } = "项";
+    
+    [Parameter]
+    public List<object> Items { get; set; } = new();
+    
+    [Parameter]
+    public EventCallback<List<object>> ItemsChanged { get; set; }
+    
+    [Parameter]
+    public RenderFragment<(object item, int index)> ItemTemplate { get; set; }
+    
+    [Parameter]
+    public Func<object> CreateNewItem { get; set; }
+    
+    [Parameter]
+    public bool ShowJsonEditor { get; set; } = true;
+
+    private bool _isJsonMode = false;
+    private string _jsonValue = "";
+    private string _jsonError = "";
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+        UpdateJsonValue();
+    }
+
+    private void UpdateJsonValue()
+    {
+        try
+        {
+            _jsonValue = JsonSerializer.Serialize(Items, new JsonSerializerOptions 
+            { 
+                WriteIndented = true,
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            });
+            _jsonError = "";
+        }
+        catch (Exception ex)
+        {
+            _jsonError = $"序列化错误: {ex.Message}";
+        }
+    }
+
+    private async Task ToggleJsonMode()
+    {
+        if (_isJsonMode)
+        {
+            // 从JSON模式切换到表单模式，尝试解析JSON
+            await OnJsonChange();
+        }
+        else
+        {
+            // 从表单模式切换到JSON模式，更新JSON值
+            UpdateJsonValue();
+        }
+        
+        _isJsonMode = !_isJsonMode;
+        StateHasChanged();
+    }
+
+    private async Task OnJsonChange()
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(_jsonValue))
+            {
+                Items.Clear();
+            }
+            else
+            {
+                var newItems = JsonSerializer.Deserialize<List<object>>(_jsonValue);
+                Items.Clear();
+                if (newItems != null)
+                {
+                    Items.AddRange(newItems);
+                }
+            }
+            
+            _jsonError = "";
+            await NotifyChange();
+        }
+        catch (Exception ex)
+        {
+            _jsonError = $"JSON解析错误: {ex.Message}";
+        }
+    }
+
+    private async Task AddItem()
+    {
+        object newItem;
+        
+        if (CreateNewItem != null)
+        {
+            newItem = CreateNewItem();
+        }
+        else
+        {
+            newItem = new { };
+        }
+        
+        Items.Add(newItem);
+        UpdateJsonValue();
+        await NotifyChange();
+    }
+
+    private async Task RemoveItem(int index)
+    {
+        if (index >= 0 && index < Items.Count)
+        {
+            Items.RemoveAt(index);
+            UpdateJsonValue();
+            await NotifyChange();
+        }
+    }
+
+    private async Task DuplicateItem(int index)
+    {
+        if (index >= 0 && index < Items.Count)
+        {
+            try
+            {
+                var item = Items[index];
+                var json = JsonSerializer.Serialize(item);
+                var duplicatedItem = JsonSerializer.Deserialize<object>(json);
+                Items.Insert(index + 1, duplicatedItem);
+                UpdateJsonValue();
+                await NotifyChange();
+            }
+            catch (Exception ex)
+            {
+                // 如果序列化失败，创建新项
+                await AddItem();
+            }
+        }
+    }
+
+    private async Task MoveUp(int index)
+    {
+        if (index > 0 && index < Items.Count)
+        {
+            var item = Items[index];
+            Items.RemoveAt(index);
+            Items.Insert(index - 1, item);
+            UpdateJsonValue();
+            await NotifyChange();
+        }
+    }
+
+    private async Task MoveDown(int index)
+    {
+        if (index >= 0 && index < Items.Count - 1)
+        {
+            var item = Items[index];
+            Items.RemoveAt(index);
+            Items.Insert(index + 1, item);
+            UpdateJsonValue();
+            await NotifyChange();
+        }
+    }
+
+    private string GetItemJson(object item)
+    {
+        try
+        {
+            return JsonSerializer.Serialize(item, new JsonSerializerOptions 
+            { 
+                WriteIndented = true,
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            });
+        }
+        catch
+        {
+            return "{}";
+        }
+    }
+
+    private async Task UpdateItemFromJson(int index, string json)
+    {
+        if (index >= 0 && index < Items.Count)
+        {
+            try
+            {
+                var item = JsonSerializer.Deserialize<object>(json ?? "{}");
+                Items[index] = item;
+                UpdateJsonValue();
+                await NotifyChange();
+            }
+            catch
+            {
+                // JSON解析失败，忽略更新
+            }
+        }
+    }
+
+    private async Task NotifyChange()
+    {
+        if (ItemsChanged.HasDelegate)
+        {
+            await ItemsChanged.InvokeAsync(Items);
+        }
+        StateHasChanged();
+    }
+}

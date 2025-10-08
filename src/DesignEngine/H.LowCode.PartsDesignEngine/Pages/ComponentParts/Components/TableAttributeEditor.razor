@@ -1,0 +1,227 @@
+@namespace H.LowCode.PartsDesignEngine
+@inherits DesignEngineLowCodeComponentBase
+@using System.Text.Json
+@using AntDesign
+
+<div class="table-attribute-editor">
+    @if (AttributeDefine != null)
+    {
+        var arrayItemType = GetArrayItemType();
+        var maxItems = GetMaxItems();
+        var objectSchema = GetObjectSchema();
+        
+        if (arrayItemType == "object")
+        {
+            <ObjectArrayEditor Title="@AttributeDefine.DisplayName"
+                               ItemDisplayName="项"
+                               Items="@GetObjectList()"
+                               ItemsChanged="@OnObjectListChanged"
+                               CreateNewItem="@(() => CreateNewObjectItem(objectSchema))"
+                               ShowJsonEditor="true">
+                <ItemTemplate Context="itemContext">
+                    @{
+                        var (item, index) = itemContext;
+                        var objectJson = GetObjectJson(item);
+                    }
+                    <div>
+                        <FormItem Label="@($"对象 {index + 1}")">
+                            <TextArea Value="@objectJson" 
+                                      @onchange="@((e) => UpdateObjectFromJson(index, e.Value?.ToString()))"
+                                      Rows="3" 
+                                      Placeholder="请输入有效的JSON对象" />
+                        </FormItem>
+                    </div>
+                </ItemTemplate>
+            </ObjectArrayEditor>
+        }
+        else
+        {
+            <ArrayPropertyEditor Title="@AttributeDefine.DisplayName"
+                                 Items="@GetSimpleList()"
+                                 ItemsChanged="@OnSimpleListChanged"
+                                 ItemType="@arrayItemType"
+                                 CreateNewItem="@(() => CreateNewSimpleItem(arrayItemType))" />
+        }
+        
+        if (maxItems > 0 && GetCurrentItemCount() >= maxItems)
+        {
+            <Alert Type="@AntDesign.AlertType.Warning" 
+                   Message="@($"已达到最大项数限制：{maxItems}")" 
+                   Style="margin-top: 8px;" />
+        }
+    }
+</div>
+
+@code {
+    [Parameter]
+    public ComponentPartsAttributeDefineSchema AttributeDefine { get; set; }
+    
+    [Parameter]
+    public EventCallback<ComponentPartsAttributeDefineSchema> AttributeDefineChanged { get; set; }
+
+    private string GetArrayItemType()
+    {
+        if (AttributeDefine?.Options == null)
+            return "string";
+            
+        return AttributeDefine.Options.ContainsKey("arrayItemType") 
+            ? AttributeDefine.Options["arrayItemType"]?.ToString() 
+            : "string";
+    }
+
+    private int GetMaxItems()
+    {
+        if (AttributeDefine?.Options == null)
+            return 0;
+            
+        if (AttributeDefine.Options.ContainsKey("maxItems") && 
+            int.TryParse(AttributeDefine.Options["maxItems"]?.ToString(), out int maxItems))
+        {
+            return maxItems;
+        }
+        return 0;
+    }
+
+    private string GetObjectSchema()
+    {
+        if (AttributeDefine?.Options == null)
+            return "{}";
+            
+        return AttributeDefine.Options.ContainsKey("objectSchema") 
+            ? AttributeDefine.Options["objectSchema"]?.ToString() 
+            : "{}";
+    }
+
+    private List<object> GetSimpleList()
+    {
+        if (AttributeDefine?.AttributeValue == null)
+            return new List<object>();
+
+        try
+        {
+            if (AttributeDefine.AttributeValue is JsonElement jsonElement)
+            {
+                if (jsonElement.ValueKind == JsonValueKind.Array)
+                {
+                    var list = new List<object>();
+                    foreach (var item in jsonElement.EnumerateArray())
+                    {
+                        list.Add(item.ToString());
+                    }
+                    return list;
+                }
+            }
+            else if (AttributeDefine.AttributeValue is List<object> objectList)
+            {
+                return objectList;
+            }
+            else if (AttributeDefine.AttributeValue is string jsonString)
+            {
+                var parsed = JsonSerializer.Deserialize<List<object>>(jsonString);
+                return parsed ?? new List<object>();
+            }
+        }
+        catch
+        {
+            // 解析失败，返回空列表
+        }
+
+        return new List<object>();
+    }
+
+    private List<object> GetObjectList()
+    {
+        return GetSimpleList(); // 对象列表和简单列表的获取逻辑相同
+    }
+
+    private async Task OnSimpleListChanged(List<object> newList)
+    {
+        AttributeDefine.AttributeValue = newList;
+        await NotifyChange();
+    }
+
+    private async Task OnObjectListChanged(List<object> newList)
+    {
+        AttributeDefine.AttributeValue = newList;
+        await NotifyChange();
+    }
+
+    private object CreateNewSimpleItem(string itemType)
+    {
+        return itemType switch
+        {
+            "string" => "",
+            "int" => 0,
+            "bool" => false,
+            "decimal" => 0m,
+            _ => ""
+        };
+    }
+
+    private object CreateNewObjectItem(string schema)
+    {
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(schema))
+            {
+                return JsonSerializer.Deserialize<object>(schema);
+            }
+        }
+        catch
+        {
+            // 解析失败，返回空对象
+        }
+        
+        return new { };
+    }
+
+    private string GetObjectJson(object item)
+    {
+        try
+        {
+            return JsonSerializer.Serialize(item, new JsonSerializerOptions 
+            { 
+                WriteIndented = true,
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            });
+        }
+        catch
+        {
+            return "{}";
+        }
+    }
+
+    private void UpdateObjectFromJson(int index, string json)
+    {
+        try
+        {
+            var list = GetObjectList();
+            if (index >= 0 && index < list.Count)
+            {
+                var item = JsonSerializer.Deserialize<object>(json ?? "{}");
+                list[index] = item;
+                AttributeDefine.AttributeValue = list;
+                StateHasChanged();
+            }
+        }
+        catch
+        {
+            // JSON解析失败，忽略更新
+        }
+    }
+
+    private int GetCurrentItemCount()
+    {
+        var list = GetSimpleList();
+        return list?.Count ?? 0;
+    }
+
+    private async Task NotifyChange()
+    {
+        if (AttributeDefineChanged.HasDelegate)
+        {
+            await AttributeDefineChanged.InvokeAsync(AttributeDefine);
+        }
+        StateHasChanged();
+    }
+}

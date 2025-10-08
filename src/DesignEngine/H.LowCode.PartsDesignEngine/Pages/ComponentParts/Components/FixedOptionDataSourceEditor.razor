@@ -1,0 +1,93 @@
+@namespace H.LowCode.PartsDesignEngine
+@inherits DesignEngineLowCodeComponentBase
+
+<div class="fixed-option-data-source-editor">
+    @if (OptionsList != null)
+    {
+        @for (int i = 0; i < OptionsList.Count; i++)
+        {
+            var option = OptionsList[i];
+            <AntDesign.Card Size="@CardSize.Small" Style="margin-bottom: 8px;">
+                <AntDesign.ChildContent>
+                    <AntDesign.Row Gutter="16">
+                        <AntDesign.Col Span="8">
+                            <FormItem Label="显示文本">
+                                <Input @bind-Value="@option.Label" Placeholder="显示文本" />
+                            </FormItem>
+                        </AntDesign.Col>
+                        <AntDesign.Col Span="8">
+                            <FormItem Label="选项值">
+                                <Input @bind-Value="@option.Value" Placeholder="选项值" />
+                            </FormItem>
+                        </AntDesign.Col>
+                        <AntDesign.Col Span="8">
+                            <FormItem Label="是否选中">
+                                <Switch @bind-Checked="@option.IsSelected" />
+                            </FormItem>
+                        </AntDesign.Col>
+                    </AntDesign.Row>
+                    <AntDesign.Row Gutter="16">
+                        <AntDesign.Col Span="12">
+                            <FormItem Label="分组">
+                                <Input @bind-Value="@option.Group" Placeholder="选项分组（可选）" />
+                            </FormItem>
+                        </AntDesign.Col>
+                        <AntDesign.Col Span="12">
+                            <FormItem Label="排序">
+                                <InputNumber @bind-Value="@option.Order" Min="0" />
+                            </FormItem>
+                        </AntDesign.Col>
+                    </AntDesign.Row>
+                    <AntDesign.Row Gutter="16">
+                        <AntDesign.Col Span="24">
+                            <FormItem Label="描述">
+                                <TextArea @bind-Value="@option.Description" Rows="2" Placeholder="选项描述（可选）" />
+                            </FormItem>
+                        </AntDesign.Col>
+                    </AntDesign.Row>
+                    <Button Type="@ButtonType.Text" Icon="delete" Size="@ButtonSize.Small" OnClick="@(() => RemoveOption(i))" Danger>删除</Button>
+                </AntDesign.ChildContent>
+            </AntDesign.Card>
+        }
+    }
+    <Button Type="@ButtonType.Dashed" Block OnClick="@AddOption" Icon="plus">添加选项</Button>
+</div>
+
+@code {
+    [Parameter]
+    public List<OptionDataSourceSchema> OptionsList { get; set; }
+    [Parameter]
+    public EventCallback<List<OptionDataSourceSchema>> OptionsListChanged { get; set; }
+
+    private async Task AddOption()
+    {
+        OptionsList ??= new List<OptionDataSourceSchema>();
+        OptionsList.Add(new OptionDataSourceSchema
+        {
+            Label = "",
+            Value = "",
+            IsSelected = false,
+            Order = OptionsList.Count,
+            Group = "",
+            Description = ""
+        });
+        await OptionsListChanged.InvokeAsync(OptionsList);
+        StateHasChanged();
+    }
+
+    private async Task RemoveOption(int index)
+    {
+        if (OptionsList != null && index >= 0 && index < OptionsList.Count)
+        {
+            OptionsList.RemoveAt(index);
+            await OptionsListChanged.InvokeAsync(OptionsList);
+            StateHasChanged();
+        }
+    }
+}
+
+<style>
+    .fixed-option-datasource-editor .ant-card-small .ant-card-body {
+        padding: 12px;
+    }
+</style>

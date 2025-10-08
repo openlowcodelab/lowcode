@@ -1,0 +1,194 @@
+@namespace H.LowCode.PartsDesignEngine
+@inherits DesignEngineLowCodeComponentBase
+
+<div class="style-define-editor">
+    <AntDesign.Card Title="样式定义" Size="@CardSize.Small">
+        <AntDesign.Extra>
+            <Button Type="@ButtonType.Primary" Icon="plus" Size="@ButtonSize.Small" OnClick="AddStyle">
+                添加样式
+            </Button>
+        </AntDesign.Extra>
+        <AntDesign.ChildContent>
+            @if (_stylesList != null && _stylesList.Any())
+            {
+                @for (int i = 0; i < _stylesList.Count; i++)
+                {
+                    var styleDefine = _stylesList[i];
+                    var currentIndex = i;
+                    <AntDesign.Card Size="@CardSize.Small" Style="margin-bottom: 12px;">
+                        <AntDesign.Extra>
+                            <Button Type="@ButtonType.Text" Icon="delete" Size="@ButtonSize.Small" 
+                                    OnClick="@(() => RemoveStyle(currentIndex))" Danger>删除</Button>
+                        </AntDesign.Extra>
+                        <AntDesign.ChildContent>
+                            <AntDesign.Row Gutter="16">
+                                <AntDesign.Col Span="8">
+                                    <FormItem Label="样式名称" Required>
+                                        <Input @bind-Value="@styleDefine.StyleName" 
+                                               @onchange="@(() => NotifyChange())"
+                                               Placeholder="样式名称，如：backgroundColor" />
+                                    </FormItem>
+                                </AntDesign.Col>
+                                <AntDesign.Col Span="8">
+                                    <FormItem Label="显示名称">
+                                        <Input @bind-Value="@styleDefine.DisplayName" 
+                                               @onchange="@(() => NotifyChange())"
+                                               Placeholder="显示名称，如：背景颜色" />
+                                    </FormItem>
+                                </AntDesign.Col>
+                                <AntDesign.Col Span="8">
+                                    <FormItem Label="样式类型">
+                                        <AntDesign.Select TItem="string" TItemValue="string" @bind-Value="@styleDefine.StyleType" 
+                                                @onchange="@(() => NotifyChange())"
+                                                DefaultValue='@("color")'>
+                                            <AntDesign.SelectOption TItem="string" TItemValue="string" Value='@("color")'>颜色</AntDesign.SelectOption>
+                                            <AntDesign.SelectOption TItem="string" TItemValue="string" Value='@("size")'>尺寸</AntDesign.SelectOption>
+                                            <AntDesign.SelectOption TItem="string" TItemValue="string" Value='@("spacing")'>间距</AntDesign.SelectOption>
+                                            <AntDesign.SelectOption TItem="string" TItemValue="string" Value='@("border")'>边框</AntDesign.SelectOption>
+                                            <AntDesign.SelectOption TItem="string" TItemValue="string" Value='@("font")'>字体</AntDesign.SelectOption>
+                                            <AntDesign.SelectOption TItem="string" TItemValue="string" Value='@("layout")'>布局</AntDesign.SelectOption>
+                                            <AntDesign.SelectOption TItem="string" TItemValue="string" Value='@("custom")'>自定义</AntDesign.SelectOption>
+                                        </AntDesign.Select>
+                                    </FormItem>
+                                </AntDesign.Col>
+                            </AntDesign.Row>
+                            <AntDesign.Row Gutter="16">
+                                <AntDesign.Col Span="8">
+                                    <FormItem Label="控件类型">
+                                        <AntDesign.Select TItem="string" TItemValue="string" @bind-Value="@styleDefine.ControlType" 
+                                                @onchange="@(() => NotifyChange())"
+                                                DefaultValue='@("input")'>
+                                            <AntDesign.SelectOption TItem="string" TItemValue="string" Value='@("input")'>输入框</AntDesign.SelectOption>
+                                            <AntDesign.SelectOption TItem="string" TItemValue="string" Value='@("colorPicker")'>颜色选择器</AntDesign.SelectOption>
+                                            <AntDesign.SelectOption TItem="string" TItemValue="string" Value='@("slider")'>滑块</AntDesign.SelectOption>
+                                            <AntDesign.SelectOption TItem="string" TItemValue="string" Value='@("select")'>下拉选择</AntDesign.SelectOption>
+                                            <AntDesign.SelectOption TItem="string" TItemValue="string" Value='@("switchCtrl")'>开关</AntDesign.SelectOption>
+                                            <AntDesign.SelectOption TItem="string" TItemValue="string" Value='@("inputNumber")'>数字输入</AntDesign.SelectOption>
+                                        </AntDesign.Select>
+                                    </FormItem>
+                                </AntDesign.Col>
+                                <AntDesign.Col Span="8">
+                                    <FormItem Label="默认值">
+                                        <Input @bind-Value="@styleDefine.DefaultValue" 
+                                               @onchange="@(() => NotifyChange())"
+                                               Placeholder="默认值" />
+                                    </FormItem>
+                                </AntDesign.Col>
+                                <AntDesign.Col Span="8">
+                                    <FormItem Label="单位">
+                                        <Input @bind-Value="@styleDefine.Unit" 
+                                               @onchange="@(() => NotifyChange())"
+                                               Placeholder="单位，如：px, %, em" />
+                                    </FormItem>
+                                </AntDesign.Col>
+                            </AntDesign.Row>
+                            <AntDesign.Row Gutter="16">
+                                <AntDesign.Col Span="12">
+                                    <FormItem Label="样式描述">
+                                        <TextArea @bind-Value="@styleDefine.Description" 
+                                                  @onchange="@(() => NotifyChange())"
+                                                  Rows="2" 
+                                                  Placeholder="样式描述" />
+                                    </FormItem>
+                                </AntDesign.Col>
+                                <AntDesign.Col Span="12">
+                                    <FormItem Label="选项配置">
+                                        <TextArea @bind-Value="@styleDefine.Options" 
+                                                  @onchange="@(() => NotifyChange())"
+                                                  Rows="2" 
+                                                  Placeholder="选项配置（JSON格式，用于下拉选择等控件）" />
+                                    </FormItem>
+                                </AntDesign.Col>
+                            </AntDesign.Row>
+                            <AntDesign.Row Gutter="16">
+                                <AntDesign.Col Span="6">
+                                    <FormItem Label="是否必需">
+                                        <Switch @bind-Checked="@styleDefine.IsRequired" 
+                                                @onchange="@(() => NotifyChange())" />
+                                    </FormItem>
+                                </AntDesign.Col>
+                                <AntDesign.Col Span="6">
+                                    <FormItem Label="排序">
+                                        <InputNumber @bind-Value="@styleDefine.Order" 
+                                                     @onchange="@(() => NotifyChange())"
+                                                     Min="0" />
+                                    </FormItem>
+                                </AntDesign.Col>
+                                <AntDesign.Col Span="6">
+                                    <FormItem Label="分组">
+                                        <Input @bind-Value="@styleDefine.Group" 
+                                               @onchange="@(() => NotifyChange())"
+                                               Placeholder="样式分组" />
+                                    </FormItem>
+                                </AntDesign.Col>
+                                <AntDesign.Col Span="6">
+                                    <FormItem Label="CSS属性">
+                                        <Input @bind-Value="@styleDefine.CssProperty" 
+                                               @onchange="@(() => NotifyChange())"
+                                               Placeholder="对应的CSS属性名" />
+                                    </FormItem>
+                                </AntDesign.Col>
+                            </AntDesign.Row>
+                        </AntDesign.ChildContent>
+                    </AntDesign.Card>
+                }
+            }
+            else
+            {
+                <AntDesign.Empty Description="@emptyDescription" />
+            }
+        </AntDesign.ChildContent>
+    </AntDesign.Card>
+</div>
+
+@code {
+    [Parameter]
+    public List<ComponentPartsStyleDefineSchema> StyleDefines { get; set; }
+
+    [Parameter]
+    public EventCallback<IEnumerable<ComponentPartsStyleDefineSchema>> StyleDefinesChanged { get; set; }
+
+    private List<ComponentPartsStyleDefineSchema> _stylesList = new();
+    private string emptyDescription = "暂无样式定义";
+
+    protected override void OnParametersSet()
+    {
+        if (StyleDefines != null)
+        {
+            _stylesList = StyleDefines.ToList();
+        }
+        else
+        {
+            _stylesList = new List<ComponentPartsStyleDefineSchema>();
+        }
+    }
+
+    private async Task AddStyle()
+    {
+        _stylesList.Add(new ComponentPartsStyleDefineSchema
+        {
+            StyleName = "",
+            DisplayName = "",
+            StyleType = "color",
+            ControlType = "input",
+            IsRequired = false,
+            Order = _stylesList.Count
+        });
+        await NotifyChange();
+    }
+
+    private async Task RemoveStyle(int index)
+    {
+        if (index >= 0 && index < _stylesList.Count)
+        {
+            _stylesList.RemoveAt(index);
+            await NotifyChange();
+        }
+    }
+
+    private async Task NotifyChange()
+    {
+        await StyleDefinesChanged.InvokeAsync(_stylesList);
+        StateHasChanged();
+    }
+}

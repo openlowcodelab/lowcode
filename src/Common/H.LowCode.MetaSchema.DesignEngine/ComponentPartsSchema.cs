@@ -1,4 +1,4 @@
-﻿using H.Util.Ids;
+using H.Util.Ids;
 using System.Text.Json.Serialization;
 
 namespace H.LowCode.MetaSchema.DesignEngine;
@@ -57,6 +57,18 @@ public class ComponentPartsSchema : ComponentSchemaBase
     /// </summary>
     [JsonPropertyName("sptevs")]
     public string[] SupportEvents { get; set; }
+
+    /// <summary>
+    /// 事件定义
+    /// </summary>
+    [JsonPropertyName("evdefs")]
+    public List<ComponentPartsEventDefineSchema> EventDefines { get; set; } = [];
+
+    /// <summary>
+    /// 样式定义
+    /// </summary>
+    [JsonPropertyName("stydefs")]
+    public List<ComponentPartsStyleDefineSchema> StyleDefines { get; set; } = [];
 
     [JsonPropertyName("order")]
     public int Order { get; set; }

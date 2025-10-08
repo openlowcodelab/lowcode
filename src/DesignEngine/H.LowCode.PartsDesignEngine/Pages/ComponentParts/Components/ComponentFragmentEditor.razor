@@ -1,0 +1,194 @@
+@namespace H.LowCode.PartsDesignEngine
+@inherits DesignEngineLowCodeComponentBase
+
+<div class="component-fragment-editor">
+    <AntDesign.Card Title="组件渲染配置" Style="margin-bottom: 16px;">
+        <ChildContent>
+            <AntDesign.Row Gutter="16">
+                <AntDesign.Col Span="12">
+                    <FormItem Label="默认类型名" Required>
+                        <Input @bind-Value="@Fragment.DefaultTypeName" 
+                               Placeholder="如: AntDesign.Input`1[System.String], AntDesign" />
+                        <div style="color: #999; font-size: 12px; margin-top: 4px;">
+                            完整的.NET类型名，包含程序集信息
+                        </div>
+                    </FormItem>
+                </AntDesign.Col>
+                <AntDesign.Col Span="12">
+                    <FormItem Label="值类型">
+                        <Input @bind-Value="@Fragment.ValueType" 
+                               Placeholder="如: System.String" />
+                        <div style="color: #999; font-size: 12px; margin-top: 4px;">
+                            组件值的CLR类型
+                        </div>
+                    </FormItem>
+                </AntDesign.Col>
+            </AntDesign.Row>
+            
+            <FormItem Label="内容">
+                <TextArea @bind-Value="@Fragment.Content" 
+                          Rows="3" 
+                          Placeholder="组件的文本内容（可选）" />
+            </FormItem>
+            
+            <div style="margin: 16px 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="font-weight: 500;">属性配置</span>
+                    <Button Type="@ButtonType.Primary" Size="@ButtonSize.Small" OnClick="AddAttribute">添加属性</Button>
+                </div>
+                
+                @if (Fragment.Attributes != null)
+                {
+                    @for (int i = 0; i < Fragment.Attributes.Length; i++)
+                    {
+                        var attr = Fragment.Attributes[i];
+                        var currentIndex = i;
+                        
+                        <AntDesign.Card Size="@CardSize.Small" Style="margin-bottom: 8px;">
+                            <Extra>
+                                <Button Type="@ButtonType.Text" Icon="delete" Size="@ButtonSize.Small" 
+                                        OnClick="() => RemoveAttribute(currentIndex)" Danger>删除</Button>
+                            </Extra>
+                            <Body>
+                                <AntDesign.Row Gutter="16">
+                                    <AntDesign.Col Span="8">
+                                        <FormItem Label="属性名">
+                                            <Input @bind-Value="@attr.AttributeName" Placeholder="属性名" />
+                                        </FormItem>
+                                    </AntDesign.Col>
+                                    <AntDesign.Col Span="8">
+                                        <FormItem Label="类型">
+                                            <Input @bind-Value="@attr.AttributeClrType" Placeholder="System.String" />
+                                        </FormItem>
+                                    </AntDesign.Col>
+                                    <AntDesign.Col Span="8">
+                                        <FormItem Label="值">
+                                            <Input @bind-Value="@attr.AttributeValue" Placeholder="属性值" />
+                                        </FormItem>
+                                    </AntDesign.Col>
+                                </AntDesign.Row>
+                            </Body>
+                        </AntDesign.Card>
+                    }
+                }
+            </div>
+            
+            @if (Fragment.HasChildFragment)
+            {
+                <div style="margin: 16px 0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-weight: 500;">子组件</span>
+                        <Button Type="@ButtonType.Primary" Size="@ButtonSize.Small" OnClick="AddChildFragment">添加子组件</Button>
+                    </div>
+                    
+                    @for (int i = 0; i < Fragment.ChildFragments.Length; i++)
+                    {
+                        var childIndex = i;
+                        <AntDesign.Card Title="@($"子组件 {i + 1}")" Size="@CardSize.Small" Style="margin-bottom: 8px;">
+                            <Extra>
+                                <Button Type="@ButtonType.Text" Icon="delete" Size="@ButtonSize.Small" 
+                                        OnClick="() => RemoveChildFragment(childIndex)" Danger>删除</Button>
+                            </Extra>
+                            <Body>
+                                <ComponentFragmentEditor @bind-Fragment="@Fragment.ChildFragments[childIndex]" />
+                            </Body>
+                        </AntDesign.Card>
+                    }
+                </div>
+            }
+            else
+            {
+                <Button Type="@ButtonType.Dashed" OnClick="AddChildFragment" Icon="plus">添加子组件</Button>
+            }
+        </ChildContent>
+    </AntDesign.Card>
+</div>
+
+@code {
+    [Parameter]
+    public ComponentPartsFragmentSchema Fragment { get; set; }
+    
+    [Parameter]
+    public EventCallback<ComponentPartsFragmentSchema> FragmentChanged { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        if (Fragment == null)
+        {
+            Fragment = new ComponentPartsFragmentSchema
+            {
+                Attributes = new ComponentAttributeFragmentSchema[0],
+                ChildFragments = new ComponentPartsFragmentSchema[0]
+            };
+        }
+        
+        if (Fragment.Attributes == null)
+        {
+            Fragment.Attributes = new ComponentAttributeFragmentSchema[0];
+        }
+        
+        if (Fragment.ChildFragments == null)
+        {
+            Fragment.ChildFragments = new ComponentPartsFragmentSchema[0];
+        }
+    }
+
+    private async Task AddAttribute()
+    {
+        var attributes = Fragment.Attributes.ToList();
+        attributes.Add(new ComponentAttributeFragmentSchema
+        {
+            AttributeName = "",
+            AttributeClrType = "System.String",
+            AttributeValue = ""
+        });
+        Fragment.Attributes = attributes.ToArray();
+        await NotifyChange();
+    }
+
+    private async Task RemoveAttribute(int index)
+    {
+        if (index >= 0 && index < Fragment.Attributes.Length)
+        {
+            var attributes = Fragment.Attributes.ToList();
+            attributes.RemoveAt(index);
+            Fragment.Attributes = attributes.ToArray();
+            await NotifyChange();
+        }
+    }
+
+    private async Task AddChildFragment()
+    {
+        var children = Fragment.ChildFragments?.ToList() ?? new List<ComponentPartsFragmentSchema>();
+        children.Add(new ComponentPartsFragmentSchema
+        {
+            Attributes = new ComponentAttributeFragmentSchema[0],
+            ChildFragments = new ComponentPartsFragmentSchema[0]
+        });
+        Fragment.ChildFragments = children.ToArray();
+        await NotifyChange();
+    }
+
+    private async Task RemoveChildFragment(int index)
+    {
+        if (Fragment.ChildFragments != null && index >= 0 && index < Fragment.ChildFragments.Length)
+        {
+            var children = Fragment.ChildFragments.ToList();
+            children.RemoveAt(index);
+            Fragment.ChildFragments = children.ToArray();
+            await NotifyChange();
+        }
+    }
+
+    private async Task NotifyChange()
+    {
+        await FragmentChanged.InvokeAsync(Fragment);
+        StateHasChanged();
+    }
+}
+
+<style>
+    .component-fragment-editor .ant-card-small .ant-card-body {
+        padding: 12px;
+    }
+</style>

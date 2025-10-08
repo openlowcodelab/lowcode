@@ -1,4 +1,4 @@
-﻿@namespace H.LowCode.PartsDesignEngine
+@namespace H.LowCode.PartsDesignEngine
 
 @inherits DesignEngineLowCodeComponentBase
 @layout PartsDesignEngineLayout
@@ -14,7 +14,7 @@
         <Search Placeholder="组件名称" OnSearch="()=>{}" />
     </div>
     <div style="width:80px; float: right; line-height:32px; margin: 0 8px 0 0;">
-        <Button Type="@ButtonType.Primary" OnClick="@(()=> CreateAsync())">新建组件</Button>
+        <Button Type="@ButtonType.Primary" OnClick="@(()=> ShowAddComponentModal())">新建组件</Button>
     </div>
     <div style="clear:both;"></div>
 </div>
@@ -27,7 +27,7 @@ HidePagination="true" Style="height:100%;">
     <PropertyColumn Title="组件名称" Property="c=>c.Label" />
     <PropertyColumn Title="组件类型" Property="c=>c.ComponentType">
         <Tag Color="@(context.ComponentType == 1 ? "Green" : "Gold")">
-            @(context.ComponentType == 1 ? "原子组件" : "组合组件")
+            @(context.ComponentType == 1 ? "原子组件" : "低代码组件")
         </Tag>
     </PropertyColumn>
     <PropertyColumn Title="是否容器" Property="c=>c.IsContainer">
@@ -50,30 +50,32 @@ HidePagination="true" Style="height:100%;">
     <PropertyColumn Title="排序" Property="c=>c.Order" />
     <PropertyColumn Title="修改时间" Property="c=>c.ModifiedTime" Format="yyyy-MM-dd HH:mm:ss" />
     <ActionColumn Title="操作" Width="180">
-        @if (context.ComponentType == 1)
-        {
-            <a onclick="@(()=> EditAsync(@context.ComponentId))" style="color: #55c201">编辑</a>
-
-            <a onclick="@(()=> TextEditAsync(@context.ComponentId))">Json编辑</a>
-        }
-        else if (context.ComponentType == 2)
-        {
-            <a href="@($"/designer/componentparts/{context.ComponentId}")" target="_blank" style="padding: 7px;border: solid #b7eb8f 1px;border-radius: 2px;line-height: 11px;height: 26px;display: block;background-color: #f6ffed;color: #389e0d;">设计</a>
-        }
-
-        <a onclick="@(()=> DeleteAsync(@context.ComponentId))" style="color:#ff4d4f">删除</a>
+        <Space>
+            @if (context.ComponentType == 1)
+            {
+                <a href="@($"/myparts/component/editorpage/{LibraryId}/{context.ComponentId}")" target="_blank"
+                style="padding: 4px 8px; border: solid #52c41a 1px; border-radius: 4px; background-color: #f6ffed; color: #389e0d; text-decoration: none; font-size: 12px;">
+                    编辑
+                </a>
+            }
+            else if (context.ComponentType == 2)
+            {
+                <a href="@($"/myparts/page/designer/{context.ComponentId}")" target="_blank"
+                style="padding: 4px 8px; border: solid #1890ff 1px; border-radius: 4px; background-color: #e6f7ff; color: #1890ff; text-decoration: none; font-size: 12px;">
+                        设计
+                </a>
+            }
+        </Space>
+        <Space>
+            <a onclick="@(() => DeleteAsync(@context.ComponentId))" style="color:#ff4d4f; font-size: 12px;">删除</a>
+        </Space>
     </ActionColumn>
 </Table>
 
-<Modal Title="组件设计" @bind-Visible="@_formVisible" OnOk="OnConfirmAsync"
-Width="1500">
-    <StandardComponentPartsDesigner ComponentParts="_componentPartsSchema" @ref="_componentPartsForm" />
-</Modal>
-
-<Modal Title="组件Json文本编辑" @bind-Visible="@_textFormVisible" OnOk="OnTextFormConfirmAsync"
-Width="800" MaxBodyHeight="700">
-    <TextArea @bind-value="@_textFormValue" MinRows="5" Style="width: 100%;"></TextArea>
-</Modal>
+<!-- 新增组件模态框 -->
+<AddComponentModal @bind-Visible="@_showAddModal" 
+                   LibraryId="@LibraryId" 
+                   OnComponentCreated="@OnComponentCreated" />
 
 @code {
     [Parameter]
@@ -85,12 +87,8 @@ Width="800" MaxBodyHeight="700">
     IEnumerable<ComponentPartsListModel> selectedRows;
 
     private IList<ComponentPartsListModel> _componentPartsList;
-    private ComponentPartsSchema _componentPartsSchema = new ComponentPartsSchema();
-
-    private bool _formVisible = false;
-    private StandardComponentPartsDesigner _componentPartsForm;
-    private bool _textFormVisible = false;
-    private string _textFormValue;
+    private ComponentPartsSchema _componentPartsSchema;
+    private bool _showAddModal = false;
 
     IDictionary<string, (bool edit, ComponentAttributeFragmentSchema parameter)> _parameterEditCache = new Dictionary<string, (bool edit, ComponentAttributeFragmentSchema parameter)>();
 
@@ -114,40 +112,29 @@ Width="800" MaxBodyHeight="700">
         return await ComponentPartsAppService.GetByIdAsync(LibraryId, componentPartsId);
     }
 
-    private void CreateAsync()
+    private void ShowAddComponentModal()
     {
-        _componentPartsSchema = new ComponentPartsSchema();
-        _componentPartsSchema.LibraryId = LibraryId;
-        _formVisible = true;
-
-        StateHasChanged();
+        _showAddModal = true;
     }
 
-    private async Task DesignAsync(string componentId)
+    private async Task OnComponentCreated(ComponentPartsSchema componentParts)
     {
-        _componentPartsSchema = await GetComponentPartsAsync(componentId);
-        _formVisible = true;
-
+        // 刷新组件列表
+        _componentPartsList = await LoadComponentPartsListAsync();
         StateHasChanged();
+
+        // 根据组件类型跳转到不同的编辑页面
+        if (componentParts.ComponentType == 1) // 原子组件
+        {
+            NavigateTo($"/myparts/component/editorpage/{componentParts.LibraryId}/{componentParts.ComponentId}");
+        }
+        else if (componentParts.ComponentType == 2) // 低代码组件
+        {
+            NavigateTo($"/myparts/component/customdesigner/{componentParts.ComponentId}");
+        }
     }
 
-    private async Task EditAsync(string componentId)
-    {
-        _componentPartsSchema = await GetComponentPartsAsync(componentId);
-        _formVisible = true;
 
-        StateHasChanged();
-    }
-
-    private async Task TextEditAsync(string componentId)
-    {
-        _componentPartsSchema = await GetComponentPartsAsync(componentId);
-
-        _textFormValue = _componentPartsSchema.ToJson(writeIndented: true);
-        _textFormVisible = true;
-
-        StateHasChanged();
-    }
 
     private async Task DeleteAsync(string componentPartsId)
     {
@@ -156,33 +143,7 @@ Width="800" MaxBodyHeight="700">
         await Message.SuccessAsync("模拟删除成功！");
     }
 
-    private async Task OnConfirmAsync(MouseEventArgs e)
-    {
-        await _componentPartsForm.SubmitAsync();
-    }
 
-    private async Task OnTextFormConfirmAsync(MouseEventArgs e)
-    {
-        _componentPartsSchema = _textFormValue.FromJson<ComponentPartsSchema>();
-        var isSuccess = await SaveComponentPartsSchemaAsync();
-        if (isSuccess)
-        {
-            _textFormVisible = false;
-            _componentPartsList = await LoadComponentPartsListAsync();
-
-            await Message.SuccessAsync("保存成功！");
-        }
-        else
-        {
-            _textFormVisible = true;
-            await Message.ErrorAsync("保存失败");
-        }
-    }
-
-    private async Task<bool> SaveComponentPartsSchemaAsync()
-    {
-        return await ComponentPartsAppService.SaveAsync(_componentPartsSchema);
-    }
 
     private void GoToComponentLibraryList()
     {

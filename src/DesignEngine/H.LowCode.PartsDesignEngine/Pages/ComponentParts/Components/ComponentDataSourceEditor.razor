@@ -1,0 +1,101 @@
+@namespace H.LowCode.PartsDesignEngine
+@inherits DesignEngineLowCodeComponentBase
+
+<div class="component-datasource-editor">
+    <Card Title="数据源配置" Style="margin-bottom: 16px;">
+        <ChildContent>
+            <Row Gutter="16">
+                <Col Span="12">
+                    <FormItem Label="数据源分组类型">
+                        <EnumSelect TEnum="ComponentDataSourceGroupTypeEnum" @bind-Value="@DataSource.DataSourceGroupType" />
+                    </FormItem>
+                </Col>
+                <Col Span="12">
+                    <FormItem Label="数据源类型">
+                        <EnumSelect TEnum="ComponentDataSourceTypeEnum" @bind-Value="@DataSource.DataSourceType" />
+                    </FormItem>
+                </Col>
+            </Row>
+            
+            <Row Gutter="16">
+                <Col Span="8">
+                    <FormItem Label="数据源ID">
+                        <Input @bind-Value="@DataSource.DataSourceId" Placeholder="数据源唯一标识" />
+                    </FormItem>
+                </Col>
+                <Col Span="8">
+                    <FormItem Label="数据源名称">
+                        <Input @bind-Value="@DataSource.DataSourceName" Placeholder="数据源显示名称" />
+                    </FormItem>
+                </Col>
+                <Col Span="8">
+                    <FormItem Label="数据源值">
+                        <Input @bind-Value="@DataSource.DataSourceValue" Placeholder="数据源值" />
+                    </FormItem>
+                </Col>
+            </Row>
+            
+            @if (DataSource.DataSourceType == ComponentDataSourceTypeEnum.Fiexd)
+            {
+                <FormItem Label="固定选项数据源">
+                    <FixedOptionDataSourceEditor @bind-Options="@DataSource.FiexdOptionDataSource" />
+                </FormItem>
+            }
+            else if (DataSource.DataSourceType == ComponentDataSourceTypeEnum.API)
+            {
+                <FormItem Label="API选项数据源">
+                    <APIDataSourceEditor @bind-DataSource="@DataSource.APIOptionDataSource" />
+                </FormItem>
+            }
+            else if (DataSource.DataSourceType == ComponentDataSourceTypeEnum.SQL)
+            {
+                <FormItem Label="SQL选项数据源">
+                    <SQLDataSourceEditor @bind-DataSource="@DataSource.SQLOptionDataSource" />
+                </FormItem>
+            }
+            
+            @if (DataSource.DataSourceFragment != null)
+            {
+                <FormItem Label="数据源Fragment">
+                    <ComponentFragmentEditor @bind-Fragment="@DataSource.DataSourceFragment" />
+                </FormItem>
+            }
+            else
+            {
+                <Button Type="@ButtonType.Dashed" OnClick="AddDataSourceFragment" Icon="plus">添加数据源Fragment</Button>
+            }
+        </ChildContent>
+    </Card>
+</div>
+
+@code {
+    [Parameter]
+    public ComponentPartsDataSourceSchema DataSource { get; set; }
+    
+    [Parameter]
+    public EventCallback<ComponentPartsDataSourceSchema> DataSourceChanged { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        if (DataSource == null)
+        {
+            DataSource = new ComponentPartsDataSourceSchema();
+        }
+    }
+
+    private async Task AddDataSourceFragment()
+    {
+        DataSource.DataSourceFragment = new ComponentPartsFragmentSchema
+        {
+            Attributes = new ComponentAttributeFragmentSchema[0],
+            ChildFragments = new ComponentPartsFragmentSchema[0]
+        };
+        await NotifyChange();
+    }
+
+    private async Task NotifyChange()
+    {
+        await DataSourceChanged.InvokeAsync(DataSource);
+        StateHasChanged();
+    }
+}

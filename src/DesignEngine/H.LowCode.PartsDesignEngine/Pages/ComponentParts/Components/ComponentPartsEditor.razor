@@ -1,0 +1,162 @@
+@namespace H.LowCode.PartsDesignEngine
+@inherits DesignEngineLowCodeComponentBase
+
+<div class="component-parts-editor">
+    <AntDesign.Tabs DefaultActiveKey="basic" TabPosition="@TabPosition.Top">
+        <AntDesign.TabPane Key="basic" Tab="基本信息">
+            <AntDesign.Card Title="组件基本信息" Size="@CardSize.Small">
+                <AntDesign.ChildContent>
+                    <Form TModel="ComponentPartsSchema" Model="@ComponentParts">
+                        <AntDesign.Row Gutter="16">
+                            <AntDesign.Col Span="12">
+                                <FormItem Label="组件名称" Required>
+                                    <Input @bind-Value="@ComponentParts.Name" Placeholder="组件名称" />
+                                </FormItem>
+                            </AntDesign.Col>
+                            <AntDesign.Col Span="12">
+                                <FormItem Label="显示名称">
+                                    <Input @bind-Value="@ComponentParts.ComponentName" Placeholder="显示名称" />
+                                </FormItem>
+                            </AntDesign.Col>
+                        </AntDesign.Row>
+                        
+                        <AntDesign.Row Gutter="16">
+                            <AntDesign.Col Span="8">
+                                <FormItem Label="组件类型">
+                                    <RadioGroup @bind-Value="@ComponentParts.ComponentType">
+                                        <Radio RadioButton Value="1">原子组件</Radio>
+                                        <Radio RadioButton Value="2">低代码组件</Radio>
+                                    </RadioGroup>
+                                </FormItem>
+                            </AntDesign.Col>
+                            <AntDesign.Col Span="8">
+                                <FormItem Label="排序">
+                                    <InputNumber @bind-Value="@ComponentParts.Order" Min="0" />
+                                </FormItem>
+                            </AntDesign.Col>
+                        </AntDesign.Row>
+                        
+                        <FormItem Label="组件描述">
+                            <TextArea @bind-Value="@ComponentParts.Description" Rows="3" Placeholder="组件描述" />
+                        </FormItem>
+                        
+                        <AntDesign.Row Gutter="16">
+                            <AntDesign.Col Span="12">
+                                <FormItem Label="版本">
+                                    <Input @bind-Value="@ComponentParts.Version" Placeholder="版本号" />
+                                </FormItem>
+                            </AntDesign.Col>
+                        </AntDesign.Row>
+                    </Form>
+                </AntDesign.ChildContent>
+            </AntDesign.Card>
+        </AntDesign.TabPane>
+        
+        <AntDesign.TabPane Key="attributes" Tab="属性定义">
+            <AttributeDefineGroupEditor @bind-AttributeDefineGroups="@ComponentParts.AttributeDefineGroups" />
+        </AntDesign.TabPane>
+        
+        <AntDesign.TabPane Key="fragment" Tab="组件片段">
+            <ComponentFragmentEditor @bind-Fragment="@ComponentParts.Fragment" />
+        </AntDesign.TabPane>
+        
+        <AntDesign.TabPane Key="datasource" Tab="数据源">
+            <ComponentDataSourceEditor @bind-DataSource="@ComponentParts.DataSource" />
+        </AntDesign.TabPane>
+        
+        <AntDesign.TabPane Key="events" Tab="事件定义">
+            <EventDefineEditor @bind-EventDefines="@ComponentParts.EventDefines" />
+        </AntDesign.TabPane>
+        
+        <AntDesign.TabPane Key="styles" Tab="样式定义">
+            <StyleDefineEditor StyleDefines="@ComponentParts.StyleDefines" />
+        </AntDesign.TabPane>
+    </AntDesign.Tabs>
+    
+    <div class="editor-actions" style="margin-top: 16px; text-align: right;">
+        <AntDesign.Space>
+            <AntDesign.SpaceItem>
+                <AntDesign.Button OnClick="OnCancel">取消</AntDesign.Button>
+            </AntDesign.SpaceItem>
+            <AntDesign.SpaceItem>
+                <AntDesign.Button Type="AntDesign.ButtonType.Primary" OnClick="HandleSave" Loading="@_saving">保存</AntDesign.Button>
+            </AntDesign.SpaceItem>
+        </AntDesign.Space>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public ComponentPartsSchema ComponentParts { get; set; }
+    
+    [Parameter]
+    public EventCallback<ComponentPartsSchema> ComponentPartsChanged { get; set; }
+    
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+    
+    [Parameter]
+    public EventCallback<ComponentPartsSchema> OnSave { get; set; }
+
+    private bool _saving = false;
+
+    protected override void OnParametersSet()
+    {
+        if (ComponentParts == null)
+        {
+            ComponentParts = new ComponentPartsSchema
+            {
+                ComponentType = 1,
+                Order = 0,
+                AttributeDefineGroups = new List<ComponentPartsAttributeDefineGroupSchema>(),
+                EventDefines = new List<ComponentPartsEventDefineSchema>(),
+                StyleDefines = new List<ComponentPartsStyleDefineSchema>()
+            };
+        }
+        
+        // 确保集合不为空
+        if (ComponentParts.AttributeDefineGroups == null)
+        {
+            ComponentParts.AttributeDefineGroups = new List<ComponentPartsAttributeDefineGroupSchema>();
+        }
+        
+        if (ComponentParts.EventDefines == null)
+        {
+            ComponentParts.EventDefines = new List<ComponentPartsEventDefineSchema>();
+        }
+        
+        if (ComponentParts.StyleDefines == null)
+        {
+            ComponentParts.StyleDefines = new List<ComponentPartsStyleDefineSchema>();
+        }
+    }
+
+    private async Task HandleSave()
+    {
+        _saving = true;
+        try
+        {
+            await ComponentPartsChanged.InvokeAsync(ComponentParts);
+            await OnSave.InvokeAsync(ComponentParts);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+}
+
+<style>
+    .component-parts-editor .ant-tabs-content-holder {
+        padding: 16px 0;
+    }
+    
+    .component-parts-editor .ant-card-small .ant-card-body {
+        padding: 16px;
+    }
+    
+    .editor-actions {
+        border-top: 1px solid #f0f0f0;
+        padding-top: 16px;
+    }
+</style>

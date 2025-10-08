@@ -1,0 +1,90 @@
+@namespace H.LowCode.PartsDesignEngine
+@inherits DesignEngineLowCodeComponentBase
+@using AntDesign
+
+<div class="event-define-editor">
+    @if (EventDefines != null && EventDefines.Count > 0)
+    {
+        @for (int i = 0; i < EventDefines.Count; i++)
+        {
+            var eventDefine = EventDefines[i];
+            <AntDesign.Card Size="@CardSize.Small" Style="margin-bottom: 12px;">
+                <AntDesign.ChildContent>
+                    <AntDesign.Row Gutter="16">
+                        <AntDesign.Col Span="8">
+                            <AntDesign.FormItem Label="事件名称" Required>
+                                <AntDesign.Input @bind-Value="eventDefine.Name" Placeholder="请输入事件名称" />
+                            </AntDesign.FormItem>
+                        </AntDesign.Col>
+                        <AntDesign.Col Span="8">
+                            <AntDesign.FormItem Label="事件类型" Required>
+                                <AntDesign.Select TItemValue="string" TItem="string" @bind-Value="eventDefine.EventType" Placeholder="请选择事件类型">
+                                    <AntDesign.SelectOption TItemValue="string" TItem="string" Value="@("click")">点击事件</AntDesign.SelectOption>
+                                    <AntDesign.SelectOption TItemValue="string" TItem="string" Value="@("change")">值变更事件</AntDesign.SelectOption>
+                                    <AntDesign.SelectOption TItemValue="string" TItem="string" Value="@("focus")">获得焦点</AntDesign.SelectOption>
+                                    <AntDesign.SelectOption TItemValue="string" TItem="string" Value="@("blur")">失去焦点</AntDesign.SelectOption>
+                                    <AntDesign.SelectOption TItemValue="string" TItem="string" Value="@("submit")">提交事件</AntDesign.SelectOption>
+                                    <AntDesign.SelectOption TItemValue="string" TItem="string" Value="@("custom")">自定义事件</AntDesign.SelectOption>
+                                </AntDesign.Select>
+                            </AntDesign.FormItem>
+                        </AntDesign.Col>
+                        <AntDesign.Col Span="8">
+                            <AntDesign.FormItem Label="参数定义">
+                                <AntDesign.TextArea @bind-Value="eventDefine.ParameterType" Rows="2" Placeholder="请输入参数定义" />
+                            </AntDesign.FormItem>
+                        </AntDesign.Col>
+                    </AntDesign.Row>
+                    <AntDesign.Row Gutter="16">
+                        <AntDesign.Col Span="12">
+                            <AntDesign.FormItem Label="描述">
+                                <AntDesign.Input @bind-Value="eventDefine.Description" Placeholder="事件描述" />
+                            </AntDesign.FormItem>
+                        </AntDesign.Col>
+                        <AntDesign.Col Span="12">
+                            <AntDesign.FormItem Label="操作">
+                                <AntDesign.Button Type="@ButtonType.Text" Icon="delete" Size="@ButtonSize.Small" OnClick="@(() => RemoveEvent(i))" Danger>删除事件</AntDesign.Button>
+                            </AntDesign.FormItem>
+                        </AntDesign.Col>
+                    </AntDesign.Row>
+                </AntDesign.ChildContent>
+            </AntDesign.Card>
+        }
+    }
+    else
+    {
+        <AntDesign.Empty Description="@("暂无事件定义")" />
+    }
+    <AntDesign.Button Type="@ButtonType.Dashed" Block OnClick="@AddEvent" Icon="plus">添加事件</AntDesign.Button>
+</div>
+
+@code {
+    [Parameter]
+    public List<ComponentPartsEventDefineSchema> EventDefines { get; set; }
+
+    [Parameter]
+    public EventCallback<List<ComponentPartsEventDefineSchema>> EventDefinesChanged { get; set; }
+
+    private async Task AddEvent()
+    {
+        EventDefines ??= new List<ComponentPartsEventDefineSchema>();
+        EventDefines.Add(new ComponentPartsEventDefineSchema
+        {
+            Name = "",
+            EventType = "click",
+            ParameterType = "",
+            Description = ""
+        });
+        await EventDefinesChanged.InvokeAsync(EventDefines);
+        StateHasChanged();
+    }
+
+    private async Task RemoveEvent(int index)
+    {
+        if (EventDefines != null && index >= 0 && index < EventDefines.Count)
+        {
+            EventDefines.RemoveAt(index);
+            await EventDefinesChanged.InvokeAsync(EventDefines);
+            StateHasChanged();
+        }
+    }
+}
