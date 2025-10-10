@@ -50,6 +50,9 @@
 * MenuSchema：菜单的元数据定义，包含菜单项的组织方式和行为特性。
 
 ### 设计引擎
+#### 启动项目
+设计引擎启动项目 H.LowCode.DesignEngine.Host
+
 #### 物料
 物料的管理对应 H.LowCode.PartsDesignEngine 项目, 物料主要包含组件、主题等，物料的元数据定义在 H.LowCode.MetaSchema.DesignEngine 项目中。
 
@@ -65,6 +68,10 @@
 * 配置面板：对选中的组件进行属性、样式和事件的配置。
 
 ### 渲染引擎
+#### 启动项目
+设计引擎启动项目 H.LowCode.DesignEngine.Host
+
+#### 页面渲染
 渲染引擎负责根据页面的元数据文件，动态生成 Blazor 组件树，并在前端页面中渲染出来。渲染引擎位于 H.LowCode.RenderEngine 项目中，主要负责以下几个方面的功能：
 * 元数据解析：读取页面的元数据文件，解析出组件、样式、事件等信息。
 * 组件渲染：根据解析出的元数据，动态创建 Blazor 组件实例，并将其添加到组件树中。

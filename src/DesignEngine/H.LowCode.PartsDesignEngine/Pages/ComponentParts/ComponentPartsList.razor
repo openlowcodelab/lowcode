@@ -138,9 +138,26 @@ HidePagination="true" Style="height:100%;">
 
     private async Task DeleteAsync(string componentPartsId)
     {
-        //await ComponentPartsAppService.DeleteAsync(LibraryId, componentPartsId);
-
-        await Message.SuccessAsync("模拟删除成功！");
+        try
+        {
+            await ComponentPartsAppService.DeleteAsync(LibraryId, componentPartsId);
+            
+            // 重新加载组件列表
+            _componentPartsList = await LoadComponentPartsListAsync();
+            StateHasChanged();
+            
+            await Message.SuccessAsync("组件删除成功！");
+            
+            // 通知父组件刷新
+            if (Refresh != null)
+            {
+                Refresh();
+            }
+        }
+        catch (Exception ex)
+        {
+            await Message.ErrorAsync($"删除失败：{ex.Message}");
+        }
     }
 
 

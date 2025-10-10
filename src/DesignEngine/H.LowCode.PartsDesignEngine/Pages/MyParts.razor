@@ -1,4 +1,4 @@
-﻿@page "/myparts/{Tab?}"
+@page "/myparts/{Tab?}"
 @namespace H.LowCode.PartsDesignEngine
 @inherits LowCodePageComponentBase
 @layout DesignEngineNavLayout
@@ -10,17 +10,13 @@
         <AppPartsList></AppPartsList>
     </TabPane>
     <TabPane Tab="组件库" Key="componentlibraries">
-        @if (string.IsNullOrEmpty(LibraryId))
-        {
-            <ComponentLibraryList Refresh="Refresh"></ComponentLibraryList>
-        }
-        else
-        {
-            <ComponentPartsList LibraryId="@LibraryId" Refresh="Refresh"></ComponentPartsList>
-        }
+        <ComponentLibraryManager Refresh="Refresh"></ComponentLibraryManager>
     </TabPane>
     <TabPane Tab="页面库" Key="pages">
         <PageLibraryList></PageLibraryList>
+    </TabPane>
+    <TabPane Tab="主题" Key="themes">
+        <ThemePartsList></ThemePartsList>
     </TabPane>
 </Tabs>
 
