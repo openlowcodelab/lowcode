@@ -71,8 +71,6 @@ else
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseHttpsRedirection();
 
-app.UseAntiforgery();
-
 app.UseResponseCompression();
 app.UseStaticFiles(new StaticFileOptions
 {
@@ -91,6 +89,7 @@ app.MapControllers();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()
-    .AddAdditionalAssemblies(LowCodeGlobalVariables.AdditionalAssemblies);  //LowCode
+    .AddAdditionalAssemblies(LowCodeGlobalVariables.AdditionalAssemblies)  //LowCode
+    .AllowAnonymous();
 
 await app.RunAsync();

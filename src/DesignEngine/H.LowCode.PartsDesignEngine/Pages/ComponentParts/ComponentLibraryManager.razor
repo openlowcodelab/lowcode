@@ -1,7 +1,6 @@
 @namespace H.LowCode.PartsDesignEngine
 @inherits DesignEngineLowCodeComponentBase
 @layout PartsDesignEngineLayout
-
 @inject IComponentLibraryAppService ComponentLibraryAppService
 @inject IComponentPartsAppService ComponentPartsAppService
 
@@ -97,8 +96,8 @@
                                         </Menu>
                                     </Overlay>
                                     <ChildContent>
-                                        <Button Type="@ButtonType.Text" Size="@ButtonSize.Small" Icon="more" 
-                                                @onclick:stopPropagation="true" />
+                                        <Button Type="@ButtonType.Text" Size="@ButtonSize.Small" Icon="more"
+                                                Disabled="!RendererInfo.IsInteractive" />
                                     </ChildContent>
                                 </Dropdown>
                             </div>
@@ -175,14 +174,11 @@
                                                 @component.ModifiedTime.ToString("MM-dd HH:mm")
                                             </span>
                                             <div style="display: flex; gap: 8px;">
-                                                @if (component.ComponentType == 1)
-                                                {
-                                                    <Button Type="@ButtonType.Link" Size="@ButtonSize.Small" 
-                                                            OnClick="@(() => EditComponent(component))">
-                                                        编辑
-                                                    </Button>
-                                                }
-                                                else if (component.ComponentType == 2)
+                                                <Button Type="@ButtonType.Link" Size="@ButtonSize.Small" 
+                                                        OnClick="@(() => EditComponent(component))">
+                                                    编辑
+                                                </Button>
+                                                @if (component.ComponentType == 2)
                                                 {
                                                     <Button Type="@ButtonType.Link" Size="@ButtonSize.Small" 
                                                             OnClick="@(() => DesignComponent(component))">
