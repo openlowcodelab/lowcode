@@ -4,7 +4,6 @@
 @layout PartsDesignEngineLayout
 
 @inject IComponentPartsAppService ComponentPartsAppService
-@inject ComponentState<ComponentPartsList, IList<ComponentPartsListModel>> ComponentPartsListState
 
 <div style="margin: 0 0 8px 0;">
     <div style="width:60px; float: left;">
@@ -84,9 +83,11 @@ HidePagination="true" Style="height:100%;">
     [Parameter]
     public Action Refresh { get; set; }
 
+    [PersistentState]
+    public IList<ComponentPartsListModel> _componentPartsList { get; set; }
+
     IEnumerable<ComponentPartsListModel> selectedRows;
 
-    private IList<ComponentPartsListModel> _componentPartsList;
     private ComponentPartsSchema _componentPartsSchema;
     private bool _showAddModal = false;
 
@@ -96,10 +97,7 @@ HidePagination="true" Style="height:100%;">
     {
         await base.OnInitializedAsync();
 
-        _componentPartsList = await ComponentPartsListState.GetOrAddAsync(this, async () =>
-        {
-            return await LoadComponentPartsListAsync();
-        });
+        _componentPartsList = await LoadComponentPartsListAsync();
     }
 
     private async Task<IList<ComponentPartsListModel>> LoadComponentPartsListAsync()

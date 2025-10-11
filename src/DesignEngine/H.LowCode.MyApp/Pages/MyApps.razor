@@ -4,7 +4,6 @@
 @layout DesignEngineNavLayout
 
 @inject IAppApplicationService AppApplicationService
-@inject ComponentState<MyApps, IList<AppListModel>> MyAppsState
 
 <PageTitle>我的应用 - H.LowCode</PageTitle>
 
@@ -96,7 +95,9 @@
 </Modal>
 
 @code {
-    private IList<AppListModel> _appList;
+    [PersistentState]
+    public IList<AppListModel> _appList { get; set; }
+
     private AppPartsSchema _currentApp;
 
     private bool _createVisible = false;
@@ -109,10 +110,7 @@
     {
         await base.OnInitializedAsync();
 
-        _appList = await MyAppsState.GetOrAddAsync(this, async () =>
-        {
-            return await LoadAppsAsync();
-        });
+        _appList = await LoadAppsAsync();
     }
 
     private async Task<IList<AppListModel>> LoadAppsAsync()

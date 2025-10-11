@@ -2,7 +2,6 @@
 @inherits DesignEngineLowCodeComponentBase
 
 @inject IDataSourceAppService DataSourceAppService
-@inject ComponentState<TableDataSourceList, IList<DataSourceListModel>> DataSourceListState
 
 <div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
     <div style="width:250px;">
@@ -162,9 +161,11 @@
     [Parameter]
     public string AppId { get; set; }
 
+    [PersistentState]
+    public IList<DataSourceListModel> _dataSourceList { get; set; }
+
     IDictionary<string, (bool edit, TableFieldSchema field)> _fieldEditCache = new Dictionary<string, (bool edit, TableFieldSchema field)>();
 
-    private IList<DataSourceListModel> _dataSourceList;
     private DataSourceSchema _dataSource;
 
     int _pageIndex = 1;
@@ -179,10 +180,7 @@
         await base.OnInitializedAsync();
 
         _total = 50;
-        _dataSourceList = await DataSourceListState.GetOrAddAsync(this, async () =>
-        {
-            return await LoadDataSourcesAsync(1, 50);
-        });
+        _dataSourceList = await LoadDataSourcesAsync(1, 50);
     }
 
     private async Task<IList<DataSourceListModel>> LoadDataSourcesAsync(int pageIndex, int pageSize)

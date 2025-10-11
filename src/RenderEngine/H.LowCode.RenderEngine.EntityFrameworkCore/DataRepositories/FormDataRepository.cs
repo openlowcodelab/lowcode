@@ -16,6 +16,10 @@ public class FormDataRepository : IFormDataRepository
     private readonly IDbContextFactory<RenderEngineDbContext> _dbContextFactory;
     public bool? IsChangeTrackingEnabled => true;
 
+    public string? EntityName { get; set; }
+
+    public string ProviderName => throw new NotImplementedException();
+
     public FormDataRepository(IDbContextFactory<RenderEngineDbContext> dbContextFactory)
     {
         _dbContextFactory = dbContextFactory;

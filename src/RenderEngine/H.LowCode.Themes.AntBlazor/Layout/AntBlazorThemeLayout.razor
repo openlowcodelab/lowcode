@@ -1,8 +1,6 @@
 ﻿@namespace H.LowCode.Themes.AntBlazor
 @inherits ThemePartLayoutBase
 
-@inject ComponentState<AntBlazorThemeLayout, MenuDataItem[]> MenuDataState
-
 <link href="@Assets["_content/H.LowCode.Themes.AntBlazor/renderengine.css"]" rel="stylesheet" />
 
 <style>
@@ -38,19 +36,17 @@
 
 @code
 {
-    private MenuDataItem[] _menuDataItems;
+    [PersistentState]
+    public MenuDataItem[]? _menuDataItems { get; set; }
 
-    private ErrorBoundary errorBoundary;
+    private ErrorBoundary? errorBoundary;
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
 
-        _menuDataItems = await MenuDataState.GetOrAddAsync(this, async () =>
-        {
-            var menus = await base.GetMenusAsync(AppId);
-            return ConvertMenus(AppId, menus);
-        });
+        var menus = await base.GetMenusAsync(AppId);
+        _menuDataItems = ConvertMenus(AppId, menus);
     }
 
     protected override void OnParametersSet()

@@ -2,7 +2,6 @@
 @inherits DesignEngineLowCodeComponentBase
 
 @inject IDataSourceAppService DataSourceAppService
-@inject ComponentState<APIDataSourceList, IList<DataSourceListModel>> APIListState
 
 <div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
     <div style="width:250px;">
@@ -56,6 +55,9 @@
     [Parameter]
     public string AppId { get; set; }
 
+    [PersistentState]
+    public IList<DataSourceListModel> _dataSourceList { get; set; }
+
     int _pageIndex = 1;
     int _pageSize = 10;
     int _total = 0;
@@ -63,7 +65,6 @@
     private bool _visible;
     private string _modalTitle;
     private Form<DataSourceSchema> _form;
-    private IList<DataSourceListModel> _dataSourceList;
     private DataSourceSchema _dataSource = new DataSourceSchema();
 
     protected override async Task OnInitializedAsync()
@@ -71,10 +72,7 @@
         await base.OnInitializedAsync();
 
         _total = 50;
-        _dataSourceList = await APIListState.GetOrAddAsync(this, async () =>
-        {
-            return await LoadDataSourcesAsync(1, 50);
-        });
+        _dataSourceList = await LoadDataSourcesAsync(1, 50);
     }
 
     private async Task<IList<DataSourceListModel>> LoadDataSourcesAsync(int pageIndex, int pageSize)

@@ -1,4 +1,4 @@
-﻿using H.LowCode.Application.Contracts;
+using H.LowCode.Application.Contracts;
 using H.LowCode.ComponentBase;
 using H.LowCode.Components.Defaults;
 using H.LowCode.RenderEngine.Application.Contracts;
@@ -22,9 +22,7 @@ namespace H.LowCode.RenderEngine.Host.Client;
     //Components
     typeof(LowCodeDefaultComponentModule),
     //Themes
-    typeof(AntBlazorThemeModule),
-    //ComponentBase
-    typeof(LowCodeComponentBaseModule)
+    typeof(AntBlazorThemeModule)
     )]
 public class RenderEngineHostClientModule : AbpModule
 {

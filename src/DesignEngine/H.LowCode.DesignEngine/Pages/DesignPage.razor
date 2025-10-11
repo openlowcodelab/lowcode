@@ -5,7 +5,6 @@
 
 @inject IPageAppService PageAppService
 @inject DragDropStateService DragDropStateService
-@inject ComponentState<DesignPage, PagePartsSchema> PagePartsSchemaState
 
 <PageTitle>@($"{_pageCascadingModel.PageName} - 页面设计器")</PageTitle>
 
@@ -47,12 +46,14 @@
 @code
 {
     [Parameter]
-    public string AppId { get; set; }
+    public required string AppId { get; set; }
 
     [Parameter]
     public string PageId { get; set; }
 
-    private PagePartsSchema _pageSchema;
+    [PersistentState]
+    public required PagePartsSchema _pageSchema { get; set; }
+
     private PageCascadingModel _pageCascadingModel;
     private bool _isNewPage;
 
@@ -62,10 +63,8 @@
 
         _pageCascadingModel = new() { AppId = AppId, PageId = PageId, PageName = "..." };
 
-        _pageSchema = await PagePartsSchemaState.GetOrAddAsync(this, async () =>
-        {
-            return await LoadPageSchemaAsync();
-        });
+        _pageSchema = await LoadPageSchemaAsync();
+
         SetPageCascadingModel(_pageSchema);
     }
 

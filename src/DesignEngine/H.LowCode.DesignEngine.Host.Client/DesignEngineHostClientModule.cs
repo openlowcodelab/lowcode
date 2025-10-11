@@ -1,4 +1,4 @@
-﻿using H.LowCode.Application.Contracts;
+using H.LowCode.Application.Contracts;
 using H.LowCode.ComponentBase;
 using H.LowCode.Components.Defaults;
 using H.LowCode.DesignEngine.Application.Contracts;
@@ -26,9 +26,7 @@ namespace H.LowCode.DesignEngine.Host.Client;
     typeof(MyAppModule),
     typeof(PartsDesignEngineModule),
     //Components
-    typeof(LowCodeDefaultComponentModule),
-    //ComponentBase
-    typeof(LowCodeComponentBaseModule)
+    typeof(LowCodeDefaultComponentModule)
     )]
 public class DesignEngineHostClientModule : AbpModule
 {

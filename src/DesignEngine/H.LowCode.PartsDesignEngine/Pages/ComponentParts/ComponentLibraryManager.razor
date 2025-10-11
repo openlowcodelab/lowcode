@@ -4,8 +4,6 @@
 
 @inject IComponentLibraryAppService ComponentLibraryAppService
 @inject IComponentPartsAppService ComponentPartsAppService
-@inject ComponentState<ComponentLibraryManager, IList<ComponentLibrarySchema>> ComponentLibrariesState
-@inject ComponentState<ComponentLibraryManager, IList<ComponentPartsListModel>> ComponentPartsListState
 
 <style>
     .library-item {
@@ -100,7 +98,7 @@
                                     </Overlay>
                                     <ChildContent>
                                         <Button Type="@ButtonType.Text" Size="@ButtonSize.Small" Icon="more" 
-                                                @onclick:stopPropagation />
+                                                @onclick:stopPropagation="true" />
                                     </ChildContent>
                                 </Dropdown>
                             </div>
@@ -261,21 +259,19 @@
 </style>
 
 @code {
-    [Parameter]
-    public Action Refresh { get; set; }
+    [PersistentState]
+    public IList<ComponentLibrarySchema> _componentLibraries { get; set; }
 
-    // 数据字段
-    private IList<ComponentLibrarySchema> _componentLibraries;
     private IList<ComponentPartsListModel> _componentParts;
-    
+
     private string _selectedLibraryId;
     private ComponentLibrarySchema _selectedLibrary;
     private bool _componentPartsLoading = false;
-    
+
     // 搜索
     private string _librarySearchText = "";
     private string _componentSearchText = "";
-    
+
     // 模态框
     private bool _libraryModalVisible = false;
     private bool _isEditingLibrary = false;
@@ -287,7 +283,7 @@
     {
         await base.OnInitializedAsync();
         await LoadComponentLibrariesAsync();
-        
+
         // 默认选中第一个组件库
         if (_componentLibraries != null && _componentLibraries.Any())
         {
@@ -297,36 +293,33 @@
 
     private async Task LoadComponentLibrariesAsync()
     {
-        _componentLibraries = await ComponentLibrariesState.GetOrAddAsync(this, async () =>
-        {
-            return await ComponentLibraryAppService.GetListAsync();
-        });
+        _componentLibraries = await ComponentLibraryAppService.GetListAsync();
     }
 
     private async Task OnLibraryCreated()
     {
         // 重新加载组件库列表
         await LoadComponentLibrariesAsync();
-        
+
         // 选择新创建的组件库
         if (_currentComponentLibrary != null)
         {
             await SelectLibraryAsync(_currentComponentLibrary);
         }
-        
+
         // 重置状态
         _currentComponentLibrary = null;
         _isEditingLibrary = false;
-        
+
         await Message.SuccessAsync("操作成功");
-        StateHasChanged();
+        //StateHasChanged();
     }
 
     private async Task SelectLibraryAsync(ComponentLibrarySchema library)
     {
         _selectedLibraryId = library.LibraryId;
         await LoadComponentPartsAsync();
-        StateHasChanged();
+        //StateHasChanged();
     }
 
     private async Task LoadComponentPartsAsync()
@@ -334,24 +327,24 @@
         if (string.IsNullOrEmpty(_selectedLibraryId))
             return;
 
-        _componentParts = await ComponentPartsListState.GetOrAddAsync(this, async () =>
-        {
-            return await ComponentPartsAppService.GetListAsync(_selectedLibraryId);
-        });
+        // _componentParts = await ComponentPartsListState.GetOrAddAsync(typeof(IList<ComponentPartsListModel>),
+        //     async () =>
+        // {
+        //     return await ComponentPartsAppService.GetListAsync(_selectedLibraryId);
+        // });
+        _componentParts = await ComponentPartsAppService.GetListAsync(_selectedLibraryId);
     }
-
-
 
     private void OnSearchLibrary(string searchText)
     {
         _librarySearchText = searchText ?? "";
-        StateHasChanged();
+        //StateHasChanged();
     }
 
     private void OnSearchComponent(string searchText)
     {
         _componentSearchText = searchText ?? "";
-        StateHasChanged();
+        //StateHasChanged();
     }
 
     private IEnumerable<ComponentLibrarySchema> FilteredLibraries =>
@@ -375,7 +368,7 @@
         _currentComponentLibrary = new();
         _isEditingLibrary = false;
         _libraryModalVisible = true;
-        StateHasChanged();
+        // StateHasChanged();
     }
 
     private void EditLibrary(string libraryId)
@@ -383,7 +376,7 @@
         _currentComponentLibrary = _componentLibraries?.FirstOrDefault(x => x.LibraryId == libraryId);
         _isEditingLibrary = true;
         _libraryModalVisible = true;
-        StateHasChanged();
+        // StateHasChanged();
     }
 
     private async Task OnLibraryConfirm(MouseEventArgs e)
@@ -429,7 +422,7 @@
         }
         
         await Message.SuccessAsync("删除成功");
-        StateHasChanged();
+        // StateHasChanged();
     }
 
     #endregion
@@ -483,7 +476,7 @@
             await LoadComponentPartsAsync();
             
             await Message.SuccessAsync("组件删除成功！");
-            StateHasChanged();
+            // StateHasChanged();
         }
         catch (Exception ex)
         {

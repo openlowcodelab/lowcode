@@ -2,8 +2,6 @@
 @inherits LowCodeLayoutComponentBase
 
 @inject IAppApplicationService AppApplicationService
-@inject ComponentState<MyAppLayout, MenuDataItem[]> MenuDataState
-@inject ComponentState<AppPartsSchema> AppState
 
 <link href="@Assets["_content/H.LowCode.MyApp/myapp.css"]" rel="stylesheet" />
 
@@ -26,23 +24,18 @@
 
 @code
 {
-    private AppPartsSchema _appSchema;
-    private MenuDataItem[] _menuDataItems;
+    [PersistentState]
+    public AppPartsSchema _appSchema { get; set; }
+    [PersistentState]
+    public MenuDataItem[] _menuDataItems { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
 
-        _appSchema = await AppState.GetOrAddAsync(typeof(AppPartsSchema), async () =>
-        {
-            return await GetAppSchemaAsync(AppId);
-        });
+        _appSchema = await GetAppSchemaAsync(AppId);
 
-        _menuDataItems = await MenuDataState.GetOrAddAsync(this, async () =>
-        {
-            var menus = InitMenuData(AppId);
-            return await Task.FromResult(menus);
-        });
+        _menuDataItems = InitMenuData(AppId);
     }
 
     private async Task<AppPartsSchema> GetAppSchemaAsync(string appId)

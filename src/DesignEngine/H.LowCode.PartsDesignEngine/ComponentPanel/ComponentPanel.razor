@@ -3,8 +3,6 @@
 
 @inject IComponentLibraryAppService ComponentLibraryAppService
 @inject IComponentPartsAppService ComponentPartsAppService
-@* @inject ComponentState<ComponentPanel, IList<ComponentLibrarySchema>> ComponentLibrariesState *@
-@inject ComponentState<ComponentPanel, IList<ComponentPartsSchema>> ComponentPartsListState
 
 <Tabs TabPosition="@TabPosition.Left" DefaultActiveKey="1" Class="componentpanel" Size="@TabSize.Small" Style="padding-left:8px;">
     <TabPane Key="1">
@@ -42,7 +40,8 @@
 </Tabs>
 
 @code {
-    private IList<ComponentPartsSchema> _componentPartsList;
+    [PersistentState]
+    public IList<ComponentPartsSchema> _componentPartsList { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -52,10 +51,7 @@
         // {
         //     return await LoadComponentLibraries();
         // });
-        _componentPartsList = await ComponentPartsListState.GetOrAddAsync(this, async () =>
-        {
-            return await LoadComponentPartsAsync();
-        });
+        _componentPartsList = await LoadComponentPartsAsync();
     }
 
     private async Task<IList<ComponentLibrarySchema>> LoadComponentLibraries()

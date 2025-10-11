@@ -2,7 +2,6 @@
 @inherits RenderEngineLowCodeComponentBase
 
 @inject IFormDataAppService FormDataAppService
-@inject ComponentState<FormPageRender, FormDataDto> FormDataState
 
 @if (_formDto != null)
 {
@@ -27,23 +26,22 @@
 
 @code {
     [Parameter]
-    public PageSchema Page { get; set; }
+    public required PageSchema Page { get; set; }
 
-    private string Id;
-    private FormDataDto _formDto;
-    private IDictionary<string, object> _fieldDictData;
+    [PersistentState]
+    public required FormDataDto _formDto { get; set; }
+
+    private string? Id;
+    public required IDictionary<string, object> _fieldDictData;
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
 
         Id = GetQueryValue("id");
-        _formDto = await FormDataState.GetOrAddAsync(this, async () =>
-        {
-            return await FormDataAppService.GetAsync(Page.AppId, Page.Id, Id);
-        });
-
-        if (_formDto?.Fields == null)
+        _formDto = await FormDataAppService.GetAsync(Page.AppId, Page.Id, Id);
+        
+        if (_formDto.Fields == null)
             _fieldDictData = new Dictionary<string, object>();
         else
             _fieldDictData = _formDto.Fields.ToDictionary(x => x.Name, x => x.Value);
@@ -51,6 +49,9 @@
 
     private async Task OnFinishAsync()
     {
+        if (_formDto == null)
+            return;
+
         foreach (var field in _formDto.Fields)
         {
             if (!_fieldDictData.ContainsKey(field.Name))

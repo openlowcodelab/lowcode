@@ -4,7 +4,6 @@
 @layout MyAppLayout
 
 @inject IPageAppService PageAppService
-@inject ComponentState<PageManager, IList<PageListModel>> PageListState
 
 <PageTitle>页面管理</PageTitle>
 
@@ -88,12 +87,14 @@
     [Parameter]
     public string AppId { get; set; }
 
+    [PersistentState]
+    public IList<PageListModel> _pageList { get; set; }
+
     IEnumerable<PageListModel> selectedRows;
     int _total = 0;
 
     private bool _visible;
     private Form<PagePartsSchema> _form;
-    private IList<PageListModel> _pageList;
     private PagePartsSchema _pageSchema = new PagePartsSchema();
 
     protected override async Task OnInitializedAsync()
@@ -101,10 +102,7 @@
         await base.OnInitializedAsync();
 
         _total = 50;
-        _pageList = await PageListState.GetOrAddAsync(this, async () =>
-        {
-            return await LoadPagesAsync(1, 50);
-        });
+        _pageList = await LoadPagesAsync(1, 50);
     }
 
     private async Task<IList<PageListModel>> LoadPagesAsync(int pageIndex, int pageSize)

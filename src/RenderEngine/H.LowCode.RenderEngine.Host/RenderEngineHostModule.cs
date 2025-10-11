@@ -25,9 +25,7 @@ namespace H.LowCode.RenderEngine.Host;
     //Components
     typeof(LowCodeDefaultComponentModule),
     //Themes
-    typeof(AntBlazorThemeModule),
-    //ComponentBase
-    typeof(LowCodeComponentBaseModule)
+    typeof(AntBlazorThemeModule)
     )]
 public class RenderEngineHostModule : AbpModule
 {

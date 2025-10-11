@@ -26,6 +26,7 @@ builder.Services.Configure<Microsoft.AspNetCore.Components.Server.CircuitOptions
     options.DisconnectedCircuitRetentionPeriod = TimeSpan.FromMinutes(3);
     options.JSInteropDefaultCallTimeout = TimeSpan.FromMinutes(1);
     options.MaxBufferedUnacknowledgedRenderBatches = 10;
+    options.DetailedErrors = builder.Environment.IsDevelopment();
 });
 
 builder.Services.AddControllers().AddJsonOptions(options =>
@@ -67,6 +68,11 @@ else
     app.UseHsts();
 }
 
+app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
+app.UseHttpsRedirection();
+
+app.UseAntiforgery();
+
 app.UseResponseCompression();
 app.UseStaticFiles(new StaticFileOptions
 {
@@ -75,8 +81,6 @@ app.UseStaticFiles(new StaticFileOptions
         ctx.Context.Response.Headers.Append("Cache-Control", "public,max-age=600");
     }
 });
-
-app.UseHttpsRedirection();
 
 app.MapStaticAssets();
 app.UseRouting();

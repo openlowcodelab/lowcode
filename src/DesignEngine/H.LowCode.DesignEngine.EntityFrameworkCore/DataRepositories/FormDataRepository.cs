@@ -12,6 +12,10 @@ public class FormDataRepository : IFormDataRepository
     private DesignEngineDbContext _dbContext;
     public bool? IsChangeTrackingEnabled => true;
 
+    public string? EntityName { get; set; }
+
+    public string ProviderName => throw new NotImplementedException();
+
     public FormDataRepository(DesignEngineDbContext dbContext)
     {
         _dbContext = dbContext;

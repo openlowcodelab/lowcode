@@ -1,4 +1,4 @@
-﻿using H.LowCode.ComponentBase;
+using H.LowCode.ComponentBase;
 using H.LowCode.Components.Defaults;
 using H.LowCode.DesignEngine.Application;
 using H.LowCode.DesignEngine.EntityFrameworkCore;
@@ -28,9 +28,7 @@ namespace H.LowCode.DesignEngine.Host;
     typeof(MyAppModule),
     typeof(PartsDesignEngineModule),
     //Components
-    typeof(LowCodeDefaultComponentModule),
-    //ComponentBase
-    typeof(LowCodeComponentBaseModule)
+    typeof(LowCodeDefaultComponentModule)
     )]
 public class DesignEngineHostModule : AbpModule
 {

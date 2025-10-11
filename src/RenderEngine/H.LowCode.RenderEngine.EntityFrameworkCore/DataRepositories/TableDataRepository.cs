@@ -12,6 +12,10 @@ public class TableDataRepository : ITableDataRepository
     private readonly IDataSourceRepository _dataSourceRepository;
     public bool? IsChangeTrackingEnabled => true;
 
+    public string? EntityName { get; set; }
+
+    public string ProviderName => throw new NotImplementedException();
+
     public TableDataRepository(IDbContextFactory<RenderEngineDbContext> dbContextFactory, IDataSourceRepository dataSourceRepository)
     {
         _dbContextFactory = dbContextFactory;

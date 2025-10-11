@@ -4,7 +4,6 @@
 @layout AntBlazorThemeLayout
 
 @inject IMetaAppService MetaAppService
-@inject ComponentState<MetaPage, PageSchema> PageSchemaState
 
 <PageTitle>@($"{_pageCascadingModel.PageName}")</PageTitle>
 
@@ -30,24 +29,24 @@
     }
 </CascadingValue>
 
-@code {
+    @code {
     [Parameter]
     public string AppId { get; set; }
 
     [Parameter]
     public string PageId { get; set; }
 
-    private PageSchema _pageSchema;
+    [PersistentState]
+    public required PageSchema _pageSchema { get; set; }
+
     private PageCascadingModel _pageCascadingModel;
 
     protected override async Task OnInitializedAsync()
     {
         _pageCascadingModel = new() { AppId = AppId, PageId = PageId, PageName = "..." };
 
-        _pageSchema = await PageSchemaState.GetOrAddAsync(this, async () =>
-        {
-            return await LoadPageSchemaAsync();
-        });
+        _pageSchema = await LoadPageSchemaAsync();
+
         SetPageModel(_pageSchema);
     }
 
