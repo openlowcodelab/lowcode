@@ -34,12 +34,6 @@
         transform: translateY(-2px);
     }
     
-    .panel-divider {
-        width: 1px;
-        background-color: #f0f0f0;
-        margin: 0 8px;
-    }
-    
     .search-input {
         margin-bottom: 16px;
     }
@@ -59,7 +53,7 @@
 
 <div style="height: calc(100vh - 120px); display: flex; gap: 16px;">
     <!-- 左侧组件库列表 -->
-    <div style="width: 350px; background: white; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.03); overflow: hidden;">
+    <div style="width: 300px; background: white; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.03); overflow: hidden;">
         <div style="padding: 16px; border-bottom: 1px solid #f0f0f0; background: #fafafa;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                 <h3 style="margin: 0; font-size: 16px; font-weight: 600;">组件库</h3>
@@ -114,9 +108,6 @@
             }
         </div>
     </div>
-
-    <!-- 分隔线 -->
-    <div class="panel-divider"></div>
 
     <!-- 右侧组件列表 -->
     <div style="flex: 1; background: white; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.03); overflow: hidden;">
@@ -229,13 +220,16 @@
 
 <!-- 创建/编辑组件库模态框 -->
 <Modal Title="@(_isEditingLibrary ? "编辑组件库" : "创建组件库")" @bind-Visible="@_libraryModalVisible" OnOk="OnLibraryConfirm">
-    <ComponentLibraryForm ComponentLibrary="_currentComponentLibrary" @ref="@_componentLibraryForm"></ComponentLibraryForm>
+    <ComponentLibraryForm ComponentLibrary="_currentComponentLibrary" @ref="@_componentLibraryForm" @key="@($"{_isEditingLibrary}_{_currentComponentLibrary?.LibraryId ?? "new"}")"></ComponentLibraryForm>
 </Modal>
 
-<!-- 新增组件模态框 -->
-<AddComponentModal @bind-Visible="@_showAddModal" 
-                   LibraryId="@_selectedLibraryId" 
-                   OnComponentCreated="@OnComponentCreated" />
+<!-- 组件基本信息表单（新增/编辑） -->
+<ComponentPartsBasicForm @bind-Visible="@_showComponentFormModal" 
+                         LibraryId="@_selectedLibraryId" 
+                         ComponentId="@_editingComponentId"
+                         IsEditMode="@_isEditMode"
+                         OnComponentCreated="@OnComponentCreated"
+                         OnComponentUpdated="@OnComponentUpdated" />
 
 <style>
     .library-item:hover {
@@ -278,7 +272,9 @@
     private bool _isEditingLibrary = false;
     private ComponentLibrarySchema _currentComponentLibrary;
     private ComponentLibraryForm _componentLibraryForm;
-    private bool _showAddModal = false;
+    private bool _showComponentFormModal = false;
+    private bool _isEditMode = false;
+    private string? _editingComponentId;
 
     protected override async Task OnInitializedAsync()
     {
@@ -364,7 +360,7 @@
         _currentComponentLibrary = new();
         _isEditingLibrary = false;
         _libraryModalVisible = true;
-        // StateHasChanged();
+        StateHasChanged();
     }
 
     private void EditLibrary(string libraryId)
@@ -372,26 +368,42 @@
         _currentComponentLibrary = _componentLibraries?.FirstOrDefault(x => x.LibraryId == libraryId);
         _isEditingLibrary = true;
         _libraryModalVisible = true;
-        // StateHasChanged();
+        StateHasChanged();
     }
 
     private async Task OnLibraryConfirm(MouseEventArgs e)
     {
-        var success = await _componentLibraryForm.SubmitAsync();
-        if (success)
+        try
         {
-            _libraryModalVisible = false;
-            await LoadComponentLibrariesAsync();
-            
-            // 如果是新创建的组件库，选中它
-            if (!_isEditingLibrary && _currentComponentLibrary != null)
+            if (_componentLibraryForm == null)
             {
-                await SelectLibraryAsync(_currentComponentLibrary);
+                await Message.ErrorAsync("表单组件未初始化");
+                return;
             }
-            
-            await Message.SuccessAsync(_isEditingLibrary ? "组件库更新成功！" : "组件库创建成功！");
-            _currentComponentLibrary = null;
-            _isEditingLibrary = false;
+
+            var success = await _componentLibraryForm.SubmitAsync();
+            if (success)
+            {
+                _libraryModalVisible = false;
+                await LoadComponentLibrariesAsync();
+                
+                // 如果是新创建的组件库，选中它
+                if (!_isEditingLibrary && _currentComponentLibrary != null)
+                {
+                    await SelectLibraryAsync(_currentComponentLibrary);
+                }
+                
+                await Message.SuccessAsync(_isEditingLibrary ? "组件库更新成功！" : "组件库创建成功！");
+                
+                // 重置状态
+                _currentComponentLibrary = null;
+                _isEditingLibrary = false;
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            await Message.ErrorAsync($"操作失败：{ex.Message}");
         }
     }
 
@@ -432,7 +444,9 @@
             Message.Warning("请先选择一个组件库");
             return;
         }
-        _showAddModal = true;
+        _isEditMode = false;
+        _editingComponentId = null;
+        _showComponentFormModal = true;
     }
 
     private async Task OnComponentCreated(ComponentPartsSchema componentParts)
@@ -454,7 +468,17 @@
 
     private void EditComponent(ComponentPartsListModel component)
     {
-        NavigateTo($"/myparts/component/edit/{component.LibraryId}/{component.ComponentId}");
+        if (component.ComponentType == 1) // 原子组件
+        {
+            NavigateTo($"/myparts/component/edit/{component.LibraryId}/{component.ComponentId}");
+        }
+        else if (component.ComponentType == 2) // 低代码组件
+        {
+            _isEditMode = true;
+            _editingComponentId = component.ComponentId;
+            _showComponentFormModal = true;
+            StateHasChanged();
+        }
     }
 
     private void DesignComponent(ComponentPartsListModel component)
@@ -478,6 +502,13 @@
         {
             await Message.ErrorAsync($"删除失败：{ex.Message}");
         }
+    }
+
+    private async Task OnComponentUpdated(ComponentPartsSchema componentParts)
+    {
+        // 刷新当前组件库的组件列表
+        await LoadComponentPartsAsync();
+        StateHasChanged();
     }
 
     #endregion

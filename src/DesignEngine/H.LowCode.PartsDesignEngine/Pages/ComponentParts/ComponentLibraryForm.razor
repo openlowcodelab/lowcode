@@ -39,6 +39,15 @@
             ComponentLibrary = new();
     }
 
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+        
+        // 确保每次参数变化时都有有效的ComponentLibrary对象
+        if (ComponentLibrary == null)
+            ComponentLibrary = new();
+    }
+
     public async Task<bool> SubmitAsync()
     {
         var success = await SaveComponentLibrarySchema();
@@ -60,13 +69,8 @@
         isSuccess = await ComponentLibraryAppService.SaveAsync(ComponentLibrary);
         if (isSuccess)
         {
-            await Message.SuccessAsync("新建成功！");
             // 重置表单
             ComponentLibrary = new();
-        }
-        else
-        {
-            await Message.ErrorAsync("新建失败");
         }
         
         return isSuccess;

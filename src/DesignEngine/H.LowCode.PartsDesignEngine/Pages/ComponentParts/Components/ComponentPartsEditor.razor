@@ -4,58 +4,66 @@
 <div class="component-parts-editor">
     <AntDesign.Tabs DefaultActiveKey="basic" TabPosition="@TabPosition.Top">
         <AntDesign.TabPane Key="basic" Tab="基本信息">
-            <AntDesign.Card Title="组件基本信息" Size="@CardSize.Small">
-                <AntDesign.ChildContent>
-                    <AntDesign.Row Gutter="16">
-                        <AntDesign.Col Span="12">
-                            <div style="margin-bottom: 16px;">
-                                <label style="display: block; margin-bottom: 4px; font-weight: 500;">
-                                    组件名称 <span style="color: #ff4d4f;">*</span>
-                                </label>
-                                <Input @bind-Value="@ComponentParts.ComponentName" Placeholder="组件名称" />
-                            </div>
-                        </AntDesign.Col>
-                        <AntDesign.Col Span="12">
-                            <div style="margin-bottom: 16px;">
-                                <label style="display: block; margin-bottom: 4px; font-weight: 500;">显示名称</label>
-                                <Input @bind-Value="@ComponentParts.Label" Placeholder="显示名称" />
-                            </div>
-                        </AntDesign.Col>
-                    </AntDesign.Row>
-                    
-                    <AntDesign.Row Gutter="16">
-                        <AntDesign.Col Span="8">
-                            <div style="margin-bottom: 16px;">
-                                <label style="display: block; margin-bottom: 4px; font-weight: 500;">组件类型</label>
-                                <RadioGroup @bind-Value="@ComponentParts.ComponentType">
-                                    <Radio RadioButton Value="1">原子组件</Radio>
-                                    <Radio RadioButton Value="2">低代码组件</Radio>
-                                </RadioGroup>
-                            </div>
-                        </AntDesign.Col>
-                        <AntDesign.Col Span="8">
-                            <div style="margin-bottom: 16px;">
-                                <label style="display: block; margin-bottom: 4px; font-weight: 500;">排序</label>
-                                <InputNumber @bind-Value="@ComponentParts.Order" Min="0" />
-                            </div>
-                        </AntDesign.Col>
-                    </AntDesign.Row>
-                    
+            <AntDesign.Row Gutter="16">
+                <AntDesign.Col Span="12">
                     <div style="margin-bottom: 16px;">
-                        <label style="display: block; margin-bottom: 4px; font-weight: 500;">组件描述</label>
-                        <TextArea @bind-Value="@ComponentParts.Description" Rows="3" Placeholder="组件描述" />
+                        <label style="display: block; margin-bottom: 4px; font-weight: 500;">
+                            组件Name <span style="color: #ff4d4f;">*</span>
+                        </label>
+                        <Input @bind-Value="@ComponentParts.ComponentName" Placeholder="组件Name" />
                     </div>
-                    
-                    <AntDesign.Row Gutter="16">
-                        <AntDesign.Col Span="12">
-                            <div style="margin-bottom: 16px;">
-                                <label style="display: block; margin-bottom: 4px; font-weight: 500;">版本</label>
-                                <Input @bind-Value="@ComponentParts.Version" Placeholder="版本号" />
-                            </div>
-                        </AntDesign.Col>
-                    </AntDesign.Row>
-                </AntDesign.ChildContent>
-            </AntDesign.Card>
+                </AntDesign.Col>
+                <AntDesign.Col Span="12">
+                    <div style="margin-bottom: 16px;">
+                        <label style="display: block; margin-bottom: 4px; font-weight: 500;">显示名称</label>
+                        <Input @bind-Value="@ComponentParts.Label" Placeholder="显示名称" />
+                    </div>
+                </AntDesign.Col>
+            </AntDesign.Row>
+
+            <AntDesign.Row Gutter="16">
+                <AntDesign.Col Span="8">
+                    <div style="margin-bottom: 16px;">
+                        <label style="display: block; margin-bottom: 4px; font-weight: 500;">组件类型</label>
+                        <RadioGroup @bind-Value="@ComponentParts.ComponentType">
+                            <Radio RadioButton Value="1">原子组件</Radio>
+                            <Radio RadioButton Value="2">低代码组件</Radio>
+                        </RadioGroup>
+                    </div>
+                </AntDesign.Col>
+                <AntDesign.Col Span="8">
+                    <div style="margin-bottom: 16px;">
+                        <label style="display: block; margin-bottom: 4px; font-weight: 500;">排序</label>
+                        <InputNumber @bind-Value="@ComponentParts.Order" Min="0" />
+                    </div>
+                </AntDesign.Col>
+                <AntDesign.Col Span="8">
+                    <div style="margin-bottom: 16px;">
+                        <label style="display: block; margin-bottom: 4px; font-weight: 500;">版本</label>
+                        <Input @bind-Value="@ComponentParts.Version" Placeholder="版本号" />
+                    </div>
+                </AntDesign.Col>
+            </AntDesign.Row>
+
+            <AntDesign.Row Gutter="16">
+                <AntDesign.Col Span="8">
+                    <div style="margin-bottom: 16px;">
+                        <label style="display: block; margin-bottom: 4px; font-weight: 500;">是否容器</label>
+                        <Switch @bind-Value="@ComponentParts.IsContainer" />
+                    </div>
+                </AntDesign.Col>
+                <AntDesign.Col Span="8">
+                    <div style="margin-bottom: 16px;">
+                        <label style="display: block; margin-bottom: 4px; font-weight: 500;">支持数据源</label>
+                        <Switch @bind-Value="@ComponentParts.IsSupportDataSource" Disabled="@ComponentParts.IsContainer" />
+                    </div>
+                </AntDesign.Col>
+            </AntDesign.Row>
+
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 4px; font-weight: 500;">组件描述</label>
+                <TextArea @bind-Value="@ComponentParts.Description" Rows="3" Placeholder="组件描述" />
+            </div>
         </AntDesign.TabPane>
         
         <AntDesign.TabPane Key="attributes" Tab="属性定义">
