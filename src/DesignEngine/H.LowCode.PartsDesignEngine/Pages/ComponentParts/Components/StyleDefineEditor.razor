@@ -23,21 +23,24 @@
                         <AntDesign.ChildContent>
                             <AntDesign.Row Gutter="16">
                                 <AntDesign.Col Span="8">
-                                    <FormItem Label="样式名称" Required>
+                                    <div style="margin-bottom: 16px;">
+                                        <label style="display: block; margin-bottom: 4px; font-weight: 500;">样式名称 <span style="color: red;">*</span></label>
                                         <Input @bind-Value="@styleDefine.StyleName" 
                                                @onchange="@(() => NotifyChange())"
                                                Placeholder="样式名称，如：backgroundColor" />
-                                    </FormItem>
+                                    </div>
                                 </AntDesign.Col>
                                 <AntDesign.Col Span="8">
-                                    <FormItem Label="显示名称">
+                                    <div style="margin-bottom: 16px;">
+                                        <label style="display: block; margin-bottom: 4px; font-weight: 500;">显示名称</label>
                                         <Input @bind-Value="@styleDefine.DisplayName" 
                                                @onchange="@(() => NotifyChange())"
                                                Placeholder="显示名称，如：背景颜色" />
-                                    </FormItem>
+                                    </div>
                                 </AntDesign.Col>
                                 <AntDesign.Col Span="8">
-                                    <FormItem Label="样式类型">
+                                    <div style="margin-bottom: 16px;">
+                                        <label style="display: block; margin-bottom: 4px; font-weight: 500;">样式类型</label>
                                         <AntDesign.Select TItem="string" TItemValue="string" @bind-Value="@styleDefine.StyleType" 
                                                 @onchange="@(() => NotifyChange())"
                                                 DefaultValue='@("color")'>
@@ -49,12 +52,13 @@
                                             <AntDesign.SelectOption TItem="string" TItemValue="string" Value='@("layout")'>布局</AntDesign.SelectOption>
                                             <AntDesign.SelectOption TItem="string" TItemValue="string" Value='@("custom")'>自定义</AntDesign.SelectOption>
                                         </AntDesign.Select>
-                                    </FormItem>
+                                    </div>
                                 </AntDesign.Col>
                             </AntDesign.Row>
                             <AntDesign.Row Gutter="16">
                                 <AntDesign.Col Span="8">
-                                    <FormItem Label="控件类型">
+                                    <div style="margin-bottom: 16px;">
+                                        <label style="display: block; margin-bottom: 4px; font-weight: 500;">控件类型</label>
                                         <AntDesign.Select TItem="string" TItemValue="string" @bind-Value="@styleDefine.ControlType" 
                                                 @onchange="@(() => NotifyChange())"
                                                 DefaultValue='@("input")'>
@@ -65,68 +69,76 @@
                                             <AntDesign.SelectOption TItem="string" TItemValue="string" Value='@("switchCtrl")'>开关</AntDesign.SelectOption>
                                             <AntDesign.SelectOption TItem="string" TItemValue="string" Value='@("inputNumber")'>数字输入</AntDesign.SelectOption>
                                         </AntDesign.Select>
-                                    </FormItem>
+                                    </div>
                                 </AntDesign.Col>
                                 <AntDesign.Col Span="8">
-                                    <FormItem Label="默认值">
+                                    <div style="margin-bottom: 16px;">
+                                        <label style="display: block; margin-bottom: 4px; font-weight: 500;">默认值</label>
                                         <Input @bind-Value="@styleDefine.DefaultValue" 
                                                @onchange="@(() => NotifyChange())"
                                                Placeholder="默认值" />
-                                    </FormItem>
+                                    </div>
                                 </AntDesign.Col>
                                 <AntDesign.Col Span="8">
-                                    <FormItem Label="单位">
+                                    <div style="margin-bottom: 16px;">
+                                        <label style="display: block; margin-bottom: 4px; font-weight: 500;">单位</label>
                                         <Input @bind-Value="@styleDefine.Unit" 
                                                @onchange="@(() => NotifyChange())"
                                                Placeholder="单位，如：px, %, em" />
-                                    </FormItem>
+                                    </div>
                                 </AntDesign.Col>
                             </AntDesign.Row>
                             <AntDesign.Row Gutter="16">
                                 <AntDesign.Col Span="12">
-                                    <FormItem Label="样式描述">
+                                    <div style="margin-bottom: 16px;">
+                                        <label style="display: block; margin-bottom: 4px; font-weight: 500;">样式描述</label>
                                         <TextArea @bind-Value="@styleDefine.Description" 
                                                   @onchange="@(() => NotifyChange())"
                                                   Rows="2" 
                                                   Placeholder="样式描述" />
-                                    </FormItem>
+                                    </div>
                                 </AntDesign.Col>
                                 <AntDesign.Col Span="12">
-                                    <FormItem Label="选项配置">
+                                    <div style="margin-bottom: 16px;">
+                                        <label style="display: block; margin-bottom: 4px; font-weight: 500;">选项配置</label>
                                         <TextArea @bind-Value="@styleDefine.Options" 
                                                   @onchange="@(() => NotifyChange())"
                                                   Rows="2" 
                                                   Placeholder="选项配置（JSON格式，用于下拉选择等控件）" />
-                                    </FormItem>
+                                    </div>
                                 </AntDesign.Col>
                             </AntDesign.Row>
                             <AntDesign.Row Gutter="16">
                                 <AntDesign.Col Span="6">
-                                    <FormItem Label="是否必需">
+                                    <div style="margin-bottom: 16px;">
+                                        <label style="display: block; margin-bottom: 4px; font-weight: 500;">是否必需</label>
                                         <Switch @bind-Checked="@styleDefine.IsRequired" 
                                                 @onchange="@(() => NotifyChange())" />
-                                    </FormItem>
+                                    </div>
                                 </AntDesign.Col>
                                 <AntDesign.Col Span="6">
-                                    <FormItem Label="排序">
+                                    <div style="margin-bottom: 16px;">
+                                        <label style="display: block; margin-bottom: 4px; font-weight: 500;">排序</label>
                                         <InputNumber @bind-Value="@styleDefine.Order" 
                                                      @onchange="@(() => NotifyChange())"
                                                      Min="0" />
-                                    </FormItem>
+                                    </div>
                                 </AntDesign.Col>
                                 <AntDesign.Col Span="6">
-                                    <FormItem Label="分组">
+                                    <div style="margin-bottom: 16px;">
+                                        <label style="display: block; margin-bottom: 4px; font-weight: 500;">分组</label>
                                         <Input @bind-Value="@styleDefine.Group" 
                                                @onchange="@(() => NotifyChange())"
                                                Placeholder="样式分组" />
-                                    </FormItem>
+                                    </div>
                                 </AntDesign.Col>
                                 <AntDesign.Col Span="6">
-                                    <FormItem Label="CSS属性">
+                                    <div style="margin-bottom: 16px;">
+                                        <label style="display: block; margin-bottom: 4px; font-weight: 500;">CSS属性</label>
                                         <Input @bind-Value="@styleDefine.CssProperty" 
                                                @onchange="@(() => NotifyChange())"
                                                Placeholder="对应的CSS属性名" />
-                                    </FormItem>
+                                    </div>
                                 </AntDesign.Col>
                             </AntDesign.Row>
                         </AntDesign.ChildContent>

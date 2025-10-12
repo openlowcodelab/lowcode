@@ -255,10 +255,15 @@
 </style>
 
 @code {
+
+
+
     [PersistentState]
     public IList<ComponentLibrarySchema> _componentLibraries { get; set; }
 
-    private IList<ComponentPartsListModel> _componentParts;
+    [PersistentState]
+
+    public IList<ComponentPartsListModel> _componentParts { get; set; }
 
     private string _selectedLibraryId;
     private ComponentLibrarySchema _selectedLibrary;
@@ -323,11 +328,6 @@
         if (string.IsNullOrEmpty(_selectedLibraryId))
             return;
 
-        // _componentParts = await ComponentPartsListState.GetOrAddAsync(typeof(IList<ComponentPartsListModel>),
-        //     async () =>
-        // {
-        //     return await ComponentPartsAppService.GetListAsync(_selectedLibraryId);
-        // });
         _componentParts = await ComponentPartsAppService.GetListAsync(_selectedLibraryId);
     }
 
@@ -444,17 +444,17 @@
         // 根据组件类型跳转到不同的编辑页面
         if (componentParts.ComponentType == 1) // 原子组件
         {
-            NavigateTo($"/myparts/component/editorpage/{componentParts.LibraryId}/{componentParts.ComponentId}");
+            NavigateTo($"/myparts/component/edit/{componentParts.LibraryId}/{componentParts.ComponentId}");
         }
         else if (componentParts.ComponentType == 2) // 低代码组件
         {
-            NavigateTo($"/myparts/component/customdesigner/{componentParts.ComponentId}");
+            NavigateTo($"/myparts/component/designer/{componentParts.ComponentId}");
         }
     }
 
     private void EditComponent(ComponentPartsListModel component)
     {
-        NavigateTo($"/myparts/component/editorpage/{component.LibraryId}/{component.ComponentId}");
+        NavigateTo($"/myparts/component/edit/{component.LibraryId}/{component.ComponentId}");
     }
 
     private void DesignComponent(ComponentPartsListModel component)

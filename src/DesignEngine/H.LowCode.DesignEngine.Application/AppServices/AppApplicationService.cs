@@ -1,14 +1,12 @@
 ﻿using H.LowCode.Configuration;
 using H.LowCode.DesignEngine.Application.Contracts;
+using H.LowCode.DesignEngine.Domain.Repositories;
 using H.LowCode.DesignEngine.Model;
-using H.LowCode.DesignEngine.Domain;
+using H.LowCode.MetaSchema.DesignEngine;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using System.Collections.Generic;
-using System.Text;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
-using H.LowCode.MetaSchema.DesignEngine;
 
 namespace H.LowCode.DesignEngine.Application;
 
@@ -17,7 +15,7 @@ public class AppApplicationService : ApplicationService, IAppApplicationService
 {
     private IEnumerable<SiteOption> _sites => LazyServiceProvider.GetRequiredService<IOptions<List<SiteOption>>>().Value;
 
-    private IAppDomainService _domainService => LazyServiceProvider.GetRequiredService<AppDomainService>();
+    private IAppRepository _repository => LazyServiceProvider.GetRequiredService<IAppRepository>();
 
     public async Task<IList<AppListModel>> GetAppsAsync()
     {
@@ -33,12 +31,12 @@ public class AppApplicationService : ApplicationService, IAppApplicationService
 
     public async Task<IList<AppPartsSchema>> GetListAsync()
     {
-        return await _domainService.GetListAsync();
+        return await _repository.GetListAsync();
     }
 
     public async Task<AppPartsSchema> GetByIdAsync(string appId)
     {
-        return await _domainService.GetAsync(appId);
+        return await _repository.GetAsync(appId);
     }
 
     public async Task<bool> SaveAsync(AppPartsSchema appSchema)
@@ -46,7 +44,7 @@ public class AppApplicationService : ApplicationService, IAppApplicationService
         ArgumentNullException.ThrowIfNull(appSchema);
         ArgumentException.ThrowIfNullOrEmpty(appSchema.Id);
 
-        await _domainService.SaveAsync(appSchema);
+        await _repository.SaveAsync(appSchema);
         return true;
     }
 }

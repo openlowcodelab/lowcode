@@ -1,4 +1,4 @@
-@page "/myparts/component/customdesigner/{PartsId}"
+@page "/myparts/component/designer/{PartsId}"
 @namespace H.LowCode.PartsDesignEngine
 @inherits DesignEngineLowCodePageComponentBase
 @layout PartsDesignEngineLayout
@@ -174,7 +174,7 @@ else
                 {
                     _isNewComponent = false;
                     // 保存成功后跳转到编辑页面
-                    NavigateTo($"/myparts/component/customdesigner/{PartsId}?libId={_libraryId}");
+                    NavigateTo($"/myparts/component/designer/{PartsId}?libId={_libraryId}");
                 }
 
                 await Message.SuccessAsync("保存成功！");

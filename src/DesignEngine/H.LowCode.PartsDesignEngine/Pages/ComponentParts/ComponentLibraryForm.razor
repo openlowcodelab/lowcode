@@ -1,30 +1,35 @@
-﻿@namespace H.LowCode.PartsDesignEngine
+@namespace H.LowCode.PartsDesignEngine
 @inherits DesignEngineLowCodeComponentBase
 @layout PartsDesignEngineLayout
 
 @inject IComponentLibraryAppService ComponentLibraryAppService
 
-<Form Model="@ComponentLibrary" @ref="@_form"
-ValidateOnChange="true" LabelColSpan="8" WrapperColSpan="16">
-    <FormItem Label="组件库标识" Required>
-        <Input @bind-Value="@context.LibraryId" />
-    </FormItem>
-    <FormItem Label="组件库名称" Required>
-        <Input @bind-Value="@context.LibraryName" />
-    </FormItem>
-    <FormItem Label="组件库描述">
-        <TextArea @bind-Value="@context.Description" />
-    </FormItem>
-    <FormItem Label="支持平台">
-        <EnumCheckboxGroup TEnum="SupportPlatformEnum" @bind-Value="@context.SupportPlatforms"></EnumCheckboxGroup>
-    </FormItem>
-</Form>
+<div style="max-width: 600px;">
+    <div style="margin-bottom: 16px;">
+        <label style="display: block; margin-bottom: 4px; font-weight: 500;">
+            <span style="color: red;">*</span> 组件库标识
+        </label>
+        <Input @bind-Value="@ComponentLibrary.LibraryId" />
+    </div>
+    <div style="margin-bottom: 16px;">
+        <label style="display: block; margin-bottom: 4px; font-weight: 500;">
+            <span style="color: red;">*</span> 组件库名称
+        </label>
+        <Input @bind-Value="@ComponentLibrary.LibraryName" />
+    </div>
+    <div style="margin-bottom: 16px;">
+        <label style="display: block; margin-bottom: 4px; font-weight: 500;">组件库描述</label>
+        <TextArea @bind-Value="@ComponentLibrary.Description" />
+    </div>
+    <div style="margin-bottom: 16px;">
+        <label style="display: block; margin-bottom: 4px; font-weight: 500;">支持平台</label>
+        <EnumCheckboxGroup TEnum="SupportPlatformEnum" @bind-Value="@ComponentLibrary.SupportPlatforms"></EnumCheckboxGroup>
+    </div>
+</div>
 
 @code {
     [Parameter]
     public ComponentLibrarySchema ComponentLibrary { get; set; }
-
-    private Form<ComponentLibrarySchema> _form;
 
     protected override async Task OnInitializedAsync()
     {
@@ -43,21 +48,27 @@ ValidateOnChange="true" LabelColSpan="8" WrapperColSpan="16">
     private async Task<bool> SaveComponentLibrarySchema()
     {
         bool isSuccess = false;
-        var validate = _form.Validate();
-        if (validate)
+        
+        // 简单验证必填字段
+        if (string.IsNullOrWhiteSpace(ComponentLibrary.LibraryId) || 
+            string.IsNullOrWhiteSpace(ComponentLibrary.LibraryName))
         {
-            isSuccess = await ComponentLibraryAppService.SaveAsync(ComponentLibrary);
-            if (isSuccess)
-            {
-                _form.Submit();
-                await Message.SuccessAsync("新建成功！");
-                _form.Reset();
-            }
-            else
-            {
-                await Message.ErrorAsync("新建失败");
-            }
+            await Message.ErrorAsync("请填写必填字段");
+            return false;
         }
+
+        isSuccess = await ComponentLibraryAppService.SaveAsync(ComponentLibrary);
+        if (isSuccess)
+        {
+            await Message.SuccessAsync("新建成功！");
+            // 重置表单
+            ComponentLibrary = new();
+        }
+        else
+        {
+            await Message.ErrorAsync("新建失败");
+        }
+        
         return isSuccess;
     }
 }

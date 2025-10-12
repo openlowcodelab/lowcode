@@ -1,11 +1,8 @@
 ﻿using H.LowCode.DesignEngine.Application.Contracts;
-using H.LowCode.DesignEngine.Domain;
+using H.LowCode.DesignEngine.Domain.Repositories;
 using H.LowCode.DesignEngine.Model;
 using H.LowCode.MetaSchema.DesignEngine;
 using Microsoft.Extensions.DependencyInjection;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Text;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
 
@@ -14,17 +11,17 @@ namespace H.LowCode.DesignEngine.Application;
 [RemoteService]
 public class PageAppService : ApplicationService, IPageAppService
 {
-    private IPageDomainService _domainService => LazyServiceProvider.GetRequiredService<IPageDomainService>();
+    private IPageRepository _repository => LazyServiceProvider.GetRequiredService<IPageRepository>();
     private IComponentPartsAppService _componentPartsAppService => LazyServiceProvider.GetRequiredService<IComponentPartsAppService>();
 
     public async Task<List<PageListModel>> GetListAsync(string appId)
     {
-        return await _domainService.GetListAsync(appId);
+        return await _repository.GetListAsync(appId);
     }
 
     public async Task<PagePartsSchema> GetByIdAsync(string appId, string pageId)
     {
-        return await _domainService.GetByIdAsync(appId, pageId);
+        return await _repository.GetByIdAsync(appId, pageId);
     }
 
     /// <summary>
@@ -35,7 +32,7 @@ public class PageAppService : ApplicationService, IPageAppService
     /// <returns></returns>
     public async Task<PagePartsSchema> GetByIdWithDefineAsync(string appId, string pageId)
     {
-        var pageSchema = await _domainService.GetByIdAsync(appId, pageId);
+        var pageSchema = await _repository.GetByIdAsync(appId, pageId);
 
         //合并组件定义中的属性
         foreach (var component in pageSchema.Components)
@@ -51,13 +48,13 @@ public class PageAppService : ApplicationService, IPageAppService
         ArgumentNullException.ThrowIfNull(pageSchema);
         ArgumentException.ThrowIfNullOrEmpty(pageSchema.Id);
 
-        await _domainService.SaveAsync(pageSchema);
+        await _repository.SaveAsync(pageSchema);
         return true;
     }
 
     public async Task<bool> DeleteAsync(string appId, string pageId)
     {
-        await _domainService.DeleteAsync(appId, pageId);
+        await _repository.DeleteAsync(appId, pageId);
         return true;
     }
 

@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Emit;
+﻿using System.Reflection.Emit;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using System.ComponentModel.DataAnnotations;
 using H.LowCode.Entity;
-using H.LowCode.DesignEngine.Domain;
+using H.LowCode.DesignEngine.Domain.Repositories;
 
 namespace H.LowCode.DesignEngine.EntityFrameworkCore;
 
@@ -20,11 +15,11 @@ public class EntityTypeManager
 
     private static List<DynamicEntityInfo> _dynamicEntities = [];
 
-    private IDataSourceDomainService _dataSourceDomainService;
+    private IDataSourceRepository _dataSourceRepository;
 
-    public EntityTypeManager(IDataSourceDomainService dataSourceDomainService)
+    public EntityTypeManager(IDataSourceRepository dataSourceRepository)
     {
-        _dataSourceDomainService = dataSourceDomainService;
+        _dataSourceRepository = dataSourceRepository;
     }
 
     public IReadOnlyList<DynamicEntityInfo> LoadDynamicEntities()
@@ -34,7 +29,7 @@ public class EntityTypeManager
         if(_dynamicEntities.Count > 0)
             return _dynamicEntities;
 
-        var entities = _dataSourceDomainService.GetAllEntities("caseapp");
+        var entities = _dataSourceRepository.GetAllEntities("caseapp");
         foreach (var entity in entities)
         {
             var fields = entity.TableFields.Select(f => new DynamicEntityField()

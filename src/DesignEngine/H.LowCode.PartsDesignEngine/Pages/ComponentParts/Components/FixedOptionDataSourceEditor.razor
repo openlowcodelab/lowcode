@@ -11,38 +11,44 @@
                 <AntDesign.ChildContent>
                     <AntDesign.Row Gutter="16">
                         <AntDesign.Col Span="8">
-                            <FormItem Label="显示文本">
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; margin-bottom: 4px; font-weight: 500;">显示文本</label>
                                 <Input @bind-Value="@option.Label" Placeholder="显示文本" />
-                            </FormItem>
+                            </div>
                         </AntDesign.Col>
                         <AntDesign.Col Span="8">
-                            <FormItem Label="选项值">
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; margin-bottom: 4px; font-weight: 500;">选项值</label>
                                 <Input @bind-Value="@option.Value" Placeholder="选项值" />
-                            </FormItem>
+                            </div>
                         </AntDesign.Col>
                         <AntDesign.Col Span="8">
-                            <FormItem Label="是否选中">
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; margin-bottom: 4px; font-weight: 500;">是否选中</label>
                                 <Switch @bind-Checked="@option.IsSelected" />
-                            </FormItem>
+                            </div>
                         </AntDesign.Col>
                     </AntDesign.Row>
                     <AntDesign.Row Gutter="16">
                         <AntDesign.Col Span="12">
-                            <FormItem Label="分组">
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; margin-bottom: 4px; font-weight: 500;">分组</label>
                                 <Input @bind-Value="@option.Group" Placeholder="选项分组（可选）" />
-                            </FormItem>
+                            </div>
                         </AntDesign.Col>
                         <AntDesign.Col Span="12">
-                            <FormItem Label="排序">
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; margin-bottom: 4px; font-weight: 500;">排序</label>
                                 <InputNumber @bind-Value="@option.Order" Min="0" />
-                            </FormItem>
+                            </div>
                         </AntDesign.Col>
                     </AntDesign.Row>
                     <AntDesign.Row Gutter="16">
                         <AntDesign.Col Span="24">
-                            <FormItem Label="描述">
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; margin-bottom: 4px; font-weight: 500;">描述</label>
                                 <TextArea @bind-Value="@option.Description" Rows="2" Placeholder="选项描述（可选）" />
-                            </FormItem>
+                            </div>
                         </AntDesign.Col>
                     </AntDesign.Row>
                     <Button Type="@ButtonType.Text" Icon="delete" Size="@ButtonSize.Small" OnClick="@(() => RemoveOption(i))" Danger>删除</Button>

@@ -20,12 +20,13 @@
         <ChildContent>
             @if (_isJsonMode && ShowJsonEditor)
             {
-                <FormItem Label="JSON编辑">
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 4px; font-weight: 500;">JSON编辑</label>
                     <TextArea Value="@_jsonValue" 
                               Rows="10" 
                               @onchange="@OnJsonChange"
                               Placeholder="请输入有效的JSON数组" />
-                </FormItem>
+                </div>
                 @if (!string.IsNullOrEmpty(_jsonError))
                 {
                     <Alert Type="@AlertType.Error" Message="@_jsonError" Style="margin-top: 8px;" />
@@ -74,12 +75,13 @@
                                 else
                                 {
                                     @* 默认的JSON编辑器 *@
-                                    <FormItem Label="JSON数据">
+                                    <div style="margin-bottom: 16px;">
+                                        <label style="display: block; margin-bottom: 4px; font-weight: 500;">JSON数据</label>
                                         <TextArea Value="@GetItemJson(item)" 
                                                   @onchange="@((e) => UpdateItemFromJson(currentIndex, e.Value?.ToString()))"
                                                   Rows="5" 
                                                   Placeholder="请输入有效的JSON对象" />
-                                    </FormItem>
+                                    </div>
                                 }
                             </ChildContent>
                         </Card>

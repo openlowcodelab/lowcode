@@ -52,7 +52,7 @@ HidePagination="true" Style="height:100%;">
         <Space>
             @if (context.ComponentType == 1)
             {
-                <a href="@($"/myparts/component/editorpage/{LibraryId}/{context.ComponentId}")" target="_blank"
+                <a href="@($"/myparts/component/edit/{LibraryId}/{context.ComponentId}")" target="_blank"
                 style="padding: 4px 8px; border: solid #52c41a 1px; border-radius: 4px; background-color: #f6ffed; color: #389e0d; text-decoration: none; font-size: 12px;">
                     编辑
                 </a>
@@ -124,15 +124,13 @@ HidePagination="true" Style="height:100%;">
         // 根据组件类型跳转到不同的编辑页面
         if (componentParts.ComponentType == 1) // 原子组件
         {
-            NavigateTo($"/myparts/component/editorpage/{componentParts.LibraryId}/{componentParts.ComponentId}");
+            NavigateTo($"/myparts/component/edit/{componentParts.LibraryId}/{componentParts.ComponentId}");
         }
         else if (componentParts.ComponentType == 2) // 低代码组件
         {
-            NavigateTo($"/myparts/component/customdesigner/{componentParts.ComponentId}");
+            NavigateTo($"/myparts/component/designer/{componentParts.ComponentId}");
         }
     }
-
-
 
     private async Task DeleteAsync(string componentPartsId)
     {

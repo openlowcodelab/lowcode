@@ -9,18 +9,18 @@ public class AppListModel
     public string Id { get; set; }
 
     [JsonPropertyName("url")]
-    public string SiteUrl { get; set; }
+    public string? SiteUrl { get; set; }
 
     [JsonPropertyName("n")]
-    public string Name { get; set; }
+    public required string Name { get; set; }
 
-    public string Icon { get; set; }
+    public string? Icon { get; set; }
 
     [JsonPropertyName("pic")]
-    public string Picture { get; set; }
+    public string? Picture { get; set; }
 
     [JsonPropertyName("desc")]
-    public string Description { get; set; }
+    public string? Description { get; set; }
 
     [JsonPropertyName("pub")]
     public PublishStatusEnum PublishStatus { get; set; }

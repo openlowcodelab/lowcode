@@ -1,5 +1,6 @@
 ﻿using H.LowCode.DesignEngine.Application.Contracts;
 using H.LowCode.DesignEngine.Domain;
+using H.LowCode.DesignEngine.Domain.Repositories;
 using H.LowCode.MetaSchema.DesignEngine;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -14,25 +15,25 @@ namespace H.LowCode.DesignEngine.Application;
 [RemoteService]
 public class ComponentLibraryAppService : ApplicationService, IComponentLibraryAppService
 {
-    private IComponentLibraryDomainService _domainService => LazyServiceProvider.GetRequiredService<IComponentLibraryDomainService>();
+    private IComponentLibraryRepository _repository => LazyServiceProvider.GetRequiredService<IComponentLibraryRepository>();
 
     public Task<List<ComponentLibrarySchema>> GetListAsync()
     {
-        return _domainService.GetListAsync();
+        return _repository.GetListAsync();
     }
 
     public async Task<ComponentLibrarySchema> GetByIdAsync(string libraryId)
     {
-        return await _domainService.GetByIdAsync(libraryId);
+        return await _repository.GetByIdAsync(libraryId);
     }
 
     public async Task<bool> SaveAsync(ComponentLibrarySchema componentLibrary)
     {
-        return await _domainService.SaveAsync(componentLibrary);
+        return await _repository.SaveAsync(componentLibrary);
     }
 
     public async Task<bool> DeleteAsync(string libraryId)
     {
-        return await _domainService.DeleteAsync(libraryId);
+        return await _repository.DeleteAsync(libraryId);
     }
 }

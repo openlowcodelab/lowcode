@@ -15,9 +15,15 @@ public abstract class ComponentSchemaBase : StateHasChangeSchema
     [JsonPropertyName("pid")]
     public string ParentId { get; set; }
 
+    /// <summary>
+    /// 组件Name
+    /// </summary>
     [JsonPropertyName("n")]
     public string Name { get; set; }
 
+    /// <summary>
+    /// 组件显示名称
+    /// </summary>
     [JsonPropertyName("lb")]
     public string Label { get; set; }
 

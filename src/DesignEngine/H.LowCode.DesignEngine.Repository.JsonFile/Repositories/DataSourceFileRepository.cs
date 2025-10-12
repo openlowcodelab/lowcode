@@ -2,14 +2,14 @@
 using H.LowCode.DesignEngine.Domain.Repositories;
 using H.LowCode.MetaSchema;
 using Microsoft.Extensions.Options;
-using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace H.LowCode.DesignEngine.Repository.JsonFile;
 
 public class DataSourceFileRepository : FileRepositoryBase, IDataSourceRepository
 {
-    private static string dataSourceName_Format = @"{0}\{1}\datasource\{2}.json";
+    private static readonly string dataSourceName_Format = @"{0}\{1}\datasource\{2}.json";
 
     public DataSourceFileRepository(IOptions<MetaOption> metaOption) : base(metaOption)
     {
@@ -36,6 +36,12 @@ public class DataSourceFileRepository : FileRepositoryBase, IDataSourceRepositor
         list = list.OrderBy(t => t.Order).ToList();
 
         return list;
+    }
+
+    public IList<DataSourceSchema> GetAllEntities(string appId)
+    {
+        var list = GetListAsync(appId).Result;
+        return [.. list.Where(t => t.DataSourceType == ComponentDataSourceTypeEnum.DB)];
     }
 
     public async Task<DataSourceSchema> GetAsync(string appId, string id)

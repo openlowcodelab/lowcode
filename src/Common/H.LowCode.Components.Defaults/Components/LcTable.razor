@@ -150,20 +150,15 @@
 
         try
         {
-            Console.WriteLine($"列表数据开始加载: {RendererInfo.Name}, {request.ToJson()}");
-
             var result = await TableDataAppService.GetListAsync(request);
             _data = result.Items.ToList();
             _total = (int)result.TotalCount;
-
-            Console.WriteLine($"列表数据加载成功: {result.ToJson()}");
         }
         catch (Exception ex)
         {
             // 出错时使用空数据
             _data = new List<Dictionary<string, object>>();
             _total = 0;
-            Console.WriteLine($"列表加载数据失败: {RendererInfo.Name}, {request.ToJson()}, {ex.Message}");
         }
     }
 

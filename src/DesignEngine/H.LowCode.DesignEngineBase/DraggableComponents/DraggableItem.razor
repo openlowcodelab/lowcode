@@ -90,7 +90,8 @@
     {
         if (firstRender)
         {
-            await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./_content/H.LowCode.DesignEngineBase/js/elementUtils.js");
+            //已在 App.razor 中引入
+            //await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./_content/H.LowCode.DesignEngineBase/js/elementUtils.js");
 
             await UpdateDimensions();
             RegisterEventDispatcher();

@@ -1,10 +1,7 @@
 ﻿using H.LowCode.Configuration;
-using H.LowCode.DesignEngine.Model;
 using H.LowCode.DesignEngine.Domain.Repositories;
 using H.LowCode.MetaSchema;
 using Microsoft.Extensions.Options;
-using System.Collections.Generic;
-using System.Text;
 
 namespace H.LowCode.DesignEngine.Repository.RemoteService;
 
@@ -15,7 +12,12 @@ public class DataSourceRemoteServiceRepository : RemoteServiceRepositoryBase, ID
 
     }
 
-    public async Task DeleteAsync(string appId, string id)
+    public async Task<IList<DataSourceSchema>> GetListAsync(string appId)
+    {
+        throw new NotImplementedException();
+    }
+
+    public IList<DataSourceSchema> GetAllEntities(string appId)
     {
         throw new NotImplementedException();
     }
@@ -25,12 +27,12 @@ public class DataSourceRemoteServiceRepository : RemoteServiceRepositoryBase, ID
         throw new NotImplementedException();
     }
 
-    public async Task<IList<DataSourceSchema>> GetListAsync(string appId)
+    public async Task SaveAsync(string appId, DataSourceSchema dataSourceSchema)
     {
         throw new NotImplementedException();
     }
 
-    public async Task SaveAsync(string appId, DataSourceSchema dataSourceSchema)
+    public async Task DeleteAsync(string appId, string id)
     {
         throw new NotImplementedException();
     }

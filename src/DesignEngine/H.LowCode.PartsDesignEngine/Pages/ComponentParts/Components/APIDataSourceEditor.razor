@@ -6,30 +6,35 @@
         <ChildContent>
             <Row Gutter="16">
                 <Col Span="12">
-                    <FormItem Label="API地址" Required>
+                    <div style="margin-bottom: 16px;">
+                        <label style="display: block; margin-bottom: 4px; font-weight: 500;">API地址 <span style="color: red;">*</span></label>
                         <Input @bind-Value="@DataSource.Path" Placeholder="https://api.example.com/data" />
-                    </FormItem>
+                    </div>
                 </Col>
                 <Col Span="12">
-                    <FormItem Label="请求方法">
+                    <div style="margin-bottom: 16px;">
+                        <label style="display: block; margin-bottom: 4px; font-weight: 500;">请求方法</label>
                         <Select TItem="string" TItemValue="string" @bind-Value="@DataSource.Method">
                             <SelectOption TItem="string" TItemValue="string" Value="@("GET")">GET</SelectOption>
                             <SelectOption TItem="string" TItemValue="string" Value="@("POST")">POST</SelectOption>
                             <SelectOption TItem="string" TItemValue="string" Value="@("PUT")">PUT</SelectOption>
                             <SelectOption TItem="string" TItemValue="string" Value="@("DELETE")">DELETE</SelectOption>
-(                        </Select>
-                    </FormItem>
+                        </Select>
+                    </div>
                 </Col>
             </Row>
-            <FormItem Label="请求头">
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 4px; font-weight: 500;">请求头</label>
                 <APIParamsList APIParams="@DataSource.Headers" />
-            </FormItem>
-            <FormItem Label="请求参数">
+            </div>
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 4px; font-weight: 500;">请求参数</label>
                 <APIParamsList APIParams="@DataSource.Queries" />
-            </FormItem>
-            <FormItem Label="请求体">
+            </div>
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 4px; font-weight: 500;">请求体</label>
                 <TextArea @bind-Value="@DataSource.Body.Value" Rows="4" Placeholder="JSON格式的请求体（POST/PUT请求时使用）" />
-            </FormItem>
+            </div>
         </ChildContent>
     </Card>
 </div>

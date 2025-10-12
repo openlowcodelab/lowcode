@@ -1,10 +1,8 @@
 ﻿using H.LowCode.DesignEngine.Application.Contracts;
+using H.LowCode.DesignEngine.Domain.Repositories;
 using H.LowCode.DesignEngine.Model;
-using H.LowCode.DesignEngine.Domain;
 using H.LowCode.MetaSchema;
 using Microsoft.Extensions.DependencyInjection;
-using System.Collections.Generic;
-using System.Text;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
 
@@ -13,11 +11,11 @@ namespace H.LowCode.DesignEngine.Application;
 [RemoteService]
 public class DataSourceAppService : ApplicationService, IDataSourceAppService
 {
-    private IDataSourceDomainService _domainService => LazyServiceProvider.GetRequiredService<IDataSourceDomainService>();
+    private IDataSourceRepository _repository => LazyServiceProvider.GetRequiredService<IDataSourceRepository>();
 
     public async Task<IList<DataSourceListModel>> GetListAsync(string appId, DataSourceInput input)
     {
-        var dataSources = await _domainService.GetListAsync(appId);
+        var dataSources = await _repository.GetListAsync(appId);
 
         List<DataSourceListModel> list = new List<DataSourceListModel>();
         foreach (var dataSourceSchema in dataSources)
@@ -42,7 +40,7 @@ public class DataSourceAppService : ApplicationService, IDataSourceAppService
 
     public async Task<DataSourceSchema> GetByIdAsync(string appId, string id)
     {
-        return await _domainService.GetAsync(appId, id);
+        return await _repository.GetAsync(appId, id);
     }
 
     public async Task<bool> SaveAsync(string appId, DataSourceSchema dataSourceSchema)
@@ -50,13 +48,13 @@ public class DataSourceAppService : ApplicationService, IDataSourceAppService
         ArgumentNullException.ThrowIfNull(dataSourceSchema);
         ArgumentException.ThrowIfNullOrEmpty(dataSourceSchema.Id);
 
-        await _domainService.SaveAsync(appId, dataSourceSchema);
+        await _repository.SaveAsync(appId, dataSourceSchema);
         return true;
     }
 
     public async Task<bool> DeleteAsync(string appId, string id)
     {
-        await _domainService.DeleteAsync(appId, id);
+        await _repository.DeleteAsync(appId, id);
         return true;
     }
 }

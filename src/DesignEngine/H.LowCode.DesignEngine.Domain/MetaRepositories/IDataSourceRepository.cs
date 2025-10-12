@@ -1,12 +1,12 @@
-﻿using H.LowCode.DesignEngine.Model;
-using H.LowCode.MetaSchema;
-using Volo.Abp.Domain.Repositories;
+﻿using H.LowCode.MetaSchema;
 
 namespace H.LowCode.DesignEngine.Domain.Repositories;
 
 public interface IDataSourceRepository
 {
     Task<IList<DataSourceSchema>> GetListAsync(string appId);
+
+    IList<DataSourceSchema> GetAllEntities(string appId);
 
     Task<DataSourceSchema> GetAsync(string appId, string id);
 

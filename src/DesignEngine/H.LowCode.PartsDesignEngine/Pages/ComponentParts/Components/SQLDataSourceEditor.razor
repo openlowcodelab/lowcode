@@ -6,7 +6,8 @@
         <AntDesign.ChildContent>
             <AntDesign.Row Gutter="16">
                 <AntDesign.Col Span="12">
-                    <FormItem Label="数据库类型">
+                    <div style="margin-bottom: 16px;">
+                        <label style="display: block; margin-bottom: 4px; font-weight: 500;">数据库类型</label>
                         <AntDesign.Select TItem="string" TItemValue="string" @bind-Value="DataSource.DbType">
                             <AntDesign.SelectOption TItem="string" TItemValue="string" Value="@("SqlServer")">SQL Server</AntDesign.SelectOption>
                             <AntDesign.SelectOption TItem="string" TItemValue="string" Value="@("MySQL")">MySQL</AntDesign.SelectOption>
@@ -14,14 +15,15 @@
                             <AntDesign.SelectOption TItem="string" TItemValue="string" Value="@("Oracle")">Oracle</AntDesign.SelectOption>
                             <AntDesign.SelectOption TItem="string" TItemValue="string" Value="@("SQLite")">SQLite</AntDesign.SelectOption>
                         </AntDesign.Select>
-                    </FormItem>
+                    </div>
                 </AntDesign.Col>
             </AntDesign.Row>
             <AntDesign.Row Gutter="16">
                 <AntDesign.Col Span="24">
-                    <FormItem Label="SQL 查询">
+                    <div style="margin-bottom: 16px;">
+                        <label style="display: block; margin-bottom: 4px; font-weight: 500;">SQL 查询</label>
                         <TextArea @bind-Value="DataSource.Sql" Rows="4" Placeholder="请输入 SQL 查询语句" />
-                    </FormItem>
+                    </div>
                 </AntDesign.Col>
             </AntDesign.Row>
         </AntDesign.ChildContent>

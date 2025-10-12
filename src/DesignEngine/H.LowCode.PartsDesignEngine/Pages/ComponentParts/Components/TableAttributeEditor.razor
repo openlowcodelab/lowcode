@@ -24,12 +24,13 @@
                         var objectJson = GetObjectJson(item);
                     }
                     <div>
-                        <FormItem Label="@($"对象 {index + 1}")">
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; margin-bottom: 4px; font-weight: 500;">@($"对象 {index + 1}")</label>
                             <TextArea Value="@objectJson" 
                                       @onchange="@((e) => UpdateObjectFromJson(index, e.Value?.ToString()))"
                                       Rows="3" 
                                       Placeholder="请输入有效的JSON对象" />
-                        </FormItem>
+                        </div>
                     </div>
                 </ItemTemplate>
             </ObjectArrayEditor>

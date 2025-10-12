@@ -1,10 +1,7 @@
-﻿using H.Extensions.System;
-using H.LowCode.DesignEngine.Application.Contracts;
-using H.LowCode.DesignEngine.Domain;
+﻿using H.LowCode.DesignEngine.Application.Contracts;
+using H.LowCode.DesignEngine.Domain.Repositories;
 using H.LowCode.MetaSchema;
 using Microsoft.Extensions.DependencyInjection;
-using System.Collections.Generic;
-using System.Text;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
 
@@ -13,16 +10,16 @@ namespace H.LowCode.DesignEngine.Application;
 [RemoteService]
 public class MenuAppService : ApplicationService, IMenuAppService
 {
-    private IMenuDomainService _domainService => LazyServiceProvider.GetRequiredService<IMenuDomainService>();
+    private IMenuRepository _repository => LazyServiceProvider.GetRequiredService<IMenuRepository>();
 
     public async Task<IList<MenuSchema>> GetListAsync(string appId)
     {
-        return await _domainService.GetListAsync(appId);
+        return await _repository.GetListAsync(appId);
     }
 
     public async Task<MenuSchema> GetByIdAsync(string appId, string menuId)
     {
-        return await _domainService.GetAsync(appId, menuId);
+        return await _repository.GetAsync(appId, menuId);
     }
 
     public async Task<bool> SaveAsync(MenuSchema menuSchema)
@@ -30,13 +27,13 @@ public class MenuAppService : ApplicationService, IMenuAppService
         ArgumentNullException.ThrowIfNull(menuSchema);
         ArgumentException.ThrowIfNullOrEmpty(menuSchema.Id);
 
-        await _domainService.SaveAsync(menuSchema);
+        await _repository.SaveAsync(menuSchema);
         return true;
     }
 
     public async Task<bool> DeleteAsync(string appId, string menuId)
     {
-        await _domainService.DeleteAsync(appId, menuId);
+        await _repository.DeleteAsync(appId, menuId);
         return true;
     }
 }

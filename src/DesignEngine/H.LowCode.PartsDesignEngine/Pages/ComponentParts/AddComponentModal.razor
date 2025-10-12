@@ -4,34 +4,46 @@
 @inject IComponentPartsAppService ComponentPartsAppService
 
 <Modal Title="新增组件" @bind-Visible="@Visible" OnOk="@OnOk" OnCancel="@OnCancel" Width="600">
-    <Form @ref="@_form" Model="@_componentModel" LabelColSpan="6" WrapperColSpan="18">
-        <FormItem Label="组件名称" Required>
+    <div style="padding: 16px;">
+        <div style="margin-bottom: 16px;">
+            <label style="display: block; margin-bottom: 4px; font-weight: 500;">
+                <span style="color: red;">*</span> 组件名称
+            </label>
             <Input @bind-Value="@_componentModel.ComponentName" Placeholder="请输入组件名称（英文，用于代码生成）" />
-        </FormItem>
+        </div>
         
-        <FormItem Label="组件标签" Required>
+        <div style="margin-bottom: 16px;">
+            <label style="display: block; margin-bottom: 4px; font-weight: 500;">
+                <span style="color: red;">*</span> 组件标签
+            </label>
             <Input @bind-Value="@_componentModel.Label" Placeholder="请输入组件显示标签（中文）" />
-        </FormItem>
+        </div>
         
-        <FormItem Label="组件类型" Required>
+        <div style="margin-bottom: 16px;">
+            <label style="display: block; margin-bottom: 4px; font-weight: 500;">
+                <span style="color: red;">*</span> 组件类型
+            </label>
             <RadioGroup @bind-Value="@_componentModel.ComponentType">
                 <Radio RadioButton Value="1">原子组件</Radio>
                 <Radio RadioButton Value="2">低代码组件</Radio>
             </RadioGroup>
-        </FormItem>
+        </div>
         
-        <FormItem Label="是否容器">
+        <div style="margin-bottom: 16px;">
+            <label style="display: block; margin-bottom: 4px; font-weight: 500;">是否容器</label>
             <Switch @bind-Value="@_componentModel.IsContainer" />
-        </FormItem>
+        </div>
         
-        <FormItem Label="支持数据源">
+        <div style="margin-bottom: 16px;">
+            <label style="display: block; margin-bottom: 4px; font-weight: 500;">支持数据源</label>
             <Switch @bind-Value="@_componentModel.IsSupportDataSource" Disabled="@_componentModel.IsContainer" />
-        </FormItem>
+        </div>
         
-        <FormItem Label="描述">
+        <div style="margin-bottom: 16px;">
+            <label style="display: block; margin-bottom: 4px; font-weight: 500;">描述</label>
             <TextArea @bind-Value="@_componentModel.Description" Placeholder="请输入组件描述" Rows="3" />
-        </FormItem>
-    </Form>
+        </div>
+    </div>
 </Modal>
 
 @code {
@@ -47,7 +59,6 @@
     [Parameter]
     public EventCallback<ComponentPartsSchema> OnComponentCreated { get; set; }
 
-    private Form<ComponentCreateModel> _form;
     private ComponentCreateModel _componentModel = new();
 
     protected override void OnParametersSet()
@@ -68,8 +79,16 @@
 
     private async Task OnOk()
     {
-        if (!_form.Validate())
+        // 手动验证必填字段
+        if (string.IsNullOrWhiteSpace(_componentModel.ComponentName))
         {
+            await Message.ErrorAsync("请输入组件名称");
+            return;
+        }
+        
+        if (string.IsNullOrWhiteSpace(_componentModel.Label))
+        {
+            await Message.ErrorAsync("请输入组件标签");
             return;
         }
 
