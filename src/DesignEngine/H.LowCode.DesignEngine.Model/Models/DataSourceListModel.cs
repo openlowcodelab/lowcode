@@ -28,7 +28,7 @@ public class DataSourceListModel
     [JsonPropertyName("pub")]
     public bool PublishStatus { get; set; }
 
-    public string ModifiedUser { get; set; }
+    public string? ModifiedUser { get; set; }
 
-    public DateTime ModifiedTime { get; set; }
+    public DateTime? ModifiedTime { get; set; }
 }

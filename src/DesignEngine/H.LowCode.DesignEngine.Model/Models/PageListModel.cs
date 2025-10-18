@@ -17,5 +17,5 @@ public class PageListModel
     [JsonPropertyName("pub")]
     public int PublishStatus { get; set; }
 
-    public DateTime ModifiedTime { get; set; }
+    public DateTime? ModifiedTime { get; set; }
 }

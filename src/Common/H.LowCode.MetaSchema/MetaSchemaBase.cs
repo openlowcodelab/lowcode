@@ -12,8 +12,8 @@ public abstract class MetaSchemaBase : StateHasChangeSchema
     public DateTime CreatedTime { get; set; }
 
     [JsonPropertyName("mu")]
-    public string ModifiedUser { get; set; }
+    public string? ModifiedUser { get; set; }
 
     [JsonPropertyName("mt")]
-    public DateTime ModifiedTime { get; set; }
+    public DateTime? ModifiedTime { get; set; }
 }
