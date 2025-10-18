@@ -6,13 +6,13 @@ namespace H.LowCode.MetaSchema;
 public class TableButtonSchema
 {
     [JsonPropertyName("id")]
-    public string Id { get; set; }
+    public string? Id { get; set; }
 
     [JsonPropertyName("n")]
-    public string Name { get; set; }
+    public string? Name { get; set; }
 
     [JsonPropertyName("t")]
-    public string Title { get; set; }
+    public string? Title { get; set; }
 
     [JsonPropertyName("bt")]
     public int ButtonType { get; set; }
@@ -36,7 +36,7 @@ public class TableButtonSchema
     /// 事件
     /// </summary>
     [JsonPropertyName("evs")]
-    public IList<EventSchema> Events { get; set; }
+    public IList<EventSchema>? Events { get; set; }
 
     public void Update(TableButtonSchema update)
     {

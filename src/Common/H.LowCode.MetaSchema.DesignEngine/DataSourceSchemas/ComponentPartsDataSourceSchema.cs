@@ -12,5 +12,5 @@ public class ComponentPartsDataSourceSchema : ComponentDataSourceSchemaBase
     /// DataSource 渲染的 Fragment
     /// </summary>
     [JsonPropertyName("dsfrag")]
-    public ComponentPartsFragmentSchema DataSourceFragment { get; set; }
+    public ComponentPartsFragmentSchema? DataSourceFragment { get; set; }
 }

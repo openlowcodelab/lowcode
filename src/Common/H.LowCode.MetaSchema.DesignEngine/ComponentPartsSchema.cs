@@ -6,6 +6,12 @@ namespace H.LowCode.MetaSchema.DesignEngine;
 public class ComponentPartsSchema : ComponentSchemaBase
 {
     /// <summary>
+    /// 组件库Id
+    /// </summary>
+    [JsonPropertyName("libid")]
+    public string? LibraryId { get; set; }
+
+    /// <summary>
     /// 组件物料Id
     /// </summary>
     /// <remarks>一类组件唯一Id</remarks>
@@ -13,17 +19,11 @@ public class ComponentPartsSchema : ComponentSchemaBase
     public string ComponentId { get; set; } = ShortIdGenerator.Generate();
 
     /// <summary>
-    /// 组件库Id
-    /// </summary>
-    [JsonPropertyName("libid")]
-    public string LibraryId { get; set; }
-
-    /// <summary>
     /// 组件物料Name
     /// </summary>
     /// <remarks>一类组件唯一Name</remarks>
     [JsonPropertyName("cn")]
-    public string ComponentName { get; set; }
+    public string? ComponentName { get; set; }
 
     /// <summary>
     /// 组件类型：1-原子组件  2-组合组件
@@ -35,10 +35,10 @@ public class ComponentPartsSchema : ComponentSchemaBase
     /// 组件渲染 Fragment
     /// </summary>
     [JsonPropertyName("frag")]
-    public ComponentPartsFragmentSchema Fragment { get; set; }
+    public ComponentPartsFragmentSchema? Fragment { get; set; }
 
     [JsonPropertyName("ds")]
-    public ComponentPartsDataSourceSchema DataSource { get; set; } = new();
+    public ComponentPartsDataSourceSchema? DataSource { get; set; } = new();
 
     /// <summary>
     /// Attribute定义分组
@@ -56,7 +56,7 @@ public class ComponentPartsSchema : ComponentSchemaBase
     /// 组件支持的事件
     /// </summary>
     [JsonPropertyName("sptevs")]
-    public string[] SupportEvents { get; set; }
+    public string[]? SupportEvents { get; set; }
 
     /// <summary>
     /// 事件定义
@@ -90,7 +90,7 @@ public class ComponentPartsSchema : ComponentSchemaBase
     public ComponentDesignStateSchema DesignState { get; set; } = new();
 
     [JsonIgnore]
-    public Action Refresh { get; set; }
+    public Action? Refresh { get; set; }
 
     public void RefreshState()
     {

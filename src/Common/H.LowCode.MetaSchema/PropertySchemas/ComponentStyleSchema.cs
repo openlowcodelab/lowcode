@@ -29,11 +29,11 @@ public class ComponentStyleSchema
     /// 默认样式
     /// </summary>
     [JsonPropertyName("dfstl")]
-    public string DefaultStyle { get; set; }
+    public string? DefaultStyle { get; set; }
 
     /// <summary>
     /// 自定义样式
     /// </summary>
     [JsonPropertyName("ctstl")]
-    public string CustomStyle { get; set; }
+    public string? CustomStyle { get; set; }
 }

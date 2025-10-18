@@ -37,11 +37,11 @@ public class ComponentPartsStyleSchema
     /// 默认样式
     /// </summary>
     [JsonPropertyName("dsty")]
-    public string DefaultStyle { get; set; }
+    public string? DefaultStyle { get; set; }
 
     /// <summary>
     /// 自定义样式
     /// </summary>
     [JsonPropertyName("csty")]
-    public string CustomStyle { get; set; }
+    public string? CustomStyle { get; set; }
 }

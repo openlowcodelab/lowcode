@@ -50,7 +50,7 @@ public class DragDropStateService
         });
     }
 
-    public ComponentPartsSchema GetCurrentDragComponent(string appId, string pageId)
+    public ComponentPartsSchema? GetCurrentDragComponent(string appId, string pageId)
     {
         var stateSchema = GetStateSchema(appId, pageId);
         return stateSchema?.CurrentDragComponent;
@@ -63,13 +63,13 @@ public class DragDropStateService
         });
     }
 
-    public ComponentPartsSchema GetLastDragOverComponent(string appId, string pageId)
+    public ComponentPartsSchema? GetLastDragOverComponent(string appId, string pageId)
     {
         var stateSchema = GetStateSchema(appId, pageId);
         return stateSchema?.LastDragOverComponent;
     }
 
-    public void SetLastDragOverComponent(string appId, string pageId, ComponentPartsSchema lastDragOverComponent)
+    public void SetLastDragOverComponent(string appId, string pageId, ComponentPartsSchema? lastDragOverComponent)
     {
         SetStateSchema(appId, pageId, (stateSchema) => {
             stateSchema.LastDragOverComponent = lastDragOverComponent;
@@ -214,22 +214,22 @@ public class DragDropStateSchema
     /// 最后选中对象
     /// （当 DraggableItem 失去焦点时，即页面上没有任何项被选中，LastSelectedModel 仍有值）
     /// </summary>
-    public ComponentPartsSchema LastSelectedComponent { get; set; }
+    public ComponentPartsSchema? LastSelectedComponent { get; set; }
 
     /// <summary>
     /// 当前被拖拽对象
     /// </summary>
-    public ComponentPartsSchema CurrentDragComponent { get; set; }
+    public ComponentPartsSchema? CurrentDragComponent { get; set; }
 
     /// <summary>
     /// 最后一次拖拽到上面的对象
     /// </summary>
-    public ComponentPartsSchema LastDragOverComponent { get; set; }
+    public ComponentPartsSchema? LastDragOverComponent { get; set; }
 
     /// <summary>
     /// 最后一次拖拽到上面的组件
     /// </summary>
-    public ComponentPartsSchema LastDropComponent { get; set; }
+    public ComponentPartsSchema? LastDropComponent { get; set; }
 
     /// <summary>
     /// 最后一次拖拽到上面的对象的时间

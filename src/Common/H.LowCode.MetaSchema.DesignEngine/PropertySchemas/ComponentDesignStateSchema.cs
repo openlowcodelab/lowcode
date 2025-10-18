@@ -13,7 +13,7 @@ public class ComponentDesignStateSchema
     public bool IsSelected { get; set; }
 
     [JsonIgnore]
-    public string DragEffectStyle { get; set; }
+    public string? DragEffectStyle { get; set; }
 
     /// <summary>
     /// 是否由组件面板拖拽而来

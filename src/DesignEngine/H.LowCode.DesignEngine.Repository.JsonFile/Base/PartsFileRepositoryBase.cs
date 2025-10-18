@@ -12,7 +12,7 @@ public abstract class PartsFileRepositoryBase
 {
     public bool? IsChangeTrackingEnabled { get; set; }
 
-    protected static string _metaBaseDir;
+    protected static string? _metaBaseDir;
 
     public PartsFileRepositoryBase(IOptions<MetaOption> metaOption)
     {

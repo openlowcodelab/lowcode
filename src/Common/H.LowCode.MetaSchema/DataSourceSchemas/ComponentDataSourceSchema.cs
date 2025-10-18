@@ -18,29 +18,29 @@ public abstract class ComponentDataSourceSchemaBase : StateHasChangeSchema
     public ComponentDataSourceTypeEnum DataSourceType { get; set; }
 
     [JsonPropertyName("dsid")]
-    public string DataSourceId { get; set; }
+    public string? DataSourceId { get; set; }
 
     [JsonPropertyName("dsn")]
-    public string DataSourceName { get; set; }
+    public string? DataSourceName { get; set; }
 
     [JsonPropertyName("dsv")]
-    public string DataSourceValue { get; set; }
+    public string? DataSourceValue { get; set; }
 
     /// <summary>
     /// 固定选项数据源
     /// </summary>
     [JsonPropertyName("fxopds")]
-    public IList<OptionDataSourceSchema> FiexdOptionDataSource { get; set; }
+    public IList<OptionDataSourceSchema>? FiexdOptionDataSource { get; set; }
 
     /// <summary>
     /// API选项数据源
     /// </summary>
     [JsonPropertyName("apiopds")]
-    public APIDataSourceSchema APIOptionDataSource { get; set; }
+    public APIDataSourceSchema? APIOptionDataSource { get; set; }
 
     /// <summary>
     /// SQL选项数据源
     /// </summary>
     [JsonPropertyName("sqlopds")]
-    public SQLDataSourceSchema SQLOptionDataSource { get; set; }
+    public SQLDataSourceSchema? SQLOptionDataSource { get; set; }
 }

@@ -6,13 +6,13 @@ namespace H.LowCode.MetaSchema;
 public abstract class PageSchemaBase : MetaSchemaBase
 {
     [JsonPropertyName("aid")]
-    public string AppId { get; set; }
+    public string? AppId { get; set; }
 
     [JsonPropertyName("id")]
     public string Id { get; set; } = ShortIdGenerator.Generate();
 
     [JsonPropertyName("n")]
-    public string Name { get; set; }
+    public string? Name { get; set; }
 
     [JsonPropertyName("order")]
     public int Order { get; set; }
@@ -36,5 +36,5 @@ public abstract class PageSchemaBase : MetaSchemaBase
     /// 事件
     /// </summary>
     [JsonPropertyName("evs")]
-    public IList<EventSchema> Events { get; set; }
+    public IList<EventSchema>? Events { get; set; }
 }

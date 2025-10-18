@@ -8,18 +8,18 @@ public abstract class ComponentFragmentSchemaBase
     /// 组件类型名
     /// </summary>
     [JsonPropertyName("t")]
-    public virtual string TypeName { get; set; }
+    public virtual string? TypeName { get; set; }
 
     [JsonPropertyName("valt")]
-    public string ValueType { get; set; }
+    public string? ValueType { get; set; }
 
     [JsonPropertyName("attrs")]
     public ComponentAttributeFragmentSchema[] Attributes { get; set; } = [];
 
     [JsonPropertyName("content")]
-    public string Content { get; set; }
+    public string? Content { get; set; }
 
-    public object GetDefaultValue()
+    public object? GetDefaultValue()
     {
         if (string.IsNullOrEmpty(ValueType))
             return null;
@@ -32,14 +32,14 @@ public abstract class ComponentFragmentSchemaBase
 public record ComponentAttributeFragmentSchema
 {
     [JsonPropertyName("attrn")]
-    public string AttributeName { get; set; }
+    public string? AttributeName { get; set; }
 
     /// <summary>
     /// 组件属性值 clr 类型
     /// </summary>
     [JsonPropertyName("attrt")]
-    public string AttributeClrType { get; set; }
+    public string? AttributeClrType { get; set; }
 
     [JsonPropertyName("attrv")]
-    public object AttributeValue { get; set; }
+    public object? AttributeValue { get; set; }
 }

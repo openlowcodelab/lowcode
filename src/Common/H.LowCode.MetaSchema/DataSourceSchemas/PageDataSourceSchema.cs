@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
+﻿using System.Text.Json.Serialization;
 
 namespace H.LowCode.MetaSchema;
 
@@ -13,11 +8,11 @@ public class PageDataSourceSchema
     public PageDataSourceTypeEnum DataSourceType { get; set; }
 
     [JsonPropertyName("dsid")]
-    public string DataSourceId { get; set; }
+    public string? DataSourceId { get; set; }
 
     [JsonPropertyName("dsn")]
-    public string DataSourceName { get; set; }
+    public string? DataSourceName { get; set; }
 
     [JsonPropertyName("dsv")]
-    public string DataSourceValue { get; set; }
+    public string? DataSourceValue { get; set; }
 }

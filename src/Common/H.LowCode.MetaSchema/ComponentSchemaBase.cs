@@ -13,19 +13,19 @@ public abstract class ComponentSchemaBase : StateHasChangeSchema
     public string Id { get; set; } = ShortIdGenerator.Generate();
 
     [JsonPropertyName("pid")]
-    public string ParentId { get; set; }
+    public string? ParentId { get; set; }
 
     /// <summary>
     /// 组件Name
     /// </summary>
     [JsonPropertyName("n")]
-    public string Name { get; set; }
+    public string? Name { get; set; }
 
     /// <summary>
     /// 组件显示名称
     /// </summary>
     [JsonPropertyName("lb")]
-    public string Label { get; set; }
+    public string? Label { get; set; }
 
     /// <summary>
     /// 是否隐藏标题
@@ -71,17 +71,17 @@ public abstract class ComponentSchemaBase : StateHasChangeSchema
     /// 事件
     /// </summary>
     [JsonPropertyName("evs")]
-    public IList<EventSchema> Events { get; set; }
+    public IList<EventSchema>? Events { get; set; }
 
     /// <summary>
     /// 事件消费
     /// </summary>
     [JsonPropertyName("evcs")]
-    public IList<EventConsumeSchema> EventConsumes { get; set; }
+    public IList<EventConsumeSchema>? EventConsumes { get; set; }
 
     [JsonPropertyName("desc")]
-    public string Description { get; set; }
+    public string? Description { get; set; }
 
     [JsonPropertyName("v")]
-    public string Version { get; set; }
+    public string Version { get; set; } = "0.0.1";
 }

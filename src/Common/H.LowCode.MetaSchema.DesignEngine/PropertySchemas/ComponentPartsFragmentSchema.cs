@@ -11,7 +11,7 @@ public class ComponentPartsFragmentSchema : ComponentFragmentSchemaBase
     /// 默认组件类型名，如 "AntDesign.Input`1[System.String], AntDesign"
     /// </summary>
     [JsonPropertyName("dt")]
-    public string DefaultTypeName { get; set; }
+    public string? DefaultTypeName { get; set; }
 
     /// <summary>
     /// 组件类型名
@@ -21,10 +21,10 @@ public class ComponentPartsFragmentSchema : ComponentFragmentSchemaBase
     /// 组件保存 json 文件时，强制设置 TypeName 为 null
     /// </remarks>
     [JsonPropertyName("t")]
-    public override string TypeName { get; set; }
+    public override string? TypeName { get; set; }
 
     [JsonPropertyName("childs")]
-    public ComponentPartsFragmentSchema[] ChildFragments { get; set; }
+    public ComponentPartsFragmentSchema[] ChildFragments { get; set; } = [];
 
     [JsonIgnore]
     public bool HasChildFragment

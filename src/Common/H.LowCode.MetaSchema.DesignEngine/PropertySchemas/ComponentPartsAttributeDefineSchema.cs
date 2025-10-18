@@ -1,18 +1,11 @@
-﻿using H.LowCode.MetaSchema;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
+﻿using System.Text.Json.Serialization;
 
 namespace H.LowCode.MetaSchema.DesignEngine;
 
 public class ComponentPartsAttributeDefineSchema : ComponentAttributeDefineSchemaBase
 {
     [JsonPropertyName("disn")]
-    public string DisplayName { get; set; }
+    public string? DisplayName { get; set; }
 
     /// <summary>
     /// 设置项类型 (用于判断设置项控件渲染)
@@ -24,19 +17,22 @@ public class ComponentPartsAttributeDefineSchema : ComponentAttributeDefineSchem
     public bool IsRequired { get; set; }
 
     [JsonPropertyName("desc")]
-    public string Description { get; set; }
+    public string? Description { get; set; }
 
     [JsonPropertyName("dftval")]
-    public object DefaultValue { get; set; }
+    public object? DefaultValue { get; set; }
 
     [JsonPropertyName("ops")]
-    public Dictionary<string, object> Options { get; set; }
+    public Dictionary<string, object>? Options { get; set; }
 
     [JsonIgnore]
-    public string StringValue
+    public string? StringValue
     {
         get
         {
+            if (AttributeValue == null)
+                return null;
+
             return AttributeValue.ConvertToRealType(typeof(string))?.ToString();
         }
         set

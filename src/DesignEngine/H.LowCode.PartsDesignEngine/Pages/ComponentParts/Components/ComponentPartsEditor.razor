@@ -58,6 +58,12 @@
                         <Switch @bind-Value="@ComponentParts.IsSupportDataSource" Disabled="@ComponentParts.IsContainer" />
                     </div>
                 </AntDesign.Col>
+                <AntDesign.Col Span="8">
+                    <div style="margin-bottom: 16px;">
+                        <label style="display: block; margin-bottom: 4px; font-weight: 500;">隐藏标签</label>
+                        <Switch @bind-Value="@ComponentParts.IsHiddenLabel" />
+                    </div>
+                </AntDesign.Col>
             </AntDesign.Row>
 
             <div style="margin-bottom: 16px;">
@@ -70,7 +76,7 @@
             <ComponentFragmentEditor @bind-Fragment="@ComponentParts.Fragment" />
         </AntDesign.TabPane>
         
-        <AntDesign.TabPane Key="attributes" Tab="属性定义">
+        <AntDesign.TabPane Key="attributes" Tab="组件设计属性">
             <AttributeDefineGroupEditor @bind-AttributeDefineGroups="@ComponentParts.AttributeDefineGroups" />
         </AntDesign.TabPane>
         

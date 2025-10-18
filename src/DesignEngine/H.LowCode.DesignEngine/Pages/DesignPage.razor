@@ -46,13 +46,13 @@
 @code
 {
     [Parameter]
-    public required string AppId { get; set; }
+    public string AppId { get; set; }
 
     [Parameter]
     public string PageId { get; set; }
 
     [PersistentState]
-    public required PagePartsSchema _pageSchema { get; set; }
+    public PagePartsSchema _pageSchema { get; set; }
 
     private PageCascadingModel _pageCascadingModel;
     private bool _isNewPage;
@@ -125,7 +125,9 @@
         if (_pageSchema == null)
             throw new NullReferenceException(nameof(_pageSchema));
 
-        _pageSchema.Components = DragDropStateService.GetRootComponent(_pageSchema.AppId, _pageSchema.Id).Childrens;
+        var pageAllComponents = DragDropStateService.GetRootComponent(_pageSchema.AppId, _pageSchema.Id).Childrens;
+
+        _pageSchema.Components = pageAllComponents;
         return _pageSchema;
     }
 
