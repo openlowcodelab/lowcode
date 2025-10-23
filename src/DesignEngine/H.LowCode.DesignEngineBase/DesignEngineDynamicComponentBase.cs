@@ -192,29 +192,32 @@ public abstract class DesignEngineDynamicComponentBase : LowCodeDynamicComponent
         if (exist.HasValue && exist.Value)
             return (null, false);
 
-        var containerComponent = RenderChildContainerComponent(component, key);
+        var innerContainerComponent = RenderChildContainerComponent(component, key);
 
-        if (action != null) action(containerComponent);
+        if (action != null) action(innerContainerComponent);
 
-        component.Childrens.Add(containerComponent);
+        component.Childrens.Add(innerContainerComponent);
 
-        return (containerComponent, true);
+        return (innerContainerComponent, true);
     }
 
     private ComponentPartsSchema RenderChildContainerComponent(ComponentPartsSchema component, string key)
     {
-        var newComponent = new ComponentPartsSchema();
-        newComponent.Id = key;
-        newComponent.Refresh = component.Refresh;
+        var innerContainerComponent = new ComponentPartsSchema
+        {
+            Id = key,
+            Refresh = component.Refresh,
 
-        newComponent.Fragment = new();
-        newComponent.Style = new() { DefaultStyle = "height:100%; width:100%;" };
-        newComponent.IsHiddenLabel = true;
+            Fragment = new(),
+            Style = new() { DefaultStyle = "height:100%; width:100%;" },
+            IsHiddenLabel = true,
 
-        newComponent.IsContainer = true;
-        newComponent.ParentId = component.Id;
+            IsContainer = true,
+            IsInnerContainer = true,
+            ParentId = component.Id
+        };
 
-        return newComponent;
+        return innerContainerComponent;
     }
     #endregion
 }

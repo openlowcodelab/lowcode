@@ -104,12 +104,14 @@ public class DragDropStateService
     }
 
     #region method
-    private DragDropStateSchema GetStateSchema(string appId, string pageId)
+    private DragDropStateSchema? GetStateSchema(string appId, string pageId)
     {
         string key = $"{appId}-{pageId}";
 
-        if (schemaStates.TryGetValue(key, out DragDropStateSchema schema))
+        if (schemaStates.TryGetValue(key, out DragDropStateSchema? schema))
+        {
             return schema;
+        }
 
         return null;
     }
@@ -118,8 +120,10 @@ public class DragDropStateService
     {
         string key = $"{appId}-{pageId}";
 
-        if (schemaStates.TryGetValue(key, out DragDropStateSchema stateSchema))
+        if (schemaStates.TryGetValue(key, out DragDropStateSchema? stateSchema))
+        {
             action(stateSchema);
+        }
         else
         {
             stateSchema = new();

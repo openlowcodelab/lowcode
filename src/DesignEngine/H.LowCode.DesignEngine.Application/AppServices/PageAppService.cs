@@ -76,6 +76,9 @@ public class PageAppService : ApplicationService, IPageAppService
         {
             foreach (var child in component.Childrens)
             {
+                if (child.IsInnerContainer)
+                    continue;
+
                 await MergeComponentPartsDefineRecursive(child);
             }
         }

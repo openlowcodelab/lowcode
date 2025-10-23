@@ -1,4 +1,4 @@
-﻿using H.Util.Ids;
+using H.Util.Ids;
 using System.Text.Json.Serialization;
 
 namespace H.LowCode.MetaSchema;
@@ -39,6 +39,12 @@ public abstract class ComponentSchemaBase : StateHasChangeSchema
     [JsonPropertyName("container")]
     public bool IsContainer { get; set; }
 
+    /// <summary>
+    /// 是否为内部容器组件
+    /// </summary>
+    [JsonPropertyName("incontainer")]
+    public bool IsInnerContainer { get; set; }
+
     private bool _isSupportDataSource;
     /// <summary>
     /// 是否支持数据源
@@ -78,6 +84,12 @@ public abstract class ComponentSchemaBase : StateHasChangeSchema
     /// </summary>
     [JsonPropertyName("evcs")]
     public IList<EventConsumeSchema>? EventConsumes { get; set; }
+
+    /// <summary>
+    /// 校验规则
+    /// </summary>
+    [JsonPropertyName("valrules")]
+    public IList<ValidationRuleSchema>? ValidationRules { get; set; }
 
     [JsonPropertyName("desc")]
     public string? Description { get; set; }
