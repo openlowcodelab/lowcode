@@ -132,7 +132,7 @@
             };
         }
 
-        Console.WriteLine($"列表列头: {tableSchema.Columns.ToJson()}");
+        Logger.LogWarning($"列表列头: {tableSchema.Columns.ToJson()}");
 
         return tableSchema;
     }
@@ -145,7 +145,8 @@
             PageId = PageCascading?.PageId,
             DataSourceId = DataSource?.DataSourceId,
             SkipCount = (_pageIndex - 1) * _pageSize,
-            MaxResultCount = _pageSize
+            MaxResultCount = _pageSize,
+            Filters = new Dictionary<string, object>()
         };
 
         try
@@ -312,21 +313,21 @@
             var primaryKeyColumn = _tableSchema.Columns.FirstOrDefault(t => t.IsPrimaryKey);
             if (primaryKeyColumn == null)
             {
-                Console.WriteLine("编辑失败: 未找到主键字段");
+                Logger.LogWarning("编辑失败: 未找到主键字段");
                 return;
             }
 
             // 获取主键值
             if (!rowData.ContainsKey(primaryKeyColumn.Name))
             {
-                Console.WriteLine($"编辑失败: 行数据中未找到主键字段 {primaryKeyColumn.Name}");
+                Logger.LogWarning($"编辑失败: 行数据中未找到主键字段 {primaryKeyColumn.Name}");
                 return;
             }
 
             var primaryKeyValue = rowData[primaryKeyColumn.Name]?.ToString();
             if (string.IsNullOrEmpty(primaryKeyValue))
             {
-                Console.WriteLine("编辑失败: 主键值为空");
+                Logger.LogWarning("编辑失败: 主键值为空");
                 return;
             }
 
@@ -342,12 +343,11 @@
             // 创建编辑数据副本
             _editingRows[primaryKeyValue] = new Dictionary<string, object>(rowData);
 
-            Console.WriteLine($"开始编辑行: ID={primaryKeyValue}");
             StateHasChanged();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"编辑行失败: {ex.Message}");
+            Logger.LogWarning($"编辑行失败: {ex.Message}");
         }
 
         await Task.CompletedTask;
@@ -361,21 +361,21 @@
             var primaryKeyColumn = _tableSchema.Columns.FirstOrDefault(t => t.IsPrimaryKey);
             if (primaryKeyColumn == null)
             {
-                Console.WriteLine("删除失败: 未找到主键字段");
+                Logger.LogWarning("删除失败: 未找到主键字段");
                 return;
             }
 
             // 获取主键值
             if (!row.ContainsKey(primaryKeyColumn.Name))
             {
-                Console.WriteLine($"删除失败: 行数据中未找到主键字段 {primaryKeyColumn.Name}");
+                Logger.LogWarning($"删除失败: 行数据中未找到主键字段 {primaryKeyColumn.Name}");
                 return;
             }
 
             var primaryKeyValue = row[primaryKeyColumn.Name]?.ToString();
             if (string.IsNullOrEmpty(primaryKeyValue))
             {
-                Console.WriteLine("删除失败: 主键值为空");
+                Logger.LogWarning("删除失败: 主键值为空");
                 return;
             }
 
@@ -394,12 +394,10 @@
 
             // 删除成功后重新加载数据
             await LoadDataAsync();
-
-            Console.WriteLine($"删除成功: ID={primaryKeyValue}");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"删除失败: {ex.Message}");
+            Logger.LogWarning($"删除失败: {ex.Message}");
         }
     }
 
@@ -411,28 +409,28 @@
             var primaryKeyColumn = _tableSchema.Columns.FirstOrDefault(t => t.IsPrimaryKey);
             if (primaryKeyColumn == null)
             {
-                Console.WriteLine("保存失败: 未找到主键字段");
+                Logger.LogWarning("保存失败: 未找到主键字段");
                 return;
             }
 
             // 获取主键值
             if (!rowData.ContainsKey(primaryKeyColumn.Name))
             {
-                Console.WriteLine($"保存失败: 行数据中未找到主键字段 {primaryKeyColumn.Name}");
+                Logger.LogWarning($"保存失败: 行数据中未找到主键字段 {primaryKeyColumn.Name}");
                 return;
             }
 
             var primaryKeyValue = rowData[primaryKeyColumn.Name]?.ToString();
             if (string.IsNullOrEmpty(primaryKeyValue))
             {
-                Console.WriteLine("保存失败: 主键值为空");
+                Logger.LogWarning("保存失败: 主键值为空");
                 return;
             }
 
             // 检查是否在编辑状态
             if (!_editingRows.ContainsKey(primaryKeyValue))
             {
-                Console.WriteLine("保存失败: 该行不在编辑状态");
+                Logger.LogWarning("保存失败: 该行不在编辑状态");
                 return;
             }
 
@@ -472,12 +470,6 @@
                 {
                     _data[dataIndex] = new Dictionary<string, object>(editingData);
                 }
-
-                Console.WriteLine($"保存成功: ID={primaryKeyValue}, 更新字段: {string.Join(", ", updateData.Keys)}");
-            }
-            else
-            {
-                Console.WriteLine($"无变更，跳过保存: ID={primaryKeyValue}");
             }
 
             // 退出编辑状态
@@ -488,7 +480,7 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"保存行失败: {ex.Message}");
+            Logger.LogWarning($"保存行失败: {ex.Message}");
         }
     }
 
@@ -500,28 +492,28 @@
             var primaryKeyColumn = _tableSchema.Columns.FirstOrDefault(t => t.IsPrimaryKey);
             if (primaryKeyColumn == null)
             {
-                Console.WriteLine("取消编辑失败: 未找到主键字段");
+                Logger.LogWarning("取消编辑失败: 未找到主键字段");
                 return;
             }
 
             // 获取主键值
             if (!rowData.ContainsKey(primaryKeyColumn.Name))
             {
-                Console.WriteLine($"取消编辑失败: 行数据中未找到主键字段 {primaryKeyColumn.Name}");
+                Logger.LogWarning($"取消编辑失败: 行数据中未找到主键字段 {primaryKeyColumn.Name}");
                 return;
             }
 
             var primaryKeyValue = rowData[primaryKeyColumn.Name]?.ToString();
             if (string.IsNullOrEmpty(primaryKeyValue))
             {
-                Console.WriteLine("取消编辑失败: 主键值为空");
+                Logger.LogWarning("取消编辑失败: 主键值为空");
                 return;
             }
 
             // 检查是否在编辑状态
             if (!_editingRows.ContainsKey(primaryKeyValue))
             {
-                Console.WriteLine("取消编辑失败: 该行不在编辑状态");
+                Logger.LogWarning("取消编辑失败: 该行不在编辑状态");
                 return;
             }
 
@@ -529,12 +521,11 @@
             _editingRows.Remove(primaryKeyValue);
             _originalRows.Remove(primaryKeyValue);
 
-            Console.WriteLine($"取消编辑: ID={primaryKeyValue}");
             StateHasChanged();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"取消编辑失败: {ex.Message}");
+            Logger.LogWarning($"取消编辑失败: {ex.Message}");
         }
 
         await Task.CompletedTask;
@@ -543,7 +534,6 @@
     private async Task AddRowAsync()
     {
         // TODO: 实现添加行功能
-        Console.WriteLine("添加新行");
     }
 
     private async Task RefreshDataAsync()
@@ -557,12 +547,11 @@
             // 重新加载数据
             await LoadDataAsync();
 
-            Console.WriteLine("刷新数据成功");
             StateHasChanged();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"刷新数据失败: {ex.Message}");
+            Logger.LogWarning($"刷新数据失败: {ex.Message}");
         }
     }
 }

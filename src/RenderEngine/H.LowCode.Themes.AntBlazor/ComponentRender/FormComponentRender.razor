@@ -1,5 +1,7 @@
-﻿@namespace H.LowCode.Themes.AntBlazor
+@namespace H.LowCode.Themes.AntBlazor
 @inherits RenderEngineDynamicComponentBase
+@using H.LowCode.MetaSchema.Services
+@inject IFormValidationService ValidationService
 
 @if (Component.IsContainer)
 {
@@ -14,7 +16,10 @@ else
 
         <FormItem Name="@Component.Name"
         Label="@(Component.IsHiddenLabel ? string.Empty : Component.Label)"
-        Style="width:100%">
+        Style="width:100%"
+        Rules="@_validationRules"
+        ValidateStatus="@_validateStatus"
+        Help="@_helpMessage">
 
             <div class="renderengine-componentitem-div-component">@_renderFragment</div>
 
@@ -36,6 +41,9 @@ else
     public bool IsInRootContainer { get; set; }
 
     private RenderFragment _renderFragment;
+    private FormValidationRule[] _validationRules = Array.Empty<FormValidationRule>();
+    private FormValidateStatus _validateStatus = FormValidateStatus.Default;
+    private string? _helpMessage;
 
     protected override async Task OnInitializedAsync()
     {
@@ -50,5 +58,92 @@ else
             throw new NullReferenceException(nameof(Component));
 
         _renderFragment = RenderComponent(Component);
+        InitializeValidationRules();
+    }
+
+    private void InitializeValidationRules()
+    {
+        if (Component.ValidationRules == null || !Component.ValidationRules.Any())
+        {
+            _validationRules = Array.Empty<FormValidationRule>();
+            return;
+        }
+
+        var rules = new List<FormValidationRule>();
+
+        foreach (var rule in Component.ValidationRules.Where(r => r.IsEnabled))
+        {
+            var formRule = new FormValidationRule
+            {
+                Required = rule.RuleType == ValidationRuleTypeEnum.Required,
+                Message = rule.ErrorMessage ?? GetDefaultErrorMessage(rule.RuleType)
+            };
+
+            // 设置长度校验
+            if (rule.RuleType == ValidationRuleTypeEnum.MinLength && rule.MinLength.HasValue)
+            {
+                formRule.Min = rule.MinLength.Value;
+            }
+            if (rule.RuleType == ValidationRuleTypeEnum.MaxLength && rule.MaxLength.HasValue)
+            {
+                formRule.Max = rule.MaxLength.Value;
+            }
+
+            // 设置数值校验
+            if (rule.RuleType == ValidationRuleTypeEnum.MinValue && rule.MinValue.HasValue)
+            {
+                formRule.Min = (int)rule.MinValue.Value;
+            }
+            if (rule.RuleType == ValidationRuleTypeEnum.MaxValue && rule.MaxValue.HasValue)
+            {
+                formRule.Max = (int)rule.MaxValue.Value;
+            }
+
+            // 设置正则表达式校验
+            if (rule.RuleType == ValidationRuleTypeEnum.Pattern && !string.IsNullOrEmpty(rule.Pattern))
+            {
+                formRule.Pattern = rule.Pattern;
+            }
+
+            // 设置邮箱校验
+            if (rule.RuleType == ValidationRuleTypeEnum.Email)
+            {
+                formRule.Type = FormFieldType.Email;
+            }
+
+            // 设置URL校验
+            if (rule.RuleType == ValidationRuleTypeEnum.Url)
+            {
+                formRule.Type = FormFieldType.Url;
+            }
+
+            rules.Add(formRule);
+        }
+
+        _validationRules = rules.ToArray();
+    }
+
+    private string GetDefaultErrorMessage(ValidationRuleTypeEnum ruleType)
+    {
+        return ruleType switch
+        {
+            ValidationRuleTypeEnum.Required => "此字段为必填项",
+            ValidationRuleTypeEnum.MinLength => "输入长度不足",
+            ValidationRuleTypeEnum.MaxLength => "输入长度超限",
+            ValidationRuleTypeEnum.MinValue => "输入值过小",
+            ValidationRuleTypeEnum.MaxValue => "输入值过大",
+            ValidationRuleTypeEnum.Pattern => "格式不正确",
+            ValidationRuleTypeEnum.Email => "请输入有效的邮箱地址",
+            ValidationRuleTypeEnum.Phone => "请输入有效的手机号码",
+            ValidationRuleTypeEnum.Url => "请输入有效的URL地址",
+            _ => "输入不符合要求"
+        };
+    }
+
+    public void UpdateValidationStatus(FormValidateStatus status, string? message = null)
+    {
+        _validateStatus = status;
+        _helpMessage = message;
+        StateHasChanged();
     }
 }

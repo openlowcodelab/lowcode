@@ -14,10 +14,10 @@ public record OptionDataSourceSchema
     public string Id { get; set; } = ShortIdGenerator.Generate();
 
     [JsonPropertyName("l")]
-    public string Label { get; set; }
+    public string? Label { get; set; }
 
     [JsonPropertyName("v")]
-    public string Value { get; set; }
+    public string? Value { get; set; }
 
     [JsonPropertyName("s")]
     public bool IsSelected { get; set; }
@@ -26,8 +26,8 @@ public record OptionDataSourceSchema
     public int Order { get; set; }
 
     [JsonPropertyName("g")]
-    public string Group { get; set; }
+    public string? Group { get; set; }
 
     [JsonPropertyName("d")]
-    public string Description { get; set; }
+    public string? Description { get; set; }
 }

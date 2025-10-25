@@ -1,4 +1,4 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 
 namespace H.LowCode.MetaSchema.DesignEngine;
 
@@ -25,6 +25,18 @@ public class ComponentPartsAttributeDefineSchema : ComponentAttributeDefineSchem
     [JsonPropertyName("ops")]
     public Dictionary<string, object>? Options { get; set; }
 
+    /// <summary>
+    /// 是否启用校验
+    /// </summary>
+    [JsonPropertyName("enableval")]
+    public bool IsValidationEnabled { get; set; }
+
+    /// <summary>
+    /// 校验规则
+    /// </summary>
+    [JsonPropertyName("valrules")]
+    public IList<ValidationRuleSchema>? ValidationRules { get; set; }
+
     [JsonIgnore]
     public string? StringValue
     {
@@ -49,7 +61,14 @@ public class ComponentPartsAttributeDefineSchema : ComponentAttributeDefineSchem
     {
         get
         {
-            return (int)AttributeValue.ConvertToRealType(typeof(int));
+            if (AttributeValue == null)
+                return 0;
+
+            var val = AttributeValue.ConvertToRealType(typeof(int));
+            if (val == null)
+                return 0;
+
+            return (int)val;
         }
         set
         {
@@ -62,7 +81,14 @@ public class ComponentPartsAttributeDefineSchema : ComponentAttributeDefineSchem
     {
         get
         {
-            return (bool)AttributeValue.ConvertToRealType(typeof(bool));
+            if (AttributeValue == null)
+                return false;
+
+            var val = AttributeValue.ConvertToRealType(typeof(bool));
+            if(val == null)
+                return false;
+
+            return (bool)val;
         }
         set
         {
