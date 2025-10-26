@@ -8,7 +8,7 @@ public static class LowCodeGlobalVariables
 
     public static readonly Assembly[] AdditionalAssemblies =
         [
-            typeof(Workbench._Imports).Assembly,
+            typeof(Portal._Imports).Assembly,
             typeof(DesignEngine._Imports).Assembly,
             typeof(PartsDesignEngine._Imports).Assembly,
             typeof(MyApp._Imports).Assembly

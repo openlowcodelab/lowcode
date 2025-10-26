@@ -4,7 +4,7 @@ using H.LowCode.Components.Defaults;
 using H.LowCode.DesignEngine.Application.Contracts;
 using H.LowCode.MyApp;
 using H.LowCode.PartsDesignEngine;
-using H.LowCode.Workbench;
+using H.LowCode.Portal;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Volo.Abp.Autofac.WebAssembly;
 using Volo.Abp.Http.Client;
@@ -19,8 +19,8 @@ namespace H.LowCode.DesignEngine.Host.Client;
     typeof(AbpHttpClientModule),
     typeof(DesignEngineApplicationContractsModule),
     //=====lowcode-web=====//
-    //Workbench
-    typeof(LowCodeWorkbenchModule),
+    //Portal
+    typeof(LowCodePortalModule),
     //DesignEngine
     typeof(DesignEngineModule),
     typeof(MyAppModule),

@@ -5,7 +5,7 @@ using H.LowCode.DesignEngine.EntityFrameworkCore;
 using H.LowCode.DesignEngine.Repository.JsonFile;
 using H.LowCode.MyApp;
 using H.LowCode.PartsDesignEngine;
-using H.LowCode.Workbench;
+using H.LowCode.Portal;
 using Volo.Abp.AspNetCore.Mvc;
 using Volo.Abp.Autofac;
 using Volo.Abp.Modularity;
@@ -21,8 +21,8 @@ namespace H.LowCode.DesignEngine.Host;
     typeof(DesignEngineEntityFrameworkCoreModule),
     typeof(DesignEngineJsonFileRepositoryModule),
     //=====lowcode-web=====//
-    //Workbench
-    typeof(LowCodeWorkbenchModule),
+    //Portal
+    typeof(LowCodePortalModule),
     //DesignEngine
     typeof(DesignEngineModule),
     typeof(MyAppModule),
