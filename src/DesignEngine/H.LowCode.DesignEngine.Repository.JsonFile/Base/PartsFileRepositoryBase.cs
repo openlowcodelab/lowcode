@@ -20,10 +20,10 @@ public abstract class PartsFileRepositoryBase
         IsChangeTrackingEnabled = false;
     }
 
-    protected static string ReadAllText(string fileName)
+    protected static string? ReadAllText(string fileName)
     {
         if (!File.Exists(fileName))
-            throw new FileNotFoundException(fileName);
+            return null;
 
         return File.ReadAllText(fileName, Encoding.UTF8);
     }

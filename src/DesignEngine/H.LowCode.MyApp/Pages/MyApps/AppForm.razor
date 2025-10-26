@@ -34,7 +34,10 @@ ValidateOnChange="true">
         await base.OnInitializedAsync();
 
         if (AppSchema == null)
-            AppSchema = new();
+            AppSchema = new()
+            {
+                Id = ShortIdGenerator.Generate()
+            };
     }
 
     public async Task SubmitAsync()

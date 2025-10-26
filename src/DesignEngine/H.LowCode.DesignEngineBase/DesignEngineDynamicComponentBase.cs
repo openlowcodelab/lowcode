@@ -1,9 +1,10 @@
-﻿using Microsoft.AspNetCore.Components;
-using System;
+﻿using H.LowCode.ComponentBase;
 using H.LowCode.MetaSchema;
 using H.LowCode.MetaSchema.DesignEngine;
+using H.Util.Ids;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
-using H.LowCode.ComponentBase;
+using System;
 
 namespace H.LowCode.DesignEngineBase;
 
@@ -206,6 +207,7 @@ public abstract class DesignEngineDynamicComponentBase : LowCodeDynamicComponent
         var innerContainerComponent = new ComponentPartsSchema
         {
             Id = key,
+            ComponentId = ShortIdGenerator.Generate(),
             Refresh = component.Refresh,
 
             Fragment = new(),

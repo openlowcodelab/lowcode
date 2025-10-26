@@ -1,17 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Collections.Concurrent;
 
 namespace System;
 
 public static class EnumExtensions
 {
+    private static readonly ConcurrentDictionary<Enum, string> _enumNameCache = new();
+
     public static string GetEnumName<T>(this T value) where T : Enum
     {
-        string key = Enum.GetName(typeof(T), value);
-        return key;
+        return _enumNameCache.GetOrAdd(value, v => Enum.GetName(typeof(T), v) ?? string.Empty);
     }
 
     public static string GetEnumName<T>(this int value) where T : Enum
@@ -28,15 +26,20 @@ public static class EnumExtensions
         return key;
     }
 
-    public static T GetEnum<T>(this int value) where T : Enum
+    public static T ToEnum<T>(this int value, T defaultValue = default) where T : struct, Enum
     {
-        T enumValue = (T)Enum.ToObject(typeof(T), value);
-        return enumValue;
+        return Enum.IsDefined(typeof(T), value) ? (T)Enum.ToObject(typeof(T), value) : defaultValue;
     }
 
-    public static T GetEnum<T>(this string value) where T : Enum
+    public static T ToEnum<T>(this int? value, T defaultValue = default) where T : struct, Enum
     {
-        T enumValue = (T)Enum.Parse(typeof(T), value);
-        return enumValue;
+        if (!value.HasValue) return defaultValue;
+        return value.Value.ToEnum(defaultValue);
+    }
+
+    public static T ToEnum<T>(this string value, T defaultValue = default) where T : struct, Enum
+    {
+        if (string.IsNullOrWhiteSpace(value)) return defaultValue;
+        return Enum.TryParse<T>(value, true, out T result) ? result : defaultValue;
     }
 }

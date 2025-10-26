@@ -1,4 +1,3 @@
-using H.Util.Ids;
 using System.Text.Json.Serialization;
 
 namespace H.LowCode.MetaSchema;
@@ -10,7 +9,7 @@ public abstract class ComponentSchemaBase : StateHasChangeSchema
     /// </summary>
     /// <remarks>一个页面组件唯一Id</remarks>
     [JsonPropertyName("id")]
-    public string Id { get; set; } = ShortIdGenerator.Generate();
+    public required string Id { get; set; }
 
     [JsonPropertyName("pid")]
     public string? ParentId { get; set; }

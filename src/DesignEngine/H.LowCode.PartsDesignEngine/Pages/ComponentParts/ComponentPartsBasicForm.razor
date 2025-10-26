@@ -57,6 +57,7 @@
 </Modal>
 
 @code {
+
     [Parameter]
     public bool Visible { get; set; }
 
@@ -78,14 +79,14 @@
     [Parameter]
     public EventCallback<ComponentPartsSchema> OnComponentUpdated { get; set; }
 
-    private ComponentPartsSchema _componentParts = new();
+    private ComponentPartsSchema? _componentParts;
     private bool _loading = false;
     private string _modalTitle => IsEditMode ? "编辑组件" : "新增组件";
 
     protected override async Task OnParametersSetAsync()
     {
         await base.OnParametersSetAsync();
-        
+
         if (Visible)
         {
             if (IsEditMode && !string.IsNullOrEmpty(ComponentId))
@@ -97,6 +98,8 @@
                 // 新增模式，重置表单
                 _componentParts = new ComponentPartsSchema
                 {
+                    Id = ShortIdGenerator.Generate(),
+                    ComponentId = ShortIdGenerator.Generate(),
                     ComponentType = 1, // 默认原子组件
                     IsContainer = false,
                     IsSupportDataSource = false,
@@ -115,6 +118,13 @@
             StateHasChanged();
 
             _componentParts = await ComponentPartsAppService.GetByIdAsync(LibraryId, ComponentId);
+
+            if (_componentParts == null)
+            {
+                await Message.ErrorAsync("未找到组件数据");
+                Visible = false;
+                await VisibleChanged.InvokeAsync(Visible);
+            }
         }
         catch (Exception ex)
         {
@@ -172,6 +182,7 @@
         // 创建组件基本信息
         var componentParts = new ComponentPartsSchema
         {
+            Id = ShortIdGenerator.Generate(),
             ComponentId = ShortIdGenerator.Generate(),
             LibraryId = LibraryId,
             ComponentName = _componentParts.ComponentName,

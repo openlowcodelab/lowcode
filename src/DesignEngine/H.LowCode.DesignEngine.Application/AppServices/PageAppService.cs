@@ -34,7 +34,7 @@ public class PageAppService : ApplicationService, IPageAppService
     {
         var pageSchema = await _repository.GetByIdAsync(appId, pageId);
 
-        //合并组件定义中的属性
+        //合并组件定义中的属性 (支持组件升级后原有组件获取最新特性)
         foreach (var component in pageSchema.Components)
         {
             await MergeComponentPartsDefineRecursive(component);

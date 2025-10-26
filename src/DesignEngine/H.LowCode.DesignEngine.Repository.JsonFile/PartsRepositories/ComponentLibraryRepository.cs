@@ -38,7 +38,7 @@ public class ComponentLibraryRepository : PartsFileRepositoryBase, IComponentLib
             if (!File.Exists(fileName))
                 continue;
 
-            var librarySchemaJson = ReadAllText(fileName);
+            var librarySchemaJson = ReadAllText(fileName) ?? throw new FileNotFoundException(fileName);
             var librarySchema = librarySchemaJson.FromJson<ComponentLibrarySchema>();
             list.Add(librarySchema);
         }
@@ -49,7 +49,7 @@ public class ComponentLibraryRepository : PartsFileRepositoryBase, IComponentLib
     {
         string fileName = string.Format(componentLibraryFileName_Format, _metaBaseDir, libraryId, libraryId);
 
-        var componentLibrarySchemaJson = ReadAllText(fileName);
+        var componentLibrarySchemaJson = ReadAllText(fileName) ?? throw new FileNotFoundException(fileName);
         var componentLibrary = componentLibrarySchemaJson.FromJson<ComponentLibrarySchema>();
         return await Task.FromResult(componentLibrary);
     }

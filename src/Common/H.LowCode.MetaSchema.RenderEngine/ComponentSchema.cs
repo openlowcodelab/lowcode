@@ -1,7 +1,4 @@
-﻿using H.Extensions.System;
-using H.Util.Ids;
-using System.ComponentModel;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace H.LowCode.MetaSchema.RenderEngine;
 
@@ -11,7 +8,7 @@ public class ComponentSchema : ComponentSchemaBase
     /// 组件渲染 Fragment
     /// </summary>
     [JsonPropertyName("frag")]
-    public ComponentFragmentSchema Fragment { get; set; }
+    public ComponentFragmentSchema? Fragment { get; set; }
 
     [JsonPropertyName("ds")]
     public ComponentDataSourceSchema DataSource { get; set; } = new();
@@ -22,13 +19,13 @@ public class ComponentSchema : ComponentSchemaBase
     /// <remarks>此数据通过 ConvertAttributeDefineToFragmentAttribute
     /// 转换为 Fragment 中的 Attribute 用于组件渲染</remarks>
     [JsonPropertyName("attrdefgroups")]
-    public ComponentAttributeDefineGroupSchema[] AttributeDefineGroups { get; set; }
+    public ComponentAttributeDefineGroupSchema[]? AttributeDefineGroups { get; set; }
 
     /// <summary>
     /// 将组件自定义属性合并到 Fragment 中
     /// </summary>
     [JsonPropertyName("childs")]
-    public ComponentSchema[] Childrens { get; set; }
+    public ComponentSchema[]? Childrens { get; set; }
 
     public void MergeAttributeDefineToFragment()
     {

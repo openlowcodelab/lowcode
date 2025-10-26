@@ -4,21 +4,21 @@ namespace H.LowCode.MetaSchema;
 
 public abstract class AppSchemaBase : MetaSchemaBase
 {
-    public string Id { get; set; }
+    public required string Id { get; set; }
 
     [JsonPropertyName("n")]
-    public string Name { get; set; }
+    public string? Name { get; set; }
 
-    public string Icon { get; set; }
+    public string? Icon { get; set; }
 
     [JsonPropertyName("pic")]
-    public string Picture { get; set; }
+    public string? Picture { get; set; }
 
     [JsonPropertyName("desc")]
-    public string Description {  get; set; }
+    public string? Description {  get; set; }
 
     [JsonPropertyName("v")]
-    public string Version { get; set; }
+    public string? Version { get; set; }
 
     [JsonPropertyName("pub")]
     public PublishStatusEnum PublishStatus { get; set; }

@@ -1,0 +1,33 @@
+﻿@page "/ecosystems/{Tab?}"
+@namespace H.LowCode.Portal
+@inherits LowCodePageComponentBase
+@layout DesignEngineNavLayout
+
+<PageTitle>生态中心 - H.LowCode</PageTitle>
+
+<Tabs DefaultActiveKey="apps" ActiveKey="@_tabKey" Centered Animated Style="width: 80%; margin: auto;">
+    <TabPane Tab="应用模板" Key="apps">
+        <AppTemplates></AppTemplates>
+    </TabPane>
+    <TabPane Tab="主题" Key="themes">
+        <ThemePartsList></ThemePartsList>
+    </TabPane>
+    <TabPane Tab="API 库" Key="apis">
+        <APIPartsList></APIPartsList>
+    </TabPane>
+    <TabPane Tab="插件" Key="plugins">
+        <PluginsPartsList></PluginsPartsList>
+    </TabPane>
+</Tabs>
+
+@code {
+    [Parameter]
+    public string? Tab { get; set; }
+
+    private string _tabKey => Tab ?? "apps";
+
+    private void Refresh()
+    {
+        StateHasChanged();
+    }
+}

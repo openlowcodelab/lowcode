@@ -35,7 +35,7 @@ public class ComponentPartsRepository : PartsFileRepositoryBase, IComponentParts
             if (fileName.EndsWith($"{libraryId}.json"))
                 continue;
 
-            var componentPartsSchemaJson = ReadAllText(fileName);
+            var componentPartsSchemaJson = ReadAllText(fileName) ?? throw new FileNotFoundException(fileName);
             if (string.IsNullOrWhiteSpace(componentPartsSchemaJson))
                 continue;
 
@@ -80,7 +80,7 @@ public class ComponentPartsRepository : PartsFileRepositoryBase, IComponentParts
             if (fileName.EndsWith($"{libraryId}.json"))
                 continue;
 
-            var componentPartsSchemaJson = ReadAllText(fileName);
+            var componentPartsSchemaJson = ReadAllText(fileName) ?? throw new FileNotFoundException(fileName);
             if (string.IsNullOrWhiteSpace(componentPartsSchemaJson))
                 continue;
 
@@ -102,7 +102,7 @@ public class ComponentPartsRepository : PartsFileRepositoryBase, IComponentParts
     {
         string fileName = string.Format(componentPartsFileName_Format, _metaBaseDir, libraryId, componentId);
 
-        var componentPartsSchemaJson = ReadAllText(fileName);
+        var componentPartsSchemaJson = ReadAllText(fileName) ?? throw new FileNotFoundException(fileName);
         var componentParts = componentPartsSchemaJson.FromJson<ComponentPartsSchema>();
         return await Task.FromResult(componentParts);
     }

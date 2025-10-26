@@ -1,7 +1,5 @@
-﻿using System;
-using System.Text.Json.Nodes;
+﻿using System.Text.Encodings.Web;
 using System.Text.Json;
-using System.Text.Encodings.Web;
 using System.Text.Json.Serialization;
 
 namespace System;
@@ -15,7 +13,7 @@ public static class JsonExtension
         Encoder = _defaultEncoder
     };
 
-    public static string ToJson(this object obj, JsonSerializerOptions options = null)
+    public static string? ToJson(this object obj, JsonSerializerOptions? options = null)
     {
         if (obj == null)
             return null;
@@ -26,57 +24,22 @@ public static class JsonExtension
         return JsonSerializer.Serialize(obj, _defaultOptions);
     }
 
-    public static string ToJson(this object obj,
-        bool writeIndented,
-        JsonIgnoreCondition ignoreCondition = JsonIgnoreCondition.Never,
-        JavaScriptEncoder encoder = null)
-    {
-        if (obj == null)
-            return null;
-
-        JsonSerializerOptions options = new(JsonSerializerDefaults.Web)
-        {
-            WriteIndented = writeIndented,
-            DefaultIgnoreCondition = ignoreCondition,
-            Encoder = encoder ?? _defaultEncoder
-        };
-
-        return JsonSerializer.Serialize(obj, options);
-    }
-
-    public static T FromJson<T>(this string json, JsonSerializerOptions options = null) where T : class
+    public static T? FromJson<T>(this string json) where T : class
     {
         if (string.IsNullOrWhiteSpace(json))
             return default;
 
-        if (options != null)
-            return JsonSerializer.Deserialize<T>(json, options);
-
-        return JsonSerializer.Deserialize<T>(json, _defaultOptions);
-    }
-
-    public static T FromJson<T>(this string json,
-        JavaScriptEncoder encoder) where T : class
-    {
-        if (string.IsNullOrWhiteSpace(json))
-            return default;
-
-        JsonSerializerOptions options = new(JsonSerializerDefaults.Web)
+        try
         {
-            Encoder = encoder ?? _defaultEncoder
-        };
-
-        return JsonSerializer.Deserialize<T>(json, options);
-    }
-
-    public static T FromJson<T>(this JsonObject obj, JsonSerializerOptions options = null) where T : class
-    {
-        if (obj == null)
-            return default;
-
-        if (options != null)
-            return JsonSerializer.Deserialize<T>(obj, options);
-
-        return JsonSerializer.Deserialize<T>(obj, _defaultOptions);
+            return JsonSerializer.Deserialize<T>(json, _defaultOptions);
+        }
+        catch (JsonException ex)
+        {
+            throw new JsonException($"反序列化异常: message={ex.Message}, path={ex.Path}, json={json}");
+        }
+        catch (Exception ex)
+        {
+            throw new JsonException($"反序列化异常: message={ex.Message}, json={json}", ex);
+        }
     }
 }

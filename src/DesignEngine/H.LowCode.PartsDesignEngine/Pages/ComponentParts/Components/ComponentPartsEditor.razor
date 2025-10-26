@@ -107,7 +107,7 @@
 
 @code {
     [Parameter]
-    public ComponentPartsSchema ComponentParts { get; set; }
+    public ComponentPartsSchema? ComponentParts { get; set; }
     
     [Parameter]
     public EventCallback<ComponentPartsSchema> ComponentPartsChanged { get; set; }
@@ -126,6 +126,8 @@
         {
             ComponentParts = new ComponentPartsSchema
             {
+                Id = ShortIdGenerator.Generate(),
+                ComponentId = ShortIdGenerator.Generate(),
                 ComponentType = 1,
                 Order = 0,
                 AttributeDefineGroups = new List<ComponentPartsAttributeDefineGroupSchema>(),

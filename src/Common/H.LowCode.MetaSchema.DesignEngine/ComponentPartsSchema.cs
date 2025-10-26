@@ -16,7 +16,7 @@ public class ComponentPartsSchema : ComponentSchemaBase
     /// </summary>
     /// <remarks>一类组件唯一Id</remarks>
     [JsonPropertyName("compid")]
-    public string ComponentId { get; set; } = ShortIdGenerator.Generate();
+    public required string ComponentId { get; set; }
 
     /// <summary>
     /// 组件物料Name

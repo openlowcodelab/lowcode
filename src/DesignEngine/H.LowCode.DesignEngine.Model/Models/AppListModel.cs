@@ -6,13 +6,13 @@ namespace H.LowCode.DesignEngine.Model;
 
 public class AppListModel
 {
-    public string Id { get; set; }
+    public required string Id { get; set; }
 
     [JsonPropertyName("url")]
     public string? SiteUrl { get; set; }
 
     [JsonPropertyName("n")]
-    public required string Name { get; set; }
+    public string? Name { get; set; }
 
     public string? Icon { get; set; }
 

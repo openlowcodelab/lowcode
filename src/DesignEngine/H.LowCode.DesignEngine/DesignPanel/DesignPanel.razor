@@ -36,7 +36,11 @@
         var rootComponent = DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId);
         if (rootComponent == null)
         {
-            rootComponent = new ComponentPartsSchema();
+            rootComponent = new ComponentPartsSchema()
+            {
+                Id = "root",
+                ComponentId = "root"
+            };
             rootComponent.Name = "root";
             rootComponent.Refresh = StateHasChanged;
         }

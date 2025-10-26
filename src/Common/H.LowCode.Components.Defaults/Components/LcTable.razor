@@ -178,7 +178,7 @@
                 if (string.IsNullOrEmpty(e.EventTargetAction))
                     continue;
 
-                var pageHandler = e.EventTargetAction.GetEnum<EventPageHandlerTypeEnum>();
+                var pageHandler = e.EventTargetAction.ToEnum<EventPageHandlerTypeEnum>();
                 switch (pageHandler)
                 {
                     case EventPageHandlerTypeEnum.Refresh:

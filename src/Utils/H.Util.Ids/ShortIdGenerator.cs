@@ -43,7 +43,7 @@ public class ShortIdGenerator
             minValue++;
         }
 
-        Random ran = new Random();
+        Random ran = new();
         int[] randNum = new int[n];
         int index;
         for (int j = 0; j < n; j++)
