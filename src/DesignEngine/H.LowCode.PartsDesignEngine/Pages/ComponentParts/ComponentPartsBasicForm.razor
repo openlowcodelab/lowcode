@@ -7,9 +7,9 @@
     <div style="padding: 16px;">
         <div style="margin-bottom: 16px;">
             <label style="display: block; margin-bottom: 4px; font-weight: 500;">
-                <span style="color: red;">*</span> 组件Name
+                <span style="color: red;">*</span> 组件Id
             </label>
-            <Input @bind-Value="@_componentParts.ComponentName" Placeholder="请输入组件Name（英文，用于代码生成）" />
+            <Input @bind-Value="@_componentParts.ComponentId" Placeholder="请输入组件Name（英文，用于代码生成）" />
         </div>
         
         <div style="margin-bottom: 16px;">
@@ -140,9 +140,9 @@
     private async Task OnOk()
     {
         // 手动验证必填字段
-        if (string.IsNullOrWhiteSpace(_componentParts.ComponentName))
+        if (string.IsNullOrWhiteSpace(_componentParts.ComponentId))
         {
-            await Message.ErrorAsync("请输入组件名称");
+            await Message.ErrorAsync("请输入组件Id");
             return;
         }
         
@@ -183,9 +183,8 @@
         var componentParts = new ComponentPartsSchema
         {
             Id = ShortIdGenerator.Generate(),
-            ComponentId = ShortIdGenerator.Generate(),
+            ComponentId = _componentParts.ComponentId,
             LibraryId = LibraryId,
-            ComponentName = _componentParts.ComponentName,
             Label = _componentParts.Label,
             ComponentType = _componentParts.ComponentType,
             Order = _componentParts.Order,
@@ -227,7 +226,6 @@
         var componentParts = await ComponentPartsAppService.GetByIdAsync(LibraryId, ComponentId);
         
         // 更新基本信息
-        componentParts.ComponentName = _componentParts.ComponentName;
         componentParts.Label = _componentParts.Label;
         componentParts.ComponentType = _componentParts.ComponentType;
         componentParts.Order = _componentParts.Order;

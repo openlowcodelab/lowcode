@@ -1,4 +1,4 @@
-﻿using H.LowCode.Configuration;
+using H.LowCode.Configuration;
 using H.LowCode.RenderEngine.Domain.Repositories;
 using H.LowCode.MetaSchema;
 using Microsoft.Extensions.Options;
@@ -23,7 +23,7 @@ public class DataSourceFileRepository : FileRepositoryBase, IDataSourceRepositor
         if (!Directory.Exists(dataSourceFolder))
             return list;
 
-        var files = Directory.GetFiles(dataSourceFolder);
+        var files = Directory.GetFiles(dataSourceFolder, "*.json");
         foreach (var fileName in files)
         {
             var dataSourceSchemaJson = ReadAllText(fileName);

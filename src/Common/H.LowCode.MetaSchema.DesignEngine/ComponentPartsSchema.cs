@@ -19,13 +19,6 @@ public class ComponentPartsSchema : ComponentSchemaBase
     public required string ComponentId { get; set; }
 
     /// <summary>
-    /// 组件物料Name
-    /// </summary>
-    /// <remarks>一类组件唯一Name</remarks>
-    [JsonPropertyName("cn")]
-    public string? ComponentName { get; set; }
-
-    /// <summary>
     /// 组件类型：1-原子组件  2-组合组件
     /// </summary>
     [JsonPropertyName("ct")]
@@ -106,7 +99,7 @@ public class ComponentPartsSchema : ComponentSchemaBase
         //Copy全新对象, Id 重新生成
         newComponent.Id = ShortIdGenerator.Generate();
         newComponent.ParentId = string.Empty;
-        newComponent.Name = $"{newComponent.ComponentName}_{Random.Shared.Next(100, 999)}";
+        newComponent.Name = $"{newComponent.ComponentId}_{Random.Shared.Next(100, 999)}";
         newComponent.DesignState.IsSelected = false;
 
         //手动赋值无法序列化属性

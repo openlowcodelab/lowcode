@@ -1,8 +1,7 @@
 # H.LowCode
 
 ### 介绍
-* 低代码实验性项目
-* 基于 .NET 8.0 + Blazor 实现
+* 低代码实验性项目，基于 .NET + Blazor 实现
 
 ### 分支规则
 * master: 最新稳定代码

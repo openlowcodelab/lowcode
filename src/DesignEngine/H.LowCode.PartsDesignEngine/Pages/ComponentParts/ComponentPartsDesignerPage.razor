@@ -6,7 +6,7 @@
 @inject DragDropStateService DragDropStateService
 @inject IComponentPartsAppService ComponentPartsAppService
 
-<PageTitle>@($"{(_partsSchema?.ComponentName ?? PartsId)} - 低代码组件设计器")</PageTitle>
+<PageTitle>@($"{(_partsSchema?.ComponentId ?? PartsId)} - 低代码组件设计器")</PageTitle>
 
 @if (_loading)
 {
@@ -22,7 +22,7 @@ else
                 <a href="javascript:void(0)" @onclick="GoBack"> @("<") 返回 </a>
             </div>
             <div style="text-align: center; flex: 1;">
-                <h3 style="margin: 0; line-height: 64px;">@(_partsSchema?.ComponentName ?? "新建低代码组件")</h3>
+                <h3 style="margin: 0; line-height: 64px;">@(_partsSchema?.ComponentId ?? "新建低代码组件")</h3>
             </div>
             <div style="float:right;">
                 <Button OnClick="PreviewComponent">预览</Button>
@@ -99,7 +99,6 @@ else
                     ComponentId = PartsId,
                     LibraryId = _libraryId,
                     ComponentType = 2, // 低代码组件
-                    ComponentName = "新建低代码组件",
                     Name = $"LowCodeComponent_{PartsId}",
                     Order = 0,
                     Version = "1.0.0",
@@ -149,9 +148,9 @@ else
             StateHasChanged();
 
             // 验证必填字段
-            if (string.IsNullOrWhiteSpace(_partsSchema.ComponentName))
+            if (string.IsNullOrWhiteSpace(_partsSchema.ComponentId))
             {
-                await Message.WarningAsync("请输入组件名称！");
+                await Message.WarningAsync("请输入组件Id！");
                 return;
             }
 

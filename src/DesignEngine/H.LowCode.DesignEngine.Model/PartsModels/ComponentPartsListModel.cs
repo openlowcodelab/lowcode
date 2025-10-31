@@ -13,9 +13,6 @@ public class ComponentPartsListModel
     [JsonPropertyName("compid")]
     public string ComponentId { get; set; }
 
-    [JsonPropertyName("cn")]
-    public string ComponentName { get; set; }
-
     [JsonPropertyName("lb")]
     public string Label { get; set; }
 

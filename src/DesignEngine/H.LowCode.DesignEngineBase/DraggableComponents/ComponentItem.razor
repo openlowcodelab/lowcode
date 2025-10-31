@@ -52,7 +52,7 @@
             throw new NullReferenceException($"{nameof(Component)} or {nameof(Component.Fragment)} is null");
 
         if (string.IsNullOrEmpty(Component.Name))
-            Component.Name = $"{Component.ComponentName}_{Random.Shared.Next(100, 999)}";
+            Component.Name = $"{Component.ComponentId}_{Random.Shared.Next(100, 999)}";
         if (string.IsNullOrEmpty(Component.Fragment.TypeName))
             Component.Fragment.TypeName = Component.Fragment.DefaultTypeName;
 

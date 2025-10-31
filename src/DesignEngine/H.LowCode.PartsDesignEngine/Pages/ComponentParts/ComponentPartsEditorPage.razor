@@ -5,7 +5,7 @@
 
 @inject IComponentPartsAppService ComponentPartsAppService
 
-<PageTitle>@($"{_componentParts?.ComponentName ?? "组件"} - 原子组件编辑器")</PageTitle>
+<PageTitle>@($"{_componentParts?.ComponentId ?? "组件"} - 原子组件编辑器")</PageTitle>
 
 <div class="component-parts-editor-page">
     <div class="editor-header" style="background: white; padding: 16px; margin-bottom: 16px; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
@@ -14,7 +14,7 @@
                 <Button Type="@ButtonType.Text" Icon="arrow-left" OnClick="GoBack">返回</Button>
                 <div>
                     <h3 style="margin: 0; font-size: 18px; font-weight: 600;">
-                        @(_componentParts?.ComponentName ?? "组件编辑")
+                        @(_componentParts?.ComponentId ?? "组件编辑")
                     </h3>
                     <div style="color: #666; font-size: 14px; margin-top: 4px;">
                         原子组件编辑器

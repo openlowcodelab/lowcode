@@ -1,4 +1,4 @@
-﻿using H.LowCode.Configuration;
+using H.LowCode.Configuration;
 using H.LowCode.DesignEngine.Model;
 using H.LowCode.DesignEngine.Domain.Repositories;
 using H.LowCode.MetaSchema;
@@ -29,7 +29,7 @@ public class ComponentPartsRepository : PartsFileRepositoryBase, IComponentParts
         if (!Directory.Exists(componentPartsFolder))
             return list;
 
-        var files = Directory.GetFiles(componentPartsFolder);
+        var files = Directory.GetFiles(componentPartsFolder, "*.json");
         foreach (var fileName in files)
         {
             if (fileName.EndsWith($"{libraryId}.json"))
@@ -47,7 +47,6 @@ public class ComponentPartsRepository : PartsFileRepositoryBase, IComponentParts
             {
                 LibraryId = componentPartsSchema.LibraryId,
                 ComponentId = componentPartsSchema.ComponentId,
-                ComponentName = componentPartsSchema.ComponentName,
                 ComponentType = componentPartsSchema.ComponentType,
                 IsContainer = componentPartsSchema.IsContainer,
                 IsSupportDataSource = componentPartsSchema.IsSupportDataSource,
@@ -74,7 +73,7 @@ public class ComponentPartsRepository : PartsFileRepositoryBase, IComponentParts
         if (!Directory.Exists(componentPartsFolder))
             return list;
 
-        var files = Directory.GetFiles(componentPartsFolder);
+        var files = Directory.GetFiles(componentPartsFolder, "*.json");
         foreach (var fileName in files)
         {
             if (fileName.EndsWith($"{libraryId}.json"))

@@ -1,8 +1,7 @@
-﻿using H.LowCode.Configuration;
+using H.LowCode.Configuration;
 using H.LowCode.DesignEngine.Domain.Repositories;
 using H.LowCode.MetaSchema;
 using Microsoft.Extensions.Options;
-using System.Collections.Generic;
 using System.Text;
 
 namespace H.LowCode.DesignEngine.Repository.JsonFile;
@@ -36,7 +35,7 @@ public class MenuFileRepository : FileRepositoryBase, IMenuRepository
         if (!Directory.Exists(menuFolder))
             return list;
 
-        var files = Directory.GetFiles(menuFolder);
+        var files = Directory.GetFiles(menuFolder, "*.json");
         foreach (var fileName in files)
         {
             var menuSchemaJson = ReadAllText(fileName);
@@ -79,7 +78,7 @@ public class MenuFileRepository : FileRepositoryBase, IMenuRepository
         if (!Directory.Exists(menuFolder))
             return;
 
-        var files = Directory.GetFiles(menuFolder);
+        var files = Directory.GetFiles(menuFolder, "*.json");
         foreach (var file in files)
         {
             var menuSchemaJson = ReadAllText(file);

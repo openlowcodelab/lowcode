@@ -1,4 +1,4 @@
-﻿using H.LowCode.Configuration;
+using H.LowCode.Configuration;
 using H.LowCode.DesignEngine.Model;
 using H.LowCode.DesignEngine.Domain.Repositories;
 using H.LowCode.MetaSchema.DesignEngine;
@@ -24,7 +24,7 @@ public class PageFileRepository : FileRepositoryBase, IPageRepository
         if (!Directory.Exists(pageFolder))
             return list;
 
-        var files = Directory.GetFiles(pageFolder);
+        var files = Directory.GetFiles(pageFolder, "*.json");
         foreach (var fileName in files)
         {
             var pageSchemaJson = ReadAllText(fileName);
