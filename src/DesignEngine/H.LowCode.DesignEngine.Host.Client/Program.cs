@@ -15,6 +15,4 @@ var host = builder.Build();
 
 await application.InitializeApplicationAsync(host.Services);
 
-ServiceLocator.SetServiceProvider(host.Services);
-
 await host.RunAsync();

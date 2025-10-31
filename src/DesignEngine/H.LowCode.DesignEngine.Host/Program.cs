@@ -52,7 +52,6 @@ await builder.AddApplicationAsync<DesignEngineHostModule>();
 
 var app = builder.Build();
 
-ServiceLocator.SetServiceProvider(app.Services);
 await app.InitializeApplicationAsync();
 
 

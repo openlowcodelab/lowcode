@@ -36,7 +36,6 @@ await builder.AddApplicationAsync<RenderEngineHostModule>();
 
 var app = builder.Build();
 
-ServiceLocator.SetServiceProvider(app.Services);
 await app.InitializeApplicationAsync();
 
 
