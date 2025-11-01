@@ -22,6 +22,9 @@ public class AppListModel
     [JsonPropertyName("desc")]
     public string? Description { get; set; }
 
+    [JsonPropertyName("order")]
+    public int Order { get; set; }
+
     [JsonPropertyName("pub")]
     public PublishStatusEnum PublishStatus { get; set; }
 

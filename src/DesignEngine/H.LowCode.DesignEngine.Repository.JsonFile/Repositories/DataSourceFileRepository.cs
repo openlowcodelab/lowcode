@@ -58,7 +58,7 @@ public class DataSourceFileRepository : FileRepositoryBase, IDataSourceRepositor
         ArgumentNullException.ThrowIfNull(dataSourceSchema);
         ArgumentException.ThrowIfNullOrEmpty(dataSourceSchema.Id);
 
-        dataSourceSchema.ModifiedTime = DateTime.UtcNow;
+        dataSourceSchema.ModificationTime = DateTime.UtcNow;
 
         string fileName = string.Format(dataSourceName_Format, _metaBaseDir, appId, dataSourceSchema.Id);
 

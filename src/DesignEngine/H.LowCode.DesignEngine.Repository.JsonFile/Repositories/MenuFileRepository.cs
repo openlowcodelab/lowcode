@@ -54,7 +54,7 @@ public class MenuFileRepository : FileRepositoryBase, IMenuRepository
         ArgumentNullException.ThrowIfNull(menuSchema);
         ArgumentException.ThrowIfNullOrEmpty(menuSchema.Id);
 
-        menuSchema.ModifiedTime = DateTime.UtcNow;
+        menuSchema.ModificationTime = DateTime.UtcNow;
 
         string fileName = string.Format(menuFileName_Format, _metaBaseDir, menuSchema.AppId, menuSchema.Id);
 

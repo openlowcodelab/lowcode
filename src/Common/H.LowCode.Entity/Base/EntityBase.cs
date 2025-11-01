@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace H.LowCode.Entity;
 
@@ -10,13 +6,16 @@ public abstract class EntityBase
 {
     protected EntityBase()
     {
+        ConcurrencyStamp = Guid.NewGuid().ToString("N");
     }
 
-    public DateTime CreatedTime { get; set; }
+    public string ConcurrencyStamp { get; set; }
 
-    public string CreatedUser { get; set; }
+    public DateTime CreationTime { get; set; }
 
-    public DateTime ModifiedTime { get; set; }
+    public string? CreatorId { get; set; }
 
-    public string ModifiedUser { get; set; }
+    public DateTime? ModificationTime { get; set; }
+
+    public string? ModifierId { get; set; }
 }

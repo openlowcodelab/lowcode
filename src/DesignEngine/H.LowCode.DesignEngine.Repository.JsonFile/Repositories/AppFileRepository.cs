@@ -46,7 +46,7 @@ public class AppFileRepository : FileRepositoryBase, IAppRepository
         ArgumentNullException.ThrowIfNull(appSchema);
         ArgumentException.ThrowIfNullOrEmpty(appSchema.Id);
 
-        appSchema.ModifiedTime = DateTime.UtcNow;
+        appSchema.ModificationTime = DateTime.UtcNow;
 
         string fileName = string.Format(appFileName_Format, _metaBaseDir, appSchema.Id, appSchema.Id);
 

@@ -1,11 +1,9 @@
 ﻿using H.LowCode.ComponentBase;
 using H.LowCode.MetaSchema;
 using H.LowCode.RenderEngine.Application.Contracts;
+using H.Util.Ids;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Configuration;
-using System;
-using System.Linq;
-using System.Text;
 
 namespace H.LowCode.RenderEngine.Abstraction;
 
@@ -29,9 +27,10 @@ public abstract class ThemePartLayoutBase : LowCodeLayoutComponentBase
         {
             menus.Insert(0, new MenuSchema
             {
+                AppId = appId,
+                Id = ShortIdGenerator.Generate(),
                 MenuUrl = IndexUrl,
-                Title = "首页",
-                Id = IndexUrl
+                Title = "首页"
             });
         }
         return menus;

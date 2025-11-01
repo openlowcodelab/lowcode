@@ -37,7 +37,7 @@ public class PageFileRepository : FileRepositoryBase, IPageRepository
                 Order = pageSchema.Order,
                 PageType = pageSchema.PageType,
                 PublishStatus = pageSchema.PublishStatus,
-                ModifiedTime = pageSchema.ModifiedTime
+                ModifiedTime = pageSchema.ModificationTime
             };
 
             list.Add(model);
@@ -63,7 +63,7 @@ public class PageFileRepository : FileRepositoryBase, IPageRepository
         ArgumentNullException.ThrowIfNull(pageSchema);
         ArgumentException.ThrowIfNullOrEmpty(pageSchema.Id);
 
-        pageSchema.ModifiedTime = DateTime.UtcNow;
+        pageSchema.ModificationTime = DateTime.UtcNow;
 
         string fileName = string.Format(pageFileName_Format, _metaBaseDir, pageSchema.AppId, pageSchema.Id);
 

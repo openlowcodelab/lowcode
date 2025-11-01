@@ -13,8 +13,8 @@
        @bind-PageIndex="@_pageIndex" @bind-PageSize="@_pageSize">
     <PropertyColumn Title="名称" Property="c=>c.Name" Sortable />
     <PropertyColumn Title="中文名" Property="c=>c.DisplayName" Sortable />
-    <PropertyColumn Title="修改人" Property="c=>c.ModifiedUser" />
-    <PropertyColumn Title="修改时间" Property="c=>c.ModifiedTime" Format="yyyy-MM-dd HH:mm:ss" />
+    <PropertyColumn Title="修改人" Property="c=>c.ModifierId" />
+    <PropertyColumn Title="修改时间" Property="c=>c.ModificationTime" Format="yyyy-MM-dd HH:mm:ss" />
     <PropertyColumn Title="发布状态" Property="c=>c.PublishStatus">
         <Switch @bind-Checked="@context.PublishStatus" />
     </PropertyColumn>

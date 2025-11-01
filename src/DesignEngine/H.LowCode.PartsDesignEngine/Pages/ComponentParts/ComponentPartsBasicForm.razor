@@ -9,7 +9,7 @@
             <label style="display: block; margin-bottom: 4px; font-weight: 500;">
                 <span style="color: red;">*</span> 组件Id
             </label>
-            <Input @bind-Value="@_componentParts.ComponentId" Placeholder="请输入组件Name（英文，用于代码生成）" />
+            <Input @bind-Value="@_componentParts.ComponentId" Placeholder="请输入组件Id（组件唯一标识, 如 input）" />
         </div>
         
         <div style="margin-bottom: 16px;">
@@ -79,7 +79,7 @@
     [Parameter]
     public EventCallback<ComponentPartsSchema> OnComponentUpdated { get; set; }
 
-    private ComponentPartsSchema? _componentParts;
+    private ComponentPartsSchema _componentParts;
     private bool _loading = false;
     private string _modalTitle => IsEditMode ? "编辑组件" : "新增组件";
 
@@ -99,7 +99,7 @@
                 _componentParts = new ComponentPartsSchema
                 {
                     Id = ShortIdGenerator.Generate(),
-                    ComponentId = ShortIdGenerator.Generate(),
+                    ComponentId = "",
                     ComponentType = 1, // 默认原子组件
                     IsContainer = false,
                     IsSupportDataSource = false,

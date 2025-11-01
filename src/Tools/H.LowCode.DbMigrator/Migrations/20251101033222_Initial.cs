@@ -23,16 +23,17 @@ namespace H.LowCode.DbMigrator.Migrations
                     f_field5 = table.Column<int>(type: "int", nullable: true),
                     f_field6 = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
                     f_field7 = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    f_field8 = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    f_field8 = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     f_field9 = table.Column<bool>(type: "bit", nullable: true),
                     f_field10 = table.Column<DateTime>(type: "datetime2", nullable: true),
                     f_field11 = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
                     f_field12 = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
                     f_field13 = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    CreatedTime = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CreatedUser = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ModifiedTime = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ModifiedUser = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    ConcurrencyStamp = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CreationTime = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatorId = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ModificationTime = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ModifierId = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {

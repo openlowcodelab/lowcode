@@ -20,13 +20,16 @@ public class AppApplicationService : ApplicationService, IAppApplicationService
     public async Task<IList<AppListModel>> GetAppsAsync()
     {
         var appSchemas = await GetListAsync();
-        return appSchemas.Select(x => new AppListModel
+        var apps = appSchemas.Select(x => new AppListModel
         {
             Id = x.Id,
             SiteUrl = _sites.FirstOrDefault(t => t.AppId.Equals(x.Id, StringComparison.OrdinalIgnoreCase))?.SiteUrl,
             Name = x.Name,
-            Description = x.Description
-        }).ToList();
+            Description = x.Description,
+            Order = x.Order
+        });
+
+        return [.. apps.OrderBy(t => t.Order)];
     }
 
     public async Task<IList<AppPartsSchema>> GetListAsync()

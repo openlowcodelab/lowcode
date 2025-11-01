@@ -5,15 +5,15 @@ namespace H.LowCode.MetaSchema;
 
 public abstract class MetaSchemaBase : StateHasChangeSchema
 {
-    [JsonPropertyName("cu")]
-    public string? CreatedUser {  get; set; }
+    [JsonPropertyName("cid")]
+    public string? CreatorId {  get; set; }
 
     [JsonPropertyName("ct")]
-    public DateTime? CreatedTime { get; set; }
+    public DateTime? CreationTime { get; set; }
 
-    [JsonPropertyName("mu")]
-    public string? ModifiedUser { get; set; }
+    [JsonPropertyName("mid")]
+    public string? ModifierId { get; set; }
 
     [JsonPropertyName("mt")]
-    public DateTime? ModifiedTime { get; set; }
+    public DateTime? ModificationTime { get; set; }
 }

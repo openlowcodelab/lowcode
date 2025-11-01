@@ -30,7 +30,7 @@ public class DataSourceAppService : ApplicationService, IDataSourceAppService
                 Order = dataSourceSchema.Order,
                 DataSourceType = dataSourceSchema.DataSourceType,
                 PublishStatus = dataSourceSchema.PublishStatus,
-                ModifiedTime = dataSourceSchema.ModifiedTime
+                ModifiedTime = dataSourceSchema.ModificationTime
             };
             list.Add(model);
         }

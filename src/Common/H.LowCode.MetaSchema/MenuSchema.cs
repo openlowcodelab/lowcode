@@ -6,15 +6,15 @@ namespace H.LowCode.MetaSchema;
 public class MenuSchema : MetaSchemaBase
 {
     [JsonPropertyName("aid")]
-    public string AppId {  get; set; }
+    public required string AppId {  get; set; }
 
-    public string Id { get; set; } = ShortIdGenerator.Generate();
+    public required string Id { get; set; }
 
     [JsonPropertyName("pid")]
-    public string ParentId { get; set; }
+    public string? ParentId { get; set; }
 
     [JsonPropertyName("t")]
-    public string Title { get; set; }
+    public string? Title { get; set; }
 
     /// <summary>
     /// 菜单类型
@@ -23,13 +23,13 @@ public class MenuSchema : MetaSchemaBase
     [JsonPropertyName("type")]
     public int MenuType { get; set; }
 
-    public string Icon {  get; set; }
+    public string? Icon {  get; set; }
 
     /// <summary>
     /// 菜单地址
     /// </summary>
     [JsonPropertyName("path")]
-    public string MenuUrl { get; set; }
+    public string? MenuUrl { get; set; }
 
     public int Order { get; set; }
 

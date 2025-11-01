@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace H.LowCode.DbMigrator.Migrations
 {
     [DbContext(typeof(MigratorDbContext))]
-    [Migration("20250225020741_Initial")]
+    [Migration("20251101033222_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -20,7 +20,7 @@ namespace H.LowCode.DbMigrator.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.1")
+                .HasAnnotation("ProductVersion", "10.0.0-rc.2.25502.107")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -32,16 +32,20 @@ namespace H.LowCode.DbMigrator.Migrations
                         .IsUnicode(false)
                         .HasColumnType("varchar(50)");
 
-                    b.Property<DateTime>("CreatedTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("CreatedUser")
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("ModifiedTime")
+                    b.Property<DateTime>("CreationTime")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("ModifiedUser")
+                    b.Property<string>("CreatorId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModificationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ModifierId")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("f_field1")
@@ -91,10 +95,8 @@ namespace H.LowCode.DbMigrator.Migrations
                         .IsUnicode(true)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<string>("f_field8")
-                        .HasMaxLength(50)
-                        .IsUnicode(true)
-                        .HasColumnType("nvarchar(50)");
+                    b.PrimitiveCollection<string>("f_field8")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool?>("f_field9")
                         .HasColumnType("bit");
