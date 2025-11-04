@@ -22,6 +22,57 @@ namespace H.LowCode.DbMigrator.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("H.LowCode.DynamicEntity.tb_check", b =>
+                {
+                    b.Property<string>("f_id")
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatorId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModificationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ModifierId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("f_checklocation")
+                        .HasMaxLength(50)
+                        .IsUnicode(true)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("f_checktime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("f_checktype")
+                        .HasMaxLength(10)
+                        .HasColumnType("int");
+
+                    b.Property<string>("f_deptid")
+                        .HasMaxLength(50)
+                        .IsUnicode(true)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("f_userid")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .IsUnicode(true)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("f_id");
+
+                    b.ToTable("tb_check", (string)null);
+                });
+
             modelBuilder.Entity("H.LowCode.DynamicEntity.tb_test1", b =>
                 {
                     b.Property<string>("f_id")
@@ -101,6 +152,80 @@ namespace H.LowCode.DbMigrator.Migrations
                     b.HasKey("f_id");
 
                     b.ToTable("tb_test1", (string)null);
+                });
+
+            modelBuilder.Entity("H.LowCode.DynamicEntity.tb_test2", b =>
+                {
+                    b.Property<string>("f_id")
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatorId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModificationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ModifierId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("f_field1")
+                        .HasMaxLength(50)
+                        .IsUnicode(true)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("f_field2")
+                        .HasMaxLength(50)
+                        .IsUnicode(true)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool?>("f_field3")
+                        .HasColumnType("bit");
+
+                    b.HasKey("f_id");
+
+                    b.ToTable("tb_test2", (string)null);
+                });
+
+            modelBuilder.Entity("H.LowCode.DynamicEntity.tb_test3", b =>
+                {
+                    b.Property<string>("f_id")
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatorId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ModificationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ModifierId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("f_field1")
+                        .HasMaxLength(50)
+                        .IsUnicode(true)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("f_id");
+
+                    b.ToTable("tb_test3", (string)null);
                 });
 #pragma warning restore 612, 618
         }

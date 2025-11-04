@@ -1,3 +1,4 @@
+using H.LowCode.Application;
 using H.LowCode.Application.Contracts;
 using H.LowCode.ComponentBase;
 using H.LowCode.Components.Defaults;
@@ -15,8 +16,9 @@ namespace H.LowCode.RenderEngine.Host.Client;
     typeof(AbpAutofacWebAssemblyModule),
     //动态API代理
     typeof(AbpHttpClientModule),
-    typeof(RenderEngineApplicationContractsModule),
     //=====lowcode-web=====//
+    typeof(LowCodeApplicationModule),
+    typeof(RenderEngineApplicationContractsModule),
     //RenderEngine
     typeof(RenderEngineModule),
     //Components

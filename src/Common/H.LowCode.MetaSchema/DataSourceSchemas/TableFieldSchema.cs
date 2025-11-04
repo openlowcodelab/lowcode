@@ -10,16 +10,16 @@ namespace H.LowCode.MetaSchema;
 public record TableFieldSchema
 {
     [JsonPropertyName("id")]
-    public string Id { get; set; }
+    public string? Id { get; set; }
 
     [JsonPropertyName("n")]
-    public string Name { get; set; }
+    public string? Name { get; set; }
 
     [JsonPropertyName("disn")]
-    public string DisplayName { get; set; }
+    public string? DisplayName { get; set; }
 
     [JsonPropertyName("type")]
-    public string Type { get; set; }
+    public string? Type { get; set; }
 
     [JsonPropertyName("pk")]
     public bool IsPrimaryKey { get; set; }
@@ -34,5 +34,5 @@ public record TableFieldSchema
     public bool IsUnique { get; set; }
 
     [JsonPropertyName("m")]
-    public string Comments { get; set; }
+    public string? Comments { get; set; }
 }

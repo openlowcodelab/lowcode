@@ -246,7 +246,12 @@
     private async Task CreateAsync()
     {
         await Task.Delay(1);
-        _dataSource = new() { AppId = AppId, DataSourceType = ComponentDataSourceTypeEnum.DB };
+        _dataSource = new()
+            {
+                AppId = AppId,
+                Id = ShortIdGenerator.Generate(),
+                DataSourceType = ComponentDataSourceTypeEnum.DB
+            };
         _visible = true;
         _modalTitle = "新建数据表";
 

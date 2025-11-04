@@ -1,10 +1,8 @@
-﻿using H.LowCode.DesignEngine.EntityFrameworkCore;
+using H.LowCode.Application.Contracts;
+using H.LowCode.DbMigrator.Services;
+using H.LowCode.DesignEngine.EntityFrameworkCore;
+using H.LowCode.Entity;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace H.LowCode.DbMigrator;
 
@@ -15,8 +13,26 @@ namespace H.LowCode.DbMigrator;
 /// </summary>
 public class MigratorDbContext : DesignEngineDbContext
 {
+    private readonly EntityTypeManager _entityTypeManager;
+    private readonly MigrationAppContextService _appContextService;
+
     public MigratorDbContext(DbContextOptions<DesignEngineDbContext> options,
-        EntityTypeManager entityTypeManager) : base(options, entityTypeManager)
+        EntityTypeManager entityTypeManager,
+        MigrationAppContextService appContextService) : base(options, entityTypeManager, appContextService)
     {
+        _entityTypeManager = entityTypeManager;
+        _appContextService = appContextService;
+    }
+
+    protected override IList<DynamicEntityInfo> GetEntityTypes()
+    {
+        IList<DynamicEntityInfo> dynamicEntities = [];
+        // 同步等待遍历所有应用，确保实体完整加载
+        _appContextService.ForEachAppAsync(async (appId) =>
+        {
+            var currentAppDynamicEntities = _entityTypeManager.LoadDynamicEntities(appId);
+            dynamicEntities = [.. dynamicEntities, .. currentAppDynamicEntities];
+        }).GetAwaiter().GetResult();
+        return dynamicEntities;
     }
 }

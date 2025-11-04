@@ -1,14 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore.Design;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
+using H.LowCode.Application.Contracts;
+using H.LowCode.DbMigrator.Services;
 using H.LowCode.DesignEngine.EntityFrameworkCore;
 using H.LowCode.DesignEngine.Repository.JsonFile;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace H.LowCode.DbMigrator;
 
@@ -36,7 +33,8 @@ public class MigratorDbContextFactory : IDesignTimeDbContextFactory<MigratorDbCo
         services.AddApplication<DesignEngineJsonFileRepositoryModule>();
         var serviceProvider = services.BuildServiceProvider();
         EntityTypeManager entityTypeManager = serviceProvider.GetService<EntityTypeManager>();
+        MigrationAppContextService appContextService = serviceProvider.GetService<MigrationAppContextService>();
 
-        return new MigratorDbContext(builder.Options, entityTypeManager);
+        return new MigratorDbContext(builder.Options, entityTypeManager, appContextService);
     }
 }

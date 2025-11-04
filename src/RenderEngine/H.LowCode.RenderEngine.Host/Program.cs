@@ -1,10 +1,10 @@
 using H.LowCode.RenderEngine.Host.Client;
 using System.Text.Json;
 using H.LowCode.RenderEngine.Host.Components;
-using H.Util.Blazor;
 using H.LowCode.RenderEngine.Host;
 using Microsoft.AspNetCore.ResponseCompression;
 using System.IO.Compression;
+using H.LowCode.Application;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,7 +18,7 @@ builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
 });
 
-// ������Ӧѹ��
+// 启用响应压缩
 builder.Services.AddResponseCompression(options =>
 {
     options.Providers.Add<BrotliCompressionProvider>();
@@ -64,6 +64,10 @@ app.UseStaticFiles(new StaticFileOptions
 });
 
 app.MapStaticAssets();
+
+// 使用 AppContext 中间件，自动解析和设置 AppId
+app.UseAppContext();
+
 app.UseRouting();
 app.UseAntiforgery();
 

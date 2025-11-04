@@ -9,6 +9,7 @@ using System.ComponentModel.DataAnnotations;
 using H.LowCode.Entity;
 using H.LowCode.RenderEngine.Domain;
 using H.LowCode.RenderEngine.Domain.Repositories;
+using Volo.Abp.Domain.Entities;
 
 namespace H.LowCode.RenderEngine.EntityFrameworkCore;
 
@@ -19,7 +20,7 @@ public class EntityTypeManager
     private const string _dynamicAssemblyName = "H.LowCode.DynamicEntity";
     private const string _dynamicModuleName = "DynamicModule";
 
-    private static List<DynamicEntityInfo> _dynamicEntities = [];
+    private static Dictionary<string, List<DynamicEntityInfo>> _dynamicEntitiesDic = [];
 
     private IDataSourceRepository _dataSourceRepository;
 
@@ -28,14 +29,21 @@ public class EntityTypeManager
         _dataSourceRepository = dataSourceRepository;
     }
 
-    public IReadOnlyList<DynamicEntityInfo> LoadDynamicEntities()
+    public IReadOnlyList<DynamicEntityInfo> LoadDynamicEntities(string appId)
     {
+        if (string.IsNullOrEmpty(appId))
+        {
+            throw new EntityNotFoundException($"{nameof(appId)} is empty");
+        }
+
         InitDynamicAssembly();
 
-        if(_dynamicEntities.Count > 0)
-            return _dynamicEntities;
+        if (_dynamicEntitiesDic.ContainsKey(appId))
+            return _dynamicEntitiesDic[appId];
 
-        var entities = _dataSourceRepository.GetAllEntities("caseapp");
+        var dynamicEntities = new List<DynamicEntityInfo>();
+
+        var entities = _dataSourceRepository.GetAllEntities(appId);
         foreach (var entity in entities)
         {
             var fields = entity.TableFields.Select(f => new DynamicEntityField()
@@ -51,7 +59,7 @@ public class EntityTypeManager
 
             //创建实体类
             var entityType = EntityFactory.CreateEntityType(_dynamicModule, entity.Name, fields);
-            
+
             var dynamicEntity = new DynamicEntityInfo()
             {
                 EntityName = entity.Name,
@@ -60,10 +68,12 @@ public class EntityTypeManager
                 EnableSoftDelete = entity.EnableSoftDelete,
                 Fields = fields
             };
-            _dynamicEntities.Add(dynamicEntity);
-            return _dynamicEntities;
+            dynamicEntities.Add(dynamicEntity);
         }
-        return _dynamicEntities;
+
+        _dynamicEntitiesDic[appId] = dynamicEntities;
+
+        return dynamicEntities;
     }
 
     private static void InitDynamicAssembly()

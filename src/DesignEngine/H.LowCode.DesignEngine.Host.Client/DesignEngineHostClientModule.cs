@@ -1,3 +1,4 @@
+using H.LowCode.Application;
 using H.LowCode.Application.Contracts;
 using H.LowCode.ComponentBase;
 using H.LowCode.Components.Defaults;
@@ -17,8 +18,9 @@ namespace H.LowCode.DesignEngine.Host.Client;
     typeof(AbpAutofacWebAssemblyModule),
     //动态API代理
     typeof(AbpHttpClientModule),
-    typeof(DesignEngineApplicationContractsModule),
     //=====lowcode-web=====//
+    typeof(LowCodeApplicationModule),
+    typeof(DesignEngineApplicationContractsModule),
     //Portal
     typeof(LowCodePortalModule),
     //DesignEngine

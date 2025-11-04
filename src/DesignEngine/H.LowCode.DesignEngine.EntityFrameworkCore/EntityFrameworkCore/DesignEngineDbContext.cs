@@ -1,14 +1,9 @@
-﻿using H.LowCode.DesignEngine.Domain;
+using H.LowCode.Application.Contracts;
 using H.LowCode.Entity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
-using System.Text;
 
 namespace H.LowCode.DesignEngine.EntityFrameworkCore;
 
@@ -20,10 +15,14 @@ public class DesignEngineDbContext : DbContext
     private EntityTypeManager _entityTypeManager;
 
     public DesignEngineDbContext(DbContextOptions<DesignEngineDbContext> options,
-        EntityTypeManager entityTypeManager) : base(options)
+        EntityTypeManager entityTypeManager,
+        IAppContextService appContextService) : base(options)
     {
         _dbOptions = options;
         _entityTypeManager = entityTypeManager;
+        
+        // 从应用上下文服务获取当前 AppId
+        AppId = appContextService.CurrentAppId ?? string.Empty;
     }
 
     public async Task<bool> AddAsync(FormEntity formEntity)
@@ -146,7 +145,7 @@ public class DesignEngineDbContext : DbContext
     /// <param name="modelBuilder"></param>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        var dynamicEntities = _entityTypeManager.LoadDynamicEntities();
+        var dynamicEntities = GetEntityTypes();
         for (var i = 0; i < dynamicEntities.Count(); i++)
         {
             var dynamicEntity = dynamicEntities[i];
@@ -169,6 +168,12 @@ public class DesignEngineDbContext : DbContext
         }
 
         base.OnModelCreating(modelBuilder);
+    }
+
+    protected virtual IList<DynamicEntityInfo> GetEntityTypes()
+    {
+        var dynamicEntities = _entityTypeManager.LoadDynamicEntities(AppId);
+        return [.. dynamicEntities];
     }
 
     private void ConfigureProperties(EntityTypeBuilder entityBuilder, DynamicEntityInfo dynamicEntity, Type entityType)

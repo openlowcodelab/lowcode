@@ -1,13 +1,8 @@
-﻿using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.Extensions.Logging.Abstractions;
 using Volo.Abp.Data;
 using Volo.Abp.DependencyInjection;
+using H.LowCode.DbMigrator.Services;
+using Microsoft.Extensions.Logging;
 
 namespace H.LowCode.DbMigrator;
 
@@ -17,13 +12,16 @@ public class DbMigrationService : ITransientDependency
 
     private readonly IDataSeeder _dataSeeder;
     private readonly IEnumerable<IDbSchemaMigrator> _dbSchemaMigrators;
+    private readonly MigrationAppContextService _appContextService;
 
     public DbMigrationService(
         IDataSeeder dataSeeder,
-        IEnumerable<IDbSchemaMigrator> dbSchemaMigrators)
+        IEnumerable<IDbSchemaMigrator> dbSchemaMigrators,
+        MigrationAppContextService appContextService)
     {
         _dataSeeder = dataSeeder;
         _dbSchemaMigrators = dbSchemaMigrators;
+        _appContextService = appContextService;
 
         Logger = NullLogger<DbMigrationService>.Instance;
     }
@@ -32,8 +30,15 @@ public class DbMigrationService : ITransientDependency
     {
         Logger.LogInformation("Started database migrations...");
 
+        // 首先执行数据库架构迁移（不依赖 AppId）
         await MigrateDatabaseSchemaAsync();
-        await SeedDataAsync();
+
+        // 然后遍历所有应用进行数据种子
+        await _appContextService.ForEachAppAsync(async (appId) =>
+        {
+            Logger.LogInformation("开始为应用 {AppId} 执行数据种子", appId);
+            await SeedDataAsync();
+        });
 
         Logger.LogInformation("Successfully completed all database migrations.");
         Logger.LogInformation("You can safely end this process...");

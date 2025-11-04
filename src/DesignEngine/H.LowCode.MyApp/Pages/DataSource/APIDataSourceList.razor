@@ -65,7 +65,7 @@
     private bool _visible;
     private string _modalTitle;
     private Form<DataSourceSchema> _form;
-    private DataSourceSchema _dataSource = new DataSourceSchema();
+    private DataSourceSchema _dataSource;
 
     protected override async Task OnInitializedAsync()
     {
@@ -141,6 +141,7 @@
         _dataSource = new()
         {
             AppId = AppId,
+            Id = ShortIdGenerator.Generate(),
             DataSourceType = ComponentDataSourceTypeEnum.API,
             API = new()
         };

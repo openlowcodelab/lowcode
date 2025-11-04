@@ -1,4 +1,6 @@
-﻿using H.LowCode.DesignEngine.EntityFrameworkCore;
+using H.LowCode.DbMigrator.Services;
+using H.LowCode.DesignEngine.Application;
+using H.LowCode.DesignEngine.EntityFrameworkCore;
 using H.LowCode.DesignEngine.Repository.JsonFile;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -10,7 +12,8 @@ namespace H.LowCode.DbMigrator;
 
 [DependsOn(
     typeof(DesignEngineJsonFileRepositoryModule),
-    typeof(DesignEngineEntityFrameworkCoreModule)
+    typeof(DesignEngineEntityFrameworkCoreModule),
+    typeof(DesignEngineApplicationModule)
     )]
 public class LowCodeDbMigratorModule : AbpModule
 {
@@ -20,6 +23,9 @@ public class LowCodeDbMigratorModule : AbpModule
 
         context.Services.AddTransient<IDbSchemaMigrator, EntityFrameworkCoreDbSchemaMigrator>();
 
+        // 注册迁移专用的应用上下文服务
+        context.Services.AddScoped<MigrationAppContextService>();
+        
         //使用 MigratorDbContext 而不是 DesignEngineDbContext 的原因为需要指定迁移程序集，但又不想在 DesignEngineDbContext 中指定迁移程序集。
         context.Services.AddDbContext<MigratorDbContext>(options =>
         {

@@ -1,15 +1,9 @@
-﻿using H.LowCode.Entity;
-using H.LowCode.RenderEngine.Domain;
+using H.LowCode.Application.Contracts;
+using H.LowCode.Entity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Microsoft.VisualBasic.FileIO;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Text.Json;
 using Volo.Abp.Domain.Entities;
 
 namespace H.LowCode.RenderEngine.EntityFrameworkCore;
@@ -22,10 +16,14 @@ public class RenderEngineDbContext : DbContext
     private EntityTypeManager _entityTypeManager;
 
     public RenderEngineDbContext(DbContextOptions<RenderEngineDbContext> options,
-        EntityTypeManager entityTypeManager) : base(options)
+        EntityTypeManager entityTypeManager,
+        IAppContextService appContextService) : base(options)
     {
         _dbOptions = options;
         _entityTypeManager = entityTypeManager;
+        
+        // 从应用上下文服务获取当前 AppId
+        AppId = appContextService.CurrentAppId ?? string.Empty;
     }
 
     public async Task<bool> AddAsync(FormEntity formEntity)
@@ -162,7 +160,7 @@ public class RenderEngineDbContext : DbContext
     /// <param name="modelBuilder"></param>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        var dynamicEntities = _entityTypeManager.LoadDynamicEntities();
+        var dynamicEntities = _entityTypeManager.LoadDynamicEntities(AppId);
         for (var i = 0; i < dynamicEntities.Count(); i++)
         {
             var dynamicEntity = dynamicEntities[i];

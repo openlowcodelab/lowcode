@@ -6,18 +6,18 @@ namespace H.LowCode.MetaSchema;
 public class DataSourceSchema : MetaSchemaBase
 {
     [JsonPropertyName("aid")]
-    public string AppId { get; set; }
+    public required string AppId { get; set; }
 
-    public string Id { get; set; } = ShortIdGenerator.Generate();
+    public required string Id { get; set; }
 
     [JsonPropertyName("n")]
-    public string Name { get; set; }
+    public string? Name { get; set; }
 
     [JsonPropertyName("disn")]
-    public string DisplayName { get; set; }
+    public string? DisplayName { get; set; }
 
     [JsonPropertyName("desc")]
-    public string Description { get; set; }
+    public string? Description { get; set; }
 
     [JsonPropertyName("order")]
     public int Order { get; set; }
@@ -46,7 +46,7 @@ public class DataSourceSchema : MetaSchemaBase
     /// API 数据源
     /// </summary>
     [JsonPropertyName("api")]
-    public APIDataSourceSchema API { get; set; }
+    public APIDataSourceSchema? API { get; set; }
     #endregion
 
     #region DataSourceType=Option
@@ -54,17 +54,17 @@ public class DataSourceSchema : MetaSchemaBase
     /// 选项数据源
     /// </summary>
     [JsonPropertyName("ops")]
-    public OptionDataSourceSchema[] Options { get; set; }
+    public OptionDataSourceSchema[]? Options { get; set; }
 
     /// <summary>
     /// 
     /// </summary>
-    public string Value { get; set; }
+    public string? Value { get; set; }
 
     /// <summary>
     /// 字典数据源
     /// </summary>
     [JsonPropertyName("vals")]
-    public IDictionary<string, string> Values { get; set; }
+    public IDictionary<string, string>? Values { get; set; }
     #endregion
 }

@@ -37,11 +37,7 @@
     [Parameter]
     public string AppId { get; set; }
 
-    private IEnumerable<DataSourceSchema> _dataSource =
-    [
-        new (){ Name = "option1", DisplayName="Option1", DataSourceType = ComponentDataSourceTypeEnum.Option },
-        new (){ Name = "option2", DisplayName="Option2", DataSourceType = ComponentDataSourceTypeEnum.Option }
-    ];
+    private IEnumerable<DataSourceSchema> _dataSource = [];
 
     private DataSourceSchema _currentDataSource;
 
@@ -55,7 +51,13 @@
     private async Task CreateAsync()
     {
         await Task.Delay(1);
-        _currentDataSource = new() { DataSourceType = ComponentDataSourceTypeEnum.DB };
+        _currentDataSource = new()
+            {
+                AppId = AppId,
+                Id = ShortIdGenerator.Generate(),
+                DataSourceType = ComponentDataSourceTypeEnum.DB
+            };
+
         _visible = true;
         _modalTitle = "新建数据表";
         StateHasChanged();

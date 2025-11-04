@@ -1,4 +1,4 @@
-﻿using H.LowCode.Configuration;
+using H.LowCode.Configuration;
 using H.LowCode.DesignEngine.Application.Contracts;
 using H.LowCode.DesignEngine.Domain.Repositories;
 using H.LowCode.DesignEngine.Model;
@@ -13,9 +13,14 @@ namespace H.LowCode.DesignEngine.Application;
 [RemoteService]
 public class AppApplicationService : ApplicationService, IAppApplicationService
 {
-    private IEnumerable<SiteOption> _sites => LazyServiceProvider.GetRequiredService<IOptions<List<SiteOption>>>().Value;
+    private readonly IEnumerable<SiteOption> _sites;
+    private readonly IAppRepository _repository;
 
-    private IAppRepository _repository => LazyServiceProvider.GetRequiredService<IAppRepository>();
+    public AppApplicationService(IOptions<List<SiteOption>> siteOptions, IAppRepository repository)
+    {
+        _sites = siteOptions.Value;
+        _repository = repository;
+    }
 
     public async Task<IList<AppListModel>> GetAppsAsync()
     {
