@@ -52,10 +52,14 @@
         //订阅设计面板中的组件点击事件
         BlazorEventDispatcher.Subscribe("designengine.draggableitem.onclick", (value) =>
         {
-            _component = (ComponentPartsSchema)value;
-            _showPropertyPanel = true;
-            _tabs.ActivatePane("tab_property");
-            StateHasChanged();
+            if (value != null)
+            {
+                _component = (ComponentPartsSchema)value;
+                _showPropertyPanel = true;
+                _tabs.ActivatePane("tab_property");
+                // 使用InvokeAsync确保在正确的线程上下文中执行
+                InvokeAsync(StateHasChanged);
+            }
         });
 
         //订阅设计面板取消选中事件
@@ -64,7 +68,8 @@
             _component = null;
             _showPropertyPanel = false;
             _tabs.ActivatePane("tab_page");
-            StateHasChanged();
+            // 使用InvokeAsync确保在正确的线程上下文中执行
+            InvokeAsync(StateHasChanged);
         });
     }
     #endregion

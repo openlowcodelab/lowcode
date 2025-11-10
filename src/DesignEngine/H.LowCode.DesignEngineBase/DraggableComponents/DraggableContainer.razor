@@ -59,7 +59,11 @@
             //订阅 ComponentPanel 中的组件点击事件
             BlazorEventDispatcher.Subscribe("designengine.dragitem.onclick", (value) =>
             {
-                DragDropHandler((ComponentPartsSchema)value);
+                if (value != null)
+                {
+                    // 使用InvokeAsync确保在正确的线程上下文中执行
+                    InvokeAsync(() => DragDropHandler((ComponentPartsSchema)value));
+                }
             });
         }
     }
@@ -69,6 +73,9 @@
     private void OnDrop()
     {
         var currentDragComponent = DragDropStateService.GetCurrentDragComponent(PageCascading.AppId, PageCascading.PageId);
+        if (currentDragComponent == null)
+            return;
+
         DragDropHandler(currentDragComponent);
 
         //重置拖拽样式和动画状态
@@ -83,7 +90,8 @@
             DragDropStateService.ResetDragStyle(PageCascading.AppId, PageCascading.PageId);
         }
 
-        BlazorEventDispatcher.Publish("designengine.draggableitem.onblur", null);
+        // 使用InvokeAsync确保在正确的线程上下文中执行
+        InvokeAsync(() => BlazorEventDispatcher.Publish("designengine.draggableitem.onblur", null));
     }
 
     private void OnItemClick(ComponentPartsSchema component)
@@ -97,7 +105,8 @@
         }
 
         component.DesignState.IsSelected = true;
-        StateHasChanged();
+        // 使用InvokeAsync确保在正确的线程上下文中执行
+        InvokeAsync(StateHasChanged);
 
         DragDropStateService.SetLastSelectedComponent(PageCascading.AppId, PageCascading.PageId, component);
     }
@@ -105,15 +114,16 @@
     private void OnItemDelete(ComponentPartsSchema component)
     {
         DraggableItem_Remove(ContainerComponent, component);
-        StateHasChanged();
+        // 使用InvokeAsync确保在正确的线程上下文中执行
+        InvokeAsync(StateHasChanged);
     }
 
     private void OnItemCopy(ComponentPartsSchema component)
     {
         var newComponent = component.DeepClone();
         DragItem_Add(ContainerComponent, newComponent, null, false);
-        StateHasChanged();
-    }
+        // 使用InvokeAsync确保在正确的线程上下文中执行
+        InvokeAsync(StateHasChanged);    }
     #endregion
 
     #region private
@@ -143,11 +153,11 @@
             }
         }
 
-        StateHasChanged();
+        // 使用InvokeAsync确保在正确的线程上下文中执行
+        InvokeAsync(StateHasChanged);
 
         //拖拽释放后将 LastDragOverComponent 置空（避免下一次(如空白区或Copy按钮)拖拽无放置区时，读取到了上次的放置区）
-        DragDropStateService.SetLastDragOverComponent(PageCascading.AppId, PageCascading.PageId, null);
-    }
+        DragDropStateService.SetLastDragOverComponent(PageCascading.AppId, PageCascading.PageId, null);    }
 
     /// <summary>
     /// 新增 DragItem
@@ -165,7 +175,7 @@
             currentDragComponent.DesignState.IsSelected = isSelected;
             DragDropStateService.SetLastSelectedComponent(PageCascading.AppId, PageCascading.PageId, currentDragComponent);
         }
-        currentDragComponent.Refresh = StateHasChanged;
+        currentDragComponent.Refresh = () => InvokeAsync(StateHasChanged);
 
         //如果拖拽到放置区对象上方，按照顺序添加
         if (dragOverComponent != null)

@@ -67,7 +67,8 @@
 
     private void OnLayoutChange(int pageLayout)
     {
-        BlazorEventDispatcher.Publish("designengine.pagesetting.pagelayout.onchange", pageLayout);
+        // 使用InvokeAsync确保在正确的线程上下文中执行
+        InvokeAsync(() => BlazorEventDispatcher.Publish("designengine.pagesetting.pagelayout.onchange", pageLayout));
     }
 
     private void OnStyleChange(string customStyle)

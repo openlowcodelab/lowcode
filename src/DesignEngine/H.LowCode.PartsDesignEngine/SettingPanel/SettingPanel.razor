@@ -40,10 +40,13 @@
         //订阅设计面板中的组件点击事件
         BlazorEventDispatcher.Subscribe("designengine.draggableitem.onclick", (value) =>
         {
-            _component = (ComponentPartsSchema)value;
-            _showPropertyPanel = true;
-            _activeTabKey = "tab_property";
-            StateHasChanged();
+            if (value != null)
+            {
+                _component = (ComponentPartsSchema)value;
+                _showPropertyPanel = true;
+                _activeTabKey = "tab_property";
+                StateHasChanged();
+            }
         });
 
         //订阅设计面板取消选中事件

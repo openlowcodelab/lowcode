@@ -1,5 +1,5 @@
 window.elementUtils = {
-    // ��ȡԪ�سߴ���Ϣ������margin
+    // 获取元素尺寸信息，包括margin
     getDimensions: function (element) {
         if (!element) return null;
         
@@ -7,7 +7,7 @@ window.elementUtils = {
         const computedStyle = window.getComputedStyle(element);
         const containerWidth = element.parentElement ? element.parentElement.getBoundingClientRect().width : 0;
         
-        // ����ʵ�ʳߴ磨����margin��
+        // 计算实际尺寸（包括margin）
         const margin = {
             top: parseFloat(computedStyle.marginTop),
             right: parseFloat(computedStyle.marginRight),
@@ -27,7 +27,7 @@ window.elementUtils = {
         };
     },
     
-    // ����������Ϣ
+    // 计算容器信息
     getContainerInfo: function (element) {
         if (!element || !element.parentElement) return null;
         
@@ -66,7 +66,7 @@ window.elementUtils = {
         return null;
     }
     ,
-    // 为元素绑定 dragstart 事件，使用“整个 DraggableItem”作为拖拽图像
+    // 为元素绑定 dragstart 事件，使用"整个 DraggableItem"作为拖拽图像
     attachDragImage: function (element, label) {
         if (!element) return;
         try {
@@ -76,10 +76,12 @@ window.elementUtils = {
                     const target = element.querySelector('.draggableitem') || element;
                     const rect = target.getBoundingClientRect();
 
+                    // 克隆原始元素以保持所有样式
                     const clone = target.cloneNode(true);
                     clone.style.width = '100%';
                     clone.style.height = '100%';
-
+                    
+                    // 创建一个包裹容器来增强视觉效果
                     const overlay = document.createElement('div');
                     overlay.style.cssText = [
                         'position:fixed',
@@ -92,17 +94,36 @@ window.elementUtils = {
                         'width:' + rect.width + 'px',
                         'height:' + rect.height + 'px',
                         'background:transparent',
-                        'border:none',
-                        'border-radius:8px',
-                        'opacity:0.5',
-                        'box-shadow:0 10px 24px rgba(0,0,0,.28)',
-                        'filter:contrast(1.2) saturate(1.05)',
-                        '-webkit-font-smoothing:antialiased',
-                        '-moz-osx-font-smoothing:grayscale',
-                        'text-rendering:optimizeLegibility'
+                        'border: 1px solid #409eff',  // 添加清晰的蓝色边框
+                        'border-radius: 4px',
+                        'opacity: 0.6',  // 调整透明度使内容更清晰
+                        'box-shadow: 0 8px 16px rgba(0,0,0,0.2)',  // 添加阴影增强视觉效果
+                        'filter: contrast(1.1) saturate(1.05)',  // 增强对比度和饱和度
+                        '-webkit-font-smoothing: antialiased',  // 优化文字清晰度
+                        '-moz-osx-font-smoothing: grayscale',
+                        'text-rendering: optimizeLegibility'
                     ].join(';');
                     overlay.appendChild(clone);
                     document.body.appendChild(overlay);
+
+                    // 特别优化克隆元素中的文字和图标清晰度
+                    const texts = overlay.querySelectorAll('span, div, p, h1, h2, h3, h4, h5, h6, label, .ant-typography');
+                    for (let i = 0; i < texts.length; i++) {
+                        const textEl = texts[i];
+                        textEl.style.webkitFontSmoothing = 'antialiased';
+                        textEl.style.mozOsxFontSmoothing = 'grayscale';
+                        textEl.style.textRendering = 'optimizeLegibility';
+                        textEl.style.filter = 'contrast(1.15) saturate(1.1)';
+                    }
+                    
+                    // 优化图标清晰度
+                    const icons = overlay.querySelectorAll('.anticon, .icon, svg, i');
+                    for (let i = 0; i < icons.length; i++) {
+                        const iconEl = icons[i];
+                        iconEl.style.webkitFontSmoothing = 'antialiased';
+                        iconEl.style.mozOsxFontSmoothing = 'grayscale';
+                        iconEl.style.filter = 'contrast(1.2) saturate(1.15)';
+                    }
 
                     // 记录鼠标相对于组件中心的偏移，居中效果更直观
                     const offsetX = rect.width / 2;

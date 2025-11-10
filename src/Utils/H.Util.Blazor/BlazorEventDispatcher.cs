@@ -9,13 +9,13 @@ public static class BlazorEventDispatcher
     /// key 格式建议(小写)：{组件库名称}.{组件名称}.{事件名称}
     /// 如：designengine.dragitem.onclick
     /// </summary>
-    private static Dictionary<string, Action<object>> _actions;
+    private static Dictionary<string, Action<object?>> _actions;
     static BlazorEventDispatcher()
     {
-        _actions = new Dictionary<string, Action<object>>();
+        _actions = [];
     }
 
-    public static void Subscribe(string eventName, Action<object> action)
+    public static void Subscribe(string eventName, Action<object?> action)
     {
         if (!_actions.ContainsKey(eventName))
         {
@@ -35,7 +35,7 @@ public static class BlazorEventDispatcher
         }
     }
 
-    public static void Publish(string eventName, object param)
+    public static void Publish(string eventName, object? param)
     {
         if (_actions.ContainsKey(eventName))
         {

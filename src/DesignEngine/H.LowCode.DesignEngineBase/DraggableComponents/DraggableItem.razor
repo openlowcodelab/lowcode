@@ -6,28 +6,27 @@
 @inject IJSRuntime JSRuntime
 
 <div @ref="itemRef" class="draggableitem-box @DraggableItemBoxClassMapper.Class"
-    draggable="true" data-component-id="@Component.Id"
+    draggable="@Component.DesignState.IsSelected"
      style="float:left;
         width: @((Component.Style.ItemWidth > 4 ? Component.Style.ItemWidth : (IsInRootContainer ? 24/PageCascading.PageLayout : 24))  /24 * 100)%;
         min-height: @(Component.Style.ItemHeight)px;
         transform: @Component.DesignState.AnimationTransform;
         will-change: @(Component.DesignState.IsAnimating ? "transform" : "auto");
         transition: @(Component.DesignState.IsAnimating && !isDragging ? "transform 0.2s ease-out" : "none");
-        z-index: @(isDragging ? "9999" : "auto");
-        position: @(isDragging ? "relative" : "static");
+        z-index: auto;
+        position: static;
         pointer-events: @(isDragging ? "none" : "auto");
         @Component.Style.DefaultStyle @Component.Style.CustomStyle"
      @onclick="OnClick" @onclick:stopPropagation
      @ondragstart="OnDragStart" @ondragstart:stopPropagation
      @ondragenter="OnDragEnter" @ondragenter:preventDefault @ondragenter:stopPropagation
      @ondragover="OnDragOver" @ondragover:preventDefault @ondragover:stopPropagation
-     @ondrag="OnDrag"
      @ondragleave="OnDragLeave" @ondragleave:stopPropagation
      @ondragend="OnDragEnd" @ondragend:stopPropagation
      @onmouseover="OnMouseOver" @onmouseover:stopPropagation
      @onmouseout="OnMouseOut" @onmouseout:stopPropagation>
 
-    <div @ref="innerRef" draggable="true" class="draggableitem @DraggableItemClassMapper.Class" style="@Component.DesignState.DragEffectStyle">
+    <div class="draggableitem @DraggableItemClassMapper.Class" style="@Component.DesignState.DragEffectStyle">
         @if (Component.DesignState.IsSelected)
         {
             <div draggable="true" class="draggableitem-icon-move">
@@ -73,43 +72,11 @@
     protected ClassMapper DraggableItemClassMapper { get; } = new ClassMapper();
 
     private ElementReference itemRef;
-    private ElementReference innerRef;
     private DragDropElementDimensions dimensions;
 
     private bool isDragging = false;
     private double initialX = 0;
     private double initialY = 0;
-    private long lastAnimationMs = 0;
-    private ComponentPartsSchema pendingOverComponent;
-    private long pendingOverStartMs = 0;
-    private int hoverStableMs = 120;
-
-    private bool TryScheduleAnimation(int intervalMs = 120)
-    {
-        var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-        if (now - lastAnimationMs < intervalMs) return false;
-        lastAnimationMs = now;
-        return true;
-    }
-
-    private bool TryCommitHoverTarget(ComponentPartsSchema candidate)
-    {
-        var now = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-        if (!ReferenceEquals(pendingOverComponent, candidate))
-        {
-            pendingOverComponent = candidate;
-            pendingOverStartMs = now;
-            return false;
-        }
-        if (now - pendingOverStartMs < hoverStableMs)
-            return false;
-
-        DragDropStateService.SetLastDragOverComponent(PageCascading.AppId, PageCascading.PageId, candidate);
-        // 清空候选
-        pendingOverComponent = null;
-        pendingOverStartMs = 0;
-        return true;
-    }
 
     #region Init
     protected override async Task OnInitializedAsync()
@@ -128,14 +95,9 @@
             //await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./_content/H.LowCode.DesignEngineBase/js/elementUtils.js");
 
             await UpdateDimensions();
+            // 启用优化的半透明拖拽图像（自定义 DragImage）
+            try { await JSRuntime.InvokeVoidAsync("elementUtils.attachDragImage", itemRef, Component?.Label ?? "组件"); } catch { }
             RegisterEventDispatcher();
-
-            try
-            {
-                // 优先对内部真实组件容器绑定覆盖层，使拖拽在 WASM 下更稳定
-                await JSRuntime.InvokeVoidAsync("elementUtils.attachDragImage", innerRef, Component?.Label ?? "组件");
-            }
-            catch { }
         }
     }
 
@@ -164,8 +126,12 @@
             //订阅 PageSetting 中的组件点击事件
             BlazorEventDispatcher.Subscribe("designengine.pagesetting.pagelayout.onchange", (value) =>
             {
-                PageCascading.PageLayout = (int)value;
-                StateHasChanged();
+                if (value != null)
+                {
+                    PageCascading.PageLayout = (int)value;
+                    // 使用InvokeAsync确保在正确的线程上下文中执行
+                    InvokeAsync(StateHasChanged);
+                }
             });
         }
     }
@@ -194,37 +160,33 @@
         ResetAllAnimationStates();
 
         OnItemClick.Invoke(Component);
-        BlazorEventDispatcher.Publish("designengine.draggableitem.onclick", Component);
+        // 使用InvokeAsync确保在正确的线程上下文中执行
+        InvokeAsync(() => BlazorEventDispatcher.Publish("designengine.draggableitem.onclick", Component));
     }
 
     private void OnDragStart(DragEventArgs dragEventArgs)
     {
-        // 避免在拖拽开始时触发 Blazor 重渲染，保持 DOM 稳定
+        //标记正在拖拽中
+        isDragging = true;
         initialX = dragEventArgs.ClientX;
         initialY = dragEventArgs.ClientY;
         Console.WriteLine($"拖拽开始:{initialX}-{initialY}");
 
         //记录当前选中对象
         DragDropStateService.SetCurrentDragComponent(PageCascading.AppId, PageCascading.PageId, Component);
+        //拖拽开始前，清理兄弟组件残留动画，避免初始闪烁
+        ClearSiblingAnimation();
     }
 
     private void OnDragEnter(DragEventArgs dragEventArgs)
     {
-        // 仅在进入“新”目标组件时触发一次让位，避免在同一组件内重复触发
-        var last = DragDropStateService.GetLastDragOverComponent(PageCascading.AppId, PageCascading.PageId);
-        if (ReferenceEquals(last, Component)) return;
-
+        // 更新最后悬停目标，但避免全量重置以防频繁进出同一目标导致闪烁
         DragDropStateService.SetLastDragOverComponent(PageCascading.AppId, PageCascading.PageId, Component);
-        if (TryScheduleAnimation())
-        {
-            TriggerSiblingAnimation();
-        }
     }
 
     private void OnDragOver(DragEventArgs dragEventArgs)
     {
         Console.WriteLine($"OnDragOver:{isDragging}");
-        TriggerCurrentSiblingAnimation(dragEventArgs.ClientX, dragEventArgs.ClientY);
 
         var currentDragComponent = DragDropStateService.GetCurrentDragComponent(PageCascading.AppId, PageCascading.PageId);
         if (ReferenceEquals(currentDragComponent, Component))
@@ -232,15 +194,17 @@
 
         var lastDragOverComponent = DragDropStateService.GetLastDragOverComponent(PageCascading.AppId, PageCascading.PageId);
 
-        // 只有当拖拽到不同组件时才触发让位动画，避免在同一目标组件内频繁移动导致闪烁
+        // 只有当拖拽到不同组件时才触发让位动画，避免连续拖拽问题
         if (!ReferenceEquals(lastDragOverComponent, Component))
         {
-            // 在同一目标上方时先稳定一段时间再触发，避免来回移动造成闪烁
-            if (TryCommitHoverTarget(Component) && TryScheduleAnimation())
-            {
-                TriggerSiblingAnimation();
-            }
+            // 先清理之前的动画状态
+            ClearSiblingAnimation();
+
+            // 更新最后拖拽经过的组件
+            DragDropStateService.SetLastDragOverComponent(PageCascading.AppId, PageCascading.PageId, Component);
         }
+
+        TriggerSiblingAnimation();
     }
 
     private void OnDragLeave()
@@ -253,7 +217,7 @@
         Component.DesignState.DragEffectStyle = string.Empty;
 
         //清理让位动画
-        // 为保持连续拖拽的平滑过渡，这里不清理动画，交由下一个目标组件的计算覆盖
+        //ClearSiblingAnimation();
     }
 
     private void OnDragEnd(DragEventArgs e)
@@ -302,42 +266,12 @@
             return;
 
         // 使用 transform3d 优化性能，触发 GPU 加速，添加 will-change 提示浏览器优化
-        // 拖拽过程中不再移动原始组件，改为使用自定义拖拽图像展示拖拽效果
-        // 仅保持内部状态用于命中测试与位移计算
-    }
-
-    private async Task OnDrag(DragEventArgs dragEventArgs)
-    {
-        if (!isDragging) return;
-
-        // 更新被拖拽组件的跟随移动
         var currentDragComponent = DragDropStateService.GetCurrentDragComponent(PageCascading.AppId, PageCascading.PageId);
-        if (currentDragComponent == null) return;
-
-        // 不再更新原始组件 transform，避免遮挡目标组件导致让位事件不触发
-
-        // 命中测试：在拖拽过程中，识别鼠标下方的目标组件（排除当前拖拽组件），以触发让位动画
-        try
+        if (currentDragComponent != null)
         {
-            var overComponentId = await JSRuntime.InvokeAsync<string>("elementUtils.getComponentIdByPoint", dragEventArgs.ClientX, dragEventArgs.ClientY, currentDragComponent.Id);
-            if (!string.IsNullOrEmpty(overComponentId) && !string.Equals(overComponentId, currentDragComponent.Id, StringComparison.Ordinal))
-            {
-                var overComponent = DragDropStateService.FindComponentById(PageCascading.AppId, PageCascading.PageId, overComponentId);
-                if (overComponent != null)
-                {
-                    var last = DragDropStateService.GetLastDragOverComponent(PageCascading.AppId, PageCascading.PageId);
-                    if (!ReferenceEquals(last, overComponent))
-                    {
-                        // 命中检测到新目标时，要求稳定停留 hoverStableMs 再触发动画
-                        if (TryCommitHoverTarget(overComponent) && TryScheduleAnimation())
-                        {
-                            TriggerSiblingAnimation();
-                        }
-                    }
-                }
-            }
+            currentDragComponent.DesignState.AnimationTransform = $"translate3d({dragOffsetX}px, {dragOffsetY}px, 0)";
+            currentDragComponent.DesignState.IsAnimating = true;
         }
-        catch { }
     }
 
     private void OnDelete()
@@ -382,18 +316,15 @@
         if (rootComponent?.Childrens == null || currentDragComponent == null)
             return;
 
-        // 使用最后一次命中测试到的目标组件作为让位依据
-        var overComponent = DragDropStateService.GetLastDragOverComponent(PageCascading.AppId, PageCascading.PageId);
-        if (overComponent == null) return;
-        var overIndex = rootComponent.Childrens.IndexOf(overComponent);
+        var overIndex = rootComponent.Childrens.IndexOf(Component);
         var dragIndex = rootComponent.Childrens.IndexOf(currentDragComponent);
 
         if (overIndex == -1 || dragIndex == -1)
             return;
 
-        // 计算每行可容纳的组件数量（至少为 1）
-        var itemsPerRowDouble = Math.Floor(dimensions.ContainerWidth / dimensions.ActualWidth);
-        var itemsPerRow = (int)(itemsPerRowDouble < 1 ? 1 : itemsPerRowDouble);
+        // 计算每行可容纳的组件数量
+        var itemsPerRow = Math.Floor(dimensions.ContainerWidth / dimensions.ActualWidth);
+        if (itemsPerRow < 1) itemsPerRow = 1;
 
         foreach (var child in rootComponent.Childrens)
         {
@@ -405,14 +336,14 @@
             var moveDistanceX = 0.0;
             var moveDistanceY = 0.0;
 
-            if (dragIndex > overIndex)    // 往前拖拽, 夹在两者之间的组件向后移动
+            if (dragIndex > overIndex)    //往前拖拽,向后移动
             {
                 if (childIndex >= overIndex && childIndex < dragIndex)
                 {
                     shouldMove = true;
-                    var col = childIndex % itemsPerRow;
-                    var isRowEnd = col == (itemsPerRow - 1);
-                    if (!isRowEnd)
+
+                    var isChangeRow = (childIndex + 1) % itemsPerRow == 0;
+                    if (!isChangeRow)
                     {
                         // 同行移动
                         moveDistanceX = dimensions.ActualWidth;
@@ -425,14 +356,14 @@
                     }
                 }
             }
-            else    // 往后拖拽, 夹在两者之间的组件向前移动
+            else    //往后拖拽,向前移动
             {
                 if (childIndex > dragIndex && childIndex <= overIndex)
                 {
                     shouldMove = true;
-                    var col = childIndex % itemsPerRow;
-                    var isRowStart = col == 0;
-                    if (!isRowStart)
+
+                    var isChangeRow = (childIndex + 1) % itemsPerRow == 1;
+                    if (!isChangeRow)
                     {
                         // 同行移动
                         moveDistanceX = -dimensions.ActualWidth;
@@ -449,56 +380,16 @@
             if (shouldMove)
             {
                 // 使用 translate3d 优化性能，触发 GPU 加速
-                var newTransform = moveDistanceY != 0
-                    ? $"translate3d({moveDistanceX}px, {moveDistanceY}px, 0)"
-                    : $"translate3d({moveDistanceX}px, 0, 0)";
-
-                if (!string.Equals(child.DesignState.AnimationTransform, newTransform, StringComparison.Ordinal) || !child.DesignState.IsAnimating)
+                if (moveDistanceY != 0)
                 {
-                    child.DesignState.AnimationTransform = newTransform;
-                    child.DesignState.IsAnimating = true;
-                    child.RefreshState();
+                    child.DesignState.AnimationTransform = $"translate3d({moveDistanceX}px, {moveDistanceY}px, 0)";
                 }
-            }
-            else
-            {
-                // 未参与当前让位的组件需要复位，避免残留位移造成闪烁或错位
-                if (!string.IsNullOrEmpty(child.DesignState.AnimationTransform) || child.DesignState.IsAnimating)
+                else
                 {
-                    child.DesignState.AnimationTransform = string.Empty;
-                    child.DesignState.IsAnimating = false;
-                    child.RefreshState();
+                    child.DesignState.AnimationTransform = $"translate3d({moveDistanceX}px, 0, 0)";
                 }
-            }
-        }
-
-        // 计算并移动被拖拽组件到目标插槽位置（相对于其原始位置的位移）
-        if (dragIndex != overIndex)
-        {
-            var currentRow = (int)Math.Floor(dragIndex / (double)itemsPerRow);
-            var targetRow = (int)Math.Floor(overIndex / (double)itemsPerRow);
-            var currentCol = dragIndex % itemsPerRow;
-            var targetCol = overIndex % itemsPerRow;
-
-            var dragDistanceX = (targetCol - currentCol) * dimensions.ActualWidth;
-            var dragDistanceY = (targetRow - currentRow) * dimensions.ActualHeight;
-
-            var newTransform = $"translate3d({dragDistanceX}px, {dragDistanceY}px, 0)";
-            if (!string.Equals(currentDragComponent.DesignState.AnimationTransform, newTransform, StringComparison.Ordinal) || !currentDragComponent.DesignState.IsAnimating)
-            {
-                currentDragComponent.DesignState.AnimationTransform = newTransform;
-                currentDragComponent.DesignState.IsAnimating = true;
-                currentDragComponent.RefreshState();
-            }
-        }
-        else
-        {
-            // 悬停在自身位置时复位拖拽组件
-            if (!string.IsNullOrEmpty(currentDragComponent.DesignState.AnimationTransform) || currentDragComponent.DesignState.IsAnimating)
-            {
-                currentDragComponent.DesignState.AnimationTransform = string.Empty;
-                currentDragComponent.DesignState.IsAnimating = false;
-                currentDragComponent.RefreshState();
+                child.DesignState.IsAnimating = true;
+                child.RefreshState();
             }
         }
     }
@@ -511,10 +402,10 @@
         var rootComponent = DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId);
         if (rootComponent?.Childrens != null)
         {
-            var currentDrag = DragDropStateService.GetCurrentDragComponent(PageCascading.AppId, PageCascading.PageId);
+            var currentDragComponent = DragDropStateService.GetCurrentDragComponent(PageCascading.AppId, PageCascading.PageId);
             foreach (var child in rootComponent.Childrens)
             {
-                if (!ReferenceEquals(child, currentDrag))
+                if (!ReferenceEquals(child, currentDragComponent))
                 {
                     child.DesignState.AnimationTransform = string.Empty;
                     child.DesignState.IsAnimating = false;
