@@ -13,12 +13,14 @@
         transform: @Component.DesignState.AnimationTransform;
         will-change: @(Component.DesignState.IsAnimating ? "transform" : "auto");
         transition: @(Component.DesignState.IsAnimating && !isDragging ? "transform 0.2s ease-out" : "none");
-        z-index: auto;
-        position: static;
+        z-index: @(isDragging ? "9999" : "auto");
+        position: @(isDragging ? "relative" : "static");
+        opacity: @(isDragging ? "0.6" : "1");
         pointer-events: @(isDragging ? "none" : "auto");
         @Component.Style.DefaultStyle @Component.Style.CustomStyle"
      @onclick="OnClick" @onclick:stopPropagation
      @ondragstart="OnDragStart" @ondragstart:stopPropagation
+     @ondrag="OnDrag" @ondrag:stopPropagation
      @ondragenter="OnDragEnter" @ondragenter:preventDefault @ondragenter:stopPropagation
      @ondragover="OnDragOver" @ondragover:preventDefault @ondragover:stopPropagation
      @ondragleave="OnDragLeave" @ondragleave:stopPropagation
@@ -95,8 +97,8 @@
             //await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./_content/H.LowCode.DesignEngineBase/js/elementUtils.js");
 
             await UpdateDimensions();
-            // 启用优化的半透明拖拽图像（自定义 DragImage）
-            try { await JSRuntime.InvokeVoidAsync("elementUtils.attachDragImage", itemRef, Component?.Label ?? "组件"); } catch { }
+            //设置拖拽图像（自定义 DragImage）   -- 暂时屏蔽此逻辑，拖拽已改为跟随鼠标移动，无需设置拖拽图像
+            //try { await JSRuntime.InvokeVoidAsync("elementUtils.attachDragImage", itemRef, Component?.Label ?? "组件"); } catch { }
             RegisterEventDispatcher();
         }
     }
@@ -143,6 +145,8 @@
             .If("draggableitem-component", () => Component.IsContainer == false)
             .If("draggableitem-container", () => Component.IsContainer);
 
+        DraggableItemClassMapper.If("draggableitem-dragging", () => isDragging);
+
         DraggableItemBoxClassMapper.Clear()
             .If("draggableitem-box-layout", () => Component.IsContainer)
             .If("draggableitem-animating", () => Component.DesignState.IsAnimating);
@@ -186,8 +190,6 @@
 
     private void OnDragOver(DragEventArgs dragEventArgs)
     {
-        Console.WriteLine($"OnDragOver:{isDragging}");
-
         var currentDragComponent = DragDropStateService.GetCurrentDragComponent(PageCascading.AppId, PageCascading.PageId);
         if (ReferenceEquals(currentDragComponent, Component))
             return;
@@ -235,6 +237,11 @@
         ResetAllAnimationStates();
     }
 
+    private void OnDrag(DragEventArgs dragEventArgs)
+    {
+        TriggerCurrentSiblingAnimation(dragEventArgs.ClientX, dragEventArgs.ClientY);
+    }
+
     private void OnMouseOver()
     {
         if (Component.DesignState.IsSelected == false)
@@ -271,6 +278,7 @@
         {
             currentDragComponent.DesignState.AnimationTransform = $"translate3d({dragOffsetX}px, {dragOffsetY}px, 0)";
             currentDragComponent.DesignState.IsAnimating = true;
+            currentDragComponent.RefreshState();
         }
     }
 
