@@ -24,7 +24,7 @@ public class LowCodeDbMigratorModule : AbpModule
         context.Services.AddTransient<IDbSchemaMigrator, EntityFrameworkCoreDbSchemaMigrator>();
 
         // 注册迁移专用的应用上下文服务
-        context.Services.AddScoped<MigrationAppContextService>();
+        context.Services.AddScoped<MigrationCurrentApp>();
         
         //使用 MigratorDbContext 而不是 DesignEngineDbContext 的原因为需要指定迁移程序集，但又不想在 DesignEngineDbContext 中指定迁移程序集。
         context.Services.AddDbContext<MigratorDbContext>(options =>

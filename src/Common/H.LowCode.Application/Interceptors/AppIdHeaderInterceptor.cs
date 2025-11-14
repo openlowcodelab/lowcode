@@ -9,14 +9,14 @@ namespace H.LowCode.Application;
 /// </summary>
 public class AppIdHeaderInterceptor : DelegatingHandler
 {
-    private readonly IAppContextService _appContextService;
+    private readonly ICurrentApp _currentApp;
     private readonly ILogger<AppIdHeaderInterceptor> _logger;
 
     public AppIdHeaderInterceptor(
-        IAppContextService appContextService,
+        ICurrentApp currentApp,
         ILogger<AppIdHeaderInterceptor> logger)
     {
-        _appContextService = appContextService;
+        _currentApp = currentApp;
         _logger = logger;
     }
 
@@ -27,7 +27,7 @@ public class AppIdHeaderInterceptor : DelegatingHandler
         try
         {
             // 获取当前 AppId
-            var appId = _appContextService.CurrentAppId;
+            var appId = _currentApp.CurrentAppId;
             
             if (!string.IsNullOrEmpty(appId))
             {

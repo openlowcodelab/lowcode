@@ -6,7 +6,7 @@ namespace H.LowCode.Application.Contracts;
 /// 应用上下文服务接口
 /// 用于在请求生命周期中管理当前应用的 AppId
 /// </summary>
-public interface IAppContextService
+public interface ICurrentApp
 {
     /// <summary>
     /// 获取当前请求的 AppId

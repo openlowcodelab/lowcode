@@ -8,14 +8,14 @@ namespace H.LowCode.DbMigrator.Services;
 /// 迁移工具专用的应用上下文服务
 /// 支持遍历所有应用的 AppId 进行数据库迁移
 /// </summary>
-public class MigrationAppContextService : IAppContextService
+public class MigrationCurrentApp : ICurrentApp
 {
-    private readonly ILogger<MigrationAppContextService> _logger;
+    private readonly ILogger<MigrationCurrentApp> _logger;
     private readonly IAppApplicationService _appService;
     private string? _currentAppId;
 
-    public MigrationAppContextService(
-        ILogger<MigrationAppContextService> logger,
+    public MigrationCurrentApp(
+        ILogger<MigrationCurrentApp> logger,
         IAppApplicationService appService)
     {
         _logger = logger;

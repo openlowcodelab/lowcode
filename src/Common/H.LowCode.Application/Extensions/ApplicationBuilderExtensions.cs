@@ -13,8 +13,8 @@ public static class ApplicationBuilderExtensions
     /// </summary>
     /// <param name="app">应用构建器</param>
     /// <returns>应用构建器</returns>
-    public static IApplicationBuilder UseAppContext(this IApplicationBuilder app)
+    public static IApplicationBuilder UseCurrentApp(this IApplicationBuilder app)
     {
-        return app.UseMiddleware<AppContextMiddleware>();
+        return app.UseMiddleware<CurrentAppMiddleware>();
     }
 }
