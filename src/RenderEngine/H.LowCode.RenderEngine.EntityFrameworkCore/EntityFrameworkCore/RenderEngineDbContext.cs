@@ -17,13 +17,13 @@ public class RenderEngineDbContext : DbContext
 
     public RenderEngineDbContext(DbContextOptions<RenderEngineDbContext> options,
         EntityTypeManager entityTypeManager,
-        IAppContextService appContextService) : base(options)
+        ICurrentApp currentApp) : base(options)
     {
         _dbOptions = options;
         _entityTypeManager = entityTypeManager;
         
         // 从应用上下文服务获取当前 AppId
-        AppId = appContextService.CurrentAppId ?? string.Empty;
+        AppId = currentApp.CurrentAppId ?? string.Empty;
     }
 
     public async Task<bool> AddAsync(FormEntity formEntity)

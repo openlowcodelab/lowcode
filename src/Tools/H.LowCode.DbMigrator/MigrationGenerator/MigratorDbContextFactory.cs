@@ -33,8 +33,8 @@ public class MigratorDbContextFactory : IDesignTimeDbContextFactory<MigratorDbCo
         services.AddApplication<DesignEngineJsonFileRepositoryModule>();
         var serviceProvider = services.BuildServiceProvider();
         EntityTypeManager entityTypeManager = serviceProvider.GetService<EntityTypeManager>();
-        MigrationAppContextService appContextService = serviceProvider.GetService<MigrationAppContextService>();
+        MigrationCurrentApp currentApp = serviceProvider.GetService<MigrationCurrentApp>();
 
-        return new MigratorDbContext(builder.Options, entityTypeManager, appContextService);
+        return new MigratorDbContext(builder.Options, entityTypeManager, currentApp);
     }
 }

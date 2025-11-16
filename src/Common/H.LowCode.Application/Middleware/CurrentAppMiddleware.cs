@@ -8,30 +8,30 @@ namespace H.LowCode.Application;
 /// 应用上下文中间件
 /// 在每个请求开始时自动解析并设置当前应用的 AppId
 /// </summary>
-public class AppContextMiddleware
+public class CurrentAppMiddleware
 {
     private readonly RequestDelegate _next;
-    private readonly ILogger<AppContextMiddleware> _logger;
+    private readonly ILogger<CurrentAppMiddleware> _logger;
 
-    public AppContextMiddleware(RequestDelegate next, ILogger<AppContextMiddleware> logger)
+    public CurrentAppMiddleware(RequestDelegate next, ILogger<CurrentAppMiddleware> logger)
     {
         _next = next;
         _logger = logger;
     }
 
-    public async Task InvokeAsync(HttpContext context, IAppContextService appContextService)
+    public async Task InvokeAsync(HttpContext context, ICurrentApp currentApp)
     {
         try
         {
             // 在请求开始时自动解析 AppId
-            appContextService.ResolveAppIdFromContext();
+            currentApp.ResolveAppIdFromContext();
             
-            _logger.LogDebug("AppContext middleware processed request for path: {Path}, AppId: {AppId}", 
-                context.Request.Path, appContextService.CurrentAppId);
+            _logger.LogDebug("CurrentApp middleware processed request for path: {Path}, AppId: {AppId}", 
+                context.Request.Path, currentApp.CurrentAppId);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error in AppContext middleware");
+            _logger.LogError(ex, "Error in CurrentApp middleware");
         }
 
         // 继续处理请求

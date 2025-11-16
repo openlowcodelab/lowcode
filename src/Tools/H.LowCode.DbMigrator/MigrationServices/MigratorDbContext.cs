@@ -14,21 +14,21 @@ namespace H.LowCode.DbMigrator;
 public class MigratorDbContext : DesignEngineDbContext
 {
     private readonly EntityTypeManager _entityTypeManager;
-    private readonly MigrationAppContextService _appContextService;
+    private readonly MigrationCurrentApp _currentApp;
 
     public MigratorDbContext(DbContextOptions<DesignEngineDbContext> options,
         EntityTypeManager entityTypeManager,
-        MigrationAppContextService appContextService) : base(options, entityTypeManager, appContextService)
+        MigrationCurrentApp currentApp) : base(options, entityTypeManager, currentApp)
     {
         _entityTypeManager = entityTypeManager;
-        _appContextService = appContextService;
+        _currentApp = currentApp;
     }
 
     protected override IList<DynamicEntityInfo> GetEntityTypes()
     {
         IList<DynamicEntityInfo> dynamicEntities = [];
         // 同步等待遍历所有应用，确保实体完整加载
-        _appContextService.ForEachAppAsync(async (appId) =>
+        _currentApp.ForEachAppAsync(async (appId) =>
         {
             var currentAppDynamicEntities = _entityTypeManager.LoadDynamicEntities(appId);
             dynamicEntities = [.. dynamicEntities, .. currentAppDynamicEntities];

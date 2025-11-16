@@ -65,8 +65,8 @@ app.UseStaticFiles(new StaticFileOptions
 
 app.MapStaticAssets();
 
-// 使用 AppContext 中间件，自动解析和设置 AppId
-app.UseAppContext();
+// 使用 CurrentApp 中间件，自动解析和设置 AppId
+app.UseCurrentApp();
 
 app.UseRouting();
 app.UseAntiforgery();

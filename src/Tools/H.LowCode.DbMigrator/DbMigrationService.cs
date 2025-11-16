@@ -12,16 +12,16 @@ public class DbMigrationService : ITransientDependency
 
     private readonly IDataSeeder _dataSeeder;
     private readonly IEnumerable<IDbSchemaMigrator> _dbSchemaMigrators;
-    private readonly MigrationAppContextService _appContextService;
+    private readonly MigrationCurrentApp _currentApp;
 
     public DbMigrationService(
         IDataSeeder dataSeeder,
         IEnumerable<IDbSchemaMigrator> dbSchemaMigrators,
-        MigrationAppContextService appContextService)
+        MigrationCurrentApp currentApp)
     {
         _dataSeeder = dataSeeder;
         _dbSchemaMigrators = dbSchemaMigrators;
-        _appContextService = appContextService;
+        _currentApp = currentApp;
 
         Logger = NullLogger<DbMigrationService>.Instance;
     }
@@ -34,7 +34,7 @@ public class DbMigrationService : ITransientDependency
         await MigrateDatabaseSchemaAsync();
 
         // 然后遍历所有应用进行数据种子
-        await _appContextService.ForEachAppAsync(async (appId) =>
+        await _currentApp.ForEachAppAsync(async (appId) =>
         {
             Logger.LogInformation("开始为应用 {AppId} 执行数据种子", appId);
             await SeedDataAsync();

@@ -10,7 +10,7 @@ namespace H.LowCode.ComponentBase.Components;
 /// </summary>
 public abstract class AppIdComponentBase : Microsoft.AspNetCore.Components.ComponentBase
 {
-    [Inject] protected IAppContextService AppContextService { get; set; } = default!;
+    [Inject] protected ICurrentApp CurrentApp { get; set; } = default!;
     [Inject] protected ILogger<AppIdComponentBase> Logger { get; set; } = default!;
 
     /// <summary>
@@ -32,7 +32,7 @@ public abstract class AppIdComponentBase : Microsoft.AspNetCore.Components.Compo
                 return AppId;
             }
 
-            var contextAppId = AppContextService.CurrentAppId;
+            var contextAppId = CurrentApp.CurrentAppId;
             if (!string.IsNullOrEmpty(contextAppId))
             {
                 return contextAppId;
@@ -52,7 +52,7 @@ public abstract class AppIdComponentBase : Microsoft.AspNetCore.Components.Compo
             // 如果没有通过参数传递 AppId，尝试从上下文获取
             if (string.IsNullOrEmpty(AppId))
             {
-                var contextAppId = AppContextService.CurrentAppId;
+                var contextAppId = CurrentApp.CurrentAppId;
                 if (!string.IsNullOrEmpty(contextAppId))
                 {
                     Logger.LogDebug("Using AppId from context: {AppId} for component: {ComponentType}", 
@@ -70,7 +70,7 @@ public abstract class AppIdComponentBase : Microsoft.AspNetCore.Components.Compo
                     AppId, GetType().Name);
                 
                 // 如果通过参数传递了 AppId，更新应用上下文服务
-                AppContextService.SetAppId(AppId);
+                CurrentApp.SetAppId(AppId);
             }
 
             await base.OnInitializedAsync();

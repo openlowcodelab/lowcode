@@ -12,7 +12,7 @@ public class LowCodeApplicationModule : AbpModule
         context.Services.AddHttpContextAccessor();
 
         // 注册应用上下文服务
-        context.Services.AddScoped<IAppContextService, AppContextService>();
+        context.Services.AddScoped<ICurrentApp, CurrentApp>();
 
         // 注册 AppId 请求头拦截器
         context.Services.AddTransient<AppIdHeaderInterceptor>();

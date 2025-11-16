@@ -8,15 +8,15 @@ namespace H.LowCode.Application;
 /// 应用上下文服务实现
 /// 负责从 HTTP 上下文中解析和管理当前请求的 AppId
 /// </summary>
-public class AppContextService : IAppContextService
+public class CurrentApp : ICurrentApp
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly ILogger<AppContextService> _logger;
+    private readonly ILogger<CurrentApp> _logger;
     private string? _currentAppId;
 
-    public AppContextService(
+    public CurrentApp(
         IHttpContextAccessor httpContextAccessor,
-        ILogger<AppContextService> logger)
+        ILogger<CurrentApp> logger)
     {
         _httpContextAccessor = httpContextAccessor;
         _logger = logger;
