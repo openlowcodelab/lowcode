@@ -24,7 +24,7 @@
         }
         else
         {
-            throw new NotImplementedException($"PageType: {_pageSchema.PageType}");
+            <Result Status="ResultStatus.Warning" Title="页面类型未实现" SubTitle=@($"PageType: {_pageSchema.PageType}") />
         }
     }
 </CascadingValue>
@@ -37,7 +37,7 @@
     public string PageId { get; set; }
 
     [PersistentState]
-    public required PageSchema _pageSchema { get; set; }
+    public PageSchema _pageSchema { get; set; }
 
     private PageCascadingModel _pageCascadingModel;
 

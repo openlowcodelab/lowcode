@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components;
 using System;
 using H.LowCode.MetaSchema;
 using H.LowCode.MetaSchema.RenderEngine;
@@ -36,7 +36,7 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
         if (string.IsNullOrEmpty(componentFragment.TypeName))
             throw new NullReferenceException($"componentId={componentId}, {nameof(componentFragment.TypeName)}");
 
-        Type componentType = Type.GetType(componentFragment.TypeName, true);
+        Type componentType = componentFragment.TypeName.ResolveType();
         if (componentType == null)
             throw new NullReferenceException($"componentId={componentId}, type={componentFragment.TypeName}");
 
@@ -102,7 +102,7 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
             if (string.IsNullOrEmpty(dataSource.DataSourceFragment.TypeName))
                 throw new NullReferenceException($"componentId={componentId}, {nameof(dataSource.DataSourceFragment.TypeName)}");
 
-            Type childComponentType = Type.GetType(dataSource.DataSourceFragment.TypeName, true);
+            Type childComponentType = dataSource.DataSourceFragment.TypeName.ResolveType();
             if (childComponentType == null)
                 throw new NullReferenceException($"componentId={componentId}, type={dataSource.DataSourceFragment.TypeName}");
 

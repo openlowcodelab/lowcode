@@ -29,25 +29,42 @@
 
 @code {
     [Parameter]
-    public required PageSchema Page { get; set; }
+    public PageSchema Page { get; set; }
 
     [PersistentState]
-    public required FormDataDto _formDto { get; set; }
+    public FormDataDto _formDto { get; set; }
 
     private string? Id;
-    public required Dictionary<string, object?> _fieldDictData;
+    public Dictionary<string, object?> _fieldDictData;
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
 
         Id = GetQueryValue("id");
-        _formDto = await FormDataAppService.GetAsync(Page.AppId, Page.Id, Id);
-        
-        if (_formDto.Fields == null)
-            _fieldDictData = new Dictionary<string, object>();
+        if (string.IsNullOrEmpty(Id))
+        {
+            _formDto = new FormDataDto
+            {
+                Name = Page?.DataSource?.DataSourceValue,
+                Fields = Page.Components
+                    .Where(t => t.IsContainer == false)
+                    .Select(t => new FormFieldDto
+                    {
+                        Name = t.Name,
+                        TypeName = t.Fragment.ValueType,
+                        Value = t.Fragment.GetDefaultValue()
+                    }).ToList()
+            };
+        }
         else
-            _fieldDictData = _formDto.Fields.ToDictionary(x => x.Name, x => x.Value);
+        {
+            _formDto = await FormDataAppService.GetAsync(Page.AppId, Page.Id, Id);
+        }
+
+        _fieldDictData = (_formDto.Fields == null)
+            ? new Dictionary<string, object?>()
+            : _formDto.Fields.ToDictionary(x => x.Name, x => x.Value);
     }
 
     private async Task OnFinishAsync()

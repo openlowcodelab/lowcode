@@ -35,4 +35,50 @@ public static class TypeExtension
 
         return null;
     }
+
+    public static Type ResolveType(this string typeName)
+    {
+        if (string.IsNullOrWhiteSpace(typeName))
+            return null;
+
+        var type = Type.GetType(typeName, throwOnError: false, ignoreCase: true);
+        if (type != null)
+            return type;
+
+        var (fullName, asmName) = SplitTypeName(typeName);
+        if (string.IsNullOrEmpty(fullName))
+            return null;
+
+        foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            if (!string.IsNullOrEmpty(asmName))
+            {
+                var name = asm.GetName().Name;
+                if (!string.Equals(name, asmName, StringComparison.OrdinalIgnoreCase))
+                    continue;
+            }
+            var t = asm.GetType(fullName, throwOnError: false, ignoreCase: true);
+            if (t != null)
+                return t;
+        }
+
+        foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            var t = asm.GetType(fullName, throwOnError: false, ignoreCase: true);
+            if (t != null)
+                return t;
+        }
+
+        return null;
+    }
+
+    private static (string fullName, string asmName) SplitTypeName(string typeName)
+    {
+        var idx = typeName.IndexOf(',');
+        if (idx < 0)
+            return (typeName.Trim(), null);
+        var fullName = typeName.Substring(0, idx).Trim();
+        var asmName = typeName.Substring(idx + 1).Trim();
+        return (fullName, asmName);
+    }
 }
