@@ -2,7 +2,7 @@ using H.LowCode.Application.Contracts;
 using H.LowCode.DesignEngine.Application.Contracts;
 using Microsoft.Extensions.Logging;
 
-namespace H.LowCode.DbMigrator.Services;
+namespace H.LowCode.DbMigrator;
 
 /// <summary>
 /// 迁移工具专用的应用上下文服务

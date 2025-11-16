@@ -1,7 +1,6 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using Volo.Abp.Data;
 using Volo.Abp.DependencyInjection;
-using H.LowCode.DbMigrator.Services;
 using Microsoft.Extensions.Logging;
 
 namespace H.LowCode.DbMigrator;

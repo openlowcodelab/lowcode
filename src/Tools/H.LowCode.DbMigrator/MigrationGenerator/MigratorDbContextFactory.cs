@@ -1,5 +1,3 @@
-using H.LowCode.Application.Contracts;
-using H.LowCode.DbMigrator.Services;
 using H.LowCode.DesignEngine.EntityFrameworkCore;
 using H.LowCode.DesignEngine.Repository.JsonFile;
 using Microsoft.EntityFrameworkCore;
@@ -22,11 +20,11 @@ public class MigratorDbContextFactory : IDesignTimeDbContextFactory<MigratorDbCo
             .AddJsonFile("appsettings.json", optional: false);
         var configuration = configurationBuilder.Build();
 
-        //此处使用的是 DesignEngineDbContext, 默认生成的迁移文件会在 DesignEngineDbContext 所在的程序集(H.LowCode.EntityFrameworkCore)中
-        //需通过 MigrationsAssembly 指定迁移文件生成到 "H.LowCode.DbMigrator" 程序集中
+        // Ensure migrations are generated into the DbMigrator assembly
         string migrationAssembly = typeof(Program).Namespace;
-        var builder = new DbContextOptionsBuilder<DesignEngineDbContext>()
-            .UseSqlServer(configuration.GetConnectionString("Default"), b => b.MigrationsAssembly(migrationAssembly));
+        string connectionString = configuration.GetConnectionString("Default");
+        var builder = new DbContextOptionsBuilder<MigratorDbContext>()
+            .UseSqlServer(connectionString, b => b.MigrationsAssembly(migrationAssembly));
 
         var services = new ServiceCollection();
         services.AddApplication<LowCodeDbMigratorModule>();

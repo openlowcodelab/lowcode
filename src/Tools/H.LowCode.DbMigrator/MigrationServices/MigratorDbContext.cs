@@ -1,5 +1,3 @@
-using H.LowCode.Application.Contracts;
-using H.LowCode.DbMigrator.Services;
 using H.LowCode.DesignEngine.EntityFrameworkCore;
 using H.LowCode.Entity;
 using Microsoft.EntityFrameworkCore;
@@ -16,7 +14,7 @@ public class MigratorDbContext : DesignEngineDbContext
     private readonly EntityTypeManager _entityTypeManager;
     private readonly MigrationCurrentApp _currentApp;
 
-    public MigratorDbContext(DbContextOptions<DesignEngineDbContext> options,
+    public MigratorDbContext(DbContextOptions<MigratorDbContext> options,
         EntityTypeManager entityTypeManager,
         MigrationCurrentApp currentApp) : base(options, entityTypeManager, currentApp)
     {

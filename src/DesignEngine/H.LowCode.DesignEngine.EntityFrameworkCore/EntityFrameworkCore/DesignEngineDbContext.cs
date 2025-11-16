@@ -11,10 +11,11 @@ public class DesignEngineDbContext : DbContext
 {
     public string AppId { get; private set; }
 
-    private DbContextOptions<DesignEngineDbContext> _dbOptions;
+    private DbContextOptions _dbOptions;
     private EntityTypeManager _entityTypeManager;
 
-    public DesignEngineDbContext(DbContextOptions<DesignEngineDbContext> options,
+    // Accept non-generic DbContextOptions so derived contexts with different generic options can pass theirs
+    public DesignEngineDbContext(DbContextOptions options,
         EntityTypeManager entityTypeManager,
         ICurrentApp currentApp) : base(options)
     {
