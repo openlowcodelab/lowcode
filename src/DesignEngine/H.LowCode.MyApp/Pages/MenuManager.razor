@@ -45,12 +45,11 @@ RowKey="x=>x.Id" HidePagination DefaultExpandAllRows>
 <Modal Title="新建菜单" @bind-Visible="@_visible" OnOk="OnConfirmAsync">
     <Form Model="@_menuSchema" LabelColSpan="8" WrapperColSpan="16" OnFinish="OnFinishAsync" @ref="@_form"
     ValidateOnChange="true">
-        @if (context.ParentId.IsNullOrEmpty() == false)
-        {
-            <FormItem Label="父级Id" Required>
-                <Input @bind-Value="@context.ParentId" Disabled />
-            </FormItem>
-        }
+        <FormItem Label="父级菜单">
+            <TreeSelect TItem="string" TItemValue="string" @bind-Value="@context.ParentId" AllowClear TreeDefaultExpandAll Style="width:100%;">
+                @RenderParentTreeNodes(GetSelectableParentMenus(context.Id))
+            </TreeSelect>
+        </FormItem>
         <FormItem Label="菜单名称" Required>
             <Input @bind-Value="@context.Title" />
         </FormItem>
@@ -164,4 +163,119 @@ RowKey="x=>x.Id" HidePagination DefaultExpandAllRows>
     {
         return await MenuAppService.SaveAsync(_menuSchema);
     }
+
+    private IEnumerable<MenuSchema> GetSelectableParentMenus(string currentId)
+    {
+        if (_menuList == null)
+            return Array.Empty<MenuSchema>();
+
+        var exclude = new HashSet<string>();
+        var current = FindMenuById(_menuList, currentId);
+        if (current != null)
+        {
+            exclude.Add(current.Id);
+            CollectDescendantIds(current, exclude);
+        }
+
+        return FilterMenus(_menuList, exclude);
+    }
+
+    private MenuSchema FindMenuById(IEnumerable<MenuSchema> nodes, string id)
+    {
+        if (string.IsNullOrWhiteSpace(id) || nodes == null)
+            return null;
+
+        foreach (var n in nodes)
+        {
+            if (n.Id == id)
+                return n;
+            var found = FindMenuById(n.Childrens, id);
+            if (found != null)
+                return found;
+        }
+        return null;
+    }
+
+    private void CollectDescendantIds(MenuSchema node, HashSet<string> set)
+    {
+        if (node?.Childrens == null)
+            return;
+        foreach (var c in node.Childrens)
+        {
+            set.Add(c.Id);
+            CollectDescendantIds(c, set);
+        }
+    }
+
+    private IEnumerable<MenuSchema> FilterMenus(IEnumerable<MenuSchema> nodes, HashSet<string> exclude)
+    {
+        if (nodes == null)
+            return Array.Empty<MenuSchema>();
+        var result = new List<MenuSchema>();
+        foreach (var n in nodes)
+        {
+            if (exclude.Contains(n.Id))
+                continue;
+            var copy = new MenuSchema
+            {
+                AppId = n.AppId,
+                Id = n.Id,
+                ParentId = n.ParentId,
+                Title = n.Title,
+                MenuType = n.MenuType,
+                Icon = n.Icon,
+                MenuUrl = n.MenuUrl,
+                Order = n.Order,
+                Childrens = new List<MenuSchema>()
+            };
+            var children = FilterMenus(n.Childrens, exclude);
+            foreach (var c in children)
+                copy.Childrens.Add(c);
+            result.Add(copy);
+        }
+        return result;
+    }
+
+    private RenderFragment RenderParentTreeNodes(IEnumerable<MenuSchema> nodes) => builder =>
+    {
+        var seq = 0;
+        void AddNodes(IEnumerable<MenuSchema> ns)
+        {
+            if (ns == null)
+                return;
+            foreach (var m in ns)
+            {
+                builder.OpenComponent<AntDesign.TreeNode<string>>(seq++);
+                builder.AddAttribute(seq++, "Title", m.Title);
+                builder.AddAttribute(seq++, "Key", m.Id);
+                if (m.Childrens != null && m.Childrens.Count > 0)
+                {
+                    builder.AddAttribute(seq++, "ChildContent", (RenderFragment)(childBuilder =>
+                    {
+                        var childSeq = 0;
+                        void AddChildNodes(IEnumerable<MenuSchema> childNodes)
+                        {
+                            foreach (var cm in childNodes)
+                            {
+                                childBuilder.OpenComponent<AntDesign.TreeNode<string>>(childSeq++);
+                                childBuilder.AddAttribute(childSeq++, "Title", cm.Title);
+                                childBuilder.AddAttribute(childSeq++, "Key", cm.Id);
+                                if (cm.Childrens != null && cm.Childrens.Count > 0)
+                                {
+                                    childBuilder.AddAttribute(childSeq++, "ChildContent", (RenderFragment)(grandChildBuilder =>
+                                    {
+                                        AddChildNodes(cm.Childrens);
+                                    }));
+                                }
+                                childBuilder.CloseComponent();
+                            }
+                        }
+                        AddChildNodes(m.Childrens);
+                    }));
+                }
+                builder.CloseComponent();
+            }
+        }
+        AddNodes(nodes);
+    };
 }
