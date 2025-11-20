@@ -48,7 +48,7 @@
 
     private RenderFragment GetRenderFragment()
     {
-        if (Component == null || Component.Fragment == null)
+        if (Component?.Fragment == null)
             throw new NullReferenceException($"{nameof(Component)} or {nameof(Component.Fragment)} is null");
 
         if (string.IsNullOrEmpty(Component.Name))
