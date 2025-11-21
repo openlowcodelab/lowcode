@@ -6,6 +6,35 @@
 @inject IMenuAppService MenuAppService
 
 <PageTitle>菜单管理</PageTitle>
+<style>
+    .icon-select-menu {
+        display: flex;
+        flex-wrap: wrap;
+        max-width: 560px;
+        max-height: 300px;
+        overflow: auto;
+        padding: 4px;
+    }
+    .icon-select-menu .ant-menu-item {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        flex: 0 0 140px;
+        height: 32px;
+        margin: 2px;
+        padding: 4px 8px;
+        box-sizing: border-box;
+        white-space: nowrap;
+    }
+    .icon-select-menu .anticon {
+        font-size: 16px;
+        flex: 0 0 auto;
+    }
+    .icon-select-menu .icon-label {
+        margin-left: 6px;
+        line-height: 1;
+    }
+</style>
 
 <div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
     <div style="width:250px;">
@@ -60,7 +89,26 @@ RowKey="x=>x.Id" HidePagination DefaultExpandAllRows>
             </RadioGroup>
         </FormItem>
         <FormItem Label="图标" Required>
-            <Input @bind-Value="@context.Icon" />
+            <div style="display:flex; gap:8px; align-items:center;">
+                <Input @bind-Value="@context.Icon" ReadOnly Style="width:220px;" />
+                <Icon Type="@context.Icon" />
+                <Dropdown>
+                    <Overlay>
+                        <Menu Class="icon-select-menu" Style="max-width:480px;">
+                            @foreach (var icon in _iconList)
+                            {
+                                <MenuItem OnClick="@(()=> SelectIcon(icon))">
+                                    <Icon Type="@icon" />
+                                    <span class="icon-label">@icon</span>
+                                </MenuItem>
+                            }
+                        </Menu>
+                    </Overlay>
+                    <ChildContent>
+                        <Button Size="@ButtonSize.Small" Icon="appstore">选择图标</Button>
+                    </ChildContent>
+                </Dropdown>
+            </div>
         </FormItem>
         @if (context.MenuType == 0)
         {
@@ -163,6 +211,20 @@ RowKey="x=>x.Id" HidePagination DefaultExpandAllRows>
     {
         return await MenuAppService.SaveAsync(_menuSchema);
     }
+
+    private readonly string[] _iconList = new[]
+    {
+        "menu","profile","database","api","deployment-unit","cloud-upload","setting",
+        "home","appstore","plus","delete","edit","save","eye","user","team","search",
+        "calendar","clock-circle","arrow-left","arrow-right","up","down","copy","code","form"
+    };
+
+    private void SelectIcon(string icon)
+    {
+        _menuSchema.Icon = icon;
+        StateHasChanged();
+    }
+
 
     private IEnumerable<MenuSchema> GetSelectableParentMenus(string currentId)
     {
