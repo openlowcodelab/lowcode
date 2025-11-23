@@ -70,11 +70,49 @@
                 <label style="display: block; margin-bottom: 4px; font-weight: 500;">组件描述</label>
                 <TextArea @bind-Value="@ComponentParts.Description" Rows="3" Placeholder="组件描述" />
             </div>
+            <div style="margin-top: 16px;">
+                <ComponentFragmentEditor @bind-Fragment="@ComponentParts.Fragment" />
+            </div>
+            <div style="margin-top: 16px;">
+                <AntDesign.Card Title="基础样式" Size="@CardSize.Small">
+                    <ChildContent>
+                        <AntDesign.Row Gutter="24">
+                            <AntDesign.Col Span="8">
+                                <div style="margin-bottom: 16px;">
+                                    <label style="display: block; margin-bottom: 4px; font-weight: 500;">组件宽度(24栅格)</label>
+                                    <Slider TValue="double" Value="@ComponentParts.Style.ItemWidth" DefaultValue="4" Min="4" Max="24" OnChange="(value)=>OnBasicStyleChange()" />
+                                </div>
+                            </AntDesign.Col>
+                            @if (ComponentParts.IsHiddenLabel == false && ComponentParts.IsContainer == false)
+                            {
+                                <AntDesign.Col Span="8">
+                                    <div style="margin-bottom: 16px;">
+                                        <label style="display: block; margin-bottom: 4px; font-weight: 500;">标签宽度(px)</label>
+                                        <Slider TValue="double" Value="@ComponentParts.Style.LabelWidth" DefaultValue="180" Min="4" Max="300" OnChange="(value)=>OnBasicStyleChange()" />
+                                    </div>
+                                </AntDesign.Col>
+                            }
+                            <AntDesign.Col Span="8">
+                                <div style="margin-bottom: 16px;">
+                                    <label style="display: block; margin-bottom: 4px; font-weight: 500;">组件高度(px)</label>
+                                    <Slider TValue="double" Value="@ComponentParts.Style.ItemHeight" DefaultValue="85" Min="40" Max="500" OnChange="(value)=>OnBasicStyleChange()" />
+                                </div>
+                            </AntDesign.Col>
+                        </AntDesign.Row>
+                        <AntDesign.Row>
+                            <AntDesign.Col Span="24">
+                                <div style="margin-bottom: 16px;">
+                                    <label style="display: block; margin-bottom: 4px; font-weight: 500;">默认样式</label>
+                                    <TextArea @bind-Value="@ComponentParts.Style.DefaultStyle" Rows="4" Placeholder="例如：margin:8px; padding:4px;" />
+                                </div>
+                            </AntDesign.Col>
+                        </AntDesign.Row>
+                    </ChildContent>
+                </AntDesign.Card>
+            </div>
         </AntDesign.TabPane>
-
-        <AntDesign.TabPane Key="fragment" Tab="组件片段">
-            <ComponentFragmentEditor @bind-Fragment="@ComponentParts.Fragment" />
-        </AntDesign.TabPane>
+        
+        
         
         <AntDesign.TabPane Key="attributes" Tab="组件设计属性">
             <AttributeDefineGroupEditor @bind-AttributeDefineGroups="@ComponentParts.AttributeDefineGroups" />
@@ -92,6 +130,7 @@
             <StyleDefineEditor StyleDefines="@ComponentParts.StyleDefines" />
         </AntDesign.TabPane>
     </AntDesign.Tabs>
+    
     
     <div class="editor-actions" style="margin-top: 16px; text-align: right;">
         <AntDesign.Space>
@@ -151,6 +190,10 @@
         {
             ComponentParts.StyleDefines = new List<ComponentPartsStyleDefineSchema>();
         }
+    }
+
+    private void OnBasicStyleChange()
+    {
     }
 
     private async Task HandleSave()

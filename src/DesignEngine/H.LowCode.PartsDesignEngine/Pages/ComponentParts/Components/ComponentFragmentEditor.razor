@@ -2,7 +2,7 @@
 @inherits DesignEngineLowCodeComponentBase
 
 <div class="component-fragment-editor">
-    <AntDesign.Card Title="组件渲染配置" Style="margin-bottom: 16px;">
+    <AntDesign.Card Title="组件渲染片段" Style="margin-bottom: 16px;">
         <ChildContent>
             <AntDesign.Row Gutter="16">
                 <AntDesign.Col Span="12">
@@ -47,10 +47,12 @@
                         var attr = Fragment.Attributes[i];
                         var currentIndex = i;
                         
-                        <AntDesign.Card Size="@CardSize.Small" Style="margin-bottom: 8px;">
+                        <AntDesign.Card Title="@($"属性 {currentIndex + 1}")" Size="@CardSize.Small" Style="margin-bottom: 8px;">
                             <Extra>
-                                <Button Type="@ButtonType.Text" Icon="delete" Size="@ButtonSize.Small" 
-                                        OnClick="() => RemoveAttribute(currentIndex)" Danger>删除</Button>
+                                <AntDesign.Popconfirm Title="确定删除该属性吗？" OkText="确定" CancelText="取消" 
+                                                     OnConfirm="() => RemoveAttribute(currentIndex)">
+                                    <Button Type="@ButtonType.Text" Icon="delete" Size="@ButtonSize.Small" Danger>删除</Button>
+                                </AntDesign.Popconfirm>
                             </Extra>
                             <Body>
                                 <AntDesign.Row Gutter="16">
@@ -69,7 +71,10 @@
                                     <AntDesign.Col Span="8">
                                         <div style="margin-bottom: 8px;">
                                             <label style="display: block; margin-bottom: 4px; font-weight: 500;">值</label>
-                                            <Input @bind-Value="@attr.AttributeValue" Placeholder="属性值" />
+                                            <Input TValue="string"
+                                                   Value="@GetAttrValueString(attr)"
+                                                   ValueChanged="@(v => SetAttrValue(attr, v))"
+                                                   Placeholder="属性值" />
                                         </div>
                                     </AntDesign.Col>
                                 </AntDesign.Row>
@@ -190,6 +195,17 @@
     {
         await FragmentChanged.InvokeAsync(Fragment);
         StateHasChanged();
+    }
+
+    private static string GetAttrValueString(ComponentAttributeFragmentSchema attr)
+    {
+        return attr?.AttributeValue?.ToString() ?? string.Empty;
+    }
+
+    private static void SetAttrValue(ComponentAttributeFragmentSchema attr, string value)
+    {
+        if (attr == null) return;
+        attr.AttributeValue = value;
     }
 }
 

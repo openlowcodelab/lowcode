@@ -176,12 +176,26 @@
                                                         设计
                                                     </Button>
                                                 }
-                                                <Popconfirm Title="确定要删除这个组件吗？删除后无法恢复。" OkText="确定" CancelText="取消"
-                                                            OnConfirm="@(() => DeleteComponent(component.ComponentId))">
-                                                    <Button Type="@ButtonType.Link" Size="@ButtonSize.Small" Danger>
-                                                        删除
+                                                @if (component.PublishStatus == 0)
+                                                {
+                                                    <Popconfirm Title="确定要删除这个组件吗？删除后无法恢复。" OkText="确定" CancelText="取消"
+                                                                OnConfirm="@(() => DeleteComponent(component.ComponentId))">
+                                                        <Button Type="@ButtonType.Link" Size="@ButtonSize.Small" Danger>
+                                                            删除
+                                                        </Button>
+                                                    </Popconfirm>
+                                                    <Button Type="@ButtonType.Link" Size="@ButtonSize.Small" 
+                                                            OnClick="@(() => PublishComponent(component.ComponentId))">
+                                                        发布
                                                     </Button>
-                                                </Popconfirm>
+                                                }
+                                                else
+                                                {
+                                                    <Button Type="@ButtonType.Link" Size="@ButtonSize.Small" 
+                                                            OnClick="@(() => UnpublishComponent(component.ComponentId))">
+                                                        取消发布
+                                                    </Button>
+                                                }
                                             </div>
                                         </div>
                                     </div>
@@ -501,6 +515,38 @@
         catch (Exception ex)
         {
             await Message.ErrorAsync($"删除失败：{ex.Message}");
+        }
+    }
+
+    private async Task PublishComponent(string componentId)
+    {
+        try
+        {
+            var comp = await ComponentPartsAppService.GetByIdAsync(_selectedLibraryId, componentId);
+            comp.PublishStatus = 1;
+            await ComponentPartsAppService.SaveAsync(comp);
+            await LoadComponentPartsAsync();
+            await Message.SuccessAsync("组件已发布");
+        }
+        catch (Exception ex)
+        {
+            await Message.ErrorAsync($"发布失败：{ex.Message}");
+        }
+    }
+
+    private async Task UnpublishComponent(string componentId)
+    {
+        try
+        {
+            var comp = await ComponentPartsAppService.GetByIdAsync(_selectedLibraryId, componentId);
+            comp.PublishStatus = 0;
+            await ComponentPartsAppService.SaveAsync(comp);
+            await LoadComponentPartsAsync();
+            await Message.SuccessAsync("已取消发布");
+        }
+        catch (Exception ex)
+        {
+            await Message.ErrorAsync($"取消发布失败：{ex.Message}");
         }
     }
 
