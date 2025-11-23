@@ -1,5 +1,6 @@
 @namespace H.LowCode.DesignEngine
 @inherits DesignEngineLowCodeComponentBase
+@inject IDataSourceAppService DataSourceAppService
 
 @if (Page != null)
 {
@@ -26,15 +27,61 @@
         {
             <div class="propertysetting-item">
                 <label>表：</label>
-                <Input TValue="string" @bind-value="@Page.DataSource.DataSourceValue" />
+                <Select DataSource="@_dbDataSources"
+                        @bind-Value="@_selectedDbDataSourceId"
+                        ItemValue="ds => ds.Id"
+                        ItemLabel="ds => ds.DisplayName"
+                        TItem="DataSourceListModel"
+                        TItemValue="string"
+                        Placeholder="请选择数据表"
+                        OnSelectedItemChanged="@OnDbDataSourceSelected"
+                        Style="width: 100%;">
+                </Select>
             </div>
+            @if (!string.IsNullOrEmpty(_selectedDbDataSourceId))
+            {
+                <div class="propertysetting-item">
+                    <label>表信息：</label>
+                    <div style="padding: 8px; background: #f5f5f5; border-radius: 4px;">
+                        <div><strong>表名：</strong>@_selectedDbDataSource?.Name</div>
+                        <div><strong>中文名：</strong>@_selectedDbDataSource?.DisplayName</div>
+                        @if (!string.IsNullOrEmpty(_selectedDbDataSource?.Description))
+                        {
+                            <div><strong>描述：</strong>@_selectedDbDataSource.Description</div>
+                        }
+                    </div>
+                </div>
+            }
         }
         else if (Page.DataSource.DataSourceType == PageDataSourceTypeEnum.API)
         {
             <div class="propertysetting-item">
                 <label>API：</label>
-
+                <Select DataSource="@_apiDataSources"
+                        @bind-Value="@_selectedApiDataSourceId"
+                        ItemValue="ds => ds.Id"
+                        ItemLabel="ds => ds.DisplayName"
+                        TItem="DataSourceListModel"
+                        TItemValue="string"
+                        Placeholder="请选择 API 数据源"
+                        OnSelectedItemChanged="@OnApiDataSourceSelected"
+                        Style="width: 100%;">
+                </Select>
             </div>
+            @if (!string.IsNullOrEmpty(_selectedApiDataSourceId))
+            {
+                <div class="propertysetting-item">
+                    <label>API信息：</label>
+                    <div style="padding: 8px; background: #f5f5f5; border-radius: 4px;">
+                        <div><strong>名称：</strong>@_selectedApiDataSource?.DisplayName</div>
+                        <div><strong>请求：</strong>@_selectedApiDataSource?.API?.Method @(_selectedApiDataSource?.API?.Path)</div>
+                        @if (!string.IsNullOrEmpty(_selectedApiDataSource?.Description))
+                        {
+                            <div><strong>描述：</strong>@_selectedApiDataSource.Description</div>
+                        }
+                    </div>
+                </div>
+            }
         }
     }
 
@@ -63,6 +110,22 @@
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
+        await LoadDataSourcesAsync();
+
+        // 如果已有配置，初始化选中态
+        if (!string.IsNullOrEmpty(Page?.DataSource?.DataSourceId))
+        {
+            if (Page.DataSource.DataSourceType == PageDataSourceTypeEnum.DB)
+            {
+                _selectedDbDataSourceId = Page.DataSource.DataSourceId;
+                await LoadSelectedDbDataSourceAsync();
+            }
+            else if (Page.DataSource.DataSourceType == PageDataSourceTypeEnum.API)
+            {
+                _selectedApiDataSourceId = Page.DataSource.DataSourceId;
+                await LoadSelectedApiDataSourceAsync();
+            }
+        }
     }
 
     private void OnLayoutChange(int pageLayout)
@@ -78,6 +141,87 @@
 
     private bool _eventVisible;
     private IList<EventSchema> _eventList;
+
+    private IList<DataSourceListModel> _dbDataSources = new List<DataSourceListModel>();
+    private IList<DataSourceListModel> _apiDataSources = new List<DataSourceListModel>();
+    private string _selectedDbDataSourceId;
+    private string _selectedApiDataSourceId;
+    private DataSourceSchema _selectedDbDataSource;
+    private DataSourceSchema _selectedApiDataSource;
+
+    private async Task LoadDataSourcesAsync()
+    {
+        try
+        {
+            var dbInput = new DataSourceInput { DataSourceType = ComponentDataSourceTypeEnum.DB };
+            _dbDataSources = await DataSourceAppService.GetListAsync(Page.AppId, dbInput);
+
+            var apiInput = new DataSourceInput { DataSourceType = ComponentDataSourceTypeEnum.API };
+            _apiDataSources = await DataSourceAppService.GetListAsync(Page.AppId, apiInput);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"加载数据源失败: {ex.Message}");
+        }
+    }
+
+    private async Task OnDbDataSourceSelected(DataSourceListModel selected)
+    {
+        if (selected == null) return;
+        _selectedDbDataSourceId = selected.Id;
+        await LoadSelectedDbDataSourceAsync();
+        UpdatePageDataSourceForDb();
+    }
+
+    private async Task OnApiDataSourceSelected(DataSourceListModel selected)
+    {
+        if (selected == null) return;
+        _selectedApiDataSourceId = selected.Id;
+        await LoadSelectedApiDataSourceAsync();
+        UpdatePageDataSourceForApi();
+    }
+
+    private async Task LoadSelectedDbDataSourceAsync()
+    {
+        if (string.IsNullOrEmpty(_selectedDbDataSourceId)) return;
+        try
+        {
+            _selectedDbDataSource = await DataSourceAppService.GetByIdAsync(Page.AppId, _selectedDbDataSourceId);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"加载数据表详情失败: {ex.Message}");
+        }
+    }
+
+    private async Task LoadSelectedApiDataSourceAsync()
+    {
+        if (string.IsNullOrEmpty(_selectedApiDataSourceId)) return;
+        try
+        {
+            _selectedApiDataSource = await DataSourceAppService.GetByIdAsync(Page.AppId, _selectedApiDataSourceId);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"加载 API 详情失败: {ex.Message}");
+        }
+    }
+
+    private void UpdatePageDataSourceForDb()
+    {
+        if (Page?.DataSource == null || _selectedDbDataSource == null) return;
+        Page.DataSource.DataSourceId = _selectedDbDataSource.Id;
+        Page.DataSource.DataSourceName = _selectedDbDataSource.DisplayName;
+        Page.DataSource.DataSourceValue = _selectedDbDataSource.Name;
+    }
+
+    private void UpdatePageDataSourceForApi()
+    {
+        if (Page?.DataSource == null || _selectedApiDataSource == null) return;
+        Page.DataSource.DataSourceId = _selectedApiDataSource.Id;
+        Page.DataSource.DataSourceName = _selectedApiDataSource.DisplayName;
+        Page.DataSource.DataSourceValue = _selectedApiDataSource.API?.Path;
+    }
 
     private void ShowEventModal()
     {

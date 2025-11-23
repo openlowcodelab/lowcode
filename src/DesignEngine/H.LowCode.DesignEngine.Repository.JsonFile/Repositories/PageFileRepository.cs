@@ -63,15 +63,6 @@ public class PageFileRepository : FileRepositoryBase, IPageRepository
         ArgumentNullException.ThrowIfNull(pageSchema);
         ArgumentException.ThrowIfNullOrEmpty(pageSchema.Id);
 
-        foreach (var component in pageSchema.Components)
-        {
-            if (!component.IsInnerContainer)
-            {
-                //json 文件不保存 Fragment 数据, 从组件定义中获取
-                component.Fragment = null;
-            }
-        }
-
         pageSchema.ModificationTime = DateTime.UtcNow;
 
         string fileName = string.Format(pageFileName_Format, _metaBaseDir, pageSchema.AppId, pageSchema.Id);
