@@ -1,10 +1,11 @@
 ---
 trigger: manual
 alwaysApply: false
+description: 组件拖拽移动动画交互逻辑
 ---
 H.LowCode.DesignEngine 项目中的 DesignPage.razor 是页面设计器，内部包含 ComponentPanel 用于放置可拖拽组件  DraggableItem，通过拖拽 DraggableItem 组件进行拖拽排序，目前基本功能已实现，但拖拽组件时，组件位移没有动画，需优化操作体验。
 
-组件拖拽移动动画参考交互逻辑如下：
+组件拖拽移动动画交互逻辑如下：
 DraggableItem 组件拖拽过程中，当拖拽后的顺序大于原始顺序，说明组件向后拖拽，反之向前拖拽。
 向后拖拽时，被拖拽到上方的组件及两个组件中间的所有组件都向前移动；反之都向后移动。
 向前移动时，如果组件在当前行的第一个，则移动到上一行的末尾；向后移动时，如果组件在当前行的最后一个，则移动到下一行的第一个。

@@ -22,6 +22,12 @@ public class ValidationRuleSchema
     public string ComponentId { get; set; }
 
     /// <summary>
+    /// 是否启用
+    /// </summary>
+    [JsonPropertyName("enabled")]
+    public bool IsEnabled { get; set; }
+
+    /// <summary>
     /// 校验规则类型
     /// </summary>
     [JsonPropertyName("type")]
@@ -80,12 +86,6 @@ public class ValidationRuleSchema
     /// </summary>
     [JsonPropertyName("trigger")]
     public ValidationTriggerEnum Trigger { get; set; } = ValidationTriggerEnum.Blur;
-
-    /// <summary>
-    /// 是否启用
-    /// </summary>
-    [JsonPropertyName("enabled")]
-    public bool IsEnabled { get; set; } = true;
 
     /// <summary>
     /// 排序

@@ -1,9 +1,5 @@
 using H.LowCode.MetaSchema;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace H.LowCode.Application.Contracts;
 
@@ -26,8 +22,8 @@ public class FormFieldDto
     /// <remarks>init 用于控制允许在 AutoMapper 场景赋值, 不允许外部赋值</remarks>
     public string TypeName { get; init; }
 
-    private object _value;
-    public object Value
+    private object? _value;
+    public object? Value
     {
         get
         {

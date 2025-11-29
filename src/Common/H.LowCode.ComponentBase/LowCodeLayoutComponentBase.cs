@@ -25,7 +25,7 @@ public abstract class LowCodeLayoutComponentBase : LayoutComponentBase
         }
     }
 
-    private string _appId;
+    private string? _appId;
     protected string AppId
     {
         get
@@ -36,6 +36,14 @@ public abstract class LowCodeLayoutComponentBase : LayoutComponentBase
                 return _appId;
             }
             return _appId;
+        }
+    }
+
+    protected string AppName
+    {
+        get
+        {
+            return AppId; //TODO: 以后改为通过 AppId 获取 AppName
         }
     }
 

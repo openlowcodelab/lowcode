@@ -1,6 +1,6 @@
 @page "/{AppId}/{PageId}"
 @namespace H.LowCode.Themes.AntBlazor
-@inherits LowCodePageComponentBase
+@inherits RenderEnginePageComponentBase
 @layout AntBlazorThemeLayout
 
 @inject IMetaAppService MetaAppService
@@ -29,10 +29,7 @@
     }
 </CascadingValue>
 
-    @code {
-    [Parameter]
-    public string AppId { get; set; }
-
+@code {
     [Parameter]
     public string PageId { get; set; }
 

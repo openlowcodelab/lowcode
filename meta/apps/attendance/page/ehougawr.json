@@ -9,7 +9,9 @@
                 "valt": "System.Nullable\u00601[System.DateTime]",
                 "attrs": []
             },
-            "ds": {},
+            "ds": {
+                "dsgt": 1
+            },
             "attrdefgroups": [],
             "childs": [],
             "sptevs": [
@@ -30,7 +32,17 @@
                 "itemh": 85,
                 "labelw": 120
             },
-            "valrules": [],
+            "valrules": [
+                {
+                    "id": "f_overtime_date_required",
+                    "cid": "f_overtime_date",
+                    "type": 1,
+                    "errmsg": "加班日期不能为空",
+                    "trigger": 1,
+                    "enabled": true,
+                    "order": 1
+                }
+            ],
             "v": "0.0.1"
         },
         {
@@ -42,7 +54,9 @@
                 "valt": "System.Nullable\u00601[System.DateTime]",
                 "attrs": []
             },
-            "ds": {},
+            "ds": {
+                "dsgt": 1
+            },
             "attrdefgroups": [],
             "childs": [],
             "evdefs": [],
@@ -59,7 +73,17 @@
                 "itemh": 85,
                 "labelw": 120
             },
-            "valrules": [],
+            "valrules": [
+                {
+                    "id": "f_start_time_required",
+                    "cid": "f_start_time",
+                    "type": 1,
+                    "errmsg": "开始时间不能为空",
+                    "trigger": 1,
+                    "enabled": true,
+                    "order": 1
+                }
+            ],
             "v": "0.0.1"
         },
         {
@@ -71,7 +95,9 @@
                 "valt": "System.Nullable\u00601[System.DateTime]",
                 "attrs": []
             },
-            "ds": {},
+            "ds": {
+                "dsgt": 1
+            },
             "attrdefgroups": [],
             "childs": [],
             "evdefs": [],
@@ -88,7 +114,17 @@
                 "itemh": 85,
                 "labelw": 120
             },
-            "valrules": [],
+            "valrules": [
+                {
+                    "id": "f_end_time_required",
+                    "cid": "f_end_time",
+                    "type": 1,
+                    "errmsg": "结束时间不能为空",
+                    "trigger": 1,
+                    "enabled": true,
+                    "order": 1
+                }
+            ],
             "v": "0.0.1"
         },
         {
@@ -100,7 +136,9 @@
                 "valt": "System.Int32",
                 "attrs": []
             },
-            "ds": {},
+            "ds": {
+                "dsgt": 1
+            },
             "attrdefgroups": [],
             "childs": [],
             "evdefs": [],
@@ -117,7 +155,27 @@
                 "itemh": 85,
                 "labelw": 120
             },
-            "valrules": [],
+            "valrules": [
+                {
+                    "id": "f_hours_required",
+                    "cid": "f_hours",
+                    "type": 1,
+                    "errmsg": "加班小时数不能为空",
+                    "trigger": 1,
+                    "enabled": true,
+                    "order": 1
+                },
+                {
+                    "id": "f_hours_min",
+                    "cid": "f_hours",
+                    "type": 3,
+                    "errmsg": "加班小时数必须大于0",
+                    "trigger": 1,
+                    "enabled": true,
+                    "order": 2,
+                    "rulev": "1"
+                }
+            ],
             "v": "0.0.1"
         },
         {
@@ -150,7 +208,27 @@
                 "itemh": 85,
                 "labelw": 120
             },
-            "valrules": [],
+            "valrules": [
+                {
+                    "id": "f_reason_required",
+                    "cid": "f_reason",
+                    "type": 1,
+                    "errmsg": "加班原因不能为空",
+                    "trigger": 1,
+                    "enabled": true,
+                    "order": 1
+                },
+                {
+                    "id": "f_reason_min",
+                    "cid": "f_reason",
+                    "type": 3,
+                    "errmsg": "加班原因不能少于5个字符",
+                    "trigger": 1,
+                    "enabled": true,
+                    "order": 2,
+                    "rulev": "5"
+                }
+            ],
             "v": "0.0.1"
         },
         {
@@ -162,7 +240,9 @@
                 "valt": "System.String",
                 "attrs": []
             },
-            "ds": {},
+            "ds": {
+                "dsgt": 1
+            },
             "attrdefgroups": [
                 {
                     "gn": "基础属性",
@@ -366,6 +446,7 @@
         }
     },
     "ds": {
+        "dsgt": 1,
         "dst": 1,
         "dsid": "overtime_request",
         "dsn": "加班申请",
