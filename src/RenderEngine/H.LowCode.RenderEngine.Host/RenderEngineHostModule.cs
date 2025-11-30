@@ -4,6 +4,7 @@ using H.LowCode.Components.Defaults;
 using H.LowCode.RenderEngine.Application;
 using H.LowCode.RenderEngine.EntityFrameworkCore;
 using H.LowCode.RenderEngine.Repository.JsonFile;
+using H.LowCode.RenderEngineBase;
 using H.LowCode.Themes.AntBlazor;
 using Volo.Abp;
 using Volo.Abp.AspNetCore.Mvc;
@@ -18,6 +19,7 @@ namespace H.LowCode.RenderEngine.Host;
     typeof(AbpAspNetCoreMvcModule),
     //=====lowcode-server=====//
     typeof(LowCodeApplicationModule),
+    typeof(RenderEngineBaseModule),
     typeof(RenderEngineApplicationModule),
     typeof(RenderEngineEntityFrameworkCoreModule),
     typeof(RenderEngineJsonFileRepositoryModule),

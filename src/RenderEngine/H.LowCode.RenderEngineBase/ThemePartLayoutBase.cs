@@ -5,7 +5,7 @@ using H.Util.Ids;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Configuration;
 
-namespace H.LowCode.RenderEngine.Abstraction;
+namespace H.LowCode.RenderEngineBase;
 
 public abstract class ThemePartLayoutBase : LowCodeLayoutComponentBase
 {

@@ -1,8 +1,8 @@
-using H.LowCode.Application;
 using H.LowCode.Application.Contracts;
 using H.LowCode.ComponentBase;
 using H.LowCode.Components.Defaults;
 using H.LowCode.RenderEngine.Application.Contracts;
+using H.LowCode.RenderEngineBase;
 using H.LowCode.Themes.AntBlazor;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Volo.Abp.Autofac.WebAssembly;
@@ -17,7 +17,7 @@ namespace H.LowCode.RenderEngine.Host.Client;
     //动态API代理
     typeof(AbpHttpClientModule),
     //=====lowcode-web=====//
-    typeof(LowCodeApplicationModule),
+    typeof(RenderEngineBaseModule),
     typeof(RenderEngineApplicationContractsModule),
     //RenderEngine
     typeof(RenderEngineModule),

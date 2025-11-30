@@ -2,7 +2,7 @@
 using H.LowCode.ComponentBase;
 using Microsoft.AspNetCore.Components;
 
-namespace H.LowCode.RenderEngine.Abstraction;
+namespace H.LowCode.RenderEngineBase;
 
 /// <summary>
 /// 页面组件基类

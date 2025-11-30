@@ -4,6 +4,7 @@ using H.LowCode.Components.Defaults;
 using H.LowCode.DesignEngine.Application;
 using H.LowCode.DesignEngine.EntityFrameworkCore;
 using H.LowCode.DesignEngine.Repository.JsonFile;
+using H.LowCode.DesignEngineBase;
 using H.LowCode.MyApp;
 using H.LowCode.PartsDesignEngine;
 using H.LowCode.Portal;
@@ -19,6 +20,7 @@ namespace H.LowCode.DesignEngine.Host;
     typeof(AbpAspNetCoreMvcModule),
     //=====lowcode-server=====//
     typeof(LowCodeApplicationModule),
+    typeof(DesignEngineBaseModule),
     typeof(DesignEngineApplicationModule),
     typeof(DesignEngineEntityFrameworkCoreModule),
     typeof(DesignEngineJsonFileRepositoryModule),

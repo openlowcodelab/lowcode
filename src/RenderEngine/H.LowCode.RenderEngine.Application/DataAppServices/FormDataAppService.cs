@@ -56,9 +56,6 @@ public class FormDataAppService : ApplicationService, IFormDataAppService
 
         var entity = ObjectMapper.Map<FormDataDto, FormEntity>(dto);
 
-        // 设置默认表名
-        entity.Name = entity.Name ?? "tb_test1";
-
         // 验证字段
         if (entity.Fields == null || !entity.Fields.Any())
             throw new ArgumentException("表单字段不能为空", nameof(entity));

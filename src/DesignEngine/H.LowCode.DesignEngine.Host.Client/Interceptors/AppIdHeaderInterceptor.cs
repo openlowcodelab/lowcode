@@ -1,7 +1,6 @@
 using H.LowCode.Application.Contracts;
-using Microsoft.Extensions.Logging;
 
-namespace H.LowCode.Application;
+namespace H.LowCode.DesignEngine.Host.Client;
 
 /// <summary>
 /// AppId 请求头拦截器
@@ -27,8 +26,10 @@ public class AppIdHeaderInterceptor : DelegatingHandler
         try
         {
             // 获取当前 AppId
+            _currentApp.ResolveAppIdFromContext();
             var appId = _currentApp.CurrentAppId;
-            
+            Console.WriteLine($"========= AppIdHeaderInterceptor =====: appId = {appId}, uri = {request.RequestUri}");
+
             if (!string.IsNullOrEmpty(appId))
             {
                 // 如果请求头中还没有 x-appid，则添加

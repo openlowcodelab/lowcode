@@ -1,17 +1,29 @@
-using Microsoft.AspNetCore.Components;
-using System;
+using AntDesign;
+using H.LowCode.Application.Contracts;
+using H.LowCode.ComponentBase;
 using H.LowCode.MetaSchema;
 using H.LowCode.MetaSchema.RenderEngine;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
-using H.LowCode.ComponentBase;
-using AntDesign;
 
-namespace H.LowCode.RenderEngine.Abstraction;
+namespace H.LowCode.RenderEngineBase;
 
 public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponentBase
 {
-    [Inject]
-    protected new IMessageService Message { get; set; }
+    [CascadingParameter(Name = "pageCascading")]
+    public PageCascadingModel PageCascading { get; set; }
+
+    [Inject] protected ICurrentApp CurrentApp { get; set; } = default!;
+
+    [Inject] protected new IMessageService Message { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Console.WriteLine($"========= RenderEngineDynamicComponentBase OnInitializedAsync: AppId = {PageCascading.AppId} ======");
+        CurrentApp.SetAppId(PageCascading.AppId);
+
+        await base.OnInitializedAsync();
+    }
 
     protected virtual RenderFragment RenderComponent(ComponentSchema component)
         => builder =>

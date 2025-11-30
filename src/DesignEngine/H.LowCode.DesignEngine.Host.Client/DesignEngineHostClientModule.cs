@@ -3,6 +3,7 @@ using H.LowCode.Application.Contracts;
 using H.LowCode.ComponentBase;
 using H.LowCode.Components.Defaults;
 using H.LowCode.DesignEngine.Application.Contracts;
+using H.LowCode.DesignEngineBase;
 using H.LowCode.MyApp;
 using H.LowCode.PartsDesignEngine;
 using H.LowCode.Portal;
@@ -19,7 +20,7 @@ namespace H.LowCode.DesignEngine.Host.Client;
     //动态API代理
     typeof(AbpHttpClientModule),
     //=====lowcode-web=====//
-    typeof(LowCodeApplicationModule),
+    typeof(DesignEngineBaseModule),
     typeof(DesignEngineApplicationContractsModule),
     //Portal
     typeof(LowCodePortalModule),
@@ -47,6 +48,9 @@ public class DesignEngineHostClientModule : AbpModule
 
     private static void ConfigureHttpClient(ServiceConfigurationContext context, IWebAssemblyHostEnvironment environment)
     {
+        // 注册 HTTP 上下文访问器
+        context.Services.AddHttpContextAccessor();
+
         context.Services.AddTransient(sp => new HttpClient
         {
             BaseAddress = new Uri(environment.BaseAddress)
@@ -64,5 +68,12 @@ public class DesignEngineHostClientModule : AbpModule
             typeof(LowCodeApplicationContractsModule).Assembly,
             RemoteServiceName
         );
+
+        // 注册 AppId 请求头拦截器
+        context.Services.AddTransient<AppIdHeaderInterceptor>();
+
+        // 为 HttpClient 添加 AppId 请求头拦截器
+        context.Services.AddHttpClient(RemoteServiceName)
+            .AddHttpMessageHandler<AppIdHeaderInterceptor>();
     }
 }
