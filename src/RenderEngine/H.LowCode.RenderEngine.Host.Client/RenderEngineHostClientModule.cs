@@ -39,6 +39,9 @@ public class RenderEngineHostClientModule : AbpModule
 
         //应用状态
         context.Services.AddSingleton(new LowCodeAppState(false));
+
+        // 注册 Session 服务
+        context.Services.AddScoped<ISessionStorageService, ClientSessionStorageService>();
     }
 
     private static void ConfigureHttpClient(ServiceConfigurationContext context, IWebAssemblyHostEnvironment environment)

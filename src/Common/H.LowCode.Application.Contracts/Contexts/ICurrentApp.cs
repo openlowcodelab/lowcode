@@ -14,12 +14,6 @@ public interface ICurrentApp
     string? CurrentAppId { get; }
 
     /// <summary>
-    /// 设置当前请求的 AppId
-    /// </summary>
-    /// <param name="appId">应用ID</param>
-    void SetAppId(string? appId);
-
-    /// <summary>
     /// 从 HTTP 上下文中自动解析并设置 AppId
     /// </summary>
     void ResolveAppIdFromContext();

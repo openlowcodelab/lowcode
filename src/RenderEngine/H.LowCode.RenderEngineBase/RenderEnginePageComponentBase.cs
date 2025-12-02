@@ -9,15 +9,15 @@ namespace H.LowCode.RenderEngineBase;
 /// </summary>
 public abstract class RenderEnginePageComponentBase : LowCodePageComponentBase
 {
-    [Inject] protected ICurrentApp CurrentApp { get; set; } = default!;
+    [Inject] protected ISessionStorageService SessionStorageService { get; set; }
 
     [Parameter]
     public string AppId { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        await base.OnInitializedAsync();
+        await SessionStorageService.SetAsync("appid", AppId);
 
-        CurrentApp.SetAppId(AppId);
+        await base.OnInitializedAsync();
     }
 }

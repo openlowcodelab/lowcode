@@ -1,10 +1,11 @@
-using H.LowCode.RenderEngine.Host.Client;
-using System.Text.Json;
-using H.LowCode.RenderEngine.Host.Components;
+using H.LowCode.Application;
+using H.LowCode.ComponentBase;
 using H.LowCode.RenderEngine.Host;
+using H.LowCode.RenderEngine.Host.Client;
+using H.LowCode.RenderEngine.Host.Components;
 using Microsoft.AspNetCore.ResponseCompression;
 using System.IO.Compression;
-using H.LowCode.Application;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +28,9 @@ builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
 {
     options.Level = CompressionLevel.Optimal;
 });
+
+// 注册 Session 服务
+builder.Services.AddScoped<ISessionStorageService, ServerSessionStorageService>();
 
 #region  LowCode
 builder.Host.UseAutofac();
@@ -69,6 +73,7 @@ app.MapStaticAssets();
 app.UseCurrentApp();
 
 app.UseRouting();
+app.UseSession();
 app.UseAntiforgery();
 
 app.MapControllers();

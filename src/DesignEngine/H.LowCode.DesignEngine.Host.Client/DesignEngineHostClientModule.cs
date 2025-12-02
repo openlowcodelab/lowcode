@@ -44,6 +44,9 @@ public class DesignEngineHostClientModule : AbpModule
 
         //应用状态
         context.Services.AddSingleton(new LowCodeAppState(true));
+
+        // 注册 Session 服务
+        context.Services.AddScoped<ISessionStorageService, ClientSessionStorageService>();
     }
 
     private static void ConfigureHttpClient(ServiceConfigurationContext context, IWebAssemblyHostEnvironment environment)
@@ -68,12 +71,5 @@ public class DesignEngineHostClientModule : AbpModule
             typeof(LowCodeApplicationContractsModule).Assembly,
             RemoteServiceName
         );
-
-        // 注册 AppId 请求头拦截器
-        context.Services.AddTransient<AppIdHeaderInterceptor>();
-
-        // 为 HttpClient 添加 AppId 请求头拦截器
-        context.Services.AddHttpClient(RemoteServiceName)
-            .AddHttpMessageHandler<AppIdHeaderInterceptor>();
     }
 }

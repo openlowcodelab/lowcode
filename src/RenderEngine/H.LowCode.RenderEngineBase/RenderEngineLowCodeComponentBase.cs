@@ -10,15 +10,10 @@ public abstract class RenderEngineLowCodeComponentBase : LowCodeComponentBase
     [CascadingParameter(Name = "pageCascading")]
     public PageCascadingModel PageCascading { get; set; }
 
-    [Inject] protected ICurrentApp CurrentApp { get; set; } = default!;
-
     [Inject] protected new IMessageService Message { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
-        Console.WriteLine($"========= RenderEngineLowCodeComponentBase OnInitializedAsync: AppId = {PageCascading.AppId} ======");
-        CurrentApp.SetAppId(PageCascading.AppId);
-
         await base.OnInitializedAsync();
     }
 }

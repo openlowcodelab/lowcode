@@ -33,8 +33,29 @@ public class RenderEngineDbContext : DbContext
 
         foreach (var field in formEntity.Fields)
         {
-            var propertyInfoName = entityType.GetProperty(field.Name);
-            propertyInfoName.SetValue(entity, field.Value);
+            var propertyInfo = entityType.GetProperty(field.Name);
+            if (propertyInfo != null)
+            {
+                // 获取属性的实际类型
+                var propertyType = propertyInfo.PropertyType;
+                
+                // 获取字段值并转换为正确的类型
+                var fieldValue = field.Value;
+                if (fieldValue != null)
+                {
+                    try
+                    {
+                        // 转换为属性的实际类型
+                        var convertedValue = Convert.ChangeType(fieldValue, propertyType);
+                        propertyInfo.SetValue(entity, convertedValue);
+                    }
+                    catch (Exception ex)
+                    {
+                        // 记录转换错误日志
+                        Console.WriteLine($"Error converting field '{field.Name}' value '{fieldValue}' to type '{propertyType.Name}': {ex.Message}");
+                    }
+                }
+            }
         }
 
         Add(entity);
@@ -51,8 +72,29 @@ public class RenderEngineDbContext : DbContext
 
         foreach (var field in formEntity.Fields)
         {
-            var propertyInfoName = entityType.GetProperty(field.Name);
-            propertyInfoName.SetValue(entity, field.Value);
+            var propertyInfo = entityType.GetProperty(field.Name);
+            if (propertyInfo != null)
+            {
+                // 获取属性的实际类型
+                var propertyType = propertyInfo.PropertyType;
+                
+                // 获取字段值并转换为正确的类型
+                var fieldValue = field.Value;
+                if (fieldValue != null)
+                {
+                    try
+                    {
+                        // 转换为属性的实际类型
+                        var convertedValue = Convert.ChangeType(fieldValue, propertyType);
+                        propertyInfo.SetValue(entity, convertedValue);
+                    }
+                    catch (Exception ex)
+                    {
+                        // 记录转换错误日志
+                        Console.WriteLine($"Error converting field '{field.Name}' value '{fieldValue}' to type '{propertyType.Name}': {ex.Message}");
+                    }
+                }
+            }
         }
 
         Update(entity);
@@ -97,9 +139,12 @@ public class RenderEngineDbContext : DbContext
 
     public int SaveChangesAsync(FormEntity formEntity)
     {
-        var entityType = GetEntityType(formEntity.Name);
+        var entityTypes = this.Model.GetEntityTypes();
+        var entityType = entityTypes.FirstOrDefault(t => t.ClrType.Name == formEntity.Name);
+        if (entityType == null)
+            throw new ArgumentException($"Entity type '{formEntity.Name}' not found.");
 
-        var entries = ChangeTracker.Entries().Where(e => e.Entity.GetType() == entityType);
+        var entries = ChangeTracker.Entries().Where(e => e.Entity.GetType() == entityType.ClrType);
         foreach (var entry in entries)
         {
             if (entry.State == EntityState.Deleted)
