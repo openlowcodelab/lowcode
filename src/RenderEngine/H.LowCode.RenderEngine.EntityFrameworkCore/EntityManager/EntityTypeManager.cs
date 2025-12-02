@@ -29,7 +29,7 @@ public class EntityTypeManager
         _dataSourceRepository = dataSourceRepository;
     }
 
-    public IReadOnlyList<DynamicEntityInfo> LoadDynamicEntities(string appId)
+    public IReadOnlyList<DynamicEntityInfo> LoadDynamicEntities(string? appId)
     {
         if (string.IsNullOrEmpty(appId))
         {

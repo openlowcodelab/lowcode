@@ -42,20 +42,13 @@ public class CurrentApp : ICurrentApp
     /// </summary>
     public void ResolveAppIdFromContext()
     {
-        try
+        var session = _httpContextAccessor.HttpContext?.Session;
+        if (session == null)
         {
-            var session = _httpContextAccessor.HttpContext?.Session;
-            if (session == null)
-            {
-                _logger.LogWarning("HttpContext is null, cannot resolve AppId");
-                return;
-            }
+            _logger.LogWarning("HttpContext is null, cannot resolve AppId");
+            return;
+        }
 
-            _currentAppId = session.GetString("appid");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error resolving AppId from context");
-        }
+        _currentAppId = session.GetString("appid");
     }
 }

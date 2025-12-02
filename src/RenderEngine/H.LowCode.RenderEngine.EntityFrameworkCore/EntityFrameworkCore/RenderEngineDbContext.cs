@@ -10,7 +10,7 @@ namespace H.LowCode.RenderEngine.EntityFrameworkCore;
 
 public class RenderEngineDbContext : DbContext
 {
-    public string AppId { get; private set; }
+    public string? AppId { get; private set; }
 
     private DbContextOptions<RenderEngineDbContext> _dbOptions;
     private EntityTypeManager _entityTypeManager;
@@ -23,7 +23,7 @@ public class RenderEngineDbContext : DbContext
         _entityTypeManager = entityTypeManager;
         
         // 从应用上下文服务获取当前 AppId
-        AppId = currentApp.CurrentAppId ?? string.Empty;
+        AppId = currentApp.CurrentAppId;
     }
 
     public async Task<bool> AddAsync(FormEntity formEntity)

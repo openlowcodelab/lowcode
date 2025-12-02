@@ -5,7 +5,7 @@
 
 @inject IMetaAppService MetaAppService
 
-<PageTitle>@($"{_pageCascadingModel.PageName}")</PageTitle>
+<PageTitle>@(_pageCascadingModel?.PageName ?? "加载中...")</PageTitle>
 
 <CascadingValue Value="@_pageCascadingModel" Name="pageCascading">
     @if (_pageSchema != null)

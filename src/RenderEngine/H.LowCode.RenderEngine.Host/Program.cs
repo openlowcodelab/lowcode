@@ -30,6 +30,7 @@ builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
 });
 
 // 注册 Session 服务
+builder.Services.AddSession();
 builder.Services.AddScoped<ISessionStorageService, ServerSessionStorageService>();
 
 #region  LowCode
@@ -68,9 +69,6 @@ app.UseStaticFiles(new StaticFileOptions
 });
 
 app.MapStaticAssets();
-
-// 使用 CurrentApp 中间件，自动解析和设置 AppId
-app.UseCurrentApp();
 
 app.UseRouting();
 app.UseSession();
