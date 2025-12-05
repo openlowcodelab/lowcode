@@ -55,7 +55,7 @@
     {
         await base.OnInitializedAsync();
 
-        _pageCascadingModel = new() { PageId = PartsId, PageName = "..." };
+        _pageCascadingModel = new() { AppId = string.Empty, PageId = PartsId, PageName = "..." };
 
         _partsSchema = LoadPartsSchemaAsync();
         SetPageModel(_partsSchema);

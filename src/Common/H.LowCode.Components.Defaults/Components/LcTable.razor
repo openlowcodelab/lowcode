@@ -56,14 +56,17 @@
 </Table>
 
 @code {
-    [Parameter]
-    public ComponentDataSourceSchemaBase DataSource { get; set; }
-
     [CascadingParameter(Name = "pageCascading")]
     public PageCascadingModel PageCascading { get; set; }
 
-    private TablePropertySchema _tableSchema = new();
-    private List<Dictionary<string, object>> _data;
+    [Parameter]
+    public ComponentDataSourceSchemaBase DataSource { get; set; }
+
+    [PersistentState]
+    public TablePropertySchema _tableSchema { get; set; }
+
+    [PersistentState]
+    public List<Dictionary<string, object>> _data { get; set; }
 
     IEnumerable<Dictionary<string, object>> _selectedRows = [];
     ITable table;
@@ -79,9 +82,31 @@
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
+    }
 
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+        
+        Logger.LogWarning($"==========OnParametersSetAsync: render={RendererInfo.Name}, DataSource={DataSource != null}, PageCascading={PageCascading != null}, AppId={PageCascading?.AppId}, _data={_data?.Count ?? 0}");
+        
+        // 确保所有必需的参数都已设置
+        if (DataSource == null || PageCascading == null || string.IsNullOrEmpty(PageCascading.AppId))
+        {
+            Logger.LogWarning($"==========参数未完全设置，跳过加载");
+            return;
+        }
+        
+        // 初始化 Schema
         Init();
-        await LoadDataAsync();
+        
+        // 检查持久化状态：如果 _data 为空，则需要加载
+        // PersistentState 会在 SSR -> WebAssembly 切换时保持数据
+        // 如果数据已存在（从 SSR 持久化过来），则跳过加载
+        if (_data == null || _data.Count == 0)
+        {
+            await LoadDataAsync();
+        }
     }
 
     protected override bool ShouldRender()
@@ -89,12 +114,21 @@
         //if (StateKey == DataSource.StateKey)
         //    return false;
 
-        Init();
+        // 参数变化时重新初始化
+        if (DataSource != null)
+        {
+            Init();
+        }
         return true;
     }
 
     private void Init()
     {
+        if (DataSource == null)
+        {
+            return;
+        }
+        
         _tableSchema = GetTableSchemaAsync();
         StateKey = DataSource.StateKey;
     }
@@ -113,7 +147,7 @@
     private TablePropertySchema GetTableSchemaAsync()
     {
         var dataSource = DataSource?.DataSourceValue;
-        if (dataSource.IsNullOrWhiteSpace() || dataSource.Trim().Equals("[]"))
+        if (string.IsNullOrEmpty(dataSource) || dataSource.Trim().Equals("[]"))
         {
             var defaultTableSchema = new TablePropertySchema();
             defaultTableSchema.Columns = new List<TableColumnSchema>()
@@ -124,15 +158,13 @@
         }
 
         var tableSchema = dataSource.FromJson<TablePropertySchema>();
-        if(tableSchema.Columns.Any() == false)
+        if(tableSchema?.Columns != null && tableSchema.Columns.Any() == false)
         {
             tableSchema.Columns = new List<TableColumnSchema>()
             {
                 new() { Name = "_temp", Title = "(待添加列)" }
             };
         }
-
-        Logger.LogWarning($"列表列头: {tableSchema.Columns.ToJson()}");
 
         return tableSchema;
     }
@@ -141,9 +173,9 @@
     {
         var request = new TableDataInput
         {
-            AppId = PageCascading?.AppId,
-            PageId = PageCascading?.PageId,
-            DataSourceId = DataSource?.DataSourceId,
+            AppId = PageCascading.AppId,
+            PageId = PageCascading.PageId,
+            DataSourceId = DataSource.DataSourceId,
             SkipCount = (_pageIndex - 1) * _pageSize,
             MaxResultCount = _pageSize,
             Filters = new Dictionary<string, object>()
