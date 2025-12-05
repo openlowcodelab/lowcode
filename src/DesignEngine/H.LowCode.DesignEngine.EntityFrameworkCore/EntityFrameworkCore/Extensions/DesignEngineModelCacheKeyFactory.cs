@@ -1,14 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace H.LowCode.DesignEngine.EntityFrameworkCore;
 
-internal class MapModelCacheKeyFactory : IModelCacheKeyFactory
+internal class DesignEngineModelCacheKeyFactory : IModelCacheKeyFactory
 {
     public object Create(DbContext context, bool designTime)
     {

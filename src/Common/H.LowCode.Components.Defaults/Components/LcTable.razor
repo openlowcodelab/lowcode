@@ -88,12 +88,9 @@
     {
         await base.OnParametersSetAsync();
         
-        Logger.LogWarning($"==========OnParametersSetAsync: render={RendererInfo.Name}, DataSource={DataSource != null}, PageCascading={PageCascading != null}, AppId={PageCascading?.AppId}, _data={_data?.Count ?? 0}");
-        
         // 确保所有必需的参数都已设置
         if (DataSource == null || PageCascading == null || string.IsNullOrEmpty(PageCascading.AppId))
         {
-            Logger.LogWarning($"==========参数未完全设置，跳过加载");
             return;
         }
         

@@ -8,6 +8,6 @@ public class LowCodeApplicationModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
-        context.Services.AddScoped<ICurrentApp, CurrentApp>();
+        context.Services.AddTransient<ICurrentApp, CurrentApp>();
     }
 }

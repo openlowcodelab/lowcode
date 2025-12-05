@@ -184,6 +184,8 @@ public class RenderEngineDbContext : DbContext
         //设置连接字符串
         //optionsBuilder.UseSqlServer("");
 
+        optionsBuilder.ReplaceService<IModelCacheKeyFactory, RenderEngineModelCacheKeyFactory>();
+
         //注册EFcore拦截器，对需要With(NoLock)查询linq进行拦截修改Sql语句
         optionsBuilder.AddInterceptors(new QueryWithNoLockDbCommandInterceptor());
         //表重复注册

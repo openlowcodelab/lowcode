@@ -45,7 +45,8 @@
                 _component = (ComponentPartsSchema)value;
                 _showPropertyPanel = true;
                 _activeTabKey = "tab_property";
-                StateHasChanged();
+                // 使用InvokeAsync确保在正确的线程上下文中执行
+                InvokeAsync(StateHasChanged);
             }
         });
 
@@ -55,7 +56,8 @@
             _component = null;
             _showPropertyPanel = false;
             _activeTabKey = "tab_page";
-            StateHasChanged();
+            // 使用InvokeAsync确保在正确的线程上下文中执行
+            InvokeAsync(StateHasChanged);
         });
     }
     #endregion

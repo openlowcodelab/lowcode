@@ -56,9 +56,12 @@
             {
                 _component = (ComponentPartsSchema)value;
                 _showPropertyPanel = true;
-                _tabs.ActivatePane("tab_property");
                 // 使用InvokeAsync确保在正确的线程上下文中执行
-                InvokeAsync(StateHasChanged);
+                InvokeAsync(() =>
+                {
+                    _tabs.ActivatePane("tab_property");
+                    StateHasChanged();
+                });
             }
         });
 
@@ -67,9 +70,12 @@
         {
             _component = null;
             _showPropertyPanel = false;
-            _tabs.ActivatePane("tab_page");
             // 使用InvokeAsync确保在正确的线程上下文中执行
-            InvokeAsync(StateHasChanged);
+            InvokeAsync(() =>
+            {
+                _tabs.ActivatePane("tab_page");
+                StateHasChanged();
+            });
         });
     }
     #endregion
