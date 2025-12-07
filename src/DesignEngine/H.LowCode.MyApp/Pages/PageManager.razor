@@ -1,6 +1,6 @@
 ﻿@page "/myapp/{AppId}/pagemanager"
 @namespace H.LowCode.MyApp
-@inherits DesignEngineLowCodePageComponentBase
+@inherits LowCodePageComponentBase
 @layout MyAppLayout
 
 @inject IPageAppService PageAppService
@@ -84,9 +84,6 @@
 </Modal>
 
 @code {
-    [Parameter]
-    public string AppId { get; set; }
-
     [PersistentState]
     public IList<PageListModel> _pageList { get; set; }
 

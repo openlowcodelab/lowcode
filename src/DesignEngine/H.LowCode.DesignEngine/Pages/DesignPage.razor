@@ -1,6 +1,6 @@
 @page "/designer/{AppId}/{PageId}"
 @namespace H.LowCode.DesignEngine
-@inherits DesignEngineLowCodePageComponentBase
+@inherits LowCodePageComponentBase
 @layout DesignEngineLayout
 
 @inject IPageAppService PageAppService
@@ -45,9 +45,6 @@
 
 @code
 {
-    [Parameter]
-    public string AppId { get; set; }
-
     [Parameter]
     public string PageId { get; set; }
 

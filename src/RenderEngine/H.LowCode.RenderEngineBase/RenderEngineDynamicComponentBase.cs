@@ -13,8 +13,6 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
     [CascadingParameter(Name = "pageCascading")]
     public PageCascadingModel PageCascading { get; set; }
 
-    [Inject] protected new IMessageService Message { get; set; }
-
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();

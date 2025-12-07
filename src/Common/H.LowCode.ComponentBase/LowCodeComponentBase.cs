@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using AntDesign;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.WebUtilities;
 using System.Diagnostics.CodeAnalysis;
 using Volo.Abp.AspNetCore.Components;
@@ -10,11 +11,11 @@ namespace H.LowCode.ComponentBase;
 /// </summary>
 public abstract class LowCodeComponentBase : AbpComponentBase
 {
-    [Inject]
-    private LowCodeAppState LowCodeAppState { get; set; }
+    [Inject] private LowCodeAppState LowCodeAppState { get; set; }
 
-    [Inject]
-    protected NavigationManager NavigationManager { get; set; }
+    [Inject] protected NavigationManager NavigationManager { get; set; }
+
+    [Inject] protected new IMessageService Message { get; set; }
 
     /// <summary>
     /// 组件状态标识 (用于 ShouldRender 判断)

@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNetCore.Components;
-using Microsoft.Extensions.Logging;
+﻿using AntDesign;
+using Microsoft.AspNetCore.Components;
 
 namespace H.LowCode.ComponentBase;
 
@@ -8,11 +8,18 @@ namespace H.LowCode.ComponentBase;
 /// </summary>
 public abstract class LowCodePageComponentBase : LowCodeComponentBase
 {
+    [Parameter] public string AppId { get; set; }
+
+    [Inject] protected ISessionStorageService SessionStorageService { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
-        await base.OnInitializedAsync();
+        if (!string.IsNullOrEmpty(AppId))
+        {
+            await SessionStorageService.SetAsync("appid", AppId);
+        }
 
-        Logger.LogInformation($"渲染模式: {RendererInfo.Name}, path=/{NavigationManager.ToBaseRelativePath(NavigationManager.Uri)}");
+        await base.OnInitializedAsync();
     }
 
     protected static T GetQueryValue<T>(string name)
