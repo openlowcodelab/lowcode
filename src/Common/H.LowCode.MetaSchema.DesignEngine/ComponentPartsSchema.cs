@@ -147,6 +147,7 @@ public class ComponentPartsSchema : ComponentSchemaBase
         //基础属性合并
         //this.Fragment = componentPartsDefine.Fragment;
         //this.Style = componentPartsDefine.Style;
+        this.IsHiddenLabel = componentPartsDefine.IsHiddenLabel;
         this.SupportEvents = componentPartsDefine.SupportEvents;
 
         //属性合并

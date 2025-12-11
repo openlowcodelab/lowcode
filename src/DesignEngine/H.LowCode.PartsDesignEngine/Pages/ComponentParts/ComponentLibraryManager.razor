@@ -136,10 +136,15 @@
                                   Hoverable>
                                 <ChildContent>
                                     <div style="padding: 8px;">
-                                        <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                                            <Icon Type="@(component.ComponentType == 1 ? "build" : "appstore")" 
-                                                  Style="@($"margin-right: 8px; color: {(component.ComponentType == 1 ? "#52c41a" : "#1890ff")};")"/>
-                                            <span style="font-weight: 500;">@component.Label</span>
+                                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                                            <div style="display: flex; align-items: center;">
+                                                <Icon Type="@(component.ComponentType == 1 ? "build" : "appstore")" 
+                                                      Style="@($"margin-right: 8px; color: {(component.ComponentType == 1 ? "#52c41a" : "#1890ff")}")"/>
+                                                <span style="font-weight: 500;">@component.Label</span>
+                                            </div>
+                                            <div style="font-size: 12px; color: #999; padding: 2px; border-radius: 10px;">
+                                                @component.Order
+                                            </div>
                                         </div>
                                         <div style="font-size: 12px; color: #666; margin-bottom: 8px;">
                                             @component.ComponentId
