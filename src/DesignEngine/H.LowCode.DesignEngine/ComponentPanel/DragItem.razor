@@ -34,8 +34,8 @@
         component.DesignState.IsDroppedFromComponentPanel = true;
         if (isOnClick)
         {
-            //发送事件，通知订阅此事件的其他组件更新状态
-            BlazorEventDispatcher.Publish("designengine.dragitem.onclick", component);
+            // 在组件的渲染线程中发布事件，避免 Publish 在非 UI 线程执行导致后续 InvokeAsync 抛异常
+            InvokeAsync(() => BlazorEventDispatcher.Publish("designengine.dragitem.onclick", component));
         }
         else
         {

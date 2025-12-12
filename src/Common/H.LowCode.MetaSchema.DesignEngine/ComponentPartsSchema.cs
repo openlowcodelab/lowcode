@@ -1,5 +1,7 @@
 using H.Util.Ids;
 using System.Text.Json.Serialization;
+using Volo.Abp.Validation;
+using System.Linq;
 
 namespace H.LowCode.MetaSchema.DesignEngine;
 
@@ -83,6 +85,7 @@ public class ComponentPartsSchema : ComponentSchemaBase
     public ComponentDesignStateSchema DesignState { get; set; } = new();
 
     [JsonIgnore]
+    [DisableValidation]
     public Action? Refresh { get; set; }
 
     public void RefreshState()
@@ -151,34 +154,71 @@ public class ComponentPartsSchema : ComponentSchemaBase
         this.SupportEvents = componentPartsDefine.SupportEvents;
 
         //属性合并
-        if (componentPartsDefine.AttributeDefineGroups != null)
-        {
-            foreach (var attrDefineGroup in componentPartsDefine.AttributeDefineGroups)
-            {
-                if(attrDefineGroup.AttributeDefines == null)
-                    continue;
-                
-                foreach (var attrDefine in attrDefineGroup.AttributeDefines)
-                {
-                    var attr = this.AttributeDefineGroups.SelectMany(a => a.AttributeDefines)
-                        .FirstOrDefault(a => a.AttributeName == attrDefine.AttributeName);
-
-                    if (attr != null)
-                    {
-                        attr.DisplayName = attrDefine.DisplayName;
-                        attr.AttributeItemType = attrDefine.AttributeItemType;
-                        attr.IsRequired = attrDefine.IsRequired;
-                        attr.Description = attrDefine.Description;
-                        attr.DefaultValue = attrDefine.DefaultValue;
-                        attr.Options = attrDefine.Options;
-                    }
-                }
-            }
-        }
+        MergeAttributeDefineGroups(componentPartsDefine.AttributeDefineGroups);
 
         //数据源合并
         this.IsSupportDataSource = componentPartsDefine.IsSupportDataSource;
         if (componentPartsDefine?.DataSource?.DataSourceFragment != null)
             this.DataSource.DataSourceFragment = componentPartsDefine.DataSource.DataSourceFragment;
+    }
+
+    // 抽取的私有方法：合并 AttributeDefineGroups，存在则更新，不存在则新增
+    private void MergeAttributeDefineGroups(IEnumerable<ComponentPartsAttributeDefineGroupSchema>? srcGroups)
+    {
+        if (srcGroups == null)
+            return;
+
+        var currentGroups = this.AttributeDefineGroups?.ToList() ?? new List<ComponentPartsAttributeDefineGroupSchema>();
+
+        foreach (var srcGroup in srcGroups)
+        {
+            if (srcGroup == null || srcGroup.AttributeDefines == null)
+                continue;
+
+            var targetGroup = currentGroups.FirstOrDefault(g => g.GroupName == srcGroup.GroupName);
+
+            if (targetGroup == null)
+            {
+                // 新增整个分组（复制数组以避免引用同一实例）
+                var newGroup = new ComponentPartsAttributeDefineGroupSchema
+                {
+                    GroupName = srcGroup.GroupName,
+                    AttributeDefines = srcGroup.AttributeDefines.ToArray()
+                };
+
+                currentGroups.Add(newGroup);
+            }
+            else
+            {
+                var targetAttrs = targetGroup.AttributeDefines?.ToList() ?? new List<ComponentPartsAttributeDefineSchema>();
+
+                foreach (var srcAttr in srcGroup.AttributeDefines)
+                {
+                    if (srcAttr == null)
+                        continue;
+
+                    var existingAttr = targetAttrs.FirstOrDefault(a => a.AttributeName == srcAttr.AttributeName);
+                    if (existingAttr != null)
+                    {
+                        existingAttr.DisplayName = srcAttr.DisplayName;
+                        existingAttr.AttributeItemType = srcAttr.AttributeItemType;
+                        //existingAttr.IsRequired = srcAttr.IsRequired;
+                        existingAttr.Description = srcAttr.Description;
+                        existingAttr.DefaultValue = srcAttr.DefaultValue;
+                        existingAttr.Options = srcAttr.Options;
+                        //existingAttr.IsValidationEnabled = srcAttr.IsValidationEnabled;
+                        //existingAttr.ValidationRules = srcAttr.ValidationRules;
+                    }
+                    else
+                    {
+                        targetAttrs.Add(srcAttr);
+                    }
+                }
+
+                targetGroup.AttributeDefines = targetAttrs.ToArray();
+            }
+        }
+
+        this.AttributeDefineGroups = currentGroups;
     }
 }
