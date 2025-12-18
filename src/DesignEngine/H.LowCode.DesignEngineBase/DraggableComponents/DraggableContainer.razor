@@ -1,4 +1,5 @@
 @namespace H.LowCode.DesignEngineBase
+@using System.Threading.Tasks
 @inherits LowCodeComponentBase
 
 @inject DragDropStateService DragDropStateService
@@ -197,13 +198,14 @@
     /// <param name="newContainerComponent"></param>
     /// <param name="currentDragComponent"></param>
     /// <param name="dragOverComponent"></param>
-    private void DragItem_Move(ComponentPartsSchema newContainerComponent, ComponentPartsSchema currentDragComponent, ComponentPartsSchema dragOverComponent)
+    private async Task DragItem_Move(ComponentPartsSchema newContainerComponent, ComponentPartsSchema currentDragComponent, ComponentPartsSchema dragOverComponent)
     {
         //上一个 DraggableContainer 移除
         var oldContainerComponent = DragDropStateService.FindComponentById(PageCascading.AppId, PageCascading.PageId, currentDragComponent.ParentId);
         oldContainerComponent.Childrens.Remove(currentDragComponent);
-        oldContainerComponent.RefreshState();  //刷新上一个 DraggableContainer，使 Remove 立即生效
 
+        await InvokeAsync(() => oldContainerComponent.RefreshState()); //刷新上一个 DraggableContainer，使 Remove 立即生效
+        
         //当前 DraggableContainer 新增
         currentDragComponent.ParentId = newContainerComponent.Id;
         DragItem_Add(newContainerComponent, currentDragComponent, dragOverComponent);
