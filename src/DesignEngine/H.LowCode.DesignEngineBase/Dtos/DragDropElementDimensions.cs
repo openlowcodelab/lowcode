@@ -2,7 +2,7 @@
 
 namespace H.LowCode.DesignEngineBase;
 
-internal class DragDropElementDimensions
+public class DragDropElementDimensions
 {
     public double Width { get; set; }
     public double Height { get; set; }
@@ -14,7 +14,7 @@ internal class DragDropElementDimensions
     public double OffsetLeft { get; set; }
 }
 
-internal class DragDropElementMargin
+public class DragDropElementMargin
 {
     public double Top { get; set; }
     public double Right { get; set; }

@@ -5,9 +5,9 @@ using H.Util.Ids;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
 
-namespace H.LowCode.DesignEngineBase;
+namespace H.LowCode.PartsDesignEngine;
 
-public abstract class DesignEngineDynamicComponentBase : LowCodeDynamicComponentBase
+public abstract class PartsDynamicComponentBase : LowCodeDynamicComponentBase
 {
     protected virtual RenderFragment RenderComponent(ComponentPartsSchema component)
         => builder =>

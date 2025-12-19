@@ -11,26 +11,29 @@
             <Tabs DefaultActiveKey="11" Class="componentpanel" Style="width:270px; padding:0px 4px;">
                 <TabPane Key="11" Tab="组件库">
                     <div style="height:100%; overflow-y: auto;">
-                        @* @if (_componentLibraries != null)
+                        <!-- 按组件库分组显示 -->
+                        @if (ComponentsByLibrary != null && ComponentsByLibrary.Count > 0)
                         {
-                            @foreach (var componentLibrary in _componentLibraries)
-                            {
-                                <div style="display: inline-block; padding-bottom: 20px;">
-                                    <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:5px 0;">@componentLibrary.LibraryName</div>
-
-                                    @foreach (var component in LoadComponentParts(componentLibrary.LibraryId))
-                                    {
-                                        <DragItem Component="component"></DragItem>
-                                    }
-                                </div>
-                            }
-                        } *@
-                        @if (_componentPartsList != null)
+                            <Collapse Accordion="false" Style="padding: 4px 0;">
+                                @foreach (var libraryGroup in ComponentsByLibrary)
+                                {
+                                    <CollapsePanel Header="@libraryGroup.Key" Key="@libraryGroup.Key" DefaultActive="true">
+                                        <div style="padding: 8px 0;">
+                                            @if (libraryGroup.Value != null)
+                                            {
+                                                @foreach (var component in libraryGroup.Value)
+                                                {
+                                                    <DragItem Component="component"></DragItem>
+                                                }
+                                            }
+                                        </div>
+                                    </CollapsePanel>
+                                }
+                            </Collapse>
+                        }
+                        else
                         {
-                            @foreach (var component in _componentPartsList)
-                            {
-                                <DragItem Component="component"></DragItem>
-                            }
+                            <div style="padding: 16px; text-align: center; color: #999;">暂无组件</div>
                         }
                     </div>
                 </TabPane>
@@ -66,23 +69,45 @@
 </Tabs>
 
 @code {
+    /// <summary>
+    /// 按组件库分组的组件集合
+    /// Key: 组件库名称, Value: 该库的组件列表
+    /// </summary>
     [PersistentState]
-    public IList<ComponentPartsSchema>? _componentPartsList { get; set; }
+    public Dictionary<string, List<ComponentPartsSchema>> ComponentsByLibrary { get; set; } = [];
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
 
-        _componentPartsList = (await LoadComponentPartsAsync()) ?? [];
+        // 先尝试获取所有组件库
+        var libraries = await LoadComponentLibraries();
+
+        if (libraries != null && libraries.Count > 0)
+        {
+            // 为每个库加载组件，并按库分组
+            ComponentsByLibrary = new Dictionary<string, List<ComponentPartsSchema>>();
+
+            foreach (var lib in libraries)
+            {
+                var components = await ComponentPartsAppService.GetAllComponentsAsync(lib.LibraryId);
+                if (components != null && components.Count > 0)
+                {
+                    ComponentsByLibrary[lib.LibraryId] = new List<ComponentPartsSchema>(components);
+                }
+            }
+        }
     }
 
     private async Task<IList<ComponentLibrarySchema>> LoadComponentLibraries()
     {
-        return await ComponentLibraryAppService.GetListAsync();
-    }
-
-    private async Task<IList<ComponentPartsSchema>> LoadComponentPartsAsync()
-    {
-        return await ComponentPartsAppService.GetAllComponentsAsync("antdesign");
+        try
+        {
+            return await ComponentLibraryAppService.GetListAsync();
+        }
+        catch
+        {
+            return new List<ComponentLibrarySchema>();
+        }
     }
 }

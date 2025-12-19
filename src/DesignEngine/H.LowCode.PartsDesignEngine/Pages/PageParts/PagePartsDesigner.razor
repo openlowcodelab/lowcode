@@ -3,7 +3,7 @@
 @inherits LowCodePageComponentBase
 @layout PartsDesignEngineLayout
 
-@inject DragDropStateService DragDropStateService
+@inject PartsDragDropStateService PartsDragDropStateService
 
 <PageTitle>@($"{_pageCascadingModel.PageName} - 页面物料设计器")</PageTitle>
 
@@ -115,8 +115,8 @@
         if (_partsSchema == null)
             throw new NullReferenceException(nameof(_partsSchema));
 
-        //_partsSchema.Components = DragDropStateService.GetRootComponent(_partsSchema.AppId, _partsSchema.Id).Childrens;
-        //_partsSchema.PageProperty = DragDropStateService.GetGlobalPageProperty(AppId, PageId);
+        //_partsSchema.Components = PartsDragDropStateService.GetRootComponent(_partsSchema.AppId, _partsSchema.Id).Childrens;
+        //_partsSchema.PageProperty = PartsDragDropStateService.GetGlobalPageProperty(AppId, PageId);
         return _partsSchema;
     }
 

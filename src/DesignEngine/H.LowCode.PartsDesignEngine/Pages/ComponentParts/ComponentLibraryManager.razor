@@ -268,9 +268,6 @@
 </style>
 
 @code {
-
-
-
     [PersistentState]
     public IList<ComponentLibrarySchema> _componentLibraries { get; set; }
 
@@ -481,7 +478,7 @@
         }
         else if (componentParts.ComponentType == 2) // 低代码组件
         {
-            NavigateTo($"/myparts/component/designer/{componentParts.ComponentId}");
+            NavigateTo($"/myparts/component/designer/{componentParts.LibraryId}/{componentParts.ComponentId}");
         }
     }
 
@@ -502,7 +499,7 @@
 
     private void DesignComponent(ComponentPartsListModel component)
     {
-        NavigateTo($"/myparts/page/designer/{component.ComponentId}");
+        NavigateTo($"/myparts/component/designer/{component.LibraryId}/{component.ComponentId}");
     }
 
     private async Task DeleteComponent(string componentId)

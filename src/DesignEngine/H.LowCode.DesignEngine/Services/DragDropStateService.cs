@@ -1,11 +1,11 @@
 ﻿using H.LowCode.MetaSchema.DesignEngine;
 
-namespace H.LowCode.DesignEngineBase;
+namespace H.LowCode.DesignEngine;
 
 /// <summary>
 /// 拖拽状态服务
 /// </summary>
-public class DragDropStateService
+internal class DragDropStateService
 {
     #region 拖拽对象状态管理
     private IDictionary<string, DragDropStateSchema> schemaStates = new Dictionary<string, DragDropStateSchema>();
@@ -205,7 +205,7 @@ public class DragDropStateService
     #endregion
 }
 
-public class DragDropStateSchema
+internal class DragDropStateSchema
 {
     /// <summary>
     /// 根 ComponentPartsSchema

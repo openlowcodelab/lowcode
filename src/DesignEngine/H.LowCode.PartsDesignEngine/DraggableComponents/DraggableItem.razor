@@ -1,14 +1,14 @@
-@namespace H.LowCode.DesignEngineBase
+@namespace H.LowCode.PartsDesignEngine
 @inherits LowCodeComponentBase
 @implements IAsyncDisposable
 
-@inject DragDropStateService DragDropStateService
+@inject PartsDragDropStateService PartsDragDropStateService
 @inject IJSRuntime JSRuntime
 
 <div @ref="itemRef" class="draggableitem-box @DraggableItemBoxClassMapper.Class"
     draggable="@Component.DesignState.IsSelected"
      style="float:left;
-        width: @((Component.Style.ItemWidth > 4 ? Component.Style.ItemWidth : (IsInRootContainer ? 24/PageCascading.PageLayout : 24))  /24 * 100)%;
+        width: @((Component.Style.ItemWidth > 4 ? Component.Style.ItemWidth : 24)  /24 * 100)%;
         min-height: @(Component.Style.ItemHeight)px;
         transform: @Component.DesignState.AnimationTransform;
         will-change: @(Component.DesignState.IsAnimating ? "transform" : "auto");
@@ -44,13 +44,13 @@
             </div>
         }
 
-        <ComponentItem Component="@Component"></ComponentItem>
+        <DynamicComponentItem Component="@Component"></DynamicComponentItem>
     </div>
 </div>
 
 @code {
-    [CascadingParameter(Name = "pageCascading")]
-    public PageCascadingModel PageCascading { get; set; }
+    [CascadingParameter(Name = "partsCascading")]
+    public PartsCascadingModel PartsCascading { get; set; }
 
     [Parameter]
     public ComponentPartsSchema Component { get; set; }
@@ -130,7 +130,7 @@
             {
                 if (value != null)
                 {
-                    PageCascading.PageLayout = (int)value;
+                    //PageCascading.PageLayout = (int)value;
                     // 使用InvokeAsync确保在正确的线程上下文中执行
                     InvokeAsync(StateHasChanged);
                 }
@@ -177,7 +177,7 @@
         Console.WriteLine($"拖拽开始:{initialX}-{initialY}");
 
         //记录当前选中对象
-        DragDropStateService.SetCurrentDragComponent(PageCascading.AppId, PageCascading.PageId, Component);
+        PartsDragDropStateService.SetCurrentDragComponent(PartsCascading.LibraryId, PartsCascading.PartsId, Component);
         //拖拽开始前，清理兄弟组件残留动画，避免初始闪烁
         ClearSiblingAnimation();
     }
@@ -185,16 +185,16 @@
     private void OnDragEnter(DragEventArgs dragEventArgs)
     {
         // 更新最后悬停目标，但避免全量重置以防频繁进出同一目标导致闪烁
-        DragDropStateService.SetLastDragOverComponent(PageCascading.AppId, PageCascading.PageId, Component);
+        PartsDragDropStateService.SetLastDragOverComponent(PartsCascading.LibraryId, PartsCascading.PartsId, Component);
     }
 
     private void OnDragOver(DragEventArgs dragEventArgs)
     {
-        var currentDragComponent = DragDropStateService.GetCurrentDragComponent(PageCascading.AppId, PageCascading.PageId);
+        var currentDragComponent = PartsDragDropStateService.GetCurrentDragComponent(PartsCascading.LibraryId, PartsCascading.PartsId);
         if (ReferenceEquals(currentDragComponent, Component))
             return;
 
-        var lastDragOverComponent = DragDropStateService.GetLastDragOverComponent(PageCascading.AppId, PageCascading.PageId);
+        var lastDragOverComponent = PartsDragDropStateService.GetLastDragOverComponent(PartsCascading.LibraryId, PartsCascading.PartsId);
 
         // 只有当拖拽到不同组件时才触发让位动画，避免连续拖拽问题
         if (!ReferenceEquals(lastDragOverComponent, Component))
@@ -203,7 +203,7 @@
             ClearSiblingAnimation();
 
             // 更新最后拖拽经过的组件
-            DragDropStateService.SetLastDragOverComponent(PageCascading.AppId, PageCascading.PageId, Component);
+            PartsDragDropStateService.SetLastDragOverComponent(PartsCascading.LibraryId, PartsCascading.PartsId, Component);
         }
 
         TriggerSiblingAnimation();
@@ -212,7 +212,7 @@
     private void OnDragLeave()
     {
         //如果当前被拖拽的组件和拖拽到上面的组件是同一个，直接返回
-        var currentDragComponent = DragDropStateService.GetCurrentDragComponent(PageCascading.AppId, PageCascading.PageId);
+        var currentDragComponent = PartsDragDropStateService.GetCurrentDragComponent(PartsCascading.LibraryId, PartsCascading.PartsId);
         if (ReferenceEquals(currentDragComponent, Component))
             return;
 
@@ -273,7 +273,7 @@
             return;
 
         // 使用 transform3d 优化性能，触发 GPU 加速，添加 will-change 提示浏览器优化
-        var currentDragComponent = DragDropStateService.GetCurrentDragComponent(PageCascading.AppId, PageCascading.PageId);
+        var currentDragComponent = PartsDragDropStateService.GetCurrentDragComponent(PartsCascading.LibraryId, PartsCascading.PartsId);
         if (currentDragComponent != null)
         {
             currentDragComponent.DesignState.AnimationTransform = $"translate3d({dragOffsetX}px, {dragOffsetY}px, 0)";
@@ -299,7 +299,7 @@
     /// </summary>
     private void ResetAllAnimationStates()
     {
-        var rootComponent = DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId);
+        var rootComponent = PartsDragDropStateService.GetRootComponent(PartsCascading.LibraryId, PartsCascading.PartsId);
         if (rootComponent?.Childrens != null)
         {
             foreach (var child in rootComponent.Childrens)
@@ -318,8 +318,8 @@
     {
         if (dimensions == null) return;
 
-        var rootComponent = DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId);
-        var currentDragComponent = DragDropStateService.GetCurrentDragComponent(PageCascading.AppId, PageCascading.PageId);
+        var rootComponent = PartsDragDropStateService.GetRootComponent(PartsCascading.LibraryId, PartsCascading.PartsId);
+        var currentDragComponent = PartsDragDropStateService.GetCurrentDragComponent(PartsCascading.LibraryId, PartsCascading.PartsId);
 
         if (rootComponent?.Childrens == null || currentDragComponent == null)
             return;
@@ -407,10 +407,10 @@
     /// </summary>
     private void ClearSiblingAnimation()
     {
-        var rootComponent = DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId);
+        var rootComponent = PartsDragDropStateService.GetRootComponent(PartsCascading.LibraryId, PartsCascading.PartsId);
         if (rootComponent?.Childrens != null)
         {
-            var currentDragComponent = DragDropStateService.GetCurrentDragComponent(PageCascading.AppId, PageCascading.PageId);
+            var currentDragComponent = PartsDragDropStateService.GetCurrentDragComponent(PartsCascading.LibraryId, PartsCascading.PartsId);
             foreach (var child in rootComponent.Childrens)
             {
                 if (!ReferenceEquals(child, currentDragComponent))
