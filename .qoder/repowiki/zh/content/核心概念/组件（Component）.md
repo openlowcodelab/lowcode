@@ -358,7 +358,7 @@ Component-->>User : 反馈
     "mt": "2025-02-24T15:36:15.8037414Z",
     "id": "cj8ac3m42",
     "libid": "antdesign",
-    "compid": "52391a70",
+    "partsId": "52391a70",
     "lb": "输入框-A",
     "container": false,
     "stl": {

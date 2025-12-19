@@ -3,13 +3,13 @@
 
 @if (Component.IsContainer)
 {
-    <span style="font-size:10px; color:gray; margin-left:10px;">组件标识：@Component.ComponentId</span>
+    <span style="font-size:10px; color:gray; margin-left:10px;">组件标识：@Component.PartsId</span>
 }
 else
 {
     <div class="propertysetting-item">
         <label>Name<span style="font-size:10px; color:gray;"> (字段名称/英文)</span>：</label>
-        <label style="float:right; color:gray;">@Component.ComponentId</label>
+        <label style="float:right; color:gray;">@Component.PartsId</label>
         <Input TValue="string" @bind-value="@Component.Name" OnChange="(value) => OnPropertyChange()" />
     </div>
     <div class="propertysetting-item">

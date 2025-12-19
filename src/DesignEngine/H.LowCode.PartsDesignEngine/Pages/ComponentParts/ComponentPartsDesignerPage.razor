@@ -23,7 +23,7 @@ else
                     <a href="javascript:void(0)" @onclick="GoBack"> @("<") 返回 </a>
                 </div>
                 <div style="text-align: center; flex: 1;">
-                    <h3 style="margin: 0; line-height: 64px;">@(_partsSchema?.ComponentId ?? "新建低代码组件")</h3>
+                    <h3 style="margin: 0; line-height: 64px;">@(_partsSchema?.PartsId ?? "新建低代码组件")</h3>
                 </div>
                 <div style="float:right;">
                     <Button OnClick="PreviewComponent">预览</Button>
@@ -102,7 +102,7 @@ else
                 _partsSchema = new ComponentPartsSchema
                 {
                     Id = partsId,
-                    ComponentId = string.Empty,
+                    PartsId = string.Empty,
                     LibraryId = _partsCascading.PartsId,
                     ComponentType = 2, // 低代码组件
                     Name = partsId,
@@ -154,7 +154,7 @@ else
             StateHasChanged();
 
             // 验证必填字段
-            if (string.IsNullOrWhiteSpace(_partsSchema.ComponentId))
+            if (string.IsNullOrWhiteSpace(_partsSchema.PartsId))
             {
                 await Message.WarningAsync("请输入组件Id！");
                 return;
@@ -168,7 +168,7 @@ else
 
             // 设置基本信息
             _partsSchema.LibraryId = _partsCascading.LibraryId;
-            _partsSchema.ComponentId = PartsId;
+            _partsSchema.PartsId = PartsId;
             _partsSchema.ModifiedTime = DateTime.UtcNow;
 
             // 保存组件

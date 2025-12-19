@@ -67,7 +67,7 @@ public class PageAppService : ApplicationService, IPageAppService
     {
         //组件定义 Schema
         var componentPartsDefine = await _componentPartsAppService.GetByIdAsync(component.LibraryId,
-            component.ComponentId);
+            component.PartsId);
 
         //组件实例与组件定义合并,保证历史组件实例升级到最新组件特性
         component.MergeComponentPartsDefine(componentPartsDefine);

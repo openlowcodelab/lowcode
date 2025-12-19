@@ -206,7 +206,7 @@ public abstract class PartsDynamicComponentBase : LowCodeDynamicComponentBase
         var innerContainerComponent = new ComponentPartsSchema
         {
             Id = key,
-            ComponentId = ShortIdGenerator.Generate(),
+            PartsId = ShortIdGenerator.Generate(),
             Refresh = component.Refresh,
 
             Fragment = new(),

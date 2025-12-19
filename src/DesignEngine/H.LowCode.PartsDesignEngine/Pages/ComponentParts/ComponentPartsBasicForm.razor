@@ -9,7 +9,7 @@
             <label style="display: block; margin-bottom: 4px; font-weight: 500;">
                 <span style="color: red;">*</span> 组件Id
             </label>
-            <Input @bind-Value="@_componentParts.ComponentId" Placeholder="请输入组件Id（组件唯一标识, 如 input）" />
+            <Input @bind-Value="@_componentParts.PartsId" Placeholder="请输入组件Id（组件唯一标识, 如 input）" />
         </div>
         
         <div style="margin-bottom: 16px;">
@@ -104,7 +104,7 @@
                 _componentParts = new ComponentPartsSchema
                 {
                     Id = ShortIdGenerator.Generate(),
-                    ComponentId = "",
+                    PartsId = "",
                     ComponentType = 1, // 默认原子组件
                     IsContainer = false,
                     IsSupportDataSource = false,
@@ -151,7 +151,7 @@
     private async Task OnOk()
     {
         // 手动验证必填字段
-        if (string.IsNullOrWhiteSpace(_componentParts.ComponentId))
+        if (string.IsNullOrWhiteSpace(_componentParts.PartsId))
         {
             await Message.ErrorAsync("请输入组件Id");
             return;
@@ -194,7 +194,7 @@
         var componentParts = new ComponentPartsSchema
         {
             Id = ShortIdGenerator.Generate(),
-            ComponentId = _componentParts.ComponentId,
+            PartsId = _componentParts.PartsId,
             LibraryId = LibraryId,
             Label = _componentParts.Label,
             ComponentType = _componentParts.ComponentType,

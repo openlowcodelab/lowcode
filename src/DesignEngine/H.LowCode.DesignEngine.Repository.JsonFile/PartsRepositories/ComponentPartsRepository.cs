@@ -46,7 +46,7 @@ public class ComponentPartsRepository : PartsFileRepositoryBase, IComponentParts
             ComponentPartsListModel model = new()
             {
                 LibraryId = componentPartsSchema.LibraryId,
-                ComponentId = componentPartsSchema.ComponentId,
+                ComponentId = componentPartsSchema.PartsId,
                 ComponentType = componentPartsSchema.ComponentType,
                 IsContainer = componentPartsSchema.IsContainer,
                 IsSupportDataSource = componentPartsSchema.IsSupportDataSource,
@@ -118,7 +118,7 @@ public class ComponentPartsRepository : PartsFileRepositoryBase, IComponentParts
         if(componentParts.Fragment != null)
             componentParts.Fragment.TypeName = null;
 
-        string fileName = string.Format(componentPartsFileName_Format, _metaBaseDir, componentParts.LibraryId, componentParts.ComponentId);
+        string fileName = string.Format(componentPartsFileName_Format, _metaBaseDir, componentParts.LibraryId, componentParts.PartsId);
 
         string fileDirectory = Path.GetDirectoryName(fileName);
         if (!Directory.Exists(fileDirectory))
