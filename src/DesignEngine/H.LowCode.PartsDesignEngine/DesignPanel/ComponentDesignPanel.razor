@@ -78,14 +78,4 @@ else
     {
         return _rootComponent?.Childrens?.ToList() ?? new List<ComponentPartsSchema>();
     }
-
-    /// <summary>
-    /// 重新加载设计面板
-    /// </summary>
-    public async Task Reload(ComponentPartsSchema componentPartsSchema)
-    {
-        ComponentPartsSchema = componentPartsSchema;
-        _rootComponent = LoadRootComponent();
-        await InvokeAsync(StateHasChanged);
-    }
 }

@@ -97,9 +97,9 @@ public class ComponentPartsRepository : PartsFileRepositoryBase, IComponentParts
         return await Task.FromResult(list);
     }
 
-    public async Task<ComponentPartsSchema> GetByIdAsync(string libraryId, string componentId)
+    public async Task<ComponentPartsSchema> GetByIdAsync(string libraryId, string partsId)
     {
-        string fileName = string.Format(componentPartsFileName_Format, _metaBaseDir, libraryId, componentId);
+        string fileName = string.Format(componentPartsFileName_Format, _metaBaseDir, libraryId, partsId);
 
         var componentPartsSchemaJson = ReadAllText(fileName) ?? throw new FileNotFoundException(fileName);
         var componentParts = componentPartsSchemaJson.FromJson<ComponentPartsSchema>();
@@ -128,9 +128,9 @@ public class ComponentPartsRepository : PartsFileRepositoryBase, IComponentParts
         return await Task.FromResult(true);
     }
 
-    public async Task<bool> DeleteAsync(string libraryId, string componentId)
+    public async Task<bool> DeleteAsync(string libraryId, string partsId)
     {
-        string fileName = string.Format(componentPartsFileName_Format, _metaBaseDir, libraryId, componentId);
+        string fileName = string.Format(componentPartsFileName_Format, _metaBaseDir, libraryId, partsId);
         if (!File.Exists(fileName))
             return false;
 

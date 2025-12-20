@@ -23,7 +23,7 @@ else
                     <a href="javascript:void(0)" @onclick="GoBack"> @("<") 返回 </a>
                 </div>
                 <div style="text-align: center; flex: 1;">
-                    <h3 style="margin: 0; line-height: 64px;">@(_partsSchema?.PartsId ?? "新建低代码组件")</h3>
+                    <h3 style="margin: 0; line-height: 64px;">低代码组件设计器</h3>
                 </div>
                 <div style="float:right;">
                     <Button OnClick="PreviewComponent">预览</Button>
@@ -38,7 +38,7 @@ else
                     <Content Class="designpage">
                         <AntDesign.Tabs DefaultActiveKey="design" TabPosition="@TabPosition.Top" Style="height: 100%;">
                             <AntDesign.TabPane Key="design" Tab="可视化设计">
-                                <ComponentDesignPanel @ref="_designPanel" ComponentPartsSchema="_partsSchema"></ComponentDesignPanel>
+                                <ComponentDesignPanel ComponentPartsSchema="_partsSchema"></ComponentDesignPanel>
                             </AntDesign.TabPane>
                             <AntDesign.TabPane Key="properties" Tab="组件属性">
                                 @if (_partsSchema != null)
@@ -70,11 +70,11 @@ else
     [Parameter]
     public string PartsId { get; set; }
 
+    [PersistentState]
+    public ComponentPartsSchema _partsSchema { get; set; }
+
     private PartsCascadingModel _partsCascading;
 
-    private ComponentDesignPanel _designPanel;
-    private ComponentPartsSchema _partsSchema;
-    private bool _isNewComponent;
     private bool _loading = true;
     private bool _saving = false;
 
@@ -94,43 +94,21 @@ else
             _loading = true;
             StateHasChanged();
 
-            if (string.Equals("newparts", _partsCascading.PartsId, StringComparison.OrdinalIgnoreCase))
+            _partsSchema = await ComponentPartsAppService.GetByIdAsync(_partsCascading.LibraryId, _partsCascading.PartsId);
+            if (_partsSchema == null)
             {
-                _isNewComponent = true;
-                var partsId = ShortIdGenerator.Generate();
-                _partsCascading.PartsId = partsId;
-                _partsSchema = new ComponentPartsSchema
-                {
-                    Id = partsId,
-                    PartsId = string.Empty,
-                    LibraryId = _partsCascading.PartsId,
-                    ComponentType = 2, // 低代码组件
-                    Name = partsId,
-                    Order = 0,
-                    Version = "1.0.0",
-                    AttributeDefineGroups = new List<ComponentPartsAttributeDefineGroupSchema>(),
-                    EventDefines = new List<ComponentPartsEventDefineSchema>(),
-                    StyleDefines = new List<ComponentPartsStyleDefineSchema>(),
-                    Fragment = new ComponentPartsFragmentSchema(),
-                    DataSource = new ComponentPartsDataSourceSchema()
-                };
+                await Message.ErrorAsync("组件不存在！");
+                GoBack();
+                return;
             }
-            else
+            
+            // 确保 Childrens 不为 null
+            if (_partsSchema.Childrens == null)
             {
-                _partsSchema = await ComponentPartsAppService.GetByIdAsync(_partsCascading.LibraryId, _partsCascading.PartsId);
-                if (_partsSchema == null)
-                {
-                    await Message.ErrorAsync("组件不存在！");
-                    GoBack();
-                    return;
-                }
+                _partsSchema.Childrens = new List<ComponentPartsSchema>();
             }
-
-            // 初始化设计面板
-            if (_designPanel != null)
-            {
-                await _designPanel.Reload(_partsSchema);
-            }
+            
+            _partsCascading.PartsName = _partsSchema.Name;
         }
         catch (Exception ex)
         {
@@ -176,13 +154,6 @@ else
             
             if (success)
             {
-                if (_isNewComponent)
-                {
-                    _isNewComponent = false;
-                    // 保存成功后跳转到编辑页面
-                    NavigateTo($"/myparts/component/derarysigner/{_partsCascading.LibraryId}/{PartsId}");
-                }
-
                 await Message.SuccessAsync("保存成功！");
             }
             else
