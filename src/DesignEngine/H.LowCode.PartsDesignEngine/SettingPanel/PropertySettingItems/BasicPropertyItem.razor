@@ -1,0 +1,38 @@
+﻿@namespace H.LowCode.PartsDesignEngine
+@inherits LowCodeComponentBase
+
+@if (Component.IsContainer)
+{
+    <span style="font-size:10px; color:gray; margin-left:10px;">组件标识：@Component.PartsId</span>
+}
+else
+{
+    <div class="propertysetting-item">
+        <label>Name<span style="font-size:10px; color:gray;"> (字段名称/英文)</span>：</label>
+        <label style="float:right; color:gray;">@Component.PartsId</label>
+        <Input TValue="string" @bind-value="@Component.Name" OnChange="(value) => OnPropertyChange()" />
+    </div>
+    <div class="propertysetting-item">
+        <label>标题：</label>
+        <Input TValue="string" @bind-value="@Component.Label" OnChange="(value) => OnPropertyChange()" />
+    </div>
+    <div class="propertysetting-item">
+        <label>描述：</label>
+        <TextArea @bind-value="@Component.Description" OnChange="(value) => OnPropertyChange()" />
+    </div>
+}
+
+@code {
+    [Parameter]
+    public ComponentPartsSchema Component { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+
+    private void OnPropertyChange()
+    {
+        Component.RefreshState();
+    }
+}

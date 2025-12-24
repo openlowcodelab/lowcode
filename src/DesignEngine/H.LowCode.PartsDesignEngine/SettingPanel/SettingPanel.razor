@@ -3,7 +3,7 @@
 
 @inject PartsDragDropStateService PartsDragDropStateService
 
-<Tabs DefaultActiveKey="tab_page" @bind-ActiveKey="@_activeTabKey" Class="settingpanel" Style="width:250px; padding:0px 8px;">
+<Tabs DefaultActiveKey="tab_property" @bind-ActiveKey="@_activeTabKey" Class="settingpanel" Style="width:250px; padding:0px 8px;">
     @if (_showPropertyPanel)
     {
         @if (_component.IsContainer == false)
@@ -12,6 +12,7 @@
                 <PropertySetting Component="@_component"></PropertySetting>
             </TabPane>
         }
+
         <TabPane Key="tab_style" Tab="样式">
             <StyleSetting Component="@_component"></StyleSetting>
         </TabPane>
@@ -26,7 +27,7 @@
 
     private bool _showPropertyPanel { get; set; }
 
-    private string _activeTabKey { get; set; } = "tab_page";
+    private string _activeTabKey { get; set; } = "tab_property";
 
     #region Init
     protected override void OnAfterRender(bool firstRender)
@@ -55,7 +56,7 @@
         {
             _component = null;
             _showPropertyPanel = false;
-            _activeTabKey = "tab_page";
+            _activeTabKey = "tab_property";
             // 使用InvokeAsync确保在正确的线程上下文中执行
             InvokeAsync(StateHasChanged);
         });
