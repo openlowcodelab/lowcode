@@ -43,4 +43,10 @@ public abstract class ComponentDataSourceSchemaBase : StateHasChangeSchema
     /// </summary>
     [JsonPropertyName("sqlopds")]
     public SQLDataSourceSchema? SQLOptionDataSource { get; set; }
+
+    /// <summary>
+    /// List 循环数据源配置
+    /// </summary>
+    [JsonPropertyName("listds")]
+    public ListDataSourceSchema? ListDataSource { get; set; }
 }

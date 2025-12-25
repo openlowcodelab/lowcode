@@ -22,10 +22,24 @@ public class ComponentSchema : ComponentSchemaBase
     public ComponentAttributeDefineGroupSchema[]? AttributeDefineGroups { get; set; }
 
     /// <summary>
-    /// 将组件自定义属性合并到 Fragment 中
+    /// 子组件列表
     /// </summary>
     [JsonPropertyName("childs")]
     public ComponentSchema[]? Childrens { get; set; }
+
+    /// <summary>
+    /// 条件分支配置（用于条件渲染组件）
+    /// Key: 条件值（字符串形式）
+    /// Value: 对应的子组件配置
+    /// </summary>
+    [JsonPropertyName("cases")]
+    public Dictionary<string, ComponentSchema>? Cases { get; set; }
+
+    /// <summary>
+    /// 默认分支（当没有匹配的条件时渲染）
+    /// </summary>
+    [JsonPropertyName("default")]
+    public ComponentSchema? DefaultCase { get; set; }
 
     public void MergeAttributeDefineToFragment()
     {

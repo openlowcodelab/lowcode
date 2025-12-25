@@ -89,6 +89,16 @@ public abstract class DynamicComponentPartsBase : LowCodeDynamicComponentBase
         {
             builder.AddAttribute(index++, "DataSource", component.DataSource);
         }
+        else if (dataSource.DataSourceGroupType == ComponentDataSourceGroupTypeEnum.List)
+        {
+            // List 数据源，使用默认示例数据
+            var sampleData = new List<object>
+            {
+                new Dictionary<string, object> { { "id", "1" }, { "title", "示例项 1" } },
+                new Dictionary<string, object> { { "id", "2" }, { "title", "示例项 2" } }
+            };
+            builder.AddAttribute(index++, "DataSource", sampleData);
+        }
     }
 
     private void RenderOptionDataSource(string componentId,

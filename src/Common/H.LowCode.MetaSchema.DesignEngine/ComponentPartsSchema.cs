@@ -65,6 +65,20 @@ public class ComponentPartsSchema : ComponentSchemaBase
     [JsonPropertyName("stydefs")]
     public List<ComponentPartsStyleDefineSchema> StyleDefines { get; set; } = [];
 
+    /// <summary>
+    /// 条件分支配置（用于条件渲染组件）
+    /// Key: 条件值（字符串形式）
+    /// Value: 对应的子组件配置
+    /// </summary>
+    [JsonPropertyName("cases")]
+    public Dictionary<string, ComponentPartsSchema>? Cases { get; set; }
+
+    /// <summary>
+    /// 默认分支（当没有匹配的条件时渲染）
+    /// </summary>
+    [JsonPropertyName("default")]
+    public ComponentPartsSchema? DefaultCase { get; set; }
+
     [JsonPropertyName("order")]
     public int Order { get; set; }
 

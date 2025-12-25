@@ -1,0 +1,76 @@
+@namespace H.LowCode.Components.Defaults
+@using Microsoft.AspNetCore.Components.Rendering
+
+@* 
+    条件渲染组件 - 平台层通用能力
+    根据 ConditionValue 匹配 Cases 中的条件，渲染对应的子内容
+*@
+
+@if (MatchedContent != null)
+{
+    @MatchedContent
+}
+else if (DefaultContent != null)
+{
+    @DefaultContent
+}
+
+@code {
+    /// <summary>
+    /// 条件值（用于匹配 Cases）
+    /// </summary>
+    [Parameter]
+    public object ConditionValue { get; set; }
+
+    /// <summary>
+    /// 条件分支内容字典
+    /// Key: 条件值（字符串形式）
+    /// Value: 对应的渲染内容
+    /// </summary>
+    [Parameter]
+    public Dictionary<string, RenderFragment> Cases { get; set; }
+
+    /// <summary>
+    /// 默认内容（当没有匹配的条件时显示）
+    /// </summary>
+    [Parameter]
+    public RenderFragment DefaultContent { get; set; }
+
+    /// <summary>
+    /// 子内容（用于简单的显示/隐藏场景）
+    /// </summary>
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+    /// <summary>
+    /// 是否显示（用于简单的显示/隐藏场景）
+    /// </summary>
+    [Parameter]
+    public bool Visible { get; set; } = true;
+
+    private RenderFragment MatchedContent
+    {
+        get
+        {
+            // 简单显示/隐藏模式
+            if (Cases == null || Cases.Count == 0)
+            {
+                return Visible ? ChildContent : null;
+            }
+
+            // 条件匹配模式
+            if (ConditionValue == null)
+            {
+                return null;
+            }
+
+            var key = ConditionValue.ToString();
+            if (Cases.TryGetValue(key, out var content))
+            {
+                return content;
+            }
+
+            return null;
+        }
+    }
+}

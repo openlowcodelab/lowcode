@@ -89,6 +89,10 @@ public abstract class DynamicComponentBase : LowCodeDynamicComponentBase
         {
             builder.AddAttribute(index++, "DataSource", component.DataSource);
         }
+        else if (dataSource.DataSourceGroupType == ComponentDataSourceGroupTypeEnum.List)
+        {
+            RenderListDataSource(componentId, component, dataSource, builder, index);
+        }
     }
 
     private void RenderOptionDataSource(string componentId,
@@ -147,6 +151,127 @@ public abstract class DynamicComponentBase : LowCodeDynamicComponentBase
                     component, null, childFragment, childBuilder, index);
             }
         }));
+    }
+    #endregion
+
+    #region 渲染 List 循环数据源
+    private void RenderListDataSource(string componentId,
+        ComponentPartsSchema component,
+        ComponentPartsDataSourceSchema dataSource,
+        RenderTreeBuilder builder, int index)
+    {
+        if (dataSource.ListDataSource == null)
+        {
+            // 如果没有配置数据源，渲染空列表
+            builder.AddAttribute(index++, "DataSource", new List<object>());
+            return;
+        }
+
+        // 获取固定数据源（设计时预览）
+        var listData = GetListDataSource(dataSource);
+        if (listData == null || listData.Count == 0)
+        {
+            // 使用示例数据
+            listData = new List<object>
+            {
+                new Dictionary<string, object> { { "id", "1" }, { "title", "示例问题 1" } },
+                new Dictionary<string, object> { { "id", "2" }, { "title", "示例问题 2" } }
+            };
+        }
+
+        // 渲染 ItemTemplate
+        if (dataSource.DataSourceFragment != null)
+        {
+            builder.AddAttribute(index++, "ChildContent", (RenderFragment<object>)((item) => (childBuilder) =>
+            {
+                if (string.IsNullOrEmpty(dataSource.DataSourceFragment.TypeName))
+                    return;
+
+                Type itemComponentType = Type.GetType(dataSource.DataSourceFragment.TypeName, true);
+                if (itemComponentType == null)
+                    return;
+
+                childBuilder.OpenComponent(index++, itemComponentType);
+
+                // 渲染属性
+                if (dataSource.DataSourceFragment.Attributes != null)
+                {
+                    foreach (var attr in dataSource.DataSourceFragment.Attributes)
+                    {
+                        if (string.IsNullOrEmpty(attr.AttributeName))
+                            continue;
+
+                        var attrValue = ResolveAttributeValue(attr, item);
+                        
+                        if (!string.IsNullOrEmpty(attr.AttributeClrType))
+                        {
+                            var attrType = Type.GetType(attr.AttributeClrType);
+                            if (attrType != null)
+                            {
+                                var realValue = attrValue?.ToString().ConvertToRealType(attrType) ?? attrValue;
+                                childBuilder.AddAttribute(index++, attr.AttributeName, realValue);
+                            }
+                        }
+                        else
+                        {
+                            childBuilder.AddAttribute(index++, attr.AttributeName, attrValue);
+                        }
+                    }
+                }
+
+                // 渲染子组件
+                if (dataSource.DataSourceFragment.HasChildFragment)
+                {
+                    RenderChildFragments(componentId, component, dataSource.DataSourceFragment, childBuilder, index);
+                }
+
+                childBuilder.CloseComponent();
+            }));
+        }
+
+        builder.AddAttribute(index++, "DataSource", listData);
+    }
+
+    private IList<object> GetListDataSource(ComponentPartsDataSourceSchema dataSource)
+    {
+        var listDs = dataSource.ListDataSource;
+        if (listDs == null)
+            return new List<object>();
+
+        if (listDs.FixedData != null && listDs.FixedData.Count > 0)
+        {
+            return listDs.FixedData.Cast<object>().ToList();
+        }
+
+        return new List<object>();
+    }
+
+    private object ResolveAttributeValue(ComponentAttributeFragmentSchema attr, object dataItem)
+    {
+        if (attr.AttributeValue == null)
+            return null;
+
+        var valueStr = attr.AttributeValue.ToString();
+        if (string.IsNullOrEmpty(valueStr))
+            return null;
+
+        // 支持绑定表达式 $(item.fieldName)
+        if (valueStr.StartsWith("$(item.") && valueStr.EndsWith(")"))
+        {
+            var fieldName = valueStr.Substring(7, valueStr.Length - 8);
+            
+            if (dataItem is Dictionary<string, object> dict)
+            {
+                return dict.ContainsKey(fieldName) ? dict[fieldName] : null;
+            }
+            else
+            {
+                var propInfo = dataItem.GetType().GetProperty(fieldName);
+                return propInfo?.GetValue(dataItem);
+            }
+        }
+
+        return attr.AttributeValue;
     }
     #endregion
 
