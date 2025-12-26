@@ -1,16 +1,18 @@
-{
+﻿{
     "comps": [
         {
             "libid": "antdesign",
-            "compid": "select",
+            "partsId": "select",
             "ct": 1,
             "frag": {
-                "t": "AntDesign.Select\u00602[[System.String],[System.String]], antdesign",
+                "t": "AntDesign.Select`2[[System.String],[System.String]], antdesign",
+                "childs": [],
                 "valt": "System.String",
                 "attrs": []
             },
             "ds": {
                 "dsgt": 1,
+                "dst": 8,
                 "dsid": "leave_type_options"
             },
             "attrdefgroups": [],
@@ -34,10 +36,10 @@
                 {
                     "id": "f_start_time_required",
                     "cid": "f_start_time",
+                    "enabled": true,
                     "type": 1,
                     "errmsg": "开始时间不能为空",
                     "trigger": 1,
-                    "enabled": true,
                     "order": 1
                 }
             ],
@@ -45,11 +47,12 @@
         },
         {
             "libid": "antdesign",
-            "compid": "datepicker",
+            "partsId": "datepicker",
             "ct": 1,
             "frag": {
-                "t": "AntDesign.DatePicker\u00601[[System.Nullable\u00601[[System.DateTime]]]], AntDesign",
-                "valt": "System.Nullable\u00601[System.DateTime]",
+                "t": "AntDesign.DatePicker`1[[System.Nullable`1[[System.DateTime]]]], AntDesign",
+                "childs": [],
+                "valt": "System.Nullable`1[System.DateTime]",
                 "attrs": []
             },
             "ds": {
@@ -79,10 +82,10 @@
                 {
                     "id": "f_end_time_required",
                     "cid": "f_end_time",
+                    "enabled": true,
                     "type": 1,
                     "errmsg": "结束时间不能为空",
                     "trigger": 1,
-                    "enabled": true,
                     "order": 1
                 }
             ],
@@ -90,11 +93,12 @@
         },
         {
             "libid": "antdesign",
-            "compid": "datepicker",
+            "partsId": "datepicker",
             "ct": 1,
             "frag": {
-                "t": "AntDesign.DatePicker\u00601[[System.Nullable\u00601[[System.DateTime]]]], AntDesign",
-                "valt": "System.Nullable\u00601[System.DateTime]",
+                "t": "AntDesign.DatePicker`1[[System.Nullable`1[[System.DateTime]]]], AntDesign",
+                "childs": [],
+                "valt": "System.Nullable`1[System.DateTime]",
                 "attrs": []
             },
             "ds": {
@@ -124,31 +128,31 @@
                 {
                     "id": "f_days_required",
                     "cid": "f_days",
+                    "enabled": true,
                     "type": 1,
                     "errmsg": "请假天数不能为空",
                     "trigger": 1,
-                    "enabled": true,
                     "order": 1
                 },
                 {
                     "id": "f_days_min",
                     "cid": "f_days",
+                    "enabled": true,
                     "type": 3,
                     "errmsg": "请假天数必须大于0",
                     "trigger": 1,
-                    "enabled": true,
-                    "order": 2,
-                    "rulev": "1"
+                    "order": 2
                 }
             ],
             "v": "0.0.1"
         },
         {
             "libid": "antdesign",
-            "compid": "inputnumber",
+            "partsId": "inputnumber",
             "ct": 1,
             "frag": {
-                "t": "AntDesign.InputNumber\u00601[System.Int32], AntDesign",
+                "t": "AntDesign.InputNumber`1[System.Int32], AntDesign",
+                "childs": [],
                 "valt": "System.Int32",
                 "attrs": []
             },
@@ -175,31 +179,31 @@
                 {
                     "id": "f_reason_required",
                     "cid": "f_reason",
+                    "enabled": true,
                     "type": 1,
                     "errmsg": "请假原因不能为空",
                     "trigger": 1,
-                    "enabled": true,
                     "order": 1
                 },
                 {
                     "id": "f_reason_min",
                     "cid": "f_reason",
+                    "enabled": true,
                     "type": 3,
                     "errmsg": "请假原因不能少于5个字符",
                     "trigger": 1,
-                    "enabled": true,
-                    "order": 2,
-                    "rulev": "5"
+                    "order": 2
                 }
             ],
             "v": "0.0.1"
         },
         {
             "libid": "antdesign",
-            "compid": "textarea",
+            "partsId": "textarea",
             "ct": 1,
             "frag": {
                 "t": "AntDesign.TextArea, AntDesign",
+                "childs": [],
                 "valt": "System.String",
                 "attrs": []
             },
@@ -216,7 +220,7 @@
                             "desc": "",
                             "dftval": 4,
                             "attrn": "Rows",
-                            "attrt": "System.Int32",
+                            "attrt": "System.UInt32",
                             "attrv": 4
                         },
                         {
@@ -248,144 +252,6 @@
             },
             "valrules": [],
             "v": "0.0.1"
-        },
-        {
-            "libid": "antdesign",
-            "compid": "button",
-            "ct": 1,
-            "frag": {
-                "t": "AntDesign.Button, AntDesign",
-                "valt": "System.String",
-                "attrs": [
-                    {
-                        "attrn": "Text",
-                        "attrt": "System.String"
-                    },
-                    {
-                        "attrn": "Type",
-                        "attrt": "System.String"
-                    }
-                ]
-            },
-            "ds": {},
-            "attrdefgroups": [
-                {
-                    "gn": "基础属性",
-                    "attrdefs": [
-                        {
-                            "disn": "按钮文字",
-                            "pt": 1,
-                            "desc": "按钮显示的文本内容",
-                            "dftval": "按钮",
-                            "attrn": "Text",
-                            "attrt": "System.String",
-                            "attrv": "提交申请"
-                        },
-                        {
-                            "disn": "按钮类型",
-                            "pt": 3,
-                            "desc": "按钮的样式类型",
-                            "dftval": "default",
-                            "attrn": "Type",
-                            "attrt": "System.String",
-                            "attrv": "primary"
-                        }
-                    ]
-                }
-            ],
-            "childs": [],
-            "evdefs": [],
-            "stydefs": [],
-            "order": 60,
-            "pub": 1,
-            "mt": "2025-11-17T10:00:00Z",
-            "id": "submit_btn",
-            "pid": "root",
-            "n": "submit_btn",
-            "lb": "提交按钮",
-            "stl": {
-                "itemw": 4,
-                "itemh": 50,
-                "labelw": 180
-            },
-            "evs": [
-                {
-                    "en": "OnClick",
-                    "eht": 10,
-                    "edat": 10
-                }
-            ],
-            "valrules": [],
-            "v": "0.0.1"
-        },
-        {
-            "libid": "antdesign",
-            "compid": "button",
-            "ct": 1,
-            "frag": {
-                "t": "AntDesign.Button, AntDesign",
-                "valt": "System.String",
-                "attrs": [
-                    {
-                        "attrn": "Text",
-                        "attrt": "System.String"
-                    },
-                    {
-                        "attrn": "Type",
-                        "attrt": "System.String"
-                    }
-                ]
-            },
-            "ds": {},
-            "attrdefgroups": [
-                {
-                    "gn": "基础属性",
-                    "attrdefs": [
-                        {
-                            "disn": "按钮文字",
-                            "pt": 1,
-                            "desc": "按钮显示的文本内容",
-                            "dftval": "按钮",
-                            "attrn": "Text",
-                            "attrt": "System.String",
-                            "attrv": "重置"
-                        },
-                        {
-                            "disn": "按钮类型",
-                            "pt": 3,
-                            "desc": "按钮的样式类型",
-                            "dftval": "default",
-                            "attrn": "Type",
-                            "attrt": "System.String",
-                            "attrv": "default"
-                        }
-                    ]
-                }
-            ],
-            "childs": [],
-            "evdefs": [],
-            "stydefs": [],
-            "order": 70,
-            "pub": 1,
-            "mt": "2025-11-17T10:00:00Z",
-            "id": "reset_btn",
-            "pid": "root",
-            "n": "reset_btn",
-            "lb": "重置按钮",
-            "stl": {
-                "itemw": 4,
-                "itemh": 50,
-                "labelw": 180
-            },
-            "evs": [
-                {
-                    "en": "OnClick",
-                    "eht": 10,
-                    "edat": 20
-                }
-            ],
-            "valrules": [],
-            "v": "0.0.1"
         }
     ],
     "sptevs": [
@@ -403,11 +269,10 @@
         }
     },
     "ds": {
-        "dsgt": 1,
         "dst": 1,
         "dsid": "leave_request",
         "dsn": "请假申请",
         "dsv": "tb_leave_request"
     },
-    "mt": "2025-11-23T10:51:59.3503316Z"
+    "mt": "2025-12-09T15:01:32.3954823Z"
 }

@@ -1,5 +1,7 @@
 using H.Util.Ids;
 using System.Text.Json.Serialization;
+using Volo.Abp.Validation;
+using System.Linq;
 
 namespace H.LowCode.MetaSchema.DesignEngine;
 
@@ -15,8 +17,8 @@ public class ComponentPartsSchema : ComponentSchemaBase
     /// 组件物料Id
     /// </summary>
     /// <remarks>一类组件唯一Id</remarks>
-    [JsonPropertyName("compid")]
-    public required string ComponentId { get; set; }
+    [JsonPropertyName("partsId")]
+    public required string PartsId { get; set; }
 
     /// <summary>
     /// 组件类型：1-原子组件  2-组合组件
@@ -63,6 +65,20 @@ public class ComponentPartsSchema : ComponentSchemaBase
     [JsonPropertyName("stydefs")]
     public List<ComponentPartsStyleDefineSchema> StyleDefines { get; set; } = [];
 
+    /// <summary>
+    /// 条件分支配置（用于条件渲染组件）
+    /// Key: 条件值（字符串形式）
+    /// Value: 对应的子组件配置
+    /// </summary>
+    [JsonPropertyName("cases")]
+    public Dictionary<string, ComponentPartsSchema>? Cases { get; set; }
+
+    /// <summary>
+    /// 默认分支（当没有匹配的条件时渲染）
+    /// </summary>
+    [JsonPropertyName("default")]
+    public ComponentPartsSchema? DefaultCase { get; set; }
+
     [JsonPropertyName("order")]
     public int Order { get; set; }
 
@@ -83,6 +99,7 @@ public class ComponentPartsSchema : ComponentSchemaBase
     public ComponentDesignStateSchema DesignState { get; set; } = new();
 
     [JsonIgnore]
+    [DisableValidation]
     public Action? Refresh { get; set; }
 
     public void RefreshState()
@@ -99,7 +116,7 @@ public class ComponentPartsSchema : ComponentSchemaBase
         //Copy全新对象, Id 重新生成
         newComponent.Id = ShortIdGenerator.Generate();
         newComponent.ParentId = string.Empty;
-        newComponent.Name = $"{newComponent.ComponentId}_{Random.Shared.Next(100, 999)}";
+        newComponent.Name = $"{newComponent.PartsId}_{Random.Shared.Next(100, 999)}";
         newComponent.DesignState.IsSelected = false;
 
         //手动赋值无法序列化属性
@@ -147,37 +164,75 @@ public class ComponentPartsSchema : ComponentSchemaBase
         //基础属性合并
         //this.Fragment = componentPartsDefine.Fragment;
         //this.Style = componentPartsDefine.Style;
+        this.IsHiddenLabel = componentPartsDefine.IsHiddenLabel;
         this.SupportEvents = componentPartsDefine.SupportEvents;
 
         //属性合并
-        if (componentPartsDefine.AttributeDefineGroups != null)
-        {
-            foreach (var attrDefineGroup in componentPartsDefine.AttributeDefineGroups)
-            {
-                if(attrDefineGroup.AttributeDefines == null)
-                    continue;
-                
-                foreach (var attrDefine in attrDefineGroup.AttributeDefines)
-                {
-                    var attr = this.AttributeDefineGroups.SelectMany(a => a.AttributeDefines)
-                        .FirstOrDefault(a => a.AttributeName == attrDefine.AttributeName);
-
-                    if (attr != null)
-                    {
-                        attr.DisplayName = attrDefine.DisplayName;
-                        attr.AttributeItemType = attrDefine.AttributeItemType;
-                        attr.IsRequired = attrDefine.IsRequired;
-                        attr.Description = attrDefine.Description;
-                        attr.DefaultValue = attrDefine.DefaultValue;
-                        attr.Options = attrDefine.Options;
-                    }
-                }
-            }
-        }
+        MergeAttributeDefineGroups(componentPartsDefine.AttributeDefineGroups);
 
         //数据源合并
         this.IsSupportDataSource = componentPartsDefine.IsSupportDataSource;
         if (componentPartsDefine?.DataSource?.DataSourceFragment != null)
             this.DataSource.DataSourceFragment = componentPartsDefine.DataSource.DataSourceFragment;
+    }
+
+    // 抽取的私有方法：合并 AttributeDefineGroups，存在则更新，不存在则新增
+    private void MergeAttributeDefineGroups(IEnumerable<ComponentPartsAttributeDefineGroupSchema>? srcGroups)
+    {
+        if (srcGroups == null)
+            return;
+
+        var currentGroups = this.AttributeDefineGroups?.ToList() ?? new List<ComponentPartsAttributeDefineGroupSchema>();
+
+        foreach (var srcGroup in srcGroups)
+        {
+            if (srcGroup == null || srcGroup.AttributeDefines == null)
+                continue;
+
+            var targetGroup = currentGroups.FirstOrDefault(g => g.GroupName == srcGroup.GroupName);
+
+            if (targetGroup == null)
+            {
+                // 新增整个分组（复制数组以避免引用同一实例）
+                var newGroup = new ComponentPartsAttributeDefineGroupSchema
+                {
+                    GroupName = srcGroup.GroupName,
+                    AttributeDefines = srcGroup.AttributeDefines.ToArray()
+                };
+
+                currentGroups.Add(newGroup);
+            }
+            else
+            {
+                var targetAttrs = targetGroup.AttributeDefines?.ToList() ?? new List<ComponentPartsAttributeDefineSchema>();
+
+                foreach (var srcAttr in srcGroup.AttributeDefines)
+                {
+                    if (srcAttr == null)
+                        continue;
+
+                    var existingAttr = targetAttrs.FirstOrDefault(a => a.AttributeName == srcAttr.AttributeName);
+                    if (existingAttr != null)
+                    {
+                        existingAttr.DisplayName = srcAttr.DisplayName;
+                        existingAttr.AttributeItemType = srcAttr.AttributeItemType;
+                        //existingAttr.IsRequired = srcAttr.IsRequired;
+                        existingAttr.Description = srcAttr.Description;
+                        existingAttr.DefaultValue = srcAttr.DefaultValue;
+                        existingAttr.Options = srcAttr.Options;
+                        //existingAttr.IsValidationEnabled = srcAttr.IsValidationEnabled;
+                        //existingAttr.ValidationRules = srcAttr.ValidationRules;
+                    }
+                    else
+                    {
+                        targetAttrs.Add(srcAttr);
+                    }
+                }
+
+                targetGroup.AttributeDefines = targetAttrs.ToArray();
+            }
+        }
+
+        this.AttributeDefineGroups = currentGroups;
     }
 }

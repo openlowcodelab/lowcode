@@ -1,7 +1,7 @@
 ﻿@namespace H.LowCode.PartsDesignEngine
-@inherits DesignEngineLowCodeComponentBase
+@inherits LowCodeComponentBase
 
-@inject DragDropStateService DragDropStateService
+@inject PartsDragDropStateService PartsDragDropStateService
 
 @if (_rootComponent != null)
 {
@@ -11,8 +11,8 @@
 }
 
 @code {
-    [CascadingParameter(Name = "pageCascading")]
-    public PageCascadingModel PageCascading { get; set; }
+    [CascadingParameter(Name = "partsCascading")]
+    public PartsCascadingModel PartsCascading { get; set; }
 
     [SupplyParameterFromQuery(Name = "pt")]
     public int PageType { get; set; }
@@ -28,23 +28,23 @@
 
     private ComponentPartsSchema LoadRootComponent()
     {
-        var rootComponent = DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId);
+        var rootComponent = PartsDragDropStateService.GetRootComponent(PartsCascading.LibraryId, PartsCascading.PartsId);
         if (rootComponent == null)
         {
             rootComponent = new ComponentPartsSchema()
             {
                 Id = "root",
-                ComponentId = "root"
+                PartsId = "root"
             };
             //rootComponent.Refresh = StateHasChanged;
-            DragDropStateService.SetRootComponent(PageCascading.AppId, PageCascading.PageId, rootComponent);
+            PartsDragDropStateService.SetRootComponent(PartsCascading.LibraryId, PartsCascading.PartsId, rootComponent);
         }
         return rootComponent;
     }
 
     public void Reload(PagePartsSchema pageSchema)
     {
-        var rootComponent = DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId);
+        var rootComponent = PartsDragDropStateService.GetRootComponent(PartsCascading.LibraryId, PartsCascading.PartsId);
         if (pageSchema != null && rootComponent != null)
         {
             var componentPartses = new List<ComponentPartsSchema>();

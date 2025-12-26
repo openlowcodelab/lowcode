@@ -1,6 +1,6 @@
 @page "/{AppId}/{PageId}"
 @namespace H.LowCode.Themes.AntBlazor
-@inherits RenderEnginePageComponentBase
+@inherits LowCodePageComponentBase
 @layout AntBlazorThemeLayout
 
 @inject IMetaAppService MetaAppService
@@ -47,6 +47,19 @@
         _pageSchema = await LoadPageSchemaAsync();
 
         SetPageModel(_pageSchema);
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+        
+        // 当 PageId 改变时，重新加载页面数据
+        if (_pageCascadingModel == null || _pageCascadingModel.PageId != PageId)
+        {
+            _pageCascadingModel = new() { AppId = AppId, PageId = PageId, PageName = "..." };
+            _pageSchema = await LoadPageSchemaAsync();
+            SetPageModel(_pageSchema);
+        }
     }
 
     private async Task<PageSchema> LoadPageSchemaAsync()

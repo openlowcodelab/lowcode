@@ -1,5 +1,5 @@
 @namespace H.LowCode.PartsDesignEngine
-@inherits DesignEngineLowCodeComponentBase
+@inherits LowCodeComponentBase
 
 <div class="component-parts-editor">
     <AntDesign.Tabs DefaultActiveKey="basic" TabPosition="@TabPosition.Top">
@@ -10,7 +10,7 @@
                         <label style="display: block; margin-bottom: 4px; font-weight: 500;">
                             组件Id <span style="color: #ff4d4f;">*</span>
                         </label>
-                        <Input @bind-Value="@ComponentParts.ComponentId" Placeholder="组件Name" />
+                        <Input @bind-Value="@ComponentParts.PartsId" Placeholder="组件Name" />
                     </div>
                 </AntDesign.Col>
                 <AntDesign.Col Span="12">
@@ -166,7 +166,7 @@
             ComponentParts = new ComponentPartsSchema
             {
                 Id = ShortIdGenerator.Generate(),
-                ComponentId = ShortIdGenerator.Generate(),
+                PartsId = ShortIdGenerator.Generate(),
                 ComponentType = 1,
                 Order = 0,
                 AttributeDefineGroups = new List<ComponentPartsAttributeDefineGroupSchema>(),

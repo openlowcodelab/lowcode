@@ -1,5 +1,5 @@
 @namespace H.LowCode.PartsDesignEngine
-@inherits DesignEngineLowCodeComponentBase
+@inherits LowCodeComponentBase
 @layout PartsDesignEngineLayout
 @inject IComponentLibraryAppService ComponentLibraryAppService
 @inject IComponentPartsAppService ComponentPartsAppService
@@ -136,10 +136,15 @@
                                   Hoverable>
                                 <ChildContent>
                                     <div style="padding: 8px;">
-                                        <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                                            <Icon Type="@(component.ComponentType == 1 ? "build" : "appstore")" 
-                                                  Style="@($"margin-right: 8px; color: {(component.ComponentType == 1 ? "#52c41a" : "#1890ff")};")"/>
-                                            <span style="font-weight: 500;">@component.Label</span>
+                                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                                            <div style="display: flex; align-items: center;">
+                                                <Icon Type="@(component.ComponentType == 1 ? "build" : "appstore")" 
+                                                      Style="@($"margin-right: 8px; color: {(component.ComponentType == 1 ? "#52c41a" : "#1890ff")}")"/>
+                                                <span style="font-weight: 500;">@component.Label</span>
+                                            </div>
+                                            <div style="font-size: 12px; color: #999; padding: 2px; border-radius: 10px;">
+                                                @component.Order
+                                            </div>
                                         </div>
                                         <div style="font-size: 12px; color: #666; margin-bottom: 8px;">
                                             @component.ComponentId
@@ -263,9 +268,6 @@
 </style>
 
 @code {
-
-
-
     [PersistentState]
     public IList<ComponentLibrarySchema> _componentLibraries { get; set; }
 
@@ -472,11 +474,11 @@
         // 根据组件类型跳转到不同的编辑页面
         if (componentParts.ComponentType == 1) // 原子组件
         {
-            NavigateTo($"/myparts/component/edit/{componentParts.LibraryId}/{componentParts.ComponentId}");
+            NavigateTo($"/myparts/component/edit/{componentParts.LibraryId}/{componentParts.PartsId}");
         }
         else if (componentParts.ComponentType == 2) // 低代码组件
         {
-            NavigateTo($"/myparts/component/designer/{componentParts.ComponentId}");
+            NavigateTo($"/myparts/component/designer/{componentParts.LibraryId}/{componentParts.PartsId}");
         }
     }
 
@@ -497,7 +499,7 @@
 
     private void DesignComponent(ComponentPartsListModel component)
     {
-        NavigateTo($"/myparts/page/designer/{component.ComponentId}");
+        NavigateTo($"/myparts/component/designer/{component.LibraryId}/{component.ComponentId}");
     }
 
     private async Task DeleteComponent(string componentId)

@@ -1,0 +1,149 @@
+@namespace H.LowCode.DesignEngine
+@inherits LowCodeComponentBase
+@using System.Text.Json
+
+<div style="margin: 16px 0;">
+    <Alert Type="@AntDesign.AlertType.Info" 
+           Message="固定数据源说明"
+           Description="用于设计时预览和测试。运行时可以切换为 API 或 SQL 数据源。数据格式为 JSON 数组，每个元素是一个对象。"
+           Style="margin-bottom: 16px;" />
+
+    <div style="margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <label style="font-weight: 500;">数据列表</label>
+            <Button Type="@ButtonType.Primary" Size="@ButtonSize.Small" OnClick="AddDataItem" Icon="plus">添加数据项</Button>
+        </div>
+
+        @if (DataSource?.FixedData != null && DataSource.FixedData.Count > 0)
+        {
+            <div style="max-height: 400px; overflow-y: auto;">
+                @for (int i = 0; i < DataSource.FixedData.Count; i++)
+                {
+                    var index = i;
+                    var dataItem = DataSource.FixedData[index];
+                    
+                    <Card Size="@CardSize.Small" Style="margin-bottom: 8px;">
+                        <Extra>
+                            <Space>
+                                <SpaceItem>
+                                    <Button Type="@ButtonType.Text" Size="@ButtonSize.Small" OnClick="() => MoveUp(index)" 
+                                            Disabled="@(index == 0)" Icon="up">上移</Button>
+                                </SpaceItem>
+                                <SpaceItem>
+                                    <Button Type="@ButtonType.Text" Size="@ButtonSize.Small" OnClick="() => MoveDown(index)" 
+                                            Disabled="@(index == DataSource.FixedData.Count - 1)" Icon="down">下移</Button>
+                                </SpaceItem>
+                                <SpaceItem>
+                                    <Button Type="@ButtonType.Text" Size="@ButtonSize.Small" OnClick="() => RemoveDataItem(index)" 
+                                            Danger Icon="delete">删除</Button>
+                                </SpaceItem>
+                            </Space>
+                        </Extra>
+                        <Body>
+                            <div style="margin-bottom: 8px;">
+                                <label style="display: block; margin-bottom: 4px; font-weight: 500;">数据项 @(index + 1) (JSON 格式)</label>
+                                <TextArea Value="@GetJsonString(dataItem)" 
+                                          ValueChanged="@((v) => UpdateDataItem(index, v))"
+                                          Rows="4" 
+                                          Placeholder='{"id": "1", "title": "问题标题", "type": 1}' />
+                            </div>
+                        </Body>
+                    </Card>
+                }
+            </div>
+        }
+        else
+        {
+            <Empty />
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public ListDataSourceSchema DataSource { get; set; }
+
+    [Parameter]
+    public EventCallback<ListDataSourceSchema> DataSourceChanged { get; set; }
+
+    private void AddDataItem()
+    {
+        if (DataSource != null)
+        {
+            if (DataSource.FixedData == null)
+            {
+                DataSource.FixedData = new List<Dictionary<string, object>>();
+            }
+
+            DataSource.FixedData.Add(new Dictionary<string, object>
+            {
+                { "id", DataSource.FixedData.Count + 1 },
+                { "title", $"示例数据 {DataSource.FixedData.Count + 1}" }
+            });
+
+            StateHasChanged();
+        }
+    }
+
+    private void RemoveDataItem(int index)
+    {
+        if (DataSource?.FixedData != null && index >= 0 && index < DataSource.FixedData.Count)
+        {
+            DataSource.FixedData.RemoveAt(index);
+            StateHasChanged();
+        }
+    }
+
+    private void MoveUp(int index)
+    {
+        if (DataSource?.FixedData != null && index > 0)
+        {
+            var item = DataSource.FixedData[index];
+            DataSource.FixedData.RemoveAt(index);
+            DataSource.FixedData.Insert(index - 1, item);
+            StateHasChanged();
+        }
+    }
+
+    private void MoveDown(int index)
+    {
+        if (DataSource?.FixedData != null && index < DataSource.FixedData.Count - 1)
+        {
+            var item = DataSource.FixedData[index];
+            DataSource.FixedData.RemoveAt(index);
+            DataSource.FixedData.Insert(index + 1, item);
+            StateHasChanged();
+        }
+    }
+
+    private string GetJsonString(Dictionary<string, object> dataItem)
+    {
+        try
+        {
+            return JsonSerializer.Serialize(dataItem, new JsonSerializerOptions { WriteIndented = true });
+        }
+        catch
+        {
+            return "{}";
+        }
+    }
+
+    private void UpdateDataItem(int index, string jsonString)
+    {
+        if (DataSource?.FixedData == null || index < 0 || index >= DataSource.FixedData.Count)
+            return;
+
+        try
+        {
+            var dict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonString);
+            if (dict != null)
+            {
+                DataSource.FixedData[index] = dict;
+            }
+        }
+        catch
+        {
+            // JSON 解析失败，忽略
+        }
+    }
+}

@@ -1,12 +1,12 @@
-@page "/myparts/component/designer/{PartsId}"
+@page "/myparts/component/designer/{LibraryId}/{PartsId}"
 @namespace H.LowCode.PartsDesignEngine
-@inherits DesignEngineLowCodePageComponentBase
+@inherits LowCodePageComponentBase
 @layout PartsDesignEngineLayout
 
-@inject DragDropStateService DragDropStateService
+@inject PartsDragDropStateService PartsDragDropStateService
 @inject IComponentPartsAppService ComponentPartsAppService
 
-<PageTitle>@($"{(_partsSchema?.ComponentId ?? PartsId)} - 低代码组件设计器")</PageTitle>
+<PageTitle>@($"{_partsCascading.PartsName} - 组件物料设计器")</PageTitle>
 
 @if (_loading)
 {
@@ -16,69 +16,74 @@
 }
 else
 {
-    <AntDesign.Layout Class="designpage" Style="padding:0 2px; background-color: #f7f7f7;">
-        <Header Style="background-color: white; padding:0 20px;">
-            <div style="float:left;">
-                <a href="javascript:void(0)" @onclick="GoBack"> @("<") 返回 </a>
-            </div>
-            <div style="text-align: center; flex: 1;">
-                <h3 style="margin: 0; line-height: 64px;">@(_partsSchema?.ComponentId ?? "新建低代码组件")</h3>
-            </div>
-            <div style="float:right;">
-                <Button OnClick="PreviewComponent">预览</Button>
-                <Button Type="ButtonType.Primary" OnClick="SaveComponentPartsSchemaAsync" Loading="_saving">保存</Button>
-            </div>
-        </Header>
-        <AntDesign.Layout>
-            <Sider Style="min-width: 200px; flex: auto; max-width: max-content;" Theme="SiderTheme.Light">
-                <ComponentPanel></ComponentPanel>
-            </Sider>
-            <Layout>
-                <Content Class="designpage">
-                    <AntDesign.Tabs DefaultActiveKey="design" TabPosition="@TabPosition.Top" Style="height: 100%;">
-                        <AntDesign.TabPane Key="design" Tab="可视化设计">
-                            <ComponentDesignPanel @ref="_designPanel"></ComponentDesignPanel>
-                        </AntDesign.TabPane>
-                        <AntDesign.TabPane Key="properties" Tab="组件属性">
-                            @if (_partsSchema != null)
-                            {
-                                <div style="padding: 16px; height: calc(100vh - 160px); overflow-y: auto;">
-                                    <ComponentPartsEditor ComponentParts="_partsSchema" 
-                                                        ComponentPartsChanged="OnComponentPartsChanged"
-                                                        OnSave="OnSaveFromEditor" 
-                                                        OnCancel="OnCancelFromEditor" />
-                                </div>
-                            }
-                        </AntDesign.TabPane>
-                    </AntDesign.Tabs>
-                </Content>
-            </Layout>
-            <Sider Class="designpage" Style="flex: auto; max-width: max-content; min-width: 250px;" Theme="SiderTheme.Light">
-                <SettingPanel></SettingPanel>
-            </Sider>
+    <CascadingValue Value="@_partsCascading" Name="partsCascading">
+        <AntDesign.Layout Class="designpage" Style="padding:0 2px; background-color: #f7f7f7;">
+            <Header Style="background-color: white; padding:0 20px;">
+                <div style="float:left;">
+                    <a href="javascript:void(0)" @onclick="GoBack"> @("<") 返回 </a>
+                </div>
+                <div style="text-align: center; flex: 1;">
+                    <h3 style="margin: 0; line-height: 64px;">组件物料设计器</h3>
+                </div>
+                <div style="float:right;">
+                    <Button OnClick="PreviewComponent">预览</Button>
+                    <Button Type="ButtonType.Primary" OnClick="SaveComponentPartsSchemaAsync" Loading="_saving">保存</Button>
+                </div>
+            </Header>
+            <AntDesign.Layout>
+                <Sider Style="min-width: 200px; flex: auto; max-width: max-content;" Theme="SiderTheme.Light">
+                    <ComponentPanel></ComponentPanel>
+                </Sider>
+                <Layout>
+                    <Content Class="designpage">
+                        <AntDesign.Tabs DefaultActiveKey="design" TabPosition="@TabPosition.Top" Style="height: 100%;">
+                            <AntDesign.TabPane Key="design" Tab="可视化设计">
+                                <ComponentDesignPanel ComponentPartsSchema="_partsSchema"></ComponentDesignPanel>
+                            </AntDesign.TabPane>
+                            <AntDesign.TabPane Key="properties" Tab="组件属性">
+                                @if (_partsSchema != null)
+                                {
+                                    <div style="padding: 16px; height: calc(100vh - 160px); overflow-y: auto;">
+                                        <ComponentPartsEditor ComponentParts="_partsSchema" 
+                                        ComponentPartsChanged="OnComponentPartsChanged"
+                                        OnSave="OnSaveFromEditor" 
+                                        OnCancel="OnCancelFromEditor" />
+                                    </div>
+                                }
+                            </AntDesign.TabPane>
+                        </AntDesign.Tabs>
+                    </Content>
+                </Layout>
+                <Sider Class="designpage" Style="flex: auto; max-width: max-content; min-width: 250px;" Theme="SiderTheme.Light">
+                    <PartsSettingPanel></PartsSettingPanel>
+                </Sider>
+            </AntDesign.Layout>
         </AntDesign.Layout>
-    </AntDesign.Layout>
+    </CascadingValue>
 }
 
 @code
 {
     [Parameter]
+    public string LibraryId { get; set; }
+
+    [Parameter]
     public string PartsId { get; set; }
 
-    private ComponentDesignPanel _designPanel;
-    private ComponentPartsSchema _partsSchema;
-    private bool _isNewComponent;
+    [PersistentState]
+    public ComponentPartsSchema _partsSchema { get; set; }
+
+    private PartsCascadingModel _partsCascading;
+
     private bool _loading = true;
     private bool _saving = false;
-    private string _libraryId;
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
-        
-        // 从URL查询参数获取LibraryId
-        _libraryId = GetQueryValue("libId") ?? "common";
-        
+
+        _partsCascading = new() { LibraryId = LibraryId, PartsId = PartsId, PartsName = "..." };
+
         await LoadPartsSchemaAsync();
     }
 
@@ -89,42 +94,21 @@ else
             _loading = true;
             StateHasChanged();
 
-            if (string.Equals("newparts", PartsId, StringComparison.OrdinalIgnoreCase))
+            _partsSchema = await ComponentPartsAppService.GetByIdAsync(_partsCascading.LibraryId, _partsCascading.PartsId);
+            if (_partsSchema == null)
             {
-                _isNewComponent = true;
-                PartsId = ShortIdGenerator.Generate();
-                _partsSchema = new ComponentPartsSchema
-                {
-                    Id = ShortIdGenerator.Generate(),
-                    ComponentId = PartsId,
-                    LibraryId = _libraryId,
-                    ComponentType = 2, // 低代码组件
-                    Name = $"LowCodeComponent_{PartsId}",
-                    Order = 0,
-                    Version = "1.0.0",
-                    AttributeDefineGroups = new List<ComponentPartsAttributeDefineGroupSchema>(),
-                    EventDefines = new List<ComponentPartsEventDefineSchema>(),
-                    StyleDefines = new List<ComponentPartsStyleDefineSchema>(),
-                    Fragment = new ComponentPartsFragmentSchema(),
-                    DataSource = new ComponentPartsDataSourceSchema()
-                };
+                await Message.ErrorAsync("组件不存在！");
+                GoBack();
+                return;
             }
-            else
+            
+            // 确保 Childrens 不为 null
+            if (_partsSchema.Childrens == null)
             {
-                _partsSchema = await ComponentPartsAppService.GetByIdAsync(_libraryId, PartsId);
-                if (_partsSchema == null)
-                {
-                    await Message.ErrorAsync("组件不存在！");
-                    GoBack();
-                    return;
-                }
+                _partsSchema.Childrens = new List<ComponentPartsSchema>();
             }
-
-            // 初始化设计面板
-            if (_designPanel != null)
-            {
-                // TODO: 初始化设计面板数据
-            }
+            
+            _partsCascading.PartsName = _partsSchema.Name;
         }
         catch (Exception ex)
         {
@@ -148,7 +132,7 @@ else
             StateHasChanged();
 
             // 验证必填字段
-            if (string.IsNullOrWhiteSpace(_partsSchema.ComponentId))
+            if (string.IsNullOrWhiteSpace(_partsSchema.PartsId))
             {
                 await Message.WarningAsync("请输入组件Id！");
                 return;
@@ -161,8 +145,8 @@ else
             }
 
             // 设置基本信息
-            _partsSchema.LibraryId = _libraryId;
-            _partsSchema.ComponentId = PartsId;
+            _partsSchema.LibraryId = _partsCascading.LibraryId;
+            _partsSchema.PartsId = PartsId;
             _partsSchema.ModifiedTime = DateTime.UtcNow;
 
             // 保存组件
@@ -170,13 +154,6 @@ else
             
             if (success)
             {
-                if (_isNewComponent)
-                {
-                    _isNewComponent = false;
-                    // 保存成功后跳转到编辑页面
-                    NavigateTo($"/myparts/component/designer/{PartsId}?libId={_libraryId}");
-                }
-
                 await Message.SuccessAsync("保存成功！");
             }
             else
@@ -214,7 +191,7 @@ else
 
     private void GoBack()
     {
-        NavigateTo($"/myparts?libId={_libraryId}");
+        NavigateTo($"/myparts?libIraryd={_partsCascading.LibraryId}");
     }
 
     private async Task PreviewComponent()

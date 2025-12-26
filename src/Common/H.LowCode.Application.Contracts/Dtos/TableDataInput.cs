@@ -11,20 +11,20 @@ public class TableDataInput : PagedAndSortedResultRequestDto
     /// <summary>
     /// 应用ID
     /// </summary>
-    public string AppId { get; set; }
+    public required string AppId { get; set; }
 
     /// <summary>
     /// 页面ID
     /// </summary>
-    public string PageId { get; set; }
+    public required string PageId { get; set; }
 
     /// <summary>
     /// 数据源ID
     /// </summary>
-    public string DataSourceId { get; set; }
+    public required string? DataSourceId { get; set; }
 
     /// <summary>
     /// 筛选条件
     /// </summary>
-    public Dictionary<string, object> Filters { get; set; }
+    public Dictionary<string, object>? Filters { get; set; }
 }

@@ -19,6 +19,12 @@ public abstract class ComponentFragmentSchemaBase
     [JsonPropertyName("content")]
     public string? Content { get; set; }
 
+    /// <summary>
+    /// 事件配置（用于按钮等组件的事件绑定）
+    /// </summary>
+    [JsonPropertyName("evs")]
+    public IList<EventSchema>? Events { get; set; }
+
     public object? GetDefaultValue()
     {
         if (string.IsNullOrEmpty(ValueType))

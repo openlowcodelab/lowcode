@@ -1,21 +1,21 @@
-ï»¿@namespace H.LowCode.PartsDesignEngine
-@inherits DesignEngineLowCodeComponentBase
+@namespace H.LowCode.PartsDesignEngine
+@inherits LowCodeComponentBase
 
 @if (Component != null)
 {
     <div class="propertysetting-item">
-        <label>ç»„ä»¶å®½åº¦ï¼š</label>
+        <label>×é¼ş¿í¶È£º</label>
         <Slider TValue="double" Value="@Component.Style.ItemWidth" DefaultValue="4" Min="4" Max="24" OnChange="(value) => OnStyleChange()" />
     </div>
     @if (Component.IsHiddenLabel == false && Component.IsContainer == false)
     {
         <div class="propertysetting-item">
-            <label>æ ‡ç­¾å®½åº¦ï¼š</label>
+            <label>±êÇ©¿í¶È£º</label>
             <Slider TValue="double" Value="@Component.Style.LabelWidth" DefaultValue="180" Min="4" Max="300" OnChange="(value) => OnStyleChange()" />
         </div>
     }
     <div style="margin: 5px 15px 20px 10px;">
-        <label>è‡ªå®šä¹‰æ ·å¼ï¼š</label>
+        <label>×Ô¶¨ÒåÑùÊ½£º</label>
         <TextArea @bind-value="@Component.Style.CustomStyle" OnChange="() => OnStyleChange()" Style="height: 150px;" />
     </div>
 }

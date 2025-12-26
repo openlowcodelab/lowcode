@@ -8,6 +8,6 @@ public class PartsDesignEngineModule : AbpModule
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         context.Services.AddAntDesign();
-        context.Services.AddSingleton(typeof(DragDropStateService));
+        context.Services.AddSingleton(typeof(PartsDragDropStateService));
     }
 }

@@ -11,9 +11,9 @@ public interface IComponentPartsAppService : IApplicationService
 
     Task<List<ComponentPartsSchema>> GetAllComponentsAsync(string libraryId);
 
-    Task<ComponentPartsSchema> GetByIdAsync(string libraryId, string componentId);
+    Task<ComponentPartsSchema> GetByIdAsync(string libraryId, string partsId);
 
     Task<bool> SaveAsync(ComponentPartsSchema componentParts);
 
-    Task<bool> DeleteAsync(string libraryId, string componentId);
+    Task<bool> DeleteAsync(string libraryId, string partsId);
 }

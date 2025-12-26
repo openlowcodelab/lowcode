@@ -1,6 +1,6 @@
 @page "/myapp/{AppId}/menumanager"
 @namespace H.LowCode.MyApp
-@inherits DesignEngineLowCodePageComponentBase
+@inherits LowCodePageComponentBase
 @layout MyAppLayout
 
 @inject IMenuAppService MenuAppService
@@ -123,9 +123,6 @@ RowKey="x=>x.Id" HidePagination DefaultExpandAllRows>
 </Modal>
 
 @code {
-    [Parameter]
-    public string AppId { get; set; }
-
     [PersistentState]
     public IList<MenuSchema> _menuList { get; set; }
 

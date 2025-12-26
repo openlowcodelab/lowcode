@@ -29,6 +29,11 @@ public class TableDataRepository : ITableDataRepository
     /// <returns>分页数据结果</returns>
     public async Task<PagedResultDto<Dictionary<string, object>>> GetListAsync(TableDataInput input)
     {
+        if (string.IsNullOrEmpty(input.DataSourceId))
+        {
+            return new();
+        }
+
         var dataSource = await _dataSourceRepository.GetAsync(input.AppId, input.DataSourceId);
         if (dataSource == null)
         {

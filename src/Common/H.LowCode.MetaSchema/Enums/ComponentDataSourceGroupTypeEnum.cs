@@ -14,5 +14,6 @@ public enum ComponentDataSourceGroupTypeEnum
     General = 0,
     Option = 1,
     Table = 2,
-    Tree = 3
+    Tree = 3,
+    List = 4  // 列表循环数据源
 }

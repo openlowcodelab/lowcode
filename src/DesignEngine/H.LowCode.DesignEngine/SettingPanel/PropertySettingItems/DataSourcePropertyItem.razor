@@ -1,5 +1,5 @@
 @namespace H.LowCode.DesignEngine
-@inherits DesignEngineLowCodeComponentBase
+@inherits LowCodeComponentBase
 
 @if (Component.IsSupportDataSource){
     <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:30px 0 10px;">数据源</div>
@@ -33,6 +33,12 @@
             配置数据源
         </Button>
     }
+    else if (Component.DataSource.DataSourceGroupType == ComponentDataSourceGroupTypeEnum.List)
+    {
+        <Button Type="ButtonType.Default" OnClick="() => ShowListDataSourceModal()">
+            配置数据源
+        </Button>
+    }
     else{
         <div class="propertysetting-item">
             <label>不支持的数据源类型</label>
@@ -50,6 +56,11 @@
     <TableDataSourceSetting @bind-DataSource="Component.DataSource" AppId="@PageCascading.AppId"></TableDataSourceSetting>
 </Modal>
 
+<Modal Title="配置 List 数据源" @bind-Visible="@_listDataSourceVisible"
+       OnOk="()=>OnDataSourceConfirmAsync(_listDataSourceVisible, SaveListDataSourceAsync)" Width="1200">
+    <ListDataSourceSetting @bind-DataSource="Component.DataSource" AppId="@PageCascading.AppId"></ListDataSourceSetting>
+</Modal>
+
 @code {
     [CascadingParameter(Name = "pageCascading")]
     public PageCascadingModel PageCascading { get; set; }
@@ -60,6 +71,7 @@
     private bool _optionDataSourceVisible = false;
     private bool _tableDataSourceVisible = false;
     private bool _treeDataSourceVisible = false;
+    private bool _listDataSourceVisible = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -79,6 +91,11 @@
     private void ShowTreeDataSourceModal()
     {
         _treeDataSourceVisible = true;
+    }
+
+    private void ShowListDataSourceModal()
+    {
+        _listDataSourceVisible = true;
     }
 
     private async Task OnOptionDataSourceConfirmAsync(MouseEventArgs e)
@@ -130,6 +147,11 @@
     }
 
     private async Task<bool> SaveTreeDataSourceAsync()
+    {
+        return await Task.FromResult(true);
+    }
+
+    private async Task<bool> SaveListDataSourceAsync()
     {
         return await Task.FromResult(true);
     }

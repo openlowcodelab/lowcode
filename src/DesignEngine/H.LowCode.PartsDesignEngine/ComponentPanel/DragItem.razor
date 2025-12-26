@@ -1,7 +1,7 @@
 @namespace H.LowCode.PartsDesignEngine
-@inherits DesignEngineLowCodeComponentBase
+@inherits LowCodeComponentBase
 
-@inject DragDropStateService DragDropStateService
+@inject PartsDragDropStateService PartsDragDropStateService
 
 <div draggable="true" class="dragitem" style="@Style" @ondragstart="OnDragStart" @onclick="OnClick">
     @Component.Label
@@ -9,8 +9,8 @@
 
 @code
 {
-    [CascadingParameter(Name = "pageCascading")]
-    public PageCascadingModel PageCascading { get; set; }
+    [CascadingParameter(Name = "partsCascading")]
+    public PartsCascadingModel PartsCascading { get; set; }
 
     [Parameter]
     public ComponentPartsSchema Component { get; set; }
@@ -43,7 +43,7 @@
         else
         {
             //设置当前拖拽项
-            DragDropStateService.SetCurrentDragComponent(PageCascading.AppId, PageCascading.PageId, component);
+            PartsDragDropStateService.SetCurrentDragComponent(PartsCascading.LibraryId, PartsCascading.PartsId, component);
         }
     }
 }

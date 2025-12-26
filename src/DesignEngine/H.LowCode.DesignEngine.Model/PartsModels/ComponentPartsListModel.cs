@@ -10,7 +10,7 @@ public class ComponentPartsListModel
     /// </summary>
     public string LibraryId { get; set; }
 
-    [JsonPropertyName("compid")]
+    [JsonPropertyName("partsId")]
     public string ComponentId { get; set; }
 
     [JsonPropertyName("lb")]

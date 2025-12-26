@@ -13,4 +13,10 @@ public class ComponentDataSourceSchema : ComponentDataSourceSchemaBase
     /// </summary>
     [JsonPropertyName("dsfrag")]
     public ComponentFragmentSchema DataSourceFragment { get; set; }
+
+    /// <summary>
+    /// 列表项模板（支持完整的组件配置，包括条件渲染）
+    /// </summary>
+    [JsonPropertyName("itemtpl")]
+    public ComponentSchema ItemTemplate { get; set; }
 }

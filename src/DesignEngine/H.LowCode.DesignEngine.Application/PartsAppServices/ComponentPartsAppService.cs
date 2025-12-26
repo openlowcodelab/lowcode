@@ -13,19 +13,14 @@ public class ComponentPartsAppService : ApplicationService, IComponentPartsAppSe
 {
     private IComponentPartsRepository _repository => LazyServiceProvider.GetRequiredService<IComponentPartsRepository>();
 
-    public async Task<bool> DeleteAsync(string libraryId, string componentId)
-    {
-        return await _repository.DeleteAsync(libraryId, componentId);
-    }
-
     public async Task<List<ComponentPartsSchema>> GetAllComponentsAsync(string libraryId)
     {
         return await _repository.GetAllComponentsAsync(libraryId);
     }
 
-    public async Task<ComponentPartsSchema> GetByIdAsync(string libraryId, string componentId)
+    public async Task<ComponentPartsSchema> GetByIdAsync(string libraryId, string partsId)
     {
-        return await _repository.GetByIdAsync(libraryId, componentId);
+        return await _repository.GetByIdAsync(libraryId, partsId);
     }
 
     public async Task<List<ComponentPartsListModel>> GetListAsync(string libraryId)
@@ -36,5 +31,10 @@ public class ComponentPartsAppService : ApplicationService, IComponentPartsAppSe
     public async Task<bool> SaveAsync(ComponentPartsSchema componentParts)
     {
         return await _repository.SaveAsync(componentParts);
+    }
+
+    public async Task<bool> DeleteAsync(string libraryId, string partsId)
+    {
+        return await _repository.DeleteAsync(libraryId, partsId);
     }
 }

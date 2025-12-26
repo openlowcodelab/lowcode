@@ -1,6 +1,6 @@
 ﻿@namespace H.LowCode.DesignEngine
 @using System.Reflection
-@inherits DesignEngineLowCodeComponentBase
+@inherits LowCodeComponentBase
 
 @inject DragDropStateService DragDropStateService
 
@@ -39,7 +39,7 @@
             rootComponent = new ComponentPartsSchema()
             {
                 Id = "root",
-                ComponentId = "root"
+                PartsId = "root"
             };
             rootComponent.Name = "root";
             rootComponent.Refresh = StateHasChanged;

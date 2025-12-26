@@ -1,11 +1,11 @@
 @page "/myparts/component/edit/{LibraryId}/{ComponentId}"
 @namespace H.LowCode.PartsDesignEngine
-@inherits DesignEngineLowCodePageComponentBase
+@inherits LowCodePageComponentBase
 @layout PartsDesignEngineLayout
 
 @inject IComponentPartsAppService ComponentPartsAppService
 
-<PageTitle>@($"{_componentParts?.ComponentId ?? "组件"} - 原子组件编辑器")</PageTitle>
+<PageTitle>@($"{_componentParts?.PartsId ?? "组件"} - 原子组件编辑器")</PageTitle>
 
 <div class="component-parts-editor-page">
     <div class="editor-header" style="background: white; padding: 16px; margin-bottom: 16px; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
@@ -14,7 +14,7 @@
                 <Button Type="@ButtonType.Text" Icon="arrow-left" OnClick="GoBack">返回</Button>
                 <div>
                     <h3 style="margin: 0; font-size: 18px; font-weight: 600;">
-                        @(_componentParts?.ComponentId ?? "组件编辑")
+                        @(_componentParts?.PartsId ?? "组件编辑")
                     </h3>
                     <div style="color: #666; font-size: 14px; margin-top: 4px;">
                         原子组件编辑器
@@ -77,7 +77,7 @@
     protected override async Task OnParametersSetAsync()
     {
         await base.OnParametersSetAsync();
-        if (_componentParts?.ComponentId != ComponentId)
+        if (_componentParts?.PartsId != ComponentId)
         {
             await LoadComponent();
         }

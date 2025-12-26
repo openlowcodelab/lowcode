@@ -46,7 +46,7 @@ public class ComponentPartsRepository : PartsFileRepositoryBase, IComponentParts
             ComponentPartsListModel model = new()
             {
                 LibraryId = componentPartsSchema.LibraryId,
-                ComponentId = componentPartsSchema.ComponentId,
+                ComponentId = componentPartsSchema.PartsId,
                 ComponentType = componentPartsSchema.ComponentType,
                 IsContainer = componentPartsSchema.IsContainer,
                 IsSupportDataSource = componentPartsSchema.IsSupportDataSource,
@@ -97,9 +97,9 @@ public class ComponentPartsRepository : PartsFileRepositoryBase, IComponentParts
         return await Task.FromResult(list);
     }
 
-    public async Task<ComponentPartsSchema> GetByIdAsync(string libraryId, string componentId)
+    public async Task<ComponentPartsSchema> GetByIdAsync(string libraryId, string partsId)
     {
-        string fileName = string.Format(componentPartsFileName_Format, _metaBaseDir, libraryId, componentId);
+        string fileName = string.Format(componentPartsFileName_Format, _metaBaseDir, libraryId, partsId);
 
         var componentPartsSchemaJson = ReadAllText(fileName) ?? throw new FileNotFoundException(fileName);
         var componentParts = componentPartsSchemaJson.FromJson<ComponentPartsSchema>();
@@ -118,7 +118,7 @@ public class ComponentPartsRepository : PartsFileRepositoryBase, IComponentParts
         if(componentParts.Fragment != null)
             componentParts.Fragment.TypeName = null;
 
-        string fileName = string.Format(componentPartsFileName_Format, _metaBaseDir, componentParts.LibraryId, componentParts.ComponentId);
+        string fileName = string.Format(componentPartsFileName_Format, _metaBaseDir, componentParts.LibraryId, componentParts.PartsId);
 
         string fileDirectory = Path.GetDirectoryName(fileName);
         if (!Directory.Exists(fileDirectory))
@@ -128,9 +128,9 @@ public class ComponentPartsRepository : PartsFileRepositoryBase, IComponentParts
         return await Task.FromResult(true);
     }
 
-    public async Task<bool> DeleteAsync(string libraryId, string componentId)
+    public async Task<bool> DeleteAsync(string libraryId, string partsId)
     {
-        string fileName = string.Format(componentPartsFileName_Format, _metaBaseDir, libraryId, componentId);
+        string fileName = string.Format(componentPartsFileName_Format, _metaBaseDir, libraryId, partsId);
         if (!File.Exists(fileName))
             return false;
 

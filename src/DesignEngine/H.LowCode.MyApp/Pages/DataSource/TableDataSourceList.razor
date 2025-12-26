@@ -1,5 +1,5 @@
 ﻿@namespace H.LowCode.MyApp
-@inherits DesignEngineLowCodeComponentBase
+@inherits LowCodeComponentBase
 
 @inject IDataSourceAppService DataSourceAppService
 
@@ -250,6 +250,7 @@
             {
                 AppId = AppId,
                 Id = ShortIdGenerator.Generate(),
+                Name = string.Empty,
                 DataSourceType = ComponentDataSourceTypeEnum.DB
             };
         _visible = true;

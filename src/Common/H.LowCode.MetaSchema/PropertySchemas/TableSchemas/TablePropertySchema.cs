@@ -6,7 +6,7 @@ namespace H.LowCode.MetaSchema;
 public class TablePropertySchema
 {
     [JsonPropertyName("tcols")]
-    public IList<TableColumnSchema> Columns { get; set; } = [];
+    public IList<TableColumnSchema>? Columns { get; set; } = [];
 
     [JsonPropertyName("searchs")]
     public IList<TableSearchItemSchema> SearchItems { get; set; } = [];

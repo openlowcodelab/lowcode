@@ -1,18 +1,35 @@
 ﻿/* ================== DragItem.razor ==================== */
 .dragitem {
     float: left;
-    width: 6.8rem;
-    height: 2.2rem;
-    margin: 4px;
-    cursor: pointer;
+    width: calc(50% - 8px);
+    min-width: 90px;
+    height: 36px;
+    margin: 4px 8px 4px 0;
+    cursor: grab;
     display: flex;
     justify-content: center;
     align-items: center;
     color: #333;
-    background-color: #f5f7fa;
+    font-size: 13px;
+    background-color: #fafafa;
+    border: 1px solid #e8e8e8;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
     .dragitem:hover {
-        border: #409eff dashed 1px;
+        border-color: #409eff;
         color: #409eff;
+        background-color: #f0f7ff;
+        box-shadow: 0 2px 8px rgba(64, 158, 255, 0.15);
+        transform: translateY(-1px);
+    }
+
+    .dragitem:active {
+        cursor: grabbing;
+        transform: scale(0.98);
     }

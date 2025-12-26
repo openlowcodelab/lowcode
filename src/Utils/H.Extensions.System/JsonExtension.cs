@@ -13,7 +13,7 @@ public static class JsonExtension
         Encoder = _defaultEncoder
     };
 
-    public static string? ToJson(this object obj, JsonSerializerOptions? options = null)
+    public static string? ToJson(this object? obj, JsonSerializerOptions? options = null)
     {
         if (obj == null)
             return null;
@@ -24,7 +24,7 @@ public static class JsonExtension
         return JsonSerializer.Serialize(obj, _defaultOptions);
     }
 
-    public static T? FromJson<T>(this string json) where T : class
+    public static T? FromJson<T>(this string? json) where T : class
     {
         if (string.IsNullOrWhiteSpace(json))
             return default;
