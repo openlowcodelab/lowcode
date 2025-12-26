@@ -10,15 +10,15 @@
         <ChildContent>
             <Tabs DefaultActiveKey="11" Class="componentpanel" Style="width:270px; padding:0px 4px;">
                 <TabPane Key="11" Tab="组件库">
-                    <div style="height:100%; overflow-y: auto;">
+                    <div style="height:100%; overflow-y: auto; padding: 4px 0;">
                         <!-- 按组件库分组显示 -->
                         @if (ComponentsByLibrary != null && ComponentsByLibrary.Count > 0)
                         {
-                            <Collapse Accordion="false" Style="padding: 4px 0;">
+                            <Collapse Bordered="false" DefaultActiveKey="@(new[] { "antdesign", "common" })">
                                 @foreach (var libraryGroup in ComponentsByLibrary)
                                 {
-                                    <CollapsePanel Header="@libraryGroup.Key" Key="@libraryGroup.Key" DefaultActive="true">
-                                        <div style="padding: 8px 0;">
+                                    <Panel Header="@libraryGroup.Key" Key="@libraryGroup.Key">
+                                        <div style="padding: 2px 0; overflow: hidden;">
                                             @if (libraryGroup.Value != null)
                                             {
                                                 @foreach (var component in libraryGroup.Value)
@@ -27,7 +27,7 @@
                                                 }
                                             }
                                         </div>
-                                    </CollapsePanel>
+                                    </Panel>
                                 }
                             </Collapse>
                         }
@@ -81,7 +81,7 @@
         await base.OnInitializedAsync();
 
         // 先尝试获取所有组件库
-        var libraries = await LoadComponentLibraries();
+        var libraries = await ComponentLibraryAppService.GetListAsync();
 
         if (libraries != null && libraries.Count > 0)
         {
@@ -96,18 +96,6 @@
                     ComponentsByLibrary[lib.LibraryId] = new List<ComponentPartsSchema>(components);
                 }
             }
-        }
-    }
-
-    private async Task<IList<ComponentLibrarySchema>> LoadComponentLibraries()
-    {
-        try
-        {
-            return await ComponentLibraryAppService.GetListAsync();
-        }
-        catch
-        {
-            return new List<ComponentLibrarySchema>();
         }
     }
 }
