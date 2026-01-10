@@ -1,4 +1,4 @@
-﻿using H.LowCode.Configuration;
+using H.LowCode.Configuration;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
@@ -12,15 +12,16 @@ public abstract class FileRepositoryBase
 {
     public bool? IsChangeTrackingEnabled { get; set; }
 
-    protected static string _metaBaseDir;
+    protected readonly string _metaBaseDir;
 
     public FileRepositoryBase(IOptions<MetaOption> metaOption)
     {
-        _metaBaseDir = metaOption.Value.AppsFilePath;
+        // 获取绝对路径
+        _metaBaseDir = Path.GetFullPath(metaOption.Value.AppsFilePath);
         IsChangeTrackingEnabled = false;
     }
 
-    protected static string ReadAllText(string fileName)
+    protected string ReadAllText(string fileName)
     {
         if (!File.Exists(fileName))
             throw new FileNotFoundException(fileName);

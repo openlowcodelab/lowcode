@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Text.Json;
@@ -14,14 +14,14 @@ public static class ObjectExtension
     /// 深拷贝
     /// </summary>
     /// <returns></returns>
-    public static T DeepClone<T>(this T source) where T : class
+    public static T? DeepClone<T>(this T source) where T : class
     {
         var jsonString = source.ToJson();
         var result = jsonString.FromJson<T>();
         return result;
     }
 
-    public static object ConvertToRealType(this object obj, Type targetType)
+    public static object? ConvertToRealType(this object? obj, Type targetType)
     {
         if (targetType == null)
             throw new ArgumentNullException(nameof(targetType));
@@ -36,15 +36,32 @@ public static class ObjectExtension
             return obj;
         }
 
+        // 处理 JsonElement 类型
+        string stringValue = obj.ToString();
         if (obj is JsonElement jsonElement)
         {
-            obj = jsonElement.ConvertToRealType();
+            // 尝试获取字符串值
+            if (jsonElement.ValueKind == JsonValueKind.String)
+            {
+                stringValue = jsonElement.GetString() ?? string.Empty;
+            }
+            else if (jsonElement.ValueKind == JsonValueKind.Number)
+            {
+                stringValue = jsonElement.GetRawText();
+            }
         }
 
         try
         {
             Type underlyingType = Nullable.GetUnderlyingType(targetType) ?? targetType;
-            var value = Convert.ChangeType(obj, underlyingType);
+            
+            // 处理枚举类型
+            if (underlyingType.IsEnum)
+            {
+                return Enum.Parse(underlyingType, stringValue);
+            }
+            
+            var value = Convert.ChangeType(stringValue, underlyingType);
             return value;
         }
         catch
@@ -53,7 +70,7 @@ public static class ObjectExtension
         }
     }
 
-    public static object ConvertToRealType(this JsonElement element)
+    public static object? ConvertToRealType(this JsonElement element)
     {
         return element.ValueKind switch
         {
@@ -69,9 +86,9 @@ public static class ObjectExtension
         };
     }
 
-    private static Dictionary<string, object> ConvertJsonObjectToDictionary(JsonElement element)
+    private static Dictionary<string, object?> ConvertJsonObjectToDictionary(JsonElement element)
     {
-        var dict = new Dictionary<string, object>();
+        var dict = new Dictionary<string, object?>();
         foreach (var property in element.EnumerateObject())
         {
             dict[property.Name] = property.Value.ConvertToRealType();
@@ -79,9 +96,9 @@ public static class ObjectExtension
         return dict;
     }
 
-    private static List<object> ConvertJsonArrayToList(JsonElement element)
+    private static List<object?> ConvertJsonArrayToList(JsonElement element)
     {
-        var list = new List<object>();
+        var list = new List<object?>();
         foreach (var item in element.EnumerateArray())
         {
             list.Add(item.ConvertToRealType());

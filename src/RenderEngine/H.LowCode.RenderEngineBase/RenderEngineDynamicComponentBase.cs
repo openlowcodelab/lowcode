@@ -42,13 +42,13 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
         ComponentDataSourceSchema dataSource,
         ComponentFragmentSchema componentFragment,
         RenderTreeBuilder builder, int index,
-        object dataContext = null)
+        object? dataContext = null)
     {
         ArgumentNullException.ThrowIfNull(componentFragment);
 
         if (string.IsNullOrEmpty(componentFragment.TypeName))
             throw new NullReferenceException($"componentId={componentId}, {nameof(componentFragment.TypeName)}");
-
+        
         // 检查是否为条件渲染组件
         if (IsConditionalComponent(componentFragment.TypeName) && component.Cases != null)
         {
@@ -96,7 +96,7 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
         ComponentSchema component,
         ComponentDataSourceSchema dataSource,
         RenderTreeBuilder builder, int index,
-        object dataContext = null)
+        object? dataContext = null)
     {
         if (component.Cases == null || component.Cases.Count == 0)
             return;
@@ -134,7 +134,7 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
     /// <summary>
     /// 获取条件值
     /// </summary>
-    private object GetConditionValue(ComponentSchema component, object dataContext)
+    private object? GetConditionValue(ComponentSchema component, object? dataContext)
     {
         if (component.Fragment?.Attributes == null)
             return null;
@@ -172,19 +172,19 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
             if (propertyInfo == null)
                 continue;
 
-            if (!string.IsNullOrEmpty(attr.AttributeClrType))
+            // 使用属性的实际类型进行转换，而不是使用 attr.AttributeClrType
+            var realType = propertyInfo.PropertyType;
+            
+            // 转换为属性的实际类型
+            object? realValue = resolvedValue;
+            if (realValue != null)
             {
-                var attrType = Type.GetType(attr.AttributeClrType);
-                if (attrType != null)
-                {
-                    var realValue = resolvedValue?.ToString().ConvertToRealType(attrType) ?? resolvedValue;
-                    builder.AddAttribute(index++, attr.AttributeName, realValue);
-                }
+                // 先确保值是字符串类型
+                string stringValue = realValue.ToString();
+                realValue = stringValue.ConvertToRealType(realType);
             }
-            else
-            {
-                builder.AddAttribute(index++, attr.AttributeName, resolvedValue);
-            }
+            
+            builder.AddAttribute(index++, attr.AttributeName, realValue);
         }
     }
 
@@ -387,14 +387,22 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
 
                     var attrValue = ResolveAttributeValue(attr, item);
                     
-                    if (!string.IsNullOrEmpty(attr.AttributeClrType))
+                    var propertyInfo = itemComponentType.GetProperty(attr.AttributeName);
+                    if (propertyInfo != null)
                     {
-                        var attrType = Type.GetType(attr.AttributeClrType);
-                        if (attrType != null)
+                        // 使用属性的实际类型进行转换
+                        var realType = propertyInfo.PropertyType;
+                        
+                        // 转换为属性的实际类型
+                        object? realValue = attrValue;
+                        if (realValue != null)
                         {
-                            var realValue = attrValue?.ToString().ConvertToRealType(attrType) ?? attrValue;
-                            childBuilder.AddAttribute(index++, attr.AttributeName, realValue);
+                            // 先确保值是字符串类型
+                            string stringValue = realValue.ToString();
+                            realValue = stringValue.ConvertToRealType(realType);
                         }
+                        
+                        childBuilder.AddAttribute(index++, attr.AttributeName, realValue);
                     }
                     else
                     {
@@ -445,14 +453,23 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
                     continue;
 
                 var attrValue = ResolveAttributeValue(attr, dataContext);
-                if (!string.IsNullOrEmpty(attr.AttributeClrType))
+                
+                var propertyInfo = componentType.GetProperty(attr.AttributeName);
+                if (propertyInfo != null)
                 {
-                    var attrType = Type.GetType(attr.AttributeClrType);
-                    if (attrType != null)
+                    // 使用属性的实际类型进行转换
+                    var realType = propertyInfo.PropertyType;
+                    
+                    // 转换为属性的实际类型
+                    object? realValue = attrValue;
+                    if (realValue != null)
                     {
-                        var realValue = attrValue?.ToString().ConvertToRealType(attrType) ?? attrValue;
-                        builder.AddAttribute(index++, attr.AttributeName, realValue);
+                        // 先确保值是字符串类型
+                        string stringValue = realValue.ToString();
+                        realValue = stringValue.ConvertToRealType(realType);
                     }
+                    
+                    builder.AddAttribute(index++, attr.AttributeName, realValue);
                 }
                 else
                 {
@@ -550,7 +567,7 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
     /// <summary>
     /// 解析属性值，支持数据绑定表达式 $(item.fieldName)
     /// </summary>
-    private object ResolveAttributeValue(ComponentAttributeFragmentSchema attr, object dataContext)
+    private object? ResolveAttributeValue(ComponentAttributeFragmentSchema attr, object? dataContext)
     {
         if (attr.AttributeValue == null)
             return null;
@@ -565,7 +582,7 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
             var fieldName = valueStr.Substring(7, valueStr.Length - 8); // 提取字段名
             
             // 处理 ListItemContext
-            object dataItem = dataContext;
+            object? dataItem = dataContext;
             if (dataContext is ListItemContext ctx)
             {
                 dataItem = ctx.Item;
@@ -573,7 +590,7 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
 
             if (dataItem is Dictionary<string, object> dict)
             {
-                return dict.ContainsKey(fieldName) ? dict[fieldName] : null;
+                return dict.TryGetValue(fieldName, out object? value) ? value : null;
             }
             else if (dataItem != null)
             {
@@ -649,12 +666,12 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
     /// <summary>
     /// 列表数据保存事件（由页面层订阅并调用数据源 API）
     /// </summary>
-    protected Action<string, IList<object>> OnListDataSave { get; set; }
+    protected Action<string, IList<object>>? OnListDataSave { get; set; }
 
     /// <summary>
     /// 列表数据刷新事件（由页面层订阅并调用数据源 API）
     /// </summary>
-    protected Action<string> OnListDataRefresh { get; set; }
+    protected Action<string>? OnListDataRefresh { get; set; }
 
     /// <summary>
     /// 创建按钮点击事件处理器
