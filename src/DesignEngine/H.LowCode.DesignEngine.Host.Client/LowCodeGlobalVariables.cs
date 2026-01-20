@@ -4,7 +4,7 @@ namespace H.LowCode.DesignEngine.Host.Client;
 
 public static class LowCodeGlobalVariables
 {
-    public static readonly Type LowCodeDefaultLayout = typeof(DesignEngineBase.DesignEngineNavLayout);
+    public static readonly Type LowCodeDefaultLayout = typeof(DesignEngineBase.WorkbenchNavLayout);
 
     public static readonly Assembly[] AdditionalAssemblies =
         [
