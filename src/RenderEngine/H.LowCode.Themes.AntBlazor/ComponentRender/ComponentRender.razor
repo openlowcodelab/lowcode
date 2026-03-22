@@ -1,16 +1,16 @@
 ﻿@namespace H.LowCode.Themes.AntBlazor
 @inherits RenderEngineDynamicComponentBase
 
-@if (Component.IsContainer)
+@if (Component.IsContainer || Component.ComponentType == 2)
 {
     <ContainerComponentRender ContainerComponent="@Component"></ContainerComponentRender>
 }
 else
 {
     <div class="renderengine-componentitem-box" style="float:left;
-        width: @((Component.Style.ItemWidth > 4 ? Component.Style.ItemWidth : (IsInRootContainer ? 24/PageCascading.PageLayout : 24))  /24 * 100)%;
-        min-width:85px; min-height: @(Component.Style.ItemHeight)px;
-        @Component.Style.DefaultStyle @Component.Style.CustomStyle">
+            width: @((Component.Style.ItemWidth > 4 ? Component.Style.ItemWidth : (IsInRootContainer ? 24 / PageCascading.PageLayout : 24)) / 24 * 100)%;
+            min-width:85px; min-height: @(Component.Style.ItemHeight)px;
+            @Component.Style.DefaultStyle @Component.Style.CustomStyle">
 
         @if (Component.IsHiddenLabel == false && Component.IsContainer == false)
         {
@@ -23,7 +23,7 @@ else
         }
         else
         {
-            <div class="renderengine-componentitem-div-component">@_renderFragment</div>
+        <div class="renderengine-componentitem-div-component">@_renderFragment</div>
         }
     </div>
 }
@@ -52,6 +52,8 @@ else
         if (Component == null)
             throw new NullReferenceException(nameof(Component));
 
-        _renderFragment = RenderComponent(Component);
+        // 低代码组件没有 Fragment，由 ContainerComponentRender 渲染子组件
+        if (Component.Fragment != null)
+            _renderFragment = RenderComponent(Component);
     }
 }

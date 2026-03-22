@@ -27,6 +27,12 @@ public abstract class ComponentSchemaBase : StateHasChangeSchema
     public string? Label { get; set; }
 
     /// <summary>
+    /// 组件类型：1-原子组件  2-组合组件
+    /// </summary>
+    [JsonPropertyName("ct")]
+    public int ComponentType { get; set; }
+
+    /// <summary>
     /// 是否隐藏标题
     /// </summary>
     [JsonPropertyName("hlb")]
