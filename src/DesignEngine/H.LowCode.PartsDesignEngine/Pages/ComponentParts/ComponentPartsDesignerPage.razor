@@ -18,16 +18,16 @@ else
 {
     <CascadingValue Value="@_partsCascading" Name="partsCascading">
         <AntDesign.Layout Class="designpage" Style="padding:0 2px; background-color: #f7f7f7;">
-            <Header Style="background-color: white; padding:0 20px;">
-                <div style="float:left;">
+            <Header Style="background-color: white; padding:0 20px; display: flex; align-items: center; justify-content: space-between;">
+                <div>
                     <a href="javascript:void(0)" @onclick="GoBack"> @("<") 返回 </a>
                 </div>
-                <div style="text-align: center; flex: 1;">
+                <div style="text-align: center;">
                     <h3 style="margin: 0; line-height: 64px;">组件物料设计器</h3>
                 </div>
-                <div style="float:right;">
+                <div>
                     <Button OnClick="PreviewComponent">预览</Button>
-                    <Button Type="ButtonType.Primary" OnClick="SaveComponentPartsSchemaAsync" Loading="_saving">保存</Button>
+                    <Button Type="@ButtonType.Primary" OnClick="SaveComponentPartsSchemaAsync" Loading="_saving">保存</Button>
                 </div>
             </Header>
             <AntDesign.Layout>

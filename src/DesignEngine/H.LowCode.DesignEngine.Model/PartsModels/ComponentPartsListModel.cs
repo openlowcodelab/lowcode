@@ -8,6 +8,7 @@ public class ComponentPartsListModel
     /// <summary>
     /// 组件库Id
     /// </summary>
+    [JsonPropertyName("libid")]
     public string LibraryId { get; set; }
 
     [JsonPropertyName("partsId")]

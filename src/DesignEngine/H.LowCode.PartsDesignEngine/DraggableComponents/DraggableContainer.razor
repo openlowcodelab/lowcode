@@ -203,6 +203,9 @@
     {
         //上一个 DraggableContainer 移除
         var oldContainerComponent = PartsDragDropStateService.FindComponentById(PartsCascading.LibraryId, PartsCascading.PartsId, currentDragComponent.ParentId);
+        if (oldContainerComponent == null)
+            return;
+            
         oldContainerComponent.Childrens.Remove(currentDragComponent);
 
         await InvokeAsync(() => oldContainerComponent.RefreshState()); //刷新上一个 DraggableContainer，使 Remove 立即生效

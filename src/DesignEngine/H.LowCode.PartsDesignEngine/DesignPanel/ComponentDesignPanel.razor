@@ -19,6 +19,9 @@ else
 @code {
     private ComponentPartsSchema _rootComponent;
 
+    [CascadingParameter(Name = "partsCascading")]
+    public PartsCascadingModel PartsCascading { get; set; }
+
     [Parameter]
     public ComponentPartsSchema ComponentPartsSchema { get; set; }
 
@@ -42,16 +45,22 @@ else
         ComponentPartsSchema rootComponent = null;
 
         // 如果传入了要编辑的组件定义
-        if (ComponentPartsSchema != null && ComponentPartsSchema.Childrens?.Count > 0)
+        if (ComponentPartsSchema != null)
         {
-            // 创建一个虚拟根容器，包含该组件的所有子组件
+            // 确保 Childrens 不为 null
+            if (ComponentPartsSchema.Childrens == null)
+            {
+                ComponentPartsSchema.Childrens = new List<ComponentPartsSchema>();
+            }
+            
+            // 创建一个虚拟根容器，直接引用原组件的子组件列表（不复制）
             rootComponent = new ComponentPartsSchema()
             {
                 Id = "root",
                 PartsId = "root",
                 Name = "root",
                 IsContainer = true,
-                Childrens = new List<ComponentPartsSchema>(ComponentPartsSchema.Childrens)
+                Childrens = ComponentPartsSchema.Childrens  // 直接引用，不复制
             };
         }
         else
@@ -68,6 +77,10 @@ else
         }
 
         rootComponent.Refresh = StateHasChanged;
+        
+        // 注册到拖拽状态服务，使拖拽功能正常工作
+        PartsDragDropStateService.SetRootComponent(PartsCascading.LibraryId, PartsCascading.PartsId, rootComponent);
+        
         return rootComponent;
     }
 
