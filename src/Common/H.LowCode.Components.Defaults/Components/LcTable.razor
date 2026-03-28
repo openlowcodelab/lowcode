@@ -108,14 +108,7 @@
 
     protected override bool ShouldRender()
     {
-        //if (StateKey == DataSource.StateKey)
-        //    return false;
-
-        // 参数变化时重新初始化
-        if (DataSource != null)
-        {
-            Init();
-        }
+        // ShouldRender 不应有副作用，初始化逻辑已在 OnParametersSetAsync 中处理
         return true;
     }
 
@@ -138,7 +131,8 @@
         // 重新加载数据
         await LoadDataAsync();
 
-        StateHasChanged();
+        // 使用异步方式触发重新渲染，避免同步调用导致的堆栈问题
+        _ = InvokeAsync(StateHasChanged);
     }
 
     private TablePropertySchema GetTableSchemaAsync()
@@ -372,7 +366,8 @@
             // 创建编辑数据副本
             _editingRows[primaryKeyValue] = new Dictionary<string, object>(rowData);
 
-            StateHasChanged();
+            // 使用异步方式触发重新渲染，避免同步调用导致的堆栈问题
+            _ = InvokeAsync(StateHasChanged);
         }
         catch (Exception ex)
         {
@@ -505,7 +500,8 @@
             _editingRows.Remove(primaryKeyValue);
             _originalRows.Remove(primaryKeyValue);
 
-            StateHasChanged();
+            // 使用异步方式触发重新渲染，避免同步调用导致的堆栈问题
+            _ = InvokeAsync(StateHasChanged);
         }
         catch (Exception ex)
         {
@@ -550,7 +546,8 @@
             _editingRows.Remove(primaryKeyValue);
             _originalRows.Remove(primaryKeyValue);
 
-            StateHasChanged();
+            // 使用异步方式触发重新渲染，避免同步调用导致的堆栈问题
+            _ = InvokeAsync(StateHasChanged);
         }
         catch (Exception ex)
         {
@@ -576,7 +573,8 @@
             // 重新加载数据
             await LoadDataAsync();
 
-            StateHasChanged();
+            // 使用异步方式触发重新渲染，避免同步调用导致的堆栈问题
+            _ = InvokeAsync(StateHasChanged);
         }
         catch (Exception ex)
         {
