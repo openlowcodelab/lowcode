@@ -14,8 +14,8 @@ public static class WebServiceCollectionExtensions
     /// <returns>服务集合</returns>
     public static IServiceCollection AddAccountWeb(this IServiceCollection services)
     {
-        // Web 层主要是 Blazor 组件，通常不需要额外注册服务
-        // 如果需要注册 Blazor 服务，可以在这里添加
+        services.AddAntDesign();
+
         return services;
     }
 }

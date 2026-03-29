@@ -9,6 +9,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveWebAssemblyComponents();
 
 #region Account
+builder.Services.AddAntDesign();
 builder.Services.AddAccountHttpApi(builder.Configuration);
 #endregion
 

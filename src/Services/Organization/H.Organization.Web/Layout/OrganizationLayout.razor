@@ -1,0 +1,56 @@
+﻿@namespace H.Organization.Web
+@inherits LayoutComponentBase
+
+<AntDesign.ProLayout.BasicLayout FixedHeader="true"
+        Logo="@("_content/H.Organization.Web/logo.png")" Title="组织管理"
+        MenuData="@_menuDataItems" MenuAccordion="true" Layout="AntDesign.ProLayout.Layout.Side">
+    <RightContentRender>
+        RightContent
+    </RightContentRender>
+    <ChildContent>
+        @Body
+    </ChildContent>
+    <FooterRender></FooterRender>
+</AntDesign.ProLayout.BasicLayout>
+<SettingDrawer />
+
+@code
+{
+    [PersistentState]
+    public MenuDataItem[] _menuDataItems { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        _menuDataItems = InitMenuData();
+    }
+
+    private MenuDataItem[] InitMenuData()
+    {
+        MenuDataItem[] menuData = [
+            new MenuDataItem
+            {
+                Path = "/organization",
+                Name = "组织管理",
+                Icon = "profile",
+                Key = "organization-manage"
+            },
+            new MenuDataItem
+            {
+                Path = "/organization/member",
+                Name = "成员管理",
+                Icon = "menu",
+                Key = "member-manage"
+            },
+            new MenuDataItem
+            {
+                Path = $"/organization/role",
+                Name = "角色管理",
+                Icon = "database",
+                Key = "role-manage"
+            }
+        ];
+        return menuData;
+    }
+}

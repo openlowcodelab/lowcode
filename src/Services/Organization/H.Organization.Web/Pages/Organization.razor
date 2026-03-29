@@ -1,5 +1,6 @@
 @page "/organization"
-@inject OrganizationClient OrganizationClient
+@layout OrganizationLayout
+@inject IOrganizationService IOrganizationService
 @inject IJSRuntime JS
 
 <h3>组织架构管理</h3>
@@ -113,7 +114,7 @@ else
 
     private async Task LoadData()
     {
-        var result = await OrganizationClient.GetOrganizationsAsync(new OrganizationQueryParams { PageSize = 100 });
+        var result = await IOrganizationService.GetListAsync(new OrganizationQueryParams { PageSize = 100 });
         organizations = result.Items;
     }
 
@@ -145,7 +146,7 @@ else
     {
         if (isEdit)
         {
-            await OrganizationClient.UpdateOrganizationAsync(currentOrg.Id, new UpdateOrganizationDto
+            await IOrganizationService.UpdateAsync(currentOrg.Id, new UpdateOrganizationDto
             {
                 Name = currentOrg.Name,
                 Code = currentOrg.Code,
@@ -159,7 +160,7 @@ else
         }
         else
         {
-            await OrganizationClient.CreateOrganizationAsync(new CreateOrganizationDto
+            await IOrganizationService.CreateAsync(new CreateOrganizationDto
             {
                 Name = currentOrg.Name,
                 Code = currentOrg.Code,
@@ -179,7 +180,7 @@ else
     {
         if (await JS.InvokeAsync<bool>("confirm", "确定要删除这个部门吗？"))
         {
-            await OrganizationClient.DeleteOrganizationAsync(id);
+            await IOrganizationService.DeleteAsync(id);
             await LoadData();
         }
     }

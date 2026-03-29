@@ -1,4 +1,3 @@
-using H.Organization.Client;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace H.Organization.Web;
@@ -14,11 +13,10 @@ public static class WebServiceCollectionExtensions
     /// <param name="services">服务集合</param>
     /// <param name="baseAddress">API 基础地址</param>
     /// <returns>服务集合</returns>
-    public static IServiceCollection AddOrganizationWebServices(
-        this IServiceCollection services,
-        string baseAddress)
+    public static IServiceCollection AddOrganizationWeb(
+        this IServiceCollection services)
     {
-        services.AddOrganizationClient(baseAddress);
+        services.AddAntDesign();
 
         return services;
     }

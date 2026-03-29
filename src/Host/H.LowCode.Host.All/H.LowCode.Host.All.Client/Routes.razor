@@ -1,7 +1,9 @@
 ﻿@using H.LowCode.Portal
 @using System.Reflection
 
-<Router AppAssembly="typeof(Program).Assembly" NotFoundPage="typeof(Pages.NotFound)" AdditionalAssemblies="@Assemblies">
+<Router AppAssembly="typeof(Program).Assembly"
+        NotFoundPage="typeof(Pages.NotFound)"
+        AdditionalAssemblies="@Assemblies">
     <Found Context="routeData">
         <RouteView RouteData="routeData" DefaultLayout="typeof(PortalLayout)" />
         <FocusOnNavigate RouteData="routeData" Selector="h1" />

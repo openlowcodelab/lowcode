@@ -1,5 +1,6 @@
 @page "/organization/role"
-@inject OrganizationClient OrganizationClient
+@layout OrganizationLayout
+@inject IRoleService IRoleService
 @inject IJSRuntime JS
 
 <h3>角色管理</h3>
@@ -119,7 +120,7 @@ else
 
     private async Task LoadData()
     {
-        var result = await OrganizationClient.GetRolesAsync(new RoleQueryParams { PageSize = 100 });
+        var result = await IRoleService.GetListAsync(new RoleQueryParams { PageSize = 100 });
         roles = result.Items;
     }
 
@@ -151,7 +152,7 @@ else
     {
         if (isEdit)
         {
-            await OrganizationClient.UpdateRoleAsync(currentRole.Id, new UpdateRoleDto
+            await IRoleService.UpdateAsync(currentRole.Id, new UpdateRoleDto
             {
                 Name = currentRole.Name,
                 Code = currentRole.Code,
@@ -164,7 +165,7 @@ else
         }
         else
         {
-            await OrganizationClient.CreateRoleAsync(new CreateRoleDto
+            await IRoleService.CreateAsync(new CreateRoleDto
             {
                 Name = currentRole.Name,
                 Code = currentRole.Code,
@@ -183,7 +184,7 @@ else
     {
         if (await JS.InvokeAsync<bool>("confirm", "确定要删除这个角色吗？"))
         {
-            await OrganizationClient.DeleteRoleAsync(id);
+            await IRoleService.DeleteAsync(id);
             await LoadData();
         }
     }

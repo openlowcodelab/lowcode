@@ -14,6 +14,7 @@ builder.Services.AddAccountClient(builder.Configuration);
 #endregion
 
 #region Organization
+builder.Services.AddAntDesign();
 builder.Services.AddOrganizationHttpApi(builder.Configuration);
 #endregion
 

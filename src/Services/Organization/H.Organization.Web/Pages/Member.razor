@@ -1,5 +1,7 @@
 @page "/organization/member"
-@inject OrganizationClient OrganizationClient
+@layout OrganizationLayout
+@inject IMemberService IMemberService
+@inject IOrganizationService IOrganizationService
 @inject IJSRuntime JS
 
 <h3>成员管理</h3>
@@ -121,10 +123,10 @@ else
 
     private async Task LoadData()
     {
-        var memberResult = await OrganizationClient.GetMembersAsync(new MemberQueryParams { PageSize = 100 });
+        var memberResult = await IMemberService.GetListAsync(new MemberQueryParams { PageSize = 100 });
         members = memberResult.Items;
 
-        var orgResult = await OrganizationClient.GetOrganizationsAsync(new OrganizationQueryParams { PageSize = 100 });
+        var orgResult = await IOrganizationService.GetListAsync(new OrganizationQueryParams { PageSize = 100 });
         organizations = orgResult.Items;
     }
 
@@ -157,7 +159,7 @@ else
     {
         if (isEdit)
         {
-            await OrganizationClient.UpdateMemberAsync(currentMember.Id, new UpdateMemberDto
+            await IMemberService.UpdateAsync(currentMember.Id, new UpdateMemberDto
             {
                 MemberType = currentMember.MemberType,
                 Sort = currentMember.Sort,
@@ -168,7 +170,7 @@ else
         }
         else
         {
-            await OrganizationClient.AddMemberAsync(new AddMemberDto
+            await IMemberService.AddAsync(new AddMemberDto
             {
                 OrganizationId = currentMember.OrganizationId,
                 UserId = currentMember.UserId,
@@ -187,7 +189,7 @@ else
     {
         if (await JS.InvokeAsync<bool>("confirm", "确定要删除这个成员吗？"))
         {
-            await OrganizationClient.DeleteMemberAsync(id);
+            await IMemberService.DeleteAsync(id);
             await LoadData();
         }
     }

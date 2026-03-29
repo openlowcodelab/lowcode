@@ -1,0 +1,42 @@
+﻿@namespace H.Account.Web
+@inherits LayoutComponentBase
+
+<AntDesign.ProLayout.BasicLayout FixedHeader="true"
+        Logo="@("_content/H.Account.Web/logo.png")" Title="组织管理"
+        MenuData="@_menuDataItems" MenuAccordion="true" Layout="AntDesign.ProLayout.Layout.Side">
+    <RightContentRender>
+        RightContent
+    </RightContentRender>
+    <ChildContent>
+        @Body
+    </ChildContent>
+    <FooterRender></FooterRender>
+</AntDesign.ProLayout.BasicLayout>
+<SettingDrawer />
+
+@code
+{
+    [PersistentState]
+    public MenuDataItem[] _menuDataItems { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        _menuDataItems = InitMenuData();
+    }
+
+    private MenuDataItem[] InitMenuData()
+    {
+        MenuDataItem[] menuData = [
+            new MenuDataItem
+            {
+                Path = "/users",
+                Name = "用户列表",
+                Icon = "profile",
+                Key = "users-list"
+            }
+        ];
+        return menuData;
+    }
+}

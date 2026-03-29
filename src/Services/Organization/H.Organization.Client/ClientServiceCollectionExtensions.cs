@@ -15,9 +15,9 @@ public static class ClientServiceCollectionExtensions
     /// <param name="baseAddress">API 基础地址</param>
     /// <returns>服务集合</returns>
     public static IServiceCollection AddOrganizationClient(
-        this IServiceCollection services,
-        string baseAddress)
+        this IServiceCollection services)
     {
+        string baseAddress = "https://localhost:5001"; // 替换为实际的 API 地址
         services.AddHttpClient<OrganizationClient>(client =>
         {
             client.BaseAddress = new Uri(baseAddress);
