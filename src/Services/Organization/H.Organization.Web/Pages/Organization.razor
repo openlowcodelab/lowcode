@@ -1,0 +1,191 @@
+@page "/organization"
+@inject OrganizationClient OrganizationClient
+@inject IJSRuntime JS
+
+<h3>组织架构管理</h3>
+
+<div class="mb-3">
+    <button class="btn btn-primary" @onclick="ShowCreateDialog">新增部门</button>
+</div>
+
+@if (organizations == null)
+{
+    <p>加载中...</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>部门名称</th>
+                <th>编码</th>
+                <th>负责人</th>
+                <th>电话</th>
+                <th>邮箱</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var org in organizations)
+            {
+                <tr>
+                    <td>@org.Name</td>
+                    <td>@org.Code</td>
+                    <td>@org.LeaderName</td>
+                    <td>@org.Phone</td>
+                    <td>@org.Email</td>
+                    <td>@(org.IsEnabled ? "启用" : "禁用")</td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary" @onclick="() => Edit(org)">编辑</button>
+                        <button class="btn btn-sm btn-danger" @onclick="() => Delete(org.Id)">删除</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@if (showDialog)
+{
+    <div class="modal d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(isEdit ? "编辑部门" : "新增部门")</h5>
+                    <button type="button" class="btn-close" @onclick="CloseDialog"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">部门名称</label>
+                        <input class="form-control" @bind="currentOrg.Name" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">编码</label>
+                        <input class="form-control" @bind="currentOrg.Code" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">父部门</label>
+                        <select class="form-select" @bind="currentOrg.ParentId">
+                            <option value="">-- 无 --</option>
+                            @foreach (var org in organizations)
+                            {
+                                <option value="@org.Id">@org.Name</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">联系电话</label>
+                        <input class="form-control" @bind="currentOrg.Phone" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">邮箱</label>
+                        <input class="form-control" @bind="currentOrg.Email" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">排序</label>
+                        <input class="form-control" type="number" @bind="currentOrg.Sort" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">备注</label>
+                        <textarea class="form-control" @bind="currentOrg.Remark"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseDialog">取消</button>
+                    <button type="button" class="btn btn-primary" @onclick="Save">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<OrganizationDto>? organizations;
+    private bool showDialog;
+    private bool isEdit;
+    private OrganizationDto currentOrg = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        var result = await OrganizationClient.GetOrganizationsAsync(new OrganizationQueryParams { PageSize = 100 });
+        organizations = result.Items;
+    }
+
+    private void ShowCreateDialog()
+    {
+        currentOrg = new OrganizationDto();
+        isEdit = false;
+        showDialog = true;
+    }
+
+    private void Edit(OrganizationDto org)
+    {
+        currentOrg = new OrganizationDto
+        {
+            Id = org.Id,
+            Name = org.Name,
+            Code = org.Code,
+            ParentId = org.ParentId,
+            Phone = org.Phone,
+            Email = org.Email,
+            Sort = org.Sort,
+            Remark = org.Remark
+        };
+        isEdit = true;
+        showDialog = true;
+    }
+
+    private async Task Save()
+    {
+        if (isEdit)
+        {
+            await OrganizationClient.UpdateOrganizationAsync(currentOrg.Id, new UpdateOrganizationDto
+            {
+                Name = currentOrg.Name,
+                Code = currentOrg.Code,
+                ParentId = currentOrg.ParentId,
+                Phone = currentOrg.Phone,
+                Email = currentOrg.Email,
+                Sort = currentOrg.Sort,
+                IsEnabled = currentOrg.IsEnabled,
+                Remark = currentOrg.Remark
+            });
+        }
+        else
+        {
+            await OrganizationClient.CreateOrganizationAsync(new CreateOrganizationDto
+            {
+                Name = currentOrg.Name,
+                Code = currentOrg.Code,
+                ParentId = currentOrg.ParentId,
+                Phone = currentOrg.Phone,
+                Email = currentOrg.Email,
+                Sort = currentOrg.Sort,
+                Remark = currentOrg.Remark
+            });
+        }
+
+        CloseDialog();
+        await LoadData();
+    }
+
+    private async Task Delete(Guid id)
+    {
+        if (await JS.InvokeAsync<bool>("confirm", "确定要删除这个部门吗？"))
+        {
+            await OrganizationClient.DeleteOrganizationAsync(id);
+            await LoadData();
+        }
+    }
+
+    private void CloseDialog()
+    {
+        showDialog = false;
+    }
+}

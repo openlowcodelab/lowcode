@@ -1,0 +1,126 @@
+@page "/admin/users/create"
+@using Microsoft.AspNetCore.Components.Forms
+@inject IUserService UserService
+@inject NavigationManager Navigation
+
+<PageTitle>创建用户</PageTitle>
+
+<h3>创建用户</h3>
+
+<div class="card">
+    <div class="card-body">
+        <EditForm Model="@createUserDto" OnValidSubmit="HandleSubmit">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger" />
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">用户名 <span class="text-danger">*</span></label>
+                    <InputText @bind-value="createUserDto.UserName" class="form-control" />
+                    <ValidationMessage For="@(() => createUserDto.UserName)" class="text-danger" />
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">邮箱 <span class="text-danger">*</span></label>
+                    <InputText @bind-value="createUserDto.Email" class="form-control" />
+                    <ValidationMessage For="@(() => createUserDto.Email)" class="text-danger" />
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">密码 <span class="text-danger">*</span></label>
+                    <InputText @bind-value="createUserDto.Password" type="password" class="form-control" />
+                    <ValidationMessage For="@(() => createUserDto.Password)" class="text-danger" />
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">确认密码 <span class="text-danger">*</span></label>
+                    <InputText @bind-value="createUserDto.ConfirmPassword" type="password" class="form-control" />
+                    <ValidationMessage For="@(() => createUserDto.ConfirmPassword)" class="text-danger" />
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">手机号</label>
+                    <InputText @bind-value="createUserDto.PhoneNumber" class="form-control" />
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">用户类型</label>
+                    <InputSelect @bind-value="createUserDto.UserType" class="form-select">
+                        <option value="0">普通用户</option>
+                        <option value="1">管理员</option>
+                        <option value="2">超级管理员</option>
+                    </InputSelect>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">角色</label>
+                    <InputText @bind-value="createUserDto.Roles" class="form-control" placeholder="逗号分隔多个角色" />
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <div class="form-check mt-4">
+                        <InputCheckbox @bind-value="createUserDto.IsActive" class="form-check-input" />
+                        <label class="form-check-label">账户激活</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">备注</label>
+                <InputTextArea @bind-value="createUserDto.Remark" class="form-control" rows="3" />
+            </div>
+
+            <div class="mb-3">
+                <button type="submit" class="btn btn-primary" disabled="@isSubmitting">
+                    @if (isSubmitting)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2"></span>
+                    }
+                    创建用户
+                </button>
+                <a href="/admin/users" class="btn btn-secondary ms-2">返回</a>
+            </div>
+        </EditForm>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger">@errorMessage</div>
+        }
+    </div>
+</div>
+
+@code {
+    private CreateUserDto createUserDto = new();
+    private bool isSubmitting = false;
+    private string errorMessage = "";
+
+    private async Task HandleSubmit()
+    {
+        isSubmitting = true;
+        errorMessage = "";
+
+        try
+        {
+            await UserService.CreateUserAsync(createUserDto);
+            Navigation.NavigateTo("/admin/users");
+        }
+        catch (ArgumentException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"创建失败：{ex.Message}";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}

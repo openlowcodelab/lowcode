@@ -21,9 +21,9 @@
         
         <div class="navbar-right">
             <!-- 控制台 -->
-            <a href="/" class="nav-link">
+            @* <a href="/" class="nav-link">
                 <span>控制台</span>
-            </a>
+            </a> *@
             
             <!-- 登录/用户信息 -->
             @if (IsLoggedIn)
@@ -42,9 +42,9 @@
                 </div>
                 
                 <!-- 退出登录 -->
-                <button class="logout-btn" @onclick="Logout">
+                @* <button class="logout-btn" @onclick="Logout">
                     <span>退出</span>
-                </button>
+                </button> *@
             }
             else
             {
@@ -103,32 +103,28 @@
     {
         new AppCategoryInfo
         {
-            CategoryName = "办公应用",
+            CategoryName = "基础服务",
             Apps = new List<AppItemInfo>
             {
-                new AppItemInfo { Name = "考勤管理", Icon = "📅", Url = "/attendance", Target = "_self" },
-                new AppItemInfo { Name = "案件管理", Icon = "📁", Url = "/caseapp", Target = "_self" },
-                new AppItemInfo { Name = "问卷调查", Icon = "📝", Url = "/survey", Target = "_blank" }
+                new AppItemInfo { Name = "用户管理", Icon = "📅", Url = "https://localhost:7210/admin/users", Target = "_self" },
+                new AppItemInfo { Name = "组织管理", Icon = "📁", Url = "https://localhost:7298/organization", Target = "_self" }
             }
         },
         new AppCategoryInfo
         {
-            CategoryName = "开发工具",
+            CategoryName = "业务应用",
             Apps = new List<AppItemInfo>
             {
-                new AppItemInfo { Name = "表单设计器", Icon = "🎨", Url = "/designer", Target = "_self" },
-                new AppItemInfo { Name = "流程引擎", Icon = "⚙️", Url = "/workflow", Target = "_self" },
-                new AppItemInfo { Name = "报表中心", Icon = "📊", Url = "/reports", Target = "_blank" }
+                new AppItemInfo { Name = "审批中心", Icon = "🎨", Url = "/workflow", Target = "_self" },
             }
         },
         new AppCategoryInfo
         {
-            CategoryName = "系统管理",
+            CategoryName = "开发与运维",
             Apps = new List<AppItemInfo>
             {
-                new AppItemInfo { Name = "用户管理", Icon = "👥", Url = "/users", Target = "_self" },
-                new AppItemInfo { Name = "权限配置", Icon = "🔐", Url = "/permissions", Target = "_self" },
-                new AppItemInfo { Name = "系统设置", Icon = "🔧", Url = "/settings", Target = "_self" }
+                new AppItemInfo { Name = "低代码应用开发", Icon = "👥", Url = "https://localhost:5181/", Target = "_blank" },
+                new AppItemInfo { Name = "系统配置", Icon = "🔐", Url = "/system/config", Target = "_blank" },
             }
         }
     };

@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<Import Project="..\..\..\..\common.props" />
+
+	<PropertyGroup>
+    <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+  </PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" />
+	</ItemGroup>
+
+	<ItemGroup>
+    <ProjectReference Include="..\..\..\..\Services\Organization\H.Organization.HttpApi\H.Organization.HttpApi.csproj" />
+    <ProjectReference Include="..\H.Organization.Host.Client\H.Organization.Host.Client.csproj" />
+  </ItemGroup>
+
+</Project>

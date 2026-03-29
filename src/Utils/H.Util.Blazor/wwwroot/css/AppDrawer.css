@@ -24,7 +24,7 @@
     position: fixed;
     top: 0;
     left: 0;
-    width: 320px;
+    width: 450px;
     height: 100%;
     background-color: #fff;
     box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
@@ -128,16 +128,16 @@
 }
 
 .category-apps {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
 }
 
 /* 应用项 */
 .app-item {
     display: flex;
     align-items: center;
-    padding: 12px 16px;
+    padding: 8px 4px;
     background-color: #f5f5f5;
     border-radius: 8px;
     cursor: pointer;
@@ -145,6 +145,7 @@
     border: 1px solid transparent;
     text-decoration: none;
     color: inherit;
+    min-width: 0;
 }
 
 .app-item:hover {

@@ -1,0 +1,103 @@
+@page "/account/register"
+@layout LayoutComponentBase
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components
+@inject IAuthService AuthService
+@inject NavigationManager Navigation
+
+<h3>用户注册</h3>
+
+<EditForm Model="@registerModel" OnValidSubmit="@HandleRegister" FormName="RegisterForm">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group">
+        <label for="username">用户名:</label>
+        <InputText id="username" @bind-value="registerModel.UserName" class="form-control" />
+    </div>
+
+    <div class="form-group">
+        <label for="email">邮箱:</label>
+        <InputText id="email" @bind-value="registerModel.Email" type="email" class="form-control" />
+    </div>
+
+    <div class="form-group">
+        <label for="password">密码:</label>
+        <InputText id="password" @bind-value="registerModel.Password" type="password" class="form-control" />
+    </div>
+
+    <div class="form-group">
+        <label for="confirmPassword">确认密码:</label>
+        <InputText id="confirmPassword" @bind-value="registerModel.ConfirmPassword" type="password" class="form-control" />
+    </div>
+
+    <div class="form-group">
+        <label for="phone">手机号:</label>
+        <InputText id="phone" @bind-value="registerModel.PhoneNumber" class="form-control" />
+    </div>
+
+    <button type="submit" class="btn btn-primary w-100">注册</button>
+</EditForm>
+
+<div class="mt-3">
+    已有账户？ <a href="/account/login">点击登录</a>
+</div>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger mt-3">@errorMessage</div>
+}
+
+@if (!string.IsNullOrEmpty(successMessage))
+{
+    <div class="alert alert-success mt-3">@successMessage</div>
+}
+
+@code {
+    [SupplyParameterFromForm]
+    private RegisterRequestDto? registerModel { get; set; }
+    private string errorMessage = "";
+    private string successMessage = "";
+
+    protected override void OnInitialized()
+    {
+        registerModel ??= new RegisterRequestDto();
+    }
+
+    private async Task HandleRegister()
+    {
+        if (registerModel == null)
+        {
+            errorMessage = "系统错误：表单数据未初始化";
+            return;
+        }
+        
+        try
+        {
+            var result = await AuthService.RegisterAsync(registerModel);
+            
+            if (result.Success)
+            {
+                successMessage = "注册成功！正在跳转到登录页面...";
+                errorMessage = "";
+                
+                await Task.Delay(500);
+                Navigation.NavigateTo("/account/login");
+            }
+            else
+            {
+                errorMessage = result.Message;
+                successMessage = "";
+            }
+        }
+        catch (Microsoft.AspNetCore.Components.NavigationException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"注册失败: {ex.Message}";
+            successMessage = "";
+        }
+    }
+}

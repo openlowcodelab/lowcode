@@ -1,0 +1,245 @@
+@page "/admin/users"
+@using Microsoft.AspNetCore.Components.Web
+@inject IUserService UserService
+@inject NavigationManager Navigation
+
+<PageTitle>用户管理</PageTitle>
+
+<h3>用户管理</h3>
+
+<div class="card">
+    <div class="card-header">
+        <div class="row align-items-center">
+            <div class="col-md-4">
+                <input type="text" class="form-control" value="@searchKeyword" @oninput="OnSearchKeywordInput"
+                       placeholder="搜索用户名、邮箱、手机号" @onkeyup="HandleSearchKeyUp" />
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" value="@searchUserType" @onchange="OnSearchUserTypeChange">
+                    <option value="">所有用户类型</option>
+                    <option value="0">普通用户</option>
+                    <option value="1">管理员</option>
+                    <option value="2">超级管理员</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" value="@searchIsActive" @onchange="OnSearchIsActiveChange">
+                    <option value="">所有状态</option>
+                    <option value="true">激活</option>
+                    <option value="false">禁用</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-primary" @onclick="LoadUsers">
+                    <span class="bi bi-search"></span> 搜索
+                </button>
+                <a href="/admin/users/create" class="btn btn-success ms-2">
+                    <span class="bi bi-plus"></span> 新增
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        @if (isLoading)
+        {
+            <div class="text-center">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">加载中...</span>
+                </div>
+            </div>
+        }
+        else if (users.Items.Any())
+        {
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>用户名</th>
+                        <th>邮箱</th>
+                        <th>手机号</th>
+                        <th>用户类型</th>
+                        <th>状态</th>
+                        <th>创建时间</th>
+                        <th>最后登录</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var user in users.Items)
+                    {
+                        <tr>
+                            <td>@user.Id.ToString("N")[..8]</td>
+                            <td>@user.UserName</td>
+                            <td>@user.Email</td>
+                            <td>@user.PhoneNumber</td>
+                            <td>
+                                <span class="badge @GetUserTypeBadge(user.UserType)">
+                                    @GetUserTypeText(user.UserType)
+                                </span>
+                            </td>
+                            <td>
+                                @if (user.IsActive)
+                                {
+                                    <span class="badge bg-success">激活</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">禁用</span>
+                                }
+                            </td>
+                            <td>@user.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>@(user.LastLoginAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                            <td>
+                                <a href="/admin/users/@user.Id/edit" class="btn btn-sm btn-primary">编辑</a>
+                                <button class="btn btn-sm btn-danger" @onclick="() => DeleteUser(user.Id)">删除</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <!-- 分页 -->
+            <nav>
+                <ul class="pagination justify-content-center">
+                    <li class="page-item @(users.PageIndex <= 1 ? "disabled" : "")">
+                        <a class="page-link" href="#" @onclick="() => ChangePage(users.PageIndex - 1)">上一页</a>
+                    </li>
+                    @for (int i = 1; i <= users.TotalPages; i++)
+                    {
+                        <li class="page-item @(i == users.PageIndex ? "active" : "")">
+                            <a class="page-link" href="#" @onclick="() => ChangePage(i)">@i</a>
+                        </li>
+                    }
+                    <li class="page-item @(users.PageIndex >= users.TotalPages ? "disabled" : "")">
+                        <a class="page-link" href="#" @onclick="() => ChangePage(users.PageIndex + 1)">下一页</a>
+                    </li>
+                </ul>
+            </nav>
+        }
+        else
+        {
+            <div class="text-center text-muted">
+                <p>暂无用户数据</p>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private PagedResult<UserDto> users = new();
+    private bool isLoading = false;
+    private string searchKeyword = "";
+    private string searchUserType = "";
+    private string searchIsActive = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsers();
+    }
+
+    private async Task LoadUsers()
+    {
+        isLoading = true;
+        try
+        {
+            var queryParams = new UserQueryParams
+            {
+                PageIndex = users.PageIndex,
+                PageSize = users.PageSize
+            };
+
+            if (!string.IsNullOrWhiteSpace(searchKeyword))
+                queryParams.Keyword = searchKeyword;
+            if (!string.IsNullOrWhiteSpace(searchUserType) && int.TryParse(searchUserType, out var userType))
+                queryParams.UserType = (UserType)userType;
+            if (!string.IsNullOrWhiteSpace(searchIsActive) && bool.TryParse(searchIsActive, out var isActive))
+                queryParams.IsActive = isActive;
+
+            users = await UserService.GetPagedUsersAsync(queryParams);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"加载用户失败：{ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleSearchKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            users.PageIndex = 1;
+            await LoadUsers();
+        }
+    }
+
+    private void OnSearchKeywordInput(ChangeEventArgs e)
+    {
+        searchKeyword = e.Value?.ToString() ?? "";
+    }
+
+    private void OnSearchUserTypeChange(ChangeEventArgs e)
+    {
+        searchUserType = e.Value?.ToString() ?? "";
+    }
+
+    private void OnSearchIsActiveChange(ChangeEventArgs e)
+    {
+        searchIsActive = e.Value?.ToString() ?? "";
+    }
+
+    private async Task ChangePage(int pageIndex)
+    {
+        if (pageIndex < 1 || pageIndex > users.TotalPages) return;
+        users.PageIndex = pageIndex;
+        await LoadUsers();
+    }
+
+    private async Task DeleteUser(Guid userId)
+    {
+        if (!Confirm("确定要删除该用户吗？")) return;
+
+        try
+        {
+            await UserService.DeleteUserAsync(userId);
+            await LoadUsers();
+        }
+        catch (Exception ex)
+        {
+            Alert($"删除失败：{ex.Message}");
+        }
+    }
+
+    private string GetUserTypeBadge(UserType userType)
+    {
+        return userType switch
+        {
+            UserType.Admin => "bg-primary",
+            UserType.SuperAdmin => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    private string GetUserTypeText(UserType userType)
+    {
+        return userType switch
+        {
+            UserType.Admin => "管理员",
+            UserType.SuperAdmin => "超级管理员",
+            _ => "普通用户"
+        };
+    }
+
+    private bool Confirm(string message)
+    {
+        return System.Threading.Tasks.Task.FromResult(true).Result; 
+    }
+
+    private void Alert(string message)
+    {
+        Console.WriteLine(message);
+    }
+}

@@ -1,0 +1,195 @@
+@page "/organization/role"
+@inject OrganizationClient OrganizationClient
+@inject IJSRuntime JS
+
+<h3>角色管理</h3>
+
+<div class="mb-3">
+    <button class="btn btn-primary" @onclick="ShowCreateDialog">新增角色</button>
+</div>
+
+@if (roles == null)
+{
+    <p>加载中...</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>角色名称</th>
+                <th>编码</th>
+                <th>角色类型</th>
+                <th>数据范围</th>
+                <th>成员数量</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var role in roles)
+            {
+                <tr>
+                    <td>@role.Name</td>
+                    <td>@role.Code</td>
+                    <td>@role.RoleTypeName</td>
+                    <td>@role.DataScopeName</td>
+                    <td>@role.MembersCount</td>
+                    <td>@(role.IsEnabled ? "启用" : "禁用")</td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary" @onclick="() => Edit(role)">编辑</button>
+                        <button class="btn btn-sm btn-danger" @onclick="() => Delete(role.Id)">删除</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@if (showDialog)
+{
+    <div class="modal d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(isEdit ? "编辑角色" : "新增角色")</h5>
+                    <button type="button" class="btn-close" @onclick="CloseDialog"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">角色名称</label>
+                        <input class="form-control" @bind="currentRole.Name" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">编码</label>
+                        <input class="form-control" @bind="currentRole.Code" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">角色类型</label>
+                        <select class="form-select" @bind="currentRole.RoleType">
+                            <option value="1">系统角色</option>
+                            <option value="2">自定义角色</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">数据范围</label>
+                        <select class="form-select" @bind="currentRole.DataScope">
+                            <option value="1">全部数据</option>
+                            <option value="2">本部门数据</option>
+                            <option value="3">仅本人数据</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">排序</label>
+                        <input class="form-control" type="number" @bind="currentRole.Sort" />
+                    </div>
+                    @if (isEdit)
+                    {
+                        <div class="mb-3">
+                            <label class="form-check">
+                                <input class="form-check-input" type="checkbox" @bind="currentRole.IsEnabled" />
+                                <span class="form-check-label">启用</span>
+                            </label>
+                        </div>
+                    }
+                    <div class="mb-3">
+                        <label class="form-label">备注</label>
+                        <textarea class="form-control" @bind="currentRole.Remark"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="CloseDialog">取消</button>
+                    <button type="button" class="btn btn-primary" @onclick="Save">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<RoleDto>? roles;
+    private bool showDialog;
+    private bool isEdit;
+    private RoleDto currentRole = new() { RoleType = 2, DataScope = 1 };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        var result = await OrganizationClient.GetRolesAsync(new RoleQueryParams { PageSize = 100 });
+        roles = result.Items;
+    }
+
+    private void ShowCreateDialog()
+    {
+        currentRole = new RoleDto { RoleType = 2, DataScope = 1 };
+        isEdit = false;
+        showDialog = true;
+    }
+
+    private void Edit(RoleDto role)
+    {
+        currentRole = new RoleDto
+        {
+            Id = role.Id,
+            Name = role.Name,
+            Code = role.Code,
+            RoleType = role.RoleType,
+            DataScope = role.DataScope,
+            Sort = role.Sort,
+            IsEnabled = role.IsEnabled,
+            Remark = role.Remark
+        };
+        isEdit = true;
+        showDialog = true;
+    }
+
+    private async Task Save()
+    {
+        if (isEdit)
+        {
+            await OrganizationClient.UpdateRoleAsync(currentRole.Id, new UpdateRoleDto
+            {
+                Name = currentRole.Name,
+                Code = currentRole.Code,
+                RoleType = currentRole.RoleType,
+                DataScope = currentRole.DataScope,
+                Sort = currentRole.Sort,
+                IsEnabled = currentRole.IsEnabled,
+                Remark = currentRole.Remark
+            });
+        }
+        else
+        {
+            await OrganizationClient.CreateRoleAsync(new CreateRoleDto
+            {
+                Name = currentRole.Name,
+                Code = currentRole.Code,
+                RoleType = currentRole.RoleType,
+                DataScope = currentRole.DataScope,
+                Sort = currentRole.Sort,
+                Remark = currentRole.Remark
+            });
+        }
+
+        CloseDialog();
+        await LoadData();
+    }
+
+    private async Task Delete(Guid id)
+    {
+        if (await JS.InvokeAsync<bool>("confirm", "确定要删除这个角色吗？"))
+        {
+            await OrganizationClient.DeleteRoleAsync(id);
+            await LoadData();
+        }
+    }
+
+    private void CloseDialog()
+    {
+        showDialog = false;
+    }
+}
