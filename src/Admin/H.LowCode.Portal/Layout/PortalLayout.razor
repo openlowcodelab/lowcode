@@ -1,11 +1,158 @@
 ﻿@namespace H.LowCode.Portal
 @inherits LayoutComponentBase
 
-<div>
-    @Body
+<link rel="stylesheet" href="_content/H.Util.Blazor/css/AppDrawer.css" />
+<link rel="stylesheet" href="_content/H.LowCode.Portal/css/site.css" />
+
+<div class="layout-container">
+    <!-- 顶部导航栏 -->
+    <div class="top-navbar">
+        <div class="navbar-left">
+            <!-- 应用抽屉按钮 -->
+            <button class="drawer-toggle" @onclick="ToggleAppDrawer">
+                <span class="drawer-icon">☰</span>
+            </button>
+            
+            <!-- 应用名称 -->
+            <div class="app-name">
+                <h3>H.LowCode</h3>
+            </div>
+        </div>
+        
+        <div class="navbar-right">
+            <!-- 控制台 -->
+            <a href="/" class="nav-link">
+                <span>控制台</span>
+            </a>
+            
+            <!-- 登录/用户信息 -->
+            @if (IsLoggedIn)
+            {
+                <!-- 用户头像 -->
+                <div class="user-avatar" style="background-color: #1890ff; display: flex; align-items: center; justify-content: center;">
+                    <svg viewBox="0 0 100 100" style="width: 100%; height: 100%;">
+                        <circle fill="#fff" cx="50" cy="35" r="20"/>
+                        <path fill="#fff" d="M50 60 Q20 60 20 85 L80 85 Q80 60 50 60"/>
+                    </svg>
+                </div>
+                
+                <!-- 用户名称 -->
+                <div class="user-name">
+                    <span>@UserName</span>
+                </div>
+                
+                <!-- 退出登录 -->
+                <button class="logout-btn" @onclick="Logout">
+                    <span>退出</span>
+                </button>
+            }
+            else
+            {
+                <!-- 登录按钮 -->
+                <button class="login-btn" @onclick="Login">
+                    <span>登录</span>
+                </button>
+            }
+        </div>
+    </div>
+    
+    <!-- 主体内容区域 -->
+    <div class="main-content">
+        @Body
+    </div>
+    
+    <!-- 应用抽屉（内联实现） -->
+    <div class="app-drawer-container @(showAppDrawer ? "visible" : "")">
+        <div class="app-drawer-overlay" @onclick="CloseAppDrawer"></div>
+        <div class="app-drawer">
+            <div class="drawer-header">
+                <h4>应用列表</h4>
+                <button class="close-drawer" @onclick="CloseAppDrawer">×</button>
+            </div>
+            <div class="drawer-content">
+                @foreach (var category in appCategories)
+                {
+                    <div class="app-category">
+                        <div class="category-title">@category.CategoryName</div>
+                        <div class="category-apps">
+                            @foreach (var app in category.Apps)
+                            {
+                                <a class="app-item" href="@app.Url" target="@app.Target" title="@app.Name">
+                                    <div class="app-icon">@app.Icon</div>
+                                    <div class="app-info">
+                                        <div class="app-name-text">@app.Name</div>
+                                    </div>
+                                </a>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
 </div>
 
-@code
-{
+@code{
+    private bool showAppDrawer = false;
+    private bool IsLoggedIn => !string.IsNullOrEmpty(UserName);
+    private string UserName { get; set; } = "用户";
+    private string UserAvatarUrl { get; set; } = ""; // 如果有用户头像 URL，设置此属性
     
+    // 应用列表数据（使用新的数据模型）
+    private List<AppCategoryInfo> appCategories = new()
+    {
+        new AppCategoryInfo
+        {
+            CategoryName = "办公应用",
+            Apps = new List<AppItemInfo>
+            {
+                new AppItemInfo { Name = "考勤管理", Icon = "📅", Url = "/attendance", Target = "_self" },
+                new AppItemInfo { Name = "案件管理", Icon = "📁", Url = "/caseapp", Target = "_self" },
+                new AppItemInfo { Name = "问卷调查", Icon = "📝", Url = "/survey", Target = "_blank" }
+            }
+        },
+        new AppCategoryInfo
+        {
+            CategoryName = "开发工具",
+            Apps = new List<AppItemInfo>
+            {
+                new AppItemInfo { Name = "表单设计器", Icon = "🎨", Url = "/designer", Target = "_self" },
+                new AppItemInfo { Name = "流程引擎", Icon = "⚙️", Url = "/workflow", Target = "_self" },
+                new AppItemInfo { Name = "报表中心", Icon = "📊", Url = "/reports", Target = "_blank" }
+            }
+        },
+        new AppCategoryInfo
+        {
+            CategoryName = "系统管理",
+            Apps = new List<AppItemInfo>
+            {
+                new AppItemInfo { Name = "用户管理", Icon = "👥", Url = "/users", Target = "_self" },
+                new AppItemInfo { Name = "权限配置", Icon = "🔐", Url = "/permissions", Target = "_self" },
+                new AppItemInfo { Name = "系统设置", Icon = "🔧", Url = "/settings", Target = "_self" }
+            }
+        }
+    };
+    
+    private void ToggleAppDrawer()
+    {
+        showAppDrawer = !showAppDrawer;
+    }
+    
+    private void CloseAppDrawer()
+    {
+        showAppDrawer = false;
+        StateHasChanged();
+    }
+    
+    private void Login()
+    {
+        // TODO: 实现登录逻辑
+        UserName = "测试用户";
+    }
+    
+    private void Logout()
+    {
+        // TODO: 实现登出逻辑
+        UserName = null;
+    }
 }

@@ -1,0 +1,148 @@
+﻿@namespace H.Util.Blazor
+@using Microsoft.JSInterop
+@using System.Threading.Tasks
+
+@inject Microsoft.JSInterop.IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+
+<div class="app-drawer-container @(Visible ? "visible" : "")">
+    <div class="app-drawer-overlay" @onclick="HandleOverlayClick" @onclick:stopPropagation="true"></div>
+    <div class="app-drawer">
+        <div class="drawer-header">
+            <h4>@Title</h4>
+            <button class="close-drawer" @onclick="HandleClose" @onclick:stopPropagation="true">×</button>
+        </div>
+        <div class="drawer-content">
+            @if (AppCategories != null && AppCategories.Any())
+            {
+                @foreach (var category in AppCategories)
+                {
+                    <div class="app-category">
+                        <div class="category-title">@category.CategoryName</div>
+                        <div class="category-apps">
+                            @foreach (var app in category.Apps)
+                            {
+                                <div class="app-item" 
+                                     @onclick="() => HandleAppClick(app)"
+                                     @onclick:stopPropagation="true"
+                                     title="@app.Name (@(app.Target == "_blank" ? "新标签页" : "当前页"))">
+                                    @if (!string.IsNullOrEmpty(app.Icon))
+                                    {
+                                        <div class="app-icon">@app.Icon</div>
+                                    }
+                                    else if (!string.IsNullOrEmpty(app.IconUrl))
+                                    {
+                                        <img src="@app.IconUrl" alt="" class="app-icon-image" />
+                                    }
+                                    <div class="app-info">
+                                        <div class="app-name-text">@app.Name</div>
+                                        @if (ShowTargetBadge)
+                                        {
+                                            <div class="app-target-badge">@(app.Target == "_blank" ? "🔗" : "📄")</div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="empty-state">@EmptyMessage</div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    /// <summary>
+    /// 是否显示抽屉
+    /// </summary>
+    [Parameter]
+    public bool Visible { get; set; }
+
+    /// <summary>
+    /// 抽屉标题
+    /// </summary>
+    [Parameter]
+    public string Title { get; set; } = "应用列表";
+
+    /// <summary>
+    /// 空状态提示文字
+    /// </summary>
+    [Parameter]
+    public string EmptyMessage { get; set; } = "暂无应用";
+
+    /// <summary>
+    /// 是否显示目标标识（新标签页/当前页）
+    /// </summary>
+    [Parameter]
+    public bool ShowTargetBadge { get; set; } = true;
+
+    /// <summary>
+    /// 应用分类列表
+    /// </summary>
+    [Parameter]
+    public List<AppCategoryInfo> AppCategories { get; set; } = new();
+
+    /// <summary>
+    /// 关闭抽屉事件
+    /// </summary>
+    [Parameter]
+    public EventCallback OnClose { get; set; }
+
+    /// <summary>
+    /// 点击应用事件（如果设置此事件，将覆盖默认跳转行为）
+    /// </summary>
+    [Parameter]
+    public Func<AppItemInfo, Task>? OnAppClick { get; set; }
+
+    /// <summary>
+    /// 点击遮罩层是否关闭抽屉
+    /// </summary>
+    [Parameter]
+    public bool CloseOnOverlayClick { get; set; } = true;
+
+    private async Task HandleClose()
+    {
+        Console.WriteLine("HandleClose 执行");
+        if (OnClose.HasDelegate)
+        {
+            await OnClose.InvokeAsync();
+        }
+    }
+
+    private async Task HandleOverlayClick()
+    {
+        Console.WriteLine("HandleOverlayClick 执行");
+        if (CloseOnOverlayClick && OnClose.HasDelegate)
+        {
+            await OnClose.InvokeAsync();
+        }
+    }
+
+    private async Task HandleAppClick(AppItemInfo app)
+    {
+        if (OnAppClick != null)
+        {
+            // 使用自定义点击处理
+            await OnAppClick.Invoke(app);
+        }
+        else
+        {
+            // 默认跳转行为
+            if (app.Target == "_blank")
+            {
+                _ = JSRuntime.InvokeVoidAsync("open", app.Url, "_blank");
+            }
+            else
+            {
+                NavigationManager.NavigateTo(app.Url);
+            }
+            
+            // 跳转后关闭抽屉
+            await OnClose.InvokeAsync();
+        }
+    }
+}
