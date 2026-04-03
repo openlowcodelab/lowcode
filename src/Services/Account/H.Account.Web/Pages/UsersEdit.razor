@@ -1,166 +1,127 @@
 @page "/admin/users/{id:guid}/edit"
-@using Microsoft.AspNetCore.Components.Forms
 @inject IUserService UserService
 @inject NavigationManager Navigation
+@inject IJSRuntime JS
 
 <PageTitle>编辑用户</PageTitle>
 
-<h3>编辑用户</h3>
-
-<div class="card">
-    <div class="card-body">
-        @if (isLoading)
+<Card Title="编辑用户">
+    <Spin Spinning="@isLoading">
+        @if (user != null)
         {
-            <div class="text-center">
-                <div class="spinner-border" role="status">
-                    <span class="visually-hidden">加载中...</span>
+            <Form Model="@updateUserDto" OnFinish="@HandleSubmit" LabelColSpan="4" WrapperColSpan="20">
+                <div class="ant-row">
+                    <div class="ant-col ant-col-12">
+                        <FormItem Label="用户名" Required>
+                            <Input @bind-Value="@updateUserDto.UserName" Placeholder="请输入用户名" />
+                        </FormItem>
+                    </div>
+                    <div class="ant-col ant-col-12">
+                        <FormItem Label="邮箱" Required>
+                            <Input @bind-Value="@updateUserDto.Email" Placeholder="请输入邮箱" />
+                        </FormItem>
+                    </div>
                 </div>
-            </div>
+
+                <div class="ant-row">
+                    <div class="ant-col ant-col-12">
+                        <FormItem Label="手机号">
+                            <Input @bind-Value="@updateUserDto.PhoneNumber" Placeholder="请输入手机号" />
+                        </FormItem>
+                    </div>
+                    <div class="ant-col ant-col-12">
+                        <FormItem Label="用户类型">
+                            <Select TItem="UserType" TItemValue="UserType" @bind-Value="@updateUserDto.UserType" Placeholder="请选择用户类型">
+                                <SelectOption Value="@UserType.Normal" Label="普通用户" />
+                                <SelectOption Value="@UserType.Admin" Label="管理员" />
+                                <SelectOption Value="@UserType.SuperAdmin" Label="超级管理员" />
+                            </Select>
+                        </FormItem>
+                    </div>
+                </div>
+
+                <div class="ant-row">
+                    <div class="ant-col ant-col-12">
+                        <FormItem Label="角色">
+                            <Input @bind-Value="@updateUserDto.Roles" Placeholder="逗号分隔多个角色" />
+                        </FormItem>
+                    </div>
+                    <div class="ant-col ant-col-12">
+                        <FormItem Label="账户激活">
+                            <Switch @bind-Value="@updateUserDto.IsActive" />
+                        </FormItem>
+                    </div>
+                </div>
+
+                <div class="ant-row">
+                    <div class="ant-col ant-col-8">
+                        <FormItem Label="邮箱已验证">
+                            <Switch @bind-Value="@updateUserDto.EmailConfirmed" />
+                        </FormItem>
+                    </div>
+                    <div class="ant-col ant-col-8">
+                        <FormItem Label="手机号已验证">
+                            <Switch @bind-Value="@updateUserDto.PhoneNumberConfirmed" />
+                        </FormItem>
+                    </div>
+                </div>
+
+                <FormItem Label="备注">
+                    <TextArea @bind-Value="@updateUserDto.Remark" Placeholder="请输入备注" Rows="3" />
+                </FormItem>
+
+                <FormItem WrapperColOffset="4">
+                    <Space>
+                        <SpaceItem>
+                            <Button Type="@ButtonType.Primary" HtmlType="submit" Loading="@isSubmitting">保存修改</Button>
+                        </SpaceItem>
+                        <SpaceItem>
+                            <a href="/admin/users">
+                                <Button>返回</Button>
+                            </a>
+                        </SpaceItem>
+                        <SpaceItem>
+                            <Button Type="@ButtonType.Primary" Ghost OnClick="@ShowResetPassword">重置密码</Button>
+                        </SpaceItem>
+                    </Space>
+                </FormItem>
+            </Form>
+
+            <Divider />
+
+            <Descriptions Title="用户信息" Bordered>
+                <DescriptionsItem Label="ID">@user.Id</DescriptionsItem>
+                <DescriptionsItem Label="创建时间">@user.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")</DescriptionsItem>
+                <DescriptionsItem Label="最后登录">@(user.LastLoginAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? "从未登录")</DescriptionsItem>
+                <DescriptionsItem Label="更新时间">@(user.UpdatedAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? "未更新")</DescriptionsItem>
+            </Descriptions>
         }
-        else if (user != null)
+        else if (!isLoading)
         {
-            <EditForm Model="@updateUserDto" OnValidSubmit="HandleSubmit">
-                <DataAnnotationsValidator />
-                <ValidationSummary class="text-danger" />
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">用户名 <span class="text-danger">*</span></label>
-                        <InputText @bind-value="updateUserDto.UserName" class="form-control" />
-                        <ValidationMessage For="@(() => updateUserDto.UserName)" class="text-danger" />
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">邮箱 <span class="text-danger">*</span></label>
-                        <InputText @bind-value="updateUserDto.Email" class="form-control" />
-                        <ValidationMessage For="@(() => updateUserDto.Email)" class="text-danger" />
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">手机号</label>
-                        <InputText @bind-value="updateUserDto.PhoneNumber" class="form-control" />
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">用户类型</label>
-                        <InputSelect @bind-value="updateUserDto.UserType" class="form-select">
-                            <option value="0">普通用户</option>
-                            <option value="1">管理员</option>
-                            <option value="2">超级管理员</option>
-                        </InputSelect>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">角色</label>
-                        <InputText @bind-value="updateUserDto.Roles" class="form-control" placeholder="逗号分隔多个角色" />
-                    </div>
-
-                    <div class="col-md-3 mb-3">
-                        <div class="form-check mt-4">
-                            <InputCheckbox @bind-value="updateUserDto.IsActive" class="form-check-input" />
-                            <label class="form-check-label">账户激活</label>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <div class="form-check">
-                            <InputCheckbox @bind-value="updateUserDto.EmailConfirmed" class="form-check-input" />
-                            <label class="form-check-label">邮箱已验证</label>
-                        </div>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <div class="form-check">
-                            <InputCheckbox @bind-value="updateUserDto.PhoneNumberConfirmed" class="form-check-input" />
-                            <label class="form-check-label">手机号已验证</label>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">备注</label>
-                    <InputTextArea @bind-value="updateUserDto.Remark" class="form-control" rows="3" />
-                </div>
-
-                <div class="mb-3">
-                    <button type="submit" class="btn btn-primary" disabled="@isSubmitting">
-                        @if (isSubmitting)
-                        {
-                            <span class="spinner-border spinner-border-sm me-2"></span>
-                        }
-                        保存修改
-                    </button>
-                    <a href="/admin/users" class="btn btn-secondary ms-2">返回</a>
-                    <button type="button" class="btn btn-warning ms-2" @onclick="ShowResetPassword">重置密码</button>
-                </div>
-            </EditForm>
-
-            <!-- 用户信息 -->
-            <hr />
-            <h5>用户信息</h5>
-            <dl class="row">
-                <dt class="col-sm-3">ID</dt>
-                <dd class="col-sm-9">@user.Id</dd>
-
-                <dt class="col-sm-3">创建时间</dt>
-                <dd class="col-sm-9">@user.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")</dd>
-
-                <dt class="col-sm-3">最后登录</dt>
-                <dd class="col-sm-9">@(user.LastLoginAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? "从未登录")</dd>
-
-                <dt class="col-sm-3">更新时间</dt>
-                <dd class="col-sm-9">@(user.UpdatedAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? "未更新")</dd>
-            </dl>
+            <Alert Type="@AlertType.Error" Message="用户不存在" />
         }
-        else
-        {
-            <div class="alert alert-danger">用户不存在</div>
-        }
+    </Spin>
 
-        @if (!string.IsNullOrEmpty(errorMessage))
-        {
-            <div class="alert alert-danger">@errorMessage</div>
-        }
-    </div>
-</div>
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <Alert Type="@AlertType.Error" Message="@errorMessage" ShowIcon="true" Style="margin-top: 16px;" />
+    }
+</Card>
 
-<!-- 重置密码模态框 -->
-@if (showResetPasswordModal)
-{
-    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">重置密码</h5>
-                    <button type="button" class="btn-close" @onclick="CloseResetPassword"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">新密码</label>
-                        <InputText @bind-value="resetPasswordDto.NewPassword" type="password" class="form-control" />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">确认密码</label>
-                        <InputText @bind-value="resetPasswordDto.ConfirmPassword" type="password" class="form-control" />
-                    </div>
-                    @if (!string.IsNullOrEmpty(resetPasswordError))
-                    {
-                        <div class="text-danger">@resetPasswordError</div>
-                    }
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="CloseResetPassword">取消</button>
-                    <button type="button" class="btn btn-primary" @onclick="SubmitResetPassword">确定</button>
-                </div>
-            </div>
-        </div>
-    </div>
-}
+<Modal Title="重置密码" Visible="@showResetPasswordModal" OnOk="@SubmitResetPassword" OnCancel="@CloseResetPassword">
+    <Form Model="@resetPasswordDto" LabelColSpan="6" WrapperColSpan="18">
+        <FormItem Label="新密码">
+            <InputPassword @bind-Value="@resetPasswordDto.NewPassword" Placeholder="请输入新密码" />
+        </FormItem>
+        <FormItem Label="确认密码">
+            <InputPassword @bind-Value="@resetPasswordDto.ConfirmPassword" Placeholder="请再次输入密码" />
+        </FormItem>
+    </Form>
+    @if (!string.IsNullOrEmpty(resetPasswordError))
+    {
+        <Alert Type="@AlertType.Error" Message="@resetPasswordError" ShowIcon="true" />
+    }
+</Modal>
 
 @code {
     [Parameter]
@@ -243,19 +204,19 @@
         resetPasswordError = "";
     }
 
-    private void CloseResetPassword()
+    private void CloseResetPassword(MouseEventArgs e)
     {
         showResetPasswordModal = false;
         resetPasswordError = "";
     }
 
-    private async Task SubmitResetPassword()
+    private async Task SubmitResetPassword(MouseEventArgs e)
     {
         try
         {
             await UserService.ResetPasswordAsync(Id, resetPasswordDto);
             showResetPasswordModal = false;
-            Alert("密码重置成功");
+            _ = JS.InvokeVoidAsync("alert", "密码重置成功");
         }
         catch (ArgumentException ex)
         {
@@ -265,10 +226,5 @@
         {
             resetPasswordError = $"重置密码失败：{ex.Message}";
         }
-    }
-
-    private void Alert(string message)
-    {
-        Console.WriteLine(message);
     }
 }

@@ -4,116 +4,104 @@
 @inject IOrganizationService IOrganizationService
 @inject IJSRuntime JS
 
-<h3>成员管理</h3>
-
-<div class="mb-3">
-    <button class="btn btn-primary" @onclick="ShowCreateDialog">添加成员</button>
-</div>
-
-@if (members == null)
-{
-    <p>加载中...</p>
-}
-else
-{
-    <table class="table">
-        <thead>
-            <tr>
-                <th>用户名</th>
-                <th>邮箱</th>
-                <th>手机号</th>
-                <th>所属部门</th>
-                <th>成员类型</th>
-                <th>主部门</th>
-                <th>状态</th>
-                <th>操作</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var member in members)
-            {
-                <tr>
-                    <td>@member.UserName</td>
-                    <td>@member.Email</td>
-                    <td>@member.PhoneNumber</td>
-                    <td>@member.OrganizationName</td>
-                    <td>@member.MemberTypeName</td>
-                    <td>@(member.IsMain ? "是" : "否")</td>
-                    <td>@(member.IsEnabled ? "启用" : "禁用")</td>
-                    <td>
-                        <button class="btn btn-sm btn-secondary" @onclick="() => Edit(member)">编辑</button>
-                        <button class="btn btn-sm btn-danger" @onclick="() => Delete(member.Id)">删除</button>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
-
-@if (showDialog)
-{
-    <div class="modal d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">@(isEdit ? "编辑成员" : "添加成员")</h5>
-                    <button type="button" class="btn-close" @onclick="CloseDialog"></button>
-                </div>
-                <div class="modal-body">
-                    @if (!isEdit)
-                    {
-                        <div class="mb-3">
-                            <label class="form-label">用户ID</label>
-                            <input class="form-control" @bind="currentMember.UserId" placeholder="请输入Account服务中的用户ID" />
-                        </div>
-                    }
-                    <div class="mb-3">
-                        <label class="form-label">所属部门</label>
-                        <select class="form-select" @bind="currentMember.OrganizationId">
-                            <option value="">-- 请选择 --</option>
-                            @foreach (var org in organizations)
-                            {
-                                <option value="@org.Id">@org.Name</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">成员类型</label>
-                        <select class="form-select" @bind="currentMember.MemberType">
-                            <option value="1">普通成员</option>
-                            <option value="2">部门负责人</option>
-                            <option value="3">部门经理</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">排序</label>
-                        <input class="form-control" type="number" @bind="currentMember.Sort" />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-check">
-                            <input class="form-check-input" type="checkbox" @bind="currentMember.IsMain" />
-                            <span class="form-check-label">设为主部门</span>
-                        </label>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">备注</label>
-                        <textarea class="form-control" @bind="currentMember.Remark"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="CloseDialog">取消</button>
-                    <button type="button" class="btn btn-primary" @onclick="Save">保存</button>
-                </div>
-            </div>
-        </div>
+<Card Title="成员管理">
+    <div style="margin-bottom: 16px;">
+        <Button Type="@ButtonType.Primary" OnClick="@ShowCreateDialog">添加成员</Button>
     </div>
-}
+
+    <Table TItem="MemberDto" DataSource="@members" Loading="@(members == null)">
+        <Column TData="string" Title="用户名">
+            @context.UserName
+        </Column>
+        <Column TData="string" Title="邮箱">
+            @context.Email
+        </Column>
+        <Column TData="string" Title="手机号">
+            @context.PhoneNumber
+        </Column>
+        <Column TData="string" Title="所属部门">
+            @context.OrganizationName
+        </Column>
+        <Column TData="string" Title="成员类型">
+            @context.MemberTypeName
+        </Column>
+        <Column TData="string" Title="主部门">
+            @if (context.IsMain)
+            {
+                <Tag Color="@("blue")">是</Tag>
+            }
+            else
+            {
+                <Tag>否</Tag>
+            }
+        </Column>
+        <Column TData="string" Title="状态">
+            @if (context.IsEnabled)
+            {
+                <Tag Color="@("green")">启用</Tag>
+            }
+            else
+            {
+                <Tag Color="@("red")">禁用</Tag>
+            }
+        </Column>
+        <Column TData="string" Title="操作">
+            <Space>
+                <SpaceItem>
+                    <Button Type="@ButtonType.Primary" Size="@ButtonSize.Small" OnClick="@(() => Edit(context))">编辑</Button>
+                </SpaceItem>
+                <SpaceItem>
+                    <Popconfirm Title="确定要删除这个成员吗？" OnConfirm="@(() => Delete(context.Id))">
+                        <Button Type="@ButtonType.Primary" Danger Size="@ButtonSize.Small">删除</Button>
+                    </Popconfirm>
+                </SpaceItem>
+            </Space>
+        </Column>
+    </Table>
+</Card>
+
+<Modal Title="@(isEdit ? "编辑成员" : "添加成员")" Visible="@showDialog" OnOk="@Save" OnCancel="@CloseDialog"
+       ConfirmLoading="@isSubmitting">
+    <Form Model="@currentMember" LabelColSpan="6" WrapperColSpan="18">
+        @if (!isEdit)
+        {
+            <FormItem Label="用户ID">
+                <Input @bind-Value="@currentMember.UserId" Placeholder="请输入Account服务中的用户ID" />
+            </FormItem>
+        }
+        <FormItem Label="所属部门">
+            <Select TItem="Guid" TItemValue="Guid" @bind-Value="@currentMember.OrganizationId" Placeholder="请选择所属部门">
+                @foreach (var org in organizations ?? new List<OrganizationDto>())
+                {
+                    <SelectOption Value="@org.Id" Label="@org.Name" />
+                }
+            </Select>
+        </FormItem>
+        <FormItem Label="成员类型">
+            <Select TItem="int" TItemValue="int" @bind-Value="@currentMember.MemberType" Placeholder="请选择成员类型">
+                <SelectOption Value="1" Label="普通成员" />
+                <SelectOption Value="2" Label="部门负责人" />
+                <SelectOption Value="3" Label="部门经理" />
+            </Select>
+        </FormItem>
+        <FormItem Label="排序">
+            <AntDesign.InputNumber @bind-Value="@currentMember.Sort" Style="width: 100%;" />
+        </FormItem>
+        <FormItem Label="设为主部门">
+            <Switch @bind-Value="@currentMember.IsMain" />
+        </FormItem>
+        <FormItem Label="备注">
+            <TextArea @bind-Value="@currentMember.Remark" Placeholder="请输入备注" Rows="3" />
+        </FormItem>
+    </Form>
+</Modal>
 
 @code {
     private List<MemberDto>? members;
     private List<OrganizationDto>? organizations;
     private bool showDialog;
     private bool isEdit;
+    private bool isSubmitting;
     private MemberDto currentMember = new() { MemberType = 1 };
 
     protected override async Task OnInitializedAsync()
@@ -155,46 +143,51 @@ else
         showDialog = true;
     }
 
-    private async Task Save()
+    private async Task Save(MouseEventArgs e)
     {
-        if (isEdit)
+        isSubmitting = true;
+        try
         {
-            await IMemberService.UpdateAsync(currentMember.Id, new UpdateMemberDto
+            if (isEdit)
             {
-                MemberType = currentMember.MemberType,
-                Sort = currentMember.Sort,
-                IsMain = currentMember.IsMain,
-                IsEnabled = currentMember.IsEnabled,
-                Remark = currentMember.Remark
-            });
-        }
-        else
-        {
-            await IMemberService.AddAsync(new AddMemberDto
+                await IMemberService.UpdateAsync(currentMember.Id, new UpdateMemberDto
+                {
+                    MemberType = currentMember.MemberType,
+                    Sort = currentMember.Sort,
+                    IsMain = currentMember.IsMain,
+                    IsEnabled = currentMember.IsEnabled,
+                    Remark = currentMember.Remark
+                });
+            }
+            else
             {
-                OrganizationId = currentMember.OrganizationId,
-                UserId = currentMember.UserId,
-                MemberType = currentMember.MemberType,
-                Sort = currentMember.Sort,
-                IsMain = currentMember.IsMain,
-                Remark = currentMember.Remark
-            });
-        }
+                await IMemberService.AddAsync(new AddMemberDto
+                {
+                    OrganizationId = currentMember.OrganizationId,
+                    UserId = currentMember.UserId,
+                    MemberType = currentMember.MemberType,
+                    Sort = currentMember.Sort,
+                    IsMain = currentMember.IsMain,
+                    Remark = currentMember.Remark
+                });
+            }
 
-        CloseDialog();
-        await LoadData();
+            CloseDialog();
+            await LoadData();
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
     }
 
     private async Task Delete(Guid id)
     {
-        if (await JS.InvokeAsync<bool>("confirm", "确定要删除这个成员吗？"))
-        {
-            await IMemberService.DeleteAsync(id);
-            await LoadData();
-        }
+        await IMemberService.DeleteAsync(id);
+        await LoadData();
     }
 
-    private void CloseDialog()
+    private void CloseDialog(MouseEventArgs? e = null)
     {
         showDialog = false;
     }

@@ -1,136 +1,109 @@
 @page "/users"
-@using Microsoft.AspNetCore.Components.Web
 @inject IUserService UserService
 @inject NavigationManager Navigation
+@inject IJSRuntime JS
 
 <PageTitle>用户管理</PageTitle>
 
-<h3>用户管理</h3>
-
-<div class="card">
-    <div class="card-header">
-        <div class="row align-items-center">
-            <div class="col-md-4">
-                <input type="text" class="form-control" value="@searchKeyword" @oninput="OnSearchKeywordInput"
-                       placeholder="搜索用户名、邮箱、手机号" @onkeyup="HandleSearchKeyUp" />
-            </div>
-            <div class="col-md-3">
-                <select class="form-select" value="@searchUserType" @onchange="OnSearchUserTypeChange">
-                    <option value="">所有用户类型</option>
-                    <option value="0">普通用户</option>
-                    <option value="1">管理员</option>
-                    <option value="2">超级管理员</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <select class="form-select" value="@searchIsActive" @onchange="OnSearchIsActiveChange">
-                    <option value="">所有状态</option>
-                    <option value="true">激活</option>
-                    <option value="false">禁用</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <button class="btn btn-primary" @onclick="LoadUsers">
-                    <span class="bi bi-search"></span> 搜索
-                </button>
-                <a href="/admin/users/create" class="btn btn-success ms-2">
-                    <span class="bi bi-plus"></span> 新增
+<Card Title="用户管理">
+    <div style="margin-bottom: 16px;">
+        <Space Size="@("middle")">
+            <SpaceItem>
+                <Input @bind-Value="@searchKeyword" Placeholder="搜索用户名、邮箱、手机号" Style="width: 200px;"
+                       OnKeyUp="@HandleSearchKeyUp" />
+            </SpaceItem>
+            <SpaceItem>
+                <Select TItem="UserType?" TItemValue="UserType?" @bind-Value="@searchUserType" Placeholder="用户类型" Style="width: 120px;" AllowClear>
+                    <SelectOption Value="@((UserType?)UserType.Normal)" Label="普通用户" />
+                    <SelectOption Value="@((UserType?)UserType.Admin)" Label="管理员" />
+                    <SelectOption Value="@((UserType?)UserType.SuperAdmin)" Label="超级管理员" />
+                </Select>
+            </SpaceItem>
+            <SpaceItem>
+                <Select TItem="bool?" TItemValue="bool?" @bind-Value="@searchIsActive" Placeholder="状态" Style="width: 120px;" AllowClear>
+                    <SelectOption Value="true" Label="激活" />
+                    <SelectOption Value="false" Label="禁用" />
+                </Select>
+            </SpaceItem>
+            <SpaceItem>
+                <Button Type="@ButtonType.Primary" OnClick="@LoadUsers">搜索</Button>
+            </SpaceItem>
+            <SpaceItem>
+                <a href="/admin/users/create">
+                    <Button Type="@ButtonType.Primary">新增</Button>
                 </a>
-            </div>
-        </div>
+            </SpaceItem>
+        </Space>
     </div>
-    <div class="card-body">
-        @if (isLoading)
-        {
-            <div class="text-center">
-                <div class="spinner-border" role="status">
-                    <span class="visually-hidden">加载中...</span>
-                </div>
-            </div>
-        }
-        else if (users.Items.Any())
-        {
-            <table class="table table-hover">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>用户名</th>
-                        <th>邮箱</th>
-                        <th>手机号</th>
-                        <th>用户类型</th>
-                        <th>状态</th>
-                        <th>创建时间</th>
-                        <th>最后登录</th>
-                        <th>操作</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var user in users.Items)
-                    {
-                        <tr>
-                            <td>@user.Id.ToString("N")[..8]</td>
-                            <td>@user.UserName</td>
-                            <td>@user.Email</td>
-                            <td>@user.PhoneNumber</td>
-                            <td>
-                                <span class="badge @GetUserTypeBadge(user.UserType)">
-                                    @GetUserTypeText(user.UserType)
-                                </span>
-                            </td>
-                            <td>
-                                @if (user.IsActive)
-                                {
-                                    <span class="badge bg-success">激活</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-danger">禁用</span>
-                                }
-                            </td>
-                            <td>@user.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
-                            <td>@(user.LastLoginAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
-                            <td>
-                                <a href="/admin/users/@user.Id/edit" class="btn btn-sm btn-primary">编辑</a>
-                                <button class="btn btn-sm btn-danger" @onclick="() => DeleteUser(user.Id)">删除</button>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
 
-            <!-- 分页 -->
-            <nav>
-                <ul class="pagination justify-content-center">
-                    <li class="page-item @(users.PageIndex <= 1 ? "disabled" : "")">
-                        <a class="page-link" href="#" @onclick="() => ChangePage(users.PageIndex - 1)">上一页</a>
-                    </li>
-                    @for (int i = 1; i <= users.TotalPages; i++)
-                    {
-                        <li class="page-item @(i == users.PageIndex ? "active" : "")">
-                            <a class="page-link" href="#" @onclick="() => ChangePage(i)">@i</a>
-                        </li>
-                    }
-                    <li class="page-item @(users.PageIndex >= users.TotalPages ? "disabled" : "")">
-                        <a class="page-link" href="#" @onclick="() => ChangePage(users.PageIndex + 1)">下一页</a>
-                    </li>
-                </ul>
-            </nav>
-        }
-        else
-        {
-            <div class="text-center text-muted">
-                <p>暂无用户数据</p>
-            </div>
-        }
-    </div>
-</div>
+    <Table TItem="UserDto" DataSource="@users.Items" Loading="@isLoading" HidePagination="true">
+        <Column TData="string" Title="ID">
+            @context.Id.ToString("N")[..8]
+        </Column>
+        <Column TData="string" Title="用户名">
+            @context.UserName
+        </Column>
+        <Column TData="string" Title="邮箱">
+            @context.Email
+        </Column>
+        <Column TData="string" Title="手机号">
+            @context.PhoneNumber
+        </Column>
+        <Column TData="string" Title="用户类型">
+            <Tag Color="@GetUserTypeColor(context.UserType)">@GetUserTypeText(context.UserType)</Tag>
+        </Column>
+        <Column TData="string" Title="状态">
+            @if (context.IsActive)
+            {
+                <Tag Color="@("green")">激活</Tag>
+            }
+            else
+            {
+                <Tag Color="@("red")">禁用</Tag>
+            }
+        </Column>
+        <Column TData="string" Title="创建时间">
+            @context.CreatedAt.ToString("yyyy-MM-dd HH:mm")
+        </Column>
+        <Column TData="string" Title="最后登录">
+            @(context.LastLoginAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")
+        </Column>
+        <Column TData="string" Title="操作">
+            <Space>
+                <SpaceItem>
+                    <a href="/admin/users/@context.Id/edit">
+                        <Button Type="@ButtonType.Primary" Size="@ButtonSize.Small">编辑</Button>
+                    </a>
+                </SpaceItem>
+                <SpaceItem>
+                    <Popconfirm Title="确定要删除该用户吗？" OnConfirm="@(() => DeleteUser(context.Id))">
+                        <Button Type="@ButtonType.Primary" Danger Size="@ButtonSize.Small">删除</Button>
+                    </Popconfirm>
+                </SpaceItem>
+            </Space>
+        </Column>
+    </Table>
+
+    @if (users.Items.Any())
+    {
+        <div style="margin-top: 16px; text-align: center;">
+            <Pagination Current="@users.PageIndex" PageSize="@users.PageSize" Total="@users.Total"
+                        OnChange="@HandlePageChange" />
+        </div>
+    }
+
+    @if (!users.Items.Any() && !isLoading)
+    {
+        <Empty Description="@("暂无用户数据")" />
+    }
+</Card>
 
 @code {
-    private PagedResult<UserDto> users = new();
+    private PagedResult<UserDto> users = new() { PageIndex = 1, PageSize = 10 };
     private bool isLoading = false;
     private string searchKeyword = "";
-    private string searchUserType = "";
-    private string searchIsActive = "";
+    private UserType? searchUserType = null;
+    private bool? searchIsActive = null;
 
     protected override async Task OnInitializedAsync()
     {
@@ -150,10 +123,10 @@
 
             if (!string.IsNullOrWhiteSpace(searchKeyword))
                 queryParams.Keyword = searchKeyword;
-            if (!string.IsNullOrWhiteSpace(searchUserType) && int.TryParse(searchUserType, out var userType))
-                queryParams.UserType = (UserType)userType;
-            if (!string.IsNullOrWhiteSpace(searchIsActive) && bool.TryParse(searchIsActive, out var isActive))
-                queryParams.IsActive = isActive;
+            if (searchUserType.HasValue)
+                queryParams.UserType = searchUserType.Value;
+            if (searchIsActive.HasValue)
+                queryParams.IsActive = searchIsActive.Value;
 
             users = await UserService.GetPagedUsersAsync(queryParams);
         }
@@ -176,32 +149,15 @@
         }
     }
 
-    private void OnSearchKeywordInput(ChangeEventArgs e)
+    private async Task HandlePageChange(PaginationEventArgs e)
     {
-        searchKeyword = e.Value?.ToString() ?? "";
-    }
-
-    private void OnSearchUserTypeChange(ChangeEventArgs e)
-    {
-        searchUserType = e.Value?.ToString() ?? "";
-    }
-
-    private void OnSearchIsActiveChange(ChangeEventArgs e)
-    {
-        searchIsActive = e.Value?.ToString() ?? "";
-    }
-
-    private async Task ChangePage(int pageIndex)
-    {
-        if (pageIndex < 1 || pageIndex > users.TotalPages) return;
-        users.PageIndex = pageIndex;
+        users.PageIndex = e.Page;
+        users.PageSize = e.PageSize;
         await LoadUsers();
     }
 
     private async Task DeleteUser(Guid userId)
     {
-        if (!Confirm("确定要删除该用户吗？")) return;
-
         try
         {
             await UserService.DeleteUserAsync(userId);
@@ -209,17 +165,17 @@
         }
         catch (Exception ex)
         {
-            Alert($"删除失败：{ex.Message}");
+            await JS.InvokeVoidAsync("alert", $"删除失败：{ex.Message}");
         }
     }
 
-    private string GetUserTypeBadge(UserType userType)
+    private string GetUserTypeColor(UserType userType)
     {
         return userType switch
         {
-            UserType.Admin => "bg-primary",
-            UserType.SuperAdmin => "bg-danger",
-            _ => "bg-secondary"
+            UserType.Admin => "blue",
+            UserType.SuperAdmin => "red",
+            _ => "default"
         };
     }
 
@@ -231,15 +187,5 @@
             UserType.SuperAdmin => "超级管理员",
             _ => "普通用户"
         };
-    }
-
-    private bool Confirm(string message)
-    {
-        return System.Threading.Tasks.Task.FromResult(true).Result; 
-    }
-
-    private void Alert(string message)
-    {
-        Console.WriteLine(message);
     }
 }

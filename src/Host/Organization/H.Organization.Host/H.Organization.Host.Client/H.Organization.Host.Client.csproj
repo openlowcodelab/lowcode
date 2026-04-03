@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
-	<Import Project="..\..\..\..\common.props" />
+	<Import Project="../../../../common.props" />
 
 	<PropertyGroup>
     <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
@@ -9,11 +9,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Volo.Abp.Autofac.WebAssembly" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\Services\Organization\H.Organization.Web\H.Organization.Web.csproj" />
+    <ProjectReference Include="../../../../Services/Organization/H.Organization.Web/H.Organization.Web.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,10 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
+using Volo.Abp.Application.Services;
 
 namespace H.Account.Application.Contracts;
 
-public interface IUserService
+public interface IUserService : IApplicationService
 {
     Task<UserDto?> GetUserByUserNameAsync(string userName);
     Task<UserDto?> GetUserByEmailAsync(string email);

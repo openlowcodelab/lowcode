@@ -3,108 +3,89 @@
 @inject IOrganizationService IOrganizationService
 @inject IJSRuntime JS
 
-<h3>组织架构管理</h3>
-
-<div class="mb-3">
-    <button class="btn btn-primary" @onclick="ShowCreateDialog">新增部门</button>
-</div>
-
-@if (organizations == null)
-{
-    <p>加载中...</p>
-}
-else
-{
-    <table class="table">
-        <thead>
-            <tr>
-                <th>部门名称</th>
-                <th>编码</th>
-                <th>负责人</th>
-                <th>电话</th>
-                <th>邮箱</th>
-                <th>状态</th>
-                <th>操作</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var org in organizations)
-            {
-                <tr>
-                    <td>@org.Name</td>
-                    <td>@org.Code</td>
-                    <td>@org.LeaderName</td>
-                    <td>@org.Phone</td>
-                    <td>@org.Email</td>
-                    <td>@(org.IsEnabled ? "启用" : "禁用")</td>
-                    <td>
-                        <button class="btn btn-sm btn-secondary" @onclick="() => Edit(org)">编辑</button>
-                        <button class="btn btn-sm btn-danger" @onclick="() => Delete(org.Id)">删除</button>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
-
-@if (showDialog)
-{
-    <div class="modal d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">@(isEdit ? "编辑部门" : "新增部门")</h5>
-                    <button type="button" class="btn-close" @onclick="CloseDialog"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">部门名称</label>
-                        <input class="form-control" @bind="currentOrg.Name" />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">编码</label>
-                        <input class="form-control" @bind="currentOrg.Code" />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">父部门</label>
-                        <select class="form-select" @bind="currentOrg.ParentId">
-                            <option value="">-- 无 --</option>
-                            @foreach (var org in organizations)
-                            {
-                                <option value="@org.Id">@org.Name</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">联系电话</label>
-                        <input class="form-control" @bind="currentOrg.Phone" />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">邮箱</label>
-                        <input class="form-control" @bind="currentOrg.Email" />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">排序</label>
-                        <input class="form-control" type="number" @bind="currentOrg.Sort" />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">备注</label>
-                        <textarea class="form-control" @bind="currentOrg.Remark"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="CloseDialog">取消</button>
-                    <button type="button" class="btn btn-primary" @onclick="Save">保存</button>
-                </div>
-            </div>
-        </div>
+<Card Title="组织架构管理">
+    <div style="margin-bottom: 16px;">
+        <Button Type="@ButtonType.Primary" OnClick="@ShowCreateDialog">新增部门</Button>
     </div>
-}
+
+    <Table TItem="OrganizationDto" DataSource="@organizations" Loading="@(organizations == null)">
+        <Column TData="string" Title="部门名称">
+            @context.Name
+        </Column>
+        <Column TData="string" Title="编码">
+            @context.Code
+        </Column>
+        <Column TData="string" Title="负责人">
+            @context.LeaderName
+        </Column>
+        <Column TData="string" Title="电话">
+            @context.Phone
+        </Column>
+        <Column TData="string" Title="邮箱">
+            @context.Email
+        </Column>
+        <Column TData="string" Title="状态">
+            @if (context.IsEnabled)
+            {
+                <Tag Color="@("green")">启用</Tag>
+            }
+            else
+            {
+                <Tag Color="@("red")">禁用</Tag>
+            }
+        </Column>
+        <Column TData="string" Title="操作">
+            <Space>
+                <SpaceItem>
+                    <Button Type="@ButtonType.Primary" Size="@ButtonSize.Small" OnClick="@(() => Edit(context))">编辑</Button>
+                </SpaceItem>
+                <SpaceItem>
+                    <Popconfirm Title="确定要删除这个部门吗？" OnConfirm="@(() => Delete(context.Id))">
+                        <Button Type="@ButtonType.Primary" Danger Size="@ButtonSize.Small">删除</Button>
+                    </Popconfirm>
+                </SpaceItem>
+            </Space>
+        </Column>
+    </Table>
+</Card>
+
+<Modal Title="@(isEdit ? "编辑部门" : "新增部门")" Visible="@showDialog" OnOk="@Save" OnCancel="@CloseDialog"
+       ConfirmLoading="@isSubmitting">
+    <Form Model="@currentOrg" LabelColSpan="6" WrapperColSpan="18">
+        <FormItem Label="部门名称">
+            <Input @bind-Value="@currentOrg.Name" Placeholder="请输入部门名称" />
+        </FormItem>
+        <FormItem Label="编码">
+            <Input @bind-Value="@currentOrg.Code" Placeholder="请输入编码" />
+        </FormItem>
+        <FormItem Label="父部门">
+            <Select TItem="Guid?" TItemValue="Guid?" @bind-Value="@currentOrg.ParentId" Placeholder="请选择父部门" AllowClear>
+                @foreach (var org in organizations ?? new List<OrganizationDto>())
+                {
+                    <SelectOption Value="@((Guid?)org.Id)" Label="@org.Name" />
+                }
+            </Select>
+        </FormItem>
+        <FormItem Label="联系电话">
+            <Input @bind-Value="@currentOrg.Phone" Placeholder="请输入联系电话" />
+        </FormItem>
+        <FormItem Label="邮箱">
+            <Input @bind-Value="@currentOrg.Email" Placeholder="请输入邮箱" />
+        </FormItem>
+        <FormItem Label="排序">
+            <AntDesign.InputNumber @bind-Value="@currentOrg.Sort" Style="width: 100%;" />
+        </FormItem>
+        <FormItem Label="备注">
+            <TextArea @bind-Value="@currentOrg.Remark" Placeholder="请输入备注" Rows="3" />
+        </FormItem>
+    </Form>
+</Modal>
 
 @code {
     private List<OrganizationDto>? organizations;
     private bool showDialog;
     private bool isEdit;
+    private bool isSubmitting;
     private OrganizationDto currentOrg = new();
 
     protected override async Task OnInitializedAsync()
@@ -142,50 +123,55 @@ else
         showDialog = true;
     }
 
-    private async Task Save()
+    private async Task Save(MouseEventArgs e)
     {
-        if (isEdit)
+        isSubmitting = true;
+        try
         {
-            await IOrganizationService.UpdateAsync(currentOrg.Id, new UpdateOrganizationDto
+            if (isEdit)
             {
-                Name = currentOrg.Name,
-                Code = currentOrg.Code,
-                ParentId = currentOrg.ParentId,
-                Phone = currentOrg.Phone,
-                Email = currentOrg.Email,
-                Sort = currentOrg.Sort,
-                IsEnabled = currentOrg.IsEnabled,
-                Remark = currentOrg.Remark
-            });
-        }
-        else
-        {
-            await IOrganizationService.CreateAsync(new CreateOrganizationDto
+                await IOrganizationService.UpdateAsync(currentOrg.Id, new UpdateOrganizationDto
+                {
+                    Name = currentOrg.Name,
+                    Code = currentOrg.Code,
+                    ParentId = currentOrg.ParentId,
+                    Phone = currentOrg.Phone,
+                    Email = currentOrg.Email,
+                    Sort = currentOrg.Sort,
+                    IsEnabled = currentOrg.IsEnabled,
+                    Remark = currentOrg.Remark
+                });
+            }
+            else
             {
-                Name = currentOrg.Name,
-                Code = currentOrg.Code,
-                ParentId = currentOrg.ParentId,
-                Phone = currentOrg.Phone,
-                Email = currentOrg.Email,
-                Sort = currentOrg.Sort,
-                Remark = currentOrg.Remark
-            });
-        }
+                await IOrganizationService.CreateAsync(new CreateOrganizationDto
+                {
+                    Name = currentOrg.Name,
+                    Code = currentOrg.Code,
+                    ParentId = currentOrg.ParentId,
+                    Phone = currentOrg.Phone,
+                    Email = currentOrg.Email,
+                    Sort = currentOrg.Sort,
+                    Remark = currentOrg.Remark
+                });
+            }
 
-        CloseDialog();
-        await LoadData();
+            CloseDialog();
+            await LoadData();
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
     }
 
     private async Task Delete(Guid id)
     {
-        if (await JS.InvokeAsync<bool>("confirm", "确定要删除这个部门吗？"))
-        {
-            await IOrganizationService.DeleteAsync(id);
-            await LoadData();
-        }
+        await IOrganizationService.DeleteAsync(id);
+        await LoadData();
     }
 
-    private void CloseDialog()
+    private void CloseDialog(MouseEventArgs? e = null)
     {
         showDialog = false;
     }

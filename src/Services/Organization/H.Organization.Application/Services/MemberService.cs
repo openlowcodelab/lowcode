@@ -1,8 +1,9 @@
-using H.Account.Client;
+using H.Account.Application.Contracts;
 using H.Organization.Application.Contracts;
 using H.Organization.Domain;
 using H.Organization.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using PagedResult = H.Organization.Application.Contracts.PagedResult<H.Organization.Application.Contracts.MemberDto>;
 
 namespace H.Organization.Application.Services;
 
@@ -12,18 +13,18 @@ namespace H.Organization.Application.Services;
 public class MemberService : IMemberService
 {
     private readonly OrganizationDbContext _context;
-    private readonly AccountClient _accountClient;
+    private readonly IUserService _userService;
 
-    public MemberService(OrganizationDbContext context, AccountClient accountClient)
+    public MemberService(OrganizationDbContext context, IUserService userService)
     {
         _context = context;
-        _accountClient = accountClient;
+        _userService = userService;
     }
 
     /// <summary>
     /// 获取成员列表
     /// </summary>
-    public async Task<PagedResult<MemberDto>> GetListAsync(MemberQueryParams queryParams)
+    public async Task<H.Organization.Application.Contracts.PagedResult<MemberDto>> GetListAsync(MemberQueryParams queryParams)
     {
         var query = _context.Members
             .Include(x => x.Organization)
@@ -77,7 +78,7 @@ public class MemberService : IMemberService
         {
             try
             {
-                var user = await _accountClient.GetUserAsync(item.UserId);
+                var user = await _userService.GetUserDtoByIdAsync(item.UserId);
                 if (user != null)
                 {
                     item.Email = user.Email;
@@ -90,7 +91,7 @@ public class MemberService : IMemberService
             }
         }
 
-        return new PagedResult<MemberDto>
+        return new H.Organization.Application.Contracts.PagedResult<MemberDto>
         {
             Items = items,
             TotalCount = totalCount,
@@ -129,7 +130,7 @@ public class MemberService : IMemberService
         // 尝试从 Account 服务获取用户的邮箱和手机号
         try
         {
-            var user = await _accountClient.GetUserAsync(entity.UserId);
+            var user = await _userService.GetUserDtoByIdAsync(entity.UserId);
             if (user != null)
             {
                 dto.Email = user.Email;
@@ -171,7 +172,7 @@ public class MemberService : IMemberService
         string userName = string.Empty;
         try
         {
-            var user = await _accountClient.GetUserAsync(input.UserId);
+            var user = await _userService.GetUserDtoByIdAsync(input.UserId);
             if (user != null)
             {
                 userName = user.UserName;
@@ -294,7 +295,7 @@ public class MemberService : IMemberService
         {
             try
             {
-                var user = await _accountClient.GetUserAsync(item.UserId);
+                var user = await _userService.GetUserDtoByIdAsync(item.UserId);
                 if (user != null)
                 {
                     item.Email = user.Email;

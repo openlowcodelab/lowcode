@@ -3,114 +3,94 @@
 @inject IRoleService IRoleService
 @inject IJSRuntime JS
 
-<h3>角色管理</h3>
-
-<div class="mb-3">
-    <button class="btn btn-primary" @onclick="ShowCreateDialog">新增角色</button>
-</div>
-
-@if (roles == null)
-{
-    <p>加载中...</p>
-}
-else
-{
-    <table class="table">
-        <thead>
-            <tr>
-                <th>角色名称</th>
-                <th>编码</th>
-                <th>角色类型</th>
-                <th>数据范围</th>
-                <th>成员数量</th>
-                <th>状态</th>
-                <th>操作</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var role in roles)
-            {
-                <tr>
-                    <td>@role.Name</td>
-                    <td>@role.Code</td>
-                    <td>@role.RoleTypeName</td>
-                    <td>@role.DataScopeName</td>
-                    <td>@role.MembersCount</td>
-                    <td>@(role.IsEnabled ? "启用" : "禁用")</td>
-                    <td>
-                        <button class="btn btn-sm btn-secondary" @onclick="() => Edit(role)">编辑</button>
-                        <button class="btn btn-sm btn-danger" @onclick="() => Delete(role.Id)">删除</button>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
-
-@if (showDialog)
-{
-    <div class="modal d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">@(isEdit ? "编辑角色" : "新增角色")</h5>
-                    <button type="button" class="btn-close" @onclick="CloseDialog"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">角色名称</label>
-                        <input class="form-control" @bind="currentRole.Name" />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">编码</label>
-                        <input class="form-control" @bind="currentRole.Code" />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">角色类型</label>
-                        <select class="form-select" @bind="currentRole.RoleType">
-                            <option value="1">系统角色</option>
-                            <option value="2">自定义角色</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">数据范围</label>
-                        <select class="form-select" @bind="currentRole.DataScope">
-                            <option value="1">全部数据</option>
-                            <option value="2">本部门数据</option>
-                            <option value="3">仅本人数据</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">排序</label>
-                        <input class="form-control" type="number" @bind="currentRole.Sort" />
-                    </div>
-                    @if (isEdit)
-                    {
-                        <div class="mb-3">
-                            <label class="form-check">
-                                <input class="form-check-input" type="checkbox" @bind="currentRole.IsEnabled" />
-                                <span class="form-check-label">启用</span>
-                            </label>
-                        </div>
-                    }
-                    <div class="mb-3">
-                        <label class="form-label">备注</label>
-                        <textarea class="form-control" @bind="currentRole.Remark"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="CloseDialog">取消</button>
-                    <button type="button" class="btn btn-primary" @onclick="Save">保存</button>
-                </div>
-            </div>
-        </div>
+<Card Title="角色管理">
+    <div style="margin-bottom: 16px;">
+        <Button Type="@ButtonType.Primary" OnClick="@ShowCreateDialog">新增角色</Button>
     </div>
-}
+
+    <Table TItem="RoleDto" DataSource="@roles" Loading="@(roles == null)">
+        <Column TData="string" Title="角色名称">
+            @context.Name
+        </Column>
+        <Column TData="string" Title="编码">
+            @context.Code
+        </Column>
+        <Column TData="string" Title="角色类型">
+            @context.RoleTypeName
+        </Column>
+        <Column TData="string" Title="数据范围">
+            @context.DataScopeName
+        </Column>
+        <Column TData="int" Title="成员数量">
+            @context.MembersCount
+        </Column>
+        <Column TData="string" Title="状态">
+            @if (context.IsEnabled)
+            {
+                <Tag Color="@("green")">启用</Tag>
+            }
+            else
+            {
+                <Tag Color="@("red")">禁用</Tag>
+            }
+        </Column>
+        <Column TData="string" Title="操作">
+            <Space>
+                <SpaceItem>
+                    <Button Type="@ButtonType.Primary" Size="@ButtonSize.Small" OnClick="@(() => Edit(context))">编辑</Button>
+                </SpaceItem>
+                <SpaceItem>
+                    <Popconfirm Title="确定要删除这个角色吗？" OnConfirm="@(() => Delete(context.Id))">
+                        <Button Type="@ButtonType.Primary" Danger Size="@ButtonSize.Small">删除</Button>
+                    </Popconfirm>
+                </SpaceItem>
+            </Space>
+        </Column>
+    </Table>
+</Card>
+
+<Modal Title="@(isEdit ? "编辑角色" : "新增角色")" Visible="@showDialog" OnOk="@Save" OnCancel="@CloseDialog"
+       ConfirmLoading="@isSubmitting">
+    <Form Model="@currentRole" LabelColSpan="6" WrapperColSpan="18">
+        <FormItem Label="角色名称">
+            <Input @bind-Value="@currentRole.Name" Placeholder="请输入角色名称" />
+        </FormItem>
+        <FormItem Label="编码">
+            <Input @bind-Value="@currentRole.Code" Placeholder="请输入编码" />
+        </FormItem>
+        <FormItem Label="角色类型">
+            <Select TItem="int" TItemValue="int" @bind-Value="@currentRole.RoleType" Placeholder="请选择角色类型">
+                <SelectOption Value="1" Label="系统角色" />
+                <SelectOption Value="2" Label="自定义角色" />
+            </Select>
+        </FormItem>
+        <FormItem Label="数据范围">
+            <Select TItem="int" TItemValue="int" @bind-Value="@currentRole.DataScope" Placeholder="请选择数据范围">
+                <SelectOption Value="1" Label="全部数据" />
+                <SelectOption Value="2" Label="本部门数据" />
+                <SelectOption Value="3" Label="仅本人数据" />
+            </Select>
+        </FormItem>
+        <FormItem Label="排序">
+            <AntDesign.InputNumber @bind-Value="@currentRole.Sort" Style="width: 100%;" />
+        </FormItem>
+        @if (isEdit)
+        {
+            <FormItem Label="启用">
+                <Switch @bind-Value="@currentRole.IsEnabled" />
+            </FormItem>
+        }
+        <FormItem Label="备注">
+            <TextArea @bind-Value="@currentRole.Remark" Placeholder="请输入备注" Rows="3" />
+        </FormItem>
+    </Form>
+</Modal>
 
 @code {
     private List<RoleDto>? roles;
     private bool showDialog;
     private bool isEdit;
+    private bool isSubmitting;
     private RoleDto currentRole = new() { RoleType = 2, DataScope = 1 };
 
     protected override async Task OnInitializedAsync()
@@ -148,48 +128,53 @@ else
         showDialog = true;
     }
 
-    private async Task Save()
+    private async Task Save(MouseEventArgs e)
     {
-        if (isEdit)
+        isSubmitting = true;
+        try
         {
-            await IRoleService.UpdateAsync(currentRole.Id, new UpdateRoleDto
+            if (isEdit)
             {
-                Name = currentRole.Name,
-                Code = currentRole.Code,
-                RoleType = currentRole.RoleType,
-                DataScope = currentRole.DataScope,
-                Sort = currentRole.Sort,
-                IsEnabled = currentRole.IsEnabled,
-                Remark = currentRole.Remark
-            });
-        }
-        else
-        {
-            await IRoleService.CreateAsync(new CreateRoleDto
+                await IRoleService.UpdateAsync(currentRole.Id, new UpdateRoleDto
+                {
+                    Name = currentRole.Name,
+                    Code = currentRole.Code,
+                    RoleType = currentRole.RoleType,
+                    DataScope = currentRole.DataScope,
+                    Sort = currentRole.Sort,
+                    IsEnabled = currentRole.IsEnabled,
+                    Remark = currentRole.Remark
+                });
+            }
+            else
             {
-                Name = currentRole.Name,
-                Code = currentRole.Code,
-                RoleType = currentRole.RoleType,
-                DataScope = currentRole.DataScope,
-                Sort = currentRole.Sort,
-                Remark = currentRole.Remark
-            });
-        }
+                await IRoleService.CreateAsync(new CreateRoleDto
+                {
+                    Name = currentRole.Name,
+                    Code = currentRole.Code,
+                    RoleType = currentRole.RoleType,
+                    DataScope = currentRole.DataScope,
+                    Sort = currentRole.Sort,
+                    Remark = currentRole.Remark
+                });
+            }
 
-        CloseDialog();
-        await LoadData();
+            CloseDialog();
+            await LoadData();
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
     }
 
     private async Task Delete(Guid id)
     {
-        if (await JS.InvokeAsync<bool>("confirm", "确定要删除这个角色吗？"))
-        {
-            await IRoleService.DeleteAsync(id);
-            await LoadData();
-        }
+        await IRoleService.DeleteAsync(id);
+        await LoadData();
     }
 
-    private void CloseDialog()
+    private void CloseDialog(MouseEventArgs? e = null)
     {
         showDialog = false;
     }

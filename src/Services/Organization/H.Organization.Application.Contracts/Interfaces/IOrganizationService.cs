@@ -1,11 +1,11 @@
-using System;
+using Volo.Abp.Application.Services;
 
 namespace H.Organization.Application.Contracts;
 
 /// <summary>
 /// 部门服务接口
 /// </summary>
-public interface IOrganizationService
+public interface IOrganizationService : IApplicationService
 {
     /// <summary>
     /// 获取所有部门（树形结构）

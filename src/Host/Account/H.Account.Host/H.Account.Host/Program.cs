@@ -9,11 +9,14 @@ builder.Services.AddRazorComponents()
     .AddInteractiveWebAssemblyComponents();
 
 #region Account
+builder.Host.UseAutofac();
+await builder.AddApplicationAsync<AccountHttpApiModule>();
 builder.Services.AddAntDesign();
-builder.Services.AddAccountHttpApi(builder.Configuration);
 #endregion
 
 var app = builder.Build();
+
+await app.InitializeApplicationAsync();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -29,9 +32,10 @@ else
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseHttpsRedirection();
 
-app.UseAntiforgery();
-
+app.UseStaticFiles();
 app.MapStaticAssets();
+
+app.UseAntiforgery();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()

@@ -1,43 +1,42 @@
 @page "/account/login"
 @layout LayoutComponentBase
-@using Microsoft.AspNetCore.Components.Forms
-@using Microsoft.AspNetCore.Components
 @inject IAuthService AuthService
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
 
-<h3>用户登录</h3>
+<div style="max-width: 400px; margin: 50px auto;">
+    <Card Title="用户登录">
+        <Form Model="@loginModel" OnFinish="@HandleLogin" LabelColSpan="8" WrapperColSpan="16">
+            <FormItem Label="用户名">
+                <Input @bind-Value="@loginModel.UserName" Placeholder="请输入用户名" />
+            </FormItem>
 
-<EditForm Model="@loginModel" OnValidSubmit="@HandleLogin" FormName="LoginForm">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
+            <FormItem Label="密码">
+                <InputPassword @bind-Value="@loginModel.Password" Placeholder="请输入密码" />
+            </FormItem>
 
-    <div class="form-group">
-        <label for="username">用户名:</label>
-        <InputText id="username" @bind-value="loginModel.UserName" class="form-control" />
-    </div>
+            <FormItem WrapperColOffset="8" WrapperColSpan="16">
+                <Button Type="@ButtonType.Primary" HtmlType="submit" Block>登录</Button>
+            </FormItem>
+        </Form>
 
-    <div class="form-group">
-        <label for="password">密码:</label>
-        <InputText id="password" @bind-value="loginModel.Password" type="password" class="form-control" />
-    </div>
+        <Divider />
 
-    <button type="submit" class="btn btn-primary w-100">登录</button>
-</EditForm>
+        <div style="text-align: center;">
+            还没有账户？ <a href="/account/register">点击注册</a>
+        </div>
 
-<div class="mt-3">
-    还没有账户？ <a href="/account/register">点击注册</a>
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <Alert Type="@AlertType.Error" Message="@errorMessage" ShowIcon="true" Style="margin-top: 16px;" />
+        }
+
+        @if (!string.IsNullOrEmpty(successMessage))
+        {
+            <Alert Type="@AlertType.Success" Message="@successMessage" ShowIcon="true" Style="margin-top: 16px;" />
+        }
+    </Card>
 </div>
-
-@if (!string.IsNullOrEmpty(errorMessage))
-{
-    <div class="alert alert-danger mt-3">@errorMessage</div>
-}
-
-@if (!string.IsNullOrEmpty(successMessage))
-{
-    <div class="alert alert-success mt-3">@successMessage</div>
-}
 
 @code {
     [SupplyParameterFromForm]
@@ -60,7 +59,6 @@
         
         try
         {
-            // 检查 AuthService 是否注入成功
             if (AuthService == null)
             {
                 errorMessage = "系统错误：认证服务未初始化";
@@ -69,7 +67,6 @@
             
             var result = await AuthService.LoginAsync(loginModel);
             
-            // 检查返回结果
             if (result == null)
             {
                 errorMessage = "登录失败：服务器未返回有效响应";
@@ -83,7 +80,6 @@
                 
                 if (!string.IsNullOrEmpty(result.Token))
                 {
-                    // 直接跳转到首页，token 通过 URL 参数传递
                     Navigation.NavigateTo($"/?token={Uri.EscapeDataString(result.Token)}");
                 }
                 else

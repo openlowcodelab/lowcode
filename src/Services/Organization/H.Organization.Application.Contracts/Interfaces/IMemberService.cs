@@ -1,11 +1,11 @@
-using System;
+using Volo.Abp.Application.Services;
 
 namespace H.Organization.Application.Contracts;
 
 /// <summary>
 /// 成员服务接口
 /// </summary>
-public interface IMemberService
+public interface IMemberService : IApplicationService
 {
     /// <summary>
     /// 获取成员列表
