@@ -1,5 +1,7 @@
 using H.Account.Host.Components;
 using H.Account.HttpApi;
+using H.Account.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +19,13 @@ builder.Services.AddAntDesign();
 var app = builder.Build();
 
 await app.InitializeApplicationAsync();
+
+// 自动迁移数据库
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<AccountDbContext>();
+    dbContext.Database.EnsureCreated();
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

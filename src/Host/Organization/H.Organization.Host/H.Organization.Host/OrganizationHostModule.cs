@@ -1,15 +1,20 @@
 using H.Account.Application.Contracts;
+using H.Organization.HttpApi;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Http.Client;
 using Volo.Abp.Modularity;
 
 namespace H.Organization.Host;
 
+/// <summary>
+/// Organization Host 聚合模块，统一管理所有依赖
+/// </summary>
 [DependsOn(
+    typeof(OrganizationHttpApiModule),
     typeof(AbpHttpClientModule),
     typeof(AccountApplicationContractsModule)
 )]
-public class OrganizationHostAccountClientModule : AbpModule
+public class OrganizationHostModule : AbpModule
 {
     public const string RemoteServiceName = "Account";
 

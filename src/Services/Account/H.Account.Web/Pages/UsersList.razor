@@ -13,16 +13,20 @@
                        OnKeyUp="@HandleSearchKeyUp" />
             </SpaceItem>
             <SpaceItem>
-                <Select TItem="UserType?" TItemValue="UserType?" @bind-Value="@searchUserType" Placeholder="用户类型" Style="width: 120px;" AllowClear>
-                    <SelectOption Value="@((UserType?)UserType.Normal)" Label="普通用户" />
-                    <SelectOption Value="@((UserType?)UserType.Admin)" Label="管理员" />
-                    <SelectOption Value="@((UserType?)UserType.SuperAdmin)" Label="超级管理员" />
+                <Select TItem="UserType?" TItemValue="UserType?" @bind-Value="@searchUserType" Placeholder="用户类型" Style="width: 120px;" AllowClear EnableSearch="false">
+                    <SelectOptions>
+                        <SelectOption TItem="UserType?" TItemValue="UserType?" Value="@((UserType?)UserType.Normal)" Label="普通用户" />
+                        <SelectOption TItem="UserType?" TItemValue="UserType?" Value="@((UserType?)UserType.Admin)" Label="管理员" />
+                        <SelectOption TItem="UserType?" TItemValue="UserType?" Value="@((UserType?)UserType.SuperAdmin)" Label="超级管理员" />
+                    </SelectOptions>
                 </Select>
             </SpaceItem>
             <SpaceItem>
-                <Select TItem="bool?" TItemValue="bool?" @bind-Value="@searchIsActive" Placeholder="状态" Style="width: 120px;" AllowClear>
-                    <SelectOption Value="true" Label="激活" />
-                    <SelectOption Value="false" Label="禁用" />
+                <Select TItem="bool?" TItemValue="bool?" @bind-Value="@searchIsActive" Placeholder="状态" Style="width: 120px;" AllowClear EnableSearch="false">
+                    <SelectOptions>
+                        <SelectOption TItem="bool?" TItemValue="bool?" Value="@((bool?)true)" Label="激活" />
+                        <SelectOption TItem="bool?" TItemValue="bool?" Value="@((bool?)false)" Label="禁用" />
+                    </SelectOptions>
                 </Select>
             </SpaceItem>
             <SpaceItem>
@@ -115,6 +119,12 @@
         isLoading = true;
         try
         {
+            if (UserService == null)
+            {
+                Console.WriteLine("UserService 未注入");
+                return;
+            }
+
             var queryParams = new UserQueryParams
             {
                 PageIndex = users.PageIndex,
@@ -128,11 +138,16 @@
             if (searchIsActive.HasValue)
                 queryParams.IsActive = searchIsActive.Value;
 
-            users = await UserService.GetPagedUsersAsync(queryParams);
+            var result = await UserService.GetPagedUsersAsync(queryParams);
+            if (result != null)
+            {
+                users = result;
+            }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"加载用户失败：{ex.Message}");
+            Console.WriteLine($"堆栈跟踪：{ex.StackTrace}");
         }
         finally
         {

@@ -1,5 +1,7 @@
+using H.Organization.Host;
 using H.Organization.Host.Components;
-using H.Organization.HttpApi;
+using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.StaticFiles;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,9 +12,16 @@ builder.Services.AddRazorComponents()
 
 #region Organization
 builder.Host.UseAutofac();
-await builder.AddApplicationAsync<OrganizationHttpApiModule>();
-await builder.AddApplicationAsync<global::H.Organization.Host.OrganizationHostAccountClientModule>();
+await builder.AddApplicationAsync<OrganizationHostModule>();
 builder.Services.AddAntDesign();
+
+// 移除 ABP 对 StaticFileOptions 的配置，避免与 .NET 10 的 MapStaticAssets 冲突
+var abpStaticFileOptionsSetup = builder.Services
+    .FirstOrDefault(d => d.ServiceType == typeof(IConfigureOptions<StaticFileOptions>));
+if (abpStaticFileOptionsSetup != null)
+{
+    builder.Services.Remove(abpStaticFileOptionsSetup);
+}
 #endregion
 
 var app = builder.Build();
