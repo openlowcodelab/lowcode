@@ -1,5 +1,7 @@
 ﻿@namespace H.LowCode.Portal
 @inherits LayoutComponentBase
+@inject H.LowCode.Host.All.Shared.Services.AppStateManager AppStateManager
+@inject NavigationManager NavigationManager
 
 <link rel="stylesheet" href="_content/H.Util.Blazor/css/AppDrawer.css" />
 <link rel="stylesheet" href="_content/H.LowCode.Portal/css/site.css" />
@@ -13,9 +15,12 @@
                 <span class="drawer-icon">☰</span>
             </button>
             
+            <!-- 测试按钮 -->
+            <button @onclick="TestClick" style="margin-left: 10px; padding: 5px 10px;">测试点击</button>
+            
             <!-- 应用名称 -->
             <div class="app-name">
-                <h3>H.LowCode</h3>
+                <h3>@CurrentAppName</h3>
             </div>
         </div>
         
@@ -61,35 +66,12 @@
         @Body
     </div>
     
-    <!-- 应用抽屉（内联实现） -->
-    <div class="app-drawer-container @(showAppDrawer ? "visible" : "")">
-        <div class="app-drawer-overlay" @onclick="CloseAppDrawer"></div>
-        <div class="app-drawer">
-            <div class="drawer-header">
-                <h4>应用列表</h4>
-                <button class="close-drawer" @onclick="CloseAppDrawer">×</button>
-            </div>
-            <div class="drawer-content">
-                @foreach (var category in appCategories)
-                {
-                    <div class="app-category">
-                        <div class="category-title">@category.CategoryName</div>
-                        <div class="category-apps">
-                            @foreach (var app in category.Apps)
-                            {
-                                <a class="app-item" href="@app.Url" target="@app.Target" title="@app.Name">
-                                    <div class="app-icon">@app.Icon</div>
-                                    <div class="app-info">
-                                        <div class="app-name-text">@app.Name</div>
-                                    </div>
-                                </a>
-                            }
-                        </div>
-                    </div>
-                }
-            </div>
-        </div>
-    </div>
+    <!-- 应用抽屉（使用组件） -->
+    <AppDrawer Visible="showAppDrawer"
+               Title="应用列表"
+               AppCategories="@appCategories"
+               OnAppClick="@(async (app) => await OnAppSelected(app))"
+               OnClose="CloseAppDrawer" />
 </div>
 
 @code{
@@ -98,36 +80,41 @@
     private string UserName { get; set; } = "用户";
     private string UserAvatarUrl { get; set; } = ""; // 如果有用户头像 URL，设置此属性
     
-    // 应用列表数据（使用新的数据模型）
-    private List<AppCategoryInfo> appCategories = new()
+    // 应用列表数据
+    private List<AppCategoryInfo> appCategories = new();
+    
+    // 当前应用名称
+    private string CurrentAppName => GetCurrentAppName();
+    
+    protected override void OnInitialized()
     {
-        new AppCategoryInfo
-        {
-            CategoryName = "基础服务",
-            Apps = new List<AppItemInfo>
-            {
-                new AppItemInfo { Name = "用户管理", Icon = "📅", Url = "https://localhost:7210/admin/users", Target = "_self" },
-                new AppItemInfo { Name = "组织管理", Icon = "📁", Url = "https://localhost:7298/organization", Target = "_self" }
-            }
-        },
-        new AppCategoryInfo
-        {
-            CategoryName = "业务应用",
-            Apps = new List<AppItemInfo>
-            {
-                new AppItemInfo { Name = "审批中心", Icon = "🎨", Url = "/workflow", Target = "_self" },
-            }
-        },
-        new AppCategoryInfo
-        {
-            CategoryName = "开发与运维",
-            Apps = new List<AppItemInfo>
-            {
-                new AppItemInfo { Name = "低代码应用开发", Icon = "👥", Url = "https://localhost:5181/", Target = "_blank" },
-                new AppItemInfo { Name = "系统配置", Icon = "🔐", Url = "/system/config", Target = "_blank" },
-            }
-        }
-    };
+        // 初始化应用列表
+        appCategories = AppStateManager.GetAppCategories();
+        
+        // 订阅应用切换事件
+        AppStateManager.OnAppChanged += OnAppChanged;
+    }
+    
+    private void OnAppChanged(string appId)
+    {
+        StateHasChanged();
+    }
+    
+    private async Task OnAppSelected(H.Util.Blazor.AppItemInfo app)
+    {
+        Console.WriteLine($"OnAppSelected 被调用: {app.Name}, URL: {app.Url}");
+        
+        // 更新当前应用状态
+        AppStateManager.CurrentAppId = app.Id;
+        
+        // 关闭抽屉
+        showAppDrawer = false;
+        StateHasChanged();
+        
+        // 导航到应用页面
+        await Task.Delay(100); // 等待 UI 更新
+        NavigationManager.NavigateTo(app.Url);
+    }
     
     private void ToggleAppDrawer()
     {
@@ -140,6 +127,19 @@
         StateHasChanged();
     }
     
+    private string GetCurrentAppName()
+    {
+        var currentPath = NavigationManager.Uri.Replace(NavigationManager.BaseUri, "");
+        return currentPath switch
+        {
+            var p when p.StartsWith("/account") => "用户管理",
+            var p when p.StartsWith("/organization") => "组织管理",
+            var p when p.StartsWith("/design") => "应用设计器",
+            var p when p.StartsWith("/render") => "应用预览",
+            _ => "H.LowCode"
+        };
+    }
+    
     private void Login()
     {
         // TODO: 实现登录逻辑
@@ -150,5 +150,11 @@
     {
         // TODO: 实现登出逻辑
         UserName = null;
+    }
+    
+    private void TestClick()
+    {
+        Console.WriteLine("[TEST] TestClick 被调用！");
+        UserName = UserName == "测试用户" ? "点击成功！" : "测试用户";
     }
 }

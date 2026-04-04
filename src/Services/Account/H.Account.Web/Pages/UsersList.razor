@@ -119,12 +119,6 @@
         isLoading = true;
         try
         {
-            if (UserService == null)
-            {
-                Console.WriteLine("UserService 未注入");
-                return;
-            }
-
             var queryParams = new UserQueryParams
             {
                 PageIndex = users.PageIndex,

@@ -27,6 +27,11 @@ public class AppCategoryInfo
 public class AppItemInfo
 {
     /// <summary>
+    /// 应用唯一标识
+    /// </summary>
+    public string Id { get; set; } = string.Empty;
+
+    /// <summary>
     /// 应用名称
     /// </summary>
     public string Name { get; set; } = string.Empty;

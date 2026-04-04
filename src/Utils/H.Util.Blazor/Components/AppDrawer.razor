@@ -23,8 +23,7 @@
                             @foreach (var app in category.Apps)
                             {
                                 <div class="app-item" 
-                                     @onclick="() => HandleAppClick(app)"
-                                     @onclick:stopPropagation="true"
+                                     @onclick="@(() => OnAppItemClick(app))"
                                      title="@app.Name (@(app.Target == "_blank" ? "新标签页" : "当前页"))">
                                     @if (!string.IsNullOrEmpty(app.Icon))
                                     {
@@ -124,13 +123,17 @@
 
     private async Task HandleAppClick(AppItemInfo app)
     {
+        Console.WriteLine($"[AppDrawer] HandleAppClick 被调用: {app.Name}, URL: {app.Url}");
+        
         if (OnAppClick != null)
         {
+            Console.WriteLine($"[AppDrawer] 调用自定义 OnAppClick 处理器");
             // 使用自定义点击处理
             await OnAppClick.Invoke(app);
         }
         else
         {
+            Console.WriteLine($"[AppDrawer] 使用默认跳转行为");
             // 默认跳转行为
             if (app.Target == "_blank")
             {
@@ -144,5 +147,11 @@
             // 跳转后关闭抽屉
             await OnClose.InvokeAsync();
         }
+    }
+
+    private async Task OnAppItemClick(AppItemInfo app)
+    {
+        Console.WriteLine($"[AppDrawer] OnAppItemClick 被调用: {app.Name}, URL: {app.Url}");
+        await HandleAppClick(app);
     }
 }
