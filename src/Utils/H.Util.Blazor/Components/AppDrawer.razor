@@ -1,60 +1,67 @@
 ﻿@namespace H.Util.Blazor
 @using Microsoft.JSInterop
 @using System.Threading.Tasks
+@using System.Linq
 
 @inject Microsoft.JSInterop.IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager
 
-<div class="app-drawer-container @(Visible ? "visible" : "")">
-    <div class="app-drawer-overlay" @onclick="HandleOverlayClick" @onclick:stopPropagation="true"></div>
-    <div class="app-drawer">
-        <div class="drawer-header">
-            <h4>@Title</h4>
-            <button class="close-drawer" @onclick="HandleClose" @onclick:stopPropagation="true">×</button>
-        </div>
-        <div class="drawer-content">
-            @if (AppCategories != null && AppCategories.Any())
-            {
-                @foreach (var category in AppCategories)
+@if (Visible)
+{
+    <div class="app-drawer-container visible">
+        <div class="app-drawer-overlay"></div>
+        <div class="app-drawer">
+            <div class="drawer-header">
+                <h4>@Title</h4>
+                <button class="close-drawer">×</button>
+            </div>
+            <div class="drawer-content">
+                @if (AppCategories != null && AppCategories.Any())
                 {
-                    <div class="app-category">
-                        <div class="category-title">@category.CategoryName</div>
-                        <div class="category-apps">
-                            @foreach (var app in category.Apps)
-                            {
-                                <div class="app-item" 
-                                     @onclick="@(() => OnAppItemClick(app))"
-                                     title="@app.Name (@(app.Target == "_blank" ? "新标签页" : "当前页"))">
-                                    @if (!string.IsNullOrEmpty(app.Icon))
-                                    {
-                                        <div class="app-icon">@app.Icon</div>
-                                    }
-                                    else if (!string.IsNullOrEmpty(app.IconUrl))
-                                    {
-                                        <img src="@app.IconUrl" alt="" class="app-icon-image" />
-                                    }
-                                    <div class="app-info">
-                                        <div class="app-name-text">@app.Name</div>
-                                        @if (ShowTargetBadge)
+                    @foreach (var category in AppCategories)
+                    {
+                        <div class="app-category">
+                            <div class="category-title">@category.CategoryName</div>
+                            <div class="category-apps">
+                                @foreach (var app in category.Apps)
+                                {
+                                    <div class="app-item" 
+                                         @key="app.Id"
+                                         data-app-id="@app.Id"
+                                         title="@app.Name (@(app.Target == "_blank" ? "新标签页" : "当前页"))">
+                                        @if (!string.IsNullOrEmpty(app.Icon))
                                         {
-                                            <div class="app-target-badge">@(app.Target == "_blank" ? "🔗" : "📄")</div>
+                                            <div class="app-icon">@app.Icon</div>
                                         }
+                                        else if (!string.IsNullOrEmpty(app.IconUrl))
+                                        {
+                                            <img src="@app.IconUrl" alt="" class="app-icon-image" />
+                                        }
+                                        <div class="app-info">
+                                            <div class="app-name-text">@app.Name</div>
+                                            @if (ShowTargetBadge)
+                                            {
+                                                <div class="app-target-badge">@(app.Target == "_blank" ? "🔗" : "📄")</div>
+                                            }
+                                        </div>
                                     </div>
-                                </div>
-                            }
+                                }
+                            </div>
                         </div>
-                    </div>
+                    }
                 }
-            }
-            else
-            {
-                <div class="empty-state">@EmptyMessage</div>
-            }
+                else
+                {
+                    <div class="empty-state">@EmptyMessage</div>
+                }
+            </div>
         </div>
     </div>
-</div>
+}
 
 @code {
+    private DotNetObjectReference<AppDrawer>? _dotNetRef;
+
     /// <summary>
     /// 是否显示抽屉
     /// </summary>
@@ -92,10 +99,16 @@
     public EventCallback OnClose { get; set; }
 
     /// <summary>
-    /// 点击应用事件（如果设置此事件，将覆盖默认跳转行为）
+    /// 点击应用事件（如果设置此事件,将覆盖默认跳转行为）
     /// </summary>
     [Parameter]
-    public Func<AppItemInfo, Task>? OnAppClick { get; set; }
+    public EventCallback<AppItemInfo> OnAppClick { get; set; }
+
+    /// <summary>
+    /// 应用选择后的回调（可选，用于更新状态等）
+    /// </summary>
+    [Parameter]
+    public EventCallback<AppItemInfo> OnAppSelected { get; set; }
 
     /// <summary>
     /// 点击遮罩层是否关闭抽屉
@@ -103,55 +116,95 @@
     [Parameter]
     public bool CloseOnOverlayClick { get; set; } = true;
 
-    private async Task HandleClose()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        Console.WriteLine("HandleClose 执行");
+        if (Visible)
+        {
+            // 等待 DOM 渲染完成
+            await Task.Delay(50);
+            
+            // 创建或复用 DotNetObjectReference
+            _dotNetRef ??= DotNetObjectReference.Create(this);
+            
+            // 绑定事件（JS 已通过 script 标签加载）
+            await JSRuntime.InvokeVoidAsync("AppDrawer.init", _dotNetRef);
+        }
+    }
+
+    public void Dispose()
+    {
+        _dotNetRef?.Dispose();
+    }
+
+    [JSInvokable]
+    public async Task HandleClose()
+    {
         if (OnClose.HasDelegate)
         {
             await OnClose.InvokeAsync();
         }
     }
 
-    private async Task HandleOverlayClick()
+    [JSInvokable]
+    public async Task HandleOverlayClick()
     {
-        Console.WriteLine("HandleOverlayClick 执行");
         if (CloseOnOverlayClick && OnClose.HasDelegate)
         {
             await OnClose.InvokeAsync();
         }
     }
 
+    [JSInvokable]
+    public async Task HandleAppClickById(string appId)
+    {
+        var app = AppCategories
+            .SelectMany(c => c.Apps)
+            .FirstOrDefault(a => a.Id == appId);
+        
+        if (app != null)
+        {
+            await HandleAppClick(app);
+        }
+    }
+
     private async Task HandleAppClick(AppItemInfo app)
     {
-        Console.WriteLine($"[AppDrawer] HandleAppClick 被调用: {app.Name}, URL: {app.Url}");
-        
-        if (OnAppClick != null)
+        if (OnAppClick.HasDelegate)
         {
-            Console.WriteLine($"[AppDrawer] 调用自定义 OnAppClick 处理器");
             // 使用自定义点击处理
-            await OnAppClick.Invoke(app);
+            await OnAppClick.InvokeAsync(app);
         }
         else
         {
-            Console.WriteLine($"[AppDrawer] 使用默认跳转行为");
-            // 默认跳转行为
+            // 触发 OnAppSelected 回调（用于更新状态等）
+            if (OnAppSelected.HasDelegate)
+            {
+                await OnAppSelected.InvokeAsync(app);
+            }
+            
+            // 关闭抽屉
+            if (OnClose.HasDelegate)
+            {
+                await OnClose.InvokeAsync();
+            }
+            
+            // 等待抽屉关闭动画
+            await Task.Delay(100);
+            
+            // 根据 Target 决定打开方式
             if (app.Target == "_blank")
             {
-                _ = JSRuntime.InvokeVoidAsync("open", app.Url, "_blank");
+                await JSRuntime.InvokeVoidAsync("open", app.Url, "_blank");
             }
             else
             {
                 NavigationManager.NavigateTo(app.Url);
             }
-            
-            // 跳转后关闭抽屉
-            await OnClose.InvokeAsync();
         }
     }
 
     private async Task OnAppItemClick(AppItemInfo app)
     {
-        Console.WriteLine($"[AppDrawer] OnAppItemClick 被调用: {app.Name}, URL: {app.Url}");
         await HandleAppClick(app);
     }
 }

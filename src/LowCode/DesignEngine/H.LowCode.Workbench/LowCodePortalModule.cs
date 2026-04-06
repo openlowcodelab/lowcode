@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Modularity;
 
-namespace H.LowCode.Portal;
+namespace H.LowCode.Workbench;
 
 public class LowCodePortalModule : AbpModule
 {

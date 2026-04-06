@@ -146,6 +146,8 @@ app.MapRazorComponents<App>()
         typeof(H.Account.Web._Imports).Assembly,
         typeof(H.Organization.Web._Imports).Assembly,
         typeof(H.LowCode.DesignEngine._Imports).Assembly,
-        typeof(H.LowCode.Themes.AntBlazor._Imports).Assembly);
+        typeof(H.LowCode.Workbench._Imports).Assembly,
+        typeof(H.LowCode.Themes.AntBlazor._Imports).Assembly,
+        typeof(H.Util.Blazor._Imports).Assembly);
 
 app.Run();

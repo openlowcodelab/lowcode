@@ -6,7 +6,7 @@ using H.LowCode.DesignEngine.Application.Contracts;
 using H.LowCode.DesignEngineBase;
 using H.LowCode.MyApp;
 using H.LowCode.PartsDesignEngine;
-using H.LowCode.Portal;
+using H.LowCode.Workbench;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Volo.Abp.Autofac.WebAssembly;
 using Volo.Abp.Http.Client;

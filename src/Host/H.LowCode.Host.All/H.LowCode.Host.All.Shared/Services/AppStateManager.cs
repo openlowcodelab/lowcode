@@ -32,51 +32,42 @@ public class AppStateManager
     /// </summary>
     public List<AppCategoryInfo> GetAppCategories()
     {
-        return new List<AppCategoryInfo>
-        {
-            new AppCategoryInfo
-            {
+        return
+        [
+            new() {
                 CategoryName = "基础服务",
-                Apps = new List<AppItemInfo>
-                {
-                    new AppItemInfo {
+                Apps =
+                [
+                    new() {
                         Id = "account",
                         Name = "用户管理",
                         Icon = "👤",
                         Url = "/account/users",
                         Target = "_self"
                     },
-                    new AppItemInfo {
+                    new() {
                         Id = "organization",
                         Name = "组织管理",
                         Icon = "🏢",
                         Url = "/organization",
                         Target = "_self"
                     }
-                }
+                ]
             },
-            new AppCategoryInfo
-            {
+            new() {
                 CategoryName = "低代码平台",
-                Apps = new List<AppItemInfo>
-                {
-                    new AppItemInfo {
+                Apps =
+                [
+                    new() {
                         Id = "design-engine",
-                        Name = "应用设计器",
+                        Name = "应用开发",
                         Icon = "🛠️",
-                        Url = "/designer/_new/_new",
-                        Target = "_self"
-                    },
-                    new AppItemInfo {
-                        Id = "render-engine",
-                        Name = "应用预览",
-                        Icon = "👁️",
-                        Url = "/render",
-                        Target = "_self"
+                        Url = "/workbench",
+                        Target = "_blank"
                     }
-                }
+                ]
             }
-        };
+        ];
     }
 
     /// <summary>
