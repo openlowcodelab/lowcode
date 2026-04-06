@@ -1,4 +1,4 @@
-@page "/admin/users/create"
+@page "/account/users/create"
 @inject IUserService UserService
 @inject NavigationManager Navigation
 
@@ -72,7 +72,7 @@
                     <Button Type="@ButtonType.Primary" HtmlType="submit" Loading="@isSubmitting">创建用户</Button>
                 </SpaceItem>
                 <SpaceItem>
-                    <a href="/admin/users">
+                    <a href="/account/users">
                         <Button>返回</Button>
                     </a>
                 </SpaceItem>
@@ -99,7 +99,7 @@
         try
         {
             await UserService.CreateUserAsync(createUserDto);
-            Navigation.NavigateTo("/admin/users");
+            Navigation.NavigateTo("/account/users");
         }
         catch (ArgumentException ex)
         {

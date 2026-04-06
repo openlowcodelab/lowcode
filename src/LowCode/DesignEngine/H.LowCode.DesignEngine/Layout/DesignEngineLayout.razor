@@ -3,6 +3,7 @@
 @inherits LowCodeLayoutComponentBase
 @inject AppStateManager AppStateManager
 @inject NavigationManager NavigationManager
+@inject Microsoft.JSInterop.IJSRuntime JSRuntime
 
 <link rel="stylesheet" href="_content/H.Util.Blazor/css/AppDrawer.css" />
 
@@ -68,8 +69,50 @@
         <div class="content-area">@Body</div>
     </div>
 
-    <AppDrawer Visible="showAppDrawer" Title="应用列表" AppCategories="@appCategories"
-               OnAppClick="@(async (app) => await OnAppSelected(app))" OnClose="CloseAppDrawer" />
+    <div class="app-drawer-container @(showAppDrawer ? "visible" : "")">
+        <div class="app-drawer-overlay" @onclick="CloseAppDrawer" @onclick:stopPropagation="true"></div>
+        <div class="app-drawer">
+            <div class="drawer-header">
+                <h4>应用列表</h4>
+                <button class="close-drawer" @onclick="CloseAppDrawer" @onclick:stopPropagation="true">×</button>
+            </div>
+            <div class="drawer-content">
+                @if (appCategories != null && appCategories.Any())
+                {
+                    @foreach (var category in appCategories)
+                    {
+                        <div class="app-category">
+                            <div class="category-title">@category.CategoryName</div>
+                            <div class="category-apps">
+                                @foreach (var app in category.Apps)
+                                {
+                                    <div class="app-item" 
+                                         @onclick="@(() => HandleAppClick(app))"
+                                         title="@app.Name (@(app.Target == "_blank" ? "新标签页" : "当前页"))">
+                                        @if (!string.IsNullOrEmpty(app.Icon))
+                                        {
+                                            <div class="app-icon">@app.Icon</div>
+                                        }
+                                        else if (!string.IsNullOrEmpty(app.IconUrl))
+                                        {
+                                            <img src="@app.IconUrl" alt="" class="app-icon-image" />
+                                        }
+                                        <div class="app-info">
+                                            <div class="app-name-text">@app.Name</div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="empty-state">暂无应用</div>
+                }
+            </div>
+        </div>
+    </div>
 </div>
 
 @code {
@@ -108,4 +151,9 @@
     }
 
     private void Login() { UserName = "测试用户"; }
+    
+    private async Task HandleAppClick(AppItemInfo app)
+    {
+        await OnAppSelected(app);
+    }
 }

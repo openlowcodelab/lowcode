@@ -43,7 +43,7 @@ public class AppStateManager
                         Id = "account",
                         Name = "用户管理",
                         Icon = "👤",
-                        Url = "/users",
+                        Url = "/account/users",
                         Target = "_self"
                     },
                     new AppItemInfo {
@@ -116,9 +116,7 @@ public class AppStateManager
     {
         return new List<AppMenuItem>
         {
-            new AppMenuItem { Name = "用户列表", Url = "/users", Icon = "👥" },
-            new AppMenuItem { Name = "角色管理", Url = "/roles", Icon = "🔑" },
-            new AppMenuItem { Name = "权限设置", Url = "/permissions", Icon = "🔒" }
+            new AppMenuItem { Name = "用户列表", Url = "/account/users", Icon = "👥" }
         };
     }
 
@@ -130,8 +128,8 @@ public class AppStateManager
         return new List<AppMenuItem>
         {
             new AppMenuItem { Name = "组织管理", Url = "/organization", Icon = "🏢" },
-            new AppMenuItem { Name = "成员管理", Url = "/member", Icon = "👥" },
-            new AppMenuItem { Name = "角色管理", Url = "/role", Icon = "🔑" }
+            new AppMenuItem { Name = "成员管理", Url = "/organization/member", Icon = "👥" },
+            new AppMenuItem { Name = "角色管理", Url = "/organization/role", Icon = "🔑" }
         };
     }
 

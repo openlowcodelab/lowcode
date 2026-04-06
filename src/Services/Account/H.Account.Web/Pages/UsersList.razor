@@ -1,4 +1,4 @@
-@page "/users"
+@page "/account/users"
 @inject IUserService UserService
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
@@ -33,7 +33,7 @@
                 <Button Type="@ButtonType.Primary" OnClick="@LoadUsers">搜索</Button>
             </SpaceItem>
             <SpaceItem>
-                <a href="/admin/users/create">
+                <a href="/account/users/create">
                     <Button Type="@ButtonType.Primary">新增</Button>
                 </a>
             </SpaceItem>
@@ -75,7 +75,7 @@
         <Column TData="string" Title="操作">
             <Space>
                 <SpaceItem>
-                    <a href="/admin/users/@context.Id/edit">
+                    <a href="/account/users/@context.Id/edit">
                         <Button Type="@ButtonType.Primary" Size="@ButtonSize.Small">编辑</Button>
                     </a>
                 </SpaceItem>

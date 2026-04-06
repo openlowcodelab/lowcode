@@ -1,4 +1,4 @@
-@page "/admin/users/{id:guid}/edit"
+@page "/account/users/{id:guid}/edit"
 @inject IUserService UserService
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
@@ -76,7 +76,7 @@
                             <Button Type="@ButtonType.Primary" HtmlType="submit" Loading="@isSubmitting">保存修改</Button>
                         </SpaceItem>
                         <SpaceItem>
-                            <a href="/admin/users">
+                            <a href="/account/users">
                                 <Button>返回</Button>
                             </a>
                         </SpaceItem>
@@ -181,7 +181,7 @@
         try
         {
             await UserService.UpdateUserAsync(Id, updateUserDto);
-            Navigation.NavigateTo("/admin/users");
+            Navigation.NavigateTo("/account/users");
         }
         catch (ArgumentException ex)
         {
