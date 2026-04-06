@@ -1,55 +1,111 @@
 ﻿@namespace H.Organization.Web
+@using H.LowCode.Host.All.Shared.Services
 @inherits LayoutComponentBase
+@inject AppStateManager AppStateManager
+@inject NavigationManager NavigationManager
 
-<AntDesign.ProLayout.BasicLayout FixedHeader="true"
-        Logo="@("_content/H.Organization.Web/logo.png")" Title="组织管理"
-        MenuData="@_menuDataItems" MenuAccordion="true" Layout="AntDesign.ProLayout.Layout.Side">
-    <RightContentRender>
-        RightContent
-    </RightContentRender>
-    <ChildContent>
-        @Body
-    </ChildContent>
-    <FooterRender></FooterRender>
-</AntDesign.ProLayout.BasicLayout>
+<link rel="stylesheet" href="_content/H.Util.Blazor/css/AppDrawer.css" />
 
-@code
-{
-    [PersistentState]
-    public MenuDataItem[] _menuDataItems { get; set; }
+<style>
+.layout-container { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+.top-navbar { display: flex; justify-content: space-between; align-items: center; height: 60px; padding: 0 20px; background-color: #fff; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); z-index: 100; }
+.navbar-left { display: flex; align-items: center; gap: 15px; }
+.drawer-toggle { background: none; border: none; font-size: 24px; cursor: pointer; padding: 5px 10px; border-radius: 4px; }
+.drawer-toggle:hover { background-color: #f0f0f0; }
+.app-name h3 { margin: 0; font-size: 18px; color: #333; }
+.navbar-right { display: flex; align-items: center; gap: 10px; }
+.user-avatar { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; }
+.user-name span { color: #666; font-size: 14px; }
+.login-btn { padding: 6px 16px; background-color: #1890ff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+.main-layout { display: flex; flex: 1; overflow: hidden; }
+.sidebar-menu { width: 220px; background-color: #fff; border-right: 1px solid #e8e8e8; overflow-y: auto; padding: 10px 0; }
+.menu-list { list-style: none; margin: 0; padding: 0; }
+.menu-item { display: flex; align-items: center; padding: 12px 20px; cursor: pointer; transition: all 0.3s; color: #333; }
+.menu-item:hover { background-color: #f0f7ff; color: #1890ff; }
+.menu-item.active { background-color: #e6f7ff; color: #1890ff; border-right: 3px solid #1890ff; }
+.menu-icon { margin-right: 10px; font-size: 18px; }
+.menu-text { font-size: 14px; }
+.content-area { flex: 1; overflow-y: auto; background-color: #f0f2f5; padding: 20px; }
+</style>
 
-    protected override async Task OnInitializedAsync()
-    {
-        await base.OnInitializedAsync();
-
-        _menuDataItems = InitMenuData();
-    }
-
-    private MenuDataItem[] InitMenuData()
-    {
-        MenuDataItem[] menuData = [
-            new MenuDataItem
+<div class="layout-container">
+    <div class="top-navbar">
+        <div class="navbar-left">
+            <button class="drawer-toggle" @onclick="ToggleAppDrawer"><span class="drawer-icon">☰</span></button>
+            <div class="app-name"><h3>组织管理</h3></div>
+        </div>
+        <div class="navbar-right">
+            @if (IsLoggedIn)
             {
-                Path = "/organization",
-                Name = "组织管理",
-                Icon = "profile",
-                Key = "organization-manage"
-            },
-            new MenuDataItem
-            {
-                Path = "/organization/member",
-                Name = "成员管理",
-                Icon = "menu",
-                Key = "member-manage"
-            },
-            new MenuDataItem
-            {
-                Path = $"/organization/role",
-                Name = "角色管理",
-                Icon = "database",
-                Key = "role-manage"
+                <div class="user-avatar" style="background-color: #1890ff; display: flex; align-items: center; justify-content: center;">
+                    <svg viewBox="0 0 100 100" style="width: 100%; height: 100%;">
+                        <circle fill="#fff" cx="50" cy="35" r="20"/>
+                        <path fill="#fff" d="M50 60 Q20 60 20 85 L80 85 Q80 60 50 60"/>
+                    </svg>
+                </div>
+                <div class="user-name"><span>@UserName</span></div>
             }
-        ];
-        return menuData;
+            else
+            {
+                <button class="login-btn" @onclick="Login"><span>登录</span></button>
+            }
+        </div>
+    </div>
+
+    <div class="main-layout">
+        <div class="sidebar-menu">
+            <ul class="menu-list">
+                @foreach (var item in MenuItems)
+                {
+                    <li class="menu-item @(IsActiveMenu(item.Url) ? "active" : "")"
+                        @onclick="@(() => NavigateTo(item.Url))">
+                        <span class="menu-icon">@item.Icon</span>
+                        <span class="menu-text">@item.Name</span>
+                    </li>
+                }
+            </ul>
+        </div>
+        <div class="content-area">@Body</div>
+    </div>
+
+    <AppDrawer Visible="showAppDrawer" Title="应用列表" AppCategories="@appCategories"
+               OnAppClick="@(async (app) => await OnAppSelected(app))" OnClose="CloseAppDrawer" />
+</div>
+
+@code {
+    private bool showAppDrawer = false;
+    private bool IsLoggedIn => !string.IsNullOrEmpty(UserName);
+    private string UserName { get; set; } = "用户";
+    private List<AppCategoryInfo> appCategories = new();
+    private List<AppMenuItem> MenuItems = new();
+
+    protected override void OnInitialized()
+    {
+        AppStateManager.OnAppChanged += OnAppChanged;
+        appCategories = AppStateManager.GetAppCategories();
+        MenuItems = AppStateManager.GetAppMenuItems("organization");
     }
+
+    private void OnAppChanged(string appId) { InvokeAsync(() => StateHasChanged()); }
+
+    private async Task OnAppSelected(AppItemInfo app)
+    {
+        AppStateManager.CurrentAppId = app.Id;
+        showAppDrawer = false;
+        StateHasChanged();
+        await Task.Delay(100);
+        NavigationManager.NavigateTo(app.Url);
+    }
+
+    private void ToggleAppDrawer() { showAppDrawer = !showAppDrawer; StateHasChanged(); }
+    private void CloseAppDrawer() { showAppDrawer = false; StateHasChanged(); }
+    private void NavigateTo(string url) { NavigationManager.NavigateTo(url); }
+
+    private bool IsActiveMenu(string url)
+    {
+        var currentPath = NavigationManager.Uri.Replace(NavigationManager.BaseUri, "");
+        return currentPath.StartsWith(url, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void Login() { UserName = "测试用户"; }
 }

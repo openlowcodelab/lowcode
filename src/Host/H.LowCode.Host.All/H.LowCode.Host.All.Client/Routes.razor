@@ -1,11 +1,15 @@
 ﻿@using H.LowCode.Portal
+@using H.Account.Web
+@using H.Organization.Web
+@using H.LowCode.DesignEngine
+@using H.LowCode.Themes.AntBlazor
 @using System.Reflection
 
 <Router AppAssembly="typeof(Program).Assembly"
         NotFoundPage="typeof(Pages.NotFound)"
         AdditionalAssemblies="@Assemblies">
     <Found Context="routeData">
-        <RouteView RouteData="routeData" DefaultLayout="typeof(PortalLayout)" />
+        <RouteView RouteData="routeData" DefaultLayout="@GetLayoutForRoute(routeData.PageType)" />
         <FocusOnNavigate RouteData="routeData" Selector="h1" />
     </Found>
     <Navigating>
@@ -15,6 +19,51 @@
 
 @code {
     private Assembly[] Assemblies = [
-        typeof(H.LowCode.Portal._Imports).Assembly
+        typeof(H.LowCode.Portal._Imports).Assembly,
+        typeof(H.Account.Web._Imports).Assembly,
+        typeof(H.Organization.Web._Imports).Assembly,
+        typeof(H.LowCode.DesignEngine._Imports).Assembly,
+        typeof(H.LowCode.Themes.AntBlazor._Imports).Assembly
     ];
+
+    /// <summary>
+    /// 根据路由页面类型动态选择布局
+    /// </summary>
+    private Type GetLayoutForRoute(Type pageType)
+    {
+        var pagePath = pageType.FullName?.ToLower() ?? "";
+        
+        // Portal 首页使用 PortalLayout（无菜单）
+        if (pagePath.Contains("portal") && pagePath.Contains("home"))
+        {
+            return typeof(PortalLayout);
+        }
+        
+        // Account 应用使用 AccountLayout
+        if (pagePath.Contains("account"))
+        {
+            return typeof(AccountLayout);
+        }
+        
+        // Organization 应用使用 OrganizationLayout
+        if (pagePath.Contains("organization"))
+        {
+            return typeof(OrganizationLayout);
+        }
+        
+        // DesignEngine 使用 DesignEngineLayout
+        if (pagePath.Contains("designengine") || pagePath.Contains("designer"))
+        {
+            return typeof(DesignEngineLayout);
+        }
+        
+        // RenderEngine 使用 AntBlazorThemeLayout
+        if (pagePath.Contains("renderengine") || pagePath.Contains("themes"))
+        {
+            return typeof(AntBlazorThemeLayout);
+        }
+        
+        // 默认使用 PortalLayout
+        return typeof(PortalLayout);
+    }
 }

@@ -1,0 +1,151 @@
+/* AppLayout 样式 */
+.layout-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* 顶部导航栏 */
+.top-navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 60px;
+    padding: 0 20px;
+    background-color: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+}
+
+.navbar-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.drawer-toggle {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+}
+
+.drawer-toggle:hover {
+    background-color: #f0f0f0;
+}
+
+.drawer-icon {
+    display: inline-block;
+}
+
+.app-name h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #333;
+}
+
+.navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+.user-name span {
+    color: #666;
+    font-size: 14px;
+}
+
+.login-btn {
+    padding: 6px 16px;
+    background-color: #1890ff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.login-btn:hover {
+    background-color: #40a9ff;
+}
+
+/* 主体布局 */
+.main-layout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* 侧边菜单 */
+.sidebar-menu {
+    width: 220px;
+    background-color: #fff;
+    border-right: 1px solid #e8e8e8;
+    overflow-y: auto;
+    padding: 10px 0;
+}
+
+.menu-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+    color: #333;
+}
+
+.menu-item:hover {
+    background-color: #f0f7ff;
+    color: #1890ff;
+}
+
+.menu-item.active {
+    background-color: #e6f7ff;
+    color: #1890ff;
+    border-right: 3px solid #1890ff;
+}
+
+.menu-icon {
+    margin-right: 10px;
+    font-size: 18px;
+}
+
+.menu-text {
+    font-size: 14px;
+}
+
+/* 内容区域 */
+.content-area {
+    flex: 1;
+    overflow-y: auto;
+    background-color: #f0f2f5;
+    padding: 20px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .sidebar-menu {
+        display: none;
+    }
+
+    .content-area {
+        padding: 10px;
+    }
+}

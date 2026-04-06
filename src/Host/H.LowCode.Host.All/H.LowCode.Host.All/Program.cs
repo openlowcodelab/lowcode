@@ -142,6 +142,10 @@ app.MapRazorComponents<App>()
     .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(
         typeof(H.LowCode.Host.All.Client._Imports).Assembly,
-        typeof(H.LowCode.Portal._Imports).Assembly);
+        typeof(H.LowCode.Portal._Imports).Assembly,
+        typeof(H.Account.Web._Imports).Assembly,
+        typeof(H.Organization.Web._Imports).Assembly,
+        typeof(H.LowCode.DesignEngine._Imports).Assembly,
+        typeof(H.LowCode.Themes.AntBlazor._Imports).Assembly);
 
 app.Run();

@@ -1,0 +1,105 @@
+@namespace H.LowCode.Host.All.Client.Layout
+@using H.Util.Blazor
+@using H.LowCode.Host.All.Shared.Services
+@inherits LayoutComponentBase
+@inject AppStateManager AppStateManager
+@inject NavigationManager NavigationManager
+
+<link rel="stylesheet" href="_content/H.Util.Blazor/css/AppDrawer.css" />
+
+<div class="layout-container">
+    <div class="top-navbar">
+        <div class="navbar-left">
+            <button class="drawer-toggle" @onclick="ToggleAppDrawer"><span class="drawer-icon">☰</span></button>
+            <div class="app-name"><h3>@AppName</h3></div>
+        </div>
+        <div class="navbar-right">
+            @if (IsLoggedIn)
+            {
+                <div class="user-avatar" style="background-color: #1890ff; display: flex; align-items: center; justify-content: center;">
+                    <svg viewBox="0 0 100 100" style="width: 100%; height: 100%;">
+                        <circle fill="#fff" cx="50" cy="35" r="20"/>
+                        <path fill="#fff" d="M50 60 Q20 60 20 85 L80 85 Q80 60 50 60"/>
+                    </svg>
+                </div>
+                <div class="user-name"><span>@UserName</span></div>
+            }
+            else
+            {
+                <button class="login-btn" @onclick="Login"><span>登录</span></button>
+            }
+        </div>
+    </div>
+
+    <div class="main-layout">
+        @if (ShowSidebar && MenuItems != null && MenuItems.Any())
+        {
+            <div class="sidebar-menu">@BuildMenu(MenuItems)</div>
+        }
+        <div class="content-area">@Body</div>
+    </div>
+
+    <AppDrawer Visible="showAppDrawer" Title="应用列表" AppCategories="@appCategories"
+               OnAppClick="@(async (app) => await OnAppSelected(app))" OnClose="CloseAppDrawer" />
+</div>
+
+@code {
+    [Parameter] public string AppName { get; set; } = "应用";
+    [Parameter] public bool ShowSidebar { get; set; } = true;
+    [Parameter] public List<MenuItemInfo>? MenuItems { get; set; }
+
+    private bool showAppDrawer = false;
+    private bool IsLoggedIn => !string.IsNullOrEmpty(UserName);
+    private string UserName { get; set; } = "用户";
+    private List<AppCategoryInfo> appCategories = new();
+
+    protected override void OnInitialized()
+    {
+        appCategories = AppStateManager.GetAppCategories();
+        AppStateManager.OnAppChanged += OnAppChanged;
+    }
+
+    private void OnAppChanged(string appId) { StateHasChanged(); }
+
+    private async Task OnAppSelected(AppItemInfo app)
+    {
+        AppStateManager.CurrentAppId = app.Id;
+        showAppDrawer = false;
+        StateHasChanged();
+        await Task.Delay(100);
+        NavigationManager.NavigateTo(app.Url);
+    }
+
+    private void ToggleAppDrawer() { showAppDrawer = !showAppDrawer; }
+    private void CloseAppDrawer() { showAppDrawer = false; StateHasChanged(); }
+    private void Login() { UserName = "测试用户"; }
+
+    private MarkupString BuildMenu(List<MenuItemInfo> items)
+    {
+        var html = "<ul class=\"menu-list\">";
+        foreach (var item in items)
+        {
+            html += $@"<li class=""menu-item {(IsActiveMenu(item.Url) ? "active" : "")}"" 
+                    onclick=""window.location.href='{item.Url}'"">
+                    <span class=""menu-icon"">{item.Icon}</span>
+                    <span class=""menu-text"">{item.Name}</span>
+                </li>";
+        }
+        html += "</ul>";
+        return new MarkupString(html);
+    }
+
+    private bool IsActiveMenu(string url)
+    {
+        var currentPath = NavigationManager.Uri.Replace(NavigationManager.BaseUri, "");
+        return currentPath.StartsWith(url, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>菜单项信息</summary>
+    public class MenuItemInfo
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Url { get; set; } = string.Empty;
+        public string Icon { get; set; } = "📄";
+    }
+}
