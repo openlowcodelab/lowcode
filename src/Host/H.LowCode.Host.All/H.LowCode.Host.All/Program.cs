@@ -41,6 +41,9 @@ builder.Services.AddScoped<H.LowCode.ComponentBase.ISessionStorageService, H.Low
 // 注册应用状态管理器
 builder.Services.AddSingleton<AppStateManager>();
 
+// 注册 LowCodeAppState (设计时为 true)
+builder.Services.AddScoped(sp => new LowCodeAppState(isDesign: true));
+
 #region ABP Modules
 builder.Host.UseAutofac();
 await builder.AddApplicationAsync<HostAllModule>();

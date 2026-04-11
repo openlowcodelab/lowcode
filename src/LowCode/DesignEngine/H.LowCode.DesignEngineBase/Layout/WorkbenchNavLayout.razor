@@ -1,36 +1,90 @@
 ﻿@namespace H.LowCode.DesignEngineBase
 @inherits LowCodeLayoutComponentBase
+@using H.Util.Blazor
+@inject AppStateManager AppStateManager
+@inject NavigationManager NavigationManager
+
+<link rel="stylesheet" href="_content/H.Util.Blazor/css/AppDrawer.css" />
+<script src="_content/H.Util.Blazor/js/AppDrawer.js"></script>
 
 <style>
-    .ant-layout {
-        background-color: #f6f6f6 !important;
-    }
-
-    .ant-pro-top-nav-header-menu {
-        margin-left: 50px;
-    }
+.layout-container { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+.top-navbar { display: flex; justify-content: space-between; align-items: center; height: 60px; padding: 0 20px; background-color: #fff; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); z-index: 100; }
+.navbar-left { display: flex; align-items: center; gap: 15px; }
+.navbar-menu { display: flex; align-items: center; gap: 5px; margin-left: 50px; flex: 1; }
+.menu-item-top { display: flex; align-items: center; gap: 6px; padding: 8px 16px; cursor: pointer; transition: all 0.3s; color: #333; border-radius: 4px; font-size: 14px; }
+.menu-item-top:hover { background-color: #f0f7ff; color: #1890ff; }
+.menu-item-top.active { background-color: #e6f7ff; color: #1890ff; font-weight: 500; }
+.menu-icon-top { font-size: 16px; }
+.drawer-toggle { background: none; border: none; font-size: 24px; cursor: pointer; padding: 5px 10px; border-radius: 4px; }
+.drawer-toggle:hover { background-color: #f0f0f0; }
+.app-name h3 { margin: 0; font-size: 18px; color: #333; }
+.navbar-right { display: flex; align-items: center; gap: 10px; }
+.user-avatar { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; }
+.user-name span { color: #666; font-size: 14px; }
+.login-btn { padding: 6px 16px; background-color: #1890ff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+.content-area { flex: 1; overflow-y: auto; background-color: #f0f2f5; padding: 20px; }
 </style>
 
-<AntDesign.ProLayout.BasicLayout Logo="@("logo.png")" Title="OpenLowCode" MenuData="_menuData"
-                                 Layout="AntDesign.ProLayout.Layout.Top" FixedHeader="true">
-    <RightContentRender>
-        RightContent
-    </RightContentRender>
-    <ChildContent>
-        @Body
-    </ChildContent>
-    <FooterRender>
-        <FooterView Copyright="@($"2021 - {DateTime.Now.Year} H")" Links="Links"></FooterView>
-    </FooterRender>
-</AntDesign.ProLayout.BasicLayout>
+<div class="layout-container">
+    <div class="top-navbar">
+        <div class="navbar-left">
+            <button class="drawer-toggle" @onclick="ToggleAppDrawer"><span class="drawer-icon">☰</span></button>
+            <div class="app-name"><h3>OpenLowCode</h3></div>
+        </div>
+        
+        <div class="navbar-menu">
+            @foreach (var item in MenuItems)
+            {
+                var isActive = IsActiveMenu(item.Path);
+                <div class="menu-item-top @(isActive ? "active" : "")"
+                     style="cursor: pointer;"
+                     @onclick="@(async (_) => {
+                         await Task.Delay(10);
+                         NavigationManager.NavigateTo(item.Path, forceLoad: false);
+                     })">
+                    <span class="menu-icon-top">@GetIcon(item.Icon)</span>
+                    <span>@item.Name</span>
+                </div>
+            }
+        </div>
+        
+        <div class="navbar-right">
+            @if (IsLoggedIn)
+            {
+                <div class="user-avatar" style="background-color: #1890ff; display: flex; align-items: center; justify-content: center;">
+                    <svg viewBox="0 0 100 100" style="width: 100%; height: 100%;">
+                        <circle fill="#fff" cx="50" cy="35" r="20"/>
+                        <path fill="#fff" d="M50 60 Q20 60 20 85 L80 85 Q80 60 50 60"/>
+                    </svg>
+                </div>
+                <div class="user-name"><span>@UserName</span></div>
+            }
+            else
+            {
+                <button class="login-btn" @onclick="Login"><span>登录</span></button>
+            }
+        </div>
+    </div>
+
+    <div class="content-area">@Body</div>
+
+    <AppDrawer Visible="showAppDrawer" Title="应用列表" AppCategories="@appCategories"
+               OnAppClick="@(async (app) => await OnAppSelected(app))" OnClose="CloseAppDrawer" />
+</div>
 
 @code
 {
-    private readonly MenuDataItem[] _menuData =
+    private bool showAppDrawer = false;
+    private bool IsLoggedIn => !string.IsNullOrEmpty(UserName);
+    private string UserName { get; set; } = "用户";
+    private List<AppCategoryInfo> appCategories = new();
+    
+    private readonly MenuDataItem[] MenuItems =
     {
         new MenuDataItem
         {
-            Path = "/",
+            Path = "/workbench",
             Name = "工作台",
             Icon = "home",
             Key = "home"
@@ -71,15 +125,67 @@
             Key = "docs"
         }
     };
-
-    private LinkItem[] Links { get; set; } =
+    
+    protected override void OnInitialized()
     {
-        new LinkItem
+        appCategories = AppStateManager.GetAppCategories();
+        AppStateManager.OnAppChanged += OnAppChanged;
+    }
+    
+    private void OnAppChanged(string appId) 
+    { 
+        InvokeAsync(() => StateHasChanged()); 
+    }
+    
+    private async Task OnAppSelected(AppItemInfo app)
+    {
+        AppStateManager.CurrentAppId = app.Id;
+        showAppDrawer = false;
+        StateHasChanged();
+        await Task.Delay(100);
+        NavigationManager.NavigateTo(app.Url);
+    }
+    
+    private void ToggleAppDrawer() 
+    { 
+        showAppDrawer = !showAppDrawer; 
+        StateHasChanged(); 
+    }
+    
+    private void CloseAppDrawer() 
+    { 
+        showAppDrawer = false; 
+        StateHasChanged(); 
+    }
+    
+    private async Task NavigateToAsync(string url) 
+    { 
+        await Task.Delay(10);
+        NavigationManager.NavigateTo(url, forceLoad: false); 
+    }
+    
+    private bool IsActiveMenu(string path)
+    {
+        var currentPath = NavigationManager.Uri.Replace(NavigationManager.BaseUri, "");
+        return currentPath.StartsWith(path, StringComparison.OrdinalIgnoreCase);
+    }
+    
+    private string GetIcon(string? icon)
+    {
+        return icon switch
         {
-            Key = "OpenLowCode",
-            Title = "OpenLowCode",
-            Href = "/",
-            BlankTarget = true,
-        }
-    };
+            "home" => "🏠",
+            "appstore" => "⊞",
+            "api" => "🔌",
+            "cloud" => "☁",
+            "deployment-unit" => "🔧",
+            "question-circle" => "❓",
+            _ => "📄"
+        };
+    }
+    
+    private void Login() 
+    { 
+        UserName = "测试用户"; 
+    }
 }
