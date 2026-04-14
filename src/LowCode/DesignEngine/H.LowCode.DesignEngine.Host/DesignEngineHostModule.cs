@@ -1,38 +1,24 @@
 using H.LowCode.Application;
 using H.LowCode.ComponentBase;
-using H.LowCode.Components.Defaults;
 using H.LowCode.DesignEngine.Application;
 using H.LowCode.DesignEngine.EntityFrameworkCore;
+using H.LowCode.DesignEngine.Host.Client;
 using H.LowCode.DesignEngine.Repository.JsonFile;
-using H.LowCode.DesignEngineBase;
-using H.LowCode.MyApp;
-using H.LowCode.PartsDesignEngine;
-using H.LowCode.Workbench;
 using Volo.Abp.AspNetCore.Mvc;
-using Volo.Abp.Autofac;
 using Volo.Abp.Modularity;
 
 namespace H.LowCode.DesignEngine.Host;
 
 [DependsOn(
     //abp
-    typeof(AbpAutofacModule),
     typeof(AbpAspNetCoreMvcModule),
-    //=====lowcode-server=====//
+    //Web
+    typeof(DesignEngineHostClientModule),
+    //Server
     typeof(LowCodeApplicationModule),
-    typeof(DesignEngineBaseModule),
     typeof(DesignEngineApplicationModule),
     typeof(DesignEngineEntityFrameworkCoreModule),
-    typeof(DesignEngineJsonFileRepositoryModule),
-    //=====lowcode-web=====//
-    //Portal
-    typeof(LowCodePortalModule),
-    //DesignEngine
-    typeof(DesignEngineModule),
-    typeof(MyAppModule),
-    typeof(PartsDesignEngineModule),
-    //Components
-    typeof(LowCodeDefaultComponentModule)
+    typeof(DesignEngineJsonFileRepositoryModule)
     )]
 public class DesignEngineHostModule : AbpModule
 {

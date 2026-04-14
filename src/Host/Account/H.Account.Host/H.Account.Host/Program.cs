@@ -1,7 +1,7 @@
 using H.Account.Host.Components;
-using H.Account.HttpApi;
 using H.Account.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using H.Account.Application;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,7 +12,7 @@ builder.Services.AddRazorComponents()
 
 #region Account
 builder.Host.UseAutofac();
-await builder.AddApplicationAsync<AccountHttpApiModule>();
+await builder.AddApplicationAsync<AccountApplicationModule>();
 builder.Services.AddAntDesign();
 #endregion
 

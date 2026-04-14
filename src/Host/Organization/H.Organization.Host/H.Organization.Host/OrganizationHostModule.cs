@@ -1,6 +1,5 @@
 using H.Account.Application.Contracts;
-using H.Organization.HttpApi;
-using Microsoft.Extensions.DependencyInjection;
+using H.Organization.Application;
 using Volo.Abp.Http.Client;
 using Volo.Abp.Modularity;
 
@@ -10,7 +9,7 @@ namespace H.Organization.Host;
 /// Organization Host 聚合模块，统一管理所有依赖
 /// </summary>
 [DependsOn(
-    typeof(OrganizationHttpApiModule),
+    typeof(OrganizationApplicationModule),
     typeof(AbpHttpClientModule),
     typeof(AccountApplicationContractsModule)
 )]

@@ -1,11 +1,6 @@
-using H.LowCode.Application;
 using H.LowCode.Application.Contracts;
 using H.LowCode.ComponentBase;
-using H.LowCode.Components.Defaults;
 using H.LowCode.DesignEngine.Application.Contracts;
-using H.LowCode.DesignEngineBase;
-using H.LowCode.MyApp;
-using H.LowCode.PartsDesignEngine;
 using H.LowCode.Workbench;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Volo.Abp.Autofac.WebAssembly;
@@ -19,21 +14,12 @@ namespace H.LowCode.DesignEngine.Host.Client;
     typeof(AbpAutofacWebAssemblyModule),
     //动态API代理
     typeof(AbpHttpClientModule),
-    //=====lowcode-web=====//
-    typeof(DesignEngineBaseModule),
-    typeof(DesignEngineApplicationContractsModule),
-    //Portal
-    typeof(LowCodePortalModule),
     //DesignEngine
-    typeof(DesignEngineModule),
-    typeof(MyAppModule),
-    typeof(PartsDesignEngineModule),
-    //Components
-    typeof(LowCodeDefaultComponentModule)
+    typeof(LowCodeWorkbenchModule)
     )]
 public class DesignEngineHostClientModule : AbpModule
 {
-    public const string RemoteServiceName = "Default";
+    public const string RemoteServiceName = "DesignEngine";
 
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
@@ -44,9 +30,6 @@ public class DesignEngineHostClientModule : AbpModule
 
         //应用状态
         context.Services.AddSingleton(new LowCodeAppState(true));
-
-        // 注册 Session 服务
-        context.Services.AddScoped<ISessionStorageService, ClientSessionStorageService>();
     }
 
     private static void ConfigureHttpClient(ServiceConfigurationContext context, IWebAssemblyHostEnvironment environment)
@@ -67,9 +50,9 @@ public class DesignEngineHostClientModule : AbpModule
             typeof(DesignEngineApplicationContractsModule).Assembly,
             RemoteServiceName
         );
-        context.Services.AddHttpClientProxies(
-            typeof(LowCodeApplicationContractsModule).Assembly,
-            RemoteServiceName
-        );
+        //context.Services.AddHttpClientProxies(
+        //    typeof(LowCodeApplicationContractsModule).Assembly,
+        //    RemoteServiceName
+        //);
     }
 }

@@ -5,7 +5,9 @@ using Volo.Abp.Modularity;
 
 namespace H.LowCode.DesignEngine.Application;
 
-[DependsOn(typeof(DesignEngineDomainModule))]
+[DependsOn(
+    typeof(DesignEngineDomainModule)
+)]
 public class DesignEngineApplicationModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)

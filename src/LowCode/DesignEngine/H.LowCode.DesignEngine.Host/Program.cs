@@ -45,10 +45,6 @@ builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
     options.Level = CompressionLevel.Optimal;
 });
 
-// 注册 Session 服务
-builder.Services.AddSession();
-builder.Services.AddScoped<ISessionStorageService, ServerSessionStorageService>();
-
 #region  LowCode
 builder.Host.UseAutofac();
 
@@ -87,7 +83,6 @@ app.UseStaticFiles(new StaticFileOptions
 app.MapStaticAssets();
 
 app.UseRouting();
-app.UseSession();
 app.UseAntiforgery();
 
 app.MapControllers();

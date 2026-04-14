@@ -1,10 +1,6 @@
 using H.LowCode.Host.All.Components;
 using H.Admin.AppDrawer;
 using Microsoft.EntityFrameworkCore;
-using H.Account.EntityFrameworkCore;
-using H.Organization.EntityFrameworkCore;
-using H.LowCode.DesignEngine.EntityFrameworkCore;
-using H.LowCode.RenderEngine.EntityFrameworkCore;
 using H.LowCode.Host.All;
 using H.LowCode.ComponentBase;
 
@@ -31,11 +27,6 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 // Response compression
 builder.Services.AddResponseCompression();
 
-// Session support
-builder.Services.AddSession();
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<H.LowCode.ComponentBase.ISessionStorageService, H.LowCode.Host.All.Services.ServerSessionStorageService>();
-
 // 注册应用状态管理器
 builder.Services.AddSingleton<AppStateManager>();
 
@@ -45,67 +36,11 @@ builder.Services.AddScoped(sp => new LowCodeAppState(isDesign: true));
 #region ABP Modules
 builder.Host.UseAutofac();
 await builder.AddApplicationAsync<HostAllModule>();
-builder.Services.AddAntDesign();
 #endregion
 
 var app = builder.Build();
 
 await app.InitializeApplicationAsync();
-
-// Database initialization
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    var logger = services.GetRequiredService<ILogger<Program>>();
-    
-    // 初始化 Account 数据库
-    try
-    {
-        var accountDb = services.GetService<AccountDbContext>();
-        accountDb?.Database.EnsureCreated();
-        logger.LogInformation("Account database initialized");
-    }
-    catch (Exception ex)
-    {
-        logger.LogWarning(ex, "Account database initialization skipped");
-    }
-    
-    // 初始化 Organization 数据库
-    try
-    {
-        var orgDb = services.GetService<OrganizationDbContext>();
-        orgDb?.Database.EnsureCreated();
-        logger.LogInformation("Organization database initialized");
-    }
-    catch (Exception ex)
-    {
-        logger.LogWarning(ex, "Organization database initialization skipped");
-    }
-    
-    // 初始化 DesignEngine 数据库
-    try
-    {
-        var designDb = services.GetService<DesignEngineDbContext>();
-        designDb?.Database.EnsureCreated();
-        logger.LogInformation("DesignEngine database initialized");
-    }
-    catch (Exception ex)
-    {
-        logger.LogWarning(ex, "DesignEngine database initialization skipped");
-    }
-    
-    // 初始化 RenderEngine 数据库
-    try
-    {
-        var renderDb = services.GetService<RenderEngineDbContext>();
-        renderDb?.Database.EnsureCreated();
-        logger.LogInformation("RenderEngine database initialized");
-    }
-    catch (Exception ex)
-    {
-        logger.LogWarning(ex, "RenderEngine database initialization skipped");
-    }
-}
 
 // Configure HTTP pipeline
 if (app.Environment.IsDevelopment())
@@ -132,12 +67,10 @@ app.UseStaticFiles(new StaticFileOptions
 app.MapStaticAssets();
 
 app.UseRouting();
-app.UseSession();
 app.UseAntiforgery();
 
 app.MapControllers();
 
-// Map Razor Components with all assemblies
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()
@@ -146,8 +79,10 @@ app.MapRazorComponents<App>()
         typeof(H.LowCode.Portal._Imports).Assembly,
         typeof(H.Account.Web._Imports).Assembly,
         typeof(H.Organization.Web._Imports).Assembly,
-        typeof(H.LowCode.DesignEngine._Imports).Assembly,
         typeof(H.LowCode.Workbench._Imports).Assembly,
+        typeof(H.LowCode.DesignEngine._Imports).Assembly,
+        typeof(H.LowCode.MyApp._Imports).Assembly,
+        typeof(H.LowCode.PartsDesignEngine._Imports).Assembly,
         typeof(H.LowCode.Themes.AntBlazor._Imports).Assembly,
         typeof(H.Util.Blazor._Imports).Assembly);
 

@@ -1,16 +1,15 @@
-using H.Account.HttpApi;
 using H.Account.Application;
-using H.Account.EntityFrameworkCore;
-using H.Organization.HttpApi;
-using H.Organization.Application;
-using H.Organization.EntityFrameworkCore;
 using H.LowCode.Application;
 using H.LowCode.DesignEngine.Application;
 using H.LowCode.DesignEngine.EntityFrameworkCore;
+using H.LowCode.DesignEngine.Repository.JsonFile;
+using H.LowCode.Host.All.Client;
 using H.LowCode.RenderEngine.Application;
 using H.LowCode.RenderEngine.EntityFrameworkCore;
-using Volo.Abp.Autofac;
+using H.LowCode.RenderEngine.Repository.JsonFile;
+using H.Organization.Application;
 using Volo.Abp.AspNetCore.Mvc;
+using Volo.Abp.Autofac;
 using Volo.Abp.Modularity;
 
 namespace H.LowCode.Host.All;
@@ -19,18 +18,24 @@ namespace H.LowCode.Host.All;
 /// 统一宿主模块，整合所有应用模块
 /// </summary>
 [DependsOn(
+    //abp
     typeof(AbpAutofacModule),
-    typeof(AbpAspNetCoreMvcModule),
+    //Web（所有应用）
+    typeof(HostAllClientModule),
     // Account
-    typeof(AccountHttpApiModule),
+    typeof(AccountApplicationModule),
     // Organization
-    typeof(OrganizationHttpApiModule),
+    typeof(OrganizationApplicationModule),
     // LowCode Common
     typeof(LowCodeApplicationModule),
-    // DesignEngine 模块
+    // DesignEngine
     typeof(DesignEngineApplicationModule),
-    // RenderEngine 模块
-    typeof(RenderEngineApplicationModule)
+    typeof(DesignEngineEntityFrameworkCoreModule),
+    typeof(DesignEngineJsonFileRepositoryModule),
+    // RenderEngine
+    typeof(RenderEngineApplicationModule),
+    typeof(RenderEngineEntityFrameworkCoreModule),
+    typeof(RenderEngineJsonFileRepositoryModule)
 )]
 public class HostAllModule : AbpModule
 {
@@ -45,10 +50,10 @@ public class HostAllModule : AbpModule
         Configure<AbpAspNetCoreMvcOptions>(options =>
         {
             // 注册所有模块的控制器
-            options.ConventionalControllers.Create(typeof(AccountHttpApiModule).Assembly);
-            options.ConventionalControllers.Create(typeof(OrganizationHttpApiModule).Assembly);
-            options.ConventionalControllers.Create(typeof(H.LowCode.DesignEngine.Application.DesignEngineApplicationModule).Assembly);
-            options.ConventionalControllers.Create(typeof(H.LowCode.RenderEngine.Application.RenderEngineApplicationModule).Assembly);
+            options.ConventionalControllers.Create(typeof(AccountApplicationModule).Assembly);
+            options.ConventionalControllers.Create(typeof(OrganizationApplicationModule).Assembly);
+            options.ConventionalControllers.Create(typeof(DesignEngineApplicationModule).Assembly);
+            options.ConventionalControllers.Create(typeof(RenderEngineApplicationModule).Assembly);
         });
     }
 }

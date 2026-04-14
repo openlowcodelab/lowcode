@@ -8,14 +8,16 @@
 
   <ItemGroup>
 	<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" />
+	<PackageReference Include="Volo.Abp.Autofac" />
+	<PackageReference Include="Volo.Abp.AspNetCore.Mvc" />
   </ItemGroup>
 	
   <ItemGroup>
+    <ProjectReference Include="..\..\..\Services\Account\H.Account.Application\H.Account.Application.csproj" />
+    <ProjectReference Include="..\..\..\Services\Organization\H.Organization.Application\H.Organization.Application.csproj" />
     <ProjectReference Include="..\H.LowCode.Host.All.Client\H.LowCode.Host.All.Client.csproj" />
     <!-- Account 模块 -->
-    <ProjectReference Include="..\..\..\Services\Account\H.Account.HttpApi\H.Account.HttpApi.csproj" />
     <!-- Organization 模块 -->
-    <ProjectReference Include="..\..\..\Services\Organization\H.Organization.HttpApi\H.Organization.HttpApi.csproj" />
     
     <!-- DesignEngine 模块 -->
     <ProjectReference Include="..\..\..\LowCode\Common\H.LowCode.Application\H.LowCode.Application.csproj" />
@@ -23,18 +25,16 @@
     <ProjectReference Include="..\..\..\LowCode\DesignEngine\H.LowCode.DesignEngine.EntityFrameworkCore\H.LowCode.DesignEngine.EntityFrameworkCore.csproj" />
     <ProjectReference Include="..\..\..\LowCode\DesignEngine\H.LowCode.DesignEngine.Repository.JsonFile\H.LowCode.DesignEngine.Repository.JsonFile.csproj" />
     <ProjectReference Include="..\..\..\LowCode\DesignEngine\H.LowCode.DesignEngine.Repository.RemoteService\H.LowCode.DesignEngine.Repository.RemoteService.csproj" />
-    
+	<!-- Workbench -->
+	<ProjectReference Include="..\..\..\LowCode\DesignEngine\H.LowCode.Workbench\H.LowCode.Workbench.csproj" />
+	
     <!-- RenderEngine 模块 -->
     <ProjectReference Include="..\..\..\LowCode\RenderEngine\H.LowCode.RenderEngine.Application\H.LowCode.RenderEngine.Application.csproj" />
     <ProjectReference Include="..\..\..\LowCode\RenderEngine\H.LowCode.RenderEngine.EntityFrameworkCore\H.LowCode.RenderEngine.EntityFrameworkCore.csproj" />
     <ProjectReference Include="..\..\..\LowCode\RenderEngine\H.LowCode.RenderEngine.Repository.JsonFile\H.LowCode.RenderEngine.Repository.JsonFile.csproj" />
     <ProjectReference Include="..\..\..\LowCode\RenderEngine\H.LowCode.RenderEngine.Repository.RemoteService\H.LowCode.RenderEngine.Repository.RemoteService.csproj" />
-    
     <!-- Themes -->
     <ProjectReference Include="..\..\..\LowCode\RenderEngine\H.LowCode.Themes.AntBlazor\H.LowCode.Themes.AntBlazor.csproj" />
-    
-    <!-- Workbench -->
-    <ProjectReference Include="..\..\..\LowCode\DesignEngine\H.LowCode.Workbench\H.LowCode.Workbench.csproj" />
   </ItemGroup>
 
 </Project>

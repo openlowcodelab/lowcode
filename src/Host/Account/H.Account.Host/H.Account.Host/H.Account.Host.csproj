@@ -7,12 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-	<PackageReference Include="Volo.Abp.Autofac" />
 	<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" />
+	<PackageReference Include="Volo.Abp.Autofac" />
+	<PackageReference Include="Volo.Abp.AspNetCore.Mvc" />
   </ItemGroup>
 	
   <ItemGroup>
-    <ProjectReference Include="../../../../Services/Account/H.Account.HttpApi/H.Account.HttpApi.csproj" />
+    <ProjectReference Include="..\..\..\..\Services\Account\H.Account.Application\H.Account.Application.csproj" />
     <ProjectReference Include="..\H.Account.Host.Client\H.Account.Host.Client.csproj" />
   </ItemGroup>
 
