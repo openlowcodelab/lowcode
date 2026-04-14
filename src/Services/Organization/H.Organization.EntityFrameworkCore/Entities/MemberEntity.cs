@@ -1,4 +1,4 @@
-namespace H.Organization.Domain;
+namespace H.Organization.EntityFrameworkCore;
 
 /// <summary>
 /// 成员（关联Account服务的用户）

@@ -1,5 +1,4 @@
 using H.Account.Application.Contracts;
-using H.Account.Domain;
 using H.Account.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;

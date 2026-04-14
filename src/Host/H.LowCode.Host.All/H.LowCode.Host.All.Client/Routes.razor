@@ -2,7 +2,9 @@
 @using H.Account.Web
 @using H.Organization.Web
 @using H.LowCode.DesignEngine
+@using H.LowCode.Workbench
 @using H.LowCode.Themes.AntBlazor
+@using H.LowCode.DesignEngineBase
 @using System.Reflection
 
 <Router AppAssembly="typeof(Program).Assembly"
@@ -23,6 +25,7 @@
         typeof(H.Account.Web._Imports).Assembly,
         typeof(H.Organization.Web._Imports).Assembly,
         typeof(H.LowCode.DesignEngine._Imports).Assembly,
+        typeof(H.LowCode.Workbench._Imports).Assembly,
         typeof(H.LowCode.Themes.AntBlazor._Imports).Assembly
     ];
 
@@ -37,6 +40,13 @@
         if (pagePath.Contains("portal") && pagePath.Contains("home"))
         {
             return typeof(PortalLayout);
+        }
+        
+        // Workbench 相关页面使用 WorkbenchNavLayout
+        if (pagePath.Contains("workbench") || pagePath.Contains("myapps") || pagePath.Contains("myparts") || 
+            pagePath.Contains("ecosystems") || pagePath.Contains("solutions") || pagePath.Contains("docs"))
+        {
+            return typeof(WorkbenchNavLayout);
         }
         
         // Account 应用使用 AccountLayout

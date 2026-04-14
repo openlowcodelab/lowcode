@@ -1,4 +1,4 @@
-namespace H.Util.Blazor;
+namespace H.Admin.AppDrawer;
 
 /// <summary>
 /// 应用分类信息

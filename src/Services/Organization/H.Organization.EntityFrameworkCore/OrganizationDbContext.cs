@@ -1,4 +1,3 @@
-using H.Organization.Domain;
 using Microsoft.EntityFrameworkCore;
 
 namespace H.Organization.EntityFrameworkCore;

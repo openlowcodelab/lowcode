@@ -1,18 +1,13 @@
-<Project Sdk="Microsoft.NET.Sdk.Razor">
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
 
   <Import Project="../../../common.props" />
 
   <ItemGroup>
-    <PackageReference Include="Volo.Abp.AspNetCore.Components.WebAssembly" />
-    <PackageReference Include="AntDesign.ProLayout" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
+	  <PackageReference Include="AntDesign.ProLayout" />
+	  <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\H.Account.Application.Contracts\H.Account.Application.Contracts.csproj" />
-    <ProjectReference Include="..\H.Account.Client\H.Account.Client.csproj" />
-    <!-- Host.All.Shared for AppStateManager -->
-    <ProjectReference Include="..\..\..\Host\H.LowCode.Host.All\H.LowCode.Host.All.Shared\H.LowCode.Host.All.Shared.csproj" />
-    <!-- H.Util.Blazor for AppDrawer -->
-    <ProjectReference Include="..\..\..\Utils\H.Util.Blazor\H.Util.Blazor.csproj" />
+    <ProjectReference Include="..\..\..\Admin\H.Admin.AppDrawer\H.Admin.AppDrawer.csproj" />
   </ItemGroup>
 </Project>

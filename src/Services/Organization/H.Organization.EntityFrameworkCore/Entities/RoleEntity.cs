@@ -1,4 +1,4 @@
-namespace H.Organization.Domain;
+namespace H.Organization.EntityFrameworkCore;
 
 /// <summary>
 /// 角色

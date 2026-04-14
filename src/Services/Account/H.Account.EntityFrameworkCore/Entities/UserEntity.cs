@@ -1,4 +1,4 @@
-namespace H.Account.Domain;
+namespace H.Account.EntityFrameworkCore;
 
 public class UserEntity
 {

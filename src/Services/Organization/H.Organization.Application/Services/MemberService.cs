@@ -1,9 +1,7 @@
 using H.Account.Application.Contracts;
 using H.Organization.Application.Contracts;
-using H.Organization.Domain;
 using H.Organization.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using PagedResult = H.Organization.Application.Contracts.PagedResult<H.Organization.Application.Contracts.MemberDto>;
 
 namespace H.Organization.Application.Services;
 

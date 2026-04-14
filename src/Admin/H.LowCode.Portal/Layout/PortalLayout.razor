@@ -1,11 +1,10 @@
 ﻿@namespace H.LowCode.Portal
+
 @inherits LayoutComponentBase
-@inject H.LowCode.Host.All.Shared.Services.AppStateManager AppStateManager
+@inject H.Admin.AppDrawer.AppStateManager AppStateManager
 @inject NavigationManager NavigationManager
 
-<link rel="stylesheet" href="_content/H.Util.Blazor/css/AppDrawer.css" />
 <link rel="stylesheet" href="_content/H.LowCode.Portal/css/site.css" />
-<script src="_content/H.Util.Blazor/js/AppDrawer.js"></script>
 
 <div class="layout-container">
     <!-- 顶部导航栏 -->
@@ -81,7 +80,7 @@
         InvokeAsync(() => StateHasChanged());
     }
     
-    private async Task OnAppSelected(H.Util.Blazor.AppItemInfo app)
+    private async Task OnAppSelected(AppItemInfo app)
     {
         // 更新当前应用状态
         AppStateManager.CurrentAppId = app.Id;

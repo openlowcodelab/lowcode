@@ -1,5 +1,4 @@
 using H.Organization.Application.Contracts;
-using H.Organization.Domain;
 using H.Organization.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 

@@ -21,22 +21,16 @@ namespace H.LowCode.Host.All;
 [DependsOn(
     typeof(AbpAutofacModule),
     typeof(AbpAspNetCoreMvcModule),
-    // Account 模块
+    // Account
     typeof(AccountHttpApiModule),
-    typeof(AccountApplicationModule),
-    typeof(AccountEntityFrameworkCoreModule),
-    // Organization 模块
+    // Organization
     typeof(OrganizationHttpApiModule),
-    typeof(OrganizationApplicationModule),
-    typeof(OrganizationEntityFrameworkCoreModule),
     // LowCode Common
     typeof(LowCodeApplicationModule),
     // DesignEngine 模块
     typeof(DesignEngineApplicationModule),
-    typeof(DesignEngineEntityFrameworkCoreModule),
     // RenderEngine 模块
-    typeof(RenderEngineApplicationModule),
-    typeof(RenderEngineEntityFrameworkCoreModule)
+    typeof(RenderEngineApplicationModule)
 )]
 public class HostAllModule : AbpModule
 {

@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using H.Account.Domain;
 
 namespace H.Account.EntityFrameworkCore;
 
