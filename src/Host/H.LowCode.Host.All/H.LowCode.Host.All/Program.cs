@@ -1,8 +1,6 @@
 using H.LowCode.Host.All.Components;
-using H.Admin.AppDrawer;
 using Microsoft.EntityFrameworkCore;
 using H.LowCode.Host.All;
-using H.LowCode.ComponentBase;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,7 +9,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
 
-// Configure SignalR (DesignEngine 需要)
+// Configure SignalR
 builder.Services.AddSignalR(options =>
 {
     options.MaximumReceiveMessageSize = 1024 * 1024;
@@ -27,13 +25,7 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 // Response compression
 builder.Services.AddResponseCompression();
 
-// 注册应用状态管理器
-builder.Services.AddSingleton<AppStateManager>();
-
-// 注册 LowCodeAppState (设计时为 true)
-builder.Services.AddScoped(sp => new LowCodeAppState(isDesign: true));
-
-#region ABP Modules
+#region
 builder.Host.UseAutofac();
 await builder.AddApplicationAsync<HostAllModule>();
 #endregion

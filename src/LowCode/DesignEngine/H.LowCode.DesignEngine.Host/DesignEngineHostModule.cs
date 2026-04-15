@@ -12,8 +12,6 @@ namespace H.LowCode.DesignEngine.Host;
 [DependsOn(
     //abp
     typeof(AbpAspNetCoreMvcModule),
-    //Web
-    typeof(DesignEngineHostClientModule),
     //Server
     typeof(LowCodeApplicationModule),
     typeof(DesignEngineApplicationModule),
