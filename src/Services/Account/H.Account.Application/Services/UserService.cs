@@ -3,10 +3,11 @@ using H.Account.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
+using Volo.Abp.Application.Services;
 
 namespace H.Account.Application;
 
-public class UserService : IUserService
+public class UserService : ApplicationService, IUserService
 {
     private readonly AccountDbContext _dbContext;
 

@@ -1,6 +1,5 @@
 using H.Account.Application.Contracts;
 using H.Admin.AppDrawer;
-using H.LowCode.Application.Contracts;
 using H.LowCode.ComponentBase;
 using H.LowCode.DesignEngine.Application.Contracts;
 using H.LowCode.Workbench;
@@ -15,7 +14,7 @@ namespace H.LowCode.Host.All.Client;
 [DependsOn(
     //abp
     typeof(AbpAutofacWebAssemblyModule),
-    //¶¯Ì¬API´úÀí
+    //åŠ¨æ€APIä»£ç†
     typeof(AbpHttpClientModule),
     //DesignEngine
     typeof(LowCodeWorkbenchModule)
@@ -33,16 +32,16 @@ public class HostAllClientModule : AbpModule
         ConfigureHttpClient(context, environment);
         ConfigureHttpClientProxies(context);
 
-        // ×¢²áÓ¦ÓÃ×´Ì¬¹ÜÀíÆ÷
+        // æ³¨å†Œåº”ç”¨çŠ¶æ€ç®¡ç†å™¨
         context.Services.AddSingleton<AppStateManager>();
 
-        //Ó¦ÓÃ×´Ì¬
+        //åº”ç”¨çŠ¶æ€
         context.Services.AddSingleton(new LowCodeAppState(true));
     }
 
     private static void ConfigureHttpClient(ServiceConfigurationContext context, IWebAssemblyHostEnvironment environment)
     {
-        // ×¢²á HTTP ÉÏÏÂÎÄ·ÃÎÊÆ÷
+        // æ³¨å†Œ HTTP å®¢æˆ·ç«¯æœåŠ¡
         context.Services.AddHttpContextAccessor();
 
         context.Services.AddTransient(sp => new HttpClient
@@ -53,13 +52,13 @@ public class HostAllClientModule : AbpModule
 
     private void ConfigureHttpClientProxies(ServiceConfigurationContext context)
     {
-        //¶¯Ì¬API´úÀí
+        //åŠ¨æ€APIä»£ç†
         context.Services.AddHttpClientProxies(
             typeof(DesignEngineApplicationContractsModule).Assembly,
             DesignEngineRemoteServiceName
         );
 
-        // ×¢²á HTTP Client ´úÀí
+        // æ³¨å†Œ HTTP Client ä»£ç†
         context.Services.AddHttpClientProxies(
             typeof(AccountApplicationContractsModule).Assembly,
             AccountRemoteServiceName

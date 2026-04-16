@@ -1,13 +1,14 @@
 using H.Organization.Application.Contracts;
 using H.Organization.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Volo.Abp.Application.Services;
 
 namespace H.Organization.Application.Services;
 
 /// <summary>
 /// 角色服务实现
 /// </summary>
-public class RoleService : IRoleService
+public class RoleService : ApplicationService, IRoleService
 {
     private readonly OrganizationDbContext _context;
 

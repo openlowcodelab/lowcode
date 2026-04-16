@@ -2,13 +2,14 @@ using H.Account.Application.Contracts;
 using H.Organization.Application.Contracts;
 using H.Organization.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Volo.Abp.Application.Services;
 
 namespace H.Organization.Application.Services;
 
 /// <summary>
 /// 成员服务实现
 /// </summary>
-public class MemberService : IMemberService
+public class MemberService : ApplicationService, IMemberService
 {
     private readonly OrganizationDbContext _context;
     private readonly IUserService _userService;

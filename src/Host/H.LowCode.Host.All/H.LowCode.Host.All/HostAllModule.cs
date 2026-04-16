@@ -22,7 +22,7 @@ namespace H.LowCode.Host.All;
 [DependsOn(
     //abp
     typeof(AbpAutofacModule),
-    typeof(AbpAspNetCoreModule),
+    typeof(AbpAspNetCoreMvcModule),
     // Account
     typeof(AccountApplicationModule),
     // Organization

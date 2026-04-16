@@ -1,13 +1,14 @@
 using H.Organization.Application.Contracts;
 using H.Organization.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Volo.Abp.Application.Services;
 
 namespace H.Organization.Application.Services;
 
 /// <summary>
 /// 部门服务实现
 /// </summary>
-public class OrganizationService : IOrganizationService
+public class OrganizationService : ApplicationService, IOrganizationService
 {
     private readonly OrganizationDbContext _context;
 
