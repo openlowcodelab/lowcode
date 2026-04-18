@@ -1,11 +1,11 @@
-using System;
+using Volo.Abp.Application.Services;
 
 namespace H.Approval.Application.Contracts;
 
 /// <summary>
 /// 审批定义服务接口
 /// </summary>
-public interface IApprovalDefinitionService
+public interface IApprovalDefinitionService : IApplicationService
 {
     /// <summary>
     /// 获取所有审批定义

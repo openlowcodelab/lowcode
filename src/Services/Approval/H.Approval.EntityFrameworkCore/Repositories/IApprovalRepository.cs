@@ -1,0 +1,41 @@
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using H.Approval.EntityFrameworkCore.Entities;
+
+namespace H.Approval.EntityFrameworkCore.Repositories;
+
+/// <summary>
+/// 审批定义仓储接口
+/// </summary>
+public interface IApprovalDefinitionRepository
+{
+    Task<List<ApprovalDefinition>> GetAllAsync();
+    Task<ApprovalDefinition?> GetByIdAsync(string id);
+    Task<ApprovalDefinition> InsertAsync(ApprovalDefinition entity);
+    Task<ApprovalDefinition> UpdateAsync(ApprovalDefinition entity);
+    Task DeleteAsync(string id);
+}
+
+/// <summary>
+/// 审批实例仓储接口
+/// </summary>
+public interface IApprovalInstanceRepository
+{
+    Task<ApprovalInstance> InsertAsync(ApprovalInstance entity);
+    Task<ApprovalInstance?> GetByIdAsync(string id);
+    Task<List<ApprovalInstance>> GetByCreatorIdAsync(string creatorId);
+    Task<ApprovalInstance> UpdateAsync(ApprovalInstance entity);
+}
+
+/// <summary>
+/// 审批任务仓储接口
+/// </summary>
+public interface IApprovalTaskRepository
+{
+    Task<ApprovalTask> InsertAsync(ApprovalTask entity);
+    Task<List<ApprovalTask>> GetPendingByAssigneeIdAsync(string assigneeId);
+    Task<List<ApprovalTask>> GetCompletedByAssigneeIdAsync(string assigneeId);
+    Task<ApprovalTask?> GetByIdAsync(string id);
+    Task<ApprovalTask> UpdateAsync(ApprovalTask entity);
+}

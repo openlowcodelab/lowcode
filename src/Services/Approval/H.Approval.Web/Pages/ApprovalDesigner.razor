@@ -2,48 +2,97 @@
 
 @namespace H.Approval.Web
 @layout ApprovalDesignerLayout
-
-<NodeWrap Node="@Node"></NodeWrap>
-<EndNode></EndNode>
+@inject IApprovalDefinitionService DefinitionService
+@inject NavigationManager Nav
+@inject MessageService Message
+<div class="designer-container">
+    <div class="toolbar">
+        <AntDesign.Button Type="@ButtonType.Primary" @onclick="SaveDesign" Loading="@saving">保存</AntDesign.Button>
+        <AntDesign.Button @onclick="Cancel">取消</AntDesign.Button>
+        <span class="title">@definition?.Name</span>
+    </div>
+    
+    <div class="designer-content">
+        <NodeWrap Node="@Node"></NodeWrap>
+        <EndNode></EndNode>
+    </div>
+</div>
 
 @code {
-	[Parameter]
-	public string AppId { get; set; }
+    [Parameter]
+    public string AppId { get; set; } = string.Empty;
 
-	[Parameter]
-	public string ApprovalId { get; set; }
+    [Parameter]
+    public string ApprovalId { get; set; } = string.Empty;
+    
+    private ApprovalDefinitionDto? definition;
+    private bool saving = false;
 
-	public NodeModelBase Node = new StartNodeModel()
-	{
-		NodeName = "发起人",
-		NodeType = NodeTypeEnum.Start,
-		ChildNodes =
-		{
-			new ApproveModel()
-			{
-				NodeName = "审批人", NodeType = NodeTypeEnum.Approve,
-				ChildNodes = new List<NodeModelBase>()
-				{
-					new BranchModel(){ 
-						NodeName = "分支", NodeType = NodeTypeEnum.Branch,						
-						ConditionNodes = new List<NodeModelBase>()
-						{
-							new ConditionModel(){
-								NodeName = "条件1", NodeType = NodeTypeEnum.Condition, 
-								ChildNodes = new List<NodeModelBase>()
-								{
-									new ApproveModel(){ NodeName = "审批人", NodeType = NodeTypeEnum.Approve }
-								}
-							},
-							new ConditionModel(){ NodeName = "条件2", NodeType = NodeTypeEnum.Condition }
-						},
-						ChildNodes = new List<NodeModelBase>()
-						{
-							new CarbonCopyModel(){ NodeName = "抄送人", NodeType = NodeTypeEnum.CarbonCopy }
-						}
-					}
-				}
-			}
-		}
-	};
+    public NodeModelBase Node { get; set; } = new StartNodeModel()
+    {
+        NodeName = "发起人",
+        NodeType = NodeTypeEnum.Start,
+        ChildNodes = new List<NodeModelBase>()
+    };
+    
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            definition = await DefinitionService.GetByIdAsync(ApprovalId);
+            
+            if (!string.IsNullOrEmpty(definition?.DefinitionJson) && definition.DefinitionJson != "{}")
+            {
+                // TODO: 从JSON反序列化节点树
+                // Node = JsonSerializer.Deserialize<NodeModelBase>(definition.DefinitionJson);
+            }
+        }
+        catch (Exception ex)
+        {
+            Message.Error($"加载审批定义失败: {ex.Message}");
+        }
+    }
+    
+    private async Task SaveDesign()
+    {
+        if (definition == null)
+        {
+            Message.Error("审批定义未加载");
+            return;
+        }
+        
+        saving = true;
+        StateHasChanged();
+        
+        try
+        {
+            // TODO: 将节点树序列化为JSON
+            var json = "{}"; // JsonSerializer.Serialize(Node);
+            
+            await DefinitionService.UpdateAsync(new UpdateApprovalDefinitionDto
+            {
+                Id = ApprovalId,
+                Name = definition.Name,
+                Description = definition.Description,
+                DefinitionJson = json
+            });
+            
+            Message.Success("保存成功");
+            Nav.NavigateTo("/approval/management");
+        }
+        catch (Exception ex)
+        {
+            Message.Error($"保存失败: {ex.Message}");
+        }
+        finally
+        {
+            saving = false;
+            StateHasChanged();
+        }
+    }
+    
+    private void Cancel()
+    {
+        Nav.NavigateTo("/approval/management");
+    }
 }

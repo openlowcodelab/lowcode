@@ -1,13 +1,11 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using H.Approval.Application.Contracts;
+using Volo.Abp.Application.Services;
 
 namespace H.Approval.Application.Contracts;
 
 /// <summary>
 /// 审批实例服务接口
 /// </summary>
-public interface IApprovalInstanceService
+public interface IApprovalInstanceService : IApplicationService
 {
     /// <summary>
     /// 启动审批实例
