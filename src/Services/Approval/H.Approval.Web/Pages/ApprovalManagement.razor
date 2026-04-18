@@ -1,0 +1,67 @@
+@page "/approval/management"
+@layout ApprovalLayout
+
+<h3>审批管理</h3>
+
+<AntDesign.Tabs>
+    <AntDesign.TabPane Tab="审批定义" Key="1">
+        <AntDesign.Button Type="@ButtonType.Primary" @onclick="CreateNew">新建审批</AntDesign.Button>
+        
+        <AntDesign.Table DataSource="@definitions" TItem="ApprovalDefinitionDto" Style="margin-top: 16px;">
+            <AntDesign.Column TData="string" @bind-Field="@context.Name" Title="审批名称" />
+            <AntDesign.Column TData="int" @bind-Field="@context.Version" Title="版本" />
+            <AntDesign.Column TData="bool" @bind-Field="@context.IsEnabled" Title="状态">
+                <Template>
+                    <AntDesign.Tag Color="@(context.IsEnabled ? "green" : "red")">
+                        @(context.IsEnabled ? "启用" : "禁用")
+                    </AntDesign.Tag>
+                </Template>
+            </AntDesign.Column>
+            <AntDesign.Column TData="DateTime" @bind-Field="@context.CreationTime" Title="创建时间" />
+            <AntDesign.Column TData="string" Title="操作">
+                <AntDesign.Button Type="@ButtonType.Link" Size="@ButtonSize.Small">编辑</AntDesign.Button>
+                <AntDesign.Button Type="@ButtonType.Link" Size="@ButtonSize.Small">设计</AntDesign.Button>
+                <AntDesign.Button Type="@ButtonType.Link" Size="@ButtonSize.Small" Danger>删除</AntDesign.Button>
+            </AntDesign.Column>
+        </AntDesign.Table>
+    </AntDesign.TabPane>
+    
+    <AntDesign.TabPane Tab="审批实例" Key="2">
+        <AntDesign.Table DataSource="@instances" TItem="ApprovalInstanceDto">
+            <AntDesign.Column TData="string" @bind-Field="@context.Id" Title="实例ID" />
+            <AntDesign.Column TData="string" @bind-Field="@context.DefinitionName" Title="审批名称" />
+            <AntDesign.Column TData="ApprovalStatusEnum" Title="状态">
+                <Template>
+                    <span>@context.Status.ToString()</span>
+                </Template>
+            </AntDesign.Column>
+            <AntDesign.Column TData="string" @bind-Field="@context.CreatorName" Title="发起人" />
+            <AntDesign.Column TData="DateTime" @bind-Field="@context.CreationTime" Title="创建时间" />
+        </AntDesign.Table>
+    </AntDesign.TabPane>
+</AntDesign.Tabs>
+
+@code {
+    private List<ApprovalDefinitionDto> definitions = new();
+    private List<ApprovalInstanceDto> instances = new();
+    
+    protected override async Task OnInitializedAsync()
+    {
+        // TODO: 加载审批定义和实例
+        definitions = new List<ApprovalDefinitionDto>
+        {
+            new() { Id = "1", Name = "请假审批", Version = 1, IsEnabled = true, CreationTime = DateTime.Now.AddDays(-10) }
+        };
+        
+        instances = new List<ApprovalInstanceDto>
+        {
+            new() { Id = "INST001", DefinitionName = "请假审批", Status = ApprovalStatusEnum.Running, CreatorName = "张三", CreationTime = DateTime.Now.AddDays(-1) }
+        };
+    }
+    
+    private void CreateNew()
+    {
+        // TODO: 跳转到审批设计器
+        Console.WriteLine("新建审批");
+    }
+}

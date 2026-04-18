@@ -1,0 +1,49 @@
+@page "/approval/designer/{AppId}/{ApprovalId}"
+
+@namespace H.Approval.Web
+@layout ApprovalDesignerLayout
+
+<NodeWrap Node="@Node"></NodeWrap>
+<EndNode></EndNode>
+
+@code {
+	[Parameter]
+	public string AppId { get; set; }
+
+	[Parameter]
+	public string ApprovalId { get; set; }
+
+	public NodeModelBase Node = new StartNodeModel()
+	{
+		NodeName = "发起人",
+		NodeType = NodeTypeEnum.Start,
+		ChildNodes =
+		{
+			new ApproveModel()
+			{
+				NodeName = "审批人", NodeType = NodeTypeEnum.Approve,
+				ChildNodes = new List<NodeModelBase>()
+				{
+					new BranchModel(){ 
+						NodeName = "分支", NodeType = NodeTypeEnum.Branch,						
+						ConditionNodes = new List<NodeModelBase>()
+						{
+							new ConditionModel(){
+								NodeName = "条件1", NodeType = NodeTypeEnum.Condition, 
+								ChildNodes = new List<NodeModelBase>()
+								{
+									new ApproveModel(){ NodeName = "审批人", NodeType = NodeTypeEnum.Approve }
+								}
+							},
+							new ConditionModel(){ NodeName = "条件2", NodeType = NodeTypeEnum.Condition }
+						},
+						ChildNodes = new List<NodeModelBase>()
+						{
+							new CarbonCopyModel(){ NodeName = "抄送人", NodeType = NodeTypeEnum.CarbonCopy }
+						}
+					}
+				}
+			}
+		}
+	};
+}

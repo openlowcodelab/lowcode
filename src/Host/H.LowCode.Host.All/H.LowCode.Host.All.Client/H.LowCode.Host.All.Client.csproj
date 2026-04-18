@@ -1,20 +1,18 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
-
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
   <Import Project="..\..\..\common.props" />
-	
   <PropertyGroup>
     <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
     <StaticWebAssetProjectMode>Default</StaticWebAssetProjectMode>
     <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
   </PropertyGroup>
-
   <ItemGroup>
-	<PackageReference Include="Volo.Abp.AspNetCore.Components.WebAssembly" />
+    <PackageReference Include="Volo.Abp.AspNetCore.Components.WebAssembly" />
     <PackageReference Include="Volo.Abp.Autofac.WebAssembly" />
     <PackageReference Include="Volo.Abp.Http.Client" />
   </ItemGroup>
-
   <ItemGroup>
+    <!-- Shared and Utils -->
+    <ProjectReference Include="..\..\..\Admin\H.Admin.AppDrawer\H.Admin.AppDrawer.csproj" />
     <!-- Portal -->
     <ProjectReference Include="..\..\..\Admin\H.LowCode.Portal\H.LowCode.Portal.csproj" />
     <!-- Account -->
@@ -25,8 +23,7 @@
     <ProjectReference Include="..\..\..\LowCode\DesignEngine\H.LowCode.Workbench\H.LowCode.Workbench.csproj" />
     <!-- RenderEngine -->
     <ProjectReference Include="..\..\..\LowCode\RenderEngine\H.LowCode.Themes.AntBlazor\H.LowCode.Themes.AntBlazor.csproj" />
-    <!-- Shared and Utils -->
-    <ProjectReference Include="..\..\..\Admin\H.Admin.AppDrawer\H.Admin.AppDrawer.csproj" />
+    <!-- Approval -->
+    <ProjectReference Include="..\..\..\Services\Approval\H.Approval.Web\H.Approval.Web.csproj" />
   </ItemGroup>
-
 </Project>

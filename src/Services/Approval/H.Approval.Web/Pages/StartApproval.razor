@@ -1,0 +1,69 @@
+@page "/approval/start"
+@layout ApprovalLayout
+
+<h3>发起审批</h3>
+
+<AntDesign.Alert Message="选择审批审批类型并填写相关信息" Type="AlertType.Info" ShowIcon="true" />
+
+<AntDesign.Form Model="@model" OnFinish="OnFinish" OnFinishFailed="OnFinishFailed">
+    <AntDesign.FormItem Label="审批审批" Required="true">
+        <AntDesign.Select TItemValue="string" TItem="string" @bind-Value="@model.DefinitionId" Placeholder="请选择审批审批">
+            @foreach (var def in approvalDefinitions)
+            {
+                <AntDesign.SelectOption TItemValue="string" TItem="string" Value="@def.Id" Label="@def.Name" />
+            }
+        </AntDesign.Select>
+    </AntDesign.FormItem>
+    
+    <AntDesign.FormItem Label="审批标题" Required="true">
+        <AntDesign.Input @bind-Value="@model.Title" />
+    </AntDesign.FormItem>
+    
+    <AntDesign.FormItem Label="审批说明">
+        <AntDesign.TextArea @bind-Value="@model.VariablesJson" Rows="4" />
+    </AntDesign.FormItem>
+    
+    <AntDesign.FormItem>
+        <AntDesign.Button Type="@ButtonType.Primary" HtmlType="submit">提交审批</AntDesign.Button>
+        <AntDesign.Button Style="margin-left: 8px;" @onclick="Reset">重置</AntDesign.Button>
+    </AntDesign.FormItem>
+</AntDesign.Form>
+
+@code {
+    private StartApprovalInstanceDto model = new();
+    private List<ApprovalDefinitionDto> approvalDefinitions = new();
+    
+    protected override async Task OnInitializedAsync()
+    {
+        // TODO: 加载审批定义列表
+        // approvalDefinitions = await ApprovalDefinitionService.GetAllAsync();
+        
+        // 模拟数据
+        approvalDefinitions = new List<ApprovalDefinitionDto>
+        {
+            new() { Id = "1", Name = "请假审批" },
+            new() { Id = "2", Name = "报销审批" },
+            new() { Id = "3", Name = "采购审批" }
+        };
+    }
+    
+    private async Task OnFinish(EditContext editContext)
+    {
+        // TODO: 调用服务启动审批实例
+        Console.WriteLine($"启动审批: {model.Title}");
+        
+        // 显示成功消息
+        // 跳转到我的审批页面
+    }
+    
+    private void OnFinishFailed(EditContext editContext)
+    {
+        Console.WriteLine("表单验证失败");
+    }
+    
+    private void Reset()
+    {
+        model = new StartApprovalInstanceDto();
+        StateHasChanged();
+    }
+}

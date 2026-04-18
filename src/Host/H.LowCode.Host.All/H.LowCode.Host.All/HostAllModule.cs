@@ -9,7 +9,7 @@ using H.LowCode.RenderEngine.Application;
 using H.LowCode.RenderEngine.EntityFrameworkCore;
 using H.LowCode.RenderEngine.Repository.JsonFile;
 using H.Organization.Application;
-using Volo.Abp.AspNetCore;
+using H.Approval.Application;
 using Volo.Abp.AspNetCore.Mvc;
 using Volo.Abp.Autofac;
 using Volo.Abp.Modularity;
@@ -36,7 +36,9 @@ namespace H.LowCode.Host.All;
     // RenderEngine
     typeof(RenderEngineApplicationModule),
     typeof(RenderEngineEntityFrameworkCoreModule),
-    typeof(RenderEngineJsonFileRepositoryModule)
+    typeof(RenderEngineJsonFileRepositoryModule),
+    // Approval
+    typeof(ApprovalApplicationModule)
 )]
 public class HostAllModule : AbpModule
 {
@@ -64,6 +66,7 @@ public class HostAllModule : AbpModule
             options.ConventionalControllers.Create(typeof(OrganizationApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(DesignEngineApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(RenderEngineApplicationModule).Assembly);
+            options.ConventionalControllers.Create(typeof(ApprovalApplicationModule).Assembly);
         });
     }
 }

@@ -1,0 +1,51 @@
+@page "/approval/pending"
+@layout ApprovalLayout
+
+<h3>待我审批</h3>
+
+<AntDesign.Table DataSource="@pendingTasks" TItem="ApprovalTaskDto">
+    <AntDesign.Column TData="string" @bind-Field="@context.InstanceTitle" Title="审批标题" />
+    <AntDesign.Column TData="string" @bind-Field="@context.ApprovalName" Title="审批名称" />
+    <AntDesign.Column TData="string" @bind-Field="@context.NodeName" Title="当前节点" />
+    <AntDesign.Column TData="DateTime" @bind-Field="@context.CreationTime" Title="到达时间" />
+    <AntDesign.Column TData="string" Title="操作">
+        <AntDesign.Button Type="@ButtonType.Primary" Size="@ButtonSize.Small" @onclick="() => Approve(context)">通过</AntDesign.Button>
+        <AntDesign.Button Type="@ButtonType.Default" Danger Size="@ButtonSize.Small" @onclick="() => Reject(context)">驳回</AntDesign.Button>
+        <AntDesign.Button Type="@ButtonType.Link" Size="@ButtonSize.Small">详情</AntDesign.Button>
+    </AntDesign.Column>
+</AntDesign.Table>
+
+@code {
+    private List<ApprovalTaskDto> pendingTasks = new();
+    
+    protected override async Task OnInitializedAsync()
+    {
+        // TODO: 加载待审批任务
+        // pendingTasks = await ApprovalTaskService.GetPendingTasksAsync(userId);
+        
+        // 模拟数据
+        pendingTasks = new List<ApprovalTaskDto>
+        {
+            new() 
+            { 
+                Id = "TASK001",
+                InstanceTitle = "张三的请假申请", 
+                ApprovalName = "请假审批",
+                NodeName = "部门经理审批",
+                CreationTime = DateTime.Now.AddHours(-2)
+            }
+        };
+    }
+    
+    private async Task Approve(ApprovalTaskDto task)
+    {
+        // TODO: 审批通过
+        Console.WriteLine($"审批通过: {task.InstanceTitle}");
+    }
+    
+    private async Task Reject(ApprovalTaskDto task)
+    {
+        // TODO: 审批驳回
+        Console.WriteLine($"审批驳回: {task.InstanceTitle}");
+    }
+}

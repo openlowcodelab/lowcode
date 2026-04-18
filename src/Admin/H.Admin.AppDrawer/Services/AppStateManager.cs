@@ -51,6 +51,13 @@ public class AppStateManager
                         Icon = "🏢",
                         Url = "/organization",
                         Target = "_self"
+                    },
+                    new() {
+                        Id = "approval",
+                        Name = "审批管理",
+                        Icon = "✅",
+                        Url = "/approval",
+                        Target = "_self"
                     }
                 ]
             },
@@ -81,6 +88,7 @@ public class AppStateManager
             "organization" => "org-menu",
             "design-engine" => "design-menu",
             "render-engine" => "render-menu",
+            "approval" => "approval-menu",
             _ => "portal-menu"
         };
     }
@@ -96,6 +104,7 @@ public class AppStateManager
             "organization" => GetOrganizationMenuItems(),
             "design-engine" => GetDesignEngineMenuItems(),
             "render-engine" => GetRenderEngineMenuItems(),
+            "approval" => GetApprovalMenuItems(),
             _ => new List<AppMenuItem>()
         };
     }
@@ -146,6 +155,20 @@ public class AppStateManager
         {
             new AppMenuItem { Name = "应用预览", Url = "/render", Icon = "👁️" },
             new AppMenuItem { Name = "主题管理", Url = "/themes", Icon = "🎨" }
+        };
+    }
+    
+    /// <summary>
+    /// Approval 应用菜单
+    /// </summary>
+    private List<AppMenuItem> GetApprovalMenuItems()
+    {
+        return new List<AppMenuItem>
+        {
+            new AppMenuItem { Name = "发起审批", Url = "/approval/start", Icon = "📝" },
+            new AppMenuItem { Name = "我发起的", Url = "/approval/my", Icon = "📤" },
+            new AppMenuItem { Name = "待我审批", Url = "/approval/pending", Icon = "⏳" },
+            new AppMenuItem { Name = "审批管理", Url = "/approval/management", Icon = "⚙️" }
         };
     }
 }

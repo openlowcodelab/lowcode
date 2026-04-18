@@ -71,6 +71,7 @@ app.MapRazorComponents<App>()
         typeof(H.LowCode.Portal._Imports).Assembly,
         typeof(H.Account.Web._Imports).Assembly,
         typeof(H.Organization.Web._Imports).Assembly,
+        typeof(H.Approval.Web._Imports).Assembly,
         typeof(H.LowCode.Workbench._Imports).Assembly,
         typeof(H.LowCode.DesignEngine._Imports).Assembly,
         typeof(H.LowCode.MyApp._Imports).Assembly,

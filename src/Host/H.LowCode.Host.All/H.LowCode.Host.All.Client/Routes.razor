@@ -1,12 +1,3 @@
-﻿@using H.LowCode.Portal
-@using H.Account.Web
-@using H.Organization.Web
-@using H.LowCode.DesignEngine
-@using H.LowCode.Workbench
-@using H.LowCode.Themes.AntBlazor
-@using H.LowCode.DesignEngineBase
-@using System.Reflection
-
 <Router AppAssembly="typeof(Program).Assembly"
         NotFoundPage="typeof(Pages.NotFound)"
         AdditionalAssemblies="@Assemblies">
@@ -24,6 +15,7 @@
         typeof(H.LowCode.Portal._Imports).Assembly,
         typeof(H.Account.Web._Imports).Assembly,
         typeof(H.Organization.Web._Imports).Assembly,
+        typeof(H.Approval.Web._Imports).Assembly,
         typeof(H.LowCode.Workbench._Imports).Assembly,
         typeof(H.LowCode.DesignEngine._Imports).Assembly,
         typeof(H.LowCode.MyApp._Imports).Assembly,
@@ -74,7 +66,13 @@
         {
             return typeof(AntBlazorThemeLayout);
         }
-        
+
+        // Approval 使用 ApprovalLayout
+        if (pagePath.Contains("Approval"))
+        {
+            return typeof(ApprovalLayout);
+        }
+
         // 默认使用 PortalLayout
         return typeof(PortalLayout);
     }

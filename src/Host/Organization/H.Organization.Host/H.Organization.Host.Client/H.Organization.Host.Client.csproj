@@ -1,20 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
-
-	<Import Project="../../../../common.props" />
-
-	<PropertyGroup>
+  <Import Project="../../../../common.props" />
+  <PropertyGroup>
     <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
     <StaticWebAssetProjectMode>Default</StaticWebAssetProjectMode>
     <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="Volo.Abp.Autofac.WebAssembly" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="../../../../Services/Organization/H.Organization.Web/H.Organization.Web.csproj" />
   </ItemGroup>
-
 </Project>

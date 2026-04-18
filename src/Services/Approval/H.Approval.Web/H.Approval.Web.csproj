@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+	<Import Project="../../../common.props" />
+	
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
+    <PackageReference Include="Volo.Abp.Core" />
+    <PackageReference Include="AntDesign" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\H.Approval.Application.Contracts\H.Approval.Application.Contracts.csproj" />
+    <ProjectReference Include="..\H.Approval.Application\H.Approval.Application.csproj" />
+    <ProjectReference Include="..\..\..\Admin\H.Admin.AppDrawer\H.Admin.AppDrawer.csproj" />
+  </ItemGroup>
+</Project>

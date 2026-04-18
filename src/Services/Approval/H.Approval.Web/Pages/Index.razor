@@ -1,0 +1,44 @@
+@page "/approval"
+@layout ApprovalLayout
+
+<h3>欢迎使用审批管理系统</h3>
+
+<AntDesign.Row Gutter="16" Style="margin-top: 20px;">
+    <AntDesign.Col Span="6">
+        <AntDesign.Card Title="发起审批" Style="text-align: center; cursor: pointer;" 
+                        @onclick="NavigateToStart">
+            <div Style="font-size: 48px; margin: 20px 0;">📝</div>
+            <p>创建新的审批审批</p>
+        </AntDesign.Card>
+    </AntDesign.Col>
+    <AntDesign.Col Span="6">
+        <AntDesign.Card Title="我发起的" Style="text-align: center; cursor: pointer;"
+                        @onclick="NavigateToMy">
+            <div Style="font-size: 48px; margin: 20px 0;">📤</div>
+            <p>查看我发起的审批</p>
+        </AntDesign.Card>
+    </AntDesign.Col>
+    <AntDesign.Col Span="6">
+        <AntDesign.Card Title="待我审批" Style="text-align: center; cursor: pointer;"
+                        @onclick="NavigateToPending">
+            <div Style="font-size: 48px; margin: 20px 0;">⏳</div>
+            <p>处理待审批事项</p>
+        </AntDesign.Card>
+    </AntDesign.Col>
+    <AntDesign.Col Span="6">
+        <AntDesign.Card Title="审批管理" Style="text-align: center; cursor: pointer;"
+                        @onclick="NavigateToManagement">
+            <div Style="font-size: 48px; margin: 20px 0;">⚙️</div>
+            <p>管理审批审批</p>
+        </AntDesign.Card>
+    </AntDesign.Col>
+</AntDesign.Row>
+
+@code {
+    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+    
+    private void NavigateToStart(MouseEventArgs e) => NavigationManager.NavigateTo("/approval/start");
+    private void NavigateToMy(MouseEventArgs e) => NavigationManager.NavigateTo("/approval/my");
+    private void NavigateToPending(MouseEventArgs e) => NavigationManager.NavigateTo("/approval/pending");
+    private void NavigateToManagement(MouseEventArgs e) => NavigationManager.NavigateTo("/approval/management");
+}

@@ -4,10 +4,12 @@ using H.LowCode.ComponentBase;
 using H.LowCode.DesignEngine.Application.Contracts;
 using H.LowCode.Workbench;
 using H.Organization.Application.Contracts;
+using H.Approval.Application.Contracts;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Volo.Abp.Autofac.WebAssembly;
 using Volo.Abp.Http.Client;
 using Volo.Abp.Modularity;
+using H.Approval.Application.Contracts;
 
 namespace H.LowCode.Host.All.Client;
 
@@ -24,6 +26,7 @@ public class HostAllClientModule : AbpModule
     public const string DesignEngineRemoteServiceName = "DesignEngine";
     public const string AccountRemoteServiceName = "Account";
     public const string OrganizationRemoteServiceName = "Organization";
+    public const string ApprovalRemoteServiceName = "Approval";
 
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
@@ -67,6 +70,11 @@ public class HostAllClientModule : AbpModule
         context.Services.AddHttpClientProxies(
             typeof(OrganizationApplicationContractsModule).Assembly,
             OrganizationRemoteServiceName
+        );
+        
+        context.Services.AddHttpClientProxies(
+            typeof(ApprovalApplicationContractsModule).Assembly,
+            ApprovalRemoteServiceName
         );
     }
 }
