@@ -62,9 +62,8 @@
     {
         try
         {
-            Console.WriteLine("开始加载审批定义数据...");
             definitions = await DefinitionService.GetAllAsync();
-            Console.WriteLine($"加载了 {definitions.Count} 条审批定义数据");
+
             // TODO: 加载实例数据
             instances = new List<ApprovalInstanceDto>();
         }
@@ -91,9 +90,6 @@
                 Description = "",
                 DefinitionJson = "{}"
             });
-            
-            Console.WriteLine($"审批定义创建成功: {newDef.Id}");
-            Message.Success("创建成功");
             
             // 刷新数据
             await LoadData();

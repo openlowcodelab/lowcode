@@ -2,20 +2,7 @@
 @inherits LayoutComponentBase
 @inject NavigationManager NavigationManager
 
-<style>
-.fd-nav { display: flex; justify-content: space-between; align-items: center; height: 60px; padding: 0 20px; background-color: #fff; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); z-index: 100; }
-.fd-nav-left { display: flex; align-items: center; gap: 15px; }
-.fd-nav-back { cursor: pointer; font-size: 20px; padding: 5px 10px; }
-.fd-nav-back:hover { background-color: #f0f0f0; border-radius: 4px; }
-.fd-nav-title { font-size: 18px; font-weight: 500; color: #fff; }
-.fd-nav-right { display: flex; align-items: center; gap: 10px; }
-.fd-nav-content { flex: 1; overflow: auto; background-color: #f0f2f5; }
-.dingflow-design { position: relative; min-height: calc(100vh - 60px); }
-.zoom { position: fixed; bottom: 20px; right: 20px; display: flex; align-items: center; gap: 10px; background: #fff; padding: 8px 12px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 1000; }
-.zoom-out, .zoom-in { cursor: pointer; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
-.zoom-out:hover, .zoom-in:hover { background-color: #f0f0f0; border-radius: 4px; }
-.box-scale { transform-origin: 50% 0px 0px; }
-</style>
+<link href="@Assets["_content/H.Approval.Web/css/approval-designer.css"]" rel="stylesheet" />
 
 <div style="display: flex; flex-direction: column; height: 100vh;">
     <div class="fd-nav">
