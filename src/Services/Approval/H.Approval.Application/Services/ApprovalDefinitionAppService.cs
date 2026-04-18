@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using H.Approval.Application.Contracts;
-using H.Approval.EntityFrameworkCore.Entities;
-using H.Approval.EntityFrameworkCore.Repositories;
+﻿using H.Approval.Application.Contracts;
+using H.Approval.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Volo.Abp.Application.Services;
 
@@ -28,7 +23,6 @@ public class ApprovalDefinitionAppService : ApplicationService, IApprovalDefinit
     
     public async Task<List<ApprovalDefinitionDto>> GetAllAsync()
     {
-        _logger.LogInformation("获取所有审批定义");
         var entities = await _definitionRepository.GetAllAsync();
         return entities.Select(MapToDto).ToList();
     }

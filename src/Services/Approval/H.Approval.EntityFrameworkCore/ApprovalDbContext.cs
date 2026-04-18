@@ -1,4 +1,3 @@
-using H.Approval.EntityFrameworkCore.Entities;
 using Microsoft.EntityFrameworkCore;
 using Volo.Abp.EntityFrameworkCore;
 

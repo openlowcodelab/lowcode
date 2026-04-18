@@ -165,6 +165,7 @@ public class AppStateManager
     {
         return new List<AppMenuItem>
         {
+            new AppMenuItem { Name = "首页", Url = "/approval", Icon = "🏠" },
             new AppMenuItem { Name = "发起审批", Url = "/approval/start", Icon = "📝" },
             new AppMenuItem { Name = "我发起的", Url = "/approval/my", Icon = "📤" },
             new AppMenuItem { Name = "待我审批", Url = "/approval/pending", Icon = "⏳" },

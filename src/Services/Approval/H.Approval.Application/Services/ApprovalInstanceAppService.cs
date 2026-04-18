@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using H.Approval.Application.Contracts;
-using H.Approval.EntityFrameworkCore.Entities;
-using H.Approval.EntityFrameworkCore.Repositories;
+﻿using H.Approval.Application.Contracts;
+using H.Approval.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Volo.Abp.Application.Services;
 

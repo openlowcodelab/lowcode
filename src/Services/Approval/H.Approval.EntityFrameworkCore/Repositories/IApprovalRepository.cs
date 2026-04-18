@@ -1,9 +1,6 @@
 using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using H.Approval.EntityFrameworkCore.Entities;
 
-namespace H.Approval.EntityFrameworkCore.Repositories;
+namespace H.Approval.EntityFrameworkCore;
 
 /// <summary>
 /// 审批定义仓储接口

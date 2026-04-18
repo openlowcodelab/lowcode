@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using H.Approval.Application.Contracts;
 using Volo.Abp.Domain.Entities;
 
-namespace H.Approval.EntityFrameworkCore.Entities;
+namespace H.Approval.EntityFrameworkCore;
 
 /// <summary>
 /// 审批实例实体

@@ -1,5 +1,10 @@
+using Elsa.Persistence.EFCore.Extensions;
+using Elsa.Persistence.EFCore.Modules.Management;
+using Elsa.Persistence.EFCore.Modules.Runtime;
+using Elsa.Extensions;
 using H.Approval.Application.Contracts;
 using H.Approval.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Modularity;
 
@@ -14,29 +19,24 @@ public class ApprovalApplicationModule : AbpModule
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         var configuration = context.Services.GetConfiguration();
+        var connectionString = configuration.GetConnectionString("ApprovalDb");
 
-        // TODO: µÈ´ýElsa 3.x APIÊìÏ¤ºóÔÙÆôÓÃ×Ô¶¨Òå»î¶¯
-        // µ±Ç°ÏÈÊ¹ÓÃÄÚ´æ´æ´¢ÊµÏÖÉóÅú¹¦ÄÜ
-
-        /*
         context.Services.AddElsa(elsa =>
         {
-            elsa.UseWorkflowManagement(management => management.UseEntityFrameworkCore())
-                .UseWorkflowRuntime(runtime => runtime.UseEntityFrameworkCore())
-                .UseEntityFrameworkCorePersistence(options =>
-                {
-                    // Ê¹ÓÃ¶ÀÁ¢SqliteÊý¾Ý¿â´æ´¢Elsa¹¤×÷Á÷Êý¾Ý
-                    var connectionString = configuration.GetConnectionString("ElsaDb") 
-                        ?? "Data Source=elsa-workflows.db";
-                    options.UseSqlite(connectionString);
-                })
-                // ×¢²á×Ô¶¨ÒåÉóÅú»î¶¯
-                //.AddActivity<StartApprovalActivity>()
-                //.AddActivity<ApprovalTaskActivity>()
-                //.AddActivity<ConditionActivity>()
-                //.AddActivity<CarbonCopyActivity>()
-                //.AddActivity<ApprovalEndActivity>();
+            elsa.UseWorkflowManagement(management => management.UseEntityFrameworkCore(ef =>
+                ef.UseSqlServer(connectionString!)));
+
+            elsa.UseWorkflowRuntime(runtime => runtime.UseEntityFrameworkCore(ef =>
+                ef.UseSqlServer(connectionString!)));
+
+            elsa.UseWorkflowsApi();
+
+            // æ³¨å†Œè‡ªå®šä¹‰å®¡æ‰¹æ´»åŠ¨
+            //elsa.AddActivity<StartApprovalActivity>()
+            //.AddActivity<ApprovalTaskActivity>()
+            //.AddActivity<ConditionActivity>()
+            //.AddActivity<CarbonCopyActivity>()
+            //.AddActivity<ApprovalEndActivity>();
         });
-        */
     }
 }

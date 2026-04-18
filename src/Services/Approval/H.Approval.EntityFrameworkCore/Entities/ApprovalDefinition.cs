@@ -1,7 +1,7 @@
 using System;
 using Volo.Abp.Domain.Entities;
 
-namespace H.Approval.EntityFrameworkCore.Entities;
+namespace H.Approval.EntityFrameworkCore;
 
 /// <summary>
 /// 审批定义实体
