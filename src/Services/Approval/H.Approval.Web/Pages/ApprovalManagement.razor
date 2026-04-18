@@ -69,8 +69,6 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"加载数据失败: {ex.Message}");
-            Console.WriteLine($"堆栈跟踪: {ex.StackTrace}");
             Message.Error($"加载数据失败: {ex.Message}");
             // 即使加载失败，也要初始化空列表以防止空引用异常
             definitions = new List<ApprovalDefinitionDto>();

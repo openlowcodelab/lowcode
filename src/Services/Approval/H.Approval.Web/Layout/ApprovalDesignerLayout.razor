@@ -4,40 +4,30 @@
 
 <link href="@Assets["_content/H.Approval.Web/css/approval-designer.css"]" rel="stylesheet" />
 
-<div style="display: flex; flex-direction: column; height: 100vh;">
-    <div class="fd-nav">
-        <div class="fd-nav-left">
-            <div class="fd-nav-back" @onclick="toReturn">
-                <i class="anticon anticon-left"></i>
-            </div>
-            <div class="fd-nav-title">审批设计器</div>
+<div class="fd-nav">
+    <div class="fd-nav-left">
+        <div class="fd-nav-back" @onclick="GoBack">
+            <i class="anticon anticon-left"></i>
         </div>
-        <div class="fd-nav-right">
-            <button type="button" class="ant-btn button-preview"><span>预览</span></button>
-            <button type="button" class="ant-btn button-publish" @onclick="saveSet"><span>发布</span></button>
-        </div>
+        <div class="fd-nav-title">审批设计器</div>
     </div>
-    <div class="fd-nav-content">
-        <section class="dingflow-design">
-            <div class="zoom">
-                <div class="zoom-out">-</div>
-                <span>100%</span>
-                <div class="zoom-in">+</div>
-            </div>
-            <div id="box-scale" class="box-scale" style="transform: scale(1); transform-origin: 50% 0px 0px;">
-                @Body
-            </div>
-        </section>
+    <div class="fd-nav-right">
+        <button type="button" class="button-publish" @onclick="SaveApproval"><span>保存</span></button>
     </div>
+</div>
+<div class="fd-nav-content">
+    <section class="approval-container">
+        @Body
+    </section>
 </div>
 
 @code {
-    private void toReturn()
+    private void GoBack()
     {
         NavigationManager.NavigateTo("/approval/management");
     }
     
-    private void saveSet()
+    private void SaveApproval()
     {
         // TODO: 保存审批设计
         Console.WriteLine("保存审批设计");
