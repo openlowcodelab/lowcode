@@ -18,8 +18,7 @@ public class Program
             .AddJsonFile("appsettings.json", optional: true)
             .Build();
 
-        var connectionString = configuration.GetConnectionString("OrganizationDb")
-            ?? "Server=(localdb)\\mssqllocaldb;Database=OrganizationDb;Trusted_Connection=true;";
+        var connectionString = configuration.GetConnectionString("OrganizationDb")!;
 
         Console.WriteLine($"连接字符串：{connectionString}");
         Console.WriteLine();

@@ -20,11 +20,10 @@ public class MigratorDbContextFactory : IDesignTimeDbContextFactory<MigratorDbCo
             .AddJsonFile("appsettings.json", optional: false);
         var configuration = configurationBuilder.Build();
 
-        // Ensure migrations are generated into the DbMigrator assembly
-        string migrationAssembly = typeof(Program).Namespace;
-        string connectionString = configuration.GetConnectionString("Default");
+        //指定迁移文件生成到当前程序集（DbMigrator）中，而不是主项目中
+        string connectionString = configuration.GetConnectionString("LowCodeDb")!;
         var builder = new DbContextOptionsBuilder<MigratorDbContext>()
-            .UseSqlServer(connectionString, b => b.MigrationsAssembly(migrationAssembly));
+            .UseSqlServer(connectionString, b => b.MigrationsAssembly(typeof(Program).Namespace));
 
         var services = new ServiceCollection();
         services.AddApplication<LowCodeDbMigratorModule>();

@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="../../../common.props" />
+  <Import Project="../../common.props" />
   <PropertyGroup>
     <OutputType>Exe</OutputType>
   </PropertyGroup>
@@ -10,10 +10,9 @@
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\H.Approval.EntityFrameworkCore\H.Approval.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\..\Services\Account\H.Account.EntityFrameworkCore\H.Account.EntityFrameworkCore.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Update="appsettings.json">

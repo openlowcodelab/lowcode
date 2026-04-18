@@ -51,7 +51,7 @@ class Program
             .ConfigureServices((hostContext, services) =>
             {
                 var configuration = hostContext.Configuration;
-                var connectionString = configuration.GetConnectionString("Default");
+                var connectionString = configuration.GetConnectionString("ApprovalDb");
                 
                 services.AddDbContext<ApprovalDbContext>(options =>
                     options.UseSqlServer(connectionString));

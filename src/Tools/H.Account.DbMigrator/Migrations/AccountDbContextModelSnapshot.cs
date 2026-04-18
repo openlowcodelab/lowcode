@@ -4,28 +4,25 @@ using H.Account.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace H.Account.EntityFrameworkCore.Services.Account.H.Account.EntityFrameworkCore.Migrations
+namespace H.Account.DbMigrator.Migrations
 {
     [DbContext(typeof(AccountDbContext))]
-    [Migration("20260223064420_InitialCreate")]
-    partial class InitialCreate
+    partial class AccountDbContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.3")
+                .HasAnnotation("ProductVersion", "10.0.5")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("H.Account.Domain.Entities.User", b =>
+            modelBuilder.Entity("H.Account.EntityFrameworkCore.UserEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()

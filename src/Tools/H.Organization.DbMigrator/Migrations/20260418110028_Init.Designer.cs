@@ -4,6 +4,7 @@ using H.Organization.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,18 +12,20 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace H.Organization.DbMigrator.Migrations
 {
     [DbContext(typeof(OrganizationDbContext))]
-    partial class OrganizationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260418110028_Init")]
+    partial class Init
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.3")
+                .HasAnnotation("ProductVersion", "10.0.5")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("H.Organization.Domain.Entities.Member", b =>
+            modelBuilder.Entity("H.Organization.EntityFrameworkCore.MemberEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -77,7 +80,7 @@ namespace H.Organization.DbMigrator.Migrations
                     b.ToTable("Organization_Members", (string)null);
                 });
 
-            modelBuilder.Entity("H.Organization.Domain.Entities.Organization", b =>
+            modelBuilder.Entity("H.Organization.EntityFrameworkCore.OrganizationEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -135,7 +138,7 @@ namespace H.Organization.DbMigrator.Migrations
                     b.ToTable("Organization_Organizations", (string)null);
                 });
 
-            modelBuilder.Entity("H.Organization.Domain.Entities.Role", b =>
+            modelBuilder.Entity("H.Organization.EntityFrameworkCore.RoleEntity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -187,7 +190,7 @@ namespace H.Organization.DbMigrator.Migrations
                     b.ToTable("Organization_Roles", (string)null);
                 });
 
-            modelBuilder.Entity("H.Organization.Domain.Entities.RoleMember", b =>
+            modelBuilder.Entity("H.Organization.EntityFrameworkCore.RoleMember", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -212,9 +215,9 @@ namespace H.Organization.DbMigrator.Migrations
                     b.ToTable("Organization_RoleMembers", (string)null);
                 });
 
-            modelBuilder.Entity("H.Organization.Domain.Entities.Member", b =>
+            modelBuilder.Entity("H.Organization.EntityFrameworkCore.MemberEntity", b =>
                 {
-                    b.HasOne("H.Organization.Domain.Entities.Organization", "Organization")
+                    b.HasOne("H.Organization.EntityFrameworkCore.OrganizationEntity", "Organization")
                         .WithMany("Members")
                         .HasForeignKey("OrganizationId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -223,9 +226,9 @@ namespace H.Organization.DbMigrator.Migrations
                     b.Navigation("Organization");
                 });
 
-            modelBuilder.Entity("H.Organization.Domain.Entities.Organization", b =>
+            modelBuilder.Entity("H.Organization.EntityFrameworkCore.OrganizationEntity", b =>
                 {
-                    b.HasOne("H.Organization.Domain.Entities.Organization", "Parent")
+                    b.HasOne("H.Organization.EntityFrameworkCore.OrganizationEntity", "Parent")
                         .WithMany("Children")
                         .HasForeignKey("ParentId")
                         .OnDelete(DeleteBehavior.Restrict);
@@ -233,15 +236,15 @@ namespace H.Organization.DbMigrator.Migrations
                     b.Navigation("Parent");
                 });
 
-            modelBuilder.Entity("H.Organization.Domain.Entities.RoleMember", b =>
+            modelBuilder.Entity("H.Organization.EntityFrameworkCore.RoleMember", b =>
                 {
-                    b.HasOne("H.Organization.Domain.Entities.Member", "Member")
+                    b.HasOne("H.Organization.EntityFrameworkCore.MemberEntity", "Member")
                         .WithMany()
                         .HasForeignKey("MemberId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("H.Organization.Domain.Entities.Role", "Role")
+                    b.HasOne("H.Organization.EntityFrameworkCore.RoleEntity", "Role")
                         .WithMany("RoleMembers")
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -252,14 +255,14 @@ namespace H.Organization.DbMigrator.Migrations
                     b.Navigation("Role");
                 });
 
-            modelBuilder.Entity("H.Organization.Domain.Entities.Organization", b =>
+            modelBuilder.Entity("H.Organization.EntityFrameworkCore.OrganizationEntity", b =>
                 {
                     b.Navigation("Children");
 
                     b.Navigation("Members");
                 });
 
-            modelBuilder.Entity("H.Organization.Domain.Entities.Role", b =>
+            modelBuilder.Entity("H.Organization.EntityFrameworkCore.RoleEntity", b =>
                 {
                     b.Navigation("RoleMembers");
                 });

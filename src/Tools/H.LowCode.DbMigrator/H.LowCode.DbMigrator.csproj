@@ -1,5 +1,5 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\..\..\common.props" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\..\common.props" />
   <PropertyGroup>
     <OutputType>Exe</OutputType>
   </PropertyGroup>
@@ -11,19 +11,17 @@
     <PackageReference Include="Serilog.Settings.Configuration" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="Volo.Abp.Core" />
-  </ItemGroup>
-  <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Common\H.LowCode.Configuration\H.LowCode.Configuration.csproj" />
-    <ProjectReference Include="..\..\DesignEngine\H.LowCode.DesignEngine.Application.Contracts\H.LowCode.DesignEngine.Application.Contracts.csproj" />
-    <ProjectReference Include="..\..\DesignEngine\H.LowCode.DesignEngine.Application\H.LowCode.DesignEngine.Application.csproj" />
-    <ProjectReference Include="..\..\DesignEngine\H.LowCode.DesignEngine.EntityFrameworkCore\H.LowCode.DesignEngine.EntityFrameworkCore.csproj" />
-    <ProjectReference Include="..\..\DesignEngine\H.LowCode.DesignEngine.Repository.JsonFile\H.LowCode.DesignEngine.Repository.JsonFile.csproj" />
+    <ProjectReference Include="..\..\LowCode\Common\H.LowCode.Configuration\H.LowCode.Configuration.csproj" />
+    <ProjectReference Include="..\..\LowCode\DesignEngine\H.LowCode.DesignEngine.Application.Contracts\H.LowCode.DesignEngine.Application.Contracts.csproj" />
+    <ProjectReference Include="..\..\LowCode\DesignEngine\H.LowCode.DesignEngine.Application\H.LowCode.DesignEngine.Application.csproj" />
+    <ProjectReference Include="..\..\LowCode\DesignEngine\H.LowCode.DesignEngine.EntityFrameworkCore\H.LowCode.DesignEngine.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\..\LowCode\DesignEngine\H.LowCode.DesignEngine.Repository.JsonFile\H.LowCode.DesignEngine.Repository.JsonFile.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Update="appsettings.json">
