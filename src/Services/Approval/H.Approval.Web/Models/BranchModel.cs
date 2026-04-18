@@ -4,11 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace H.Approval.Application.Contracts;
+namespace H.Approval.Web;
 
 /// <summary>
-/// 抄送节点
+/// 审核人节点
 /// </summary>
-public class CarbonCopyModel : NodeModelBase
+public class BranchModel : NodeModelBase
 {
 }

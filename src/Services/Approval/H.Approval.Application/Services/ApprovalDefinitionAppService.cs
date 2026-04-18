@@ -8,7 +8,7 @@ namespace H.Approval.Application.Services;
 /// <summary>
 /// 审批定义应用服务
 /// </summary>
-public class ApprovalDefinitionAppService : ApplicationService, IApprovalDefinitionService
+public class ApprovalDefinitionAppService : ApplicationService, IApprovalDefinitionAppService
 {
     private readonly ILogger<ApprovalDefinitionAppService> _logger;
     private readonly IApprovalDefinitionRepository _definitionRepository;

@@ -4,11 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace H.Approval.Application.Contracts;
+namespace H.Approval.Web;
 
 /// <summary>
-/// 审核人节点
+/// 结束节点
 /// </summary>
-public class ApproveModel : NodeModelBase
+public class EndNodeModel : NodeModelBase
 {
 }

@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Volo.Abp.Autofac.WebAssembly;
 using Volo.Abp.Http.Client;
 using Volo.Abp.Modularity;
-using H.Approval.Application.Contracts;
 
 namespace H.LowCode.Host.All.Client;
 

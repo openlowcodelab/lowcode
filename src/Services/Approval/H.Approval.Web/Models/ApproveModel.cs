@@ -4,11 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace H.Approval.Application.Contracts;
+namespace H.Approval.Web;
 
 /// <summary>
 /// …Û∫À»ÀΩ⁄µ„
 /// </summary>
-public class BranchModel : NodeModelBase
+public class ApproveModel : NodeModelBase
 {
 }

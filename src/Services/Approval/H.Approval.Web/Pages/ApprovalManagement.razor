@@ -1,7 +1,7 @@
 @page "/approval/management"
 @layout ApprovalLayout
-@inject IApprovalDefinitionService DefinitionService
-@inject IApprovalInstanceService InstanceService
+@inject IApprovalDefinitionAppService DefinitionService
+@inject IApprovalInstanceAppService InstanceService
 @inject NavigationManager Nav
 @inject MessageService Message
 
@@ -62,13 +62,20 @@
     {
         try
         {
+            Console.WriteLine("开始加载审批定义数据...");
             definitions = await DefinitionService.GetAllAsync();
+            Console.WriteLine($"加载了 {definitions.Count} 条审批定义数据");
             // TODO: 加载实例数据
             instances = new List<ApprovalInstanceDto>();
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"加载数据失败: {ex.Message}");
+            Console.WriteLine($"堆栈跟踪: {ex.StackTrace}");
             Message.Error($"加载数据失败: {ex.Message}");
+            // 即使加载失败，也要初始化空列表以防止空引用异常
+            definitions = new List<ApprovalDefinitionDto>();
+            instances = new List<ApprovalInstanceDto>();
         }
     }
     
@@ -76,6 +83,8 @@
     {
         try
         {
+            Console.WriteLine("开始创建审批定义...");
+            
             var newDef = await DefinitionService.CreateAsync(new CreateApprovalDefinitionDto
             {
                 Name = "新建审批",
@@ -83,11 +92,19 @@
                 DefinitionJson = "{}"
             });
             
+            Console.WriteLine($"审批定义创建成功: {newDef.Id}");
             Message.Success("创建成功");
+            
+            // 刷新数据
+            await LoadData();
+            
+            // 导航到设计器页面
             Nav.NavigateTo($"/approval/designer/default/{newDef.Id}");
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"创建审批定义失败: {ex.Message}");
+            Console.WriteLine($"堆栈跟踪: {ex.StackTrace}");
             Message.Error($"创建失败: {ex.Message}");
         }
     }

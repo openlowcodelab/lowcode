@@ -8,13 +8,37 @@
     <ResourcePreloader />
     <link rel="stylesheet" href="@Assets["H.LowCode.Host.All.styles.css"]" />
     <ImportMap />
-    <link rel="icon" type="image/png" href="favicon.png" />
+    <link rel="icon" type="image/png" href="@Assets["favicon.png"]" />
     <HeadOutlet @rendermode="InteractiveWebAssembly" />
 </head>
 
 <body>
     <Routes @rendermode="InteractiveWebAssembly" />
-    <script src="_framework/blazor.web.js"></script>
+    <script>
+        // 定义 ABP 工具函数，避免依赖外部 JS 文件
+        window.abp = window.abp || {};
+        window.abp.utils = window.abp.utils || {};
+        
+        window.abp.utils.getCookieValue = function(name) {
+            var equalities = document.cookie.split(';');
+            for (var i = 0; i < equalities.length; i++) {
+                if (!equalities[i]) {
+                    continue;
+                }
+                var equalSignIndex = equalities[i].indexOf('=');
+                if (equalSignIndex < 0) {
+                    continue;
+                }
+                var key = equalities[i].substring(0, equalSignIndex).trim();
+                if (key === name) {
+                    var val = equalities[i].substring(equalSignIndex + 1);
+                    return val;
+                }
+            }
+            return null;
+        };
+    </script>
+    <script src="@Assets["_framework/blazor.web.js"]"></script>
 </body>
 
 </html>

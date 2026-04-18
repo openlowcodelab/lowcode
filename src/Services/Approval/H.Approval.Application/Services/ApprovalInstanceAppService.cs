@@ -8,15 +8,15 @@ namespace H.Approval.Application.Services;
 /// <summary>
 /// 审批实例应用服务
 /// </summary>
-public class ApprovalInstanceAppService : ApplicationService, IApprovalInstanceService
+public class ApprovalInstanceAppService : ApplicationService, IApprovalInstanceAppService
 {
     private readonly ILogger<ApprovalInstanceAppService> _logger;
-    private readonly IApprovalDefinitionService _definitionService;
+    private readonly IApprovalDefinitionAppService _definitionService;
     private readonly IApprovalInstanceRepository _instanceRepository;
 
     public ApprovalInstanceAppService(
         ILogger<ApprovalInstanceAppService> logger,
-        IApprovalDefinitionService definitionService,
+        IApprovalDefinitionAppService definitionService,
         IApprovalInstanceRepository instanceRepository)
     {
         _logger = logger;

@@ -4,11 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace H.Approval.Application.Contracts;
+namespace H.Approval.Web;
 
 /// <summary>
-/// 结束节点
+/// 抄送节点
 /// </summary>
-public class EndNodeModel : NodeModelBase
+public class CarbonCopyModel : NodeModelBase
 {
 }

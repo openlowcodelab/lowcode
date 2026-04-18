@@ -5,7 +5,7 @@ namespace H.Approval.Application.Contracts;
 /// <summary>
 /// 审批任务服务接口
 /// </summary>
-public interface IApprovalTaskService : IApplicationService
+public interface IApprovalTaskAppService : IApplicationService
 {
     /// <summary>
     /// 获取待我审批的任务列表

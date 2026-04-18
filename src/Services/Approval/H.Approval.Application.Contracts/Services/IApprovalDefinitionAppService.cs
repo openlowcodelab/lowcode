@@ -5,7 +5,7 @@ namespace H.Approval.Application.Contracts;
 /// <summary>
 /// 审批定义服务接口
 /// </summary>
-public interface IApprovalDefinitionService : IApplicationService
+public interface IApprovalDefinitionAppService : IApplicationService
 {
     /// <summary>
     /// 获取所有审批定义

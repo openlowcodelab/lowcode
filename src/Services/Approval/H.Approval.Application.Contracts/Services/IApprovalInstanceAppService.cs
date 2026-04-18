@@ -5,7 +5,7 @@ namespace H.Approval.Application.Contracts;
 /// <summary>
 /// 审批实例服务接口
 /// </summary>
-public interface IApprovalInstanceService : IApplicationService
+public interface IApprovalInstanceAppService : IApplicationService
 {
     /// <summary>
     /// 启动审批实例
