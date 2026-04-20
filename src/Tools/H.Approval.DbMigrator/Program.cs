@@ -1,11 +1,8 @@
-using System;
-using System.IO;
-using System.Threading.Tasks;
+using H.LowCode.DbMigrator;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using H.Approval.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore;
 
 namespace H.Approval.DbMigrator;
 
@@ -14,20 +11,20 @@ class Program
     static async Task Main(string[] args)
     {
         var host = CreateHostBuilder(args).Build();
-        
+
         using (var scope = host.Services.CreateScope())
         {
             var services = scope.ServiceProvider;
-            
+
             try
             {
-                var dbContext = services.GetRequiredService<ApprovalDbContext>();
-                
+                var dbContext = services.GetRequiredService<MigratorDbContext>();
+
                 Console.WriteLine("开始执行数据库迁移...");
-                
+
                 // 执行数据库迁移
                 await dbContext.Database.MigrateAsync();
-                
+
                 Console.WriteLine("数据库迁移完成");
             }
             catch (Exception ex)
@@ -36,7 +33,7 @@ class Program
                 Console.WriteLine(ex.StackTrace);
             }
         }
-        
+
         Console.WriteLine("按任意键退出...");
         Console.ReadKey();
     }
@@ -52,8 +49,8 @@ class Program
             {
                 var configuration = hostContext.Configuration;
                 var connectionString = configuration.GetConnectionString("ApprovalDb");
-                
-                services.AddDbContext<ApprovalDbContext>(options =>
+
+                services.AddDbContext<MigratorDbContext>(options =>
                     options.UseSqlServer(connectionString));
             });
 }

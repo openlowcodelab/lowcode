@@ -1,0 +1,220 @@
+@namespace H.Approval.Web
+@using AntDesign
+@inject MessageService Message
+
+<div class="basic-settings-container">
+    <div class="settings-card">
+        <div class="form-item">
+            <label class="form-label">
+                <span class="required">*</span> 表单名称
+            </label>
+            <div class="form-row">
+                <div class="icon-preview" @onclick="SelectIcon">@Icon</div>
+                <div class="form-input-wrapper">
+                    <Input @bind-Value="Name" 
+                           Placeholder="请输入表单名称" 
+                           MaxLength="50"
+                           @oninput="OnNameInput" />
+                    <div class="char-count">@(Name?.Length ?? 0) / 50</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-item">
+            <label class="form-label">
+                <span class="required">*</span> 所在分组
+            </label>
+            <Select TItem="string"
+                    TItemValue="string"
+                    @bind-Value="CategoryName"
+                    Placeholder="请选择分组">
+                <SelectOptions>
+                    <SelectOption TItem="string" TItemValue="string" Value="@("报销（含电子发票）")" Label="报销（含电子发票）" />
+                    <SelectOption TItem="string" TItemValue="string" Value="@("请假")" Label="请假" />
+                    <SelectOption TItem="string" TItemValue="string" Value="@("行政")" Label="行政" />
+                    <SelectOption TItem="string" TItemValue="string" Value="@("人事")" Label="人事" />
+                </SelectOptions>
+            </Select>
+        </div>
+
+        <div class="form-item">
+            <label class="form-label">表单说明</label>
+            <TextArea @bind-Value="Description" 
+                      Placeholder="请输入"
+                      Rows="4"
+                      MaxLength="100"
+                      @oninput="OnDescriptionInput" />
+            <div class="char-count">@(Description?.Length ?? 0) / 100</div>
+        </div>
+
+        <div class="form-item">
+            <label class="form-label">
+                <span class="required">*</span> 谁可以发起
+            </label>
+            <RadioGroup @bind-Value="WhoCanStart" TValue="string">
+                <Radio Value="@("All")">全部</Radio>
+                <Radio Value="@("Specified")">指定成员</Radio>
+            </RadioGroup>
+        </div>
+
+        @if (WhoCanStart == "Specified")
+        {
+            <div class="form-item">
+                <label class="form-label">指定发起人</label>
+                <Button Type="@ButtonType.Default" OnClick="SelectStarters">
+                    选择成员
+                </Button>
+                @if (SelectedStarters.Count > 0)
+                {
+                    <div style="margin-top: 10px;">
+                        @foreach (var starter in SelectedStarters)
+                        {
+                            <Tag Closable OnClose="() => RemoveStarter(starter)" Style="margin-right: 8px;">
+                                @starter
+                            </Tag>
+                        }
+                    </div>
+                }
+            </div>
+        }
+
+        <div class="form-item">
+            <label class="form-label">
+                <span class="required">*</span> 表单管理员
+            </label>
+            <RadioGroup @bind-Value="AdminType" TValue="string">
+                <Radio Value="@("All")">全部「OA审批」管理员</Radio>
+                <Radio Value="@("Specified")">指定「OA审批」管理员</Radio>
+            </RadioGroup>
+        </div>
+
+        @if (AdminType == "Specified")
+        {
+            <div class="form-item">
+                <label class="form-label">指定管理员</label>
+                <Button Type="@ButtonType.Default" OnClick="SelectAdmins">
+                    选择管理员
+                </Button>
+                @if (SelectedAdmins.Count > 0)
+                {
+                    <div style="margin-top: 10px;">
+                        @foreach (var admin in SelectedAdmins)
+                        {
+                            <Tag Closable OnClose="() => RemoveAdmin(admin)" Style="margin-right: 8px;">
+                                @admin
+                            </Tag>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public ApprovalDefinitionDto? Definition { get; set; }
+    
+    [Parameter]
+    public EventCallback<ApprovalDefinitionDto> OnSettingsChanged { get; set; }
+
+    private string Icon { get; set; } = "💰";
+    private string Name { get; set; } = string.Empty;
+    private string? CategoryId { get; set; }
+    private string? CategoryName { get; set; }
+    private string Description { get; set; } = string.Empty;
+    private string WhoCanStart { get; set; } = "All";
+    private string AdminType { get; set; } = "All";
+    
+    private List<string> SelectedStarters { get; set; } = new();
+    private List<string> SelectedAdmins { get; set; } = new();
+
+    protected override void OnParametersSet()
+    {
+        if (Definition != null)
+        {
+            Icon = Definition.Icon ?? "💰";
+            Name = Definition.Name ?? string.Empty;
+            CategoryId = Definition.CategoryId;
+            CategoryName = Definition.CategoryName;
+            Description = Definition.Description ?? string.Empty;
+            WhoCanStart = Definition.WhoCanStart ?? "All";
+            AdminType = Definition.AdminType ?? "All";
+            
+            if (!string.IsNullOrEmpty(Definition.SpecifiedStarters))
+            {
+                try { SelectedStarters = System.Text.Json.JsonSerializer.Deserialize<List<string>>(Definition.SpecifiedStarters) ?? new(); }
+                catch { SelectedStarters = new(); }
+            }
+            if (!string.IsNullOrEmpty(Definition.SpecifiedAdmins))
+            {
+                try { SelectedAdmins = System.Text.Json.JsonSerializer.Deserialize<List<string>>(Definition.SpecifiedAdmins) ?? new(); }
+                catch { SelectedAdmins = new(); }
+            }
+        }
+    }
+
+    private void OnNameInput(ChangeEventArgs e)
+    {
+        Name = e.Value?.ToString() ?? string.Empty;
+        NotifyChanged();
+    }
+    
+    private void OnDescriptionInput(ChangeEventArgs e)
+    {
+        Description = e.Value?.ToString() ?? string.Empty;
+        NotifyChanged();
+    }
+
+    private void SelectIcon()
+    {
+        var icons = new[] { "💰", "📝", "✈️", "📦", "📅", "📨" };
+        var currentIndex = Array.IndexOf(icons, Icon);
+        Icon = icons[(currentIndex + 1) % icons.Length];
+        NotifyChanged();
+    }
+
+    private void SelectStarters()
+    {
+        // TODO: 打开人员选择器
+        SelectedStarters.Add("张三");
+        NotifyChanged();
+    }
+
+    private void RemoveStarter(string starter)
+    {
+        SelectedStarters.Remove(starter);
+        NotifyChanged();
+    }
+
+    private void SelectAdmins()
+    {
+        // TODO: 打开人员选择器
+        SelectedAdmins.Add("李四");
+        NotifyChanged();
+    }
+
+    private void RemoveAdmin(string admin)
+    {
+        SelectedAdmins.Remove(admin);
+        NotifyChanged();
+    }
+
+    private void NotifyChanged()
+    {
+        var settings = new ApprovalDefinitionDto
+        {
+            Icon = Icon,
+            Name = Name,
+            CategoryId = CategoryId,
+            CategoryName = CategoryName,
+            Description = Description,
+            WhoCanStart = WhoCanStart,
+            AdminType = AdminType,
+            SpecifiedStarters = System.Text.Json.JsonSerializer.Serialize(SelectedStarters),
+            SpecifiedAdmins = System.Text.Json.JsonSerializer.Serialize(SelectedAdmins)
+        };
+        
+        OnSettingsChanged.InvokeAsync(settings);
+    }
+}

@@ -1,6 +1,7 @@
-using H.Organization.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace H.Organization.DbMigrator;
 
@@ -8,50 +9,47 @@ public class Program
 {
     public static async Task Main(string[] args)
     {
-        Console.WriteLine("==========================================");
-        Console.WriteLine("  H.Organization.DbMigrator - 数据库迁移工具");
-        Console.WriteLine("==========================================");
-        Console.WriteLine();
+        var host = CreateHostBuilder(args).Build();
 
-        var configuration = new ConfigurationBuilder()
-            .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile("appsettings.json", optional: true)
-            .Build();
-
-        var connectionString = configuration.GetConnectionString("OrganizationDb")!;
-
-        Console.WriteLine($"连接字符串：{connectionString}");
-        Console.WriteLine();
-
-        var optionsBuilder = new DbContextOptionsBuilder<OrganizationDbContext>();
-        optionsBuilder.UseSqlServer(connectionString);
-
-        using var dbContext = new OrganizationDbContext(optionsBuilder.Options);
-
-        // 应用所有迁移
-        Console.WriteLine("正在应用迁移...");
-        
-        // 检查待应用的迁移
-        var pendingMigrations = await dbContext.Database.GetPendingMigrationsAsync();
-        if (pendingMigrations.Any())
+        using (var scope = host.Services.CreateScope())
         {
-            Console.WriteLine($"发现 {pendingMigrations.Count()} 个待应用的迁移:");
-            foreach (var migration in pendingMigrations)
+            var services = scope.ServiceProvider;
+
+            try
             {
-                Console.WriteLine($"  - {migration}");
+                var dbContext = services.GetRequiredService<MigratorDbContext>();
+
+                Console.WriteLine("开始执行数据库迁移...");
+
+                // 执行数据库迁移
+                await dbContext.Database.MigrateAsync();
+
+                Console.WriteLine("数据库迁移完成");
             }
-            Console.WriteLine();
-            
-            await dbContext.Database.MigrateAsync();
-            Console.WriteLine("迁移应用成功！");
-        }
-        else
-        {
-            Console.WriteLine("没有待应用的迁移，数据库已是最新状态。");
+            catch (Exception ex)
+            {
+                Console.WriteLine($"数据库迁移失败: {ex.Message}");
+                Console.WriteLine(ex.StackTrace);
+            }
         }
 
-        Console.WriteLine();
         Console.WriteLine("按任意键退出...");
         Console.ReadKey();
     }
+
+    static IHostBuilder CreateHostBuilder(string[] args) =>
+        Host.CreateDefaultBuilder(args)
+            .ConfigureAppConfiguration((context, config) =>
+            {
+                config.SetBasePath(Directory.GetCurrentDirectory());
+                config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+            })
+            .ConfigureServices((hostContext, services) =>
+            {
+                var configuration = hostContext.Configuration;
+                var connectionString = configuration.GetConnectionString("OrganizationDb");
+
+                services.AddDbContext<MigratorDbContext>(options =>
+                    options.UseSqlServer(connectionString));
+            });
 }

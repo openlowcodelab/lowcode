@@ -10,11 +10,11 @@ using Volo.Abp.EntityFrameworkCore;
 
 #nullable disable
 
-namespace H.Approval.EntityFrameworkCore.Migrations
+namespace H.Approval.DbMigrator.Migrations
 {
     [DbContext(typeof(ApprovalDbContext))]
-    [Migration("20260418065147_InitialApproval")]
-    partial class InitialApproval
+    [Migration("20260419135953_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -22,15 +22,25 @@ namespace H.Approval.EntityFrameworkCore.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("_Abp_DatabaseProvider", EfCoreDatabaseProvider.SqlServer)
-                .HasAnnotation("ProductVersion", "10.0.5")
+                .HasAnnotation("ProductVersion", "10.0.6")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("H.Approval.EntityFrameworkCore.Entities.ApprovalDefinition", b =>
+            modelBuilder.Entity("H.Approval.EntityFrameworkCore.ApprovalDefinition", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("AdminType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CategoryId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CategoryName")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("CreationTime")
                         .HasColumnType("datetime2");
@@ -43,6 +53,9 @@ namespace H.Approval.EntityFrameworkCore.Migrations
                         .HasMaxLength(1024)
                         .HasColumnType("nvarchar(1024)");
 
+                    b.Property<string>("Icon")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("IsEnabled")
                         .HasColumnType("bit");
 
@@ -54,15 +67,25 @@ namespace H.Approval.EntityFrameworkCore.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
+                    b.Property<string>("SpecifiedAdmins")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SpecifiedStarters")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("Version")
                         .HasColumnType("int");
+
+                    b.Property<string>("WhoCanStart")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
                     b.ToTable("ApprovalDefinitions", (string)null);
                 });
 
-            modelBuilder.Entity("H.Approval.EntityFrameworkCore.Entities.ApprovalInstance", b =>
+            modelBuilder.Entity("H.Approval.EntityFrameworkCore.ApprovalInstance", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("nvarchar(450)");
@@ -105,7 +128,7 @@ namespace H.Approval.EntityFrameworkCore.Migrations
                     b.ToTable("ApprovalInstances", (string)null);
                 });
 
-            modelBuilder.Entity("H.Approval.EntityFrameworkCore.Entities.ApprovalTask", b =>
+            modelBuilder.Entity("H.Approval.EntityFrameworkCore.ApprovalTask", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("nvarchar(450)");
@@ -164,16 +187,16 @@ namespace H.Approval.EntityFrameworkCore.Migrations
                     b.ToTable("ApprovalTasks", (string)null);
                 });
 
-            modelBuilder.Entity("H.Approval.EntityFrameworkCore.Entities.ApprovalTask", b =>
+            modelBuilder.Entity("H.Approval.EntityFrameworkCore.ApprovalTask", b =>
                 {
-                    b.HasOne("H.Approval.EntityFrameworkCore.Entities.ApprovalInstance", null)
+                    b.HasOne("H.Approval.EntityFrameworkCore.ApprovalInstance", null)
                         .WithMany("Tasks")
                         .HasForeignKey("InstanceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("H.Approval.EntityFrameworkCore.Entities.ApprovalInstance", b =>
+            modelBuilder.Entity("H.Approval.EntityFrameworkCore.ApprovalInstance", b =>
                 {
                     b.Navigation("Tasks");
                 });

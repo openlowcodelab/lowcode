@@ -5,27 +5,55 @@
     <div>
         <div class="title" style="background: rgb(255, 148, 62);">
             <span class="iconfont">✓</span>
-            <span class="iconfont" style="display: none;"></span>
-            <span class="editable-title">审批人</span>
-            <i class="anticon anticon-close close"></i>
+            <span class="editable-title">@Node.NodeName</span>
+            <i class="anticon anticon-close close" @onclick="DeleteNode" @onclick:stopPropagation></i>
         </div>
         <div class="content">
-            <div class="text">直接主管</div>
+            <div class="text">
+                @if (Node is ApproveModel approveNode)
+                {
+                    @(approveNode.ApproverType switch
+                    {
+                        ApproverTypeEnum.StarterSelect => "发起人自选",
+                        ApproverTypeEnum.Specified => "指定成员",
+                        ApproverTypeEnum.StarterSelf => "发起人本人",
+                        ApproverTypeEnum.Role => "指定角色",
+                        ApproverTypeEnum.DepartmentManager => "部门主管",
+                        _ => "请设置审批人"
+                    })
+                }
+                else
+                {
+                    <text>请设置审批人</text>
+                }
+            </div>
             <i class="anticon anticon-right arrow"></i>
         </div>
     </div>
 </div>
-<AddNodeButton></AddNodeButton>
+<AddNodeButton OnAddNode="OnAddNode" />
 
 @*递归渲染子节点*@
 @foreach(var childNode in Node.ChildNodes)
 {
-    <NodeWrap Node="@childNode"></NodeWrap>
+    <NodeWrap Node="@childNode" OnNodeTreeChanged="OnNodeTreeChanged" />
 }
 
 @code {
     [Parameter]
-    public NodeModelBase Node { get; set; }
-
+    public NodeModelBase Node { get; set; } = null!;
     
+    [Parameter]
+    public EventCallback<NodeModelBase> OnAddNode { get; set; }
+    
+    [Parameter]
+    public EventCallback OnDeleteNode { get; set; }
+    
+    [Parameter]
+    public EventCallback OnNodeTreeChanged { get; set; }
+    
+    private async Task DeleteNode()
+    {
+        await OnDeleteNode.InvokeAsync();
+    }
 }

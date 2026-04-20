@@ -1,117 +1,63 @@
 @page "/approval/management"
 @layout ApprovalLayout
 @inject IApprovalDefinitionAppService DefinitionService
-@inject IApprovalInstanceAppService InstanceService
 @inject NavigationManager Nav
 @inject MessageService Message
 
-<h3>审批管理</h3>
+<AntDesign.Button Type="@ButtonType.Primary" @onclick="CreateNew">新建审批</AntDesign.Button>
 
-<AntDesign.Tabs>
-    <AntDesign.TabPane Tab="审批定义" Key="1">
-        <AntDesign.Button Type="@ButtonType.Primary" @onclick="CreateNew">新建审批</AntDesign.Button>
-        
-        <AntDesign.Table DataSource="@definitions" TItem="ApprovalDefinitionDto" Style="margin-top: 16px;">
-            <AntDesign.Column TData="string" @bind-Field="@context.Name" Title="审批名称" />
-            <AntDesign.Column TData="string" @bind-Field="@context.Description" Title="描述" />
-            <AntDesign.Column TData="int" @bind-Field="@context.Version" Title="版本" />
-            <AntDesign.Column TData="bool" @bind-Field="@context.IsEnabled" Title="状态">
-                <Template>
-                    <AntDesign.Tag Color="@(context.IsEnabled ? "green" : "red")">
-                        @(context.IsEnabled ? "启用" : "禁用")
-                    </AntDesign.Tag>
-                </Template>
-            </AntDesign.Column>
-            <AntDesign.Column TData="DateTime" @bind-Field="@context.CreationTime" Title="创建时间" />
-            <AntDesign.Column TData="string" Title="操作">
-                <AntDesign.Button Type="@ButtonType.Link" Size="@ButtonSize.Small" @onclick="() => Edit(context.Id)">编辑</AntDesign.Button>
-                <AntDesign.Button Type="@ButtonType.Link" Size="@ButtonSize.Small" @onclick="() => Design(context.Id)">设计</AntDesign.Button>
-                <AntDesign.Popconfirm Title="确认删除?" OnConfirm="() => Delete(context.Id)">
-                    <AntDesign.Button Type="@ButtonType.Link" Size="@ButtonSize.Small" Danger>删除</AntDesign.Button>
-                </AntDesign.Popconfirm>
-            </AntDesign.Column>
-        </AntDesign.Table>
-    </AntDesign.TabPane>
-    
-    <AntDesign.TabPane Tab="审批实例" Key="2">
-        <AntDesign.Table DataSource="@instances" TItem="ApprovalInstanceDto">
-            <AntDesign.Column TData="string" @bind-Field="@context.DefinitionName" Title="审批名称" />
-            <AntDesign.Column TData="ApprovalStatusEnum" Title="状态">
-                <Template>
-                    <AntDesign.Tag Color="@GetStatusColor(context.Status)">
-                        @GetStatusText(context.Status)
-                    </AntDesign.Tag>
-                </Template>
-            </AntDesign.Column>
-            <AntDesign.Column TData="string" @bind-Field="@context.CreatorName" Title="发起人" />
-            <AntDesign.Column TData="DateTime" @bind-Field="@context.CreationTime" Title="创建时间" />
-        </AntDesign.Table>
-    </AntDesign.TabPane>
-</AntDesign.Tabs>
+<AntDesign.Table DataSource="@definitions" TItem="ApprovalDefinitionDto" Style="margin-top: 16px;">
+    <AntDesign.Column TData="string" @bind-Field="@context.Name" Title="审批名称" />
+    <AntDesign.Column TData="string" @bind-Field="@context.Description" Title="描述" />
+    <AntDesign.Column TData="int" @bind-Field="@context.Version" Title="版本" />
+    <AntDesign.Column TData="bool" @bind-Field="@context.IsEnabled" Title="状态">
+        <Template>
+            <AntDesign.Tag Color="@(context.IsEnabled ? "green" : "red")">
+                @(context.IsEnabled ? "启用" : "禁用")
+            </AntDesign.Tag>
+        </Template>
+    </AntDesign.Column>
+    <AntDesign.Column TData="DateTime" @bind-Field="@context.CreationTime" Title="创建时间" />
+    <AntDesign.Column TData="string" Title="操作">
+        <AntDesign.Button Type="@ButtonType.Link" Size="@ButtonSize.Small" @onclick="() => Edit(context.Id)">编辑</AntDesign.Button>
+        <AntDesign.Popconfirm Title="确认删除?" OnConfirm="() => Delete(context.Id)">
+            <AntDesign.Button Type="@ButtonType.Link" Size="@ButtonSize.Small" Danger>删除</AntDesign.Button>
+        </AntDesign.Popconfirm>
+    </AntDesign.Column>
+</AntDesign.Table>
 
 @code {
     private List<ApprovalDefinitionDto> definitions = new();
     private List<ApprovalInstanceDto> instances = new();
-    
+
     protected override async Task OnInitializedAsync()
     {
         await LoadData();
     }
-    
+
     private async Task LoadData()
     {
         try
         {
             definitions = await DefinitionService.GetAllAsync();
-
-            // TODO: 加载实例数据
-            instances = new List<ApprovalInstanceDto>();
         }
         catch (Exception ex)
         {
             Message.Error($"加载数据失败: {ex.Message}");
             // 即使加载失败，也要初始化空列表以防止空引用异常
             definitions = new List<ApprovalDefinitionDto>();
-            instances = new List<ApprovalInstanceDto>();
         }
     }
-    
+
     private async Task CreateNew()
     {
-        try
-        {
-            Console.WriteLine("开始创建审批定义...");
-            
-            var newDef = await DefinitionService.CreateAsync(new CreateApprovalDefinitionDto
-            {
-                Name = "新建审批",
-                Description = "",
-                DefinitionJson = "{}"
-            });
-            
-            // 刷新数据
-            await LoadData();
-            
-            // 导航到设计器页面
-            Nav.NavigateTo($"/approval/designer/default/{newDef.Id}");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"创建审批定义失败: {ex.Message}");
-            Console.WriteLine($"堆栈跟踪: {ex.StackTrace}");
-            Message.Error($"创建失败: {ex.Message}");
-        }
+        // 导航到设计器页面
+        Nav.NavigateTo($"/approval/designer/_new");
     }
-    
+
     private void Edit(string id)
     {
-        // TODO: 打开编辑对话框
-        Message.Info("编辑功能开发中");
-    }
-    
-    private void Design(string id)
-    {
-        Nav.NavigateTo($"/approval/designer/default/{id}");
+        Nav.NavigateTo($"/approval/designer/{id}");
     }
     
     private async Task Delete(string id)
@@ -126,28 +72,5 @@
         {
             Message.Error($"删除失败: {ex.Message}");
         }
-    }
-    
-    private string GetStatusColor(ApprovalStatusEnum status)
-    {
-        return status switch
-        {
-            ApprovalStatusEnum.Running => "blue",
-            ApprovalStatusEnum.Completed => "green",
-            ApprovalStatusEnum.Cancelled => "red",
-            _ => "default"
-        };
-    }
-    
-    private string GetStatusText(ApprovalStatusEnum status)
-    {
-        return status switch
-        {
-            ApprovalStatusEnum.Draft => "草稿",
-            ApprovalStatusEnum.Running => "运行中",
-            ApprovalStatusEnum.Completed => "已完成",
-            ApprovalStatusEnum.Cancelled => "已取消",
-            _ => "未知"
-        };
     }
 }

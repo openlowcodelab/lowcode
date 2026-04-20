@@ -7,8 +7,12 @@ using System.Threading.Tasks;
 namespace H.Approval.Web;
 
 /// <summary>
-/// Ìõ¼þ½Úµã
+/// ï¿½ï¿½ï¿½ï¿½ï¿½Úµï¿½
 /// </summary>
 public class ConditionModel : NodeModelBase
 {
+    public ConditionModel()
+    {
+        NodeType = NodeTypeEnum.Condition;
+    }
 }

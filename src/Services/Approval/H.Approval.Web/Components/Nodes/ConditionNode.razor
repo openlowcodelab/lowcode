@@ -12,22 +12,23 @@
             <div class="sort-right">&gt;</div>
             <div class="content">请设置条件</div>
         </div>
-        <AddNodeButton></AddNodeButton>
+        <AddNodeButton OnAddNode="OnAddNode" />
     </div>
 </div>
 
 @*递归渲染子节点*@
 @foreach(var childNode in Node.ChildNodes)
 {
-    <NodeWrap Node="@childNode"></NodeWrap>
+    <NodeWrap Node="@childNode" OnNodeTreeChanged="OnNodeTreeChanged" />
 }
 
 @code {
     [Parameter]
-    public NodeModelBase Node { get; set; }
-
-    private void AddNode(int nodeType)
-    {
-        
-    }
+    public NodeModelBase Node { get; set; } = null!;
+    
+    [Parameter]
+    public EventCallback<NodeModelBase> OnAddNode { get; set; }
+    
+    [Parameter]
+    public EventCallback OnNodeTreeChanged { get; set; }
 }

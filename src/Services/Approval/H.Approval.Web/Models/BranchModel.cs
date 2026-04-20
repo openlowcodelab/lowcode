@@ -7,8 +7,12 @@ using System.Threading.Tasks;
 namespace H.Approval.Web;
 
 /// <summary>
-/// ÉóºËÈË½Úµã
+/// ï¿½ï¿½ï¿½ï¿½Ë½Úµï¿½
 /// </summary>
 public class BranchModel : NodeModelBase
 {
+    public BranchModel()
+    {
+        NodeType = NodeTypeEnum.Branch;
+    }
 }

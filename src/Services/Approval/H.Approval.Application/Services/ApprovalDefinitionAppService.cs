@@ -50,6 +50,13 @@ public class ApprovalDefinitionAppService : ApplicationService, IApprovalDefinit
             Name = input.Name,
             Description = input.Description,
             DefinitionJson = input.DefinitionJson,
+            Icon = input.Icon,
+            CategoryId = input.CategoryId,
+            CategoryName = input.CategoryName,
+            WhoCanStart = input.WhoCanStart,
+            SpecifiedStarters = input.SpecifiedStarters,
+            AdminType = input.AdminType,
+            SpecifiedAdmins = input.SpecifiedAdmins,
             Version = 1,
             IsEnabled = true,
             CreationTime = DateTime.Now
@@ -75,6 +82,13 @@ public class ApprovalDefinitionAppService : ApplicationService, IApprovalDefinit
         entity.Name = input.Name;
         entity.Description = input.Description;
         entity.DefinitionJson = input.DefinitionJson;
+        entity.Icon = input.Icon;
+        entity.CategoryId = input.CategoryId;
+        entity.CategoryName = input.CategoryName;
+        entity.WhoCanStart = input.WhoCanStart;
+        entity.SpecifiedStarters = input.SpecifiedStarters;
+        entity.AdminType = input.AdminType;
+        entity.SpecifiedAdmins = input.SpecifiedAdmins;
         entity.LastModificationTime = DateTime.Now;
         
         await _definitionRepository.UpdateAsync(entity);
@@ -116,6 +130,13 @@ public class ApprovalDefinitionAppService : ApplicationService, IApprovalDefinit
             Name = entity.Name,
             Description = entity.Description,
             DefinitionJson = entity.DefinitionJson,
+            Icon = entity.Icon,
+            CategoryId = entity.CategoryId,
+            CategoryName = entity.CategoryName,
+            WhoCanStart = entity.WhoCanStart,
+            SpecifiedStarters = entity.SpecifiedStarters,
+            AdminType = entity.AdminType,
+            SpecifiedAdmins = entity.SpecifiedAdmins,
             Version = entity.Version,
             IsEnabled = entity.IsEnabled,
             CreationTime = entity.CreationTime,

@@ -1,4 +1,4 @@
-@page "/approval/designer/{AppId}/{ApprovalId}"
+@page "/approval/designer/{ApprovalId}"
 
 @namespace H.Approval.Web
 @layout ApprovalDesignerLayout
@@ -6,63 +6,77 @@
 @inject NavigationManager Nav
 @inject MessageService Message
 
-<NodeWrap Node="@Node"></NodeWrap>
-<EndNode></EndNode>
+<PageTitle>审批设计器</PageTitle>
+
+@if (definition == null)
+{
+    <div style="padding: 40px; text-align: center;">
+        <Spin Tip="加载中..." />
+    </div>
+}
+else
+{
+    @if (DesignerLayout?.ActiveTab == "basic")
+    {
+        <BasicSettings Definition="@definition" OnSettingsChanged="OnBasicSettingsChanged" />
+    }
+    else if (DesignerLayout?.ActiveTab == "flow")
+    {
+        <div class="flow-design-container">
+            <div class="flow-design-canvas" style="transform: scale(@(ZoomLevel / 100.0)); transform-origin: center top;">
+                <NodeWrap Node="@RootNode" OnNodeTreeChanged="OnNodeTreeChanged" />
+                <EndNode />
+            </div>
+            
+            <div class="zoom-control">
+                <button class="zoom-btn" @onclick="ZoomOut" disabled="@(ZoomLevel <= 50)">-</button>
+                <span class="zoom-level">@ZoomLevel%</span>
+                <button class="zoom-btn" @onclick="ZoomIn" disabled="@(ZoomLevel >= 150)">+</button>
+            </div>
+        </div>
+    }
+}
 
 @code {
     [Parameter]
-    public string AppId { get; set; } = string.Empty;
-
-    [Parameter]
     public string ApprovalId { get; set; } = string.Empty;
     
+    [CascadingParameter]
+    public ApprovalDesignerLayout? DesignerLayout { get; set; }
+    
     private ApprovalDefinitionDto? definition;
-    private bool saving = false;
-
-    public NodeModelBase Node = new StartNodeModel()
-    {
-        NodeName = "发起人",
-        NodeType = NodeTypeEnum.Start,
-        ChildNodes =
-        {
-            new ApproveModel()
-            {
-                NodeName = "审核人", NodeType = NodeTypeEnum.Approve,
-                ChildNodes = new List<NodeModelBase>()
-                {
-                    new BranchModel(){
-                        NodeName = "路由", NodeType = NodeTypeEnum.Branch,
-                        ConditionNodes = new List<NodeModelBase>()
-                        {
-                            new ConditionModel(){
-                                NodeName = "条件1", NodeType = NodeTypeEnum.Condition,
-                                ChildNodes = new List<NodeModelBase>()
-                                {
-                                    new ApproveModel(){ NodeName = "审核人", NodeType = NodeTypeEnum.Approve }
-                                }
-                            },
-                            new ConditionModel(){ NodeName = "条件2", NodeType = NodeTypeEnum.Condition }
-                        },
-                        ChildNodes = new List<NodeModelBase>()
-                        {
-                            new CarbonCopyModel(){ NodeName = "抄送人", NodeType = NodeTypeEnum.CarbonCopy }
-                        }
-                    }
-                }
-            }
-        }
-    };
+    private int ZoomLevel { get; set; } = 100;
+    
+    /// <summary>
+    /// 根节点 - 发起人节点
+    /// </summary>
+    public NodeModelBase RootNode { get; set; } = null!;
     
     protected override async Task OnInitializedAsync()
     {
+        InitDefaultNodeTree();
+        
         try
         {
-            definition = await ApprovalDefinitionAppService.GetByIdAsync(ApprovalId);
-            
-            if (!string.IsNullOrEmpty(definition?.DefinitionJson) && definition.DefinitionJson != "{}")
+            if (ApprovalId == "_new")
             {
-                // TODO: 从JSON反序列化节点树
-                // Node = JsonSerializer.Deserialize<NodeModelBase>(definition.DefinitionJson);
+                definition = new ApprovalDefinitionDto
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    Name = "新审批",
+                    Icon = "💰",
+                    WhoCanStart = "All",
+                    AdminType = "All"
+                };
+            }
+            else
+            {
+                definition = await ApprovalDefinitionAppService.GetByIdAsync(ApprovalId);
+            }
+            
+            if (definition != null && !string.IsNullOrEmpty(definition.DefinitionJson) && definition.DefinitionJson != "{}")
+            {
+                // TODO: 从json反序列化节点树
             }
         }
         catch (Exception ex)
@@ -71,7 +85,95 @@
         }
     }
     
-    private async Task SaveDesign()
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender && DesignerLayout != null)
+        {
+            DesignerLayout.OnTabChanged += OnTabChanged;
+            DesignerLayout.OnPublishRequested += OnPublishAsync;
+            
+            if (definition != null)
+            {
+                DesignerLayout.UpdateHeader(definition.Icon, definition.Name);
+            }
+        }
+    }
+    
+    private void OnTabChanged(string tab)
+    {
+        StateHasChanged();
+    }
+    
+    private void InitDefaultNodeTree()
+    {
+        RootNode = new StartNodeModel()
+        {
+            Id = Guid.NewGuid().ToString(),
+            NodeName = "发起人",
+            NodeType = NodeTypeEnum.Start,
+            ChildNodes = new List<NodeModelBase>
+            {
+                new ApproveModel()
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    NodeName = "审批人",
+                    NodeType = NodeTypeEnum.Approve,
+                    ApproverType = ApproverTypeEnum.StarterSelect,
+                    ChildNodes = new List<NodeModelBase>
+                    {
+                        new CarbonCopyModel()
+                        {
+                            Id = Guid.NewGuid().ToString(),
+                            NodeName = "抄送人",
+                            NodeType = NodeTypeEnum.CarbonCopy,
+                            CarbonCopyType = CarbonCopyTypeEnum.StarterSelect
+                        }
+                    }
+                }
+            }
+        };
+    }
+    
+    private void OnBasicSettingsChanged(ApprovalDefinitionDto settings)
+    {
+        if (definition != null)
+        {
+            definition.Icon = settings.Icon;
+            definition.Name = settings.Name;
+            definition.CategoryId = settings.CategoryId;
+            definition.CategoryName = settings.CategoryName;
+            definition.Description = settings.Description;
+            definition.WhoCanStart = settings.WhoCanStart;
+            definition.AdminType = settings.AdminType;
+            definition.SpecifiedStarters = settings.SpecifiedStarters;
+            definition.SpecifiedAdmins = settings.SpecifiedAdmins;
+            
+            DesignerLayout?.UpdateHeader(definition.Icon, definition.Name);
+        }
+    }
+    
+    private void OnNodeTreeChanged()
+    {
+        StateHasChanged();
+    }
+    
+    private void ZoomIn()
+    {
+        if (ZoomLevel < 150)
+        {
+            ZoomLevel += 10;
+        }
+    }
+    
+    private void ZoomOut()
+    {
+        if (ZoomLevel > 50)
+        {
+            ZoomLevel -= 10;
+        }
+    }
+    
+    private async Task OnPublishAsync()
     {
         if (definition == null)
         {
@@ -79,38 +181,59 @@
             return;
         }
         
-        saving = true;
-        StateHasChanged();
-        
         try
         {
-            // TODO: 将节点树序列化为JSON
-            var json = "{}"; // JsonSerializer.Serialize(Node);
+            var json = System.Text.Json.JsonSerializer.Serialize(RootNode);
             
-            await ApprovalDefinitionAppService.UpdateAsync(new UpdateApprovalDefinitionDto
+            if (ApprovalId == "_new")
             {
-                Id = ApprovalId,
-                Name = definition.Name,
-                Description = definition.Description,
-                DefinitionJson = json
-            });
+                await ApprovalDefinitionAppService.CreateAsync(new CreateApprovalDefinitionDto
+                {
+                    Name = definition.Name,
+                    Description = definition.Description,
+                    Icon = definition.Icon,
+                    CategoryId = definition.CategoryId,
+                    CategoryName = definition.CategoryName,
+                    WhoCanStart = definition.WhoCanStart,
+                    SpecifiedStarters = definition.SpecifiedStarters,
+                    AdminType = definition.AdminType,
+                    SpecifiedAdmins = definition.SpecifiedAdmins,
+                    DefinitionJson = json
+                });
+            }
+            else
+            {
+                await ApprovalDefinitionAppService.UpdateAsync(new UpdateApprovalDefinitionDto
+                {
+                    Id = ApprovalId,
+                    Name = definition.Name,
+                    Description = definition.Description,
+                    Icon = definition.Icon,
+                    CategoryId = definition.CategoryId,
+                    CategoryName = definition.CategoryName,
+                    WhoCanStart = definition.WhoCanStart,
+                    SpecifiedStarters = definition.SpecifiedStarters,
+                    AdminType = definition.AdminType,
+                    SpecifiedAdmins = definition.SpecifiedAdmins,
+                    DefinitionJson = json
+                });
+            }
             
-            Message.Success("保存成功");
+            Message.Success("发布成功");
             Nav.NavigateTo("/approval/management");
         }
         catch (Exception ex)
         {
-            Message.Error($"保存失败: {ex.Message}");
-        }
-        finally
-        {
-            saving = false;
-            StateHasChanged();
+            Message.Error($"发布失败: {ex.Message}");
         }
     }
     
-    private void Cancel()
+    public void Dispose()
     {
-        Nav.NavigateTo("/approval/management");
+        if (DesignerLayout != null)
+        {
+            DesignerLayout.OnTabChanged -= OnTabChanged;
+            DesignerLayout.OnPublishRequested -= OnPublishAsync;
+        }
     }
 }

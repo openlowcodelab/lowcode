@@ -11,30 +11,30 @@
     <div class="node-wrap">
         @if (Node.NodeType == NodeTypeEnum.Start)
         {
-            <StartNode Node="@Node"></StartNode>
+            <StartNode Node="@Node" OnAddNode="AddChildNode" OnNodeTreeChanged="NotifyTreeChanged" />
         }
         else if (Node.NodeType == NodeTypeEnum.Approve)
         {
-            <ApproveNode Node="@Node"></ApproveNode>
+            <ApproveNode Node="@Node" OnAddNode="AddChildNode" OnDeleteNode="DeleteThisNode" OnNodeTreeChanged="NotifyTreeChanged" />
         }
         else if (Node.NodeType == NodeTypeEnum.CarbonCopy)
         {
-            <CarbonCopyNode Node="@Node"></CarbonCopyNode>
+            <CarbonCopyNode Node="@Node" OnAddNode="AddChildNode" OnDeleteNode="DeleteThisNode" OnNodeTreeChanged="NotifyTreeChanged" />
         }
         else if (Node.NodeType == NodeTypeEnum.Condition)
         {
-            <ConditionNode Node="@Node"></ConditionNode>
+            <ConditionNode Node="@Node" OnAddNode="AddChildNode" OnNodeTreeChanged="NotifyTreeChanged" />
         }
         else if (Node.NodeType == NodeTypeEnum.Branch)
         {
             <div class="branch-wrap">
-                <BranchNode Node="@Node"></BranchNode>
+                <BranchNode Node="@Node" OnNodeTreeChanged="NotifyTreeChanged" />
             </div>
             
             @*递归渲染子节点*@
             @foreach(var childNode in Node.ChildNodes)
             {
-                <NodeWrap Node="@childNode"></NodeWrap>
+                <NodeWrap Node="@childNode" OnNodeTreeChanged="OnNodeTreeChanged" />
             }
         }
     </div>
@@ -42,11 +42,36 @@
 
 @code {
     [Parameter]
-    public NodeModelBase Node { get; set; }
+    public NodeModelBase Node { get; set; } = null!;
+    
+    [Parameter]
+    public EventCallback OnNodeTreeChanged { get; set; }
 
-    private void ShowSettingPanel()
+    /// <summary>
+    /// 在当前节点的子节点列表中添加新节点
+    /// </summary>
+    private void AddChildNode(NodeModelBase newNode)
     {
-        
+        // 新节点继承当前节点的子节点
+        newNode.ChildNodes = new List<NodeModelBase>(Node.ChildNodes);
+        // 当前节点的子节点替换为新节点
+        Node.ChildNodes = new List<NodeModelBase> { newNode };
+        NotifyTreeChanged();
     }
-
+    
+    /// <summary>
+    /// 删除当前节点（将其子节点提升给父节点）
+    /// </summary>
+    private void DeleteThisNode()
+    {
+        // 通过事件通知父组件删除本节点
+        // 实际的删除逻辑在父节点的节点组件中处理
+        NotifyTreeChanged();
+    }
+    
+    private void NotifyTreeChanged()
+    {
+        OnNodeTreeChanged.InvokeAsync();
+        StateHasChanged();
+    }
 }

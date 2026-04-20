@@ -3,12 +3,12 @@
 @*条件分支按钮*@
 <div class="branch-box-wrap">
     <div class="branch-box">
-        <button class="add-branch" @onclick="()=>AddBranchNode()">添加条件</button>
+        <button class="add-branch" @onclick="AddBranchNode">添加条件</button>
         @*渲染条件子节点*@
         @foreach(var conditionNode in Node.ConditionNodes)
         {
             <div class="col-box">
-                <NodeWrap Node="@conditionNode"></NodeWrap>
+                <NodeWrap Node="@conditionNode" OnNodeTreeChanged="OnNodeTreeChanged" />
                 
                 @if (conditionNode == Node.ConditionNodes.First())
                 {
@@ -23,15 +23,27 @@
             </div>
         }
     </div>
-    <AddNodeButton></AddNodeButton>
+    <AddNodeButton OnAddNode="OnAddNode" />
 </div>
 
 @code {
     [Parameter]
-    public NodeModelBase Node { get; set; }
+    public NodeModelBase Node { get; set; } = null!;
+    
+    [Parameter]
+    public EventCallback<NodeModelBase> OnAddNode { get; set; }
+    
+    [Parameter]
+    public EventCallback OnNodeTreeChanged { get; set; }
 
     private void AddBranchNode()
     {
-        
+        var newCondition = new ConditionModel
+        {
+            Id = Guid.NewGuid().ToString(),
+            NodeName = $"条件{Node.ConditionNodes.Count + 1}"
+        };
+        Node.ConditionNodes.Add(newCondition);
+        OnNodeTreeChanged.InvokeAsync();
     }
 }

@@ -16,6 +16,7 @@ public class ApprovalDefinition : Entity<string>
     {
         Id = id;
     }
+
     /// <summary>
     /// 审批名称
     /// </summary>
@@ -40,6 +41,41 @@ public class ApprovalDefinition : Entity<string>
     /// 审批定义JSON
     /// </summary>
     public virtual string DefinitionJson { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// 审批图标(emoji)
+    /// </summary>
+    public virtual string? Icon { get; set; }
+    
+    /// <summary>
+    /// 所在分组ID
+    /// </summary>
+    public virtual string? CategoryId { get; set; }
+    
+    /// <summary>
+    /// 所在分组名称
+    /// </summary>
+    public virtual string? CategoryName { get; set; }
+    
+    /// <summary>
+    /// 谁可以发起: All-全部, Specified-指定成员
+    /// </summary>
+    public virtual string WhoCanStart { get; set; } = "All";
+    
+    /// <summary>
+    /// 指定发起人员工ID列表(JSON数组)
+    /// </summary>
+    public virtual string? SpecifiedStarters { get; set; }
+    
+    /// <summary>
+    /// 表单管理员类型: All-全部OA审批管理员, Specified-指定管理员
+    /// </summary>
+    public virtual string AdminType { get; set; } = "All";
+    
+    /// <summary>
+    /// 指定管理员ID列表(JSON数组)
+    /// </summary>
+    public virtual string? SpecifiedAdmins { get; set; }
     
     /// <summary>
     /// 创建时间

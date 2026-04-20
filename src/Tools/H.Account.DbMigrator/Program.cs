@@ -1,6 +1,7 @@
-using H.Account.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace H.Account.DbMigrator;
 
@@ -8,33 +9,47 @@ public class Program
 {
     public static async Task Main(string[] args)
     {
-        Console.WriteLine("==========================================");
-        Console.WriteLine("  H.Account.DbMigrator - 数据库迁移工具");
-        Console.WriteLine("==========================================");
-        Console.WriteLine();
+        var host = CreateHostBuilder(args).Build();
 
-        var configuration = new ConfigurationBuilder()
-            .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile("appsettings.json", optional: true)
-            .Build();
+        using (var scope = host.Services.CreateScope())
+        {
+            var services = scope.ServiceProvider;
 
-        var connectionString = configuration.GetConnectionString("AccountDb")!;
+            try
+            {
+                var dbContext = services.GetRequiredService<MigratorDbContext>();
 
-        Console.WriteLine($"连接字符串：{connectionString}");
-        Console.WriteLine();
+                Console.WriteLine("开始执行数据库迁移...");
 
-        var optionsBuilder = new DbContextOptionsBuilder<AccountDbContext>();
-        optionsBuilder.UseSqlServer(connectionString);
+                // 执行数据库迁移
+                await dbContext.Database.MigrateAsync();
 
-        using var dbContext = new AccountDbContext(optionsBuilder.Options);
+                Console.WriteLine("数据库迁移完成");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"数据库迁移失败: {ex.Message}");
+                Console.WriteLine(ex.StackTrace);
+            }
+        }
 
-        // 应用所有迁移
-        Console.WriteLine("正在应用迁移...");
-        await dbContext.Database.MigrateAsync();
-        Console.WriteLine("迁移应用成功！");
-
-        Console.WriteLine();
         Console.WriteLine("按任意键退出...");
         Console.ReadKey();
     }
+
+    static IHostBuilder CreateHostBuilder(string[] args) =>
+        Host.CreateDefaultBuilder(args)
+            .ConfigureAppConfiguration((context, config) =>
+            {
+                config.SetBasePath(Directory.GetCurrentDirectory());
+                config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+            })
+            .ConfigureServices((hostContext, services) =>
+            {
+                var configuration = hostContext.Configuration;
+                var connectionString = configuration.GetConnectionString("AccountDb");
+
+                services.AddDbContext<MigratorDbContext>(options =>
+                    options.UseSqlServer(connectionString));
+            });
 }

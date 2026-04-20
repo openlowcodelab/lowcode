@@ -3,28 +3,55 @@
 @*抄送人节点*@
 <div class="node-wrap-box">
     <div>
-        <div class="title" style="background: rgb(50, 150, 250);"><span class="iconfont"
-                style="display: none;">✓</span><span class="iconfont">📧</span>
-            <span class="editable-title">抄送人</span><i class="anticon anticon-close close"></i>
+        <div class="title" style="background: rgb(50, 150, 250);">
+            <span class="iconfont">✉️</span>
+            <span class="editable-title">@Node.NodeName</span>
+            <i class="anticon anticon-close close" @onclick="DeleteNode" @onclick:stopPropagation></i>
         </div>
         <div class="content">
             <div class="text">
-                发起人自选
-            </div><i class="anticon anticon-right arrow"></i>
+                @if (Node is CarbonCopyModel ccNode)
+                {
+                    @(ccNode.CarbonCopyType switch
+                    {
+                        CarbonCopyTypeEnum.StarterSelect => "发起人自选",
+                        CarbonCopyTypeEnum.Specified => "指定成员",
+                        CarbonCopyTypeEnum.Role => "指定角色",
+                        _ => "请设置抄送人"
+                    })
+                }
+                else
+                {
+                    <text>请设置抄送人</text>
+                }
+            </div>
+            <i class="anticon anticon-right arrow"></i>
         </div>
     </div>
 </div>
-<AddNodeButton></AddNodeButton>
+<AddNodeButton OnAddNode="OnAddNode" />
 
 @*递归渲染子节点*@
 @foreach(var childNode in Node.ChildNodes)
 {
-    <NodeWrap Node="@childNode"></NodeWrap>
+    <NodeWrap Node="@childNode" OnNodeTreeChanged="OnNodeTreeChanged" />
 }
 
 @code {
     [Parameter]
-    public NodeModelBase Node { get; set; }
-
+    public NodeModelBase Node { get; set; } = null!;
     
+    [Parameter]
+    public EventCallback<NodeModelBase> OnAddNode { get; set; }
+    
+    [Parameter]
+    public EventCallback OnDeleteNode { get; set; }
+    
+    [Parameter]
+    public EventCallback OnNodeTreeChanged { get; set; }
+    
+    private async Task DeleteNode()
+    {
+        await OnDeleteNode.InvokeAsync();
+    }
 }

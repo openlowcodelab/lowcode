@@ -3,10 +3,10 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace H.Approval.EntityFrameworkCore.Migrations
+namespace H.Approval.DbMigrator.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialApproval : Migration
+    public partial class Init : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -21,6 +21,13 @@ namespace H.Approval.EntityFrameworkCore.Migrations
                     Version = table.Column<int>(type: "int", nullable: false),
                     IsEnabled = table.Column<bool>(type: "bit", nullable: false),
                     DefinitionJson = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Icon = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CategoryId = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CategoryName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    WhoCanStart = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    SpecifiedStarters = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    AdminType = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    SpecifiedAdmins = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CreationTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     LastModificationTime = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
