@@ -72,7 +72,7 @@
                         <a href="@($"/myapp/{app.Id}/pagemanager")" title="开发应用" target="_blank"><Icon Type="desktop" /></a>
                     </CardAction>
                     <CardAction>
-                        <a href="@(string.IsNullOrEmpty(app.SiteUrl) ? "#" : $"{app.SiteUrl}/{app.Id}/index")" title="访问应用" target="_blank"><Icon Type="global" /></a>
+                        <a href="@(string.IsNullOrEmpty(app.SiteUrl) ? "#" : $"{app.SiteUrl}/app/{app.Id}/index")" title="访问应用" target="_blank"><Icon Type="global" /></a>
                     </CardAction>
                     <CardAction>
                         <a onclick="@(() =>EditApp(app.Id))" title="编辑"><Icon Type="edit" /></a>

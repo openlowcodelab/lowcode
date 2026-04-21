@@ -14,9 +14,7 @@ namespace H.LowCode.Workbench;
     typeof(DesignEngineModule),
     typeof(MyAppModule),
     typeof(PartsDesignEngineModule),
-    typeof(LowCodeDefaultComponentModule),
-    //Contracts
-    typeof(DesignEngineApplicationContractsModule)
+    typeof(LowCodeDefaultComponentModule)
 )]
 public class LowCodeWorkbenchModule : AbpModule
 {

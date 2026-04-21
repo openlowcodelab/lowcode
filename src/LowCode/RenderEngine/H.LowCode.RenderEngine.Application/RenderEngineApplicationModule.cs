@@ -1,4 +1,5 @@
 using H.LowCode.Configuration;
+using H.LowCode.RenderEngine.Application.Contracts;
 using H.LowCode.RenderEngine.Domain;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.AutoMapper;
@@ -9,6 +10,7 @@ namespace H.LowCode.RenderEngine.Application;
 [DependsOn(
     //abp
     typeof(AbpAutoMapperModule),
+    typeof(RenderEngineApplicationContractsModule),
     //lowcode
     typeof(RenderEngineDomainModule)
     )]

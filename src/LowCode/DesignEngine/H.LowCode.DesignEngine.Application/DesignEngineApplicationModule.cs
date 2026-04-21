@@ -1,4 +1,5 @@
 using H.LowCode.Configuration;
+using H.LowCode.DesignEngine.Application.Contracts;
 using H.LowCode.DesignEngine.Domain;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Modularity;
@@ -6,6 +7,7 @@ using Volo.Abp.Modularity;
 namespace H.LowCode.DesignEngine.Application;
 
 [DependsOn(
+    typeof(DesignEngineApplicationContractsModule),
     typeof(DesignEngineDomainModule)
 )]
 public class DesignEngineApplicationModule : AbpModule

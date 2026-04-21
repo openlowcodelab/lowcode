@@ -1,5 +1,6 @@
 using H.Account.Application;
 using H.Admin.AppDrawer;
+using H.Approval.Application;
 using H.LowCode.Application;
 using H.LowCode.ComponentBase;
 using H.LowCode.DesignEngine.Application;
@@ -8,8 +9,9 @@ using H.LowCode.DesignEngine.Repository.JsonFile;
 using H.LowCode.RenderEngine.Application;
 using H.LowCode.RenderEngine.EntityFrameworkCore;
 using H.LowCode.RenderEngine.Repository.JsonFile;
+using H.LowCode.Themes.AntBlazor;
+using H.LowCode.Workbench;
 using H.Organization.Application;
-using H.Approval.Application;
 using Volo.Abp.AspNetCore.Mvc;
 using Volo.Abp.Autofac;
 using Volo.Abp.Modularity;
@@ -30,10 +32,12 @@ namespace H.LowCode.Host.All;
     // LowCode Common
     typeof(LowCodeApplicationModule),
     // DesignEngine
+    typeof(LowCodeWorkbenchModule),
     typeof(DesignEngineApplicationModule),
     typeof(DesignEngineEntityFrameworkCoreModule),
     typeof(DesignEngineJsonFileRepositoryModule),
     // RenderEngine
+    typeof(AntBlazorThemeModule),
     typeof(RenderEngineApplicationModule),
     typeof(RenderEngineEntityFrameworkCoreModule),
     typeof(RenderEngineJsonFileRepositoryModule),

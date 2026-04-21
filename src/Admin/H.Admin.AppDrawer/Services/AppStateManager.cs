@@ -103,7 +103,6 @@ public class AppStateManager
             "account" => GetAccountMenuItems(),
             "organization" => GetOrganizationMenuItems(),
             "design-engine" => GetDesignEngineMenuItems(),
-            "render-engine" => GetRenderEngineMenuItems(),
             "approval" => GetApprovalMenuItems(),
             _ => new List<AppMenuItem>()
         };
@@ -146,18 +145,6 @@ public class AppStateManager
         };
     }
 
-    /// <summary>
-    /// RenderEngine 应用菜单
-    /// </summary>
-    private List<AppMenuItem> GetRenderEngineMenuItems()
-    {
-        return new List<AppMenuItem>
-        {
-            new AppMenuItem { Name = "应用预览", Url = "/render", Icon = "👁️" },
-            new AppMenuItem { Name = "主题管理", Url = "/themes", Icon = "🎨" }
-        };
-    }
-    
     /// <summary>
     /// Approval 应用菜单
     /// </summary>

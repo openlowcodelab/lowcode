@@ -1,4 +1,4 @@
-@page "/{AppId}/{PageId}"
+@page "/app/{AppId}/{PageId}"
 @namespace H.LowCode.Themes.AntBlazor
 @inherits LowCodePageComponentBase
 @layout AntBlazorThemeLayout
@@ -70,7 +70,7 @@
 
     private void SetPageModel(PageSchema pageSchema)
     {
-        _pageCascadingModel.PageName = pageSchema.Name;
+        _pageCascadingModel.PageName = pageSchema.Name!;
         _pageCascadingModel.PageLayout = pageSchema.PageProperty.PageLayout;
     }
 

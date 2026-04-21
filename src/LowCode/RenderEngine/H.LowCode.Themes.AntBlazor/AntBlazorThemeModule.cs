@@ -1,15 +1,14 @@
-﻿using AntDesign.ProLayout;
-using H.LowCode.RenderEngine;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Linq;
-using System.Net.Http;
-using System.Text;
+﻿using H.LowCode.RenderEngine.Application.Contracts;
+using H.LowCode.RenderEngineBase;
 using Volo.Abp.Modularity;
 
 namespace H.LowCode.Themes.AntBlazor;
 
+[DependsOn(
+    typeof(RenderEngineBaseModule),
+    //Contracts
+    typeof(RenderEngineApplicationContractsModule)
+)]
 public class AntBlazorThemeModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
