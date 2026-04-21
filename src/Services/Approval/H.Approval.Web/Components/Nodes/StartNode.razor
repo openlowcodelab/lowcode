@@ -1,7 +1,7 @@
 @namespace H.Approval.Web
 
 @*开始节点*@
-<div class="node-wrap-box start-node">
+<div class="node-wrap-box start-node" @onclick="() => OnNodeClick.InvokeAsync(Node)" @onclick:stopPropagation>
     <div>
         <div class="title" style="background: rgb(87, 106, 149);">
             <span>发起人</span>
@@ -26,7 +26,7 @@
 @*递归渲染子节点*@
 @foreach(var childNode in Node.ChildNodes)
 {
-    <NodeWrap Node="@childNode" OnNodeTreeChanged="OnNodeTreeChanged" />
+    <NodeWrap Node="@childNode" OnNodeTreeChanged="OnNodeTreeChanged" OnNodeClick="OnNodeClick" OnDeleteNode="OnDeleteNode" />
 }
 
 @code {
@@ -38,4 +38,10 @@
     
     [Parameter]
     public EventCallback OnNodeTreeChanged { get; set; }
+    
+    [Parameter]
+    public EventCallback<NodeModelBase> OnNodeClick { get; set; }
+    
+    [Parameter]
+    public EventCallback<NodeModelBase> OnDeleteNode { get; set; }
 }

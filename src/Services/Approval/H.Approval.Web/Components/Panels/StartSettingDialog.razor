@@ -1,11 +1,87 @@
 @namespace H.Approval.Web
 
-@*开始节点设置面板*@
-<button class="add-branch" @onclick="()=>AddConditionNode()">添加条件</button>
+@*发起人设置面板*@
+<div class="setting-panel">
+    <div class="setting-section">
+        <div class="setting-label">谁可以发起</div>
+        <RadioGroup @bind-Value="@startTypeValue" TValue="int" OnChange="OnStartTypeChanged">
+            <Radio Value="0">全员可发起</Radio>
+            <Radio Value="1">指定成员</Radio>
+            <Radio Value="2">指定角色</Radio>
+        </RadioGroup>
+    </div>
+
+    @if (Node.StartType == StartTypeEnum.Specified)
+    {
+        <div class="setting-section">
+            <div class="setting-label">指定成员</div>
+            <div class="setting-hint">暂未集成人员选择器，请手动输入成员ID（逗号分隔）</div>
+            <TextArea Rows="3"
+                      Value="@specifiedUsersText"
+                      @oninput="OnSpecifiedUsersInput"
+                      Placeholder="请输入成员ID，多个用逗号分隔" />
+        </div>
+    }
+
+    @if (Node.StartType == StartTypeEnum.Role)
+    {
+        <div class="setting-section">
+            <div class="setting-label">指定角色</div>
+            <div class="setting-hint">暂未集成角色选择器，请手动输入角色ID（逗号分隔）</div>
+            <TextArea Rows="3"
+                      Value="@specifiedRolesText"
+                      @oninput="OnSpecifiedRolesInput"
+                      Placeholder="请输入角色ID，多个用逗号分隔" />
+        </div>
+    }
+
+    <div class="setting-actions">
+        <Button Type="@ButtonType.Primary" OnClick="SaveSettings">确 定</Button>
+    </div>
+</div>
 
 @code {
-    private void AddConditionNode()
+    [Parameter]
+    public StartNodeModel Node { get; set; } = null!;
+
+    [Parameter]
+    public EventCallback OnSave { get; set; }
+
+    private int startTypeValue;
+    private string specifiedUsersText = "";
+    private string specifiedRolesText = "";
+
+    protected override void OnParametersSet()
     {
-        
+        if (Node != null)
+        {
+            startTypeValue = (int)Node.StartType;
+            specifiedUsersText = string.Join(",", Node.SpecifiedUsers ?? new List<string>());
+            specifiedRolesText = string.Join(",", Node.SpecifiedRoles ?? new List<string>());
+        }
+    }
+
+    private void OnStartTypeChanged(int value)
+    {
+        Node.StartType = (StartTypeEnum)value;
+    }
+
+    private void OnSpecifiedUsersInput(ChangeEventArgs e)
+    {
+        specifiedUsersText = e.Value?.ToString() ?? "";
+        Node.SpecifiedUsers = specifiedUsersText.Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s)).ToList();
+    }
+
+    private void OnSpecifiedRolesInput(ChangeEventArgs e)
+    {
+        specifiedRolesText = e.Value?.ToString() ?? "";
+        Node.SpecifiedRoles = specifiedRolesText.Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s)).ToList();
+    }
+
+    private async Task SaveSettings()
+    {
+        await OnSave.InvokeAsync();
     }
 }

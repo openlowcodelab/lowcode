@@ -1,33 +1,31 @@
 @namespace H.Approval.Web
 
-@*审批人设置面板*@
+@*抄送人设置面板*@
 <div class="setting-panel">
     <div class="setting-section">
-        <div class="setting-label">审批人类型</div>
-        <RadioGroup @bind-Value="@approverTypeValue" TValue="int" OnChange="OnApproverTypeChanged">
+        <div class="setting-label">抄送人类型</div>
+        <RadioGroup @bind-Value="@ccTypeValue" TValue="int" OnChange="OnCcTypeChanged">
             <Radio Value="0">指定成员</Radio>
             <Radio Value="1">发起人自选</Radio>
-            <Radio Value="2">发起人本人</Radio>
-            <Radio Value="3">指定角色</Radio>
-            <Radio Value="4">部门主管</Radio>
+            <Radio Value="2">指定角色</Radio>
         </RadioGroup>
     </div>
 
-    @if (Node.ApproverType == ApproverTypeEnum.Specified || Node.ApproverType == ApproverTypeEnum.StarterSelect)
+    @if (Node.CarbonCopyType == CarbonCopyTypeEnum.Specified || Node.CarbonCopyType == CarbonCopyTypeEnum.StarterSelect)
     {
         <div class="setting-section">
             <div class="setting-label">
-                @(Node.ApproverType == ApproverTypeEnum.Specified ? "指定审批人" : "可选审批人范围")
+                @(Node.CarbonCopyType == CarbonCopyTypeEnum.Specified ? "指定抄送人" : "可选抄送人范围")
             </div>
             <div class="setting-hint">暂未集成人员选择器，请手动输入成员ID（逗号分隔）</div>
-            <TextArea Rows="3" 
+            <TextArea Rows="3"
                       Value="@specifiedUsersText"
                       @oninput="OnSpecifiedUsersInput"
                       Placeholder="请输入成员ID，多个用逗号分隔" />
         </div>
     }
 
-    @if (Node.ApproverType == ApproverTypeEnum.Role)
+    @if (Node.CarbonCopyType == CarbonCopyTypeEnum.Role)
     {
         <div class="setting-section">
             <div class="setting-label">指定角色</div>
@@ -39,24 +37,6 @@
         </div>
     }
 
-    <div class="setting-section">
-        <div class="setting-label">多人审批方式</div>
-        <RadioGroup @bind-Value="@approverModeValue" TValue="int" OnChange="OnApproverModeChanged">
-            <Radio Value="0">
-                <span>依次审批</span>
-                <span class="radio-desc">按顺序依次审批</span>
-            </Radio>
-            <Radio Value="1">
-                <span>会签</span>
-                <span class="radio-desc">需所有审批人同意</span>
-            </Radio>
-            <Radio Value="2">
-                <span>或签</span>
-                <span class="radio-desc">其中一人同意即可</span>
-            </Radio>
-        </RadioGroup>
-    </div>
-
     <div class="setting-actions">
         <Button Type="@ButtonType.Primary" OnClick="SaveSettings">确 定</Button>
     </div>
@@ -64,13 +44,12 @@
 
 @code {
     [Parameter]
-    public ApproveModel Node { get; set; } = null!;
+    public CarbonCopyModel Node { get; set; } = null!;
 
     [Parameter]
     public EventCallback OnSave { get; set; }
 
-    private int approverTypeValue;
-    private int approverModeValue;
+    private int ccTypeValue;
     private string specifiedUsersText = "";
     private string specifiedRolesText = "";
 
@@ -78,21 +57,15 @@
     {
         if (Node != null)
         {
-            approverTypeValue = (int)Node.ApproverType;
-            approverModeValue = (int)Node.ApproverMode;
+            ccTypeValue = (int)Node.CarbonCopyType;
             specifiedUsersText = string.Join(",", Node.SpecifiedUsers ?? new List<string>());
             specifiedRolesText = string.Join(",", Node.SpecifiedRoles ?? new List<string>());
         }
     }
 
-    private void OnApproverTypeChanged(int value)
+    private void OnCcTypeChanged(int value)
     {
-        Node.ApproverType = (ApproverTypeEnum)value;
-    }
-
-    private void OnApproverModeChanged(int value)
-    {
-        Node.ApproverMode = (ApproverModeEnum)value;
+        Node.CarbonCopyType = (CarbonCopyTypeEnum)value;
     }
 
     private void OnSpecifiedUsersInput(ChangeEventArgs e)

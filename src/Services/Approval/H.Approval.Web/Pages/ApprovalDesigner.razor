@@ -24,7 +24,7 @@ else
     {
         <div class="flow-design-container">
             <div class="flow-design-canvas" style="transform: scale(@(ZoomLevel / 100.0)); transform-origin: center top;">
-                <NodeWrap Node="@RootNode" OnNodeTreeChanged="OnNodeTreeChanged" />
+                <NodeWrap Node="@RootNode" OnNodeTreeChanged="OnNodeTreeChanged" OnNodeClick="OnNodeClick" OnDeleteNode="OnDeleteNode" />
                 <EndNode />
             </div>
             
@@ -34,6 +34,28 @@ else
                 <button class="zoom-btn" @onclick="ZoomIn" disabled="@(ZoomLevel >= 150)">+</button>
             </div>
         </div>
+        
+        @* 节点设置抽屉 *@
+        <Drawer Title="@settingDrawerTitle"
+                Visible="@isSettingDrawerVisible"
+                Width="480"
+                OnClose="CloseSettingDrawer">
+            @if (editingNode != null)
+            {
+                @if (editingNode.NodeType == NodeTypeEnum.Start)
+                {
+                    <StartSettingDialog Node="@((StartNodeModel)editingNode)" OnSave="OnNodeSettingSaved" />
+                }
+                else if (editingNode.NodeType == NodeTypeEnum.Approve)
+                {
+                    <ApproverSettingDialog Node="@((ApproveModel)editingNode)" OnSave="OnNodeSettingSaved" />
+                }
+                else if (editingNode.NodeType == NodeTypeEnum.CarbonCopy)
+                {
+                    <CarbonCopySettingDialog Node="@((CarbonCopyModel)editingNode)" OnSave="OnNodeSettingSaved" />
+                }
+            }
+        </Drawer>
     }
 }
 
@@ -52,13 +74,20 @@ else
     /// </summary>
     public NodeModelBase RootNode { get; set; } = null!;
     
+    // 节点设置抽屉状态
+    private bool isSettingDrawerVisible = false;
+    private string settingDrawerTitle = "";
+    private NodeModelBase? editingNode = null;
+    private bool isNewDefinition = false;
+    
     protected override async Task OnInitializedAsync()
     {
         InitDefaultNodeTree();
+        isNewDefinition = ApprovalId == "_new";
         
         try
         {
-            if (ApprovalId == "_new")
+            if (isNewDefinition)
             {
                 definition = new ApprovalDefinitionDto
                 {
@@ -74,9 +103,14 @@ else
                 definition = await ApprovalDefinitionAppService.GetByIdAsync(ApprovalId);
             }
             
+            // 从json反序列化节点树
             if (definition != null && !string.IsNullOrEmpty(definition.DefinitionJson) && definition.DefinitionJson != "{}")
             {
-                // TODO: 从json反序列化节点树
+                var node = NodeSerializer.Deserialize(definition.DefinitionJson);
+                if (node != null)
+                {
+                    RootNode = node;
+                }
             }
         }
         catch (Exception ex)
@@ -91,10 +125,12 @@ else
         {
             DesignerLayout.OnTabChanged += OnTabChanged;
             DesignerLayout.OnPublishRequested += OnPublishAsync;
+            DesignerLayout.OnSaveRequested += OnSaveDraftAsync;
             
             if (definition != null)
             {
                 DesignerLayout.UpdateHeader(definition.Icon, definition.Name);
+                DesignerLayout.UpdateStatus(isNewDefinition ? "草稿" : (definition.IsEnabled ? "已发布" : "草稿"));
             }
         }
     }
@@ -157,6 +193,67 @@ else
         StateHasChanged();
     }
     
+    /// <summary>
+    /// 节点删除事件：遍历树找到父节点，移除目标节点并将其子节点提升
+    /// </summary>
+    private void OnDeleteNode(NodeModelBase nodeToDelete)
+    {
+        if (RemoveNodeFromTree(RootNode, nodeToDelete))
+        {
+            StateHasChanged();
+        }
+    }
+    
+    private bool RemoveNodeFromTree(NodeModelBase parent, NodeModelBase target)
+    {
+        var index = parent.ChildNodes.IndexOf(target);
+        if (index >= 0)
+        {
+            parent.ChildNodes.RemoveAt(index);
+            parent.ChildNodes.InsertRange(index, target.ChildNodes);
+            return true;
+        }
+        foreach (var child in parent.ChildNodes)
+        {
+            if (RemoveNodeFromTree(child, target)) return true;
+        }
+        foreach (var cond in parent.ConditionNodes)
+        {
+            if (RemoveNodeFromTree(cond, target)) return true;
+        }
+        return false;
+    }
+    
+    /// <summary>
+    /// 节点点击事件，打开设置面板
+    /// </summary>
+    private void OnNodeClick(NodeModelBase node)
+    {
+        editingNode = node;
+        settingDrawerTitle = node.NodeType switch
+        {
+            NodeTypeEnum.Start => "发起人设置",
+            NodeTypeEnum.Approve => "审批人设置",
+            NodeTypeEnum.CarbonCopy => "抄送人设置",
+            _ => "节点设置"
+        };
+        isSettingDrawerVisible = true;
+        StateHasChanged();
+    }
+    
+    private void CloseSettingDrawer()
+    {
+        isSettingDrawerVisible = false;
+        editingNode = null;
+    }
+    
+    private void OnNodeSettingSaved()
+    {
+        isSettingDrawerVisible = false;
+        editingNode = null;
+        StateHasChanged();
+    }
+    
     private void ZoomIn()
     {
         if (ZoomLevel < 150)
@@ -173,21 +270,28 @@ else
         }
     }
     
-    private async Task OnPublishAsync()
+    /// <summary>
+    /// 构建保存用的DTO
+    /// </summary>
+    private string BuildDefinitionJson()
     {
-        if (definition == null)
-        {
-            Message.Error("审批定义未加载");
-            return;
-        }
+        return NodeSerializer.Serialize(RootNode);
+    }
+    
+    /// <summary>
+    /// 保存草稿
+    /// </summary>
+    private async Task OnSaveDraftAsync()
+    {
+        if (definition == null) return;
         
         try
         {
-            var json = System.Text.Json.JsonSerializer.Serialize(RootNode);
+            var json = BuildDefinitionJson();
             
-            if (ApprovalId == "_new")
+            if (isNewDefinition)
             {
-                await ApprovalDefinitionAppService.CreateAsync(new CreateApprovalDefinitionDto
+                var result = await ApprovalDefinitionAppService.CreateAsync(new CreateApprovalDefinitionDto
                 {
                     Name = definition.Name,
                     Description = definition.Description,
@@ -200,6 +304,11 @@ else
                     SpecifiedAdmins = definition.SpecifiedAdmins,
                     DefinitionJson = json
                 });
+                
+                // 保存后切换为编辑模式
+                isNewDefinition = false;
+                ApprovalId = result.Id;
+                definition.Id = result.Id;
             }
             else
             {
@@ -219,6 +328,68 @@ else
                 });
             }
             
+            Message.Success("保存成功");
+            DesignerLayout?.UpdateStatus("草稿");
+        }
+        catch (Exception ex)
+        {
+            Message.Error($"保存失败: {ex.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// 发布审批
+    /// </summary>
+    private async Task OnPublishAsync()
+    {
+        if (definition == null)
+        {
+            Message.Error("审批定义未加载");
+            return;
+        }
+        
+        try
+        {
+            var json = BuildDefinitionJson();
+            
+            if (isNewDefinition)
+            {
+                var result = await ApprovalDefinitionAppService.CreateAsync(new CreateApprovalDefinitionDto
+                {
+                    Name = definition.Name,
+                    Description = definition.Description,
+                    Icon = definition.Icon,
+                    CategoryId = definition.CategoryId,
+                    CategoryName = definition.CategoryName,
+                    WhoCanStart = definition.WhoCanStart,
+                    SpecifiedStarters = definition.SpecifiedStarters,
+                    AdminType = definition.AdminType,
+                    SpecifiedAdmins = definition.SpecifiedAdmins,
+                    DefinitionJson = json
+                });
+                ApprovalId = result.Id;
+            }
+            else
+            {
+                await ApprovalDefinitionAppService.UpdateAsync(new UpdateApprovalDefinitionDto
+                {
+                    Id = ApprovalId,
+                    Name = definition.Name,
+                    Description = definition.Description,
+                    Icon = definition.Icon,
+                    CategoryId = definition.CategoryId,
+                    CategoryName = definition.CategoryName,
+                    WhoCanStart = definition.WhoCanStart,
+                    SpecifiedStarters = definition.SpecifiedStarters,
+                    AdminType = definition.AdminType,
+                    SpecifiedAdmins = definition.SpecifiedAdmins,
+                    DefinitionJson = json
+                });
+            }
+            
+            // 启用审批定义
+            await ApprovalDefinitionAppService.ToggleEnabledAsync(ApprovalId, true);
+            
             Message.Success("发布成功");
             Nav.NavigateTo("/approval/management");
         }
@@ -234,6 +405,7 @@ else
         {
             DesignerLayout.OnTabChanged -= OnTabChanged;
             DesignerLayout.OnPublishRequested -= OnPublishAsync;
+            DesignerLayout.OnSaveRequested -= OnSaveDraftAsync;
         }
     }
 }
