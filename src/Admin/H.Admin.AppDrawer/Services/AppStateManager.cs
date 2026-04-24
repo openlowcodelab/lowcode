@@ -58,6 +58,13 @@ public class AppStateManager
                         Icon = "✅",
                         Url = "/approval",
                         Target = "_self"
+                    },
+                    new() {
+                        Id = "autotest",
+                        Name = "自动化测试",
+                        Icon = "🧪",
+                        Url = "/autotest",
+                        Target = "_self"
                     }
                 ]
             },
@@ -89,6 +96,7 @@ public class AppStateManager
             "design-engine" => "design-menu",
             "render-engine" => "render-menu",
             "approval" => "approval-menu",
+            "autotest" => "autotest-menu",
             _ => "portal-menu"
         };
     }
@@ -104,6 +112,7 @@ public class AppStateManager
             "organization" => GetOrganizationMenuItems(),
             "design-engine" => GetDesignEngineMenuItems(),
             "approval" => GetApprovalMenuItems(),
+            "autotest" => GetAutoTestMenuItems(),
             _ => new List<AppMenuItem>()
         };
     }
@@ -157,6 +166,19 @@ public class AppStateManager
             new AppMenuItem { Name = "我发起的", Url = "/approval/my", Icon = "📤" },
             new AppMenuItem { Name = "待我审批", Url = "/approval/pending", Icon = "⏳" },
             new AppMenuItem { Name = "审批管理", Url = "/approval/management", Icon = "⚙️" }
+        };
+    }
+
+    /// <summary>
+    /// AutoTest 应用菜单
+    /// </summary>
+    private List<AppMenuItem> GetAutoTestMenuItems()
+    {
+        return new List<AppMenuItem>
+        {
+            new AppMenuItem { Name = "首页", Url = "/autotest", Icon = "🏠" },
+            new AppMenuItem { Name = "项目管理", Url = "/autotest/projects", Icon = "📁" },
+            new AppMenuItem { Name = "测试用例", Url = "/autotest/project-cases", Icon = "📋" }
         };
     }
 }

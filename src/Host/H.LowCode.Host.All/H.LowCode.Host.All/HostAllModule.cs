@@ -1,6 +1,7 @@
 using H.Account.Application;
 using H.Admin.AppDrawer;
 using H.Approval.Application;
+using H.AutoTest.Application;
 using H.LowCode.Application;
 using H.LowCode.ComponentBase;
 using H.LowCode.DesignEngine.Application;
@@ -42,7 +43,9 @@ namespace H.LowCode.Host.All;
     typeof(RenderEngineEntityFrameworkCoreModule),
     typeof(RenderEngineJsonFileRepositoryModule),
     // Approval
-    typeof(ApprovalApplicationModule)
+    typeof(ApprovalApplicationModule),
+    // AutoTest
+    typeof(AutoTestApplicationModule)
 )]
 public class HostAllModule : AbpModule
 {
@@ -71,6 +74,7 @@ public class HostAllModule : AbpModule
             options.ConventionalControllers.Create(typeof(DesignEngineApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(RenderEngineApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(ApprovalApplicationModule).Assembly);
+            options.ConventionalControllers.Create(typeof(AutoTestApplicationModule).Assembly);
         });
     }
 }

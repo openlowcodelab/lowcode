@@ -1,6 +1,7 @@
 using H.Account.Application.Contracts;
 using H.Admin.AppDrawer;
 using H.Approval.Application.Contracts;
+using H.AutoTest.Application.Contracts;
 using H.LowCode.ComponentBase;
 using H.LowCode.DesignEngine.Application.Contracts;
 using H.LowCode.RenderEngine.Application.Contracts;
@@ -31,6 +32,7 @@ public class HostAllClientModule : AbpModule
     public const string AccountRemoteServiceName = "Account";
     public const string OrganizationRemoteServiceName = "Organization";
     public const string ApprovalRemoteServiceName = "Approval";
+    public const string AutoTestRemoteServiceName = "AutoTest";
 
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
@@ -84,6 +86,11 @@ public class HostAllClientModule : AbpModule
         context.Services.AddHttpClientProxies(
             typeof(ApprovalApplicationContractsModule).Assembly,
             ApprovalRemoteServiceName
+        );
+
+        context.Services.AddHttpClientProxies(
+            typeof(AutoTestApplicationContractsModule).Assembly,
+            AutoTestRemoteServiceName
         );
     }
 }

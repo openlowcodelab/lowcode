@@ -1,0 +1,805 @@
+@page "/autotest/projects"
+
+@namespace H.AutoTest.Web
+@layout AutoTestLayout
+
+@inject IProjectAppService ProjectService
+@inject IProjectEnvironmentAppService ProjectEnvironmentService
+@inject IProjectServiceConfigAppService ProjectServiceConfigService
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+
+<PageTitle>项目管理</PageTitle>
+
+<style>
+    .environment-item-selected {
+        font-weight: 500;
+        border-left: 3px solid #0d6efd !important;
+    }
+</style>
+
+<!-- 搜索、筛选和操作按钮 -->
+<div class="row mb-3">
+    <div class="col-md-4">
+        <div class="input-group">
+            <input type="text" class="form-control" placeholder="搜索项目..." @bind="searchTerm" @oninput="OnSearchChanged">
+            <button class="btn btn-outline-secondary" type="button" @onclick="SearchProjects">
+                <i class="oi oi-magnifying-glass"></i>
+            </button>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <select class="form-select" value="@selectedStatus" @onchange="FilterByStatus">
+            <option value="">全部状态</option>
+            <option value="1">活跃</option>
+            <option value="2">未激活</option>
+            <option value="3">已完成</option>
+            <option value="4">已取消</option>
+            <option value="5">暂停</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <button class="btn btn-primary" @onclick="ShowAddProjectModal">
+            <i class="oi oi-plus"></i> 新建项目
+        </button>
+    </div>
+</div>
+
+<!-- 项目列表 -->
+@if (loading)
+{
+    <div class="text-center">
+        <div class="spinner-border" role="status"><span class="visually-hidden">加载中...</span></div>
+    </div>
+}
+else if (filteredProjects.Any())
+{
+    <div class="row">
+        @foreach (var project in filteredProjects)
+        {
+            <div class="col-lg-6 col-xl-4 mb-4">
+                <div class="card h-100" @onclick="async () => await NavigateToProjectCases(project.Id)" style="cursor: pointer;">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">@project.Name</h5>
+                        <span class="badge @GetStatusBadgeClass(project.Status)">@GetStatusDisplayName(project.Status)</span>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">@project.Description</p>
+                        <div class="mb-3">
+                            <small class="text-muted"><strong>环境数量：</strong> @GetProjectEnvironments(project.Id).Count 个</small>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="btn-group flex-fill me-2">
+                                <button class="btn btn-outline-info btn-sm" @onclick="() => ManageProjectServices(project)" @onclick:stopPropagation="true">
+                                    <i class="oi oi-cog"></i> 服务
+                                </button>
+                                <button class="btn btn-outline-warning btn-sm" @onclick="async () => await ManageEnvironments(project)" @onclick:stopPropagation="true">
+                                    <i class="oi oi-globe"></i> 环境
+                                </button>
+                                <button class="btn btn-outline-primary btn-sm" @onclick="async () => await NavigateToProjectCases(project.Id)" @onclick:stopPropagation="true">
+                                    <i class="oi oi-list-rich"></i> 用例
+                                </button>
+                            </div>
+                            <div class="dropdown">
+                                <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" @onclick:stopPropagation="true">
+                                    <i class="oi oi-ellipses"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="#" @onclick="() => ShowEditProjectModal(project)" @onclick:preventDefault="true" @onclick:stopPropagation="true"><i class="oi oi-pencil me-2"></i>编辑</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item text-danger" href="#" @onclick="() => DeleteProject(project.Id)" @onclick:preventDefault="true" @onclick:stopPropagation="true"><i class="oi oi-trash me-2"></i>删除</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="alert alert-info text-center"><i class="oi oi-info"></i> 暂无项目数据</div>
+}
+
+<!-- 项目添加/编辑模态框 -->
+@if (showProjectModal)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(isEditingProject ? "编辑项目" : "新建项目")</h5>
+                    <button type="button" class="btn-close" @onclick="HideProjectModal"></button>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="currentProject" OnValidSubmit="SaveProject">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="text-danger" />
+                        <div class="mb-3 row">
+                            <label class="col-sm-2 col-form-label">项目标识 <span class="text-danger">*</span></label>
+                            <div class="col-sm-10">
+                                <div class="input-group">
+                                    <InputText class="form-control" @bind-Value="currentProject.Id" placeholder="留空自动生成" disabled="@isEditingProject" />
+                                    @if (!isEditingProject)
+                                    {
+                                        <button class="btn btn-outline-secondary" type="button" @onclick="GenerateProjectId"><i class="oi oi-reload"></i></button>
+                                    }
+                                </div>
+                                <ValidationMessage For="() => currentProject.Id" />
+                                <small class="form-text text-muted">只能包含字母、数字、下划线，以字母开头，长度3-12</small>
+                            </div>
+                        </div>
+                        <div class="mb-3 row">
+                            <label class="col-sm-2 col-form-label">项目名称 <span class="text-danger">*</span></label>
+                            <div class="col-sm-10">
+                                <InputText class="form-control" @bind-Value="currentProject.Name" />
+                                <ValidationMessage For="() => currentProject.Name" />
+                            </div>
+                        </div>
+                        <div class="mb-3 row">
+                            <label class="col-sm-2 col-form-label">项目描述</label>
+                            <div class="col-sm-10">
+                                <InputTextArea class="form-control" rows="3" @bind-Value="currentProject.Description" />
+                            </div>
+                        </div>
+                        <div class="mb-3 row">
+                            <label class="col-sm-2 col-form-label">状态</label>
+                            <div class="col-sm-10">
+                                <InputSelect class="form-select" @bind-Value="currentProject.Status">
+                                    <option value="@ProjectStatus.Active">活跃</option>
+                                    <option value="@ProjectStatus.Inactive">未激活</option>
+                                    <option value="@ProjectStatus.Completed">已完成</option>
+                                    <option value="@ProjectStatus.Cancelled">已取消</option>
+                                    <option value="@ProjectStatus.OnHold">暂停</option>
+                                </InputSelect>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" @onclick="HideProjectModal">取消</button>
+                            <button type="submit" class="btn btn-primary">@(isEditingProject ? "更新" : "保存")</button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- 环境管理模态框 -->
+@if (showEnvironmentModal)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">环境管理 - @selectedProject?.Name</h5>
+                    <button type="button" class="btn-close" @onclick="HideEnvironmentModal"></button>
+                </div>
+                <div class="modal-body p-0" style="min-height: 600px;">
+                    <div class="d-flex" style="min-height: 600px;">
+                        <div class="bg-light border-end" style="width: 300px;">
+                            <div class="p-3 h-100">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="mb-0">环境列表</h6>
+                                    <button class="btn btn-primary btn-sm" @onclick="ShowAddEnvironmentModal"><i class="oi oi-plus"></i></button>
+                                </div>
+                                <div class="list-group">
+                                    @if (projectEnvironments.Any())
+                                    {
+                                        @foreach (var env in projectEnvironments)
+                                        {
+                                            <button class="list-group-item list-group-item-action @(selectedEnvironment?.Id == env.Id ? "active bg-primary text-white environment-item-selected" : "")" @onclick="() => SelectEnvironment(env)">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="flex-grow-1 text-truncate">
+                                                        <div class="fw-bold text-truncate">@env.Name</div>
+                                                        <small class="@(selectedEnvironment?.Id == env.Id ? "text-white-50" : "text-muted")">@GetEnvironmentTypeDisplayName(env.Type)</small>
+                                                    </div>
+                                                    <div class="dropdown">
+                                                        <button class="btn btn-link btn-sm p-0 @(selectedEnvironment?.Id == env.Id ? "text-white" : "text-muted") dropdown-toggle" data-bs-toggle="dropdown" @onclick:stopPropagation="true"><i class="oi oi-ellipses"></i></button>
+                                                        <ul class="dropdown-menu dropdown-menu-end">
+                                                            <li><a class="dropdown-item" href="#" @onclick="() => EditEnvironment(env)" @onclick:preventDefault="true"><i class="oi oi-pencil me-2"></i>编辑</a></li>
+                                                            <li><a class="dropdown-item text-danger" href="#" @onclick="() => DeleteEnvironment(env.Id)" @onclick:preventDefault="true"><i class="oi oi-trash me-2"></i>删除</a></li>
+                                                        </ul>
+                                                    </div>
+                                                </div>
+                                            </button>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <div class="text-center text-muted py-5">
+                                            <p>暂无环境</p>
+                                            <button class="btn btn-outline-primary btn-sm" @onclick="ShowAddEnvironmentModal"><i class="oi oi-plus me-1"></i>添加环境</button>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            @if (selectedEnvironment != null)
+                            {
+                                <div class="p-4">
+                                    <div class="card mb-4">
+                                        <div class="card-header"><h6 class="mb-0">服务配置</h6></div>
+                                        <div class="card-body">
+                                            @if (serviceConfigViews.Any())
+                                            {
+                                                <table class="table table-sm mb-0">
+                                                    <thead><tr><th>服务名称</th><th>基础URL</th><th>操作</th></tr></thead>
+                                                    <tbody>
+                                                        @foreach (var config in serviceConfigViews)
+                                                        {
+                                                            <tr>
+                                                                <td><strong>@config.ProjectService.Name</strong></td>
+                                                                <td><span class="text-primary">@config.EnvironmentConfig?.BaseUrl</span></td>
+                                                                <td>
+                                                                    @if (config.EnvironmentConfig != null)
+                                                                    {
+                                                                        <button class="btn btn-outline-primary btn-sm me-1" @onclick="() => EditServiceConfig(config.EnvironmentConfig)"><i class="oi oi-pencil"></i></button>
+                                                                        <button class="btn btn-outline-danger btn-sm" @onclick="() => DeleteServiceConfig(config.EnvironmentConfig.Id)"><i class="oi oi-trash"></i></button>
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <button class="btn btn-outline-success btn-sm" @onclick="() => AddServiceConfig(config.ProjectService)"><i class="oi oi-plus"></i> 配置</button>
+                                                                    }
+                                                                </td>
+                                                            </tr>
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            }
+                                            else { <div class="text-center text-muted py-3">暂无服务配置</div> }
+                                        </div>
+                                    </div>
+                                    <div class="card">
+                                        <div class="card-header d-flex justify-content-between align-items-center">
+                                            <h6 class="mb-0">环境变量</h6>
+                                            <button class="btn btn-outline-success btn-sm" @onclick="ShowAddVariableModal"><i class="oi oi-plus"></i> 添加变量</button>
+                                        </div>
+                                        <div class="card-body">
+                                            @if (selectedEnvironment.Variables.Any())
+                                            {
+                                                <table class="table table-sm mb-0">
+                                                    <thead><tr><th>变量名</th><th>变量值</th><th>说明</th><th>操作</th></tr></thead>
+                                                    <tbody>
+                                                        @foreach (var variable in selectedEnvironment.Variables)
+                                                        {
+                                                            <tr>
+                                                                <td><strong>@variable.Key</strong></td>
+                                                                <td><span class="text-primary">@variable.Value</span></td>
+                                                                <td><small class="text-muted">-</small></td>
+                                                                <td>
+                                                                    <div class="btn-group btn-group-sm">
+                                                                        <button class="btn btn-outline-secondary" @onclick="() => EditVariable(variable.Key, variable.Value)"><i class="oi oi-pencil"></i></button>
+                                                                        <button class="btn btn-outline-danger" @onclick="() => DeleteVariable(variable.Key)"><i class="oi oi-trash"></i></button>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            }
+                                            else { <div class="text-center text-muted py-3">暂无环境变量</div> }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="d-flex align-items-center justify-content-center" style="min-height: 600px;">
+                                    <div class="text-center text-muted">
+                                        <h4 class="mt-4 mb-3">选择一个环境</h4>
+                                        <p>请从左侧列表中选择一个环境来查看详情</p>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="HideEnvironmentModal">关闭</button>
+                    @if (selectedEnvironment != null)
+                    {
+                        <button type="button" class="btn btn-success" @onclick="SaveEnvironmentChanges">保存更改</button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- 添加环境模态框 -->
+@if (showAddEnvironmentModal)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">新建环境</h5>
+                    <button type="button" class="btn-close" @onclick="HideAddEnvironmentModal"></button>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="currentEnvironment" OnValidSubmit="SaveEnvironment">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary class="text-danger" />
+                        <div class="mb-3 row">
+                            <label class="col-sm-3 col-form-label">环境名称 <span class="text-danger">*</span></label>
+                            <div class="col-sm-9">
+                                <InputText class="form-control" @bind-Value="currentEnvironment.Name" />
+                                <ValidationMessage For="() => currentEnvironment.Name" />
+                            </div>
+                        </div>
+                        <div class="mb-3 row">
+                            <label class="col-sm-3 col-form-label">环境类型</label>
+                            <div class="col-sm-9">
+                                <InputSelect class="form-select" @bind-Value="currentEnvironment.Type">
+                                    <option value="@EnvironmentType.Development">开发环境</option>
+                                    <option value="@EnvironmentType.Testing">项目环境</option>
+                                    <option value="@EnvironmentType.Staging">预发环境</option>
+                                    <option value="@EnvironmentType.Production">生产环境</option>
+                                </InputSelect>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" @onclick="HideAddEnvironmentModal">取消</button>
+                            <button type="submit" class="btn btn-primary">保存</button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- 添加变量模态框 -->
+@if (showAddVariableModal)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.7);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">添加环境变量</h5>
+                    <button type="button" class="btn-close" @onclick="HideAddVariableModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">变量名 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" @bind="newVariableName" placeholder="请输入变量名" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">变量值 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" @bind="newVariableValue" placeholder="请输入变量值" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="HideAddVariableModal">取消</button>
+                    <button type="button" class="btn btn-success" @onclick="SaveNewVariable">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- 编辑变量模态框 -->
+@if (showEditVariableModal)
+{
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.7);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">编辑环境变量</h5>
+                    <button type="button" class="btn-close" @onclick="HideEditVariableModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">变量名</label>
+                        <input type="text" class="form-control" @bind="editVariableName" readonly />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">变量值 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" @bind="editVariableValue" placeholder="请输入变量值" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="HideEditVariableModal">取消</button>
+                    <button type="button" class="btn btn-primary" @onclick="SaveEditVariable">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- 项目服务管理模态框 -->
+@if (showProjectServiceManagementModal && selectedProjectForServices != null)
+{
+    <div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.5);" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@selectedProjectForServices.Name - 服务管理</h5>
+                    <button type="button" class="btn-close" @onclick="HideProjectServiceManagementModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="mb-0">项目服务列表</h6>
+                        <button class="btn btn-primary btn-sm" @onclick="ShowAddProjectServiceModal"><i class="fas fa-plus"></i> 添加服务</button>
+                    </div>
+                    @if (projectServices.Any())
+                    {
+                        <table class="table table-hover">
+                            <thead><tr><th>服务名称</th><th>创建时间</th><th>操作</th></tr></thead>
+                            <tbody>
+                                @foreach (var service in projectServices)
+                                {
+                                    <tr>
+                                        <td><div><strong>@service.Name</strong>@if (!string.IsNullOrEmpty(service.Description)) { <br><small class="text-muted">@service.Description</small> }</div></td>
+                                        <td>@service.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => EditProjectService(service)"><i class="oi oi-pencil"></i></button>
+                                            <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteProjectService(service.Id)"><i class="oi oi-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <p class="text-muted">暂无服务配置</p>
+                            <button class="btn btn-primary" @onclick="ShowAddProjectServiceModal"><i class="fas fa-plus"></i> 添加第一个服务</button>
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @onclick="HideProjectServiceManagementModal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- 项目服务添加/编辑模态框 -->
+@if (showProjectServiceModal)
+{
+    <div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.5);" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(isEditingProjectService ? "编辑" : "添加")项目服务</h5>
+                    <button type="button" class="btn-close" @onclick="HideProjectServiceModal"></button>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="currentProjectService" OnValidSubmit="SaveProjectService">
+                        <DataAnnotationsValidator />
+                        <div class="mb-3 row">
+                            <label class="col-sm-3 col-form-label">服务名称 *</label>
+                            <div class="col-sm-9">
+                                <InputText class="form-control" @bind-Value="currentProjectService.Name" placeholder="请输入服务名称" />
+                                <ValidationMessage For="() => currentProjectService.Name" />
+                            </div>
+                        </div>
+                        <div class="mb-3 row">
+                            <label class="col-sm-3 col-form-label">服务描述</label>
+                            <div class="col-sm-9">
+                                <InputTextArea class="form-control" @bind-Value="currentProjectService.Description" placeholder="请输入服务描述" rows="3" />
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" @onclick="HideProjectServiceModal">取消</button>
+                            <button type="submit" class="btn btn-primary">@(isEditingProjectService ? "更新" : "保存")</button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- 环境服务配置添加/编辑模态框 -->
+@if (showServiceConfigModal)
+{
+    <div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.5);" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(isEditingServiceConfig ? "编辑" : "添加")服务配置</h5>
+                    <button type="button" class="btn-close" @onclick="HideServiceConfigModal"></button>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="currentServiceConfig" OnValidSubmit="SaveServiceConfig">
+                        <DataAnnotationsValidator />
+                        <div class="mb-3 row">
+                            <label class="col-sm-3 col-form-label">基础URL *</label>
+                            <div class="col-sm-9">
+                                <InputText class="form-control" @bind-Value="currentServiceConfig.BaseUrl" placeholder="请输入基础URL" />
+                                <ValidationMessage For="() => currentServiceConfig.BaseUrl" />
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-secondary" @onclick="HideServiceConfigModal">取消</button>
+                            <button type="submit" class="btn btn-primary">@(isEditingServiceConfig ? "更新" : "添加")</button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<ProjectDto> projects = new();
+    private List<ProjectDto> filteredProjects = new();
+    private List<ProjectEnvironmentDto> environments = new();
+    private List<ProjectEnvironmentDto> projectEnvironments = new();
+    private ProjectDto currentProject = new();
+    private ProjectEnvironmentDto currentEnvironment = new();
+    private ProjectEnvironmentDto? selectedEnvironment;
+    private ProjectDto? selectedProject;
+    private bool loading = true;
+    private bool showProjectModal = false;
+    private bool showEnvironmentModal = false;
+    private bool showAddEnvironmentModal = false;
+    private bool showAddVariableModal = false;
+    private bool showEditVariableModal = false;
+    private bool showProjectServiceModal = false;
+    private bool showProjectServiceManagementModal = false;
+    private bool isEditingProject = false;
+    private bool isEditingProjectService = false;
+    private string searchTerm = "";
+    private string selectedStatus = "";
+    private string newVariableName = "";
+    private string newVariableValue = "";
+    private string editVariableName = "";
+    private string editVariableValue = "";
+    private List<ProjectServiceDto> projectServices = new();
+    private List<ServiceConfigView> serviceConfigViews = new();
+    private ProjectServiceDto currentProjectService = new();
+    private ProjectDto? selectedProjectForServices;
+    private EnvironmentServiceConfigDto currentServiceConfig = new();
+    private bool showServiceConfigModal = false;
+    private bool isEditingServiceConfig = false;
+
+    protected override async Task OnInitializedAsync() { await LoadData(); }
+
+    private async Task LoadData()
+    {
+        loading = true;
+        projects = await ProjectService.GetAllAsync();
+        environments = await ProjectEnvironmentService.GetAllAsync();
+        filteredProjects = projects.ToList();
+        loading = false;
+        StateHasChanged();
+    }
+
+    private List<ProjectEnvironmentDto> GetProjectEnvironments(string projectId) => environments.Where(e => e.ProjectId == projectId).ToList();
+
+    private void ShowAddProjectModal() { currentProject = new ProjectDto(); isEditingProject = false; showProjectModal = true; }
+
+    private void ShowEditProjectModal(ProjectDto project)
+    {
+        currentProject = new ProjectDto { Id = project.Id, Name = project.Name, Description = project.Description, Status = project.Status, Metadata = new Dictionary<string, object>(project.Metadata), CreatedAt = project.CreatedAt, CreatedBy = project.CreatedBy };
+        isEditingProject = true;
+        showProjectModal = true;
+    }
+
+    private void HideProjectModal() { showProjectModal = false; currentProject = new ProjectDto(); }
+
+    private async Task GenerateProjectId() { currentProject.Id = await ProjectService.GenerateUniqueIdAsync(); }
+
+    private async Task SaveProject()
+    {
+        try
+        {
+            if (isEditingProject) await ProjectService.UpdateAsync(currentProject.Id, currentProject);
+            else await ProjectService.CreateProjectAsync(currentProject);
+            HideProjectModal();
+            await LoadData();
+        }
+        catch (InvalidOperationException ex) { await JSRuntime.InvokeVoidAsync("alert", ex.Message); }
+        catch (Exception ex) { await JSRuntime.InvokeVoidAsync("alert", $"保存项目时发生错误: {ex.Message}"); }
+    }
+
+    private async Task DeleteProject(string id)
+    {
+        if (await JSRuntime.InvokeAsync<bool>("confirm", "确定要删除此项目吗？"))
+        {
+            await ProjectService.DeleteAsync(id);
+            await LoadData();
+        }
+    }
+
+    private async Task NavigateToProjectCases(string projectId)
+    {
+        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "lastSelectedProjectId", projectId);
+        NavigationManager.NavigateTo($"/autotest/project-cases/{projectId}");
+    }
+
+    private async Task ManageEnvironments(ProjectDto project)
+    {
+        selectedProject = project;
+        projectEnvironments = GetProjectEnvironments(project.Id);
+        selectedEnvironment = projectEnvironments.FirstOrDefault();
+        if (selectedEnvironment != null) await LoadEnvironmentServiceConfigs();
+        showEnvironmentModal = true;
+    }
+    
+    private void HideEnvironmentModal() { showEnvironmentModal = false; selectedProject = null; selectedEnvironment = null; }
+    
+    private async Task SelectEnvironment(ProjectEnvironmentDto environment)
+    {
+        selectedEnvironment = environment;
+        if (selectedEnvironment != null && selectedProject != null) await LoadEnvironmentServiceConfigs();
+        StateHasChanged();
+    }
+    
+    private void ShowAddEnvironmentModal() { currentEnvironment = new ProjectEnvironmentDto { ProjectId = selectedProject?.Id ?? "" }; showAddEnvironmentModal = true; }
+    private void HideAddEnvironmentModal() { showAddEnvironmentModal = false; currentEnvironment = new ProjectEnvironmentDto(); }
+    
+    private async Task SaveEnvironment()
+    {
+        await ProjectEnvironmentService.CreateAsync(currentEnvironment);
+        environments = await ProjectEnvironmentService.GetAllAsync();
+        if (selectedProject != null) projectEnvironments = GetProjectEnvironments(selectedProject.Id);
+        HideAddEnvironmentModal();
+        StateHasChanged();
+    }
+    
+    private void EditEnvironment(ProjectEnvironmentDto environment)
+    {
+        currentEnvironment = new ProjectEnvironmentDto { Id = environment.Id, Name = environment.Name, ProjectId = environment.ProjectId, Type = environment.Type, Variables = new Dictionary<string, string>(environment.Variables), Headers = new Dictionary<string, string>(environment.Headers) };
+        showAddEnvironmentModal = true;
+    }
+    
+    private async Task DeleteEnvironment(string environmentId)
+    {
+        await ProjectEnvironmentService.DeleteAsync(environmentId);
+        environments = await ProjectEnvironmentService.GetAllAsync();
+        if (selectedProject != null)
+        {
+            projectEnvironments = GetProjectEnvironments(selectedProject.Id);
+            if (selectedEnvironment?.Id == environmentId) selectedEnvironment = null;
+        }
+        StateHasChanged();
+    }
+
+    private void ShowAddVariableModal() { newVariableName = ""; newVariableValue = ""; showAddVariableModal = true; }
+    private void HideAddVariableModal() { showAddVariableModal = false; newVariableName = ""; newVariableValue = ""; }
+    
+    private async Task SaveNewVariable()
+    {
+        if (selectedEnvironment != null && !string.IsNullOrWhiteSpace(newVariableName) && !string.IsNullOrWhiteSpace(newVariableValue))
+        {
+            selectedEnvironment.Variables[newVariableName] = newVariableValue;
+            await ProjectEnvironmentService.UpdateAsync(selectedEnvironment.Id, selectedEnvironment);
+            environments = await ProjectEnvironmentService.GetAllAsync();
+            if (selectedProject != null) { projectEnvironments = GetProjectEnvironments(selectedProject.Id); selectedEnvironment = projectEnvironments.FirstOrDefault(e => e.Id == selectedEnvironment.Id); }
+            HideAddVariableModal();
+            StateHasChanged();
+        }
+    }
+    
+    private void EditVariable(string key, string value) { editVariableName = key; editVariableValue = value; showEditVariableModal = true; }
+    private void HideEditVariableModal() { showEditVariableModal = false; editVariableName = ""; editVariableValue = ""; }
+    
+    private async Task SaveEditVariable()
+    {
+        if (selectedEnvironment != null && !string.IsNullOrWhiteSpace(editVariableName) && !string.IsNullOrWhiteSpace(editVariableValue))
+        {
+            selectedEnvironment.Variables[editVariableName] = editVariableValue;
+            await ProjectEnvironmentService.UpdateAsync(selectedEnvironment.Id, selectedEnvironment);
+            environments = await ProjectEnvironmentService.GetAllAsync();
+            if (selectedProject != null) { projectEnvironments = GetProjectEnvironments(selectedProject.Id); selectedEnvironment = projectEnvironments.FirstOrDefault(e => e.Id == selectedEnvironment.Id); }
+            HideEditVariableModal();
+            StateHasChanged();
+        }
+    }
+    
+    private async Task DeleteVariable(string key)
+    {
+        if (selectedEnvironment != null)
+        {
+            selectedEnvironment.Variables.Remove(key);
+            await ProjectEnvironmentService.UpdateAsync(selectedEnvironment.Id, selectedEnvironment);
+            environments = await ProjectEnvironmentService.GetAllAsync();
+            if (selectedProject != null) { projectEnvironments = GetProjectEnvironments(selectedProject.Id); selectedEnvironment = projectEnvironments.FirstOrDefault(e => e.Id == selectedEnvironment.Id); }
+            StateHasChanged();
+        }
+    }
+
+    private async Task SaveEnvironmentChanges()
+    {
+        if (selectedEnvironment != null) { await ProjectEnvironmentService.UpdateAsync(selectedEnvironment.Id, selectedEnvironment); await JSRuntime.InvokeVoidAsync("alert", "环境修改已保存"); }
+    }
+
+    private void OnSearchChanged(ChangeEventArgs e) { searchTerm = e.Value?.ToString() ?? ""; FilterProjects(); }
+    private Task SearchProjects() { FilterProjects(); return Task.CompletedTask; }
+    private void FilterByStatus(ChangeEventArgs e) { selectedStatus = e.Value?.ToString() ?? ""; FilterProjects(); }
+
+    private void FilterProjects()
+    {
+        filteredProjects = projects.Where(p =>
+        {
+            var matchesSearch = string.IsNullOrEmpty(searchTerm) || p.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) || p.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase);
+            var matchesStatus = string.IsNullOrEmpty(selectedStatus) || ((int)p.Status).ToString() == selectedStatus;
+            return matchesSearch && matchesStatus;
+        }).ToList();
+        StateHasChanged();
+    }
+
+    private string GetStatusDisplayName(ProjectStatus status) => status switch { ProjectStatus.Active => "活跃", ProjectStatus.Inactive => "未激活", ProjectStatus.Completed => "已完成", ProjectStatus.Cancelled => "已取消", ProjectStatus.OnHold => "暂停", _ => "未知" };
+    private string GetStatusBadgeClass(ProjectStatus status) => status switch { ProjectStatus.Active => "bg-success", ProjectStatus.Inactive => "bg-warning", ProjectStatus.Completed => "bg-info", ProjectStatus.Cancelled => "bg-danger", ProjectStatus.OnHold => "bg-secondary", _ => "bg-light" };
+    private string GetEnvironmentTypeDisplayName(EnvironmentType type) => type switch { EnvironmentType.Development => "开发环境", EnvironmentType.Testing => "集成环境", EnvironmentType.Staging => "预发环境", EnvironmentType.Production => "生产环境", _ => "未知" };
+    
+    private async Task ManageProjectServices(ProjectDto project) { selectedProjectForServices = project; projectServices = await ProjectServiceConfigService.GetProjectServicesAsync(project.Id); showProjectServiceManagementModal = true; }
+    private void HideProjectServiceManagementModal() { showProjectServiceManagementModal = false; selectedProjectForServices = null; projectServices.Clear(); }
+    private void ShowAddProjectServiceModal() { currentProjectService = new ProjectServiceDto { ProjectId = selectedProjectForServices?.Id ?? "" }; isEditingProjectService = false; showProjectServiceModal = true; }
+    
+    private void EditProjectService(ProjectServiceDto service)
+    {
+        currentProjectService = new ProjectServiceDto { Id = service.Id, Name = service.Name, Description = service.Description, ProjectId = service.ProjectId, CreatedAt = service.CreatedAt, CreatedBy = service.CreatedBy };
+        isEditingProjectService = true;
+        showProjectServiceModal = true;
+    }
+    
+    private void HideProjectServiceModal() { showProjectServiceModal = false; currentProjectService = new ProjectServiceDto(); isEditingProjectService = false; }
+    
+    private async Task SaveProjectService()
+    {
+        if (selectedProjectForServices != null)
+        {
+            if (isEditingProjectService) await ProjectServiceConfigService.UpdateProjectServiceAsync(currentProjectService.Id, currentProjectService);
+            else await ProjectServiceConfigService.CreateProjectServiceAsync(currentProjectService);
+            projectServices = await ProjectServiceConfigService.GetProjectServicesAsync(selectedProjectForServices.Id);
+            HideProjectServiceModal();
+            StateHasChanged();
+        }
+    }
+    
+    private async Task DeleteProjectService(string serviceId)
+    {
+        await ProjectServiceConfigService.DeleteProjectServiceAsync(selectedProjectForServices.Id, serviceId);
+        await ProjectServiceConfigService.DeleteEnvironmentServiceConfigAsync(serviceId);
+        projectServices = await ProjectServiceConfigService.GetProjectServicesAsync(selectedProjectForServices.Id);
+        await LoadEnvironmentServiceConfigs();
+        StateHasChanged();
+    }
+    
+    private async Task LoadEnvironmentServiceConfigs()
+    {
+        if (selectedEnvironment != null && selectedProject != null) { serviceConfigViews = await ProjectServiceConfigService.GetServiceConfigViewsAsync(selectedEnvironment.Id, selectedProject.Id); StateHasChanged(); }
+    }
+    
+    private async Task DeleteServiceConfig(string configId) { await ProjectServiceConfigService.DeleteEnvironmentServiceConfigAsync(configId); await LoadEnvironmentServiceConfigs(); }
+    
+    private void EditServiceConfig(EnvironmentServiceConfigDto config)
+    {
+        currentServiceConfig = new EnvironmentServiceConfigDto { Id = config.Id, EnvironmentId = config.EnvironmentId, ProjectServiceId = config.ProjectServiceId, BaseUrl = config.BaseUrl, CreatedAt = config.CreatedAt, CreatedBy = config.CreatedBy };
+        isEditingServiceConfig = true;
+        showServiceConfigModal = true;
+    }
+    
+    private void AddServiceConfig(ProjectServiceDto service)
+    {
+        currentServiceConfig = new EnvironmentServiceConfigDto { EnvironmentId = selectedEnvironment?.Id ?? "", ProjectServiceId = service.Id, BaseUrl = "" };
+        isEditingServiceConfig = false;
+        showServiceConfigModal = true;
+    }
+    
+    private void HideServiceConfigModal() { showServiceConfigModal = false; currentServiceConfig = new EnvironmentServiceConfigDto(); isEditingServiceConfig = false; }
+    
+    private async Task SaveServiceConfig()
+    {
+        if (selectedEnvironment != null)
+        {
+            if (isEditingServiceConfig) await ProjectServiceConfigService.UpdateEnvironmentServiceConfigAsync(currentServiceConfig);
+            else await ProjectServiceConfigService.CreateEnvironmentServiceConfigAsync(currentServiceConfig);
+            await LoadEnvironmentServiceConfigs();
+            HideServiceConfigModal();
+            StateHasChanged();
+        }
+    }
+}

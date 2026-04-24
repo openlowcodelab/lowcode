@@ -195,7 +195,14 @@
             await Task.Delay(100);
             
             // 根据 Target 决定打开方式
-            if (app.Target == "_blank")
+            if (string.IsNullOrEmpty(app.Url))
+            {
+                // 如果没有 URL，不执行任何操作
+                return;
+            }
+            
+            var target = app.Target ?? "_self";
+            if (target == "_blank")
             {
                 await JSRuntime.InvokeVoidAsync("open", app.Url, "_blank");
             }

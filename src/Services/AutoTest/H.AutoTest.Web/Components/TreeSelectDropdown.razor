@@ -1,0 +1,151 @@
+@namespace H.AutoTest.Web
+@inject IJSRuntime JSRuntime
+
+<div class="dropdown tree-select-dropdown">
+    <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start" type="button" 
+            id="@dropdownId" data-bs-toggle="dropdown" aria-expanded="false">
+        <span class="selected-text">@GetSelectedText()</span>
+    </button>
+    <ul class="dropdown-menu w-100" aria-labelledby="@dropdownId" style="max-height: 300px; overflow-y: auto;">
+        @if (ShowEmptyOption)
+        {
+            <li>
+                <a class="dropdown-item @(string.IsNullOrEmpty(Value) ? "active" : "")" 
+                   href="javascript:void(0)" @onclick="() => SelectItem(null)">
+                    @EmptyOptionText
+                </a>
+            </li>
+            <li><hr class="dropdown-divider" /></li>
+        }
+        
+        @foreach (var rootCategory in GetRootCategories())
+        {
+            @RenderCategoryItem(rootCategory, 0)
+        }
+    </ul>
+</div>
+
+@code {
+    [Parameter] public List<ProjectCaseCategory> Categories { get; set; } = new();
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+    [Parameter] public bool ShowEmptyOption { get; set; } = true;
+    [Parameter] public string EmptyOptionText { get; set; } = "无分类";
+    [Parameter] public string Placeholder { get; set; } = "请选择分类";
+    
+    private string dropdownId = Guid.NewGuid().ToString("N")[..8];
+    
+    private List<ProjectCaseCategory> GetRootCategories()
+    {
+        return Categories.Where(c => string.IsNullOrEmpty(c.ParentId)).OrderBy(c => c.Order).ToList();
+    }
+    
+    private List<ProjectCaseCategory> GetChildCategories(string parentId)
+    {
+        return Categories.Where(c => c.ParentId == parentId).OrderBy(c => c.Order).ToList();
+    }
+    
+    private bool HasChildren(string categoryId)
+    {
+        return Categories.Any(c => c.ParentId == categoryId);
+    }
+    
+    private string GetSelectedText()
+    {
+        if (string.IsNullOrEmpty(Value))
+            return Placeholder;
+            
+        var selected = Categories.FirstOrDefault(c => c.Id == Value);
+        if (selected == null)
+            return Placeholder;
+            
+        // 构建层级路径
+        var path = new List<string>();
+        var current = selected;
+        
+        while (current != null)
+        {
+            path.Insert(0, current.Name);
+            current = string.IsNullOrEmpty(current.ParentId) ? null : Categories.FirstOrDefault(c => c.Id == current.ParentId);
+        }
+        
+        return string.Join(" > ", path);
+    }
+    
+    private async Task SelectItem(string? categoryId)
+    {
+        Value = categoryId;
+        await ValueChanged.InvokeAsync(categoryId);
+        
+        // 关闭下拉菜单
+        await JSRuntime.InvokeVoidAsync("eval", $"document.getElementById('{dropdownId}').click();");
+    }
+    
+    private RenderFragment RenderCategoryItem(ProjectCaseCategory category, int level) => builder =>
+    {
+        var indentStyle = $"padding-left: {20 + level * 20}px;";
+        var hasChildren = HasChildren(category.Id);
+        var isSelected = Value == category.Id;
+        
+        builder.OpenElement(0, "li");
+        
+        builder.OpenElement(1, "a");
+        builder.AddAttribute(2, "class", $"dropdown-item d-flex align-items-center {(isSelected ? "active" : "")}");
+        builder.AddAttribute(3, "href", "javascript:void(0)");
+        builder.AddAttribute(4, "style", indentStyle);
+        builder.AddAttribute(5, "onclick", EventCallback.Factory.Create(this, () => SelectItem(category.Id)));
+        
+        if (hasChildren)
+        {
+            builder.OpenElement(6, "i");
+            builder.AddAttribute(7, "class", "oi oi-chevron-right me-2");
+            builder.AddAttribute(8, "style", "font-size: 0.7em; color: #6c757d; width: 12px;");
+            builder.CloseElement();
+        }
+        else
+        {
+            builder.OpenElement(6, "span");
+            builder.AddAttribute(7, "style", "width: 12px; margin-right: 8px;");
+            builder.CloseElement();
+        }
+        
+        builder.AddContent(9, category.Name);
+        
+        builder.CloseElement(); // a
+        builder.CloseElement(); // li
+        
+        // 递归渲染子分类
+        var children = GetChildCategories(category.Id);
+        foreach (var child in children)
+        {
+            builder.AddContent(10, RenderCategoryItem(child, level + 1));
+        }
+    };
+}
+
+<style>
+    .tree-select-dropdown .dropdown-menu {
+        border: 1px solid #dee2e6;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    
+    .tree-select-dropdown .dropdown-item {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.875rem;
+    }
+    
+    .tree-select-dropdown .dropdown-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .tree-select-dropdown .dropdown-item.active {
+        background-color: #0d6efd;
+        color: white;
+    }
+    
+    .tree-select-dropdown .selected-text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+</style>
