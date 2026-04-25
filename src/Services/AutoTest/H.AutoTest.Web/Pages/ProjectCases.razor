@@ -4,398 +4,395 @@
 @namespace H.AutoTest.Web
 @layout AutoTestLayout
 
-@using Microsoft.AspNetCore.Components.Web
-@inject IProjectCaseAppService ProjectCaseService
 @inject IProjectAppService ProjectService
-@inject IProjectCaseCategoryAppService CategoryService
-@inject IProjectEnvironmentAppService ProjectEnvironmentService
-@inject IProjectServiceConfigAppService ProjectServiceConfigService
-@inject IBatchExecutionAppService BatchExecutionService
+@inject IProjectCaseCategoryAppService ProjectCaseCategoryAppService
+@inject IProjectCaseAppService ProjectCaseService
+@inject IBatchExecutionAppService BatchExecutionAppService
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
 
 <PageTitle>测试用例管理</PageTitle>
 
 <!-- 项目选择、统计信息和操作按钮区域 -->
-<div class="d-flex mb-3 align-items-center">
-    <!-- 左侧：项目选择 -->
-    <div class="border-end pe-3 me-3" style="width: 300px; min-height: 50px; display: flex; align-items: center;">
-        <label class="form-label mb-0 me-2 text-nowrap">选择项目:</label>
-        <select class="form-select form-select-sm" value="@selectedProjectId" @onchange="OnProjectChanged">
-            <option value="">请选择项目</option>
-            @foreach (var project in projects)
-            {
-                <option value="@project.Id">@project.Name</option>
-            }
-        </select>
-    </div>
-    
-    <!-- 中间：项目统计 -->
-    <div class="border-end pe-3 me-3 flex-grow-1" style="min-height: 50px; display: flex; align-items: center;">
-        <div class="d-flex justify-content-around w-100">
-            <div class="text-center">
-                <div class="h6 text-primary mb-0">@filteredTestCases.Count</div>
-                <small class="text-muted">总用例</small>
+<div style="margin-bottom: 16px;">
+    <AntDesign.Row Gutter="16" Style="margin-bottom: 16px; align-items: center;">
+        <!-- 左侧：项目选择 -->
+        <AntDesign.Col Span="6">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span>选择项目:</span>
+                <AntDesign.Select TItemValue="string" TItem="string" 
+                                  Style="width: 200px;" 
+                                  @bind-Value="selectedProjectId" 
+                                  OnChange="OnProjectChanged"
+                                  Placeholder="请选择项目">
+                    @foreach (var project in projects)
+                    {
+                        <AntDesign.SelectOption TItemValue="string" TItem="string" Value="@project.Id" Label="@project.Name" />
+                    }
+                </AntDesign.Select>
             </div>
-            <div class="text-center">
-                <div class="h6 text-danger mb-0">@filteredTestCases.Count(tc => tc.Levels.Contains("T0"))</div>
-                <small class="text-muted">T0级别</small>
+        </AntDesign.Col>
+        
+        <!-- 中间：项目统计 -->
+        <AntDesign.Col Span="12">
+            <AntDesign.Row Gutter="16" Style="justify-content: space-around;">
+                <AntDesign.Col Span="6">
+                    <div style="text-align: center;">
+                        <div style="font-size: 24px; color: #1890ff; font-weight: 500;">@filteredTestCases.Count</div>
+                        <div style="color: #999; font-size: 12px;">总用例</div>
+                    </div>
+                </AntDesign.Col>
+                <AntDesign.Col Span="6">
+                    <div style="text-align: center;">
+                        <div style="font-size: 24px; color: #ff4d4f; font-weight: 500;">@filteredTestCases.Count(tc => tc.Levels.Contains("T0"))</div>
+                        <div style="color: #999; font-size: 12px;">T0级别</div>
+                    </div>
+                </AntDesign.Col>
+                <AntDesign.Col Span="6">
+                    <div style="text-align: center;">
+                        <div style="font-size: 24px; color: #faad14; font-weight: 500;">@filteredTestCases.Count(tc => tc.Levels.Contains("T1"))</div>
+                        <div style="color: #999; font-size: 12px;">T1级别</div>
+                    </div>
+                </AntDesign.Col>
+                <AntDesign.Col Span="6">
+                    <div style="text-align: center;">
+                        <div style="font-size: 24px; color: #52c41a; font-weight: 500;">@selectedTestCases.Count</div>
+                        <div style="color: #999; font-size: 12px;">已选中</div>
+                    </div>
+                </AntDesign.Col>
+            </AntDesign.Row>
+        </AntDesign.Col>
+        
+        <!-- 右侧：操作按钮 -->
+        <AntDesign.Col Span="6">
+            <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                <AntDesign.Button Type="@ButtonType.Default" 
+                                  Style="background-color: #52c41a; border-color: #52c41a; color: white;"
+                                  @onclick="ExecuteSelectedTests" 
+                                  Disabled="@(!selectedTestCases.Any() || string.IsNullOrEmpty(selectedProjectId))">
+                    ▶ 执行选中
+                </AntDesign.Button>
+                <AntDesign.Button Type="@ButtonType.Primary" @onclick="CreateNewTestCase">
+                    ➕ 新建用例
+                </AntDesign.Button>
             </div>
-            <div class="text-center">
-                <div class="h6 text-warning mb-0">@filteredTestCases.Count(tc => tc.Levels.Contains("T1"))</div>
-                <small class="text-muted">T1级别</small>
-            </div>
-            <div class="text-center">
-                <div class="h6 text-success mb-0">@selectedTestCases.Count</div>
-                <small class="text-muted">已选中</small>
-            </div>
-        </div>
-    </div>
-    
-    <!-- 右侧：操作按钮 -->
-    <div style="width: 350px; min-height: 50px; display: flex; align-items: center;">
-        <div class="btn-group w-100">
-            <button class="btn btn-success btn-sm" @onclick="ExecuteSelectedTests" disabled="@(!selectedTestCases.Any() || string.IsNullOrEmpty(selectedProjectId))">
-                <i class="oi oi-play-circle"></i> 执行选中
-            </button>
-            <button class="btn btn-warning btn-sm" @onclick="NavigateToProjectManagement" disabled="@(string.IsNullOrEmpty(selectedProjectId))">
-                <i class="oi oi-globe"></i> 环境管理
-            </button>
-            <button class="btn btn-primary btn-sm" @onclick="CreateNewTestCase">
-                <i class="oi oi-plus"></i> 新建用例
-            </button>
-        </div>
-    </div>
+        </AntDesign.Col>
+    </AntDesign.Row>
 </div>
 
 @if (!string.IsNullOrEmpty(selectedProjectId))
 {
     <!-- 主体内容区域 -->
-    <div class="row" style="height: calc(100vh - 155px);">
-        <!-- 左侧分类栏 -->
-        <div class="col-md-3" style="height: 100%;"> <!-- 从col-md-2改为col-md-3，增加分类区域宽度 -->
-            <div class="card h-100" style="display: flex; flex-direction: column;">
-                <div class="card-header d-flex justify-content-between align-items-center py-2">
-                    <h6 class="mb-0">📁 分类</h6>
-                    <button class="btn btn-sm btn-outline-primary" @onclick="ShowAddCategoryModal">
-                        <i class="oi oi-plus"></i>
-                    </button>
-                </div>
-                <div class="card-body p-1" style="flex: 1; overflow-y: auto;">
-                    <div class="list-group list-group-flush">
-                        <button class="list-group-item list-group-item-action py-2 @(string.IsNullOrEmpty(selectedCategoryId) ? "active" : "")"
-                                @onclick="() => SelectCategory(null)">
-                            <small><i class="oi oi-list"></i> 全部 (@filteredTestCases.Count)</small>
-                        </button>
-                        
-                        @* 渲染树形分类结构 *@
-                        @foreach (var rootCategory in GetRootCategories())
-                        {
-                            @RenderCategoryTree(rootCategory, 0)
-                        }
-                        
-                        @if (!categories.Any())
-                        {
-                            <div class="text-center text-muted py-2">
-                                <small>暂无分类</small>
-                            </div>
-                        }
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- 右侧：测试用例列表 -->
-        <div class="col-md-9" style="height: 100%;"> <!-- 从col-md-10改为col-md-9，减少列表区域宽度 -->
-            <div class="card h-100" style="display: flex; flex-direction: column;">
-                <div class="card-header py-2">
-                    <div class="row align-items-center">
-                        @*<div class="col-md-6">
-                            <h6 class="mb-0">📋 测试用例列表</h6>
-                        </div>*@
-                        <div class="col-md-6">
-                            <div class="input-group input-group-sm">
-                                <input type="text" class="form-control" placeholder="搜索用例..." @bind="searchTerm" @oninput="OnSearchChanged">
-                                <button class="btn btn-outline-secondary" type="button" @onclick="SearchTestCases">
-                                    <i class="oi oi-magnifying-glass"></i>
+    <div style="height: calc(100vh - 155px);">
+        <AntDesign.Row Gutter="16" Style="height: 100%;">
+            <!-- 左侧分类栏 -->
+            <AntDesign.Col Span="6" Style="height: 100%;">
+                <AntDesign.Card Style="height: 100%; display: flex; flex-direction: column;">
+                    <ChildContent>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <span style="font-weight: 500;">📁 分类</span>
+                            <AntDesign.Button Type="@ButtonType.Primary" Shape="@ButtonShape.Circle" Size="@ButtonSize.Small" @onclick="ShowAddCategoryModal">
+                                ➕
+                            </AntDesign.Button>
+                        </div>
+                        <div style="flex: 1; overflow-y: auto;">
+                            <div class="list-group list-group-flush">
+                                <button class="list-group-item list-group-item-action py-2 @(string.IsNullOrEmpty(selectedCategoryId) ? "active" : "")"
+                                        @onclick="() => SelectCategory(null)" style="cursor: pointer;">
+                                    <small><i class="oi oi-list"></i> 全部 (@filteredTestCases.Count)</small>
                                 </button>
+                                
+                                @foreach (var rootCategory in GetRootCategories())
+                                {
+                                    @RenderCategoryItem(rootCategory, 0)
+                                }
+                                
+                                @if (!categories.Any())
+                                {
+                                    <div class="text-center text-muted py-2">
+                                        <small>暂无分类</small>
+                                    </div>
+                                }
                             </div>
                         </div>
-                    </div>
-                </div>
-                <div class="card-body p-0" style="flex: 1; overflow-y: auto;">
-                    @if (loading)
-                    {
-                        <div class="text-center p-4">
-                            <div class="spinner-border" role="status">
-                                <span class="visually-hidden">加载中...</span>
-                            </div>
+                    </ChildContent>
+                </AntDesign.Card>
+            </AntDesign.Col>
+            
+            <!-- 右侧：测试用例列表 -->
+            <AntDesign.Col Span="18" Style="height: 100%;">
+                <AntDesign.Card Style="height: 100%; display: flex; flex-direction: column;">
+                    <ChildContent>
+                        <!-- 搜索框 -->
+                        <div style="margin-bottom: 12px;">
+                            <AntDesign.Input Search="true" 
+                                           Placeholder="搜索用例..." 
+                                           @bind-Value="searchTerm" 
+                                           OnSearch="SearchTestCases" 
+                                           Style="width: 300px;" />
                         </div>
-                    }
-                    else if (displayTestCases.Any())
-                    {
-                        <div class="table-responsive">
-                            <table class="table table-hover table-sm mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th style="width: 30px;">
+                        
+                        <!-- 表格 -->
+                        <div style="flex: 1; overflow-y: auto;">
+                            @if (loading)
+                            {
+                                <div style="text-align: center; padding: 40px;">
+                                    <AntDesign.Spin Tip="加载中..." />
+                                </div>
+                            }
+                            else if (displayTestCases.Any())
+                            {
+                                <AntDesign.Table DataSource="displayTestCases" 
+                                               TItem="ProjectCaseDto" 
+                                               Bordered="true"
+                                               Size="@TableSize.Small"
+                                               RowKey="context => context.Id"
+                                               PageSize="20">
+                                    <AntDesign.Column TData="bool" Title="" Width="50px">
+                                        <HeaderTemplate>
                                             <input type="checkbox" class="form-check-input" @onchange="ToggleSelectAll">
-                                        </th>
-                                        <th style="width: 100px;">用例编号</th>
-                                        <th>用例名称</th>
-                                        <th style="width: 120px;">级别</th>
-                                        <th style="width: 60px;">步骤数</th>
-                                        <th style="width: 100px;">执行结果</th>
-                                        <th style="width: 140px;">操作</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var testCase in displayTestCases)
-                                    {
-                                        var isSelected = selectedTestCases.Contains(testCase.Id);
-                                        
-                                        <tr class="@(isSelected ? "table-warning" : "")">
-                                            <td>
-                                                <input type="checkbox" class="form-check-input" 
-                                                       checked="@isSelected" 
-                                                       @onchange="@(e => ToggleTestCaseSelection(testCase.Id, (bool)e.Value!))">
-                                            </td>
-                                            <td>
-                                                <span class="text-muted">@(string.IsNullOrEmpty(testCase.CaseNumber) ? "-" : testCase.CaseNumber)</span>
-                                            </td>
-                                            <td>
-                                                <div>
-                                                    <strong>@testCase.Name</strong>
-                                                    @if (testCase.IsTemplate)
-                                                    {
-                                                        <span class="badge bg-info ms-1">模板</span>
-                                                    }
-                                                    @if (!string.IsNullOrEmpty(testCase.TemplateId))
-                                                    {
-                                                        <span class="badge bg-secondary ms-1">继承</span>
-                                                    }
-                                                    @if (!string.IsNullOrEmpty(testCase.Description))
-                                                    {
-                                                        <br><small class="text-muted">@testCase.Description</small>
-                                                    }
-                                                </div>
-                                            </td>
-                                            <td>
-                                                @if (testCase.Levels.Any())
+                                        </HeaderTemplate>
+                                        <Cell>
+                                            <input type="checkbox" 
+                                                   class="form-check-input" 
+                                                   checked="@selectedTestCases.Contains(context.Id)" 
+                                                   @onchange="@(e => ToggleTestCaseSelection(context.Id, (bool)e.Value!))">
+                                        </Cell>
+                                    </AntDesign.Column>
+                                    
+                                    <AntDesign.Column TData="string" Title="用例编号" Width="100px">
+                                        <Cell>
+                                            <span style="color: #999;">@(string.IsNullOrEmpty(context.CaseNumber) ? "-" : context.CaseNumber)</span>
+                                        </Cell>
+                                    </AntDesign.Column>
+                                    
+                                    <AntDesign.Column TData="string" Title="用例名称">
+                                        <Cell>
+                                            <div>
+                                                <strong>@context.Name</strong>
+                                                @if (context.IsTemplate)
                                                 {
-                                                    @foreach (var level in testCase.Levels.Take(3))
-                                                    {
-                                                        <span class="badge @GetLevelBadgeClass(level) me-1">@level</span>
-                                                    }
-                                                    @if (testCase.Levels.Count > 3)
-                                                    {
-                                                        <span class="text-muted">+@(testCase.Levels.Count - 3)</span>
-                                                    }
+                                                    <AntDesign.Tag Color="@TagColor.Blue" style="margin-left: 8px;">模板</AntDesign.Tag>
                                                 }
-                                                else
+                                                @if (!string.IsNullOrEmpty(context.TemplateId))
                                                 {
-                                                    <span class="text-muted">无</span>
+                                                    <AntDesign.Tag Color="@TagColor.Default" style="margin-left: 4px;">继承</AntDesign.Tag>
                                                 }
-                                            </td>
-                                            <td>@testCase.Steps.Count</td>
-                                            <td>
-                                                @if (testCase.LastExecutionResult.HasValue)
+                                                @if (!string.IsNullOrEmpty(context.Description))
                                                 {
-                                                    <span class="badge @GetExecutionResultBadgeClass(testCase.LastExecutionResult.Value)">
-                                                        @GetExecutionResultText(testCase.LastExecutionResult.Value)
-                                                    </span>
-                                                    @if (testCase.LastExecutionTime.HasValue)
-                                                    {
-                                                        <br><small class="text-muted">@testCase.LastExecutionTime.Value.ToString("MM-dd HH:mm")</small>
-                                                    }
+                                                    <div style="color: #999; font-size: 12px; margin-top: 4px;">@context.Description</div>
                                                 }
-                                                else
+                                            </div>
+                                        </Cell>
+                                    </AntDesign.Column>
+                                    
+                                    <AntDesign.Column TData="string" Title="级别" Width="120px">
+                                        <Cell>
+                                            @if (context.Levels.Any())
+                                            {
+                                                @foreach (var level in context.Levels.Take(3))
                                                 {
-                                                    <span class="text-muted">未执行</span>
+                                                    <AntDesign.Tag Color="@GetLevelTagColor(level)" style="margin-right: 4px;">@level</AntDesign.Tag>
                                                 }
-                                            </td>
-                                            <td>
-                                                <div class="btn-group btn-group-sm">
-                                                    <!-- 执行测试按钮 -->
-                                                    <button class="btn btn-outline-success" @onclick="() => ExecuteSingleTest(testCase)" title="执行测试">
-                                                        <i class="oi oi-play-circle"></i>
-                                                    </button>
-                                                    
-                                                    <!-- 测试步骤按钮 -->
-                                                    <button class="btn btn-outline-primary" @onclick="() => EditTestCaseSteps(testCase)" title="测试步骤">
-                                                        <i class="oi oi-list"></i>
-                                                    </button>
-                                                    
-                                                    <!-- 更多操作下拉菜单 -->
-                                                    <div class="btn-group" role="group">
-                                                        <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" title="更多操作">
-                                                            <i class="oi oi-menu"></i>
-                                                        </button>
-                                                        <ul class="dropdown-menu">
-                                                            <li>
-                                                                <a class="dropdown-item" href="javascript:void(0)" @onclick="() => ShowTemplateSettingsModal(testCase)">
-                                                                    <i class="oi oi-cog me-2"></i>模板设置
-                                                                </a>
-                                                            </li>
-                                                            <li>
-                                                                <a class="dropdown-item" href="javascript:void(0)" @onclick="() => ViewExecutionHistory(testCase)">
-                                                                    <i class="oi oi-clock me-2"></i>测试报告
-                                                                </a>
-                                                            </li>
-                                                            <li>
-                                                                <a class="dropdown-item" href="javascript:void(0)" @onclick="() => CopyTestCase(testCase)">
-                                                                    <i class="oi oi-document me-2"></i>复制
-                                                                </a>
-                                                            </li>
-                                                            <li>
-                                                                <a class="dropdown-item" href="javascript:void(0)" @onclick="() => ShowEditBasicInfoModal(testCase)">
-                                                                    <i class="oi oi-pencil me-2"></i>编辑
-                                                                </a>
-                                                            </li>
-                                                            <li><hr class="dropdown-divider"></li>
-                                                            <li>
-                                                                <a class="dropdown-item text-danger" href="javascript:void(0)" @onclick="() => DeleteTestCase(testCase.Id)">
-                                                                    <i class="oi oi-trash me-2"></i>删除
-                                                                </a>
-                                                            </li>
-                                                        </ul>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
+                                                @if (context.Levels.Count > 3)
+                                                {
+                                                    <span style="color: #999; font-size: 12px;">+@(context.Levels.Count - 3)</span>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <span style="color: #999;">无</span>
+                                            }
+                                        </Cell>
+                                    </AntDesign.Column>
+                                    
+                                    <AntDesign.Column TData="int" Title="步骤数" Width="60px">
+                                        <Cell>
+                                            @context.Steps.Count
+                                        </Cell>
+                                    </AntDesign.Column>
+                                    
+                                    <AntDesign.Column TData="string" Title="执行结果" Width="100px">
+                                        <Cell>
+                                            @if (context.LastExecutionResult.HasValue)
+                                            {
+                                                <AntDesign.Tag Color="@GetExecutionResultTagColor(context.LastExecutionResult.Value)">
+                                                    @GetExecutionResultText(context.LastExecutionResult.Value)
+                                                </AntDesign.Tag>
+                                                @if (context.LastExecutionTime.HasValue)
+                                                {
+                                                    <div style="color: #999; font-size: 12px; margin-top: 4px;">@context.LastExecutionTime.Value.ToString("MM-dd HH:mm")</div>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <span style="color: #999;">未执行</span>
+                                            }
+                                        </Cell>
+                                    </AntDesign.Column>
+                                    
+                                    <AntDesign.Column TData="string" Title="操作" Width="140px">
+                                        <Cell>
+                                            <div style="display: flex; gap: 4px;">
+                                                <AntDesign.Button Type="@ButtonType.Default" 
+                                                                Shape="@ButtonShape.Circle" 
+                                                                Size="@ButtonSize.Small" 
+                                                                @onclick="() => ExecuteSingleTest(context)" 
+                                                                Style="color: #52c41a; border-color: #52c41a;" 
+                                                                Title="执行测试">
+                                                    ▶
+                                                </AntDesign.Button>
+                                                
+                                                <AntDesign.Button Type="@ButtonType.Default" 
+                                                                Shape="@ButtonShape.Circle" 
+                                                                Size="@ButtonSize.Small" 
+                                                                @onclick="() => EditTestCaseSteps(context)" 
+                                                                Style="color: #1890ff; border-color: #1890ff;" 
+                                                                Title="测试步骤">
+                                                    📝
+                                                </AntDesign.Button>
+                                                
+                                                <AntDesign.Dropdown Trigger="new[] { AntDesign.Trigger.Click }">
+                                                    <ChildContent>
+                                                        <AntDesign.Button Type="@ButtonType.Default" 
+                                                                        Shape="@ButtonShape.Circle" 
+                                                                        Size="@ButtonSize.Small" 
+                                                                        Title="更多操作">
+                                                            ⋯
+                                                        </AntDesign.Button>
+                                                    </ChildContent>
+                                                    <Overlay>
+                                                        <AntDesign.Menu>
+                                                            <AntDesign.MenuItem @onclick="() => ShowTemplateSettingsModal(context)">
+                                                                ⚙️ 模板设置
+                                                            </AntDesign.MenuItem>
+                                                            <AntDesign.MenuItem @onclick="() => ViewExecutionHistory(context)">
+                                                                🕒 测试报告
+                                                            </AntDesign.MenuItem>
+                                                            <AntDesign.MenuItem @onclick="() => CopyTestCase(context)">
+                                                                📄 复制
+                                                            </AntDesign.MenuItem>
+                                                            <AntDesign.MenuItem @onclick="() => ShowEditBasicInfoModal(context)">
+                                                                ✏️ 编辑
+                                                            </AntDesign.MenuItem>
+                                                            <AntDesign.MenuItem Divider="true" />
+                                                            <AntDesign.MenuItem @onclick="() => DeleteTestCase(context.Id)" Style="color: #ff4d4f;">
+                                                                🗑️ 删除
+                                                            </AntDesign.MenuItem>
+                                                        </AntDesign.Menu>
+                                                    </Overlay>
+                                                </AntDesign.Dropdown>
+                                            </div>
+                                        </Cell>
+                                    </AntDesign.Column>
+                                </AntDesign.Table>
+                            }
+                            else
+                            {
+                                <div style="text-align: center; padding: 40px; color: #999;">
+                                    <AntDesign.Empty Description="@("暂无测试用例数据")" />
+                                </div>
+                            }
                         </div>
-                    }
-                    else
-                    {
-                        <div class="text-center p-4">
-                            <i class="oi oi-info"></i> 暂无测试用例数据
-                        </div>
-                    }
-                </div>
-            </div>
-        </div>
+                    </ChildContent>
+                </AntDesign.Card>
+            </AntDesign.Col>
+        </AntDesign.Row>
     </div>
 }
 else
 {
-    <div class="alert alert-warning text-center">
-        <i class="oi oi-warning"></i> 请先选择一个项目来管理测试用例
-    </div>
+    <AntDesign.Alert Type="@AlertType.Warning" ShowIcon="true" Style="text-align: center;">
+        ⚠️ 请先选择一个项目来管理测试用例
+    </AntDesign.Alert>
 }
 
 <!-- 添加/编辑分类模态框 -->
-@if (showCategoryModal)
-{
-    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">@((isEditingCategory ? "编辑" : "新建") + "分类")</h5>
-                    <button type="button" class="btn-close" @onclick="HideCategoryModal"></button>
-                </div>
-                <div class="modal-body">
-                    <EditForm Model="currentCategory" OnValidSubmit="SaveCategory">
-                        <DataAnnotationsValidator />
-                        <ValidationSummary class="text-danger" />
-                        
-                        <div class="mb-3 row">
-                            <label class="col-sm-3 col-form-label">分类名称 <span class="text-danger">*</span></label>
-                            <div class="col-sm-9">
-                                <InputText class="form-control" @bind-Value="currentCategory.Name" />
-                                <ValidationMessage For="() => currentCategory.Name" />
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3 row">
-                            <label class="col-sm-3 col-form-label">描述</label>
-                            <div class="col-sm-9">
-                                <InputTextArea class="form-control" rows="2" @bind-Value="currentCategory.Description" />
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3 row">
-                            <label class="col-sm-3 col-form-label">父级分类</label>
-                            <div class="col-sm-9">
-                                <TreeSelectDropdown Categories="GetAvailableParentCategories()" 
-                                                  SelectedValue="currentCategory.ParentId" 
-                                                  EmptyOptionText="无（根分类）" 
-                                                  Placeholder="请选择父级分类" />
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3 row">
-                            <label class="col-sm-3 col-form-label">排序</label>
-                            <div class="col-sm-9">
-                                <Microsoft.AspNetCore.Components.Forms.InputNumber class="form-control" @bind-Value="currentCategory.Order" />
-                            </div>
-                        </div>
-                        
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" @onclick="HideCategoryModal">取消</button>
-                            <button type="submit" class="btn btn-primary">保存</button>
-                        </div>
-                    </EditForm>
-                </div>
-            </div>
-        </div>
-    </div>
+@{
+    var categoryModalTitle = isEditingCategory ? "编辑分类" : "新建分类";
 }
-
-
+<AntDesign.Modal @bind-Visible="showCategoryModal" 
+                 Title="@categoryModalTitle" 
+                 Width="@("600px")" 
+                 OnOk="SaveCategory" 
+                 OnCancel="HideCategoryModal">
+    <EditForm Model="currentCategory" OnValidSubmit="SaveCategory">
+        <DataAnnotationsValidator />
+        <ValidationSummary Style="color: red;" />
+        
+        <AntDesign.FormItem Label="分类名称" Required="true" LabelColSpan="5" WrapperColSpan="19">
+            <InputText class="form-control" @bind-Value="currentCategory.Name" />
+            <ValidationMessage For="() => currentCategory.Name" />
+        </AntDesign.FormItem>
+        
+        <AntDesign.FormItem Label="描述" LabelColSpan="5" WrapperColSpan="19">
+            <InputTextArea class="form-control" rows="2" @bind-Value="currentCategory.Description" />
+        </AntDesign.FormItem>
+        
+        <AntDesign.FormItem Label="父级分类" LabelColSpan="5" WrapperColSpan="19">
+            <TreeSelectDropdown Categories="GetAvailableParentCategories()" 
+                               SelectedValue="currentCategory.ParentId" 
+                               EmptyOptionText="无(根分类)" 
+                               Placeholder="请选择父级分类" />
+        </AntDesign.FormItem>
+        
+        <AntDesign.FormItem Label="排序" LabelColSpan="5" WrapperColSpan="19">
+            <Microsoft.AspNetCore.Components.Forms.InputNumber class="form-control" @bind-Value="currentCategory.Order" />
+        </AntDesign.FormItem>
+    </EditForm>
+</AntDesign.Modal>
 
 <!-- 模板设置模态框 -->
-@if (showTemplateSettingsModal)
-{
-    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">模板设置 - @editingTestCase.Name</h5>
-                    <button type="button" class="btn-close" @onclick="HideTemplateSettingsModal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3 form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="isTemplateCheck" @bind="editingTestCase.IsTemplate">
-                        <label class="form-check-label" for="isTemplateCheck">设为测试模板</label>
-                        <div class="form-text">将此用例设为模板，供其他用例继承。</div>
-                    </div>
-                    
-                    @if (!editingTestCase.IsTemplate)
+<AntDesign.Modal @bind-Visible="showTemplateSettingsModal" 
+                 Title="@($"模板设置 - {editingTestCase.Name}")" 
+                 Width="@("600px")" 
+                 OnOk="SaveTemplateSettings" 
+                 OnCancel="HideTemplateSettingsModal">
+    <div Style="padding: 20px 0;">
+        <div Style="margin-bottom: 16px;">
+            <AntDesign.Switch @bind-Checked="editingTestCase.IsTemplate" />
+            <span Style="margin-left: 8px;">设为测试模板</span>
+            <div Style="color: #999; font-size: 12px; margin-top: 4px;">将此用例设为模板，供其他用例继承。</div>
+        </div>
+        
+        @if (!editingTestCase.IsTemplate)
+        {
+            <div Style="margin-bottom: 16px;">
+                <label Style="display: block; margin-bottom: 8px;">继承模板</label>
+                <AntDesign.Select TItemValue="string" TItem="string" 
+                                  Style="width: 100%;" 
+                                  @bind-Value="editingTestCase.TemplateId"
+                                  Placeholder="无(独立用例)">
+                    @foreach (var template in availableTemplates)
                     {
-                        <div class="mb-3">
-                            <label class="form-label">继承模板</label>
-                            <select class="form-select" value="@editingTestCase.TemplateId" @onchange="OnTemplateChanged">
-                                <option value="">无（独立用例）</option>
-                                @foreach (var template in availableTemplates)
-                                {
-                                    <option value="@template.Id">@template.Name @(string.IsNullOrEmpty(template.CaseNumber) ? "" : $"({template.CaseNumber})")</option>
-                                }
-                            </select>
-                            <div class="form-text">
-                                选择模板后，此用例将自动使用模板中的步骤。您只需在此处维护测试数据。
-                                <br>
-                                <span class="text-danger">注意：继承模板后，当前用例的步骤将被覆盖且不可编辑。</span>
-                            </div>
-                        </div>
+                        <AntDesign.SelectOption TItemValue="string" TItem="string" 
+                                              Value="@template.Id" 
+                                              Label="@(template.Name + (string.IsNullOrEmpty(template.CaseNumber) ? "" : $"({template.CaseNumber})"))" />
                     }
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="HideTemplateSettingsModal">取消</button>
-                    <button type="button" class="btn btn-primary" @onclick="SaveTemplateSettings">保存</button>
+                </AntDesign.Select>
+                <div Style="color: #999; font-size: 12px; margin-top: 4px;">
+                    选择模板后，此用例将自动使用模板中的步骤。您只需在此处维护测试数据。
+                    <br>
+                    <span Style="color: #ff4d4f;">注意：继承模板后，当前用例的步骤将被覆盖且不可编辑。</span>
                 </div>
             </div>
-        </div>
+        }
     </div>
-}
+</AntDesign.Modal>
+
+<!-- 测试用例基本信息编辑弹窗 -->
+<ProjectCaseBasicInfoModal ShowModal="showBasicInfoModal" 
+                        CurrentTestCase="currentTestCase" 
+                        Categories="categories" 
+                        IsEditing="isEditingBasicInfo" 
+                        OnClose="HideBasicInfoModal" 
+                        OnSave="SaveBasicInfo" 
+                        OnSaveOnly="SaveBasicInfoOnly" />
 
 @code {
     [Parameter] public string ProjectId { get; set; } = string.Empty;
     
     private List<ProjectDto> projects = new();
-
     private List<ProjectCaseDto> testCases = new();
     private List<ProjectCaseDto> filteredTestCases = new();
     private List<ProjectCaseDto> displayTestCases = new();
@@ -403,20 +400,21 @@ else
     private HashSet<string> selectedTestCases = new();
     
     private ProjectCaseDto currentTestCase = new();
-    private ProjectCaseDto editingTestCase = new(); // 用于模板设置的临时编辑对象
+    private ProjectCaseDto editingTestCase = new();
     private ProjectCaseCategory currentCategory = new();
     
     private bool loading = true;
     private bool showCategoryModal = false;
-    private bool showTemplateSettingsModal = false; // 模板设置模态框显示状态
-    private List<ProjectCaseDto> availableTemplates = new(); // 可用的模板列表
-    private bool isEditingCategory = false; // 标识是否为编辑模式
-    private List<ProjectEnvironmentDto> projectEnvironments = new();
+    private bool showTemplateSettingsModal = false;
+    private List<ProjectCaseDto> availableTemplates = new();
+    private bool isEditingCategory = false;
     private string selectedProjectId = "";
     private string selectedCategoryId = "";
     private string searchTerm = "";
     
-
+    // 基本信息编辑相关
+    private bool showBasicInfoModal = false;
+    private bool isEditingBasicInfo = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -431,21 +429,25 @@ else
     {
         if (firstRender)
         {
-            // 如果没有URL参数指定的项目ID，尝试从localStorage恢复上次选择的项目
-            if (string.IsNullOrEmpty(ProjectId) && projects.Any())
+            // 如果 URL 中没有指定项目，且当前没有选中项目，尝试从 localStorage 恢复
+            if (string.IsNullOrEmpty(ProjectId) && string.IsNullOrEmpty(selectedProjectId) && projects.Any())
             {
                 var lastSelectedProjectId = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "lastSelectedProjectId");
                 
-                // 验证上次选择的项目是否仍然存在
                 if (!string.IsNullOrEmpty(lastSelectedProjectId) && projects.Any(p => p.Id == lastSelectedProjectId))
                 {
                     selectedProjectId = lastSelectedProjectId;
                     await LoadProjectData();
                     StateHasChanged();
                 }
+                else if (!string.IsNullOrEmpty(selectedProjectId))
+                {
+                    // 如果 LoadData 已经默认选中了第一个项目，保存下来
+                    await JSRuntime.InvokeVoidAsync("localStorage.setItem", "lastSelectedProjectId", selectedProjectId);
+                }
             }
             
-            // 第一次渲染后，从localStorage恢复之前选中的分类
+            // 恢复选中的分类
             if (!string.IsNullOrEmpty(selectedProjectId))
             {
                 var savedCategoryId = await JSRuntime.InvokeAsync<string>("localStorage.getItem", $"selectedCategoryId_{selectedProjectId}");
@@ -461,7 +463,6 @@ else
     
     protected override async Task OnParametersSetAsync()
     {
-        // 当URL参数变化时（如从其他页面返回），重新设置selectedProjectId并加载数据
         if (!string.IsNullOrEmpty(ProjectId) && selectedProjectId != ProjectId)
         {
             selectedProjectId = ProjectId;
@@ -475,14 +476,14 @@ else
         projects = await ProjectService.GetAllAsync();
         testCases = await ProjectCaseService.GetAllAsync();
         
-        // 如果有ProjectId参数，加载对应项目数据
+        // 如果已有选中项目，加载项目数据
         if (!string.IsNullOrEmpty(selectedProjectId))
         {
             await LoadProjectData();
         }
-        // 否则如果有项目，默认选择第一个项目（localStorage读取将在OnAfterRenderAsync中处理）
         else if (projects.Any())
         {
+            // 默认选中第一个项目
             selectedProjectId = projects.First().Id;
             await LoadProjectData();
         }
@@ -495,59 +496,79 @@ else
     {
         if (!string.IsNullOrEmpty(selectedProjectId))
         {
-            // 重新加载所有测试用例数据
             testCases = await ProjectCaseService.GetAllAsync();
+            categories = await ProjectCaseCategoryAppService.GetByProjectIdAsync(selectedProjectId);
             
-            // 加载项目分类
-            categories = await CategoryService.GetByProjectIdAsync(selectedProjectId);
-            
-            // 加载项目环境
-            var allEnvironments = await ProjectEnvironmentService.GetAllAsync();
-            projectEnvironments = allEnvironments.Where(e => e.ProjectId == selectedProjectId).ToList();
-            
-            // 过滤测试用例（保持当前选中的分类）
             filteredTestCases = testCases.Where(tc => tc.ProjectId == selectedProjectId).ToList();
-            
-            // 注意：localStorage操作需要在OnAfterRenderAsync中进行
-            FilterTestCases(); // 使用FilterTestCases方法来保持当前分类选择
+            FilterTestCases();
         }
         else
         {
             categories.Clear();
             filteredTestCases.Clear();
             displayTestCases.Clear();
-            projectEnvironments.Clear();
         }
         
         selectedTestCases.Clear();
     }
 
-    private async Task OnProjectChanged(ChangeEventArgs e)
+    private RenderFragment RenderCategoryItem(ProjectCaseCategory category, int level) => __builder =>
     {
-        selectedProjectId = e.Value?.ToString() ?? "";
+        var indentStyle = $"padding-left: {(level * 20 + 12)}px;";
+        var hasChildren = HasChildCategories(category.Id);
+        
+        __builder.OpenElement(0, "button");
+        __builder.AddAttribute(1, "class", $"list-group-item list-group-item-action py-2 {(selectedCategoryId == category.Id ? "active" : "")}");
+        __builder.AddAttribute(2, "style", $"{indentStyle} cursor: pointer;");
+        __builder.AddAttribute(3, "onclick", EventCallback.Factory.Create(this, () => SelectCategory(category.Id)));
+        
+        __builder.OpenElement(4, "small");
+        
+        if (hasChildren)
+        {
+            __builder.AddMarkupContent(5, "<i class=\"oi oi-chevron-right me-2\" style=\"font-size: 0.7em;\"></i>");
+        }
+        else
+        {
+            __builder.AddMarkupContent(5, "<span style=\"display: inline-block; width: 12px; margin-right: 8px;\"></span>");
+        }
+        
+        __builder.AddContent(6, $"{category.Name} ({GetCategoryTestCount(category.Id)})");
+        __builder.CloseElement();
+        __builder.CloseElement();
+        
+        var children = GetChildCategories(category.Id);
+        foreach (var child in children)
+        {
+            __builder.AddContent(7, RenderCategoryItem(child, level + 1));
+        }
+    };
+
+    private async Task OnProjectChanged(string? projectId)
+    {
+        selectedProjectId = projectId ?? "";
         selectedCategoryId = "";
         
-        // 保存选择的项目到localStorage
         if (!string.IsNullOrEmpty(selectedProjectId))
         {
             await JSRuntime.InvokeVoidAsync("localStorage.setItem", "lastSelectedProjectId", selectedProjectId);
             Navigation.NavigateTo($"/autotest/project-cases/{selectedProjectId}", false);
+            
+            // 加载项目数据
+            await LoadProjectData();
+            StateHasChanged();
         }
         else
         {
             await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "lastSelectedProjectId");
             Navigation.NavigateTo("/autotest/project-cases", false);
         }
-        
-        await LoadProjectData();
-        StateHasChanged();
     }
 
     private async Task SelectCategory(string? categoryId)
     {
         selectedCategoryId = categoryId ?? "";
         
-        // 保存选中的分类到localStorage
         if (!string.IsNullOrEmpty(selectedProjectId))
         {
             if (string.IsNullOrEmpty(selectedCategoryId))
@@ -588,15 +609,14 @@ else
             
             return matchesSearch && matchesCategory;
         })
-        .OrderBy(tc => string.IsNullOrEmpty(tc.CaseNumber) ? "zzz" : tc.CaseNumber)  // 按用例编号排序，空编号排在最后
-        .ThenBy(tc => tc.Order)  // 相同编号时按排序字段排序
-        .ThenBy(tc => tc.CreatedAt)  // 最后按创建时间排序
+        .OrderBy(tc => string.IsNullOrEmpty(tc.CaseNumber) ? "zzz" : tc.CaseNumber)
+        .ThenBy(tc => tc.Order)
+        .ThenBy(tc => tc.CreatedAt)
         .ToList();
         
         StateHasChanged();
     }
     
-    // 获取指定分类及其所有子分类的ID列表
     private HashSet<string> GetAllCategoryIds(string categoryId)
     {
         var categoryIds = new HashSet<string> { categoryId };
@@ -604,7 +624,6 @@ else
         return categoryIds;
     }
     
-    // 递归添加所有子分类ID
     private void AddAllChildCategoryIds(string parentId, HashSet<string> categoryIds)
     {
         var children = categories.Where(c => c.ParentId == parentId).ToList();
@@ -667,20 +686,17 @@ else
     {
         if (!selectedTestCases.Any()) return;
         
-        // 跳转到批量执行页面，传递选中的用例ID
         var selectedIds = string.Join(",", selectedTestCases);
         Navigation.NavigateTo($"/autotest/test-execution/batch/{selectedProjectId}?selectedIds={selectedIds}");
     }
 
     private async Task ExecuteSingleTest(ProjectCaseDto testCase)
     {
-        // 跳转到单个用例执行页面
         Navigation.NavigateTo($"/autotest/test-execution/{testCase.Id}");
     }
     
     private void ViewExecutionHistory(ProjectCaseDto testCase)
     {
-        // 跳转到执行历史页面，添加returnProjectId参数
         Navigation.NavigateTo($"/autotest/execution-history/{testCase.Id}?returnProjectId={selectedProjectId}");
     }
     
@@ -700,7 +716,7 @@ else
         currentTestCase = new ProjectCaseDto 
         { 
             ProjectId = selectedProjectId,
-            CategoryId = selectedCategoryId // 默认填充当前选中的分类
+            CategoryId = selectedCategoryId
         };
         isEditingBasicInfo = false;
         showBasicInfoModal = true;
@@ -709,17 +725,16 @@ else
     private async Task DeleteTestCase(string id)
     {
         await ProjectCaseService.DeleteAsync(id);
-        await LoadProjectData(); // 保持当前选中的分类不变
+        await LoadProjectData();
     }
 
-    // 复制单个测试用例
     private async Task CopyTestCase(ProjectCaseDto testCase)
     {
         try
         {
             var copiedId = await ProjectCaseService.CopyAsync(testCase.Id);
             await JSRuntime.InvokeVoidAsync("alert", $"测试用例 '{testCase.Name}' 复制成功！");
-            await LoadProjectData(); // 刷新数据以显示复制的用例
+            await LoadProjectData();
         }
         catch (Exception ex)
         {
@@ -727,48 +742,35 @@ else
         }
     }
 
-    // 显示模板设置模态框
     private void ShowTemplateSettingsModal(ProjectCaseDto testCase)
     {
-        // 深拷贝当前用例，避免直接修改列表数据
         var json = System.Text.Json.JsonSerializer.Serialize(testCase);
         editingTestCase = System.Text.Json.JsonSerializer.Deserialize<ProjectCaseDto>(json)!;
-        
-        // 加载可用模板（排除自身）
         availableTemplates = testCases.Where(c => c.IsTemplate && c.Id != editingTestCase.Id).ToList();
-        
         showTemplateSettingsModal = true;
     }
 
-    // 隐藏模板设置模态框
     private void HideTemplateSettingsModal()
     {
         showTemplateSettingsModal = false;
     }
 
-    // 模板选择变更处理
     private void OnTemplateChanged(ChangeEventArgs e)
     {
         editingTestCase.TemplateId = e.Value?.ToString();
     }
 
-    // 保存模板设置
     private async Task SaveTemplateSettings()
     {
         try
         {
-            // 如果关联了模板，清空当前用例的步骤（因为将使用模板步骤）
-            // 注意：这与StepEditor中的逻辑一致
             if (!string.IsNullOrEmpty(editingTestCase.TemplateId))
             {
                 editingTestCase.Steps.Clear();
             }
 
             await ProjectCaseService.UpdateAsync(editingTestCase.Id, editingTestCase);
-            
-            // 重新加载所有数据，以确保状态完全同步
             await LoadProjectData();
-            
             showTemplateSettingsModal = false;
         }
         catch (Exception ex)
@@ -777,7 +779,6 @@ else
         }
     }
 
-    // 显示添加分类模态框
     private void ShowAddCategoryModal()
     {
         currentCategory = new ProjectCaseCategory { ProjectId = selectedProjectId };
@@ -785,7 +786,6 @@ else
         showCategoryModal = true;
     }
 
-    // 显示编辑分类模态框
     private void ShowEditCategoryModal(ProjectCaseCategory category)
     {
         currentCategory = new ProjectCaseCategory
@@ -803,7 +803,6 @@ else
         showCategoryModal = true;
     }
 
-    // 隐藏分类模态框
     private void HideCategoryModal()
     {
         showCategoryModal = false;
@@ -811,43 +810,36 @@ else
         isEditingCategory = false;
     }
 
-    // 保存分类（新建或更新）
     private async Task SaveCategory()
     {
         if (isEditingCategory)
         {
-            // 更新分类
-            await CategoryService.UpdateAsync(currentCategory.Id, currentCategory);
+            await ProjectCaseCategoryAppService.UpdateAsync(currentCategory.Id, currentCategory);
         }
         else
         {
-            // 创建新分类
-            await CategoryService.CreateAsync(currentCategory);
+            await ProjectCaseCategoryAppService.CreateAsync(currentCategory);
         }
         
-        categories = await CategoryService.GetByProjectIdAsync(selectedProjectId);
+        categories = await ProjectCaseCategoryAppService.GetByProjectIdAsync(selectedProjectId);
         HideCategoryModal();
         StateHasChanged();
     }
 
-    // 获取可用的父级分类（排除当前编辑的分类及其子分类）
     private List<ProjectCaseCategory> GetAvailableParentCategories()
     {
         if (isEditingCategory)
         {
-            // 在编辑模式下，排除当前分类及其所有子分类
             var excludeIds = new HashSet<string> { currentCategory.Id };
             AddChildCategoryIds(currentCategory.Id, excludeIds);
             return categories.Where(c => !excludeIds.Contains(c.Id)).ToList();
         }
         else
         {
-            // 在新建模式下，返回所有分类
             return new List<ProjectCaseCategory>(categories);
         }
     }
 
-    // 递归添加子分类ID到排除列表
     private void AddChildCategoryIds(string parentId, HashSet<string> excludeIds)
     {
         var children = categories.Where(c => c.ParentId == parentId).ToList();
@@ -858,7 +850,6 @@ else
         }
     }
 
-    // 添加子分类
     private void AddChildCategory(ProjectCaseCategory parentCategory)
     {
         currentCategory = new ProjectCaseCategory 
@@ -870,243 +861,30 @@ else
         showCategoryModal = true;
     }
 
-    // 删除分类（包括子分类）
     private async Task DeleteCategory(string categoryId)
     {
-        // 递归删除子分类
         await DeleteChildCategories(categoryId);
-        
-        // 删除分类本身
-        await CategoryService.DeleteAsync(selectedProjectId, categoryId);
-        
-        // 重新加载分类数据
-        categories = await CategoryService.GetByProjectIdAsync(selectedProjectId);
+        await ProjectCaseCategoryAppService.DeleteAsync(selectedProjectId, categoryId);
+        categories = await ProjectCaseCategoryAppService.GetByProjectIdAsync(selectedProjectId);
         StateHasChanged();
     }
 
-    // 递归删除子分类
     private async Task DeleteChildCategories(string parentId)
     {
         var children = categories.Where(c => c.ParentId == parentId).ToList();
         foreach (var child in children)
         {
-            // 递归删除孙子分类
             await DeleteChildCategories(child.Id);
-            
-            // 删除子分类
-            await CategoryService.DeleteAsync(selectedProjectId, child.Id);
+            await ProjectCaseCategoryAppService.DeleteAsync(selectedProjectId, child.Id);
         }
     }
 
-    // 显示名称和样式方法
-    private string GetProjectStatusDisplayName(ProjectStatus status) => status switch
-    {
-        ProjectStatus.Active => "活跃",
-        ProjectStatus.Inactive => "未激活",
-        ProjectStatus.Completed => "已完成",
-        ProjectStatus.Cancelled => "已取消",
-        ProjectStatus.OnHold => "暂停",
-        _ => "未知"
-    };
-
-    private string GetProjectStatusBadgeClass(ProjectStatus status) => status switch
-    {
-        ProjectStatus.Active => "bg-success",
-        ProjectStatus.Inactive => "bg-warning",
-        ProjectStatus.Completed => "bg-info",
-        ProjectStatus.Cancelled => "bg-danger",
-        ProjectStatus.OnHold => "bg-secondary",
-        _ => "bg-light"
-    };
-
-    private string GetStatusDisplayName(ProjectCaseStatus status) => status switch
-    {
-        ProjectCaseStatus.Active => "激活",
-        ProjectCaseStatus.Inactive => "未激活",
-        ProjectCaseStatus.Archived => "已归档",
-        ProjectCaseStatus.Draft => "草稿",
-        _ => "未知"
-    };
-
-    private string GetStatusBadgeClass(ProjectCaseStatus status) => status switch
-    {
-        ProjectCaseStatus.Active => "bg-success",
-        ProjectCaseStatus.Inactive => "bg-warning",
-        ProjectCaseStatus.Archived => "bg-secondary",
-        ProjectCaseStatus.Draft => "bg-info",
-        _ => "bg-light"
-    };
-}
-
-<!-- 测试用例基本信息编辑弹窗 -->
-<ProjectCaseBasicInfoModal ShowModal="showBasicInfoModal" 
-                        CurrentTestCase="currentTestCase" 
-                        Categories="categories" 
-                        IsEditing="isEditingBasicInfo" 
-                        OnClose="HideBasicInfoModal" 
-                        OnSave="SaveBasicInfo" 
-                        OnSaveOnly="SaveBasicInfoOnly" />
-
-@* 树形分类渲染方法 *@
-@code {
-    private RenderFragment RenderCategoryTree(ProjectCaseCategory category, int level) => builder =>
-    {
-        var indentStyle = $"margin-left: {level * 20}px;";
-        var hasChildren = HasChildCategories(category.Id);
-        
-        builder.OpenElement(0, "div");
-        builder.AddAttribute(1, "class", "category-item-container position-relative");
-        builder.AddAttribute(2, "style", indentStyle);
-        
-        builder.OpenElement(3, "div");
-        builder.AddAttribute(4, "class", "d-flex justify-content-between align-items-center category-item");
-        
-        builder.OpenElement(5, "button");
-        builder.AddAttribute(6, "class", $"list-group-item list-group-item-action py-2 flex-grow-1 d-flex justify-content-between align-items-center {(selectedCategoryId == category.Id ? "active" : "")}");
-        builder.AddAttribute(7, "onclick", EventCallback.Factory.Create(this, () => SelectCategory(category.Id)));
-        builder.AddAttribute(8, "style", "border: none; border-radius: 0.375rem; text-align: left; width: 100%; position: relative;");
-        
-        builder.OpenElement(9, "div");
-        builder.AddAttribute(10, "class", "d-flex align-items-center");
-        
-        @if (hasChildren)
-        {
-            builder.OpenElement(11, "i");
-            builder.AddAttribute(12, "class", "oi oi-chevron-right me-2 category-chevron");
-            builder.AddAttribute(13, "style", "font-size: 0.7em; color: #6c757d; width: 12px;");
-            builder.CloseElement();
-        }
-        else
-        {
-            builder.OpenElement(11, "span");
-            builder.AddAttribute(12, "style", "width: 12px;");
-            builder.CloseElement();
-        }
-        
-        // 移除颜色徽章，直接显示分类名称
-        builder.OpenElement(14, "span");
-        builder.AddAttribute(15, "class", "category-name");
-        builder.AddContent(16, category.Name);
-        builder.CloseElement();
-        
-        builder.CloseElement(); // d-flex align-items-center
-        
-        // 右侧容器：包含徽章和下拉菜单
-        builder.OpenElement(17, "div");
-        builder.AddAttribute(18, "class", "d-flex align-items-center gap-2");
-        
-        builder.OpenElement(19, "span");
-        builder.AddAttribute(20, "class", "badge bg-secondary badge-sm");
-        builder.AddContent(21, GetCategoryTestCount(category.Id));
-        builder.CloseElement();
-        
-        // 下拉操作按钮
-        builder.OpenElement(22, "div");
-        builder.AddAttribute(23, "class", "dropdown");
-        
-        builder.OpenElement(24, "button");
-        builder.AddAttribute(25, "class", "btn btn-link btn-sm p-0 text-muted dropdown-toggle");
-        builder.AddAttribute(26, "type", "button");
-        builder.AddAttribute(27, "id", $"dropdownMenuButton-{category.Id}");
-        builder.AddAttribute(28, "data-bs-toggle", "dropdown");
-        builder.AddAttribute(29, "aria-expanded", "false");
-        builder.AddEventStopPropagationAttribute(30, "onclick", true); // 防止事件冒泡
-        
-        builder.OpenElement(31, "i");
-        builder.AddAttribute(32, "class", "oi oi-ellipses");
-        builder.CloseElement(); // 图标
-        
-        builder.CloseElement(); // 下拉按钮
-        
-        builder.OpenElement(33, "ul");
-        builder.AddAttribute(34, "class", "dropdown-menu dropdown-menu-end");
-        builder.AddAttribute(35, "aria-labelledby", $"dropdownMenuButton-{category.Id}");
-        // 移除内联z-index样式，让CSS完全控制层级
-        
-        builder.OpenElement(36, "li");
-        builder.OpenElement(37, "a");
-        builder.AddAttribute(38, "class", "dropdown-item");
-        builder.AddAttribute(39, "href", "javascript:void(0)");
-        builder.AddAttribute(40, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this, e => {
-            AddChildCategory(category);
-        }));
-        builder.OpenElement(41, "i");
-        builder.AddAttribute(42, "class", "oi oi-plus me-2");
-        builder.CloseElement();
-        builder.AddContent(43, "添加子分类");
-        builder.CloseElement(); // a
-        builder.CloseElement(); // li
-        
-        builder.OpenElement(44, "li");
-        builder.OpenElement(45, "a");
-        builder.AddAttribute(46, "class", "dropdown-item");
-        builder.AddAttribute(47, "href", "javascript:void(0)");
-        builder.AddAttribute(48, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this, e => {
-            ShowEditCategoryModal(category);
-        }));
-        builder.OpenElement(49, "i");
-        builder.AddAttribute(50, "class", "oi oi-pencil me-2");
-        builder.CloseElement();
-        builder.AddContent(51, "编辑分类");
-        builder.CloseElement(); // a
-        builder.CloseElement(); // li
-        
-        builder.OpenElement(52, "li");
-        builder.OpenElement(53, "hr");
-        builder.AddAttribute(54, "class", "dropdown-divider");
-        builder.CloseElement(); // hr
-        builder.CloseElement(); // li
-        
-        builder.OpenElement(55, "li");
-        builder.OpenElement(56, "a");
-        builder.AddAttribute(57, "class", "dropdown-item text-danger");
-        builder.AddAttribute(58, "href", "javascript:void(0)");
-        builder.AddAttribute(59, "onclick", EventCallback.Factory.Create<MouseEventArgs>(this, async e => {
-            await DeleteCategory(category.Id);
-        }));
-        builder.OpenElement(60, "i");
-        builder.AddAttribute(61, "class", "oi oi-trash me-2");
-        builder.CloseElement();
-        builder.AddContent(62, "删除分类");
-        builder.CloseElement(); // a
-        builder.CloseElement(); // li
-        
-        builder.CloseElement(); // ul
-        
-        builder.CloseElement(); // dropdown div
-        
-        builder.CloseElement(); // 右侧容器 d-flex align-items-center gap-2
-        
-        builder.CloseElement(); // list-group-item button
-        
-        builder.CloseElement(); // d-flex justify-content-between
-        
-        builder.CloseElement(); // category-item-container div
-        
-        // 递归渲染子分类
-        var children = GetChildCategories(category.Id);
-        if (children.Any())
-        {
-            builder.OpenElement(64, "div");
-            builder.AddAttribute(65, "class", "category-children");
-            foreach (var child in children)
-            {
-                builder.AddContent(66, RenderCategoryTree(child, level + 1));
-            }
-            builder.CloseElement(); // 子分类容器
-        }
-    };
-    
-    // 新增的方法用于处理基本信息编辑
-    private bool showBasicInfoModal = false;
-    private bool isEditingBasicInfo = false;
-    
     private void ShowEditBasicInfoModal(ProjectCaseDto testCase)
     {
         currentTestCase = new ProjectCaseDto
         {
             Id = testCase.Id,
-            CaseNumber = testCase.CaseNumber,  // 添加用例编号字段
+            CaseNumber = testCase.CaseNumber,
             Name = testCase.Name,
             Description = testCase.Description,
             ProjectId = testCase.ProjectId,
@@ -1150,13 +928,12 @@ else
             {
                 await ProjectCaseService.CreateAsync(testCase);
                 await JSRuntime.InvokeVoidAsync("alert", "测试用例创建成功！");
-                // 创建后直接跳转到步骤编辑页面
                 Navigation.NavigateTo($"/autotest/project-cases/{testCase.Id}/steps");
                 return;
             }
             
             await HideBasicInfoModal();
-            await LoadProjectData(); // 保持当前选中的分类不变
+            await LoadProjectData();
         }
         catch (Exception ex)
         {
@@ -1172,7 +949,7 @@ else
             await JSRuntime.InvokeVoidAsync("alert", "测试用例保存成功！");
             
             await HideBasicInfoModal();
-            await LoadProjectData(); // 保持当前选中的分类不变
+            await LoadProjectData();
         }
         catch (Exception ex)
         {
@@ -1180,22 +957,22 @@ else
         }
     }
     
-    private string GetLevelBadgeClass(string level) => level switch
+    private string GetLevelTagColor(string level) => level switch
     {
-        "P0" => "bg-danger",      // 最高级别：红色
-        "P1" => "bg-warning",     // 高级别：橙色
-        "P2" => "bg-primary",     // 中级别：蓝色
-        "P3" => "bg-secondary",   // 最低级别：灰色
-        _ => "bg-light"
+        "P0" => "red",
+        "P1" => "orange",
+        "P2" => "blue",
+        "P3" => "default",
+        _ => "default"
     };
     
-    private string GetExecutionResultBadgeClass(ExecutionStatus status) => status switch
+    private string GetExecutionResultTagColor(ExecutionStatus status) => status switch
     {
-        ExecutionStatus.Success => "bg-success",      // 成功：绿色
-        ExecutionStatus.Failed => "bg-danger",       // 失败：红色
-        ExecutionStatus.Running => "bg-primary",     // 运行中：蓝色
-        ExecutionStatus.Pending => "bg-warning",     // 等待中：黄色
-        _ => "bg-secondary"                           // 其他：灰色
+        ExecutionStatus.Success => "green",
+        ExecutionStatus.Failed => "red",
+        ExecutionStatus.Running => "blue",
+        ExecutionStatus.Pending => "orange",
+        _ => "default"
     };
     
     private string GetExecutionResultText(ExecutionStatus status) => status switch
@@ -1207,7 +984,6 @@ else
         _ => "未知"
     };
     
-    // 导航到项目管理页面进行环境管理
     private void NavigateToProjectManagement()
     {
         if (string.IsNullOrEmpty(selectedProjectId))
@@ -1215,8 +991,6 @@ else
             
         Navigation.NavigateTo($"/project-management");
     }
-    
-
 
     private string GetEnvironmentTypeDisplayName(EnvironmentType type) => type switch
     {

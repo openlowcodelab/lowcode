@@ -9,14 +9,14 @@ namespace H.AutoTest.Application;
 /// </summary>
 public class BatchExecutionAppService : ApplicationService, IBatchExecutionAppService
 {
-    private readonly TestExecutionEngineAppService _testExecutionEngine;
-    private readonly ProjectCaseAppService _projectCaseService;
-    private readonly ExecutionRecordAppService _executionRecordService;
+    private readonly ITestExecutionEngineAppService _testExecutionEngine;
+    private readonly IProjectCaseAppService _projectCaseService;
+    private readonly IExecutionRecordAppService _executionRecordService;
     
     public BatchExecutionAppService(
-        TestExecutionEngineAppService testExecutionEngine,
-        ProjectCaseAppService projectCaseService,
-        ExecutionRecordAppService executionRecordService)
+        ITestExecutionEngineAppService testExecutionEngine,
+        IProjectCaseAppService projectCaseService,
+        IExecutionRecordAppService executionRecordService)
     {
         _testExecutionEngine = testExecutionEngine;
         _projectCaseService = projectCaseService;

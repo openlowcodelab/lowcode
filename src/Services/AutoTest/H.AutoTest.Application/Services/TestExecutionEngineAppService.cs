@@ -17,9 +17,9 @@ namespace H.AutoTest.Application;
 public class TestExecutionEngineAppService : ApplicationService, ITestExecutionEngineAppService
 {    
     private readonly HttpClient _httpClient;
-    private readonly ExecutionRecordAppService _executionRecordService;
-    private readonly EnvironmentAppService _environmentService;
-    private readonly ProjectCaseAppService _projectCaseService;
+    private readonly IExecutionRecordAppService _executionRecordService;
+    private readonly IEnvironmentAppService _environmentService;
+    private readonly IProjectCaseAppService _projectCaseService;
     private readonly Dictionary<string, string> _variables;
     private readonly string _dataPath;
     
@@ -29,9 +29,9 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
     
     public TestExecutionEngineAppService(
         HttpClient httpClient,
-        ExecutionRecordAppService executionRecordService,
-        EnvironmentAppService environmentService,
-        ProjectCaseAppService projectCaseService,
+        IExecutionRecordAppService executionRecordService,
+        IEnvironmentAppService environmentService,
+        IProjectCaseAppService projectCaseService,
         IConfiguration configuration)
     {
         _httpClient = httpClient;

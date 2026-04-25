@@ -7,7 +7,7 @@ namespace H.AutoTest.Application;
 /// <summary>
 /// 测试执行记录服务
 /// </summary>
-public class ExecutionRecordAppService
+public class ExecutionRecordAppService : IExecutionRecordAppService
 {
     private readonly string _dataPath;
     

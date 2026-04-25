@@ -1,5 +1,5 @@
-using H.AutoTest.Application;
 using H.AutoTest.Application.Contracts;
+using H.Util.Ids;
 using Microsoft.Extensions.Configuration;
 using System.Linq;
 using System.Text.Json;
@@ -7,21 +7,14 @@ using Volo.Abp.Application.Services;
 
 namespace H.AutoTest.Application;
 
-public class ProjectEnvironmentAppService : AutoTestAppServiceBase<ProjectEnvironmentDto>, IProjectEnvironmentAppService
+public class ProjectEnvironmentAppService : ApplicationService, IProjectEnvironmentAppService
 {
     private readonly string _dataPath;
     
-    public ProjectEnvironmentAppService(IConfiguration configuration) : base(Path.Combine(Path.GetTempPath(), "temp-project-environments.json"))
+    public ProjectEnvironmentAppService(IConfiguration configuration)
     {
         _dataPath = configuration["DataPath"] ?? "data";
     }
-    
-    protected override string GetId(ProjectEnvironmentDto item) => item.Id;
-    protected override void SetId(ProjectEnvironmentDto item, string id) => item.Id = id;
-    protected override string GenerateId(ProjectEnvironmentDto item) => GenerateShortId();
-    
-    protected override void SetCreatedAt(ProjectEnvironmentDto item, DateTime createdAt) => item.CreatedAt = createdAt;
-    protected override void SetUpdatedAt(ProjectEnvironmentDto item, DateTime updatedAt) => item.UpdatedAt = updatedAt;
     
     /// <summary>
     /// 获取所有项目环境（所有项目）
@@ -77,7 +70,7 @@ public class ProjectEnvironmentAppService : AutoTestAppServiceBase<ProjectEnviro
     /// </summary>
     public new async Task<string> CreateAsync(ProjectEnvironmentDto environment)
     {
-        environment.Id = GenerateShortId();
+        environment.Id = ShortIdGenerator.Generate();
         environment.CreatedAt = DateTime.Now;
         environment.UpdatedAt = DateTime.Now;
         

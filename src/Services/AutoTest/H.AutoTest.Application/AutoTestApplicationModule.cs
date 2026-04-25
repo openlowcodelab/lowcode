@@ -1,4 +1,5 @@
 using H.AutoTest.Application.Contracts;
+using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Modularity;
 
 namespace H.AutoTest.Application;
@@ -9,4 +10,10 @@ namespace H.AutoTest.Application;
 [DependsOn(typeof(AutoTestApplicationContractsModule))]
 public class AutoTestApplicationModule : AbpModule
 {
+    public override void ConfigureServices(ServiceConfigurationContext context)
+    {
+        // 注册 HttpClient
+        context.Services.AddHttpClient();
+        
+    }
 }

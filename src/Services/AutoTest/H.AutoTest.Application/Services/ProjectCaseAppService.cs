@@ -1,5 +1,6 @@
 using H.AutoTest.Application;
 using H.AutoTest.Application.Contracts;
+using H.Util.Ids;
 using Microsoft.Extensions.Configuration;
 using System.Linq;
 using System.Text.Json;
@@ -7,21 +8,14 @@ using Volo.Abp.Application.Services;
 
 namespace H.AutoTest.Application;
 
-public class ProjectCaseAppService : AutoTestAppServiceBase<ProjectCaseDto>, IProjectCaseAppService
+public class ProjectCaseAppService : ApplicationService, IProjectCaseAppService
 {
     private readonly string _dataPath;
     
-    public ProjectCaseAppService(IConfiguration configuration) : base(Path.Combine(Path.GetTempPath(), "temp-project-cases.json"))
+    public ProjectCaseAppService(IConfiguration configuration)
     {
         _dataPath = configuration["DataPath"] ?? "data";
     }
-    
-    protected override string GetId(ProjectCaseDto item) => item.Id;
-    protected override void SetId(ProjectCaseDto item, string id) => item.Id = id;
-    protected override string GenerateId(ProjectCaseDto item) => GenerateShortId();
-    
-    protected override void SetCreatedAt(ProjectCaseDto item, DateTime createdAt) => item.CreatedAt = createdAt;
-    protected override void SetUpdatedAt(ProjectCaseDto item, DateTime updatedAt) => item.UpdatedAt = updatedAt;
     
     /// <summary>
     /// 获取所有测试用例（所有项目）
@@ -77,7 +71,7 @@ public class ProjectCaseAppService : AutoTestAppServiceBase<ProjectCaseDto>, IPr
     /// </summary>
     public new async Task<string> CreateAsync(ProjectCaseDto projectCase)
     {
-        projectCase.Id = GenerateShortId();
+        projectCase.Id = ShortIdGenerator.Generate();
         projectCase.CreatedAt = DateTime.Now;
         projectCase.UpdatedAt = DateTime.Now;
         
@@ -177,7 +171,7 @@ public class ProjectCaseAppService : AutoTestAppServiceBase<ProjectCaseDto>, IPr
         // 创建复制的测试用例
         var copiedCase = new ProjectCaseDto
         {
-            Id = GenerateShortId(),
+            Id = ShortIdGenerator.Generate(),
             CaseNumber = GenerateNewCaseNumber(originalCase.CaseNumber),
             Name = $"{originalCase.Name} - 副本",
             Description = originalCase.Description,
