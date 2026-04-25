@@ -59,7 +59,7 @@ public class ProjectEnvironmentAppService : AutoTestAppServiceBase<ProjectEnviro
         }
         
         var json = await File.ReadAllTextAsync(filePath);
-        var environments = JsonSerializer.Deserialize<List<ProjectEnvironmentDto>>(json) ?? new List<ProjectEnvironmentDto>();
+        var environments = JsonSerializer.Deserialize<List<ProjectEnvironmentDto>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<ProjectEnvironmentDto>();
         return environments;
     }
     

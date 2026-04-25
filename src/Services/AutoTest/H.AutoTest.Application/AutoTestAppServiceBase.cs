@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Volo.Abp;
 using Volo.Abp.Application.Services;
 
 namespace H.AutoTest.Application;
@@ -15,17 +16,29 @@ public abstract class AutoTestAppServiceBase<T> : ApplicationService where T : c
         _filePath = filePath;
     }
 
+    /// <summary>
+    /// Base GetAllAsync - not exposed as remote API to avoid route conflict with derived classes
+    /// </summary>
+    [RemoteService(false)]
     public async Task<List<T>> GetAllAsync()
     {
         return await LoadDataAsync();
     }
 
+    /// <summary>
+    /// Base GetByIdAsync - not exposed as remote API to avoid route conflict with derived classes
+    /// </summary>
+    [RemoteService(false)]
     public async Task<T?> GetByIdAsync(string id)
     {
         var items = await LoadDataAsync();
         return items.FirstOrDefault(x => GetId(x) == id);
     }
 
+    /// <summary>
+    /// Base CreateAsync - not exposed as remote API to avoid route conflict with derived classes
+    /// </summary>
+    [RemoteService(false)]
     public async Task<T> CreateAsync(T item)
     {
         if (string.IsNullOrEmpty(GetId(item)))
@@ -41,6 +54,10 @@ public abstract class AutoTestAppServiceBase<T> : ApplicationService where T : c
         return item;
     }
 
+    /// <summary>
+    /// Base UpdateAsync - not exposed as remote API to avoid route conflict with derived classes
+    /// </summary>
+    [RemoteService(false)]
     public async Task<T> UpdateAsync(string id, T item)
     {
         var items = await LoadDataAsync();
@@ -54,6 +71,10 @@ public abstract class AutoTestAppServiceBase<T> : ApplicationService where T : c
         return item;
     }
 
+    /// <summary>
+    /// Base DeleteAsync - not exposed as remote API to avoid route conflict with derived classes
+    /// </summary>
+    [RemoteService(false)]
     public async Task DeleteAsync(string id)
     {
         var items = await LoadDataAsync();
@@ -61,6 +82,10 @@ public abstract class AutoTestAppServiceBase<T> : ApplicationService where T : c
         await SaveDataAsync(items);
     }
 
+    /// <summary>
+    /// Base SearchAsync - not exposed as remote API to avoid route conflict with derived classes
+    /// </summary>
+    [RemoteService(false)]
     public async Task<List<T>> SearchAsync(Func<T, bool> predicate)
     {
         var items = await LoadDataAsync();

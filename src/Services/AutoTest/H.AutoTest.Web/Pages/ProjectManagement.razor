@@ -3,6 +3,7 @@
 @namespace H.AutoTest.Web
 @layout AutoTestLayout
 
+@using AntDesign
 @inject IProjectAppService ProjectService
 @inject IProjectEnvironmentAppService ProjectEnvironmentService
 @inject IProjectServiceConfigAppService ProjectServiceConfigService
@@ -19,516 +20,459 @@
 </style>
 
 <!-- 搜索、筛选和操作按钮 -->
-<div class="row mb-3">
-    <div class="col-md-4">
-        <div class="input-group">
-            <input type="text" class="form-control" placeholder="搜索项目..." @bind="searchTerm" @oninput="OnSearchChanged">
-            <button class="btn btn-outline-secondary" type="button" @onclick="SearchProjects">
-                <i class="oi oi-magnifying-glass"></i>
-            </button>
-        </div>
-    </div>
-    <div class="col-md-2">
-        <select class="form-select" value="@selectedStatus" @onchange="FilterByStatus">
-            <option value="">全部状态</option>
-            <option value="1">活跃</option>
-            <option value="2">未激活</option>
-            <option value="3">已完成</option>
-            <option value="4">已取消</option>
-            <option value="5">暂停</option>
-        </select>
-    </div>
-    <div class="col-md-3">
-        <button class="btn btn-primary" @onclick="ShowAddProjectModal">
-            <i class="oi oi-plus"></i> 新建项目
-        </button>
-    </div>
-</div>
+<AntDesign.Row Gutter="16" Style="margin-bottom: 16px;">
+    <AntDesign.Col Span="8">
+        <AntDesign.Input Search="true" EnterButton="🔍" @bind-Value="searchTerm" Placeholder="搜索项目..." OnSearch="SearchProjects" />
+    </AntDesign.Col>
+    <AntDesign.Col Span="4">
+        <AntDesign.Select TItemValue="string" TItem="string" Placeholder="全部状态" Style="width: 100%;" OnChange="OnStatusChanged">
+            <AntDesign.SelectOption TItemValue="string" TItem="string" Value="@("" as string)" Label="全部状态" />
+            <AntDesign.SelectOption TItemValue="string" TItem="string" Value="@(1.ToString())" Label="活跃" />
+            <AntDesign.SelectOption TItemValue="string" TItem="string" Value="@(2.ToString())" Label="未激活" />
+            <AntDesign.SelectOption TItemValue="string" TItem="string" Value="@(3.ToString())" Label="已完成" />
+            <AntDesign.SelectOption TItemValue="string" TItem="string" Value="@(4.ToString())" Label="已取消" />
+            <AntDesign.SelectOption TItemValue="string" TItem="string" Value="@(5.ToString())" Label="暂停" />
+        </AntDesign.Select>
+    </AntDesign.Col>
+    <AntDesign.Col Span="12" Style="text-align: right;">
+        <AntDesign.Button Type="@ButtonType.Primary" @onclick="ShowAddProjectModal">➕ 新建项目</AntDesign.Button>
+    </AntDesign.Col>
+</AntDesign.Row>
 
 <!-- 项目列表 -->
 @if (loading)
 {
-    <div class="text-center">
-        <div class="spinner-border" role="status"><span class="visually-hidden">加载中...</span></div>
+    <div style="text-align: center; padding: 40px;">
+        <AntDesign.Spin Tip="加载中..." />
     </div>
 }
 else if (filteredProjects.Any())
 {
-    <div class="row">
+    <AntDesign.Row Gutter="16">
         @foreach (var project in filteredProjects)
         {
-            <div class="col-lg-6 col-xl-4 mb-4">
-                <div class="card h-100" @onclick="async () => await NavigateToProjectCases(project.Id)" style="cursor: pointer;">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">@project.Name</h5>
-                        <span class="badge @GetStatusBadgeClass(project.Status)">@GetStatusDisplayName(project.Status)</span>
-                    </div>
-                    <div class="card-body">
-                        <p class="card-text">@project.Description</p>
-                        <div class="mb-3">
-                            <small class="text-muted"><strong>环境数量：</strong> @GetProjectEnvironments(project.Id).Count 个</small>
+            <AntDesign.Col Xs="24" Sm="12" Lg="8" Xl="6" Style="margin-bottom: 16px;">
+                <AntDesign.Card Hoverable="true" Style="cursor: pointer; height: 100%;">
+                    <TitleTemplate>
+                        <div @onclick="async () => await NavigateToProjectCases(project.Id)" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; cursor: pointer;">
+                            <strong style="font-size: 16px;">@project.Name</strong>
+                            <AntDesign.Tag Color="@GetStatusTagColor(project.Status)">@GetStatusDisplayName(project.Status)</AntDesign.Tag>
                         </div>
-                    </div>
-                    <div class="card-footer">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div class="btn-group flex-fill me-2">
-                                <button class="btn btn-outline-info btn-sm" @onclick="() => ManageProjectServices(project)" @onclick:stopPropagation="true">
-                                    <i class="oi oi-cog"></i> 服务
-                                </button>
-                                <button class="btn btn-outline-warning btn-sm" @onclick="async () => await ManageEnvironments(project)" @onclick:stopPropagation="true">
-                                    <i class="oi oi-globe"></i> 环境
-                                </button>
-                                <button class="btn btn-outline-primary btn-sm" @onclick="async () => await NavigateToProjectCases(project.Id)" @onclick:stopPropagation="true">
-                                    <i class="oi oi-list-rich"></i> 用例
-                                </button>
-                            </div>
-                            <div class="dropdown">
-                                <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" @onclick:stopPropagation="true">
-                                    <i class="oi oi-ellipses"></i>
-                                </button>
-                                <ul class="dropdown-menu dropdown-menu-end">
-                                    <li><a class="dropdown-item" href="#" @onclick="() => ShowEditProjectModal(project)" @onclick:preventDefault="true" @onclick:stopPropagation="true"><i class="oi oi-pencil me-2"></i>编辑</a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item text-danger" href="#" @onclick="() => DeleteProject(project.Id)" @onclick:preventDefault="true" @onclick:stopPropagation="true"><i class="oi oi-trash me-2"></i>删除</a></li>
-                                </ul>
-                            </div>
+                    </TitleTemplate>
+                    <ChildContent>
+                        <div @onclick="async () => await NavigateToProjectCases(project.Id)" style="cursor: pointer;">
+                            <p style="color: #666; margin-bottom: 12px; min-height: 40px;">@(string.IsNullOrEmpty(project.Description) ? "暂无描述" : project.Description)</p>
+                            <div style="color: #999; font-size: 13px; margin-bottom: 12px;">🌍 环境数量：@GetProjectEnvironments(project.Id).Count 个</div>
                         </div>
-                    </div>
-                </div>
-            </div>
+                        <div style="display: flex; gap: 8px; padding-top: 12px; border-top: 1px solid #f0f0f0;">
+                            <AntDesign.Button Size="@ButtonSize.Small" Type="@ButtonType.Default" @onclick="() => ManageProjectServices(project)">⚙️ 服务</AntDesign.Button>
+                            <AntDesign.Button Size="@ButtonSize.Small" Type="@ButtonType.Default" @onclick="async () => await ManageEnvironments(project)">🌐 环境</AntDesign.Button>
+                            <AntDesign.Button Size="@ButtonSize.Small" Type="@ButtonType.Primary" @onclick="async () => await NavigateToProjectCases(project.Id)">📝 用例</AntDesign.Button>
+                        </div>
+                    </ChildContent>
+                    <Extra>
+                        <AntDesign.Dropdown Trigger="new[] { AntDesign.Trigger.Click }">
+                            <ChildContent>
+                                <AntDesign.Button Size="@ButtonSize.Small" Type="@ButtonType.Default" Shape="@ButtonShape.Circle">⋯</AntDesign.Button>
+                            </ChildContent>
+                            <Overlay>
+                                <AntDesign.Menu>
+                                    <AntDesign.MenuItem @onclick="() => ShowEditProjectModal(project)">✏️ 编辑</AntDesign.MenuItem>
+                                    <AntDesign.MenuItem Divider="true" />
+                                    <AntDesign.MenuItem @onclick="() => DeleteProject(project.Id)" Style="color: #ff4d4f;">🗑️ 删除</AntDesign.MenuItem>
+                                </AntDesign.Menu>
+                            </Overlay>
+                        </AntDesign.Dropdown>
+                    </Extra>
+                </AntDesign.Card>
+            </AntDesign.Col>
         }
-    </div>
+    </AntDesign.Row>
 }
 else
 {
-    <div class="alert alert-info text-center"><i class="oi oi-info"></i> 暂无项目数据</div>
+    <AntDesign.Result Status="@AntDesign.ResultStatus.Info" Title="暂无项目数据" SubTitle="点击「新建项目」按钮创建您的第一个项目" />
 }
 
 <!-- 项目添加/编辑模态框 -->
-@if (showProjectModal)
-{
-    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">@(isEditingProject ? "编辑项目" : "新建项目")</h5>
-                    <button type="button" class="btn-close" @onclick="HideProjectModal"></button>
-                </div>
-                <div class="modal-body">
-                    <EditForm Model="currentProject" OnValidSubmit="SaveProject">
-                        <DataAnnotationsValidator />
-                        <ValidationSummary class="text-danger" />
-                        <div class="mb-3 row">
-                            <label class="col-sm-2 col-form-label">项目标识 <span class="text-danger">*</span></label>
-                            <div class="col-sm-10">
-                                <div class="input-group">
-                                    <InputText class="form-control" @bind-Value="currentProject.Id" placeholder="留空自动生成" disabled="@isEditingProject" />
-                                    @if (!isEditingProject)
-                                    {
-                                        <button class="btn btn-outline-secondary" type="button" @onclick="GenerateProjectId"><i class="oi oi-reload"></i></button>
-                                    }
-                                </div>
-                                <ValidationMessage For="() => currentProject.Id" />
-                                <small class="form-text text-muted">只能包含字母、数字、下划线，以字母开头，长度3-12</small>
-                            </div>
-                        </div>
-                        <div class="mb-3 row">
-                            <label class="col-sm-2 col-form-label">项目名称 <span class="text-danger">*</span></label>
-                            <div class="col-sm-10">
-                                <InputText class="form-control" @bind-Value="currentProject.Name" />
-                                <ValidationMessage For="() => currentProject.Name" />
-                            </div>
-                        </div>
-                        <div class="mb-3 row">
-                            <label class="col-sm-2 col-form-label">项目描述</label>
-                            <div class="col-sm-10">
-                                <InputTextArea class="form-control" rows="3" @bind-Value="currentProject.Description" />
-                            </div>
-                        </div>
-                        <div class="mb-3 row">
-                            <label class="col-sm-2 col-form-label">状态</label>
-                            <div class="col-sm-10">
-                                <InputSelect class="form-select" @bind-Value="currentProject.Status">
-                                    <option value="@ProjectStatus.Active">活跃</option>
-                                    <option value="@ProjectStatus.Inactive">未激活</option>
-                                    <option value="@ProjectStatus.Completed">已完成</option>
-                                    <option value="@ProjectStatus.Cancelled">已取消</option>
-                                    <option value="@ProjectStatus.OnHold">暂停</option>
-                                </InputSelect>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" @onclick="HideProjectModal">取消</button>
-                            <button type="submit" class="btn btn-primary">@(isEditingProject ? "更新" : "保存")</button>
-                        </div>
-                    </EditForm>
-                </div>
+@{
+    var projectModalTitle = isEditingProject ? "编辑项目" : "新建项目";
+    var projectModalOkText = isEditingProject ? "更新" : "保存";
+    var projectModalCancelText = "取消";
+}
+<AntDesign.Modal @bind-Visible="showProjectModal" Title="@projectModalTitle" Width="@("700px")" OnOk="SaveProject" OnCancel="HideProjectModal">
+    <div Style="padding: 20px 0;">
+        <div Style="margin-bottom: 16px; display: flex; align-items: center;">
+            <label Style="width: 100px; text-align: right; margin-right: 16px;"><span Style="color: red;">*</span> 项目标识</label>
+            <div Style="flex: 1;">
+                <InputText class="form-control" @bind-Value="currentProject.Id" Placeholder="留空自动生成" Disabled="@isEditingProject" />
+                @if (!isEditingProject)
+                {
+                    <div Style="color: #999; font-size: 12px; margin-top: 4px;">只能包含字母、数字、下划线，以字母开头，长度3-12</div>
+                }
+            </div>
+        </div>
+        
+        <div Style="margin-bottom: 16px; display: flex; align-items: center;">
+            <label Style="width: 100px; text-align: right; margin-right: 16px;"><span Style="color: red;">*</span> 项目名称</label>
+            <div Style="flex: 1;">
+                <InputText class="form-control" @bind-Value="currentProject.Name" />
+            </div>
+        </div>
+        
+        <div Style="margin-bottom: 16px; display: flex; align-items: start;">
+            <label Style="width: 100px; text-align: right; margin-right: 16px; margin-top: 6px;">项目描述</label>
+            <div Style="flex: 1;">
+                <InputTextArea class="form-control" rows="4" @bind-Value="currentProject.Description" />
+            </div>
+        </div>
+        
+        <div Style="margin-bottom: 16px; display: flex; align-items: center;">
+            <label Style="width: 100px; text-align: right; margin-right: 16px;">状态</label>
+            <div Style="flex: 1;">
+                <AntDesign.Select @bind-Value="currentProject.Status" TItemValue="ProjectStatus" TItem="ProjectStatus" Style="width: 100%;">
+                    <AntDesign.SelectOption TItemValue="ProjectStatus" TItem="ProjectStatus" Value="@ProjectStatus.Active" Label="活跃" />
+                    <AntDesign.SelectOption TItemValue="ProjectStatus" TItem="ProjectStatus" Value="@ProjectStatus.Inactive" Label="未激活" />
+                    <AntDesign.SelectOption TItemValue="ProjectStatus" TItem="ProjectStatus" Value="@ProjectStatus.Completed" Label="已完成" />
+                    <AntDesign.SelectOption TItemValue="ProjectStatus" TItem="ProjectStatus" Value="@ProjectStatus.Cancelled" Label="已取消" />
+                    <AntDesign.SelectOption TItemValue="ProjectStatus" TItem="ProjectStatus" Value="@ProjectStatus.OnHold" Label="暂停" />
+                </AntDesign.Select>
             </div>
         </div>
     </div>
-}
+    
+    <div Style="text-align: right; padding-top: 16px; border-top: 1px solid #f0f0f0; margin-top: 24px;">
+        <AntDesign.Button Type="@ButtonType.Default" @onclick="HideProjectModal" Style="margin-right: 8px;">取消</AntDesign.Button>
+        <AntDesign.Button Type="@ButtonType.Primary" @onclick="SaveProject">@(isEditingProject ? "更新" : "保存")</AntDesign.Button>
+    </div>
+</AntDesign.Modal>
 
 <!-- 环境管理模态框 -->
-@if (showEnvironmentModal)
-{
-    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-        <div class="modal-dialog modal-xl">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">环境管理 - @selectedProject?.Name</h5>
-                    <button type="button" class="btn-close" @onclick="HideEnvironmentModal"></button>
-                </div>
-                <div class="modal-body p-0" style="min-height: 600px;">
-                    <div class="d-flex" style="min-height: 600px;">
-                        <div class="bg-light border-end" style="width: 300px;">
-                            <div class="p-3 h-100">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <h6 class="mb-0">环境列表</h6>
-                                    <button class="btn btn-primary btn-sm" @onclick="ShowAddEnvironmentModal"><i class="oi oi-plus"></i></button>
+@{
+    var envModalTitle = $"环境管理 - {selectedProject?.Name}";
+}
+<AntDesign.Modal @bind-Visible="showEnvironmentModal" Title="@envModalTitle" Width="@("1100px")">
+    <div Style="display: flex; min-height: 600px;">
+        <!-- 左侧环境列表 -->
+        <div Style="width: 280px; border-right: 1px solid #f0f0f0; padding: 16px; background-color: #fafafa;">
+            <div Style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <span Style="font-weight: 500;">环境列表</span>
+                <AntDesign.Button Type="@ButtonType.Primary" Size="@ButtonSize.Small" @onclick="ShowAddEnvironmentModal">➕</AntDesign.Button>
+            </div>
+            
+            @if (projectEnvironments.Any())
+            {
+                <div Style="display: flex; flex-direction: column; gap: 8px;">
+                    @foreach (var env in projectEnvironments)
+                    {
+                        var isSelected = selectedEnvironment?.Id == env.Id;
+                        var bgColor = isSelected ? "#1890ff" : "#fff";
+                        var textColor = isSelected ? "#fff" : "#333";
+                        var subTextColor = isSelected ? "rgba(255,255,255,0.8)" : "#999";
+                        var borderColor = isSelected ? "#1890ff" : "#d9d9d9";
+                        var dropdownColor = isSelected ? "#fff" : "#999";
+                        
+                        <div @onclick="() => SelectEnvironment(env)" 
+                             Style="padding: 12px; border-radius: 4px; cursor: pointer; background-color: @bgColor; color: @textColor; border: 1px solid @borderColor;">
+                            <div Style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <div Style="font-weight: 600; margin-bottom: 4px;">@env.Name</div>
+                                    <div Style="font-size: 12px; color: @subTextColor;">@GetEnvironmentTypeDisplayName(env.Type)</div>
                                 </div>
-                                <div class="list-group">
-                                    @if (projectEnvironments.Any())
-                                    {
-                                        @foreach (var env in projectEnvironments)
-                                        {
-                                            <button class="list-group-item list-group-item-action @(selectedEnvironment?.Id == env.Id ? "active bg-primary text-white environment-item-selected" : "")" @onclick="() => SelectEnvironment(env)">
-                                                <div class="d-flex align-items-center">
-                                                    <div class="flex-grow-1 text-truncate">
-                                                        <div class="fw-bold text-truncate">@env.Name</div>
-                                                        <small class="@(selectedEnvironment?.Id == env.Id ? "text-white-50" : "text-muted")">@GetEnvironmentTypeDisplayName(env.Type)</small>
-                                                    </div>
-                                                    <div class="dropdown">
-                                                        <button class="btn btn-link btn-sm p-0 @(selectedEnvironment?.Id == env.Id ? "text-white" : "text-muted") dropdown-toggle" data-bs-toggle="dropdown" @onclick:stopPropagation="true"><i class="oi oi-ellipses"></i></button>
-                                                        <ul class="dropdown-menu dropdown-menu-end">
-                                                            <li><a class="dropdown-item" href="#" @onclick="() => EditEnvironment(env)" @onclick:preventDefault="true"><i class="oi oi-pencil me-2"></i>编辑</a></li>
-                                                            <li><a class="dropdown-item text-danger" href="#" @onclick="() => DeleteEnvironment(env.Id)" @onclick:preventDefault="true"><i class="oi oi-trash me-2"></i>删除</a></li>
-                                                        </ul>
-                                                    </div>
-                                                </div>
-                                            </button>
-                                        }
-                                    }
-                                    else
-                                    {
-                                        <div class="text-center text-muted py-5">
-                                            <p>暂无环境</p>
-                                            <button class="btn btn-outline-primary btn-sm" @onclick="ShowAddEnvironmentModal"><i class="oi oi-plus me-1"></i>添加环境</button>
-                                        </div>
-                                    }
-                                </div>
+                                <AntDesign.Dropdown Trigger="new[] { AntDesign.Trigger.Click }">
+                                    <ChildContent>
+                                        <AntDesign.Button Type="@ButtonType.Text" Size="@ButtonSize.Small" @onclick:stopPropagation>⋯</AntDesign.Button>
+                                    </ChildContent>
+                                    <Overlay>
+                                        <AntDesign.Menu>
+                                            <AntDesign.MenuItem @onclick="() => EditEnvironment(env)">✏️ 编辑</AntDesign.MenuItem>
+                                            <AntDesign.MenuItem Divider="true" />
+                                            <AntDesign.MenuItem @onclick="() => DeleteEnvironment(env.Id)" Style="color: #ff4d4f;">🗑️ 删除</AntDesign.MenuItem>
+                                        </AntDesign.Menu>
+                                    </Overlay>
+                                </AntDesign.Dropdown>
                             </div>
                         </div>
-                        <div class="flex-grow-1">
-                            @if (selectedEnvironment != null)
+                    }
+                </div>
+            }
+            else
+            {
+                <div Style="text-align: center; padding: 40px 20px; color: #999;">
+                    <p>暂无环境</p>
+                    <AntDesign.Button Type="@ButtonType.Default" Size="@ButtonSize.Small" @onclick="ShowAddEnvironmentModal">添加环境</AntDesign.Button>
+                </div>
+            }
+        </div>
+        
+        <!-- 右侧详情 -->
+        <div Style="flex: 1; padding: 16px;">
+            @if (selectedEnvironment != null)
+            {
+                <div>
+                    <!-- 服务配置 -->
+                    <div Style="margin-bottom: 24px; border: 1px solid #d9d9d9; border-radius: 4px;">
+                        <div Style="padding: 12px 16px; background-color: #fafafa; border-bottom: 1px solid #d9d9d9; font-weight: 500;">
+                            💻 服务配置
+                        </div>
+                        <div Style="padding: 16px;">
+                            @if (serviceConfigViews.Any())
                             {
-                                <div class="p-4">
-                                    <div class="card mb-4">
-                                        <div class="card-header"><h6 class="mb-0">服务配置</h6></div>
-                                        <div class="card-body">
-                                            @if (serviceConfigViews.Any())
-                                            {
-                                                <table class="table table-sm mb-0">
-                                                    <thead><tr><th>服务名称</th><th>基础URL</th><th>操作</th></tr></thead>
-                                                    <tbody>
-                                                        @foreach (var config in serviceConfigViews)
-                                                        {
-                                                            <tr>
-                                                                <td><strong>@config.ProjectService.Name</strong></td>
-                                                                <td><span class="text-primary">@config.EnvironmentConfig?.BaseUrl</span></td>
-                                                                <td>
-                                                                    @if (config.EnvironmentConfig != null)
-                                                                    {
-                                                                        <button class="btn btn-outline-primary btn-sm me-1" @onclick="() => EditServiceConfig(config.EnvironmentConfig)"><i class="oi oi-pencil"></i></button>
-                                                                        <button class="btn btn-outline-danger btn-sm" @onclick="() => DeleteServiceConfig(config.EnvironmentConfig.Id)"><i class="oi oi-trash"></i></button>
-                                                                    }
-                                                                    else
-                                                                    {
-                                                                        <button class="btn btn-outline-success btn-sm" @onclick="() => AddServiceConfig(config.ProjectService)"><i class="oi oi-plus"></i> 配置</button>
-                                                                    }
-                                                                </td>
-                                                            </tr>
-                                                        }
-                                                    </tbody>
-                                                </table>
-                                            }
-                                            else { <div class="text-center text-muted py-3">暂无服务配置</div> }
-                                        </div>
-                                    </div>
-                                    <div class="card">
-                                        <div class="card-header d-flex justify-content-between align-items-center">
-                                            <h6 class="mb-0">环境变量</h6>
-                                            <button class="btn btn-outline-success btn-sm" @onclick="ShowAddVariableModal"><i class="oi oi-plus"></i> 添加变量</button>
-                                        </div>
-                                        <div class="card-body">
-                                            @if (selectedEnvironment.Variables.Any())
-                                            {
-                                                <table class="table table-sm mb-0">
-                                                    <thead><tr><th>变量名</th><th>变量值</th><th>说明</th><th>操作</th></tr></thead>
-                                                    <tbody>
-                                                        @foreach (var variable in selectedEnvironment.Variables)
-                                                        {
-                                                            <tr>
-                                                                <td><strong>@variable.Key</strong></td>
-                                                                <td><span class="text-primary">@variable.Value</span></td>
-                                                                <td><small class="text-muted">-</small></td>
-                                                                <td>
-                                                                    <div class="btn-group btn-group-sm">
-                                                                        <button class="btn btn-outline-secondary" @onclick="() => EditVariable(variable.Key, variable.Value)"><i class="oi oi-pencil"></i></button>
-                                                                        <button class="btn btn-outline-danger" @onclick="() => DeleteVariable(variable.Key)"><i class="oi oi-trash"></i></button>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                        }
-                                                    </tbody>
-                                                </table>
-                                            }
-                                            else { <div class="text-center text-muted py-3">暂无环境变量</div> }
-                                        </div>
-                                    </div>
-                                </div>
+                                <table class="table" Style="width: 100%; border-collapse: collapse;">
+                                    <thead>
+                                        <tr Style="background-color: #fafafa; border-bottom: 1px solid #d9d9d9;">
+                                            <th Style="padding: 12px 16px; text-align: left; font-weight: 500;">服务名称</th>
+                                            <th Style="padding: 12px 16px; text-align: left; font-weight: 500;">基础URL</th>
+                                            <th Style="padding: 12px 16px; text-align: left; font-weight: 500; width: 120px;">操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var config in serviceConfigViews)
+                                        {
+                                            <tr Style="border-bottom: 1px solid #f0f0f0;">
+                                                <td Style="padding: 12px 16px;"><strong>@config.ProjectService.Name</strong></td>
+                                                <td Style="padding: 12px 16px;">
+                                                    @if (config.EnvironmentConfig != null)
+                                                    {
+                                                        <a href="@config.EnvironmentConfig.BaseUrl" target="_blank" Style="color: #1890ff;">@config.EnvironmentConfig.BaseUrl</a>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span Style="color: #999;">未配置</span>
+                                                    }
+                                                </td>
+                                                <td Style="padding: 12px 16px;">
+                                                    @if (config.EnvironmentConfig != null)
+                                                    {
+                                                        <AntDesign.Button Type="@ButtonType.Default" Size="@ButtonSize.Small" @onclick="() => EditServiceConfig(config.EnvironmentConfig!)" Style="margin-right: 4px; color: #1890ff; border-color: #1890ff;">✏️</AntDesign.Button>
+                                                        <AntDesign.Button Type="@ButtonType.Default" Size="@ButtonSize.Small" @onclick="() => DeleteServiceConfig(config.EnvironmentConfig!.Id)" Style="color: #ff4d4f; border-color: #ff4d4f;">🗑️</AntDesign.Button>
+                                                    }
+                                                    else
+                                                    {
+                                                        <AntDesign.Button Type="@ButtonType.Default" Size="@ButtonSize.Small" @onclick="() => AddServiceConfig(config.ProjectService)">➕ 配置</AntDesign.Button>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
                             }
                             else
                             {
-                                <div class="d-flex align-items-center justify-content-center" style="min-height: 600px;">
-                                    <div class="text-center text-muted">
-                                        <h4 class="mt-4 mb-3">选择一个环境</h4>
-                                        <p>请从左侧列表中选择一个环境来查看详情</p>
-                                    </div>
-                                </div>
+                                <div Style="text-align: center; padding: 20px; color: #999;">暂无服务配置</div>
+                            }
+                        </div>
+                    </div>
+                    
+                    <!-- 环境变量 -->
+                    <div Style="border: 1px solid #d9d9d9; border-radius: 4px;">
+                        <div Style="padding: 12px 16px; background-color: #fafafa; border-bottom: 1px solid #d9d9d9; display: flex; justify-content: space-between; align-items: center;">
+                            <span Style="font-weight: 500;">📊 环境变量</span>
+                            <AntDesign.Button Type="@ButtonType.Primary" Size="@ButtonSize.Small" @onclick="ShowAddVariableModal">➕ 添加变量</AntDesign.Button>
+                        </div>
+                        <div Style="padding: 16px;">
+                            @if (selectedEnvironment?.Variables != null && selectedEnvironment.Variables.Any())
+                            {
+                                <table class="table" Style="width: 100%; border-collapse: collapse;">
+                                    <thead>
+                                        <tr Style="background-color: #fafafa; border-bottom: 1px solid #d9d9d9;">
+                                            <th Style="padding: 12px 16px; text-align: left; font-weight: 500;">变量名</th>
+                                            <th Style="padding: 12px 16px; text-align: left; font-weight: 500;">变量值</th>
+                                            <th Style="padding: 12px 16px; text-align: left; font-weight: 500; width: 100px;">操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var kvp in selectedEnvironment.Variables)
+                                        {
+                                            <tr Style="border-bottom: 1px solid #f0f0f0;">
+                                                <td Style="padding: 12px 16px;"><strong>@kvp.Key</strong></td>
+                                                <td Style="padding: 12px 16px;"><span Style="color: #1890ff; word-break: break-all;">@kvp.Value</span></td>
+                                                <td Style="padding: 12px 16px;">
+                                                    <AntDesign.Button Type="@ButtonType.Default" Size="@ButtonSize.Small" @onclick="() => EditVariable(kvp.Key, kvp.Value)" Style="margin-right: 4px;">✏️</AntDesign.Button>
+                                                    <AntDesign.Button Type="@ButtonType.Default" Size="@ButtonSize.Small" @onclick="() => DeleteVariable(kvp.Key)" Style="color: #ff4d4f; border-color: #ff4d4f;">🗑️</AntDesign.Button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            }
+                            else
+                            {
+                                <div Style="text-align: center; padding: 20px; color: #999;">暂无环境变量</div>
                             }
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="HideEnvironmentModal">关闭</button>
-                    @if (selectedEnvironment != null)
-                    {
-                        <button type="button" class="btn btn-success" @onclick="SaveEnvironmentChanges">保存更改</button>
-                    }
+            }
+            else
+            {
+                <div Style="display: flex; align-items: center; justify-content: center; height: 100%; color: #999;">
+                    <div Style="text-align: center;">
+                        <h4 Style="margin-bottom: 16px;">选择一个环境</h4>
+                        <p>请从左侧列表中选择一个环境来查看详情</p>
+                    </div>
                 </div>
-            </div>
+            }
         </div>
     </div>
-}
+    
+    <div Style="text-align: right; padding-top: 16px; border-top: 1px solid #f0f0f0; margin-top: 24px;">
+        <AntDesign.Button Type="@ButtonType.Default" @onclick="HideEnvironmentModal" Style="margin-right: 8px;">关闭</AntDesign.Button>
+        @if (selectedEnvironment != null)
+        {
+            <AntDesign.Button Type="@ButtonType.Primary" @onclick="SaveEnvironmentChanges" Style="background-color: #52c41a; border-color: #52c41a;">保存更改</AntDesign.Button>
+        }
+    </div>
+</AntDesign.Modal>
 
 <!-- 添加环境模态框 -->
-@if (showAddEnvironmentModal)
-{
-    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">新建环境</h5>
-                    <button type="button" class="btn-close" @onclick="HideAddEnvironmentModal"></button>
-                </div>
-                <div class="modal-body">
-                    <EditForm Model="currentEnvironment" OnValidSubmit="SaveEnvironment">
-                        <DataAnnotationsValidator />
-                        <ValidationSummary class="text-danger" />
-                        <div class="mb-3 row">
-                            <label class="col-sm-3 col-form-label">环境名称 <span class="text-danger">*</span></label>
-                            <div class="col-sm-9">
-                                <InputText class="form-control" @bind-Value="currentEnvironment.Name" />
-                                <ValidationMessage For="() => currentEnvironment.Name" />
-                            </div>
-                        </div>
-                        <div class="mb-3 row">
-                            <label class="col-sm-3 col-form-label">环境类型</label>
-                            <div class="col-sm-9">
-                                <InputSelect class="form-select" @bind-Value="currentEnvironment.Type">
-                                    <option value="@EnvironmentType.Development">开发环境</option>
-                                    <option value="@EnvironmentType.Testing">项目环境</option>
-                                    <option value="@EnvironmentType.Staging">预发环境</option>
-                                    <option value="@EnvironmentType.Production">生产环境</option>
-                                </InputSelect>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" @onclick="HideAddEnvironmentModal">取消</button>
-                            <button type="submit" class="btn btn-primary">保存</button>
-                        </div>
-                    </EditForm>
-                </div>
-            </div>
+<AntDesign.Modal @bind-Visible="showAddEnvironmentModal" Title="新建环境" Width="@("600px")">
+    <EditForm Model="currentEnvironment" OnValidSubmit="SaveEnvironment">
+        <DataAnnotationsValidator />
+        <ValidationSummary Style="color: red;" />
+        
+        <AntDesign.FormItem Label="环境名称" Required="true" LabelColSpan="5" WrapperColSpan="19">
+            <InputText class="form-control" @bind-Value="currentEnvironment.Name" />
+            <ValidationMessage For="() => currentEnvironment.Name" />
+        </AntDesign.FormItem>
+        
+        <AntDesign.FormItem Label="环境类型" LabelColSpan="5" WrapperColSpan="19">
+            <AntDesign.Select @bind-Value="currentEnvironment.Type" TItemValue="EnvironmentType" TItem="EnvironmentType">
+                <AntDesign.SelectOption TItemValue="EnvironmentType" TItem="EnvironmentType" Value="@EnvironmentType.Development" Label="开发环境" />
+                <AntDesign.SelectOption TItemValue="EnvironmentType" TItem="EnvironmentType" Value="@EnvironmentType.Testing" Label="项目环境" />
+                <AntDesign.SelectOption TItemValue="EnvironmentType" TItem="EnvironmentType" Value="@EnvironmentType.Staging" Label="预发环境" />
+                <AntDesign.SelectOption TItemValue="EnvironmentType" TItem="EnvironmentType" Value="@EnvironmentType.Production" Label="生产环境" />
+            </AntDesign.Select>
+        </AntDesign.FormItem>
+        
+        <div Style="text-align: right; padding-top: 16px; border-top: 1px solid #f0f0f0; margin-top: 24px;">
+            <AntDesign.Button Type="@ButtonType.Default" @onclick="HideAddEnvironmentModal" Style="margin-right: 8px;">取消</AntDesign.Button>
+            <AntDesign.Button Type="@ButtonType.Primary" @onclick="SaveEnvironment">保存</AntDesign.Button>
         </div>
-    </div>
-}
+    </EditForm>
+</AntDesign.Modal>
 
 <!-- 添加变量模态框 -->
-@if (showAddVariableModal)
-{
-    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.7);">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">添加环境变量</h5>
-                    <button type="button" class="btn-close" @onclick="HideAddVariableModal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">变量名 <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" @bind="newVariableName" placeholder="请输入变量名" />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">变量值 <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" @bind="newVariableValue" placeholder="请输入变量值" />
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="HideAddVariableModal">取消</button>
-                    <button type="button" class="btn btn-success" @onclick="SaveNewVariable">保存</button>
-                </div>
-            </div>
-        </div>
+<AntDesign.Modal @bind-Visible="showAddVariableModal" Title="添加环境变量" Width="@("500px")">
+    <div>
+        <AntDesign.FormItem Label="变量名" Required="true" LabelColSpan="5" WrapperColSpan="19">
+            <AntDesign.Input @bind-Value="newVariableName" Placeholder="请输入变量名" />
+        </AntDesign.FormItem>
+        <AntDesign.FormItem Label="变量值" Required="true" LabelColSpan="5" WrapperColSpan="19">
+            <AntDesign.Input @bind-Value="newVariableValue" Placeholder="请输入变量值" />
+        </AntDesign.FormItem>
     </div>
-}
+    <div Style="text-align: right; padding-top: 16px; border-top: 1px solid #f0f0f0; margin-top: 24px;">
+        <AntDesign.Button Type="@ButtonType.Default" @onclick="HideAddVariableModal" Style="margin-right: 8px;">取消</AntDesign.Button>
+        <AntDesign.Button Type="@ButtonType.Primary" @onclick="SaveNewVariable">保存</AntDesign.Button>
+    </div>
+</AntDesign.Modal>
 
 <!-- 编辑变量模态框 -->
-@if (showEditVariableModal)
-{
-    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.7);">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">编辑环境变量</h5>
-                    <button type="button" class="btn-close" @onclick="HideEditVariableModal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">变量名</label>
-                        <input type="text" class="form-control" @bind="editVariableName" readonly />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">变量值 <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" @bind="editVariableValue" placeholder="请输入变量值" />
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="HideEditVariableModal">取消</button>
-                    <button type="button" class="btn btn-primary" @onclick="SaveEditVariable">保存</button>
-                </div>
-            </div>
-        </div>
+<AntDesign.Modal @bind-Visible="showEditVariableModal" Title="编辑环境变量" Width="@("500px")">
+    <div>
+        <AntDesign.FormItem Label="变量名" LabelColSpan="5" WrapperColSpan="19">
+            <AntDesign.Input @bind-Value="editVariableName" ReadOnly="true" />
+        </AntDesign.FormItem>
+        <AntDesign.FormItem Label="变量值" Required="true" LabelColSpan="5" WrapperColSpan="19">
+            <AntDesign.Input @bind-Value="editVariableValue" Placeholder="请输入变量值" />
+        </AntDesign.FormItem>
     </div>
-}
+    <div Style="text-align: right; padding-top: 16px; border-top: 1px solid #f0f0f0; margin-top: 24px;">
+        <AntDesign.Button Type="@ButtonType.Default" @onclick="HideEditVariableModal" Style="margin-right: 8px;">取消</AntDesign.Button>
+        <AntDesign.Button Type="@ButtonType.Primary" @onclick="SaveEditVariable">保存</AntDesign.Button>
+    </div>
+</AntDesign.Modal>
 
 <!-- 项目服务管理模态框 -->
-@if (showProjectServiceManagementModal && selectedProjectForServices != null)
-{
-    <div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.5);" tabindex="-1">
-        <div class="modal-dialog modal-xl">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">@selectedProjectForServices.Name - 服务管理</h5>
-                    <button type="button" class="btn-close" @onclick="HideProjectServiceManagementModal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h6 class="mb-0">项目服务列表</h6>
-                        <button class="btn btn-primary btn-sm" @onclick="ShowAddProjectServiceModal"><i class="fas fa-plus"></i> 添加服务</button>
-                    </div>
-                    @if (projectServices.Any())
-                    {
-                        <table class="table table-hover">
-                            <thead><tr><th>服务名称</th><th>创建时间</th><th>操作</th></tr></thead>
-                            <tbody>
-                                @foreach (var service in projectServices)
-                                {
-                                    <tr>
-                                        <td><div><strong>@service.Name</strong>@if (!string.IsNullOrEmpty(service.Description)) { <br><small class="text-muted">@service.Description</small> }</div></td>
-                                        <td>@service.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => EditProjectService(service)"><i class="oi oi-pencil"></i></button>
-                                            <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteProjectService(service.Id)"><i class="oi oi-trash"></i></button>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    }
-                    else
-                    {
-                        <div class="text-center py-4">
-                            <p class="text-muted">暂无服务配置</p>
-                            <button class="btn btn-primary" @onclick="ShowAddProjectServiceModal"><i class="fas fa-plus"></i> 添加第一个服务</button>
-                        </div>
-                    }
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" @onclick="HideProjectServiceManagementModal">关闭</button>
-                </div>
-            </div>
-        </div>
-    </div>
+@{
+    var serviceModalTitle = selectedProjectForServices != null ? $"{selectedProjectForServices.Name} - 服务管理" : "服务管理";
 }
+<AntDesign.Modal @bind-Visible="showProjectServiceManagementModal" Title="@serviceModalTitle" Width="@("900px")">
+    <div Style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+        <span Style="font-weight: 500;">项目服务列表</span>
+        <AntDesign.Button Type="@ButtonType.Primary" @onclick="ShowAddProjectServiceModal">添加服务</AntDesign.Button>
+    </div>
+    
+    @if (projectServices.Any())
+    {
+        <AntDesign.Table DataSource="projectServices" TItem="ProjectServiceDto" PageSize="10" Bordered="true">
+            <AntDesign.Column TData="string" @bind-Field="context.Name" Title="服务名称">
+                <strong>@context.Name</strong>
+                @if (!string.IsNullOrEmpty(context.Description))
+                {
+                    <br /><span Style="color: #999; font-size: 12px;">@context.Description</span>
+                }
+            </AntDesign.Column>
+            <AntDesign.Column TData="DateTime" @bind-Field="context.CreatedAt" Title="创建时间">
+                @context.CreatedAt.ToString("yyyy-MM-dd HH:mm")
+            </AntDesign.Column>
+            <AntDesign.Column TData="string" Title="操作" Width="150px">
+                <AntDesign.Button Type="@ButtonType.Primary" Shape="@ButtonShape.Circle" Size="@ButtonSize.Small" @onclick="() => EditProjectService(context)" Style="margin-right: 8px;">
+                    ✏️
+                </AntDesign.Button>
+                <AntDesign.Button Type="@ButtonType.Default" Shape="@ButtonShape.Circle" Size="@ButtonSize.Small" @onclick="() => DeleteProjectService(context.Id)" Style="color: #ff4d4f; border-color: #ff4d4f;">
+                    🗑️
+                </AntDesign.Button>
+            </AntDesign.Column>
+        </AntDesign.Table>
+    }
+    else
+    {
+        <div Style="text-align: center; padding: 40px; color: #999;">
+            <p>暂无服务配置</p>
+            <AntDesign.Button Type="@ButtonType.Primary" @onclick="ShowAddProjectServiceModal">添加第一个服务</AntDesign.Button>
+        </div>
+    }
+    
+    <div Style="text-align: right; padding-top: 16px; border-top: 1px solid #f0f0f0; margin-top: 24px;">
+        <AntDesign.Button Type="@ButtonType.Default" @onclick="HideProjectServiceManagementModal">关闭</AntDesign.Button>
+    </div>
+</AntDesign.Modal>
 
 <!-- 项目服务添加/编辑模态框 -->
-@if (showProjectServiceModal)
-{
-    <div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.5);" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">@(isEditingProjectService ? "编辑" : "添加")项目服务</h5>
-                    <button type="button" class="btn-close" @onclick="HideProjectServiceModal"></button>
-                </div>
-                <div class="modal-body">
-                    <EditForm Model="currentProjectService" OnValidSubmit="SaveProjectService">
-                        <DataAnnotationsValidator />
-                        <div class="mb-3 row">
-                            <label class="col-sm-3 col-form-label">服务名称 *</label>
-                            <div class="col-sm-9">
-                                <InputText class="form-control" @bind-Value="currentProjectService.Name" placeholder="请输入服务名称" />
-                                <ValidationMessage For="() => currentProjectService.Name" />
-                            </div>
-                        </div>
-                        <div class="mb-3 row">
-                            <label class="col-sm-3 col-form-label">服务描述</label>
-                            <div class="col-sm-9">
-                                <InputTextArea class="form-control" @bind-Value="currentProjectService.Description" placeholder="请输入服务描述" rows="3" />
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" @onclick="HideProjectServiceModal">取消</button>
-                            <button type="submit" class="btn btn-primary">@(isEditingProjectService ? "更新" : "保存")</button>
-                        </div>
-                    </EditForm>
-                </div>
-            </div>
-        </div>
-    </div>
+@{
+    var serviceEditModalTitle = isEditingProjectService ? "编辑项目服务" : "添加项目服务";
 }
+<AntDesign.Modal @bind-Visible="showProjectServiceModal" Title="@serviceEditModalTitle" Width="@("500px")">
+    <EditForm Model="currentProjectService" OnValidSubmit="SaveProjectService">
+        <DataAnnotationsValidator />
+        
+        <AntDesign.FormItem Label="服务名称" Required="true" LabelColSpan="6" WrapperColSpan="18">
+            <InputText class="form-control" @bind-Value="currentProjectService.Name" Placeholder="请输入服务名称" />
+            <ValidationMessage For="() => currentProjectService.Name" />
+        </AntDesign.FormItem>
+        
+        <AntDesign.FormItem Label="服务描述" LabelColSpan="6" WrapperColSpan="18">
+            <InputTextArea class="form-control" @bind-Value="currentProjectService.Description" Placeholder="请输入服务描述" rows="3" />
+        </AntDesign.FormItem>
+        
+        <div Style="text-align: right; padding-top: 16px; border-top: 1px solid #f0f0f0; margin-top: 24px;">
+            <AntDesign.Button Type="@ButtonType.Default" @onclick="HideProjectServiceModal" Style="margin-right: 8px;">取消</AntDesign.Button>
+            <AntDesign.Button Type="@ButtonType.Primary" @onclick="SaveProjectService">@(isEditingProjectService ? "更新" : "保存")</AntDesign.Button>
+        </div>
+    </EditForm>
+</AntDesign.Modal>
 
-<!-- 环境服务配置添加/编辑模态框 -->
-@if (showServiceConfigModal)
-{
-    <div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.5);" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">@(isEditingServiceConfig ? "编辑" : "添加")服务配置</h5>
-                    <button type="button" class="btn-close" @onclick="HideServiceConfigModal"></button>
-                </div>
-                <div class="modal-body">
-                    <EditForm Model="currentServiceConfig" OnValidSubmit="SaveServiceConfig">
-                        <DataAnnotationsValidator />
-                        <div class="mb-3 row">
-                            <label class="col-sm-3 col-form-label">基础URL *</label>
-                            <div class="col-sm-9">
-                                <InputText class="form-control" @bind-Value="currentServiceConfig.BaseUrl" placeholder="请输入基础URL" />
-                                <ValidationMessage For="() => currentServiceConfig.BaseUrl" />
-                            </div>
-                        </div>
-                        <div class="d-flex justify-content-end gap-2">
-                            <button type="button" class="btn btn-secondary" @onclick="HideServiceConfigModal">取消</button>
-                            <button type="submit" class="btn btn-primary">@(isEditingServiceConfig ? "更新" : "添加")</button>
-                        </div>
-                    </EditForm>
-                </div>
-            </div>
-        </div>
-    </div>
+<!-- 服务配置添加/编辑模态框 -->
+@{
+    var serviceConfigModalTitle = isEditingServiceConfig ? "编辑服务配置" : "添加服务配置";
 }
+<AntDesign.Modal @bind-Visible="showServiceConfigModal" Title="@serviceConfigModalTitle" Width="@("500px")" Footer="null">
+    <EditForm Model="currentServiceConfig" OnValidSubmit="SaveServiceConfig">
+        <DataAnnotationsValidator />
+        
+        <AntDesign.FormItem Label="基础URL" Required="true" LabelColSpan="5" WrapperColSpan="19">
+            <AntDesign.Input @bind-Value="currentServiceConfig.BaseUrl" Placeholder="请输入基础URL，如：http://127.0.0.1:8080" />
+            <ValidationMessage For="() => currentServiceConfig.BaseUrl" />
+        </AntDesign.FormItem>
+    </EditForm>
+    
+    <div Style="text-align: right; padding-top: 16px; border-top: 1px solid #f0f0f0; margin-top: 24px;">
+        <AntDesign.Button Type="@ButtonType.Default" @onclick="HideServiceConfigModal" Style="margin-right: 8px;">取消</AntDesign.Button>
+        <AntDesign.Button Type="@ButtonType.Primary" @onclick="SaveServiceConfig">@(isEditingServiceConfig ? "更新" : "添加")</AntDesign.Button>
+    </div>
+</AntDesign.Modal>
 
 @code {
     private List<ProjectDto> projects = new();
@@ -625,6 +569,7 @@ else
         selectedEnvironment = projectEnvironments.FirstOrDefault();
         if (selectedEnvironment != null) await LoadEnvironmentServiceConfigs();
         showEnvironmentModal = true;
+        StateHasChanged();
     }
     
     private void HideEnvironmentModal() { showEnvironmentModal = false; selectedProject = null; selectedEnvironment = null; }
@@ -718,6 +663,7 @@ else
     private void OnSearchChanged(ChangeEventArgs e) { searchTerm = e.Value?.ToString() ?? ""; FilterProjects(); }
     private Task SearchProjects() { FilterProjects(); return Task.CompletedTask; }
     private void FilterByStatus(ChangeEventArgs e) { selectedStatus = e.Value?.ToString() ?? ""; FilterProjects(); }
+    private void OnStatusChanged(string value) { selectedStatus = value; FilterProjects(); }
 
     private void FilterProjects()
     {
@@ -731,7 +677,15 @@ else
     }
 
     private string GetStatusDisplayName(ProjectStatus status) => status switch { ProjectStatus.Active => "活跃", ProjectStatus.Inactive => "未激活", ProjectStatus.Completed => "已完成", ProjectStatus.Cancelled => "已取消", ProjectStatus.OnHold => "暂停", _ => "未知" };
-    private string GetStatusBadgeClass(ProjectStatus status) => status switch { ProjectStatus.Active => "bg-success", ProjectStatus.Inactive => "bg-warning", ProjectStatus.Completed => "bg-info", ProjectStatus.Cancelled => "bg-danger", ProjectStatus.OnHold => "bg-secondary", _ => "bg-light" };
+    private string GetStatusTagColor(ProjectStatus status) => status switch 
+    { 
+        ProjectStatus.Active => "green", 
+        ProjectStatus.Inactive => "orange", 
+        ProjectStatus.Completed => "blue", 
+        ProjectStatus.Cancelled => "red", 
+        ProjectStatus.OnHold => "default", 
+        _ => "default" 
+    };
     private string GetEnvironmentTypeDisplayName(EnvironmentType type) => type switch { EnvironmentType.Development => "开发环境", EnvironmentType.Testing => "集成环境", EnvironmentType.Staging => "预发环境", EnvironmentType.Production => "生产环境", _ => "未知" };
     
     private async Task ManageProjectServices(ProjectDto project) { selectedProjectForServices = project; projectServices = await ProjectServiceConfigService.GetProjectServicesAsync(project.Id); showProjectServiceManagementModal = true; }

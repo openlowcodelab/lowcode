@@ -59,7 +59,7 @@ public class ProjectCaseAppService : AutoTestAppServiceBase<ProjectCaseDto>, IPr
         }
         
         var json = await File.ReadAllTextAsync(filePath);
-        var projectCases = JsonSerializer.Deserialize<List<ProjectCaseDto>>(json) ?? new List<ProjectCaseDto>();
+        var projectCases = JsonSerializer.Deserialize<List<ProjectCaseDto>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<ProjectCaseDto>();
         return projectCases;
     }
     

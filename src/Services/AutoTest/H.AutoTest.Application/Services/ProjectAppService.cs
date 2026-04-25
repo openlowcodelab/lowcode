@@ -28,7 +28,7 @@ public class ProjectAppService : AutoTestAppServiceBase<ProjectDto>, IProjectApp
         }
         
         var json = await File.ReadAllTextAsync(filePath);
-        return JsonSerializer.Deserialize<List<ProjectDto>>(json) ?? new List<ProjectDto>();
+        return JsonSerializer.Deserialize<List<ProjectDto>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<ProjectDto>();
     }
     
     public async Task<ProjectDto?> GetByIdAsync(string id)
@@ -210,7 +210,7 @@ public class ProjectCaseCategoryService : IProjectCaseCategoryAppService
         }
         
         var json = await File.ReadAllTextAsync(filePath);
-        var categories = System.Text.Json.JsonSerializer.Deserialize<List<ProjectCaseCategory>>(json) ?? new List<ProjectCaseCategory>();
+        var categories = System.Text.Json.JsonSerializer.Deserialize<List<ProjectCaseCategory>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<ProjectCaseCategory>();
         return categories.OrderBy(c => c.Order).ToList();
     }
     
