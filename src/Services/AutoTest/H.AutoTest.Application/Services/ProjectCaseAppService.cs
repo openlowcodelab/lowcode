@@ -14,7 +14,7 @@ public class ProjectCaseAppService : ApplicationService, IProjectCaseAppService
     
     public ProjectCaseAppService(IConfiguration configuration)
     {
-        _dataPath = configuration["DataPath"] ?? "data";
+        _dataPath = configuration["DataPath"]!;        
     }
     
     /// <summary>

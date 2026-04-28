@@ -37,17 +37,31 @@
     
     private List<ProjectCaseCategory> GetRootCategories()
     {
-        return Categories.Where(c => string.IsNullOrEmpty(c.ParentId)).OrderBy(c => c.Order).ToList();
+        // 根分类是没有父级的分类，即不在任何其他分类的 Childrens 中
+        var allChildIds = new HashSet<string>();
+        foreach (var category in Categories)
+        {
+            if (category.Childrens != null)
+            {
+                foreach (var child in category.Childrens)
+                {
+                    allChildIds.Add(child.Id);
+                }
+            }
+        }
+        return Categories.Where(c => !allChildIds.Contains(c.Id)).OrderBy(c => c.Order).ToList();
     }
     
-    private List<ProjectCaseCategory> GetChildCategories(string parentId)
+    private List<ProjectCaseCategory> GetChildCategories(string categoryId)
     {
-        return Categories.Where(c => c.ParentId == parentId).OrderBy(c => c.Order).ToList();
+        var category = Categories.FirstOrDefault(c => c.Id == categoryId);
+        return category?.Childrens?.OrderBy(c => c.Order).ToList() ?? new List<ProjectCaseCategory>();
     }
     
     private bool HasChildren(string categoryId)
     {
-        return Categories.Any(c => c.ParentId == categoryId);
+        var category = Categories.FirstOrDefault(c => c.Id == categoryId);
+        return category?.Childrens != null && category.Childrens.Length > 0;
     }
     
     private string GetSelectedText()
@@ -59,17 +73,33 @@
         if (selected == null)
             return Placeholder;
             
-        // 构建层级路径
+        // 构建层级路径 - 需要通过遍历找到父级
         var path = new List<string>();
         var current = selected;
         
         while (current != null)
         {
             path.Insert(0, current.Name);
-            current = string.IsNullOrEmpty(current.ParentId) ? null : Categories.FirstOrDefault(c => c.Id == current.ParentId);
+            current = FindParentCategory(current.Id);
         }
         
         return string.Join(" > ", path);
+    }
+    
+    private ProjectCaseCategory? FindParentCategory(string categoryId)
+    {
+        foreach (var category in Categories)
+        {
+            if (category.Childrens != null)
+            {
+                var child = category.Childrens.FirstOrDefault(c => c.Id == categoryId);
+                if (child != null)
+                {
+                    return category;
+                }
+            }
+        }
+        return null;
     }
     
     private async Task SelectItem(string? categoryId)

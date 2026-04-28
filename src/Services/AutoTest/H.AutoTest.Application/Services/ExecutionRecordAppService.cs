@@ -1,13 +1,14 @@
 using H.AutoTest.Application.Contracts;
 using Microsoft.Extensions.Configuration;
 using System.Text.Json;
+using Volo.Abp.Application.Services;
 
 namespace H.AutoTest.Application;
 
 /// <summary>
 /// 测试执行记录服务
 /// </summary>
-public class ExecutionRecordAppService : IExecutionRecordAppService
+public class ExecutionRecordAppService : ApplicationService, IExecutionRecordAppService
 {
     private readonly string _dataPath;
     

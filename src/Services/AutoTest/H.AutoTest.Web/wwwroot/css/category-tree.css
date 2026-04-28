@@ -1,0 +1,112 @@
+/* Category Tree Styles */
+.category-tree {
+    user-select: none;
+}
+
+.tree-node {
+    width: 100%;
+}
+
+.tree-node-row {
+    display: flex;
+    align-items: center;
+    padding: 6px 8px;
+    cursor: pointer;
+    border-radius: 4px;
+    margin-bottom: 2px;
+    transition: background-color 0.2s;
+    position: relative;
+    background: transparent;
+    border: none;
+    text-align: left;
+}
+
+.tree-node-row:hover {
+    background-color: #f5f5f5;
+}
+
+.tree-node-row.selected {
+    background-color: #1890ff;
+    color: white;
+}
+
+.tree-node-row.selected .tree-node-badge {
+    background-color: rgba(255, 255, 255, 0.3);
+    color: white;
+}
+
+.tree-node-expand-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+    font-size: 10px;
+    color: #999;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.tree-node-expand-icon.placeholder {
+    visibility: hidden;
+}
+
+.tree-node-title {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 14px;
+}
+
+.tree-node-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    margin: 0 8px;
+    background-color: #e0e0e0;
+    color: #666;
+    font-size: 12px;
+    border-radius: 10px;
+    flex-shrink: 0;
+}
+
+.tree-node-actions {
+    display: none;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.tree-node-row:hover .tree-node-actions,
+.tree-node-row.selected .tree-node-actions {
+    display: flex;
+}
+
+.tree-node-action-btn {
+    padding: 0 4px;
+    font-size: 16px;
+    line-height: 1;
+    color: #666;
+    opacity: 0.6;
+}
+
+.tree-node-row:hover .tree-node-action-btn,
+.tree-node-row.selected .tree-node-action-btn {
+    opacity: 1;
+}
+
+.tree-node-row.selected .tree-node-action-btn {
+    color: white;
+}
+
+.tree-node-action-btn:hover {
+    color: #1890ff;
+}
+
+.tree-node-row.selected .tree-node-action-btn:hover {
+    color: white;
+}

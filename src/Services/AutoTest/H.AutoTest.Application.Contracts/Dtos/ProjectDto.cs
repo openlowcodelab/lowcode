@@ -48,13 +48,15 @@ public class ProjectCaseCategory
     
     public string ProjectId { get; set; } = string.Empty;
     
-    public string ParentId { get; set; } = string.Empty; // 支持树形结构
+    public string ParentId { get; set; } = string.Empty;
     
     public int Order { get; set; } = 0;
     
-    public DateTime CreatedAt { get; set; } = DateTime.Now;
+    public DateTime CreatedAt { get; set; }
     
-    public string CreatedBy { get; set; } = "System";
+    public string CreatedBy { get; set; } = string.Empty;
+
+    public ProjectCaseCategory[] Childrens { get; set; } = [];
 }
 
 /// <summary>

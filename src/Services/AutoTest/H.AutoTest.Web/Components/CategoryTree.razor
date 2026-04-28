@@ -1,0 +1,156 @@
+@namespace H.AutoTest.Web
+
+<link href="_content/H.AutoTest.Web/css/category-tree.css" rel="stylesheet" />
+
+<div class="category-tree">
+    @if (Categories != null && Categories.Any())
+    {
+        @foreach (var category in GetRootCategories())
+        {
+            @RenderTreeNode(category, 0)
+        }
+    }
+    else
+    {
+        <div style="padding: 20px; text-align: center; color: #999;">
+            <small>暂无分类数据</small>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public List<ProjectCaseCategory> Categories { get; set; } = new();
+    [Parameter] public string? SelectedCategoryId { get; set; }
+    [Parameter] public EventCallback<string?> OnCategorySelected { get; set; }
+    [Parameter] public EventCallback<ProjectCaseCategory> OnAddChild { get; set; }
+    [Parameter] public EventCallback<ProjectCaseCategory> OnEdit { get; set; }
+    [Parameter] public EventCallback<ProjectCaseCategory> OnDelete { get; set; }
+    [Parameter] public Dictionary<string, int> TestCaseCounts { get; set; } = new();
+
+    private HashSet<string> expandedCategories = new();
+
+    private List<ProjectCaseCategory> GetRootCategories()
+    {
+        var allChildIds = new HashSet<string>();
+        foreach (var category in Categories)
+        {
+            if (category.Childrens != null)
+            {
+                foreach (var child in category.Childrens)
+                {
+                    allChildIds.Add(child.Id);
+                }
+            }
+        }
+        var roots = Categories.Where(c => !allChildIds.Contains(c.Id)).OrderBy(c => c.Order).ToList();
+        Console.WriteLine($"CategoryTree: Found {roots.Count} root categories from {Categories.Count} total categories");
+        return roots;
+    }
+
+    private List<ProjectCaseCategory> GetChildCategories(string categoryId)
+    {
+        var category = Categories.FirstOrDefault(c => c.Id == categoryId);
+        return category?.Childrens?.OrderBy(c => c.Order).ToList() ?? new List<ProjectCaseCategory>();
+    }
+
+    private bool HasChildren(string categoryId)
+    {
+        var children = GetChildCategories(categoryId);
+        return children.Any();
+    }
+
+    private bool IsExpanded(string categoryId)
+    {
+        return expandedCategories.Contains(categoryId);
+    }
+
+    private async Task ToggleExpand(string categoryId)
+    {
+        if (expandedCategories.Contains(categoryId))
+        {
+            expandedCategories.Remove(categoryId);
+        }
+        else
+        {
+            expandedCategories.Add(categoryId);
+        }
+        await Task.CompletedTask;
+    }
+
+    private async Task SelectCategory(string categoryId)
+    {
+        await OnCategorySelected.InvokeAsync(categoryId);
+    }
+
+    private int GetTestCaseCount(string categoryId)
+    {
+        if (TestCaseCounts.ContainsKey(categoryId))
+        {
+            return TestCaseCounts[categoryId];
+        }
+        return 0;
+    }
+
+    private RenderFragment RenderTreeNode(ProjectCaseCategory category, int level) => __builder =>
+    {
+        var isSelected = SelectedCategoryId == category.Id;
+        var hasChildren = HasChildren(category.Id);
+        var isExpanded = IsExpanded(category.Id);
+        var paddingLeft = level * 20;
+        var testCaseCount = GetTestCaseCount(category.Id);
+
+        <div class="tree-node">
+            <div class="tree-node-row @(isSelected ? "selected" : "")" style="padding-left: @(paddingLeft)px;">
+                @if (hasChildren)
+                {
+                    <span class="tree-node-expand-icon" @onclick="() => ToggleExpand(category.Id)">
+                        @(isExpanded ? "▼" : "▶")
+                    </span>
+                }
+                else
+                {
+                    <span class="tree-node-expand-icon placeholder"></span>
+                }
+
+                <span class="tree-node-title" @onclick="() => SelectCategory(category.Id)">
+                    @category.Name
+                </span>
+
+                <span class="tree-node-badge">
+                    @testCaseCount
+                </span>
+
+                <div class="tree-node-actions">
+                    <AntDesign.Dropdown Trigger="new[] { AntDesign.Trigger.Click }">
+                        <ChildContent>
+                            <button type="button" class="btn btn-sm btn-link tree-node-action-btn">⋯</button>
+                        </ChildContent>
+                        <Overlay>
+                            <AntDesign.Menu>
+                                <AntDesign.MenuItem @onclick="() => OnAddChild.InvokeAsync(category)">
+                                    <i class="anticon anticon-plus" style="margin-right: 8px;"></i>添加子分类
+                                </AntDesign.MenuItem>
+                                <AntDesign.MenuItem @onclick="() => OnEdit.InvokeAsync(category)">
+                                    <i class="anticon anticon-edit" style="margin-right: 8px;"></i>编辑
+                                </AntDesign.MenuItem>
+                                <AntDesign.MenuItem Divider="true" />
+                                <AntDesign.MenuItem @onclick="() => OnDelete.InvokeAsync(category)" Style="color: #ff4d4f;">
+                                    <i class="anticon anticon-delete" style="margin-right: 8px;"></i>删除
+                                </AntDesign.MenuItem>
+                            </AntDesign.Menu>
+                        </Overlay>
+                    </AntDesign.Dropdown>
+                </div>
+            </div>
+
+            @if (hasChildren && isExpanded)
+            {
+                var children = GetChildCategories(category.Id);
+                foreach (var child in children)
+                {
+                    @RenderTreeNode(child, level + 1)
+                }
+            }
+        </div>
+    };
+}

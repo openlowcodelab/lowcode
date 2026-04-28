@@ -11,16 +11,13 @@ public class BatchExecutionAppService : ApplicationService, IBatchExecutionAppSe
 {
     private readonly ITestExecutionEngineAppService _testExecutionEngine;
     private readonly IProjectCaseAppService _projectCaseService;
-    private readonly IExecutionRecordAppService _executionRecordService;
     
     public BatchExecutionAppService(
         ITestExecutionEngineAppService testExecutionEngine,
-        IProjectCaseAppService projectCaseService,
-        IExecutionRecordAppService executionRecordService)
+        IProjectCaseAppService projectCaseService)
     {
         _testExecutionEngine = testExecutionEngine;
         _projectCaseService = projectCaseService;
-        _executionRecordService = executionRecordService;
     }
     
     /// <summary>
