@@ -100,7 +100,7 @@ else
     var projectModalOkText = isEditingProject ? "更新" : "保存";
     var projectModalCancelText = "取消";
 }
-<AntDesign.Modal @bind-Visible="showProjectModal" Title="@projectModalTitle" Width="@("700px")" OnOk="SaveProject" OnCancel="HideProjectModal">
+<AntDesign.Modal @bind-Visible="showProjectModal" Title="@projectModalTitle" Width="@("700px")" OnOk="SaveProject" OnCancel="HideProjectModal" Footer="null">
     <div Style="padding: 20px 0;">
         <div Style="margin-bottom: 16px; display: flex; align-items: center;">
             <label Style="width: 100px; text-align: right; margin-right: 16px;"><span Style="color: red;">*</span> 项目标识</label>
@@ -151,7 +151,7 @@ else
 @{
     var envModalTitle = $"环境管理 - {selectedProject?.Name}";
 }
-<AntDesign.Modal @bind-Visible="showEnvironmentModal" Title="@envModalTitle" Width="@("1100px")">
+<AntDesign.Modal @bind-Visible="showEnvironmentModal" Title="@envModalTitle" Width="@("1100px")" Footer="null">
     <div Style="display: flex; min-height: 600px;">
         <!-- 左侧环境列表 -->
         <div Style="width: 280px; border-right: 1px solid #f0f0f0; padding: 16px; background-color: #fafafa;">
@@ -326,7 +326,7 @@ else
 </AntDesign.Modal>
 
 <!-- 添加环境模态框 -->
-<AntDesign.Modal @bind-Visible="showAddEnvironmentModal" Title="新建环境" Width="@("600px")">
+<AntDesign.Modal @bind-Visible="showAddEnvironmentModal" Title="新建环境" Width="@("600px")" Footer="null">
     <EditForm Model="currentEnvironment" OnValidSubmit="SaveEnvironment">
         <DataAnnotationsValidator />
         <ValidationSummary Style="color: red;" />
@@ -353,7 +353,7 @@ else
 </AntDesign.Modal>
 
 <!-- 添加变量模态框 -->
-<AntDesign.Modal @bind-Visible="showAddVariableModal" Title="添加环境变量" Width="@("500px")">
+<AntDesign.Modal @bind-Visible="showAddVariableModal" Title="添加环境变量" Width="@("500px")" Footer="null">
     <div>
         <AntDesign.FormItem Label="变量名" Required="true" LabelColSpan="5" WrapperColSpan="19">
             <AntDesign.Input @bind-Value="newVariableName" Placeholder="请输入变量名" />
@@ -369,7 +369,7 @@ else
 </AntDesign.Modal>
 
 <!-- 编辑变量模态框 -->
-<AntDesign.Modal @bind-Visible="showEditVariableModal" Title="编辑环境变量" Width="@("500px")">
+<AntDesign.Modal @bind-Visible="showEditVariableModal" Title="编辑环境变量" Width="@("500px")" Footer="null">
     <div>
         <AntDesign.FormItem Label="变量名" LabelColSpan="5" WrapperColSpan="19">
             <AntDesign.Input @bind-Value="editVariableName" ReadOnly="true" />
@@ -388,7 +388,7 @@ else
 @{
     var serviceModalTitle = selectedProjectForServices != null ? $"{selectedProjectForServices.Name} - 服务管理" : "服务管理";
 }
-<AntDesign.Modal @bind-Visible="showProjectServiceManagementModal" Title="@serviceModalTitle" Width="@("900px")">
+<AntDesign.Modal @bind-Visible="showProjectServiceManagementModal" Title="@serviceModalTitle" Width="@("900px")" Footer="null">
     <div Style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
         <span Style="font-weight: 500;">项目服务列表</span>
         <AntDesign.Button Type="@ButtonType.Primary" @onclick="ShowAddProjectServiceModal">添加服务</AntDesign.Button>
@@ -434,7 +434,7 @@ else
 @{
     var serviceEditModalTitle = isEditingProjectService ? "编辑项目服务" : "添加项目服务";
 }
-<AntDesign.Modal @bind-Visible="showProjectServiceModal" Title="@serviceEditModalTitle" Width="@("500px")">
+<AntDesign.Modal @bind-Visible="showProjectServiceModal" Title="@serviceEditModalTitle" Width="@("500px")" Footer="null">
     <EditForm Model="currentProjectService" OnValidSubmit="SaveProjectService">
         <DataAnnotationsValidator />
         

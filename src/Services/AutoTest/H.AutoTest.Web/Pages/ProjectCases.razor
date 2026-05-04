@@ -1,4 +1,5 @@
 @page "/autotest/project-cases"
+@page "/autotest/project-cases/{ProjectId}"
 
 @namespace H.AutoTest.Web
 @layout AutoTestLayout
@@ -366,6 +367,10 @@
     private bool showTemplateSettingsModal = false;
     private List<ProjectCaseDto> availableTemplates = new();
     private bool isEditingCategory = false;
+
+    [Parameter]
+    public string? ProjectId { get; set; }
+
     private string selectedProjectId = "";
     private string selectedCategoryId = "";
     private string searchTerm = "";
@@ -390,10 +395,18 @@
         loading = true;
         projects = await ProjectService.GetAllAsync();
 
-        // 默认选中第一个项目
-        if (projects.Any())
+        // 优先根据路由参数 ProjectId 选中项目，若项目不存在或路由无 ProjectId，则默认选择第1个
+        if (!string.IsNullOrEmpty(ProjectId) && projects.Any(p => p.Id == ProjectId))
+        {
+            selectedProjectId = ProjectId;
+        }
+        else if (projects.Any())
         {
             selectedProjectId = projects.First().Id;
+        }
+        else
+        {
+            selectedProjectId = "";
         }
 
         await LoadProjectData();
