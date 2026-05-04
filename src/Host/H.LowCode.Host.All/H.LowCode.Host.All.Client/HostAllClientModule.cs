@@ -46,6 +46,9 @@ public class HostAllClientModule : AbpModule
 
         //应用状态
         context.Services.AddSingleton(new LowCodeAppState(true));
+
+        // AutoTest 测试执行事件通知器（WASM 端本地单例，避免 AppService 接口上的事件被 ABP ValidationInterceptor 反射崩溃）
+        context.Services.AddSingleton<ITestExecutionEventNotifier, TestExecutionEventNotifier>();
     }
 
     private static void ConfigureHttpClient(ServiceConfigurationContext context, IWebAssemblyHostEnvironment environment)

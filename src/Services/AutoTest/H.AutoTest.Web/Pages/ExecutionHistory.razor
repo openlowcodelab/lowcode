@@ -10,427 +10,396 @@
 
 <PageTitle>执行历史记录</PageTitle>
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h4 class="mb-1">📊 执行历史记录</h4>
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb mb-0">
-                            <li class="breadcrumb-item"><a href="/autotest/project-cases">测试用例</a></li>
-                            <li class="breadcrumb-item active">执行历史</li>
-                        </ol>
-                    </nav>
-                </div>
-                <div>
-                    <button class="btn btn-outline-secondary me-2" @onclick="RefreshData">
-                        <i class="oi oi-reload"></i> 刷新
-                    </button>
-                    <button class="btn btn-outline-secondary" @onclick="GoBack">
-                        <i class="oi oi-arrow-left"></i> 返回
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+<AntDesign.Row Justify="RowJustify.SpaceBetween" Align="RowAlign.Middle" Style="margin-bottom: 16px;">
+    <AntDesign.Col>
+        <div style="font-size: 18px; font-weight: 600; margin-bottom: 4px;">📊 执行历史记录</div>
+        <AntDesign.Breadcrumb>
+            <AntDesign.BreadcrumbItem>
+                <a href="/autotest/project-cases">测试用例</a>
+            </AntDesign.BreadcrumbItem>
+            <AntDesign.BreadcrumbItem>执行历史</AntDesign.BreadcrumbItem>
+        </AntDesign.Breadcrumb>
+    </AntDesign.Col>
+    <AntDesign.Col>
+        <AntDesign.Space>
+            <SpaceItem>
+                <AntDesign.Button OnClick="RefreshData">🔄 刷新</AntDesign.Button>
+            </SpaceItem>
+            <SpaceItem>
+                <AntDesign.Button OnClick="GoBack">← 返回</AntDesign.Button>
+            </SpaceItem>
+        </AntDesign.Space>
+    </AntDesign.Col>
+</AntDesign.Row>
 
-    @if (loading)
-    {
-        <div class="text-center p-5">
-            <div class="spinner-border" role="status">
-                <span class="visually-hidden">加载中...</span>
-            </div>
-            <p class="mt-2">正在加载执行历史...</p>
-        </div>
-    }
-    else if (testCase == null)
-    {
-        <div class="alert alert-danger">
-            <i class="oi oi-warning"></i> 未找到指定的测试用例
-        </div>
-    }
-    else
-    {
-        <div class="row">
-            <!-- 左侧：测试用例信息和统计 -->
-            <div class="col-md-4">
-                <!-- 测试用例信息 -->
-                <div class="card mb-3">
-                    <div class="card-header">
-                        <h6 class="mb-0">📋 测试用例信息</h6>
-                    </div>
-                    <div class="card-body">
-                        <dl class="row">
-                            <dt class="col-sm-4">用例名称:</dt>
-                            <dd class="col-sm-8">@testCase.Name</dd>
-                            
-                            <dt class="col-sm-4">描述:</dt>
-                            <dd class="col-sm-8">@(string.IsNullOrEmpty(testCase.Description) ? "无" : testCase.Description)</dd>
-                            
-                            <dt class="col-sm-4">步骤数量:</dt>
-                            <dd class="col-sm-8">@testCase.Steps.Count</dd>
-                            
-                            <dt class="col-sm-4">测试级别:</dt>
-                            <dd class="col-sm-8">
-                                @if (testCase.Levels.Any())
+@if (loading)
+{
+    <div style="text-align: center; padding: 60px 0;">
+        <AntDesign.Spin Size="@SpinSize.Large" Tip="正在加载执行历史..." />
+    </div>
+}
+else if (testCase == null)
+{
+    <AntDesign.Alert Type="@AlertType.Error" ShowIcon="true" Message="未找到指定的测试用例" />
+}
+else
+{
+    <AntDesign.Row Gutter="16">
+        <!-- 左侧：测试用例信息和统计 -->
+        <AntDesign.Col Span="8">
+            <AntDesign.Card Size="@CardSize.Small" Style="margin-bottom: 16px;">
+                <TitleTemplate>📋 测试用例信息</TitleTemplate>
+                <Body>
+                    <AntDesign.Descriptions Column="1" Size="@DescriptionsSize.Small">
+                        <AntDesign.DescriptionsItem Title="用例名称">@testCase.Name</AntDesign.DescriptionsItem>
+                        <AntDesign.DescriptionsItem Title="描述">
+                            @(string.IsNullOrEmpty(testCase.Description) ? "无" : testCase.Description)
+                        </AntDesign.DescriptionsItem>
+                        <AntDesign.DescriptionsItem Title="步骤数量">@testCase.Steps.Count</AntDesign.DescriptionsItem>
+                        <AntDesign.DescriptionsItem Title="测试级别">
+                            @if (testCase.Levels.Any())
+                            {
+                                @foreach (var level in testCase.Levels)
                                 {
-                                    @foreach (var level in testCase.Levels)
-                                    {
-                                        <span class="badge @GetLevelBadgeClass(level) me-1">@level</span>
-                                    }
+                                    <AntDesign.Tag Color="@GetLevelTagColor(level)">@level</AntDesign.Tag>
                                 }
-                                else
-                                {
-                                    <span class="text-muted">无</span>
-                                }
-                            </dd>
-                        </dl>
-                    </div>
-                </div>
-                
-                <!-- 执行统计 -->
-                <div class="card">
-                    <div class="card-header">
-                        <h6 class="mb-0">📈 执行统计</h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="row text-center">
-                            <div class="col-6">
-                                <div class="h4 text-primary mb-0">@executionRecords.Count</div>
-                                <small class="text-muted">总执行次数</small>
-                            </div>
-                            <div class="col-6">
-                                <div class="h4 text-success mb-0">@executionRecords.Count(r => r.Status == ExecutionStatus.Success)</div>
-                                <small class="text-muted">成功次数</small>
-                            </div>
+                            }
+                            else
+                            {
+                                <span style="color: #999;">无</span>
+                            }
+                        </AntDesign.DescriptionsItem>
+                    </AntDesign.Descriptions>
+                </Body>
+            </AntDesign.Card>
+
+            <AntDesign.Card Size="@CardSize.Small">
+                <TitleTemplate>📈 执行统计</TitleTemplate>
+                <Body>
+                    <AntDesign.Row Gutter="8">
+                        <AntDesign.Col Span="12">
+                            <AntDesign.Statistic Title="总执行次数" Value="@executionRecords.Count"
+                                                 ValueStyle="color: #1890ff;" />
+                        </AntDesign.Col>
+                        <AntDesign.Col Span="12">
+                            <AntDesign.Statistic Title="成功次数"
+                                                 Value="@executionRecords.Count(r => r.Status == ExecutionStatus.Success)"
+                                                 ValueStyle="color: #52c41a;" />
+                        </AntDesign.Col>
+                    </AntDesign.Row>
+                    <AntDesign.Row Gutter="8" Style="margin-top: 16px;">
+                        <AntDesign.Col Span="12">
+                            <AntDesign.Statistic Title="失败次数"
+                                                 Value="@executionRecords.Count(r => r.Status == ExecutionStatus.Failed)"
+                                                 ValueStyle="color: #ff4d4f;" />
+                        </AntDesign.Col>
+                        <AntDesign.Col Span="12">
+                            @{
+                                var successRate = executionRecords.Count > 0
+                                    ? (double)executionRecords.Count(r => r.Status == ExecutionStatus.Success) / executionRecords.Count * 100
+                                    : 0;
+                                var successRateColor = successRate >= 80 ? "#52c41a" : successRate >= 60 ? "#faad14" : "#ff4d4f";
+                            }
+                            <AntDesign.Statistic Title="成功率"
+                                                 Value="@successRate"
+                                                 Precision="1"
+                                                 Suffix="%"
+                                                 ValueStyle="@($"color: {successRateColor};")" />
+                        </AntDesign.Col>
+                    </AntDesign.Row>
+
+                    @if (executionRecords.Any())
+                    {
+                        var avgDuration = executionRecords
+                            .Where(r => r.Duration > 0)
+                            .Select(r => (double)r.Duration)
+                            .DefaultIfEmpty(0)
+                            .Average();
+                        <div style="margin-top: 16px; text-align: center; padding-top: 12px; border-top: 1px solid #f0f0f0;">
+                            <div style="font-size: 16px; color: #13c2c2;">@(avgDuration.ToString("F0"))ms</div>
+                            <small style="color: #999;">平均执行时间</small>
                         </div>
-                        <div class="row text-center mt-3">
-                            <div class="col-6">
-                                <div class="h4 text-danger mb-0">@executionRecords.Count(r => r.Status == ExecutionStatus.Failed)</div>
-                                <small class="text-muted">失败次数</small>
-                            </div>
-                            <div class="col-6">
-                                @{
-                                    var successRate = executionRecords.Count > 0 
-                                        ? (double)executionRecords.Count(r => r.Status == ExecutionStatus.Success) / executionRecords.Count * 100 
-                                        : 0;
-                                }
-                                <div class="h4 @(successRate >= 80 ? "text-success" : successRate >= 60 ? "text-warning" : "text-danger") mb-0">@(successRate.ToString("F1"))%</div>
-                                <small class="text-muted">成功率</small>
-                            </div>
-                        </div>
-                        
-                        @if (executionRecords.Any())
-                        {
-                            var avgDuration = executionRecords
-                                .Where(r => r.Duration > 0)
-                                .Select(r => (double)r.Duration)
-                                .DefaultIfEmpty(0)
-                                .Average();
-                            <div class="mt-3 text-center">
-                                <div class="h6 text-info mb-0">@(avgDuration.ToString("F0"))ms</div>
-                                <small class="text-muted">平均执行时间</small>
-                            </div>
-                        }
-                    </div>
-                </div>
-            </div>
-            
-            <!-- 右侧：执行记录列表 -->
-            <div class="col-md-8">
-                <div class="card">
-                    <div class="card-header">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h6 class="mb-0">🕒 执行记录列表</h6>
-                            <div class="d-flex align-items-center">
-                                <label class="form-label me-2 mb-0">筛选状态:</label>
-                                <select class="form-select form-select-sm" style="width: auto;" @bind="statusFilter" @bind:after="ApplyFilter">
-                                    <option value="">全部</option>
-                                    <option value="Success">成功</option>
-                                    <option value="Failed">失败</option>
-                                    <option value="Running">执行中</option>
-                                    <option value="Cancelled">已取消</option>
-                                </select>
-                            </div>
+                    }
+                </Body>
+            </AntDesign.Card>
+        </AntDesign.Col>
+
+        <!-- 右侧：执行记录列表 -->
+        <AntDesign.Col Span="16">
+            <AntDesign.Card Size="@CardSize.Small">
+                <TitleTemplate>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>🕒 执行记录列表</span>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 13px; font-weight: normal;">筛选状态:</span>
+                            <AntDesign.Select TItemValue="string" TItem="string"
+                                              @bind-Value="statusFilter"
+                                              OnSelectedItemChanged="@((string _) => ApplyFilter())"
+                                              Style="width: 120px;">
+                                <SelectOptions>
+                                    <AntDesign.SelectOption TItemValue="string" TItem="string" Value="@("")" Label="全部" />
+                                    <AntDesign.SelectOption TItemValue="string" TItem="string" Value="@("Success")" Label="成功" />
+                                    <AntDesign.SelectOption TItemValue="string" TItem="string" Value="@("Failed")" Label="失败" />
+                                    <AntDesign.SelectOption TItemValue="string" TItem="string" Value="@("Running")" Label="执行中" />
+                                    <AntDesign.SelectOption TItemValue="string" TItem="string" Value="@("Cancelled")" Label="已取消" />
+                                </SelectOptions>
+                            </AntDesign.Select>
                         </div>
                     </div>
-                    <div class="card-body p-0">
-                        @if (!filteredRecords.Any())
-                        {
-                            <div class="text-center p-4">
-                                <i class="oi oi-info"></i> 暂无执行记录
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="list-group list-group-flush">
-                                @foreach (var record in filteredRecords.Take(20)) // 限制显示数量
-                                {
-                                    <div class="list-group-item @(selectedRecordId == record.Id ? "active" : "")" 
-                                         style="cursor: pointer;" 
-                                         @onclick="() => SelectRecord(record.Id)">
-                                        <div class="d-flex justify-content-between align-items-start">
-                                            <div class="flex-grow-1">
-                                                <div class="d-flex align-items-center mb-1">
-                                                    <span class="badge @GetExecutionStatusBadgeClass(record.Status) me-2">@GetExecutionStatusDisplayName(record.Status)</span>
-                                                    <strong>@record.EnvironmentName</strong>
-                                                    <span class="text-muted ms-2">@record.StartTime.ToString("yyyy-MM-dd HH:mm:ss")</span>
-                                                </div>
-                                                <div class="small text-muted">
-                                                    步骤: @record.SuccessSteps 成功 / @record.FailedSteps 失败 / @record.SkippedSteps 跳过
-                                                    @if (record.Duration > 0)
-                                                    {
-                                                        <span class="ms-2">耗时: @(record.Duration)ms</span>
-                                                    }
-                                                </div>
-                                                @if (!string.IsNullOrEmpty(record.ErrorMessage))
+                </TitleTemplate>
+                <Body>
+                    @if (!filteredRecords.Any())
+                    {
+                        <AntDesign.Empty Description="@("暂无执行记录")" />
+                    }
+                    else
+                    {
+                        <div style="max-height: 600px; overflow-y: auto;">
+                            @foreach (var record in filteredRecords.Take(20))
+                            {
+                                var isSelected = selectedRecordId == record.Id;
+                                <div style="@($"padding: 12px; border: 1px solid {(isSelected ? "#1890ff" : "#f0f0f0")}; border-radius: 4px; margin-bottom: 8px; cursor: pointer; background: {(isSelected ? "#e6f7ff" : "#fff")};")"
+                                     @onclick="() => SelectRecord(record.Id)">
+                                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                        <div style="flex: 1;">
+                                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                                                <AntDesign.Tag Color="@GetExecutionStatusTagColor(record.Status)">@GetExecutionStatusDisplayName(record.Status)</AntDesign.Tag>
+                                                <strong>@record.EnvironmentName</strong>
+                                                <span style="color: #999; font-size: 12px;">@record.StartTime.ToString("yyyy-MM-dd HH:mm:ss")</span>
+                                            </div>
+                                            <div style="color: #666; font-size: 12px;">
+                                                步骤: @record.SuccessSteps 成功 / @record.FailedSteps 失败 / @record.SkippedSteps 跳过
+                                                @if (record.Duration > 0)
                                                 {
-                                                    <div class="small text-danger mt-1">
-                                                        <i class="oi oi-warning"></i> @record.ErrorMessage
-                                                    </div>
+                                                    <span style="margin-left: 8px;">耗时: @(record.Duration)ms</span>
                                                 }
                                             </div>
-                                            <div class="text-end">
-                                                <button class="btn btn-outline-primary btn-sm" @onclick="() => SelectRecord(record.Id)" @onclick:stopPropagation="true">
-                                                    <i class="oi oi-eye"></i> 查看详情
-                                                </button>
-                                                <button class="btn btn-outline-danger btn-sm ms-2" @onclick="() => DeleteRecord(record.Id)" @onclick:stopPropagation="true">
-                                                    <i class="oi oi-trash"></i> 删除
-                                                </button>
-                                            </div>
+                                            @if (!string.IsNullOrEmpty(record.ErrorMessage))
+                                            {
+                                                <div style="color: #ff4d4f; font-size: 12px; margin-top: 4px;">
+                                                    ⚠ @record.ErrorMessage
+                                                </div>
+                                            }
                                         </div>
+                                        <AntDesign.Space>
+                                            <SpaceItem>
+                                                <AntDesign.Button Size="@ButtonSize.Small"
+                                                                  Type="@ButtonType.Primary"
+                                                                  OnClick="@(async (MouseEventArgs e) => { await JSRuntime.InvokeVoidAsync("event.stopPropagation"); SelectRecord(record.Id); })">
+                                                    👁 查看详情
+                                                </AntDesign.Button>
+                                            </SpaceItem>
+                                            <SpaceItem>
+                                                <AntDesign.Button Size="@ButtonSize.Small"
+                                                                  Danger="true"
+                                                                  OnClick="@(async (MouseEventArgs e) => await DeleteRecord(record.Id))">
+                                                    🗑 删除
+                                                </AntDesign.Button>
+                                            </SpaceItem>
+                                        </AntDesign.Space>
                                     </div>
-                                }
-                            </div>
-                            
-                            @if (filteredRecords.Count > 20)
-                            {
-                                <div class="p-3 text-center text-muted">
-                                    显示前20条记录，共 @filteredRecords.Count 条
                                 </div>
                             }
+                        </div>
+
+                        @if (filteredRecords.Count > 20)
+                        {
+                            <div style="padding: 12px; text-align: center; color: #999;">
+                                显示前 20 条记录，共 @filteredRecords.Count 条
+                            </div>
                         }
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- 执行详情模态框 -->
+                    }
+                </Body>
+            </AntDesign.Card>
+        </AntDesign.Col>
+    </AntDesign.Row>
+
+    <!-- 执行详情模态框 -->
+    <AntDesign.Modal Visible="@(selectedRecord != null)"
+                     Title="@($"执行详情 - {selectedRecord?.StartTime.ToString("yyyy-MM-dd HH:mm:ss")}")"
+                     Width="1000"
+                     OnCancel="CloseModal"
+                     Footer="null"
+                     DestroyOnClose="true">
         @if (selectedRecord != null)
         {
-            <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-                <div class="modal-dialog modal-xl">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">
-                                执行详情 - @selectedRecord.StartTime.ToString("yyyy-MM-dd HH:mm:ss")
-                                <span class="badge @GetExecutionStatusBadgeClass(selectedRecord.Status) ms-2">@GetExecutionStatusDisplayName(selectedRecord.Status)</span>
-                            </h5>
-                            <button type="button" class="btn-close" @onclick="CloseModal"></button>
-                        </div>
-                        <div class="modal-body">
-                            <!-- 执行概要 -->
-                            <div class="row mb-4">
-                                <div class="col-md-3">
-                                    <div class="text-center">
-                                        <div class="h5 text-primary mb-0">@selectedRecord.TotalSteps</div>
-                                        <small class="text-muted">总步骤</small>
+            <div style="margin-bottom: 16px;">
+                <AntDesign.Tag Color="@GetExecutionStatusTagColor(selectedRecord.Status)">
+                    @GetExecutionStatusDisplayName(selectedRecord.Status)
+                </AntDesign.Tag>
+            </div>
+
+            <!-- 执行概要 -->
+            <AntDesign.Row Gutter="16" Style="margin-bottom: 16px;">
+                <AntDesign.Col Span="6">
+                    <AntDesign.Statistic Title="总步骤" Value="@selectedRecord.TotalSteps"
+                                         ValueStyle="color: #1890ff;" />
+                </AntDesign.Col>
+                <AntDesign.Col Span="6">
+                    <AntDesign.Statistic Title="成功" Value="@selectedRecord.SuccessSteps"
+                                         ValueStyle="color: #52c41a;" />
+                </AntDesign.Col>
+                <AntDesign.Col Span="6">
+                    <AntDesign.Statistic Title="失败" Value="@selectedRecord.FailedSteps"
+                                         ValueStyle="color: #ff4d4f;" />
+                </AntDesign.Col>
+                <AntDesign.Col Span="6">
+                    <AntDesign.Statistic Title="执行时间" Value="@selectedRecord.Duration" Suffix="ms"
+                                         ValueStyle="color: #13c2c2;" />
+                </AntDesign.Col>
+            </AntDesign.Row>
+
+            <!-- 环境信息 -->
+            <AntDesign.Card Size="@CardSize.Small" Title="环境信息" Style="margin-bottom: 16px;">
+                <AntDesign.Descriptions Column="2" Size="@DescriptionsSize.Small">
+                    <AntDesign.DescriptionsItem Title="环境名称">@selectedRecord.EnvironmentName</AntDesign.DescriptionsItem>
+                    <AntDesign.DescriptionsItem Title="环境ID">@selectedRecord.EnvironmentId</AntDesign.DescriptionsItem>
+                </AntDesign.Descriptions>
+            </AntDesign.Card>
+
+            <!-- 错误信息 -->
+            @if (!string.IsNullOrEmpty(selectedRecord.ErrorMessage))
+            {
+                <AntDesign.Alert Type="@AlertType.Error"
+                                 ShowIcon="true"
+                                 Message="错误信息"
+                                 Description="@selectedRecord.ErrorMessage"
+                                 Style="margin-bottom: 16px;" />
+            }
+
+            <!-- 步骤执行详情 -->
+            @if (selectedRecord.StepRecords.Any())
+            {
+                <div style="font-weight: 600; margin-bottom: 8px;">步骤执行详情</div>
+                <AntDesign.Collapse>
+                    @foreach (var stepRecord in selectedRecord.StepRecords.OrderBy(s => s.Order))
+                    {
+                        <AntDesign.Panel Key="@stepRecord.Id">
+                            <HeaderTemplate>
+                                <div style="display: flex; align-items: center; gap: 8px; width: 100%;">
+                                    <AntDesign.Tag Color="@GetStepStatusTagColor(stepRecord.Status)">@stepRecord.Order</AntDesign.Tag>
+                                    <strong>@stepRecord.StepName</strong>
+                                    <AntDesign.Tag Color="@TagColor.Default">@stepRecord.StepType</AntDesign.Tag>
+                                    <AntDesign.Tag Color="@GetStepStatusTagColor(stepRecord.Status)">@GetStepStatusDisplayName(stepRecord.Status)</AntDesign.Tag>
+                                    @if (stepRecord.Duration > 0)
+                                    {
+                                        <span style="color: #999; font-size: 12px; margin-left: auto;">@(stepRecord.Duration)ms</span>
+                                    }
+                                </div>
+                            </HeaderTemplate>
+                            <ChildContent>
+                                @if (!string.IsNullOrEmpty(stepRecord.ErrorMessage))
+                                {
+                                    <AntDesign.Alert Type="@AlertType.Error"
+                                                     ShowIcon="true"
+                                                     Message="错误"
+                                                     Description="@stepRecord.ErrorMessage"
+                                                     Style="margin-bottom: 12px;" />
+                                }
+
+                                @if (!string.IsNullOrEmpty(stepRecord.RequestData))
+                                {
+                                    <div style="margin-bottom: 12px;">
+                                        <div style="font-weight: 600; margin-bottom: 4px;">请求数据</div>
+                                        <pre style="background: #fafafa; padding: 8px; border-radius: 4px; border: 1px solid #f0f0f0; white-space: pre-wrap; word-break: break-all;"><code>@stepRecord.RequestData</code></pre>
                                     </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="text-center">
-                                        <div class="h5 text-success mb-0">@selectedRecord.SuccessSteps</div>
-                                        <small class="text-muted">成功</small>
+                                }
+
+                                @if (!string.IsNullOrEmpty(stepRecord.ResponseData))
+                                {
+                                    <div style="margin-bottom: 12px;">
+                                        <div style="font-weight: 600; margin-bottom: 4px;">响应数据</div>
+                                        <pre style="background: #fafafa; padding: 8px; border-radius: 4px; border: 1px solid #f0f0f0; white-space: pre-wrap; word-break: break-all;"><code>@stepRecord.ResponseData</code></pre>
                                     </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="text-center">
-                                        <div class="h5 text-danger mb-0">@selectedRecord.FailedSteps</div>
-                                        <small class="text-muted">失败</small>
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <div class="text-center">
-                                        <div class="h5 text-info mb-0">@(selectedRecord.Duration)ms</div>
-                                        <small class="text-muted">执行时间</small>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- 环境信息 -->
-                            <div class="mb-4">
-                                <h6>环境信息</h6>
-                                <div class="bg-light p-3 rounded">
-                                    <strong>环境名称:</strong> @selectedRecord.EnvironmentName<br>
-                                    <strong>环境ID:</strong> @selectedRecord.EnvironmentId
-                                </div>
-                            </div>
-                            
-                            <!-- 错误信息 -->
-                            @if (!string.IsNullOrEmpty(selectedRecord.ErrorMessage))
-                            {
-                                <div class="mb-4">
-                                    <h6>错误信息</h6>
-                                    <div class="alert alert-danger">
-                                        @selectedRecord.ErrorMessage
-                                    </div>
-                                </div>
-                            }
-                            
-                            <!-- 步骤执行详情 -->
-                            @if (selectedRecord.StepRecords.Any())
-                            {
-                                <div class="mb-4">
-                                    <h6>步骤执行详情</h6>
-                                    <div class="accordion" id="stepAccordion">
-                                        @foreach (var stepRecord in selectedRecord.StepRecords.OrderBy(s => s.Order))
+                                }
+
+                                @if (stepRecord.AssertionResults.Any())
+                                {
+                                    <div style="margin-bottom: 12px;">
+                                        <div style="font-weight: 600; margin-bottom: 4px;">断言结果</div>
+                                        @foreach (var assertion in stepRecord.AssertionResults)
                                         {
-                                            var accordionId = $"step-{stepRecord.Id}";
-                                            <div class="accordion-item">
-                                                <h2 class="accordion-header" id="@($"heading-{stepRecord.Id}")">
-                                                    <button class="accordion-button collapsed" type="button" 
-                                                            data-bs-toggle="collapse" 
-                                                            data-bs-target="@($"#{accordionId}")"
-                                                            aria-expanded="false" 
-                                                            aria-controls="@accordionId">
-                                                        <div class="d-flex align-items-center w-100">
-                                                            <span class="badge @GetStepStatusBadgeClass(stepRecord.Status) me-2">@stepRecord.Order</span>
-                                                            <strong class="me-2">@stepRecord.StepName</strong>
-                                                            <span class="badge bg-secondary me-2">@stepRecord.StepType</span>
-                                                            <span class="badge @GetStepStatusBadgeClass(stepRecord.Status) me-auto">@GetStepStatusDisplayName(stepRecord.Status)</span>
-                                                            @if (stepRecord.Duration > 0)
-                                                            {
-                                                                <small class="text-muted">@(stepRecord.Duration)ms</small>
-                                                            }
-                                                        </div>
-                                                    </button>
-                                                </h2>
-                                                <div id="@accordionId" class="accordion-collapse collapse" 
-                                                     aria-labelledby="@($"heading-{stepRecord.Id}")" 
-                                                     data-bs-parent="#stepAccordion">
-                                                    <div class="accordion-body">
-                                                        <!-- 错误信息 -->
-                                                        @if (!string.IsNullOrEmpty(stepRecord.ErrorMessage))
-                                                        {
-                                                            <div class="alert alert-danger">
-                                                                <strong>错误:</strong> @stepRecord.ErrorMessage
-                                                            </div>
-                                                        }
-                                                        
-                                                        <!-- 请求数据 -->
-                                                        @if (!string.IsNullOrEmpty(stepRecord.RequestData))
-                                                        {
-                                                            <div class="mb-3">
-                                                                <h6>请求数据</h6>
-                                                                <pre class="bg-light p-2 rounded"><code>@stepRecord.RequestData</code></pre>
-                                                            </div>
-                                                        }
-                                                        
-                                                        <!-- 响应数据 -->
-                                                        @if (!string.IsNullOrEmpty(stepRecord.ResponseData))
-                                                        {
-                                                            <div class="mb-3">
-                                                                <h6>响应数据</h6>
-                                                                <pre class="bg-light p-2 rounded"><code>@stepRecord.ResponseData</code></pre>
-                                                            </div>
-                                                        }
-                                                        
-                                                        <!-- 断言结果 -->
-                                                        @if (stepRecord.AssertionResults.Any())
-                                                        {
-                                                            <div class="mb-3">
-                                                                <h6>断言结果</h6>
-                                                                @foreach (var assertion in stepRecord.AssertionResults)
-                                                                {
-                                                                    <div class="d-flex align-items-center mb-2">
-                                                                        <span class="badge @(assertion.Passed ? "bg-success" : "bg-danger") me-2">
-                                                                            @(assertion.Passed ? "✓" : "✗")
-                                                                        </span>
-                                                                        <span class="me-2">@assertion.Expression</span>
-                                                                        <span class="me-2">@assertion.Operator</span>
-                                                                        <span class="me-2">@assertion.Expected</span>
-                                                                        @if (!assertion.Passed)
-                                                                        {
-                                                                            <span class="text-danger">(实际: @assertion.Actual)</span>
-                                                                        }
-                                                                    </div>
-                                                                }
-                                                            </div>
-                                                        }
-                                                        
-                                                        <!-- 提取的变量 -->
-                                                        @if (stepRecord.ExtractedVariables.Any())
-                                                        {
-                                                            <div class="mb-3">
-                                                                <h6>提取的变量</h6>
-                                                                @foreach (var variable in stepRecord.ExtractedVariables)
-                                                                {
-                                                                    <div class="mb-1">
-                                                                        <strong>@variable.Key:</strong> @variable.Value
-                                                                    </div>
-                                                                }
-                                                            </div>
-                                                        }
-                                                        
-                                                        <!-- 执行日志 -->
-                                                        @if (stepRecord.Logs.Any())
-                                                        {
-                                                            <div class="mb-3">
-                                                                <h6>执行日志</h6>
-                                                                <div class="bg-dark text-light p-2 rounded" style="max-height: 200px; overflow-y: auto;">
-                                                                    @foreach (var log in stepRecord.Logs)
-                                                                    {
-                                                                        <div class="small">@log</div>
-                                                                    }
-                                                                </div>
-                                                            </div>
-                                                        }
-                                                        
-                                                        <!-- 截图展示 -->
-                                                        @{
-                                                            var screenshotPaths = GetScreenshotPaths(testCase.ProjectId, testCase.Id, stepRecord.StepId);
-                                                        }
-                                                        @if (screenshotPaths.Any())
-                                                        {
-                                                            <div class="mb-3">
-                                                                <h6>截图</h6>
-                                                                <div class="row">
-                                                                    @foreach (var screenshotPath in screenshotPaths)
-                                                                    {
-                                                                        <div class="col-md-6 mb-2">
-                                                                            <div class="card">
-                                                                                <img src="@GetRelativeScreenshotPath(screenshotPath)" class="card-img-top" alt="截图" style="max-height: 200px; object-fit: contain;">
-                                                                                <div class="card-body p-2">
-                                                                                    <small class="text-muted">@Path.GetFileName(screenshotPath)</small>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-                                                                    }
-                                                                </div>
-                                                            </div>
-                                                        }
-                                                    </div>
-                                                </div>
+                                            <div style="display: flex; align-items: center; margin-bottom: 4px; gap: 8px;">
+                                                <AntDesign.Tag Color="@(assertion.Passed ? TagColor.Green : TagColor.Red)">
+                                                    @(assertion.Passed ? "✓" : "✗")
+                                                </AntDesign.Tag>
+                                                <span>@assertion.Expression</span>
+                                                <span>@assertion.Operator</span>
+                                                <span>@assertion.Expected</span>
+                                                @if (!assertion.Passed)
+                                                {
+                                                    <span style="color: #ff4d4f;">(实际: @assertion.Actual)</span>
+                                                }
                                             </div>
                                         }
                                     </div>
-                                </div>
-                            }
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" @onclick="CloseModal">关闭</button>
-                        </div>
-                    </div>
-                </div>
+                                }
+
+                                @if (stepRecord.ExtractedVariables.Any())
+                                {
+                                    <div style="margin-bottom: 12px;">
+                                        <div style="font-weight: 600; margin-bottom: 4px;">提取的变量</div>
+                                        @foreach (var variable in stepRecord.ExtractedVariables)
+                                        {
+                                            <div style="margin-bottom: 2px;">
+                                                <strong>@variable.Key:</strong> @variable.Value
+                                            </div>
+                                        }
+                                    </div>
+                                }
+
+                                @if (stepRecord.Logs.Any())
+                                {
+                                    <div style="margin-bottom: 12px;">
+                                        <div style="font-weight: 600; margin-bottom: 4px;">执行日志</div>
+                                        <div style="background: #1e1e1e; color: #d4d4d4; padding: 8px; border-radius: 4px; max-height: 200px; overflow-y: auto; font-family: monospace; font-size: 12px;">
+                                            @foreach (var log in stepRecord.Logs)
+                                            {
+                                                <div>@log</div>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+
+                                @{
+                                    var screenshotPaths = GetScreenshotPaths(testCase.ProjectId, testCase.Id, stepRecord.StepId);
+                                }
+                                @if (screenshotPaths.Any())
+                                {
+                                    <div style="margin-bottom: 12px;">
+                                        <div style="font-weight: 600; margin-bottom: 4px;">截图</div>
+                                        <AntDesign.Row Gutter="8">
+                                            @foreach (var screenshotPath in screenshotPaths)
+                                            {
+                                                <AntDesign.Col Span="12" Style="margin-bottom: 8px;">
+                                                    <AntDesign.Card Size="@CardSize.Small">
+                                                        <img src="@GetRelativeScreenshotPath(screenshotPath)" alt="截图"
+                                                             style="width: 100%; max-height: 200px; object-fit: contain;" />
+                                                        <div style="padding: 4px; font-size: 12px; color: #999;">
+                                                            @Path.GetFileName(screenshotPath)
+                                                        </div>
+                                                    </AntDesign.Card>
+                                                </AntDesign.Col>
+                                            }
+                                        </AntDesign.Row>
+                                    </div>
+                                }
+                            </ChildContent>
+                        </AntDesign.Panel>
+                    }
+                </AntDesign.Collapse>
+            }
+
+            <div style="text-align: right; margin-top: 16px; padding-top: 12px; border-top: 1px solid #f0f0f0;">
+                <AntDesign.Button OnClick="CloseModal">关闭</AntDesign.Button>
             </div>
         }
-    }
-</div>
+    </AntDesign.Modal>
+}
 
 @code {
     [Parameter] public string TestCaseId { get; set; } = string.Empty;
-    
+
     private ProjectCaseDto? testCase;
     private List<ExecutionRecordDto> executionRecords = new();
     private List<ExecutionRecordDto> filteredRecords = new();
@@ -438,24 +407,22 @@
     private string statusFilter = string.Empty;
     private string selectedRecordId = string.Empty;
     private ExecutionRecordDto? selectedRecord;
-    
+
     protected override async Task OnInitializedAsync()
     {
         await LoadData();
     }
-    
+
     private async Task LoadData()
     {
         try
         {
             loading = true;
-            
-            // 加载测试用例
+
             testCase = await ProjectCaseService.GetByIdAsync(TestCaseId);
-            
+
             if (testCase != null)
             {
-                // 加载执行记录
                 executionRecords = await ExecutionRecordService.GetByTestCaseIdAsync(testCase.ProjectId, TestCaseId);
                 ApplyFilter();
             }
@@ -470,12 +437,12 @@
             StateHasChanged();
         }
     }
-    
+
     private async Task RefreshData()
     {
         await LoadData();
     }
-    
+
     private void ApplyFilter()
     {
         if (string.IsNullOrEmpty(statusFilter))
@@ -494,30 +461,29 @@
         }
         StateHasChanged();
     }
-    
+
     private void SelectRecord(string recordId)
     {
         selectedRecordId = recordId;
         selectedRecord = executionRecords.FirstOrDefault(r => r.Id == recordId);
         StateHasChanged();
     }
-    
+
     private async Task DeleteRecord(string recordId)
     {
         if (testCase == null) return;
-        
+
         try
         {
             var success = await ExecutionRecordService.DeleteAsync(testCase.ProjectId, recordId);
             if (success)
             {
-                // 如果删除的是当前选中的记录，清空选中状态
                 if (selectedRecordId == recordId)
                 {
                     selectedRecordId = string.Empty;
                     selectedRecord = null;
                 }
-                
+
                 await LoadData();
             }
             else
@@ -530,21 +496,20 @@
             await JSRuntime.InvokeVoidAsync("alert", $"删除出错: {ex.Message}");
         }
     }
-    
+
     private void CloseModal()
     {
         selectedRecordId = string.Empty;
         selectedRecord = null;
         StateHasChanged();
     }
-    
+
     private void GoBack()
     {
-        // 从查询字符串中获取返回的项目ID
         var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
         var queryParameters = System.Web.HttpUtility.ParseQueryString(uri.Query);
         var returnProjectId = queryParameters["returnProjectId"];
-        
+
         if (!string.IsNullOrEmpty(returnProjectId))
         {
             Navigation.NavigateTo($"/autotest/project-cases/{returnProjectId}");
@@ -554,30 +519,24 @@
             Navigation.NavigateTo("/autotest/project-cases");
         }
     }
-    
-    // 获取截图路径
+
     private List<string> GetScreenshotPaths(string projectId, string testCaseId, string stepId)
     {
         var screenshotPaths = new List<string>();
-        
-        // 截图目录路径
+
         var screenshotDir = Path.Combine("data", projectId, "screenshots", testCaseId);
-        
-        // 检查目录是否存在
+
         if (Directory.Exists(screenshotDir))
         {
-            // 查找与步骤ID相关的截图文件
             var screenshotFiles = Directory.GetFiles(screenshotDir, $"*{stepId}*.png");
             screenshotPaths.AddRange(screenshotFiles);
         }
-        
+
         return screenshotPaths;
     }
-    
-    // 获取相对路径用于前端展示
+
     private string GetRelativeScreenshotPath(string fullPath)
     {
-        // 将文件路径转换为相对路径，以便在浏览器中展示
         var relativePath = fullPath.Replace("\\", "/").Replace(Directory.GetCurrentDirectory(), "");
         if (relativePath.StartsWith("/"))
         {
@@ -585,25 +544,25 @@
         }
         return $"/{relativePath}";
     }
-    
-    private string GetLevelBadgeClass(string level) => level switch
+
+    private string GetLevelTagColor(string level) => level switch
     {
-        "P0" => "bg-danger",
-        "P1" => "bg-warning",
-        "P2" => "bg-primary",
-        "P3" => "bg-secondary",
-        _ => "bg-light"
+        "P0" => "red",
+        "P1" => "orange",
+        "P2" => "blue",
+        "P3" => "default",
+        _ => "default"
     };
-    
-    private string GetExecutionStatusBadgeClass(ExecutionStatus status) => status switch
+
+    private string GetExecutionStatusTagColor(ExecutionStatus status) => status switch
     {
-        ExecutionStatus.Success => "bg-success",
-        ExecutionStatus.Failed => "bg-danger",
-        ExecutionStatus.Running => "bg-primary",
-        ExecutionStatus.Cancelled => "bg-warning",
-        _ => "bg-secondary"
+        ExecutionStatus.Success => "green",
+        ExecutionStatus.Failed => "red",
+        ExecutionStatus.Running => "blue",
+        ExecutionStatus.Cancelled => "orange",
+        _ => "default"
     };
-    
+
     private string GetExecutionStatusDisplayName(ExecutionStatus status) => status switch
     {
         ExecutionStatus.Success => "成功",
@@ -612,16 +571,16 @@
         ExecutionStatus.Cancelled => "已取消",
         _ => "未知"
     };
-    
-    private string GetStepStatusBadgeClass(StepExecutionStatus status) => status switch
+
+    private string GetStepStatusTagColor(StepExecutionStatus status) => status switch
     {
-        StepExecutionStatus.Success => "bg-success",
-        StepExecutionStatus.Failed => "bg-danger",
-        StepExecutionStatus.Running => "bg-primary",
-        StepExecutionStatus.Skipped => "bg-warning",
-        _ => "bg-secondary"
+        StepExecutionStatus.Success => "green",
+        StepExecutionStatus.Failed => "red",
+        StepExecutionStatus.Running => "blue",
+        StepExecutionStatus.Skipped => "orange",
+        _ => "default"
     };
-    
+
     private string GetStepStatusDisplayName(StepExecutionStatus status) => status switch
     {
         StepExecutionStatus.Success => "成功",

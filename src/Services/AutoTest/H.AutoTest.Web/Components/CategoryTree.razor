@@ -31,25 +31,27 @@
 
     private List<ProjectCaseCategory> GetRootCategories()
     {
-        var allChildIds = new HashSet<string>();
-        foreach (var category in Categories)
+        // 服务端已返回根节点列表（子节点嵌套在 Childrens 中），直接按 Order 排序即可
+        return Categories.OrderBy(c => c.Order).ToList();
+    }
+
+    private ProjectCaseCategory? FindCategoryInTree(string id, IEnumerable<ProjectCaseCategory> nodes)
+    {
+        foreach (var n in nodes)
         {
-            if (category.Childrens != null)
+            if (n.Id == id) return n;
+            if (n.Childrens is { Length: > 0 })
             {
-                foreach (var child in category.Childrens)
-                {
-                    allChildIds.Add(child.Id);
-                }
+                var hit = FindCategoryInTree(id, n.Childrens);
+                if (hit != null) return hit;
             }
         }
-        var roots = Categories.Where(c => !allChildIds.Contains(c.Id)).OrderBy(c => c.Order).ToList();
-        Console.WriteLine($"CategoryTree: Found {roots.Count} root categories from {Categories.Count} total categories");
-        return roots;
+        return null;
     }
 
     private List<ProjectCaseCategory> GetChildCategories(string categoryId)
     {
-        var category = Categories.FirstOrDefault(c => c.Id == categoryId);
+        var category = FindCategoryInTree(categoryId, Categories);
         return category?.Childrens?.OrderBy(c => c.Order).ToList() ?? new List<ProjectCaseCategory>();
     }
 

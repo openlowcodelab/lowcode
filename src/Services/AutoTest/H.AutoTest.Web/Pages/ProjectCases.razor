@@ -215,7 +215,7 @@
                                                           Size="@ButtonSize.Small"
                                                           @onclick="() => ExecuteSingleTest(context)"
                                                           Style="color: #52c41a; padding: 0;">
-                                            <i class="anticon anticon-play-circle" style="margin-right: 4px;"></i>执行测试
+                                            <i class="anticon anticon-play-circle" style="margin-right: 4px;"></i>执行
                                         </AntDesign.Button>
 
                                         <AntDesign.Button Type="@ButtonType.Link"
@@ -404,7 +404,6 @@
 
     private async Task LoadProjectData()
     {
-        Console.WriteLine($"============== renderMode={RendererInfo.Name}, selectedProjectId={selectedProjectId}");
         if (!string.IsNullOrEmpty(selectedProjectId))
         {
             categories = await ProjectCaseCategoryAppService.GetByProjectIdAsync(selectedProjectId);
@@ -498,7 +497,7 @@
     
     private void AddAllChildCategoryIds(string categoryId, HashSet<string> categoryIds)
     {
-        var category = categories.FirstOrDefault(c => c.Id == categoryId);
+        var category = FindCategoryInTree(categoryId, categories);
         if (category?.Childrens != null)
         {
             foreach (var child in category.Childrens)
@@ -508,22 +507,42 @@
             }
         }
     }
-    
-    private List<ProjectCaseCategory> GetRootCategories()
+
+    // 递归在树形分类中查找指定 Id 的节点
+    private ProjectCaseCategory? FindCategoryInTree(string id, IEnumerable<ProjectCaseCategory> nodes)
     {
-        // 根分类是没有父级的分类，即不在任何其他分类的 Childrens 中
-        var allChildIds = new HashSet<string>();
-        foreach (var category in categories)
+        foreach (var n in nodes)
         {
-            if (category.Childrens != null)
+            if (n.Id == id) return n;
+            if (n.Childrens is { Length: > 0 })
             {
-                foreach (var child in category.Childrens)
+                var hit = FindCategoryInTree(id, n.Childrens);
+                if (hit != null) return hit;
+            }
+        }
+        return null;
+    }
+
+    // 将树形分类展平为所有层级的分类列表
+    private IEnumerable<ProjectCaseCategory> FlattenCategories(IEnumerable<ProjectCaseCategory> nodes)
+    {
+        foreach (var n in nodes)
+        {
+            yield return n;
+            if (n.Childrens is { Length: > 0 })
+            {
+                foreach (var c in FlattenCategories(n.Childrens))
                 {
-                    allChildIds.Add(child.Id);
+                    yield return c;
                 }
             }
         }
-        return categories.Where(c => !allChildIds.Contains(c.Id)).OrderBy(c => c.Order).ToList();
+    }
+    
+    private List<ProjectCaseCategory> GetRootCategories()
+    {
+        // 服务端已返回根节点列表，直接按 Order 排序即可
+        return categories.OrderBy(c => c.Order).ToList();
     }
     
     private async Task OnTreeNodeClick(TreeEventArgs<ProjectCaseCategory> args)
@@ -538,9 +557,9 @@
     {
         categoryTestCaseCounts.Clear();
         
-        foreach (var category in categories)
+        // 遍历所有层级的分类，为每个分类计算其及所有子孙包含的用例数量
+        foreach (var category in FlattenCategories(categories))
         {
-            // 获取该分类及其所有子分类的用例数量
             var categoryIds = GetAllCategoryIds(category.Id);
             var count = testCases.Count(tc => categoryIds.Contains(tc.CategoryId));
             categoryTestCaseCounts[category.Id] = count;
@@ -737,21 +756,22 @@
 
     private List<ProjectCaseCategory> GetAvailableParentCategories()
     {
+        var all = FlattenCategories(categories).ToList();
         if (isEditingCategory)
         {
             var excludeIds = new HashSet<string> { currentCategory.Id };
             AddChildCategoryIds(currentCategory.Id, excludeIds);
-            return categories.Where(c => !excludeIds.Contains(c.Id)).ToList();
+            return all.Where(c => !excludeIds.Contains(c.Id)).ToList();
         }
         else
         {
-            return new List<ProjectCaseCategory>(categories);
+            return all;
         }
     }
 
     private void AddChildCategoryIds(string categoryId, HashSet<string> excludeIds)
     {
-        var category = categories.FirstOrDefault(c => c.Id == categoryId);
+        var category = FindCategoryInTree(categoryId, categories);
         if (category?.Childrens != null)
         {
             foreach (var child in category.Childrens)
@@ -802,7 +822,7 @@
 
     private async Task DeleteChildCategories(string categoryId)
     {
-        var category = categories.FirstOrDefault(c => c.Id == categoryId);
+        var category = FindCategoryInTree(categoryId, categories);
         if (category?.Childrens != null)
         {
             foreach (var child in category.Childrens)

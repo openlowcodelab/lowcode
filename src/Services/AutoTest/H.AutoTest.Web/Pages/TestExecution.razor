@@ -4,612 +4,497 @@
 @namespace H.AutoTest.Web
 @layout AutoTestLayout
 
+@implements IDisposable
+
 @inject IProjectCaseAppService ProjectCaseService
 @inject IEnvironmentAppService EnvironmentService
 @inject ITestExecutionEngineAppService ExecutionEngine
+@inject ITestExecutionEventNotifier ExecutionEventNotifier
 @inject IBatchExecutionAppService BatchExecutionService
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
 
 <PageTitle>@(IsBatchMode ? "批量执行测试用例" : "执行测试用例")</PageTitle>
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h4 class="mb-1">🚀 @(IsBatchMode ? "批量执行测试用例" : "执行测试用例")</h4>
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb mb-0">
-                            <li class="breadcrumb-item">
-                                @if (IsBatchMode)
+<!-- 顶部栏：标题 + 面包屑 + 返回按钮 -->
+<AntDesign.Row Style="margin-bottom: 16px; align-items: center;">
+    <AntDesign.Col Flex=@("auto")>
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <h3 style="margin: 0; font-weight: 600;">🚀 @(IsBatchMode ? "批量执行测试用例" : "执行测试用例")</h3>
+        </div>
+        <AntDesign.Breadcrumb Style="margin-top: 4px;">
+            <AntDesign.BreadcrumbItem>
+                @if (IsBatchMode)
+                {
+                    <a href="@($"/autotest/project-cases/{ProjectId}")">测试用例</a>
+                }
+                else if (testCase != null && !string.IsNullOrEmpty(testCase.ProjectId))
+                {
+                    <a href="@($"/autotest/project-cases/{testCase.ProjectId}")">测试用例</a>
+                }
+                else
+                {
+                    <a href="/autotest/project-cases">测试用例</a>
+                }
+            </AntDesign.BreadcrumbItem>
+            <AntDesign.BreadcrumbItem>@(IsBatchMode ? "批量执行" : "执行测试")</AntDesign.BreadcrumbItem>
+        </AntDesign.Breadcrumb>
+    </AntDesign.Col>
+    <AntDesign.Col>
+        <AntDesign.Button OnClick="GoBack">← 返回</AntDesign.Button>
+    </AntDesign.Col>
+</AntDesign.Row>
+
+@if (loading)
+{
+    <div style="text-align: center; padding: 60px 0;">
+        <AntDesign.Spin Size="@SpinSize.Large" Tip="正在加载测试用例信息..." />
+    </div>
+}
+else if (!IsBatchMode && testCase == null)
+{
+    <AntDesign.Alert Type="@AlertType.Error" ShowIcon="true" Message="未找到指定的测试用例" />
+}
+else if (IsBatchMode && !testCases.Any())
+{
+    <AntDesign.Alert Type="@AlertType.Error" ShowIcon="true" Message="未找到可执行的测试用例" />
+}
+else
+{
+    <AntDesign.Row Gutter="16">
+        <!-- 左侧：测试用例信息 + 设置 -->
+        <AntDesign.Col Span="8">
+            <AntDesign.Card Size="@CardSize.Small">
+                <TitleTemplate>📋 @(IsBatchMode ? "批量执行信息" : "测试用例信息")</TitleTemplate>
+                <Body>
+                    @if (IsBatchMode)
+                    {
+                        <AntDesign.Descriptions Column="1" Size="@DescriptionsSize.Small">
+                            <AntDesign.DescriptionsItem Title="执行模式">批量执行</AntDesign.DescriptionsItem>
+                            <AntDesign.DescriptionsItem Title="用例数量">@testCases.Count</AntDesign.DescriptionsItem>
+                            <AntDesign.DescriptionsItem Title="总步骤数">@testCases.Sum(tc => tc.Steps.Count)</AntDesign.DescriptionsItem>
+                            <AntDesign.DescriptionsItem Title="选中用例">
+                                @if (selectedTestCaseIds.Any())
                                 {
-                                    <a href="/autotest/project-cases/@ProjectId">测试用例</a>
-                                }
-                                else if (testCase != null && !string.IsNullOrEmpty(testCase.ProjectId))
-                                {
-                                    <a href="/autotest/project-cases/@testCase.ProjectId">测试用例</a>
+                                    <AntDesign.Tag Color="@TagColor.Blue">@selectedTestCaseIds.Count 个用例</AntDesign.Tag>
                                 }
                                 else
                                 {
-                                    <a href="/autotest/project-cases">测试用例</a>
+                                    <span style="color: #999;">请选择要执行的用例</span>
                                 }
-                            </li>
-                            <li class="breadcrumb-item active">@(IsBatchMode ? "批量执行" : "执行测试")</li>
-                        </ol>
-                    </nav>
-                </div>
-                <button class="btn btn-outline-secondary" @onclick="GoBack">
-                    <i class="oi oi-arrow-left"></i> 返回
-                </button>
-            </div>
-        </div>
-    </div>
+                            </AntDesign.DescriptionsItem>
+                        </AntDesign.Descriptions>
 
-    @if (loading)
-    {
-        <div class="text-center p-5">
-            <div class="spinner-border" role="status">
-                <span class="visually-hidden">加载中...</span>
-            </div>
-            <p class="mt-2">正在加载测试用例信息...</p>
-        </div>
-    }
-    else if (!IsBatchMode && testCase == null)
-    {
-        <div class="alert alert-danger">
-            <i class="oi oi-warning"></i> 未找到指定的测试用例
-        </div>
-    }
-    else if (IsBatchMode && !testCases.Any())
-    {
-        <div class="alert alert-danger">
-            <i class="oi oi-warning"></i> 未找到可执行的测试用例
-        </div>
-    }
-    else
-    {
-        <div class="row">
-            <!-- 左侧：测试用例信息 -->
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h6 class="mb-0">📋 @(IsBatchMode ? "批量执行信息" : "测试用例信息")</h6>
+                        <div style="margin-top: 16px;">
+                            <div style="margin-bottom: 8px; font-weight: 500;">选择要执行的测试用例</div>
+                            <div style="margin-bottom: 8px;">
+                                <AntDesign.Checkbox Checked="@IsAllSelected"
+                                                    Indeterminate="@IsPartialSelected"
+                                                    CheckedChange="@((bool v) => ToggleSelectAll(v))">
+                                    全选/全不选
+                                </AntDesign.Checkbox>
+                            </div>
+                            <div style="max-height: 220px; overflow-y: auto; border: 1px solid #f0f0f0; border-radius: 4px; padding: 8px;">
+                                @foreach (var tc in testCases)
+                                {
+                                    <div style="margin-bottom: 4px;">
+                                        <AntDesign.Checkbox Checked="@selectedTestCaseIds.Contains(tc.Id)"
+                                                            CheckedChange="@((bool v) => ToggleTestCaseSelection(tc.Id, v))">
+                                            @tc.Name
+                                            <span style="color: #999; margin-left: 4px;">(@tc.Steps.Count 步骤)</span>
+                                        </AntDesign.Checkbox>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <AntDesign.Descriptions Column="1" Size="@DescriptionsSize.Small">
+                            <AntDesign.DescriptionsItem Title="用例名称">@testCase!.Name</AntDesign.DescriptionsItem>
+                            <AntDesign.DescriptionsItem Title="描述">
+                                @(string.IsNullOrEmpty(testCase.Description) ? "无" : testCase.Description)
+                            </AntDesign.DescriptionsItem>
+                            <AntDesign.DescriptionsItem Title="步骤数量">@testCase.Steps.Count</AntDesign.DescriptionsItem>
+                            <AntDesign.DescriptionsItem Title="测试级别">
+                                @if (testCase.Levels.Any())
+                                {
+                                    @foreach (var level in testCase.Levels)
+                                    {
+                                        <AntDesign.Tag Color="@GetLevelTagColor(level)">@level</AntDesign.Tag>
+                                    }
+                                }
+                                else
+                                {
+                                    <span style="color: #999;">无</span>
+                                }
+                            </AntDesign.DescriptionsItem>
+                        </AntDesign.Descriptions>
+                    }
+
+                    <!-- 环境选择 -->
+                    <div style="margin-top: 16px;">
+                        <div style="margin-bottom: 6px;">选择执行环境 <span style="color: #ff4d4f;">*</span></div>
+                        <AntDesign.Select TItemValue="string" TItem="string"
+                                          Value="selectedEnvironmentId"
+                                          ValueChanged="@((string v) => { selectedEnvironmentId = v ?? string.Empty; StateHasChanged(); })"
+                                          Placeholder="请选择环境"
+                                          Style="width: 100%;">
+                            @foreach (var env in environments)
+                            {
+                                <AntDesign.SelectOption TItemValue="string" TItem="string"
+                                                        Value="@env.Id"
+                                                        Label="@($"{env.Name} ({env.Status})")" />
+                            }
+                        </AntDesign.Select>
+                        @if (!string.IsNullOrEmpty(selectedEnvironmentId))
+                        {
+                            var selectedEnv = environments.FirstOrDefault(e => e.Id == selectedEnvironmentId);
+                            if (selectedEnv != null && !string.IsNullOrEmpty(selectedEnv.Description))
+                            {
+                                <div style="color: #999; font-size: 12px; margin-top: 4px;">@selectedEnv.Description</div>
+                            }
+                        }
                     </div>
-                    <div class="card-body">
+
+                    <!-- 性能测试设置 -->
+                    <div style="margin-top: 16px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-weight: 500;">⚡ 性能测试设置</span>
+                            <AntDesign.Button Size="@ButtonSize.Small" OnClick="TogglePerformanceSettings">
+                                @(showPerformanceSettings ? "▲ 收起" : "▼ 展开")
+                            </AntDesign.Button>
+                        </div>
+                        @if (showPerformanceSettings)
+                        {
+                            <div style="background: #fafafa; border: 1px solid #f0f0f0; border-radius: 4px; padding: 12px;">
+                                <div style="margin-bottom: 12px;">
+                                    <AntDesign.Checkbox @bind-Checked="performanceSettings.IsPerformanceTestEnabled">
+                                        启用性能测试模式
+                                    </AntDesign.Checkbox>
+                                    <div style="color: #999; font-size: 12px; margin-left: 22px;">启用后将按照性能测试参数执行测试用例</div>
+                                </div>
+
+                                @if (performanceSettings.IsPerformanceTestEnabled)
+                                {
+                                    <AntDesign.Row Gutter="12">
+                                        <AntDesign.Col Span="12">
+                                            <div style="margin-bottom: 10px;">
+                                                <div style="margin-bottom: 4px;">并发数 <span style="color: #ff4d4f;">*</span></div>
+                                                <AntDesign.InputNumber TValue="int" @bind-Value="performanceSettings.ConcurrentUsers"
+                                                                       Min="1" Max="1000" Style="width: 100%;" />
+                                                <div style="color: #999; font-size: 12px;">1-1000，根据服务器性能设置</div>
+                                            </div>
+                                        </AntDesign.Col>
+                                        <AntDesign.Col Span="12">
+                                            <div style="margin-bottom: 10px;">
+                                                <div style="margin-bottom: 4px;">运行时间（秒） <span style="color: #ff4d4f;">*</span></div>
+                                                <AntDesign.InputNumber TValue="int" @bind-Value="performanceSettings.DurationSeconds"
+                                                                       Min="1" Max="86400" Style="width: 100%;" />
+                                                <div style="color: #999; font-size: 12px;">1-86400 秒（24 小时）</div>
+                                            </div>
+                                        </AntDesign.Col>
+                                        <AntDesign.Col Span="12">
+                                            <div style="margin-bottom: 10px;">
+                                                <div style="margin-bottom: 4px;">爬坡时间（秒）</div>
+                                                <AntDesign.InputNumber TValue="int" @bind-Value="performanceSettings.RampUpSeconds"
+                                                                       Min="0" Max="3600" Style="width: 100%;" />
+                                                <div style="color: #999; font-size: 12px;">0-3600，0 表示立即达到</div>
+                                            </div>
+                                        </AntDesign.Col>
+                                        <AntDesign.Col Span="12">
+                                            <div style="margin-bottom: 10px;">
+                                                <div style="margin-bottom: 4px;">思考时间（毫秒）</div>
+                                                <AntDesign.InputNumber TValue="int" @bind-Value="performanceSettings.ThinkTimeMs"
+                                                                       Min="0" Max="60000" Style="width: 100%;" />
+                                                <div style="color: #999; font-size: 12px;">0-60000 毫秒</div>
+                                            </div>
+                                        </AntDesign.Col>
+                                        <AntDesign.Col Span="24">
+                                            <div style="margin-bottom: 10px;">
+                                                <div style="margin-bottom: 4px;">最大错误率（%）</div>
+                                                <AntDesign.InputNumber TValue="double" @bind-Value="performanceSettings.MaxErrorRate"
+                                                                       Min="0" Max="100" Step="0.1" Style="width: 100%;" />
+                                                <div style="color: #999; font-size: 12px;">0-100%，建议 5-20%</div>
+                                            </div>
+                                        </AntDesign.Col>
+                                    </AntDesign.Row>
+
+                                    <AntDesign.Alert Type="@AlertType.Info"
+                                                     ShowIcon="true"
+                                                     Style="margin-top: 8px;">
+                                        <MessageTemplate>
+                                            <strong>📊 性能测试配置预览</strong>
+                                            <ul style="margin: 6px 0 0 0; padding-left: 20px;">
+                                                <li>并发用户数：@performanceSettings.ConcurrentUsers 个</li>
+                                                <li>测试时长：@performanceSettings.DurationSeconds 秒 (@TimeSpan.FromSeconds(performanceSettings.DurationSeconds).ToString(@"hh\:mm\:ss"))</li>
+                                                <li>爬坡时间：@performanceSettings.RampUpSeconds 秒</li>
+                                                <li>思考时间：@performanceSettings.ThinkTimeMs 毫秒</li>
+                                                <li>最大错误率：@performanceSettings.MaxErrorRate%</li>
+                                            </ul>
+                                        </MessageTemplate>
+                                    </AntDesign.Alert>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <!-- 执行按钮 -->
+                    <div style="margin-top: 20px;">
+                        <AntDesign.Button Type="@ButtonType.Primary"
+                                          Block="true"
+                                          Style="background-color: #52c41a; border-color: #52c41a;"
+                                          Loading="@isExecuting"
+                                          Disabled="@(string.IsNullOrEmpty(selectedEnvironmentId) || isExecuting || (IsBatchMode && !selectedTestCaseIds.Any()))"
+                                          OnClick="StartExecution">
+                            @if (isExecuting)
+                            {
+                                <span>执行中...</span>
+                            }
+                            else
+                            {
+                                <span>▶ @(IsBatchMode ? "开始批量执行" : "开始执行")</span>
+                            }
+                        </AntDesign.Button>
+
+                        @if (isExecuting && cancellationTokenSource != null)
+                        {
+                            <AntDesign.Button Type="@ButtonType.Default"
+                                              Danger="true"
+                                              Block="true"
+                                              Style="margin-top: 8px;"
+                                              OnClick="CancelExecution">
+                                ✕ 取消执行
+                            </AntDesign.Button>
+                        }
+                    </div>
+                </Body>
+            </AntDesign.Card>
+        </AntDesign.Col>
+
+        <!-- 右侧：执行进度和结果 -->
+        <AntDesign.Col Span="16">
+            <AntDesign.Card Size="@CardSize.Small">
+                <TitleTemplate>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>⚡ 执行进度</span>
+                        @{
+                            var firstRecord = executionRecords.FirstOrDefault();
+                        }
+                        @if (firstRecord != null)
+                        {
+                            <AntDesign.Tag Color="@GetExecutionStatusTagColor(firstRecord.Status)">
+                                @GetExecutionStatusDisplayName(firstRecord.Status)
+                            </AntDesign.Tag>
+                        }
+                    </div>
+                </TitleTemplate>
+                <Body>
+                    @if (!executionRecords.Any())
+                    {
+                        <AntDesign.Empty Description="@($"请选择环境{(IsBatchMode ? "和测试用例" : "")}并点击开始执行")" />
+                    }
+                    else
+                    {
                         @if (IsBatchMode)
                         {
-                            <dl class="row">
-                                <dt class="col-sm-4">执行模式:</dt>
-                                <dd class="col-sm-8">批量执行</dd>
-                                
-                                <dt class="col-sm-4">用例数量:</dt>
-                                <dd class="col-sm-8">@testCases.Count</dd>
-                                
-                                <dt class="col-sm-4">总步骤数:</dt>
-                                <dd class="col-sm-8">@testCases.Sum(tc => tc.Steps.Count)</dd>
-                                
-                                <dt class="col-sm-4">选中用例:</dt>
-                                <dd class="col-sm-8">
-                                    @if (selectedTestCaseIds.Any())
-                                    {
-                                        <span class="badge bg-primary">@selectedTestCaseIds.Count 个用例</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted">请选择要执行的用例</span>
-                                    }
-                                </dd>
-                            </dl>
-                            
-                            <!-- 用例选择列表 -->
-                            <div class="mt-3">
-                                <label class="form-label">选择要执行的测试用例</label>
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="checkbox" 
-                                           @onchange="ToggleSelectAll" 
-                                           checked="@(selectedTestCaseIds.Count == testCases.Count)">
-                                    <label class="form-check-label">
-                                        全选/全不选
-                                    </label>
+                            <AntDesign.Row Gutter="16" Style="margin-bottom: 16px;">
+                                <AntDesign.Col Span="6">
+                                    <AntDesign.Statistic Title="总用例" Value="@executionRecords.Count" />
+                                </AntDesign.Col>
+                                <AntDesign.Col Span="6">
+                                    <AntDesign.Statistic Title="成功"
+                                                         Value="@(executionRecords.Count(r => r.Status == ExecutionStatus.Success))"
+                                                         ValueStyle="color: #52c41a;" />
+                                </AntDesign.Col>
+                                <AntDesign.Col Span="6">
+                                    <AntDesign.Statistic Title="失败"
+                                                         Value="@(executionRecords.Count(r => r.Status == ExecutionStatus.Failed))"
+                                                         ValueStyle="color: #ff4d4f;" />
+                                </AntDesign.Col>
+                                <AntDesign.Col Span="6">
+                                    <AntDesign.Statistic Title="执行中"
+                                                         Value="@(executionRecords.Count(r => r.Status == ExecutionStatus.Running))"
+                                                         ValueStyle="color: #faad14;" />
+                                </AntDesign.Col>
+                            </AntDesign.Row>
+
+                            var completedCases = executionRecords.Count(r => r.Status != ExecutionStatus.Running);
+                            var totalCases = executionRecords.Count;
+                            var batchProgressPercentage = totalCases > 0 ? (int)((double)completedCases / totalCases * 100) : 0;
+                            <div style="margin-bottom: 16px;">
+                                <div style="display: flex; justify-content: space-between; color: #999; font-size: 12px; margin-bottom: 4px;">
+                                    <span>批量执行进度</span>
+                                    <span>@completedCases / @totalCases</span>
                                 </div>
-                                <div style="max-height: 200px; overflow-y: auto;">
-                                    @foreach (var tc in testCases)
-                                    {
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" 
-                                                   @onchange="@((e) => ToggleTestCaseSelection(tc.Id, (bool)e.Value!))"
-                                                   checked="@selectedTestCaseIds.Contains(tc.Id)">
-                                            <label class="form-check-label">
-                                                @tc.Name
-                                                <small class="text-muted">(@tc.Steps.Count 步骤)</small>
-                                            </label>
-                                        </div>
-                                    }
-                                </div>
+                                <AntDesign.Progress Percent="batchProgressPercentage" />
                             </div>
                         }
                         else
                         {
-                            <dl class="row">
-                                <dt class="col-sm-4">用例名称:</dt>
-                                <dd class="col-sm-8">@testCase!.Name</dd>
-                                
-                                <dt class="col-sm-4">描述:</dt>
-                                <dd class="col-sm-8">@(string.IsNullOrEmpty(testCase.Description) ? "无" : testCase.Description)</dd>
-                                
-                                <dt class="col-sm-4">步骤数量:</dt>
-                                <dd class="col-sm-8">@testCase.Steps.Count</dd>
-                                
-                                <dt class="col-sm-4">测试级别:</dt>
-                                <dd class="col-sm-8">
-                                    @if (testCase.Levels.Any())
-                                    {
-                                        @foreach (var level in testCase.Levels)
-                                        {
-                                            <span class="badge @GetLevelBadgeClass(level) me-1">@level</span>
-                                        }
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted">无</span>
-                                    }
-                                </dd>
-                            </dl>
-                        }
-                        
-                        <!-- 环境选择 -->
-                        <div class="mt-3">
-                            <label class="form-label">选择执行环境 <span class="text-danger">*</span></label>
-                            <select class="form-select" @bind="selectedEnvironmentId">
-                                <option value="">请选择环境</option>
-                                @foreach (var env in environments)
-                                {
-                                    <option value="@env.Id">@env.Name (@env.Status)</option>
-                                }
-                            </select>
-                            @if (!string.IsNullOrEmpty(selectedEnvironmentId))
+                            var executionRecord = executionRecords.FirstOrDefault();
+                            if (executionRecord != null)
                             {
-                                var selectedEnv = environments.FirstOrDefault(e => e.Id == selectedEnvironmentId);
-                                if (selectedEnv != null)
+                                <AntDesign.Row Gutter="16" Style="margin-bottom: 16px;">
+                                    <AntDesign.Col Span="6">
+                                        <AntDesign.Statistic Title="总步骤" Value="@executionRecord.TotalSteps" />
+                                    </AntDesign.Col>
+                                    <AntDesign.Col Span="6">
+                                        <AntDesign.Statistic Title="成功" Value="@executionRecord.SuccessSteps"
+                                                             ValueStyle="color: #52c41a;" />
+                                    </AntDesign.Col>
+                                    <AntDesign.Col Span="6">
+                                        <AntDesign.Statistic Title="失败" Value="@executionRecord.FailedSteps"
+                                                             ValueStyle="color: #ff4d4f;" />
+                                    </AntDesign.Col>
+                                    <AntDesign.Col Span="6">
+                                        <AntDesign.Statistic Title="跳过" Value="@executionRecord.SkippedSteps"
+                                                             ValueStyle="color: #faad14;" />
+                                    </AntDesign.Col>
+                                </AntDesign.Row>
+
+                                @if (executionRecord.TotalSteps > 0)
                                 {
-                                    <small class="text-muted">@selectedEnv.Description</small>
-                                }
-                            }
-                        </div>
-                        
-                        <!-- 性能测试设置 -->
-                        <div class="mt-3">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <label class="form-label mb-0">⚡ 性能测试设置</label>
-                                <button type="button" class="btn btn-sm btn-outline-primary" @onclick="TogglePerformanceSettings">
-                                    @if (showPerformanceSettings)
-                                    {
-                                        <i class="oi oi-chevron-top"></i>
-                                        <span>收起</span>
-                                    }
-                                    else
-                                    {
-                                        <i class="oi oi-chevron-bottom"></i>
-                                        <span>展开</span>
-                                    }
-                                </button>
-                            </div>
-                            
-                            @if (showPerformanceSettings)
-                            {
-                                <div class="card mt-2">
-                                    <div class="card-body">
-                                        <!-- 启用性能测试 -->
-                                        <div class="form-check mb-3">
-                                            <input class="form-check-input" type="checkbox" 
-                                                   @bind="performanceSettings.IsPerformanceTestEnabled" 
-                                                   id="enablePerformanceTest">
-                                            <label class="form-check-label" for="enablePerformanceTest">
-                                                启用性能测试模式
-                                            </label>
-                                            <div class="form-text">启用后将按照性能测试参数执行测试用例</div>
+                                    var completedSteps = executionRecord.SuccessSteps + executionRecord.FailedSteps + executionRecord.SkippedSteps;
+                                    var progressPercentage = (int)((double)completedSteps / executionRecord.TotalSteps * 100);
+                                    <div style="margin-bottom: 16px;">
+                                        <div style="display: flex; justify-content: space-between; color: #999; font-size: 12px; margin-bottom: 4px;">
+                                            <span>执行进度</span>
+                                            <span>@completedSteps / @executionRecord.TotalSteps</span>
                                         </div>
-                                        
-                                        @if (performanceSettings.IsPerformanceTestEnabled)
-                                        {
-                                            <div class="row">
-                                                <!-- 并发数 -->
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label">并发数 <span class="text-danger">*</span></label>
-                                                    <input type="number" class="form-control" 
-                                                           @bind="performanceSettings.ConcurrentUsers" 
-                                                           min="1" max="1000" 
-                                                           placeholder="同时执行的线程数">
-                                                    <div class="form-text">范围：1-1000，建议根据服务器性能设置</div>
-                                                </div>
-                                                
-                                                <!-- 运行时间 -->
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label">运行时间（秒） <span class="text-danger">*</span></label>
-                                                    <input type="number" class="form-control" 
-                                                           @bind="performanceSettings.DurationSeconds" 
-                                                           min="1" max="86400" 
-                                                           placeholder="测试持续时间">
-                                                    <div class="form-text">范围：1-86400秒（24小时）</div>
-                                                </div>
-                                                
-                                                <!-- 爬坡时间 -->
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label">爬坡时间（秒）</label>
-                                                    <input type="number" class="form-control" 
-                                                           @bind="performanceSettings.RampUpSeconds" 
-                                                           min="0" max="3600" 
-                                                           placeholder="逐渐增加到目标并发数的时间">
-                                                    <div class="form-text">范围：0-3600秒，0表示立即达到目标并发数</div>
-                                                </div>
-                                                
-                                                <!-- 思考时间 -->
-                                                <div class="col-md-6 mb-3">
-                                                    <label class="form-label">思考时间（毫秒）</label>
-                                                    <input type="number" class="form-control" 
-                                                           @bind="performanceSettings.ThinkTimeMs" 
-                                                           min="0" max="60000" 
-                                                           placeholder="每次请求之间的等待时间">
-                                                    <div class="form-text">范围：0-60000毫秒，模拟用户操作间隔</div>
-                                                </div>
-                                                
-                                                <!-- 最大错误率 -->
-                                                <div class="col-md-12 mb-3">
-                                                    <label class="form-label">最大错误率（%）</label>
-                                                    <input type="number" class="form-control" 
-                                                           @bind="performanceSettings.MaxErrorRate" 
-                                                           min="0" max="100" step="0.1"
-                                                           placeholder="超过此错误率将停止测试">
-                                                    <div class="form-text">范围：0-100%，建议设置为5-20%</div>
-                                                </div>
-                                            </div>
-                                            
-                                            <!-- 性能测试预览 -->
-                                            <div class="alert alert-info">
-                                                <h6 class="alert-heading">📊 性能测试配置预览</h6>
-                                                <ul class="mb-0">
-                                                    <li><strong>并发用户数：</strong>@performanceSettings.ConcurrentUsers 个</li>
-                                                    <li><strong>测试时长：</strong>@performanceSettings.DurationSeconds 秒 (@TimeSpan.FromSeconds(performanceSettings.DurationSeconds).ToString(@"hh\:mm\:ss"))</li>
-                                                    <li><strong>爬坡时间：</strong>@performanceSettings.RampUpSeconds 秒</li>
-                                                    <li><strong>思考时间：</strong>@performanceSettings.ThinkTimeMs 毫秒</li>
-                                                    <li><strong>最大错误率：</strong>@performanceSettings.MaxErrorRate%</li>
-                                                </ul>
-                                            </div>
-                                        }
+                                        <AntDesign.Progress Percent="progressPercentage" />
                                     </div>
-                                </div>
-                            }
-                        </div>
-                        
-                        <!-- 执行按钮 -->
-                        <div class="mt-4">
-                            <button class="btn btn-success w-100" 
-                                    @onclick="StartExecution" 
-                                    disabled="@(string.IsNullOrEmpty(selectedEnvironmentId) || isExecuting || (IsBatchMode && !selectedTestCaseIds.Any()))">
-                                @if (isExecuting)
-                                {
-                                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                                    <span>执行中...</span>
                                 }
-                                else
+
+                                @if (executionRecord.Duration > 0)
                                 {
-                                    <i class="oi oi-play-circle me-2"></i>
-                                    <span>@(IsBatchMode ? "开始批量执行" : "开始执行")</span>
+                                    <div style="color: #999; margin-bottom: 8px;">
+                                        执行时间: @(executionRecord.Duration)ms
+                                    </div>
                                 }
-                            </button>
-                            
-                            @if (isExecuting && cancellationTokenSource != null)
-                            {
-                                <button class="btn btn-outline-danger w-100 mt-2" @onclick="CancelExecution">
-                                    <i class="oi oi-x me-2"></i>
-                                    取消执行
-                                </button>
-                            }
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- 右侧：执行进度和结果 -->
-            <div class="col-md-8">
-                <div class="card">
-                    <div class="card-header">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h6 class="mb-0">⚡ 执行进度</h6>
-                            @if (executionRecords.Any())
-                            {
-                                var firstRecord = executionRecords.FirstOrDefault();
-                                if (firstRecord != null)
+
+                                @if (!string.IsNullOrEmpty(executionRecord.ErrorMessage))
                                 {
-                                    <span class="badge @GetExecutionStatusBadgeClass(firstRecord.Status)">@GetExecutionStatusDisplayName(firstRecord.Status)</span>
+                                    <AntDesign.Alert Type="@AlertType.Error"
+                                                     ShowIcon="true"
+                                                     Message="执行失败"
+                                                     Description="@executionRecord.ErrorMessage"
+                                                     Style="margin-bottom: 12px;" />
                                 }
                             }
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        @if (!executionRecords.Any())
+                        }
+
+                        @if (IsBatchMode)
                         {
-                            <div class="text-center text-muted p-4">
-                                <i class="oi oi-info"></i> 请选择环境@(IsBatchMode ? "和测试用例" : "")并点击开始执行
+                            <div style="margin-top: 16px;">
+                                <h4 style="margin-bottom: 12px;">用例执行详情</h4>
+                                <AntDesign.Collapse>
+                                    @foreach (var record in executionRecords.OrderBy(r => r.TestCaseName))
+                                    {
+                                        <AntDesign.Panel Key="@record.Id">
+                                            <HeaderTemplate>
+                                                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                                    <div>
+                                                        <strong>@record.TestCaseName</strong>
+                                                        <AntDesign.Tag Color="@GetExecutionStatusTagColor(record.Status)" Style="margin-left: 8px;">
+                                                            @GetExecutionStatusDisplayName(record.Status)
+                                                        </AntDesign.Tag>
+                                                    </div>
+                                                    <div style="color: #999; font-size: 12px; text-align: right;">
+                                                        <div>@record.SuccessSteps / @record.TotalSteps 步骤</div>
+                                                        @if (record.Duration > 0)
+                                                        {
+                                                            <div>@(record.Duration)ms</div>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            </HeaderTemplate>
+                                            <ChildContent>
+                                                @if (!string.IsNullOrEmpty(record.ErrorMessage))
+                                                {
+                                                    <AntDesign.Alert Type="@AlertType.Error"
+                                                                     ShowIcon="true"
+                                                                     Message="执行失败"
+                                                                     Description="@record.ErrorMessage"
+                                                                     Style="margin-bottom: 12px;" />
+                                                }
+                                                @if (record.StepRecords.Any())
+                                                {
+                                                    @RenderStepList(record.StepRecords)
+                                                }
+                                            </ChildContent>
+                                        </AntDesign.Panel>
+                                    }
+                                </AntDesign.Collapse>
                             </div>
                         }
                         else
                         {
-                            <!-- 执行统计 -->
-                            @if (IsBatchMode)
+                            var singleRecord = executionRecords.FirstOrDefault();
+                            if (singleRecord?.StepRecords.Any() == true)
                             {
-                                <div class="row mb-3">
-                                    <div class="col-3">
-                                        <div class="text-center">
-                                            <div class="h5 text-primary mb-0">@executionRecords.Count</div>
-                                            <small class="text-muted">总用例</small>
-                                        </div>
-                                    </div>
-                                    <div class="col-3">
-                                        <div class="text-center">
-                                            <div class="h5 text-success mb-0">@executionRecords.Count(r => r.Status == ExecutionStatus.Success)</div>
-                                            <small class="text-muted">成功</small>
-                                        </div>
-                                    </div>
-                                    <div class="col-3">
-                                        <div class="text-center">
-                                            <div class="h5 text-danger mb-0">@executionRecords.Count(r => r.Status == ExecutionStatus.Failed)</div>
-                                            <small class="text-muted">失败</small>
-                                        </div>
-                                    </div>
-                                    <div class="col-3">
-                                        <div class="text-center">
-                                            <div class="h5 text-warning mb-0">@executionRecords.Count(r => r.Status == ExecutionStatus.Running)</div>
-                                            <small class="text-muted">执行中</small>
-                                        </div>
-                                    </div>
+                                <div style="margin-top: 16px;">
+                                    <h4 style="margin-bottom: 12px;">步骤执行详情</h4>
+                                    @RenderStepList(singleRecord.StepRecords)
                                 </div>
-                                
-                                <!-- 批量执行进度条 -->
-                                var completedCases = executionRecords.Count(r => r.Status != ExecutionStatus.Running);
-                                var totalCases = executionRecords.Count;
-                                var batchProgressPercentage = totalCases > 0 ? (double)completedCases / totalCases * 100 : 0;
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <small class="text-muted">批量执行进度</small>
-                                        <small class="text-muted">@completedCases/@totalCases</small>
-                                    </div>
-                                    <div class="progress">
-                                        <div class="progress-bar" role="progressbar" style="width: @(batchProgressPercentage)%"></div>
-                                    </div>
-                                </div>
-                            }
-                            else
-                            {
-                                var executionRecord = executionRecords.FirstOrDefault();
-                                @if (executionRecord != null)
-                                {
-                                    <div class="row mb-3">
-                                        <div class="col-3">
-                                            <div class="text-center">
-                                                <div class="h5 text-primary mb-0">@executionRecord.TotalSteps</div>
-                                                <small class="text-muted">总步骤</small>
-                                            </div>
-                                        </div>
-                                        <div class="col-3">
-                                            <div class="text-center">
-                                                <div class="h5 text-success mb-0">@executionRecord.SuccessSteps</div>
-                                                <small class="text-muted">成功</small>
-                                            </div>
-                                        </div>
-                                        <div class="col-3">
-                                            <div class="text-center">
-                                                <div class="h5 text-danger mb-0">@executionRecord.FailedSteps</div>
-                                                <small class="text-muted">失败</small>
-                                            </div>
-                                        </div>
-                                        <div class="col-3">
-                                            <div class="text-center">
-                                                <div class="h5 text-warning mb-0">@executionRecord.SkippedSteps</div>
-                                                <small class="text-muted">跳过</small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                }
-                            }
-                            
-                            <!-- 进度条 -->
-                            @if (!IsBatchMode)
-                            {
-                                var currentRecord = executionRecords.FirstOrDefault();
-                                if (currentRecord != null && currentRecord.TotalSteps > 0)
-                                {
-                                    var completedSteps = currentRecord.SuccessSteps + currentRecord.FailedSteps + currentRecord.SkippedSteps;
-                                    var progressPercentage = (double)completedSteps / currentRecord.TotalSteps * 100;
-                                
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <small class="text-muted">执行进度</small>
-                                        <small class="text-muted">@completedSteps/@currentRecord.TotalSteps</small>
-                                    </div>
-                                    <div class="progress">
-                                        <div class="progress-bar" role="progressbar" style="width: @(progressPercentage)%"></div>
-                                    </div>
-                                </div>
-                                }
-                            }
-                            
-                            <!-- 执行时间 -->
-                            @if (!IsBatchMode)
-                            {
-                                var currentRecord = executionRecords.FirstOrDefault();
-                                if (currentRecord != null)
-                            {
-                                @if (currentRecord.Duration > 0)
-                                {
-                                    <div class="mb-3">
-                                        <small class="text-muted">执行时间: @(currentRecord.Duration)ms</small>
-                                    </div>
-                                }
-                                
-                                <!-- 错误信息 -->
-                                @if (!string.IsNullOrEmpty(currentRecord.ErrorMessage))
-                                {
-                                    <div class="alert alert-danger">
-                                        <strong>执行失败:</strong> @currentRecord.ErrorMessage
-                                    </div>
-                                }
-                                }
-                            }
-                            
-                            <!-- 执行详情 -->
-                            @if (IsBatchMode)
-                            {
-                                <!-- 批量执行用例列表 -->
-                                <div class="mt-4">
-                                    <h6>用例执行详情</h6>
-                                    <div class="accordion" id="executionAccordion">
-                                        @foreach (var record in executionRecords.OrderBy(r => r.TestCaseName))
-                                        {
-                                            <div class="accordion-item">
-                                                <h2 class="accordion-header" id="heading-@record.Id">
-                                                    <button class="accordion-button @(record.Status == ExecutionStatus.Running ? "" : "collapsed")" 
-                                                            type="button" 
-                                                            data-bs-toggle="collapse" 
-                                                            data-bs-target="#collapse-@record.Id">
-                                                        <div class="d-flex justify-content-between align-items-center w-100 me-3">
-                                                            <div>
-                                                                <strong>@record.TestCaseName</strong>
-                                                                <span class="badge @GetExecutionStatusBadgeClass(record.Status) ms-2">@GetExecutionStatusDisplayName(record.Status)</span>
-                                                            </div>
-                                                            <div class="text-end">
-                                                                <small class="text-muted">@record.SuccessSteps/@record.TotalSteps 步骤</small>
-                                                                @if (record.Duration > 0)
-                                                                {
-                                                                    <div class="small text-muted">@(record.Duration)ms</div>
-                                                                }
-                                                            </div>
-                                                        </div>
-                                                    </button>
-                                                </h2>
-                                                <div id="collapse-@record.Id" 
-                                                     class="accordion-collapse collapse @(record.Status == ExecutionStatus.Running ? "show" : "")" 
-                                                     data-bs-parent="#executionAccordion">
-                                                    <div class="accordion-body">
-                                                        @if (!string.IsNullOrEmpty(record.ErrorMessage))
-                                                        {
-                                                            <div class="alert alert-danger">
-                                                                <strong>执行失败:</strong> @record.ErrorMessage
-                                                            </div>
-                                                        }
-                                                        
-                                                        @if (record.StepRecords.Any())
-                                                        {
-                                                            <div class="list-group">
-                                                                @foreach (var stepRecord in record.StepRecords.OrderBy(s => s.Order))
-                                                                {
-                                                                    <div class="list-group-item">
-                                                                        <div class="d-flex justify-content-between align-items-start">
-                                                                            <div class="flex-grow-1">
-                                                                                <div class="d-flex align-items-center mb-1">
-                                                                                    <span class="badge @GetStepStatusBadgeClass(stepRecord.Status) me-2">@stepRecord.Order</span>
-                                                                                    <strong>@stepRecord.StepName</strong>
-                                                                                    <span class="badge bg-secondary ms-2">@stepRecord.StepType</span>
-                                                                                </div>
-                                                                                @if (!string.IsNullOrEmpty(stepRecord.ErrorMessage))
-                                                                                {
-                                                                                    <div class="text-danger small">@stepRecord.ErrorMessage</div>
-                                                                                }
-                                                                                @if (stepRecord.Logs.Any())
-                                                                                {
-                                                                                    <details class="mt-2">
-                                                                                        <summary class="text-muted small">查看日志 (@stepRecord.Logs.Count 条)</summary>
-                                                                                        <div class="mt-2">
-                                                                                            @foreach (var log in stepRecord.Logs)
-                                                                                            {
-                                                                                                <div class="small text-muted">@log</div>
-                                                                                            }
-                                                                                        </div>
-                                                                                    </details>
-                                                                                }
-                                                                            </div>
-                                                                            <div class="text-end">
-                                                                                <span class="badge @GetStepStatusBadgeClass(stepRecord.Status)">@GetStepStatusDisplayName(stepRecord.Status)</span>
-                                                                                @if (stepRecord.Duration > 0)
-                                                                                {
-                                                                                    <div class="small text-muted">@(stepRecord.Duration)ms</div>
-                                                                                }
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                }
-                                                            </div>
-                                                        }
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        }
-                                    </div>
-                                </div>
-                            }
-                            else
-                            {
-                                <!-- 单个用例步骤详情 -->
-                                var singleRecord = executionRecords.FirstOrDefault();
-                                @if (singleRecord?.StepRecords.Any() == true)
-                                {
-                                    <div class="mt-4">
-                                        <h6>步骤执行详情</h6>
-                                        <div class="list-group">
-                                            @foreach (var stepRecord in singleRecord.StepRecords.OrderBy(s => s.Order))
-                                            {
-                                                <div class="list-group-item">
-                                                    <div class="d-flex justify-content-between align-items-start">
-                                                        <div class="flex-grow-1">
-                                                            <div class="d-flex align-items-center mb-1">
-                                                                <span class="badge @GetStepStatusBadgeClass(stepRecord.Status) me-2">@stepRecord.Order</span>
-                                                                <strong>@stepRecord.StepName</strong>
-                                                                <span class="badge bg-secondary ms-2">@stepRecord.StepType</span>
-                                                            </div>
-                                                            @if (!string.IsNullOrEmpty(stepRecord.ErrorMessage))
-                                                            {
-                                                                <div class="text-danger small">@stepRecord.ErrorMessage</div>
-                                                            }
-                                                            @if (stepRecord.Logs.Any())
-                                                            {
-                                                                <details class="mt-2">
-                                                                    <summary class="text-muted small">查看日志 (@stepRecord.Logs.Count 条)</summary>
-                                                                    <div class="mt-2">
-                                                                        @foreach (var log in stepRecord.Logs)
-                                                                        {
-                                                                            <div class="small text-muted">@log</div>
-                                                                        }
-                                                                    </div>
-                                                                </details>
-                                                            }
-                                                        </div>
-                                                        <div class="text-end">
-                                                            <span class="badge @GetStepStatusBadgeClass(stepRecord.Status)">@GetStepStatusDisplayName(stepRecord.Status)</span>
-                                                            @if (stepRecord.Duration > 0)
-                                                            {
-                                                                <div class="small text-muted">@(stepRecord.Duration)ms</div>
-                                                            }
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            }
-                                        </div>
-                                    </div>
-                                }
                             }
                         }
-                    </div>
-                </div>
-            </div>
-        </div>
-    }
-</div>
+                    }
+                </Body>
+            </AntDesign.Card>
+        </AntDesign.Col>
+    </AntDesign.Row>
+}
 
 @code {
+    private RenderFragment RenderStepList(List<StepExecutionRecord> stepRecords) => __builder =>
+    {
+        <div style="border: 1px solid #f0f0f0; border-radius: 4px;">
+            @foreach (var stepRecord in stepRecords.OrderBy(s => s.Order))
+            {
+                <div style="padding: 10px 12px; border-bottom: 1px solid #f0f0f0;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div style="flex: 1;">
+                            <div style="display: flex; align-items: center; margin-bottom: 4px; gap: 8px;">
+                                <AntDesign.Tag Color="@GetStepStatusTagColor(stepRecord.Status)">@stepRecord.Order</AntDesign.Tag>
+                                <strong>@stepRecord.StepName</strong>
+                                <AntDesign.Tag Color="@TagColor.Default">@stepRecord.StepType</AntDesign.Tag>
+                            </div>
+                            @if (!string.IsNullOrEmpty(stepRecord.ErrorMessage))
+                            {
+                                <div style="color: #ff4d4f; font-size: 12px;">@stepRecord.ErrorMessage</div>
+                            }
+                            @if (stepRecord.Logs.Any())
+                            {
+                                <details style="margin-top: 6px;">
+                                    <summary style="color: #999; font-size: 12px; cursor: pointer;">查看日志 (@stepRecord.Logs.Count 条)</summary>
+                                    <div style="margin-top: 6px; background: #fafafa; padding: 8px; border-radius: 4px;">
+                                        @foreach (var log in stepRecord.Logs)
+                                        {
+                                            <div style="color: #666; font-size: 12px; font-family: monospace;">@log</div>
+                                        }
+                                    </div>
+                                </details>
+                            }
+                        </div>
+                        <div style="text-align: right;">
+                            <AntDesign.Tag Color="@GetStepStatusTagColor(stepRecord.Status)">
+                                @GetStepStatusDisplayName(stepRecord.Status)
+                            </AntDesign.Tag>
+                            @if (stepRecord.Duration > 0)
+                            {
+                                <div style="color: #999; font-size: 12px; margin-top: 4px;">@(stepRecord.Duration)ms</div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    };
+
     [Parameter] public string TestCaseId { get; set; } = string.Empty;
     [Parameter] public string ProjectId { get; set; } = string.Empty;
-    
+
     private ProjectCaseDto? testCase;
     private List<ProjectCaseDto> testCases = new();
     private List<EnvironmentDto> environments = new();
@@ -620,58 +505,51 @@
     private HashSet<string> selectedTestCaseIds = new();
     private CancellationTokenSource? cancellationTokenSource;
     private Dictionary<string, ExecutionRecordDto> currentExecutionRecords = new();
-    
-    // 性能测试设置
+
     private PerformanceTestSettingsDto performanceSettings = new();
     private bool showPerformanceSettings = false;
-    
+
     private bool IsBatchMode => !string.IsNullOrEmpty(ProjectId);
-    
+
     protected override async Task OnInitializedAsync()
     {
-        // 订阅执行引擎的实时更新事件
-        ExecutionEngine.StepUpdated += OnStepUpdated;
-        ExecutionEngine.ExecutionUpdated += OnExecutionUpdated;
-        
-        // 如果是批量模式，从查询参数获取选中的用例ID
+        ExecutionEventNotifier.StepUpdated += OnStepUpdated;
+        ExecutionEventNotifier.ExecutionUpdated += OnExecutionUpdated;
+
         if (IsBatchMode)
         {
             var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
             var queryParameters = System.Web.HttpUtility.ParseQueryString(uri.Query);
             var selectedIds = queryParameters["selectedIds"];
-            
+
             if (!string.IsNullOrEmpty(selectedIds))
             {
                 selectedTestCaseIds = selectedIds.Split(',').ToHashSet();
             }
         }
-        
+
         await LoadData();
     }
-    
+
     private async Task LoadData()
     {
         try
         {
             loading = true;
-            
+
             if (IsBatchMode)
             {
-                // 批量模式：加载项目下的所有测试用例
                 testCases = await ProjectCaseService.GetByProjectIdAsync(ProjectId);
-                
+
                 if (testCases.Any())
                 {
-                    // 加载环境列表
                     environments = await EnvironmentService.GetByProjectIdAsync(ProjectId);
-                    
-                    // 默认选中第一个环境
+
                     if (environments.Count > 0)
                     {
                         selectedEnvironmentId = environments[0].Id;
                     }
-                    
-                    // 如果没有从查询参数获取到选中的用例，则默认选中所有用例
+
                     if (!selectedTestCaseIds.Any())
                     {
                         selectedTestCaseIds = testCases.Select(tc => tc.Id).ToHashSet();
@@ -680,15 +558,12 @@
             }
             else
             {
-                // 单个模式：加载指定测试用例
                 testCase = await ProjectCaseService.GetByIdAsync(TestCaseId);
-                
+
                 if (testCase != null)
                 {
-                    // 加载环境列表
                     environments = await EnvironmentService.GetByProjectIdAsync(testCase.ProjectId);
-                    
-                    // 默认选中第一个环境
+
                     if (environments.Count > 0)
                     {
                         selectedEnvironmentId = environments[0].Id;
@@ -706,67 +581,64 @@
             StateHasChanged();
         }
     }
-    
+
     private async Task StartExecution()
     {
         if (string.IsNullOrEmpty(selectedEnvironmentId))
             return;
-            
+
         if (IsBatchMode && !selectedTestCaseIds.Any())
             return;
-            
+
         if (!IsBatchMode && testCase == null)
             return;
-            
+
         try
         {
             isExecuting = true;
             cancellationTokenSource = new CancellationTokenSource();
             executionRecords.Clear();
             currentExecutionRecords.Clear();
-            
+
             if (IsBatchMode)
             {
-                // 批量执行
                 var batchSettings = new BatchExecutionSettings
                 {
                     SelectedTestCaseIds = selectedTestCaseIds.ToList(),
                     PerformanceSettings = performanceSettings,
-                    IsParallelExecution = false, // 可以后续添加并行执行选项
-                    ContinueOnFailure = true // 可以后续添加失败时是否继续的选项
+                    IsParallelExecution = false,
+                    ContinueOnFailure = true
                 };
-                
+
                 try
                 {
                     var batchResult = await BatchExecutionService.ExecuteBatchAsync(
-                        batchSettings, 
-                        selectedEnvironmentId, 
+                        batchSettings,
+                        selectedEnvironmentId,
                         cancellationTokenSource.Token);
-                    
-                    // 更新执行记录
+
                     executionRecords.AddRange(batchResult.ExecutionRecords);
                     foreach (var record in batchResult.ExecutionRecords)
                     {
                         currentExecutionRecords[record.TestCaseId] = record;
                     }
-                    
+
                     StateHasChanged();
-                    
-                    // 显示批量执行结果
+
                     var message = $"批量执行完成！\n" +
-                                 $"总用例数: {batchResult.TotalTestCases}\n" +
-                                 $"成功: {batchResult.SuccessfulTestCases}\n" +
-                                 $"失败: {batchResult.FailedTestCases}\n" +
-                                 $"执行时间: {batchResult.Duration:hh\\:mm\\:ss}";
-                    
+                                  $"总用例数: {batchResult.TotalTestCases}\n" +
+                                  $"成功: {batchResult.SuccessfulTestCases}\n" +
+                                  $"失败: {batchResult.FailedTestCases}\n" +
+                                  $"执行时间: {batchResult.Duration:hh\\:mm\\:ss}";
+
                     if (performanceSettings.IsPerformanceTestEnabled)
                     {
                         message += $"\n总执行次数: {batchResult.TotalExecutions}\n" +
-                                  $"成功率: {batchResult.SuccessRate:F2}%\n" +
-                                  $"错误率: {batchResult.ErrorRate:F2}%\n" +
-                                  $"平均执行时间: {batchResult.AverageExecutionTime.TotalMilliseconds:F0}ms";
+                                   $"成功率: {batchResult.SuccessRate:F2}%\n" +
+                                   $"错误率: {batchResult.ErrorRate:F2}%\n" +
+                                   $"平均执行时间: {batchResult.AverageExecutionTime.TotalMilliseconds:F0}ms";
                     }
-                    
+
                     await JSRuntime.InvokeVoidAsync("alert", message);
                 }
                 catch (Exception ex)
@@ -776,8 +648,6 @@
             }
             else
             {
-                // 单个执行
-                // 初始化执行记录
                 var initialRecord = new ExecutionRecordDto
                 {
                     Id = Guid.NewGuid().ToString(),
@@ -791,17 +661,16 @@
                     SkippedSteps = 0,
                     StepRecords = new List<StepExecutionRecord>()
                 };
-                
+
                 currentExecutionRecords[testCase.Id] = initialRecord;
                 executionRecords.Add(initialRecord);
                 StateHasChanged();
-                
+
                 var record = await ExecutionEngine.ExecuteTestCaseAsync(
-                    testCase!, 
-                    selectedEnvironmentId, 
+                    testCase!,
+                    selectedEnvironmentId,
                     cancellationTokenSource.Token);
-                
-                // 最终更新记录
+
                 var index = executionRecords.FindIndex(r => r.TestCaseId == testCase.Id);
                 if (index >= 0)
                 {
@@ -820,12 +689,11 @@
             StateHasChanged();
         }
     }
-    
+
     private void GoBack()
     {
         if (IsBatchMode)
         {
-            // 批量模式：返回到项目的测试用例页面
             if (!string.IsNullOrEmpty(ProjectId))
             {
                 Navigation.NavigateTo($"/autotest/project-cases/{ProjectId}");
@@ -837,7 +705,6 @@
         }
         else
         {
-            // 单个模式：获取当前测试用例的项目ID，返回时保持项目选择
             if (testCase != null && !string.IsNullOrEmpty(testCase.ProjectId))
             {
                 Navigation.NavigateTo($"/autotest/project-cases/{testCase.ProjectId}");
@@ -848,15 +715,14 @@
             }
         }
     }
-    
+
     private void CancelExecution()
     {
         cancellationTokenSource?.Cancel();
     }
-    
-    private void ToggleSelectAll(ChangeEventArgs e)
+
+    private void ToggleSelectAll(bool selected)
     {
-        var selected = (bool)e.Value!;
         if (selected)
         {
             selectedTestCaseIds = testCases.Select(tc => tc.Id).ToHashSet();
@@ -867,57 +733,47 @@
         }
         StateHasChanged();
     }
-    
+
     private void ToggleTestCaseSelection(string testCaseId, bool selected)
-     {
-         if (selected)
-         {
-             selectedTestCaseIds.Add(testCaseId);
-         }
-         else
-         {
-             selectedTestCaseIds.Remove(testCaseId);
-         }
-         StateHasChanged();
-     }
-     
-     private void TogglePerformanceSettings()
-     {
-         showPerformanceSettings = !showPerformanceSettings;
-         StateHasChanged();
-     }
-     
-     private bool IsAllSelected => testCases.Any() && selectedTestCaseIds.Count == testCases.Count;
-     private bool IsPartialSelected => selectedTestCaseIds.Any() && selectedTestCaseIds.Count < testCases.Count;
-     
-     // 批量执行统计
-     private int TotalSelectedCases => selectedTestCaseIds.Count;
-     private int CompletedCases => executionRecords.Count;
-     private int SuccessfulCases => executionRecords.Count(r => r.Status == ExecutionStatus.Success);
-     private int FailedCases => executionRecords.Count(r => r.Status == ExecutionStatus.Failed);
-     private int ExecutingCases => isExecuting ? 1 : 0;
-     
-     // 批量执行进度
-     private double BatchProgress => TotalSelectedCases > 0 ? (double)CompletedCases / TotalSelectedCases * 100 : 0;
-    
-    private string GetLevelBadgeClass(string level) => level switch
     {
-        "P0" => "bg-danger",
-        "P1" => "bg-warning",
-        "P2" => "bg-primary",
-        "P3" => "bg-secondary",
-        _ => "bg-light"
-    };
-    
-    private string GetExecutionStatusBadgeClass(ExecutionStatus status) => status switch
+        if (selected)
+        {
+            selectedTestCaseIds.Add(testCaseId);
+        }
+        else
+        {
+            selectedTestCaseIds.Remove(testCaseId);
+        }
+        StateHasChanged();
+    }
+
+    private void TogglePerformanceSettings()
     {
-        ExecutionStatus.Success => "bg-success",
-        ExecutionStatus.Failed => "bg-danger",
-        ExecutionStatus.Running => "bg-primary",
-        ExecutionStatus.Cancelled => "bg-warning",
-        _ => "bg-secondary"
+        showPerformanceSettings = !showPerformanceSettings;
+        StateHasChanged();
+    }
+
+    private bool IsAllSelected => testCases.Any() && selectedTestCaseIds.Count == testCases.Count;
+    private bool IsPartialSelected => selectedTestCaseIds.Any() && selectedTestCaseIds.Count < testCases.Count;
+
+    private string GetLevelTagColor(string level) => level switch
+    {
+        "P0" => "red",
+        "P1" => "orange",
+        "P2" => "blue",
+        "P3" => "default",
+        _ => "default"
     };
-    
+
+    private string GetExecutionStatusTagColor(ExecutionStatus status) => status switch
+    {
+        ExecutionStatus.Success => "green",
+        ExecutionStatus.Failed => "red",
+        ExecutionStatus.Running => "blue",
+        ExecutionStatus.Cancelled => "orange",
+        _ => "default"
+    };
+
     private string GetExecutionStatusDisplayName(ExecutionStatus status) => status switch
     {
         ExecutionStatus.Success => "成功",
@@ -926,16 +782,16 @@
         ExecutionStatus.Cancelled => "已取消",
         _ => "未知"
     };
-    
-    private string GetStepStatusBadgeClass(StepExecutionStatus status) => status switch
+
+    private string GetStepStatusTagColor(StepExecutionStatus status) => status switch
     {
-        StepExecutionStatus.Success => "bg-success",
-        StepExecutionStatus.Failed => "bg-danger",
-        StepExecutionStatus.Running => "bg-primary",
-        StepExecutionStatus.Skipped => "bg-warning",
-        _ => "bg-secondary"
+        StepExecutionStatus.Success => "green",
+        StepExecutionStatus.Failed => "red",
+        StepExecutionStatus.Running => "blue",
+        StepExecutionStatus.Skipped => "orange",
+        _ => "default"
     };
-    
+
     private string GetStepStatusDisplayName(StepExecutionStatus status) => status switch
     {
         StepExecutionStatus.Success => "成功",
@@ -944,40 +800,35 @@
         StepExecutionStatus.Skipped => "跳过",
         _ => "未知"
     };
-    
+
     private void OnStepUpdated(string testCaseId, StepExecutionRecord stepRecord)
     {
         InvokeAsync(() =>
         {
-            // 更新当前执行记录中的步骤状态
             if (currentExecutionRecords.TryGetValue(testCaseId, out var record))
             {
                 var existingStep = record.StepRecords.FirstOrDefault(s => s.StepId == stepRecord.StepId);
                 if (existingStep != null)
                 {
-                    // 更新现有步骤记录
                     var index = record.StepRecords.IndexOf(existingStep);
                     record.StepRecords[index] = stepRecord;
                 }
                 else
                 {
-                    // 添加新的步骤记录
                     record.StepRecords.Add(stepRecord);
                 }
-                
+
                 StateHasChanged();
             }
         });
     }
-    
+
     private void OnExecutionUpdated(string testCaseId, ExecutionRecordDto executionRecord)
     {
         InvokeAsync(() =>
         {
-            // 更新当前执行记录
             currentExecutionRecords[testCaseId] = executionRecord;
-            
-            // 更新主执行记录列表
+
             var existingRecord = executionRecords.FirstOrDefault(r => r.TestCaseId == testCaseId);
             if (existingRecord != null)
             {
@@ -988,17 +839,16 @@
             {
                 executionRecords.Add(executionRecord);
             }
-            
+
             StateHasChanged();
         });
     }
-    
+
     public void Dispose()
     {
-        // 取消订阅事件
-        ExecutionEngine.StepUpdated -= OnStepUpdated;
-        ExecutionEngine.ExecutionUpdated -= OnExecutionUpdated;
-        
+        ExecutionEventNotifier.StepUpdated -= OnStepUpdated;
+        ExecutionEventNotifier.ExecutionUpdated -= OnExecutionUpdated;
+
         cancellationTokenSource?.Cancel();
         cancellationTokenSource?.Dispose();
     }

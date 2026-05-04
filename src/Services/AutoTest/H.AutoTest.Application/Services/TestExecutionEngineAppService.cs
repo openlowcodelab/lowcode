@@ -20,24 +20,23 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
     private readonly IExecutionRecordAppService _executionRecordService;
     private readonly IEnvironmentAppService _environmentService;
     private readonly IProjectCaseAppService _projectCaseService;
+    private readonly ITestExecutionEventNotifier _eventNotifier;
     private readonly Dictionary<string, string> _variables;
     private readonly string _dataPath;
-    
-    // 实时步骤更新事件
-    public event Action<string, StepExecutionRecord>? StepUpdated;
-    public event Action<string, ExecutionRecordDto>? ExecutionUpdated;
     
     public TestExecutionEngineAppService(
         HttpClient httpClient,
         IExecutionRecordAppService executionRecordService,
         IEnvironmentAppService environmentService,
         IProjectCaseAppService projectCaseService,
+        ITestExecutionEventNotifier eventNotifier,
         IConfiguration configuration)
     {
         _httpClient = httpClient;
         _executionRecordService = executionRecordService;
         _environmentService = environmentService;
         _projectCaseService = projectCaseService;
+        _eventNotifier = eventNotifier;
         _variables = new Dictionary<string, string>();
 
         _dataPath = configuration["DataPath"] ?? "data";
@@ -167,7 +166,7 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
                 }
                 
                 // 通知执行记录更新
-                ExecutionUpdated?.Invoke(testCase.Id, executionRecord);
+                _eventNotifier.RaiseExecutionUpdated(testCase.Id, executionRecord);
             }
             
             ExecutionComplete:
@@ -244,7 +243,7 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
         };
         
         // 通知步骤开始执行
-        StepUpdated?.Invoke(testCase.Id, stepRecord);
+        _eventNotifier.RaiseStepUpdated(testCase.Id, stepRecord);
         
         var stopwatch = Stopwatch.StartNew();
         
@@ -287,7 +286,7 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
             stepRecord.Duration = stopwatch.ElapsedMilliseconds;
             
             // 通知步骤执行完成
-            StepUpdated?.Invoke(testCase.Id, stepRecord);
+            _eventNotifier.RaiseStepUpdated(testCase.Id, stepRecord);
         }
         
         return stepRecord;

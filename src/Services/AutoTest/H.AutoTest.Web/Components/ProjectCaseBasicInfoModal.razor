@@ -1,99 +1,82 @@
-@namespace H.AuTest.Web
+@namespace H.AutoTest.Web
 
-<!-- 测试用例基本信息编辑模态框 -->
-@if (ShowModal)
-{
-    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">@(IsEditing ? "编辑测试用例" : "新建测试用例")</h5>
-                    <button type="button" class="btn-close" @onclick="HideModal"></button>
-                </div>
-                <div class="modal-body">
-                    <EditForm Model="CurrentTestCase" OnValidSubmit="SaveTestCase">
-                        <DataAnnotationsValidator />
-                        <ValidationSummary class="text-danger" />
-                        
-                        <div class="mb-3 row">
-                            <label class="col-sm-3 col-form-label">用例编号</label>
-                            <div class="col-sm-9">
-                                <InputText class="form-control" @bind-Value="CurrentTestCase.CaseNumber" placeholder="如：TC001, TEST_01等" />
-                                <ValidationMessage For="() => CurrentTestCase.CaseNumber" />
-                                <small class="text-muted">可选字段，3-12位字母、数字、下划线组合</small>
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3 row">
-                            <label class="col-sm-3 col-form-label">用例名称 <span class="text-danger">*</span></label>
-                            <div class="col-sm-9">
-                                <InputText class="form-control" @bind-Value="CurrentTestCase.Name" />
-                                <ValidationMessage For="() => CurrentTestCase.Name" />
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3 row">
-                            <label class="col-sm-3 col-form-label">用例描述</label>
-                            <div class="col-sm-9">
-                                <InputTextArea class="form-control" rows="3" @bind-Value="CurrentTestCase.Description" />
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3 row">
-                            <label class="col-sm-3 col-form-label">用例级别</label>
-                            <div class="col-sm-9">
-                                <div class="d-flex flex-wrap gap-3 p-2 border rounded">
-                                    @foreach (var level in AvailableLevels)
-                                    {
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" 
-                                                   checked="@CurrentTestCase.Levels.Contains(level)" 
-                                                   @onchange="@(e => ToggleLevel(level, (bool)e.Value!))" />
-                                            <label class="form-check-label">
-                                                <span class="badge @GetLevelBadgeClass(level)">@level</span>
-                                            </label>
-                                        </div>
-                                    }
-                                </div>
-                                <small class="text-muted">可多选，T0为最高级别</small>
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3 row">
-                            <label class="col-sm-3 col-form-label">分类</label>
-                            <div class="col-sm-9">
-                                <TreeSelectDropdown Categories="Categories" 
-                                                  Value="CurrentTestCase.CategoryId"
-                                                  ValueChanged="OnCategoryChanged"
-                                                  EmptyOptionText="无分类" 
-                                                  Placeholder="请选择分类" />
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3 row">
-                            <label class="col-sm-3 col-form-label">排序</label>
-                            <div class="col-sm-9">
-                                <Microsoft.AspNetCore.Components.Forms.InputNumber class="form-control" @bind-Value="CurrentTestCase.Order" />
-                                <small class="text-muted">数值越小排序越靠前，默认为0</small>
-                            </div>
-                        </div>
-                        
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" @onclick="HideModal">取消</button>
-                            @if (!IsEditing)
-                            {
-                                <button type="button" class="btn btn-success" @onclick="SaveOnly">仅保存</button>
-                            }
-                            <button type="submit" class="btn btn-primary">
-                                @(IsEditing ? "更新" : "保存并继续编辑步骤")
-                            </button>
-                        </div>
-                    </EditForm>
-                </div>
+<AntDesign.Modal Visible="ShowModal"
+                 Title="@(IsEditing ? "编辑测试用例" : "新建测试用例")"
+                 Width="720"
+                 OnCancel="HideModal"
+                 Footer="null"
+                 DestroyOnClose="true">
+    <EditForm Model="CurrentTestCase" OnValidSubmit="SaveTestCase">
+        <DataAnnotationsValidator />
+        <ValidationSummary Style="color: #ff4d4f;" />
+
+        <AntDesign.FormItem Label="用例编号" LabelColSpan="5" WrapperColSpan="19">
+            <AntDesign.Input @bind-Value="CurrentTestCase.CaseNumber" Placeholder="如：TC001, TEST_01等" />
+            <div style="color: #999; font-size: 12px; margin-top: 4px;">可选字段，3-12 位字母、数字、下划线组合</div>
+            <ValidationMessage For="() => CurrentTestCase.CaseNumber" />
+        </AntDesign.FormItem>
+
+        <AntDesign.FormItem Label="用例名称" Required="true" LabelColSpan="5" WrapperColSpan="19">
+            <AntDesign.Input @bind-Value="CurrentTestCase.Name" />
+            <ValidationMessage For="() => CurrentTestCase.Name" />
+        </AntDesign.FormItem>
+
+        <AntDesign.FormItem Label="用例描述" LabelColSpan="5" WrapperColSpan="19">
+            <AntDesign.TextArea Rows="3"
+                                @bind-Value="CurrentTestCase.Description" />
+        </AntDesign.FormItem>
+
+        <AntDesign.FormItem Label="用例级别" LabelColSpan="5" WrapperColSpan="19">
+            <div style="display: flex; flex-wrap: wrap; gap: 12px; padding: 8px 12px; border: 1px solid #d9d9d9; border-radius: 4px;">
+                @foreach (var level in AvailableLevels)
+                {
+                    var checkedValue = CurrentTestCase.Levels.Contains(level);
+                    <AntDesign.Checkbox Checked="@checkedValue"
+                                        CheckedChange="@((bool isChecked) => ToggleLevel(level, isChecked))">
+                        <AntDesign.Tag Color="@GetLevelTagColor(level)">@level</AntDesign.Tag>
+                    </AntDesign.Checkbox>
+                }
             </div>
+            <div style="color: #999; font-size: 12px; margin-top: 4px;">可多选，P0 为最高级别</div>
+        </AntDesign.FormItem>
+
+        <AntDesign.FormItem Label="分类" LabelColSpan="5" WrapperColSpan="19">
+            <TreeSelectDropdown Categories="Categories"
+                                Value="CurrentTestCase.CategoryId"
+                                ValueChanged="OnCategoryChanged"
+                                EmptyOptionText="无分类"
+                                Placeholder="请选择分类" />
+        </AntDesign.FormItem>
+
+        <AntDesign.FormItem Label="排序" LabelColSpan="5" WrapperColSpan="19">
+            <AntDesign.InputNumber TValue="int" @bind-Value="CurrentTestCase.Order" Style="width: 200px;" />
+            <div style="color: #999; font-size: 12px; margin-top: 4px;">数值越小排序越靠前，默认为 0</div>
+        </AntDesign.FormItem>
+
+        <div style="text-align: right; margin-top: 16px; padding-top: 12px; border-top: 1px solid #f0f0f0;">
+            <AntDesign.Space>
+                <SpaceItem>
+                    <AntDesign.Button OnClick="HideModal">取消</AntDesign.Button>
+                </SpaceItem>
+                @if (!IsEditing)
+                {
+                    <SpaceItem>
+                        <AntDesign.Button Type="@ButtonType.Default"
+                                          Style="background-color: #52c41a; border-color: #52c41a; color: white;"
+                                          OnClick="SaveOnly">
+                            仅保存
+                        </AntDesign.Button>
+                    </SpaceItem>
+                }
+                <SpaceItem>
+                    <AntDesign.Button Type="@ButtonType.Primary" HtmlType="submit">
+                        @(IsEditing ? "更新" : "保存并继续编辑步骤")
+                    </AntDesign.Button>
+                </SpaceItem>
+            </AntDesign.Space>
         </div>
-    </div>
-}
+    </EditForm>
+</AntDesign.Modal>
 
 @code {
     [Parameter] public bool ShowModal { get; set; }
@@ -103,10 +86,9 @@
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback<ProjectCaseDto> OnSave { get; set; }
     [Parameter] public EventCallback<ProjectCaseDto> OnSaveOnly { get; set; }
-    
-    // 可用的用例级别
+
     private readonly List<string> AvailableLevels = new() { "P0", "P1", "P2", "P3" };
-    
+
     private void ToggleLevel(string level, bool isChecked)
     {
         if (isChecked)
@@ -120,40 +102,36 @@
         {
             CurrentTestCase.Levels.Remove(level);
         }
-        
-        // 按级别排序（T0最高）
         CurrentTestCase.Levels = CurrentTestCase.Levels.OrderBy(l => l).ToList();
     }
-    
+
     private async Task OnCategoryChanged(string? categoryId)
     {
         CurrentTestCase.CategoryId = categoryId;
         await Task.CompletedTask;
     }
-    
+
     private async Task SaveTestCase()
     {
         await OnSave.InvokeAsync(CurrentTestCase);
     }
-    
+
     private async Task SaveOnly()
     {
         await OnSaveOnly.InvokeAsync(CurrentTestCase);
     }
-    
+
     private async Task HideModal()
     {
         await OnClose.InvokeAsync();
     }
-    
-    private string GetLevelBadgeClass(string level) => level switch
-    {
-        "P0" => "bg-danger",      // 最高级别：红色
-        "P1" => "bg-warning",     // 高级别：橙色
-        "P2" => "bg-primary",     // 中级别：蓝色
-        "P3" => "bg-secondary",   // 最低级别：灰色
-        _ => "bg-light"
-    };
-    
 
+    private string GetLevelTagColor(string level) => level switch
+    {
+        "P0" => "red",
+        "P1" => "orange",
+        "P2" => "blue",
+        "P3" => "default",
+        _ => "default"
+    };
 }

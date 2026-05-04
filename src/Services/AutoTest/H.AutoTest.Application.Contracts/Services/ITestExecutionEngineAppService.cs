@@ -9,23 +9,19 @@ namespace H.AutoTest.Application.Contracts;
 /// <summary>
 /// 测试执行引擎服务接口
 /// </summary>
+/// <remarks>
+/// 注意：StepUpdated/ExecutionUpdated 实时进度事件已移至 <see cref="ITestExecutionEventNotifier"/>，
+/// 因为 ABP 会为 IApplicationService 生成动态代理并以 ValidationInterceptor 拦截所有方法，
+/// 包括 event add/remove，这会对 Action&lt;,&gt; 委托参数递归反射属性，
+/// 触发 Type.GenericParameterAttributes 抛 Arg_NotGenericParameter。
+/// </remarks>
 public interface ITestExecutionEngineAppService : IApplicationService
 {
-    /// <summary>
-    /// 步骤更新事件
-    /// </summary>
-    event Action<string, StepExecutionRecord> StepUpdated;
-    
-    /// <summary>
-    /// 执行记录更新事件
-    /// </summary>
-    event Action<string, ExecutionRecordDto> ExecutionUpdated;
-    
     /// <summary>
     /// 执行测试用例
     /// </summary>
     Task<ExecutionRecordDto> ExecuteTestCaseAsync(
-        ProjectCaseDto testCase, 
-        string environmentId, 
+        ProjectCaseDto testCase,
+        string environmentId,
         CancellationToken cancellationToken = default);
 }

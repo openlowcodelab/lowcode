@@ -1,181 +1,78 @@
 @namespace H.AutoTest.Web
-@inject IJSRuntime JSRuntime
 
-<div class="dropdown tree-select-dropdown">
-    <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start" type="button" 
-            id="@dropdownId" data-bs-toggle="dropdown" aria-expanded="false">
-        <span class="selected-text">@GetSelectedText()</span>
-    </button>
-    <ul class="dropdown-menu w-100" aria-labelledby="@dropdownId" style="max-height: 300px; overflow-y: auto;">
-        @if (ShowEmptyOption)
-        {
-            <li>
-                <a class="dropdown-item @(string.IsNullOrEmpty(Value) ? "active" : "")" 
-                   href="javascript:void(0)" @onclick="() => SelectItem(null)">
-                    @EmptyOptionText
-                </a>
-            </li>
-            <li><hr class="dropdown-divider" /></li>
-        }
-        
-        @foreach (var rootCategory in GetRootCategories())
-        {
-            @RenderCategoryItem(rootCategory, 0)
-        }
-    </ul>
-</div>
+<AntDesign.Select TItemValue="string"
+                  TItem="FlatCategoryItem"
+                  DataSource="GetFlatItems()"
+                  LabelName="@nameof(FlatCategoryItem.DisplayName)"
+                  ValueName="@nameof(FlatCategoryItem.Id)"
+                  Value="@(Value ?? SelectedValue ?? string.Empty)"
+                  ValueChanged="OnValueChanged"
+                  Placeholder="@Placeholder"
+                  AllowClear="true"
+                  Style="width: 100%;" />
 
 @code {
     [Parameter] public List<ProjectCaseCategory> Categories { get; set; } = new();
     [Parameter] public string? Value { get; set; }
     [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+
+    // 兼容旧的 SelectedValue 属性
+    [Parameter] public string? SelectedValue { get; set; }
+    [Parameter] public EventCallback<string?> SelectedValueChanged { get; set; }
+
     [Parameter] public bool ShowEmptyOption { get; set; } = true;
     [Parameter] public string EmptyOptionText { get; set; } = "无分类";
     [Parameter] public string Placeholder { get; set; } = "请选择分类";
-    
-    private string dropdownId = Guid.NewGuid().ToString("N")[..8];
-    
-    private List<ProjectCaseCategory> GetRootCategories()
-    {
-        // 根分类是没有父级的分类，即不在任何其他分类的 Childrens 中
-        var allChildIds = new HashSet<string>();
-        foreach (var category in Categories)
-        {
-            if (category.Childrens != null)
-            {
-                foreach (var child in category.Childrens)
-                {
-                    allChildIds.Add(child.Id);
-                }
-            }
-        }
-        return Categories.Where(c => !allChildIds.Contains(c.Id)).OrderBy(c => c.Order).ToList();
-    }
-    
-    private List<ProjectCaseCategory> GetChildCategories(string categoryId)
-    {
-        var category = Categories.FirstOrDefault(c => c.Id == categoryId);
-        return category?.Childrens?.OrderBy(c => c.Order).ToList() ?? new List<ProjectCaseCategory>();
-    }
-    
-    private bool HasChildren(string categoryId)
-    {
-        var category = Categories.FirstOrDefault(c => c.Id == categoryId);
-        return category?.Childrens != null && category.Childrens.Length > 0;
-    }
-    
-    private string GetSelectedText()
-    {
-        if (string.IsNullOrEmpty(Value))
-            return Placeholder;
-            
-        var selected = Categories.FirstOrDefault(c => c.Id == Value);
-        if (selected == null)
-            return Placeholder;
-            
-        // 构建层级路径 - 需要通过遍历找到父级
-        var path = new List<string>();
-        var current = selected;
-        
-        while (current != null)
-        {
-            path.Insert(0, current.Name);
-            current = FindParentCategory(current.Id);
-        }
-        
-        return string.Join(" > ", path);
-    }
-    
-    private ProjectCaseCategory? FindParentCategory(string categoryId)
-    {
-        foreach (var category in Categories)
-        {
-            if (category.Childrens != null)
-            {
-                var child = category.Childrens.FirstOrDefault(c => c.Id == categoryId);
-                if (child != null)
-                {
-                    return category;
-                }
-            }
-        }
-        return null;
-    }
-    
-    private async Task SelectItem(string? categoryId)
-    {
-        Value = categoryId;
-        await ValueChanged.InvokeAsync(categoryId);
-        
-        // 关闭下拉菜单
-        await JSRuntime.InvokeVoidAsync("eval", $"document.getElementById('{dropdownId}').click();");
-    }
-    
-    private RenderFragment RenderCategoryItem(ProjectCaseCategory category, int level) => builder =>
-    {
-        var indentStyle = $"padding-left: {20 + level * 20}px;";
-        var hasChildren = HasChildren(category.Id);
-        var isSelected = Value == category.Id;
-        
-        builder.OpenElement(0, "li");
-        
-        builder.OpenElement(1, "a");
-        builder.AddAttribute(2, "class", $"dropdown-item d-flex align-items-center {(isSelected ? "active" : "")}");
-        builder.AddAttribute(3, "href", "javascript:void(0)");
-        builder.AddAttribute(4, "style", indentStyle);
-        builder.AddAttribute(5, "onclick", EventCallback.Factory.Create(this, () => SelectItem(category.Id)));
-        
-        if (hasChildren)
-        {
-            builder.OpenElement(6, "i");
-            builder.AddAttribute(7, "class", "oi oi-chevron-right me-2");
-            builder.AddAttribute(8, "style", "font-size: 0.7em; color: #6c757d; width: 12px;");
-            builder.CloseElement();
-        }
-        else
-        {
-            builder.OpenElement(6, "span");
-            builder.AddAttribute(7, "style", "width: 12px; margin-right: 8px;");
-            builder.CloseElement();
-        }
-        
-        builder.AddContent(9, category.Name);
-        
-        builder.CloseElement(); // a
-        builder.CloseElement(); // li
-        
-        // 递归渲染子分类
-        var children = GetChildCategories(category.Id);
-        foreach (var child in children)
-        {
-            builder.AddContent(10, RenderCategoryItem(child, level + 1));
-        }
-    };
-}
 
-<style>
-    .tree-select-dropdown .dropdown-menu {
-        border: 1px solid #dee2e6;
-        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    public class FlatCategoryItem
+    {
+        public string Id { get; set; } = string.Empty;
+        public string DisplayName { get; set; } = string.Empty;
     }
-    
-    .tree-select-dropdown .dropdown-item {
-        padding: 0.375rem 0.75rem;
-        font-size: 0.875rem;
+
+    private List<FlatCategoryItem> GetFlatItems()
+    {
+        var items = new List<FlatCategoryItem>();
+        if (ShowEmptyOption)
+        {
+            items.Add(new FlatCategoryItem { Id = string.Empty, DisplayName = EmptyOptionText });
+        }
+        foreach (var root in Categories.OrderBy(c => c.Order))
+        {
+            AppendCategory(items, root, 0);
+        }
+        return items;
     }
-    
-    .tree-select-dropdown .dropdown-item:hover {
-        background-color: #f8f9fa;
+
+    private void AppendCategory(List<FlatCategoryItem> items, ProjectCaseCategory category, int level)
+    {
+        var prefix = level == 0 ? string.Empty : new string('\u3000', level) + "└ ";
+        items.Add(new FlatCategoryItem
+        {
+            Id = category.Id,
+            DisplayName = prefix + category.Name
+        });
+        if (category.Childrens is { Length: > 0 })
+        {
+            foreach (var child in category.Childrens.OrderBy(c => c.Order))
+            {
+                AppendCategory(items, child, level + 1);
+            }
+        }
     }
-    
-    .tree-select-dropdown .dropdown-item.active {
-        background-color: #0d6efd;
-        color: white;
+
+    private async Task OnValueChanged(string newValue)
+    {
+        var normalized = string.IsNullOrEmpty(newValue) ? null : newValue;
+        Value = normalized;
+        SelectedValue = normalized;
+        if (ValueChanged.HasDelegate)
+        {
+            await ValueChanged.InvokeAsync(normalized);
+        }
+        if (SelectedValueChanged.HasDelegate)
+        {
+            await SelectedValueChanged.InvokeAsync(normalized);
+        }
     }
-    
-    .tree-select-dropdown .selected-text {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-</style>
+}
