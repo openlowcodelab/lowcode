@@ -50,9 +50,9 @@ public class DesignEngineHostClientModule : AbpModule
             typeof(DesignEngineApplicationContractsModule).Assembly,
             RemoteServiceName
         );
-        //context.Services.AddHttpClientProxies(
-        //    typeof(LowCodeApplicationContractsModule).Assembly,
-        //    RemoteServiceName
-        //);
+        context.Services.AddHttpClientProxies(
+            typeof(LowCodeApplicationContractsModule).Assembly,
+            RemoteServiceName
+        );
     }
 }

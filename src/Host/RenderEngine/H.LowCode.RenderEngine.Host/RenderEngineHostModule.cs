@@ -1,3 +1,4 @@
+using H.Admin.AppDrawer;
 using H.LowCode.ComponentBase;
 using H.LowCode.RenderEngine.Application;
 using H.LowCode.RenderEngine.EntityFrameworkCore;
@@ -25,15 +26,16 @@ public class RenderEngineHostModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
-        ConfigureAutoApiControllers();
+        // 注册 AntDesign 服务
+        context.Services.AddAntDesign();
+
+        // 注册应用状态管理器
+        context.Services.AddSingleton<AppStateManager>();
 
         //应用状态
         context.Services.AddSingleton(new LowCodeAppState(false));
-    }
 
-    public override void OnApplicationInitialization(ApplicationInitializationContext context)
-    {
-        
+        ConfigureAutoApiControllers();
     }
 
     private void ConfigureAutoApiControllers()

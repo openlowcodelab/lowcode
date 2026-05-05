@@ -28,7 +28,7 @@ namespace H.LowCode.RenderEngine.Host.Client;
     )]
 public class RenderEngineHostClientModule : AbpModule
 {
-    public const string RemoteServiceName = "Default";
+    public const string RemoteServiceName = "RenderEngine";
 
     public override void ConfigureServices(ServiceConfigurationContext context)
     {

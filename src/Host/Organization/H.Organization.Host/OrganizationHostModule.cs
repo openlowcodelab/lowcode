@@ -2,7 +2,6 @@ using H.Account.Application.Contracts;
 using H.Admin.AppDrawer;
 using H.Organization.Application;
 using Volo.Abp.AspNetCore.Mvc;
-using Volo.Abp.Http.Client;
 using Volo.Abp.Modularity;
 
 namespace H.Organization.Host;
@@ -11,8 +10,8 @@ namespace H.Organization.Host;
 /// Organization Host 聚合模块，统一管理所有依赖
 /// </summary>
 [DependsOn(
+    typeof(AbpAspNetCoreMvcModule),
     typeof(OrganizationApplicationModule),
-    typeof(AbpHttpClientModule),
     typeof(AccountApplicationContractsModule)
 )]
 public class OrganizationHostModule : AbpModule
