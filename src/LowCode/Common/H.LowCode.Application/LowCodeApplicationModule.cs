@@ -7,7 +7,6 @@ namespace H.LowCode.Application;
 [DependsOn(
     typeof(LowCodeApplicationContractsModule)
 )]
-
 public class LowCodeApplicationModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)

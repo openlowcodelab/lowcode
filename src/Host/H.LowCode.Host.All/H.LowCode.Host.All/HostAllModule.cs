@@ -26,12 +26,6 @@ namespace H.LowCode.Host.All;
     //abp
     typeof(AbpAutofacModule),
     typeof(AbpAspNetCoreMvcModule),
-    // Account
-    typeof(AccountApplicationModule),
-    // Organization
-    typeof(OrganizationApplicationModule),
-    // LowCode Common
-    typeof(LowCodeApplicationModule),
     // DesignEngine
     typeof(LowCodeWorkbenchModule),
     typeof(DesignEngineApplicationModule),
@@ -42,6 +36,10 @@ namespace H.LowCode.Host.All;
     typeof(RenderEngineApplicationModule),
     typeof(RenderEngineEntityFrameworkCoreModule),
     typeof(RenderEngineJsonFileRepositoryModule),
+    // Account
+    typeof(AccountApplicationModule),
+    // Organization
+    typeof(OrganizationApplicationModule),
     // Approval
     typeof(ApprovalApplicationModule),
     // AutoTest

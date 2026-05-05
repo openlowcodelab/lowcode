@@ -1,3 +1,4 @@
+using H.LowCode.Application;
 using H.LowCode.Configuration;
 using H.LowCode.RenderEngine.Application.Contracts;
 using H.LowCode.RenderEngine.Domain;
@@ -12,6 +13,7 @@ namespace H.LowCode.RenderEngine.Application;
     typeof(AbpAutoMapperModule),
     typeof(RenderEngineApplicationContractsModule),
     //lowcode
+    typeof(LowCodeApplicationModule),
     typeof(RenderEngineDomainModule)
     )]
 public class RenderEngineApplicationModule : AbpModule

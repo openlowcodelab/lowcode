@@ -1,10 +1,8 @@
 @namespace H.LowCode.Themes.AntBlazor
 @inherits RenderEngineLowCodeComponentBase
-@using H.LowCode.MetaSchema.Services
-@using System.Linq
 
 @inject IFormDataAppService FormDataAppService
-@inject IFormValidationService ValidationService
+@inject IFormValidationAppService FormValidationAppService
 
 @if (_formDto != null)
 {
@@ -73,7 +71,7 @@
             return;
 
         // 执行表单校验
-        var validationResult = ValidationService.ValidateForm(_fieldDictData, Page.Components.Cast<ComponentSchemaBase>().ToList());
+        var validationResult = FormValidationAppService.ValidateForm(_fieldDictData, Page.Components.Cast<ComponentSchemaBase>().ToList());
         if (!validationResult.IsValid)
         {
             var errorMessage = string.Join("\n", validationResult.ErrorMessages);

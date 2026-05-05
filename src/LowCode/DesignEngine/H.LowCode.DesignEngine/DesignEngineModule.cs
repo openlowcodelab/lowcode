@@ -1,5 +1,3 @@
-using H.LowCode.DesignEngineBase;
-using H.LowCode.MetaSchema.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Modularity;
 
@@ -12,6 +10,5 @@ public class DesignEngineModule : AbpModule
         context.Services.AddAntDesign();
 
         context.Services.AddSingleton(typeof(DragDropStateService));
-        context.Services.AddTransient<IFormValidationService, FormValidationService>();
     }
 }

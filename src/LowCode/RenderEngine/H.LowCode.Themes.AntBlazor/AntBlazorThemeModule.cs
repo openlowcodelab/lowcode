@@ -1,11 +1,15 @@
-﻿using H.LowCode.RenderEngine.Application.Contracts;
+﻿using H.LowCode.Components.Defaults;
+using H.LowCode.RenderEngine;
+using H.LowCode.RenderEngine.Application.Contracts;
 using H.LowCode.RenderEngineBase;
 using Volo.Abp.Modularity;
 
 namespace H.LowCode.Themes.AntBlazor;
 
 [DependsOn(
+    typeof(LowCodeDefaultComponentModule),
     typeof(RenderEngineBaseModule),
+    typeof(RenderEngineModule),
     //Contracts
     typeof(RenderEngineApplicationContractsModule)
 )]
