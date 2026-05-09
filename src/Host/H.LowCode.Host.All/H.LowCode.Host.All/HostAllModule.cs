@@ -1,8 +1,8 @@
 using H.Account.Application;
 using H.Admin.AppDrawer;
+using H.Admin.Portal;
 using H.Approval.Application;
 using H.AutoTest.Application;
-using H.LowCode.Application;
 using H.LowCode.ComponentBase;
 using H.LowCode.DesignEngine.Application;
 using H.LowCode.DesignEngine.EntityFrameworkCore;
@@ -73,6 +73,8 @@ public class HostAllModule : AbpModule
             options.ConventionalControllers.Create(typeof(RenderEngineApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(ApprovalApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(AutoTestApplicationModule).Assembly);
+            // AppDrawer 应用管理
+            options.ConventionalControllers.Create(typeof(AppManageAppService).Assembly);
         });
     }
 }

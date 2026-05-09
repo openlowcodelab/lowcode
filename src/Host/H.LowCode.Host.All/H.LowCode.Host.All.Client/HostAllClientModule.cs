@@ -33,6 +33,7 @@ public class HostAllClientModule : AbpModule
     public const string OrganizationRemoteServiceName = "Organization";
     public const string ApprovalRemoteServiceName = "Approval";
     public const string AutoTestRemoteServiceName = "AutoTest";
+    public const string PortalRemoteServiceName = "Portal";
 
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
@@ -94,6 +95,11 @@ public class HostAllClientModule : AbpModule
         context.Services.AddHttpClientProxies(
             typeof(AutoTestApplicationContractsModule).Assembly,
             AutoTestRemoteServiceName
+        );
+
+        context.Services.AddHttpClientProxies(
+            typeof(H.Admin.Portal.IAppManageAppService).Assembly,
+            PortalRemoteServiceName
         );
     }
 }

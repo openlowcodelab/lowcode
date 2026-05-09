@@ -1,0 +1,618 @@
+@page "/admin/apps"
+
+@inject IAppManageAppService AppManageAppService
+@inject IJSRuntime JSRuntime
+
+<PageTitle>应用管理</PageTitle>
+
+<h3>应用管理</h3>
+
+<div class="app-management-container">
+    <div class="toolbar">
+        <button class="btn btn-primary" @onclick="ShowAddAppModal">
+            <i class="fa fa-plus"></i> 添加应用
+        </button>
+        <button class="btn btn-secondary" @onclick="ShowAddCategoryModal">
+            <i class="fa fa-folder-plus"></i> 添加分类
+        </button>
+        <button class="btn btn-info" @onclick="LoadApps">
+            <i class="fa fa-refresh"></i> 刷新
+        </button>
+    </div>
+
+    @if (loading)
+    {
+        <div class="loading">加载中...</div>
+    }
+    else
+    {
+        @foreach (var category in categories)
+        {
+            <div class="category-section">
+                <div class="category-header">
+                    <h4>@category.CategoryName</h4>
+                    <button class="btn btn-sm btn-danger" @onclick="() => DeleteCategory(category.CategoryName)" 
+                            disabled="@(category.Apps?.Count > 0)">
+                        删除分类
+                    </button>
+                </div>
+                
+                @if (category.Apps != null && category.Apps.Count > 0)
+                {
+                    <div class="apps-grid">
+                        @foreach (var app in category.Apps.OrderBy(a => a.Order))
+                        {
+                            <div class="app-card @(app.Enabled ? "" : "disabled")">
+                                <div class="app-icon">
+                                    @if (!string.IsNullOrEmpty(app.IconUrl))
+                                    {
+                                        <img src="@app.IconUrl" alt="@app.Name" />
+                                    }
+                                    else
+                                    {
+                                        <span>@(app.Icon ?? "📱")</span>
+                                    }
+                                </div>
+                                <div class="app-info">
+                                    <h5>@app.Name</h5>
+                                    <p class="app-id">ID: @app.Id</p>
+                                    <p class="app-url">@app.Url</p>
+                                    <p class="app-status">@(app.Enabled ? "启用" : "禁用")</p>
+                                </div>
+                                <div class="app-actions">
+                                    <button class="btn btn-sm btn-primary" @onclick="() => EditApp(app)">
+                                        编辑
+                                    </button>
+                                    <button class="btn btn-sm btn-danger" @onclick="() => DeleteApp(app.Id)">
+                                        删除
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="empty-message">该分类下暂无应用</p>
+                }
+            </div>
+        }
+    }
+</div>
+
+<!-- 添加/编辑应用模态框 -->
+@if (showAppModal)
+{
+    <div class="modal-overlay" @onclick="CloseAppModal">
+        <div class="modal-content" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h4>@(isEditing ? "编辑应用" : "添加应用")</h4>
+                <button class="btn-close" @onclick="CloseAppModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>应用ID *</label>
+                    <input type="text" @bind="editingApp.Id" class="form-control" 
+                           disabled="@(isEditing)" placeholder="例如: myapp" />
+                </div>
+                <div class="form-group">
+                    <label>应用名称 *</label>
+                    <input type="text" @bind="editingApp.Name" class="form-control" placeholder="例如: 我的应用" />
+                </div>
+                <div class="form-group">
+                    <label>图标 (Emoji)</label>
+                    <input type="text" @bind="editingApp.Icon" class="form-control" placeholder="例如: 🚀" />
+                </div>
+                <div class="form-group">
+                    <label>图标 URL</label>
+                    <input type="text" @bind="editingApp.IconUrl" class="form-control" placeholder="https://example.com/icon.png" />
+                </div>
+                <div class="form-group">
+                    <label>跳转地址 *</label>
+                    <input type="text" @bind="editingApp.Url" class="form-control" placeholder="例如: /myapp" />
+                </div>
+                <div class="form-group">
+                    <label>打开方式</label>
+                    <select @bind="editingApp.Target" class="form-control">
+                        <option value="_self">当前页 (_self)</option>
+                        <option value="_blank">新标签页 (_blank)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>所属分类 *</label>
+                    <select @bind="selectedCategory" class="form-control" disabled="@(isEditing)">
+                        @foreach (var cat in categories)
+                        {
+                            <option value="@cat.CategoryName">@cat.CategoryName</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>排序号</label>
+                    <input type="number" @bind="editingApp.Order" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" @bind="editingApp.Enabled" />
+                        启用
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>描述</label>
+                    <textarea @bind="editingApp.Description" class="form-control" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" @onclick="CloseAppModal">取消</button>
+                <button class="btn btn-primary" @onclick="SaveApp" disabled="@(saving)">
+                    @(saving ? "保存中..." : "保存")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- 添加分类模态框 -->
+@if (showCategoryModal)
+{
+    <div class="modal-overlay" @onclick="CloseCategoryModal">
+        <div class="modal-content" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h4>添加分类</h4>
+                <button class="btn-close" @onclick="CloseCategoryModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>分类名称 *</label>
+                    <input type="text" @bind="newCategoryName" class="form-control" placeholder="例如: 业务系统" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" @onclick="CloseCategoryModal">取消</button>
+                <button class="btn btn-primary" @onclick="SaveCategory" disabled="@(saving)">
+                    @(saving ? "保存中..." : "保存")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .app-management-container {
+        padding: 20px;
+    }
+
+    .toolbar {
+        margin-bottom: 20px;
+        display: flex;
+        gap: 10px;
+    }
+
+    .category-section {
+        margin-bottom: 30px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 20px;
+        background: #f9f9f9;
+    }
+
+    .category-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #007bff;
+    }
+
+    .category-header h4 {
+        margin: 0;
+        color: #333;
+    }
+
+    .apps-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 15px;
+    }
+
+    .app-card {
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 15px;
+        display: flex;
+        gap: 15px;
+        transition: all 0.3s;
+    }
+
+    .app-card:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .app-card.disabled {
+        opacity: 0.5;
+    }
+
+    .app-icon {
+        font-size: 48px;
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f0f0f0;
+        border-radius: 8px;
+    }
+
+    .app-icon img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+    .app-info {
+        flex: 1;
+    }
+
+    .app-info h5 {
+        margin: 0 0 5px 0;
+        color: #333;
+    }
+
+    .app-id {
+        margin: 0;
+        font-size: 12px;
+        color: #666;
+    }
+
+    .app-url {
+        margin: 5px 0;
+        font-size: 12px;
+        color: #007bff;
+    }
+
+    .app-status {
+        margin: 5px 0 0 0;
+        font-size: 12px;
+        font-weight: bold;
+        color: #28a745;
+    }
+
+    .app-card.disabled .app-status {
+        color: #dc3545;
+    }
+
+    .app-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .empty-message {
+        color: #999;
+        font-style: italic;
+    }
+
+    .loading {
+        text-align: center;
+        padding: 40px;
+        color: #666;
+    }
+
+    /* 模态框样式 */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 600px;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .modal-header h4 {
+        margin: 0;
+    }
+
+    .btn-close {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #666;
+    }
+
+    .modal-body {
+        padding: 20px;
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        padding: 20px;
+        border-top: 1px solid #e0e0e0;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+        color: #333;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+
+    .form-control:disabled {
+        background: #f0f0f0;
+    }
+
+    .btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+    .btn-primary {
+        background: #007bff;
+        color: white;
+    }
+
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+    }
+
+    .btn-info {
+        background: #17a2b8;
+        color: white;
+    }
+
+    .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .btn-sm {
+        padding: 4px 8px;
+        font-size: 12px;
+    }
+</style>
+
+@code {
+    private List<AppCategoryInfo> categories = new();
+    private bool loading = false;
+    private bool saving = false;
+    
+    // 应用模态框
+    private bool showAppModal = false;
+    private bool isEditing = false;
+    private AppItemInfo editingApp = new();
+    private string selectedCategory = string.Empty;
+    
+    // 分类模态框
+    private bool showCategoryModal = false;
+    private string newCategoryName = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadApps();
+    }
+
+    private async Task LoadApps()
+    {
+        loading = true;
+        try
+        {
+            categories = await AppManageAppService.GetAllCategoriesAsync();
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private void ShowAddAppModal()
+    {
+        isEditing = false;
+        editingApp = new AppItemInfo
+        {
+            Enabled = true,
+            Target = "_self",
+            Icon = "📱"
+        };
+        selectedCategory = categories.FirstOrDefault()?.CategoryName ?? string.Empty;
+        showAppModal = true;
+    }
+
+    private void EditApp(AppItemInfo app)
+    {
+        isEditing = true;
+        editingApp = new AppItemInfo
+        {
+            Id = app.Id,
+            Name = app.Name,
+            Icon = app.Icon,
+            IconUrl = app.IconUrl,
+            Url = app.Url,
+            Target = app.Target,
+            Description = app.Description,
+            Enabled = app.Enabled,
+            Order = app.Order,
+            MenuItems = app.MenuItems
+        };
+        
+        // 查找应用所属的分类
+        foreach (var category in categories)
+        {
+            if (category.Apps?.Any(a => a.Id == app.Id) == true)
+            {
+                selectedCategory = category.CategoryName;
+                break;
+            }
+        }
+        
+        showAppModal = true;
+    }
+
+    private void CloseAppModal()
+    {
+        showAppModal = false;
+        editingApp = new();
+    }
+
+    private async Task SaveApp()
+    {
+        if (string.IsNullOrWhiteSpace(editingApp.Id) || 
+            string.IsNullOrWhiteSpace(editingApp.Name) || 
+            string.IsNullOrWhiteSpace(editingApp.Url))
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "请填写必填字段（应用ID、名称、跳转地址）");
+            return;
+        }
+
+        saving = true;
+        try
+        {
+            bool success;
+            if (isEditing)
+            {
+                success = await AppManageAppService.UpdateAppAsync(editingApp.Id, editingApp);
+            }
+            else
+            {
+                success = await AppManageAppService.AddAppAsync(selectedCategory, editingApp);
+            }
+
+            if (success)
+            {
+                CloseAppModal();
+                await LoadApps();
+                await JSRuntime.InvokeVoidAsync("alert", "保存成功");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "保存失败，请检查日志");
+            }
+        }
+        finally
+        {
+            saving = false;
+        }
+    }
+
+    private async Task DeleteApp(string appId)
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"确定要删除应用 '{appId}' 吗？");
+        if (confirmed)
+        {
+            var success = await AppManageAppService.DeleteAppAsync(appId);
+            if (success)
+            {
+                await LoadApps();
+                await JSRuntime.InvokeVoidAsync("alert", "删除成功");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "删除失败，请检查日志");
+            }
+        }
+    }
+
+    private void ShowAddCategoryModal()
+    {
+        newCategoryName = string.Empty;
+        showCategoryModal = true;
+    }
+
+    private void CloseCategoryModal()
+    {
+        showCategoryModal = false;
+        newCategoryName = string.Empty;
+    }
+
+    private async Task SaveCategory()
+    {
+        if (string.IsNullOrWhiteSpace(newCategoryName))
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "请输入分类名称");
+            return;
+        }
+
+        saving = true;
+        try
+        {
+            var success = await AppManageAppService.AddCategoryAsync(newCategoryName);
+            if (success)
+            {
+                CloseCategoryModal();
+                await LoadApps();
+                await JSRuntime.InvokeVoidAsync("alert", "分类添加成功");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "添加失败，分类可能已存在");
+            }
+        }
+        finally
+        {
+            saving = false;
+        }
+    }
+
+    private async Task DeleteCategory(string categoryName)
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"确定要删除分类 '{categoryName}' 吗？");
+        if (confirmed)
+        {
+            var success = await AppManageAppService.DeleteCategoryAsync(categoryName);
+            if (success)
+            {
+                await LoadApps();
+                await JSRuntime.InvokeVoidAsync("alert", "删除成功");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "删除失败，分类下可能还有应用");
+            }
+        }
+    }
+}

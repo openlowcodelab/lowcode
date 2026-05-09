@@ -1,6 +1,14 @@
 namespace H.Admin.AppDrawer;
 
 /// <summary>
+/// 应用数据根对象（用于 JSON 反序列化）
+/// </summary>
+public class AppData
+{
+    public List<AppCategoryInfo> Categories { get; set; } = new();
+}
+
+/// <summary>
 /// 应用分类信息
 /// </summary>
 public class AppCategoryInfo
@@ -70,4 +78,9 @@ public class AppItemInfo
     /// 排序号（可选）
     /// </summary>
     public int Order { get; set; } = 0;
+
+    /// <summary>
+    /// 应用菜单项列表
+    /// </summary>
+    public List<AppMenuItem>? MenuItems { get; set; }
 }

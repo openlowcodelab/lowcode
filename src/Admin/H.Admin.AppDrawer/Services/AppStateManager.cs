@@ -8,6 +8,13 @@ namespace H.Admin.AppDrawer;
 public class AppStateManager
 {
     private string _currentAppId = "portal";
+    private List<AppCategoryInfo>? _categories;
+    private readonly string _jsonFilePath;
+
+    public AppStateManager(string? jsonFilePath = null)
+    {
+        _jsonFilePath = jsonFilePath ?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "Admin", "data", "apps.json");
+    }
 
     /// <summary>
     /// 当前应用ID
@@ -32,8 +39,47 @@ public class AppStateManager
     /// </summary>
     public List<AppCategoryInfo> GetAppCategories()
     {
-        return
-        [
+        if (_categories == null)
+        {
+            LoadAppsFromJson();
+        }
+        return _categories ?? new List<AppCategoryInfo>();
+    }
+
+    /// <summary>
+    /// 从 JSON 文件加载应用数据
+    /// </summary>
+    private void LoadAppsFromJson()
+    {
+        try
+        {
+            if (!File.Exists(_jsonFilePath))
+            {
+                // 如果文件不存在，使用默认数据
+                _categories = GetDefaultAppCategories();
+                return;
+            }
+
+            var jsonContent = File.ReadAllText(_jsonFilePath);
+            var appData = jsonContent.FromJson<AppData>();
+            
+            _categories = appData?.Categories ?? new List<AppCategoryInfo>();
+        }
+        catch (Exception ex)
+        {
+            // 如果加载失败，使用默认数据
+            Console.WriteLine($"Failed to load apps from JSON: {ex.Message}");
+            _categories = GetDefaultAppCategories();
+        }
+    }
+
+    /// <summary>
+    /// 获取默认应用分类（硬编码的备用数据）
+    /// </summary>
+    private List<AppCategoryInfo> GetDefaultAppCategories()
+    {
+        return new List<AppCategoryInfo>
+        {
             new() {
                 CategoryName = "基础服务",
                 Apps =
@@ -81,7 +127,7 @@ public class AppStateManager
                     }
                 ]
             }
-        ];
+        };
     }
 
     /// <summary>
@@ -106,80 +152,32 @@ public class AppStateManager
     /// </summary>
     public List<AppMenuItem> GetAppMenuItems(string appId)
     {
-        return appId switch
+        if (_categories == null)
         {
-            "account" => GetAccountMenuItems(),
-            "organization" => GetOrganizationMenuItems(),
-            "design-engine" => GetDesignEngineMenuItems(),
-            "approval" => GetApprovalMenuItems(),
-            "autotest" => GetAutoTestMenuItems(),
-            _ => new List<AppMenuItem>()
-        };
+            LoadAppsFromJson();
+        }
+
+        // 从加载的应用数据中查找菜单项
+        foreach (var category in _categories ?? new List<AppCategoryInfo>())
+        {
+            var app = category.Apps?.FirstOrDefault(a => a.Id == appId);
+            if (app != null && app.MenuItems != null)
+            {
+                return app.MenuItems;
+            }
+        }
+
+        // 如果未找到，返回空列表
+        return new List<AppMenuItem>();
     }
 
     /// <summary>
-    /// Account 应用菜单
+    /// 重新加载应用数据（用于管理页面更新后刷新）
     /// </summary>
-    private List<AppMenuItem> GetAccountMenuItems()
+    public void ReloadApps()
     {
-        return new List<AppMenuItem>
-        {
-            new AppMenuItem { Name = "用户列表", Url = "/account/users", Icon = "👥" }
-        };
-    }
-
-    /// <summary>
-    /// Organization 应用菜单
-    /// </summary>
-    private List<AppMenuItem> GetOrganizationMenuItems()
-    {
-        return new List<AppMenuItem>
-        {
-            new AppMenuItem { Name = "组织管理", Url = "/organization", Icon = "🏢" },
-            new AppMenuItem { Name = "成员管理", Url = "/organization/member", Icon = "👥" },
-            new AppMenuItem { Name = "角色管理", Url = "/organization/role", Icon = "🔑" }
-        };
-    }
-
-    /// <summary>
-    /// DesignEngine 应用菜单
-    /// </summary>
-    private List<AppMenuItem> GetDesignEngineMenuItems()
-    {
-        return new List<AppMenuItem>
-        {
-            new AppMenuItem { Name = "我的应用", Url = "/myapps", Icon = "📱" },
-            new AppMenuItem { Name = "页面管理", Url = "/pages", Icon = "📄" },
-            new AppMenuItem { Name = "数据源管理", Url = "/datasources", Icon = "💾" }
-        };
-    }
-
-    /// <summary>
-    /// Approval 应用菜单
-    /// </summary>
-    private List<AppMenuItem> GetApprovalMenuItems()
-    {
-        return new List<AppMenuItem>
-        {
-            new AppMenuItem { Name = "首页", Url = "/approval", Icon = "🏠" },
-            new AppMenuItem { Name = "发起审批", Url = "/approval/start", Icon = "📝" },
-            new AppMenuItem { Name = "我发起的", Url = "/approval/my", Icon = "📤" },
-            new AppMenuItem { Name = "待我审批", Url = "/approval/pending", Icon = "⏳" },
-            new AppMenuItem { Name = "审批管理", Url = "/approval/management", Icon = "⚙️" }
-        };
-    }
-
-    /// <summary>
-    /// AutoTest 应用菜单
-    /// </summary>
-    private List<AppMenuItem> GetAutoTestMenuItems()
-    {
-        return new List<AppMenuItem>
-        {
-            new AppMenuItem { Name = "首页", Url = "/autotest", Icon = "🏠" },
-            new AppMenuItem { Name = "项目管理", Url = "/autotest/projects", Icon = "📁" },
-            new AppMenuItem { Name = "测试用例", Url = "/autotest/project-cases", Icon = "📋" }
-        };
+        _categories = null;
+        LoadAppsFromJson();
     }
 }
 
