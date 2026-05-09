@@ -1,7 +1,7 @@
 using H.Admin.AppDrawer;
 using Volo.Abp.Application.Services;
 
-namespace H.Admin.Portal;
+namespace H.Portal.Application.Contracts;
 
 /// <summary>
 /// 应用管理服务接口
@@ -11,7 +11,7 @@ public interface IAppManageAppService : IApplicationService
     /// <summary>
     /// 获取所有应用分类
     /// </summary>
-    Task<List<AppCategoryInfo>> GetAllCategoriesAsync();
+    Task<AppCategoryInfo[]> GetAllCategoriesAsync();
 
     /// <summary>
     /// 添加应用

@@ -1,3 +1,4 @@
+using H.Admin.AppDrawer;
 using System;
 
 namespace H.Admin.AppDrawer;
@@ -8,7 +9,7 @@ namespace H.Admin.AppDrawer;
 public class AppStateManager
 {
     private string _currentAppId = "portal";
-    private List<AppCategoryInfo>? _categories;
+    private AppCategoryInfo[]? _categories;
     private readonly string _jsonFilePath;
 
     public AppStateManager(string? jsonFilePath = null)
@@ -37,13 +38,13 @@ public class AppStateManager
     /// <summary>
     /// 获取应用分类列表
     /// </summary>
-    public List<AppCategoryInfo> GetAppCategories()
+    public AppCategoryInfo[] GetAppCategories()
     {
         if (_categories == null)
         {
             LoadAppsFromJson();
         }
-        return _categories ?? new List<AppCategoryInfo>();
+        return _categories ?? [];
     }
 
     /// <summary>
@@ -56,78 +57,21 @@ public class AppStateManager
             if (!File.Exists(_jsonFilePath))
             {
                 // 如果文件不存在，使用默认数据
-                _categories = GetDefaultAppCategories();
+                _categories = [];
                 return;
             }
 
             var jsonContent = File.ReadAllText(_jsonFilePath);
             var appData = jsonContent.FromJson<AppData>();
             
-            _categories = appData?.Categories ?? new List<AppCategoryInfo>();
+            _categories = appData?.AppCategories?.ToArray() ?? [];
         }
         catch (Exception ex)
         {
             // 如果加载失败，使用默认数据
             Console.WriteLine($"Failed to load apps from JSON: {ex.Message}");
-            _categories = GetDefaultAppCategories();
+            _categories = [];
         }
-    }
-
-    /// <summary>
-    /// 获取默认应用分类（硬编码的备用数据）
-    /// </summary>
-    private List<AppCategoryInfo> GetDefaultAppCategories()
-    {
-        return new List<AppCategoryInfo>
-        {
-            new() {
-                CategoryName = "基础服务",
-                Apps =
-                [
-                    new() {
-                        Id = "account",
-                        Name = "用户管理",
-                        Icon = "👤",
-                        Url = "/account/users",
-                        Target = "_self"
-                    },
-                    new() {
-                        Id = "organization",
-                        Name = "组织管理",
-                        Icon = "🏢",
-                        Url = "/organization",
-                        Target = "_self"
-                    },
-                    new() {
-                        Id = "approval",
-                        Name = "审批管理",
-                        Icon = "✅",
-                        Url = "/approval",
-                        Target = "_self"
-                    },
-                    new() {
-                        Id = "autotest",
-                        Name = "自动化测试",
-                        Icon = "🧪",
-                        Url = "/autotest",
-                        Target = "_self"
-                    }
-                ]
-            },
-            new() {
-                CategoryName = "低代码平台",
-                Apps =
-                [
-                    new() {
-                        Id = "design-engine",
-                        Name = "应用开发",
-                        Icon = "🛠️",
-                        Url = "/workbench",
-                        Target = "_blank"
-                    }
-                ]
-            }
-        };
     }
 
     /// <summary>
@@ -158,7 +102,7 @@ public class AppStateManager
         }
 
         // 从加载的应用数据中查找菜单项
-        foreach (var category in _categories ?? new List<AppCategoryInfo>())
+        foreach (var category in _categories ?? [])
         {
             var app = category.Apps?.FirstOrDefault(a => a.Id == appId);
             if (app != null && app.MenuItems != null)
@@ -179,14 +123,4 @@ public class AppStateManager
         _categories = null;
         LoadAppsFromJson();
     }
-}
-
-/// <summary>
-/// 应用菜单项
-/// </summary>
-public class AppMenuItem
-{
-    public string Name { get; set; } = string.Empty;
-    public string Url { get; set; } = string.Empty;
-    public string Icon { get; set; } = "📄";
 }

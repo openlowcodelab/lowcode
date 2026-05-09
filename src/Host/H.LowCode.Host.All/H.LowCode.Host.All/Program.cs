@@ -68,7 +68,7 @@ app.MapRazorComponents<App>()
     .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(
         typeof(H.LowCode.Host.All.Client._Imports).Assembly,
-        typeof(H.Admin.Portal._Imports).Assembly,
+        typeof(H.Portal.Web._Imports).Assembly,
         typeof(H.Account.Web._Imports).Assembly,
         typeof(H.Organization.Web._Imports).Assembly,
         typeof(H.Approval.Web._Imports).Assembly,

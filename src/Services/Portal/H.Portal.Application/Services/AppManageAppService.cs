@@ -1,9 +1,11 @@
 using H.Admin.AppDrawer;
+using H.Portal.Application.Contracts;
+using System;
 using System.Text.Json;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
 
-namespace H.Admin.Portal;
+namespace H.Portal.Application;
 
 /// <summary>
 /// 应用管理服务，负责应用的增删改查操作
@@ -12,36 +14,26 @@ namespace H.Admin.Portal;
 public class AppManageAppService : ApplicationService, IAppManageAppService
 {
     private readonly string _jsonFilePath;
-    private readonly AppStateManager _appStateManager;
 
-    public AppManageAppService(string? jsonFilePath = null, AppStateManager? appStateManager = null)
+    public AppManageAppService()
     {
-        _jsonFilePath = jsonFilePath ?? Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "Admin", "data", "apps.json");
-        _appStateManager = appStateManager ?? new AppStateManager(jsonFilePath);
+        _jsonFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "Admin", "data", "apps.json");
     }
 
     /// <summary>
     /// 获取所有应用分类
     /// </summary>
-    public Task<List<AppCategoryInfo>> GetAllCategoriesAsync()
+    public async Task<AppCategoryInfo[]> GetAllCategoriesAsync()
     {
-        return Task.FromResult(_appStateManager.GetAppCategories());
-    }
-
-    /// <summary>
-    /// 获取所有应用分类（同步版本，供内部使用）
-    /// </summary>
-    public List<AppCategoryInfo> GetAllCategories()
-    {
-        return _appStateManager.GetAppCategories();
+        return LoadAppsFromJson();
     }
 
     /// <summary>
     /// 获取所有应用（扁平化）
     /// </summary>
-    public List<AppItemInfo> GetAllApps()
+    public async Task<AppItemInfo[]> GetAllAppsAsync()
     {
-        var categories = GetAllCategories();
+        var categories = await GetAllCategoriesAsync();
         var allApps = new List<AppItemInfo>();
         
         foreach (var category in categories)
@@ -52,15 +44,15 @@ public class AppManageAppService : ApplicationService, IAppManageAppService
             }
         }
         
-        return allApps.OrderBy(a => a.Order).ToList();
+        return allApps.OrderBy(a => a.Order).ToArray();
     }
 
     /// <summary>
     /// 根据 ID 获取应用
     /// </summary>
-    public AppItemInfo? GetAppById(string appId)
+    public async Task<AppItemInfo?> GetAppByIdAsync(string appId)
     {
-        var categories = GetAllCategories();
+        var categories = await GetAllCategoriesAsync();
         
         foreach (var category in categories)
         {
@@ -82,7 +74,7 @@ public class AppManageAppService : ApplicationService, IAppManageAppService
         try
         {
             var appData = LoadAppData();
-            var category = appData.Categories.FirstOrDefault(c => c.CategoryName == categoryId);
+            var category = appData.AppCategories.FirstOrDefault(c => c.CategoryName == categoryId);
             
             if (category == null)
             {
@@ -90,14 +82,14 @@ public class AppManageAppService : ApplicationService, IAppManageAppService
                 category = new AppCategoryInfo
                 {
                     CategoryName = categoryId,
-                    Apps = new List<AppItemInfo>()
+                    Apps = []
                 };
-                appData.Categories.Add(category);
+                appData.AppCategories.Add(category);
             }
             
             if (category.Apps == null)
             {
-                category.Apps = new List<AppItemInfo>();
+                category.Apps = [];
             }
             
             // 检查 ID 是否已存在
@@ -109,7 +101,6 @@ public class AppManageAppService : ApplicationService, IAppManageAppService
             category.Apps.Add(app);
             
             await SaveAppDataAsync(appData);
-            _appStateManager.ReloadApps();
             
             return true;
         }
@@ -129,22 +120,21 @@ public class AppManageAppService : ApplicationService, IAppManageAppService
         {
             var appData = LoadAppData();
             
-            foreach (var category in appData.Categories)
+            foreach (var category in appData.AppCategories)
             {
                 var appIndex = category.Apps?.FindIndex(a => a.Id == appId) ?? -1;
                 
                 if (appIndex >= 0 && category.Apps != null)
                 {
                     // 保留原有的菜单项（如果没有提供新的）
-                    if (updatedApp.MenuItems == null || updatedApp.MenuItems.Count == 0)
-                    {
-                        updatedApp.MenuItems = category.Apps[appIndex].MenuItems;
-                    }
+                    //if (updatedApp.MenuItems == null || updatedApp.MenuItems.Count == 0)
+                    //{
+                    //    updatedApp.MenuItems = category.Apps[appIndex].MenuItems;
+                    //}
                     
                     category.Apps[appIndex] = updatedApp;
                     
                     await SaveAppDataAsync(appData);
-                    _appStateManager.ReloadApps();
                     
                     return true;
                 }
@@ -168,7 +158,7 @@ public class AppManageAppService : ApplicationService, IAppManageAppService
         {
             var appData = LoadAppData();
             
-            foreach (var category in appData.Categories)
+            foreach (var category in appData.AppCategories)
             {
                 var app = category.Apps?.FirstOrDefault(a => a.Id == appId);
                 
@@ -177,7 +167,6 @@ public class AppManageAppService : ApplicationService, IAppManageAppService
                     category.Apps.Remove(app);
                     
                     await SaveAppDataAsync(appData);
-                    _appStateManager.ReloadApps();
                     
                     return true;
                 }
@@ -201,19 +190,18 @@ public class AppManageAppService : ApplicationService, IAppManageAppService
         {
             var appData = LoadAppData();
             
-            if (appData.Categories.Any(c => c.CategoryName == categoryName))
+            if (appData.AppCategories.Any(c => c.CategoryName == categoryName))
             {
                 throw new Exception($"分类 '{categoryName}' 已存在");
             }
             
-            appData.Categories.Add(new AppCategoryInfo
+            appData.AppCategories.Add(new AppCategoryInfo
             {
                 CategoryName = categoryName,
                 Apps = new List<AppItemInfo>()
             });
             
             await SaveAppDataAsync(appData);
-            _appStateManager.ReloadApps();
             
             return true;
         }
@@ -232,7 +220,7 @@ public class AppManageAppService : ApplicationService, IAppManageAppService
         try
         {
             var appData = LoadAppData();
-            var category = appData.Categories.FirstOrDefault(c => c.CategoryName == categoryName);
+            var category = appData.AppCategories.FirstOrDefault(c => c.CategoryName == categoryName);
             
             if (category == null)
             {
@@ -244,10 +232,9 @@ public class AppManageAppService : ApplicationService, IAppManageAppService
                 throw new Exception($"分类 '{categoryName}' 下还有应用，无法删除");
             }
             
-            appData.Categories.Remove(category);
+            appData.AppCategories.Remove(category);
             
             await SaveAppDataAsync(appData);
-            _appStateManager.ReloadApps();
             
             return true;
         }
@@ -269,13 +256,8 @@ public class AppManageAppService : ApplicationService, IAppManageAppService
         }
         
         var jsonContent = File.ReadAllText(_jsonFilePath);
-        var options = new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true,
-            WriteIndented = true
-        };
-        
-        var appData = JsonSerializer.Deserialize<AppData>(jsonContent, options);
+                
+        var appData = jsonContent.FromJson<AppData>();
         return appData ?? new AppData();
     }
 
@@ -300,5 +282,30 @@ public class AppManageAppService : ApplicationService, IAppManageAppService
         }
         
         await File.WriteAllTextAsync(_jsonFilePath, jsonContent);
+    }
+
+    /// <summary>
+    /// 从 JSON 文件加载应用数据
+    /// </summary>
+    private AppCategoryInfo[] LoadAppsFromJson()
+    {
+        try
+        {
+            if (!File.Exists(_jsonFilePath))
+            {
+                return [];
+            }
+
+            var jsonContent = File.ReadAllText(_jsonFilePath);
+            var appData = jsonContent.FromJson<AppData>();
+
+            return appData?.AppCategories?.ToArray() ?? [];
+        }
+        catch (Exception ex)
+        {
+            // 如果加载失败，使用默认数据
+            Console.WriteLine($"Failed to load apps from JSON: {ex.Message}");
+            return [];
+        }
     }
 }

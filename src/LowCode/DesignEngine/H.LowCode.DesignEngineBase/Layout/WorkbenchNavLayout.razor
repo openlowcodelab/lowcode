@@ -73,7 +73,7 @@
     private bool showAppDrawer = false;
     private bool IsLoggedIn => !string.IsNullOrEmpty(UserName);
     private string UserName { get; set; } = "用户";
-    private List<AppCategoryInfo> appCategories = new();
+    private AppCategoryInfo[] appCategories = [];
     
     private readonly MenuDataItem[] MenuItems =
     {

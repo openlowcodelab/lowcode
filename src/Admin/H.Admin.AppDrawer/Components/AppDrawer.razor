@@ -1,9 +1,6 @@
 ﻿@namespace H.Admin.AppDrawer
-@using Microsoft.JSInterop
-@using System.Threading.Tasks
-@using System.Linq
 
-@inject Microsoft.JSInterop.IJSRuntime JSRuntime
+@inject IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager
 
 <link rel="stylesheet" href="@Assets["_content/H.Admin.AppDrawer/css/AppDrawer.css"]" />
@@ -93,7 +90,7 @@
     /// 应用分类列表
     /// </summary>
     [Parameter]
-    public List<AppCategoryInfo> AppCategories { get; set; } = new();
+    public AppCategoryInfo[] AppCategories { get; set; } = [];
 
     /// <summary>
     /// 关闭抽屉事件

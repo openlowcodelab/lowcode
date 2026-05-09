@@ -1,6 +1,5 @@
 using H.Account.Application;
 using H.Admin.AppDrawer;
-using H.Admin.Portal;
 using H.Approval.Application;
 using H.AutoTest.Application;
 using H.LowCode.ComponentBase;
@@ -13,6 +12,7 @@ using H.LowCode.RenderEngine.Repository.JsonFile;
 using H.LowCode.Themes.AntBlazor;
 using H.LowCode.Workbench;
 using H.Organization.Application;
+using H.Portal.Application;
 using Volo.Abp.AspNetCore.Mvc;
 using Volo.Abp.Autofac;
 using Volo.Abp.Modularity;
@@ -43,7 +43,9 @@ namespace H.LowCode.Host.All;
     // Approval
     typeof(ApprovalApplicationModule),
     // AutoTest
-    typeof(AutoTestApplicationModule)
+    typeof(AutoTestApplicationModule),
+    // Portal
+    typeof(PortalApplicationModule)
 )]
 public class HostAllModule : AbpModule
 {
@@ -73,8 +75,7 @@ public class HostAllModule : AbpModule
             options.ConventionalControllers.Create(typeof(RenderEngineApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(ApprovalApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(AutoTestApplicationModule).Assembly);
-            // AppDrawer 应用管理
-            options.ConventionalControllers.Create(typeof(AppManageAppService).Assembly);
+            options.ConventionalControllers.Create(typeof(PortalApplicationModule).Assembly);
         });
     }
 }

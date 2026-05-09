@@ -8,6 +8,7 @@ using H.LowCode.RenderEngine.Application.Contracts;
 using H.LowCode.Themes.AntBlazor;
 using H.LowCode.Workbench;
 using H.Organization.Application.Contracts;
+using H.Portal.Application.Contracts;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Volo.Abp.Autofac.WebAssembly;
 using Volo.Abp.Http.Client;
@@ -98,7 +99,7 @@ public class HostAllClientModule : AbpModule
         );
 
         context.Services.AddHttpClientProxies(
-            typeof(H.Admin.Portal.IAppManageAppService).Assembly,
+            typeof(PortalApplicationContractsModule).Assembly,
             PortalRemoteServiceName
         );
     }

@@ -1,13 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk.Razor">
-  <Import Project="..\..\common.props" />
+  <Import Project="../../../common.props" />
   <ItemGroup>
     <SupportedPlatform Include="browser" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
-    <PackageReference Include="Volo.Abp.Ddd.Application" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Admin\H.Admin.AppDrawer\H.Admin.AppDrawer.csproj" />
+    <ProjectReference Include="..\..\..\Admin\H.Admin.AppDrawer\H.Admin.AppDrawer.csproj" />
+    <ProjectReference Include="..\H.Portal.Application.Contracts\H.Portal.Application.Contracts.csproj" />
   </ItemGroup>
 </Project>
