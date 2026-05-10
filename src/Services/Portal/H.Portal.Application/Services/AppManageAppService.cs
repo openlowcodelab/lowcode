@@ -17,7 +17,21 @@ public class AppManageAppService : ApplicationService, IAppManageAppService
 
     public AppManageAppService()
     {
-        _jsonFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "Admin", "data", "apps.json");
+        _jsonFilePath = FindAppsJsonFile();
+    }
+
+    /// <summary>
+    /// 查找 apps.json 文件
+    /// </summary>
+    private string FindAppsJsonFile()
+    {
+#if DEBUG
+        var jsonFilePath = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "Services", "Portal", "data", "apps.json");
+        return jsonFilePath;
+#else
+        var jsonFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data", "apps.json");
+        return jsonFilePath;
+#endif
     }
 
     /// <summary>
