@@ -79,10 +79,11 @@
     protected override void OnInitialized()
     {
         MenuItems = [
-            new() { Name = "审批流程", Icon = "📋", Url = "/approval/processes" },
-            new() { Name = "待我审批", Icon = "⏳", Url = "/approval/pending" },
-            new() { Name = "我已审批", Icon = "✅", Url = "/approval/approved" },
-            new() { Name = "我发起的", Icon = "📤", Url = "/approval/initiated" }
+            new AppMenuItem { Name = "首页", Url = "/approval", Icon = "🏠" },
+            new AppMenuItem { Name = "发起审批", Url = "/approval/start", Icon = "📝" },
+            new AppMenuItem { Name = "我发起的", Url = "/approval/my", Icon = "📤" },
+            new AppMenuItem { Name = "待我审批", Url = "/approval/pending", Icon = "⏳" },
+            new AppMenuItem { Name = "审批管理", Url = "/approval/management", Icon = "⚙️" }
         ];
     }
 

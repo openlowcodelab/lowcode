@@ -70,19 +70,4 @@ public class AppItemInfo
     /// 排序号（可选）
     /// </summary>
     public int Order { get; set; } = 0;
-
-    /// <summary>
-    /// 应用菜单项列表
-    /// </summary>
-    public List<AppMenuItem>? MenuItems { get; set; }
-}
-
-/// <summary>
-/// 应用菜单项
-/// </summary>
-public class AppMenuItem
-{
-    public string Name { get; set; } = string.Empty;
-    public string Url { get; set; } = string.Empty;
-    public string Icon { get; set; } = "📄";
 }

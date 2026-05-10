@@ -79,10 +79,9 @@
     protected override void OnInitialized()
     {
         MenuItems = [
-            new() { Name = "测试项目", Icon = "📁", Url = "/autotest/projects" },
-            new() { Name = "测试用例", Icon = "📝", Url = "/autotest/cases" },
-            new() { Name = "测试执行", Icon = "▶️", Url = "/autotest/execution" },
-            new() { Name = "测试报告", Icon = "📊", Url = "/autotest/reports" }
+            new AppMenuItem { Name = "首页", Url = "/autotest", Icon = "🏠" },
+            new AppMenuItem { Name = "项目管理", Url = "/autotest/projects", Icon = "📁" },
+            new AppMenuItem { Name = "测试用例", Url = "/autotest/project-cases", Icon = "📋" }
         ];
     }
 
