@@ -1,11 +1,13 @@
 ﻿@namespace H.Organization.Web
 
-@inherits DefaultLayoutComponentBase
+@inherits LayoutComponentBase
+
+<DefaultLayoutComponent AppName="组织管理" MenuItems="@MenuItems">
+    @Body
+</DefaultLayoutComponent>
 
 @code {
-    protected override string AppName => "组织管理";
-
-    protected override List<AppMenuItem> MenuItems => new()
+    private static List<AppMenuItem> MenuItems => new()
     {
         new AppMenuItem { Name = "组织管理", Url = "/organization", Icon = "🏢" },
         new AppMenuItem { Name = "成员管理", Url = "/organization/member", Icon = "👥" },

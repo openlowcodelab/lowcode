@@ -1,0 +1,48 @@
+@namespace H.AppDrawer.Components
+
+<style>
+.layout-container { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+.menu-container { display: flex; flex: 1; overflow: hidden; }
+.content-container { flex: 1; overflow-y: auto; background-color: #f0f2f5; padding: 20px; }
+</style>
+
+<div class="layout-container">
+    <TopNavbar AppName="@AppName" OnDrawerToggle="ToggleAppDrawer" />
+    
+    <div class="menu-container">
+        <SidebarMenu MenuItems="@MenuItems" />
+
+        <div class="content-container">
+            @ChildContent
+        </div>
+    </div>
+    
+    <AppDrawer @ref="appDrawer" />
+</div>
+
+@code {
+    /// <summary>
+    /// 应用名称
+    /// </summary>
+    [Parameter]
+    public string AppName { get; set; } = "应用";
+
+    /// <summary>
+    /// 菜单列表（不传则不渲染菜单）
+    /// </summary>
+    [Parameter]
+    public List<AppMenuItem>? MenuItems { get; set; }
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    private AppDrawer? appDrawer;
+
+    /// <summary>
+    /// 切换应用抽屉
+    /// </summary>
+    private void ToggleAppDrawer()
+    {
+        appDrawer?.Toggle();
+    }
+}

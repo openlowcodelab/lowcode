@@ -1,10 +1,11 @@
 ﻿@namespace H.Portal.Web
 
-@inherits DefaultLayoutComponentBase
+@inherits LayoutComponentBase
 
-<link rel="stylesheet" href="@Assets["_content/H.Portal.Web/css/site.css"]" />
+<DefaultLayoutComponent AppName="H.LowCode">
+    @Body
+</DefaultLayoutComponent>
 
 @code{
-    protected override string AppName => "H.LowCode";
-    protected override bool ShowSidebar => false;
+
 }

@@ -1,11 +1,13 @@
 @namespace H.Approval.Web
 
-@inherits DefaultLayoutComponentBase
+@inherits LayoutComponentBase
+
+<DefaultLayoutComponent AppName="审批管理" MenuItems="@MenuItems">
+    @Body
+</DefaultLayoutComponent>
 
 @code {
-    protected override string AppName => "审批管理";
-
-    protected override List<AppMenuItem> MenuItems => new()
+    private static List<AppMenuItem> MenuItems => new()
     {
         new AppMenuItem { Name = "首页", Url = "/approval", Icon = "🏠" },
         new AppMenuItem { Name = "发起审批", Url = "/approval/start", Icon = "📝" },
