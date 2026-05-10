@@ -5,67 +5,92 @@
 
 <PageTitle>应用管理</PageTitle>
 
-<h3>应用管理</h3>
-
-<div class="app-management-container">
-    <div class="toolbar">
-        <button class="btn btn-primary" @onclick="ShowAddAppModal">
-            <i class="fa fa-plus"></i> 添加应用
-        </button>
-        <button class="btn btn-secondary" @onclick="ShowAddCategoryModal">
-            <i class="fa fa-folder-plus"></i> 添加分类
-        </button>
-        <button class="btn btn-info" @onclick="LoadApps">
-            <i class="fa fa-refresh"></i> 刷新
-        </button>
+<div class="app-mgmt-container">
+    <div class="app-mgmt-page-header">
+        <div class="app-mgmt-header-content">
+            <div class="app-mgmt-header-title">
+                <h2>应用管理</h2>
+                <p class="app-mgmt-subtitle">管理和配置您的应用程序</p>
+            </div>
+            <div class="app-mgmt-toolbar">
+                <button class="app-mgmt-btn app-mgmt-btn-primary" @onclick="ShowAddAppModal">
+                    <i class="fa fa-plus"></i> 添加应用
+                </button>
+                <button class="app-mgmt-btn app-mgmt-btn-secondary" @onclick="ShowAddCategoryModal">
+                    <i class="fa fa-folder-plus"></i> 添加分类
+                </button>
+                <button class="app-mgmt-btn app-mgmt-btn-info" @onclick="LoadApps">
+                    <i class="fa fa-refresh"></i> 刷新
+                </button>
+            </div>
+        </div>
     </div>
 
     @if (loading)
     {
-        <div class="loading">加载中...</div>
+        <div class="app-mgmt-loading">加载中...</div>
     }
     else
     {
         @foreach (var category in categories)
         {
-            <div class="category-section">
-                <div class="category-header">
-                    <h4>@category.CategoryName</h4>
-                    <button class="btn btn-sm btn-danger" @onclick="() => DeleteCategory(category.CategoryName)" 
+            <div class="app-mgmt-category-section">
+                <div class="app-mgmt-category-header">
+                    <div class="app-mgmt-category-title">
+                        <i class="fa fa-folder-open"></i>
+                        <h4>@category.CategoryName</h4>
+                        <span class="app-mgmt-app-count">@category.Apps?.Count 个应用</span>
+                    </div>
+                    <button class="app-mgmt-btn-delete-category" @onclick="() => DeleteCategory(category.CategoryName)" 
                             disabled="@(category.Apps?.Count > 0)">
-                        删除分类
+                        <i class="fa fa-trash"></i> 删除分类
                     </button>
                 </div>
                 
                 @if (category.Apps != null && category.Apps.Count > 0)
                 {
-                    <div class="apps-grid">
+                    <div class="app-mgmt-apps-grid">
                         @foreach (var app in category.Apps.OrderBy(a => a.Order))
                         {
-                            <div class="app-card @(app.Enabled ? "" : "disabled")">
-                                <div class="app-icon">
-                                    @if (!string.IsNullOrEmpty(app.IconUrl))
-                                    {
-                                        <img src="@app.IconUrl" alt="@app.Name" />
-                                    }
-                                    else
-                                    {
-                                        <span>@(app.Icon ?? "📱")</span>
-                                    }
+                            <div class="app-mgmt-app-card @(app.Enabled ? "" : "app-mgmt-disabled")">
+                                <div class="app-mgmt-icon-wrapper">
+                                    <div class="app-mgmt-icon">
+                                        @if (!string.IsNullOrEmpty(app.IconUrl))
+                                        {
+                                            <img src="@app.IconUrl" alt="@app.Name" />
+                                        }
+                                        else
+                                        {
+                                            <span>@(app.Icon ?? "📱")</span>
+                                        }
+                                    </div>
                                 </div>
-                                <div class="app-info">
-                                    <h5>@app.Name</h5>
-                                    <p class="app-id">ID: @app.Id</p>
-                                    <p class="app-url">@app.Url</p>
-                                    <p class="app-status">@(app.Enabled ? "启用" : "禁用")</p>
-                                </div>
-                                <div class="app-actions">
-                                    <button class="btn btn-sm btn-primary" @onclick="() => EditApp(app)">
-                                        编辑
-                                    </button>
-                                    <button class="btn btn-sm btn-danger" @onclick="() => DeleteApp(app.Id)">
-                                        删除
-                                    </button>
+                                <div class="app-mgmt-app-info">
+                                    <div class="app-mgmt-app-header">
+                                        <h5>@app.Name</h5>
+                                        <span class="app-mgmt-app-status @(app.Enabled ? "app-mgmt-enabled" : "app-mgmt-disabled")">
+                                            <i class="fa @(app.Enabled ? "fa-check-circle" : "fa-times-circle")"></i>
+                                            @(app.Enabled ? "启用" : "禁用")
+                                        </span>
+                                    </div>
+                                    <div class="app-mgmt-app-meta">
+                                        <div class="app-mgmt-meta-row">
+                                            <span class="app-mgmt-meta-label">ID:</span>
+                                            <span class="app-mgmt-meta-value">@app.Id</span>
+                                        </div>
+                                        <div class="app-mgmt-meta-row">
+                                            <span class="app-mgmt-meta-label">地址:</span>
+                                            <span class="app-mgmt-meta-value">@app.Url</span>
+                                        </div>
+                                    </div>
+                                    <div class="app-mgmt-app-actions">
+                                        <button class="app-mgmt-btn-action app-mgmt-btn-edit" @onclick="() => EditApp(app)">
+                                            <span>编辑</span>
+                                        </button>
+                                        <button class="app-mgmt-btn-action app-mgmt-btn-delete" @onclick="() => DeleteApp(app.Id)">
+                                            <span>删除</span>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         }
@@ -73,7 +98,7 @@
                 }
                 else
                 {
-                    <p class="empty-message">该分类下暂无应用</p>
+                    <p class="app-mgmt-empty-message">该分类下暂无应用</p>
                 }
             </div>
         }
@@ -83,68 +108,68 @@
 <!-- 添加/编辑应用模态框 -->
 @if (showAppModal)
 {
-    <div class="modal-overlay" @onclick="CloseAppModal">
-        <div class="modal-content" @onclick:stopPropagation="true">
-            <div class="modal-header">
+    <div class="app-mgmt-modal-overlay" @onclick="CloseAppModal">
+        <div class="app-mgmt-modal-content" @onclick:stopPropagation="true">
+            <div class="app-mgmt-modal-header">
                 <h4>@(isEditing ? "编辑应用" : "添加应用")</h4>
-                <button class="btn-close" @onclick="CloseAppModal">×</button>
+                <button class="app-mgmt-btn-close" @onclick="CloseAppModal">×</button>
             </div>
-            <div class="modal-body">
-                <div class="form-group">
+            <div class="app-mgmt-modal-body">
+                <div class="app-mgmt-form-group">
                     <label>应用ID *</label>
-                    <input type="text" @bind="editingApp.Id" class="form-control" 
+                    <input type="text" @bind="editingApp.Id" class="app-mgmt-form-control" 
                            disabled="@(isEditing)" placeholder="例如: myapp" />
                 </div>
-                <div class="form-group">
+                <div class="app-mgmt-form-group">
                     <label>应用名称 *</label>
-                    <input type="text" @bind="editingApp.Name" class="form-control" placeholder="例如: 我的应用" />
+                    <input type="text" @bind="editingApp.Name" class="app-mgmt-form-control" placeholder="例如: 我的应用" />
                 </div>
-                <div class="form-group">
+                <div class="app-mgmt-form-group">
                     <label>图标 (Emoji)</label>
-                    <input type="text" @bind="editingApp.Icon" class="form-control" placeholder="例如: 🚀" />
+                    <input type="text" @bind="editingApp.Icon" class="app-mgmt-form-control" placeholder="例如: 🚀" />
                 </div>
-                <div class="form-group">
+                <div class="app-mgmt-form-group">
                     <label>图标 URL</label>
-                    <input type="text" @bind="editingApp.IconUrl" class="form-control" placeholder="https://example.com/icon.png" />
+                    <input type="text" @bind="editingApp.IconUrl" class="app-mgmt-form-control" placeholder="https://example.com/icon.png" />
                 </div>
-                <div class="form-group">
+                <div class="app-mgmt-form-group">
                     <label>跳转地址 *</label>
-                    <input type="text" @bind="editingApp.Url" class="form-control" placeholder="例如: /myapp" />
+                    <input type="text" @bind="editingApp.Url" class="app-mgmt-form-control" placeholder="例如: /myapp" />
                 </div>
-                <div class="form-group">
+                <div class="app-mgmt-form-group">
                     <label>打开方式</label>
-                    <select @bind="editingApp.Target" class="form-control">
+                    <select @bind="editingApp.Target" class="app-mgmt-form-control">
                         <option value="_self">当前页 (_self)</option>
                         <option value="_blank">新标签页 (_blank)</option>
                     </select>
                 </div>
-                <div class="form-group">
+                <div class="app-mgmt-form-group">
                     <label>所属分类 *</label>
-                    <select @bind="selectedCategory" class="form-control" disabled="@(isEditing)">
+                    <select @bind="selectedCategory" class="app-mgmt-form-control" disabled="@(isEditing)">
                         @foreach (var cat in categories)
                         {
                             <option value="@cat.CategoryName">@cat.CategoryName</option>
                         }
                     </select>
                 </div>
-                <div class="form-group">
+                <div class="app-mgmt-form-group">
                     <label>排序号</label>
-                    <input type="number" @bind="editingApp.Order" class="form-control" />
+                    <input type="number" @bind="editingApp.Order" class="app-mgmt-form-control" />
                 </div>
-                <div class="form-group">
+                <div class="app-mgmt-form-group">
                     <label>
                         <input type="checkbox" @bind="editingApp.Enabled" />
                         启用
                     </label>
                 </div>
-                <div class="form-group">
+                <div class="app-mgmt-form-group">
                     <label>描述</label>
-                    <textarea @bind="editingApp.Description" class="form-control" rows="3"></textarea>
+                    <textarea @bind="editingApp.Description" class="app-mgmt-form-control" rows="3"></textarea>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" @onclick="CloseAppModal">取消</button>
-                <button class="btn btn-primary" @onclick="SaveApp" disabled="@(saving)">
+            <div class="app-mgmt-modal-footer">
+                <button class="app-mgmt-btn app-mgmt-btn-secondary" @onclick="CloseAppModal">取消</button>
+                <button class="app-mgmt-btn app-mgmt-btn-primary" @onclick="SaveApp" disabled="@(saving)">
                     @(saving ? "保存中..." : "保存")
                 </button>
             </div>
@@ -155,21 +180,21 @@
 <!-- 添加分类模态框 -->
 @if (showCategoryModal)
 {
-    <div class="modal-overlay" @onclick="CloseCategoryModal">
-        <div class="modal-content" @onclick:stopPropagation="true">
-            <div class="modal-header">
+    <div class="app-mgmt-modal-overlay" @onclick="CloseCategoryModal">
+        <div class="app-mgmt-modal-content" @onclick:stopPropagation="true">
+            <div class="app-mgmt-modal-header">
                 <h4>添加分类</h4>
-                <button class="btn-close" @onclick="CloseCategoryModal">×</button>
+                <button class="app-mgmt-btn-close" @onclick="CloseCategoryModal">×</button>
             </div>
-            <div class="modal-body">
-                <div class="form-group">
+            <div class="app-mgmt-modal-body">
+                <div class="app-mgmt-form-group">
                     <label>分类名称 *</label>
-                    <input type="text" @bind="newCategoryName" class="form-control" placeholder="例如: 业务系统" />
+                    <input type="text" @bind="newCategoryName" class="app-mgmt-form-control" placeholder="例如: 业务系统" />
                 </div>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" @onclick="CloseCategoryModal">取消</button>
-                <button class="btn btn-primary" @onclick="SaveCategory" disabled="@(saving)">
+            <div class="app-mgmt-modal-footer">
+                <button class="app-mgmt-btn app-mgmt-btn-secondary" @onclick="CloseCategoryModal">取消</button>
+                <button class="app-mgmt-btn app-mgmt-btn-primary" @onclick="SaveCategory" disabled="@(saving)">
                     @(saving ? "保存中..." : "保存")
                 </button>
             </div>
@@ -178,242 +203,563 @@
 }
 
 <style>
-    .app-management-container {
-        padding: 20px;
+    /* 全局样式 */
+    .app-mgmt-container {
+        padding: 24px;
+        background: #f5f7fa;
+        min-height: 100vh;
     }
 
-    .toolbar {
-        margin-bottom: 20px;
-        display: flex;
-        gap: 10px;
+    /* 页面头部 */
+    .app-mgmt-page-header {
+        margin-bottom: 32px;
     }
 
-    .category-section {
-        margin-bottom: 30px;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        padding: 20px;
-        background: #f9f9f9;
-    }
-
-    .category-header {
+    .app-mgmt-header-content {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 15px;
-        padding-bottom: 10px;
-        border-bottom: 2px solid #007bff;
+        flex-wrap: wrap;
+        gap: 20px;
     }
 
-    .category-header h4 {
+    .app-mgmt-header-title h2 {
+        margin: 0 0 8px 0;
+        color: #1a1a1a;
+        font-size: 28px;
+        font-weight: 600;
+    }
+
+    .app-mgmt-header-title .app-mgmt-subtitle {
         margin: 0;
-        color: #333;
+        color: #666;
+        font-size: 14px;
     }
 
-    .apps-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 15px;
-    }
-
-    .app-card {
-        background: white;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        padding: 15px;
+    /* 工具栏 */
+    .app-mgmt-toolbar {
         display: flex;
-        gap: 15px;
-        transition: all 0.3s;
+        gap: 12px;
+        flex-wrap: wrap;
     }
 
-    .app-card:hover {
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    /* 分类区块 */
+    .app-mgmt-category-section {
+        margin-bottom: 32px;
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        transition: box-shadow 0.3s ease;
     }
 
-    .app-card.disabled {
-        opacity: 0.5;
+    .app-mgmt-category-section:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     }
 
-    .app-icon {
-        font-size: 48px;
-        width: 60px;
-        height: 60px;
+    /* 分类头部 */
+    .app-mgmt-category-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+        border-bottom: 2px solid #e8e8e8;
+    }
+
+    .app-mgmt-category-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .app-mgmt-category-title i {
+        font-size: 20px;
+        color: #1890ff;
+    }
+
+    .app-mgmt-category-header h4 {
+        margin: 0;
+        color: #262626;
+        font-size: 18px;
+        font-weight: 600;
+    }
+
+    .app-mgmt-app-count {
+        background: #f0f5ff;
+        color: #1890ff;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    /* 应用网格 */
+    .app-mgmt-apps-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 20px;
+    }
+
+    /* 应用卡片 */
+    .app-mgmt-app-card {
+        background: white;
+        border: 1px solid #e8e8e8;
+        border-radius: 12px;
+        padding: 20px;
+        display: flex;
+        gap: 16px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .app-mgmt-app-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #1890ff, #36cfc9);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .app-mgmt-app-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        border-color: #1890ff;
+    }
+
+    .app-mgmt-app-card:hover::before {
+        opacity: 1;
+    }
+
+    .app-mgmt-app-card.app-mgmt-disabled {
+        opacity: 0.6;
+    }
+
+    .app-mgmt-app-card.app-mgmt-disabled:hover {
+        transform: none;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    /* 应用图标 */
+    .app-mgmt-icon-wrapper {
+        flex-shrink: 0;
+    }
+
+    .app-mgmt-icon {
+        width: 48px;
+        height: 48px;
         display: flex;
         align-items: center;
         justify-content: center;
-        background: #f0f0f0;
-        border-radius: 8px;
+        background: linear-gradient(135deg, #a8b8ff 0%, #d4a8ff 100%);
+        border-radius: 10px;
+        font-size: 20px;
+        color: white;
+        box-shadow: 0 2px 8px rgba(168, 184, 255, 0.4);
     }
 
-    .app-icon img {
+    .app-mgmt-icon img {
         width: 100%;
         height: 100%;
         object-fit: contain;
+        border-radius: 12px;
     }
 
-    .app-info {
+    /* 应用信息 */
+    .app-mgmt-app-info {
         flex: 1;
-    }
-
-    .app-info h5 {
-        margin: 0 0 5px 0;
-        color: #333;
-    }
-
-    .app-id {
-        margin: 0;
-        font-size: 12px;
-        color: #666;
-    }
-
-    .app-url {
-        margin: 5px 0;
-        font-size: 12px;
-        color: #007bff;
-    }
-
-    .app-status {
-        margin: 5px 0 0 0;
-        font-size: 12px;
-        font-weight: bold;
-        color: #28a745;
-    }
-
-    .app-card.disabled .app-status {
-        color: #dc3545;
-    }
-
-    .app-actions {
         display: flex;
         flex-direction: column;
-        gap: 5px;
+        gap: 10px;
+        min-width: 0;
     }
 
-    .empty-message {
-        color: #999;
+    .app-mgmt-app-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .app-mgmt-app-info h5 {
+        margin: 0;
+        color: #262626;
+        font-size: 16px;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .app-mgmt-app-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .app-mgmt-meta-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+    }
+
+    .app-mgmt-meta-label {
+        color: #8c8c8c;
+        font-weight: 500;
+        min-width: 40px;
+    }
+
+    .app-mgmt-meta-value {
+        color: #595959;
+        word-break: break-all;
+    }
+
+    /* 应用操作按钮 */
+    .app-mgmt-app-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: auto;
+        padding-top: 12px;
+    }
+
+    /* 应用状态 */
+    .app-mgmt-app-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        padding: 4px 12px;
+        border-radius: 12px;
+    }
+
+    .app-mgmt-app-status.app-mgmt-enabled {
+        color: #52c41a;
+        background: #f6ffed;
+    }
+
+    .app-mgmt-app-status.app-mgmt-disabled {
+        color: #ff4d4f;
+        background: #fff2f0;
+    }
+
+    /* 操作按钮 */
+    .app-mgmt-btn-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 6px 14px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 13px;
+        font-weight: 500;
+    }
+
+    .app-mgmt-btn-edit {
+        background: #e6f7ff;
+        color: #1890ff;
+        border: 1px solid #91d5ff;
+    }
+
+    .app-mgmt-btn-edit:hover {
+        background: #1890ff;
+        color: white;
+        border-color: #1890ff;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
+    }
+
+    .app-mgmt-btn-delete {
+        background: #fff2f0;
+        color: #ff4d4f;
+        border: 1px solid #ffccc7;
+    }
+
+    .app-mgmt-btn-delete:hover {
+        background: #ff4d4f;
+        color: white;
+        border-color: #ff4d4f;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(255, 77, 79, 0.3);
+    }
+
+    .app-mgmt-btn-delete-category {
+        background: #fff2f0;
+        color: #ff4d4f;
+        border: 1px solid #ffccc7;
+        padding: 8px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .app-mgmt-btn-delete-category:hover:not(:disabled) {
+        background: #ff4d4f;
+        color: white;
+        border-color: #ff4d4f;
+    }
+
+    .app-mgmt-btn-delete-category:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+
+    /* 空状态 */
+    .app-mgmt-empty-message {
+        color: #bfbfbf;
         font-style: italic;
+        text-align: center;
+        padding: 20px;
     }
 
-    .loading {
+    /* 加载状态 */
+    .app-mgmt-loading {
         text-align: center;
-        padding: 40px;
-        color: #666;
+        padding: 60px;
+        color: #8c8c8c;
+        font-size: 16px;
+    }
+
+    /* 按钮样式 */
+    .app-mgmt-btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .app-mgmt-btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .app-mgmt-btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+    }
+
+    .app-mgmt-btn-secondary {
+        background: white;
+        color: #595959;
+        border: 1px solid #d9d9d9;
+    }
+
+    .app-mgmt-btn-secondary:hover {
+        border-color: #1890ff;
+        color: #1890ff;
+    }
+
+    .app-mgmt-btn-info {
+        background: #e6f7ff;
+        color: #1890ff;
+        border: 1px solid #91d5ff;
+    }
+
+    .app-mgmt-btn-info:hover {
+        background: #1890ff;
+        color: white;
+    }
+
+    .app-mgmt-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none !important;
     }
 
     /* 模态框样式 */
-    .modal-overlay {
+    .app-mgmt-modal-overlay {
         position: fixed;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(0,0,0,0.5);
+        background: rgba(0, 0, 0, 0.45);
+        backdrop-filter: blur(4px);
         display: flex;
         align-items: center;
         justify-content: center;
         z-index: 1000;
+        animation: app-mgmt-fadeIn 0.2s ease;
     }
 
-    .modal-content {
+    @@keyframes app-mgmt-fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    .app-mgmt-modal-content {
         background: white;
-        border-radius: 8px;
+        border-radius: 16px;
         width: 90%;
-        max-width: 600px;
-        max-height: 90vh;
+        max-width: 640px;
+        max-height: 85vh;
         overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        animation: app-mgmt-slideUp 0.3s ease;
     }
 
-    .modal-header {
+    @@keyframes app-mgmt-slideUp {
+        from {
+            transform: translateY(20px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .app-mgmt-modal-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 20px;
-        border-bottom: 1px solid #e0e0e0;
+        padding: 24px;
+        border-bottom: 1px solid #f0f0f0;
     }
 
-    .modal-header h4 {
+    .app-mgmt-modal-header h4 {
         margin: 0;
+        color: #262626;
+        font-size: 18px;
+        font-weight: 600;
     }
 
-    .btn-close {
-        background: none;
+    .app-mgmt-btn-close {
+        background: #f5f5f5;
         border: none;
-        font-size: 24px;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        font-size: 20px;
         cursor: pointer;
-        color: #666;
+        color: #8c8c8c;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
-    .modal-body {
-        padding: 20px;
+    .app-mgmt-btn-close:hover {
+        background: #ff4d4f;
+        color: white;
     }
 
-    .modal-footer {
+    .app-mgmt-modal-body {
+        padding: 24px;
+    }
+
+    .app-mgmt-modal-footer {
         display: flex;
         justify-content: flex-end;
-        gap: 10px;
-        padding: 20px;
-        border-top: 1px solid #e0e0e0;
+        gap: 12px;
+        padding: 20px 24px;
+        border-top: 1px solid #f0f0f0;
     }
 
-    .form-group {
-        margin-bottom: 15px;
+    /* 表单样式 */
+    .app-mgmt-form-group {
+        margin-bottom: 20px;
     }
 
-    .form-group label {
+    .app-mgmt-form-group label {
         display: block;
-        margin-bottom: 5px;
-        font-weight: bold;
-        color: #333;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: #262626;
+        font-size: 14px;
     }
 
-    .form-control {
+    .app-mgmt-form-control {
         width: 100%;
-        padding: 8px 12px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
+        padding: 10px 14px;
+        border: 1px solid #d9d9d9;
+        border-radius: 8px;
         font-size: 14px;
+        transition: all 0.2s ease;
+        background: #fafafa;
     }
 
-    .form-control:disabled {
-        background: #f0f0f0;
+    .app-mgmt-form-control:focus {
+        outline: none;
+        border-color: #1890ff;
+        background: white;
+        box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
     }
 
-    .btn {
-        padding: 8px 16px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 14px;
-    }
-
-    .btn-primary {
-        background: #007bff;
-        color: white;
-    }
-
-    .btn-secondary {
-        background: #6c757d;
-        color: white;
-    }
-
-    .btn-danger {
-        background: #dc3545;
-        color: white;
-    }
-
-    .btn-info {
-        background: #17a2b8;
-        color: white;
-    }
-
-    .btn:disabled {
-        opacity: 0.6;
+    .app-mgmt-form-control:disabled {
+        background: #f5f5f5;
         cursor: not-allowed;
     }
 
-    .btn-sm {
-        padding: 4px 8px;
-        font-size: 12px;
+    textarea.app-mgmt-form-control {
+        resize: vertical;
+        min-height: 80px;
+    }
+
+    select.app-mgmt-form-control {
+        cursor: pointer;
+    }
+
+    /* 响应式设计 */
+    @@media (max-width: 768px) {
+        .app-mgmt-container {
+            padding: 16px;
+        }
+
+        .app-mgmt-header-content {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .app-mgmt-toolbar {
+            width: 100%;
+        }
+
+        .app-mgmt-btn {
+            flex: 1;
+            justify-content: center;
+        }
+
+        .app-mgmt-apps-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .app-mgmt-category-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .app-mgmt-btn-delete-category {
+            width: 100%;
+            justify-content: center;
+        }
     }
 </style>
 
