@@ -1,22 +1,30 @@
 @namespace H.AppDrawer.Components
 
 <style>
-.layout-container { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-.menu-container { display: flex; flex: 1; overflow: hidden; }
+.layout-container { display: flex; flex-direction: column; height: 100vh; }
+.menu-container { display: flex; flex: 1; }
 .content-container { flex: 1; overflow-y: auto; background-color: #f0f2f5; padding: 20px; }
 </style>
 
 <div class="layout-container">
-    <TopNavbar AppName="@AppName" OnDrawerToggle="ToggleAppDrawer" />
-    
+    <TopNavbar AppName="@AppName" OnDrawerToggle="ToggleAppDrawer">
+        @if (MenuPosition == MenuPosition.Top)
+        {
+            <TopMenu MenuItems="@MenuItems" />
+        }
+    </TopNavbar>
+
     <div class="menu-container">
-        <SidebarMenu MenuItems="@MenuItems" />
+        @if (MenuPosition != MenuPosition.Top)
+        {
+            <SideMenu MenuItems="@MenuItems" />
+        }
 
         <div class="content-container">
             @ChildContent
         </div>
     </div>
-    
+
     <AppDrawer @ref="appDrawer" />
 </div>
 
@@ -33,8 +41,17 @@
     [Parameter]
     public List<AppMenuItem>? MenuItems { get; set; }
 
+    /// <summary>
+    /// 菜单位置（默认左侧）
+    /// </summary>
+    [Parameter]
+    public MenuPosition MenuPosition { get; set; } = MenuPosition.Left;
+
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
+
+    [Inject]
+    private NavigationManager NavigationManager { get; set; } = default!;
 
     private AppDrawer? appDrawer;
 

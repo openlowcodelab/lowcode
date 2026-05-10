@@ -1,0 +1,78 @@
+@namespace H.AppDrawer.Components
+
+<style>
+.navbar-menu { display: flex; align-items: center; gap: 5px; flex: 1; }
+.menu-item-top { display: flex; align-items: center; gap: 6px; padding: 8px 16px; cursor: pointer; transition: all 0.3s; color: #333; border-radius: 4px; font-size: 14px; }
+.menu-item-top:hover { background-color: #f0f7ff; color: #1890ff; }
+.menu-item-top.active { background-color: #e6f7ff; color: #1890ff; font-weight: 500; }
+.menu-icon-top { font-size: 16px; }
+</style>
+
+@if (MenuItems != null && MenuItems.Any())
+{
+    <div class="navbar-menu">
+        @foreach (var item in MenuItems)
+        {
+            var menuItem = item;
+            var isActive = IsActiveMenu(item.Url);
+            <div class="menu-item-top @(isActive ? "active" : "")"
+                 style="cursor: pointer;"
+                 @onclick="() => NavigateToMenuItem(menuItem)">
+                <span class="menu-icon-top">@GetIcon(item.Icon)</span>
+                <span>@item.Name</span>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    /// <summary>
+    /// 菜单列表
+    /// </summary>
+    [Parameter]
+    public List<AppMenuItem>? MenuItems { get; set; }
+
+    [Inject]
+    private NavigationManager NavigationManager { get; set; } = default!;
+
+    /// <summary>
+    /// 判断顶部菜单是否激活
+    /// </summary>
+    private bool IsActiveMenu(string? url)
+    {
+        if (string.IsNullOrEmpty(url))
+            return false;
+            
+        var currentPath = NavigationManager.Uri.Replace(NavigationManager.BaseUri, "");
+        return currentPath.StartsWith(url, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// 导航到菜单项
+    /// </summary>
+    private async Task NavigateToMenuItem(AppMenuItem item)
+    {
+        if (!string.IsNullOrEmpty(item.Url))
+        {
+            await Task.Delay(10);
+            NavigationManager.NavigateTo(item.Url, forceLoad: false);
+        }
+    }
+
+    /// <summary>
+    /// 获取图标
+    /// </summary>
+    private string GetIcon(string? icon)
+    {
+        return icon switch
+        {
+            "home" => "🏠",
+            "appstore" => "⊞",
+            "api" => "🔌",
+            "cloud" => "☁",
+            "deployment-unit" => "🔧",
+            "question-circle" => "❓",
+            _ => string.IsNullOrEmpty(icon) ? "📄" : icon
+        };
+    }
+}
