@@ -1,0 +1,73 @@
+@namespace H.AppDrawer.Components
+
+<style>
+.menu-container { display: flex; flex: 1; overflow: hidden; }
+.menu-sidebar { width: 220px; background-color: #fff; border-right: 1px solid #e8e8e8; overflow-y: auto; padding: 10px 0; }
+.menu-list { list-style: none; margin: 0; padding: 0; }
+.menu-item { display: flex; align-items: center; padding: 12px 20px; cursor: pointer; transition: all 0.3s; color: #333; }
+.menu-item:hover { background-color: #f0f7ff; color: #1890ff; }
+.menu-item.active { background-color: #e6f7ff; color: #1890ff; border-right: 3px solid #1890ff; }
+.menu-icon { margin-right: 10px; font-size: 18px; }
+.menu-text { font-size: 14px; }
+.content-area { flex: 1; overflow-y: auto; background-color: #f0f2f5; padding: 20px; }
+</style>
+
+<div class="menu-container">
+    @if (ShowSidebar && MenuItems.Any())
+    {
+        <div class="menu-sidebar">
+            <ul class="menu-list">
+                @foreach (var item in MenuItems)
+                {
+                    <li class="menu-item @(IsActiveMenu(item.Url) ? "active" : "")"
+                        @onclick="@(() => NavigateTo(item.Url))">
+                        <span class="menu-icon">@item.Icon</span>
+                        <span class="menu-text">@item.Name</span>
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+    <div class="content-area">
+        @ChildContent
+    </div>
+</div>
+
+@code {
+    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+
+    /// <summary>
+    /// 菜单项列表
+    /// </summary>
+    [Parameter]
+    public List<AppMenuItem> MenuItems { get; set; } = new();
+
+    /// <summary>
+    /// 是否显示侧边栏
+    /// </summary>
+    [Parameter]
+    public bool ShowSidebar { get; set; } = true;
+
+    /// <summary>
+    /// 子内容（页面主体内容）
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// 导航到指定 URL
+    /// </summary>
+    private void NavigateTo(string url)
+    {
+        NavigationManager.NavigateTo(url);
+    }
+
+    /// <summary>
+    /// 判断菜单项是否处于激活状态
+    /// </summary>
+    private bool IsActiveMenu(string url)
+    {
+        var currentPath = NavigationManager.Uri.Replace(NavigationManager.BaseUri, "");
+        return currentPath.StartsWith(url, StringComparison.OrdinalIgnoreCase);
+    }
+}

@@ -1,70 +1,10 @@
 ﻿@namespace H.Portal.Web
 
-@inherits LayoutComponentBase
-@inject NavigationManager NavigationManager
+@inherits DefaultLayoutComponentBase
 
 <link rel="stylesheet" href="@Assets["_content/H.Portal.Web/css/site.css"]" />
 
-<div class="layout-container">
-    <!-- 顶部导航栏 -->
-    <div class="top-navbar">
-        <div class="navbar-left">
-            <!-- 应用抽屉按钮 -->
-            <button class="drawer-toggle" @onclick="ToggleAppDrawer">
-                <span class="drawer-icon">☰</span>
-            </button>
-            
-            <!-- 应用名称 -->
-            <div class="app-name">
-                <h3>H.LowCode</h3>
-            </div>
-        </div>
-        
-        <div class="navbar-right">
-            <!-- 用户信息 -->
-            @if (IsLoggedIn)
-            {
-                <div class="user-avatar" style="background-color: #1890ff; display: flex; align-items: center; justify-content: center;">
-                    <svg viewBox="0 0 100 100" style="width: 100%; height: 100%;">
-                        <circle fill="#fff" cx="50" cy="35" r="20"/>
-                        <path fill="#fff" d="M50 60 Q20 60 20 85 L80 85 Q80 60 50 60"/>
-                    </svg>
-                </div>
-                
-                <div class="user-name">
-                    <span>@UserName</span>
-                </div>
-            }
-            else
-            {
-                <button class="login-btn" @onclick="Login">
-                    <span>登录</span>
-                </button>
-            }
-        </div>
-    </div>
-    
-    <!-- 主体内容区域 -->
-    <div class="main-content">
-        @Body
-    </div>
-    
-    <!-- 应用抽屉 -->
-    <AppDrawer @ref="appDrawer" />
-</div>
-
 @code{
-    private AppDrawer? appDrawer;
-    private bool IsLoggedIn => !string.IsNullOrEmpty(UserName);
-    private string UserName { get; set; } = "用户";
-    
-    private void Login()
-    {
-        UserName = "测试用户";
-    }
-    
-    private void ToggleAppDrawer()
-    {
-        appDrawer?.Toggle();
-    }
+    protected override string AppName => "H.LowCode";
+    protected override bool ShowSidebar => false;
 }

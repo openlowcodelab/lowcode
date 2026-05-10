@@ -1,0 +1,79 @@
+@namespace H.AppDrawer.Components
+@using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Web
+
+<style>
+.top-navbar { display: flex; justify-content: space-between; align-items: center; height: 60px; padding: 0 20px; background-color: #fff; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); z-index: 100; }
+.navbar-left { display: flex; align-items: center; gap: 15px; }
+.drawer-toggle { background: none; border: none; font-size: 24px; cursor: pointer; padding: 5px 10px; border-radius: 4px; }
+.drawer-toggle:hover { background-color: #f0f0f0; }
+.app-name h3 { margin: 0; font-size: 18px; color: #333; }
+.navbar-right { display: flex; align-items: center; gap: 10px; }
+.user-avatar { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; }
+.user-name span { color: #666; font-size: 14px; }
+.login-btn { padding: 6px 16px; background-color: #1890ff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+</style>
+
+<div class="top-navbar">
+    <div class="navbar-left">
+        <button class="drawer-toggle" @onclick="OnDrawerToggle">
+            <span class="drawer-icon">☰</span>
+        </button>
+        <div class="app-name">
+            <h3>@AppName</h3>
+        </div>
+    </div>
+    
+    <div class="navbar-right">
+        @if (IsLoggedIn)
+        {
+            <div class="user-avatar" style="background-color: #1890ff; display: flex; align-items: center; justify-content: center;">
+                <svg viewBox="0 0 100 100" style="width: 100%; height: 100%;">
+                    <circle fill="#fff" cx="50" cy="35" r="20"/>
+                    <path fill="#fff" d="M50 60 Q20 60 20 85 L80 85 Q80 60 50 60"/>
+                </svg>
+            </div>
+            <div class="user-name">
+                <span>@UserName</span>
+            </div>
+        }
+        else
+        {
+            <button class="login-btn" @onclick="HandleLogin">
+                <span>登录</span>
+            </button>
+        }
+    </div>
+</div>
+
+@code {
+    /// <summary>
+    /// 应用名称
+    /// </summary>
+    [Parameter]
+    public string AppName { get; set; } = "应用";
+
+    /// <summary>
+    /// 抽屉切换事件
+    /// </summary>
+    [Parameter]
+    public EventCallback OnDrawerToggle { get; set; }
+
+    /// <summary>
+    /// 用户名
+    /// </summary>
+    private string UserName { get; set; } = "用户";
+
+    /// <summary>
+    /// 是否已登录
+    /// </summary>
+    private bool IsLoggedIn => !string.IsNullOrEmpty(UserName);
+
+    /// <summary>
+    /// 处理登录
+    /// </summary>
+    private void HandleLogin()
+    {
+        UserName = "测试用户";
+    }
+}
