@@ -1,7 +1,6 @@
 ﻿@namespace H.LowCode.DesignEngineBase
 @inherits LowCodeLayoutComponentBase
-@using H.Util.Blazor
-@inject AppStateManager AppStateManager
+
 @inject NavigationManager NavigationManager
 
 <style>
@@ -64,16 +63,14 @@
 
     <div class="content-area">@Body</div>
 
-    <AppDrawer Visible="showAppDrawer" Title="应用列表" AppCategories="@appCategories"
-               OnAppClick="@(async (app) => await OnAppSelected(app))" OnClose="CloseAppDrawer" />
+    <AppDrawer @ref="appDrawer" OnAppClick="OnAppClicked" />
 </div>
 
 @code
 {
-    private bool showAppDrawer = false;
+    private AppDrawer? appDrawer;
     private bool IsLoggedIn => !string.IsNullOrEmpty(UserName);
     private string UserName { get; set; } = "用户";
-    private AppCategoryInfo[] appCategories = [];
     
     private readonly MenuDataItem[] MenuItems =
     {
@@ -121,36 +118,16 @@
         }
     };
     
-    protected override void OnInitialized()
+    private async Task OnAppClicked(AppItemInfo app)
     {
-        appCategories = AppStateManager.GetAppCategories();
-        AppStateManager.OnAppChanged += OnAppChanged;
-    }
-    
-    private void OnAppChanged(string appId) 
-    { 
-        InvokeAsync(() => StateHasChanged()); 
-    }
-    
-    private async Task OnAppSelected(AppItemInfo app)
-    {
-        AppStateManager.CurrentAppId = app.Id;
-        showAppDrawer = false;
-        StateHasChanged();
+        appDrawer?.Hide();
         await Task.Delay(100);
         NavigationManager.NavigateTo(app.Url);
     }
     
     private void ToggleAppDrawer() 
     { 
-        showAppDrawer = !showAppDrawer; 
-        StateHasChanged(); 
-    }
-    
-    private void CloseAppDrawer() 
-    { 
-        showAppDrawer = false; 
-        StateHasChanged(); 
+        appDrawer?.Toggle();
     }
     
     private async Task NavigateToAsync(string url) 

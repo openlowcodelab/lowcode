@@ -1,7 +1,6 @@
 ﻿@namespace H.Account.Web
-@using H.Admin.AppDrawer
+
 @inherits LayoutComponentBase
-@inject AppStateManager AppStateManager
 @inject NavigationManager NavigationManager
 
 <style>
@@ -68,47 +67,25 @@
         <div class="content-area">@Body</div>
     </div>
 
-    <AppDrawer Visible="showAppDrawer"
-               Title="应用列表"
-               AppCategories="@appCategories"
-               OnAppSelected="OnAppSelected"
-               OnClose="CloseAppDrawer" />
+    <AppDrawer @ref="appDrawer" />
 </div>
 
 @code {
-    private bool showAppDrawer = false;
+    private AppDrawer? appDrawer;
     private bool IsLoggedIn => !string.IsNullOrEmpty(UserName);
     private string UserName { get; set; } = "用户";
-    private AppCategoryInfo[] appCategories = [];
     private List<AppMenuItem> MenuItems = new();
 
     protected override void OnInitialized()
     {
-        // 先订阅事件
-        AppStateManager.OnAppChanged += OnAppChanged;
-        
-        // 再初始化数据（不设置 CurrentAppId 避免触发事件）
-        appCategories = AppStateManager.GetAppCategories();
-        MenuItems = AppStateManager.GetAppMenuItems("account");
+        MenuItems = [
+            new() { Name = "用户管理", Icon = "👤", Url = "/account/users" },
+            new() { Name = "角色管理", Icon = "🔑", Url = "/account/roles" },
+            new() { Name = "权限管理", Icon = "🛡️", Url = "/account/permissions" }
+        ];
     }
 
-    private void OnAppChanged(string appId) 
-    { 
-        // 只在需要时更新 UI
-        InvokeAsync(() => StateHasChanged()); 
-    }
-
-    private async Task OnAppSelected(AppItemInfo app)
-    {
-        AppStateManager.CurrentAppId = app.Id;
-    }
-
-    private void ToggleAppDrawer() 
-    { 
-        showAppDrawer = !showAppDrawer; 
-        StateHasChanged();
-    }
-    private void CloseAppDrawer() { showAppDrawer = false; StateHasChanged(); }
+    private void ToggleAppDrawer() { appDrawer?.Toggle(); }
     private void NavigateTo(string url) { NavigationManager.NavigateTo(url); }
 
     private bool IsActiveMenu(string url)

@@ -21,9 +21,6 @@ public class OrganizationHostModule : AbpModule
         // 注册 AntDesign 服务
         context.Services.AddAntDesign();
 
-        // 注册应用状态管理器
-        context.Services.AddSingleton<AppStateManager>();
-
         ConfigureAutoApiControllers();
     }
 

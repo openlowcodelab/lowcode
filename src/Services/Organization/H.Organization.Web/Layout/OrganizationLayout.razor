@@ -1,7 +1,6 @@
 ﻿@namespace H.Organization.Web
-@using H.Admin.AppDrawer
+
 @inherits LayoutComponentBase
-@inject AppStateManager AppStateManager
 @inject NavigationManager NavigationManager
 
 <style>
@@ -66,33 +65,25 @@
         <div class="content-area">@Body</div>
     </div>
 
-    <AppDrawer Visible="showAppDrawer" Title="应用列表" AppCategories="@appCategories"
-               OnAppSelected="OnAppSelected" OnClose="CloseAppDrawer" />
+    <AppDrawer @ref="appDrawer" />
 </div>
 
 @code {
-    private bool showAppDrawer = false;
+    private AppDrawer? appDrawer;
     private bool IsLoggedIn => !string.IsNullOrEmpty(UserName);
     private string UserName { get; set; } = "用户";
-    private AppCategoryInfo[] appCategories = [];
     private List<AppMenuItem> MenuItems = new();
 
     protected override void OnInitialized()
     {
-        AppStateManager.OnAppChanged += OnAppChanged;
-        appCategories = AppStateManager.GetAppCategories();
-        MenuItems = AppStateManager.GetAppMenuItems("organization");
+        MenuItems = [
+            new() { Name = "组织架构", Icon = "🏢", Url = "/organization/structure" },
+            new() { Name = "员工管理", Icon = "👥", Url = "/organization/employees" },
+            new() { Name = "部门管理", Icon = "📁", Url = "/organization/departments" }
+        ];
     }
 
-    private void OnAppChanged(string appId) { InvokeAsync(() => StateHasChanged()); }
-
-    private async Task OnAppSelected(AppItemInfo app)
-    {
-        AppStateManager.CurrentAppId = app.Id;
-    }
-
-    private void ToggleAppDrawer() { showAppDrawer = !showAppDrawer; StateHasChanged(); }
-    private void CloseAppDrawer() { showAppDrawer = false; StateHasChanged(); }
+    private void ToggleAppDrawer() { appDrawer?.Toggle(); }
     private void NavigateTo(string url) { NavigationManager.NavigateTo(url); }
 
     private bool IsActiveMenu(string url)

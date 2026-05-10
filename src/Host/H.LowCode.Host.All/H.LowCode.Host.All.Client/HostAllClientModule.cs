@@ -43,9 +43,6 @@ public class HostAllClientModule : AbpModule
         ConfigureHttpClient(context, environment);
         ConfigureHttpClientProxies(context);
 
-        // 注册应用状态管理器
-        context.Services.AddSingleton<AppStateManager>();
-
         //应用状态
         context.Services.AddSingleton(new LowCodeAppState(true));
 

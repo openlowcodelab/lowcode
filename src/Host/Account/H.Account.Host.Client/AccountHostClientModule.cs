@@ -26,9 +26,6 @@ public class AccountHostClientModule : AbpModule
 
         ConfigureHttpClient(context, environment);
         ConfigureHttpClientProxies(context);
-
-        // 注册应用状态管理器
-        context.Services.AddSingleton<AppStateManager>();
     }
 
     private static void ConfigureHttpClient(ServiceConfigurationContext context, IWebAssemblyHostEnvironment environment)

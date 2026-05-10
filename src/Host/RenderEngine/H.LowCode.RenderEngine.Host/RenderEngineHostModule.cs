@@ -29,9 +29,6 @@ public class RenderEngineHostModule : AbpModule
         // 注册 AntDesign 服务
         context.Services.AddAntDesign();
 
-        // 注册应用状态管理器
-        context.Services.AddSingleton<AppStateManager>();
-
         //应用状态
         context.Services.AddSingleton(new LowCodeAppState(false));
 

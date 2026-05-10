@@ -1,8 +1,6 @@
 @namespace H.LowCode.Host.All.Client.Layout
-@using H.Util.Blazor
-@using H.Admin.AppDrawer
+
 @inherits LayoutComponentBase
-@inject AppStateManager AppStateManager
 @inject NavigationManager NavigationManager
 
 <div class="layout-container">
@@ -37,8 +35,7 @@
         <div class="content-area">@Body</div>
     </div>
 
-    <AppDrawer Visible="showAppDrawer" Title="应用列表" AppCategories="@appCategories"
-               OnAppClick="@(async (app) => await OnAppSelected(app))" OnClose="CloseAppDrawer" />
+    <AppDrawer @ref="appDrawer" OnAppClick="OnAppClicked" />
 </div>
 
 @code {
@@ -46,30 +43,23 @@
     [Parameter] public bool ShowSidebar { get; set; } = true;
     [Parameter] public List<MenuItemInfo>? MenuItems { get; set; }
 
-    private bool showAppDrawer = false;
+    private AppDrawer? appDrawer;
     private bool IsLoggedIn => !string.IsNullOrEmpty(UserName);
     private string UserName { get; set; } = "用户";
-    private AppCategoryInfo[] appCategories = [];
 
-    protected override void OnInitialized()
+    private async Task OnAppClicked(AppItemInfo app)
     {
-        appCategories = AppStateManager.GetAppCategories();
-        AppStateManager.OnAppChanged += OnAppChanged;
-    }
-
-    private void OnAppChanged(string appId) { StateHasChanged(); }
-
-    private async Task OnAppSelected(AppItemInfo app)
-    {
-        AppStateManager.CurrentAppId = app.Id;
-        showAppDrawer = false;
-        StateHasChanged();
+        // 自定义应用点击行为：先隐藏抽屉，然后导航
+        appDrawer?.Hide();
         await Task.Delay(100);
         NavigationManager.NavigateTo(app.Url);
     }
 
-    private void ToggleAppDrawer() { showAppDrawer = !showAppDrawer; }
-    private void CloseAppDrawer() { showAppDrawer = false; StateHasChanged(); }
+    private void ToggleAppDrawer() 
+    { 
+        appDrawer?.Toggle();
+    }
+    
     private void Login() { UserName = "测试用户"; }
 
     private MarkupString BuildMenu(List<MenuItemInfo> items)

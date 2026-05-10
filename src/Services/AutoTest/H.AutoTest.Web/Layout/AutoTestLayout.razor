@@ -1,7 +1,6 @@
 @namespace H.AutoTest.Web
 
 @inherits LayoutComponentBase
-@inject AppStateManager AppStateManager
 @inject NavigationManager NavigationManager
 
 <style>
@@ -68,47 +67,26 @@
         <div class="content-area">@Body</div>
     </div>
 
-    <AppDrawer Visible="showAppDrawer"
-               Title="应用列表"
-               AppCategories="@appCategories"
-               OnAppSelected="OnAppSelected"
-               OnClose="CloseAppDrawer" />
+    <AppDrawer @ref="appDrawer" />
 </div>
 
 @code {
-    private bool showAppDrawer = false;
+    private AppDrawer? appDrawer;
     private bool IsLoggedIn => !string.IsNullOrEmpty(UserName);
     private string UserName { get; set; } = "用户";
-    private AppCategoryInfo[] appCategories = [];
     private List<AppMenuItem> MenuItems = new();
 
     protected override void OnInitialized()
     {
-        // 先绑定事件
-        AppStateManager.OnAppChanged += OnAppChanged;
-        
-        // 再初始化数据，避免 CurrentAppId 意外触发事件
-        appCategories = AppStateManager.GetAppCategories();
-        MenuItems = AppStateManager.GetAppMenuItems("autotest");
+        MenuItems = [
+            new() { Name = "测试项目", Icon = "📁", Url = "/autotest/projects" },
+            new() { Name = "测试用例", Icon = "📝", Url = "/autotest/cases" },
+            new() { Name = "测试执行", Icon = "▶️", Url = "/autotest/execution" },
+            new() { Name = "测试报告", Icon = "📊", Url = "/autotest/reports" }
+        ];
     }
 
-    private void OnAppChanged(string appId) 
-    { 
-        // 只在需要时刷新 UI
-        InvokeAsync(() => StateHasChanged()); 
-    }
-
-    private async Task OnAppSelected(AppItemInfo app)
-    {
-        AppStateManager.CurrentAppId = app.Id;
-    }
-
-    private void ToggleAppDrawer() 
-    { 
-        showAppDrawer = !showAppDrawer; 
-        StateHasChanged();
-    }
-    private void CloseAppDrawer() { showAppDrawer = false; StateHasChanged(); }
+    private void ToggleAppDrawer() { appDrawer?.Toggle(); }
     private void NavigateTo(string url) { NavigationManager.NavigateTo(url); }
 
     private bool IsActiveMenu(string url)

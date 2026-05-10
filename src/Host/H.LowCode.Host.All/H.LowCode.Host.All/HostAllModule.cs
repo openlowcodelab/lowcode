@@ -54,9 +54,6 @@ public class HostAllModule : AbpModule
         // 注册 AntDesign 服务
         context.Services.AddAntDesign();
 
-        // 注册应用状态管理器
-        context.Services.AddSingleton<AppStateManager>();
-
         // 注册 LowCodeAppState (设计时为 true)
         context.Services.AddScoped(sp => new LowCodeAppState(isDesign: true));
 

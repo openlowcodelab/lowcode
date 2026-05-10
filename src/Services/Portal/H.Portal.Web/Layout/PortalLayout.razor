@@ -1,7 +1,6 @@
 ﻿@namespace H.Portal.Web
 
 @inherits LayoutComponentBase
-@inject AppStateManager AppStateManager
 @inject NavigationManager NavigationManager
 
 <link rel="stylesheet" href="@Assets["_content/H.Portal.Web/css/site.css"]" />
@@ -51,40 +50,13 @@
     </div>
     
     <!-- 应用抽屉 -->
-    <AppDrawer Visible="showAppDrawer"
-               Title="应用列表"
-               AppCategories="@appCategories"
-               OnAppSelected="OnAppSelected"
-               OnClose="CloseAppDrawer" />
+    <AppDrawer @ref="appDrawer" />
 </div>
 
 @code{
-    private bool showAppDrawer = false;
+    private AppDrawer? appDrawer;
     private bool IsLoggedIn => !string.IsNullOrEmpty(UserName);
     private string UserName { get; set; } = "用户";
-    
-    // 应用列表数据
-    private AppCategoryInfo[] appCategories = [];
-    
-    protected override void OnInitialized()
-    {
-        // 先订阅事件
-        AppStateManager.OnAppChanged += OnAppChanged;
-        
-        // 初始化应用列表
-        appCategories = AppStateManager.GetAppCategories();
-    }
-    
-    private void OnAppChanged(string appId)
-    {
-        InvokeAsync(() => StateHasChanged());
-    }
-    
-    private async Task OnAppSelected(AppItemInfo app)
-    {
-        // 更新当前应用状态
-        AppStateManager.CurrentAppId = app.Id;
-    }
     
     private void Login()
     {
@@ -93,13 +65,6 @@
     
     private void ToggleAppDrawer()
     {
-        showAppDrawer = !showAppDrawer;
-        StateHasChanged();
-    }
-    
-    private void CloseAppDrawer()
-    {
-        showAppDrawer = false;
-        StateHasChanged();
+        appDrawer?.Toggle();
     }
 }

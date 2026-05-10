@@ -1,7 +1,6 @@
 @namespace H.Approval.Web
 @using H.Admin.AppDrawer
 @inherits LayoutComponentBase
-@inject AppStateManager AppStateManager
 @inject NavigationManager NavigationManager
 
 <style>
@@ -68,47 +67,30 @@
         <div class="content-area">@Body</div>
     </div>
 
-    <AppDrawer Visible="showAppDrawer"
-               Title="应用列表"
-               AppCategories="@appCategories"
-               OnAppSelected="OnAppSelected"
-               OnClose="CloseAppDrawer" />
+    <AppDrawer @ref="appDrawer" />
 </div>
 
 @code {
-    private bool showAppDrawer = false;
+    private AppDrawer? appDrawer;
     private bool IsLoggedIn => !string.IsNullOrEmpty(UserName);
     private string UserName { get; set; } = "用户";
-    private AppCategoryInfo[] appCategories = [];
     private List<AppMenuItem> MenuItems = new();
 
     protected override void OnInitialized()
     {
-        // 先绑定事件
-        AppStateManager.OnAppChanged += OnAppChanged;
-        
-        // 再初始化数据，避免 CurrentAppId 意外触发事件
-        appCategories = AppStateManager.GetAppCategories();
-        MenuItems = AppStateManager.GetAppMenuItems("approval");
-    }
-
-    private void OnAppChanged(string appId) 
-    { 
-        // 只在需要时刷新 UI
-        InvokeAsync(() => StateHasChanged()); 
-    }
-
-    private async Task OnAppSelected(AppItemInfo app)
-    {
-        AppStateManager.CurrentAppId = app.Id;
+        MenuItems = [
+            new() { Name = "审批流程", Icon = "📋", Url = "/approval/processes" },
+            new() { Name = "待我审批", Icon = "⏳", Url = "/approval/pending" },
+            new() { Name = "我已审批", Icon = "✅", Url = "/approval/approved" },
+            new() { Name = "我发起的", Icon = "📤", Url = "/approval/initiated" }
+        ];
     }
 
     private void ToggleAppDrawer() 
     { 
-        showAppDrawer = !showAppDrawer; 
-        StateHasChanged();
+        appDrawer?.Toggle();
     }
-    private void CloseAppDrawer() { showAppDrawer = false; StateHasChanged(); }
+    
     private void NavigateTo(string url) { NavigationManager.NavigateTo(url); }
 
     private bool IsActiveMenu(string url)
