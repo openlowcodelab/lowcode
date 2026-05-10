@@ -35,7 +35,7 @@
         <div class="content-area">@Body</div>
     </div>
 
-    <AppDrawer @ref="appDrawer" OnAppClick="OnAppClicked" />
+    <AppDrawer @ref="appDrawer" />
 </div>
 
 @code {
@@ -46,14 +46,6 @@
     private AppDrawer? appDrawer;
     private bool IsLoggedIn => !string.IsNullOrEmpty(UserName);
     private string UserName { get; set; } = "用户";
-
-    private async Task OnAppClicked(AppItemInfo app)
-    {
-        // 自定义应用点击行为：先隐藏抽屉，然后导航
-        appDrawer?.Hide();
-        await Task.Delay(100);
-        NavigationManager.NavigateTo(app.Url);
-    }
 
     private void ToggleAppDrawer() 
     { 

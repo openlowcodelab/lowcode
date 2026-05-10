@@ -124,36 +124,25 @@
         {
             isLoading = true;
             StateHasChanged();
-            
-            Console.WriteLine($"[AppDrawer] 开始通过 HTTP API 加载应用数据");
-            
+
             // 直接调用 API 获取应用分类数据
             // ABP 路由规则: /api/app/{service-name}/{method-name-simplified}
             // IAppManageAppService.GetAllCategoriesAsync -> /api/app/app-manage/categories
             var response = await HttpClient.GetFromJsonAsync<AppCategoryInfo[]>("/api/app/app-manage/categories");
-            
+
             if (response != null)
             {
                 appCategories = response;
-                Console.WriteLine($"[AppDrawer] 加载完成，分类数量: {appCategories.Length}");
-                
-                // 打印第一个分类的信息用于调试
-                if (appCategories.Length > 0)
-                {
-                    Console.WriteLine($"[AppDrawer] 第一个分类: {appCategories[0].CategoryName}, 应用数: {appCategories[0].Apps?.Count ?? 0}");
-                }
             }
             else
             {
                 appCategories = [];
-                Console.WriteLine($"[AppDrawer] 未获取到数据");
             }
-            
+
             isLoading = false;
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"[AppDrawer] 加载应用数据失败: {ex.Message}");
             isLoading = false;
             appCategories = [];
         }

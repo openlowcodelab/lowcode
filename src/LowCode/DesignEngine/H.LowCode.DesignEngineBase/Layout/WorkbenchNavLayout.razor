@@ -63,7 +63,7 @@
 
     <div class="content-area">@Body</div>
 
-    <AppDrawer @ref="appDrawer" OnAppClick="OnAppClicked" />
+    <AppDrawer @ref="appDrawer" />
 </div>
 
 @code
@@ -117,13 +117,6 @@
             Key = "docs"
         }
     };
-    
-    private async Task OnAppClicked(AppItemInfo app)
-    {
-        appDrawer?.Hide();
-        await Task.Delay(100);
-        NavigationManager.NavigateTo(app.Url);
-    }
     
     private void ToggleAppDrawer() 
     { 
