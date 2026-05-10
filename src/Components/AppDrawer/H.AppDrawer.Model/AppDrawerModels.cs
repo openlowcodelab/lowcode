@@ -1,4 +1,4 @@
-namespace H.Admin.AppDrawer;
+namespace H.AppDrawer.Components;
 
 /// <summary>
 /// 应用分类信息

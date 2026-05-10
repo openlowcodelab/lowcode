@@ -1,8 +1,6 @@
-﻿using H.Admin.AppDrawer;
-using H.Organization.Application.Contracts;
+﻿using H.Organization.Application.Contracts;
 using H.Organization.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Autofac.WebAssembly;
 using Volo.Abp.Http.Client;
 using Volo.Abp.Modularity;

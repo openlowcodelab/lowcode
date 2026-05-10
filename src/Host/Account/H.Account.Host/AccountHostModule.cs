@@ -1,5 +1,4 @@
 using H.Account.Application;
-using H.Admin.AppDrawer;
 using Volo.Abp.AspNetCore.Mvc;
 using Volo.Abp.Modularity;
 
@@ -13,7 +12,6 @@ public class AccountHostModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
-        // зЂВс AntDesign ЗўЮё
         context.Services.AddAntDesign();
 
         ConfigureAutoApiControllers();
