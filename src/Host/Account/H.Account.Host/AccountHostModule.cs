@@ -14,7 +14,7 @@ public class AccountHostModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
-        // ×¢²á HttpClient
+        // æ³¨å†Œ HttpClient
         context.Services.AddHttpClient();
 
         context.Services.AddAntDesign();
