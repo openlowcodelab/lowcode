@@ -1,10 +1,12 @@
 using H.Account.Application;
 using Volo.Abp.AspNetCore.Mvc;
+using Volo.Abp.Autofac;
 using Volo.Abp.Modularity;
 
 namespace H.Account.Host;
 
 [DependsOn(
+    typeof(AbpAutofacModule),
     typeof(AbpAspNetCoreMvcModule),
     typeof(AccountApplicationModule)
 )]
@@ -12,6 +14,9 @@ public class AccountHostModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
+        // зЂВс HttpClient
+        context.Services.AddHttpClient();
+
         context.Services.AddAntDesign();
 
         ConfigureAutoApiControllers();

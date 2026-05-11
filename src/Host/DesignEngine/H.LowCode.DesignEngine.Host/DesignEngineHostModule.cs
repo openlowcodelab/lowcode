@@ -4,12 +4,14 @@ using H.LowCode.DesignEngine.Application;
 using H.LowCode.DesignEngine.EntityFrameworkCore;
 using H.LowCode.DesignEngine.Repository.JsonFile;
 using Volo.Abp.AspNetCore.Mvc;
+using Volo.Abp.Autofac;
 using Volo.Abp.Modularity;
 
 namespace H.LowCode.DesignEngine.Host;
 
 [DependsOn(
     //abp
+    typeof(AbpAutofacModule),
     typeof(AbpAspNetCoreMvcModule),
     //Server
     typeof(DesignEngineApplicationModule),
@@ -20,6 +22,9 @@ public class DesignEngineHostModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
+        // 注册 HttpClient
+        context.Services.AddHttpClient();
+
         // 注册 AntDesign 服务
         context.Services.AddAntDesign();
 

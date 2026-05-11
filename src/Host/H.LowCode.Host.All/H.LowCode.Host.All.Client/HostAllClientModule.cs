@@ -51,9 +51,6 @@ public class HostAllClientModule : AbpModule
 
     private static void ConfigureHttpClient(ServiceConfigurationContext context, IWebAssemblyHostEnvironment environment)
     {
-        // 注册 HTTP 客户端服务
-        context.Services.AddHttpContextAccessor();
-
         context.Services.AddTransient(sp => new HttpClient
         {
             BaseAddress = new Uri(environment.BaseAddress)

@@ -34,9 +34,6 @@ public class DesignEngineHostClientModule : AbpModule
 
     private static void ConfigureHttpClient(ServiceConfigurationContext context, IWebAssemblyHostEnvironment environment)
     {
-        // 注册 HTTP 上下文访问器
-        context.Services.AddHttpContextAccessor();
-
         context.Services.AddTransient(sp => new HttpClient
         {
             BaseAddress = new Uri(environment.BaseAddress)

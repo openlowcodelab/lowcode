@@ -8,8 +8,6 @@ using H.LowCode.DesignEngine.Repository.JsonFile;
 using H.LowCode.RenderEngine.Application;
 using H.LowCode.RenderEngine.EntityFrameworkCore;
 using H.LowCode.RenderEngine.Repository.JsonFile;
-using H.LowCode.Themes.AntBlazor;
-using H.LowCode.Workbench;
 using H.Organization.Application;
 using H.Portal.Application;
 using Volo.Abp.AspNetCore.Mvc;
@@ -26,12 +24,10 @@ namespace H.LowCode.Host.All;
     typeof(AbpAutofacModule),
     typeof(AbpAspNetCoreMvcModule),
     // DesignEngine
-    typeof(LowCodeWorkbenchModule),
     typeof(DesignEngineApplicationModule),
     typeof(DesignEngineEntityFrameworkCoreModule),
     typeof(DesignEngineJsonFileRepositoryModule),
     // RenderEngine
-    typeof(AntBlazorThemeModule),
     typeof(RenderEngineApplicationModule),
     typeof(RenderEngineEntityFrameworkCoreModule),
     typeof(RenderEngineJsonFileRepositoryModule),
@@ -50,6 +46,9 @@ public class HostAllModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
+        // 注册 HttpClient
+        context.Services.AddHttpClient();
+
         // 注册 AntDesign 服务
         context.Services.AddAntDesign();
 

@@ -1,6 +1,7 @@
 using H.Account.Application.Contracts;
 using H.Organization.Application;
 using Volo.Abp.AspNetCore.Mvc;
+using Volo.Abp.Autofac;
 using Volo.Abp.Modularity;
 
 namespace H.Organization.Host;
@@ -9,6 +10,7 @@ namespace H.Organization.Host;
 /// Organization Host 聚合模块，统一管理所有依赖
 /// </summary>
 [DependsOn(
+    typeof(AbpAutofacModule),
     typeof(AbpAspNetCoreMvcModule),
     typeof(OrganizationApplicationModule),
     typeof(AccountApplicationContractsModule)
@@ -17,6 +19,9 @@ public class OrganizationHostModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
+        // 注册 HttpClient
+        context.Services.AddHttpClient();
+
         // 注册 AntDesign 服务
         context.Services.AddAntDesign();
 
