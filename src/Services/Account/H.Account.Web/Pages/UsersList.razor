@@ -43,9 +43,6 @@
     </div>
 
     <Table TItem="UserDto" DataSource="@users.Items" Loading="@isLoading" HidePagination="true">
-        <Column TData="string" Title="ID">
-            @context.Id.ToString("N")[..8]
-        </Column>
         <Column TData="string" Title="用户名">
             @context.UserName
         </Column>
@@ -54,6 +51,23 @@
         </Column>
         <Column TData="string" Title="手机号">
             @context.PhoneNumber
+        </Column>
+        <Column TData="string" Title="第三方账号">
+            @if (context.ExternalAccounts.Any())
+            {
+                <Space>
+                    @foreach (var account in context.ExternalAccounts)
+                    {
+                        <Tooltip Title="@account.Provider">
+                            <Icon Type="@GetProviderIcon(account.Provider)" />
+                        </Tooltip>
+                    }
+                </Space>
+            }
+            else
+            {
+                <span style="color: #999;">未绑定</span>
+            }
         </Column>
         <Column TData="string" Title="用户类型">
             <Tag Color="@GetUserTypeColor(context.UserType)">@GetUserTypeText(context.UserType)</Tag>
@@ -68,14 +82,14 @@
                 <Tag Color="@("red")">禁用</Tag>
             }
         </Column>
-        <Column TData="string" Title="创建时间">
-            @context.CreatedAt.ToString("yyyy-MM-dd HH:mm")
-        </Column>
         <Column TData="string" Title="最后登录">
             @(context.LastLoginAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")
         </Column>
         <Column TData="string" Title="操作">
             <Space>
+                <SpaceItem>
+                    <Button Type="@ButtonType.Default" Size="@ButtonSize.Small" OnClick="@(() => ViewUser(context.Id))">查看</Button>
+                </SpaceItem>
                 <SpaceItem>
                     <a href="/account/users/@context.Id/edit">
                         <Button Type="@ButtonType.Primary" Size="@ButtonSize.Small">编辑</Button>
@@ -196,6 +210,21 @@
             UserType.Admin => "管理员",
             UserType.SuperAdmin => "超级管理员",
             _ => "普通用户"
+        };
+    }
+
+    private void ViewUser(Guid userId)
+    {
+        Navigation.NavigateTo($"/account/users/{userId}/detail");
+    }
+
+    private string GetProviderIcon(string provider)
+    {
+        return provider.ToLower() switch
+        {
+            "wechat" => "wechat",
+            "dingtalk" => "android",
+            _ => "link"
         };
     }
 }

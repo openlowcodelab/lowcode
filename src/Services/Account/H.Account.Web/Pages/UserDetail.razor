@@ -1,0 +1,91 @@
+@page "/account/users/{userId:guid}/detail"
+
+@layout AccountLayout
+@inject IUserService UserService
+@inject NavigationManager Navigation
+
+<Card Title="用户详情" Extra="@BackButton">
+    @if (user != null)
+    {
+        <Descriptions Column="2" Bordered>
+            <DescriptionsItem Label="用户名">@user.UserName</DescriptionsItem>
+            <DescriptionsItem Label="邮箱">@user.Email</DescriptionsItem>
+            <DescriptionsItem Label="手机号">@user.PhoneNumber</DescriptionsItem>
+            <DescriptionsItem Label="用户类型">@GetUserTypeText(user.UserType)</DescriptionsItem>
+            <DescriptionsItem Label="状态">
+                <Tag Color="@(user.IsActive ? "green" : "red")">
+                    @(user.IsActive ? "启用" : "禁用")
+                </Tag>
+            </DescriptionsItem>
+            <DescriptionsItem Label="邮箱验证">
+                <Tag Color="@(user.EmailConfirmed ? "green" : "default")">
+                    @(user.EmailConfirmed ? "已验证" : "未验证")
+                </Tag>
+            </DescriptionsItem>
+            <DescriptionsItem Label="手机验证">
+                <Tag Color="@(user.PhoneNumberConfirmed ? "green" : "default")">
+                    @(user.PhoneNumberConfirmed ? "已验证" : "未验证")
+                </Tag>
+            </DescriptionsItem>
+            <DescriptionsItem Label="最后登录">@user.LastLoginAt?.ToString("yyyy-MM-dd HH:mm:ss")</DescriptionsItem>
+            <DescriptionsItem Label="创建时间">@user.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")</DescriptionsItem>
+            <DescriptionsItem Label="更新时间">@user.UpdatedAt?.ToString("yyyy-MM-dd HH:mm:ss")</DescriptionsItem>
+            <DescriptionsItem Label="备注" Span="2">@user.Remark</DescriptionsItem>
+        </Descriptions>
+
+        <Divider>绑定的第三方账号</Divider>
+
+        @if (user.ExternalAccounts.Any())
+        {
+            <Table DataSource="@user.ExternalAccounts" TItem="ExternalAccountDto" PageSize="10" Pagination="false">
+                <Column @bind-Field="@context.Provider" Title="平台" />
+                <Column @bind-Field="@context.ProviderKey" Title="账号ID" />
+                <Column @bind-Field="@context.DisplayName" Title="显示名称" />
+                <Column @bind-Field="@context.BoundAt" Title="绑定时间" Format="yyyy-MM-dd HH:mm" />
+                <ActionColumn Title="操作">
+                    <Popconfirm Title="确定要解绑此账号吗?" OnConfirm="@(() => UnbindAccount(context.Provider))">
+                        <Button Danger Size="@ButtonSize.Small">解绑</Button>
+                    </Popconfirm>
+                </ActionColumn>
+            </Table>
+        }
+        else
+        {
+            <Empty Description="@("暂无绑定的第三方账号")" />
+        }
+    }
+    else
+    {
+        <Spin Tip="加载中..." />
+    }
+</Card>
+
+@code {
+    private UserDto? user;
+
+    [Microsoft.AspNetCore.Components.Parameter]
+    public Guid userId { get; set; }
+
+    private RenderFragment BackButton => @<Button OnClick="@(() => Navigation.NavigateTo("/account/users"))">返回</Button>;
+
+    protected override async Task OnInitializedAsync()
+    {
+        user = await UserService.GetUserDtoByIdAsync(userId);
+    }
+
+    private string GetUserTypeText(UserType type)
+    {
+        return type switch
+        {
+            UserType.SuperAdmin => "超级管理员",
+            UserType.Admin => "管理员",
+            _ => "普通用户"
+        };
+    }
+
+    private async Task UnbindAccount(string provider)
+    {
+        // TODO: 实现解绑逻辑
+        await Task.CompletedTask;
+    }
+}

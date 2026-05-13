@@ -1,19 +1,46 @@
 @page "/account/register"
 
-@layout LayoutComponentBase
+@layout AccountEmptyLayout
 @inject IAuthService AuthService
 @inject NavigationManager Navigation
 
 <div style="max-width: 500px; margin: 50px auto;">
     <Card Title="用户注册">
         <Form Model="@registerModel" OnFinish="@HandleRegister" LabelColSpan="6" WrapperColSpan="18">
-            <FormItem Label="用户名">
-                <Input @bind-Value="@registerModel.UserName" Placeholder="请输入用户名" />
+            <FormItem Label="注册方式">
+                <RadioGroup @bind-Value="@registerModel.RegisterType">
+                    <RadioButton Value="RegisterType.UserName">用户名</RadioButton>
+                    <RadioButton Value="RegisterType.Email">邮箱</RadioButton>
+                    <RadioButton Value="RegisterType.PhoneNumber">手机号</RadioButton>
+                </RadioGroup>
             </FormItem>
 
-            <FormItem Label="邮箱">
-                <Input @bind-Value="@registerModel.Email" Placeholder="请输入邮箱" />
-            </FormItem>
+            @if (registerModel.RegisterType == RegisterType.UserName)
+            {
+                <FormItem Label="用户名">
+                    <Input @bind-Value="@registerModel.UserName" Placeholder="请输入用户名" />
+                </FormItem>
+            }
+            else if (registerModel.RegisterType == RegisterType.Email)
+            {
+                <FormItem Label="邮箱">
+                    <Input @bind-Value="@registerModel.Email" Placeholder="请输入邮箱" />
+                </FormItem>
+                <FormItem Label="验证码">
+                    <Input @bind-Value="@registerModel.EmailCode" Placeholder="请输入邮箱验证码" />
+                    <Button OnClick="@SendEmailCode">发送验证码</Button>
+                </FormItem>
+            }
+            else if (registerModel.RegisterType == RegisterType.PhoneNumber)
+            {
+                <FormItem Label="手机号">
+                    <Input @bind-Value="@registerModel.PhoneNumber" Placeholder="请输入手机号" />
+                </FormItem>
+                <FormItem Label="验证码">
+                    <Input @bind-Value="@registerModel.PhoneCode" Placeholder="请输入手机验证码" />
+                    <Button OnClick="@SendPhoneCode">发送验证码</Button>
+                </FormItem>
+            }
 
             <FormItem Label="密码">
                 <InputPassword @bind-Value="@registerModel.Password" Placeholder="请输入密码" />
@@ -23,14 +50,20 @@
                 <InputPassword @bind-Value="@registerModel.ConfirmPassword" Placeholder="请再次输入密码" />
             </FormItem>
 
-            <FormItem Label="手机号">
-                <Input @bind-Value="@registerModel.PhoneNumber" Placeholder="请输入手机号" />
-            </FormItem>
-
             <FormItem WrapperColOffset="6" WrapperColSpan="18">
                 <Button Type="@ButtonType.Primary" HtmlType="submit" Block>注册</Button>
             </FormItem>
         </Form>
+
+        <Divider>第三方账号绑定</Divider>
+
+        <div style="text-align: center;">
+            <Alert Type="@AlertType.Info" Message="请先注册账号,然后在用户中心绑定第三方账号" Style="margin-bottom: 16px;" />
+            <Space>
+                <Button Icon="wechat" OnClick="@(() => BindExternalAccount("WeChat"))">绑定微信</Button>
+                <Button OnClick="@(() => BindExternalAccount("DingTalk"))">绑定钉钉</Button>
+            </Space>
+        </div>
 
         <Divider />
 
@@ -96,5 +129,23 @@
             errorMessage = $"注册失败: {ex.Message}";
             successMessage = "";
         }
+    }
+
+    private async Task SendEmailCode()
+    {
+        // TODO: 实现邮箱验证码发送逻辑
+        errorMessage = "邮箱验证码功能暂未实现";
+    }
+
+    private async Task SendPhoneCode()
+    {
+        // TODO: 实现手机验证码发送逻辑
+        errorMessage = "手机验证码功能暂未实现";
+    }
+
+    private async Task BindExternalAccount(string provider)
+    {
+        // TODO: 实现第三方账号绑定逻辑
+        errorMessage = $"绑定{provider}账号功能暂未实现";
     }
 }

@@ -1,29 +1,29 @@
 using Microsoft.EntityFrameworkCore;
+using Volo.Abp.Data;
+using Volo.Abp.EntityFrameworkCore;
+using Volo.Abp.Identity;
+using Volo.Abp.Identity.EntityFrameworkCore;
 
 namespace H.Account.EntityFrameworkCore;
 
-public class AccountDbContext : DbContext
+[ConnectionStringName("AccountDb")]
+public class AccountDbContext : AbpDbContext<AccountDbContext>
 {
-    public AccountDbContext(DbContextOptions<AccountDbContext> options) : base(options)
+    public AccountDbContext(DbContextOptions<AccountDbContext> options) 
+        : base(options)
     {
     }
 
-    public DbSet<UserEntity> Users { get; set; }
+    // Identity 实体
+    public DbSet<IdentityUser> Users { get; set; }
+    public DbSet<IdentityRole> Roles { get; set; }
+    public DbSet<IdentityUserLogin> UserLogins { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<UserEntity>(entity =>
-        {
-            entity.HasKey(e => e.Id);
-            entity.HasIndex(e => e.UserName).IsUnique();
-            entity.HasIndex(e => e.Email).IsUnique();
-            entity.Property(e => e.UserName).IsRequired().HasMaxLength(50);
-            entity.Property(e => e.Email).IsRequired().HasMaxLength(100);
-            entity.Property(e => e.PasswordHash).IsRequired();
-            entity.Property(e => e.PhoneNumber).HasMaxLength(20);
-            entity.Property(e => e.Roles).HasMaxLength(500);
-            entity.Property(e => e.Remark).HasMaxLength(1000);
-            entity.Property(e => e.UserType).HasConversion<int>();
-        });
+        base.OnModelCreating(modelBuilder);
+        
+        // 配置 Identity 实体
+        modelBuilder.ConfigureIdentity();
     }
 }

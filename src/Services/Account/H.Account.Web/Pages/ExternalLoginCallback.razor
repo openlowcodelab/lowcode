@@ -1,0 +1,33 @@
+@page "/account/external-callback"
+@inject IAuthService AuthService
+@inject NavigationManager Navigation
+
+<div style="text-align: center; margin-top: 100px;">
+    <Spin Tip="正在处理第三方登录..." />
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = new Uri(Navigation.Uri);
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        
+        var token = query["token"];
+        var error = query["error"];
+        
+        if (!string.IsNullOrEmpty(error))
+        {
+            Navigation.NavigateTo($"/account/login?error={Uri.EscapeDataString(error)}");
+            return;
+        }
+        
+        if (!string.IsNullOrEmpty(token))
+        {
+            Navigation.NavigateTo($"/?token={Uri.EscapeDataString(token)}");
+        }
+        else
+        {
+            Navigation.NavigateTo("/account/login?error=external_login_failed");
+        }
+    }
+}

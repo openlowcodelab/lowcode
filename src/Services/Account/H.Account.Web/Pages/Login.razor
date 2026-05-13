@@ -1,6 +1,6 @@
 @page "/account/login"
 
-@layout LayoutComponentBase
+@layout AccountEmptyLayout
 @inject IAuthService AuthService
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
@@ -8,18 +8,39 @@
 <div style="max-width: 400px; margin: 50px auto;">
     <Card Title="用户登录">
         <Form Model="@loginModel" OnFinish="@HandleLogin" LabelColSpan="8" WrapperColSpan="16">
-            <FormItem Label="用户名">
-                <Input @bind-Value="@loginModel.UserName" Placeholder="请输入用户名" />
+            <FormItem Label="登录方式">
+                <Select TItem="LoginType" TItemValue="LoginType" @bind-Value="@loginModel.LoginType">
+                    <SelectOption TItem="LoginType" TItemValue="LoginType" Value="LoginType.Account" Label="用户名" />
+                    <SelectOption TItem="LoginType" TItemValue="LoginType" Value="LoginType.Email" Label="邮箱" />
+                    <SelectOption TItem="LoginType" TItemValue="LoginType" Value="LoginType.PhoneNumber" Label="手机号" />
+                </Select>
+            </FormItem>
+
+            <FormItem Label="@(loginModel.LoginType == LoginType.Email ? "邮箱" : loginModel.LoginType == LoginType.PhoneNumber ? "手机号" : "用户名")">
+                <Input @bind-Value="@loginModel.Account" Placeholder="@($"请输入{(loginModel.LoginType == LoginType.Email ? "邮箱" : loginModel.LoginType == LoginType.PhoneNumber ? "手机号" : "用户名")}")" />
             </FormItem>
 
             <FormItem Label="密码">
                 <InputPassword @bind-Value="@loginModel.Password" Placeholder="请输入密码" />
             </FormItem>
 
-            <FormItem WrapperColOffset="8" WrapperColSpan="16">
+            <FormItem WrapperColSpan="16" WrapperColOffset="8">
+                <Checkbox @bind-Checked="@loginModel.RememberMe">记住我</Checkbox>
+            </FormItem>
+
+            <FormItem WrapperColSpan="16" WrapperColOffset="8">
                 <Button Type="@ButtonType.Primary" HtmlType="submit" Block>登录</Button>
             </FormItem>
         </Form>
+
+        <Divider>第三方登录</Divider>
+
+        <div style="text-align: center;">
+            <Space>
+                <Button Icon="wechat" OnClick="@(() => ExternalLogin("WeChat"))">微信登录</Button>
+                <Button OnClick="@(() => ExternalLogin("DingTalk"))">钉钉登录</Button>
+            </Space>
+        </div>
 
         <Divider />
 
@@ -103,5 +124,11 @@
             errorMessage = $"登录失败: {ex.Message}";
             successMessage = string.Empty;
         }
+    }
+
+    private async Task ExternalLogin(string provider)
+    {
+        var returnUrl = Navigation.ToAbsoluteUri("/account/external-callback");
+        Navigation.NavigateTo($"/api/account/external-login?provider={provider}&returnUrl={Uri.EscapeDataString(returnUrl.ToString())}");
     }
 }
