@@ -8,16 +8,8 @@
 <div style="max-width: 400px; margin: 50px auto;">
     <Card Title="用户登录">
         <Form Model="@loginModel" OnFinish="@HandleLogin" LabelColSpan="8" WrapperColSpan="16">
-            <FormItem Label="登录方式">
-                <Select TItem="LoginType" TItemValue="LoginType" @bind-Value="@loginModel.LoginType">
-                    <SelectOption TItem="LoginType" TItemValue="LoginType" Value="LoginType.Account" Label="用户名" />
-                    <SelectOption TItem="LoginType" TItemValue="LoginType" Value="LoginType.Email" Label="邮箱" />
-                    <SelectOption TItem="LoginType" TItemValue="LoginType" Value="LoginType.PhoneNumber" Label="手机号" />
-                </Select>
-            </FormItem>
-
-            <FormItem Label="@(loginModel.LoginType == LoginType.Email ? "邮箱" : loginModel.LoginType == LoginType.PhoneNumber ? "手机号" : "用户名")">
-                <Input @bind-Value="@loginModel.Account" Placeholder="@($"请输入{(loginModel.LoginType == LoginType.Email ? "邮箱" : loginModel.LoginType == LoginType.PhoneNumber ? "手机号" : "用户名")}")" />
+            <FormItem Label="账号">
+                <Input @bind-Value="@loginModel.Account" Placeholder="请输入用户名/邮箱/手机号" />
             </FormItem>
 
             <FormItem Label="密码">

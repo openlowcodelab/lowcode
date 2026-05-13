@@ -103,7 +103,10 @@ public class AuthService : ApplicationService, IAuthService
     {
         Volo.Abp.Identity.IdentityUser? user = null;
 
-        switch (request.LoginType)
+        // 自动判断输入格式
+        var loginType = DetectLoginType(request.Account);
+
+        switch (loginType)
         {
             case LoginType.Email:
                 user = await _userManager.FindByEmailAsync(request.Account);
@@ -244,5 +247,30 @@ public class AuthService : ApplicationService, IAuthService
             UpdatedAt = user.LastModificationTime,
             LastLoginAt = user.LastModificationTime
         };
+    }
+
+    /// <summary>
+    /// 自动检测登录类型
+    /// </summary>
+    private LoginType DetectLoginType(string account)
+    {
+        if (string.IsNullOrWhiteSpace(account))
+            return LoginType.Account;
+
+        // 判断是否为邮箱
+        if (account.Contains('@') && account.Contains('.'))
+        {
+            // 简单的邮箱格式验证
+            var emailRegex = new System.Text.RegularExpressions.Regex(@"^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$");
+            if (emailRegex.IsMatch(account))
+                return LoginType.Email;
+        }
+
+        // 判断是否为手机号（11位数字，以1开头）
+        if (System.Text.RegularExpressions.Regex.IsMatch(account, @"^1[3-9]\d{9}$"))
+            return LoginType.PhoneNumber;
+
+        // 默认为用户名
+        return LoginType.Account;
     }
 }
