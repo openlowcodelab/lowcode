@@ -1,13 +1,16 @@
 using H.Account.Application;
 using H.Account.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authentication;
 using Volo.Abp.AspNetCore.Mvc;
 using Volo.Abp.Autofac;
 using Volo.Abp.Modularity;
+using Volo.Abp.Identity;
 using Volo.Abp.Identity.EntityFrameworkCore;
 
 namespace H.Account.Host;
@@ -30,6 +33,7 @@ public class AccountHostModule : AbpModule
 
         ConfigureAutoApiControllers();
         
+        ConfigureAuthentication(context);
         ConfigureExternalLogin(context);
     }
 
@@ -41,6 +45,21 @@ public class AccountHostModule : AbpModule
         });
     }
     
+    private void ConfigureAuthentication(ServiceConfigurationContext context)
+    {
+        context.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+            .AddCookie(options =>
+            {
+                options.LoginPath = "/account/login";
+                options.AccessDeniedPath = "/account/login";
+                options.ExpireTimeSpan = TimeSpan.FromHours(24);
+                options.SlidingExpiration = true;
+            });
+
+        // 注册 SignInManager
+        context.Services.AddScoped<SignInManager<Volo.Abp.Identity.IdentityUser>>();
+    }
+
     private void ConfigureExternalLogin(ServiceConfigurationContext context)
     {
         var configuration = context.Services.GetConfiguration();

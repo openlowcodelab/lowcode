@@ -1,0 +1,16 @@
+@page "/account/logout"
+@attribute [AllowAnonymous]
+
+@inject IAuthService AuthService
+@inject NavigationManager Navigation
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        // 退出登录
+        await AuthService.LogoutAsync();
+        
+        // 跳转到首页
+        Navigation.NavigateTo("/", forceLoad: true);
+    }
+}

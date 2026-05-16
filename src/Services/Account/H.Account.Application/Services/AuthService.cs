@@ -10,21 +10,26 @@ using Microsoft.EntityFrameworkCore;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Identity;
 using Volo.Abp.Guids;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace H.Account.Application;
 
 public class AuthService : ApplicationService, IAuthService
 {
-    private readonly Volo.Abp.Identity.IdentityUserManager _userManager;
+    private readonly IdentityUserManager _userManager;
+    private readonly SignInManager<Volo.Abp.Identity.IdentityUser> _signInManager;
     private readonly IConfiguration _configuration;
     private readonly IGuidGenerator _guidGenerator;
 
     public AuthService(
-        Volo.Abp.Identity.IdentityUserManager userManager,
+        IdentityUserManager userManager,
+        SignInManager<Volo.Abp.Identity.IdentityUser> signInManager,
         IConfiguration configuration,
         IGuidGenerator guidGenerator)
     {
         _userManager = userManager;
+        _signInManager = signInManager;
         _configuration = configuration;
         _guidGenerator = guidGenerator;
     }
@@ -155,14 +160,32 @@ public class AuthService : ApplicationService, IAuthService
         user.LastModificationTime = DateTime.UtcNow;
         await _userManager.UpdateAsync(user);
 
-        // 生成JWT令牌
-        var token = GenerateJwtToken(user);
+        // 设置Cookie认证
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Name, user.UserName ?? ""),
+            new Claim(ClaimTypes.Email, user.Email ?? "")
+        };
+
+        if (!string.IsNullOrEmpty(user.PhoneNumber))
+        {
+            claims.Add(new Claim(ClaimTypes.MobilePhone, user.PhoneNumber));
+        }
+
+        var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        var authProperties = new AuthenticationProperties
+        {
+            IsPersistent = request.RememberMe,
+            ExpiresUtc = request.RememberMe ? DateTimeOffset.UtcNow.AddDays(7) : DateTimeOffset.UtcNow.AddHours(24)
+        };
+
+        await _signInManager.SignInWithClaimsAsync(user, authProperties, claims);
 
         return new AuthResponseDto
         {
             Success = true,
             Message = "登录成功",
-            Token = token,
             User = MapToUserDto(user)
         };
     }
@@ -198,6 +221,11 @@ public class AuthService : ApplicationService, IAuthService
         {
             return false;
         }
+    }
+
+    public async Task LogoutAsync()
+    {
+        await _signInManager.SignOutAsync();
     }
 
     private string GenerateJwtToken(Volo.Abp.Identity.IdentityUser user)

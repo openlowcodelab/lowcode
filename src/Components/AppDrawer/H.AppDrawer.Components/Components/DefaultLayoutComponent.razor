@@ -7,7 +7,14 @@
 </style>
 
 <div class="layout-container">
-    <TopNavbar AppName="@AppName" OnDrawerToggle="ToggleAppDrawer">
+    <TopNavbar 
+        AppName="@AppName" 
+        OnDrawerToggle="ToggleAppDrawer"
+        UserName="@UserName"
+        IsLoggedIn="@IsLoggedIn"
+        LoginUrl="@LoginUrl"
+        ProfileUrl="@ProfileUrl"
+        OnLogout="HandleLogout">
         @if (MenuPosition == MenuPosition.Top)
         {
             <TopMenu MenuItems="@MenuItems" />
@@ -47,6 +54,36 @@
     [Parameter]
     public MenuPosition MenuPosition { get; set; } = MenuPosition.Left;
 
+    /// <summary>
+    /// 用户名（由外部传入）
+    /// </summary>
+    [Parameter]
+    public string UserName { get; set; } = "用户";
+
+    /// <summary>
+    /// 是否已登录（由外部传入）
+    /// </summary>
+    [Parameter]
+    public bool IsLoggedIn { get; set; }
+
+    /// <summary>
+    /// 登录Url（默认/account/login）
+    /// </summary>
+    [Parameter]
+    public string LoginUrl { get; set; } = "/account/login";
+
+    /// <summary>
+    /// 个人资料Url（默认/account/users）
+    /// </summary>
+    [Parameter]
+    public string ProfileUrl { get; set; } = "/account/users";
+
+    /// <summary>
+    /// 退出登录回调（由外部处理）
+    /// </summary>
+    [Parameter]
+    public EventCallback OnLogout { get; set; }
+
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
 
@@ -61,5 +98,21 @@
     private void ToggleAppDrawer()
     {
         appDrawer?.Toggle();
+    }
+
+    /// <summary>
+    /// 处理退出登录（默认实现，可被外部覆盖）
+    /// </summary>
+    private async Task HandleLogout()
+    {
+        if (OnLogout.HasDelegate)
+        {
+            await OnLogout.InvokeAsync();
+        }
+        else
+        {
+            // 默认行为：跳转到首页
+            NavigationManager.NavigateTo("/");
+        }
     }
 }

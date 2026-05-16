@@ -1,4 +1,5 @@
 @page "/account/login"
+@attribute [AllowAnonymous]
 
 @layout AccountEmptyLayout
 @inject IAuthService AuthService
@@ -7,7 +8,7 @@
 
 <div style="max-width: 400px; margin: 50px auto;">
     <Card Title="用户登录">
-        <Form Model="@loginModel" OnFinish="@HandleLogin" LabelColSpan="8" WrapperColSpan="16">
+        <Form Model="@loginModel" OnFinish="@HandleLogin" LabelColSpan="8" WrapperColSpan="16" FormName="loginForm">
             <FormItem Label="账号">
                 <Input @bind-Value="@loginModel.Account" Placeholder="请输入用户名/邮箱/手机号" />
             </FormItem>
@@ -53,14 +54,20 @@
 </div>
 
 @code {
-    [SupplyParameterFromForm]
+    [SupplyParameterFromForm(FormName = "loginForm")]
     private LoginRequestDto? loginModel { get; set; }
     private string errorMessage = "";
     private string successMessage = "";
+    private string returnUrl = "/";
 
     protected override void OnInitialized()
     {
         loginModel ??= new LoginRequestDto();
+        
+        // 读取returnUrl参数
+        var uri = new Uri(Navigation.Uri);
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        returnUrl = query["returnUrl"] ?? "/";
     }
 
     private async Task HandleLogin()
@@ -92,14 +99,8 @@
                 successMessage = "登录成功！正在跳转到首页...";
                 errorMessage = string.Empty;
                 
-                if (!string.IsNullOrEmpty(result.Token))
-                {
-                    Navigation.NavigateTo($"/?token={Uri.EscapeDataString(result.Token)}");
-                }
-                else
-                {
-                    Navigation.NavigateTo("/");
-                }
+                // 使用强制跳转，确保 Cookie 被设置
+                Navigation.NavigateTo(returnUrl, forceLoad: true);
             }
             else
             {

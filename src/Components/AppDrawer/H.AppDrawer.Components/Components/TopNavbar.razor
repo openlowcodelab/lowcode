@@ -1,4 +1,5 @@
 @namespace H.AppDrawer.Components
+@inject NavigationManager Navigation
 
 <style>
 .top-navbar { display: flex; justify-content: space-between; align-items: center; height: 60px; padding: 0 20px 0 5px; background-color: #fff; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); z-index: 100; }
@@ -11,6 +12,16 @@
 .user-avatar { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; }
 .user-name span { color: #666; font-size: 14px; }
 .login-btn { padding: 6px 16px; background-color: #1890ff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+.user-dropdown { position: relative; cursor: pointer; }
+.user-info { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border-radius: 4px; }
+.user-info:hover { background-color: #f5f5f5; }
+.dropdown-menu { 
+    position: absolute; top: 100%; right: 0; background: white; 
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15); border-radius: 4px; 
+    min-width: 160px; z-index: 1000; margin-top: 8px;
+}
+.dropdown-item { padding: 8px 16px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+.dropdown-item:hover { background-color: #f5f5f5; }
 </style>
 
 <div class="top-navbar">
@@ -33,14 +44,31 @@
     <div class="navbar-right">
         @if (IsLoggedIn)
         {
-            <div class="user-avatar" style="background-color: #1890ff; display: flex; align-items: center; justify-content: center;">
-                <svg viewBox="0 0 100 100" style="width: 100%; height: 100%;">
-                    <circle fill="#fff" cx="50" cy="35" r="20"/>
-                    <path fill="#fff" d="M50 60 Q20 60 20 85 L80 85 Q80 60 50 60"/>
-                </svg>
-            </div>
-            <div class="user-name">
-                <span>@UserName</span>
+            <div class="user-dropdown" @onclick:stopPropagation="true">
+                <div class="user-info" @onclick="ToggleDropdown">
+                    <div class="user-avatar" style="background-color: #1890ff; display: flex; align-items: center; justify-content: center;">
+                        <svg viewBox="0 0 100 100" style="width: 100%; height: 100%;">
+                            <circle fill="#fff" cx="50" cy="35" r="20"/>
+                            <path fill="#fff" d="M50 60 Q20 60 20 85 L80 85 Q80 60 50 60"/>
+                        </svg>
+                    </div>
+                    <div class="user-name">
+                        <span>@UserName</span>
+                    </div>
+                </div>
+                
+                @if (showDropdown)
+                {
+                    <div class="dropdown-menu">
+                        <div class="dropdown-item" @onclick="GoToProfile">
+                            <span>👤</span> 账号信息
+                        </div>
+                        <div style="margin: 4px 0; border-top: 1px solid #f0f0f0;"></div>
+                        <div class="dropdown-item" @onclick="OnLogout">
+                            <span>🚪</span> 退出登录
+                        </div>
+                    </div>
+                }
             </div>
         }
         else
@@ -72,20 +100,51 @@
     public RenderFragment? ChildContent { get; set; }
 
     /// <summary>
-    /// 用户名
+    /// 用户名（由外部传入）
     /// </summary>
-    private string UserName { get; set; } = "用户";
+    [Parameter]
+    public string UserName { get; set; } = "用户";
 
     /// <summary>
-    /// 是否已登录
+    /// 是否已登录（由外部传入）
     /// </summary>
-    private bool IsLoggedIn => !string.IsNullOrEmpty(UserName);
+    [Parameter]
+    public bool IsLoggedIn { get; set; }
 
     /// <summary>
-    /// 处理登录
+    /// 登录Url（由外部传入，默认/account/login）
     /// </summary>
+    [Parameter]
+    public string LoginUrl { get; set; } = "/account/login";
+
+    /// <summary>
+    /// 个人资料Url（由外部传入，默认/account/users）
+    /// </summary>
+    [Parameter]
+    public string ProfileUrl { get; set; } = "/account/users";
+
+    /// <summary>
+    /// 退出登录回调（由外部处理）
+    /// </summary>
+    [Parameter]
+    public EventCallback OnLogout { get; set; }
+
+    private bool showDropdown = false;
+
+    private void ToggleDropdown()
+    {
+        showDropdown = !showDropdown;
+    }
+
+    private void GoToProfile()
+    {
+        showDropdown = false;
+        Navigation.NavigateTo(ProfileUrl);
+    }
+
     private void HandleLogin()
     {
-        UserName = "测试用户";
+        var returnUrl = Uri.EscapeDataString(Navigation.Uri);
+        Navigation.NavigateTo($"{LoginUrl}?returnUrl={returnUrl}");
     }
 }

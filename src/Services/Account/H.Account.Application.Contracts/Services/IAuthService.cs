@@ -8,4 +8,5 @@ public interface IAuthService : IApplicationService
     Task<AuthResponseDto> LoginAsync(LoginRequestDto request);
     Task<UserDto?> GetUserByIdAsync(Guid userId);
     Task<bool> ValidateTokenAsync(string token);
+    Task LogoutAsync();
 }

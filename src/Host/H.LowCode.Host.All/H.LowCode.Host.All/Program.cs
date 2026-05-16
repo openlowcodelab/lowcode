@@ -59,6 +59,8 @@ app.UseStaticFiles(new StaticFileOptions
 app.MapStaticAssets();
 
 app.UseRouting();
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseAntiforgery();
 
 app.MapControllers();

@@ -1,12 +1,41 @@
 ﻿@namespace H.Account.Web
+@using Volo.Abp.Users
+@inject ICurrentUser CurrentUser
+@inject NavigationManager Navigation
 
 @inherits LayoutComponentBase
 
-<DefaultLayoutComponent AppName="用户管理" MenuItems="@MenuItems">
+<DefaultLayoutComponent 
+    AppName="用户管理" 
+    MenuItems="@MenuItems"
+    UserName="@UserName"
+    IsLoggedIn="@IsLoggedIn"
+    LoginUrl="/account/login"
+    ProfileUrl="/account/users"
+    OnLogout="HandleLogout">
     @Body
 </DefaultLayoutComponent>
 
 @code {
+    private string UserName => CurrentUser.UserName ?? "用户";
+    private bool IsLoggedIn => CurrentUser.IsAuthenticated;
+
+    protected override void OnInitialized()
+    {
+        // 检查用户是否已登录，未登录则跳转到登录页
+        if (!CurrentUser.IsAuthenticated)
+        {
+            var returnUrl = Uri.EscapeDataString(Navigation.Uri);
+            Navigation.NavigateTo($"/account/login?returnUrl={returnUrl}", forceLoad: true);
+        }
+    }
+
+    private void HandleLogout()
+    {
+        // 退出登录由Host层处理，这里跳转到Account Host的退出端点
+        Navigation.NavigateTo("/account/logout", forceLoad: true);
+    }
+
     private static List<AppMenuItem> MenuItems => new()
     {
         new AppMenuItem { Name = "用户列表", Url = "/account/users", Icon = "👥" }
