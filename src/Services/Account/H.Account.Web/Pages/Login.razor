@@ -2,7 +2,7 @@
 @attribute [AllowAnonymous]
 
 @layout AccountEmptyLayout
-@inject IAuthService AuthService
+@inject IAccountAppService AccountAppService
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
 
@@ -80,13 +80,13 @@
         
         try
         {
-            if (AuthService == null)
+            if (AccountAppService == null)
             {
                 errorMessage = "系统错误：认证服务未初始化";
                 return;
             }
             
-            var result = await AuthService.LoginAsync(loginModel);
+            var result = await AccountAppService.LoginAsync(loginModel);
             
             if (result == null)
             {

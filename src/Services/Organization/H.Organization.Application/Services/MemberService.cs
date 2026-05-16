@@ -12,9 +12,9 @@ namespace H.Organization.Application.Services;
 public class MemberService : ApplicationService, IMemberService
 {
     private readonly OrganizationDbContext _context;
-    private readonly IUserService _userService;
+    private readonly IUserAppService _userService;
 
-    public MemberService(OrganizationDbContext context, IUserService userService)
+    public MemberService(OrganizationDbContext context, IUserAppService userService)
     {
         _context = context;
         _userService = userService;

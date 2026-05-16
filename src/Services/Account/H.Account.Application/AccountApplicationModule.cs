@@ -13,8 +13,6 @@ public class AccountApplicationModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
-        // 注册应用服务
-        context.Services.AddScoped<IAuthService, AuthService>();
-        context.Services.AddScoped<IUserService, UserService>();
+
     }
 }

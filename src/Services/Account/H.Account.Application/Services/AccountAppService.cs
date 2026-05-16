@@ -15,14 +15,14 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace H.Account.Application;
 
-public class AuthService : ApplicationService, IAuthService
+public class AccountAppService : ApplicationService, IAccountAppService
 {
     private readonly IdentityUserManager _userManager;
     private readonly SignInManager<Volo.Abp.Identity.IdentityUser> _signInManager;
     private readonly IConfiguration _configuration;
     private readonly IGuidGenerator _guidGenerator;
 
-    public AuthService(
+    public AccountAppService(
         IdentityUserManager userManager,
         SignInManager<Volo.Abp.Identity.IdentityUser> signInManager,
         IConfiguration configuration,

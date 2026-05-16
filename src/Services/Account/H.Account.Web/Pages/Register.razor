@@ -2,7 +2,7 @@
 @attribute [AllowAnonymous]
 
 @layout AccountEmptyLayout
-@inject IAuthService AuthService
+@inject IAccountAppService AccountAppService
 @inject NavigationManager Navigation
 
 <div style="max-width: 500px; margin: 50px auto;">
@@ -105,7 +105,7 @@
         
         try
         {
-            var result = await AuthService.RegisterAsync(registerModel);
+            var result = await AccountAppService.RegisterAsync(registerModel);
             
             if (result.Success)
             {

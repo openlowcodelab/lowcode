@@ -7,12 +7,12 @@ using Volo.Abp.Identity;
 
 namespace H.Account.Application;
 
-public class UserService : ApplicationService, IUserService
+public class UserAppService : ApplicationService, IUserAppService
 {
     private readonly IdentityUserManager _userManager;
     private readonly IRepository<Volo.Abp.Identity.IdentityUser, Guid> _userRepository;
 
-    public UserService(
+    public UserAppService(
         IdentityUserManager userManager,
         IRepository<Volo.Abp.Identity.IdentityUser, Guid> userRepository)
     {

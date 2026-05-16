@@ -2,7 +2,7 @@ using Volo.Abp.Application.Services;
 
 namespace H.Account.Application.Contracts;
 
-public interface IUserService : IApplicationService
+public interface IUserAppService : IApplicationService
 {
     Task<UserDto?> GetUserByUserNameAsync(string userName);
     Task<UserDto?> GetUserByEmailAsync(string email);
