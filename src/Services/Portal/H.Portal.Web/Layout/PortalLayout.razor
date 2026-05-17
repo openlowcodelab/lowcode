@@ -1,7 +1,6 @@
 ﻿@namespace H.Portal.Web
 @using Volo.Abp.Users
 @inject ICurrentUser CurrentUser
-@inject NavigationManager Navigation
 
 @inherits LayoutComponentBase
 
@@ -10,17 +9,11 @@
     UserName="@UserName"
     IsLoggedIn="@IsLoggedIn"
     LoginUrl="/account/login"
-    ProfileUrl="/account/users"
-    OnLogout="HandleLogout">
+    ProfileUrl="/account/users">
     @Body
 </DefaultLayoutComponent>
 
 @code{
     private string UserName => CurrentUser.UserName ?? "用户";
     private bool IsLoggedIn => CurrentUser.IsAuthenticated;
-
-    private void HandleLogout()
-    {
-        Navigation.NavigateTo("/account/logout", forceLoad: true);
-    }
 }

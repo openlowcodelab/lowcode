@@ -1,70 +1,17 @@
 ﻿@namespace H.Organization.Web
-@using Volo.Abp.Users
-@inject ICurrentUser CurrentUser
-@inject NavigationManager Navigation
-@inject HttpClient HttpClient
 
 @inherits LayoutComponentBase
 
 <DefaultLayoutComponent 
     AppName="组织管理" 
     MenuItems="@MenuItems"
-    UserName="@UserName"
-    IsLoggedIn="@IsLoggedIn"
     LoginUrl="/account/login"
     ProfileUrl="/account/users"
-    OnLogout="HandleLogout">
+    RequireAuthentication="true">
     @Body
 </DefaultLayoutComponent>
 
 @code {
-    private string UserName => CurrentUser.UserName ?? "用户";
-    private bool IsLoggedIn => CurrentUser.IsAuthenticated;
-
-    protected override async Task OnInitializedAsync()
-    {
-        // 检查用户是否已登录，未登录则跳转到登录页
-        if (!CurrentUser.IsAuthenticated)
-        {
-            // InteractiveWebAssembly 模式下，WASM 客户端无法通过 ICurrentUser 感知 Cookie 认证状态
-            // 需要通过 API 调用验证真实的认证状态
-            if (OperatingSystem.IsBrowser())
-            {
-                var isAuthenticated = await CheckAuthViaApiAsync();
-                if (isAuthenticated)
-                {
-                    return; // 已认证，无需跳转
-                }
-            }
-
-            // 确实未认证，跳转到登录页
-            var returnUrl = Uri.EscapeDataString(Navigation.Uri);
-            Navigation.NavigateTo($"/account/login?returnUrl={returnUrl}", forceLoad: true);
-        }
-    }
-
-    private async Task<bool> CheckAuthViaApiAsync()
-    {
-        try
-        {
-            // GetCurrentUserAsync 未认证时返回 null，认证时返回 UserDto
-            var response = await HttpClient.GetAsync("/api/app/account/current-user");
-            if (!response.IsSuccessStatusCode) return false;
-            var content = await response.Content.ReadAsStringAsync();
-            return !string.IsNullOrEmpty(content) && content.Trim() != "null";
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    private void HandleLogout()
-    {
-        // 退出登录由Host层处理
-        Navigation.NavigateTo("/account/logout", forceLoad: true);
-    }
-
     private static List<AppMenuItem> MenuItems => new()
     {
         new AppMenuItem { Name = "组织管理", Url = "/organization", Icon = "🏢" },

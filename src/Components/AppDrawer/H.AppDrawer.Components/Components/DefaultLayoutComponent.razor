@@ -1,4 +1,5 @@
 @namespace H.AppDrawer.Components
+@using Microsoft.AspNetCore.Http
 
 <style>
 .layout-container { display: flex; flex-direction: column; height: 100vh; }
@@ -10,8 +11,8 @@
     <TopNavbar 
         AppName="@AppName" 
         OnDrawerToggle="ToggleAppDrawer"
-        UserName="@UserName"
-        IsLoggedIn="@IsLoggedIn"
+        UserName="@(RequireAuthentication ? _userName : UserName)"
+        IsLoggedIn="@(RequireAuthentication ? _isLoggedIn : IsLoggedIn)"
         LoginUrl="@LoginUrl"
         ProfileUrl="@ProfileUrl"
         OnLogout="HandleLogout">
@@ -55,18 +56,6 @@
     public MenuPosition MenuPosition { get; set; } = MenuPosition.Left;
 
     /// <summary>
-    /// 用户名（由外部传入）
-    /// </summary>
-    [Parameter]
-    public string UserName { get; set; } = "用户";
-
-    /// <summary>
-    /// 是否已登录（由外部传入）
-    /// </summary>
-    [Parameter]
-    public bool IsLoggedIn { get; set; }
-
-    /// <summary>
     /// 登录Url（默认/account/login）
     /// </summary>
     [Parameter]
@@ -84,13 +73,117 @@
     [Parameter]
     public EventCallback OnLogout { get; set; }
 
+    /// <summary>
+    /// 是否需要认证（默认 false，开启后组件内部处理登录态校验与跳转）
+    /// </summary>
+    [Parameter]
+    public bool RequireAuthentication { get; set; }
+
+    /// <summary>
+    /// 用户名（RequireAuthentication=false 时由外部传入）
+    /// </summary>
+    [Parameter]
+    public string UserName { get; set; } = "用户";
+
+    /// <summary>
+    /// 是否已登录（RequireAuthentication=false 时由外部传入）
+    /// </summary>
+    [Parameter]
+    public bool IsLoggedIn { get; set; }
+
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
 
     [Inject]
     private NavigationManager NavigationManager { get; set; } = default!;
 
+    [Inject]
+    private IServiceProvider ServiceProvider { get; set; } = default!;
+
+    [Inject]
+    private HttpClient HttpClient { get; set; } = default!;
+
+    private bool _isLoggedIn;
+    private string _userName = "用户";
     private AppDrawer? appDrawer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!RequireAuthentication)
+            return;
+
+        // 服务端预渲染：通过 HttpContext 快速验证
+        bool isAuthenticated = IsAuthenticatedViaHttpContext();
+
+        if (!isAuthenticated && OperatingSystem.IsBrowser())
+        {
+            // WASM 环境：通过 API 验证 Cookie 认证状态
+            var result = await CheckAuthViaApiAsync();
+            isAuthenticated = result.authenticated;
+            if (!string.IsNullOrEmpty(result.userName))
+            {
+                _userName = result.userName;
+            }
+        }
+        else if (isAuthenticated)
+        {
+            // 服务端：从 HttpContext 获取用户名
+            var httpContextAccessor = ServiceProvider.GetService<IHttpContextAccessor>();
+            var name = httpContextAccessor?.HttpContext?.User?.Identity?.Name;
+            if (!string.IsNullOrEmpty(name))
+            {
+                _userName = name;
+            }
+        }
+
+        _isLoggedIn = isAuthenticated;
+
+        if (!isAuthenticated)
+        {
+            var returnUrl = Uri.EscapeDataString(NavigationManager.Uri);
+            NavigationManager.NavigateTo($"{LoginUrl}?returnUrl={returnUrl}", forceLoad: true);
+        }
+    }
+
+    private bool IsAuthenticatedViaHttpContext()
+    {
+        var httpContextAccessor = ServiceProvider.GetService<IHttpContextAccessor>();
+        return httpContextAccessor?.HttpContext?.User?.Identity?.IsAuthenticated == true;
+    }
+
+    private async Task<(bool authenticated, string? userName)> CheckAuthViaApiAsync()
+    {
+        try
+        {
+            var response = await HttpClient.GetAsync("/api/app/account/current-user");
+            if (!response.IsSuccessStatusCode)
+                return (false, null);
+
+            var content = await response.Content.ReadAsStringAsync();
+            if (string.IsNullOrEmpty(content))
+                return (false, null);
+
+            using var doc = System.Text.Json.JsonDocument.Parse(content);
+            var root = doc.RootElement;
+
+            // 检查 isAuthenticated 字段
+            if (root.TryGetProperty("isAuthenticated", out var authProp) &&
+                authProp.ValueKind == System.Text.Json.JsonValueKind.False)
+            {
+                return (false, null);
+            }
+
+            // 解析用户名
+            var userName = root.TryGetProperty("userName", out var nameProp)
+                ? nameProp.GetString()
+                : null;
+            return (true, userName);
+        }
+        catch
+        {
+            return (false, null);
+        }
+    }
 
     /// <summary>
     /// 切换应用抽屉
@@ -111,8 +204,8 @@
         }
         else
         {
-            // 默认行为：跳转到首页
-            NavigationManager.NavigateTo("/");
+            // 默认行为：跳转到账户登出端点
+            NavigationManager.NavigateTo("/account/logout", forceLoad: true);
         }
     }
 }
