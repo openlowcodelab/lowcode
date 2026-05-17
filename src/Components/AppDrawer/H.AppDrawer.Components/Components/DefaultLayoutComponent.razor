@@ -14,7 +14,7 @@
         UserName="@(RequireAuthentication ? _userName : UserName)"
         IsLoggedIn="@(RequireAuthentication ? _isLoggedIn : IsLoggedIn)"
         LoginUrl="@LoginUrl"
-        ProfileUrl="@ProfileUrl"
+        ProfileUrl="/account/profile"
         OnLogout="HandleLogout">
         @if (MenuPosition == MenuPosition.Top)
         {
@@ -60,12 +60,6 @@
     /// </summary>
     [Parameter]
     public string LoginUrl { get; set; } = "/account/login";
-
-    /// <summary>
-    /// 个人资料Url（默认/account/users）
-    /// </summary>
-    [Parameter]
-    public string ProfileUrl { get; set; } = "/account/users";
 
     /// <summary>
     /// 退出登录回调（由外部处理）

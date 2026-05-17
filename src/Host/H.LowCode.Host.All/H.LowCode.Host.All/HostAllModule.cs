@@ -10,6 +10,8 @@ using H.LowCode.RenderEngine.EntityFrameworkCore;
 using H.LowCode.RenderEngine.Repository.JsonFile;
 using H.Organization.Application;
 using H.Portal.Application;
+using H.SystemManagement.Application;
+using H.SystemManagement.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Volo.Abp.AspNetCore.Mvc;
 using Volo.Abp.Autofac;
@@ -41,7 +43,10 @@ namespace H.LowCode.Host.All;
     // AutoTest
     typeof(AutoTestApplicationModule),
     // Portal
-    typeof(PortalApplicationModule)
+    typeof(PortalApplicationModule),
+    // SystemManagement
+    typeof(SystemManagementApplicationModule),
+    typeof(SystemManagementEntityFrameworkCoreModule)
 )]
 public class HostAllModule : AbpModule
 {
@@ -90,6 +95,7 @@ public class HostAllModule : AbpModule
             options.ConventionalControllers.Create(typeof(ApprovalApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(AutoTestApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(PortalApplicationModule).Assembly);
+            options.ConventionalControllers.Create(typeof(SystemManagementApplicationModule).Assembly);
         });
     }
 }

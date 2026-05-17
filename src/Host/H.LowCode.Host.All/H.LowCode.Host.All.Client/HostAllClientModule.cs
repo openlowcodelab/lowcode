@@ -8,6 +8,7 @@ using H.LowCode.Themes.AntBlazor;
 using H.LowCode.Workbench;
 using H.Organization.Application.Contracts;
 using H.Portal.Application.Contracts;
+using H.SystemManagement.Application.Contracts;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Volo.Abp.Autofac.WebAssembly;
 using Volo.Abp.Http.Client;
@@ -34,6 +35,7 @@ public class HostAllClientModule : AbpModule
     public const string ApprovalRemoteServiceName = "Approval";
     public const string AutoTestRemoteServiceName = "AutoTest";
     public const string PortalRemoteServiceName = "Portal";
+    public const string SystemManagementRemoteServiceName = "SystemManagement";
 
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
@@ -94,6 +96,11 @@ public class HostAllClientModule : AbpModule
         context.Services.AddHttpClientProxies(
             typeof(PortalApplicationContractsModule).Assembly,
             PortalRemoteServiceName
+        );
+
+        context.Services.AddHttpClientProxies(
+            typeof(SystemManagementApplicationContractsModule).Assembly,
+            SystemManagementRemoteServiceName
         );
     }
 }
