@@ -1,4 +1,4 @@
-namespace H.SystemManagement.Application.Contracts.Enums;
+namespace H.SystemManagement.Application.Contracts;
 
 /// <summary>
 /// 通知方式类型

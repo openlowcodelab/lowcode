@@ -1,7 +1,6 @@
-using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Entities.Auditing;
 
-namespace H.SystemManagement.EntityFrameworkCore.Entities;
+namespace H.SystemManagement.EntityFrameworkCore;
 
 /// <summary>
 /// 通知业务实体

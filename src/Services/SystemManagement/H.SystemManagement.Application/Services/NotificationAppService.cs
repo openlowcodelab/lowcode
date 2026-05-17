@@ -1,15 +1,13 @@
-using H.SystemManagement.Application.Contracts.Dtos;
-using H.SystemManagement.Application.Contracts.Services;
-using H.SystemManagement.EntityFrameworkCore;
-using H.SystemManagement.EntityFrameworkCore.Entities;
 using Microsoft.EntityFrameworkCore;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
 using System.Linq.Dynamic.Core;
+using H.SystemManagement.Application.Contracts;
+using H.SystemManagement.EntityFrameworkCore;
 
-namespace H.SystemManagement.Application.Services;
+namespace H.SystemManagement.Application;
 
 public class NotificationBusinessAppService
     : CrudAppService<NotificationBusinessEntity, NotificationBusinessDto, Guid, NotificationBusinessQueryDto, CreateNotificationBusinessDto, UpdateNotificationBusinessDto>,

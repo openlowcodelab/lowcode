@@ -1,10 +1,171 @@
 @page "/system/settings"
+
 @layout SystemManagementLayout
-@using H.SystemManagement.Application.Contracts.Dtos
-@inject HttpClient Http
+@inject ISettingAppService SettingAppService
+@inject IMessageService MessageService
 
 <h2>系统设置</h2>
 
-<div class="settings-container">
-    <p>设置功能开发中...</p>
-</div>
+<Card>
+    @if (loading)
+    {
+        <div style="text-align: center; padding: 40px;">
+            <Spin Tip="加载中..." />
+        </div>
+    }
+    else if (settingGroups.Any())
+    {
+        <Tabs ActiveKey="@activeTab" OnChange="@OnTabChange">
+            @foreach (var group in settingGroups)
+            {
+                <TabPane Tab="@group.GroupDisplayName" Key="@group.GroupName">
+                    <div style="padding: 12px 0;">
+                        @foreach (var item in group.Items)
+                        {
+                            <div class="setting-item" style="margin-bottom: 20px; display: flex; align-items: center;">
+                                <div style="width: 180px; font-weight: 500;">
+                                    @item.DisplayName
+                                </div>
+                                <div style="flex: 1; max-width: 400px;">
+                                    <Input Value="@GetItemValue(item, group.GroupName)"
+                                           TValue="string"
+                                           ValueChanged="@((v) => SetItemValue(item.Name, group.GroupName, v))"
+                                           Placeholder="@GetPlaceholder(item)"
+                                           Style="width: 100%;" />
+                                </div>
+                            </div>
+                            @if (!string.IsNullOrEmpty(item.Description))
+                            {
+                                <div style="margin-left: 180px; color: #8c8c8c; font-size: 12px; margin-top: -12px; margin-bottom: 20px;">
+                                    @item.Description
+                                </div>
+                            }
+                        }
+                        <div style="margin-top: 24px;">
+                            <Button Type="@ButtonType.Primary" OnClick="@(() => SaveGroup(group))" Loading="@savingGroups.Contains(group.GroupName)">
+                                保存设置
+                            </Button>
+                        </div>
+                    </div>
+                </TabPane>
+            }
+        </Tabs>
+    }
+    else
+    {
+        <Empty Description="@("暂无设置项")" />
+    }
+</Card>
+
+@code {
+    private List<SettingGroupDto> settingGroups = new();
+    private bool loading;
+    private HashSet<string> savingGroups = new();
+    private string activeTab = string.Empty;
+    private Dictionary<string, Dictionary<string, string>> groupValues = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSettings();
+    }
+
+    private async Task LoadSettings()
+    {
+        loading = true;
+        try
+        {
+            settingGroups = await SettingAppService.GetAllAsync();
+
+            // 初始化每个分组的值缓存
+            groupValues.Clear();
+            foreach (var group in settingGroups)
+            {
+                groupValues[group.GroupName] = new Dictionary<string, string>();
+                foreach (var item in group.Items)
+                {
+                    groupValues[group.GroupName][item.Name] = item.Value ?? string.Empty;
+                }
+            }
+
+            // 设置默认激活的Tab
+            if (settingGroups.Any() && string.IsNullOrEmpty(activeTab))
+            {
+                activeTab = settingGroups.First().GroupName;
+            }
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private void OnTabChange(string key)
+    {
+        activeTab = key;
+    }
+
+    private string GetItemValue(SettingItemDto item, string? groupName)
+    {
+        if (groupName != null && groupValues.TryGetValue(groupName, out var values))
+        {
+            if (values.TryGetValue(item.Name, out var value))
+            {
+                return value;
+            }
+        }
+        return item.Value ?? string.Empty;
+    }
+
+    private void SetItemValue(string itemName, string? groupName, string value)
+    {
+        if (groupName != null && groupValues.TryGetValue(groupName, out var values))
+        {
+            values[itemName] = value;
+        }
+    }
+
+    private string GetPlaceholder(SettingItemDto item)
+    {
+        return $"请输入{item.DisplayName}";
+    }
+
+    private async Task SaveGroup(SettingGroupDto group)
+    {
+        savingGroups.Add(group.GroupName);
+        try
+        {
+            var updates = new List<UpdateSettingItemDto>();
+            if (groupValues.TryGetValue(group.GroupName, out var values))
+            {
+                foreach (var item in group.Items)
+                {
+                    if (values.TryGetValue(item.Name, out var newValue))
+                    {
+                        updates.Add(new UpdateSettingItemDto
+                        {
+                            Name = item.Name,
+                            Value = newValue
+                        });
+                    }
+                }
+            }
+
+            if (updates.Any())
+            {
+                await SettingAppService.UpdateManyAsync(updates);
+                MessageService.Success($"{group.GroupDisplayName}设置保存成功");
+
+                // 刷新数据
+                await LoadSettings();
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageService.Error($"保存失败：{ex.Message}");
+        }
+        finally
+        {
+            savingGroups.Remove(group.GroupName);
+        }
+    }
+}

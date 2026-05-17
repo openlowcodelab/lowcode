@@ -1,7 +1,6 @@
-using H.SystemManagement.Application.Contracts.Dtos;
 using Volo.Abp.Application.Services;
 
-namespace H.SystemManagement.Application.Contracts.Services;
+namespace H.SystemManagement.Application.Contracts;
 
 /// <summary>
 /// 设置管理接口

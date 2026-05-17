@@ -1,7 +1,4 @@
-using Volo.Abp.Application.Dtos;
-using Volo.Abp.Application.Services;
-
-namespace H.SystemManagement.Application.Contracts.Dtos;
+namespace H.SystemManagement.Application.Contracts;
 
 /// <summary>
 /// 设置项DTO

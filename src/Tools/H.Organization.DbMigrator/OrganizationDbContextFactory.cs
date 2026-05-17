@@ -8,9 +8,9 @@ namespace H.Organization.DbMigrator;
 /// <summary>
 /// 执行 dotnet ef migrations [command] [arguments] 命令时使用
 /// </summary>
-public class OrganizationDbContextFactory : IDesignTimeDbContextFactory<OrganizationDbContext>
+public class OrganizationDbContextFactory : IDesignTimeDbContextFactory<MigratorDbContext>
 {
-    public OrganizationDbContext CreateDbContext(string[] args)
+    public MigratorDbContext CreateDbContext(string[] args)
     {
         var configurationBuilder = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
@@ -22,6 +22,6 @@ public class OrganizationDbContextFactory : IDesignTimeDbContextFactory<Organiza
         var optionsBuilder = new DbContextOptionsBuilder<OrganizationDbContext>()
             .UseSqlServer(connectionString, b => b.MigrationsAssembly(typeof(Program).Namespace));
 
-        return new OrganizationDbContext(optionsBuilder.Options);
+        return new MigratorDbContext(optionsBuilder.Options);
     }
 }

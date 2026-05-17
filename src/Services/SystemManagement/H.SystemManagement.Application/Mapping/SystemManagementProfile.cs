@@ -1,8 +1,8 @@
 using AutoMapper;
-using H.SystemManagement.Application.Contracts.Dtos;
-using H.SystemManagement.EntityFrameworkCore.Entities;
+using H.SystemManagement.Application.Contracts;
+using H.SystemManagement.EntityFrameworkCore;
 
-namespace H.SystemManagement.Application.Mapping;
+namespace H.SystemManagement.Application;
 
 public class SystemManagementProfile : Profile
 {

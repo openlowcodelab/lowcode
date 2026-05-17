@@ -1,39 +1,75 @@
-using H.SystemManagement.Application.Contracts.Dtos;
-using H.SystemManagement.Application.Contracts.Services;
+using H.SystemManagement.Application.Contracts;
 using Volo.Abp.Application.Services;
+using Volo.Abp.SettingManagement;
 
-namespace H.SystemManagement.Application.Services;
+namespace H.SystemManagement.Application;
 
 public class SettingAppService : ApplicationService, ISettingAppService
 {
+    private readonly ISettingManager _settingManager;
+
+    public SettingAppService(ISettingManager settingManager)
+    {
+        _settingManager = settingManager;
+    }
+
     public async Task<List<SettingGroupDto>> GetAllAsync()
     {
-        // TODO: 实现获取所有设置的逻辑
-        return new List<SettingGroupDto>();
+        var settingValues = await _settingManager.GetAllAsync(null, null, true);
+        var groups = settingValues
+            .GroupBy(x => x.Name)
+            .Select(g => new SettingGroupDto
+            {
+                GroupName = g.Key,
+                GroupDisplayName = g.Key,
+                Items = g.Select(x => new SettingItemDto
+                {
+                    Name = x.Name,
+                    DisplayName = x.Name,
+                    Value = x.Value,
+                    GroupName = x.Name
+                }).ToList()
+            }).ToList();
+
+        return groups;
     }
 
     public async Task<List<SettingItemDto>> GetByGroupAsync(string groupName)
     {
-        // TODO: 实现按组获取设置的逻辑
-        return new List<SettingItemDto>();
+        var settingValues = await _settingManager.GetAllAsync(null, null, true);
+        return settingValues
+            .Where(x => x.Name == groupName)
+            .Select(x => new SettingItemDto
+            {
+                Name = x.Name,
+                DisplayName = x.Name,
+                Value = x.Value,
+                GroupName = x.Name
+            }).ToList();
     }
 
     public async Task<SettingItemDto> GetAsync(string name)
     {
-        // TODO: 实现获取单个设置的逻辑
-        var value = await SettingProvider.GetOrNullAsync(name);
-        return new SettingItemDto { Name = name, Value = value };
+        var value = await _settingManager.GetOrNullAsync(name, null, null, true);
+        return new SettingItemDto
+        {
+            Name = name,
+            DisplayName = name,
+            Value = value,
+            GroupName = name
+        };
     }
 
     public async Task UpdateAsync(UpdateSettingItemDto input)
     {
-        // TODO: 实现更新设置的逻辑 - 需要后续实现
-        await Task.CompletedTask;
+        await _settingManager.SetAsync(input.Name, input.Value, null, null, true);
     }
 
     public async Task UpdateManyAsync(List<UpdateSettingItemDto> inputs)
     {
-        // TODO: 实现批量更新设置的逻辑
-        await Task.CompletedTask;
+        foreach (var input in inputs)
+        {
+            await _settingManager.SetAsync(input.Name, input.Value, null, null, true);
+        }
     }
 }

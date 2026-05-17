@@ -1,8 +1,7 @@
-using H.SystemManagement.Application.Contracts.Dtos;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
 
-namespace H.SystemManagement.Application.Contracts.Services;
+namespace H.SystemManagement.Application.Contracts;
 
 /// <summary>
 /// 通知业务管理接口

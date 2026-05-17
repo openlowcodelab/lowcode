@@ -1,7 +1,6 @@
-using H.SystemManagement.Application.Contracts.Enums;
 using Volo.Abp.Application.Dtos;
 
-namespace H.SystemManagement.Application.Contracts.Dtos;
+namespace H.SystemManagement.Application.Contracts;
 
 /// <summary>
 /// 通知业务配置DTO

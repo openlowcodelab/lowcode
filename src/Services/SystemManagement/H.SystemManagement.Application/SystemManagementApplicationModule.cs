@@ -1,5 +1,4 @@
 using H.SystemManagement.Application.Contracts;
-using H.SystemManagement.Application.Mapping;
 using H.SystemManagement.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.AutoMapper;
