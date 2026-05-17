@@ -1,14 +1,20 @@
 @page "/account/logout"
 @attribute [AllowAnonymous]
 
-@inject IAccountAppService AuthService
+@inject HttpClient HttpClient
 @inject NavigationManager Navigation
 
 @code {
     protected override async Task OnInitializedAsync()
     {
-        // 退出登录
-        await AuthService.LogoutAsync();
+        try
+        {
+            await HttpClient.PostAsync("/api/app/account/logout", null);
+        }
+        catch
+        {
+            // 忽略退出登录错误
+        }
         
         // 跳转到首页
         Navigation.NavigateTo("/", forceLoad: true);

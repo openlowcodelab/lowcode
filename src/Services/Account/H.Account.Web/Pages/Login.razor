@@ -1,14 +1,15 @@
 @page "/account/login"
 @attribute [AllowAnonymous]
+@using System.Net.Http.Json
 
 @layout AccountEmptyLayout
-@inject IAccountAppService AccountAppService
+@inject HttpClient HttpClient
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
 
 <div style="max-width: 400px; margin: 50px auto;">
     <Card Title="用户登录">
-        <Form Model="@loginModel" OnFinish="@HandleLogin" LabelColSpan="8" WrapperColSpan="16" FormName="loginForm">
+        <Form Model="@loginModel" OnFinish="@HandleLogin" LabelColSpan="8" WrapperColSpan="16">
             <FormItem Label="账号">
                 <Input @bind-Value="@loginModel.Account" Placeholder="请输入用户名/邮箱/手机号" />
             </FormItem>
@@ -22,7 +23,7 @@
             </FormItem>
 
             <FormItem WrapperColSpan="16" WrapperColOffset="8">
-                <Button Type="@ButtonType.Primary" HtmlType="submit" Block>登录</Button>
+                <Button Type="@ButtonType.Primary" OnClick="@HandleLogin" Block>登录</Button>
             </FormItem>
         </Form>
 
@@ -54,7 +55,6 @@
 </div>
 
 @code {
-    [SupplyParameterFromForm(FormName = "loginForm")]
     private LoginRequestDto? loginModel { get; set; }
     private string errorMessage = "";
     private string successMessage = "";
@@ -80,31 +80,21 @@
         
         try
         {
-            if (AccountAppService == null)
-            {
-                errorMessage = "系统错误：认证服务未初始化";
-                return;
-            }
+            // 使用ABP自动控制器的API路径
+            var response = await HttpClient.PostAsJsonAsync("/api/app/account/login", loginModel);
             
-            var result = await AccountAppService.LoginAsync(loginModel);
-            
-            if (result == null)
-            {
-                errorMessage = "登录失败：服务器未返回有效响应";
-                return;
-            }
-            
-            if (result.Success)
+            if (response.IsSuccessStatusCode)
             {
                 successMessage = "登录成功！正在跳转到首页...";
                 errorMessage = string.Empty;
                 
-                // 使用强制跳转，确保 Cookie 被设置
+                // 跳转到目标页面
                 Navigation.NavigateTo(returnUrl, forceLoad: true);
             }
             else
             {
-                errorMessage = result.Message ?? "登录失败";
+                var errorContent = await response.Content.ReadAsStringAsync();
+                errorMessage = "登录失败：" + (response.ReasonPhrase ?? "未知错误");
                 successMessage = string.Empty;
             }
         }

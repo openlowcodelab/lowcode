@@ -10,6 +10,7 @@ using H.LowCode.RenderEngine.EntityFrameworkCore;
 using H.LowCode.RenderEngine.Repository.JsonFile;
 using H.Organization.Application;
 using H.Portal.Application;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Volo.Abp.AspNetCore.Mvc;
 using Volo.Abp.Autofac;
 using Volo.Abp.Modularity;
@@ -49,6 +50,12 @@ public class HostAllModule : AbpModule
         // 注册 HttpClient
         context.Services.AddHttpClient();
 
+        // 注册 HttpContextAccessor
+        context.Services.AddHttpContextAccessor();
+
+        // 配置 Cookie 认证
+        ConfigureAuthentication(context);
+
         // 注册 AntDesign 服务
         context.Services.AddAntDesign();
 
@@ -57,6 +64,18 @@ public class HostAllModule : AbpModule
 
         // 配置统一的 API 控制器
         ConfigureAutoApiControllers();
+    }
+
+    private void ConfigureAuthentication(ServiceConfigurationContext context)
+    {
+        context.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+            .AddCookie(options =>
+            {
+                options.LoginPath = "/account/login";
+                options.AccessDeniedPath = "/account/login";
+                options.ExpireTimeSpan = TimeSpan.FromHours(24);
+                options.SlidingExpiration = true;
+            });
     }
 
     private void ConfigureAutoApiControllers()

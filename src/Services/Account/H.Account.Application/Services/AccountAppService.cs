@@ -1,5 +1,7 @@
 using H.Account.Application.Contracts;
-using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -10,26 +12,25 @@ using Microsoft.EntityFrameworkCore;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Identity;
 using Volo.Abp.Guids;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
+using IdentityUser = Volo.Abp.Identity.IdentityUser;
 
 namespace H.Account.Application;
 
 public class AccountAppService : ApplicationService, IAccountAppService
 {
     private readonly IdentityUserManager _userManager;
-    private readonly SignInManager<Volo.Abp.Identity.IdentityUser> _signInManager;
+    private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IConfiguration _configuration;
     private readonly IGuidGenerator _guidGenerator;
 
     public AccountAppService(
         IdentityUserManager userManager,
-        SignInManager<Volo.Abp.Identity.IdentityUser> signInManager,
+        IHttpContextAccessor httpContextAccessor,
         IConfiguration configuration,
         IGuidGenerator guidGenerator)
     {
         _userManager = userManager;
-        _signInManager = signInManager;
+        _httpContextAccessor = httpContextAccessor;
         _configuration = configuration;
         _guidGenerator = guidGenerator;
     }
@@ -46,7 +47,7 @@ public class AccountAppService : ApplicationService, IAccountAppService
             };
         }
 
-        Volo.Abp.Identity.IdentityUser user;
+        IdentityUser user;
 
         switch (request.RegisterType)
         {
@@ -58,7 +59,7 @@ public class AccountAppService : ApplicationService, IAccountAppService
                 if (existingEmail != null)
                     return new AuthResponseDto { Success = false, Message = "邮箱已被注册" };
 
-                user = new Volo.Abp.Identity.IdentityUser(_guidGenerator.Create(), request.Email, request.Email);
+                user = new IdentityUser(_guidGenerator.Create(), request.Email, request.Email);
                 break;
 
             case RegisterType.PhoneNumber:
@@ -70,7 +71,7 @@ public class AccountAppService : ApplicationService, IAccountAppService
                 if (existingPhone != null)
                     return new AuthResponseDto { Success = false, Message = "手机号已被注册" };
 
-                user = new Volo.Abp.Identity.IdentityUser(_guidGenerator.Create(), request.PhoneNumber, $"{request.PhoneNumber}@temp.local");
+                user = new IdentityUser(_guidGenerator.Create(), request.PhoneNumber, $"{request.PhoneNumber}@temp.local");
                 user.SetPhoneNumber(request.PhoneNumber, false);
                 break;
 
@@ -82,7 +83,7 @@ public class AccountAppService : ApplicationService, IAccountAppService
                 if (existingUser != null)
                     return new AuthResponseDto { Success = false, Message = "用户名已存在" };
 
-                user = new Volo.Abp.Identity.IdentityUser(_guidGenerator.Create(), request.UserName, request.Email ?? $"{request.UserName}@temp.local");
+                user = new IdentityUser(_guidGenerator.Create(), request.UserName, request.Email ?? $"{request.UserName}@temp.local");
                 break;
         }
 
@@ -106,7 +107,7 @@ public class AccountAppService : ApplicationService, IAccountAppService
 
     public async Task<AuthResponseDto> LoginAsync(LoginRequestDto request)
     {
-        Volo.Abp.Identity.IdentityUser? user = null;
+        IdentityUser? user = null;
 
         // 自动判断输入格式
         var loginType = DetectLoginType(request.Account);
@@ -156,31 +157,38 @@ public class AccountAppService : ApplicationService, IAccountAppService
 
         await _userManager.ResetAccessFailedCountAsync(user);
         
-        // 更新最后登录时间 (通过设置 LastModificationTime 或使用自定义字段)
+        // 更新最后登录时间
         user.LastModificationTime = DateTime.UtcNow;
         await _userManager.UpdateAsync(user);
 
         // 设置Cookie认证
-        var claims = new List<Claim>
+        var httpContext = _httpContextAccessor.HttpContext;
+        if (httpContext != null)
         {
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Name, user.UserName ?? ""),
-            new Claim(ClaimTypes.Email, user.Email ?? "")
-        };
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.UserName ?? ""),
+                new Claim(ClaimTypes.Email, user.Email ?? "")
+            };
 
-        if (!string.IsNullOrEmpty(user.PhoneNumber))
-        {
-            claims.Add(new Claim(ClaimTypes.MobilePhone, user.PhoneNumber));
+            if (!string.IsNullOrEmpty(user.PhoneNumber))
+            {
+                claims.Add(new Claim(ClaimTypes.MobilePhone, user.PhoneNumber));
+            }
+
+            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var authProperties = new AuthenticationProperties
+            {
+                IsPersistent = request.RememberMe,
+                ExpiresUtc = request.RememberMe ? DateTimeOffset.UtcNow.AddDays(7) : DateTimeOffset.UtcNow.AddHours(24)
+            };
+
+            await httpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(claimsIdentity),
+                authProperties);
         }
-
-        var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-        var authProperties = new AuthenticationProperties
-        {
-            IsPersistent = request.RememberMe,
-            ExpiresUtc = request.RememberMe ? DateTimeOffset.UtcNow.AddDays(7) : DateTimeOffset.UtcNow.AddHours(24)
-        };
-
-        await _signInManager.SignInWithClaimsAsync(user, authProperties, claims);
 
         return new AuthResponseDto
         {
@@ -188,6 +196,24 @@ public class AccountAppService : ApplicationService, IAccountAppService
             Message = "登录成功",
             User = MapToUserDto(user)
         };
+    }
+
+    public async Task<UserDto?> GetCurrentUserAsync()
+    {
+        var httpContext = _httpContextAccessor.HttpContext;
+        if (httpContext?.User?.Identity?.IsAuthenticated != true)
+        {
+            return null;
+        }
+
+        var userIdClaim = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+        {
+            return null;
+        }
+
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        return user != null ? MapToUserDto(user) : null;
     }
 
     public async Task<UserDto?> GetUserByIdAsync(Guid userId)
@@ -225,10 +251,14 @@ public class AccountAppService : ApplicationService, IAccountAppService
 
     public async Task LogoutAsync()
     {
-        await _signInManager.SignOutAsync();
+        var httpContext = _httpContextAccessor.HttpContext;
+        if (httpContext != null)
+        {
+            await httpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        }
     }
 
-    private string GenerateJwtToken(Volo.Abp.Identity.IdentityUser user)
+    private string GenerateJwtToken(IdentityUser user)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.ASCII.GetBytes(_configuration["Jwt:SecretKey"] ?? "YourSuperSecretKey12345678901234567890");
@@ -258,7 +288,7 @@ public class AccountAppService : ApplicationService, IAccountAppService
         return tokenHandler.WriteToken(token);
     }
 
-    private UserDto MapToUserDto(Volo.Abp.Identity.IdentityUser user)
+    private UserDto MapToUserDto(IdentityUser user)
     {
         return new UserDto
         {

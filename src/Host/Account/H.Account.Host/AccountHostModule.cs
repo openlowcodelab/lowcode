@@ -12,6 +12,7 @@ using Volo.Abp.Autofac;
 using Volo.Abp.Modularity;
 using Volo.Abp.Identity;
 using Volo.Abp.Identity.EntityFrameworkCore;
+using IdentityUser = Volo.Abp.Identity.IdentityUser;
 
 namespace H.Account.Host;
 
@@ -28,6 +29,9 @@ public class AccountHostModule : AbpModule
     {
         // 注册 HttpClient
         context.Services.AddHttpClient();
+
+        // 注册 HttpContextAccessor（用于 Blazor Server 中访问 HttpContext）
+        context.Services.AddHttpContextAccessor();
 
         context.Services.AddAntDesign();
 
@@ -55,9 +59,6 @@ public class AccountHostModule : AbpModule
                 options.ExpireTimeSpan = TimeSpan.FromHours(24);
                 options.SlidingExpiration = true;
             });
-
-        // 注册 SignInManager
-        context.Services.AddScoped<SignInManager<Volo.Abp.Identity.IdentityUser>>();
     }
 
     private void ConfigureExternalLogin(ServiceConfigurationContext context)

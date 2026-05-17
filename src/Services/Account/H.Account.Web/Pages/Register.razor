@@ -7,7 +7,7 @@
 
 <div style="max-width: 500px; margin: 50px auto;">
     <Card Title="用户注册">
-        <Form Model="@registerModel" OnFinish="@HandleRegister" LabelColSpan="6" WrapperColSpan="18" FormName="registerForm">
+        <Form Model="@registerModel" OnFinish="@HandleRegister" LabelColSpan="6" WrapperColSpan="18">
             <FormItem Label="注册方式">
                 <RadioGroup @bind-Value="@registerModel.RegisterType">
                     <RadioButton Value="RegisterType.UserName">用户名</RadioButton>
@@ -85,7 +85,6 @@
 </div>
 
 @code {
-    [SupplyParameterFromForm(FormName = "registerForm")]
     private RegisterRequestDto? registerModel { get; set; }
     private string errorMessage = "";
     private string successMessage = "";
