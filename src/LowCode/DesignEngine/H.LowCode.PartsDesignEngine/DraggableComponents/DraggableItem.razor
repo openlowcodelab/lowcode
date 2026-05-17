@@ -5,6 +5,8 @@
 @inject PartsDragDropStateService PartsDragDropStateService
 @inject IJSRuntime JSRuntime
 
+<script src="@Assets["_content/H.LowCode.DesignEngineBase/js/elementUtils.js"]"></script>
+
 <div @ref="itemRef" class="draggableitem-box @DraggableItemBoxClassMapper.Class"
     draggable="@Component.DesignState.IsSelected"
      style="float:left;
@@ -93,9 +95,6 @@
     {
         if (firstRender)
         {
-            //已在 App.razor 中引入
-            //await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./_content/H.LowCode.DesignEngineBase/js/elementUtils.js");
-
             await UpdateDimensions();
             //设置拖拽图像（自定义 DragImage）   -- 暂时屏蔽此逻辑，拖拽已改为跟随鼠标移动，无需设置拖拽图像
             //try { await JSRuntime.InvokeVoidAsync("elementUtils.attachDragImage", itemRef, Component?.Label ?? "组件"); } catch { }
