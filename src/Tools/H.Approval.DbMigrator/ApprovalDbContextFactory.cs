@@ -1,5 +1,4 @@
 using H.Approval.EntityFrameworkCore;
-using H.LowCode.DbMigrator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
@@ -7,11 +6,12 @@ using Microsoft.Extensions.Configuration;
 namespace H.Approval.DbMigrator;
 
 /// <summary>
-/// 执行 dotnet ef migrations [command] [arguments] 命令时使用
+/// 执行 dotnet ef migrations 命令时使用
 /// </summary>
-public class ApprovalDbContextFactory : IDesignTimeDbContextFactory<MigratorDbContext>
+/// <remarks>新增迁移文件: dotnet ef migrations add xxx</remarks>
+public class ApprovalDbContextFactory : IDesignTimeDbContextFactory<ApprovalDbContext>
 {
-    public MigratorDbContext CreateDbContext(string[] args)
+    public ApprovalDbContext CreateDbContext(string[] args)
     {
         var configurationBuilder = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
@@ -23,6 +23,6 @@ public class ApprovalDbContextFactory : IDesignTimeDbContextFactory<MigratorDbCo
         var optionsBuilder = new DbContextOptionsBuilder<ApprovalDbContext>()
             .UseSqlServer(connectionString, b => b.MigrationsAssembly(typeof(Program).Namespace));
 
-        return new MigratorDbContext(optionsBuilder.Options);
+        return new ApprovalDbContext(optionsBuilder.Options);
     }
 }

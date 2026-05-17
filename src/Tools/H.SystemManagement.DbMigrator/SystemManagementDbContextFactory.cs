@@ -8,9 +8,9 @@ namespace H.SystemManagement.DbMigrator;
 /// <summary>
 /// 执行 dotnet ef migrations [command] [arguments] 命令时使用
 /// </summary>
-public class SystemManagementDbContextFactory : IDesignTimeDbContextFactory<MigratorDbContext>
+public class SystemManagementDbContextFactory : IDesignTimeDbContextFactory<SystemManagementDbContext>
 {
-    public MigratorDbContext CreateDbContext(string[] args)
+    public SystemManagementDbContext CreateDbContext(string[] args)
     {
         var configurationBuilder = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
@@ -22,6 +22,6 @@ public class SystemManagementDbContextFactory : IDesignTimeDbContextFactory<Migr
         var optionsBuilder = new DbContextOptionsBuilder<SystemManagementDbContext>()
             .UseSqlServer(connectionString, b => b.MigrationsAssembly(typeof(Program).Namespace));
 
-        return new MigratorDbContext(optionsBuilder.Options);
+        return new SystemManagementDbContext(optionsBuilder.Options);
     }
 }

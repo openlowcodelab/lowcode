@@ -6,11 +6,12 @@ using Microsoft.Extensions.Configuration;
 namespace H.Account.DbMigrator;
 
 /// <summary>
-/// 执行 dotnet ef migrations [command] [arguments] 命令时使用
+/// 执行 dotnet ef migrations 命令时使用
 /// </summary>
-public class AccountDbContextFactory : IDesignTimeDbContextFactory<MigratorDbContext>
+/// <remarks>新增迁移文件: dotnet ef migrations add xxx</remarks>
+public class AccountDbContextFactory : IDesignTimeDbContextFactory<AccountDbContext>
 {
-    public MigratorDbContext CreateDbContext(string[] args)
+    public AccountDbContext CreateDbContext(string[] args)
     {
         var configurationBuilder = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
@@ -22,6 +23,6 @@ public class AccountDbContextFactory : IDesignTimeDbContextFactory<MigratorDbCon
         var optionsBuilder = new DbContextOptionsBuilder<AccountDbContext>()
             .UseSqlServer(connectionString, b => b.MigrationsAssembly(typeof(Program).Namespace));
 
-        return new MigratorDbContext(optionsBuilder.Options);
+        return new AccountDbContext(optionsBuilder.Options);
     }
 }

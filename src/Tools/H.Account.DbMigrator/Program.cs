@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using H.Account.EntityFrameworkCore;
 
 namespace H.Account.DbMigrator;
 
@@ -17,7 +18,7 @@ public class Program
 
             try
             {
-                var dbContext = services.GetRequiredService<MigratorDbContext>();
+                var dbContext = services.GetRequiredService<AccountDbContext>();
 
                 Console.WriteLine("开始执行数据库迁移...");
 
@@ -49,7 +50,8 @@ public class Program
                 var configuration = hostContext.Configuration;
                 var connectionString = configuration.GetConnectionString("AccountDb");
 
-                services.AddDbContext<MigratorDbContext>(options =>
-                    options.UseSqlServer(connectionString));
+                // MigrationsAssembly 用于指定迁移文件所在的程序集
+                services.AddDbContext<AccountDbContext>(options =>
+                    options.UseSqlServer(connectionString, b => b.MigrationsAssembly(typeof(Program).Namespace)));
             });
 }

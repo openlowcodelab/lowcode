@@ -45,8 +45,7 @@ namespace H.LowCode.Host.All;
     // Portal
     typeof(PortalApplicationModule),
     // SystemManagement
-    typeof(SystemManagementApplicationModule),
-    typeof(SystemManagementEntityFrameworkCoreModule)
+    typeof(SystemManagementApplicationModule)
 )]
 public class HostAllModule : AbpModule
 {

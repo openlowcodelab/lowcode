@@ -1,8 +1,8 @@
-using H.LowCode.DbMigrator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using H.Approval.EntityFrameworkCore;
 
 namespace H.Approval.DbMigrator;
 
@@ -18,7 +18,7 @@ class Program
 
             try
             {
-                var dbContext = services.GetRequiredService<MigratorDbContext>();
+                var dbContext = services.GetRequiredService<ApprovalDbContext>();
 
                 Console.WriteLine("开始执行数据库迁移...");
 
@@ -50,7 +50,8 @@ class Program
                 var configuration = hostContext.Configuration;
                 var connectionString = configuration.GetConnectionString("ApprovalDb");
 
-                services.AddDbContext<MigratorDbContext>(options =>
-                    options.UseSqlServer(connectionString));
+                // MigrationsAssembly 用于指定迁移文件所在的程序集
+                services.AddDbContext<ApprovalDbContext>(options =>
+                    options.UseSqlServer(connectionString, b => b.MigrationsAssembly(typeof(Program).Namespace)));
             });
 }
