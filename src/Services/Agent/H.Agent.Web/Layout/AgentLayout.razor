@@ -1,0 +1,210 @@
+@namespace H.Agent.Web
+
+@inherits LayoutComponentBase
+
+<div class="agent-layout">
+    @Body
+</div>
+
+<style>
+    .agent-layout {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .agent-chat-container {
+        flex: 1;
+        display: flex;
+        overflow: hidden;
+    }
+
+    .chat-layout {
+        display: flex;
+        width: 100%;
+        height: 100%;
+    }
+
+    /* 左侧会话列表 */
+    .session-list-panel {
+        width: 280px;
+        border-right: 1px solid #e8e8e8;
+        display: flex;
+        flex-direction: column;
+        background: #fafafa;
+    }
+
+    .panel-header {
+        padding: 16px;
+        border-bottom: 1px solid #e8e8e8;
+    }
+
+    .panel-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 8px;
+    }
+
+    .session-item {
+        padding: 12px;
+        cursor: pointer;
+        border-radius: 4px;
+        margin-bottom: 4px;
+        transition: background-color 0.2s;
+    }
+
+    .session-item:hover {
+        background-color: #e6f7ff;
+    }
+
+    .session-item.active {
+        background-color: #bae7ff;
+    }
+
+    .session-title {
+        font-weight: 500;
+        margin-bottom: 4px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .session-meta {
+        font-size: 12px;
+        color: #8c8c8c;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    /* 中间聊天区域 */
+    .chat-main-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: #fff;
+    }
+
+    .chat-header {
+        padding: 16px;
+        border-bottom: 1px solid #e8e8e8;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .chat-header-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .chat-header-right {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+    }
+
+    .message-item {
+        display: flex;
+        margin-bottom: 16px;
+        gap: 12px;
+    }
+
+    .user-message {
+        flex-direction: row-reverse;
+    }
+
+    .message-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background-color: #1890ff;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .user-message .message-avatar {
+        background-color: #52c41a;
+    }
+
+    .message-content {
+        max-width: 60%;
+    }
+
+    .message-text {
+        padding: 12px;
+        border-radius: 8px;
+        background-color: #f0f0f0;
+        line-height: 1.5;
+    }
+
+    .user-message .message-text {
+        background-color: #1890ff;
+        color: white;
+    }
+
+    .message-time {
+        font-size: 12px;
+        color: #8c8c8c;
+        margin-top: 4px;
+    }
+
+    .chat-input-area {
+        border-top: 1px solid #e8e8e8;
+        padding: 16px;
+        background: #fafafa;
+    }
+
+    .input-actions {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 8px;
+    }
+
+    .empty-chat-state {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* 右侧 Agent 信息面板 */
+    .agent-info-panel {
+        width: 280px;
+        border-left: 1px solid #e8e8e8;
+        display: flex;
+        flex-direction: column;
+        background: #fafafa;
+    }
+
+    .agent-detail h4 {
+        margin-bottom: 12px;
+        color: #1890ff;
+    }
+
+    .agent-description {
+        color: #595959;
+        line-height: 1.6;
+        margin-bottom: 20px;
+    }
+
+    .agent-capabilities h5 {
+        margin-bottom: 8px;
+        color: #262626;
+    }
+
+    .capabilities-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+</style>

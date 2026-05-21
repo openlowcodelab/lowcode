@@ -1,0 +1,310 @@
+@page "/agent"
+@page "/agent/chat"
+
+@layout AgentLayout
+@inject IAgentChatAppService AgentChatAppService
+@inject IMessageService MessageService
+
+<div class="agent-chat-container">
+    <div class="chat-layout">
+        <div class="session-list-panel">
+            <div class="panel-header">
+                <Button Type="@ButtonType.Primary" OnClick="CreateNewSession" Style="width: 100%;">
+                    <Icon Type="plus" /> New Chat
+                </Button>
+            </div>
+            <div class="panel-content">
+                @if (loadingSessions)
+                {
+                    <div style="text-align: center; padding: 20px;">
+                        <Spin Tip="Loading..." />
+                    </div>
+                }
+                else if (sessions.Any())
+                {
+                    @foreach (var session in sessions)
+                    {
+                        <div class="session-item @(selectedSessionId == session.Id ? "active" : "")"
+                             @onclick="() => SelectSession(session.Id)">
+                            <div class="session-title">@session.Title</div>
+                            <div class="session-meta">
+                                <span class="message-count">@session.MessageCount msgs</span>
+                                <span class="time">@session.LastMessageTime.ToString("MM-dd HH:mm")</span>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <AntDesign.Empty Description="@("No sessions")" />
+                }
+            </div>
+        </div>
+
+        <div class="chat-main-panel">
+            @if (selectedSessionId.HasValue)
+            {
+                <div class="chat-header">
+                    <div class="chat-header-left">
+                        <span>Agent: @selectedAgent?.DisplayName</span>
+                    </div>
+                    <div class="chat-header-right">
+                        @foreach (var agent in availableAgents)
+                        {
+                            <Button Type="@(selectedAgentType == agent.AgentType ? ButtonType.Primary : ButtonType.Default)"
+                                    Size="@ButtonSize.Small"
+                                    OnClick="() => OnAgentTypeChanged(agent.AgentType)"
+                                    Style="margin-left: 4px;">
+                                @agent.DisplayName
+                            </Button>
+                        }
+                        <Button Type="@ButtonType.Default" OnClick="DeleteCurrentSession" Style="margin-left: 8px;">
+                            <Icon Type="delete" /> Delete
+                        </Button>
+                    </div>
+                </div>
+
+                <div class="chat-messages">
+                    @if (loadingMessages)
+                    {
+                        <div style="text-align: center; padding: 40px;">
+                            <Spin Tip="Loading..." />
+                        </div>
+                    }
+                    else if (messages.Any())
+                    {
+                        @foreach (var message in messages)
+                        {
+                            <div class="message-item @(message.Role == "user" ? "user-message" : "assistant-message")">
+                                <div class="message-avatar">
+                                    @if (message.Role == "user")
+                                    {
+                                        <Icon Type="user" />
+                                    }
+                                    else
+                                    {
+                                        <Icon Type="robot" />
+                                    }
+                                </div>
+                                <div class="message-content">
+                                    <div class="message-text">@((MarkupString)FormatMessage(message.Content))</div>
+                                    <div class="message-time">@message.CreationTime.ToString("HH:mm:ss")</div>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <AntDesign.Empty Description="@("Start a conversation")" />
+                    }
+                </div>
+
+                <div class="chat-input-area">
+                    <TextArea @bind-Value="@inputMessage"
+                              Placeholder="Type message, press Enter to send..."
+                              Rows="3"
+                              OnKeyDown="HandleKeyDown" />
+                    <div class="input-actions">
+                        <Button Type="@ButtonType.Primary" 
+                                OnClick="SendMessage" 
+                                Loading="@isSending"
+                                Disabled="@string.IsNullOrWhiteSpace(inputMessage)">
+                            <Icon Type="send" /> Send
+                        </Button>
+                        <Button OnClick="ClearInput">
+                            <Icon Type="clear" /> Clear
+                        </Button>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="empty-chat-state">
+                    <AntDesign.Empty Description="@("Select or create a session")" />
+                </div>
+            }
+        </div>
+
+        <div class="agent-info-panel">
+            <div class="panel-header">
+                <h3>Agent Info</h3>
+            </div>
+            <div class="panel-content">
+                @if (selectedAgent != null)
+                {
+                    <div class="agent-detail">
+                        <h4>@selectedAgent.DisplayName</h4>
+                        <p class="agent-description">@selectedAgent.Description</p>
+                        <div class="agent-capabilities">
+                            <h5>Capabilities</h5>
+                            <div class="capabilities-list">
+                                @foreach (var capability in selectedAgent.Capabilities)
+                                {
+                                    <Tag Color="@("blue")">@capability</Tag>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <AntDesign.Empty Description="@("Select an agent")" />
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<ChatSessionDto> sessions = new();
+    private List<ChatMessageDto> messages = new();
+    private List<AgentConfigDto> availableAgents = new();
+    private Guid? selectedSessionId;
+    private string selectedAgentType = "general";
+    private string inputMessage = string.Empty;
+    private bool loadingSessions;
+    private bool loadingMessages;
+    private bool isSending;
+    private AgentConfigDto? selectedAgent;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSessions();
+        await LoadAvailableAgents();
+    }
+
+    private async Task LoadSessions()
+    {
+        loadingSessions = true;
+        try
+        {
+            var result = await AgentChatAppService.GetSessionsAsync(new SessionQueryDto
+            {
+                MaxResultCount = 50,
+                SkipCount = 0
+            });
+            sessions = result.Items.ToList();
+        }
+        finally
+        {
+            loadingSessions = false;
+        }
+    }
+
+    private async Task LoadAvailableAgents()
+    {
+        availableAgents = await AgentChatAppService.GetAvailableAgentsAsync();
+        selectedAgent = availableAgents.FirstOrDefault(a => a.AgentType == selectedAgentType);
+    }
+
+    private async Task SelectSession(Guid sessionId)
+    {
+        selectedSessionId = sessionId;
+        await LoadMessages(sessionId);
+    }
+
+    private async Task LoadMessages(Guid sessionId)
+    {
+        loadingMessages = true;
+        try
+        {
+            messages = await AgentChatAppService.GetMessagesAsync(sessionId);
+            StateHasChanged();
+            await ScrollToBottom();
+        }
+        finally
+        {
+            loadingMessages = false;
+        }
+    }
+
+    private async Task CreateNewSession()
+    {
+        selectedSessionId = null;
+        messages.Clear();
+        StateHasChanged();
+    }
+
+    private async Task SendMessage()
+    {
+        if (string.IsNullOrWhiteSpace(inputMessage) || isSending)
+            return;
+
+        isSending = true;
+        try
+        {
+            var response = await AgentChatAppService.SendMessageAsync(new SendChatMessageInputDto
+            {
+                SessionId = selectedSessionId,
+                Message = inputMessage,
+                AgentType = selectedAgentType
+            });
+
+            selectedSessionId = response.SessionId;
+            inputMessage = string.Empty;
+            
+            await LoadMessages(response.SessionId);
+            await LoadSessions();
+        }
+        catch (Exception ex)
+        {
+            MessageService.Error("Send failed: " + ex.Message);
+        }
+        finally
+        {
+            isSending = false;
+        }
+    }
+
+    private async Task DeleteCurrentSession()
+    {
+        if (!selectedSessionId.HasValue)
+            return;
+
+        try
+        {
+            await AgentChatAppService.DeleteSessionAsync(selectedSessionId.Value);
+            selectedSessionId = null;
+            messages.Clear();
+            await LoadSessions();
+            MessageService.Success("Session deleted");
+        }
+        catch (Exception ex)
+        {
+            MessageService.Error("Delete failed: " + ex.Message);
+        }
+    }
+
+    private void ClearInput()
+    {
+        inputMessage = string.Empty;
+    }
+
+    private void OnAgentTypeChanged(string value)
+    {
+        selectedAgentType = value;
+        selectedAgent = availableAgents.FirstOrDefault(a => a.AgentType == value);
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey)
+        {
+            await SendMessage();
+        }
+    }
+
+    private async Task ScrollToBottom()
+    {
+        await Task.Delay(100);
+        StateHasChanged();
+    }
+
+    private string FormatMessage(string message)
+    {
+        return message
+            .Replace("\n", "<br/>")
+            .Replace("**", "<strong>")
+            .Replace("`", "<code>");
+    }
+}

@@ -1,4 +1,5 @@
 using H.Account.Application;
+using H.Agent.Application;
 using H.Approval.Application;
 using H.AutoTest.Application;
 using H.LowCode.ComponentBase;
@@ -36,6 +37,8 @@ namespace H.LowCode.Host.All;
     typeof(RenderEngineJsonFileRepositoryModule),
     // Account
     typeof(AccountApplicationModule),
+    // Agent
+    typeof(AgentApplicationModule),
     // Organization
     typeof(OrganizationApplicationModule),
     // Approval
@@ -88,6 +91,7 @@ public class HostAllModule : AbpModule
         {
             // 注册所有模块的控制器
             options.ConventionalControllers.Create(typeof(AccountApplicationModule).Assembly);
+            options.ConventionalControllers.Create(typeof(AgentApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(OrganizationApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(DesignEngineApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(RenderEngineApplicationModule).Assembly);
