@@ -152,33 +152,7 @@
             }
         </div>
 
-        <div class="agent-info-panel">
-            <div class="panel-header">
-                <h3>Agent Info</h3>
-            </div>
-            <div class="panel-content">
-                @if (selectedAgent != null)
-                {
-                    <div class="agent-detail">
-                        <h4>@selectedAgent.DisplayName</h4>
-                        <p class="agent-description">@selectedAgent.Description</p>
-                        <div class="agent-capabilities">
-                            <h5>Capabilities</h5>
-                            <div class="capabilities-list">
-                                @foreach (var capability in selectedAgent.Capabilities)
-                                {
-                                    <Tag Color="@("blue")">@capability</Tag>
-                                }
-                            </div>
-                        </div>
-                    </div>
-                }
-                else
-                {
-                    <AntDesign.Empty Description="@("Select an agent")" />
-                }
-            </div>
-        </div>
+
     </div>
 </div>
 
