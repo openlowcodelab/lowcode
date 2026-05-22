@@ -8,7 +8,7 @@
 <div class="settings-container">
     <div class="settings-sidebar">
         <div class="sidebar-header">
-            <Button Type="@ButtonType.Link" OnClick="GoBack">
+            <Button Type="@ButtonType.Link" OnClick="GoBack" Class="back-btn">
                 <Icon Type="arrow-left" /> 返回
             </Button>
         </div>
@@ -38,10 +38,12 @@
                             <label>主题模式</label>
                             <div class="theme-options">
                                 <Button Type="@(themeMode == "light" ? ButtonType.Primary : ButtonType.Default)"
+                                        Class="@(themeMode == "light" ? "agent-btn-primary" : "")"
                                         OnClick="@(() => themeMode = "light")" Size="@ButtonSize.Small">
                                     <Icon Type="sun" /> 浅色
                                 </Button>
                                 <Button Type="@(themeMode == "dark" ? ButtonType.Primary : ButtonType.Default)"
+                                        Class="@(themeMode == "dark" ? "agent-btn-primary" : "")"
                                         OnClick="@(() => themeMode = "dark")" Size="@ButtonSize.Small">
                                     <Icon Type="moon" /> 深色
                                 </Button>
@@ -54,10 +56,12 @@
                             <label>界面语言</label>
                             <div class="theme-options">
                                 <Button Type="@(language == "zh" ? ButtonType.Primary : ButtonType.Default)"
+                                        Class="@(language == "zh" ? "agent-btn-primary" : "")"
                                         OnClick="@(() => language = "zh")" Size="@ButtonSize.Small">
                                     中文
                                 </Button>
                                 <Button Type="@(language == "en" ? ButtonType.Primary : ButtonType.Default)"
+                                        Class="@(language == "en" ? "agent-btn-primary" : "")"
                                         OnClick="@(() => language = "en")" Size="@ButtonSize.Small">
                                     English
                                 </Button>
@@ -70,7 +74,7 @@
             case "model":
                 <div class="content-header">
                     <h2>模型管理</h2>
-                    <Button Type="@ButtonType.Primary" OnClick="ShowAddModel" Size="@ButtonSize.Small">
+                    <Button Type="@ButtonType.Primary" OnClick="ShowAddModel" Size="@ButtonSize.Small" Class="agent-btn-primary">
                         <Icon Type="plus" /> 添加
                     </Button>
                 </div>
@@ -205,7 +209,7 @@
                                     <input class="modal-input" @bind="@editModel.ApiKey" placeholder="API密钥" />
                                     @if (currentApiKeyUrl != null)
                                     {
-                                        <a class="api-key-link-green" href="@currentApiKeyUrl" target="_blank">获取 API 密钥</a>
+                                        <a class="api-key-link-gray" href="@currentApiKeyUrl" target="_blank">获取 API 密钥</a>
                                     }
                                 </div>
                                 <div class="form-item">
@@ -258,7 +262,7 @@
             case "skill":
                 <div class="content-header">
                     <h2>技能/指令</h2>
-                    <Button Type="@ButtonType.Primary" Size="@ButtonSize.Small" Disabled="true">
+                    <Button Type="@ButtonType.Primary" Size="@ButtonSize.Small" Disabled="true" Class="agent-btn-primary">
                         <Icon Type="plus" /> 添加
                     </Button>
                 </div>

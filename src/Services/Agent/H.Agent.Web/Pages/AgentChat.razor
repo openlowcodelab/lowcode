@@ -10,7 +10,7 @@
     <div class="chat-layout">
         <div class="session-list-panel">
             <div class="panel-header">
-                <Button Type="@ButtonType.Primary" OnClick="CreateNewSession" Style="width: 100%;">
+                <Button Type="@ButtonType.Primary" OnClick="CreateNewSession" Style="width: 100%;" Class="new-chat-btn">
                     <Icon Type="plus" /> New Chat
                 </Button>
             </div>
@@ -78,6 +78,7 @@
                         @foreach (var agent in availableAgents)
                         {
                             <Button Type="@(selectedAgentType == agent.AgentType ? ButtonType.Primary : ButtonType.Default)"
+                                    Class="@(selectedAgentType == agent.AgentType ? "agent-btn-primary" : "")"
                                     Size="@ButtonSize.Small"
                                     OnClick="() => OnAgentTypeChanged(agent.AgentType)"
                                     Style="margin-left: 4px;">
@@ -131,7 +132,7 @@
                               Rows="3"
                               OnKeyDown="HandleKeyDown" />
                     <div class="input-actions">
-                        <Button Type="@ButtonType.Primary" 
+                        <Button Type="@ButtonType.Primary" Class="agent-btn-primary"
                                 OnClick="SendMessage" 
                                 Loading="@isSending"
                                 Disabled="@string.IsNullOrWhiteSpace(inputMessage)">
