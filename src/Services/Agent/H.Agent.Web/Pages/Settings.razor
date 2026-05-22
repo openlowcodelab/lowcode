@@ -161,66 +161,62 @@
                 @if (showModelDialog)
                 {
                     <div class="modal-overlay" @onclick="CloseModelDialog">
-                        <div class="modal-dialog" @onclick:stopPropagation="true">
+                        <div class="modal-dialog model-dialog" @onclick:stopPropagation="true">
                             <div class="modal-header">
-                                <h3>@(isEditing ? "编辑模型" : "添加模型")</h3>
+                                <h3>添加模型</h3>
                                 <Button Type="@ButtonType.Text" OnClick="CloseModelDialog">
                                     <Icon Type="close" />
                                 </Button>
                             </div>
                             <div class="modal-body">
-                                <div class="form-item">
-                                    <label>Provider 名称</label>
-                                    @if (isEditing)
+                                <div class="form-item required">
+                                    <label>* 提供商</label>
+                                    <select class="modal-select" @onchange="OnProviderChanged">
+                                        @foreach (var p in providerDefs)
+                                        {
+                                            <option value="@p.ProviderName" selected="@(editModel.ProviderName == p.ProviderName)">@p.DisplayName</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="form-item required">
+                                    <label>* 类型</label>
+                                    <select class="modal-select" @onchange="OnTypeChanged">
+                                        @foreach (var t in currentProviderTypes)
+                                        {
+                                            <option value="@t.Name" selected="@(editModel.PlanType == t.Name)">@t.DisplayName</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="form-item required">
+                                    <label>* 模型Id</label>
+                                    <input class="modal-input" @bind="@editModel.Model" placeholder="选择模型" />
+                                    @if (currentModels.Any())
                                     {
-                                        <Input @bind-Value="@editModel.ProviderName" Disabled="true" />
+                                        <div class="model-suggestions">
+                                            @foreach (var m in currentModels)
+                                            {
+                                                <span class="model-suggestion-tag" @onclick="() => SelectModel(m)">@m</span>
+                                            }
+                                        </div>
                                     }
-                                    else
+                                </div>
+                                <div class="form-item required">
+                                    <label>* API 密钥</label>
+                                    <input class="modal-input" @bind="@editModel.ApiKey" placeholder="API密钥" />
+                                    @if (currentApiKeyUrl != null)
                                     {
-                                        <Input @bind-Value="@editModel.ProviderName" Placeholder="如: deepseek, qwen, openai" />
+                                        <a class="api-key-link-green" href="@currentApiKeyUrl" target="_blank">获取 API 密钥</a>
                                     }
                                 </div>
                                 <div class="form-item">
-                                    <label>显示名称</label>
-                                    <Input @bind-Value="@editModel.ProviderDisplayName" Placeholder="如: DeepSeek, 通义千问" />
-                                </div>
-                                <div class="form-item">
-                                    <label>API Key</label>
-                                    <Input @bind-Value="@editModel.ApiKey" Placeholder="输入 API Key" />
-                                </div>
-                                <div class="form-item">
-                                    <label>API Secret (可选)</label>
-                                    <Input @bind-Value="@editModel.ApiSecret" Placeholder="部分厂商需要" />
-                                </div>
-                                <div class="form-item">
-                                    <label>Base URL (可选)</label>
-                                    <Input @bind-Value="@editModel.BaseUrl" Placeholder="自定义 API 地址" />
-                                </div>
-                                <div class="form-item">
-                                    <label>模型名称</label>
-                                    <Input @bind-Value="@editModel.Model" Placeholder="如: deepseek-chat, qwen-turbo" />
-                                </div>
-                                <div class="form-row">
-                                    <div class="form-item" style="flex:1;">
-                                        <label>Max Tokens</label>
-                                        <InputNumber TValue="int" @bind-Value="@editModel.MaxTokens" Min="100" Max="128000" />
-                                    </div>
-                                    <div class="form-item" style="flex:1;">
-                                        <label>Temperature</label>
-                                        <InputNumber TValue="float" @bind-Value="@editModel.Temperature" Min="0f" Max="2f" Step="0.1f" />
-                                    </div>
-                                </div>
-                                <div class="form-item">
-                                    <div class="checkbox-item">
-                                        <input type="checkbox" id="isEnabled" @bind="editModel.IsEnabled" />
-                                        <label for="isEnabled">启用此模型</label>
-                                    </div>
+                                    <label>请求地址</label>
+                                    <input class="modal-input" @bind="@editModel.BaseUrl" placeholder="例如 https://api.deepseek.com/v1/chat/completions" />
                                 </div>
                             </div>
                             <div class="modal-footer">
-                                <Button OnClick="CloseModelDialog">取消</Button>
-                                <Button Type="@ButtonType.Primary" OnClick="SaveModel" Loading="@savingModel">
-                                    保存
+                                <Button OnClick="CloseModelDialog" class="modal-btn-cancel">取消</Button>
+                                <Button OnClick="SaveModel" Loading="@savingModel" class="modal-btn-primary">
+                                    添加
                                 </Button>
                             </div>
                         </div>
@@ -275,7 +271,7 @@
 </div>
 
 @code {
-    private string selectedMenu = "model";
+    private string selectedMenu = "general";
     private string themeMode = "light";
     private string language = "zh";
     private bool loadingModels;
@@ -295,6 +291,38 @@
         new("skill", "技能/指令", "thunderbolt")
     };
 
+    private record TypeDef(string Name, string DisplayName, List<string> Models);
+    private record ProviderDef(string ProviderName, string DisplayName, string DefaultEndpoint, string ApiKeyUrl, List<TypeDef> Types);
+
+    private readonly List<ProviderDef> providerDefs = new()
+    {
+        new("bailian", "阿里云百炼", "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation",
+            "https://bailian.console.aliyun.com/cn-beijing/?tab=plan#/efm/subscription/token-plan",
+            new()
+            {
+                new("token-plan", "TokenPlan", new() { "qwen-3.7-max", "qwen-3.6-plus", "glm-5.1", "kimi-k2.6", "deepseek-v4-pro", "deepseek-v4-flash" }),
+                new("pay-as-you-go", "按量付费", new() { "qwen-3.7-max", "qwen-3.6-plus" })
+            }),
+        new("deepseek", "DeepSeek", "https://api.deepseek.com/v1/chat/completions",
+            "https://platform.deepseek.com/api_keys",
+            new()
+            {
+                new("pay-as-you-go", "按量付费", new() { "deepseek-v4-pro", "deepseek-v4-flash" })
+            })
+    };
+
+    private ProviderDef? currentProviderDef => providerDefs.FirstOrDefault(p => p.ProviderName == editModel.ProviderName);
+    private List<TypeDef> currentProviderTypes => currentProviderDef?.Types ?? new();
+    private List<string> currentModels
+    {
+        get
+        {
+            var typeDef = currentProviderDef?.Types.FirstOrDefault(t => t.Name == editModel.PlanType);
+            return typeDef?.Models ?? new();
+        }
+    }
+    private string? currentApiKeyUrl => currentProviderDef?.ApiKeyUrl;
+
     private List<AgentDefinition> agentDefinitions = new();
 
     protected override async Task OnInitializedAsync()
@@ -303,32 +331,16 @@
         LoadAgentDefinitions();
     }
 
-    private void SelectMenu(string key)
-    {
-        selectedMenu = key;
-    }
+    private void SelectMenu(string key) { selectedMenu = key; }
 
-    private void GoBack()
-    {
-        Navigation.NavigateTo("/agent/chat");
-    }
+    private void GoBack() { Navigation.NavigateTo("/agent/chat"); }
 
-    // Model management
     private async Task LoadLLMConfigs()
     {
         loadingModels = true;
-        try
-        {
-            llmConfigs = await LLMConfigAppService.GetAllAsync();
-        }
-        catch (Exception ex)
-        {
-            MessageService.Error("加载模型配置失败: " + ex.Message);
-        }
-        finally
-        {
-            loadingModels = false;
-        }
+        try { llmConfigs = await LLMConfigAppService.GetAllAsync(); }
+        catch (Exception ex) { MessageService.Error("加载模型配置失败: " + ex.Message); }
+        finally { loadingModels = false; }
     }
 
     private void LoadAgentDefinitions()
@@ -342,16 +354,41 @@
         };
     }
 
+    private void OnProviderChanged(ChangeEventArgs e)
+    {
+        var providerName = e.Value?.ToString() ?? "";
+        var provider = providerDefs.FirstOrDefault(p => p.ProviderName == providerName);
+        if (provider != null)
+        {
+            editModel.ProviderName = provider.ProviderName;
+            editModel.ProviderDisplayName = provider.DisplayName;
+            editModel.BaseUrl = provider.DefaultEndpoint;
+            editModel.PlanType = provider.Types.FirstOrDefault()?.Name ?? "";
+            editModel.Model = "";
+        }
+    }
+
+    private void OnTypeChanged(ChangeEventArgs e)
+    {
+        editModel.PlanType = e.Value?.ToString() ?? "";
+        editModel.Model = "";
+    }
+
+    private void SelectModel(string model) { editModel.Model = model; }
+
     private void ShowAddModel()
     {
         isEditing = false;
+        var firstProvider = providerDefs[0];
+        var firstType = firstProvider.Types[0];
         editModel = new ModelEditModel
         {
-            ProviderName = "",
-            ProviderDisplayName = "",
+            ProviderName = firstProvider.ProviderName,
+            ProviderDisplayName = firstProvider.DisplayName,
+            PlanType = firstType.Name,
             ApiKey = "",
             Model = "",
-            BaseUrl = "",
+            BaseUrl = firstProvider.DefaultEndpoint,
             MaxTokens = 2000,
             Temperature = 0.7f,
             IsEnabled = true
@@ -378,18 +415,13 @@
         showModelDialog = true;
     }
 
-    private void CloseModelDialog()
-    {
-        showModelDialog = false;
-    }
+    private void CloseModelDialog() { showModelDialog = false; }
 
     private async Task SaveModel()
     {
-        if (string.IsNullOrWhiteSpace(editModel.ProviderName))
-        {
-            MessageService.Warning("Provider 名称不能为空");
-            return;
-        }
+        if (string.IsNullOrWhiteSpace(editModel.ProviderName)) { MessageService.Warning("请选择提供商"); return; }
+        if (string.IsNullOrWhiteSpace(editModel.Model)) { MessageService.Warning("请输入模型名称"); return; }
+        if (string.IsNullOrWhiteSpace(editModel.ApiKey)) { MessageService.Warning("请输入 API 密钥"); return; }
 
         savingModel = true;
         try
@@ -425,18 +457,11 @@
                 });
                 MessageService.Success("模型配置已添加");
             }
-
             showModelDialog = false;
             await LoadLLMConfigs();
         }
-        catch (Exception ex)
-        {
-            MessageService.Error("保存失败: " + ex.Message);
-        }
-        finally
-        {
-            savingModel = false;
-        }
+        catch (Exception ex) { MessageService.Error("保存失败: " + ex.Message); }
+        finally { savingModel = false; }
     }
 
     private async Task DeleteModel(Guid id)
@@ -447,10 +472,7 @@
             MessageService.Success("已删除");
             await LoadLLMConfigs();
         }
-        catch (Exception ex)
-        {
-            MessageService.Error("删除失败: " + ex.Message);
-        }
+        catch (Exception ex) { MessageService.Error("删除失败: " + ex.Message); }
     }
 
     private async Task SetDefault(string providerName)
@@ -461,10 +483,7 @@
             MessageService.Success($"{providerName} 已设为默认");
             await LoadLLMConfigs();
         }
-        catch (Exception ex)
-        {
-            MessageService.Error("设置失败: " + ex.Message);
-        }
+        catch (Exception ex) { MessageService.Error("设置失败: " + ex.Message); }
     }
 
     private string MaskApiKey(string apiKey)
@@ -479,6 +498,7 @@
         public Guid? Id { get; set; }
         public string ProviderName { get; set; } = "";
         public string ProviderDisplayName { get; set; } = "";
+        public string PlanType { get; set; } = "";
         public string ApiKey { get; set; } = "";
         public string? ApiSecret { get; set; }
         public string Model { get; set; } = "";
