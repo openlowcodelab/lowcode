@@ -15,8 +15,6 @@ public class AgentApplicationModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
-        context.Services.AddHttpContextAccessor();
-        
         Configure<AbpAutoMapperOptions>(options =>
         {
             options.AddMaps<AgentApplicationModule>();
@@ -32,7 +30,6 @@ public class AgentApplicationModule : AbpModule
         context.Services.AddSingleton<AgentSessionStore>();
         
         // 注册 LLM 服务
-        context.Services.AddScoped<ILLMConfigAppService, LLMConfigAppService>();
         context.Services.AddScoped<LLMProviderFactory>();
         
         // 注册 Agent 工厂

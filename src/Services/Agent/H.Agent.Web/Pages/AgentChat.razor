@@ -4,6 +4,7 @@
 @layout AgentLayout
 @inject IAgentChatAppService AgentChatAppService
 @inject IMessageService MessageService
+@inject NavigationManager Navigation
 
 <div class="agent-chat-container">
     <div class="chat-layout">
@@ -38,6 +39,31 @@
                 {
                     <AntDesign.Empty Description="@("No sessions")" />
                 }
+            </div>
+            <div class="user-menu-area">
+                <div class="user-menu-trigger">
+                    <div class="user-avatar-small">
+                        <Icon Type="user" />
+                    </div>
+                    <span class="user-name">用户</span>
+                    <div class="user-menu-icon" @onclick="ToggleUserMenu">
+                        <Icon Type="setting" />
+                    </div>
+                    @if (showUserMenu)
+                    {
+                        <div class="user-dropdown-menu">
+                            <div class="dropdown-item" @onclick:stopPropagation="true" @onclick="GoToSettings">
+                                <Icon Type="setting" />
+                                <span>设置</span>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <div class="dropdown-item danger" @onclick:stopPropagation="true" @onclick="Logout">
+                                <Icon Type="logout" />
+                                <span>退出登录</span>
+                            </div>
+                        </div>
+                    }
+                </div>
             </div>
         </div>
 
@@ -166,6 +192,8 @@
     private bool loadingMessages;
     private bool isSending;
     private AgentConfigDto? selectedAgent;
+    private bool showUserMenu;
+    private bool isDarkTheme;
 
     protected override async Task OnInitializedAsync()
     {
@@ -306,5 +334,22 @@
             .Replace("\n", "<br/>")
             .Replace("**", "<strong>")
             .Replace("`", "<code>");
+    }
+
+    private void ToggleUserMenu()
+    {
+        showUserMenu = !showUserMenu;
+    }
+
+    private void GoToSettings()
+    {
+        showUserMenu = false;
+        Navigation.NavigateTo("/agent/settings");
+    }
+
+    private void Logout()
+    {
+        showUserMenu = false;
+        MessageService.Info("已退出登录");
     }
 }

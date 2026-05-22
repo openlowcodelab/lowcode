@@ -1,14 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
+using Volo.Abp.Application.Services;
 
 namespace H.Agent.Application.Contracts;
 
 /// <summary>
 /// LLM 配置服务接口
 /// </summary>
-public interface ILLMConfigAppService
+public interface ILLMConfigAppService : IApplicationService
 {
     /// <summary>
     /// 获取所有配置
