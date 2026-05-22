@@ -1,0 +1,14 @@
+using AutoMapper;
+using H.Agent.Application.Contracts;
+using H.Agent.EntityFrameworkCore;
+
+namespace H.Agent.Application;
+
+public class LLMConfigProfile : Profile
+{
+    public LLMConfigProfile()
+    {
+        CreateMap<LLMConfigEntity, LLMConfigDto>();
+        CreateMap<CreateLLMConfigDto, LLMConfigEntity>();
+    }
+}

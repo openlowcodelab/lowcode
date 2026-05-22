@@ -1,5 +1,6 @@
 using H.Account.Application;
 using H.Agent.Application;
+using H.Agent.EntityFrameworkCore;
 using H.Approval.Application;
 using H.AutoTest.Application;
 using H.LowCode.ComponentBase;
@@ -39,6 +40,7 @@ namespace H.LowCode.Host.All;
     typeof(AccountApplicationModule),
     // Agent
     typeof(AgentApplicationModule),
+    typeof(AgentEntityFrameworkCoreModule),
     // Organization
     typeof(OrganizationApplicationModule),
     // Approval

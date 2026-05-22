@@ -1,12 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
 using H.Agent.Application.Contracts;
 
-namespace H.Agent.Application.Services;
+namespace H.Agent.Application;
 
 /// <summary>
 /// Agent 聊天服务实现

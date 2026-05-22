@@ -1,8 +1,5 @@
 using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Configuration;
+using H.Agent.Application.Contracts;
 
 namespace H.Agent.Application;
 
@@ -11,27 +8,27 @@ namespace H.Agent.Application;
 /// </summary>
 public class AgentFactory
 {
-    private readonly IServiceProvider _serviceProvider;
-    private readonly IConfiguration _configuration;
+    private readonly LLMProviderFactory _llmProviderFactory;
     
-    public AgentFactory(IServiceProvider serviceProvider, IConfiguration configuration)
+    public AgentFactory(LLMProviderFactory llmProviderFactory)
     {
-        _serviceProvider = serviceProvider;
-        _configuration = configuration;
+        _llmProviderFactory = llmProviderFactory;
     }
     
     /// <summary>
     /// 创建 Agent 实例
     /// </summary>
-    public Task<IAgentInstance?> CreateAgentAsync(string agentType)
+    public async Task<IAgentInstance?> CreateAgentAsync(string agentType)
     {
+        var llmProvider = await _llmProviderFactory.GetDefaultProviderAsync();
+        
         return agentType.ToLowerInvariant() switch
         {
-            "general" => Task.FromResult<IAgentInstance?>(new GeneralAgent()),
-            "customer-service" => Task.FromResult<IAgentInstance?>(new CustomerServiceAgent()),
-            "data-analysis" => Task.FromResult<IAgentInstance?>(new DataAnalysisAgent()),
-            "automation-test" => Task.FromResult<IAgentInstance?>(new AutomationTestAgent()),
-            _ => Task.FromResult<IAgentInstance?>(new GeneralAgent())
+            "general" => new GeneralAgent(llmProvider),
+            "customer-service" => new CustomerServiceAgent(llmProvider),
+            "data-analysis" => new DataAnalysisAgent(llmProvider),
+            "automation-test" => new AutomationTestAgent(llmProvider),
+            _ => new GeneralAgent(llmProvider)
         };
     }
     
@@ -97,25 +94,85 @@ public interface IAgentInstance
 }
 
 /// <summary>
+/// Agent 基类 - 提供 LLM 调用能力
+/// </summary>
+public abstract class AgentBase : IAgentInstance
+{
+    protected readonly ILLMProvider? _llmProvider;
+    
+    protected AgentBase(ILLMProvider? llmProvider)
+    {
+        _llmProvider = llmProvider;
+    }
+    
+    public abstract string Name { get; }
+    public abstract string SystemPrompt { get; }
+    public abstract List<string> GetAvailableTools();
+    
+    public virtual async Task<string> ProcessMessageAsync(string message, List<string>? conversationHistory = null)
+    {
+        if (_llmProvider == null)
+        {
+            return "[系统] 未配置 LLM Provider，请在模型配置页面添加并启用 Provider。";
+        }
+        
+        try
+        {
+            var messages = new List<Message>
+            {
+                new Message { Role = "system", Content = SystemPrompt }
+            };
+            
+            if (conversationHistory != null)
+            {
+                foreach (var hist in conversationHistory)
+                {
+                    var parts = hist.Split(':', 2);
+                    if (parts.Length == 2)
+                    {
+                        messages.Add(new Message
+                        {
+                            Role = parts[0].Trim().ToLower() == "user" ? "user" : "assistant",
+                            Content = parts[1].Trim()
+                        });
+                    }
+                }
+            }
+            
+            messages.Add(new Message { Role = "user", Content = message });
+            
+            var request = new LLMRequest
+            {
+                Messages = messages,
+                Temperature = 0.7f,
+                MaxTokens = 2000
+            };
+            
+            var response = await _llmProvider.ChatAsync(request);
+            return response.Content;
+        }
+        catch (Exception ex)
+        {
+            return $"[错误] 调用 LLM 失败：{ex.Message}";
+        }
+    }
+}
+
+/// <summary>
 /// 通用 Agent 实现
 /// </summary>
-public class GeneralAgent : IAgentInstance
+public class GeneralAgent : AgentBase
 {
-    public string Name => "通用助手";
+    public override string Name => "通用助手";
     
-    public string SystemPrompt => """
+    public override string SystemPrompt => """
         你是一个通用的智能助手，能够帮助用户解答问题、生成文本、编写代码、翻译语言等。
         请用简洁语言回答用户的问题，保持友好和专业的态度。
         """;
     
-    public Task<string> ProcessMessageAsync(string message, List<string>? conversationHistory = null)
-    {
-        // TODO: 集成 Microsoft Agent Framework 和 LLM 模型
-        // 这里先返回模拟响应
-        return Task.FromResult($"[通用助手] 收到您的消息：{message}\n\n这是一个模拟响应。在实际部署中，这里将调用 AI 模型生成回复。");
-    }
+    public GeneralAgent(ILLMProvider? llmProvider) : base(llmProvider) { }
     
-    public List<string> GetAvailableTools()
+    public override List<string> GetAvailableTools()
     {
         return new List<string> { "代码执行", "文本翻译", "摘要生成", "知识查询" };
     }
@@ -124,22 +181,18 @@ public class GeneralAgent : IAgentInstance
 /// <summary>
 /// 客服 Agent 实现
 /// </summary>
-public class CustomerServiceAgent : IAgentInstance
+public class CustomerServiceAgent : AgentBase
 {
-    public string Name => "客服助手";
+    public override string Name => "客服助手";
     
-    public string SystemPrompt => """
+    public override string SystemPrompt => """
         你是一个专业的智能客服助手，能够帮助客户解答问题、处理工单和收集反馈。
         请根据知识库提供准确的回答，并在需要时建议创建工单。
         """;
     
-    public Task<string> ProcessMessageAsync(string message, List<string>? conversationHistory = null)
-    {
-        // TODO: 集成 Microsoft Agent Framework 和 LLM 模型
-        return Task.FromResult($"[客服助手] 感谢您的咨询，关于您的问题：{message}\n\n这是一个模拟响应。在实际部署中，这里将查询知识库并生成回复。");
-    }
+    public CustomerServiceAgent(ILLMProvider? llmProvider) : base(llmProvider) { }
     
-    public List<string> GetAvailableTools()
+    public override List<string> GetAvailableTools()
     {
         return new List<string> { "知识库查询", "工单创建", "客户反馈", "常见问题解答" };
     }
@@ -148,22 +201,18 @@ public class CustomerServiceAgent : IAgentInstance
 /// <summary>
 /// 数据分析 Agent 实现
 /// </summary>
-public class DataAnalysisAgent : IAgentInstance
+public class DataAnalysisAgent : AgentBase
 {
-    public string Name => "数据分析助手";
+    public override string Name => "数据分析助手";
     
-    public string SystemPrompt => """
+    public override string SystemPrompt => """
         你是一个数据分析智能助手，能够帮助用户进行数据查询、统计分析和报表生成。
         请提供清晰的数据分析结果，并给出专业的解读建议。
         """;
     
-    public Task<string> ProcessMessageAsync(string message, List<string>? conversationHistory = null)
-    {
-        // TODO: 集成 Microsoft Agent Framework 和 LLM 模型
-        return Task.FromResult($"[数据分析助手] 正在分析您的数据需求：{message}\n\n这是一个模拟响应。在实际部署中，这里将执行数据查询并生成分析报告。");
-    }
+    public DataAnalysisAgent(ILLMProvider? llmProvider) : base(llmProvider) { }
     
-    public List<string> GetAvailableTools()
+    public override List<string> GetAvailableTools()
     {
         return new List<string> { "SQL 查询", "统计分析", "图表生成", "趋势预测", "报表导出" };
     }
@@ -172,22 +221,18 @@ public class DataAnalysisAgent : IAgentInstance
 /// <summary>
 /// 自动化测试 Agent 实现
 /// </summary>
-public class AutomationTestAgent : IAgentInstance
+public class AutomationTestAgent : AgentBase
 {
-    public string Name => "自动化测试助手";
+    public override string Name => "自动化测试助手";
     
-    public string SystemPrompt => """
+    public override string SystemPrompt => """
         你是一个自动化测试智能助手，能够帮助用户生成测试用例、执行测试并分析结果。
         请提供专业的测试建议和详细的测试报告。
         """;
     
-    public Task<string> ProcessMessageAsync(string message, List<string>? conversationHistory = null)
-    {
-        // TODO: 集成 Microsoft Agent Framework 和 LLM 模型
-        return Task.FromResult($"[自动化测试助手] 收到您的测试需求：{message}\n\n这是一个模拟响应。在实际部署中，这里将生成测试用例并执行测试。");
-    }
+    public AutomationTestAgent(ILLMProvider? llmProvider) : base(llmProvider) { }
     
-    public List<string> GetAvailableTools()
+    public override List<string> GetAvailableTools()
     {
         return new List<string> { "测试用例生成", "Playwright 测试", "API 测试", "结果分析", "缺陷报告" };
     }
