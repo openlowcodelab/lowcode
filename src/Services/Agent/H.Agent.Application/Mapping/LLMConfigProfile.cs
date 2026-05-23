@@ -10,5 +10,9 @@ public class LLMConfigProfile : Profile
     {
         CreateMap<LLMConfigEntity, LLMConfigDto>();
         CreateMap<CreateLLMConfigDto, LLMConfigEntity>();
+        
+        // Chat session & message mapping
+        CreateMap<AgentChatSessionEntity, ChatSessionDto>();
+        CreateMap<AgentChatMessageEntity, ChatMessageDto>();
     }
 }

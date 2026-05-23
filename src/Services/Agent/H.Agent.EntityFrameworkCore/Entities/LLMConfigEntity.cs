@@ -1,4 +1,3 @@
-using System;
 using Volo.Abp.Domain.Entities.Auditing;
 
 namespace H.Agent.EntityFrameworkCore;
@@ -6,7 +5,7 @@ namespace H.Agent.EntityFrameworkCore;
 /// <summary>
 /// LLM 配置实体
 /// </summary>
-public class LLMConfigEntity : FullAuditedEntity<Guid>
+public class LLMConfigEntity : CreationAuditedEntity<Guid>
 {
     /// <summary>
     /// 厂商名称

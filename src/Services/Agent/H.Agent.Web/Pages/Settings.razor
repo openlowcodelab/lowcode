@@ -193,17 +193,17 @@
                                         </div>
                                     }
                                 </div>
+                                <div class="form-item">
+                                    <label>请求地址</label>
+                                    <input class="modal-input" @bind="@editModel.BaseUrl" placeholder="留空则使用默认地址" />
+                                </div>
                                 <div class="form-item required">
                                     <label>* API 密钥</label>
                                     <input class="modal-input" @bind="@editModel.ApiKey" placeholder="API密钥" />
                                     @if (currentApiKeyUrl != null)
                                     {
-                                        <a class="api-key-link-gray" href="@currentApiKeyUrl" target="_blank">获取 API 密钥</a>
+                                        <a href="@currentApiKeyUrl" target="_blank">获取 API 密钥</a>
                                     }
-                                </div>
-                                <div class="form-item">
-                                    <label>请求地址</label>
-                                    <input class="modal-input" @bind="@editModel.BaseUrl" placeholder="例如 https://api.deepseek.com/v1/chat/completions" />
                                 </div>
                             </div>
                             <div class="modal-footer">
@@ -287,10 +287,11 @@
         toastType = type;
         toastVisible = true;
         StateHasChanged();
-        _ = Task.Run(async () => {
+        _ = Task.Run(async () =>
+        {
             await Task.Delay(3000);
             toastVisible = false;
-            InvokeAsync(StateHasChanged);
+            await InvokeAsync(StateHasChanged);
         });
     }
 
@@ -300,7 +301,7 @@
         new("general", "通用", "setting"),
         new("model", "模型", "api"),
         new("agent", "智能体", "robot"),
-        new("skill", "技能/指令", "thunderbolt")
+        new("skill", "技能", "thunderbolt")
     };
 
     private record TypeDef(string Name, string DisplayName, List<string> Models);
@@ -308,14 +309,14 @@
 
     private readonly List<ProviderDef> providerDefs = new()
     {
-        new("bailian", "阿里云百炼", "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation",
+        new("bailian", "阿里云百炼", "https://dashscope.aliyuncs.com/compatible-mode/v1",
             "https://bailian.console.aliyun.com/cn-beijing/?tab=plan#/efm/subscription/token-plan",
             new()
             {
-                new("token-plan", "TokenPlan", new() { "qwen3.7-max", "qwen3.6-plus", "glm-5.1", "kimi-k2.6", "deepseek-v4-pro", "deepseek-v4-flash" }),
-                new("pay-as-you-go", "按量付费", new() { "qwen3.7-max", "qwen3.6-plus" })
+                new("pay-as-you-go", "按量付费", new() { "qwen3.7-max", "qwen3.6-plus", "deepseek-v4-pro" }),
+                new("token-plan", "TokenPlan", new() { "qwen3.7-max", "qwen3.6-plus", "glm-5.1", "kimi-k2.6", "deepseek-v4-pro", "deepseek-v4-flash" })
             }),
-        new("deepseek", "DeepSeek", "https://api.deepseek.com/v1/chat/completions",
+        new("deepseek", "DeepSeek", "https://api.deepseek.com",
             "https://platform.deepseek.com/api_keys",
             new()
             {

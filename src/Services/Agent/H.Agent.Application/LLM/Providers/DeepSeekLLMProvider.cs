@@ -1,9 +1,7 @@
 using System.Runtime.CompilerServices;
 using System.Net.Http.Json;
-using System.Text.Json;
 using System.Text.Json.Serialization;
 using H.Agent.Application.Contracts;
-using System;
 
 namespace H.Agent.Application;
 
@@ -17,12 +15,14 @@ public class DeepSeekLLMProvider : ILLMProvider
     private readonly HttpClient _httpClient;
     private readonly string _defaultModel;
     
-    public DeepSeekLLMProvider(string apiKey, string? baseUrl = "https://api.deepseek.com", string? model = null)
+    public DeepSeekLLMProvider(string apiKey, string baseUrl, string model)
     {
         _httpClient = new HttpClient();
         _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
-        _httpClient.BaseAddress = new Uri(string.IsNullOrEmpty(baseUrl) ? "https://api.deepseek.com" : baseUrl);
-        _defaultModel = string.IsNullOrEmpty(model) ? "deepseek-chat" : model;
+
+        // 确保 BaseAddress 以 '/' 结尾，避免相对路径拼接时丢失 BaseUrl 中的路径部分
+        _httpClient.BaseAddress = new Uri(baseUrl.TrimEnd('/') + "/");
+        _defaultModel = model;
     }
     
     public async Task<LLMResponse> ChatAsync(LLMRequest request, CancellationToken ct = default)
@@ -35,8 +35,14 @@ public class DeepSeekLLMProvider : ILLMProvider
             max_tokens = request.MaxTokens
         };
         
-        var response = await _httpClient.PostAsJsonAsync("/v1/chat/completions", payload, ct);
-        response.EnsureSuccessStatusCode();
+        var response = await _httpClient.PostAsJsonAsync("v1/chat/completions", payload, ct);
+        
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorBody = await response.Content.ReadAsStringAsync(ct);
+            throw new HttpRequestException(
+                $"DeepSeek API 返回 {(int)response.StatusCode} ({response.StatusCode}): {errorBody}");
+        }
         
         var result = await response.Content.ReadFromJsonAsync<DeepSeekResponse>(ct);
         
@@ -57,8 +63,14 @@ public class DeepSeekLLMProvider : ILLMProvider
             stream = true
         };
         
-        var response = await _httpClient.PostAsJsonAsync("/v1/chat/completions", payload, ct);
-        response.EnsureSuccessStatusCode();
+        var response = await _httpClient.PostAsJsonAsync("v1/chat/completions", payload, ct);
+        
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorBody = await response.Content.ReadAsStringAsync(ct);
+            throw new HttpRequestException(
+                $"DeepSeek API 返回 {(int)response.StatusCode} ({response.StatusCode}): {errorBody}");
+        }
         
         await using var stream = await response.Content.ReadAsStreamAsync(ct);
         using var reader = new StreamReader(stream);

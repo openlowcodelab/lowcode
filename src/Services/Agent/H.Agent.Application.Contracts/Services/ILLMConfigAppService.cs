@@ -1,3 +1,4 @@
+using System;
 using Volo.Abp.Application.Services;
 
 namespace H.Agent.Application.Contracts;
@@ -11,6 +12,11 @@ public interface ILLMConfigAppService : IApplicationService
     /// 获取所有配置
     /// </summary>
     Task<List<LLMConfigDto>> GetAllAsync();
+    
+    /// <summary>
+    /// 获取指定 ID 的配置
+    /// </summary>
+    Task<LLMConfigDto?> GetAsync(Guid id);
     
     /// <summary>
     /// 获取指定 Provider 配置

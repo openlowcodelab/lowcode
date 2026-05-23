@@ -9,26 +9,30 @@ namespace H.Agent.Application;
 /// </summary>
 public class AgentChatAppService : ApplicationService, IAgentChatAppService
 {
-    private readonly AgentSessionStore _sessionStore;
+    private readonly IAgentSessionAppService _sessionAppService;
     private readonly AgentFactory _agentFactory;
     
-    public AgentChatAppService(AgentSessionStore sessionStore, AgentFactory agentFactory)
+    public AgentChatAppService(IAgentSessionAppService sessionAppService, AgentFactory agentFactory)
     {
-        _sessionStore = sessionStore;
+        _sessionAppService = sessionAppService;
         _agentFactory = agentFactory;
     }
     
     public async Task<ChatResponseDto> SendMessageAsync(SendChatMessageInputDto input)
     {
-        var sessionId = input.SessionId ?? Guid.NewGuid();
         var agentType = input.AgentType ?? "general";
+        Guid sessionId;
         
-        // 如果是新会话，创建会话
-        var existingSession = await _sessionStore.GetSessionAsync(sessionId);
-        if (existingSession == null)
+        // 如果是新会话（SessionId 为 null），创建新会话
+        if (!input.SessionId.HasValue)
         {
             var title = input.Message.Length > 30 ? input.Message[..30] + "..." : input.Message;
-            sessionId = await _sessionStore.CreateSessionAsync(title);
+            sessionId = await _sessionAppService.CreateSessionAsync(title, agentType);
+        }
+        else
+        {
+            // 使用已存在的会话
+            sessionId = input.SessionId.Value;
         }
         
         // 添加用户消息
@@ -42,13 +46,22 @@ public class AgentChatAppService : ApplicationService, IAgentChatAppService
         };
         
         // 获取历史消息（在添加当前用户消息之前，避免 ProcessMessageAsync 中重复添加）
-        var history = await _sessionStore.GetMessagesAsync(sessionId);
+        var history = await _sessionAppService.GetMessagesAsync(sessionId);
         var conversationHistory = history.Select(m => $"{m.Role}: {m.Content}").ToList();
         
-        await _sessionStore.AddMessageAsync(sessionId, userMessage);
+        await _sessionAppService.AddMessageAsync(sessionId, userMessage);
         
         // 获取 Agent 实例
-        var agent = await _agentFactory.CreateAgentAsync(agentType, input.ProviderName);
+        IAgentInstance? agent;
+        if (input.ModelConfigId.HasValue)
+        {
+            agent = await _agentFactory.CreateAgentAsync(agentType, input.ModelConfigId.Value);
+        }
+        else
+        {
+            agent = await _agentFactory.CreateAgentAsync(agentType, input.ProviderName);
+        }
+        
         if (agent == null)
         {
             throw new InvalidOperationException($"无法创建 Agent 实例: {agentType}");
@@ -66,7 +79,7 @@ public class AgentChatAppService : ApplicationService, IAgentChatAppService
             Content = response,
             CreationTime = DateTime.UtcNow
         };
-        await _sessionStore.AddMessageAsync(sessionId, aiMessage);
+        await _sessionAppService.AddMessageAsync(sessionId, aiMessage);
         
         return new ChatResponseDto
         {
@@ -80,7 +93,7 @@ public class AgentChatAppService : ApplicationService, IAgentChatAppService
     
     public async Task<PagedResultDto<ChatSessionDto>> GetSessionsAsync(SessionQueryDto input)
     {
-        var sessions = await _sessionStore.GetSessionsAsync(input.Filter);
+        var sessions = await _sessionAppService.GetSessionsAsync(input.Filter);
         
         var totalCount = sessions.Count;
         var pagedSessions = sessions
@@ -93,12 +106,12 @@ public class AgentChatAppService : ApplicationService, IAgentChatAppService
     
     public async Task<List<ChatMessageDto>> GetMessagesAsync(Guid sessionId)
     {
-        return await _sessionStore.GetMessagesAsync(sessionId);
+        return await _sessionAppService.GetMessagesAsync(sessionId);
     }
     
     public async Task DeleteSessionAsync(Guid sessionId)
     {
-        await _sessionStore.DeleteSessionAsync(sessionId);
+        await _sessionAppService.DeleteSessionAsync(sessionId);
     }
     
     public async Task<List<AgentConfigDto>> GetAvailableAgentsAsync()

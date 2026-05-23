@@ -38,6 +38,12 @@ public class LLMConfigAppService : ApplicationService, ILLMConfigAppService
         return entity == null ? null : _objectMapper.Map<LLMConfigEntity, LLMConfigDto>(entity);
     }
     
+    public async Task<LLMConfigDto?> GetAsync(Guid id)
+    {
+        var entity = await _repository.FindAsync(id);
+        return entity == null ? null : _objectMapper.Map<LLMConfigEntity, LLMConfigDto>(entity);
+    }
+    
     public async Task<LLMConfigDto?> GetDefaultConfigAsync(CancellationToken ct = default)
     {
         var entity = await AsyncExecuter.FirstOrDefaultAsync(

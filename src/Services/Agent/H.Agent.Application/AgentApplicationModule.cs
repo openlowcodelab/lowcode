@@ -26,9 +26,6 @@ public class AgentApplicationModule : AbpModule
     
     private void ConfigureAgentServices(ServiceConfigurationContext context)
     {
-        // 注册内存会话存储
-        context.Services.AddSingleton<AgentSessionStore>();
-        
         // 注册 LLM 服务
         context.Services.AddScoped<LLMProviderFactory>();
         
