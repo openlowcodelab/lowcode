@@ -3,23 +3,29 @@
 
 @layout AgentLayout
 @inject IAgentChatAppService AgentChatAppService
-@inject IMessageService MessageService
+@inject ILLMConfigAppService LLMConfigAppService
 @inject NavigationManager Navigation
+
+<!-- Toast Notification -->
+@if (!string.IsNullOrEmpty(toastMessage))
+{
+    <div class="toast-notification toast-@toastType @(toastVisible ? "toast-show" : "")">
+        @toastMessage
+    </div>
+}
 
 <div class="agent-chat-container">
     <div class="chat-layout">
         <div class="session-list-panel">
             <div class="panel-header">
-                <Button Type="@ButtonType.Primary" OnClick="CreateNewSession" Style="width: 100%;" Class="new-chat-btn">
-                    <Icon Type="plus" /> New Chat
-                </Button>
+                <button class="btn btn-primary new-chat-btn" @onclick="CreateNewTask">
+                    @IconSvg("plus") New Task
+                </button>
             </div>
             <div class="panel-content">
                 @if (loadingSessions)
                 {
-                    <div style="text-align: center; padding: 20px;">
-                        <Spin Tip="Loading..." />
-                    </div>
+                    <div class="loading-spinner"><div class="spinner"></div><span>Loading...</span></div>
                 }
                 else if (sessions.Any())
                 {
@@ -37,29 +43,23 @@
                 }
                 else
                 {
-                    <AntDesign.Empty Description="@("No sessions")" />
+                    <div class="empty-state"><div class="empty-icon">@IconSvg("inbox")</div><div class="empty-text">No tasks</div></div>
                 }
             </div>
             <div class="user-menu-area">
                 <div class="user-menu-trigger">
-                    <div class="user-avatar-small">
-                        <Icon Type="user" />
-                    </div>
+                    <div class="user-avatar-small">@IconSvg("user")</div>
                     <span class="user-name">用户</span>
-                    <div class="user-menu-icon" @onclick="ToggleUserMenu">
-                        <Icon Type="setting" />
-                    </div>
+                    <div class="user-menu-icon" @onclick="ToggleUserMenu">@IconSvg("setting")</div>
                     @if (showUserMenu)
                     {
                         <div class="user-dropdown-menu">
                             <div class="dropdown-item" @onclick:stopPropagation="true" @onclick="GoToSettings">
-                                <Icon Type="setting" />
-                                <span>设置</span>
+                                @IconSvg("setting") <span>设置</span>
                             </div>
                             <div class="dropdown-divider"></div>
                             <div class="dropdown-item danger" @onclick:stopPropagation="true" @onclick="Logout">
-                                <Icon Type="logout" />
-                                <span>退出登录</span>
+                                @IconSvg("logout") <span>退出登录</span>
                             </div>
                         </div>
                     }
@@ -68,7 +68,53 @@
         </div>
 
         <div class="chat-main-panel">
-            @if (selectedSessionId.HasValue)
+            @if (isNewTask)
+            {
+                <div class="new-task-container">
+                    <div class="new-task-header">
+                        <h2>New Task</h2>
+                        <p class="new-task-desc">描述您的任务，AI 助手将为您处理</p>
+                    </div>
+                    <div class="new-task-body">
+                        <textarea class="new-task-textarea"
+                                  @bind="inputMessage"
+                                  placeholder="Describe your task in detail..."
+                                  rows="8"
+                                  @onkeydown="HandleNewTaskKeyDown"></textarea>
+                    </div>
+                    <div class="new-task-footer">
+                        <div class="new-task-model-selector">
+                            <span class="model-selector-label">Model:</span>
+                            <select class="model-select-dropdown"
+                                    value="@selectedProviderName"
+                                    @onchange="OnNewTaskModelChanged">
+                                @if (availableModels.Any())
+                                {
+                                    @foreach (var model in availableModels)
+                                    {
+                                        <option value="@model.ProviderName">
+                                            @model.ProviderDisplayName (@model.Model)
+                                        </option>
+                                    }
+                                }
+                                else
+                                {
+                                    <option value="">No models configured</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="new-task-actions">
+                            <button class="btn" @onclick="CancelNewTask">Cancel</button>
+                            <button class="btn btn-primary agent-btn-primary"
+                                    @onclick="SendNewTask"
+                                    disabled="@string.IsNullOrWhiteSpace(inputMessage)">
+                                @IconSvg("send") Send
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+            else if (selectedSessionId.HasValue)
             {
                 <div class="chat-header">
                     <div class="chat-header-left">
@@ -77,26 +123,22 @@
                     <div class="chat-header-right">
                         @foreach (var agent in availableAgents)
                         {
-                            <Button Type="@(selectedAgentType == agent.AgentType ? ButtonType.Primary : ButtonType.Default)"
-                                    Class="@(selectedAgentType == agent.AgentType ? "agent-btn-primary" : "")"
-                                    Size="@ButtonSize.Small"
-                                    OnClick="() => OnAgentTypeChanged(agent.AgentType)"
-                                    Style="margin-left: 4px;">
+                            <button class="btn @(selectedAgentType == agent.AgentType ? "btn-primary agent-btn-primary" : "") agent-btn-small"
+                                    @onclick="() => OnAgentTypeChanged(agent.AgentType)"
+                                    style="margin-left: 4px;">
                                 @agent.DisplayName
-                            </Button>
+                            </button>
                         }
-                        <Button Type="@ButtonType.Default" OnClick="DeleteCurrentSession" Style="margin-left: 8px;">
-                            <Icon Type="delete" /> Delete
-                        </Button>
+                        <button class="btn" @onclick="DeleteCurrentSession" style="margin-left: 8px;">
+                            @IconSvg("delete") Delete
+                        </button>
                     </div>
                 </div>
 
                 <div class="chat-messages">
                     @if (loadingMessages)
                     {
-                        <div style="text-align: center; padding: 40px;">
-                            <Spin Tip="Loading..." />
-                        </div>
+                        <div class="loading-spinner"><div class="spinner"></div><span>Loading...</span></div>
                     }
                     else if (messages.Any())
                     {
@@ -106,11 +148,11 @@
                                 <div class="message-avatar">
                                     @if (message.Role == "user")
                                     {
-                                        <Icon Type="user" />
+                                        @IconSvg("user")
                                     }
                                     else
                                     {
-                                        <Icon Type="robot" />
+                                        @IconSvg("robot")
                                     }
                                 </div>
                                 <div class="message-content">
@@ -122,37 +164,71 @@
                     }
                     else
                     {
-                        <AntDesign.Empty Description="@("Start a conversation")" />
+                        <div class="empty-state"><div class="empty-icon">@IconSvg("chat")</div><div class="empty-text">Start a conversation</div></div>
+                    }
+
+                    @if (isSending)
+                    {
+                        <div class="message-item assistant-message">
+                            <div class="message-avatar">@IconSvg("robot")</div>
+                            <div class="message-content">
+                                <div class="message-text thinking-text">
+                                    <span class="thinking-dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
+                                </div>
+                            </div>
+                        </div>
                     }
                 </div>
 
                 <div class="chat-input-area">
-                    <TextArea @bind-Value="@inputMessage"
-                              Placeholder="Type message, press Enter to send..."
-                              Rows="3"
-                              OnKeyDown="HandleKeyDown" />
-                    <div class="input-actions">
-                        <Button Type="@ButtonType.Primary" Class="agent-btn-primary"
-                                OnClick="SendMessage" 
-                                Loading="@isSending"
-                                Disabled="@string.IsNullOrWhiteSpace(inputMessage)">
-                            <Icon Type="send" /> Send
-                        </Button>
-                        <Button OnClick="ClearInput">
-                            <Icon Type="clear" /> Clear
-                        </Button>
+                    <textarea class="chat-textarea"
+                              @bind="inputMessage"
+                              placeholder="Type message, press Enter to send..."
+                              rows="3"
+                              @onkeydown="HandleKeyDown"></textarea>
+                    <div class="chat-input-footer">
+                        <div class="chat-model-selector">
+                            <span class="model-selector-label">Model:</span>
+                            <select class="model-select-dropdown"
+                                    value="@selectedProviderName"
+                                    @onchange="OnChatModelChanged">
+                                @if (availableModels.Any())
+                                {
+                                    @foreach (var model in availableModels)
+                                    {
+                                        <option value="@model.ProviderName">
+                                            @model.ProviderDisplayName (@model.Model)
+                                        </option>
+                                    }
+                                }
+                                else
+                                {
+                                    <option value="">No models configured</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="chat-input-actions">
+                            <button class="btn btn-primary agent-btn-primary"
+                                    @onclick="SendMessage"
+                                    disabled="@string.IsNullOrWhiteSpace(inputMessage)">
+                                @IconSvg("send") Send
+                            </button>
+                            <button class="btn" @onclick="ClearInput">
+                                @IconSvg("clear") Clear
+                            </button>
+                        </div>
                     </div>
                 </div>
             }
             else
             {
                 <div class="empty-chat-state">
-                    <AntDesign.Empty Description="@("Select or create a session")" />
+                    <div class="empty-chat-content">
+                        <div class="empty-state"><div class="empty-icon">@IconSvg("task")</div><div class="empty-text">Click 'New Task' to create a new task</div></div>
+                    </div>
                 </div>
             }
         </div>
-
-
     </div>
 </div>
 
@@ -160,20 +236,41 @@
     private List<ChatSessionDto> sessions = new();
     private List<ChatMessageDto> messages = new();
     private List<AgentConfigDto> availableAgents = new();
+    private List<LLMConfigDto> availableModels = new();
     private Guid? selectedSessionId;
     private string selectedAgentType = "general";
     private string inputMessage = string.Empty;
+    private string selectedProviderName = string.Empty;
     private bool loadingSessions;
     private bool loadingMessages;
     private bool isSending;
+    private bool isNewTask;
     private AgentConfigDto? selectedAgent;
     private bool showUserMenu;
-    private bool isDarkTheme;
+
+    // Toast notification state
+    private string toastMessage = string.Empty;
+    private string toastType = "info";
+    private bool toastVisible;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadSessions();
         await LoadAvailableAgents();
+        await LoadAvailableModels();
+    }
+
+    private void ShowToast(string message, string type = "info")
+    {
+        toastMessage = message;
+        toastType = type;
+        toastVisible = true;
+        StateHasChanged();
+        _ = Task.Run(async () => {
+            await Task.Delay(3000);
+            toastVisible = false;
+            InvokeAsync(StateHasChanged);
+        });
     }
 
     private async Task LoadSessions()
@@ -200,10 +297,33 @@
         selectedAgent = availableAgents.FirstOrDefault(a => a.AgentType == selectedAgentType);
     }
 
+    private async Task LoadAvailableModels()
+    {
+        try
+        {
+            var allConfigs = await LLMConfigAppService.GetAllAsync();
+            availableModels = allConfigs.Where(c => c.IsEnabled).ToList();
+
+            if (string.IsNullOrEmpty(selectedProviderName) && availableModels.Any())
+            {
+                var defaultModel = availableModels.FirstOrDefault(m => m.IsDefault);
+                selectedProviderName = defaultModel?.ProviderName ?? availableModels.First().ProviderName;
+            }
+        }
+        catch (Exception ex)
+        {
+            availableModels = new List<LLMConfigDto>();
+            ShowToast($"Load models failed: {ex.Message}", "error");
+        }
+    }
+
     private async Task SelectSession(Guid sessionId)
     {
         selectedSessionId = sessionId;
+        isNewTask = false;
+        inputMessage = string.Empty;
         await LoadMessages(sessionId);
+        StateHasChanged();
     }
 
     private async Task LoadMessages(Guid sessionId)
@@ -212,7 +332,6 @@
         try
         {
             messages = await AgentChatAppService.GetMessagesAsync(sessionId);
-            StateHasChanged();
             await ScrollToBottom();
         }
         finally
@@ -221,11 +340,71 @@
         }
     }
 
-    private async Task CreateNewSession()
+    private async Task CreateNewTask()
     {
         selectedSessionId = null;
         messages.Clear();
+        inputMessage = string.Empty;
+        isNewTask = true;
+        await LoadAvailableModels();
         StateHasChanged();
+    }
+
+    private void CancelNewTask()
+    {
+        isNewTask = false;
+        inputMessage = string.Empty;
+        StateHasChanged();
+    }
+
+    private void OnNewTaskModelChanged(ChangeEventArgs e)
+    {
+        selectedProviderName = e.Value?.ToString() ?? string.Empty;
+        StateHasChanged();
+    }
+
+    private void OnChatModelChanged(ChangeEventArgs e)
+    {
+        selectedProviderName = e.Value?.ToString() ?? string.Empty;
+        StateHasChanged();
+    }
+
+    private async Task SendNewTask()
+    {
+        if (string.IsNullOrWhiteSpace(inputMessage) || isSending)
+            return;
+
+        isSending = true;
+        StateHasChanged();
+
+        try
+        {
+            var response = await AgentChatAppService.SendMessageAsync(new SendChatMessageInputDto
+            {
+                SessionId = null,
+                Message = inputMessage,
+                AgentType = selectedAgentType,
+                ProviderName = string.IsNullOrEmpty(selectedProviderName) ? null : selectedProviderName
+            });
+
+            selectedSessionId = response.SessionId;
+            isNewTask = false;
+            inputMessage = string.Empty;
+
+            await LoadMessages(response.SessionId);
+            await LoadSessions();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            ShowToast("Send failed: " + ex.Message, "error");
+            StateHasChanged();
+        }
+        finally
+        {
+            isSending = false;
+            StateHasChanged();
+        }
     }
 
     private async Task SendMessage()
@@ -234,28 +413,34 @@
             return;
 
         isSending = true;
+        StateHasChanged();
+
         try
         {
             var response = await AgentChatAppService.SendMessageAsync(new SendChatMessageInputDto
             {
                 SessionId = selectedSessionId,
                 Message = inputMessage,
-                AgentType = selectedAgentType
+                AgentType = selectedAgentType,
+                ProviderName = string.IsNullOrEmpty(selectedProviderName) ? null : selectedProviderName
             });
 
             selectedSessionId = response.SessionId;
             inputMessage = string.Empty;
-            
+
             await LoadMessages(response.SessionId);
             await LoadSessions();
+            StateHasChanged();
         }
         catch (Exception ex)
         {
-            MessageService.Error("Send failed: " + ex.Message);
+            ShowToast("Send failed: " + ex.Message, "error");
+            StateHasChanged();
         }
         finally
         {
             isSending = false;
+            StateHasChanged();
         }
     }
 
@@ -270,11 +455,12 @@
             selectedSessionId = null;
             messages.Clear();
             await LoadSessions();
-            MessageService.Success("Session deleted");
+            ShowToast("Session deleted", "success");
+            StateHasChanged();
         }
         catch (Exception ex)
         {
-            MessageService.Error("Delete failed: " + ex.Message);
+            ShowToast("Delete failed: " + ex.Message, "error");
         }
     }
 
@@ -294,6 +480,14 @@
         if (e.Key == "Enter" && !e.ShiftKey)
         {
             await SendMessage();
+        }
+    }
+
+    private async Task HandleNewTaskKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey)
+        {
+            await SendNewTask();
         }
     }
 
@@ -325,6 +519,25 @@
     private void Logout()
     {
         showUserMenu = false;
-        MessageService.Info("已退出登录");
+        ShowToast("已退出登录", "info");
     }
+
+    // ========== SVG Icon Helper ==========
+    private static MarkupString IconSvg(string name) => (MarkupString)GetIconSvg(name);
+
+    private static string GetIconSvg(string name) => name switch
+    {
+        "plus" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"12\" y1=\"5\" x2=\"12\" y2=\"19\"></line><line x1=\"5\" y1=\"12\" x2=\"19\" y2=\"12\"></line></svg>",
+        "user" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2\"></path><circle cx=\"12\" cy=\"7\" r=\"4\"></circle></svg>",
+        "setting" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"3\"></circle><path d=\"M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z\"></path></svg>",
+        "logout" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4\"></path><polyline points=\"16 17 21 12 16 7\"></polyline><line x1=\"21\" y1=\"12\" x2=\"9\" y2=\"12\"></line></svg>",
+        "send" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"22\" y1=\"2\" x2=\"11\" y2=\"13\"></line><polygon points=\"22 2 15 22 11 13 2 9 22 2\"></polygon></svg>",
+        "delete" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"3 6 5 6 21 6\"></polyline><path d=\"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3-3h8l1 1h-10l1-1z\"></path><line x1=\"10\" y1=\"11\" x2=\"10\" y2=\"17\"></line><line x1=\"14\" y1=\"11\" x2=\"14\" y2=\"17\"></line></svg>",
+        "robot" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"11\" width=\"18\" height=\"10\" rx=\"2\"></rect><circle cx=\"12\" cy=\"5\" r=\"2\"></circle><path d=\"M12 7v4\"></path><line x1=\"8\" y1=\"16\" x2=\"8\" y2=\"16\"></line><line x1=\"16\" y1=\"16\" x2=\"16\" y2=\"16\"></line></svg>",
+        "clear" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"18\" y1=\"6\" x2=\"6\" y2=\"18\"></line><line x1=\"6\" y1=\"6\" x2=\"18\" y2=\"18\"></line></svg>",
+        "inbox" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"22 12 16 12 14 15 10 15 8 12 2 12\"></polyline><path d=\"M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z\"></path></svg>",
+        "chat" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z\"></path></svg>",
+        "task" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"></path><polyline points=\"14 2 14 8 20 8\"></polyline><line x1=\"16\" y1=\"13\" x2=\"8\" y2=\"13\"></line><line x1=\"16\" y1=\"17\" x2=\"8\" y2=\"17\"></line><polyline points=\"10 9 9 9 8 9\"></polyline></svg>",
+        _ => ""
+    };
 }

@@ -2,22 +2,29 @@
 
 @layout AgentLayout
 @inject ILLMConfigAppService LLMConfigAppService
-@inject IMessageService MessageService
 @inject NavigationManager Navigation
+
+<!-- Toast Notification -->
+@if (!string.IsNullOrEmpty(toastMessage))
+{
+    <div class="toast-notification toast-@toastType @(toastVisible ? "toast-show" : "")">
+        @toastMessage
+    </div>
+}
 
 <div class="settings-container">
     <div class="settings-sidebar">
         <div class="sidebar-header">
-            <Button Type="@ButtonType.Link" OnClick="GoBack" Class="back-btn">
-                <Icon Type="arrow-left" /> 返回
-            </Button>
+            <button class="btn btn-link back-btn" @onclick="GoBack">
+                @IconSvg("arrow-left") 返回
+            </button>
         </div>
         <div class="sidebar-menu">
             @foreach (var item in menuItems)
             {
                 <div class="menu-item @(selectedMenu == item.Key ? "active" : "")"
                      @onclick="() => SelectMenu(item.Key)">
-                    <Icon Type="@item.Icon" />
+                    @IconSvg(item.Icon)
                     <span>@item.Label</span>
                 </div>
             }
@@ -37,16 +44,12 @@
                         <div class="form-item">
                             <label>主题模式</label>
                             <div class="theme-options">
-                                <Button Type="@(themeMode == "light" ? ButtonType.Primary : ButtonType.Default)"
-                                        Class="@(themeMode == "light" ? "agent-btn-primary" : "")"
-                                        OnClick="@(() => themeMode = "light")" Size="@ButtonSize.Small">
-                                    <Icon Type="sun" /> 浅色
-                                </Button>
-                                <Button Type="@(themeMode == "dark" ? ButtonType.Primary : ButtonType.Default)"
-                                        Class="@(themeMode == "dark" ? "agent-btn-primary" : "")"
-                                        OnClick="@(() => themeMode = "dark")" Size="@ButtonSize.Small">
-                                    <Icon Type="moon" /> 深色
-                                </Button>
+                                <button class="btn @(themeMode == "light" ? "btn-primary agent-btn-primary" : "")" @onclick="@(() => themeMode = "light")">
+                                    @IconSvg("sun") 浅色
+                                </button>
+                                <button class="btn @(themeMode == "dark" ? "btn-primary agent-btn-primary" : "")" @onclick="@(() => themeMode = "dark")">
+                                    @IconSvg("moon") 深色
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -55,16 +58,12 @@
                         <div class="form-item">
                             <label>界面语言</label>
                             <div class="theme-options">
-                                <Button Type="@(language == "zh" ? ButtonType.Primary : ButtonType.Default)"
-                                        Class="@(language == "zh" ? "agent-btn-primary" : "")"
-                                        OnClick="@(() => language = "zh")" Size="@ButtonSize.Small">
+                                <button class="btn @(language == "zh" ? "btn-primary agent-btn-primary" : "")" @onclick="@(() => language = "zh")">
                                     中文
-                                </Button>
-                                <Button Type="@(language == "en" ? ButtonType.Primary : ButtonType.Default)"
-                                        Class="@(language == "en" ? "agent-btn-primary" : "")"
-                                        OnClick="@(() => language = "en")" Size="@ButtonSize.Small">
+                                </button>
+                                <button class="btn @(language == "en" ? "btn-primary agent-btn-primary" : "")" @onclick="@(() => language = "en")">
                                     English
-                                </Button>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -74,16 +73,14 @@
             case "model":
                 <div class="content-header">
                     <h2>模型管理</h2>
-                    <Button Type="@ButtonType.Primary" OnClick="ShowAddModel" Size="@ButtonSize.Small" Class="agent-btn-primary">
-                        <Icon Type="plus" /> 添加
-                    </Button>
+                    <button class="btn btn-primary agent-btn-primary btn-small" @onclick="ShowAddModel">
+                        @IconSvg("plus") 添加
+                    </button>
                 </div>
                 <div class="model-list">
                     @if (loadingModels)
                     {
-                        <div style="text-align: center; padding: 40px;">
-                            <Spin Tip="加载中..." />
-                        </div>
+                        <div class="loading-spinner"><div class="spinner"></div><span>加载中...</span></div>
                     }
                     else if (llmConfigs.Any())
                     {
@@ -95,33 +92,24 @@
                                         <strong>@config.ProviderDisplayName</strong>
                                         @if (config.IsDefault)
                                         {
-                                            <Tag Color="@("green")">默认</Tag>
+                                            <span class="tag tag-green">默认</span>
                                         }
                                         @if (config.IsEnabled)
                                         {
-                                            <Tag Color="@("blue")">已启用</Tag>
+                                            <span class="tag tag-blue">已启用</span>
                                         }
                                         else
                                         {
-                                            <Tag Color="@("default")">已禁用</Tag>
+                                            <span class="tag tag-default">已禁用</span>
                                         }
                                     </div>
                                     <div class="model-actions">
                                         @if (!config.IsDefault)
                                         {
-                                            <Button Type="@ButtonType.Link" Size="@ButtonSize.Small"
-                                                    OnClick="@(() => SetDefault(config.ProviderName))">
-                                                设为默认
-                                            </Button>
+                                            <button class="btn btn-link btn-small" @onclick="@(() => SetDefault(config.ProviderName))">设为默认</button>
                                         }
-                                        <Button Type="@ButtonType.Link" Size="@ButtonSize.Small"
-                                                OnClick="@(() => EditModel(config))">
-                                            编辑
-                                        </Button>
-                                        <Button Type="@ButtonType.Link" Size="@ButtonSize.Small" Danger="true"
-                                                OnClick="@(() => DeleteModel(config.Id))">
-                                            删除
-                                        </Button>
+                                        <button class="btn btn-link btn-small" @onclick="@(() => EditModel(config))">编辑</button>
+                                        <button class="btn btn-link btn-small btn-danger" @onclick="@(() => DeleteModel(config.Id))">删除</button>
                                     </div>
                                 </div>
                                 <div class="model-card-body">
@@ -157,7 +145,8 @@
                     else
                     {
                         <div class="empty-state">
-                            <AntDesign.Empty Description="@("暂无模型配置，点击添加按钮新增")" />
+                            <div class="empty-icon">@IconSvg("inbox")</div>
+                            <div class="empty-text">暂无模型配置，点击添加按钮新增</div>
                         </div>
                     }
                 </div>
@@ -167,10 +156,10 @@
                     <div class="modal-overlay" @onclick="CloseModelDialog">
                         <div class="modal-dialog model-dialog" @onclick:stopPropagation="true">
                             <div class="modal-header">
-                                <h3>添加模型</h3>
-                                <Button Type="@ButtonType.Text" OnClick="CloseModelDialog">
-                                    <Icon Type="close" />
-                                </Button>
+                                <h3>@(isEditing ? "编辑模型" : "添加模型")</h3>
+                                <button class="btn btn-text modal-close-btn" @onclick="CloseModelDialog">
+                                    @IconSvg("close")
+                                </button>
                             </div>
                             <div class="modal-body">
                                 <div class="form-item required">
@@ -218,10 +207,10 @@
                                 </div>
                             </div>
                             <div class="modal-footer">
-                                <Button OnClick="CloseModelDialog" class="modal-btn-cancel">取消</Button>
-                                <Button OnClick="SaveModel" Loading="@savingModel" class="modal-btn-primary">
-                                    添加
-                                </Button>
+                                <button class="modal-btn-cancel" @onclick="CloseModelDialog">取消</button>
+                                <button class="modal-btn-primary" @onclick="SaveModel" disabled="@savingModel">
+                                    @(isEditing ? "保存" : "添加")
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -239,7 +228,7 @@
                             <div class="model-card-header">
                                 <div class="model-name">
                                     <strong>@agent.DisplayName</strong>
-                                    <Tag Color="@("blue")">@agent.AgentType</Tag>
+                                    <span class="tag tag-blue">@agent.AgentType</span>
                                 </div>
                             </div>
                             <div class="model-card-body">
@@ -250,7 +239,7 @@
                                     <span class="info-label">能力:</span>
                                     @foreach (var cap in agent.Capabilities)
                                     {
-                                        <Tag Color="@("default")" Style="margin-left:4px;">@cap</Tag>
+                                        <span class="tag tag-default tag-inline">@cap</span>
                                     }
                                 </div>
                             </div>
@@ -262,12 +251,13 @@
             case "skill":
                 <div class="content-header">
                     <h2>技能/指令</h2>
-                    <Button Type="@ButtonType.Primary" Size="@ButtonSize.Small" Disabled="true" Class="agent-btn-primary">
-                        <Icon Type="plus" /> 添加
-                    </Button>
+                    <button class="btn btn-primary agent-btn-primary btn-small" disabled>
+                        @IconSvg("plus") 添加
+                    </button>
                 </div>
                 <div class="empty-state">
-                    <AntDesign.Empty Description="@("技能管理功能开发中...")" />
+                    <div class="empty-icon">@IconSvg("inbox")</div>
+                    <div class="empty-text">技能管理功能开发中...</div>
                 </div>
                 break;
         }
@@ -285,6 +275,24 @@
     private List<LLMConfigDto> llmConfigs = new();
 
     private ModelEditModel editModel = new();
+
+    // Toast notification state
+    private string toastMessage = string.Empty;
+    private string toastType = "info";
+    private bool toastVisible;
+
+    private void ShowToast(string message, string type = "info")
+    {
+        toastMessage = message;
+        toastType = type;
+        toastVisible = true;
+        StateHasChanged();
+        _ = Task.Run(async () => {
+            await Task.Delay(3000);
+            toastVisible = false;
+            InvokeAsync(StateHasChanged);
+        });
+    }
 
     private record MenuItemDef(string Key, string Label, string Icon);
     private readonly List<MenuItemDef> menuItems = new()
@@ -343,7 +351,7 @@
     {
         loadingModels = true;
         try { llmConfigs = await LLMConfigAppService.GetAllAsync(); }
-        catch (Exception ex) { MessageService.Error("加载模型配置失败: " + ex.Message); }
+        catch (Exception ex) { ShowToast("加载模型配置失败: " + ex.Message, "error"); }
         finally { loadingModels = false; }
     }
 
@@ -423,9 +431,9 @@
 
     private async Task SaveModel()
     {
-        if (string.IsNullOrWhiteSpace(editModel.ProviderName)) { MessageService.Warning("请选择提供商"); return; }
-        if (string.IsNullOrWhiteSpace(editModel.Model)) { MessageService.Warning("请输入模型名称"); return; }
-        if (string.IsNullOrWhiteSpace(editModel.ApiKey)) { MessageService.Warning("请输入 API 密钥"); return; }
+        if (string.IsNullOrWhiteSpace(editModel.ProviderName)) { ShowToast("请选择提供商", "warning"); return; }
+        if (string.IsNullOrWhiteSpace(editModel.Model)) { ShowToast("请输入模型名称", "warning"); return; }
+        if (string.IsNullOrWhiteSpace(editModel.ApiKey)) { ShowToast("请输入 API 密钥", "warning"); return; }
 
         savingModel = true;
         try
@@ -443,7 +451,7 @@
                     MaxTokens = editModel.MaxTokens,
                     Temperature = editModel.Temperature
                 });
-                MessageService.Success("模型配置已更新");
+                ShowToast("模型配置已更新", "success");
             }
             else
             {
@@ -459,12 +467,12 @@
                     MaxTokens = editModel.MaxTokens,
                     Temperature = editModel.Temperature
                 });
-                MessageService.Success("模型配置已添加");
+                ShowToast("模型配置已添加", "success");
             }
             showModelDialog = false;
             await LoadLLMConfigs();
         }
-        catch (Exception ex) { MessageService.Error("保存失败: " + ex.Message); }
+        catch (Exception ex) { ShowToast("保存失败: " + ex.Message, "error"); }
         finally { savingModel = false; }
     }
 
@@ -473,10 +481,10 @@
         try
         {
             await LLMConfigAppService.DeleteAsync(id);
-            MessageService.Success("已删除");
+            ShowToast("已删除", "success");
             await LoadLLMConfigs();
         }
-        catch (Exception ex) { MessageService.Error("删除失败: " + ex.Message); }
+        catch (Exception ex) { ShowToast("删除失败: " + ex.Message, "error"); }
     }
 
     private async Task SetDefault(string providerName)
@@ -484,10 +492,10 @@
         try
         {
             await LLMConfigAppService.SetDefaultAsync(providerName);
-            MessageService.Success($"{providerName} 已设为默认");
+            ShowToast($"{providerName} 已设为默认", "success");
             await LoadLLMConfigs();
         }
-        catch (Exception ex) { MessageService.Error("设置失败: " + ex.Message); }
+        catch (Exception ex) { ShowToast("设置失败: " + ex.Message, "error"); }
     }
 
     private string MaskApiKey(string apiKey)
@@ -519,4 +527,22 @@
         public string Description { get; set; } = "";
         public List<string> Capabilities { get; set; } = new();
     }
+
+    // ========== SVG Icon Helper ==========
+    private static MarkupString IconSvg(string name) => (MarkupString)GetIconSvg(name);
+
+    private static string GetIconSvg(string name) => name switch
+    {
+        "plus" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"12\" y1=\"5\" x2=\"12\" y2=\"19\"></line><line x1=\"5\" y1=\"12\" x2=\"19\" y2=\"12\"></line></svg>",
+        "setting" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"3\"></circle><path d=\"M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z\"></path></svg>",
+        "robot" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"11\" width=\"18\" height=\"10\" rx=\"2\"></rect><circle cx=\"12\" cy=\"5\" r=\"2\"></circle><path d=\"M12 7v4\"></path><line x1=\"8\" y1=\"16\" x2=\"8\" y2=\"16\"></line><line x1=\"16\" y1=\"16\" x2=\"16\" y2=\"16\"></line></svg>",
+        "thunderbolt" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polygon points=\"13 2 3 14 12 14 11 22 21 10 12 10 13 2\"></polygon></svg>",
+        "arrow-left" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"19\" y1=\"12\" x2=\"5\" y2=\"12\"></line><polyline points=\"12 19 5 12 12 5\"></polyline></svg>",
+        "sun" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"5\"></circle><line x1=\"12\" y1=\"1\" x2=\"12\" y2=\"3\"></line><line x1=\"12\" y1=\"21\" x2=\"12\" y2=\"23\"></line><line x1=\"4.22\" y1=\"4.22\" x2=\"5.64\" y2=\"5.64\"></line><line x1=\"18.36\" y1=\"18.36\" x2=\"19.78\" y2=\"19.78\"></line><line x1=\"1\" y1=\"12\" x2=\"3\" y2=\"12\"></line><line x1=\"21\" y1=\"12\" x2=\"23\" y2=\"12\"></line><line x1=\"4.22\" y1=\"19.78\" x2=\"5.64\" y2=\"18.36\"></line><line x1=\"18.36\" y1=\"5.64\" x2=\"19.78\" y2=\"4.22\"></line></svg>",
+        "moon" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z\"></path></svg>",
+        "close" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"18\" y1=\"6\" x2=\"6\" y2=\"18\"></line><line x1=\"6\" y1=\"6\" x2=\"18\" y2=\"18\"></line></svg>",
+        "inbox" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"22 12 16 12 14 15 10 15 8 12 2 12\"></polyline><path d=\"M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z\"></path></svg>",
+        "api" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"16 18 22 12 16 6\"></polyline><polyline points=\"8 6 2 12 8 18\"></polyline></svg>",
+        _ => ""
+    };
 }

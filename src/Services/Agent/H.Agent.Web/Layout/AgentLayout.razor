@@ -7,6 +7,7 @@
 </div>
 
 <style>
+    /* ========== Layout Base ========== */
     .agent-layout {
         height: 100vh;
         display: flex;
@@ -25,7 +26,160 @@
         height: 100%;
     }
 
-    /* 左侧会话列表 */
+    /* ========== Buttons ========== */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 6px 16px;
+        font-size: 14px;
+        line-height: 1.5;
+        border: 1px solid #d9d9d9;
+        border-radius: 6px;
+        background: #fff;
+        color: #595959;
+        cursor: pointer;
+        transition: all 0.2s;
+        outline: none;
+        font-family: inherit;
+        white-space: nowrap;
+    }
+
+    .btn:hover:not(:disabled) {
+        color: #262626;
+        border-color: #595959;
+    }
+
+    .btn:disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
+    }
+
+    .btn:active:not(:disabled) {
+        opacity: 0.8;
+    }
+
+    .btn-primary {
+        color: #fff;
+        background: #595959;
+        border-color: #595959;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+        background: #404040;
+        border-color: #404040;
+        color: #fff;
+    }
+
+    .btn-link {
+        border-color: transparent;
+        background: transparent;
+        color: #595959;
+        padding: 4px 8px;
+    }
+
+    .btn-link:hover:not(:disabled) {
+        background: transparent;
+        color: #262626;
+        border-color: transparent;
+    }
+
+    .btn-text {
+        border-color: transparent;
+        background: transparent;
+        padding: 4px 8px;
+    }
+
+    .btn-text:hover:not(:disabled) {
+        background: #f5f5f5;
+        border-color: transparent;
+    }
+
+    .btn-danger {
+        color: #ff4d4f;
+    }
+
+    .btn-danger:hover:not(:disabled) {
+        color: #ff4d4f;
+        background: #fff1f0;
+        border-color: transparent;
+    }
+
+    .btn-small {
+        padding: 2px 8px;
+        font-size: 12px;
+    }
+
+    .agent-btn-small {
+        padding: 2px 10px;
+        font-size: 12px;
+        border-radius: 4px;
+    }
+
+    /* 灰色系 primary 按钮 */
+    .agent-btn-primary {
+        background: #a6a6a6;
+        border-color: #a6a6a6;
+        color: #fff;
+    }
+
+    .agent-btn-primary:hover:not(:disabled) {
+        background: #bfbfbf;
+        border-color: #bfbfbf;
+        color: #fff;
+    }
+
+    /* New Task 按钮 */
+    .new-chat-btn {
+        width: 100%;
+        background: #a6a6a6;
+        border-color: #a6a6a6;
+        color: #fff;
+    }
+
+    .new-chat-btn:hover {
+        background: #bfbfbf;
+        border-color: #bfbfbf;
+        color: #fff;
+    }
+
+    /* 返回按钮 */
+    .back-btn {
+        color: #262626;
+    }
+
+    .back-btn:hover {
+        background: #f0f0f0;
+        color: #262626;
+    }
+
+    /* ========== SVG Icons ========== */
+    .btn svg,
+    .session-item svg,
+    .user-avatar-small svg,
+    .user-menu-icon svg,
+    .dropdown-item svg,
+    .menu-item svg,
+    .message-avatar svg,
+    .empty-icon svg {
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+    }
+
+    .message-avatar svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .empty-icon svg {
+        width: 48px;
+        height: 48px;
+        color: #d9d9d9;
+    }
+
+    /* ========== Left Panel ========== */
     .session-list-panel {
         width: 280px;
         border-right: 1px solid #e8e8e8;
@@ -76,7 +230,7 @@
         justify-content: space-between;
     }
 
-    /* 中间聊天区域 */
+    /* ========== Main Chat Area ========== */
     .chat-main-panel {
         flex: 1;
         display: flex;
@@ -158,16 +312,32 @@
         margin-top: 4px;
     }
 
+    /* ========== Chat Input ========== */
     .chat-input-area {
         border-top: 1px solid #e8e8e8;
         padding: 16px;
         background: #fafafa;
     }
 
-    .input-actions {
+    .chat-input-footer {
         display: flex;
         justify-content: space-between;
+        align-items: center;
         margin-top: 8px;
+        gap: 12px;
+    }
+
+    .chat-model-selector {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+
+    .chat-input-actions {
+        display: flex;
+        gap: 8px;
+        flex-shrink: 0;
     }
 
     .empty-chat-state {
@@ -177,38 +347,14 @@
         justify-content: center;
     }
 
-    /* 右侧 Agent 信息面板 */
-    .agent-info-panel {
-        width: 280px;
-        border-left: 1px solid #e8e8e8;
+    .empty-chat-content {
         display: flex;
         flex-direction: column;
-        background: #fafafa;
+        align-items: center;
+        justify-content: center;
     }
 
-    .agent-detail h4 {
-        margin-bottom: 12px;
-        color: #262626;
-    }
-
-    .agent-description {
-        color: #595959;
-        line-height: 1.6;
-        margin-bottom: 20px;
-    }
-
-    .agent-capabilities h5 {
-        margin-bottom: 8px;
-        color: #262626;
-    }
-
-    .capabilities-list {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-    }
-
-    /* 左下角用户菜单区域 */
+    /* ========== User Menu ========== */
     .user-menu-area {
         border-top: 1px solid #e8e8e8;
         padding: 8px 12px;
@@ -302,7 +448,229 @@
         margin: 4px 0;
     }
 
-    /* 设置页面 */
+    /* ========== New Task View ========== */
+    .new-task-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 60px;
+        background: #fff;
+        max-width: 800px;
+        margin: 0 auto;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .new-task-header {
+        text-align: center;
+        margin-bottom: 24px;
+        width: 100%;
+    }
+
+    .new-task-header h2 {
+        font-size: 24px;
+        font-weight: 600;
+        color: #262626;
+        margin: 0 0 8px 0;
+    }
+
+    .new-task-desc {
+        font-size: 14px;
+        color: #8c8c8c;
+        margin: 0;
+    }
+
+    .new-task-body {
+        width: 100%;
+        margin-bottom: 20px;
+    }
+
+    .new-task-footer {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .new-task-model-selector {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .new-task-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    /* ========== Textarea ========== */
+    .new-task-textarea {
+        width: 100%;
+        border: 1px solid #d9d9d9;
+        border-radius: 8px;
+        padding: 12px 16px;
+        font-size: 14px;
+        line-height: 1.6;
+        resize: vertical;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        font-family: inherit;
+        box-sizing: border-box;
+    }
+
+    .new-task-textarea:focus {
+        border-color: #a6a6a6;
+        box-shadow: 0 0 0 2px rgba(166, 166, 166, 0.1);
+        outline: none;
+    }
+
+    .chat-textarea {
+        width: 100%;
+        border: 1px solid #d9d9d9;
+        border-radius: 6px;
+        padding: 8px 12px;
+        font-size: 14px;
+        line-height: 1.5;
+        resize: vertical;
+        transition: border-color 0.2s;
+        font-family: inherit;
+        box-sizing: border-box;
+    }
+
+    .chat-textarea:focus {
+        border-color: #a6a6a6;
+        outline: none;
+    }
+
+    /* ========== Model Select Dropdown ========== */
+    .model-selector-label {
+        font-size: 13px;
+        color: #595959;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+
+    .model-select-dropdown {
+        height: 34px;
+        padding: 4px 11px;
+        border: 1px solid #d9d9d9;
+        border-radius: 6px;
+        font-size: 13px;
+        color: #262626;
+        background: #fff;
+        outline: none;
+        transition: border-color 0.2s;
+        cursor: pointer;
+        min-width: 200px;
+    }
+
+    .model-select-dropdown:focus {
+        border-color: #a6a6a6;
+        box-shadow: 0 0 0 2px rgba(166, 166, 166, 0.1);
+    }
+
+    .new-task-model-selector .model-select-dropdown {
+        min-width: 320px;
+    }
+
+    /* ========== Thinking / Loading ========== */
+    .thinking-text {
+        color: #8c8c8c;
+        font-style: italic;
+    }
+
+    .thinking-dots {
+        display: inline-flex;
+        gap: 4px;
+        align-items: center;
+    }
+
+    .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background-color: #8c8c8c;
+        display: inline-block;
+        animation: thinking-bounce 1.4s ease-in-out infinite;
+    }
+
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @@keyframes thinking-bounce {
+        0%, 80%, 100% { transform: scale(0); opacity: 0.4; }
+        40% { transform: scale(1); opacity: 1; }
+    }
+
+    .loading-spinner {
+        text-align: center;
+        padding: 40px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        color: #8c8c8c;
+        font-size: 14px;
+    }
+
+    .spinner {
+        width: 28px;
+        height: 28px;
+        border: 3px solid #e8e8e8;
+        border-top-color: #a6a6a6;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @@keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* ========== Empty State ========== */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .empty-text {
+        color: #8c8c8c;
+        font-size: 14px;
+    }
+
+    /* ========== Toast Notification ========== */
+    .toast-notification {
+        position: fixed;
+        top: 24px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-100%);
+        padding: 10px 24px;
+        border-radius: 6px;
+        font-size: 14px;
+        color: #fff;
+        z-index: 9999;
+        opacity: 0;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        pointer-events: none;
+    }
+
+    .toast-notification.toast-show {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+
+    .toast-success { background: #52c41a; }
+    .toast-error { background: #ff4d4f; }
+    .toast-warning { background: #faad14; }
+    .toast-info { background: #595959; }
+
+    /* ========== Settings Page ========== */
     .settings-container {
         display: flex;
         height: 100%;
@@ -415,6 +783,7 @@
         margin-bottom: 0;
     }
 
+    /* ========== Model Cards ========== */
     .model-list {
         display: flex;
         flex-direction: column;
@@ -462,11 +831,38 @@
         margin-right: 4px;
     }
 
-    .empty-state {
-        text-align: center;
-        padding: 60px 20px;
+    /* ========== Tags ========== */
+    .tag {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        line-height: 1.5;
     }
 
+    .tag-inline {
+        margin-left: 4px;
+    }
+
+    .tag-green {
+        background: #f6ffed;
+        color: #52c41a;
+        border: 1px solid #b7eb8f;
+    }
+
+    .tag-blue {
+        background: #e6f7ff;
+        color: #1890ff;
+        border: 1px solid #91d5ff;
+    }
+
+    .tag-default {
+        background: #fafafa;
+        color: #595959;
+        border: 1px solid #d9d9d9;
+    }
+
+    /* ========== Modal ========== */
     .modal-overlay {
         position: fixed;
         top: 0;
@@ -516,13 +912,22 @@
         gap: 8px;
     }
 
+    .modal-close-btn {
+        padding: 4px;
+    }
+
+    .modal-close-btn:hover {
+        background: #f5f5f5;
+    }
+
+    /* ========== Agent Settings List ========== */
     .agent-settings-list {
         display: flex;
         flex-direction: column;
         gap: 12px;
     }
 
-    /* 添加模型对话框 */
+    /* ========== Add Model Dialog ========== */
     .model-dialog {
         width: 460px;
     }
@@ -565,8 +970,8 @@
     }
 
     .modal-select:focus {
-        border-color: #4096ff;
-        box-shadow: 0 0 0 2px rgba(24,144,255,0.1);
+        border-color: #a6a6a6;
+        box-shadow: 0 0 0 2px rgba(166, 166, 166, 0.1);
     }
 
     .modal-input {
@@ -584,8 +989,8 @@
     }
 
     .modal-input:focus {
-        border-color: #4096ff;
-        box-shadow: 0 0 0 2px rgba(24,144,255,0.1);
+        border-color: #a6a6a6;
+        box-shadow: 0 0 0 2px rgba(166, 166, 166, 0.1);
     }
 
     .modal-input::placeholder {
@@ -612,7 +1017,7 @@
     }
 
     .model-suggestion-tag:hover {
-        color: #595959;
+        color: #262626;
         border-color: #595959;
         background: #f0f0f0;
     }
@@ -652,8 +1057,13 @@
         min-width: 80px;
     }
 
-    .model-dialog .modal-btn-primary:hover {
+    .model-dialog .modal-btn-primary:hover:not(:disabled) {
         background: #404040;
+    }
+
+    .model-dialog .modal-btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
     }
 
     .model-dialog .modal-btn-cancel {
@@ -672,38 +1082,5 @@
     .model-dialog .modal-btn-cancel:hover {
         color: #262626;
         border-color: #262626;
-    }
-
-    /* 灰色系 New Chat 按钮 */
-    .new-chat-btn.ant-btn-primary {
-        background-color: #a6a6a6;
-        border-color: #a6a6a6;
-        color: #fff;
-    }
-
-    .new-chat-btn.ant-btn-primary:hover {
-        background-color: #bfbfbf;
-        border-color: #bfbfbf;
-    }
-
-    /* 通用的灰色 Primary 按钮 */
-    .agent-btn-primary.ant-btn-primary {
-        background-color: #a6a6a6;
-        border-color: #a6a6a6;
-    }
-
-    .agent-btn-primary.ant-btn-primary:hover {
-        background-color: #bfbfbf;
-        border-color: #bfbfbf;
-    }
-
-    /* 返回按钮 - 文字黑色，悬浮灰色背景 */
-    .back-btn.ant-btn-link {
-        color: #000;
-    }
-
-    .back-btn.ant-btn-link:hover {
-        color: #000;
-        background-color: #f0f0f0;
     }
 </style>

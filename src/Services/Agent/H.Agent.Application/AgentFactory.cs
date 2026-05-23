@@ -18,9 +18,18 @@ public class AgentFactory
     /// <summary>
     /// 创建 Agent 实例
     /// </summary>
-    public async Task<IAgentInstance?> CreateAgentAsync(string agentType)
+    public async Task<IAgentInstance?> CreateAgentAsync(string agentType, string? providerName = null)
     {
-        var llmProvider = await _llmProviderFactory.GetDefaultProviderAsync();
+        ILLMProvider? llmProvider;
+        
+        if (!string.IsNullOrEmpty(providerName))
+        {
+            llmProvider = await _llmProviderFactory.CreateProviderAsync(providerName);
+        }
+        else
+        {
+            llmProvider = await _llmProviderFactory.GetDefaultProviderAsync();
+        }
         
         return agentType.ToLowerInvariant() switch
         {

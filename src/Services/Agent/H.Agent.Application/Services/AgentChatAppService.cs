@@ -43,7 +43,7 @@ public class AgentChatAppService : ApplicationService, IAgentChatAppService
         await _sessionStore.AddMessageAsync(sessionId, userMessage);
         
         // 获取 Agent 实例
-        var agent = await _agentFactory.CreateAgentAsync(agentType);
+        var agent = await _agentFactory.CreateAgentAsync(agentType, input.ProviderName);
         if (agent == null)
         {
             throw new InvalidOperationException($"无法创建 Agent 实例: {agentType}");

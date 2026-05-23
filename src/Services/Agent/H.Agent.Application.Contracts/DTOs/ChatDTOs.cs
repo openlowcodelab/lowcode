@@ -46,6 +46,11 @@ public class SendChatMessageInputDto
     public string Message { get; set; } = string.Empty;
     
     public string? AgentType { get; set; }
+    
+    /// <summary>
+    /// 指定使用的 LLM Provider 名称，为空则使用默认
+    /// </summary>
+    public string? ProviderName { get; set; }
 }
 
 /// <summary>
