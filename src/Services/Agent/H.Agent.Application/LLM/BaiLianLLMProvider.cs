@@ -1,5 +1,7 @@
+using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 using System.Net.Http.Json;
+using System.Text;
 using System.Text.Json.Serialization;
 using H.Agent.Application.Contracts;
 
@@ -63,7 +65,12 @@ public class BaiLianLLMProvider : ILLMProvider
             stream = true
         };
         
-        var response = await _httpClient.PostAsJsonAsync("chat/completions", payload, ct);
+        var jsonContent = payload.ToJson();
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "chat/completions");
+        httpRequest.Content = new StringContent(jsonContent, Encoding.UTF8, new MediaTypeHeaderValue("application/json"));
+        
+        // 关键：使用 ResponseHeadersRead 让请求在收到响应头后立即返回，而非等待整个响应体
+        using var response = await _httpClient.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, ct);
         
         if (!response.IsSuccessStatusCode)
         {

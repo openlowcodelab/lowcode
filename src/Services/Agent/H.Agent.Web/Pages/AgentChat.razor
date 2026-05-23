@@ -6,6 +6,7 @@
 @inject ILLMConfigAppService LLMConfigAppService
 @inject NavigationManager Navigation
 @inject IHttpClientFactory HttpClientFactory
+@inject IJSRuntime JS
 
 <!-- Toast Notification -->
 @if (!string.IsNullOrEmpty(toastMessage))
@@ -122,7 +123,7 @@
                     </div>
                 </div>
 
-                <div class="chat-messages">
+                <div class="chat-messages" @ref="chatMessagesRef">
                     @if (loadingMessages)
                     {
                         <div class="loading-spinner"><div class="spinner"></div><span>Loading...</span></div>
@@ -265,6 +266,8 @@
     private ChatMessageDto? pendingUserMessage;
     // 用于流式显示AI回复
     private string streamingResponse = string.Empty;
+    // 消息列表元素引用（用于自动滚动）
+    private ElementReference chatMessagesRef;
 
     // Toast notification state
     private string toastMessage = string.Empty;
@@ -395,6 +398,7 @@
         };
         streamingResponse = string.Empty;
         StateHasChanged();
+        await ScrollToBottom();
 
         try
         {
@@ -464,6 +468,7 @@
         };
         streamingResponse = string.Empty;
         StateHasChanged();
+        await ScrollToBottom();
 
         try
         {
@@ -471,7 +476,7 @@
             var httpClient = HttpClientFactory.CreateClient();
             httpClient.Timeout = TimeSpan.FromMinutes(5);
             
-            var request = new SendChatMessageInputDto
+            var requestDto = new SendChatMessageInputDto
             {
                 SessionId = selectedSessionId,
                 Message = message,
@@ -480,10 +485,15 @@
                 ModelConfigId = Guid.TryParse(selectedProviderName, out var configId) ? configId : null
             };
             
-            var json = System.Text.Json.JsonSerializer.Serialize(request);
-            var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+            var json = requestDto.ToJson();
             
-            var response = await httpClient.PostAsync($"{Navigation.BaseUri}api/agent/chat/stream", content);
+            // 构建 HttpRequestMessage 并启用浏览器端流式响应
+            var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"{Navigation.BaseUri}api/agent/chat/stream");
+            httpRequest.Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+            httpRequest.SetBrowserResponseStreamingEnabled(true);
+            
+            // 使用 ResponseHeadersRead 以便在收到响应头后立即开始读取流
+            using var response = await httpClient.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead);
             response.EnsureSuccessStatusCode();
             
             using var stream = await response.Content.ReadAsStreamAsync();
@@ -507,9 +517,13 @@
                     fullResponse.Append(data);
                     streamingResponse = fullResponse.ToString();
                     
-                    // 强制立即更新 UI 并让出控制权给 UI 线程
+                    // 标记需要重新渲染，然后通过 Task.Delay 让出到浏览器事件循环
+                    // 在 WebAssembly 单线程环境中，只有 Task.Delay 能真正让浏览器执行渲染
                     StateHasChanged();
-                    await Task.Yield();
+                    await Task.Delay(1);
+                    
+                    // 自动滚动到底部以显示最新内容
+                    await ScrollToBottom();
                 }
             }
             
@@ -605,8 +619,11 @@
 
     private async Task ScrollToBottom()
     {
-        await Task.Delay(100);
-        StateHasChanged();
+        try
+        {
+            await JS.InvokeVoidAsync("eval", "var el = document.querySelector('.chat-messages'); if(el) el.scrollTop = el.scrollHeight;");
+        }
+        catch { }
     }
 
 

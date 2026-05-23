@@ -1,6 +1,5 @@
-using System;
 using System.Text;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using H.Agent.Application.Contracts;
 
@@ -26,6 +25,10 @@ public class AgentChatController : ControllerBase
     [HttpPost("stream")]
     public async Task StreamMessageAsync([FromBody] SendChatMessageInputDto input)
     {
+        // 禁用响应缓冲，确保每次 FlushAsync 都立即将数据推送到客户端
+        var bufferingFeature = HttpContext.Features.Get<IHttpResponseBodyFeature>();
+        bufferingFeature?.DisableBuffering();
+
         // 设置 SSE 响应头
         Response.ContentType = "text/event-stream";
         Response.Headers.CacheControl = "no-cache";
