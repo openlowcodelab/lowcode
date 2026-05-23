@@ -413,6 +413,45 @@
         gap: 12px;
     }
 
+    .chat-selectors {
+        display: flex;
+        gap: 16px;
+        flex-shrink: 0;
+        align-items: center;
+    }
+
+    .selector-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .selector-label {
+        font-size: 13px;
+        color: #595959;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+
+    .selector-dropdown {
+        height: 34px;
+        padding: 4px 11px;
+        border: 1px solid #d9d9d9;
+        border-radius: 6px;
+        font-size: 13px;
+        color: #262626;
+        background: #fff;
+        outline: none;
+        transition: border-color 0.2s;
+        cursor: pointer;
+        min-width: 150px;
+    }
+
+    .selector-dropdown:focus {
+        border-color: #a6a6a6;
+        box-shadow: 0 0 0 2px rgba(166, 166, 166, 0.1);
+    }
+
     .chat-model-selector {
         display: flex;
         align-items: center;
@@ -420,10 +459,52 @@
         flex-shrink: 0;
     }
 
+    .chat-agent-selector {
+        display: flex;
+        gap: 6px;
+        flex-shrink: 0;
+        overflow-x: auto;
+        max-width: 40%;
+    }
+
+    .agent-select-btn {
+        padding: 4px 12px;
+        font-size: 12px;
+        border: 1px solid #d9d9d9;
+        border-radius: 4px;
+        background: #fff;
+        color: #595959;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+    }
+
+    .agent-select-btn:hover:not(.active) {
+        border-color: #a6a6a6;
+        color: #262626;
+    }
+
+    .agent-select-btn.active {
+        background: #a6a6a6;
+        border-color: #a6a6a6;
+        color: #fff;
+    }
+
     .chat-input-actions {
         display: flex;
         gap: 8px;
         flex-shrink: 0;
+    }
+
+    .btn-stop {
+        color: #ff4d4f;
+        border-color: #ff4d4f;
+    }
+
+    .btn-stop:hover:not(:disabled) {
+        background: #fff1f0;
+        border-color: #ff7875;
+        color: #ff4d4f;
     }
 
     .empty-chat-state {

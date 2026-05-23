@@ -5,7 +5,7 @@
 @inject IAgentChatAppService AgentChatAppService
 @inject ILLMConfigAppService LLMConfigAppService
 @inject NavigationManager Navigation
-@using H.Agent.Web.Pages.Components
+@inject IHttpClientFactory HttpClientFactory
 
 <!-- Toast Notification -->
 @if (!string.IsNullOrEmpty(toastMessage))
@@ -120,16 +120,6 @@
                     <div class="chat-header-left">
                         <span>Agent: @selectedAgent?.DisplayName</span>
                     </div>
-                    <div class="chat-header-right">
-                        @foreach (var agent in availableAgents)
-                        {
-                            <button class="btn @(selectedAgentType == agent.AgentType ? "btn-primary agent-btn-primary" : "") agent-btn-small"
-                                    @onclick="() => OnAgentTypeChanged(agent.AgentType)"
-                                    style="margin-left: 4px;">
-                                @agent.DisplayName
-                            </button>
-                        }
-                    </div>
                 </div>
 
                 <div class="chat-messages">
@@ -137,7 +127,7 @@
                     {
                         <div class="loading-spinner"><div class="spinner"></div><span>Loading...</span></div>
                     }
-                    else if (messages.Any())
+                    else if (messages.Any() || pendingUserMessage != null)
                     {
                         @foreach (var message in messages)
                         {
@@ -160,13 +150,41 @@
                                 </div>
                             </div>
                         }
+                        
+                        @* 显示待发送的用户消息 *@
+                        @if (pendingUserMessage != null)
+                        {
+                            <div class="message-item user-message">
+                                <div class="message-avatar">@IconSvg("user")</div>
+                                <div class="message-content">
+                                    <div class="message-text markdown-content">
+                                        <MarkdownRenderer Content="@pendingUserMessage.Content" />
+                                    </div>
+                                    <div class="message-time">@pendingUserMessage.CreationTime.ToString("HH:mm:ss")</div>
+                                </div>
+                            </div>
+                        }
+                        
+                        @* 显示流式AI回复 *@
+                        @if (!string.IsNullOrEmpty(streamingResponse))
+                        {
+                            <div class="message-item assistant-message">
+                                <div class="message-avatar">@IconSvg("robot")</div>
+                                <div class="message-content">
+                                    <div class="message-text markdown-content">
+                                        <MarkdownRenderer Content="@streamingResponse" />
+                                    </div>
+                                    <div class="message-time">@DateTime.Now.ToString("HH:mm:ss")</div>
+                                </div>
+                            </div>
+                        }
                     }
                     else
                     {
                         <div class="empty-state"><div class="empty-icon">@IconSvg("chat")</div><div class="empty-text">Start a conversation</div></div>
                     }
 
-                    @if (isSending)
+                    @if (isSending && string.IsNullOrEmpty(streamingResponse))
                     {
                         <div class="message-item assistant-message">
                             <div class="message-avatar">@IconSvg("robot")</div>
@@ -187,14 +205,29 @@
                               rows="3"
                               @onkeydown="HandleKeyDown"></textarea>
                     <div class="chat-input-footer">
-                        <div class="chat-model-selector">
-                            <ModelSelector @bind-Value="selectedProviderName" Models="availableModels" />
+                        <div class="chat-selectors">
+                            <div class="selector-item">
+                                <label class="selector-label">Agent:</label>
+                                <select class="selector-dropdown" @bind="selectedAgentType">
+                                    @foreach (var agent in availableAgents)
+                                    {
+                                        <option value="@agent.AgentType">@agent.DisplayName</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="selector-item">
+                                <label class="selector-label">模型:</label>
+                                <ModelSelector @bind-Value="selectedProviderName" Models="availableModels" />
+                            </div>
                         </div>
                         <div class="chat-input-actions">
                             <SendButton @onclick="SendMessage" IsDisabled="@string.IsNullOrWhiteSpace(inputMessage)" />
-                            <button class="btn" @onclick="ClearInput">
-                                @IconSvg("clear") 清除
-                            </button>
+                            @if (isSending)
+                            {
+                                <button class="btn btn-stop" @onclick="StopSending" title="停止生成">
+                                    @IconSvg("stop")
+                                </button>
+                            }
                         </div>
                     </div>
                 </div>
@@ -227,6 +260,11 @@
     private AgentConfigDto? selectedAgent;
     private bool showUserMenu;
     private Guid? showSessionMenu;
+    
+    // 用于立即显示用户消息
+    private ChatMessageDto? pendingUserMessage;
+    // 用于流式显示AI回复
+    private string streamingResponse = string.Empty;
 
     // Toast notification state
     private string toastMessage = string.Empty;
@@ -345,6 +383,17 @@
         isSending = true;
         var message = inputMessage;
         inputMessage = string.Empty;
+        
+        // 立即显示用户消息（临时会话ID）
+        pendingUserMessage = new ChatMessageDto
+        {
+            Id = Guid.NewGuid(),
+            SessionId = Guid.NewGuid(), // 临时ID，稍后会更新
+            Role = "user",
+            Content = message,
+            CreationTime = DateTime.Now
+        };
+        streamingResponse = string.Empty;
         StateHasChanged();
 
         try
@@ -360,13 +409,25 @@
 
             selectedSessionId = response.SessionId;
             isNewTask = false;
+            
+            // 如果有流式响应，先显示
+            if (!string.IsNullOrEmpty(response.Response))
+            {
+                streamingResponse = response.Response;
+                StateHasChanged();
+            }
 
+            // 清除待显示消息并加载完整历史
+            pendingUserMessage = null;
+            streamingResponse = string.Empty;
             await LoadMessages(response.SessionId);
             await LoadSessions();
         }
         catch (Exception ex)
         {
             inputMessage = message;
+            pendingUserMessage = null;
+            streamingResponse = string.Empty;
             ShowToast("Send failed: " + ex.Message, "error");
         }
         finally
@@ -391,27 +452,80 @@
         isSending = true;
         var message = inputMessage;
         inputMessage = string.Empty;
+        
+        // 立即显示用户消息
+        pendingUserMessage = new ChatMessageDto
+        {
+            Id = Guid.NewGuid(),
+            SessionId = selectedSessionId.Value,
+            Role = "user",
+            Content = message,
+            CreationTime = DateTime.Now
+        };
+        streamingResponse = string.Empty;
         StateHasChanged();
 
         try
         {
-            var response = await AgentChatAppService.SendMessageAsync(new SendChatMessageInputDto
+            // 使用 SSE 流式请求
+            var httpClient = HttpClientFactory.CreateClient();
+            httpClient.Timeout = TimeSpan.FromMinutes(5);
+            
+            var request = new SendChatMessageInputDto
             {
                 SessionId = selectedSessionId,
                 Message = message,
                 AgentType = selectedAgentType,
                 ProviderName = string.IsNullOrEmpty(selectedProviderName) ? null : selectedProviderName,
                 ModelConfigId = Guid.TryParse(selectedProviderName, out var configId) ? configId : null
-            });
-
-            selectedSessionId = response.SessionId;
-
-            await LoadMessages(response.SessionId);
+            };
+            
+            var json = System.Text.Json.JsonSerializer.Serialize(request);
+            var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+            
+            var response = await httpClient.PostAsync($"{Navigation.BaseUri}api/agent/chat/stream", content);
+            response.EnsureSuccessStatusCode();
+            
+            using var stream = await response.Content.ReadAsStreamAsync();
+            using var reader = new System.IO.StreamReader(stream);
+            
+            var fullResponse = new System.Text.StringBuilder();
+            string? line;
+            
+            while ((line = await reader.ReadLineAsync()) != null)
+            {
+                // 解析 SSE 格式: data: {content}
+                if (line.StartsWith("data: "))
+                {
+                    var data = line.Substring(6).Trim();
+                    
+                    // 检查是否结束
+                    if (data == "[DONE]")
+                        break;
+                    
+                    // 累积响应内容
+                    fullResponse.Append(data);
+                    streamingResponse = fullResponse.ToString();
+                    
+                    // 强制立即更新 UI 并让出控制权给 UI 线程
+                    StateHasChanged();
+                    await Task.Yield();
+                }
+            }
+            
+            selectedSessionId = selectedSessionId.Value;
+            
+            // 清除待显示消息并加载完整历史
+            pendingUserMessage = null;
+            streamingResponse = string.Empty;
+            await LoadMessages(selectedSessionId.Value);
             await LoadSessions();
         }
         catch (Exception ex)
         {
             inputMessage = message;
+            pendingUserMessage = null;
+            streamingResponse = string.Empty;
             ShowToast("Send failed: " + ex.Message, "error");
         }
         finally
@@ -483,6 +597,12 @@
         }
     }
 
+    private void StopSending()
+    {
+        isSending = false;
+        StateHasChanged();
+    }
+
     private async Task ScrollToBottom()
     {
         await Task.Delay(100);
@@ -530,6 +650,7 @@
         "chat" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z\"></path></svg>",
         "task" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"></path><polyline points=\"14 2 14 8 20 8\"></polyline><line x1=\"16\" y1=\"13\" x2=\"8\" y2=\"13\"></line><line x1=\"16\" y1=\"17\" x2=\"8\" y2=\"17\"></line><polyline points=\"10 9 9 9 8 9\"></polyline></svg>",
         "more" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"1\"></circle><circle cx=\"12\" cy=\"5\" r=\"1\"></circle><circle cx=\"12\" cy=\"19\" r=\"1\"></circle></svg>",
+        "stop" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"6\" y=\"6\" width=\"12\" height=\"12\" rx=\"2\" ry=\"2\"></rect></svg>",
         _ => ""
     };
 }

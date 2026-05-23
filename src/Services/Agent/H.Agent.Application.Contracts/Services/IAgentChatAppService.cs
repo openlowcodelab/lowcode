@@ -17,6 +17,11 @@ public interface IAgentChatAppService : IApplicationService
     Task<ChatResponseDto> SendMessageAsync(SendChatMessageInputDto input);
     
     /// <summary>
+    /// 发送消息并获取流式响应（SSE）
+    /// </summary>
+    IAsyncEnumerable<string> SendMessageStreamAsync(SendChatMessageInputDto input);
+    
+    /// <summary>
     /// 获取会话列表
     /// </summary>
     Task<PagedResultDto<ChatSessionDto>> GetSessionsAsync(SessionQueryDto input);
