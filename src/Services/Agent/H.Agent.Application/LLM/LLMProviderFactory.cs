@@ -25,8 +25,8 @@ public class LLMProviderFactory
         
         return providerName.ToLowerInvariant() switch
         {
-            "deepseek" => new DeepSeekLLMProvider(config.ApiKey, config.BaseUrl),
-            "qwen" => new QwenLLMProvider(config.ApiKey),
+            "bailian" => new QwenLLMProvider(config.ApiKey, config.Model),
+            "deepseek" => new DeepSeekLLMProvider(config.ApiKey, config.BaseUrl, config.Model),
             _ => throw new ArgumentException($"不支持的 Provider: {providerName}")
         };
     }

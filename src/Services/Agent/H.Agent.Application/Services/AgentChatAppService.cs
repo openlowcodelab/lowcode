@@ -40,6 +40,11 @@ public class AgentChatAppService : ApplicationService, IAgentChatAppService
             Content = input.Message,
             CreationTime = DateTime.UtcNow
         };
+        
+        // 获取历史消息（在添加当前用户消息之前，避免 ProcessMessageAsync 中重复添加）
+        var history = await _sessionStore.GetMessagesAsync(sessionId);
+        var conversationHistory = history.Select(m => $"{m.Role}: {m.Content}").ToList();
+        
         await _sessionStore.AddMessageAsync(sessionId, userMessage);
         
         // 获取 Agent 实例
@@ -48,10 +53,6 @@ public class AgentChatAppService : ApplicationService, IAgentChatAppService
         {
             throw new InvalidOperationException($"无法创建 Agent 实例: {agentType}");
         }
-        
-        // 获取历史消息
-        var history = await _sessionStore.GetMessagesAsync(sessionId);
-        var conversationHistory = history.Select(m => $"{m.Role}: {m.Content}").ToList();
         
         // 处理消息
         var response = await agent.ProcessMessageAsync(input.Message, conversationHistory);

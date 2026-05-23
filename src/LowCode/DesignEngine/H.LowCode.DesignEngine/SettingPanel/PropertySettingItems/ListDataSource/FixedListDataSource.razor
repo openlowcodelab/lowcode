@@ -118,14 +118,7 @@
 
     private string GetJsonString(Dictionary<string, object> dataItem)
     {
-        try
-        {
-            return JsonSerializer.Serialize(dataItem, new JsonSerializerOptions { WriteIndented = true });
-        }
-        catch
-        {
-            return "{}";
-        }
+        return dataItem.ToJson() ?? "{}";
     }
 
     private void UpdateDataItem(int index, string jsonString)
@@ -135,7 +128,7 @@
 
         try
         {
-            var dict = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonString);
+            var dict = jsonString.FromJson<Dictionary<string, object>>();
             if (dict != null)
             {
                 DataSource.FixedData[index] = dict;

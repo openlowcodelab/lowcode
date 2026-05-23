@@ -78,7 +78,8 @@
                     </div>
                     <div class="new-task-body">
                         <textarea class="new-task-textarea"
-                                  @bind="inputMessage"
+                                  @bind-value="inputMessage"
+                                  @bind-value:event="oninput"
                                   placeholder="详细描述您的任务..."
                                   rows="8"
                                   @onkeydown="HandleNewTaskKeyDown"></textarea>
@@ -160,7 +161,8 @@
 
                 <div class="chat-input-area">
                     <textarea class="chat-textarea"
-                              @bind="inputMessage"
+                              @bind-value="inputMessage"
+                              @bind-value:event="oninput"
                               placeholder="Type message, press Enter to send..."
                               rows="3"
                               @onkeydown="HandleKeyDown"></textarea>

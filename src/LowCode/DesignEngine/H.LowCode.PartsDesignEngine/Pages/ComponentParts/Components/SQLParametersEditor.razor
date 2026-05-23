@@ -97,7 +97,7 @@
         {
             try
             {
-                var parameters = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(Value);
+                var parameters = Value.FromJson<Dictionary<string, object>>();
                 if (parameters != null)
                 {
                     foreach (var kvp in parameters)
@@ -222,8 +222,8 @@
                 parameters[param.Key] = param.Value ?? "";
             }
         }
-        
-        var json = System.Text.Json.JsonSerializer.Serialize(parameters);
+
+        var json = parameters.ToJson() ?? "{}";
         await ValueChanged.InvokeAsync(json);
         StateHasChanged();
     }

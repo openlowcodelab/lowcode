@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace H.Agent.Application.Contracts;
 
 /// <summary>
@@ -5,7 +7,10 @@ namespace H.Agent.Application.Contracts;
 /// </summary>
 public class Message
 {
+    [JsonPropertyName("role")]
     public string Role { get; set; } = string.Empty;  // system/user/assistant
+    
+    [JsonPropertyName("content")]
     public string Content { get; set; } = string.Empty;
 }
 

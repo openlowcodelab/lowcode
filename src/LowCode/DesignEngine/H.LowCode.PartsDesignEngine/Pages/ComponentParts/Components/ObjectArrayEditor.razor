@@ -132,11 +132,7 @@
     {
         try
         {
-            _jsonValue = JsonSerializer.Serialize(Items, new JsonSerializerOptions 
-            { 
-                WriteIndented = true,
-                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-            });
+            _jsonValue = Items.ToJson() ?? "";
             _jsonError = "";
         }
         catch (Exception ex)
@@ -172,7 +168,7 @@
             }
             else
             {
-                var newItems = JsonSerializer.Deserialize<List<object>>(_jsonValue);
+                var newItems = _jsonValue.FromJson<List<object>>();
                 Items.Clear();
                 if (newItems != null)
                 {
@@ -224,8 +220,8 @@
             try
             {
                 var item = Items[index];
-                var json = JsonSerializer.Serialize(item);
-                var duplicatedItem = JsonSerializer.Deserialize<object>(json);
+                var json = item.ToJson();
+                var duplicatedItem = json.FromJson<object>();
                 Items.Insert(index + 1, duplicatedItem);
                 UpdateJsonValue();
                 await NotifyChange();
@@ -264,18 +260,7 @@
 
     private string GetItemJson(object item)
     {
-        try
-        {
-            return JsonSerializer.Serialize(item, new JsonSerializerOptions 
-            { 
-                WriteIndented = true,
-                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-            });
-        }
-        catch
-        {
-            return "{}";
-        }
+        return item.ToJson() ?? "{}";
     }
 
     private async Task UpdateItemFromJson(int index, string json)
@@ -284,7 +269,7 @@
         {
             try
             {
-                var item = JsonSerializer.Deserialize<object>(json ?? "{}");
+                var item = json.FromJson<object>();
                 Items[index] = item;
                 UpdateJsonValue();
                 await NotifyChange();

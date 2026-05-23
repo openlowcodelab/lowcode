@@ -118,7 +118,7 @@
             }
             else if (AttributeDefine.AttributeValue is string jsonString)
             {
-                var parsed = JsonSerializer.Deserialize<List<object>>(jsonString);
+                var parsed = jsonString.FromJson<List<object>>();
                 return parsed ?? new List<object>();
             }
         }
@@ -165,7 +165,7 @@
         {
             if (!string.IsNullOrWhiteSpace(schema))
             {
-                return JsonSerializer.Deserialize<object>(schema);
+                return schema.FromJson<object>();
             }
         }
         catch
@@ -178,18 +178,7 @@
 
     private string GetObjectJson(object item)
     {
-        try
-        {
-            return JsonSerializer.Serialize(item, new JsonSerializerOptions 
-            { 
-                WriteIndented = true,
-                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-            });
-        }
-        catch
-        {
-            return "{}";
-        }
+        return item.ToJson() ?? "{}";
     }
 
     private void UpdateObjectFromJson(int index, string json)
@@ -199,7 +188,7 @@
             var list = GetObjectList();
             if (index >= 0 && index < list.Count)
             {
-                var item = JsonSerializer.Deserialize<object>(json ?? "{}");
+                var item = json.FromJson<object>();
                 list[index] = item;
                 AttributeDefine.AttributeValue = list;
                 StateHasChanged();
