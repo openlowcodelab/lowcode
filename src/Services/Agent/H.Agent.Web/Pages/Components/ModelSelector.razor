@@ -1,0 +1,37 @@
+@using H.Agent.Application.Contracts
+
+<span class="model-selector-label">模型:</span>
+<select class="model-select-dropdown"
+        value="@Value"
+        @onchange="OnChanged">
+    @if (Models.Any())
+    {
+        @foreach (var model in Models)
+        {
+            <option value="@model.ProviderName">
+                @model.ProviderDisplayName (@model.Model)
+            </option>
+        }
+    }
+    else
+    {
+        <option value="">未配置模型</option>
+    }
+</select>
+
+@code {
+    [Parameter]
+    public string Value { get; set; } = string.Empty;
+
+    [Parameter]
+    public EventCallback<string> ValueChanged { get; set; }
+
+    [Parameter]
+    public List<LLMConfigDto> Models { get; set; } = new();
+
+    private async Task OnChanged(ChangeEventArgs e)
+    {
+        Value = e.Value?.ToString() ?? string.Empty;
+        await ValueChanged.InvokeAsync(Value);
+    }
+}

@@ -5,6 +5,7 @@
 @inject IAgentChatAppService AgentChatAppService
 @inject ILLMConfigAppService LLMConfigAppService
 @inject NavigationManager Navigation
+@using H.Agent.Web.Pages.Components
 
 <!-- Toast Notification -->
 @if (!string.IsNullOrEmpty(toastMessage))
@@ -19,7 +20,7 @@
         <div class="session-list-panel">
             <div class="panel-header">
                 <button class="btn btn-primary new-chat-btn" @onclick="CreateNewTask">
-                    @IconSvg("plus") New Task
+                    @IconSvg("plus") 新建任务
                 </button>
             </div>
             <div class="panel-content">
@@ -43,13 +44,13 @@
                 }
                 else
                 {
-                    <div class="empty-state"><div class="empty-icon">@IconSvg("inbox")</div><div class="empty-text">No tasks</div></div>
+                    <div class="empty-state"><div class="empty-icon">@IconSvg("inbox")</div><div class="empty-text">暂无任务</div></div>
                 }
             </div>
             <div class="user-menu-area">
                 <div class="user-menu-trigger">
                     <div class="user-avatar-small">@IconSvg("user")</div>
-                    <span class="user-name">用户</span>
+                    <span class="user-name">未登录</span>
                     <div class="user-menu-icon" @onclick="ToggleUserMenu">@IconSvg("setting")</div>
                     @if (showUserMenu)
                     {
@@ -57,10 +58,10 @@
                             <div class="dropdown-item" @onclick:stopPropagation="true" @onclick="GoToSettings">
                                 @IconSvg("setting") <span>设置</span>
                             </div>
-                            <div class="dropdown-divider"></div>
-                            <div class="dropdown-item danger" @onclick:stopPropagation="true" @onclick="Logout">
+                            @* <div class="dropdown-divider"></div> *@
+                            @* <div class="dropdown-item danger" @onclick:stopPropagation="true" @onclick="Logout">
                                 @IconSvg("logout") <span>退出登录</span>
-                            </div>
+                            </div> *@
                         </div>
                     }
                 </div>
@@ -72,44 +73,21 @@
             {
                 <div class="new-task-container">
                     <div class="new-task-header">
-                        <h2>New Task</h2>
+                        <h2>新建任务</h2>
                         <p class="new-task-desc">描述您的任务，AI 助手将为您处理</p>
                     </div>
                     <div class="new-task-body">
                         <textarea class="new-task-textarea"
                                   @bind="inputMessage"
-                                  placeholder="Describe your task in detail..."
+                                  placeholder="详细描述您的任务..."
                                   rows="8"
                                   @onkeydown="HandleNewTaskKeyDown"></textarea>
                     </div>
                     <div class="new-task-footer">
-                        <div class="new-task-model-selector">
-                            <span class="model-selector-label">Model:</span>
-                            <select class="model-select-dropdown"
-                                    value="@selectedProviderName"
-                                    @onchange="OnNewTaskModelChanged">
-                                @if (availableModels.Any())
-                                {
-                                    @foreach (var model in availableModels)
-                                    {
-                                        <option value="@model.ProviderName">
-                                            @model.ProviderDisplayName (@model.Model)
-                                        </option>
-                                    }
-                                }
-                                else
-                                {
-                                    <option value="">No models configured</option>
-                                }
-                            </select>
-                        </div>
+                        <ModelSelector @bind-Value="selectedProviderName" Models="availableModels" />
                         <div class="new-task-actions">
-                            <button class="btn" @onclick="CancelNewTask">Cancel</button>
-                            <button class="btn btn-primary agent-btn-primary"
-                                    @onclick="SendNewTask"
-                                    disabled="@string.IsNullOrWhiteSpace(inputMessage)">
-                                @IconSvg("send") Send
-                            </button>
+                            <button class="btn" @onclick="CancelNewTask">取消</button>
+                            <SendButton @onclick="SendNewTask" IsDisabled="@string.IsNullOrWhiteSpace(inputMessage)" />
                         </div>
                     </div>
                 </div>
@@ -130,7 +108,7 @@
                             </button>
                         }
                         <button class="btn" @onclick="DeleteCurrentSession" style="margin-left: 8px;">
-                            @IconSvg("delete") Delete
+                            @IconSvg("delete") 删除
                         </button>
                     </div>
                 </div>
@@ -187,34 +165,11 @@
                               rows="3"
                               @onkeydown="HandleKeyDown"></textarea>
                     <div class="chat-input-footer">
-                        <div class="chat-model-selector">
-                            <span class="model-selector-label">Model:</span>
-                            <select class="model-select-dropdown"
-                                    value="@selectedProviderName"
-                                    @onchange="OnChatModelChanged">
-                                @if (availableModels.Any())
-                                {
-                                    @foreach (var model in availableModels)
-                                    {
-                                        <option value="@model.ProviderName">
-                                            @model.ProviderDisplayName (@model.Model)
-                                        </option>
-                                    }
-                                }
-                                else
-                                {
-                                    <option value="">No models configured</option>
-                                }
-                            </select>
-                        </div>
+                        <ModelSelector @bind-Value="selectedProviderName" Models="availableModels" />
                         <div class="chat-input-actions">
-                            <button class="btn btn-primary agent-btn-primary"
-                                    @onclick="SendMessage"
-                                    disabled="@string.IsNullOrWhiteSpace(inputMessage)">
-                                @IconSvg("send") Send
-                            </button>
+                            <SendButton @onclick="SendMessage" IsDisabled="@string.IsNullOrWhiteSpace(inputMessage)" />
                             <button class="btn" @onclick="ClearInput">
-                                @IconSvg("clear") Clear
+                                @IconSvg("clear") 清除
                             </button>
                         </div>
                     </div>
@@ -224,7 +179,7 @@
             {
                 <div class="empty-chat-state">
                     <div class="empty-chat-content">
-                        <div class="empty-state"><div class="empty-icon">@IconSvg("task")</div><div class="empty-text">Click 'New Task' to create a new task</div></div>
+                        <div class="empty-state"><div class="empty-icon">@IconSvg("task")</div><div class="empty-text">点击 '新建任务' 创建新任务</div></div>
                     </div>
                 </div>
             }
@@ -354,18 +309,6 @@
     {
         isNewTask = false;
         inputMessage = string.Empty;
-        StateHasChanged();
-    }
-
-    private void OnNewTaskModelChanged(ChangeEventArgs e)
-    {
-        selectedProviderName = e.Value?.ToString() ?? string.Empty;
-        StateHasChanged();
-    }
-
-    private void OnChatModelChanged(ChangeEventArgs e)
-    {
-        selectedProviderName = e.Value?.ToString() ?? string.Empty;
         StateHasChanged();
     }
 
