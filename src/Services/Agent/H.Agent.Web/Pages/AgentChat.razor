@@ -153,7 +153,9 @@
                                     }
                                 </div>
                                 <div class="message-content">
-                                    <div class="message-text">@((MarkupString)FormatMessage(message.Content))</div>
+                                    <div class="message-text markdown-content">
+                                        <MarkdownRenderer Content="@message.Content" />
+                                    </div>
                                     <div class="message-time">@message.CreationTime.ToString("HH:mm:ss")</div>
                                 </div>
                             </div>
@@ -181,7 +183,7 @@
                     <textarea class="chat-textarea"
                               @bind-value="inputMessage"
                               @bind-value:event="oninput"
-                              placeholder="Type message, press Enter to send..."
+                              placeholder="详细描述您的任务..."
                               rows="3"
                               @onkeydown="HandleKeyDown"></textarea>
                     <div class="chat-input-footer">
@@ -487,13 +489,7 @@
         StateHasChanged();
     }
 
-    private string FormatMessage(string message)
-    {
-        return message
-            .Replace("\n", "<br/>")
-            .Replace("**", "<strong>")
-            .Replace("`", "<code>");
-    }
+
 
     private void ToggleUserMenu()
     {
