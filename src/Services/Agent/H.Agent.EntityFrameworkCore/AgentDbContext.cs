@@ -10,6 +10,8 @@ public class AgentDbContext : AbpDbContext<AgentDbContext>
     public DbSet<LLMConfigEntity> LLMConfigs { get; set; } = null!;
     public DbSet<AgentChatSessionEntity> ChatSessions { get; set; } = null!;
     public DbSet<AgentChatMessageEntity> ChatMessages { get; set; } = null!;
+    public DbSet<AgentScheduledTaskEntity> ScheduledTasks { get; set; } = null!;
+    public DbSet<AgentTaskExecutionLogEntity> TaskExecutionLogs { get; set; } = null!;
 
     public AgentDbContext(DbContextOptions<AgentDbContext> options)
         : base(options)
@@ -59,6 +61,37 @@ public class AgentDbContext : AbpDbContext<AgentDbContext>
             b.Property(x => x.ToolResult).HasMaxLength(2000);
             
             b.HasIndex(x => x.SessionId);
+        });
+
+        modelBuilder.Entity<AgentScheduledTaskEntity>(b =>
+        {
+            b.ToTable("AgentScheduledTasks");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.TaskName).IsRequired().HasMaxLength(100);
+            b.Property(x => x.TaskDescription).HasMaxLength(500);
+            b.Property(x => x.TaskType).IsRequired().HasMaxLength(50);
+            b.Property(x => x.PromptContent).IsRequired().HasMaxLength(8000);
+            b.Property(x => x.AgentType).IsRequired().HasMaxLength(50);
+            b.Property(x => x.ScheduleType).IsRequired().HasMaxLength(20);
+            b.Property(x => x.CronExpression).HasMaxLength(100);
+            b.Property(x => x.Status).IsRequired().HasMaxLength(20);
+            b.Property(x => x.HangfireJobId).HasMaxLength(100);
+            
+            b.HasIndex(x => new { x.IsEnabled, x.Status });
+            b.HasIndex(x => x.NextExecutionTime);
+        });
+
+        modelBuilder.Entity<AgentTaskExecutionLogEntity>(b =>
+        {
+            b.ToTable("AgentTaskExecutionLogs");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.TaskId).IsRequired();
+            b.Property(x => x.Status).IsRequired().HasMaxLength(20);
+            b.Property(x => x.Result).HasMaxLength(8000);
+            b.Property(x => x.ErrorMessage).HasMaxLength(2000);
+            
+            b.HasIndex(x => x.TaskId);
+            b.HasIndex(x => x.StartTime);
         });
     }
 }

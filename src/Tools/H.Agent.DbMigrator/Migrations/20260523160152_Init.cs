@@ -54,6 +54,58 @@ namespace H.Agent.DbMigrator.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "AgentScheduledTasks",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TaskName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    TaskDescription = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    TaskType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    PromptContent = table.Column<string>(type: "nvarchar(max)", maxLength: 8000, nullable: false),
+                    AgentType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    ModelConfigId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    ScheduleType = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    CronExpression = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    Hour = table.Column<int>(type: "int", nullable: true),
+                    Minute = table.Column<int>(type: "int", nullable: true),
+                    DayOfWeek = table.Column<int>(type: "int", nullable: true),
+                    DayOfMonth = table.Column<int>(type: "int", nullable: true),
+                    IsEnabled = table.Column<bool>(type: "bit", nullable: false),
+                    LastExecutionTime = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    NextExecutionTime = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ExecutionCount = table.Column<int>(type: "int", nullable: false),
+                    HangfireJobId = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    CreationTime = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatorId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    LastModificationTime = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    LastModifierId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AgentScheduledTasks", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AgentTaskExecutionLogs",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TaskId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    Result = table.Column<string>(type: "nvarchar(max)", maxLength: 8000, nullable: true),
+                    ErrorMessage = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
+                    StartTime = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    EndTime = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreationTime = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatorId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AgentTaskExecutionLogs", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "AgentChatMessages",
                 columns: table => new
                 {
@@ -87,6 +139,26 @@ namespace H.Agent.DbMigrator.Migrations
                 table: "AgentLLMConfigs",
                 columns: new[] { "ProviderName", "Model" },
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AgentScheduledTasks_IsEnabled_Status",
+                table: "AgentScheduledTasks",
+                columns: new[] { "IsEnabled", "Status" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AgentScheduledTasks_NextExecutionTime",
+                table: "AgentScheduledTasks",
+                column: "NextExecutionTime");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AgentTaskExecutionLogs_StartTime",
+                table: "AgentTaskExecutionLogs",
+                column: "StartTime");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AgentTaskExecutionLogs_TaskId",
+                table: "AgentTaskExecutionLogs",
+                column: "TaskId");
         }
 
         /// <inheritdoc />
@@ -97,6 +169,12 @@ namespace H.Agent.DbMigrator.Migrations
 
             migrationBuilder.DropTable(
                 name: "AgentLLMConfigs");
+
+            migrationBuilder.DropTable(
+                name: "AgentScheduledTasks");
+
+            migrationBuilder.DropTable(
+                name: "AgentTaskExecutionLogs");
 
             migrationBuilder.DropTable(
                 name: "AgentChatSessions");

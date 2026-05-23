@@ -14,5 +14,9 @@ public class LLMConfigProfile : Profile
         // Chat session & message mapping
         CreateMap<AgentChatSessionEntity, ChatSessionDto>();
         CreateMap<AgentChatMessageEntity, ChatMessageDto>();
+
+        // Scheduled task mapping
+        CreateMap<AgentScheduledTaskEntity, ScheduledTaskDto>();
+        CreateMap<AgentTaskExecutionLogEntity, TaskExecutionLogDto>();
     }
 }

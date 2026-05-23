@@ -1,0 +1,235 @@
+@page "/agent/task-logs"
+
+@layout AgentLayout
+@inject IAgentTaskExecutionLogAppService TaskLogAppService
+@inject IAgentScheduledTaskAppService ScheduledTaskAppService
+
+<div class="agent-chat-container">
+    <div class="task-logs-page">
+        <div class="page-header">
+            <h2>任务执行日志</h2>
+            <button class="btn" @onclick="OnReturnToAgent">返回 Agent</button>
+        </div>
+
+        <div class="filters">
+            <div class="filter-group">
+                <label>任务:</label>
+                <select class="form-select" @bind="selectedTaskId">
+                    <option value="">全部任务</option>
+                    @foreach (var task in allTasks)
+                    {
+                        <option value="@task.Id">@task.TaskName</option>
+                    }
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>状态:</label>
+                <select class="form-select" @bind="selectedStatus">
+                    <option value="">全部</option>
+                    <option value="Success">成功</option>
+                    <option value="Failed">失败</option>
+                    <option value="Running">运行中</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" @onclick="LoadLogs">查询</button>
+        </div>
+
+        <div class="logs-table-container">
+            @if (loadingLogs)
+            {
+                <div class="loading-spinner"><div class="spinner"></div><span>Loading...</span></div>
+            }
+            else if (logs.Any())
+            {
+                <table class="logs-table">
+                    <thead>
+                        <tr>
+                            <th>任务名称</th>
+                            <th>状态</th>
+                            <th>开始时间</th>
+                            <th>耗时</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var log in logs)
+                        {
+                            <tr>
+                                <td>@log.TaskName</td>
+                                <td>
+                                    <span class="log-status status-@log.Status.ToLower()">
+                                        @GetStatusText(log.Status)
+                                    </span>
+                                </td>
+                                <td>@log.StartTime.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                                <td>@(log.DurationSeconds.HasValue ? $"{log.DurationSeconds.Value}秒" : "-")</td>
+                                <td>
+                                    <button class="btn-link" @onclick="() => ViewLogDetails(log.Id)">查看详情</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+                <div class="pagination">
+                    <span class="total">共 @totalCount 条记录</span>
+                    <button class="btn btn-sm" disabled="@(currentPage <= 0)" @onclick="() => GoToPage(currentPage - 1)">上一页</button>
+                    <span class="page-info">第 @(currentPage + 1) 页</span>
+                    <button class="btn btn-sm" disabled="@((currentPage + 1) * pageSize >= totalCount)" @onclick="() => GoToPage(currentPage + 1)">下一页</button>
+                </div>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <div class="empty-text">暂无执行日志</div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Log Detail Modal -->
+@if (showLogDetail && selectedLog != null)
+{
+    <div class="scheduled-task-dialog">
+        <div class="dialog-overlay" @onclick="(() => showLogDetail = false)"></div>
+        <div class="dialog-content">
+            <div class="dialog-header">
+                <h3>执行详情</h3>
+                <button class="dialog-close" @onclick="() => showLogDetail = false">@IconSvg("close")</button>
+            </div>
+            <div class="dialog-body">
+                <div class="detail-row">
+                    <label>任务名称:</label>
+                    <span>@selectedLog.TaskName</span>
+                </div>
+                <div class="detail-row">
+                    <label>执行状态:</label>
+                    <span class="log-status status-@selectedLog.Status.ToLower()">@GetStatusText(selectedLog.Status)</span>
+                </div>
+                <div class="detail-row">
+                    <label>开始时间:</label>
+                    <span>@selectedLog.StartTime.ToString("yyyy-MM-dd HH:mm:ss")</span>
+                </div>
+                <div class="detail-row">
+                    <label>结束时间:</label>
+                    <span>@(selectedLog.EndTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "-")</span>
+                </div>
+                <div class="detail-row">
+                    <label>耗时:</label>
+                    <span>@(selectedLog.DurationSeconds.HasValue ? $"{selectedLog.DurationSeconds.Value}秒" : "-")</span>
+                </div>
+                @if (!string.IsNullOrEmpty(selectedLog.Result))
+                {
+                    <div class="detail-row full-width">
+                        <label>执行结果:</label>
+                        <pre class="result-content">@selectedLog.Result</pre>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(selectedLog.ErrorMessage))
+                {
+                    <div class="detail-row full-width error">
+                        <label>错误信息:</label>
+                        <pre class="error-content">@selectedLog.ErrorMessage</pre>
+                    </div>
+                }
+            </div>
+            <div class="dialog-footer">
+                <button class="btn" @onclick="() => showLogDetail = false">关闭</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private void OnReturnToAgent() => Navigation.NavigateTo("/agent/chat");
+    private void HideLogDetail() => showLogDetail = false;
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+
+    private List<TaskExecutionLogDto> logs = new();
+    private List<ScheduledTaskDto> allTasks = new();
+    private Guid? selectedTaskId;
+    private string selectedStatus = "";
+    private bool loadingLogs;
+    private int currentPage;
+    private int pageSize = 20;
+    private int totalCount;
+
+    private bool showLogDetail;
+    private TaskExecutionLogDto? selectedLog;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTasks();
+        await LoadLogs();
+    }
+
+    private async Task LoadTasks()
+    {
+        var result = await ScheduledTaskAppService.GetListAsync(new ScheduledTaskQueryDto { MaxResultCount = 100 });
+        allTasks = result.Items.ToList();
+    }
+
+    private async Task LoadLogs()
+    {
+        loadingLogs = true;
+        currentPage = 0;
+        try
+        {
+            var query = new TaskExecutionLogQueryDto
+            {
+                TaskId = selectedTaskId,
+                Status = selectedStatus,
+                MaxResultCount = pageSize,
+                SkipCount = 0
+            };
+            var result = await TaskLogAppService.GetListAsync(query);
+            logs = result.Items.ToList();
+            totalCount = (int)result.TotalCount;
+        }
+        finally { loadingLogs = false; }
+    }
+
+    private async Task GoToPage(int page)
+    {
+        currentPage = page;
+        loadingLogs = true;
+        try
+        {
+            var query = new TaskExecutionLogQueryDto
+            {
+                TaskId = selectedTaskId,
+                Status = selectedStatus,
+                MaxResultCount = pageSize,
+                SkipCount = page * pageSize
+            };
+            var result = await TaskLogAppService.GetListAsync(query);
+            logs = result.Items.ToList();
+        }
+        finally { loadingLogs = false; }
+    }
+
+    private async Task ViewLogDetails(Guid logId)
+    {
+        selectedLog = await TaskLogAppService.GetAsync(logId);
+        showLogDetail = true;
+    }
+
+    private string GetStatusText(string status)
+    {
+        return status switch
+        {
+            "Success" => "成功",
+            "Failed" => "失败",
+            "Running" => "运行中",
+            _ => status
+        };
+    }
+
+    private static MarkupString IconSvg(string name) => (MarkupString)GetIconSvg(name);
+    private static string GetIconSvg(string name) => name switch
+    {
+        "close" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"18\" y1=\"6\" x2=\"6\" y2=\"18\"></line><line x1=\"6\" y1=\"6\" x2=\"18\" y2=\"18\"></line></svg>",
+        _ => ""
+    };
+}
