@@ -1,0 +1,46 @@
+@namespace H.Assistant.Web
+
+@inject NavigationManager NavigationManager
+
+@if (!string.IsNullOrEmpty(Content))
+{
+    @((MarkupString)RenderedContent)
+}
+
+@code {
+    [Parameter]
+    public string Content { get; set; } = string.Empty;
+
+    private string RenderedContent => ParseMarkdown(Content);
+
+    private string ParseMarkdown(string markdown)
+    {
+        if (string.IsNullOrEmpty(markdown))
+            return string.Empty;
+
+        // 配置 Markdig 以支持更多功能
+        var pipeline = new MarkdownPipelineBuilder()
+            .UseAdvancedExtensions()
+            .UseEmojiAndSmiley()
+            .UseCustomContainers()
+            .Build();
+
+        var html = Markdown.ToHtml(markdown, pipeline);
+
+        // 处理代码块的高亮样式
+        html = AddCodeBlockStyles(html);
+
+        return html;
+    }
+
+    private string AddCodeBlockStyles(string html)
+    {
+        // 为代码块添加基础样式类
+        html = html.Replace("<pre><code", "<pre class=\"markdown-code-block\"><code");
+
+        // 为行内代码添加样式
+        html = html.Replace("<code>", "<code class=\"markdown-inline-code\">");
+
+        return html;
+    }
+}

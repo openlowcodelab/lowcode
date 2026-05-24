@@ -1,6 +1,6 @@
 using H.Account.Application;
-using H.Agent.Application;
-using H.Agent.EntityFrameworkCore;
+using H.Assistant.Application;
+using H.Assistant.EntityFrameworkCore;
 using H.Approval.Application;
 using H.AutoTest.Application;
 using H.LowCode.ComponentBase;
@@ -13,7 +13,6 @@ using H.LowCode.RenderEngine.Repository.JsonFile;
 using H.Organization.Application;
 using H.Portal.Application;
 using H.SystemManagement.Application;
-using H.SystemManagement.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Volo.Abp.AspNetCore.Mvc;
 using Volo.Abp.Autofac;
@@ -38,9 +37,9 @@ namespace H.LowCode.Host.All;
     typeof(RenderEngineJsonFileRepositoryModule),
     // Account
     typeof(AccountApplicationModule),
-    // Agent
-    typeof(AgentApplicationModule),
-    typeof(AgentEntityFrameworkCoreModule),
+    // Assistant
+    typeof(AssistantApplicationModule),
+    typeof(AssistantEntityFrameworkCoreModule),
     // Organization
     typeof(OrganizationApplicationModule),
     // Approval
@@ -93,7 +92,7 @@ public class HostAllModule : AbpModule
         {
             // 注册所有模块的控制器
             options.ConventionalControllers.Create(typeof(AccountApplicationModule).Assembly);
-            options.ConventionalControllers.Create(typeof(AgentApplicationModule).Assembly);
+            options.ConventionalControllers.Create(typeof(AssistantApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(OrganizationApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(DesignEngineApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(RenderEngineApplicationModule).Assembly);
