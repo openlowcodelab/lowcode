@@ -15,7 +15,7 @@
 <div class="settings-container">
     <div class="settings-sidebar">
         <div class="sidebar-header">
-            <button class="btn btn-link back-btn" @onclick="GoBack">
+            <button class="btn back-btn" @onclick="GoBack">
                 @IconSvg("arrow-left") 返回
             </button>
         </div>
@@ -44,10 +44,10 @@
                         <div class="form-item">
                             <label>主题模式</label>
                             <div class="theme-options">
-                                <button class="btn @(themeMode == "light" ? "btn-primary agent-btn-primary" : "")" @onclick="@(() => themeMode = "light")">
+                                <button class="btn @(themeMode == "light" ? "btn-primary assistant-btn-primary" : "")" @onclick="@(() => themeMode = "light")">
                                     @IconSvg("sun") 浅色
                                 </button>
-                                <button class="btn @(themeMode == "dark" ? "btn-primary agent-btn-primary" : "")" @onclick="@(() => themeMode = "dark")">
+                                <button class="btn @(themeMode == "dark" ? "btn-primary assistant-btn-primary" : "")" @onclick="@(() => themeMode = "dark")">
                                     @IconSvg("moon") 深色
                                 </button>
                             </div>
@@ -58,10 +58,10 @@
                         <div class="form-item">
                             <label>界面语言</label>
                             <div class="theme-options">
-                                <button class="btn @(language == "zh" ? "btn-primary agent-btn-primary" : "")" @onclick="@(() => language = "zh")">
+                                <button class="btn @(language == "zh" ? "btn-primary assistant-btn-primary" : "")" @onclick="@(() => language = "zh")">
                                     中文
                                 </button>
-                                <button class="btn @(language == "en" ? "btn-primary agent-btn-primary" : "")" @onclick="@(() => language = "en")">
+                                <button class="btn @(language == "en" ? "btn-primary assistant-btn-primary" : "")" @onclick="@(() => language = "en")">
                                     English
                                 </button>
                             </div>
@@ -73,7 +73,7 @@
             case "model":
                 <div class="content-header">
                     <h2>模型管理</h2>
-                    <button class="btn btn-primary agent-btn-primary btn-small" @onclick="ShowAddModel">
+                    <button class="btn btn-primary assistant-btn-primary btn-small" @onclick="ShowAddModel">
                         @IconSvg("plus") 添加
                     </button>
                 </div>
@@ -251,7 +251,7 @@
             case "skill":
                 <div class="content-header">
                     <h2>技能</h2>
-                    <button class="btn btn-primary agent-btn-primary btn-small" disabled>
+                    <button class="btn btn-primary assistant-btn-primary btn-small" disabled>
                         @IconSvg("plus") 添加
                     </button>
                 </div>
