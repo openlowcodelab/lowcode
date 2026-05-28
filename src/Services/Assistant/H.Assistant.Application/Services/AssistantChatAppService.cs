@@ -1,7 +1,7 @@
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
 using H.Assistant.Application.Contracts;
-using H.Assistant.Extensions;
+using H.Assistant.Core;
 
 namespace H.Assistant.Application;
 
@@ -209,7 +209,7 @@ public class AssistantChatAppService : ApplicationService, IAssistantChatAppServ
     
     public async Task<List<AgentConfigDto>> GetAvailableAgentsAsync()
     {
-        var agents = _agentFactory.GetAvailableAgents();
+        var agents = await _agentFactory.GetAvailableAgentsAsync();
         return agents.Select(a => new AgentConfigDto
         {
             AgentType = a.AgentType,

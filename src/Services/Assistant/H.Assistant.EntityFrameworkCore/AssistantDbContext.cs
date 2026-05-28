@@ -12,6 +12,8 @@ public class AssistantDbContext : AbpDbContext<AssistantDbContext>
     public DbSet<ChatMessageEntity> ChatMessages { get; set; } = null!;
     public DbSet<ScheduledTaskEntity> ScheduledTasks { get; set; } = null!;
     public DbSet<TaskExecutionLogEntity> TaskExecutionLogs { get; set; } = null!;
+    public DbSet<AgentDefinitionEntity> AgentDefinitions { get; set; } = null!;
+    public DbSet<SkillDefinitionEntity> SkillDefinitions { get; set; } = null!;
 
     public AssistantDbContext(DbContextOptions<AssistantDbContext> options)
         : base(options)
@@ -92,6 +94,38 @@ public class AssistantDbContext : AbpDbContext<AssistantDbContext>
             
             b.HasIndex(x => x.TaskId);
             b.HasIndex(x => x.StartTime);
+        });
+
+        modelBuilder.Entity<AgentDefinitionEntity>(b =>
+        {
+            b.ToTable("AgentDefinitions");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.AgentType).IsRequired().HasMaxLength(100);
+            b.Property(x => x.DisplayName).IsRequired().HasMaxLength(200);
+            b.Property(x => x.Description).HasMaxLength(1000);
+            b.Property(x => x.SystemPrompt).IsRequired().HasMaxLength(4000);
+            b.Property(x => x.Metadata).HasMaxLength(4000);
+            b.Property(x => x.SkillIds).HasMaxLength(2000);
+            
+            b.HasIndex(x => x.AgentType).IsUnique();
+            b.HasIndex(x => x.IsEnabled);
+        });
+
+        modelBuilder.Entity<SkillDefinitionEntity>(b =>
+        {
+            b.ToTable("SkillDefinitions");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.SkillName).IsRequired().HasMaxLength(100);
+            b.Property(x => x.DisplayName).IsRequired().HasMaxLength(200);
+            b.Property(x => x.Description).HasMaxLength(1000);
+            b.Property(x => x.SkillType).IsRequired().HasMaxLength(50);
+            b.Property(x => x.ImplementationClass).HasMaxLength(500);
+            b.Property(x => x.Config).HasMaxLength(4000);
+            b.Property(x => x.ParameterSchema).HasMaxLength(4000);
+            
+            b.HasIndex(x => x.SkillName).IsUnique();
+            b.HasIndex(x => x.IsEnabled);
+            b.HasIndex(x => x.SkillType);
         });
     }
 }

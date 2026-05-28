@@ -1,6 +1,6 @@
 ﻿using H.Assistant.Application.Contracts;
 
-namespace H.Assistant.Extensions;
+namespace H.Assistant.Core;
 
 /// <summary>
 /// 自动化测试 Agent 实现

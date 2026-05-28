@@ -1,6 +1,6 @@
 ﻿using H.Assistant.Application.Contracts;
 
-namespace H.Assistant.Extensions;
+namespace H.Assistant.Core;
 
 /// <summary>
 /// 客服 Agent 实现

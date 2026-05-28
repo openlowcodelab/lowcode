@@ -4,19 +4,19 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json.Serialization;
 
-namespace H.Assistant.Extensions;
+namespace H.Assistant.Core;
 
 /// <summary>
-/// DeepSeek LLM Provider
+/// 阿里云百炼 LLM Provider
 /// </summary>
-public class DeepSeekLLMProvider : ILLMProvider
+public class BaiLianLLMProvider : ILLMProvider
 {
-    public string ProviderName => "deepseek";
+    public string ProviderName => "qwen";
     
     private readonly HttpClient _httpClient;
     private readonly string _defaultModel;
     
-    public DeepSeekLLMProvider(string apiKey, string baseUrl, string model)
+    public BaiLianLLMProvider(string apiKey, string baseUrl, string model)
     {
         _httpClient = new HttpClient();
         _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
@@ -36,16 +36,16 @@ public class DeepSeekLLMProvider : ILLMProvider
             max_tokens = request.MaxTokens
         };
         
-        var response = await _httpClient.PostAsJsonAsync("v1/chat/completions", payload, ct);
+        var response = await _httpClient.PostAsJsonAsync("chat/completions", payload, ct);
         
         if (!response.IsSuccessStatusCode)
         {
             var errorBody = await response.Content.ReadAsStringAsync(ct);
             throw new HttpRequestException(
-                $"DeepSeek API 返回 {(int)response.StatusCode} ({response.StatusCode}): {errorBody}");
+                $"DashScope API 返回 {(int)response.StatusCode} ({response.StatusCode}): {errorBody}");
         }
         
-        var result = await response.Content.ReadFromJsonAsync<DeepSeekResponse>(ct);
+        var result = await response.Content.ReadFromJsonAsync<QwenResponse>(ct);
         
         return new LLMResponse
         {
@@ -65,7 +65,7 @@ public class DeepSeekLLMProvider : ILLMProvider
         };
         
         var jsonContent = payload.ToJson();
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "v1/chat/completions");
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "chat/completions");
         httpRequest.Content = new StringContent(jsonContent, Encoding.UTF8, new MediaTypeHeaderValue("application/json"));
         
         // 关键：使用 ResponseHeadersRead 让请求在收到响应头后立即返回，而非等待整个响应体
@@ -75,7 +75,7 @@ public class DeepSeekLLMProvider : ILLMProvider
         {
             var errorBody = await response.Content.ReadAsStringAsync(ct);
             throw new HttpRequestException(
-                $"DeepSeek API 返回 {(int)response.StatusCode} ({response.StatusCode}): {errorBody}");
+                $"DashScope API 返回 {(int)response.StatusCode} ({response.StatusCode}): {errorBody}");
         }
         
         await using var stream = await response.Content.ReadAsStreamAsync(ct);
@@ -89,7 +89,7 @@ public class DeepSeekLLMProvider : ILLMProvider
                 var json = line["data: ".Length..];
                 if (json != "[DONE]")
                 {
-                    var chunk = json.FromJson<DeepSeekStreamChunk>();
+                    var chunk = json.FromJson<QwenStreamChunk>();
                     var content = chunk?.Choices?.FirstOrDefault()?.Delta?.Content;
                     if (!string.IsNullOrEmpty(content))
                         yield return content;
@@ -99,27 +99,27 @@ public class DeepSeekLLMProvider : ILLMProvider
     }
 }
 
-#region DeepSeek Response Types
+#region Qwen Response Types (OpenAI 兼容格式)
 
-public class DeepSeekResponse
+public class QwenResponse
 {
     [JsonPropertyName("model")]
     public string Model { get; set; } = string.Empty;
     
     [JsonPropertyName("choices")]
-    public List<DeepSeekChoice> Choices { get; set; } = new();
+    public List<QwenChoice> Choices { get; set; } = new();
     
     [JsonPropertyName("usage")]
-    public DeepSeekUsage? Usage { get; set; }
+    public QwenUsage? Usage { get; set; }
 }
 
-public class DeepSeekChoice
+public class QwenChoice
 {
     [JsonPropertyName("message")]
-    public DeepSeekMessage Message { get; set; } = new();
+    public QwenMessage Message { get; set; } = new();
 }
 
-public class DeepSeekMessage
+public class QwenMessage
 {
     [JsonPropertyName("role")]
     public string Role { get; set; } = string.Empty;
@@ -128,25 +128,25 @@ public class DeepSeekMessage
     public string Content { get; set; } = string.Empty;
 }
 
-public class DeepSeekUsage
+public class QwenUsage
 {
     [JsonPropertyName("total_tokens")]
     public int TotalTokens { get; set; }
 }
 
-public class DeepSeekStreamChunk
+public class QwenStreamChunk
 {
     [JsonPropertyName("choices")]
-    public List<DeepSeekStreamChoice> Choices { get; set; } = new();
+    public List<QwenStreamChoice> Choices { get; set; } = new();
 }
 
-public class DeepSeekStreamChoice
+public class QwenStreamChoice
 {
     [JsonPropertyName("delta")]
-    public DeepSeekDelta Delta { get; set; } = new();
+    public QwenStreamDelta Delta { get; set; } = new();
 }
 
-public class DeepSeekDelta
+public class QwenStreamDelta
 {
     [JsonPropertyName("content")]
     public string? Content { get; set; }

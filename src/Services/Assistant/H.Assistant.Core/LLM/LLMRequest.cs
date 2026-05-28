@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace H.Assistant.Extensions;
+namespace H.Assistant.Core;
 
 /// <summary>
 /// 对话消息

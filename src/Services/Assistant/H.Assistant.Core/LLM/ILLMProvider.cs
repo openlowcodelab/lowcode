@@ -1,4 +1,4 @@
-namespace H.Assistant.Extensions;
+namespace H.Assistant.Core;
 
 /// <summary>
 /// LLM Provider 统一接口

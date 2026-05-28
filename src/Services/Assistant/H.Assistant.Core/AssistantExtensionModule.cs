@@ -1,6 +1,6 @@
 ﻿using Volo.Abp.Modularity;
 
-namespace H.Assistant.Extensions;
+namespace H.Assistant.Core;
 
 public class AssistantExtensionModule : AbpModule
 {

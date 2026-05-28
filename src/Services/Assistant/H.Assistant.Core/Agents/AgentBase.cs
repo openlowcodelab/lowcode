@@ -1,6 +1,6 @@
 ﻿using H.Assistant.Application.Contracts;
 
-namespace H.Assistant.Extensions;
+namespace H.Assistant.Core;
 
 /// <summary>
 /// Agent 基类 - 提供 LLM 调用能力，支持同步和流式响应

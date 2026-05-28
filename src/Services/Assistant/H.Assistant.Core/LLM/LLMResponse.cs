@@ -1,4 +1,4 @@
-namespace H.Assistant.Extensions;
+namespace H.Assistant.Core;
 
 /// <summary>
 /// 工具调用
