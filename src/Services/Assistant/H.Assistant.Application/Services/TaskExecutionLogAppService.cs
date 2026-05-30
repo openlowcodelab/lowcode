@@ -101,4 +101,9 @@ public class AssistantTaskExecutionLogAppService : ApplicationService, ITaskExec
 
         return dto;
     }
+
+    public async Task DeleteAsync(Guid id)
+    {
+        await _logRepository.DeleteAsync(id);
+    }
 }

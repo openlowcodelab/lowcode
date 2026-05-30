@@ -17,4 +17,9 @@ public interface ITaskExecutionLogAppService : IApplicationService
     /// 获取单个执行日志
     /// </summary>
     Task<TaskExecutionLogDto> GetAsync(Guid id);
+
+    /// <summary>
+    /// 删除执行日志
+    /// </summary>
+    Task DeleteAsync(Guid id);
 }

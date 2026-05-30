@@ -171,6 +171,13 @@
                         {
                             <div class="log-entry @log.Status.ToLower()">
                                 <div class="log-header">
+                                    @if (isLogSelectionMode)
+                                    {
+                                        <input type="checkbox" 
+                                               class="log-checkbox"
+                                               checked="@selectedLogIds.Contains(log.Id)" 
+                                               @onchange="() => ToggleLogSelectItem(log.Id)" />
+                                    }
                                     <span class="log-status-badge status-@log.Status.ToLower()">@GetLogStatusText(log.Status)</span>
                                     <span class="log-time">@log.StartTime.ToString("yyyy-MM-dd HH:mm:ss")</span>
                                     @if (log.DurationSeconds.HasValue)
@@ -195,9 +202,29 @@
                     }
                 </div>
                 <div class="chat-input-area">
-                    <div class="chat-input-footer" style="justify-content: flex-end;">
-                        <button class="btn" @onclick="(() => { selectedScheduledTaskId = null; selectedTaskLogs.Clear(); StateHasChanged(); })">关闭</button>
-                        <button class="btn btn-primary" @onclick="(() => { _ = ExecuteTaskNow(selectedScheduledTaskId.Value); _ = LoadTaskExecutionLogs(selectedScheduledTaskId.Value); })">重新执行</button>
+                    <div class="chat-input-footer" style="justify-content: space-between;">
+                        @if (isLogSelectionMode)
+                        {
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-sm" @onclick="ToggleLogSelectAll">@GetLogSelectAllText()</button>
+                                <button class="btn btn-sm btn-danger" disabled="@(selectedLogIds.Count == 0)" @onclick="ConfirmBatchDeleteLogs">删除选中</button>
+                            </div>
+                        }
+                        else
+                        {
+                            <div></div>
+                        }
+                        <div style="display: flex; gap: 8px;">
+                            @if (!isLogSelectionMode)
+                            {
+                                <button class="btn" @onclick="(() => { selectedScheduledTaskId = null; selectedTaskLogs.Clear(); isLogSelectionMode = false; selectedLogIds.Clear(); StateHasChanged(); })">关闭</button>
+                                <button class="btn" @onclick="ToggleLogSelectionMode">多选</button>
+                            }
+                            else
+                            {
+                                <button class="btn" @onclick="ExitLogSelectionMode">退出多选</button>
+                            }
+                        </div>
                     </div>
                 </div>
             }
@@ -429,6 +456,27 @@
     </div>
 }
 
+<!-- Batch Delete Confirmation Modal -->
+@if (showBatchDeleteConfirm)
+{
+    <div class="scheduled-task-dialog">
+        <div class="dialog-overlay" @onclick="(() => showBatchDeleteConfirm = false)"></div>
+        <div class="dialog-content confirm-dialog">
+            <div class="dialog-header">
+                <h3>确认批量删除</h3>
+                <button class="dialog-close" @onclick="() => showBatchDeleteConfirm = false">@IconSvg("close")</button>
+            </div>
+            <div class="dialog-body">
+                <p class="confirm-message">确定要删除选中的 @selectedLogIds.Count 条执行日志吗？此操作不可撤销。</p>
+            </div>
+            <div class="dialog-footer">
+                <button class="btn" @onclick="() => showBatchDeleteConfirm = false">取消</button>
+                <button class="btn btn-danger" @onclick="BatchDeleteLogs">删除</button>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private List<ChatSessionDto> sessions = new();
     private List<ChatMessageDto> messages = new();
@@ -466,6 +514,11 @@
     private List<TaskExecutionLogDto> selectedTaskLogs = new();
     private bool loadingTaskLogs;
     private Guid? showTaskMenu;
+
+    // 日志多选模式相关
+    private bool isLogSelectionMode = false;
+    private HashSet<Guid> selectedLogIds = new();
+    private bool showBatchDeleteConfirm;
 
     protected override async Task OnInitializedAsync()
     {
@@ -531,6 +584,78 @@
             "Running" => "运行中",
             _ => status
         };
+    }
+
+    // 日志多选模式相关方法
+    private void ToggleLogSelectionMode()
+    {
+        isLogSelectionMode = !isLogSelectionMode;
+        if (!isLogSelectionMode)
+        {
+            selectedLogIds.Clear();
+        }
+    }
+
+    private void ExitLogSelectionMode()
+    {
+        isLogSelectionMode = false;
+        selectedLogIds.Clear();
+    }
+
+    private bool IsAllLogsSelected()
+    {
+        return selectedTaskLogs.Count > 0 && selectedLogIds.Count == selectedTaskLogs.Count;
+    }
+
+    private void ToggleLogSelectAll()
+    {
+        if (IsAllLogsSelected())
+        {
+            selectedLogIds.Clear();
+        }
+        else
+        {
+            selectedLogIds = new HashSet<Guid>(selectedTaskLogs.Select(l => l.Id));
+        }
+    }
+
+    private string GetLogSelectAllText()
+    {
+        return IsAllLogsSelected() ? "取消全选" : "全选";
+    }
+
+    private void ToggleLogSelectItem(Guid logId)
+    {
+        if (selectedLogIds.Contains(logId))
+        {
+            selectedLogIds.Remove(logId);
+        }
+        else
+        {
+            selectedLogIds.Add(logId);
+        }
+    }
+
+    private void ConfirmBatchDeleteLogs()
+    {
+        if (selectedLogIds.Count > 0)
+        {
+            showBatchDeleteConfirm = true;
+        }
+    }
+
+    private async Task BatchDeleteLogs()
+    {
+        foreach (var logId in selectedLogIds.ToList())
+        {
+            await TaskExecutionLogAppService.DeleteAsync(logId);
+        }
+        
+        showBatchDeleteConfirm = false;
+        selectedLogIds.Clear();
+        isLogSelectionMode = false;
+        await LoadTaskExecutionLogs(selectedScheduledTaskId.Value);
+        StateHasChanged();
     }
 
     private async Task SwitchTab(string tab)

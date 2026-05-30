@@ -1,8 +1,10 @@
 using System.Linq.Dynamic.Core;
 using AutoMapper;
 using H.Assistant.Application.Contracts;
+using H.Assistant.Core;
 using H.Assistant.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Entities;
@@ -18,22 +20,25 @@ public class AssistantScheduledTaskAppService : ApplicationService, IScheduledTa
 {
     private readonly IRepository<ScheduledTaskEntity, Guid> _taskRepository;
     private readonly IRepository<TaskExecutionLogEntity, Guid> _logRepository;
-    private readonly IAssistantChatAppService _chatAppService;
     private readonly IMapper _objectMapper;
     private readonly IAsyncQueryableExecuter _asyncExecuter;
+    private readonly AgentFactory _agentFactory;
+    private readonly IServiceProvider _serviceProvider;
 
     public AssistantScheduledTaskAppService(
         IRepository<ScheduledTaskEntity, Guid> taskRepository,
         IRepository<TaskExecutionLogEntity, Guid> logRepository,
-        IAssistantChatAppService chatAppService,
         IMapper objectMapper,
-        IAsyncQueryableExecuter asyncExecuter)
+        IAsyncQueryableExecuter asyncExecuter,
+        AgentFactory agentFactory,
+        IServiceProvider serviceProvider)
     {
         _taskRepository = taskRepository;
         _logRepository = logRepository;
-        _chatAppService = chatAppService;
         _objectMapper = objectMapper;
         _asyncExecuter = asyncExecuter;
+        _agentFactory = agentFactory;
+        _serviceProvider = serviceProvider;
     }
 
     public async Task<PagedResultDto<ScheduledTaskDto>> GetListAsync(ScheduledTaskQueryDto input)
@@ -180,13 +185,7 @@ public class AssistantScheduledTaskAppService : ApplicationService, IScheduledTa
 
     public async Task ExecuteNowAsync(Guid id)
     {
-        var task = await _taskRepository.FindAsync(id);
-        if (task == null)
-        {
-            throw new EntityNotFoundException(typeof(ScheduledTaskEntity), id);
-        }
-
-        await ExecuteTaskAsync(task.Id);
+        await ExecuteTaskAsync(id);
     }
 
     public async Task<List<TaskExecutionLogDto>> GetExecutionLogsAsync(Guid taskId, int maxResultCount = 10)
@@ -222,7 +221,7 @@ public class AssistantScheduledTaskAppService : ApplicationService, IScheduledTa
         var task = await _taskRepository.FindAsync(taskId);
         if (task == null)
         {
-            throw new EntityNotFoundException(typeof(ScheduledTaskEntity), taskId);
+            return;
         }
 
         await ExecuteTaskInternalAsync(task);
@@ -230,7 +229,111 @@ public class AssistantScheduledTaskAppService : ApplicationService, IScheduledTa
 
     private async Task ExecuteTaskInternalAsync(ScheduledTaskEntity task)
     {
-        
+        var startTime = DateTime.UtcNow;
+        var taskId = task.Id;
+        var taskName = task.TaskName;
+        var promptContent = task.PromptContent;
+        var agentType = task.AgentType;
+        var modelConfigId = task.ModelConfigId;
+        var scheduleType = task.ScheduleType;
+        var cronExpression = task.CronExpression;
+        var hour = task.Hour;
+        var minute = task.Minute;
+        var dayOfWeek = task.DayOfWeek;
+        var dayOfMonth = task.DayOfMonth;
+
+        // 异步后台执行任务 - 在 Task.Run 内部创建新的 scope
+        _ = Task.Run(async () =>
+        {
+            using var scope = _serviceProvider.CreateScope();
+            try
+            {
+                var logRepository = scope.ServiceProvider.GetRequiredService<IRepository<TaskExecutionLogEntity, Guid>>();
+                var taskRepository = scope.ServiceProvider.GetRequiredService<IRepository<ScheduledTaskEntity, Guid>>();
+                var agentFactory = scope.ServiceProvider.GetRequiredService<AgentFactory>();
+
+                // 获取 Agent 实例
+                IAgentInstance? agent = await agentFactory.CreateAgentAsync(agentType, modelConfigId);
+                
+                if (agent == null)
+                {
+                    throw new InvalidOperationException($"无法创建 Agent 实例: {agentType}");
+                }
+
+                // 执行 Prompt
+                var response = await agent.ProcessMessageAsync(promptContent, new List<string>());
+
+                // 插入成功日志
+                await logRepository.InsertAsync(new TaskExecutionLogEntity
+                {
+                    TaskId = taskId,
+                    StartTime = startTime,
+                    EndTime = DateTime.UtcNow,
+                    Status = "Success",
+                    Result = response
+                });
+
+                // 更新任务执行统计
+                var currentTask = await taskRepository.FindAsync(taskId);
+                if (currentTask != null)
+                {
+                    currentTask.LastExecutionTime = DateTime.UtcNow;
+                    currentTask.ExecutionCount++;
+                    currentTask.NextExecutionTime = CalculateNextExecutionTime(
+                        scheduleType, cronExpression, hour, minute, dayOfWeek, dayOfMonth);
+
+                    if (scheduleType == "Once")
+                    {
+                        currentTask.Status = "Completed";
+                        currentTask.IsEnabled = false;
+                    }
+
+                    await taskRepository.UpdateAsync(currentTask);
+                }
+            }
+            catch (Exception ex)
+            {
+                try
+                {
+                    var logRepository = scope.ServiceProvider.GetRequiredService<IRepository<TaskExecutionLogEntity, Guid>>();
+                    // 插入失败日志
+                    await logRepository.InsertAsync(new TaskExecutionLogEntity
+                    {
+                        TaskId = taskId,
+                        StartTime = startTime,
+                        EndTime = DateTime.UtcNow,
+                        Status = "Failed",
+                        ErrorMessage = ex.Message
+                    });
+                }
+                catch
+                {
+                    // 忽略日志记录失败
+                }
+            }
+        });
+    }
+
+    /// <summary>
+    /// 更新任务执行统计信息
+    /// </summary>
+    private async Task UpdateTaskExecutionStatsAsync(ScheduledTaskEntity task)
+    {
+        task.LastExecutionTime = DateTime.UtcNow;
+        task.ExecutionCount++;
+
+        // 计算下次执行时间
+        task.NextExecutionTime = CalculateNextExecutionTime(
+            task.ScheduleType, task.CronExpression, task.Hour, task.Minute, task.DayOfWeek, task.DayOfMonth);
+
+        // 如果是一次性任务,标记为完成
+        if (task.ScheduleType == "Once")
+        {
+            task.Status = "Completed";
+            task.IsEnabled = false;
+        }
+
+        await _taskRepository.UpdateAsync(task);
     }
 
     /// <summary>

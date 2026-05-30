@@ -32,6 +32,7 @@
                 </select>
             </div>
             <button class="btn btn-primary" @onclick="LoadLogs">查询</button>
+            <button class="btn" @onclick="ToggleSelectionMode">@GetSelectionButtonText()</button>
         </div>
 
         <div class="logs-table-container">
@@ -44,6 +45,14 @@
                 <table class="logs-table">
                     <thead>
                         <tr>
+                            @if (isSelectionMode)
+                            {
+                                <th style="width: 50px;">
+                                    <input type="checkbox" 
+                                           checked="@IsAllSelected()" 
+                                           @onchange="ToggleSelectAll" />
+                                </th>
+                            }
                             <th>任务名称</th>
                             <th>状态</th>
                             <th>开始时间</th>
@@ -55,6 +64,14 @@
                         @foreach (var log in logs)
                         {
                             <tr>
+                                @if (isSelectionMode)
+                                {
+                                    <td>
+                                        <input type="checkbox" 
+                                               checked="@selectedLogIds.Contains(log.Id)" 
+                                               @onchange="() => ToggleSelectItem(log.Id)" />
+                                    </td>
+                                }
                                 <td>@log.TaskName</td>
                                 <td>
                                     <span class="log-status status-@log.Status.ToLower()">
@@ -65,11 +82,25 @@
                                 <td>@(log.DurationSeconds.HasValue ? $"{log.DurationSeconds.Value}秒" : "-")</td>
                                 <td>
                                     <button class="btn-link" @onclick="() => ViewLogDetails(log.Id)">查看详情</button>
+                                    @if (!isSelectionMode)
+                                    {
+                                        <button class="btn-link btn-delete" @onclick="() => ConfirmDelete(log.Id)">删除</button>
+                                    }
                                 </td>
                             </tr>
                         }
                     </tbody>
                 </table>
+
+                <!-- 多选工具栏 -->
+                @if (isSelectionMode)
+                {
+                    <div class="selection-toolbar">
+                        <span class="selected-count">已选择 @selectedLogIds.Count 项</span>
+                        <button class="btn btn-sm" @onclick="ToggleSelectAll">@GetSelectAllText()</button>
+                        <button class="btn btn-sm btn-danger" disabled="@(selectedLogIds.Count == 0)" @onclick="ConfirmBatchDelete">删除所选</button>
+                    </div>
+                }
 
                 <div class="pagination">
                     <span class="total">共 @totalCount 条记录</span>
@@ -141,6 +172,48 @@
     </div>
 }
 
+<!-- Delete Confirmation Modal -->
+@if (showDeleteConfirm)
+{
+    <div class="scheduled-task-dialog">
+        <div class="dialog-overlay" @onclick="(() => showDeleteConfirm = false)"></div>
+        <div class="dialog-content confirm-dialog">
+            <div class="dialog-header">
+                <h3>确认删除</h3>
+                <button class="dialog-close" @onclick="() => showDeleteConfirm = false">@IconSvg("close")</button>
+            </div>
+            <div class="dialog-body">
+                <p class="confirm-message">确定要删除这条执行日志吗？此操作不可撤销。</p>
+            </div>
+            <div class="dialog-footer">
+                <button class="btn" @onclick="() => showDeleteConfirm = false">取消</button>
+                <button class="btn btn-danger" @onclick="DeleteLog">删除</button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Batch Delete Confirmation Modal -->
+@if (showBatchDeleteConfirm)
+{
+    <div class="scheduled-task-dialog">
+        <div class="dialog-overlay" @onclick="(() => showBatchDeleteConfirm = false)"></div>
+        <div class="dialog-content confirm-dialog">
+            <div class="dialog-header">
+                <h3>确认批量删除</h3>
+                <button class="dialog-close" @onclick="() => showBatchDeleteConfirm = false">@IconSvg("close")</button>
+            </div>
+            <div class="dialog-body">
+                <p class="confirm-message">确定要删除选中的 @selectedLogIds.Count 条执行日志吗？此操作不可撤销。</p>
+            </div>
+            <div class="dialog-footer">
+                <button class="btn" @onclick="() => showBatchDeleteConfirm = false">取消</button>
+                <button class="btn btn-danger" @onclick="BatchDeleteLogs">删除</button>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private void HideLogDetail() => showLogDetail = false;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
@@ -156,6 +229,16 @@
 
     private bool showLogDetail;
     private TaskExecutionLogDto? selectedLog;
+
+    private bool showDeleteConfirm;
+    private Guid? deleteLogId;
+
+    // 批量删除相关
+    private bool showBatchDeleteConfirm;
+
+    // 多选模式相关
+    private bool isSelectionMode = false;
+    private HashSet<Guid> selectedLogIds = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -214,6 +297,97 @@
     {
         selectedLog = await TaskLogAppService.GetAsync(logId);
         showLogDetail = true;
+    }
+
+    private void ConfirmDelete(Guid logId)
+    {
+        deleteLogId = logId;
+        showDeleteConfirm = true;
+    }
+
+    private async Task DeleteLog()
+    {
+        if (deleteLogId.HasValue)
+        {
+            await TaskLogAppService.DeleteAsync(deleteLogId.Value);
+            showDeleteConfirm = false;
+            deleteLogId = null;
+            await LoadLogs();
+        }
+    }
+
+    // 多选模式切换
+    private void ToggleSelectionMode()
+    {
+        isSelectionMode = !isSelectionMode;
+        if (!isSelectionMode)
+        {
+            selectedLogIds.Clear();
+        }
+    }
+
+    private string GetSelectionButtonText()
+    {
+        return isSelectionMode ? "退出多选" : "多选";
+    }
+
+    // 全选/取消全选
+    private bool IsAllSelected()
+    {
+        return logs.Count > 0 && selectedLogIds.Count == logs.Count;
+    }
+
+    private void ToggleSelectAll()
+    {
+        if (IsAllSelected())
+        {
+            selectedLogIds.Clear();
+        }
+        else
+        {
+            selectedLogIds = new HashSet<Guid>(logs.Select(l => l.Id));
+        }
+    }
+
+    private string GetSelectAllText()
+    {
+        return IsAllSelected() ? "取消全选" : "全选";
+    }
+
+    // 切换单个项目选中状态
+    private void ToggleSelectItem(Guid logId)
+    {
+        if (selectedLogIds.Contains(logId))
+        {
+            selectedLogIds.Remove(logId);
+        }
+        else
+        {
+            selectedLogIds.Add(logId);
+        }
+    }
+
+    // 批量删除确认
+    private void ConfirmBatchDelete()
+    {
+        if (selectedLogIds.Count > 0)
+        {
+            showBatchDeleteConfirm = true;
+        }
+    }
+
+    // 批量删除执行
+    private async Task BatchDeleteLogs()
+    {
+        foreach (var logId in selectedLogIds.ToList())
+        {
+            await TaskLogAppService.DeleteAsync(logId);
+        }
+        
+        showBatchDeleteConfirm = false;
+        selectedLogIds.Clear();
+        isSelectionMode = false;
+        await LoadLogs();
     }
 
     private string GetStatusText(string status)

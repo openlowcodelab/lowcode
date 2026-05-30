@@ -53,15 +53,7 @@ public class AssistantChatAppService : ApplicationService, IAssistantChatAppServ
         await _sessionAppService.AddMessageAsync(sessionId, userMessage);
         
         // 获取 Assistant 实例
-        IAgentInstance? agent;
-        if (input.ModelConfigId.HasValue)
-        {
-            agent = await _agentFactory.CreateAgentAsync(agentType, input.ModelConfigId.Value);
-        }
-        else
-        {
-            agent = await _agentFactory.CreateAgentAsync(agentType, input.ProviderName);
-        }
+        IAgentInstance? agent = await _agentFactory.CreateAgentAsync(agentType, input.ModelConfigId);
         
         if (agent == null)
         {
