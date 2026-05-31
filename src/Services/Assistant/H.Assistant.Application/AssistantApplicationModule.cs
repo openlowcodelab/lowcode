@@ -36,6 +36,6 @@ public class AssistantApplicationModule : AbpModule
         context.Services.AddTransient<AgentFactory>();
 
         // 注册定时任务 Worker
-        context.Services.AddHostedService<ScheduledTaskWorker>();
+        context.Services.AddHostedService<TaskWorker>();
     }
 }

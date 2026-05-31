@@ -13,13 +13,13 @@ public class FrameworkAgent
 {
     private readonly AIAgent _agent;
     private readonly ILLMProvider _llmProvider;
-    private readonly AgentDefinitionDto _definition;
-    private readonly List<SkillDefinitionDto> _skills;
+    private readonly AgentDto _definition;
+    private readonly List<SkillDto> _skills;
 
     public FrameworkAgent(
         ILLMProvider llmProvider,
-        AgentDefinitionDto definition,
-        List<SkillDefinitionDto> skills)
+        AgentDto definition,
+        List<SkillDto> skills)
     {
         _llmProvider = llmProvider;
         _definition = definition;
@@ -120,7 +120,7 @@ public class FrameworkAgent
     /// <summary>
     /// 从技能定义创建工具
     /// </summary>
-    private AIFunction? CreateToolFromSkill(SkillDefinitionDto skill)
+    private AIFunction? CreateToolFromSkill(SkillDto skill)
     {
         if (string.IsNullOrWhiteSpace(skill.ImplementationClass))
         {

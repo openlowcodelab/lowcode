@@ -1,9 +1,9 @@
 @page "/agent/settings"
 
 @layout AssistantLayout
-@inject ILLMConfigAppService LLMConfigAppService
-@inject ISkillDefinitionAppService SkillDefinitionAppService
-@inject IAgentDefinitionAppService AgentDefinitionAppService
+@inject ILLMAppService LLMConfigAppService
+@inject ISkillAppService SkillDefinitionAppService
+@inject IAgentAppService AgentDefinitionAppService
 @inject NavigationManager Navigation
 
 <!-- Toast Notification -->
@@ -612,7 +612,7 @@
     private bool savingModel;
     private bool showModelDialog;
     private bool isEditing;
-    private List<LLMConfigDto> llmConfigs = new();
+    private List<LLMDto> llmConfigs = new();
 
     private ModelEditModel editModel = new();
 
@@ -676,14 +676,14 @@
     }
     private string? currentApiKeyUrl => currentProviderDef?.ApiKeyUrl;
 
-    private List<AgentDefinitionDto> agentsFromDb = new();
-    private Dictionary<Guid, List<SkillDefinitionDto>> agentSkillDetails = new();
+    private List<AgentDto> agentsFromDb = new();
+    private Dictionary<Guid, List<SkillDto>> agentSkillDetails = new();
     private bool loadingAgents;
     private bool showAgentDialog;
     private bool isEditingAgent;
     private bool savingAgent;
     private AgentEditModel editAgent = new();
-    private List<SkillDefinitionDto> availableSkills = new();
+    private List<SkillDto> availableSkills = new();
     private string agentSkillSearchText = "";
 
     private List<AgentDefinition> agentDefinitions = new();
@@ -693,7 +693,7 @@
     private bool savingSkill;
     private bool showSkillDialog;
     private bool isEditingSkill;
-    private List<SkillDefinitionDto> skills = new();
+    private List<SkillDto> skills = new();
     private List<ToolDisplayInfo> tools = new();
     private string selectedSkillTab = "skill";
     private SkillEditModel editSkill = new();
@@ -735,7 +735,7 @@
         loadingAgents = true;
         try
         {
-            var result = await AgentDefinitionAppService.GetListAsync(new AgentDefinitionQueryDto
+            var result = await AgentDefinitionAppService.GetListAsync(new AgentQueryDto
             {
                 MaxResultCount = 100
             });
@@ -765,7 +765,7 @@
         catch (Exception ex) { ShowToast("加载可用技能失败: " + ex.Message, "error"); }
     }
 
-    private IEnumerable<IGrouping<string, SkillDefinitionDto>> FilteredAvailableSkills
+    private IEnumerable<IGrouping<string, SkillDto>> FilteredAvailableSkills
     {
         get
         {
@@ -798,7 +798,7 @@
         showAgentDialog = true;
     }
 
-    private async void EditAgent(AgentDefinitionDto agent)
+    private async void EditAgent(AgentDto agent)
     {
         isEditingAgent = true;
         editAgent = new AgentEditModel
@@ -843,7 +843,7 @@
         {
             if (isEditingAgent && editAgent.Id.HasValue)
             {
-                await AgentDefinitionAppService.UpdateAsync(editAgent.Id.Value, new UpdateAgentDefinitionDto
+                await AgentDefinitionAppService.UpdateAsync(editAgent.Id.Value, new UpdateAgentDto
                 {
                     DisplayName = editAgent.DisplayName,
                     Description = editAgent.Description,
@@ -859,7 +859,7 @@
             }
             else
             {
-                await AgentDefinitionAppService.CreateAsync(new CreateAgentDefinitionDto
+                await AgentDefinitionAppService.CreateAsync(new CreateAgentDto
                 {
                     AgentType = editAgent.AgentType.Trim().ToLower(),
                     DisplayName = editAgent.DisplayName,
@@ -892,7 +892,7 @@
         catch (Exception ex) { ShowToast("删除失败: " + ex.Message, "error"); }
     }
 
-    private async Task ToggleAgent(AgentDefinitionDto agent)
+    private async Task ToggleAgent(AgentDto agent)
     {
         try
         {
@@ -945,7 +945,7 @@
         showModelDialog = true;
     }
 
-    private void EditModel(LLMConfigDto config)
+    private void EditModel(LLMDto config)
     {
         isEditing = true;
         editModel = new ModelEditModel
@@ -977,7 +977,7 @@
         {
             if (isEditing && editModel.Id.HasValue)
             {
-                await LLMConfigAppService.UpdateAsync(editModel.Id.Value, new UpdateLLMConfigDto
+                await LLMConfigAppService.UpdateAsync(editModel.Id.Value, new UpdateLLMDto
                 {
                     ProviderDisplayName = editModel.ProviderDisplayName,
                     ApiKey = editModel.ApiKey,
@@ -992,7 +992,7 @@
             }
             else
             {
-                await LLMConfigAppService.CreateAsync(new CreateLLMConfigDto
+                await LLMConfigAppService.CreateAsync(new CreateLLMDto
                 {
                     ProviderName = editModel.ProviderName.Trim().ToLower(),
                     ProviderDisplayName = editModel.ProviderDisplayName,
@@ -1095,7 +1095,7 @@
         showSkillDialog = true;
     }
 
-    private void EditSkill(SkillDefinitionDto skill)
+    private void EditSkill(SkillDto skill)
     {
         isEditingSkill = true;
         editSkill = new SkillEditModel
@@ -1162,7 +1162,7 @@
         finally { savingSkill = false; }
     }
 
-    private async Task ToggleSkill(SkillDefinitionDto skill)
+    private async Task ToggleSkill(SkillDto skill)
     {
         try
         {

@@ -7,9 +7,9 @@ namespace H.Assistant.Core;
 /// </summary>
 public class LLMProviderFactory
 {
-    private readonly ILLMConfigAppService _configService;
+    private readonly ILLMAppService _configService;
     
-    public LLMProviderFactory(ILLMConfigAppService configService)
+    public LLMProviderFactory(ILLMAppService configService)
     {
         _configService = configService;
     }
@@ -44,7 +44,7 @@ public class LLMProviderFactory
     /// <summary>
     /// 根据 config 创建 Provider
     /// </summary>
-    private static ILLMProvider? CreateFromConfig(LLMConfigDto? config)
+    private static ILLMProvider? CreateFromConfig(LLMDto? config)
     {
         if (config == null || !config.IsEnabled || string.IsNullOrEmpty(config.ApiKey))
             return null;

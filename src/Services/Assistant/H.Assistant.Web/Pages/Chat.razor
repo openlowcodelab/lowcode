@@ -2,10 +2,10 @@
 @page "/assistant/chat"
 
 @layout AssistantLayout
-@inject IAssistantChatAppService AssistantChatAppService
-@inject ILLMConfigAppService LLMConfigAppService
-@inject IScheduledTaskAppService ScheduledTaskAppService
-@inject ITaskExecutionLogAppService TaskExecutionLogAppService
+@inject IChatMessageAppService ChatMessageAppService
+@inject ILLMAppService LLMAppService
+@inject ITaskAppService TaskAppService
+@inject ITaskLogAppService TaskLogAppService
 @inject NavigationManager Navigation
 @inject IHttpClientFactory HttpClientFactory
 @inject IJSRuntime JS
@@ -33,39 +33,39 @@
             <div class="tab-header">
                 <div class="tab-item @(activeTab == "instant" ? "active" : "")"
                      @onclick="OnClickInstantTab">即时任务</div>
-                <div class="tab-item @(activeTab == "scheduled" ? "active" : "")"
-                     @onclick="OnClickScheduledTab">定时任务</div>
+                <div class="tab-item @(activeTab == "task" ? "active" : "")"
+                     @onclick="OnClickTaskTab">定时任务</div>
             </div>
 
             <div class="panel-content">
                 @if (activeTab == "instant")
                 {
-                    if (loadingSessions)
+                    if (loadingChats)
                     {
                         <div class="loading-spinner"><div class="spinner"></div><span>Loading...</span></div>
                     }
-                    else if (sessions.Any())
+                    else if (chats.Any())
                     {
-                        @foreach (var session in sessions)
+                        @foreach (var chat in chats)
                         {
-                            <div class="session-item @(selectedSessionId == session.Id ? "active" : "")"
-                                 @onclick="() => SelectSession(session.Id)">
+                            <div class="session-item @(selectedChatId == chat.Id ? "active" : "")"
+                                 @onclick="() => SelectChat(chat.Id)">
                                 <div class="session-content-wrapper">
                                     <div class="session-info">
-                                        <div class="session-title">@session.Title</div>
+                                        <div class="session-title">@chat.Title</div>
                                         <div class="session-meta">
-                                            <span class="message-count">@session.MessageCount msgs</span>
-                                            <span class="time">@session.LastMessageTime.ToString("MM-dd HH:mm")</span>
+                                            <span class="message-count">@chat.MessageCount msgs</span>
+                                            <span class="time">@chat.LastMessageTime.ToString("MM-dd HH:mm")</span>
                                         </div>
                                     </div>
                                     <div class="session-actions" @onclick:stopPropagation="true">
-                                        <button class="session-more-btn" @onclick="() => ToggleSessionMenu(session.Id)" title="更多操作">
+                                        <button class="session-more-btn" @onclick="() => ToggleChatMenu(chat.Id)" title="更多操作">
                                             @IconSvg("more")
                                         </button>
-                                        @if (showSessionMenu == session.Id)
+                                        @if (showSessionMenu == chat.Id)
                                         {
                                             <div class="session-dropdown-menu">
-                                                <div class="dropdown-item danger" @onclick="() => DeleteSession(session.Id)">
+                                                <div class="dropdown-item danger" @onclick="() => DeleteChat(chat.Id)">
                                                     @IconSvg("delete") <span>删除</span>
                                                 </div>
                                             </div>
@@ -82,16 +82,16 @@
                 }
                 else
                 {
-                    if (loadingScheduledTasks)
+                    if (loadingTasks)
                     {
                         <div class="loading-spinner"><div class="spinner"></div><span>Loading...</span></div>
                     }
-                    else if (scheduledTasks.Any())
+                    else if (tasks.Any())
                     {
-                        @foreach (var task in scheduledTasks)
+                        @foreach (var task in tasks)
                         {
-                            <div class="scheduled-task-item @(task.IsEnabled ? "" : "disabled") @(selectedScheduledTaskId == task.Id ? "active" : "")"
-                                 @onclick="() => SelectScheduledTask(task.Id)">
+                            <div class="scheduled-task-item @(task.IsEnabled ? "" : "disabled") @(selectedTaskId == task.Id ? "active" : "")"
+                                 @onclick="() => SelectTask(task.Id)">
                                 <div class="task-info">
                                     <div class="task-title">@task.TaskName</div>
                                     <div class="task-meta">
@@ -109,7 +109,7 @@
                                             <div class="dropdown-item" @onclick="() => ExecuteTaskNow(task.Id)">
                                                 @IconSvg("send") <span>立即执行</span>
                                             </div>
-                                            <div class="dropdown-item" @onclick="() => EditScheduledTask(task.Id)">
+                                            <div class="dropdown-item" @onclick="() => EditTask(task.Id)">
                                                 @IconSvg("edit") <span>编辑</span>
                                             </div>
                                             <div class="dropdown-item" @onclick="() => ToggleTaskEnable(task.Id)">
@@ -153,7 +153,7 @@
         </div>
 
         <div class="chat-main-panel">
-            @if (activeTab == "scheduled" && selectedScheduledTaskId.HasValue)
+            @if (activeTab == "task" && selectedTaskId.HasValue)
             {
                 <div class="chat-header">
                     <div class="chat-header-left">
@@ -217,7 +217,7 @@
                         <div style="display: flex; gap: 8px;">
                             @if (!isLogSelectionMode)
                             {
-                                <button class="btn" @onclick="(() => { selectedScheduledTaskId = null; selectedTaskLogs.Clear(); isLogSelectionMode = false; selectedLogIds.Clear(); StateHasChanged(); })">关闭</button>
+                                <button class="btn" @onclick="(() => { selectedTaskId = null; selectedTaskLogs.Clear(); isLogSelectionMode = false; selectedLogIds.Clear(); StateHasChanged(); })">关闭</button>
                                 <button class="btn" @onclick="ToggleLogSelectionMode">多选</button>
                             }
                             else
@@ -249,7 +249,7 @@
                     </div>
                 </div>
             }
-            else if (selectedSessionId.HasValue)
+            else if (selectedChatId.HasValue)
             {
                 <div class="chat-header">
                     <div class="chat-header-left">
@@ -366,7 +366,7 @@
 </div>
 
 <!-- Scheduled Task Dialog -->
-@if (showScheduledTaskDialog)
+@if (showTaskDialog)
 {
     <div class="scheduled-task-dialog">
         <div class="dialog-overlay" @onclick="CloseTaskDialog"></div>
@@ -378,16 +378,16 @@
             <div class="dialog-body">
                 <div class="form-group">
                     <label class="form-label">任务名称 <span class="required">*</span></label>
-                    <input type="text" class="form-input" @bind="newTaskInput.TaskName" placeholder="输入任务名称" />
+                    <input type="text" class="form-input" @bind="newTaskDto.TaskName" placeholder="输入任务名称" />
                 </div>
                 <div class="form-group">
                     <label class="form-label">提示词内容 <span class="required">*</span></label>
-                    <textarea class="form-textarea" @bind="newTaskInput.PromptContent" @bind:event="oninput" placeholder="输入要执行的任务内容..." rows="5"></textarea>
+                    <textarea class="form-textarea" @bind="newTaskDto.PromptContent" @bind:event="oninput" placeholder="输入要执行的任务内容..." rows="5"></textarea>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Agent 类型</label>
-                        <select class="form-select" @bind="newTaskInput.AgentType">
+                        <select class="form-select" @bind="newTaskDto.AgentType">
                             @foreach (var agent in availableAgents)
                             {
                                 <option value="@agent.AgentType">@agent.DisplayName</option>
@@ -396,7 +396,7 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">调度类型</label>
-                        <select class="form-select" @bind="newTaskInput.ScheduleType">
+                        <select class="form-select" @bind="newTaskDto.ScheduleType">
                             <option value="Once">仅一次</option>
                             <option value="Daily">每天</option>
                             <option value="Weekly">每周</option>
@@ -405,50 +405,50 @@
                         </select>
                     </div>
                 </div>
-                @if (newTaskInput.ScheduleType == "Daily" || newTaskInput.ScheduleType == "Weekly" || newTaskInput.ScheduleType == "Monthly")
+                @if (newTaskDto.ScheduleType == "Daily" || newTaskDto.ScheduleType == "Weekly" || newTaskDto.ScheduleType == "Monthly")
                 {
                     <div class="schedule-config">
                         <div class="config-title">执行时间</div>
                         <div class="time-config">
-                            @if (newTaskInput.ScheduleType == "Weekly")
+                            @if (newTaskDto.ScheduleType == "Weekly")
                             {
                                 <div class="time-input-group">
                                     <label>星期</label>
-                                    <select class="form-select" @bind="newTaskInput.DayOfWeek">
+                                    <select class="form-select" @bind="newTaskDto.DayOfWeek">
                                         <option value="1">周一</option><option value="2">周二</option><option value="3">周三</option>
                                         <option value="4">周四</option><option value="5">周五</option><option value="6">周六</option><option value="0">周日</option>
                                     </select>
                                 </div>
                             }
-                            else if (newTaskInput.ScheduleType == "Monthly")
+                            else if (newTaskDto.ScheduleType == "Monthly")
                             {
                                 <div class="time-input-group">
                                     <label>日期</label>
-                                    <input type="number" class="form-input" @bind="newTaskInput.DayOfMonth" min="1" max="31" />
+                                    <input type="number" class="form-input" @bind="newTaskDto.DayOfMonth" min="1" max="31" />
                                 </div>
                             }
                             <div class="time-input-group">
                                 <label>小时</label>
-                                <input type="number" class="form-input" @bind="newTaskInput.Hour" min="0" max="23" />
+                                <input type="number" class="form-input" @bind="newTaskDto.Hour" min="0" max="23" />
                             </div>
                             <div class="time-input-group">
                                 <label>分钟</label>
-                                <input type="number" class="form-input" @bind="newTaskInput.Minute" min="0" max="59" />
+                                <input type="number" class="form-input" @bind="newTaskDto.Minute" min="0" max="59" />
                             </div>
                         </div>
                     </div>
                 }
-                else if (newTaskInput.ScheduleType == "Cron")
+                else if (newTaskDto.ScheduleType == "Cron")
                 {
                     <div class="schedule-config">
                         <div class="config-title">Cron 表达式</div>
-                        <input type="text" class="form-input" @bind="newTaskInput.CronExpression" placeholder="例如: 0 */2 * * *" />
+                        <input type="text" class="form-input" @bind="newTaskDto.CronExpression" placeholder="例如: 0 */2 * * *" />
                     </div>
                 }
             </div>
             <div class="dialog-footer">
                 <button class="btn" @onclick="CloseTaskDialog">取消</button>
-                <button class="btn btn-primary" @onclick="SaveScheduledTask" disabled="@(string.IsNullOrWhiteSpace(newTaskInput.TaskName) || string.IsNullOrWhiteSpace(newTaskInput.PromptContent))">
+                <button class="btn btn-primary" @onclick="SaveScheduledTask" disabled="@(string.IsNullOrWhiteSpace(newTaskDto.TaskName) || string.IsNullOrWhiteSpace(newTaskDto.PromptContent))">
                     @(editingTaskId.HasValue ? "保存" : "创建")
                 </button>
             </div>
@@ -478,15 +478,15 @@
 }
 
 @code {
-    private List<ChatSessionDto> sessions = new();
+    private List<ChatDto> chats = new();
     private List<ChatMessageDto> messages = new();
     private List<AgentConfigDto> availableAgents = new();
-    private List<LLMConfigDto> availableModels = new();
-    private Guid? selectedSessionId;
-    private string selectedAgentType = "general";
+    private List<LLMDto> availableModels = new();
+    private Guid? selectedChatId;
+    private string selectedAgentType = "";  // 默认为空,使用默认 Agent
     private string inputMessage = string.Empty;
     private string selectedProviderName = string.Empty;
-    private bool loadingSessions;
+    private bool loadingChats;
     private bool loadingMessages;
     private bool isSending;
     private bool isNewTask;
@@ -499,19 +499,18 @@
     private string toastMessage = string.Empty;
     private string toastType = "info";
     private bool toastVisible;
-
-    // Tab & Scheduled Tasks
+    
     private string activeTab = "instant";
-    private bool loadingScheduledTasks;
-    private List<ScheduledTaskDto> scheduledTasks = new();
-    private bool showScheduledTaskDialog;
-    private CreateScheduledTaskInputDto newTaskInput = new();
+    private bool loadingTasks;
+    private List<TaskDto> tasks = new();
+    private bool showTaskDialog;
+    private CreateTaskDto newTaskDto = new();
     private Guid? editingTaskId;
 
     // 定时任务选中与执行日志
-    private Guid? selectedScheduledTaskId;
+    private Guid? selectedTaskId;
     private string selectedTaskName = string.Empty;
-    private List<TaskExecutionLogDto> selectedTaskLogs = new();
+    private List<TaskLogDto> selectedTaskLogs = new();
     private bool loadingTaskLogs;
     private Guid? showTaskMenu;
 
@@ -528,39 +527,39 @@
     }
 
     private void OnClickInstantTab() => _ = SwitchTab("instant");
-    private void OnClickScheduledTab() => _ = SwitchTab("scheduled");
+    private void OnClickTaskTab() => _ = SwitchTab("task");
 
     private void OnClickCreateTask()
     {
         if (activeTab == "instant")
         {
-            _ = CreateNewTask();
+            _ = CreateNewChat();
         }
         else
         {
-            CreateNewScheduledTask();
+            CreateNewTask();
         }
     }
 
     private string GetCreateButtonTitle() => activeTab == "instant" ? "新建即时任务" : "新建定时任务";
 
-    private async Task SelectScheduledTask(Guid taskId)
+    private async Task SelectTask(Guid taskId)
     {
-        selectedScheduledTaskId = taskId;
-        var task = scheduledTasks.FirstOrDefault(t => t.Id == taskId);
+        selectedTaskId = taskId;
+        var task = tasks.FirstOrDefault(t => t.Id == taskId);
         selectedTaskName = task?.TaskName ?? "";
-        selectedSessionId = null;
+        selectedChatId = null;
         isNewTask = false;
-        await LoadTaskExecutionLogs(taskId);
+        await LoadTaskLogs(taskId);
         StateHasChanged();
     }
 
-    private async Task LoadTaskExecutionLogs(Guid taskId)
+    private async Task LoadTaskLogs(Guid taskId)
     {
         loadingTaskLogs = true;
         try
         {
-            var result = await TaskExecutionLogAppService.GetListAsync(new TaskExecutionLogQueryDto
+            var result = await TaskLogAppService.GetListAsync(new TaskLogQueryDto
             {
                 TaskId = taskId,
                 MaxResultCount = 20
@@ -648,41 +647,41 @@
     {
         foreach (var logId in selectedLogIds.ToList())
         {
-            await TaskExecutionLogAppService.DeleteAsync(logId);
+            await TaskLogAppService.DeleteAsync(logId);
         }
         
         showBatchDeleteConfirm = false;
         selectedLogIds.Clear();
         isLogSelectionMode = false;
-        await LoadTaskExecutionLogs(selectedScheduledTaskId.Value);
+        await LoadTaskLogs(selectedTaskId.Value);
         StateHasChanged();
     }
 
     private async Task SwitchTab(string tab)
     {
         activeTab = tab;
-        if (tab == "scheduled" && !scheduledTasks.Any())
+        if (tab == "task" && !tasks.Any())
         {
-            await LoadScheduledTasks();
+            await LoadTasks();
         }
         StateHasChanged();
     }
 
-    private async Task LoadScheduledTasks()
+    private async Task LoadTasks()
     {
-        loadingScheduledTasks = true;
+        loadingTasks = true;
         try
         {
-            var result = await ScheduledTaskAppService.GetListAsync(new ScheduledTaskQueryDto { MaxResultCount = 50 });
-            scheduledTasks = result.Items.ToList();
+            var result = await TaskAppService.GetListAsync(new TaskQueryDto { MaxResultCount = 50 });
+            tasks = result.Items.ToList();
         }
-        finally { loadingScheduledTasks = false; }
+        finally { loadingTasks = false; }
     }
 
-    private void CreateNewScheduledTask()
+    private void CreateNewTask()
     {
         editingTaskId = null;
-        newTaskInput = new CreateScheduledTaskInputDto
+        newTaskDto = new CreateTaskDto
         {
             TaskName = "",
             TaskDescription = "",
@@ -693,16 +692,16 @@
             Minute = 0,
             IsEnabled = true
         };
-        showScheduledTaskDialog = true;
+        showTaskDialog = true;
     }
 
-    private void EditScheduledTask(Guid taskId)
+    private void EditTask(Guid taskId)
     {
-        var task = scheduledTasks.FirstOrDefault(t => t.Id == taskId);
+        var task = tasks.FirstOrDefault(t => t.Id == taskId);
         if (task != null)
         {
             editingTaskId = taskId;
-            newTaskInput = new CreateScheduledTaskInputDto
+            newTaskDto = new CreateTaskDto
             {
                 TaskName = task.TaskName,
                 TaskDescription = task.TaskDescription,
@@ -717,13 +716,13 @@
                 DayOfMonth = task.DayOfMonth,
                 IsEnabled = task.IsEnabled
             };
-            showScheduledTaskDialog = true;
+            showTaskDialog = true;
         }
     }
 
     private async Task CloseTaskDialog()
     {
-        showScheduledTaskDialog = false;
+        showTaskDialog = false;
         editingTaskId = null;
     }
 
@@ -733,30 +732,30 @@
         {
             if (editingTaskId.HasValue)
             {
-                await ScheduledTaskAppService.UpdateAsync(editingTaskId.Value, new UpdateScheduledTaskInputDto
+                await TaskAppService.UpdateAsync(editingTaskId.Value, new UpdateTaskDto
                 {
-                    TaskName = newTaskInput.TaskName,
-                    TaskDescription = newTaskInput.TaskDescription,
-                    PromptContent = newTaskInput.PromptContent,
-                    AgentType = newTaskInput.AgentType,
-                    ModelConfigId = newTaskInput.ModelConfigId,
-                    ScheduleType = newTaskInput.ScheduleType,
-                    CronExpression = newTaskInput.CronExpression,
-                    Hour = newTaskInput.Hour,
-                    Minute = newTaskInput.Minute,
-                    DayOfWeek = newTaskInput.DayOfWeek,
-                    DayOfMonth = newTaskInput.DayOfMonth,
-                    IsEnabled = newTaskInput.IsEnabled
+                    TaskName = newTaskDto.TaskName,
+                    TaskDescription = newTaskDto.TaskDescription,
+                    PromptContent = newTaskDto.PromptContent,
+                    AgentType = newTaskDto.AgentType,
+                    ModelConfigId = newTaskDto.ModelConfigId,
+                    ScheduleType = newTaskDto.ScheduleType,
+                    CronExpression = newTaskDto.CronExpression,
+                    Hour = newTaskDto.Hour,
+                    Minute = newTaskDto.Minute,
+                    DayOfWeek = newTaskDto.DayOfWeek,
+                    DayOfMonth = newTaskDto.DayOfMonth,
+                    IsEnabled = newTaskDto.IsEnabled
                 });
                 ShowToast("任务已更新", "success");
             }
             else
             {
-                await ScheduledTaskAppService.CreateAsync(newTaskInput);
+                await TaskAppService.CreateAsync(newTaskDto);
                 ShowToast("任务已创建", "success");
             }
             await CloseTaskDialog();
-            await LoadScheduledTasks();
+            await LoadTasks();
         }
         catch (Exception ex)
         {
@@ -768,8 +767,8 @@
     {
         try
         {
-            await ScheduledTaskAppService.ToggleEnableAsync(taskId);
-            await LoadScheduledTasks();
+            await TaskAppService.ToggleEnableAsync(taskId);
+            await LoadTasks();
         }
         catch (Exception ex) { ShowToast("操作失败: " + ex.Message, "error"); }
     }
@@ -778,9 +777,9 @@
     {
         try
         {
-            await ScheduledTaskAppService.ExecuteNowAsync(taskId);
+            await TaskAppService.ExecuteNowAsync(taskId);
             ShowToast("任务已触发执行", "success");
-            await LoadScheduledTasks();
+            await LoadTasks();
         }
         catch (Exception ex) { ShowToast("执行失败: " + ex.Message, "error"); }
     }
@@ -789,9 +788,9 @@
     {
         try
         {
-            await ScheduledTaskAppService.DeleteAsync(taskId);
+            await TaskAppService.DeleteAsync(taskId);
             ShowToast("任务已删除", "success");
-            await LoadScheduledTasks();
+            await LoadTasks();
         }
         catch (Exception ex) { ShowToast("删除失败: " + ex.Message, "error"); }
     }
@@ -808,18 +807,18 @@
 
     private async Task LoadSessions()
     {
-        loadingSessions = true;
+        loadingChats = true;
         try
         {
-            var result = await AssistantChatAppService.GetSessionsAsync(new SessionQueryDto { MaxResultCount = 50, SkipCount = 0 });
-            sessions = result.Items.ToList();
+            var result = await ChatMessageAppService.GetSessionsAsync(new SessionQueryDto { MaxResultCount = 50, SkipCount = 0 });
+            chats = result.Items.ToList();
         }
-        finally { loadingSessions = false; }
+        finally { loadingChats = false; }
     }
 
     private async Task LoadAvailableAgents()
     {
-        availableAgents = await AssistantChatAppService.GetAvailableAgentsAsync();
+        availableAgents = await ChatMessageAppService.GetAvailableAgentsAsync();
         selectedAgent = availableAgents.FirstOrDefault(a => a.AgentType == selectedAgentType);
     }
 
@@ -827,7 +826,7 @@
     {
         try
         {
-            var allConfigs = await LLMConfigAppService.GetAllAsync();
+            var allConfigs = await LLMAppService.GetAllAsync();
             availableModels = allConfigs.Where(c => c.IsEnabled).ToList();
             if (string.IsNullOrEmpty(selectedProviderName) && availableModels.Any())
             {
@@ -835,12 +834,12 @@
                 selectedProviderName = defaultModel.Id.ToString();
             }
         }
-        catch (Exception ex) { availableModels = new List<LLMConfigDto>(); ShowToast($"Load models failed: {ex.Message}", "error"); }
+        catch (Exception ex) { availableModels = new List<LLMDto>(); ShowToast($"Load models failed: {ex.Message}", "error"); }
     }
 
-    private async Task SelectSession(Guid sessionId)
+    private async Task SelectChat(Guid sessionId)
     {
-        selectedSessionId = sessionId;
+        selectedChatId = sessionId;
         isNewTask = false;
         inputMessage = string.Empty;
         await LoadMessages(sessionId);
@@ -850,13 +849,13 @@
     private async Task LoadMessages(Guid sessionId)
     {
         loadingMessages = true;
-        try { messages = await AssistantChatAppService.GetMessagesAsync(sessionId); await ScrollToBottom(); }
+        try { messages = await ChatMessageAppService.GetMessagesAsync(sessionId); await ScrollToBottom(); }
         finally { loadingMessages = false; }
     }
 
-    private async Task CreateNewTask()
+    private async Task CreateNewChat()
     {
-        selectedSessionId = null; messages.Clear(); inputMessage = string.Empty; isNewTask = true;
+        selectedChatId = null; messages.Clear(); inputMessage = string.Empty; isNewTask = true;
         await LoadAvailableModels(); StateHasChanged();
     }
 
@@ -870,8 +869,8 @@
         streamingResponse = string.Empty; StateHasChanged(); await ScrollToBottom();
         try
         {
-            var response = await AssistantChatAppService.SendMessageAsync(new SendChatMessageInputDto { SessionId = null, Message = message, AgentType = selectedAgentType, ProviderName = string.IsNullOrEmpty(selectedProviderName) ? null : selectedProviderName, ModelConfigId = Guid.TryParse(selectedProviderName, out var configId) ? configId : null });
-            selectedSessionId = response.SessionId; isNewTask = false;
+            var response = await ChatMessageAppService.SendMessageAsync(new SendChatMessageInputDto { SessionId = null, Message = message, AgentType = selectedAgentType, ProviderName = string.IsNullOrEmpty(selectedProviderName) ? null : selectedProviderName, ModelConfigId = Guid.TryParse(selectedProviderName, out var configId) ? configId : null });
+            selectedChatId = response.SessionId; isNewTask = false;
             if (!string.IsNullOrEmpty(response.Response)) { streamingResponse = response.Response; StateHasChanged(); }
             pendingUserMessage = null; streamingResponse = string.Empty; await LoadMessages(response.SessionId); await LoadSessions();
         }
@@ -882,14 +881,14 @@
     private async Task SendMessage()
     {
         if (string.IsNullOrWhiteSpace(inputMessage) || isSending) return;
-        if (!selectedSessionId.HasValue) { ShowToast("请先选择或创建一个会话", "warning"); return; }
+        if (!selectedChatId.HasValue) { ShowToast("请先选择或创建一个会话", "warning"); return; }
         isSending = true; var message = inputMessage; inputMessage = string.Empty;
-        pendingUserMessage = new ChatMessageDto { Id = Guid.NewGuid(), SessionId = selectedSessionId.Value, Role = "user", Content = message, CreationTime = DateTime.Now };
+        pendingUserMessage = new ChatMessageDto { Id = Guid.NewGuid(), SessionId = selectedChatId.Value, Role = "user", Content = message, CreationTime = DateTime.Now };
         streamingResponse = string.Empty; StateHasChanged(); await ScrollToBottom();
         try
         {
             var httpClient = HttpClientFactory.CreateClient(); httpClient.Timeout = TimeSpan.FromMinutes(5);
-            var requestDto = new SendChatMessageInputDto { SessionId = selectedSessionId, Message = message, AgentType = selectedAgentType, ProviderName = string.IsNullOrEmpty(selectedProviderName) ? null : selectedProviderName, ModelConfigId = Guid.TryParse(selectedProviderName, out var configId) ? configId : null };
+            var requestDto = new SendChatMessageInputDto { SessionId = selectedChatId, Message = message, AgentType = selectedAgentType, ProviderName = string.IsNullOrEmpty(selectedProviderName) ? null : selectedProviderName, ModelConfigId = Guid.TryParse(selectedProviderName, out var configId) ? configId : null };
             var json = requestDto.ToJson();
             var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"{Navigation.BaseUri}api/assistant/chat/stream");
             httpRequest.Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
@@ -903,18 +902,18 @@
             {
                 if (line.StartsWith("data: ")) { var data = line.Substring(6).Trim(); if (data == "[DONE]") break; fullResponse.Append(data); streamingResponse = fullResponse.ToString(); StateHasChanged(); await Task.Delay(1); await ScrollToBottom(); }
             }
-            pendingUserMessage = null; streamingResponse = string.Empty; await LoadMessages(selectedSessionId.Value); await LoadSessions();
+            pendingUserMessage = null; streamingResponse = string.Empty; await LoadMessages(selectedChatId.Value); await LoadSessions();
         }
         catch (Exception ex) { inputMessage = message; pendingUserMessage = null; streamingResponse = string.Empty; ShowToast("Send failed: " + ex.Message, "error"); }
         finally { isSending = false; StateHasChanged(); }
     }
 
-    private async Task DeleteSession(Guid sessionId)
+    private async Task DeleteChat(Guid sessionId)
     {
         try
         {
-            await AssistantChatAppService.DeleteSessionAsync(sessionId); showSessionMenu = null;
-            if (selectedSessionId == sessionId) { selectedSessionId = null; messages.Clear(); isNewTask = false; }
+            await ChatMessageAppService.DeleteSessionAsync(sessionId); showSessionMenu = null;
+            if (selectedChatId == sessionId) { selectedChatId = null; messages.Clear(); isNewTask = false; }
             await LoadSessions(); ShowToast("会话已删除", "success"); StateHasChanged();
         }
         catch (Exception ex) { ShowToast("删除失败: " + ex.Message, "error"); }
@@ -925,7 +924,7 @@
     private void StopSending() { isSending = false; StateHasChanged(); }
     private async Task ScrollToBottom() { try { await JS.InvokeVoidAsync("eval", "var el = document.querySelector('.chat-messages'); if(el) el.scrollTop = el.scrollHeight;"); } catch { } }
     private void ToggleUserMenu() { showUserMenu = !showUserMenu; }
-    private void ToggleSessionMenu(Guid sessionId) { showSessionMenu = showSessionMenu == sessionId ? null : sessionId; }
+    private void ToggleChatMenu(Guid sessionId) { showSessionMenu = showSessionMenu == sessionId ? null : sessionId; }
     private void GoToSettings() { showUserMenu = false; Navigation.NavigateTo("/agent/settings"); }
 
     private static MarkupString IconSvg(string name) => (MarkupString)GetIconSvg(name);

@@ -1,5 +1,6 @@
 using H.Assistant.Application.Contracts;
 using Microsoft.Agents.AI;
+using Microsoft.Extensions.Logging;
 
 namespace H.Assistant.Core;
 
@@ -9,17 +10,20 @@ namespace H.Assistant.Core;
 public class AgentFactory
 {
     private readonly LLMProviderFactory _llmProviderFactory;
-    private readonly IAgentDefinitionAppService _agentDefinitionAppService;
-    private readonly ISkillDefinitionAppService _skillDefinitionAppService;
+    private readonly IAgentAppService _agentDefinitionAppService;
+    private readonly ISkillAppService _skillDefinitionAppService;
+    private readonly ILogger<AgentFactory> _logger;
     
     public AgentFactory(
         LLMProviderFactory llmProviderFactory,
-        IAgentDefinitionAppService agentDefinitionAppService,
-        ISkillDefinitionAppService skillDefinitionAppService)
+        IAgentAppService agentDefinitionAppService,
+        ISkillAppService skillDefinitionAppService,
+        ILogger<AgentFactory> logger)
     {
         _llmProviderFactory = llmProviderFactory;
         _agentDefinitionAppService = agentDefinitionAppService;
         _skillDefinitionAppService = skillDefinitionAppService;
+        _logger = logger;
     }
     
     /// <summary>
@@ -28,27 +32,54 @@ public class AgentFactory
     public async Task<IAgentInstance?> CreateAgentAsync(string agentType, Guid? modelConfigId)
     {
         ILLMProvider? llmProvider;
+        bool llmProviderFailed = false;
         
         if (modelConfigId.HasValue)
         {
             llmProvider = await _llmProviderFactory.CreateProviderAsync(modelConfigId.Value);
+            if (llmProvider == null)
+            {
+                _logger.LogWarning("无法创建 LLM Provider，configId={ConfigId}。请检查该配置是否存在、已启用且 API Key 不为空", modelConfigId.Value);
+                llmProviderFailed = true;
+            }
         }
         else
         {
             llmProvider = await _llmProviderFactory.GetDefaultProviderAsync();
+            if (llmProvider == null)
+            {
+                _logger.LogWarning("无法获取默认 LLM Provider。请检查是否存在 IsDefault=true 且 IsEnabled=true 且 ApiKey 不为空的配置");
+                llmProviderFailed = true;
+            }
+        }
+
+        if (llmProviderFailed)
+        {
+            return null;
         }
 
         var agents = await _agentDefinitionAppService.GetEnabledAgentsAsync();
         var definition = agents.FirstOrDefault(a => a.AgentType == agentType);
 
+        // 如果 agentType 为空或未找到,使用第一个启用的 Agent
+        if (definition == null && string.IsNullOrEmpty(agentType))
+        {
+            definition = agents.FirstOrDefault();
+            if (definition != null)
+            {
+                _logger.LogInformation("AgentType 为空,使用默认 Agent: {AgentType}", definition.AgentType);
+            }
+        }
+
         if (definition == null)
         {
+            _logger.LogWarning("未找到 AgentType='{AgentType}' 的启用 Agent 定义。请先在设置页面 > 智能体 Tab 中创建至少一个 Agent", agentType);
             return null;
         }
 
         // 使用 Microsoft Agent Framework 创建 Agent
         var skills = await _agentDefinitionAppService.GetAgentSkillsAsync(definition.Id);
-        return new FrameworkAgentInstance(llmProvider, definition, skills);
+        return new FrameworkAgentInstance(llmProvider!, definition, skills);
     }
     
     /// <summary>
@@ -57,101 +88,90 @@ public class AgentFactory
     public async Task<IAgentInstance?> CreateAgentAsync(string agentType, string? providerName = null)
     {
         ILLMProvider? llmProvider;
+        bool llmProviderFailed = false;
         
         if (!string.IsNullOrEmpty(providerName))
         {
             llmProvider = await _llmProviderFactory.CreateProviderAsync(providerName);
+            if (llmProvider == null)
+            {
+                _logger.LogWarning("无法创建 LLM Provider，providerName={ProviderName}。请检查该配置是否存在、已启用且 API Key 不为空", providerName);
+                llmProviderFailed = true;
+            }
         }
         else
         {
             llmProvider = await _llmProviderFactory.GetDefaultProviderAsync();
+            if (llmProvider == null)
+            {
+                _logger.LogWarning("无法获取默认 LLM Provider。请检查是否存在 IsDefault=true 且 IsEnabled=true 且 ApiKey 不为空的配置");
+                llmProviderFailed = true;
+            }
+        }
+
+        if (llmProviderFailed)
+        {
+            return null;
         }
 
         var agents = await _agentDefinitionAppService.GetEnabledAgentsAsync();
         var definition = agents.FirstOrDefault(a => a.AgentType == agentType);
 
+        // 如果 agentType 为空或未找到,使用第一个启用的 Agent
+        if (definition == null && string.IsNullOrEmpty(agentType))
+        {
+            definition = agents.FirstOrDefault();
+            if (definition != null)
+            {
+                _logger.LogInformation("AgentType 为空,使用默认 Agent: {AgentType}", definition.AgentType);
+            }
+        }
+
         if (definition == null)
         {
+            _logger.LogWarning("未找到 AgentType='{AgentType}' 的启用 Agent 定义。请先在设置页面 > 智能体 Tab 中创建至少一个 Agent", agentType);
             return null;
         }
 
         // 使用 Microsoft Agent Framework 创建 Agent
         var skills = await _agentDefinitionAppService.GetAgentSkillsAsync(definition.Id);
-        return new FrameworkAgentInstance(llmProvider, definition, skills);
+        return new FrameworkAgentInstance(llmProvider!, definition, skills);
     }
-    
+
     /// <summary>
     /// 获取所有可用的 Assistant 类型
-    /// 合并数据库定义和硬编码定义
+    /// 只返回数据库中启用的 Agent,并在首位添加"默认"选项
     /// </summary>
     public async Task<List<AgentDefinition>> GetAvailableAgentsAsync()
     {
-        var agents = new List<AgentDefinition>();
-        
-        // 从数据库加载启用的 Agent
-        if (_agentDefinitionAppService != null)
+        var agents = new List<AgentDefinition>
         {
-            try
-            {
-                var dbAgents = await _agentDefinitionAppService.GetEnabledAgentsAsync();
-                agents.AddRange(dbAgents.Select(a => new AgentDefinition
-                {
-                    AgentType = a.AgentType,
-                    DisplayName = a.DisplayName,
-                    Description = a.Description,
-                    Capabilities = a.Skills
-                }));
-            }
-            catch
-            {
-                // 如果数据库查询失败，使用硬编码定义
-            }
-        }
-        
-        // 如果没有数据库定义，使用硬编码定义
-        if (!agents.Any())
-        {
-            agents.AddRange(GetAvailableAgents());
-        }
-        
-        return agents;
-    }
-    
-    /// <summary>
-    /// 获取所有可用的 Assistant 类型（硬编码，向后兼容）
-    /// </summary>
-    public List<AgentDefinition> GetAvailableAgents()
-    {
-        return new List<AgentDefinition>
-        {
-            new AgentDefinition
-            {
-                AgentType = "general",
-                DisplayName = "通用助手",
-                Description = "通用智能助手，支持问答、文本生成、代码编写等常见任务",
-                Capabilities = new List<string> { "问答", "文本生成", "代码编写", "翻译", "总结" }
-            },
-            new AgentDefinition
-            {
-                AgentType = "customer-service",
-                DisplayName = "客服助手",
-                Description = "智能客服助手，支持问题解答、工单处理、客户反馈等客服场景",
-                Capabilities = new List<string> { "问题解答", "工单处理", "客户反馈", "知识库查询" }
-            },
-            new AgentDefinition
-            {
-                AgentType = "data-analysis",
-                DisplayName = "数据分析助手",
-                Description = "数据分析智能助手，支持数据查询、统计分析、报表生成等",
-                Capabilities = new List<string> { "数据查询", "统计分析", "报表生成", "趋势预测" }
-            },
-            new AgentDefinition
-            {
-                AgentType = "automation-test",
-                DisplayName = "自动化测试助手",
-                Description = "自动化测试智能助手，支持测试用例生成、测试执行、结果分析等",
-                Capabilities = new List<string> { "测试用例生成", "测试执行", "结果分析", "缺陷报告" }
+            // 添加"默认"选项
+            new() {
+                AgentType = "",
+                DisplayName = "默认",
+                Description = "使用系统默认的 Agent 配置",
+                Capabilities = []
             }
         };
+
+        // 从数据库加载启用的 Agent
+        try
+        {
+            var dbAgents = await _agentDefinitionAppService.GetEnabledAgentsAsync();
+            agents.AddRange(dbAgents.Select(a => new AgentDefinition
+            {
+                AgentType = a.AgentType,
+                DisplayName = a.DisplayName,
+                Description = a.Description,
+                Capabilities = a.Skills
+            }));
+        }
+        catch
+        {
+            // 如果数据库查询失败，返回空列表
+        }
+
+        return agents;
     }
 }

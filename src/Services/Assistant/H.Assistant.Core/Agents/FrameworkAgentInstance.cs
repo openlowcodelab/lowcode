@@ -9,13 +9,13 @@ namespace H.Assistant.Core;
 public class FrameworkAgentInstance : IAgentInstance, IStreamingAgent
 {
     private readonly FrameworkAgent _frameworkAgent;
-    private readonly AgentDefinitionDto _definition;
-    private readonly List<SkillDefinitionDto> _skills;
+    private readonly AgentDto _definition;
+    private readonly List<SkillDto> _skills;
 
     public FrameworkAgentInstance(
         ILLMProvider llmProvider,
-        AgentDefinitionDto definition,
-        List<SkillDefinitionDto> skills)
+        AgentDto definition,
+        List<SkillDto> skills)
     {
         _definition = definition;
         _skills = skills;

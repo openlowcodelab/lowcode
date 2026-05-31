@@ -7,13 +7,13 @@ namespace H.Assistant.EntityFrameworkCore;
 [ConnectionStringName("AssistantDb")]
 public class AssistantDbContext : AbpDbContext<AssistantDbContext>
 {
-    public DbSet<LLMConfigEntity> LLMConfigs { get; set; } = null!;
-    public DbSet<ChatSessionEntity> ChatSessions { get; set; } = null!;
+    public DbSet<LLMEntity> LLMConfigs { get; set; } = null!;
+    public DbSet<ChatEntity> ChatSessions { get; set; } = null!;
     public DbSet<ChatMessageEntity> ChatMessages { get; set; } = null!;
-    public DbSet<ScheduledTaskEntity> ScheduledTasks { get; set; } = null!;
-    public DbSet<TaskExecutionLogEntity> TaskExecutionLogs { get; set; } = null!;
-    public DbSet<AgentDefinitionEntity> AgentDefinitions { get; set; } = null!;
-    public DbSet<SkillDefinitionEntity> SkillDefinitions { get; set; } = null!;
+    public DbSet<TaskEntity> ScheduledTasks { get; set; } = null!;
+    public DbSet<TaskLogEntity> TaskExecutionLogs { get; set; } = null!;
+    public DbSet<AgentEntity> AgentDefinitions { get; set; } = null!;
+    public DbSet<SkillEntity> SkillDefinitions { get; set; } = null!;
 
     public AssistantDbContext(DbContextOptions<AssistantDbContext> options)
         : base(options)
@@ -24,7 +24,7 @@ public class AssistantDbContext : AbpDbContext<AssistantDbContext>
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.Entity<LLMConfigEntity>(b =>
+        modelBuilder.Entity<LLMEntity>(b =>
         {
             b.ToTable("LLMConfigs");
             b.HasKey(x => x.Id);
@@ -39,7 +39,7 @@ public class AssistantDbContext : AbpDbContext<AssistantDbContext>
             b.HasIndex(x => new { x.ProviderName, x.Model }).IsUnique();
         });
 
-        modelBuilder.Entity<ChatSessionEntity>(b =>
+        modelBuilder.Entity<ChatEntity>(b =>
         {
             b.ToTable("ChatSessions");
             b.HasKey(x => x.Id);
@@ -65,7 +65,7 @@ public class AssistantDbContext : AbpDbContext<AssistantDbContext>
             b.HasIndex(x => x.SessionId);
         });
 
-        modelBuilder.Entity<ScheduledTaskEntity>(b =>
+        modelBuilder.Entity<TaskEntity>(b =>
         {
             b.ToTable("ScheduledTasks");
             b.HasKey(x => x.Id);
@@ -83,7 +83,7 @@ public class AssistantDbContext : AbpDbContext<AssistantDbContext>
             b.HasIndex(x => x.NextExecutionTime);
         });
 
-        modelBuilder.Entity<TaskExecutionLogEntity>(b =>
+        modelBuilder.Entity<TaskLogEntity>(b =>
         {
             b.ToTable("TaskExecutionLogs");
             b.HasKey(x => x.Id);
@@ -96,7 +96,7 @@ public class AssistantDbContext : AbpDbContext<AssistantDbContext>
             b.HasIndex(x => x.StartTime);
         });
 
-        modelBuilder.Entity<AgentDefinitionEntity>(b =>
+        modelBuilder.Entity<AgentEntity>(b =>
         {
             b.ToTable("AgentDefinitions");
             b.HasKey(x => x.Id);
@@ -111,7 +111,7 @@ public class AssistantDbContext : AbpDbContext<AssistantDbContext>
             b.HasIndex(x => x.IsEnabled);
         });
 
-        modelBuilder.Entity<SkillDefinitionEntity>(b =>
+        modelBuilder.Entity<SkillEntity>(b =>
         {
             b.ToTable("SkillDefinitions");
             b.HasKey(x => x.Id);
