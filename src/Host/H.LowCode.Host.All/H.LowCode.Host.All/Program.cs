@@ -1,6 +1,7 @@
 using H.LowCode.Host.All.Components;
 using Microsoft.EntityFrameworkCore;
 using H.LowCode.Host.All;
+using ModelContextProtocol.Server;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -64,6 +65,7 @@ app.UseAuthorization();
 app.UseAntiforgery();
 
 app.MapControllers();
+app.MapMcp();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()

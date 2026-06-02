@@ -13,6 +13,7 @@ using H.LowCode.RenderEngine.Repository.JsonFile;
 using H.Organization.Application;
 using H.Portal.Application;
 using H.SystemManagement.Application;
+using H.YunXiaoMcpServer;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Volo.Abp.AspNetCore.Mvc;
 using Volo.Abp.Autofac;
@@ -49,7 +50,9 @@ namespace H.LowCode.Host.All;
     // Portal
     typeof(PortalApplicationModule),
     // SystemManagement
-    typeof(SystemManagementApplicationModule)
+    typeof(SystemManagementApplicationModule),
+    // YunXiao MCP Server
+    typeof(YunXiaoMcpServerModule)
 )]
 public class HostAllModule : AbpModule
 {
