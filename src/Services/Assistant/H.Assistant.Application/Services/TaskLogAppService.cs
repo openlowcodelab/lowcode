@@ -12,13 +12,13 @@ namespace H.Assistant.Application;
 /// <summary>
 /// 任务执行日志查询应用服务
 /// </summary>
-public class AssistantTaskExecutionLogAppService : ApplicationService, ITaskLogAppService
+public class TaskLogAppService : ApplicationService, ITaskLogAppService
 {
     private readonly IRepository<TaskLogEntity, Guid> _logRepository;
     private readonly IRepository<TaskEntity, Guid> _taskRepository;
     private readonly IMapper _objectMapper;
 
-    public AssistantTaskExecutionLogAppService(
+    public TaskLogAppService(
         IRepository<TaskLogEntity, Guid> logRepository,
         IRepository<TaskEntity, Guid> taskRepository,
         IMapper objectMapper)

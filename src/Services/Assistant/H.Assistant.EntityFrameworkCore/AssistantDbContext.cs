@@ -7,13 +7,13 @@ namespace H.Assistant.EntityFrameworkCore;
 [ConnectionStringName("AssistantDb")]
 public class AssistantDbContext : AbpDbContext<AssistantDbContext>
 {
-    public DbSet<LLMEntity> LLMConfigs { get; set; } = null!;
-    public DbSet<ChatEntity> ChatSessions { get; set; } = null!;
+    public DbSet<LLMEntity> Llms { get; set; } = null!;
+    public DbSet<ChatEntity> Chats { get; set; } = null!;
     public DbSet<ChatMessageEntity> ChatMessages { get; set; } = null!;
-    public DbSet<TaskEntity> ScheduledTasks { get; set; } = null!;
-    public DbSet<TaskLogEntity> TaskExecutionLogs { get; set; } = null!;
-    public DbSet<AgentEntity> AgentDefinitions { get; set; } = null!;
-    public DbSet<SkillEntity> SkillDefinitions { get; set; } = null!;
+    public DbSet<TaskEntity> Tasks { get; set; } = null!;
+    public DbSet<TaskLogEntity> TaskLogs { get; set; } = null!;
+    public DbSet<AgentEntity> Agents { get; set; } = null!;
+    public DbSet<SkillEntity> Skills { get; set; } = null!;
 
     public AssistantDbContext(DbContextOptions<AssistantDbContext> options)
         : base(options)
@@ -26,7 +26,7 @@ public class AssistantDbContext : AbpDbContext<AssistantDbContext>
 
         modelBuilder.Entity<LLMEntity>(b =>
         {
-            b.ToTable("LLMConfigs");
+            b.ToTable("Llm");
             b.HasKey(x => x.Id);
             b.Property(x => x.ProviderName).IsRequired().HasMaxLength(50);
             b.Property(x => x.ProviderDisplayName).HasMaxLength(100);
@@ -41,7 +41,7 @@ public class AssistantDbContext : AbpDbContext<AssistantDbContext>
 
         modelBuilder.Entity<ChatEntity>(b =>
         {
-            b.ToTable("ChatSessions");
+            b.ToTable("Chat");
             b.HasKey(x => x.Id);
             b.Property(x => x.Title).IsRequired().HasMaxLength(200);
             b.Property(x => x.AgentType).IsRequired().HasMaxLength(50);
@@ -54,7 +54,7 @@ public class AssistantDbContext : AbpDbContext<AssistantDbContext>
 
         modelBuilder.Entity<ChatMessageEntity>(b =>
         {
-            b.ToTable("ChatMessages");
+            b.ToTable("ChatMessage");
             b.HasKey(x => x.Id);
             b.Property(x => x.SessionId).IsRequired();
             b.Property(x => x.Role).IsRequired().HasMaxLength(20);
@@ -67,7 +67,7 @@ public class AssistantDbContext : AbpDbContext<AssistantDbContext>
 
         modelBuilder.Entity<TaskEntity>(b =>
         {
-            b.ToTable("ScheduledTasks");
+            b.ToTable("Task");
             b.HasKey(x => x.Id);
             b.Property(x => x.TaskName).IsRequired().HasMaxLength(100);
             b.Property(x => x.TaskDescription).HasMaxLength(500);
@@ -85,7 +85,7 @@ public class AssistantDbContext : AbpDbContext<AssistantDbContext>
 
         modelBuilder.Entity<TaskLogEntity>(b =>
         {
-            b.ToTable("TaskExecutionLogs");
+            b.ToTable("TaskLog");
             b.HasKey(x => x.Id);
             b.Property(x => x.TaskId).IsRequired();
             b.Property(x => x.Status).IsRequired().HasMaxLength(20);
@@ -98,7 +98,7 @@ public class AssistantDbContext : AbpDbContext<AssistantDbContext>
 
         modelBuilder.Entity<AgentEntity>(b =>
         {
-            b.ToTable("AgentDefinitions");
+            b.ToTable("Agent");
             b.HasKey(x => x.Id);
             b.Property(x => x.AgentType).IsRequired().HasMaxLength(100);
             b.Property(x => x.DisplayName).IsRequired().HasMaxLength(200);
@@ -113,7 +113,7 @@ public class AssistantDbContext : AbpDbContext<AssistantDbContext>
 
         modelBuilder.Entity<SkillEntity>(b =>
         {
-            b.ToTable("SkillDefinitions");
+            b.ToTable("Skill");
             b.HasKey(x => x.Id);
             b.Property(x => x.SkillName).IsRequired().HasMaxLength(100);
             b.Property(x => x.DisplayName).IsRequired().HasMaxLength(200);

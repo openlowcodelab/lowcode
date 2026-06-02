@@ -65,7 +65,7 @@ app.UseAuthorization();
 app.UseAntiforgery();
 
 app.MapControllers();
-app.MapMcp();
+app.MapMcp("/mcp");
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()

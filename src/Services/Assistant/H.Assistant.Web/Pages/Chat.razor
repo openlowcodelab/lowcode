@@ -4,8 +4,6 @@
 @layout AssistantLayout
 @inject IChatMessageAppService ChatMessageAppService
 @inject ILLMAppService LLMAppService
-@inject ITaskAppService TaskAppService
-@inject ITaskLogAppService TaskLogAppService
 @inject NavigationManager Navigation
 @inject IHttpClientFactory HttpClientFactory
 @inject IJSRuntime JS
@@ -23,115 +21,60 @@
         <div class="session-list-panel">
             <div class="panel-header">
                 <div class="panel-header-actions">
-                    <button class="btn-icon" @onclick="OnClickCreateTask" title="@GetCreateButtonTitle()">
+                    <button class="btn-icon" @onclick="OnClickCreateTask" title="新建即时任务">
                         @IconSvg("plus")
                     </button>
                 </div>
             </div>
 
-            <!-- Tab Header -->
-            <div class="tab-header">
-                <div class="tab-item @(activeTab == "instant" ? "active" : "")"
-                     @onclick="OnClickInstantTab">即时任务</div>
-                <div class="tab-item @(activeTab == "task" ? "active" : "")"
-                     @onclick="OnClickTaskTab">定时任务</div>
+            <!-- 定时任务菜单项 -->
+            <div class="scheduled-task-menu-item" @onclick="GoToScheduledTasks">
+                @IconSvg("clock")
+                <span>定时任务</span>
             </div>
 
+            <!-- 会话标题 -->
+            <div class="section-title">会话</div>
+
             <div class="panel-content">
-                @if (activeTab == "instant")
+                @if (loadingChats)
                 {
-                    if (loadingChats)
-                    {
-                        <div class="loading-spinner"><div class="spinner"></div><span>Loading...</span></div>
-                    }
-                    else if (chats.Any())
-                    {
-                        @foreach (var chat in chats)
-                        {
-                            <div class="session-item @(selectedChatId == chat.Id ? "active" : "")"
-                                 @onclick="() => SelectChat(chat.Id)">
-                                <div class="session-content-wrapper">
-                                    <div class="session-info">
-                                        <div class="session-title">@chat.Title</div>
-                                        <div class="session-meta">
-                                            <span class="message-count">@chat.MessageCount msgs</span>
-                                            <span class="time">@chat.LastMessageTime.ToString("MM-dd HH:mm")</span>
-                                        </div>
-                                    </div>
-                                    <div class="session-actions" @onclick:stopPropagation="true">
-                                        <button class="session-more-btn" @onclick="() => ToggleChatMenu(chat.Id)" title="更多操作">
-                                            @IconSvg("more")
-                                        </button>
-                                        @if (showSessionMenu == chat.Id)
-                                        {
-                                            <div class="session-dropdown-menu">
-                                                <div class="dropdown-item danger" @onclick="() => DeleteChat(chat.Id)">
-                                                    @IconSvg("delete") <span>删除</span>
-                                                </div>
-                                            </div>
-                                        }
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                    }
-                    else
-                    {
-                        <div class="empty-state"><div class="empty-icon">@IconSvg("inbox")</div><div class="empty-text">暂无任务</div></div>
-                    }
+                    <div class="loading-spinner"><div class="spinner"></div><span>Loading...</span></div>
                 }
-                else
+                else if (chats.Any())
                 {
-                    if (loadingTasks)
+                    @foreach (var chat in chats)
                     {
-                        <div class="loading-spinner"><div class="spinner"></div><span>Loading...</span></div>
-                    }
-                    else if (tasks.Any())
-                    {
-                        @foreach (var task in tasks)
-                        {
-                            <div class="scheduled-task-item @(task.IsEnabled ? "" : "disabled") @(selectedTaskId == task.Id ? "active" : "")"
-                                 @onclick="() => SelectTask(task.Id)">
-                                <div class="task-info">
-                                    <div class="task-title">@task.TaskName</div>
-                                    <div class="task-meta">
-                                        <span class="task-schedule">@task.ScheduleDisplayText</span>
-                                        <span class="task-status status-@task.Status.ToLower()">@task.Status</span>
+                        <div class="session-item @(selectedChatId == chat.Id ? "active" : "")"
+                             @onclick="() => SelectChat(chat.Id)">
+                            <div class="session-content-wrapper">
+                                <div class="session-info">
+                                    <div class="session-title">@chat.Title</div>
+                                    <div class="session-meta">
+                                        <span class="message-count">@chat.MessageCount msgs</span>
+                                        <span class="time">@chat.LastMessageTime.ToString("MM-dd HH:mm")</span>
                                     </div>
                                 </div>
-                                <div class="task-actions" @onclick:stopPropagation="true">
-                                    <button class="task-action-btn" @onclick="() => ToggleTaskMenu(task.Id)" title="更多操作">
+                                <div class="session-actions" @onclick:stopPropagation="true">
+                                    <button class="session-more-btn" @onclick="() => ToggleChatMenu(chat.Id)" title="更多操作">
                                         @IconSvg("more")
                                     </button>
-                                    @if (showTaskMenu == task.Id)
+                                    @if (showSessionMenu == chat.Id)
                                     {
-                                        <div class="session-dropdown-menu" style="right:0; left:auto;">
-                                            <div class="dropdown-item" @onclick="() => ExecuteTaskNow(task.Id)">
-                                                @IconSvg("send") <span>立即执行</span>
-                                            </div>
-                                            <div class="dropdown-item" @onclick="() => EditTask(task.Id)">
-                                                @IconSvg("edit") <span>编辑</span>
-                                            </div>
-                                            <div class="dropdown-item" @onclick="() => ToggleTaskEnable(task.Id)">
-                                                @IconSvg(task.IsEnabled ? "pause" : "play") <span>@(task.IsEnabled ? "禁用" : "启用")</span>
-                                            </div>
-                                            <div class="dropdown-divider"></div>
-                                            <div class="dropdown-item danger" @onclick="() => DeleteScheduledTask(task.Id)">
+                                        <div class="session-dropdown-menu">
+                                            <div class="dropdown-item danger" @onclick="() => DeleteChat(chat.Id)">
                                                 @IconSvg("delete") <span>删除</span>
                                             </div>
                                         </div>
                                     }
                                 </div>
                             </div>
-                        }
-                    }
-                    else
-                    {
-                        <div class="empty-state">
-                            <div class="empty-icon">@IconSvg("clock")</div>
-                            <div class="empty-text">暂无定时任务</div>
                         </div>
                     }
+                }
+                else
+                {
+                    <div class="empty-state"><div class="empty-icon">@IconSvg("inbox")</div><div class="empty-text">暂无任务</div></div>
                 }
             </div>
 
@@ -153,100 +96,23 @@
         </div>
 
         <div class="chat-main-panel">
-            @if (activeTab == "task" && selectedTaskId.HasValue)
-            {
-                <div class="chat-header">
-                    <div class="chat-header-left">
-                        <span>@selectedTaskName - 执行日志</span>
-                    </div>
-                </div>
-                <div class="task-log-list">
-                    @if (loadingTaskLogs)
-                    {
-                        <div class="loading-spinner"><div class="spinner"></div><span>Loading...</span></div>
-                    }
-                    else if (selectedTaskLogs.Any())
-                    {
-                        @foreach (var log in selectedTaskLogs)
-                        {
-                            <div class="log-entry @log.Status.ToLower()">
-                                <div class="log-header">
-                                    @if (isLogSelectionMode)
-                                    {
-                                        <input type="checkbox" 
-                                               class="log-checkbox"
-                                               checked="@selectedLogIds.Contains(log.Id)" 
-                                               @onchange="() => ToggleLogSelectItem(log.Id)" />
-                                    }
-                                    <span class="log-status-badge status-@log.Status.ToLower()">@GetLogStatusText(log.Status)</span>
-                                    <span class="log-time">@log.StartTime.ToString("yyyy-MM-dd HH:mm:ss")</span>
-                                    @if (log.DurationSeconds.HasValue)
-                                    {
-                                        <span class="log-duration">@(log.DurationSeconds.Value)秒</span>
-                                    }
-                                </div>
-                                @if (!string.IsNullOrEmpty(log.Result))
-                                {
-                                    <div class="log-result">@log.Result</div>
-                                }
-                                @if (!string.IsNullOrEmpty(log.ErrorMessage))
-                                {
-                                    <div class="log-error">@log.ErrorMessage</div>
-                                }
-                            </div>
-                        }
-                    }
-                    else
-                    {
-                        <div class="empty-state"><div class="empty-icon">@IconSvg("inbox")</div><div class="empty-text">暂无执行记录</div></div>
-                    }
-                </div>
-                <div class="chat-input-area">
-                    <div class="chat-input-footer" style="justify-content: space-between;">
-                        @if (isLogSelectionMode)
-                        {
-                            <div style="display: flex; gap: 8px;">
-                                <button class="btn btn-sm" @onclick="ToggleLogSelectAll">@GetLogSelectAllText()</button>
-                                <button class="btn btn-sm btn-danger" disabled="@(selectedLogIds.Count == 0)" @onclick="ConfirmBatchDeleteLogs">删除选中</button>
-                            </div>
-                        }
-                        else
-                        {
-                            <div></div>
-                        }
-                        <div style="display: flex; gap: 8px;">
-                            @if (!isLogSelectionMode)
-                            {
-                                <button class="btn" @onclick="(() => { selectedTaskId = null; selectedTaskLogs.Clear(); isLogSelectionMode = false; selectedLogIds.Clear(); StateHasChanged(); })">关闭</button>
-                                <button class="btn" @onclick="ToggleLogSelectionMode">多选</button>
-                            }
-                            else
-                            {
-                                <button class="btn" @onclick="ExitLogSelectionMode">退出多选</button>
-                            }
-                        </div>
-                    </div>
-                </div>
-            }
-            else if (isNewTask)
+            @if (isNewTask)
             {
                 <div class="new-task-container">
                     <div class="new-task-header">
                         <h2>新建任务</h2>
                         <p class="new-task-desc">描述您的任务，AI 助手将为您处理</p>
                     </div>
-                    <div class="new-task-body">
-                        <textarea class="new-task-textarea" @bind-value="inputMessage" @bind-value:event="oninput" placeholder="详细描述您的任务..." rows="8" @onkeydown="HandleNewTaskKeyDown"></textarea>
-                    </div>
-                    <div class="new-task-footer">
-                        <div class="new-task-model-selector">
-                            <ModelSelector @bind-Value="selectedProviderName" Models="availableModels" />
-                        </div>
-                        <div class="new-task-actions">
-                            <button class="btn" @onclick="CancelNewTask">取消</button>
-                            <SendButton @onclick="SendNewTask" IsDisabled="@string.IsNullOrWhiteSpace(inputMessage)" />
-                        </div>
-                    </div>
+                    <ChatInputArea @bind-Message="inputMessage"
+                                   @bind-SelectedAgentType="selectedAgentType"
+                                   @bind-SelectedProviderName="selectedProviderName"
+                                   AvailableAgents="availableAgents"
+                                   AvailableModels="availableModels"
+                                   IsSending="isSending"
+                                   OnSend="SendNewTask"
+                                   OnCancel="CancelNewTask"
+                                   ShowCancel="true"
+                                   Rows="8" />
                 </div>
             }
             else if (selectedChatId.HasValue)
@@ -271,7 +137,7 @@
                                     @if (message.Role == "user") { @IconSvg("user") } else { @IconSvg("robot") }
                                 </div>
                                 <div class="message-content">
-                                    <div class="message-text markdown-content">
+                                    <div class="message-text">
                                         <MarkdownRenderer Content="@message.Content" />
                                     </div>
                                     <div class="message-time">@message.CreationTime.ToString("HH:mm:ss")</div>
@@ -284,7 +150,7 @@
                             <div class="message-item user-message">
                                 <div class="message-avatar">@IconSvg("user")</div>
                                 <div class="message-content">
-                                    <div class="message-text markdown-content">
+                                    <div class="message-text">
                                         <MarkdownRenderer Content="@pendingUserMessage.Content" />
                                     </div>
                                     <div class="message-time">@pendingUserMessage.CreationTime.ToString("HH:mm:ss")</div>
@@ -297,7 +163,7 @@
                             <div class="message-item assistant-message">
                                 <div class="message-avatar">@IconSvg("robot")</div>
                                 <div class="message-content">
-                                    <div class="message-text markdown-content">
+                                    <div class="message-text">
                                         <MarkdownRenderer Content="@streamingResponse" />
                                     </div>
                                     <div class="message-time">@DateTime.Now.ToString("HH:mm:ss")</div>
@@ -323,35 +189,15 @@
                     }
                 </div>
 
-                <div class="chat-input-area">
-                    <textarea class="chat-textarea" @bind-value="inputMessage" @bind-value:event="oninput" placeholder="详细描述您的任务..." rows="3" @onkeydown="HandleKeyDown"></textarea>
-                    <div class="chat-input-footer">
-                        <div class="chat-selectors">
-                            <div class="selector-item">
-                                <label class="selector-label">Agent:</label>
-                                <select class="selector-dropdown" @bind="selectedAgentType">
-                                    @foreach (var agent in availableAgents)
-                                    {
-                                        <option value="@agent.AgentType">@agent.DisplayName</option>
-                                    }
-                                </select>
-                            </div>
-                            <div class="selector-item">
-                                <label class="selector-label">模型:</label>
-                                <ModelSelector @bind-Value="selectedProviderName" Models="availableModels" />
-                            </div>
-                        </div>
-                        <div class="chat-input-actions">
-                            <SendButton @onclick="SendMessage" IsDisabled="@string.IsNullOrWhiteSpace(inputMessage)" />
-                            @if (isSending)
-                            {
-                                <button class="btn btn-stop" @onclick="StopSending" title="停止生成">
-                                    @IconSvg("stop")
-                                </button>
-                            }
-                        </div>
-                    </div>
-                </div>
+                <ChatInputArea @bind-Message="inputMessage"
+                               @bind-SelectedAgentType="selectedAgentType"
+                               @bind-SelectedProviderName="selectedProviderName"
+                               AvailableAgents="availableAgents"
+                               AvailableModels="availableModels"
+                               IsSending="isSending"
+                               OnSend="SendMessage"
+                               OnStop="StopSending"
+                               ShowCancel="false" />
             }
             else
             {
@@ -364,118 +210,6 @@
         </div>
     </div>
 </div>
-
-<!-- Scheduled Task Dialog -->
-@if (showTaskDialog)
-{
-    <div class="scheduled-task-dialog">
-        <div class="dialog-overlay" @onclick="CloseTaskDialog"></div>
-        <div class="dialog-content">
-            <div class="dialog-header">
-                <h3>@(editingTaskId.HasValue ? "编辑定时任务" : "创建定时任务")</h3>
-                <button class="dialog-close" @onclick="CloseTaskDialog">@IconSvg("close")</button>
-            </div>
-            <div class="dialog-body">
-                <div class="form-group">
-                    <label class="form-label">任务名称 <span class="required">*</span></label>
-                    <input type="text" class="form-input" @bind="newTaskDto.TaskName" placeholder="输入任务名称" />
-                </div>
-                <div class="form-group">
-                    <label class="form-label">提示词内容 <span class="required">*</span></label>
-                    <textarea class="form-textarea" @bind="newTaskDto.PromptContent" @bind:event="oninput" placeholder="输入要执行的任务内容..." rows="5"></textarea>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">Agent 类型</label>
-                        <select class="form-select" @bind="newTaskDto.AgentType">
-                            @foreach (var agent in availableAgents)
-                            {
-                                <option value="@agent.AgentType">@agent.DisplayName</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">调度类型</label>
-                        <select class="form-select" @bind="newTaskDto.ScheduleType">
-                            <option value="Once">仅一次</option>
-                            <option value="Daily">每天</option>
-                            <option value="Weekly">每周</option>
-                            <option value="Monthly">每月</option>
-                            <option value="Cron">Cron 表达式</option>
-                        </select>
-                    </div>
-                </div>
-                @if (newTaskDto.ScheduleType == "Daily" || newTaskDto.ScheduleType == "Weekly" || newTaskDto.ScheduleType == "Monthly")
-                {
-                    <div class="schedule-config">
-                        <div class="config-title">执行时间</div>
-                        <div class="time-config">
-                            @if (newTaskDto.ScheduleType == "Weekly")
-                            {
-                                <div class="time-input-group">
-                                    <label>星期</label>
-                                    <select class="form-select" @bind="newTaskDto.DayOfWeek">
-                                        <option value="1">周一</option><option value="2">周二</option><option value="3">周三</option>
-                                        <option value="4">周四</option><option value="5">周五</option><option value="6">周六</option><option value="0">周日</option>
-                                    </select>
-                                </div>
-                            }
-                            else if (newTaskDto.ScheduleType == "Monthly")
-                            {
-                                <div class="time-input-group">
-                                    <label>日期</label>
-                                    <input type="number" class="form-input" @bind="newTaskDto.DayOfMonth" min="1" max="31" />
-                                </div>
-                            }
-                            <div class="time-input-group">
-                                <label>小时</label>
-                                <input type="number" class="form-input" @bind="newTaskDto.Hour" min="0" max="23" />
-                            </div>
-                            <div class="time-input-group">
-                                <label>分钟</label>
-                                <input type="number" class="form-input" @bind="newTaskDto.Minute" min="0" max="59" />
-                            </div>
-                        </div>
-                    </div>
-                }
-                else if (newTaskDto.ScheduleType == "Cron")
-                {
-                    <div class="schedule-config">
-                        <div class="config-title">Cron 表达式</div>
-                        <input type="text" class="form-input" @bind="newTaskDto.CronExpression" placeholder="例如: 0 */2 * * *" />
-                    </div>
-                }
-            </div>
-            <div class="dialog-footer">
-                <button class="btn" @onclick="CloseTaskDialog">取消</button>
-                <button class="btn btn-primary" @onclick="SaveScheduledTask" disabled="@(string.IsNullOrWhiteSpace(newTaskDto.TaskName) || string.IsNullOrWhiteSpace(newTaskDto.PromptContent))">
-                    @(editingTaskId.HasValue ? "保存" : "创建")
-                </button>
-            </div>
-        </div>
-    </div>
-}
-
-<!-- Batch Delete Confirmation Modal -->
-@if (showBatchDeleteConfirm)
-{
-    <div class="scheduled-task-dialog">
-        <div class="dialog-overlay" @onclick="(() => showBatchDeleteConfirm = false)"></div>
-        <div class="dialog-content confirm-dialog">
-            <div class="dialog-header">
-                <h3>确认批量删除</h3>
-                <button class="dialog-close" @onclick="() => showBatchDeleteConfirm = false">@IconSvg("close")</button>
-            </div>
-            <div class="dialog-body">
-                <p class="confirm-message">确定要删除选中的 @selectedLogIds.Count 条执行日志吗？此操作不可撤销。</p>
-            </div>
-            <div class="dialog-footer">
-                <button class="btn" @onclick="() => showBatchDeleteConfirm = false">取消</button>
-                <button class="btn btn-danger" @onclick="BatchDeleteLogs">删除</button>
-            </div>
-        </div>
-    </div>
-}
 
 @code {
     private List<ChatDto> chats = new();
@@ -499,25 +233,6 @@
     private string toastMessage = string.Empty;
     private string toastType = "info";
     private bool toastVisible;
-    
-    private string activeTab = "instant";
-    private bool loadingTasks;
-    private List<TaskDto> tasks = new();
-    private bool showTaskDialog;
-    private CreateTaskDto newTaskDto = new();
-    private Guid? editingTaskId;
-
-    // 定时任务选中与执行日志
-    private Guid? selectedTaskId;
-    private string selectedTaskName = string.Empty;
-    private List<TaskLogDto> selectedTaskLogs = new();
-    private bool loadingTaskLogs;
-    private Guid? showTaskMenu;
-
-    // 日志多选模式相关
-    private bool isLogSelectionMode = false;
-    private HashSet<Guid> selectedLogIds = new();
-    private bool showBatchDeleteConfirm;
 
     protected override async Task OnInitializedAsync()
     {
@@ -526,274 +241,9 @@
         await LoadAvailableModels();
     }
 
-    private void OnClickInstantTab() => _ = SwitchTab("instant");
-    private void OnClickTaskTab() => _ = SwitchTab("task");
+    private void OnClickCreateTask() => _ = CreateNewChat();
 
-    private void OnClickCreateTask()
-    {
-        if (activeTab == "instant")
-        {
-            _ = CreateNewChat();
-        }
-        else
-        {
-            CreateNewTask();
-        }
-    }
-
-    private string GetCreateButtonTitle() => activeTab == "instant" ? "新建即时任务" : "新建定时任务";
-
-    private async Task SelectTask(Guid taskId)
-    {
-        selectedTaskId = taskId;
-        var task = tasks.FirstOrDefault(t => t.Id == taskId);
-        selectedTaskName = task?.TaskName ?? "";
-        selectedChatId = null;
-        isNewTask = false;
-        await LoadTaskLogs(taskId);
-        StateHasChanged();
-    }
-
-    private async Task LoadTaskLogs(Guid taskId)
-    {
-        loadingTaskLogs = true;
-        try
-        {
-            var result = await TaskLogAppService.GetListAsync(new TaskLogQueryDto
-            {
-                TaskId = taskId,
-                MaxResultCount = 20
-            });
-            selectedTaskLogs = result.Items.ToList();
-        }
-        finally { loadingTaskLogs = false; }
-    }
-
-    private void ToggleTaskMenu(Guid taskId)
-    {
-        showTaskMenu = showTaskMenu == taskId ? null : taskId;
-    }
-
-    private string GetLogStatusText(string status)
-    {
-        return status switch
-        {
-            "Success" => "成功",
-            "Failed" => "失败",
-            "Running" => "运行中",
-            _ => status
-        };
-    }
-
-    // 日志多选模式相关方法
-    private void ToggleLogSelectionMode()
-    {
-        isLogSelectionMode = !isLogSelectionMode;
-        if (!isLogSelectionMode)
-        {
-            selectedLogIds.Clear();
-        }
-    }
-
-    private void ExitLogSelectionMode()
-    {
-        isLogSelectionMode = false;
-        selectedLogIds.Clear();
-    }
-
-    private bool IsAllLogsSelected()
-    {
-        return selectedTaskLogs.Count > 0 && selectedLogIds.Count == selectedTaskLogs.Count;
-    }
-
-    private void ToggleLogSelectAll()
-    {
-        if (IsAllLogsSelected())
-        {
-            selectedLogIds.Clear();
-        }
-        else
-        {
-            selectedLogIds = new HashSet<Guid>(selectedTaskLogs.Select(l => l.Id));
-        }
-    }
-
-    private string GetLogSelectAllText()
-    {
-        return IsAllLogsSelected() ? "取消全选" : "全选";
-    }
-
-    private void ToggleLogSelectItem(Guid logId)
-    {
-        if (selectedLogIds.Contains(logId))
-        {
-            selectedLogIds.Remove(logId);
-        }
-        else
-        {
-            selectedLogIds.Add(logId);
-        }
-    }
-
-    private void ConfirmBatchDeleteLogs()
-    {
-        if (selectedLogIds.Count > 0)
-        {
-            showBatchDeleteConfirm = true;
-        }
-    }
-
-    private async Task BatchDeleteLogs()
-    {
-        foreach (var logId in selectedLogIds.ToList())
-        {
-            await TaskLogAppService.DeleteAsync(logId);
-        }
-        
-        showBatchDeleteConfirm = false;
-        selectedLogIds.Clear();
-        isLogSelectionMode = false;
-        await LoadTaskLogs(selectedTaskId.Value);
-        StateHasChanged();
-    }
-
-    private async Task SwitchTab(string tab)
-    {
-        activeTab = tab;
-        if (tab == "task" && !tasks.Any())
-        {
-            await LoadTasks();
-        }
-        StateHasChanged();
-    }
-
-    private async Task LoadTasks()
-    {
-        loadingTasks = true;
-        try
-        {
-            var result = await TaskAppService.GetListAsync(new TaskQueryDto { MaxResultCount = 50 });
-            tasks = result.Items.ToList();
-        }
-        finally { loadingTasks = false; }
-    }
-
-    private void CreateNewTask()
-    {
-        editingTaskId = null;
-        newTaskDto = new CreateTaskDto
-        {
-            TaskName = "",
-            TaskDescription = "",
-            PromptContent = "",
-            AgentType = selectedAgentType,
-            ScheduleType = "Daily",
-            Hour = 9,
-            Minute = 0,
-            IsEnabled = true
-        };
-        showTaskDialog = true;
-    }
-
-    private void EditTask(Guid taskId)
-    {
-        var task = tasks.FirstOrDefault(t => t.Id == taskId);
-        if (task != null)
-        {
-            editingTaskId = taskId;
-            newTaskDto = new CreateTaskDto
-            {
-                TaskName = task.TaskName,
-                TaskDescription = task.TaskDescription,
-                PromptContent = task.PromptContent,
-                AgentType = task.AgentType,
-                ModelConfigId = task.ModelConfigId,
-                ScheduleType = task.ScheduleType,
-                CronExpression = task.CronExpression,
-                Hour = task.Hour,
-                Minute = task.Minute,
-                DayOfWeek = task.DayOfWeek,
-                DayOfMonth = task.DayOfMonth,
-                IsEnabled = task.IsEnabled
-            };
-            showTaskDialog = true;
-        }
-    }
-
-    private async Task CloseTaskDialog()
-    {
-        showTaskDialog = false;
-        editingTaskId = null;
-    }
-
-    private async Task SaveScheduledTask()
-    {
-        try
-        {
-            if (editingTaskId.HasValue)
-            {
-                await TaskAppService.UpdateAsync(editingTaskId.Value, new UpdateTaskDto
-                {
-                    TaskName = newTaskDto.TaskName,
-                    TaskDescription = newTaskDto.TaskDescription,
-                    PromptContent = newTaskDto.PromptContent,
-                    AgentType = newTaskDto.AgentType,
-                    ModelConfigId = newTaskDto.ModelConfigId,
-                    ScheduleType = newTaskDto.ScheduleType,
-                    CronExpression = newTaskDto.CronExpression,
-                    Hour = newTaskDto.Hour,
-                    Minute = newTaskDto.Minute,
-                    DayOfWeek = newTaskDto.DayOfWeek,
-                    DayOfMonth = newTaskDto.DayOfMonth,
-                    IsEnabled = newTaskDto.IsEnabled
-                });
-                ShowToast("任务已更新", "success");
-            }
-            else
-            {
-                await TaskAppService.CreateAsync(newTaskDto);
-                ShowToast("任务已创建", "success");
-            }
-            await CloseTaskDialog();
-            await LoadTasks();
-        }
-        catch (Exception ex)
-        {
-            ShowToast("保存失败: " + ex.Message, "error");
-        }
-    }
-
-    private async Task ToggleTaskEnable(Guid taskId)
-    {
-        try
-        {
-            await TaskAppService.ToggleEnableAsync(taskId);
-            await LoadTasks();
-        }
-        catch (Exception ex) { ShowToast("操作失败: " + ex.Message, "error"); }
-    }
-
-    private async Task ExecuteTaskNow(Guid taskId)
-    {
-        try
-        {
-            await TaskAppService.ExecuteNowAsync(taskId);
-            ShowToast("任务已触发执行", "success");
-            await LoadTasks();
-        }
-        catch (Exception ex) { ShowToast("执行失败: " + ex.Message, "error"); }
-    }
-
-    private async Task DeleteScheduledTask(Guid taskId)
-    {
-        try
-        {
-            await TaskAppService.DeleteAsync(taskId);
-            ShowToast("任务已删除", "success");
-            await LoadTasks();
-        }
-        catch (Exception ex) { ShowToast("删除失败: " + ex.Message, "error"); }
-    }
+    private void GoToScheduledTasks() => Navigation.NavigateTo("/assistant/tasks");
 
     // ========== Existing Methods ==========
     private void ShowToast(string message, string type = "info")
@@ -919,8 +369,6 @@
         catch (Exception ex) { ShowToast("删除失败: " + ex.Message, "error"); }
     }
 
-    private async Task HandleKeyDown(KeyboardEventArgs e) { if (e.Key == "Enter" && !e.ShiftKey) await SendMessage(); }
-    private async Task HandleNewTaskKeyDown(KeyboardEventArgs e) { if (e.Key == "Enter" && !e.ShiftKey) await SendNewTask(); }
     private void StopSending() { isSending = false; StateHasChanged(); }
     private async Task ScrollToBottom() { try { await JS.InvokeVoidAsync("eval", "var el = document.querySelector('.chat-messages'); if(el) el.scrollTop = el.scrollHeight;"); } catch { } }
     private void ToggleUserMenu() { showUserMenu = !showUserMenu; }
@@ -950,3 +398,284 @@
         _ => ""
     };
 }
+
+<style>
+    /* ========== Chat Page Layout ========== */
+    .assistant-chat-container {
+        flex: 1;
+        display: flex;
+        overflow: hidden;
+    }
+
+    .chat-layout {
+        display: flex;
+        width: 100%;
+        height: 100%;
+    }
+
+    /* ========== Left Panel ========== */
+    .session-item {
+        padding: 12px;
+        cursor: pointer;
+        border-radius: 4px;
+        margin-bottom: 4px;
+        transition: background-color 0.2s;
+    }
+
+    .session-item:hover {
+        background-color: #f0f0f0;
+    }
+
+    .session-item.active {
+        background-color: #d9d9d9;
+    }
+
+    .session-content-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .session-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .session-actions {
+        position: relative;
+        flex-shrink: 0;
+    }
+
+    .session-more-btn {
+        padding: 4px;
+        border: none;
+        background: transparent;
+        border-radius: 4px;
+        cursor: pointer;
+        opacity: 0;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #8c8c8c;
+    }
+
+    .session-more-btn svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .session-item:hover .session-more-btn {
+        opacity: 1;
+    }
+
+    .session-more-btn:hover {
+        background-color: #d9d9d9;
+        color: #262626;
+    }
+
+    .session-dropdown-menu {
+        position: absolute;
+        right: 0;
+        top: 100%;
+        background: white;
+        border: 1px solid #e8e8e8;
+        border-radius: 6px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        z-index: 1000;
+        min-width: 120px;
+        overflow: hidden;
+        margin-top: 4px;
+    }
+
+    .session-dropdown-menu .dropdown-item {
+        padding: 8px 12px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        transition: background-color 0.2s;
+        color: #595959;
+    }
+
+    .session-dropdown-menu .dropdown-item:hover {
+        background-color: #f5f5f5;
+    }
+
+    .session-dropdown-menu .dropdown-item.danger {
+        color: #ff4d4f;
+    }
+
+    .session-dropdown-menu .dropdown-item.danger:hover {
+        background-color: #fff1f0;
+    }
+
+    .session-dropdown-menu .dropdown-item svg {
+        width: 14px;
+        height: 14px;
+    }
+
+    .session-title {
+        font-weight: 500;
+        margin-bottom: 4px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .session-meta {
+        font-size: 12px;
+        color: #8c8c8c;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    /* ========== Main Chat Area ========== */
+    .chat-main-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: #fff;
+    }
+
+    .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+    }
+
+    .message-item {
+        display: flex;
+        margin-bottom: 16px;
+        gap: 12px;
+    }
+
+    .user-message {
+        flex-direction: row-reverse;
+    }
+
+    .message-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background-color: #bfbfbf;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .user-message .message-avatar {
+        background-color: #a6a6a6;
+    }
+
+    .message-content {
+        max-width: 60%;
+    }
+
+    .message-text {
+        padding: 12px;
+        border-radius: 8px;
+        background-color: #f0f0f0;
+        line-height: 1.5;
+    }
+
+    .user-message .message-text {
+        background-color: #595959;
+        color: white;
+    }
+
+    .message-time {
+        font-size: 12px;
+        color: #8c8c8c;
+        margin-top: 4px;
+    }
+
+    /* ========== New Task View ========== */
+    .new-task-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 60px;
+        background: #fff;
+        max-width: 800px;
+        margin: 0 auto;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .new-task-header {
+        text-align: center;
+        margin-bottom: 24px;
+        width: 100%;
+    }
+
+    .new-task-header h2 {
+        font-size: 24px;
+        font-weight: 600;
+        color: #262626;
+        margin: 0 0 8px 0;
+    }
+
+    .new-task-desc {
+        font-size: 14px;
+        color: #8c8c8c;
+        margin: 0;
+    }
+
+    .new-task-body {
+        width: 100%;
+        margin-bottom: 20px;
+    }
+
+    .new-task-footer {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .new-task-model-selector {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .new-task-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .new-task-textarea {
+        width: 100%;
+        border: 1px solid #d9d9d9;
+        border-radius: 8px;
+        padding: 12px 16px;
+        font-size: 14px;
+        line-height: 1.6;
+        resize: vertical;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        font-family: inherit;
+        box-sizing: border-box;
+    }
+
+    .new-task-textarea:focus {
+        border-color: #a6a6a6;
+        box-shadow: 0 0 0 2px rgba(166, 166, 166, 0.1);
+        outline: none;
+    }
+
+    .new-task-model-selector .model-select-dropdown {
+        min-width: 320px;
+    }
+
+    .task-action-btn svg {
+        width: 16px;
+        height: 16px;
+    }
+</style>

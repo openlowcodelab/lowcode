@@ -34,7 +34,7 @@ public class TaskWorker : BackgroundService
                 var now = DateTime.UtcNow;
 
                 // 查找待执行的任务（已启用且下次执行时间已到）
-                var tasksToExecute = await dbContext.ScheduledTasks
+                var tasksToExecute = await dbContext.Tasks
                     .Where(t => t.IsEnabled && t.Status == "Active" && t.NextExecutionTime <= now)
                     .ToListAsync(stoppingToken);
 

@@ -1,0 +1,221 @@
+@namespace H.Assistant.Web
+
+<div class="chat-input-area">
+    <textarea class="chat-textarea"
+              @bind-value="Message"
+              @bind-value:event="oninput"
+              placeholder="@Placeholder"
+              rows="@Rows"
+              @onkeydown="HandleKeyDown"></textarea>
+    <div class="chat-input-footer">
+        <div class="chat-selectors">
+            <div class="selector-item">
+                <label class="selector-label">Agent:</label>
+                <select class="selector-dropdown" value="@SelectedAgentType" @onchange="OnAgentChanged">
+                    @foreach (var agent in AvailableAgents)
+                    {
+                        <option value="@agent.AgentType">@agent.DisplayName</option>
+                    }
+                </select>
+            </div>
+            <div class="selector-item">
+                <ModelSelector @bind-Value="SelectedProviderName" Models="AvailableModels" />
+            </div>
+        </div>
+        <div class="chat-input-actions">
+            @if (ShowCancel)
+            {
+                <button class="btn" @onclick="OnCancel">取消</button>
+            }
+            <SendButton @onclick="OnSend" IsDisabled="@string.IsNullOrWhiteSpace(Message)" />
+            @if (IsSending)
+            {
+                <button class="btn btn-stop" @onclick="OnStop" title="停止生成">
+                    @IconSvg("stop")
+                </button>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string Message { get; set; } = string.Empty;
+
+    [Parameter]
+    public EventCallback<string> MessageChanged { get; set; }
+
+    [Parameter]
+    public string SelectedAgentType { get; set; } = string.Empty;
+
+    [Parameter]
+    public EventCallback<string> SelectedAgentTypeChanged { get; set; }
+
+    [Parameter]
+    public string SelectedProviderName { get; set; } = string.Empty;
+
+    [Parameter]
+    public EventCallback<string> SelectedProviderNameChanged { get; set; }
+
+    [Parameter]
+    public List<AgentConfigDto> AvailableAgents { get; set; } = new();
+
+    [Parameter]
+    public List<LLMDto> AvailableModels { get; set; } = new();
+
+    [Parameter]
+    public bool IsSending { get; set; }
+
+    [Parameter]
+    public EventCallback OnSend { get; set; }
+
+    [Parameter]
+    public EventCallback OnStop { get; set; }
+
+    [Parameter]
+    public EventCallback OnCancel { get; set; }
+
+    [Parameter]
+    public bool ShowCancel { get; set; }
+
+    [Parameter]
+    public string Placeholder { get; set; } = "详细描述您的任务...";
+
+    [Parameter]
+    public int Rows { get; set; } = 3;
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey)
+        {
+            await OnSend.InvokeAsync();
+        }
+    }
+
+    private async Task OnAgentChanged(ChangeEventArgs e)
+    {
+        SelectedAgentType = e.Value?.ToString() ?? string.Empty;
+        await SelectedAgentTypeChanged.InvokeAsync(SelectedAgentType);
+    }
+
+    private static MarkupString IconSvg(string name) => (MarkupString)GetIconSvg(name);
+    private static string GetIconSvg(string name) => name switch
+    {
+        "stop" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"6\" y=\"6\" width=\"12\" height=\"12\" rx=\"2\" ry=\"2\"></rect></svg>",
+        _ => ""
+    };
+}
+
+<style>
+    .chat-selectors {
+        display: flex;
+        gap: 16px;
+        flex-shrink: 0;
+        align-items: center;
+    }
+
+    .selector-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .selector-label {
+        font-size: 13px;
+        color: #595959;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+
+    .selector-dropdown {
+        height: 34px;
+        padding: 4px 11px;
+        border: 1px solid #d9d9d9;
+        border-radius: 6px;
+        font-size: 13px;
+        color: #262626;
+        background: #fff;
+        outline: none;
+        transition: border-color 0.2s;
+        cursor: pointer;
+        min-width: 150px;
+    }
+
+    .selector-dropdown:focus {
+        border-color: #a6a6a6;
+        box-shadow: 0 0 0 2px rgba(166, 166, 166, 0.1);
+    }
+
+    .chat-model-selector {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+
+    .chat-agent-selector {
+        display: flex;
+        gap: 6px;
+        flex-shrink: 0;
+        overflow-x: auto;
+        max-width: 40%;
+    }
+
+    .agent-select-btn {
+        padding: 4px 12px;
+        font-size: 12px;
+        border: 1px solid #d9d9d9;
+        border-radius: 4px;
+        background: #fff;
+        color: #595959;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+    }
+
+    .agent-select-btn:hover:not(.active) {
+        border-color: #a6a6a6;
+        color: #262626;
+    }
+
+    .agent-select-btn.active {
+        background: #a6a6a6;
+        border-color: #a6a6a6;
+        color: #fff;
+    }
+
+    .chat-input-actions {
+        display: flex;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+
+    .btn-stop {
+        color: #ff4d4f;
+        border-color: #ff4d4f;
+    }
+
+    .btn-stop:hover:not(:disabled) {
+        background: #fff1f0;
+        border-color: #ff7875;
+        color: #ff4d4f;
+    }
+
+    .chat-textarea {
+        width: 100%;
+        border: 1px solid #d9d9d9;
+        border-radius: 6px;
+        padding: 8px 12px;
+        font-size: 14px;
+        line-height: 1.5;
+        resize: vertical;
+        transition: border-color 0.2s;
+        font-family: inherit;
+        box-sizing: border-box;
+    }
+
+    .chat-textarea:focus {
+        border-color: #a6a6a6;
+        outline: none;
+    }
+</style>
