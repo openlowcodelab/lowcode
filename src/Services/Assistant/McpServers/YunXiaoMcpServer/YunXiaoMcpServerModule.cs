@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using ModelContextProtocol.Server;
 using Volo.Abp.Modularity;
 
 namespace H.YunXiaoMcpServer;
@@ -20,11 +19,5 @@ public class YunXiaoMcpServerModule : AbpModule
 
         // 注册 API Client
         context.Services.AddTransient<YunXiaoApiClient>();
-
-        // 注册 MCP Server（HTTP/SSE 传输）
-        context.Services
-            .AddMcpServer()
-            .WithHttpTransport()
-            .WithTools<YunXiaoMcpTools>();
     }
 }
