@@ -182,18 +182,13 @@
             else
             {
                 <div class="new-task-container">
-                    <div class="new-task-header">
-                        <h2>新建任务</h2>
-                        <p class="new-task-desc">描述您的任务，AI 助手将为您处理</p>
-                    </div>
                     <ChatInput @bind-Message="inputMessage"
                                    @bind-SelectedAgentType="selectedAgentType"
                                    @bind-SelectedProviderName="selectedProviderName"
                                    AvailableAgents="availableAgents"
                                    AvailableModels="availableModels"
                                    IsSending="isSending"
-                                   OnSend="SendNewTask"
-                                   Rows="8" />
+                                   OnSend="SendNewTask" />
                 </div>
             }
         </div>
