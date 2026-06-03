@@ -1,7 +1,9 @@
 @page "/agent/settings"
 
 @layout AssistantLayout
-@inject ILLMConfigAppService LLMConfigAppService
+@inject ILLMAppService LLMConfigAppService
+@inject ISkillAppService SkillDefinitionAppService
+@inject IAgentAppService AgentDefinitionAppService
 @inject NavigationManager Navigation
 
 <!-- Toast Notification -->
@@ -15,7 +17,7 @@
 <div class="settings-container">
     <div class="settings-sidebar">
         <div class="sidebar-header">
-            <button class="btn btn-link back-btn" @onclick="GoBack">
+            <button class="btn back-btn" @onclick="GoBack">
                 @IconSvg("arrow-left") 返回
             </button>
         </div>
@@ -44,10 +46,10 @@
                         <div class="form-item">
                             <label>主题模式</label>
                             <div class="theme-options">
-                                <button class="btn @(themeMode == "light" ? "btn-primary agent-btn-primary" : "")" @onclick="@(() => themeMode = "light")">
+                                <button class="btn @(themeMode == "light" ? "btn-primary assistant-btn-primary" : "")" @onclick="@(() => themeMode = "light")">
                                     @IconSvg("sun") 浅色
                                 </button>
-                                <button class="btn @(themeMode == "dark" ? "btn-primary agent-btn-primary" : "")" @onclick="@(() => themeMode = "dark")">
+                                <button class="btn @(themeMode == "dark" ? "btn-primary assistant-btn-primary" : "")" @onclick="@(() => themeMode = "dark")">
                                     @IconSvg("moon") 深色
                                 </button>
                             </div>
@@ -58,10 +60,10 @@
                         <div class="form-item">
                             <label>界面语言</label>
                             <div class="theme-options">
-                                <button class="btn @(language == "zh" ? "btn-primary agent-btn-primary" : "")" @onclick="@(() => language = "zh")">
+                                <button class="btn @(language == "zh" ? "btn-primary assistant-btn-primary" : "")" @onclick="@(() => language = "zh")">
                                     中文
                                 </button>
-                                <button class="btn @(language == "en" ? "btn-primary agent-btn-primary" : "")" @onclick="@(() => language = "en")">
+                                <button class="btn @(language == "en" ? "btn-primary assistant-btn-primary" : "")" @onclick="@(() => language = "en")">
                                     English
                                 </button>
                             </div>
@@ -73,7 +75,7 @@
             case "model":
                 <div class="content-header">
                     <h2>模型管理</h2>
-                    <button class="btn btn-primary agent-btn-primary btn-small" @onclick="ShowAddModel">
+                    <button class="btn btn-primary assistant-btn-primary btn-small" @onclick="ShowAddModel">
                         @IconSvg("plus") 添加
                     </button>
                 </div>
@@ -220,45 +222,383 @@
             case "agent":
                 <div class="content-header">
                     <h2>智能体管理</h2>
+                    <button class="btn btn-primary assistant-btn-primary btn-small" @onclick="ShowAddAgent">
+                        @IconSvg("plus") 新建智能体
+                    </button>
                 </div>
-                <div class="agent-settings-list">
-                    @foreach (var agent in agentDefinitions)
+                <div class="agent-list">
+                    @if (loadingAgents)
                     {
-                        <div class="model-card">
-                            <div class="model-card-header">
-                                <div class="model-name">
-                                    <strong>@agent.DisplayName</strong>
-                                    <span class="tag tag-blue">@agent.AgentType</span>
+                        <div class="loading-spinner"><div class="spinner"></div><span>加载中...</span></div>
+                    }
+                    else if (agentsFromDb.Any())
+                    {
+                        @foreach (var agent in agentsFromDb)
+                        {
+                            <div class="model-card">
+                                <div class="model-card-header">
+                                    <div class="model-name">
+                                        <strong>@agent.DisplayName</strong>
+                                        <span class="tag tag-blue">@agent.AgentType</span>
+                                        @if (agent.IsEnabled)
+                                        {
+                                            <span class="tag tag-green">已启用</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="tag tag-default">已禁用</span>
+                                        }
+                                    </div>
+                                    <div class="model-actions">
+                                        <button class="btn btn-link btn-small" @onclick="@(() => ToggleAgent(agent))">
+                                            @(agent.IsEnabled ? "禁用" : "启用")
+                                        </button>
+                                        <button class="btn btn-link btn-small" @onclick="@(() => EditAgent(agent))">编辑</button>
+                                        <button class="btn btn-link btn-small btn-danger" @onclick="@(() => DeleteAgent(agent.Id))">删除</button>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="model-card-body">
-                                <div class="model-info-row">
-                                    <span>@agent.Description</span>
-                                </div>
-                                <div class="model-info-row" style="margin-top: 8px;">
-                                    <span class="info-label">能力:</span>
-                                    @foreach (var cap in agent.Capabilities)
+                                <div class="model-card-body">
+                                    <div class="model-info-row">
+                                        <span class="info-label">描述:</span>
+                                        <span>@agent.Description</span>
+                                    </div>
+                                    <div class="model-info-row">
+                                        <span class="info-label">温度:</span>
+                                        <span>@agent.Temperature</span>
+                                        <span class="info-label" style="margin-left:16px;">MaxTokens:</span>
+                                        <span>@agent.MaxTokens</span>
+                                        <span class="info-label" style="margin-left:16px;">流式:</span>
+                                        <span>@(agent.SupportsStreaming ? "支持" : "不支持")</span>
+                                    </div>
+                                    @if (agentSkillDetails.TryGetValue(agent.Id, out var skills) && skills.Any())
                                     {
-                                        <span class="tag tag-default tag-inline">@cap</span>
+                                        <div class="model-info-row" style="margin-top: 8px;">
+                                            <span class="info-label">关联技能:</span>
+                                            @foreach (var skill in skills)
+                                            {
+                                                <span class="tag tag-blue tag-inline">@skill.DisplayName</span>
+                                            }
+                                        </div>
                                     }
                                 </div>
                             </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="empty-state">
+                            <div class="empty-icon">@IconSvg("inbox")</div>
+                            <div class="empty-text">暂无智能体,点击新建按钮新增</div>
                         </div>
                     }
                 </div>
+
+                @if (showAgentDialog)
+                {
+                    <div class="modal-overlay" @onclick="CloseAgentDialog">
+                        <div class="modal-dialog agent-dialog" @onclick:stopPropagation="true">
+                            <div class="modal-header">
+                                <h3>@(isEditingAgent ? "编辑智能体" : "新建智能体")</h3>
+                                <button class="btn btn-text modal-close-btn" @onclick="CloseAgentDialog">
+                                    @IconSvg("close")
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="form-item required">
+                                    <label>* 类型标识</label>
+                                    <input class="modal-input" @bind="@editAgent.AgentType" placeholder="如: general" disabled="@isEditingAgent" />
+                                </div>
+                                <div class="form-item required">
+                                    <label>* 显示名称</label>
+                                    <input class="modal-input" @bind="@editAgent.DisplayName" placeholder="如: 通用助手" />
+                                </div>
+                                <div class="form-item required">
+                                    <label>* 描述</label>
+                                    <textarea class="modal-input modal-textarea" @bind="@editAgent.Description" placeholder="描述智能体的功能和用途"></textarea>
+                                </div>
+                                <div class="form-item required">
+                                    <label>* 系统提示词</label>
+                                    <textarea class="modal-input modal-textarea" @bind="@editAgent.SystemPrompt" placeholder="输入系统提示词" style="min-height: 120px;"></textarea>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-item">
+                                        <label>温度 (0-1)</label>
+                                        <input class="modal-input" type="number" step="0.1" min="0" max="1" @bind="@editAgent.Temperature" />
+                                    </div>
+                                    <div class="form-item">
+                                        <label>MaxTokens</label>
+                                        <input class="modal-input" type="number" @bind="@editAgent.MaxTokens" />
+                                    </div>
+                                </div>
+                                <div class="form-item">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" @bind="@editAgent.SupportsStreaming" />
+                                        支持流式响应
+                                    </label>
+                                </div>
+                                <div class="form-item">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" @bind="@editAgent.IsEnabled" />
+                                        启用
+                                    </label>
+                                </div>
+                                <div class="form-item">
+                                    <label>技能选择</label>
+                                    <div class="skill-search-box">
+                                        <input class="modal-input" @bind="@agentSkillSearchText" placeholder="搜索技能..." />
+                                    </div>
+                                    <div class="skill-selection-area">
+                                        @foreach (var group in FilteredAvailableSkills)
+                                        {
+                                            <div style="margin-bottom: 8px;">
+                                                <div style="font-size: 12px; color: #8c8c8c; margin-bottom: 4px;">@group.Key</div>
+                                                @foreach (var skill in group)
+                                                {
+                                                    <div class="skill-checkbox-item">
+                                                        <input type="checkbox" id="skill-@skill.Id" @bind="@editAgent.SelectedSkillIds" value="@skill.Id" />
+                                                        <label for="skill-@skill.Id" class="skill-checkbox-label">
+                                                            @skill.DisplayName
+                                                        </label>
+                                                    </div>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                                <div class="form-item">
+                                    <label>默认模型 (可选)</label>
+                                    <select class="modal-select" @bind="@editAgent.DefaultModelConfigId">
+                                        <option value="">无</option>
+                                        @foreach (var config in llmConfigs)
+                                        {
+                                            <option value="@config.Id">@config.ProviderDisplayName - @config.Model</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button class="modal-btn-cancel" @onclick="CloseAgentDialog">取消</button>
+                                <button class="modal-btn-primary" @onclick="SaveAgent" disabled="@savingAgent">
+                                    @(isEditingAgent ? "保存" : "创建")
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
                 break;
 
             case "skill":
                 <div class="content-header">
-                    <h2>技能</h2>
-                    <button class="btn btn-primary agent-btn-primary btn-small" disabled>
-                        @IconSvg("plus") 添加
-                    </button>
+                    <h2>技能管理</h2>
                 </div>
-                <div class="empty-state">
-                    <div class="empty-icon">@IconSvg("inbox")</div>
-                    <div class="empty-text">技能管理功能开发中...</div>
+                
+                <!-- Skill/Tool 选项卡 -->
+                <div class="tab-nav">
+                    <div class="tab-item @(selectedSkillTab == "skill" ? "active" : "")" @onclick="@(() => selectedSkillTab = "skill")">
+                        Skill 列表
+                    </div>
+                    <div class="tab-item @(selectedSkillTab == "tool" ? "active" : "")" @onclick="@(() => selectedSkillTab = "tool")">
+                        Tool 列表
+                    </div>
                 </div>
+
+                @if (selectedSkillTab == "skill")
+                {
+                    <div class="content-header" style="margin-top: 16px;">
+                        <button class="btn btn-primary assistant-btn-primary btn-small" @onclick="ShowAddSkill">
+                            @IconSvg("plus") 添加
+                        </button>
+                    </div>
+                    <div class="skill-list">
+                    @if (loadingSkills)
+                    {
+                        <div class="loading-spinner"><div class="spinner"></div><span>加载中...</span></div>
+                    }
+                    else if (skills.Any())
+                    {
+                        @foreach (var skill in skills)
+                        {
+                            <div class="model-card">
+                                <div class="model-card-header">
+                                    <div class="model-name">
+                                        <strong>@skill.DisplayName</strong>
+                                        <span class="tag tag-blue">@skill.SkillName</span>
+                                        @if (skill.IsEnabled)
+                                        {
+                                            <span class="tag tag-green">已启用</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="tag tag-default">已禁用</span>
+                                        }
+                                    </div>
+                                    <div class="model-actions">
+                                        <button class="btn btn-link btn-small" @onclick="@(() => ToggleSkill(skill))">
+                                            @(skill.IsEnabled ? "禁用" : "启用")
+                                        </button>
+                                        <button class="btn btn-link btn-small" @onclick="@(() => EditSkill(skill))">编辑</button>
+                                        <button class="btn btn-link btn-small btn-danger" @onclick="@(() => DeleteSkill(skill.Id))">删除</button>
+                                    </div>
+                                </div>
+                                <div class="model-card-body">
+                                    <div class="model-info-row">
+                                        <span class="info-label">类型:</span>
+                                        <span>@skill.SkillType</span>
+                                    </div>
+                                    <div class="model-info-row">
+                                        <span class="info-label">描述:</span>
+                                        <span>@skill.Description</span>
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(skill.ImplementationClass))
+                                    {
+                                        <div class="model-info-row">
+                                            <span class="info-label">实现类:</span>
+                                            <span class="code-text">@skill.ImplementationClass</span>
+                                        </div>
+                                    }
+                                    <div class="model-info-row">
+                                        <span class="info-label">使用次数:</span>
+                                        <span>@skill.UsageCount</span>
+                                        @if (skill.LastUsedTime.HasValue)
+                                        {
+                                            <span class="info-label" style="margin-left:16px;">最后使用:</span>
+                                            <span>@skill.LastUsedTime.Value.ToString("yyyy-MM-dd HH:mm")</span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="empty-state">
+                            <div class="empty-icon">@IconSvg("inbox")</div>
+                            <div class="empty-text">暂无技能，点击添加按钮新增</div>
+                        </div>
+                    }
+                </div>
+                }
+                else
+                {
+                    <!-- Tool 列表 -->
+                    <div class="tool-list">
+                        @if (loadingSkills)
+                        {
+                            <div class="loading-spinner"><div class="spinner"></div><span>加载中...</span></div>
+                        }
+                        else if (tools.Any())
+                        {
+                            @foreach (var tool in tools)
+                            {
+                                <div class="model-card">
+                                    <div class="model-card-header">
+                                        <div class="model-name">
+                                            <strong>@tool.ClassName</strong>
+                                            @if (tool.IsEnabled)
+                                            {
+                                                <span class="tag tag-green">已启用</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="tag tag-default">已禁用</span>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="model-card-body">
+                                        <div class="model-info-row">
+                                            <span class="info-label">描述:</span>
+                                            <span>@tool.Description</span>
+                                        </div>
+                                        <div class="model-info-row">
+                                            <span class="info-label">实现类:</span>
+                                            <span class="code-text">@tool.FullName</span>
+                                        </div>
+                                        <div class="model-info-row">
+                                            <span class="info-label">关联 Skill:</span>
+                                            <span>@tool.SkillName</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="empty-state">
+                                <div class="empty-icon">@IconSvg("inbox")</div>
+                                <div class="empty-text">暂无 Tool</div>
+                            </div>
+                        }
+                    </div>
+                }
+
+                @if (showSkillDialog)
+                {
+                    <div class="modal-overlay" @onclick="CloseSkillDialog">
+                        <div class="modal-dialog model-dialog" @onclick:stopPropagation="true">
+                            <div class="modal-header">
+                                <h3>@(isEditingSkill ? "编辑技能" : "添加技能")</h3>
+                                <button class="btn btn-text modal-close-btn" @onclick="CloseSkillDialog">
+                                    @IconSvg("close")
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                @if (!isEditingSkill)
+                                {
+                                    <div class="form-item required">
+                                        <label>* 技能名称</label>
+                                        <input class="modal-input" @bind="@editSkill.SkillName" placeholder="英文标识，如 weather_query" />
+                                    </div>
+                                }
+                                <div class="form-item required">
+                                    <label>* 显示名称</label>
+                                    <input class="modal-input" @bind="@editSkill.DisplayName" placeholder="如：天气查询" />
+                                </div>
+                                <div class="form-item required">
+                                    <label>* 描述</label>
+                                    <textarea class="modal-input modal-textarea" @bind="@editSkill.Description" placeholder="描述技能的功能，AI 会根据描述自动选择使用此技能"></textarea>
+                                </div>
+                                <div class="form-item required">
+                                    <label>* 类型</label>
+                                    <select class="modal-select" @bind="@editSkill.SkillType">
+                                        <option value="Function">Function (函数调用)</option>
+                                        <option value="Plugin">Plugin (插件)</option>
+                                        <option value="Workflow">Workflow (工作流)</option>
+                                    </select>
+                                </div>
+                                <div class="form-item">
+                                    <label>实现类</label>
+                                    <input class="modal-input" @bind="@editSkill.ImplementationClass" placeholder="完整类名，如 H.Assistant.Core.Tools.WeatherTool" />
+                                </div>
+                                <div class="form-item">
+                                    <label>配置 (JSON)</label>
+                                    <textarea class="modal-input modal-textarea" @bind="@editSkill.Config" placeholder='可选，如 {"api_key": "xxx"}'></textarea>
+                                </div>
+                                <div class="form-item">
+                                    <label>参数 Schema (JSON)</label>
+                                    <textarea class="modal-input modal-textarea" @bind="@editSkill.ParameterSchema" placeholder='可选，JSON Schema 格式'></textarea>
+                                </div>
+                                <div class="form-item">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" @bind="@editSkill.IsEnabled" />
+                                        启用
+                                    </label>
+                                </div>
+                                <div class="form-item">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" @bind="@editSkill.RequiresApproval" />
+                                        需要审批
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button class="modal-btn-cancel" @onclick="CloseSkillDialog">取消</button>
+                                <button class="modal-btn-primary" @onclick="SaveSkill" disabled="@savingSkill">
+                                    @(isEditingSkill ? "保存" : "添加")
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
                 break;
         }
     </div>
@@ -272,7 +612,7 @@
     private bool savingModel;
     private bool showModelDialog;
     private bool isEditing;
-    private List<LLMConfigDto> llmConfigs = new();
+    private List<LLMDto> llmConfigs = new();
 
     private ModelEditModel editModel = new();
 
@@ -336,12 +676,34 @@
     }
     private string? currentApiKeyUrl => currentProviderDef?.ApiKeyUrl;
 
+    private List<AgentDto> agentsFromDb = new();
+    private Dictionary<Guid, List<SkillDto>> agentSkillDetails = new();
+    private bool loadingAgents;
+    private bool showAgentDialog;
+    private bool isEditingAgent;
+    private bool savingAgent;
+    private AgentEditModel editAgent = new();
+    private List<SkillDto> availableSkills = new();
+    private string agentSkillSearchText = "";
+
     private List<AgentDefinition> agentDefinitions = new();
+
+    // Skill management state
+    private bool loadingSkills;
+    private bool savingSkill;
+    private bool showSkillDialog;
+    private bool isEditingSkill;
+    private List<SkillDto> skills = new();
+    private List<ToolDisplayInfo> tools = new();
+    private string selectedSkillTab = "skill";
+    private SkillEditModel editSkill = new();
 
     protected override async Task OnInitializedAsync()
     {
         await LoadLLMConfigs();
-        LoadAgentDefinitions();
+        await LoadSkills();
+        await LoadAgents();
+        LoadAgentDefinitions(); // Keep for backward compatibility
     }
 
     private void SelectMenu(string key) { selectedMenu = key; }
@@ -365,6 +727,180 @@
             new() { AgentType = "data-analysis", DisplayName = "数据分析助手", Description = "数据分析智能助手，支持数据查询、统计分析、报表生成等", Capabilities = new() { "数据查询", "统计分析", "报表生成", "趋势预测" } },
             new() { AgentType = "automation-test", DisplayName = "自动化测试助手", Description = "自动化测试智能助手，支持测试用例生成、测试执行、结果分析等", Capabilities = new() { "测试用例生成", "测试执行", "结果分析", "缺陷报告" } }
         };
+    }
+
+    // ========== Agent Management Methods ==========
+    private async Task LoadAgents()
+    {
+        loadingAgents = true;
+        try
+        {
+            var result = await AgentDefinitionAppService.GetListAsync(new AgentQueryDto
+            {
+                MaxResultCount = 100
+            });
+            agentsFromDb = result.Items.ToList();
+            
+            agentSkillDetails.Clear();
+            foreach (var agent in agentsFromDb)
+            {
+                try
+                {
+                    var skills = await AgentDefinitionAppService.GetAgentSkillsAsync(agent.Id);
+                    agentSkillDetails[agent.Id] = skills;
+                }
+                catch { }
+            }
+        }
+        catch (Exception ex) { ShowToast("加载智能体列表失败: " + ex.Message, "error"); }
+        finally { loadingAgents = false; }
+    }
+
+    private async Task LoadAvailableSkills()
+    {
+        try
+        {
+            availableSkills = await SkillDefinitionAppService.GetEnabledSkillsAsync();
+        }
+        catch (Exception ex) { ShowToast("加载可用技能失败: " + ex.Message, "error"); }
+    }
+
+    private IEnumerable<IGrouping<string, SkillDto>> FilteredAvailableSkills
+    {
+        get
+        {
+            var filtered = string.IsNullOrWhiteSpace(agentSkillSearchText)
+                ? availableSkills
+                : availableSkills.Where(s =>
+                    s.DisplayName.Contains(agentSkillSearchText, StringComparison.OrdinalIgnoreCase) ||
+                    s.SkillName.Contains(agentSkillSearchText, StringComparison.OrdinalIgnoreCase));
+            
+            return filtered.GroupBy(s => s.SkillType);
+        }
+    }
+
+    private void ShowAddAgent()
+    {
+        isEditingAgent = false;
+        editAgent = new AgentEditModel
+        {
+            AgentType = "",
+            DisplayName = "",
+            Description = "",
+            SystemPrompt = "",
+            IsEnabled = true,
+            SupportsStreaming = true,
+            Temperature = 0.7f,
+            MaxTokens = 2000,
+            SelectedSkillIds = new()
+        };
+        _ = LoadAvailableSkills();
+        showAgentDialog = true;
+    }
+
+    private async void EditAgent(AgentDto agent)
+    {
+        isEditingAgent = true;
+        editAgent = new AgentEditModel
+        {
+            Id = agent.Id,
+            AgentType = agent.AgentType,
+            DisplayName = agent.DisplayName,
+            Description = agent.Description,
+            SystemPrompt = agent.SystemPrompt,
+            IsEnabled = agent.IsEnabled,
+            SupportsStreaming = agent.SupportsStreaming,
+            Temperature = agent.Temperature,
+            MaxTokens = agent.MaxTokens,
+            DefaultModelConfigId = agent.DefaultModelConfigId,
+            SelectedSkillIds = new()
+        };
+        
+        await LoadAvailableSkills();
+        
+        try
+        {
+            var currentSkills = await AgentDefinitionAppService.GetAgentSkillsAsync(agent.Id);
+            editAgent.SelectedSkillIds = currentSkills.Select(s => s.Id).ToList();
+        }
+        catch { }
+        
+        showAgentDialog = true;
+        StateHasChanged();
+    }
+
+    private void CloseAgentDialog() { showAgentDialog = false; }
+
+    private async Task SaveAgent()
+    {
+        if (string.IsNullOrWhiteSpace(editAgent.AgentType)) { ShowToast("请输入类型标识", "warning"); return; }
+        if (string.IsNullOrWhiteSpace(editAgent.DisplayName)) { ShowToast("请输入显示名称", "warning"); return; }
+        if (string.IsNullOrWhiteSpace(editAgent.Description)) { ShowToast("请输入描述", "warning"); return; }
+        if (string.IsNullOrWhiteSpace(editAgent.SystemPrompt)) { ShowToast("请输入系统提示词", "warning"); return; }
+
+        savingAgent = true;
+        try
+        {
+            if (isEditingAgent && editAgent.Id.HasValue)
+            {
+                await AgentDefinitionAppService.UpdateAsync(editAgent.Id.Value, new UpdateAgentDto
+                {
+                    DisplayName = editAgent.DisplayName,
+                    Description = editAgent.Description,
+                    SystemPrompt = editAgent.SystemPrompt,
+                    IsEnabled = editAgent.IsEnabled,
+                    SupportsStreaming = editAgent.SupportsStreaming,
+                    Temperature = editAgent.Temperature,
+                    MaxTokens = editAgent.MaxTokens,
+                    DefaultModelConfigId = editAgent.DefaultModelConfigId,
+                    SkillIds = editAgent.SelectedSkillIds
+                });
+                ShowToast("智能体已更新", "success");
+            }
+            else
+            {
+                await AgentDefinitionAppService.CreateAsync(new CreateAgentDto
+                {
+                    AgentType = editAgent.AgentType.Trim().ToLower(),
+                    DisplayName = editAgent.DisplayName,
+                    Description = editAgent.Description,
+                    SystemPrompt = editAgent.SystemPrompt,
+                    IsEnabled = editAgent.IsEnabled,
+                    SupportsStreaming = editAgent.SupportsStreaming,
+                    Temperature = editAgent.Temperature,
+                    MaxTokens = editAgent.MaxTokens,
+                    DefaultModelConfigId = editAgent.DefaultModelConfigId,
+                    SkillIds = editAgent.SelectedSkillIds
+                });
+                ShowToast("智能体已创建", "success");
+            }
+            showAgentDialog = false;
+            await LoadAgents();
+        }
+        catch (Exception ex) { ShowToast("保存失败: " + ex.Message, "error"); }
+        finally { savingAgent = false; }
+    }
+
+    private async Task DeleteAgent(Guid id)
+    {
+        try
+        {
+            await AgentDefinitionAppService.DeleteAsync(id);
+            ShowToast("已删除", "success");
+            await LoadAgents();
+        }
+        catch (Exception ex) { ShowToast("删除失败: " + ex.Message, "error"); }
+    }
+
+    private async Task ToggleAgent(AgentDto agent)
+    {
+        try
+        {
+            await AgentDefinitionAppService.ToggleEnabledAsync(agent.Id, !agent.IsEnabled);
+            ShowToast(agent.IsEnabled ? "智能体已禁用" : "智能体已启用", "success");
+            await LoadAgents();
+        }
+        catch (Exception ex) { ShowToast("操作失败: " + ex.Message, "error"); }
     }
 
     private void OnProviderChanged(ChangeEventArgs e)
@@ -409,7 +945,7 @@
         showModelDialog = true;
     }
 
-    private void EditModel(LLMConfigDto config)
+    private void EditModel(LLMDto config)
     {
         isEditing = true;
         editModel = new ModelEditModel
@@ -441,7 +977,7 @@
         {
             if (isEditing && editModel.Id.HasValue)
             {
-                await LLMConfigAppService.UpdateAsync(editModel.Id.Value, new UpdateLLMConfigDto
+                await LLMConfigAppService.UpdateAsync(editModel.Id.Value, new UpdateLLMDto
                 {
                     ProviderDisplayName = editModel.ProviderDisplayName,
                     ApiKey = editModel.ApiKey,
@@ -456,7 +992,7 @@
             }
             else
             {
-                await LLMConfigAppService.CreateAsync(new CreateLLMConfigDto
+                await LLMConfigAppService.CreateAsync(new CreateLLMDto
                 {
                     ProviderName = editModel.ProviderName.Trim().ToLower(),
                     ProviderDisplayName = editModel.ProviderDisplayName,
@@ -506,6 +1042,148 @@
         return apiKey[..4] + "****" + apiKey[^4..];
     }
 
+    // ========== Skill Management Methods ==========
+    private async Task LoadSkills()
+    {
+        loadingSkills = true;
+        try
+        {
+            var result = await SkillDefinitionAppService.GetListAsync(new SkillDefinitionQueryDto
+            {
+                MaxResultCount = 100
+            });
+            skills = result.Items.ToList();
+            
+            // 从 Skill 提取 Tool 信息
+            tools = skills
+                .Where(s => !string.IsNullOrWhiteSpace(s.ImplementationClass))
+                .GroupBy(s => s.ImplementationClass)
+                .Select(g =>
+                {
+                    var first = g.First();
+                    return new ToolDisplayInfo
+                    {
+                        ClassName = first.ImplementationClass.Split('.').Last(),
+                        FullName = first.ImplementationClass,
+                        Description = first.Description,
+                        SkillName = string.Join(", ", g.Select(s => s.DisplayName)),
+                        SkillId = first.Id,
+                        IsEnabled = g.Any(s => s.IsEnabled)
+                    };
+                })
+                .ToList();
+        }
+        catch (Exception ex) { ShowToast("加载技能列表失败: " + ex.Message, "error"); }
+        finally { loadingSkills = false; }
+    }
+
+    private void ShowAddSkill()
+    {
+        isEditingSkill = false;
+        editSkill = new SkillEditModel
+        {
+            SkillName = "",
+            DisplayName = "",
+            Description = "",
+            SkillType = "Function",
+            ImplementationClass = "",
+            Config = "",
+            ParameterSchema = "",
+            IsEnabled = true,
+            RequiresApproval = false
+        };
+        showSkillDialog = true;
+    }
+
+    private void EditSkill(SkillDto skill)
+    {
+        isEditingSkill = true;
+        editSkill = new SkillEditModel
+        {
+            Id = skill.Id,
+            SkillName = skill.SkillName,
+            DisplayName = skill.DisplayName,
+            Description = skill.Description,
+            SkillType = skill.SkillType,
+            ImplementationClass = skill.ImplementationClass ?? "",
+            Config = skill.Config ?? "",
+            ParameterSchema = skill.ParameterSchema ?? "",
+            IsEnabled = skill.IsEnabled,
+            RequiresApproval = skill.RequiresApproval
+        };
+        showSkillDialog = true;
+    }
+
+    private void CloseSkillDialog() { showSkillDialog = false; }
+
+    private async Task SaveSkill()
+    {
+        if (string.IsNullOrWhiteSpace(editSkill.SkillName)) { ShowToast("请输入技能名称", "warning"); return; }
+        if (string.IsNullOrWhiteSpace(editSkill.DisplayName)) { ShowToast("请输入显示名称", "warning"); return; }
+        if (string.IsNullOrWhiteSpace(editSkill.Description)) { ShowToast("请输入描述", "warning"); return; }
+
+        savingSkill = true;
+        try
+        {
+            if (isEditingSkill)
+            {
+                await SkillDefinitionAppService.UpdateAsync(editSkill.Id.Value, new UpdateSkillDefinitionDto
+                {
+                    DisplayName = editSkill.DisplayName,
+                    Description = editSkill.Description,
+                    ImplementationClass = string.IsNullOrWhiteSpace(editSkill.ImplementationClass) ? null : editSkill.ImplementationClass,
+                    Config = string.IsNullOrWhiteSpace(editSkill.Config) ? null : editSkill.Config,
+                    ParameterSchema = string.IsNullOrWhiteSpace(editSkill.ParameterSchema) ? null : editSkill.ParameterSchema,
+                    IsEnabled = editSkill.IsEnabled,
+                    RequiresApproval = editSkill.RequiresApproval
+                });
+                ShowToast("技能已更新", "success");
+            }
+            else
+            {
+                await SkillDefinitionAppService.CreateAsync(new CreateSkillDefinitionDto
+                {
+                    SkillName = editSkill.SkillName.Trim().ToLower(),
+                    DisplayName = editSkill.DisplayName,
+                    Description = editSkill.Description,
+                    SkillType = editSkill.SkillType,
+                    ImplementationClass = string.IsNullOrWhiteSpace(editSkill.ImplementationClass) ? null : editSkill.ImplementationClass,
+                    Config = string.IsNullOrWhiteSpace(editSkill.Config) ? null : editSkill.Config,
+                    ParameterSchema = string.IsNullOrWhiteSpace(editSkill.ParameterSchema) ? null : editSkill.ParameterSchema,
+                    IsEnabled = editSkill.IsEnabled,
+                    RequiresApproval = editSkill.RequiresApproval
+                });
+                ShowToast("技能已添加", "success");
+            }
+            showSkillDialog = false;
+            await LoadSkills();
+        }
+        catch (Exception ex) { ShowToast("保存失败: " + ex.Message, "error"); }
+        finally { savingSkill = false; }
+    }
+
+    private async Task ToggleSkill(SkillDto skill)
+    {
+        try
+        {
+            await SkillDefinitionAppService.ToggleEnabledAsync(skill.Id, !skill.IsEnabled);
+            ShowToast(skill.IsEnabled ? "技能已禁用" : "技能已启用", "success");
+            await LoadSkills();
+        }
+        catch (Exception ex) { ShowToast("操作失败: " + ex.Message, "error"); }
+    }
+
+    private async Task DeleteSkill(Guid id)
+    {
+        try
+        {
+            await SkillDefinitionAppService.DeleteAsync(id);
+            ShowToast("已删除", "success");
+            await LoadSkills();
+        }
+        catch (Exception ex) { ShowToast("删除失败: " + ex.Message, "error"); }
+    }
+
     private class ModelEditModel
     {
         public Guid? Id { get; set; }
@@ -519,6 +1197,45 @@
         public int MaxTokens { get; set; } = 2000;
         public float Temperature { get; set; } = 0.7f;
         public bool IsEnabled { get; set; } = true;
+    }
+
+    private class AgentEditModel
+    {
+        public Guid? Id { get; set; }
+        public string AgentType { get; set; } = "";
+        public string DisplayName { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string SystemPrompt { get; set; } = "";
+        public bool IsEnabled { get; set; } = true;
+        public bool SupportsStreaming { get; set; } = true;
+        public float Temperature { get; set; } = 0.7f;
+        public int MaxTokens { get; set; } = 2000;
+        public Guid? DefaultModelConfigId { get; set; }
+        public List<Guid> SelectedSkillIds { get; set; } = new();
+    }
+
+    private class ToolDisplayInfo
+    {
+        public string ClassName { get; set; } = "";
+        public string FullName { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string SkillName { get; set; } = "";
+        public Guid SkillId { get; set; }
+        public bool IsEnabled { get; set; }
+    }
+
+    private class SkillEditModel
+    {
+        public Guid? Id { get; set; }
+        public string SkillName { get; set; } = "";
+        public string DisplayName { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string SkillType { get; set; } = "Function";
+        public string ImplementationClass { get; set; } = "";
+        public string Config { get; set; } = "";
+        public string ParameterSchema { get; set; } = "";
+        public bool IsEnabled { get; set; } = true;
+        public bool RequiresApproval { get; set; }
     }
 
     // ========== SVG Icon Helper ==========
@@ -539,3 +1256,569 @@
         _ => ""
     };
 }
+
+<style>
+    /* ========== Settings Page ========== */
+    .settings-container {
+        display: flex;
+        height: 100%;
+        width: 100%;
+    }
+
+    .settings-sidebar {
+        width: 220px;
+        border-right: 1px solid #e8e8e8;
+        background: #fafafa;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .sidebar-header {
+        padding: 16px;
+        border-bottom: 1px solid #e8e8e8;
+    }
+
+    .sidebar-menu {
+        padding: 8px;
+        flex: 1;
+    }
+
+    .menu-item {
+        padding: 10px 16px;
+        cursor: pointer;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 14px;
+        margin-bottom: 4px;
+        transition: background-color 0.2s;
+    }
+
+    .menu-item:hover {
+        background-color: #f0f0f0;
+    }
+
+    .menu-item.active {
+        background-color: #d9d9d9;
+        font-weight: 500;
+    }
+
+    .settings-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 24px;
+        background: #fff;
+    }
+
+    .content-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #e8e8e8;
+    }
+
+    .content-header h2 {
+        margin: 0;
+        font-size: 20px;
+    }
+
+    .settings-form {
+        max-width: 600px;
+    }
+
+    .form-section {
+        margin-bottom: 32px;
+    }
+
+    .form-section h3 {
+        font-size: 16px;
+        margin-bottom: 16px;
+        color: #262626;
+    }
+
+    .form-item {
+        margin-bottom: 16px;
+    }
+
+    .form-item label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 14px;
+        color: #595959;
+        font-weight: 500;
+    }
+
+    .form-row {
+        display: flex;
+        gap: 16px;
+    }
+
+    .form-row .form-item {
+        flex: 1;
+    }
+
+    .theme-options {
+        display: flex;
+        gap: 8px;
+    }
+
+    .checkbox-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .checkbox-item label {
+        margin-bottom: 0;
+    }
+
+    /* ========== Model Cards ========== */
+    .model-list {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .model-card {
+        border: 1px solid #e8e8e8;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .model-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        background: #fafafa;
+        border-bottom: 1px solid #e8e8e8;
+    }
+
+    .model-name {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .model-actions {
+        display: flex;
+        gap: 4px;
+    }
+
+    .model-card-body {
+        padding: 12px 16px;
+    }
+
+    .model-info-row {
+        font-size: 13px;
+        color: #595959;
+        margin-bottom: 4px;
+    }
+
+    .info-label {
+        color: #8c8c8c;
+        margin-right: 4px;
+    }
+
+    /* ========== Tags ========== */
+    .tag {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        line-height: 1.5;
+    }
+
+    .tag-inline {
+        margin-left: 4px;
+    }
+
+    .tag-green {
+        background: #f6ffed;
+        color: #52c41a;
+        border: 1px solid #b7eb8f;
+    }
+
+    .tag-blue {
+        background: #e6f7ff;
+        color: #1890ff;
+        border: 1px solid #91d5ff;
+    }
+
+    .tag-default {
+        background: #fafafa;
+        color: #595959;
+        border: 1px solid #d9d9d9;
+    }
+
+    /* ========== Modal ========== */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.45);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+
+    .modal-dialog {
+        background: white;
+        border-radius: 8px;
+        width: 520px;
+        max-height: 80vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 24px;
+        border-bottom: 1px solid #e8e8e8;
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        font-size: 16px;
+    }
+
+    .modal-body {
+        padding: 24px;
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    .modal-footer {
+        padding: 16px 24px;
+        border-top: 1px solid #e8e8e8;
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+    }
+
+    .modal-close-btn {
+        padding: 4px;
+    }
+
+    .modal-close-btn:hover {
+        background: #f5f5f5;
+    }
+
+    /* ========== Assistant Settings List ========== */
+    .agent-settings-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .skill-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .modal-textarea {
+        min-height: 60px;
+        resize: vertical;
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        font-size: 12px;
+    }
+
+    .code-text {
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        font-size: 12px;
+        color: #666;
+    }
+
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        color: #333;
+    }
+
+    .checkbox-label input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        accent-color: #1677ff;
+        cursor: pointer;
+    }
+
+    /* ========== Add Model Dialog ========== */
+    .model-dialog {
+        width: 460px;
+    }
+
+    .model-dialog .modal-body {
+        padding: 20px 24px 12px;
+    }
+
+    .model-dialog .modal-body .form-item {
+        margin-bottom: 14px;
+    }
+
+    .model-dialog .modal-body .form-item label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 13px;
+        color: #333;
+        font-weight: 500;
+    }
+
+    .model-dialog .modal-body .form-item.required label::before {
+        content: "*";
+        color: #ff4d4f;
+        margin-right: 4px;
+    }
+
+    .modal-select {
+        width: 100%;
+        height: 36px;
+        padding: 4px 11px;
+        border: 1px solid #d9d9d9;
+        border-radius: 6px;
+        font-size: 14px;
+        color: #262626;
+        background: #fff;
+        outline: none;
+        transition: border-color 0.2s;
+        cursor: pointer;
+        appearance: auto;
+    }
+
+    .modal-select:focus {
+        border-color: #a6a6a6;
+        box-shadow: 0 0 0 2px rgba(166, 166, 166, 0.1);
+    }
+
+    .modal-input {
+        width: 100%;
+        height: 36px;
+        padding: 4px 11px;
+        border: 1px solid #d9d9d9;
+        border-radius: 6px;
+        font-size: 14px;
+        color: #262626;
+        background: #fff;
+        outline: none;
+        transition: border-color 0.2s;
+        box-sizing: border-box;
+    }
+
+    .modal-input:focus {
+        border-color: #a6a6a6;
+        box-shadow: 0 0 0 2px rgba(166, 166, 166, 0.1);
+    }
+
+    .modal-input::placeholder {
+        color: #bfbfbf;
+    }
+
+    .model-suggestions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 6px;
+    }
+
+    .model-suggestion-tag {
+        display: inline-block;
+        padding: 2px 10px;
+        border: 1px solid #d9d9d9;
+        border-radius: 4px;
+        font-size: 12px;
+        color: #595959;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: #fafafa;
+    }
+
+    .model-suggestion-tag:hover {
+        color: #262626;
+        border-color: #595959;
+        background: #f0f0f0;
+    }
+
+    .model-dialog .modal-footer {
+        padding: 0 24px 20px;
+        border-top: none;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    .model-dialog .modal-btn-primary {
+        height: 36px;
+        padding: 4px 20px;
+        border: none;
+        border-radius: 6px;
+        background: #262626;
+        color: #fff;
+        font-size: 14px;
+        cursor: pointer;
+        transition: background 0.2s;
+        min-width: 80px;
+    }
+
+    .model-dialog .modal-btn-primary:hover:not(:disabled) {
+        background: #404040;
+    }
+
+    .model-dialog .modal-btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .model-dialog .modal-btn-cancel {
+        height: 36px;
+        padding: 4px 20px;
+        border: 1px solid #d9d9d9;
+        border-radius: 6px;
+        background: #fff;
+        color: #595959;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+        min-width: 80px;
+    }
+
+    .model-dialog .modal-btn-cancel:hover {
+        color: #262626;
+        border-color: #262626;
+    }
+
+    /* ========== Tab Header ========== */
+    .tab-header {
+        display: flex;
+        border-bottom: 1px solid #e8e8e8;
+        background: #fafafa;
+    }
+
+    .tab-header .tab-item {
+        flex: 1;
+        padding: 12px 8px;
+        text-align: center;
+        cursor: pointer;
+        font-size: 13px;
+        color: #8c8c8c;
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s;
+    }
+
+    .tab-header .tab-item:hover {
+        color: #595959;
+        background: #f0f0f0;
+    }
+
+    .tab-header .tab-item.active {
+        color: #595959;
+        font-weight: 500;
+        border-bottom-color: #595959;
+        background: #fff;
+    }
+
+    /* ========== Agent Management ========== */
+    .agent-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    /* ========== Tab Navigation ========== */
+    .tab-nav {
+        display: flex;
+        border-bottom: 2px solid #e8e8e8;
+        margin-bottom: 16px;
+    }
+
+    .tab-nav .tab-item {
+        padding: 10px 20px;
+        cursor: pointer;
+        font-size: 14px;
+        color: #595959;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -2px;
+        transition: all 0.2s;
+    }
+
+    .tab-nav .tab-item:hover {
+        color: #262626;
+    }
+
+    .tab-nav .tab-item.active {
+        color: #262626;
+        font-weight: 500;
+        border-bottom-color: #262626;
+    }
+
+    /* ========== Agent Dialog ========== */
+    .agent-dialog {
+        width: 600px;
+        max-width: 90vw;
+    }
+
+    /* ========== Skill Selection Area ========== */
+    .skill-search-box {
+        margin-bottom: 8px;
+    }
+
+    .skill-selection-area {
+        border: 1px solid #d9d9d9;
+        border-radius: 6px;
+        padding: 12px;
+        max-height: 280px;
+        overflow-y: auto;
+        background: #fafafa;
+    }
+
+    .skill-checkbox-item {
+        display: flex;
+        align-items: center;
+        padding: 8px;
+        margin-bottom: 4px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .skill-checkbox-item:hover {
+        background: #f0f0f0;
+    }
+
+    .skill-checkbox-item input[type="checkbox"] {
+        margin-right: 8px;
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+    }
+
+    .skill-checkbox-label {
+        flex: 1;
+        font-size: 14px;
+        cursor: pointer;
+    }
+
+    .skill-checkbox-type {
+        font-size: 12px;
+        color: #8c8c8c;
+        margin-left: 8px;
+    }
+
+    /* ========== Tool List ========== */
+    .tool-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 16px;
+    }
+</style>

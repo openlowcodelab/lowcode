@@ -2,10 +2,8 @@
 @page "/assistant/chat"
 
 @layout AssistantLayout
-@inject IAssistantChatAppService AssistantChatAppService
-@inject ILLMConfigAppService LLMConfigAppService
-@inject IScheduledTaskAppService ScheduledTaskAppService
-@inject ITaskExecutionLogAppService TaskExecutionLogAppService
+@inject IChatMessageAppService ChatMessageAppService
+@inject ILLMAppService LLMAppService
 @inject NavigationManager Navigation
 @inject IHttpClientFactory HttpClientFactory
 @inject IJSRuntime JS
@@ -18,120 +16,65 @@
     </div>
 }
 
-<div class="agent-chat-container">
+<div class="assistant-chat-container">
     <div class="chat-layout">
         <div class="session-list-panel">
             <div class="panel-header">
                 <div class="panel-header-actions">
-                    <button class="btn-icon" @onclick="OnClickCreateTask" title="@GetCreateButtonTitle()">
+                    <button class="btn-icon" @onclick="OnClickCreateTask" title="新建即时任务">
                         @IconSvg("plus")
                     </button>
                 </div>
             </div>
 
-            <!-- Tab Header -->
-            <div class="tab-header">
-                <div class="tab-item @(activeTab == "instant" ? "active" : "")"
-                     @onclick="OnClickInstantTab">即时任务</div>
-                <div class="tab-item @(activeTab == "scheduled" ? "active" : "")"
-                     @onclick="OnClickScheduledTab">定时任务</div>
+            <!-- 定时任务菜单项 -->
+            <div class="scheduled-task-menu-item" @onclick="GoToScheduledTasks">
+                @IconSvg("clock")
+                <span>定时任务</span>
             </div>
 
+            <!-- 会话标题 -->
+            <div class="section-title">会话</div>
+
             <div class="panel-content">
-                @if (activeTab == "instant")
+                @if (loadingChats)
                 {
-                    if (loadingSessions)
-                    {
-                        <div class="loading-spinner"><div class="spinner"></div><span>Loading...</span></div>
-                    }
-                    else if (sessions.Any())
-                    {
-                        @foreach (var session in sessions)
-                        {
-                            <div class="session-item @(selectedSessionId == session.Id ? "active" : "")"
-                                 @onclick="() => SelectSession(session.Id)">
-                                <div class="session-content-wrapper">
-                                    <div class="session-info">
-                                        <div class="session-title">@session.Title</div>
-                                        <div class="session-meta">
-                                            <span class="message-count">@session.MessageCount msgs</span>
-                                            <span class="time">@session.LastMessageTime.ToString("MM-dd HH:mm")</span>
-                                        </div>
-                                    </div>
-                                    <div class="session-actions" @onclick:stopPropagation="true">
-                                        <button class="session-more-btn" @onclick="() => ToggleSessionMenu(session.Id)" title="更多操作">
-                                            @IconSvg("more")
-                                        </button>
-                                        @if (showSessionMenu == session.Id)
-                                        {
-                                            <div class="session-dropdown-menu">
-                                                <div class="dropdown-item danger" @onclick="() => DeleteSession(session.Id)">
-                                                    @IconSvg("delete") <span>删除</span>
-                                                </div>
-                                            </div>
-                                        }
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                    }
-                    else
-                    {
-                        <div class="empty-state"><div class="empty-icon">@IconSvg("inbox")</div><div class="empty-text">暂无任务</div></div>
-                    }
+                    <div class="loading-spinner"><div class="spinner"></div><span>Loading...</span></div>
                 }
-                else
+                else if (chats.Any())
                 {
-                    if (loadingScheduledTasks)
+                    @foreach (var chat in chats)
                     {
-                        <div class="loading-spinner"><div class="spinner"></div><span>Loading...</span></div>
-                    }
-                    else if (scheduledTasks.Any())
-                    {
-                        @foreach (var task in scheduledTasks)
-                        {
-                            <div class="scheduled-task-item @(task.IsEnabled ? "" : "disabled") @(selectedScheduledTaskId == task.Id ? "active" : "")"
-                                 @onclick="() => SelectScheduledTask(task.Id)">
-                                <div class="task-info">
-                                    <div class="task-title">@task.TaskName</div>
-                                    <div class="task-meta">
-                                        <span class="task-schedule">@task.ScheduleDisplayText</span>
-                                        <span class="task-status status-@task.Status.ToLower()">@task.Status</span>
+                        <div class="session-item @(selectedChatId == chat.Id ? "active" : "")"
+                             @onclick="() => SelectChat(chat.Id)">
+                            <div class="session-content-wrapper">
+                                <div class="session-info">
+                                    <div class="session-title">@chat.Title</div>
+                                    <div class="session-meta">
+                                        <span class="message-count">@chat.MessageCount msgs</span>
+                                        <span class="time">@chat.LastMessageTime.ToString("MM-dd HH:mm")</span>
                                     </div>
                                 </div>
-                                <div class="task-actions" @onclick:stopPropagation="true">
-                                    <button class="task-action-btn" @onclick="() => ToggleTaskMenu(task.Id)" title="更多操作">
+                                <div class="session-actions" @onclick:stopPropagation="true">
+                                    <button class="session-more-btn" @onclick="() => ToggleChatMenu(chat.Id)" title="更多操作">
                                         @IconSvg("more")
                                     </button>
-                                    @if (showTaskMenu == task.Id)
+                                    @if (showSessionMenu == chat.Id)
                                     {
-                                        <div class="session-dropdown-menu" style="right:0; left:auto;">
-                                            <div class="dropdown-item" @onclick="() => ExecuteTaskNow(task.Id)">
-                                                @IconSvg("send") <span>立即执行</span>
-                                            </div>
-                                            <div class="dropdown-item" @onclick="() => EditScheduledTask(task.Id)">
-                                                @IconSvg("edit") <span>编辑</span>
-                                            </div>
-                                            <div class="dropdown-item" @onclick="() => ToggleTaskEnable(task.Id)">
-                                                @IconSvg(task.IsEnabled ? "pause" : "play") <span>@(task.IsEnabled ? "禁用" : "启用")</span>
-                                            </div>
-                                            <div class="dropdown-divider"></div>
-                                            <div class="dropdown-item danger" @onclick="() => DeleteScheduledTask(task.Id)">
+                                        <div class="session-dropdown-menu">
+                                            <div class="dropdown-item danger" @onclick="() => DeleteChat(chat.Id)">
                                                 @IconSvg("delete") <span>删除</span>
                                             </div>
                                         </div>
                                     }
                                 </div>
                             </div>
-                        }
-                    }
-                    else
-                    {
-                        <div class="empty-state">
-                            <div class="empty-icon">@IconSvg("clock")</div>
-                            <div class="empty-text">暂无定时任务</div>
                         </div>
                     }
+                }
+                else
+                {
+                    <div class="empty-state"><div class="empty-icon">@IconSvg("inbox")</div><div class="empty-text">暂无任务</div></div>
                 }
             </div>
 
@@ -153,76 +96,26 @@
         </div>
 
         <div class="chat-main-panel">
-            @if (activeTab == "scheduled" && selectedScheduledTaskId.HasValue)
-            {
-                <div class="chat-header">
-                    <div class="chat-header-left">
-                        <span>@selectedTaskName - 执行日志</span>
-                    </div>
-                </div>
-                <div class="task-log-list">
-                    @if (loadingTaskLogs)
-                    {
-                        <div class="loading-spinner"><div class="spinner"></div><span>Loading...</span></div>
-                    }
-                    else if (selectedTaskLogs.Any())
-                    {
-                        @foreach (var log in selectedTaskLogs)
-                        {
-                            <div class="log-entry @log.Status.ToLower()">
-                                <div class="log-header">
-                                    <span class="log-status-badge status-@log.Status.ToLower()">@GetLogStatusText(log.Status)</span>
-                                    <span class="log-time">@log.StartTime.ToString("yyyy-MM-dd HH:mm:ss")</span>
-                                    @if (log.DurationSeconds.HasValue)
-                                    {
-                                        <span class="log-duration">@(log.DurationSeconds.Value)秒</span>
-                                    }
-                                </div>
-                                @if (!string.IsNullOrEmpty(log.Result))
-                                {
-                                    <div class="log-result">@log.Result</div>
-                                }
-                                @if (!string.IsNullOrEmpty(log.ErrorMessage))
-                                {
-                                    <div class="log-error">@log.ErrorMessage</div>
-                                }
-                            </div>
-                        }
-                    }
-                    else
-                    {
-                        <div class="empty-state"><div class="empty-icon">@IconSvg("inbox")</div><div class="empty-text">暂无执行记录</div></div>
-                    }
-                </div>
-                <div class="chat-input-area">
-                    <div class="chat-input-footer" style="justify-content: flex-end;">
-                        <button class="btn" @onclick="(() => { selectedScheduledTaskId = null; selectedTaskLogs.Clear(); StateHasChanged(); })">关闭</button>
-                        <button class="btn btn-primary" @onclick="(() => { _ = ExecuteTaskNow(selectedScheduledTaskId.Value); _ = LoadTaskExecutionLogs(selectedScheduledTaskId.Value); })">重新执行</button>
-                    </div>
-                </div>
-            }
-            else if (isNewTask)
+            @if (isNewTask)
             {
                 <div class="new-task-container">
                     <div class="new-task-header">
                         <h2>新建任务</h2>
                         <p class="new-task-desc">描述您的任务，AI 助手将为您处理</p>
                     </div>
-                    <div class="new-task-body">
-                        <textarea class="new-task-textarea" @bind-value="inputMessage" @bind-value:event="oninput" placeholder="详细描述您的任务..." rows="8" @onkeydown="HandleNewTaskKeyDown"></textarea>
-                    </div>
-                    <div class="new-task-footer">
-                        <div class="new-task-model-selector">
-                            <ModelSelector @bind-Value="selectedProviderName" Models="availableModels" />
-                        </div>
-                        <div class="new-task-actions">
-                            <button class="btn" @onclick="CancelNewTask">取消</button>
-                            <SendButton @onclick="SendNewTask" IsDisabled="@string.IsNullOrWhiteSpace(inputMessage)" />
-                        </div>
-                    </div>
+                    <ChatInputArea @bind-Message="inputMessage"
+                                   @bind-SelectedAgentType="selectedAgentType"
+                                   @bind-SelectedProviderName="selectedProviderName"
+                                   AvailableAgents="availableAgents"
+                                   AvailableModels="availableModels"
+                                   IsSending="isSending"
+                                   OnSend="SendNewTask"
+                                   OnCancel="CancelNewTask"
+                                   ShowCancel="true"
+                                   Rows="8" />
                 </div>
             }
-            else if (selectedSessionId.HasValue)
+            else if (selectedChatId.HasValue)
             {
                 <div class="chat-header">
                     <div class="chat-header-left">
@@ -244,7 +137,7 @@
                                     @if (message.Role == "user") { @IconSvg("user") } else { @IconSvg("robot") }
                                 </div>
                                 <div class="message-content">
-                                    <div class="message-text markdown-content">
+                                    <div class="message-text">
                                         <MarkdownRenderer Content="@message.Content" />
                                     </div>
                                     <div class="message-time">@message.CreationTime.ToString("HH:mm:ss")</div>
@@ -257,7 +150,7 @@
                             <div class="message-item user-message">
                                 <div class="message-avatar">@IconSvg("user")</div>
                                 <div class="message-content">
-                                    <div class="message-text markdown-content">
+                                    <div class="message-text">
                                         <MarkdownRenderer Content="@pendingUserMessage.Content" />
                                     </div>
                                     <div class="message-time">@pendingUserMessage.CreationTime.ToString("HH:mm:ss")</div>
@@ -270,7 +163,7 @@
                             <div class="message-item assistant-message">
                                 <div class="message-avatar">@IconSvg("robot")</div>
                                 <div class="message-content">
-                                    <div class="message-text markdown-content">
+                                    <div class="message-text">
                                         <MarkdownRenderer Content="@streamingResponse" />
                                     </div>
                                     <div class="message-time">@DateTime.Now.ToString("HH:mm:ss")</div>
@@ -296,35 +189,15 @@
                     }
                 </div>
 
-                <div class="chat-input-area">
-                    <textarea class="chat-textarea" @bind-value="inputMessage" @bind-value:event="oninput" placeholder="详细描述您的任务..." rows="3" @onkeydown="HandleKeyDown"></textarea>
-                    <div class="chat-input-footer">
-                        <div class="chat-selectors">
-                            <div class="selector-item">
-                                <label class="selector-label">Agent:</label>
-                                <select class="selector-dropdown" @bind="selectedAgentType">
-                                    @foreach (var agent in availableAgents)
-                                    {
-                                        <option value="@agent.AgentType">@agent.DisplayName</option>
-                                    }
-                                </select>
-                            </div>
-                            <div class="selector-item">
-                                <label class="selector-label">模型:</label>
-                                <ModelSelector @bind-Value="selectedProviderName" Models="availableModels" />
-                            </div>
-                        </div>
-                        <div class="chat-input-actions">
-                            <SendButton @onclick="SendMessage" IsDisabled="@string.IsNullOrWhiteSpace(inputMessage)" />
-                            @if (isSending)
-                            {
-                                <button class="btn btn-stop" @onclick="StopSending" title="停止生成">
-                                    @IconSvg("stop")
-                                </button>
-                            }
-                        </div>
-                    </div>
-                </div>
+                <ChatInputArea @bind-Message="inputMessage"
+                               @bind-SelectedAgentType="selectedAgentType"
+                               @bind-SelectedProviderName="selectedProviderName"
+                               AvailableAgents="availableAgents"
+                               AvailableModels="availableModels"
+                               IsSending="isSending"
+                               OnSend="SendMessage"
+                               OnStop="StopSending"
+                               ShowCancel="false" />
             }
             else
             {
@@ -338,107 +211,16 @@
     </div>
 </div>
 
-<!-- Scheduled Task Dialog -->
-@if (showScheduledTaskDialog)
-{
-    <div class="scheduled-task-dialog">
-        <div class="dialog-overlay" @onclick="CloseTaskDialog"></div>
-        <div class="dialog-content">
-            <div class="dialog-header">
-                <h3>@(editingTaskId.HasValue ? "编辑定时任务" : "创建定时任务")</h3>
-                <button class="dialog-close" @onclick="CloseTaskDialog">@IconSvg("close")</button>
-            </div>
-            <div class="dialog-body">
-                <div class="form-group">
-                    <label class="form-label">任务名称 <span class="required">*</span></label>
-                    <input type="text" class="form-input" @bind="newTaskInput.TaskName" placeholder="输入任务名称" />
-                </div>
-                <div class="form-group">
-                    <label class="form-label">提示词内容 <span class="required">*</span></label>
-                    <textarea class="form-textarea" @bind="newTaskInput.PromptContent" @bind:event="oninput" placeholder="输入要执行的任务内容..." rows="5"></textarea>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">Agent 类型</label>
-                        <select class="form-select" @bind="newTaskInput.AgentType">
-                            @foreach (var agent in availableAgents)
-                            {
-                                <option value="@agent.AgentType">@agent.DisplayName</option>
-                            }
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">调度类型</label>
-                        <select class="form-select" @bind="newTaskInput.ScheduleType">
-                            <option value="Once">仅一次</option>
-                            <option value="Daily">每天</option>
-                            <option value="Weekly">每周</option>
-                            <option value="Monthly">每月</option>
-                            <option value="Cron">Cron 表达式</option>
-                        </select>
-                    </div>
-                </div>
-                @if (newTaskInput.ScheduleType == "Daily" || newTaskInput.ScheduleType == "Weekly" || newTaskInput.ScheduleType == "Monthly")
-                {
-                    <div class="schedule-config">
-                        <div class="config-title">执行时间</div>
-                        <div class="time-config">
-                            @if (newTaskInput.ScheduleType == "Weekly")
-                            {
-                                <div class="time-input-group">
-                                    <label>星期</label>
-                                    <select class="form-select" @bind="newTaskInput.DayOfWeek">
-                                        <option value="1">周一</option><option value="2">周二</option><option value="3">周三</option>
-                                        <option value="4">周四</option><option value="5">周五</option><option value="6">周六</option><option value="0">周日</option>
-                                    </select>
-                                </div>
-                            }
-                            else if (newTaskInput.ScheduleType == "Monthly")
-                            {
-                                <div class="time-input-group">
-                                    <label>日期</label>
-                                    <input type="number" class="form-input" @bind="newTaskInput.DayOfMonth" min="1" max="31" />
-                                </div>
-                            }
-                            <div class="time-input-group">
-                                <label>小时</label>
-                                <input type="number" class="form-input" @bind="newTaskInput.Hour" min="0" max="23" />
-                            </div>
-                            <div class="time-input-group">
-                                <label>分钟</label>
-                                <input type="number" class="form-input" @bind="newTaskInput.Minute" min="0" max="59" />
-                            </div>
-                        </div>
-                    </div>
-                }
-                else if (newTaskInput.ScheduleType == "Cron")
-                {
-                    <div class="schedule-config">
-                        <div class="config-title">Cron 表达式</div>
-                        <input type="text" class="form-input" @bind="newTaskInput.CronExpression" placeholder="例如: 0 */2 * * *" />
-                    </div>
-                }
-            </div>
-            <div class="dialog-footer">
-                <button class="btn" @onclick="CloseTaskDialog">取消</button>
-                <button class="btn btn-primary" @onclick="SaveScheduledTask" disabled="@(string.IsNullOrWhiteSpace(newTaskInput.TaskName) || string.IsNullOrWhiteSpace(newTaskInput.PromptContent))">
-                    @(editingTaskId.HasValue ? "保存" : "创建")
-                </button>
-            </div>
-        </div>
-    </div>
-}
-
 @code {
-    private List<ChatSessionDto> sessions = new();
+    private List<ChatDto> chats = new();
     private List<ChatMessageDto> messages = new();
     private List<AgentConfigDto> availableAgents = new();
-    private List<LLMConfigDto> availableModels = new();
-    private Guid? selectedSessionId;
-    private string selectedAgentType = "general";
+    private List<LLMDto> availableModels = new();
+    private Guid? selectedChatId;
+    private string selectedAgentType = "";  // 默认为空,使用默认 Agent
     private string inputMessage = string.Empty;
     private string selectedProviderName = string.Empty;
-    private bool loadingSessions;
+    private bool loadingChats;
     private bool loadingMessages;
     private bool isSending;
     private bool isNewTask;
@@ -452,21 +234,6 @@
     private string toastType = "info";
     private bool toastVisible;
 
-    // Tab & Scheduled Tasks
-    private string activeTab = "instant";
-    private bool loadingScheduledTasks;
-    private List<ScheduledTaskDto> scheduledTasks = new();
-    private bool showScheduledTaskDialog;
-    private CreateScheduledTaskInputDto newTaskInput = new();
-    private Guid? editingTaskId;
-
-    // 定时任务选中与执行日志
-    private Guid? selectedScheduledTaskId;
-    private string selectedTaskName = string.Empty;
-    private List<TaskExecutionLogDto> selectedTaskLogs = new();
-    private bool loadingTaskLogs;
-    private Guid? showTaskMenu;
-
     protected override async Task OnInitializedAsync()
     {
         await LoadSessions();
@@ -474,202 +241,9 @@
         await LoadAvailableModels();
     }
 
-    private void OnClickInstantTab() => _ = SwitchTab("instant");
-    private void OnClickScheduledTab() => _ = SwitchTab("scheduled");
+    private void OnClickCreateTask() => _ = CreateNewChat();
 
-    private void OnClickCreateTask()
-    {
-        if (activeTab == "instant")
-        {
-            _ = CreateNewTask();
-        }
-        else
-        {
-            CreateNewScheduledTask();
-        }
-    }
-
-    private string GetCreateButtonTitle() => activeTab == "instant" ? "新建即时任务" : "新建定时任务";
-
-    private async Task SelectScheduledTask(Guid taskId)
-    {
-        selectedScheduledTaskId = taskId;
-        var task = scheduledTasks.FirstOrDefault(t => t.Id == taskId);
-        selectedTaskName = task?.TaskName ?? "";
-        selectedSessionId = null;
-        isNewTask = false;
-        await LoadTaskExecutionLogs(taskId);
-        StateHasChanged();
-    }
-
-    private async Task LoadTaskExecutionLogs(Guid taskId)
-    {
-        loadingTaskLogs = true;
-        try
-        {
-            var result = await TaskExecutionLogAppService.GetListAsync(new TaskExecutionLogQueryDto
-            {
-                TaskId = taskId,
-                MaxResultCount = 20
-            });
-            selectedTaskLogs = result.Items.ToList();
-        }
-        finally { loadingTaskLogs = false; }
-    }
-
-    private void ToggleTaskMenu(Guid taskId)
-    {
-        showTaskMenu = showTaskMenu == taskId ? null : taskId;
-    }
-
-    private string GetLogStatusText(string status)
-    {
-        return status switch
-        {
-            "Success" => "成功",
-            "Failed" => "失败",
-            "Running" => "运行中",
-            _ => status
-        };
-    }
-
-    private async Task SwitchTab(string tab)
-    {
-        activeTab = tab;
-        if (tab == "scheduled" && !scheduledTasks.Any())
-        {
-            await LoadScheduledTasks();
-        }
-        StateHasChanged();
-    }
-
-    private async Task LoadScheduledTasks()
-    {
-        loadingScheduledTasks = true;
-        try
-        {
-            var result = await ScheduledTaskAppService.GetListAsync(new ScheduledTaskQueryDto { MaxResultCount = 50 });
-            scheduledTasks = result.Items.ToList();
-        }
-        finally { loadingScheduledTasks = false; }
-    }
-
-    private void CreateNewScheduledTask()
-    {
-        editingTaskId = null;
-        newTaskInput = new CreateScheduledTaskInputDto
-        {
-            TaskName = "",
-            TaskDescription = "",
-            PromptContent = "",
-            AgentType = selectedAgentType,
-            ScheduleType = "Daily",
-            Hour = 9,
-            Minute = 0,
-            IsEnabled = true
-        };
-        showScheduledTaskDialog = true;
-    }
-
-    private void EditScheduledTask(Guid taskId)
-    {
-        var task = scheduledTasks.FirstOrDefault(t => t.Id == taskId);
-        if (task != null)
-        {
-            editingTaskId = taskId;
-            newTaskInput = new CreateScheduledTaskInputDto
-            {
-                TaskName = task.TaskName,
-                TaskDescription = task.TaskDescription,
-                PromptContent = task.PromptContent,
-                AgentType = task.AgentType,
-                ModelConfigId = task.ModelConfigId,
-                ScheduleType = task.ScheduleType,
-                CronExpression = task.CronExpression,
-                Hour = task.Hour,
-                Minute = task.Minute,
-                DayOfWeek = task.DayOfWeek,
-                DayOfMonth = task.DayOfMonth,
-                IsEnabled = task.IsEnabled
-            };
-            showScheduledTaskDialog = true;
-        }
-    }
-
-    private async Task CloseTaskDialog()
-    {
-        showScheduledTaskDialog = false;
-        editingTaskId = null;
-    }
-
-    private async Task SaveScheduledTask()
-    {
-        try
-        {
-            if (editingTaskId.HasValue)
-            {
-                await ScheduledTaskAppService.UpdateAsync(editingTaskId.Value, new UpdateScheduledTaskInputDto
-                {
-                    TaskName = newTaskInput.TaskName,
-                    TaskDescription = newTaskInput.TaskDescription,
-                    PromptContent = newTaskInput.PromptContent,
-                    AgentType = newTaskInput.AgentType,
-                    ModelConfigId = newTaskInput.ModelConfigId,
-                    ScheduleType = newTaskInput.ScheduleType,
-                    CronExpression = newTaskInput.CronExpression,
-                    Hour = newTaskInput.Hour,
-                    Minute = newTaskInput.Minute,
-                    DayOfWeek = newTaskInput.DayOfWeek,
-                    DayOfMonth = newTaskInput.DayOfMonth,
-                    IsEnabled = newTaskInput.IsEnabled
-                });
-                ShowToast("任务已更新", "success");
-            }
-            else
-            {
-                await ScheduledTaskAppService.CreateAsync(newTaskInput);
-                ShowToast("任务已创建", "success");
-            }
-            await CloseTaskDialog();
-            await LoadScheduledTasks();
-        }
-        catch (Exception ex)
-        {
-            ShowToast("保存失败: " + ex.Message, "error");
-        }
-    }
-
-    private async Task ToggleTaskEnable(Guid taskId)
-    {
-        try
-        {
-            await ScheduledTaskAppService.ToggleEnableAsync(taskId);
-            await LoadScheduledTasks();
-        }
-        catch (Exception ex) { ShowToast("操作失败: " + ex.Message, "error"); }
-    }
-
-    private async Task ExecuteTaskNow(Guid taskId)
-    {
-        try
-        {
-            await ScheduledTaskAppService.ExecuteNowAsync(taskId);
-            ShowToast("任务已触发执行", "success");
-            await LoadScheduledTasks();
-        }
-        catch (Exception ex) { ShowToast("执行失败: " + ex.Message, "error"); }
-    }
-
-    private async Task DeleteScheduledTask(Guid taskId)
-    {
-        try
-        {
-            await ScheduledTaskAppService.DeleteAsync(taskId);
-            ShowToast("任务已删除", "success");
-            await LoadScheduledTasks();
-        }
-        catch (Exception ex) { ShowToast("删除失败: " + ex.Message, "error"); }
-    }
+    private void GoToScheduledTasks() => Navigation.NavigateTo("/assistant/tasks");
 
     // ========== Existing Methods ==========
     private void ShowToast(string message, string type = "info")
@@ -683,18 +257,18 @@
 
     private async Task LoadSessions()
     {
-        loadingSessions = true;
+        loadingChats = true;
         try
         {
-            var result = await AssistantChatAppService.GetSessionsAsync(new SessionQueryDto { MaxResultCount = 50, SkipCount = 0 });
-            sessions = result.Items.ToList();
+            var result = await ChatMessageAppService.GetSessionsAsync(new SessionQueryDto { MaxResultCount = 50, SkipCount = 0 });
+            chats = result.Items.ToList();
         }
-        finally { loadingSessions = false; }
+        finally { loadingChats = false; }
     }
 
     private async Task LoadAvailableAgents()
     {
-        availableAgents = await AssistantChatAppService.GetAvailableAgentsAsync();
+        availableAgents = await ChatMessageAppService.GetAvailableAgentsAsync();
         selectedAgent = availableAgents.FirstOrDefault(a => a.AgentType == selectedAgentType);
     }
 
@@ -702,7 +276,7 @@
     {
         try
         {
-            var allConfigs = await LLMConfigAppService.GetAllAsync();
+            var allConfigs = await LLMAppService.GetAllAsync();
             availableModels = allConfigs.Where(c => c.IsEnabled).ToList();
             if (string.IsNullOrEmpty(selectedProviderName) && availableModels.Any())
             {
@@ -710,12 +284,12 @@
                 selectedProviderName = defaultModel.Id.ToString();
             }
         }
-        catch (Exception ex) { availableModels = new List<LLMConfigDto>(); ShowToast($"Load models failed: {ex.Message}", "error"); }
+        catch (Exception ex) { availableModels = new List<LLMDto>(); ShowToast($"Load models failed: {ex.Message}", "error"); }
     }
 
-    private async Task SelectSession(Guid sessionId)
+    private async Task SelectChat(Guid sessionId)
     {
-        selectedSessionId = sessionId;
+        selectedChatId = sessionId;
         isNewTask = false;
         inputMessage = string.Empty;
         await LoadMessages(sessionId);
@@ -725,13 +299,13 @@
     private async Task LoadMessages(Guid sessionId)
     {
         loadingMessages = true;
-        try { messages = await AssistantChatAppService.GetMessagesAsync(sessionId); await ScrollToBottom(); }
+        try { messages = await ChatMessageAppService.GetMessagesAsync(sessionId); await ScrollToBottom(); }
         finally { loadingMessages = false; }
     }
 
-    private async Task CreateNewTask()
+    private async Task CreateNewChat()
     {
-        selectedSessionId = null; messages.Clear(); inputMessage = string.Empty; isNewTask = true;
+        selectedChatId = null; messages.Clear(); inputMessage = string.Empty; isNewTask = true;
         await LoadAvailableModels(); StateHasChanged();
     }
 
@@ -745,8 +319,8 @@
         streamingResponse = string.Empty; StateHasChanged(); await ScrollToBottom();
         try
         {
-            var response = await AssistantChatAppService.SendMessageAsync(new SendChatMessageInputDto { SessionId = null, Message = message, AgentType = selectedAgentType, ProviderName = string.IsNullOrEmpty(selectedProviderName) ? null : selectedProviderName, ModelConfigId = Guid.TryParse(selectedProviderName, out var configId) ? configId : null });
-            selectedSessionId = response.SessionId; isNewTask = false;
+            var response = await ChatMessageAppService.SendMessageAsync(new SendChatMessageInputDto { SessionId = null, Message = message, AgentType = selectedAgentType, ProviderName = string.IsNullOrEmpty(selectedProviderName) ? null : selectedProviderName, ModelConfigId = Guid.TryParse(selectedProviderName, out var configId) ? configId : null });
+            selectedChatId = response.SessionId; isNewTask = false;
             if (!string.IsNullOrEmpty(response.Response)) { streamingResponse = response.Response; StateHasChanged(); }
             pendingUserMessage = null; streamingResponse = string.Empty; await LoadMessages(response.SessionId); await LoadSessions();
         }
@@ -757,14 +331,14 @@
     private async Task SendMessage()
     {
         if (string.IsNullOrWhiteSpace(inputMessage) || isSending) return;
-        if (!selectedSessionId.HasValue) { ShowToast("请先选择或创建一个会话", "warning"); return; }
+        if (!selectedChatId.HasValue) { ShowToast("请先选择或创建一个会话", "warning"); return; }
         isSending = true; var message = inputMessage; inputMessage = string.Empty;
-        pendingUserMessage = new ChatMessageDto { Id = Guid.NewGuid(), SessionId = selectedSessionId.Value, Role = "user", Content = message, CreationTime = DateTime.Now };
+        pendingUserMessage = new ChatMessageDto { Id = Guid.NewGuid(), SessionId = selectedChatId.Value, Role = "user", Content = message, CreationTime = DateTime.Now };
         streamingResponse = string.Empty; StateHasChanged(); await ScrollToBottom();
         try
         {
             var httpClient = HttpClientFactory.CreateClient(); httpClient.Timeout = TimeSpan.FromMinutes(5);
-            var requestDto = new SendChatMessageInputDto { SessionId = selectedSessionId, Message = message, AgentType = selectedAgentType, ProviderName = string.IsNullOrEmpty(selectedProviderName) ? null : selectedProviderName, ModelConfigId = Guid.TryParse(selectedProviderName, out var configId) ? configId : null };
+            var requestDto = new SendChatMessageInputDto { SessionId = selectedChatId, Message = message, AgentType = selectedAgentType, ProviderName = string.IsNullOrEmpty(selectedProviderName) ? null : selectedProviderName, ModelConfigId = Guid.TryParse(selectedProviderName, out var configId) ? configId : null };
             var json = requestDto.ToJson();
             var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"{Navigation.BaseUri}api/assistant/chat/stream");
             httpRequest.Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
@@ -778,29 +352,27 @@
             {
                 if (line.StartsWith("data: ")) { var data = line.Substring(6).Trim(); if (data == "[DONE]") break; fullResponse.Append(data); streamingResponse = fullResponse.ToString(); StateHasChanged(); await Task.Delay(1); await ScrollToBottom(); }
             }
-            pendingUserMessage = null; streamingResponse = string.Empty; await LoadMessages(selectedSessionId.Value); await LoadSessions();
+            pendingUserMessage = null; streamingResponse = string.Empty; await LoadMessages(selectedChatId.Value); await LoadSessions();
         }
         catch (Exception ex) { inputMessage = message; pendingUserMessage = null; streamingResponse = string.Empty; ShowToast("Send failed: " + ex.Message, "error"); }
         finally { isSending = false; StateHasChanged(); }
     }
 
-    private async Task DeleteSession(Guid sessionId)
+    private async Task DeleteChat(Guid sessionId)
     {
         try
         {
-            await AssistantChatAppService.DeleteSessionAsync(sessionId); showSessionMenu = null;
-            if (selectedSessionId == sessionId) { selectedSessionId = null; messages.Clear(); isNewTask = false; }
+            await ChatMessageAppService.DeleteSessionAsync(sessionId); showSessionMenu = null;
+            if (selectedChatId == sessionId) { selectedChatId = null; messages.Clear(); isNewTask = false; }
             await LoadSessions(); ShowToast("会话已删除", "success"); StateHasChanged();
         }
         catch (Exception ex) { ShowToast("删除失败: " + ex.Message, "error"); }
     }
 
-    private async Task HandleKeyDown(KeyboardEventArgs e) { if (e.Key == "Enter" && !e.ShiftKey) await SendMessage(); }
-    private async Task HandleNewTaskKeyDown(KeyboardEventArgs e) { if (e.Key == "Enter" && !e.ShiftKey) await SendNewTask(); }
     private void StopSending() { isSending = false; StateHasChanged(); }
     private async Task ScrollToBottom() { try { await JS.InvokeVoidAsync("eval", "var el = document.querySelector('.chat-messages'); if(el) el.scrollTop = el.scrollHeight;"); } catch { } }
     private void ToggleUserMenu() { showUserMenu = !showUserMenu; }
-    private void ToggleSessionMenu(Guid sessionId) { showSessionMenu = showSessionMenu == sessionId ? null : sessionId; }
+    private void ToggleChatMenu(Guid sessionId) { showSessionMenu = showSessionMenu == sessionId ? null : sessionId; }
     private void GoToSettings() { showUserMenu = false; Navigation.NavigateTo("/agent/settings"); }
 
     private static MarkupString IconSvg(string name) => (MarkupString)GetIconSvg(name);
@@ -826,3 +398,284 @@
         _ => ""
     };
 }
+
+<style>
+    /* ========== Chat Page Layout ========== */
+    .assistant-chat-container {
+        flex: 1;
+        display: flex;
+        overflow: hidden;
+    }
+
+    .chat-layout {
+        display: flex;
+        width: 100%;
+        height: 100%;
+    }
+
+    /* ========== Left Panel ========== */
+    .session-item {
+        padding: 12px;
+        cursor: pointer;
+        border-radius: 4px;
+        margin-bottom: 4px;
+        transition: background-color 0.2s;
+    }
+
+    .session-item:hover {
+        background-color: #f0f0f0;
+    }
+
+    .session-item.active {
+        background-color: #d9d9d9;
+    }
+
+    .session-content-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .session-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .session-actions {
+        position: relative;
+        flex-shrink: 0;
+    }
+
+    .session-more-btn {
+        padding: 4px;
+        border: none;
+        background: transparent;
+        border-radius: 4px;
+        cursor: pointer;
+        opacity: 0;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #8c8c8c;
+    }
+
+    .session-more-btn svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .session-item:hover .session-more-btn {
+        opacity: 1;
+    }
+
+    .session-more-btn:hover {
+        background-color: #d9d9d9;
+        color: #262626;
+    }
+
+    .session-dropdown-menu {
+        position: absolute;
+        right: 0;
+        top: 100%;
+        background: white;
+        border: 1px solid #e8e8e8;
+        border-radius: 6px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        z-index: 1000;
+        min-width: 120px;
+        overflow: hidden;
+        margin-top: 4px;
+    }
+
+    .session-dropdown-menu .dropdown-item {
+        padding: 8px 12px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        transition: background-color 0.2s;
+        color: #595959;
+    }
+
+    .session-dropdown-menu .dropdown-item:hover {
+        background-color: #f5f5f5;
+    }
+
+    .session-dropdown-menu .dropdown-item.danger {
+        color: #ff4d4f;
+    }
+
+    .session-dropdown-menu .dropdown-item.danger:hover {
+        background-color: #fff1f0;
+    }
+
+    .session-dropdown-menu .dropdown-item svg {
+        width: 14px;
+        height: 14px;
+    }
+
+    .session-title {
+        font-weight: 500;
+        margin-bottom: 4px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .session-meta {
+        font-size: 12px;
+        color: #8c8c8c;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    /* ========== Main Chat Area ========== */
+    .chat-main-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: #fff;
+    }
+
+    .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+    }
+
+    .message-item {
+        display: flex;
+        margin-bottom: 16px;
+        gap: 12px;
+    }
+
+    .user-message {
+        flex-direction: row-reverse;
+    }
+
+    .message-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background-color: #bfbfbf;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .user-message .message-avatar {
+        background-color: #a6a6a6;
+    }
+
+    .message-content {
+        max-width: 60%;
+    }
+
+    .message-text {
+        padding: 12px;
+        border-radius: 8px;
+        background-color: #f0f0f0;
+        line-height: 1.5;
+    }
+
+    .user-message .message-text {
+        background-color: #595959;
+        color: white;
+    }
+
+    .message-time {
+        font-size: 12px;
+        color: #8c8c8c;
+        margin-top: 4px;
+    }
+
+    /* ========== New Task View ========== */
+    .new-task-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 60px;
+        background: #fff;
+        max-width: 800px;
+        margin: 0 auto;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .new-task-header {
+        text-align: center;
+        margin-bottom: 24px;
+        width: 100%;
+    }
+
+    .new-task-header h2 {
+        font-size: 24px;
+        font-weight: 600;
+        color: #262626;
+        margin: 0 0 8px 0;
+    }
+
+    .new-task-desc {
+        font-size: 14px;
+        color: #8c8c8c;
+        margin: 0;
+    }
+
+    .new-task-body {
+        width: 100%;
+        margin-bottom: 20px;
+    }
+
+    .new-task-footer {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .new-task-model-selector {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .new-task-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .new-task-textarea {
+        width: 100%;
+        border: 1px solid #d9d9d9;
+        border-radius: 8px;
+        padding: 12px 16px;
+        font-size: 14px;
+        line-height: 1.6;
+        resize: vertical;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        font-family: inherit;
+        box-sizing: border-box;
+    }
+
+    .new-task-textarea:focus {
+        border-color: #a6a6a6;
+        box-shadow: 0 0 0 2px rgba(166, 166, 166, 0.1);
+        outline: none;
+    }
+
+    .new-task-model-selector .model-select-dropdown {
+        min-width: 320px;
+    }
+
+    .task-action-btn svg {
+        width: 16px;
+        height: 16px;
+    }
+</style>

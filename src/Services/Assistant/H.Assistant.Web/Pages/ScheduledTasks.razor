@@ -1,0 +1,1317 @@
+@page "/assistant/tasks"
+
+@layout AssistantLayout
+@inject ITaskAppService TaskAppService
+@inject ITaskLogAppService TaskLogAppService
+@inject IChatMessageAppService ChatMessageAppService
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<!-- Toast Notification -->
+@if (!string.IsNullOrEmpty(toastMessage))
+{
+    <div class="toast-notification toast-@toastType @(toastVisible ? "toast-show" : "")">
+        @toastMessage
+    </div>
+}
+
+<div class="scheduled-tasks-container">
+    <div class="tasks-layout">
+        <!-- 左侧栏 - 与 Chat 页面保持一致 -->
+        <div class="session-list-panel">
+            <div class="panel-header">
+                <div class="panel-header-actions">
+                    <button class="btn-icon" @onclick="CreateNewTask" title="新建定时任务">
+                        @IconSvg("plus")
+                    </button>
+                </div>
+            </div>
+
+            <!-- 定时任务菜单项 - 当前激活 -->
+            <div class="scheduled-task-menu-item active">
+                @IconSvg("clock")
+                <span>定时任务</span>
+            </div>
+
+            <!-- 会话标题 - 点击返回会话页面 -->
+            <div class="section-title clickable" @onclick="GoToChat">会话</div>
+
+            <div class="panel-content">
+                @if (loadingTasks)
+                {
+                    <div class="loading-spinner"><div class="spinner"></div><span>Loading...</span></div>
+                }
+                else if (tasks.Any())
+                {
+                    @foreach (var task in tasks)
+                    {
+                        <div class="scheduled-task-item @(task.IsEnabled ? "" : "disabled") @(selectedTaskId == task.Id ? "active" : "")"
+                             @onclick="() => SelectTask(task.Id)">
+                            <div class="task-info">
+                                <div class="task-title">@task.TaskName</div>
+                                <div class="task-meta">
+                                    <span class="task-schedule">@task.ScheduleDisplayText</span>
+                                    <span class="task-status status-@task.Status.ToLower()">@task.Status</span>
+                                </div>
+                            </div>
+                            <div class="task-actions" @onclick:stopPropagation="true">
+                                <button class="task-action-btn" @onclick="() => ToggleTaskMenu(task.Id)" title="更多操作">
+                                    @IconSvg("more")
+                                </button>
+                                @if (showTaskMenu == task.Id)
+                                {
+                                    <div class="session-dropdown-menu" style="right:0; left:auto;">
+                                        <div class="dropdown-item" @onclick="() => ExecuteTaskNow(task.Id)">
+                                            @IconSvg("send") <span>立即执行</span>
+                                        </div>
+                                        <div class="dropdown-item" @onclick="() => EditTask(task.Id)">
+                                            @IconSvg("edit") <span>编辑</span>
+                                        </div>
+                                        <div class="dropdown-item" @onclick="() => ToggleTaskEnable(task.Id)">
+                                            @IconSvg(task.IsEnabled ? "pause" : "play") <span>@(task.IsEnabled ? "禁用" : "启用")</span>
+                                        </div>
+                                        <div class="dropdown-divider"></div>
+                                        <div class="dropdown-item danger" @onclick="() => DeleteScheduledTask(task.Id)">
+                                            @IconSvg("delete") <span>删除</span>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <div class="empty-icon">@IconSvg("clock")</div>
+                        <div class="empty-text">暂无定时任务</div>
+                    </div>
+                }
+            </div>
+
+            <div class="user-menu-area">
+                <div class="user-menu-trigger">
+                    <div class="user-avatar-small">@IconSvg("user")</div>
+                    <span class="user-name">未登录</span>
+                    <div class="user-menu-icon" @onclick="ToggleUserMenu">@IconSvg("setting")</div>
+                    @if (showUserMenu)
+                    {
+                        <div class="user-dropdown-menu">
+                            <div class="dropdown-item" @onclick:stopPropagation="true" @onclick="GoToSettings">
+                                @IconSvg("setting") <span>设置</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="tasks-main-panel">
+            @if (selectedTaskId.HasValue)
+            {
+                <div class="chat-header">
+                    <div class="chat-header-left">
+                        <span>@selectedTaskName - 执行日志</span>
+                    </div>
+                    <div class="chat-header-right">
+                        <button class="btn btn-primary" @onclick="CreateNewTask">
+                            @IconSvg("plus") 新建定时任务
+                        </button>
+                    </div>
+                </div>
+                <div class="task-log-list">
+                    @if (loadingTaskLogs)
+                    {
+                        <div class="loading-spinner"><div class="spinner"></div><span>Loading...</span></div>
+                    }
+                    else if (selectedTaskLogs.Any())
+                    {
+                        @foreach (var log in selectedTaskLogs)
+                        {
+                            <div class="log-entry @log.Status.ToLower()">
+                                <div class="log-header">
+                                    @if (isLogSelectionMode)
+                                    {
+                                        <input type="checkbox" 
+                                               class="log-checkbox"
+                                               checked="@selectedLogIds.Contains(log.Id)" 
+                                               @onchange="() => ToggleLogSelectItem(log.Id)" />
+                                    }
+                                    <span class="log-status-badge status-@log.Status.ToLower()">@GetLogStatusText(log.Status)</span>
+                                    <span class="log-time">@log.StartTime.ToString("yyyy-MM-dd HH:mm:ss")</span>
+                                    @if (log.DurationSeconds.HasValue)
+                                    {
+                                        <span class="log-duration">@(log.DurationSeconds.Value)秒</span>
+                                    }
+                                </div>
+                                @if (!string.IsNullOrEmpty(log.Result))
+                                {
+                                    <div class="log-result">@log.Result</div>
+                                }
+                                @if (!string.IsNullOrEmpty(log.ErrorMessage))
+                                {
+                                    <div class="log-error">@log.ErrorMessage</div>
+                                }
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="empty-state"><div class="empty-icon">@IconSvg("inbox")</div><div class="empty-text">暂无执行记录</div></div>
+                    }
+                </div>
+                <div class="chat-input-area">
+                    <div class="chat-input-footer" style="justify-content: space-between;">
+                        @if (isLogSelectionMode)
+                        {
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-sm" @onclick="ToggleLogSelectAll">@GetLogSelectAllText()</button>
+                                <button class="btn btn-sm btn-danger" disabled="@(selectedLogIds.Count == 0)" @onclick="ConfirmBatchDeleteLogs">删除选中</button>
+                            </div>
+                        }
+                        else
+                        {
+                            <div></div>
+                        }
+                        <div style="display: flex; gap: 8px;">
+                            @if (!isLogSelectionMode)
+                            {
+                                <button class="btn" @onclick="ToggleLogSelectionMode">多选</button>
+                            }
+                            else
+                            {
+                                <button class="btn" @onclick="ExitLogSelectionMode">退出多选</button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="chat-header">
+                    <div class="chat-header-left">
+                        <span>定时任务</span>
+                    </div>
+                    <div class="chat-header-right">
+                        <button class="btn btn-primary" @onclick="CreateNewTask">
+                            @IconSvg("plus") 新建定时任务
+                        </button>
+                    </div>
+                </div>
+                <div class="empty-chat-state">
+                    <div class="empty-chat-content">
+                        <div class="empty-state"><div class="empty-icon">@IconSvg("task")</div><div class="empty-text">选择一个定时任务查看执行日志</div></div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Scheduled Task Dialog -->
+@if (showTaskDialog)
+{
+    <div class="scheduled-task-dialog">
+        <div class="dialog-overlay" @onclick="CloseTaskDialog"></div>
+        <div class="dialog-content">
+            <div class="dialog-header">
+                <h3>@(editingTaskId.HasValue ? "编辑定时任务" : "创建定时任务")</h3>
+                <button class="dialog-close" @onclick="CloseTaskDialog">@IconSvg("close")</button>
+            </div>
+            <div class="dialog-body">
+                <div class="form-group">
+                    <label class="form-label">任务名称 <span class="required">*</span></label>
+                    <input type="text" class="form-input" @bind="newTaskDto.TaskName" placeholder="输入任务名称" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">提示词内容 <span class="required">*</span></label>
+                    <textarea class="form-textarea" @bind="newTaskDto.PromptContent" @bind:event="oninput" placeholder="输入要执行的任务内容..." rows="5"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Agent 类型</label>
+                        <select class="form-select" @bind="newTaskDto.AgentType">
+                            @foreach (var agent in availableAgents)
+                            {
+                                <option value="@agent.AgentType">@agent.DisplayName</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">调度类型</label>
+                        <select class="form-select" @bind="newTaskDto.ScheduleType">
+                            <option value="Once">仅一次</option>
+                            <option value="Daily">每天</option>
+                            <option value="Weekly">每周</option>
+                            <option value="Monthly">每月</option>
+                            <option value="Cron">Cron 表达式</option>
+                        </select>
+                    </div>
+                </div>
+                @if (newTaskDto.ScheduleType == "Daily" || newTaskDto.ScheduleType == "Weekly" || newTaskDto.ScheduleType == "Monthly")
+                {
+                    <div class="schedule-config">
+                        <div class="config-title">执行时间</div>
+                        <div class="time-config">
+                            @if (newTaskDto.ScheduleType == "Weekly")
+                            {
+                                <div class="time-input-group">
+                                    <label>星期</label>
+                                    <select class="form-select" @bind="newTaskDto.DayOfWeek">
+                                        <option value="1">周一</option><option value="2">周二</option><option value="3">周三</option>
+                                        <option value="4">周四</option><option value="5">周五</option><option value="6">周六</option><option value="0">周日</option>
+                                    </select>
+                                </div>
+                            }
+                            else if (newTaskDto.ScheduleType == "Monthly")
+                            {
+                                <div class="time-input-group">
+                                    <label>日期</label>
+                                    <input type="number" class="form-input" @bind="newTaskDto.DayOfMonth" min="1" max="31" />
+                                </div>
+                            }
+                            <div class="time-input-group">
+                                <label>小时</label>
+                                <input type="number" class="form-input" @bind="newTaskDto.Hour" min="0" max="23" />
+                            </div>
+                            <div class="time-input-group">
+                                <label>分钟</label>
+                                <input type="number" class="form-input" @bind="newTaskDto.Minute" min="0" max="59" />
+                            </div>
+                        </div>
+                    </div>
+                }
+                else if (newTaskDto.ScheduleType == "Cron")
+                {
+                    <div class="schedule-config">
+                        <div class="config-title">Cron 表达式</div>
+                        <input type="text" class="form-input" @bind="newTaskDto.CronExpression" placeholder="例如: 0 */2 * * *" />
+                    </div>
+                }
+            </div>
+            <div class="dialog-footer">
+                <button class="btn" @onclick="CloseTaskDialog">取消</button>
+                <button class="btn btn-primary" @onclick="SaveScheduledTask" disabled="@(string.IsNullOrWhiteSpace(newTaskDto.TaskName) || string.IsNullOrWhiteSpace(newTaskDto.PromptContent))">
+                    @(editingTaskId.HasValue ? "保存" : "创建")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Batch Delete Confirmation Modal -->
+@if (showBatchDeleteConfirm)
+{
+    <div class="scheduled-task-dialog">
+        <div class="dialog-overlay" @onclick="(() => showBatchDeleteConfirm = false)"></div>
+        <div class="dialog-content confirm-dialog">
+            <div class="dialog-header">
+                <h3>确认批量删除</h3>
+                <button class="dialog-close" @onclick="() => showBatchDeleteConfirm = false">@IconSvg("close")</button>
+            </div>
+            <div class="dialog-body">
+                <p class="confirm-message">确定要删除选中的 @selectedLogIds.Count 条执行日志吗？此操作不可撤销。</p>
+            </div>
+            <div class="dialog-footer">
+                <button class="btn" @onclick="() => showBatchDeleteConfirm = false">取消</button>
+                <button class="btn btn-danger" @onclick="BatchDeleteLogs">删除</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<TaskDto> tasks = new();
+    private List<AgentConfigDto> availableAgents = new();
+    private bool loadingTasks;
+    private bool showTaskDialog;
+    private CreateTaskDto newTaskDto = new();
+    private Guid? editingTaskId;
+
+    private Guid? selectedTaskId;
+    private string selectedTaskName = string.Empty;
+    private List<TaskLogDto> selectedTaskLogs = new();
+    private bool loadingTaskLogs;
+    private Guid? showTaskMenu;
+
+    private bool isLogSelectionMode = false;
+    private HashSet<Guid> selectedLogIds = new();
+    private bool showBatchDeleteConfirm;
+
+    private string toastMessage = string.Empty;
+    private string toastType = "info";
+    private bool toastVisible;
+    private bool showUserMenu;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTasks();
+        await LoadAvailableAgents();
+    }
+
+    private void GoToChat() => Navigation.NavigateTo("/assistant");
+    private void ToggleUserMenu() => showUserMenu = !showUserMenu;
+    private void GoToSettings() { showUserMenu = false; Navigation.NavigateTo("/agent/settings"); }
+
+    private async Task SelectTask(Guid taskId)
+    {
+        selectedTaskId = taskId;
+        var task = tasks.FirstOrDefault(t => t.Id == taskId);
+        selectedTaskName = task?.TaskName ?? "";
+        await LoadTaskLogs(taskId);
+        StateHasChanged();
+    }
+
+    private async Task LoadTaskLogs(Guid taskId)
+    {
+        loadingTaskLogs = true;
+        try
+        {
+            var result = await TaskLogAppService.GetListAsync(new TaskLogQueryDto
+            {
+                TaskId = taskId,
+                MaxResultCount = 20
+            });
+            selectedTaskLogs = result.Items.ToList();
+        }
+        finally { loadingTaskLogs = false; }
+    }
+
+    private void ToggleTaskMenu(Guid taskId)
+    {
+        showTaskMenu = showTaskMenu == taskId ? null : taskId;
+    }
+
+    private string GetLogStatusText(string status)
+    {
+        return status switch
+        {
+            "Success" => "成功",
+            "Failed" => "失败",
+            "Running" => "运行中",
+            _ => status
+        };
+    }
+
+    private void ToggleLogSelectionMode()
+    {
+        isLogSelectionMode = !isLogSelectionMode;
+        if (!isLogSelectionMode)
+        {
+            selectedLogIds.Clear();
+        }
+    }
+
+    private void ExitLogSelectionMode()
+    {
+        isLogSelectionMode = false;
+        selectedLogIds.Clear();
+    }
+
+    private bool IsAllLogsSelected()
+    {
+        return selectedTaskLogs.Count > 0 && selectedLogIds.Count == selectedTaskLogs.Count;
+    }
+
+    private void ToggleLogSelectAll()
+    {
+        if (IsAllLogsSelected())
+        {
+            selectedLogIds.Clear();
+        }
+        else
+        {
+            selectedLogIds = new HashSet<Guid>(selectedTaskLogs.Select(l => l.Id));
+        }
+    }
+
+    private string GetLogSelectAllText()
+    {
+        return IsAllLogsSelected() ? "取消全选" : "全选";
+    }
+
+    private void ToggleLogSelectItem(Guid logId)
+    {
+        if (selectedLogIds.Contains(logId))
+        {
+            selectedLogIds.Remove(logId);
+        }
+        else
+        {
+            selectedLogIds.Add(logId);
+        }
+    }
+
+    private void ConfirmBatchDeleteLogs()
+    {
+        if (selectedLogIds.Count > 0)
+        {
+            showBatchDeleteConfirm = true;
+        }
+    }
+
+    private async Task BatchDeleteLogs()
+    {
+        foreach (var logId in selectedLogIds.ToList())
+        {
+            await TaskLogAppService.DeleteAsync(logId);
+        }
+        
+        showBatchDeleteConfirm = false;
+        selectedLogIds.Clear();
+        isLogSelectionMode = false;
+        await LoadTaskLogs(selectedTaskId.Value);
+        StateHasChanged();
+    }
+
+    private async Task LoadTasks()
+    {
+        loadingTasks = true;
+        try
+        {
+            var result = await TaskAppService.GetListAsync(new TaskQueryDto { MaxResultCount = 50 });
+            tasks = result.Items.ToList();
+        }
+        finally { loadingTasks = false; }
+    }
+
+    private async Task LoadAvailableAgents()
+    {
+        availableAgents = await ChatMessageAppService.GetAvailableAgentsAsync();
+    }
+
+    private void CreateNewTask()
+    {
+        editingTaskId = null;
+        newTaskDto = new CreateTaskDto
+        {
+            TaskName = "",
+            TaskDescription = "",
+            PromptContent = "",
+            AgentType = "",
+            ScheduleType = "Daily",
+            Hour = 9,
+            Minute = 0,
+            IsEnabled = true
+        };
+        showTaskDialog = true;
+    }
+
+    private void EditTask(Guid taskId)
+    {
+        var task = tasks.FirstOrDefault(t => t.Id == taskId);
+        if (task != null)
+        {
+            editingTaskId = taskId;
+            newTaskDto = new CreateTaskDto
+            {
+                TaskName = task.TaskName,
+                TaskDescription = task.TaskDescription,
+                PromptContent = task.PromptContent,
+                AgentType = task.AgentType,
+                ModelConfigId = task.ModelConfigId,
+                ScheduleType = task.ScheduleType,
+                CronExpression = task.CronExpression,
+                Hour = task.Hour,
+                Minute = task.Minute,
+                DayOfWeek = task.DayOfWeek,
+                DayOfMonth = task.DayOfMonth,
+                IsEnabled = task.IsEnabled
+            };
+            showTaskDialog = true;
+        }
+    }
+
+    private async Task CloseTaskDialog()
+    {
+        showTaskDialog = false;
+        editingTaskId = null;
+    }
+
+    private async Task SaveScheduledTask()
+    {
+        try
+        {
+            if (editingTaskId.HasValue)
+            {
+                await TaskAppService.UpdateAsync(editingTaskId.Value, new UpdateTaskDto
+                {
+                    TaskName = newTaskDto.TaskName,
+                    TaskDescription = newTaskDto.TaskDescription,
+                    PromptContent = newTaskDto.PromptContent,
+                    AgentType = newTaskDto.AgentType,
+                    ModelConfigId = newTaskDto.ModelConfigId,
+                    ScheduleType = newTaskDto.ScheduleType,
+                    CronExpression = newTaskDto.CronExpression,
+                    Hour = newTaskDto.Hour,
+                    Minute = newTaskDto.Minute,
+                    DayOfWeek = newTaskDto.DayOfWeek,
+                    DayOfMonth = newTaskDto.DayOfMonth,
+                    IsEnabled = newTaskDto.IsEnabled
+                });
+                ShowToast("任务已更新", "success");
+            }
+            else
+            {
+                await TaskAppService.CreateAsync(newTaskDto);
+                ShowToast("任务已创建", "success");
+            }
+            await CloseTaskDialog();
+            await LoadTasks();
+        }
+        catch (Exception ex)
+        {
+            ShowToast("保存失败: " + ex.Message, "error");
+        }
+    }
+
+    private async Task ToggleTaskEnable(Guid taskId)
+    {
+        try
+        {
+            await TaskAppService.ToggleEnableAsync(taskId);
+            await LoadTasks();
+        }
+        catch (Exception ex) { ShowToast("操作失败: " + ex.Message, "error"); }
+    }
+
+    private async Task ExecuteTaskNow(Guid taskId)
+    {
+        try
+        {
+            await TaskAppService.ExecuteNowAsync(taskId);
+            ShowToast("任务已触发执行", "success");
+            await LoadTasks();
+        }
+        catch (Exception ex) { ShowToast("执行失败: " + ex.Message, "error"); }
+    }
+
+    private async Task DeleteScheduledTask(Guid taskId)
+    {
+        try
+        {
+            await TaskAppService.DeleteAsync(taskId);
+            ShowToast("任务已删除", "success");
+            await LoadTasks();
+            if (selectedTaskId == taskId)
+            {
+                selectedTaskId = null;
+                selectedTaskLogs.Clear();
+            }
+        }
+        catch (Exception ex) { ShowToast("删除失败: " + ex.Message, "error"); }
+    }
+
+    private void ShowToast(string message, string type = "info")
+    {
+        toastMessage = message;
+        toastType = type;
+        toastVisible = true;
+        StateHasChanged();
+        _ = Task.Run(async () => { await Task.Delay(3000); toastVisible = false; InvokeAsync(StateHasChanged); });
+    }
+
+    private static MarkupString IconSvg(string name) => (MarkupString)GetIconSvg(name);
+    private static string GetIconSvg(string name) => name switch
+    {
+        "plus" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"12\" y1=\"5\" x2=\"12\" y2=\"19\"></line><line x1=\"5\" y1=\"12\" x2=\"19\" y2=\"12\"></line></svg>",
+        "arrow-left" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"19\" y1=\"12\" x2=\"5\" y2=\"12\"></line><polyline points=\"12 19 5 12 12 5\"></polyline></svg>",
+        "more" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"1\"></circle><circle cx=\"12\" cy=\"5\" r=\"1\"></circle><circle cx=\"12\" cy=\"19\" r=\"1\"></circle></svg>",
+        "send" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"22\" y1=\"2\" x2=\"11\" y2=\"13\"></line><polygon points=\"22 2 15 22 11 13 2 9 22 2\"></polygon></svg>",
+        "edit" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7\"></path><path d=\"M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z\"></path></svg>",
+        "pause" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"6\" y=\"4\" width=\"4\" height=\"16\"></rect><rect x=\"14\" y=\"4\" width=\"4\" height=\"16\"></rect></svg>",
+        "play" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polygon points=\"5 3 19 12 5 21 5 3\"></polygon></svg>",
+        "delete" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"3 6 5 6 21 6\"></polyline><path d=\"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3-3h8l1 1h-10l1-1z\"></path><line x1=\"10\" y1=\"11\" x2=\"10\" y2=\"17\"></line><line x1=\"14\" y1=\"11\" x2=\"14\" y2=\"17\"></line></svg>",
+        "clock" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"></circle><polyline points=\"12 6 12 12 16 14\"></polyline></svg>",
+        "task" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"></path><polyline points=\"14 2 14 8 20 8\"></polyline><line x1=\"16\" y1=\"13\" x2=\"8\" y2=\"13\"></line><line x1=\"16\" y1=\"17\" x2=\"8\" y2=\"17\"></line><polyline points=\"10 9 9 9 8 9\"></polyline></svg>",
+        "inbox" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"22 12 16 12 14 15 10 15 8 12 2 12\"></polyline><path d=\"M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z\"></path></svg>",
+        "close" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"18\" y1=\"6\" x2=\"6\" y2=\"18\"></line><line x1=\"6\" y1=\"6\" x2=\"18\" y2=\"18\"></line></svg>",
+        _ => ""
+    };
+}
+
+<style>
+    /* ========== Scheduled Tasks Page Container ========== */
+    .scheduled-tasks-container {
+        flex: 1;
+        display: flex;
+        overflow: hidden;
+        height: 100%;
+    }
+
+    .tasks-layout {
+        display: flex;
+        width: 100%;
+        height: 100%;
+    }
+
+    .tasks-sidebar {
+        width: 280px;
+        border-right: 1px solid #e8e8e8;
+        display: flex;
+        flex-direction: column;
+        background: #fafafa;
+    }
+
+    .tasks-sidebar .sidebar-header {
+        padding: 16px;
+        border-bottom: 1px solid #e8e8e8;
+    }
+
+    .tasks-sidebar .sidebar-title {
+        padding: 16px;
+        font-size: 16px;
+        font-weight: 500;
+        color: #262626;
+    }
+
+    .tasks-sidebar .sidebar-actions {
+        padding: 0 16px 16px;
+    }
+
+    .tasks-sidebar .sidebar-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 8px;
+    }
+
+    .tasks-main-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: #fff;
+    }
+
+    /* ========== Scheduled Task Item ========== */
+    .scheduled-task-item {
+        padding: 12px;
+        border-radius: 4px;
+        margin-bottom: 4px;
+        background: #fff;
+        border: 1px solid #e8e8e8;
+        transition: all 0.2s;
+    }
+
+    .scheduled-task-item:hover {
+        border-color: #bfbfbf;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .scheduled-task-item.disabled {
+        opacity: 0.6;
+    }
+
+    .scheduled-task-item.active {
+        background: #e6f7ff;
+        border-color: #91d5ff;
+    }
+
+    .task-info {
+        cursor: pointer;
+        margin-bottom: 8px;
+    }
+
+    .task-title {
+        font-weight: 500;
+        margin-bottom: 4px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .task-meta {
+        font-size: 12px;
+        color: #8c8c8c;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .task-schedule {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .task-status {
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 11px;
+        margin-left: 8px;
+    }
+
+    .status-active {
+        background: #f6ffed;
+        color: #52c41a;
+    }
+
+    .status-paused {
+        background: #fffbe6;
+        color: #faad14;
+    }
+
+    .status-completed {
+        background: #e6f7ff;
+        color: #1890ff;
+    }
+
+    .task-actions {
+        display: flex;
+        gap: 4px;
+        justify-content: flex-end;
+        position: relative;
+    }
+
+    .task-action-btn {
+        padding: 4px;
+        border: none;
+        background: transparent;
+        border-radius: 4px;
+        cursor: pointer;
+        color: #8c8c8c;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .task-action-btn:hover {
+        background: #f0f0f0;
+        color: #595959;
+    }
+
+    .task-action-btn svg {
+        width: 14px;
+        height: 14px;
+    }
+
+    /* ========== Scheduled Task Dialog ========== */
+    .scheduled-task-dialog {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 10000;
+    }
+
+    .dialog-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+    }
+
+    .dialog-content {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        width: 90%;
+        max-width: 600px;
+        max-height: 90vh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .dialog-header {
+        padding: 16px 20px;
+        border-bottom: 1px solid #e8e8e8;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .dialog-header h3 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+    .dialog-close {
+        padding: 4px;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        color: #8c8c8c;
+        border-radius: 4px;
+        transition: all 0.2s;
+    }
+
+    .dialog-close:hover {
+        background: #f0f0f0;
+        color: #595959;
+    }
+
+    .dialog-close svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    .dialog-body {
+        padding: 20px;
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    .form-group {
+        margin-bottom: 16px;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 13px;
+        color: #595959;
+        font-weight: 500;
+    }
+
+    .required {
+        color: #ff4d4f;
+    }
+
+    .form-input,
+    .form-select,
+    .form-textarea {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #d9d9d9;
+        border-radius: 4px;
+        font-size: 14px;
+        font-family: inherit;
+        transition: border-color 0.2s;
+    }
+
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+        outline: none;
+        border-color: #595959;
+    }
+
+    .form-textarea {
+        resize: vertical;
+        min-height: 100px;
+    }
+
+    .schedule-config {
+        background: #f9f9f9;
+        border: 1px solid #e8e8e8;
+        border-radius: 4px;
+        padding: 12px;
+        margin-bottom: 16px;
+    }
+
+    .config-title {
+        font-size: 13px;
+        font-weight: 500;
+        margin-bottom: 8px;
+        color: #595959;
+    }
+
+    .time-config,
+    .weekly-config,
+    .monthly-config {
+        display: flex;
+        gap: 12px;
+        align-items: flex-end;
+    }
+
+    .time-input-group,
+    .day-input-group {
+        flex: 1;
+    }
+
+    .time-input-group label,
+    .day-input-group label {
+        display: block;
+        font-size: 12px;
+        color: #8c8c8c;
+        margin-bottom: 4px;
+    }
+
+    .time-input-group input,
+    .day-input-group input,
+    .day-input-group select {
+        width: 100%;
+    }
+
+    .cron-help {
+        margin-top: 8px;
+        font-size: 12px;
+        color: #8c8c8c;
+    }
+
+    .cron-help code {
+        background: #f0f0f0;
+        padding: 2px 4px;
+        border-radius: 3px;
+        font-family: monospace;
+    }
+
+    .form-checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+    }
+
+    .dialog-footer {
+        padding: 12px 20px;
+        border-top: 1px solid #e8e8e8;
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+    }
+
+    .btn-cancel {
+        composes: btn;
+    }
+
+    .btn-sm {
+        padding: 6px 12px;
+        font-size: 13px;
+    }
+
+    .empty-state .btn-sm {
+        margin-top: 12px;
+    }
+
+    /* ========== Task Logs Page ========== */
+    .task-logs-page {
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .page-header h2 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 600;
+    }
+
+    .filters {
+        display: flex;
+        gap: 16px;
+        align-items: flex-end;
+        margin-bottom: 20px;
+        padding: 16px;
+        background: #f9f9f9;
+        border-radius: 6px;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .filter-group label {
+        font-size: 12px;
+        color: #8c8c8c;
+    }
+
+    .filter-group .form-select {
+        min-width: 200px;
+    }
+
+    .logs-table-container {
+        background: #fff;
+        border-radius: 6px;
+        border: 1px solid #e8e8e8;
+        overflow: hidden;
+    }
+
+    .logs-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .logs-table thead {
+        background: #fafafa;
+    }
+
+    .logs-table th {
+        padding: 12px 16px;
+        text-align: left;
+        font-size: 13px;
+        font-weight: 500;
+        color: #595959;
+        border-bottom: 1px solid #e8e8e8;
+    }
+
+    .logs-table td {
+        padding: 12px 16px;
+        font-size: 13px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .logs-table tbody tr:hover {
+        background: #f9f9f9;
+    }
+
+    .log-status {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .log-status.status-success {
+        background: #f6ffed;
+        color: #52c41a;
+    }
+
+    .log-status.status-failed {
+        background: #fff1f0;
+        color: #ff4d4f;
+    }
+
+    .log-status.status-running {
+        background: #e6f7ff;
+        color: #1890ff;
+    }
+
+    /* Override Layout btn-link for this page */
+    .btn-link {
+        background: none;
+        border: none;
+        color: #1890ff;
+        cursor: pointer;
+        padding: 0;
+        font-size: 13px;
+    }
+
+    .btn-link:hover {
+        color: #40a9ff;
+        text-decoration: underline;
+    }
+
+    .btn-delete {
+        color: #ff4d4f;
+        margin-left: 12px;
+    }
+
+    .btn-delete:hover {
+        color: #ff7875;
+        text-decoration: underline;
+    }
+
+    .confirm-dialog {
+        max-width: 400px;
+    }
+
+    .confirm-message {
+        font-size: 14px;
+        color: #595959;
+        text-align: center;
+        padding: 20px 0;
+    }
+
+    /* ========== Selection Toolbar ========== */
+    .selection-toolbar {
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        border-top: 1px solid #e8e8e8;
+        border-bottom: 1px solid #e8e8e8;
+        background: #fffbe6;
+    }
+
+    .selected-count {
+        font-size: 13px;
+        color: #595959;
+        font-weight: 500;
+    }
+
+    .pagination {
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        justify-content: flex-end;
+        border-top: 1px solid #e8e8e8;
+        background: #fafafa;
+    }
+
+    .total {
+        font-size: 13px;
+        color: #8c8c8c;
+    }
+
+    .page-info {
+        font-size: 13px;
+        color: #595959;
+    }
+
+    .detail-row {
+        display: grid;
+        grid-template-columns: 120px 1fr;
+        gap: 12px;
+        margin-bottom: 16px;
+        font-size: 14px;
+    }
+
+    .detail-row label {
+        font-weight: 500;
+        color: #595959;
+    }
+
+    .detail-row.full-width {
+        grid-template-columns: 1fr;
+    }
+
+    .detail-row.error label {
+        color: #ff4d4f;
+    }
+
+    .result-content,
+    .error-content {
+        background: #f9f9f9;
+        border: 1px solid #e8e8e8;
+        border-radius: 4px;
+        padding: 12px;
+        font-family: monospace;
+        font-size: 13px;
+        max-height: 400px;
+        overflow: auto;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    .error-content {
+        background: #fff1f0;
+        border-color: #ff4d4f;
+        color: #ff4d4f;
+    }
+
+    /* ========== Task Log List ========== */
+    .task-log-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px;
+    }
+
+    .log-entry {
+        padding: 12px;
+        margin-bottom: 8px;
+        border: 1px solid #e8e8e8;
+        border-radius: 6px;
+        background: #fff;
+    }
+
+    .log-entry.failed {
+        border-left: 3px solid #ff4d4f;
+    }
+
+    .log-entry.success {
+        border-left: 3px solid #52c41a;
+    }
+
+    .log-entry.running {
+        border-left: 3px solid #1890ff;
+    }
+
+    .log-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 8px;
+    }
+
+    .log-status-badge {
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .log-status-badge.status-success {
+        background: #f6ffed;
+        color: #52c41a;
+    }
+
+    .log-status-badge.status-failed {
+        background: #fff1f0;
+        color: #ff4d4f;
+    }
+
+    .log-status-badge.status-running {
+        background: #e6f7ff;
+        color: #1890ff;
+    }
+
+    .log-time {
+        font-size: 12px;
+        color: #8c8c8c;
+    }
+
+    .log-duration {
+        font-size: 12px;
+        color: #8c8c8c;
+        margin-left: auto;
+    }
+
+    .log-result {
+        font-size: 13px;
+        color: #595959;
+        line-height: 1.6;
+        max-height: 200px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        word-break: break-word;
+        background: #f9f9f9;
+        border-radius: 4px;
+        padding: 8px;
+    }
+
+    .log-error {
+        font-size: 13px;
+        color: #ff4d4f;
+        background: #fff1f0;
+        border-radius: 4px;
+        padding: 8px;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    .log-checkbox {
+        width: 16px;
+        height: 16px;
+        margin-right: 8px;
+        cursor: pointer;
+        accent-color: #595959;
+    }
+
+    .log-selection-toolbar {
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        border-bottom: 1px solid #e8e8e8;
+        background: #fffbe6;
+        margin-bottom: 8px;
+        border-radius: 4px;
+    }
+</style>

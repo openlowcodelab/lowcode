@@ -1,8 +1,9 @@
 using H.Assistant.Application.Contracts;
 using H.Assistant.Application.Workers;
 using H.Assistant.EntityFrameworkCore;
-using H.Assistant.Extensions;
+using H.Assistant.Core;
 using Microsoft.Extensions.DependencyInjection;
+using Volo.Abp;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.Modularity;
 
@@ -35,6 +36,6 @@ public class AssistantApplicationModule : AbpModule
         context.Services.AddTransient<AgentFactory>();
 
         // 注册定时任务 Worker
-        context.Services.AddHostedService<ScheduledTaskWorker>();
+        context.Services.AddHostedService<TaskWorker>();
     }
 }
