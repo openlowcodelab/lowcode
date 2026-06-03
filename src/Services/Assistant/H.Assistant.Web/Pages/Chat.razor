@@ -21,7 +21,7 @@
         <div class="session-list-panel">
             <div class="panel-header">
                 <div class="panel-header-actions">
-                    <button class="btn-icon" @onclick="OnClickCreateTask" title="新建即时任务">
+                    <button class="btn-icon" @onclick="OnClickCreateTask" title="新建会话">
                         @IconSvg("plus")
                     </button>
                 </div>
@@ -96,26 +96,7 @@
         </div>
 
         <div class="chat-main-panel">
-            @if (isNewTask)
-            {
-                <div class="new-task-container">
-                    <div class="new-task-header">
-                        <h2>新建任务</h2>
-                        <p class="new-task-desc">描述您的任务，AI 助手将为您处理</p>
-                    </div>
-                    <ChatInputArea @bind-Message="inputMessage"
-                                   @bind-SelectedAgentType="selectedAgentType"
-                                   @bind-SelectedProviderName="selectedProviderName"
-                                   AvailableAgents="availableAgents"
-                                   AvailableModels="availableModels"
-                                   IsSending="isSending"
-                                   OnSend="SendNewTask"
-                                   OnCancel="CancelNewTask"
-                                   ShowCancel="true"
-                                   Rows="8" />
-                </div>
-            }
-            else if (selectedChatId.HasValue)
+            @if (selectedChatId.HasValue)
             {
                 <div class="chat-header">
                     <div class="chat-header-left">
@@ -189,22 +170,30 @@
                     }
                 </div>
 
-                <ChatInputArea @bind-Message="inputMessage"
+                <ChatInput @bind-Message="inputMessage"
                                @bind-SelectedAgentType="selectedAgentType"
                                @bind-SelectedProviderName="selectedProviderName"
                                AvailableAgents="availableAgents"
                                AvailableModels="availableModels"
                                IsSending="isSending"
                                OnSend="SendMessage"
-                               OnStop="StopSending"
-                               ShowCancel="false" />
+                               OnStop="StopSending" />
             }
             else
             {
-                <div class="empty-chat-state">
-                    <div class="empty-chat-content">
-                        <div class="empty-state"><div class="empty-icon">@IconSvg("task")</div><div class="empty-text">点击 '新建任务' 创建新任务</div></div>
+                <div class="new-task-container">
+                    <div class="new-task-header">
+                        <h2>新建任务</h2>
+                        <p class="new-task-desc">描述您的任务，AI 助手将为您处理</p>
                     </div>
+                    <ChatInput @bind-Message="inputMessage"
+                                   @bind-SelectedAgentType="selectedAgentType"
+                                   @bind-SelectedProviderName="selectedProviderName"
+                                   AvailableAgents="availableAgents"
+                                   AvailableModels="availableModels"
+                                   IsSending="isSending"
+                                   OnSend="SendNewTask"
+                                   Rows="8" />
                 </div>
             }
         </div>
@@ -239,6 +228,7 @@
         await LoadSessions();
         await LoadAvailableAgents();
         await LoadAvailableModels();
+        _ = CreateNewChat();
     }
 
     private void OnClickCreateTask() => _ = CreateNewChat();
@@ -308,8 +298,6 @@
         selectedChatId = null; messages.Clear(); inputMessage = string.Empty; isNewTask = true;
         await LoadAvailableModels(); StateHasChanged();
     }
-
-    private void CancelNewTask() { isNewTask = false; inputMessage = string.Empty; StateHasChanged(); }
 
     private async Task SendNewTask()
     {

@@ -4,13 +4,12 @@
     <textarea class="chat-textarea"
               @bind-value="Message"
               @bind-value:event="oninput"
-              placeholder="@Placeholder"
+              placeholder="详细描述您的任务..."
               rows="@Rows"
               @onkeydown="HandleKeyDown"></textarea>
     <div class="chat-input-footer">
         <div class="chat-selectors">
             <div class="selector-item">
-                <label class="selector-label">Agent:</label>
                 <select class="selector-dropdown" value="@SelectedAgentType" @onchange="OnAgentChanged">
                     @foreach (var agent in AvailableAgents)
                     {
@@ -22,11 +21,7 @@
                 <ModelSelector @bind-Value="SelectedProviderName" Models="AvailableModels" />
             </div>
         </div>
-        <div class="chat-input-actions">
-            @if (ShowCancel)
-            {
-                <button class="btn" @onclick="OnCancel">取消</button>
-            }
+        <div class="chat-input-actions">            
             <SendButton @onclick="OnSend" IsDisabled="@string.IsNullOrWhiteSpace(Message)" />
             @if (IsSending)
             {
@@ -71,15 +66,6 @@
 
     [Parameter]
     public EventCallback OnStop { get; set; }
-
-    [Parameter]
-    public EventCallback OnCancel { get; set; }
-
-    [Parameter]
-    public bool ShowCancel { get; set; }
-
-    [Parameter]
-    public string Placeholder { get; set; } = "详细描述您的任务...";
 
     [Parameter]
     public int Rows { get; set; } = 3;
