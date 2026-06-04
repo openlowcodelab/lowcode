@@ -13,7 +13,7 @@ using Volo.Abp.EntityFrameworkCore;
 namespace H.Assistant.DbMigrator.Migrations
 {
     [DbContext(typeof(AssistantDbContext))]
-    [Migration("20260531163926_Init")]
+    [Migration("20260604021506_Init")]
     partial class Init
     {
         /// <inheritdoc />
@@ -112,7 +112,7 @@ namespace H.Assistant.DbMigrator.Migrations
 
                     b.HasIndex("IsEnabled");
 
-                    b.ToTable("AgentDefinitions", (string)null);
+                    b.ToTable("Agent", (string)null);
                 });
 
             modelBuilder.Entity("H.Assistant.EntityFrameworkCore.ChatEntity", b =>
@@ -146,7 +146,7 @@ namespace H.Assistant.DbMigrator.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ChatSessions", (string)null);
+                    b.ToTable("Chat", (string)null);
                 });
 
             modelBuilder.Entity("H.Assistant.EntityFrameworkCore.ChatMessageEntity", b =>
@@ -187,7 +187,7 @@ namespace H.Assistant.DbMigrator.Migrations
 
                     b.HasIndex("SessionId");
 
-                    b.ToTable("ChatMessages", (string)null);
+                    b.ToTable("ChatMessage", (string)null);
                 });
 
             modelBuilder.Entity("H.Assistant.EntityFrameworkCore.LLMEntity", b =>
@@ -255,7 +255,7 @@ namespace H.Assistant.DbMigrator.Migrations
                     b.HasIndex("ProviderName", "Model")
                         .IsUnique();
 
-                    b.ToTable("LLMConfigs", (string)null);
+                    b.ToTable("Llm", (string)null);
                 });
 
             modelBuilder.Entity("H.Assistant.EntityFrameworkCore.SkillEntity", b =>
@@ -346,7 +346,7 @@ namespace H.Assistant.DbMigrator.Migrations
 
                     b.HasIndex("SkillType");
 
-                    b.ToTable("SkillDefinitions", (string)null);
+                    b.ToTable("Skill", (string)null);
                 });
 
             modelBuilder.Entity("H.Assistant.EntityFrameworkCore.TaskEntity", b =>
@@ -446,7 +446,7 @@ namespace H.Assistant.DbMigrator.Migrations
 
                     b.HasIndex("IsEnabled", "Status");
 
-                    b.ToTable("ScheduledTasks", (string)null);
+                    b.ToTable("Task", (string)null);
                 });
 
             modelBuilder.Entity("H.Assistant.EntityFrameworkCore.TaskLogEntity", b =>
@@ -490,7 +490,7 @@ namespace H.Assistant.DbMigrator.Migrations
 
                     b.HasIndex("TaskId");
 
-                    b.ToTable("TaskExecutionLogs", (string)null);
+                    b.ToTable("TaskLog", (string)null);
                 });
 
             modelBuilder.Entity("H.Assistant.EntityFrameworkCore.ChatMessageEntity", b =>

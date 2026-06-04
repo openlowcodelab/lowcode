@@ -12,7 +12,7 @@ namespace H.Assistant.DbMigrator.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "AgentDefinitions",
+                name: "Agent",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -37,11 +37,11 @@ namespace H.Assistant.DbMigrator.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_AgentDefinitions", x => x.Id);
+                    table.PrimaryKey("PK_Agent", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
-                name: "ChatSessions",
+                name: "Chat",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -54,11 +54,11 @@ namespace H.Assistant.DbMigrator.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ChatSessions", x => x.Id);
+                    table.PrimaryKey("PK_Chat", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
-                name: "LLMConfigs",
+                name: "Llm",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -79,11 +79,40 @@ namespace H.Assistant.DbMigrator.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_LLMConfigs", x => x.Id);
+                    table.PrimaryKey("PK_Llm", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
-                name: "ScheduledTasks",
+                name: "Skill",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    SkillName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    DisplayName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
+                    SkillType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    ImplementationClass = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    Config = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: true),
+                    ParameterSchema = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: true),
+                    IsEnabled = table.Column<bool>(type: "bit", nullable: false),
+                    RequiresApproval = table.Column<bool>(type: "bit", nullable: false),
+                    UsageCount = table.Column<int>(type: "int", nullable: false),
+                    LastUsedTime = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreationTime = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatorId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    LastModificationTime = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    LastModifierId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
+                    DeleterId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    DeletionTime = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Skill", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Task",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -112,40 +141,11 @@ namespace H.Assistant.DbMigrator.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ScheduledTasks", x => x.Id);
+                    table.PrimaryKey("PK_Task", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
-                name: "SkillDefinitions",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    SkillName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    DisplayName = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
-                    SkillType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    ImplementationClass = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    Config = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: true),
-                    ParameterSchema = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: true),
-                    IsEnabled = table.Column<bool>(type: "bit", nullable: false),
-                    RequiresApproval = table.Column<bool>(type: "bit", nullable: false),
-                    UsageCount = table.Column<int>(type: "int", nullable: false),
-                    LastUsedTime = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    CreationTime = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CreatorId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    LastModificationTime = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    LastModifierId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    IsDeleted = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
-                    DeleterId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    DeletionTime = table.Column<DateTime>(type: "datetime2", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_SkillDefinitions", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "TaskExecutionLogs",
+                name: "TaskLog",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -160,11 +160,11 @@ namespace H.Assistant.DbMigrator.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_TaskExecutionLogs", x => x.Id);
+                    table.PrimaryKey("PK_TaskLog", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
-                name: "ChatMessages",
+                name: "ChatMessage",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
@@ -178,71 +178,71 @@ namespace H.Assistant.DbMigrator.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_ChatMessages", x => x.Id);
+                    table.PrimaryKey("PK_ChatMessage", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_ChatMessages_ChatSessions_SessionId",
+                        name: "FK_ChatMessage_Chat_SessionId",
                         column: x => x.SessionId,
-                        principalTable: "ChatSessions",
+                        principalTable: "Chat",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_AgentDefinitions_AgentType",
-                table: "AgentDefinitions",
+                name: "IX_Agent_AgentType",
+                table: "Agent",
                 column: "AgentType",
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_AgentDefinitions_IsEnabled",
-                table: "AgentDefinitions",
+                name: "IX_Agent_IsEnabled",
+                table: "Agent",
                 column: "IsEnabled");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ChatMessages_SessionId",
-                table: "ChatMessages",
+                name: "IX_ChatMessage_SessionId",
+                table: "ChatMessage",
                 column: "SessionId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_LLMConfigs_ProviderName_Model",
-                table: "LLMConfigs",
+                name: "IX_Llm_ProviderName_Model",
+                table: "Llm",
                 columns: new[] { "ProviderName", "Model" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_ScheduledTasks_IsEnabled_Status",
-                table: "ScheduledTasks",
-                columns: new[] { "IsEnabled", "Status" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ScheduledTasks_NextExecutionTime",
-                table: "ScheduledTasks",
-                column: "NextExecutionTime");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_SkillDefinitions_IsEnabled",
-                table: "SkillDefinitions",
+                name: "IX_Skill_IsEnabled",
+                table: "Skill",
                 column: "IsEnabled");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SkillDefinitions_SkillName",
-                table: "SkillDefinitions",
+                name: "IX_Skill_SkillName",
+                table: "Skill",
                 column: "SkillName",
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_SkillDefinitions_SkillType",
-                table: "SkillDefinitions",
+                name: "IX_Skill_SkillType",
+                table: "Skill",
                 column: "SkillType");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TaskExecutionLogs_StartTime",
-                table: "TaskExecutionLogs",
+                name: "IX_Task_IsEnabled_Status",
+                table: "Task",
+                columns: new[] { "IsEnabled", "Status" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Task_NextExecutionTime",
+                table: "Task",
+                column: "NextExecutionTime");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TaskLog_StartTime",
+                table: "TaskLog",
                 column: "StartTime");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TaskExecutionLogs_TaskId",
-                table: "TaskExecutionLogs",
+                name: "IX_TaskLog_TaskId",
+                table: "TaskLog",
                 column: "TaskId");
         }
 
@@ -250,25 +250,25 @@ namespace H.Assistant.DbMigrator.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "AgentDefinitions");
+                name: "Agent");
 
             migrationBuilder.DropTable(
-                name: "ChatMessages");
+                name: "ChatMessage");
 
             migrationBuilder.DropTable(
-                name: "LLMConfigs");
+                name: "Llm");
 
             migrationBuilder.DropTable(
-                name: "ScheduledTasks");
+                name: "Skill");
 
             migrationBuilder.DropTable(
-                name: "SkillDefinitions");
+                name: "Task");
 
             migrationBuilder.DropTable(
-                name: "TaskExecutionLogs");
+                name: "TaskLog");
 
             migrationBuilder.DropTable(
-                name: "ChatSessions");
+                name: "Chat");
         }
     }
 }
