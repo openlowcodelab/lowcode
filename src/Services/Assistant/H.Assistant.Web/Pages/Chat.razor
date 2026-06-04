@@ -356,7 +356,7 @@
     private async Task ScrollToBottom() { try { await JS.InvokeVoidAsync("eval", "var el = document.querySelector('.chat-messages'); if(el) el.scrollTop = el.scrollHeight;"); } catch { } }
     private void ToggleUserMenu() { showUserMenu = !showUserMenu; }
     private void ToggleChatMenu(Guid sessionId) { showSessionMenu = showSessionMenu == sessionId ? null : sessionId; }
-    private void GoToSettings() { showUserMenu = false; Navigation.NavigateTo("/agent/settings"); }
+    private void GoToSettings() { showUserMenu = false; Navigation.NavigateTo("/assistant/settings"); }
 
     private static MarkupString IconSvg(string name) => (MarkupString)GetIconSvg(name);
     private static string GetIconSvg(string name) => name switch

@@ -1,6 +1,7 @@
-@page "/assistant/settings"
+@page "/assistant/settings-llms"
 
 @layout AssistantLayout
+@inject ILLMAppService LLMConfigAppService
 @inject NavigationManager Navigation
 
 <!-- Toast Notification -->
@@ -32,44 +33,160 @@
 
     <div class="settings-content">
         <div class="content-header">
-            <h2>通用设置</h2>
+            <h2>模型管理</h2>
+            <button class="btn btn-primary assistant-btn-primary btn-small" @onclick="ShowAddModel">
+                @IconSvg("plus") 添加
+            </button>
         </div>
-        <div class="settings-form">
-            <div class="form-section">
-                <h3>外观</h3>
-                <div class="form-item">
-                    <label>主题模式</label>
-                    <div class="theme-options">
-                        <button class="btn @(themeMode == "light" ? "btn-primary assistant-btn-primary" : "")" @onclick="@(() => themeMode = "light")">
-                            @IconSvg("sun") 浅色
+        <div class="model-list">
+            @if (loadingModels)
+            {
+                <div class="loading-spinner"><div class="spinner"></div><span>加载中...</span></div>
+            }
+            else if (llmConfigs.Any())
+            {
+                @foreach (var config in llmConfigs)
+                {
+                    <div class="model-card">
+                        <div class="model-card-header">
+                            <div class="model-name">
+                                <strong>@config.ProviderDisplayName</strong>
+                                @if (config.IsDefault)
+                                {
+                                    <span class="tag tag-green">默认</span>
+                                }
+                                @if (config.IsEnabled)
+                                {
+                                    <span class="tag tag-blue">已启用</span>
+                                }
+                                else
+                                {
+                                    <span class="tag tag-default">已禁用</span>
+                                }
+                            </div>
+                            <div class="model-actions">
+                                @if (!config.IsDefault)
+                                {
+                                    <button class="btn btn-link btn-small" @onclick="@(() => SetDefault(config.ProviderName))">设为默认</button>
+                                }
+                                <button class="btn btn-link btn-small" @onclick="@(() => EditModel(config))">编辑</button>
+                                <button class="btn btn-link btn-small btn-danger" @onclick="@(() => DeleteModel(config.Id))">删除</button>
+                            </div>
+                        </div>
+                        <div class="model-card-body">
+                            <div class="model-info-row">
+                                <span class="info-label">Provider:</span>
+                                <span>@config.ProviderName</span>
+                            </div>
+                            <div class="model-info-row">
+                                <span class="info-label">模型:</span>
+                                <span>@config.Model</span>
+                            </div>
+                            <div class="model-info-row">
+                                <span class="info-label">API Key:</span>
+                                <span>@MaskApiKey(config.ApiKey)</span>
+                            </div>
+                            @if (!string.IsNullOrEmpty(config.BaseUrl))
+                            {
+                                <div class="model-info-row">
+                                    <span class="info-label">Base URL:</span>
+                                    <span>@config.BaseUrl</span>
+                                </div>
+                            }
+                            <div class="model-info-row">
+                                <span class="info-label">MaxTokens:</span>
+                                <span>@config.MaxTokens</span>
+                                <span class="info-label" style="margin-left:16px;">Temperature:</span>
+                                <span>@config.Temperature</span>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="empty-state">
+                    <div class="empty-icon">@IconSvg("inbox")</div>
+                    <div class="empty-text">暂无模型配置，点击添加按钮新增</div>
+                </div>
+            }
+        </div>
+
+        @if (showModelDialog)
+        {
+            <div class="modal-overlay" @onclick="CloseModelDialog">
+                <div class="modal-dialog model-dialog" @onclick:stopPropagation="true">
+                    <div class="modal-header">
+                        <h3>@(isEditing ? "编辑模型" : "添加模型")</h3>
+                        <button class="btn btn-text modal-close-btn" @onclick="CloseModelDialog">
+                            @IconSvg("close")
                         </button>
-                        <button class="btn @(themeMode == "dark" ? "btn-primary assistant-btn-primary" : "")" @onclick="@(() => themeMode = "dark")">
-                            @IconSvg("moon") 深色
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-item required">
+                            <label>* 提供商</label>
+                            <select class="modal-select" @onchange="OnProviderChanged">
+                                @foreach (var p in providerDefs)
+                                {
+                                    <option value="@p.ProviderName" selected="@(editModel.ProviderName == p.ProviderName)">@p.DisplayName</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="form-item required">
+                            <label>* 类型</label>
+                            <select class="modal-select" @onchange="OnTypeChanged">
+                                @foreach (var t in currentProviderTypes)
+                                {
+                                    <option value="@t.Name" selected="@(editModel.PlanType == t.Name)">@t.DisplayName</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="form-item required">
+                            <label>* 模型Id</label>
+                            <input class="modal-input" @bind="@editModel.Model" placeholder="选择模型" />
+                            @if (currentModels.Any())
+                            {
+                                <div class="model-suggestions">
+                                    @foreach (var m in currentModels)
+                                    {
+                                        <span class="model-suggestion-tag" @onclick="() => SelectModel(m)">@m</span>
+                                    }
+                                </div>
+                            }
+                        </div>
+                        <div class="form-item">
+                            <label>请求地址</label>
+                            <input class="modal-input" @bind="@editModel.BaseUrl" placeholder="留空则使用默认地址" />
+                        </div>
+                        <div class="form-item required">
+                            <label>* API 密钥</label>
+                            <input class="modal-input" @bind="@editModel.ApiKey" placeholder="API密钥" />
+                            @if (currentApiKeyUrl != null)
+                            {
+                                <a href="@currentApiKeyUrl" target="_blank">获取 API 密钥</a>
+                            }
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="modal-btn-cancel" @onclick="CloseModelDialog">取消</button>
+                        <button class="modal-btn-primary" @onclick="SaveModel" disabled="@savingModel">
+                            @(isEditing ? "保存" : "添加")
                         </button>
                     </div>
                 </div>
             </div>
-            <div class="form-section">
-                <h3>语言</h3>
-                <div class="form-item">
-                    <label>界面语言</label>
-                    <div class="theme-options">
-                        <button class="btn @(language == "zh" ? "btn-primary assistant-btn-primary" : "")" @onclick="@(() => language = "zh")">
-                            中文
-                        </button>
-                        <button class="btn @(language == "en" ? "btn-primary assistant-btn-primary" : "")" @onclick="@(() => language = "en")">
-                            English
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+        }
     </div>
 </div>
 
 @code {
-    private string themeMode = "light";
-    private string language = "zh";
+    private bool loadingModels;
+    private bool savingModel;
+    private bool showModelDialog;
+    private bool isEditing;
+    private List<LLMDto> llmConfigs = new();
+
+    private ModelEditModel editModel = new();
 
     private string toastMessage = string.Empty;
     private string toastType = "info";
@@ -106,6 +223,205 @@
     }
 
     private void GoBack() { Navigation.NavigateTo("/assistant/chat"); }
+
+    private record TypeDef(string Name, string DisplayName, List<string> Models);
+    private record ProviderDef(string ProviderName, string DisplayName, string DefaultEndpoint, string ApiKeyUrl, List<TypeDef> Types);
+
+    private readonly List<ProviderDef> providerDefs = new()
+    {
+        new("bailian", "阿里云百炼", "https://dashscope.aliyuncs.com/compatible-mode/v1",
+            "https://bailian.console.aliyun.com/cn-beijing/?tab=plan#/efm/subscription/token-plan",
+            new()
+            {
+                new("pay-as-you-go", "按量付费", new() { "qwen3.7-max", "qwen3.6-plus", "qwen3.6-flash", "glm-5.1", "kimi-k2.6", "deepseek-v4-pro", "deepseek-v4-flash" }),
+                new("token-plan", "TokenPlan", new() { "qwen3.7-max", "qwen3.6-plus", "glm-5.1", "kimi-k2.6", "deepseek-v4-pro", "deepseek-v4-flash" })
+            }),
+        new("deepseek", "DeepSeek", "https://api.deepseek.com",
+            "https://platform.deepseek.com/api_keys",
+            new()
+            {
+                new("pay-as-you-go", "按量付费", new() { "deepseek-v4-pro", "deepseek-v4-flash" })
+            })
+    };
+
+    private ProviderDef? currentProviderDef => providerDefs.FirstOrDefault(p => p.ProviderName == editModel.ProviderName);
+    private List<TypeDef> currentProviderTypes => currentProviderDef?.Types ?? new();
+    private List<string> currentModels
+    {
+        get
+        {
+            var typeDef = currentProviderDef?.Types.FirstOrDefault(t => t.Name == editModel.PlanType);
+            return typeDef?.Models ?? new();
+        }
+    }
+    private string? currentApiKeyUrl => currentProviderDef?.ApiKeyUrl;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadLLMConfigs();
+    }
+
+    private async Task LoadLLMConfigs()
+    {
+        loadingModels = true;
+        try { llmConfigs = await LLMConfigAppService.GetAllAsync(); }
+        catch (Exception ex) { ShowToast("加载模型配置失败: " + ex.Message, "error"); }
+        finally { loadingModels = false; }
+    }
+
+    private void OnProviderChanged(ChangeEventArgs e)
+    {
+        var providerName = e.Value?.ToString() ?? "";
+        var provider = providerDefs.FirstOrDefault(p => p.ProviderName == providerName);
+        if (provider != null)
+        {
+            editModel.ProviderName = provider.ProviderName;
+            editModel.ProviderDisplayName = provider.DisplayName;
+            editModel.BaseUrl = provider.DefaultEndpoint;
+            editModel.PlanType = provider.Types.FirstOrDefault()?.Name ?? "";
+            editModel.Model = "";
+        }
+    }
+
+    private void OnTypeChanged(ChangeEventArgs e)
+    {
+        editModel.PlanType = e.Value?.ToString() ?? "";
+        editModel.Model = "";
+    }
+
+    private void SelectModel(string model) { editModel.Model = model; }
+
+    private void ShowAddModel()
+    {
+        isEditing = false;
+        var firstProvider = providerDefs[0];
+        var firstType = firstProvider.Types[0];
+        editModel = new ModelEditModel
+        {
+            ProviderName = firstProvider.ProviderName,
+            ProviderDisplayName = firstProvider.DisplayName,
+            PlanType = firstType.Name,
+            ApiKey = "",
+            Model = "",
+            BaseUrl = firstProvider.DefaultEndpoint,
+            MaxTokens = 2000,
+            Temperature = 0.7f,
+            IsEnabled = true
+        };
+        showModelDialog = true;
+    }
+
+    private void EditModel(LLMDto config)
+    {
+        isEditing = true;
+        editModel = new ModelEditModel
+        {
+            Id = config.Id,
+            ProviderName = config.ProviderName,
+            ProviderDisplayName = config.ProviderDisplayName,
+            ApiKey = config.ApiKey,
+            ApiSecret = config.ApiSecret ?? "",
+            Model = config.Model,
+            BaseUrl = config.BaseUrl ?? "",
+            MaxTokens = config.MaxTokens,
+            Temperature = config.Temperature,
+            IsEnabled = config.IsEnabled
+        };
+        showModelDialog = true;
+    }
+
+    private void CloseModelDialog() { showModelDialog = false; }
+
+    private async Task SaveModel()
+    {
+        if (string.IsNullOrWhiteSpace(editModel.ProviderName)) { ShowToast("请选择提供商", "warning"); return; }
+        if (string.IsNullOrWhiteSpace(editModel.Model)) { ShowToast("请输入模型名称", "warning"); return; }
+        if (string.IsNullOrWhiteSpace(editModel.ApiKey)) { ShowToast("请输入 API 密钥", "warning"); return; }
+
+        savingModel = true;
+        try
+        {
+            if (isEditing && editModel.Id.HasValue)
+            {
+                await LLMConfigAppService.UpdateAsync(editModel.Id.Value, new UpdateLLMDto
+                {
+                    ProviderDisplayName = editModel.ProviderDisplayName,
+                    ApiKey = editModel.ApiKey,
+                    ApiSecret = string.IsNullOrEmpty(editModel.ApiSecret) ? null : editModel.ApiSecret,
+                    BaseUrl = string.IsNullOrEmpty(editModel.BaseUrl) ? null : editModel.BaseUrl,
+                    Model = editModel.Model,
+                    IsEnabled = editModel.IsEnabled,
+                    MaxTokens = editModel.MaxTokens,
+                    Temperature = editModel.Temperature
+                });
+                ShowToast("模型配置已更新", "success");
+            }
+            else
+            {
+                await LLMConfigAppService.CreateAsync(new CreateLLMDto
+                {
+                    ProviderName = editModel.ProviderName.Trim().ToLower(),
+                    ProviderDisplayName = editModel.ProviderDisplayName,
+                    ApiKey = editModel.ApiKey,
+                    ApiSecret = string.IsNullOrEmpty(editModel.ApiSecret) ? null : editModel.ApiSecret,
+                    BaseUrl = string.IsNullOrEmpty(editModel.BaseUrl) ? null : editModel.BaseUrl,
+                    Model = editModel.Model,
+                    IsEnabled = editModel.IsEnabled,
+                    MaxTokens = editModel.MaxTokens,
+                    Temperature = editModel.Temperature
+                });
+                ShowToast("模型配置已添加", "success");
+            }
+            showModelDialog = false;
+            await LoadLLMConfigs();
+        }
+        catch (Exception ex) { ShowToast("保存失败: " + ex.Message, "error"); }
+        finally { savingModel = false; }
+    }
+
+    private async Task DeleteModel(Guid id)
+    {
+        try
+        {
+            await LLMConfigAppService.DeleteAsync(id);
+            ShowToast("已删除", "success");
+            await LoadLLMConfigs();
+        }
+        catch (Exception ex) { ShowToast("删除失败: " + ex.Message, "error"); }
+    }
+
+    private async Task SetDefault(string providerName)
+    {
+        try
+        {
+            await LLMConfigAppService.SetDefaultAsync(providerName);
+            ShowToast($"{providerName} 已设为默认", "success");
+            await LoadLLMConfigs();
+        }
+        catch (Exception ex) { ShowToast("设置失败: " + ex.Message, "error"); }
+    }
+
+    private string MaskApiKey(string apiKey)
+    {
+        if (string.IsNullOrEmpty(apiKey)) return "(未设置)";
+        if (apiKey.Length <= 8) return "****";
+        return apiKey[..4] + "****" + apiKey[^4..];
+    }
+
+    private class ModelEditModel
+    {
+        public Guid? Id { get; set; }
+        public string ProviderName { get; set; } = "";
+        public string ProviderDisplayName { get; set; } = "";
+        public string PlanType { get; set; } = "";
+        public string ApiKey { get; set; } = "";
+        public string? ApiSecret { get; set; }
+        public string Model { get; set; } = "";
+        public string? BaseUrl { get; set; }
+        public int MaxTokens { get; set; } = 2000;
+        public float Temperature { get; set; } = 0.7f;
+        public bool IsEnabled { get; set; } = true;
+    }
 
     private static MarkupString IconSvg(string name) => (MarkupString)GetIconSvg(name);
 

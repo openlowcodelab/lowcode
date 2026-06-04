@@ -1,6 +1,7 @@
-@page "/assistant/settings"
+@page "/assistant/settings-skills"
 
 @layout AssistantLayout
+@inject ISkillAppService SkillDefinitionAppService
 @inject NavigationManager Navigation
 
 <!-- Toast Notification -->
@@ -32,44 +33,228 @@
 
     <div class="settings-content">
         <div class="content-header">
-            <h2>通用设置</h2>
+            <h2>技能管理</h2>
         </div>
-        <div class="settings-form">
-            <div class="form-section">
-                <h3>外观</h3>
-                <div class="form-item">
-                    <label>主题模式</label>
-                    <div class="theme-options">
-                        <button class="btn @(themeMode == "light" ? "btn-primary assistant-btn-primary" : "")" @onclick="@(() => themeMode = "light")">
-                            @IconSvg("sun") 浅色
+
+        <!-- Skill/Tool 选项卡 -->
+        <div class="tab-nav">
+            <div class="tab-item @(selectedSkillTab == "skill" ? "active" : "")" @onclick="@(() => selectedSkillTab = "skill")">
+                Skill 列表
+            </div>
+            <div class="tab-item @(selectedSkillTab == "tool" ? "active" : "")" @onclick="@(() => selectedSkillTab = "tool")">
+                Tool 列表
+            </div>
+        </div>
+
+        @if (selectedSkillTab == "skill")
+        {
+            <div class="content-header" style="margin-top: 16px;">
+                <button class="btn btn-primary assistant-btn-primary btn-small" @onclick="ShowAddSkill">
+                    @IconSvg("plus") 添加
+                </button>
+            </div>
+            <div class="skill-list">
+            @if (loadingSkills)
+            {
+                <div class="loading-spinner"><div class="spinner"></div><span>加载中...</span></div>
+            }
+            else if (skills.Any())
+            {
+                @foreach (var skill in skills)
+                {
+                    <div class="model-card">
+                        <div class="model-card-header">
+                            <div class="model-name">
+                                <strong>@skill.DisplayName</strong>
+                                <span class="tag tag-blue">@skill.SkillName</span>
+                                @if (skill.IsEnabled)
+                                {
+                                    <span class="tag tag-green">已启用</span>
+                                }
+                                else
+                                {
+                                    <span class="tag tag-default">已禁用</span>
+                                }
+                            </div>
+                            <div class="model-actions">
+                                <button class="btn btn-link btn-small" @onclick="@(() => ToggleSkill(skill))">
+                                    @(skill.IsEnabled ? "禁用" : "启用")
+                                </button>
+                                <button class="btn btn-link btn-small" @onclick="@(() => EditSkill(skill))">编辑</button>
+                                <button class="btn btn-link btn-small btn-danger" @onclick="@(() => DeleteSkill(skill.Id))">删除</button>
+                            </div>
+                        </div>
+                        <div class="model-card-body">
+                            <div class="model-info-row">
+                                <span class="info-label">类型:</span>
+                                <span>@skill.SkillType</span>
+                            </div>
+                            <div class="model-info-row">
+                                <span class="info-label">描述:</span>
+                                <span>@skill.Description</span>
+                            </div>
+                            @if (!string.IsNullOrEmpty(skill.ImplementationClass))
+                            {
+                                <div class="model-info-row">
+                                    <span class="info-label">实现类:</span>
+                                    <span class="code-text">@skill.ImplementationClass</span>
+                                </div>
+                            }
+                            <div class="model-info-row">
+                                <span class="info-label">使用次数:</span>
+                                <span>@skill.UsageCount</span>
+                                @if (skill.LastUsedTime.HasValue)
+                                {
+                                    <span class="info-label" style="margin-left:16px;">最后使用:</span>
+                                    <span>@skill.LastUsedTime.Value.ToString("yyyy-MM-dd HH:mm")</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="empty-state">
+                    <div class="empty-icon">@IconSvg("inbox")</div>
+                    <div class="empty-text">暂无技能，点击添加按钮新增</div>
+                </div>
+            }
+        </div>
+        }
+        else
+        {
+            <!-- Tool 列表 -->
+            <div class="tool-list">
+                @if (loadingSkills)
+                {
+                    <div class="loading-spinner"><div class="spinner"></div><span>加载中...</span></div>
+                }
+                else if (tools.Any())
+                {
+                    @foreach (var tool in tools)
+                    {
+                        <div class="model-card">
+                            <div class="model-card-header">
+                                <div class="model-name">
+                                    <strong>@tool.ClassName</strong>
+                                    @if (tool.IsEnabled)
+                                    {
+                                        <span class="tag tag-green">已启用</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="tag tag-default">已禁用</span>
+                                    }
+                                </div>
+                            </div>
+                            <div class="model-card-body">
+                                <div class="model-info-row">
+                                    <span class="info-label">描述:</span>
+                                    <span>@tool.Description</span>
+                                </div>
+                                <div class="model-info-row">
+                                    <span class="info-label">实现类:</span>
+                                    <span class="code-text">@tool.FullName</span>
+                                </div>
+                                <div class="model-info-row">
+                                    <span class="info-label">关联 Skill:</span>
+                                    <span>@tool.SkillName</span>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <div class="empty-icon">@IconSvg("inbox")</div>
+                        <div class="empty-text">暂无 Tool</div>
+                    </div>
+                }
+            </div>
+        }
+
+        @if (showSkillDialog)
+        {
+            <div class="modal-overlay" @onclick="CloseSkillDialog">
+                <div class="modal-dialog model-dialog" @onclick:stopPropagation="true">
+                    <div class="modal-header">
+                        <h3>@(isEditingSkill ? "编辑技能" : "添加技能")</h3>
+                        <button class="btn btn-text modal-close-btn" @onclick="CloseSkillDialog">
+                            @IconSvg("close")
                         </button>
-                        <button class="btn @(themeMode == "dark" ? "btn-primary assistant-btn-primary" : "")" @onclick="@(() => themeMode = "dark")">
-                            @IconSvg("moon") 深色
+                    </div>
+                    <div class="modal-body">
+                        @if (!isEditingSkill)
+                        {
+                            <div class="form-item required">
+                                <label>* 技能名称</label>
+                                <input class="modal-input" @bind="@editSkill.SkillName" placeholder="英文标识，如 weather_query" />
+                            </div>
+                        }
+                        <div class="form-item required">
+                            <label>* 显示名称</label>
+                            <input class="modal-input" @bind="@editSkill.DisplayName" placeholder="如：天气查询" />
+                        </div>
+                        <div class="form-item required">
+                            <label>* 描述</label>
+                            <textarea class="modal-input modal-textarea" @bind="@editSkill.Description" placeholder="描述技能的功能，AI 会根据描述自动选择使用此技能"></textarea>
+                        </div>
+                        <div class="form-item required">
+                            <label>* 类型</label>
+                            <select class="modal-select" @bind="@editSkill.SkillType">
+                                <option value="Function">Function (函数调用)</option>
+                                <option value="Plugin">Plugin (插件)</option>
+                                <option value="Workflow">Workflow (工作流)</option>
+                            </select>
+                        </div>
+                        <div class="form-item">
+                            <label>实现类</label>
+                            <input class="modal-input" @bind="@editSkill.ImplementationClass" placeholder="完整类名，如 H.Assistant.Core.Tools.WeatherTool" />
+                        </div>
+                        <div class="form-item">
+                            <label>配置 (JSON)</label>
+                            <textarea class="modal-input modal-textarea" @bind="@editSkill.Config" placeholder='可选，如 {"api_key": "xxx"}'></textarea>
+                        </div>
+                        <div class="form-item">
+                            <label>参数 Schema (JSON)</label>
+                            <textarea class="modal-input modal-textarea" @bind="@editSkill.ParameterSchema" placeholder='可选，JSON Schema 格式'></textarea>
+                        </div>
+                        <div class="form-item">
+                            <label class="checkbox-label">
+                                <input type="checkbox" @bind="@editSkill.IsEnabled" />
+                                启用
+                            </label>
+                        </div>
+                        <div class="form-item">
+                            <label class="checkbox-label">
+                                <input type="checkbox" @bind="@editSkill.RequiresApproval" />
+                                需要审批
+                            </label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="modal-btn-cancel" @onclick="CloseSkillDialog">取消</button>
+                        <button class="modal-btn-primary" @onclick="SaveSkill" disabled="@savingSkill">
+                            @(isEditingSkill ? "保存" : "添加")
                         </button>
                     </div>
                 </div>
             </div>
-            <div class="form-section">
-                <h3>语言</h3>
-                <div class="form-item">
-                    <label>界面语言</label>
-                    <div class="theme-options">
-                        <button class="btn @(language == "zh" ? "btn-primary assistant-btn-primary" : "")" @onclick="@(() => language = "zh")">
-                            中文
-                        </button>
-                        <button class="btn @(language == "en" ? "btn-primary assistant-btn-primary" : "")" @onclick="@(() => language = "en")">
-                            English
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+        }
     </div>
 </div>
 
 @code {
-    private string themeMode = "light";
-    private string language = "zh";
+    private bool loadingSkills;
+    private bool savingSkill;
+    private bool showSkillDialog;
+    private bool isEditingSkill;
+    private List<SkillDto> skills = new();
+    private List<ToolDisplayInfo> tools = new();
+    private string selectedSkillTab = "skill";
+    private SkillEditModel editSkill = new();
 
     private string toastMessage = string.Empty;
     private string toastType = "info";
@@ -106,6 +291,175 @@
     }
 
     private void GoBack() { Navigation.NavigateTo("/assistant/chat"); }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSkills();
+    }
+
+    private async Task LoadSkills()
+    {
+        loadingSkills = true;
+        try
+        {
+            var result = await SkillDefinitionAppService.GetListAsync(new SkillDefinitionQueryDto
+            {
+                MaxResultCount = 100
+            });
+            skills = result.Items.ToList();
+
+            tools = skills
+                .Where(s => !string.IsNullOrWhiteSpace(s.ImplementationClass))
+                .GroupBy(s => s.ImplementationClass)
+                .Select(g =>
+                {
+                    var first = g.First();
+                    return new ToolDisplayInfo
+                    {
+                        ClassName = first.ImplementationClass.Split('.').Last(),
+                        FullName = first.ImplementationClass,
+                        Description = first.Description,
+                        SkillName = string.Join(", ", g.Select(s => s.DisplayName)),
+                        SkillId = first.Id,
+                        IsEnabled = g.Any(s => s.IsEnabled)
+                    };
+                })
+                .ToList();
+        }
+        catch (Exception ex) { ShowToast("加载技能列表失败: " + ex.Message, "error"); }
+        finally { loadingSkills = false; }
+    }
+
+    private void ShowAddSkill()
+    {
+        isEditingSkill = false;
+        editSkill = new SkillEditModel
+        {
+            SkillName = "",
+            DisplayName = "",
+            Description = "",
+            SkillType = "Function",
+            ImplementationClass = "",
+            Config = "",
+            ParameterSchema = "",
+            IsEnabled = true,
+            RequiresApproval = false
+        };
+        showSkillDialog = true;
+    }
+
+    private void EditSkill(SkillDto skill)
+    {
+        isEditingSkill = true;
+        editSkill = new SkillEditModel
+        {
+            Id = skill.Id,
+            SkillName = skill.SkillName,
+            DisplayName = skill.DisplayName,
+            Description = skill.Description,
+            SkillType = skill.SkillType,
+            ImplementationClass = skill.ImplementationClass ?? "",
+            Config = skill.Config ?? "",
+            ParameterSchema = skill.ParameterSchema ?? "",
+            IsEnabled = skill.IsEnabled,
+            RequiresApproval = skill.RequiresApproval
+        };
+        showSkillDialog = true;
+    }
+
+    private void CloseSkillDialog() { showSkillDialog = false; }
+
+    private async Task SaveSkill()
+    {
+        if (string.IsNullOrWhiteSpace(editSkill.SkillName)) { ShowToast("请输入技能名称", "warning"); return; }
+        if (string.IsNullOrWhiteSpace(editSkill.DisplayName)) { ShowToast("请输入显示名称", "warning"); return; }
+        if (string.IsNullOrWhiteSpace(editSkill.Description)) { ShowToast("请输入描述", "warning"); return; }
+
+        savingSkill = true;
+        try
+        {
+            if (isEditingSkill)
+            {
+                await SkillDefinitionAppService.UpdateAsync(editSkill.Id.Value, new UpdateSkillDefinitionDto
+                {
+                    DisplayName = editSkill.DisplayName,
+                    Description = editSkill.Description,
+                    ImplementationClass = string.IsNullOrWhiteSpace(editSkill.ImplementationClass) ? null : editSkill.ImplementationClass,
+                    Config = string.IsNullOrWhiteSpace(editSkill.Config) ? null : editSkill.Config,
+                    ParameterSchema = string.IsNullOrWhiteSpace(editSkill.ParameterSchema) ? null : editSkill.ParameterSchema,
+                    IsEnabled = editSkill.IsEnabled,
+                    RequiresApproval = editSkill.RequiresApproval
+                });
+                ShowToast("技能已更新", "success");
+            }
+            else
+            {
+                await SkillDefinitionAppService.CreateAsync(new CreateSkillDefinitionDto
+                {
+                    SkillName = editSkill.SkillName.Trim().ToLower(),
+                    DisplayName = editSkill.DisplayName,
+                    Description = editSkill.Description,
+                    SkillType = editSkill.SkillType,
+                    ImplementationClass = string.IsNullOrWhiteSpace(editSkill.ImplementationClass) ? null : editSkill.ImplementationClass,
+                    Config = string.IsNullOrWhiteSpace(editSkill.Config) ? null : editSkill.Config,
+                    ParameterSchema = string.IsNullOrWhiteSpace(editSkill.ParameterSchema) ? null : editSkill.ParameterSchema,
+                    IsEnabled = editSkill.IsEnabled,
+                    RequiresApproval = editSkill.RequiresApproval
+                });
+                ShowToast("技能已添加", "success");
+            }
+            showSkillDialog = false;
+            await LoadSkills();
+        }
+        catch (Exception ex) { ShowToast("保存失败: " + ex.Message, "error"); }
+        finally { savingSkill = false; }
+    }
+
+    private async Task ToggleSkill(SkillDto skill)
+    {
+        try
+        {
+            await SkillDefinitionAppService.ToggleEnabledAsync(skill.Id, !skill.IsEnabled);
+            ShowToast(skill.IsEnabled ? "技能已禁用" : "技能已启用", "success");
+            await LoadSkills();
+        }
+        catch (Exception ex) { ShowToast("操作失败: " + ex.Message, "error"); }
+    }
+
+    private async Task DeleteSkill(Guid id)
+    {
+        try
+        {
+            await SkillDefinitionAppService.DeleteAsync(id);
+            ShowToast("已删除", "success");
+            await LoadSkills();
+        }
+        catch (Exception ex) { ShowToast("删除失败: " + ex.Message, "error"); }
+    }
+
+    private class ToolDisplayInfo
+    {
+        public string ClassName { get; set; } = "";
+        public string FullName { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string SkillName { get; set; } = "";
+        public Guid SkillId { get; set; }
+        public bool IsEnabled { get; set; }
+    }
+
+    private class SkillEditModel
+    {
+        public Guid? Id { get; set; }
+        public string SkillName { get; set; } = "";
+        public string DisplayName { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string SkillType { get; set; } = "Function";
+        public string ImplementationClass { get; set; } = "";
+        public string Config { get; set; } = "";
+        public string ParameterSchema { get; set; } = "";
+        public bool IsEnabled { get; set; } = true;
+        public bool RequiresApproval { get; set; }
+    }
 
     private static MarkupString IconSvg(string name) => (MarkupString)GetIconSvg(name);
 

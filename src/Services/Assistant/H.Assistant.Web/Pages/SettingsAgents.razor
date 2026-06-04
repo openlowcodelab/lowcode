@@ -1,6 +1,9 @@
-@page "/assistant/settings"
+@page "/assistant/settings-agents"
 
 @layout AssistantLayout
+@inject IAgentAppService AgentDefinitionAppService
+@inject ISkillAppService SkillDefinitionAppService
+@inject ILLMAppService LLMConfigAppService
 @inject NavigationManager Navigation
 
 <!-- Toast Notification -->
@@ -32,44 +35,185 @@
 
     <div class="settings-content">
         <div class="content-header">
-            <h2>通用设置</h2>
+            <h2>智能体管理</h2>
+            <button class="btn btn-primary assistant-btn-primary btn-small" @onclick="ShowAddAgent">
+                @IconSvg("plus") 新建智能体
+            </button>
         </div>
-        <div class="settings-form">
-            <div class="form-section">
-                <h3>外观</h3>
-                <div class="form-item">
-                    <label>主题模式</label>
-                    <div class="theme-options">
-                        <button class="btn @(themeMode == "light" ? "btn-primary assistant-btn-primary" : "")" @onclick="@(() => themeMode = "light")">
-                            @IconSvg("sun") 浅色
+        <div class="agent-list">
+            @if (loadingAgents)
+            {
+                <div class="loading-spinner"><div class="spinner"></div><span>加载中...</span></div>
+            }
+            else if (agentsFromDb.Any())
+            {
+                @foreach (var agent in agentsFromDb)
+                {
+                    <div class="model-card">
+                        <div class="model-card-header">
+                            <div class="model-name">
+                                <strong>@agent.DisplayName</strong>
+                                <span class="tag tag-blue">@agent.AgentType</span>
+                                @if (agent.IsEnabled)
+                                {
+                                    <span class="tag tag-green">已启用</span>
+                                }
+                                else
+                                {
+                                    <span class="tag tag-default">已禁用</span>
+                                }
+                            </div>
+                            <div class="model-actions">
+                                <button class="btn btn-link btn-small" @onclick="@(() => ToggleAgent(agent))">
+                                    @(agent.IsEnabled ? "禁用" : "启用")
+                                </button>
+                                <button class="btn btn-link btn-small" @onclick="@(() => EditAgent(agent))">编辑</button>
+                                <button class="btn btn-link btn-small btn-danger" @onclick="@(() => DeleteAgent(agent.Id))">删除</button>
+                            </div>
+                        </div>
+                        <div class="model-card-body">
+                            <div class="model-info-row">
+                                <span class="info-label">描述:</span>
+                                <span>@agent.Description</span>
+                            </div>
+                            <div class="model-info-row">
+                                <span class="info-label">温度:</span>
+                                <span>@agent.Temperature</span>
+                                <span class="info-label" style="margin-left:16px;">MaxTokens:</span>
+                                <span>@agent.MaxTokens</span>
+                                <span class="info-label" style="margin-left:16px;">流式:</span>
+                                <span>@(agent.SupportsStreaming ? "支持" : "不支持")</span>
+                            </div>
+                            @if (agentSkillDetails.TryGetValue(agent.Id, out var skills) && skills.Any())
+                            {
+                                <div class="model-info-row" style="margin-top: 8px;">
+                                    <span class="info-label">关联技能:</span>
+                                    @foreach (var skill in skills)
+                                    {
+                                        <span class="tag tag-blue tag-inline">@skill.DisplayName</span>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="empty-state">
+                    <div class="empty-icon">@IconSvg("inbox")</div>
+                    <div class="empty-text">暂无智能体,点击新建按钮新增</div>
+                </div>
+            }
+        </div>
+
+        @if (showAgentDialog)
+        {
+            <div class="modal-overlay" @onclick="CloseAgentDialog">
+                <div class="modal-dialog agent-dialog" @onclick:stopPropagation="true">
+                    <div class="modal-header">
+                        <h3>@(isEditingAgent ? "编辑智能体" : "新建智能体")</h3>
+                        <button class="btn btn-text modal-close-btn" @onclick="CloseAgentDialog">
+                            @IconSvg("close")
                         </button>
-                        <button class="btn @(themeMode == "dark" ? "btn-primary assistant-btn-primary" : "")" @onclick="@(() => themeMode = "dark")">
-                            @IconSvg("moon") 深色
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-item required">
+                            <label>* 类型标识</label>
+                            <input class="modal-input" @bind="@editAgent.AgentType" placeholder="如: general" disabled="@isEditingAgent" />
+                        </div>
+                        <div class="form-item required">
+                            <label>* 显示名称</label>
+                            <input class="modal-input" @bind="@editAgent.DisplayName" placeholder="如: 通用助手" />
+                        </div>
+                        <div class="form-item required">
+                            <label>* 描述</label>
+                            <textarea class="modal-input modal-textarea" @bind="@editAgent.Description" placeholder="描述智能体的功能和用途"></textarea>
+                        </div>
+                        <div class="form-item required">
+                            <label>* 系统提示词</label>
+                            <textarea class="modal-input modal-textarea" @bind="@editAgent.SystemPrompt" placeholder="输入系统提示词" style="min-height: 120px;"></textarea>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-item">
+                                <label>温度 (0-1)</label>
+                                <input class="modal-input" type="number" step="0.1" min="0" max="1" @bind="@editAgent.Temperature" />
+                            </div>
+                            <div class="form-item">
+                                <label>MaxTokens</label>
+                                <input class="modal-input" type="number" @bind="@editAgent.MaxTokens" />
+                            </div>
+                        </div>
+                        <div class="form-item">
+                            <label class="checkbox-label">
+                                <input type="checkbox" @bind="@editAgent.SupportsStreaming" />
+                                支持流式响应
+                            </label>
+                        </div>
+                        <div class="form-item">
+                            <label class="checkbox-label">
+                                <input type="checkbox" @bind="@editAgent.IsEnabled" />
+                                启用
+                            </label>
+                        </div>
+                        <div class="form-item">
+                            <label>技能选择</label>
+                            <div class="skill-search-box">
+                                <input class="modal-input" @bind="@agentSkillSearchText" placeholder="搜索技能..." />
+                            </div>
+                            <div class="skill-selection-area">
+                                @foreach (var group in FilteredAvailableSkills)
+                                {
+                                    <div style="margin-bottom: 8px;">
+                                        <div style="font-size: 12px; color: #8c8c8c; margin-bottom: 4px;">@group.Key</div>
+                                        @foreach (var skill in group)
+                                        {
+                                            <div class="skill-checkbox-item">
+                                                <input type="checkbox" id="skill-@skill.Id" @bind="@editAgent.SelectedSkillIds" value="@skill.Id" />
+                                                <label for="skill-@skill.Id" class="skill-checkbox-label">
+                                                    @skill.DisplayName
+                                                </label>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                        <div class="form-item">
+                            <label>默认模型 (可选)</label>
+                            <select class="modal-select" @bind="@editAgent.DefaultModelConfigId">
+                                <option value="">无</option>
+                                @foreach (var config in llmConfigs)
+                                {
+                                    <option value="@config.Id">@config.ProviderDisplayName - @config.Model</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="modal-btn-cancel" @onclick="CloseAgentDialog">取消</button>
+                        <button class="modal-btn-primary" @onclick="SaveAgent" disabled="@savingAgent">
+                            @(isEditingAgent ? "保存" : "创建")
                         </button>
                     </div>
                 </div>
             </div>
-            <div class="form-section">
-                <h3>语言</h3>
-                <div class="form-item">
-                    <label>界面语言</label>
-                    <div class="theme-options">
-                        <button class="btn @(language == "zh" ? "btn-primary assistant-btn-primary" : "")" @onclick="@(() => language = "zh")">
-                            中文
-                        </button>
-                        <button class="btn @(language == "en" ? "btn-primary assistant-btn-primary" : "")" @onclick="@(() => language = "en")">
-                            English
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+        }
     </div>
 </div>
 
 @code {
-    private string themeMode = "light";
-    private string language = "zh";
+    private List<AgentDto> agentsFromDb = new();
+    private Dictionary<Guid, List<SkillDto>> agentSkillDetails = new();
+    private bool loadingAgents;
+    private bool showAgentDialog;
+    private bool isEditingAgent;
+    private bool savingAgent;
+    private AgentEditModel editAgent = new();
+    private List<SkillDto> availableSkills = new();
+    private string agentSkillSearchText = "";
+
+    private List<LLMDto> llmConfigs = new();
 
     private string toastMessage = string.Empty;
     private string toastType = "info";
@@ -106,6 +250,206 @@
     }
 
     private void GoBack() { Navigation.NavigateTo("/assistant/chat"); }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadLLMConfigs();
+        await LoadAgents();
+    }
+
+    private async Task LoadLLMConfigs()
+    {
+        try { llmConfigs = await LLMConfigAppService.GetAllAsync(); }
+        catch (Exception ex) { ShowToast("加载模型配置失败: " + ex.Message, "error"); }
+    }
+
+    private async Task LoadAgents()
+    {
+        loadingAgents = true;
+        try
+        {
+            var result = await AgentDefinitionAppService.GetListAsync(new AgentQueryDto
+            {
+                MaxResultCount = 100
+            });
+            agentsFromDb = result.Items.ToList();
+
+            agentSkillDetails.Clear();
+            foreach (var agent in agentsFromDb)
+            {
+                try
+                {
+                    var skills = await AgentDefinitionAppService.GetAgentSkillsAsync(agent.Id);
+                    agentSkillDetails[agent.Id] = skills;
+                }
+                catch { }
+            }
+        }
+        catch (Exception ex) { ShowToast("加载智能体列表失败: " + ex.Message, "error"); }
+        finally { loadingAgents = false; }
+    }
+
+    private async Task LoadAvailableSkills()
+    {
+        try
+        {
+            availableSkills = await SkillDefinitionAppService.GetEnabledSkillsAsync();
+        }
+        catch (Exception ex) { ShowToast("加载可用技能失败: " + ex.Message, "error"); }
+    }
+
+    private IEnumerable<IGrouping<string, SkillDto>> FilteredAvailableSkills
+    {
+        get
+        {
+            var filtered = string.IsNullOrWhiteSpace(agentSkillSearchText)
+                ? availableSkills
+                : availableSkills.Where(s =>
+                    s.DisplayName.Contains(agentSkillSearchText, StringComparison.OrdinalIgnoreCase) ||
+                    s.SkillName.Contains(agentSkillSearchText, StringComparison.OrdinalIgnoreCase));
+
+            return filtered.GroupBy(s => s.SkillType);
+        }
+    }
+
+    private void ShowAddAgent()
+    {
+        isEditingAgent = false;
+        editAgent = new AgentEditModel
+        {
+            AgentType = "",
+            DisplayName = "",
+            Description = "",
+            SystemPrompt = "",
+            IsEnabled = true,
+            SupportsStreaming = true,
+            Temperature = 0.7f,
+            MaxTokens = 2000,
+            SelectedSkillIds = new()
+        };
+        _ = LoadAvailableSkills();
+        showAgentDialog = true;
+    }
+
+    private async void EditAgent(AgentDto agent)
+    {
+        isEditingAgent = true;
+        editAgent = new AgentEditModel
+        {
+            Id = agent.Id,
+            AgentType = agent.AgentType,
+            DisplayName = agent.DisplayName,
+            Description = agent.Description,
+            SystemPrompt = agent.SystemPrompt,
+            IsEnabled = agent.IsEnabled,
+            SupportsStreaming = agent.SupportsStreaming,
+            Temperature = agent.Temperature,
+            MaxTokens = agent.MaxTokens,
+            DefaultModelConfigId = agent.DefaultModelConfigId,
+            SelectedSkillIds = new()
+        };
+
+        await LoadAvailableSkills();
+
+        try
+        {
+            var currentSkills = await AgentDefinitionAppService.GetAgentSkillsAsync(agent.Id);
+            editAgent.SelectedSkillIds = currentSkills.Select(s => s.Id).ToList();
+        }
+        catch { }
+
+        showAgentDialog = true;
+        StateHasChanged();
+    }
+
+    private void CloseAgentDialog() { showAgentDialog = false; }
+
+    private async Task SaveAgent()
+    {
+        if (string.IsNullOrWhiteSpace(editAgent.AgentType)) { ShowToast("请输入类型标识", "warning"); return; }
+        if (string.IsNullOrWhiteSpace(editAgent.DisplayName)) { ShowToast("请输入显示名称", "warning"); return; }
+        if (string.IsNullOrWhiteSpace(editAgent.Description)) { ShowToast("请输入描述", "warning"); return; }
+        if (string.IsNullOrWhiteSpace(editAgent.SystemPrompt)) { ShowToast("请输入系统提示词", "warning"); return; }
+
+        savingAgent = true;
+        try
+        {
+            if (isEditingAgent && editAgent.Id.HasValue)
+            {
+                await AgentDefinitionAppService.UpdateAsync(editAgent.Id.Value, new UpdateAgentDto
+                {
+                    DisplayName = editAgent.DisplayName,
+                    Description = editAgent.Description,
+                    SystemPrompt = editAgent.SystemPrompt,
+                    IsEnabled = editAgent.IsEnabled,
+                    SupportsStreaming = editAgent.SupportsStreaming,
+                    Temperature = editAgent.Temperature,
+                    MaxTokens = editAgent.MaxTokens,
+                    DefaultModelConfigId = editAgent.DefaultModelConfigId,
+                    SkillIds = editAgent.SelectedSkillIds
+                });
+                ShowToast("智能体已更新", "success");
+            }
+            else
+            {
+                await AgentDefinitionAppService.CreateAsync(new CreateAgentDto
+                {
+                    AgentType = editAgent.AgentType.Trim().ToLower(),
+                    DisplayName = editAgent.DisplayName,
+                    Description = editAgent.Description,
+                    SystemPrompt = editAgent.SystemPrompt,
+                    IsEnabled = editAgent.IsEnabled,
+                    SupportsStreaming = editAgent.SupportsStreaming,
+                    Temperature = editAgent.Temperature,
+                    MaxTokens = editAgent.MaxTokens,
+                    DefaultModelConfigId = editAgent.DefaultModelConfigId,
+                    SkillIds = editAgent.SelectedSkillIds
+                });
+                ShowToast("智能体已创建", "success");
+            }
+            showAgentDialog = false;
+            await LoadAgents();
+        }
+        catch (Exception ex) { ShowToast("保存失败: " + ex.Message, "error"); }
+        finally { savingAgent = false; }
+    }
+
+    private async Task DeleteAgent(Guid id)
+    {
+        try
+        {
+            await AgentDefinitionAppService.DeleteAsync(id);
+            ShowToast("已删除", "success");
+            await LoadAgents();
+        }
+        catch (Exception ex) { ShowToast("删除失败: " + ex.Message, "error"); }
+    }
+
+    private async Task ToggleAgent(AgentDto agent)
+    {
+        try
+        {
+            await AgentDefinitionAppService.ToggleEnabledAsync(agent.Id, !agent.IsEnabled);
+            ShowToast(agent.IsEnabled ? "智能体已禁用" : "智能体已启用", "success");
+            await LoadAgents();
+        }
+        catch (Exception ex) { ShowToast("操作失败: " + ex.Message, "error"); }
+    }
+
+    private class AgentEditModel
+    {
+        public Guid? Id { get; set; }
+        public string AgentType { get; set; } = "";
+        public string DisplayName { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string SystemPrompt { get; set; } = "";
+        public bool IsEnabled { get; set; } = true;
+        public bool SupportsStreaming { get; set; } = true;
+        public float Temperature { get; set; } = 0.7f;
+        public int MaxTokens { get; set; } = 2000;
+        public Guid? DefaultModelConfigId { get; set; }
+        public List<Guid> SelectedSkillIds { get; set; } = new();
+    }
 
     private static MarkupString IconSvg(string name) => (MarkupString)GetIconSvg(name);
 

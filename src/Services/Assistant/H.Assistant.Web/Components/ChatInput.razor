@@ -15,7 +15,7 @@
                 <div class="selector-group agent-selector">
                     <button class="selector-btn" @onclick="ToggleAgentDropdown">
                         <svg class="icon icon-agent" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a5 5 0 0 1 5 5c0 .74-.16 1.44-.45 2.07L12 12l-4.55-2.93A5.002 5.002 0 0 1 12 2z"/><path d="M12 12v10"/><path d="M8 19h8"/></svg>
-                        <span>@(SelectedAgentDisplayName ?? "智能体")</span>
+                        <span>@SelectedAgentDisplayName</span>
                         <svg class="icon icon-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                     </button>
                     @if (ShowAgentDropdown)
@@ -151,10 +151,6 @@
             {
                 SelectedModelDisplay = $"{model.ProviderDisplayName} ({model.Model})";
             }
-        }
-        else
-        {
-            SelectedModelDisplay = "Auto";
         }
     }
 
