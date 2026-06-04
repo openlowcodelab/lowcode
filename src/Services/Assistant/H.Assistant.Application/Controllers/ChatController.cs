@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using H.Assistant.Application.Contracts;
@@ -13,10 +14,12 @@ namespace H.Assistant.Application.Controllers;
 public class ChatController : ControllerBase
 {
     private readonly IChatMessageAppService _chatAppService;
+    private readonly IChatAppService _sessionAppService;
 
-    public ChatController(IChatMessageAppService chatAppService)
+    public ChatController(IChatMessageAppService chatAppService, IChatAppService sessionAppService)
     {
         _chatAppService = chatAppService;
+        _sessionAppService = sessionAppService;
     }
 
     /// <summary>
@@ -31,11 +34,26 @@ public class ChatController : ControllerBase
 
         // 设置 SSE 响应头
         Response.ContentType = "text/event-stream";
-        Response.Headers.CacheControl = "no-cache";
+        Response.Headers.CacheControl = "no-cache, no-transform"; // no-transform 防止响应压缩中间件缓冲 SSE 数据
         Response.Headers.Connection = "keep-alive";
 
         try
         {
+            // 如果需要创建新会话，先创建并发送 sessionId 事件
+            var sessionId = input.SessionId;
+            if (!sessionId.HasValue)
+            {
+                var agentType = input.AgentType ?? "general";
+                var title = input.Message.Length > 30 ? input.Message[..30] + "..." : input.Message;
+                sessionId = await _sessionAppService.CreateSessionAsync(title, agentType);
+                input.SessionId = sessionId;
+
+                // 发送 session 事件，让前端获取 sessionId
+                var sessionEvent = $"data: {JsonSerializer.Serialize(new { session = sessionId.Value })}\n\n";
+                await Response.Body.WriteAsync(Encoding.UTF8.GetBytes(sessionEvent));
+                await Response.Body.FlushAsync();
+            }
+
             await foreach (var chunk in _chatAppService.SendMessageStreamAsync(input))
             {
                 // 发送 SSE 格式的数据

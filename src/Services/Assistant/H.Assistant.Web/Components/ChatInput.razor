@@ -171,7 +171,6 @@
 
     private async Task HandleKeyDown(KeyboardEventArgs e)
     {
-        Console.WriteLine($"[ChatInput] HandleKeyDown: key='{e.Key}', _localMessage='{_localMessage}'");
         if (e.Key == "Enter" && !e.ShiftKey)
         {
             await SyncAndSend();
@@ -192,7 +191,6 @@
         }
         catch { /* JS 调用失败时使用本地值 */ }
         
-        Console.WriteLine($"[ChatInput] SyncAndSend: _localMessage='{_localMessage}'");
         Message = _localMessage;
         await MessageChanged.InvokeAsync(Message);
         await OnSend.InvokeAsync();

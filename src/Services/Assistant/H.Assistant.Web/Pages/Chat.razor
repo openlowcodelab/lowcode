@@ -144,7 +144,9 @@
                                 <div class="message-avatar">@IconSvg("robot")</div>
                                 <div class="message-content">
                                     <div class="message-text">
-                                        <MarkdownRenderer Content="@streamingResponse" />
+                                        <div class="markdown-content">
+                                            @((MarkupString)RenderMarkdown(streamingResponse))
+                                        </div>
                                     </div>
                                     <div class="message-time">@DateTime.Now.ToString("HH:mm:ss")</div>
                                 </div>
@@ -213,28 +215,71 @@
     private ChatMessageDto? pendingUserMessage;
     private string streamingResponse = string.Empty;
     private ElementReference chatMessagesRef;
+    private CancellationTokenSource? streamCts;
+    private DotNetObjectReference<SseStreamCallbacks>? _sseCallbacksRef;
+
+    private static readonly MarkdownPipeline _mdPipeline = new MarkdownPipelineBuilder()
+        .UseAdvancedExtensions()
+        .UseEmojiAndSmiley()
+        .UseCustomContainers()
+        .Build();
+
+    private static string RenderMarkdown(string markdown)
+    {
+        if (string.IsNullOrEmpty(markdown)) return string.Empty;
+        var html = Markdown.ToHtml(markdown, _mdPipeline);
+        html = html.Replace("<pre><code", "<pre class=\"markdown-code-block\"><code");
+        html = html.Replace("<code>", "<code class=\"markdown-inline-code\">");
+        return html;
+    }
     private string toastMessage = string.Empty;
     private string toastType = "info";
     private bool toastVisible;
 
     protected override async Task OnInitializedAsync()
     {
-        Console.WriteLine("[Chat] OnInitializedAsync started");
         try
         {
+            // 注入 JS 流式读取辅助函数
+            await JS.InvokeVoidAsync("eval", @"
+                window.__chatSseStream = async function(url, body, dotNetRef) {
+                    const resp = await fetch(url, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: typeof body === 'string' ? body : JSON.stringify(body),
+                        credentials: 'same-origin'
+                    });
+                    if (!resp.ok) { await dotNetRef.invokeMethodAsync('OnSseDone'); await dotNetRef.invokeMethodAsync('OnSseError', 'HTTP ' + resp.status); return; }
+                    const reader = resp.body.pipeThrough(new TextDecoderStream()).getReader();
+                    let buffer = '';
+                    try {
+                        while (true) {
+                            const { done, value } = await reader.read();
+                            if (done) break;
+                            buffer += value;
+                            let nl;
+                            while ((nl = buffer.indexOf('\n')) >= 0) {
+                                const line = buffer.substring(0, nl).trimEnd();
+                                buffer = buffer.substring(nl + 1);
+                                if (!line.startsWith('data: ')) continue;
+                                const d = line.substring(6);
+                                if (d === '[DONE]') { await dotNetRef.invokeMethodAsync('OnSseDone'); return; }
+                                await dotNetRef.invokeMethodAsync('OnSseChunk', d);
+                            }
+                        }
+                        await dotNetRef.invokeMethodAsync('OnSseDone');
+                    } catch(e) {
+                        await dotNetRef.invokeMethodAsync('OnSseError', e.message);
+                    }
+                };
+            ");
+
             await LoadSessions();
-            Console.WriteLine($"[Chat] LoadSessions done, chats count: {chats.Count}");
             await LoadAvailableAgents();
-            Console.WriteLine($"[Chat] LoadAvailableAgents done, agents count: {availableAgents.Count}");
             await LoadAvailableModels();
-            Console.WriteLine($"[Chat] LoadAvailableModels done, models count: {availableModels.Count}");
             _ = CreateNewChat();
-            Console.WriteLine("[Chat] OnInitializedAsync completed");
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"[Chat] OnInitializedAsync ERROR: {ex}");
-        }
+        catch (Exception ex) { }
     }
 
     private void OnClickCreateTask() => _ = CreateNewChat();
@@ -307,40 +352,90 @@
 
     private async Task SendNewTask()
     {
-        Console.WriteLine($"[Chat] SendNewTask called, inputMessage='{inputMessage}', isSending={isSending}");
-        if (string.IsNullOrWhiteSpace(inputMessage) || isSending) { Console.WriteLine("[Chat] SendNewTask early return"); return; }
+        if (string.IsNullOrWhiteSpace(inputMessage) || isSending)
+        {
+            return;
+        }
+
         isSending = true; var message = inputMessage; inputMessage = string.Empty;
         pendingUserMessage = new ChatMessageDto { Id = Guid.NewGuid(), SessionId = Guid.NewGuid(), Role = "user", Content = message, CreationTime = DateTime.Now };
         streamingResponse = string.Empty; StateHasChanged(); await ScrollToBottom();
         try
         {
-            Console.WriteLine("[Chat] SendNewTask calling SendMessageAsync...");
-            var response = await ChatMessageAppService.SendMessageAsync(new SendChatMessageInputDto { SessionId = null, Message = message, AgentType = selectedAgentType, ProviderName = string.IsNullOrEmpty(selectedProviderName) ? null : selectedProviderName, ModelConfigId = Guid.TryParse(selectedProviderName, out var configId) ? configId : null });
-            Console.WriteLine($"[Chat] SendNewTask got response, SessionId={response.SessionId}");
-            selectedChatId = response.SessionId; isNewTask = false;
-            if (!string.IsNullOrEmpty(response.Response)) { streamingResponse = response.Response; StateHasChanged(); }
-            pendingUserMessage = null; streamingResponse = string.Empty; await LoadMessages(response.SessionId); await LoadSessions();
+            var input = new SendChatMessageInputDto
+                {
+                    SessionId = null,
+                    Message = message,
+                    AgentType = string.IsNullOrEmpty(selectedAgentType) ? null : selectedAgentType,
+                    ProviderName = string.IsNullOrEmpty(selectedProviderName) ? null : selectedProviderName,
+                    ModelConfigId = Guid.TryParse(selectedProviderName, out var configId) ? configId : null
+                };
+
+            await foreach (var chunk in SendMessageStreamViaJsAsync(input))
+            {
+                streamingResponse += chunk;
+                StateHasChanged();
+                await ScrollToBottom();
+                await Task.Delay(1);
+            }
+
+            if (selectedChatId.HasValue)
+            {
+                isNewTask = false;
+                pendingUserMessage = null;
+                streamingResponse = string.Empty;
+                await LoadMessages(selectedChatId.Value);
+                await LoadSessions();
+            }
         }
-        catch (Exception ex) { Console.WriteLine($"[Chat] SendNewTask ERROR: {ex}"); inputMessage = message; pendingUserMessage = null; streamingResponse = string.Empty; ShowToast("Send failed: " + ex.Message, "error"); }
+        catch (Exception ex)
+        {
+            inputMessage = message; pendingUserMessage = null;
+            streamingResponse = string.Empty;
+            ShowToast("Send failed: " + ex.Message, "error");
+        }
         finally { isSending = false; StateHasChanged(); }
     }
 
     private async Task SendMessage()
     {
-        Console.WriteLine($"[Chat] SendMessage called, inputMessage='{inputMessage}', isSending={isSending}, selectedChatId={selectedChatId}");
-        if (string.IsNullOrWhiteSpace(inputMessage) || isSending) { Console.WriteLine("[Chat] SendMessage early return"); return; }
+        if (string.IsNullOrWhiteSpace(inputMessage) || isSending)
+        {
+            return;
+        }
         if (!selectedChatId.HasValue) { ShowToast("请先选择或创建一个会话", "warning"); return; }
         isSending = true; var message = inputMessage; inputMessage = string.Empty;
         pendingUserMessage = new ChatMessageDto { Id = Guid.NewGuid(), SessionId = selectedChatId.Value, Role = "user", Content = message, CreationTime = DateTime.Now };
         streamingResponse = string.Empty; StateHasChanged(); await ScrollToBottom();
         try
         {
-            Console.WriteLine("[Chat] SendMessage calling SendMessageAsync...");
-            var response = await ChatMessageAppService.SendMessageAsync(new SendChatMessageInputDto { SessionId = selectedChatId, Message = message, AgentType = selectedAgentType, ProviderName = string.IsNullOrEmpty(selectedProviderName) ? null : selectedProviderName, ModelConfigId = Guid.TryParse(selectedProviderName, out var configId) ? configId : null });
-            Console.WriteLine($"[Chat] SendMessage got response");
-            pendingUserMessage = null; streamingResponse = string.Empty; await LoadMessages(selectedChatId.Value); await LoadSessions();
+            var input = new SendChatMessageInputDto
+                {
+                    SessionId = selectedChatId,
+                    Message = message,
+                    AgentType = string.IsNullOrEmpty(selectedAgentType) ? null : selectedAgentType,
+                    ProviderName = string.IsNullOrEmpty(selectedProviderName) ? null : selectedProviderName,
+                    ModelConfigId = Guid.TryParse(selectedProviderName, out var configId) ? configId : null
+                };
+
+            await foreach (var chunk in SendMessageStreamViaJsAsync(input))
+            {
+                streamingResponse += chunk;
+                StateHasChanged();
+                await ScrollToBottom();
+                await Task.Delay(1);
+            }
+
+            pendingUserMessage = null;
+            streamingResponse = string.Empty;
+            await LoadMessages(selectedChatId.Value);
+            await LoadSessions();
         }
-        catch (Exception ex) { Console.WriteLine($"[Chat] SendMessage ERROR: {ex}"); inputMessage = message; pendingUserMessage = null; streamingResponse = string.Empty; ShowToast("Send failed: " + ex.Message, "error"); }
+        catch (Exception ex)
+        {
+            inputMessage = message; pendingUserMessage = null;
+            streamingResponse = string.Empty; ShowToast("Send failed: " + ex.Message, "error");
+        }
         finally { isSending = false; StateHasChanged(); }
     }
 
@@ -355,7 +450,110 @@
         catch (Exception ex) { ShowToast("删除失败: " + ex.Message, "error"); }
     }
 
-    private void StopSending() { isSending = false; StateHasChanged(); }
+    private async IAsyncEnumerable<string> SendMessageStreamViaJsAsync(SendChatMessageInputDto input)
+    {
+        streamCts?.Cancel();
+        streamCts = new CancellationTokenSource();
+
+        var chunkQueue = new Queue<string>();
+        var tcs = new TaskCompletionSource<bool>();
+        var error = (string?)null;
+
+        // JS 回调处理器
+        void OnChunk(string data)
+        {
+            if (data.TrimStart().StartsWith("{"))
+            {
+                try
+                {
+                    using var doc = JsonDocument.Parse(data);
+                    if (doc.RootElement.TryGetProperty("session", out var s))
+                    {
+                        selectedChatId = Guid.Parse(s.GetString()!);
+                        return;
+                    }
+                    if (doc.RootElement.TryGetProperty("error", out var e))
+                    {
+                        error = e.GetString();
+                        tcs.TrySetResult(false);
+                        return;
+                    }
+                }
+                catch (JsonException) { }
+            }
+            chunkQueue.Enqueue(data);
+            tcs.TrySetResult(true);
+        }
+
+        void OnDone()
+        {
+            tcs.TrySetResult(false);
+        }
+
+        void OnError(string msg)
+        {
+            error = msg;
+            tcs.TrySetResult(false);
+        }
+
+        // 注册回调并启动 JS 流式读取
+        var callbacks = new SseStreamCallbacks(OnChunk, OnDone, OnError);
+        _sseCallbacksRef?.Dispose();
+        _sseCallbacksRef = DotNetObjectReference.Create(callbacks);
+        var requestJson = JsonSerializer.Serialize(input);
+        _ = JS.InvokeVoidAsync("__chatSseStream", "api/assistant/chat/stream", requestJson, _sseCallbacksRef);
+
+        try
+        {
+            // 逐 chunk 产出
+            while (true)
+            {
+                streamCts.Token.ThrowIfCancellationRequested();
+
+                while (chunkQueue.Count > 0)
+                    yield return chunkQueue.Dequeue();
+
+                if (error != null) throw new Exception(error);
+
+                var hasMore = await tcs.Task;
+                tcs = new TaskCompletionSource<bool>();
+
+                while (chunkQueue.Count > 0)
+                    yield return chunkQueue.Dequeue();
+
+                if (!hasMore) yield break;
+            }
+        }
+        finally
+        {
+            _sseCallbacksRef?.Dispose();
+            _sseCallbacksRef = null;
+        }
+    }
+
+    // JS 回调桥接类
+    private class SseStreamCallbacks
+    {
+        private readonly Action<string> _onChunk;
+        private readonly Action _onDone;
+        private readonly Action<string> _onError;
+
+        public SseStreamCallbacks(Action<string> onChunk, Action onDone, Action<string> onError)
+        {
+            _onChunk = onChunk; _onDone = onDone; _onError = onError;
+        }
+
+        [JSInvokable] public void OnSseChunk(string data) => _onChunk(data);
+        [JSInvokable] public void OnSseDone() => _onDone();
+        [JSInvokable] public void OnSseError(string msg) => _onError(msg);
+    }
+
+    private void StopSending()
+    {
+        streamCts?.Cancel();
+        isSending = false;
+        StateHasChanged();
+    }
     private async Task ScrollToBottom() { try { await JS.InvokeVoidAsync("eval", "var el = document.querySelector('.chat-messages'); if(el) el.scrollTop = el.scrollHeight;"); } catch { } }
     private void ToggleUserMenu() { showUserMenu = !showUserMenu; }
     private void ToggleChatMenu(Guid sessionId) { showSessionMenu = showSessionMenu == sessionId ? null : sessionId; }
@@ -663,5 +861,116 @@
     .task-action-btn svg {
         width: 16px;
         height: 16px;
+    }
+
+    /* ========== Markdown Content Styles (for streaming) ========== */
+    .markdown-content {
+        line-height: 1.8;
+    }
+
+    .markdown-content h1,
+    .markdown-content h2,
+    .markdown-content h3,
+    .markdown-content h4,
+    .markdown-content h5,
+    .markdown-content h6 {
+        margin-top: 1em;
+        margin-bottom: 0.5em;
+        font-weight: 600;
+        line-height: 1.25;
+    }
+
+    .markdown-content h1 { font-size: 1.75em; border-bottom: 1px solid #e8e8e8; padding-bottom: 0.3em; }
+    .markdown-content h2 { font-size: 1.5em; border-bottom: 1px solid #e8e8e8; padding-bottom: 0.3em; }
+    .markdown-content h3 { font-size: 1.25em; }
+    .markdown-content h4 { font-size: 1em; }
+
+    .markdown-content p { margin-bottom: 1em; margin-top: 0; }
+
+    .markdown-content ul,
+    .markdown-content ol {
+        margin-bottom: 1em;
+        padding-left: 2em;
+    }
+
+    .markdown-content ul li,
+    .markdown-content ol li {
+        margin-bottom: 0.25em;
+    }
+
+    .markdown-content ul { list-style-type: disc; }
+    .markdown-content ol { list-style-type: decimal; }
+
+    .markdown-content blockquote {
+        margin: 1em 0;
+        padding: 0.5em 1em;
+        border-left: 4px solid #a6a6a6;
+        background: rgba(0, 0, 0, 0.03);
+        color: #595959;
+    }
+
+    .markdown-content pre {
+        background: #f5f5f5;
+        border-radius: 6px;
+        padding: 1em;
+        overflow-x: auto;
+        margin: 1em 0;
+    }
+
+    .markdown-content code {
+        background: #f0f0f0;
+        border-radius: 3px;
+        padding: 0.2em 0.4em;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        font-size: 0.9em;
+    }
+
+    .markdown-content pre code {
+        background: transparent;
+        padding: 0;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    .markdown-content table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1em 0;
+    }
+
+    .markdown-content table th,
+    .markdown-content table td {
+        padding: 0.5em 1em;
+        border: 1px solid #e8e8e8;
+        text-align: left;
+    }
+
+    .markdown-content table th {
+        background: #fafafa;
+        font-weight: 600;
+    }
+
+    .markdown-content hr {
+        border: none;
+        border-top: 1px solid #e8e8e8;
+        margin: 1.5em 0;
+    }
+
+    .markdown-content a {
+        color: #1890ff;
+        text-decoration: none;
+    }
+
+    .markdown-content a:hover {
+        text-decoration: underline;
+    }
+
+    .markdown-content strong { font-weight: 600; }
+    .markdown-content em { font-style: italic; }
+
+    .markdown-content img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 4px;
     }
 </style>
