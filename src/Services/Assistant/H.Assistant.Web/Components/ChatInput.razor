@@ -1,10 +1,12 @@
 @namespace H.Assistant.Web
+@inject IJSRuntime JS
 
 <div class="chat-input-wrapper">
     <div class="chat-input-container">
         <textarea class="chat-textarea"
-                  @bind-value="Message"
-                  @bind-value:event="oninput"
+                  @ref="_textareaRef"
+                  @bind="_localMessage"
+                  @bind:event="oninput"
                   placeholder="@PlaceholderText"
                   rows="5"
                   @onkeydown="HandleKeyDown"></textarea>
@@ -78,8 +80,8 @@
                 else
                 {
                     <button class="btn btn-send" 
-                            @onclick="OnSend" 
-                            disabled="@string.IsNullOrWhiteSpace(Message)"
+                            @onclick="SyncAndSend" 
+                            disabled="@string.IsNullOrWhiteSpace(_localMessage)"
                             title="发送">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                     </button>
@@ -95,6 +97,9 @@
 
     [Parameter]
     public EventCallback<string> MessageChanged { get; set; }
+
+    private string _localMessage = string.Empty;
+    private ElementReference _textareaRef;
 
     [Parameter]
     public string SelectedAgentType { get; set; } = string.Empty;
@@ -136,13 +141,23 @@
     protected override void OnParametersSet()
     {
         base.OnParametersSet();
-        if (!string.IsNullOrEmpty(SelectedAgentType))
+        // 父组件重置 Message 时同步本地值（如发送后清空）
+        if (Message != _localMessage && string.IsNullOrEmpty(Message))
         {
-            var agent = AvailableAgents.FirstOrDefault(a => a.AgentType == SelectedAgentType);
-            if (agent != null)
-            {
-                SelectedAgentDisplayName = agent.DisplayName;
-            }
+            _localMessage = Message;
+        }
+        // 始终查找智能体显示名称（包括 AgentType 为空的默认智能体）
+        var agent = AvailableAgents.FirstOrDefault(a => a.AgentType == SelectedAgentType);
+        if (agent != null)
+        {
+            SelectedAgentDisplayName = agent.DisplayName;
+        }
+        else if (AvailableAgents.Any())
+        {
+            // fallback 到第一个可用智能体
+            var fallback = AvailableAgents.First();
+            SelectedAgentDisplayName = fallback.DisplayName;
+            SelectedAgentType = fallback.AgentType;
         }
         if (!string.IsNullOrEmpty(SelectedProviderName))
         {
@@ -156,10 +171,31 @@
 
     private async Task HandleKeyDown(KeyboardEventArgs e)
     {
+        Console.WriteLine($"[ChatInput] HandleKeyDown: key='{e.Key}', _localMessage='{_localMessage}'");
         if (e.Key == "Enter" && !e.ShiftKey)
         {
-            await OnSend.InvokeAsync();
+            await SyncAndSend();
         }
+    }
+
+    private async Task SyncAndSend()
+    {
+        // 通过 JS interop 读取 textarea 实际值，确保不丢失
+        try
+        {
+            var jsValue = await JS.InvokeAsync<string>("eval", 
+                "document.querySelector('.chat-textarea')?.value || ''");
+            if (!string.IsNullOrEmpty(jsValue))
+            {
+                _localMessage = jsValue;
+            }
+        }
+        catch { /* JS 调用失败时使用本地值 */ }
+        
+        Console.WriteLine($"[ChatInput] SyncAndSend: _localMessage='{_localMessage}'");
+        Message = _localMessage;
+        await MessageChanged.InvokeAsync(Message);
+        await OnSend.InvokeAsync();
     }
 
     private async Task SelectAgent(string agentType)
@@ -198,6 +234,26 @@
     protected override void OnInitialized()
     {
         SelectedAgentDisplayName = AvailableAgents.FirstOrDefault(a => a.AgentType == SelectedAgentType)?.DisplayName;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // 在 JS 层阴断 Enter 键的默认换行行为，Blazor 的 onkeydown 事件仍会正常触发
+            await JS.InvokeVoidAsync("eval",
+                @"(function() {
+                    var el = document.querySelector('.chat-textarea');
+                    if (el && !el._enterPrevented) {
+                        el._enterPrevented = true;
+                        el.addEventListener('keydown', function(e) {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                            }
+                        });
+                    }
+                })();");
+        }
     }
 }
 
@@ -419,8 +475,8 @@
         justify-content: center;
         width: 30px;
         height: 30px;
-        background: #4caf50;
         border: none;
+        background: #fafafa;
         border-radius: 4px;
         color: #ffffff;
         cursor: pointer;
@@ -428,7 +484,7 @@
     }
 
     .btn-send:hover:not(:disabled) {
-        background: #43a047;
+            background: #bfbdbd;
     }
 
     .btn-send:disabled {

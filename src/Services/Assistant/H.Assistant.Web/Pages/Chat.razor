@@ -5,7 +5,6 @@
 @inject IChatMessageAppService ChatMessageAppService
 @inject ILLMAppService LLMAppService
 @inject NavigationManager Navigation
-@inject IHttpClientFactory HttpClientFactory
 @inject IJSRuntime JS
 
 <!-- Toast Notification -->
@@ -220,10 +219,22 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadSessions();
-        await LoadAvailableAgents();
-        await LoadAvailableModels();
-        _ = CreateNewChat();
+        Console.WriteLine("[Chat] OnInitializedAsync started");
+        try
+        {
+            await LoadSessions();
+            Console.WriteLine($"[Chat] LoadSessions done, chats count: {chats.Count}");
+            await LoadAvailableAgents();
+            Console.WriteLine($"[Chat] LoadAvailableAgents done, agents count: {availableAgents.Count}");
+            await LoadAvailableModels();
+            Console.WriteLine($"[Chat] LoadAvailableModels done, models count: {availableModels.Count}");
+            _ = CreateNewChat();
+            Console.WriteLine("[Chat] OnInitializedAsync completed");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Chat] OnInitializedAsync ERROR: {ex}");
+        }
     }
 
     private void OnClickCreateTask() => _ = CreateNewChat();
@@ -296,48 +307,40 @@
 
     private async Task SendNewTask()
     {
-        if (string.IsNullOrWhiteSpace(inputMessage) || isSending) return;
+        Console.WriteLine($"[Chat] SendNewTask called, inputMessage='{inputMessage}', isSending={isSending}");
+        if (string.IsNullOrWhiteSpace(inputMessage) || isSending) { Console.WriteLine("[Chat] SendNewTask early return"); return; }
         isSending = true; var message = inputMessage; inputMessage = string.Empty;
         pendingUserMessage = new ChatMessageDto { Id = Guid.NewGuid(), SessionId = Guid.NewGuid(), Role = "user", Content = message, CreationTime = DateTime.Now };
         streamingResponse = string.Empty; StateHasChanged(); await ScrollToBottom();
         try
         {
+            Console.WriteLine("[Chat] SendNewTask calling SendMessageAsync...");
             var response = await ChatMessageAppService.SendMessageAsync(new SendChatMessageInputDto { SessionId = null, Message = message, AgentType = selectedAgentType, ProviderName = string.IsNullOrEmpty(selectedProviderName) ? null : selectedProviderName, ModelConfigId = Guid.TryParse(selectedProviderName, out var configId) ? configId : null });
+            Console.WriteLine($"[Chat] SendNewTask got response, SessionId={response.SessionId}");
             selectedChatId = response.SessionId; isNewTask = false;
             if (!string.IsNullOrEmpty(response.Response)) { streamingResponse = response.Response; StateHasChanged(); }
             pendingUserMessage = null; streamingResponse = string.Empty; await LoadMessages(response.SessionId); await LoadSessions();
         }
-        catch (Exception ex) { inputMessage = message; pendingUserMessage = null; streamingResponse = string.Empty; ShowToast("Send failed: " + ex.Message, "error"); }
+        catch (Exception ex) { Console.WriteLine($"[Chat] SendNewTask ERROR: {ex}"); inputMessage = message; pendingUserMessage = null; streamingResponse = string.Empty; ShowToast("Send failed: " + ex.Message, "error"); }
         finally { isSending = false; StateHasChanged(); }
     }
 
     private async Task SendMessage()
     {
-        if (string.IsNullOrWhiteSpace(inputMessage) || isSending) return;
+        Console.WriteLine($"[Chat] SendMessage called, inputMessage='{inputMessage}', isSending={isSending}, selectedChatId={selectedChatId}");
+        if (string.IsNullOrWhiteSpace(inputMessage) || isSending) { Console.WriteLine("[Chat] SendMessage early return"); return; }
         if (!selectedChatId.HasValue) { ShowToast("请先选择或创建一个会话", "warning"); return; }
         isSending = true; var message = inputMessage; inputMessage = string.Empty;
         pendingUserMessage = new ChatMessageDto { Id = Guid.NewGuid(), SessionId = selectedChatId.Value, Role = "user", Content = message, CreationTime = DateTime.Now };
         streamingResponse = string.Empty; StateHasChanged(); await ScrollToBottom();
         try
         {
-            var httpClient = HttpClientFactory.CreateClient(); httpClient.Timeout = TimeSpan.FromMinutes(5);
-            var requestDto = new SendChatMessageInputDto { SessionId = selectedChatId, Message = message, AgentType = selectedAgentType, ProviderName = string.IsNullOrEmpty(selectedProviderName) ? null : selectedProviderName, ModelConfigId = Guid.TryParse(selectedProviderName, out var configId) ? configId : null };
-            var json = requestDto.ToJson();
-            var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"{Navigation.BaseUri}api/assistant/chat/stream");
-            httpRequest.Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
-            httpRequest.SetBrowserResponseStreamingEnabled(true);
-            using var response = await httpClient.SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead);
-            response.EnsureSuccessStatusCode();
-            using var stream = await response.Content.ReadAsStreamAsync();
-            using var reader = new System.IO.StreamReader(stream);
-            var fullResponse = new System.Text.StringBuilder(); string? line;
-            while ((line = await reader.ReadLineAsync()) != null)
-            {
-                if (line.StartsWith("data: ")) { var data = line.Substring(6).Trim(); if (data == "[DONE]") break; fullResponse.Append(data); streamingResponse = fullResponse.ToString(); StateHasChanged(); await Task.Delay(1); await ScrollToBottom(); }
-            }
+            Console.WriteLine("[Chat] SendMessage calling SendMessageAsync...");
+            var response = await ChatMessageAppService.SendMessageAsync(new SendChatMessageInputDto { SessionId = selectedChatId, Message = message, AgentType = selectedAgentType, ProviderName = string.IsNullOrEmpty(selectedProviderName) ? null : selectedProviderName, ModelConfigId = Guid.TryParse(selectedProviderName, out var configId) ? configId : null });
+            Console.WriteLine($"[Chat] SendMessage got response");
             pendingUserMessage = null; streamingResponse = string.Empty; await LoadMessages(selectedChatId.Value); await LoadSessions();
         }
-        catch (Exception ex) { inputMessage = message; pendingUserMessage = null; streamingResponse = string.Empty; ShowToast("Send failed: " + ex.Message, "error"); }
+        catch (Exception ex) { Console.WriteLine($"[Chat] SendMessage ERROR: {ex}"); inputMessage = message; pendingUserMessage = null; streamingResponse = string.Empty; ShowToast("Send failed: " + ex.Message, "error"); }
         finally { isSending = false; StateHasChanged(); }
     }
 
@@ -410,7 +413,7 @@
     }
 
     .session-item.active {
-        background-color: #d9d9d9;
+            background-color: #f2f2f2;
     }
 
     .session-content-wrapper {

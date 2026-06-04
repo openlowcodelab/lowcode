@@ -14,6 +14,23 @@ public class AgentFactory
     private readonly ISkillAppService _skillDefinitionAppService;
     private readonly ILogger<AgentFactory> _logger;
     
+    /// <summary>
+    /// 内置默认智能体定义，当数据库中无已启用 Agent 时使用
+    /// </summary>
+    private static readonly AgentDto DefaultAgent = new()
+    {
+        Id = Guid.Empty,
+        AgentType = "",
+        DisplayName = "默认助手",
+        Description = "通用智能助手，支持各类问答和任务",
+        SystemPrompt = "你是一个智能助手，请用简洁清晰的方式回答用户的问题。",
+        IsEnabled = true,
+        SupportsStreaming = true,
+        Temperature = 0.7f,
+        MaxTokens = 2000,
+        Skills = new List<string>()
+    };
+    
     public AgentFactory(
         LLMProviderFactory llmProviderFactory,
         IAgentAppService agentDefinitionAppService,
@@ -73,12 +90,14 @@ public class AgentFactory
 
         if (definition == null)
         {
-            _logger.LogWarning("未找到 AgentType='{AgentType}' 的启用 Agent 定义。请先在设置页面 > 智能体 Tab 中创建至少一个 Agent", agentType);
-            return null;
+            _logger.LogInformation("数据库中无已启用 Agent，使用内置默认智能体");
+            definition = DefaultAgent;
         }
 
         // 使用 Microsoft Agent Framework 创建 Agent
-        var skills = await _agentDefinitionAppService.GetAgentSkillsAsync(definition.Id);
+        var skills = definition.Id != Guid.Empty
+            ? await _agentDefinitionAppService.GetAgentSkillsAsync(definition.Id)
+            : new List<SkillDto>();
         return new FrameworkAgentInstance(llmProvider!, definition, skills);
     }
     
@@ -129,12 +148,14 @@ public class AgentFactory
 
         if (definition == null)
         {
-            _logger.LogWarning("未找到 AgentType='{AgentType}' 的启用 Agent 定义。请先在设置页面 > 智能体 Tab 中创建至少一个 Agent", agentType);
-            return null;
+            _logger.LogInformation("数据库中无已启用 Agent，使用内置默认智能体");
+            definition = DefaultAgent;
         }
 
         // 使用 Microsoft Agent Framework 创建 Agent
-        var skills = await _agentDefinitionAppService.GetAgentSkillsAsync(definition.Id);
+        var skills = definition.Id != Guid.Empty
+            ? await _agentDefinitionAppService.GetAgentSkillsAsync(definition.Id)
+            : new List<SkillDto>();
         return new FrameworkAgentInstance(llmProvider!, definition, skills);
     }
 
@@ -149,7 +170,7 @@ public class AgentFactory
             // 添加"默认"选项
             new() {
                 AgentType = "",
-                DisplayName = "默认",
+                DisplayName = "默认智能体",
                 Description = "使用系统默认的 Agent 配置",
                 Capabilities = []
             }
