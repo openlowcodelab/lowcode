@@ -36,11 +36,7 @@
             <div class="section-title">会话</div>
 
             <div class="panel-content">
-                @if (loadingChats)
-                {
-                    <div class="loading-spinner"><div class="spinner"></div><span>Loading...</span></div>
-                }
-                else if (chats.Any())
+                @if (chats.Any())
                 {
                     @foreach (var chat in chats)
                     {
@@ -205,7 +201,6 @@
     private string selectedAgentType = "";  // 默认为空,使用默认 Agent
     private string inputMessage = string.Empty;
     private string selectedProviderName = string.Empty;
-    private bool loadingChats;
     private bool loadingMessages;
     private bool isSending;
     private bool isNewTask;
@@ -298,13 +293,12 @@
 
     private async Task LoadSessions()
     {
-        loadingChats = true;
         try
         {
             var result = await ChatMessageAppService.GetSessionsAsync(new SessionQueryDto { MaxResultCount = 50, SkipCount = 0 });
             chats = result.Items.ToList();
         }
-        finally { loadingChats = false; }
+        catch (Exception ex) { ShowToast($"加载会话失败: {ex.Message}", "error"); }
     }
 
     private async Task LoadAvailableAgents()
@@ -358,6 +352,8 @@
         }
 
         isSending = true; var message = inputMessage; inputMessage = string.Empty;
+        // 保存消息内容用于创建前端会话项
+        var newSessionTitle = message.Length > 30 ? message[..30] + "..." : message;
         pendingUserMessage = new ChatMessageDto { Id = Guid.NewGuid(), SessionId = Guid.NewGuid(), Role = "user", Content = message, CreationTime = DateTime.Now };
         streamingResponse = string.Empty; StateHasChanged(); await ScrollToBottom();
         try
@@ -371,7 +367,7 @@
                     ModelConfigId = Guid.TryParse(selectedProviderName, out var configId) ? configId : null
                 };
 
-            await foreach (var chunk in SendMessageStreamViaJsAsync(input))
+            await foreach (var chunk in SendMessageStreamViaJsAsync(input, newSessionTitle))
             {
                 streamingResponse += chunk;
                 StateHasChanged();
@@ -450,7 +446,7 @@
         catch (Exception ex) { ShowToast("删除失败: " + ex.Message, "error"); }
     }
 
-    private async IAsyncEnumerable<string> SendMessageStreamViaJsAsync(SendChatMessageInputDto input)
+    private async IAsyncEnumerable<string> SendMessageStreamViaJsAsync(SendChatMessageInputDto input, string? newSessionTitle = null)
     {
         streamCts?.Cancel();
         streamCts = new CancellationTokenSource();
@@ -469,7 +465,22 @@
                     using var doc = JsonDocument.Parse(data);
                     if (doc.RootElement.TryGetProperty("session", out var s))
                     {
-                        selectedChatId = Guid.Parse(s.GetString()!);
+                        var sessionId = Guid.Parse(s.GetString()!);
+                        selectedChatId = sessionId;
+                        // 直接在前端添加新会话项，避免重新加载整个列表
+                        if (!string.IsNullOrEmpty(newSessionTitle))
+                        {
+                            var newChat = new ChatDto
+                            {
+                                Id = sessionId,
+                                Title = newSessionTitle,
+                                CreationTime = DateTime.Now,
+                                LastMessageTime = DateTime.Now,
+                                MessageCount = 1
+                            };
+                            chats.Insert(0, newChat);
+                        }
+                        _ = InvokeAsync(StateHasChanged);
                         return;
                     }
                     if (doc.RootElement.TryGetProperty("error", out var e))
@@ -885,7 +896,7 @@
     .markdown-content h3 { font-size: 1.25em; }
     .markdown-content h4 { font-size: 1em; }
 
-    .markdown-content p { margin-bottom: 1em; margin-top: 0; }
+    .markdown-content p { margin-bottom: 0; margin-top: 0; }
 
     .markdown-content ul,
     .markdown-content ol {
