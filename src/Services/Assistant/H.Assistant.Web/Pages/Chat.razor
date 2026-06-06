@@ -1,212 +1,125 @@
 @page "/assistant"
 @page "/assistant/chat"
 
-@layout AssistantLayout
+@layout ChatLayout
 @inject IChatMessageAppService ChatMessageAppService
 @inject ILLMAppService LLMAppService
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
 
-<!-- Toast Notification -->
-@if (!string.IsNullOrEmpty(toastMessage))
-{
-    <div class="toast-notification toast-@toastType @(toastVisible ? "toast-show" : "")">
-        @toastMessage
-    </div>
-}
-
-<div class="assistant-chat-container">
-    <div class="chat-layout">
-        <div class="session-list-panel">
-            <div class="panel-header">
-                <div class="panel-header-actions">
-                    <button class="btn-icon" @onclick="OnClickCreateTask" title="新建会话">
-                        @IconSvg("plus")
-                    </button>
-                </div>
-            </div>
-
-            <!-- 定时任务菜单项 -->
-            <div class="scheduled-task-menu-item" @onclick="GoToScheduledTasks">
-                @IconSvg("clock")
-                <span>定时任务</span>
-            </div>
-
-            <!-- 会话标题 -->
-            <div class="section-title">会话</div>
-
-            <div class="panel-content">
-                @if (chats.Any())
-                {
-                    @foreach (var chat in chats)
-                    {
-                        <div class="session-item @(selectedChatId == chat.Id ? "active" : "")"
-                             @onclick="() => SelectChat(chat.Id)">
-                            <div class="session-content-wrapper">
-                                <div class="session-info">
-                                    <div class="session-title">@chat.Title</div>
-                                    <div class="session-meta">
-                                        <span class="message-count">@chat.MessageCount msgs</span>
-                                        <span class="time">@chat.LastMessageTime.ToString("MM-dd HH:mm")</span>
-                                    </div>
-                                </div>
-                                <div class="session-actions" @onclick:stopPropagation="true">
-                                    <button class="session-more-btn" @onclick="() => ToggleChatMenu(chat.Id)" title="更多操作">
-                                        @IconSvg("more")
-                                    </button>
-                                    @if (showSessionMenu == chat.Id)
-                                    {
-                                        <div class="session-dropdown-menu">
-                                            <div class="dropdown-item danger" @onclick="() => DeleteChat(chat.Id)">
-                                                @IconSvg("delete") <span>删除</span>
-                                            </div>
-                                        </div>
-                                    }
-                                </div>
-                            </div>
-                        </div>
-                    }
-                }
-                else
-                {
-                    <div class="empty-state"><div class="empty-icon">@IconSvg("inbox")</div><div class="empty-text">暂无任务</div></div>
-                }
-            </div>
-
-            <div class="user-menu-area">
-                <div class="user-menu-trigger">
-                    <div class="user-avatar-small">@IconSvg("user")</div>
-                    <span class="user-name">未登录</span>
-                    <div class="user-menu-icon" @onclick="ToggleUserMenu">@IconSvg("setting")</div>
-                    @if (showUserMenu)
-                    {
-                        <div class="user-dropdown-menu">
-                            <div class="dropdown-item" @onclick:stopPropagation="true" @onclick="GoToSettings">
-                                @IconSvg("setting") <span>设置</span>
-                            </div>
-                        </div>
-                    }
-                </div>
+<!-- Right Panel - Chat Area -->
+<div class="chat-main-panel">
+    @if (selectedChatId.HasValue)
+    {
+        <div class="chat-header">
+            <div class="chat-header-left">
+                <span>Agent: @selectedAgent?.DisplayName</span>
             </div>
         </div>
 
-        <div class="chat-main-panel">
-            @if (selectedChatId.HasValue)
+        <div class="chat-messages" @ref="chatMessagesRef">
+            @if (loadingMessages)
             {
-                <div class="chat-header">
-                    <div class="chat-header-left">
-                        <span>Agent: @selectedAgent?.DisplayName</span>
-                    </div>
-                </div>
-
-                <div class="chat-messages" @ref="chatMessagesRef">
-                    @if (loadingMessages)
-                    {
-                        <div class="loading-spinner"><div class="spinner"></div><span>Loading...</span></div>
-                    }
-                    else if (messages.Any() || pendingUserMessage != null)
-                    {
-                        @foreach (var message in messages)
-                        {
-                            <div class="message-item @(message.Role == "user" ? "user-message" : "assistant-message")">
-                                <div class="message-avatar">
-                                    @if (message.Role == "user") { @IconSvg("user") } else { @IconSvg("robot") }
-                                </div>
-                                <div class="message-content">
-                                    <div class="message-text">
-                                        <MarkdownRenderer Content="@message.Content" />
-                                    </div>
-                                    <div class="message-time">@message.CreationTime.ToString("HH:mm:ss")</div>
-                                </div>
-                            </div>
-                        }
-
-                        @if (pendingUserMessage != null)
-                        {
-                            <div class="message-item user-message">
-                                <div class="message-avatar">@IconSvg("user")</div>
-                                <div class="message-content">
-                                    <div class="message-text">
-                                        <MarkdownRenderer Content="@pendingUserMessage.Content" />
-                                    </div>
-                                    <div class="message-time">@pendingUserMessage.CreationTime.ToString("HH:mm:ss")</div>
-                                </div>
-                            </div>
-                        }
-
-                        @if (!string.IsNullOrEmpty(streamingResponse))
-                        {
-                            <div class="message-item assistant-message">
-                                <div class="message-avatar">@IconSvg("robot")</div>
-                                <div class="message-content">
-                                    <div class="message-text">
-                                        <div class="markdown-content">
-                                            @((MarkupString)RenderMarkdown(streamingResponse))
-                                        </div>
-                                    </div>
-                                    <div class="message-time">@DateTime.Now.ToString("HH:mm:ss")</div>
-                                </div>
-                            </div>
-                        }
-                    }
-                    else
-                    {
-                        <div class="empty-state"><div class="empty-icon">@IconSvg("chat")</div><div class="empty-text">Start a conversation</div></div>
-                    }
-
-                    @if (isSending && string.IsNullOrEmpty(streamingResponse))
-                    {
-                        <div class="message-item assistant-message">
-                            <div class="message-avatar">@IconSvg("robot")</div>
-                            <div class="message-content">
-                                <div class="message-text thinking-text">
-                                    <span class="thinking-dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
-                                </div>
-                            </div>
+                <div class="loading-spinner"><div class="spinner"></div><span>Loading...</span></div>
+            }
+            else if (messages.Any() || pendingUserMessage != null)
+            {
+                @foreach (var message in messages)
+                {
+                    <div class="message-item @(message.Role == "user" ? "user-message" : "assistant-message")">
+                        <div class="message-avatar">
+                            @if (message.Role == "user") { @IconSvg("user") } else { @IconSvg("robot") }
                         </div>
-                    }
-                </div>
+                        <div class="message-content">
+                            <div class="message-text">
+                                <MarkdownRenderer Content="@message.Content" />
+                            </div>
+                            <div class="message-time">@message.CreationTime.ToString("HH:mm:ss")</div>
+                        </div>
+                    </div>
+                }
 
-                <ChatInput @bind-Message="inputMessage"
-                               @bind-SelectedAgentType="selectedAgentType"
-                               @bind-SelectedProviderName="selectedProviderName"
-                               AvailableAgents="availableAgents"
-                               AvailableModels="availableModels"
-                               IsSending="isSending"
-                               OnSend="SendMessage"
-                               OnStop="StopSending" />
+                @if (pendingUserMessage != null)
+                {
+                    <div class="message-item user-message">
+                        <div class="message-avatar">@IconSvg("user")</div>
+                        <div class="message-content">
+                            <div class="message-text">
+                                <MarkdownRenderer Content="@pendingUserMessage.Content" />
+                            </div>
+                            <div class="message-time">@pendingUserMessage.CreationTime.ToString("HH:mm:ss")</div>
+                        </div>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(streamingResponse))
+                {
+                    <div class="message-item assistant-message">
+                        <div class="message-avatar">@IconSvg("robot")</div>
+                        <div class="message-content">
+                            <div class="message-text">
+                                <div class="markdown-content">
+                                    @((MarkupString)RenderMarkdown(streamingResponse))
+                                </div>
+                            </div>
+                            <div class="message-time">@DateTime.Now.ToString("HH:mm:ss")</div>
+                        </div>
+                    </div>
+                }
             }
             else
             {
-                <div class="new-task-container">
-                    <ChatInput @bind-Message="inputMessage"
-                                   @bind-SelectedAgentType="selectedAgentType"
-                                   @bind-SelectedProviderName="selectedProviderName"
-                                   AvailableAgents="availableAgents"
-                                   AvailableModels="availableModels"
-                                   IsSending="isSending"
-                                   OnSend="SendNewTask" />
+                <div class="empty-state"><div class="empty-icon">@IconSvg("chat")</div><div class="empty-text">Start a conversation</div></div>
+            }
+
+            @if (isSending && string.IsNullOrEmpty(streamingResponse))
+            {
+                <div class="message-item assistant-message">
+                    <div class="message-avatar">@IconSvg("robot")</div>
+                    <div class="message-content">
+                        <div class="message-text thinking-text">
+                            <span class="thinking-dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span>
+                        </div>
+                    </div>
                 </div>
             }
         </div>
-    </div>
+
+        <ChatInput @bind-Message="inputMessage"
+                       @bind-SelectedAgentType="selectedAgentType"
+                       @bind-SelectedProviderName="selectedProviderName"
+                       AvailableAgents="availableAgents"
+                       AvailableModels="availableModels"
+                       IsSending="isSending"
+                       OnSend="SendMessage"
+                       OnStop="StopSending" />
+    }
+    else
+    {
+        <div class="new-task-container">
+            <ChatInput @bind-Message="inputMessage"
+                           @bind-SelectedAgentType="selectedAgentType"
+                           @bind-SelectedProviderName="selectedProviderName"
+                           AvailableAgents="availableAgents"
+                           AvailableModels="availableModels"
+                           IsSending="isSending"
+                           OnSend="SendNewTask" />
+        </div>
+    }
 </div>
 
 @code {
-    private List<ChatDto> chats = new();
     private List<ChatMessageDto> messages = new();
+    private Guid? selectedChatId;
     private List<AgentConfigDto> availableAgents = new();
     private List<LLMDto> availableModels = new();
-    private Guid? selectedChatId;
-    private string selectedAgentType = "";  // 默认为空,使用默认 Agent
+    private string selectedAgentType = "";
     private string inputMessage = string.Empty;
     private string selectedProviderName = string.Empty;
     private bool loadingMessages;
     private bool isSending;
     private bool isNewTask;
     private AgentConfigDto? selectedAgent;
-    private bool showUserMenu;
-    private Guid? showSessionMenu;
     private ChatMessageDto? pendingUserMessage;
     private string streamingResponse = string.Empty;
     private ElementReference chatMessagesRef;
@@ -227,15 +140,12 @@
         html = html.Replace("<code>", "<code class=\"markdown-inline-code\">");
         return html;
     }
-    private string toastMessage = string.Empty;
-    private string toastType = "info";
-    private bool toastVisible;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            // 注入 JS 流式读取辅助函数
+            // Inject JS SSE stream helper
             await JS.InvokeVoidAsync("eval", @"
                 window.__chatSseStream = async function(url, body, dotNetRef) {
                     const resp = await fetch(url, {
@@ -269,36 +179,42 @@
                 };
             ");
 
-            await LoadSessions();
             await LoadAvailableAgents();
             await LoadAvailableModels();
-            _ = CreateNewChat();
+
+            // Read query param for initial session selection
+            var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+            var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+            var idStr = query["id"];
+            if (!string.IsNullOrEmpty(idStr) && Guid.TryParse(idStr, out var id))
+            {
+                await SelectChat(id);
+            }
+            else
+            {
+                _ = CreateNewChat();
+            }
         }
         catch (Exception ex) { }
     }
 
-    private void OnClickCreateTask() => _ = CreateNewChat();
-
-    private void GoToScheduledTasks() => Navigation.NavigateTo("/assistant/tasks");
-
-    // ========== Existing Methods ==========
-    private void ShowToast(string message, string type = "info")
+    protected override async Task OnParametersSetAsync()
     {
-        toastMessage = message;
-        toastType = type;
-        toastVisible = true;
-        StateHasChanged();
-        _ = Task.Run(async () => { await Task.Delay(3000); toastVisible = false; InvokeAsync(StateHasChanged); });
-    }
-
-    private async Task LoadSessions()
-    {
-        try
+        // Handle navigation from sidebar (page stays alive, only query param changes)
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        var idStr = query["id"];
+        if (!string.IsNullOrEmpty(idStr) && Guid.TryParse(idStr, out var id))
         {
-            var result = await ChatMessageAppService.GetSessionsAsync(new SessionQueryDto { MaxResultCount = 50, SkipCount = 0 });
-            chats = result.Items.ToList();
+            if (selectedChatId != id)
+            {
+                await SelectChat(id);
+            }
         }
-        catch (Exception ex) { ShowToast($"加载会话失败: {ex.Message}", "error"); }
+        else if (!selectedChatId.HasValue)
+        {
+            await CreateNewChat();
+        }
     }
 
     private async Task LoadAvailableAgents()
@@ -319,7 +235,7 @@
                 selectedProviderName = defaultModel.Id.ToString();
             }
         }
-        catch (Exception ex) { availableModels = new List<LLMDto>(); ShowToast($"Load models failed: {ex.Message}", "error"); }
+        catch (Exception ex) { availableModels = new List<LLMDto>(); await ShowToast($"Load models failed: {ex.Message}", "error"); }
     }
 
     private async Task SelectChat(Guid sessionId)
@@ -340,7 +256,8 @@
 
     private async Task CreateNewChat()
     {
-        selectedChatId = null; messages.Clear(); inputMessage = string.Empty; isNewTask = true;
+        selectedChatId = null;
+        messages.Clear(); inputMessage = string.Empty; isNewTask = true;
         await LoadAvailableModels(); StateHasChanged();
     }
 
@@ -352,7 +269,6 @@
         }
 
         isSending = true; var message = inputMessage; inputMessage = string.Empty;
-        // 保存消息内容用于创建前端会话项
         var newSessionTitle = message.Length > 30 ? message[..30] + "..." : message;
         pendingUserMessage = new ChatMessageDto { Id = Guid.NewGuid(), SessionId = Guid.NewGuid(), Role = "user", Content = message, CreationTime = DateTime.Now };
         streamingResponse = string.Empty; StateHasChanged(); await ScrollToBottom();
@@ -381,14 +297,14 @@
                 pendingUserMessage = null;
                 streamingResponse = string.Empty;
                 await LoadMessages(selectedChatId.Value);
-                await LoadSessions();
+                await JS.InvokeVoidAsync("ChatStateBus.notifySessionsChanged", "chatLayout");
             }
         }
         catch (Exception ex)
         {
             inputMessage = message; pendingUserMessage = null;
             streamingResponse = string.Empty;
-            ShowToast("Send failed: " + ex.Message, "error");
+            await ShowToast("Send failed: " + ex.Message, "error");
         }
         finally { isSending = false; StateHasChanged(); }
     }
@@ -399,7 +315,7 @@
         {
             return;
         }
-        if (!selectedChatId.HasValue) { ShowToast("请先选择或创建一个会话", "warning"); return; }
+        if (!selectedChatId.HasValue) { await ShowToast("请先选择或创建一个会话", "warning"); return; }
         isSending = true; var message = inputMessage; inputMessage = string.Empty;
         pendingUserMessage = new ChatMessageDto { Id = Guid.NewGuid(), SessionId = selectedChatId.Value, Role = "user", Content = message, CreationTime = DateTime.Now };
         streamingResponse = string.Empty; StateHasChanged(); await ScrollToBottom();
@@ -425,25 +341,14 @@
             pendingUserMessage = null;
             streamingResponse = string.Empty;
             await LoadMessages(selectedChatId.Value);
-            await LoadSessions();
+            await JS.InvokeVoidAsync("ChatStateBus.notifySessionsChanged", "chatLayout");
         }
         catch (Exception ex)
         {
             inputMessage = message; pendingUserMessage = null;
-            streamingResponse = string.Empty; ShowToast("Send failed: " + ex.Message, "error");
+            streamingResponse = string.Empty; await ShowToast("Send failed: " + ex.Message, "error");
         }
         finally { isSending = false; StateHasChanged(); }
-    }
-
-    private async Task DeleteChat(Guid sessionId)
-    {
-        try
-        {
-            await ChatMessageAppService.DeleteSessionAsync(sessionId); showSessionMenu = null;
-            if (selectedChatId == sessionId) { selectedChatId = null; messages.Clear(); isNewTask = false; }
-            await LoadSessions(); ShowToast("会话已删除", "success"); StateHasChanged();
-        }
-        catch (Exception ex) { ShowToast("删除失败: " + ex.Message, "error"); }
     }
 
     private async IAsyncEnumerable<string> SendMessageStreamViaJsAsync(SendChatMessageInputDto input, string? newSessionTitle = null)
@@ -455,7 +360,6 @@
         var tcs = new TaskCompletionSource<bool>();
         var error = (string?)null;
 
-        // JS 回调处理器
         void OnChunk(string data)
         {
             if (data.TrimStart().StartsWith("{"))
@@ -467,7 +371,6 @@
                     {
                         var sessionId = Guid.Parse(s.GetString()!);
                         selectedChatId = sessionId;
-                        // 直接在前端添加新会话项，避免重新加载整个列表
                         if (!string.IsNullOrEmpty(newSessionTitle))
                         {
                             var newChat = new ChatDto
@@ -478,7 +381,8 @@
                                 LastMessageTime = DateTime.Now,
                                 MessageCount = 1
                             };
-                            chats.Insert(0, newChat);
+                            _ = JS.InvokeVoidAsync("ChatStateBus.insertSessionAtTop", "chatLayout", JsonSerializer.Serialize(newChat));
+                            _ = JS.InvokeVoidAsync("ChatStateBus.notifyChatSelected", "chatLayout", sessionId.ToString());
                         }
                         _ = InvokeAsync(StateHasChanged);
                         return;
@@ -507,7 +411,6 @@
             tcs.TrySetResult(false);
         }
 
-        // 注册回调并启动 JS 流式读取
         var callbacks = new SseStreamCallbacks(OnChunk, OnDone, OnError);
         _sseCallbacksRef?.Dispose();
         _sseCallbacksRef = DotNetObjectReference.Create(callbacks);
@@ -516,7 +419,6 @@
 
         try
         {
-            // 逐 chunk 产出
             while (true)
             {
                 streamCts.Token.ThrowIfCancellationRequested();
@@ -542,7 +444,6 @@
         }
     }
 
-    // JS 回调桥接类
     private class SseStreamCallbacks
     {
         private readonly Action<string> _onChunk;
@@ -565,165 +466,35 @@
         isSending = false;
         StateHasChanged();
     }
+
+    private async Task ShowToast(string message, string type = "info") => await JS.InvokeVoidAsync("ChatStateBus.showToast", message, type);
+
     private async Task ScrollToBottom() { try { await JS.InvokeVoidAsync("eval", "var el = document.querySelector('.chat-messages'); if(el) el.scrollTop = el.scrollHeight;"); } catch { } }
-    private void ToggleUserMenu() { showUserMenu = !showUserMenu; }
-    private void ToggleChatMenu(Guid sessionId) { showSessionMenu = showSessionMenu == sessionId ? null : sessionId; }
-    private void GoToSettings() { showUserMenu = false; Navigation.NavigateTo("/assistant/settings"); }
 
     private static MarkupString IconSvg(string name) => (MarkupString)GetIconSvg(name);
     private static string GetIconSvg(string name) => name switch
     {
-        "plus" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"12\" y1=\"5\" x2=\"12\" y2=\"19\"></line><line x1=\"5\" y1=\"12\" x2=\"19\" y2=\"12\"></line></svg>",
         "user" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2\"></path><circle cx=\"12\" cy=\"7\" r=\"4\"></circle></svg>",
-        "setting" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"3\"></circle><path d=\"M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z\"></path></svg>",
-        "send" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"22\" y1=\"2\" x2=\"11\" y2=\"13\"></line><polygon points=\"22 2 15 22 11 13 2 9 22 2\"></polygon></svg>",
-        "delete" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"3 6 5 6 21 6\"></polyline><path d=\"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3-3h8l1 1h-10l1-1z\"></path><line x1=\"10\" y1=\"11\" x2=\"10\" y2=\"17\"></line><line x1=\"14\" y1=\"11\" x2=\"14\" y2=\"17\"></line></svg>",
         "robot" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"11\" width=\"18\" height=\"10\" rx=\"2\"></rect><circle cx=\"12\" cy=\"5\" r=\"2\"></circle><path d=\"M12 7v4\"></path><line x1=\"8\" y1=\"16\" x2=\"8\" y2=\"16\"></line><line x1=\"16\" y1=\"16\" x2=\"16\" y2=\"16\"></line></svg>",
-        "inbox" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"22 12 16 12 14 15 10 15 8 12 2 12\"></polyline><path d=\"M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z\"></path></svg>",
         "chat" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z\"></path></svg>",
-        "task" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"></path><polyline points=\"14 2 14 8 20 8\"></polyline><line x1=\"16\" y1=\"13\" x2=\"8\" y2=\"13\"></line><line x1=\"16\" y1=\"17\" x2=\"8\" y2=\"17\"></line><polyline points=\"10 9 9 9 8 9\"></polyline></svg>",
-        "more" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"1\"></circle><circle cx=\"12\" cy=\"5\" r=\"1\"></circle><circle cx=\"12\" cy=\"19\" r=\"1\"></circle></svg>",
-        "stop" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"6\" y=\"6\" width=\"12\" height=\"12\" rx=\"2\" ry=\"2\"></rect></svg>",
-        "close" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"18\" y1=\"6\" x2=\"6\" y2=\"18\"></line><line x1=\"6\" y1=\"6\" x2=\"18\" y2=\"18\"></line></svg>",
-        "clock" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"></circle><polyline points=\"12 6 12 12 16 14\"></polyline></svg>",
-        "apps" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"3\" width=\"7\" height=\"7\"></rect><rect x=\"14\" y=\"3\" width=\"7\" height=\"7\"></rect><rect x=\"3\" y=\"14\" width=\"7\" height=\"7\"></rect><rect x=\"14\" y=\"14\" width=\"7\" height=\"7\"></rect></svg>",
-        "edit" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7\"></path><path d=\"M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z\"></path></svg>",
-        "pause" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"6\" y=\"4\" width=\"4\" height=\"16\"></rect><rect x=\"14\" y=\"4\" width=\"4\" height=\"16\"></rect></svg>",
-        "play" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polygon points=\"5 3 19 12 5 21 5 3\"></polygon></svg>",
         _ => ""
     };
 }
 
 <style>
-    /* ========== Chat Page Layout ========== */
-    .assistant-chat-container {
-        flex: 1;
-        display: flex;
-        overflow: hidden;
-    }
-
-    .chat-layout {
-        display: flex;
-        width: 100%;
-        height: 100%;
-    }
-
-    /* ========== Left Panel ========== */
-    .session-item {
-        padding: 12px;
-        cursor: pointer;
-        border-radius: 4px;
-        margin-bottom: 4px;
-        transition: background-color 0.2s;
-    }
-
-    .session-item:hover {
-        background-color: #f0f0f0;
-    }
-
-    .session-item.active {
-            background-color: #f2f2f2;
-    }
-
-    .session-content-wrapper {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .session-info {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .session-actions {
-        position: relative;
-        flex-shrink: 0;
-    }
-
-    .session-more-btn {
-        padding: 4px;
-        border: none;
-        background: transparent;
-        border-radius: 4px;
-        cursor: pointer;
-        opacity: 0;
-        transition: all 0.2s;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #8c8c8c;
-    }
-
-    .session-more-btn svg {
-        width: 16px;
-        height: 16px;
-    }
-
-    .session-item:hover .session-more-btn {
-        opacity: 1;
-    }
-
-    .session-more-btn:hover {
-        background-color: #d9d9d9;
-        color: #262626;
-    }
-
-    .session-dropdown-menu {
-        position: absolute;
-        right: 0;
-        top: 100%;
-        background: white;
-        border: 1px solid #e8e8e8;
-        border-radius: 6px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-        z-index: 1000;
-        min-width: 120px;
-        overflow: hidden;
-        margin-top: 4px;
-    }
-
-    .session-dropdown-menu .dropdown-item {
-        padding: 8px 12px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 13px;
-        transition: background-color 0.2s;
-        color: #595959;
-    }
-
-    .session-dropdown-menu .dropdown-item:hover {
-        background-color: #f5f5f5;
-    }
-
-    .session-dropdown-menu .dropdown-item.danger {
-        color: #ff4d4f;
-    }
-
-    .session-dropdown-menu .dropdown-item.danger:hover {
-        background-color: #fff1f0;
-    }
-
-    .session-dropdown-menu .dropdown-item svg {
-        width: 14px;
-        height: 14px;
-    }
-
-    .session-title {
-        font-weight: 500;
-        margin-bottom: 4px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    .session-meta {
-        font-size: 12px;
-        color: #8c8c8c;
+    /* ========== Chat Header ========== */
+    .chat-header {
+        padding: 16px;
+        border-bottom: 1px solid #e8e8e8;
         display: flex;
         justify-content: space-between;
+        align-items: center;
+    }
+
+    .chat-header-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
     }
 
     /* ========== Main Chat Area ========== */
@@ -762,6 +533,11 @@
         flex-shrink: 0;
     }
 
+    .message-avatar svg {
+        width: 18px;
+        height: 18px;
+    }
+
     .user-message .message-avatar {
         background-color: #a6a6a6;
     }
@@ -788,6 +564,80 @@
         margin-top: 4px;
     }
 
+    /* ========== Thinking / Loading ========== */
+    .thinking-text {
+        color: #8c8c8c;
+        font-style: italic;
+    }
+
+    .thinking-dots {
+        display: inline-flex;
+        gap: 4px;
+        align-items: center;
+    }
+
+    .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background-color: #8c8c8c;
+        display: inline-block;
+        animation: thinking-bounce 1.4s ease-in-out infinite;
+    }
+
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @@keyframes thinking-bounce {
+        0%, 80%, 100% { transform: scale(0); opacity: 0.4; }
+        40% { transform: scale(1); opacity: 1; }
+    }
+
+    .loading-spinner {
+        text-align: center;
+        padding: 40px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        color: #8c8c8c;
+        font-size: 14px;
+    }
+
+    .spinner {
+        width: 28px;
+        height: 28px;
+        border: 3px solid #e8e8e8;
+        border-top-color: #a6a6a6;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+
+    @@keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* ========== Empty State ========== */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .empty-icon svg {
+        width: 48px;
+        height: 48px;
+        color: #d9d9d9;
+    }
+
+    .empty-text {
+        color: #8c8c8c;
+        font-size: 14px;
+    }
+
     /* ========== New Task View ========== */
     .new-task-container {
         flex: 1;
@@ -803,78 +653,22 @@
         box-sizing: border-box;
     }
 
-    .new-task-header {
-        text-align: center;
-        margin-bottom: 24px;
-        width: 100%;
+    /* ========== Chat Input Container ========== */
+    .chat-input-area {
+        border-top: 1px solid #e8e8e8;
+        padding: 16px;
+        background: #fafafa;
     }
 
-    .new-task-header h2 {
-        font-size: 24px;
-        font-weight: 600;
-        color: #262626;
-        margin: 0 0 8px 0;
-    }
-
-    .new-task-desc {
-        font-size: 14px;
-        color: #8c8c8c;
-        margin: 0;
-    }
-
-    .new-task-body {
-        width: 100%;
-        margin-bottom: 20px;
-    }
-
-    .new-task-footer {
-        width: 100%;
+    .chat-input-footer {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        gap: 16px;
+        margin-top: 8px;
+        gap: 12px;
     }
 
-    .new-task-model-selector {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .new-task-actions {
-        display: flex;
-        gap: 8px;
-    }
-
-    .new-task-textarea {
-        width: 100%;
-        border: 1px solid #d9d9d9;
-        border-radius: 8px;
-        padding: 12px 16px;
-        font-size: 14px;
-        line-height: 1.6;
-        resize: vertical;
-        transition: border-color 0.2s, box-shadow 0.2s;
-        font-family: inherit;
-        box-sizing: border-box;
-    }
-
-    .new-task-textarea:focus {
-        border-color: #a6a6a6;
-        box-shadow: 0 0 0 2px rgba(166, 166, 166, 0.1);
-        outline: none;
-    }
-
-    .new-task-model-selector .model-select-dropdown {
-        min-width: 320px;
-    }
-
-    .task-action-btn svg {
-        width: 16px;
-        height: 16px;
-    }
-
-    /* ========== Markdown Content Styles (for streaming) ========== */
+    /* ========== Markdown Content Styles ========== */
     .markdown-content {
         line-height: 1.8;
     }

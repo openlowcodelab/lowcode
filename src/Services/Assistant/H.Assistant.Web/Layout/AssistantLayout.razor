@@ -14,7 +14,7 @@
         flex-direction: column;
     }
 
-    /* ========== Buttons ========== */
+    /* ========== Buttons (shared by Settings and other pages) ========== */
     .btn {
         display: inline-flex;
         align-items: center;
@@ -60,6 +60,29 @@
         color: #fff;
     }
 
+    /* 灰色系 primary 按钮 */
+    .assistant-btn-primary {
+        background: #a6a6a6;
+        border-color: #a6a6a6;
+        color: #fff;
+    }
+
+    .assistant-btn-primary:hover:not(:disabled) {
+        background: #bfbfbf;
+        border-color: #bfbfbf;
+        color: #fff;
+    }
+
+    /* 返回按钮 */
+    .back-btn {
+        color: #262626;
+    }
+
+    .back-btn:hover {
+        background: #f0f0f0;
+        color: #262626;
+    }
+
     .btn-link {
         border-color: transparent;
         background: transparent;
@@ -99,411 +122,11 @@
         font-size: 12px;
     }
 
-    .assistant-btn-small {
-        padding: 2px 10px;
-        font-size: 12px;
-        border-radius: 4px;
-    }
-
-    /* 灰色系 primary 按钮 */
-    .assistant-btn-primary {
-        background: #a6a6a6;
-        border-color: #a6a6a6;
-        color: #fff;
-    }
-
-    .assistant-btn-primary:hover:not(:disabled) {
-        background: #bfbfbf;
-        border-color: #bfbfbf;
-        color: #fff;
-    }
-
-    /* New Task 按钮 */
-    .new-chat-btn {
-        width: 100%;
-        background: #a6a6a6;
-        border-color: #a6a6a6;
-        color: #fff;
-    }
-
-    .new-chat-btn:hover {
-        background: #bfbfbf;
-        border-color: #bfbfbf;
-        color: #fff;
-    }
-
-    /* 返回按钮 */
-    .back-btn {
-        color: #262626;
-    }
-
-    .back-btn:hover {
-        background: #f0f0f0;
-        color: #262626;
-    }
-
-    /* ========== SVG Icons ========== */
+    /* ========== SVG Icons (shared by Settings and other pages) ========== */
     .btn svg,
-    .session-item svg,
-    .user-avatar-small svg,
-    .user-menu-icon svg,
-    .dropdown-item svg,
-    .menu-item svg,
-    .message-avatar svg,
-    .empty-icon svg {
+    .menu-item svg {
         width: 16px;
         height: 16px;
         flex-shrink: 0;
-    }
-
-    .message-avatar svg {
-        width: 18px;
-        height: 18px;
-    }
-
-    .empty-icon svg {
-        width: 48px;
-        height: 48px;
-        color: #d9d9d9;
-    }
-
-    /* ========== Chat Header (shared by Chat & ScheduledTasks) ========== */
-    .chat-header {
-        padding: 16px;
-        border-bottom: 1px solid #e8e8e8;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .chat-header-left {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-
-    .chat-header-right {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    /* ========== Chat Input Container (shared by Chat & ScheduledTasks) ========== */
-    .chat-input-area {
-        border-top: 1px solid #e8e8e8;
-        padding: 16px;
-        background: #fafafa;
-    }
-
-    .chat-input-footer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 8px;
-        gap: 12px;
-    }
-
-    /* ========== User Menu ========== */
-    .user-menu-area {
-        border-top: 1px solid #e8e8e8;
-        padding: 8px 12px;
-        background: #fafafa;
-    }
-
-    .user-menu-trigger {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 4px 8px;
-        border-radius: 6px;
-        position: relative;
-    }
-
-    .user-avatar-small {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        background-color: #bfbfbf;
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        font-size: 14px;
-    }
-
-    .user-menu-icon {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 28px;
-        height: 28px;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: background-color 0.2s;
-    }
-
-    .user-menu-icon:hover {
-        background-color: #d9d9d9;
-    }
-
-    .user-name {
-        flex: 1;
-        font-size: 14px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    .user-dropdown-menu {
-        position: absolute;
-        bottom: 100%;
-        left: 0;
-        right: 0;
-        background: white;
-        border: 1px solid #e8e8e8;
-        border-radius: 6px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-        z-index: 1000;
-        margin-bottom: 4px;
-        overflow: hidden;
-    }
-
-    .dropdown-item {
-        padding: 10px 16px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 14px;
-        transition: background-color 0.2s;
-    }
-
-    .dropdown-item:hover {
-        background-color: #f5f5f5;
-    }
-
-    .dropdown-item.danger {
-        color: #ff4d4f;
-    }
-
-    .dropdown-item.danger:hover {
-        background-color: #fff1f0;
-    }
-
-    .dropdown-divider {
-        height: 1px;
-        background: #e8e8e8;
-        margin: 4px 0;
-    }
-
-    /* ========== Thinking / Loading ========== */
-    .thinking-text {
-        color: #8c8c8c;
-        font-style: italic;
-    }
-
-    .thinking-dots {
-        display: inline-flex;
-        gap: 4px;
-        align-items: center;
-    }
-
-    .dot {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background-color: #8c8c8c;
-        display: inline-block;
-        animation: thinking-bounce 1.4s ease-in-out infinite;
-    }
-
-    .dot:nth-child(2) { animation-delay: 0.2s; }
-    .dot:nth-child(3) { animation-delay: 0.4s; }
-
-    @@keyframes thinking-bounce {
-        0%, 80%, 100% { transform: scale(0); opacity: 0.4; }
-        40% { transform: scale(1); opacity: 1; }
-    }
-
-    .loading-spinner {
-        text-align: center;
-        padding: 40px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 12px;
-        color: #8c8c8c;
-        font-size: 14px;
-    }
-
-    .spinner {
-        width: 28px;
-        height: 28px;
-        border: 3px solid #e8e8e8;
-        border-top-color: #a6a6a6;
-        border-radius: 50%;
-        animation: spin 0.8s linear infinite;
-    }
-
-    @@keyframes spin {
-        to { transform: rotate(360deg); }
-    }
-
-    /* ========== Empty State ========== */
-    .empty-state {
-        text-align: center;
-        padding: 60px 20px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 12px;
-    }
-
-    .empty-text {
-        color: #8c8c8c;
-        font-size: 14px;
-    }
-
-    /* ========== Toast Notification ========== */
-    .toast-notification {
-        position: fixed;
-        top: 24px;
-        left: 50%;
-        transform: translateX(-50%) translateY(-100%);
-        padding: 10px 24px;
-        border-radius: 6px;
-        font-size: 14px;
-        color: #fff;
-        z-index: 9999;
-        opacity: 0;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        pointer-events: none;
-    }
-
-    .toast-notification.toast-show {
-        transform: translateX(-50%) translateY(0);
-        opacity: 1;
-    }
-
-    .toast-success { background: #52c41a; }
-    .toast-error { background: #ff4d4f; }
-    .toast-warning { background: #faad14; }
-    .toast-info { background: #595959; }
-
-    /* ========== Scheduled Task Menu Item (shared by Chat & ScheduledTasks) ========== */
-    .scheduled-task-menu-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 12px 16px;
-        cursor: pointer;
-        transition: background-color 0.2s;
-        color: #595959;
-        font-size: 14px;
-    }
-
-    .scheduled-task-menu-item:hover {
-        background-color: #f0f0f0;
-        color: #262626;
-    }
-
-    .scheduled-task-menu-item.active {
-        background-color: #e6f7ff;
-        color: #1890ff;
-    }
-
-    .scheduled-task-menu-item svg {
-        width: 16px;
-        height: 16px;
-    }
-
-    /* ========== Section Title (shared by Chat & ScheduledTasks) ========== */
-    .section-title {
-        padding: 8px 16px;
-        font-size: 12px;
-        font-weight: 500;
-        color: #8c8c8c;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .section-title.clickable {
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-
-    .section-title.clickable:hover {
-        color: #1890ff;
-        background-color: #f0f0f0;
-    }
-
-    /* ========== Panel Header (shared by Chat & ScheduledTasks) ========== */
-    .panel-header {
-        padding: 16px;
-        border-bottom: 1px solid #e8e8e8;
-    }
-
-    .panel-content {
-        flex: 1;
-        overflow-y: auto;
-        padding: 8px;
-    }
-
-    .panel-header-actions {
-        display: flex;
-        gap: 8px;
-        justify-content: flex-end;
-    }
-
-    .btn-icon {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 36px;
-        height: 36px;
-        border: 1px solid #d9d9d9;
-        border-radius: 6px;
-        background: #fff;
-        color: #595959;
-        cursor: pointer;
-        transition: all 0.2s;
-        outline: none;
-        padding: 0;
-    }
-
-    .btn-icon:hover {
-        background: #f0f0f0;
-        border-color: #bfbfbf;
-    }
-
-    .btn-icon svg {
-        width: 18px;
-        height: 18px;
-    }
-
-    /* ========== Session List Panel (shared sidebar) ========== */
-    .session-list-panel {
-        width: 280px;
-        border-right: 1px solid #e8e8e8;
-        display: flex;
-        flex-direction: column;
-        background: #fafafa;
-    }
-
-    /* ========== Empty Chat State (shared right panel empty) ========== */
-    .empty-chat-state {
-        flex: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .empty-chat-content {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
     }
 </style>
