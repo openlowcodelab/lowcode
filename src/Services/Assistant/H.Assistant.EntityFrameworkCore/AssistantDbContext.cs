@@ -14,6 +14,8 @@ public class AssistantDbContext : AbpDbContext<AssistantDbContext>
     public DbSet<TaskLogEntity> TaskLogs { get; set; } = null!;
     public DbSet<AgentEntity> Agents { get; set; } = null!;
     public DbSet<SkillEntity> Skills { get; set; } = null!;
+    public DbSet<KnowledgeNodeEntity> KnowledgeNodes { get; set; } = null!;
+    public DbSet<KnowledgeDocumentEntity> KnowledgeDocuments { get; set; } = null!;
 
     public AssistantDbContext(DbContextOptions<AssistantDbContext> options)
         : base(options)
@@ -126,6 +128,25 @@ public class AssistantDbContext : AbpDbContext<AssistantDbContext>
             b.HasIndex(x => x.SkillName).IsUnique();
             b.HasIndex(x => x.IsEnabled);
             b.HasIndex(x => x.SkillType);
+        });
+
+        modelBuilder.Entity<KnowledgeNodeEntity>(b =>
+        {
+            b.ToTable("KnowledgeNode");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Title).IsRequired().HasMaxLength(200);
+            b.Property(x => x.NodeType).IsRequired().HasMaxLength(20);
+            b.Property(x => x.OwnerType).IsRequired().HasMaxLength(20).HasDefaultValue("Knowledge");
+            
+            b.HasIndex(x => new { x.OwnerType, x.ParentId });
+        });
+
+        modelBuilder.Entity<KnowledgeDocumentEntity>(b =>
+        {
+            b.ToTable("KnowledgeDocument");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.NodeId);
+            b.Property(x => x.Content).HasMaxLength(100000);
         });
     }
 }

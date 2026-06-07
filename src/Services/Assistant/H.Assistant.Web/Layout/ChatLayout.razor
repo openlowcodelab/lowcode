@@ -27,7 +27,7 @@
             </div>
 
             <!-- 会话标题 -->
-            <div class="section-title @(isTasksPage ? "clickable" : "")" @onclick="GoToChat">会话</div>
+            <div class="section-title @((isTasksPage || isKnowledgePage) ? "clickable" : "")" @onclick="GoToChat">会话</div>
 
             <div class="panel-content">
                 @if (chats.Any())
@@ -67,6 +67,12 @@
                 }
             </div>
 
+            <!-- 知识中心菜单项 -->
+            <div class="knowledge-menu-item @(isKnowledgePage ? "active" : "")" @onclick="GoToKnowledge">
+                @IconSvg("book")
+                <span>知识中心</span>
+            </div>
+
             <div class="user-menu-area">
                 <div class="user-menu-trigger">
                     <div class="user-avatar-small">@IconSvg("user")</div>
@@ -91,6 +97,7 @@
 
 @code {
     private bool isTasksPage;
+    private bool isKnowledgePage;
     private List<ChatDto> chats = new();
     private Guid? selectedChatId;
     private bool showUserMenu;
@@ -101,6 +108,7 @@
     protected override void OnInitialized()
     {
         isTasksPage = Navigation.Uri.Contains("/assistant/tasks");
+        isKnowledgePage = Navigation.Uri.Contains("/assistant/knowledge");
         Navigation.LocationChanged += OnLocationChanged;
     }
 
@@ -154,8 +162,9 @@
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
         isTasksPage = e.Location.Contains("/assistant/tasks");
+        isKnowledgePage = e.Location.Contains("/assistant/knowledge");
 
-        if (!isTasksPage)
+        if (!isTasksPage && !isKnowledgePage)
         {
             UpdateSelectedChatFromUri();
         }
@@ -188,7 +197,7 @@
 
     private void GoToChat()
     {
-        if (isTasksPage)
+        if (isTasksPage || isKnowledgePage)
         {
             Navigation.NavigateTo("/assistant");
         }
@@ -199,6 +208,14 @@
         if (!isTasksPage)
         {
             Navigation.NavigateTo("/assistant/tasks");
+        }
+    }
+
+    private void GoToKnowledge()
+    {
+        if (!isKnowledgePage)
+        {
+            Navigation.NavigateTo("/assistant/knowledge");
         }
     }
 
@@ -309,6 +326,7 @@
         "inbox" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"22 12 16 12 14 15 10 15 8 12 2 12\"></polyline><path d=\"M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z\"></path></svg>",
         "more" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"1\"></circle><circle cx=\"12\" cy=\"5\" r=\"1\"></circle><circle cx=\"12\" cy=\"19\" r=\"1\"></circle></svg>",
         "clock" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"></circle><polyline points=\"12 6 12 12 16 14\"></polyline></svg>",
+        "book" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z\"></path><path d=\"M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z\"></path></svg>",
         _ => ""
     };
 }
@@ -411,7 +429,8 @@
     .user-avatar-small svg,
     .user-menu-icon svg,
     .dropdown-item svg,
-    .scheduled-task-menu-item svg {
+    .scheduled-task-menu-item svg,
+    .knowledge-menu-item svg {
         width: 16px;
         height: 16px;
         flex-shrink: 0;
@@ -579,6 +598,28 @@
     }
 
     .scheduled-task-menu-item.active {
+        background-color: #e6f7ff;
+        color: #1890ff;
+    }
+
+    /* ========== Knowledge Menu Item ========== */
+    .knowledge-menu-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        color: #595959;
+        font-size: 14px;
+    }
+
+    .knowledge-menu-item:hover {
+        background-color: #f0f0f0;
+        color: #262626;
+    }
+
+    .knowledge-menu-item.active {
         background-color: #e6f7ff;
         color: #1890ff;
     }

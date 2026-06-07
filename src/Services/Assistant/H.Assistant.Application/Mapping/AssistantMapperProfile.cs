@@ -18,5 +18,12 @@ public class AssistantMapperProfile : Profile
         // Scheduled task mapping
         CreateMap<TaskEntity, TaskDto>();
         CreateMap<TaskLogEntity, TaskLogDto>();
+
+        // Knowledge node (tree structure) mapping
+        CreateMap<KnowledgeNodeEntity, KnowledgeNodeDto>();
+        CreateMap<CreateKnowledgeNodeDto, KnowledgeNodeEntity>();
+
+        // Knowledge document (content) mapping
+        CreateMap<KnowledgeDocumentEntity, KnowledgeDocumentDto>();
     }
 }
