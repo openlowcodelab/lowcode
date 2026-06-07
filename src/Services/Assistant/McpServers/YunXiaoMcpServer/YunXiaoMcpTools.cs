@@ -26,8 +26,14 @@ public class YunXiaoMcpTools
     public async Task<string> SearchWorkItems(
         [Description("项目空间标识符（spaceIdentifier），通常是项目ID或项目路径")] string spaceIdentifier,
         [Description("搜索关键字，用于模糊匹配工作项标题")] string? keyword = null,
-        [Description("工作项类别：Req（需求）、Bug（缺陷）、Task（任务），为空则搜索所有类别")] string? category = null)
+        [Description("工作项类别：Req（需求）、Bug（缺陷）、Task（任务），默认为 Req")] string? category = "Req")
     {
         return await _apiClient.SearchWorkItemsAsync(spaceIdentifier, keyword, category);
+    }
+
+    [McpServerTool, Description("获取当前企业下的项目列表。返回项目名称、项目ID、项目前缀等信息，可用于获取项目的 spaceIdentifier。")]
+    public async Task<string> ListProjects()
+    {
+        return await _apiClient.ListProjectsAsync();
     }
 }

@@ -20,7 +20,7 @@ public class YunXiaoMcpServerModule : AbpModule
         // 注册 API Client
         context.Services.AddTransient<YunXiaoApiClient>();
 
-        // 注册 MCP Server（HTTP/SSE 传输）
+        // 注册 MCP Server（Streamable HTTP 传输）
         context.Services
             .AddMcpServer()
             .WithHttpTransport()

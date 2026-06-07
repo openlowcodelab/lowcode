@@ -17,5 +17,5 @@ public class YunXiaoOptions
     /// <summary>
     /// 云效 API 端点
     /// </summary>
-    public string Endpoint { get; set; } = "https://devops.cn-hangzhou.aliyuncs.com";
+    public string Endpoint { get; set; } = "https://openapi-rdc.aliyuncs.com";
 }
