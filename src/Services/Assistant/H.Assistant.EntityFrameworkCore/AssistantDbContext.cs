@@ -16,6 +16,7 @@ public class AssistantDbContext : AbpDbContext<AssistantDbContext>
     public DbSet<SkillEntity> Skills { get; set; } = null!;
     public DbSet<KnowledgeNodeEntity> KnowledgeNodes { get; set; } = null!;
     public DbSet<KnowledgeDocumentEntity> KnowledgeDocuments { get; set; } = null!;
+    public DbSet<McpServerEntity> McpServers { get; set; } = null!;
 
     public AssistantDbContext(DbContextOptions<AssistantDbContext> options)
         : base(options)
@@ -147,6 +148,22 @@ public class AssistantDbContext : AbpDbContext<AssistantDbContext>
             b.HasKey(x => x.Id);
             b.Property(x => x.NodeId);
             b.Property(x => x.Content).HasMaxLength(100000);
+        });
+
+        modelBuilder.Entity<McpServerEntity>(b =>
+        {
+            b.ToTable("McpServer");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Name).IsRequired().HasMaxLength(100);
+            b.Property(x => x.DisplayName).IsRequired().HasMaxLength(200);
+            b.Property(x => x.Endpoint).IsRequired().HasMaxLength(500);
+            b.Property(x => x.TransportType).IsRequired().HasMaxLength(20);
+            b.Property(x => x.AuthToken).HasMaxLength(500);
+            b.Property(x => x.ApiKey).HasMaxLength(500);
+            b.Property(x => x.Headers).HasMaxLength(2000);
+
+            b.HasIndex(x => x.Name).IsUnique();
+            b.HasIndex(x => x.IsEnabled);
         });
     }
 }

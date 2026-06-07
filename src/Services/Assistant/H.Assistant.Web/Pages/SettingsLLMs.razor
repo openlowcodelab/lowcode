@@ -4,6 +4,8 @@
 @inject ILLMAppService LLMConfigAppService
 @inject NavigationManager Navigation
 
+<PageTitle>设置 - Agent 助手</PageTitle>
+
 <!-- Toast Notification -->
 @if (!string.IsNullOrEmpty(toastMessage))
 {
@@ -212,7 +214,8 @@
         new("general", "通用", "setting", "/assistant/settings"),
         new("agent", "智能体", "robot", "/assistant/settings-agents"),
         new("skill", "技能", "thunderbolt", "/assistant/settings-skills"),
-        new("model", "模型", "api", "/assistant/settings-llms")
+        new("model", "模型", "api", "/assistant/settings-llms"),
+        new("mcp", "MCP", "plug", "/assistant/settings-mcp")
     };
 
     private bool IsActive(string url)
@@ -437,6 +440,7 @@
         "close" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"18\" y1=\"6\" x2=\"6\" y2=\"18\"></line><line x1=\"6\" y1=\"6\" x2=\"18\" y2=\"18\"></line></svg>",
         "inbox" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"22 12 16 12 14 15 10 15 8 12 2 12\"></polyline><path d=\"M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z\"></path></svg>",
         "api" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"16 18 22 12 16 6\"></polyline><polyline points=\"8 6 2 12 8 18\"></polyline></svg>",
+        "plug" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V2\"></path><path d=\"M12 10v12\"></path><path d=\"M8 22h8\"></path><path d=\"M5 2h14\"></path></svg>",
         _ => ""
     };
 }

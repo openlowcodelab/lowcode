@@ -2,7 +2,7 @@ using H.LowCode.Host.All.Components;
 using H.YunXiaoMcpServer;
 using Microsoft.EntityFrameworkCore;
 using H.LowCode.Host.All;
-using ModelContextProtocol.Server;
+using Microsoft.AspNetCore.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -66,7 +66,7 @@ app.UseAuthorization();
 app.UseAntiforgery();
 
 app.MapControllers();
-app.MapMcp("/yunxiao");
+app.MapMcp("/yunxiao").AllowAnonymous();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
