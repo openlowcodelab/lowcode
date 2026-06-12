@@ -3,7 +3,6 @@ using H.Assistant.Application.Workers;
 using H.Assistant.EntityFrameworkCore;
 using H.Assistant.Core;
 using Microsoft.Extensions.DependencyInjection;
-using Volo.Abp;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.Modularity;
 
@@ -12,7 +11,8 @@ namespace H.Assistant.Application;
 [DependsOn(
     typeof(AssistantApplicationContractsModule),
     typeof(AssistantEntityFrameworkCoreModule),
-    typeof(AbpAutoMapperModule)
+    typeof(AbpAutoMapperModule),
+    typeof(AssistantCoreModule)
 )]
 public class AssistantApplicationModule : AbpModule
 {

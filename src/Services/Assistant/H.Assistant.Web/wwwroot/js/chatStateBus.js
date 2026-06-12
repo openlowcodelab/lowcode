@@ -33,7 +33,7 @@ window.ChatStateBus = {
                     border-radius: 6px;
                     font-size: 14px;
                     color: #fff;
-                    z-index: 9999;
+                    z-index: 100001;
                     opacity: 0;
                     transition: all 0.3s ease;
                     box-shadow: 0 4px 12px rgba(0,0,0,0.15);

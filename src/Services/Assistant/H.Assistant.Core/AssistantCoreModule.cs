@@ -2,7 +2,7 @@
 
 namespace H.Assistant.Core;
 
-public class AssistantExtensionModule : AbpModule
+public class AssistantCoreModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {

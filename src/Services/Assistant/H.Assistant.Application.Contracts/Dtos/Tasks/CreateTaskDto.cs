@@ -17,7 +17,6 @@ public class CreateTaskDto
     [Required(ErrorMessage = "提示词内容不能为空")]
     public string PromptContent { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "Agent类型不能为空")]
     public string AgentType { get; set; } = string.Empty;
 
     public Guid? ModelConfigId { get; set; }

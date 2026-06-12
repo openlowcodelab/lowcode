@@ -11,37 +11,115 @@
 
 <!-- Right Panel - Tasks Area -->
 <div class="tasks-main-panel">
-    @if (selectedTaskId.HasValue)
+    <!-- Tab Bar -->
+    <div class="tasks-tab-bar">
+        <div class="tasks-tab @(activeTab == "tasks" ? "active" : "")" @onclick='() => SwitchTab("tasks")'>我的定时任务</div>
+        <div class="tasks-tab @(activeTab == "logs" ? "active" : "")" @onclick='() => SwitchTab("logs")'>执行记录</div>
+    </div>
+
+    @if (activeTab == "tasks")
     {
         <div class="chat-header">
-            <div class="chat-header-left">
-                <span>@selectedTaskName - 执行日志</span>
-            </div>
+            <div class="chat-header-left"><span>定时任务</span></div>
             <div class="chat-header-right">
-                <button class="btn btn-primary" @onclick="CreateNewTask">
-                    @IconSvg("plus") 新建定时任务
-                </button>
+                <button class="btn btn-primary" @onclick="CreateNewTask">@IconSvg("plus") 新建定时任务</button>
             </div>
         </div>
-        <div class="task-log-list">
-            @if (loadingTaskLogs)
-            {
-                <div class="loading-spinner"><div class="spinner"></div><span>Loading...</span></div>
-            }
-            else if (selectedTaskLogs.Any())
-            {
-                @foreach (var log in selectedTaskLogs)
+        @if (loadingTasks)
+        {
+            <div class="loading-spinner"><div class="spinner"></div><span>Loading...</span></div>
+        }
+        else if (tasks.Any())
+        {
+            <div class="task-card-list">
+                @foreach (var task in tasks)
+                {
+                    <div class="task-card @(task.IsEnabled ? "" : "disabled")">
+                        <div class="task-card-header">
+                            <span class="task-name-text">@task.TaskName</span>
+                            <div class="task-card-header-right" @onclick:stopPropagation>
+                                <label class="toggle-switch" @onclick="() => ToggleTaskEnable(task.Id)">
+                                    <div class="toggle-track @(task.IsEnabled ? "on" : "")">
+                                        <div class="toggle-thumb"></div>
+                                    </div>
+                                </label>
+                                <div class="more-menu-wrapper">
+                                    <button class="task-action-btn" @onclick="() => ToggleMoreMenu(task.Id)">@IconSvg("more")</button>
+                                    @if (showMoreMenuId == task.Id)
+                                    {
+                                        <div class="more-dropdown">
+                                            <div class="dropdown-item" @onclick="() => { showMoreMenuId = null; EditTask(task.Id); }">
+                                                @IconSvg("edit") <span>编辑</span>
+                                            </div>
+                                            <div class="dropdown-item" @onclick="async () => { showMoreMenuId = null; await ExecuteTaskNow(task.Id); }">
+                                                @IconSvg("play") <span>立即执行</span>
+                                            </div>
+                                            <div class="dropdown-item danger" @onclick="async () => { showMoreMenuId = null; await DeleteScheduledTask(task.Id); }">
+                                                @IconSvg("delete") <span>删除任务</span>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        @if (!string.IsNullOrEmpty(task.TaskDescription))
+                        {
+                            <div class="task-card-info">@task.TaskDescription</div>
+                        }
+                        <div class="task-card-info">@IconSvg("clock-sm") <span>@task.ScheduleDisplayText</span></div>
+                        @if (task.IsEnabled && task.NextExecutionTime.HasValue)
+                        {
+                            <div class="task-card-info">@IconSvg("timer") <span>下次执行: @task.NextExecutionTime.Value.ToString("MM-dd HH:mm")</span></div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="empty-chat-state">
+                <div class="empty-chat-content">
+                    <div class="empty-state"><div class="empty-icon">@IconSvg("task")</div><div class="empty-text">暂无定时任务，点击上方按钮创建</div></div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="chat-header">
+            <div class="chat-header-left"><span>执行记录</span></div>
+            <div class="chat-header-right">
+                @if (isLogSelectionMode)
+                {
+                    <button class="btn btn-sm" @onclick="ToggleLogSelectAll">@GetLogSelectAllText()</button>
+                    <button class="btn btn-sm btn-danger" disabled="@(selectedLogIds.Count == 0)" @onclick="ConfirmBatchDeleteLogs">删除选中</button>
+                    <button class="btn btn-sm" @onclick="ExitLogSelectionMode">取消</button>
+                }
+                else
+                {
+                    <button class="btn" @onclick="ToggleLogSelectionMode">多选</button>
+                }
+            </div>
+        </div>
+        @if (loadingTaskLogs)
+        {
+            <div class="loading-spinner"><div class="spinner"></div><span>Loading...</span></div>
+        }
+        else if (allTaskLogs.Any())
+        {
+            <div class="task-log-list">
+                @foreach (var log in allTaskLogs)
                 {
                     <div class="log-entry @log.Status.ToLower()">
                         <div class="log-header">
                             @if (isLogSelectionMode)
                             {
-                                <input type="checkbox" 
-                                       class="log-checkbox"
-                                       checked="@selectedLogIds.Contains(log.Id)" 
+                                <input type="checkbox" class="log-checkbox"
+                                       checked="@selectedLogIds.Contains(log.Id)"
                                        @onchange="() => ToggleLogSelectItem(log.Id)" />
                             }
                             <span class="log-status-badge status-@log.Status.ToLower()">@GetLogStatusText(log.Status)</span>
+                            <span class="log-task-name">@log.TaskName</span>
                             <span class="log-time">@log.StartTime.ToString("yyyy-MM-dd HH:mm:ss")</span>
                             @if (log.DurationSeconds.HasValue)
                             {
@@ -58,55 +136,16 @@
                         }
                     </div>
                 }
-            }
-            else
-            {
-                <div class="empty-state"><div class="empty-icon">@IconSvg("inbox")</div><div class="empty-text">暂无执行记录</div></div>
-            }
-        </div>
-        <div class="chat-input-area">
-            <div class="chat-input-footer" style="justify-content: space-between;">
-                @if (isLogSelectionMode)
-                {
-                    <div style="display: flex; gap: 8px;">
-                        <button class="btn btn-sm" @onclick="ToggleLogSelectAll">@GetLogSelectAllText()</button>
-                        <button class="btn btn-sm btn-danger" disabled="@(selectedLogIds.Count == 0)" @onclick="ConfirmBatchDeleteLogs">删除选中</button>
-                    </div>
-                }
-                else
-                {
-                    <div></div>
-                }
-                <div style="display: flex; gap: 8px;">
-                    @if (!isLogSelectionMode)
-                    {
-                        <button class="btn" @onclick="ToggleLogSelectionMode">多选</button>
-                    }
-                    else
-                    {
-                        <button class="btn" @onclick="ExitLogSelectionMode">退出多选</button>
-                    }
+            </div>
+        }
+        else
+        {
+            <div class="empty-chat-state">
+                <div class="empty-chat-content">
+                    <div class="empty-state"><div class="empty-icon">@IconSvg("inbox")</div><div class="empty-text">暂无执行记录</div></div>
                 </div>
             </div>
-        </div>
-    }
-    else
-    {
-        <div class="chat-header">
-            <div class="chat-header-left">
-                <span>定时任务</span>
-            </div>
-            <div class="chat-header-right">
-                <button class="btn btn-primary" @onclick="CreateNewTask">
-                    @IconSvg("plus") 新建定时任务
-                </button>
-            </div>
-        </div>
-        <div class="empty-chat-state">
-            <div class="empty-chat-content">
-                <div class="empty-state"><div class="empty-icon">@IconSvg("task")</div><div class="empty-text">选择一个定时任务查看执行日志</div></div>
-            </div>
-        </div>
+        }
     }
 </div>
 
@@ -223,18 +262,17 @@
 }
 
 @code {
+    private string activeTab = "tasks";
     private List<TaskDto> tasks = new();
     private List<AgentConfigDto> availableAgents = new();
     private bool loadingTasks;
     private bool showTaskDialog;
     private CreateTaskDto newTaskDto = new();
     private Guid? editingTaskId;
+    private Guid? showMoreMenuId;
 
-    private Guid? selectedTaskId;
-    private string selectedTaskName = string.Empty;
-    private List<TaskLogDto> selectedTaskLogs = new();
+    private List<TaskLogDto> allTaskLogs = new();
     private bool loadingTaskLogs;
-    private Guid? showTaskMenu;
 
     private bool isLogSelectionMode = false;
     private HashSet<Guid> selectedLogIds = new();
@@ -242,37 +280,39 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadTasks();
         await LoadAvailableAgents();
+        await LoadTasks();
+        await LoadAllTaskLogs();
     }
 
-    private async Task SelectTask(Guid taskId)
+    private async Task SwitchTab(string tab)
     {
-        selectedTaskId = taskId;
-        var task = tasks.FirstOrDefault(t => t.Id == taskId);
-        selectedTaskName = task?.TaskName ?? "";
-        await LoadTaskLogs(taskId);
-        StateHasChanged();
+        activeTab = tab;
+        showMoreMenuId = null;
+        if (tab == "logs")
+        {
+            await LoadAllTaskLogs();
+        }
+        else
+        {
+            await LoadTasks();
+        }
     }
 
-    private async Task LoadTaskLogs(Guid taskId)
+    private async Task LoadAllTaskLogs()
     {
         loadingTaskLogs = true;
         try
         {
-            var result = await TaskLogAppService.GetListAsync(new TaskLogQueryDto
-            {
-                TaskId = taskId,
-                MaxResultCount = 20
-            });
-            selectedTaskLogs = result.Items.ToList();
+            var result = await TaskLogAppService.GetListAsync(new TaskLogQueryDto { MaxResultCount = 50 });
+            allTaskLogs = result.Items.ToList();
         }
         finally { loadingTaskLogs = false; }
     }
 
-    private void ToggleTaskMenu(Guid taskId)
+    private void ToggleMoreMenu(Guid taskId)
     {
-        showTaskMenu = showTaskMenu == taskId ? null : taskId;
+        showMoreMenuId = showMoreMenuId == taskId ? null : taskId;
     }
 
     private string GetLogStatusText(string status)
@@ -303,7 +343,7 @@
 
     private bool IsAllLogsSelected()
     {
-        return selectedTaskLogs.Count > 0 && selectedLogIds.Count == selectedTaskLogs.Count;
+        return allTaskLogs.Count > 0 && selectedLogIds.Count == allTaskLogs.Count;
     }
 
     private void ToggleLogSelectAll()
@@ -314,7 +354,7 @@
         }
         else
         {
-            selectedLogIds = new HashSet<Guid>(selectedTaskLogs.Select(l => l.Id));
+            selectedLogIds = new HashSet<Guid>(allTaskLogs.Select(l => l.Id));
         }
     }
 
@@ -353,8 +393,7 @@
         showBatchDeleteConfirm = false;
         selectedLogIds.Clear();
         isLogSelectionMode = false;
-        await LoadTaskLogs(selectedTaskId.Value);
-        StateHasChanged();
+        await LoadAllTaskLogs();
     }
 
     private async Task LoadTasks()
@@ -381,7 +420,7 @@
             TaskName = "",
             TaskDescription = "",
             PromptContent = "",
-            AgentType = "",
+            AgentType = availableAgents.FirstOrDefault()?.AgentType ?? "",
             ScheduleType = "Daily",
             Hour = 9,
             Minute = 0,
@@ -486,11 +525,6 @@
             await TaskAppService.DeleteAsync(taskId);
             await ShowToast("任务已删除", "success");
             await LoadTasks();
-            if (selectedTaskId == taskId)
-            {
-                selectedTaskId = null;
-                selectedTaskLogs.Clear();
-            }
         }
         catch (Exception ex) { await ShowToast("删除失败: " + ex.Message, "error"); }
     }
@@ -510,6 +544,8 @@
         "task" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"></path><polyline points=\"14 2 14 8 20 8\"></polyline><line x1=\"16\" y1=\"13\" x2=\"8\" y2=\"13\"></line><line x1=\"16\" y1=\"17\" x2=\"8\" y2=\"17\"></line><polyline points=\"10 9 9 9 8 9\"></polyline></svg>",
         "inbox" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"22 12 16 12 14 15 10 15 8 12 2 12\"></polyline><path d=\"M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z\"></path></svg>",
         "close" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"18\" y1=\"6\" x2=\"6\" y2=\"18\"></line><line x1=\"6\" y1=\"6\" x2=\"18\" y2=\"18\"></line></svg>",
+        "clock-sm" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"></circle><polyline points=\"12 6 12 12 16 14\"></polyline></svg>",
+        "timer" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"10\" y1=\"2\" x2=\"14\" y2=\"2\"></line><line x1=\"12\" y1=\"14\" x2=\"12\" y2=\"10\"></line><path d=\"M12 14a7 7 0 1 0 0-14 7 7 0 0 0 0 14z\" transform=\"translate(0 4)\"></path></svg>",
         _ => ""
     };
 }
@@ -522,6 +558,34 @@
         flex-direction: column;
         background: #fff;
         overflow: hidden;
+    }
+
+    /* ========== Tab Bar ========== */
+    .tasks-tab-bar {
+        display: flex;
+        border-bottom: 1px solid #e8e8e8;
+        padding: 0 16px;
+        background: #fafafa;
+    }
+
+    .tasks-tab {
+        padding: 12px 20px;
+        font-size: 14px;
+        color: #8c8c8c;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s;
+        user-select: none;
+    }
+
+    .tasks-tab:hover {
+        color: #595959;
+    }
+
+    .tasks-tab.active {
+        color: #262626;
+        font-weight: 500;
+        border-bottom-color: #262626;
     }
 
     /* ========== Chat Header (used in tasks right panel) ========== */
@@ -986,5 +1050,179 @@
         color: #595959;
         text-align: center;
         padding: 20px 0;
+    }
+
+    /* ========== Task Card List ========== */
+    .task-card-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        align-content: start;
+    }
+
+    .task-card {
+        display: flex;
+        flex-direction: column;
+        padding: 14px 16px;
+        border: 1px solid #e8e8e8;
+        border-radius: 8px;
+        background: #fff;
+        transition: all 0.2s;
+    }
+
+    .task-card:hover {
+        border-color: #d0d0d0;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .task-card.disabled {
+        opacity: 0.55;
+    }
+
+    .task-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+    }
+
+    .task-card-header-right {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+    }
+
+    .task-name-text {
+        font-size: 14px;
+        font-weight: 500;
+        color: #262626;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .task-card-info {
+        font-size: 12px;
+        color: #8c8c8c;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 4px;
+        line-height: 1.4;
+    }
+
+    .task-card-info svg {
+        width: 13px;
+        height: 13px;
+        flex-shrink: 0;
+        color: #bfbfbf;
+    }
+
+    /* ========== Toggle Switch ========== */
+    .toggle-switch {
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        margin: 0;
+    }
+
+    .toggle-track {
+        width: 32px;
+        height: 18px;
+        background: #d9d9d9;
+        border-radius: 9px;
+        position: relative;
+        transition: background 0.2s;
+    }
+
+    .toggle-track.on {
+        background: #52c41a;
+    }
+
+    .toggle-thumb {
+        width: 14px;
+        height: 14px;
+        background: #fff;
+        border-radius: 50%;
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        transition: left 0.2s;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+    }
+
+    .toggle-track.on .toggle-thumb {
+        left: 16px;
+    }
+
+    /* ========== More Dropdown ========== */
+    .more-menu-wrapper {
+        position: relative;
+    }
+
+    .more-dropdown {
+        position: absolute;
+        right: 0;
+        top: 100%;
+        background: #fff;
+        border: 1px solid #e8e8e8;
+        border-radius: 6px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        z-index: 1000;
+        min-width: 130px;
+        overflow: hidden;
+        margin-top: 4px;
+    }
+
+    .more-dropdown .dropdown-item {
+        padding: 8px 12px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: #595959;
+        transition: background-color 0.15s;
+    }
+
+    .more-dropdown .dropdown-item:hover {
+        background: #f5f5f5;
+    }
+
+    .more-dropdown .dropdown-item.danger {
+        color: #ff4d4f;
+    }
+
+    .more-dropdown .dropdown-item.danger:hover {
+        background: #fff1f0;
+    }
+
+    .more-dropdown .dropdown-item svg {
+        width: 14px;
+        height: 14px;
+    }
+
+    .task-action-danger:hover {
+        background: #fff1f0 !important;
+        color: #ff4d4f !important;
+    }
+
+    /* ========== Log extras ========== */
+    .log-task-name {
+        font-size: 12px;
+        color: #595959;
+        font-weight: 500;
+    }
+
+    @@media (max-width: 768px) {
+        .task-card-list {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
