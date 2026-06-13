@@ -28,13 +28,7 @@ public class BaiLianLLMProvider : ILLMProvider
     
     public async Task<LLMResponse> ChatAsync(LLMRequest request, CancellationToken ct = default)
     {
-        var payload = new
-        {
-            model = string.IsNullOrEmpty(request.Model) ? _defaultModel : request.Model,
-            messages = request.Messages,
-            temperature = request.Temperature,
-            max_tokens = request.MaxTokens
-        };
+        var payload = BuildPayload(request, stream: false);
         
         var response = await _httpClient.PostAsJsonAsync("chat/completions", payload, ct);
         
@@ -46,23 +40,20 @@ public class BaiLianLLMProvider : ILLMProvider
         }
         
         var result = await response.Content.ReadFromJsonAsync<QwenResponse>(ct);
+        var choice = result?.Choices?.FirstOrDefault();
         
         return new LLMResponse
         {
-            Content = result?.Choices?.FirstOrDefault()?.Message?.Content ?? string.Empty,
+            Content = choice?.Message?.Content ?? string.Empty,
             Model = result?.Model ?? string.Empty,
-            UsageTokens = result?.Usage?.TotalTokens ?? 0
+            UsageTokens = result?.Usage?.TotalTokens ?? 0,
+            ToolCalls = choice?.Message?.ToolCalls
         };
     }
     
-    public async IAsyncEnumerable<string> ChatStreamAsync(LLMRequest request, [EnumeratorCancellation] CancellationToken ct = default)
+    public async IAsyncEnumerable<LLMStreamChunk> ChatStreamAsync(LLMRequest request, [EnumeratorCancellation] CancellationToken ct = default)
     {
-        var payload = new
-        {
-            model = string.IsNullOrEmpty(request.Model) ? _defaultModel : request.Model,
-            messages = request.Messages,
-            stream = true
-        };
+        var payload = BuildPayload(request, stream: true);
         
         var jsonContent = payload.ToJson();
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "chat/completions");
@@ -90,12 +81,58 @@ public class BaiLianLLMProvider : ILLMProvider
                 if (json != "[DONE]")
                 {
                     var chunk = json.FromJson<QwenStreamChunk>();
-                    var content = chunk?.Choices?.FirstOrDefault()?.Delta?.Content;
-                    if (!string.IsNullOrEmpty(content))
-                        yield return content;
+                    var choice = chunk?.Choices?.FirstOrDefault();
+                    if (choice == null) continue;
+                    
+                    var streamChunk = new LLMStreamChunk
+                    {
+                        Content = choice.Delta?.Content,
+                        FinishReason = choice.FinishReason
+                    };
+                    
+                    // 流式 tool_calls 增量
+                    if (choice.Delta?.ToolCalls is { Count: > 0 })
+                    {
+                        var tc = choice.Delta.ToolCalls[0];
+                        streamChunk.ToolCallDelta = new ToolCallDelta
+                        {
+                            Index = tc.Index,
+                            Id = tc.Id,
+                            FunctionName = tc.Function?.Name,
+                            FunctionArgumentsDelta = tc.Function?.Arguments
+                        };
+                    }
+                    
+                    yield return streamChunk;
                 }
             }
         }
+    }
+    
+    private object BuildPayload(LLMRequest request, bool stream)
+    {
+        var payload = new Dictionary<string, object>
+        {
+            ["model"] = string.IsNullOrEmpty(request.Model) ? _defaultModel : request.Model,
+            ["messages"] = request.Messages
+        };
+        
+        if (!stream)
+        {
+            payload["temperature"] = request.Temperature;
+            payload["max_tokens"] = request.MaxTokens;
+        }
+        else
+        {
+            payload["stream"] = true;
+        }
+        
+        if (request.Tools is { Count: > 0 })
+        {
+            payload["tools"] = request.Tools;
+        }
+        
+        return payload;
     }
 }
 
@@ -117,6 +154,9 @@ public class QwenChoice
 {
     [JsonPropertyName("message")]
     public QwenMessage Message { get; set; } = new();
+    
+    [JsonPropertyName("finish_reason")]
+    public string? FinishReason { get; set; }
 }
 
 public class QwenMessage
@@ -125,7 +165,11 @@ public class QwenMessage
     public string Role { get; set; } = string.Empty;
     
     [JsonPropertyName("content")]
-    public string Content { get; set; } = string.Empty;
+    public string? Content { get; set; }
+    
+    [JsonPropertyName("tool_calls")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<ToolCall>? ToolCalls { get; set; }
 }
 
 public class QwenUsage
@@ -144,12 +188,40 @@ public class QwenStreamChoice
 {
     [JsonPropertyName("delta")]
     public QwenStreamDelta Delta { get; set; } = new();
+    
+    [JsonPropertyName("finish_reason")]
+    public string? FinishReason { get; set; }
 }
 
 public class QwenStreamDelta
 {
     [JsonPropertyName("content")]
     public string? Content { get; set; }
+    
+    [JsonPropertyName("tool_calls")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<QwenStreamToolCall>? ToolCalls { get; set; }
+}
+
+public class QwenStreamToolCall
+{
+    [JsonPropertyName("index")]
+    public int Index { get; set; }
+    
+    [JsonPropertyName("id")]
+    public string? Id { get; set; }
+    
+    [JsonPropertyName("function")]
+    public QwenStreamFunction? Function { get; set; }
+}
+
+public class QwenStreamFunction
+{
+    [JsonPropertyName("name")]
+    public string? Name { get; set; }
+    
+    [JsonPropertyName("arguments")]
+    public string? Arguments { get; set; }
 }
 
 #endregion

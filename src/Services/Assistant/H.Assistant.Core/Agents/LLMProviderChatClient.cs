@@ -63,7 +63,8 @@ internal class LLMProviderChatClient : IChatClient
 
         await foreach (var chunk in _provider.ChatStreamAsync(request, cancellationToken))
         {
-            yield return new ChatResponseUpdate(ChatRole.Assistant, chunk);
+            if (!string.IsNullOrEmpty(chunk.Content))
+                yield return new ChatResponseUpdate(ChatRole.Assistant, chunk.Content);
         }
     }
 

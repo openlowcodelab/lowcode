@@ -2,6 +2,7 @@ using H.Assistant.Application.Contracts;
 using H.Assistant.Application.Workers;
 using H.Assistant.EntityFrameworkCore;
 using H.Assistant.Core;
+using H.Assistant.Core.Mcp;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.Modularity;
@@ -31,6 +32,12 @@ public class AssistantApplicationModule : AbpModule
     {
         // 注册 LLM 服务
         context.Services.AddScoped<LLMProviderFactory>();
+
+        // 注册工具注册中心（单例，保持工具注册状态）
+        context.Services.AddSingleton<IToolRegistry, ToolRegistry>();
+
+        // 注册 MCP Client 管理器（单例，保持连接状态）
+        context.Services.AddSingleton<McpClientManager>();
 
         // 注册 Agent 工厂
         context.Services.AddTransient<AgentFactory>();

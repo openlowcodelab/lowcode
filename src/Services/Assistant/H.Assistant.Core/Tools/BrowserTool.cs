@@ -76,7 +76,11 @@ public class BrowserTool
                 Url = response.RequestMessage?.RequestUri?.ToString()
             };
 
-            return JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = false });
+            return JsonSerializer.Serialize(result, new JsonSerializerOptions 
+            { 
+                WriteIndented = false,
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            });
         }
         catch (Exception ex)
         {
@@ -118,7 +122,12 @@ public class BrowserTool
                 Url = url
             };
 
-            return JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = false });
+            // 禁用非 ASCII 字符转义，确保中文等字符正常显示
+            return JsonSerializer.Serialize(result, new JsonSerializerOptions 
+            { 
+                WriteIndented = false,
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            });
         }
         catch (Exception ex)
         {
@@ -153,7 +162,12 @@ public class BrowserTool
                 Url = url
             };
 
-            return JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = false });
+            // 禁用非 ASCII 字符转义，确保中文等字符正常显示
+            return JsonSerializer.Serialize(result, new JsonSerializerOptions 
+            { 
+                WriteIndented = false,
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            });
         }
         catch (Exception ex)
         {
@@ -185,7 +199,12 @@ public class BrowserTool
                 Url = url
             };
 
-            return JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = false });
+            // 禁用非 ASCII 字符转义，确保中文等字符正常显示
+            return JsonSerializer.Serialize(result, new JsonSerializerOptions 
+            { 
+                WriteIndented = false,
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            });
         }
         catch (Exception ex)
         {
@@ -194,7 +213,11 @@ public class BrowserTool
                 Success = false,
                 Error = ex.Message,
                 Url = url
-            }, new JsonSerializerOptions { WriteIndented = false });
+            }, new JsonSerializerOptions 
+            { 
+                WriteIndented = false,
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            });
         }
     }
 

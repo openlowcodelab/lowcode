@@ -16,7 +16,7 @@ public interface ILLMProvider
     Task<LLMResponse> ChatAsync(LLMRequest request, CancellationToken ct = default);
     
     /// <summary>
-    /// 流式对话
+    /// 流式对话（返回结构化 chunk，支持 tool_calls 增量）
     /// </summary>
-    IAsyncEnumerable<string> ChatStreamAsync(LLMRequest request, CancellationToken ct = default);
+    IAsyncEnumerable<LLMStreamChunk> ChatStreamAsync(LLMRequest request, CancellationToken ct = default);
 }

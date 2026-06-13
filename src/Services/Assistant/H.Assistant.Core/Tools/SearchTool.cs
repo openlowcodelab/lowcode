@@ -66,7 +66,12 @@ public class SearchTool
                 Results = results
             };
 
-            return JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = false });
+            // 禁用非 ASCII 字符转义，确保中文等字符正常显示
+            return JsonSerializer.Serialize(result, new JsonSerializerOptions 
+            { 
+                WriteIndented = false,
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            });
         }
         catch (Exception ex)
         {
@@ -104,7 +109,12 @@ public class SearchTool
                 Results = results
             };
 
-            return JsonSerializer.Serialize(result, new JsonSerializerOptions { WriteIndented = false });
+            // 禁用非 ASCII 字符转义，确保中文等字符正常显示
+            return JsonSerializer.Serialize(result, new JsonSerializerOptions 
+            { 
+                WriteIndented = false,
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            });
         }
         catch (Exception ex)
         {

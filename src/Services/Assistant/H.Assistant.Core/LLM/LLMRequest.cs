@@ -8,10 +8,24 @@ namespace H.Assistant.Core;
 public class Message
 {
     [JsonPropertyName("role")]
-    public string Role { get; set; } = string.Empty;  // system/user/assistant
+    public string Role { get; set; } = string.Empty;  // system/user/assistant/tool
     
     [JsonPropertyName("content")]
-    public string Content { get; set; } = string.Empty;
+    public string? Content { get; set; }
+    
+    /// <summary>
+    /// assistant 消息中的 tool_calls（OpenAI 协议）
+    /// </summary>
+    [JsonPropertyName("tool_calls")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<ToolCall>? ToolCalls { get; set; }
+    
+    /// <summary>
+    /// tool 消息中的 tool_call_id（OpenAI 协议）
+    /// </summary>
+    [JsonPropertyName("tool_call_id")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ToolCallId { get; set; }
 }
 
 /// <summary>

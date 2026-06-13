@@ -7,6 +7,9 @@
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
 
+@using System.Text.Json
+@using Markdig
+
 <PageTitle>Chat - Agent 助手</PageTitle>
 
 <!-- Right Panel - Chat Area -->
@@ -26,7 +29,8 @@
             }
             else if (messages.Any() || pendingUserMessage != null)
             {
-                @foreach (var message in messages)
+                @* 如果正在流式响应且有 reactSteps，隐藏最后一条助手消息以避免重复 *@
+                @foreach (var message in GetMessagesToRender())
                 {
                     <div class="message-item @(message.Role == "user" ? "user-message" : "assistant-message")">
                         <div class="message-avatar">
@@ -54,7 +58,74 @@
                     </div>
                 }
 
-                @if (!string.IsNullOrEmpty(streamingResponse))
+                @* ReAct 步骤可视化 *@
+                @if (hasReactSteps && reactSteps.Any())
+                {
+                    <div class="message-item assistant-message">
+                        <div class="message-avatar">@IconSvg("robot")</div>
+                        <div class="message-content react-content">
+                            @foreach (var step in reactSteps)
+                            {
+                                @if (!string.IsNullOrEmpty(step.ThinkingContent))
+                                {
+                                    <div class="react-thinking">
+                                        <div class="react-thinking-header">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+                                            <span>思考中</span>
+                                        </div>
+                                        <div class="react-thinking-body">
+                                            <MarkdownRenderer Content="@step.ThinkingContent" />
+                                        </div>
+                                    </div>
+                                }
+                                @foreach (var tool in step.ToolCalls)
+                                {
+                                    <div class="react-tool-call">
+                                        <div class="react-tool-header">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
+                                            <span class="react-tool-name">@GetFriendlyToolName(tool.ToolName)</span>
+                                            @if (tool.IsExecuting)
+                                            {
+                                                <span class="react-tool-status executing">
+                                                    <span class="executing-dot"></span>
+                                                    执行中...
+                                                </span>
+                                            }
+                                        </div>
+                                        @if (!string.IsNullOrEmpty(tool.Arguments))
+                                        {
+                                            <details class="react-tool-details">
+                                                <summary>参数</summary>
+                                                <pre class="react-tool-args">@FormatToolArguments(tool.Arguments)</pre>
+                                            </details>
+                                        }
+                                        @if (tool.Result != null)
+                                        {
+                                            <div class="react-tool-result @(tool.IsError ? "error" : "")">
+                                                <div class="react-tool-result-label">
+                                                    @(tool.IsError ? "错误" : "结果")
+                                                </div>
+                                                <pre class="react-tool-result-text">@TruncateResult(tool.Result)</pre>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            }
+
+                            @* 最终回答（流式 markdown 或历史消息中的答案） *@
+                            @if (!string.IsNullOrEmpty(streamingResponse) || !string.IsNullOrEmpty(historicalAnswer))
+                            {
+                                <div class="react-answer">
+                                    <div class="markdown-content">
+                                        @((MarkupString)RenderMarkdown(!string.IsNullOrEmpty(streamingResponse) ? streamingResponse : historicalAnswer))
+                                    </div>
+                                </div>
+                            }
+                            <div class="message-time">@DateTime.Now.ToString("HH:mm:ss")</div>
+                        </div>
+                    </div>
+                }
+                else if (!string.IsNullOrEmpty(streamingResponse))
                 {
                     <div class="message-item assistant-message">
                         <div class="message-avatar">@IconSvg("robot")</div>
@@ -74,7 +145,7 @@
                 <div class="empty-state"><div class="empty-icon">@IconSvg("chat")</div><div class="empty-text">Start a conversation</div></div>
             }
 
-            @if (isSending && string.IsNullOrEmpty(streamingResponse))
+            @if (isSending && string.IsNullOrEmpty(streamingResponse) && !hasReactSteps)
             {
                 <div class="message-item assistant-message">
                     <div class="message-avatar">@IconSvg("robot")</div>
@@ -124,9 +195,14 @@
     private AgentConfigDto? selectedAgent;
     private ChatMessageDto? pendingUserMessage;
     private string streamingResponse = string.Empty;
+    private string historicalAnswer = string.Empty; // 从历史消息中解析出的最终回答
     private ElementReference chatMessagesRef;
     private CancellationTokenSource? streamCts;
     private DotNetObjectReference<SseStreamCallbacks>? _sseCallbacksRef;
+
+    // ReAct 步骤可视化状态
+    private List<ReactStep> reactSteps = new();
+    private bool hasReactSteps;
 
     private static readonly MarkdownPipeline _mdPipeline = new MarkdownPipelineBuilder()
         .UseAdvancedExtensions()
@@ -141,6 +217,58 @@
         html = html.Replace("<pre><code", "<pre class=\"markdown-code-block\"><code");
         html = html.Replace("<code>", "<code class=\"markdown-inline-code\">");
         return html;
+    }
+
+    private static string FormatToolArguments(string args)
+    {
+        if (string.IsNullOrEmpty(args)) return "";
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(args);
+            // 禁用非 ASCII 字符转义，确保中文等字符正常显示
+            return System.Text.Json.JsonSerializer.Serialize(doc.RootElement, new System.Text.Json.JsonSerializerOptions 
+            { 
+                WriteIndented = true,
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            });
+        }
+        catch { return args; }
+    }
+
+    /// <summary>
+    /// 将技术性工具名称转换为友好的中文说明
+    /// </summary>
+    private static string GetFriendlyToolName(string toolName)
+    {
+        return toolName switch
+        {
+            "SearchAsync" => "网络搜索",
+            "SearchNewsAsync" => "新闻搜索",
+            "FetchPageAsync" => "访问网页",
+            "ExtractTextAsync" => "提取文本",
+            "ExtractLinksAsync" => "提取链接",
+            "CheckUrlAsync" => "检查链接",
+            _ => toolName // 未知工具名保持原样
+        };
+    }
+
+    /// <summary>
+    /// 获取要渲染的消息列表（如果有 reactSteps，排除最后一条助手消息以避免重复）
+    /// </summary>
+    private List<ChatMessageDto> GetMessagesToRender()
+    {
+        if (hasReactSteps && reactSteps.Any() && messages.Count > 0 && messages.Last().Role == "assistant")
+        {
+            // 排除最后一条助手消息（由 reactSteps 替代显示）
+            return messages.Take(messages.Count - 1).ToList();
+        }
+        return messages;
+    }
+
+    private static string TruncateResult(string result, int maxLen = 500)
+    {
+        if (string.IsNullOrEmpty(result)) return "";
+        return result.Length > maxLen ? result[..maxLen] + "..." : result;
     }
 
     protected override async Task OnInitializedAsync()
@@ -252,7 +380,108 @@
     private async Task LoadMessages(Guid sessionId)
     {
         loadingMessages = true;
-        try { messages = await ChatMessageAppService.GetMessagesAsync(sessionId); await ScrollToBottom(); }
+        try 
+        { 
+            messages = await ChatMessageAppService.GetMessagesAsync(sessionId); 
+            
+            // 检查最后一条助手消息是否包含嵌入的 ReAct 步骤数据
+            var lastAssistantMsg = messages.LastOrDefault(m => m.Role == "assistant");
+            if (lastAssistantMsg != null && !string.IsNullOrEmpty(lastAssistantMsg.Content))
+            {
+                try
+                {
+                    // 尝试解析为 JSON 格式（包含 answer + reactSteps）
+                    using var doc = JsonDocument.Parse(lastAssistantMsg.Content);
+                    var root = doc.RootElement;
+                    
+                    // 检查是否有 "answer" 和 "reactSteps" 字段（新的富内容格式）
+                    if (root.TryGetProperty("answer", out var answerProp) && 
+                        root.TryGetProperty("reactSteps", out var reactStepsProp))
+                    {
+                        // 提取最终回答内容用于显示
+                        var answerContent = answerProp.GetString() ?? "";
+                        
+                        // 解析 ReAct 步骤
+                        reactSteps.Clear();
+                        foreach (var stepElem in reactStepsProp.EnumerateArray())
+                        {
+                            var type = stepElem.TryGetProperty("type", out var t) ? t.GetString() ?? "" : "";
+                            var iteration = stepElem.TryGetProperty("iteration", out var i) ? i.GetInt32() : 0;
+                            
+                            var step = reactSteps.LastOrDefault(s => s.Iteration == iteration);
+                            
+                            switch (type)
+                            {
+                                case "thinking":
+                                    if (step == null) { step = new ReactStep { Iteration = iteration }; reactSteps.Add(step); }
+                                    step.ThinkingContent = stepElem.TryGetProperty("content", out var tc) ? tc.GetString() ?? "" : "";
+                                    break;
+                                    
+                                case "tool_call":
+                                    if (step == null) { step = new ReactStep { Iteration = iteration }; reactSteps.Add(step); }
+                                    step.ToolCalls.Add(new ToolCallInfo
+                                    {
+                                        ToolName = stepElem.TryGetProperty("toolName", out var tn) ? tn.GetString() ?? "" : "",
+                                        Arguments = stepElem.TryGetProperty("arguments", out var args) ? args.GetString() ?? "" : "",
+                                        IsExecuting = false,
+                                        Result = null
+                                    });
+                                    break;
+                                    
+                                case "tool_result":
+                                    var rToolName = stepElem.TryGetProperty("toolName", out var rtn) ? rtn.GetString() ?? "" : "";
+                                    var rResult = stepElem.TryGetProperty("result", out var res) ? res.GetString() ?? "" : "";
+                                    var rIsError = stepElem.TryGetProperty("isError", out var ie) && ie.GetBoolean();
+                                    var toolInfo = reactSteps.SelectMany(st => st.ToolCalls)
+                                        .LastOrDefault(t => t.ToolName == rToolName && t.Result == null);
+                                    if (toolInfo != null)
+                                    {
+                                        toolInfo.Result = rResult;
+                                        toolInfo.IsError = rIsError;
+                                    }
+                                    break;
+                            }
+                        }
+                        
+                        hasReactSteps = reactSteps.Any();
+                        
+                        // 保存最终回答内容用于 ReAct 区域渲染
+                        historicalAnswer = answerContent;
+                        
+                        // 更新消息内容为纯文本答案（防止 GetMessagesToRender 中渲染 JSON）
+                        lastAssistantMsg.Content = answerContent;
+                        
+                        // 兜底逻辑：如果有 ReAct 步骤但没有最终回答，降级为普通消息显示
+                        if (hasReactSteps && string.IsNullOrEmpty(historicalAnswer))
+                        {
+                            hasReactSteps = false;
+                        }
+                        
+                        // 触发 UI 重新渲染
+                        StateHasChanged();
+                    }
+                    else
+                    {
+                        // 不是富内容格式，清空 ReAct 步骤
+                        reactSteps.Clear();
+                        hasReactSteps = false;
+                    }
+                }
+                catch (Exception)
+                {
+                    // 解析失败时（可能是普通文本消息），清空 ReAct 步骤
+                    reactSteps.Clear();
+                    hasReactSteps = false;
+                }
+            }
+            else
+            {
+                reactSteps.Clear();
+                hasReactSteps = false;
+            }
+            
+            await ScrollToBottom(); 
+        }
         finally { loadingMessages = false; }
     }
 
@@ -260,6 +489,7 @@
     {
         selectedChatId = null;
         messages.Clear(); inputMessage = string.Empty; isNewTask = true;
+        reactSteps.Clear(); hasReactSteps = false; historicalAnswer = string.Empty;
         await LoadAvailableModels(); StateHasChanged();
     }
 
@@ -273,7 +503,7 @@
         isSending = true; var message = inputMessage; inputMessage = string.Empty;
         var newSessionTitle = message.Length > 30 ? message[..30] + "..." : message;
         pendingUserMessage = new ChatMessageDto { Id = Guid.NewGuid(), SessionId = Guid.NewGuid(), Role = "user", Content = message, CreationTime = DateTime.Now };
-        streamingResponse = string.Empty; StateHasChanged(); await ScrollToBottom();
+        streamingResponse = string.Empty; reactSteps.Clear(); hasReactSteps = false; historicalAnswer = string.Empty; StateHasChanged(); await ScrollToBottom();
         try
         {
             var input = new SendChatMessageInputDto
@@ -320,7 +550,7 @@
         if (!selectedChatId.HasValue) { await ShowToast("请先选择或创建一个会话", "warning"); return; }
         isSending = true; var message = inputMessage; inputMessage = string.Empty;
         pendingUserMessage = new ChatMessageDto { Id = Guid.NewGuid(), SessionId = selectedChatId.Value, Role = "user", Content = message, CreationTime = DateTime.Now };
-        streamingResponse = string.Empty; StateHasChanged(); await ScrollToBottom();
+        streamingResponse = string.Empty; reactSteps.Clear(); hasReactSteps = false; historicalAnswer = string.Empty; StateHasChanged(); await ScrollToBottom();
         try
         {
             var input = new SendChatMessageInputDto
@@ -369,7 +599,10 @@
                 try
                 {
                     using var doc = JsonDocument.Parse(data);
-                    if (doc.RootElement.TryGetProperty("session", out var s))
+                    var root = doc.RootElement;
+
+                    // Session 事件
+                    if (root.TryGetProperty("session", out var s))
                     {
                         var sessionId = Guid.Parse(s.GetString()!);
                         selectedChatId = sessionId;
@@ -389,7 +622,83 @@
                         _ = InvokeAsync(StateHasChanged);
                         return;
                     }
-                    if (doc.RootElement.TryGetProperty("error", out var e))
+
+                    // ReAct 类型化事件
+                    if (root.TryGetProperty("type", out var typeProp))
+                    {
+                        var eventType = typeProp.GetString();
+                        var iteration = root.TryGetProperty("iteration", out var iterProp) ? iterProp.GetInt32() : 0;
+                        var step = reactSteps.LastOrDefault(s => s.Iteration == iteration);
+
+                        switch (eventType)
+                        {
+                            case "thinking":
+                                if (step == null) { step = new ReactStep { Iteration = iteration }; reactSteps.Add(step); }
+                                step.ThinkingContent += root.TryGetProperty("content", out var tc) ? tc.GetString() ?? "" : "";
+                                hasReactSteps = true;
+                                _ = InvokeAsync(async () => { StateHasChanged(); await ScrollToBottom(); });
+                                return;
+
+                            case "tool_call":
+                                if (step == null) { step = new ReactStep { Iteration = iteration }; reactSteps.Add(step); }
+                                step.ToolCalls.Add(new ToolCallInfo
+                                {
+                                    ToolName = root.TryGetProperty("toolName", out var tn) ? tn.GetString() ?? "" : "",
+                                    Arguments = root.TryGetProperty("arguments", out var args) ? args.GetString() ?? "" : "",
+                                    IsExecuting = true
+                                });
+                                hasReactSteps = true;
+                                _ = InvokeAsync(async () => { StateHasChanged(); await ScrollToBottom(); });
+                                return;
+
+                            case "tool_result":
+                                var rToolName = root.TryGetProperty("toolName", out var rtn) ? rtn.GetString() ?? "" : "";
+                                var rResult = root.TryGetProperty("result", out var res) ? res.GetString() ?? "" : "";
+                                var rIsError = root.TryGetProperty("isError", out var ie) && ie.GetBoolean();
+                                var toolInfo = reactSteps.SelectMany(st => st.ToolCalls)
+                                    .LastOrDefault(t => t.ToolName == rToolName && t.IsExecuting);
+                                if (toolInfo != null)
+                                {
+                                    toolInfo.Result = rResult;
+                                    toolInfo.IsError = rIsError;
+                                    toolInfo.IsExecuting = false;
+                                }
+                                _ = InvokeAsync(async () => { StateHasChanged(); await ScrollToBottom(); });
+                                return;
+
+                            case "answer":
+                                var ansContent = root.TryGetProperty("content", out var ac) ? ac.GetString() ?? "" : "";
+                                // 只有非空 answer 内容才追加到 streamingResponse（空 answer 是完成信号）
+                                if (!string.IsNullOrEmpty(ansContent))
+                                {
+                                    chunkQueue.Enqueue(ansContent);
+                                    tcs.TrySetResult(true);
+                                }
+                                else
+                                {
+                                    // 空 answer = 流式完成信号
+                                    tcs.TrySetResult(false);
+                                }
+                                return;
+
+                            case "error":
+                                var errMsg = root.TryGetProperty("message", out var em) ? em.GetString() ?? "Unknown error" : "Unknown error";
+                                var isFatal = root.TryGetProperty("isFatal", out var fat) && fat.GetBoolean();
+                                if (isFatal)
+                                {
+                                    error = errMsg;
+                                    tcs.TrySetResult(false);
+                                }
+                                else
+                                {
+                                    _ = InvokeAsync(async () => await ShowToast(errMsg, "warning"));
+                                }
+                                return;
+                        }
+                    }
+
+                    // 向后兼容：旧格式 error
+                    if (root.TryGetProperty("error", out var e))
                     {
                         error = e.GetString();
                         tcs.TrySetResult(false);
@@ -398,6 +707,7 @@
                 }
                 catch (JsonException) { }
             }
+            // 非 JSON 纯文本（向后兼容）
             chunkQueue.Enqueue(data);
             tcs.TrySetResult(true);
         }
@@ -460,6 +770,28 @@
         [JSInvokable] public void OnSseChunk(string data) => _onChunk(data);
         [JSInvokable] public void OnSseDone() => _onDone();
         [JSInvokable] public void OnSseError(string msg) => _onError(msg);
+    }
+
+    /// <summary>
+    /// ReAct 步骤 - 对应一次 LLM 迭代
+    /// </summary>
+    private class ReactStep
+    {
+        public int Iteration { get; set; }
+        public string ThinkingContent { get; set; } = string.Empty;
+        public List<ToolCallInfo> ToolCalls { get; set; } = new();
+    }
+
+    /// <summary>
+    /// 工具调用信息
+    /// </summary>
+    private class ToolCallInfo
+    {
+        public string ToolName { get; set; } = string.Empty;
+        public string Arguments { get; set; } = string.Empty;
+        public string? Result { get; set; }
+        public bool IsError { get; set; }
+        public bool IsExecuting { get; set; }
     }
 
     private void StopSending()
@@ -548,6 +880,10 @@
         max-width: 60%;
     }
 
+    .react-content {
+        max-width: 75%;
+    }
+
     .message-text {
         padding: 12px;
         border-radius: 8px;
@@ -564,6 +900,162 @@
         font-size: 12px;
         color: #8c8c8c;
         margin-top: 4px;
+    }
+
+    /* ========== ReAct Steps ========== */
+    .react-thinking {
+        border-left: 3px solid #1890ff;
+        padding: 8px 12px;
+        margin-bottom: 8px;
+        background: #f6f8fa;
+        border-radius: 0 6px 6px 0;
+    }
+
+    .react-thinking-header {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: #1890ff;
+        margin-bottom: 4px;
+        font-weight: 500;
+    }
+
+    .react-thinking-header svg {
+        width: 14px;
+        height: 14px;
+    }
+
+    .react-thinking-body {
+        font-size: 13px;
+        color: #595959;
+        line-height: 1.6;
+    }
+
+    .react-thinking-body p {
+        margin: 0;
+    }
+
+    .react-tool-call {
+        border: 1px solid #e8e8e8;
+        border-radius: 6px;
+        margin-bottom: 8px;
+        overflow: hidden;
+    }
+
+    .react-tool-header {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 12px;
+        background: #fafafa;
+        font-size: 13px;
+    }
+
+    .react-tool-header svg {
+        width: 14px;
+        height: 14px;
+        color: #8c8c8c;
+    }
+
+    .react-tool-name {
+        font-weight: 600;
+        color: #262626;
+    }
+
+    .react-tool-status {
+        margin-left: auto;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .react-tool-status.executing {
+        color: #faad14;
+    }
+
+    .executing-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background-color: #faad14;
+        display: inline-block;
+        animation: pulse-dot 1s ease-in-out infinite;
+    }
+
+    @@keyframes pulse-dot {
+        0%, 100% { opacity: 0.3; transform: scale(0.8); }
+        50% { opacity: 1; transform: scale(1.2); }
+    }
+
+    .react-tool-details {
+        padding: 0 12px 8px;
+        font-size: 12px;
+    }
+
+    .react-tool-details summary {
+        cursor: pointer;
+        color: #8c8c8c;
+        user-select: none;
+        padding: 4px 0;
+    }
+
+    .react-tool-details summary:hover {
+        color: #595959;
+    }
+
+    .react-tool-args {
+        background: #f5f5f5;
+        padding: 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        overflow-x: auto;
+        margin: 4px 0 0;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    }
+
+    .react-tool-result {
+        border-top: 1px solid #e8e8e8;
+        padding: 8px 12px;
+    }
+
+    .react-tool-result.error {
+        background: #fff2f0;
+        border-top-color: #ffccc7;
+    }
+
+    .react-tool-result-label {
+        font-size: 11px;
+        font-weight: 600;
+        color: #52c41a;
+        margin-bottom: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .react-tool-result.error .react-tool-result-label {
+        color: #ff4d4f;
+    }
+
+    .react-tool-result-text {
+        font-size: 12px;
+        margin: 0;
+        white-space: pre-wrap;
+        word-break: break-word;
+        max-height: 200px;
+        overflow-y: auto;
+        color: #595959;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    }
+
+    .react-answer {
+        padding: 12px;
+        background-color: #f0f0f0;
+        border-radius: 8px;
+        line-height: 1.5;
     }
 
     /* ========== Thinking / Loading ========== */

@@ -48,8 +48,8 @@ public class ChatController : ControllerBase
                 sessionId = await _sessionAppService.CreateSessionAsync(title, agentType);
                 input.SessionId = sessionId;
 
-                // 发送 session 事件，让前端获取 sessionId
-                var sessionEvent = $"data: {JsonSerializer.Serialize(new { session = sessionId.Value })}\n\n";
+                // 发送 session 事件，让前端获取 sessionId（包含 type 字段保持事件格式一致）
+                var sessionEvent = $"data: {JsonSerializer.Serialize(new { type = "session", session = sessionId.Value })}\n\n";
                 await Response.Body.WriteAsync(Encoding.UTF8.GetBytes(sessionEvent));
                 await Response.Body.FlushAsync();
             }
@@ -68,8 +68,9 @@ public class ChatController : ControllerBase
         }
         catch (Exception ex)
         {
-            // 发送错误信息
-            var errorData = $"data: {{\"error\": \"{ex.Message}\"}}\n\n";
+            // 发送错误信息（使用 JsonSerializer 防止消息中的特殊字符破坏 JSON）
+            var errorJson = JsonSerializer.Serialize(new { type = "error", message = ex.Message, isFatal = true });
+            var errorData = $"data: {errorJson}\n\n";
             await Response.Body.WriteAsync(Encoding.UTF8.GetBytes(errorData));
             await Response.Body.FlushAsync();
         }

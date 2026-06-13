@@ -155,27 +155,99 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
         if (agent is IStreamingAgent streamingAgent)
         {
             var fullResponse = string.Empty;
+            var reactSteps = new List<object>();
             
-            // 逐块接收响应并推送给客户端
+            // 逐块接收 ReAct 事件并推送给客户端
             await foreach (var chunk in streamingAgent.ProcessMessageStreamAsync(input.Message, conversationHistory))
             {
-                fullResponse += chunk;
+                // 解析 JSON 事件，提取内容用于保存
+                try
+                {
+                    using var doc = JsonDocument.Parse(chunk);
+                    var root = doc.RootElement;
+                    
+                    if (root.TryGetProperty("type", out var typeProp))
+                    {
+                        var eventType = typeProp.GetString();
+                        
+                        // 累积最终回答内容（来自 answer 事件）
+                        if (eventType == "answer" && root.TryGetProperty("content", out var contentProp))
+                        {
+                            var content = contentProp.GetString() ?? "";
+                            fullResponse += content;
+                        }
+                        
+                        // 收集 ReAct 步骤数据（thinking、tool_call、tool_result）
+                        if (eventType == "thinking" || eventType == "tool_call" || eventType == "tool_result")
+                        {
+                            var iteration = root.TryGetProperty("iteration", out var iterProp) ? iterProp.GetInt32() : 0;
+                            var stepData = new Dictionary<string, object?>
+                            {
+                                ["type"] = eventType,
+                                ["iteration"] = iteration
+                            };
+                            
+                            if (eventType == "thinking" && root.TryGetProperty("content", out var tc))
+                            {
+                                stepData["content"] = tc.GetString();
+                            }
+                            else if (eventType == "tool_call")
+                            {
+                                if (root.TryGetProperty("toolName", out var tn)) stepData["toolName"] = tn.GetString();
+                                if (root.TryGetProperty("arguments", out var args)) stepData["arguments"] = args.GetString();
+                            }
+                            else if (eventType == "tool_result")
+                            {
+                                if (root.TryGetProperty("toolName", out var trn)) stepData["toolName"] = trn.GetString();
+                                if (root.TryGetProperty("result", out var res)) stepData["result"] = res.GetString();
+                                if (root.TryGetProperty("isError", out var ie)) stepData["isError"] = ie.GetBoolean();
+                            }
+                            
+                            reactSteps.Add(stepData);
+                        }
+                    }
+                }
+                catch
+                {
+                    // 非 JSON 格式（向后兼容旧格式），直接累积
+                    fullResponse += chunk;
+                }
+                
                 yield return chunk;
             }
             
-            // 保存完整的 AI 响应消息
-            var aiMessage = new ChatMessageDto
+            // 保存完整的 AI 响应消息（将 ReAct 步骤嵌入 Content 字段）
+            if (!string.IsNullOrWhiteSpace(fullResponse))
             {
-                Id = Guid.NewGuid(),
-                SessionId = sessionId,
-                Role = "assistant",
-                Content = fullResponse,
-                CreationTime = DateTime.UtcNow
-            };
-            await _sessionAppService.AddMessageAsync(sessionId, aiMessage);
-            
-            // Trigger memory extraction in background
-            _ = Task.Run(() => TryExtractMemoryAsync(sessionId));
+                var contentToSave = fullResponse;
+                
+                // 如果有 ReAct 步骤，将其与最终回答一起打包为 JSON 格式
+                if (reactSteps.Count > 0)
+                {
+                    var enrichedContent = new Dictionary<string, object?>
+                    {
+                        ["answer"] = fullResponse,
+                        ["reactSteps"] = reactSteps
+                    };
+                    contentToSave = JsonSerializer.Serialize(enrichedContent, new JsonSerializerOptions 
+                    { 
+                        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping 
+                    });
+                }
+                
+                var aiMessage = new ChatMessageDto
+                {
+                    Id = Guid.NewGuid(),
+                    SessionId = sessionId,
+                    Role = "assistant",
+                    Content = contentToSave,
+                    CreationTime = DateTime.UtcNow
+                };
+                await _sessionAppService.AddMessageAsync(sessionId, aiMessage);
+                
+                // Trigger memory extraction in background
+                _ = Task.Run(() => TryExtractMemoryAsync(sessionId));
+            }
         }
         else
         {
