@@ -10,11 +10,11 @@
     <link rel="stylesheet" href="@Assets["H.Account.Host.styles.css"]" />
     <ImportMap />
     <link rel="icon" type="image/png" href="@Assets["favicon.png"]" />
-    <HeadOutlet @rendermode="InteractiveWebAssembly" />
+    <HeadOutlet @rendermode="new InteractiveWebAssemblyRenderMode(prerender: false)" />
 </head>
 
 <body>
-    <Routes @rendermode="InteractiveWebAssembly" />
+    <Routes @rendermode="new InteractiveWebAssemblyRenderMode(prerender: false)" />
     <script src="@Assets["_framework/blazor.web.js"]"></script>
 </body>
 

@@ -9,11 +9,11 @@
     <link rel="stylesheet" href="@Assets["H.LowCode.Host.All.styles.css"]" />
     <ImportMap />
     <link rel="icon" type="image/png" href="@Assets["favicon.png"]" />
-    <HeadOutlet @rendermode="InteractiveWebAssembly" />
+    <HeadOutlet @rendermode="new InteractiveWebAssemblyRenderMode(prerender: false)" />
 </head>
 
 <body>
-    <Routes @rendermode="InteractiveWebAssembly" />
+    <Routes @rendermode="new InteractiveWebAssemblyRenderMode(prerender: false)" />
     <script>
         // 定义 ABP 工具函数，避免依赖外部 JS 文件
         window.abp = window.abp || {};
