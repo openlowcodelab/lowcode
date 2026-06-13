@@ -33,18 +33,6 @@
                     <span class="tree-node-arrow spacer"></span>
                 }
 
-                @* Icon *@
-                <span class="tree-node-icon">
-                    @if (isDirectory)
-                    {
-                        @(isExpanded ? "📂" : "📁")
-                    }
-                    else
-                    {
-                        <text>📄</text>
-                    }
-                </span>
-
                 @* Title *@
                 @if (isRenaming)
                 {
@@ -268,13 +256,6 @@
 
     .tree-node-arrow.spacer {
         cursor: default;
-    }
-
-    .tree-node-icon {
-        font-size: 14px;
-        flex-shrink: 0;
-        width: 18px;
-        text-align: center;
     }
 
     .tree-node-title {

@@ -1,11 +1,11 @@
+using H.Assistant.Application.Contracts;
 using H.Assistant.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Volo.Abp;
+using Microsoft.Extensions.Logging;
 
-using H.Assistant.Application.Contracts;
 namespace H.Assistant.Application.Workers;
-using Microsoft.EntityFrameworkCore;
 
 /// <summary>
 /// 定时任务后台 Worker
@@ -23,6 +23,8 @@ public class TaskWorker : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        Console.WriteLine("ScheduledTaskWorker 已启动");
+
         while (!stoppingToken.IsCancellationRequested)
         {
             try
@@ -30,24 +32,40 @@ public class TaskWorker : BackgroundService
                 using var scope = _serviceProvider.CreateScope();
                 var taskService = scope.ServiceProvider.GetRequiredService<ITaskAppService>();
                 var dbContext = scope.ServiceProvider.GetRequiredService<AssistantDbContext>();
+                var logger = scope.ServiceProvider.GetRequiredService<ILogger<TaskWorker>>();
 
-                var now = DateTime.UtcNow;
+                var now = DateTime.Now;
 
                 // 查找待执行的任务（已启用且下次执行时间已到）
                 var tasksToExecute = await dbContext.Tasks
                     .Where(t => t.IsEnabled && t.Status == "Active" && t.NextExecutionTime <= now)
                     .ToListAsync(stoppingToken);
 
-                foreach (var task in tasksToExecute)
+                if (tasksToExecute.Count > 0)
                 {
-                    try
+                    logger.LogInformation("发现 {Count} 个待执行的定时任务", tasksToExecute.Count);
+
+                    // 先更新所有待执行任务的下次执行时间，防止重复拾取
+                    foreach (var task in tasksToExecute)
                     {
-                        await taskService.ExecuteTaskAsync(task.Id);
+                        task.NextExecutionTime = now.AddMinutes(9999); // 设置一个远将来时间，执行完成后会重新计算
                     }
-                    catch (Exception ex)
+                    await dbContext.SaveChangesAsync(stoppingToken);
+
+                    // 逐个执行任务
+                    foreach (var task in tasksToExecute)
                     {
-                        // 记录错误但不中断其他任务的执行
-                        Console.WriteLine($"执行定时任务 {task.TaskName} 失败: {ex.Message}");
+                        try
+                        {
+                            logger.LogInformation("执行定时任务: {TaskName} (Id={TaskId})", task.TaskName, task.Id);
+                            await taskService.ExecuteTaskAsync(task.Id);
+                        }
+                        catch (Exception ex)
+                        {
+                            // 记录错误但不中断其他任务的执行
+                            logger.LogError(ex, "执行定时任务 {TaskName} (Id={TaskId}) 失败: {Error}",
+                                task.TaskName, task.Id, ex.Message);
+                        }
                     }
                 }
             }

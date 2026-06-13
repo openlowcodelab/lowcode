@@ -4,7 +4,7 @@ using H.Assistant.Application.Contracts;
 using H.Assistant.Core;
 using H.Assistant.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Entities;
@@ -23,22 +23,19 @@ public class AssistantScheduledTaskAppService : ApplicationService, ITaskAppServ
     private readonly IMapper _objectMapper;
     private readonly IAsyncQueryableExecuter _asyncExecuter;
     private readonly AgentFactory _agentFactory;
-    private readonly IServiceProvider _serviceProvider;
 
     public AssistantScheduledTaskAppService(
         IRepository<TaskEntity, Guid> taskRepository,
         IRepository<TaskLogEntity, Guid> logRepository,
         IMapper objectMapper,
         IAsyncQueryableExecuter asyncExecuter,
-        AgentFactory agentFactory,
-        IServiceProvider serviceProvider)
+        AgentFactory agentFactory)
     {
         _taskRepository = taskRepository;
         _logRepository = logRepository;
         _objectMapper = objectMapper;
         _asyncExecuter = asyncExecuter;
         _agentFactory = agentFactory;
-        _serviceProvider = serviceProvider;
     }
 
     public async Task<PagedResultDto<TaskDto>> GetListAsync(TaskQueryDto input)
@@ -229,111 +226,72 @@ public class AssistantScheduledTaskAppService : ApplicationService, ITaskAppServ
 
     private async Task ExecuteTaskInternalAsync(TaskEntity task)
     {
-        var startTime = DateTime.UtcNow;
+        var startTime = DateTime.Now;
         var taskId = task.Id;
         var taskName = task.TaskName;
-        var promptContent = task.PromptContent;
-        var agentType = task.AgentType;
-        var modelConfigId = task.ModelConfigId;
-        var scheduleType = task.ScheduleType;
-        var cronExpression = task.CronExpression;
-        var hour = task.Hour;
-        var minute = task.Minute;
-        var dayOfWeek = task.DayOfWeek;
-        var dayOfMonth = task.DayOfMonth;
 
-        // 异步后台执行任务 - 在 Task.Run 内部创建新的 scope
-        _ = Task.Run(async () =>
+        Logger.LogInformation("开始执行定时任务: {TaskName} (Id={TaskId})", taskName, taskId);
+
+        try
         {
-            using var scope = _serviceProvider.CreateScope();
+            // 获取 Agent 实例
+            IAgentInstance? agent = await _agentFactory.CreateAgentAsync(task.AgentType, task.ModelConfigId);
+            
+            if (agent == null)
+            {
+                throw new InvalidOperationException($"无法创建 Agent 实例: {task.AgentType}");
+            }
+
+            // 执行 Prompt
+            var response = await agent.ProcessMessageAsync(task.PromptContent, new List<string>());
+
+            // 插入成功日志
+            await _logRepository.InsertAsync(new TaskLogEntity
+            {
+                TaskId = taskId,
+                StartTime = startTime,
+                EndTime = DateTime.Now,
+                Status = "Success",
+                Result = response
+            });
+
+            // 更新任务执行统计
+            task.LastExecutionTime = DateTime.Now;
+            task.ExecutionCount++;
+            task.NextExecutionTime = CalculateNextExecutionTime(
+                task.ScheduleType, task.CronExpression, task.Hour, task.Minute, task.DayOfWeek, task.DayOfMonth);
+
+            if (task.ScheduleType == "Once")
+            {
+                task.Status = "Completed";
+                task.IsEnabled = false;
+            }
+
+            await _taskRepository.UpdateAsync(task);
+
+            Logger.LogInformation("定时任务执行成功: {TaskName} (Id={TaskId})", taskName, taskId);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "定时任务执行失败: {TaskName} (Id={TaskId}), 错误: {Error}", taskName, taskId, ex.Message);
+
+            // 插入失败日志
             try
             {
-                var logRepository = scope.ServiceProvider.GetRequiredService<IRepository<TaskLogEntity, Guid>>();
-                var taskRepository = scope.ServiceProvider.GetRequiredService<IRepository<TaskEntity, Guid>>();
-                var agentFactory = scope.ServiceProvider.GetRequiredService<AgentFactory>();
-
-                // 获取 Agent 实例
-                IAgentInstance? agent = await agentFactory.CreateAgentAsync(agentType, modelConfigId);
-                
-                if (agent == null)
-                {
-                    throw new InvalidOperationException($"无法创建 Agent 实例: {agentType}");
-                }
-
-                // 执行 Prompt
-                var response = await agent.ProcessMessageAsync(promptContent, new List<string>());
-
-                // 插入成功日志
-                await logRepository.InsertAsync(new TaskLogEntity
+                await _logRepository.InsertAsync(new TaskLogEntity
                 {
                     TaskId = taskId,
                     StartTime = startTime,
-                    EndTime = DateTime.UtcNow,
-                    Status = "Success",
-                    Result = response
+                    EndTime = DateTime.Now,
+                    Status = "Failed",
+                    ErrorMessage = ex.Message
                 });
-
-                // 更新任务执行统计
-                var currentTask = await taskRepository.FindAsync(taskId);
-                if (currentTask != null)
-                {
-                    currentTask.LastExecutionTime = DateTime.UtcNow;
-                    currentTask.ExecutionCount++;
-                    currentTask.NextExecutionTime = CalculateNextExecutionTime(
-                        scheduleType, cronExpression, hour, minute, dayOfWeek, dayOfMonth);
-
-                    if (scheduleType == "Once")
-                    {
-                        currentTask.Status = "Completed";
-                        currentTask.IsEnabled = false;
-                    }
-
-                    await taskRepository.UpdateAsync(currentTask);
-                }
             }
-            catch (Exception ex)
+            catch (Exception logEx)
             {
-                try
-                {
-                    var logRepository = scope.ServiceProvider.GetRequiredService<IRepository<TaskLogEntity, Guid>>();
-                    // 插入失败日志
-                    await logRepository.InsertAsync(new TaskLogEntity
-                    {
-                        TaskId = taskId,
-                        StartTime = startTime,
-                        EndTime = DateTime.UtcNow,
-                        Status = "Failed",
-                        ErrorMessage = ex.Message
-                    });
-                }
-                catch
-                {
-                    // 忽略日志记录失败
-                }
+                Logger.LogError(logEx, "记录任务失败日志时出错: TaskId={TaskId}", taskId);
             }
-        });
-    }
-
-    /// <summary>
-    /// 更新任务执行统计信息
-    /// </summary>
-    private async Task UpdateTaskExecutionStatsAsync(TaskEntity task)
-    {
-        task.LastExecutionTime = DateTime.UtcNow;
-        task.ExecutionCount++;
-
-        // 计算下次执行时间
-        task.NextExecutionTime = CalculateNextExecutionTime(
-            task.ScheduleType, task.CronExpression, task.Hour, task.Minute, task.DayOfWeek, task.DayOfMonth);
-
-        // 如果是一次性任务,标记为完成
-        if (task.ScheduleType == "Once")
-        {
-            task.Status = "Completed";
-            task.IsEnabled = false;
         }
-
-        await _taskRepository.UpdateAsync(task);
     }
 
     /// <summary>
@@ -347,7 +305,7 @@ public class AssistantScheduledTaskAppService : ApplicationService, ITaskAppServ
         int? dayOfWeek,
         int? dayOfMonth)
     {
-        var now = DateTime.UtcNow;
+        var now = DateTime.Now;
 
         return scheduleType switch
         {
@@ -403,7 +361,7 @@ public class AssistantScheduledTaskAppService : ApplicationService, ITaskAppServ
             day = DateTime.DaysInMonth(now.Year, now.Month);
         }
 
-        var result = new DateTime(now.Year, now.Month, day, hour ?? 0, minute ?? 0, 0, DateTimeKind.Utc);
+        var result = new DateTime(now.Year, now.Month, day, hour ?? 0, minute ?? 0, 0, DateTimeKind.Local);
 
         if (result <= now)
         {
@@ -413,7 +371,7 @@ public class AssistantScheduledTaskAppService : ApplicationService, ITaskAppServ
             {
                 day = DateTime.DaysInMonth(result.Year, result.Month);
             }
-            result = new DateTime(result.Year, result.Month, day, hour ?? 0, minute ?? 0, 0, DateTimeKind.Utc);
+            result = new DateTime(result.Year, result.Month, day, hour ?? 0, minute ?? 0, 0, DateTimeKind.Local);
         }
 
         return result;
