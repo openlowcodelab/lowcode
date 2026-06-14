@@ -6,7 +6,6 @@
 @inject NavigationManager Navigation
 
 <div class="auth-form">
-    <h2 class="auth-title">注册 <span class="auth-title-en">/ REGISTER</span></h2>
 
     @if (!string.IsNullOrEmpty(errorMessage))
     {
@@ -39,9 +38,9 @@
                 <Input @bind-Value="@registerModel.Email" Placeholder="请输入邮箱" />
             </FormItem>
             <FormItem>
-                <Space>
-                    <Input @bind-Value="@registerModel.EmailCode" Placeholder="请输入邮箱验证码" />
-                    <Button OnClick="@SendEmailCode">发送验证码</Button>
+                <Space Style="width:100%; justify-content: space-between;">
+                    <Input @bind-Value="@registerModel.EmailCode" Placeholder="请输入邮箱验证码" Style="flex:1; max-width: calc(100% - 120px);" />
+                    <Button OnClick="@SendEmailCode" Class="btn-send-code">发送验证码</Button>
                 </Space>
             </FormItem>
         }
@@ -51,9 +50,9 @@
                 <Input @bind-Value="@registerModel.PhoneNumber" Placeholder="请输入手机号" />
             </FormItem>
             <FormItem>
-                <Space>
-                    <Input @bind-Value="@registerModel.PhoneCode" Placeholder="请输入手机验证码" />
-                    <Button OnClick="@SendPhoneCode">发送验证码</Button>
+                <Space Style="width:100%; justify-content: space-between;">
+                    <Input @bind-Value="@registerModel.PhoneCode" Placeholder="请输入手机验证码" Style="flex:1; max-width: calc(100% - 120px);" />
+                    <Button OnClick="@SendPhoneCode" Class="btn-send-code">发送验证码</Button>
                 </Space>
             </FormItem>
         }

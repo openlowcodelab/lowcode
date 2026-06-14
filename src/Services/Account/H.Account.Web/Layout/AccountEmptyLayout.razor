@@ -1,4 +1,4 @@
-﻿@namespace H.Account.Web
+@namespace H.Account.Web
 
 @inherits LayoutComponentBase
 
@@ -13,10 +13,6 @@
                 <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" style="stop-color:rgba(102,126,234,0.3)" />
                     <stop offset="100%" style="stop-color:rgba(118,75,162,0.15)" />
-                </linearGradient>
-                <linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" style="stop-color:rgba(102,126,234,0.25)" />
-                    <stop offset="100%" style="stop-color:rgba(118,75,162,0.1)" />
                 </linearGradient>
                 <linearGradient id="g3" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" style="stop-color:#667eea" />
@@ -55,8 +51,6 @@
             <circle cx="160" cy="330" r="2" fill="rgba(102,126,234,0.2)" />
             <circle cx="240" cy="330" r="2.5" fill="rgba(118,75,162,0.2)" />
         </svg>
-        <h1 class="auth-illustration-title">低代码平台</h1>
-        <p class="auth-illustration-subtitle">快速构建企业级应用，释放创造力</p>
     </div>
 
     @* Decorative blobs (subtle, full page) *@
@@ -108,21 +102,6 @@
         max-width: 360px;
         height: auto;
         opacity: 0.9;
-    }
-
-    .auth-illustration-title {
-        font-size: 34px;
-        font-weight: 700;
-        color: #2d2b55;
-        margin: 32px 0 12px 0;
-        letter-spacing: 1px;
-    }
-
-    .auth-illustration-subtitle {
-        font-size: 15px;
-        color: #6c6b8a;
-        margin: 0;
-        line-height: 1.6;
     }
 
     /* Subtle decorative blobs */
@@ -195,21 +174,6 @@
                     0 1px 4px rgba(0, 0, 0, 0.04);
     }
 
-    /* ===== Form Title ===== */
-    .auth-title {
-        font-size: 22px;
-        font-weight: 700;
-        color: #1a1a2e !important;
-        margin: 0 0 24px 0;
-    }
-
-    .auth-title-en {
-        font-size: 14px;
-        font-weight: 400;
-        color: #999;
-        margin-left: 2px;
-    }
-
     /* ===== Form Links ===== */
     .auth-form-links {
         display: flex;
@@ -227,27 +191,13 @@
         color: #999;
     }
 
+    .auth-form-links-spacer {
+        height: 20px;
+    }
+
     .auth-form-links a:hover {
         text-decoration: none;
         opacity: 0.8;
-    }
-
-    /* ===== Form Header ===== */
-    .auth-form .auth-header {
-        margin-bottom: 28px;
-    }
-
-    .auth-form .auth-header h2 {
-        font-size: 22px;
-        font-weight: 600;
-        color: #1a1a2e !important;
-        margin: 0 0 4px 0;
-    }
-
-    .auth-form .auth-header p {
-        font-size: 14px;
-        color: #8c8c8c !important;
-        margin: 0;
     }
 
     /* ===== Form Styles ===== */
@@ -298,10 +248,6 @@
         background: #fff !important;
     }
 
-    .auth-form .ant-checkbox-wrapper {
-        color: #666 !important;
-    }
-
     .auth-form .ant-radio-button-wrapper {
         background: #fff !important;
         border-color: #d9d9d9 !important;
@@ -340,18 +286,62 @@
         transform: translateY(0) !important;
     }
 
-    /* ===== Divider ===== */
-    .auth-form .ant-divider {
-        border-top-color: #f0f0f0 !important;
+    /* ===== Login Tabs ===== */
+    .login-tabs {
+        display: flex;
+        gap: 24px;
+        margin-bottom: 24px;
+        border-bottom: 1px solid #f0f0f0;
     }
 
-    .auth-form .ant-divider-inner-text {
-        color: #bbb !important;
-        font-size: 13px;
-        background: #fff !important;
+    .login-tab {
+        padding: 8px 0;
+        font-size: 15px;
+        color: #999;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: all 0.3s ease;
+        user-select: none;
     }
 
-    /* ===== Social Icon Buttons ===== */
+    .login-tab:hover {
+        color: #667eea;
+    }
+
+    .login-tab.active {
+        color: #667eea;
+        font-weight: 500;
+        border-bottom-color: #667eea;
+    }
+
+    /* ===== Send Code Button ===== */
+    .auth-form .btn-send-code {
+        height: 42px !important;
+        border-radius: 8px !important;
+        font-size: 13px !important;
+        font-weight: 500 !important;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        border: none !important;
+        color: #fff !important;
+        white-space: nowrap !important;
+        padding: 0 16px !important;
+        transition: all 0.3s ease !important;
+    }
+
+    .auth-form .btn-send-code:hover {
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.35) !important;
+    }
+
+    .auth-form .btn-send-code[disabled],
+    .auth-form .btn-send-code.ant-btn-disabled {
+        background: #d9d9d9 !important;
+        color: #999 !important;
+        box-shadow: none !important;
+        transform: none !important;
+    }
+
+    /* ===== Social Circle Buttons (plain HTML) ===== */
     .auth-social-btns {
         display: flex;
         gap: 16px;
@@ -359,28 +349,35 @@
         margin-bottom: 20px;
     }
 
-    .auth-social-btns .ant-btn {
-        width: 44px !important;
-        height: 44px !important;
-        min-width: unset !important;
-        padding: 0 !important;
-        border-radius: 50% !important;
-        background: #f5f7fa !important;
-        border: 1px solid #e8e8e8 !important;
-        color: #555 !important;
-        font-size: 20px !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        transition: all 0.3s ease !important;
+    .auth-social-btns .social-circle-btn {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: #f5f7fa;
+        border: 1px solid #e8e8e8;
+        color: #555;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        padding: 0;
+        font-size: 0;
+        text-decoration: none;
     }
 
-    .auth-social-btns .ant-btn:hover {
-        background: #667eea !important;
-        border-color: #667eea !important;
-        color: #fff !important;
+    .auth-social-btns .social-circle-btn:hover {
+        background: #667eea;
+        border-color: #667eea;
+        color: #fff;
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        text-decoration: none;
+    }
+
+    .auth-social-btns .social-circle-btn .social-svg {
+        fill: currentColor;
+        display: block;
     }
 
     /* ===== Footer Link ===== */
