@@ -5,83 +5,84 @@
 @inject IAccountAppService AccountAppService
 @inject NavigationManager Navigation
 
-<div style="max-width: 500px; margin: 50px auto;">
-    <Card Title="用户注册">
-        <Form Model="@registerModel" OnFinish="@HandleRegister" LabelColSpan="6" WrapperColSpan="18">
-            <FormItem Label="注册方式">
-                <RadioGroup @bind-Value="@registerModel.RegisterType">
-                    <RadioButton Value="RegisterType.UserName">用户名</RadioButton>
-                    <RadioButton Value="RegisterType.Email">邮箱</RadioButton>
-                    <RadioButton Value="RegisterType.PhoneNumber">手机号</RadioButton>
-                </RadioGroup>
-            </FormItem>
+<div class="auth-form">
+    <h2 class="auth-title">注册 <span class="auth-title-en">/ REGISTER</span></h2>
 
-            @if (registerModel.RegisterType == RegisterType.UserName)
-            {
-                <FormItem Label="用户名">
-                    <Input @bind-Value="@registerModel.UserName" Placeholder="请输入用户名" />
-                </FormItem>
-            }
-            else if (registerModel.RegisterType == RegisterType.Email)
-            {
-                <FormItem Label="邮箱">
-                    <Input @bind-Value="@registerModel.Email" Placeholder="请输入邮箱" />
-                </FormItem>
-                <FormItem Label="验证码">
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <Alert Type="@AlertType.Error" Message="@errorMessage" ShowIcon="true" Style="margin-bottom: 16px;" />
+    }
+
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+        <Alert Type="@AlertType.Success" Message="@successMessage" ShowIcon="true" Style="margin-bottom: 16px;" />
+    }
+
+    <Form Model="@registerModel" OnFinish="@HandleRegister">
+        <FormItem>
+            <RadioGroup @bind-Value="@registerModel.RegisterType">
+                <RadioButton Value="RegisterType.UserName">用户名</RadioButton>
+                <RadioButton Value="RegisterType.Email">邮箱</RadioButton>
+                <RadioButton Value="RegisterType.PhoneNumber">手机号</RadioButton>
+            </RadioGroup>
+        </FormItem>
+
+        @if (registerModel.RegisterType == RegisterType.UserName)
+        {
+            <FormItem>
+                <Input @bind-Value="@registerModel.UserName" Placeholder="请输入用户名" />
+            </FormItem>
+        }
+        else if (registerModel.RegisterType == RegisterType.Email)
+        {
+            <FormItem>
+                <Input @bind-Value="@registerModel.Email" Placeholder="请输入邮箱" />
+            </FormItem>
+            <FormItem>
+                <Space>
                     <Input @bind-Value="@registerModel.EmailCode" Placeholder="请输入邮箱验证码" />
                     <Button OnClick="@SendEmailCode">发送验证码</Button>
-                </FormItem>
-            }
-            else if (registerModel.RegisterType == RegisterType.PhoneNumber)
-            {
-                <FormItem Label="手机号">
-                    <Input @bind-Value="@registerModel.PhoneNumber" Placeholder="请输入手机号" />
-                </FormItem>
-                <FormItem Label="验证码">
+                </Space>
+            </FormItem>
+        }
+        else if (registerModel.RegisterType == RegisterType.PhoneNumber)
+        {
+            <FormItem>
+                <Input @bind-Value="@registerModel.PhoneNumber" Placeholder="请输入手机号" />
+            </FormItem>
+            <FormItem>
+                <Space>
                     <Input @bind-Value="@registerModel.PhoneCode" Placeholder="请输入手机验证码" />
                     <Button OnClick="@SendPhoneCode">发送验证码</Button>
-                </FormItem>
-            }
-
-            <FormItem Label="密码">
-                <InputPassword @bind-Value="@registerModel.Password" Placeholder="请输入密码" />
+                </Space>
             </FormItem>
-
-            <FormItem Label="确认密码">
-                <InputPassword @bind-Value="@registerModel.ConfirmPassword" Placeholder="请再次输入密码" />
-            </FormItem>
-
-            <FormItem WrapperColOffset="6" WrapperColSpan="18">
-                <Button Type="@ButtonType.Primary" HtmlType="submit" Block>注册</Button>
-            </FormItem>
-        </Form>
-
-        <Divider>第三方账号绑定</Divider>
-
-        <div style="text-align: center;">
-            <Alert Type="@AlertType.Info" Message="请先注册账号,然后在用户中心绑定第三方账号" Style="margin-bottom: 16px;" />
-            <Space>
-                <Button Icon="wechat" OnClick="@(() => BindExternalAccount("WeChat"))">绑定微信</Button>
-                <Button OnClick="@(() => BindExternalAccount("DingTalk"))">绑定钉钉</Button>
-            </Space>
-        </div>
-
-        <Divider />
-
-        <div style="text-align: center;">
-            已有账户？ <a href="/account/login">点击登录</a>
-        </div>
-
-        @if (!string.IsNullOrEmpty(errorMessage))
-        {
-            <Alert Type="@AlertType.Error" Message="@errorMessage" ShowIcon="true" Style="margin-top: 16px;" />
         }
 
-        @if (!string.IsNullOrEmpty(successMessage))
-        {
-            <Alert Type="@AlertType.Success" Message="@successMessage" ShowIcon="true" Style="margin-top: 16px;" />
-        }
-    </Card>
+        <FormItem>
+            <InputPassword @bind-Value="@registerModel.Password" Placeholder="请输入密码" />
+        </FormItem>
+
+        <FormItem>
+            <InputPassword @bind-Value="@registerModel.ConfirmPassword" Placeholder="请再次输入密码" />
+        </FormItem>
+
+        <FormItem Style="margin-top: 24px; margin-bottom: 20px;">
+            <Button Type="@ButtonType.Primary" HtmlType="submit" Block Class="auth-btn-primary">注 册</Button>
+        </FormItem>
+    </Form>
+
+    <div class="auth-social-btns">
+        <Button Shape="@ButtonShape.Circle" OnClick="@(() => BindExternalAccount("WeChat"))" Title="绑定微信">
+            <Icon Type="wechat" />
+        </Button>
+        <Button Shape="@ButtonShape.Circle" OnClick="@(() => BindExternalAccount("DingTalk"))" Title="绑定钉钉">
+            <Icon Type="dingding" />
+        </Button>
+    </div>
+
+    <div class="auth-footer">
+        已有账户？ <a href="/account/login">立即登录</a>
+    </div>
 </div>
 
 @code {

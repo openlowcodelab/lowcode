@@ -6,51 +6,50 @@
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
 
-<div style="max-width: 400px; margin: 50px auto;">
-    <Card Title="用户登录">
-        <Form Model="@loginModel" OnFinish="@HandleLogin" LabelColSpan="8" WrapperColSpan="16">
-            <FormItem Label="账号">
-                <Input @bind-Value="@loginModel.Account" Placeholder="请输入用户名/邮箱/手机号" />
-            </FormItem>
+<div class="auth-form">
+    <h2 class="auth-title">登录 <span class="auth-title-en">/ LOGIN</span></h2>
 
-            <FormItem Label="密码">
-                <InputPassword @bind-Value="@loginModel.Password" Placeholder="请输入密码" />
-            </FormItem>
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <Alert Type="@AlertType.Error" Message="@errorMessage" ShowIcon="true" Style="margin-bottom: 16px;" />
+    }
 
-            <FormItem WrapperColSpan="16" WrapperColOffset="8">
-                <Checkbox @bind-Checked="@loginModel.RememberMe">记住我</Checkbox>
-            </FormItem>
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+        <Alert Type="@AlertType.Success" Message="@successMessage" ShowIcon="true" Style="margin-bottom: 16px;" />
+    }
 
-            <FormItem WrapperColSpan="16" WrapperColOffset="8">
-                <Button Type="@ButtonType.Primary" OnClick="@HandleLogin" Block>登录</Button>
-            </FormItem>
-        </Form>
+    <Form Model="@loginModel" OnFinish="@HandleLogin">
+        <FormItem>
+            <Input @bind-Value="@loginModel.Account" Placeholder="请输入账号" />
+        </FormItem>
 
-        <Divider>第三方登录</Divider>
+        <FormItem>
+            <InputPassword @bind-Value="@loginModel.Password" Placeholder="请输入密码" />
+        </FormItem>
 
-        <div style="text-align: center;">
-            <Space>
-                <Button Icon="wechat" OnClick="@(() => ExternalLogin("WeChat"))">微信登录</Button>
-                <Button OnClick="@(() => ExternalLogin("DingTalk"))">钉钉登录</Button>
-            </Space>
+        <div class="auth-form-links">
+            <a href="/account/register">注册</a>
+            <a href="#">忘记密码？</a>
         </div>
 
-        <Divider />
+        <FormItem Style="margin-top: 24px; margin-bottom: 20px;">
+            <Button Type="@ButtonType.Primary" OnClick="@HandleLogin" Block Class="auth-btn-primary">登 录</Button>
+        </FormItem>
+    </Form>
 
-        <div style="text-align: center;">
-            还没有账户？ <a href="/account/register">点击注册</a>
-        </div>
+    <div class="auth-social-btns">
+        <Button Shape="@ButtonShape.Circle" OnClick="@(() => ExternalLogin("WeChat"))" Title="微信登录">
+            <Icon Type="wechat" />
+        </Button>
+        <Button Shape="@ButtonShape.Circle" OnClick="@(() => ExternalLogin("DingTalk"))" Title="钉钉登录">
+            <Icon Type="dingding" />
+        </Button>
+    </div>
 
-        @if (!string.IsNullOrEmpty(errorMessage))
-        {
-            <Alert Type="@AlertType.Error" Message="@errorMessage" ShowIcon="true" Style="margin-top: 16px;" />
-        }
-
-        @if (!string.IsNullOrEmpty(successMessage))
-        {
-            <Alert Type="@AlertType.Success" Message="@successMessage" ShowIcon="true" Style="margin-top: 16px;" />
-        }
-    </Card>
+    <div class="auth-footer">
+        还没有账户？ <a href="/account/register">立即注册</a>
+    </div>
 </div>
 
 @code {

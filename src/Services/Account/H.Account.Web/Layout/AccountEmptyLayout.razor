@@ -2,4 +2,470 @@
 
 @inherits LayoutComponentBase
 
-@Body
+<div class="auth-page">
+    @* Full-page background *@
+    <div class="auth-bg"></div>
+
+    @* Left illustration area *@
+    <div class="auth-illustration">
+        <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:rgba(102,126,234,0.3)" />
+                    <stop offset="100%" style="stop-color:rgba(118,75,162,0.15)" />
+                </linearGradient>
+                <linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:rgba(102,126,234,0.25)" />
+                    <stop offset="100%" style="stop-color:rgba(118,75,162,0.1)" />
+                </linearGradient>
+                <linearGradient id="g3" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#667eea" />
+                    <stop offset="100%" style="stop-color:#764ba2" />
+                </linearGradient>
+            </defs>
+            @* Monitor *@
+            <rect x="100" y="80" width="200" height="140" rx="12" fill="white" fill-opacity="0.6" stroke="rgba(102,126,234,0.3)" stroke-width="2" />
+            <rect x="115" y="95" width="170" height="100" rx="4" fill="rgba(240,242,245,0.8)" />
+            <rect x="170" y="220" width="60" height="12" rx="2" fill="rgba(102,126,234,0.2)" />
+            <rect x="150" y="232" width="100" height="8" rx="4" fill="rgba(102,126,234,0.15)" />
+            @* UI elements inside screen *@
+            <rect x="130" y="110" width="60" height="8" rx="4" fill="rgba(102,126,234,0.4)" />
+            <rect x="130" y="125" width="40" height="6" rx="3" fill="rgba(102,126,234,0.25)" />
+            <rect x="130" y="145" width="80" height="10" rx="5" fill="rgba(102,126,234,0.15)" />
+            <rect x="130" y="162" width="80" height="10" rx="5" fill="rgba(102,126,234,0.15)" />
+            <circle cx="250" cy="140" r="20" fill="rgba(102,126,234,0.15)" stroke="url(#g3)" stroke-width="2" />
+            <path d="M244 140 l4 4 l8-8" stroke="url(#g3)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+            @* Shield *@
+            <g transform="translate(60, 160)">
+                <path d="M25 5 L45 15 L45 30 Q45 50 25 60 Q5 50 5 30 L5 15 Z" fill="url(#g1)" stroke="rgba(102,126,234,0.4)" stroke-width="1.5" />
+                <path d="M20 32 l5 5 l10-12" stroke="url(#g3)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+            </g>
+            @* Floating circles *@
+            <circle cx="320" cy="100" r="30" fill="rgba(102,126,234,0.08)" stroke="rgba(102,126,234,0.2)" stroke-width="1" />
+            <circle cx="340" cy="200" r="18" fill="rgba(118,75,162,0.08)" stroke="rgba(118,75,162,0.15)" stroke-width="1" />
+            <circle cx="80" cy="100" r="22" fill="rgba(102,126,234,0.06)" stroke="rgba(102,126,234,0.15)" stroke-width="1" />
+            @* Connection lines *@
+            <line x1="80" y1="100" x2="100" y2="120" stroke="rgba(102,126,234,0.2)" stroke-width="1" stroke-dasharray="4 3" />
+            <line x1="320" y1="100" x2="300" y2="120" stroke="rgba(102,126,234,0.2)" stroke-width="1" stroke-dasharray="4 3" />
+            <line x1="340" y1="200" x2="300" y2="180" stroke="rgba(102,126,234,0.2)" stroke-width="1" stroke-dasharray="4 3" />
+            @* Dots *@
+            <circle cx="180" cy="310" r="3" fill="rgba(102,126,234,0.35)" />
+            <circle cx="200" cy="320" r="2" fill="rgba(118,75,162,0.25)" />
+            <circle cx="220" cy="305" r="3.5" fill="rgba(102,126,234,0.3)" />
+            <circle cx="160" cy="330" r="2" fill="rgba(102,126,234,0.2)" />
+            <circle cx="240" cy="330" r="2.5" fill="rgba(118,75,162,0.2)" />
+        </svg>
+        <h1 class="auth-illustration-title">低代码平台</h1>
+        <p class="auth-illustration-subtitle">快速构建企业级应用，释放创造力</p>
+    </div>
+
+    @* Decorative blobs (subtle, full page) *@
+    <div class="auth-decor">
+        <span class="blob blob-1"></span>
+        <span class="blob blob-2"></span>
+        <span class="blob blob-3"></span>
+    </div>
+
+    @* Right form area *@
+    <div class="auth-content">
+        @Body
+    </div>
+</div>
+
+<style>
+    /* ===== Full-Page Auth Layout ===== */
+    .auth-page {
+        min-height: 100vh;
+        position: relative;
+        display: flex;
+        align-items: center;
+        overflow: hidden;
+    }
+
+    /* Full-page background */
+    .auth-bg {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        background: linear-gradient(135deg, #dce2f8 0%, #e4e0f5 20%, #edf0f9 40%, #f5f7fc 60%, #fafbfe 100%);
+    }
+
+    /* Left illustration */
+    .auth-illustration {
+        position: relative;
+        z-index: 1;
+        flex: 0 0 50%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 60px 40px;
+        text-align: center;
+    }
+
+    .auth-illustration svg {
+        width: 100%;
+        max-width: 360px;
+        height: auto;
+        opacity: 0.9;
+    }
+
+    .auth-illustration-title {
+        font-size: 34px;
+        font-weight: 700;
+        color: #2d2b55;
+        margin: 32px 0 12px 0;
+        letter-spacing: 1px;
+    }
+
+    .auth-illustration-subtitle {
+        font-size: 15px;
+        color: #6c6b8a;
+        margin: 0;
+        line-height: 1.6;
+    }
+
+    /* Subtle decorative blobs */
+    .auth-decor {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        overflow: hidden;
+    }
+
+    .auth-decor .blob {
+        position: absolute;
+        border-radius: 50%;
+        opacity: 0.08;
+        animation: authBlob 20s infinite ease-in-out;
+    }
+
+    .auth-decor .blob-1 {
+        width: 400px;
+        height: 400px;
+        background: #667eea;
+        top: -120px;
+        left: 10%;
+    }
+
+    .auth-decor .blob-2 {
+        width: 300px;
+        height: 300px;
+        background: #764ba2;
+        bottom: -80px;
+        left: 30%;
+        animation-delay: -7s;
+    }
+
+    .auth-decor .blob-3 {
+        width: 200px;
+        height: 200px;
+        background: #a78bfa;
+        top: 40%;
+        right: -60px;
+        animation-delay: -14s;
+    }
+
+    @@keyframes authBlob {
+        0%, 100% { transform: translateY(0) scale(1); }
+        33% { transform: translateY(-15px) scale(1.03); }
+        66% { transform: translateY(8px) scale(0.97); }
+    }
+
+    /* Right content area */
+    .auth-content {
+        position: relative;
+        z-index: 2;
+        flex: 0 0 440px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 80px;
+    }
+
+    .auth-content > .auth-form,
+    .auth-content > .auth-card {
+        width: 100%;
+        max-width: 400px;
+        background: #fff;
+        border-radius: 16px;
+        padding: 40px 36px;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06),
+                    0 1px 4px rgba(0, 0, 0, 0.04);
+    }
+
+    /* ===== Form Title ===== */
+    .auth-title {
+        font-size: 22px;
+        font-weight: 700;
+        color: #1a1a2e !important;
+        margin: 0 0 24px 0;
+    }
+
+    .auth-title-en {
+        font-size: 14px;
+        font-weight: 400;
+        color: #999;
+        margin-left: 2px;
+    }
+
+    /* ===== Form Links ===== */
+    .auth-form-links {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 4px 0 0 0;
+    }
+
+    .auth-form-links a {
+        font-size: 13px;
+        color: #667eea;
+    }
+
+    .auth-form-links a:last-child {
+        color: #999;
+    }
+
+    .auth-form-links a:hover {
+        text-decoration: none;
+        opacity: 0.8;
+    }
+
+    /* ===== Form Header ===== */
+    .auth-form .auth-header {
+        margin-bottom: 28px;
+    }
+
+    .auth-form .auth-header h2 {
+        font-size: 22px;
+        font-weight: 600;
+        color: #1a1a2e !important;
+        margin: 0 0 4px 0;
+    }
+
+    .auth-form .auth-header p {
+        font-size: 14px;
+        color: #8c8c8c !important;
+        margin: 0;
+    }
+
+    /* ===== Form Styles ===== */
+    .auth-form .ant-form-item-label > label {
+        color: #333 !important;
+        font-weight: 500;
+    }
+
+    .auth-form .ant-input {
+        background: #fff !important;
+        border: 1px solid #d9d9d9 !important;
+        color: #333 !important;
+        border-radius: 8px !important;
+        height: 42px;
+    }
+
+    .auth-form .ant-input::placeholder {
+        color: #bbb !important;
+    }
+
+    .auth-form .ant-input:focus,
+    .auth-form .ant-input-focused {
+        border-color: #667eea !important;
+        box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.12) !important;
+        background: #fff !important;
+    }
+
+    .auth-form .ant-input-password {
+        background: #fff !important;
+        border: 1px solid #d9d9d9 !important;
+        border-radius: 8px !important;
+        height: 42px;
+    }
+
+    .auth-form .ant-input-password .ant-input {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    .auth-form .ant-input-password .ant-input-suffix .anticon {
+        color: #999 !important;
+    }
+
+    .auth-form .ant-input-password:focus-within {
+        border-color: #667eea !important;
+        box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.12) !important;
+        background: #fff !important;
+    }
+
+    .auth-form .ant-checkbox-wrapper {
+        color: #666 !important;
+    }
+
+    .auth-form .ant-radio-button-wrapper {
+        background: #fff !important;
+        border-color: #d9d9d9 !important;
+        color: #666 !important;
+    }
+
+    .auth-form .ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled) {
+        background: rgba(102, 126, 234, 0.08) !important;
+        border-color: #667eea !important;
+        color: #667eea !important;
+    }
+
+    .auth-form .ant-radio-button-wrapper:not(.ant-radio-button-wrapper-disabled):hover {
+        color: #667eea !important;
+    }
+
+    /* ===== Primary Button ===== */
+    .auth-btn-primary {
+        height: 44px !important;
+        border-radius: 8px !important;
+        font-size: 15px !important;
+        font-weight: 500 !important;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        border: none !important;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3) !important;
+        transition: all 0.3s ease !important;
+        color: #fff !important;
+    }
+
+    .auth-btn-primary:hover {
+        transform: translateY(-1px) !important;
+        box-shadow: 0 6px 18px rgba(102, 126, 234, 0.45) !important;
+    }
+
+    .auth-btn-primary:active {
+        transform: translateY(0) !important;
+    }
+
+    /* ===== Divider ===== */
+    .auth-form .ant-divider {
+        border-top-color: #f0f0f0 !important;
+    }
+
+    .auth-form .ant-divider-inner-text {
+        color: #bbb !important;
+        font-size: 13px;
+        background: #fff !important;
+    }
+
+    /* ===== Social Icon Buttons ===== */
+    .auth-social-btns {
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+        margin-bottom: 20px;
+    }
+
+    .auth-social-btns .ant-btn {
+        width: 44px !important;
+        height: 44px !important;
+        min-width: unset !important;
+        padding: 0 !important;
+        border-radius: 50% !important;
+        background: #f5f7fa !important;
+        border: 1px solid #e8e8e8 !important;
+        color: #555 !important;
+        font-size: 20px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        transition: all 0.3s ease !important;
+    }
+
+    .auth-social-btns .ant-btn:hover {
+        background: #667eea !important;
+        border-color: #667eea !important;
+        color: #fff !important;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    /* ===== Footer Link ===== */
+    .auth-footer {
+        text-align: center;
+        color: #8c8c8c;
+        font-size: 14px;
+    }
+
+    .auth-footer a {
+        color: #667eea !important;
+        font-weight: 500;
+    }
+
+    .auth-footer a:hover {
+        color: #764ba2 !important;
+        text-decoration: none;
+    }
+
+    /* ===== Alert Overrides ===== */
+    .auth-form .ant-alert,
+    .auth-card .ant-alert {
+        border-radius: 8px !important;
+    }
+
+    /* ===== Auth Card (callback page) ===== */
+    .auth-card .auth-header {
+        text-align: center;
+        margin-bottom: 32px;
+    }
+
+    .auth-card .auth-header .auth-logo {
+        width: 52px;
+        height: 52px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border-radius: 14px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 16px;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .auth-card .auth-header .auth-logo .anticon {
+        font-size: 26px;
+        color: #fff;
+    }
+
+    .auth-card .auth-header h2 {
+        font-size: 24px;
+        font-weight: 600;
+        color: #1a1a2e !important;
+        margin: 0 0 6px 0;
+    }
+
+    .auth-card .auth-header p {
+        font-size: 14px;
+        color: #8c8c8c !important;
+        margin: 0;
+    }
+
+    .auth-card .ant-spin-text {
+        color: #666 !important;
+    }
+
+    /* ===== Responsive ===== */
+    @@media (max-width: 992px) {
+        .auth-illustration {
+            display: none;
+        }
+        .auth-content {
+            flex: 1;
+            margin-right: 0;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+    }
+
+    @@media (max-width: 480px) {
+        .auth-content {
+            padding: 24px 16px;
+        }
+        .auth-content > .auth-form,
+        .auth-content > .auth-card {
+            padding: 28px 20px;
+        }
+    }
+</style>

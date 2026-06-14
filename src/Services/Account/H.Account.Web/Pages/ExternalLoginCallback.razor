@@ -1,23 +1,35 @@
 @page "/account/external-callback"
 @attribute [AllowAnonymous]
+@layout AccountEmptyLayout
 @inject NavigationManager Navigation
 
-<div style="text-align: center; margin-top: 100px;">
+<div class="auth-card">
+    <div class="auth-header">
+        <div class="auth-logo">
+            <Icon Type="safety-certificate" />
+        </div>
+        <h2>第三方登录</h2>
+        <p>正在处理您的登录请求</p>
+    </div>
+
     @if (!string.IsNullOrEmpty(_errorMessage))
     {
-        <div style="max-width: 400px; margin: 0 auto;">
-            <Alert Type="@AlertType.Error" Message="@_errorMessage" ShowIcon="true" />
-            <br />
-            <Button Type="@ButtonType.Primary" OnClick="@ReturnToLogin">返回登录</Button>
+        <Alert Type="@AlertType.Error" Message="@_errorMessage" ShowIcon="true" Style="margin-bottom: 20px;" />
+        <div style="text-align: center;">
+            <Button Type="@ButtonType.Primary" OnClick="@ReturnToLogin" Class="auth-btn-primary">返回登录</Button>
         </div>
     }
     else if (_isLoading)
     {
-        <Spin Tip="正在处理第三方登录..." />
+        <div style="text-align: center; padding: 20px 0;">
+            <Spin Tip="正在处理第三方登录..." />
+        </div>
     }
     else
     {
-        <Spin Tip="正在跳转..." />
+        <div style="text-align: center; padding: 20px 0;">
+            <Spin Tip="正在跳转..." />
+        </div>
     }
 </div>
 
