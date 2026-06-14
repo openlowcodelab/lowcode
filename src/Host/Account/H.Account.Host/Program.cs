@@ -41,6 +41,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
 
+app.MapControllers();
+
 // 认证检查端点（供 InteractiveWebAssembly 客户端验证 Cookie 登录态，注册在 Blazor 路由之前）
 app.MapGet("/api/app/account/current-user", async (HttpContext httpContext, IdentityUserManager userManager) =>
 {

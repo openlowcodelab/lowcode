@@ -1,34 +1,59 @@
 @page "/account/external-callback"
 @attribute [AllowAnonymous]
-@inject IAccountAppService AuthService
 @inject NavigationManager Navigation
 
 <div style="text-align: center; margin-top: 100px;">
-    <Spin Tip="正在处理第三方登录..." />
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div style="max-width: 400px; margin: 0 auto;">
+            <Alert Type="@AlertType.Error" Message="@_errorMessage" ShowIcon="true" />
+            <br />
+            <Button Type="@ButtonType.Primary" OnClick="@ReturnToLogin">返回登录</Button>
+        </div>
+    }
+    else if (_isLoading)
+    {
+        <Spin Tip="正在处理第三方登录..." />
+    }
+    else
+    {
+        <Spin Tip="正在跳转..." />
+    }
 </div>
 
 @code {
-    protected override async Task OnInitializedAsync()
+    private string? _errorMessage;
+    private bool _isLoading = true;
+
+    protected override void OnInitialized()
     {
         var uri = new Uri(Navigation.Uri);
         var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
-        
-        var token = query["token"];
+
         var error = query["error"];
-        
+        var success = query["success"];
+
         if (!string.IsNullOrEmpty(error))
         {
-            Navigation.NavigateTo($"/account/login?error={Uri.EscapeDataString(error)}");
+            _errorMessage = error;
+            _isLoading = false;
             return;
         }
-        
-        if (!string.IsNullOrEmpty(token))
+
+        if (success == "true")
         {
-            Navigation.NavigateTo($"/?token={Uri.EscapeDataString(token)}");
+            // Cookie 已由 Controller 写入，需要 forceLoad 让 Blazor 重新加载以读取新的认证状态
+            Navigation.NavigateTo("/", forceLoad: true);
+            return;
         }
-        else
-        {
-            Navigation.NavigateTo("/account/login?error=external_login_failed");
-        }
+
+        // 未知状态，返回登录
+        _errorMessage = "外部登录未完成";
+        _isLoading = false;
+    }
+
+    private void ReturnToLogin()
+    {
+        Navigation.NavigateTo("/account/login");
     }
 }

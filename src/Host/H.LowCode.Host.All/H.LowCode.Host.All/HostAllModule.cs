@@ -14,6 +14,7 @@ using H.Portal.Application;
 using H.SystemManagement.Application;
 using H.YunXiaoMcpServer;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.Extensions.Options;
 using Volo.Abp.AspNetCore.Mvc;
 using Volo.Abp.Autofac;
 using Volo.Abp.Modularity;
@@ -65,6 +66,9 @@ public class HostAllModule : AbpModule
         // 配置 Cookie 认证
         ConfigureAuthentication(context);
 
+        // 配置外部登录
+        ConfigureExternalLogin(context);
+
         // 注册 AntDesign 服务
         context.Services.AddAntDesign();
 
@@ -102,5 +106,18 @@ public class HostAllModule : AbpModule
             options.ConventionalControllers.Create(typeof(PortalApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(SystemManagementApplicationModule).Assembly);
         });
+    }
+
+    private void ConfigureExternalLogin(ServiceConfigurationContext context)
+    {
+        var configuration = context.Services.GetConfiguration();
+
+        // 绑定外部登录配置
+        context.Services.Configure<ExternalLoginOptions>(
+            configuration.GetSection("ExternalLogin"));
+
+        // 注册外部登录服务
+        context.Services.AddTransient<WeChatAuthService>();
+        context.Services.AddTransient<DingTalkAuthService>();
     }
 }

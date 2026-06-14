@@ -1,12 +1,13 @@
 using H.Account.Application;
+using H.Account.Application.Contracts;
 using H.Account.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.Extensions.Options;
 using Volo.Abp.AspNetCore.Mvc;
 using Volo.Abp.Autofac;
 using Volo.Abp.Modularity;
@@ -64,52 +65,13 @@ public class AccountHostModule : AbpModule
     private void ConfigureExternalLogin(ServiceConfigurationContext context)
     {
         var configuration = context.Services.GetConfiguration();
-        
-        context.Services.AddAuthentication()
-            .AddOAuth("WeChat", options =>
-            {
-                options.ClientId = configuration["ExternalLogin:WeChat:ClientId"] ?? "";
-                options.ClientSecret = configuration["ExternalLogin:WeChat:ClientSecret"] ?? "";
-                options.CallbackPath = new PathString(configuration["ExternalLogin:WeChat:CallbackPath"] ?? "/signin-wechat");
-                options.AuthorizationEndpoint = "https://open.weixin.qq.com/connect/oauth2/authorize";
-                options.TokenEndpoint = "https://api.weixin.qq.com/sns/oauth2/access_token";
-                options.UserInformationEndpoint = "https://api.weixin.qq.com/sns/userinfo";
-                
-                options.ClaimActions.MapJsonKey(ClaimTypes.NameIdentifier, "openid");
-                options.ClaimActions.MapJsonKey(ClaimTypes.Name, "nickname");
-                options.ClaimActions.MapJsonKey("urn:wechat:headimgurl", "headimgurl");
-                
-                options.SaveTokens = true;
-                
-                options.Events = new OAuthEvents
-                {
-                    OnCreatingTicket = async context =>
-                    {
-                        var request = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);
-                        request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", context.AccessToken);
-                        
-                        var response = await context.Backchannel.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, context.HttpContext.RequestAborted);
-                        response.EnsureSuccessStatusCode();
-                        
-                        var user = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-                        context.RunClaimActions(user.RootElement);
-                    }
-                };
-            })
-            .AddOAuth("DingTalk", options =>
-            {
-                options.ClientId = configuration["ExternalLogin:DingTalk:ClientId"] ?? "";
-                options.ClientSecret = configuration["ExternalLogin:DingTalk:ClientSecret"] ?? "";
-                options.CallbackPath = new PathString(configuration["ExternalLogin:DingTalk:CallbackPath"] ?? "/signin-dingtalk");
-                options.AuthorizationEndpoint = "https://oapi.dingtalk.com/connect/oauth2/sns_authorize";
-                options.TokenEndpoint = "https://oapi.dingtalk.com/sns/get_persistent_code";
-                options.UserInformationEndpoint = "https://oapi.dingtalk.com/sns/getuserinfo_bycode";
-                
-                options.ClaimActions.MapJsonKey(ClaimTypes.NameIdentifier, "openid");
-                options.ClaimActions.MapJsonKey(ClaimTypes.Name, "nick");
-                options.ClaimActions.MapJsonKey("urn:dingtalk:unionid", "unionid");
-                
-                options.SaveTokens = true;
-            });
+
+        // 绑定外部登录配置
+        context.Services.Configure<ExternalLoginOptions>(
+            configuration.GetSection("ExternalLogin"));
+
+        // 注册外部登录服务
+        context.Services.AddTransient<WeChatAuthService>();
+        context.Services.AddTransient<DingTalkAuthService>();
     }
 }

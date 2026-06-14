@@ -63,10 +63,17 @@
     {
         loginModel ??= new LoginRequestDto();
         
-        // 读取returnUrl参数
+        // 读取查询参数
         var uri = new Uri(Navigation.Uri);
         var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
         returnUrl = query["returnUrl"] ?? "/";
+        
+        // 读取外部登录回调的错误信息
+        var error = query["error"];
+        if (!string.IsNullOrEmpty(error))
+        {
+            errorMessage = error;
+        }
     }
 
     private async Task HandleLogin()
@@ -108,9 +115,11 @@
         }
     }
 
-    private async Task ExternalLogin(string provider)
+    private void ExternalLogin(string provider)
     {
         var returnUrl = Navigation.ToAbsoluteUri("/account/external-callback");
-        Navigation.NavigateTo($"/api/account/external-login?provider={provider}&returnUrl={Uri.EscapeDataString(returnUrl.ToString())}");
+        Navigation.NavigateTo(
+            $"/api/external-login/challenge?provider={provider}&returnUrl={Uri.EscapeDataString(returnUrl.ToString())}",
+            forceLoad: true);
     }
 }
