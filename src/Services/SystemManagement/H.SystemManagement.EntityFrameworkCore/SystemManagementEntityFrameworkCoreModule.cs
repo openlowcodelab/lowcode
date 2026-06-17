@@ -24,10 +24,9 @@ public class SystemManagementEntityFrameworkCoreModule : AbpModule
             options.UseSqlServer();
         });
         
-        // 配置默认数据库连接字符串
         Configure<AbpDbConnectionOptions>(options =>
         {
-            options.ConnectionStrings.Default = connectionString;
+            options.ConnectionStrings["SystemManagementDb"] = connectionString;
         });
     }
 }

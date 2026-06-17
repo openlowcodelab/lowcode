@@ -3,6 +3,7 @@ using Volo.Abp.Data;
 using Volo.Abp.EntityFrameworkCore;
 using Volo.Abp.Identity;
 using Volo.Abp.Identity.EntityFrameworkCore;
+using Volo.Abp.SettingManagement.EntityFrameworkCore;
 
 namespace H.Account.EntityFrameworkCore;
 
@@ -25,5 +26,8 @@ public class AccountDbContext : AbpDbContext<AccountDbContext>
         
         // 配置 Identity 实体
         modelBuilder.ConfigureIdentity();
+        
+        // 配置 SettingManagement 实体
+        modelBuilder.ConfigureSettingManagement();
     }
 }

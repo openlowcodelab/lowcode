@@ -30,10 +30,10 @@ public class AccountEntityFrameworkCoreModule : AbpModule
             options.UseSqlServer();
         });
         
-        // 配置默认数据库连接字符串
         Configure<AbpDbConnectionOptions>(options =>
         {
-            options.ConnectionStrings.Default = connectionString;
+            options.ConnectionStrings["AccountDb"] = connectionString;
+            options.ConnectionStrings["AbpIdentity"] = connectionString;
             options.ConnectionStrings["AbpSettingManagement"] = connectionString;
         });
     }
