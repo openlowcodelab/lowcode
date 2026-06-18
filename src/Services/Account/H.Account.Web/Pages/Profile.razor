@@ -115,12 +115,8 @@
             if (string.IsNullOrEmpty(content) || content == "null")
                 return;
 
-            // 尝试反序列化为 UserDto
-            var options = new System.Text.Json.JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            };
-            user = System.Text.Json.JsonSerializer.Deserialize<UserDto>(content, options);
+            // 尝试反序列化为 UserDto            
+            user = content.FromJson<UserDto>();
         }
         catch (Exception ex)
         {

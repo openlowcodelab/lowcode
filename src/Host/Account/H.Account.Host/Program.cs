@@ -40,9 +40,6 @@ app.UseAntiforgery();
 
 app.MapControllers();
 
-// current-user 端点已由 ABP 约定控制器自动生成（AccountAppService.GetCurrentUserAsync）
-// 路由: GET /api/app/account/current-user，返回 UserDto?（已登录返回用户信息，未登录返回 null）
-
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()

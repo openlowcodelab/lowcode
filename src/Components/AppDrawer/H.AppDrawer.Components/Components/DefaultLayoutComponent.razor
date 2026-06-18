@@ -61,12 +61,6 @@
     public string LoginUrl { get; set; } = "/account/login";
 
     /// <summary>
-    /// 退出登录回调（由外部处理）
-    /// </summary>
-    [Parameter]
-    public EventCallback OnLogout { get; set; }
-
-    /// <summary>
     /// 认证模式（None=不检测，Optional=检测但允许匿名，Required=强制登录）
     /// </summary>
     [Parameter]
@@ -93,11 +87,8 @@
         if (AuthMode == AuthenticationMode.None)
             return;
 
-        Console.WriteLine($"[DefaultLayout] OnInitializedAsync: AuthMode={AuthMode}, IsBrowser={OperatingSystem.IsBrowser()}");
-
         // 服务端预渲染：通过 HttpContext 快速验证
         bool isAuthenticated = IsAuthenticatedViaHttpContext();
-        Console.WriteLine($"[DefaultLayout] HttpContext auth: {isAuthenticated}");
 
         if (!isAuthenticated && OperatingSystem.IsBrowser())
         {
@@ -193,18 +184,10 @@
     }
 
     /// <summary>
-    /// 处理退出登录（默认实现，可被外部覆盖）
+    /// 处理退出登录
     /// </summary>
     private async Task HandleLogout()
     {
-        if (OnLogout.HasDelegate)
-        {
-            await OnLogout.InvokeAsync();
-        }
-        else
-        {
-            // 默认行为：跳转到账户登出端点
-            NavigationManager.NavigateTo("/account/logout", forceLoad: true);
-        }
+        NavigationManager.NavigateTo("/account/logout", forceLoad: true);
     }
 }
