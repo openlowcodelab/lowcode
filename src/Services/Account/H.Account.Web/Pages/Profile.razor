@@ -1,0 +1,190 @@
+@page "/account/profile"
+
+@layout AccountLayout
+@inject HttpClient HttpClient
+@inject IUserAppService UserService
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<PageTitle>账号信息</PageTitle>
+
+<Card Title="账号信息">
+    <Spin Spinning="@isLoading">
+        @if (user != null)
+        {
+            <Descriptions Column="2" Bordered>
+                <DescriptionsItem Label="用户名">@user.UserName</DescriptionsItem>
+                <DescriptionsItem Label="邮箱">
+                    @user.Email
+                    @if (user.EmailConfirmed)
+                    {
+                        <Tag Color="TagColor.Green" Style="margin-left: 8px;">已验证</Tag>
+                    }
+                    else
+                    {
+                        <Tag Color="default" Style="margin-left: 8px;">未验证</Tag>
+                    }
+                </DescriptionsItem>
+                <DescriptionsItem Label="手机号">
+                    @(string.IsNullOrEmpty(user.PhoneNumber) ? "-" : user.PhoneNumber)
+                    @if (!string.IsNullOrEmpty(user.PhoneNumber) && user.PhoneNumberConfirmed)
+                    {
+                        <Tag Color="TagColor.Green" Style="margin-left: 8px;">已验证</Tag>
+                    }
+                    else if (!string.IsNullOrEmpty(user.PhoneNumber))
+                    {
+                        <Tag Color="default" Style="margin-left: 8px;">未验证</Tag>
+                    }
+                </DescriptionsItem>
+                <DescriptionsItem Label="用户类型">@GetUserTypeText(user.UserType)</DescriptionsItem>
+                <DescriptionsItem Label="状态">
+                    <Tag Color="@(user.IsActive ? "green" : "red")">
+                        @(user.IsActive ? "正常" : "禁用")
+                    </Tag>
+                </DescriptionsItem>
+                <DescriptionsItem Label="注册时间">@user.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")</DescriptionsItem>
+                <DescriptionsItem Label="最后登录">@(user.LastLoginAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? "-")</DescriptionsItem>
+                <DescriptionsItem Label="备注" Span="2">@(string.IsNullOrEmpty(user.Remark) ? "-" : user.Remark)</DescriptionsItem>
+            </Descriptions>
+
+            <Divider>修改密码</Divider>
+
+            @if (!string.IsNullOrEmpty(passwordMessage))
+            {
+                <Alert Type="@(passwordSuccess ? AlertType.Success : AlertType.Error)" Message="@passwordMessage" ShowIcon="true" Style="margin-bottom: 16px;" />
+            }
+
+            <Form Model="@changePasswordModel" OnFinish="@HandleChangePassword" LabelColSpan="6" WrapperColSpan="18" Style="max-width: 480px;">
+                <FormItem Label="新密码" Required>
+                    <InputPassword @bind-Value="@changePasswordModel.NewPassword" Placeholder="请输入新密码" />
+                </FormItem>
+                <FormItem Label="确认密码" Required>
+                    <InputPassword @bind-Value="@changePasswordModel.ConfirmPassword" Placeholder="请再次输入新密码" />
+                </FormItem>
+                <FormItem WrapperColOffset="6">
+                    <Button Type="@ButtonType.Primary" HtmlType="submit" Loading="@isChangingPassword">修改密码</Button>
+                </FormItem>
+            </Form>
+
+            <Divider>绑定的第三方账号</Divider>
+
+            @if (user.ExternalAccounts.Any())
+            {
+                <Table DataSource="@user.ExternalAccounts" TItem="ExternalAccountDto" PageSize="10" Pagination="false">
+                    <Column @bind-Field="@context.Provider" Title="平台" />
+                    <Column @bind-Field="@context.DisplayName" Title="显示名称" />
+                    <Column @bind-Field="@context.BoundAt" Title="绑定时间" Format="yyyy-MM-dd HH:mm" />
+                </Table>
+            }
+            else
+            {
+                <Empty Description="@("暂无绑定的第三方账号")" />
+            }
+        }
+        else if (!isLoading)
+        {
+            <Alert Type="@AlertType.Error" Message="无法获取用户信息，请重新登录" />
+        }
+    </Spin>
+</Card>
+
+@code {
+    private UserDto? user;
+    private bool isLoading = true;
+    private bool isChangingPassword = false;
+    private ResetPasswordDto changePasswordModel = new();
+    private string passwordMessage = "";
+    private bool passwordSuccess;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCurrentUser();
+    }
+
+    private async Task LoadCurrentUser()
+    {
+        isLoading = true;
+        try
+        {
+            // 通过 API 获取当前登录用户（ABP 端点返回 UserDto?，未登录返回 null）
+            var response = await HttpClient.GetAsync("/api/app/account/current-user");
+            if (!response.IsSuccessStatusCode)
+                return;
+
+            var content = await response.Content.ReadAsStringAsync();
+            if (string.IsNullOrEmpty(content) || content == "null")
+                return;
+
+            // 尝试反序列化为 UserDto
+            var options = new System.Text.Json.JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+            user = System.Text.Json.JsonSerializer.Deserialize<UserDto>(content, options);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Profile] LoadCurrentUser error: {ex.Message}");
+            passwordMessage = $"加载用户信息失败：{ex.Message}";
+            passwordSuccess = false;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleChangePassword()
+    {
+        if (user == null) return;
+
+        if (string.IsNullOrWhiteSpace(changePasswordModel.NewPassword))
+        {
+            passwordMessage = "请输入新密码";
+            passwordSuccess = false;
+            return;
+        }
+
+        if (changePasswordModel.NewPassword != changePasswordModel.ConfirmPassword)
+        {
+            passwordMessage = "两次输入的密码不一致";
+            passwordSuccess = false;
+            return;
+        }
+
+        isChangingPassword = true;
+        passwordMessage = "";
+
+        try
+        {
+            await UserService.ResetPasswordAsync(user.Id, changePasswordModel);
+            passwordMessage = "密码修改成功";
+            passwordSuccess = true;
+            changePasswordModel = new ResetPasswordDto();
+        }
+        catch (ArgumentException ex)
+        {
+            passwordMessage = ex.Message;
+            passwordSuccess = false;
+        }
+        catch (Exception ex)
+        {
+            passwordMessage = $"修改密码失败：{ex.Message}";
+            passwordSuccess = false;
+        }
+        finally
+        {
+            isChangingPassword = false;
+        }
+    }
+
+    private string GetUserTypeText(UserType type)
+    {
+        return type switch
+        {
+            UserType.SuperAdmin => "超级管理员",
+            UserType.Admin => "管理员",
+            _ => "普通用户"
+        };
+    }
+}

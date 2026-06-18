@@ -1,8 +1,5 @@
 using H.Account.Host.Components;
 using H.Account.Host;
-using System.Security.Claims;
-using Volo.Abp.Identity;
-using IdentityUser = Volo.Abp.Identity.IdentityUser;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -43,22 +40,8 @@ app.UseAntiforgery();
 
 app.MapControllers();
 
-// 认证检查端点（供 InteractiveWebAssembly 客户端验证 Cookie 登录态，注册在 Blazor 路由之前）
-app.MapGet("/api/app/account/current-user", async (HttpContext httpContext, IdentityUserManager userManager) =>
-{
-    if (httpContext.User?.Identity?.IsAuthenticated != true)
-        return Results.Ok(new { isAuthenticated = false });
-
-    var userIdClaim = httpContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-    if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
-        return Results.Ok(new { isAuthenticated = false });
-
-    var user = await userManager.FindByIdAsync(userId.ToString());
-    if (user == null)
-        return Results.Ok(new { isAuthenticated = false });
-
-    return Results.Ok(new { isAuthenticated = true, id = user.Id, userName = user.UserName, email = user.Email, phoneNumber = user.PhoneNumber, isActive = user.IsActive });
-});
+// current-user 端点已由 ABP 约定控制器自动生成（AccountAppService.GetCurrentUserAsync）
+// 路由: GET /api/app/account/current-user，返回 UserDto?（已登录返回用户信息，未登录返回 null）
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()

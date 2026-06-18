@@ -10,8 +10,8 @@
     <TopNavbar 
         AppName="@AppName" 
         OnDrawerToggle="ToggleAppDrawer"
-        UserName="@(RequireAuthentication ? _userName : UserName)"
-        IsLoggedIn="@(RequireAuthentication ? _isLoggedIn : IsLoggedIn)"
+        UserName="@_userName"
+        IsLoggedIn="@_isLoggedIn"
         LoginUrl="@LoginUrl"
         ProfileUrl="/account/profile"
         OnLogout="HandleLogout">
@@ -67,22 +67,10 @@
     public EventCallback OnLogout { get; set; }
 
     /// <summary>
-    /// 是否需要认证（默认 false，开启后组件内部处理登录态校验与跳转）
+    /// 认证模式（None=不检测，Optional=检测但允许匿名，Required=强制登录）
     /// </summary>
     [Parameter]
-    public bool RequireAuthentication { get; set; }
-
-    /// <summary>
-    /// 用户名（RequireAuthentication=false 时由外部传入）
-    /// </summary>
-    [Parameter]
-    public string UserName { get; set; } = "用户";
-
-    /// <summary>
-    /// 是否已登录（RequireAuthentication=false 时由外部传入）
-    /// </summary>
-    [Parameter]
-    public bool IsLoggedIn { get; set; }
+    public AuthenticationMode AuthMode { get; set; } = AuthenticationMode.Required;
 
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
@@ -102,16 +90,20 @@
 
     protected override async Task OnInitializedAsync()
     {
-        if (!RequireAuthentication)
+        if (AuthMode == AuthenticationMode.None)
             return;
+
+        Console.WriteLine($"[DefaultLayout] OnInitializedAsync: AuthMode={AuthMode}, IsBrowser={OperatingSystem.IsBrowser()}");
 
         // 服务端预渲染：通过 HttpContext 快速验证
         bool isAuthenticated = IsAuthenticatedViaHttpContext();
+        Console.WriteLine($"[DefaultLayout] HttpContext auth: {isAuthenticated}");
 
         if (!isAuthenticated && OperatingSystem.IsBrowser())
         {
             // WASM 环境：通过 API 验证 Cookie 认证状态
             var result = await CheckAuthViaApiAsync();
+            Console.WriteLine($"[DefaultLayout] API auth: authenticated={result.authenticated}, userName={result.userName}");
             isAuthenticated = result.authenticated;
             if (!string.IsNullOrEmpty(result.userName))
             {
@@ -130,8 +122,10 @@
         }
 
         _isLoggedIn = isAuthenticated;
+        Console.WriteLine($"[DefaultLayout] Final: _isLoggedIn={_isLoggedIn}, _userName={_userName}");
 
-        if (!isAuthenticated)
+        // 强制认证模式下，未登录跳转登录页
+        if (AuthMode == AuthenticationMode.Required && !isAuthenticated)
         {
             var returnUrl = Uri.EscapeDataString(NavigationManager.Uri);
             NavigationManager.NavigateTo($"{LoginUrl}?returnUrl={returnUrl}", forceLoad: true);
@@ -153,27 +147,39 @@
                 return (false, null);
 
             var content = await response.Content.ReadAsStringAsync();
-            if (string.IsNullOrEmpty(content))
+            if (string.IsNullOrEmpty(content) || content == "null")
                 return (false, null);
 
             using var doc = System.Text.Json.JsonDocument.Parse(content);
             var root = doc.RootElement;
 
-            // 检查 isAuthenticated 字段
-            if (root.TryGetProperty("isAuthenticated", out var authProp) &&
-                authProp.ValueKind == System.Text.Json.JsonValueKind.False)
-            {
+            // JSON null 表示未登录（ABP 返回 UserDto?）
+            if (root.ValueKind == System.Text.Json.JsonValueKind.Null)
                 return (false, null);
+
+            // 格式1: 最小 API 格式 { isAuthenticated: bool, userName: string }
+            if (root.TryGetProperty("isAuthenticated", out var authProp))
+            {
+                if (authProp.ValueKind == System.Text.Json.JsonValueKind.False)
+                    return (false, null);
+                var userName = root.TryGetProperty("userName", out var nameProp)
+                    ? nameProp.GetString()
+                    : null;
+                return (true, userName);
             }
 
-            // 解析用户名
-            var userName = root.TryGetProperty("userName", out var nameProp)
-                ? nameProp.GetString()
+            // 格式2: ABP UserDto 格式 { id, userName, email, ... }
+            var abpUserName = root.TryGetProperty("userName", out var abpNameProp)
+                ? abpNameProp.GetString()
                 : null;
-            return (true, userName);
+            if (!string.IsNullOrEmpty(abpUserName))
+                return (true, abpUserName);
+
+            return (false, null);
         }
-        catch
+        catch (Exception ex)
         {
+            Console.WriteLine($"[DefaultLayout] CheckAuthViaApiAsync error: {ex.Message}");
             return (false, null);
         }
     }
