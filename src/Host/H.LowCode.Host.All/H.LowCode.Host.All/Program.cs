@@ -1,6 +1,8 @@
 using H.LowCode.Host.All.Components;
 using H.YunXiaoMcpServer;
 using H.LowCode.Host.All;
+using Microsoft.AspNetCore.ResponseCompression;
+using System.IO.Compression;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,8 +24,26 @@ builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
 });
 
-// Response compression
-builder.Services.AddResponseCompression();
+// Response compression - 启用 Brotli 压缩以减少 WASM 资源传输体积
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<BrotliCompressionProvider>();
+    options.Providers.Add<GzipCompressionProvider>();
+    options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat([
+        "application/octet-stream",
+        "application/wasm",
+        "application/dll"
+    ]);
+});
+builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
+{
+    options.Level = CompressionLevel.Fastest; // 开发环境用 Fastest，生产环境可改为 Optimal
+});
+builder.Services.Configure<GzipCompressionProviderOptions>(options =>
+{
+    options.Level = CompressionLevel.Fastest;
+});
 
 #region
 builder.Host.UseAutofac();
@@ -53,7 +73,15 @@ app.UseStaticFiles(new StaticFileOptions
 {
     OnPrepareResponse = ctx =>
     {
-        ctx.Context.Response.Headers.Append("Cache-Control", "public,max-age=600");
+        // _framework 目录下的 WASM 资源使用指纹文件名，可以长期缓存
+        if (ctx.Context.Request.Path.StartsWithSegments("/_framework"))
+        {
+            ctx.Context.Response.Headers.Append("Cache-Control", "public,max-age=31536000,immutable");
+        }
+        else
+        {
+            ctx.Context.Response.Headers.Append("Cache-Control", "public,max-age=3600");
+        }
     }
 });
 app.MapStaticAssets();

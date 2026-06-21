@@ -5,6 +5,18 @@
     <StaticWebAssetProjectMode>Default</StaticWebAssetProjectMode>
     <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
   </PropertyGroup>
+  <!-- Release 模式启用 AOT 编译，显著减少 WASM 启动时间 -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <RunAOTCompilation>true</RunAOTCompilation>
+  </PropertyGroup>
+  <!-- 延迟加载: 这些程序集不在启动时下载，而是导航到对应路由时按需加载 -->
+  <!-- 注意: 被 ABP [DependsOn] 引用的模块不能懒加载，否则启动时报错 -->
+  <ItemGroup>
+    <BlazorWebAssemblyLazyLoad Include="H.Organization.Web.dll" />
+    <BlazorWebAssemblyLazyLoad Include="H.Approval.Web.dll" />
+    <BlazorWebAssemblyLazyLoad Include="H.AutoTest.Web.dll" />
+    <BlazorWebAssemblyLazyLoad Include="H.SystemManagement.Web.dll" />
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Volo.Abp.AspNetCore.Components.WebAssembly" />
     <PackageReference Include="Volo.Abp.Autofac.WebAssembly" />
