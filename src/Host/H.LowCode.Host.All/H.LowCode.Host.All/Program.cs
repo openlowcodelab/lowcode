@@ -8,7 +8,6 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add Blazor services
 builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
 
 // Configure SignalR
@@ -95,7 +94,6 @@ app.MapControllers();
 app.MapMcp("/yunxiao").AllowAnonymous();
 
 app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(
         typeof(H.LowCode.Host.All.Client._Imports).Assembly,

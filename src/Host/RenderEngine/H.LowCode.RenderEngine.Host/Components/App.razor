@@ -14,7 +14,7 @@
     <script src="@Assets["_content/Volo.Abp.AspNetCore.Components.Web/libs/abp/js/abp.js"]"></script>
     <script src="@Assets["_content/Volo.Abp.AspNetCore.Components.Web/libs/abp/js/lang-utils.js"]"></script>
 
-    <!-- Ant Design Pro Blazor (antblazor库会自动引入js,css资源(auto模式不支持自动引入),此处可无需引入.为避免在按需动态引入时样式渲染闪烁问题,此处提前引入) -->
+    <!-- Ant Design Pro Blazor (提前引入 CSS/JS 资源，避免按需动态引入时样式渲染闪烁问题) -->
     <link href="@Assets["_content/AntDesign/css/ant-design-blazor.css"]" rel="stylesheet" />
     <link href="@Assets["_content/AntDesign.ProLayout/css/ant-design-pro-layout-blazor.css"]" rel="stylesheet" />
     <script src="@Assets["_content/AntDesign/js/ant-design-blazor.js"]"></script>
@@ -22,13 +22,13 @@
     <link href="@Assets["manifest.json"]" rel="manifest" />
 
     <ImportMap />
-    <HeadOutlet @rendermode="@InteractiveWebAssembly" />
+    <HeadOutlet @rendermode="new InteractiveWebAssemblyRenderMode(prerender: false)" />
 </head>
 
 <body>
-    <Routes @rendermode="@InteractiveWebAssembly" />
+    <Routes @rendermode="new InteractiveWebAssemblyRenderMode(prerender: false)" />
     
-    <AntDesign.AntContainer @rendermode="@InteractiveWebAssembly" />
+    <AntDesign.AntContainer @rendermode="new InteractiveWebAssemblyRenderMode(prerender: false)" />
 
     <script src="@Assets["_framework/blazor.web.js"]"></script>
 </body>

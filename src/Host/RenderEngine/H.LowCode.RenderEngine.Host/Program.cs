@@ -11,7 +11,6 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
 
 builder.Services.AddControllers().AddJsonOptions(options =>
@@ -74,7 +73,6 @@ app.UseAntiforgery();
 app.MapControllers();
 
 app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(LowCodeGlobalVariables.AdditionalAssemblies);  //LowCode
 

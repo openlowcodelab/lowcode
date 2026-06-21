@@ -31,7 +31,7 @@ public class AccountHostModule : AbpModule
         // 注册 HttpClient
         context.Services.AddHttpClient();
 
-        // 注册 HttpContextAccessor（用于 Blazor Server 中访问 HttpContext）
+        // 注册 HttpContextAccessor（用于 Server 端 API 控制器访问 HttpContext）
         context.Services.AddHttpContextAccessor();
 
         context.Services.AddAntDesign();
