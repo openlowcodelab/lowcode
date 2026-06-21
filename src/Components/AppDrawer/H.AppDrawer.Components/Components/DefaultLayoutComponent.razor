@@ -79,48 +79,61 @@
     private HttpClient HttpClient { get; set; } = default!;
 
     private bool _isLoggedIn;
+    private bool _authChecked;
     private string _userName = "用户";
     private AppDrawer? appDrawer;
 
-    protected override async Task OnInitializedAsync()
+    /// <summary>
+    /// 服务端预渲染时通过 HttpContext 快速验证认证状态（不阻塞 WASM 渲染）
+    /// </summary>
+    protected override void OnInitialized()
     {
         if (AuthMode == AuthenticationMode.None)
             return;
 
-        // 服务端预渲染：通过 HttpContext 快速验证
-        bool isAuthenticated = IsAuthenticatedViaHttpContext();
-
-        if (!isAuthenticated && OperatingSystem.IsBrowser())
+        // 仅服务端预渲染时通过 HttpContext 验证
+        if (IsAuthenticatedViaHttpContext())
         {
-            // WASM 环境：通过 API 验证 Cookie 认证状态
+            var httpContextAccessor = ServiceProvider.GetService<IHttpContextAccessor>();
+            var name = httpContextAccessor?.HttpContext?.User?.Identity?.Name;
+            if (!string.IsNullOrEmpty(name))
+                _userName = name;
+
+            _isLoggedIn = true;
+            _authChecked = true;
+        }
+    }
+
+    /// <summary>
+    /// 首次渲染完成后异步检查认证状态（WASM 环境下通过 API 验证）
+    /// 使用 OnAfterRenderAsync 而非 OnInitializedAsync，避免认证检查阻塞首次渲染导致白屏
+    /// </summary>
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _authChecked || AuthMode == AuthenticationMode.None)
+            return;
+
+        // WASM 环境：通过 API 验证 Cookie 认证状态
+        if (OperatingSystem.IsBrowser())
+        {
             var result = await CheckAuthViaApiAsync();
-            Console.WriteLine($"[DefaultLayout] API auth: authenticated={result.authenticated}, userName={result.userName}");
-            isAuthenticated = result.authenticated;
+            _isLoggedIn = result.authenticated;
             if (!string.IsNullOrEmpty(result.userName))
             {
                 _userName = result.userName;
             }
         }
-        else if (isAuthenticated)
-        {
-            // 服务端：从 HttpContext 获取用户名
-            var httpContextAccessor = ServiceProvider.GetService<IHttpContextAccessor>();
-            var name = httpContextAccessor?.HttpContext?.User?.Identity?.Name;
-            if (!string.IsNullOrEmpty(name))
-            {
-                _userName = name;
-            }
-        }
 
-        _isLoggedIn = isAuthenticated;
-        Console.WriteLine($"[DefaultLayout] Final: _isLoggedIn={_isLoggedIn}, _userName={_userName}");
+        _authChecked = true;
 
-        // 强制认证模式下，未登录跳转登录页
-        if (AuthMode == AuthenticationMode.Required && !isAuthenticated)
+        // 强制认证模式下，未登录跳转登录页（使用 Blazor 导航，避免 forceLoad 中断 WASM 渲染）
+        if (AuthMode == AuthenticationMode.Required && !_isLoggedIn)
         {
             var returnUrl = Uri.EscapeDataString(NavigationManager.Uri);
-            NavigationManager.NavigateTo($"{LoginUrl}?returnUrl={returnUrl}", forceLoad: true);
+            NavigationManager.NavigateTo($"{LoginUrl}?returnUrl={returnUrl}");
         }
+
+        StateHasChanged();
     }
 
     private bool IsAuthenticatedViaHttpContext()
@@ -168,9 +181,8 @@
 
             return (false, null);
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"[DefaultLayout] CheckAuthViaApiAsync error: {ex.Message}");
             return (false, null);
         }
     }
