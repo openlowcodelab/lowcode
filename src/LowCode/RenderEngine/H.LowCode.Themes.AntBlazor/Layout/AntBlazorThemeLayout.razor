@@ -15,30 +15,14 @@
         }
 </style>
 
-<AntDesign.ProLayout.BasicLayout FixedHeader="true" Class="renderengine"
-        Logo="@("_content/H.LowCode.Themes.AntBlazor/logo.png")" Title="@AppName"
-        MenuData="@_menuDataItems" MenuAccordion="true" Layout="AntDesign.ProLayout.Layout.Side">
-    <RightContentRender>
-        @*<AntDesign.Pro.Template.Components.RightContent />*@
-        RightContent
-    </RightContentRender>
-    <ChildContent>
-        <ErrorBoundary @ref="errorBoundary">
-            <ChildContent>
-                @Body
-            </ChildContent>
-            <ErrorContent>
-                系统异常
-            </ErrorContent>
-        </ErrorBoundary>
-    </ChildContent>
-    <FooterRender></FooterRender>
-</AntDesign.ProLayout.BasicLayout>
+<DefaultLayoutComponent AppName="@AppName" Logo="_content/H.LowCode.Themes.AntBlazor/logo.png"
+    MenuItems="@_menuItems" AuthMode="AuthenticationMode.None">
+</DefaultLayoutComponent>
 
 @code
 {
     [PersistentState]
-    public MenuDataItem[]? _menuDataItems { get; set; }
+    public List<AppMenuItem>? _menuItems { get; set; }
 
     private ErrorBoundary? errorBoundary;
 
@@ -47,7 +31,7 @@
         await base.OnInitializedAsync();
 
         var menus = await base.GetMenusAsync(AppId);
-        _menuDataItems = ConvertMenus(AppId, menus);
+        _menuItems = ConvertMenus(AppId, menus);
     }
 
     protected override void OnParametersSet()
@@ -55,14 +39,14 @@
         errorBoundary?.Recover();
     }
 
-    private MenuDataItem[] ConvertMenus(string appId, IList<MenuSchema> menuList)
+    private List<AppMenuItem> ConvertMenus(string appId, IList<MenuSchema> menuList)
     {
-        var menus = new List<MenuDataItem>();
+        var menus = new List<AppMenuItem>();
         foreach (var menu in menuList)
         {
-            var m = new MenuDataItem()
+            var m = new AppMenuItem()
             {
-                Path = $"/app/{appId}/{menu.MenuUrl}",
+                Url = $"/app/{appId}/{menu.MenuUrl}",
                 Name = menu.Title,
                 Key = menu.Id,
                 Icon = menu.Icon
@@ -71,6 +55,6 @@
                 m.Children = ConvertMenus(appId, menu.Childrens);
             menus.Add(m);
         }
-        return menus.ToArray();
+        return menus;
     }
 }

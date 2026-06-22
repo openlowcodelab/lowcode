@@ -8,6 +8,7 @@
 .drawer-toggle { background: none; border: none; font-size: 24px; cursor: pointer; padding: 5px 10px; border-radius: 4px; }
 .drawer-toggle:hover { background-color: #f0f0f0; }
 .app-name h3 { margin: 0; font-size: 18px; color: #333; }
+.navbar-logo { height: 32px; width: 32px; object-fit: contain; }
 .navbar-right { display: flex; align-items: center; gap: 10px; }
 .user-avatar { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; }
 .user-name span { color: #666; font-size: 14px; }
@@ -29,6 +30,10 @@
         <button class="drawer-toggle" @onclick="OnDrawerToggle">
             <span class="drawer-icon">☰</span>
         </button>
+        @if (!string.IsNullOrEmpty(Logo))
+        {
+            <img class="navbar-logo" src="@Logo" alt="logo" />
+        }
         <div class="app-name">
             <h3>@AppName</h3>
         </div>
@@ -86,6 +91,12 @@
     /// </summary>
     [Parameter]
     public string AppName { get; set; } = "应用";
+
+    /// <summary>
+    /// Logo 图片路径
+    /// </summary>
+    [Parameter]
+    public string? Logo { get; set; }
 
     /// <summary>
     /// 抽屉切换事件

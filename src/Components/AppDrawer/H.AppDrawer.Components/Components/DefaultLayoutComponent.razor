@@ -8,7 +8,8 @@
 
 <div class="layout-container">
     <TopNavbar 
-        AppName="@AppName" 
+        AppName="@AppName"
+        Logo="@Logo"
         OnDrawerToggle="ToggleAppDrawer"
         UserName="@_userName"
         IsLoggedIn="@_isLoggedIn"
@@ -41,6 +42,12 @@
     /// </summary>
     [Parameter]
     public string AppName { get; set; } = "应用";
+
+    /// <summary>
+    /// Logo 图片路径
+    /// </summary>
+    [Parameter]
+    public string? Logo { get; set; }
 
     /// <summary>
     /// 菜单列表（不传则不渲染菜单）

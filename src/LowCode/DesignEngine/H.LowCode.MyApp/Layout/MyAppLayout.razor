@@ -8,16 +8,10 @@
 @if (_appSchema != null)
 {
     <CascadingValue Value="@_appSchema" Name="appCascading">
-        <AntDesign.ProLayout.BasicLayout FixedHeader="true" Class="myapp" Logo="@("_content/H.LowCode.MyApp/logo.png")" Title="@_appSchema.Name"
-        MenuData="@_menuDataItems" MenuAccordion="true" Layout="AntDesign.ProLayout.Layout.Side">
-            <RightContentRender>
-                RightContent
-            </RightContentRender>
-            <ChildContent>
-                @Body
-            </ChildContent>
-            <FooterRender></FooterRender>
-        </AntDesign.ProLayout.BasicLayout>
+        <DefaultLayoutComponent AppName="@_appSchema.Name" Logo="_content/H.LowCode.MyApp/logo.png"
+            MenuItems="@_menuItems" AuthMode="AuthenticationMode.None">
+            @Body
+        </DefaultLayoutComponent>
         <SettingDrawer />
     </CascadingValue>
 }
@@ -27,7 +21,7 @@
     [PersistentState]
     public AppPartsSchema _appSchema { get; set; }
     [PersistentState]
-    public MenuDataItem[] _menuDataItems { get; set; }
+    public List<AppMenuItem> _menuItems { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -35,7 +29,7 @@
 
         _appSchema = await GetAppSchemaAsync(AppId);
 
-        _menuDataItems = InitMenuData(AppId);
+        _menuItems = InitMenuData(AppId);
     }
 
     private async Task<AppPartsSchema> GetAppSchemaAsync(string appId)
@@ -43,59 +37,58 @@
         return await AppApplicationService.GetByIdAsync(appId);
     }
 
-    private MenuDataItem[] InitMenuData(string appId)
+    private List<AppMenuItem> InitMenuData(string appId)
     {
-        MenuDataItem[] menuData = [
-            new MenuDataItem
+        return [
+            new AppMenuItem
             {
-                Path = $"/myapp/{appId}/pagemanager",
+                Url = $"/myapp/{appId}/pagemanager",
                 Name = "页面管理",
-                Icon = "profile",
+                Icon = "📋",
                 Key = "page"
             },
-        new MenuDataItem
+            new AppMenuItem
             {
-                Path = $"/myapp/{appId}/menumanager",
+                Url = $"/myapp/{appId}/menumanager",
                 Name = "菜单管理",
-                Icon = "menu",
+                Icon = "📝",
                 Key = "menu"
             },
-        new MenuDataItem
+            new AppMenuItem
             {
-                Path = $"/myapp/{appId}/datasource",
+                Url = $"/myapp/{appId}/datasource",
                 Name = "数据源",
-                Icon = "database",
+                Icon = "🗄",
                 Key = "datasource"
             },
-        new MenuDataItem
+            new AppMenuItem
             {
-                Path = $"/myapp/{appId}/integration",
+                Url = $"/myapp/{appId}/integration",
                 Name = "集成",
-                Icon = "api",
+                Icon = "🔌",
                 Key = "integration"
             },
-        new MenuDataItem
+            new AppMenuItem
             {
-                Path = $"/myapp/{appId}/autoflow",
+                Url = $"/myapp/{appId}/autoflow",
                 Name = "自动化",
-                Icon = "deployment-unit",
+                Icon = "🔧",
                 Key = "autoflow"
             },
-        new MenuDataItem
+            new AppMenuItem
             {
-                Path = $"/myapp/{appId}/publish",
+                Url = $"/myapp/{appId}/publish",
                 Name = "应用发布",
-                Icon = "cloud-upload",
+                Icon = "☁",
                 Key = "publish"
             },
-        new MenuDataItem
+            new AppMenuItem
             {
-                Path = $"/myapp/{appId}/appsettings",
+                Url = $"/myapp/{appId}/appsettings",
                 Name = "应用设置",
-                Icon = "setting",
+                Icon = "⚙",
                 Key = "appsettings"
             }
         ];
-        return menuData;
     }
 }
