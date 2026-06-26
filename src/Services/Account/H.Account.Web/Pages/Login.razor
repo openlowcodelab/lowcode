@@ -10,12 +10,18 @@
 
     @if (!string.IsNullOrEmpty(errorMessage))
     {
-        <Alert Type="@AlertType.Error" Message="@errorMessage" ShowIcon="true" Style="margin-bottom: 16px;" />
+        <div class="h-alert h-alert-error">
+            <span class="h-alert-icon">&#9888;</span>
+            <span>@errorMessage</span>
+        </div>
     }
 
     @if (!string.IsNullOrEmpty(successMessage))
     {
-        <Alert Type="@AlertType.Success" Message="@successMessage" ShowIcon="true" Style="margin-bottom: 16px;" />
+        <div class="h-alert h-alert-success">
+            <span class="h-alert-icon">&#10004;</span>
+            <span>@successMessage</span>
+        </div>
     }
 
     <div class="login-tabs">
@@ -27,45 +33,45 @@
 
     @if (loginMode == LoginMode.AccountPassword)
     {
-        <Form Model="@loginModel" OnFinish="@HandleLogin">
-            <FormItem>
-                <Input @bind-Value="@loginModel.Account" Placeholder="请输入用户名/邮箱/手机号" />
-            </FormItem>
+        <EditForm Model="@loginModel" OnValidSubmit="@HandleLogin">
+            <div class="h-form-item">
+                <input type="text" @bind-value="@loginModel.Account" placeholder="请输入用户名/邮箱/手机号" class="h-input" />
+            </div>
 
-            <FormItem>
-                <InputPassword @bind-Value="@loginModel.Password" Placeholder="请输入密码" />
-            </FormItem>
+            <div class="h-form-item">
+                <input type="password" @bind-value="@loginModel.Password" placeholder="请输入密码" class="h-input" />
+            </div>
 
             <div class="auth-form-links">
                 <a href="/account/register">注册</a>
                 <a href="#">忘记密码？</a>
             </div>
 
-            <FormItem Style="margin-top: 24px; margin-bottom: 20px;">
-                <Button Type="@ButtonType.Primary" HtmlType="submit" Block Class="auth-btn-primary">登 录</Button>
-            </FormItem>
-        </Form>
+            <div class="h-form-item" style="margin-top: 24px; margin-bottom: 20px;">
+                <button type="submit" class="h-btn h-btn-primary h-btn-block auth-btn-primary">登 录</button>
+            </div>
+        </EditForm>
     }
     else
     {
-        <Form Model="@phoneLoginModel" OnFinish="@HandlePhoneLogin">
-            <FormItem>
-                <Input @bind-Value="@phoneLoginModel.PhoneNumber" Placeholder="请输入手机号" />
-            </FormItem>
+        <EditForm Model="@phoneLoginModel" OnValidSubmit="@HandlePhoneLogin">
+            <div class="h-form-item">
+                <input type="text" @bind-value="@phoneLoginModel.PhoneNumber" placeholder="请输入手机号" class="h-input" />
+            </div>
 
-            <FormItem>
-                <Space Style="width:100%; justify-content: space-between;">
-                    <Input @bind-Value="@phoneLoginModel.PhoneCode" Placeholder="请输入验证码" Style="flex:1; max-width: calc(100% - 120px);" />
-                    <Button OnClick="@SendPhoneCode" Disabled="@smsCountdownActive" Class="btn-send-code">@sendCodeButtonText</Button>
-                </Space>
-            </FormItem>
+            <div class="h-form-item">
+                <div class="h-input-group">
+                    <input type="text" @bind-value="@phoneLoginModel.PhoneCode" placeholder="请输入验证码" class="h-input" style="flex:1;" />
+                    <button type="button" @onclick="@SendPhoneCode" disabled="@smsCountdownActive" class="h-btn btn-send-code">@sendCodeButtonText</button>
+                </div>
+            </div>
 
             <div class="auth-form-links-spacer"></div>
 
-            <FormItem Style="margin-top: 24px; margin-bottom: 20px;">
-                <Button Type="@ButtonType.Primary" HtmlType="submit" Block Class="auth-btn-primary">登 录</Button>
-            </FormItem>
-        </Form>
+            <div class="h-form-item" style="margin-top: 24px; margin-bottom: 20px;">
+                <button type="submit" class="h-btn h-btn-primary h-btn-block auth-btn-primary">登 录</button>
+            </div>
+        </EditForm>
     }
 
     <div class="auth-social-btns">
@@ -94,7 +100,6 @@
     private string returnUrl = "/";
     private LoginMode loginMode = LoginMode.AccountPassword;
 
-    // SMS countdown
     private int smsCountdown = 0;
     private string sendCodeButtonText = "发送验证码";
     private bool smsCountdownActive => smsCountdown > 0;
@@ -104,12 +109,10 @@
         loginModel ??= new LoginRequestDto();
         phoneLoginModel ??= new PhoneLoginInput();
 
-        // 读取查询参数
         var uri = new Uri(Navigation.Uri);
         var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
         returnUrl = query["returnUrl"] ?? "/";
 
-        // 读取外部登录回调的错误信息
         var error = query["error"];
         if (!string.IsNullOrEmpty(error))
         {

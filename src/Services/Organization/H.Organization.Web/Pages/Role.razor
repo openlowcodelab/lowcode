@@ -4,88 +4,114 @@
 @inject IRoleService IRoleService
 @inject IJSRuntime JS
 
-<Card Title="角色管理">
+<HCard Title="角色管理">
     <div style="margin-bottom: 16px;">
-        <Button Type="@ButtonType.Primary" OnClick="@ShowCreateDialog">新增角色</Button>
+        <button class="h-btn h-btn-primary" @onclick="@ShowCreateDialog">新增角色</button>
     </div>
 
-    <Table TItem="RoleDto" DataSource="@roles" Loading="@(roles == null)">
-        <Column TData="string" Title="角色名称">
-            @context.Name
-        </Column>
-        <Column TData="string" Title="编码">
-            @context.Code
-        </Column>
-        <Column TData="string" Title="角色类型">
-            @context.RoleTypeName
-        </Column>
-        <Column TData="string" Title="数据范围">
-            @context.DataScopeName
-        </Column>
-        <Column TData="int" Title="成员数量">
-            @context.MembersCount
-        </Column>
-        <Column TData="string" Title="状态">
-            @if (context.IsEnabled)
+    <HTable Loading="@(roles == null)" ShowEmpty="@(roles != null && !roles.Any())">
+        <thead>
+            <tr>
+                <th>角色名称</th>
+                <th>编码</th>
+                <th>角色类型</th>
+                <th>数据范围</th>
+                <th>成员数量</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (roles != null)
             {
-                <Tag Color="@("green")">启用</Tag>
+                @foreach (var context in roles)
+                {
+                    <tr>
+                        <td>@context.Name</td>
+                        <td>@context.Code</td>
+                        <td>@context.RoleTypeName</td>
+                        <td>@context.DataScopeName</td>
+                        <td>@context.MembersCount</td>
+                        <td>
+                            @if (context.IsEnabled)
+                            {
+                                <span class="h-tag h-tag-green">启用</span>
+                            }
+                            else
+                            {
+                                <span class="h-tag h-tag-red">禁用</span>
+                            }
+                        </td>
+                        <td>
+                            <span class="h-space">
+                                <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => Edit(context))">编辑</button>
+                                <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => ConfirmDelete(context.Id))">删除</button>
+                            </span>
+                        </td>
+                    </tr>
+                }
             }
-            else
-            {
-                <Tag Color="@("red")">禁用</Tag>
-            }
-        </Column>
-        <Column TData="string" Title="操作">
-            <Space>
-                <SpaceItem>
-                    <Button Type="@ButtonType.Primary" Size="@ButtonSize.Small" OnClick="@(() => Edit(context))">编辑</Button>
-                </SpaceItem>
-                <SpaceItem>
-                    <Popconfirm Title="确定要删除这个角色吗？" OnConfirm="@(() => Delete(context.Id))">
-                        <Button Type="@ButtonType.Primary" Danger Size="@ButtonSize.Small">删除</Button>
-                    </Popconfirm>
-                </SpaceItem>
-            </Space>
-        </Column>
-    </Table>
-</Card>
+        </tbody>
+    </HTable>
+</HCard>
 
-<Modal Title="@(isEdit ? "编辑角色" : "新增角色")" Visible="@showDialog" OnOk="@Save" OnCancel="@CloseDialog"
-       ConfirmLoading="@isSubmitting">
-    <Form Model="@currentRole" LabelColSpan="6" WrapperColSpan="18">
-        <FormItem Label="角色名称">
-            <Input @bind-Value="@currentRole.Name" Placeholder="请输入角色名称" />
-        </FormItem>
-        <FormItem Label="编码">
-            <Input @bind-Value="@currentRole.Code" Placeholder="请输入编码" />
-        </FormItem>
-        <FormItem Label="角色类型">
-            <Select TItem="int" TItemValue="int" @bind-Value="@currentRole.RoleType" Placeholder="请选择角色类型">
-                <SelectOption Value="1" Label="系统角色" />
-                <SelectOption Value="2" Label="自定义角色" />
-            </Select>
-        </FormItem>
-        <FormItem Label="数据范围">
-            <Select TItem="int" TItemValue="int" @bind-Value="@currentRole.DataScope" Placeholder="请选择数据范围">
-                <SelectOption Value="1" Label="全部数据" />
-                <SelectOption Value="2" Label="本部门数据" />
-                <SelectOption Value="3" Label="仅本人数据" />
-            </Select>
-        </FormItem>
-        <FormItem Label="排序">
-            <AntDesign.InputNumber @bind-Value="@currentRole.Sort" Style="width: 100%;" />
-        </FormItem>
-        @if (isEdit)
-        {
-            <FormItem Label="启用">
-                <Switch @bind-Value="@currentRole.IsEnabled" />
-            </FormItem>
-        }
-        <FormItem Label="备注">
-            <TextArea @bind-Value="@currentRole.Remark" Placeholder="请输入备注" Rows="3" />
-        </FormItem>
-    </Form>
-</Modal>
+<HModal Title="@(isEdit ? "编辑角色" : "新增角色")" Visible="@showDialog" OnOk="@Save" OnCancel="@CloseDialog" ConfirmLoading="@isSubmitting">
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">角色名称</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@currentRole.Name" placeholder="请输入角色名称" class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">编码</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@currentRole.Code" placeholder="请输入编码" class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">角色类型</label>
+        <div class="h-form-control">
+            <select @bind="@currentRole.RoleType" class="h-select">
+                <option value="1">系统角色</option>
+                <option value="2">自定义角色</option>
+            </select>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">数据范围</label>
+        <div class="h-form-control">
+            <select @bind="@currentRole.DataScope" class="h-select">
+                <option value="1">全部数据</option>
+                <option value="2">本部门数据</option>
+                <option value="3">仅本人数据</option>
+            </select>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">排序</label>
+        <div class="h-form-control">
+            <input type="number" @bind="@currentRole.Sort" class="h-input" />
+        </div>
+    </div>
+    @if (isEdit)
+    {
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">启用</label>
+            <div class="h-form-control">
+                <label class="h-switch">
+                    <input type="checkbox" @bind="@currentRole.IsEnabled" />
+                    <span class="h-switch-slider"></span>
+                </label>
+            </div>
+        </div>
+    }
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">备注</label>
+        <div class="h-form-control">
+            <textarea @bind="@currentRole.Remark" placeholder="请输入备注" rows="3" class="h-textarea"></textarea>
+        </div>
+    </div>
+</HModal>
 
 @code {
     private List<RoleDto>? roles;
@@ -129,7 +155,7 @@
         showDialog = true;
     }
 
-    private async Task Save(MouseEventArgs e)
+    private async Task Save()
     {
         isSubmitting = true;
         try
@@ -169,13 +195,22 @@
         }
     }
 
+    private async Task ConfirmDelete(Guid id)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm", "确定要删除这个角色吗？");
+        if (confirmed)
+        {
+            await Delete(id);
+        }
+    }
+
     private async Task Delete(Guid id)
     {
         await IRoleService.DeleteAsync(id);
         await LoadData();
     }
 
-    private void CloseDialog(MouseEventArgs? e = null)
+    private void CloseDialog()
     {
         showDialog = false;
     }

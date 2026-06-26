@@ -1,0 +1,404 @@
+.h-input,
+.h-select,
+.h-textarea {
+    background: #fff;
+    border: 1px solid #d9d9d9;
+    color: #333;
+    border-radius: 6px;
+    padding: 4px 11px;
+    font-size: 14px;
+    box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    font-family: inherit;
+}
+
+.h-input:focus,
+.h-select:focus,
+.h-textarea:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.12);
+    outline: none;
+}
+
+.h-input::placeholder,
+.h-textarea::placeholder {
+    color: #bbb;
+}
+
+.h-input {
+    height: 32px;
+    width: 100%;
+}
+
+.h-select {
+    height: 32px;
+    width: 100%;
+    appearance: auto;
+}
+
+.h-textarea {
+    width: 100%;
+    resize: vertical;
+    min-height: 60px;
+}
+
+.h-input-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    width: 100%;
+}
+
+.h-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 4px 16px;
+    height: 32px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    border: 1px solid #d9d9d9;
+    background: #fff;
+    color: #333;
+    transition: all 0.2s;
+    font-family: inherit;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.h-btn:hover {
+    border-color: #667eea;
+    color: #667eea;
+}
+
+.h-btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.h-btn-primary {
+    background: #667eea;
+    border-color: #667eea;
+    color: #fff;
+}
+
+.h-btn-primary:hover {
+    background: #5570d6;
+    border-color: #5570d6;
+    color: #fff;
+}
+
+.h-btn-primary:disabled {
+    background: #667eea;
+    border-color: #667eea;
+}
+
+.h-btn-danger {
+    background: #fff;
+    border-color: #ff4d4f;
+    color: #ff4d4f;
+}
+
+.h-btn-danger:hover {
+    background: #ff4d4f;
+    border-color: #ff4d4f;
+    color: #fff;
+}
+
+.h-btn-ghost {
+    background: #fff;
+    border-color: #667eea;
+    color: #667eea;
+}
+
+.h-btn-ghost:hover {
+    background: rgba(102, 126, 234, 0.06);
+}
+
+.h-btn-block {
+    display: flex;
+    width: 100%;
+}
+
+.h-btn-sm {
+    height: 24px;
+    padding: 0 8px;
+    font-size: 12px;
+}
+
+.h-btn-loading {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: h-btn-spin 0.6s linear infinite;
+}
+
+@keyframes h-btn-spin {
+    to { transform: rotate(360deg); }
+}
+
+.h-alert {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    margin-bottom: 16px;
+}
+
+.h-alert-error {
+    background: #fff2f0;
+    border: 1px solid #ffccc7;
+    color: #ff4d4f;
+}
+
+.h-alert-success {
+    background: #f6ffed;
+    border: 1px solid #b7eb8f;
+    color: #52c41a;
+}
+
+.h-alert-icon {
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.h-tag {
+    display: inline-block;
+    padding: 0 8px;
+    height: 22px;
+    line-height: 22px;
+    border-radius: 4px;
+    font-size: 12px;
+    background: #fafafa;
+    border: 1px solid #d9d9d9;
+    color: #666;
+}
+
+.h-tag-green {
+    background: #f6ffed;
+    border-color: #b7eb8f;
+    color: #52c41a;
+}
+
+.h-tag-red {
+    background: #fff2f0;
+    border-color: #ffccc7;
+    color: #ff4d4f;
+}
+
+.h-tag-blue {
+    background: #e6f7ff;
+    border-color: #91d5ff;
+    color: #1890ff;
+}
+
+.h-tag-default {
+    background: #fafafa;
+    border-color: #d9d9d9;
+    color: #666;
+}
+
+.h-space {
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.h-toolbar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.h-form-item {
+    margin-bottom: 16px;
+}
+
+.h-form-horizontal {
+    display: flex;
+    align-items: flex-start;
+}
+
+.h-form-label {
+    flex: 0 0 auto;
+    width: 100px;
+    text-align: right;
+    padding: 5px 12px 0 0;
+    font-size: 14px;
+    color: #333;
+    white-space: nowrap;
+}
+
+.h-form-control {
+    flex: 1;
+    min-width: 0;
+}
+
+.h-form-row {
+    display: flex;
+    gap: 16px;
+}
+
+.h-form-col {
+    flex: 1;
+    min-width: 0;
+}
+
+.h-required {
+    color: #ff4d4f;
+}
+
+.h-switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 22px;
+    cursor: pointer;
+}
+
+.h-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.h-switch-slider {
+    position: absolute;
+    inset: 0;
+    background: #ccc;
+    border-radius: 22px;
+    transition: 0.2s;
+}
+
+.h-switch-slider::before {
+    content: "";
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    left: 2px;
+    bottom: 2px;
+    background: #fff;
+    border-radius: 50%;
+    transition: 0.2s;
+}
+
+.h-switch input:checked + .h-switch-slider {
+    background: #667eea;
+}
+
+.h-switch input:checked + .h-switch-slider::before {
+    transform: translateX(22px);
+}
+
+.h-divider {
+    display: flex;
+    align-items: center;
+    margin: 24px 0;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+}
+
+.h-divider::before,
+.h-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: #f0f0f0;
+}
+
+.h-divider::before {
+    margin-right: 16px;
+}
+
+.h-divider::after {
+    margin-left: 16px;
+}
+
+.h-descriptions {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #f0f0f0;
+    font-size: 14px;
+    margin-bottom: 16px;
+}
+
+.h-descriptions th {
+    background: #fafafa;
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 500;
+    color: #666;
+    border: 1px solid #f0f0f0;
+    white-space: nowrap;
+    width: 120px;
+}
+
+.h-descriptions td {
+    padding: 12px 16px;
+    border: 1px solid #f0f0f0;
+    color: #333;
+}
+
+.h-spin {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 24px;
+    color: #666;
+    font-size: 14px;
+}
+
+.h-spin-dot {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #667eea;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: h-spin-anim 0.6s linear infinite;
+}
+
+@keyframes h-spin-anim {
+    to { transform: rotate(360deg); }
+}
+
+.h-spin-text {
+    color: #666;
+}
+
+.h-empty {
+    padding: 32px 16px;
+    text-align: center;
+    color: #999;
+    font-size: 14px;
+}
+
+.h-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 16px;
+    padding-top: 16px;
+}
+
+.h-pagination-info {
+    font-size: 13px;
+    color: #666;
+}
+
+.h-tooltip {
+    cursor: default;
+}

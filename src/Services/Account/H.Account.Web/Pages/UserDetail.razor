@@ -4,61 +4,100 @@
 @inject IUserAppService UserService
 @inject NavigationManager Navigation
 
-<Card Title="用户详情" Extra="@BackButton">
+<HCard Title="用户详情" Extra="@BackButton">
     @if (user != null)
     {
-        <Descriptions Column="2" Bordered>
-            <DescriptionsItem Label="用户名">@user.UserName</DescriptionsItem>
-            <DescriptionsItem Label="邮箱">@user.Email</DescriptionsItem>
-            <DescriptionsItem Label="手机号">@user.PhoneNumber</DescriptionsItem>
-            <DescriptionsItem Label="用户类型">@GetUserTypeText(user.UserType)</DescriptionsItem>
-            <DescriptionsItem Label="状态">
-                <Tag Color="@(user.IsActive ? "green" : "red")">
-                    @(user.IsActive ? "启用" : "禁用")
-                </Tag>
-            </DescriptionsItem>
-            <DescriptionsItem Label="邮箱验证">
-                <Tag Color="@(user.EmailConfirmed ? "green" : "default")">
-                    @(user.EmailConfirmed ? "已验证" : "未验证")
-                </Tag>
-            </DescriptionsItem>
-            <DescriptionsItem Label="手机验证">
-                <Tag Color="@(user.PhoneNumberConfirmed ? "green" : "default")">
-                    @(user.PhoneNumberConfirmed ? "已验证" : "未验证")
-                </Tag>
-            </DescriptionsItem>
-            <DescriptionsItem Label="最后登录">@user.LastLoginAt?.ToString("yyyy-MM-dd HH:mm:ss")</DescriptionsItem>
-            <DescriptionsItem Label="创建时间">@user.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")</DescriptionsItem>
-            <DescriptionsItem Label="更新时间">@user.UpdatedAt?.ToString("yyyy-MM-dd HH:mm:ss")</DescriptionsItem>
-            <DescriptionsItem Label="备注" Span="2">@user.Remark</DescriptionsItem>
-        </Descriptions>
+        <table class="h-descriptions">
+            <tbody>
+                <tr>
+                    <th>用户名</th>
+                    <td>@user.UserName</td>
+                    <th>邮箱</th>
+                    <td>@user.Email</td>
+                </tr>
+                <tr>
+                    <th>手机号</th>
+                    <td>@user.PhoneNumber</td>
+                    <th>用户类型</th>
+                    <td>@GetUserTypeText(user.UserType)</td>
+                </tr>
+                <tr>
+                    <th>状态</th>
+                    <td>
+                        <span class="h-tag @(user.IsActive ? "h-tag-green" : "h-tag-red")">
+                            @(user.IsActive ? "启用" : "禁用")
+                        </span>
+                    </td>
+                    <th>邮箱验证</th>
+                    <td>
+                        <span class="h-tag @(user.EmailConfirmed ? "h-tag-green" : "h-tag-default")">
+                            @(user.EmailConfirmed ? "已验证" : "未验证")
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <th>手机验证</th>
+                    <td>
+                        <span class="h-tag @(user.PhoneNumberConfirmed ? "h-tag-green" : "h-tag-default")">
+                            @(user.PhoneNumberConfirmed ? "已验证" : "未验证")
+                        </span>
+                    </td>
+                    <th>最后登录</th>
+                    <td>@user.LastLoginAt?.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                </tr>
+                <tr>
+                    <th>创建时间</th>
+                    <td>@user.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                    <th>更新时间</th>
+                    <td>@user.UpdatedAt?.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                </tr>
+                <tr>
+                    <th>备注</th>
+                    <td colspan="3">@user.Remark</td>
+                </tr>
+            </tbody>
+        </table>
 
-        <Divider>绑定的第三方账号</Divider>
+        <div class="h-divider">绑定的第三方账号</div>
 
         @if (user.ExternalAccounts.Any())
         {
-            <Table DataSource="@user.ExternalAccounts" TItem="ExternalAccountDto" PageSize="10" Pagination="false">
-                <Column @bind-Field="@context.Provider" Title="平台" />
-                <Column @bind-Field="@context.ProviderKey" Title="账号ID" />
-                <Column @bind-Field="@context.DisplayName" Title="显示名称" />
-                <Column @bind-Field="@context.BoundAt" Title="绑定时间" Format="yyyy-MM-dd HH:mm" />
-                <ActionColumn Title="操作">
-                    <Popconfirm Title="确定要解绑此账号吗?" OnConfirm="@(() => UnbindAccount(context.Provider))">
-                        <Button Danger Size="@ButtonSize.Small">解绑</Button>
-                    </Popconfirm>
-                </ActionColumn>
-            </Table>
+            <HTable Loading="false">
+                <thead>
+                    <tr>
+                        <th>平台</th>
+                        <th>账号ID</th>
+                        <th>显示名称</th>
+                        <th>绑定时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var context in user.ExternalAccounts)
+                    {
+                        <tr>
+                            <td>@context.Provider</td>
+                            <td>@context.ProviderKey</td>
+                            <td>@context.DisplayName</td>
+                            <td>@context.BoundAt.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>
+                                <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => ConfirmUnbind(context.Provider))">解绑</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </HTable>
         }
         else
         {
-            <Empty Description="@("暂无绑定的第三方账号")" />
+            <div class="h-empty">暂无绑定的第三方账号</div>
         }
     }
     else
     {
-        <Spin Tip="加载中..." />
+        <div class="h-spin"><span class="h-spin-dot"></span><span class="h-spin-text">加载中...</span></div>
     }
-</Card>
+</HCard>
 
 @code {
     private UserDto? user;
@@ -66,7 +105,7 @@
     [Microsoft.AspNetCore.Components.Parameter]
     public Guid userId { get; set; }
 
-    private RenderFragment BackButton => @<Button OnClick="@(() => Navigation.NavigateTo("/account/users"))">返回</Button>;
+    private RenderFragment BackButton => @<button class="h-btn" @onclick="@(() => Navigation.NavigateTo("/account/users"))">返回</button>;
 
     protected override async Task OnInitializedAsync()
     {
@@ -83,7 +122,7 @@
         };
     }
 
-    private async Task UnbindAccount(string provider)
+    private async Task ConfirmUnbind(string provider)
     {
         // TODO: 实现解绑逻辑
         await Task.CompletedTask;

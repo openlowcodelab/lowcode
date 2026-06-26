@@ -4,40 +4,48 @@
 
 <h3>欢迎使用审批管理系统</h3>
 
-<AntDesign.Row Gutter="16" Style="margin-top: 20px;">
-    <AntDesign.Col Span="6">
+<div style="display: flex; gap: 16px; margin-top: 20px;">
+    <div style="flex: 1;">
         <div @onclick="NavigateToStart" style="cursor: pointer;">
-            <AntDesign.Card Title="发起审批" Style="text-align: center;">
-                <div Style="font-size: 48px; margin: 20px 0;">📝</div>
-                <p>创建新的审批审批</p>
-            </AntDesign.Card>
+            <HCard Title="发起审批">
+                <div style="text-align: center;">
+                    <div style="font-size: 48px; margin: 20px 0;">📝</div>
+                    <p>创建新的审批审批</p>
+                </div>
+            </HCard>
         </div>
-    </AntDesign.Col>
-    <AntDesign.Col Span="6">
+    </div>
+    <div style="flex: 1;">
         <div @onclick="NavigateToMy" style="cursor: pointer;">
-            <AntDesign.Card Title="我发起的" Style="text-align: center;">
-                <div Style="font-size: 48px; margin: 20px 0;">📤</div>
-                <p>查看我发起的审批</p>
-            </AntDesign.Card>
+            <HCard Title="我发起的">
+                <div style="text-align: center;">
+                    <div style="font-size: 48px; margin: 20px 0;">📤</div>
+                    <p>查看我发起的审批</p>
+                </div>
+            </HCard>
         </div>
-    </AntDesign.Col>
-    <AntDesign.Col Span="6">
+    </div>
+    <div style="flex: 1;">
         <div @onclick="NavigateToPending" style="cursor: pointer;">
-            <AntDesign.Card Title="待我审批" Style="text-align: center;">
-                <div Style="font-size: 48px; margin: 20px 0;">⏳</div>
-                <p>处理待审批事项</p>
-            </AntDesign.Card>
+            <HCard Title="待我审批">
+                <div style="text-align: center;">
+                    <div style="font-size: 48px; margin: 20px 0;">⏳</div>
+                    <p>处理待审批事项</p>
+                </div>
+            </HCard>
         </div>
-    </AntDesign.Col>
-    <AntDesign.Col Span="6">
+    </div>
+    <div style="flex: 1;">
         <div @onclick="NavigateToManagement" style="cursor: pointer;">
-            <AntDesign.Card Title="审批管理" Style="text-align: center;">
-                <div Style="font-size: 48px; margin: 20px 0;">⚙️</div>
-                <p>管理审批审批</p>
-            </AntDesign.Card>
+            <HCard Title="审批管理">
+                <div style="text-align: center;">
+                    <div style="font-size: 48px; margin: 20px 0;">⚙️</div>
+                    <p>管理审批审批</p>
+                </div>
+            </HCard>
         </div>
-    </AntDesign.Col>
-</AntDesign.Row>
+    </div>
+</div>
 
 @code {
     [Inject] private NavigationManager NavigationManager { get; set; } = default!;

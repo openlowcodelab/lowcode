@@ -1,14 +1,19 @@
 @namespace H.Approval.Web
 
-@*抄送人设置面板*@
 <div class="setting-panel">
     <div class="setting-section">
         <div class="setting-label">抄送人类型</div>
-        <RadioGroup @bind-Value="@ccTypeValue" TValue="int" OnChange="OnCcTypeChanged">
-            <Radio Value="0">指定成员</Radio>
-            <Radio Value="1">发起人自选</Radio>
-            <Radio Value="2">指定角色</Radio>
-        </RadioGroup>
+        <div class="h-radio-group">
+            <label class="h-radio-button">
+                <input type="radio" name="ccType" value="0" checked="@(ccTypeValue == 0)" @onchange="() => OnCcTypeChanged(0)" />指定成员
+            </label>
+            <label class="h-radio-button">
+                <input type="radio" name="ccType" value="1" checked="@(ccTypeValue == 1)" @onchange="() => OnCcTypeChanged(1)" />发起人自选
+            </label>
+            <label class="h-radio-button">
+                <input type="radio" name="ccType" value="2" checked="@(ccTypeValue == 2)" @onchange="() => OnCcTypeChanged(2)" />指定角色
+            </label>
+        </div>
     </div>
 
     @if (Node.CarbonCopyType == CarbonCopyTypeEnum.Specified || Node.CarbonCopyType == CarbonCopyTypeEnum.StarterSelect)
@@ -18,10 +23,10 @@
                 @(Node.CarbonCopyType == CarbonCopyTypeEnum.Specified ? "指定抄送人" : "可选抄送人范围")
             </div>
             <div class="setting-hint">暂未集成人员选择器，请手动输入成员ID（逗号分隔）</div>
-            <TextArea Rows="3"
-                      Value="@specifiedUsersText"
+            <textarea class="h-textarea" rows="3"
+                      value="@specifiedUsersText"
                       @oninput="OnSpecifiedUsersInput"
-                      Placeholder="请输入成员ID，多个用逗号分隔" />
+                      placeholder="请输入成员ID，多个用逗号分隔"></textarea>
         </div>
     }
 
@@ -30,15 +35,15 @@
         <div class="setting-section">
             <div class="setting-label">指定角色</div>
             <div class="setting-hint">暂未集成角色选择器，请手动输入角色ID（逗号分隔）</div>
-            <TextArea Rows="3"
-                      Value="@specifiedRolesText"
+            <textarea class="h-textarea" rows="3"
+                      value="@specifiedRolesText"
                       @oninput="OnSpecifiedRolesInput"
-                      Placeholder="请输入角色ID，多个用逗号分隔" />
+                      placeholder="请输入角色ID，多个用逗号分隔"></textarea>
         </div>
     }
 
     <div class="setting-actions">
-        <Button Type="@ButtonType.Primary" OnClick="SaveSettings">确 定</Button>
+        <button class="h-btn h-btn-primary" @onclick="SaveSettings">确 定</button>
     </div>
 </div>
 

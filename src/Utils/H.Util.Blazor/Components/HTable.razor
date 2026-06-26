@@ -1,0 +1,34 @@
+@namespace H.Util.Blazor
+
+<div class="h-table-wrapper">
+    @if (Loading)
+    {
+        <div class="h-table-loading">
+            <span class="h-table-spinner"></span>
+            <span>加载中...</span>
+        </div>
+    }
+    <table class="h-table">
+        @ChildContent
+    </table>
+    @if (ShowEmpty && !Loading)
+    {
+        <div class="h-table-empty">
+            @if (EmptyTemplate != null)
+            {
+                @EmptyTemplate
+            }
+            else
+            {
+                <span>暂无数据</span>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public bool Loading { get; set; }
+    [Parameter] public bool ShowEmpty { get; set; }
+    [Parameter] public RenderFragment? EmptyTemplate { get; set; }
+}

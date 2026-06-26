@@ -3,10 +3,8 @@
 @inherits LayoutComponentBase
 
 <div class="auth-page">
-    @* Full-page background *@
     <div class="auth-bg"></div>
 
-    @* Left illustration area *@
     <div class="auth-illustration">
         <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
             <defs>
@@ -19,32 +17,26 @@
                     <stop offset="100%" style="stop-color:#764ba2" />
                 </linearGradient>
             </defs>
-            @* Monitor *@
             <rect x="100" y="80" width="200" height="140" rx="12" fill="white" fill-opacity="0.6" stroke="rgba(102,126,234,0.3)" stroke-width="2" />
             <rect x="115" y="95" width="170" height="100" rx="4" fill="rgba(240,242,245,0.8)" />
             <rect x="170" y="220" width="60" height="12" rx="2" fill="rgba(102,126,234,0.2)" />
             <rect x="150" y="232" width="100" height="8" rx="4" fill="rgba(102,126,234,0.15)" />
-            @* UI elements inside screen *@
             <rect x="130" y="110" width="60" height="8" rx="4" fill="rgba(102,126,234,0.4)" />
             <rect x="130" y="125" width="40" height="6" rx="3" fill="rgba(102,126,234,0.25)" />
             <rect x="130" y="145" width="80" height="10" rx="5" fill="rgba(102,126,234,0.15)" />
             <rect x="130" y="162" width="80" height="10" rx="5" fill="rgba(102,126,234,0.15)" />
             <circle cx="250" cy="140" r="20" fill="rgba(102,126,234,0.15)" stroke="url(#g3)" stroke-width="2" />
             <path d="M244 140 l4 4 l8-8" stroke="url(#g3)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
-            @* Shield *@
             <g transform="translate(60, 160)">
                 <path d="M25 5 L45 15 L45 30 Q45 50 25 60 Q5 50 5 30 L5 15 Z" fill="url(#g1)" stroke="rgba(102,126,234,0.4)" stroke-width="1.5" />
                 <path d="M20 32 l5 5 l10-12" stroke="url(#g3)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
             </g>
-            @* Floating circles *@
             <circle cx="320" cy="100" r="30" fill="rgba(102,126,234,0.08)" stroke="rgba(102,126,234,0.2)" stroke-width="1" />
             <circle cx="340" cy="200" r="18" fill="rgba(118,75,162,0.08)" stroke="rgba(118,75,162,0.15)" stroke-width="1" />
             <circle cx="80" cy="100" r="22" fill="rgba(102,126,234,0.06)" stroke="rgba(102,126,234,0.15)" stroke-width="1" />
-            @* Connection lines *@
             <line x1="80" y1="100" x2="100" y2="120" stroke="rgba(102,126,234,0.2)" stroke-width="1" stroke-dasharray="4 3" />
             <line x1="320" y1="100" x2="300" y2="120" stroke="rgba(102,126,234,0.2)" stroke-width="1" stroke-dasharray="4 3" />
             <line x1="340" y1="200" x2="300" y2="180" stroke="rgba(102,126,234,0.2)" stroke-width="1" stroke-dasharray="4 3" />
-            @* Dots *@
             <circle cx="180" cy="310" r="3" fill="rgba(102,126,234,0.35)" />
             <circle cx="200" cy="320" r="2" fill="rgba(118,75,162,0.25)" />
             <circle cx="220" cy="305" r="3.5" fill="rgba(102,126,234,0.3)" />
@@ -53,21 +45,18 @@
         </svg>
     </div>
 
-    @* Decorative blobs (subtle, full page) *@
     <div class="auth-decor">
         <span class="blob blob-1"></span>
         <span class="blob blob-2"></span>
         <span class="blob blob-3"></span>
     </div>
 
-    @* Right form area *@
     <div class="auth-content">
         @Body
     </div>
 </div>
 
 <style>
-    /* ===== Full-Page Auth Layout ===== */
     .auth-page {
         min-height: 100vh;
         position: relative;
@@ -76,7 +65,6 @@
         overflow: hidden;
     }
 
-    /* Full-page background */
     .auth-bg {
         position: fixed;
         inset: 0;
@@ -84,7 +72,6 @@
         background: linear-gradient(135deg, #dce2f8 0%, #e4e0f5 20%, #edf0f9 40%, #f5f7fc 60%, #fafbfe 100%);
     }
 
-    /* Left illustration */
     .auth-illustration {
         position: relative;
         z-index: 1;
@@ -104,7 +91,6 @@
         opacity: 0.9;
     }
 
-    /* Subtle decorative blobs */
     .auth-decor {
         position: fixed;
         inset: 0;
@@ -152,7 +138,6 @@
         66% { transform: translateY(8px) scale(0.97); }
     }
 
-    /* Right content area */
     .auth-content {
         position: relative;
         z-index: 2;
@@ -174,7 +159,6 @@
                     0 1px 4px rgba(0, 0, 0, 0.04);
     }
 
-    /* ===== Form Links ===== */
     .auth-form-links {
         display: flex;
         justify-content: space-between;
@@ -200,71 +184,73 @@
         opacity: 0.8;
     }
 
-    /* ===== Form Styles ===== */
-    .auth-form .ant-form-item-label > label {
-        color: #333 !important;
-        font-weight: 500;
-    }
-
-    .auth-form .ant-input {
-        background: #fff !important;
-        border: 1px solid #d9d9d9 !important;
-        color: #333 !important;
-        border-radius: 8px !important;
+    .auth-form .h-input {
+        background: #fff;
+        border: 1px solid #d9d9d9;
+        color: #333;
+        border-radius: 8px;
         height: 42px;
+        width: 100%;
+        padding: 4px 11px;
+        font-size: 14px;
+        box-sizing: border-box;
+        transition: border-color 0.2s, box-shadow 0.2s;
     }
 
-    .auth-form .ant-input::placeholder {
-        color: #bbb !important;
+    .auth-form .h-input::placeholder {
+        color: #bbb;
     }
 
-    .auth-form .ant-input:focus,
-    .auth-form .ant-input-focused {
-        border-color: #667eea !important;
-        box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.12) !important;
-        background: #fff !important;
+    .auth-form .h-input:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.12);
+        outline: none;
     }
 
-    .auth-form .ant-input-password {
-        background: #fff !important;
-        border: 1px solid #d9d9d9 !important;
-        border-radius: 8px !important;
-        height: 42px;
+    .auth-form .h-radio-group {
+        display: flex;
+        gap: 0;
     }
 
-    .auth-form .ant-input-password .ant-input {
-        background: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
+    .auth-form .h-radio-button {
+        padding: 4px 15px;
+        height: 32px;
+        line-height: 30px;
+        border: 1px solid #d9d9d9;
+        background: #fff;
+        color: #666;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.2s;
     }
 
-    .auth-form .ant-input-password .ant-input-suffix .anticon {
-        color: #999 !important;
+    .auth-form .h-radio-button:first-child {
+        border-radius: 6px 0 0 6px;
     }
 
-    .auth-form .ant-input-password:focus-within {
-        border-color: #667eea !important;
-        box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.12) !important;
-        background: #fff !important;
+    .auth-form .h-radio-button:last-child {
+        border-radius: 0 6px 6px 0;
     }
 
-    .auth-form .ant-radio-button-wrapper {
-        background: #fff !important;
-        border-color: #d9d9d9 !important;
-        color: #666 !important;
+    .auth-form .h-radio-button:not(:first-child) {
+        margin-left: -1px;
     }
 
-    .auth-form .ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled) {
-        background: rgba(102, 126, 234, 0.08) !important;
-        border-color: #667eea !important;
-        color: #667eea !important;
+    .auth-form .h-radio-button input[type="radio"] {
+        display: none;
     }
 
-    .auth-form .ant-radio-button-wrapper:not(.ant-radio-button-wrapper-disabled):hover {
-        color: #667eea !important;
+    .auth-form .h-radio-button.active {
+        background: rgba(102, 126, 234, 0.08);
+        border-color: #667eea;
+        color: #667eea;
+        z-index: 1;
     }
 
-    /* ===== Primary Button ===== */
+    .auth-form .h-radio-button:hover {
+        color: #667eea;
+    }
+
     .auth-btn-primary {
         height: 44px !important;
         border-radius: 8px !important;
@@ -286,7 +272,6 @@
         transform: translateY(0) !important;
     }
 
-    /* ===== Login Tabs ===== */
     .login-tabs {
         display: flex;
         gap: 24px;
@@ -314,7 +299,6 @@
         border-bottom-color: #667eea;
     }
 
-    /* ===== Send Code Button ===== */
     .auth-form .btn-send-code {
         height: 42px !important;
         border-radius: 8px !important;
@@ -333,15 +317,13 @@
         box-shadow: 0 4px 12px rgba(102, 126, 234, 0.35) !important;
     }
 
-    .auth-form .btn-send-code[disabled],
-    .auth-form .btn-send-code.ant-btn-disabled {
+    .auth-form .btn-send-code[disabled] {
         background: #d9d9d9 !important;
         color: #999 !important;
         box-shadow: none !important;
         transform: none !important;
     }
 
-    /* ===== Social Circle Buttons (plain HTML) ===== */
     .auth-social-btns {
         display: flex;
         gap: 16px;
@@ -380,7 +362,6 @@
         display: block;
     }
 
-    /* ===== Footer Link ===== */
     .auth-footer {
         text-align: center;
         color: #8c8c8c;
@@ -397,13 +378,10 @@
         text-decoration: none;
     }
 
-    /* ===== Alert Overrides ===== */
-    .auth-form .ant-alert,
-    .auth-card .ant-alert {
-        border-radius: 8px !important;
+    .auth-form .h-alert {
+        border-radius: 8px;
     }
 
-    /* ===== Auth Card (callback page) ===== */
     .auth-card .auth-header {
         text-align: center;
         margin-bottom: 32px;
@@ -421,11 +399,6 @@
         box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
     }
 
-    .auth-card .auth-header .auth-logo .anticon {
-        font-size: 26px;
-        color: #fff;
-    }
-
     .auth-card .auth-header h2 {
         font-size: 24px;
         font-weight: 600;
@@ -439,11 +412,10 @@
         margin: 0;
     }
 
-    .auth-card .ant-spin-text {
-        color: #666 !important;
+    .auth-card .h-spin-text {
+        color: #666;
     }
 
-    /* ===== Responsive ===== */
     @@media (max-width: 992px) {
         .auth-illustration {
             display: none;

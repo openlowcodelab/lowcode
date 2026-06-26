@@ -28,10 +28,10 @@
     [Parameter] public Dictionary<string, int> TestCaseCounts { get; set; } = new();
 
     private HashSet<string> expandedCategories = new();
+    private string? openDropdownId = null;
 
     private List<ProjectCaseCategory> GetRootCategories()
     {
-        // 服务端已返回根节点列表（子节点嵌套在 Childrens 中），直接按 Order 排序即可
         return Categories.OrderBy(c => c.Order).ToList();
     }
 
@@ -93,6 +93,16 @@
         return 0;
     }
 
+    private void ToggleDropdown(string categoryId)
+    {
+        openDropdownId = openDropdownId == categoryId ? null : categoryId;
+    }
+
+    private void CloseDropdown()
+    {
+        openDropdownId = null;
+    }
+
     private RenderFragment RenderTreeNode(ProjectCaseCategory category, int level) => __builder =>
     {
         var isSelected = SelectedCategoryId == category.Id;
@@ -122,26 +132,23 @@
                     @testCaseCount
                 </span>
 
-                <div class="tree-node-actions">
-                    <AntDesign.Dropdown Trigger="new[] { AntDesign.Trigger.Click }">
-                        <ChildContent>
-                            <button type="button" class="btn btn-sm btn-link tree-node-action-btn">⋯</button>
-                        </ChildContent>
-                        <Overlay>
-                            <AntDesign.Menu>
-                                <AntDesign.MenuItem @onclick="() => OnAddChild.InvokeAsync(category)">
-                                    <i class="anticon anticon-plus" style="margin-right: 8px;"></i>添加子分类
-                                </AntDesign.MenuItem>
-                                <AntDesign.MenuItem @onclick="() => OnEdit.InvokeAsync(category)">
-                                    <i class="anticon anticon-edit" style="margin-right: 8px;"></i>编辑
-                                </AntDesign.MenuItem>
-                                <AntDesign.MenuItem Divider="true" />
-                                <AntDesign.MenuItem @onclick="() => OnDelete.InvokeAsync(category)" Style="color: #ff4d4f;">
-                                    <i class="anticon anticon-delete" style="margin-right: 8px;"></i>删除
-                                </AntDesign.MenuItem>
-                            </AntDesign.Menu>
-                        </Overlay>
-                    </AntDesign.Dropdown>
+                <div class="tree-node-actions" style="position: relative;">
+                    <button type="button" class="btn btn-sm btn-link tree-node-action-btn" @onclick="() => ToggleDropdown(category.Id)" @onclick:stopPropagation>⋯</button>
+                    @if (openDropdownId == category.Id)
+                    {
+                        <div style="position: absolute; right: 0; top: 100%; z-index: 100; background: #fff; border: 1px solid #d9d9d9; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); min-width: 120px;">
+                            <div style="padding: 6px 12px; cursor: pointer; white-space: nowrap;" @onclick="async () => { CloseDropdown(); await OnAddChild.InvokeAsync(category); }">
+                                添加子分类
+                            </div>
+                            <div style="padding: 6px 12px; cursor: pointer; white-space: nowrap;" @onclick="async () => { CloseDropdown(); await OnEdit.InvokeAsync(category); }">
+                                编辑
+                            </div>
+                            <div style="border-top: 1px solid #f0f0f0;"></div>
+                            <div style="padding: 6px 12px; cursor: pointer; white-space: nowrap; color: #ff4d4f;" @onclick="async () => { CloseDropdown(); await OnDelete.InvokeAsync(category); }">
+                                删除
+                            </div>
+                        </div>
+                    }
                 </div>
             </div>
 

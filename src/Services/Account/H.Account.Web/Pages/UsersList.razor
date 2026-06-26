@@ -7,116 +7,97 @@
 
 <PageTitle>用户管理</PageTitle>
 
-<Card Title="用户管理">
-    <div style="margin-bottom: 16px;">
-        <Space Size="@("middle")">
-            <SpaceItem>
-                <Input @bind-Value="@searchKeyword" Placeholder="搜索用户名、邮箱、手机号" Style="width: 200px;"
-                       OnKeyUp="@HandleSearchKeyUp" />
-            </SpaceItem>
-            <SpaceItem>
-                <Select TItem="UserType?" TItemValue="UserType?" @bind-Value="@searchUserType" Placeholder="用户类型" Style="width: 120px;" AllowClear EnableSearch="false">
-                    <SelectOptions>
-                        <SelectOption TItem="UserType?" TItemValue="UserType?" Value="@((UserType?)UserType.Normal)" Label="普通用户" />
-                        <SelectOption TItem="UserType?" TItemValue="UserType?" Value="@((UserType?)UserType.Admin)" Label="管理员" />
-                        <SelectOption TItem="UserType?" TItemValue="UserType?" Value="@((UserType?)UserType.SuperAdmin)" Label="超级管理员" />
-                    </SelectOptions>
-                </Select>
-            </SpaceItem>
-            <SpaceItem>
-                <Select TItem="bool?" TItemValue="bool?" @bind-Value="@searchIsActive" Placeholder="状态" Style="width: 120px;" AllowClear EnableSearch="false">
-                    <SelectOptions>
-                        <SelectOption TItem="bool?" TItemValue="bool?" Value="@((bool?)true)" Label="激活" />
-                        <SelectOption TItem="bool?" TItemValue="bool?" Value="@((bool?)false)" Label="禁用" />
-                    </SelectOptions>
-                </Select>
-            </SpaceItem>
-            <SpaceItem>
-                <Button Type="@ButtonType.Primary" OnClick="@LoadUsers">搜索</Button>
-            </SpaceItem>
-            <SpaceItem>
-                <a href="/account/users/create">
-                    <Button Type="@ButtonType.Primary">新增</Button>
-                </a>
-            </SpaceItem>
-        </Space>
+<HCard Title="用户管理">
+    <div class="h-toolbar">
+        <input type="text" @bind-value="@searchKeyword" placeholder="搜索用户名、邮箱、手机号" class="h-input" style="width: 200px;"
+               @onkeyup="@HandleSearchKeyUp" />
+        <select @bind="@searchUserType" class="h-select" style="width: 120px;">
+            <option value="">用户类型</option>
+            <option value="@UserType.Normal">普通用户</option>
+            <option value="@UserType.Admin">管理员</option>
+            <option value="@UserType.SuperAdmin">超级管理员</option>
+        </select>
+        <select @bind="@searchIsActive" class="h-select" style="width: 120px;">
+            <option value="">状态</option>
+            <option value="true">激活</option>
+            <option value="false">禁用</option>
+        </select>
+        <button class="h-btn h-btn-primary" @onclick="@LoadUsers">搜索</button>
+        <a href="/account/users/create" class="h-btn h-btn-primary" style="text-decoration:none;">新增</a>
     </div>
 
-    <Table TItem="UserDto" DataSource="@users.Items" Loading="@isLoading" HidePagination="true">
-        <Column TData="string" Title="用户名">
-            @context.UserName
-        </Column>
-        <Column TData="string" Title="邮箱">
-            @context.Email
-        </Column>
-        <Column TData="string" Title="手机号">
-            @context.PhoneNumber
-        </Column>
-        <Column TData="string" Title="第三方账号">
-            @if (context.ExternalAccounts.Any())
+    <HTable Loading="@isLoading" ShowEmpty="@(!users.Items.Any() && !isLoading)">
+        <thead>
+            <tr>
+                <th>用户名</th>
+                <th>邮箱</th>
+                <th>手机号</th>
+                <th>第三方账号</th>
+                <th>用户类型</th>
+                <th>状态</th>
+                <th>最后登录</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var context in users.Items)
             {
-                <Space>
-                    @foreach (var account in context.ExternalAccounts)
-                    {
-                        <Tooltip Title="@account.Provider">
-                            <Icon Type="@GetProviderIcon(account.Provider)" />
-                        </Tooltip>
-                    }
-                </Space>
+                <tr>
+                    <td>@context.UserName</td>
+                    <td>@context.Email</td>
+                    <td>@context.PhoneNumber</td>
+                    <td>
+                        @if (context.ExternalAccounts.Any())
+                        {
+                            <span class="h-space">
+                                @foreach (var account in context.ExternalAccounts)
+                                {
+                                    <span class="h-tooltip" title="@account.Provider">
+                                        @GetProviderIcon(account.Provider)
+                                    </span>
+                                }
+                            </span>
+                        }
+                        else
+                        {
+                            <span style="color: #999;">未绑定</span>
+                        }
+                    </td>
+                    <td>
+                        <span class="h-tag h-tag-@GetUserTypeColor(context.UserType)">@GetUserTypeText(context.UserType)</span>
+                    </td>
+                    <td>
+                        @if (context.IsActive)
+                        {
+                            <span class="h-tag h-tag-green">激活</span>
+                        }
+                        else
+                        {
+                            <span class="h-tag h-tag-red">禁用</span>
+                        }
+                    </td>
+                    <td>@(context.LastLoginAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                    <td>
+                        <span class="h-space">
+                            <button class="h-btn h-btn-sm" @onclick="@(() => ViewUser(context.Id))">查看</button>
+                            <a href="/account/users/@context.Id/edit" class="h-btn h-btn-primary h-btn-sm" style="text-decoration:none;">编辑</a>
+                            <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => ConfirmDelete(context.Id))">删除</button>
+                        </span>
+                    </td>
+                </tr>
             }
-            else
-            {
-                <span style="color: #999;">未绑定</span>
-            }
-        </Column>
-        <Column TData="string" Title="用户类型">
-            <Tag Color="@GetUserTypeColor(context.UserType)">@GetUserTypeText(context.UserType)</Tag>
-        </Column>
-        <Column TData="string" Title="状态">
-            @if (context.IsActive)
-            {
-                <Tag Color="@("green")">激活</Tag>
-            }
-            else
-            {
-                <Tag Color="@("red")">禁用</Tag>
-            }
-        </Column>
-        <Column TData="string" Title="最后登录">
-            @(context.LastLoginAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")
-        </Column>
-        <Column TData="string" Title="操作">
-            <Space>
-                <SpaceItem>
-                    <Button Type="@ButtonType.Default" Size="@ButtonSize.Small" OnClick="@(() => ViewUser(context.Id))">查看</Button>
-                </SpaceItem>
-                <SpaceItem>
-                    <a href="/account/users/@context.Id/edit">
-                        <Button Type="@ButtonType.Primary" Size="@ButtonSize.Small">编辑</Button>
-                    </a>
-                </SpaceItem>
-                <SpaceItem>
-                    <Popconfirm Title="确定要删除该用户吗？" OnConfirm="@(() => DeleteUser(context.Id))">
-                        <Button Type="@ButtonType.Primary" Danger Size="@ButtonSize.Small">删除</Button>
-                    </Popconfirm>
-                </SpaceItem>
-            </Space>
-        </Column>
-    </Table>
+        </tbody>
+    </HTable>
 
     @if (users.Items.Any())
     {
-        <div style="margin-top: 16px; text-align: center;">
-            <Pagination Current="@users.PageIndex" PageSize="@users.PageSize" Total="@users.Total"
-                        OnChange="@HandlePageChange" />
+        <div class="h-pagination">
+            <button class="h-btn h-btn-sm" disabled="@(users.PageIndex <= 1)" @onclick="@(() => GoToPage(users.PageIndex - 1))">上一页</button>
+            <span class="h-pagination-info">第 @users.PageIndex 页 / 共 @((users.Total + users.PageSize - 1) / users.PageSize) 页 (共 @users.Total 条)</span>
+            <button class="h-btn h-btn-sm" disabled="@((users.PageIndex * users.PageSize) >= users.Total)" @onclick="@(() => GoToPage(users.PageIndex + 1))">下一页</button>
         </div>
     }
-
-    @if (!users.Items.Any() && !isLoading)
-    {
-        <Empty Description="@("暂无用户数据")" />
-    }
-</Card>
+</HCard>
 
 @code {
     private PagedResult<UserDto> users = new() { PageIndex = 1, PageSize = 10 };
@@ -173,11 +154,19 @@
         }
     }
 
-    private async Task HandlePageChange(PaginationEventArgs e)
+    private async Task GoToPage(int page)
     {
-        users.PageIndex = e.Page;
-        users.PageSize = e.PageSize;
+        users.PageIndex = page;
         await LoadUsers();
+    }
+
+    private async Task ConfirmDelete(Guid userId)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm", "确定要删除该用户吗？");
+        if (confirmed)
+        {
+            await DeleteUser(userId);
+        }
     }
 
     private async Task DeleteUser(Guid userId)
@@ -222,9 +211,9 @@
     {
         return provider.ToLower() switch
         {
-            "wechat" => "wechat",
-            "dingtalk" => "android",
-            _ => "link"
+            "wechat" => "\U0001F4AC",
+            "dingtalk" => "\U0001F4E7",
+            _ => "\U0001F517"
         };
     }
 }

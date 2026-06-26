@@ -3,30 +3,39 @@
 
 <h3>我发起的审批</h3>
 
-<AntDesign.Table DataSource="@myApprovals" TItem="ApprovalInstanceDto">
-    <AntDesign.Column TData="string" @bind-Field="@context.Id" Title="审批实例ID" />
-    <AntDesign.Column TData="string" @bind-Field="@context.DefinitionName" Title="审批名称" />
-    <AntDesign.Column TData="ApprovalStatusEnum" Title="状态">
-        <Template>
-            <span>@context.Status.ToString()</span>
-        </Template>
-    </AntDesign.Column>
-    <AntDesign.Column TData="string" @bind-Field="@context.CurrentNodeName" Title="当前节点" />
-    <AntDesign.Column TData="DateTime" @bind-Field="@context.CreationTime" Title="发起时间" />
-    <AntDesign.Column TData="string" Title="操作">
-        <AntDesign.Button Type="@ButtonType.Link" Size="@ButtonSize.Small">查看</AntDesign.Button>
-    </AntDesign.Column>
-</AntDesign.Table>
+<HTable ShowEmpty="@(!myApprovals.Any())">
+    <thead>
+        <tr>
+            <th>审批实例ID</th>
+            <th>审批名称</th>
+            <th>状态</th>
+            <th>当前节点</th>
+            <th>发起时间</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in myApprovals)
+        {
+            <tr>
+                <td>@item.Id</td>
+                <td>@item.DefinitionName</td>
+                <td>@item.Status.ToString()</td>
+                <td>@item.CurrentNodeName</td>
+                <td>@item.CreationTime</td>
+                <td>
+                    <button class="h-btn h-btn-ghost h-btn-sm">查看</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</HTable>
 
 @code {
     private List<ApprovalInstanceDto> myApprovals = new();
     
     protected override async Task OnInitializedAsync()
     {
-        // TODO: 加载我发起的审批实例
-        // myApprovals = await ApprovalInstanceService.GetMyApprovalsAsync(userId);
-        
-        // 模拟数据
         myApprovals = new List<ApprovalInstanceDto>
         {
             new() 

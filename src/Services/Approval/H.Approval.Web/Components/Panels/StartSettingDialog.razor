@@ -1,14 +1,19 @@
 @namespace H.Approval.Web
 
-@*发起人设置面板*@
 <div class="setting-panel">
     <div class="setting-section">
         <div class="setting-label">谁可以发起</div>
-        <RadioGroup @bind-Value="@startTypeValue" TValue="int" OnChange="OnStartTypeChanged">
-            <Radio Value="0">全员可发起</Radio>
-            <Radio Value="1">指定成员</Radio>
-            <Radio Value="2">指定角色</Radio>
-        </RadioGroup>
+        <div class="h-radio-group">
+            <label class="h-radio-button">
+                <input type="radio" name="startType" value="0" checked="@(startTypeValue == 0)" @onchange="() => OnStartTypeChanged(0)" />全员可发起
+            </label>
+            <label class="h-radio-button">
+                <input type="radio" name="startType" value="1" checked="@(startTypeValue == 1)" @onchange="() => OnStartTypeChanged(1)" />指定成员
+            </label>
+            <label class="h-radio-button">
+                <input type="radio" name="startType" value="2" checked="@(startTypeValue == 2)" @onchange="() => OnStartTypeChanged(2)" />指定角色
+            </label>
+        </div>
     </div>
 
     @if (Node.StartType == StartTypeEnum.Specified)
@@ -16,10 +21,10 @@
         <div class="setting-section">
             <div class="setting-label">指定成员</div>
             <div class="setting-hint">暂未集成人员选择器，请手动输入成员ID（逗号分隔）</div>
-            <TextArea Rows="3"
-                      Value="@specifiedUsersText"
+            <textarea class="h-textarea" rows="3"
+                      value="@specifiedUsersText"
                       @oninput="OnSpecifiedUsersInput"
-                      Placeholder="请输入成员ID，多个用逗号分隔" />
+                      placeholder="请输入成员ID，多个用逗号分隔"></textarea>
         </div>
     }
 
@@ -28,15 +33,15 @@
         <div class="setting-section">
             <div class="setting-label">指定角色</div>
             <div class="setting-hint">暂未集成角色选择器，请手动输入角色ID（逗号分隔）</div>
-            <TextArea Rows="3"
-                      Value="@specifiedRolesText"
+            <textarea class="h-textarea" rows="3"
+                      value="@specifiedRolesText"
                       @oninput="OnSpecifiedRolesInput"
-                      Placeholder="请输入角色ID，多个用逗号分隔" />
+                      placeholder="请输入角色ID，多个用逗号分隔"></textarea>
         </div>
     }
 
     <div class="setting-actions">
-        <Button Type="@ButtonType.Primary" OnClick="SaveSettings">确 定</Button>
+        <button class="h-btn h-btn-primary" @onclick="SaveSettings">确 定</button>
     </div>
 </div>
 

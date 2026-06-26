@@ -1,7 +1,7 @@
 @namespace H.Approval.Web
 
 @layout ApprovalLayout
-@inject MessageService Message
+@inject IJSRuntime JS
 
 <div class="basic-settings-container">
     <div class="settings-card">
@@ -12,9 +12,9 @@
             <div class="form-row">
                 <div class="icon-preview" @onclick="SelectIcon">@Icon</div>
                 <div class="form-input-wrapper">
-                    <Input @bind-Value="Name" 
-                           Placeholder="请输入表单名称" 
-                           MaxLength="50"
+                    <input class="h-input" value="@Name"
+                           placeholder="请输入表单名称"
+                           maxlength="50"
                            @oninput="OnNameInput" />
                     <div class="char-count">@(Name?.Length ?? 0) / 50</div>
                 </div>
@@ -25,26 +25,23 @@
             <label class="form-label">
                 <span class="required">*</span> 所在分组
             </label>
-            <Select TItem="string"
-                    TItemValue="string"
-                    @bind-Value="CategoryName"
-                    Placeholder="请选择分组">
-                <SelectOptions>
-                    <SelectOption TItem="string" TItemValue="string" Value="@("报销（含电子发票）")" Label="报销（含电子发票）" />
-                    <SelectOption TItem="string" TItemValue="string" Value="@("请假")" Label="请假" />
-                    <SelectOption TItem="string" TItemValue="string" Value="@("行政")" Label="行政" />
-                    <SelectOption TItem="string" TItemValue="string" Value="@("人事")" Label="人事" />
-                </SelectOptions>
-            </Select>
+            <select class="h-select" @bind="CategoryName">
+                <option value="">请选择分组</option>
+                <option value="报销（含电子发票）">报销（含电子发票）</option>
+                <option value="请假">请假</option>
+                <option value="行政">行政</option>
+                <option value="人事">人事</option>
+            </select>
         </div>
 
         <div class="form-item">
             <label class="form-label">表单说明</label>
-            <TextArea @bind-Value="Description" 
-                      Placeholder="请输入"
-                      Rows="4"
-                      MaxLength="100"
-                      @oninput="OnDescriptionInput" />
+            <textarea class="h-textarea"
+                      placeholder="请输入"
+                      rows="4"
+                      maxlength="100"
+                      value="@Description"
+                      @oninput="OnDescriptionInput"></textarea>
             <div class="char-count">@(Description?.Length ?? 0) / 100</div>
         </div>
 
@@ -52,27 +49,32 @@
             <label class="form-label">
                 <span class="required">*</span> 谁可以发起
             </label>
-            <RadioGroup @bind-Value="WhoCanStart" TValue="string">
-                <Radio Value="@("All")">全部</Radio>
-                <Radio Value="@("Specified")">指定成员</Radio>
-            </RadioGroup>
+            <div class="h-radio-group">
+                <label class="h-radio-button">
+                    <input type="radio" name="whoCanStart" value="All" checked="@IsWhoCanStartAll" @onchange="SetWhoCanStartAll" />全部
+                </label>
+                <label class="h-radio-button">
+                    <input type="radio" name="whoCanStart" value="Specified" checked="@IsWhoCanStartSpecified" @onchange="SetWhoCanStartSpecified" />指定成员
+                </label>
+            </div>
         </div>
 
         @if (WhoCanStart == "Specified")
         {
             <div class="form-item">
                 <label class="form-label">指定发起人</label>
-                <Button Type="@ButtonType.Default" OnClick="SelectStarters">
+                <button class="h-btn" @onclick="SelectStarters">
                     选择成员
-                </Button>
+                </button>
                 @if (SelectedStarters.Count > 0)
                 {
                     <div style="margin-top: 10px;">
                         @foreach (var starter in SelectedStarters)
                         {
-                            <Tag Closable OnClose="() => RemoveStarter(starter)" Style="margin-right: 8px;">
+                            <span class="h-tag h-tag-default" style="margin-right: 8px;">
                                 @starter
-                            </Tag>
+                                <button class="h-tag-close" @onclick="() => RemoveStarter(starter)">&times;</button>
+                            </span>
                         }
                     </div>
                 }
@@ -83,27 +85,32 @@
             <label class="form-label">
                 <span class="required">*</span> 表单管理员
             </label>
-            <RadioGroup @bind-Value="AdminType" TValue="string">
-                <Radio Value="@("All")">全部「OA审批」管理员</Radio>
-                <Radio Value="@("Specified")">指定「OA审批」管理员</Radio>
-            </RadioGroup>
+            <div class="h-radio-group">
+                <label class="h-radio-button">
+                    <input type="radio" name="adminType" value="All" checked="@IsAdminTypeAll" @onchange="SetAdminTypeAll" />全部「OA审批」管理员
+                </label>
+                <label class="h-radio-button">
+                    <input type="radio" name="adminType" value="Specified" checked="@IsAdminTypeSpecified" @onchange="SetAdminTypeSpecified" />指定「OA审批」管理员
+                </label>
+            </div>
         </div>
 
         @if (AdminType == "Specified")
         {
             <div class="form-item">
                 <label class="form-label">指定管理员</label>
-                <Button Type="@ButtonType.Default" OnClick="SelectAdmins">
+                <button class="h-btn" @onclick="SelectAdmins">
                     选择管理员
-                </Button>
+                </button>
                 @if (SelectedAdmins.Count > 0)
                 {
                     <div style="margin-top: 10px;">
                         @foreach (var admin in SelectedAdmins)
                         {
-                            <Tag Closable OnClose="() => RemoveAdmin(admin)" Style="margin-right: 8px;">
+                            <span class="h-tag h-tag-default" style="margin-right: 8px;">
                                 @admin
-                            </Tag>
+                                <button class="h-tag-close" @onclick="() => RemoveAdmin(admin)">&times;</button>
+                            </span>
                         }
                     </div>
                 }
@@ -129,6 +136,15 @@
     
     private List<string> SelectedStarters { get; set; } = new();
     private List<string> SelectedAdmins { get; set; } = new();
+
+    private bool IsWhoCanStartAll => WhoCanStart == "All";
+    private bool IsWhoCanStartSpecified => WhoCanStart == "Specified";
+    private void SetWhoCanStartAll() { WhoCanStart = "All"; }
+    private void SetWhoCanStartSpecified() { WhoCanStart = "Specified"; }
+    private bool IsAdminTypeAll => AdminType == "All";
+    private bool IsAdminTypeSpecified => AdminType == "Specified";
+    private void SetAdminTypeAll() { AdminType = "All"; }
+    private void SetAdminTypeSpecified() { AdminType = "Specified"; }
 
     protected override void OnParametersSet()
     {
@@ -177,7 +193,6 @@
 
     private void SelectStarters()
     {
-        // TODO: 打开人员选择器
         SelectedStarters.Add("张三");
         NotifyChanged();
     }
@@ -190,7 +205,6 @@
 
     private void SelectAdmins()
     {
-        // TODO: 打开人员选择器
         SelectedAdmins.Add("李四");
         NotifyChanged();
     }

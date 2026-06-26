@@ -5,14 +5,17 @@
 
 @inject IApprovalDefinitionAppService ApprovalDefinitionAppService
 @inject NavigationManager Nav
-@inject MessageService Message
+@inject IJSRuntime JS
 
 <PageTitle>审批设计器</PageTitle>
 
 @if (definition == null)
 {
     <div style="padding: 40px; text-align: center;">
-        <Spin Tip="加载中..." />
+        <div class="h-spin">
+            <span class="h-spin-dot"></span>
+            <span class="h-spin-text">加载中...</span>
+        </div>
     </div>
 }
 else
@@ -36,27 +39,31 @@ else
             </div>
         </div>
         
-        @* 节点设置抽屉 *@
-        <Drawer Title="@settingDrawerTitle"
-                Visible="@isSettingDrawerVisible"
-                Width="480"
-                OnClose="CloseSettingDrawer">
-            @if (editingNode != null)
-            {
-                @if (editingNode.NodeType == NodeTypeEnum.Start)
+        @if (isSettingDrawerVisible)
+        {
+            <div class="setting-drawer-overlay" @onclick="CloseSettingDrawer"></div>
+            <div class="setting-drawer" style="position: fixed; right: 0; top: 0; bottom: 0; width: 480px; background: #fff; box-shadow: -2px 0 8px rgba(0,0,0,0.15); z-index: 1000; overflow-y: auto; padding: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <h4 style="margin: 0;">@settingDrawerTitle</h4>
+                    <button class="h-btn h-btn-ghost h-btn-sm" @onclick="CloseSettingDrawer">&times;</button>
+                </div>
+                @if (editingNode != null)
                 {
-                    <StartSettingDialog Node="@((StartNodeModel)editingNode)" OnSave="OnNodeSettingSaved" />
+                    @if (editingNode.NodeType == NodeTypeEnum.Start)
+                    {
+                        <StartSettingDialog Node="@((StartNodeModel)editingNode)" OnSave="OnNodeSettingSaved" />
+                    }
+                    else if (editingNode.NodeType == NodeTypeEnum.Approve)
+                    {
+                        <ApproverSettingDialog Node="@((ApproveModel)editingNode)" OnSave="OnNodeSettingSaved" />
+                    }
+                    else if (editingNode.NodeType == NodeTypeEnum.CarbonCopy)
+                    {
+                        <CarbonCopySettingDialog Node="@((CarbonCopyModel)editingNode)" OnSave="OnNodeSettingSaved" />
+                    }
                 }
-                else if (editingNode.NodeType == NodeTypeEnum.Approve)
-                {
-                    <ApproverSettingDialog Node="@((ApproveModel)editingNode)" OnSave="OnNodeSettingSaved" />
-                }
-                else if (editingNode.NodeType == NodeTypeEnum.CarbonCopy)
-                {
-                    <CarbonCopySettingDialog Node="@((CarbonCopyModel)editingNode)" OnSave="OnNodeSettingSaved" />
-                }
-            }
-        </Drawer>
+            </div>
+        }
     }
 }
 
@@ -70,12 +77,8 @@ else
     private ApprovalDefinitionDto? definition;
     private int ZoomLevel { get; set; } = 100;
     
-    /// <summary>
-    /// 根节点 - 发起人节点
-    /// </summary>
     public NodeModelBase RootNode { get; set; } = null!;
     
-    // 节点设置抽屉状态
     private bool isSettingDrawerVisible = false;
     private string settingDrawerTitle = "";
     private NodeModelBase? editingNode = null;
@@ -104,7 +107,6 @@ else
                 definition = await ApprovalDefinitionAppService.GetByIdAsync(ApprovalId);
             }
             
-            // 从json反序列化节点树
             if (definition != null && !string.IsNullOrEmpty(definition.DefinitionJson) && definition.DefinitionJson != "{}")
             {
                 var node = NodeSerializer.Deserialize(definition.DefinitionJson);
@@ -116,7 +118,7 @@ else
         }
         catch (Exception ex)
         {
-            Message.Error($"加载审批定义失败: {ex.Message}");
+            await JS.InvokeVoidAsync("alert", $"加载审批定义失败: {ex.Message}");
         }
     }
     
@@ -194,9 +196,6 @@ else
         StateHasChanged();
     }
     
-    /// <summary>
-    /// 节点删除事件：遍历树找到父节点，移除目标节点并将其子节点提升
-    /// </summary>
     private void OnDeleteNode(NodeModelBase nodeToDelete)
     {
         if (RemoveNodeFromTree(RootNode, nodeToDelete))
@@ -225,9 +224,6 @@ else
         return false;
     }
     
-    /// <summary>
-    /// 节点点击事件，打开设置面板
-    /// </summary>
     private void OnNodeClick(NodeModelBase node)
     {
         editingNode = node;
@@ -271,17 +267,11 @@ else
         }
     }
     
-    /// <summary>
-    /// 构建保存用的DTO
-    /// </summary>
     private string BuildDefinitionJson()
     {
         return NodeSerializer.Serialize(RootNode);
     }
     
-    /// <summary>
-    /// 保存草稿
-    /// </summary>
     private async Task OnSaveDraftAsync()
     {
         if (definition == null) return;
@@ -306,7 +296,6 @@ else
                     DefinitionJson = json
                 });
                 
-                // 保存后切换为编辑模式
                 isNewDefinition = false;
                 ApprovalId = result.Id;
                 definition.Id = result.Id;
@@ -329,23 +318,20 @@ else
                 });
             }
             
-            Message.Success("保存成功");
+            await JS.InvokeVoidAsync("alert", "保存成功");
             DesignerLayout?.UpdateStatus("草稿");
         }
         catch (Exception ex)
         {
-            Message.Error($"保存失败: {ex.Message}");
+            await JS.InvokeVoidAsync("alert", $"保存失败: {ex.Message}");
         }
     }
     
-    /// <summary>
-    /// 发布审批
-    /// </summary>
     private async Task OnPublishAsync()
     {
         if (definition == null)
         {
-            Message.Error("审批定义未加载");
+            await JS.InvokeVoidAsync("alert", "审批定义未加载");
             return;
         }
         
@@ -388,15 +374,14 @@ else
                 });
             }
             
-            // 启用审批定义
             await ApprovalDefinitionAppService.ToggleEnabledAsync(ApprovalId, true);
             
-            Message.Success("发布成功");
+            await JS.InvokeVoidAsync("alert", "发布成功");
             Nav.NavigateTo("/approval/management");
         }
         catch (Exception ex)
         {
-            Message.Error($"发布失败: {ex.Message}");
+            await JS.InvokeVoidAsync("alert", $"发布失败: {ex.Message}");
         }
     }
     

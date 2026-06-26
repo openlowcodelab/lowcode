@@ -1,0 +1,26 @@
+@namespace H.Util.Blazor
+
+<div class="h-card">
+    @if (!string.IsNullOrEmpty(Title) || Extra != null)
+    {
+        <div class="h-card-header">
+            @if (!string.IsNullOrEmpty(Title))
+            {
+                <div class="h-card-title">@Title</div>
+            }
+            @if (Extra != null)
+            {
+                <div class="h-card-extra">@Extra</div>
+            }
+        </div>
+    }
+    <div class="h-card-body">
+        @ChildContent
+    </div>
+</div>
+
+@code {
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public RenderFragment? Extra { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

@@ -4,29 +4,42 @@
 
 @inject IApprovalDefinitionAppService DefinitionService
 @inject NavigationManager Nav
-@inject MessageService Message
+@inject IJSRuntime JS
 
-<AntDesign.Button Type="@ButtonType.Primary" @onclick="CreateNew">新建审批</AntDesign.Button>
+<button class="h-btn h-btn-primary" @onclick="CreateNew">新建审批</button>
 
-<AntDesign.Table DataSource="@definitions" TItem="ApprovalDefinitionDto" Style="margin-top: 16px;">
-    <AntDesign.Column TData="string" @bind-Field="@context.Name" Title="审批名称" />
-    <AntDesign.Column TData="string" @bind-Field="@context.Description" Title="描述" />
-    <AntDesign.Column TData="int" @bind-Field="@context.Version" Title="版本" />
-    <AntDesign.Column TData="bool" @bind-Field="@context.IsEnabled" Title="状态">
-        <Template>
-            <AntDesign.Tag Color="@(context.IsEnabled ? "green" : "red")">
-                @(context.IsEnabled ? "启用" : "禁用")
-            </AntDesign.Tag>
-        </Template>
-    </AntDesign.Column>
-    <AntDesign.Column TData="DateTime" @bind-Field="@context.CreationTime" Title="创建时间" />
-    <AntDesign.Column TData="string" Title="操作">
-        <AntDesign.Button Type="@ButtonType.Link" Size="@ButtonSize.Small" @onclick="() => Edit(context.Id)">编辑</AntDesign.Button>
-        <AntDesign.Popconfirm Title="确认删除?" OnConfirm="() => Delete(context.Id)">
-            <AntDesign.Button Type="@ButtonType.Link" Size="@ButtonSize.Small" Danger>删除</AntDesign.Button>
-        </AntDesign.Popconfirm>
-    </AntDesign.Column>
-</AntDesign.Table>
+<HTable ShowEmpty="@(!definitions.Any())" Style="margin-top: 16px;">
+    <thead>
+        <tr>
+            <th>审批名称</th>
+            <th>描述</th>
+            <th>版本</th>
+            <th>状态</th>
+            <th>创建时间</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in definitions)
+        {
+            <tr>
+                <td>@item.Name</td>
+                <td>@item.Description</td>
+                <td>@item.Version</td>
+                <td>
+                    <span class="h-tag @(item.IsEnabled ? "h-tag-green" : "h-tag-red")">
+                        @(item.IsEnabled ? "启用" : "禁用")
+                    </span>
+                </td>
+                <td>@item.CreationTime</td>
+                <td>
+                    <button class="h-btn h-btn-ghost h-btn-sm" @onclick="() => Edit(item.Id)">编辑</button>
+                    <button class="h-btn h-btn-danger h-btn-sm" @onclick="() => Delete(item.Id)">删除</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</HTable>
 
 @code {
     private List<ApprovalDefinitionDto> definitions = new();
@@ -45,15 +58,13 @@
         }
         catch (Exception ex)
         {
-            Message.Error($"加载数据失败: {ex.Message}");
-            // 即使加载失败，也要初始化空列表以防止空引用异常
+            await JS.InvokeVoidAsync("alert", $"加载数据失败: {ex.Message}");
             definitions = new List<ApprovalDefinitionDto>();
         }
     }
 
     private async Task CreateNew()
     {
-        // 导航到设计器页面
         Nav.NavigateTo($"/approval/designer/_new");
     }
 
@@ -64,15 +75,18 @@
     
     private async Task Delete(string id)
     {
+        var confirmed = await JS.InvokeAsync<bool>("confirm", "确认删除?");
+        if (!confirmed) return;
+
         try
         {
             await DefinitionService.DeleteAsync(id);
-            Message.Success("删除成功");
+            await JS.InvokeVoidAsync("alert", "删除成功");
             await LoadData();
         }
         catch (Exception ex)
         {
-            Message.Error($"删除失败: {ex.Message}");
+            await JS.InvokeVoidAsync("alert", $"删除失败: {ex.Message}");
         }
     }
 }

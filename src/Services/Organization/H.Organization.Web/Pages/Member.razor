@@ -5,97 +5,122 @@
 @inject IOrganizationService IOrganizationService
 @inject IJSRuntime JS
 
-<Card Title="成员管理">
+<HCard Title="成员管理">
     <div style="margin-bottom: 16px;">
-        <Button Type="@ButtonType.Primary" OnClick="@ShowCreateDialog">添加成员</Button>
+        <button class="h-btn h-btn-primary" @onclick="@ShowCreateDialog">添加成员</button>
     </div>
 
-    <Table TItem="MemberDto" DataSource="@members" Loading="@(members == null)">
-        <Column TData="string" Title="用户名">
-            @context.UserName
-        </Column>
-        <Column TData="string" Title="邮箱">
-            @context.Email
-        </Column>
-        <Column TData="string" Title="手机号">
-            @context.PhoneNumber
-        </Column>
-        <Column TData="string" Title="所属部门">
-            @context.OrganizationName
-        </Column>
-        <Column TData="string" Title="成员类型">
-            @context.MemberTypeName
-        </Column>
-        <Column TData="string" Title="主部门">
-            @if (context.IsMain)
+    <HTable Loading="@(members == null)" ShowEmpty="@(members != null && !members.Any())">
+        <thead>
+            <tr>
+                <th>用户名</th>
+                <th>邮箱</th>
+                <th>手机号</th>
+                <th>所属部门</th>
+                <th>成员类型</th>
+                <th>主部门</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (members != null)
             {
-                <Tag Color="@("blue")">是</Tag>
+                @foreach (var context in members)
+                {
+                    <tr>
+                        <td>@context.UserName</td>
+                        <td>@context.Email</td>
+                        <td>@context.PhoneNumber</td>
+                        <td>@context.OrganizationName</td>
+                        <td>@context.MemberTypeName</td>
+                        <td>
+                            @if (context.IsMain)
+                            {
+                                <span class="h-tag h-tag-blue">是</span>
+                            }
+                            else
+                            {
+                                <span class="h-tag">否</span>
+                            }
+                        </td>
+                        <td>
+                            @if (context.IsEnabled)
+                            {
+                                <span class="h-tag h-tag-green">启用</span>
+                            }
+                            else
+                            {
+                                <span class="h-tag h-tag-red">禁用</span>
+                            }
+                        </td>
+                        <td>
+                            <span class="h-space">
+                                <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => Edit(context))">编辑</button>
+                                <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => ConfirmDelete(context.Id))">删除</button>
+                            </span>
+                        </td>
+                    </tr>
+                }
             }
-            else
-            {
-                <Tag>否</Tag>
-            }
-        </Column>
-        <Column TData="string" Title="状态">
-            @if (context.IsEnabled)
-            {
-                <Tag Color="@("green")">启用</Tag>
-            }
-            else
-            {
-                <Tag Color="@("red")">禁用</Tag>
-            }
-        </Column>
-        <Column TData="string" Title="操作">
-            <Space>
-                <SpaceItem>
-                    <Button Type="@ButtonType.Primary" Size="@ButtonSize.Small" OnClick="@(() => Edit(context))">编辑</Button>
-                </SpaceItem>
-                <SpaceItem>
-                    <Popconfirm Title="确定要删除这个成员吗？" OnConfirm="@(() => Delete(context.Id))">
-                        <Button Type="@ButtonType.Primary" Danger Size="@ButtonSize.Small">删除</Button>
-                    </Popconfirm>
-                </SpaceItem>
-            </Space>
-        </Column>
-    </Table>
-</Card>
+        </tbody>
+    </HTable>
+</HCard>
 
-<Modal Title="@(isEdit ? "编辑成员" : "添加成员")" Visible="@showDialog" OnOk="@Save" OnCancel="@CloseDialog"
-       ConfirmLoading="@isSubmitting">
-    <Form Model="@currentMember" LabelColSpan="6" WrapperColSpan="18">
-        @if (!isEdit)
-        {
-            <FormItem Label="用户ID">
-                <Input @bind-Value="@currentMember.UserId" Placeholder="请输入Account服务中的用户ID" />
-            </FormItem>
-        }
-        <FormItem Label="所属部门">
-            <Select TItem="Guid" TItemValue="Guid" @bind-Value="@currentMember.OrganizationId" Placeholder="请选择所属部门">
+<HModal Title="@(isEdit ? "编辑成员" : "添加成员")" Visible="@showDialog" OnOk="@Save" OnCancel="@CloseDialog" ConfirmLoading="@isSubmitting">
+    @if (!isEdit)
+    {
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">用户ID</label>
+            <div class="h-form-control">
+                <input type="text" @bind-value="@currentMember.UserId" placeholder="请输入Account服务中的用户ID" class="h-input" />
+            </div>
+        </div>
+    }
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">所属部门</label>
+        <div class="h-form-control">
+            <select @bind="@currentMember.OrganizationId" class="h-select">
+                <option value="">请选择</option>
                 @foreach (var org in organizations ?? new List<OrganizationDto>())
                 {
-                    <SelectOption Value="@org.Id" Label="@org.Name" />
+                    <option value="@org.Id">@org.Name</option>
                 }
-            </Select>
-        </FormItem>
-        <FormItem Label="成员类型">
-            <Select TItem="int" TItemValue="int" @bind-Value="@currentMember.MemberType" Placeholder="请选择成员类型">
-                <SelectOption Value="1" Label="普通成员" />
-                <SelectOption Value="2" Label="部门负责人" />
-                <SelectOption Value="3" Label="部门经理" />
-            </Select>
-        </FormItem>
-        <FormItem Label="排序">
-            <AntDesign.InputNumber @bind-Value="@currentMember.Sort" Style="width: 100%;" />
-        </FormItem>
-        <FormItem Label="设为主部门">
-            <Switch @bind-Value="@currentMember.IsMain" />
-        </FormItem>
-        <FormItem Label="备注">
-            <TextArea @bind-Value="@currentMember.Remark" Placeholder="请输入备注" Rows="3" />
-        </FormItem>
-    </Form>
-</Modal>
+            </select>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">成员类型</label>
+        <div class="h-form-control">
+            <select @bind="@currentMember.MemberType" class="h-select">
+                <option value="1">普通成员</option>
+                <option value="2">部门负责人</option>
+                <option value="3">部门经理</option>
+            </select>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">排序</label>
+        <div class="h-form-control">
+            <input type="number" @bind="@currentMember.Sort" class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">设为主部门</label>
+        <div class="h-form-control">
+            <label class="h-switch">
+                <input type="checkbox" @bind="@currentMember.IsMain" />
+                <span class="h-switch-slider"></span>
+            </label>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">备注</label>
+        <div class="h-form-control">
+            <textarea @bind="@currentMember.Remark" placeholder="请输入备注" rows="3" class="h-textarea"></textarea>
+        </div>
+    </div>
+</HModal>
 
 @code {
     private List<MemberDto>? members;
@@ -144,7 +169,7 @@
         showDialog = true;
     }
 
-    private async Task Save(MouseEventArgs e)
+    private async Task Save()
     {
         isSubmitting = true;
         try
@@ -182,13 +207,22 @@
         }
     }
 
+    private async Task ConfirmDelete(Guid id)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm", "确定要删除这个成员吗？");
+        if (confirmed)
+        {
+            await Delete(id);
+        }
+    }
+
     private async Task Delete(Guid id)
     {
         await IMemberService.DeleteAsync(id);
         await LoadData();
     }
 
-    private void CloseDialog(MouseEventArgs? e = null)
+    private void CloseDialog()
     {
         showDialog = false;
     }

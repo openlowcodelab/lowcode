@@ -79,33 +79,27 @@
                     <div style="font-size: 15px; font-weight: 600; margin-bottom: 4px;">📋 测试步骤</div>
                     <small style="color: #999;">@(isNewTestCase ? "新建测试用例" : currentTestCase.Name)</small>
                 </div>
-                <AntDesign.Button Danger="true" Size="@ButtonSize.Small" OnClick="GoBack">← 返回</AntDesign.Button>
+                <button class="h-btn h-btn-sm" style="color:#ff4d4f;border-color:#ff4d4f;" @onclick="GoBack">← 返回</button>
             </div>
-            <AntDesign.Space Style="flex-wrap: wrap; justify-content: flex-end; width: 100%;">
-                <SpaceItem>
-                    <AntDesign.Button Type="@ButtonType.Primary" Size="@ButtonSize.Small"
-                                      OnClick="AddStep" Disabled="@(!string.IsNullOrEmpty(currentTestCase.TemplateId))">
-                        ➕ 添加
-                    </AntDesign.Button>
-                </SpaceItem>
-                <SpaceItem>
-                    <AntDesign.Button Size="@ButtonSize.Small"
-                                      Style="background-color: #52c41a; border-color: #52c41a; color: #fff;"
-                                      OnClick="ShowRecorderModal" Disabled="@(!string.IsNullOrEmpty(currentTestCase.TemplateId))">
-                        🎥 录制
-                    </AntDesign.Button>
-                </SpaceItem>
-                <SpaceItem>
-                    <AntDesign.Button Size="@ButtonSize.Small"
-                                      Style="background-color: #13c2c2; border-color: #13c2c2; color: #fff;"
-                                      OnClick="ToggleTestDataModal" Title="管理测试数据">
-                        📊 数据
-                    </AntDesign.Button>
-                </SpaceItem>
-                <SpaceItem>
-                    <AntDesign.Button Size="@ButtonSize.Small" OnClick="SaveTestCase">✓ 保存</AntDesign.Button>
-                </SpaceItem>
-            </AntDesign.Space>
+            <span class="h-space" style="flex-wrap:wrap;justify-content:flex-end;width:100%;display:flex;">
+                <button class="h-btn h-btn-sm h-btn-primary"
+                        disabled="@(!string.IsNullOrEmpty(currentTestCase.TemplateId))"
+                        @onclick="AddStep">
+                    ➕ 添加
+                </button>
+                <button class="h-btn h-btn-sm"
+                        style="background-color:#52c41a;border-color:#52c41a;color:#fff;"
+                        disabled="@(!string.IsNullOrEmpty(currentTestCase.TemplateId))"
+                        @onclick="ShowRecorderModal">
+                    🎥 录制
+                </button>
+                <button class="h-btn h-btn-sm"
+                        style="background-color:#13c2c2;border-color:#13c2c2;color:#fff;"
+                        @onclick="ToggleTestDataModal" title="管理测试数据">
+                    📊 数据
+                </button>
+                <button class="h-btn h-btn-sm" @onclick="SaveTestCase">✓ 保存</button>
+            </span>
         </div>
 
         @if (currentTestCase.Steps.Any())
@@ -119,35 +113,29 @@
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div style="flex: 1; min-width: 0;">
                                 <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 2px;">
-                                    <AntDesign.Tag Color="@TagColor.Default">@step.Order</AntDesign.Tag>
+                                    <span class="h-tag h-tag-default">@step.Order</span>
                                     <span style="font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">@step.Name</span>
                                     @if (!step.IsEnabled)
                                     {
-                                        <AntDesign.Tag Color="@TagColor.Orange">禁用</AntDesign.Tag>
+                                        <span class="h-tag h-tag-orange">禁用</span>
                                     }
                                 </div>
                                 <small style="color: #999;">@GetStepTypeDisplayName(step.Type)</small>
                             </div>
-                            <AntDesign.Space Size="@("small")">
-                                <SpaceItem>
-                                    <AntDesign.Button Size="@ButtonSize.Small"
-                                                      Disabled="@(step.Order <= 1 || !string.IsNullOrEmpty(currentTestCase.TemplateId))"
-                                                      OnClick="@(async (MouseEventArgs e) => { await Task.CompletedTask; MoveStepUp(step); })"
-                                                      OnClickStopPropagation="true">↑</AntDesign.Button>
-                                </SpaceItem>
-                                <SpaceItem>
-                                    <AntDesign.Button Size="@ButtonSize.Small"
-                                                      Disabled="@(step.Order >= currentTestCase.Steps.Count || !string.IsNullOrEmpty(currentTestCase.TemplateId))"
-                                                      OnClick="@(async (MouseEventArgs e) => { await Task.CompletedTask; MoveStepDown(step); })"
-                                                      OnClickStopPropagation="true">↓</AntDesign.Button>
-                                </SpaceItem>
-                                <SpaceItem>
-                                    <AntDesign.Button Size="@ButtonSize.Small" Danger="true"
-                                                      Disabled="@(!string.IsNullOrEmpty(currentTestCase.TemplateId))"
-                                                      OnClick="@(async (MouseEventArgs e) => { await Task.CompletedTask; DeleteStep(step.Id); })"
-                                                      OnClickStopPropagation="true">🗑</AntDesign.Button>
-                                </SpaceItem>
-                            </AntDesign.Space>
+                            <span class="h-space">
+                                <button class="h-btn h-btn-sm"
+                                        disabled="@(step.Order <= 1 || !string.IsNullOrEmpty(currentTestCase.TemplateId))"
+                                        @onclick="@(async () => { await Task.CompletedTask; MoveStepUp(step); })"
+                                        @onclick:stopPropagation>↑</button>
+                                <button class="h-btn h-btn-sm"
+                                        disabled="@(step.Order >= currentTestCase.Steps.Count || !string.IsNullOrEmpty(currentTestCase.TemplateId))"
+                                        @onclick="@(async () => { await Task.CompletedTask; MoveStepDown(step); })"
+                                        @onclick:stopPropagation>↓</button>
+                                <button class="h-btn h-btn-sm" style="color:#ff4d4f;border-color:#ff4d4f;"
+                                        disabled="@(!string.IsNullOrEmpty(currentTestCase.TemplateId))"
+                                        @onclick="@(async () => { await Task.CompletedTask; DeleteStep(step.Id); })"
+                                        @onclick:stopPropagation>🗑</button>
+                            </span>
                         </div>
                     </div>
                 }
@@ -156,9 +144,9 @@
         else
         {
             <div style="text-align: center; padding: 40px 0;">
-                <AntDesign.Empty Description="@("暂无测试步骤")" />
+                <div class="h-empty">暂无测试步骤</div>
                 <div style="color: #999; margin-top: 12px; margin-bottom: 12px;">点击上方按钮添加第一个测试步骤</div>
-                <AntDesign.Button Type="@ButtonType.Primary" Size="@ButtonSize.Small" OnClick="AddStep">➕ 添加步骤</AntDesign.Button>
+                <button class="h-btn h-btn-sm h-btn-primary" @onclick="AddStep">➕ 添加步骤</button>
             </div>
         }
     </div>
@@ -169,18 +157,20 @@
         {
             <div style="padding: 12px;">
                 <!-- 基本信息 -->
-                <AntDesign.Card Size="@CardSize.Small" Title="基本信息" Style="margin-bottom: 16px;">
-                    <AntDesign.Row Gutter="16">
-                        <AntDesign.Col Span="16">
+                <div style="margin-bottom:16px;">
+                <HCard Title="基本信息">
+                    <ChildContent>
+                    <div style="display:flex;gap:16px;">
+                        <div style="flex:2;">
                             <div style="margin-bottom: 12px;">
                                 <div style="margin-bottom: 4px;">步骤名称 <span style="color: #ff4d4f;">*</span></div>
-                                <AntDesign.Input @bind-Value="selectedStep.Name" />
+                                <input class="h-input" @bind-value="selectedStep.Name" />
                             </div>
-                        </AntDesign.Col>
-                        <AntDesign.Col Span="8">
+                        </div>
+                        <div style="flex:1;">
                             <div style="margin-bottom: 12px;">
                                 <div style="margin-bottom: 4px;">步骤类型</div>
-                                <select class="ant-input" style="width: 100%; height: 32px; padding: 4px 11px; border: 1px solid #d9d9d9; border-radius: 2px;"
+                                <select class="h-select" style="width: 100%; height: 32px;"
                                         value="@selectedStep.Type" @onchange="OnStepTypeChanged">
                                     <optgroup label="API测试步骤">
                                         <option value="@StepType.HttpRequest">HTTP请求</option>
@@ -207,25 +197,29 @@
                                     </optgroup>
                                 </select>
                             </div>
-                        </AntDesign.Col>
-                    </AntDesign.Row>
+                        </div>
+                    </div>
 
-                    <AntDesign.Row Gutter="16">
-                        <AntDesign.Col Span="20">
+                    <div style="display:flex;gap:16px;">
+                        <div style="flex:5;">
                             <div style="margin-bottom: 12px;">
                                 <div style="margin-bottom: 4px;">期望结果</div>
-                                <AntDesign.TextArea Rows="2" @bind-Value="selectedStep.ExpectedResult" Placeholder="描述此步骤的期望结果" />
+                                <textarea class="h-textarea" rows="2" @bind="selectedStep.ExpectedResult" placeholder="描述此步骤的期望结果"></textarea>
                             </div>
-                        </AntDesign.Col>
-                        <AntDesign.Col Span="4">
+                        </div>
+                        <div style="flex:1;">
                             <div style="margin-bottom: 12px;">
                                 <div style="margin-bottom: 4px;">启用状态</div>
-                                <AntDesign.Switch @bind-Checked="selectedStep.IsEnabled"
-                                                  CheckedChildren="启用" UnCheckedChildren="禁用" />
+                                <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
+                                    <input type="checkbox" @bind="selectedStep.IsEnabled" />
+                                    @(selectedStep.IsEnabled ? "启用" : "禁用")
+                                </label>
                             </div>
-                        </AntDesign.Col>
-                    </AntDesign.Row>
-                </AntDesign.Card>
+                        </div>
+                    </div>
+                    </ChildContent>
+                </HCard>
+                </div>
 
                 <!-- 步骤配置 -->
                 @if (selectedStep != null)
@@ -253,11 +247,11 @@
         {
             <div style="display: flex; align-items: center; justify-content: center; min-height: 400px;">
                 <div style="text-align: center;">
-                    <AntDesign.Empty Description="@("请从左侧列表中选择一个步骤来编辑详情")" />
+                    <div class="h-empty">请从左侧列表中选择一个步骤来编辑详情</div>
                     @if (!currentTestCase.Steps.Any())
                     {
                         <div style="margin-top: 16px;">
-                            <AntDesign.Button Type="@ButtonType.Primary" OnClick="AddStep">➕ 创建第一个步骤</AntDesign.Button>
+                            <button class="h-btn h-btn-primary" @onclick="AddStep">➕ 创建第一个步骤</button>
                         </div>
                     }
                 </div>
@@ -266,16 +260,14 @@
     </div>
 </div>
 
-<!-- 测试数据 Modal -->
-<AntDesign.Modal Visible="@showTestDataModal"
-                 Title="测试数据管理"
-                 Width="800"
-                 OnCancel="ToggleTestDataModal"
-                 Footer="null"
-                 DestroyOnClose="true">
-    <AntDesign.Alert Type="@AlertType.Info" ShowIcon="true"
-                     Message="@("在此定义测试数据变量。这些变量可在测试步骤中通过 {{VariableName}} 引用。如果此用例继承了模板，这些变量将覆盖模板中的同名变量。")"
-                     Style="margin-bottom: 16px;" />
+<HModal Visible="@showTestDataModal"
+        Title="测试数据管理"
+        OnCancel="ToggleTestDataModal"
+        ShowFooter="false"
+        Style="width:800px;">
+    <div class="h-alert h-alert-info" style="margin-bottom: 16px;">
+        在此定义测试数据变量。这些变量可在测试步骤中通过 {{VariableName}} 引用。如果此用例继承了模板，这些变量将覆盖模板中的同名变量。
+    </div>
 
     <table style="width: 100%; border-collapse: collapse;">
         <thead>
@@ -291,11 +283,11 @@
                 <tr style="border-bottom: 1px solid #f0f0f0;">
                     <td style="padding: 8px 12px;">@kvp.Key</td>
                     <td style="padding: 8px 12px;">
-                        <AntDesign.Input Value="@(kvp.Value?.ToString() ?? "")"
-                                         OnChange="@((string v) => currentTestCase.TestData[kvp.Key] = v ?? "")" />
+                        <input class="h-input" value="@(kvp.Value?.ToString() ?? "")"
+                               @onchange="@((ChangeEventArgs e) => currentTestCase.TestData[kvp.Key] = e.Value?.ToString() ?? "")" />
                     </td>
                     <td style="padding: 8px 12px;">
-                        <AntDesign.Button Size="@ButtonSize.Small" Danger="true" OnClick="@(() => RemoveTestData(kvp.Key))">🗑 删除</AntDesign.Button>
+                        <button class="h-btn h-btn-sm" style="color:#ff4d4f;border-color:#ff4d4f;" @onclick="@(() => RemoveTestData(kvp.Key))">🗑 删除</button>
                     </td>
                 </tr>
             }
@@ -303,17 +295,17 @@
     </table>
 
     <div style="display: flex; gap: 8px; margin-top: 16px; padding-top: 12px; border-top: 1px solid #f0f0f0;">
-        <AntDesign.Input Placeholder="新变量名" @bind-Value="newTestDataKey" Style="flex: 1;" />
-        <AntDesign.Input Placeholder="变量值" @bind-Value="newTestDataValue" Style="flex: 1;" />
-        <AntDesign.Button Type="@ButtonType.Primary"
-                          Style="background-color: #52c41a; border-color: #52c41a;"
-                          OnClick="AddTestData">➕ 添加</AntDesign.Button>
+        <input class="h-input" placeholder="新变量名" @bind-value="newTestDataKey" style="flex: 1;" />
+        <input class="h-input" placeholder="变量值" @bind-value="newTestDataValue" style="flex: 1;" />
+        <button class="h-btn h-btn-primary"
+                style="background-color: #52c41a; border-color: #52c41a;"
+                @onclick="AddTestData">➕ 添加</button>
     </div>
 
     <div style="text-align: right; margin-top: 16px; padding-top: 12px; border-top: 1px solid #f0f0f0;">
-        <AntDesign.Button Type="@ButtonType.Primary" OnClick="ToggleTestDataModal">完成</AntDesign.Button>
+        <button class="h-btn h-btn-primary" @onclick="ToggleTestDataModal">完成</button>
     </div>
-</AntDesign.Modal>
+</HModal>
 
 @code {
     [Parameter] public string? TestCaseId { get; set; }

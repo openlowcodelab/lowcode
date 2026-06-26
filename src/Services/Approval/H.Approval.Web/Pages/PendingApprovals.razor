@@ -3,27 +3,39 @@
 
 <h3>待我审批</h3>
 
-<AntDesign.Table DataSource="@pendingTasks" TItem="ApprovalTaskDto">
-    <AntDesign.Column TData="string" @bind-Field="@context.InstanceTitle" Title="审批标题" />
-    <AntDesign.Column TData="string" @bind-Field="@context.ApprovalName" Title="审批名称" />
-    <AntDesign.Column TData="string" @bind-Field="@context.NodeName" Title="当前节点" />
-    <AntDesign.Column TData="DateTime" @bind-Field="@context.CreationTime" Title="到达时间" />
-    <AntDesign.Column TData="string" Title="操作">
-        <AntDesign.Button Type="@ButtonType.Primary" Size="@ButtonSize.Small" @onclick="() => Approve(context)">通过</AntDesign.Button>
-        <AntDesign.Button Type="@ButtonType.Default" Danger Size="@ButtonSize.Small" @onclick="() => Reject(context)">驳回</AntDesign.Button>
-        <AntDesign.Button Type="@ButtonType.Link" Size="@ButtonSize.Small">详情</AntDesign.Button>
-    </AntDesign.Column>
-</AntDesign.Table>
+<HTable ShowEmpty="@(!pendingTasks.Any())">
+    <thead>
+        <tr>
+            <th>审批标题</th>
+            <th>审批名称</th>
+            <th>当前节点</th>
+            <th>到达时间</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in pendingTasks)
+        {
+            <tr>
+                <td>@item.InstanceTitle</td>
+                <td>@item.ApprovalName</td>
+                <td>@item.NodeName</td>
+                <td>@item.CreationTime</td>
+                <td>
+                    <button class="h-btn h-btn-primary h-btn-sm" @onclick="() => Approve(item)">通过</button>
+                    <button class="h-btn h-btn-danger h-btn-sm" @onclick="() => Reject(item)">驳回</button>
+                    <button class="h-btn h-btn-ghost h-btn-sm">详情</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</HTable>
 
 @code {
     private List<ApprovalTaskDto> pendingTasks = new();
     
     protected override async Task OnInitializedAsync()
     {
-        // TODO: 加载待审批任务
-        // pendingTasks = await ApprovalTaskService.GetPendingTasksAsync(userId);
-        
-        // 模拟数据
         pendingTasks = new List<ApprovalTaskDto>
         {
             new() 
@@ -39,13 +51,11 @@
     
     private async Task Approve(ApprovalTaskDto task)
     {
-        // TODO: 审批通过
         Console.WriteLine($"审批通过: {task.InstanceTitle}");
     }
     
     private async Task Reject(ApprovalTaskDto task)
     {
-        // TODO: 审批驳回
         Console.WriteLine($"审批驳回: {task.InstanceTitle}");
     }
 }

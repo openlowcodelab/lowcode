@@ -4,83 +4,107 @@
 @inject IOrganizationService IOrganizationService
 @inject IJSRuntime JS
 
-<Card Title="组织管理">
+<HCard Title="组织管理">
     <div style="margin-bottom: 16px;">
-        <Button Type="@ButtonType.Primary" OnClick="@ShowCreateDialog">新增部门</Button>
+        <button class="h-btn h-btn-primary" @onclick="@ShowCreateDialog">新增部门</button>
     </div>
 
-    <Table TItem="OrganizationDto" DataSource="@organizations" Loading="@(organizations == null)">
-        <Column TData="string" Title="部门名称">
-            @context.Name
-        </Column>
-        <Column TData="string" Title="编码">
-            @context.Code
-        </Column>
-        <Column TData="string" Title="负责人">
-            @context.LeaderName
-        </Column>
-        <Column TData="string" Title="电话">
-            @context.Phone
-        </Column>
-        <Column TData="string" Title="邮箱">
-            @context.Email
-        </Column>
-        <Column TData="string" Title="状态">
-            @if (context.IsEnabled)
+    <HTable Loading="@(organizations == null)" ShowEmpty="@(organizations != null && !organizations.Any())">
+        <thead>
+            <tr>
+                <th>部门名称</th>
+                <th>编码</th>
+                <th>负责人</th>
+                <th>电话</th>
+                <th>邮箱</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (organizations != null)
             {
-                <Tag Color="@("green")">启用</Tag>
+                @foreach (var context in organizations)
+                {
+                    <tr>
+                        <td>@context.Name</td>
+                        <td>@context.Code</td>
+                        <td>@context.LeaderName</td>
+                        <td>@context.Phone</td>
+                        <td>@context.Email</td>
+                        <td>
+                            @if (context.IsEnabled)
+                            {
+                                <span class="h-tag h-tag-green">启用</span>
+                            }
+                            else
+                            {
+                                <span class="h-tag h-tag-red">禁用</span>
+                            }
+                        </td>
+                        <td>
+                            <span class="h-space">
+                                <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => Edit(context))">编辑</button>
+                                <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => ConfirmDelete(context.Id))">删除</button>
+                            </span>
+                        </td>
+                    </tr>
+                }
             }
-            else
-            {
-                <Tag Color="@("red")">禁用</Tag>
-            }
-        </Column>
-        <Column TData="string" Title="操作">
-            <Space>
-                <SpaceItem>
-                    <Button Type="@ButtonType.Primary" Size="@ButtonSize.Small" OnClick="@(() => Edit(context))">编辑</Button>
-                </SpaceItem>
-                <SpaceItem>
-                    <Popconfirm Title="确定要删除这个部门吗？" OnConfirm="@(() => Delete(context.Id))">
-                        <Button Type="@ButtonType.Primary" Danger Size="@ButtonSize.Small">删除</Button>
-                    </Popconfirm>
-                </SpaceItem>
-            </Space>
-        </Column>
-    </Table>
-</Card>
+        </tbody>
+    </HTable>
+</HCard>
 
-<Modal Title="@(isEdit ? "编辑部门" : "新增部门")" Visible="@showDialog" OnOk="@Save" OnCancel="@CloseDialog"
-       ConfirmLoading="@isSubmitting">
-    <Form Model="@currentOrg" LabelColSpan="6" WrapperColSpan="18">
-        <FormItem Label="部门名称">
-            <Input @bind-Value="@currentOrg.Name" Placeholder="请输入部门名称" />
-        </FormItem>
-        <FormItem Label="编码">
-            <Input @bind-Value="@currentOrg.Code" Placeholder="请输入编码" />
-        </FormItem>
-        <FormItem Label="父部门">
-            <Select TItem="Guid?" TItemValue="Guid?" @bind-Value="@currentOrg.ParentId" Placeholder="请选择父部门" AllowClear>
+<HModal Title="@(isEdit ? "编辑部门" : "新增部门")" Visible="@showDialog" OnOk="@Save" OnCancel="@CloseDialog" ConfirmLoading="@isSubmitting">
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">部门名称</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@currentOrg.Name" placeholder="请输入部门名称" class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">编码</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@currentOrg.Code" placeholder="请输入编码" class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">父部门</label>
+        <div class="h-form-control">
+            <select @bind="@currentOrg.ParentId" class="h-select">
+                <option value="">无</option>
                 @foreach (var org in organizations ?? new List<OrganizationDto>())
                 {
-                    <SelectOption Value="@((Guid?)org.Id)" Label="@org.Name" />
+                    <option value="@org.Id">@org.Name</option>
                 }
-            </Select>
-        </FormItem>
-        <FormItem Label="联系电话">
-            <Input @bind-Value="@currentOrg.Phone" Placeholder="请输入联系电话" />
-        </FormItem>
-        <FormItem Label="邮箱">
-            <Input @bind-Value="@currentOrg.Email" Placeholder="请输入邮箱" />
-        </FormItem>
-        <FormItem Label="排序">
-            <AntDesign.InputNumber @bind-Value="@currentOrg.Sort" Style="width: 100%;" />
-        </FormItem>
-        <FormItem Label="备注">
-            <TextArea @bind-Value="@currentOrg.Remark" Placeholder="请输入备注" Rows="3" />
-        </FormItem>
-    </Form>
-</Modal>
+            </select>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">联系电话</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@currentOrg.Phone" placeholder="请输入联系电话" class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">邮箱</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@currentOrg.Email" placeholder="请输入邮箱" class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">排序</label>
+        <div class="h-form-control">
+            <input type="number" @bind="@currentOrg.Sort" class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">备注</label>
+        <div class="h-form-control">
+            <textarea @bind="@currentOrg.Remark" placeholder="请输入备注" rows="3" class="h-textarea"></textarea>
+        </div>
+    </div>
+</HModal>
 
 @code {
     private List<OrganizationDto>? organizations;
@@ -124,7 +148,7 @@
         showDialog = true;
     }
 
-    private async Task Save(MouseEventArgs e)
+    private async Task Save()
     {
         isSubmitting = true;
         try
@@ -166,13 +190,22 @@
         }
     }
 
+    private async Task ConfirmDelete(Guid id)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm", "确定要删除这个部门吗？");
+        if (confirmed)
+        {
+            await Delete(id);
+        }
+    }
+
     private async Task Delete(Guid id)
     {
         await IOrganizationService.DeleteAsync(id);
         await LoadData();
     }
 
-    private void CloseDialog(MouseEventArgs? e = null)
+    private void CloseDialog()
     {
         showDialog = false;
     }

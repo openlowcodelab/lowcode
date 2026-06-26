@@ -1,22 +1,24 @@
 @namespace H.AutoTest.Web
 
-<AntDesign.Select TItemValue="string"
-                  TItem="FlatCategoryItem"
-                  DataSource="GetFlatItems()"
-                  LabelName="@nameof(FlatCategoryItem.DisplayName)"
-                  ValueName="@nameof(FlatCategoryItem.Id)"
-                  Value="@(Value ?? SelectedValue ?? string.Empty)"
-                  ValueChanged="OnValueChanged"
-                  Placeholder="@Placeholder"
-                  AllowClear="true"
-                  Style="width: 100%;" />
+<select class="h-select" style="width: 100%;" value="@(Value ?? SelectedValue ?? string.Empty)" @onchange="OnValueChanged">
+    @if (ShowEmptyOption)
+    {
+        <option value="">@EmptyOptionText</option>
+    }
+    @foreach (var item in GetFlatItems())
+    {
+        @if (!string.IsNullOrEmpty(item.Id))
+        {
+            <option value="@item.Id">@item.DisplayName</option>
+        }
+    }
+</select>
 
 @code {
     [Parameter] public List<ProjectCaseCategory> Categories { get; set; } = new();
     [Parameter] public string? Value { get; set; }
     [Parameter] public EventCallback<string?> ValueChanged { get; set; }
 
-    // 兼容旧的 SelectedValue 属性
     [Parameter] public string? SelectedValue { get; set; }
     [Parameter] public EventCallback<string?> SelectedValueChanged { get; set; }
 
@@ -33,10 +35,6 @@
     private List<FlatCategoryItem> GetFlatItems()
     {
         var items = new List<FlatCategoryItem>();
-        if (ShowEmptyOption)
-        {
-            items.Add(new FlatCategoryItem { Id = string.Empty, DisplayName = EmptyOptionText });
-        }
         foreach (var root in Categories.OrderBy(c => c.Order))
         {
             AppendCategory(items, root, 0);
@@ -61,8 +59,9 @@
         }
     }
 
-    private async Task OnValueChanged(string newValue)
+    private async Task OnValueChanged(ChangeEventArgs e)
     {
+        var newValue = e.Value?.ToString();
         var normalized = string.IsNullOrEmpty(newValue) ? null : newValue;
         Value = normalized;
         SelectedValue = normalized;

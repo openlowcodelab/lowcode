@@ -8,43 +8,49 @@
 
 <PageTitle>自动化测试</PageTitle>
 
-<!-- 统计卡片 -->
-<AntDesign.Row Gutter="16">
-    <AntDesign.Col Span="12">
-        <AntDesign.Statistic Title="项目数量" Value="@projectCount">
-            <Prefix>
+<div style="display: flex; gap: 16px; margin-bottom: 20px;">
+    <div style="flex: 1;">
+        <HCard>
+            <div style="text-align: center; padding: 16px;">
                 <span style="font-size: 24px;">📁</span>
-            </Prefix>
-        </AntDesign.Statistic>
-    </AntDesign.Col>
-    <AntDesign.Col Span="12">
-        <AntDesign.Statistic Title="测试用例" Value="@projectCaseCount">
-            <Prefix>
+                <div style="font-size: 28px; font-weight: 600; color: #1890ff; margin: 8px 0;">@projectCount</div>
+                <div style="color: #999;">项目数量</div>
+            </div>
+        </HCard>
+    </div>
+    <div style="flex: 1;">
+        <HCard>
+            <div style="text-align: center; padding: 16px;">
                 <span style="font-size: 24px;">📋</span>
-            </Prefix>
-        </AntDesign.Statistic>
-    </AntDesign.Col>
-</AntDesign.Row>
+                <div style="font-size: 28px; font-weight: 600; color: #1890ff; margin: 8px 0;">@projectCaseCount</div>
+                <div style="color: #999;">测试用例</div>
+            </div>
+        </HCard>
+    </div>
+</div>
 
-<!-- 功能快捷方式 -->
-<AntDesign.Row Gutter="16" Style="margin-top: 20px;">
-    <AntDesign.Col Span="12">
+<div style="display: flex; gap: 16px;">
+    <div style="flex: 1;">
         <div @onclick="@(() => NavigationManager.NavigateTo("/autotest/projects"))" style="cursor: pointer;">
-            <AntDesign.Card Title="📁 项目管理" Style="text-align: center;">
-                <div Style="font-size: 48px; margin: 20px 0;">📁</div>
-                <p>管理项目、配置项目环境</p>
-            </AntDesign.Card>
+            <HCard Title="📁 项目管理">
+                <div style="text-align: center;">
+                    <div Style="font-size: 48px; margin: 20px 0;">📁</div>
+                    <p>管理项目、配置项目环境</p>
+                </div>
+            </HCard>
         </div>
-    </AntDesign.Col>
-    <AntDesign.Col Span="12">
+    </div>
+    <div style="flex: 1;">
         <div @onclick="@(() => NavigationManager.NavigateTo("/autotest/project-cases"))" style="cursor: pointer;">
-            <AntDesign.Card Title="📋 测试用例" Style="text-align: center;">
-                <div Style="font-size: 48px; margin: 20px 0;">📋</div>
-                <p>设计和管理 API 和 UI 测试用例</p>
-            </AntDesign.Card>
+            <HCard Title="📋 测试用例">
+                <div style="text-align: center;">
+                    <div Style="font-size: 48px; margin: 20px 0;">📋</div>
+                    <p>设计和管理 API 和 UI 测试用例</p>
+                </div>
+            </HCard>
         </div>
-    </AntDesign.Col>
-</AntDesign.Row>
+    </div>
+</div>
 
 @code {
     private int projectCount = 0;

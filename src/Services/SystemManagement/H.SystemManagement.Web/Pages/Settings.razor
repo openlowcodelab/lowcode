@@ -2,36 +2,45 @@
 
 @layout SystemManagementLayout
 @inject ISettingAppService SettingAppService
-@inject IMessageService MessageService
+@inject IJSRuntime JS
 
 <h2>系统设置</h2>
 
-<Card>
+<HCard>
     @if (loading)
     {
-        <div style="text-align: center; padding: 40px;">
-            <Spin Tip="加载中..." />
-        </div>
+        <div class="h-spin"><span class="h-spin-dot"></span><span class="h-spin-text">加载中...</span></div>
     }
     else if (settingGroups.Any())
     {
-        <Tabs ActiveKey="@activeTab" OnChange="@OnTabChange">
-            @foreach (var group in settingGroups)
-            {
-                <TabPane Tab="@group.GroupDisplayName" Key="@group.GroupName">
+        <div class="h-tabs">
+            <div class="h-tabs-nav">
+                @foreach (var group in settingGroups)
+                {
+                    <div class="h-tab @(activeTab == group.GroupName ? "h-tab-active" : "")" @onclick="@(() => OnTabChange(group.GroupName))">
+                        @group.GroupDisplayName
+                    </div>
+                }
+            </div>
+            <div class="h-tab-content">
+                @{
+                    var currentGroup = settingGroups.FirstOrDefault(g => g.GroupName == activeTab);
+                }
+                @if (currentGroup != null)
+                {
                     <div style="padding: 12px 0;">
-                        @foreach (var item in group.Items)
+                        @foreach (var item in currentGroup.Items)
                         {
-                            <div class="setting-item" style="margin-bottom: 20px; display: flex; align-items: center;">
+                            <div style="margin-bottom: 20px; display: flex; align-items: center;">
                                 <div style="width: 180px; font-weight: 500;">
                                     @item.DisplayName
                                 </div>
                                 <div style="flex: 1; max-width: 400px;">
-                                    <Input Value="@GetItemValue(item, group.GroupName)"
-                                           TValue="string"
-                                           ValueChanged="@((v) => SetItemValue(item.Name, group.GroupName, v))"
-                                           Placeholder="@GetPlaceholder(item)"
-                                           Style="width: 100%;" />
+                                    <input type="text"
+                                           value="@GetItemValue(item, currentGroup.GroupName)"
+                                           @onchange="@((e) => SetItemValue(item.Name, currentGroup.GroupName, e.Value?.ToString() ?? ""))"
+                                           placeholder="@GetPlaceholder(item)"
+                                           class="h-input" style="width: 100%;" />
                                 </div>
                             </div>
                             @if (!string.IsNullOrEmpty(item.Description))
@@ -42,20 +51,24 @@
                             }
                         }
                         <div style="margin-top: 24px;">
-                            <Button Type="@ButtonType.Primary" OnClick="@(() => SaveGroup(group))" Loading="@savingGroups.Contains(group.GroupName)">
+                            <button class="h-btn h-btn-primary" @onclick="@(() => SaveGroup(currentGroup))" disabled="@savingGroups.Contains(currentGroup.GroupName)">
+                                @if (savingGroups.Contains(currentGroup.GroupName))
+                                {
+                                    <span class="h-btn-loading"></span>
+                                }
                                 保存设置
-                            </Button>
+                            </button>
                         </div>
                     </div>
-                </TabPane>
-            }
-        </Tabs>
+                }
+            </div>
+        </div>
     }
     else
     {
-        <Empty Description="@("暂无设置项")" />
+        <div class="h-empty">暂无设置项</div>
     }
-</Card>
+</HCard>
 
 @code {
     private List<SettingGroupDto> settingGroups = new();
@@ -76,7 +89,6 @@
         {
             settingGroups = await SettingAppService.GetAllAsync();
 
-            // 初始化每个分组的值缓存
             groupValues.Clear();
             foreach (var group in settingGroups)
             {
@@ -87,7 +99,6 @@
                 }
             }
 
-            // 设置默认激活的Tab
             if (settingGroups.Any() && string.IsNullOrEmpty(activeTab))
             {
                 activeTab = settingGroups.First().GroupName;
@@ -153,15 +164,13 @@
             if (updates.Any())
             {
                 await SettingAppService.UpdateManyAsync(updates);
-                MessageService.Success($"{group.GroupDisplayName}设置保存成功");
-
-                // 刷新数据
+                await JS.InvokeVoidAsync("alert",$"{group.GroupDisplayName}设置保存成功");
                 await LoadSettings();
             }
         }
         catch (Exception ex)
         {
-            MessageService.Error($"保存失败：{ex.Message}");
+            await JS.InvokeVoidAsync("alert",$"保存失败：{ex.Message}");
         }
         finally
         {

@@ -1,0 +1,66 @@
+@namespace H.Util.Blazor
+
+@if (Visible)
+{
+    <div class="h-modal-mask" @onclick="HandleMaskClick"></div>
+    <div class="h-modal-wrap">
+        <div class="h-modal" style="@Style">
+            <div class="h-modal-content">
+                <div class="h-modal-header">
+                    <div class="h-modal-title">@Title</div>
+                    <button class="h-modal-close" @onclick="HandleCancel">&times;</button>
+                </div>
+                <div class="h-modal-body">
+                    @ChildContent
+                </div>
+                @if (ShowFooter)
+                {
+                    <div class="h-modal-footer">
+                        <button class="h-btn h-btn-default" @onclick="HandleCancel">
+                            @CancelText
+                        </button>
+                        <button class="h-btn h-btn-primary" @onclick="HandleOk" disabled="@ConfirmLoading">
+                            @if (ConfirmLoading)
+                            {
+                                <span class="h-btn-loading"></span>
+                            }
+                            @OkText
+                        </button>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback OnOk { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public bool ConfirmLoading { get; set; }
+    [Parameter] public string OkText { get; set; } = "确定";
+    [Parameter] public string CancelText { get; set; } = "取消";
+    [Parameter] public bool ShowFooter { get; set; } = true;
+    [Parameter] public bool MaskClosable { get; set; } = true;
+    [Parameter] public string? Style { get; set; }
+
+    private async Task HandleOk()
+    {
+        if (OnOk.HasDelegate)
+            await OnOk.InvokeAsync();
+    }
+
+    private async Task HandleCancel()
+    {
+        if (OnCancel.HasDelegate)
+            await OnCancel.InvokeAsync();
+    }
+
+    private async Task HandleMaskClick()
+    {
+        if (MaskClosable && OnCancel.HasDelegate)
+            await OnCancel.InvokeAsync();
+    }
+}

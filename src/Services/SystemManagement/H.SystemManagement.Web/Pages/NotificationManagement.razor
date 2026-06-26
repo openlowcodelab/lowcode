@@ -3,165 +3,169 @@
 @layout SystemManagementLayout
 @inject INotificationBusinessAppService NotificationBusinessAppService
 @inject INotificationMethodConfigAppService NotificationMethodConfigAppService
-@inject IMessageService MessageService
+@inject IJSRuntime JS
 
 <h2>通知管理</h2>
 
-<Card>
-    <div style="margin-bottom: 16px;">
-        <Space>
-            <SpaceItem>
-                <Input Search @bind-Value="@searchFilter" Placeholder="搜索业务名称或编码" Style="width: 250px;" />
-            </SpaceItem>
-            <SpaceItem>
-                <Button Type="@ButtonType.Primary" OnClick="@LoadData">搜索</Button>
-            </SpaceItem>
-            <SpaceItem>
-                <Button Type="@ButtonType.Primary" OnClick="@ShowCreateDialog">新增业务</Button>
-            </SpaceItem>
-            <SpaceItem>
-                <Button OnClick="@LoadData">刷新</Button>
-            </SpaceItem>
-        </Space>
+<HCard>
+    <div class="h-toolbar">
+        <input type="text" @bind-value="@searchFilter" placeholder="搜索业务名称或编码" class="h-input" style="width: 250px;" />
+        <button class="h-btn h-btn-primary" @onclick="@LoadData">搜索</button>
+        <button class="h-btn h-btn-primary" @onclick="@ShowCreateDialog">新增业务</button>
+        <button class="h-btn" @onclick="@LoadData">刷新</button>
     </div>
 
-    <Table TItem="NotificationBusinessDto" DataSource="@businessList" Loading="@loading" PageSize="10">
-        <Column TData="string" Title="业务名称">
-            @context.BusinessName
-        </Column>
-        <Column TData="string" Title="业务编码">
-            @context.BusinessCode
-        </Column>
-        <Column TData="string" Title="描述">
-            @(context.Description ?? "-")
-        </Column>
-        <Column TData="int" Title="通知方式">
-            <Space>
-                @foreach (var method in context.Methods)
-                {
-                    if (method.IsEnabled)
-                    {
-                        <Tag Color="@("blue")">@GetMethodTypeName(method.MethodType)</Tag>
-                    }
-                }
-                @if (context.Methods.All(m => !m.IsEnabled))
-                {
-                    <Tag>未配置</Tag>
-                }
-            </Space>
-        </Column>
-        <Column TData="bool" Title="状态">
-            @if (context.IsEnabled)
+    <HTable Loading="@loading" ShowEmpty="@(!loading && !businessList.Any())">
+        <thead>
+            <tr>
+                <th>业务名称</th>
+                <th>业务编码</th>
+                <th>描述</th>
+                <th>通知方式</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var context in businessList)
             {
-                <Tag Color="@("green")">启用</Tag>
+                <tr>
+                    <td>@context.BusinessName</td>
+                    <td>@context.BusinessCode</td>
+                    <td>@(context.Description ?? "-")</td>
+                    <td>
+                        <span class="h-space">
+                            @foreach (var method in context.Methods)
+                            {
+                                if (method.IsEnabled)
+                                {
+                                    <span class="h-tag h-tag-blue">@GetMethodTypeName(method.MethodType)</span>
+                                }
+                            }
+                            @if (context.Methods.All(m => !m.IsEnabled))
+                            {
+                                <span class="h-tag">未配置</span>
+                            }
+                        </span>
+                    </td>
+                    <td>
+                        @if (context.IsEnabled)
+                        {
+                            <span class="h-tag h-tag-green">启用</span>
+                        }
+                        else
+                        {
+                            <span class="h-tag h-tag-red">禁用</span>
+                        }
+                    </td>
+                    <td>
+                        <span class="h-space">
+                            <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => EditBusiness(context))">编辑</button>
+                            <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => ConfirmDeleteBusiness(context.Id))">删除</button>
+                        </span>
+                    </td>
+                </tr>
             }
-            else
-            {
-                <Tag Color="@("red")">禁用</Tag>
-            }
-        </Column>
-        <Column TData="string" Title="操作">
-            <Space>
-                <SpaceItem>
-                    <Button Type="@ButtonType.Primary" Size="@ButtonSize.Small" OnClick="@(() => EditBusiness(context))">编辑</Button>
-                </SpaceItem>
-                <SpaceItem>
-                    <Popconfirm Title="确定要删除该业务吗？关联的通知方式配置也将被删除。" OnConfirm="@(() => DeleteBusiness(context.Id))">
-                        <Button Type="@ButtonType.Primary" Danger Size="@ButtonSize.Small">删除</Button>
-                    </Popconfirm>
-                </SpaceItem>
-            </Space>
-        </Column>
-    </Table>
-</Card>
+        </tbody>
+    </HTable>
+</HCard>
 
-<!-- 新增/编辑业务模态框 -->
-<Modal Title="@(isEdit ? "编辑通知业务" : "新增通知业务")" Visible="@showBusinessModal" OnOk="@SaveBusiness" OnCancel="@CloseBusinessModal"
-       ConfirmLoading="@saving" Width="800">
-    <Form Model="@currentBusiness" LabelColSpan="6" WrapperColSpan="16">
-        <FormItem Label="业务名称">
-            <Input @bind-Value="@currentBusiness.BusinessName" Placeholder="请输入业务名称" />
-        </FormItem>
-        @if (!isEdit)
-        {
-            <FormItem Label="业务编码">
-                <Input @bind-Value="@currentBusiness.BusinessCode" Placeholder="请输入业务编码（英文或数字）" />
-            </FormItem>
-        }
-        <FormItem Label="描述">
-            <TextArea @bind-Value="@currentBusiness.Description" Placeholder="请输入业务描述" Rows="3" />
-        </FormItem>
-        <FormItem Label="启用">
-            <Switch @bind-Value="@currentBusiness.IsEnabled" />
-        </FormItem>
-    </Form>
+<HModal Title="@(isEdit ? "编辑通知业务" : "新增通知业务")" Visible="@showBusinessModal" OnOk="@SaveBusiness" OnCancel="@CloseBusinessModal" ConfirmLoading="@saving" Style="width:800px;">
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">业务名称</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@currentBusiness.BusinessName" placeholder="请输入业务名称" class="h-input" />
+        </div>
+    </div>
+    @if (!isEdit)
+    {
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">业务编码</label>
+            <div class="h-form-control">
+                <input type="text" @bind-value="@currentBusiness.BusinessCode" placeholder="请输入业务编码（英文或数字）" class="h-input" />
+            </div>
+        </div>
+    }
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">描述</label>
+        <div class="h-form-control">
+            <textarea @bind="@currentBusiness.Description" placeholder="请输入业务描述" rows="3" class="h-textarea"></textarea>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">启用</label>
+        <div class="h-form-control">
+            <label class="h-switch">
+                <input type="checkbox" @bind="@currentBusiness.IsEnabled" />
+                <span class="h-switch-slider"></span>
+            </label>
+        </div>
+    </div>
 
     @if (isEdit && editBusinessId.HasValue)
     {
-        <Divider Orientation="@DividerOrientation.Left">通知方式配置</Divider>
+        <div class="h-divider" style="justify-content: flex-start;">通知方式配置</div>
         <div style="margin-bottom: 12px;">
-            <Space>
+            <span class="h-space">
                 @foreach (NotificationMethodType type in Enum.GetValues(typeof(NotificationMethodType)))
                 {
                     var exists = methodConfigs.Any(m => m.MethodType == type);
                     if (!exists)
                     {
-                        <SpaceItem>
-                            <Button Size="@ButtonSize.Small" OnClick="@(() => AddMethodConfig(type))">
-                                添加 @GetMethodTypeName(type)
-                            </Button>
-                        </SpaceItem>
+                        <button class="h-btn h-btn-sm" @onclick="@(() => AddMethodConfig(type))">
+                            添加 @GetMethodTypeName(type)
+                        </button>
                     }
                 }
-            </Space>
+            </span>
         </div>
 
         @foreach (var config in methodConfigs)
         {
-            <Card Size="@CardSize.Small" Style="margin-bottom: 12px;">
+            <div class="h-card" style="margin-bottom: 12px; padding: 16px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                     <strong>@GetMethodTypeName(config.MethodType)</strong>
-                    <Space>
-                        <SpaceItem>
-                            <Switch @bind-Value="@config.IsEnabled" CheckedChildren="启用" UnCheckedChildren="禁用" />
-                        </SpaceItem>
-                        <SpaceItem>
-                            <Popconfirm Title="确定要删除此通知方式吗？" OnConfirm="@(() => DeleteMethodConfig(config.Id))">
-                                <Button Type="@ButtonType.Primary" Danger Size="@ButtonSize.Small">删除</Button>
-                            </Popconfirm>
-                        </SpaceItem>
-                    </Space>
+                    <span class="h-space">
+                        <label class="h-switch">
+                            <input type="checkbox" @bind="@config.IsEnabled" />
+                            <span class="h-switch-slider"></span>
+                        </label>
+                        <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => ConfirmDeleteMethodConfig(config.Id))">删除</button>
+                    </span>
                 </div>
 
                 @if (config.MethodType == NotificationMethodType.Webhook)
                 {
                     <div style="margin-bottom: 8px;">
                         <span style="display: inline-block; width: 100px;">Webhook地址：</span>
-                        <Input @bind-Value="@config.WebhookUrl" Placeholder="请输入Webhook地址" Style="width: calc(100% - 110px);" />
+                        <input type="text" @bind-value="@config.WebhookUrl" placeholder="请输入Webhook地址" class="h-input" style="width: calc(100% - 110px);" />
                     </div>
                 }
                 @if (config.MethodType == NotificationMethodType.Sms)
                 {
                     <div style="margin-bottom: 8px;">
                         <span style="display: inline-block; width: 100px;">短信模板ID：</span>
-                        <Input @bind-Value="@config.SmsTemplateId" Placeholder="请输入短信模板ID" Style="width: calc(100% - 110px);" />
+                        <input type="text" @bind-value="@config.SmsTemplateId" placeholder="请输入短信模板ID" class="h-input" style="width: calc(100% - 110px);" />
                     </div>
                 }
                 @if (config.MethodType == NotificationMethodType.Email)
                 {
                     <div style="margin-bottom: 8px;">
                         <span style="display: inline-block; width: 100px;">邮件地址：</span>
-                        <Input @bind-Value="@config.EmailAddress" Placeholder="请输入邮件接收地址" Style="width: calc(100% - 110px);" />
+                        <input type="text" @bind-value="@config.EmailAddress" placeholder="请输入邮件接收地址" class="h-input" style="width: calc(100% - 110px);" />
                     </div>
                 }
                 @if (config.MethodType == NotificationMethodType.InApp)
                 {
-                    <Alert Message="站内通知无需额外配置" Type="@AlertType.Info" ShowIcon="true" />
+                    <div class="h-alert" style="background:#e6f7ff;border:1px solid #91d5ff;color:#1890ff;">
+                        <span class="h-alert-icon">ℹ</span>
+                        <span>站内通知无需额外配置</span>
+                    </div>
                 }
-            </Card>
+            </div>
         }
     }
-</Modal>
+</HModal>
 
 @code {
     private List<NotificationBusinessDto> businessList = new();
@@ -169,13 +173,11 @@
     private bool saving;
     private string searchFilter = string.Empty;
 
-    // 业务模态框相关
     private bool showBusinessModal;
     private bool isEdit;
     private Guid? editBusinessId;
     private CreateNotificationBusinessDto currentBusiness = new();
 
-    // 通知方式配置相关
     private List<NotificationMethodConfigDto> methodConfigs = new();
     private Dictionary<Guid, CreateNotificationMethodConfigDto> newMethodConfigs = new();
 
@@ -223,7 +225,6 @@
             IsEnabled = business.IsEnabled
         };
 
-        // 加载通知方式配置
         var detail = await NotificationBusinessAppService.GetAsync(business.Id);
         methodConfigs = detail.Methods;
         newMethodConfigs.Clear();
@@ -233,7 +234,7 @@
         showBusinessModal = true;
     }
 
-    private async Task SaveBusiness(MouseEventArgs e)
+    private async Task SaveBusiness()
     {
         saving = true;
         try
@@ -255,10 +256,8 @@
                 businessId = result.Id;
             }
 
-            // 保存通知方式配置（仅编辑模式）
             if (isEdit)
             {
-                // 更新现有配置
                 foreach (var config in methodConfigs)
                 {
                     if (config.Id != Guid.Empty)
@@ -274,20 +273,19 @@
                     }
                 }
 
-                // 创建新配置
                 foreach (var pair in newMethodConfigs)
                 {
                     await NotificationMethodConfigAppService.CreateAsync(businessId, pair.Value);
                 }
             }
 
-            MessageService.Success($"通知业务{(isEdit ? "更新" : "创建")}成功");
+            await JS.InvokeVoidAsync("alert",$"通知业务{(isEdit ? "更新" : "创建")}成功");
             CloseBusinessModal();
             await LoadData();
         }
         catch (Exception ex)
         {
-            MessageService.Error($"保存失败：{ex.Message}");
+            await JS.InvokeVoidAsync("alert",$"保存失败：{ex.Message}");
         }
         finally
         {
@@ -305,26 +303,31 @@
         isEdit = false;
     }
 
+    private async Task ConfirmDeleteBusiness(Guid id)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm", "确定要删除该业务吗？关联的通知方式配置也将被删除。");
+        if (confirmed) await DeleteBusiness(id);
+    }
+
     private async Task DeleteBusiness(Guid id)
     {
         try
         {
             await NotificationBusinessAppService.DeleteAsync(id);
-            MessageService.Success("删除成功");
+            await JS.InvokeVoidAsync("alert","删除成功");
             await LoadData();
         }
         catch (Exception ex)
         {
-            MessageService.Error($"删除失败：{ex.Message}");
+            await JS.InvokeVoidAsync("alert",$"删除失败：{ex.Message}");
         }
     }
 
-    // 通知方式配置相关方法
     private void AddMethodConfig(NotificationMethodType type)
     {
         var newConfig = new NotificationMethodConfigDto
         {
-            Id = Guid.NewGuid(), // 临时ID用于UI展示
+            Id = Guid.NewGuid(),
             BusinessId = editBusinessId ?? Guid.Empty,
             MethodType = type,
             IsEnabled = true
@@ -338,12 +341,17 @@
         };
     }
 
+    private async Task ConfirmDeleteMethodConfig(Guid id)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm", "确定要删除此通知方式吗？");
+        if (confirmed) await DeleteMethodConfig(id);
+    }
+
     private async Task DeleteMethodConfig(Guid id)
     {
         var config = methodConfigs.FirstOrDefault(m => m.Id == id);
         if (config == null) return;
 
-        // 如果是新添加的配置（临时ID），直接从列表移除
         if (newMethodConfigs.ContainsKey(id))
         {
             methodConfigs.Remove(config);
@@ -351,16 +359,15 @@
         }
         else
         {
-            // 已存在的配置，调用API删除
             try
             {
                 await NotificationMethodConfigAppService.DeleteAsync(id);
                 methodConfigs.Remove(config);
-                MessageService.Success("删除成功");
+                await JS.InvokeVoidAsync("alert","删除成功");
             }
             catch (Exception ex)
             {
-                MessageService.Error($"删除失败：{ex.Message}");
+                await JS.InvokeVoidAsync("alert",$"删除失败：{ex.Message}");
             }
         }
     }
