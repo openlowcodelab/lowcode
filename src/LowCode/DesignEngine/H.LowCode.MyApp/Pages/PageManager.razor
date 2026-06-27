@@ -1,4 +1,4 @@
-﻿@page "/myapp/{AppId}/pagemanager"
+﻿@page "/designengine/myapp/{AppId}/pagemanager"
 @namespace H.LowCode.MyApp
 @inherits LowCodePageComponentBase
 @layout MyAppLayout
@@ -44,7 +44,7 @@
                 </td>
                 <td>
                     <div class="space">
-                        <a href="@($"/designer/{AppId}/{item.PageId}")" target="_blank" style="padding: 7px;border: solid #b7eb8f 1px;border-radius: 2px;line-height: 11px;height: 26px;display: block;background-color: #f6ffed;color: #389e0d;">设计</a>
+                        <a href="@($"/designengine/designer/{AppId}/{item.PageId}")" target="_blank" style="padding: 7px;border: solid #b7eb8f 1px;border-radius: 2px;line-height: 11px;height: 26px;display: block;background-color: #f6ffed;color: #389e0d;">设计</a>
                         <a @onclick='() => EditAsync(item.PageId)'>编辑</a>
                         <a @onclick='() => DeleteAsync(item.PageId)' style="color:#ff4d4f">删除</a>
                     </div>

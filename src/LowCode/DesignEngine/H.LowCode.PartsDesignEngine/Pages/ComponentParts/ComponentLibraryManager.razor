@@ -416,11 +416,11 @@
         // 根据组件类型跳转到不同的编辑页面
         if (componentParts.ComponentType == 1) // 原子组件
         {
-            NavigateTo($"/myparts/component/edit/{componentParts.LibraryId}/{componentParts.PartsId}");
+            NavigateTo($"/designengine/myparts/component/edit/{componentParts.LibraryId}/{componentParts.PartsId}");
         }
         else if (componentParts.ComponentType == 2) // 低代码组件
         {
-            NavigateTo($"/myparts/component/designer/{componentParts.LibraryId}/{componentParts.PartsId}");
+            NavigateTo($"/designengine/myparts/component/designer/{componentParts.LibraryId}/{componentParts.PartsId}");
         }
     }
 
@@ -428,7 +428,7 @@
     {
         if (component.ComponentType == 1) // 原子组件
         {
-            NavigateTo($"/myparts/component/edit/{component.LibraryId}/{component.ComponentId}");
+            NavigateTo($"/designengine/myparts/component/edit/{component.LibraryId}/{component.ComponentId}");
         }
         else if (component.ComponentType == 2) // 低代码组件
         {
@@ -441,7 +441,7 @@
 
     private void DesignComponent(ComponentPartsListModel component)
     {
-        NavigateTo($"/myparts/component/designer/{component.LibraryId}/{component.ComponentId}");
+        NavigateTo($"/designengine/myparts/component/designer/{component.LibraryId}/{component.ComponentId}");
     }
 
     private async Task DeleteComponent(string componentId)

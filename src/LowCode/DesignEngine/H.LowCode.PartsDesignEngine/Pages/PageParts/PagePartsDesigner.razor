@@ -1,4 +1,4 @@
-﻿@page "/myparts/page/designer/{PartsId}"
+﻿@page "/designengine/myparts/page/designer/{PartsId}"
 @namespace H.LowCode.PartsDesignEngine
 @inherits LowCodePageComponentBase
 @layout PartsDesignEngineLayout
@@ -99,7 +99,7 @@
             if (_isNewPage)
             {
                 _isNewPage = false;
-                base.NavigateTo($"/designer/pageparts/{pageParts.Id}");
+                base.NavigateTo($"/designengine/designer/pageparts/{pageParts.Id}");
             }
 
             await Message.SuccessAsync("保存成功！");

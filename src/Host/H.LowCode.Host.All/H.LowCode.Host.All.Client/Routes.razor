@@ -17,26 +17,31 @@
 
 @code {
     // 路由首段 → 懒加载程序集映射（基于精确路径段匹配，避免 /system 误匹配 /systemmanagement）
-    private static readonly Dictionary<string, string> LazyAssemblies = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly Dictionary<string, string[]> LazyAssemblies = new(StringComparer.OrdinalIgnoreCase)
     {
-        ["organization"] = "H.Organization.Web.dll",
-        ["approval"] = "H.Approval.Web.dll",
-        ["autotest"] = "H.AutoTest.Web.dll",
-        ["system"] = "H.SystemManagement.Web.dll",
+        ["organization"] = ["H.Organization.Web.dll"],
+        ["approval"] = ["H.Approval.Web.dll"],
+        ["autotest"] = ["H.AutoTest.Web.dll"],
+        ["system"] = ["H.SystemManagement.Web.dll"],
+        ["account"] = ["H.Account.Web.dll"],
+        ["assistant"] = ["H.Assistant.Web.dll"],
+        ["designengine"] = [
+            "H.LowCode.Workbench.dll",
+            "H.LowCode.DesignEngine.dll",
+            "H.LowCode.MyApp.dll",
+            "H.LowCode.PartsDesignEngine.dll"
+        ],
+        ["app"] = [
+            "H.LowCode.Themes.AntBlazor.dll",
+            "H.LowCode.RenderEngine.dll",
+            "H.LowCode.RenderEngine.Application.Contracts.dll"
+        ],
     };
 
     // 立即加载的程序集（启动时即包含，无需懒加载）
     // 注意: ABP [DependsOn] 引用的模块必须在此处立即加载
     private static readonly Assembly[] EagerAssemblies = [
         typeof(H.Portal.Web._Imports).Assembly,
-        typeof(H.Account.Web._Imports).Assembly,
-        typeof(H.Assistant.Web._Imports).Assembly,
-        typeof(H.LowCode.Themes.AntBlazor._Imports).Assembly,
-        // DesignEngine 模块链 (HostAllClientModule → LowCodeWorkbenchModule → ...)
-        typeof(H.LowCode.Workbench._Imports).Assembly,
-        typeof(H.LowCode.DesignEngine._Imports).Assembly,
-        typeof(H.LowCode.MyApp._Imports).Assembly,
-        typeof(H.LowCode.PartsDesignEngine._Imports).Assembly,
     ];
 
     // 已加载的懒加载程序集缓存，避免重复下载
@@ -53,17 +58,19 @@
 
     private async Task OnNavigateAsync(NavigationContext args)
     {
-        // 提取导航路径的第一段（如 /organization/role → organization）
         var firstSegment = args.Path.Split('/', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
 
         if (firstSegment != null
-            && LazyAssemblies.TryGetValue(firstSegment, out var assemblyName)
-            && !_loadedAssemblies.ContainsKey(assemblyName))
+            && LazyAssemblies.TryGetValue(firstSegment, out var assemblyNames))
         {
-            var loaded = await AssemblyLoader.LoadAssembliesAsync([assemblyName]);
-            foreach (var asm in loaded)
+            var toLoad = assemblyNames.Where(n => !_loadedAssemblies.ContainsKey(n)).ToArray();
+            if (toLoad.Length > 0)
             {
-                _loadedAssemblies[assemblyName] = asm;
+                var loaded = await AssemblyLoader.LoadAssembliesAsync(toLoad);
+                foreach (var asm in loaded)
+                {
+                    _loadedAssemblies[asm.GetName().Name + ".dll"] = asm;
+                }
             }
         }
 

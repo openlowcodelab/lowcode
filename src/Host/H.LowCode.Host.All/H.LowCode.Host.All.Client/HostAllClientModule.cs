@@ -4,8 +4,9 @@ using H.Assistant.Application.Contracts;
 using H.AutoTest.Application.Contracts;
 using H.LowCode.ComponentBase;
 using H.LowCode.DesignEngine.Application.Contracts;
+using H.LowCode.DesignEngineBase;
 using H.LowCode.RenderEngine.Application.Contracts;
-using H.LowCode.Themes.AntBlazor;
+using H.LowCode.RenderEngineBase;
 using H.LowCode.Workbench;
 using H.Organization.Application.Contracts;
 using H.Portal.Application.Contracts;
@@ -21,16 +22,12 @@ namespace H.LowCode.Host.All.Client;
     //abp
     typeof(AbpAutofacWebAssemblyModule),
     //动态API代理
-    typeof(AbpHttpClientModule),
-    //DesignEngine
-    typeof(LowCodeWorkbenchModule),
-    //RenderEngine
-    typeof(AntBlazorThemeModule)
+    typeof(AbpHttpClientModule)
 )]
 public class HostAllClientModule : AbpModule
 {
-    public const string DesignEngineRemoteServiceName = "DesignEngine";
-    public const string RenderEngineRemoteServiceName = "RenderEngine";
+    //public const string DesignEngineRemoteServiceName = "DesignEngine";
+    //public const string RenderEngineRemoteServiceName = "RenderEngine";
     public const string AccountRemoteServiceName = "Account";
     public const string OrganizationRemoteServiceName = "Organization";
     public const string ApprovalRemoteServiceName = "Approval";
@@ -64,15 +61,15 @@ public class HostAllClientModule : AbpModule
     private void ConfigureHttpClientProxies(ServiceConfigurationContext context)
     {
         //动态API代理
-        context.Services.AddHttpClientProxies(
-            typeof(DesignEngineApplicationContractsModule).Assembly,
-            DesignEngineRemoteServiceName
-        );
+        //context.Services.AddHttpClientProxies(
+        //    typeof(DesignEngineApplicationContractsModule).Assembly,
+        //    DesignEngineRemoteServiceName
+        //);
 
-        context.Services.AddHttpClientProxies(
-            typeof(RenderEngineApplicationContractsModule).Assembly,
-            RenderEngineRemoteServiceName
-        );
+        //context.Services.AddHttpClientProxies(
+        //    typeof(RenderEngineApplicationContractsModule).Assembly,
+        //    RenderEngineRemoteServiceName
+        //);
 
         // 注册 HTTP Client 代理
         context.Services.AddHttpClientProxies(

@@ -1,4 +1,4 @@
-@page "/myparts/component/designer/{LibraryId}/{PartsId}"
+@page "/designengine/myparts/component/designer/{LibraryId}/{PartsId}"
 @namespace H.LowCode.PartsDesignEngine
 @inherits LowCodePageComponentBase
 @layout PartsDesignEngineLayout
@@ -195,7 +195,7 @@ else
 
     private void GoBack()
     {
-        NavigateTo($"/myparts?libIraryd={_partsCascading.LibraryId}");
+        NavigateTo($"/designengine/myparts?libIraryd={_partsCascading.LibraryId}");
     }
 
     private async Task PreviewComponent()

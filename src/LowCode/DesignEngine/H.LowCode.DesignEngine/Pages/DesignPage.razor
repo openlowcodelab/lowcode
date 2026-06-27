@@ -1,4 +1,4 @@
-@page "/designer/{AppId}/{PageId}"
+@page "/designengine/designer/{AppId}/{PageId}"
 @namespace H.LowCode.DesignEngine
 @inherits LowCodePageComponentBase
 @layout DesignEngineLayout
@@ -100,7 +100,7 @@
                 if (_isNewPage)
                 {
                     _isNewPage = false;
-                    base.NavigateTo($"/designer/{pageSchema.AppId}/{pageSchema.Id}");
+                    base.NavigateTo($"/designengine/designer/{pageSchema.AppId}/{pageSchema.Id}");
                 }
 
                 await Message.SuccessAsync("保存成功");

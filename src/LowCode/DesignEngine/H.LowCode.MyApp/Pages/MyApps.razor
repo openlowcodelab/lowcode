@@ -1,4 +1,4 @@
-﻿@page "/myapps"
+﻿@page "/designengine/myapps"
 @namespace H.LowCode.MyApp
 @inherits LowCodePageComponentBase
 @layout WorkbenchNavLayout
@@ -63,10 +63,10 @@
         {
             <HCard Title="@app.Name" Description="@app.Description" Class="myapps" Style="float:left; width:300px; margin:5px;">
                 <div style="display:flex; gap:8px;">
-                    <a href="@($"/myapp/{app.Id}/pagemanager")" title="开发应用" target="_blank">&#x1F5A5;</a>
-                    <a href="@(string.IsNullOrEmpty(app.SiteUrl) ? "#" : $"{app.SiteUrl}/app/{app.Id}/index")" title="访问应用" target="_blank">&#x1F310;</a>
+                    <a href="@($"/designengine/myapp/{app.Id}/pagemanager")" title="开发应用" target="_blank">&#x1F5A5;</a>
+                    <a href="@(string.IsNullOrEmpty(app.SiteUrl) ? "#" : $"{app.SiteUrl}/renderengine/app/{app.Id}/index")" title="访问应用" target="_blank">&#x1F310;</a>
                     <a @onclick='() => EditApp(app.Id)' title="编辑">&#x270F;</a>
-                    <a href="@($"/myapp/{app.Id}/appsettings")" title="应用设置" target="_blank">&#x2699;</a>
+                    <a href="@($"/designengine/myapp/{app.Id}/appsettings")" title="应用设置" target="_blank">&#x2699;</a>
                 </div>
             </HCard>
         }
