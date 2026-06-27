@@ -9,28 +9,27 @@
             var parameter = _parametersList[i];
             var currentIndex = i;
             
-            <AntDesign.Row Gutter="8" Style="margin-bottom: 8px;">
-                <AntDesign.Col Span="10">
-                    <AntDesign.Input Value="@parameter.Key" 
+            <div class="row" style="margin-bottom: 8px;">
+                <div class="col col-10">
+                    <input class="inp" value="@parameter.Key" 
                            @onchange="@(EventCallback.Factory.Create<ChangeEventArgs>(this, (args) => OnParameterKeyChange(currentIndex, args.Value?.ToString())))"
-                           Placeholder="参数名称" />
-                </AntDesign.Col>
-                <AntDesign.Col Span="12">
-                    <AntDesign.Input Value="@parameter.Value" 
+                           placeholder="参数名称" />
+                </div>
+                <div class="col col-12">
+                    <input class="inp" value="@parameter.Value" 
                            @onchange="@(EventCallback.Factory.Create<ChangeEventArgs>(this, (args) => OnParameterValueChange(currentIndex, args.Value?.ToString())))"
-                           Placeholder="参数值" />
-                </AntDesign.Col>
-                <AntDesign.Col Span="2">
-                    <AntDesign.Button Type="@ButtonType.Text" Icon="delete" Size="@ButtonSize.Small" 
-                            OnClick="() => RemoveParameter(currentIndex)" Danger />
-                </AntDesign.Col>
-            </AntDesign.Row>
+                           placeholder="参数值" />
+                </div>
+                <div class="col col-2">
+                    <button class="btn btn-text btn-sm" @onclick="() => RemoveParameter(currentIndex)" style="color: red;">删除</button>
+                </div>
+            </div>
         }
     }
     
-    <AntDesign.Button Type="@ButtonType.Dashed" Block OnClick="AddParameter" Icon="plus" Size="@ButtonSize.Small">
+    <button class="btn btn-dashed btn-sm btn-block" @onclick="AddParameter">
         添加参数
-    </AntDesign.Button>
+    </button>
 </div>
 
 @code {

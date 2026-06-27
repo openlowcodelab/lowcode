@@ -1,6 +1,6 @@
-﻿using AntDesign;
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.JSInterop;
 using System.Diagnostics.CodeAnalysis;
 using Volo.Abp.AspNetCore.Components;
 
@@ -15,7 +15,10 @@ public abstract class LowCodeComponentBase : AbpComponentBase
 
     [Inject] protected NavigationManager NavigationManager { get; set; }
 
-    [Inject] protected new IMessageService Message { get; set; }
+    [Inject] protected IJSRuntime JSRuntime { get; set; }
+
+    protected LowCodeMessageService Message => new(JSRuntime);
+
 
     /// <summary>
     /// 组件状态标识 (用于 ShouldRender 判断)
@@ -31,6 +34,15 @@ public abstract class LowCodeComponentBase : AbpComponentBase
         {
             return LowCodeAppState.IsDesign;
         }
+    }
+
+    public class LowCodeMessageService(IJSRuntime js)
+    {
+        public async Task SuccessAsync(string msg) => await js.InvokeVoidAsync("alert", msg);
+        public async Task ErrorAsync(string msg) => await js.InvokeVoidAsync("alert", "错误: " + msg);
+        public async Task WarningAsync(string msg) => await js.InvokeVoidAsync("alert", "警告: " + msg);
+        public async Task InfoAsync(string msg) => await js.InvokeVoidAsync("alert", msg);
+        public void Warning(string msg) => js.InvokeVoidAsync("alert", "警告: " + msg);
     }
 
     protected Uri GetBaseUri()

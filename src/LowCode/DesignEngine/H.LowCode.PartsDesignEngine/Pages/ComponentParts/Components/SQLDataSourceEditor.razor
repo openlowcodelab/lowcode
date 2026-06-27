@@ -2,32 +2,30 @@
 @inherits LowCodeComponentBase
 
 <div class="sql-data-source-editor">
-    <AntDesign.Card Size="CardSize.Small" Style="margin-bottom: 8px;">
-        <AntDesign.ChildContent>
-            <AntDesign.Row Gutter="16">
-                <AntDesign.Col Span="12">
-                    <div style="margin-bottom: 16px;">
-                        <label style="display: block; margin-bottom: 4px; font-weight: 500;">数据库类型</label>
-                        <AntDesign.Select TItem="string" TItemValue="string" @bind-Value="DataSource.DbType">
-                            <AntDesign.SelectOption TItem="string" TItemValue="string" Value="@("SqlServer")">SQL Server</AntDesign.SelectOption>
-                            <AntDesign.SelectOption TItem="string" TItemValue="string" Value="@("MySQL")">MySQL</AntDesign.SelectOption>
-                            <AntDesign.SelectOption TItem="string" TItemValue="string" Value="@("PostgreSQL")">PostgreSQL</AntDesign.SelectOption>
-                            <AntDesign.SelectOption TItem="string" TItemValue="string" Value="@("Oracle")">Oracle</AntDesign.SelectOption>
-                            <AntDesign.SelectOption TItem="string" TItemValue="string" Value="@("SQLite")">SQLite</AntDesign.SelectOption>
-                        </AntDesign.Select>
-                    </div>
-                </AntDesign.Col>
-            </AntDesign.Row>
-            <AntDesign.Row Gutter="16">
-                <AntDesign.Col Span="24">
-                    <div style="margin-bottom: 16px;">
-                        <label style="display: block; margin-bottom: 4px; font-weight: 500;">SQL 查询</label>
-                        <TextArea @bind-Value="DataSource.Sql" Rows="4" Placeholder="请输入 SQL 查询语句" />
-                    </div>
-                </AntDesign.Col>
-            </AntDesign.Row>
-        </AntDesign.ChildContent>
-    </AntDesign.Card>
+    <HCard Style="margin-bottom: 8px;">
+        <div class="row">
+            <div class="col col-12">
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 4px; font-weight: 500;">数据库类型</label>
+                    <select class="sel" @bind="DataSource.DbType">
+                        <option value="SqlServer">SQL Server</option>
+                        <option value="MySQL">MySQL</option>
+                        <option value="PostgreSQL">PostgreSQL</option>
+                        <option value="Oracle">Oracle</option>
+                        <option value="SQLite">SQLite</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col col-24">
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 4px; font-weight: 500;">SQL 查询</label>
+                    <textarea class="ta" @bind="DataSource.Sql" rows="4" placeholder="请输入 SQL 查询语句"></textarea>
+                </div>
+            </div>
+        </div>
+    </HCard>
 </div>
 
 @code {

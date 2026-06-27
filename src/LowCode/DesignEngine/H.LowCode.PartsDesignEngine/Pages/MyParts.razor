@@ -5,20 +5,30 @@
 
 <PageTitle>我的物料 - H.LowCode</PageTitle>
 
-<Tabs DefaultActiveKey="componentlibraries" ActiveKey="@_tabKey" Centered Animated Style="width: 80%; margin: auto;">
-    <TabPane Tab="组件库" Key="componentlibraries">
+<div class="tabs-header" style="width: 80%; margin: auto;">
+    <button class='tab-btn @(_tabKey == "componentlibraries" ? "tab-active" : "")' @onclick='() => _tabKey = "componentlibraries"'>组件库</button>
+    <button class='tab-btn @(_tabKey == "pagelibraries" ? "tab-active" : "")' @onclick='() => _tabKey = "pagelibraries"'>页面库</button>
+    <button class='tab-btn @(_tabKey == "apptemplates" ? "tab-active" : "")' @onclick='() => _tabKey = "apptemplates"'>应用模板</button>
+    <button class='tab-btn @(_tabKey == "themes" ? "tab-active" : "")' @onclick='() => _tabKey = "themes"'>主题</button>
+</div>
+<div>
+    @if (_tabKey == "componentlibraries")
+    {
         <ComponentLibraryManager></ComponentLibraryManager>
-    </TabPane>
-    <TabPane Tab="页面库" Key="pagelibraries">
+    }
+    @if (_tabKey == "pagelibraries")
+    {
         <PageLibraryList></PageLibraryList>
-    </TabPane>
-    <TabPane Tab="应用模板" Key="apptemplates">
+    }
+    @if (_tabKey == "apptemplates")
+    {
         <AppPartsList></AppPartsList>
-    </TabPane>
-    <TabPane Tab="主题" Key="themes">
+    }
+    @if (_tabKey == "themes")
+    {
         <ThemePartsList></ThemePartsList>
-    </TabPane>
-</Tabs>
+    }
+</div>
 
 @code {
     [Parameter]
@@ -26,5 +36,10 @@
 
     private string LibraryId => GetQueryValue("libId");
 
-    private string _tabKey => Tab ?? "componentlibraries";
+    private string _activeTabKey;
+    private string _tabKey
+    {
+        get => _activeTabKey ?? Tab ?? "componentlibraries";
+        set { _activeTabKey = value; StateHasChanged(); }
+    }
 }

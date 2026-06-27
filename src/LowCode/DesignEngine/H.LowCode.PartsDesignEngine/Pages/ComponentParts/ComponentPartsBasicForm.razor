@@ -3,62 +3,62 @@
 
 @inject IComponentPartsAppService ComponentPartsAppService
 
-<Modal Title="@_modalTitle" @bind-Visible="@Visible" OnOk="@OnOk" OnCancel="@OnCancel" Width="600">
+<HModal Title="@_modalTitle" Visible="@Visible" OnOk="@OnOk" OnCancel="@OnCancel">
     <div style="padding: 16px;">
         <div style="margin-bottom: 16px;">
             <label style="display: block; margin-bottom: 4px; font-weight: 500;">
                 <span style="color: red;">*</span> 组件Id
             </label>
-            <Input @bind-Value="@_componentParts.PartsId" Placeholder="请输入组件Id（组件唯一标识, 如 input）" />
+            <input class="inp" placeholder="请输入组件Id（组件唯一标识, 如 input）" @bind="_componentParts.PartsId" />
         </div>
         
         <div style="margin-bottom: 16px;">
             <label style="display: block; margin-bottom: 4px; font-weight: 500;">
                 <span style="color: red;">*</span> 显示名称
             </label>
-            <Input @bind-Value="@_componentParts.Label" Placeholder="请输入组件显示名称" />
+            <input class="inp" placeholder="请输入组件显示名称" @bind="_componentParts.Label" />
         </div>
         
         <div style="margin-bottom: 16px;">
             <label style="display: block; margin-bottom: 4px; font-weight: 500;">
                 <span style="color: red;">*</span> 组件类型
             </label>
-            <RadioGroup @bind-Value="@_componentParts.ComponentType">
-                <Radio RadioButton Value="1">原子组件</Radio>
-                <Radio RadioButton Value="2">低代码组件</Radio>
-            </RadioGroup>
+            <div class="radio-group">
+                <label class="radio-label"><input type="radio" name="componentType" checked="@(_componentParts.ComponentType == 1)" @onchange="() => _componentParts.ComponentType = 1" /> 原子组件</label>
+                <label class="radio-label"><input type="radio" name="componentType" checked="@(_componentParts.ComponentType == 2)" @onchange="() => _componentParts.ComponentType = 2" /> 低代码组件</label>
+            </div>
         </div>
 
         <div style="margin-bottom: 16px;">
             <label style="display: block; margin-bottom: 4px; font-weight: 500;">是否容器</label>
-            <Switch @bind-Value="@_componentParts.IsContainer" />
+            <label class="switch"><input type="checkbox" @bind="_componentParts.IsContainer" /></label>
         </div>
         
         <div style="margin-bottom: 16px;">
             <label style="display: block; margin-bottom: 4px; font-weight: 500;">支持数据源</label>
-            <Switch @bind-Value="@_componentParts.IsSupportDataSource" Disabled="@_componentParts.IsContainer" />
+            <label class="switch"><input type="checkbox" disabled="@_componentParts.IsContainer" @bind="_componentParts.IsSupportDataSource" /></label>
         </div>
         
         <div style="margin-bottom: 16px;">
             <label style="display: block; margin-bottom: 4px; font-weight: 500;">描述</label>
-            <TextArea @bind-Value="@_componentParts.Description" Placeholder="请输入组件描述" Rows="3" />
+            <textarea class="ta" placeholder="请输入组件描述" rows="3" @bind="_componentParts.Description"></textarea>
         </div>
 
         <div style="margin-bottom: 16px;">
             <label style="display: block; margin-bottom: 4px; font-weight: 500;">排序</label>
-            <InputNumber @bind-Value="@_componentParts.Order" Min="0" />
+            <input type="number" class="inp" min="0" @bind="_componentParts.Order" />
         </div>
 
         <div style="margin-bottom: 16px;">
             <label style="display: block; margin-bottom: 4px; font-weight: 500;">版本</label>
-            <Input @bind-Value="@_componentParts.Version" Placeholder="版本号" />
+            <input class="inp" placeholder="版本号" @bind="_componentParts.Version" />
         </div>
         <div style="margin-bottom: 16px;">
             <label style="display: block; margin-bottom: 4px; font-weight: 500;">发布状态</label>
-            <Switch @bind-Value="@_isPublished" />
+            <label class="switch"><input type="checkbox" @bind="_isPublished" /></label>
         </div>
     </div>
-</Modal>
+</HModal>
 
 @code {
 

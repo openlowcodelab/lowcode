@@ -6,12 +6,11 @@
 {
     <div class="propertysetting-item">
         <label>数据源类型：</label>
-        <RadioGroup DefaultValue="ComponentDataSourceTypeEnum.DB"
-                    @bind-Value="@DataSource.DataSourceType">
-            <Radio AutoFocus="true" Value="ComponentDataSourceTypeEnum.DB">数据表</Radio>
-            <Radio Value="ComponentDataSourceTypeEnum.SQL">SQL</Radio>
-            <Radio Value="ComponentDataSourceTypeEnum.API">API</Radio>
-        </RadioGroup>
+        <div class="radio-group">
+            <label class="radio-label"><input type="radio" name="table-datasource-type" checked='@(DataSource.DataSourceType == ComponentDataSourceTypeEnum.DB)' @onchange='() => DataSource.DataSourceType = ComponentDataSourceTypeEnum.DB' /> 数据表</label>
+            <label class="radio-label"><input type="radio" name="table-datasource-type" checked='@(DataSource.DataSourceType == ComponentDataSourceTypeEnum.SQL)' @onchange='() => DataSource.DataSourceType = ComponentDataSourceTypeEnum.SQL' /> SQL</label>
+            <label class="radio-label"><input type="radio" name="table-datasource-type" checked='@(DataSource.DataSourceType == ComponentDataSourceTypeEnum.API)' @onchange='() => DataSource.DataSourceType = ComponentDataSourceTypeEnum.API' /> API</label>
+        </div>
     </div>
     
     if (DataSource.DataSourceType == ComponentDataSourceTypeEnum.DB)

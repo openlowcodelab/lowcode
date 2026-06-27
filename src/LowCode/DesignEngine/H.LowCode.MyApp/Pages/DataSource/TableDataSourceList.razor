@@ -5,157 +5,192 @@
 
 <div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
     <div style="width:250px;">
-        <Search Placeholder="表名、表中文名" OnSearch="()=>{}" />
+        <input type="search" class="inp" placeholder="表名、表中文名" />
     </div>
     <div style="width:80px; line-height:32px; margin: 0 22px 0 0;">
-        <Button Type="@ButtonType.Primary" OnClick="CreateAsync">新建数据表</Button>
+        <button class="btn btn-primary" @onclick="CreateAsync">新建数据表</button>
     </div>
 </div>
-<Table TItem="DataSourceListModel" DataSource="@_dataSourceList" Total="_total"
-@bind-PageIndex="@_pageIndex" @bind-PageSize="@_pageSize">
-    <PropertyColumn Title="名称" Property="c=>c.Name" Sortable />
-    <PropertyColumn Title="中文名" Property="c=>c.DisplayName" Sortable />
-    <PropertyColumn Title="修改人" Property="c=>c.ModifiedUser" />
-    <PropertyColumn Title="修改时间" Property="c=>c.ModifiedTime" Format="yyyy-MM-dd HH:mm:ss" />
-    <PropertyColumn Title="发布状态" Property="c=>c.PublishStatus">
-        <Switch @bind-Checked="@context.PublishStatus" />
-    </PropertyColumn>
-    <ActionColumn Title="操作">
-        <Space Size=@("middle")>
-            <SpaceItem>
-                <a onclick="@(()=>EditAsync(@context.Id))">编辑</a>
-            </SpaceItem>
-            <SpaceItem>
-                <a onclick="@(()=>DeleteAsync(@context.Id))" style="color:#ff4d4f">删除</a>
-            </SpaceItem>
-        </Space>
-    </ActionColumn>
-</Table>
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>名称</th>
+            <th>中文名</th>
+            <th>修改人</th>
+            <th>修改时间</th>
+            <th>发布状态</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in _dataSourceList)
+        {
+            <tr>
+                <td>@item.Name</td>
+                <td>@item.DisplayName</td>
+                <td>@item.ModifiedUser</td>
+                <td>@item.ModifiedTime?.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                <td>
+                    <label class="switch">
+                        <input type="checkbox" checked="@item.PublishStatus" @onchange='(e) => item.PublishStatus = (bool)(e.Value ?? false)' />
+                        <span class="slider"></span>
+                    </label>
+                </td>
+                <td>
+                    <div class="space">
+                        <a @onclick='() => EditAsync(item.Id)'>编辑</a>
+                        <a @onclick='() => DeleteAsync(item.Id)' style="color:#ff4d4f">删除</a>
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
 
-<Modal Title="@_modalTitle" @bind-Visible="@_visible" OnOk="OnConfirmAsync" Width="1100" Resizable="true" Draggable="true">
-    @* 数据表基本信息 *@
-    <Descriptions Style="margin: 0 0 8px 0;" Bordered>
-        <DescriptionsItem Title="表名">
-            <Input @bind-Value="@_dataSource.Name" Disabled="@(!_dataSource.Name.IsNullOrEmpty())">
-        </DescriptionsItem>
-        <DescriptionsItem Title="表中文名" Span="2">
-            <Input @bind-Value="@_dataSource.DisplayName"></Input>
-        </DescriptionsItem>
-        <DescriptionsItem Title="描述" Span="3">
-            <TextArea @bind-Value="@_dataSource.Description" Rows="2"></TextArea>
-        </DescriptionsItem>
-    </Descriptions>
+<HModal Title="@_modalTitle" Visible="@_visible" OnOk="OnConfirmAsync" OnCancel='() => _visible = false' Width="1100">
+    <table class="descriptions" style="margin: 0 0 8px 0;">
+        <tr>
+            <th>表名</th>
+            <td>
+                <input class="inp" @bind="_dataSource.Name" disabled="@(!_dataSource.Name.IsNullOrEmpty())" />
+            </td>
+        </tr>
+        <tr>
+            <th>表中文名</th>
+            <td colspan="2">
+                <input class="inp" @bind="_dataSource.DisplayName" />
+            </td>
+        </tr>
+        <tr>
+            <th>描述</th>
+            <td colspan="3">
+                <textarea class="ta" @bind="_dataSource.Description" rows="2"></textarea>
+            </td>
+        </tr>
+    </table>
 
-    @* 字段列表 *@
     <div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
         <div style="width:250px;">
-            <Search Placeholder="字段名" OnSearch="()=>{}" />
+            <input type="search" class="inp" placeholder="字段名" />
         </div>
         <div style="width:80px; line-height:32px; margin: 0 22px 0 0;">
-            <Button Type="@ButtonType.Primary" OnClick="CreateFieldAsync">新增字段</Button>
+            <button class="btn btn-primary" @onclick="CreateFieldAsync">新增字段</button>
         </div>
     </div>
-    <Table TItem="TableFieldSchema" DataSource="@_dataSource.TableFields">
-        <ChildContent Context="context">
-            <PropertyColumn Title="字段名" Property="c => c.Name">
-                @if (!_fieldEditCache[context.Id].edit)
-                {
-                    @context.Name
-                }
-                else
-                {
-                    <Input @bind-Value="_fieldEditCache[context.Id].field.Name" />
-                }
-            </PropertyColumn>
-            <PropertyColumn Title="字段中文名" Property="c => c.DisplayName">
-                @if (!_fieldEditCache[context.Id].edit)
-                {
-                    @context.DisplayName
-                }
-                else
-                {
-                    <Input @bind-Value="_fieldEditCache[context.Id].field.DisplayName" />
-                }
-            </PropertyColumn>
-            <PropertyColumn Title="字段类型" Property="c => c.Type">
-                @if (!_fieldEditCache[context.Id].edit)
-                {
-                    @context.Type
-                }
-                else
-                {
-                    <Input @bind-Value="_fieldEditCache[context.Id].field.Type" />
-                }
-            </PropertyColumn>
-            <PropertyColumn Title="是否主键" Property="c => c.IsPrimaryKey">
-                @if (!_fieldEditCache[context.Id].edit)
-                {
-                    @if (context.IsPrimaryKey)
-                    {
-                        <span style="color:#ff4d4f;">是</span>
-                    }
-                    else
-                    {
-                        <span>否</span>
-                    }
-                }
-                else
-                {
-                    <Checkbox @bind-Checked="_fieldEditCache[context.Id].field.IsPrimaryKey"></Checkbox>
-                }
-            </PropertyColumn>
-            <PropertyColumn Title="是否唯一" Property="c => c.IsUnique">
-                @if (!_fieldEditCache[context.Id].edit)
-                {
-                    @if(context.IsUnique)
-                    {
-                        <span style="color:#ff4d4f;">是</span>
-                    }
-                    else
-                    {
-                        <span>否</span>
-                    }
-                }
-                else
-                {
-                    <Checkbox @bind-Checked="_fieldEditCache[context.Id].field.IsUnique"></Checkbox>
-                }
-            </PropertyColumn>
-            <PropertyColumn Title="是否可空" Property="c => c.IsNullable">
-                @if (!_fieldEditCache[context.Id].edit)
-                {
-                    @if (context.IsNullable)
-                    {
-                        <span>是</span>
-                    }
-                    else
-                    {
-                        <span style="color:#ff4d4f;">否</span>
-                    }
-                }
-                else
-                {
-                    <Checkbox @bind-Checked="_fieldEditCache[context.Id].field.IsNullable"></Checkbox>
-                }
-            </PropertyColumn>
-            <ActionColumn Title="操作">
-                @if (!_fieldEditCache[@context.Id].edit)
-                {
-                    <a onclick="@(() => FieldStartEdit(@context.Id))">编辑</a>
-                    <a onclick="@(() => DeleteFieldAsync(@context.Id))" style="color:#ff4d4f">删除</a>
-                }
-                else
-                {
-                    <a onclick="@(() => SaveFieldAsync(context.Id))" class="save">保存</a>
-                    <Popconfirm Title="确定取消吗?" OkText="确定" CancelText="取消"
-                    OnConfirm="() => FieldCancelEditAsync(context.Id)">
-                        <a>取消</a>
-                    </Popconfirm>
-                }
-            </ActionColumn>
-        </ChildContent>
-    </Table>
-</Modal>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>字段名</th>
+                <th>字段中文名</th>
+                <th>字段类型</th>
+                <th>是否主键</th>
+                <th>是否唯一</th>
+                <th>是否可空</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var field in _dataSource.TableFields)
+            {
+                <tr>
+                    <td>
+                        @if (!_fieldEditCache[field.Id].edit)
+                        {
+                            @field.Name
+                        }
+                        else
+                        {
+                            <input class="inp" @bind="_fieldEditCache[field.Id].field.Name" />
+                        }
+                    </td>
+                    <td>
+                        @if (!_fieldEditCache[field.Id].edit)
+                        {
+                            @field.DisplayName
+                        }
+                        else
+                        {
+                            <input class="inp" @bind="_fieldEditCache[field.Id].field.DisplayName" />
+                        }
+                    </td>
+                    <td>
+                        @if (!_fieldEditCache[field.Id].edit)
+                        {
+                            @field.Type
+                        }
+                        else
+                        {
+                            <input class="inp" @bind="_fieldEditCache[field.Id].field.Type" />
+                        }
+                    </td>
+                    <td>
+                        @if (!_fieldEditCache[field.Id].edit)
+                        {
+                            @if (field.IsPrimaryKey)
+                            {
+                                <span style="color:#ff4d4f;">是</span>
+                            }
+                            else
+                            {
+                                <span>否</span>
+                            }
+                        }
+                        else
+                        {
+                            <label class="chk-label"><input type="checkbox" checked="@_fieldEditCache[field.Id].field.IsPrimaryKey" @onchange='(e) => _fieldEditCache[field.Id].field.IsPrimaryKey = (bool)(e.Value ?? false)' /></label>
+                        }
+                    </td>
+                    <td>
+                        @if (!_fieldEditCache[field.Id].edit)
+                        {
+                            @if(field.IsUnique)
+                            {
+                                <span style="color:#ff4d4f;">是</span>
+                            }
+                            else
+                            {
+                                <span>否</span>
+                            }
+                        }
+                        else
+                        {
+                            <label class="chk-label"><input type="checkbox" checked="@_fieldEditCache[field.Id].field.IsUnique" @onchange='(e) => _fieldEditCache[field.Id].field.IsUnique = (bool)(e.Value ?? false)' /></label>
+                        }
+                    </td>
+                    <td>
+                        @if (!_fieldEditCache[field.Id].edit)
+                        {
+                            @if (field.IsNullable)
+                            {
+                                <span>是</span>
+                            }
+                            else
+                            {
+                                <span style="color:#ff4d4f;">否</span>
+                            }
+                        }
+                        else
+                        {
+                            <label class="chk-label"><input type="checkbox" checked="@_fieldEditCache[field.Id].field.IsNullable" @onchange='(e) => _fieldEditCache[field.Id].field.IsNullable = (bool)(e.Value ?? false)' /></label>
+                        }
+                    </td>
+                    <td>
+                        @if (!_fieldEditCache[field.Id].edit)
+                        {
+                            <a @onclick='() => FieldStartEdit(field.Id)'>编辑</a>
+                            <a @onclick='() => DeleteFieldAsync(field.Id)' style="color:#ff4d4f">删除</a>
+                        }
+                        else
+                        {
+                            <a @onclick='() => SaveFieldAsync(field.Id)' class="save">保存</a>
+                            <a @onclick='() => FieldCancelEditAsync(field.Id)'>取消</a>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</HModal>
 
 @code {
     [Parameter]
@@ -193,15 +228,15 @@
         var dataSourceSchema = await DataSourceAppService.GetByIdAsync(AppId, dataSourceId);
 
         //初始化缓存
-        dataSourceSchema.TableFields.ForEach(item =>
+        foreach (var item in dataSourceSchema.TableFields)
         {
             _fieldEditCache[item.Id] = (false, item);
-        });
+        }
 
         return dataSourceSchema;
     }
 
-    private async Task OnConfirmAsync(MouseEventArgs e)
+    private async Task OnConfirmAsync()
     {
         // var validate = _form.Validate();
         // if (validate)

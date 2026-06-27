@@ -10,65 +10,62 @@
             var parameter = _parametersList[i];
             var currentIndex = i;
             
-            <AntDesign.Row Gutter="8" Style="margin-bottom: 8px;">
-                <AntDesign.Col Span="7">
-                    <AntDesign.Input Value="@parameter.Key" 
+            <div class="row" style="margin-bottom: 8px;">
+                <div class="col col-7">
+                    <input class="inp" value="@parameter.Key" 
                            @onchange="@(EventCallback.Factory.Create<ChangeEventArgs>(this, (args) => OnParameterKeyChange(currentIndex, args.Value?.ToString())))"
-                           Placeholder="参数名称" />
-                </AntDesign.Col>
-                <AntDesign.Col Span="5">
-                    <AntDesign.Select TItemValue="string" TItem="string" Value="@parameter.Type" 
-                            @onchange="@(EventCallback.Factory.Create<ChangeEventArgs>(this, (args) => OnParameterTypeChange(currentIndex, args.Value?.ToString())))"
-                            DefaultValue="@("string")">
-                        <AntDesign.SelectOption TItemValue="string" TItem="string" Value="@("string")">字符串</AntDesign.SelectOption>
-                        <AntDesign.SelectOption TItemValue="string" TItem="string" Value="@("int")">整数</AntDesign.SelectOption>
-                        <AntDesign.SelectOption TItemValue="string" TItem="string" Value="@("decimal")">小数</AntDesign.SelectOption>
-                        <AntDesign.SelectOption TItemValue="string" TItem="string" Value="@("bool")">布尔值</AntDesign.SelectOption>
-                        <AntDesign.SelectOption TItemValue="string" TItem="string" Value="@("datetime")">日期时间</AntDesign.SelectOption>
-                    </AntDesign.Select>
-                </AntDesign.Col>
-                <AntDesign.Col Span="10">
+                           placeholder="参数名称" />
+                </div>
+                <div class="col col-5">
+                    <select class="sel" value="@parameter.Type" 
+                            @onchange="@(EventCallback.Factory.Create<ChangeEventArgs>(this, (args) => OnParameterTypeChange(currentIndex, args.Value?.ToString())))">
+                        <option value="string">字符串</option>
+                        <option value="int">整数</option>
+                        <option value="decimal">小数</option>
+                        <option value="bool">布尔值</option>
+                        <option value="datetime">日期时间</option>
+                    </select>
+                </div>
+                <div class="col col-10">
                     @{
                         if (parameter.Type == "bool")
                         {
-                            <AntDesign.Switch Checked="@((bool?)parameter.Value ?? false)" 
-                                    @onchange="@(EventCallback.Factory.Create<ChangeEventArgs>(this, e => OnParameterValueChange(currentIndex, bool.TryParse(e.Value?.ToString(), out var v) ? v : false)))" />
+                            <label class="switch"><input type="checkbox" checked="@((bool?)parameter.Value ?? false)" 
+                                    @onchange="@(EventCallback.Factory.Create<ChangeEventArgs>(this, e => OnParameterValueChange(currentIndex, bool.TryParse(e.Value?.ToString(), out var v) ? v : false)))" /></label>
                         }
                         else if (parameter.Type == "int")
                         {
-                            <AntDesign.InputNumber Value="@((int?)parameter.Value ?? 0)" 
-                                         @onchange="@(EventCallback.Factory.Create<ChangeEventArgs>(this, e => OnParameterValueChange(currentIndex, int.TryParse(e.Value?.ToString(), out var v) ? v : 0)))" />
+                            <input type="number" class="inp" value="@((int?)parameter.Value ?? 0)" 
+                                   @onchange="@(EventCallback.Factory.Create<ChangeEventArgs>(this, e => OnParameterValueChange(currentIndex, int.TryParse(e.Value?.ToString(), out var v) ? v : 0)))" />
                         }
                         else if (parameter.Type == "decimal")
                         {
-                            <AntDesign.InputNumber Value="@((decimal?)parameter.Value ?? 0m)" 
-                                         @onchange="@(EventCallback.Factory.Create<ChangeEventArgs>(this, e => OnParameterValueChange(currentIndex, decimal.TryParse(e.Value?.ToString(), out var v) ? v : 0m)))" />
+                            <input type="number" class="inp" value="@((decimal?)parameter.Value ?? 0m)" step="any"
+                                   @onchange="@(EventCallback.Factory.Create<ChangeEventArgs>(this, e => OnParameterValueChange(currentIndex, decimal.TryParse(e.Value?.ToString(), out var v) ? v : 0m)))" />
                         }
                         else if (parameter.Type == "datetime")
                         {
-                            <AntDesign.DatePicker Value="@((DateTime?)parameter.Value)" 
-                                        @onchange="@(EventCallback.Factory.Create<ChangeEventArgs>(this, e => OnParameterValueChange(currentIndex, DateTime.TryParse(e.Value?.ToString(), out var v) ? v : DateTime.Now)))"
-                                        ShowTime="true" />
+                            <input type="datetime-local" class="inp" value="@((DateTime?)parameter.Value)" 
+                                   @onchange="@(EventCallback.Factory.Create<ChangeEventArgs>(this, e => OnParameterValueChange(currentIndex, DateTime.TryParse(e.Value?.ToString(), out var v) ? v : DateTime.Now)))" />
                         }
                         else
                         {
-                            <AntDesign.Input Value="@(parameter.Value?.ToString() ?? "")" 
+                            <input class="inp" value="@(parameter.Value?.ToString() ?? "")" 
                                    @onchange="@(EventCallback.Factory.Create<ChangeEventArgs>(this, (args) => OnParameterValueChange(currentIndex, args.Value?.ToString())))"
-                                   Placeholder="参数值" />
+                                   placeholder="参数值" />
                         }
                     }
-                </AntDesign.Col>
-                <AntDesign.Col Span="2">
-                    <AntDesign.Button Type="@ButtonType.Text" Icon="delete" Size="@ButtonSize.Small" 
-                            OnClick="() => RemoveParameter(currentIndex)" Danger />
-                </AntDesign.Col>
-            </AntDesign.Row>
+                </div>
+                <div class="col col-2">
+                    <button class="btn btn-text btn-sm" @onclick="() => RemoveParameter(currentIndex)" style="color: red;">删除</button>
+                </div>
+            </div>
         }
     }
     
-    <AntDesign.Button Type="@ButtonType.Dashed" Block OnClick="AddParameter" Icon="plus" Size="@ButtonSize.Small">
+    <button class="btn btn-dashed btn-sm btn-block" @onclick="AddParameter">
         添加参数
-    </AntDesign.Button>
+    </button>
 </div>
 
 @code {

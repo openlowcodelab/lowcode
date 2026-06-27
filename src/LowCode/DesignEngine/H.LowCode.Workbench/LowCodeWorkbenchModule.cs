@@ -19,6 +19,5 @@ public class LowCodeWorkbenchModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
-        context.Services.AddAntDesign();
     }
 }

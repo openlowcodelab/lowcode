@@ -4,18 +4,14 @@
 
 <div style="display: flex; justify-content: space-between; margin: 0 0 8px 5px;">
     <div style="width:250px;">
-        <Search Placeholder="主题名称" OnSearch="()=>{}" />
+        <input type="search" class="inp" placeholder="主题名称" />
     </div>
 </div>
 
-<Card Title="默认主题" Style="float:left; width:300px; margin:5px;">
-    <Extra>
-        <a href="#">查看</a>
-    </Extra>
-    <Body>
-        <p>Card content</p>
-    </Body>
-</Card>
+<HCard Title="默认主题" Style="float:left; width:300px; margin:5px;">
+    <a href="#">查看</a>
+    <p>Card content</p>
+</HCard>
 
 @code {
     protected override async Task OnInitializedAsync()

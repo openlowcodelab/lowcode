@@ -7,7 +7,7 @@
 
 <script src="@Assets["_content/H.LowCode.DesignEngineBase/js/elementUtils.js"]"></script>
 
-<div @ref="itemRef" class="draggableitem-box @DraggableItemBoxClassMapper.Class"
+<div @ref="itemRef" class="@GetDraggableItemBoxClass()"
     draggable="@Component.DesignState.IsSelected"
      style="float:left;
         width: @((Component.Style.ItemWidth > 4 ? Component.Style.ItemWidth : 24)  /24 * 100)%;
@@ -30,18 +30,18 @@
      @onmouseover="OnMouseOver" @onmouseover:stopPropagation
      @onmouseout="OnMouseOut" @onmouseout:stopPropagation>
 
-    <div class="draggableitem @DraggableItemClassMapper.Class" style="@Component.DesignState.DragEffectStyle">
+    <div class="@GetDraggableItemClass()" style="@Component.DesignState.DragEffectStyle">
         @if (Component.DesignState.IsSelected)
         {
             <div draggable="true" class="draggableitem-icon-move">
-                <Icon Type="drag" Theme="IconThemeType.Outline" />
+                <span class="icon">&#9776;</span>
             </div>
             <div class="draggableitem-pointer-wrapper">
                 <div class="draggableitem-pointer" @onclick="OnDelete">
-                    <Icon Type="delete" Theme="IconThemeType.Outline" />
+                    <span class="icon">&#10005;</span>
                 </div>
                 <div class="draggableitem-pointer" @onclick="OnCopy">
-                    <Icon Type="copy" Theme="IconThemeType.Outline" />
+                    <span class="icon">&#128203;</span>
                 </div>
             </div>
         }
@@ -72,9 +72,6 @@
     [Parameter]
     public Action<ComponentPartsSchema> OnItemCopy { get; set; }
 
-    protected ClassMapper DraggableItemBoxClassMapper { get; } = new ClassMapper();
-    protected ClassMapper DraggableItemClassMapper { get; } = new ClassMapper();
-
     private ElementReference itemRef;
     private DragDropElementDimensions dimensions;
 
@@ -88,7 +85,6 @@
         await base.OnInitializedAsync();
 
         Init();
-        SetClassMap();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -137,18 +133,22 @@
         }
     }
 
-    private void SetClassMap()
+    private string GetDraggableItemBoxClass()
     {
-        DraggableItemClassMapper.Clear()
-            .If("draggableitem-selected", () => Component.DesignState.IsSelected)
-            .If("draggableitem-component", () => Component.IsContainer == false)
-            .If("draggableitem-container", () => Component.IsContainer);
+        var cls = "draggableitem-box";
+        if (Component.IsContainer) cls += " draggableitem-box-layout";
+        if (Component.DesignState.IsAnimating) cls += " draggableitem-animating";
+        return cls;
+    }
 
-        DraggableItemClassMapper.If("draggableitem-dragging", () => isDragging);
-
-        DraggableItemBoxClassMapper.Clear()
-            .If("draggableitem-box-layout", () => Component.IsContainer)
-            .If("draggableitem-animating", () => Component.DesignState.IsAnimating);
+    private string GetDraggableItemClass()
+    {
+        var cls = "draggableitem";
+        if (Component.DesignState.IsSelected) cls += " draggableitem-selected";
+        if (!Component.IsContainer) cls += " draggableitem-component";
+        else cls += " draggableitem-container";
+        if (isDragging) cls += " draggableitem-dragging";
+        return cls;
     }
     #endregion
 

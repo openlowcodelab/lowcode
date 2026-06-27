@@ -8,8 +8,8 @@
 <PageTitle>@($"{_pageCascadingModel.PageName} - 页面物料设计器")</PageTitle>
 
 <CascadingValue Value="@_pageCascadingModel" Name="pageCascading">
-    <AntDesign.Layout Class="designpage" Style="padding:0 2px; background-color: #f7f7f7;">
-        <Header Style="background-color: white; padding:0 20px;">
+    <div class="designpage layout" style="padding:0 2px; background-color: #f7f7f7;">
+        <div class="layout-header" style="background-color: white; padding:0 20px;">
             <div style="float:left;">
                 <a href="javascript:void(0)"> @("<") 返回 </a>
             </div>
@@ -20,24 +20,24 @@
             </Menu>
             </div>*@
             <div style="float:right;">
-                <Button>预览</Button>
-                <Button Type="ButtonType.Primary" OnClick="() => SavePagePartsSchemaAsync()">保存</Button>
+                <button class="btn">预览</button>
+                <button class="btn btn-primary" @onclick="() => SavePagePartsSchemaAsync()">保存</button>
             </div>
-        </Header>
-        <AntDesign.Layout>
-            <Sider Style="min-width: 200px; flex: auto; max-width: max-content;" Theme="SiderTheme.Light">
+        </div>
+        <div class="layout-body">
+            <div class="layout-sider" style="min-width: 200px; flex: auto; max-width: max-content;">
                 <ComponentPanel></ComponentPanel>
-            </Sider>
-            <Layout>
-                <Content Class="designpage">
+            </div>
+            <div class="layout-main">
+                <div class="designpage layout-content">
                     <PageDesignPanel @ref="_designPanel"></PageDesignPanel>
-                </Content>
-            </Layout>
-            <Sider Class="designpage" Style="flex: auto; max-width: max-content; min-width: 250px;" Theme="SiderTheme.Light">
+                </div>
+            </div>
+            <div class="layout-sider designpage" style="flex: auto; max-width: max-content; min-width: 250px;">
                 <PartsSettingPanel></PartsSettingPanel>
-            </Sider>
-        </AntDesign.Layout>
-    </AntDesign.Layout>
+            </div>
+        </div>
+    </div>
 </CascadingValue>
 
 @code

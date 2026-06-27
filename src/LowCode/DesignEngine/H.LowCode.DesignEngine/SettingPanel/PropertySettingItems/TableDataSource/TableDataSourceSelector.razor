@@ -4,16 +4,13 @@
 
 <div class="propertysetting-item">
     <label>选择数据表：</label>
-    <Select DataSource="@_dataSourceList"
-            @bind-Value="@_selectedDataSourceId" 
-            ItemValue="ds => ds.Id"
-            ItemLabel="ds => ds.DisplayName"
-            TItem="DataSourceListModel"
-            TItemValue="string"
-            Placeholder="请选择数据表"
-            OnSelectedItemChanged="@OnDataSourceSelected"
-            Style="width: 100%;">
-    </Select>
+    <select class="sel" @bind="@_selectedDataSourceId" @bind:after="OnDataSourceSelected" style="width: 100%;">
+        <option value="">请选择数据表</option>
+        @foreach (var ds in _dataSourceList)
+        {
+            <option value="@ds.Id">@ds.DisplayName</option>
+        }
+    </select>
 </div>
 
 @if (!string.IsNullOrEmpty(_selectedDataSourceId))
@@ -75,11 +72,10 @@
         }
     }
 
-    private async Task OnDataSourceSelected(DataSourceListModel selectedItem)
+    private async Task OnDataSourceSelected()
     {
-        if (selectedItem != null)
+        if (!string.IsNullOrEmpty(_selectedDataSourceId))
         {
-            _selectedDataSourceId = selectedItem.Id;
             await LoadSelectedDataSourceAsync();
             await UpdateDataSourceConfig();
         }

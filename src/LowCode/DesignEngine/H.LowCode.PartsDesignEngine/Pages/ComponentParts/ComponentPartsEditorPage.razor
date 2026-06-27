@@ -11,7 +11,7 @@
     <div class="editor-header" style="background: white; padding: 16px; margin-bottom: 16px; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
         <div style="display: flex; justify-content: space-between; align-items: center;">
             <div style="display: flex; align-items: center; gap: 16px;">
-                <Button Type="@ButtonType.Text" Icon="arrow-left" OnClick="GoBack">返回</Button>
+                <button class="btn btn-text" @onclick="GoBack">返回</button>
                 <div>
                     <h3 style="margin: 0; font-size: 18px; font-weight: 600;">
                         @(_componentParts?.PartsId ?? "组件编辑")
@@ -22,10 +22,10 @@
                 </div>
             </div>
             <div style="display: flex; gap: 8px;">
-                <Button OnClick="Preview" Icon="eye">预览</Button>
-                <Button Type="@ButtonType.Primary" OnClick="Save" Icon="save" Loading="@_saving">
+                <button class="btn" @onclick="Preview">预览</button>
+                <button class="btn btn-primary" @onclick="Save" disabled="@_saving">
                     保存
-                </Button>
+                </button>
             </div>
         </div>
     </div>
@@ -40,19 +40,18 @@
         else if (_loading)
         {
             <div style="text-align: center; padding: 60px 0;">
-                <Spin Size="SpinSize.Large" />
-                <div style="margin-top: 16px; color: #666;">加载中...</div>
+                <div class="loading-spinner">加载中...</div>
             </div>
         }
         else
         {
-            <Result Status="ResultStatus.Http404" 
-                    Title="组件不存在" 
-                    SubTitle="请检查组件ID是否正确">
-                <Extra>
-                    <Button Type="@ButtonType.Primary" OnClick="GoBack">返回列表</Button>
-                </Extra>
-            </Result>
+            <div class="result-404">
+                <div class="result-title">组件不存在</div>
+                <div class="result-subtitle">请检查组件ID是否正确</div>
+                <div class="result-extra">
+                    <button class="btn btn-primary" @onclick="GoBack">返回列表</button>
+                </div>
+            </div>
         }
     </div>
 </div>

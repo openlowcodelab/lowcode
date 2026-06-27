@@ -8,27 +8,26 @@
         {
             var header = _headersList[i];
             var currentIndex = i;
-            <AntDesign.Row Gutter="8" Style="margin-bottom: 8px;">
-                <AntDesign.Col Span="10">
-                    <AntDesign.Input @bind-Value="header.Key" 
-                           @onchange="@(() => OnHeaderChange(currentIndex, header.Key, header.Value))"
-                           Placeholder="请求头名称" />
-                </AntDesign.Col>
-                <AntDesign.Col Span="12">
-                    <AntDesign.Input @bind-Value="header.Value" 
-                           @onchange="@(() => OnHeaderChange(currentIndex, header.Key, header.Value))"
-                           Placeholder="请求头值" />
-                </AntDesign.Col>
-                <AntDesign.Col Span="2">
-                    <AntDesign.Button Type="ButtonType.Text" Icon="delete" Size="ButtonSize.Small" 
-                            OnClick="() => RemoveHeader(currentIndex)" Danger />
-                </AntDesign.Col>
-            </AntDesign.Row>
+            <div class="row" style="margin-bottom: 8px;">
+                <div class="col col-10">
+                    <input class="inp" @bind="header.Key" 
+                           @bind:after="@(() => OnHeaderChange(currentIndex, header.Key, header.Value))"
+                           placeholder="请求头名称" />
+                </div>
+                <div class="col col-12">
+                    <input class="inp" @bind="header.Value" 
+                           @bind:after="@(() => OnHeaderChange(currentIndex, header.Key, header.Value))"
+                           placeholder="请求头值" />
+                </div>
+                <div class="col col-2">
+                    <button class="btn btn-text btn-sm" @onclick="() => RemoveHeader(currentIndex)" style="color: red;">删除</button>
+                </div>
+            </div>
         }
     }
-    <AntDesign.Button Type="ButtonType.Dashed" Block OnClick="AddHeader" Icon="plus" Size="ButtonSize.Small">
+    <button class="btn btn-dashed btn-sm btn-block" @onclick="AddHeader">
         添加请求头
-    </AntDesign.Button>
+    </button>
 </div>
 
 @code {

@@ -4,19 +4,19 @@
 @if (Component != null)
 {
     <div class="propertysetting-item">
-        <label>×é¼þ¿í¶È£º</label>
-        <Slider TValue="double" Value="@Component.Style.ItemWidth" DefaultValue="4" Min="4" Max="24" OnChange="(value) => OnStyleChange()" />
+        <label>ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È£ï¿½</label>
+            <input type="range" class="slider" min="4" max="24" @bind="Component.Style.ItemWidth" @bind:after="OnStyleChange" />
     </div>
     @if (Component.IsHiddenLabel == false && Component.IsContainer == false)
     {
         <div class="propertysetting-item">
-            <label>±êÇ©¿í¶È£º</label>
-            <Slider TValue="double" Value="@Component.Style.LabelWidth" DefaultValue="180" Min="4" Max="300" OnChange="(value) => OnStyleChange()" />
+            <label>ï¿½ï¿½Ç©ï¿½ï¿½ï¿½È£ï¿½</label>
+            <input type="range" class="slider" min="4" max="300" @bind="Component.Style.LabelWidth" @bind:after="OnStyleChange" />
         </div>
     }
     <div style="margin: 5px 15px 20px 10px;">
-        <label>×Ô¶¨ÒåÑùÊ½£º</label>
-        <TextArea @bind-value="@Component.Style.CustomStyle" OnChange="() => OnStyleChange()" Style="height: 150px;" />
+        <label>ï¿½Ô¶ï¿½ï¿½ï¿½ï¿½ï¿½Ê½ï¿½ï¿½</label>
+        <textarea class="ta" @bind="Component.Style.CustomStyle" @bind:after="OnStyleChange" style="height: 150px;"></textarea>
     </div>
 }
 

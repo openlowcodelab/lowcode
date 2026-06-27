@@ -3,15 +3,15 @@
 @using System.Text.Json
 
 <div style="margin: 16px 0;">
-    <Alert Type="@AntDesign.AlertType.Info" 
-           Message="固定数据源说明"
-           Description="用于设计时预览和测试。运行时可以切换为 API 或 SQL 数据源。数据格式为 JSON 数组，每个元素是一个对象。"
-           Style="margin-bottom: 16px;" />
+    <div class="alert alert-info" style="padding:8px 12px; border:1px solid #91d5ff; background:#e6f7ff; border-radius:4px; margin-bottom:16px;">
+        <strong>固定数据源说明</strong>
+        <div style="margin-top:4px; font-size:12px; color:#666;">用于设计时预览和测试。运行时可以切换为 API 或 SQL 数据源。数据格式为 JSON 数组，每个元素是一个对象。</div>
+    </div>
 
     <div style="margin-bottom: 16px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
             <label style="font-weight: 500;">数据列表</label>
-            <Button Type="@ButtonType.Primary" Size="@ButtonSize.Small" OnClick="AddDataItem" Icon="plus">添加数据项</Button>
+            <button class="btn btn-primary btn-sm" @onclick="AddDataItem">+ 添加数据项</button>
         </div>
 
         @if (DataSource?.FixedData != null && DataSource.FixedData.Count > 0)
@@ -22,39 +22,31 @@
                     var index = i;
                     var dataItem = DataSource.FixedData[index];
                     
-                    <Card Size="@CardSize.Small" Style="margin-bottom: 8px;">
-                        <Extra>
-                            <Space>
-                                <SpaceItem>
-                                    <Button Type="@ButtonType.Text" Size="@ButtonSize.Small" OnClick="() => MoveUp(index)" 
-                                            Disabled="@(index == 0)" Icon="up">上移</Button>
-                                </SpaceItem>
-                                <SpaceItem>
-                                    <Button Type="@ButtonType.Text" Size="@ButtonSize.Small" OnClick="() => MoveDown(index)" 
-                                            Disabled="@(index == DataSource.FixedData.Count - 1)" Icon="down">下移</Button>
-                                </SpaceItem>
-                                <SpaceItem>
-                                    <Button Type="@ButtonType.Text" Size="@ButtonSize.Small" OnClick="() => RemoveDataItem(index)" 
-                                            Danger Icon="delete">删除</Button>
-                                </SpaceItem>
-                            </Space>
-                        </Extra>
-                        <Body>
+                    <div class="card" style="border:1px solid #e8e8e8; border-radius:4px; margin-bottom:8px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:4px 8px; background:#fafafa; border-bottom:1px solid #e8e8e8;">
+                            <span>数据项 @(index + 1)</span>
+                            <div style="display:flex; gap:4px;">
+                                <button class="btn btn-text btn-sm" @onclick="() => MoveUp(index)" disabled="@(index == 0)">↑ 上移</button>
+                                <button class="btn btn-text btn-sm" @onclick="() => MoveDown(index)" disabled="@(index == DataSource.FixedData.Count - 1)">↓ 下移</button>
+                                <button class="btn btn-text btn-sm" @onclick="() => RemoveDataItem(index)" style="color:red;">✕ 删除</button>
+                            </div>
+                        </div>
+                        <div style="padding:8px;">
                             <div style="margin-bottom: 8px;">
                                 <label style="display: block; margin-bottom: 4px; font-weight: 500;">数据项 @(index + 1) (JSON 格式)</label>
-                                <TextArea Value="@GetJsonString(dataItem)" 
-                                          ValueChanged="@((v) => UpdateDataItem(index, v))"
-                                          Rows="4" 
-                                          Placeholder='{"id": "1", "title": "问题标题", "type": 1}' />
+                                <textarea class="ta" rows="4"
+                                    value="@GetJsonString(dataItem)"
+                                    @onchange='(e) => UpdateDataItem(index, e.Value?.ToString() ?? "{}")'
+                                    placeholder='{"id": "1", "title": "问题标题", "type": 1}'></textarea>
                             </div>
-                        </Body>
-                    </Card>
+                        </div>
+                    </div>
                 }
             </div>
         }
         else
         {
-            <Empty />
+            <div style="padding: 16px; text-align: center; color: #999;">暂无数据</div>
         }
     </div>
 </div>
@@ -136,7 +128,6 @@
         }
         catch
         {
-            // JSON 解析失败，忽略
         }
     }
 }

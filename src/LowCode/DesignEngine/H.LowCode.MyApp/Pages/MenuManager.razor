@@ -1,4 +1,4 @@
-@page "/myapp/{AppId}/menumanager"
+﻿@page "/myapp/{AppId}/menumanager"
 @namespace H.LowCode.MyApp
 @inherits LowCodePageComponentBase
 @layout MyAppLayout
@@ -15,7 +15,7 @@
         overflow: auto;
         padding: 4px;
     }
-    .icon-select-menu .ant-menu-item {
+    .icon-select-menu .dropdown-item {
         display: flex;
         align-items: center;
         justify-content: flex-start;
@@ -25,10 +25,10 @@
         padding: 4px 8px;
         box-sizing: border-box;
         white-space: nowrap;
+        cursor: pointer;
     }
-    .icon-select-menu .anticon {
-        font-size: 16px;
-        flex: 0 0 auto;
+    .icon-select-menu .dropdown-item:hover {
+        background-color: #f5f5f5;
     }
     .icon-select-menu .icon-label {
         margin-left: 6px;
@@ -38,98 +38,93 @@
 
 <div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
     <div style="width:250px;">
-        <Search Placeholder="菜单名称" OnSearch="()=>{}" />
+        <input type="search" class="inp" placeholder="菜单名称" />
     </div>
     <div style="width:80px; line-height:32px; margin: 0 8px 0 0;">
-        <Button Type="@ButtonType.Primary" OnClick="@(()=> CreateAsync(string.Empty))">新建菜单</Button>
+        <button class="btn btn-primary" @onclick='() => CreateAsync(string.Empty)'>新建菜单</button>
     </div>
 </div>
 
-<Table TItem="MenuSchema" TreeChildren="item=>item.Childrens" DataSource="@_menuList" @bind-SelectedRows="selectedRows"
-RowKey="x=>x.Id" HidePagination DefaultExpandAllRows>
-    <PropertyColumn Title="菜单名称" Property="c=>c.Title" Format="yyyy-MM-dd" Sortable />
-    <PropertyColumn Title="排序" Property="c=>c.Order" />
-    <PropertyColumn Title="图标" Property="c=>c.Icon" />
-    <PropertyColumn Title="类型" Property="c=>c.MenuType" Format="@(context.MenuType == 0 ?"菜单":"目录")" />
-    <PropertyColumn Title="菜单地址" Property="c=>c.MenuUrl" />
-    <PropertyColumn Title="修改时间" Property="c=>c.ModificationTime" Format="yyyy-MM-dd HH:mm:ss" />
-    <ActionColumn Title="操作" Width="200">
-        <Space Size=@("middle")>
-            @if(context.MenuType == 1)
-            {
-                <SpaceItem>
-                    <a onclick="@(()=> CreateAsync(@context.Id))">新增子菜单</a>
-                </SpaceItem>
-            }
-            <SpaceItem>
-                <a onclick="@(()=> EditAsync(@context.Id))">编辑</a>
-            </SpaceItem>
-            <SpaceItem>
-                <a onclick="@(()=> DeleteAsync(@context.Id))" style="color:#ff4d4f">删除</a>
-            </SpaceItem>
-        </Space>
-    </ActionColumn>
-</Table>
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>菜单名称</th>
+            <th>排序</th>
+            <th>图标</th>
+            <th>类型</th>
+            <th>菜单地址</th>
+            <th>修改时间</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        @RenderFlatMenuRows(_menuList, 0)
+    </tbody>
+</table>
 
-<Modal Title="新建菜单" @bind-Visible="@_visible" OnOk="OnConfirmAsync">
-    <Form Model="@_menuSchema" LabelColSpan="8" WrapperColSpan="16" OnFinish="OnFinishAsync" @ref="@_form"
-    ValidateOnChange="true">
-        <FormItem Label="父级菜单">
-            <TreeSelect TItem="string" TItemValue="string" @bind-Value="@context.ParentId" AllowClear TreeDefaultExpandAll Style="width:100%;">
-                @RenderParentTreeNodes(GetSelectableParentMenus(context.Id))
-            </TreeSelect>
-        </FormItem>
-        <FormItem Label="菜单名称" Required>
-            <Input @bind-Value="@context.Title" />
-        </FormItem>
-        <FormItem Label="类型" Required>
-            <RadioGroup @bind-Value="@context.MenuType">
-                <Radio Value="0">菜单</Radio>
-                <Radio Value="1">目录</Radio>
-            </RadioGroup>
-        </FormItem>
-        <FormItem Label="图标" Required>
+<HModal Title="新建菜单" Visible="@_visible" OnOk="OnConfirmAsync" OnCancel='() => _visible = false'>
+    <form>
+        <div class="form-item">
+            <label>父级菜单</label>
+            <select class="sel" @bind="_menuSchema.ParentId" style="width:100%;">
+                <option value="">-- 无 --</option>
+                @foreach (var m in GetFlatParentMenus(_menuSchema.Id))
+                {
+                    <option value="@m.Id">@m.Title</option>
+                }
+            </select>
+        </div>
+        <div class="form-item">
+            <label>菜单名称</label>
+            <input class="inp" @bind="_menuSchema.Title" />
+        </div>
+        <div class="form-item">
+            <label>类型</label>
+            <div class="radio-group">
+                <label class="radio-label"><input type="radio" name="menuType" value="0" checked="@(_menuSchema.MenuType == 0)" @onchange='() => _menuSchema.MenuType = 0' />菜单</label>
+                <label class="radio-label"><input type="radio" name="menuType" value="1" checked="@(_menuSchema.MenuType == 1)" @onchange='() => _menuSchema.MenuType = 1' />目录</label>
+            </div>
+        </div>
+        <div class="form-item">
+            <label>图标</label>
             <div style="display:flex; gap:8px; align-items:center;">
-                <Input @bind-Value="@context.Icon" ReadOnly Style="width:220px;" />
-                <Icon Type="@context.Icon" />
-                <Dropdown>
-                    <Overlay>
-                        <Menu Class="icon-select-menu" Style="max-width:480px;">
+                <input class="inp" @bind="_menuSchema.Icon" readonly style="width:220px;" />
+                <div class="dropdown">
+                    <button class="btn btn-default btn-sm" type="button" @onclick='() => _iconDropdownOpen = !_iconDropdownOpen'>选择图标</button>
+                    @if (_iconDropdownOpen)
+                    {
+                        <div class="dropdown-menu icon-select-menu" style="max-width:480px;">
                             @foreach (var icon in _iconList)
                             {
-                                <MenuItem OnClick="@(()=> SelectIcon(icon))">
-                                    <Icon Type="@icon" />
-                                    <span class="icon-label">@icon</span>
-                                </MenuItem>
+                                <div class="dropdown-item" @onclick='() => SelectIcon(icon)'>
+                                    <span>@icon</span>
+                                </div>
                             }
-                        </Menu>
-                    </Overlay>
-                    <ChildContent>
-                        <Button Size="@ButtonSize.Small" Icon="appstore">选择图标</Button>
-                    </ChildContent>
-                </Dropdown>
+                        </div>
+                    }
+                </div>
             </div>
-        </FormItem>
-        @if (context.MenuType == 0)
+        </div>
+        @if (_menuSchema.MenuType == 0)
         {
-            <FormItem Label="菜单地址" Required>
-                <Input @bind-Value="@context.MenuUrl" />
-            </FormItem>
+            <div class="form-item">
+                <label>菜单地址</label>
+                <input class="inp" @bind="_menuSchema.MenuUrl" />
+            </div>
         }
-        <FormItem Label="排序">
-            <InputNumber @bind-Value="@context.Order" Min="0" DefaultValue="0"></InputNumber>
-        </FormItem>
-    </Form>
-</Modal>
+        <div class="form-item">
+            <label>排序</label>
+            <input type="number" class="inp" @bind="_menuSchema.Order" min="0" />
+        </div>
+    </form>
+</HModal>
 
 @code {
     [PersistentState]
     public IList<MenuSchema> _menuList { get; set; }
 
-    IEnumerable<MenuSchema> selectedRows;
-
     private bool _visible = false;
-    private Form<MenuSchema> _form;
+    private bool _iconDropdownOpen = false;
 
     private MenuSchema _menuSchema;
 
@@ -174,28 +169,18 @@ RowKey="x=>x.Id" HidePagination DefaultExpandAllRows>
         await Message.SuccessAsync("删除成功！");
     }
 
-    private async Task OnConfirmAsync(MouseEventArgs e)
+    private async Task OnConfirmAsync()
     {
-        var validate = _form.Validate();
-        if (validate)
+        var isSuccess = await SaveMenuSchemaAsync();
+        if (isSuccess)
         {
-            var isSuccess = await SaveMenuSchemaAsync();
-            if (isSuccess)
-            {
-                _visible = false;
-                _form.Submit();
-                await Message.SuccessAsync("保存成功");
-                _form.Reset();
-            }
-            else
-            {
-                _visible = true;
-                await Message.ErrorAsync("保存失败");
-            }
+            _visible = false;
+            await Message.SuccessAsync("保存成功");
         }
         else
         {
             _visible = true;
+            await Message.ErrorAsync("保存失败");
         }
     }
 
@@ -218,15 +203,12 @@ RowKey="x=>x.Id" HidePagination DefaultExpandAllRows>
     private void SelectIcon(string icon)
     {
         _menuSchema.Icon = icon;
+        _iconDropdownOpen = false;
         StateHasChanged();
     }
 
-
-    private IEnumerable<MenuSchema> GetSelectableParentMenus(string currentId)
+    private IEnumerable<MenuSchema> GetFlatParentMenus(string currentId)
     {
-        if (_menuList == null)
-            return Array.Empty<MenuSchema>();
-
         var exclude = new HashSet<string>();
         var current = FindMenuById(_menuList, currentId);
         if (current != null)
@@ -234,8 +216,7 @@ RowKey="x=>x.Id" HidePagination DefaultExpandAllRows>
             exclude.Add(current.Id);
             CollectDescendantIds(current, exclude);
         }
-
-        return FilterMenus(_menuList, exclude);
+        return FlattenForSelect(_menuList, exclude, 0);
     }
 
     private MenuSchema FindMenuById(IEnumerable<MenuSchema> nodes, string id)
@@ -265,75 +246,72 @@ RowKey="x=>x.Id" HidePagination DefaultExpandAllRows>
         }
     }
 
-    private IEnumerable<MenuSchema> FilterMenus(IEnumerable<MenuSchema> nodes, HashSet<string> exclude)
+    private IEnumerable<MenuSchema> FlattenForSelect(IEnumerable<MenuSchema> nodes, HashSet<string> exclude, int depth)
     {
         if (nodes == null)
-            return Array.Empty<MenuSchema>();
-        var result = new List<MenuSchema>();
+            yield break;
         foreach (var n in nodes)
         {
             if (exclude.Contains(n.Id))
                 continue;
-            var copy = new MenuSchema
-            {
-                AppId = n.AppId,
-                Id = n.Id,
-                ParentId = n.ParentId,
-                Title = n.Title,
-                MenuType = n.MenuType,
-                Icon = n.Icon,
-                MenuUrl = n.MenuUrl,
-                Order = n.Order,
-                Childrens = new List<MenuSchema>()
-            };
-            var children = FilterMenus(n.Childrens, exclude);
-            foreach (var c in children)
-                copy.Childrens.Add(c);
-            result.Add(copy);
+            var display = new string('-', depth * 2) + n.Title;
+            yield return new MenuSchema { Id = n.Id, AppId = AppId, Title = display };
+            foreach (var child in FlattenForSelect(n.Childrens, exclude, depth + 1))
+                yield return child;
         }
-        return result;
     }
 
-    private RenderFragment RenderParentTreeNodes(IEnumerable<MenuSchema> nodes) => builder =>
+    private RenderFragment RenderFlatMenuRows(IEnumerable<MenuSchema> nodes, int depth) => builder =>
     {
-        var seq = 0;
-        void AddNodes(IEnumerable<MenuSchema> ns)
+        if (nodes == null) return;
+        foreach (var m in nodes)
         {
-            if (ns == null)
-                return;
-            foreach (var m in ns)
+            builder.OpenElement(0, "tr");
+            builder.OpenElement(1, "td");
+            builder.AddAttribute(2, "style", "padding-left: " + (depth * 20) + "px;");
+            builder.AddContent(3, m.Title);
+            builder.CloseElement();
+            builder.OpenElement(4, "td");
+            builder.AddContent(5, m.Order);
+            builder.CloseElement();
+            builder.OpenElement(6, "td");
+            builder.AddContent(7, m.Icon);
+            builder.CloseElement();
+            builder.OpenElement(8, "td");
+            builder.AddContent(9, m.MenuType == 0 ? "菜单" : "目录");
+            builder.CloseElement();
+            builder.OpenElement(10, "td");
+            builder.AddContent(11, m.MenuUrl);
+            builder.CloseElement();
+            builder.OpenElement(12, "td");
+            builder.AddContent(13, m.ModificationTime?.ToString("yyyy-MM-dd HH:mm:ss"));
+            builder.CloseElement();
+            builder.OpenElement(14, "td");
+            if (m.MenuType == 1)
             {
-                builder.OpenComponent<AntDesign.TreeNode<string>>(seq++);
-                builder.AddAttribute(seq++, "Title", m.Title);
-                builder.AddAttribute(seq++, "Key", m.Id);
-                if (m.Childrens != null && m.Childrens.Count > 0)
-                {
-                    builder.AddAttribute(seq++, "ChildContent", (RenderFragment)(childBuilder =>
-                    {
-                        var childSeq = 0;
-                        void AddChildNodes(IEnumerable<MenuSchema> childNodes)
-                        {
-                            foreach (var cm in childNodes)
-                            {
-                                childBuilder.OpenComponent<AntDesign.TreeNode<string>>(childSeq++);
-                                childBuilder.AddAttribute(childSeq++, "Title", cm.Title);
-                                childBuilder.AddAttribute(childSeq++, "Key", cm.Id);
-                                if (cm.Childrens != null && cm.Childrens.Count > 0)
-                                {
-                                    childBuilder.AddAttribute(childSeq++, "ChildContent", (RenderFragment)(grandChildBuilder =>
-                                    {
-                                        AddChildNodes(cm.Childrens);
-                                    }));
-                                }
-                                childBuilder.CloseComponent();
-                            }
-                        }
-                        AddChildNodes(m.Childrens);
-                    }));
-                }
-                builder.CloseComponent();
+                builder.OpenElement(15, "a");
+                builder.AddAttribute(16, "onclick", EventCallback.Factory.Create(this, () => CreateAsync(m.Id)));
+                builder.AddAttribute(17, "href", "javascript:void(0)");
+                builder.AddContent(18, "新增子菜单");
+                builder.CloseElement();
+            }
+            builder.OpenElement(19, "a");
+            builder.AddAttribute(20, "onclick", EventCallback.Factory.Create(this, () => EditAsync(m.Id)));
+            builder.AddAttribute(21, "href", "javascript:void(0)");
+            builder.AddContent(22, "编辑");
+            builder.CloseElement();
+            builder.OpenElement(23, "a");
+            builder.AddAttribute(24, "onclick", EventCallback.Factory.Create(this, () => DeleteAsync(m.Id)));
+            builder.AddAttribute(25, "href", "javascript:void(0)");
+            builder.AddAttribute(26, "style", "color:#ff4d4f");
+            builder.AddContent(27, "删除");
+            builder.CloseElement();
+            builder.CloseElement();
+            builder.CloseElement();
+            if (m.Childrens != null && m.Childrens.Count > 0)
+            {
+                builder.AddContent(28, RenderFlatMenuRows(m.Childrens, depth + 1));
             }
         }
-        AddNodes(nodes);
     };
 }

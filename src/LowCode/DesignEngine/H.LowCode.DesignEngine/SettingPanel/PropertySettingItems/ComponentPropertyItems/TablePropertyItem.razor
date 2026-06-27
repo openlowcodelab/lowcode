@@ -15,8 +15,8 @@
     <div>
         <span draggable="true" style="cursor: move; display: inline-block; width: 10px; margin: 0 auto; writing-mode: vertical-lr;">...</span>
         <span style="display:inline-block; width:140px;">@column.Title</span>
-        <Icon Type="edit" OnClick="@(() => EditColumn(column.Id))" Theme="IconThemeType.Outline" Style="cursor: pointer;" />
-        <Icon Type="delete" OnClick="@(() => DeleteColumn(column.Id))" Theme="IconThemeType.Outline" Style="cursor: pointer;" />
+        <a href="javascript:void(0)" @onclick="() => EditColumn(column.Id)" style="cursor:pointer; margin:0 3px;" title="编辑">✏️</a>
+        <a href="javascript:void(0)" @onclick="() => DeleteColumn(column.Id)" style="cursor:pointer; margin:0 3px;" title="删除">🗑️</a>
     </div>
 }
 <hr color="#f6f6f6" />
@@ -35,9 +35,9 @@
     <div>
         <span draggable="true" style="cursor: move; display: inline-block; width: 10px; margin: 0 auto; writing-mode: vertical-lr;">...</span>
         <span style="display:inline-block; width:140px;">@topBtn.Title</span>
-        <Icon Type="edit" OnClick="@(() => EditButton(topBtn.Id, true))" Theme="IconThemeType.Outline" Style="cursor: pointer;" />
-        <Icon Type="thunderbolt" OnClick="@(() => EditButtonEvent(topBtn.Id, true))" Theme="IconThemeType.Outline" Style="cursor: pointer;" />
-        <Icon Type="delete" OnClick="@(() => DeleteButton(topBtn.Id, true))" Theme="IconThemeType.Outline" Style="cursor: pointer;" />
+        <a href="javascript:void(0)" @onclick="() => EditButton(topBtn.Id, true)" style="cursor:pointer; margin:0 3px;" title="编辑">✏️</a>
+        <a href="javascript:void(0)" @onclick="() => EditButtonEvent(topBtn.Id, true)" style="cursor:pointer; margin:0 3px;" title="事件">⚡</a>
+        <a href="javascript:void(0)" @onclick="() => DeleteButton(topBtn.Id, true)" style="cursor:pointer; margin:0 3px;" title="删除">🗑️</a>
     </div>
 }
 <hr color="#f6f6f6" />
@@ -56,74 +56,78 @@
     <div>
         <span draggable="true" style="cursor: move; display: inline-block; width: 10px; margin: 0 auto; writing-mode: vertical-lr;">...</span>
         <span style="display:inline-block; width:140px;">@rowBtn.Title</span>
-        <Icon Type="edit" OnClick="@(() => EditButton(rowBtn.Id, false))" Theme="IconThemeType.Outline" Style="cursor: pointer;" />
-        <Icon Type="thunderbolt" OnClick="@(() => EditButtonEvent(rowBtn.Id, false))" Theme="IconThemeType.Outline" Style="cursor: pointer;" />
-        <Icon Type="delete" OnClick="@(() => DeleteButton(rowBtn.Id, false))" Theme="IconThemeType.Outline" Style="cursor: pointer;" />
+        <a href="javascript:void(0)" @onclick="() => EditButton(rowBtn.Id, false)" style="cursor:pointer; margin:0 3px;" title="编辑">✏️</a>
+        <a href="javascript:void(0)" @onclick="() => EditButtonEvent(rowBtn.Id, false)" style="cursor:pointer; margin:0 3px;" title="事件">⚡</a>
+        <a href="javascript:void(0)" @onclick="() => DeleteButton(rowBtn.Id, false)" style="cursor:pointer; margin:0 3px;" title="删除">🗑️</a>
     </div>
 }
 <hr color="#f6f6f6" />
 
-<Modal Title="表格列" @bind-Visible="@_columnVisible" OnOk="OnColumnConfirm">
-    <Form Model="@_tableColumnSchema" OnFinish="OnColumnFinish" @ref="_columnForm"
-          ValidateOnChange="true" LabelColSpan="8" WrapperColSpan="16">
-        <FormItem Label="字段标识" Required>
-            <Input @bind-Value="@context.Name" />
-        </FormItem>
-        <FormItem Label="字段名称" Required>
-            <Input @bind-Value="@context.Title" />
-        </FormItem>
-        <FormItem Label="是否主键">
-            <RadioGroup TValue="bool" DefaultValue="false" @bind-Value="@context.IsPrimaryKey">
-                <Radio Value="false">否</Radio>
-                <Radio Value="true">是</Radio>
-            </RadioGroup>
-        </FormItem>
-        <FormItem Label="是否支持过滤">
-            <RadioGroup TValue="bool" DefaultValue="false" @bind-Value="@context.Filterable">
-                <Radio Value="false">否</Radio>
-                <Radio Value="true">是</Radio>
-            </RadioGroup>
-        </FormItem>
-        <FormItem Label="是否支持排序">
-            <RadioGroup TValue="bool" DefaultValue="false" @bind-Value="@context.Sortable">
-                <Radio Value="false">否</Radio>
-                <Radio Value="true">是</Radio>
-            </RadioGroup>
-        </FormItem>
-        <FormItem Label="排序">
-            <AntDesign.InputNumber @bind-Value="@context.Order" Min="0" DefaultValue="0"></AntDesign.InputNumber>
-        </FormItem>
-    </Form>
-</Modal>
+<HModal Title="表格列" @bind-Visible="@_columnVisible" OnOk="OnColumnConfirm">
+    <div>
+        <div class="form-item">
+            <label>字段标识 <span style="color:red">*</span></label>
+            <input class="inp" @bind="@_tableColumnSchema.Name" />
+        </div>
+        <div class="form-item">
+            <label>字段名称 <span style="color:red">*</span></label>
+            <input class="inp" @bind="@_tableColumnSchema.Title" />
+        </div>
+        <div class="form-item">
+            <label>是否主键</label>
+            <div class="radio-group">
+                <label class="radio-label"><input type="radio" name="isPk" value="false" checked="@(!_tableColumnSchema.IsPrimaryKey)" @onchange='() => _tableColumnSchema.IsPrimaryKey = false' /> 否</label>
+                <label class="radio-label"><input type="radio" name="isPk" value="true" checked="@(_tableColumnSchema.IsPrimaryKey)" @onchange='() => _tableColumnSchema.IsPrimaryKey = true' /> 是</label>
+            </div>
+        </div>
+        <div class="form-item">
+            <label>是否支持过滤</label>
+            <div class="radio-group">
+                <label class="radio-label"><input type="radio" name="filterable" value="false" checked="@(!_tableColumnSchema.Filterable)" @onchange='() => _tableColumnSchema.Filterable = false' /> 否</label>
+                <label class="radio-label"><input type="radio" name="filterable" value="true" checked="@(_tableColumnSchema.Filterable)" @onchange='() => _tableColumnSchema.Filterable = true' /> 是</label>
+            </div>
+        </div>
+        <div class="form-item">
+            <label>是否支持排序</label>
+            <div class="radio-group">
+                <label class="radio-label"><input type="radio" name="sortable" value="false" checked="@(!_tableColumnSchema.Sortable)" @onchange='() => _tableColumnSchema.Sortable = false' /> 否</label>
+                <label class="radio-label"><input type="radio" name="sortable" value="true" checked="@(_tableColumnSchema.Sortable)" @onchange='() => _tableColumnSchema.Sortable = true' /> 是</label>
+            </div>
+        </div>
+        <div class="form-item">
+            <label>排序</label>
+            <input type="number" class="inp" @bind="@_tableColumnSchema.Order" min="0" />
+        </div>
+    </div>
+</HModal>
 
-<Modal Title="表格按钮" @bind-Visible="@_btnVisible" OnOk="OnButtonConfirm">
-    <Form Model="@_tableButtonSchema" OnFinish="OnButtonFinish" @ref="_btnForm"
-          ValidateOnChange="true" LabelColSpan="8" WrapperColSpan="16">
-        <FormItem Label="按钮标识" Required>
-            <Input @bind-Value="@context.Name" />
-        </FormItem>
-        <FormItem Label="按钮名称" Required>
-            <Input @bind-Value="@context.Title" />
-        </FormItem>
-        <FormItem Label="按钮类型" Required>
-            <RadioGroup DefaultValue="0" @bind-Value="@context.ButtonType">
-                <Radio AutoFocus="true" Value="0">Default</Radio>
-                <Radio Value="1">Primary</Radio>
-                <Radio Value="2">Dashed</Radio>
-                <Radio Value="3">Link</Radio>
-                <Radio Value="4">Text</Radio>
-            </RadioGroup>
-        </FormItem>
-        <FormItem Label="排序">
-            <AntDesign.InputNumber @bind-Value="@context.Order" Min="0" DefaultValue="0"></AntDesign.InputNumber>
-        </FormItem>
-    </Form>
-</Modal>
+<HModal Title="表格按钮" @bind-Visible="@_btnVisible" OnOk="OnButtonConfirm">
+    <div>
+        <div class="form-item">
+            <label>按钮标识 <span style="color:red">*</span></label>
+            <input class="inp" @bind="@_tableButtonSchema.Name" />
+        </div>
+        <div class="form-item">
+            <label>按钮类型 <span style="color:red">*</span></label>
+            <div class="radio-group">
+                <label class="radio-label"><input type="radio" name="btnType" value="0" checked="@(_tableButtonSchema.ButtonType == 0)" @onchange='() => _tableButtonSchema.ButtonType = 0' /> Default</label>
+                <label class="radio-label"><input type="radio" name="btnType" value="1" checked="@(_tableButtonSchema.ButtonType == 1)" @onchange='() => _tableButtonSchema.ButtonType = 1' /> Primary</label>
+                <label class="radio-label"><input type="radio" name="btnType" value="2" checked="@(_tableButtonSchema.ButtonType == 2)" @onchange='() => _tableButtonSchema.ButtonType = 2' /> Dashed</label>
+                <label class="radio-label"><input type="radio" name="btnType" value="3" checked="@(_tableButtonSchema.ButtonType == 3)" @onchange='() => _tableButtonSchema.ButtonType = 3' /> Link</label>
+                <label class="radio-label"><input type="radio" name="btnType" value="4" checked="@(_tableButtonSchema.ButtonType == 4)" @onchange='() => _tableButtonSchema.ButtonType = 4' /> Text</label>
+            </div>
+        </div>
+        <div class="form-item">
+            <label>排序</label>
+            <input type="number" class="inp" @bind="@_tableButtonSchema.Order" min="0" />
+        </div>
+    </div>
+</HModal>
 
-<Modal Title="配置事件" @bind-Visible="@_btnEventVisible"
-       OnOk="()=>OnButtonEventConfirm()" Width="1000">
+<HModal Title="配置事件" @bind-Visible="@_btnEventVisible"
+       OnOk="()=>OnButtonEventConfirm()" Style="width:1000px">
     <EventList Events="@_btnEvents"></EventList>
-</Modal>
+</HModal>
 
 @code {
     [Parameter]
@@ -171,7 +175,6 @@
 
     #region Columns
     private bool _columnVisible;
-    private Form<TableColumnSchema> _columnForm;
     private bool _isColumnCreate;
     private TableColumnSchema _tableColumnSchema = new TableColumnSchema();
 
@@ -214,24 +217,13 @@
         //OnPropertyChanged();
     }
 
-    private void OnColumnConfirm(MouseEventArgs e)
+    private void OnColumnConfirm()
     {
-        var validate = _columnForm.Validate();
-        if (validate)
+        var result = SaveTableColumnSchema();
+        if (result)
         {
-            var result = SaveTableColumnSchema();
-            if (result)
-            {
-                _columnVisible = false;
-                _columnForm.Submit();
-
-                OnPropertyChanged();
-                _columnForm.Reset();
-            }
-            else
-            {
-                _columnVisible = true;
-            }
+            _columnVisible = false;
+            OnPropertyChanged();
         }
         else
         {
@@ -272,7 +264,6 @@
     private bool _btnVisible;
     private bool _isbtnCreate;
     private bool _isTopBtn;
-    private Form<TableButtonSchema> _btnForm;
     private TableButtonSchema _tableButtonSchema = new TableButtonSchema();
 
     private void CreateButton(bool isTopBtn)
@@ -321,24 +312,13 @@
         OnPropertyChanged();
     }
 
-    private void OnButtonConfirm(MouseEventArgs e)
+    private void OnButtonConfirm()
     {
-        var validate = _btnForm.Validate();
-        if (validate)
+        var result = SaveButtonSchema();
+        if (result)
         {
-            var result = SaveButtonSchema();
-            if (result)
-            {
-                _btnVisible = false;
-                _btnForm.Submit();
-
-                OnPropertyChanged();
-                _btnForm.Reset();
-            }
-            else
-            {
-                _btnVisible = true;
-            }
+            _btnVisible = false;
+            OnPropertyChanged();
         }
         else
         {

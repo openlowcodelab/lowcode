@@ -9,70 +9,87 @@
 
 <div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
     <div style="width:250px;">
-        <Search Placeholder="页面名称" OnSearch="()=>{}" />
+        <input type="search" class="inp" placeholder="页面名称" />
     </div>
     <div style="width:80px; line-height:32px; margin: 0 8px 0 0;">
-        <Button Type="@ButtonType.Primary" OnClick="@(()=> CreateAsync(string.Empty))">新建页面</Button>
+        <button class="btn btn-primary" @onclick='() => CreateAsync(string.Empty)'>新建页面</button>
     </div>
 </div>
 
-<Table TItem="PageListModel" DataSource="@_pageList" PageSize="15" PageIndex="1" Total="_total"
-@bind-SelectedRows="selectedRows" Style="height:100%;" RowKey="c=>c.PageId">
-    <PropertyColumn Title="ID" Property="c=>c.PageId" />
-    <PropertyColumn Title="页面名称" Property="c=>c.PageName" Sortable />
-    <PropertyColumn Title="排序" Property="c=>c.Order" />
-    <PropertyColumn Title="类型" Property="c=>c.PageType" Sortable />
-    <PropertyColumn Title="修改时间" Property="c=>c.ModifiedTime" Format="yyyy-MM-dd HH:mm:ss" />
-    <PropertyColumn Title="发布状态" Property="c=>c.PublishStatus">
-        <Tag Color="@(context.PublishStatus == 1 ? "Green" : "Gold")">
-            @(context.PublishStatus == 1 ? "已发布" : "待发布")
-        </Tag>
-    </PropertyColumn>
-    <ActionColumn Title="操作" Width="180">
-        <Space Size=@("middle")>
-            <SpaceItem>
-                <a href="@($"/designer/{AppId}/{context.PageId}")" target="_blank" style="padding: 7px;border: solid #b7eb8f 1px;border-radius: 2px;line-height: 11px;height: 26px;display: block;background-color: #f6ffed;color: #389e0d;">设计</a>
-            </SpaceItem>
-            <SpaceItem>
-                <a onclick="@(()=> EditAsync(@context.PageId))">编辑</a>
-            </SpaceItem>
-            <SpaceItem>
-                <a onclick="@(()=> DeleteAsync(@context.PageId))" style="color:#ff4d4f">删除</a>
-            </SpaceItem>
-        </Space>
-    </ActionColumn>
-</Table>
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>页面名称</th>
+            <th>排序</th>
+            <th>类型</th>
+            <th>修改时间</th>
+            <th>发布状态</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in _pageList)
+        {
+            <tr>
+                <td>@item.PageId</td>
+                <td>@item.PageName</td>
+                <td>@item.Order</td>
+                <td>@item.PageType</td>
+                <td>@item.ModifiedTime?.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                <td>
+                    <span class="tag @(item.PublishStatus == 1 ? "tag-green" : "tag-gold")">
+                        @(item.PublishStatus == 1 ? "已发布" : "待发布")
+                    </span>
+                </td>
+                <td>
+                    <div class="space">
+                        <a href="@($"/designer/{AppId}/{item.PageId}")" target="_blank" style="padding: 7px;border: solid #b7eb8f 1px;border-radius: 2px;line-height: 11px;height: 26px;display: block;background-color: #f6ffed;color: #389e0d;">设计</a>
+                        <a @onclick='() => EditAsync(item.PageId)'>编辑</a>
+                        <a @onclick='() => DeleteAsync(item.PageId)' style="color:#ff4d4f">删除</a>
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
 
-<Modal Title="新建页面" @bind-Visible="@_visible" OnOk="OnConfirmAsync">
-    <Form Model="@_pageSchema" LabelColSpan="8" WrapperColSpan="16" OnFinish="OnFinishAsync" @ref="@_form"
-    ValidateOnChange="true">
-        <FormItem Label="页面名称" Required>
-            <Input @bind-Value="@context.Name" />
-        </FormItem>
-        <FormItem Label="类型" Required>
-            <EnumRadioGroup TEnum="PageTypeEnum" @bind-Value="@context.PageType" Name="radio_pageType"></EnumRadioGroup>
-        </FormItem>
-        <FormItem Label="发布状态" Required>
-            <RadioGroup @bind-Value="@context.PublishStatus">
-                <Radio Value="0">待发布</Radio>
-                <Radio Value="1">已发布</Radio>
-            </RadioGroup>
-        </FormItem>
-        <FormItem Label="排序">
-            <InputNumber @bind-Value="@context.Order" Min="0" DefaultValue="0"></InputNumber>
-        </FormItem>
-    </Form>
-</Modal>
+<HModal Title="新建页面" Visible="@_visible" OnOk="OnConfirmAsync" OnCancel='() => _visible = false'>
+    <form>
+        <div class="form-item">
+            <label>页面名称</label>
+            <input class="inp" @bind="_pageSchema.Name" />
+        </div>
+        <div class="form-item">
+            <label>类型</label>
+            <div class="radio-group">
+    <label class="radio-label"><input type="radio" name="page-type" checked='@(_pageSchema.PageType == PageTypeEnum.Normal)' @onchange='() => _pageSchema.PageType = PageTypeEnum.Normal' /> 普通</label>
+    <label class="radio-label"><input type="radio" name="page-type" checked='@(_pageSchema.PageType == PageTypeEnum.Form)' @onchange='() => _pageSchema.PageType = PageTypeEnum.Form' /> 表单</label>
+    <label class="radio-label"><input type="radio" name="page-type" checked='@(_pageSchema.PageType == PageTypeEnum.Table)' @onchange='() => _pageSchema.PageType = PageTypeEnum.Table' /> 列表</label>
+    <label class="radio-label"><input type="radio" name="page-type" checked='@(_pageSchema.PageType == PageTypeEnum.Report)' @onchange='() => _pageSchema.PageType = PageTypeEnum.Report' /> 报表</label>
+</div>
+        </div>
+        <div class="form-item">
+            <label>发布状态</label>
+            <div class="radio-group">
+                <label class="radio-label"><input type="radio" name="publishStatus" value="0" checked="@(_pageSchema.PublishStatus == 0)" @onchange='() => _pageSchema.PublishStatus = 0' />待发布</label>
+                <label class="radio-label"><input type="radio" name="publishStatus" value="1" checked="@(_pageSchema.PublishStatus == 1)" @onchange='() => _pageSchema.PublishStatus = 1' />已发布</label>
+            </div>
+        </div>
+        <div class="form-item">
+            <label>排序</label>
+            <input type="number" class="inp" @bind="_pageSchema.Order" min="0" />
+        </div>
+    </form>
+</HModal>
 
 @code {
     [PersistentState]
     public IList<PageListModel> _pageList { get; set; }
 
-    IEnumerable<PageListModel> selectedRows;
     int _total = 0;
 
     private bool _visible;
-    private Form<PagePartsSchema> _form;
     private PagePartsSchema _pageSchema = new PagePartsSchema();
 
     protected override async Task OnInitializedAsync()
@@ -117,28 +134,18 @@
         await Message.SuccessAsync("删除成功！");
     }
 
-    private async Task OnConfirmAsync(MouseEventArgs e)
+    private async Task OnConfirmAsync()
     {
-        var validate = _form.Validate();
-        if (validate)
+        var isSuccess = await SavePageSchemaAsync();
+        if (isSuccess)
         {
-            var isSuccess = await SavePageSchemaAsync();
-            if (isSuccess)
-            {
-                _visible = false;
-                _form.Submit();
-                await Message.SuccessAsync("保存成功！");
-                _form.Reset();
-            }
-            else
-            {
-                _visible = true;
-                await Message.ErrorAsync("保存失败");
-            }
+            _visible = false;
+            await Message.SuccessAsync("保存成功！");
         }
         else
         {
             _visible = true;
+            await Message.ErrorAsync("保存失败");
         }
     }
 

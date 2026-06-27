@@ -44,11 +44,6 @@
         color: #999;
     }
     
-    .empty-state .anticon {
-        font-size: 48px;
-        margin-bottom: 16px;
-        color: #d9d9d9;
-    }
 </style>
 
 <div style="height: calc(100vh - 120px); display: flex; gap: 16px;">
@@ -57,11 +52,9 @@
         <div style="padding: 16px; border-bottom: 1px solid #f0f0f0; background: #fafafa;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                 <h3 style="margin: 0; font-size: 16px; font-weight: 600;">组件库</h3>
-                <Button Type="@ButtonType.Primary" Size="@ButtonSize.Small" OnClick="@CreateComponentLibrary">
-                    <Icon Type="plus" /> 新建
-                </Button>
+                <button class="btn btn-primary btn-sm" @onclick="@CreateComponentLibrary">+ 新建</button>
             </div>
-            <Search Placeholder="搜索组件库" OnSearch="@OnSearchLibrary" Class="search-input" />
+            <input type="search" class="inp search-input" placeholder="搜索组件库" @onchange="@(e => OnSearchLibrary(e.Value?.ToString() ?? ""))" />
         </div>
         
         <div style="height: calc(100% - 120px); overflow-y: auto; padding: 8px;">
@@ -78,22 +71,13 @@
                                 <div style="font-size: 12px; color: #666; line-height: 1.4;">@library.Description</div>
                             </div>
                             <div style="margin-left: 8px;">
-                                <Dropdown>
-                                    <Overlay>
-                                        <Menu>
-                                            <MenuItem OnClick="@(() => EditLibrary(library.LibraryId))">
-                                                <Icon Type="edit" /> 编辑
-                                            </MenuItem>
-                                            <MenuItem OnClick="@(() => DeleteLibrary(library.LibraryId))">
-                                                <Icon Type="delete" /> 删除
-                                            </MenuItem>
-                                        </Menu>
-                                    </Overlay>
-                                    <ChildContent>
-                                        <Button Type="@ButtonType.Text" Size="@ButtonSize.Small" Icon="more"
-                                                Disabled="!RendererInfo.IsInteractive" />
-                                    </ChildContent>
-                                </Dropdown>
+                                <details class="dropdown">
+                                    <summary class="btn btn-text btn-sm">...</summary>
+                                    <ul>
+                                        <li @onclick="@(() => EditLibrary(library.LibraryId))">编辑</li>
+                                        <li @onclick="@(() => DeleteLibrary(library.LibraryId))">删除</li>
+                                    </ul>
+                                </details>
                             </div>
                         </div>
                     </div>
@@ -102,7 +86,6 @@
             else
             {
                 <div class="empty-state">
-                    <Icon Type="inbox" />
                     <div>暂无组件库</div>
                 </div>
             }
@@ -118,11 +101,9 @@
                     <h3 style="margin: 0; font-size: 16px; font-weight: 600;">
                         @(_selectedLibrary?.LibraryName ?? "组件列表")
                     </h3>
-                    <Button Type="@ButtonType.Primary" Size="@ButtonSize.Small" OnClick="@ShowAddComponentModal">
-                        <Icon Type="plus" /> 新建组件
-                    </Button>
+                    <button class="btn btn-primary btn-sm" @onclick="@ShowAddComponentModal">+ 新建组件</button>
                 </div>
-                <Search Placeholder="搜索组件" OnSearch="@OnSearchComponent" Class="search-input" />
+                <input type="search" class="inp search-input" placeholder="搜索组件" @onchange="@(e => OnSearchComponent(e.Value?.ToString() ?? ""))" />
             </div>
             
             <div style="height: calc(100% - 120px); overflow-y: auto; padding: 16px;">
@@ -131,95 +112,72 @@
                     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
                         @foreach (var component in FilteredComponents)
                         {
-                            <Card Class="component-card" 
-                                  Style="border: 1px solid #f0f0f0;" 
-                                  Hoverable>
-                                <ChildContent>
-                                    <div style="padding: 8px;">
-                                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-                                            <div style="display: flex; align-items: center;">
-                                                <Icon Type="@(component.ComponentType == 1 ? "build" : "appstore")" 
-                                                      Style="@($"margin-right: 8px; color: {(component.ComponentType == 1 ? "#52c41a" : "#1890ff")}")"/>
-                                                <span style="font-weight: 500;">@component.Label</span>
-                                            </div>
-                                            <div style="font-size: 12px; color: #999; padding: 2px; border-radius: 10px;">
-                                                @component.Order
-                                            </div>
+                            <HCard Class="component-card" Style="border: 1px solid #f0f0f0;">
+                                <div style="padding: 8px;">
+                                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                                        <div style="display: flex; align-items: center;">
+                                            <span class='icon' style='margin-right: 8px; color: @(component.ComponentType == 1 ? "#52c41a" : "#1890ff")'>&#9881;</span>
+                                            <span style="font-weight: 500;">@component.Label</span>
                                         </div>
-                                        <div style="font-size: 12px; color: #666; margin-bottom: 8px;">
-                                            @component.ComponentId
-                                        </div>
-                                        <div style="display: flex; gap: 4px; margin-bottom: 12px;">
-                                            <Tag Color="@(component.ComponentType == 1 ? "green" : "gold")">
-                                                @(component.ComponentType == 1 ? "原子组件" : "低代码组件")
-                                            </Tag>
-                                            @if (component.IsContainer)
-                                            {
-                                                <Tag Color="@("blue")">容器</Tag>
-                                            }
-                                            @if (component.IsSupportDataSource)
-                                            {
-                                                <Tag Color="@("purple")">数据源</Tag>
-                                            }
-                                            <Tag Color="@(component.PublishStatus == 1 ? "green" : "gray")">
-                                                @(component.PublishStatus == 1 ? "已发布" : "待发布")
-                                            </Tag>
-                                        </div>
-                                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                                            <span style="font-size: 12px; color: #999;">
-                                                @component.ModifiedTime.ToString("MM-dd HH:mm")
-                                            </span>
-                                            <div style="display: flex; gap: 8px;">
-                                                <Button Type="@ButtonType.Link" Size="@ButtonSize.Small" 
-                                                        OnClick="@(() => EditComponent(component))">
-                                                    编辑
-                                                </Button>
-                                                @if (component.ComponentType == 2)
-                                                {
-                                                    <Button Type="@ButtonType.Link" Size="@ButtonSize.Small" 
-                                                            OnClick="@(() => DesignComponent(component))">
-                                                        设计
-                                                    </Button>
-                                                }
-                                                @if (component.PublishStatus == 0)
-                                                {
-                                                    <Popconfirm Title="确定要删除这个组件吗？删除后无法恢复。" OkText="确定" CancelText="取消"
-                                                                OnConfirm="@(() => DeleteComponent(component.ComponentId))">
-                                                        <Button Type="@ButtonType.Link" Size="@ButtonSize.Small" Danger>
-                                                            删除
-                                                        </Button>
-                                                    </Popconfirm>
-                                                    <Button Type="@ButtonType.Link" Size="@ButtonSize.Small" 
-                                                            OnClick="@(() => PublishComponent(component.ComponentId))">
-                                                        发布
-                                                    </Button>
-                                                }
-                                                else
-                                                {
-                                                    <Button Type="@ButtonType.Link" Size="@ButtonSize.Small" 
-                                                            OnClick="@(() => UnpublishComponent(component.ComponentId))">
-                                                        取消发布
-                                                    </Button>
-                                                }
-                                            </div>
+                                        <div style="font-size: 12px; color: #999; padding: 2px; border-radius: 10px;">
+                                            @component.Order
                                         </div>
                                     </div>
-                                </ChildContent>
-                            </Card>
+                                    <div style="font-size: 12px; color: #666; margin-bottom: 8px;">
+                                        @component.ComponentId
+                                    </div>
+                                    <div style="display: flex; gap: 4px; margin-bottom: 12px;">
+                                        <span class='tag @(component.ComponentType == 1 ? "tag-green" : "tag-gold")'>
+                                            @(component.ComponentType == 1 ? "原子组件" : "低代码组件")
+                                        </span>
+                                        @if (component.IsContainer)
+                                        {
+                                            <span class="tag tag-blue">容器</span>
+                                        }
+                                        @if (component.IsSupportDataSource)
+                                        {
+                                            <span class="tag tag-purple">数据源</span>
+                                        }
+                                        <span class='tag @(component.PublishStatus == 1 ? "tag-green" : "tag-gray")'>
+                                            @(component.PublishStatus == 1 ? "已发布" : "待发布")
+                                        </span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <span style="font-size: 12px; color: #999;">
+                                            @component.ModifiedTime.ToString("MM-dd HH:mm")
+                                        </span>
+                                        <div style="display: flex; gap: 8px;">
+                                            <button class="btn btn-link btn-sm" @onclick="@(() => EditComponent(component))">编辑</button>
+                                            @if (component.ComponentType == 2)
+                                            {
+                                                <button class="btn btn-link btn-sm" @onclick="@(() => DesignComponent(component))">设计</button>
+                                            }
+                                            @if (component.PublishStatus == 0)
+                                            {
+                                                <button class="btn btn-link btn-sm btn-danger" @onclick="@(() => DeleteComponent(component.ComponentId))">删除</button>
+                                                <button class="btn btn-link btn-sm" @onclick="@(() => PublishComponent(component.ComponentId))">发布</button>
+                                            }
+                                            else
+                                            {
+                                                <button class="btn btn-link btn-sm" @onclick="@(() => UnpublishComponent(component.ComponentId))">取消发布</button>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </HCard>
                         }
                     </div>
                 }
                 else if (_componentPartsLoading)
                 {
                     <div style="text-align: center; padding: 60px 0;">
-                        <Spin Size="SpinSize.Large" />
+                        <span class="spinner spinner-large"></span>
                         <div style="margin-top: 16px; color: #666;">加载组件列表中...</div>
                     </div>
                 }
                 else
                 {
                     <div class="empty-state">
-                        <Icon Type="appstore" />
                         <div>该组件库暂无组件</div>
                     </div>
                 }
@@ -229,7 +187,7 @@
         {
             <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #999;">
                 <div style="text-align: center;">
-                    <Icon Type="appstore" Style="font-size: 48px; margin-bottom: 16px;" />
+                    <div style="font-size: 48px; color: #d9d9d9; margin-bottom: 16px;">&#9635;</div>
                     <div>请选择一个组件库查看组件列表</div>
                 </div>
             </div>
@@ -238,9 +196,9 @@
 </div>
 
 <!-- 创建/编辑组件库模态框 -->
-<Modal Title="@(_isEditingLibrary ? "编辑组件库" : "创建组件库")" @bind-Visible="@_libraryModalVisible" OnOk="OnLibraryConfirm">
+<HModal Title="@(_isEditingLibrary ? "编辑组件库" : "创建组件库")" Visible="@_libraryModalVisible" OnOk="OnLibraryConfirm" OnCancel="() => _libraryModalVisible = false">
     <ComponentLibraryForm ComponentLibrary="_currentComponentLibrary" @ref="@_componentLibraryForm" @key="@($"{_isEditingLibrary}_{_currentComponentLibrary?.LibraryId ?? "new"}")"></ComponentLibraryForm>
-</Modal>
+</HModal>
 
 <!-- 组件基本信息表单（新增/编辑） -->
 <ComponentPartsBasicForm @bind-Visible="@_showComponentFormModal" 
@@ -250,22 +208,6 @@
                          OnComponentCreated="@OnComponentCreated"
                          OnComponentUpdated="@OnComponentUpdated" />
 
-<style>
-    .library-item:hover {
-        background-color: #f5f5f5;
-        border-color: #d9d9d9;
-    }
-    
-    .library-item.selected {
-        background-color: #e6f7ff;
-        border-color: #1890ff;
-    }
-    
-    .component-card:hover {
-        border-color: #1890ff;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-</style>
 
 @code {
     [PersistentState]
@@ -387,7 +329,7 @@
         StateHasChanged();
     }
 
-    private async Task OnLibraryConfirm(MouseEventArgs e)
+    private async Task OnLibraryConfirm()
     {
         try
         {

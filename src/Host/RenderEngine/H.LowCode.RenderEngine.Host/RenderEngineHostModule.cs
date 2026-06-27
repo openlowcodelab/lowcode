@@ -21,8 +21,6 @@ public class RenderEngineHostModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
-        // 注册 AntDesign 服务
-        context.Services.AddAntDesign();
 
         //应用状态
         context.Services.AddSingleton(new LowCodeAppState(false));

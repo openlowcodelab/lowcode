@@ -13,15 +13,15 @@
     }
     else if (Component.DataSource.DataSourceGroupType == ComponentDataSourceGroupTypeEnum.Option)
     {
-        <Button Type="ButtonType.Default" OnClick="() => ShowOptionDataSourceModal()">
+        <button class="btn btn-default" @onclick="() => ShowOptionDataSourceModal()">
             配置数据源
-        </Button>
+        </button>
     }
     else if (Component.DataSource.DataSourceGroupType == ComponentDataSourceGroupTypeEnum.Table)
     {
-        <Button Type="ButtonType.Default" OnClick="() => ShowTableDataSourceModal()">
+        <button class="btn btn-default" @onclick="() => ShowTableDataSourceModal()">
             配置数据源
-        </Button>
+        </button>
 
         <div class="propertysetting-item">
             <TablePropertyItem DataSource="Component.DataSource" OnTablePropertyChange="OnDataSourcePropertyChange"></TablePropertyItem>
@@ -29,15 +29,15 @@
     }
     else if (Component.DataSource.DataSourceGroupType == ComponentDataSourceGroupTypeEnum.Tree)
     {
-        <Button Type="ButtonType.Default" OnClick="() => ShowTreeDataSourceModal()">
+        <button class="btn btn-default" @onclick="() => ShowTreeDataSourceModal()">
             配置数据源
-        </Button>
+        </button>
     }
     else if (Component.DataSource.DataSourceGroupType == ComponentDataSourceGroupTypeEnum.List)
     {
-        <Button Type="ButtonType.Default" OnClick="() => ShowListDataSourceModal()">
+        <button class="btn btn-default" @onclick="() => ShowListDataSourceModal()">
             配置数据源
-        </Button>
+        </button>
     }
     else{
         <div class="propertysetting-item">
@@ -46,20 +46,20 @@
     }
 }
 
-<Modal Title="配置数据源" @bind-Visible="@_optionDataSourceVisible"
-       OnOk="()=>OnDataSourceConfirmAsync(_optionDataSourceVisible, SaveOptionDataSourceAsync)" Width="1000">
+<HModal Title="配置数据源" @bind-Visible="@_optionDataSourceVisible"
+       OnOk="()=>OnDataSourceConfirmAsync(_optionDataSourceVisible, SaveOptionDataSourceAsync)">
     <OptionDataSourceSetting @bind-DataSource="Component.DataSource"></OptionDataSourceSetting>
-</Modal>
+</HModal>
 
-<Modal Title="配置数据源" @bind-Visible="@_tableDataSourceVisible"
-       OnOk="()=>OnDataSourceConfirmAsync(_tableDataSourceVisible, SaveTableDataSourceAsync)" Width="1000">
+<HModal Title="配置数据源" @bind-Visible="@_tableDataSourceVisible"
+       OnOk="()=>OnDataSourceConfirmAsync(_tableDataSourceVisible, SaveTableDataSourceAsync)">
     <TableDataSourceSetting @bind-DataSource="Component.DataSource" AppId="@PageCascading.AppId"></TableDataSourceSetting>
-</Modal>
+</HModal>
 
-<Modal Title="配置 List 数据源" @bind-Visible="@_listDataSourceVisible"
-       OnOk="()=>OnDataSourceConfirmAsync(_listDataSourceVisible, SaveListDataSourceAsync)" Width="1200">
+<HModal Title="配置 List 数据源" @bind-Visible="@_listDataSourceVisible"
+       OnOk="()=>OnDataSourceConfirmAsync(_listDataSourceVisible, SaveListDataSourceAsync)">
     <ListDataSourceSetting @bind-DataSource="Component.DataSource" AppId="@PageCascading.AppId"></ListDataSourceSetting>
-</Modal>
+</HModal>
 
 @code {
     [CascadingParameter(Name = "pageCascading")]

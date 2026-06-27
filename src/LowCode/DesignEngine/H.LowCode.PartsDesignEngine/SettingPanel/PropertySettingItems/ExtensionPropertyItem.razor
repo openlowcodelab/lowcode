@@ -17,11 +17,11 @@
 
                 @if (attrDefine.AttributeItemType == ComponentAttributeItemTypeEnum.Input)
                 {
-                    <Input TValue="string" @bind-value="@attrDefine.StringValue" OnChange="OnStringPropertyChange" />
+                    <input class="inp" @bind="attrDefine.StringValue" @bind:after="() => {}" />
                 }
                 else if (attrDefine.AttributeItemType == ComponentAttributeItemTypeEnum.InputNumber)
                 {
-                    <AntDesign.InputNumber TValue="int" @bind-value="@attrDefine.IntValue" OnChange="OnIntPropertyChange" />
+                    <input type="number" class="inp" @bind="attrDefine.IntValue" @bind:after="() => {}" />
                 }
                 else if (attrDefine.AttributeItemType == ComponentAttributeItemTypeEnum.Radio)
                 {
@@ -29,7 +29,7 @@
                 }
                 else if (attrDefine.AttributeItemType == ComponentAttributeItemTypeEnum.Checkbox)
                 {
-                    <Checkbox Checked="@attrDefine.BoolValue"></Checkbox>
+                    <label class="chk-label"><input type="checkbox" checked="@attrDefine.BoolValue"></label>
                 }
                 else if (attrDefine.AttributeItemType == ComponentAttributeItemTypeEnum.Select)
                 {
@@ -37,7 +37,7 @@
                 }
                 else if (attrDefine.AttributeItemType == ComponentAttributeItemTypeEnum.Switch)
                 {
-                    <Switch @bind-Checked="@attrDefine.BoolValue"></Switch>
+                    <label class="switch"><input type="checkbox" @bind="attrDefine.BoolValue"></label>
                 }
                 else if (attrDefine.AttributeItemType == ComponentAttributeItemTypeEnum.Date)
                 {
@@ -69,27 +69,18 @@
     private void OnExtensionPropertyChange(string key, string attrDefineValue)
     {
         ComponentPartsAttributeDefineSchema attrDefine = null;
-        Component.AttributeDefineGroups.ForEach(t =>
+        foreach (var group in Component.AttributeDefineGroups)
         {
-            t.AttributeDefines.ForEach(p =>
+            foreach (var p in group.AttributeDefines)
             {
                 if (string.Equals(p.AttributeName, key))
                     attrDefine = p;
-            });
-        });
+            }
+        }
         if (attrDefine != null)
         {
             attrDefine.StringValue = attrDefineValue;
         }
     }
 
-    private void OnStringPropertyChange(string value)
-    {
-
-    }
-
-    private void OnIntPropertyChange(int value)
-    {
-        
-    }
 }

@@ -5,17 +5,27 @@
 
 <PageTitle>数据源管理</PageTitle>
 
-<Tabs ActiveKey="@DataSourceType" OnChange="OnTabChange" Animated>
-    <TabPane Tab="数据表" Key="table">
-        <TableDataSourceList AppId="@AppId"></TableDataSourceList>
-    </TabPane>
-    <TabPane Tab="API" Key="api">
-        <APIDataSourceList AppId="@AppId"></APIDataSourceList>
-    </TabPane>
-    <TabPane Tab="选项" Key="option">
-        <OptionDataSourceList AppId="@AppId"></OptionDataSourceList>
-    </TabPane>
-</Tabs>
+<div class="tabs">
+    <div class="tab-buttons">
+        <button class="tab-btn @(DataSourceType == "table" ? "active" : "")" @onclick='() => OnTabChange("table")'>数据表</button>
+        <button class="tab-btn @(DataSourceType == "api" ? "active" : "")" @onclick='() => OnTabChange("api")'>API</button>
+        <button class="tab-btn @(DataSourceType == "option" ? "active" : "")" @onclick='() => OnTabChange("option")'>选项</button>
+    </div>
+    <div class="tab-content">
+        @if (DataSourceType == "table")
+        {
+            <TableDataSourceList AppId="@AppId"></TableDataSourceList>
+        }
+        else if (DataSourceType == "api")
+        {
+            <APIDataSourceList AppId="@AppId"></APIDataSourceList>
+        }
+        else if (DataSourceType == "option")
+        {
+            <OptionDataSourceList AppId="@AppId"></OptionDataSourceList>
+        }
+    </div>
+</div>
 
 @code {
     [Parameter]

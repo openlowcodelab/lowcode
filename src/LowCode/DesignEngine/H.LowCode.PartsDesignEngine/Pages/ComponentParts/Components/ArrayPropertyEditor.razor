@@ -2,83 +2,68 @@
 @inherits LowCodeComponentBase
 
 <div class="array-property-editor">
-    <Card Title="@Title" Style="margin-bottom: 16px;">
-        <Extra>
-            <Button Type="@ButtonType.Primary" Size="@ButtonSize.Small" 
-                    OnClick="AddItem" Icon="plus">添加项</Button>
-        </Extra>
-        <ChildContent>
-            @if (Items != null && Items.Any())
+    <HCard Title="@Title" Style="margin-bottom: 16px;">
+        <button class="btn btn-primary btn-sm" @onclick="AddItem">添加项</button>
+        @if (Items != null && Items.Any())
+        {
+            @for (int index = 0; index < Items.Count; index++)
             {
-                @for (int index = 0; index < Items.Count; index++)
-                {
-                    var item = Items[index];
-                    var currentIndex = index;
-                    
-                    <Card Size="@CardSize.Small" Style="margin-bottom: 8px;">
-                        <Extra>
-                            <Space>
-                                @if (index > 0)
-                                {
-                                    <Button Type="@ButtonType.Text" Icon="up" Size="@ButtonSize.Small" 
-                                            OnClick="() => MoveUp(currentIndex)" Title="上移">
-                                    </Button>
-                                }
-                                @if (index < Items.Count - 1)
-                                {
-                                    <Button Type="@ButtonType.Text" Icon="down" Size="@ButtonSize.Small" 
-                                            OnClick="() => MoveDown(currentIndex)" Title="下移">
-                                    </Button>
-                                }
-                                <Button Type="@ButtonType.Text" Icon="delete" Size="@ButtonSize.Small" 
-                                        OnClick="() => RemoveItem(currentIndex)" Danger Title="删除">
-                                </Button>
-                            </Space>
-                        </Extra>
-                        <ChildContent>
-                            @if (ItemTemplate != null)
+                var item = Items[index];
+                var currentIndex = index;
+                
+                <HCard Style="margin-bottom: 8px;">
+                    <div class="space">
+                        @if (index > 0)
+                        {
+                            <button class="btn btn-text btn-sm" @onclick="() => MoveUp(currentIndex)" title="上移">&uarr;</button>
+                        }
+                        @if (index < Items.Count - 1)
+                        {
+                            <button class="btn btn-text btn-sm" @onclick="() => MoveDown(currentIndex)" title="下移">&darr;</button>
+                        }
+                        <button class="btn btn-text btn-sm" @onclick="() => RemoveItem(currentIndex)" style="color: red;" title="删除">删除</button>
+                    </div>
+                    @if (ItemTemplate != null)
+                    {
+                        @ItemTemplate((item, currentIndex))
+                    }
+                    else
+                    {
+                        @* 默认的简单编辑器 *@
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; margin-bottom: 4px; font-weight: 500;">@($"项 {index + 1}")</label>
+                            @if (ItemType == "string")
                             {
-                                @ItemTemplate((item, currentIndex))
+                                <input class="inp" value="@((string)item)" 
+                                       @onchange="@((e) => UpdateItem(currentIndex, e.Value?.ToString()))"
+                                       placeholder="请输入值" />
+                            }
+                            else if (ItemType == "int")
+                            {
+                                <input type="number" class="inp" value="@((int)item)" 
+                                       @onchange="@((e) => UpdateItem(currentIndex, int.TryParse(e.Value?.ToString(), out var v) ? v : 0))" />
+                            }
+                            else if (ItemType == "bool")
+                            {
+                                <label class="switch"><input type="checkbox" checked="@((bool)item)" 
+                                        @onchange="@((e) => UpdateItem(currentIndex, e.Value))"></label>
                             }
                             else
                             {
-                                @* 默认的简单编辑器 *@
-                                <div style="margin-bottom: 16px;">
-                                    <label style="display: block; margin-bottom: 4px; font-weight: 500;">@($"项 {index + 1}")</label>
-                                    @if (ItemType == "string")
-                                    {
-                                        <Input Value="@((string)item)" 
-                                               @onchange="@((e) => UpdateItem(currentIndex, e.Value?.ToString()))"
-                                               Placeholder="请输入值" />
-                                    }
-                                    else if (ItemType == "int")
-                                    {
-                                        <InputNumber Value="@((int)item)" 
-                                                     @onchange="@((e) => UpdateItem(currentIndex, int.TryParse(e.Value?.ToString(), out var v) ? v : 0))" />
-                                    }
-                                    else if (ItemType == "bool")
-                                    {
-                                        <Switch Checked="@((bool)item)" 
-                                                @onchange="@((e) => UpdateItem(currentIndex, e))" />
-                                    }
-                                    else
-                                    {
-                                        <Input Value="@(item?.ToString())" 
-                                               @onchange="@((e) => UpdateItem(currentIndex, e.Value?.ToString()))"
-                                               Placeholder="请输入值" />
-                                    }
-                                </div>
+                                <input class="inp" value="@(item?.ToString())" 
+                                       @onchange="@((e) => UpdateItem(currentIndex, e.Value?.ToString()))"
+                                       placeholder="请输入值" />
                             }
-                        </ChildContent>
-                    </Card>
-                }
+                        </div>
+                    }
+                </HCard>
             }
-            else
-            {
-                <AntDesign.Empty Description="@("暂无数据,点击上方按钮添加项")" />
-            }
-        </ChildContent>
-    </Card>
+        }
+        else
+        {
+            <div class="empty-state">暂无数据,点击上方按钮添加项</div>
+        }
+    </HCard>
 </div>
 
 @code {

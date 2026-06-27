@@ -5,26 +5,43 @@
 
 <PageTitle>生态中心 - H.LowCode</PageTitle>
 
-<Tabs DefaultActiveKey="apps" ActiveKey="@_tabKey" Centered Animated Style="width: 80%; margin: auto;">
-    <TabPane Tab="应用模板" Key="apps">
-        <AppTemplates></AppTemplates>
-    </TabPane>
-    <TabPane Tab="主题" Key="themes">
-        <ThemePartsList></ThemePartsList>
-    </TabPane>
-    <TabPane Tab="API 库" Key="apis">
-        <APIPartsList></APIPartsList>
-    </TabPane>
-    <TabPane Tab="插件" Key="plugins">
-        <PluginsPartsList></PluginsPartsList>
-    </TabPane>
-</Tabs>
+<div class="tabs" style="width: 80%; margin: auto;">
+    <div class="tab-buttons">
+        <button class='tab-btn @(_activeTab == "apps" ? "active" : "")' @onclick='() => _activeTab = "apps"'>应用模板</button>
+        <button class='tab-btn @(_activeTab == "themes" ? "active" : "")' @onclick='() => _activeTab = "themes"'>主题</button>
+        <button class='tab-btn @(_activeTab == "apis" ? "active" : "")' @onclick='() => _activeTab = "apis"'>API 库</button>
+        <button class='tab-btn @(_activeTab == "plugins" ? "active" : "")' @onclick='() => _activeTab = "plugins"'>插件</button>
+    </div>
+    <div class="tab-content">
+        @if (_activeTab == "apps")
+        {
+            <AppTemplates></AppTemplates>
+        }
+        else if (_activeTab == "themes")
+        {
+            <ThemePartsList></ThemePartsList>
+        }
+        else if (_activeTab == "apis")
+        {
+            <APIPartsList></APIPartsList>
+        }
+        else if (_activeTab == "plugins")
+        {
+            <PluginsPartsList></PluginsPartsList>
+        }
+    </div>
+</div>
 
 @code {
     [Parameter]
     public string? Tab { get; set; }
 
-    private string _tabKey => Tab ?? "apps";
+    private string _activeTab;
+
+    protected override void OnInitialized()
+    {
+        _activeTab = Tab ?? "apps";
+    }
 
     private void Refresh()
     {

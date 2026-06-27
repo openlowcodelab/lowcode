@@ -6,17 +6,17 @@
 
 <div style="width:100%; height: 500px; margin:auto;">
     <h3>基础创建</h3>
-    <Card Bordered="true" Style="width:300px; margin:5px;">
-        <a href="javascript:void(0)" onclick="@(()=>{ _visible = true; })">创建空白应用</a>
-    </Card>
+    <HCard Style="width:300px; margin:5px;">
+        <a href="javascript:void(0)" @onclick='() => { _visible = true; }'>创建空白应用</a>
+    </HCard>
     <br/>
     <h3>从模板创建</h3>
     <AppPopularTemplates></AppPopularTemplates>
 </div>
 
-<Modal Title="创建应用" @bind-Visible="@_visible" OnOk="OnConfirm">
+<HModal Title="创建应用" Visible="@_visible" OnOk="OnConfirm" OnCancel='() => _visible = false'>
     <AppForm OnSubmit="Submit" @ref="@_appForm"></AppForm>
-</Modal>
+</HModal>
 
 @code {
     [Parameter]
@@ -25,7 +25,7 @@
     private bool _visible = false;
     private AppForm _appForm;
 
-    private async Task OnConfirm(MouseEventArgs e)
+    private async Task OnConfirm()
     {
         _visible = true;
         await _appForm.SubmitAsync();

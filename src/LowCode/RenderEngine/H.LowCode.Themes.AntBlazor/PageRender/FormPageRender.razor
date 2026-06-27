@@ -6,23 +6,21 @@
 
 @if (_formDto != null)
 {
-    <Form Model="_fieldDictData"
-    OnFinish="OnFinishAsync" OnFinishFailed="OnFinishFailed"
-    LabelColSpan="8" WrapperColSpan="16">
+    <form @onsubmit="OnFinishAsync" @onsubmit:preventDefault>
         @foreach (var component in Page.Components)
         {
             <FormComponentRender Component="@component" IsInRootContainer="true"></FormComponentRender>
         }
 
-        <FormItem WrapperColOffset="8" WrapperColSpan="16" Style="clear:both; padding-top: 15px;">
-            <Button Type="@ButtonType.Primary" HtmlType="submit">
+        <div class="form-item" style="clear:both; padding-top: 15px;">
+            <button class="btn btn-primary" type="submit">
                 保存
-            </Button>
-            <Button HtmlType="button" Style="margin: 0 8px">
+            </button>
+            <button class="btn btn-default" type="button" style="margin: 0 8px">
                 取消
-            </Button>
-        </FormItem>
-    </Form>
+            </button>
+        </div>
+    </form>
 }
 
 @code {

@@ -3,97 +3,77 @@
 @using System.Text.Json
 
 <div class="object-array-editor">
-    <Card Title="@Title" Style="margin-bottom: 16px;">
-        <Extra>
-            <Space>
-                <Button Type="@ButtonType.Primary" Size="@ButtonSize.Small" 
-                        OnClick="AddItem" Icon="plus">添加项</Button>
-                @if (ShowJsonEditor)
-                {
-                    <Button Type="@ButtonType.Default" Size="@ButtonSize.Small" 
-                            OnClick="ToggleJsonMode" Icon="@(_isJsonMode ? "form" : "code")">
-                        @(_isJsonMode ? "表单模式" : "JSON模式")
-                    </Button>
-                }
-            </Space>
-        </Extra>
-        <ChildContent>
-            @if (_isJsonMode && ShowJsonEditor)
+    <HCard Title="@Title" Style="margin-bottom: 16px;">
+        <div class="space">
+            <button class="btn btn-primary btn-sm" @onclick="AddItem">添加项</button>
+            @if (ShowJsonEditor)
             {
-                <div style="margin-bottom: 16px;">
-                    <label style="display: block; margin-bottom: 4px; font-weight: 500;">JSON编辑</label>
-                    <TextArea Value="@_jsonValue" 
-                              Rows="10" 
-                              @onchange="@OnJsonChange"
-                              Placeholder="请输入有效的JSON数组" />
-                </div>
-                @if (!string.IsNullOrEmpty(_jsonError))
+                <button class="btn btn-sm" @onclick="ToggleJsonMode">
+                    @(_isJsonMode ? "表单模式" : "JSON模式")
+                </button>
+            }
+        </div>
+        @if (_isJsonMode && ShowJsonEditor)
+        {
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 4px; font-weight: 500;">JSON编辑</label>
+                <textarea class="ta" value="@_jsonValue" 
+                          rows="10" 
+                          @onchange="@OnJsonChange"
+                          placeholder="请输入有效的JSON数组"></textarea>
+            </div>
+            @if (!string.IsNullOrEmpty(_jsonError))
+            {
+                <div class="alert alert-error" style="margin-top: 8px;">@_jsonError</div>
+            }
+        }
+        else
+        {
+            @if (Items != null && Items.Any())
+            {
+                @for (int index = 0; index < Items.Count; index++)
                 {
-                    <Alert Type="@AlertType.Error" Message="@_jsonError" Style="margin-top: 8px;" />
+                    var item = Items[index];
+                    var currentIndex = index;
+                    
+                    <HCard Style="margin-bottom: 8px;">
+                        <span>@($"{ItemDisplayName} {index + 1}")</span>
+                        <div class="space">
+                            @if (index > 0)
+                            {
+                                <button class="btn btn-text btn-sm" @onclick="() => MoveUp(currentIndex)" title="上移">&uarr;</button>
+                            }
+                            @if (index < Items.Count - 1)
+                            {
+                                <button class="btn btn-text btn-sm" @onclick="() => MoveDown(currentIndex)" title="下移">&darr;</button>
+                            }
+                            <button class="btn btn-text btn-sm" @onclick="() => DuplicateItem(currentIndex)" title="复制">复制</button>
+                            <button class="btn btn-text btn-sm" @onclick="() => RemoveItem(currentIndex)" style="color: red;" title="删除">删除</button>
+                        </div>
+                        @if (ItemTemplate != null)
+                        {
+                            @ItemTemplate((item, currentIndex))
+                        }
+                        else
+                        {
+                            @* 默认的JSON编辑器 *@
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; margin-bottom: 4px; font-weight: 500;">JSON数据</label>
+                                <textarea class="ta" value="@GetItemJson(item)" 
+                                          @onchange="@((e) => UpdateItemFromJson(currentIndex, e.Value?.ToString()))"
+                                          rows="5" 
+                                          placeholder="请输入有效的JSON对象"></textarea>
+                            </div>
+                        }
+                    </HCard>
                 }
             }
             else
             {
-                @if (Items != null && Items.Any())
-                {
-                    @for (int index = 0; index < Items.Count; index++)
-                    {
-                        var item = Items[index];
-                        var currentIndex = index;
-                        
-                        <Card Size="@CardSize.Small" Style="margin-bottom: 8px;">
-                            <TitleTemplate>
-                                <span>@($"{ItemDisplayName} {index + 1}")</span>
-                            </TitleTemplate>
-                            <Extra>
-                                <Space>
-                                    @if (index > 0)
-                                    {
-                                        <Button Type="@ButtonType.Text" Icon="up" Size="@ButtonSize.Small" 
-                                                OnClick="() => MoveUp(currentIndex)" Title="上移">
-                                        </Button>
-                                    }
-                                    @if (index < Items.Count - 1)
-                                    {
-                                        <Button Type="@ButtonType.Text" Icon="down" Size="@ButtonSize.Small" 
-                                                OnClick="() => MoveDown(currentIndex)" Title="下移">
-                                        </Button>
-                                    }
-                                    <Button Type="@ButtonType.Text" Icon="copy" Size="@ButtonSize.Small" 
-                                            OnClick="() => DuplicateItem(currentIndex)" Title="复制">
-                                    </Button>
-                                    <Button Type="@ButtonType.Text" Icon="delete" Size="@ButtonSize.Small" 
-                                            OnClick="() => RemoveItem(currentIndex)" Danger Title="删除">
-                                    </Button>
-                                </Space>
-                            </Extra>
-                            <ChildContent>
-                                @if (ItemTemplate != null)
-                                {
-                                    @ItemTemplate((item, currentIndex))
-                                }
-                                else
-                                {
-                                    @* 默认的JSON编辑器 *@
-                                    <div style="margin-bottom: 16px;">
-                                        <label style="display: block; margin-bottom: 4px; font-weight: 500;">JSON数据</label>
-                                        <TextArea Value="@GetItemJson(item)" 
-                                                  @onchange="@((e) => UpdateItemFromJson(currentIndex, e.Value?.ToString()))"
-                                                  Rows="5" 
-                                                  Placeholder="请输入有效的JSON对象" />
-                                    </div>
-                                }
-                            </ChildContent>
-                        </Card>
-                    }
-                }
-                else
-                {
-                    <AntDesign.Empty Description="@("暂无数据,点击上方按钮添加项")" />
-                }
+                <div class="empty-state">暂无数据,点击上方按钮添加项</div>
             }
-        </ChildContent>
-    </Card>
+        }
+    </HCard>
 </div>
 
 @code {

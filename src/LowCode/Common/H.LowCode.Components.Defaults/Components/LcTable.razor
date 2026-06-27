@@ -4,56 +4,88 @@
 @inject IJSRuntime JS
 @inject ITableDataAppService TableDataAppService
 
-<Table @ref="table" TItem="Dictionary<string, object>" DataSource="@_data" Total="_total" @bind-PageIndex="_pageIndex" @bind-PageSize="_pageSize"
-@bind-SelectedRows="_selectedRows" OnChange="OnChange" Size="TableSize.Small">
-    <TitleTemplate>
-        <Flex Justify="FlexJustify.End" Gap="FlexGap.Middle">
-            @foreach (var topBtn in _tableSchema.TopButtons)
-            {
-                <Button Type="@((ButtonType)topBtn.ButtonType)" Disabled="@topBtn.Disabled" @onclick="@(() => ButtonActionAsync(topBtn))">@topBtn.Title</Button>
-            }
-        </Flex>
-    </TitleTemplate>
-    <ColumnDefinitions Context="row">
-        <Selection />
-        @foreach (var key in _data?.FirstOrDefault()?.Keys.ToArray() ?? new string[0])
+<div class="flex flex-col gap-2">
+    <div class="flex justify-between items-center" style="gap:8px;">
+        @foreach (var topBtn in _tableSchema.TopButtons)
         {
-            var column = _tableSchema.Columns.FirstOrDefault(t => string.Equals(t.Name, key, StringComparison.OrdinalIgnoreCase));
-            if (column != null)
+            <button class="btn btn-primary" disabled="@topBtn.Disabled" @onclick="@(() => ButtonActionAsync(topBtn))">@topBtn.Title</button>
+        }
+    </div>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                @foreach (var key in (_data?.FirstOrDefault()?.Keys.ToArray() ?? new string[0]))
+                {
+                    var column = _tableSchema.Columns.FirstOrDefault(t => string.Equals(t.Name, key, StringComparison.OrdinalIgnoreCase));
+                    if (column != null)
+                    {
+                        <th>@column.Title</th>
+                    }
+                }
+                @if (_tableSchema.RowButtons?.Any() == true)
+                {
+                    <th style="width:120px;">操作</th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var row in _data)
             {
-                <PropertyColumn Property="@(c=> c[key])" Title="@column.Title">
-                    @{
-                        var primaryKeyColumn = _tableSchema.Columns.FirstOrDefault(t => t.IsPrimaryKey);
-                        var primaryKeyValue = primaryKeyColumn != null && row.ContainsKey(primaryKeyColumn.Name) 
-                            ? row[primaryKeyColumn.Name]?.ToString() : null;
-                        var isEditing = !string.IsNullOrEmpty(primaryKeyValue) && _editingRows.ContainsKey(primaryKeyValue);
-                    }
-                    @if (isEditing && !column.IsPrimaryKey)
+                var primaryKeyColumn = _tableSchema.Columns.FirstOrDefault(t => t.IsPrimaryKey);
+                var primaryKeyValue = primaryKeyColumn != null && row.ContainsKey(primaryKeyColumn.Name) ? row[primaryKeyColumn.Name]?.ToString() : null;
+                var isEditing = !string.IsNullOrEmpty(primaryKeyValue) && _editingRows.ContainsKey(primaryKeyValue);
+
+                <tr>
+                    @foreach (var key in row.Keys)
                     {
-                        <Input @bind-Value="@_editingRows[primaryKeyValue][key]" />
+                        var column = _tableSchema.Columns.FirstOrDefault(t => string.Equals(t.Name, key, StringComparison.OrdinalIgnoreCase));
+                        if (column != null)
+                        {
+                            <td>
+                                @if (isEditing && !column.IsPrimaryKey)
+                                {
+                                    <input class="inp" @bind="@_editingRows[primaryKeyValue][key]" />
+                                }
+                                else
+                                {
+                                    @row[key]
+                                }
+                            </td>
+                        }
                     }
-                    else
+                    @if (_tableSchema.RowButtons?.Any() == true)
                     {
-                        @row[key]
+                        <td>
+                            <div class="space">
+                                @foreach (var rowBtn in _tableSchema.RowButtons)
+                                {
+                                    <a @onclick="@(() => ButtonActionAsync(rowBtn, row))">@rowBtn.Title</a>
+                                }
+                            </div>
+                        </td>
                     }
-                </PropertyColumn>
+                </tr>
             }
-        }
-        @if (_tableSchema.RowButtons != null && _tableSchema.RowButtons.Any())
-        {
-            <ActionColumn Title="操作" Width="120">
-                <Space Size=@("middle")>
-                    @foreach (var rowBtn in _tableSchema.RowButtons)
-                    {
-                        <SpaceItem>
-                            <a @onclick="@(() => ButtonActionAsync(rowBtn, row))">@rowBtn.Title</a>
-                        </SpaceItem>
-                    }
-                </Space>
-            </ActionColumn>
-        }
-    </ColumnDefinitions>
-</Table>
+        </tbody>
+    </table>
+
+    <!-- Pagination -->
+    @if (_total > _pageSize)
+    {
+        <div class="flex items-center gap-2" style="justify-content:flex-end; padding:8px 0;">
+            <span style="font-size:13px;color:#999;">共 @_total 条</span>
+            <select class="sel" style="width:80px;" @bind="@_pageSize" @bind:after="() => OnChange(_pageIndex, _pageSize)">
+                <option value="10">10条/页</option>
+                <option value="20">20条/页</option>
+                <option value="50">50条/页</option>
+            </select>
+            <button class="btn btn-sm" disabled="@(_pageIndex <= 1)" @onclick="() => OnChange(1, _pageSize)">上一页</button>
+            <span style="font-size:13px;color:#333;">@_pageIndex / @((int)Math.Ceiling((double)_total / _pageSize))</span>
+            <button class="btn btn-sm" disabled="@(_pageIndex >= Math.Ceiling((double)_total / _pageSize))" @onclick="() => OnChange(_pageIndex + 1, _pageSize)">下一页</button>
+        </div>
+    }
+</div>
 
 @code {
     [CascadingParameter(Name = "pageCascading")]
@@ -67,9 +99,6 @@
 
     [PersistentState]
     public List<Dictionary<string, object>> _data { get; set; }
-
-    IEnumerable<Dictionary<string, object>> _selectedRows = [];
-    ITable table;
 
     int _pageIndex = 1;
     int _pageSize = 10;
@@ -123,15 +152,11 @@
         StateKey = DataSource.StateKey;
     }
 
-    public async Task OnChange(QueryModel<Dictionary<string, object>> queryModel)
+    public async Task OnChange(int pageIndex, int pageSize)
     {
-        _pageIndex = queryModel.PageIndex;
-        _pageSize = queryModel.PageSize;
-
-        // 重新加载数据
+        _pageIndex = pageIndex;
+        _pageSize = pageSize;
         await LoadDataAsync();
-
-        // 使用异步方式触发重新渲染，避免同步调用导致的堆栈问题
         _ = InvokeAsync(StateHasChanged);
     }
 

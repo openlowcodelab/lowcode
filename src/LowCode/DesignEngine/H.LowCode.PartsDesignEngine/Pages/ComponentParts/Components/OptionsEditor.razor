@@ -10,15 +10,14 @@
             var currentIndex = i;
             
             <div class="option-item" style="display: flex; gap: 8px; margin-bottom: 8px; align-items: center;">
-                <Input @bind-Value="@option.Key" Placeholder="选项键" Style="flex: 1;" />
-                <Input @bind-Value="@option.Value" Placeholder="选项值" Style="flex: 1;" />
-                <Button Type="@ButtonType.Text" Icon="delete" Size="@ButtonSize.Small" 
-                        OnClick="() => RemoveOption(currentIndex)" Danger />
+                <input class="inp" @bind="option.Key" placeholder="选项键" style="flex: 1;" />
+                <input class="inp" @bind="option.Value" placeholder="选项值" style="flex: 1;" />
+                <button class="btn btn-text btn-sm" @onclick="() => RemoveOption(currentIndex)" style="color: red;">删除</button>
             </div>
         }
     }
     
-    <Button Type="@ButtonType.Dashed" Size="@ButtonSize.Small" OnClick="AddOption" Icon="plus">添加选项</Button>
+    <button class="btn btn-dashed btn-sm" @onclick="AddOption">添加选项</button>
 </div>
 
 @code {

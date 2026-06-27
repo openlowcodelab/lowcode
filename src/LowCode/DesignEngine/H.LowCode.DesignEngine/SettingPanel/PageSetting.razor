@@ -6,12 +6,12 @@
 {
     <div class="pagesetting-item">
         <label>布局：</label>
-        <RadioGroup TValue="int" @bind-Value="@Page.PageProperty.PageLayout" OnChange="OnLayoutChange">
-            <Radio RadioButton Value="1">一列</Radio>
-            <Radio RadioButton Value="2">两列</Radio>
-            <Radio RadioButton Value="3">三列</Radio>
-            <Radio RadioButton Value="4">四列</Radio>
-        </RadioGroup>
+        <div class="radio-group">
+            <label class="radio-label"><input type="radio" name="pageLayout" value="1" checked="@(Page.PageProperty.PageLayout == 1)" @onchange='() => { Page.PageProperty.PageLayout = 1; OnLayoutChange(1); }' /> 一列</label>
+            <label class="radio-label"><input type="radio" name="pageLayout" value="2" checked="@(Page.PageProperty.PageLayout == 2)" @onchange='() => { Page.PageProperty.PageLayout = 2; OnLayoutChange(2); }' /> 两列</label>
+            <label class="radio-label"><input type="radio" name="pageLayout" value="3" checked="@(Page.PageProperty.PageLayout == 3)" @onchange='() => { Page.PageProperty.PageLayout = 3; OnLayoutChange(3); }' /> 三列</label>
+            <label class="radio-label"><input type="radio" name="pageLayout" value="4" checked="@(Page.PageProperty.PageLayout == 4)" @onchange='() => { Page.PageProperty.PageLayout = 4; OnLayoutChange(4); }' /> 四列</label>
+        </div>
     </div>
 
     @* 表单页 *@
@@ -20,23 +20,24 @@
         <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:30px 0 10px;">数据源</div>
         <div class="propertysetting-item">
             <label>类型：</label>
-            <EnumRadioGroup TEnum="PageDataSourceTypeEnum" @bind-Value="@Page.DataSource.DataSourceType" Name="radio_datasourcetype"></EnumRadioGroup>
+            <div class="radio-group">
+    <label class="radio-label"><input type="radio" name="datasource-type" checked='@(Page.DataSource.DataSourceType == PageDataSourceTypeEnum.None)' @onchange='() => Page.DataSource.DataSourceType = PageDataSourceTypeEnum.None' /> 无</label>
+    <label class="radio-label"><input type="radio" name="datasource-type" checked='@(Page.DataSource.DataSourceType == PageDataSourceTypeEnum.DB)' @onchange='() => Page.DataSource.DataSourceType = PageDataSourceTypeEnum.DB' /> 数据表</label>
+    <label class="radio-label"><input type="radio" name="datasource-type" checked='@(Page.DataSource.DataSourceType == PageDataSourceTypeEnum.API)' @onchange='() => Page.DataSource.DataSourceType = PageDataSourceTypeEnum.API' /> API</label>
+</div>
         </div>
 
         @if (Page.DataSource.DataSourceType == PageDataSourceTypeEnum.DB)
         {
             <div class="propertysetting-item">
                 <label>表：</label>
-                <Select DataSource="@_dbDataSources"
-                        @bind-Value="@_selectedDbDataSourceId"
-                        ItemValue="ds => ds.Id"
-                        ItemLabel="ds => ds.DisplayName"
-                        TItem="DataSourceListModel"
-                        TItemValue="string"
-                        Placeholder="请选择数据表"
-                        OnSelectedItemChanged="@OnDbDataSourceSelected"
-                        Style="width: 100%;">
-                </Select>
+                <select class="sel" @bind="@_selectedDbDataSourceId" @bind:after="OnDbDataSourceSelected" style="width: 100%;">
+                    <option value="">请选择数据表</option>
+                    @foreach (var ds in _dbDataSources)
+                    {
+                        <option value="@ds.Id">@ds.DisplayName</option>
+                    }
+                </select>
             </div>
             @if (!string.IsNullOrEmpty(_selectedDbDataSourceId))
             {
@@ -57,16 +58,13 @@
         {
             <div class="propertysetting-item">
                 <label>API：</label>
-                <Select DataSource="@_apiDataSources"
-                        @bind-Value="@_selectedApiDataSourceId"
-                        ItemValue="ds => ds.Id"
-                        ItemLabel="ds => ds.DisplayName"
-                        TItem="DataSourceListModel"
-                        TItemValue="string"
-                        Placeholder="请选择 API 数据源"
-                        OnSelectedItemChanged="@OnApiDataSourceSelected"
-                        Style="width: 100%;">
-                </Select>
+                <select class="sel" @bind="@_selectedApiDataSourceId" @bind:after="OnApiDataSourceSelected" style="width: 100%;">
+                    <option value="">请选择 API 数据源</option>
+                    @foreach (var ds in _apiDataSources)
+                    {
+                        <option value="@ds.Id">@ds.DisplayName</option>
+                    }
+                </select>
             </div>
             @if (!string.IsNullOrEmpty(_selectedApiDataSourceId))
             {
@@ -88,20 +86,20 @@
     <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:30px 0 10px;">其它</div>
     <div class="pagesetting-item">
         <label>自定义样式：</label>
-        <TextArea @bind-value="@Page.PageProperty.CustomStyle" OnChange="OnStyleChange" Style="height: 150px;" />
+        <textarea class="ta" @bind="@Page.PageProperty.CustomStyle" @bind:after="OnStyleChange" style="height: 150px;"></textarea>
     </div>
 
     @*事件属性*@
     <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:30px 0 10px;">事件</div>
-    <Button Type="ButtonType.Default" OnClick="() => ShowEventModal()">
+    <button class="btn btn-default" @onclick="() => ShowEventModal()">
         配置事件
-    </Button>
+    </button>
 }
 
-<Modal Title="配置事件" @bind-Visible="@_eventVisible"
+<HModal Title="配置事件" @bind-Visible="@_eventVisible"
        OnOk="()=>OnEventConfirm()" Width="1000">
     <EventList Events="@_eventList"></EventList>
-</Modal>
+</HModal>
 
 @code {
     [Parameter]
@@ -134,7 +132,7 @@
         InvokeAsync(() => BlazorEventDispatcher.Publish("designengine.pagesetting.pagelayout.onchange", pageLayout));
     }
 
-    private void OnStyleChange(string customStyle)
+    private void OnStyleChange()
     {
         
     }
@@ -165,18 +163,16 @@
         }
     }
 
-    private async Task OnDbDataSourceSelected(DataSourceListModel selected)
+    private async Task OnDbDataSourceSelected()
     {
-        if (selected == null) return;
-        _selectedDbDataSourceId = selected.Id;
+        if (string.IsNullOrEmpty(_selectedDbDataSourceId)) return;
         await LoadSelectedDbDataSourceAsync();
         UpdatePageDataSourceForDb();
     }
 
-    private async Task OnApiDataSourceSelected(DataSourceListModel selected)
+    private async Task OnApiDataSourceSelected()
     {
-        if (selected == null) return;
-        _selectedApiDataSourceId = selected.Id;
+        if (string.IsNullOrEmpty(_selectedApiDataSourceId)) return;
         await LoadSelectedApiDataSourceAsync();
         UpdatePageDataSourceForApi();
     }

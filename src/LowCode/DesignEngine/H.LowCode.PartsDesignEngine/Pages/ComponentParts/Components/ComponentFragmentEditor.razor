@@ -2,117 +2,102 @@
 @inherits LowCodeComponentBase
 
 <div class="component-fragment-editor">
-    <AntDesign.Card Title="组件渲染片段" Style="margin-bottom: 16px;">
-        <ChildContent>
-            <AntDesign.Row Gutter="16">
-                <AntDesign.Col Span="12">
-                    <div style="margin-bottom: 16px;">
-                        <label style="display: block; margin-bottom: 4px; font-weight: 500;">默认类型名 <span style="color: red;">*</span></label>
-                        <Input @bind-Value="@Fragment.DefaultTypeName" 
-                               Placeholder="如: AntDesign.Input`1[System.String], AntDesign" />
-                        <div style="color: #999; font-size: 12px; margin-top: 4px;">
-                            完整的.NET类型名，包含程序集信息
-                        </div>
+    <HCard Title="组件渲染片段" Style="margin-bottom: 16px;">
+        <div class="row">
+            <div class="col col-12">
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 4px; font-weight: 500;">默认类型名 <span style="color: red;">*</span></label>
+                    <input class="inp" @bind="Fragment.DefaultTypeName" 
+                           placeholder="如: AntDesign.Input`1[System.String], AntDesign" />
+                    <div style="color: #999; font-size: 12px; margin-top: 4px;">
+                        完整的.NET类型名，包含程序集信息
                     </div>
-                </AntDesign.Col>
-                <AntDesign.Col Span="12">
-                    <div style="margin-bottom: 16px;">
-                        <label style="display: block; margin-bottom: 4px; font-weight: 500;">值类型</label>
-                        <Input @bind-Value="@Fragment.ValueType" 
-                               Placeholder="如: System.String" />
-                        <div style="color: #999; font-size: 12px; margin-top: 4px;">
-                            组件值的CLR类型
-                        </div>
+                </div>
+            </div>
+            <div class="col col-12">
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 4px; font-weight: 500;">值类型</label>
+                    <input class="inp" @bind="Fragment.ValueType" 
+                           placeholder="如: System.String" />
+                    <div style="color: #999; font-size: 12px; margin-top: 4px;">
+                        组件值的CLR类型
                     </div>
-                </AntDesign.Col>
-            </AntDesign.Row>
-            
-            <div style="margin-bottom: 16px;">
-                <label style="display: block; margin-bottom: 4px; font-weight: 500;">内容</label>
-                <TextArea @bind-Value="@Fragment.Content" 
-                          Rows="3" 
-                          Placeholder="组件的文本内容（可选）" />
+                </div>
+            </div>
+        </div>
+        
+        <div style="margin-bottom: 16px;">
+            <label style="display: block; margin-bottom: 4px; font-weight: 500;">内容</label>
+            <textarea class="ta" @bind="Fragment.Content" 
+                      rows="3" 
+                      placeholder="组件的文本内容（可选）"></textarea>
+        </div>
+        
+        <div style="margin: 16px 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-weight: 500;">属性配置</span>
+                <button class="btn btn-primary btn-sm" @onclick="AddAttribute">添加属性</button>
             </div>
             
+            @if (Fragment.Attributes != null)
+            {
+                @for (int i = 0; i < Fragment.Attributes.Length; i++)
+                {
+                    var attr = Fragment.Attributes[i];
+                    var currentIndex = i;
+                    
+                    <HCard Title="@($"属性 {currentIndex + 1}")" Style="margin-bottom: 8px;">
+                        <button class="btn btn-text btn-sm" @onclick="() => RemoveAttribute(currentIndex)" style="color: red;">删除</button>
+                        <div class="row">
+                            <div class="col col-8">
+                                <div style="margin-bottom: 8px;">
+                                    <label style="display: block; margin-bottom: 4px; font-weight: 500;">属性名</label>
+                                    <input class="inp" @bind="attr.AttributeName" placeholder="属性名" />
+                                </div>
+                            </div>
+                            <div class="col col-8">
+                                <div style="margin-bottom: 8px;">
+                                    <label style="display: block; margin-bottom: 4px; font-weight: 500;">类型</label>
+                                    <input class="inp" @bind="attr.AttributeClrType" placeholder="System.String" />
+                                </div>
+                            </div>
+                            <div class="col col-8">
+                                <div style="margin-bottom: 8px;">
+                                    <label style="display: block; margin-bottom: 4px; font-weight: 500;">值</label>
+                                    <input class="inp" value="@GetAttrValueString(attr)"
+                                           @onchange="@(v => SetAttrValue(attr, v.Value?.ToString()))"
+                                           placeholder="属性值" />
+                                </div>
+                            </div>
+                        </div>
+                    </HCard>
+                }
+            }
+        </div>
+        
+        @if (Fragment.HasChildFragment)
+        {
             <div style="margin: 16px 0;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <span style="font-weight: 500;">属性配置</span>
-                    <Button Type="@ButtonType.Primary" Size="@ButtonSize.Small" OnClick="AddAttribute">添加属性</Button>
+                    <span style="font-weight: 500;">子组件</span>
+                    <button class="btn btn-primary btn-sm" @onclick="AddChildFragment">添加子组件</button>
                 </div>
                 
-                @if (Fragment.Attributes != null)
+                @for (int i = 0; i < Fragment.ChildFragments.Length; i++)
                 {
-                    @for (int i = 0; i < Fragment.Attributes.Length; i++)
-                    {
-                        var attr = Fragment.Attributes[i];
-                        var currentIndex = i;
-                        
-                        <AntDesign.Card Title="@($"属性 {currentIndex + 1}")" Size="@CardSize.Small" Style="margin-bottom: 8px;">
-                            <Extra>
-                                <AntDesign.Popconfirm Title="确定删除该属性吗？" OkText="确定" CancelText="取消" 
-                                                     OnConfirm="() => RemoveAttribute(currentIndex)">
-                                    <Button Type="@ButtonType.Text" Icon="delete" Size="@ButtonSize.Small" Danger>删除</Button>
-                                </AntDesign.Popconfirm>
-                            </Extra>
-                            <Body>
-                                <AntDesign.Row Gutter="16">
-                                    <AntDesign.Col Span="8">
-                                        <div style="margin-bottom: 8px;">
-                                            <label style="display: block; margin-bottom: 4px; font-weight: 500;">属性名</label>
-                                            <Input @bind-Value="@attr.AttributeName" Placeholder="属性名" />
-                                        </div>
-                                    </AntDesign.Col>
-                                    <AntDesign.Col Span="8">
-                                        <div style="margin-bottom: 8px;">
-                                            <label style="display: block; margin-bottom: 4px; font-weight: 500;">类型</label>
-                                            <Input @bind-Value="@attr.AttributeClrType" Placeholder="System.String" />
-                                        </div>
-                                    </AntDesign.Col>
-                                    <AntDesign.Col Span="8">
-                                        <div style="margin-bottom: 8px;">
-                                            <label style="display: block; margin-bottom: 4px; font-weight: 500;">值</label>
-                                            <Input TValue="string"
-                                                   Value="@GetAttrValueString(attr)"
-                                                   ValueChanged="@(v => SetAttrValue(attr, v))"
-                                                   Placeholder="属性值" />
-                                        </div>
-                                    </AntDesign.Col>
-                                </AntDesign.Row>
-                            </Body>
-                        </AntDesign.Card>
-                    }
+                    var childIndex = i;
+                    <HCard Title="@($"子组件 {i + 1}")" Style="margin-bottom: 8px;">
+                        <button class="btn btn-text btn-sm" @onclick="() => RemoveChildFragment(childIndex)" style="color: red;">删除</button>
+                        <ComponentFragmentEditor @bind-Fragment="@Fragment.ChildFragments[childIndex]" />
+                    </HCard>
                 }
             </div>
-            
-            @if (Fragment.HasChildFragment)
-            {
-                <div style="margin: 16px 0;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <span style="font-weight: 500;">子组件</span>
-                        <Button Type="@ButtonType.Primary" Size="@ButtonSize.Small" OnClick="AddChildFragment">添加子组件</Button>
-                    </div>
-                    
-                    @for (int i = 0; i < Fragment.ChildFragments.Length; i++)
-                    {
-                        var childIndex = i;
-                        <AntDesign.Card Title="@($"子组件 {i + 1}")" Size="@CardSize.Small" Style="margin-bottom: 8px;">
-                            <Extra>
-                                <Button Type="@ButtonType.Text" Icon="delete" Size="@ButtonSize.Small" 
-                                        OnClick="() => RemoveChildFragment(childIndex)" Danger>删除</Button>
-                            </Extra>
-                            <Body>
-                                <ComponentFragmentEditor @bind-Fragment="@Fragment.ChildFragments[childIndex]" />
-                            </Body>
-                        </AntDesign.Card>
-                    }
-                </div>
-            }
-            else
-            {
-                <Button Type="@ButtonType.Dashed" OnClick="AddChildFragment" Icon="plus">添加子组件</Button>
-            }
-        </ChildContent>
-    </AntDesign.Card>
+        }
+        else
+        {
+            <button class="btn btn-dashed" @onclick="AddChildFragment">添加子组件</button>
+        }
+    </HCard>
 </div>
 
 @code {
@@ -210,7 +195,7 @@
 }
 
 <style>
-    .component-fragment-editor .ant-card-small .ant-card-body {
+    .component-fragment-editor .hcard-body {
         padding: 12px;
     }
 </style>

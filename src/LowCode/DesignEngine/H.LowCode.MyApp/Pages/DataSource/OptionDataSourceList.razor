@@ -3,35 +3,48 @@
 
 <div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
     <div style="width:250px;">
-        <Search Placeholder="选项名称" OnSearch="()=>{}" />
+        <input type="search" class="inp" placeholder="选项名称" />
     </div>
     <div style="width:80px; line-height:32px;">
-        <Button Type="@ButtonType.Primary" OnClick="CreateAsync">新建选项</Button>
+        <button class="btn btn-primary" @onclick="CreateAsync">新建选项</button>
     </div>
 </div>
-<Table TItem="DataSourceSchema" DataSource="@_dataSource" Total="_total"
-       @bind-PageIndex="@_pageIndex" @bind-PageSize="@_pageSize">
-    <PropertyColumn Title="名称" Property="c=>c.Name" Sortable />
-    <PropertyColumn Title="中文名" Property="c=>c.DisplayName" Sortable />
-    <PropertyColumn Title="修改人" Property="c=>c.ModifierId" />
-    <PropertyColumn Title="修改时间" Property="c=>c.ModificationTime" Format="yyyy-MM-dd HH:mm:ss" />
-    <PropertyColumn Title="发布状态" Property="c=>c.PublishStatus">
-        <Switch @bind-Checked="@context.PublishStatus" />
-    </PropertyColumn>
-    <ActionColumn Title="操作">
-        <Space Size=@("middle")>
-            <SpaceItem>
-                <a onclick="@(()=>EditAsync(@context))">编辑</a>
-            </SpaceItem>
-            <SpaceItem>
-                <a onclick="@(()=>DeleteAsync(@context.Id))" style="color:#ff4d4f">删除</a>
-            </SpaceItem>
-            <SpaceItem>
-                <a onclick="@(()=>PublishAsync(@context.Id))" style="color:green">发布</a>
-            </SpaceItem>
-        </Space>
-    </ActionColumn>
-</Table>
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>名称</th>
+            <th>中文名</th>
+            <th>修改人</th>
+            <th>修改时间</th>
+            <th>发布状态</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in _dataSource)
+        {
+            <tr>
+                <td>@item.Name</td>
+                <td>@item.DisplayName</td>
+                <td>@item.ModifierId</td>
+                <td>@item.ModificationTime?.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                <td>
+                    <label class="switch">
+                        <input type="checkbox" checked="@item.PublishStatus" @onchange='(e) => item.PublishStatus = (bool)(e.Value ?? false)' />
+                        <span class="slider"></span>
+                    </label>
+                </td>
+                <td>
+                    <div class="space">
+                        <a @onclick='() => EditAsync(item)'>编辑</a>
+                        <a @onclick='() => DeleteAsync(item.Id)' style="color:#ff4d4f">删除</a>
+                        <a @onclick='() => PublishAsync(item.Id)' style="color:green">发布</a>
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
 
 @code {
     [Parameter]

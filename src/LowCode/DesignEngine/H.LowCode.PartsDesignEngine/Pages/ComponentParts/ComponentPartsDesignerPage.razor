@@ -11,14 +11,14 @@
 @if (_loading)
 {
     <div style="display: flex; justify-content: center; align-items: center; height: 100vh;">
-        <Spin Size="SpinSize.Large" />
+        <div class="loading-spinner">加载中...</div>
     </div>
 }
 else
 {
     <CascadingValue Value="@_partsCascading" Name="partsCascading">
-        <AntDesign.Layout Class="designpage" Style="padding:0 2px; background-color: #f7f7f7;">
-            <Header Style="background-color: white; padding:0 20px; display: flex; align-items: center; justify-content: space-between;">
+        <div class="designpage layout" style="padding:0 2px; background-color: #f7f7f7;">
+            <div class="layout-header" style="background-color: white; padding:0 20px; display: flex; align-items: center; justify-content: space-between;">
                 <div>
                     <a href="javascript:void(0)" @onclick="GoBack"> @("<") 返回 </a>
                 </div>
@@ -26,21 +26,25 @@ else
                     <h3 style="margin: 0; line-height: 64px;">组件物料设计器</h3>
                 </div>
                 <div>
-                    <Button OnClick="PreviewComponent">预览</Button>
-                    <Button Type="@ButtonType.Primary" OnClick="SaveComponentPartsSchemaAsync" Loading="_saving">保存</Button>
+                    <button class="btn" @onclick="PreviewComponent">预览</button>
+                    <button class="btn btn-primary" @onclick="SaveComponentPartsSchemaAsync" disabled="@_saving">保存</button>
                 </div>
-            </Header>
-            <AntDesign.Layout>
-                <Sider Style="min-width: 200px; flex: auto; max-width: max-content;" Theme="SiderTheme.Light">
+            </div>
+            <div class="layout-body">
+                <div class="layout-sider" style="min-width: 200px; flex: auto; max-width: max-content;">
                     <ComponentPanel></ComponentPanel>
-                </Sider>
-                <Layout>
-                    <Content Class="designpage">
-                        <AntDesign.Tabs DefaultActiveKey="design" TabPosition="@TabPosition.Top" Style="height: 100%;">
-                            <AntDesign.TabPane Key="design" Tab="可视化设计">
+                </div>
+                <div class="layout-main">
+                    <div class="designpage layout-content">
+                        <div class="tabs-section">
+                            <div class="tabs-section-header">可视化设计</div>
+                            <div class="tabs-section-body">
                                 <ComponentDesignPanel ComponentPartsSchema="_partsSchema"></ComponentDesignPanel>
-                            </AntDesign.TabPane>
-                            <AntDesign.TabPane Key="properties" Tab="组件属性">
+                            </div>
+                        </div>
+                        <div class="tabs-section">
+                            <div class="tabs-section-header">组件属性</div>
+                            <div class="tabs-section-body">
                                 @if (_partsSchema != null)
                                 {
                                     <div style="padding: 16px; height: calc(100vh - 160px); overflow-y: auto;">
@@ -50,15 +54,15 @@ else
                                         OnCancel="OnCancelFromEditor" />
                                     </div>
                                 }
-                            </AntDesign.TabPane>
-                        </AntDesign.Tabs>
-                    </Content>
-                </Layout>
-                <Sider Class="designpage" Style="flex: auto; max-width: max-content; min-width: 250px;" Theme="SiderTheme.Light">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="layout-sider designpage" style="flex: auto; max-width: max-content; min-width: 250px;">
                     <PartsSettingPanel></PartsSettingPanel>
-                </Sider>
-            </AntDesign.Layout>
-        </AntDesign.Layout>
+                </div>
+            </div>
+        </div>
     </CascadingValue>
 }
 

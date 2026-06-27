@@ -69,8 +69,6 @@ public class HostAllModule : AbpModule
         // 配置外部登录
         ConfigureExternalLogin(context);
 
-        // 注册 AntDesign 服务
-        context.Services.AddAntDesign();
 
         // 注册 LowCodeAppState (设计时为 true)
         context.Services.AddScoped(sp => new LowCodeAppState(isDesign: true));

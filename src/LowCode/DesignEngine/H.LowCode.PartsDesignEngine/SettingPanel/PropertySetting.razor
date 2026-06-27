@@ -17,7 +17,7 @@
 
         <div class="propertysetting-item">
             <label>启用校验：</label>
-            <Switch @bind-Checked="@_isValidationEnabled" @bind-Checked:after="() => OnValidationEnabledChange(_isValidationEnabled)" />
+            <label class="switch"><input type="checkbox" @bind="_isValidationEnabled" @bind:after="() => OnValidationEnabledChange(_isValidationEnabled)" /></label>
         </div>
 
         @if (_isValidationEnabled)
@@ -33,39 +33,36 @@
                     var index = i;
                     var rule = Component.ValidationRules[index];
 
-                    <Card Size="@CardSize.Small" Style="margin-bottom: 10px;">
-                        <TitleTemplate>
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span>规则 @(index + 1)</span>
-                                <div>
-                                    <Switch @bind-Checked="@rule.IsEnabled" @bind-Checked:after="OnRuleChange" />
-                                    <Button Type="@ButtonType.Text" Danger Size="@ButtonSize.Small"
-                                            Icon="delete" OnClick="() => RemoveRule(index)" />
-                                </div>
+                    <div style="border: 1px solid #d9d9d9; border-radius: 6px; padding: 8px; margin-bottom: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span>规则 @(index + 1)</span>
+                            <div>
+                                <label class="switch"><input type="checkbox" @bind="rule.IsEnabled" @bind:after="OnRuleChange" /></label>
+                                <button class="btn btn-text btn-danger btn-sm" @onclick="() => RemoveRule(index)">&#10005;</button>
                             </div>
-                        </TitleTemplate>
-                        <ChildContent>
+                        </div>
+                        <div>
                             <div class="propertysetting-item">
                                 <label>校验类型：</label>
-                                <Select TItemValue="ValidationRuleTypeEnum" TItem="ValidationRuleTypeEnum" @bind-Value="@rule.RuleType" @bind-Value:after="OnRuleChange">
-                                    <SelectOption Value="@ValidationRuleTypeEnum.Required" Label="必填" />
-                                    <SelectOption Value="@ValidationRuleTypeEnum.MinLength" Label="最小长度" />
-                                    <SelectOption Value="@ValidationRuleTypeEnum.MaxLength" Label="最大长度" />
-                                    <SelectOption Value="@ValidationRuleTypeEnum.MinValue" Label="最小值" />
-                                    <SelectOption Value="@ValidationRuleTypeEnum.MaxValue" Label="最大值" />
-                                    <SelectOption Value="@ValidationRuleTypeEnum.Pattern" Label="正则表达式" />
-                                    <SelectOption Value="@ValidationRuleTypeEnum.Email" Label="邮箱格式" />
-                                    <SelectOption Value="@ValidationRuleTypeEnum.Phone" Label="手机号格式" />
-                                    <SelectOption Value="@ValidationRuleTypeEnum.Url" Label="URL格式" />
-                                    <SelectOption Value="@ValidationRuleTypeEnum.Custom" Label="自定义" />
-                                </Select>
+                                <select class="sel" @bind="rule.RuleType" @bind:after="OnRuleChange">
+                                    <option value="@ValidationRuleTypeEnum.Required">必填</option>
+                                    <option value="@ValidationRuleTypeEnum.MinLength">最小长度</option>
+                                    <option value="@ValidationRuleTypeEnum.MaxLength">最大长度</option>
+                                    <option value="@ValidationRuleTypeEnum.MinValue">最小值</option>
+                                    <option value="@ValidationRuleTypeEnum.MaxValue">最大值</option>
+                                    <option value="@ValidationRuleTypeEnum.Pattern">正则表达式</option>
+                                    <option value="@ValidationRuleTypeEnum.Email">邮箱格式</option>
+                                    <option value="@ValidationRuleTypeEnum.Phone">手机号格式</option>
+                                    <option value="@ValidationRuleTypeEnum.Url">URL格式</option>
+                                    <option value="@ValidationRuleTypeEnum.Custom">自定义</option>
+                                </select>
                             </div>
 
                             @if (rule.RuleType == ValidationRuleTypeEnum.MinLength)
                             {
                                 <div class="propertysetting-item">
                                     <label>最小长度：</label>
-                                    <AntDesign.InputNumber @bind-Value="@rule.MinLength" Min="0" @bind-Value:after="OnRuleChange" />
+                                    <input type="number" class="inp" min="0" @bind="rule.MinLength" @bind:after="OnRuleChange" />
                                 </div>
                             }
 
@@ -73,7 +70,7 @@
                             {
                                 <div class="propertysetting-item">
                                     <label>最大长度：</label>
-                                    <AntDesign.InputNumber @bind-Value="@rule.MaxLength" Min="1" @bind-Value:after="OnRuleChange" />
+                                    <input type="number" class="inp" min="1" @bind="rule.MaxLength" @bind:after="OnRuleChange" />
                                 </div>
                             }
 
@@ -81,7 +78,7 @@
                             {
                                 <div class="propertysetting-item">
                                     <label>最小值：</label>
-                                    <AntDesign.InputNumber @bind-Value="@rule.MinValue" @bind-Value:after="OnRuleChange" />
+                                    <input type="number" class="inp" @bind="rule.MinValue" @bind:after="OnRuleChange" />
                                 </div>
                             }
 
@@ -89,7 +86,7 @@
                             {
                                 <div class="propertysetting-item">
                                     <label>最大值：</label>
-                                    <AntDesign.InputNumber @bind-Value="@rule.MaxValue" @bind-Value:after="OnRuleChange" />
+                                    <input type="number" class="inp" @bind="rule.MaxValue" @bind:after="OnRuleChange" />
                                 </div>
                             }
 
@@ -97,36 +94,33 @@
                             {
                                 <div class="propertysetting-item">
                                     <label>@(rule.RuleType == ValidationRuleTypeEnum.Pattern ? "正则表达式" : "自定义表达式")：</label>
-                                    <Input @bind-Value="@rule.Pattern" @bind-Value:after="OnRuleChange" />
+                                    <input class="inp" @bind="rule.Pattern" @bind:after="OnRuleChange" />
                                 </div>
                             }
 
                             <div class="propertysetting-item">
                                 <label>错误消息：</label>
-                                <Input @bind-Value="@rule.ErrorMessage" @bind-Value:after="OnRuleChange"
-                                       Placeholder="@GetDefaultErrorMessage(rule.RuleType)" />
+                                <input class="inp" placeholder="@GetDefaultErrorMessage(rule.RuleType)" @bind="rule.ErrorMessage" @bind:after="OnRuleChange" />
                             </div>
 
                             <div class="propertysetting-item">
                                 <label>触发时机：</label>
-                                <RadioGroup @bind-Value="@rule.Trigger" @bind-Value:after="OnRuleChange">
-                                    <Radio Value="@ValidationTriggerEnum.Change">输入时</Radio>
-                                    <Radio Value="@ValidationTriggerEnum.Blur">失去焦点时</Radio>
-                                </RadioGroup>
+                                <div class="radio-group">
+                                    <label class="radio-label"><input type="radio" name="@($"trigger_{index}")" checked="@(rule.Trigger == ValidationTriggerEnum.Change)" @onchange="() => { rule.Trigger = ValidationTriggerEnum.Change; OnRuleChange(); }" /> 输入时</label>
+                                    <label class="radio-label"><input type="radio" name="@($"trigger_{index}")" checked="@(rule.Trigger == ValidationTriggerEnum.Blur)" @onchange="() => { rule.Trigger = ValidationTriggerEnum.Blur; OnRuleChange(); }" /> 失去焦点时</label>
+                                </div>
                             </div>
 
                             <div class="propertysetting-item">
                                 <label>优先级：</label>
-                                <AntDesign.InputNumber @bind-Value="@rule.Order" Min="1" @bind-Value:after="OnRuleChange" />
+                                <input type="number" class="inp" min="1" @bind="rule.Order" @bind:after="OnRuleChange" />
                             </div>
-                        </ChildContent>
-                    </Card>
+                        </div>
+                    </div>
                 }
             }
 
-            <Button Type="@ButtonType.Dashed" Block OnClick="AddRule" Icon="plus" Size="@ButtonSize.Small">
-                添加校验规则
-            </Button>
+            <button class="btn btn-dashed btn-block btn-sm" @onclick="AddRule">+ 添加校验规则</button>
         }
 
         @*事件属性*@
