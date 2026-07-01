@@ -113,6 +113,7 @@ public class EnterpriseAppService : ApplicationService, IEnterpriseAppService
         };
 
         _context.Enterprises.Add(entity);
+        await _context.SaveChangesAsync();
 
         // 创建者自动成为 Owner
         if (currentUserId.HasValue)
@@ -274,15 +275,18 @@ public class EnterpriseAppService : ApplicationService, IEnterpriseAppService
 
         var existingClaims = httpContext.User.Claims.ToList();
 
-        // 移除旧的 TenantId 和 EnterpriseName Claims
+        // 移除旧的 TenantId、EnterpriseName、EnterpriseId、EnterpriseRole Claims
         var newClaims = existingClaims
-            .Where(c => c.Type != "TenantId" && c.Type != "EnterpriseName" && c.Type != "EnterpriseId")
+            .Where(c => c.Type != "TenantId" && c.Type != "EnterpriseName" && c.Type != "EnterpriseId" && c.Type != "EnterpriseRole")
             .ToList();
 
         // 追加企业相关 Claims
         newClaims.Add(new Claim("TenantId", enterprise.Id.ToString()));
         newClaims.Add(new Claim("EnterpriseId", enterprise.Id.ToString()));
         newClaims.Add(new Claim("EnterpriseName", enterprise.Name));
+
+        // 追加企业角色 Claim
+        newClaims.Add(new Claim("EnterpriseRole", userEnterprise.Role));
 
         var claimsIdentity = new ClaimsIdentity(newClaims, CookieAuthenticationDefaults.AuthenticationScheme);
         var authProperties = new AuthenticationProperties

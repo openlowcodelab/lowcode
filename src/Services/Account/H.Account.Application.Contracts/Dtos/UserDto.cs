@@ -14,7 +14,8 @@ public class UserDto
     public string PhoneNumber { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty; // 注意：实际应用中不应直接暴露密码字段
     public UserType UserType { get; set; }
-    public string? Roles { get; set; }
+    public List<string> RoleNames { get; set; } = new();
+    public string? LoginMode { get; set; }
     public bool IsActive { get; set; }
     public bool EmailConfirmed { get; set; }
     public bool PhoneNumberConfirmed { get; set; }
@@ -29,6 +30,35 @@ public class UserDto
     public string? Remark { get; set; }
     
     public List<ExternalAccountDto> ExternalAccounts { get; set; } = new();
+}
+
+/// <summary>
+/// 系统角色 DTO
+/// </summary>
+public class SystemRoleDto
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public bool IsBuiltIn { get; set; }
+    public int UserCount { get; set; }
+}
+
+/// <summary>
+/// 创建系统自定义角色 DTO
+/// </summary>
+public class CreateSystemRoleDto
+{
+    [Required, MaxLength(50)]
+    public string Name { get; set; } = string.Empty;
+    public string? Remark { get; set; }
+}
+
+/// <summary>
+/// 分配角色 DTO
+/// </summary>
+public class AssignRolesDto
+{
+    public List<string> RoleNames { get; set; } = new();
 }
 
 /// <summary>
@@ -51,7 +81,7 @@ public class CreateUserDto
     public string ConfirmPassword { get; set; } = string.Empty;
     public string? PhoneNumber { get; set; }
     public UserType UserType { get; set; } = UserType.Normal;
-    public string? Roles { get; set; }
+    public List<string> RoleNames { get; set; } = new();
     public bool IsActive { get; set; } = true;
     public bool EmailConfirmed { get; set; }
     public bool PhoneNumberConfirmed { get; set; }
@@ -67,7 +97,7 @@ public class UpdateUserDto
     public string Email { get; set; } = string.Empty;
     public string? PhoneNumber { get; set; }
     public UserType UserType { get; set; }
-    public string? Roles { get; set; }
+    public List<string> RoleNames { get; set; } = new();
     public bool IsActive { get; set; } = true;
     public bool EmailConfirmed { get; set; }
     public bool PhoneNumberConfirmed { get; set; }

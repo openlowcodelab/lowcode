@@ -1,6 +1,6 @@
 @page "/account/users/{id:guid}/edit"
 
-@layout AccountLayout
+@layout SystemLayout
 @inject IUserAppService UserService
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
@@ -62,7 +62,7 @@
                     <div class="h-form-item h-form-horizontal">
                         <label class="h-form-label">角色</label>
                         <div class="h-form-control">
-                            <input type="text" @bind-value="@updateUserDto.Roles" placeholder="逗号分隔多个角色" class="h-input" />
+                            <input type="text" @bind-value="@rolesText" placeholder="逗号分隔多个角色" class="h-input" />
                         </div>
                     </div>
                 </div>
@@ -197,6 +197,7 @@
     private UserDto? user;
     private UpdateUserDto updateUserDto = new();
     private ResetPasswordDto resetPasswordDto = new();
+    private string rolesText = "";
     private bool isLoading = true;
     private bool isSubmitting = false;
     private bool showResetPasswordModal = false;
@@ -222,12 +223,13 @@
                     Email = user.Email,
                     PhoneNumber = user.PhoneNumber,
                     UserType = user.UserType,
-                    Roles = user.Roles,
+                    RoleNames = user.RoleNames,
                     IsActive = user.IsActive,
                     EmailConfirmed = user.EmailConfirmed,
                     PhoneNumberConfirmed = user.PhoneNumberConfirmed,
                     Remark = user.Remark
                 };
+                rolesText = string.Join(", ", user.RoleNames);
             }
         }
         catch (Exception ex)
@@ -247,6 +249,9 @@
 
         try
         {
+            updateUserDto.RoleNames = string.IsNullOrWhiteSpace(rolesText)
+                ? new List<string>()
+                : rolesText.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
             await UserService.UpdateUserAsync(Id, updateUserDto);
             Navigation.NavigateTo("/account/users");
         }

@@ -71,6 +71,7 @@ public class EnterpriseDbContext : DbContext
             // 复合唯一索引: 同一企业下同一用户只能有一条关联记录
             entity.HasIndex(e => new { e.EnterpriseId, e.UserId }).IsUnique();
             entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.Role);
 
             // 外键关系
             entity.HasOne(e => e.Enterprise)

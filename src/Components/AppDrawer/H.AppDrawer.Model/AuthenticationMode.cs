@@ -18,5 +18,15 @@ public enum AuthenticationMode
     /// <summary>
     /// 强制认证，未登录自动跳转登录页
     /// </summary>
-    Required
+    Required,
+
+    /// <summary>
+    /// 仅系统级用户（LoginMode=System）可访问
+    /// </summary>
+    SystemRequired,
+
+    /// <summary>
+    /// 仅企业级用户（无 LoginMode=System）可访问
+    /// </summary>
+    EnterpriseRequired
 }

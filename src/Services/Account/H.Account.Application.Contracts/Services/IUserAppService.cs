@@ -22,4 +22,8 @@ public interface IUserAppService : IApplicationService
     Task<bool> ExistsByEmailAsync(string email, Guid? excludeId = null);
     Task<bool> VerifyPasswordAsync(string userName, string password);
     Task UpdateLastLoginTimeAsync(Guid userId);
+
+    // 角色管理
+    Task AssignRolesToUserAsync(Guid userId, List<string> roleNames);
+    Task<List<string>> GetUserRoleNamesAsync(Guid userId);
 }

@@ -111,7 +111,7 @@ public class EnterpriseUserAppService : ApplicationService, IEnterpriseUserAppSe
             ?? throw new Exception("用户不在该企业中");
 
         // 不允许修改 Owner 角色
-        if (entity.Role == "Owner" && role != "Owner")
+        if (entity.Role == "Owner")
             throw new Exception("不能修改企业所有者的角色");
 
         entity.Role = role;

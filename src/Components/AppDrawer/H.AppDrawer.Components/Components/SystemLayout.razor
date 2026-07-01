@@ -1,0 +1,22 @@
+@namespace H.AppDrawer.Components
+
+@inherits LayoutComponentBase
+
+<DefaultLayoutComponent
+    AppName="系统管理"
+    AuthMode="AuthenticationMode.SystemRequired"
+    LoginUrl="/system/login"
+    MenuItems="@MenuItems">
+    @Body
+</DefaultLayoutComponent>
+
+@code {
+    private static List<AppMenuItem> MenuItems => new()
+    {
+        new AppMenuItem { Name = "企业管理", Url = "/enterprise", Icon = "🏢" },
+        new AppMenuItem { Name = "用户管理", Url = "/account/users", Icon = "👥" },
+        new AppMenuItem { Name = "应用管理", Url = "/admin/apps", Icon = "📦" },
+        new AppMenuItem { Name = "通知管理", Url = "/system/notifications", Icon = "🔔" },
+        new AppMenuItem { Name = "系统设置", Url = "/system/settings", Icon = "⚙️" }
+    };
+}

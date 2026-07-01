@@ -26,7 +26,7 @@ public class EnterpriseUserEntity
     public string UserName { get; set; } = string.Empty;
 
     /// <summary>
-    /// 企业内角色: Owner / Admin / Member
+    /// 角色（Owner/Admin/Member 等）
     /// </summary>
     public string Role { get; set; } = "Member";
 
@@ -54,4 +54,5 @@ public class EnterpriseUserEntity
     /// 关联企业
     /// </summary>
     public virtual EnterpriseEntity? Enterprise { get; set; }
+
 }

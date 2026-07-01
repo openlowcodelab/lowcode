@@ -23,25 +23,25 @@ public class UserAppService : ApplicationService, IUserAppService
     public async Task<UserDto?> GetUserByUserNameAsync(string userName)
     {
         var user = await _userManager.FindByNameAsync(userName);
-        return user != null ? MapToUserDto(user) : null;
+        return user != null ? await MapToUserDtoAsync(user) : null;
     }
 
     public async Task<UserDto?> GetUserByEmailAsync(string email)
     {
         var user = await _userManager.FindByEmailAsync(email);
-        return user != null ? MapToUserDto(user) : null;
+        return user != null ? await MapToUserDtoAsync(user) : null;
     }
 
     public async Task<UserDto?> GetUserByIdAsync(Guid userId)
     {
         var user = await _userManager.FindByIdAsync(userId.ToString());
-        return user != null ? MapToUserDto(user) : null;
+        return user != null ? await MapToUserDtoAsync(user) : null;
     }
 
     public async Task<UserDto?> GetUserDtoByIdAsync(Guid userId)
     {
         var user = await _userManager.FindByIdAsync(userId.ToString());
-        return user != null ? MapToUserDto(user) : null;
+        return user != null ? await MapToUserDtoAsync(user) : null;
     }
 
     public async Task<UserDto> CreateUserAsync(UserDto user)
@@ -66,7 +66,7 @@ public class UserAppService : ApplicationService, IUserAppService
             await _userManager.SetLockoutEndDateAsync(identityUser, DateTimeOffset.MaxValue);
         }
 
-        return MapToUserDto(identityUser);
+        return await MapToUserDtoAsync(identityUser);
     }
 
     public async Task<UserDto> CreateUserAsync(CreateUserDto dto, Guid? currentUserId = null)
@@ -84,13 +84,23 @@ public class UserAppService : ApplicationService, IUserAppService
             throw new Exception(string.Join(", ", result.Errors.Select(e => e.Description)));
         }
 
+        // 分配角色
+        if (dto.RoleNames != null && dto.RoleNames.Any())
+        {
+            var addRoleResult = await _userManager.AddToRolesAsync(identityUser, dto.RoleNames);
+            if (!addRoleResult.Succeeded)
+            {
+                throw new Exception(string.Join(", ", addRoleResult.Errors.Select(e => e.Description)));
+            }
+        }
+
         if (!dto.IsActive)
         {
             await _userManager.SetLockoutEnabledAsync(identityUser, true);
             await _userManager.SetLockoutEndDateAsync(identityUser, DateTimeOffset.MaxValue);
         }
 
-        return MapToUserDto(identityUser);
+        return await MapToUserDtoAsync(identityUser);
     }
 
     public async Task<bool> UpdateUserAsync(UserDto user)
@@ -122,6 +132,19 @@ public class UserAppService : ApplicationService, IUserAppService
         await _userManager.SetUserNameAsync(existingUser, dto.UserName);
         await _userManager.SetEmailAsync(existingUser, dto.Email);
         await _userManager.SetPhoneNumberAsync(existingUser, dto.PhoneNumber);
+        
+        // 更新角色
+        if (dto.RoleNames != null)
+        {
+            var currentRoles = await _userManager.GetRolesAsync(existingUser);
+            var rolesToRemove = currentRoles.Except(dto.RoleNames, StringComparer.OrdinalIgnoreCase).ToList();
+            var rolesToAdd = dto.RoleNames.Except(currentRoles, StringComparer.OrdinalIgnoreCase).ToList();
+
+            if (rolesToRemove.Any())
+                await _userManager.RemoveFromRolesAsync(existingUser, rolesToRemove);
+            if (rolesToAdd.Any())
+                await _userManager.AddToRolesAsync(existingUser, rolesToAdd);
+        }
         
         existingUser.LastModificationTime = DateTime.UtcNow;
 
@@ -235,7 +258,23 @@ public class UserAppService : ApplicationService, IUserAppService
                                      (u.PhoneNumber != null && u.PhoneNumber.Contains(queryParams.Keyword))).ToList();
         }
 
-        // 用户类型筛选 (ABP Identity 没有 UserType,这里跳过)
+        // 用户类型筛选：根据角色名过滤
+        if (queryParams.UserType.HasValue)
+        {
+            var targetRoleName = queryParams.UserType.Value switch
+            {
+                UserType.SuperAdmin => SystemRoleNames.SuperAdmin,
+                UserType.Admin => SystemRoleNames.Admin,
+                _ => null
+            };
+
+            if (targetRoleName != null)
+            {
+                var usersInRole = await _userManager.GetUsersInRoleAsync(targetRoleName);
+                var userIds = usersInRole.Select(u => u.Id).ToHashSet();
+                query = query.Where(u => userIds.Contains(u.Id)).ToList();
+            }
+        }
         
         // 状态筛选
         if (queryParams.IsActive.HasValue)
@@ -246,27 +285,58 @@ public class UserAppService : ApplicationService, IUserAppService
         var total = query.Count();
         var items = query
             .Skip((queryParams.PageIndex - 1) * queryParams.PageSize)
-            .Take(queryParams.PageSize)
-            .Select(MapToUserDto)
-            .ToList();
+            .Take(queryParams.PageSize);
+
+        var dtoItems = new List<UserDto>();
+        foreach (var item in items)
+        {
+            dtoItems.Add(await MapToUserDtoAsync(item));
+        }
 
         return new PagedResult<UserDto>
         {
-            Items = items,
+            Items = dtoItems,
             Total = total,
             PageIndex = queryParams.PageIndex,
             PageSize = queryParams.PageSize
         };
     }
 
-    private UserDto MapToUserDto(Volo.Abp.Identity.IdentityUser user)
+    public async Task AssignRolesToUserAsync(Guid userId, List<string> roleNames)
     {
+        var user = await _userManager.FindByIdAsync(userId.ToString())
+            ?? throw new Exception("用户不存在");
+
+        var currentRoles = await _userManager.GetRolesAsync(user);
+        var rolesToRemove = currentRoles.Except(roleNames, StringComparer.OrdinalIgnoreCase).ToList();
+        var rolesToAdd = roleNames.Except(currentRoles, StringComparer.OrdinalIgnoreCase).ToList();
+
+        if (rolesToRemove.Any())
+            await _userManager.RemoveFromRolesAsync(user, rolesToRemove);
+        if (rolesToAdd.Any())
+            await _userManager.AddToRolesAsync(user, rolesToAdd);
+    }
+
+    public async Task<List<string>> GetUserRoleNamesAsync(Guid userId)
+    {
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        if (user == null) return new List<string>();
+
+        var roles = await _userManager.GetRolesAsync(user);
+        return roles.ToList();
+    }
+
+    private async Task<UserDto> MapToUserDtoAsync(Volo.Abp.Identity.IdentityUser user)
+    {
+        var roles = await _userManager.GetRolesAsync(user);
         return new UserDto
         {
             Id = user.Id,
             UserName = user.UserName ?? "",
             Email = user.Email ?? "",
             PhoneNumber = user.PhoneNumber ?? "",
+            RoleNames = roles.ToList(),
+            UserType = DeriveUserType(roles),
             IsActive = !user.LockoutEnabled || user.LockoutEnd == null || user.LockoutEnd <= DateTimeOffset.UtcNow,
             EmailConfirmed = user.EmailConfirmed,
             PhoneNumberConfirmed = user.PhoneNumberConfirmed,
@@ -276,5 +346,14 @@ public class UserAppService : ApplicationService, IUserAppService
             UpdatedAt = user.LastModificationTime,
             LastLoginAt = user.LastModificationTime
         };
+    }
+
+    private static UserType DeriveUserType(IList<string> roles)
+    {
+        if (roles.Contains(SystemRoleNames.SuperAdmin, StringComparer.OrdinalIgnoreCase))
+            return UserType.SuperAdmin;
+        if (roles.Contains(SystemRoleNames.Admin, StringComparer.OrdinalIgnoreCase))
+            return UserType.Admin;
+        return UserType.Normal;
     }
 }

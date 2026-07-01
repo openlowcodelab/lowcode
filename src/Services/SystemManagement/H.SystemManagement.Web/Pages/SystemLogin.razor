@@ -1,0 +1,156 @@
+@page "/system/login"
+@attribute [AllowAnonymous]
+
+@layout SystemLoginLayout
+@inject HttpClient HttpClient
+@inject NavigationManager Navigation
+
+<div class="auth-card">
+    <div class="auth-card-title">系统管理登录</div>
+    <div class="auth-card-subtitle">仅限系统管理员访问</div>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="sys-alert sys-alert-error">
+            <span>&#9888;</span>
+            <span>@errorMessage</span>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+        <div class="sys-alert sys-alert-success">
+            <span>&#10004;</span>
+            <span>@successMessage</span>
+        </div>
+    }
+
+    <EditForm Model="@loginModel" OnValidSubmit="@HandleLogin">
+        <div class="h-form-item">
+            <input type="text" @bind-value="@loginModel.Account" placeholder="请输入管理员账号" class="h-input" />
+        </div>
+
+        <div class="h-form-item">
+            <input type="password" @bind-value="@loginModel.Password" placeholder="请输入密码" class="h-input" />
+        </div>
+
+        <div class="h-form-item" style="margin-top: 24px; margin-bottom: 0;">
+            <button type="submit" class="h-btn h-btn-primary" disabled="@isLoading">
+                @(isLoading ? "登录中..." : "登 录")
+            </button>
+        </div>
+    </EditForm>
+</div>
+
+<div class="sys-login-footer">
+    <a href="/account/login">企业用户登录 →</a>
+</div>
+
+@code {
+    private LoginModel loginModel { get; set; } = new();
+    private string errorMessage = "";
+    private string successMessage = "";
+    private string returnUrl = "/enterprise";
+    private bool isLoading = false;
+
+    protected override void OnInitialized()
+    {
+        var uri = new Uri(Navigation.Uri);
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        returnUrl = query["returnUrl"] ?? "/enterprise";
+    }
+
+    private async Task HandleLogin()
+    {
+        if (string.IsNullOrWhiteSpace(loginModel.Account) || string.IsNullOrWhiteSpace(loginModel.Password))
+        {
+            errorMessage = "请输入账号和密码";
+            return;
+        }
+
+        isLoading = true;
+        errorMessage = "";
+        successMessage = "";
+
+        try
+        {
+            var payload = new
+            {
+                account = loginModel.Account,
+                password = loginModel.Password,
+                rememberMe = false
+            };
+
+            var response = await HttpClient.PostAsJsonAsync("/api/app/account/system-login", payload);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                bool success = false;
+                string message = "";
+
+                try
+                {
+                    using var doc = System.Text.Json.JsonDocument.Parse(content);
+                    if (doc.RootElement.TryGetProperty("success", out var sProp))
+                        success = sProp.GetBoolean();
+                    if (doc.RootElement.TryGetProperty("message", out var mProp))
+                        message = mProp.GetString() ?? "";
+                }
+                catch
+                {
+                    // ABP 成功时可能返回 200 + UserDto 对象
+                    success = true;
+                }
+
+                if (success)
+                {
+                    successMessage = "登录成功，正在跳转...";
+                    Navigation.NavigateTo(returnUrl, forceLoad: true);
+                }
+                else
+                {
+                    errorMessage = string.IsNullOrEmpty(message) ? "登录失败" : message;
+                }
+            }
+            else
+            {
+                // ABP 错误格式：{ "error": { "message": "..." } }
+                var errorContent = await response.Content.ReadAsStringAsync();
+                try
+                {
+                    using var doc = System.Text.Json.JsonDocument.Parse(errorContent);
+                    if (doc.RootElement.TryGetProperty("error", out var errProp))
+                    {
+                        if (errProp.TryGetProperty("message", out var msgProp))
+                        {
+                            errorMessage = msgProp.GetString() ?? "登录失败";
+                            return;
+                        }
+                    }
+                }
+                catch { }
+
+                errorMessage = response.ReasonPhrase ?? "登录失败，请稍后重试";
+            }
+        }
+        catch (Microsoft.AspNetCore.Components.NavigationException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"登录失败: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private class LoginModel
+    {
+        public string Account { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+}

@@ -29,8 +29,8 @@ public class AddEnterpriseUserDto
     public Guid UserId { get; set; }
 
     /// <summary>
-    /// 角色: Owner / Admin / Member
+    /// 角色（Owner/Admin/Member 等）
     /// </summary>
-    [Required, MaxLength(50)]
+    [Required]
     public string Role { get; set; } = "Member";
 }

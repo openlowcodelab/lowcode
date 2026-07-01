@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using H.Account.EntityFrameworkCore;
+using Volo.Abp.Identity;
 
 namespace H.Account.DbMigrator;
 
@@ -26,6 +27,9 @@ public class Program
                 await dbContext.Database.MigrateAsync();
 
                 Console.WriteLine("数据库迁移完成");
+
+                // 种子数据：系统内置角色
+                await SeedSystemRolesAsync(dbContext);
             }
             catch (Exception ex)
             {
@@ -36,6 +40,34 @@ public class Program
 
         Console.WriteLine("按任意键退出...");
         Console.ReadKey();
+    }
+
+    /// <summary>
+    /// 系统内置角色种子数据
+    /// </summary>
+    private static async Task SeedSystemRolesAsync(AccountDbContext dbContext)
+    {
+        var builtInRoles = new[] { "SuperAdmin", "Admin" };
+
+        foreach (var roleName in builtInRoles)
+        {
+            var existing = await dbContext.Roles.FirstOrDefaultAsync(r => r.Name == roleName);
+            if (existing == null)
+            {
+                var role = new IdentityRole(Guid.NewGuid(), roleName);
+                role.IsStatic = true;
+                dbContext.Roles.Add(role);
+                Console.WriteLine($"已创建内置角色: {roleName}");
+            }
+            else if (!existing.IsStatic)
+            {
+                existing.IsStatic = true;
+                Console.WriteLine($"已更新内置角色 IsStatic: {roleName}");
+            }
+        }
+
+        await dbContext.SaveChangesAsync();
+        Console.WriteLine("角色种子数据完成");
     }
 
     static IHostBuilder CreateHostBuilder(string[] args) =>
