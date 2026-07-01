@@ -2,6 +2,8 @@ using H.Account.Application;
 using H.Assistant.Application;
 using H.Approval.Application;
 using H.AutoTest.Application;
+using H.Enterprise.Application;
+using H.Enterprise.EntityFrameworkCore;
 using H.LowCode.ComponentBase;
 using H.LowCode.DesignEngine.Application;
 using H.LowCode.DesignEngine.EntityFrameworkCore;
@@ -18,6 +20,7 @@ using Microsoft.Extensions.Options;
 using Volo.Abp.AspNetCore.Mvc;
 using Volo.Abp.Autofac;
 using Volo.Abp.Modularity;
+using Volo.Abp.MultiTenancy;
 
 namespace H.LowCode.Host.All;
 
@@ -50,6 +53,8 @@ namespace H.LowCode.Host.All;
     typeof(PortalApplicationModule),
     // SystemManagement
     typeof(SystemManagementApplicationModule),
+    // Enterprise
+    typeof(EnterpriseApplicationModule),
     // YunXiao MCP Server
     typeof(YunXiaoMcpServerModule)
 )]
@@ -65,6 +70,9 @@ public class HostAllModule : AbpModule
 
         // 配置 Cookie 认证
         ConfigureAuthentication(context);
+
+        // 配置多租户
+        ConfigureMultiTenancy(context);
 
         // 配置外部登录
         ConfigureExternalLogin(context);
@@ -103,6 +111,7 @@ public class HostAllModule : AbpModule
             options.ConventionalControllers.Create(typeof(AutoTestApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(PortalApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(SystemManagementApplicationModule).Assembly);
+            options.ConventionalControllers.Create(typeof(EnterpriseApplicationModule).Assembly);
         });
     }
 
@@ -117,5 +126,17 @@ public class HostAllModule : AbpModule
         // 注册外部登录服务
         context.Services.AddTransient<WeChatAuthService>();
         context.Services.AddTransient<DingTalkAuthService>();
+    }
+
+    private void ConfigureMultiTenancy(ServiceConfigurationContext context)
+    {
+        // 启用多租户
+        Configure<AbpMultiTenancyOptions>(options =>
+        {
+            options.IsEnabled = true;
+        });
+
+        // 注册自定义 ITenantStore（从 Enterprise 数据库读取租户配置）
+        context.Services.AddTransient<ITenantStore, EnterpriseTenantStore>();
     }
 }

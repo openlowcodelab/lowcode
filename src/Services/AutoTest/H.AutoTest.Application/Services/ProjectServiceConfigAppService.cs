@@ -1,7 +1,6 @@
 using H.AutoTest.Application.Contracts;
 using Microsoft.Extensions.Configuration;
 using System.Text.Json;
-using Volo.Abp.Application.Services;
 using ProjectServiceModel = H.AutoTest.Application.Contracts.ProjectServiceDto;
 
 namespace H.AutoTest.Application;
@@ -9,13 +8,11 @@ namespace H.AutoTest.Application;
 /// <summary>
 /// 项目服务配置管理服务
 /// </summary>
-public class ProjectServiceConfigAppService : ApplicationService, IProjectServiceConfigAppService
+public class ProjectServiceConfigAppService : AutoTestAppServiceBase, IProjectServiceConfigAppService
 {
-    private readonly string _dataPath;
-    
     public ProjectServiceConfigAppService(IConfiguration configuration) 
+        : base(configuration)
     {
-        _dataPath = configuration["DataPath"] ?? "data";
     }
     
     /// <summary>
@@ -159,7 +156,7 @@ public class ProjectServiceConfigAppService : ApplicationService, IProjectServic
     {
         // 这里需要遍历所有环境配置文件来查找
         // 简化实现，实际项目中可能需要更高效的查找方式
-        var dataDir = new DirectoryInfo(_dataPath);
+        var dataDir = new DirectoryInfo(GetTenantDataPath());
         if (!dataDir.Exists) return null;
         
         foreach (var projectDir in dataDir.GetDirectories())
@@ -276,7 +273,7 @@ public class ProjectServiceConfigAppService : ApplicationService, IProjectServic
     /// </summary>
     private async Task DeleteEnvironmentServiceConfigsAsync(string serviceId)
     {
-        var dataDir = new DirectoryInfo(_dataPath);
+        var dataDir = new DirectoryInfo(GetTenantDataPath());
         if (!dataDir.Exists) return;
         
         foreach (var projectDir in dataDir.GetDirectories())
@@ -326,11 +323,11 @@ public class ProjectServiceConfigAppService : ApplicationService, IProjectServic
     private string GetEnvironmentServiceConfigsFilePath(string environmentId)
     {
         // 通过遍历项目目录查找包含该environmentId的项目
-        var dataDir = new DirectoryInfo(_dataPath);
+        var dataDir = new DirectoryInfo(GetTenantDataPath());
         if (!dataDir.Exists) 
         {
             // 如果数据目录不存在，使用默认路径
-            return Path.Combine(_dataPath, "default", "environment-service-configs.json");
+            return Path.Combine(GetTenantDataPath(), "default", "environment-service-configs.json");
         }
         
         foreach (var projectDir in dataDir.GetDirectories())
@@ -352,14 +349,14 @@ public class ProjectServiceConfigAppService : ApplicationService, IProjectServic
         }
         
         // 如果找不到，使用默认路径
-        return Path.Combine(_dataPath, "default", "environment-service-configs.json");
+        return Path.Combine(GetTenantDataPath(), "default", "environment-service-configs.json");
     }
     
     #endregion
     
     private string GetProjectServicesFilePath(string projectId)
     {
-        return Path.Combine(_dataPath, projectId, "project-services.json");
+        return Path.Combine(GetTenantDataPath(), projectId, "project-services.json");
     }
     
     private static JsonSerializerOptions GetJsonOptions()

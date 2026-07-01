@@ -1,20 +1,17 @@
 using H.AutoTest.Application.Contracts;
 using Microsoft.Extensions.Configuration;
 using System.Text.Json;
-using Volo.Abp.Application.Services;
 
 namespace H.AutoTest.Application;
 
 /// <summary>
 /// 测试执行记录服务
 /// </summary>
-public class ExecutionRecordAppService : ApplicationService, IExecutionRecordAppService
+public class ExecutionRecordAppService : AutoTestAppServiceBase, IExecutionRecordAppService
 {
-    private readonly string _dataPath;
-    
     public ExecutionRecordAppService(IConfiguration configuration)
+        : base(configuration)
     {
-        _dataPath = configuration["DataPath"] ?? "data";
     }
     
     /// <summary>
@@ -22,7 +19,7 @@ public class ExecutionRecordAppService : ApplicationService, IExecutionRecordApp
     /// </summary>
     public async Task<List<ExecutionRecordDto>> GetByProjectIdAsync(string projectId)
     {
-        var filePath = Path.Combine(_dataPath, projectId, "execution-records.json");
+        var filePath = Path.Combine(GetTenantDataPath(), projectId, "execution-records.json");
         
         if (!File.Exists(filePath))
         {
@@ -165,7 +162,7 @@ public class ExecutionRecordAppService : ApplicationService, IExecutionRecordApp
     /// </summary>
     private async Task SaveAsync(string projectId, List<ExecutionRecordDto> records)
     {
-        var directoryPath = Path.Combine(_dataPath, projectId);
+        var directoryPath = Path.Combine(GetTenantDataPath(), projectId);
         if (!Directory.Exists(directoryPath))
         {
             Directory.CreateDirectory(directoryPath);

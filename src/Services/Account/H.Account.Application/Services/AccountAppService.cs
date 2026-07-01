@@ -12,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Identity;
 using Volo.Abp.Guids;
+using Volo.Abp.MultiTenancy;
 using IdentityUser = Volo.Abp.Identity.IdentityUser;
 
 namespace H.Account.Application;
@@ -22,17 +23,20 @@ public class AccountAppService : ApplicationService, IAccountAppService
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IConfiguration _configuration;
     private readonly IGuidGenerator _guidGenerator;
+    private readonly ICurrentTenant _currentTenant;
 
     public AccountAppService(
         IdentityUserManager userManager,
         IHttpContextAccessor httpContextAccessor,
         IConfiguration configuration,
-        IGuidGenerator guidGenerator)
+        IGuidGenerator guidGenerator,
+        ICurrentTenant currentTenant)
     {
         _userManager = userManager;
         _httpContextAccessor = httpContextAccessor;
         _configuration = configuration;
         _guidGenerator = guidGenerator;
+        _currentTenant = currentTenant;
     }
 
     public async Task<AuthResponseDto> RegisterAsync(RegisterRequestDto request)
@@ -112,18 +116,22 @@ public class AccountAppService : ApplicationService, IAccountAppService
         // 自动判断输入格式
         var loginType = DetectLoginType(request.Account);
 
-        switch (loginType)
+        // 登录时使用 Host 上下文，跨租户查找用户
+        using (_currentTenant.Change(null))
         {
-            case LoginType.Email:
-                user = await _userManager.FindByEmailAsync(request.Account);
-                break;
-            case LoginType.PhoneNumber:
-                var allUsers = await _userManager.Users.ToListAsync();
-                user = allUsers.FirstOrDefault(u => u.PhoneNumber == request.Account);
-                break;
-            default:
-                user = await _userManager.FindByNameAsync(request.Account);
-                break;
+            switch (loginType)
+            {
+                case LoginType.Email:
+                    user = await _userManager.FindByEmailAsync(request.Account);
+                    break;
+                case LoginType.PhoneNumber:
+                    var allUsers = await _userManager.Users.ToListAsync();
+                    user = allUsers.FirstOrDefault(u => u.PhoneNumber == request.Account);
+                    break;
+                default:
+                    user = await _userManager.FindByNameAsync(request.Account);
+                    break;
+            }
         }
 
         if (user == null)

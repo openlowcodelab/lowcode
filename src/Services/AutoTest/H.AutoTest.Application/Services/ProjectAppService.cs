@@ -2,27 +2,25 @@ using H.AutoTest.Application.Contracts;
 using Microsoft.Extensions.Configuration;
 using System.Linq;
 using System.Text.Json;
-using Volo.Abp.Application.Services;
 
 namespace H.AutoTest.Application;
 
 /// <summary>
 /// 项目服务
 /// </summary>
-public class ProjectAppService : ApplicationService, IProjectAppService
+public class ProjectAppService : AutoTestAppServiceBase, IProjectAppService
 {
     private readonly ProjectEnvironmentAppService _environmentService;
-    private readonly string _dataPath;
     
     public ProjectAppService(IConfiguration configuration, ProjectEnvironmentAppService environmentService)
+        : base(configuration)
     {
         _environmentService = environmentService;
-        _dataPath = configuration["DataPath"] ?? "data";
     }
     
     public async Task<List<ProjectDto>> GetAllAsync()
     {
-        var filePath = Path.Combine(_dataPath, "projects.json");
+        var filePath = Path.Combine(GetTenantDataPath(), "projects.json");
         if (!File.Exists(filePath))
         {
             return new List<ProjectDto>();
@@ -81,7 +79,7 @@ public class ProjectAppService : ApplicationService, IProjectAppService
                 await SaveAsync(projects);
                 
                 // 删除项目相关的数据文件夹
-                var projectDataPath = Path.Combine(_dataPath, id);
+                var projectDataPath = Path.Combine(GetTenantDataPath(), id);
                 if (Directory.Exists(projectDataPath))
                 {
                     Directory.Delete(projectDataPath, true);
@@ -116,7 +114,7 @@ public class ProjectAppService : ApplicationService, IProjectAppService
     
     private async Task SaveAsync(List<ProjectDto> projects)
     {
-        var filePath = Path.Combine(_dataPath, "projects.json");
+        var filePath = Path.Combine(GetTenantDataPath(), "projects.json");
         var directoryPath = Path.GetDirectoryName(filePath);
         
         if (!string.IsNullOrEmpty(directoryPath) && !Directory.Exists(directoryPath))

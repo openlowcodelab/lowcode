@@ -1,9 +1,11 @@
+using Volo.Abp.MultiTenancy;
+
 namespace H.Organization.EntityFrameworkCore;
 
 /// <summary>
 /// 角色
 /// </summary>
-public class RoleEntity
+public class RoleEntity : IMultiTenant
 {
     /// <summary>
     /// 角色ID
@@ -66,6 +68,11 @@ public class RoleEntity
     public string? Remark { get; set; }
 
     /// <summary>
+    /// 租户 ID（多租户）
+    /// </summary>
+    public Guid? TenantId { get; set; }
+
+    /// <summary>
     /// 角色成员
     /// </summary>
     public virtual ICollection<RoleMember> RoleMembers { get; set; } = new List<RoleMember>();
@@ -74,7 +81,7 @@ public class RoleEntity
 /// <summary>
 /// 角色成员关联
 /// </summary>
-public class RoleMember
+public class RoleMember : IMultiTenant
 {
     /// <summary>
     /// ID
@@ -95,6 +102,11 @@ public class RoleMember
     /// 创建时间
     /// </summary>
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    /// <summary>
+    /// 租户 ID（多租户）
+    /// </summary>
+    public Guid? TenantId { get; set; }
 
     /// <summary>
     /// 角色

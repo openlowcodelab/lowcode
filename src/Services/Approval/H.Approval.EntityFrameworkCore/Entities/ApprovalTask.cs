@@ -1,12 +1,13 @@
 using System;
 using Volo.Abp.Domain.Entities;
+using Volo.Abp.MultiTenancy;
 
 namespace H.Approval.EntityFrameworkCore;
 
 /// <summary>
 /// 审批任务实体
 /// </summary>
-public class ApprovalTask : Entity<string>
+public class ApprovalTask : Entity<string>, IMultiTenant
 {
     protected ApprovalTask()
     {
@@ -65,4 +66,9 @@ public class ApprovalTask : Entity<string>
     /// 审批意见
     /// </summary>
     public virtual string? Comment { get; set; }
+    
+    /// <summary>
+    /// 租户 ID（多租户）
+    /// </summary>
+    public virtual Guid? TenantId { get; set; }
 }

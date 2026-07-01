@@ -65,6 +65,13 @@
                 @if (showDropdown)
                 {
                     <div class="dropdown-menu">
+                        @if (!string.IsNullOrEmpty(EnterpriseName))
+                        {
+                            <div class="dropdown-item" @onclick="GoToEnterpriseSelect">
+                                <span>🏭</span> @EnterpriseName (切换企业)
+                            </div>
+                            <div style="margin: 4px 0; border-top: 1px solid #f0f0f0;"></div>
+                        }
                         <div class="dropdown-item" @onclick="GoToProfile">
                             <span>👤</span> 账号信息
                         </div>
@@ -135,6 +142,12 @@
     public string ProfileUrl { get; set; } = "/account/users";
 
     /// <summary>
+    /// 当前企业名称
+    /// </summary>
+    [Parameter]
+    public string? EnterpriseName { get; set; }
+
+    /// <summary>
     /// 退出登录回调（由外部处理）
     /// </summary>
     [Parameter]
@@ -157,5 +170,11 @@
     {
         var returnUrl = Uri.EscapeDataString(Navigation.Uri);
         Navigation.NavigateTo($"{LoginUrl}?returnUrl={returnUrl}");
+    }
+
+    private void GoToEnterpriseSelect()
+    {
+        showDropdown = false;
+        Navigation.NavigateTo("/enterprise/select", forceLoad: true);
     }
 }

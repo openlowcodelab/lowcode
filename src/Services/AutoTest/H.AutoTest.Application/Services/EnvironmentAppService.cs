@@ -1,21 +1,19 @@
 using H.AutoTest.Application.Contracts;
 using Microsoft.Extensions.Configuration;
 using System.Text.Json;
-using Volo.Abp.Application.Services;
 
 namespace H.AutoTest.Application;
 
 /// <summary>
 /// 测试环境服务
 /// </summary>
-public class EnvironmentAppService : ApplicationService, IEnvironmentAppService
+public class EnvironmentAppService : AutoTestAppServiceBase, IEnvironmentAppService
 {
-    private readonly string _dataPath;
     private readonly ProjectServiceConfigAppService _projectServiceConfigService;
     
     public EnvironmentAppService(IConfiguration configuration, ProjectServiceConfigAppService projectServiceConfigService)
+        : base(configuration)
     {
-        _dataPath = configuration["DataPath"] ?? "data";
         _projectServiceConfigService = projectServiceConfigService;
     }
 
@@ -27,7 +25,7 @@ public class EnvironmentAppService : ApplicationService, IEnvironmentAppService
         var environments = new List<EnvironmentDto>();
 
         // 首先尝试读取 environments.json 文件
-        var filePath = Path.Combine(_dataPath, projectId, "project-environments.json");
+        var filePath = Path.Combine(GetTenantDataPath(), projectId, "project-environments.json");
 
         if (File.Exists(filePath))
         {
@@ -153,7 +151,7 @@ public class EnvironmentAppService : ApplicationService, IEnvironmentAppService
     /// </summary>
     private async Task SaveAsync(string projectId, List<EnvironmentDto> environments)
     {
-        var directoryPath = Path.Combine(_dataPath, projectId);
+        var directoryPath = Path.Combine(GetTenantDataPath(), projectId);
         if (!Directory.Exists(directoryPath))
         {
             Directory.CreateDirectory(directoryPath);

@@ -5,6 +5,7 @@
 @inject HttpClient HttpClient
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
+@inject IAccountAppService AccountAppService
 
 <div class="auth-form">
 
@@ -137,18 +138,19 @@
 
         try
         {
-            var response = await HttpClient.PostAsJsonAsync("/api/app/account/login", loginModel);
+            var result = await AccountAppService.LoginAsync(loginModel);
 
-            if (response.IsSuccessStatusCode)
+            if (result.Success)
             {
-                successMessage = "登录成功！正在跳转到首页...";
+                successMessage = "登录成功！正在跳转到企业选择...";
                 errorMessage = string.Empty;
-                Navigation.NavigateTo(returnUrl, forceLoad: true);
+                // 登录成功后跳转到企业选择页面
+                var targetUrl = (returnUrl == "/" || string.IsNullOrWhiteSpace(returnUrl)) ? "/enterprise/select" : returnUrl;
+                Navigation.NavigateTo(targetUrl, forceLoad: true);
             }
             else
             {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                errorMessage = "登录失败：" + (response.ReasonPhrase ?? "未知错误");
+                errorMessage = "登录失败：" + result.Message;
                 successMessage = string.Empty;
             }
         }
@@ -182,9 +184,11 @@
 
             if (response.IsSuccessStatusCode)
             {
-                successMessage = "登录成功！正在跳转到首页...";
+                successMessage = "登录成功！正在跳转到企业选择...";
                 errorMessage = string.Empty;
-                Navigation.NavigateTo(returnUrl, forceLoad: true);
+                // 登录成功后跳转到企业选择页面
+                var targetUrl = (returnUrl == "/" || string.IsNullOrWhiteSpace(returnUrl)) ? "/enterprise/select" : returnUrl;
+                Navigation.NavigateTo(targetUrl, forceLoad: true);
             }
             else
             {

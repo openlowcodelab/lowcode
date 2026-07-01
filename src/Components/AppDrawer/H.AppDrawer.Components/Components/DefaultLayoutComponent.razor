@@ -15,6 +15,7 @@
         IsLoggedIn="@_isLoggedIn"
         LoginUrl="@LoginUrl"
         ProfileUrl="/account/profile"
+        EnterpriseName="@_enterpriseName"
         OnLogout="HandleLogout">
         @if (MenuPosition == MenuPosition.Top)
         {
@@ -88,6 +89,7 @@
     private bool _isLoggedIn;
     private bool _authChecked;
     private string _userName = "用户";
+    private string? _enterpriseName;
     private AppDrawer? appDrawer;
 
     /// <summary>
@@ -105,6 +107,9 @@
             var name = httpContextAccessor?.HttpContext?.User?.Identity?.Name;
             if (!string.IsNullOrEmpty(name))
                 _userName = name;
+
+            // 从 Claims 中读取当前企业信息
+            _enterpriseName = httpContextAccessor?.HttpContext?.User?.FindFirst("EnterpriseName")?.Value;
 
             _isLoggedIn = true;
             _authChecked = true;
@@ -129,18 +134,58 @@
             {
                 _userName = result.userName;
             }
+
+            // 如果服务端预渲染已设置 _enterpriseName，保留它
+            // 否则从 Enterprise API 获取当前企业信息
+            if (_isLoggedIn && string.IsNullOrEmpty(_enterpriseName))
+            {
+                _enterpriseName = await FetchCurrentEnterpriseNameAsync();
+            }
         }
 
         _authChecked = true;
 
-        // 强制认证模式下，未登录跳转登录页（使用 Blazor 导航，避免 forceLoad 中断 WASM 渲染）
+        // 强制认证模式下，未登录跳转登录页
         if (AuthMode == AuthenticationMode.Required && !_isLoggedIn)
         {
             var returnUrl = Uri.EscapeDataString(NavigationManager.Uri);
             NavigationManager.NavigateTo($"{LoginUrl}?returnUrl={returnUrl}");
         }
+        // 已登录但没有 TenantId，且不在企业管理页面 → 重定向到企业选择
+        else if (_isLoggedIn && string.IsNullOrEmpty(_enterpriseName))
+        {
+            var currentPath = NavigationManager.ToAbsoluteUri(NavigationManager.Uri).AbsolutePath;
+            if (!currentPath.StartsWith("/enterprise") && !currentPath.StartsWith("/account/"))
+            {
+                NavigationManager.NavigateTo("/enterprise/select", forceLoad: true);
+            }
+        }
 
         StateHasChanged();
+    }
+
+    private async Task<string?> FetchCurrentEnterpriseNameAsync()
+    {
+        try
+        {
+            var response = await HttpClient.GetAsync("/api/app/enterprise/current-enterprise");
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            var content = await response.Content.ReadAsStringAsync();
+            if (string.IsNullOrEmpty(content) || content == "null")
+                return null;
+
+            using var doc = System.Text.Json.JsonDocument.Parse(content);
+            if (doc.RootElement.TryGetProperty("name", out var nameProp))
+                return nameProp.GetString();
+
+            return null;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private bool IsAuthenticatedViaHttpContext()

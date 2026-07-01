@@ -1,9 +1,11 @@
+using Volo.Abp.MultiTenancy;
+
 namespace H.Organization.EntityFrameworkCore;
 
 /// <summary>
 /// 部门/组织
 /// </summary>
-public class OrganizationEntity
+public class OrganizationEntity : IMultiTenant
 {
     /// <summary>
     /// 部门ID
@@ -74,6 +76,11 @@ public class OrganizationEntity
     /// 备注
     /// </summary>
     public string? Remark { get; set; }
+
+    /// <summary>
+    /// 租户 ID（多租户）
+    /// </summary>
+    public Guid? TenantId { get; set; }
 
     /// <summary>
     /// 父部门

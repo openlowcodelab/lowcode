@@ -6,20 +6,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
-using Volo.Abp.Application.Services;
 
 namespace H.AutoTest.Application;
 
 /// <summary>
 /// 测试用例分类服务
 /// </summary>
-public class ProjectCaseCategoryAppService : ApplicationService, IProjectCaseCategoryAppService
+public class ProjectCaseCategoryAppService : AutoTestAppServiceBase, IProjectCaseCategoryAppService
 {
-    private readonly string _dataPath;
-
     public ProjectCaseCategoryAppService(IConfiguration configuration)
+        : base(configuration)
     {
-        _dataPath = configuration["DataPath"]!;
     }
 
     /// <summary>
@@ -29,10 +26,11 @@ public class ProjectCaseCategoryAppService : ApplicationService, IProjectCaseCat
     {
         var allCategories = new List<ProjectCaseCategory>();
         
-        if (!Directory.Exists(_dataPath))
+        var dataPath = GetTenantDataPath();
+        if (!Directory.Exists(dataPath))
             return allCategories;
             
-        var projectDirs = Directory.GetDirectories(_dataPath)
+        var projectDirs = Directory.GetDirectories(dataPath)
             .Where(d => Directory.Exists(d) && !Path.GetFileName(d).StartsWith("."))
             .ToList();
             
@@ -51,7 +49,7 @@ public class ProjectCaseCategoryAppService : ApplicationService, IProjectCaseCat
     /// </summary>
     public async Task<List<ProjectCaseCategory>> GetByProjectIdAsync(string projectId)
     {
-        var filePath = Path.Combine(_dataPath, projectId, "project-case-categories.json");
+        var filePath = Path.Combine(GetTenantDataPath(), projectId, "project-case-categories.json");
         
         if (!File.Exists(filePath))
         {
@@ -118,7 +116,7 @@ public class ProjectCaseCategoryAppService : ApplicationService, IProjectCaseCat
 
     private async Task SaveAsync(string projectId, List<ProjectCaseCategory> categories)
     {
-        var dirPath = Path.Combine(_dataPath, projectId);
+        var dirPath = Path.Combine(GetTenantDataPath(), projectId);
         Directory.CreateDirectory(dirPath);
 
         var filePath = Path.Combine(dirPath, "project-case-categories.json");

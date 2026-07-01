@@ -4,17 +4,14 @@ using H.Util.Ids;
 using Microsoft.Extensions.Configuration;
 using System.Linq;
 using System.Text.Json;
-using Volo.Abp.Application.Services;
 
 namespace H.AutoTest.Application;
 
-public class ProjectCaseAppService : ApplicationService, IProjectCaseAppService
+public class ProjectCaseAppService : AutoTestAppServiceBase, IProjectCaseAppService
 {
-    private readonly string _dataPath;
-    
     public ProjectCaseAppService(IConfiguration configuration)
+        : base(configuration)
     {
-        _dataPath = configuration["DataPath"]!;        
     }
     
     /// <summary>
@@ -24,10 +21,11 @@ public class ProjectCaseAppService : ApplicationService, IProjectCaseAppService
     {
         var allProjectCases = new List<ProjectCaseDto>();
         
-        if (!Directory.Exists(_dataPath))
+        var dataPath = GetTenantDataPath();
+        if (!Directory.Exists(dataPath))
             return allProjectCases;
             
-        var projectDirs = Directory.GetDirectories(_dataPath)
+        var projectDirs = Directory.GetDirectories(dataPath)
             .Where(d => Directory.Exists(d) && !Path.GetFileName(d).StartsWith("."))
             .ToList();
             
@@ -46,7 +44,7 @@ public class ProjectCaseAppService : ApplicationService, IProjectCaseAppService
     /// </summary>
     public async Task<List<ProjectCaseDto>> GetByProjectIdAsync(string projectId)
     {
-        var filePath = Path.Combine(_dataPath, projectId, "project-cases.json");
+        var filePath = Path.Combine(GetTenantDataPath(), projectId, "project-cases.json");
         if (!File.Exists(filePath))
         {
             return new List<ProjectCaseDto>();
@@ -365,7 +363,7 @@ public class ProjectCaseAppService : ApplicationService, IProjectCaseAppService
     
     private async Task SaveAsync(string projectId, List<ProjectCaseDto> projectCases)
     {
-        var dirPath = Path.Combine(_dataPath, projectId);
+        var dirPath = Path.Combine(GetTenantDataPath(), projectId);
         Directory.CreateDirectory(dirPath);
         
         var filePath = Path.Combine(dirPath, "project-cases.json");

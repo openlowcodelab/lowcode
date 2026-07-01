@@ -7,14 +7,13 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
-using Volo.Abp.Application.Services;
 
 namespace H.AutoTest.Application;
 
 /// <summary>
 /// 测试执行引擎
 /// </summary>
-public class TestExecutionEngineAppService : ApplicationService, ITestExecutionEngineAppService
+public class TestExecutionEngineAppService : AutoTestAppServiceBase, ITestExecutionEngineAppService
 {    
     private readonly HttpClient _httpClient;
     private readonly IExecutionRecordAppService _executionRecordService;
@@ -22,7 +21,6 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
     private readonly IProjectCaseAppService _projectCaseService;
     private readonly ITestExecutionEventNotifier _eventNotifier;
     private readonly Dictionary<string, string> _variables;
-    private readonly string _dataPath;
     
     public TestExecutionEngineAppService(
         HttpClient httpClient,
@@ -31,6 +29,7 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
         IProjectCaseAppService projectCaseService,
         ITestExecutionEventNotifier eventNotifier,
         IConfiguration configuration)
+        : base(configuration)
     {
         _httpClient = httpClient;
         _executionRecordService = executionRecordService;
@@ -38,8 +37,6 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
         _projectCaseService = projectCaseService;
         _eventNotifier = eventNotifier;
         _variables = new Dictionary<string, string>();
-
-        _dataPath = configuration["DataPath"] ?? "data";
     }
     
     /// <summary>
@@ -471,7 +468,7 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
                         stepRecord.Logs.Add($"元素操作失败: {ex.Message}");
                         // 尝试截图记录当前页面状态
                         try {
-                            var screenshotDir = Path.Combine(_dataPath, testCase.ProjectId, "screenshots", testCase.Id);
+                            var screenshotDir = Path.Combine(GetTenantDataPath(), testCase.ProjectId, "screenshots", testCase.Id);
                             if (!Directory.Exists(screenshotDir))
                             {
                                 Directory.CreateDirectory(screenshotDir);
@@ -517,7 +514,7 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
                         stepRecord.Logs.Add($"元素点击失败: {ex.Message}");
                         // 尝试截图记录当前页面状态
                         try {
-                            var screenshotDir = Path.Combine(_dataPath, testCase.ProjectId, "screenshots", testCase.Id);
+                            var screenshotDir = Path.Combine(GetTenantDataPath(), testCase.ProjectId, "screenshots", testCase.Id);
                             if (!Directory.Exists(screenshotDir))
                             {
                                 Directory.CreateDirectory(screenshotDir);
@@ -572,7 +569,7 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
                         stepRecord.Logs.Add($"断言失败: {ex.Message}");
                         // 尝试截图记录当前页面状态
                         try {
-                            var screenshotDir = Path.Combine(_dataPath, testCase.ProjectId, "screenshots", testCase.Id);
+                            var screenshotDir = Path.Combine(GetTenantDataPath(), testCase.ProjectId, "screenshots", testCase.Id);
                             if (!Directory.Exists(screenshotDir))
                             {
                                 Directory.CreateDirectory(screenshotDir);
@@ -594,7 +591,7 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
                     break;
 
                 case "screenshot":
-                    var screenshotDir1 = Path.Combine(_dataPath, testCase.ProjectId, "screenshots", testCase.Id);
+                    var screenshotDir1 = Path.Combine(GetTenantDataPath(), testCase.ProjectId, "screenshots", testCase.Id);
                     if (!Directory.Exists(screenshotDir1))
                     {
                         Directory.CreateDirectory(screenshotDir1);
@@ -611,7 +608,7 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
             // 如果需要截图，则执行截图操作
             if (config.TakeScreenshot)
             {
-                var screenshotDir = Path.Combine(_dataPath, testCase.ProjectId, "screenshots", testCase.Id);
+                var screenshotDir = Path.Combine(GetTenantDataPath(), testCase.ProjectId, "screenshots", testCase.Id);
                 if (!Directory.Exists(screenshotDir))
                 {
                     Directory.CreateDirectory(screenshotDir);

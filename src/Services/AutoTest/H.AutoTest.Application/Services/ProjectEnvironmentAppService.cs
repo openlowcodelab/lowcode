@@ -3,17 +3,14 @@ using H.Util.Ids;
 using Microsoft.Extensions.Configuration;
 using System.Linq;
 using System.Text.Json;
-using Volo.Abp.Application.Services;
 
 namespace H.AutoTest.Application;
 
-public class ProjectEnvironmentAppService : ApplicationService, IProjectEnvironmentAppService
+public class ProjectEnvironmentAppService : AutoTestAppServiceBase, IProjectEnvironmentAppService
 {
-    private readonly string _dataPath;
-    
     public ProjectEnvironmentAppService(IConfiguration configuration)
+        : base(configuration)
     {
-        _dataPath = configuration["DataPath"] ?? "data";
     }
     
     /// <summary>
@@ -23,10 +20,11 @@ public class ProjectEnvironmentAppService : ApplicationService, IProjectEnvironm
     {
         var allEnvironments = new List<ProjectEnvironmentDto>();
         
-        if (!Directory.Exists(_dataPath))
+        var dataPath = GetTenantDataPath();
+        if (!Directory.Exists(dataPath))
             return allEnvironments;
             
-        var projectDirs = Directory.GetDirectories(_dataPath)
+        var projectDirs = Directory.GetDirectories(dataPath)
             .Where(d => Directory.Exists(d) && !Path.GetFileName(d).StartsWith("."))
             .ToList();
             
@@ -45,7 +43,7 @@ public class ProjectEnvironmentAppService : ApplicationService, IProjectEnvironm
     /// </summary>
     public async Task<List<ProjectEnvironmentDto>> GetByProjectIdAsync(string projectId)
     {
-        var filePath = Path.Combine(_dataPath, projectId, "project-environments.json");
+        var filePath = Path.Combine(GetTenantDataPath(), projectId, "project-environments.json");
         if (!File.Exists(filePath))
         {
             return new List<ProjectEnvironmentDto>();
@@ -152,7 +150,7 @@ public class ProjectEnvironmentAppService : ApplicationService, IProjectEnvironm
     
     private async Task SaveAsync(string projectId, List<ProjectEnvironmentDto> environments)
     {
-        var dirPath = Path.Combine(_dataPath, projectId);
+        var dirPath = Path.Combine(GetTenantDataPath(), projectId);
         Directory.CreateDirectory(dirPath);
         
         var filePath = Path.Combine(dirPath, "project-environments.json");
