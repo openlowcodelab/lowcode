@@ -1,0 +1,289 @@
+@namespace H.LowCode.PartsDesignEngine
+@inherits LowCodeComponentBase
+
+<div class="attribute-define-group-editor">
+    @if (AttributeDefineGroups != null)
+    {
+        @for (int groupIndex = 0; groupIndex < AttributeDefineGroups.Count(); groupIndex++)
+        {
+            var group = AttributeDefineGroups.ElementAt(groupIndex);
+            var currentGroupIndex = groupIndex;
+            <HCard Title="@group.GroupName" Style="margin-bottom: 16px;">
+                <button class="btn btn-text btn-sm" @onclick="@(() => RemoveGroup(currentGroupIndex))" style="color: red;">删除分组</button>
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 4px; font-weight: 500;">分组名称</label>
+                    <input class="inp" @bind="group.GroupName" placeholder="请输入分组名称" />
+                </div>
+                <div style="margin: 16px 0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-weight: 500;">属性定义</span>
+                        <button class="btn btn-primary btn-sm" @onclick="@(() => AddAttribute(currentGroupIndex))">添加属性</button>
+                    </div>
+                    @if (group.AttributeDefines != null)
+                    {
+                        @for (int attrIndex = 0; attrIndex < group.AttributeDefines.Length; attrIndex++)
+                        {
+                            var attr = group.AttributeDefines[attrIndex];
+                            var currentAttrIndex = attrIndex;
+                            <HCard Style="margin-bottom: 8px;">
+                                <button class="btn btn-text btn-sm" @onclick="@(() => RemoveAttribute(currentGroupIndex, currentAttrIndex))" style="color: red;">删除</button>
+                                <div class="row">
+                                    <div class="col col-12">
+                                        <div style="margin-bottom: 16px;">
+                                            <label style="display: block; margin-bottom: 4px; font-weight: 500;">
+                                                属性名称 <span style="color: #ff4d4f;">*</span>
+                                            </label>
+                                            <input class="inp" @bind="attr.AttributeName" placeholder="如: Text, Value" />
+                                        </div>
+                                    </div>
+                                    <div class="col col-12">
+                                        <div style="margin-bottom: 16px;">
+                                            <label style="display: block; margin-bottom: 4px; font-weight: 500;">
+                                                显示名称 <span style="color: #ff4d4f;">*</span>
+                                            </label>
+                                            <input class="inp" @bind="attr.DisplayName" placeholder="如: 文本内容, 默认值" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col col-8">
+                                        <div style="margin-bottom: 16px;">
+                                            <label style="display: block; margin-bottom: 4px; font-weight: 500;">属性类型</label>
+                                            <input class="inp" @bind="attr.AttributeClrType" placeholder="如: System.String" />
+                                        </div>
+                                    </div>
+                                    <div class="col col-8">
+                                        <div style="margin-bottom: 16px;">
+                                            <label style="display: block; margin-bottom: 4px; font-weight: 500;">控件类型</label>
+                                            <select class="sel" value="@attr.AttributeItemType" @onchange="@(EventCallback.Factory.Create<ChangeEventArgs>(this, e => { if (Enum.TryParse<ComponentAttributeItemTypeEnum>(e.Value?.ToString(), out var v)) attr.AttributeItemType = v; }))">
+                                                @foreach (var val in Enum.GetValues<ComponentAttributeItemTypeEnum>())
+                                                {
+                                                    <option value="@val">@val</option>
+                                                }
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col col-8">
+                                        <div style="margin-bottom: 16px;">
+                                            <label style="display: block; margin-bottom: 4px; font-weight: 500;">是否必填</label>
+                                            <label class="switch"><input type="checkbox" @bind="attr.IsRequired"></label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col col-12">
+                                        <div style="margin-bottom: 16px;">
+                                            <label style="display: block; margin-bottom: 4px; font-weight: 500;">默认值</label>
+                                            <input class="inp" @bind="attr.DefaultValue" placeholder="默认值" />
+                                        </div>
+                                    </div>
+                                    <div class="col col-12">
+                                        <div style="margin-bottom: 16px;">
+                                            <label style="display: block; margin-bottom: 4px; font-weight: 500;">描述</label>
+                                            <input class="inp" @bind="attr.Description" placeholder="属性描述" />
+                                        </div>
+                                    </div>
+                                </div>
+                                @if (attr.AttributeItemType == ComponentAttributeItemTypeEnum.Select || attr.AttributeItemType == ComponentAttributeItemTypeEnum.Radio || attr.AttributeItemType == ComponentAttributeItemTypeEnum.Checkbox)
+                                {
+                                    <div style="margin-bottom: 16px;">
+                                        <label style="display: block; margin-bottom: 4px; font-weight: 500;">选项配置</label>
+                                        <HCard>
+                                            <FixedOptionDataSourceEditor @bind-Value="attr.Options" />
+                                        </HCard>
+                                    </div>
+                                }
+                                @if (attr.AttributeItemType == ComponentAttributeItemTypeEnum.Table)
+                                {
+                                    <div style="margin-bottom: 16px;">
+                                        <label style="display: block; margin-bottom: 4px; font-weight: 500;">数组配置</label>
+                                        <HCard>
+                                            <div class="row">
+                                                <div class="col col-12">
+                                                    <div style="margin-bottom: 16px;">
+                                                        <label style="display: block; margin-bottom: 4px; font-weight: 500;">数组项类型</label>
+                                                        <select class="sel" value="@GetArrayItemType(attr)" @onchange="@(EventCallback.Factory.Create<ChangeEventArgs>(this, e => SetArrayItemType(attr, e.Value?.ToString())))">
+                                                            <option value="string">字符串</option>
+                                                            <option value="int">整数</option>
+                                                            <option value="bool">布尔值</option>
+                                                            <option value="decimal">小数</option>
+                                                            <option value="object">对象</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="col col-12">
+                                                    <div style="margin-bottom: 16px;">
+                                                        <label style="display: block; margin-bottom: 4px; font-weight: 500;">最大项数</label>
+                                                        <input type="number" class="inp" value="@GetMaxItems(attr)" @onchange="@(EventCallback.Factory.Create<ChangeEventArgs>(this, e => SetMaxItems(attr, int.TryParse(e.Value?.ToString(), out var v) ? v : 0)))" min="0" placeholder="0表示无限制" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            @if (GetArrayItemType(attr) == "object")
+                                            {
+                                                <div style="margin-bottom: 16px;">
+                                                    <label style="display: block; margin-bottom: 4px; font-weight: 500;">对象结构定义（JSON Schema）</label>
+                                                    <textarea class="ta" value="@GetObjectSchema(attr)" @onchange="@(EventCallback.Factory.Create<ChangeEventArgs>(this, e => SetObjectSchema(attr, e.Value?.ToString())))" rows="5" placeholder="请输入对象的JSON Schema定义"></textarea>
+                                                </div>
+                                            }
+                                        </HCard>
+                                    </div>
+                                }
+
+                            </HCard>
+                        }
+                    }
+                </div>
+            </HCard>
+        }
+    }
+    <button class="btn btn-dashed btn-block" @onclick="@AddGroup">添加属性分组</button>
+</div>
+
+@code {
+    [Parameter]
+    public IEnumerable<ComponentPartsAttributeDefineGroupSchema> AttributeDefineGroups { get; set; }
+    
+    [Parameter]
+    public EventCallback<IEnumerable<ComponentPartsAttributeDefineGroupSchema>> AttributeDefineGroupsChanged { get; set; }
+
+    private List<ComponentPartsAttributeDefineGroupSchema> _groups = new();
+
+    protected override void OnParametersSet()
+    {
+        if (AttributeDefineGroups != null)
+        {
+            _groups = AttributeDefineGroups.ToList();
+        }
+        else
+        {
+            _groups = new List<ComponentPartsAttributeDefineGroupSchema>();
+        }
+    }
+
+    private async Task AddGroup()
+    {
+        _groups.Add(new ComponentPartsAttributeDefineGroupSchema
+        {
+            GroupName = $"分组 {_groups.Count + 1}",
+            AttributeDefines = new ComponentPartsAttributeDefineSchema[0]
+        });
+        
+        await NotifyChange();
+    }
+
+    private async Task RemoveGroup(int groupIndex)
+    {
+        if (groupIndex >= 0 && groupIndex < _groups.Count)
+        {
+            _groups.RemoveAt(groupIndex);
+            await NotifyChange();
+        }
+    }
+
+    private async Task AddAttribute(int groupIndex)
+    {
+        if (groupIndex >= 0 && groupIndex < _groups.Count)
+        {
+            var group = _groups[groupIndex];
+            var attributes = group.AttributeDefines?.ToList() ?? new List<ComponentPartsAttributeDefineSchema>();
+            
+            attributes.Add(new ComponentPartsAttributeDefineSchema
+            {
+                AttributeName = "",
+                DisplayName = "",
+                AttributeClrType = "System.String",
+                AttributeItemType = ComponentAttributeItemTypeEnum.Input,
+                IsRequired = false
+            });
+            
+            group.AttributeDefines = attributes.ToArray();
+            await NotifyChange();
+        }
+    }
+
+    private async Task RemoveAttribute(int groupIndex, int attrIndex)
+    {
+        if (groupIndex >= 0 && groupIndex < _groups.Count)
+        {
+            var group = _groups[groupIndex];
+            if (group.AttributeDefines != null && attrIndex >= 0 && attrIndex < group.AttributeDefines.Length)
+            {
+                var attributes = group.AttributeDefines.ToList();
+                attributes.RemoveAt(attrIndex);
+                group.AttributeDefines = attributes.ToArray();
+                await NotifyChange();
+            }
+        }
+    }
+
+    private async Task NotifyChange()
+    {
+        await AttributeDefineGroupsChanged.InvokeAsync(_groups);
+        StateHasChanged();
+    }
+
+    #region 数组配置相关方法
+
+    private string GetArrayItemType(ComponentPartsAttributeDefineSchema attr)
+    {
+        if (attr.Options == null)
+            attr.Options = new Dictionary<string, object>();
+            
+        return attr.Options.ContainsKey("arrayItemType") ? attr.Options["arrayItemType"]?.ToString() : "string";
+    }
+
+    private void SetArrayItemType(ComponentPartsAttributeDefineSchema attr, string itemType)
+    {
+        if (attr.Options == null)
+            attr.Options = new Dictionary<string, object>();
+            
+        attr.Options["arrayItemType"] = itemType;
+    }
+
+    private int GetMaxItems(ComponentPartsAttributeDefineSchema attr)
+    {
+        if (attr.Options == null)
+            attr.Options = new Dictionary<string, object>();
+            
+        if (attr.Options.ContainsKey("maxItems") && int.TryParse(attr.Options["maxItems"]?.ToString(), out int maxItems))
+        {
+            return maxItems;
+        }
+        return 0;
+    }
+
+    private void SetMaxItems(ComponentPartsAttributeDefineSchema attr, int maxItems)
+    {
+        if (attr.Options == null)
+            attr.Options = new Dictionary<string, object>();
+            
+        attr.Options["maxItems"] = maxItems;
+    }
+
+    private string GetObjectSchema(ComponentPartsAttributeDefineSchema attr)
+    {
+        if (attr.Options == null)
+            attr.Options = new Dictionary<string, object>();
+            
+        return attr.Options.ContainsKey("objectSchema") ? attr.Options["objectSchema"]?.ToString() : "";
+    }
+
+    private void SetObjectSchema(ComponentPartsAttributeDefineSchema attr, string schema)
+    {
+        if (attr.Options == null)
+            attr.Options = new Dictionary<string, object>();
+            
+        attr.Options["objectSchema"] = schema ?? "";
+    }
+
+    #endregion
+}
+
+<style>
+    .attribute-define-group-editor .hcard {
+        border: 1px solid #d9d9d9;
+    }
+    .attribute-define-group-editor .hcard-body {
+        padding: 12px;
+    }
+</style>

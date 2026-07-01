@@ -1,0 +1,666 @@
+@page "/assistant/knowledge"
+@layout ChatLayout
+@inject IKnowledgeDocumentAppService KnowledgeDocumentAppService
+@inject IMemoryAppService MemoryAppService
+@inject IJSRuntime JS
+
+<PageTitle>知识中心 - Agent 助手</PageTitle>
+
+<div class="knowledge-main-panel">
+    @* Tab Bar *@
+    <div class="knowledge-tab-bar">
+        <button class="knowledge-tab @(activeTab == "knowledge" ? "active" : "")"
+                @onclick="@(() => SwitchTab("knowledge"))">
+            知识库
+        </button>
+        <button class="knowledge-tab @(activeTab == "memory" ? "active" : "")"
+                @onclick="@(() => SwitchTab("memory"))">
+            记忆
+        </button>
+    </div>
+
+    <div class="knowledge-content">
+        @if (activeTab == "knowledge")
+        {
+            @* Knowledge Base Tab *@
+            <div class="knowledge-tree-panel">
+                <div class="tree-toolbar">
+                    <button class="btn-sm" @onclick="@(() => CreateRootNode("Directory"))" title="新建目录">
+                        + 目录
+                    </button>
+                    <button class="btn-sm" @onclick="@(() => CreateRootNode("Document"))" title="新建文档">
+                        + 文档
+                    </button>
+                </div>
+                <div class="tree-scroll-area">
+                    @if (knowledgeTree.Any())
+                    {
+                        <KnowledgeTree Nodes="knowledgeTree"
+                                       SelectedNodeId="selectedDocId"
+                                       OnNodeSelected="OnDocNodeSelected"
+                                       OnCreateNode="OnCreateChildNode"
+                                       OnCreateDirectory="OnCreateChildDirectory"
+                                       OnDeleteNode="OnDeleteDocNode"
+                                       OnRenameNode="OnRenameDocNode"
+                                       IsReadOnly="false" />
+                    }
+                    else
+                    {
+                        <div class="tree-empty">
+                            <div>暂无文档</div>
+                            <div class="tree-empty-hint">点击上方按钮创建</div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="knowledge-content-panel">
+                <ContentPanel Title="@selectedDocTitle"
+                              Content="@selectedDocContent"
+                              AllowEdit="@selectedDocIsDocument"
+                              OnSave="OnSaveDocument"
+                              OnTitleChanged="OnDocTitleChanged" />
+            </div>
+        }
+        else
+        {
+            @* Memory Tab *@
+            <div class="knowledge-tree-panel">
+                <div class="tree-toolbar">
+                    <button class="btn-sm" @onclick="@(() => CreateMemoryRootNode("Directory"))" title="新建目录">
+                        + 目录
+                    </button>
+                    <button class="btn-sm" @onclick="@(() => CreateMemoryRootNode("Document"))" title="新建记忆">
+                        + 记忆
+                    </button>
+                </div>
+                <div class="tree-scroll-area">
+                    @if (memoryTree.Any())
+                    {
+                        <KnowledgeTree Nodes="memoryTree"
+                                       SelectedNodeId="selectedMemId"
+                                       OnNodeSelected="OnMemNodeSelected"
+                                       OnCreateNode="OnCreateMemoryChildNode"
+                                       OnCreateDirectory="OnCreateMemoryChildDirectory"
+                                       OnDeleteNode="OnDeleteMemory"
+                                       OnRenameNode="OnRenameMemory"
+                                       IsReadOnly="false" />
+                    }
+                    else
+                    {
+                        <div class="tree-empty">
+                            <div>暂无记忆</div>
+                            <div class="tree-empty-hint">对话后将自动提取</div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="knowledge-content-panel">
+                <ContentPanel Title="@selectedMemTitle"
+                              Content="@selectedMemContent"
+                              AllowEdit="@selectedMemIsDocument"
+                              OnSave="OnSaveMemory"
+                              OnTitleChanged="OnMemTitleChanged" />
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private string activeTab = "knowledge";
+
+    // Knowledge Base state
+    private List<KnowledgeNodeDto> knowledgeTree = new();
+    private Guid? selectedDocId;
+    private string selectedDocTitle = string.Empty;
+    private string? selectedDocContent;
+    private bool selectedDocIsDocument;
+    private Dictionary<Guid, KnowledgeNodeDto> docFlatMap = new();
+
+    // Memory state
+    private List<KnowledgeNodeDto> memoryTree = new();
+    private Guid? selectedMemId;
+    private string selectedMemTitle = string.Empty;
+    private string? selectedMemContent;
+    private bool selectedMemIsDocument;
+    private Dictionary<Guid, KnowledgeNodeDto> memFlatMap = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadKnowledgeTree();
+        await LoadMemories();
+    }
+
+    private void SwitchTab(string tab)
+    {
+        activeTab = tab;
+    }
+
+    #region Knowledge Base
+
+    private async Task LoadKnowledgeTree()
+    {
+        try
+        {
+            knowledgeTree = await KnowledgeDocumentAppService.GetTreeAsync();
+            docFlatMap.Clear();
+            BuildDocFlatMap(knowledgeTree);
+        }
+        catch (Exception ex)
+        {
+            await ShowToast($"加载知识库失败: {ex.Message}", "error");
+        }
+    }
+
+    private void BuildDocFlatMap(List<KnowledgeNodeDto> nodes)
+    {
+        foreach (var node in nodes)
+        {
+            docFlatMap[node.Id] = node;
+            if (node.Children != null)
+            {
+                BuildDocFlatMap(node.Children);
+            }
+        }
+    }
+
+    private async Task OnDocNodeSelected(Guid nodeId)
+    {
+        selectedDocId = nodeId;
+        if (docFlatMap.TryGetValue(nodeId, out var node))
+        {
+            selectedDocTitle = node.Title;
+            selectedDocIsDocument = node.NodeType == "Document";
+
+            if (selectedDocIsDocument)
+            {
+                // Load document content separately
+                try
+                {
+                    var doc = await KnowledgeDocumentAppService.GetDocumentAsync(nodeId);
+                    selectedDocContent = doc?.Content;
+                }
+                catch
+                {
+                    selectedDocContent = null;
+                }
+            }
+            else
+            {
+                selectedDocContent = null;
+            }
+        }
+    }
+
+    private async Task CreateRootNode(string nodeType)
+    {
+        try
+        {
+            var title = nodeType == "Directory" ? "新建目录" : "新建文档";
+            await KnowledgeDocumentAppService.CreateNodeAsync(new CreateKnowledgeNodeDto
+            {
+                Title = title,
+                NodeType = nodeType
+            });
+            await LoadKnowledgeTree();
+        }
+        catch (Exception ex)
+        {
+            await ShowToast($"创建失败: {ex.Message}", "error");
+        }
+    }
+
+    private async Task OnCreateChildNode(Guid? parentId)
+    {
+        try
+        {
+            await KnowledgeDocumentAppService.CreateNodeAsync(new CreateKnowledgeNodeDto
+            {
+                ParentId = parentId,
+                Title = "新建文档",
+                NodeType = "Document"
+            });
+            await LoadKnowledgeTree();
+        }
+        catch (Exception ex)
+        {
+            await ShowToast($"创建失败: {ex.Message}", "error");
+        }
+    }
+
+    private async Task OnCreateChildDirectory(Guid parentId)
+    {
+        try
+        {
+            await KnowledgeDocumentAppService.CreateNodeAsync(new CreateKnowledgeNodeDto
+            {
+                ParentId = parentId,
+                Title = "新建子目录",
+                NodeType = "Directory"
+            });
+            await LoadKnowledgeTree();
+        }
+        catch (Exception ex)
+        {
+            await ShowToast($"创建失败: {ex.Message}", "error");
+        }
+    }
+
+    private async Task OnDeleteDocNode(Guid nodeId)
+    {
+        try
+        {
+            await KnowledgeDocumentAppService.DeleteNodeAsync(nodeId);
+            if (selectedDocId == nodeId)
+            {
+                selectedDocId = null;
+                selectedDocTitle = string.Empty;
+                selectedDocContent = null;
+                selectedDocIsDocument = false;
+            }
+            await LoadKnowledgeTree();
+            await ShowToast("已删除", "success");
+        }
+        catch (Exception ex)
+        {
+            await ShowToast($"删除失败: {ex.Message}", "error");
+        }
+    }
+
+    private async Task OnRenameDocNode((Guid Id, string NewTitle) args)
+    {
+        try
+        {
+            if (docFlatMap.TryGetValue(args.Id, out var node))
+            {
+                await KnowledgeDocumentAppService.UpdateNodeAsync(args.Id, new UpdateKnowledgeNodeDto
+                {
+                    Title = args.NewTitle,
+                    SortOrder = node.SortOrder
+                });
+                await LoadKnowledgeTree();
+
+                if (selectedDocId == args.Id)
+                {
+                    selectedDocTitle = args.NewTitle;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await ShowToast($"重命名失败: {ex.Message}", "error");
+        }
+    }
+
+    private async Task OnSaveDocument((string title, string content) data)
+    {
+        if (!selectedDocId.HasValue) return;
+        try
+        {
+            // Update node title if changed
+            if (docFlatMap.TryGetValue(selectedDocId.Value, out var node))
+            {
+                if (node.Title != data.title)
+                {
+                    await KnowledgeDocumentAppService.UpdateNodeAsync(selectedDocId.Value, new UpdateKnowledgeNodeDto
+                    {
+                        Title = data.title,
+                        SortOrder = node.SortOrder
+                    });
+                    selectedDocTitle = data.title;
+                }
+            }
+
+            // Save document content separately
+            await KnowledgeDocumentAppService.SaveDocumentAsync(selectedDocId.Value, new SaveKnowledgeDocumentDto
+            {
+                Content = data.content
+            });
+            selectedDocContent = data.content;
+            await LoadKnowledgeTree();
+            await ShowToast("已保存", "success");
+        }
+        catch (Exception ex)
+        {
+            await ShowToast($"保存失败: {ex.Message}", "error");
+        }
+    }
+
+    private async Task OnDocTitleChanged(string newTitle)
+    {
+        if (!selectedDocId.HasValue) return;
+        try
+        {
+            if (docFlatMap.TryGetValue(selectedDocId.Value, out var node))
+            {
+                await KnowledgeDocumentAppService.UpdateNodeAsync(selectedDocId.Value, new UpdateKnowledgeNodeDto
+                {
+                    Title = newTitle,
+                    SortOrder = node.SortOrder
+                });
+                selectedDocTitle = newTitle;
+                await LoadKnowledgeTree();
+            }
+        }
+        catch (Exception ex)
+        {
+            await ShowToast($"重命名失败: {ex.Message}", "error");
+        }
+    }
+
+    #endregion
+
+    #region Memory
+
+    private async Task LoadMemories()
+    {
+        try
+        {
+            memoryTree = await MemoryAppService.GetTreeAsync();
+            memFlatMap.Clear();
+            BuildMemFlatMap(memoryTree);
+        }
+        catch (Exception ex)
+        {
+            await ShowToast($"加载记忆失败: {ex.Message}", "error");
+        }
+    }
+
+    private void BuildMemFlatMap(List<KnowledgeNodeDto> nodes)
+    {
+        foreach (var node in nodes)
+        {
+            memFlatMap[node.Id] = node;
+            if (node.Children != null)
+            {
+                BuildMemFlatMap(node.Children);
+            }
+        }
+    }
+
+    private async Task OnMemNodeSelected(Guid nodeId)
+    {
+        selectedMemId = nodeId;
+        if (memFlatMap.TryGetValue(nodeId, out var node))
+        {
+            selectedMemTitle = node.Title;
+            selectedMemIsDocument = node.NodeType == "Document";
+
+            if (selectedMemIsDocument)
+            {
+                try
+                {
+                    var doc = await MemoryAppService.GetDocumentAsync(nodeId);
+                    selectedMemContent = doc?.Content;
+                }
+                catch
+                {
+                    selectedMemContent = null;
+                }
+            }
+            else
+            {
+                selectedMemContent = null;
+            }
+        }
+    }
+
+    private async Task CreateMemoryRootNode(string nodeType)
+    {
+        try
+        {
+            var title = nodeType == "Directory" ? "新建分类" : "新建记忆";
+            await MemoryAppService.CreateNodeAsync(new CreateKnowledgeNodeDto
+            {
+                Title = title,
+                NodeType = nodeType
+            });
+            await LoadMemories();
+        }
+        catch (Exception ex)
+        {
+            await ShowToast($"创建失败: {ex.Message}", "error");
+        }
+    }
+
+    private async Task OnCreateMemoryChildNode(Guid? parentId)
+    {
+        try
+        {
+            await MemoryAppService.CreateNodeAsync(new CreateKnowledgeNodeDto
+            {
+                ParentId = parentId,
+                Title = "新建记忆",
+                NodeType = "Document"
+            });
+            await LoadMemories();
+        }
+        catch (Exception ex)
+        {
+            await ShowToast($"创建失败: {ex.Message}", "error");
+        }
+    }
+
+    private async Task OnCreateMemoryChildDirectory(Guid parentId)
+    {
+        try
+        {
+            await MemoryAppService.CreateNodeAsync(new CreateKnowledgeNodeDto
+            {
+                ParentId = parentId,
+                Title = "新建子目录",
+                NodeType = "Directory"
+            });
+            await LoadMemories();
+        }
+        catch (Exception ex)
+        {
+            await ShowToast($"创建失败: {ex.Message}", "error");
+        }
+    }
+
+    private async Task OnDeleteMemory(Guid nodeId)
+    {
+        try
+        {
+            await MemoryAppService.DeleteNodeAsync(nodeId);
+            if (selectedMemId == nodeId)
+            {
+                selectedMemId = null;
+                selectedMemTitle = string.Empty;
+                selectedMemContent = null;
+                selectedMemIsDocument = false;
+            }
+            await LoadMemories();
+            await ShowToast("已删除", "success");
+        }
+        catch (Exception ex)
+        {
+            await ShowToast($"删除失败: {ex.Message}", "error");
+        }
+    }
+
+    private async Task OnRenameMemory((Guid Id, string NewTitle) args)
+    {
+        try
+        {
+            if (memFlatMap.TryGetValue(args.Id, out var node))
+            {
+                await MemoryAppService.UpdateNodeAsync(args.Id, new UpdateKnowledgeNodeDto
+                {
+                    Title = args.NewTitle,
+                    SortOrder = node.SortOrder
+                });
+                await LoadMemories();
+
+                if (selectedMemId == args.Id)
+                {
+                    selectedMemTitle = args.NewTitle;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await ShowToast($"重命名失败: {ex.Message}", "error");
+        }
+    }
+
+    private async Task OnSaveMemory((string title, string content) data)
+    {
+        if (!selectedMemId.HasValue) return;
+        try
+        {
+            // Update node title if changed
+            if (memFlatMap.TryGetValue(selectedMemId.Value, out var node))
+            {
+                if (node.Title != data.title)
+                {
+                    await MemoryAppService.UpdateNodeAsync(selectedMemId.Value, new UpdateKnowledgeNodeDto
+                    {
+                        Title = data.title,
+                        SortOrder = node.SortOrder
+                    });
+                    selectedMemTitle = data.title;
+                }
+            }
+
+            // Save document content separately
+            await MemoryAppService.SaveDocumentAsync(selectedMemId.Value, new SaveKnowledgeDocumentDto
+            {
+                Content = data.content
+            });
+            selectedMemContent = data.content;
+            await LoadMemories();
+            await ShowToast("已保存", "success");
+        }
+        catch (Exception ex)
+        {
+            await ShowToast($"保存失败: {ex.Message}", "error");
+        }
+    }
+
+    private async Task OnMemTitleChanged(string newTitle)
+    {
+        if (!selectedMemId.HasValue) return;
+        try
+        {
+            if (memFlatMap.TryGetValue(selectedMemId.Value, out var node))
+            {
+                await MemoryAppService.UpdateNodeAsync(selectedMemId.Value, new UpdateKnowledgeNodeDto
+                {
+                    Title = newTitle,
+                    SortOrder = node.SortOrder
+                });
+                selectedMemTitle = newTitle;
+                await LoadMemories();
+            }
+        }
+        catch (Exception ex)
+        {
+            await ShowToast($"重命名失败: {ex.Message}", "error");
+        }
+    }
+
+    #endregion
+
+    private async Task ShowToast(string message, string type = "info")
+    {
+        try { await JS.InvokeVoidAsync("ChatStateBus.showToast", message, type); }
+        catch { }
+    }
+}
+
+<style>
+    .knowledge-main-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        background: #fff;
+    }
+
+    /* ========== Tab Bar ========== */
+    .knowledge-tab-bar {
+        display: flex;
+        border-bottom: 1px solid #e8e8e8;
+        padding: 0 16px;
+        background: #fafafa;
+    }
+
+    .knowledge-tab {
+        padding: 12px 20px;
+        font-size: 14px;
+        color: #595959;
+        cursor: pointer;
+        border: none;
+        background: transparent;
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s;
+        font-family: inherit;
+        outline: none;
+    }
+
+    .knowledge-tab:hover {
+        color: #1890ff;
+    }
+
+    .knowledge-tab.active {
+        color: #1890ff;
+        border-bottom-color: #1890ff;
+        font-weight: 500;
+    }
+
+    /* ========== Content Area ========== */
+    .knowledge-content {
+        flex: 1;
+        display: flex;
+        overflow: hidden;
+    }
+
+    /* ========== Tree Panel ========== */
+    .knowledge-tree-panel {
+        width: 280px;
+        border-right: 1px solid #e8e8e8;
+        display: flex;
+        flex-direction: column;
+        background: #fafafa;
+    }
+
+    .tree-toolbar {
+        display: flex;
+        gap: 8px;
+        padding: 12px;
+        border-bottom: 1px solid #e8e8e8;
+    }
+
+    .tree-scroll-area {
+        flex: 1;
+        overflow-y: auto;
+        padding: 8px;
+    }
+
+    .tree-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 16px;
+        color: #8c8c8c;
+        font-size: 14px;
+        gap: 8px;
+    }
+
+    .tree-empty-hint {
+        font-size: 12px;
+        color: #bfbfbf;
+    }
+
+    /* ========== Content Panel ========== */
+    .knowledge-content-panel {
+        flex: 1;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+</style>

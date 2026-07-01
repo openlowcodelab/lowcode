@@ -1,0 +1,935 @@
+@page "/autotest/project-cases"
+@page "/autotest/project-cases/{ProjectId}"
+
+@namespace H.AutoTest.Web
+@layout AutoTestLayout
+
+<link href="_content/H.AutoTest.Web/css/category-tree.css" rel="stylesheet" />
+
+@inject IProjectAppService ProjectService
+@inject IProjectCaseCategoryAppService ProjectCaseCategoryAppService
+@inject IProjectCaseAppService ProjectCaseService
+@inject IBatchExecutionAppService BatchExecutionAppService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<PageTitle>测试用例管理</PageTitle>
+
+<div style="margin-bottom: 16px;">
+    <div style="display: flex; gap: 16px; margin-bottom: 16px; align-items: center;">
+        <div style="flex: 0 0 25%;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span>选择项目:</span>
+                <select class="h-select" style="width: 200px;" value="@selectedProjectId" @onchange="@(async e => await OnProjectChanged(e.Value?.ToString() ?? ""))">
+                    @foreach (var project in projects)
+                    {
+                        <option value="@project.Id">@project.Name</option>
+                    }
+                </select>
+            </div>
+        </div>
+        
+        <div style="flex: 1;">
+            <div style="display: flex; justify-content: space-around;">
+                <div style="text-align: center;">
+                    <div style="font-size: 24px; color: #1890ff; font-weight: 500;">@filteredTestCases.Count</div>
+                    <div style="color: #999; font-size: 12px;">总用例</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 24px; color: #ff4d4f; font-weight: 500;">@filteredTestCases.Count(tc => tc.Levels.Contains("T0"))</div>
+                    <div style="color: #999; font-size: 12px;">T0级别</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 24px; color: #faad14; font-weight: 500;">@filteredTestCases.Count(tc => tc.Levels.Contains("T1"))</div>
+                    <div style="color: #999; font-size: 12px;">T1级别</div>
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-size: 24px; color: #52c41a; font-weight: 500;">@selectedTestCases.Count</div>
+                    <div style="color: #999; font-size: 12px;">已选中</div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="flex: 0 0 25%;">
+            <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                <button class="h-btn" 
+                        style="background-color: #52c41a; border-color: #52c41a; color: white;"
+                        @onclick="ExecuteSelectedTests" 
+                        disabled="@(!selectedTestCases.Any() || string.IsNullOrEmpty(selectedProjectId))">
+                    ▶ 执行选中
+                </button>
+                <button class="h-btn h-btn-primary" @onclick="CreateNewTestCase">
+                    ➕ 新建用例
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div style="height: calc(100vh - 155px);">
+    <div style="display: flex; gap: 16px; height: 100%;">
+        <div style="flex: 0 0 20%; height: 100%;">
+            <HCard Style="height: 100%; display: flex; flex-direction: column;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <span style="font-weight: 500;">📁 分类</span>
+                    <button class="h-btn h-btn-sm h-btn-primary" @onclick="ShowAddCategoryModal">➕</button>
+                </div>
+                <div style="flex: 1; overflow-y: auto;">
+                    <button class="tree-node-row py-2 @(string.IsNullOrEmpty(selectedCategoryId) ? "selected" : "")"
+                            @onclick="() => SelectCategory(null)" 
+                            style="cursor: pointer; width: 100%; border: none; border-radius: 4px; margin-bottom: 2px;">
+                        <span class="tree-node-expand-icon placeholder"></span>
+                        <span class="tree-node-title"><small><i class="oi oi-list"></i> 全部 (@testCases.Count)</small></span>
+                    </button>
+                    <CategoryTree Categories="categories"
+                                 SelectedCategoryId="selectedCategoryId"
+                                 OnCategorySelected="SelectCategory"
+                                 OnAddChild="ShowAddChildCategoryModal"
+                                 OnEdit="ShowEditCategoryModal"
+                                 OnDelete="HandleDeleteCategory"
+                                 TestCaseCounts="categoryTestCaseCounts" />
+                </div>
+            </HCard>
+        </div>
+
+        <div style="flex: 1; height: 100%;">
+            <HCard Style="height: 100%; display: flex; flex-direction: column;">
+                <div style="margin-bottom: 12px;">
+                    <input class="h-input" Placeholder="搜索用例..."
+                                     @bind-value="searchTerm" @bind-value:event="oninput"
+                                     Style="width: 300px;" />
+                </div>
+
+                <div style="flex: 1; overflow-y: auto;">
+                    @if (loading)
+                    {
+                        <div style="text-align: center; padding: 40px;">
+                            <div class="h-spin"><span class="h-spin-dot"></span><span class="h-spin-text">加载中...</span></div>
+                        </div>
+                    }
+                    else if (displayTestCases.Any())
+                    {
+                        <HTable>
+                            <thead>
+                                <tr>
+                                    <th style="width: 100px;">用例编号</th>
+                                    <th>用例名称</th>
+                                    <th style="width: 120px;">级别</th>
+                                    <th style="width: 60px;">步骤数</th>
+                                    <th style="width: 100px;">执行结果</th>
+                                    <th style="width: 180px;">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var context in displayTestCases)
+                                {
+                                    <tr>
+                                        <td>
+                                            <span style="color: #999;">@context.CaseNumber</span>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <strong>@context.Name</strong>
+                                                @if (context.IsTemplate)
+                                                {
+                                                    <span class="h-tag h-tag-blue" style="margin-left: 8px;">模板</span>
+                                                }
+                                                @if (!string.IsNullOrEmpty(context.TemplateId))
+                                                {
+                                                    <span class="h-tag h-tag-default" style="margin-left: 4px;">继承</span>
+                                                }
+                                                @if (!string.IsNullOrEmpty(context.Description))
+                                                {
+                                                    <div style="color: #999; font-size: 12px; margin-top: 4px;">@context.Description</div>
+                                                }
+                                            </div>
+                                        </td>
+                                        <td>
+                                            @if (context.Levels.Any())
+                                            {
+                                                @foreach (var level in context.Levels.Take(3))
+                                                {
+                                                    <span class="h-tag h-tag-@GetLevelTagClass(level)" style="margin-right: 4px;">@level</span>
+                                                }
+                                                @if (context.Levels.Count > 3)
+                                                {
+                                                    <span style="color: #999; font-size: 12px;">+@(context.Levels.Count - 3)</span>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <span style="color: #999;">无</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @context.Steps.Count
+                                        </td>
+                                        <td>
+                                            @if (context.LastExecutionResult.HasValue)
+                                            {
+                                                <span class="h-tag h-tag-@GetExecutionResultTagClass(context.LastExecutionResult.Value)">
+                                                    @GetExecutionResultText(context.LastExecutionResult.Value)
+                                                </span>
+                                                @if (context.LastExecutionTime.HasValue)
+                                                {
+                                                    <div style="color: #999; font-size: 12px; margin-top: 4px;">@context.LastExecutionTime.Value.ToString("MM-dd HH:mm")</div>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <span style="color: #999;">未执行</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <div style="display: flex; gap: 8px; align-items: center;">
+                                                <button class="h-btn h-btn-sm" @onclick="() => ExecuteSingleTest(context)" Style="color: #52c41a; padding: 0; background: none; border: none;">
+                                                    执行
+                                                </button>
+                                                <button class="h-btn h-btn-sm" @onclick="() => EditTestCaseSteps(context)" Style="color: #1890ff; padding: 0; background: none; border: none;">
+                                                    测试步骤
+                                                </button>
+                                                <div style="position: relative;">
+                                                    <button class="h-btn h-btn-sm" @onclick="() => ToggleTestCaseDropdown(context.Id)" Style="color: #666; padding: 0; background: none; border: none;">
+                                                        更多 ▾
+                                                    </button>
+                                                    @if (openTestCaseDropdownId == context.Id)
+                                                    {
+                                                        <div style="position: absolute; right: 0; top: 100%; z-index: 100; background: #fff; border: 1px solid #d9d9d9; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); min-width: 120px;">
+                                                            <div style="padding: 6px 12px; cursor: pointer;" @onclick="() => { openTestCaseDropdownId = null; ShowTemplateSettingsModal(context); }">模板设置</div>
+                                                            <div style="padding: 6px 12px; cursor: pointer;" @onclick="() => { openTestCaseDropdownId = null; ViewExecutionHistory(context); }">测试报告</div>
+                                                            <div style="padding: 6px 12px; cursor: pointer;" @onclick="() => { openTestCaseDropdownId = null; CopyTestCase(context); }">复制</div>
+                                                            <div style="padding: 6px 12px; cursor: pointer;" @onclick="() => { openTestCaseDropdownId = null; ShowEditBasicInfoModal(context); }">编辑</div>
+                                                            <div style="border-top: 1px solid #f0f0f0;"></div>
+                                                            <div style="padding: 6px 12px; cursor: pointer; color: #ff4d4f;" @onclick="() => { openTestCaseDropdownId = null; DeleteTestCase(context.Id); }">删除</div>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </HTable>
+                    }
+                    else
+                    {
+                        <div class="h-empty">暂无测试用例数据</div>
+                    }
+                </div>
+            </HCard>
+        </div>
+    </div>
+</div>
+
+@{
+    var categoryModalTitle = isEditingCategory ? "编辑分类" : "新建分类";
+}
+<HModal Visible="showCategoryModal" 
+        Title="@categoryModalTitle" 
+        OnOk="SaveCategory" 
+        OnCancel="HideCategoryModal"
+        Style="width: 600px;">
+    <EditForm Model="currentCategory" OnValidSubmit="SaveCategory">
+        <DataAnnotationsValidator />
+        <ValidationSummary Style="color: red;" />
+        
+        <div class="h-form-item">
+            <label class="h-form-label" style="width: 100px;"><span class="h-required">分类名称</span></label>
+            <div class="h-form-control" style="flex: 1;">
+                <InputText class="h-input" @bind-Value="currentCategory.Name" />
+                <ValidationMessage For="() => currentCategory.Name" />
+            </div>
+        </div>
+        
+        <div class="h-form-item">
+            <label class="h-form-label" style="width: 100px;">父级分类</label>
+            <div class="h-form-control" style="flex: 1;">
+                <TreeSelectDropdown Categories="GetAvailableParentCategories()" 
+                                   SelectedValue="currentCategory.ParentId" 
+                                   EmptyOptionText="无(根分类)" 
+                                   Placeholder="请选择父级分类" />
+            </div>
+        </div>
+        
+        <div class="h-form-item">
+            <label class="h-form-label" style="width: 100px;">排序</label>
+            <div class="h-form-control" style="flex: 1;">
+                <Microsoft.AspNetCore.Components.Forms.InputNumber class="h-input" @bind-Value="currentCategory.Order" />
+            </div>
+        </div>
+    </EditForm>
+</HModal>
+
+<HModal Visible="showTemplateSettingsModal" 
+        Title="@($"模板设置 - {editingTestCase.Name}")" 
+        OnOk="SaveTemplateSettings" 
+        OnCancel="HideTemplateSettingsModal"
+        Style="width: 600px;">
+    <div Style="padding: 20px 0;">
+        <div Style="margin-bottom: 16px;">
+            <label class="h-switch">
+                <input type="checkbox" @bind="editingTestCase.IsTemplate" />
+                <span class="h-switch-slider"></span>
+            </label>
+            <span Style="margin-left: 8px;">设为测试模板</span>
+            <div Style="color: #999; font-size: 12px; margin-top: 4px;">将此用例设为模板，供其他用例继承。</div>
+        </div>
+        
+        @if (!editingTestCase.IsTemplate)
+        {
+            <div Style="margin-bottom: 16px;">
+                <label Style="display: block; margin-bottom: 8px;">继承模板</label>
+                <select class="h-select" style="width: 100%;" value="@(editingTestCase.TemplateId ?? "")" @onchange="OnTemplateChanged">
+                    <option value="">无(独立用例)</option>
+                    @foreach (var template in availableTemplates)
+                    {
+                        <option value="@template.Id">@(template.Name + (string.IsNullOrEmpty(template.CaseNumber) ? "" : $"({template.CaseNumber})"))</option>
+                    }
+                </select>
+                <div Style="color: #999; font-size: 12px; margin-top: 4px;">
+                    选择模板后，此用例将自动使用模板中的步骤。您只需在此处维护测试数据。
+                    <br>
+                    <span Style="color: #ff4d4f;">注意：继承模板后，当前用例的步骤将被覆盖且不可编辑。</span>
+                </div>
+            </div>
+        }
+    </div>
+</HModal>
+
+<ProjectCaseBasicInfoModal ShowModal="showBasicInfoModal" 
+                        CurrentTestCase="currentTestCase" 
+                        Categories="categories" 
+                        IsEditing="isEditingBasicInfo" 
+                        OnClose="HideBasicInfoModal" 
+                        OnSave="SaveBasicInfo" 
+                        OnSaveOnly="SaveBasicInfoOnly" />
+
+@code {
+    private List<ProjectDto> projects = new();
+    private List<ProjectCaseDto> testCases = new();
+    private List<ProjectCaseDto> filteredTestCases = new();
+    private List<ProjectCaseDto> displayTestCases = new();
+    private List<ProjectCaseCategory> categories = new();
+    private HashSet<string> selectedTestCases = new();
+
+    private ProjectCaseDto currentTestCase = new();
+    private ProjectCaseDto editingTestCase = new();
+    private ProjectCaseCategory currentCategory = new();
+
+    private bool loading = true;
+    private bool showCategoryModal = false;
+    private bool showTemplateSettingsModal = false;
+    private List<ProjectCaseDto> availableTemplates = new();
+    private bool isEditingCategory = false;
+
+    [Parameter]
+    public string? ProjectId { get; set; }
+
+    private string selectedProjectId = "";
+    private string selectedCategoryId = "";
+    private string searchTerm = "";
+    private string? openTestCaseDropdownId = null;
+
+    private bool showBasicInfoModal = false;
+    private bool isEditingBasicInfo = false;
+
+    private HashSet<string> expandedCategories = new();
+
+    private Dictionary<string, int> categoryTestCaseCounts = new();
+
+    private void ToggleTestCaseDropdown(string testCaseId)
+    {
+        openTestCaseDropdownId = openTestCaseDropdownId == testCaseId ? null : testCaseId;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        loading = true;
+        projects = await ProjectService.GetAllAsync();
+
+        if (!string.IsNullOrEmpty(ProjectId) && projects.Any(p => p.Id == ProjectId))
+        {
+            selectedProjectId = ProjectId;
+        }
+        else if (projects.Any())
+        {
+            selectedProjectId = projects.First().Id;
+        }
+        else
+        {
+            selectedProjectId = "";
+        }
+
+        await LoadProjectData();
+
+        loading = false;
+        StateHasChanged();
+    }
+
+    private async Task LoadProjectData()
+    {
+        if (!string.IsNullOrEmpty(selectedProjectId))
+        {
+            categories = await ProjectCaseCategoryAppService.GetByProjectIdAsync(selectedProjectId);
+            testCases = await ProjectCaseService.GetByProjectIdAsync(selectedProjectId);
+
+            filteredTestCases = testCases;
+            CalculateCategoryTestCaseCounts();
+            FilterTestCases();
+        }
+        else
+        {
+            categories = new List<ProjectCaseCategory>();
+            filteredTestCases.Clear();
+            displayTestCases.Clear();
+            categoryTestCaseCounts.Clear();
+        }
+
+        selectedTestCases.Clear();
+        StateHasChanged();
+    }
+
+    private async Task OnProjectChanged(string projectId)
+    {
+        if (string.IsNullOrEmpty(projectId))
+        {
+            return;
+        }
+        
+        if (projectId == selectedProjectId)
+        {
+            return;
+        }
+
+        selectedProjectId = projectId;
+        selectedCategoryId = "";
+
+        await LoadProjectData();
+        StateHasChanged();
+    }
+
+    private async Task SelectCategory(string? categoryId)
+    {
+        selectedCategoryId = categoryId ?? "";
+        
+        if (!string.IsNullOrEmpty(selectedProjectId))
+        {
+            if (string.IsNullOrEmpty(selectedCategoryId))
+            {
+                await JSRuntime.InvokeVoidAsync("localStorage.removeItem", $"selectedCategoryId_{selectedProjectId}");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("localStorage.setItem", $"selectedCategoryId_{selectedProjectId}", selectedCategoryId);
+            }
+        }
+        
+        FilterTestCases();
+        StateHasChanged();
+    }
+
+    private void FilterTestCases()
+    {
+        displayTestCases = filteredTestCases.Where(tc =>
+        {
+            var matchesSearch = string.IsNullOrEmpty(searchTerm) ||
+                               tc.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                               tc.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase);
+            
+            var matchesCategory = string.IsNullOrEmpty(selectedCategoryId) ||
+                                 GetAllCategoryIds(selectedCategoryId).Contains(tc.CategoryId);
+            
+            return matchesSearch && matchesCategory;
+        })
+        .OrderBy(tc => string.IsNullOrEmpty(tc.CaseNumber) ? "zzz" : tc.CaseNumber)
+        .ThenBy(tc => tc.Order)
+        .ThenBy(tc => tc.CreatedAt)
+        .ToList();
+        
+        StateHasChanged();
+    }
+    
+    private HashSet<string> GetAllCategoryIds(string categoryId)
+    {
+        var categoryIds = new HashSet<string> { categoryId };
+        AddAllChildCategoryIds(categoryId, categoryIds);
+        return categoryIds;
+    }
+    
+    private void AddAllChildCategoryIds(string categoryId, HashSet<string> categoryIds)
+    {
+        var category = FindCategoryInTree(categoryId, categories);
+        if (category?.Childrens != null)
+        {
+            foreach (var child in category.Childrens)
+            {
+                categoryIds.Add(child.Id);
+                AddAllChildCategoryIds(child.Id, categoryIds);
+            }
+        }
+    }
+
+    private ProjectCaseCategory? FindCategoryInTree(string id, IEnumerable<ProjectCaseCategory> nodes)
+    {
+        foreach (var n in nodes)
+        {
+            if (n.Id == id) return n;
+            if (n.Childrens is { Length: > 0 })
+            {
+                var hit = FindCategoryInTree(id, n.Childrens);
+                if (hit != null) return hit;
+            }
+        }
+        return null;
+    }
+
+    private IEnumerable<ProjectCaseCategory> FlattenCategories(IEnumerable<ProjectCaseCategory> nodes)
+    {
+        foreach (var n in nodes)
+        {
+            yield return n;
+            if (n.Childrens is { Length: > 0 })
+            {
+                foreach (var c in FlattenCategories(n.Childrens))
+                {
+                    yield return c;
+                }
+            }
+        }
+    }
+    
+    private List<ProjectCaseCategory> GetRootCategories()
+    {
+        return categories.OrderBy(c => c.Order).ToList();
+    }
+    
+
+
+    private void CalculateCategoryTestCaseCounts()
+    {
+        categoryTestCaseCounts.Clear();
+        
+        foreach (var category in FlattenCategories(categories))
+        {
+            var categoryIds = GetAllCategoryIds(category.Id);
+            var count = testCases.Count(tc => categoryIds.Contains(tc.CategoryId));
+            categoryTestCaseCounts[category.Id] = count;
+        }
+    }
+
+    private void ShowAddChildCategoryModal(ProjectCaseCategory parentCategory)
+    {
+        currentCategory = new ProjectCaseCategory 
+        { 
+            ProjectId = selectedProjectId
+        };
+        
+        if (parentCategory.Childrens == null)
+        {
+            parentCategory.Childrens = Array.Empty<ProjectCaseCategory>();
+        }
+        
+        isEditingCategory = false;
+        showCategoryModal = true;
+    }
+
+    private async Task HandleDeleteCategory(ProjectCaseCategory category)
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"确定要删除分类 '{category.Name}' 吗?其子分类也会被删除。");
+        if (confirmed)
+        {
+            await DeleteCategory(category.Id);
+            CalculateCategoryTestCaseCounts();
+        }
+    }
+
+    private void ToggleTestCaseSelection(string testCaseId, bool? isSelected)
+    {
+        if (isSelected == true)
+        {
+            selectedTestCases.Add(testCaseId);
+        }
+        else
+        {
+            selectedTestCases.Remove(testCaseId);
+        }
+        StateHasChanged();
+    }
+
+    private async Task ExecuteSelectedTests()
+    {
+        if (!selectedTestCases.Any()) return;
+        
+        var selectedIds = string.Join(",", selectedTestCases);
+        Navigation.NavigateTo($"/autotest/test-execution/batch/{selectedProjectId}?selectedIds={selectedIds}");
+    }
+
+    private async Task ExecuteSingleTest(ProjectCaseDto testCase)
+    {
+        Navigation.NavigateTo($"/autotest/test-execution/{testCase.Id}");
+    }
+    
+    private void ViewExecutionHistory(ProjectCaseDto testCase)
+    {
+        Navigation.NavigateTo($"/autotest/execution-history/{testCase.Id}?returnProjectId={selectedProjectId}");
+    }
+    
+    private void EditTestCase(ProjectCaseDto testCase)
+    {
+        Navigation.NavigateTo($"/autotest/project-cases/{testCase.Id}/edit");
+    }
+    
+    private void CreateNewTestCase()
+    {
+        if (string.IsNullOrEmpty(selectedProjectId))
+        {
+            JSRuntime.InvokeVoidAsync("alert", "请先选择一个项目");
+            return;
+        }
+        
+        currentTestCase = new ProjectCaseDto 
+        { 
+            ProjectId = selectedProjectId,
+            CategoryId = selectedCategoryId
+        };
+        isEditingBasicInfo = false;
+        showBasicInfoModal = true;
+    }
+
+    private async Task DeleteTestCase(string id)
+    {
+        await ProjectCaseService.DeleteAsync(id);
+        await LoadProjectData();
+    }
+
+    private async Task CopyTestCase(ProjectCaseDto testCase)
+    {
+        try
+        {
+            var copiedId = await ProjectCaseService.CopyAsync(testCase.Id);
+            await JSRuntime.InvokeVoidAsync("alert", $"测试用例 '{testCase.Name}' 复制成功！");
+            await LoadProjectData();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"复制失败: {ex.Message}");
+        }
+    }
+
+    private void ShowTemplateSettingsModal(ProjectCaseDto testCase)
+    {
+        var json = System.Text.Json.JsonSerializer.Serialize(testCase);
+        editingTestCase = System.Text.Json.JsonSerializer.Deserialize<ProjectCaseDto>(json)!;
+        availableTemplates = testCases.Where(c => c.IsTemplate && c.Id != editingTestCase.Id).ToList();
+        showTemplateSettingsModal = true;
+    }
+
+    private void HideTemplateSettingsModal()
+    {
+        showTemplateSettingsModal = false;
+    }
+
+    private void OnTemplateChanged(ChangeEventArgs e)
+    {
+        editingTestCase.TemplateId = e.Value?.ToString();
+    }
+
+    private async Task SaveTemplateSettings()
+    {
+        try
+        {
+            if (!string.IsNullOrEmpty(editingTestCase.TemplateId))
+            {
+                editingTestCase.Steps.Clear();
+            }
+
+            await ProjectCaseService.UpdateAsync(editingTestCase.Id, editingTestCase);
+            await LoadProjectData();
+            showTemplateSettingsModal = false;
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"保存失败: {ex.Message}");
+        }
+    }
+
+    private void ShowAddCategoryModal()
+    {
+        currentCategory = new ProjectCaseCategory { ProjectId = selectedProjectId };
+        isEditingCategory = false;
+        showCategoryModal = true;
+    }
+
+    private void ShowEditCategoryModal(ProjectCaseCategory category)
+    {
+        currentCategory = new ProjectCaseCategory
+        {
+            Id = category.Id,
+            Name = category.Name,
+            ProjectId = category.ProjectId,
+            Order = category.Order,
+            Childrens = category.Childrens
+        };
+        isEditingCategory = true;
+        showCategoryModal = true;
+    }
+
+    private void HideCategoryModal()
+    {
+        showCategoryModal = false;
+        currentCategory = new ProjectCaseCategory();
+        isEditingCategory = false;
+    }
+
+    private async Task SaveCategory()
+    {
+        try
+        {
+            if (isEditingCategory)
+            {
+                await ProjectCaseCategoryAppService.UpdateAsync(currentCategory.Id, currentCategory);
+            }
+            else
+            {
+                await ProjectCaseCategoryAppService.CreateAsync(currentCategory);
+            }
+            
+            categories = await ProjectCaseCategoryAppService.GetByProjectIdAsync(selectedProjectId);
+            HideCategoryModal();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"保存失败: {ex.Message}");
+        }
+    }
+
+    private List<ProjectCaseCategory> GetAvailableParentCategories()
+    {
+        var all = FlattenCategories(categories).ToList();
+        if (isEditingCategory)
+        {
+            var excludeIds = new HashSet<string> { currentCategory.Id };
+            AddChildCategoryIds(currentCategory.Id, excludeIds);
+            return all.Where(c => !excludeIds.Contains(c.Id)).ToList();
+        }
+        else
+        {
+            return all;
+        }
+    }
+
+    private void AddChildCategoryIds(string categoryId, HashSet<string> excludeIds)
+    {
+        var category = FindCategoryInTree(categoryId, categories);
+        if (category?.Childrens != null)
+        {
+            foreach (var child in category.Childrens)
+            {
+                excludeIds.Add(child.Id);
+                AddChildCategoryIds(child.Id, excludeIds);
+            }
+        }
+    }
+
+    private void AddChildCategory(ProjectCaseCategory parentCategory)
+    {
+        currentCategory = new ProjectCaseCategory 
+        { 
+            ProjectId = selectedProjectId
+        };
+        
+        if (parentCategory.Childrens == null)
+        {
+            parentCategory.Childrens = Array.Empty<ProjectCaseCategory>();
+        }
+        
+        isEditingCategory = false;
+        showCategoryModal = true;
+    }
+    
+    private void ToggleCategoryExpand(string categoryId)
+    {
+        if (expandedCategories.Contains(categoryId))
+        {
+            expandedCategories.Remove(categoryId);
+        }
+        else
+        {
+            expandedCategories.Add(categoryId);
+        }
+        StateHasChanged();
+    }
+
+    private async Task DeleteCategory(string categoryId)
+    {
+        await DeleteChildCategories(categoryId);
+        await ProjectCaseCategoryAppService.DeleteAsync(selectedProjectId, categoryId);
+        categories = await ProjectCaseCategoryAppService.GetByProjectIdAsync(selectedProjectId);
+        StateHasChanged();
+    }
+
+    private async Task DeleteChildCategories(string categoryId)
+    {
+        var category = FindCategoryInTree(categoryId, categories);
+        if (category?.Childrens != null)
+        {
+            foreach (var child in category.Childrens)
+            {
+                await DeleteChildCategories(child.Id);
+                await ProjectCaseCategoryAppService.DeleteAsync(selectedProjectId, child.Id);
+            }
+        }
+    }
+
+    private void ShowEditBasicInfoModal(ProjectCaseDto testCase)
+    {
+        currentTestCase = new ProjectCaseDto
+        {
+            Id = testCase.Id,
+            CaseNumber = testCase.CaseNumber,
+            Name = testCase.Name,
+            Description = testCase.Description,
+            ProjectId = testCase.ProjectId,
+            CategoryId = testCase.CategoryId,
+            Levels = new List<string>(testCase.Levels),
+            Order = testCase.Order,
+            Status = testCase.Status,
+            Tags = new List<string>(testCase.Tags),
+            Steps = testCase.Steps,
+            CreatedAt = testCase.CreatedAt,
+            CreatedBy = testCase.CreatedBy
+        };
+        
+        isEditingBasicInfo = true;
+        showBasicInfoModal = true;
+    }
+    
+    private void EditTestCaseSteps(ProjectCaseDto testCase)
+    {
+        Navigation.NavigateTo($"/autotest/project-cases/{testCase.Id}/steps");
+    }
+    
+    private Task HideBasicInfoModal()
+    {
+        showBasicInfoModal = false;
+        currentTestCase = new ProjectCaseDto();
+        isEditingBasicInfo = false;
+        return Task.CompletedTask;
+    }
+    
+    private async Task SaveBasicInfo(ProjectCaseDto testCase)
+    {
+        try
+        {
+            if (isEditingBasicInfo)
+            {
+                await ProjectCaseService.UpdateAsync(testCase.Id, testCase);
+                await JSRuntime.InvokeVoidAsync("alert", "测试用例基本信息更新成功！");
+            }
+            else
+            {
+                await ProjectCaseService.CreateAsync(testCase);
+                await JSRuntime.InvokeVoidAsync("alert", "测试用例创建成功！");
+                Navigation.NavigateTo($"/autotest/project-cases/{testCase.Id}/steps");
+                return;
+            }
+            
+            await HideBasicInfoModal();
+            await LoadProjectData();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"保存失败: {ex.Message}");
+        }
+    }
+    
+    private async Task SaveBasicInfoOnly(ProjectCaseDto testCase)
+    {
+        try
+        {
+            await ProjectCaseService.CreateAsync(testCase);
+            await JSRuntime.InvokeVoidAsync("alert", "测试用例保存成功！");
+            
+            await HideBasicInfoModal();
+            await LoadProjectData();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"保存失败: {ex.Message}");
+        }
+    }
+    
+    private string GetLevelTagColor(string level) => level switch
+    {
+        "P0" => "red",
+        "P1" => "orange",
+        "P2" => "blue",
+        "P3" => "default",
+        _ => "default"
+    };
+
+    private string GetLevelTagClass(string level) => level switch
+    {
+        "P0" => "red",
+        "P1" => "red",
+        "P2" => "blue",
+        "P3" => "default",
+        _ => "default"
+    };
+    
+    private string GetExecutionResultTagColor(ExecutionStatus status) => status switch
+    {
+        ExecutionStatus.Success => "green",
+        ExecutionStatus.Failed => "red",
+        ExecutionStatus.Running => "blue",
+        ExecutionStatus.Pending => "orange",
+        _ => "default"
+    };
+
+    private string GetExecutionResultTagClass(ExecutionStatus status) => status switch
+    {
+        ExecutionStatus.Success => "green",
+        ExecutionStatus.Failed => "red",
+        ExecutionStatus.Running => "blue",
+        ExecutionStatus.Pending => "default",
+        _ => "default"
+    };
+    
+    private string GetExecutionResultText(ExecutionStatus status) => status switch
+    {
+        ExecutionStatus.Success => "成功",
+        ExecutionStatus.Failed => "失败",
+        ExecutionStatus.Running => "运行中",
+        ExecutionStatus.Pending => "等待中",
+        _ => "未知"
+    };
+    
+    private void NavigateToProjectManagement()
+    {
+        if (string.IsNullOrEmpty(selectedProjectId))
+            return;
+            
+        Navigation.NavigateTo($"/project-management");
+    }
+
+    private string GetEnvironmentTypeDisplayName(EnvironmentType type) => type switch
+    {
+        EnvironmentType.Development => "开发环境",
+        EnvironmentType.Testing => "测试环境",
+        EnvironmentType.Staging => "预发环境",
+        EnvironmentType.Production => "生产环境",
+        _ => "未知环境"
+    };
+
+    private string GetTestCaseName(string testCaseId)
+    {
+        var testCase = testCases.FirstOrDefault(tc => tc.Id == testCaseId);
+        return testCase?.Name ?? "未知用例";
+    }
+}

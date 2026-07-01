@@ -1,0 +1,91 @@
+@namespace H.Approval.Web
+
+@*添加节点按钮*@
+<div class="add-node-btn-box">
+    <div class="add-node-btn">
+        @if (IsShowPopover)
+        {
+            <div role="tooltip" aria-hidden="false" class="el-popover el-popper" tabindex="0"
+                style="position: fixed; transform-origin: left center; z-index: 9999; @PopoverStyle" x-placement="right-start">
+                <div class="add-node-popover-body">
+                    <a class="add-node-popover-item approver" @onclick="() => AddNode(NodeTypeEnum.Approve)" @onclick:stopPropagation>
+                        <div class="item-wrapper">
+                            <span class="iconfont">✓</span>
+                        </div>
+                        <p>审批人</p>
+                    </a>
+                    <a class="add-node-popover-item notifier" @onclick="() => AddNode(NodeTypeEnum.CarbonCopy)" @onclick:stopPropagation>
+                        <div class="item-wrapper">
+                            <span class="iconfont">📧</span>
+                        </div>
+                        <p>抄送人</p>
+                    </a>
+                    <a class="add-node-popover-item condition" @onclick="() => AddNode(NodeTypeEnum.Branch)" @onclick:stopPropagation>
+                        <div class="item-wrapper">
+                            <span class="iconfont">⚡</span>
+                        </div>
+                        <p>条件分支</p>
+                    </a>
+                </div>
+                <div x-arrow="" class="popper__arrow" style="top: 8px;"></div>
+            </div>
+        }
+        <button class="btn" type="button" @onclick="ShowPopover" @onfocusout="OnFocusOut">
+            <span class="iconfont">+</span>
+        </button>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public EventCallback<NodeModelBase> OnAddNode { get; set; }
+    
+    private bool IsShowPopover = false;
+    private string PopoverStyle = "";
+
+    private void ShowPopover(MouseEventArgs e)
+    {
+        IsShowPopover = !IsShowPopover;
+        PopoverStyle = $"top: {e.ClientY - 140}px; left: {e.ClientX + 20}px;";
+    }
+
+    private async Task OnFocusOut()
+    {
+        await Task.Delay(200);
+        IsShowPopover = false;
+        StateHasChanged();
+    }
+
+    private async Task AddNode(NodeTypeEnum nodeType)
+    {
+        NodeModelBase newNode = nodeType switch
+        {
+            NodeTypeEnum.Approve => new ApproveModel
+            {
+                Id = Guid.NewGuid().ToString(),
+                NodeName = "审批人",
+                ApproverType = ApproverTypeEnum.StarterSelect
+            },
+            NodeTypeEnum.CarbonCopy => new CarbonCopyModel
+            {
+                Id = Guid.NewGuid().ToString(),
+                NodeName = "抄送人",
+                CarbonCopyType = CarbonCopyTypeEnum.StarterSelect
+            },
+            NodeTypeEnum.Branch => new BranchModel
+            {
+                Id = Guid.NewGuid().ToString(),
+                NodeName = "条件分支",
+                ConditionNodes = new List<NodeModelBase>
+                {
+                    new ConditionModel { Id = Guid.NewGuid().ToString(), NodeName = "条件1" },
+                    new ConditionModel { Id = Guid.NewGuid().ToString(), NodeName = "条件2" }
+                }
+            },
+            _ => throw new ArgumentException($"不支持的节点类型: {nodeType}")
+        };
+        
+        IsShowPopover = false;
+        await OnAddNode.InvokeAsync(newNode);
+    }
+}

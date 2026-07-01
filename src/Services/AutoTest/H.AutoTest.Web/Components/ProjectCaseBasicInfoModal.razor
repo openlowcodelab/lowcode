@@ -1,0 +1,150 @@
+@namespace H.AutoTest.Web
+
+<HModal Visible="ShowModal"
+        Title="@(IsEditing ? "编辑测试用例" : "新建测试用例")"
+        OnCancel="HideModal"
+        ShowFooter="false"
+        Style="width: 720px;">
+    <EditForm Model="CurrentTestCase" OnValidSubmit="SaveTestCase">
+        <DataAnnotationsValidator />
+        <ValidationSummary Style="color: #ff4d4f;" />
+
+        <div class="h-form-item">
+            <label class="h-form-label" style="width: 100px;">用例编号</label>
+            <div class="h-form-control" style="flex: 1;">
+                <input class="h-input" @bind-value="CurrentTestCase.CaseNumber" placeholder="如：TC001, TEST_01等" />
+                <div style="color: #999; font-size: 12px; margin-top: 4px;">可选字段，3-12 位字母、数字、下划线组合</div>
+                <ValidationMessage For="() => CurrentTestCase.CaseNumber" />
+            </div>
+        </div>
+
+        <div class="h-form-item">
+            <label class="h-form-label" style="width: 100px;"><span class="h-required">用例名称</span></label>
+            <div class="h-form-control" style="flex: 1;">
+                <input class="h-input" @bind-value="CurrentTestCase.Name" />
+                <ValidationMessage For="() => CurrentTestCase.Name" />
+            </div>
+        </div>
+
+        <div class="h-form-item">
+            <label class="h-form-label" style="width: 100px;">用例描述</label>
+            <div class="h-form-control" style="flex: 1;">
+                <textarea class="h-textarea" rows="3" @bind="CurrentTestCase.Description"></textarea>
+            </div>
+        </div>
+
+        <div class="h-form-item">
+            <label class="h-form-label" style="width: 100px;">用例级别</label>
+            <div class="h-form-control" style="flex: 1;">
+                <div style="display: flex; flex-wrap: wrap; gap: 12px; padding: 8px 12px; border: 1px solid #d9d9d9; border-radius: 4px;">
+                    @foreach (var level in AvailableLevels)
+                    {
+                        var checkedValue = CurrentTestCase.Levels.Contains(level);
+                        <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <input type="checkbox" checked="@checkedValue" @onchange="@(e => ToggleLevel(level, (bool)(e.Value ?? false)))" />
+                            <span class="h-tag h-tag-@GetLevelTagClass(level)">@level</span>
+                        </label>
+                    }
+                </div>
+                <div style="color: #999; font-size: 12px; margin-top: 4px;">可多选，P0 为最高级别</div>
+            </div>
+        </div>
+
+        <div class="h-form-item">
+            <label class="h-form-label" style="width: 100px;">分类</label>
+            <div class="h-form-control" style="flex: 1;">
+                <TreeSelectDropdown Categories="Categories"
+                                    Value="CurrentTestCase.CategoryId"
+                                    ValueChanged="OnCategoryChanged"
+                                    EmptyOptionText="无分类"
+                                    Placeholder="请选择分类" />
+            </div>
+        </div>
+
+        <div class="h-form-item">
+            <label class="h-form-label" style="width: 100px;">排序</label>
+            <div class="h-form-control" style="flex: 1;">
+                <input type="number" class="h-input" style="width: 200px;" @bind-value="CurrentTestCase.Order" />
+                <div style="color: #999; font-size: 12px; margin-top: 4px;">数值越小排序越靠前，默认为 0</div>
+            </div>
+        </div>
+
+        <div style="text-align: right; margin-top: 16px; padding-top: 12px; border-top: 1px solid #f0f0f0;">
+            <span class="h-space">
+                <button class="h-btn h-btn-default" @onclick="HideModal">取消</button>
+                @if (!IsEditing)
+                {
+                    <button class="h-btn" style="background-color: #52c41a; border-color: #52c41a; color: white;" @onclick="SaveOnly">仅保存</button>
+                }
+                <button type="submit" class="h-btn h-btn-primary">@(IsEditing ? "更新" : "保存并继续编辑步骤")</button>
+            </span>
+        </div>
+    </EditForm>
+</HModal>
+
+@code {
+    [Parameter] public bool ShowModal { get; set; }
+    [Parameter] public ProjectCaseDto CurrentTestCase { get; set; } = new();
+    [Parameter] public List<ProjectCaseCategory> Categories { get; set; } = new();
+    [Parameter] public bool IsEditing { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<ProjectCaseDto> OnSave { get; set; }
+    [Parameter] public EventCallback<ProjectCaseDto> OnSaveOnly { get; set; }
+
+    private readonly List<string> AvailableLevels = new() { "P0", "P1", "P2", "P3" };
+
+    private void ToggleLevel(string level, bool isChecked)
+    {
+        if (isChecked)
+        {
+            if (!CurrentTestCase.Levels.Contains(level))
+            {
+                CurrentTestCase.Levels.Add(level);
+            }
+        }
+        else
+        {
+            CurrentTestCase.Levels.Remove(level);
+        }
+        CurrentTestCase.Levels = CurrentTestCase.Levels.OrderBy(l => l).ToList();
+    }
+
+    private async Task OnCategoryChanged(string? categoryId)
+    {
+        CurrentTestCase.CategoryId = categoryId;
+        await Task.CompletedTask;
+    }
+
+    private async Task SaveTestCase()
+    {
+        await OnSave.InvokeAsync(CurrentTestCase);
+    }
+
+    private async Task SaveOnly()
+    {
+        await OnSaveOnly.InvokeAsync(CurrentTestCase);
+    }
+
+    private async Task HideModal()
+    {
+        await OnClose.InvokeAsync();
+    }
+
+    private string GetLevelTagColor(string level) => level switch
+    {
+        "P0" => "red",
+        "P1" => "orange",
+        "P2" => "blue",
+        "P3" => "default",
+        _ => "default"
+    };
+
+    private string GetLevelTagClass(string level) => level switch
+    {
+        "P0" => "red",
+        "P1" => "red",
+        "P2" => "blue",
+        "P3" => "default",
+        _ => "default"
+    };
+}

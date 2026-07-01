@@ -1,0 +1,16 @@
+﻿@namespace H.Account.Web
+
+@inherits LayoutComponentBase
+
+<DefaultLayoutComponent 
+    AppName="用户管理" 
+    MenuItems="@MenuItems">
+    @Body
+</DefaultLayoutComponent>
+
+@code {
+    private static List<AppMenuItem> MenuItems => new()
+    {
+        new AppMenuItem { Name = "用户列表", Url = "/account/users", Icon = "👥" }
+    };
+}

@@ -1,0 +1,235 @@
+@namespace H.Approval.Web
+
+@layout ApprovalLayout
+@inject IJSRuntime JS
+
+<div class="basic-settings-container">
+    <div class="settings-card">
+        <div class="form-item">
+            <label class="form-label">
+                <span class="required">*</span> 表单名称
+            </label>
+            <div class="form-row">
+                <div class="icon-preview" @onclick="SelectIcon">@Icon</div>
+                <div class="form-input-wrapper">
+                    <input class="h-input" value="@Name"
+                           placeholder="请输入表单名称"
+                           maxlength="50"
+                           @oninput="OnNameInput" />
+                    <div class="char-count">@(Name?.Length ?? 0) / 50</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-item">
+            <label class="form-label">
+                <span class="required">*</span> 所在分组
+            </label>
+            <select class="h-select" @bind="CategoryName">
+                <option value="">请选择分组</option>
+                <option value="报销（含电子发票）">报销（含电子发票）</option>
+                <option value="请假">请假</option>
+                <option value="行政">行政</option>
+                <option value="人事">人事</option>
+            </select>
+        </div>
+
+        <div class="form-item">
+            <label class="form-label">表单说明</label>
+            <textarea class="h-textarea"
+                      placeholder="请输入"
+                      rows="4"
+                      maxlength="100"
+                      value="@Description"
+                      @oninput="OnDescriptionInput"></textarea>
+            <div class="char-count">@(Description?.Length ?? 0) / 100</div>
+        </div>
+
+        <div class="form-item">
+            <label class="form-label">
+                <span class="required">*</span> 谁可以发起
+            </label>
+            <div class="h-radio-group">
+                <label class="h-radio-button">
+                    <input type="radio" name="whoCanStart" value="All" checked="@IsWhoCanStartAll" @onchange="SetWhoCanStartAll" />全部
+                </label>
+                <label class="h-radio-button">
+                    <input type="radio" name="whoCanStart" value="Specified" checked="@IsWhoCanStartSpecified" @onchange="SetWhoCanStartSpecified" />指定成员
+                </label>
+            </div>
+        </div>
+
+        @if (WhoCanStart == "Specified")
+        {
+            <div class="form-item">
+                <label class="form-label">指定发起人</label>
+                <button class="h-btn" @onclick="SelectStarters">
+                    选择成员
+                </button>
+                @if (SelectedStarters.Count > 0)
+                {
+                    <div style="margin-top: 10px;">
+                        @foreach (var starter in SelectedStarters)
+                        {
+                            <span class="h-tag h-tag-default" style="margin-right: 8px;">
+                                @starter
+                                <button class="h-tag-close" @onclick="() => RemoveStarter(starter)">&times;</button>
+                            </span>
+                        }
+                    </div>
+                }
+            </div>
+        }
+
+        <div class="form-item">
+            <label class="form-label">
+                <span class="required">*</span> 表单管理员
+            </label>
+            <div class="h-radio-group">
+                <label class="h-radio-button">
+                    <input type="radio" name="adminType" value="All" checked="@IsAdminTypeAll" @onchange="SetAdminTypeAll" />全部「OA审批」管理员
+                </label>
+                <label class="h-radio-button">
+                    <input type="radio" name="adminType" value="Specified" checked="@IsAdminTypeSpecified" @onchange="SetAdminTypeSpecified" />指定「OA审批」管理员
+                </label>
+            </div>
+        </div>
+
+        @if (AdminType == "Specified")
+        {
+            <div class="form-item">
+                <label class="form-label">指定管理员</label>
+                <button class="h-btn" @onclick="SelectAdmins">
+                    选择管理员
+                </button>
+                @if (SelectedAdmins.Count > 0)
+                {
+                    <div style="margin-top: 10px;">
+                        @foreach (var admin in SelectedAdmins)
+                        {
+                            <span class="h-tag h-tag-default" style="margin-right: 8px;">
+                                @admin
+                                <button class="h-tag-close" @onclick="() => RemoveAdmin(admin)">&times;</button>
+                            </span>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public ApprovalDefinitionDto? Definition { get; set; }
+    
+    [Parameter]
+    public EventCallback<ApprovalDefinitionDto> OnSettingsChanged { get; set; }
+
+    private string Icon { get; set; } = "💰";
+    private string Name { get; set; } = string.Empty;
+    private string? CategoryId { get; set; }
+    private string? CategoryName { get; set; }
+    private string Description { get; set; } = string.Empty;
+    private string WhoCanStart { get; set; } = "All";
+    private string AdminType { get; set; } = "All";
+    
+    private List<string> SelectedStarters { get; set; } = new();
+    private List<string> SelectedAdmins { get; set; } = new();
+
+    private bool IsWhoCanStartAll => WhoCanStart == "All";
+    private bool IsWhoCanStartSpecified => WhoCanStart == "Specified";
+    private void SetWhoCanStartAll() { WhoCanStart = "All"; }
+    private void SetWhoCanStartSpecified() { WhoCanStart = "Specified"; }
+    private bool IsAdminTypeAll => AdminType == "All";
+    private bool IsAdminTypeSpecified => AdminType == "Specified";
+    private void SetAdminTypeAll() { AdminType = "All"; }
+    private void SetAdminTypeSpecified() { AdminType = "Specified"; }
+
+    protected override void OnParametersSet()
+    {
+        if (Definition != null)
+        {
+            Icon = Definition.Icon ?? "💰";
+            Name = Definition.Name ?? string.Empty;
+            CategoryId = Definition.CategoryId;
+            CategoryName = Definition.CategoryName;
+            Description = Definition.Description ?? string.Empty;
+            WhoCanStart = Definition.WhoCanStart ?? "All";
+            AdminType = Definition.AdminType ?? "All";
+            
+            if (!string.IsNullOrEmpty(Definition.SpecifiedStarters))
+            {
+                try { SelectedStarters = System.Text.Json.JsonSerializer.Deserialize<List<string>>(Definition.SpecifiedStarters) ?? new(); }
+                catch { SelectedStarters = new(); }
+            }
+            if (!string.IsNullOrEmpty(Definition.SpecifiedAdmins))
+            {
+                try { SelectedAdmins = System.Text.Json.JsonSerializer.Deserialize<List<string>>(Definition.SpecifiedAdmins) ?? new(); }
+                catch { SelectedAdmins = new(); }
+            }
+        }
+    }
+
+    private void OnNameInput(ChangeEventArgs e)
+    {
+        Name = e.Value?.ToString() ?? string.Empty;
+        NotifyChanged();
+    }
+    
+    private void OnDescriptionInput(ChangeEventArgs e)
+    {
+        Description = e.Value?.ToString() ?? string.Empty;
+        NotifyChanged();
+    }
+
+    private void SelectIcon()
+    {
+        var icons = new[] { "💰", "📝", "✈️", "📦", "📅", "📨" };
+        var currentIndex = Array.IndexOf(icons, Icon);
+        Icon = icons[(currentIndex + 1) % icons.Length];
+        NotifyChanged();
+    }
+
+    private void SelectStarters()
+    {
+        SelectedStarters.Add("张三");
+        NotifyChanged();
+    }
+
+    private void RemoveStarter(string starter)
+    {
+        SelectedStarters.Remove(starter);
+        NotifyChanged();
+    }
+
+    private void SelectAdmins()
+    {
+        SelectedAdmins.Add("李四");
+        NotifyChanged();
+    }
+
+    private void RemoveAdmin(string admin)
+    {
+        SelectedAdmins.Remove(admin);
+        NotifyChanged();
+    }
+
+    private void NotifyChanged()
+    {
+        var settings = new ApprovalDefinitionDto
+        {
+            Icon = Icon,
+            Name = Name,
+            CategoryId = CategoryId,
+            CategoryName = CategoryName,
+            Description = Description,
+            WhoCanStart = WhoCanStart,
+            AdminType = AdminType,
+            SpecifiedStarters = System.Text.Json.JsonSerializer.Serialize(SelectedStarters),
+            SpecifiedAdmins = System.Text.Json.JsonSerializer.Serialize(SelectedAdmins)
+        };
+        
+        OnSettingsChanged.InvokeAsync(settings);
+    }
+}

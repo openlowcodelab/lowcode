@@ -1,0 +1,338 @@
+@namespace H.Assistant.Web
+
+<div class="content-panel">
+    @if (string.IsNullOrEmpty(Title) && !HasContent)
+    {
+        <div class="content-panel-empty">
+            <div class="empty-icon">📝</div>
+            <div class="empty-text">选择一个文档查看或编辑内容</div>
+        </div>
+    }
+    else
+    {
+        @* Toolbar *@
+        <div class="content-panel-toolbar">
+            @if (IsEditingTitle)
+            {
+                <input class="title-edit-input"
+                       @bind="editingTitle"
+                       @bind:event="oninput"
+                       @onkeydown="HandleTitleKeydown"
+                       @onblur="CommitTitleEdit"
+                       autofocus />
+            }
+            else
+            {
+                <span class="content-title" @ondblclick="StartTitleEdit">@Title</span>
+            }
+
+            <div class="toolbar-actions">
+                @if (AllowEdit)
+                {
+                    @if (IsEditing)
+                    {
+                        <button class="btn-sm" @onclick="TogglePreview">预览</button>
+                        <button class="btn-sm btn-primary" @onclick="SaveContent">保存</button>
+                    }
+                    else
+                    {
+                        <button class="btn-sm btn-primary" @onclick="StartEdit">编辑</button>
+                    }
+                }
+            </div>
+        </div>
+
+        @* Content Area *@
+        <div class="content-panel-body">
+            @if (IsEditing && AllowEdit)
+            {
+                <textarea class="markdown-editor"
+                          @bind="editingContent"
+                          @bind:event="oninput"
+                          placeholder="在此输入 Markdown 内容..."></textarea>
+            }
+            else
+            {
+                <div class="knowledge-preview-area">
+                    @if (!string.IsNullOrEmpty(DisplayContent))
+                    {
+                        <MarkdownRenderer Content="@DisplayContent" />
+                    }
+                    else
+                    {
+                        <div class="content-panel-empty-inline">暂无内容</div>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string Title { get; set; } = string.Empty;
+
+    [Parameter]
+    public string? Content { get; set; }
+
+    [Parameter]
+    public bool AllowEdit { get; set; } = true;
+
+    [Parameter]
+    public EventCallback<(string title, string content)> OnSave { get; set; }
+
+    [Parameter]
+    public EventCallback<string> OnTitleChanged { get; set; }
+
+    private bool IsEditing { get; set; }
+    private bool IsEditingTitle { get; set; }
+    private string editingContent = string.Empty;
+    private string editingTitle = string.Empty;
+
+    private bool HasContent => !string.IsNullOrEmpty(Content);
+    private string DisplayContent => IsEditing ? editingContent : (Content ?? string.Empty);
+
+    /// <summary>
+    /// Start editing content
+    /// </summary>
+    public void StartEdit()
+    {
+        if (!AllowEdit) return;
+        editingContent = Content ?? string.Empty;
+        IsEditing = true;
+    }
+
+    /// <summary>
+    /// Toggle to preview mode
+    /// </summary>
+    public void TogglePreview()
+    {
+        IsEditing = false;
+    }
+
+    private void StartTitleEdit()
+    {
+        if (!AllowEdit) return;
+        editingTitle = Title ?? string.Empty;
+        IsEditingTitle = true;
+    }
+
+    private async Task HandleTitleKeydown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await CommitTitleEdit();
+        }
+        else if (e.Key == "Escape")
+        {
+            IsEditingTitle = false;
+        }
+    }
+
+    private async Task CommitTitleEdit()
+    {
+        if (IsEditingTitle && !string.IsNullOrWhiteSpace(editingTitle))
+        {
+            await OnTitleChanged.InvokeAsync(editingTitle.Trim());
+        }
+        IsEditingTitle = false;
+    }
+
+    private async Task SaveContent()
+    {
+        var title = IsEditingTitle ? editingTitle.Trim() : Title;
+        await OnSave.InvokeAsync((title, editingContent));
+        IsEditing = false;
+    }
+}
+
+<style>
+    .content-panel {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        background: #fff;
+    }
+
+    .content-panel-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: #8c8c8c;
+        gap: 12px;
+    }
+
+    .content-panel-empty .empty-icon {
+        font-size: 48px;
+        opacity: 0.5;
+    }
+
+    .content-panel-empty .empty-text {
+        font-size: 14px;
+    }
+
+    .content-panel-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+        border-bottom: 1px solid #e8e8e8;
+        gap: 12px;
+        min-height: 52px;
+    }
+
+    .content-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #262626;
+        cursor: default;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        flex: 1;
+    }
+
+    .title-edit-input {
+        flex: 1;
+        padding: 4px 8px;
+        border: 1px solid #1890ff;
+        border-radius: 4px;
+        font-size: 16px;
+        font-weight: 600;
+        outline: none;
+        font-family: inherit;
+    }
+
+    .toolbar-actions {
+        display: flex;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+
+    .btn-sm {
+        padding: 4px 12px;
+        font-size: 13px;
+        border: 1px solid #d9d9d9;
+        border-radius: 4px;
+        background: #fff;
+        color: #595959;
+        cursor: pointer;
+        transition: all 0.2s;
+        outline: none;
+        font-family: inherit;
+        white-space: nowrap;
+    }
+
+    .btn-sm:hover {
+        border-color: #1890ff;
+        color: #1890ff;
+    }
+
+    .btn-sm.btn-primary {
+        background: #1890ff;
+        border-color: #1890ff;
+        color: #fff;
+    }
+
+    .btn-sm.btn-primary:hover {
+        background: #40a9ff;
+        border-color: #40a9ff;
+    }
+
+    .content-panel-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px;
+    }
+
+    .markdown-editor {
+        width: 100%;
+        height: 100%;
+        min-height: 300px;
+        padding: 12px;
+        border: 1px solid #e8e8e8;
+        border-radius: 6px;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        font-size: 14px;
+        line-height: 1.6;
+        resize: vertical;
+        outline: none;
+        color: #262626;
+        background: #fafafa;
+        box-sizing: border-box;
+    }
+
+    .markdown-editor:focus {
+        border-color: #1890ff;
+        background: #fff;
+    }
+
+    .content-panel-empty-inline {
+        color: #8c8c8c;
+        font-size: 14px;
+        text-align: center;
+        padding: 40px;
+    }
+
+    /* ========== Light Theme Markdown Preview ========== */
+    .knowledge-preview-area {
+        color: #262626;
+    }
+
+    .knowledge-preview-area .markdown-content h1,
+    .knowledge-preview-area .markdown-content h2 {
+        border-bottom-color: #e8e8e8;
+    }
+
+    .knowledge-preview-area .markdown-content blockquote {
+        border-left-color: #d9d9d9;
+        background: #fafafa;
+        color: #595959;
+    }
+
+    .knowledge-preview-area .markdown-content pre {
+        background: #f5f5f5;
+        border: 1px solid #e8e8e8;
+    }
+
+    .knowledge-preview-area .markdown-content code {
+        background: #f0f0f0;
+        color: #d4380d;
+    }
+
+    .knowledge-preview-area .markdown-content pre code {
+        background: transparent;
+        color: #262626;
+    }
+
+    .knowledge-preview-area .markdown-content table th,
+    .knowledge-preview-area .markdown-content table td {
+        border-color: #e8e8e8;
+    }
+
+    .knowledge-preview-area .markdown-content table th {
+        background: #fafafa;
+    }
+
+    .knowledge-preview-area .markdown-content table tr:nth-child(even) {
+        background: #fafafa;
+    }
+
+    .knowledge-preview-area .markdown-content hr {
+        border-top-color: #e8e8e8;
+    }
+
+    .knowledge-preview-area .markdown-content a {
+        color: #1890ff;
+    }
+
+    .knowledge-preview-area .markdown-content a:hover {
+        color: #40a9ff;
+    }
+
+    .knowledge-preview-area .markdown-content img {
+        border: 1px solid #e8e8e8;
+    }
+</style>

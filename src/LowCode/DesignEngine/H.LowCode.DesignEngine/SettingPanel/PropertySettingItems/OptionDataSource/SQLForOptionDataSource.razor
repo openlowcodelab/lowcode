@@ -1,0 +1,25 @@
+﻿@namespace H.LowCode.DesignEngine
+@inherits LowCodeComponentBase
+
+@if (DataSource != null)
+{
+    <textarea class="ta" @bind="@DataSource.Sql" rows="16" style="width: 100%;"></textarea>
+}
+
+@code {
+    [Parameter]
+    public SQLDataSourceSchema DataSource { get; set; }
+
+    [Parameter]
+    public EventCallback<SQLDataSourceSchema> DataSourceChanged { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        if (DataSource == null)
+        {
+            DataSource = new();
+        }
+    }
+}

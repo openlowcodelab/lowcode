@@ -1,0 +1,80 @@
+@using Microsoft.AspNetCore.Components.WebAssembly.Services
+@inject LazyAssemblyLoader AssemblyLoader
+@inject IJSRuntime JS
+
+<Router AppAssembly="typeof(Program).Assembly"
+        NotFoundPage="typeof(Pages.NotFound)"
+        AdditionalAssemblies="@_additionalAssemblies"
+        OnNavigateAsync="OnNavigateAsync">
+    <Found Context="routeData">
+        <RouteView RouteData="routeData" DefaultLayout="typeof(PortalLayout)" />
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+    <Navigating>
+        <div style="padding: 20px; text-align: center;">加载中...</div>
+    </Navigating>
+</Router>
+
+@code {
+    // 路由首段 → 懒加载程序集映射（基于精确路径段匹配，避免 /system 误匹配 /systemmanagement）
+    private static readonly Dictionary<string, string[]> LazyAssemblies = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["organization"] = ["H.Organization.Web.dll"],
+        ["approval"] = ["H.Approval.Web.dll"],
+        ["autotest"] = ["H.AutoTest.Web.dll"],
+        ["system"] = ["H.SystemManagement.Web.dll"],
+        ["account"] = ["H.Account.Web.dll"],
+        ["assistant"] = ["H.Assistant.Web.dll"],
+        ["enterprise"] = ["H.Enterprise.Web.dll"],
+        ["designengine"] = [
+            "H.LowCode.Workbench.dll",
+            "H.LowCode.DesignEngine.dll",
+            "H.LowCode.MyApp.dll",
+            "H.LowCode.PartsDesignEngine.dll"
+        ],
+        ["app"] = [
+            "H.LowCode.Themes.AntBlazor.dll",
+            "H.LowCode.RenderEngine.dll",
+            "H.LowCode.RenderEngine.Application.Contracts.dll"
+        ],
+    };
+
+    // 立即加载的程序集（启动时即包含，无需懒加载）
+    // 注意: ABP [DependsOn] 引用的模块必须在此处立即加载
+    private static readonly Assembly[] EagerAssemblies = [
+        typeof(H.Portal.Web._Imports).Assembly,
+    ];
+
+    // 已加载的懒加载程序集缓存，避免重复下载
+    private static readonly Dictionary<string, Assembly> _loadedAssemblies = new();
+    private Assembly[] _additionalAssemblies = EagerAssemblies;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("removeLoadingOverlay");
+        }
+    }
+
+    private async Task OnNavigateAsync(NavigationContext args)
+    {
+        var firstSegment = args.Path.Split('/', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
+
+        if (firstSegment != null
+            && LazyAssemblies.TryGetValue(firstSegment, out var assemblyNames))
+        {
+            var toLoad = assemblyNames.Where(n => !_loadedAssemblies.ContainsKey(n)).ToArray();
+            if (toLoad.Length > 0)
+            {
+                var loaded = await AssemblyLoader.LoadAssembliesAsync(toLoad);
+                foreach (var asm in loaded)
+                {
+                    _loadedAssemblies[asm.GetName().Name + ".dll"] = asm;
+                }
+            }
+        }
+
+        _additionalAssemblies = [..EagerAssemblies, .._loadedAssemblies.Values];
+    }
+}

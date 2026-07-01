@@ -1,0 +1,163 @@
+@namespace H.LowCode.DesignEngine
+@inherits LowCodeComponentBase
+
+@if (Component.IsSupportDataSource){
+    <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:30px 0 10px;">数据源</div>
+
+    if (Component.DataSource.DataSourceGroupType == ComponentDataSourceGroupTypeEnum.General)
+    {
+        <div class="propertysetting-item">
+            <label>字段：</label>
+            <div>@Component.Name</div>
+        </div>
+    }
+    else if (Component.DataSource.DataSourceGroupType == ComponentDataSourceGroupTypeEnum.Option)
+    {
+        <button class="btn btn-default" @onclick="() => ShowOptionDataSourceModal()">
+            配置数据源
+        </button>
+    }
+    else if (Component.DataSource.DataSourceGroupType == ComponentDataSourceGroupTypeEnum.Table)
+    {
+        <button class="btn btn-default" @onclick="() => ShowTableDataSourceModal()">
+            配置数据源
+        </button>
+
+        <div class="propertysetting-item">
+            <TablePropertyItem DataSource="Component.DataSource" OnTablePropertyChange="OnDataSourcePropertyChange"></TablePropertyItem>
+        </div>
+    }
+    else if (Component.DataSource.DataSourceGroupType == ComponentDataSourceGroupTypeEnum.Tree)
+    {
+        <button class="btn btn-default" @onclick="() => ShowTreeDataSourceModal()">
+            配置数据源
+        </button>
+    }
+    else if (Component.DataSource.DataSourceGroupType == ComponentDataSourceGroupTypeEnum.List)
+    {
+        <button class="btn btn-default" @onclick="() => ShowListDataSourceModal()">
+            配置数据源
+        </button>
+    }
+    else{
+        <div class="propertysetting-item">
+            <label>不支持的数据源类型</label>
+        </div>
+    }
+}
+
+<HModal Title="配置数据源" @bind-Visible="@_optionDataSourceVisible"
+       OnOk="()=>OnDataSourceConfirmAsync(_optionDataSourceVisible, SaveOptionDataSourceAsync)">
+    <OptionDataSourceSetting @bind-DataSource="Component.DataSource"></OptionDataSourceSetting>
+</HModal>
+
+<HModal Title="配置数据源" @bind-Visible="@_tableDataSourceVisible"
+       OnOk="()=>OnDataSourceConfirmAsync(_tableDataSourceVisible, SaveTableDataSourceAsync)">
+    <TableDataSourceSetting @bind-DataSource="Component.DataSource" AppId="@PageCascading.AppId"></TableDataSourceSetting>
+</HModal>
+
+<HModal Title="配置 List 数据源" @bind-Visible="@_listDataSourceVisible"
+       OnOk="()=>OnDataSourceConfirmAsync(_listDataSourceVisible, SaveListDataSourceAsync)">
+    <ListDataSourceSetting @bind-DataSource="Component.DataSource" AppId="@PageCascading.AppId"></ListDataSourceSetting>
+</HModal>
+
+@code {
+    [CascadingParameter(Name = "pageCascading")]
+    public PageCascadingModel PageCascading { get; set; }
+
+    [Parameter]
+    public ComponentPartsSchema Component { get; set; }
+
+    private bool _optionDataSourceVisible = false;
+    private bool _tableDataSourceVisible = false;
+    private bool _treeDataSourceVisible = false;
+    private bool _listDataSourceVisible = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+
+    private void ShowOptionDataSourceModal()
+    {
+        _optionDataSourceVisible = true;
+    }
+
+    private void ShowTableDataSourceModal()
+    {
+        _tableDataSourceVisible = true;
+    }
+
+    private void ShowTreeDataSourceModal()
+    {
+        _treeDataSourceVisible = true;
+    }
+
+    private void ShowListDataSourceModal()
+    {
+        _listDataSourceVisible = true;
+    }
+
+    private async Task OnOptionDataSourceConfirmAsync(MouseEventArgs e)
+    {
+        await Task.CompletedTask;
+    }
+
+    private async Task OnTableDataSourceConfirmAsync(MouseEventArgs e)
+    {
+        await Task.CompletedTask;
+    }
+
+    private async Task OnTreeDataSourceConfirmAsync(MouseEventArgs e)
+    {
+        await Task.CompletedTask;
+    }
+
+    private async Task OnDataSourceConfirmAsync(bool dataSourceVisible, Func<Task<bool>> saveDataSourceAsync)
+    {
+        var validate = true;
+        if (validate)
+        {
+            var isSuccess = await saveDataSourceAsync();
+            if (isSuccess)
+            {
+                dataSourceVisible = false;
+                //await Message.SuccessAsync("保存成功！");
+            }
+            else
+            {
+                dataSourceVisible = true;
+                //await Message.ErrorAsync("保存失败");
+            }
+        }
+        else
+        {
+            dataSourceVisible = true;
+        }
+    }
+
+    private async Task<bool> SaveOptionDataSourceAsync()
+    {
+        return await Task.FromResult(true);
+    }
+
+    private async Task<bool> SaveTableDataSourceAsync()
+    {
+        return await Task.FromResult(true);
+    }
+
+    private async Task<bool> SaveTreeDataSourceAsync()
+    {
+        return await Task.FromResult(true);
+    }
+
+    private async Task<bool> SaveListDataSourceAsync()
+    {
+        return await Task.FromResult(true);
+    }
+
+    private void OnDataSourcePropertyChange(string value)
+    {
+        Component.RefreshState();
+    }
+}

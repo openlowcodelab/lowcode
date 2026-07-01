@@ -1,0 +1,192 @@
+@namespace H.LowCode.PartsDesignEngine
+@inherits LowCodeComponentBase
+
+<div class="style-define-editor">
+    <HCard Title="样式定义">
+        <button class="btn btn-primary btn-sm" @onclick="AddStyle">
+            添加样式
+        </button>
+        @if (_stylesList != null && _stylesList.Any())
+        {
+            @for (int i = 0; i < _stylesList.Count; i++)
+            {
+                var styleDefine = _stylesList[i];
+                var currentIndex = i;
+                <HCard Style="margin-bottom: 12px;">
+                    <button class="btn btn-text btn-sm" @onclick="@(() => RemoveStyle(currentIndex))" style="color: red;">删除</button>
+                    <div class="row">
+                        <div class="col col-8">
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; margin-bottom: 4px; font-weight: 500;">样式名称 <span style="color: red;">*</span></label>
+                                <input class="inp" @bind="styleDefine.StyleName" 
+                                       @bind:after="() => NotifyChange()"
+                                       placeholder="样式名称，如：backgroundColor" />
+                            </div>
+                        </div>
+                        <div class="col col-8">
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; margin-bottom: 4px; font-weight: 500;">显示名称</label>
+                                <input class="inp" @bind="styleDefine.DisplayName" 
+                                       @bind:after="() => NotifyChange()"
+                                       placeholder="显示名称，如：背景颜色" />
+                            </div>
+                        </div>
+                        <div class="col col-8">
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; margin-bottom: 4px; font-weight: 500;">样式类型</label>
+                                <select class="sel" @bind="styleDefine.StyleType" @bind:after="() => NotifyChange()">
+                                    <option value="color">颜色</option>
+                                    <option value="size">尺寸</option>
+                                    <option value="spacing">间距</option>
+                                    <option value="border">边框</option>
+                                    <option value="font">字体</option>
+                                    <option value="layout">布局</option>
+                                    <option value="custom">自定义</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col col-8">
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; margin-bottom: 4px; font-weight: 500;">控件类型</label>
+                                <select class="sel" @bind="styleDefine.ControlType" @bind:after="() => NotifyChange()">
+                                    <option value="input">输入框</option>
+                                    <option value="colorPicker">颜色选择器</option>
+                                    <option value="slider">滑块</option>
+                                    <option value="select">下拉选择</option>
+                                    <option value="switchCtrl">开关</option>
+                                    <option value="inputNumber">数字输入</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col col-8">
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; margin-bottom: 4px; font-weight: 500;">默认值</label>
+                                <input class="inp" @bind="styleDefine.DefaultValue" 
+                                       @bind:after="() => NotifyChange()"
+                                       placeholder="默认值" />
+                            </div>
+                        </div>
+                        <div class="col col-8">
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; margin-bottom: 4px; font-weight: 500;">单位</label>
+                                <input class="inp" @bind="styleDefine.Unit" 
+                                       @bind:after="() => NotifyChange()"
+                                       placeholder="单位，如：px, %, em" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col col-12">
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; margin-bottom: 4px; font-weight: 500;">样式描述</label>
+                                <textarea class="ta" @bind="styleDefine.Description" 
+                                          @bind:after="() => NotifyChange()"
+                                          rows="2" 
+                                          placeholder="样式描述"></textarea>
+                            </div>
+                        </div>
+                        <div class="col col-12">
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; margin-bottom: 4px; font-weight: 500;">选项配置</label>
+                                <textarea class="ta" @bind="styleDefine.Options" 
+                                          @bind:after="() => NotifyChange()"
+                                          rows="2" 
+                                          placeholder="选项配置（JSON格式，用于下拉选择等控件）"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col col-6">
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; margin-bottom: 4px; font-weight: 500;">是否必需</label>
+                                <label class="switch"><input type="checkbox" @bind="styleDefine.IsRequired" @bind:after="() => NotifyChange()"></label>
+                            </div>
+                        </div>
+                        <div class="col col-6">
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; margin-bottom: 4px; font-weight: 500;">排序</label>
+                                <input type="number" class="inp" @bind="styleDefine.Order" 
+                                       @bind:after="() => NotifyChange()"
+                                       min="0" />
+                            </div>
+                        </div>
+                        <div class="col col-6">
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; margin-bottom: 4px; font-weight: 500;">分组</label>
+                                <input class="inp" @bind="styleDefine.Group" 
+                                       @bind:after="() => NotifyChange()"
+                                       placeholder="样式分组" />
+                            </div>
+                        </div>
+                        <div class="col col-6">
+                            <div style="margin-bottom: 16px;">
+                                <label style="display: block; margin-bottom: 4px; font-weight: 500;">CSS属性</label>
+                                <input class="inp" @bind="styleDefine.CssProperty" 
+                                       @bind:after="() => NotifyChange()"
+                                       placeholder="对应的CSS属性名" />
+                            </div>
+                        </div>
+                    </div>
+                </HCard>
+            }
+        }
+        else
+        {
+            <div class="empty-state">@emptyDescription</div>
+        }
+    </HCard>
+</div>
+
+@code {
+    [Parameter]
+    public List<ComponentPartsStyleDefineSchema> StyleDefines { get; set; }
+
+    [Parameter]
+    public EventCallback<IEnumerable<ComponentPartsStyleDefineSchema>> StyleDefinesChanged { get; set; }
+
+    private List<ComponentPartsStyleDefineSchema> _stylesList = new();
+    private string emptyDescription = "暂无样式定义";
+
+    protected override void OnParametersSet()
+    {
+        if (StyleDefines != null)
+        {
+            _stylesList = StyleDefines.ToList();
+        }
+        else
+        {
+            _stylesList = new List<ComponentPartsStyleDefineSchema>();
+        }
+    }
+
+    private async Task AddStyle()
+    {
+        _stylesList.Add(new ComponentPartsStyleDefineSchema
+        {
+            StyleName = "",
+            DisplayName = "",
+            StyleType = "color",
+            ControlType = "input",
+            IsRequired = false,
+            Order = _stylesList.Count
+        });
+        await NotifyChange();
+    }
+
+    private async Task RemoveStyle(int index)
+    {
+        if (index >= 0 && index < _stylesList.Count)
+        {
+            _stylesList.RemoveAt(index);
+            await NotifyChange();
+        }
+    }
+
+    private async Task NotifyChange()
+    {
+        await StyleDefinesChanged.InvokeAsync(_stylesList);
+        StateHasChanged();
+    }
+}

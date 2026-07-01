@@ -1,0 +1,53 @@
+﻿@namespace H.LowCode.PartsDesignEngine
+@inherits LowCodeComponentBase
+
+<div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:30px 0 10px;">事件</div>
+<button class="btn" @onclick="() => ShowEventModal()">
+    配置事件
+</button>
+
+@if (_eventVisible)
+{
+    <div class="modal-overlay" @onclick="() => _eventVisible = false">
+        <div class="modal" style="max-width: 1000px;" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h3>配置事件</h3>
+                <button class="btn btn-text" @onclick="() => _eventVisible = false">&times;</button>
+            </div>
+            <div class="modal-body">
+                <EventList Events="@_eventList"></EventList>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" @onclick="()=>OnEventConfirm()">确定</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public ComponentPartsSchema Component { get; set; }
+
+    private bool _eventVisible;
+    private IList<EventSchema> _eventList;
+
+    private void ShowEventModal()
+    {
+        _eventList = Component.Events ?? [];
+        foreach (var ev in Component.SupportEvents)
+        {
+            var any = _eventList.Any(t => string.Equals(t.EventName, ev, StringComparison.OrdinalIgnoreCase));
+            if (any)
+                continue;
+            _eventList.Add(new() { EventName = ev });
+        }
+
+        _eventVisible = true;
+    }
+
+    private void OnEventConfirm()
+    {
+        Component.Events = _eventList;
+        _eventVisible = false;
+    }
+}

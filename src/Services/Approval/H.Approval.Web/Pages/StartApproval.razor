@@ -1,0 +1,69 @@
+@page "/approval/start"
+@layout ApprovalLayout
+
+<h3>发起审批</h3>
+
+<div class="h-alert h-alert-success">选择审批审批类型并填写相关信息</div>
+
+<form @onsubmit="OnFinish">
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label"><span class="h-required">*</span> 审批审批</label>
+        <div class="h-form-control">
+            <select class="h-select" @bind="model.DefinitionId">
+                <option value="">请选择审批审批</option>
+                @foreach (var def in approvalDefinitions)
+                {
+                    <option value="@def.Id">@def.Name</option>
+                }
+            </select>
+        </div>
+    </div>
+    
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label"><span class="h-required">*</span> 审批标题</label>
+        <div class="h-form-control">
+            <input class="h-input" @bind="model.Title" />
+        </div>
+    </div>
+    
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">审批说明</label>
+        <div class="h-form-control">
+            <textarea class="h-textarea" rows="4" @bind="model.VariablesJson"></textarea>
+        </div>
+    </div>
+    
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label"></label>
+        <div class="h-form-control">
+            <button type="submit" class="h-btn h-btn-primary">提交审批</button>
+            <button type="button" class="h-btn" style="margin-left: 8px;" @onclick="Reset">重置</button>
+        </div>
+    </div>
+</form>
+
+@code {
+    private StartApprovalInstanceDto model = new();
+    private List<ApprovalDefinitionDto> approvalDefinitions = new();
+    
+    protected override async Task OnInitializedAsync()
+    {
+        approvalDefinitions = new List<ApprovalDefinitionDto>
+        {
+            new() { Id = "1", Name = "请假审批" },
+            new() { Id = "2", Name = "报销审批" },
+            new() { Id = "3", Name = "采购审批" }
+        };
+    }
+    
+    private async Task OnFinish()
+    {
+        Console.WriteLine($"启动审批: {model.Title}");
+    }
+    
+    private void Reset()
+    {
+        model = new StartApprovalInstanceDto();
+        StateHasChanged();
+    }
+}

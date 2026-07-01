@@ -1,0 +1,162 @@
+@namespace H.LowCode.PartsDesignEngine
+@inherits LowCodeComponentBase
+
+<div class="array-property-editor">
+    <HCard Title="@Title" Style="margin-bottom: 16px;">
+        <button class="btn btn-primary btn-sm" @onclick="AddItem">添加项</button>
+        @if (Items != null && Items.Any())
+        {
+            @for (int index = 0; index < Items.Count; index++)
+            {
+                var item = Items[index];
+                var currentIndex = index;
+                
+                <HCard Style="margin-bottom: 8px;">
+                    <div class="space">
+                        @if (index > 0)
+                        {
+                            <button class="btn btn-text btn-sm" @onclick="() => MoveUp(currentIndex)" title="上移">&uarr;</button>
+                        }
+                        @if (index < Items.Count - 1)
+                        {
+                            <button class="btn btn-text btn-sm" @onclick="() => MoveDown(currentIndex)" title="下移">&darr;</button>
+                        }
+                        <button class="btn btn-text btn-sm" @onclick="() => RemoveItem(currentIndex)" style="color: red;" title="删除">删除</button>
+                    </div>
+                    @if (ItemTemplate != null)
+                    {
+                        @ItemTemplate((item, currentIndex))
+                    }
+                    else
+                    {
+                        @* 默认的简单编辑器 *@
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; margin-bottom: 4px; font-weight: 500;">@($"项 {index + 1}")</label>
+                            @if (ItemType == "string")
+                            {
+                                <input class="inp" value="@((string)item)" 
+                                       @onchange="@((e) => UpdateItem(currentIndex, e.Value?.ToString()))"
+                                       placeholder="请输入值" />
+                            }
+                            else if (ItemType == "int")
+                            {
+                                <input type="number" class="inp" value="@((int)item)" 
+                                       @onchange="@((e) => UpdateItem(currentIndex, int.TryParse(e.Value?.ToString(), out var v) ? v : 0))" />
+                            }
+                            else if (ItemType == "bool")
+                            {
+                                <label class="switch"><input type="checkbox" checked="@((bool)item)" 
+                                        @onchange="@((e) => UpdateItem(currentIndex, e.Value))"></label>
+                            }
+                            else
+                            {
+                                <input class="inp" value="@(item?.ToString())" 
+                                       @onchange="@((e) => UpdateItem(currentIndex, e.Value?.ToString()))"
+                                       placeholder="请输入值" />
+                            }
+                        </div>
+                    }
+                </HCard>
+            }
+        }
+        else
+        {
+            <div class="empty-state">暂无数据,点击上方按钮添加项</div>
+        }
+    </HCard>
+</div>
+
+@code {
+    [Parameter]
+    public string Title { get; set; } = "数组编辑器";
+    
+    [Parameter]
+    public List<object> Items { get; set; } = new();
+    
+    [Parameter]
+    public EventCallback<List<object>> ItemsChanged { get; set; }
+    
+    [Parameter]
+    public string ItemType { get; set; } = "string";
+    
+    [Parameter]
+    public RenderFragment<(object item, int index)> ItemTemplate { get; set; }
+    
+    [Parameter]
+    public Func<object> CreateNewItem { get; set; }
+
+    private async Task AddItem()
+    {
+        object newItem;
+        
+        if (CreateNewItem != null)
+        {
+            newItem = CreateNewItem();
+        }
+        else
+        {
+            // 根据类型创建默认值
+            newItem = ItemType switch
+            {
+                "string" => "",
+                "int" => 0,
+                "bool" => false,
+                "decimal" => 0m,
+                "double" => 0.0,
+                _ => ""
+            };
+        }
+        
+        Items.Add(newItem);
+        await NotifyChange();
+    }
+
+    private async Task RemoveItem(int index)
+    {
+        if (index >= 0 && index < Items.Count)
+        {
+            Items.RemoveAt(index);
+            await NotifyChange();
+        }
+    }
+
+    private async Task MoveUp(int index)
+    {
+        if (index > 0 && index < Items.Count)
+        {
+            var item = Items[index];
+            Items.RemoveAt(index);
+            Items.Insert(index - 1, item);
+            await NotifyChange();
+        }
+    }
+
+    private async Task MoveDown(int index)
+    {
+        if (index >= 0 && index < Items.Count - 1)
+        {
+            var item = Items[index];
+            Items.RemoveAt(index);
+            Items.Insert(index + 1, item);
+            await NotifyChange();
+        }
+    }
+
+    private async Task UpdateItem(int index, object value)
+    {
+        if (index >= 0 && index < Items.Count)
+        {
+            Items[index] = value;
+            await NotifyChange();
+        }
+    }
+
+    private async Task NotifyChange()
+    {
+        if (ItemsChanged.HasDelegate)
+        {
+            await ItemsChanged.InvokeAsync(Items);
+        }
+        StateHasChanged();
+    }
+}

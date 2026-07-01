@@ -1,0 +1,170 @@
+@page "/designengine/myparts/component/edit/{LibraryId}/{ComponentId}"
+@namespace H.LowCode.PartsDesignEngine
+@inherits LowCodePageComponentBase
+@layout PartsDesignEngineLayout
+
+@inject IComponentPartsAppService ComponentPartsAppService
+
+<PageTitle>@($"{_componentParts?.PartsId ?? "组件"} - 原子组件编辑器")</PageTitle>
+
+<div class="component-parts-editor-page">
+    <div class="editor-header" style="background: white; padding: 16px; margin-bottom: 16px; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <button class="btn btn-text" @onclick="GoBack">返回</button>
+                <div>
+                    <h3 style="margin: 0; font-size: 18px; font-weight: 600;">
+                        @(_componentParts?.PartsId ?? "组件编辑")
+                    </h3>
+                    <div style="color: #666; font-size: 14px; margin-top: 4px;">
+                        原子组件编辑器
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn" @onclick="Preview">预览</button>
+                <button class="btn btn-primary" @onclick="Save" disabled="@_saving">
+                    保存
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="editor-content" style="background: white; padding: 24px; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);">
+        @if (_componentParts != null)
+        {
+            <ComponentPartsEditor @bind-ComponentParts="@_componentParts" 
+                                  OnSave="@OnSaveComponent"
+                                  OnCancel="@OnCancel" />
+        }
+        else if (_loading)
+        {
+            <div style="text-align: center; padding: 60px 0;">
+                <div class="loading-spinner">加载中...</div>
+            </div>
+        }
+        else
+        {
+            <div class="result-404">
+                <div class="result-title">组件不存在</div>
+                <div class="result-subtitle">请检查组件ID是否正确</div>
+                <div class="result-extra">
+                    <button class="btn btn-primary" @onclick="GoBack">返回列表</button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string LibraryId { get; set; }
+    
+    [Parameter]
+    public string ComponentId { get; set; }
+
+    private ComponentPartsSchema _componentParts;
+    private bool _loading = true;
+    private bool _saving = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        await LoadComponent();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+        if (_componentParts?.PartsId != ComponentId)
+        {
+            await LoadComponent();
+        }
+    }
+
+    private async Task LoadComponent()
+    {
+        if (string.IsNullOrEmpty(ComponentId))
+        {
+            _loading = false;
+            return;
+        }
+
+        try
+        {
+            _loading = true;
+            StateHasChanged();
+
+            _componentParts = await ComponentPartsAppService.GetByIdAsync(LibraryId, ComponentId);
+        }
+        catch (Exception ex)
+        {
+            await Message.ErrorAsync($"加载组件失败: {ex.Message}");
+            _componentParts = null;
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnSaveComponent(ComponentPartsSchema componentParts)
+    {
+        await Save();
+    }
+
+    private async Task Save()
+    {
+        if (_componentParts == null) return;
+
+        try
+        {
+            _saving = true;
+            StateHasChanged();
+
+            await ComponentPartsAppService.SaveAsync(_componentParts);
+            await Message.SuccessAsync("保存成功");
+        }
+        catch (Exception ex)
+        {
+            await Message.ErrorAsync($"保存失败: {ex.Message}");
+        }
+        finally
+        {
+            _saving = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task Preview()
+    {
+        await Message.InfoAsync("预览功能开发中...");
+    }
+
+    private void OnCancel()
+    {
+        GoBack();
+    }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/designengine/myparts/componentlibraries");
+    }
+}
+
+<style>
+    .component-parts-editor-page {
+        height: 100%;
+        padding: 16px;
+        background: #f5f5f5;
+    }
+
+    .editor-header h3 {
+        color: #262626;
+    }
+
+    .editor-content {
+        min-height: calc(100vh - 200px);
+    }
+</style>

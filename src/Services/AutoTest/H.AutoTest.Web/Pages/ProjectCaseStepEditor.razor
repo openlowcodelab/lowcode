@@ -1,0 +1,2706 @@
+@page "/autotest/project-cases/{testCaseId}/steps"
+@page "/autotest/project-cases/new/{projectId}/steps"
+
+@namespace H.AutoTest.Web
+@layout AutoTestLayout
+
+@inject IProjectCaseAppService ProjectCaseService
+@inject IProjectAppService ProjectService
+@inject IProjectCaseCategoryAppService CategoryService
+@inject IProjectServiceConfigAppService ProjectServiceConfigService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<style>
+    .autotest-step-editor .card { background: #fff; border: 1px solid #f0f0f0; border-radius: 6px; margin-bottom: 16px; }
+    .autotest-step-editor .card-header { padding: 10px 16px; background: #fafafa; border-bottom: 1px solid #f0f0f0; border-radius: 6px 6px 0 0; font-weight: 600; }
+    .autotest-step-editor .card-header h6 { margin: 0; font-size: 14px; }
+    .autotest-step-editor .card-body { padding: 16px; }
+    .autotest-step-editor .row { display: flex; flex-wrap: wrap; margin-left: -8px; margin-right: -8px; }
+    .autotest-step-editor .row > [class*="col-"] { padding-left: 8px; padding-right: 8px; box-sizing: border-box; }
+    .autotest-step-editor .col-md-1 { flex: 0 0 8.333%; max-width: 8.333%; }
+    .autotest-step-editor .col-md-2 { flex: 0 0 16.666%; max-width: 16.666%; }
+    .autotest-step-editor .col-md-3 { flex: 0 0 25%; max-width: 25%; }
+    .autotest-step-editor .col-md-4 { flex: 0 0 33.333%; max-width: 33.333%; }
+    .autotest-step-editor .col-md-6 { flex: 0 0 50%; max-width: 50%; }
+    .autotest-step-editor .col-md-7 { flex: 0 0 58.333%; max-width: 58.333%; }
+    .autotest-step-editor .form-label { display: block; margin-bottom: 4px; font-size: 13px; color: rgba(0,0,0,.85); }
+    .autotest-step-editor .form-control, .autotest-step-editor .form-select { display: block; width: 100%; height: 32px; padding: 4px 11px; font-size: 14px; line-height: 1.5715; color: rgba(0,0,0,.85); background: #fff; border: 1px solid #d9d9d9; border-radius: 2px; box-sizing: border-box; transition: all .3s; }
+    .autotest-step-editor .form-control:focus, .autotest-step-editor .form-select:focus { outline: none; border-color: #40a9ff; box-shadow: 0 0 0 2px rgba(24,144,255,.2); }
+    .autotest-step-editor textarea.form-control { height: auto; min-height: 64px; }
+    .autotest-step-editor .form-control-sm, .autotest-step-editor .form-select-sm { height: 28px; padding: 2px 8px; font-size: 12px; }
+    .autotest-step-editor .form-check { display: inline-flex; align-items: center; gap: 6px; }
+    .autotest-step-editor .form-check-input { width: 14px; height: 14px; margin: 0; }
+    .autotest-step-editor .form-check-label { font-size: 13px; }
+    .autotest-step-editor .btn { display: inline-flex; align-items: center; justify-content: center; padding: 4px 15px; height: 32px; font-size: 14px; line-height: 1.5715; border: 1px solid transparent; border-radius: 2px; cursor: pointer; transition: all .3s; white-space: nowrap; background: #fff; color: rgba(0,0,0,.85); border-color: #d9d9d9; }
+    .autotest-step-editor .btn:hover { color: #40a9ff; border-color: #40a9ff; }
+    .autotest-step-editor .btn-sm { height: 24px; padding: 0 7px; font-size: 12px; }
+    .autotest-step-editor .btn-outline-primary { color: #1890ff; border-color: #1890ff; }
+    .autotest-step-editor .btn-outline-primary:hover { background: #1890ff; color: #fff; }
+    .autotest-step-editor .btn-outline-danger { color: #ff4d4f; border-color: #ff4d4f; }
+    .autotest-step-editor .btn-outline-danger:hover { background: #ff4d4f; color: #fff; }
+    .autotest-step-editor .nav-tabs { display: flex; list-style: none; padding: 0; margin: 0 0 16px 0; border-bottom: 1px solid #f0f0f0; gap: 2px; }
+    .autotest-step-editor .nav-tabs .nav-item { list-style: none; margin: 0; }
+    .autotest-step-editor .nav-tabs .nav-link { background: transparent; border: none; padding: 8px 16px; font-size: 14px; color: rgba(0,0,0,.65); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+    .autotest-step-editor .nav-tabs .nav-link:hover { color: #40a9ff; }
+    .autotest-step-editor .nav-tabs .nav-link.active { color: #1890ff; border-bottom-color: #1890ff; font-weight: 600; }
+    .autotest-step-editor .tab-content { padding-top: 8px; }
+    .autotest-step-editor .tab-pane { display: none; }
+    .autotest-step-editor .tab-pane.show.active { display: block; }
+    .autotest-step-editor .badge { display: inline-block; padding: 0 7px; font-size: 12px; line-height: 18px; color: #fff; border-radius: 10px; margin-left: 4px; }
+    .autotest-step-editor .bg-primary { background: #1890ff; }
+    .autotest-step-editor .bg-info { background: #13c2c2; }
+    .autotest-step-editor .bg-success { background: #52c41a; }
+    .autotest-step-editor .alert { padding: 8px 15px; border-radius: 2px; margin-bottom: 12px; font-size: 13px; }
+    .autotest-step-editor .alert-info { background: #e6f7ff; border: 1px solid #91d5ff; color: rgba(0,0,0,.85); }
+    .autotest-step-editor .table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .autotest-step-editor .table th, .autotest-step-editor .table td { padding: 8px 12px; border-bottom: 1px solid #f0f0f0; text-align: left; }
+    .autotest-step-editor .table thead th { background: #fafafa; font-weight: 600; }
+    .autotest-step-editor .table-sm th, .autotest-step-editor .table-sm td { padding: 6px 10px; }
+    .autotest-step-editor .table-responsive { overflow-x: auto; }
+    .autotest-step-editor .text-muted { color: rgba(0,0,0,.45); }
+    .autotest-step-editor .small { font-size: 12px; }
+    .autotest-step-editor .border { border: 1px solid #f0f0f0; }
+    .autotest-step-editor .rounded { border-radius: 4px; }
+    .autotest-step-editor .p-3 { padding: 12px; }
+    .autotest-step-editor .mb-0 { margin-bottom: 0 !important; }
+    .autotest-step-editor .mb-2 { margin-bottom: 8px; }
+    .autotest-step-editor .mb-3 { margin-bottom: 12px; }
+    .autotest-step-editor .mt-3 { margin-top: 12px; }
+    .autotest-step-editor .ms-1 { margin-left: 4px; }
+</style>
+
+<div class="autotest-step-editor" style="display: flex; height: calc(100vh - 80px);">
+    <!-- 左侧：步骤列表 -->
+    <div style="width: 400px; height: 100%; overflow-y: auto; border-right: 1px solid #f0f0f0; padding: 12px;">
+        <div style="margin-bottom: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                <div>
+                    <div style="font-size: 15px; font-weight: 600; margin-bottom: 4px;">📋 测试步骤</div>
+                    <small style="color: #999;">@(isNewTestCase ? "新建测试用例" : currentTestCase.Name)</small>
+                </div>
+                <button class="h-btn h-btn-sm" style="color:#ff4d4f;border-color:#ff4d4f;" @onclick="GoBack">← 返回</button>
+            </div>
+            <span class="h-space" style="flex-wrap:wrap;justify-content:flex-end;width:100%;display:flex;">
+                <button class="h-btn h-btn-sm h-btn-primary"
+                        disabled="@(!string.IsNullOrEmpty(currentTestCase.TemplateId))"
+                        @onclick="AddStep">
+                    ➕ 添加
+                </button>
+                <button class="h-btn h-btn-sm"
+                        style="background-color:#52c41a;border-color:#52c41a;color:#fff;"
+                        disabled="@(!string.IsNullOrEmpty(currentTestCase.TemplateId))"
+                        @onclick="ShowRecorderModal">
+                    🎥 录制
+                </button>
+                <button class="h-btn h-btn-sm"
+                        style="background-color:#13c2c2;border-color:#13c2c2;color:#fff;"
+                        @onclick="ToggleTestDataModal" title="管理测试数据">
+                    📊 数据
+                </button>
+                <button class="h-btn h-btn-sm" @onclick="SaveTestCase">✓ 保存</button>
+            </span>
+        </div>
+
+        @if (currentTestCase.Steps.Any())
+        {
+            <div>
+                @foreach (var step in currentTestCase.Steps.OrderBy(s => s.Order))
+                {
+                    var isSelected = selectedStep?.Id == step.Id;
+                    <div style="@($"padding: 10px 12px; border: 1px solid {(isSelected ? "#1890ff" : "#f0f0f0")}; border-radius: 4px; margin-bottom: 6px; cursor: pointer; background: {(isSelected ? "#e6f7ff" : "#fff")};")"
+                         @onclick="() => SelectStep(step)">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 2px;">
+                                    <span class="h-tag h-tag-default">@step.Order</span>
+                                    <span style="font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">@step.Name</span>
+                                    @if (!step.IsEnabled)
+                                    {
+                                        <span class="h-tag h-tag-orange">禁用</span>
+                                    }
+                                </div>
+                                <small style="color: #999;">@GetStepTypeDisplayName(step.Type)</small>
+                            </div>
+                            <span class="h-space">
+                                <button class="h-btn h-btn-sm"
+                                        disabled="@(step.Order <= 1 || !string.IsNullOrEmpty(currentTestCase.TemplateId))"
+                                        @onclick="@(async () => { await Task.CompletedTask; MoveStepUp(step); })"
+                                        @onclick:stopPropagation>↑</button>
+                                <button class="h-btn h-btn-sm"
+                                        disabled="@(step.Order >= currentTestCase.Steps.Count || !string.IsNullOrEmpty(currentTestCase.TemplateId))"
+                                        @onclick="@(async () => { await Task.CompletedTask; MoveStepDown(step); })"
+                                        @onclick:stopPropagation>↓</button>
+                                <button class="h-btn h-btn-sm" style="color:#ff4d4f;border-color:#ff4d4f;"
+                                        disabled="@(!string.IsNullOrEmpty(currentTestCase.TemplateId))"
+                                        @onclick="@(async () => { await Task.CompletedTask; DeleteStep(step.Id); })"
+                                        @onclick:stopPropagation>🗑</button>
+                            </span>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div style="text-align: center; padding: 40px 0;">
+                <div class="h-empty">暂无测试步骤</div>
+                <div style="color: #999; margin-top: 12px; margin-bottom: 12px;">点击上方按钮添加第一个测试步骤</div>
+                <button class="h-btn h-btn-sm h-btn-primary" @onclick="AddStep">➕ 添加步骤</button>
+            </div>
+        }
+    </div>
+
+    <!-- 右侧：步骤详情编辑 -->
+    <div style="flex: 1; height: 100%; overflow-y: auto;">
+        @if (selectedStep != null)
+        {
+            <div style="padding: 12px;">
+                <!-- 基本信息 -->
+                <div style="margin-bottom:16px;">
+                <HCard Title="基本信息">
+                    <ChildContent>
+                    <div style="display:flex;gap:16px;">
+                        <div style="flex:2;">
+                            <div style="margin-bottom: 12px;">
+                                <div style="margin-bottom: 4px;">步骤名称 <span style="color: #ff4d4f;">*</span></div>
+                                <input class="h-input" @bind-value="selectedStep.Name" />
+                            </div>
+                        </div>
+                        <div style="flex:1;">
+                            <div style="margin-bottom: 12px;">
+                                <div style="margin-bottom: 4px;">步骤类型</div>
+                                <select class="h-select" style="width: 100%; height: 32px;"
+                                        value="@selectedStep.Type" @onchange="OnStepTypeChanged">
+                                    <optgroup label="API测试步骤">
+                                        <option value="@StepType.HttpRequest">HTTP请求</option>
+                                        <option value="@StepType.ApiAssertion">API断言</option>
+                                        <option value="@StepType.VariableExtraction">变量提取</option>
+                                    </optgroup>
+                                    <optgroup label="UI测试步骤">
+                                        <option value="@StepType.Navigate">页面导航</option>
+                                        <option value="@StepType.Click">点击操作</option>
+                                        <option value="@StepType.Input">输入文本</option>
+                                        <option value="@StepType.Select">选择操作</option>
+                                        <option value="@StepType.Wait">等待操作</option>
+                                        <option value="@StepType.Assert">UI断言</option>
+                                        <option value="@StepType.Screenshot">截图</option>
+                                    </optgroup>
+                                    <optgroup label="通用步骤">
+                                        <option value="@StepType.Script">脚本执行</option>
+                                        <option value="@StepType.Delay">延时等待</option>
+                                        <option value="@StepType.SetVariable">设置变量</option>
+                                    </optgroup>
+                                    <optgroup label="脚本步骤">
+                                        <option value="@StepType.JavascriptScript">JavaScript脚本</option>
+                                        <option value="@StepType.CSharpScript">C#脚本</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display:flex;gap:16px;">
+                        <div style="flex:5;">
+                            <div style="margin-bottom: 12px;">
+                                <div style="margin-bottom: 4px;">期望结果</div>
+                                <textarea class="h-textarea" rows="2" @bind="selectedStep.ExpectedResult" placeholder="描述此步骤的期望结果"></textarea>
+                            </div>
+                        </div>
+                        <div style="flex:1;">
+                            <div style="margin-bottom: 12px;">
+                                <div style="margin-bottom: 4px;">启用状态</div>
+                                <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
+                                    <input type="checkbox" @bind="selectedStep.IsEnabled" />
+                                    @(selectedStep.IsEnabled ? "启用" : "禁用")
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    </ChildContent>
+                </HCard>
+                </div>
+
+                <!-- 步骤配置 -->
+                @if (selectedStep != null)
+                {
+                    @if (IsApiStep(selectedStep.Type))
+                    {
+                        @RenderApiStepConfig(selectedStep)
+                    }
+                    else if (IsUiStep(selectedStep.Type))
+                    {
+                        @RenderUiStepConfig(selectedStep)
+                    }
+                    else if (IsScriptStep(selectedStep.Type))
+                    {
+                        @RenderScriptStepConfig(selectedStep)
+                    }
+                    else
+                    {
+                        @RenderGeneralStepConfig(selectedStep)
+                    }
+                }
+            </div>
+        }
+        else
+        {
+            <div style="display: flex; align-items: center; justify-content: center; min-height: 400px;">
+                <div style="text-align: center;">
+                    <div class="h-empty">请从左侧列表中选择一个步骤来编辑详情</div>
+                    @if (!currentTestCase.Steps.Any())
+                    {
+                        <div style="margin-top: 16px;">
+                            <button class="h-btn h-btn-primary" @onclick="AddStep">➕ 创建第一个步骤</button>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<HModal Visible="@showTestDataModal"
+        Title="测试数据管理"
+        OnCancel="ToggleTestDataModal"
+        ShowFooter="false"
+        Style="width:800px;">
+    <div class="h-alert h-alert-info" style="margin-bottom: 16px;">
+        在此定义测试数据变量。这些变量可在测试步骤中通过 {{VariableName}} 引用。如果此用例继承了模板，这些变量将覆盖模板中的同名变量。
+    </div>
+
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background: #fafafa; border-bottom: 1px solid #f0f0f0;">
+                <th style="padding: 8px 12px; text-align: left; font-weight: 600;">变量名 (Key)</th>
+                <th style="padding: 8px 12px; text-align: left; font-weight: 600;">变量值 (Value)</th>
+                <th style="padding: 8px 12px; text-align: left; font-weight: 600; width: 100px;">操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var kvp in currentTestCase.TestData)
+            {
+                <tr style="border-bottom: 1px solid #f0f0f0;">
+                    <td style="padding: 8px 12px;">@kvp.Key</td>
+                    <td style="padding: 8px 12px;">
+                        <input class="h-input" value="@(kvp.Value?.ToString() ?? "")"
+                               @onchange="@((ChangeEventArgs e) => currentTestCase.TestData[kvp.Key] = e.Value?.ToString() ?? "")" />
+                    </td>
+                    <td style="padding: 8px 12px;">
+                        <button class="h-btn h-btn-sm" style="color:#ff4d4f;border-color:#ff4d4f;" @onclick="@(() => RemoveTestData(kvp.Key))">🗑 删除</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div style="display: flex; gap: 8px; margin-top: 16px; padding-top: 12px; border-top: 1px solid #f0f0f0;">
+        <input class="h-input" placeholder="新变量名" @bind-value="newTestDataKey" style="flex: 1;" />
+        <input class="h-input" placeholder="变量值" @bind-value="newTestDataValue" style="flex: 1;" />
+        <button class="h-btn h-btn-primary"
+                style="background-color: #52c41a; border-color: #52c41a;"
+                @onclick="AddTestData">➕ 添加</button>
+    </div>
+
+    <div style="text-align: right; margin-top: 16px; padding-top: 12px; border-top: 1px solid #f0f0f0;">
+        <button class="h-btn h-btn-primary" @onclick="ToggleTestDataModal">完成</button>
+    </div>
+</HModal>
+
+@code {
+    [Parameter] public string? TestCaseId { get; set; }
+    [Parameter] public string? ProjectId { get; set; }
+    
+    private ProjectCaseDto currentTestCase = new();
+    private ProjectCaseStep? selectedStep;
+    private bool isNewTestCase = false;
+    private List<H.AutoTest.Application.Contracts.ProjectServiceDto> projectServices = new();
+    private string activeApiTab = "Params"; // 当前活动的API配置tab页
+    
+    // 用于存储新添加项的临时变量，确保切换tab时值不丢失
+    private string newParamKey = "";
+    private string newParamValue = "";
+    private string newHeaderKey = "";
+    private string newHeaderValue = "";
+    private string newCookieKey = "";
+    private string newCookieValue = "";
+    private string newVariableName = "";
+    private string newVariablePath = "";
+    
+    // 断言配置相关变量
+    private string newAssertionType = "JsonPath";
+    private string newAssertionTarget = "";
+    private string newAssertionOperator = "equals";
+    private string newAssertionExpectedValue = "";
+
+    // 模板和测试数据相关
+    private List<ProjectCaseDto> availableTemplates = new();
+    private bool showSettingsModal = false;
+    private bool showTestDataModal = false;
+    private string newTestDataKey = "";
+    private string newTestDataValue = "";
+    
+    protected override async Task OnInitializedAsync()
+    {
+        if (!string.IsNullOrEmpty(TestCaseId))
+        {
+            // 编辑现有测试用例
+            var testCase = await ProjectCaseService.GetByIdAsync(TestCaseId);
+            if (testCase != null)
+            {
+                currentTestCase = testCase;
+            }
+            else
+            {
+                Navigation.NavigateTo("/autotest/project-cases");
+                return;
+            }
+        }
+        else if (!string.IsNullOrEmpty(ProjectId))
+        {
+            // 创建新测试用例
+            isNewTestCase = true;
+            currentTestCase = new ProjectCaseDto { ProjectId = ProjectId };
+        }
+        else
+        {
+            Navigation.NavigateTo("/autotest/project-cases");
+            return;
+        }
+        
+        // 加载项目服务列表
+        var projectId = currentTestCase.ProjectId;
+        if (!string.IsNullOrEmpty(projectId))
+        {
+            projectServices = await ProjectServiceConfigService.GetProjectServicesAsync(projectId);
+            
+            // 加载可用模板
+            var allCases = await ProjectCaseService.GetByProjectIdAsync(projectId);
+            availableTemplates = allCases.Where(c => c.IsTemplate && c.Id != currentTestCase.Id).ToList();
+        }
+        
+        // 如果关联了模板，加载模板步骤
+        if (!string.IsNullOrEmpty(currentTestCase.TemplateId))
+        {
+            await LoadTemplateSteps(currentTestCase.TemplateId);
+        }
+
+        // 默认选中第一个步骤
+        if (currentTestCase.Steps.Any())
+        {
+            var firstStep = currentTestCase.Steps.OrderBy(s => s.Order).First();
+            SelectStep(firstStep);
+        }
+    }
+    
+    private async Task LoadTemplateSteps(string templateId)
+    {
+        var template = await ProjectCaseService.GetByIdAsync(templateId);
+        if (template != null)
+        {
+            // 深拷贝步骤列表用于显示
+            var json = System.Text.Json.JsonSerializer.Serialize(template.Steps);
+            currentTestCase.Steps = System.Text.Json.JsonSerializer.Deserialize<List<ProjectCaseStep>>(json) ?? new List<ProjectCaseStep>();
+            
+            // 如果当前选中的步骤不在新列表中，取消选中
+            if (selectedStep != null && !currentTestCase.Steps.Any(s => s.Id == selectedStep.Id))
+            {
+                selectedStep = null;
+            }
+            StateHasChanged();
+        }
+    }
+
+    private void ToggleTestDataModal() => showTestDataModal = !showTestDataModal;
+
+    private void AddTestData()
+    {
+        if (!string.IsNullOrWhiteSpace(newTestDataKey))
+        {
+            if (currentTestCase.TestData.ContainsKey(newTestDataKey))
+            {
+                 currentTestCase.TestData[newTestDataKey] = newTestDataValue;
+            }
+            else
+            {
+                 currentTestCase.TestData.Add(newTestDataKey, newTestDataValue);
+            }
+            newTestDataKey = "";
+            newTestDataValue = "";
+        }
+    }
+    
+    private void RemoveTestData(string key)
+    {
+        if (currentTestCase.TestData.ContainsKey(key))
+        {
+            currentTestCase.TestData.Remove(key);
+        }
+    }
+    
+    private void SelectStep(ProjectCaseStep step)
+    {
+        selectedStep = step;
+        
+        // 确保步骤有正确的配置对象
+        if (IsApiStep(step.Type) && step.ApiConfig == null)
+        {
+            step.ApiConfig = new ApiStepConfig();
+        }
+        else if (IsUiStep(step.Type) && step.UiConfig == null)
+        {
+            step.UiConfig = new UiStepConfig();
+        }
+        else if (IsScriptStep(step.Type) && step.ScriptConfig == null)
+        {
+            step.ScriptConfig = new ScriptStepConfig();
+        }
+        
+        StateHasChanged();
+    }
+    
+    private void AddStep()
+    {
+        var newStep = new ProjectCaseStep
+        {
+            Name = $"步骤 {currentTestCase.Steps.Count + 1}",
+            Order = currentTestCase.Steps.Count + 1,
+            Type = StepType.HttpRequest,
+            ApiConfig = new ApiStepConfig()
+        };
+        
+        currentTestCase.Steps.Add(newStep);
+        selectedStep = newStep;
+        StateHasChanged();
+    }
+    
+    private async Task DeleteStep(string stepId)
+    {
+        var stepToRemove = currentTestCase.Steps.FirstOrDefault(s => s.Id == stepId);
+        if (stepToRemove != null)
+        {
+            currentTestCase.Steps.Remove(stepToRemove);
+            
+            // 重新排序
+            for (int i = 0; i < currentTestCase.Steps.Count; i++)
+            {
+                currentTestCase.Steps[i].Order = i + 1;
+            }
+            
+            // 如果删除的是当前选中的步骤，清除选择
+            if (selectedStep?.Id == stepId)
+            {
+                selectedStep = null;
+            }
+            
+            StateHasChanged();
+        }
+    }
+    
+    private void MoveStepUp(ProjectCaseStep step)
+    {
+        if (step.Order > 1)
+        {
+            var prevStep = currentTestCase.Steps.FirstOrDefault(s => s.Order == step.Order - 1);
+            if (prevStep != null)
+            {
+                prevStep.Order++;
+                step.Order--;
+                StateHasChanged();
+            }
+        }
+    }
+    
+    private void MoveStepDown(ProjectCaseStep step)
+    {
+        if (step.Order < currentTestCase.Steps.Count)
+        {
+            var nextStep = currentTestCase.Steps.FirstOrDefault(s => s.Order == step.Order + 1);
+            if (nextStep != null)
+            {
+                nextStep.Order--;
+                step.Order++;
+                StateHasChanged();
+            }
+        }
+    }
+    
+    private void OnStepTypeChanged(ChangeEventArgs e)
+    {
+        if (selectedStep != null && Enum.TryParse<StepType>(e.Value?.ToString(), out var stepType))
+        {
+            selectedStep.Type = stepType;
+            
+            // 根据步骤类型初始化相应的配置
+            if (IsApiStep(stepType))
+            {
+                selectedStep.ApiConfig = selectedStep.ApiConfig ?? new ApiStepConfig();
+                selectedStep.UiConfig = null;
+                selectedStep.ScriptConfig = null;
+            }
+            else if (IsUiStep(stepType))
+            {
+                selectedStep.UiConfig = selectedStep.UiConfig ?? new UiStepConfig();
+                selectedStep.ApiConfig = null;
+                selectedStep.ScriptConfig = null;
+            }
+            else if (IsScriptStep(stepType))
+            {
+                selectedStep.ScriptConfig = selectedStep.ScriptConfig ?? new ScriptStepConfig();
+                selectedStep.ApiConfig = null;
+                selectedStep.UiConfig = null;
+            }
+            else
+            {
+                selectedStep.ApiConfig = null;
+                selectedStep.UiConfig = null;
+                selectedStep.ScriptConfig = null;
+            }
+            
+            StateHasChanged();
+        }
+    }
+    
+    private async Task SaveTestCase()
+    {
+        try
+        {
+            // 如果使用了模板，保存时不保存步骤（步骤由模板定义）
+            var caseToSave = currentTestCase;
+            if (!string.IsNullOrEmpty(currentTestCase.TemplateId))
+            {
+                var json = System.Text.Json.JsonSerializer.Serialize(currentTestCase);
+                caseToSave = System.Text.Json.JsonSerializer.Deserialize<ProjectCaseDto>(json)!;
+                caseToSave.Steps.Clear();
+            }
+
+            if (isNewTestCase)
+            {
+                await ProjectCaseService.CreateAsync(caseToSave);
+                // 如果是新建，更新当前对象的ID，防止重复创建
+                if (currentTestCase.Id != caseToSave.Id) currentTestCase.Id = caseToSave.Id;
+                isNewTestCase = false;
+                await JSRuntime.InvokeVoidAsync("alert", "测试用例创建成功！");
+            }
+            else
+            {
+                await ProjectCaseService.UpdateAsync(caseToSave.Id, caseToSave);
+                await JSRuntime.InvokeVoidAsync("alert", "测试用例保存成功！");
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"保存失败: {ex.Message}");
+        }
+    }
+    
+    private void GoBack()
+    {
+        // 返回测试用例页面，并保留项目ID
+        if (!string.IsNullOrEmpty(currentTestCase.ProjectId))
+        {
+            Navigation.NavigateTo($"/autotest/project-cases/{currentTestCase.ProjectId}");
+        }
+        else
+        {
+            Navigation.NavigateTo("/autotest/project-cases");
+        }
+    }
+    
+    // 辅助方法
+    private bool IsApiStep(StepType type) => type == StepType.HttpRequest || type == StepType.ApiAssertion || type == StepType.VariableExtraction;
+    
+    private bool IsUiStep(StepType type) => type >= StepType.Navigate && type <= StepType.KeyPress;
+    
+    private bool IsScriptStep(StepType type) => type == StepType.JavascriptScript || type == StepType.CSharpScript;
+    
+    private string GetStepTypeDisplayName(StepType type) => type switch
+    {
+        StepType.HttpRequest => "HTTP请求",
+        StepType.ApiAssertion => "API断言",
+        StepType.VariableExtraction => "变量提取",
+        StepType.Navigate => "页面导航",
+        StepType.Click => "点击操作",
+        StepType.Input => "输入文本",
+        StepType.Select => "选择操作",
+        StepType.Wait => "等待操作",
+        StepType.Assert => "UI断言",
+        StepType.Screenshot => "截图",
+        StepType.Script => "脚本执行",
+        StepType.Delay => "延时等待",
+        StepType.SetVariable => "设置变量",
+        StepType.JavascriptScript => "JavaScript脚本",
+        StepType.CSharpScript => "C#脚本",
+        _ => "未知"
+    };
+    
+    // API配置辅助方法
+    private void ParseHeaders(ApiStepConfig config, string headersText)
+    {
+        config.Headers.Clear();
+        if (string.IsNullOrWhiteSpace(headersText)) return;
+        
+        var lines = headersText.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        foreach (var line in lines)
+        {
+            var parts = line.Split(':', 2, StringSplitOptions.TrimEntries);
+            if (parts.Length == 2)
+            {
+                config.Headers[parts[0]] = parts[1];
+            }
+        }
+    }
+    
+    private void RenderApiAssertions(ProjectCaseStep step, RenderTreeBuilder builder, int sequence)
+    {
+        builder.OpenElement(sequence, "div");
+        builder.AddAttribute(sequence + 1, "class", "card mb-3");
+        
+        builder.OpenElement(sequence + 2, "div");
+        builder.AddAttribute(sequence + 3, "class", "card-header");
+        builder.OpenElement(sequence + 4, "h6");
+        builder.AddAttribute(sequence + 5, "class", "mb-0");
+        builder.AddContent(sequence + 6, "✅ 响应断言");
+        builder.CloseElement();
+        builder.CloseElement();
+        
+        builder.OpenElement(sequence + 7, "div");
+        builder.AddAttribute(sequence + 8, "class", "card-body");
+        
+        // 添加断言按钮
+        builder.OpenElement(sequence + 9, "button");
+        builder.AddAttribute(sequence + 10, "type", "button");
+        builder.AddAttribute(sequence + 11, "class", "btn btn-outline-primary btn-sm mb-3");
+        builder.AddAttribute(sequence + 12, "onclick", EventCallback.Factory.Create(this, () => AddAssertion(step)));
+        builder.AddContent(sequence + 13, "+ 添加断言");
+        builder.CloseElement();
+        
+        // 渲染现有断言
+        for (int i = 0; i < step.ApiConfig.Assertions.Count; i++)
+        {
+            var assertion = step.ApiConfig.Assertions[i];
+            var baseSeq = sequence + 20 + (i * 20);
+            
+            builder.OpenElement(baseSeq, "div");
+            builder.AddAttribute(baseSeq + 1, "class", "border rounded p-3 mb-2");
+            
+            builder.OpenElement(baseSeq + 2, "div");
+            builder.AddAttribute(baseSeq + 3, "class", "row");
+            
+            // 断言类型
+            builder.OpenElement(baseSeq + 4, "div");
+            builder.AddAttribute(baseSeq + 5, "class", "col-md-3");
+            builder.OpenElement(baseSeq + 6, "select");
+            builder.AddAttribute(baseSeq + 7, "class", "form-select form-select-sm");
+            builder.AddAttribute(baseSeq + 8, "value", assertion.Type);
+            builder.AddAttribute(baseSeq + 9, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => assertion.Type = e.Value?.ToString() ?? ""));
+            builder.OpenElement(baseSeq + 10, "option");
+            builder.AddAttribute(baseSeq + 11, "value", "status_code");
+            builder.AddContent(baseSeq + 12, "状态码");
+            builder.CloseElement();
+            builder.OpenElement(baseSeq + 13, "option");
+            builder.AddAttribute(baseSeq + 14, "value", "response_time");
+            builder.AddContent(baseSeq + 15, "响应时间");
+            builder.CloseElement();
+            builder.OpenElement(baseSeq + 16, "option");
+            builder.AddAttribute(baseSeq + 17, "value", "json_path");
+            builder.AddContent(baseSeq + 18, "JSON路径");
+            builder.CloseElement();
+            builder.CloseElement();
+            builder.CloseElement();
+            
+            // 删除按钮
+            builder.OpenElement(baseSeq + 19, "div");
+            builder.AddAttribute(baseSeq + 20, "class", "col-md-1");
+            builder.OpenElement(baseSeq + 21, "button");
+            builder.AddAttribute(baseSeq + 22, "type", "button");
+            builder.AddAttribute(baseSeq + 23, "class", "btn btn-outline-danger btn-sm");
+            builder.AddAttribute(baseSeq + 24, "onclick", EventCallback.Factory.Create(this, () => RemoveAssertion(step, i)));
+            builder.AddContent(baseSeq + 25, "×");
+            builder.CloseElement();
+            builder.CloseElement();
+            
+            builder.CloseElement(); // row
+            builder.CloseElement(); // border
+        }
+        
+        builder.CloseElement(); // card-body
+        builder.CloseElement(); // card
+    }
+    
+    private void RenderVariableExtraction(ProjectCaseStep step, RenderTreeBuilder builder, int sequence)
+    {
+        builder.OpenElement(sequence, "div");
+        builder.AddAttribute(sequence + 1, "class", "card mb-3");
+        
+        builder.OpenElement(sequence + 2, "div");
+        builder.AddAttribute(sequence + 3, "class", "card-header");
+        builder.OpenElement(sequence + 4, "h6");
+        builder.AddAttribute(sequence + 5, "class", "mb-0");
+        builder.AddContent(sequence + 6, "📋 变量提取");
+        builder.CloseElement();
+        builder.CloseElement();
+        
+        builder.OpenElement(sequence + 7, "div");
+        builder.AddAttribute(sequence + 8, "class", "card-body");
+        builder.OpenElement(sequence + 9, "textarea");
+        builder.AddAttribute(sequence + 10, "class", "form-control");
+        builder.AddAttribute(sequence + 11, "rows", "3");
+        builder.AddAttribute(sequence + 12, "placeholder", "token=$.data.token\nuserId=$.user.id");
+        builder.AddAttribute(sequence + 13, "value", string.Join("\n", step.ApiConfig.VariableExtractions.Select(v => $"{v.Key}={v.Value}")));
+        builder.AddAttribute(sequence + 14, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => ParseVariableExtractions(step.ApiConfig, e.Value?.ToString() ?? "")));
+        builder.CloseElement();
+        builder.CloseElement();
+        
+        builder.CloseElement();
+    }
+    
+    // UI配置辅助方法
+    private void RenderUiActionOptions(RenderTreeBuilder builder, int sequence)
+    {
+        var actions = new Dictionary<string, string>
+        {
+            { "navigate", "导航到页面" },
+            { "click", "点击元素" },
+            { "type", "输入文本" },
+            { "clear", "清除内容" },
+            { "select", "选择选项" },
+            { "check", "勾选复选框" },
+            { "uncheck", "取消勾选" },
+            { "hover", "鼠标悬停" },
+            { "wait", "等待元素" },
+            { "assert", "断言检查" },
+            { "screenshot", "截图" }
+        };
+        
+        foreach (var action in actions)
+        {
+            builder.OpenElement(sequence, "option");
+            builder.AddAttribute(sequence + 1, "value", action.Key);
+            builder.AddContent(sequence + 2, action.Value);
+            builder.CloseElement();
+            sequence += 3;
+        }
+    }
+    
+    private string GetSelectorPlaceholder(string selectorType) => selectorType switch
+    {
+        "css" => "#id, .class, button[type='submit']",
+        "xpath" => "//button[@id='submit']",
+        "id" => "submit-button",
+        "name" => "username",
+        "text" => "登录按钮",
+        _ => "选择器表达式"
+    };
+    
+    private bool NeedsValue(string action) => action switch
+    {
+        "navigate" => true,
+        "type" => true,
+        "select" => true,
+        "assert" => true,
+        _ => false
+    };
+    
+    private string GetValueLabel(string action) => action switch
+    {
+        "navigate" => "🌐 URL地址",
+        "type" => "📝 输入文本",
+        "select" => "📋 选择值",
+        "assert" => "✅ 期望值",
+        _ => "🔧 操作值"
+    };
+    
+    // 断言和变量提取操作
+    private void AddAssertion(ProjectCaseStep step)
+    {
+        step.ApiConfig.Assertions.Add(new ApiAssertion
+        {
+            Type = "status_code",
+            Operator = "equals",
+            ExpectedValue = "200",
+            Description = "检查状态码"
+        });
+        StateHasChanged();
+    }
+    
+    // 使用用户输入值添加新断言
+    private void AddNewAssertion(ProjectCaseStep step)
+    {
+        if (string.IsNullOrWhiteSpace(newAssertionType) || 
+            string.IsNullOrWhiteSpace(newAssertionOperator))
+        {
+            return;
+        }
+        
+        step.ApiConfig.Assertions.Add(new ApiAssertion
+        {
+            Type = newAssertionType,
+            Target = newAssertionTarget,
+            Operator = newAssertionOperator,
+            ExpectedValue = newAssertionExpectedValue,
+            Description = $"检查{newAssertionType}"
+        });
+        
+        // 清空输入框
+        newAssertionType = "JsonPath";
+        newAssertionTarget = "";
+        newAssertionOperator = "equals";
+        newAssertionExpectedValue = "";
+        
+        StateHasChanged();
+    }
+    
+    private void RemoveAssertion(ProjectCaseStep step, int index)
+    {
+        Console.WriteLine($"RemoveAssertion called: index={index}, count={step.ApiConfig.Assertions.Count}");
+        if (index >= 0 && index < step.ApiConfig.Assertions.Count)
+        {
+            var removedAssertion = step.ApiConfig.Assertions[index];
+            Console.WriteLine($"Removing assertion: Type={removedAssertion.Type}, Target={removedAssertion.Target}");
+            step.ApiConfig.Assertions.RemoveAt(index);
+            Console.WriteLine($"After removal, count={step.ApiConfig.Assertions.Count}");
+            StateHasChanged();
+        }
+        else
+        {
+            Console.WriteLine($"Invalid index: {index}, count: {step.ApiConfig.Assertions.Count}");
+        }
+    }
+    
+    // 断言配置更新方法
+    private void UpdateAssertionType(ProjectCaseStep step, int index, string type)
+    {
+        if (index >= 0 && index < step.ApiConfig.Assertions.Count)
+        {
+            step.ApiConfig.Assertions[index].Type = type;
+            // 根据断言类型设置默认的目标值
+            switch (type)
+            {
+                case "status_code":
+                    step.ApiConfig.Assertions[index].Target = "";
+                    step.ApiConfig.Assertions[index].ExpectedValue = "200";
+                    break;
+                case "response_time":
+                    step.ApiConfig.Assertions[index].Target = "";
+                    step.ApiConfig.Assertions[index].ExpectedValue = "5000";
+                    break;
+                case "json_path":
+                    step.ApiConfig.Assertions[index].Target = "$.data";
+                    break;
+                case "header":
+                    step.ApiConfig.Assertions[index].Target = "Content-Type";
+                    break;
+            }
+            StateHasChanged();
+        }
+    }
+    
+    private void UpdateAssertionTarget(ProjectCaseStep step, int index, string target)
+    {
+        if (index >= 0 && index < step.ApiConfig.Assertions.Count)
+        {
+            step.ApiConfig.Assertions[index].Target = target;
+            StateHasChanged();
+        }
+    }
+    
+    private void UpdateAssertionOperator(ProjectCaseStep step, int index, string operatorValue)
+    {
+        if (index >= 0 && index < step.ApiConfig.Assertions.Count)
+        {
+            step.ApiConfig.Assertions[index].Operator = operatorValue;
+            StateHasChanged();
+        }
+    }
+    
+    private void UpdateAssertionExpectedValue(ProjectCaseStep step, int index, string expectedValue)
+    {
+        if (index >= 0 && index < step.ApiConfig.Assertions.Count)
+        {
+            step.ApiConfig.Assertions[index].ExpectedValue = expectedValue;
+            StateHasChanged();
+        }
+    }
+    
+    // 获取目标字段的占位符文本
+    private string GetTargetPlaceholder(string assertionType) => assertionType switch
+    {
+        "status_code" => "状态码（留空）",
+        "response_time" => "响应时间（留空）",
+        "json_path" => "$.data.id",
+        "header" => "Content-Type",
+        _ => "目标字段"
+    };
+    
+    // 获取断言目标字段的占位符文本
+    private string GetAssertionTargetPlaceholder(string assertionType) => assertionType switch
+    {
+        "StatusCode" => "状态码（留空）",
+        "ResponseTime" => "响应时间（留空）",
+        "JsonPath" => "$.data.id",
+        "Header" => "Content-Type",
+        _ => "目标字段"
+    };
+    
+    // 断言配置验证方法
+    private bool ValidateAssertion(ApiAssertion assertion, out string errorMessage)
+    {
+        errorMessage = string.Empty;
+        
+        // 验证断言类型
+        if (string.IsNullOrWhiteSpace(assertion.Type))
+        {
+            errorMessage = "断言类型不能为空";
+            return false;
+        }
+        
+        // 验证期望值
+        if (string.IsNullOrWhiteSpace(assertion.ExpectedValue))
+        {
+            errorMessage = "期望值不能为空";
+            return false;
+        }
+        
+        // 根据断言类型进行特定验证
+        switch (assertion.Type)
+        {
+            case "status_code":
+                if (!int.TryParse(assertion.ExpectedValue, out var statusCode) || statusCode < 100 || statusCode > 599)
+                {
+                    errorMessage = "状态码必须是100-599之间的整数";
+                    return false;
+                }
+                break;
+                
+            case "response_time":
+                if (!int.TryParse(assertion.ExpectedValue, out var responseTime) || responseTime <= 0)
+                {
+                    errorMessage = "响应时间必须是大于0的整数（毫秒）";
+                    return false;
+                }
+                break;
+                
+            case "json_path":
+                if (string.IsNullOrWhiteSpace(assertion.Target))
+                {
+                    errorMessage = "JSON路径不能为空";
+                    return false;
+                }
+                if (!assertion.Target.StartsWith("$"))
+                {
+                    errorMessage = "JSON路径必须以$开头";
+                    return false;
+                }
+                break;
+                
+            case "header":
+                if (string.IsNullOrWhiteSpace(assertion.Target))
+                {
+                    errorMessage = "响应头名称不能为空";
+                    return false;
+                }
+                break;
+        }
+        
+        // 验证操作符
+        var validOperators = new[] { "equals", "contains", "not_equals", "greater_than", "less_than", "startswith", "endswith" };
+        if (!validOperators.Contains(assertion.Operator))
+        {
+            errorMessage = "无效的操作符";
+            return false;
+        }
+        
+        return true;
+    }
+    
+    // 验证所有断言配置
+    private bool ValidateAllAssertions(ProjectCaseStep step, out List<string> errorMessages)
+    {
+        errorMessages = new List<string>();
+        
+        if (step.ApiConfig?.Assertions == null || !step.ApiConfig.Assertions.Any())
+        {
+            return true; // 没有断言配置是允许的
+        }
+        
+        for (int i = 0; i < step.ApiConfig.Assertions.Count; i++)
+        {
+            var assertion = step.ApiConfig.Assertions[i];
+            if (!ValidateAssertion(assertion, out var errorMessage))
+            {
+                errorMessages.Add($"断言 {i + 1}: {errorMessage}");
+            }
+        }
+        
+        return !errorMessages.Any();
+    }
+    
+    // 变量提取操作
+    private void AddVariableExtraction(ProjectCaseStep step)
+    {
+        if (!string.IsNullOrWhiteSpace(newVariableName) && !string.IsNullOrWhiteSpace(newVariablePath))
+        {
+            step.ApiConfig.VariableExtractions[newVariableName] = newVariablePath;
+            newVariableName = "";
+            newVariablePath = "";
+            StateHasChanged();
+        }
+    }
+    
+    private void RemoveVariableExtraction(ProjectCaseStep step, string variableName)
+    {
+        if (step.ApiConfig.VariableExtractions.ContainsKey(variableName))
+        {
+            step.ApiConfig.VariableExtractions.Remove(variableName);
+            StateHasChanged();
+        }
+    }
+    
+    private void UpdateVariableExtraction(ProjectCaseStep step, string oldName, string newName, string newPath)
+    {
+        if (step.ApiConfig.VariableExtractions.ContainsKey(oldName))
+        {
+            step.ApiConfig.VariableExtractions.Remove(oldName);
+        }
+        if (!string.IsNullOrWhiteSpace(newName) && !string.IsNullOrWhiteSpace(newPath))
+        {
+            step.ApiConfig.VariableExtractions[newName] = newPath;
+        }
+        StateHasChanged();
+    }
+    
+    private void ParseVariableExtractions(ApiStepConfig config, string extractionsText)
+    {
+        config.VariableExtractions.Clear();
+        if (string.IsNullOrWhiteSpace(extractionsText)) return;
+        
+        var lines = extractionsText.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+        foreach (var line in lines)
+        {
+            var parts = line.Split('=', 2, StringSplitOptions.TrimEntries);
+            if (parts.Length == 2)
+            {
+                config.VariableExtractions[parts[0]] = parts[1];
+            }
+        }
+    }
+}
+
+@* 渲染API步骤配置 *@
+@code {
+    private RenderFragment RenderApiStepConfig(ProjectCaseStep step) => builder =>
+    {
+        if (step.ApiConfig == null) return;
+        
+        // HTTP请求配置
+        if (step.Type == StepType.HttpRequest)
+        {
+            builder.OpenElement(0, "div");
+            builder.AddAttribute(1, "class", "card mb-3");
+            
+            builder.OpenElement(2, "div");
+            builder.AddAttribute(3, "class", "card-header");
+            builder.OpenElement(4, "h6");
+            builder.AddAttribute(5, "class", "mb-0");
+            builder.AddContent(6, "🌐 HTTP请求配置");
+            builder.CloseElement();
+            builder.CloseElement();
+            
+            builder.OpenElement(7, "div");
+            builder.AddAttribute(8, "class", "card-body");
+            
+            // 请求方法和URL（基本信息，始终显示）
+             builder.OpenElement(9, "div");
+             builder.AddAttribute(10, "class", "row mb-3");
+             
+             // 请求方法
+             builder.OpenElement(11, "div");
+             builder.AddAttribute(12, "class", "col-md-2");
+             builder.OpenElement(13, "label");
+             builder.AddAttribute(14, "class", "form-label");
+             builder.AddContent(15, "请求方法");
+             builder.CloseElement();
+             builder.OpenElement(16, "select");
+             builder.AddAttribute(17, "class", "form-select");
+             builder.AddAttribute(18, "value", step.ApiConfig.Method);
+             builder.AddAttribute(19, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => { step.ApiConfig.Method = e.Value?.ToString() ?? "GET"; }));
+             builder.OpenElement(20, "option");
+             builder.AddAttribute(21, "value", "GET");
+             builder.AddContent(22, "GET");
+             builder.CloseElement();
+             builder.OpenElement(23, "option");
+             builder.AddAttribute(24, "value", "POST");
+             builder.AddContent(25, "POST");
+             builder.CloseElement();
+             builder.OpenElement(26, "option");
+             builder.AddAttribute(27, "value", "PUT");
+             builder.AddContent(28, "PUT");
+             builder.CloseElement();
+             builder.OpenElement(29, "option");
+             builder.AddAttribute(30, "value", "DELETE");
+             builder.AddContent(31, "DELETE");
+             builder.CloseElement();
+             builder.OpenElement(32, "option");
+             builder.AddAttribute(33, "value", "PATCH");
+             builder.AddContent(34, "PATCH");
+             builder.CloseElement();
+             builder.CloseElement();
+             builder.CloseElement();
+             
+             // 服务选择
+             builder.OpenElement(35, "div");
+             builder.AddAttribute(36, "class", "col-md-3");
+             builder.OpenElement(37, "label");
+             builder.AddAttribute(38, "class", "form-label");
+             builder.AddContent(39, "选择服务");
+             builder.CloseElement();
+             builder.OpenElement(40, "select");
+             builder.AddAttribute(41, "class", "form-select");
+             builder.AddAttribute(42, "value", step.ApiConfig.ServiceId ?? "");
+             builder.AddAttribute(43, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => { step.ApiConfig.ServiceId = string.IsNullOrEmpty(e.Value?.ToString()) ? null : e.Value.ToString(); }));
+             builder.OpenElement(44, "option");
+             builder.AddAttribute(45, "value", "");
+             builder.AddContent(46, "-- 直接输入完整URL --");
+             builder.CloseElement();
+             foreach (var service in projectServices)
+             {
+                 builder.OpenElement(47, "option");
+                 builder.AddAttribute(48, "value", service.Id.ToString());
+                 builder.AddContent(49, service.Name);
+                 builder.CloseElement();
+             }
+             builder.CloseElement();
+             builder.CloseElement();
+             
+             // URL输入
+             builder.OpenElement(50, "div");
+             builder.AddAttribute(51, "class", "col-md-7");
+             builder.OpenElement(52, "label");
+             builder.AddAttribute(53, "class", "form-label");
+             builder.AddContent(54, string.IsNullOrEmpty(step.ApiConfig.ServiceId) ? "URL 地址" : "相对路径");
+             builder.CloseElement();
+             builder.OpenElement(55, "input");
+             builder.AddAttribute(56, "type", "text");
+             builder.AddAttribute(57, "class", "form-control");
+             builder.AddAttribute(58, "placeholder", string.IsNullOrEmpty(step.ApiConfig.ServiceId) ? "https://api.example.com/users" : "/api/users");
+             builder.AddAttribute(59, "value", step.ApiConfig.Url);
+             builder.AddAttribute(60, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => { step.ApiConfig.Url = e.Value?.ToString() ?? ""; }));
+             builder.CloseElement();
+             builder.CloseElement();
+             
+             builder.CloseElement(); // row
+             
+             // Tab导航
+             builder.OpenElement(61, "ul");
+             builder.AddAttribute(62, "class", "nav nav-tabs mb-3");
+             
+             // Params Tab
+             builder.OpenElement(63, "li");
+             builder.AddAttribute(64, "class", "nav-item");
+             builder.OpenElement(65, "button");
+             builder.AddAttribute(66, "class", $"nav-link {(activeApiTab == "Params" ? "active" : "")}");
+             builder.AddAttribute(67, "onclick", EventCallback.Factory.Create(this, () => { activeApiTab = "Params"; StateHasChanged(); }));
+             builder.AddContent(68, "Params");
+             builder.CloseElement();
+             builder.CloseElement();
+             
+             // Body Tab
+             builder.OpenElement(69, "li");
+             builder.AddAttribute(70, "class", "nav-item");
+             builder.OpenElement(71, "button");
+             builder.AddAttribute(72, "class", $"nav-link {(activeApiTab == "Body" ? "active" : "")}");
+             builder.AddAttribute(73, "onclick", EventCallback.Factory.Create(this, () => { activeApiTab = "Body"; StateHasChanged(); }));
+             builder.AddContent(74, "Body");
+             if (!string.IsNullOrEmpty(step.ApiConfig.Body))
+             {
+                 builder.OpenElement(75, "span");
+                 builder.AddAttribute(76, "class", "badge bg-primary ms-1");
+                 builder.AddContent(77, "1");
+                 builder.CloseElement();
+             }
+             builder.CloseElement();
+             builder.CloseElement();
+             
+             // Headers Tab
+             builder.OpenElement(78, "li");
+             builder.AddAttribute(79, "class", "nav-item");
+             builder.OpenElement(80, "button");
+             builder.AddAttribute(81, "class", $"nav-link {(activeApiTab == "Headers" ? "active" : "")}");
+             builder.AddAttribute(82, "onclick", EventCallback.Factory.Create(this, () => { activeApiTab = "Headers"; StateHasChanged(); }));
+             builder.AddContent(83, "Headers");
+             if (step.ApiConfig.Headers?.Count > 0)
+             {
+                 builder.OpenElement(84, "span");
+                 builder.AddAttribute(85, "class", "badge bg-primary ms-1");
+                 builder.AddContent(86, step.ApiConfig.Headers.Count.ToString());
+                 builder.CloseElement();
+             }
+             builder.CloseElement();
+             builder.CloseElement();
+             
+             // Cookies Tab
+             builder.OpenElement(87, "li");
+             builder.AddAttribute(88, "class", "nav-item");
+             builder.OpenElement(89, "button");
+             builder.AddAttribute(90, "class", $"nav-link {(activeApiTab == "Cookies" ? "active" : "")}");
+             builder.AddAttribute(91, "onclick", EventCallback.Factory.Create(this, () => { activeApiTab = "Cookies"; StateHasChanged(); }));
+             builder.AddContent(92, "Cookies");
+             if (step.ApiConfig.Cookies?.Count > 0)
+             {
+                 builder.OpenElement(93, "span");
+                 builder.AddAttribute(94, "class", "badge bg-primary ms-1");
+                 builder.AddContent(95, step.ApiConfig.Cookies.Count.ToString());
+                 builder.CloseElement();
+             }
+             builder.CloseElement();
+             builder.CloseElement();
+             
+             // Auth Tab
+             builder.OpenElement(96, "li");
+             builder.AddAttribute(97, "class", "nav-item");
+             builder.OpenElement(98, "button");
+             builder.AddAttribute(99, "class", $"nav-link {(activeApiTab == "Auth" ? "active" : "")}");
+             builder.AddAttribute(100, "onclick", EventCallback.Factory.Create(this, () => { activeApiTab = "Auth"; StateHasChanged(); }));
+             builder.AddContent(101, "Auth");
+             if (step.ApiConfig.Auth?.Type != "None")
+             {
+                 builder.OpenElement(102, "span");
+                 builder.AddAttribute(103, "class", "badge bg-success ms-1");
+                 builder.AddContent(104, "●");
+                 builder.CloseElement();
+             }
+             builder.CloseElement();
+             builder.CloseElement();
+             
+             // 变量提取 Tab
+             builder.OpenElement(105, "li");
+             builder.AddAttribute(106, "class", "nav-item");
+             builder.OpenElement(107, "button");
+             builder.AddAttribute(108, "class", $"nav-link {(activeApiTab == "Variables" ? "active" : "")}");
+             builder.AddAttribute(109, "onclick", EventCallback.Factory.Create(this, () => { activeApiTab = "Variables"; StateHasChanged(); }));
+             builder.AddContent(110, "变量提取");
+             if (step.ApiConfig.VariableExtractions?.Count > 0)
+             {
+                 builder.OpenElement(111, "span");
+                 builder.AddAttribute(112, "class", "badge bg-info ms-1");
+                 builder.AddContent(113, step.ApiConfig.VariableExtractions.Count.ToString());
+                 builder.CloseElement();
+             }
+             builder.CloseElement();
+             builder.CloseElement();
+             
+             // 设置 Tab
+             builder.OpenElement(114, "li");
+             builder.AddAttribute(115, "class", "nav-item");
+             builder.OpenElement(116, "button");
+             builder.AddAttribute(117, "class", $"nav-link {(activeApiTab == "Settings" ? "active" : "")}");
+             builder.AddAttribute(118, "onclick", EventCallback.Factory.Create(this, () => { activeApiTab = "Settings"; StateHasChanged(); }));
+             builder.AddContent(119, "设置");
+             builder.CloseElement();
+             builder.CloseElement();
+             
+             builder.CloseElement(); // nav-tabs
+             
+             // Tab内容
+             builder.OpenElement(111, "div");
+             builder.AddAttribute(112, "class", "tab-content");
+             
+             // Params Tab内容
+             if (activeApiTab == "Params")
+             {
+                 builder.OpenElement(113, "div");
+                 builder.AddAttribute(114, "class", "tab-pane fade show active");
+                 builder.OpenElement(115, "h6");
+                 builder.AddContent(116, "Query 参数");
+                 builder.CloseElement();
+                 builder.OpenElement(117, "p");
+                 builder.AddAttribute(118, "class", "text-muted small");
+                 builder.AddContent(119, "配置URL查询参数，如 ?name=value&type=test");
+                 builder.CloseElement();
+                 
+                 // 参数表格
+                 builder.OpenElement(120, "div");
+                 builder.AddAttribute(121, "class", "table-responsive");
+                 builder.OpenElement(122, "table");
+                 builder.AddAttribute(123, "class", "table table-sm");
+                 builder.OpenElement(124, "thead");
+                 builder.OpenElement(125, "tr");
+                 builder.OpenElement(126, "th");
+                 builder.AddContent(127, "参数名");
+                 builder.CloseElement();
+                 builder.OpenElement(128, "th");
+                 builder.AddContent(129, "参数值");
+                 builder.CloseElement();
+                 builder.OpenElement(130, "th");
+                 builder.AddContent(131, "操作");
+                 builder.CloseElement();
+                 builder.CloseElement();
+                 builder.CloseElement();
+                 builder.OpenElement(132, "tbody");
+                 
+                 // 显示现有参数
+                 if (step.ApiConfig.Params != null)
+                 {
+                     foreach (var param in step.ApiConfig.Params)
+                     {
+                         builder.OpenElement(133, "tr");
+                         builder.OpenElement(134, "td");
+                         builder.AddContent(135, param.Key);
+                         builder.CloseElement();
+                         builder.OpenElement(136, "td");
+                         builder.AddContent(137, param.Value);
+                         builder.CloseElement();
+                         builder.OpenElement(138, "td");
+                         builder.OpenElement(139, "button");
+                         builder.AddAttribute(140, "class", "btn btn-sm btn-outline-danger");
+                         builder.AddAttribute(141, "onclick", EventCallback.Factory.Create(this, () => {
+                             step.ApiConfig.Params.Remove(param.Key);
+                             StateHasChanged();
+                         }));
+                         builder.AddContent(142, "删除");
+                         builder.CloseElement();
+                         builder.CloseElement();
+                         builder.CloseElement();
+                     }
+                 }
+                 
+                 // 添加新参数行
+                 builder.OpenElement(143, "tr");
+                 builder.OpenElement(144, "td");
+                 builder.OpenElement(145, "input");
+                 builder.AddAttribute(146, "type", "text");
+                 builder.AddAttribute(147, "class", "form-control form-control-sm");
+                 builder.AddAttribute(148, "placeholder", "参数名");
+                 builder.AddAttribute(149, "value", newParamKey);
+                 builder.AddAttribute(150, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => newParamKey = e.Value?.ToString() ?? ""));
+                 builder.CloseElement();
+                 builder.CloseElement();
+                 builder.OpenElement(151, "td");
+                 builder.OpenElement(152, "input");
+                 builder.AddAttribute(153, "type", "text");
+                 builder.AddAttribute(154, "class", "form-control form-control-sm");
+                 builder.AddAttribute(155, "placeholder", "参数值");
+                 builder.AddAttribute(156, "value", newParamValue);
+                 builder.AddAttribute(157, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => newParamValue = e.Value?.ToString() ?? ""));
+                 builder.CloseElement();
+                 builder.CloseElement();
+                 builder.OpenElement(158, "td");
+                 builder.OpenElement(159, "button");
+                 builder.AddAttribute(160, "class", "btn btn-sm btn-outline-primary");
+                 builder.AddAttribute(161, "onclick", EventCallback.Factory.Create(this, () => {
+                     if (!string.IsNullOrWhiteSpace(newParamKey))
+                     {
+                         step.ApiConfig.Params[newParamKey] = newParamValue ?? "";
+                         newParamKey = "";
+                         newParamValue = "";
+                         StateHasChanged();
+                     }
+                 }));
+                 builder.AddContent(162, "添加");
+                 builder.CloseElement();
+                 builder.CloseElement();
+                 builder.CloseElement();
+                 
+                 builder.CloseElement();
+                 builder.CloseElement();
+                 builder.CloseElement();
+                 builder.CloseElement();
+             }
+             
+             // Body Tab内容
+             else if (activeApiTab == "Body")
+             {
+                 builder.OpenElement(158, "div");
+                 builder.AddAttribute(159, "class", "tab-pane fade show active");
+                 
+                 // Body类型选择
+                 builder.OpenElement(160, "div");
+                 builder.AddAttribute(161, "class", "mb-3");
+                 builder.OpenElement(162, "label");
+                 builder.AddAttribute(163, "class", "form-label");
+                 builder.AddContent(164, "Body类型");
+                 builder.CloseElement();
+                 builder.OpenElement(165, "select");
+                 builder.AddAttribute(166, "class", "form-select");
+                 builder.AddAttribute(167, "value", step.ApiConfig.BodyType);
+                 builder.AddAttribute(168, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => step.ApiConfig.BodyType = e.Value?.ToString() ?? "json"));
+                 builder.OpenElement(169, "option");
+                 builder.AddAttribute(170, "value", "json");
+                 builder.AddContent(171, "JSON");
+                 builder.CloseElement();
+                 builder.OpenElement(172, "option");
+                 builder.AddAttribute(173, "value", "form");
+                 builder.AddContent(174, "Form Data");
+                 builder.CloseElement();
+                 builder.OpenElement(175, "option");
+                 builder.AddAttribute(176, "value", "text");
+                 builder.AddContent(177, "Plain Text");
+                 builder.CloseElement();
+                 builder.CloseElement();
+                 builder.CloseElement();
+                 
+                 // Body内容
+                 builder.OpenElement(178, "div");
+                 builder.AddAttribute(179, "class", "mb-3");
+                 builder.OpenElement(180, "label");
+                 builder.AddAttribute(181, "class", "form-label");
+                 builder.AddContent(182, "请求体内容");
+                 builder.CloseElement();
+                 builder.OpenElement(183, "textarea");
+                 builder.AddAttribute(184, "class", "form-control");
+                 builder.AddAttribute(185, "rows", "8");
+                 builder.AddAttribute(186, "placeholder", step.ApiConfig.BodyType == "json" ? "{\n  \"key\": \"value\"\n}" : "请输入请求体内容");
+                 builder.AddAttribute(187, "value", step.ApiConfig.Body);
+                 builder.AddAttribute(188, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => step.ApiConfig.Body = e.Value?.ToString() ?? ""));
+                 builder.CloseElement();
+                 builder.CloseElement();
+                 builder.CloseElement();
+             }
+             
+             // Headers Tab内容
+             else if (activeApiTab == "Headers")
+             {
+                 builder.OpenElement(189, "div");
+                 builder.AddAttribute(190, "class", "tab-pane fade show active");
+                 builder.OpenElement(191, "h6");
+                 builder.AddContent(192, "请求头");
+                 builder.CloseElement();
+                 builder.OpenElement(193, "p");
+                 builder.AddAttribute(194, "class", "text-muted small");
+                 builder.AddContent(195, "配置HTTP请求头，如Content-Type、Authorization等");
+                 builder.CloseElement();
+                 
+                 // Headers表格
+                 builder.OpenElement(196, "div");
+                 builder.AddAttribute(197, "class", "table-responsive");
+                 builder.OpenElement(198, "table");
+                 builder.AddAttribute(199, "class", "table table-sm");
+                 builder.OpenElement(200, "thead");
+                 builder.OpenElement(201, "tr");
+                 builder.OpenElement(202, "th");
+                 builder.AddContent(203, "Header名称");
+                 builder.CloseElement();
+                 builder.OpenElement(204, "th");
+                 builder.AddContent(205, "Header值");
+                 builder.CloseElement();
+                 builder.OpenElement(206, "th");
+                 builder.AddContent(207, "操作");
+                 builder.CloseElement();
+                 builder.CloseElement();
+                 builder.CloseElement();
+                 builder.OpenElement(208, "tbody");
+                 
+                 // 显示现有headers
+                 if (step.ApiConfig.Headers != null)
+                 {
+                     foreach (var header in step.ApiConfig.Headers)
+                     {
+                         builder.OpenElement(209, "tr");
+                         builder.OpenElement(210, "td");
+                         builder.AddContent(211, header.Key);
+                         builder.CloseElement();
+                         builder.OpenElement(212, "td");
+                         builder.AddContent(213, header.Value);
+                         builder.CloseElement();
+                         builder.OpenElement(214, "td");
+                         builder.OpenElement(215, "button");
+                         builder.AddAttribute(216, "class", "btn btn-sm btn-outline-danger");
+                         builder.AddAttribute(217, "onclick", EventCallback.Factory.Create(this, () => {
+                             step.ApiConfig.Headers.Remove(header.Key);
+                             StateHasChanged();
+                         }));
+                         builder.AddContent(218, "删除");
+                         builder.CloseElement();
+                         builder.CloseElement();
+                         builder.CloseElement();
+                     }
+                 }
+                 
+                 // 添加新header行
+                 builder.OpenElement(219, "tr");
+                 builder.OpenElement(220, "td");
+                 builder.OpenElement(221, "input");
+                 builder.AddAttribute(222, "type", "text");
+                 builder.AddAttribute(223, "class", "form-control form-control-sm");
+                 builder.AddAttribute(224, "placeholder", "Header名称");
+                 builder.AddAttribute(225, "value", newHeaderKey);
+                 builder.AddAttribute(226, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => newHeaderKey = e.Value?.ToString() ?? ""));
+                 builder.CloseElement();
+                 builder.CloseElement();
+                 builder.OpenElement(227, "td");
+                 builder.OpenElement(228, "input");
+                 builder.AddAttribute(229, "type", "text");
+                 builder.AddAttribute(230, "class", "form-control form-control-sm");
+                 builder.AddAttribute(231, "placeholder", "Header值");
+                 builder.AddAttribute(232, "value", newHeaderValue);
+                 builder.AddAttribute(233, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => newHeaderValue = e.Value?.ToString() ?? ""));
+                 builder.CloseElement();
+                 builder.CloseElement();
+                 builder.OpenElement(234, "td");
+                 builder.OpenElement(235, "button");
+                 builder.AddAttribute(236, "class", "btn btn-sm btn-outline-primary");
+                 builder.AddAttribute(237, "onclick", EventCallback.Factory.Create(this, () => {
+                     if (!string.IsNullOrWhiteSpace(newHeaderKey))
+                     {
+                         step.ApiConfig.Headers[newHeaderKey] = newHeaderValue ?? "";
+                         newHeaderKey = "";
+                         newHeaderValue = "";
+                         StateHasChanged();
+                     }
+                 }));
+                 builder.AddContent(238, "添加");
+                 builder.CloseElement();
+                 builder.CloseElement();
+                 builder.CloseElement();
+                 
+                 builder.CloseElement();
+                 builder.CloseElement();
+                 builder.CloseElement();
+                 builder.CloseElement();
+             }
+             
+             // Cookies Tab内容
+             else if (activeApiTab == "Cookies")
+             {
+                 builder.OpenElement(233, "div");
+                 builder.AddAttribute(234, "class", "tab-pane fade show active");
+                 builder.OpenElement(235, "h6");
+                 builder.AddContent(236, "Cookies");
+                 builder.CloseElement();
+                 builder.OpenElement(237, "p");
+                 builder.AddAttribute(238, "class", "text-muted small");
+                 builder.AddContent(239, "配置请求时携带的Cookie");
+                 builder.CloseElement();
+                 
+                 // Cookies表格
+                 builder.OpenElement(240, "div");
+                 builder.AddAttribute(241, "class", "table-responsive");
+                 builder.OpenElement(242, "table");
+                 builder.AddAttribute(243, "class", "table table-sm");
+                 builder.OpenElement(244, "thead");
+                 builder.OpenElement(245, "tr");
+                 builder.OpenElement(246, "th");
+                 builder.AddContent(247, "Cookie名称");
+                 builder.CloseElement();
+                 builder.OpenElement(248, "th");
+                 builder.AddContent(249, "Cookie值");
+                 builder.CloseElement();
+                 builder.OpenElement(250, "th");
+                 builder.AddContent(251, "操作");
+                 builder.CloseElement();
+                 builder.CloseElement();
+                 builder.CloseElement();
+                 builder.OpenElement(252, "tbody");
+                 
+                 // 显示现有cookies
+                 if (step.ApiConfig.Cookies != null)
+                 {
+                     foreach (var cookie in step.ApiConfig.Cookies)
+                     {
+                         builder.OpenElement(253, "tr");
+                         builder.OpenElement(254, "td");
+                         builder.AddContent(255, cookie.Key);
+                         builder.CloseElement();
+                         builder.OpenElement(256, "td");
+                         builder.AddContent(257, cookie.Value);
+                         builder.CloseElement();
+                         builder.OpenElement(258, "td");
+                         builder.OpenElement(259, "button");
+                         builder.AddAttribute(260, "class", "btn btn-sm btn-outline-danger");
+                         builder.AddAttribute(261, "onclick", EventCallback.Factory.Create(this, () => {
+                             step.ApiConfig.Cookies.Remove(cookie.Key);
+                             StateHasChanged();
+                         }));
+                         builder.AddContent(262, "删除");
+                         builder.CloseElement();
+                         builder.CloseElement();
+                         builder.CloseElement();
+                     }
+                 }
+                 
+                 // 添加新cookie行
+                 builder.OpenElement(263, "tr");
+                 builder.OpenElement(264, "td");
+                 builder.OpenElement(265, "input");
+                 builder.AddAttribute(266, "type", "text");
+                 builder.AddAttribute(267, "class", "form-control form-control-sm");
+                 builder.AddAttribute(268, "placeholder", "Cookie名称");
+                 builder.AddAttribute(269, "value", newCookieKey);
+                 builder.AddAttribute(270, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => newCookieKey = e.Value?.ToString() ?? ""));
+                 builder.CloseElement();
+                 builder.CloseElement();
+                 builder.OpenElement(271, "td");
+                 builder.OpenElement(272, "input");
+                 builder.AddAttribute(273, "type", "text");
+                 builder.AddAttribute(274, "class", "form-control form-control-sm");
+                 builder.AddAttribute(275, "placeholder", "Cookie值");
+                 builder.AddAttribute(276, "value", newCookieValue);
+                 builder.AddAttribute(277, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => newCookieValue = e.Value?.ToString() ?? ""));
+                 builder.CloseElement();
+                 builder.CloseElement();
+                 builder.OpenElement(278, "td");
+                 builder.OpenElement(279, "button");
+                 builder.AddAttribute(280, "class", "btn btn-sm btn-outline-primary");
+                 builder.AddAttribute(281, "onclick", EventCallback.Factory.Create(this, () => {
+                     if (!string.IsNullOrWhiteSpace(newCookieKey))
+                     {
+                         step.ApiConfig.Cookies[newCookieKey] = newCookieValue ?? "";
+                         newCookieKey = "";
+                         newCookieValue = "";
+                         StateHasChanged();
+                     }
+                 }));
+                 builder.AddContent(282, "添加");
+                 builder.CloseElement();
+                 builder.CloseElement();
+                 builder.CloseElement();
+                 
+                 builder.CloseElement();
+                 builder.CloseElement();
+                 builder.CloseElement();
+                 builder.CloseElement();
+             }
+             
+             // Auth Tab内容
+             else if (activeApiTab == "Auth")
+             {
+                 builder.OpenElement(268, "div");
+                 builder.AddAttribute(269, "class", "tab-pane fade show active");
+                 builder.OpenElement(270, "h6");
+                 builder.AddContent(271, "认证配置");
+                 builder.CloseElement();
+                 
+                 // 认证类型选择
+                 builder.OpenElement(272, "div");
+                 builder.AddAttribute(273, "class", "mb-3");
+                 builder.OpenElement(274, "label");
+                 builder.AddAttribute(275, "class", "form-label");
+                 builder.AddContent(276, "认证类型");
+                 builder.CloseElement();
+                 builder.OpenElement(277, "select");
+                 builder.AddAttribute(278, "class", "form-select");
+                 builder.AddAttribute(279, "value", step.ApiConfig.Auth?.Type ?? "None");
+                 builder.AddAttribute(280, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => {
+                     if (step.ApiConfig.Auth == null) step.ApiConfig.Auth = new AuthConfig();
+                     step.ApiConfig.Auth.Type = e.Value?.ToString() ?? "None";
+                 }));
+                 builder.OpenElement(281, "option");
+                 builder.AddAttribute(282, "value", "None");
+                 builder.AddContent(283, "无认证");
+                 builder.CloseElement();
+                 builder.OpenElement(284, "option");
+                 builder.AddAttribute(285, "value", "Basic");
+                 builder.AddContent(286, "Basic认证");
+                 builder.CloseElement();
+                 builder.OpenElement(287, "option");
+                 builder.AddAttribute(288, "value", "Bearer");
+                 builder.AddContent(289, "Bearer Token");
+                 builder.CloseElement();
+                 builder.OpenElement(290, "option");
+                 builder.AddAttribute(291, "value", "ApiKey");
+                 builder.AddContent(292, "API Key");
+                 builder.CloseElement();
+                 builder.CloseElement();
+                 builder.CloseElement();
+                 
+                 // 根据认证类型显示不同配置
+                 if (step.ApiConfig.Auth?.Type == "Basic")
+                 {
+                     builder.OpenElement(293, "div");
+                     builder.AddAttribute(294, "class", "row");
+                     builder.OpenElement(295, "div");
+                     builder.AddAttribute(296, "class", "col-md-6");
+                     builder.OpenElement(297, "label");
+                     builder.AddAttribute(298, "class", "form-label");
+                     builder.AddContent(299, "用户名");
+                     builder.CloseElement();
+                     builder.OpenElement(300, "input");
+                     builder.AddAttribute(301, "type", "text");
+                     builder.AddAttribute(302, "class", "form-control");
+                     builder.AddAttribute(303, "value", step.ApiConfig.Auth.Username);
+                     builder.AddAttribute(304, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => step.ApiConfig.Auth.Username = e.Value?.ToString() ?? ""));
+                     builder.CloseElement();
+                     builder.CloseElement();
+                     builder.OpenElement(305, "div");
+                     builder.AddAttribute(306, "class", "col-md-6");
+                     builder.OpenElement(307, "label");
+                     builder.AddAttribute(308, "class", "form-label");
+                     builder.AddContent(309, "密码");
+                     builder.CloseElement();
+                     builder.OpenElement(310, "input");
+                     builder.AddAttribute(311, "type", "password");
+                     builder.AddAttribute(312, "class", "form-control");
+                     builder.AddAttribute(313, "value", step.ApiConfig.Auth.Password);
+                     builder.AddAttribute(314, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => step.ApiConfig.Auth.Password = e.Value?.ToString() ?? ""));
+                     builder.CloseElement();
+                     builder.CloseElement();
+                     builder.CloseElement();
+                 }
+                 else if (step.ApiConfig.Auth?.Type == "Bearer")
+                 {
+                     builder.OpenElement(315, "div");
+                     builder.AddAttribute(316, "class", "mb-3");
+                     builder.OpenElement(317, "label");
+                     builder.AddAttribute(318, "class", "form-label");
+                     builder.AddContent(319, "Token");
+                     builder.CloseElement();
+                     builder.OpenElement(320, "input");
+                     builder.AddAttribute(321, "type", "text");
+                     builder.AddAttribute(322, "class", "form-control");
+                     builder.AddAttribute(323, "placeholder", "Bearer token");
+                     builder.AddAttribute(324, "value", step.ApiConfig.Auth.Token);
+                     builder.AddAttribute(325, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => step.ApiConfig.Auth.Token = e.Value?.ToString() ?? ""));
+                     builder.CloseElement();
+                     builder.CloseElement();
+                 }
+                 
+                 builder.CloseElement();
+             }
+             
+             // 变量提取 Tab内容
+             else if (activeApiTab == "Variables")
+             {
+                 builder.OpenElement(326, "div");
+                 builder.AddAttribute(327, "class", "tab-pane fade show active");
+                 builder.OpenElement(328, "h6");
+                 builder.AddContent(329, "🔧 变量提取配置");
+                 builder.CloseElement();
+                 builder.OpenElement(330, "p");
+                 builder.AddAttribute(331, "class", "text-muted small");
+                 builder.AddContent(332, "从API响应中提取变量，供后续步骤使用。支持JSONPath表达式，如 $.data.accessToken");
+                 builder.CloseElement();
+                 
+                 // 变量提取表格
+                 builder.OpenElement(333, "div");
+                 builder.AddAttribute(334, "class", "table-responsive");
+                 builder.OpenElement(335, "table");
+                 builder.AddAttribute(336, "class", "table table-sm");
+                 builder.OpenElement(337, "thead");
+                 builder.OpenElement(338, "tr");
+                 builder.OpenElement(339, "th");
+                 builder.AddContent(340, "变量名");
+                 builder.CloseElement();
+                 builder.OpenElement(341, "th");
+                 builder.AddContent(342, "JSONPath表达式");
+                 builder.CloseElement();
+                 builder.OpenElement(343, "th");
+                 builder.AddAttribute(344, "style", "width: 100px;");
+                 builder.AddContent(345, "操作");
+                 builder.CloseElement();
+                 builder.CloseElement();
+                 builder.CloseElement();
+                 
+                 builder.OpenElement(346, "tbody");
+                 
+                 // 现有变量提取规则
+                 if (step.ApiConfig.VariableExtractions?.Any() == true)
+                 {
+                     var index = 0;
+                     foreach (var extraction in step.ApiConfig.VariableExtractions.ToList())
+                     {
+                         var currentKey = extraction.Key;
+                         var currentValue = extraction.Value;
+                         builder.OpenElement(347 + index * 20, "tr");
+                         builder.OpenElement(348 + index * 20, "td");
+                         builder.OpenElement(349 + index * 20, "input");
+                         builder.AddAttribute(350 + index * 20, "type", "text");
+                         builder.AddAttribute(351 + index * 20, "class", "form-control form-control-sm");
+                         builder.AddAttribute(352 + index * 20, "value", currentKey);
+                         builder.AddAttribute(353 + index * 20, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => UpdateVariableExtraction(step, currentKey, e.Value?.ToString() ?? "", currentValue)));
+                         builder.CloseElement();
+                         builder.CloseElement();
+                         builder.OpenElement(354 + index * 20, "td");
+                         builder.OpenElement(355 + index * 20, "input");
+                         builder.AddAttribute(356 + index * 20, "type", "text");
+                         builder.AddAttribute(357 + index * 20, "class", "form-control form-control-sm");
+                         builder.AddAttribute(358 + index * 20, "placeholder", "$.data.accessToken");
+                         builder.AddAttribute(359 + index * 20, "value", currentValue);
+                         builder.AddAttribute(360 + index * 20, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => UpdateVariableExtraction(step, currentKey, currentKey, e.Value?.ToString() ?? "")));
+                         builder.CloseElement();
+                         builder.CloseElement();
+                         builder.OpenElement(361 + index * 20, "td");
+                         builder.OpenElement(362 + index * 20, "button");
+                         builder.AddAttribute(363 + index * 20, "type", "button");
+                         builder.AddAttribute(364 + index * 20, "class", "btn btn-sm btn-outline-danger");
+                         builder.AddAttribute(365 + index * 20, "onclick", EventCallback.Factory.Create(this, () => RemoveVariableExtraction(step, currentKey)));
+                         builder.AddContent(366 + index * 20, "删除");
+                         builder.CloseElement();
+                         builder.CloseElement();
+                         builder.CloseElement();
+                         index++;
+                     }
+                 }
+                 
+                 // 添加新变量提取行
+                 builder.OpenElement(500, "tr");
+                 builder.OpenElement(501, "td");
+                 builder.OpenElement(502, "input");
+                 builder.AddAttribute(503, "type", "text");
+                 builder.AddAttribute(504, "class", "form-control form-control-sm");
+                 builder.AddAttribute(505, "placeholder", "变量名，如: accessToken");
+                 builder.AddAttribute(506, "value", newVariableName);
+                 builder.AddAttribute(507, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => newVariableName = e.Value?.ToString() ?? ""));
+                 builder.CloseElement();
+                 builder.CloseElement();
+                 builder.OpenElement(508, "td");
+                 builder.OpenElement(509, "input");
+                 builder.AddAttribute(510, "type", "text");
+                 builder.AddAttribute(511, "class", "form-control form-control-sm");
+                 builder.AddAttribute(512, "placeholder", "JSONPath表达式，如: $.data.accessToken");
+                 builder.AddAttribute(513, "value", newVariablePath);
+                 builder.AddAttribute(514, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => newVariablePath = e.Value?.ToString() ?? ""));
+                 builder.CloseElement();
+                 builder.CloseElement();
+                 builder.OpenElement(515, "td");
+                 builder.OpenElement(516, "button");
+                 builder.AddAttribute(517, "type", "button");
+                 builder.AddAttribute(518, "class", "btn btn-sm btn-outline-primary");
+                 builder.AddAttribute(519, "onclick", EventCallback.Factory.Create(this, () => AddVariableExtraction(step)));
+                 builder.AddContent(520, "添加");
+                 builder.CloseElement();
+                 builder.CloseElement();
+                 builder.CloseElement();
+                 
+                 builder.CloseElement(); // tbody
+                 builder.CloseElement(); // table
+                 builder.CloseElement(); // table-responsive
+                 
+                 // 帮助信息
+                 builder.OpenElement(521, "div");
+                 builder.AddAttribute(522, "class", "alert alert-info mt-3");
+                 builder.OpenElement(523, "h6");
+                 builder.AddContent(524, "💡 JSONPath表达式示例：");
+                 builder.CloseElement();
+                 builder.OpenElement(525, "ul");
+                 builder.AddAttribute(526, "class", "mb-0");
+                 builder.OpenElement(527, "li");
+                 builder.AddContent(528, "$.data.accessToken - 提取data对象下的accessToken字段");
+                 builder.CloseElement();
+                 builder.OpenElement(529, "li");
+                 builder.AddContent(530, "$.result[0].id - 提取result数组第一个元素的id字段");
+                 builder.CloseElement();
+                 builder.OpenElement(531, "li");
+                 builder.AddContent(532, "$.token - 提取根级别的token字段");
+                 builder.CloseElement();
+                 builder.OpenElement(533, "li");
+                 builder.AddContent(534, "$..accessToken - 递归查找所有accessToken字段");
+                 builder.CloseElement();
+                 builder.CloseElement();
+                 builder.CloseElement();
+                 
+                 builder.CloseElement();
+             }
+             
+             // Settings Tab内容
+             else if (activeApiTab == "Settings")
+             {
+                 builder.OpenElement(326, "div");
+                 builder.AddAttribute(327, "class", "tab-pane fade show active");
+                 builder.OpenElement(328, "h6");
+                 builder.AddContent(329, "HTTP设置");
+                 builder.CloseElement();
+                 
+                 // 超时设置
+                 builder.OpenElement(330, "div");
+                 builder.AddAttribute(331, "class", "mb-3");
+                 builder.OpenElement(332, "label");
+                 builder.AddAttribute(333, "class", "form-label");
+                 builder.AddContent(334, "超时时间 (毫秒)");
+                 builder.CloseElement();
+                 builder.OpenElement(335, "input");
+                 builder.AddAttribute(336, "type", "number");
+                 builder.AddAttribute(337, "class", "form-control");
+                 builder.AddAttribute(338, "value", step.ApiConfig.TimeoutMs);
+                 builder.AddAttribute(339, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => step.ApiConfig.TimeoutMs = int.TryParse(e.Value?.ToString(), out var timeout) ? timeout : 30000));
+                 builder.CloseElement();
+                 builder.CloseElement();
+                 
+                 builder.CloseElement();
+             }
+             
+             builder.CloseElement(); // tab-content
+             
+             builder.CloseElement(); // card-body (HTTP配置)
+             builder.CloseElement(); // card (HTTP配置)
+             
+             // 断言配置卡片
+             builder.OpenElement(400, "div");
+             builder.AddAttribute(401, "class", "card mb-3");
+             
+             builder.OpenElement(402, "div");
+             builder.AddAttribute(403, "class", "card-header");
+             builder.OpenElement(404, "h6");
+             builder.AddAttribute(405, "class", "mb-0");
+             builder.AddContent(406, "🔍 断言配置");
+             builder.CloseElement();
+             builder.CloseElement();
+             
+             builder.OpenElement(407, "div");
+             builder.AddAttribute(408, "class", "card-body");
+             builder.OpenElement(409, "p");
+             builder.AddAttribute(410, "class", "text-muted small");
+             builder.AddContent(411, "配置API响应的验证规则，支持状态码、响应时间、JSON路径和响应头的断言验证");
+             builder.CloseElement();
+             
+             // 断言配置表格
+             builder.OpenElement(412, "div");
+             builder.AddAttribute(413, "class", "table-responsive");
+             builder.OpenElement(414, "table");
+             builder.AddAttribute(415, "class", "table table-sm");
+             builder.OpenElement(416, "thead");
+             builder.OpenElement(417, "tr");
+             builder.OpenElement(418, "th");
+             builder.AddContent(419, "断言类型");
+             builder.CloseElement();
+             builder.OpenElement(420, "th");
+             builder.AddContent(421, "字段路径");
+             builder.CloseElement();
+             builder.OpenElement(422, "th");
+             builder.AddContent(423, "操作符");
+             builder.CloseElement();
+             builder.OpenElement(424, "th");
+             builder.AddContent(425, "期望值");
+             builder.CloseElement();
+             builder.OpenElement(426, "th");
+             builder.AddAttribute(427, "style", "width: 100px;");
+             builder.AddContent(428, "操作");
+             builder.CloseElement();
+             builder.CloseElement();
+             builder.CloseElement();
+             
+             builder.OpenElement(429, "tbody");
+             
+             // 现有断言规则
+             if (step.ApiConfig.Assertions?.Any() == true)
+             {
+                 for (int index = 0; index < step.ApiConfig.Assertions.Count; index++)
+                 {
+                     var assertion = step.ApiConfig.Assertions[index];
+                     var currentIndex = index; // 创建局部变量避免闭包问题
+                     builder.OpenElement(430 + index * 30, "tr");
+                     
+                     // 断言类型
+                     builder.OpenElement(431 + index * 30, "td");
+                     builder.OpenElement(432 + index * 30, "select");
+                     builder.AddAttribute(433 + index * 30, "class", "form-select form-select-sm");
+                     builder.AddAttribute(434 + index * 30, "value", assertion.Type);
+                     builder.AddAttribute(435 + index * 30, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => UpdateAssertionType(step, currentIndex, e.Value?.ToString() ?? "")));
+                     
+                     builder.OpenElement(436 + index * 30, "option");
+                     builder.AddAttribute(437 + index * 30, "value", "JsonPath");
+                     builder.AddContent(438 + index * 30, "JSON路径");
+                     builder.CloseElement();
+                     builder.OpenElement(439 + index * 30, "option");
+                     builder.AddAttribute(440 + index * 30, "value", "StatusCode");
+                     builder.AddContent(441 + index * 30, "状态码");
+                     builder.CloseElement();
+                     builder.OpenElement(442 + index * 30, "option");
+                     builder.AddAttribute(443 + index * 30, "value", "ResponseTime");
+                     builder.AddContent(444 + index * 30, "响应时间");
+                     builder.CloseElement();
+                     builder.OpenElement(445 + index * 30, "option");
+                     builder.AddAttribute(446 + index * 30, "value", "Header");
+                     builder.AddContent(447 + index * 30, "响应头");
+                     builder.CloseElement();
+                     
+                     builder.CloseElement();
+                     builder.CloseElement();
+                     
+                     // 字段路径
+                     builder.OpenElement(448 + index * 30, "td");
+                     builder.OpenElement(449 + index * 30, "input");
+                     builder.AddAttribute(450 + index * 30, "type", "text");
+                     builder.AddAttribute(451 + index * 30, "class", "form-control form-control-sm");
+                     builder.AddAttribute(452 + index * 30, "placeholder", GetAssertionTargetPlaceholder(assertion.Type));
+                     builder.AddAttribute(453 + index * 30, "value", assertion.Target);
+                     builder.AddAttribute(454 + index * 30, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => UpdateAssertionTarget(step, currentIndex, e.Value?.ToString() ?? "")));
+                     builder.CloseElement();
+                     builder.CloseElement();
+                     
+                     // 操作符
+                     builder.OpenElement(455 + index * 30, "td");
+                     builder.OpenElement(456 + index * 30, "select");
+                     builder.AddAttribute(457 + index * 30, "class", "form-select form-select-sm");
+                     builder.AddAttribute(458 + index * 30, "value", assertion.Operator);
+                     builder.AddAttribute(459 + index * 30, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => UpdateAssertionOperator(step, currentIndex, e.Value?.ToString() ?? "")));
+                     
+                     builder.OpenElement(460 + index * 30, "option");
+                     builder.AddAttribute(461 + index * 30, "value", "equals");
+                     builder.AddContent(462 + index * 30, "等于");
+                     builder.CloseElement();
+                     builder.OpenElement(463 + index * 30, "option");
+                     builder.AddAttribute(464 + index * 30, "value", "contains");
+                     builder.AddContent(465 + index * 30, "包含");
+                     builder.CloseElement();
+                     builder.OpenElement(466 + index * 30, "option");
+                     builder.AddAttribute(467 + index * 30, "value", "not_equals");
+                     builder.AddContent(468 + index * 30, "不等于");
+                     builder.CloseElement();
+                     builder.OpenElement(469 + index * 30, "option");
+                     builder.AddAttribute(470 + index * 30, "value", "not_contains");
+                     builder.AddContent(471 + index * 30, "不包含");
+                     builder.CloseElement();
+                     builder.OpenElement(472 + index * 30, "option");
+                     builder.AddAttribute(473 + index * 30, "value", "greater_than");
+                     builder.AddContent(474 + index * 30, "大于");
+                     builder.CloseElement();
+                     builder.OpenElement(475 + index * 30, "option");
+                     builder.AddAttribute(476 + index * 30, "value", "less_than");
+                     builder.AddContent(477 + index * 30, "小于");
+                     builder.CloseElement();
+                     builder.OpenElement(478 + index * 30, "option");
+                     builder.AddAttribute(479 + index * 30, "value", "exists");
+                     builder.AddContent(480 + index * 30, "存在");
+                     builder.CloseElement();
+                     
+                     builder.CloseElement();
+                     builder.CloseElement();
+                     
+                     // 期望值
+                     builder.OpenElement(481 + index * 30, "td");
+                     builder.OpenElement(482 + index * 30, "input");
+                     builder.AddAttribute(483 + index * 30, "type", "text");
+                     builder.AddAttribute(484 + index * 30, "class", "form-control form-control-sm");
+                     builder.AddAttribute(485 + index * 30, "placeholder", "期望值");
+                     builder.AddAttribute(486 + index * 30, "value", assertion.ExpectedValue);
+                     builder.AddAttribute(487 + index * 30, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => UpdateAssertionExpectedValue(step, currentIndex, e.Value?.ToString() ?? "")));
+                     builder.CloseElement();
+                     builder.CloseElement();
+                     
+                     // 删除按钮
+                     builder.OpenElement(488 + index * 30, "td");
+                     builder.OpenElement(489 + index * 30, "button");
+                     builder.AddAttribute(490 + index * 30, "type", "button");
+                     builder.AddAttribute(491 + index * 30, "class", "btn btn-sm btn-outline-danger");
+                     builder.AddAttribute(492 + index * 30, "onclick", EventCallback.Factory.Create(this, () => RemoveAssertion(step, currentIndex)));
+                     builder.AddContent(493 + index * 30, "删除");
+                     builder.CloseElement();
+                     builder.CloseElement();
+                     
+                     builder.CloseElement();
+                 }
+             }
+             
+             // 添加新断言行
+             builder.OpenElement(600, "tr");
+             
+             // 断言类型
+             builder.OpenElement(601, "td");
+             builder.OpenElement(602, "select");
+             builder.AddAttribute(603, "class", "form-select form-select-sm");
+             builder.AddAttribute(604, "value", newAssertionType);
+             builder.AddAttribute(605, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => newAssertionType = e.Value?.ToString() ?? "JsonPath"));
+             
+             builder.OpenElement(606, "option");
+             builder.AddAttribute(607, "value", "JsonPath");
+             builder.AddContent(608, "JSON路径");
+             builder.CloseElement();
+             builder.OpenElement(609, "option");
+             builder.AddAttribute(610, "value", "StatusCode");
+             builder.AddContent(611, "状态码");
+             builder.CloseElement();
+             builder.OpenElement(612, "option");
+             builder.AddAttribute(613, "value", "ResponseTime");
+             builder.AddContent(614, "响应时间");
+             builder.CloseElement();
+             builder.OpenElement(615, "option");
+             builder.AddAttribute(616, "value", "Header");
+             builder.AddContent(617, "响应头");
+             builder.CloseElement();
+             
+             builder.CloseElement();
+             builder.CloseElement();
+             
+             // 字段路径
+             builder.OpenElement(618, "td");
+             builder.OpenElement(619, "input");
+             builder.AddAttribute(620, "type", "text");
+             builder.AddAttribute(621, "class", "form-control form-control-sm");
+             builder.AddAttribute(622, "placeholder", GetAssertionTargetPlaceholder(newAssertionType));
+             builder.AddAttribute(623, "value", newAssertionTarget);
+             builder.AddAttribute(624, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => newAssertionTarget = e.Value?.ToString() ?? ""));
+             builder.CloseElement();
+             builder.CloseElement();
+             
+             // 操作符
+             builder.OpenElement(625, "td");
+             builder.OpenElement(626, "select");
+             builder.AddAttribute(627, "class", "form-select form-select-sm");
+             builder.AddAttribute(628, "value", newAssertionOperator);
+             builder.AddAttribute(629, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => newAssertionOperator = e.Value?.ToString() ?? "equals"));
+             
+             builder.OpenElement(630, "option");
+             builder.AddAttribute(631, "value", "equals");
+             builder.AddContent(632, "等于");
+             builder.CloseElement();
+             builder.OpenElement(633, "option");
+             builder.AddAttribute(634, "value", "contains");
+             builder.AddContent(635, "包含");
+             builder.CloseElement();
+             builder.OpenElement(636, "option");
+             builder.AddAttribute(637, "value", "not_equals");
+             builder.AddContent(638, "不等于");
+             builder.CloseElement();
+             builder.OpenElement(639, "option");
+             builder.AddAttribute(640, "value", "not_contains");
+             builder.AddContent(641, "不包含");
+             builder.CloseElement();
+             builder.OpenElement(642, "option");
+             builder.AddAttribute(643, "value", "greater_than");
+             builder.AddContent(644, "大于");
+             builder.CloseElement();
+             builder.OpenElement(645, "option");
+             builder.AddAttribute(646, "value", "less_than");
+             builder.AddContent(647, "小于");
+             builder.CloseElement();
+             builder.OpenElement(648, "option");
+             builder.AddAttribute(649, "value", "exists");
+             builder.AddContent(650, "存在");
+             builder.CloseElement();
+             
+             builder.CloseElement();
+             builder.CloseElement();
+             
+             // 期望值
+             builder.OpenElement(651, "td");
+             builder.OpenElement(652, "input");
+             builder.AddAttribute(653, "type", "text");
+             builder.AddAttribute(654, "class", "form-control form-control-sm");
+             builder.AddAttribute(655, "placeholder", "期望值");
+             builder.AddAttribute(656, "value", newAssertionExpectedValue);
+             builder.AddAttribute(657, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => newAssertionExpectedValue = e.Value?.ToString() ?? ""));
+             builder.CloseElement();
+             builder.CloseElement();
+             
+             // 添加按钮
+             builder.OpenElement(658, "td");
+             builder.OpenElement(659, "button");
+             builder.AddAttribute(660, "type", "button");
+             builder.AddAttribute(661, "class", "btn btn-sm btn-outline-primary");
+             builder.AddAttribute(662, "onclick", EventCallback.Factory.Create(this, () => AddNewAssertion(step)));
+             builder.AddContent(663, "添加");
+             builder.CloseElement();
+             builder.CloseElement();
+             
+             builder.CloseElement();
+             
+             builder.CloseElement(); // tbody
+             builder.CloseElement(); // table
+             builder.CloseElement(); // table-responsive
+             
+             // 帮助信息
+             builder.OpenElement(664, "div");
+             builder.AddAttribute(665, "class", "alert alert-info mt-3");
+             builder.OpenElement(666, "h6");
+             builder.AddContent(667, "💡 断言配置示例：");
+             builder.CloseElement();
+             builder.OpenElement(668, "ul");
+             builder.AddAttribute(669, "class", "mb-0");
+             builder.OpenElement(670, "li");
+             builder.AddContent(671, "JSON路径: $.data.status 等于 success - 验证响应数据中的状态");
+             builder.CloseElement();
+             builder.OpenElement(672, "li");
+             builder.AddContent(673, "状态码: (留空) 等于 200 - 验证HTTP状态码");
+             builder.CloseElement();
+             builder.OpenElement(674, "li");
+             builder.AddContent(675, "响应时间: (留空) 小于 1000 - 验证响应时间小于1秒");
+             builder.CloseElement();
+             builder.OpenElement(676, "li");
+             builder.AddContent(677, "响应头: Content-Type 包含 application/json - 验证响应头");
+             builder.CloseElement();
+             builder.CloseElement();
+             builder.CloseElement();
+             
+             builder.CloseElement(); // card-body
+             builder.CloseElement(); // card
+        }
+    };
+    
+    private RenderFragment RenderUiStepConfig(ProjectCaseStep step) => builder =>
+    {
+        if (step.UiConfig == null) return;
+        
+        builder.OpenElement(0, "div");
+        builder.AddAttribute(1, "class", "card mb-3");
+        
+        builder.OpenElement(2, "div");
+        builder.AddAttribute(3, "class", "card-header");
+        builder.OpenElement(4, "h6");
+        builder.AddAttribute(5, "class", "mb-0");
+        builder.AddContent(6, "🖥️ UI操作配置");
+        builder.CloseElement();
+        builder.CloseElement();
+        
+        builder.OpenElement(7, "div");
+        builder.AddAttribute(8, "class", "card-body");
+        
+        // 操作类型和选择器
+        builder.OpenElement(9, "div");
+        builder.AddAttribute(10, "class", "row mb-3");
+        
+        builder.OpenElement(11, "div");
+        builder.AddAttribute(12, "class", "col-md-4");
+        builder.OpenElement(13, "label");
+        builder.AddAttribute(14, "class", "form-label");
+        builder.AddContent(15, "🎯 操作类型");
+        builder.CloseElement();
+        builder.OpenElement(16, "select");
+        builder.AddAttribute(17, "class", "form-select");
+        builder.AddAttribute(18, "value", step.UiConfig.Action);
+        builder.AddAttribute(19, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => step.UiConfig.Action = e.Value?.ToString() ?? ""));
+        RenderUiActionOptions(builder, 20);
+        builder.CloseElement();
+        builder.CloseElement();
+        
+        builder.OpenElement(30, "div");
+        builder.AddAttribute(31, "class", "col-md-4");
+        builder.OpenElement(32, "label");
+        builder.AddAttribute(33, "class", "form-label");
+        builder.AddContent(34, "🎯 选择器类型");
+        builder.CloseElement();
+        builder.OpenElement(35, "select");
+        builder.AddAttribute(36, "class", "form-select");
+        builder.AddAttribute(37, "value", step.UiConfig.SelectorType);
+        builder.AddAttribute(38, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => step.UiConfig.SelectorType = e.Value?.ToString() ?? "css"));
+        builder.OpenElement(39, "option");
+        builder.AddAttribute(40, "value", "css");
+        builder.AddContent(41, "CSS选择器");
+        builder.CloseElement();
+        builder.OpenElement(42, "option");
+        builder.AddAttribute(43, "value", "xpath");
+        builder.AddContent(44, "XPath");
+        builder.CloseElement();
+        builder.OpenElement(45, "option");
+        builder.AddAttribute(46, "value", "id");
+        builder.AddContent(47, "ID");
+        builder.CloseElement();
+        builder.OpenElement(48, "option");
+        builder.AddAttribute(49, "value", "name");
+        builder.AddContent(50, "Name");
+        builder.CloseElement();
+        builder.OpenElement(51, "option");
+        builder.AddAttribute(52, "value", "text");
+        builder.AddContent(53, "文本内容");
+        builder.CloseElement();
+        builder.CloseElement();
+        builder.CloseElement();
+        
+        builder.OpenElement(54, "div");
+        builder.AddAttribute(55, "class", "col-md-4");
+        builder.OpenElement(56, "label");
+        builder.AddAttribute(57, "class", "form-label");
+        builder.AddContent(58, "⏱️ 超时(毫秒)");
+        builder.CloseElement();
+        builder.OpenElement(59, "input");
+        builder.AddAttribute(60, "type", "number");
+        builder.AddAttribute(61, "class", "form-control");
+        builder.AddAttribute(62, "value", step.UiConfig.TimeoutMs.ToString());
+        builder.AddAttribute(63, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => { if (int.TryParse(e.Value?.ToString(), out var timeout)) step.UiConfig.TimeoutMs = timeout; }));
+        builder.CloseElement();
+        builder.CloseElement();
+        
+        builder.CloseElement(); // row
+        
+        // 选择器表达式
+        if (step.UiConfig.Action != "navigate")
+        {
+            builder.OpenElement(64, "div");
+            builder.AddAttribute(65, "class", "mb-3");
+            builder.OpenElement(66, "label");
+            builder.AddAttribute(67, "class", "form-label");
+            builder.AddContent(68, "🎯 选择器表达式");
+            builder.CloseElement();
+            builder.OpenElement(69, "input");
+            builder.AddAttribute(70, "type", "text");
+            builder.AddAttribute(71, "class", "form-control");
+            builder.AddAttribute(72, "placeholder", GetSelectorPlaceholder(step.UiConfig.SelectorType));
+            builder.AddAttribute(73, "value", step.UiConfig.Selector);
+            builder.AddAttribute(74, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => step.UiConfig.Selector = e.Value?.ToString() ?? ""));
+            builder.CloseElement();
+            builder.CloseElement();
+        }
+        
+        // 操作值
+        if (NeedsValue(step.UiConfig.Action))
+        {
+            builder.OpenElement(75, "div");
+            builder.AddAttribute(76, "class", "mb-3");
+            builder.OpenElement(77, "label");
+            builder.AddAttribute(78, "class", "form-label");
+            builder.AddContent(79, GetValueLabel(step.UiConfig.Action));
+            builder.CloseElement();
+            
+            if (step.UiConfig.Action == "type")
+            {
+                builder.OpenElement(80, "input");
+                builder.AddAttribute(81, "type", "text");
+                builder.AddAttribute(82, "class", "form-control");
+                builder.AddAttribute(83, "placeholder", "输入文本内容");
+                builder.AddAttribute(84, "value", step.UiConfig.Value);
+                builder.AddAttribute(85, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => step.UiConfig.Value = e.Value?.ToString() ?? ""));
+                builder.CloseElement();
+            }
+            else if (step.UiConfig.Action == "navigate")
+            {
+                builder.OpenElement(86, "input");
+                builder.AddAttribute(87, "type", "url");
+                builder.AddAttribute(88, "class", "form-control");
+                builder.AddAttribute(89, "placeholder", "https://example.com/page");
+                builder.AddAttribute(90, "value", step.UiConfig.Value);
+                builder.AddAttribute(91, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => step.UiConfig.Value = e.Value?.ToString() ?? ""));
+                builder.CloseElement();
+            }
+            else
+            {
+                builder.OpenElement(92, "textarea");
+                builder.AddAttribute(93, "class", "form-control");
+                builder.AddAttribute(94, "rows", "2");
+                builder.AddAttribute(95, "value", step.UiConfig.Value);
+                builder.AddAttribute(96, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => step.UiConfig.Value = e.Value?.ToString() ?? ""));
+                builder.CloseElement();
+            }
+            builder.CloseElement();
+        }
+        
+        // 截图选项
+        builder.OpenElement(97, "div");
+        builder.AddAttribute(98, "class", "form-check");
+        builder.OpenElement(99, "input");
+        builder.AddAttribute(100, "class", "form-check-input");
+        builder.AddAttribute(101, "type", "checkbox");
+        builder.AddAttribute(102, "checked", step.UiConfig.TakeScreenshot);
+        builder.AddAttribute(103, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => step.UiConfig.TakeScreenshot = (bool)(e.Value ?? false)));
+        builder.CloseElement();
+        builder.OpenElement(104, "label");
+        builder.AddAttribute(105, "class", "form-check-label");
+        builder.AddContent(106, "📷 执行后截图");
+        builder.CloseElement();
+        builder.CloseElement();
+        
+        builder.CloseElement(); // card-body
+        builder.CloseElement(); // card
+    };
+    
+    private RenderFragment RenderGeneralStepConfig(ProjectCaseStep step) => builder =>
+    {
+        builder.OpenElement(0, "div");
+        builder.AddAttribute(1, "class", "card mb-3");
+        
+        builder.OpenElement(2, "div");
+        builder.AddAttribute(3, "class", "card-header");
+        builder.OpenElement(4, "h6");
+        builder.AddAttribute(5, "class", "mb-0");
+        builder.AddContent(6, "🔧 通用配置");
+        builder.CloseElement();
+        builder.CloseElement();
+        
+        builder.OpenElement(7, "div");
+        builder.AddAttribute(8, "class", "card-body");
+        
+        if (step.Type == StepType.Delay)
+        {
+            // 延时等待配置
+            builder.OpenElement(9, "div");
+            builder.AddAttribute(10, "class", "mb-3");
+            builder.OpenElement(11, "label");
+            builder.AddAttribute(12, "class", "form-label");
+            builder.AddContent(13, "⏱️ 延时时间 (毫秒)");
+            builder.CloseElement();
+            builder.OpenElement(14, "input");
+            builder.AddAttribute(15, "type", "number");
+            builder.AddAttribute(16, "class", "form-control");
+            builder.AddAttribute(17, "placeholder", "1000");
+            builder.AddAttribute(18, "value", step.Parameters.ContainsKey("delay") ? step.Parameters["delay"].ToString() : "1000");
+            builder.AddAttribute(19, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => step.Parameters["delay"] = int.TryParse(e.Value?.ToString(), out var delay) ? delay : 1000));
+            builder.CloseElement();
+            builder.CloseElement();
+        }
+        else if (step.Type == StepType.SetVariable)
+        {
+            // 设置变量配置
+            builder.OpenElement(20, "div");
+            builder.AddAttribute(21, "class", "row mb-3");
+            
+            builder.OpenElement(22, "div");
+            builder.AddAttribute(23, "class", "col-md-6");
+            builder.OpenElement(24, "label");
+            builder.AddAttribute(25, "class", "form-label");
+            builder.AddContent(26, "🏷️ 变量名");
+            builder.CloseElement();
+            builder.OpenElement(27, "input");
+            builder.AddAttribute(28, "type", "text");
+            builder.AddAttribute(29, "class", "form-control");
+            builder.AddAttribute(30, "placeholder", "variableName");
+            builder.AddAttribute(31, "value", step.Parameters.ContainsKey("variableName") ? step.Parameters["variableName"].ToString() : "");
+            builder.AddAttribute(32, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => step.Parameters["variableName"] = e.Value?.ToString() ?? ""));
+            builder.CloseElement();
+            builder.CloseElement();
+            
+            builder.OpenElement(33, "div");
+            builder.AddAttribute(34, "class", "col-md-6");
+            builder.OpenElement(35, "label");
+            builder.AddAttribute(36, "class", "form-label");
+            builder.AddContent(37, "📝 变量值");
+            builder.CloseElement();
+            builder.OpenElement(38, "input");
+            builder.AddAttribute(39, "type", "text");
+            builder.AddAttribute(40, "class", "form-control");
+            builder.AddAttribute(41, "placeholder", "variableValue");
+            builder.AddAttribute(42, "value", step.Parameters.ContainsKey("variableValue") ? step.Parameters["variableValue"].ToString() : "");
+            builder.AddAttribute(43, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => step.Parameters["variableValue"] = e.Value?.ToString() ?? ""));
+            builder.CloseElement();
+            builder.CloseElement();
+            
+            builder.CloseElement();
+        }
+        else if (step.Type == StepType.Script)
+        {
+            // 脚本执行配置
+            builder.OpenElement(44, "div");
+            builder.AddAttribute(45, "class", "mb-3");
+            builder.OpenElement(46, "label");
+            builder.AddAttribute(47, "class", "form-label");
+            builder.AddContent(48, "📜 脚本内容");
+            builder.CloseElement();
+            builder.OpenElement(49, "textarea");
+            builder.AddAttribute(50, "class", "form-control");
+            builder.AddAttribute(51, "rows", "8");
+            builder.AddAttribute(52, "placeholder", "// JavaScript 代码\nconsole.log('Hello World');");
+            builder.AddAttribute(53, "value", step.Parameters.ContainsKey("script") ? step.Parameters["script"].ToString() : "");
+            builder.AddAttribute(54, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => step.Parameters["script"] = e.Value?.ToString() ?? ""));
+            builder.CloseElement();
+            builder.CloseElement();
+        }
+        
+        builder.CloseElement(); // card-body
+        builder.CloseElement(); // card
+    };
+    
+    private RenderFragment RenderScriptStepConfig(ProjectCaseStep step) => builder =>
+    {
+        if (step.ScriptConfig == null) return;
+        
+        builder.OpenElement(0, "div");
+        builder.AddAttribute(1, "class", "card mb-3");
+        
+        builder.OpenElement(2, "div");
+        builder.AddAttribute(3, "class", "card-header");
+        builder.OpenElement(4, "h6");
+        builder.AddAttribute(5, "class", "mb-0");
+        builder.AddContent(6, "📜 脚本配置");
+        builder.CloseElement();
+        builder.CloseElement();
+        
+        builder.OpenElement(7, "div");
+        builder.AddAttribute(8, "class", "card-body");
+        
+        // 脚本类型
+        builder.OpenElement(9, "div");
+        builder.AddAttribute(10, "class", "row mb-3");
+        builder.OpenElement(11, "div");
+        builder.AddAttribute(12, "class", "col-md-4");
+        builder.OpenElement(13, "label");
+        builder.AddAttribute(14, "class", "form-label");
+        builder.AddContent(15, "🔧 脚本类型");
+        builder.CloseElement();
+        builder.OpenElement(16, "select");
+        builder.AddAttribute(17, "class", "form-select");
+        builder.AddAttribute(18, "value", step.ScriptConfig.ScriptType);
+        builder.AddAttribute(19, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => step.ScriptConfig.ScriptType = e.Value?.ToString() ?? ""));
+        builder.OpenElement(20, "option");
+        builder.AddAttribute(21, "value", "javascript");
+        builder.AddContent(22, "JavaScript");
+        builder.CloseElement();
+        builder.OpenElement(23, "option");
+        builder.AddAttribute(24, "value", "csharp");
+        builder.AddContent(25, "C#");
+        builder.CloseElement();
+        builder.CloseElement();
+        builder.CloseElement();
+        
+        // 超时时间
+        builder.OpenElement(26, "div");
+        builder.AddAttribute(27, "class", "col-md-4");
+        builder.OpenElement(28, "label");
+        builder.AddAttribute(29, "class", "form-label");
+        builder.AddContent(30, "⏱️ 超时时间(ms)");
+        builder.CloseElement();
+        builder.OpenElement(31, "input");
+        builder.AddAttribute(32, "type", "number");
+        builder.AddAttribute(33, "class", "form-control");
+        builder.AddAttribute(34, "value", step.ScriptConfig.TimeoutMs);
+        builder.AddAttribute(35, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => step.ScriptConfig.TimeoutMs = int.TryParse(e.Value?.ToString(), out var timeout) ? timeout : 30000));
+        builder.CloseElement();
+        builder.CloseElement();
+        
+        // 预期返回值类型
+        builder.OpenElement(36, "div");
+        builder.AddAttribute(37, "class", "col-md-4");
+        builder.OpenElement(38, "label");
+        builder.AddAttribute(39, "class", "form-label");
+        builder.AddContent(40, "📤 预期返回值类型");
+        builder.CloseElement();
+        builder.OpenElement(41, "select");
+        builder.AddAttribute(42, "class", "form-select");
+        builder.AddAttribute(43, "value", step.ScriptConfig.ExpectedReturnType);
+        builder.AddAttribute(44, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => step.ScriptConfig.ExpectedReturnType = e.Value?.ToString() ?? ""));
+        builder.OpenElement(45, "option");
+        builder.AddAttribute(46, "value", "string");
+        builder.AddContent(47, "字符串");
+        builder.CloseElement();
+        builder.OpenElement(48, "option");
+        builder.AddAttribute(49, "value", "number");
+        builder.AddContent(50, "数字");
+        builder.CloseElement();
+        builder.OpenElement(51, "option");
+        builder.AddAttribute(52, "value", "boolean");
+        builder.AddContent(53, "布尔值");
+        builder.CloseElement();
+        builder.OpenElement(54, "option");
+        builder.AddAttribute(55, "value", "object");
+        builder.AddContent(56, "对象");
+        builder.CloseElement();
+        builder.CloseElement();
+        builder.CloseElement();
+        builder.CloseElement();
+        
+        // 脚本内容
+        builder.OpenElement(57, "div");
+        builder.AddAttribute(58, "class", "mb-3");
+        builder.OpenElement(59, "label");
+        builder.AddAttribute(60, "class", "form-label");
+        builder.AddContent(61, "📝 脚本内容");
+        builder.CloseElement();
+        builder.OpenElement(62, "textarea");
+        builder.AddAttribute(63, "class", "form-control");
+        builder.AddAttribute(64, "rows", "10");
+        builder.AddAttribute(65, "placeholder", "请输入脚本代码...");
+        builder.AddAttribute(66, "value", step.ScriptConfig.ScriptContent);
+        builder.AddAttribute(67, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => step.ScriptConfig.ScriptContent = e.Value?.ToString() ?? ""));
+        builder.CloseElement();
+        builder.CloseElement();
+        
+        // 脚本参数
+        builder.OpenElement(68, "div");
+        builder.AddAttribute(69, "class", "mb-3");
+        builder.OpenElement(70, "label");
+        builder.AddAttribute(71, "class", "form-label");
+        builder.AddContent(72, "⚙️ 脚本参数 (JSON格式)");
+        builder.CloseElement();
+        builder.OpenElement(73, "textarea");
+        builder.AddAttribute(74, "class", "form-control");
+        builder.AddAttribute(75, "rows", "3");
+        builder.AddAttribute(76, "placeholder", "{\"key1\": \"value1\", \"key2\": \"value2\"}");
+         builder.AddAttribute(77, "value", System.Text.Json.JsonSerializer.Serialize(step.ScriptConfig.Parameters));
+         builder.AddAttribute(78, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => {
+             try {
+                 step.ScriptConfig.Parameters = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(e.Value?.ToString() ?? "{}") ?? new();
+             } catch {
+                 step.ScriptConfig.Parameters = new();
+             }
+         }));
+        builder.CloseElement();
+        builder.CloseElement();
+        
+        // 输出捕获和变量提取
+        builder.OpenElement(79, "div");
+        builder.AddAttribute(80, "class", "row mb-3");
+        
+        // 输出捕获
+        builder.OpenElement(81, "div");
+        builder.AddAttribute(82, "class", "col-md-6");
+        builder.OpenElement(83, "div");
+        builder.AddAttribute(84, "class", "form-check");
+        builder.OpenElement(85, "input");
+        builder.AddAttribute(86, "class", "form-check-input");
+        builder.AddAttribute(87, "type", "checkbox");
+        builder.AddAttribute(88, "checked", step.ScriptConfig.CaptureOutput);
+        builder.AddAttribute(89, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => step.ScriptConfig.CaptureOutput = bool.TryParse(e.Value?.ToString(), out var capture) && capture));
+        builder.CloseElement();
+        builder.OpenElement(90, "label");
+        builder.AddAttribute(91, "class", "form-check-label");
+        builder.AddContent(92, "📋 捕获输出");
+        builder.CloseElement();
+        builder.CloseElement();
+        builder.CloseElement();
+        
+        // 变量提取
+        builder.OpenElement(93, "div");
+        builder.AddAttribute(94, "class", "col-md-6");
+        builder.OpenElement(95, "label");
+        builder.AddAttribute(96, "class", "form-label");
+        builder.AddContent(97, "🔍 变量提取 (变量名=表达式)");
+        builder.CloseElement();
+        builder.OpenElement(98, "textarea");
+        builder.AddAttribute(99, "class", "form-control");
+        builder.AddAttribute(100, "rows", "2");
+        builder.AddAttribute(101, "placeholder", "result=$.data\ncount=$.items.length");
+         builder.AddAttribute(102, "value", string.Join("\n", step.ScriptConfig.VariableExtractions.Select(kv => $"{kv.Key}={kv.Value}")));
+         builder.AddAttribute(103, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => {
+             step.ScriptConfig.VariableExtractions.Clear();
+             var lines = (e.Value?.ToString() ?? "").Split('\n', StringSplitOptions.RemoveEmptyEntries);
+             foreach (var line in lines) {
+                 var parts = line.Split('=', 2, StringSplitOptions.TrimEntries);
+                 if (parts.Length == 2) {
+                     step.ScriptConfig.VariableExtractions[parts[0]] = parts[1];
+                 }
+             }
+         }));
+        builder.CloseElement();
+        builder.CloseElement();
+        builder.CloseElement();
+        
+        builder.CloseElement(); // card-body
+        builder.CloseElement(); // card
+    };
+}
+
+<!-- Playwright 录制模态框 -->
+<AutoTest.Components.PlaywrightRecorderModal 
+    ShowModal="@showRecorderModal" 
+    OnHide="@HideRecorderModal"
+    OnStepsGenerated="@OnRecordedStepsGenerated" />
+
+@code {
+    private bool showRecorderModal = false;
+
+    private void ShowRecorderModal()
+    {
+        showRecorderModal = true;
+        StateHasChanged();
+    }
+
+    private void HideRecorderModal()
+    {
+        showRecorderModal = false;
+        StateHasChanged();
+    }
+
+    private async Task OnRecordedStepsGenerated(List<ProjectCaseStep> recordedSteps)
+    {
+        if (recordedSteps?.Any() == true)
+        {
+            // 获取当前最大的 Order 值
+            int maxOrder = currentTestCase.Steps.Any() ? currentTestCase.Steps.Max(s => s.Order) : 0;
+            
+            // 为录制的步骤分配新的 Order 值
+            foreach (var step in recordedSteps)
+            {
+                step.Order = ++maxOrder;
+                currentTestCase.Steps.Add(step);
+            }
+            
+            // 选中第一个新添加的步骤
+            if (recordedSteps.Count > 0)
+            {
+                selectedStep = recordedSteps[0];
+            }
+            
+            StateHasChanged();
+            
+            // 显示成功消息
+            await JSRuntime.InvokeVoidAsync("alert", $"成功添加了 {recordedSteps.Count} 个录制步骤！");
+        }
+    }
+}

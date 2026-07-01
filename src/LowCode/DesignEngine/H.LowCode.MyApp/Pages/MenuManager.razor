@@ -1,0 +1,317 @@
+﻿@page "/designengine/myapp/{AppId}/menumanager"
+@namespace H.LowCode.MyApp
+@inherits LowCodePageComponentBase
+@layout MyAppLayout
+
+@inject IMenuAppService MenuAppService
+
+<PageTitle>菜单管理</PageTitle>
+<style>
+    .icon-select-menu {
+        display: flex;
+        flex-wrap: wrap;
+        max-width: 560px;
+        max-height: 300px;
+        overflow: auto;
+        padding: 4px;
+    }
+    .icon-select-menu .dropdown-item {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        flex: 0 0 140px;
+        height: 32px;
+        margin: 2px;
+        padding: 4px 8px;
+        box-sizing: border-box;
+        white-space: nowrap;
+        cursor: pointer;
+    }
+    .icon-select-menu .dropdown-item:hover {
+        background-color: #f5f5f5;
+    }
+    .icon-select-menu .icon-label {
+        margin-left: 6px;
+        line-height: 1;
+    }
+</style>
+
+<div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
+    <div style="width:250px;">
+        <input type="search" class="inp" placeholder="菜单名称" />
+    </div>
+    <div style="width:80px; line-height:32px; margin: 0 8px 0 0;">
+        <button class="btn btn-primary" @onclick='() => CreateAsync(string.Empty)'>新建菜单</button>
+    </div>
+</div>
+
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>菜单名称</th>
+            <th>排序</th>
+            <th>图标</th>
+            <th>类型</th>
+            <th>菜单地址</th>
+            <th>修改时间</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        @RenderFlatMenuRows(_menuList, 0)
+    </tbody>
+</table>
+
+<HModal Title="新建菜单" Visible="@_visible" OnOk="OnConfirmAsync" OnCancel='() => _visible = false'>
+    <form>
+        <div class="form-item">
+            <label>父级菜单</label>
+            <select class="sel" @bind="_menuSchema.ParentId" style="width:100%;">
+                <option value="">-- 无 --</option>
+                @foreach (var m in GetFlatParentMenus(_menuSchema.Id))
+                {
+                    <option value="@m.Id">@m.Title</option>
+                }
+            </select>
+        </div>
+        <div class="form-item">
+            <label>菜单名称</label>
+            <input class="inp" @bind="_menuSchema.Title" />
+        </div>
+        <div class="form-item">
+            <label>类型</label>
+            <div class="radio-group">
+                <label class="radio-label"><input type="radio" name="menuType" value="0" checked="@(_menuSchema.MenuType == 0)" @onchange='() => _menuSchema.MenuType = 0' />菜单</label>
+                <label class="radio-label"><input type="radio" name="menuType" value="1" checked="@(_menuSchema.MenuType == 1)" @onchange='() => _menuSchema.MenuType = 1' />目录</label>
+            </div>
+        </div>
+        <div class="form-item">
+            <label>图标</label>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <input class="inp" @bind="_menuSchema.Icon" readonly style="width:220px;" />
+                <div class="dropdown">
+                    <button class="btn btn-default btn-sm" type="button" @onclick='() => _iconDropdownOpen = !_iconDropdownOpen'>选择图标</button>
+                    @if (_iconDropdownOpen)
+                    {
+                        <div class="dropdown-menu icon-select-menu" style="max-width:480px;">
+                            @foreach (var icon in _iconList)
+                            {
+                                <div class="dropdown-item" @onclick='() => SelectIcon(icon)'>
+                                    <span>@icon</span>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+        @if (_menuSchema.MenuType == 0)
+        {
+            <div class="form-item">
+                <label>菜单地址</label>
+                <input class="inp" @bind="_menuSchema.MenuUrl" />
+            </div>
+        }
+        <div class="form-item">
+            <label>排序</label>
+            <input type="number" class="inp" @bind="_menuSchema.Order" min="0" />
+        </div>
+    </form>
+</HModal>
+
+@code {
+    [PersistentState]
+    public IList<MenuSchema> _menuList { get; set; }
+
+    private bool _visible = false;
+    private bool _iconDropdownOpen = false;
+
+    private MenuSchema _menuSchema;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        _menuList = await GetMenuListAsync();
+    }
+
+    public async Task<IList<MenuSchema>> GetMenuListAsync()
+    {
+        return await MenuAppService.GetListAsync(AppId);
+    }
+
+    private async Task<MenuSchema> GetMenuAsync(string id)
+    {
+        return await MenuAppService.GetByIdAsync(AppId, id);
+    }
+
+    private void CreateAsync(string parentId)
+    {
+        _menuSchema = new MenuSchema() { AppId = AppId, Id = ShortIdGenerator.Generate() };
+        _menuSchema.ParentId = parentId;
+        _visible = true;
+
+        StateHasChanged();
+    }
+
+    private async Task EditAsync(string id)
+    {
+        _menuSchema = await GetMenuAsync(id);
+        _visible = true;
+
+        StateHasChanged();
+    }
+
+    private async Task DeleteAsync(string id)
+    {
+        await MenuAppService.DeleteAsync(AppId, id);
+
+        await Message.SuccessAsync("删除成功！");
+    }
+
+    private async Task OnConfirmAsync()
+    {
+        var isSuccess = await SaveMenuSchemaAsync();
+        if (isSuccess)
+        {
+            _visible = false;
+            await Message.SuccessAsync("保存成功");
+        }
+        else
+        {
+            _visible = true;
+            await Message.ErrorAsync("保存失败");
+        }
+    }
+
+    private async Task OnFinishAsync()
+    {
+        _menuList = await GetMenuListAsync();
+    }
+
+    private async Task<bool> SaveMenuSchemaAsync()
+    {
+        return await MenuAppService.SaveAsync(_menuSchema);
+    }
+
+    private readonly string[] _iconList = new[]
+    {
+        "home","appstore","menu","bars","database","setting","tool","api",
+        "user","team","cloud-upload","deployment-unit","bar-chart"
+    };
+
+    private void SelectIcon(string icon)
+    {
+        _menuSchema.Icon = icon;
+        _iconDropdownOpen = false;
+        StateHasChanged();
+    }
+
+    private IEnumerable<MenuSchema> GetFlatParentMenus(string currentId)
+    {
+        var exclude = new HashSet<string>();
+        var current = FindMenuById(_menuList, currentId);
+        if (current != null)
+        {
+            exclude.Add(current.Id);
+            CollectDescendantIds(current, exclude);
+        }
+        return FlattenForSelect(_menuList, exclude, 0);
+    }
+
+    private MenuSchema FindMenuById(IEnumerable<MenuSchema> nodes, string id)
+    {
+        if (string.IsNullOrWhiteSpace(id) || nodes == null)
+            return null;
+
+        foreach (var n in nodes)
+        {
+            if (n.Id == id)
+                return n;
+            var found = FindMenuById(n.Childrens, id);
+            if (found != null)
+                return found;
+        }
+        return null;
+    }
+
+    private void CollectDescendantIds(MenuSchema node, HashSet<string> set)
+    {
+        if (node?.Childrens == null)
+            return;
+        foreach (var c in node.Childrens)
+        {
+            set.Add(c.Id);
+            CollectDescendantIds(c, set);
+        }
+    }
+
+    private IEnumerable<MenuSchema> FlattenForSelect(IEnumerable<MenuSchema> nodes, HashSet<string> exclude, int depth)
+    {
+        if (nodes == null)
+            yield break;
+        foreach (var n in nodes)
+        {
+            if (exclude.Contains(n.Id))
+                continue;
+            var display = new string('-', depth * 2) + n.Title;
+            yield return new MenuSchema { Id = n.Id, AppId = AppId, Title = display };
+            foreach (var child in FlattenForSelect(n.Childrens, exclude, depth + 1))
+                yield return child;
+        }
+    }
+
+    private RenderFragment RenderFlatMenuRows(IEnumerable<MenuSchema> nodes, int depth) => builder =>
+    {
+        if (nodes == null) return;
+        foreach (var m in nodes)
+        {
+            builder.OpenElement(0, "tr");
+            builder.OpenElement(1, "td");
+            builder.AddAttribute(2, "style", "padding-left: " + (depth * 20) + "px;");
+            builder.AddContent(3, m.Title);
+            builder.CloseElement();
+            builder.OpenElement(4, "td");
+            builder.AddContent(5, m.Order);
+            builder.CloseElement();
+            builder.OpenElement(6, "td");
+            builder.AddContent(7, m.Icon);
+            builder.CloseElement();
+            builder.OpenElement(8, "td");
+            builder.AddContent(9, m.MenuType == 0 ? "菜单" : "目录");
+            builder.CloseElement();
+            builder.OpenElement(10, "td");
+            builder.AddContent(11, m.MenuUrl);
+            builder.CloseElement();
+            builder.OpenElement(12, "td");
+            builder.AddContent(13, m.ModificationTime?.ToString("yyyy-MM-dd HH:mm:ss"));
+            builder.CloseElement();
+            builder.OpenElement(14, "td");
+            if (m.MenuType == 1)
+            {
+                builder.OpenElement(15, "a");
+                builder.AddAttribute(16, "onclick", EventCallback.Factory.Create(this, () => CreateAsync(m.Id)));
+                builder.AddAttribute(17, "href", "javascript:void(0)");
+                builder.AddContent(18, "新增子菜单");
+                builder.CloseElement();
+            }
+            builder.OpenElement(19, "a");
+            builder.AddAttribute(20, "onclick", EventCallback.Factory.Create(this, () => EditAsync(m.Id)));
+            builder.AddAttribute(21, "href", "javascript:void(0)");
+            builder.AddContent(22, "编辑");
+            builder.CloseElement();
+            builder.OpenElement(23, "a");
+            builder.AddAttribute(24, "onclick", EventCallback.Factory.Create(this, () => DeleteAsync(m.Id)));
+            builder.AddAttribute(25, "href", "javascript:void(0)");
+            builder.AddAttribute(26, "style", "color:#ff4d4f");
+            builder.AddContent(27, "删除");
+            builder.CloseElement();
+            builder.CloseElement();
+            builder.CloseElement();
+            if (m.Childrens != null && m.Childrens.Count > 0)
+            {
+                builder.AddContent(28, RenderFlatMenuRows(m.Childrens, depth + 1));
+            }
+        }
+    };
+}

@@ -1,0 +1,90 @@
+@namespace H.LowCode.PartsDesignEngine
+@inherits LowCodeComponentBase
+@layout PartsDesignEngineLayout
+
+@inject IComponentLibraryAppService ComponentLibraryAppService
+
+<div style="max-width: 600px;">
+    <div style="margin-bottom: 16px;">
+        <label style="display: block; margin-bottom: 4px; font-weight: 500;">
+            <span style="color: red;">*</span> 组件库标识
+        </label>
+        <input class="inp" @bind="ComponentLibrary.LibraryId" />
+    </div>
+    <div style="margin-bottom: 16px;">
+        <label style="display: block; margin-bottom: 4px; font-weight: 500;">
+            <span style="color: red;">*</span> 组件库名称
+        </label>
+        <input class="inp" @bind="ComponentLibrary.LibraryName" />
+    </div>
+    <div style="margin-bottom: 16px;">
+        <label style="display: block; margin-bottom: 4px; font-weight: 500;">组件库描述</label>
+        <textarea class="ta" @bind="ComponentLibrary.Description"></textarea>
+    </div>
+    <div style="margin-bottom: 16px;">
+        <label style="display: block; margin-bottom: 4px; font-weight: 500;">支持平台</label>
+        <div class="checkbox-group">
+    <label class="checkbox-label"><input type="checkbox" checked='@ComponentLibrary.SupportPlatforms.Contains(SupportPlatformEnum.Web)' @onchange='(e) => ToggleSupportPlatform(ComponentLibrary, SupportPlatformEnum.Web, (bool)e.Value)' /> Web</label>
+    <label class="checkbox-label"><input type="checkbox" checked='@ComponentLibrary.SupportPlatforms.Contains(SupportPlatformEnum.Mobile)' @onchange='(e) => ToggleSupportPlatform(ComponentLibrary, SupportPlatformEnum.Mobile, (bool)e.Value)' /> App</label>
+    <label class="checkbox-label"><input type="checkbox" checked='@ComponentLibrary.SupportPlatforms.Contains(SupportPlatformEnum.WXMiniApp)' @onchange='(e) => ToggleSupportPlatform(ComponentLibrary, SupportPlatformEnum.WXMiniApp, (bool)e.Value)' /> 小程序</label>
+</div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public ComponentLibrarySchema ComponentLibrary { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        if (ComponentLibrary == null)
+            ComponentLibrary = new();
+    }
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+        
+        // 确保每次参数变化时都有有效的ComponentLibrary对象
+        if (ComponentLibrary == null)
+            ComponentLibrary = new();
+    }
+
+    public async Task<bool> SubmitAsync()
+    {
+        var success = await SaveComponentLibrarySchema();
+        return success;
+    }
+
+    private void ToggleSupportPlatform(ComponentLibrarySchema lib, SupportPlatformEnum platform, bool isChecked)
+    {
+        var list = lib.SupportPlatforms?.ToList() ?? new List<SupportPlatformEnum>();
+        if (isChecked && !list.Contains(platform)) list.Add(platform);
+        else if (!isChecked) list.Remove(platform);
+        lib.SupportPlatforms = list.ToArray();
+    }
+
+    private async Task<bool> SaveComponentLibrarySchema()
+    {
+        bool isSuccess = false;
+        
+        // 简单验证必填字段
+        if (string.IsNullOrWhiteSpace(ComponentLibrary.LibraryId) || 
+            string.IsNullOrWhiteSpace(ComponentLibrary.LibraryName))
+        {
+            await Message.ErrorAsync("请填写必填字段");
+            return false;
+        }
+
+        isSuccess = await ComponentLibraryAppService.SaveAsync(ComponentLibrary);
+        if (isSuccess)
+        {
+            // 重置表单
+            ComponentLibrary = new();
+        }
+        
+        return isSuccess;
+    }
+}

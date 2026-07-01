@@ -1,0 +1,270 @@
+@page "/account/login"
+@attribute [AllowAnonymous]
+
+@layout AccountEmptyLayout
+@inject HttpClient HttpClient
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@inject IAccountAppService AccountAppService
+
+<div class="auth-form">
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="h-alert h-alert-error">
+            <span class="h-alert-icon">&#9888;</span>
+            <span>@errorMessage</span>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+        <div class="h-alert h-alert-success">
+            <span class="h-alert-icon">&#10004;</span>
+            <span>@successMessage</span>
+        </div>
+    }
+
+    <div class="login-tabs">
+        <span class="login-tab @(loginMode == LoginMode.AccountPassword ? "active" : "")"
+              @onclick="@(() => SwitchLoginMode(LoginMode.AccountPassword))">账密登录</span>
+        <span class="login-tab @(loginMode == LoginMode.PhoneSms ? "active" : "")"
+              @onclick="@(() => SwitchLoginMode(LoginMode.PhoneSms))">手机号登录</span>
+    </div>
+
+    @if (loginMode == LoginMode.AccountPassword)
+    {
+        <EditForm Model="@loginModel" OnValidSubmit="@HandleLogin">
+            <div class="h-form-item">
+                <input type="text" @bind-value="@loginModel.Account" placeholder="请输入用户名/邮箱/手机号" class="h-input" />
+            </div>
+
+            <div class="h-form-item">
+                <input type="password" @bind-value="@loginModel.Password" placeholder="请输入密码" class="h-input" />
+            </div>
+
+            <div class="auth-form-links">
+                <a href="/account/register">注册</a>
+                <a href="#">忘记密码？</a>
+            </div>
+
+            <div class="h-form-item" style="margin-top: 24px; margin-bottom: 20px;">
+                <button type="submit" class="h-btn h-btn-primary h-btn-block auth-btn-primary">登 录</button>
+            </div>
+        </EditForm>
+    }
+    else
+    {
+        <EditForm Model="@phoneLoginModel" OnValidSubmit="@HandlePhoneLogin">
+            <div class="h-form-item">
+                <input type="text" @bind-value="@phoneLoginModel.PhoneNumber" placeholder="请输入手机号" class="h-input" />
+            </div>
+
+            <div class="h-form-item">
+                <div class="h-input-group">
+                    <input type="text" @bind-value="@phoneLoginModel.PhoneCode" placeholder="请输入验证码" class="h-input" style="flex:1;" />
+                    <button type="button" @onclick="@SendPhoneCode" disabled="@smsCountdownActive" class="h-btn btn-send-code">@sendCodeButtonText</button>
+                </div>
+            </div>
+
+            <div class="auth-form-links-spacer"></div>
+
+            <div class="h-form-item" style="margin-top: 24px; margin-bottom: 20px;">
+                <button type="submit" class="h-btn h-btn-primary h-btn-block auth-btn-primary">登 录</button>
+            </div>
+        </EditForm>
+    }
+
+    <div class="auth-social-btns">
+        <a class="social-circle-btn" href="/api/external-login/challenge?provider=WeChat&returnUrl=%2Faccount%2Fexternal-callback" title="微信登录">
+            <svg viewBox="0 0 1024 1024" width="22" height="22" class="social-svg">
+                <path d="M690.1 377.4c5.9 0 11.8 0.2 17.6 0.5-32.3-104.7-143.4-182.5-273.7-182.5-149.9 0-272.1 100.6-272.1 224.9 0 71.8 40.3 130.9 108.8 176.7l-27.2 81.8 95-47.5c34 6.8 61.3 13.6 95.3 13.6 8.5 0 17-0.4 25.4-1.1-5.3-17.8-8.3-36.5-8.3-55.9-0.1-116.3 102-210.5 239.2-210.5zM512.5 282.6c27.2 0 40.8 13.6 40.8 27.2 0 13.6-13.6 27.2-40.8 27.2-27.2 0-54.4-13.6-54.4-27.2 0-13.6 27.2-27.2 54.4-27.2zM326.9 337c-27.2 0-54.4-13.6-54.4-27.2 0-13.6 27.2-27.2 54.4-27.2 27.2 0 40.8 13.6 40.8 27.2 0 13.6-13.6 27.2-40.8 27.2zM784.9 577.8c0-104.7-108.8-189.9-217.6-189.9-122.4 0-217.6 85.2-217.6 189.9 0 104.7 95.2 189.9 217.6 189.9 27.2 0 54.4-6.8 81.6-13.6l74.8 40.8-20.4-68c54.4-40.8 81.6-95.2 81.6-149.1zM485.3 537c-20.4 0-34-13.6-34-27.2 0-13.6 13.6-27.2 34-27.2 20.4 0 34 13.6 34 27.2 0 13.6-13.6 27.2-34 27.2zM680.5 537c-20.4 0-34-13.6-34-27.2 0-13.6 13.6-27.2 34-27.2 20.4 0 34 13.6 34 27.2 0 13.6-13.6 27.2-34 27.2z"/>
+            </svg>
+        </a>
+        <a class="social-circle-btn" href="/api/external-login/challenge?provider=DingTalk&returnUrl=%2Faccount%2Fexternal-callback" title="钉钉登录">
+            <svg viewBox="0 0 1024 1024" width="22" height="22" class="social-svg">
+                <path d="M573.7 252.5C422.5 197.4 201.3 96.7 201.3 96.7c-15.7-4.1-17.9 11.1-17.9 11.1-5 61.1 33.6 160.5 53.6 182.8 19.9 22.3 319.1 113.7 319.1 113.7S326 357.9 270.5 341.9c-55.6-16-37.9 17.8-37.9 17.8 11.4 61.7 64.9 131.8 107.2 138.4 42.2 6.6 220.1 4 220.1 4s-35.5 4.1-93.2 11.9c-42.7 5.8-97 12.5-111.1 17.8-33.1 12.5 24 62.6 24 62.6 84.7 76.8 129.7 50.5 129.7 50.5 33.3-10.7 61.4-18.5 85.2-24.2L565 743.1h84.6L603 928l205.3-271.9H700.8l22.3-38.7c.3.5.4.8.4.8S799.8 496.1 829 433.8l.6-1h-.1c5-10.8 8.6-19.7 10-25.8 17-71.3-114.5-99.4-265.8-154.5z"/>
+            </svg>
+        </a>
+    </div>
+
+    <div class="auth-footer">
+        还没有账户？ <a href="/account/register">立即注册</a>
+    </div>
+</div>
+
+@code {
+    private LoginRequestDto? loginModel { get; set; }
+    private PhoneLoginInput phoneLoginModel { get; set; } = new();
+    private string errorMessage = "";
+    private string successMessage = "";
+    private string returnUrl = "/";
+    private LoginMode loginMode = LoginMode.AccountPassword;
+
+    private int smsCountdown = 0;
+    private string sendCodeButtonText = "发送验证码";
+    private bool smsCountdownActive => smsCountdown > 0;
+
+    protected override void OnInitialized()
+    {
+        loginModel ??= new LoginRequestDto();
+        phoneLoginModel ??= new PhoneLoginInput();
+
+        var uri = new Uri(Navigation.Uri);
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        returnUrl = query["returnUrl"] ?? "/";
+
+        var error = query["error"];
+        if (!string.IsNullOrEmpty(error))
+        {
+            errorMessage = error;
+        }
+    }
+
+    private void SwitchLoginMode(LoginMode mode)
+    {
+        loginMode = mode;
+        errorMessage = "";
+        successMessage = "";
+    }
+
+    private async Task HandleLogin()
+    {
+        if (loginModel == null)
+        {
+            errorMessage = "系统错误：表单数据未初始化";
+            return;
+        }
+
+        try
+        {
+            var result = await AccountAppService.LoginAsync(loginModel);
+
+            if (result.Success)
+            {
+                successMessage = "登录成功！正在跳转到企业选择...";
+                errorMessage = string.Empty;
+                // 登录成功后跳转到企业选择页面
+                var targetUrl = (returnUrl == "/" || string.IsNullOrWhiteSpace(returnUrl)) ? "/enterprise/select" : returnUrl;
+                Navigation.NavigateTo(targetUrl, forceLoad: true);
+            }
+            else
+            {
+                errorMessage = "登录失败：" + result.Message;
+                successMessage = string.Empty;
+            }
+        }
+        catch (Microsoft.AspNetCore.Components.NavigationException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"登录失败: {ex.Message}";
+            successMessage = string.Empty;
+        }
+    }
+
+    private async Task HandlePhoneLogin()
+    {
+        if (string.IsNullOrWhiteSpace(phoneLoginModel.PhoneNumber))
+        {
+            errorMessage = "请输入手机号";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(phoneLoginModel.PhoneCode))
+        {
+            errorMessage = "请输入验证码";
+            return;
+        }
+
+        try
+        {
+            var response = await HttpClient.PostAsJsonAsync("/api/app/account/phone-login", phoneLoginModel);
+
+            if (response.IsSuccessStatusCode)
+            {
+                successMessage = "登录成功！正在跳转到企业选择...";
+                errorMessage = string.Empty;
+                // 登录成功后跳转到企业选择页面
+                var targetUrl = (returnUrl == "/" || string.IsNullOrWhiteSpace(returnUrl)) ? "/enterprise/select" : returnUrl;
+                Navigation.NavigateTo(targetUrl, forceLoad: true);
+            }
+            else
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                errorMessage = "登录失败：" + (response.ReasonPhrase ?? "未知错误");
+                successMessage = string.Empty;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"登录失败: {ex.Message}";
+            successMessage = string.Empty;
+        }
+    }
+
+    private async Task SendPhoneCode()
+    {
+        if (string.IsNullOrWhiteSpace(phoneLoginModel.PhoneNumber))
+        {
+            errorMessage = "请先输入手机号";
+            return;
+        }
+
+        try
+        {
+            var response = await HttpClient.PostAsJsonAsync("/api/app/account/send-phone-code", new { phoneLoginModel.PhoneNumber });
+
+            if (response.IsSuccessStatusCode)
+            {
+                errorMessage = "";
+                successMessage = "验证码已发送";
+                StartSmsCountdown();
+            }
+            else
+            {
+                errorMessage = "发送失败：" + (response.ReasonPhrase ?? "未知错误");
+                successMessage = "";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"发送失败: {ex.Message}";
+            successMessage = "";
+        }
+    }
+
+    private async Task StartSmsCountdown()
+    {
+        smsCountdown = 60;
+        sendCodeButtonText = $"{smsCountdown}s";
+        while (smsCountdown > 0)
+        {
+            await Task.Delay(1000);
+            smsCountdown--;
+            sendCodeButtonText = smsCountdown > 0 ? $"{smsCountdown}s" : "发送验证码";
+            StateHasChanged();
+        }
+    }
+
+    private void ExternalLogin(string provider)
+    {
+        var returnUrl = Navigation.ToAbsoluteUri("/account/external-callback");
+        Navigation.NavigateTo(
+            $"/api/external-login/challenge?provider={provider}&returnUrl={Uri.EscapeDataString(returnUrl.ToString())}",
+            forceLoad: true);
+    }
+
+    private enum LoginMode
+    {
+        AccountPassword,
+        PhoneSms
+    }
+
+    private class PhoneLoginInput
+    {
+        public string PhoneNumber { get; set; } = string.Empty;
+        public string PhoneCode { get; set; } = string.Empty;
+    }
+}

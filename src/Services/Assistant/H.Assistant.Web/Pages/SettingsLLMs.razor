@@ -1,0 +1,1012 @@
+@page "/assistant/settings-llms"
+
+@layout AssistantLayout
+@inject ILLMAppService LLMConfigAppService
+@inject NavigationManager Navigation
+
+<PageTitle>设置 - Agent 助手</PageTitle>
+
+<!-- Toast Notification -->
+@if (!string.IsNullOrEmpty(toastMessage))
+{
+    <div class="toast-notification toast-@toastType @(toastVisible ? "toast-show" : "")">
+        @toastMessage
+    </div>
+}
+
+<div class="settings-container">
+    <div class="settings-sidebar">
+        <div class="sidebar-header">
+            <button class="btn back-btn" @onclick="GoBack">
+                @IconSvg("arrow-left") 返回
+            </button>
+        </div>
+        <div class="sidebar-menu">
+            @foreach (var item in menuItems)
+            {
+                <div class="menu-item @(IsActive(item.Url) ? "active" : "")"
+                     @onclick="() => Navigation.NavigateTo(item.Url)">
+                    @IconSvg(item.Icon)
+                    <span>@item.Label</span>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="settings-content">
+        <div class="content-header">
+            <h2>模型管理</h2>
+            <button class="btn btn-primary assistant-btn-primary btn-small" @onclick="ShowAddModel">
+                @IconSvg("plus") 添加
+            </button>
+        </div>
+        <div class="model-list">
+            @if (loadingModels)
+            {
+                <div class="loading-spinner"><div class="spinner"></div><span>加载中...</span></div>
+            }
+            else if (llmConfigs.Any())
+            {
+                @foreach (var config in llmConfigs)
+                {
+                    <div class="model-card">
+                        <div class="model-card-header">
+                            <div class="model-name">
+                                <strong>@config.ProviderDisplayName</strong>
+                                @if (config.IsDefault)
+                                {
+                                    <span class="tag tag-green">默认</span>
+                                }
+                                @if (config.IsEnabled)
+                                {
+                                    <span class="tag tag-blue">已启用</span>
+                                }
+                                else
+                                {
+                                    <span class="tag tag-default">已禁用</span>
+                                }
+                            </div>
+                            <div class="model-actions">
+                                @if (!config.IsDefault)
+                                {
+                                    <button class="btn btn-link btn-small" @onclick="@(() => SetDefault(config.ProviderName))">设为默认</button>
+                                }
+                                <button class="btn btn-link btn-small" @onclick="@(() => EditModel(config))">编辑</button>
+                                <button class="btn btn-link btn-small btn-danger" @onclick="@(() => DeleteModel(config.Id))">删除</button>
+                            </div>
+                        </div>
+                        <div class="model-card-body">
+                            <div class="model-info-row">
+                                <span class="info-label">Provider:</span>
+                                <span>@config.ProviderName</span>
+                            </div>
+                            <div class="model-info-row">
+                                <span class="info-label">模型:</span>
+                                <span>@config.Model</span>
+                            </div>
+                            <div class="model-info-row">
+                                <span class="info-label">API Key:</span>
+                                <span>@MaskApiKey(config.ApiKey)</span>
+                            </div>
+                            @if (!string.IsNullOrEmpty(config.BaseUrl))
+                            {
+                                <div class="model-info-row">
+                                    <span class="info-label">Base URL:</span>
+                                    <span>@config.BaseUrl</span>
+                                </div>
+                            }
+                            <div class="model-info-row">
+                                <span class="info-label">MaxTokens:</span>
+                                <span>@config.MaxTokens</span>
+                                <span class="info-label" style="margin-left:16px;">Temperature:</span>
+                                <span>@config.Temperature</span>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="empty-state">
+                    <div class="empty-icon">@IconSvg("inbox")</div>
+                    <div class="empty-text">暂无模型配置，点击添加按钮新增</div>
+                </div>
+            }
+        </div>
+
+        @if (showModelDialog)
+        {
+            <div class="modal-overlay" @onclick="CloseModelDialog">
+                <div class="modal-dialog model-dialog" @onclick:stopPropagation="true">
+                    <div class="modal-header">
+                        <h3>@(isEditing ? "编辑模型" : "添加模型")</h3>
+                        <button class="btn btn-text modal-close-btn" @onclick="CloseModelDialog">
+                            @IconSvg("close")
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-item required">
+                            <label>* 提供商</label>
+                            <select class="modal-select" @onchange="OnProviderChanged">
+                                @foreach (var p in providerDefs)
+                                {
+                                    <option value="@p.ProviderName" selected="@(editModel.ProviderName == p.ProviderName)">@p.DisplayName</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="form-item required">
+                            <label>* 类型</label>
+                            <select class="modal-select" @onchange="OnTypeChanged">
+                                @foreach (var t in currentProviderTypes)
+                                {
+                                    <option value="@t.Name" selected="@(editModel.PlanType == t.Name)">@t.DisplayName</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="form-item required">
+                            <label>* 模型Id</label>
+                            <input class="modal-input" @bind="@editModel.Model" placeholder="选择模型" />
+                            @if (currentModels.Any())
+                            {
+                                <div class="model-suggestions">
+                                    @foreach (var m in currentModels)
+                                    {
+                                        <span class="model-suggestion-tag" @onclick="() => SelectModel(m)">@m</span>
+                                    }
+                                </div>
+                            }
+                        </div>
+                        <div class="form-item">
+                            <label>请求地址</label>
+                            <input class="modal-input" @bind="@editModel.BaseUrl" placeholder="留空则使用默认地址" />
+                        </div>
+                        <div class="form-item required">
+                            <label>* API 密钥</label>
+                            <input class="modal-input" @bind="@editModel.ApiKey" placeholder="API密钥" />
+                            @if (currentApiKeyUrl != null)
+                            {
+                                <a href="@currentApiKeyUrl" target="_blank">获取 API 密钥</a>
+                            }
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="modal-btn-cancel" @onclick="CloseModelDialog">取消</button>
+                        <button class="modal-btn-primary" @onclick="SaveModel" disabled="@savingModel">
+                            @(isEditing ? "保存" : "添加")
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private bool loadingModels;
+    private bool savingModel;
+    private bool showModelDialog;
+    private bool isEditing;
+    private List<LLMDto> llmConfigs = new();
+
+    private ModelEditModel editModel = new();
+
+    private string toastMessage = string.Empty;
+    private string toastType = "info";
+    private bool toastVisible;
+
+    private void ShowToast(string message, string type = "info")
+    {
+        toastMessage = message;
+        toastType = type;
+        toastVisible = true;
+        StateHasChanged();
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(3000);
+            toastVisible = false;
+            await InvokeAsync(StateHasChanged);
+        });
+    }
+
+    private record MenuItemDef(string Key, string Label, string Icon, string Url);
+    private readonly List<MenuItemDef> menuItems = new()
+    {
+        new("general", "通用", "setting", "/assistant/settings"),
+        new("agent", "智能体", "robot", "/assistant/settings-agents"),
+        new("skill", "技能", "thunderbolt", "/assistant/settings-skills"),
+        new("model", "模型", "api", "/assistant/settings-llms"),
+        new("mcp", "MCP", "plug", "/assistant/settings-mcp")
+    };
+
+    private bool IsActive(string url)
+    {
+        var relativePath = Navigation.ToBaseRelativePath(Navigation.Uri).TrimEnd('/');
+        var targetPath = url.TrimStart('/').TrimEnd('/');
+        return string.Equals(relativePath, targetPath, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void GoBack() { Navigation.NavigateTo("/assistant/chat"); }
+
+    private record TypeDef(string Name, string DisplayName, List<string> Models);
+    private record ProviderDef(string ProviderName, string DisplayName, string DefaultEndpoint, string ApiKeyUrl, List<TypeDef> Types);
+
+    private readonly List<ProviderDef> providerDefs = new()
+    {
+        new("bailian", "阿里云百炼", "https://dashscope.aliyuncs.com/compatible-mode/v1",
+            "https://bailian.console.aliyun.com/cn-beijing/?tab=plan#/efm/subscription/token-plan",
+            new()
+            {
+                new("pay-as-you-go", "按量付费", new() { "qwen3.7-max", "qwen3.6-plus", "qwen3.6-flash", "glm-5.1", "kimi-k2.6", "deepseek-v4-pro", "deepseek-v4-flash" }),
+                new("token-plan", "TokenPlan", new() { "qwen3.7-max", "qwen3.6-plus", "glm-5.1", "kimi-k2.6", "deepseek-v4-pro", "deepseek-v4-flash" })
+            }),
+        new("deepseek", "DeepSeek", "https://api.deepseek.com",
+            "https://platform.deepseek.com/api_keys",
+            new()
+            {
+                new("pay-as-you-go", "按量付费", new() { "deepseek-v4-pro", "deepseek-v4-flash" })
+            })
+    };
+
+    private ProviderDef? currentProviderDef => providerDefs.FirstOrDefault(p => p.ProviderName == editModel.ProviderName);
+    private List<TypeDef> currentProviderTypes => currentProviderDef?.Types ?? new();
+    private List<string> currentModels
+    {
+        get
+        {
+            var typeDef = currentProviderDef?.Types.FirstOrDefault(t => t.Name == editModel.PlanType);
+            return typeDef?.Models ?? new();
+        }
+    }
+    private string? currentApiKeyUrl => currentProviderDef?.ApiKeyUrl;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadLLMConfigs();
+    }
+
+    private async Task LoadLLMConfigs()
+    {
+        loadingModels = true;
+        try { llmConfigs = await LLMConfigAppService.GetAllAsync(); }
+        catch (Exception ex) { ShowToast("加载模型配置失败: " + ex.Message, "error"); }
+        finally { loadingModels = false; }
+    }
+
+    private void OnProviderChanged(ChangeEventArgs e)
+    {
+        var providerName = e.Value?.ToString() ?? "";
+        var provider = providerDefs.FirstOrDefault(p => p.ProviderName == providerName);
+        if (provider != null)
+        {
+            editModel.ProviderName = provider.ProviderName;
+            editModel.ProviderDisplayName = provider.DisplayName;
+            editModel.BaseUrl = provider.DefaultEndpoint;
+            editModel.PlanType = provider.Types.FirstOrDefault()?.Name ?? "";
+            editModel.Model = "";
+        }
+    }
+
+    private void OnTypeChanged(ChangeEventArgs e)
+    {
+        editModel.PlanType = e.Value?.ToString() ?? "";
+        editModel.Model = "";
+    }
+
+    private void SelectModel(string model) { editModel.Model = model; }
+
+    private void ShowAddModel()
+    {
+        isEditing = false;
+        var firstProvider = providerDefs[0];
+        var firstType = firstProvider.Types[0];
+        editModel = new ModelEditModel
+        {
+            ProviderName = firstProvider.ProviderName,
+            ProviderDisplayName = firstProvider.DisplayName,
+            PlanType = firstType.Name,
+            ApiKey = "",
+            Model = "",
+            BaseUrl = firstProvider.DefaultEndpoint,
+            MaxTokens = 2000,
+            Temperature = 0.7f,
+            IsEnabled = true
+        };
+        showModelDialog = true;
+    }
+
+    private void EditModel(LLMDto config)
+    {
+        isEditing = true;
+        editModel = new ModelEditModel
+        {
+            Id = config.Id,
+            ProviderName = config.ProviderName,
+            ProviderDisplayName = config.ProviderDisplayName,
+            ApiKey = config.ApiKey,
+            ApiSecret = config.ApiSecret ?? "",
+            Model = config.Model,
+            BaseUrl = config.BaseUrl ?? "",
+            MaxTokens = config.MaxTokens,
+            Temperature = config.Temperature,
+            IsEnabled = config.IsEnabled
+        };
+        showModelDialog = true;
+    }
+
+    private void CloseModelDialog() { showModelDialog = false; }
+
+    private async Task SaveModel()
+    {
+        if (string.IsNullOrWhiteSpace(editModel.ProviderName)) { ShowToast("请选择提供商", "warning"); return; }
+        if (string.IsNullOrWhiteSpace(editModel.Model)) { ShowToast("请输入模型名称", "warning"); return; }
+        if (string.IsNullOrWhiteSpace(editModel.ApiKey)) { ShowToast("请输入 API 密钥", "warning"); return; }
+
+        savingModel = true;
+        try
+        {
+            if (isEditing && editModel.Id.HasValue)
+            {
+                await LLMConfigAppService.UpdateAsync(editModel.Id.Value, new UpdateLLMDto
+                {
+                    ProviderDisplayName = editModel.ProviderDisplayName,
+                    ApiKey = editModel.ApiKey,
+                    ApiSecret = string.IsNullOrEmpty(editModel.ApiSecret) ? null : editModel.ApiSecret,
+                    BaseUrl = string.IsNullOrEmpty(editModel.BaseUrl) ? null : editModel.BaseUrl,
+                    Model = editModel.Model,
+                    IsEnabled = editModel.IsEnabled,
+                    MaxTokens = editModel.MaxTokens,
+                    Temperature = editModel.Temperature
+                });
+                ShowToast("模型配置已更新", "success");
+            }
+            else
+            {
+                await LLMConfigAppService.CreateAsync(new CreateLLMDto
+                {
+                    ProviderName = editModel.ProviderName.Trim().ToLower(),
+                    ProviderDisplayName = editModel.ProviderDisplayName,
+                    ApiKey = editModel.ApiKey,
+                    ApiSecret = string.IsNullOrEmpty(editModel.ApiSecret) ? null : editModel.ApiSecret,
+                    BaseUrl = string.IsNullOrEmpty(editModel.BaseUrl) ? null : editModel.BaseUrl,
+                    Model = editModel.Model,
+                    IsEnabled = editModel.IsEnabled,
+                    MaxTokens = editModel.MaxTokens,
+                    Temperature = editModel.Temperature
+                });
+                ShowToast("模型配置已添加", "success");
+            }
+            showModelDialog = false;
+            await LoadLLMConfigs();
+        }
+        catch (Exception ex) { ShowToast("保存失败: " + ex.Message, "error"); }
+        finally { savingModel = false; }
+    }
+
+    private async Task DeleteModel(Guid id)
+    {
+        try
+        {
+            await LLMConfigAppService.DeleteAsync(id);
+            ShowToast("已删除", "success");
+            await LoadLLMConfigs();
+        }
+        catch (Exception ex) { ShowToast("删除失败: " + ex.Message, "error"); }
+    }
+
+    private async Task SetDefault(string providerName)
+    {
+        try
+        {
+            await LLMConfigAppService.SetDefaultAsync(providerName);
+            ShowToast($"{providerName} 已设为默认", "success");
+            await LoadLLMConfigs();
+        }
+        catch (Exception ex) { ShowToast("设置失败: " + ex.Message, "error"); }
+    }
+
+    private string MaskApiKey(string apiKey)
+    {
+        if (string.IsNullOrEmpty(apiKey)) return "(未设置)";
+        if (apiKey.Length <= 8) return "****";
+        return apiKey[..4] + "****" + apiKey[^4..];
+    }
+
+    private class ModelEditModel
+    {
+        public Guid? Id { get; set; }
+        public string ProviderName { get; set; } = "";
+        public string ProviderDisplayName { get; set; } = "";
+        public string PlanType { get; set; } = "";
+        public string ApiKey { get; set; } = "";
+        public string? ApiSecret { get; set; }
+        public string Model { get; set; } = "";
+        public string? BaseUrl { get; set; }
+        public int MaxTokens { get; set; } = 2000;
+        public float Temperature { get; set; } = 0.7f;
+        public bool IsEnabled { get; set; } = true;
+    }
+
+    private static MarkupString IconSvg(string name) => (MarkupString)GetIconSvg(name);
+
+    private static string GetIconSvg(string name) => name switch
+    {
+        "plus" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"12\" y1=\"5\" x2=\"12\" y2=\"19\"></line><line x1=\"5\" y1=\"12\" x2=\"19\" y2=\"12\"></line></svg>",
+        "setting" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"3\"></circle><path d=\"M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z\"></path></svg>",
+        "robot" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"11\" width=\"18\" height=\"10\" rx=\"2\"></rect><circle cx=\"12\" cy=\"5\" r=\"2\"></circle><path d=\"M12 7v4\"></path><line x1=\"8\" y1=\"16\" x2=\"8\" y2=\"16\"></line><line x1=\"16\" y1=\"16\" x2=\"16\" y2=\"16\"></line></svg>",
+        "thunderbolt" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polygon points=\"13 2 3 14 12 14 11 22 21 10 12 10 13 2\"></polygon></svg>",
+        "arrow-left" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"19\" y1=\"12\" x2=\"5\" y2=\"12\"></line><polyline points=\"12 19 5 12 12 5\"></polyline></svg>",
+        "sun" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"5\"></circle><line x1=\"12\" y1=\"1\" x2=\"12\" y2=\"3\"></line><line x1=\"12\" y1=\"21\" x2=\"12\" y2=\"23\"></line><line x1=\"4.22\" y1=\"4.22\" x2=\"5.64\" y2=\"5.64\"></line><line x1=\"18.36\" y1=\"18.36\" x2=\"19.78\" y2=\"19.78\"></line><line x1=\"1\" y1=\"12\" x2=\"3\" y2=\"12\"></line><line x1=\"21\" y1=\"12\" x2=\"23\" y2=\"12\"></line><line x1=\"4.22\" y1=\"19.78\" x2=\"5.64\" y2=\"18.36\"></line><line x1=\"18.36\" y1=\"5.64\" x2=\"19.78\" y2=\"4.22\"></line></svg>",
+        "moon" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z\"></path></svg>",
+        "close" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"18\" y1=\"6\" x2=\"6\" y2=\"18\"></line><line x1=\"6\" y1=\"6\" x2=\"18\" y2=\"18\"></line></svg>",
+        "inbox" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"22 12 16 12 14 15 10 15 8 12 2 12\"></polyline><path d=\"M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z\"></path></svg>",
+        "api" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"16 18 22 12 16 6\"></polyline><polyline points=\"8 6 2 12 8 18\"></polyline></svg>",
+        "plug" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V2\"></path><path d=\"M12 10v12\"></path><path d=\"M8 22h8\"></path><path d=\"M5 2h14\"></path></svg>",
+        _ => ""
+    };
+}
+
+<style>
+    /* ========== Settings Page ========== */
+    .settings-container {
+        display: flex;
+        height: 100%;
+        width: 100%;
+    }
+
+    .settings-sidebar {
+        width: 220px;
+        border-right: 1px solid #e8e8e8;
+        background: #fafafa;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .sidebar-header {
+        padding: 16px;
+        border-bottom: 1px solid #e8e8e8;
+    }
+
+    .sidebar-menu {
+        padding: 8px;
+        flex: 1;
+    }
+
+    .menu-item {
+        padding: 10px 16px;
+        cursor: pointer;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 14px;
+        margin-bottom: 4px;
+        transition: background-color 0.2s;
+    }
+
+    .menu-item:hover {
+        background-color: #f0f0f0;
+    }
+
+    .menu-item.active {
+        background-color: #d9d9d9;
+        font-weight: 500;
+    }
+
+    .settings-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 24px;
+        background: #fff;
+    }
+
+    .content-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #e8e8e8;
+    }
+
+    .content-header h2 {
+        margin: 0;
+        font-size: 20px;
+    }
+
+    .settings-form {
+        max-width: 600px;
+    }
+
+    .form-section {
+        margin-bottom: 32px;
+    }
+
+    .form-section h3 {
+        font-size: 16px;
+        margin-bottom: 16px;
+        color: #262626;
+    }
+
+    .form-item {
+        margin-bottom: 16px;
+    }
+
+    .form-item label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 14px;
+        color: #595959;
+        font-weight: 500;
+    }
+
+    .form-row {
+        display: flex;
+        gap: 16px;
+    }
+
+    .form-row .form-item {
+        flex: 1;
+    }
+
+    .theme-options {
+        display: flex;
+        gap: 8px;
+    }
+
+    .checkbox-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .checkbox-item label {
+        margin-bottom: 0;
+    }
+
+    /* ========== Model Cards ========== */
+    .model-list {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .model-card {
+        border: 1px solid #e8e8e8;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .model-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        background: #fafafa;
+        border-bottom: 1px solid #e8e8e8;
+    }
+
+    .model-name {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .model-actions {
+        display: flex;
+        gap: 4px;
+    }
+
+    .model-card-body {
+        padding: 12px 16px;
+    }
+
+    .model-info-row {
+        font-size: 13px;
+        color: #595959;
+        margin-bottom: 4px;
+    }
+
+    .info-label {
+        color: #8c8c8c;
+        margin-right: 4px;
+    }
+
+    /* ========== Tags ========== */
+    .tag {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        line-height: 1.5;
+    }
+
+    .tag-inline {
+        margin-left: 4px;
+    }
+
+    .tag-green {
+        background: #f6ffed;
+        color: #52c41a;
+        border: 1px solid #b7eb8f;
+    }
+
+    .tag-blue {
+        background: #e6f7ff;
+        color: #1890ff;
+        border: 1px solid #91d5ff;
+    }
+
+    .tag-default {
+        background: #fafafa;
+        color: #595959;
+        border: 1px solid #d9d9d9;
+    }
+
+    /* ========== Modal ========== */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.45);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+
+    .modal-dialog {
+        background: white;
+        border-radius: 8px;
+        width: 520px;
+        max-height: 80vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 24px;
+        border-bottom: 1px solid #e8e8e8;
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        font-size: 16px;
+    }
+
+    .modal-body {
+        padding: 24px;
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    .modal-footer {
+        padding: 16px 24px;
+        border-top: 1px solid #e8e8e8;
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+    }
+
+    .modal-close-btn {
+        padding: 4px;
+    }
+
+    .modal-close-btn:hover {
+        background: #f5f5f5;
+    }
+
+    /* ========== Assistant Settings List ========== */
+    .agent-settings-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .skill-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .modal-textarea {
+        min-height: 60px;
+        resize: vertical;
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        font-size: 12px;
+    }
+
+    .code-text {
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        font-size: 12px;
+        color: #666;
+    }
+
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        color: #333;
+    }
+
+    .checkbox-label input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        accent-color: #1677ff;
+        cursor: pointer;
+    }
+
+    /* ========== Add Model Dialog ========== */
+    .model-dialog {
+        width: 460px;
+    }
+
+    .model-dialog .modal-body {
+        padding: 20px 24px 12px;
+    }
+
+    .model-dialog .modal-body .form-item {
+        margin-bottom: 14px;
+    }
+
+    .model-dialog .modal-body .form-item label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 13px;
+        color: #333;
+        font-weight: 500;
+    }
+
+    .model-dialog .modal-body .form-item.required label::before {
+        content: "*";
+        color: #ff4d4f;
+        margin-right: 4px;
+    }
+
+    .modal-select {
+        width: 100%;
+        height: 36px;
+        padding: 4px 11px;
+        border: 1px solid #d9d9d9;
+        border-radius: 6px;
+        font-size: 14px;
+        color: #262626;
+        background: #fff;
+        outline: none;
+        transition: border-color 0.2s;
+        cursor: pointer;
+        appearance: auto;
+    }
+
+    .modal-select:focus {
+        border-color: #a6a6a6;
+        box-shadow: 0 0 0 2px rgba(166, 166, 166, 0.1);
+    }
+
+    .modal-input {
+        width: 100%;
+        height: 36px;
+        padding: 4px 11px;
+        border: 1px solid #d9d9d9;
+        border-radius: 6px;
+        font-size: 14px;
+        color: #262626;
+        background: #fff;
+        outline: none;
+        transition: border-color 0.2s;
+        box-sizing: border-box;
+    }
+
+    .modal-input:focus {
+        border-color: #a6a6a6;
+        box-shadow: 0 0 0 2px rgba(166, 166, 166, 0.1);
+    }
+
+    .modal-input::placeholder {
+        color: #bfbfbf;
+    }
+
+    .model-suggestions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 6px;
+    }
+
+    .model-suggestion-tag {
+        display: inline-block;
+        padding: 2px 10px;
+        border: 1px solid #d9d9d9;
+        border-radius: 4px;
+        font-size: 12px;
+        color: #595959;
+        cursor: pointer;
+        transition: all 0.2s;
+        background: #fafafa;
+    }
+
+    .model-suggestion-tag:hover {
+        color: #262626;
+        border-color: #595959;
+        background: #f0f0f0;
+    }
+
+    .model-dialog .modal-footer {
+        padding: 0 24px 20px;
+        border-top: none;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    .model-dialog .modal-btn-primary {
+        height: 36px;
+        padding: 4px 20px;
+        border: none;
+        border-radius: 6px;
+        background: #262626;
+        color: #fff;
+        font-size: 14px;
+        cursor: pointer;
+        transition: background 0.2s;
+        min-width: 80px;
+    }
+
+    .model-dialog .modal-btn-primary:hover:not(:disabled) {
+        background: #404040;
+    }
+
+    .model-dialog .modal-btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .model-dialog .modal-btn-cancel {
+        height: 36px;
+        padding: 4px 20px;
+        border: 1px solid #d9d9d9;
+        border-radius: 6px;
+        background: #fff;
+        color: #595959;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+        min-width: 80px;
+    }
+
+    .model-dialog .modal-btn-cancel:hover {
+        color: #262626;
+        border-color: #262626;
+    }
+
+    /* ========== Tab Header ========== */
+    .tab-header {
+        display: flex;
+        border-bottom: 1px solid #e8e8e8;
+        background: #fafafa;
+    }
+
+    .tab-header .tab-item {
+        flex: 1;
+        padding: 12px 8px;
+        text-align: center;
+        cursor: pointer;
+        font-size: 13px;
+        color: #8c8c8c;
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s;
+    }
+
+    .tab-header .tab-item:hover {
+        color: #595959;
+        background: #f0f0f0;
+    }
+
+    .tab-header .tab-item.active {
+        color: #595959;
+        font-weight: 500;
+        border-bottom-color: #595959;
+        background: #fff;
+    }
+
+    /* ========== Agent Management ========== */
+    .agent-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    /* ========== Tab Navigation ========== */
+    .tab-nav {
+        display: flex;
+        border-bottom: 2px solid #e8e8e8;
+        margin-bottom: 16px;
+    }
+
+    .tab-nav .tab-item {
+        padding: 10px 20px;
+        cursor: pointer;
+        font-size: 14px;
+        color: #595959;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -2px;
+        transition: all 0.2s;
+    }
+
+    .tab-nav .tab-item:hover {
+        color: #262626;
+    }
+
+    .tab-nav .tab-item.active {
+        color: #262626;
+        font-weight: 500;
+        border-bottom-color: #262626;
+    }
+
+    /* ========== Agent Dialog ========== */
+    .agent-dialog {
+        width: 600px;
+        max-width: 90vw;
+    }
+
+    /* ========== Skill Selection Area ========== */
+    .skill-search-box {
+        margin-bottom: 8px;
+    }
+
+    .skill-selection-area {
+        border: 1px solid #d9d9d9;
+        border-radius: 6px;
+        padding: 12px;
+        max-height: 280px;
+        overflow-y: auto;
+        background: #fafafa;
+    }
+
+    .skill-checkbox-item {
+        display: flex;
+        align-items: center;
+        padding: 8px;
+        margin-bottom: 4px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .skill-checkbox-item:hover {
+        background: #f0f0f0;
+    }
+
+    .skill-checkbox-item input[type="checkbox"] {
+        margin-right: 8px;
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+    }
+
+    .skill-checkbox-label {
+        flex: 1;
+        font-size: 14px;
+        cursor: pointer;
+    }
+
+    .skill-checkbox-type {
+        font-size: 12px;
+        color: #8c8c8c;
+        margin-left: 8px;
+    }
+
+    /* ========== Tool List ========== */
+    .tool-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 16px;
+    }
+</style>

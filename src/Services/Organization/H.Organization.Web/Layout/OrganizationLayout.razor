@@ -1,0 +1,18 @@
+﻿@namespace H.Organization.Web
+
+@inherits LayoutComponentBase
+
+<DefaultLayoutComponent 
+    AppName="组织管理" 
+    MenuItems="@MenuItems">
+    @Body
+</DefaultLayoutComponent>
+
+@code {
+    private static List<AppMenuItem> MenuItems => new()
+    {
+        new AppMenuItem { Name = "组织管理", Url = "/organization", Icon = "🏢" },
+        new AppMenuItem { Name = "成员管理", Url = "/organization/member", Icon = "👥" },
+        new AppMenuItem { Name = "角色管理", Url = "/organization/role", Icon = "🔑" }
+    };
+}

@@ -1,0 +1,206 @@
+@page "/designengine/myparts/component/designer/{LibraryId}/{PartsId}"
+@namespace H.LowCode.PartsDesignEngine
+@inherits LowCodePageComponentBase
+@layout PartsDesignEngineLayout
+
+@inject PartsDragDropStateService PartsDragDropStateService
+@inject IComponentPartsAppService ComponentPartsAppService
+
+<PageTitle>@($"{_partsCascading.PartsName} - 组件物料设计器")</PageTitle>
+
+@if (_loading)
+{
+    <div style="display: flex; justify-content: center; align-items: center; height: 100vh;">
+        <div class="loading-spinner">加载中...</div>
+    </div>
+}
+else
+{
+    <CascadingValue Value="@_partsCascading" Name="partsCascading">
+        <div class="designpage layout" style="padding:0 2px; background-color: #f7f7f7;">
+            <div class="layout-header" style="background-color: white; padding:0 20px; display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                    <a href="javascript:void(0)" @onclick="GoBack"> @("<") 返回 </a>
+                </div>
+                <div style="text-align: center;">
+                    <h3 style="margin: 0; line-height: 64px;">组件物料设计器</h3>
+                </div>
+                <div>
+                    <button class="btn" @onclick="PreviewComponent">预览</button>
+                    <button class="btn btn-primary" @onclick="SaveComponentPartsSchemaAsync" disabled="@_saving">保存</button>
+                </div>
+            </div>
+            <div class="layout-body">
+                <div class="layout-sider" style="min-width: 200px; flex: auto; max-width: max-content;">
+                    <ComponentPanel></ComponentPanel>
+                </div>
+                <div class="layout-main">
+                    <div class="designpage layout-content">
+                        <div class="tabs-section">
+                            <div class="tabs-section-header">可视化设计</div>
+                            <div class="tabs-section-body">
+                                <ComponentDesignPanel ComponentPartsSchema="_partsSchema"></ComponentDesignPanel>
+                            </div>
+                        </div>
+                        <div class="tabs-section">
+                            <div class="tabs-section-header">组件属性</div>
+                            <div class="tabs-section-body">
+                                @if (_partsSchema != null)
+                                {
+                                    <div style="padding: 16px; height: calc(100vh - 160px); overflow-y: auto;">
+                                        <ComponentPartsEditor ComponentParts="_partsSchema" 
+                                        ComponentPartsChanged="OnComponentPartsChanged"
+                                        OnSave="OnSaveFromEditor" 
+                                        OnCancel="OnCancelFromEditor" />
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="layout-sider designpage" style="flex: auto; max-width: max-content; min-width: 250px;">
+                    <PartsSettingPanel></PartsSettingPanel>
+                </div>
+            </div>
+        </div>
+    </CascadingValue>
+}
+
+@code
+{
+    [Parameter]
+    public string LibraryId { get; set; }
+
+    [Parameter]
+    public string PartsId { get; set; }
+
+    [PersistentState]
+    public ComponentPartsSchema _partsSchema { get; set; }
+
+    private PartsCascadingModel _partsCascading;
+
+    private bool _loading = true;
+    private bool _saving = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        _partsCascading = new() { LibraryId = LibraryId, PartsId = PartsId, PartsName = "..." };
+
+        await LoadPartsSchemaAsync();
+    }
+
+    private async Task LoadPartsSchemaAsync()
+    {
+        try
+        {
+            _loading = true;
+            StateHasChanged();
+
+            _partsSchema = await ComponentPartsAppService.GetByIdAsync(_partsCascading.LibraryId, _partsCascading.PartsId);
+            if (_partsSchema == null)
+            {
+                await Message.ErrorAsync("组件不存在！");
+                GoBack();
+                return;
+            }
+            
+            // 确保 Childrens 不为 null
+            if (_partsSchema.Childrens == null)
+            {
+                _partsSchema.Childrens = new List<ComponentPartsSchema>();
+            }
+            
+            _partsCascading.PartsName = _partsSchema.Name;
+        }
+        catch (Exception ex)
+        {
+            await Message.ErrorAsync($"加载组件失败: {ex.Message}");
+            GoBack();
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SaveComponentPartsSchemaAsync()
+    {
+        if (_partsSchema == null) return;
+
+        try
+        {
+            _saving = true;
+            StateHasChanged();
+
+            // 验证必填字段
+            if (string.IsNullOrWhiteSpace(_partsSchema.PartsId))
+            {
+                await Message.WarningAsync("请输入组件Id！");
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(_partsSchema.Name))
+            {
+                await Message.WarningAsync("请输入组件标识！");
+                return;
+            }
+
+            // 设置基本信息
+            _partsSchema.LibraryId = _partsCascading.LibraryId;
+            _partsSchema.PartsId = PartsId;
+            _partsSchema.ModifiedTime = DateTime.UtcNow;
+
+            // 保存组件
+            var success = await ComponentPartsAppService.SaveAsync(_partsSchema);
+            
+            if (success)
+            {
+                await Message.SuccessAsync("保存成功！");
+            }
+            else
+            {
+                await Message.ErrorAsync("保存失败！");
+            }
+        }
+        catch (Exception ex)
+        {
+            await Message.ErrorAsync($"保存失败: {ex.Message}");
+        }
+        finally
+        {
+            _saving = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnComponentPartsChanged(ComponentPartsSchema componentParts)
+    {
+        _partsSchema = componentParts;
+        await Task.CompletedTask;
+    }
+
+    private async Task OnSaveFromEditor(ComponentPartsSchema componentParts)
+    {
+        await SaveComponentPartsSchemaAsync();
+    }
+
+    private async Task OnCancelFromEditor()
+    {
+        GoBack();
+        await Task.CompletedTask;
+    }
+
+    private void GoBack()
+    {
+        NavigateTo($"/designengine/myparts?libIraryd={_partsCascading.LibraryId}");
+    }
+
+    private async Task PreviewComponent()
+    {
+        // TODO: 实现组件预览功能
+        await Message.InfoAsync("预览功能开发中...");
+    }
+}

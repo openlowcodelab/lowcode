@@ -1,0 +1,46 @@
+﻿@namespace H.LowCode.DesignEngine
+@inherits LowCodeComponentBase
+
+@if (DataSource != null)
+{
+    <div class="propertysetting-item">
+        <label>数据源类型：</label>
+        <div class="radio-group">
+            <label class="radio-label"><input type="radio" name="option-datasource-type" checked='@(DataSource.DataSourceType == ComponentDataSourceTypeEnum.Fiexd)' @onchange='() => DataSource.DataSourceType = ComponentDataSourceTypeEnum.Fiexd' /> 固定值</label>
+            <label class="radio-label"><input type="radio" name="option-datasource-type" checked='@(DataSource.DataSourceType == ComponentDataSourceTypeEnum.API)' @onchange='() => DataSource.DataSourceType = ComponentDataSourceTypeEnum.API' /> API</label>
+            <label class="radio-label"><input type="radio" name="option-datasource-type" checked='@(DataSource.DataSourceType == ComponentDataSourceTypeEnum.SQL)' @onchange='() => DataSource.DataSourceType = ComponentDataSourceTypeEnum.SQL' /> SQL</label>
+        </div>
+    </div>
+
+    if (DataSource.DataSourceType == ComponentDataSourceTypeEnum.Fiexd)
+    {
+        <FiexdForOptionDataSource @bind-DataSource="DataSource.FiexdOptionDataSource"></FiexdForOptionDataSource>
+    }
+    else if (DataSource.DataSourceType == ComponentDataSourceTypeEnum.API)
+    {
+        <APIDataSource @bind-DataSource="DataSource.APIOptionDataSource"></APIDataSource>
+    }
+    else if (DataSource.DataSourceType == ComponentDataSourceTypeEnum.SQL)
+    {
+        <SQLForOptionDataSource @bind-DataSource="DataSource.SQLOptionDataSource"></SQLForOptionDataSource>
+    }
+    else
+    {
+        <div class="propertysetting-item">
+            <label>不支持的选项数据源类型：</label>
+        </div>
+    }
+}
+
+@code {
+    [Parameter]
+    public ComponentPartsDataSourceSchema DataSource { get; set; }
+
+    [Parameter]
+    public EventCallback<ComponentPartsDataSourceSchema> DataSourceChanged { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+}

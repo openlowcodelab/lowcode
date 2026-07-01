@@ -1,0 +1,818 @@
+@page "/autotest/test-execution/{testCaseId}"
+@page "/autotest/test-execution/batch/{projectId}"
+
+@namespace H.AutoTest.Web
+@layout AutoTestLayout
+
+@implements IDisposable
+
+@inject IProjectCaseAppService ProjectCaseService
+@inject IEnvironmentAppService EnvironmentService
+@inject ITestExecutionEngineAppService ExecutionEngine
+@inject ITestExecutionEventNotifier ExecutionEventNotifier
+@inject IBatchExecutionAppService BatchExecutionService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+
+<PageTitle>@(IsBatchMode ? "批量执行测试用例" : "执行测试用例")</PageTitle>
+
+<div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
+    <div style="flex:1;">
+        <h3 style="margin:0;font-weight:600;">@(IsBatchMode ? "批量执行测试用例" : "执行测试用例")</h3>
+        <nav style="margin-top:4px;font-size:13px;color:#999;">
+            @if (IsBatchMode)
+            {
+                <a href="@($"/autotest/project-cases/{ProjectId}")" style="color:#1890ff;">测试用例</a>
+            }
+            else if (testCase != null && !string.IsNullOrEmpty(testCase.ProjectId))
+            {
+                <a href="@($"/autotest/project-cases/{testCase.ProjectId}")" style="color:#1890ff;">测试用例</a>
+            }
+            else
+            {
+                <a href="/autotest/project-cases" style="color:#1890ff;">测试用例</a>
+            }
+            <span> / </span>
+            <span>@(IsBatchMode ? "批量执行" : "执行测试")</span>
+        </nav>
+    </div>
+    <button class="h-btn" @onclick="GoBack">← 返回</button>
+</div>
+
+@if (loading)
+{
+    <div style="text-align:center;padding:60px 0;">
+        <div class="h-spin"><span class="h-spin-dot"></span><span class="h-spin-text">正在加载测试用例信息...</span></div>
+    </div>
+}
+else if (!IsBatchMode && testCase == null)
+{
+    <div class="h-alert h-alert-error">未找到指定的测试用例</div>
+}
+else if (IsBatchMode && !testCases.Any())
+{
+    <div class="h-alert h-alert-error">未找到可执行的测试用例</div>
+}
+else
+{
+    <div style="display:flex;gap:16px;">
+        <div style="flex:0 0 33.33%;">
+            <HCard Title="@(IsBatchMode ? "批量执行信息" : "测试用例信息")">
+                <ChildContent>
+                    @if (IsBatchMode)
+                    {
+                        <table class="h-descriptions">
+                            <tr><th>执行模式</th><td>批量执行</td></tr>
+                            <tr><th>用例数量</th><td>@testCases.Count</td></tr>
+                            <tr><th>总步骤数</th><td>@testCases.Sum(tc => tc.Steps.Count)</td></tr>
+                            <tr>
+                                <th>选中用例</th>
+                                <td>
+                                    @if (selectedTestCaseIds.Any())
+                                    {
+                                        <span class="h-tag h-tag-blue">@selectedTestCaseIds.Count 个用例</span>
+                                    }
+                                    else
+                                    {
+                                        <span style="color:#999;">请选择要执行的用例</span>
+                                    }
+                                </td>
+                            </tr>
+                        </table>
+
+                        <div style="margin-top:16px;">
+                            <div style="margin-bottom:8px;font-weight:500;">选择要执行的测试用例</div>
+                            <div style="margin-bottom:8px;">
+                                <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
+                                    <input type="checkbox" checked="@IsAllSelected"
+                                           indeterminate="@IsPartialSelected"
+                                           @onchange="@((ChangeEventArgs e) => ToggleSelectAll((bool)(e.Value ?? false)))" />
+                                    全选/全不选
+                                </label>
+                            </div>
+                            <div style="max-height:220px;overflow-y:auto;border:1px solid #f0f0f0;border-radius:4px;padding:8px;">
+                                @foreach (var tc in testCases)
+                                {
+                                    <div style="margin-bottom:4px;">
+                                        <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
+                                            <input type="checkbox" checked="@selectedTestCaseIds.Contains(tc.Id)"
+                                                   @onchange="@((ChangeEventArgs e) => ToggleTestCaseSelection(tc.Id, (bool)(e.Value ?? false)))" />
+                                            @tc.Name
+                                            <span style="color:#999;margin-left:4px;">(@tc.Steps.Count 步骤)</span>
+                                        </label>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <table class="h-descriptions">
+                            <tr><th>用例名称</th><td>@testCase!.Name</td></tr>
+                            <tr><th>描述</th><td>@(string.IsNullOrEmpty(testCase.Description) ? "无" : testCase.Description)</td></tr>
+                            <tr><th>步骤数量</th><td>@testCase.Steps.Count</td></tr>
+                            <tr>
+                                <th>测试级别</th>
+                                <td>
+                                    @if (testCase.Levels.Any())
+                                    {
+                                        @foreach (var level in testCase.Levels)
+                                        {
+                                            <span class="h-tag h-tag-@GetLevelTagClass(level)" style="margin-right:4px;">@level</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span style="color:#999;">无</span>
+                                    }
+                                </td>
+                            </tr>
+                        </table>
+                    }
+
+                    <div style="margin-top:16px;">
+                        <div style="margin-bottom:6px;">选择执行环境 <span style="color:#ff4d4f;">*</span></div>
+                        <select class="h-select" style="width:100%;" value="@selectedEnvironmentId"
+                                @onchange="@((ChangeEventArgs e) => { selectedEnvironmentId = e.Value?.ToString() ?? string.Empty; StateHasChanged(); })">
+                            <option value="">请选择环境</option>
+                            @foreach (var env in environments)
+                            {
+                                <option value="@env.Id">@env.Name (@env.Status)</option>
+                            }
+                        </select>
+                        @if (!string.IsNullOrEmpty(selectedEnvironmentId))
+                        {
+                            var selectedEnv = environments.FirstOrDefault(e => e.Id == selectedEnvironmentId);
+                            if (selectedEnv != null && !string.IsNullOrEmpty(selectedEnv.Description))
+                            {
+                                <div style="color:#999;font-size:12px;margin-top:4px;">@selectedEnv.Description</div>
+                            }
+                        }
+                    </div>
+
+                    <div style="margin-top:16px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                            <span style="font-weight:500;">⚡ 性能测试设置</span>
+                            <button class="h-btn h-btn-sm" @onclick="TogglePerformanceSettings">
+                                @(showPerformanceSettings ? "▲ 收起" : "▼ 展开")
+                            </button>
+                        </div>
+                        @if (showPerformanceSettings)
+                        {
+                            <div style="background:#fafafa;border:1px solid #f0f0f0;border-radius:4px;padding:12px;">
+                                <div style="margin-bottom:12px;">
+                                    <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
+                                        <input type="checkbox" @bind="performanceSettings.IsPerformanceTestEnabled" />
+                                        启用性能测试模式
+                                    </label>
+                                    <div style="color:#999;font-size:12px;margin-left:22px;">启用后将按照性能测试参数执行测试用例</div>
+                                </div>
+
+                                @if (performanceSettings.IsPerformanceTestEnabled)
+                                {
+                                    <div style="display:flex;flex-wrap:wrap;gap:12px;">
+                                        <div style="flex:0 0 calc(50% - 6px);">
+                                            <div style="margin-bottom:4px;">并发数 <span style="color:#ff4d4f;">*</span></div>
+                                            <input type="number" class="h-input" @bind="performanceSettings.ConcurrentUsers" min="1" max="1000" />
+                                            <div style="color:#999;font-size:12px;">1-1000，根据服务器性能设置</div>
+                                        </div>
+                                        <div style="flex:0 0 calc(50% - 6px);">
+                                            <div style="margin-bottom:4px;">运行时间（秒） <span style="color:#ff4d4f;">*</span></div>
+                                            <input type="number" class="h-input" @bind="performanceSettings.DurationSeconds" min="1" max="86400" />
+                                            <div style="color:#999;font-size:12px;">1-86400 秒（24 小时）</div>
+                                        </div>
+                                        <div style="flex:0 0 calc(50% - 6px);">
+                                            <div style="margin-bottom:4px;">爬坡时间（秒）</div>
+                                            <input type="number" class="h-input" @bind="performanceSettings.RampUpSeconds" min="0" max="3600" />
+                                            <div style="color:#999;font-size:12px;">0-3600，0 表示立即达到</div>
+                                        </div>
+                                        <div style="flex:0 0 calc(50% - 6px);">
+                                            <div style="margin-bottom:4px;">思考时间（毫秒）</div>
+                                            <input type="number" class="h-input" @bind="performanceSettings.ThinkTimeMs" min="0" max="60000" />
+                                            <div style="color:#999;font-size:12px;">0-60000 毫秒</div>
+                                        </div>
+                                        <div style="flex:0 0 calc(50% - 6px);">
+                                            <div style="margin-bottom:4px;">最大错误率（%）</div>
+                                            <input type="number" class="h-input" @bind="performanceSettings.MaxErrorRate" min="0" max="100" step="0.1" />
+                                            <div style="color:#999;font-size:12px;">0-100%，建议 5-20%</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="h-alert h-alert-info" style="margin-top:8px;">
+                                        <strong>📊 性能测试配置预览</strong>
+                                        <ul style="margin:6px 0 0 0;padding-left:20px;">
+                                            <li>并发用户数：@performanceSettings.ConcurrentUsers 个</li>
+                                            <li>测试时长：@performanceSettings.DurationSeconds 秒 (@TimeSpan.FromSeconds(performanceSettings.DurationSeconds).ToString(@"hh\:mm\:ss"))</li>
+                                            <li>爬坡时间：@performanceSettings.RampUpSeconds 秒</li>
+                                            <li>思考时间：@performanceSettings.ThinkTimeMs 毫秒</li>
+                                            <li>最大错误率：@performanceSettings.MaxErrorRate%</li>
+                                        </ul>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <div style="margin-top:20px;">
+                        <button class="h-btn" style="background-color:#52c41a;border-color:#52c41a;color:white;width:100%;"
+                                disabled="@(string.IsNullOrEmpty(selectedEnvironmentId) || isExecuting || (IsBatchMode && !selectedTestCaseIds.Any()))"
+                                @onclick="StartExecution">
+                            @if (isExecuting)
+                            {
+                                <span>执行中...</span>
+                            }
+                            else
+                            {
+                                <span>▶ @(IsBatchMode ? "开始批量执行" : "开始执行")</span>
+                            }
+                        </button>
+
+                        @if (isExecuting && cancellationTokenSource != null)
+                        {
+                            <button class="h-btn" style="border-color:#ff4d4f;color:#ff4d4f;width:100%;margin-top:8px;"
+                                    @onclick="CancelExecution">
+                                ✕ 取消执行
+                            </button>
+                        }
+                    </div>
+                </ChildContent>
+            </HCard>
+        </div>
+
+        <div style="flex:1;">
+            <HCard>
+                <TitleTemplate>
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <span>⚡ 执行进度</span>
+                        @{
+                            var firstRecord = executionRecords.FirstOrDefault();
+                        }
+                        @if (firstRecord != null)
+                        {
+                            <span class="h-tag h-tag-@GetExecutionStatusTagClass(firstRecord.Status)">
+                                @GetExecutionStatusDisplayName(firstRecord.Status)
+                            </span>
+                        }
+                    </div>
+                </TitleTemplate>
+                <Body>
+                    @if (!executionRecords.Any())
+                    {
+                        <div class="h-empty">@($"请选择环境{(IsBatchMode ? "和测试用例" : "")}并点击开始执行")</div>
+                    }
+                    else
+                    {
+                        @if (IsBatchMode)
+                        {
+                            <div style="display:flex;gap:16px;margin-bottom:16px;">
+                                <div style="flex:1;text-align:center;">
+                                    <div style="font-size:24px;color:#1890ff;font-weight:500;">@executionRecords.Count</div>
+                                    <div style="color:#999;font-size:12px;">总用例</div>
+                                </div>
+                                <div style="flex:1;text-align:center;">
+                                    <div style="font-size:24px;color:#52c41a;font-weight:500;">@executionRecords.Count(r => r.Status == ExecutionStatus.Success)</div>
+                                    <div style="color:#999;font-size:12px;">成功</div>
+                                </div>
+                                <div style="flex:1;text-align:center;">
+                                    <div style="font-size:24px;color:#ff4d4f;font-weight:500;">@executionRecords.Count(r => r.Status == ExecutionStatus.Failed)</div>
+                                    <div style="color:#999;font-size:12px;">失败</div>
+                                </div>
+                                <div style="flex:1;text-align:center;">
+                                    <div style="font-size:24px;color:#faad14;font-weight:500;">@executionRecords.Count(r => r.Status == ExecutionStatus.Running)</div>
+                                    <div style="color:#999;font-size:12px;">执行中</div>
+                                </div>
+                            </div>
+
+                            var completedCases = executionRecords.Count(r => r.Status != ExecutionStatus.Running);
+                            var totalCases = executionRecords.Count;
+                            var batchProgressPercentage = totalCases > 0 ? (int)((double)completedCases / totalCases * 100) : 0;
+                            <div style="margin-bottom:16px;">
+                                <div style="display:flex;justify-content:space-between;color:#999;font-size:12px;margin-bottom:4px;">
+                                    <span>批量执行进度</span>
+                                    <span>@completedCases / @totalCases</span>
+                                </div>
+                                <div style="background:#f0f0f0;border-radius:4px;height:8px;overflow:hidden;">
+                                    <div style="background:#667eea;height:100%;border-radius:4px;width:@(batchProgressPercentage)%;transition:width 0.3s;"></div>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            var executionRecord = executionRecords.FirstOrDefault();
+                            if (executionRecord != null)
+                            {
+                                <div style="display:flex;gap:16px;margin-bottom:16px;">
+                                    <div style="flex:1;text-align:center;">
+                                        <div style="font-size:24px;color:#1890ff;font-weight:500;">@executionRecord.TotalSteps</div>
+                                        <div style="color:#999;font-size:12px;">总步骤</div>
+                                    </div>
+                                    <div style="flex:1;text-align:center;">
+                                        <div style="font-size:24px;color:#52c41a;font-weight:500;">@executionRecord.SuccessSteps</div>
+                                        <div style="color:#999;font-size:12px;">成功</div>
+                                    </div>
+                                    <div style="flex:1;text-align:center;">
+                                        <div style="font-size:24px;color:#ff4d4f;font-weight:500;">@executionRecord.FailedSteps</div>
+                                        <div style="color:#999;font-size:12px;">失败</div>
+                                    </div>
+                                    <div style="flex:1;text-align:center;">
+                                        <div style="font-size:24px;color:#faad14;font-weight:500;">@executionRecord.SkippedSteps</div>
+                                        <div style="color:#999;font-size:12px;">跳过</div>
+                                    </div>
+                                </div>
+
+                                @if (executionRecord.TotalSteps > 0)
+                                {
+                                    var completedSteps = executionRecord.SuccessSteps + executionRecord.FailedSteps + executionRecord.SkippedSteps;
+                                    var progressPercentage = (int)((double)completedSteps / executionRecord.TotalSteps * 100);
+                                    <div style="margin-bottom:16px;">
+                                        <div style="display:flex;justify-content:space-between;color:#999;font-size:12px;margin-bottom:4px;">
+                                            <span>执行进度</span>
+                                            <span>@completedSteps / @executionRecord.TotalSteps</span>
+                                        </div>
+                                        <div style="background:#f0f0f0;border-radius:4px;height:8px;overflow:hidden;">
+                                            <div style="background:#667eea;height:100%;border-radius:4px;width:@(progressPercentage)%;transition:width 0.3s;"></div>
+                                        </div>
+                                    </div>
+                                }
+
+                                @if (executionRecord.Duration > 0)
+                                {
+                                    <div style="color:#999;margin-bottom:8px;">
+                                        执行时间: @(executionRecord.Duration)ms
+                                    </div>
+                                }
+
+                                @if (!string.IsNullOrEmpty(executionRecord.ErrorMessage))
+                                {
+                                    <div class="h-alert h-alert-error" style="margin-bottom:12px;">
+                                        <strong>执行失败</strong>
+                                        <div>@executionRecord.ErrorMessage</div>
+                                    </div>
+                                }
+                            }
+                        }
+
+                        @if (IsBatchMode)
+                        {
+                            <div style="margin-top:16px;">
+                                <h4 style="margin-bottom:12px;">用例执行详情</h4>
+                                @foreach (var record in executionRecords.OrderBy(r => r.TestCaseName))
+                                {
+                                    <details style="border:1px solid #f0f0f0;border-radius:4px;margin-bottom:8px;">
+                                        <summary style="padding:10px 12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;">
+                                            <div style="display:flex;align-items:center;gap:8px;">
+                                                <strong>@record.TestCaseName</strong>
+                                                <span class="h-tag h-tag-@GetExecutionStatusTagClass(record.Status)">
+                                                    @GetExecutionStatusDisplayName(record.Status)
+                                                </span>
+                                            </div>
+                                            <div style="color:#999;font-size:12px;text-align:right;">
+                                                <div>@record.SuccessSteps / @record.TotalSteps 步骤</div>
+                                                @if (record.Duration > 0)
+                                                {
+                                                    <div>@(record.Duration)ms</div>
+                                                }
+                                            </div>
+                                        </summary>
+                                        <div style="padding:0 12px 12px;">
+                                            @if (!string.IsNullOrEmpty(record.ErrorMessage))
+                                            {
+                                                <div class="h-alert h-alert-error" style="margin-bottom:12px;">
+                                                    <strong>执行失败</strong>
+                                                    <div>@record.ErrorMessage</div>
+                                                </div>
+                                            }
+                                            @if (record.StepRecords.Any())
+                                            {
+                                                @RenderStepList(record.StepRecords)
+                                            }
+                                        </div>
+                                    </details>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            var singleRecord = executionRecords.FirstOrDefault();
+                            if (singleRecord?.StepRecords.Any() == true)
+                            {
+                                <div style="margin-top:16px;">
+                                    <h4 style="margin-bottom:12px;">步骤执行详情</h4>
+                                    @RenderStepList(singleRecord.StepRecords)
+                                </div>
+                            }
+                        }
+                    }
+                </Body>
+            </HCard>
+        </div>
+    </div>
+}
+
+@code {
+    private RenderFragment RenderStepList(List<StepExecutionRecord> stepRecords) => __builder =>
+    {
+        <div style="border:1px solid #f0f0f0;border-radius:4px;">
+            @foreach (var stepRecord in stepRecords.OrderBy(s => s.Order))
+            {
+                <div style="padding:10px 12px;border-bottom:1px solid #f0f0f0;">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                        <div style="flex:1;">
+                            <div style="display:flex;align-items:center;margin-bottom:4px;gap:8px;">
+                                <span class="h-tag h-tag-@GetStepStatusTagClass(stepRecord.Status)">@stepRecord.Order</span>
+                                <strong>@stepRecord.StepName</strong>
+                                <span class="h-tag">@stepRecord.StepType</span>
+                            </div>
+                            @if (!string.IsNullOrEmpty(stepRecord.ErrorMessage))
+                            {
+                                <div style="color:#ff4d4f;font-size:12px;">@stepRecord.ErrorMessage</div>
+                            }
+                            @if (stepRecord.Logs.Any())
+                            {
+                                <details style="margin-top:6px;">
+                                    <summary style="color:#999;font-size:12px;cursor:pointer;">查看日志 (@stepRecord.Logs.Count 条)</summary>
+                                    <div style="margin-top:6px;background:#fafafa;padding:8px;border-radius:4px;">
+                                        @foreach (var log in stepRecord.Logs)
+                                        {
+                                            <div style="color:#666;font-size:12px;font-family:monospace;">@log</div>
+                                        }
+                                    </div>
+                                </details>
+                            }
+                        </div>
+                        <div style="text-align:right;">
+                            <span class="h-tag h-tag-@GetStepStatusTagClass(stepRecord.Status)">
+                                @GetStepStatusDisplayName(stepRecord.Status)
+                            </span>
+                            @if (stepRecord.Duration > 0)
+                            {
+                                <div style="color:#999;font-size:12px;margin-top:4px;">@(stepRecord.Duration)ms</div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    };
+
+    [Parameter] public string TestCaseId { get; set; } = string.Empty;
+    [Parameter] public string ProjectId { get; set; } = string.Empty;
+
+    private ProjectCaseDto? testCase;
+    private List<ProjectCaseDto> testCases = new();
+    private List<EnvironmentDto> environments = new();
+    private string selectedEnvironmentId = string.Empty;
+    private bool loading = true;
+    private bool isExecuting = false;
+    private List<ExecutionRecordDto> executionRecords = new();
+    private HashSet<string> selectedTestCaseIds = new();
+    private CancellationTokenSource? cancellationTokenSource;
+    private Dictionary<string, ExecutionRecordDto> currentExecutionRecords = new();
+
+    private PerformanceTestSettingsDto performanceSettings = new();
+    private bool showPerformanceSettings = false;
+
+    private bool IsBatchMode => !string.IsNullOrEmpty(ProjectId);
+
+    protected override async Task OnInitializedAsync()
+    {
+        ExecutionEventNotifier.StepUpdated += OnStepUpdated;
+        ExecutionEventNotifier.ExecutionUpdated += OnExecutionUpdated;
+
+        if (IsBatchMode)
+        {
+            var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+            var queryParameters = System.Web.HttpUtility.ParseQueryString(uri.Query);
+            var selectedIds = queryParameters["selectedIds"];
+
+            if (!string.IsNullOrEmpty(selectedIds))
+            {
+                selectedTestCaseIds = selectedIds.Split(',').ToHashSet();
+            }
+        }
+
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            loading = true;
+
+            if (IsBatchMode)
+            {
+                testCases = await ProjectCaseService.GetByProjectIdAsync(ProjectId);
+
+                if (testCases.Any())
+                {
+                    environments = await EnvironmentService.GetByProjectIdAsync(ProjectId);
+
+                    if (environments.Count > 0)
+                    {
+                        selectedEnvironmentId = environments[0].Id;
+                    }
+
+                    if (!selectedTestCaseIds.Any())
+                    {
+                        selectedTestCaseIds = testCases.Select(tc => tc.Id).ToHashSet();
+                    }
+                }
+            }
+            else
+            {
+                testCase = await ProjectCaseService.GetByIdAsync(TestCaseId);
+
+                if (testCase != null)
+                {
+                    environments = await EnvironmentService.GetByProjectIdAsync(testCase.ProjectId);
+
+                    if (environments.Count > 0)
+                    {
+                        selectedEnvironmentId = environments[0].Id;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"加载数据失败: {ex.Message}");
+        }
+        finally
+        {
+            loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task StartExecution()
+    {
+        if (string.IsNullOrEmpty(selectedEnvironmentId))
+            return;
+
+        if (IsBatchMode && !selectedTestCaseIds.Any())
+            return;
+
+        if (!IsBatchMode && testCase == null)
+            return;
+
+        try
+        {
+            isExecuting = true;
+            cancellationTokenSource = new CancellationTokenSource();
+            executionRecords.Clear();
+            currentExecutionRecords.Clear();
+
+            if (IsBatchMode)
+            {
+                var batchSettings = new BatchExecutionSettings
+                {
+                    SelectedTestCaseIds = selectedTestCaseIds.ToList(),
+                    PerformanceSettings = performanceSettings,
+                    IsParallelExecution = false,
+                    ContinueOnFailure = true
+                };
+
+                try
+                {
+                    var batchResult = await BatchExecutionService.ExecuteBatchAsync(
+                        batchSettings,
+                        selectedEnvironmentId,
+                        cancellationTokenSource.Token);
+
+                    executionRecords.AddRange(batchResult.ExecutionRecords);
+                    foreach (var record in batchResult.ExecutionRecords)
+                    {
+                        currentExecutionRecords[record.TestCaseId] = record;
+                    }
+
+                    StateHasChanged();
+
+                    var message = $"批量执行完成！\n" +
+                                  $"总用例数: {batchResult.TotalTestCases}\n" +
+                                  $"成功: {batchResult.SuccessfulTestCases}\n" +
+                                  $"失败: {batchResult.FailedTestCases}\n" +
+                                  $"执行时间: {batchResult.Duration:hh\\:mm\\:ss}";
+
+                    if (performanceSettings.IsPerformanceTestEnabled)
+                    {
+                        message += $"\n总执行次数: {batchResult.TotalExecutions}\n" +
+                                   $"成功率: {batchResult.SuccessRate:F2}%\n" +
+                                   $"错误率: {batchResult.ErrorRate:F2}%\n" +
+                                   $"平均执行时间: {batchResult.AverageExecutionTime.TotalMilliseconds:F0}ms";
+                    }
+
+                    await JSRuntime.InvokeVoidAsync("alert", message);
+                }
+                catch (Exception ex)
+                {
+                    await JSRuntime.InvokeVoidAsync("alert", $"批量执行失败: {ex.Message}");
+                }
+            }
+            else
+            {
+                var initialRecord = new ExecutionRecordDto
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    TestCaseId = testCase!.Id,
+                    TestCaseName = testCase.Name,
+                    Status = ExecutionStatus.Running,
+                    StartTime = DateTime.Now,
+                    TotalSteps = testCase.Steps.Count,
+                    SuccessSteps = 0,
+                    FailedSteps = 0,
+                    SkippedSteps = 0,
+                    StepRecords = new List<StepExecutionRecord>()
+                };
+
+                currentExecutionRecords[testCase.Id] = initialRecord;
+                executionRecords.Add(initialRecord);
+                StateHasChanged();
+
+                var record = await ExecutionEngine.ExecuteTestCaseAsync(
+                    testCase!,
+                    selectedEnvironmentId,
+                    cancellationTokenSource.Token);
+
+                var index = executionRecords.FindIndex(r => r.TestCaseId == testCase.Id);
+                if (index >= 0)
+                {
+                    executionRecords[index] = record;
+                }
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", $"执行失败: {ex.Message}");
+        }
+        finally
+        {
+            isExecuting = false;
+            StateHasChanged();
+        }
+    }
+
+    private void GoBack()
+    {
+        if (IsBatchMode)
+        {
+            if (!string.IsNullOrEmpty(ProjectId))
+            {
+                Navigation.NavigateTo($"/autotest/project-cases/{ProjectId}");
+            }
+            else
+            {
+                Navigation.NavigateTo("/autotest/project-cases");
+            }
+        }
+        else
+        {
+            if (testCase != null && !string.IsNullOrEmpty(testCase.ProjectId))
+            {
+                Navigation.NavigateTo($"/autotest/project-cases/{testCase.ProjectId}");
+            }
+            else
+            {
+                Navigation.NavigateTo("/autotest/project-cases");
+            }
+        }
+    }
+
+    private void CancelExecution()
+    {
+        cancellationTokenSource?.Cancel();
+    }
+
+    private void ToggleSelectAll(bool selected)
+    {
+        if (selected)
+        {
+            selectedTestCaseIds = testCases.Select(tc => tc.Id).ToHashSet();
+        }
+        else
+        {
+            selectedTestCaseIds.Clear();
+        }
+        StateHasChanged();
+    }
+
+    private void ToggleTestCaseSelection(string testCaseId, bool selected)
+    {
+        if (selected)
+        {
+            selectedTestCaseIds.Add(testCaseId);
+        }
+        else
+        {
+            selectedTestCaseIds.Remove(testCaseId);
+        }
+        StateHasChanged();
+    }
+
+    private void TogglePerformanceSettings()
+    {
+        showPerformanceSettings = !showPerformanceSettings;
+        StateHasChanged();
+    }
+
+    private bool IsAllSelected => testCases.Any() && selectedTestCaseIds.Count == testCases.Count;
+    private bool IsPartialSelected => selectedTestCaseIds.Any() && selectedTestCaseIds.Count < testCases.Count;
+
+    private string GetLevelTagClass(string level) => level switch
+    {
+        "P0" => "red",
+        "P1" => "orange",
+        "P2" => "blue",
+        "P3" => "default",
+        _ => "default"
+    };
+
+    private string GetExecutionStatusTagClass(ExecutionStatus status) => status switch
+    {
+        ExecutionStatus.Success => "green",
+        ExecutionStatus.Failed => "red",
+        ExecutionStatus.Running => "blue",
+        ExecutionStatus.Cancelled => "orange",
+        _ => "default"
+    };
+
+    private string GetExecutionStatusDisplayName(ExecutionStatus status) => status switch
+    {
+        ExecutionStatus.Success => "成功",
+        ExecutionStatus.Failed => "失败",
+        ExecutionStatus.Running => "执行中",
+        ExecutionStatus.Cancelled => "已取消",
+        _ => "未知"
+    };
+
+    private string GetStepStatusTagClass(StepExecutionStatus status) => status switch
+    {
+        StepExecutionStatus.Success => "green",
+        StepExecutionStatus.Failed => "red",
+        StepExecutionStatus.Running => "blue",
+        StepExecutionStatus.Skipped => "orange",
+        _ => "default"
+    };
+
+    private string GetStepStatusDisplayName(StepExecutionStatus status) => status switch
+    {
+        StepExecutionStatus.Success => "成功",
+        StepExecutionStatus.Failed => "失败",
+        StepExecutionStatus.Running => "执行中",
+        StepExecutionStatus.Skipped => "跳过",
+        _ => "未知"
+    };
+
+    private void OnStepUpdated(string testCaseId, StepExecutionRecord stepRecord)
+    {
+        InvokeAsync(() =>
+        {
+            if (currentExecutionRecords.TryGetValue(testCaseId, out var record))
+            {
+                var existingStep = record.StepRecords.FirstOrDefault(s => s.StepId == stepRecord.StepId);
+                if (existingStep != null)
+                {
+                    var index = record.StepRecords.IndexOf(existingStep);
+                    record.StepRecords[index] = stepRecord;
+                }
+                else
+                {
+                    record.StepRecords.Add(stepRecord);
+                }
+
+                StateHasChanged();
+            }
+        });
+    }
+
+    private void OnExecutionUpdated(string testCaseId, ExecutionRecordDto executionRecord)
+    {
+        InvokeAsync(() =>
+        {
+            currentExecutionRecords[testCaseId] = executionRecord;
+
+            var existingRecord = executionRecords.FirstOrDefault(r => r.TestCaseId == testCaseId);
+            if (existingRecord != null)
+            {
+                var index = executionRecords.IndexOf(existingRecord);
+                executionRecords[index] = executionRecord;
+            }
+            else
+            {
+                executionRecords.Add(executionRecord);
+            }
+
+            StateHasChanged();
+        });
+    }
+
+    public void Dispose()
+    {
+        ExecutionEventNotifier.StepUpdated -= OnStepUpdated;
+        ExecutionEventNotifier.ExecutionUpdated -= OnExecutionUpdated;
+
+        cancellationTokenSource?.Cancel();
+        cancellationTokenSource?.Dispose();
+    }
+}

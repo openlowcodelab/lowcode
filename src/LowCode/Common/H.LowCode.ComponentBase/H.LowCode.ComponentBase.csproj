@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+  <Import Project="..\..\..\common.props" />
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
+    <PackageReference Include="Microsoft.AspNetCore.WebUtilities" />
+    <PackageReference Include="Volo.Abp.AspNetCore.Components" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Utils\H.Util.Blazor\H.Util.Blazor.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Common\H.LowCode.MetaSchema\H.LowCode.MetaSchema.csproj" />
+    <ProjectReference Include="..\H.LowCode.Application.Contracts\H.LowCode.Application.Contracts.csproj" />
+  </ItemGroup>
+</Project>

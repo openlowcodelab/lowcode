@@ -1,0 +1,740 @@
+@namespace H.Assistant.Web
+@using Microsoft.AspNetCore.Components.Routing
+
+@layout AssistantLayout
+@inherits LayoutComponentBase
+@implements IDisposable
+@inject IChatMessageAppService ChatMessageAppService
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<div class="chat-app-container">
+    <div class="chat-page-layout">
+        <!-- Shared Sidebar -->
+        <div class="session-list-panel">
+            <div class="panel-header">
+                <div class="panel-header-actions">
+                    <button class="btn-icon" @onclick="OnClickCreateChat" title="新建会话">
+                        @IconSvg("plus")
+                    </button>
+                </div>
+            </div>
+
+            <!-- 定时任务菜单项 -->
+            <div class="scheduled-task-menu-item @(isTasksPage ? "active" : "")" @onclick="GoToScheduledTasks">
+                @IconSvg("clock")
+                <span>定时任务</span>
+            </div>
+
+            <!-- 会话标题 -->
+            <div class="section-title @((isTasksPage || isKnowledgePage) ? "clickable" : "")" @onclick="GoToChat">会话</div>
+
+            <div class="panel-content">
+                @if (chats.Any())
+                {
+                    @foreach (var chat in chats)
+                    {
+                        <div class="session-item @(selectedChatId == chat.Id ? "active" : "")"
+                             @onclick="() => SelectChat(chat.Id)">
+                            <div class="session-content-wrapper">
+                                <div class="session-info">
+                                    <div class="session-title">@chat.Title</div>
+                                    <div class="session-meta">
+                                        <span class="message-count">@chat.MessageCount msgs</span>
+                                        <span class="time">@chat.LastMessageTime.ToString("MM-dd HH:mm")</span>
+                                    </div>
+                                </div>
+                                <div class="session-actions" @onclick:stopPropagation="true">
+                                    <button class="session-more-btn" @onclick="() => ToggleChatMenu(chat.Id)" title="更多操作">
+                                        @IconSvg("more")
+                                    </button>
+                                    @if (showSessionMenu == chat.Id)
+                                    {
+                                        <div class="session-dropdown-menu">
+                                            <div class="dropdown-item danger" @onclick="() => DeleteChat(chat.Id)">
+                                                @IconSvg("delete") <span>删除</span>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="empty-state"><div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path></svg></div><div class="empty-text">暂无会话</div></div>
+                }
+            </div>
+
+            <!-- 知识中心菜单项 -->
+            <div class="knowledge-menu-item @(isKnowledgePage ? "active" : "")" @onclick="GoToKnowledge">
+                @IconSvg("book")
+                <span>知识中心</span>
+            </div>
+
+            <div class="user-menu-area">
+                <div class="user-menu-trigger">
+                    <div class="user-avatar-small">@IconSvg("user")</div>
+                    <span class="user-name">未登录</span>
+                    <div class="user-menu-icon" @onclick="ToggleUserMenu">@IconSvg("setting")</div>
+                    @if (showUserMenu)
+                    {
+                        <div class="user-dropdown-menu">
+                            <div class="dropdown-item" @onclick:stopPropagation="true" @onclick="GoToSettings">
+                                @IconSvg("setting") <span>设置</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel - Page Content -->
+        @Body
+    </div>
+</div>
+
+@code {
+    private bool isTasksPage;
+    private bool isKnowledgePage;
+    private List<ChatDto> chats = new();
+    private Guid? selectedChatId;
+    private bool showUserMenu;
+    private Guid? showSessionMenu;
+    private bool _loaded;
+    private DotNetObjectReference<ChatLayout>? _dotNetRef;
+
+    protected override void OnInitialized()
+    {
+        isTasksPage = Navigation.Uri.Contains("/assistant/tasks");
+        isKnowledgePage = Navigation.Uri.Contains("/assistant/knowledge");
+        Navigation.LocationChanged += OnLocationChanged;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Initial data load (works during SSR and WASM)
+        await LoadSessions();
+        UpdateSelectedChatFromUri();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _dotNetRef = DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync("ChatStateBus.register", "chatLayout", _dotNetRef);
+
+            // If SSR data load failed (chats empty), try restoring from JS cache
+            // This handles component recreation during page navigation
+            if (chats.Count == 0)
+            {
+                var cachedJson = await JS.InvokeAsync<string>("ChatStateBus.getCachedSessions");
+                if (!string.IsNullOrEmpty(cachedJson))
+                {
+                    try
+                    {
+                        var cached = JsonSerializer.Deserialize<List<ChatDto>>(cachedJson);
+                        if (cached != null && cached.Count > 0)
+                        {
+                            chats = cached;
+                            UpdateSelectedChatFromUri();
+                            _loaded = true;
+                            StateHasChanged();
+                        }
+                    }
+                    catch { }
+                }
+
+                // If still empty, load from server (WASM-only path)
+                if (!_loaded && chats.Count == 0)
+                {
+                    await LoadSessions();
+                    UpdateSelectedChatFromUri();
+                    _loaded = true;
+                    StateHasChanged();
+                }
+            }
+        }
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        isTasksPage = e.Location.Contains("/assistant/tasks");
+        isKnowledgePage = e.Location.Contains("/assistant/knowledge");
+
+        if (!isTasksPage && !isKnowledgePage)
+        {
+            UpdateSelectedChatFromUri();
+        }
+
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void UpdateSelectedChatFromUri()
+    {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        var idStr = query["id"];
+        if (!string.IsNullOrEmpty(idStr) && Guid.TryParse(idStr, out var id))
+        {
+            selectedChatId = id;
+        }
+    }
+
+    private void OnClickCreateChat()
+    {
+        selectedChatId = null;
+        Navigation.NavigateTo("/assistant");
+    }
+
+    private void SelectChat(Guid chatId)
+    {
+        selectedChatId = chatId;
+        Navigation.NavigateTo($"/assistant/chat?id={chatId}");
+    }
+
+    private void GoToChat()
+    {
+        if (isTasksPage || isKnowledgePage)
+        {
+            Navigation.NavigateTo("/assistant");
+        }
+    }
+
+    private void GoToScheduledTasks()
+    {
+        if (!isTasksPage)
+        {
+            Navigation.NavigateTo("/assistant/tasks");
+        }
+    }
+
+    private void GoToKnowledge()
+    {
+        if (!isKnowledgePage)
+        {
+            Navigation.NavigateTo("/assistant/knowledge");
+        }
+    }
+
+    private async Task DeleteChat(Guid sessionId)
+    {
+        var wasSelected = selectedChatId == sessionId;
+        try
+        {
+            await ChatMessageAppService.DeleteSessionAsync(sessionId);
+            showSessionMenu = null;
+            await LoadSessions();
+            await ShowToast("会话已删除", "success");
+        }
+        catch (Exception ex)
+        {
+            await ShowToast($"删除失败: {ex.Message}", "error");
+        }
+
+        if (wasSelected)
+        {
+            selectedChatId = null;
+            Navigation.NavigateTo("/assistant");
+        }
+    }
+
+    private void GoToSettings() { CloseMenus(); Navigation.NavigateTo("/assistant/settings"); }
+
+    // Menu helpers
+    private void ToggleUserMenu() { showUserMenu = !showUserMenu; }
+    private void ToggleChatMenu(Guid sessionId) { showSessionMenu = showSessionMenu == sessionId ? null : sessionId; }
+    private void CloseMenus() { showUserMenu = false; showSessionMenu = null; }
+
+    // Session loading
+    private async Task LoadSessions()
+    {
+        try
+        {
+            var result = await ChatMessageAppService.GetSessionsAsync(new SessionQueryDto { MaxResultCount = 50, SkipCount = 0 });
+            chats = result.Items.ToList();
+        }
+        catch (Exception ex)
+        {
+            await ShowToast($"加载会话失败: {ex.Message}", "error");
+        }
+
+        // Cache in JS separately (fails gracefully during SSR when JS is unavailable)
+        try
+        {
+            _ = JS.InvokeVoidAsync("ChatStateBus.setCachedSessions", JsonSerializer.Serialize(chats));
+        }
+        catch { }
+    }
+
+    // Toast helper
+    private async Task ShowToast(string message, string type = "info")
+    {
+        try { await JS.InvokeVoidAsync("ChatStateBus.showToast", message, type); }
+        catch { }
+    }
+
+    // JSInvokable methods - called from JS event bus
+    [JSInvokable]
+    public async Task RefreshSessions()
+    {
+        await LoadSessions();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    [JSInvokable]
+    public void InsertSessionAtTop(string sessionJson)
+    {
+        try
+        {
+            var chat = JsonSerializer.Deserialize<ChatDto>(sessionJson);
+            if (chat != null)
+            {
+                chats.Insert(0, chat);
+                StateHasChanged();
+            }
+        }
+        catch { }
+    }
+
+    [JSInvokable]
+    public void OnChatSelected(string guidStr)
+    {
+        if (Guid.TryParse(guidStr, out var id))
+        {
+            selectedChatId = id;
+            StateHasChanged();
+        }
+    }
+
+    public async void Dispose()
+    {
+        Navigation.LocationChanged -= OnLocationChanged;
+        try { await JS.InvokeVoidAsync("ChatStateBus.unregister", "chatLayout"); } catch { }
+        _dotNetRef?.Dispose();
+    }
+
+    private static MarkupString IconSvg(string name) => (MarkupString)GetIconSvg(name);
+    private static string GetIconSvg(string name) => name switch
+    {
+        "plus" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"12\" y1=\"5\" x2=\"12\" y2=\"19\"></line><line x1=\"5\" y1=\"12\" x2=\"19\" y2=\"12\"></line></svg>",
+        "user" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2\"></path><circle cx=\"12\" cy=\"7\" r=\"4\"></circle></svg>",
+        "setting" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"3\"></circle><path d=\"M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z\"></path></svg>",
+        "delete" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"3 6 5 6 21 6\"></polyline><path d=\"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3-3h8l1 1h-10l1-1z\"></path><line x1=\"10\" y1=\"11\" x2=\"10\" y2=\"17\"></line><line x1=\"14\" y1=\"11\" x2=\"14\" y2=\"17\"></line></svg>",
+        "inbox" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"22 12 16 12 14 15 10 15 8 12 2 12\"></polyline><path d=\"M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z\"></path></svg>",
+        "more" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"1\"></circle><circle cx=\"12\" cy=\"5\" r=\"1\"></circle><circle cx=\"12\" cy=\"19\" r=\"1\"></circle></svg>",
+        "clock" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"></circle><polyline points=\"12 6 12 12 16 14\"></polyline></svg>",
+        "book" => "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\" width=\"16\" height=\"16\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z\"></path><path d=\"M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z\"></path></svg>",
+        _ => ""
+    };
+}
+
+<style>
+    /* ========== Chat App Container ========== */
+    .chat-app-container {
+        flex: 1;
+        display: flex;
+        overflow: hidden;
+    }
+
+    .chat-page-layout {
+        display: flex;
+        width: 100%;
+        height: 100%;
+    }
+
+    /* ========== Buttons (shared across sidebar) ========== */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 6px 16px;
+        font-size: 14px;
+        line-height: 1.5;
+        border: 1px solid #d9d9d9;
+        border-radius: 6px;
+        background: #fafafa;
+        color: #595959;
+        cursor: pointer;
+        transition: all 0.2s;
+        outline: none;
+        font-family: inherit;
+        white-space: nowrap;
+    }
+
+    .btn:hover:not(:disabled) {
+        color: #262626;
+        border-color: #595959;
+    }
+
+    .btn:disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
+    }
+
+    .btn:active:not(:disabled) {
+        opacity: 0.8;
+    }
+
+    .btn-primary {
+        color: #fff;
+        background: #595959;
+        border-color: #595959;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+        background: #404040;
+        border-color: #404040;
+        color: #fff;
+    }
+
+    .btn-danger {
+        color: #ff4d4f;
+    }
+
+    .btn-danger:hover:not(:disabled) {
+        color: #ff4d4f;
+        background: #fff1f0;
+        border-color: transparent;
+    }
+
+    .btn-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border: 1px solid #d9d9d9;
+        border-radius: 6px;
+        background: #fff;
+        color: #595959;
+        cursor: pointer;
+        transition: all 0.2s;
+        outline: none;
+        padding: 0;
+    }
+
+    .btn-icon:hover {
+        background: #f0f0f0;
+        border-color: #bfbfbf;
+    }
+
+    /* ========== SVG Icons ========== */
+    .btn svg,
+    .btn-icon svg,
+    .session-item svg,
+    .user-avatar-small svg,
+    .user-menu-icon svg,
+    .dropdown-item svg,
+    .scheduled-task-menu-item svg,
+    .knowledge-menu-item svg {
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+    }
+
+    /* ========== Session List Panel ========== */
+    .session-list-panel {
+        width: 280px;
+        border-right: 1px solid #e8e8e8;
+        display: flex;
+        flex-direction: column;
+        background: #fafafa;
+    }
+
+    .panel-header {
+        padding: 16px;
+        border-bottom: 1px solid #e8e8e8;
+    }
+
+    .panel-header-actions {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+    }
+
+    .panel-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 8px;
+    }
+
+    /* ========== Session Item ========== */
+    .session-item {
+        padding: 12px;
+        cursor: pointer;
+        border-radius: 4px;
+        margin-bottom: 4px;
+        transition: background-color 0.2s;
+    }
+
+    .session-item:hover {
+        background-color: #f0f0f0;
+    }
+
+    .session-item.active {
+        background-color: #f2f2f2;
+    }
+
+    .session-content-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .session-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .session-title {
+        font-weight: 500;
+        margin-bottom: 4px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .session-meta {
+        font-size: 12px;
+        color: #8c8c8c;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .session-actions {
+        position: relative;
+        flex-shrink: 0;
+    }
+
+    .session-more-btn {
+        padding: 4px;
+        border: none;
+        background: transparent;
+        border-radius: 4px;
+        cursor: pointer;
+        opacity: 0;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #8c8c8c;
+    }
+
+    .session-more-btn svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .session-item:hover .session-more-btn {
+        opacity: 1;
+    }
+
+    .session-more-btn:hover {
+        background-color: #d9d9d9;
+        color: #262626;
+    }
+
+    .session-dropdown-menu {
+        position: absolute;
+        right: 0;
+        top: 100%;
+        background: white;
+        border: 1px solid #e8e8e8;
+        border-radius: 6px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        z-index: 1000;
+        min-width: 120px;
+        overflow: hidden;
+        margin-top: 4px;
+    }
+
+    .session-dropdown-menu .dropdown-item {
+        padding: 8px 12px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        transition: background-color 0.2s;
+        color: #595959;
+    }
+
+    .session-dropdown-menu .dropdown-item:hover {
+        background-color: #f5f5f5;
+    }
+
+    .session-dropdown-menu .dropdown-item.danger {
+        color: #ff4d4f;
+    }
+
+    .session-dropdown-menu .dropdown-item.danger:hover {
+        background-color: #fff1f0;
+    }
+
+    .session-dropdown-menu .dropdown-item svg {
+        width: 14px;
+        height: 14px;
+    }
+
+    /* ========== Scheduled Task Menu Item ========== */
+    .scheduled-task-menu-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        color: #595959;
+        font-size: 14px;
+    }
+
+    .scheduled-task-menu-item:hover {
+        background-color: #f0f0f0;
+        color: #262626;
+    }
+
+    .scheduled-task-menu-item.active {
+        background-color: #e6f7ff;
+        color: #1890ff;
+    }
+
+    /* ========== Knowledge Menu Item ========== */
+    .knowledge-menu-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        color: #595959;
+        font-size: 14px;
+    }
+
+    .knowledge-menu-item:hover {
+        background-color: #f0f0f0;
+        color: #262626;
+    }
+
+    .knowledge-menu-item.active {
+        background-color: #e6f7ff;
+        color: #1890ff;
+    }
+
+    /* ========== Section Title ========== */
+    .section-title {
+        padding: 8px 16px;
+        font-size: 12px;
+        font-weight: 500;
+        color: #8c8c8c;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .section-title.clickable {
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .section-title.clickable:hover {
+        color: #1890ff;
+        background-color: #f0f0f0;
+    }
+
+    /* ========== User Menu ========== */
+    .user-menu-area {
+        border-top: 1px solid #e8e8e8;
+        padding: 8px 12px;
+        background: #fafafa;
+    }
+
+    .user-menu-trigger {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 8px;
+        border-radius: 6px;
+        position: relative;
+    }
+
+    .user-avatar-small {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background-color: #bfbfbf;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 14px;
+    }
+
+    .user-menu-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+
+    .user-menu-icon:hover {
+        background-color: #d9d9d9;
+    }
+
+    .user-name {
+        flex: 1;
+        font-size: 14px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .user-dropdown-menu {
+        position: absolute;
+        bottom: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #e8e8e8;
+        border-radius: 6px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        z-index: 1000;
+        margin-bottom: 4px;
+        overflow: hidden;
+    }
+
+    .dropdown-item {
+        padding: 10px 16px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        transition: background-color 0.2s;
+    }
+
+    .dropdown-item:hover {
+        background-color: #f5f5f5;
+    }
+
+    .dropdown-item.danger {
+        color: #ff4d4f;
+    }
+
+    .dropdown-item.danger:hover {
+        background-color: #fff1f0;
+    }
+
+    .dropdown-divider {
+        height: 1px;
+        background: #e8e8e8;
+        margin: 4px 0;
+    }
+</style>

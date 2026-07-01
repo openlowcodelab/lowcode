@@ -1,0 +1,254 @@
+@namespace H.LowCode.DesignEngine
+@inherits LowCodeComponentBase
+@using H.LowCode.MetaSchema
+@using H.LowCode.MetaSchema.DesignEngine
+
+<div style="height:100%; overflow-y:auto">
+    @if (Component != null)
+    {
+        @* 基础属性 *@
+        <BasicPropertyItem Component="@Component"></BasicPropertyItem>
+
+        @* 数据源属性 *@
+        <DataSourcePropertyItem Component="@Component"></DataSourcePropertyItem>
+
+        @*扩展属性*@
+        <ExtensionPropertyItem Component="@Component"></ExtensionPropertyItem>
+
+        @*校验属性*@
+        <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:30px 0 10px;">
+            校验设置
+        </div>
+        
+        <div class="propertysetting-item">
+            <label>启用校验：</label>
+            <label class="switch"><input type="checkbox" @bind="@_isValidationEnabled" @bind:after="() => OnValidationEnabledChange(_isValidationEnabled)" /></label>
+        </div>
+
+        @if (_isValidationEnabled)
+        {
+            <div style="border-left: 5px solid #1890ff; padding: 0 0 0 8px; margin: 20px 0 10px;">
+                校验规则
+            </div>
+
+            @if (Component.ValidationRules != null && Component.ValidationRules.Any())
+            {
+                @for (int i = 0; i < Component.ValidationRules.Count; i++)
+                {
+                    var index = i;
+                    var rule = Component.ValidationRules[index];
+                    
+                    <div class="card card-small" style="margin-bottom: 10px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span>规则 @(index + 1)</span>
+                                <div>
+                                    <label class="switch"><input type="checkbox" @bind="@rule.IsEnabled" @bind:after="OnRuleChange" /></label>
+                                    <button class="btn btn-text btn-danger btn-sm" @onclick="() => RemoveRule(index)">删除</button>
+                                </div>
+                            </div>
+                            <div class="propertysetting-item">
+                                <label>校验类型：</label>
+                                <select class="sel" @bind="@rule.RuleType" @bind:after="OnRuleChange">
+                                    <option value="@ValidationRuleTypeEnum.Required">必填</option>
+                                    <option value="@ValidationRuleTypeEnum.MinLength">最小长度</option>
+                                    <option value="@ValidationRuleTypeEnum.MaxLength">最大长度</option>
+                                    <option value="@ValidationRuleTypeEnum.MinValue">最小值</option>
+                                    <option value="@ValidationRuleTypeEnum.MaxValue">最大值</option>
+                                    <option value="@ValidationRuleTypeEnum.Pattern">正则表达式</option>
+                                    <option value="@ValidationRuleTypeEnum.Email">邮箱格式</option>
+                                    <option value="@ValidationRuleTypeEnum.Phone">手机号格式</option>
+                                    <option value="@ValidationRuleTypeEnum.Url">URL格式</option>
+                                    <option value="@ValidationRuleTypeEnum.Custom">自定义</option>
+                                </select>
+                            </div>
+
+                            @if (rule.RuleType == ValidationRuleTypeEnum.MinLength)
+                            {
+                                <div class="propertysetting-item">
+                                    <label>最小长度：</label>
+                                    <input type="number" class="inp" @bind="@rule.MinLength" Min="0" @bind:after="OnRuleChange" />
+                                </div>
+                            }
+
+                            @if (rule.RuleType == ValidationRuleTypeEnum.MaxLength)
+                            {
+                                <div class="propertysetting-item">
+                                    <label>最大长度：</label>
+                                    <input type="number" class="inp" @bind="@rule.MaxLength" Min="1" @bind:after="OnRuleChange" />
+                                </div>
+                            }
+
+                            @if (rule.RuleType == ValidationRuleTypeEnum.MinValue)
+                            {
+                                <div class="propertysetting-item">
+                                    <label>最小值：</label>
+                                    <input type="number" class="inp" @bind="@rule.MinValue" @bind:after="OnRuleChange" />
+                                </div>
+                            }
+
+                            @if (rule.RuleType == ValidationRuleTypeEnum.MaxValue)
+                            {
+                                <div class="propertysetting-item">
+                                    <label>最大值：</label>
+                                    <input type="number" class="inp" @bind="@rule.MaxValue" @bind:after="OnRuleChange" />
+                                </div>
+                            }
+
+                            @if (rule.RuleType == ValidationRuleTypeEnum.Pattern || rule.RuleType == ValidationRuleTypeEnum.Custom)
+                            {
+                                <div class="propertysetting-item">
+                                    <label>@(rule.RuleType == ValidationRuleTypeEnum.Pattern ? "正则表达式" : "自定义表达式")：</label>
+                                    <input class="inp" @bind="@rule.Pattern" @bind:after="OnRuleChange" />
+                                </div>
+                            }
+
+                            <div class="propertysetting-item">
+                                <label>错误消息：</label>
+                                <input class="inp" @bind="@rule.ErrorMessage" @bind:after="OnRuleChange" 
+                                       placeholder="@GetDefaultErrorMessage(rule.RuleType)" />
+                            </div>
+
+                            <div class="propertysetting-item">
+                                <label>触发时机：</label>
+                                <div class="radio-group">
+                                    <label class="radio-label"><input type="radio" name='trigger_@index' value="@ValidationTriggerEnum.Change" checked="@(rule.Trigger == ValidationTriggerEnum.Change)" @onchange='() => { rule.Trigger = ValidationTriggerEnum.Change; OnRuleChange(); }' /> 输入时</label>
+                                    <label class="radio-label"><input type="radio" name='trigger_@index' value="@ValidationTriggerEnum.Blur" checked="@(rule.Trigger == ValidationTriggerEnum.Blur)" @onchange='() => { rule.Trigger = ValidationTriggerEnum.Blur; OnRuleChange(); }' /> 失去焦点时</label>
+                                </div>
+                            </div>
+
+                            <div class="propertysetting-item">
+                                <label>优先级：</label>
+                                <input type="number" class="inp" @bind="@rule.Order" Min="1" @bind:after="OnRuleChange" />
+                            </div>
+                        </div>
+                }
+            }
+
+            <button class="btn btn-dashed" @onclick="AddRule">
+                添加校验规则
+            </button>
+        }
+
+        @*事件属性*@
+        @if (Component.SupportEvents != null && Component.SupportEvents.Any())
+        {
+            <EventPropertyItem Component="@Component"></EventPropertyItem>
+        }
+    }
+</div>
+
+@code {
+    [Parameter]
+    public ComponentPartsSchema Component { get; set; }
+
+    private bool _isValidationEnabled;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        InitializeValidationState();
+    }
+
+    protected override void OnParametersSet()
+    {
+        InitializeValidationState();
+    }
+
+    private void InitializeValidationState()
+    {
+        if (Component?.ValidationRules != null && Component.ValidationRules.Any())
+        {
+            _isValidationEnabled = true;
+        }
+        else
+        {
+            _isValidationEnabled = false;
+        }
+    }
+
+    private void OnValidationEnabledChange(bool enabled)
+    {
+        _isValidationEnabled = enabled;
+        
+        if (enabled)
+        {
+            if (Component.ValidationRules == null || !Component.ValidationRules.Any())
+            {
+                Component.ValidationRules = new List<ValidationRuleSchema>();
+                AddRule();
+            }
+        }
+        else
+        {
+            Component.ValidationRules?.Clear();
+        }
+        
+        OnPropertyChange();
+    }
+
+    private void AddRule()
+    {
+        if (Component.ValidationRules == null)
+        {
+            Component.ValidationRules = new List<ValidationRuleSchema>();
+        }
+
+        var newRule = new ValidationRuleSchema
+        {
+            Id = Guid.NewGuid().ToString(),
+            ComponentId = Component.Id,
+            RuleType = ValidationRuleTypeEnum.Required,
+            IsEnabled = true,
+            Trigger = ValidationTriggerEnum.Blur,
+            Order = Component.ValidationRules.Count + 1
+        };
+
+        Component.ValidationRules.Add(newRule);
+        OnPropertyChange();
+    }
+
+    private void RemoveRule(int index)
+    {
+        if (Component.ValidationRules != null && index >= 0 && index < Component.ValidationRules.Count)
+        {
+            Component.ValidationRules.RemoveAt(index);
+            
+            // 重新排序
+            for (int i = 0; i < Component.ValidationRules.Count; i++)
+            {
+                Component.ValidationRules[i].Order = i + 1;
+            }
+            
+            OnPropertyChange();
+        }
+    }
+
+    private void OnRuleChange()
+    {
+        OnPropertyChange();
+    }
+
+    private void OnPropertyChange()
+    {
+        Component.RefreshState();
+        StateHasChanged();
+    }
+
+    private string GetDefaultErrorMessage(ValidationRuleTypeEnum ruleType)
+    {
+        return ruleType switch
+        {
+            ValidationRuleTypeEnum.Required => "此字段为必填项",
+            ValidationRuleTypeEnum.MinLength => "输入长度不足",
+            ValidationRuleTypeEnum.MaxLength => "输入长度超限",
+            ValidationRuleTypeEnum.MinValue => "输入值过小",
+            ValidationRuleTypeEnum.MaxValue => "输入值过大",
+            ValidationRuleTypeEnum.Pattern => "格式不正确",
+            ValidationRuleTypeEnum.Email => "请输入有效的邮箱地址",
+            ValidationRuleTypeEnum.Phone => "请输入有效的手机号码",
+            ValidationRuleTypeEnum.Url => "请输入有效的URL地址",
+            ValidationRuleTypeEnum.Custom => "自定义校验失败",
+            _ => "输入不符合要求"
+        };
+    }
+}

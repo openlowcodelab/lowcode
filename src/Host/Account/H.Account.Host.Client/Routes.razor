@@ -1,0 +1,14 @@
+﻿<Router AppAssembly="typeof(Program).Assembly"
+        NotFoundPage="typeof(NotFound)"
+        AdditionalAssemblies="@Assemblies">
+    <Found Context="routeData">
+        <RouteView RouteData="routeData" DefaultLayout="typeof(AccountLayout)" />
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+</Router>
+
+@code {
+    private Assembly[] Assemblies = [
+        typeof(H.Account.Web._Imports).Assembly
+    ];
+}

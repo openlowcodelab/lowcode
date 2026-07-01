@@ -1,0 +1,135 @@
+@namespace H.Approval.Web
+@inherits LayoutComponentBase
+@inject NavigationManager NavigationManager
+
+<link href="@Assets["_content/H.Approval.Web/css/approval-designer.css"]" rel="stylesheet" />
+
+<CascadingValue Value="this">
+    <div class="approval-designer-layout">
+        <div class="header">
+            <div class="header-left">
+                <div class="back-btn" @onclick="GoBack">
+                    ←
+                </div>
+                <div class="approval-title">
+                    <span class="icon">@Icon</span>
+                    <div class="title-info">
+                        <span class="name">@Name</span>
+                        <span class="status @(Status == "已发布" ? "status-published" : "")">@Status</span>
+                    </div>
+                </div>
+            </div>
+            <div class="header-tabs">
+                <div class="tab @(ActiveTab == "basic" ? "active" : "")" @onclick="@(() => SwitchTab("basic"))">
+                    <span class="tab-num">①</span> 基础设置
+                </div>
+                <div class="tab @(ActiveTab == "flow" ? "active" : "")" @onclick="@(() => SwitchTab("flow"))">
+                    <span class="tab-num">②</span> 流程设计
+                </div>
+            </div>
+            <div class="header-right">
+                <button type="button" class="btn-save" @onclick="OnSave">
+                    <span>保 存</span>
+                </button>
+                <button type="button" class="btn-preview" @onclick="OnPreview">
+                    <span>预 览</span>
+                </button>
+                <button type="button" class="btn-publish" @onclick="OnPublish">
+                    <span>发 布</span>
+                </button>
+            </div>
+        </div>
+        <div class="content">
+            @Body
+        </div>
+    </div>
+</CascadingValue>
+
+@code {
+    /// <summary>
+    /// 审批图标
+    /// </summary>
+    public string? Icon { get; set; }
+    
+    /// <summary>
+    /// 审批名称
+    /// </summary>
+    public string? Name { get; set; }
+    
+    /// <summary>
+    /// 当前激活的Tab
+    /// </summary>
+    public string ActiveTab { get; set; } = "basic";
+    
+    /// <summary>
+    /// 审批状态
+    /// </summary>
+    public string Status { get; set; } = "草稿";
+    
+    /// <summary>
+    /// Tab切换事件
+    /// </summary>
+    public event Action<string>? OnTabChanged;
+    
+    /// <summary>
+    /// 发布事件
+    /// </summary>
+    public event Func<Task>? OnPublishRequested;
+    
+    /// <summary>
+    /// 保存草稿事件
+    /// </summary>
+    public event Func<Task>? OnSaveRequested;
+    
+    /// <summary>
+    /// 更新布局头部信息
+    /// </summary>
+    public void UpdateHeader(string? icon, string? name)
+    {
+        Icon = icon;
+        Name = name;
+        StateHasChanged();
+    }
+    
+    /// <summary>
+    /// 更新发布状态
+    /// </summary>
+    public void UpdateStatus(string status)
+    {
+        Status = status;
+        StateHasChanged();
+    }
+    
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/approval/management");
+    }
+    
+    private void SwitchTab(string tab)
+    {
+        ActiveTab = tab;
+        OnTabChanged?.Invoke(tab);
+        StateHasChanged();
+    }
+    
+    private void OnPreview()
+    {
+        // TODO: 打开预览对话框
+    }
+    
+    private async Task OnSave()
+    {
+        if (OnSaveRequested != null)
+        {
+            await OnSaveRequested.Invoke();
+        }
+    }
+    
+    private async Task OnPublish()
+    {
+        if (OnPublishRequested != null)
+        {
+            await OnPublishRequested.Invoke();
+        }
+    }
+}

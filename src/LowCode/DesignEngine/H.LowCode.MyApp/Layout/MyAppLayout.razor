@@ -1,0 +1,94 @@
+﻿@namespace H.LowCode.MyApp
+@inherits LowCodeLayoutComponentBase
+
+@inject IAppApplicationService AppApplicationService
+
+<link href="@Assets["_content/H.LowCode.MyApp/myapp.css"]" rel="stylesheet" />
+
+@if (_appSchema != null)
+{
+    <CascadingValue Value="@_appSchema" Name="appCascading">
+        <DefaultLayoutComponent AppName="@_appSchema.Name" Logo="_content/H.LowCode.MyApp/logo.png"
+            MenuItems="@_menuItems" AuthMode="AuthenticationMode.None">
+            @Body
+        </DefaultLayoutComponent>
+        <SettingDrawer />
+    </CascadingValue>
+}
+
+@code
+{
+    [PersistentState]
+    public AppPartsSchema _appSchema { get; set; }
+    [PersistentState]
+    public List<AppMenuItem> _menuItems { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        _appSchema = await GetAppSchemaAsync(AppId);
+
+        _menuItems = InitMenuData(AppId);
+    }
+
+    private async Task<AppPartsSchema> GetAppSchemaAsync(string appId)
+    {
+        return await AppApplicationService.GetByIdAsync(appId);
+    }
+
+    private List<AppMenuItem> InitMenuData(string appId)
+    {
+        return [
+            new AppMenuItem
+            {
+                Url = $"/myapp/{appId}/pagemanager",
+                Name = "页面管理",
+                Icon = "📋",
+                Key = "page"
+            },
+            new AppMenuItem
+            {
+                Url = $"/myapp/{appId}/menumanager",
+                Name = "菜单管理",
+                Icon = "📝",
+                Key = "menu"
+            },
+            new AppMenuItem
+            {
+                Url = $"/myapp/{appId}/datasource",
+                Name = "数据源",
+                Icon = "🗄",
+                Key = "datasource"
+            },
+            new AppMenuItem
+            {
+                Url = $"/myapp/{appId}/integration",
+                Name = "集成",
+                Icon = "🔌",
+                Key = "integration"
+            },
+            new AppMenuItem
+            {
+                Url = $"/myapp/{appId}/autoflow",
+                Name = "自动化",
+                Icon = "🔧",
+                Key = "autoflow"
+            },
+            new AppMenuItem
+            {
+                Url = $"/myapp/{appId}/publish",
+                Name = "应用发布",
+                Icon = "☁",
+                Key = "publish"
+            },
+            new AppMenuItem
+            {
+                Url = $"/myapp/{appId}/appsettings",
+                Name = "应用设置",
+                Icon = "⚙",
+                Key = "appsettings"
+            }
+        ];
+    }
+}

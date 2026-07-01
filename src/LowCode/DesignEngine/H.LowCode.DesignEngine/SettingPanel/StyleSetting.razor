@@ -1,0 +1,31 @@
+﻿@namespace H.LowCode.DesignEngine
+@inherits LowCodeComponentBase
+
+@if (Component != null)
+{
+    <div class="propertysetting-item">
+        <label>组件宽度：</label>
+        <input type="range" min="4" max="24" value="@Component.Style.ItemWidth" @onchange='(e) => { Component.Style.ItemWidth = double.Parse(e.Value?.ToString() ?? "4"); OnStyleChange(); }' />
+    </div>
+    @if (Component.IsHiddenLabel == false && Component.IsContainer == false)
+    {
+        <div class="propertysetting-item">
+            <label>标签宽度：</label>
+            <input type="range" min="4" max="300" value="@Component.Style.LabelWidth" @onchange='(e) => { Component.Style.LabelWidth = double.Parse(e.Value?.ToString() ?? "180"); OnStyleChange(); }' />
+        </div>
+    }
+    <div style="margin: 5px 15px 20px 10px;">
+        <label>自定义样式：</label>
+        <textarea class="ta" @bind="@Component.Style.CustomStyle" @bind:after="() => OnStyleChange()" style="height: 150px;"></textarea>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public ComponentPartsSchema Component { get; set; }
+
+    private void OnStyleChange()
+    {
+        Component.RefreshState();
+    }
+}

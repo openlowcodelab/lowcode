@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../../../common.props" />
+  <PropertyGroup>
+    <RootNamespace>H.SystemManagement.Application</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Volo.Abp.SettingManagement.Domain" />
+    <PackageReference Include="Volo.Abp.AspNetCore.Mvc" />
+    <PackageReference Include="Volo.Abp.AutoMapper" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\H.SystemManagement.Application.Contracts\H.SystemManagement.Application.Contracts.csproj" />
+    <ProjectReference Include="..\H.SystemManagement.EntityFrameworkCore\H.SystemManagement.EntityFrameworkCore.csproj" />
+  </ItemGroup>
+
+</Project>

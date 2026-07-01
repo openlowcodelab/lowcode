@@ -1,0 +1,90 @@
+@namespace H.LowCode.Themes.AntBlazor
+@inherits RenderEngineDynamicComponentBase
+
+@if (Component.IsContainer || Component.ComponentType == 2)
+{
+    <FormContainerComponentRender ContainerComponent="@Component"></FormContainerComponentRender>
+}
+else
+{
+    <div class="renderengine-componentitem-box" style="float:left;
+            width: @((Component.Style.ItemWidth > 4 ? Component.Style.ItemWidth : (IsInRootContainer ? 24 / PageCascading.PageLayout : 24)) / 24 * 100)%;
+            min-width:85px; min-height: @(Component.Style.ItemHeight)px;
+            @Component.Style.DefaultStyle @Component.Style.CustomStyle">
+
+        <div class="form-item" style="width:100%">
+            @if (!string.IsNullOrEmpty(Component.Label) && !Component.IsHiddenLabel)
+            {
+                <label>@Component.Label</label>
+            }
+            @if (_helpMessage != null)
+            {
+                <span class="help-text">@_helpMessage</span>
+            }
+
+            <div class="renderengine-componentitem-div-component">@_renderFragment</div>
+
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public ComponentSchema Component { get; set; }
+
+    /// <summary>
+    /// 当前组件是否在根容器内
+    /// </summary>
+    [Parameter]
+    public bool IsInRootContainer { get; set; }
+
+    private RenderFragment _renderFragment;
+    private string? _helpMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        Init();
+    }
+
+    private void Init()
+    {
+        if (Component == null)
+            throw new NullReferenceException(nameof(Component));
+
+        // 低代码组件没有 Fragment，由模板中的 FormContainerComponentRender 渲染子组件
+        if (Component.Fragment != null)
+            _renderFragment = RenderComponent(Component);
+
+        InitializeValidationRules();
+    }
+
+    private void InitializeValidationRules()
+    {
+    }
+
+    private string GetDefaultErrorMessage(ValidationRuleTypeEnum ruleType)
+    {
+        return ruleType switch
+        {
+            ValidationRuleTypeEnum.Required => "此字段为必填项",
+            ValidationRuleTypeEnum.MinLength => "输入长度不足",
+            ValidationRuleTypeEnum.MaxLength => "输入长度超限",
+            ValidationRuleTypeEnum.MinValue => "输入值过小",
+            ValidationRuleTypeEnum.MaxValue => "输入值过大",
+            ValidationRuleTypeEnum.Pattern => "格式不正确",
+            ValidationRuleTypeEnum.Email => "请输入有效的邮箱地址",
+            ValidationRuleTypeEnum.Phone => "请输入有效的手机号码",
+            ValidationRuleTypeEnum.Url => "请输入有效的URL地址",
+            _ => "输入不符合要求"
+        };
+    }
+
+    public void UpdateValidationStatus(string? status, string? message = null)
+    {
+        _helpMessage = message;
+        // 使用异步方式触发重新渲染，避免同步调用导致的堆栈问题
+        _ = InvokeAsync(StateHasChanged);
+    }
+}

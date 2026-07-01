@@ -1,0 +1,98 @@
+﻿@namespace H.LowCode.MyApp
+@inherits LowCodeComponentBase
+
+<div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
+    <div style="width:250px;">
+        <input type="search" class="inp" placeholder="选项名称" />
+    </div>
+    <div style="width:80px; line-height:32px;">
+        <button class="btn btn-primary" @onclick="CreateAsync">新建选项</button>
+    </div>
+</div>
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>名称</th>
+            <th>中文名</th>
+            <th>修改人</th>
+            <th>修改时间</th>
+            <th>发布状态</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in _dataSource)
+        {
+            <tr>
+                <td>@item.Name</td>
+                <td>@item.DisplayName</td>
+                <td>@item.ModifierId</td>
+                <td>@item.ModificationTime?.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                <td>
+                    <label class="switch">
+                        <input type="checkbox" checked="@item.PublishStatus" @onchange='(e) => item.PublishStatus = (bool)(e.Value ?? false)' />
+                        <span class="slider"></span>
+                    </label>
+                </td>
+                <td>
+                    <div class="space">
+                        <a @onclick='() => EditAsync(item)'>编辑</a>
+                        <a @onclick='() => DeleteAsync(item.Id)' style="color:#ff4d4f">删除</a>
+                        <a @onclick='() => PublishAsync(item.Id)' style="color:green">发布</a>
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    [Parameter]
+    public string AppId { get; set; }
+
+    private IEnumerable<DataSourceSchema> _dataSource = [];
+
+    private DataSourceSchema _currentDataSource;
+
+    int _pageIndex = 1;
+    int _pageSize = 10;
+    int _total = 0;
+
+    private bool _visible;
+    private string _modalTitle;
+
+    private async Task CreateAsync()
+    {
+        await Task.Delay(1);
+        _currentDataSource = new()
+            {
+                AppId = AppId,
+                Id = ShortIdGenerator.Generate(),
+                Name = string.Empty,
+                DataSourceType = ComponentDataSourceTypeEnum.DB
+            };
+
+        _visible = true;
+        _modalTitle = "新建数据表";
+        StateHasChanged();
+    }
+
+    private async Task EditAsync(DataSourceSchema dataSource)
+    {
+        await Task.Delay(1);
+        _currentDataSource = dataSource;
+        _visible = true;
+        _modalTitle = "编辑数据表";
+        StateHasChanged();
+    }
+
+    private async Task DeleteAsync(string id)
+    {
+        await Task.Delay(1);
+    }
+
+    private async Task PublishAsync(string id)
+    {
+        await Task.Delay(1);
+    }
+}

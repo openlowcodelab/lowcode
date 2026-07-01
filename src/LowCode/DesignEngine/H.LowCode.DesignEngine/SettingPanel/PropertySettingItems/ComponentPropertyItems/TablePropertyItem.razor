@@ -1,0 +1,393 @@
+@namespace H.LowCode.DesignEngine
+@inherits LowCodeComponentBase
+
+<div style="display: flex; justify-content: space-between;">
+    <div>
+        表格列
+    </div>
+    <div style="text-align: center; width:22px;">
+        <a onclick="@(() => CreateColumn())" style="border: solid #c4c4c4 1px; line-height: 18px;height: 22px;display: block;background-color: #fafafa; color:#2c2c2c">+</a>
+    </div>
+</div>
+<hr color="#f6f6f6" />
+@foreach (var column in _tableSchema.Columns)
+{
+    <div>
+        <span draggable="true" style="cursor: move; display: inline-block; width: 10px; margin: 0 auto; writing-mode: vertical-lr;">...</span>
+        <span style="display:inline-block; width:140px;">@column.Title</span>
+        <a href="javascript:void(0)" @onclick="() => EditColumn(column.Id)" style="cursor:pointer; margin:0 3px;" title="编辑">✏️</a>
+        <a href="javascript:void(0)" @onclick="() => DeleteColumn(column.Id)" style="cursor:pointer; margin:0 3px;" title="删除">🗑️</a>
+    </div>
+}
+<hr color="#f6f6f6" />
+
+<div style="display: flex; justify-content: space-between; margin-top: 20px;">
+    <div>
+        表格按钮
+    </div>
+    <div style="text-align: center; width:22px;">
+        <a onclick="@(() => CreateButton(true))" style="border: solid #c4c4c4 1px; line-height: 18px;height: 22px;display: block;background-color: #fafafa; color:#2c2c2c">+</a>
+    </div>
+</div>
+<hr color="#f6f6f6" />
+@foreach (var topBtn in _tableSchema.TopButtons)
+{
+    <div>
+        <span draggable="true" style="cursor: move; display: inline-block; width: 10px; margin: 0 auto; writing-mode: vertical-lr;">...</span>
+        <span style="display:inline-block; width:140px;">@topBtn.Title</span>
+        <a href="javascript:void(0)" @onclick="() => EditButton(topBtn.Id, true)" style="cursor:pointer; margin:0 3px;" title="编辑">✏️</a>
+        <a href="javascript:void(0)" @onclick="() => EditButtonEvent(topBtn.Id, true)" style="cursor:pointer; margin:0 3px;" title="事件">⚡</a>
+        <a href="javascript:void(0)" @onclick="() => DeleteButton(topBtn.Id, true)" style="cursor:pointer; margin:0 3px;" title="删除">🗑️</a>
+    </div>
+}
+<hr color="#f6f6f6" />
+
+<div style="display: flex; justify-content: space-between; margin-top: 20px;">
+    <div>
+        行按钮
+    </div>
+    <div style="text-align: center; width:22px;">
+        <a onclick="@(() => CreateButton(false))" style="border: solid #c4c4c4 1px; line-height: 18px;height: 22px;display: block;background-color: #fafafa; color:#2c2c2c">+</a>
+    </div>
+</div>
+<hr color="#f6f6f6" />
+@foreach (var rowBtn in _tableSchema.RowButtons)
+{
+    <div>
+        <span draggable="true" style="cursor: move; display: inline-block; width: 10px; margin: 0 auto; writing-mode: vertical-lr;">...</span>
+        <span style="display:inline-block; width:140px;">@rowBtn.Title</span>
+        <a href="javascript:void(0)" @onclick="() => EditButton(rowBtn.Id, false)" style="cursor:pointer; margin:0 3px;" title="编辑">✏️</a>
+        <a href="javascript:void(0)" @onclick="() => EditButtonEvent(rowBtn.Id, false)" style="cursor:pointer; margin:0 3px;" title="事件">⚡</a>
+        <a href="javascript:void(0)" @onclick="() => DeleteButton(rowBtn.Id, false)" style="cursor:pointer; margin:0 3px;" title="删除">🗑️</a>
+    </div>
+}
+<hr color="#f6f6f6" />
+
+<HModal Title="表格列" @bind-Visible="@_columnVisible" OnOk="OnColumnConfirm">
+    <div>
+        <div class="form-item">
+            <label>字段标识 <span style="color:red">*</span></label>
+            <input class="inp" @bind="@_tableColumnSchema.Name" />
+        </div>
+        <div class="form-item">
+            <label>字段名称 <span style="color:red">*</span></label>
+            <input class="inp" @bind="@_tableColumnSchema.Title" />
+        </div>
+        <div class="form-item">
+            <label>是否主键</label>
+            <div class="radio-group">
+                <label class="radio-label"><input type="radio" name="isPk" value="false" checked="@(!_tableColumnSchema.IsPrimaryKey)" @onchange='() => _tableColumnSchema.IsPrimaryKey = false' /> 否</label>
+                <label class="radio-label"><input type="radio" name="isPk" value="true" checked="@(_tableColumnSchema.IsPrimaryKey)" @onchange='() => _tableColumnSchema.IsPrimaryKey = true' /> 是</label>
+            </div>
+        </div>
+        <div class="form-item">
+            <label>是否支持过滤</label>
+            <div class="radio-group">
+                <label class="radio-label"><input type="radio" name="filterable" value="false" checked="@(!_tableColumnSchema.Filterable)" @onchange='() => _tableColumnSchema.Filterable = false' /> 否</label>
+                <label class="radio-label"><input type="radio" name="filterable" value="true" checked="@(_tableColumnSchema.Filterable)" @onchange='() => _tableColumnSchema.Filterable = true' /> 是</label>
+            </div>
+        </div>
+        <div class="form-item">
+            <label>是否支持排序</label>
+            <div class="radio-group">
+                <label class="radio-label"><input type="radio" name="sortable" value="false" checked="@(!_tableColumnSchema.Sortable)" @onchange='() => _tableColumnSchema.Sortable = false' /> 否</label>
+                <label class="radio-label"><input type="radio" name="sortable" value="true" checked="@(_tableColumnSchema.Sortable)" @onchange='() => _tableColumnSchema.Sortable = true' /> 是</label>
+            </div>
+        </div>
+        <div class="form-item">
+            <label>排序</label>
+            <input type="number" class="inp" @bind="@_tableColumnSchema.Order" min="0" />
+        </div>
+    </div>
+</HModal>
+
+<HModal Title="表格按钮" @bind-Visible="@_btnVisible" OnOk="OnButtonConfirm">
+    <div>
+        <div class="form-item">
+            <label>按钮标识 <span style="color:red">*</span></label>
+            <input class="inp" @bind="@_tableButtonSchema.Name" />
+        </div>
+        <div class="form-item">
+            <label>按钮类型 <span style="color:red">*</span></label>
+            <div class="radio-group">
+                <label class="radio-label"><input type="radio" name="btnType" value="0" checked="@(_tableButtonSchema.ButtonType == 0)" @onchange='() => _tableButtonSchema.ButtonType = 0' /> Default</label>
+                <label class="radio-label"><input type="radio" name="btnType" value="1" checked="@(_tableButtonSchema.ButtonType == 1)" @onchange='() => _tableButtonSchema.ButtonType = 1' /> Primary</label>
+                <label class="radio-label"><input type="radio" name="btnType" value="2" checked="@(_tableButtonSchema.ButtonType == 2)" @onchange='() => _tableButtonSchema.ButtonType = 2' /> Dashed</label>
+                <label class="radio-label"><input type="radio" name="btnType" value="3" checked="@(_tableButtonSchema.ButtonType == 3)" @onchange='() => _tableButtonSchema.ButtonType = 3' /> Link</label>
+                <label class="radio-label"><input type="radio" name="btnType" value="4" checked="@(_tableButtonSchema.ButtonType == 4)" @onchange='() => _tableButtonSchema.ButtonType = 4' /> Text</label>
+            </div>
+        </div>
+        <div class="form-item">
+            <label>排序</label>
+            <input type="number" class="inp" @bind="@_tableButtonSchema.Order" min="0" />
+        </div>
+    </div>
+</HModal>
+
+<HModal Title="配置事件" @bind-Visible="@_btnEventVisible"
+       OnOk="()=>OnButtonEventConfirm()" Style="width:1000px">
+    <EventList Events="@_btnEvents"></EventList>
+</HModal>
+
+@code {
+    [Parameter]
+    public ComponentPartsDataSourceSchema DataSource { get; set; }
+
+    [Parameter]
+    public Action<string> OnTablePropertyChange { get; set; }
+
+    private TablePropertySchema _tableSchema = new();
+
+    #region Init
+    protected override void OnInitialized()
+    {
+        Init();
+    }
+
+    protected override bool ShouldRender()
+    {
+        if (StateKey != DataSource.StateKey)
+        {
+            Init();
+        }
+        return true;
+    }
+
+    private void Init()
+    {
+        if (DataSource?.DataSourceValue.IsNullOrEmpty() == false)
+        {
+            _tableSchema = DataSource.DataSourceValue.FromJson<TablePropertySchema>();
+        }
+        StateKey = DataSource.StateKey;
+    }
+
+    private void OnPropertyChanged()
+    {
+        DataSource.DataSourceValue = _tableSchema.ToJson();
+
+        //重新渲染表格列
+        DataSource.ChangeStateKey();
+
+        OnTablePropertyChange?.Invoke(DataSource.DataSourceValue);
+    }
+    #endregion
+
+    #region Columns
+    private bool _columnVisible;
+    private bool _isColumnCreate;
+    private TableColumnSchema _tableColumnSchema = new TableColumnSchema();
+
+    private void CreateColumn()
+    {
+        _isColumnCreate = true;
+        _columnVisible = true;
+        _tableColumnSchema = new();
+        _tableColumnSchema.Id = ShortIdGenerator.Generate();
+
+        //StateHasChanged();
+    }
+
+    private void EditColumn(string id)
+    {
+        _isColumnCreate = false;
+        _columnVisible = true;
+        _tableColumnSchema = _tableSchema.Columns.First(t => t.Id == id);
+
+        //StateHasChanged();
+    }
+
+    private void DeleteColumn(string id)
+    {
+        var column = _tableSchema.Columns.First(t => t.Id == id);
+        
+        // 如果要删除的是主键列，检查是否还有其他主键列
+        if (column.IsPrimaryKey)
+        {
+            var otherPrimaryKeys = _tableSchema.Columns.Where(c => c.IsPrimaryKey && c.Id != id).ToList();
+            if (!otherPrimaryKeys.Any())
+            {
+                Message.Warning("无法删除该列：这是表格中唯一的主键列，删除后将影响数据操作功能");
+                return;
+            }
+        }
+
+        _tableSchema.Columns.Remove(column);
+
+        //OnPropertyChanged();
+    }
+
+    private void OnColumnConfirm()
+    {
+        var result = SaveTableColumnSchema();
+        if (result)
+        {
+            _columnVisible = false;
+            OnPropertyChanged();
+        }
+        else
+        {
+            _columnVisible = true;
+        }
+    }
+
+    private void OnColumnFinish()
+    {
+        OnPropertyChanged();
+    }
+
+    private bool SaveTableColumnSchema()
+    {
+        if (_isColumnCreate)
+        {
+            TableColumnSchema column = _tableColumnSchema.DeepClone();
+            _tableSchema.Columns.Add(column);
+        }
+        else
+        {
+            //无需赋值
+        }
+
+        // 验证至少有一个主键列
+        var hasPrimaryKey = _tableSchema.Columns.Any(c => c.IsPrimaryKey);
+        if (!hasPrimaryKey)
+        {
+            // 如果没有主键，显示警告消息
+            Message.Warning("表格配置警告：建议至少设置一个主键列以确保数据操作的正确性");
+        }
+
+        return true;
+    }
+    #endregion
+
+    #region Buttons
+    private bool _btnVisible;
+    private bool _isbtnCreate;
+    private bool _isTopBtn;
+    private TableButtonSchema _tableButtonSchema = new TableButtonSchema();
+
+    private void CreateButton(bool isTopBtn)
+    {
+        _btnVisible = true;
+        _isbtnCreate = true;
+        _isTopBtn = isTopBtn;
+
+        _tableButtonSchema = new();
+        _tableButtonSchema.Id = ShortIdGenerator.Generate();
+
+        //StateHasChanged();
+    }
+
+    private void EditButton(string id, bool isTopBtn)
+    {
+        _isbtnCreate = false;
+        _btnVisible = true;
+        _isTopBtn = isTopBtn;
+
+        if (isTopBtn)
+        {
+            _tableButtonSchema = _tableSchema.TopButtons.First(t => t.Id == id);
+        }
+        else
+        {
+            _tableButtonSchema = _tableSchema.RowButtons.First(t => t.Id == id);
+        }
+
+        StateHasChanged();
+    }
+
+    private void DeleteButton(string id, bool isTopBtn)
+    {
+        if (isTopBtn)
+        {
+            var btn = _tableSchema.TopButtons.First(t => t.Id == id);
+            _tableSchema.TopButtons.Remove(btn);
+        }
+        else
+        {
+            var btn = _tableSchema.RowButtons.First(t => t.Id == id);
+            _tableSchema.RowButtons.Remove(btn);
+        }
+
+        OnPropertyChanged();
+    }
+
+    private void OnButtonConfirm()
+    {
+        var result = SaveButtonSchema();
+        if (result)
+        {
+            _btnVisible = false;
+            OnPropertyChanged();
+        }
+        else
+        {
+            _btnVisible = true;
+        }
+    }
+
+    private void OnButtonFinish()
+    {
+    }
+
+    private bool SaveButtonSchema()
+    {
+        if (_isbtnCreate)
+        {
+            if (_isTopBtn)
+            {
+                TableButtonSchema btn = _tableButtonSchema.DeepClone();
+                _tableSchema.TopButtons.Add(btn);
+            }
+            else
+            {
+                TableButtonSchema btn = _tableButtonSchema.DeepClone();
+                _tableSchema.RowButtons.Add(btn);
+            }
+        }
+        else
+        {
+            //无需赋值
+        }
+        return true;
+    }
+    #endregion
+
+    #region Button Events
+    private bool _btnEventVisible;
+    private IList<EventSchema> _btnEvents;
+
+    private void EditButtonEvent(string id, bool isTopBtn)
+    {
+        _btnEventVisible = true;
+
+        if (isTopBtn)
+        {
+            _tableButtonSchema = _tableSchema.TopButtons.First(t => t.Id == id);
+        }
+        else
+        {
+            _tableButtonSchema = _tableSchema.RowButtons.First(t => t.Id == id);
+        }
+
+        _btnEvents = _tableButtonSchema.Events ?? [];
+        foreach (var ev in _tableButtonSchema.SupportEvents)
+        {
+            var any = _btnEvents.Any(t => string.Equals(t.EventName, ev, StringComparison.OrdinalIgnoreCase));
+            if (any)
+                continue;
+            _btnEvents.Add(new() { EventName = ev });
+        }
+
+        StateHasChanged();
+    }
+
+    private void OnButtonEventConfirm()
+    {
+        _tableButtonSchema.Events = _btnEvents;
+        _btnEventVisible = false;
+
+        OnPropertyChanged();
+    }
+    #endregion
+}

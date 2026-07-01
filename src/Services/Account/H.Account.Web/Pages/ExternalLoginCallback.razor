@@ -1,0 +1,72 @@
+@page "/account/external-callback"
+@attribute [AllowAnonymous]
+@layout AccountEmptyLayout
+@inject NavigationManager Navigation
+
+<div class="auth-card">
+    <div class="auth-header">
+        <div class="auth-logo">
+            <span style="font-size: 26px; color: #fff;">&#128274;</span>
+        </div>
+        <h2>第三方登录</h2>
+        <p>正在处理您的登录请求</p>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div class="h-alert h-alert-error" style="margin-bottom: 20px;">
+            <span class="h-alert-icon">&#9888;</span>
+            <span>@_errorMessage</span>
+        </div>
+        <div style="text-align: center;">
+            <button class="h-btn h-btn-primary auth-btn-primary" @onclick="@ReturnToLogin">返回登录</button>
+        </div>
+    }
+    else if (_isLoading)
+    {
+        <div style="text-align: center; padding: 20px 0;">
+            <div class="h-spin"><span class="h-spin-dot"></span><span class="h-spin-text">正在处理第三方登录...</span></div>
+        </div>
+    }
+    else
+    {
+        <div style="text-align: center; padding: 20px 0;">
+            <div class="h-spin"><span class="h-spin-dot"></span><span class="h-spin-text">正在跳转...</span></div>
+        </div>
+    }
+</div>
+
+@code {
+    private string? _errorMessage;
+    private bool _isLoading = true;
+
+    protected override void OnInitialized()
+    {
+        var uri = new Uri(Navigation.Uri);
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+
+        var error = query["error"];
+        var success = query["success"];
+
+        if (!string.IsNullOrEmpty(error))
+        {
+            _errorMessage = error;
+            _isLoading = false;
+            return;
+        }
+
+        if (success == "true")
+        {
+            Navigation.NavigateTo("/", forceLoad: true);
+            return;
+        }
+
+        _errorMessage = "外部登录未完成";
+        _isLoading = false;
+    }
+
+    private void ReturnToLogin()
+    {
+        Navigation.NavigateTo("/account/login");
+    }
+}

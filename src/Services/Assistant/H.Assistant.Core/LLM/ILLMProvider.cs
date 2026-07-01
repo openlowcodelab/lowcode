@@ -1,0 +1,22 @@
+namespace H.Assistant.Core;
+
+/// <summary>
+/// LLM Provider 统一接口
+/// </summary>
+public interface ILLMProvider
+{
+    /// <summary>
+    /// Provider 名称
+    /// </summary>
+    string ProviderName { get; }
+    
+    /// <summary>
+    /// 同步对话
+    /// </summary>
+    Task<LLMResponse> ChatAsync(LLMRequest request, CancellationToken ct = default);
+    
+    /// <summary>
+    /// 流式对话（返回结构化 chunk，支持 tool_calls 增量）
+    /// </summary>
+    IAsyncEnumerable<LLMStreamChunk> ChatStreamAsync(LLMRequest request, CancellationToken ct = default);
+}

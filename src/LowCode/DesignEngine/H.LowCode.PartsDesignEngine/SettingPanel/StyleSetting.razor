@@ -1,0 +1,31 @@
+@namespace H.LowCode.PartsDesignEngine
+@inherits LowCodeComponentBase
+
+@if (Component != null)
+{
+    <div class="propertysetting-item">
+        <label>������ȣ�</label>
+            <input type="range" class="slider" min="4" max="24" @bind="Component.Style.ItemWidth" @bind:after="OnStyleChange" />
+    </div>
+    @if (Component.IsHiddenLabel == false && Component.IsContainer == false)
+    {
+        <div class="propertysetting-item">
+            <label>��ǩ���ȣ�</label>
+            <input type="range" class="slider" min="4" max="300" @bind="Component.Style.LabelWidth" @bind:after="OnStyleChange" />
+        </div>
+    }
+    <div style="margin: 5px 15px 20px 10px;">
+        <label>�Զ�����ʽ��</label>
+        <textarea class="ta" @bind="Component.Style.CustomStyle" @bind:after="OnStyleChange" style="height: 150px;"></textarea>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public ComponentPartsSchema Component { get; set; }
+
+    private void OnStyleChange()
+    {
+        Component.RefreshState();
+    }
+}

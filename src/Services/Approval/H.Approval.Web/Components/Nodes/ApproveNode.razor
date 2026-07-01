@@ -1,0 +1,65 @@
+@namespace H.Approval.Web
+
+@*审批人节点*@
+<div class="node-wrap-box" @onclick="() => OnNodeClick.InvokeAsync(Node)" @onclick:stopPropagation>
+    <div>
+        <div class="title" style="background: rgb(255, 148, 62);">
+            <span class="iconfont">✓</span>
+            <span class="editable-title">@Node.NodeName</span>
+            <i class="anticon anticon-close close" @onclick="DeleteNode" @onclick:stopPropagation></i>
+        </div>
+        <div class="content">
+            <div class="text">
+                @if (Node is ApproveModel approveNode)
+                {
+                    @(approveNode.ApproverType switch
+                    {
+                        ApproverTypeEnum.StarterSelect => "发起人自选",
+                        ApproverTypeEnum.Specified => "指定成员",
+                        ApproverTypeEnum.StarterSelf => "发起人本人",
+                        ApproverTypeEnum.Role => "指定角色",
+                        ApproverTypeEnum.DepartmentManager => "部门主管",
+                        _ => "请设置审批人"
+                    })
+                }
+                else
+                {
+                    <text>请设置审批人</text>
+                }
+            </div>
+            <i class="anticon anticon-right arrow"></i>
+        </div>
+    </div>
+</div>
+<AddNodeButton OnAddNode="OnAddNode" />
+
+@*递归渲染子节点*@
+@foreach(var childNode in Node.ChildNodes)
+{
+    <NodeWrap Node="@childNode" OnNodeTreeChanged="OnNodeTreeChanged" OnNodeClick="OnNodeClick" OnDeleteNode="OnDeleteNode" />
+}
+
+@code {
+    [Parameter]
+    public NodeModelBase Node { get; set; } = null!;
+    
+    [Parameter]
+    public EventCallback<NodeModelBase> OnAddNode { get; set; }
+    
+    [Parameter]
+    public EventCallback OnDeleteSelf { get; set; }
+    
+    [Parameter]
+    public EventCallback OnNodeTreeChanged { get; set; }
+    
+    [Parameter]
+    public EventCallback<NodeModelBase> OnNodeClick { get; set; }
+    
+    [Parameter]
+    public EventCallback<NodeModelBase> OnDeleteNode { get; set; }
+    
+    private async Task DeleteNode()
+    {
+        await OnDeleteSelf.InvokeAsync();
+    }
+}

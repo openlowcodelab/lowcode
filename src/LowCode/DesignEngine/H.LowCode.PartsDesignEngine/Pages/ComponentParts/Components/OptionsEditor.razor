@@ -1,0 +1,94 @@
+@namespace H.LowCode.PartsDesignEngine
+@inherits LowCodeComponentBase
+
+<div class="options-editor">
+    @if (_optionsList != null)
+    {
+        @for (int i = 0; i < _optionsList.Count; i++)
+        {
+            var option = _optionsList[i];
+            var currentIndex = i;
+            
+            <div class="option-item" style="display: flex; gap: 8px; margin-bottom: 8px; align-items: center;">
+                <input class="inp" @bind="option.Key" placeholder="选项键" style="flex: 1;" />
+                <input class="inp" @bind="option.Value" placeholder="选项值" style="flex: 1;" />
+                <button class="btn btn-text btn-sm" @onclick="() => RemoveOption(currentIndex)" style="color: red;">删除</button>
+            </div>
+        }
+    }
+    
+    <button class="btn btn-dashed btn-sm" @onclick="AddOption">添加选项</button>
+</div>
+
+@code {
+    [Parameter]
+    public Dictionary<string, object> Options { get; set; }
+    
+    [Parameter]
+    public EventCallback<Dictionary<string, object>> OptionsChanged { get; set; }
+
+    private List<OptionItem> _optionsList = new();
+
+    protected override void OnParametersSet()
+    {
+        _optionsList.Clear();
+        
+        if (Options != null)
+        {
+            foreach (var kvp in Options)
+            {
+                _optionsList.Add(new OptionItem 
+                { 
+                    Key = kvp.Key, 
+                    Value = kvp.Value?.ToString() ?? "" 
+                });
+            }
+        }
+    }
+
+    private async Task AddOption()
+    {
+        _optionsList.Add(new OptionItem { Key = "", Value = "" });
+        await NotifyChange();
+    }
+
+    private async Task RemoveOption(int index)
+    {
+        if (index >= 0 && index < _optionsList.Count)
+        {
+            _optionsList.RemoveAt(index);
+            await NotifyChange();
+        }
+    }
+
+    private async Task NotifyChange()
+    {
+        var newOptions = new Dictionary<string, object>();
+        
+        foreach (var option in _optionsList)
+        {
+            if (!string.IsNullOrWhiteSpace(option.Key))
+            {
+                newOptions[option.Key] = option.Value;
+            }
+        }
+        
+        await OptionsChanged.InvokeAsync(newOptions);
+        StateHasChanged();
+    }
+
+    private class OptionItem
+    {
+        public string Key { get; set; } = "";
+        public string Value { get; set; } = "";
+    }
+}
+
+<style>
+    .options-editor .option-item {
+        background: #fafafa;
+        padding: 8px;
+        border-radius: 4px;
+        border: 1px solid #d9d9d9;
+    }
+</style>

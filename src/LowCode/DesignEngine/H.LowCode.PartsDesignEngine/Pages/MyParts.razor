@@ -1,0 +1,45 @@
+@page "/designengine/myparts/{Tab?}"
+@namespace H.LowCode.PartsDesignEngine
+@inherits LowCodePageComponentBase
+@layout WorkbenchNavLayout
+
+<PageTitle>我的物料 - H.LowCode</PageTitle>
+
+<div class="tabs-header" style="width: 80%; margin: auto;">
+    <button class='tab-btn @(_tabKey == "componentlibraries" ? "tab-active" : "")' @onclick='() => _tabKey = "componentlibraries"'>组件库</button>
+    <button class='tab-btn @(_tabKey == "pagelibraries" ? "tab-active" : "")' @onclick='() => _tabKey = "pagelibraries"'>页面库</button>
+    <button class='tab-btn @(_tabKey == "apptemplates" ? "tab-active" : "")' @onclick='() => _tabKey = "apptemplates"'>应用模板</button>
+    <button class='tab-btn @(_tabKey == "themes" ? "tab-active" : "")' @onclick='() => _tabKey = "themes"'>主题</button>
+</div>
+<div>
+    @if (_tabKey == "componentlibraries")
+    {
+        <ComponentLibraryManager></ComponentLibraryManager>
+    }
+    @if (_tabKey == "pagelibraries")
+    {
+        <PageLibraryList></PageLibraryList>
+    }
+    @if (_tabKey == "apptemplates")
+    {
+        <AppPartsList></AppPartsList>
+    }
+    @if (_tabKey == "themes")
+    {
+        <ThemePartsList></ThemePartsList>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string? Tab { get; set; }
+
+    private string LibraryId => GetQueryValue("libId");
+
+    private string _activeTabKey;
+    private string _tabKey
+    {
+        get => _activeTabKey ?? Tab ?? "componentlibraries";
+        set { _activeTabKey = value; StateHasChanged(); }
+    }
+}

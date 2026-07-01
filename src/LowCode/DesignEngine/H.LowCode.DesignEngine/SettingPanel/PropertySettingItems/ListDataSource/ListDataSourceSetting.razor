@@ -1,0 +1,116 @@
+@namespace H.LowCode.DesignEngine
+@inherits LowCodeComponentBase
+
+@if (DataSource != null)
+{
+    <div class="tabs">
+        <div class="tab-buttons">
+            <button class='tab-btn @(_activeTab == "1" ? "active" : "")' @onclick='() => _activeTab = "1"'>数据源配置</button>
+            <button class='tab-btn @(_activeTab == "2" ? "active" : "")' @onclick='() => _activeTab = "2"'>ItemTemplate 配置</button>
+        </div>
+        <div class="tab-content">
+            @if (_activeTab == "1")
+            {
+                <div class="propertysetting-item">
+                    <label>数据源类型：</label>
+                    <div class="radio-group">
+                        <label class="radio-label"><input type="radio" name="dsType" value="ComponentDataSourceTypeEnum.Fiexd" checked="@(DataSource.DataSourceType == ComponentDataSourceTypeEnum.Fiexd)" @onchange='() => DataSource.DataSourceType = ComponentDataSourceTypeEnum.Fiexd' /> 固定值</label>
+                        <label class="radio-label"><input type="radio" name="dsType" value="ComponentDataSourceTypeEnum.API" checked="@(DataSource.DataSourceType == ComponentDataSourceTypeEnum.API)" @onchange='() => DataSource.DataSourceType = ComponentDataSourceTypeEnum.API' /> API</label>
+                        <label class="radio-label"><input type="radio" name="dsType" value="ComponentDataSourceTypeEnum.SQL" checked="@(DataSource.DataSourceType == ComponentDataSourceTypeEnum.SQL)" @onchange='() => DataSource.DataSourceType = ComponentDataSourceTypeEnum.SQL' /> SQL</label>
+                    </div>
+                </div>
+
+                @if (DataSource.DataSourceType == ComponentDataSourceTypeEnum.Fiexd)
+                {
+                    <FixedListDataSource @bind-DataSource="DataSource.ListDataSource"></FixedListDataSource>
+                }
+                else if (DataSource.DataSourceType == ComponentDataSourceTypeEnum.API)
+                {
+                    <div style="margin: 16px 0;">
+                        <div class="alert alert-info">
+                            <strong>API 数据源配置</strong>
+                            <p>配置 API 接口，返回的数据应该是数组格式</p>
+                        </div>
+                        <div style="margin-top: 16px;">
+                            <label style="display: block; margin-bottom: 4px; font-weight: 500;">API 接口</label>
+                            @* TODO: 实现 API 配置界面 *@
+                            <input class="inp" placeholder="API 接口地址" />
+                        </div>
+                    </div>
+                }
+                else if (DataSource.DataSourceType == ComponentDataSourceTypeEnum.SQL)
+                {
+                    <div style="margin: 16px 0;">
+                        <div class="alert alert-info">
+                            <strong>SQL 数据源配置</strong>
+                            <p>配置 SQL 查询语句，返回的数据应该是列表格式</p>
+                        </div>
+                        <div style="margin-top: 16px;">
+                            <label style="display: block; margin-bottom: 4px; font-weight: 500;">SQL 查询</label>
+                            @* TODO: 实现 SQL 配置界面 *@
+                            <textarea class="ta" rows="4" placeholder="SELECT * FROM tb_question WHERE survey_id = {surveyId}"></textarea>
+                        </div>
+                    </div>
+                }
+            }
+            else if (_activeTab == "2")
+            {
+                <div class="alert alert-info" style="margin-bottom: 16px;">
+                    <strong>ItemTemplate 说明</strong>
+                    <p>ItemTemplate 定义每个列表项的组件结构。可以配置组件类型、属性绑定等。使用 $(item.fieldName) 语法绑定数据字段。</p>
+                </div>
+
+                @if (DataSource.DataSourceFragment != null)
+                {
+                    <ComponentFragmentEditor Fragment="@DataSource.DataSourceFragment" />
+                }
+                else
+                {
+                    <button class="btn btn-dashed" @onclick="AddItemTemplate">添加 ItemTemplate</button>
+                }
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private string _activeTab = "1";
+
+    [Parameter]
+    public string AppId { get; set; }
+
+    [Parameter]
+    public ComponentPartsDataSourceSchema DataSource { get; set; }
+
+    [Parameter]
+    public EventCallback<ComponentPartsDataSourceSchema> DataSourceChanged { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        
+        // 初始化 ListDataSource
+        if (DataSource != null && DataSource.ListDataSource == null)
+        {
+            DataSource.ListDataSource = new ListDataSourceSchema
+            {
+                FixedData = new List<Dictionary<string, object>>()
+            };
+        }
+    }
+
+    private void AddItemTemplate()
+    {
+        if (DataSource != null)
+        {
+            DataSource.DataSourceFragment = new ComponentPartsFragmentSchema
+            {
+                TypeName = "AntDesign.ListItem, AntDesign",
+                DefaultTypeName = "AntDesign.ListItem, AntDesign",
+                Attributes = Array.Empty<ComponentAttributeFragmentSchema>(),
+                ChildFragments = Array.Empty<ComponentPartsFragmentSchema>()
+            };
+            StateHasChanged();
+        }
+    }
+}

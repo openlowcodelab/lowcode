@@ -1,0 +1,81 @@
+﻿@namespace H.LowCode.MyApp
+@inherits LowCodeComponentBase
+@layout MyAppLayout
+
+@inject IAppApplicationService AppApplicationService
+
+<form>
+    <div class="form-item">
+        <label>应用标识</label>
+        <input class="inp" @bind="AppSchema.Id" />
+    </div>
+    <div class="form-item">
+        <label>应用名称</label>
+        <input class="inp" @bind="AppSchema.Name" />
+    </div>
+    <div class="form-item">
+        <label>应用描述</label>
+        <textarea class="ta" @bind="AppSchema.Description"></textarea>
+    </div>
+    <div class="form-item">
+        <label>支持平台</label>
+        <div class="checkbox-group">
+    <label class="checkbox-label"><input type="checkbox" checked='@AppSchema.SupportPlatforms.Contains(SupportPlatformEnum.Web)' @onchange='(e) => ToggleSupportPlatform(AppSchema, SupportPlatformEnum.Web, (bool)e.Value)' /> Web</label>
+    <label class="checkbox-label"><input type="checkbox" checked='@AppSchema.SupportPlatforms.Contains(SupportPlatformEnum.Mobile)' @onchange='(e) => ToggleSupportPlatform(AppSchema, SupportPlatformEnum.Mobile, (bool)e.Value)' /> App</label>
+    <label class="checkbox-label"><input type="checkbox" checked='@AppSchema.SupportPlatforms.Contains(SupportPlatformEnum.WXMiniApp)' @onchange='(e) => ToggleSupportPlatform(AppSchema, SupportPlatformEnum.WXMiniApp, (bool)e.Value)' /> 小程序</label>
+</div>
+    </div>
+    <div class="form-item">
+        <label>排序</label>
+        <input type="number" class="inp" @bind="AppSchema.Order" />
+    </div>
+</form>
+
+@code {
+    [Parameter]
+    public AppPartsSchema AppSchema { get; set; }
+
+    [Parameter]
+    public Action OnSubmit { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        if (AppSchema == null)
+            AppSchema = new()
+            {
+                Id = ShortIdGenerator.Generate()
+            };
+    }
+
+    public async Task SubmitAsync()
+    {
+        var success = await SaveAppSchema();
+
+        if (success && OnSubmit != null)
+            OnSubmit();
+    }
+
+    private void ToggleSupportPlatform(AppPartsSchema schema, SupportPlatformEnum platform, bool isChecked)
+    {
+        var list = schema.SupportPlatforms?.ToList() ?? new List<SupportPlatformEnum>();
+        if (isChecked && !list.Contains(platform)) list.Add(platform);
+        else if (!isChecked) list.Remove(platform);
+        schema.SupportPlatforms = list.ToArray();
+    }
+
+    private async Task<bool> SaveAppSchema()
+    {
+        bool isSuccess = await AppApplicationService.SaveAsync(AppSchema);
+        if (isSuccess)
+        {
+            await Message.SuccessAsync("新建成功！");
+        }
+        else
+        {
+            await Message.ErrorAsync("新建失败");
+        }
+        return isSuccess;
+    }
+}

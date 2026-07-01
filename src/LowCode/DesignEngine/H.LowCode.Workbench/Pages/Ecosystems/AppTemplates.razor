@@ -1,0 +1,46 @@
+﻿@namespace H.LowCode.Workbench
+@inherits LowCodeComponentBase
+@layout WorkbenchNavLayout
+
+<div style="display: flex; justify-content: space-between; margin: 0 0 8px 5px;">
+    <div style="width:250px;">
+        <input type="search" class="inp" placeholder="应用名称" />
+    </div>
+</div>
+
+<div style="margin:10px 5px;">
+    <div class="btn-group" style="display:flex; flex-wrap:wrap; gap:4px;">
+        @foreach (var label in new[]{"全部", "OA", "CRM", "ERP", "门户", "医疗", "教育", "酒店", "餐饮", "水务"})
+        {
+            <button class="btn btn-default btn-sm" @onclick="() => {}">@label</button>
+        }
+    </div>
+</div>
+
+<HCard Title="图书管理系统" Style="float:left; width:300px; margin:5px;">
+    <a href="javascript:void(0)">使用</a>
+    <p>Card content</p>
+</HCard>
+<HCard Title="学生管理系统" Style="float:left; width:300px; margin:5px;">
+    <a href="javascript:void(0)">使用</a>
+    <p>Card content</p>
+</HCard>
+
+@code {
+    [PersistentState]
+    public IList<AppPartsSchema> _appParts { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        _appParts = await LoadAppPartsAsync(1, 50);
+    }
+
+    private async Task<IList<AppPartsSchema>> LoadAppPartsAsync(int pageIndex, int pageSize)
+    {
+        await Task.Delay(100);
+        IList<AppPartsSchema> result = [];
+        return result;
+    }
+}

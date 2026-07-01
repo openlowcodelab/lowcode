@@ -1,0 +1,92 @@
+@namespace H.Approval.Web
+
+<div class="setting-panel">
+    <div class="setting-section">
+        <div class="setting-label">谁可以发起</div>
+        <div class="h-radio-group">
+            <label class="h-radio-button">
+                <input type="radio" name="startType" value="0" checked="@(startTypeValue == 0)" @onchange="() => OnStartTypeChanged(0)" />全员可发起
+            </label>
+            <label class="h-radio-button">
+                <input type="radio" name="startType" value="1" checked="@(startTypeValue == 1)" @onchange="() => OnStartTypeChanged(1)" />指定成员
+            </label>
+            <label class="h-radio-button">
+                <input type="radio" name="startType" value="2" checked="@(startTypeValue == 2)" @onchange="() => OnStartTypeChanged(2)" />指定角色
+            </label>
+        </div>
+    </div>
+
+    @if (Node.StartType == StartTypeEnum.Specified)
+    {
+        <div class="setting-section">
+            <div class="setting-label">指定成员</div>
+            <div class="setting-hint">暂未集成人员选择器，请手动输入成员ID（逗号分隔）</div>
+            <textarea class="h-textarea" rows="3"
+                      value="@specifiedUsersText"
+                      @oninput="OnSpecifiedUsersInput"
+                      placeholder="请输入成员ID，多个用逗号分隔"></textarea>
+        </div>
+    }
+
+    @if (Node.StartType == StartTypeEnum.Role)
+    {
+        <div class="setting-section">
+            <div class="setting-label">指定角色</div>
+            <div class="setting-hint">暂未集成角色选择器，请手动输入角色ID（逗号分隔）</div>
+            <textarea class="h-textarea" rows="3"
+                      value="@specifiedRolesText"
+                      @oninput="OnSpecifiedRolesInput"
+                      placeholder="请输入角色ID，多个用逗号分隔"></textarea>
+        </div>
+    }
+
+    <div class="setting-actions">
+        <button class="h-btn h-btn-primary" @onclick="SaveSettings">确 定</button>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public StartNodeModel Node { get; set; } = null!;
+
+    [Parameter]
+    public EventCallback OnSave { get; set; }
+
+    private int startTypeValue;
+    private string specifiedUsersText = "";
+    private string specifiedRolesText = "";
+
+    protected override void OnParametersSet()
+    {
+        if (Node != null)
+        {
+            startTypeValue = (int)Node.StartType;
+            specifiedUsersText = string.Join(",", Node.SpecifiedUsers ?? new List<string>());
+            specifiedRolesText = string.Join(",", Node.SpecifiedRoles ?? new List<string>());
+        }
+    }
+
+    private void OnStartTypeChanged(int value)
+    {
+        Node.StartType = (StartTypeEnum)value;
+    }
+
+    private void OnSpecifiedUsersInput(ChangeEventArgs e)
+    {
+        specifiedUsersText = e.Value?.ToString() ?? "";
+        Node.SpecifiedUsers = specifiedUsersText.Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s)).ToList();
+    }
+
+    private void OnSpecifiedRolesInput(ChangeEventArgs e)
+    {
+        specifiedRolesText = e.Value?.ToString() ?? "";
+        Node.SpecifiedRoles = specifiedRolesText.Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s)).ToList();
+    }
+
+    private async Task SaveSettings()
+    {
+        await OnSave.InvokeAsync();
+    }
+}

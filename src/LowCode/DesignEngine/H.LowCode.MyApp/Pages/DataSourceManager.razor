@@ -1,0 +1,38 @@
+﻿@page "/designengine/myapp/{AppId}/datasource/{DataSourceType?}"
+@namespace H.LowCode.MyApp
+@inherits LowCodePageComponentBase
+@layout MyAppLayout
+
+<PageTitle>数据源管理</PageTitle>
+
+<div class="tabs">
+    <div class="tab-buttons">
+        <button class="tab-btn @(DataSourceType == "table" ? "active" : "")" @onclick='() => OnTabChange("table")'>数据表</button>
+        <button class="tab-btn @(DataSourceType == "api" ? "active" : "")" @onclick='() => OnTabChange("api")'>API</button>
+        <button class="tab-btn @(DataSourceType == "option" ? "active" : "")" @onclick='() => OnTabChange("option")'>选项</button>
+    </div>
+    <div class="tab-content">
+        @if (DataSourceType == "table")
+        {
+            <TableDataSourceList AppId="@AppId"></TableDataSourceList>
+        }
+        else if (DataSourceType == "api")
+        {
+            <APIDataSourceList AppId="@AppId"></APIDataSourceList>
+        }
+        else if (DataSourceType == "option")
+        {
+            <OptionDataSourceList AppId="@AppId"></OptionDataSourceList>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string DataSourceType { get; set; } = "table";
+
+    private void OnTabChange(string key)
+    {
+        //base.NavigateTo($"/myapp/{AppId}/datasource/{key}");
+    }
+}

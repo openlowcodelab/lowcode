@@ -1,0 +1,91 @@
+@namespace H.LowCode.DesignEngine
+@inherits LowCodeComponentBase
+
+<div class="tab-bar" style="width:250px; padding:0px 8px; display:flex; gap:0; border-bottom:1px solid #d9d9d9;">
+    @if (_showPropertyPanel)
+    {
+        <button class='tab-btn @(_activeTabKey == "tab_property" ? "active" : "")' @onclick='() => _activeTabKey = "tab_property"'>属性</button>
+        <button class='tab-btn @(_activeTabKey == "tab_style" ? "active" : "")' @onclick='() => _activeTabKey = "tab_style"'>样式</button>
+    }
+    <button class='tab-btn @(_activeTabKey == "tab_page" ? "active" : "")' @onclick='() => _activeTabKey = "tab_page"'>页面</button>
+</div>
+<div style="width:250px; padding:0px 8px;">
+    @if (_showPropertyPanel)
+    {
+        @if (_component.IsContainer == false)
+        {
+            @if (_activeTabKey == "tab_property")
+            {
+                <PropertySetting Component="@_component"></PropertySetting>
+            }
+        }
+        @if (_activeTabKey == "tab_style")
+        {
+            <StyleSetting Component="@_component"></StyleSetting>
+        }
+    }
+    @if (_activeTabKey == "tab_page")
+    {
+        <PageSetting Page="@Page"></PageSetting>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public PagePartsSchema Page { get; set; }
+
+    private ComponentPartsSchema _component { get; set; }
+
+    private bool _showPropertyPanel { get; set; }
+
+    private string _activeTabKey = "tab_page";
+
+    #region Init
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            RegisterEventDispatcher();
+
+            _activeTabKey = "tab_page";
+        }
+    }
+
+    private void RegisterEventDispatcher()
+    {
+        //订阅设计面板中的组件点击事件
+        BlazorEventDispatcher.Subscribe("designengine.draggableitem.onclick", (value) =>
+        {
+            if (value != null)
+            {
+                _component = (ComponentPartsSchema)value;
+                _showPropertyPanel = true;
+                // 使用InvokeAsync确保在正确的线程上下文中执行
+                InvokeAsync(() =>
+                {
+                    _activeTabKey = "tab_property";
+                    StateHasChanged();
+                });
+            }
+        });
+
+        //订阅设计面板取消选中事件
+        BlazorEventDispatcher.Subscribe("designengine.draggableitem.onblur", (value) =>
+        {
+            _component = null;
+            _showPropertyPanel = false;
+            // 使用InvokeAsync确保在正确的线程上下文中执行
+            InvokeAsync(() =>
+            {
+                _activeTabKey = "tab_page";
+                StateHasChanged();
+            });
+        });
+    }
+    #endregion
+}

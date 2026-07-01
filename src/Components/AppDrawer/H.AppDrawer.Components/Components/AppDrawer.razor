@@ -1,0 +1,238 @@
+﻿@namespace H.AppDrawer.Components
+
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+@inject HttpClient HttpClient
+
+<link rel="stylesheet" href="@Assets["_content/H.AppDrawer.Components/css/AppDrawer.css"]" />
+<script src="@Assets["_content/H.AppDrawer.Components/js/AppDrawer.js"]"></script>
+
+@if (Visible)
+{
+    <div class="app-drawer-container visible">
+        <div class="app-drawer-overlay" @onclick="HandleOverlayClickAsync"></div>
+        <div class="app-drawer">
+            <div class="drawer-header">
+                <h4>应用列表</h4>
+                <button class="close-drawer" @onclick="HandleCloseAsync">×</button>
+            </div>
+            <div class="drawer-content">
+                @if (isLoading)
+                {
+                    <div class="loading-state">加载中...</div>
+                }
+                else if (appCategories != null && appCategories.Any())
+                {
+                    @foreach (var category in appCategories)
+                    {
+                        <div class="app-category">
+                            <div class="category-title">@category.CategoryName</div>
+                            <div class="category-apps">
+                                @foreach (var app in category.Apps)
+                                {
+                                    <div class="app-item" 
+                                         @key="app.Id"
+                                         data-app-id="@app.Id"
+                                         @onclick="() => HandleAppClickAsync(app)"
+                                         title="@app.Name (@(app.Target == "_blank" ? "新标签页" : "当前页"))">
+                                        @if (!string.IsNullOrEmpty(app.Icon))
+                                        {
+                                            <div class="app-icon">@app.Icon</div>
+                                        }
+                                        else if (!string.IsNullOrEmpty(app.IconUrl))
+                                        {
+                                            <img src="@app.IconUrl" alt="" class="app-icon-image" />
+                                        }
+                                        <div class="app-info">
+                                            <div class="app-name-text">@app.Name</div>
+                                            @if (ShowTargetBadge)
+                                            {
+                                                <div class="app-target-badge">@(app.Target == "_blank" ? "🔗" : "📄")</div>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="empty-state">暂无应用</div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private DotNetObjectReference<AppDrawer>? _dotNetRef;
+    private AppCategoryInfo[] appCategories = [];
+    private bool isLoading = false;
+
+    /// <summary>
+    /// 是否显示抽屉
+    /// </summary>
+    private bool Visible { get; set; }
+
+    /// <summary>
+    /// 是否显示目标标识（新标签页/当前页）
+    /// </summary>
+    private bool ShowTargetBadge { get; set; } = true;
+
+    /// <summary>
+    /// 点击遮罩层是否关闭抽屉
+    /// </summary>
+    private bool CloseOnOverlayClick { get; set; } = true;
+
+    /// <summary>
+    /// 显示抽屉
+    /// </summary>
+    public void Show()
+    {
+        Visible = true;
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// 隐藏抽屉
+    /// </summary>
+    public void Hide()
+    {
+        Visible = false;
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// 切换抽屉显示状态
+    /// </summary>
+    public void Toggle()
+    {
+        Visible = !Visible;
+        StateHasChanged();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // 加载应用数据
+        await LoadAppCategoriesAsync();
+    }
+
+    private async Task LoadAppCategoriesAsync()
+    {
+        try
+        {
+            isLoading = true;
+            StateHasChanged();
+
+            // 直接调用 API 获取应用分类数据
+            // ABP 路由规则: /api/app/{service-name}/{method-name-simplified}
+            // IAppManageAppService.GetAllCategoriesAsync -> /api/app/app-manage/categories
+            var response = await HttpClient.GetFromJsonAsync<AppCategoryInfo[]>("/api/app/app-manage/categories");
+
+            if (response != null)
+            {
+                appCategories = response;
+            }
+            else
+            {
+                appCategories = [];
+            }
+
+            isLoading = false;
+        }
+        catch
+        {
+            isLoading = false;
+            appCategories = [];
+        }
+        finally
+        {
+            StateHasChanged();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Visible)
+        {
+            // 等待 DOM 渲染完成
+            await Task.Delay(50);
+            
+            // 创建或复用 DotNetObjectReference
+            _dotNetRef ??= DotNetObjectReference.Create(this);
+            
+            // 绑定事件（JS 已通过 script 标签加载）
+            await JSRuntime.InvokeVoidAsync("AppDrawer.init", _dotNetRef);
+        }
+    }
+
+    public void Dispose()
+    {
+        _dotNetRef?.Dispose();
+    }
+
+    [JSInvokable]
+    public async Task HandleClose()
+    {
+        await HandleCloseAsync();
+    }
+
+    private async Task HandleCloseAsync()
+    {
+        Visible = false;
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    public async Task HandleOverlayClick()
+    {
+        await HandleOverlayClickAsync();
+    }
+
+    private async Task HandleOverlayClickAsync()
+    {
+        if (CloseOnOverlayClick)
+        {
+            await HandleCloseAsync();
+        }
+    }
+
+    [JSInvokable]
+    public async Task HandleAppClickById(string appId)
+    {
+        var app = appCategories
+            .SelectMany(c => c.Apps)
+            .FirstOrDefault(a => a.Id == appId);
+        
+        if (app != null)
+        {
+            await HandleAppClickAsync(app);
+        }
+    }
+
+    private async Task HandleAppClickAsync(AppItemInfo app)
+    {
+        // 默认行为：关闭抽屉、跳转
+        await HandleCloseAsync();
+
+        // 等待抽屉关闭动画
+        await Task.Delay(100);
+
+        // 根据 Target 决定打开方式
+        if (string.IsNullOrEmpty(app.Url))
+        {
+            return;
+        }
+
+        var target = app.Target ?? "_self";
+        if (target == "_blank")
+        {
+            await JSRuntime.InvokeVoidAsync("open", app.Url, "_blank");
+        }
+        else
+        {
+            NavigationManager.NavigateTo(app.Url);
+        }
+    }
+}

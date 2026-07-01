@@ -1,0 +1,201 @@
+@namespace H.LowCode.PartsDesignEngine
+@inherits LowCodeComponentBase
+
+<div class="component-fragment-editor">
+    <HCard Title="组件渲染片段" Style="margin-bottom: 16px;">
+        <div class="row">
+            <div class="col col-12">
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 4px; font-weight: 500;">默认类型名 <span style="color: red;">*</span></label>
+                    <input class="inp" @bind="Fragment.DefaultTypeName" 
+                           placeholder="如: AntDesign.Input`1[System.String], AntDesign" />
+                    <div style="color: #999; font-size: 12px; margin-top: 4px;">
+                        完整的.NET类型名，包含程序集信息
+                    </div>
+                </div>
+            </div>
+            <div class="col col-12">
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 4px; font-weight: 500;">值类型</label>
+                    <input class="inp" @bind="Fragment.ValueType" 
+                           placeholder="如: System.String" />
+                    <div style="color: #999; font-size: 12px; margin-top: 4px;">
+                        组件值的CLR类型
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="margin-bottom: 16px;">
+            <label style="display: block; margin-bottom: 4px; font-weight: 500;">内容</label>
+            <textarea class="ta" @bind="Fragment.Content" 
+                      rows="3" 
+                      placeholder="组件的文本内容（可选）"></textarea>
+        </div>
+        
+        <div style="margin: 16px 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span style="font-weight: 500;">属性配置</span>
+                <button class="btn btn-primary btn-sm" @onclick="AddAttribute">添加属性</button>
+            </div>
+            
+            @if (Fragment.Attributes != null)
+            {
+                @for (int i = 0; i < Fragment.Attributes.Length; i++)
+                {
+                    var attr = Fragment.Attributes[i];
+                    var currentIndex = i;
+                    
+                    <HCard Title="@($"属性 {currentIndex + 1}")" Style="margin-bottom: 8px;">
+                        <button class="btn btn-text btn-sm" @onclick="() => RemoveAttribute(currentIndex)" style="color: red;">删除</button>
+                        <div class="row">
+                            <div class="col col-8">
+                                <div style="margin-bottom: 8px;">
+                                    <label style="display: block; margin-bottom: 4px; font-weight: 500;">属性名</label>
+                                    <input class="inp" @bind="attr.AttributeName" placeholder="属性名" />
+                                </div>
+                            </div>
+                            <div class="col col-8">
+                                <div style="margin-bottom: 8px;">
+                                    <label style="display: block; margin-bottom: 4px; font-weight: 500;">类型</label>
+                                    <input class="inp" @bind="attr.AttributeClrType" placeholder="System.String" />
+                                </div>
+                            </div>
+                            <div class="col col-8">
+                                <div style="margin-bottom: 8px;">
+                                    <label style="display: block; margin-bottom: 4px; font-weight: 500;">值</label>
+                                    <input class="inp" value="@GetAttrValueString(attr)"
+                                           @onchange="@(v => SetAttrValue(attr, v.Value?.ToString()))"
+                                           placeholder="属性值" />
+                                </div>
+                            </div>
+                        </div>
+                    </HCard>
+                }
+            }
+        </div>
+        
+        @if (Fragment.HasChildFragment)
+        {
+            <div style="margin: 16px 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="font-weight: 500;">子组件</span>
+                    <button class="btn btn-primary btn-sm" @onclick="AddChildFragment">添加子组件</button>
+                </div>
+                
+                @for (int i = 0; i < Fragment.ChildFragments.Length; i++)
+                {
+                    var childIndex = i;
+                    <HCard Title="@($"子组件 {i + 1}")" Style="margin-bottom: 8px;">
+                        <button class="btn btn-text btn-sm" @onclick="() => RemoveChildFragment(childIndex)" style="color: red;">删除</button>
+                        <ComponentFragmentEditor @bind-Fragment="@Fragment.ChildFragments[childIndex]" />
+                    </HCard>
+                }
+            </div>
+        }
+        else
+        {
+            <button class="btn btn-dashed" @onclick="AddChildFragment">添加子组件</button>
+        }
+    </HCard>
+</div>
+
+@code {
+    [Parameter]
+    public ComponentPartsFragmentSchema Fragment { get; set; }
+    
+    [Parameter]
+    public EventCallback<ComponentPartsFragmentSchema> FragmentChanged { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        if (Fragment == null)
+        {
+            Fragment = new ComponentPartsFragmentSchema
+            {
+                Attributes = new ComponentAttributeFragmentSchema[0],
+                ChildFragments = new ComponentPartsFragmentSchema[0]
+            };
+        }
+        
+        if (Fragment.Attributes == null)
+        {
+            Fragment.Attributes = new ComponentAttributeFragmentSchema[0];
+        }
+        
+        if (Fragment.ChildFragments == null)
+        {
+            Fragment.ChildFragments = new ComponentPartsFragmentSchema[0];
+        }
+    }
+
+    private async Task AddAttribute()
+    {
+        var attributes = Fragment.Attributes.ToList();
+        attributes.Add(new ComponentAttributeFragmentSchema
+        {
+            AttributeName = "",
+            AttributeClrType = "System.String",
+            AttributeValue = ""
+        });
+        Fragment.Attributes = attributes.ToArray();
+        await NotifyChange();
+    }
+
+    private async Task RemoveAttribute(int index)
+    {
+        if (index >= 0 && index < Fragment.Attributes.Length)
+        {
+            var attributes = Fragment.Attributes.ToList();
+            attributes.RemoveAt(index);
+            Fragment.Attributes = attributes.ToArray();
+            await NotifyChange();
+        }
+    }
+
+    private async Task AddChildFragment()
+    {
+        var children = Fragment.ChildFragments?.ToList() ?? new List<ComponentPartsFragmentSchema>();
+        children.Add(new ComponentPartsFragmentSchema
+        {
+            Attributes = new ComponentAttributeFragmentSchema[0],
+            ChildFragments = new ComponentPartsFragmentSchema[0]
+        });
+        Fragment.ChildFragments = children.ToArray();
+        await NotifyChange();
+    }
+
+    private async Task RemoveChildFragment(int index)
+    {
+        if (Fragment.ChildFragments != null && index >= 0 && index < Fragment.ChildFragments.Length)
+        {
+            var children = Fragment.ChildFragments.ToList();
+            children.RemoveAt(index);
+            Fragment.ChildFragments = children.ToArray();
+            await NotifyChange();
+        }
+    }
+
+    private async Task NotifyChange()
+    {
+        await FragmentChanged.InvokeAsync(Fragment);
+        StateHasChanged();
+    }
+
+    private static string GetAttrValueString(ComponentAttributeFragmentSchema attr)
+    {
+        return attr?.AttributeValue?.ToString() ?? string.Empty;
+    }
+
+    private static void SetAttrValue(ComponentAttributeFragmentSchema attr, string value)
+    {
+        if (attr == null) return;
+        attr.AttributeValue = value;
+    }
+}
+
+<style>
+    .component-fragment-editor .hcard-body {
+        padding: 12px;
+    }
+</style>

@@ -1,0 +1,239 @@
+@page "/account/profile"
+
+@layout AccountLayout
+@inject HttpClient HttpClient
+@inject IUserAppService UserService
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<PageTitle>账号信息</PageTitle>
+
+<HCard Title="账号信息">
+    @if (isLoading)
+    {
+        <div class="h-spin"><span class="h-spin-dot"></span><span class="h-spin-text">加载中...</span></div>
+    }
+    else if (user != null)
+    {
+        <table class="h-descriptions">
+            <tbody>
+                <tr>
+                    <th>用户名</th>
+                    <td>@user.UserName</td>
+                    <th>邮箱</th>
+                    <td>
+                        @user.Email
+                        @if (user.EmailConfirmed)
+                        {
+                            <span class="h-tag h-tag-green" style="margin-left: 8px;">已验证</span>
+                        }
+                        else
+                        {
+                            <span class="h-tag" style="margin-left: 8px;">未验证</span>
+                        }
+                    </td>
+                </tr>
+                <tr>
+                    <th>手机号</th>
+                    <td>
+                        @(string.IsNullOrEmpty(user.PhoneNumber) ? "-" : user.PhoneNumber)
+                        @if (!string.IsNullOrEmpty(user.PhoneNumber) && user.PhoneNumberConfirmed)
+                        {
+                            <span class="h-tag h-tag-green" style="margin-left: 8px;">已验证</span>
+                        }
+                        else if (!string.IsNullOrEmpty(user.PhoneNumber))
+                        {
+                            <span class="h-tag" style="margin-left: 8px;">未验证</span>
+                        }
+                    </td>
+                    <th>用户类型</th>
+                    <td>@GetUserTypeText(user.UserType)</td>
+                </tr>
+                <tr>
+                    <th>状态</th>
+                    <td>
+                        <span class="h-tag @(user.IsActive ? "h-tag-green" : "h-tag-red")">
+                            @(user.IsActive ? "正常" : "禁用")
+                        </span>
+                    </td>
+                    <th>注册时间</th>
+                    <td>@user.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                </tr>
+                <tr>
+                    <th>最后登录</th>
+                    <td>@(user.LastLoginAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? "-")</td>
+                    <th>备注</th>
+                    <td>@(string.IsNullOrEmpty(user.Remark) ? "-" : user.Remark)</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="h-divider">修改密码</div>
+
+        @if (!string.IsNullOrEmpty(passwordMessage))
+        {
+            <div class="h-alert @(passwordSuccess ? "h-alert-success" : "h-alert-error")">
+                <span class="h-alert-icon">@(passwordSuccess ? "✔" : "⚠")</span>
+                <span>@passwordMessage</span>
+            </div>
+        }
+
+        <EditForm Model="@changePasswordModel" OnValidSubmit="@HandleChangePassword" style="max-width: 480px;">
+            <div class="h-form-item h-form-horizontal">
+                <label class="h-form-label">新密码 <span class="h-required">*</span></label>
+                <div class="h-form-control">
+                    <input type="password" @bind-value="@changePasswordModel.NewPassword" placeholder="请输入新密码" class="h-input" />
+                </div>
+            </div>
+            <div class="h-form-item h-form-horizontal">
+                <label class="h-form-label">确认密码 <span class="h-required">*</span></label>
+                <div class="h-form-control">
+                    <input type="password" @bind-value="@changePasswordModel.ConfirmPassword" placeholder="请再次输入新密码" class="h-input" />
+                </div>
+            </div>
+            <div class="h-form-item h-form-horizontal">
+                <label class="h-form-label"></label>
+                <div class="h-form-control">
+                    <button type="submit" class="h-btn h-btn-primary" disabled="@isChangingPassword">
+                        @if (isChangingPassword)
+                        {
+                            <span class="h-btn-loading"></span>
+                        }
+                        修改密码
+                    </button>
+                </div>
+            </div>
+        </EditForm>
+
+        <div class="h-divider">绑定的第三方账号</div>
+
+        @if (user.ExternalAccounts.Any())
+        {
+            <HTable Loading="false">
+                <thead>
+                    <tr>
+                        <th>平台</th>
+                        <th>显示名称</th>
+                        <th>绑定时间</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var account in user.ExternalAccounts)
+                    {
+                        <tr>
+                            <td>@account.Provider</td>
+                            <td>@account.DisplayName</td>
+                            <td>@account.BoundAt.ToString("yyyy-MM-dd HH:mm")</td>
+                        </tr>
+                    }
+                </tbody>
+            </HTable>
+        }
+        else
+        {
+            <div class="h-empty">暂无绑定的第三方账号</div>
+        }
+    }
+    else if (!isLoading)
+    {
+        <div class="h-alert h-alert-error">
+            <span class="h-alert-icon">&#9888;</span>
+            <span>无法获取用户信息，请重新登录</span>
+        </div>
+    }
+</HCard>
+
+@code {
+    private UserDto? user;
+    private bool isLoading = true;
+    private bool isChangingPassword = false;
+    private ResetPasswordDto changePasswordModel = new();
+    private string passwordMessage = "";
+    private bool passwordSuccess;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCurrentUser();
+    }
+
+    private async Task LoadCurrentUser()
+    {
+        isLoading = true;
+        try
+        {
+            var response = await HttpClient.GetAsync("/api/app/account/current-user");
+            if (!response.IsSuccessStatusCode)
+                return;
+
+            var content = await response.Content.ReadAsStringAsync();
+            if (string.IsNullOrEmpty(content) || content == "null")
+                return;
+
+            user = content.FromJson<UserDto>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Profile] LoadCurrentUser error: {ex.Message}");
+            passwordMessage = $"加载用户信息失败：{ex.Message}";
+            passwordSuccess = false;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleChangePassword()
+    {
+        if (user == null) return;
+
+        if (string.IsNullOrWhiteSpace(changePasswordModel.NewPassword))
+        {
+            passwordMessage = "请输入新密码";
+            passwordSuccess = false;
+            return;
+        }
+
+        if (changePasswordModel.NewPassword != changePasswordModel.ConfirmPassword)
+        {
+            passwordMessage = "两次输入的密码不一致";
+            passwordSuccess = false;
+            return;
+        }
+
+        isChangingPassword = true;
+        passwordMessage = "";
+
+        try
+        {
+            await UserService.ResetPasswordAsync(user.Id, changePasswordModel);
+            passwordMessage = "密码修改成功";
+            passwordSuccess = true;
+            changePasswordModel = new ResetPasswordDto();
+        }
+        catch (ArgumentException ex)
+        {
+            passwordMessage = ex.Message;
+            passwordSuccess = false;
+        }
+        catch (Exception ex)
+        {
+            passwordMessage = $"修改密码失败：{ex.Message}";
+            passwordSuccess = false;
+        }
+        finally
+        {
+            isChangingPassword = false;
+        }
+    }
+
+    private string GetUserTypeText(UserType type)
+    {
+        return type switch
+        {
+            UserType.SuperAdmin => "超级管理员",
+            UserType.Admin => "管理员",
+            _ => "普通用户"
+        };
+    }
+}

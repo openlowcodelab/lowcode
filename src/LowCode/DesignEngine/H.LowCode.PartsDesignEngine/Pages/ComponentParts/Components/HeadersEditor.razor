@@ -1,0 +1,93 @@
+@namespace H.LowCode.PartsDesignEngine
+@inherits LowCodeComponentBase
+
+<div class="headers-editor">
+    @if (_headersList != null)
+    {
+        @for (int i = 0; i < _headersList.Count; i++)
+        {
+            var header = _headersList[i];
+            var currentIndex = i;
+            <div class="row" style="margin-bottom: 8px;">
+                <div class="col col-10">
+                    <input class="inp" @bind="header.Key" 
+                           @bind:after="@(() => OnHeaderChange(currentIndex, header.Key, header.Value))"
+                           placeholder="请求头名称" />
+                </div>
+                <div class="col col-12">
+                    <input class="inp" @bind="header.Value" 
+                           @bind:after="@(() => OnHeaderChange(currentIndex, header.Key, header.Value))"
+                           placeholder="请求头值" />
+                </div>
+                <div class="col col-2">
+                    <button class="btn btn-text btn-sm" @onclick="() => RemoveHeader(currentIndex)" style="color: red;">删除</button>
+                </div>
+            </div>
+        }
+    }
+    <button class="btn btn-dashed btn-sm btn-block" @onclick="AddHeader">
+        添加请求头
+    </button>
+</div>
+
+@code {
+    public class HeaderItem
+    {
+        public string Key { get; set; } = string.Empty;
+        public string Value { get; set; } = string.Empty;
+    }
+
+    [Parameter]
+    public Dictionary<string, string> Headers { get; set; }
+    
+    [Parameter]
+    public EventCallback<Dictionary<string, string>> HeadersChanged { get; set; }
+
+    private List<HeaderItem> _headersList = new();
+
+    protected override void OnParametersSet()
+    {
+        if (Headers != null)
+        {
+            _headersList = Headers.Select(x => new HeaderItem { Key = x.Key, Value = x.Value }).ToList();
+        }
+        else
+        {
+            _headersList = new List<HeaderItem>();
+        }
+    }
+
+    private async Task AddHeader()
+    {
+        _headersList.Add(new HeaderItem());
+        await NotifyChange();
+    }
+
+    private async Task RemoveHeader(int index)
+    {
+        if (index >= 0 && index < _headersList.Count)
+        {
+            _headersList.RemoveAt(index);
+            await NotifyChange();
+        }
+    }
+
+    private async Task OnHeaderChange(int index, string key, string value)
+    {
+        if (index >= 0 && index < _headersList.Count)
+        {
+            _headersList[index].Key = key;
+            _headersList[index].Value = value;
+            await NotifyChange();
+        }
+    }
+
+    private async Task NotifyChange()
+    {
+        var headers = _headersList
+            .Where(h => !string.IsNullOrWhiteSpace(h.Key))
+            .ToDictionary(h => h.Key, h => h.Value);
+        await HeadersChanged.InvokeAsync(headers);
+        StateHasChanged();
+    }
+}

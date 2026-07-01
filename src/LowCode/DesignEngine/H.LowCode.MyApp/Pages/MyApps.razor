@@ -1,0 +1,136 @@
+﻿@page "/designengine/myapps"
+@namespace H.LowCode.MyApp
+@inherits LowCodePageComponentBase
+@layout WorkbenchNavLayout
+
+@inject IAppApplicationService AppApplicationService
+
+<PageTitle>我的应用 - H.LowCode</PageTitle>
+
+<style>
+    .myapps .card-title {
+        cursor: pointer;
+    }
+
+    .myapps .card-desc {
+        color: #a2a3a5;
+        font-size: 12px;
+    }
+
+    .myapps .card-title-text {
+        color: #171a1d;
+        font-size: 16px;
+    }
+
+        .myapps .card-title-text:hover {
+            color: #40a9ff;
+        }
+</style>
+
+<div style="margin:-24px -24px 0px -24px; padding: 0 50px; background-size: 100% 80px;
+        background-image:url(_content/H.LowCode.MyApp/images/banner_myapps.png)">
+    <div style="width:80%; line-height:80px; margin:auto;">
+        <div style="display: flex; justify-content: space-between; margin: 0 0 8px 5px;">
+            <div style="width:500px;">
+                <span style="font-size: large; margin-right:20px;">XXX 你好!</span>
+                <span style="color:#c0baba;">你可以从这里开始创建应用～</span>
+            </div>
+            <div style="width:80px; margin-right:10px;">
+                <button class="btn btn-primary" @onclick="CreateApp">创建应用</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div style="width:80%; overflow: hidden; margin:auto; padding: 10px;">
+    <div style="display: flex; justify-content: space-between; margin: 0 0 8px 5px;">
+        <div style="text-align: left; width:500px;">
+            <div style="width: 200px;">
+                <input type="search" class="inp" placeholder="应用名称" />
+            </div>
+        </div>
+        <div style="line-height:32px; margin-right:10px;">
+            <select class="sel" style="width:100px">
+                <option value="all">全部</option>
+                <option value="published">已发布</option>
+                <option value="unpublished">未发布</option>
+            </select>
+        </div>
+    </div>
+
+    @if (_appList != null)
+    {
+        @foreach (var app in _appList)
+        {
+            <HCard Title="@app.Name" Description="@app.Description" Class="myapps" Style="float:left; width:300px; margin:5px;">
+                <div style="display:flex; gap:8px;">
+                    <a href="@($"/designengine/myapp/{app.Id}/pagemanager")" title="开发应用" target="_blank">&#x1F5A5;</a>
+                    <a href="@(string.IsNullOrEmpty(app.SiteUrl) ? "#" : $"{app.SiteUrl}/renderengine/app/{app.Id}/index")" title="访问应用" target="_blank">&#x1F310;</a>
+                    <a @onclick='() => EditApp(app.Id)' title="编辑">&#x270F;</a>
+                    <a href="@($"/designengine/myapp/{app.Id}/appsettings")" title="应用设置" target="_blank">&#x2699;</a>
+                </div>
+            </HCard>
+        }
+    }
+</div>
+
+<HModal Title="创建应用" Visible="@_createVisible" Width="1100" OnCancel='() => _createVisible = false'>
+    <AppCreateFromTemplate OnSubmit="ReloadApps"></AppCreateFromTemplate>
+</HModal>
+
+<HModal Title="编辑应用" Visible="@_editVisible" OnOk="OnConfirm" OnCancel='() => _editVisible = false'>
+    <AppForm AppSchema="_currentApp" OnSubmit="ReloadApps" @ref="@_appForm"></AppForm>
+</HModal>
+
+@code {
+    [PersistentState]
+    public IList<AppListModel> _appList { get; set; }
+
+    private AppPartsSchema _currentApp;
+
+    private bool _createVisible = false;
+    private bool _editVisible = false;
+    private AppForm _appForm;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        _appList = await LoadAppsAsync();
+    }
+
+    private async Task<IList<AppListModel>> LoadAppsAsync()
+    {
+        return await AppApplicationService.GetAppsAsync();
+    }
+
+    private async Task OnConfirm()
+    {
+        await _appForm.SubmitAsync();
+    }
+
+    private async void ReloadApps()
+    {
+        _createVisible = false;
+        _editVisible = false;
+        _appList = await LoadAppsAsync();
+
+        StateHasChanged();
+    }
+
+    private void CreateApp()
+    {
+        _currentApp = new()
+        {
+            Id = ShortIdGenerator.Generate()
+        };
+        _createVisible = true;
+        StateHasChanged();
+    }
+
+    private async Task EditApp(string id)
+    {
+        _currentApp = await AppApplicationService.GetByIdAsync(id);
+        _editVisible = true;
+        StateHasChanged();
+    }
+}

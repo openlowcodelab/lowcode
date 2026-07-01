@@ -1,0 +1,48 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+  <Import Project="..\..\..\common.props" />
+	
+  <PropertyGroup>
+    <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+  </PropertyGroup>
+	
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" />
+    <PackageReference Include="Volo.Abp.Autofac" />
+    <PackageReference Include="Volo.Abp.AspNetCore.Mvc" />
+    <PackageReference Include="Volo.Abp.MultiTenancy" />
+  </ItemGroup>
+	
+  <ItemGroup>
+    <!-- Client -->
+    <ProjectReference Include="..\H.AppLab.Host.All.Client\H.AppLab.Host.All.Client.csproj" />
+    <!-- DesignEngine -->
+    <ProjectReference Include="..\..\..\LowCode\DesignEngine\H.LowCode.DesignEngine.Application\H.LowCode.DesignEngine.Application.csproj" />
+    <ProjectReference Include="..\..\..\LowCode\DesignEngine\H.LowCode.DesignEngine.EntityFrameworkCore\H.LowCode.DesignEngine.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\..\..\LowCode\DesignEngine\H.LowCode.DesignEngine.Repository.JsonFile\H.LowCode.DesignEngine.Repository.JsonFile.csproj" />
+    <ProjectReference Include="..\..\..\LowCode\DesignEngine\H.LowCode.DesignEngine.Repository.RemoteService\H.LowCode.DesignEngine.Repository.RemoteService.csproj" />
+    <!-- RenderEngine -->
+    <ProjectReference Include="..\..\..\LowCode\RenderEngine\H.LowCode.RenderEngine.Application\H.LowCode.RenderEngine.Application.csproj" />
+    <ProjectReference Include="..\..\..\LowCode\RenderEngine\H.LowCode.RenderEngine.EntityFrameworkCore\H.LowCode.RenderEngine.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\..\..\LowCode\RenderEngine\H.LowCode.RenderEngine.Repository.JsonFile\H.LowCode.RenderEngine.Repository.JsonFile.csproj" />
+    <ProjectReference Include="..\..\..\LowCode\RenderEngine\H.LowCode.RenderEngine.Repository.RemoteService\H.LowCode.RenderEngine.Repository.RemoteService.csproj" />
+    <!-- Account -->
+    <ProjectReference Include="..\..\..\Services\Account\H.Account.Application\H.Account.Application.csproj" />
+    <!-- Assistant -->
+    <ProjectReference Include="..\..\..\Services\Assistant\H.Assistant.Application\H.Assistant.Application.csproj" />
+    <!-- MCP Servers -->
+    <ProjectReference Include="..\..\..\Services\Assistant\McpServers\YunXiaoMcpServer\H.YunXiaoMcpServer.csproj" />
+    <!-- Organization -->
+    <ProjectReference Include="..\..\..\Services\Organization\H.Organization.Application\H.Organization.Application.csproj" />
+    <!-- Approval -->
+    <ProjectReference Include="..\..\..\Services\Approval\H.Approval.Application\H.Approval.Application.csproj" />
+    <!-- AutoTest -->
+    <ProjectReference Include="..\..\..\Services\AutoTest\H.AutoTest.Application\H.AutoTest.Application.csproj" />
+	<!-- Portal -->
+    <ProjectReference Include="..\..\..\Services\Portal\H.Portal.Application\H.Portal.Application.csproj" />
+    <!-- SystemManagement -->
+    <ProjectReference Include="..\..\..\Services\SystemManagement\H.SystemManagement.Application\H.SystemManagement.Application.csproj" />
+    <ProjectReference Include="..\..\..\Services\SystemManagement\H.SystemManagement.EntityFrameworkCore\H.SystemManagement.EntityFrameworkCore.csproj" />
+    <!-- Enterprise -->
+    <ProjectReference Include="..\..\..\Services\Enterprise\H.Enterprise.Application\H.Enterprise.Application.csproj" />
+  </ItemGroup>
+</Project>

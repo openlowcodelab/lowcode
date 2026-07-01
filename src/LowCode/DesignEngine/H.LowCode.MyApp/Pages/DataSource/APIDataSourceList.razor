@@ -1,0 +1,210 @@
+﻿@namespace H.LowCode.MyApp
+@inherits LowCodeComponentBase
+
+@inject IDataSourceAppService DataSourceAppService
+
+<div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
+    <div style="width:250px;">
+        <input type="search" class="inp" placeholder="API 名称" />
+    </div>
+    <div style="width:80px; line-height:32px;">
+        <button class="btn btn-primary" @onclick="CreateAsync">新建API</button>
+    </div>
+</div>
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>名称</th>
+            <th>中文名</th>
+            <th>请求地址</th>
+            <th>修改人</th>
+            <th>修改时间</th>
+            <th>发布状态</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in _dataSourceList)
+        {
+            <tr>
+                <td>@item.Name</td>
+                <td>@item.DisplayName</td>
+                <td>@item.Extra</td>
+                <td>@item.ModifiedUser</td>
+                <td>@item.ModifiedTime?.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                <td>
+                    <label class="switch">
+                        <input type="checkbox" checked="@item.PublishStatus" @onchange='(e) => item.PublishStatus = (bool)(e.Value ?? false)' />
+                        <span class="slider"></span>
+                    </label>
+                </td>
+                <td>
+                    <div class="space">
+                        <a @onclick='() => EditAsync(item.Id)'>编辑</a>
+                        <a @onclick='() => DeleteAsync(item.Id)' style="color:#ff4d4f">删除</a>
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<HModal Title="新建 API" Visible="@_visible" OnOk="OnConfirmAsync" OnCancel='() => _visible = false' Width="1100">
+    <form>
+        <div class="form-item">
+            <label>API 名称</label>
+            <input class="inp" @bind="_dataSource.Name" />
+        </div>
+        <div class="form-item">
+            <label>API 中文名</label>
+            <input class="inp" @bind="_dataSource.DisplayName" />
+        </div>
+        <div class="form-item">
+            <label>API 参数</label>
+            <APIDataSource DataSource="_dataSource.API"></APIDataSource>
+        </div>
+        <div class="form-item">
+            <label>排序</label>
+            <input type="number" class="inp" @bind="_dataSource.Order" min="0" />
+        </div>
+    </form>
+</HModal>
+
+@code {
+    [Parameter]
+    public string AppId { get; set; }
+
+    [PersistentState]
+    public IList<DataSourceListModel> _dataSourceList { get; set; }
+
+    int _pageIndex = 1;
+    int _pageSize = 10;
+    int _total = 0;
+
+    private bool _visible;
+    private string _modalTitle;
+    private DataSourceSchema _dataSource;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        _total = 50;
+        _dataSourceList = await LoadDataSourcesAsync(1, 50);
+    }
+
+    private async Task<IList<DataSourceListModel>> LoadDataSourcesAsync(int pageIndex, int pageSize)
+    {
+        return await DataSourceAppService.GetListAsync(AppId, new() { DataSourceType = ComponentDataSourceTypeEnum.API });
+    }
+
+    private async Task<DataSourceSchema> GetDataSourceAsync(string dataSourceId)
+    {
+        var dataSourceSchema = await DataSourceAppService.GetByIdAsync(AppId, dataSourceId);
+        if (dataSourceSchema == null)
+            throw new NullReferenceException(nameof(dataSourceSchema));
+
+        if (dataSourceSchema.API == null)
+            dataSourceSchema.API = new();
+
+        return dataSourceSchema;
+    }
+
+    private async Task OnConfirmAsync()
+    {
+        try
+        {
+            await SaveDataSourceSchemaAsync();
+            _visible = false;
+            await Message.SuccessAsync("保存成功！");
+        }
+        catch (Exception ex)
+        {
+            _visible = true;
+            await Message.ErrorAsync($"保存失败: {ex.Message}");
+        }
+    }
+
+    private async Task OnFinishAsync()
+    {
+        _dataSourceList = await LoadDataSourcesAsync(1, 50);
+    }
+
+    private async Task SaveDataSourceSchemaAsync()
+    {
+        _dataSource.API.Queries = _dataSource.API.Queries
+            .Where(t => !t.Name.IsNullOrEmpty() && !t.Type.IsNullOrEmpty())
+            .ToList();
+        _dataSource.API.Headers = _dataSource.API.Headers
+            .Where(t => !t.Name.IsNullOrEmpty() && !t.Type.IsNullOrEmpty())
+            .ToList();
+
+        await DataSourceAppService.SaveAsync(AppId, _dataSource);
+    }
+
+    private async Task CreateAsync()
+    {
+        await Task.Delay(1);
+        _dataSource = new()
+        {
+            AppId = AppId,
+            Id = ShortIdGenerator.Generate(),
+            Name = string.Empty,
+            DataSourceType = ComponentDataSourceTypeEnum.API,
+            API = new()
+        };
+
+        _visible = true;
+        _modalTitle = "新建 API";
+
+        StateHasChanged();
+    }
+
+    private async Task EditAsync(string id)
+    {
+        await Task.Delay(1);
+        _visible = true;
+        _modalTitle = "编辑 API";
+        _dataSource = await GetDataSourceAsync(id);
+
+        StateHasChanged();
+    }
+
+    private async Task DeleteAsync(string id)
+    {
+        await DataSourceAppService.DeleteAsync(AppId, id);
+        
+        await Message.SuccessAsync("删除成功！");
+    }
+
+    private async Task PublishAsync(string id)
+    {
+        await Task.Delay(1);
+    }
+
+    #region QueryParam
+    private async Task CreateQueryParamAsync()
+    {
+        await Task.Delay(1);
+
+        APIParamSchema newQuery = new() { Id = ShortIdGenerator.Generate() };
+
+        _dataSource.API.Queries.Add(newQuery);
+
+        //StateHasChanged();
+    }
+
+    private async Task SaveQueryParamAsync(string id)
+    {
+        await Task.Delay(1);
+        
+        StateHasChanged();
+    }
+
+    private async Task DeleteQueryParamAsync(string id)
+    {
+        await Task.Delay(1);
+
+    }
+    #endregion
+}

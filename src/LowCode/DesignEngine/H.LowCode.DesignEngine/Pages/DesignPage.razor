@@ -1,0 +1,145 @@
+@page "/designengine/designer/{AppId}/{PageId}"
+@namespace H.LowCode.DesignEngine
+@inherits LowCodePageComponentBase
+@layout DesignEngineLayout
+
+@inject IPageAppService PageAppService
+@inject DragDropStateService DragDropStateService
+
+<PageTitle>@($"{_pageCascadingModel.PageName} - 页面设计器")</PageTitle>
+
+<link href="@Assets["_content/H.LowCode.DesignEngine/designengine.css"]" rel="stylesheet" />
+
+<CascadingValue Value="@_pageCascadingModel" Name="pageCascading">
+    <div class="designpage layout" style="padding:0 2px; background-color: #f7f7f7;">
+        <header style="background-color: white; padding:0 20px;">
+            <div style="float:left;">
+                <a href="javascript:void(0)"> @("<") 返回 </a>
+            </div>
+            @*<div style="text-align:center;">
+            <Menu Theme="MenuTheme.Light" Mode="MenuMode.Horizontal" DefaultSelectedKeys=@(new[]{"2"})>
+            <MenuItem Key="1">PC</MenuItem>
+            <MenuItem Key="2">Mobile</MenuItem>
+            </Menu>
+            </div>*@
+            <div style="float:right;">
+                <button class="btn" type="button">预览</button>
+                <button class="btn btn-primary" type="button" onclick="() => SavePageSchemaAsync()">保存</button>
+            </div>
+        </header>
+        <div class="layout">
+            <aside style="min-width: 200px; flex: auto; max-width: max-content;">
+                <ComponentPanel></ComponentPanel>
+            </aside>
+            <div class="layout">
+                <main class="designpage">
+                    <DesignPanel Components="@_pageSchema.Components"></DesignPanel>
+                </main>
+            </div>
+            <aside class="designpage" style="flex: auto; max-width: max-content; min-width: 250px;">
+                <SettingPanel Page="_pageSchema"></SettingPanel>
+            </aside>
+        </div>
+    </div>
+</CascadingValue>
+
+@code
+{
+    [Parameter]
+    public string PageId { get; set; }
+
+    [PersistentState]
+    public PagePartsSchema _pageSchema { get; set; }
+
+    private PageCascadingModel _pageCascadingModel;
+    private bool _isNewPage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        _pageCascadingModel = new() { AppId = AppId, PageId = PageId, PageName = "..." };
+
+        _pageSchema = await LoadPageSchemaAsync();
+
+        SetPageCascadingModel(_pageSchema);
+    }
+
+    private async Task<PagePartsSchema> LoadPageSchemaAsync()
+    {
+        if (string.Equals("_new", PageId))
+        {
+            _isNewPage = true;
+            var newPage = new PagePartsSchema() { AppId = AppId, Name = "newpage" };
+            PageId = newPage.Id;
+
+            DragDropStateService.SetPage(AppId, newPage);
+            return newPage;
+        }
+
+        var pageSchema = await PageAppService.GetByIdWithDefineAsync(AppId, PageId);
+        DragDropStateService.SetPage(AppId, pageSchema);
+
+        return pageSchema;
+    }
+
+    private async Task SavePageSchemaAsync()
+    {
+        PagePartsSchema pageSchema = CreatePageSchema();
+        if (pageSchema.Components.Count == 0)
+        {
+            await Message.WarningAsync("没有任何组件，禁止保存！");
+            return;
+        }
+
+        try
+        {
+            var isSuccess = await PageAppService.SaveAsync(pageSchema);
+            if (isSuccess)
+            {
+                if (_isNewPage)
+                {
+                    _isNewPage = false;
+                    base.NavigateTo($"/designengine/designer/{pageSchema.AppId}/{pageSchema.Id}");
+                }
+
+                await Message.SuccessAsync("保存成功");
+            }
+            else
+            {
+                await Message.ErrorAsync($"保存失败");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, $"保存页面失败，{ex.Message}");
+            await Message.ErrorAsync($"保存失败");
+        }
+    }
+
+    private PagePartsSchema CreatePageSchema()
+    {
+        if (_pageSchema == null)
+            throw new NullReferenceException(nameof(_pageSchema));
+
+        var pageAllComponents = DragDropStateService.GetRootComponent(_pageSchema.AppId, _pageSchema.Id).Childrens;
+
+        _pageSchema.Components = pageAllComponents;
+        return _pageSchema;
+    }
+
+    private void SetPageCascadingModel(PagePartsSchema pageSchema)
+    {
+        _pageCascadingModel.PageName = pageSchema.Name;
+        _pageCascadingModel.PageLayout = pageSchema.PageProperty.PageLayout;
+    }
+
+    /// <summary>
+    /// 用于 PagePartsSchemaState 的 key（每个页面独立缓存）
+    /// </summary>
+    /// <returns></returns>
+    public override string ToString()
+    {
+        return $"{base.ToString()}-{AppId}-{PageId}";
+    }
+}

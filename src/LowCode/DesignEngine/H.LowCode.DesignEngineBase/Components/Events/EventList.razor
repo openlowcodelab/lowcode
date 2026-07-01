@@ -1,0 +1,279 @@
+﻿@namespace H.LowCode.DesignEngineBase
+@inherits LowCodeComponentBase
+
+@inject IPageAppService PageAppService
+@inject IComponentPartsAppService ComponentPartsAppService
+
+<div style="height: 550px; display: flex;">
+    <aside style="background:#ffffff">
+        <ul class="tree" style="height:100%; border:solid 1px #e8e8e8; padding-top:5px; margin-right:5px;">
+            @foreach(var ev in Events)
+            {
+                <li class='@(_currentEvent?.EventName == ev.EventName ? "tree-node selected" : "tree-node")' @onclick='() => { _currentEvent = ev; }'>@ev.EventName</li>
+            }
+        </ul>
+    </aside>
+    <main style="background:#ffffff; flex: 1;">
+        <div class="propertysetting-item">
+            <label>事件对象：</label>
+            <div class="radio-group">
+                <label class="radio-label"><input type="radio" name="handler-type" checked='@(_currentEvent.EventHandlerType == EventTargetTypeEnum.None)' @onchange='() => _currentEvent.EventHandlerType = EventTargetTypeEnum.None' /> 无</label>
+                <label class="radio-label"><input type="radio" name="handler-type" checked='@(_currentEvent.EventHandlerType == EventTargetTypeEnum.Page)' @onchange='() => _currentEvent.EventHandlerType = EventTargetTypeEnum.Page' /> 页面</label>
+                <label class="radio-label"><input type="radio" name="handler-type" checked='@(_currentEvent.EventHandlerType == EventTargetTypeEnum.Component)' @onchange='() => _currentEvent.EventHandlerType = EventTargetTypeEnum.Component' /> 组件</label>
+                <label class="radio-label"><input type="radio" name="handler-type" checked='@(_currentEvent.EventHandlerType == EventTargetTypeEnum.Data)' @onchange='() => _currentEvent.EventHandlerType = EventTargetTypeEnum.Data' /> 数据</label>
+                <label class="radio-label"><input type="radio" name="handler-type" checked='@(_currentEvent.EventHandlerType == EventTargetTypeEnum.Custom)' @onchange='() => _currentEvent.EventHandlerType = EventTargetTypeEnum.Custom' /> 自定义</label>
+            </div>
+        </div>
+
+        @if (_currentEvent.EventHandlerType == EventTargetTypeEnum.Page)
+        {
+            <div class="propertysetting-item">
+                <label>选择页面：</label>
+                <select class="sel" @bind="_currentEvent.EventTargetId">
+                    <option value="">-- 请选择 --</option>
+                    @foreach (var p in _pageList)
+                    {
+                        <option value="@p.PageId">@p.PageName</option>
+                    }
+                </select>
+            </div>
+            <div class="propertysetting-item">
+                <label>选择操作：</label>
+                <div class="radio-group">
+                    <label class="radio-label"><input type="radio" name="page-action" checked='@(_currentEvent.EventTargetAction == "11")' @onchange='() => _currentEvent.EventTargetAction = "11"' /> 刷新</label>
+                    <label class="radio-label"><input type="radio" name="page-action" checked='@(_currentEvent.EventTargetAction == "12")' @onchange='() => _currentEvent.EventTargetAction = "12"' /> 弹窗</label>
+                    <label class="radio-label"><input type="radio" name="page-action" checked='@(_currentEvent.EventTargetAction == "13")' @onchange='() => _currentEvent.EventTargetAction = "13"' /> 当前页</label>
+                    <label class="radio-label"><input type="radio" name="page-action" checked='@(_currentEvent.EventTargetAction == "14")' @onchange='() => _currentEvent.EventTargetAction = "14"' /> 新标签页</label>
+                </div>
+            </div>
+            <div class="propertysetting-item">
+                <label>设置参数：</label>
+                <div style="margin-top: 10px;">
+                    <label style="font-size: 12px; color: #666;">固定参数：</label>
+                    @if (_currentEvent.EventArgs == null)
+                    {
+                        _currentEvent.EventArgs = new Dictionary<string, string>();
+                    }
+                    @foreach (var arg in _currentEvent.EventArgs.ToList())
+                    {
+                        var currentKey = arg.Key;
+                        var currentValue = arg.Value;
+                        <div style="display: flex; margin-bottom: 5px; align-items: center;">
+                            <input class="inp" @bind="currentKey" @bind:after='() => UpdateEventArgKey(arg.Key, currentKey)' placeholder="参数名" style="width: 100px; margin-right: 5px;" />
+                            <input class="inp" @bind="currentValue" @bind:after='() => UpdateEventArgValue(currentKey, currentValue)' placeholder="参数值" style="width: 120px; margin-right: 5px;" />
+                            <button class="btn btn-text btn-sm" @onclick='() => RemoveEventArg(currentKey)'>删除</button>
+                        </div>
+                    }
+                    <button class="btn btn-dashed btn-sm" @onclick="AddEventArg">添加固定参数</button>
+                </div>
+                <div style="margin-top: 15px;">
+                    <label style="font-size: 12px; color: #666;">行数据参数映射：</label>
+                    @if (_currentEvent.RowDataParams == null)
+                    {
+                        _currentEvent.RowDataParams = new Dictionary<string, string>();
+                    }
+                    @foreach (var param in _currentEvent.RowDataParams.ToList())
+                    {
+                        var currentKey = param.Key;
+                        var currentValue = param.Value;
+                        <div style="display: flex; margin-bottom: 5px; align-items: center;">
+                            <input class="inp" @bind="currentKey" @bind:after='() => UpdateRowDataParamKey(param.Key, currentKey)' placeholder="URL参数名" style="width: 100px; margin-right: 5px;" />
+                            <input class="inp" @bind="currentValue" @bind:after='() => UpdateRowDataParamValue(currentKey, currentValue)' placeholder="行数据字段名" style="width: 120px; margin-right: 5px;" />
+                            <button class="btn btn-text btn-sm" @onclick='() => RemoveRowDataParam(currentKey)'>删除</button>
+                        </div>
+                    }
+                    <button class="btn btn-dashed btn-sm" @onclick="AddRowDataParam">添加行数据参数</button>
+                </div>
+            </div>
+        }
+        else if (_currentEvent.EventHandlerType == EventTargetTypeEnum.Component)
+        {
+            <div class="propertysetting-item">
+                <label>选择组件：</label>
+                <select class="sel" @bind="_currentEvent.EventTargetId" @bind:after='() => { var comp = _componentList.FirstOrDefault(c => c.Id == _currentEvent.EventTargetId); if (comp != null) { var _ = OnComponentSelectedItemChangedHandler(comp); } }'>
+                    <option value="">-- 请选择 --</option>
+                    @foreach (var comp in _componentList)
+                    {
+                        <option value="@comp.Id">@comp.Label</option>
+                    }
+                </select>
+            </div>
+            <div class="propertysetting-item">
+                <label>选择操作：</label>
+                <div class="radio-group">
+                    @foreach (var eventAction in _componentEventTargetActions)
+                    {
+                        <label class="radio-label"><input type="radio" name="comp-action" checked='@(_currentEvent.EventTargetAction == eventAction.EventName)' @onchange='() => _currentEvent.EventTargetAction = eventAction.EventName' /> @eventAction.EventDisplayName</label>
+                    }
+                </div>
+            </div>
+        }
+        else if (_currentEvent.EventHandlerType == EventTargetTypeEnum.Data)
+        {
+            <div class="propertysetting-item">
+                <label>选择操作：</label>
+                <div class="radio-group">
+                    <label class="radio-label"><input type="radio" name="data-action" checked='@(_currentEvent.EventDataActionType == EventDataActionTypeEnum.EditRow)' @onchange='() => _currentEvent.EventDataActionType = EventDataActionTypeEnum.EditRow' /> 编辑行</label>
+                    <label class="radio-label"><input type="radio" name="data-action" checked='@(_currentEvent.EventDataActionType == EventDataActionTypeEnum.DeleteRow)' @onchange='() => _currentEvent.EventDataActionType = EventDataActionTypeEnum.DeleteRow' /> 删除行</label>
+                    <label class="radio-label"><input type="radio" name="data-action" checked='@(_currentEvent.EventDataActionType == EventDataActionTypeEnum.SaveRow)' @onchange='() => _currentEvent.EventDataActionType = EventDataActionTypeEnum.SaveRow' /> 保存行</label>
+                    <label class="radio-label"><input type="radio" name="data-action" checked='@(_currentEvent.EventDataActionType == EventDataActionTypeEnum.CancelEdit)' @onchange='() => _currentEvent.EventDataActionType = EventDataActionTypeEnum.CancelEdit' /> 取消编辑</label>
+                    <label class="radio-label"><input type="radio" name="data-action" checked='@(_currentEvent.EventDataActionType == EventDataActionTypeEnum.AddRow)' @onchange='() => _currentEvent.EventDataActionType = EventDataActionTypeEnum.AddRow' /> 添加行</label>
+                    <label class="radio-label"><input type="radio" name="data-action" checked='@(_currentEvent.EventDataActionType == EventDataActionTypeEnum.RefreshData)' @onchange='() => _currentEvent.EventDataActionType = EventDataActionTypeEnum.RefreshData' /> 刷新数据</label>
+                </div>
+            </div>
+        }
+        else if (_currentEvent.EventHandlerType == EventTargetTypeEnum.Custom)
+        {
+            <div class="propertysetting-item">
+                <label>语言：</label>
+                <div class="radio-group">
+                    <label class="radio-label"><input type="radio" name="custom-lang" checked='@(_currentEvent.EventCustomLanguage == EventCustomLanguageEnum.JavaScript)' @onchange='() => _currentEvent.EventCustomLanguage = EventCustomLanguageEnum.JavaScript' /> JavaScript</label>
+                    <label class="radio-label"><input type="radio" name="custom-lang" checked='@(_currentEvent.EventCustomLanguage == EventCustomLanguageEnum.Python)' @onchange='() => _currentEvent.EventCustomLanguage = EventCustomLanguageEnum.Python' /> Python</label>
+                    <label class="radio-label"><input type="radio" name="custom-lang" checked='@(_currentEvent.EventCustomLanguage == EventCustomLanguageEnum.CSharp)' @onchange='() => _currentEvent.EventCustomLanguage = EventCustomLanguageEnum.CSharp' /> C#</label>
+                </div>
+            </div>
+            <div class="propertysetting-item" style="height:463px;">
+                <textarea class="ta" @bind="_currentEvent.EventCustomScript" style="height:100%;"></textarea>
+            </div>
+        }
+    </main>
+</div>
+
+@code {
+    [Parameter]
+    public IList<EventSchema> Events { get; set; }
+
+    [CascadingParameter(Name = "pageCascading")]
+    public PageCascadingModel PageCascading { get; set; }
+
+    private string _firstNodeKey;
+    private EventSchema _currentEvent = new();
+
+    private PageListModel[] _pageList;
+    private ComponentListModel[] _componentList;
+    private EventConsumeSchema[] _componentEventTargetActions = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        InitEvents();
+        await LoadPagesAsync();
+        await LoadComponentsAsync();
+    }
+
+    private void InitEvents()
+    {
+        if (Events == null)
+        {
+            Events = [];
+        }
+
+        _firstNodeKey = Events.FirstOrDefault()?.EventName ?? string.Empty;
+    }
+
+    private async Task LoadPagesAsync()
+    {
+        var result = await PageAppService.GetListAsync(PageCascading.AppId);
+        _pageList = result?.ToArray() ?? [];
+    }
+
+    private async Task LoadComponentsAsync()
+    {
+        var result = await PageAppService.GetByIdAsync(PageCascading.AppId, PageCascading.PageId);
+        _componentList = result?.Components
+            ?.Select(t =>
+                new ComponentListModel()
+                    {
+                        Id = t.Id,
+                        Name = t.Name,
+                        Label = t.Label,
+                    })?.ToArray()
+            ?? [];
+    }
+
+    private async Task OnComponentSelectedItemChangedHandler(ComponentListModel comp)
+    {
+        await LoadComponentEventTargetActionsAsync(comp.Id);
+    }
+
+    private async Task LoadComponentEventTargetActionsAsync(string componentId)
+    {
+        var component = await PageAppService.GetPageComponentAsync(PageCascading.AppId, PageCascading.PageId, componentId);
+        _componentEventTargetActions = component?.EventConsumes?.ToArray() ?? [];
+    }
+
+    private void AddEventArg()
+    {
+        if (_currentEvent.EventArgs == null)
+        {
+            _currentEvent.EventArgs = new Dictionary<string, string>();
+        }
+        
+        var newKey = $"param{_currentEvent.EventArgs.Count + 1}";
+        _currentEvent.EventArgs[newKey] = "";
+    }
+
+    private void RemoveEventArg(string key)
+    {
+        if (_currentEvent.EventArgs != null && _currentEvent.EventArgs.ContainsKey(key))
+        {
+            _currentEvent.EventArgs.Remove(key);
+        }
+    }
+
+    private void AddRowDataParam()
+    {
+        if (_currentEvent.RowDataParams == null)
+        {
+            _currentEvent.RowDataParams = new Dictionary<string, string>();
+        }
+        
+        var newKey = $"param{_currentEvent.RowDataParams.Count + 1}";
+        _currentEvent.RowDataParams[newKey] = "";
+    }
+
+    private void RemoveRowDataParam(string key)
+    {
+        if (_currentEvent.RowDataParams != null && _currentEvent.RowDataParams.ContainsKey(key))
+        {
+            _currentEvent.RowDataParams.Remove(key);
+        }
+    }
+
+    private void UpdateEventArgKey(string oldKey, string newKey)
+    {
+        if (_currentEvent.EventArgs != null && _currentEvent.EventArgs.ContainsKey(oldKey) && !string.IsNullOrEmpty(newKey) && newKey != oldKey)
+        {
+            var value = _currentEvent.EventArgs[oldKey];
+            _currentEvent.EventArgs.Remove(oldKey);
+            _currentEvent.EventArgs[newKey] = value;
+        }
+    }
+
+    private void UpdateEventArgValue(string key, string value)
+    {
+        if (_currentEvent.EventArgs != null && _currentEvent.EventArgs.ContainsKey(key))
+        {
+            _currentEvent.EventArgs[key] = value ?? "";
+        }
+    }
+
+    private void UpdateRowDataParamKey(string oldKey, string newKey)
+    {
+        if (_currentEvent.RowDataParams != null && _currentEvent.RowDataParams.ContainsKey(oldKey) && !string.IsNullOrEmpty(newKey) && newKey != oldKey)
+        {
+            var value = _currentEvent.RowDataParams[oldKey];
+            _currentEvent.RowDataParams.Remove(oldKey);
+            _currentEvent.RowDataParams[newKey] = value;
+        }
+    }
+
+    private void UpdateRowDataParamValue(string key, string value)
+    {
+        if (_currentEvent.RowDataParams != null && _currentEvent.RowDataParams.ContainsKey(key))
+        {
+            _currentEvent.RowDataParams[key] = value ?? "";
+        }
+    }
+}

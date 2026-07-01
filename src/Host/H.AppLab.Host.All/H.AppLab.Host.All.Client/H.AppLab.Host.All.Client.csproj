@@ -1,0 +1,57 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+  <Import Project="..\..\..\common.props" />
+  <PropertyGroup>
+    <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
+    <StaticWebAssetProjectMode>Default</StaticWebAssetProjectMode>
+    <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+  </PropertyGroup>
+  <!-- Release 模式启用 AOT 编译，显著减少 WASM 启动时间 -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <RunAOTCompilation>true</RunAOTCompilation>
+  </PropertyGroup>
+  <!-- 延迟加载: 这些程序集不在启动时下载，而是导航到对应路由时按需加载 -->
+  <!-- 注意: 被 ABP [DependsOn] 引用的模块不能懒加载，否则启动时报错 -->
+  <ItemGroup>
+    <BlazorWebAssemblyLazyLoad Include="H.Organization.Web.dll" />
+    <BlazorWebAssemblyLazyLoad Include="H.Approval.Web.dll" />
+    <BlazorWebAssemblyLazyLoad Include="H.AutoTest.Web.dll" />
+    <BlazorWebAssemblyLazyLoad Include="H.SystemManagement.Web.dll" />
+    <BlazorWebAssemblyLazyLoad Include="H.Account.Web.dll" />
+    <BlazorWebAssemblyLazyLoad Include="H.Assistant.Web.dll" />
+    <BlazorWebAssemblyLazyLoad Include="H.Enterprise.Web.dll" />
+    <BlazorWebAssemblyLazyLoad Include="H.LowCode.Workbench.dll" />
+    <BlazorWebAssemblyLazyLoad Include="H.LowCode.DesignEngine.dll" />
+    <BlazorWebAssemblyLazyLoad Include="H.LowCode.MyApp.dll" />
+    <BlazorWebAssemblyLazyLoad Include="H.LowCode.PartsDesignEngine.dll" />
+    <BlazorWebAssemblyLazyLoad Include="H.LowCode.Themes.AntBlazor.dll" />
+    <BlazorWebAssemblyLazyLoad Include="H.LowCode.RenderEngine.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Volo.Abp.AspNetCore.Components.WebAssembly" />
+    <PackageReference Include="Volo.Abp.Autofac.WebAssembly" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Shared and Utils -->
+    <ProjectReference Include="..\..\..\Components\AppDrawer\H.AppDrawer.Components\H.AppDrawer.Components.csproj" />
+    <!-- Portal -->
+    <ProjectReference Include="..\..\..\Services\Portal\H.Portal.Web\H.Portal.Web.csproj" />
+    <!-- Account -->
+    <ProjectReference Include="..\..\..\Services\Account\H.Account.Web\H.Account.Web.csproj" />
+    <!-- Organization -->
+    <ProjectReference Include="..\..\..\Services\Organization\H.Organization.Web\H.Organization.Web.csproj" />
+    <!-- DesignEngine -->
+    <ProjectReference Include="..\..\..\LowCode\DesignEngine\H.LowCode.Workbench\H.LowCode.Workbench.csproj" />
+    <!-- RenderEngine -->
+    <ProjectReference Include="..\..\..\LowCode\RenderEngine\H.LowCode.Themes.AntBlazor\H.LowCode.Themes.AntBlazor.csproj" />
+    <!-- Approval -->
+    <ProjectReference Include="..\..\..\Services\Approval\H.Approval.Web\H.Approval.Web.csproj" />
+    <!-- AutoTest -->
+    <ProjectReference Include="..\..\..\Services\AutoTest\H.AutoTest.Web\H.AutoTest.Web.csproj" />
+    <!-- SystemManagement -->
+    <ProjectReference Include="..\..\..\Services\SystemManagement\H.SystemManagement.Web\H.SystemManagement.Web.csproj" />
+    <!-- Assistant -->
+    <ProjectReference Include="..\..\..\Services\Assistant\H.Assistant.Web\H.Assistant.Web.csproj" />
+    <!-- Enterprise -->
+    <ProjectReference Include="..\..\..\Services\Enterprise\H.Enterprise.Web\H.Enterprise.Web.csproj" />
+  </ItemGroup>
+</Project>

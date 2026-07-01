@@ -1,0 +1,18 @@
+@namespace H.AutoTest.Web
+
+@inherits LayoutComponentBase
+
+<DefaultLayoutComponent 
+    AppName="自动化测试" 
+    MenuItems="@MenuItems">
+    @Body
+</DefaultLayoutComponent>
+
+@code {
+    private static List<AppMenuItem> MenuItems => new()
+    {
+        new AppMenuItem { Name = "首页", Url = "/autotest", Icon = "🏠" },
+        new AppMenuItem { Name = "项目管理", Url = "/autotest/projects", Icon = "📁" },
+        new AppMenuItem { Name = "测试用例", Url = "/autotest/project-cases", Icon = "📋" }
+    };
+}

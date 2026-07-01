@@ -1,0 +1,241 @@
+@namespace H.LowCode.DesignEngine
+@inherits LowCodeComponentBase
+@inject IDataSourceAppService DataSourceAppService
+
+@if (Page != null)
+{
+    <div class="pagesetting-item">
+        <label>布局：</label>
+        <div class="radio-group">
+            <label class="radio-label"><input type="radio" name="pageLayout" value="1" checked="@(Page.PageProperty.PageLayout == 1)" @onchange='() => { Page.PageProperty.PageLayout = 1; OnLayoutChange(1); }' /> 一列</label>
+            <label class="radio-label"><input type="radio" name="pageLayout" value="2" checked="@(Page.PageProperty.PageLayout == 2)" @onchange='() => { Page.PageProperty.PageLayout = 2; OnLayoutChange(2); }' /> 两列</label>
+            <label class="radio-label"><input type="radio" name="pageLayout" value="3" checked="@(Page.PageProperty.PageLayout == 3)" @onchange='() => { Page.PageProperty.PageLayout = 3; OnLayoutChange(3); }' /> 三列</label>
+            <label class="radio-label"><input type="radio" name="pageLayout" value="4" checked="@(Page.PageProperty.PageLayout == 4)" @onchange='() => { Page.PageProperty.PageLayout = 4; OnLayoutChange(4); }' /> 四列</label>
+        </div>
+    </div>
+
+    @* 表单页 *@
+    @if (Page.PageType == PageTypeEnum.Form)
+    {
+        <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:30px 0 10px;">数据源</div>
+        <div class="propertysetting-item">
+            <label>类型：</label>
+            <div class="radio-group">
+    <label class="radio-label"><input type="radio" name="datasource-type" checked='@(Page.DataSource.DataSourceType == PageDataSourceTypeEnum.None)' @onchange='() => Page.DataSource.DataSourceType = PageDataSourceTypeEnum.None' /> 无</label>
+    <label class="radio-label"><input type="radio" name="datasource-type" checked='@(Page.DataSource.DataSourceType == PageDataSourceTypeEnum.DB)' @onchange='() => Page.DataSource.DataSourceType = PageDataSourceTypeEnum.DB' /> 数据表</label>
+    <label class="radio-label"><input type="radio" name="datasource-type" checked='@(Page.DataSource.DataSourceType == PageDataSourceTypeEnum.API)' @onchange='() => Page.DataSource.DataSourceType = PageDataSourceTypeEnum.API' /> API</label>
+</div>
+        </div>
+
+        @if (Page.DataSource.DataSourceType == PageDataSourceTypeEnum.DB)
+        {
+            <div class="propertysetting-item">
+                <label>表：</label>
+                <select class="sel" @bind="@_selectedDbDataSourceId" @bind:after="OnDbDataSourceSelected" style="width: 100%;">
+                    <option value="">请选择数据表</option>
+                    @foreach (var ds in _dbDataSources)
+                    {
+                        <option value="@ds.Id">@ds.DisplayName</option>
+                    }
+                </select>
+            </div>
+            @if (!string.IsNullOrEmpty(_selectedDbDataSourceId))
+            {
+                <div class="propertysetting-item">
+                    <label>表信息：</label>
+                    <div style="padding: 8px; background: #f5f5f5; border-radius: 4px;">
+                        <div><strong>表名：</strong>@_selectedDbDataSource?.Name</div>
+                        <div><strong>中文名：</strong>@_selectedDbDataSource?.DisplayName</div>
+                        @if (!string.IsNullOrEmpty(_selectedDbDataSource?.Description))
+                        {
+                            <div><strong>描述：</strong>@_selectedDbDataSource.Description</div>
+                        }
+                    </div>
+                </div>
+            }
+        }
+        else if (Page.DataSource.DataSourceType == PageDataSourceTypeEnum.API)
+        {
+            <div class="propertysetting-item">
+                <label>API：</label>
+                <select class="sel" @bind="@_selectedApiDataSourceId" @bind:after="OnApiDataSourceSelected" style="width: 100%;">
+                    <option value="">请选择 API 数据源</option>
+                    @foreach (var ds in _apiDataSources)
+                    {
+                        <option value="@ds.Id">@ds.DisplayName</option>
+                    }
+                </select>
+            </div>
+            @if (!string.IsNullOrEmpty(_selectedApiDataSourceId))
+            {
+                <div class="propertysetting-item">
+                    <label>API信息：</label>
+                    <div style="padding: 8px; background: #f5f5f5; border-radius: 4px;">
+                        <div><strong>名称：</strong>@_selectedApiDataSource?.DisplayName</div>
+                        <div><strong>请求：</strong>@_selectedApiDataSource?.API?.Method @(_selectedApiDataSource?.API?.Path)</div>
+                        @if (!string.IsNullOrEmpty(_selectedApiDataSource?.Description))
+                        {
+                            <div><strong>描述：</strong>@_selectedApiDataSource.Description</div>
+                        }
+                    </div>
+                </div>
+            }
+        }
+    }
+
+    <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:30px 0 10px;">其它</div>
+    <div class="pagesetting-item">
+        <label>自定义样式：</label>
+        <textarea class="ta" @bind="@Page.PageProperty.CustomStyle" @bind:after="OnStyleChange" style="height: 150px;"></textarea>
+    </div>
+
+    @*事件属性*@
+    <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:30px 0 10px;">事件</div>
+    <button class="btn btn-default" @onclick="() => ShowEventModal()">
+        配置事件
+    </button>
+}
+
+<HModal Title="配置事件" @bind-Visible="@_eventVisible"
+       OnOk="()=>OnEventConfirm()" Width="1000">
+    <EventList Events="@_eventList"></EventList>
+</HModal>
+
+@code {
+    [Parameter]
+    public PagePartsSchema Page { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        await LoadDataSourcesAsync();
+
+        // 如果已有配置，初始化选中态
+        if (!string.IsNullOrEmpty(Page?.DataSource?.DataSourceId))
+        {
+            if (Page.DataSource.DataSourceType == PageDataSourceTypeEnum.DB)
+            {
+                _selectedDbDataSourceId = Page.DataSource.DataSourceId;
+                await LoadSelectedDbDataSourceAsync();
+            }
+            else if (Page.DataSource.DataSourceType == PageDataSourceTypeEnum.API)
+            {
+                _selectedApiDataSourceId = Page.DataSource.DataSourceId;
+                await LoadSelectedApiDataSourceAsync();
+            }
+        }
+    }
+
+    private void OnLayoutChange(int pageLayout)
+    {
+        // 使用InvokeAsync确保在正确的线程上下文中执行
+        InvokeAsync(() => BlazorEventDispatcher.Publish("designengine.pagesetting.pagelayout.onchange", pageLayout));
+    }
+
+    private void OnStyleChange()
+    {
+        
+    }
+
+    private bool _eventVisible;
+    private IList<EventSchema> _eventList;
+
+    private IList<DataSourceListModel> _dbDataSources = new List<DataSourceListModel>();
+    private IList<DataSourceListModel> _apiDataSources = new List<DataSourceListModel>();
+    private string _selectedDbDataSourceId;
+    private string _selectedApiDataSourceId;
+    private DataSourceSchema _selectedDbDataSource;
+    private DataSourceSchema _selectedApiDataSource;
+
+    private async Task LoadDataSourcesAsync()
+    {
+        try
+        {
+            var dbInput = new DataSourceInput { DataSourceType = ComponentDataSourceTypeEnum.DB };
+            _dbDataSources = await DataSourceAppService.GetListAsync(Page.AppId, dbInput);
+
+            var apiInput = new DataSourceInput { DataSourceType = ComponentDataSourceTypeEnum.API };
+            _apiDataSources = await DataSourceAppService.GetListAsync(Page.AppId, apiInput);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"加载数据源失败: {ex.Message}");
+        }
+    }
+
+    private async Task OnDbDataSourceSelected()
+    {
+        if (string.IsNullOrEmpty(_selectedDbDataSourceId)) return;
+        await LoadSelectedDbDataSourceAsync();
+        UpdatePageDataSourceForDb();
+    }
+
+    private async Task OnApiDataSourceSelected()
+    {
+        if (string.IsNullOrEmpty(_selectedApiDataSourceId)) return;
+        await LoadSelectedApiDataSourceAsync();
+        UpdatePageDataSourceForApi();
+    }
+
+    private async Task LoadSelectedDbDataSourceAsync()
+    {
+        if (string.IsNullOrEmpty(_selectedDbDataSourceId)) return;
+        try
+        {
+            _selectedDbDataSource = await DataSourceAppService.GetByIdAsync(Page.AppId, _selectedDbDataSourceId);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"加载数据表详情失败: {ex.Message}");
+        }
+    }
+
+    private async Task LoadSelectedApiDataSourceAsync()
+    {
+        if (string.IsNullOrEmpty(_selectedApiDataSourceId)) return;
+        try
+        {
+            _selectedApiDataSource = await DataSourceAppService.GetByIdAsync(Page.AppId, _selectedApiDataSourceId);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"加载 API 详情失败: {ex.Message}");
+        }
+    }
+
+    private void UpdatePageDataSourceForDb()
+    {
+        if (Page?.DataSource == null || _selectedDbDataSource == null) return;
+        Page.DataSource.DataSourceId = _selectedDbDataSource.Id;
+        Page.DataSource.DataSourceName = _selectedDbDataSource.DisplayName;
+        Page.DataSource.DataSourceValue = _selectedDbDataSource.Name;
+    }
+
+    private void UpdatePageDataSourceForApi()
+    {
+        if (Page?.DataSource == null || _selectedApiDataSource == null) return;
+        Page.DataSource.DataSourceId = _selectedApiDataSource.Id;
+        Page.DataSource.DataSourceName = _selectedApiDataSource.DisplayName;
+        Page.DataSource.DataSourceValue = _selectedApiDataSource.API?.Path;
+    }
+
+    private void ShowEventModal()
+    {
+        _eventList = Page.Events ?? [];
+        foreach (var ev in Page.SupportEvents)
+        {
+            var any = _eventList.Any(t => string.Equals(t.EventName, ev, StringComparison.OrdinalIgnoreCase));
+            if (any)
+                continue;
+            _eventList.Add(new() { EventName = ev });
+        }
+
+        _eventVisible = true;
+    }
+
+    private void OnEventConfirm()
+    {
+        Page.Events = _eventList;
+        _eventVisible = false;
+    }
+}

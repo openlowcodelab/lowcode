@@ -1,0 +1,84 @@
+@namespace H.Approval.Web
+
+@*
+ 节点说明:
+  1. 开始节点只有1个: StartNode
+  2. 每个节点记录子节点的集合: 普通节点(ChildNodes)、条件节点(ConditionNodes)
+  3. 只有分支节点(BranchNode)才有条件节点,其他节点记录子节点的只有普通节点
+*@
+
+<div>
+    <div class="node-wrap">
+        @if (Node.NodeType == NodeTypeEnum.Start)
+        {
+            <StartNode Node="@Node" OnAddNode="AddChildNode" OnNodeTreeChanged="NotifyTreeChanged" OnNodeClick="HandleNodeClick" OnDeleteNode="OnDeleteNode" />
+        }
+        else if (Node.NodeType == NodeTypeEnum.Approve)
+        {
+            <ApproveNode Node="@Node" OnAddNode="AddChildNode" OnDeleteSelf="HandleDeleteSelf" OnNodeTreeChanged="NotifyTreeChanged" OnNodeClick="HandleNodeClick" OnDeleteNode="OnDeleteNode" />
+        }
+        else if (Node.NodeType == NodeTypeEnum.CarbonCopy)
+        {
+            <CarbonCopyNode Node="@Node" OnAddNode="AddChildNode" OnDeleteSelf="HandleDeleteSelf" OnNodeTreeChanged="NotifyTreeChanged" OnNodeClick="HandleNodeClick" OnDeleteNode="OnDeleteNode" />
+        }
+        else if (Node.NodeType == NodeTypeEnum.Condition)
+        {
+            <ConditionNode Node="@Node" OnAddNode="AddChildNode" OnNodeTreeChanged="NotifyTreeChanged" />
+        }
+        else if (Node.NodeType == NodeTypeEnum.Branch)
+        {
+            <div class="branch-wrap">
+                <BranchNode Node="@Node" OnNodeTreeChanged="NotifyTreeChanged" />
+            </div>
+            
+            @*递归渲染子节点*@
+            @foreach(var childNode in Node.ChildNodes)
+            {
+                <NodeWrap Node="@childNode" OnNodeTreeChanged="OnNodeTreeChanged" OnNodeClick="OnNodeClick" OnDeleteNode="OnDeleteNode" />
+            }
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public NodeModelBase Node { get; set; } = null!;
+    
+    [Parameter]
+    public EventCallback OnNodeTreeChanged { get; set; }
+    
+    [Parameter]
+    public EventCallback<NodeModelBase> OnNodeClick { get; set; }
+
+    /// <summary>
+    /// 在当前节点的子节点列表中添加新节点
+    /// </summary>
+    private void AddChildNode(NodeModelBase newNode)
+    {
+        newNode.ChildNodes = new List<NodeModelBase>(Node.ChildNodes);
+        Node.ChildNodes = new List<NodeModelBase> { newNode };
+        NotifyTreeChanged();
+    }
+    
+    [Parameter]
+    public EventCallback<NodeModelBase> OnDeleteNode { get; set; }
+    
+    /// <summary>
+    /// 当前节点请求删除自己，向上层发送删除请求
+    /// </summary>
+    private void HandleDeleteSelf()
+    {
+        OnDeleteNode.InvokeAsync(Node);
+    }
+    
+    private void HandleNodeClick(NodeModelBase node)
+    {
+        OnNodeClick.InvokeAsync(node);
+    }
+    
+    private void NotifyTreeChanged()
+    {
+        OnNodeTreeChanged.InvokeAsync();
+        StateHasChanged();
+    }
+}

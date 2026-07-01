@@ -1,0 +1,217 @@
+@page "/organization/role"
+
+@layout OrganizationLayout
+@inject IRoleService IRoleService
+@inject IJSRuntime JS
+
+<HCard Title="角色管理">
+    <div style="margin-bottom: 16px;">
+        <button class="h-btn h-btn-primary" @onclick="@ShowCreateDialog">新增角色</button>
+    </div>
+
+    <HTable Loading="@(roles == null)" ShowEmpty="@(roles != null && !roles.Any())">
+        <thead>
+            <tr>
+                <th>角色名称</th>
+                <th>编码</th>
+                <th>角色类型</th>
+                <th>数据范围</th>
+                <th>成员数量</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (roles != null)
+            {
+                @foreach (var context in roles)
+                {
+                    <tr>
+                        <td>@context.Name</td>
+                        <td>@context.Code</td>
+                        <td>@context.RoleTypeName</td>
+                        <td>@context.DataScopeName</td>
+                        <td>@context.MembersCount</td>
+                        <td>
+                            @if (context.IsEnabled)
+                            {
+                                <span class="h-tag h-tag-green">启用</span>
+                            }
+                            else
+                            {
+                                <span class="h-tag h-tag-red">禁用</span>
+                            }
+                        </td>
+                        <td>
+                            <span class="h-space">
+                                <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => Edit(context))">编辑</button>
+                                <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => ConfirmDelete(context.Id))">删除</button>
+                            </span>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </HTable>
+</HCard>
+
+<HModal Title="@(isEdit ? "编辑角色" : "新增角色")" Visible="@showDialog" OnOk="@Save" OnCancel="@CloseDialog" ConfirmLoading="@isSubmitting">
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">角色名称</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@currentRole.Name" placeholder="请输入角色名称" class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">编码</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@currentRole.Code" placeholder="请输入编码" class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">角色类型</label>
+        <div class="h-form-control">
+            <select @bind="@currentRole.RoleType" class="h-select">
+                <option value="1">系统角色</option>
+                <option value="2">自定义角色</option>
+            </select>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">数据范围</label>
+        <div class="h-form-control">
+            <select @bind="@currentRole.DataScope" class="h-select">
+                <option value="1">全部数据</option>
+                <option value="2">本部门数据</option>
+                <option value="3">仅本人数据</option>
+            </select>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">排序</label>
+        <div class="h-form-control">
+            <input type="number" @bind="@currentRole.Sort" class="h-input" />
+        </div>
+    </div>
+    @if (isEdit)
+    {
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">启用</label>
+            <div class="h-form-control">
+                <label class="h-switch">
+                    <input type="checkbox" @bind="@currentRole.IsEnabled" />
+                    <span class="h-switch-slider"></span>
+                </label>
+            </div>
+        </div>
+    }
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">备注</label>
+        <div class="h-form-control">
+            <textarea @bind="@currentRole.Remark" placeholder="请输入备注" rows="3" class="h-textarea"></textarea>
+        </div>
+    </div>
+</HModal>
+
+@code {
+    private List<RoleDto>? roles;
+    private bool showDialog;
+    private bool isEdit;
+    private bool isSubmitting;
+    private RoleDto currentRole = new() { RoleType = 2, DataScope = 1 };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        var result = await IRoleService.GetListAsync(new RoleQueryParams { PageSize = 100 });
+        roles = result.Items;
+    }
+
+    private void ShowCreateDialog()
+    {
+        currentRole = new RoleDto { RoleType = 2, DataScope = 1 };
+        isEdit = false;
+        showDialog = true;
+    }
+
+    private void Edit(RoleDto role)
+    {
+        currentRole = new RoleDto
+        {
+            Id = role.Id,
+            Name = role.Name,
+            Code = role.Code,
+            RoleType = role.RoleType,
+            DataScope = role.DataScope,
+            Sort = role.Sort,
+            IsEnabled = role.IsEnabled,
+            Remark = role.Remark
+        };
+        isEdit = true;
+        showDialog = true;
+    }
+
+    private async Task Save()
+    {
+        isSubmitting = true;
+        try
+        {
+            if (isEdit)
+            {
+                await IRoleService.UpdateAsync(currentRole.Id, new UpdateRoleDto
+                {
+                    Name = currentRole.Name,
+                    Code = currentRole.Code,
+                    RoleType = currentRole.RoleType,
+                    DataScope = currentRole.DataScope,
+                    Sort = currentRole.Sort,
+                    IsEnabled = currentRole.IsEnabled,
+                    Remark = currentRole.Remark
+                });
+            }
+            else
+            {
+                await IRoleService.CreateAsync(new CreateRoleDto
+                {
+                    Name = currentRole.Name,
+                    Code = currentRole.Code,
+                    RoleType = currentRole.RoleType,
+                    DataScope = currentRole.DataScope,
+                    Sort = currentRole.Sort,
+                    Remark = currentRole.Remark
+                });
+            }
+
+            CloseDialog();
+            await LoadData();
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private async Task ConfirmDelete(Guid id)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm", "确定要删除这个角色吗？");
+        if (confirmed)
+        {
+            await Delete(id);
+        }
+    }
+
+    private async Task Delete(Guid id)
+    {
+        await IRoleService.DeleteAsync(id);
+        await LoadData();
+    }
+
+    private void CloseDialog()
+    {
+        showDialog = false;
+    }
+}

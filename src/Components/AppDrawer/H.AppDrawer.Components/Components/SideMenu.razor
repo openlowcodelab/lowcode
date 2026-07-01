@@ -1,0 +1,193 @@
+@namespace H.AppDrawer.Components
+
+<style>
+.menu-sidebar { width: 220px; background-color: #fff; border-right: 1px solid #e8e8e8; overflow-y: auto; padding: 10px 0; }
+.menu-list { list-style: none; margin: 0; padding: 0; }
+.menu-item { display: flex; align-items: center; padding: 12px 20px; cursor: pointer; transition: all 0.3s; color: #333; }
+.menu-item:hover { background-color: #f0f7ff; color: #1890ff; }
+.menu-item.active { background-color: #e6f7ff; color: #1890ff; border-right: 3px solid #1890ff; }
+.menu-icon { margin-right: 10px; font-size: 18px; width: 20px; text-align: center; }
+.menu-text { font-size: 14px; flex: 1; }
+.menu-arrow { font-size: 12px; transition: transform 0.2s; margin-left: 4px; }
+.menu-arrow.expanded { transform: rotate(90deg); }
+.submenu { list-style: none; margin: 0; padding: 0; overflow: hidden; }
+.submenu .menu-item { padding-top: 10px; padding-bottom: 10px; font-size: 13px; }
+</style>
+
+@implements IDisposable
+
+@if (MenuItems != null && MenuItems.Any())
+{
+    <div class="menu-sidebar">
+        <ul class="menu-list">
+            @foreach (var item in MenuItems)
+            {
+                @RenderMenuItem(item, 0)
+            }
+        </ul>
+    </div>
+}
+
+@code {
+    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+
+    /// <summary>
+    /// 菜单项列表
+    /// </summary>
+    [Parameter]
+    public List<AppMenuItem> MenuItems { get; set; } = new();
+
+    private HashSet<string> _expandedKeys = new();
+    private string? _bestMatchUrl;
+
+    protected override void OnInitialized()
+    {
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        _bestMatchUrl = null;
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+
+    /// <summary>
+    /// 计算当前页面最佳匹配的菜单 URL（最长前缀匹配）
+    /// </summary>
+    private string? GetBestMatchUrl()
+    {
+        if (_bestMatchUrl != null) return _bestMatchUrl;
+
+        var currentPath = NormalizePath(NavigationManager.ToBaseRelativePath(NavigationManager.Uri));
+        _bestMatchUrl = "";
+
+        void Scan(List<AppMenuItem> items)
+        {
+            foreach (var item in items)
+            {
+                if (!string.IsNullOrEmpty(item.Url) && IsMatch(currentPath, NormalizePath(item.Url)))
+                {
+                    if (item.Url.Length > _bestMatchUrl!.Length)
+                        _bestMatchUrl = item.Url;
+                }
+                if (item.Children != null)
+                    Scan(item.Children);
+            }
+        }
+
+        Scan(MenuItems);
+        return _bestMatchUrl;
+    }
+
+    private static string NormalizePath(string path)
+    {
+        // 去掉查询参数和前导/尾部斜杠，统一格式便于匹配
+        var qIndex = path.IndexOf('?');
+        if (qIndex >= 0) path = path[..qIndex];
+        return path.Trim('/');
+    }
+
+    private static bool IsMatch(string currentPath, string menuUrl)
+    {
+        if (string.IsNullOrEmpty(menuUrl)) return false;
+        if (currentPath.Equals(menuUrl, StringComparison.OrdinalIgnoreCase)) return true;
+        return currentPath.StartsWith(menuUrl + "/", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private RenderFragment RenderMenuItem(AppMenuItem item, int depth) => __builder =>
+    {
+        var hasChildren = item.Children != null && item.Children.Any();
+        var bestUrl = GetBestMatchUrl();
+        var isActive = hasChildren ? IsAnyChildActive(item, bestUrl) 
+            : (!string.IsNullOrEmpty(item.Url) && NormalizePath(item.Url).Equals(NormalizePath(bestUrl ?? ""), StringComparison.OrdinalIgnoreCase));
+        var paddingLeft = 20 + depth * 16;
+
+        <li class="menu-item @(isActive ? "active" : "")"
+            style="padding-left: @(paddingLeft)px"
+            @onclick="() => HandleClick(item)">
+            <span class="menu-icon">@GetIcon(item.Icon)</span>
+            <span class="menu-text">@item.Name</span>
+            @if (hasChildren)
+            {
+                <span class="menu-arrow @(_expandedKeys.Contains(item.Key ?? "") ? "expanded" : "")">▶</span>
+            }
+        </li>
+
+        @if (hasChildren && _expandedKeys.Contains(item.Key ?? ""))
+        {
+            <ul class="submenu">
+                @foreach (var child in item.Children!)
+                {
+                    @RenderMenuItem(child, depth + 1)
+                }
+            </ul>
+        }
+    };
+
+    private void HandleClick(AppMenuItem item)
+    {
+        var hasChildren = item.Children != null && item.Children.Any();
+        if (hasChildren)
+        {
+            var key = item.Key ?? item.Name;
+            if (_expandedKeys.Contains(key))
+                _expandedKeys.Remove(key);
+            else
+                _expandedKeys.Add(key);
+        }
+        else if (!string.IsNullOrEmpty(item.Url))
+        {
+            NavigationManager.NavigateTo(item.Url);
+        }
+    }
+
+    private bool IsActiveMenu(string url, string? bestUrl)
+    {
+        if (string.IsNullOrEmpty(url)) return false;
+        return NormalizePath(url).Equals(NormalizePath(bestUrl ?? ""), StringComparison.OrdinalIgnoreCase);
+    }
+
+    private bool IsAnyChildActive(AppMenuItem item, string? bestUrl)
+    {
+        if (item.Children == null) return false;
+        foreach (var child in item.Children)
+        {
+            if (child.Children != null && child.Children.Any())
+            {
+                if (IsAnyChildActive(child, bestUrl)) return true;
+            }
+            else if (IsActiveMenu(child.Url, bestUrl))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private string GetIcon(string? icon)
+    {
+        return icon switch
+        {
+            "home" => "🏠",
+            "appstore" => "⊞",
+            "api" => "🔌",
+            "cloud" => "☁",
+            "cloud-upload" => "☁",
+            "deployment-unit" => "🔧",
+            "question-circle" => "❓",
+            "profile" => "📋",
+            "menu" => "📝",
+            "database" => "🗄",
+            "setting" => "⚙",
+            "edit" => "✏",
+            "global" => "🌐",
+            "desktop" => "🖥",
+            _ => string.IsNullOrEmpty(icon) ? "📄" : icon
+        };
+    }
+}

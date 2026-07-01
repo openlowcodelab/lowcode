@@ -1,0 +1,92 @@
+@namespace H.LowCode.PartsDesignEngine
+@inherits LowCodeComponentBase
+
+<div class="event-define-editor">
+    @if (EventDefines != null && EventDefines.Count > 0)
+    {
+        @for (int i = 0; i < EventDefines.Count; i++)
+        {
+            var eventDefine = EventDefines[i];
+            <HCard Style="margin-bottom: 12px;">
+                <div class="row">
+                    <div class="col col-8">
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; margin-bottom: 4px; font-weight: 500;">事件名称 <span style="color: red;">*</span></label>
+                            <input class="inp" @bind="eventDefine.Name" placeholder="请输入事件名称" />
+                        </div>
+                    </div>
+                    <div class="col col-8">
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; margin-bottom: 4px; font-weight: 500;">事件类型 <span style="color: red;">*</span></label>
+                            <select class="sel" @bind="eventDefine.EventType">
+                                <option value="click">点击事件</option>
+                                <option value="change">值变更事件</option>
+                                <option value="focus">获得焦点</option>
+                                <option value="blur">失去焦点</option>
+                                <option value="submit">提交事件</option>
+                                <option value="custom">自定义事件</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col col-8">
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; margin-bottom: 4px; font-weight: 500;">参数定义</label>
+                            <textarea class="ta" @bind="eventDefine.ParameterType" rows="2" placeholder="请输入参数定义"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col col-12">
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; margin-bottom: 4px; font-weight: 500;">描述</label>
+                            <input class="inp" @bind="eventDefine.Description" placeholder="事件描述" />
+                        </div>
+                    </div>
+                    <div class="col col-12">
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; margin-bottom: 4px; font-weight: 500;">操作</label>
+                            <button class="btn btn-text btn-sm" @onclick="@(() => RemoveEvent(i))" style="color: red;">删除事件</button>
+                        </div>
+                    </div>
+                </div>
+            </HCard>
+        }
+    }
+    else
+    {
+        <div class="empty-state">暂无事件定义</div>
+    }
+    <button class="btn btn-dashed btn-block" @onclick="@AddEvent">添加事件</button>
+</div>
+
+@code {
+    [Parameter]
+    public List<ComponentPartsEventDefineSchema> EventDefines { get; set; }
+
+    [Parameter]
+    public EventCallback<List<ComponentPartsEventDefineSchema>> EventDefinesChanged { get; set; }
+
+    private async Task AddEvent()
+    {
+        EventDefines ??= new List<ComponentPartsEventDefineSchema>();
+        EventDefines.Add(new ComponentPartsEventDefineSchema
+        {
+            Name = "",
+            EventType = "click",
+            ParameterType = "",
+            Description = ""
+        });
+        await EventDefinesChanged.InvokeAsync(EventDefines);
+        StateHasChanged();
+    }
+
+    private async Task RemoveEvent(int index)
+    {
+        if (EventDefines != null && index >= 0 && index < EventDefines.Count)
+        {
+            EventDefines.RemoveAt(index);
+            await EventDefinesChanged.InvokeAsync(EventDefines);
+            StateHasChanged();
+        }
+    }
+}

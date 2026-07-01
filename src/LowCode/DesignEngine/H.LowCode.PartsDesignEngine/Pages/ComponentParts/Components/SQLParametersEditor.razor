@@ -1,0 +1,262 @@
+@using System.Text.Json
+@namespace H.LowCode.PartsDesignEngine
+@inherits LowCodeComponentBase
+
+<div class="sql-parameters-editor">
+    @if (_parametersList != null)
+    {
+        @for (int i = 0; i < _parametersList.Count; i++)
+        {
+            var parameter = _parametersList[i];
+            var currentIndex = i;
+            
+            <div class="row" style="margin-bottom: 8px;">
+                <div class="col col-7">
+                    <input class="inp" value="@parameter.Key" 
+                           @onchange="@(EventCallback.Factory.Create<ChangeEventArgs>(this, (args) => OnParameterKeyChange(currentIndex, args.Value?.ToString())))"
+                           placeholder="参数名称" />
+                </div>
+                <div class="col col-5">
+                    <select class="sel" value="@parameter.Type" 
+                            @onchange="@(EventCallback.Factory.Create<ChangeEventArgs>(this, (args) => OnParameterTypeChange(currentIndex, args.Value?.ToString())))">
+                        <option value="string">字符串</option>
+                        <option value="int">整数</option>
+                        <option value="decimal">小数</option>
+                        <option value="bool">布尔值</option>
+                        <option value="datetime">日期时间</option>
+                    </select>
+                </div>
+                <div class="col col-10">
+                    @{
+                        if (parameter.Type == "bool")
+                        {
+                            <label class="switch"><input type="checkbox" checked="@((bool?)parameter.Value ?? false)" 
+                                    @onchange="@(EventCallback.Factory.Create<ChangeEventArgs>(this, e => OnParameterValueChange(currentIndex, bool.TryParse(e.Value?.ToString(), out var v) ? v : false)))" /></label>
+                        }
+                        else if (parameter.Type == "int")
+                        {
+                            <input type="number" class="inp" value="@((int?)parameter.Value ?? 0)" 
+                                   @onchange="@(EventCallback.Factory.Create<ChangeEventArgs>(this, e => OnParameterValueChange(currentIndex, int.TryParse(e.Value?.ToString(), out var v) ? v : 0)))" />
+                        }
+                        else if (parameter.Type == "decimal")
+                        {
+                            <input type="number" class="inp" value="@((decimal?)parameter.Value ?? 0m)" step="any"
+                                   @onchange="@(EventCallback.Factory.Create<ChangeEventArgs>(this, e => OnParameterValueChange(currentIndex, decimal.TryParse(e.Value?.ToString(), out var v) ? v : 0m)))" />
+                        }
+                        else if (parameter.Type == "datetime")
+                        {
+                            <input type="datetime-local" class="inp" value="@((DateTime?)parameter.Value)" 
+                                   @onchange="@(EventCallback.Factory.Create<ChangeEventArgs>(this, e => OnParameterValueChange(currentIndex, DateTime.TryParse(e.Value?.ToString(), out var v) ? v : DateTime.Now)))" />
+                        }
+                        else
+                        {
+                            <input class="inp" value="@(parameter.Value?.ToString() ?? "")" 
+                                   @onchange="@(EventCallback.Factory.Create<ChangeEventArgs>(this, (args) => OnParameterValueChange(currentIndex, args.Value?.ToString())))"
+                                   placeholder="参数值" />
+                        }
+                    }
+                </div>
+                <div class="col col-2">
+                    <button class="btn btn-text btn-sm" @onclick="() => RemoveParameter(currentIndex)" style="color: red;">删除</button>
+                </div>
+            </div>
+        }
+    }
+    
+    <button class="btn btn-dashed btn-sm btn-block" @onclick="AddParameter">
+        添加参数
+    </button>
+</div>
+
+@code {
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+
+    private List<ParameterItem> _parametersList = new();
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        ParseValue();
+    }
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+        ParseValue();
+    }
+
+    private void ParseValue()
+    {
+        _parametersList.Clear();
+        
+        if (!string.IsNullOrEmpty(Value))
+        {
+            try
+            {
+                var parameters = Value.FromJson<Dictionary<string, object>>();
+                if (parameters != null)
+                {
+                    foreach (var kvp in parameters)
+                    {
+                        var paramType = "string";
+                        var paramValue = kvp.Value;
+                        
+                        if (kvp.Value is JsonElement jsonElement)
+                        {
+                            switch (jsonElement.ValueKind)
+                            {
+                                case JsonValueKind.True:
+                                case JsonValueKind.False:
+                                    paramType = "bool";
+                                    paramValue = jsonElement.GetBoolean();
+                                    break;
+                                case JsonValueKind.Number:
+                                    if (jsonElement.TryGetInt32(out _))
+                                    {
+                                        paramType = "int";
+                                        paramValue = jsonElement.GetInt32();
+                                    }
+                                    else if (jsonElement.TryGetDecimal(out _))
+                                    {
+                                        paramType = "decimal";
+                                        paramValue = jsonElement.GetDecimal();
+                                    }
+                                    break;
+                                case JsonValueKind.String:
+                                    var stringValue = jsonElement.GetString();
+                                    if (DateTime.TryParse(stringValue, out var dateValue))
+                                    {
+                                        paramType = "datetime";
+                                        paramValue = dateValue;
+                                    }
+                                    else
+                                    {
+                                        paramType = "string";
+                                        paramValue = stringValue;
+                                    }
+                                    break;
+                            }
+                        }
+                        
+                        _parametersList.Add(new ParameterItem
+                        {
+                            Key = kvp.Key,
+                            Type = paramType,
+                            Value = paramValue
+                        });
+                    }
+                }
+            }
+            catch
+            {
+                // 解析失败时保持空列表
+            }
+        }
+    }
+
+    private async Task OnParameterKeyChange(int index, string? newKey)
+    {
+        if (index >= 0 && index < _parametersList.Count && !string.IsNullOrEmpty(newKey))
+        {
+            _parametersList[index].Key = newKey;
+            await UpdateValue();
+        }
+    }
+
+    private async Task OnParameterTypeChange(int index, string newType)
+    {
+        if (index >= 0 && index < _parametersList.Count)
+        {
+            var parameter = _parametersList[index];
+            parameter.Type = newType;
+            
+            // 转换值到新类型
+            parameter.Value = ConvertValueToType(parameter.Value, newType);
+            
+            await UpdateValue();
+        }
+    }
+
+    private async Task OnParameterValueChange(int index, object? newValue)
+    {
+        if (index >= 0 && index < _parametersList.Count)
+        {
+            _parametersList[index].Value = newValue;
+            await UpdateValue();
+        }
+    }
+
+    private async Task AddParameter()
+    {
+        _parametersList.Add(new ParameterItem
+        {
+            Key = $"param{_parametersList.Count + 1}",
+            Type = "string",
+            Value = ""
+        });
+        
+        await UpdateValue();
+    }
+
+    private async Task RemoveParameter(int index)
+    {
+        if (index >= 0 && index < _parametersList.Count)
+        {
+            _parametersList.RemoveAt(index);
+            await UpdateValue();
+        }
+    }
+
+    private async Task UpdateValue()
+    {
+        var parameters = new Dictionary<string, object>();
+        
+        foreach (var param in _parametersList)
+        {
+            if (!string.IsNullOrEmpty(param.Key))
+            {
+                parameters[param.Key] = param.Value ?? "";
+            }
+        }
+
+        var json = parameters.ToJson() ?? "{}";
+        await ValueChanged.InvokeAsync(json);
+        StateHasChanged();
+    }
+
+    private object? ConvertValueToType(object? value, string targetType)
+    {
+        if (value == null) return GetDefaultValue(targetType);
+        
+        var stringValue = value.ToString();
+        
+        return targetType switch
+        {
+            "bool" => bool.TryParse(stringValue, out var boolVal) ? boolVal : false,
+            "int" => int.TryParse(stringValue, out var intVal) ? intVal : 0,
+            "decimal" => decimal.TryParse(stringValue, out var decimalVal) ? decimalVal : 0m,
+            "datetime" => DateTime.TryParse(stringValue, out var dateVal) ? dateVal : DateTime.Now,
+            _ => stringValue ?? ""
+        };
+    }
+
+    private object GetDefaultValue(string type)
+    {
+        return type switch
+        {
+            "bool" => false,
+            "int" => 0,
+            "decimal" => 0m,
+            "datetime" => DateTime.Now,
+            _ => ""
+        };
+    }
+
+    private class ParameterItem
+    {
+        public string Key { get; set; } = "";
+        public string Type { get; set; } = "string";
+        public object? Value { get; set; }
+    }
+}

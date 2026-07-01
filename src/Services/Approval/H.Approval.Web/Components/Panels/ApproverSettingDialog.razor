@@ -1,0 +1,128 @@
+@namespace H.Approval.Web
+
+<div class="setting-panel">
+    <div class="setting-section">
+        <div class="setting-label">审批人类型</div>
+        <div class="h-radio-group">
+            <label class="h-radio-button">
+                <input type="radio" name="approverType" value="0" checked="@(approverTypeValue == 0)" @onchange="() => OnApproverTypeChanged(0)" />指定成员
+            </label>
+            <label class="h-radio-button">
+                <input type="radio" name="approverType" value="1" checked="@(approverTypeValue == 1)" @onchange="() => OnApproverTypeChanged(1)" />发起人自选
+            </label>
+            <label class="h-radio-button">
+                <input type="radio" name="approverType" value="2" checked="@(approverTypeValue == 2)" @onchange="() => OnApproverTypeChanged(2)" />发起人本人
+            </label>
+            <label class="h-radio-button">
+                <input type="radio" name="approverType" value="3" checked="@(approverTypeValue == 3)" @onchange="() => OnApproverTypeChanged(3)" />指定角色
+            </label>
+            <label class="h-radio-button">
+                <input type="radio" name="approverType" value="4" checked="@(approverTypeValue == 4)" @onchange="() => OnApproverTypeChanged(4)" />部门主管
+            </label>
+        </div>
+    </div>
+
+    @if (Node.ApproverType == ApproverTypeEnum.Specified || Node.ApproverType == ApproverTypeEnum.StarterSelect)
+    {
+        <div class="setting-section">
+            <div class="setting-label">
+                @(Node.ApproverType == ApproverTypeEnum.Specified ? "指定审批人" : "可选审批人范围")
+            </div>
+            <div class="setting-hint">暂未集成人员选择器，请手动输入成员ID（逗号分隔）</div>
+            <textarea class="h-textarea" rows="3"
+                      value="@specifiedUsersText"
+                      @oninput="OnSpecifiedUsersInput"
+                      placeholder="请输入成员ID，多个用逗号分隔"></textarea>
+        </div>
+    }
+
+    @if (Node.ApproverType == ApproverTypeEnum.Role)
+    {
+        <div class="setting-section">
+            <div class="setting-label">指定角色</div>
+            <div class="setting-hint">暂未集成角色选择器，请手动输入角色ID（逗号分隔）</div>
+            <textarea class="h-textarea" rows="3"
+                      value="@specifiedRolesText"
+                      @oninput="OnSpecifiedRolesInput"
+                      placeholder="请输入角色ID，多个用逗号分隔"></textarea>
+        </div>
+    }
+
+    <div class="setting-section">
+        <div class="setting-label">多人审批方式</div>
+        <div class="h-radio-group">
+            <label class="h-radio-button">
+                <input type="radio" name="approverMode" value="0" checked="@(approverModeValue == 0)" @onchange="() => OnApproverModeChanged(0)" />
+                <span>依次审批</span>
+                <span class="radio-desc">按顺序依次审批</span>
+            </label>
+            <label class="h-radio-button">
+                <input type="radio" name="approverMode" value="1" checked="@(approverModeValue == 1)" @onchange="() => OnApproverModeChanged(1)" />
+                <span>会签</span>
+                <span class="radio-desc">需所有审批人同意</span>
+            </label>
+            <label class="h-radio-button">
+                <input type="radio" name="approverMode" value="2" checked="@(approverModeValue == 2)" @onchange="() => OnApproverModeChanged(2)" />
+                <span>或签</span>
+                <span class="radio-desc">其中一人同意即可</span>
+            </label>
+        </div>
+    </div>
+
+    <div class="setting-actions">
+        <button class="h-btn h-btn-primary" @onclick="SaveSettings">确 定</button>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public ApproveModel Node { get; set; } = null!;
+
+    [Parameter]
+    public EventCallback OnSave { get; set; }
+
+    private int approverTypeValue;
+    private int approverModeValue;
+    private string specifiedUsersText = "";
+    private string specifiedRolesText = "";
+
+    protected override void OnParametersSet()
+    {
+        if (Node != null)
+        {
+            approverTypeValue = (int)Node.ApproverType;
+            approverModeValue = (int)Node.ApproverMode;
+            specifiedUsersText = string.Join(",", Node.SpecifiedUsers ?? new List<string>());
+            specifiedRolesText = string.Join(",", Node.SpecifiedRoles ?? new List<string>());
+        }
+    }
+
+    private void OnApproverTypeChanged(int value)
+    {
+        Node.ApproverType = (ApproverTypeEnum)value;
+    }
+
+    private void OnApproverModeChanged(int value)
+    {
+        Node.ApproverMode = (ApproverModeEnum)value;
+    }
+
+    private void OnSpecifiedUsersInput(ChangeEventArgs e)
+    {
+        specifiedUsersText = e.Value?.ToString() ?? "";
+        Node.SpecifiedUsers = specifiedUsersText.Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s)).ToList();
+    }
+
+    private void OnSpecifiedRolesInput(ChangeEventArgs e)
+    {
+        specifiedRolesText = e.Value?.ToString() ?? "";
+        Node.SpecifiedRoles = specifiedRolesText.Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s)).ToList();
+    }
+
+    private async Task SaveSettings()
+    {
+        await OnSave.InvokeAsync();
+    }
+}

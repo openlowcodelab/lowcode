@@ -1,0 +1,104 @@
+@namespace H.LowCode.PartsDesignEngine
+@inherits LowCodeComponentBase
+
+<div class="parameters-editor">
+    @if (_parametersList != null)
+    {
+        @for (int i = 0; i < _parametersList.Count; i++)
+        {
+            var parameter = _parametersList[i];
+            var currentIndex = i;
+            
+            <div class="row" style="margin-bottom: 8px;">
+                <div class="col col-10">
+                    <input class="inp" value="@parameter.Key" 
+                           @onchange="@(EventCallback.Factory.Create<ChangeEventArgs>(this, (args) => OnParameterKeyChange(currentIndex, args.Value?.ToString())))"
+                           placeholder="参数名称" />
+                </div>
+                <div class="col col-12">
+                    <input class="inp" value="@parameter.Value" 
+                           @onchange="@(EventCallback.Factory.Create<ChangeEventArgs>(this, (args) => OnParameterValueChange(currentIndex, args.Value?.ToString())))"
+                           placeholder="参数值" />
+                </div>
+                <div class="col col-2">
+                    <button class="btn btn-text btn-sm" @onclick="() => RemoveParameter(currentIndex)" style="color: red;">删除</button>
+                </div>
+            </div>
+        }
+    }
+    
+    <button class="btn btn-dashed btn-sm btn-block" @onclick="AddParameter">
+        添加参数
+    </button>
+</div>
+
+@code {
+    [Parameter]
+    public Dictionary<string, string> Parameters { get; set; }
+    
+    [Parameter]
+    public EventCallback<Dictionary<string, string>> ParametersChanged { get; set; }
+
+    private List<ParameterItem> _parametersList = new();
+
+    protected override void OnParametersSet()
+    {
+        if (Parameters != null)
+        {
+            _parametersList = Parameters.Select(kvp => new ParameterItem { Key = kvp.Key, Value = kvp.Value }).ToList();
+        }
+        else
+        {
+            _parametersList = new List<ParameterItem>();
+        }
+    }
+
+    private async Task AddParameter()
+    {
+        _parametersList.Add(new ParameterItem { Key = "", Value = "" });
+        await NotifyChange();
+    }
+
+    private async Task RemoveParameter(int index)
+    {
+        if (index >= 0 && index < _parametersList.Count)
+        {
+            _parametersList.RemoveAt(index);
+            await NotifyChange();
+        }
+    }
+
+    private async Task OnParameterKeyChange(int index, string? newKey)
+    {
+        if (index >= 0 && index < _parametersList.Count)
+        {
+            _parametersList[index].Key = newKey ?? "";
+            await NotifyChange();
+        }
+    }
+
+    private async Task OnParameterValueChange(int index, string? newValue)
+    {
+        if (index >= 0 && index < _parametersList.Count)
+        {
+            _parametersList[index].Value = newValue ?? "";
+            await NotifyChange();
+        }
+    }
+
+    private async Task NotifyChange()
+    {
+        var parameters = _parametersList
+            .Where(p => !string.IsNullOrWhiteSpace(p.Key))
+            .ToDictionary(p => p.Key, p => p.Value);
+            
+        await ParametersChanged.InvokeAsync(parameters);
+        StateHasChanged();
+    }
+
+    private class ParameterItem
+    {
+        public string Key { get; set; } = "";
+        public string Value { get; set; } = "";
+    }
+}

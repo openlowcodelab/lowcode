@@ -1,0 +1,85 @@
+@page "/renderengine/app/{AppId}/{PageId}"
+@namespace H.LowCode.Themes.AntBlazor
+@inherits LowCodePageComponentBase
+@layout AntBlazorThemeLayout
+
+@inject IMetaAppService MetaAppService
+
+<PageTitle>@(_pageCascadingModel?.PageName ?? "加载中...")</PageTitle>
+
+<CascadingValue Value="@_pageCascadingModel" Name="pageCascading">
+    @if (_pageSchema != null)
+    {
+        if(_pageSchema.PageType == PageTypeEnum.Normal)
+        {
+            <NormalPageRender Page="@_pageSchema"></NormalPageRender>
+        }
+        else if(_pageSchema.PageType == PageTypeEnum.Form)
+        {
+            <FormPageRender Page="@_pageSchema"></FormPageRender>
+        }
+        else if (_pageSchema.PageType == PageTypeEnum.Table)
+        {
+            <TablePageRender Page="@_pageSchema"></TablePageRender>
+        }
+        else
+        {
+            <Result Status="ResultStatus.Warning" Title="页面类型未实现" SubTitle=@($"PageType: {_pageSchema.PageType}") />
+        }
+    }
+</CascadingValue>
+
+@code {
+    [Parameter]
+    public string PageId { get; set; }
+
+    [PersistentState]
+    public PageSchema _pageSchema { get; set; }
+
+    private PageCascadingModel _pageCascadingModel;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        
+        _pageCascadingModel = new() { AppId = AppId, PageId = PageId, PageName = "..." };
+
+        _pageSchema = await LoadPageSchemaAsync();
+
+        SetPageModel(_pageSchema);
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+        
+        // 当 PageId 改变时，重新加载页面数据
+        if (_pageCascadingModel == null || _pageCascadingModel.PageId != PageId)
+        {
+            _pageCascadingModel = new() { AppId = AppId, PageId = PageId, PageName = "..." };
+            _pageSchema = await LoadPageSchemaAsync();
+            SetPageModel(_pageSchema);
+        }
+    }
+
+    private async Task<PageSchema> LoadPageSchemaAsync()
+    {
+        var pageSchema = await MetaAppService.GetPageWithDefineAsync(AppId, PageId);
+        return pageSchema;
+    }
+
+    private void SetPageModel(PageSchema pageSchema)
+    {
+        _pageCascadingModel.PageName = pageSchema.Name!;
+        _pageCascadingModel.PageLayout = pageSchema.PageProperty.PageLayout;
+    }
+
+    /// <summary>
+    /// 用于 PageSchemaState 的 key（每个页面独立缓存）
+    /// </summary>
+    /// <returns></returns>
+    public override string ToString()
+    {
+        return $"{base.ToString()}-{AppId}-{PageId}";
+    }
+}

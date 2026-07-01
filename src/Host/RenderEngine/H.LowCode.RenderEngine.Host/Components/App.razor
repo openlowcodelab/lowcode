@@ -1,0 +1,32 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    <link rel="icon" type="image/png" href="@Assets["logo.png"]" />
+    <link rel="apple-touch-icon" sizes="512x512" href="@Assets["logo.png"]" />
+    <!-- 所有项目的razor文件中的 css -->
+    <link rel="stylesheet" href="@Assets["H.LowCode.RenderEngine.Host.styles.css"]" />
+
+    <!-- abp -->
+    <script src="@Assets["_content/Volo.Abp.AspNetCore.Components.Web/libs/abp/js/abp.js"]"></script>
+    <script src="@Assets["_content/Volo.Abp.AspNetCore.Components.Web/libs/abp/js/lang-utils.js"]"></script>
+
+
+    <link href="@Assets["manifest.json"]" rel="manifest" />
+
+    <ImportMap />
+    <HeadOutlet @rendermode="new InteractiveWebAssemblyRenderMode(prerender: false)" />
+</head>
+
+<body>
+    <Routes @rendermode="new InteractiveWebAssemblyRenderMode(prerender: false)" />
+    
+    <link rel="stylesheet" href="@Assets["_content/H.Util.Blazor/css/h-components.css"]" />
+
+    <script src="@Assets["_framework/blazor.web.js"]"></script>
+</body>
+
+</html>

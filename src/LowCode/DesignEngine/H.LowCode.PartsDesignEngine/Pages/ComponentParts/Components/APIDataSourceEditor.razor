@@ -1,0 +1,78 @@
+@namespace H.LowCode.PartsDesignEngine
+@inherits LowCodeComponentBase
+
+<div class="api-datasource-editor">
+    <HCard Title="API数据源配置">
+        <div class="row">
+            <div class="col col-12">
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 4px; font-weight: 500;">API地址 <span style="color: red;">*</span></label>
+                    <input class="inp" @bind="DataSource.Path" placeholder="https://api.example.com/data" />
+                </div>
+            </div>
+            <div class="col col-12">
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 4px; font-weight: 500;">请求方法</label>
+                    <select class="sel" @bind="DataSource.Method">
+                        <option value="GET">GET</option>
+                        <option value="POST">POST</option>
+                        <option value="PUT">PUT</option>
+                        <option value="DELETE">DELETE</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div style="margin-bottom: 16px;">
+            <label style="display: block; margin-bottom: 4px; font-weight: 500;">请求头</label>
+            <APIParamsList APIParams="@DataSource.Headers" />
+        </div>
+        <div style="margin-bottom: 16px;">
+            <label style="display: block; margin-bottom: 4px; font-weight: 500;">请求参数</label>
+            <APIParamsList APIParams="@DataSource.Queries" />
+        </div>
+        <div style="margin-bottom: 16px;">
+            <label style="display: block; margin-bottom: 4px; font-weight: 500;">请求体</label>
+            <textarea class="ta" @bind="DataSource.Body.Value" rows="4" placeholder="JSON格式的请求体（POST/PUT请求时使用）"></textarea>
+        </div>
+    </HCard>
+</div>
+
+@code {
+    [Parameter]
+    public APIDataSourceSchema DataSource { get; set; }
+    
+    [Parameter]
+    public EventCallback<APIDataSourceSchema> DataSourceChanged { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        if (DataSource == null)
+        {
+            DataSource = new APIDataSourceSchema
+            {
+                Method = "GET",
+                Headers = new List<APIParamSchema>(),
+                Queries = new List<APIParamSchema>(),
+                Body = new APIBodySchema()
+            };
+        }
+        if (DataSource.Headers == null)
+        {
+            DataSource.Headers = new List<APIParamSchema>();
+        }
+        if (DataSource.Queries == null)
+        {
+            DataSource.Queries = new List<APIParamSchema>();
+        }
+        if (DataSource.Body == null)
+        {
+            DataSource.Body = new APIBodySchema();
+        }
+    }
+
+    private async Task NotifyChange()
+    {
+        await DataSourceChanged.InvokeAsync(DataSource);
+        StateHasChanged();
+    }
+}

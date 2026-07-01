@@ -1,0 +1,118 @@
+@namespace H.LowCode.PartsDesignEngine
+@inherits LowCodeComponentBase
+
+<div class="component-datasource-editor">
+    <HCard Title="数据源配置" Style="margin-bottom: 16px;">
+        <div class="row">
+            <div class="col col-12">
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 4px; font-weight: 500;">数据源分组类型</label>
+                    <select class="sel" value="@DataSource.DataSourceGroupType" @onchange="@(EventCallback.Factory.Create<ChangeEventArgs>(this, e => { if (Enum.TryParse<ComponentDataSourceGroupTypeEnum>(e.Value?.ToString(), out var v)) DataSource.DataSourceGroupType = v; }))">
+                        @foreach (var val in Enum.GetValues<ComponentDataSourceGroupTypeEnum>())
+                        {
+                            <option value="@val">@val</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="col col-12">
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 4px; font-weight: 500;">数据源类型</label>
+                    <select class="sel" value="@DataSource.DataSourceType" @onchange="@(EventCallback.Factory.Create<ChangeEventArgs>(this, e => { if (Enum.TryParse<ComponentDataSourceTypeEnum>(e.Value?.ToString(), out var v)) DataSource.DataSourceType = v; }))">
+                        @foreach (var val in Enum.GetValues<ComponentDataSourceTypeEnum>())
+                        {
+                            <option value="@val">@val</option>
+                        }
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col col-8">
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 4px; font-weight: 500;">数据源ID</label>
+                    <input class="inp" @bind="DataSource.DataSourceId" placeholder="数据源唯一标识" />
+                </div>
+            </div>
+            <div class="col col-8">
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 4px; font-weight: 500;">数据源名称</label>
+                    <input class="inp" @bind="DataSource.DataSourceName" placeholder="数据源显示名称" />
+                </div>
+            </div>
+            <div class="col col-8">
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; margin-bottom: 4px; font-weight: 500;">数据源值</label>
+                    <input class="inp" @bind="DataSource.DataSourceValue" placeholder="数据源值" />
+                </div>
+            </div>
+        </div>
+        
+        @if (DataSource.DataSourceType == ComponentDataSourceTypeEnum.Fiexd)
+        {
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 4px; font-weight: 500;">固定选项数据源</label>
+                <FixedOptionDataSourceEditor @bind-Options="@DataSource.FiexdOptionDataSource" />
+            </div>
+        }
+        else if (DataSource.DataSourceType == ComponentDataSourceTypeEnum.API)
+        {
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 4px; font-weight: 500;">API选项数据源</label>
+                <APIDataSourceEditor @bind-DataSource="@DataSource.APIOptionDataSource" />
+            </div>
+        }
+        else if (DataSource.DataSourceType == ComponentDataSourceTypeEnum.SQL)
+        {
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 4px; font-weight: 500;">SQL选项数据源</label>
+                <SQLDataSourceEditor @bind-DataSource="@DataSource.SQLOptionDataSource" />
+            </div>
+        }
+        
+        @if (DataSource.DataSourceFragment != null)
+        {
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 4px; font-weight: 500;">数据源Fragment</label>
+                <ComponentFragmentEditor @bind-Fragment="@DataSource.DataSourceFragment" />
+            </div>
+        }
+        else
+        {
+            <button class="btn btn-dashed" @onclick="AddDataSourceFragment">添加数据源Fragment</button>
+        }
+    </HCard>
+</div>
+
+@code {
+    [Parameter]
+    public ComponentPartsDataSourceSchema DataSource { get; set; }
+    
+    [Parameter]
+    public EventCallback<ComponentPartsDataSourceSchema> DataSourceChanged { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        if (DataSource == null)
+        {
+            DataSource = new ComponentPartsDataSourceSchema();
+        }
+    }
+
+    private async Task AddDataSourceFragment()
+    {
+        DataSource.DataSourceFragment = new ComponentPartsFragmentSchema
+        {
+            Attributes = new ComponentAttributeFragmentSchema[0],
+            ChildFragments = new ComponentPartsFragmentSchema[0]
+        };
+        await NotifyChange();
+    }
+
+    private async Task NotifyChange()
+    {
+        await DataSourceChanged.InvokeAsync(DataSource);
+        StateHasChanged();
+    }
+}

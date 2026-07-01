@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+  <Import Project="..\..\..\common.props" />
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Common\H.LowCode.ComponentBase\H.LowCode.ComponentBase.csproj" />
+    <ProjectReference Include="..\..\Common\H.LowCode.MetaSchema.RenderEngine\H.LowCode.MetaSchema.RenderEngine.csproj" />
+    <ProjectReference Include="..\H.LowCode.RenderEngine.Application.Contracts\H.LowCode.RenderEngine.Application.Contracts.csproj" />
+  </ItemGroup>
+</Project>

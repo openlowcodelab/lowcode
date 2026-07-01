@@ -1,0 +1,609 @@
+@namespace H.LowCode.Components.Defaults
+@inherits LowCodeComponentBase
+
+@inject IJSRuntime JS
+@inject ITableDataAppService TableDataAppService
+
+<div class="flex flex-col gap-2">
+    <div class="flex justify-between items-center" style="gap:8px;">
+        @foreach (var topBtn in _tableSchema.TopButtons)
+        {
+            <button class="btn btn-primary" disabled="@topBtn.Disabled" @onclick="@(() => ButtonActionAsync(topBtn))">@topBtn.Title</button>
+        }
+    </div>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                @foreach (var key in (_data?.FirstOrDefault()?.Keys.ToArray() ?? new string[0]))
+                {
+                    var column = _tableSchema.Columns.FirstOrDefault(t => string.Equals(t.Name, key, StringComparison.OrdinalIgnoreCase));
+                    if (column != null)
+                    {
+                        <th>@column.Title</th>
+                    }
+                }
+                @if (_tableSchema.RowButtons?.Any() == true)
+                {
+                    <th style="width:120px;">操作</th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var row in _data)
+            {
+                var primaryKeyColumn = _tableSchema.Columns.FirstOrDefault(t => t.IsPrimaryKey);
+                var primaryKeyValue = primaryKeyColumn != null && row.ContainsKey(primaryKeyColumn.Name) ? row[primaryKeyColumn.Name]?.ToString() : null;
+                var isEditing = !string.IsNullOrEmpty(primaryKeyValue) && _editingRows.ContainsKey(primaryKeyValue);
+
+                <tr>
+                    @foreach (var key in row.Keys)
+                    {
+                        var column = _tableSchema.Columns.FirstOrDefault(t => string.Equals(t.Name, key, StringComparison.OrdinalIgnoreCase));
+                        if (column != null)
+                        {
+                            <td>
+                                @if (isEditing && !column.IsPrimaryKey)
+                                {
+                                    <input class="inp" @bind="@_editingRows[primaryKeyValue][key]" />
+                                }
+                                else
+                                {
+                                    @row[key]
+                                }
+                            </td>
+                        }
+                    }
+                    @if (_tableSchema.RowButtons?.Any() == true)
+                    {
+                        <td>
+                            <div class="space">
+                                @foreach (var rowBtn in _tableSchema.RowButtons)
+                                {
+                                    <a @onclick="@(() => ButtonActionAsync(rowBtn, row))">@rowBtn.Title</a>
+                                }
+                            </div>
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <!-- Pagination -->
+    @if (_total > _pageSize)
+    {
+        <div class="flex items-center gap-2" style="justify-content:flex-end; padding:8px 0;">
+            <span style="font-size:13px;color:#999;">共 @_total 条</span>
+            <select class="sel" style="width:80px;" @bind="@_pageSize" @bind:after="() => OnChange(_pageIndex, _pageSize)">
+                <option value="10">10条/页</option>
+                <option value="20">20条/页</option>
+                <option value="50">50条/页</option>
+            </select>
+            <button class="btn btn-sm" disabled="@(_pageIndex <= 1)" @onclick="() => OnChange(1, _pageSize)">上一页</button>
+            <span style="font-size:13px;color:#333;">@_pageIndex / @((int)Math.Ceiling((double)_total / _pageSize))</span>
+            <button class="btn btn-sm" disabled="@(_pageIndex >= Math.Ceiling((double)_total / _pageSize))" @onclick="() => OnChange(_pageIndex + 1, _pageSize)">下一页</button>
+        </div>
+    }
+</div>
+
+@code {
+    [CascadingParameter(Name = "pageCascading")]
+    public PageCascadingModel PageCascading { get; set; }
+
+    [Parameter]
+    public ComponentDataSourceSchemaBase DataSource { get; set; }
+
+    [PersistentState]
+    public TablePropertySchema _tableSchema { get; set; }
+
+    [PersistentState]
+    public List<Dictionary<string, object>> _data { get; set; }
+
+    int _pageIndex = 1;
+    int _pageSize = 10;
+    int _total = 0;
+
+    // 编辑状态管理
+    private Dictionary<string, Dictionary<string, object>> _editingRows = new();
+    private Dictionary<string, Dictionary<string, object>> _originalRows = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+        
+        // 确保所有必需的参数都已设置
+        if (DataSource == null || PageCascading == null || string.IsNullOrEmpty(PageCascading.AppId))
+        {
+            return;
+        }
+        
+        // 初始化 Schema
+        Init();
+        
+        // 检查持久化状态：如果 _data 为空，则需要加载
+        // PersistentState 会在 SSR -> WebAssembly 切换时保持数据
+        // 如果数据已存在（从 SSR 持久化过来），则跳过加载
+        if (_data == null || _data.Count == 0)
+        {
+            await LoadDataAsync();
+        }
+    }
+
+    protected override bool ShouldRender()
+    {
+        // ShouldRender 不应有副作用，初始化逻辑已在 OnParametersSetAsync 中处理
+        return true;
+    }
+
+    private void Init()
+    {
+        if (DataSource == null)
+        {
+            return;
+        }
+        
+        _tableSchema = GetTableSchemaAsync();
+        StateKey = DataSource.StateKey;
+    }
+
+    public async Task OnChange(int pageIndex, int pageSize)
+    {
+        _pageIndex = pageIndex;
+        _pageSize = pageSize;
+        await LoadDataAsync();
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private TablePropertySchema GetTableSchemaAsync()
+    {
+        var dataSource = DataSource?.DataSourceValue;
+        if (string.IsNullOrEmpty(dataSource) || dataSource.Trim().Equals("[]"))
+        {
+            var defaultTableSchema = new TablePropertySchema();
+            defaultTableSchema.Columns = new List<TableColumnSchema>()
+            {
+                new() { Name = "_temp", Title = "(待添加列)" }
+            };
+            return defaultTableSchema;
+        }
+
+        var tableSchema = dataSource.FromJson<TablePropertySchema>();
+        if(tableSchema?.Columns != null && tableSchema.Columns.Any() == false)
+        {
+            tableSchema.Columns = new List<TableColumnSchema>()
+            {
+                new() { Name = "_temp", Title = "(待添加列)" }
+            };
+        }
+
+        return tableSchema;
+    }
+
+    private async Task LoadDataAsync()
+    {
+        var request = new TableDataInput
+        {
+            AppId = PageCascading.AppId,
+            PageId = PageCascading.PageId,
+            DataSourceId = DataSource.DataSourceId,
+            SkipCount = (_pageIndex - 1) * _pageSize,
+            MaxResultCount = _pageSize,
+            Filters = new Dictionary<string, object>()
+        };
+
+        try
+        {
+            var result = await TableDataAppService.GetListAsync(request);
+            _data = result.Items.ToList();
+            _total = (int)result.TotalCount;
+        }
+        catch (Exception ex)
+        {
+            // 出错时使用空数据
+            _data = new List<Dictionary<string, object>>();
+            _total = 0;
+        }
+    }
+
+    public async Task ButtonActionAsync(TableButtonSchema btn, Dictionary<string, object> rowData = null)
+    {
+        foreach(var e in btn.Events)
+        {
+            if (e.EventHandlerType == EventTargetTypeEnum.None)
+                continue;
+
+            if (e.EventHandlerType == EventTargetTypeEnum.Page)
+            {
+                if (string.IsNullOrEmpty(e.EventTargetId))
+                    continue;
+
+                if (string.IsNullOrEmpty(e.EventTargetAction))
+                    continue;
+
+                var pageHandler = e.EventTargetAction.ToEnum<EventPageHandlerTypeEnum>();
+                switch (pageHandler)
+                {
+                    case EventPageHandlerTypeEnum.Refresh:
+                        
+                        break;
+                    case EventPageHandlerTypeEnum.Modal:
+                        await ButtonActionToWithModalAsync(e, rowData);
+                        break;
+                    case EventPageHandlerTypeEnum.Self:
+                        await ButtonActionToWithSelfAsync(e, rowData);
+                        break;
+                    case EventPageHandlerTypeEnum.Blank:
+                        await ButtonActionToWithBlankAsync(e, rowData);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            else if (e.EventHandlerType == EventTargetTypeEnum.Custom)
+            {
+                if (e.EventCustomLanguage == EventCustomLanguageEnum.None
+                    || string.IsNullOrEmpty(e.EventCustomScript))
+                    continue;
+
+                await JS.InvokeVoidAsync("eval", e.EventCustomScript);
+            }
+            else if (e.EventHandlerType == EventTargetTypeEnum.Data)
+            {
+                await HandleDataActionAsync(e.EventDataActionType, rowData);
+            }
+        }
+    }
+
+    private async Task ButtonActionToWithModalAsync(EventSchema e, Dictionary<string, object> rowData = null)
+    {
+
+    }
+
+    private async Task ButtonActionToWithSelfAsync(EventSchema e, Dictionary<string, object> rowData = null)
+    {
+
+    }
+
+    private async Task ButtonActionToWithBlankAsync(EventSchema e, Dictionary<string, object> rowData = null)
+    {
+        string pageUrl = string.Empty;
+        if (IsDesign)
+            pageUrl = $"/designer/{PageCascading.AppId}/{e.EventTargetId}";
+        else
+            pageUrl = $"/{PageCascading.AppId}/{e.EventTargetId}";
+
+        // 添加URL参数
+        pageUrl = BuildUrlWithParameters(pageUrl, e, rowData);
+
+        await JS.InvokeVoidAsync("open", pageUrl, "_blank");
+    }
+
+    private string BuildUrlWithParameters(string baseUrl, EventSchema eventSchema, Dictionary<string, object> rowData)
+    {
+        var parameters = new List<string>();
+
+        // 添加事件配置中的参数
+        if (eventSchema.EventArgs != null && eventSchema.EventArgs.Any())
+        {
+            foreach (var arg in eventSchema.EventArgs)
+            {
+                parameters.Add($"{arg.Key}={Uri.EscapeDataString(arg.Value?.ToString() ?? "")}");
+            }
+        }
+
+        // 添加行数据参数（根据配置映射）
+        if (rowData != null && rowData.Any() && eventSchema.RowDataParams != null && eventSchema.RowDataParams.Any())
+        {
+            foreach (var paramMapping in eventSchema.RowDataParams)
+            {
+                var urlParamName = paramMapping.Key;
+                var rowFieldName = paramMapping.Value;
+                
+                // 检查行数据中是否包含指定字段
+                if (rowData.ContainsKey(rowFieldName))
+                {
+                    // 避免与EventArgs中的参数重复
+                    if (eventSchema.EventArgs == null || !eventSchema.EventArgs.ContainsKey(urlParamName))
+                    {
+                        parameters.Add($"{urlParamName}={Uri.EscapeDataString(rowData[rowFieldName]?.ToString() ?? "")}");
+                    }
+                }
+            }
+        }
+
+        if (parameters.Any())
+        {
+            var separator = baseUrl.Contains("?") ? "&" : "?";
+            return $"{baseUrl}{separator}{string.Join("&", parameters)}";
+        }
+
+        return baseUrl;
+    }
+
+    private async Task HandleDataActionAsync(EventDataActionTypeEnum actionType, Dictionary<string, object> rowData)
+    {
+        switch (actionType)
+        {
+            case EventDataActionTypeEnum.EditRow:
+                await EditRowAsync(rowData);
+                break;
+            case EventDataActionTypeEnum.DeleteRow:
+                await DeleteRowAsync(rowData);
+                break;
+            case EventDataActionTypeEnum.SaveRow:
+                await SaveRowAsync(rowData);
+                break;
+            case EventDataActionTypeEnum.CancelEdit:
+                await CancelEditAsync(rowData);
+                break;
+            case EventDataActionTypeEnum.AddRow:
+                await AddRowAsync();
+                break;
+            case EventDataActionTypeEnum.RefreshData:
+                await RefreshDataAsync();
+                break;
+            default:
+                break;
+        }
+    }
+
+    private async Task EditRowAsync(Dictionary<string, object> rowData)
+    {
+        try
+        {
+            // 获取主键字段
+            var primaryKeyColumn = _tableSchema.Columns.FirstOrDefault(t => t.IsPrimaryKey);
+            if (primaryKeyColumn == null)
+            {
+                Logger.LogWarning("编辑失败: 未找到主键字段");
+                return;
+            }
+
+            // 获取主键值
+            if (!rowData.ContainsKey(primaryKeyColumn.Name))
+            {
+                Logger.LogWarning($"编辑失败: 行数据中未找到主键字段 {primaryKeyColumn.Name}");
+                return;
+            }
+
+            var primaryKeyValue = rowData[primaryKeyColumn.Name]?.ToString();
+            if (string.IsNullOrEmpty(primaryKeyValue))
+            {
+                Logger.LogWarning("编辑失败: 主键值为空");
+                return;
+            }
+
+            // 如果已经在编辑状态，则不重复进入编辑
+            if (_editingRows.ContainsKey(primaryKeyValue))
+            {
+                return;
+            }
+
+            // 保存原始数据副本
+            _originalRows[primaryKeyValue] = new Dictionary<string, object>(rowData);
+
+            // 创建编辑数据副本
+            _editingRows[primaryKeyValue] = new Dictionary<string, object>(rowData);
+
+            // 使用异步方式触发重新渲染，避免同步调用导致的堆栈问题
+            _ = InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning($"编辑行失败: {ex.Message}");
+        }
+
+        await Task.CompletedTask;
+    }
+
+    private async Task DeleteRowAsync(Dictionary<string, object> row)
+    {
+        try
+        {
+            // 获取主键字段
+            var primaryKeyColumn = _tableSchema.Columns.FirstOrDefault(t => t.IsPrimaryKey);
+            if (primaryKeyColumn == null)
+            {
+                Logger.LogWarning("删除失败: 未找到主键字段");
+                return;
+            }
+
+            // 获取主键值
+            if (!row.ContainsKey(primaryKeyColumn.Name))
+            {
+                Logger.LogWarning($"删除失败: 行数据中未找到主键字段 {primaryKeyColumn.Name}");
+                return;
+            }
+
+            var primaryKeyValue = row[primaryKeyColumn.Name]?.ToString();
+            if (string.IsNullOrEmpty(primaryKeyValue))
+            {
+                Logger.LogWarning("删除失败: 主键值为空");
+                return;
+            }
+
+            // 构建删除请求
+            var deleteRequest = new TableDataDeleteInput
+            {
+                AppId = PageCascading?.AppId,
+                PageId = PageCascading?.PageId,
+                DataSourceId = DataSource?.DataSourceId,
+                Id = primaryKeyValue,
+                RowData = row
+            };
+
+            // 调用删除服务
+            await TableDataAppService.DeleteAsync(deleteRequest);
+
+            // 删除成功后重新加载数据
+            await LoadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning($"删除失败: {ex.Message}");
+        }
+    }
+
+    private async Task SaveRowAsync(Dictionary<string, object> rowData)
+    {
+        try
+        {
+            // 获取主键字段
+            var primaryKeyColumn = _tableSchema.Columns.FirstOrDefault(t => t.IsPrimaryKey);
+            if (primaryKeyColumn == null)
+            {
+                Logger.LogWarning("保存失败: 未找到主键字段");
+                return;
+            }
+
+            // 获取主键值
+            if (!rowData.ContainsKey(primaryKeyColumn.Name))
+            {
+                Logger.LogWarning($"保存失败: 行数据中未找到主键字段 {primaryKeyColumn.Name}");
+                return;
+            }
+
+            var primaryKeyValue = rowData[primaryKeyColumn.Name]?.ToString();
+            if (string.IsNullOrEmpty(primaryKeyValue))
+            {
+                Logger.LogWarning("保存失败: 主键值为空");
+                return;
+            }
+
+            // 检查是否在编辑状态
+            if (!_editingRows.ContainsKey(primaryKeyValue))
+            {
+                Logger.LogWarning("保存失败: 该行不在编辑状态");
+                return;
+            }
+
+            var editingData = _editingRows[primaryKeyValue];
+            var originalData = _originalRows[primaryKeyValue];
+
+            // 找出变更的字段
+            var updateData = new Dictionary<string, object>();
+            foreach (var kvp in editingData)
+            {
+                if (!originalData.ContainsKey(kvp.Key) || 
+                    !Equals(originalData[kvp.Key], kvp.Value))
+                {
+                    updateData[kvp.Key] = kvp.Value;
+                }
+            }
+
+            // 如果有变更，则调用更新服务
+            if (updateData.Any())
+            {
+                var updateRequest = new TableDataUpdateInput
+                {
+                    AppId = PageCascading?.AppId,
+                    PageId = PageCascading?.PageId,
+                    DataSourceId = DataSource?.DataSourceId,
+                    Id = primaryKeyValue,
+                    RowData = originalData,
+                    UpdateData = updateData
+                };
+
+                await TableDataAppService.UpdateAsync(updateRequest);
+
+                // 更新本地数据
+                var dataIndex = _data.FindIndex(d => d.ContainsKey(primaryKeyColumn.Name) && 
+                    d[primaryKeyColumn.Name]?.ToString() == primaryKeyValue);
+                if (dataIndex >= 0)
+                {
+                    _data[dataIndex] = new Dictionary<string, object>(editingData);
+                }
+            }
+
+            // 退出编辑状态
+            _editingRows.Remove(primaryKeyValue);
+            _originalRows.Remove(primaryKeyValue);
+
+            // 使用异步方式触发重新渲染，避免同步调用导致的堆栈问题
+            _ = InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning($"保存行失败: {ex.Message}");
+        }
+    }
+
+    private async Task CancelEditAsync(Dictionary<string, object> rowData)
+    {
+        try
+        {
+            // 获取主键字段
+            var primaryKeyColumn = _tableSchema.Columns.FirstOrDefault(t => t.IsPrimaryKey);
+            if (primaryKeyColumn == null)
+            {
+                Logger.LogWarning("取消编辑失败: 未找到主键字段");
+                return;
+            }
+
+            // 获取主键值
+            if (!rowData.ContainsKey(primaryKeyColumn.Name))
+            {
+                Logger.LogWarning($"取消编辑失败: 行数据中未找到主键字段 {primaryKeyColumn.Name}");
+                return;
+            }
+
+            var primaryKeyValue = rowData[primaryKeyColumn.Name]?.ToString();
+            if (string.IsNullOrEmpty(primaryKeyValue))
+            {
+                Logger.LogWarning("取消编辑失败: 主键值为空");
+                return;
+            }
+
+            // 检查是否在编辑状态
+            if (!_editingRows.ContainsKey(primaryKeyValue))
+            {
+                Logger.LogWarning("取消编辑失败: 该行不在编辑状态");
+                return;
+            }
+
+            // 清除编辑状态
+            _editingRows.Remove(primaryKeyValue);
+            _originalRows.Remove(primaryKeyValue);
+
+            // 使用异步方式触发重新渲染，避免同步调用导致的堆栈问题
+            _ = InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning($"取消编辑失败: {ex.Message}");
+        }
+
+        await Task.CompletedTask;
+    }
+
+    private async Task AddRowAsync()
+    {
+        // TODO: 实现添加行功能
+    }
+
+    private async Task RefreshDataAsync()
+    {
+        try
+        {
+            // 清除所有编辑状态
+            _editingRows.Clear();
+            _originalRows.Clear();
+
+            // 重新加载数据
+            await LoadDataAsync();
+
+            // 使用异步方式触发重新渲染，避免同步调用导致的堆栈问题
+            _ = InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning($"刷新数据失败: {ex.Message}");
+        }
+    }
+}

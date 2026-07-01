@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<Import Project="../../../common.props" />
+	<PropertyGroup>
+		<RootNamespace>H.Assistant.Core</RootNamespace>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Agents.AI" />
+		<PackageReference Include="Microsoft.Agents.AI.OpenAI" />
+		<PackageReference Include="Microsoft.Data.SqlClient" />
+		<PackageReference Include="ModelContextProtocol.Core" />
+		<PackageReference Include="Volo.Abp.Core" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\..\..\Utils\H.Extensions.System\H.Extensions.System.csproj" />
+	  <ProjectReference Include="..\H.Assistant.Application.Contracts\H.Assistant.Application.Contracts.csproj" />
+	</ItemGroup>
+
+</Project>

@@ -1,0 +1,97 @@
+@namespace H.LowCode.PartsDesignEngine
+@inherits LowCodeComponentBase
+
+<div class="fixed-option-data-source-editor">
+    @if (OptionsList != null)
+    {
+        @for (int i = 0; i < OptionsList.Count; i++)
+        {
+            var option = OptionsList[i];
+            <HCard Style="margin-bottom: 8px;">
+                <div class="row">
+                    <div class="col col-8">
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; margin-bottom: 4px; font-weight: 500;">显示文本</label>
+                            <input class="inp" @bind="option.Label" placeholder="显示文本" />
+                        </div>
+                    </div>
+                    <div class="col col-8">
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; margin-bottom: 4px; font-weight: 500;">选项值</label>
+                            <input class="inp" @bind="option.Value" placeholder="选项值" />
+                        </div>
+                    </div>
+                    <div class="col col-8">
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; margin-bottom: 4px; font-weight: 500;">是否选中</label>
+                            <label class="switch"><input type="checkbox" @bind="option.IsSelected"></label>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col col-12">
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; margin-bottom: 4px; font-weight: 500;">分组</label>
+                            <input class="inp" @bind="option.Group" placeholder="选项分组（可选）" />
+                        </div>
+                    </div>
+                    <div class="col col-12">
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; margin-bottom: 4px; font-weight: 500;">排序</label>
+                            <input type="number" class="inp" @bind="option.Order" min="0" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col col-24">
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; margin-bottom: 4px; font-weight: 500;">描述</label>
+                            <textarea class="ta" @bind="option.Description" rows="2" placeholder="选项描述（可选）"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-text btn-sm" @onclick="@(() => RemoveOption(i))" style="color: red;">删除</button>
+            </HCard>
+        }
+    }
+    <button class="btn btn-dashed btn-block" @onclick="@AddOption">添加选项</button>
+</div>
+
+@code {
+    [Parameter]
+    public List<OptionDataSourceSchema> OptionsList { get; set; }
+    [Parameter]
+    public EventCallback<List<OptionDataSourceSchema>> OptionsListChanged { get; set; }
+
+    private async Task AddOption()
+    {
+        OptionsList ??= new List<OptionDataSourceSchema>();
+        OptionsList.Add(new OptionDataSourceSchema
+        {
+            Label = "",
+            Value = "",
+            IsSelected = false,
+            Order = OptionsList.Count,
+            Group = "",
+            Description = ""
+        });
+        await OptionsListChanged.InvokeAsync(OptionsList);
+        StateHasChanged();
+    }
+
+    private async Task RemoveOption(int index)
+    {
+        if (OptionsList != null && index >= 0 && index < OptionsList.Count)
+        {
+            OptionsList.RemoveAt(index);
+            await OptionsListChanged.InvokeAsync(OptionsList);
+            StateHasChanged();
+        }
+    }
+}
+
+<style>
+    .fixed-option-datasource-editor .hcard-body {
+        padding: 12px;
+    }
+</style>
