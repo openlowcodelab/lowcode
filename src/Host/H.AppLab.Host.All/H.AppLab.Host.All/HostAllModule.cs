@@ -22,7 +22,7 @@ using Volo.Abp.Autofac;
 using Volo.Abp.Modularity;
 using Volo.Abp.MultiTenancy;
 
-namespace H.LowCode.Host.All;
+namespace H.AppLab.Host.All;
 
 /// <summary>
 /// 统一宿主模块，整合所有应用模块

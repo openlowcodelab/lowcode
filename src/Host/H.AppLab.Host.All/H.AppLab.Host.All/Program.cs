@@ -1,6 +1,6 @@
-using H.LowCode.Host.All.Components;
+using H.AppLab.Host.All.Components;
 using H.YunXiaoMcpServer;
-using H.LowCode.Host.All;
+using H.AppLab.Host.All;
 using Microsoft.AspNetCore.ResponseCompression;
 using System.IO.Compression;
 
@@ -96,7 +96,7 @@ app.MapMcp("/yunxiao").AllowAnonymous();
 app.MapRazorComponents<App>()
     .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(
-        typeof(H.LowCode.Host.All.Client._Imports).Assembly,
+        typeof(H.AppLab.Host.All.Client._Imports).Assembly,
         typeof(H.Portal.Web._Imports).Assembly,
         typeof(H.Account.Web._Imports).Assembly,
         typeof(H.Organization.Web._Imports).Assembly,

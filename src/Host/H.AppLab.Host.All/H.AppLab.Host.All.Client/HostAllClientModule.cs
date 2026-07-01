@@ -14,7 +14,7 @@ using Volo.Abp.Autofac.WebAssembly;
 using Volo.Abp.Http.Client;
 using Volo.Abp.Modularity;
 
-namespace H.LowCode.Host.All.Client;
+namespace H.AppLab.Host.All.Client;
 
 [DependsOn(
     //abp

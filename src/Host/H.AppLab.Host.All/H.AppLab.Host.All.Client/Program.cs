@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using H.LowCode.Host.All.Client;
+using H.AppLab.Host.All.Client;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
