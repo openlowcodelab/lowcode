@@ -176,7 +176,7 @@
         {
             if (!_isLoggedIn)
             {
-                NavigationManager.NavigateTo($"/account/login?returnUrl={returnUrl}");
+                NavigationManager.NavigateTo($"{LoginUrl}?returnUrl={returnUrl}");
             }
             else if (_isSystemUser)
             {

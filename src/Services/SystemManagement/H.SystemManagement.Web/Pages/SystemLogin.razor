@@ -106,11 +106,14 @@
                 if (success)
                 {
                     successMessage = "登录成功，正在跳转...";
+                    errorMessage = "";
+                    StateHasChanged();
                     Navigation.NavigateTo(returnUrl, forceLoad: true);
                 }
                 else
                 {
                     errorMessage = string.IsNullOrEmpty(message) ? "登录失败" : message;
+                    successMessage = "";
                 }
             }
             else
@@ -125,6 +128,7 @@
                         if (errProp.TryGetProperty("message", out var msgProp))
                         {
                             errorMessage = msgProp.GetString() ?? "登录失败";
+                            successMessage = "";
                             return;
                         }
                     }
@@ -132,6 +136,7 @@
                 catch { }
 
                 errorMessage = response.ReasonPhrase ?? "登录失败，请稍后重试";
+                successMessage = "";
             }
         }
         catch (Microsoft.AspNetCore.Components.NavigationException)
@@ -141,10 +146,12 @@
         catch (Exception ex)
         {
             errorMessage = $"登录失败: {ex.Message}";
+            successMessage = "";
         }
         finally
         {
             isLoading = false;
+            StateHasChanged();
         }
     }
 

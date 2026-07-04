@@ -49,7 +49,9 @@
             </div>
 
             <div class="h-form-item" style="margin-top: 24px; margin-bottom: 20px;">
-                <button type="submit" class="h-btn h-btn-primary h-btn-block auth-btn-primary">登 录</button>
+                <button type="submit" class="h-btn h-btn-primary h-btn-block auth-btn-primary" disabled="@isLoading">
+                    @(isLoading ? "登录中..." : "登 录")
+                </button>
             </div>
         </EditForm>
     }
@@ -70,7 +72,9 @@
             <div class="auth-form-links-spacer"></div>
 
             <div class="h-form-item" style="margin-top: 24px; margin-bottom: 20px;">
-                <button type="submit" class="h-btn h-btn-primary h-btn-block auth-btn-primary">登 录</button>
+                <button type="submit" class="h-btn h-btn-primary h-btn-block auth-btn-primary" disabled="@isLoading">
+                    @(isLoading ? "登录中..." : "登 录")
+                </button>
             </div>
         </EditForm>
     }
@@ -104,6 +108,7 @@
     private string successMessage = "";
     private string returnUrl = "/";
     private LoginMode loginMode = LoginMode.AccountPassword;
+    private bool isLoading = false;
 
     private int smsCountdown = 0;
     private string sendCodeButtonText = "发送验证码";
@@ -140,6 +145,11 @@
             return;
         }
 
+        isLoading = true;
+        errorMessage = "";
+        successMessage = "";
+        StateHasChanged();
+
         try
         {
             var result = await AccountAppService.LoginAsync(loginModel);
@@ -167,6 +177,11 @@
             errorMessage = $"登录失败: {ex.Message}";
             successMessage = string.Empty;
         }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
     }
 
     private async Task HandlePhoneLogin()
@@ -181,6 +196,11 @@
             errorMessage = "请输入验证码";
             return;
         }
+
+        isLoading = true;
+        errorMessage = "";
+        successMessage = "";
+        StateHasChanged();
 
         try
         {
@@ -205,6 +225,11 @@
         {
             errorMessage = $"登录失败: {ex.Message}";
             successMessage = string.Empty;
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
         }
     }
 
