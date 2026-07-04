@@ -8,7 +8,7 @@ using H.LowCode.DesignEngine.Application.Contracts;
 using H.LowCode.RenderEngine.Application.Contracts;
 using H.Organization.Application.Contracts;
 using H.Portal.Application.Contracts;
-using H.SystemManagement.Application.Contracts;
+using H.Notification.Application.Contracts;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Volo.Abp.Autofac.WebAssembly;
 using Volo.Abp.Http.Client;
@@ -31,7 +31,7 @@ public class HostAllClientModule : AbpModule
     public const string ApprovalRemoteServiceName = "Approval";
     public const string AutoTestRemoteServiceName = "AutoTest";
     public const string PortalRemoteServiceName = "Portal";
-    public const string SystemManagementRemoteServiceName = "SystemManagement";
+    public const string NotificationRemoteServiceName = "Notification";
     public const string AssistantRemoteServiceName = "Assistant";
     public const string EnterpriseRemoteServiceName = "Enterprise";
 
@@ -97,8 +97,8 @@ public class HostAllClientModule : AbpModule
         );
 
         context.Services.AddHttpClientProxies(
-            typeof(SystemManagementApplicationContractsModule).Assembly,
-            SystemManagementRemoteServiceName
+            typeof(NotificationApplicationContractsModule).Assembly,
+            NotificationRemoteServiceName
         );
 
         context.Services.AddHttpClientProxies(
