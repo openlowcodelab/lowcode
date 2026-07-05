@@ -13,6 +13,7 @@ using H.LowCode.RenderEngine.EntityFrameworkCore;
 using H.LowCode.RenderEngine.Repository.JsonFile;
 using H.Organization.Application;
 using H.Portal.Application;
+using H.SystemPortal.Application;
 using H.Notification.Application;
 using H.YunXiaoMcpServer;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -51,6 +52,8 @@ namespace H.AppLab.Host.All;
     typeof(AutoTestApplicationModule),
     // Portal
     typeof(PortalApplicationModule),
+    // SystemPortal
+    typeof(SystemPortalApplicationModule),
     // Notification
     typeof(NotificationApplicationModule),
     // Enterprise
@@ -110,6 +113,7 @@ public class HostAllModule : AbpModule
             options.ConventionalControllers.Create(typeof(ApprovalApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(AutoTestApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(PortalApplicationModule).Assembly);
+            options.ConventionalControllers.Create(typeof(SystemPortalApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(NotificationApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(EnterpriseApplicationModule).Assembly);
         });

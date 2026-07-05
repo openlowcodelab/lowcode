@@ -127,8 +127,8 @@
 
             // 直接调用 API 获取应用分类数据
             // ABP 路由规则: /api/app/{service-name}/{method-name-simplified}
-            // IAppManageAppService.GetAllCategoriesAsync -> /api/app/app-manage/categories
-            var response = await HttpClient.GetFromJsonAsync<AppCategoryInfo[]>("/api/app/app-manage/categories");
+            // IAppQueryAppService.GetAllCategoriesAsync -> /api/app/app-query/categories
+            var response = await HttpClient.GetFromJsonAsync<AppCategoryInfo[]>("/api/app/app-query/categories");
 
             if (response != null)
             {

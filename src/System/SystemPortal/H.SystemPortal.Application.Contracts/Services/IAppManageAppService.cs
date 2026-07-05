@@ -1,10 +1,10 @@
 using H.AppDrawer.Components;
 using Volo.Abp.Application.Services;
 
-namespace H.Portal.Application.Contracts;
+namespace H.SystemPortal.Application.Contracts;
 
 /// <summary>
-/// 应用管理服务接口
+/// 应用管理服务接口（包含查询和管理操作）
 /// </summary>
 public interface IAppManageAppService : IApplicationService
 {

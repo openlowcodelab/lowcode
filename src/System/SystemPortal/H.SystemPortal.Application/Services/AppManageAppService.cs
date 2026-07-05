@@ -1,13 +1,13 @@
 using H.AppDrawer.Components;
-using H.Portal.Application.Contracts;
+using H.SystemPortal.Application.Contracts;
 using System.Text.Json;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
 
-namespace H.Portal.Application;
+namespace H.SystemPortal.Application;
 
 /// <summary>
-/// 应用管理服务，负责应用的增删改查操作
+/// 应用管理服务，负责应用的查询和增删改操作
 /// </summary>
 [RemoteService]
 public class AppManageAppService : ApplicationService, IAppManageAppService
@@ -25,7 +25,7 @@ public class AppManageAppService : ApplicationService, IAppManageAppService
     private string FindAppsJsonFile()
     {
 #if DEBUG
-        var jsonFilePath = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "Services", "Portal", "data", "apps.json");
+        var jsonFilePath = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "System", "SystemPortal", "data", "apps.json");
         return jsonFilePath;
 #else
         var jsonFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data", "apps.json");
@@ -39,44 +39,6 @@ public class AppManageAppService : ApplicationService, IAppManageAppService
     public async Task<AppCategoryInfo[]> GetAllCategoriesAsync()
     {
         return LoadAppsFromJson();
-    }
-
-    /// <summary>
-    /// 获取所有应用（扁平化）
-    /// </summary>
-    public async Task<AppItemInfo[]> GetAllAppsAsync()
-    {
-        var categories = await GetAllCategoriesAsync();
-        var allApps = new List<AppItemInfo>();
-        
-        foreach (var category in categories)
-        {
-            if (category.Apps != null)
-            {
-                allApps.AddRange(category.Apps);
-            }
-        }
-        
-        return allApps.OrderBy(a => a.Order).ToArray();
-    }
-
-    /// <summary>
-    /// 根据 ID 获取应用
-    /// </summary>
-    public async Task<AppItemInfo?> GetAppByIdAsync(string appId)
-    {
-        var categories = await GetAllCategoriesAsync();
-        
-        foreach (var category in categories)
-        {
-            var app = category.Apps?.FirstOrDefault(a => a.Id == appId);
-            if (app != null)
-            {
-                return app;
-            }
-        }
-        
-        return null;
     }
 
     /// <summary>
@@ -139,12 +101,6 @@ public class AppManageAppService : ApplicationService, IAppManageAppService
                 
                 if (appIndex >= 0 && category.Apps != null)
                 {
-                    // 保留原有的菜单项（如果没有提供新的）
-                    //if (updatedApp.MenuItems == null || updatedApp.MenuItems.Count == 0)
-                    //{
-                    //    updatedApp.MenuItems = category.Apps[appIndex].MenuItems;
-                    //}
-                    
                     category.Apps[appIndex] = updatedApp;
                     
                     await SaveAppDataAsync(appData);
@@ -316,7 +272,6 @@ public class AppManageAppService : ApplicationService, IAppManageAppService
         }
         catch (Exception ex)
         {
-            // 如果加载失败，使用默认数据
             Console.WriteLine($"Failed to load apps from JSON: {ex.Message}");
             return [];
         }
