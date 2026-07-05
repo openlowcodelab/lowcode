@@ -2,8 +2,8 @@
 @attribute [AllowAnonymous]
 
 @layout SystemLoginLayout
-@inject HttpClient HttpClient
 @inject NavigationManager Navigation
+@inject ISystemAccountAppService SystemAccountAppService
 
 <div class="auth-card">
     <div class="auth-card-title">系统用户登录</div>
@@ -70,69 +70,27 @@
 
         try
         {
-            var payload = new
+            var payload = new LoginRequestDto
             {
-                account = loginModel.Account,
-                password = loginModel.Password,
-                rememberMe = false
+                Account = loginModel.Account,
+                Password = loginModel.Password,
+                RememberMe = false
             };
 
-            var response = await HttpClient.PostAsJsonAsync("/api/app/account/system-login", payload);
+            var result = await SystemAccountAppService.SystemLoginAsync(payload);
 
-            if (response.IsSuccessStatusCode)
+            if (result.Success)
             {
-                var content = await response.Content.ReadAsStringAsync();
-                bool success = false;
-                string message = "";
+                successMessage = "登录成功！正在跳转...";
+                errorMessage = string.Empty;
 
-                try
-                {
-                    using var doc = System.Text.Json.JsonDocument.Parse(content);
-                    if (doc.RootElement.TryGetProperty("success", out var sProp))
-                        success = sProp.GetBoolean();
-                    if (doc.RootElement.TryGetProperty("message", out var mProp))
-                        message = mProp.GetString() ?? "";
-                }
-                catch
-                {
-                    // ABP 成功时可能返回 200 + UserDto 对象
-                    success = true;
-                }
-
-                if (success)
-                {
-                    successMessage = "登录成功，正在跳转...";
-                    errorMessage = "";
-                    StateHasChanged();
-                    Navigation.NavigateTo(returnUrl, forceLoad: true);
-                }
-                else
-                {
-                    errorMessage = string.IsNullOrEmpty(message) ? "登录失败" : message;
-                    successMessage = "";
-                }
+                var targetUrl = (returnUrl == "/" || string.IsNullOrWhiteSpace(returnUrl)) ? "/system" : returnUrl;
+                Navigation.NavigateTo(targetUrl, forceLoad: true);
             }
             else
             {
-                // ABP 错误格式：{ "error": { "message": "..." } }
-                var errorContent = await response.Content.ReadAsStringAsync();
-                try
-                {
-                    using var doc = System.Text.Json.JsonDocument.Parse(errorContent);
-                    if (doc.RootElement.TryGetProperty("error", out var errProp))
-                    {
-                        if (errProp.TryGetProperty("message", out var msgProp))
-                        {
-                            errorMessage = msgProp.GetString() ?? "登录失败";
-                            successMessage = "";
-                            return;
-                        }
-                    }
-                }
-                catch { }
-
-                errorMessage = response.ReasonPhrase ?? "登录失败，请稍后重试";
-                successMessage = "";
+                errorMessage = "登录失败：" + result.Message;
+                successMessage = string.Empty;
             }
         }
         catch (Microsoft.AspNetCore.Components.NavigationException)

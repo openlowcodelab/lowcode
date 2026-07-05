@@ -120,25 +120,11 @@
 
     protected override void OnInitialized()
     {
-        var httpContextAccessor = ServiceProvider.GetService<IHttpContextAccessor>();
-        if (httpContextAccessor?.HttpContext?.User?.Identity?.IsAuthenticated == true)
+        // 检查 SystemCookies Cookie 是否存在（服务端预渲染时的乐观判断）
+        var httpContext = ServiceProvider.GetService<IHttpContextAccessor>()?.HttpContext;
+        if (httpContext?.Request.Cookies.ContainsKey(".AspNetCore.SystemCookies") == true)
         {
-            var user = httpContextAccessor.HttpContext.User;
-            var name = user.Identity.Name;
-            if (!string.IsNullOrEmpty(name))
-                _userName = name;
-
-            // 验证是否为系统用户
-            var loginMode = user.FindFirst("LoginMode")?.Value;
-            if (loginMode != "System")
-            {
-                // 非系统用户，重置登录状态
-                _isLoggedIn = false;
-                return;
-            }
-
             _isLoggedIn = true;
-            _authChecked = true;
         }
     }
 
@@ -147,26 +133,32 @@
         if (!firstRender || _authChecked)
             return;
 
-        // WASM 环境：通过 API 验证认证状态
         if (OperatingSystem.IsBrowser())
         {
+            // WASM 环境：通过 API 精确验证认证状态
             var result = await CheckAuthViaApiAsync();
             _isLoggedIn = result.authenticated && result.isSystemUser;
             if (!string.IsNullOrEmpty(result.userName))
             {
                 _userName = result.userName;
             }
+
+            _authChecked = true;
+
+            // 仅 WASM 环境下才执行重定向（避免 SSR 时误跳转）
+            if (!_isLoggedIn)
+            {
+                var returnUrl = Uri.EscapeDataString(NavigationManager.Uri);
+                NavigationManager.NavigateTo($"{LoginUrl}?returnUrl={returnUrl}");
+            }
+
+            StateHasChanged();
         }
-
-        _authChecked = true;
-
-        if (!_isLoggedIn)
+        else
         {
-            var returnUrl = Uri.EscapeDataString(NavigationManager.Uri);
-            NavigationManager.NavigateTo($"{LoginUrl}?returnUrl={returnUrl}");
+            // SSR 环境：不做重定向，等待 WASM 接管
+            _authChecked = true;
         }
-
-        StateHasChanged();
     }
 
     private async Task<(bool authenticated, string? userName, bool isSystemUser)> CheckAuthViaApiAsync()
@@ -228,7 +220,7 @@
     private void HandleLogout()
     {
         _showDropdown = false;
-        NavigationManager.NavigateTo("/system/login", forceLoad: true);
+        NavigationManager.NavigateTo("/system/logout", forceLoad: true);
     }
 
     private void NavigateTo(string? url)

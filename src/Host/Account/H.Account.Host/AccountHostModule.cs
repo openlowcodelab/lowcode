@@ -48,6 +48,8 @@ public class AccountHostModule : AbpModule
         });
     }
     
+    private const string SystemCookieScheme = "SystemCookies";
+
     private void ConfigureAuthentication(ServiceConfigurationContext context)
     {
         context.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -55,6 +57,14 @@ public class AccountHostModule : AbpModule
             {
                 options.LoginPath = "/account/login";
                 options.AccessDeniedPath = "/account/login";
+                options.ExpireTimeSpan = TimeSpan.FromHours(24);
+                options.SlidingExpiration = true;
+            })
+            .AddCookie(SystemCookieScheme, options =>
+            {
+                options.Cookie.Name = ".AspNetCore.SystemCookies";
+                options.LoginPath = "/system/login";
+                options.AccessDeniedPath = "/system/login";
                 options.ExpireTimeSpan = TimeSpan.FromHours(24);
                 options.SlidingExpiration = true;
             });

@@ -214,130 +214,6 @@ public class AccountAppService : ApplicationService, IAccountAppService
         };
     }
 
-    public async Task<AuthResponseDto> SystemLoginAsync(LoginRequestDto request)
-    {
-        IdentityUser? user = null;
-
-        var loginType = DetectLoginType(request.Account);
-
-        // 登录时使用 Host 上下文，跨租户查找用户
-        using (_currentTenant.Change(null))
-        {
-            switch (loginType)
-            {
-                case LoginType.Email:
-                    user = await _userManager.FindByEmailAsync(request.Account);
-                    break;
-                case LoginType.PhoneNumber:
-                    var allUsers = await _userManager.Users.ToListAsync();
-                    user = allUsers.FirstOrDefault(u => u.PhoneNumber == request.Account);
-                    break;
-                default:
-                    user = await _userManager.FindByNameAsync(request.Account);
-                    break;
-            }
-        }
-
-        if (user == null)
-        {
-            return new AuthResponseDto { Success = false, Message = "用户名或密码错误" };
-        }
-
-        if (!user.IsActive)
-        {
-            return new AuthResponseDto { Success = false, Message = "账户已被禁用" };
-        }
-
-        var passwordValid = await _userManager.CheckPasswordAsync(user, request.Password);
-        if (!passwordValid)
-        {
-            await _userManager.AccessFailedAsync(user);
-            return new AuthResponseDto { Success = false, Message = "用户名或密码错误" };
-        }
-
-        await _userManager.ResetAccessFailedCountAsync(user);
-
-        // 验证用户是否拥有系统管理员角色（SuperAdmin 或 Admin）
-        var roles = await _userManager.GetRolesAsync(user);
-        var isSystemAdmin = roles.Any(r =>
-            r.Equals(SystemRoleNames.SuperAdmin, StringComparison.OrdinalIgnoreCase) ||
-            r.Equals(SystemRoleNames.Admin, StringComparison.OrdinalIgnoreCase));
-
-        if (!isSystemAdmin)
-        {
-            return new AuthResponseDto { Success = false, Message = "该账户无系统管理权限" };
-        }
-
-        // 更新最后登录时间
-        user.LastModificationTime = DateTime.UtcNow;
-        await _userManager.UpdateAsync(user);
-
-        // 设置Cookie认证，追加 LoginMode=System
-        var httpContext = _httpContextAccessor.HttpContext;
-        if (httpContext != null)
-        {
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.UserName ?? ""),
-                new Claim(ClaimTypes.Email, user.Email ?? ""),
-                new Claim("LoginMode", "System")
-            };
-
-            if (!string.IsNullOrEmpty(user.PhoneNumber))
-            {
-                claims.Add(new Claim(ClaimTypes.MobilePhone, user.PhoneNumber));
-            }
-
-            foreach (var role in roles)
-            {
-                claims.Add(new Claim(ClaimTypes.Role, role));
-            }
-
-            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            var authProperties = new AuthenticationProperties
-            {
-                IsPersistent = request.RememberMe,
-                ExpiresUtc = request.RememberMe ? DateTimeOffset.UtcNow.AddDays(7) : DateTimeOffset.UtcNow.AddHours(24)
-            };
-
-            await httpContext.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
-                new ClaimsPrincipal(claimsIdentity),
-                authProperties);
-        }
-
-        return new AuthResponseDto
-        {
-            Success = true,
-            Message = "登录成功",
-            User = await MapToUserDtoAsync(user, "System")
-        };
-    }
-
-    public async Task<UserDto?> GetCurrentUserAsync()
-    {
-        var httpContext = _httpContextAccessor.HttpContext;
-        if (httpContext?.User?.Identity?.IsAuthenticated != true)
-        {
-            return null;
-        }
-
-        var userIdClaim = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
-        {
-            return null;
-        }
-
-        var user = await _userManager.FindByIdAsync(userId.ToString());
-        if (user == null)
-            return null;
-
-        // 从 Cookie Claims 中读取 LoginMode
-        var loginMode = httpContext.User.FindFirst("LoginMode")?.Value;
-        return await MapToUserDtoAsync(user, loginMode);
-    }
-
     public async Task<UserDto?> GetUserByIdAsync(Guid userId)
     {
         var user = await _userManager.FindByIdAsync(userId.ToString());
@@ -410,7 +286,7 @@ public class AccountAppService : ApplicationService, IAccountAppService
         return tokenHandler.WriteToken(token);
     }
 
-    private async Task<UserDto> MapToUserDtoAsync(IdentityUser user, string? loginMode = null)
+    private async Task<UserDto> MapToUserDtoAsync(IdentityUser user)
     {
         var roles = await _userManager.GetRolesAsync(user);
         return new UserDto
@@ -421,7 +297,6 @@ public class AccountAppService : ApplicationService, IAccountAppService
             PhoneNumber = user.PhoneNumber ?? "",
             RoleNames = roles.ToList(),
             UserType = DeriveUserType(roles),
-            LoginMode = loginMode,
             IsActive = !user.LockoutEnabled || user.LockoutEnd == null || user.LockoutEnd <= DateTimeOffset.UtcNow,
             EmailConfirmed = user.EmailConfirmed,
             PhoneNumberConfirmed = user.PhoneNumberConfirmed,

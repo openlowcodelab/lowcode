@@ -69,7 +69,7 @@
     public string LoginUrl { get; set; } = "/account/login";
 
     /// <summary>
-    /// 认证模式（None=不检测，Optional=检测但允许匿名，Required=强制登录，EnterpriseRequired=仅企业用户）
+    /// 认证模式（None=不检测，Optional=检测但允许匿名，Required=强制登录）
     /// </summary>
     [Parameter]
     public AuthenticationMode AuthMode { get; set; } = AuthenticationMode.Required;
@@ -105,6 +105,7 @@
         {
             var httpContextAccessor = ServiceProvider.GetService<IHttpContextAccessor>();
             var user = httpContextAccessor?.HttpContext?.User;
+
             var name = user?.Identity?.Name;
             if (!string.IsNullOrEmpty(name))
                 _userName = name;
@@ -149,14 +150,7 @@
         var returnUrl = Uri.EscapeDataString(NavigationManager.Uri);
 
         // 访问控制逻辑
-        if (AuthMode == AuthenticationMode.EnterpriseRequired)
-        {
-            if (!_isLoggedIn)
-            {
-                NavigationManager.NavigateTo($"{LoginUrl}?returnUrl={returnUrl}");
-            }
-        }
-        else if (AuthMode == AuthenticationMode.Required && !_isLoggedIn)
+        if (AuthMode == AuthenticationMode.Required && !_isLoggedIn)
         {
             // 强制认证模式下，未登录跳转登录页
             NavigationManager.NavigateTo($"{LoginUrl}?returnUrl={returnUrl}");
@@ -219,7 +213,7 @@
             using var doc = System.Text.Json.JsonDocument.Parse(content);
             var root = doc.RootElement;
 
-            // JSON null 表示未登录（ABP 返回 UserDto?）
+            // JSON null 表示未登录
             if (root.ValueKind == System.Text.Json.JsonValueKind.Null)
                 return (false, null);
 

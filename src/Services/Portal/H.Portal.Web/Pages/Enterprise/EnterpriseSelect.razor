@@ -1,4 +1,5 @@
 @page "/enterprise/select"
+@using System.Net.Http.Json
 
 @layout PortalLayout
 @inject IEnterpriseAppService EnterpriseService
@@ -196,9 +197,30 @@
         errorMessage = null;
         try
         {
-            await EnterpriseService.SelectEnterpriseAsync(enterpriseId);
-            // 强制刷新页面以更新 Cookie 中的 TenantId
-            Navigation.NavigateTo("/", forceLoad: true);
+            var response = await HttpClient.PostAsJsonAsync("/api/app/enterprise/select-enterprise",
+                new { enterpriseId = enterpriseId.ToString() });
+
+            if (response.IsSuccessStatusCode)
+            {
+                // 强制刷新页面以更新 Cookie 中的 TenantId
+                Navigation.NavigateTo("/", forceLoad: true);
+            }
+            else
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                try
+                {
+                    using var doc = System.Text.Json.JsonDocument.Parse(content);
+                    errorMessage = doc.RootElement.TryGetProperty("message", out var msgProp)
+                        ? msgProp.GetString() ?? "操作失败"
+                        : "操作失败";
+                }
+                catch
+                {
+                    errorMessage = content;
+                }
+                StateHasChanged();
+            }
         }
         catch (Exception ex)
         {
