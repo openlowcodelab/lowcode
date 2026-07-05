@@ -1,6 +1,6 @@
-@page "/account/users/{id:guid}/edit"
+@page "/system/users/{Id:guid}/edit"
 
-@layout AccountLayout
+@layout SystemPortalLayout
 @inject IUserAppService UserService
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
@@ -122,7 +122,7 @@
                             }
                             保存修改
                         </button>
-                        <a href="/account/users" class="h-btn" style="text-decoration:none;">返回</a>
+                        <a href="/system/users" class="h-btn" style="text-decoration:none;">返回</a>
                         <button type="button" class="h-btn h-btn-ghost" @onclick="@ShowResetPassword">重置密码</button>
                     </span>
                 </div>
@@ -253,7 +253,7 @@
                 ? new List<string>()
                 : rolesText.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
             await UserService.UpdateUserAsync(Id, updateUserDto);
-            Navigation.NavigateTo("/account/users");
+            Navigation.NavigateTo("/system/users");
         }
         catch (ArgumentException ex)
         {

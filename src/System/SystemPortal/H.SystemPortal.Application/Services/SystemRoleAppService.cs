@@ -1,9 +1,9 @@
-using H.Account.Application.Contracts;
+using H.SystemPortal.Application.Contracts;
 using Microsoft.EntityFrameworkCore;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Identity;
 
-namespace H.Account.Application;
+namespace H.SystemPortal.Application;
 
 /// <summary>
 /// 系统角色管理服务实现

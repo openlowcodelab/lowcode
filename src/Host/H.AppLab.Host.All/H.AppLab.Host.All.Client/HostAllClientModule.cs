@@ -6,9 +6,10 @@ using H.Enterprise.Application.Contracts;
 using H.LowCode.ComponentBase;
 using H.LowCode.DesignEngine.Application.Contracts;
 using H.LowCode.RenderEngine.Application.Contracts;
+using H.Notification.Application.Contracts;
 using H.Organization.Application.Contracts;
 using H.Portal.Application.Contracts;
-using H.Notification.Application.Contracts;
+using H.SystemPortal.Application.Contracts;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Volo.Abp.Autofac.WebAssembly;
 using Volo.Abp.Http.Client;
@@ -34,6 +35,7 @@ public class HostAllClientModule : AbpModule
     public const string NotificationRemoteServiceName = "Notification";
     public const string AssistantRemoteServiceName = "Assistant";
     public const string EnterpriseRemoteServiceName = "Enterprise";
+    public const string SystemPortalRemoteServiceName = "SystemPortal";
 
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
@@ -109,6 +111,11 @@ public class HostAllClientModule : AbpModule
         context.Services.AddHttpClientProxies(
             typeof(EnterpriseApplicationContractsModule).Assembly,
             EnterpriseRemoteServiceName
+        );
+
+        context.Services.AddHttpClientProxies(
+            typeof(SystemPortalApplicationContractsModule).Assembly,
+            SystemPortalRemoteServiceName
         );
     }
 }

@@ -1,6 +1,6 @@
-@page "/account/users/create"
+@page "/system/users/create"
 
-@layout AccountLayout
+@layout SystemPortalLayout
 @inject IUserAppService UserService
 @inject NavigationManager Navigation
 
@@ -109,7 +109,7 @@
                         }
                         创建用户
                     </button>
-                    <a href="/account/users" class="h-btn" style="text-decoration:none;">返回</a>
+                    <a href="/system/users" class="h-btn" style="text-decoration:none;">返回</a>
                 </span>
             </div>
         </div>
@@ -141,7 +141,7 @@
                 ? new List<string>()
                 : rolesText.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
             await UserService.CreateUserAsync(createUserDto);
-            Navigation.NavigateTo("/account/users");
+            Navigation.NavigateTo("/system/users");
         }
         catch (ArgumentException ex)
         {

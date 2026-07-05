@@ -1,6 +1,6 @@
-@page "/account/users/{userId:guid}/detail"
+@page "/system/users/{userId:guid}/detail"
 
-@layout AccountLayout
+@layout SystemPortalLayout
 @inject IUserAppService UserService
 @inject NavigationManager Navigation
 
@@ -105,7 +105,7 @@
     [Microsoft.AspNetCore.Components.Parameter]
     public Guid userId { get; set; }
 
-    private RenderFragment BackButton => @<button class="h-btn" @onclick="@(() => Navigation.NavigateTo("/account/users"))">返回</button>;
+    private RenderFragment BackButton => @<button class="h-btn" @onclick="@(() => Navigation.NavigateTo("/system/users"))">返回</button>;
 
     protected override async Task OnInitializedAsync()
     {

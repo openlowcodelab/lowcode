@@ -17,13 +17,13 @@ namespace H.Enterprise.Application.Services;
 public class EnterpriseAppService : ApplicationService, IEnterpriseAppService
 {
     private readonly EnterpriseDbContext _context;
-    private readonly H.Account.Application.Contracts.IUserAppService _userAppService;
+    private readonly H.SystemPortal.Application.Contracts.IUserAppService _userAppService;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
     public EnterpriseAppService(
         EnterpriseDbContext context,
         IHttpContextAccessor httpContextAccessor,
-        H.Account.Application.Contracts.IUserAppService userAppService)
+        H.SystemPortal.Application.Contracts.IUserAppService userAppService)
     {
         _context = context;
         _httpContextAccessor = httpContextAccessor;

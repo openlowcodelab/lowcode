@@ -1,4 +1,4 @@
-namespace H.Account.Application.Contracts;
+namespace H.SystemPortal.Application.Contracts;
 
 /// <summary>
 /// 系统级内置角色名称常量

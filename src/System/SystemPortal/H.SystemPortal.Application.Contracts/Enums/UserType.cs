@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace H.Account.Application.Contracts;
+namespace H.SystemPortal.Application.Contracts;
 
 /// <summary>
 /// 用户类型枚举

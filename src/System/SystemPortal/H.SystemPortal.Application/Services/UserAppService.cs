@@ -1,11 +1,11 @@
-using H.Account.Application.Contracts;
+using H.SystemPortal.Application.Contracts;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Identity;
 
-namespace H.Account.Application;
+namespace H.SystemPortal.Application;
 
 public class UserAppService : ApplicationService, IUserAppService
 {

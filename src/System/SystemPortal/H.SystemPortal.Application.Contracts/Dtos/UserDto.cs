@@ -1,7 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace H.Account.Application.Contracts;
+namespace H.SystemPortal.Application.Contracts;
 
 /// <summary>
 /// 用户 DTO
@@ -146,68 +146,65 @@ public class PagedResult<T>
     public int TotalPages => (int)Math.Ceiling(Total / (double)PageSize);
 }
 
-public class LoginRequestDto
-{
-    [Required(ErrorMessage = "登录账号不能为空")]
-    public string Account { get; set; } = string.Empty; // 支持用户名/邮箱/手机号
-    
-    [Required(ErrorMessage = "密码不能为空")]
-    public string Password { get; set; } = string.Empty;
-    
-    public LoginType LoginType { get; set; } = LoginType.Account;
-    public bool RememberMe { get; set; }
-}
-
-public enum LoginType
-{
-    Account,    // 用户名
-    Email,      // 邮箱
-    PhoneNumber // 手机号
-}
-
-public class RegisterRequestDto
-{
-    public RegisterType RegisterType { get; set; } = RegisterType.UserName;
-    
-    // 用户名注册
-    public string? UserName { get; set; }
-    
-    // 邮箱注册
-    public string? Email { get; set; }
-    public string? EmailCode { get; set; }
-    
-    // 手机号注册
-    public string? PhoneNumber { get; set; }
-    public string? PhoneCode { get; set; }
-    
-    [Required(ErrorMessage = "密码不能为空")]
-    [MinLength(6, ErrorMessage = "密码长度至少6位")]
-    public string Password { get; set; } = string.Empty;
-    
-    [Required(ErrorMessage = "确认密码不能为空")]
-    [Compare(nameof(Password), ErrorMessage = "两次密码输入不一致")]
-    public string ConfirmPassword { get; set; } = string.Empty;
-}
-
-public enum RegisterType
-{
-    UserName,
-    Email,
-    PhoneNumber
-}
-
-public class AuthResponseDto
-{
-    public bool Success { get; set; }
-    public string Message { get; set; } = string.Empty;
-    public string Token { get; set; } = string.Empty;
-    public UserDto? User { get; set; }
-}
-
 public class ExternalAccountDto
 {
     public string Provider { get; set; } = string.Empty;
     public string ProviderKey { get; set; } = string.Empty;
     public string? DisplayName { get; set; }
     public DateTime BoundAt { get; set; }
+}
+
+/// <summary>
+/// 登录请求 DTO
+/// </summary>
+public class LoginRequestDto
+{
+    public string Account { get; set; } = string.Empty;
+    public string Password { get; set; } = string.Empty;
+    public bool RememberMe { get; set; }
+}
+
+/// <summary>
+/// 登录类型
+/// </summary>
+public enum LoginType
+{
+    Account = 0,
+    Email = 1,
+    PhoneNumber = 2
+}
+
+/// <summary>
+/// 注册请求 DTO
+/// </summary>
+public class RegisterRequestDto
+{
+    public string? UserName { get; set; }
+    public string? Email { get; set; }
+    public string? PhoneNumber { get; set; }
+    public string Password { get; set; } = string.Empty;
+    public string ConfirmPassword { get; set; } = string.Empty;
+    public string? EmailCode { get; set; }
+    public string? PhoneCode { get; set; }
+    public RegisterType RegisterType { get; set; }
+}
+
+/// <summary>
+/// 注册类型
+/// </summary>
+public enum RegisterType
+{
+    UserName = 0,
+    Email = 1,
+    PhoneNumber = 2
+}
+
+/// <summary>
+/// 认证响应 DTO
+/// </summary>
+public class AuthResponseDto
+{
+    public bool Success { get; set; }
+    public string Message { get; set; } = string.Empty;
+    public UserDto? User { get; set; }
 }

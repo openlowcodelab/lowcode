@@ -17,7 +17,6 @@ using H.SystemPortal.Application;
 using H.Notification.Application;
 using H.YunXiaoMcpServer;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.Extensions.Options;
 using Volo.Abp.AspNetCore.Mvc;
 using Volo.Abp.Autofac;
 using Volo.Abp.Modularity;

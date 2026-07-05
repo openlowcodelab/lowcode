@@ -1,6 +1,6 @@
 using Volo.Abp.Application.Services;
 
-namespace H.Account.Application.Contracts;
+namespace H.SystemPortal.Application.Contracts;
 
 public interface IUserAppService : IApplicationService
 {
