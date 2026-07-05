@@ -3,9 +3,8 @@
 @inherits LayoutComponentBase
 
 <DefaultLayoutComponent 
-    AppName="系统管理" 
-    AuthMode="AuthenticationMode.SystemRequired"
-    LoginUrl="/system/login"
+    AppName="通知管理" 
+    AuthMode="AuthenticationMode.EnterpriseRequired"
     MenuItems="@MenuItems">
     @Body
 </DefaultLayoutComponent>
@@ -13,6 +12,6 @@
 @code {
     private static List<AppMenuItem> MenuItems => new()
     {
-        new AppMenuItem { Name = "通知管理", Url = "/system/notifications", Icon = "🔔" }
+        new AppMenuItem { Name = "通知管理", Url = "/notification", Icon = "🔔" }
     };
 }
