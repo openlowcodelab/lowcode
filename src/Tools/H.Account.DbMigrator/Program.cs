@@ -34,8 +34,8 @@ public class Program
                 // 种子数据：系统内置角色
                 await SeedSystemRolesAsync(dbContext);
 
-                // 种子数据：超级管理员用户
-                await SeedSuperAdminUserAsync(dbContext);
+                // 种子数据：系统管理员用户
+                await SeedSystemUserAsync(dbContext);
             }
             catch (Exception ex)
             {
@@ -80,11 +80,11 @@ public class Program
     /// <summary>
     /// 超级管理员用户种子数据
     /// </summary>
-    private static async Task SeedSuperAdminUserAsync(MigratorDbContext dbContext)
+    private static async Task SeedSystemUserAsync(MigratorDbContext dbContext)
     {
-        const string userName = "SuperAdmin";
-        const string password = "Abc,123456";
-        const string email = "superadmin@admin.com";
+        const string userName = "sys";
+        const string password = "Sys,123456";
+        const string email = "sys@applab.com";
 
         var users = dbContext.Set<IdentityUser>();
         var roles = dbContext.Set<IdentityRole>();

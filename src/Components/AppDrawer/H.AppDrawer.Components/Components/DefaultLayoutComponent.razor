@@ -178,11 +178,7 @@
             {
                 NavigationManager.NavigateTo($"{LoginUrl}?returnUrl={returnUrl}");
             }
-            else if (_isSystemUser)
-            {
-                // 已登录但是系统用户 → 跳转系统登录
-                NavigationManager.NavigateTo($"{SystemLoginUrl}?returnUrl={returnUrl}");
-            }
+            // 系统用户允许访问企业页面，不做重定向
         }
         else if (AuthMode == AuthenticationMode.Required && !_isLoggedIn)
         {

@@ -6,7 +6,7 @@
 @inject NavigationManager Navigation
 
 <div class="auth-card">
-    <div class="auth-card-title">系统管理登录</div>
+    <div class="auth-card-title">系统用户登录</div>
     <div class="auth-card-subtitle">仅限系统管理员访问</div>
 
     @if (!string.IsNullOrEmpty(errorMessage))
@@ -42,22 +42,18 @@
     </EditForm>
 </div>
 
-<div class="sys-login-footer">
-    <a href="/account/login">企业用户登录 →</a>
-</div>
-
 @code {
     private LoginModel loginModel { get; set; } = new();
     private string errorMessage = "";
     private string successMessage = "";
-    private string returnUrl = "/enterprise";
+    private string returnUrl = "/system";
     private bool isLoading = false;
 
     protected override void OnInitialized()
     {
         var uri = new Uri(Navigation.Uri);
         var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
-        returnUrl = query["returnUrl"] ?? "/enterprise";
+        returnUrl = query["returnUrl"] ?? "/system";
     }
 
     private async Task HandleLogin()
