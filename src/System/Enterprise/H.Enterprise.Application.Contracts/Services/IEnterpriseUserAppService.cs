@@ -1,7 +1,6 @@
-using H.Enterprise.Application.Contracts.Dtos;
 using Volo.Abp.Application.Services;
 
-namespace H.Enterprise.Application.Contracts.Services;
+namespace H.Enterprise.Application.Contracts;
 
 /// <summary>
 /// 企业用户管理服务接口

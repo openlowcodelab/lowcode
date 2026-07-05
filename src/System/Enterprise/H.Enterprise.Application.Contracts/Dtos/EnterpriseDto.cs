@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace H.Enterprise.Application.Contracts.Dtos;
+namespace H.Enterprise.Application.Contracts;
 
 /// <summary>
 /// 企业 DTO（输出）
