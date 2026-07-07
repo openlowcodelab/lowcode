@@ -18,6 +18,7 @@ using H.Notification.Application;
 using H.YunXiaoMcpServer;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Volo.Abp.AspNetCore.Mvc;
+using Volo.Abp.AspNetCore.Mvc.AntiForgery;
 using Volo.Abp.Autofac;
 using Volo.Abp.Modularity;
 using Volo.Abp.MultiTenancy;
@@ -85,6 +86,13 @@ public class HostAllModule : AbpModule
 
         // 配置统一的 API 控制器
         ConfigureAutoApiControllers();
+
+        // WASM 应用使用 JSON API + Cookie 认证，不需要服务端 CSRF 验证
+        // SameSite Cookie 已提供足够的 CSRF 保护
+        Configure<AbpAntiForgeryOptions>(options =>
+        {
+            options.AutoValidate = false;
+        });
     }
 
     private const string SystemCookieScheme = "SystemCookies";

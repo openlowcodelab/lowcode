@@ -1,5 +1,10 @@
 using H.SystemPortal.Application.Contracts;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Identity;
 using Volo.Abp.MultiTenancy;
@@ -10,15 +15,21 @@ public class SystemAccountAppService : ApplicationService, ISystemAccountAppServ
 {
     private readonly IdentityUserManager _userManager;
     private readonly ICurrentTenant _currentTenant;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
     public SystemAccountAppService(
         IdentityUserManager userManager,
-        ICurrentTenant currentTenant)
+        ICurrentTenant currentTenant,
+        IHttpContextAccessor httpContextAccessor)
     {
         _userManager = userManager;
         _currentTenant = currentTenant;
+        _httpContextAccessor = httpContextAccessor;
     }
 
+    private const string SystemCookieScheme = "SystemCookies";
+
+    [IgnoreAntiforgeryToken]
     public async Task<AuthResponseDto> SystemLoginAsync(LoginRequestDto request)
     {
         IdentityUser? user = null;
@@ -43,14 +54,14 @@ public class SystemAccountAppService : ApplicationService, ISystemAccountAppServ
         }
 
         if (user == null)
-            return null;
+            return new AuthResponseDto { Success = false, Message = "用户名或密码错误" };
 
         if (!user.IsActive)
-            return null;
+            return new AuthResponseDto { Success = false, Message = "账户已被禁用" };
 
         var passwordValid = await _userManager.CheckPasswordAsync(user, request.Password);
         if (!passwordValid)
-            return null;
+            return new AuthResponseDto { Success = false, Message = "用户名或密码错误" };
 
         // 验证是否拥有系统管理员角色
         var roles = await _userManager.GetRolesAsync(user);
@@ -59,7 +70,7 @@ public class SystemAccountAppService : ApplicationService, ISystemAccountAppServ
             r.Equals(SystemRoleNames.Admin, StringComparison.OrdinalIgnoreCase));
 
         if (!isSystemAdmin)
-            return null;
+            return new AuthResponseDto { Success = false, Message = "无系统管理员权限" };
 
         // 更新最后登录时间
         user.LastModificationTime = DateTime.UtcNow;
@@ -76,12 +87,98 @@ public class SystemAccountAppService : ApplicationService, ISystemAccountAppServ
             IsActive = true
         };
 
+        // 设置系统Cookie认证
+        var httpContext = _httpContextAccessor.HttpContext;
+        if (httpContext != null)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.UserName ?? ""),
+                new Claim(ClaimTypes.Email, user.Email ?? "")
+            };
+
+            foreach (var role in roles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
+
+            var claimsIdentity = new ClaimsIdentity(claims, SystemCookieScheme);
+            var authProperties = new AuthenticationProperties
+            {
+                IsPersistent = request.RememberMe,
+                ExpiresUtc = request.RememberMe ? DateTimeOffset.UtcNow.AddDays(7) : DateTimeOffset.UtcNow.AddHours(24)
+            };
+
+            await httpContext.SignInAsync(
+                SystemCookieScheme,
+                new ClaimsPrincipal(claimsIdentity),
+                authProperties);
+        }
+
         return new AuthResponseDto
         {
             Success = true,
             Message = "登录成功",
             User = userDto
         };
+    }
+
+    [IgnoreAntiforgeryToken]
+    public async Task SystemLogoutAsync()
+    {
+        var httpContext = _httpContextAccessor.HttpContext;
+        if (httpContext != null)
+        {
+            await httpContext.SignOutAsync(SystemCookieScheme);
+        }
+    }
+
+    public async Task<UserDto?> GetCurrentUserAsync()
+    {
+        var httpContext = _httpContextAccessor.HttpContext;
+        if (httpContext == null)
+            return null;
+
+        // 显式认证 SystemCookies 方案（UseAuthentication 只认证默认方案）
+        var authResult = await httpContext.AuthenticateAsync(SystemCookieScheme);
+        if (!authResult.Succeeded || authResult.Principal == null)
+            return null;
+
+        // 从认证结果中获取用户 ID
+        var userIdClaim = authResult.Principal.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null)
+            return null;
+
+        var userId = Guid.Parse(userIdClaim.Value);
+
+        // 系统用户跨租户查找
+        using (_currentTenant.Change(null))
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user == null || !user.IsActive)
+                return null;
+
+            // 验证是否拥有系统管理员角色
+            var roles = await _userManager.GetRolesAsync(user);
+            var isSystemAdmin = roles.Any(r =>
+                r.Equals(SystemRoleNames.SuperAdmin, StringComparison.OrdinalIgnoreCase) ||
+                r.Equals(SystemRoleNames.Admin, StringComparison.OrdinalIgnoreCase));
+
+            if (!isSystemAdmin)
+                return null;
+
+            return new UserDto
+            {
+                Id = user.Id,
+                UserName = user.UserName ?? "",
+                Email = user.Email ?? "",
+                PhoneNumber = user.PhoneNumber ?? "",
+                RoleNames = roles.ToList(),
+                LoginMode = "System",
+                IsActive = true
+            };
+        }
     }
 
     private static LoginType DetectLoginType(string account)

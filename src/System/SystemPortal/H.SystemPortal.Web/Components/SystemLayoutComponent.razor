@@ -104,14 +104,13 @@
     public List<AppMenuItem>? MenuItems { get; set; }
 
     [Parameter]
-    public string LoginUrl { get; set; } = "/system/login";
-
-    [Parameter]
     public RenderFragment? ChildContent { get; set; }
 
     [Inject] private NavigationManager NavigationManager { get; set; } = default!;
     [Inject] private IServiceProvider ServiceProvider { get; set; } = default!;
     [Inject] private HttpClient HttpClient { get; set; } = default!;
+
+    public string LoginUrl { get; set; } = "/system/login";
 
     private bool _isLoggedIn;
     private bool _authChecked;
@@ -133,39 +132,32 @@
         if (!firstRender || _authChecked)
             return;
 
-        if (OperatingSystem.IsBrowser())
+        // WASM 环境：通过 API 精确验证认证状态
+        var result = await CheckAuthViaApiAsync();
+        _isLoggedIn = result.authenticated && result.isSystemUser;
+        if (!string.IsNullOrEmpty(result.userName))
         {
-            // WASM 环境：通过 API 精确验证认证状态
-            var result = await CheckAuthViaApiAsync();
-            _isLoggedIn = result.authenticated && result.isSystemUser;
-            if (!string.IsNullOrEmpty(result.userName))
-            {
-                _userName = result.userName;
-            }
-
-            _authChecked = true;
-
-            // 仅 WASM 环境下才执行重定向（避免 SSR 时误跳转）
-            if (!_isLoggedIn)
-            {
-                var returnUrl = Uri.EscapeDataString(NavigationManager.Uri);
-                NavigationManager.NavigateTo($"{LoginUrl}?returnUrl={returnUrl}");
-            }
-
-            StateHasChanged();
+            _userName = result.userName;
         }
-        else
+
+        _authChecked = true;
+
+        // 仅 WASM 环境下才执行重定向（避免 SSR 时误跳转）
+        if (!_isLoggedIn)
         {
-            // SSR 环境：不做重定向，等待 WASM 接管
-            _authChecked = true;
+            var returnUrl = Uri.EscapeDataString(NavigationManager.Uri);
+            NavigationManager.NavigateTo($"{LoginUrl}?returnUrl={returnUrl}");
         }
+
+        StateHasChanged();
     }
 
     private async Task<(bool authenticated, string? userName, bool isSystemUser)> CheckAuthViaApiAsync()
     {
         try
         {
-            var response = await HttpClient.GetAsync("/api/app/account/current-user");
+            // 系统用户应调用 systemaccount 的 current-user 端点
+            var response = await HttpClient.GetAsync("/api/app/system-account/current-user");
             if (!response.IsSuccessStatusCode)
                 return (false, null, false);
 

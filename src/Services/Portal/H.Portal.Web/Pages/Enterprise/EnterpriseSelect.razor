@@ -197,8 +197,9 @@
         errorMessage = null;
         try
         {
-            var response = await HttpClient.PostAsJsonAsync("/api/app/enterprise/select-enterprise",
-                new { enterpriseId = enterpriseId.ToString() });
+            var response = await HttpClient.PostAsync(
+                $"/api/app/enterprise/select-enterprise/{enterpriseId}",
+                null);
 
             if (response.IsSuccessStatusCode)
             {

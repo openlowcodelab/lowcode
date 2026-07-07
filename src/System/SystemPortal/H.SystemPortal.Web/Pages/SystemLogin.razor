@@ -3,7 +3,7 @@
 
 @layout SystemLoginLayout
 @inject NavigationManager Navigation
-@inject ISystemAccountAppService SystemAccountAppService
+@inject HttpClient HttpClient
 
 <div class="auth-card">
     <div class="auth-card-title">系统用户登录</div>
@@ -77,9 +77,10 @@
                 RememberMe = false
             };
 
-            var result = await SystemAccountAppService.SystemLoginAsync(payload);
+            var response = await HttpClient.PostAsJsonAsync("/api/app/system-account/system-login", payload);
+            var result = await response.Content.ReadFromJsonAsync<AuthResponseDto>();
 
-            if (result.Success)
+            if (result != null && result.Success)
             {
                 successMessage = "登录成功！正在跳转...";
                 errorMessage = string.Empty;
@@ -89,7 +90,7 @@
             }
             else
             {
-                errorMessage = "登录失败：" + result.Message;
+                errorMessage = "登录失败：" + (result?.Message ?? "未知错误");
                 successMessage = string.Empty;
             }
         }

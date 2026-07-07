@@ -10,6 +10,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Identity;
 using Volo.Abp.Guids;
@@ -40,6 +41,7 @@ public class AccountAppService : ApplicationService, IAccountAppService
         _currentTenant = currentTenant;
     }
 
+    [IgnoreAntiforgeryToken]
     public async Task<AuthResponseDto> RegisterAsync(RegisterRequestDto request)
     {
         // 验证密码确认
@@ -110,6 +112,7 @@ public class AccountAppService : ApplicationService, IAccountAppService
         };
     }
 
+    [IgnoreAntiforgeryToken]
     public async Task<AuthResponseDto> LoginAsync(LoginRequestDto request)
     {
         IdentityUser? user = null;
@@ -247,6 +250,7 @@ public class AccountAppService : ApplicationService, IAccountAppService
         }
     }
 
+    [IgnoreAntiforgeryToken]
     public async Task LogoutAsync()
     {
         var httpContext = _httpContextAccessor.HttpContext;
@@ -254,6 +258,23 @@ public class AccountAppService : ApplicationService, IAccountAppService
         {
             await httpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         }
+    }
+
+    public async Task<UserDto?> GetCurrentUserAsync()
+    {
+        var httpContext = _httpContextAccessor.HttpContext;
+        if (httpContext == null)
+            return null;
+
+        var userIdClaim = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+        if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+            return null;
+
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        if (user == null)
+            return null;
+
+        return await MapToUserDtoAsync(user);
     }
 
     private string GenerateJwtToken(IdentityUser user)

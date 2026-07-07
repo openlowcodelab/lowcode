@@ -4,6 +4,7 @@ using H.Enterprise.EntityFrameworkCore.Entities;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using Volo.Abp.Application.Services;
@@ -13,6 +14,7 @@ namespace H.Enterprise.Application.Services;
 /// <summary>
 /// 企业管理服务实现
 /// </summary>
+[IgnoreAntiforgeryToken]
 public class EnterpriseAppService : ApplicationService, IEnterpriseAppService
 {
     private readonly EnterpriseDbContext _context;
@@ -254,6 +256,7 @@ public class EnterpriseAppService : ApplicationService, IEnterpriseAppService
             .ToList();
     }
 
+    [IgnoreAntiforgeryToken]
     public async Task SelectEnterpriseAsync(Guid enterpriseId)
     {
         var currentUserId = GetCurrentUserId() ?? throw new Exception("未登录");
