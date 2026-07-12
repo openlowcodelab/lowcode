@@ -119,6 +119,8 @@ public class SupplyChainDbContext : AbpDbContext<SupplyChainDbContext>
             b.Property(x => x.HttpMethod).HasMaxLength(16);
             b.Property(x => x.Path).HasMaxLength(256);
             b.Property(x => x.Description).HasMaxLength(500);
+            b.Property(x => x.RequestFieldsJson).HasColumnType("nvarchar(max)");
+            b.Property(x => x.ResponseFieldsJson).HasColumnType("nvarchar(max)");
             b.Property(x => x.Remark).HasMaxLength(500);
 
             b.HasIndex(x => x.Code).IsUnique();

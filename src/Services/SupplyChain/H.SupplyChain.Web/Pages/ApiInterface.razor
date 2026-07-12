@@ -1,60 +1,280 @@
 @page "/supply-chain/api-interface"
 @layout SupplyChainLayout
 @inject IApiInterfaceAppService InterfaceService
+@inject ISupplierInterfaceMappingAppService MappingService
+@inject ISupplyChainSupplierAppService SupplierService
 @inject IJSRuntime JS
 
-<HCard Title="接口定义管理">
-    <div class="h-toolbar">
-        <input type="text" @bind-value="@filter" placeholder="接口编码或名称" class="h-input" style="width:220px;" />
-        <select @bind="@typeFilter" class="h-input" style="width:auto">
-            <option value="">全部类型</option>
-            @foreach (var t in Enum.GetValues<InterfaceTypeEnum>())
+<HCard Title="接口配置">
+    @* 顶部：供应商下拉框 + 新增接口 *@
+    <div class="h-toolbar" style="margin-bottom:12px;">
+        <span style="font-weight:600;">供应商：</span>
+        <select class="h-input" style="width:auto;min-width:260px;" value="@selectedSupplierId?.ToString()" @onchange="@OnSupplierChanged">
+            <option value="">请选择供应商</option>
+            @foreach (var s in suppliers)
             {
-                <option value="@t">@t</option>
+                <option value="@s.Id">@s.Code - @s.Name</option>
             }
         </select>
-        <button class="h-btn h-btn-primary" @onclick="@LoadData">查询</button>
         <button class="h-btn h-btn-primary" @onclick="@ShowCreate">新增接口</button>
-        <button class="h-btn" @onclick="@LoadData">刷新</button>
+        <button class="h-btn" @onclick="@LoadInterfaces">刷新</button>
     </div>
-    <HTable Loading="@loading" ShowEmpty="@(!loading && !interfaces.Any())">
-        <thead>
-            <tr>
-                <th>编码</th>
-                <th>名称</th>
-                <th>类型</th>
-                <th>方法</th>
-                <th>路径</th>
-                <th>启用</th>
-                <th>操作</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var i in interfaces)
+
+    @* 左右结构 *@
+    <div style="display:flex;gap:16px;min-height:480px;">
+        @* ==================== 左侧：接口列表 + 标准字段 ==================== *@
+        <div style="width:44%;display:flex;flex-direction:column;gap:12px;">
+            @* 接口列表 *@
+            <div style="border:1px solid #e8e8e8;border-radius:6px;overflow-y:auto;max-height:260px;">
+                @if (interfaceLoading)
+                {
+                    <div style="padding:24px;text-align:center;color:#888;">加载中...</div>
+                }
+                else if (!interfaces.Any())
+                {
+                    <div style="padding:24px;text-align:center;color:#888;">暂无接口</div>
+                }
+                else
+                {
+                    @foreach (var i in interfaces)
+                    {
+                        <div @onclick="@(() => SelectInterface(i.Id))"
+                             style="padding:10px 16px;cursor:pointer;border-bottom:1px solid #f0f0f0;background-color:@(i.Id == selectedInterfaceId ? "#e6f7ff" : "")">
+                            <div style="display:flex;justify-content:space-between;align-items:center;">
+                                <div>
+                                    <div style="font-weight:600;color:#1890ff;">@i.Code</div>
+                                    <div style="font-size:13px;color:#666;">@i.Name</div>
+                                    <div style="font-size:12px;color:#999;">@i.InterfaceType · @i.HttpMethod · @(i.Path ?? "-")</div>
+                                </div>
+                                <div @onclick:stopPropagation>
+                                    <span class="h-space">
+                                        <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => Edit(i))">编辑</button>
+                                        <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => Delete(i.Id))">删除</button>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+
+            @* 选中接口的标准字段定义 *@
+            @if (selectedInterface is not null)
             {
-                <tr>
-                    <td>@i.Code</td>
-                    <td>@i.Name</td>
-                    <td>@i.InterfaceType</td>
-                    <td>@i.HttpMethod</td>
-                    <td>@(i.Path ?? "-")</td>
-                    <td>
-                        @if (i.IsEnabled) { <span class="h-tag h-tag-green">启用</span> }
-                        else { <span class="h-tag h-tag-red">禁用</span> }
-                    </td>
-                    <td>
-                        <span class="h-space">
-                            <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => Edit(i))">编辑</button>
-                            <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => Delete(i.Id))">删除</button>
-                        </span>
-                    </td>
-                </tr>
+                <div style="border:1px solid #e8e8e8;border-radius:6px;padding:12px;">
+                    <div style="font-weight:600;margin-bottom:8px;color:#1890ff;">标准接口格式 - @selectedInterface.Code</div>
+
+                    <div style="margin-bottom:10px;">
+                        <div style="font-weight:600;font-size:13px;color:#555;margin-bottom:4px;">请求字段（标准）</div>
+                        @if (standardRequestFields.Any())
+                        {
+                            <table style="width:100%;font-size:12px;border-collapse:collapse;">
+                                <thead>
+                                    <tr style="background:#fafafa;">
+                                        <th style="padding:4px 6px;border:1px solid #eee;text-align:left;">字段</th>
+                                        <th style="padding:4px 6px;border:1px solid #eee;text-align:left;">类型</th>
+                                        <th style="padding:4px 6px;border:1px solid #eee;text-align:left;">必填</th>
+                                        <th style="padding:4px 6px;border:1px solid #eee;text-align:left;">说明</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var f in standardRequestFields)
+                                    {
+                                        <tr>
+                                            <td style="padding:4px 6px;border:1px solid #eee;">@f.Name</td>
+                                            <td style="padding:4px 6px;border:1px solid #eee;color:#888;">@f.DataType</td>
+                                            <td style="padding:4px 6px;border:1px solid #eee;color:@(f.IsRequired ? "#f5222d" : "#999");">@(f.IsRequired ? "是" : "否")</td>
+                                            <td style="padding:4px 6px;border:1px solid #eee;color:#888;">@(f.Description ?? "-")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                        else
+                        {
+                            <div style="color:#999;font-size:12px;">暂无请求字段定义</div>
+                        }
+                    </div>
+
+                    <div>
+                        <div style="font-weight:600;font-size:13px;color:#555;margin-bottom:4px;">返回字段（标准）</div>
+                        @if (standardResponseFields.Any())
+                        {
+                            <table style="width:100%;font-size:12px;border-collapse:collapse;">
+                                <thead>
+                                    <tr style="background:#fafafa;">
+                                        <th style="padding:4px 6px;border:1px solid #eee;text-align:left;">字段</th>
+                                        <th style="padding:4px 6px;border:1px solid #eee;text-align:left;">类型</th>
+                                        <th style="padding:4px 6px;border:1px solid #eee;text-align:left;">必填</th>
+                                        <th style="padding:4px 6px;border:1px solid #eee;text-align:left;">说明</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var f in standardResponseFields)
+                                    {
+                                        <tr>
+                                            <td style="padding:4px 6px;border:1px solid #eee;">@f.Name</td>
+                                            <td style="padding:4px 6px;border:1px solid #eee;color:#888;">@f.DataType</td>
+                                            <td style="padding:4px 6px;border:1px solid #eee;color:@(f.IsRequired ? "#f5222d" : "#999");">@(f.IsRequired ? "是" : "否")</td>
+                                            <td style="padding:4px 6px;border:1px solid #eee;color:#888;">@(f.Description ?? "-")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                        else
+                        {
+                            <div style="color:#999;font-size:12px;">暂无返回字段定义</div>
+                        }
+                    </div>
+                </div>
             }
-        </tbody>
-    </HTable>
+        </div>
+
+        @* ==================== 右侧：供应商字段映射配置 ==================== *@
+        <div style="flex:1;">
+            @if (!selectedSupplierId.HasValue)
+            {
+                <div style="border:1px solid #e8e8e8;border-radius:6px;color:#888;text-align:center;padding:48px 0;">请在顶部选择一个供应商</div>
+            }
+            else if (!selectedInterfaceId.HasValue)
+            {
+                <div style="border:1px solid #e8e8e8;border-radius:6px;color:#888;text-align:center;padding:48px 0;">请在左侧选择一个接口</div>
+            }
+            else
+            {
+                <div style="border:1px solid #e8e8e8;border-radius:6px;padding:16px;">
+                    <div style="font-weight:600;margin-bottom:12px;color:#1890ff;">
+                        供应商映射配置 - @selectedInterfaceCode
+                    </div>
+
+                    <div class="h-form-item h-form-horizontal">
+                        <label class="h-form-label">供应商接口地址</label>
+                        <div class="h-form-control">
+                            <input type="text" @bind-value="@mappingForm.SupplierApiUrl" class="h-input" placeholder="为空则使用供应商默认 ApiUrl" />
+                        </div>
+                    </div>
+
+                    @* 请求字段映射表（逐字段配） *@
+                    <div style="margin:12px 0;">
+                        <div style="font-weight:600;font-size:13px;color:#555;margin-bottom:6px;">请求参数映射（标准字段 → 供应商字段）</div>
+                        @if (requestMappings.Any())
+                        {
+                            <table style="width:100%;font-size:13px;border-collapse:collapse;">
+                                <thead>
+                                    <tr style="background:#fafafa;">
+                                        <th style="padding:6px 8px;border:1px solid #eee;text-align:left;width:24%;">标准字段</th>
+                                        <th style="padding:6px 8px;border:1px solid #eee;text-align:left;width:3%;"></th>
+                                        <th style="padding:6px 8px;border:1px solid #eee;text-align:left;width:26%;">供应商字段</th>
+                                        <th style="padding:6px 8px;border:1px solid #eee;text-align:left;width:18%;">默认值</th>
+                                        <th style="padding:6px 8px;border:1px solid #eee;text-align:center;width:8%;">必填</th>
+                                        <th style="padding:6px 8px;border:1px solid #eee;text-align:center;width:8%;">启用</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (var idx = 0; idx < requestMappings.Count; idx++)
+                                    {
+                                        var m = requestMappings[idx];
+                                        <tr>
+                                            <td style="padding:4px 8px;border:1px solid #eee;font-weight:600;color:#1890ff;">@m.SourceField</td>
+                                            <td style="padding:4px 8px;border:1px solid #eee;text-align:center;color:#999;">→</td>
+                                            <td style="padding:4px 8px;border:1px solid #eee;">
+                                                <input type="text" @bind-value="@m.TargetField" class="h-input" style="width:100%;" placeholder="供应商字段名" />
+                                            </td>
+                                            <td style="padding:4px 8px;border:1px solid #eee;">
+                                                <input type="text" @bind-value="@m.DefaultValue" class="h-input" style="width:100%;" placeholder="可空" />
+                                            </td>
+                                            <td style="padding:4px 8px;border:1px solid #eee;text-align:center;">
+                                                <input type="checkbox" @bind="@m.IsRequired" />
+                                            </td>
+                                            <td style="padding:4px 8px;border:1px solid #eee;text-align:center;color:#52c41a;"></td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                        else
+                        {
+                            <div style="color:#999;font-size:12px;">该接口未定义标准请求字段</div>
+                        }
+                    </div>
+
+                    @* 返回字段映射表（逐字段配） *@
+                    <div style="margin:12px 0;">
+                        <div style="font-weight:600;font-size:13px;color:#555;margin-bottom:6px;">返回值字段映射（供应商字段 → 标准字段）</div>
+                        @if (responseMappings.Any())
+                        {
+                            <table style="width:100%;font-size:13px;border-collapse:collapse;">
+                                <thead>
+                                    <tr style="background:#fafafa;">
+                                        <th style="padding:6px 8px;border:1px solid #eee;text-align:left;width:24%;">标准字段</th>
+                                        <th style="padding:6px 8px;border:1px solid #eee;text-align:left;width:3%;"></th>
+                                        <th style="padding:6px 8px;border:1px solid #eee;text-align:left;width:26%;">供应商应答路径</th>
+                                        <th style="padding:6px 8px;border:1px solid #eee;text-align:left;width:18%;">默认值</th>
+                                        <th style="padding:6px 8px;border:1px solid #eee;text-align:left;width:8%;">必填</th>
+                                        <th style="padding:6px 8px;border:1px solid #eee;text-align:center;width:8%;">必取</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (var idx = 0; idx < responseMappings.Count; idx++)
+                                    {
+                                        var m = responseMappings[idx];
+                                        <tr>
+                                            <td style="padding:4px 8px;border:1px solid #eee;font-weight:600;color:#1890ff;">@m.TargetField</td>
+                                            <td style="padding:4px 8px;border:1px solid #eee;text-align:center;color:#999;">←</td>
+                                            <td style="padding:4px 8px;border:1px solid #eee;">
+                                                <input type="text" @bind-value="@m.SourceField" class="h-input" style="width:100%;" placeholder="如 data.orderNo" />
+                                            </td>
+                                            <td style="padding:4px 8px;border:1px solid #eee;">
+                                                <input type="text" @bind-value="@m.DefaultValue" class="h-input" style="width:100%;" placeholder="可空" />
+                                            </td>
+                                            <td style="padding:4px 8px;border:1px solid #eee;">
+                                                <input type="checkbox" @bind="@m.IsRequired" />
+                                            </td>
+                                            <td style="padding:4px 8px;border:1px solid #eee;text-align:center;color:#52c41a;"></td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                        else
+                        {
+                            <div style="color:#999;font-size:12px;">该接口未定义标准返回字段</div>
+                        }
+                    </div>
+
+                    <div class="h-form-item h-form-horizontal">
+                        <label class="h-form-label">启用</label>
+                        <div class="h-form-control">
+                            <label class="h-switch">
+                                <input type="checkbox" @bind="@mappingForm.IsEnabled" />
+                                <span class="h-switch-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="h-form-item h-form-horizontal">
+                        <label class="h-form-label">备注</label>
+                        <div class="h-form-control">
+                            <textarea @bind="@mappingForm.Remark" rows="2" class="h-textarea"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="h-toolbar" style="margin-top:8px;">
+                        <button class="h-btn h-btn-primary" @onclick="@SaveMapping">@(currentMappingId.HasValue ? "保存" : "创建")</button>
+                        @if (currentMappingId.HasValue)
+                        {
+                            <button class="h-btn h-btn-danger" @onclick="@DeleteMapping">删除映射</button>
+                        }
+                        <button class="h-btn" @onclick="@LoadMapping">重新加载</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
 </HCard>
 
-<HModal Title="@(isEdit ? "编辑接口定义" : "新增接口定义")" Visible="@showModal" OnOk="@Save" OnCancel="@CloseModal" ConfirmLoading="@saving" Style="width:720px;">
+@* ===== 接口编辑弹窗 ===== *@
+<HModal Title="@(isEdit ? "编辑接口定义" : "新增接口定义")" Visible="@showModal" OnOk="@Save" OnCancel="@CloseModal" ConfirmLoading="@saving" Style="width:820px;">
     <div class="h-form-item h-form-horizontal">
         <label class="h-form-label">接口编码</label>
         <div class="h-form-control">
@@ -102,6 +322,19 @@
         </div>
     </div>
     <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">标准请求字段 (JSON)</label>
+        <div class="h-form-control">
+            <textarea @bind="@current.RequestFieldsJson" rows="6" class="h-textarea" placeholder='[{"name":"skuCode","dataType":"string","isRequired":true,"description":"商品SKU编码"}]'></textarea>
+            <div style="color:#888;font-size:12px;">name=字段名，dataType=类型，isRequired=是否必填，description=说明</div>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">标准返回字段 (JSON)</label>
+        <div class="h-form-control">
+            <textarea @bind="@current.ResponseFieldsJson" rows="6" class="h-textarea" placeholder='[{"name":"supplierOrderNo","dataType":"string","isRequired":true,"description":"供应商订单号"}]'></textarea>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
         <label class="h-form-label">启用</label>
         <div class="h-form-control">
             <label class="h-switch">
@@ -120,35 +353,201 @@
 
 @code {
     private List<ApiInterfaceDto> interfaces = new();
-    private bool loading;
-    private string filter = string.Empty;
-    private InterfaceTypeEnum? typeFilter;
+    private List<SupplierDto> suppliers = new();
+    private bool interfaceLoading;
 
+    // 选中状态
+    private Guid? selectedSupplierId;
+    private Guid? selectedInterfaceId;
+    private ApiInterfaceDto? selectedInterface;
+    private string selectedInterfaceCode = string.Empty;
+
+    // 标准字段（来自接口定义）
+    private List<StandardField> standardRequestFields = new();
+    private List<StandardField> standardResponseFields = new();
+
+    // 供应商映射表单（逐字段）
+    private List<FieldMapping> requestMappings = new();
+    private List<FieldMapping> responseMappings = new();
+    private MappingForm mappingForm = new();
+    private Guid? currentMappingId;
+    private bool mappingLoading;
+
+    // 接口编辑弹窗
     private bool showModal;
     private bool saving;
     private bool isEdit;
     private Guid? editId;
     private CreateApiInterfaceDto current = new();
 
-    protected override async Task OnInitializedAsync() => await LoadData();
-
-    private async Task LoadData()
+    protected override async Task OnInitializedAsync()
     {
-        loading = true;
-        try
-        {
-            var input = new ApiInterfaceQueryDto { MaxResultCount = 100, Filter = string.IsNullOrWhiteSpace(filter) ? null : filter };
-            input.InterfaceType = typeFilter;
-            var result = await InterfaceService.GetListAsync(input);
-            interfaces = result.Items.ToList();
-        }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载失败：{ex.Message}"); }
-        finally { loading = false; }
+        await LoadSuppliers();
+        await LoadInterfaces();
     }
 
+    private async Task LoadSuppliers()
+    {
+        try
+        {
+            var r = await SupplierService.GetListAsync(new SupplierQueryDto { MaxResultCount = 200 });
+            suppliers = r.Items.ToList();
+        }
+        catch { }
+    }
+
+    private async Task LoadInterfaces()
+    {
+        interfaceLoading = true;
+        try
+        {
+            var r = await InterfaceService.GetListAsync(new ApiInterfaceQueryDto { MaxResultCount = 200 });
+            interfaces = r.Items.OrderBy(x => x.Code).ToList();
+            if (selectedInterfaceId.HasValue && interfaces.All(x => x.Id != selectedInterfaceId.Value))
+            {
+                selectedInterfaceId = null;
+                selectedInterface = null;
+                selectedInterfaceCode = string.Empty;
+                standardRequestFields = new();
+                standardResponseFields = new();
+                ClearMappingForm();
+            }
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载失败：{ex.Message}"); }
+        finally { interfaceLoading = false; }
+    }
+
+    // ===== 选中接口 =====
+    private async Task SelectInterface(Guid interfaceId)
+    {
+        selectedInterfaceId = interfaceId;
+        selectedInterface = interfaces.FirstOrDefault(x => x.Id == interfaceId);
+        selectedInterfaceCode = selectedInterface?.Code ?? string.Empty;
+
+        // 加载标准字段定义
+        standardRequestFields = StandardFieldHelper.FromJson(selectedInterface?.RequestFieldsJson);
+        standardResponseFields = StandardFieldHelper.FromJson(selectedInterface?.ResponseFieldsJson);
+
+        await LoadMapping();
+    }
+
+    // ===== 加载供应商映射 =====
+    private async Task LoadMapping()
+    {
+        if (!selectedSupplierId.HasValue || !selectedInterfaceId.HasValue)
+        {
+            ClearMappingForm();
+            return;
+        }
+
+        mappingLoading = true;
+        try
+        {
+            var query = new SupplierInterfaceMappingQueryDto { SupplierId = selectedSupplierId.Value, InterfaceId = selectedInterfaceId.Value, MaxResultCount = 1 };
+            var r = await MappingService.GetListAsync(query);
+            var existing = r.Items.FirstOrDefault();
+
+            if (existing is null)
+            {
+                // 未配置：用标准字段初始化空白映射行
+                InitializeEmptyMappingForm();
+                currentMappingId = null;
+            }
+            else
+            {
+                mappingForm = new MappingForm
+                {
+                    SupplierApiUrl = existing.SupplierApiUrl,
+                    IsEnabled = existing.IsEnabled,
+                    Remark = existing.Remark
+                };
+                requestMappings = EnsureAllStandardFields(existing.RequestMappingJson, standardRequestFields);
+                responseMappings = EnsureAllStandardFields(existing.ResponseMappingJson, standardResponseFields);
+                currentMappingId = existing.Id;
+            }
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载映射失败：{ex.Message}"); }
+        finally { mappingLoading = false; }
+    }
+
+    /// <summary>
+    /// 将已保存的映射 JSON 与标准字段列表合并：
+    /// 标准字段存在但映射缺失时补一行空白映射，保证右侧每行对齐标准字段。
+    /// </summary>
+    private List<FieldMapping> EnsureAllStandardFields(string? mappingJson, List<StandardField> standardFields)
+    {
+        var saved = FieldMappingHelper.FromJson(mappingJson);
+        var result = new List<FieldMapping>();
+
+        foreach (var std in standardFields)
+        {
+            // 请求映射：SourceField=标准字段；响应映射：TargetField=标准字段
+            var hit = saved.FirstOrDefault(s =>
+                string.Equals(s.SourceField, std.Name, StringComparison.OrdinalIgnoreCase)) is not null
+                ? saved.First(s => string.Equals(s.SourceField, std.Name, StringComparison.OrdinalIgnoreCase))
+                : null;
+
+            result.Add(new FieldMapping
+            {
+                SourceField = std.Name,
+                TargetField = hit?.TargetField ?? string.Empty,
+                IsRequired = hit?.IsRequired ?? std.IsRequired,
+                DefaultValue = hit?.DefaultValue
+            });
+        }
+
+        return result;
+    }
+
+    /// <summary>未配置映射时，按标准字段生成空白映射行</summary>
+    private void InitializeEmptyMappingForm()
+    {
+        mappingForm = new MappingForm { IsEnabled = true };
+
+        requestMappings = standardRequestFields.Select(f => new FieldMapping
+        {
+            SourceField = f.Name,
+            TargetField = string.Empty,
+            IsRequired = f.IsRequired,
+            DefaultValue = null
+        }).ToList();
+
+        responseMappings = standardResponseFields.Select(f => new FieldMapping
+        {
+            SourceField = string.Empty,
+            TargetField = f.Name,
+            IsRequired = f.IsRequired,
+            DefaultValue = null
+        }).ToList();
+    }
+
+    private void ClearMappingForm()
+    {
+        mappingForm = new();
+        requestMappings = new();
+        responseMappings = new();
+        currentMappingId = null;
+    }
+
+    // 供应商下拉变化
+    private async Task OnSupplierChanged(ChangeEventArgs e)
+    {
+        var val = e.Value?.ToString();
+        selectedSupplierId = string.IsNullOrWhiteSpace(val) ? null : Guid.Parse(val);
+        await LoadMapping();
+    }
+
+    // ===== 接口 CRUD =====
     private void ShowCreate()
     {
-        current = new CreateApiInterfaceDto { IsEnabled = true, HttpMethod = "POST", InterfaceType = InterfaceTypeEnum.Menu };
+        current = new CreateApiInterfaceDto
+        {
+            IsEnabled = true,
+            HttpMethod = "POST",
+            InterfaceType = InterfaceTypeEnum.Menu,
+            RequestFieldsJson = "[]",
+            ResponseFieldsJson = "[]"
+        };
         isEdit = false;
         editId = null;
         showModal = true;
@@ -164,6 +563,8 @@
             HttpMethod = i.HttpMethod,
             Path = i.Path,
             Description = i.Description,
+            RequestFieldsJson = string.IsNullOrWhiteSpace(i.RequestFieldsJson) ? "[]" : i.RequestFieldsJson,
+            ResponseFieldsJson = string.IsNullOrWhiteSpace(i.ResponseFieldsJson) ? "[]" : i.ResponseFieldsJson,
             IsEnabled = i.IsEnabled,
             Remark = i.Remark
         };
@@ -192,6 +593,8 @@
                     HttpMethod = current.HttpMethod,
                     Path = current.Path,
                     Description = current.Description,
+                    RequestFieldsJson = current.RequestFieldsJson,
+                    ResponseFieldsJson = current.ResponseFieldsJson,
                     IsEnabled = current.IsEnabled,
                     Remark = current.Remark
                 });
@@ -204,7 +607,12 @@
             }
 
             CloseModal();
-            await LoadData();
+            await LoadInterfaces();
+            // 重新选中当前接口以刷新标准字段
+            if (selectedInterfaceId.HasValue)
+            {
+                await SelectInterface(selectedInterfaceId.Value);
+            }
         }
         catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}"); }
         finally { saving = false; }
@@ -214,14 +622,86 @@
 
     private async Task Delete(Guid id)
     {
-        var ok = await JS.InvokeAsync<bool>("confirm", "确定删除该接口定义？");
+        var ok = await JS.InvokeAsync<bool>("confirm", "确定删除该接口定义（含供应商映射将一并删除）？");
         if (!ok) return;
         try
         {
             await InterfaceService.DeleteAsync(id);
             await JS.InvokeVoidAsync("alert", "已删除");
-            await LoadData();
+            if (selectedInterfaceId == id)
+            {
+                selectedInterfaceId = null;
+                selectedInterface = null;
+                selectedInterfaceCode = string.Empty;
+                standardRequestFields = new();
+                standardResponseFields = new();
+                ClearMappingForm();
+            }
+            await LoadInterfaces();
         }
         catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"删除失败：{ex.Message}"); }
+    }
+
+    // ===== 供应商映射保存/删除 =====
+    private async Task SaveMapping()
+    {
+        if (!selectedSupplierId.HasValue || !selectedInterfaceId.HasValue) return;
+        try
+        {
+            var requestJson = FieldMappingHelper.ToJson(requestMappings);
+            var responseJson = FieldMappingHelper.ToJson(responseMappings);
+
+            if (currentMappingId.HasValue)
+            {
+                await MappingService.UpdateAsync(currentMappingId.Value, new UpdateSupplierInterfaceMappingDto
+                {
+                    SupplierApiUrl = mappingForm.SupplierApiUrl,
+                    RequestMappingJson = requestJson,
+                    ResponseMappingJson = responseJson,
+                    IsEnabled = mappingForm.IsEnabled,
+                    Remark = mappingForm.Remark
+                });
+                await JS.InvokeVoidAsync("alert", "保存成功");
+            }
+            else
+            {
+                var createDto = new CreateSupplierInterfaceMappingDto
+                {
+                    SupplierId = selectedSupplierId.Value,
+                    InterfaceId = selectedInterfaceId.Value,
+                    SupplierApiUrl = mappingForm.SupplierApiUrl,
+                    RequestMappingJson = requestJson,
+                    ResponseMappingJson = responseJson,
+                    IsEnabled = mappingForm.IsEnabled,
+                    Remark = mappingForm.Remark
+                };
+                await MappingService.CreateAsync(createDto);
+                await JS.InvokeVoidAsync("alert", "创建成功");
+            }
+            await LoadMapping();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}"); }
+    }
+
+    private async Task DeleteMapping()
+    {
+        if (!currentMappingId.HasValue) return;
+        var ok = await JS.InvokeAsync<bool>("confirm", "确定删除该供应商接口映射？");
+        if (!ok) return;
+        try
+        {
+            await MappingService.DeleteAsync(currentMappingId.Value);
+            await JS.InvokeVoidAsync("alert", "已删除");
+            await LoadMapping();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"删除失败：{ex.Message}"); }
+    }
+
+    // 映射表单脱敏（仅 UI 用）
+    private class MappingForm
+    {
+        public string? SupplierApiUrl { get; set; }
+        public bool IsEnabled { get; set; } = true;
+        public string? Remark { get; set; }
     }
 }

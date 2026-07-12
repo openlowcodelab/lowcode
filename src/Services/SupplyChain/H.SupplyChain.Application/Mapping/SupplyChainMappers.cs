@@ -197,6 +197,8 @@ public static class SupplyChainMappers
         HttpMethod = e.HttpMethod,
         Path = e.Path,
         Description = e.Description,
+        RequestFieldsJson = e.RequestFieldsJson,
+        ResponseFieldsJson = e.ResponseFieldsJson,
         IsEnabled = e.IsEnabled,
         Remark = e.Remark,
         CreationTime = e.CreationTime,
@@ -213,6 +215,8 @@ public static class SupplyChainMappers
         HttpMethod = input.HttpMethod,
         Path = input.Path,
         Description = input.Description,
+        RequestFieldsJson = input.RequestFieldsJson,
+        ResponseFieldsJson = input.ResponseFieldsJson,
         IsEnabled = input.IsEnabled,
         Remark = input.Remark
     };
@@ -224,6 +228,8 @@ public static class SupplyChainMappers
         entity.HttpMethod = input.HttpMethod;
         entity.Path = input.Path;
         entity.Description = input.Description;
+        entity.RequestFieldsJson = input.RequestFieldsJson;
+        entity.ResponseFieldsJson = input.ResponseFieldsJson;
         entity.IsEnabled = input.IsEnabled;
         entity.Remark = input.Remark;
     }

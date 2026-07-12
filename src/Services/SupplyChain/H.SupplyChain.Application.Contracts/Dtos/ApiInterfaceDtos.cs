@@ -25,6 +25,12 @@ public class ApiInterfaceDto : FullAuditedEntityDto<Guid>
     /// <summary>描述</summary>
     public string? Description { get; set; }
 
+    /// <summary>标准请求字段定义（JSON，<see cref="List{StandardField}"/>）</summary>
+    public string? RequestFieldsJson { get; set; }
+
+    /// <summary>标准返回字段定义（JSON，<see cref="List{StandardField}"/>）</summary>
+    public string? ResponseFieldsJson { get; set; }
+
     /// <summary>是否启用</summary>
     public bool IsEnabled { get; set; }
 
@@ -55,6 +61,12 @@ public class CreateApiInterfaceDto
     /// <summary>描述</summary>
     public string? Description { get; set; }
 
+    /// <summary>标准请求字段定义（JSON）</summary>
+    public string? RequestFieldsJson { get; set; }
+
+    /// <summary>标准返回字段定义（JSON）</summary>
+    public string? ResponseFieldsJson { get; set; }
+
     /// <summary>是否启用</summary>
     public bool IsEnabled { get; set; } = true;
 
@@ -81,6 +93,12 @@ public class UpdateApiInterfaceDto
 
     /// <summary>描述</summary>
     public string? Description { get; set; }
+
+    /// <summary>标准请求字段定义（JSON）</summary>
+    public string? RequestFieldsJson { get; set; }
+
+    /// <summary>标准返回字段定义（JSON）</summary>
+    public string? ResponseFieldsJson { get; set; }
 
     /// <summary>是否启用</summary>
     public bool IsEnabled { get; set; }
