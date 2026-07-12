@@ -1,0 +1,199 @@
+@page "/order"
+
+@layout OrderLayout
+@inject IOrderAppService OrderService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<h2>订单列表</h2>
+
+<HCard>
+    <div class="h-toolbar">
+        <input type="text" @bind-value="@filter" placeholder="订单号或商品名称" class="h-input" style="width: 220px;" />
+        <input type="text" @bind-value="@industryFilter" placeholder="行业" class="h-input" style="width: 140px;" />
+        <input type="text" @bind-value="@buyerFilter" placeholder="买家ID" class="h-input" style="width: 140px;" />
+        <button class="h-btn h-btn-primary" @onclick="@LoadData">查询</button>
+        <button class="h-btn h-btn-primary" @onclick="@ShowCreateDialog">新增订单</button>
+        <button class="h-btn" @onclick="@LoadData">刷新</button>
+    </div>
+
+    <HTable Loading="@loading" ShowEmpty="@(!loading && !orders.Any())">
+        <thead>
+            <tr>
+                <th>订单号</th>
+                <th>商品名称</th>
+                <th>买家</th>
+                <th>行业</th>
+                <th>金额</th>
+                <th>状态</th>
+                <th>创建时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var o in orders)
+            {
+                <tr>
+                    <td>@o.OrderNo</td>
+                    <td>@o.ProductName</td>
+                    <td>@o.BuyerId</td>
+                    <td>@(o.Industry ?? "-")</td>
+                    <td>@o.TotalAmount.ToString("F2")</td>
+                    <td><span class="h-tag @StatusTag(o.OrderStatus)">@o.OrderStatus</span></td>
+                    <td>@o.CreationTime.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>
+                        <span class="h-space">
+                            <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => Nav.NavigateTo($"/order/detail/{o.Id}"))">详情</button>
+                            <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => Trigger(o.Id))">下发</button>
+                            <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => ConfirmDelete(o.Id))">删除</button>
+                        </span>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </HTable>
+</HCard>
+
+<HModal Title="新增订单" Visible="@showModal" OnOk="@Save" OnCancel="@CloseModal" ConfirmLoading="@saving" Style="width:720px;">
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">商品名称</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@current.ProductName" placeholder="请输入商品名称" class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">买家ID</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@current.BuyerId" placeholder="请输入买家ID" class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">行业</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@current.Industry" placeholder="服装 / 餐饮 / 数码 ..." class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">商品类别</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@current.ProductCategory" placeholder="可选" class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">总金额</label>
+        <div class="h-form-control">
+            <input type="number" @bind-value="@current.TotalAmount" class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">备注</label>
+        <div class="h-form-control">
+            <textarea @bind="@current.Remark" rows="2" class="h-textarea"></textarea>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">行业扩展属性 (JSON)</label>
+        <div class="h-form-control">
+            <textarea @bind="@current.AttributesJson" rows="4" placeholder='例如服装: {"size":"XL","color":"red"}' class="h-textarea"></textarea>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">订单状态</label>
+        <div class="h-form-control">
+            <select @bind="@current.OrderStatus" class="h-input" style="width:auto">
+                @foreach (var s in Enum.GetValues<OrderStatusEnum>())
+                {
+                    <option value="@s">@s</option>
+                }
+            </select>
+        </div>
+    </div>
+</HModal>
+
+@code {
+    private List<OrderDto> orders = new();
+    private bool loading;
+    private string filter = string.Empty;
+    private string industryFilter = string.Empty;
+    private string buyerFilter = string.Empty;
+
+    private bool showModal;
+    private bool saving;
+    private CreateOrderDto current = new();
+
+    protected override async Task OnInitializedAsync() => await LoadData();
+
+    private async Task LoadData()
+    {
+        loading = true;
+        try
+        {
+            var input = new OrderQueryDto { MaxResultCount = 50, Filter = filter, Status = null };
+            input.Industry = string.IsNullOrWhiteSpace(industryFilter) ? null : industryFilter;
+            input.BuyerId = string.IsNullOrWhiteSpace(buyerFilter) ? null : buyerFilter;
+            var result = await OrderService.GetListAsync(input);
+            orders = result.Items.ToList();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载失败：{ex.Message}"); }
+        finally { loading = false; }
+    }
+
+    private void ShowCreateDialog()
+    {
+        current = new CreateOrderDto { OrderStatus = OrderStatusEnum.PendingDispatch };
+        showModal = true;
+    }
+
+    private async Task Save()
+    {
+        saving = true;
+        try
+        {
+            if (string.IsNullOrWhiteSpace(current.ProductName) || string.IsNullOrWhiteSpace(current.BuyerId))
+            {
+                await JS.InvokeVoidAsync("alert", "商品名称和买家ID不能为空");
+                return;
+            }
+            await OrderService.CreateAsync(current);
+            await JS.InvokeVoidAsync("alert", "订单创建成功，进入待下发状态后将自动触发上游下发");
+            CloseModal();
+            await LoadData();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}"); }
+        finally { saving = false; }
+    }
+
+    private void CloseModal() { showModal = false; current = new(); }
+
+    private async Task Trigger(Guid id)
+    {
+        try
+        {
+            var r = await OrderService.TriggerDispatchAsync(id);
+            await JS.InvokeVoidAsync("alert", r.Success ? $"下发成功：{r.Message ?? ""}" : $"下发失败：{r.Message}");
+            await LoadData();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"触发失败：{ex.Message}"); }
+    }
+
+    private async Task ConfirmDelete(Guid id)
+    {
+        var ok = await JS.InvokeAsync<bool>("confirm", "确定删除订单？");
+        if (ok)
+        {
+            await OrderService.DeleteAsync(id);
+            await JS.InvokeVoidAsync("alert", "已删除");
+            await LoadData();
+        }
+    }
+
+    private string StatusTag(OrderStatusEnum s) => s switch
+    {
+        OrderStatusEnum.PendingDispatch => "h-tag-warning",
+        OrderStatusEnum.Dispatched => "h-tag-green",
+        OrderStatusEnum.Draft => "h-tag-blue",
+        OrderStatusEnum.Completed => "h-tag-blue",
+        OrderStatusEnum.Cancelled => "h-tag-red",
+        _ => ""
+    };
+}

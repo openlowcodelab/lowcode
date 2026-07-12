@@ -7,6 +7,7 @@ using H.LowCode.ComponentBase;
 using H.LowCode.DesignEngine.Application.Contracts;
 using H.LowCode.RenderEngine.Application.Contracts;
 using H.Notification.Application.Contracts;
+using H.Order.Application.Contracts;
 using H.Organization.Application.Contracts;
 using H.Portal.Application.Contracts;
 using H.SystemPortal.Application.Contracts;
@@ -25,17 +26,20 @@ namespace H.AppLab.Host.All.Client;
 )]
 public class HostAllClientModule : AbpModule
 {
-    public const string DesignEngineRemoteServiceName = "DesignEngine";
-    public const string RenderEngineRemoteServiceName = "RenderEngine";
+    public const string ApprovalRemoteServiceName = "Approval";
     public const string AccountRemoteServiceName = "Account";
     public const string OrganizationRemoteServiceName = "Organization";
-    public const string ApprovalRemoteServiceName = "Approval";
+    public const string DesignEngineRemoteServiceName = "DesignEngine";
+    public const string RenderEngineRemoteServiceName = "RenderEngine";
     public const string AutoTestRemoteServiceName = "AutoTest";
     public const string PortalRemoteServiceName = "Portal";
     public const string NotificationRemoteServiceName = "Notification";
-    public const string AssistantRemoteServiceName = "Assistant";
+    public const string OrderRemoteServiceName = "Order";
+
     public const string EnterpriseRemoteServiceName = "Enterprise";
     public const string SystemPortalRemoteServiceName = "SystemPortal";
+
+    public const string AssistantRemoteServiceName = "Assistant";
 
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
@@ -116,6 +120,11 @@ public class HostAllClientModule : AbpModule
         context.Services.AddHttpClientProxies(
             typeof(SystemPortalApplicationContractsModule).Assembly,
             SystemPortalRemoteServiceName
+        );
+
+        context.Services.AddHttpClientProxies(
+            typeof(OrderApplicationContractsModule).Assembly,
+            OrderRemoteServiceName
         );
     }
 }

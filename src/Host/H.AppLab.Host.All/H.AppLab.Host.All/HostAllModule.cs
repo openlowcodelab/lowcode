@@ -15,6 +15,7 @@ using H.Organization.Application;
 using H.Portal.Application;
 using H.SystemPortal.Application;
 using H.Notification.Application;
+using H.Order.Application;
 using H.YunXiaoMcpServer;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Volo.Abp.AspNetCore.Mvc;
@@ -58,6 +59,8 @@ namespace H.AppLab.Host.All;
     typeof(NotificationApplicationModule),
     // Enterprise
     typeof(EnterpriseApplicationModule),
+    // Order
+    typeof(OrderApplicationModule),
     // YunXiao MCP Server
     typeof(YunXiaoMcpServerModule)
 )]
@@ -133,6 +136,7 @@ public class HostAllModule : AbpModule
             options.ConventionalControllers.Create(typeof(SystemPortalApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(NotificationApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(EnterpriseApplicationModule).Assembly);
+            options.ConventionalControllers.Create(typeof(OrderApplicationModule).Assembly);
         });
     }
 
