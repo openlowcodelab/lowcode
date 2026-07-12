@@ -1,0 +1,21 @@
+@namespace H.SupplyChain.Web
+
+@inherits LayoutComponentBase
+
+<DefaultLayoutComponent
+    AppName="供应链集成"
+    MenuItems="@MenuItems">
+    @Body
+</DefaultLayoutComponent>
+
+@code {
+    private static List<AppMenuItem> MenuItems => new()
+    {
+        new AppMenuItem { Name = "商品管理", Url = "/supply-chain/product", Icon = "📦" },
+        new AppMenuItem { Name = "供应商管理", Url = "/supply-chain/supplier", Icon = "🏭" },
+        new AppMenuItem { Name = "商品 SKU", Url = "/supply-chain/product-sku", Icon = "🏷️" },
+        new AppMenuItem { Name = "供应商SKU映射", Url = "/supply-chain/supplier-sku-mapping", Icon = "🔗" },
+        new AppMenuItem { Name = "接口定义", Url = "/supply-chain/api-interface", Icon = "🔌" },
+        new AppMenuItem { Name = "供应商接口映射", Url = "/supply-chain/supplier-interface-mapping", Icon = "🗺️" }
+    };
+}

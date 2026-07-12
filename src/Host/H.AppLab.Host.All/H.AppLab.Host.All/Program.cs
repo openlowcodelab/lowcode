@@ -110,6 +110,7 @@ app.MapRazorComponents<App>()
         typeof(H.AutoTest.Web._Imports).Assembly,
         typeof(H.Notification.Web._Imports).Assembly,
         typeof(H.Assistant.Web._Imports).Assembly,
-        typeof(H.Order.Web._Imports).Assembly);
+        typeof(H.Order.Web._Imports).Assembly,
+        typeof(H.SupplyChain.Web._Imports).Assembly);
 
 app.Run();

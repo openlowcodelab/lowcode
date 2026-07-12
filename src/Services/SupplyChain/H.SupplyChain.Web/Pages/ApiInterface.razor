@@ -1,0 +1,227 @@
+@page "/supply-chain/api-interface"
+@layout SupplyChainLayout
+@inject IApiInterfaceAppService InterfaceService
+@inject IJSRuntime JS
+
+<HCard Title="接口定义管理">
+    <div class="h-toolbar">
+        <input type="text" @bind-value="@filter" placeholder="接口编码或名称" class="h-input" style="width:220px;" />
+        <select @bind="@typeFilter" class="h-input" style="width:auto">
+            <option value="">全部类型</option>
+            @foreach (var t in Enum.GetValues<InterfaceTypeEnum>())
+            {
+                <option value="@t">@t</option>
+            }
+        </select>
+        <button class="h-btn h-btn-primary" @onclick="@LoadData">查询</button>
+        <button class="h-btn h-btn-primary" @onclick="@ShowCreate">新增接口</button>
+        <button class="h-btn" @onclick="@LoadData">刷新</button>
+    </div>
+    <HTable Loading="@loading" ShowEmpty="@(!loading && !interfaces.Any())">
+        <thead>
+            <tr>
+                <th>编码</th>
+                <th>名称</th>
+                <th>类型</th>
+                <th>方法</th>
+                <th>路径</th>
+                <th>启用</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var i in interfaces)
+            {
+                <tr>
+                    <td>@i.Code</td>
+                    <td>@i.Name</td>
+                    <td>@i.InterfaceType</td>
+                    <td>@i.HttpMethod</td>
+                    <td>@(i.Path ?? "-")</td>
+                    <td>
+                        @if (i.IsEnabled) { <span class="h-tag h-tag-green">启用</span> }
+                        else { <span class="h-tag h-tag-red">禁用</span> }
+                    </td>
+                    <td>
+                        <span class="h-space">
+                            <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => Edit(i))">编辑</button>
+                            <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => Delete(i.Id))">删除</button>
+                        </span>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </HTable>
+</HCard>
+
+<HModal Title="@(isEdit ? "编辑接口定义" : "新增接口定义")" Visible="@showModal" OnOk="@Save" OnCancel="@CloseModal" ConfirmLoading="@saving" Style="width:720px;">
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">接口编码</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@current.Code" disabled="@isEdit" class="h-input" placeholder="如 menu / product-detail / place-order" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">接口名称</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@current.Name" class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">接口类型</label>
+        <div class="h-form-control">
+            <select @bind="@current.InterfaceType" class="h-input" style="width:auto">
+                @foreach (var t in Enum.GetValues<InterfaceTypeEnum>())
+                {
+                    <option value="@t">@t</option>
+                }
+            </select>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">HTTP 方法</label>
+        <div class="h-form-control">
+            <select @bind="@current.HttpMethod" class="h-input" style="width:auto">
+                <option value="GET">GET</option>
+                <option value="POST">POST</option>
+                <option value="PUT">PUT</option>
+                <option value="DELETE">DELETE</option>
+            </select>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">接口路径</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@current.Path" class="h-input" placeholder="如 /api/menu" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">描述</label>
+        <div class="h-form-control">
+            <textarea @bind="@current.Description" rows="2" class="h-textarea"></textarea>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">启用</label>
+        <div class="h-form-control">
+            <label class="h-switch">
+                <input type="checkbox" @bind="@current.IsEnabled" />
+                <span class="h-switch-slider"></span>
+            </label>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">备注</label>
+        <div class="h-form-control">
+            <textarea @bind="@current.Remark" rows="2" class="h-textarea"></textarea>
+        </div>
+    </div>
+</HModal>
+
+@code {
+    private List<ApiInterfaceDto> interfaces = new();
+    private bool loading;
+    private string filter = string.Empty;
+    private InterfaceTypeEnum? typeFilter;
+
+    private bool showModal;
+    private bool saving;
+    private bool isEdit;
+    private Guid? editId;
+    private CreateApiInterfaceDto current = new();
+
+    protected override async Task OnInitializedAsync() => await LoadData();
+
+    private async Task LoadData()
+    {
+        loading = true;
+        try
+        {
+            var input = new ApiInterfaceQueryDto { MaxResultCount = 100, Filter = string.IsNullOrWhiteSpace(filter) ? null : filter };
+            input.InterfaceType = typeFilter;
+            var result = await InterfaceService.GetListAsync(input);
+            interfaces = result.Items.ToList();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载失败：{ex.Message}"); }
+        finally { loading = false; }
+    }
+
+    private void ShowCreate()
+    {
+        current = new CreateApiInterfaceDto { IsEnabled = true, HttpMethod = "POST", InterfaceType = InterfaceTypeEnum.Menu };
+        isEdit = false;
+        editId = null;
+        showModal = true;
+    }
+
+    private void Edit(ApiInterfaceDto i)
+    {
+        current = new CreateApiInterfaceDto
+        {
+            Code = i.Code,
+            Name = i.Name,
+            InterfaceType = i.InterfaceType,
+            HttpMethod = i.HttpMethod,
+            Path = i.Path,
+            Description = i.Description,
+            IsEnabled = i.IsEnabled,
+            Remark = i.Remark
+        };
+        isEdit = true;
+        editId = i.Id;
+        showModal = true;
+    }
+
+    private async Task Save()
+    {
+        saving = true;
+        try
+        {
+            if (string.IsNullOrWhiteSpace(current.Code) || string.IsNullOrWhiteSpace(current.Name))
+            {
+                await JS.InvokeVoidAsync("alert", "编码和名称不能为空");
+                return;
+            }
+
+            if (isEdit && editId.HasValue)
+            {
+                await InterfaceService.UpdateAsync(editId.Value, new UpdateApiInterfaceDto
+                {
+                    Name = current.Name,
+                    InterfaceType = current.InterfaceType,
+                    HttpMethod = current.HttpMethod,
+                    Path = current.Path,
+                    Description = current.Description,
+                    IsEnabled = current.IsEnabled,
+                    Remark = current.Remark
+                });
+                await JS.InvokeVoidAsync("alert", "更新成功");
+            }
+            else
+            {
+                await InterfaceService.CreateAsync(current);
+                await JS.InvokeVoidAsync("alert", "创建成功");
+            }
+
+            CloseModal();
+            await LoadData();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}"); }
+        finally { saving = false; }
+    }
+
+    private void CloseModal() { showModal = false; current = new(); editId = null; isEdit = false; }
+
+    private async Task Delete(Guid id)
+    {
+        var ok = await JS.InvokeAsync<bool>("confirm", "确定删除该接口定义？");
+        if (!ok) return;
+        try
+        {
+            await InterfaceService.DeleteAsync(id);
+            await JS.InvokeVoidAsync("alert", "已删除");
+            await LoadData();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"删除失败：{ex.Message}"); }
+    }
+}

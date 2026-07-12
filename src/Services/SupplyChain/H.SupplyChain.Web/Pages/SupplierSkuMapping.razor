@@ -1,0 +1,250 @@
+@page "/supply-chain/supplier-sku-mapping"
+@layout SupplyChainLayout
+@inject ISupplierSkuMappingAppService MappingService
+@inject ISupplyChainSupplierAppService SupplierService
+@inject IProductSkuAppService SkuService
+@inject IJSRuntime JS
+
+<HCard Title="供应商 SKU 映射管理">
+    <div class="h-toolbar">
+        <select @bind="@supplierIdFilter" class="h-input" style="width:auto">
+            <option value="">全部供应商</option>
+            @foreach (var s in suppliers)
+            {
+                <option value="@s.Id">@s.Code - @s.Name</option>
+            }
+        </select>
+        <select @bind="@skuIdFilter" class="h-input" style="width:auto">
+            <option value="">全部 SKU</option>
+            @foreach (var s in skus)
+            {
+                <option value="@s.Id">@s.SkuCode - @s.SkuName</option>
+            }
+        </select>
+        <button class="h-btn h-btn-primary" @onclick="@LoadData">查询</button>
+        <button class="h-btn h-btn-primary" @onclick="@ShowCreate">新增映射</button>
+        <button class="h-btn" @onclick="@LoadData">刷新</button>
+    </div>
+    <HTable Loading="@loading" ShowEmpty="@(!loading && !mappings.Any())">
+        <thead>
+            <tr>
+                <th>内部 SKU</th>
+                <th>供应商</th>
+                <th>供应商 SKU 编码</th>
+                <th>供应商 SKU 名称</th>
+                <th>供货价</th>
+                <th>启用</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var m in mappings)
+            {
+                <tr>
+                    <td>@m.SkuCode</td>
+                    <td>@m.SupplierCode</td>
+                    <td>@m.SupplierSkuCode</td>
+                    <td>@m.SupplierSkuName</td>
+                    <td>@m.SupplierPrice.ToString("F2")</td>
+                    <td>
+                        @if (m.IsEnabled) { <span class="h-tag h-tag-green">启用</span> }
+                        else { <span class="h-tag h-tag-red">禁用</span> }
+                    </td>
+                    <td>
+                        <span class="h-space">
+                            <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => Edit(m))">编辑</button>
+                            <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => Delete(m.Id))">删除</button>
+                        </span>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </HTable>
+</HCard>
+
+<HModal Title="@(isEdit ? "编辑供应商 SKU 映射" : "新增供应商 SKU 映射")" Visible="@showModal" OnOk="@Save" OnCancel="@CloseModal" ConfirmLoading="@saving" Style="width:680px;">
+    @if (!isEdit)
+    {
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">内部 SKU</label>
+            <div class="h-form-control">
+                <select @bind="@current.SkuId" class="h-input" style="width:auto">
+                    @foreach (var s in skus)
+                    {
+                        <option value="@s.Id">@s.SkuCode - @s.SkuName</option>
+                    }
+                </select>
+            </div>
+        </div>
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">供应商</label>
+            <div class="h-form-control">
+                <select @bind="@current.SupplierId" class="h-input" style="width:auto">
+                    @foreach (var s in suppliers)
+                    {
+                        <option value="@s.Id">@s.Code - @s.Name</option>
+                    }
+                </select>
+            </div>
+        </div>
+    }
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">供应商 SKU 编码</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@current.SupplierSkuCode" class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">供应商 SKU 名称</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@current.SupplierSkuName" class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">供货价</label>
+        <div class="h-form-control">
+            <input type="number" @bind-value="@current.SupplierPrice" class="h-input" style="width:180px;" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">启用</label>
+        <div class="h-form-control">
+            <label class="h-switch">
+                <input type="checkbox" @bind="@current.IsEnabled" />
+                <span class="h-switch-slider"></span>
+            </label>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">备注</label>
+        <div class="h-form-control">
+            <textarea @bind="@current.Remark" rows="2" class="h-textarea"></textarea>
+        </div>
+    </div>
+</HModal>
+
+@code {
+    private List<SupplierSkuMappingDto> mappings = new();
+    private List<SupplierDto> suppliers = new();
+    private List<ProductSkuDto> skus = new();
+    private bool loading;
+    private Guid? supplierIdFilter;
+    private Guid? skuIdFilter;
+
+    private bool showModal;
+    private bool saving;
+    private bool isEdit;
+    private Guid? editId;
+    private CreateSupplierSkuMappingDto current = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadOptions();
+        await LoadData();
+    }
+
+    private async Task LoadOptions()
+    {
+        try
+        {
+            var sr = await SupplierService.GetListAsync(new SupplierQueryDto { MaxResultCount = 200 });
+            suppliers = sr.Items.ToList();
+            var kr = await SkuService.GetListAsync(new ProductSkuQueryDto { MaxResultCount = 200 });
+            skus = kr.Items.ToList();
+        }
+        catch { }
+    }
+
+    private async Task LoadData()
+    {
+        loading = true;
+        try
+        {
+            var input = new SupplierSkuMappingQueryDto { MaxResultCount = 100 };
+            input.SupplierId = supplierIdFilter;
+            input.SkuId = skuIdFilter;
+            var result = await MappingService.GetListAsync(input);
+            mappings = result.Items.ToList();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载失败：{ex.Message}"); }
+        finally { loading = false; }
+    }
+
+    private void ShowCreate()
+    {
+        current = new CreateSupplierSkuMappingDto { IsEnabled = true };
+        if (skus.Any()) current.SkuId = skus[0].Id;
+        if (suppliers.Any()) current.SupplierId = suppliers[0].Id;
+        isEdit = false;
+        editId = null;
+        showModal = true;
+    }
+
+    private void Edit(SupplierSkuMappingDto m)
+    {
+        current = new CreateSupplierSkuMappingDto
+        {
+            SkuId = m.SkuId,
+            SupplierId = m.SupplierId,
+            SupplierSkuCode = m.SupplierSkuCode,
+            SupplierSkuName = m.SupplierSkuName,
+            SupplierPrice = m.SupplierPrice,
+            IsEnabled = m.IsEnabled,
+            Remark = m.Remark
+        };
+        isEdit = true;
+        editId = m.Id;
+        showModal = true;
+    }
+
+    private async Task Save()
+    {
+        saving = true;
+        try
+        {
+            if (current.SkuId == Guid.Empty || current.SupplierId == Guid.Empty || string.IsNullOrWhiteSpace(current.SupplierSkuCode))
+            {
+                await JS.InvokeVoidAsync("alert", "内部 SKU、供应商、供应商 SKU 编码不能为空");
+                return;
+            }
+
+            if (isEdit && editId.HasValue)
+            {
+                await MappingService.UpdateAsync(editId.Value, new UpdateSupplierSkuMappingDto
+                {
+                    SupplierSkuCode = current.SupplierSkuCode,
+                    SupplierSkuName = current.SupplierSkuName,
+                    SupplierPrice = current.SupplierPrice,
+                    IsEnabled = current.IsEnabled,
+                    Remark = current.Remark
+                });
+                await JS.InvokeVoidAsync("alert", "更新成功");
+            }
+            else
+            {
+                await MappingService.CreateAsync(current);
+                await JS.InvokeVoidAsync("alert", "创建成功");
+            }
+
+            CloseModal();
+            await LoadData();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}"); }
+        finally { saving = false; }
+    }
+
+    private void CloseModal() { showModal = false; current = new(); editId = null; isEdit = false; }
+
+    private async Task Delete(Guid id)
+    {
+        var ok = await JS.InvokeAsync<bool>("confirm", "确定删除该映射？");
+        if (!ok) return;
+        try
+        {
+            await MappingService.DeleteAsync(id);
+            await JS.InvokeVoidAsync("alert", "已删除");
+            await LoadData();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"删除失败：{ex.Message}"); }
+    }
+}

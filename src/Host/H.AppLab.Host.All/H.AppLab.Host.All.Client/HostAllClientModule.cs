@@ -10,6 +10,7 @@ using H.Notification.Application.Contracts;
 using H.Order.Application.Contracts;
 using H.Organization.Application.Contracts;
 using H.Portal.Application.Contracts;
+using H.SupplyChain.Application.Contracts;
 using H.SystemPortal.Application.Contracts;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Volo.Abp.Autofac.WebAssembly;
@@ -35,6 +36,7 @@ public class HostAllClientModule : AbpModule
     public const string PortalRemoteServiceName = "Portal";
     public const string NotificationRemoteServiceName = "Notification";
     public const string OrderRemoteServiceName = "Order";
+    public const string SupplyChainRemoteServiceName = "SupplyChain";
 
     public const string EnterpriseRemoteServiceName = "Enterprise";
     public const string SystemPortalRemoteServiceName = "SystemPortal";
@@ -125,6 +127,11 @@ public class HostAllClientModule : AbpModule
         context.Services.AddHttpClientProxies(
             typeof(OrderApplicationContractsModule).Assembly,
             OrderRemoteServiceName
+        );
+
+        context.Services.AddHttpClientProxies(
+            typeof(SupplyChainApplicationContractsModule).Assembly,
+            SupplyChainRemoteServiceName
         );
     }
 }

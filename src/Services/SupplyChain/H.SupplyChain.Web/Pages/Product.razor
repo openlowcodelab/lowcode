@@ -1,0 +1,207 @@
+@page "/supply-chain/product"
+@layout SupplyChainLayout
+@inject IProductAppService ProductService
+@inject IProductSkuAppService SkuService
+@inject IJSRuntime JS
+
+<HCard Title="商品管理">
+    <div class="h-toolbar">
+        <input type="text" @bind-value="@filter" placeholder="商品编码或名称" class="h-input" style="width:220px;" />
+        <input type="text" @bind-value="@categoryFilter" placeholder="类别" class="h-input" style="width:140px;" />
+        <button class="h-btn h-btn-primary" @onclick="@LoadData">查询</button>
+        <button class="h-btn h-btn-primary" @onclick="@ShowCreate">新增商品</button>
+        <button class="h-btn" @onclick="@LoadData">刷新</button>
+    </div>
+    <HTable Loading="@loading" ShowEmpty="@(!loading && !products.Any())">
+        <thead>
+            <tr>
+                <th>商品编码</th>
+                <th>商品名称</th>
+                <th>类别</th>
+                <th>状态</th>
+                <th>SKU 数</th>
+                <th>创建时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in products)
+            {
+                <tr>
+                    <td>@p.ProductCode</td>
+                    <td>@p.Name</td>
+                    <td>@(p.Category ?? "-")</td>
+                    <td>
+                        @if (p.Status == ProductStatusEnum.OnShelf) { <span class="h-tag h-tag-green">上架</span> }
+                        else { <span class="h-tag h-tag-red">下架</span> }
+                    </td>
+                    <td>@(skuCounts.GetValueOrDefault(p.Id))</td>
+                    <td>@p.CreationTime.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>
+                        <span class="h-space">
+                            <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => Edit(p))">编辑</button>
+                            <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => Delete(p.Id))">删除</button>
+                        </span>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </HTable>
+</HCard>
+
+<HModal Title="@(isEdit ? "编辑商品" : "新增商品")" Visible="@showModal" OnOk="@Save" OnCancel="@CloseModal" ConfirmLoading="@saving" Style="width:720px;">
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">商品编码</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@current.ProductCode" disabled="@isEdit" class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">商品名称</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@current.Name" class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">类别</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@current.Category" class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">描述</label>
+        <div class="h-form-control">
+            <textarea @bind="@current.Description" rows="3" class="h-textarea"></textarea>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">状态</label>
+        <div class="h-form-control">
+            <select @bind="@current.Status" class="h-input" style="width:auto">
+                @foreach (var s in Enum.GetValues<ProductStatusEnum>())
+                {
+                    <option value="@s">@s</option>
+                }
+            </select>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">备注</label>
+        <div class="h-form-control">
+            <textarea @bind="@current.Remark" rows="2" class="h-textarea"></textarea>
+        </div>
+    </div>
+</HModal>
+
+@code {
+    private List<ProductDto> products = new();
+    private Dictionary<Guid, int> skuCounts = new();
+    private bool loading;
+    private string filter = string.Empty;
+    private string categoryFilter = string.Empty;
+
+    private bool showModal;
+    private bool saving;
+    private bool isEdit;
+    private Guid? editId;
+    private CreateProductDto current = new();
+
+    protected override async Task OnInitializedAsync() => await LoadData();
+
+    private async Task LoadData()
+    {
+        loading = true;
+        try
+        {
+            var input = new ProductQueryDto { MaxResultCount = 100, Filter = string.IsNullOrWhiteSpace(filter) ? null : filter };
+            input.Category = string.IsNullOrWhiteSpace(categoryFilter) ? null : categoryFilter;
+            var result = await ProductService.GetListAsync(input);
+            products = result.Items.ToList();
+
+            // 统计各商品 SKU 数
+            skuCounts.Clear();
+            foreach (var p in products)
+            {
+                var skus = await SkuService.GetListAsync(new ProductSkuQueryDto { ProductId = p.Id, MaxResultCount = 1 });
+                skuCounts[p.Id] = (int)skus.TotalCount;
+            }
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载失败：{ex.Message}"); }
+        finally { loading = false; }
+    }
+
+    private void ShowCreate()
+    {
+        current = new CreateProductDto { Status = ProductStatusEnum.OnShelf };
+        isEdit = false;
+        editId = null;
+        showModal = true;
+    }
+
+    private void Edit(ProductDto p)
+    {
+        current = new CreateProductDto
+        {
+            ProductCode = p.ProductCode,
+            Name = p.Name,
+            Category = p.Category,
+            Description = p.Description,
+            Status = p.Status,
+            Remark = p.Remark
+        };
+        isEdit = true;
+        editId = p.Id;
+        showModal = true;
+    }
+
+    private async Task Save()
+    {
+        saving = true;
+        try
+        {
+            if (string.IsNullOrWhiteSpace(current.ProductCode) || string.IsNullOrWhiteSpace(current.Name))
+            {
+                await JS.InvokeVoidAsync("alert", "商品编码和名称不能为空");
+                return;
+            }
+
+            if (isEdit && editId.HasValue)
+            {
+                await ProductService.UpdateAsync(editId.Value, new UpdateProductDto
+                {
+                    Name = current.Name,
+                    Category = current.Category,
+                    Description = current.Description,
+                    Status = current.Status,
+                    Remark = current.Remark
+                });
+                await JS.InvokeVoidAsync("alert", "更新成功");
+            }
+            else
+            {
+                await ProductService.CreateAsync(current);
+                await JS.InvokeVoidAsync("alert", "创建成功");
+            }
+
+            CloseModal();
+            await LoadData();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}"); }
+        finally { saving = false; }
+    }
+
+    private void CloseModal() { showModal = false; current = new(); editId = null; isEdit = false; }
+
+    private async Task Delete(Guid id)
+    {
+        var ok = await JS.InvokeAsync<bool>("confirm", "确定删除该商品（含 SKU 将一并删除）？");
+        if (!ok) return;
+        try
+        {
+            await ProductService.DeleteAsync(id);
+            await JS.InvokeVoidAsync("alert", "已删除");
+            await LoadData();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"删除失败：{ex.Message}"); }
+    }
+}
