@@ -19,10 +19,16 @@
 .dropdown-menu { 
     position: absolute; top: 100%; right: 0; background: white; 
     box-shadow: 0 2px 8px rgba(0,0,0,0.15); border-radius: 4px; 
-    min-width: 160px; z-index: 1000; margin-top: 8px;
+    width: 200px; z-index: 1000; margin-top: 8px; overflow: hidden;
 }
 .dropdown-item { padding: 8px 16px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
 .dropdown-item:hover { background-color: #f5f5f5; }
+.dropdown-section-title { padding: 8px 16px 4px; font-size: 12px; color: #999; font-weight: 500; }
+.enterprise-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-radius: 6px; margin: 4px 4px 8px; cursor: pointer; box-sizing: border-box; max-width: calc(100% - 8px); }
+.enterprise-item:hover { background-color: #f5f5f5; }
+.enterprise-item .enterprise-name-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.enterprise-item .enterprise-name-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+.enterprise-item .enterprise-switch { display: flex; align-items: center; gap: 4px; color: #999; white-space: nowrap; margin-left: 12px; font-size: 13px; }
 </style>
 
 <div class="top-navbar">
@@ -67,20 +73,26 @@
                 @if (showDropdown)
                 {
                     <div class="dropdown-menu">
+                        <div class="dropdown-item" @onclick="GoToProfile">
+                            个人设置
+                        </div>
+                        <div class="dropdown-item" @onclick="OnLogout">
+                            退出登录
+                        </div>
                         @if (!string.IsNullOrEmpty(EnterpriseName))
                         {
-                            <div class="dropdown-item" @onclick="GoToEnterpriseSelect">
-                                <span>🏭</span> @EnterpriseName (切换企业)
+                            <div style="margin: 8px 0; border-top: 1px solid #f0f0f0;"></div>
+                            <div class="dropdown-section-title">组织</div>
+                            <div class="enterprise-item" @onclick="GoToEnterpriseSelect">
+                                <div class="enterprise-name-left">
+                                    <span class="enterprise-name-text">@EnterpriseName</span>
+                                </div>
+                                <div class="enterprise-switch">
+                                    <span>切换</span>
+                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+                                </div>
                             </div>
-                            <div style="margin: 4px 0; border-top: 1px solid #f0f0f0;"></div>
                         }
-                        <div class="dropdown-item" @onclick="GoToProfile">
-                            <span>👤</span> 账号信息
-                        </div>
-                        <div style="margin: 4px 0; border-top: 1px solid #f0f0f0;"></div>
-                        <div class="dropdown-item" @onclick="OnLogout">
-                            <span>🚪</span> 退出登录
-                        </div>
                     </div>
                 }
             </div>
