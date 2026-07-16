@@ -1,130 +1,370 @@
 @namespace H.Approval.Web
 
 @inject IUserAppService UserAppService
+@inject IOrganizationService OrganizationService
+@inject IMemberService MemberService
 @inject IJSRuntime JS
 
-<div class="user-picker">
-    <div class="user-picker-header">
-        <input type="text" class="user-picker-search" placeholder="搜索用户名/邮箱..."
-               value="@keyword" @oninput="OnSearchInput" />
+<div class="up-overlay" @onclick="Cancel"></div>
+<div class="up-modal" @onclick:stopPropagation>
+    <div class="up-header">
+        <span class="up-title">选择人员</span>
+        <span class="up-close" @onclick="Cancel">&times;</span>
     </div>
 
-    <div class="user-picker-body">
-        @if (isLoading)
-        {
-            <div class="user-picker-loading">加载中...</div>
-        }
-        else if (!users.Any())
-        {
-            <div class="user-picker-empty">暂无用户</div>
-        }
-        else
-        {
-            @foreach (var user in users)
+    <div class="up-body">
+        <div class="up-left">
+            <div class="up-search">
+                <span class="up-search-icon">🔍</span>
+                <input class="up-search-input" placeholder="搜索" value="@keyword" @oninput="OnSearchInput" />
+            </div>
+
+            @if (string.IsNullOrWhiteSpace(keyword))
             {
-                var isSelected = SelectedIds.Contains(user.Id.ToString());
-                <div class="user-picker-item @(isSelected ? "selected" : "")"
-                     @onclick="() => ToggleUser(user)">
-                    <input type="checkbox" checked="@isSelected" @onclick:stopPropagation />
-                    <span class="user-name">@user.UserName</span>
-                    <span class="user-email">@(string.IsNullOrEmpty(user.Email) ? "" : $"({user.Email})")</span>
+                @if (navStack.Count == 0)
+                {
+                    <div class="up-arch-entry" @onclick="EnterArchRoot">
+                        <span class="up-arch-icon">🗂️</span>
+                        <span class="up-arch-text">按架构选</span>
+                        <span class="up-arch-arrow">&rsaquo;</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="up-breadcrumb">
+                        <span class="up-crumb link" @onclick="GoRoot">通讯录</span>
+                        @for (var i = 0; i < navStack.Count; i++)
+                        {
+                            var idx = i;
+                            <span class="up-crumb-sep">&rsaquo;</span>
+                            <span class="up-crumb @(idx == navStack.Count - 1 ? "" : "link")" @onclick="() => GoLevel(idx)">@navStack[idx].Name</span>
+                        }
+                    </div>
+                }
+
+                @if (loadingLevel)
+                {
+                    <div class="up-loading">加载中...</div>
+                }
+                else
+                {
+                    <div class="up-list">
+                        @if (currentMembers.Any())
+                        {
+                            <label class="up-item up-selectall">
+                                <input type="checkbox" checked="@AllCurrentSelected" @onchange="ToggleSelectAll" />
+                                <span class="up-item-name">全选</span>
+                            </label>
+                        }
+
+                        @foreach (var dept in currentDepts)
+                        {
+                            <div class="up-item up-dept">
+                                <span class="up-dept-icon">👥</span>
+                                <span class="up-item-name">@dept.Name</span>
+                                <span class="up-dept-count">@dept.MembersCount 人</span>
+                                @if (dept.ChildrenCount > 0)
+                                {
+                                    <span class="up-drill" @onclick="() => DrillInto(dept)">下级</span>
+                                }
+                            </div>
+                        }
+
+                        @foreach (var u in currentMembers)
+                        {
+                            var selected = selectedIds.Contains(u.Id);
+                            <label class="up-item up-user @(selected ? "selected" : "")">
+                                <input type="checkbox" checked="@selected" @onchange="() => ToggleUser(u)" />
+                                <span class="up-avatar">@Initial(u.Name)</span>
+                                <span class="up-item-name">@u.Name</span>
+                            </label>
+                        }
+
+                        @if (!currentDepts.Any() && !currentMembers.Any())
+                        {
+                            <div class="up-empty">暂无成员</div>
+                        }
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="up-list">
+                    @if (loadingLevel)
+                    {
+                        <div class="up-loading">搜索中...</div>
+                    }
+                    else if (!searchResults.Any())
+                    {
+                        <div class="up-empty">未找到匹配人员</div>
+                    }
+                    else
+                    {
+                        @foreach (var u in searchResults)
+                        {
+                            var selected = selectedIds.Contains(u.Id);
+                            <label class="up-item up-user @(selected ? "selected" : "")">
+                                <input type="checkbox" checked="@selected" @onchange="() => ToggleUser(u)" />
+                                <span class="up-avatar">@Initial(u.Name)</span>
+                                <span class="up-item-name">@u.Name</span>
+                            </label>
+                        }
+                    }
                 </div>
             }
-        }
+        </div>
+
+        <div class="up-right">
+            <div class="up-selected-head">已选 （@selectedIds.Count/@MaxCount）</div>
+            <div class="up-selected-list">
+                @for (var i = 0; i < selectedIds.Count; i++)
+                {
+                    var idx = i;
+                    <div class="up-selected-item">
+                        <span class="up-avatar">@Initial(selectedNames[idx])</span>
+                        <span class="up-item-name">@selectedNames[idx]</span>
+                        <span class="up-remove" @onclick="() => RemoveAt(idx)">&times;</span>
+                    </div>
+                }
+                @if (!selectedIds.Any())
+                {
+                    <div class="up-selected-empty">请选择人员</div>
+                }
+            </div>
+        </div>
     </div>
 
-    <div class="user-picker-footer">
-        <span class="selected-count">已选 @SelectedIds.Count 人</span>
-        <button class="h-btn h-btn-ghost h-btn-sm" @onclick="ClearAll">清空</button>
-        <button class="h-btn h-btn-primary h-btn-sm" @onclick="Confirm">确 定</button>
+    <div class="up-footer">
+        <button class="up-btn up-btn-cancel" @onclick="Cancel">取消</button>
+        <button class="up-btn up-btn-ok" @onclick="Confirm">确定</button>
     </div>
 </div>
 
 @code {
-    [Parameter]
-    public List<string> SelectedIds { get; set; } = new();
+    [Parameter] public List<string> SelectedIds { get; set; } = new();
+    [Parameter] public List<string> SelectedNames { get; set; } = new();
+    [Parameter] public EventCallback<(List<string> Ids, List<string> Names)> OnConfirm { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+    [Parameter] public int MaxCount { get; set; } = 50;
 
-    [Parameter]
-    public List<string> SelectedNames { get; set; } = new();
-
-    [Parameter]
-    public EventCallback<(List<string> Ids, List<string> Names)> OnConfirm { get; set; }
+    private class SimpleUser
+    {
+        public string Id { get; set; } = "";
+        public string Name { get; set; } = "";
+    }
 
     private string keyword = "";
-    private List<UserDto> users = new();
-    private bool isLoading = false;
-    private System.Threading.CancellationTokenSource? searchCts;
+    private bool loadingLevel = false;
+
+    private List<string> selectedIds = new();
+    private List<string> selectedNames = new();
+
+    private List<SimpleUser> allUsers = new();
+    private List<OrganizationDto> allDepts = new();
+
+    private List<OrganizationDto> currentDepts = new();
+    private List<SimpleUser> currentMembers = new();
+    private List<SimpleUser> searchResults = new();
+
+    // 导航栈：空表示根，选择"按架构选"或下钻后压栈
+    private List<OrganizationDto> navStack = new();
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadUsers();
+        selectedIds = new List<string>(SelectedIds ?? new());
+        selectedNames = new List<string>(SelectedNames ?? new());
+        await LoadBaseDataAsync();
+        BuildRootLevel();
     }
 
-    private async Task LoadUsers()
+    private async Task LoadBaseDataAsync()
     {
-        isLoading = true;
+        loadingLevel = true;
         try
         {
-            var result = await UserAppService.GetPagedUsersAsync(new UserQueryParams
+            var userResult = await UserAppService.GetPagedUsersAsync(new UserQueryParams
             {
-                Keyword = string.IsNullOrWhiteSpace(keyword) ? null : keyword,
                 PageIndex = 1,
-                PageSize = 50
+                PageSize = 500
             });
-            users = result.Items.Where(u => u.IsActive).ToList();
+            allUsers = userResult.Items
+                .Where(u => u.IsActive)
+                .Select(u => new SimpleUser { Id = u.Id.ToString(), Name = u.UserName })
+                .ToList();
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("console.error", $"加载用户列表失败: {ex.Message}");
-            users = new List<UserDto>();
+            await JS.InvokeVoidAsync("console.error", $"加载用户失败: {ex.Message}");
+            allUsers = new();
+        }
+
+        try
+        {
+            var orgResult = await OrganizationService.GetListAsync(new OrganizationQueryParams
+            {
+                PageSize = 1000,
+                IsEnabled = true
+            });
+            allDepts = orgResult.Items.ToList();
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("console.error", $"加载部门失败: {ex.Message}");
+            allDepts = new();
         }
         finally
         {
-            isLoading = false;
+            loadingLevel = false;
         }
     }
 
-    private async void OnSearchInput(ChangeEventArgs e)
+    private void BuildRootLevel()
     {
-        keyword = e.Value?.ToString() ?? "";
-        searchCts?.Cancel();
-        searchCts = new System.Threading.CancellationTokenSource();
-        try
-        {
-            await Task.Delay(300, searchCts.Token);
-            await LoadUsers();
-            StateHasChanged();
-        }
-        catch (TaskCanceledException)
-        {
-            // 搜索被取消,忽略
-        }
+        navStack.Clear();
+        currentDepts = allDepts.Where(d => d.ParentId == null).OrderBy(d => d.Sort).ToList();
+        currentMembers = new List<SimpleUser>(allUsers);
     }
 
-    private void ToggleUser(UserDto user)
+    private void EnterArchRoot()
     {
-        var userId = user.Id.ToString();
-        var index = SelectedIds.IndexOf(userId);
-        if (index >= 0)
+        // 进入按架构选：显示根部门，成员列表清空（仅展示部门），下钻查看成员
+        navStack = new List<OrganizationDto> { new OrganizationDto { Id = Guid.Empty, Name = "通讯录" } };
+        currentDepts = allDepts.Where(d => d.ParentId == null).OrderBy(d => d.Sort).ToList();
+        currentMembers = new();
+    }
+
+    private async Task DrillInto(OrganizationDto dept)
+    {
+        navStack.Add(dept);
+        await LoadLevelAsync(dept.Id);
+    }
+
+    private void GoRoot()
+    {
+        keyword = "";
+        BuildRootLevel();
+    }
+
+    private async Task GoLevel(int index)
+    {
+        if (index < 0 || index >= navStack.Count) return;
+        var target = navStack[index];
+        navStack = navStack.Take(index + 1).ToList();
+        if (target.Id == Guid.Empty)
         {
-            SelectedIds.RemoveAt(index);
-            if (index < SelectedNames.Count) SelectedNames.RemoveAt(index);
+            currentDepts = allDepts.Where(d => d.ParentId == null).OrderBy(d => d.Sort).ToList();
+            currentMembers = new();
         }
         else
         {
-            SelectedIds.Add(userId);
-            SelectedNames.Add(user.UserName);
+            await LoadLevelAsync(target.Id);
         }
     }
 
-    private void ClearAll()
+    private async Task LoadLevelAsync(Guid orgId)
     {
-        SelectedIds.Clear();
-        SelectedNames.Clear();
+        loadingLevel = true;
+        currentDepts = allDepts.Where(d => d.ParentId == orgId).OrderBy(d => d.Sort).ToList();
+        try
+        {
+            var members = await MemberService.GetMembersByOrganizationIdAsync(orgId);
+            currentMembers = members
+                .Select(m => new SimpleUser { Id = m.UserId.ToString(), Name = m.UserName })
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("console.error", $"加载部门成员失败: {ex.Message}");
+            currentMembers = new();
+        }
+        finally
+        {
+            loadingLevel = false;
+        }
     }
+
+    private void OnSearchInput(ChangeEventArgs e)
+    {
+        keyword = e.Value?.ToString() ?? "";
+        if (string.IsNullOrWhiteSpace(keyword))
+        {
+            return;
+        }
+        var kw = keyword.Trim();
+        searchResults = allUsers
+            .Where(u => u.Name.Contains(kw, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+    }
+
+    private bool AllCurrentSelected =>
+        currentMembers.Any() && currentMembers.All(u => selectedIds.Contains(u.Id));
+
+    private void ToggleSelectAll(ChangeEventArgs e)
+    {
+        var check = e.Value is bool b && b;
+        if (check)
+        {
+            foreach (var u in currentMembers)
+            {
+                AddUser(u);
+            }
+        }
+        else
+        {
+            foreach (var u in currentMembers)
+            {
+                RemoveUser(u.Id);
+            }
+        }
+    }
+
+    private void ToggleUser(SimpleUser user)
+    {
+        if (selectedIds.Contains(user.Id))
+        {
+            RemoveUser(user.Id);
+        }
+        else
+        {
+            AddUser(user);
+        }
+    }
+
+    private void AddUser(SimpleUser user)
+    {
+        if (selectedIds.Contains(user.Id)) return;
+        if (selectedIds.Count >= MaxCount) return;
+        selectedIds.Add(user.Id);
+        selectedNames.Add(user.Name);
+    }
+
+    private void RemoveUser(string id)
+    {
+        var index = selectedIds.IndexOf(id);
+        if (index >= 0)
+        {
+            selectedIds.RemoveAt(index);
+            if (index < selectedNames.Count) selectedNames.RemoveAt(index);
+        }
+    }
+
+    private void RemoveAt(int index)
+    {
+        if (index < 0 || index >= selectedIds.Count) return;
+        selectedIds.RemoveAt(index);
+        if (index < selectedNames.Count) selectedNames.RemoveAt(index);
+    }
+
+    private static string Initial(string name)
+        => string.IsNullOrEmpty(name) ? "?" : name.Substring(0, 1).ToUpper();
 
     private async Task Confirm()
     {
-        await OnConfirm.InvokeAsync((new List<string>(SelectedIds), new List<string>(SelectedNames)));
+        await OnConfirm.InvokeAsync((new List<string>(selectedIds), new List<string>(selectedNames)));
+    }
+
+    private async Task Cancel()
+    {
+        await OnCancel.InvokeAsync();
     }
 }

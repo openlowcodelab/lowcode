@@ -4,6 +4,7 @@ using H.Approval.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Volo.Abp.EntityFrameworkCore;
 
@@ -12,9 +13,11 @@ using Volo.Abp.EntityFrameworkCore;
 namespace H.Approval.DbMigrator.Migrations
 {
     [DbContext(typeof(ApprovalDbContext))]
-    partial class ApprovalDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260716151831_AddApprovalCategory")]
+    partial class AddApprovalCategory
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -72,9 +75,6 @@ namespace H.Approval.DbMigrator.Migrations
                     b.Property<string>("Description")
                         .HasMaxLength(1024)
                         .HasColumnType("nvarchar(1024)");
-
-                    b.Property<string>("FormJson")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Icon")
                         .HasColumnType("nvarchar(max)");

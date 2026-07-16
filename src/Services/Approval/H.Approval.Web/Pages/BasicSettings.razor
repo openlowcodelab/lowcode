@@ -2,6 +2,7 @@
 
 @layout ApprovalLayout
 @inject IJSRuntime JS
+@inject IApprovalCategoryAppService CategoryService
 
 <div class="basic-settings-container">
     <div class="settings-card">
@@ -27,10 +28,10 @@
             </label>
             <select class="h-select" @bind="CategoryName">
                 <option value="">请选择分组</option>
-                <option value="报销（含电子发票）">报销（含电子发票）</option>
-                <option value="请假">请假</option>
-                <option value="行政">行政</option>
-                <option value="人事">人事</option>
+                @foreach (var cat in Categories)
+                {
+                    <option value="@cat.Name">@cat.Name</option>
+                }
             </select>
         </div>
 
@@ -63,17 +64,18 @@
         {
             <div class="form-item">
                 <label class="form-label">指定发起人</label>
-                <button class="h-btn" @onclick="SelectStarters">
+                <button class="h-btn" @onclick="ShowStarterPicker">
                     选择成员
                 </button>
                 @if (SelectedStarters.Count > 0)
                 {
                     <div style="margin-top: 10px;">
-                        @foreach (var starter in SelectedStarters)
+                        @for (var i = 0; i < SelectedStarters.Count; i++)
                         {
+                            var idx = i;
                             <span class="h-tag h-tag-default" style="margin-right: 8px;">
-                                @starter
-                                <button class="h-tag-close" @onclick="() => RemoveStarter(starter)">&times;</button>
+                                @SelectedStarters[idx]
+                                <button class="h-tag-close" @onclick="() => RemoveStarter(idx)">&times;</button>
                             </span>
                         }
                     </div>
@@ -99,17 +101,18 @@
         {
             <div class="form-item">
                 <label class="form-label">指定管理员</label>
-                <button class="h-btn" @onclick="SelectAdmins">
+                <button class="h-btn" @onclick="ShowAdminPicker">
                     选择管理员
                 </button>
                 @if (SelectedAdmins.Count > 0)
                 {
                     <div style="margin-top: 10px;">
-                        @foreach (var admin in SelectedAdmins)
+                        @for (var i = 0; i < SelectedAdmins.Count; i++)
                         {
+                            var idx = i;
                             <span class="h-tag h-tag-default" style="margin-right: 8px;">
-                                @admin
-                                <button class="h-tag-close" @onclick="() => RemoveAdmin(admin)">&times;</button>
+                                @SelectedAdmins[idx]
+                                <button class="h-tag-close" @onclick="() => RemoveAdmin(idx)">&times;</button>
                             </span>
                         }
                     </div>
@@ -118,6 +121,15 @@
         }
     </div>
 </div>
+
+@if (showStarterPicker)
+{
+    <UserPickerDialog SelectedIds="@starterPickerIds" SelectedNames="@starterPickerNames" OnConfirm="OnStarterPickerConfirm" OnCancel="HideStarterPicker" />
+}
+@if (showAdminPicker)
+{
+    <UserPickerDialog SelectedIds="@adminPickerIds" SelectedNames="@adminPickerNames" OnConfirm="OnAdminPickerConfirm" OnCancel="HideAdminPicker" />
+}
 
 @code {
     [Parameter]
@@ -137,6 +149,18 @@
     private List<string> SelectedStarters { get; set; } = new();
     private List<string> SelectedAdmins { get; set; } = new();
 
+    private List<string> SelectedStarterIds { get; set; } = new();
+    private List<string> SelectedAdminIds { get; set; } = new();
+
+    private bool showStarterPicker = false;
+    private bool showAdminPicker = false;
+    private List<string> starterPickerIds = new();
+    private List<string> starterPickerNames = new();
+    private List<string> adminPickerIds = new();
+    private List<string> adminPickerNames = new();
+
+    private List<ApprovalCategoryDto> Categories { get; set; } = new();
+
     private bool IsWhoCanStartAll => WhoCanStart == "All";
     private bool IsWhoCanStartSpecified => WhoCanStart == "Specified";
     private void SetWhoCanStartAll() { WhoCanStart = "All"; }
@@ -145,6 +169,12 @@
     private bool IsAdminTypeSpecified => AdminType == "Specified";
     private void SetAdminTypeAll() { AdminType = "All"; }
     private void SetAdminTypeSpecified() { AdminType = "Specified"; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try { Categories = await CategoryService.GetAllAsync(); }
+        catch { Categories = new(); }
+    }
 
     protected override void OnParametersSet()
     {
@@ -191,27 +221,57 @@
         NotifyChanged();
     }
 
-    private void SelectStarters()
+    private void ShowStarterPicker()
     {
-        SelectedStarters.Add("张三");
+        starterPickerIds = new List<string>(SelectedStarterIds);
+        starterPickerNames = new List<string>(SelectedStarters);
+        showStarterPicker = true;
+    }
+
+    private void HideStarterPicker()
+    {
+        showStarterPicker = false;
+    }
+
+    private void OnStarterPickerConfirm((List<string> Ids, List<string> Names) result)
+    {
+        SelectedStarterIds = result.Ids;
+        SelectedStarters = result.Names;
+        showStarterPicker = false;
         NotifyChanged();
     }
 
-    private void RemoveStarter(string starter)
+    private void RemoveStarter(int index)
     {
-        SelectedStarters.Remove(starter);
+        if (index >= 0 && index < SelectedStarters.Count) SelectedStarters.RemoveAt(index);
+        if (index >= 0 && index < SelectedStarterIds.Count) SelectedStarterIds.RemoveAt(index);
         NotifyChanged();
     }
 
-    private void SelectAdmins()
+    private void ShowAdminPicker()
     {
-        SelectedAdmins.Add("李四");
+        adminPickerIds = new List<string>(SelectedAdminIds);
+        adminPickerNames = new List<string>(SelectedAdmins);
+        showAdminPicker = true;
+    }
+
+    private void HideAdminPicker()
+    {
+        showAdminPicker = false;
+    }
+
+    private void OnAdminPickerConfirm((List<string> Ids, List<string> Names) result)
+    {
+        SelectedAdminIds = result.Ids;
+        SelectedAdmins = result.Names;
+        showAdminPicker = false;
         NotifyChanged();
     }
 
-    private void RemoveAdmin(string admin)
+    private void RemoveAdmin(int index)
     {
-        SelectedAdmins.Remove(admin);
+        if (index >= 0 && index < SelectedAdmins.Count) SelectedAdmins.RemoveAt(index);
+        if (index >= 0 && index < SelectedAdminIds.Count) SelectedAdminIds.RemoveAt(index);
         NotifyChanged();
     }
 

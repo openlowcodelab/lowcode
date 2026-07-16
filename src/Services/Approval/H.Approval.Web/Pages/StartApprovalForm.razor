@@ -1,0 +1,286 @@
+@page "/approval/start/{DefinitionId}"
+@layout ApprovalLayout
+
+@inject IApprovalDefinitionAppService DefinitionService
+@inject IApprovalInstanceAppService InstanceService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+@if (isLoading)
+{
+    <div class="h-spin"><span class="h-spin-dot"></span><span class="h-spin-text">加载中...</span></div>
+}
+else if (definition == null)
+{
+    <div class="h-alert h-alert-error">
+        <span>审批流程不存在或已被删除。</span>
+    </div>
+    <button class="h-btn" style="margin-top: 12px;" @onclick="BackToStart">返回发起审批</button>
+}
+else
+{
+    <h3>@(string.IsNullOrEmpty(definition.Icon) ? "📄" : definition.Icon) @definition.Name</h3>
+    @if (!string.IsNullOrWhiteSpace(definition.Description))
+    {
+        <div class="h-alert h-alert-success">@definition.Description</div>
+    }
+
+    <form @onsubmit="OnFinish">
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label"><span class="h-required">*</span> 审批标题</label>
+            <div class="h-form-control">
+                <input class="h-input" @bind="model.Title" placeholder="请输入审批标题" />
+            </div>
+        </div>
+
+        @if (schema.Fields.Any())
+        {
+            @foreach (var field in schema.Fields)
+            {
+                @if (field.Type == FormFieldTypes.Description)
+                {
+                    <div class="h-form-item h-form-horizontal">
+                        <label class="h-form-label"></label>
+                        <div class="h-form-control">
+                            <div class="h-alert">@field.Label</div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="h-form-item h-form-horizontal">
+                        <label class="h-form-label">
+                            @if (field.Required)
+                            {
+                                <span class="h-required">*</span>
+                            }
+                            @field.Label
+                        </label>
+                        <div class="h-form-control">
+                            @RenderField(field)
+                        </div>
+                    </div>
+                }
+            }
+        }
+        else
+        {
+            <div class="h-form-item h-form-horizontal">
+                <label class="h-form-label">审批说明</label>
+                <div class="h-form-control">
+                    <textarea class="h-textarea" rows="4" @bind="fallbackDescription"></textarea>
+                </div>
+            </div>
+        }
+
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label"></label>
+            <div class="h-form-control">
+                <button type="submit" class="h-btn h-btn-primary" disabled="@isSubmitting">
+                    @if (isSubmitting)
+                    {
+                        <span class="h-btn-loading"></span>
+                    }
+                    提交审批
+                </button>
+                <button type="button" class="h-btn" style="margin-left: 8px;" @onclick="BackToStart">取消</button>
+            </div>
+        </div>
+    </form>
+}
+
+@code {
+    [Parameter] public string DefinitionId { get; set; } = string.Empty;
+
+    private StartApprovalInstanceDto model = new();
+    private ApprovalDefinitionDto? definition;
+    private FormSchema schema = new();
+    private Dictionary<string, string> formValues = new();
+    private string fallbackDescription = string.Empty;
+    private bool isLoading = true;
+    private bool isSubmitting;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            definition = await DefinitionService.GetByIdAsync(DefinitionId);
+            model.DefinitionId = DefinitionId;
+            schema = FormSchema.Parse(definition?.FormJson);
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"加载审批定义失败: {ex.Message}");
+            definition = null;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private RenderFragment RenderField(FormFieldModel field) => builder =>
+    {
+        var placeholder = string.IsNullOrEmpty(field.Placeholder) ? "请输入" : field.Placeholder;
+        var current = formValues.TryGetValue(field.Id, out var v) ? v : "";
+        switch (field.Type)
+        {
+            case FormFieldTypes.Textarea:
+                builder.OpenElement(0, "textarea");
+                builder.AddAttribute(1, "class", "h-textarea");
+                builder.AddAttribute(2, "rows", "3");
+                builder.AddAttribute(3, "placeholder", placeholder);
+                builder.AddAttribute(4, "value", current);
+                builder.AddAttribute(5, "oninput", EventCallback.Factory.Create<ChangeEventArgs>(this, e => SetValue(field.Id, e.Value?.ToString() ?? "")));
+                builder.CloseElement();
+                break;
+            case FormFieldTypes.Number:
+            case FormFieldTypes.Amount:
+                builder.OpenElement(0, "input");
+                builder.AddAttribute(1, "class", "h-input");
+                builder.AddAttribute(2, "type", "number");
+                builder.AddAttribute(3, "placeholder", placeholder);
+                builder.AddAttribute(4, "value", current);
+                builder.AddAttribute(5, "oninput", EventCallback.Factory.Create<ChangeEventArgs>(this, e => SetValue(field.Id, e.Value?.ToString() ?? "")));
+                builder.CloseElement();
+                break;
+            case FormFieldTypes.Date:
+                builder.OpenElement(0, "input");
+                builder.AddAttribute(1, "class", "h-input");
+                builder.AddAttribute(2, "type", "date");
+                builder.AddAttribute(3, "value", current);
+                builder.AddAttribute(4, "oninput", EventCallback.Factory.Create<ChangeEventArgs>(this, e => SetValue(field.Id, e.Value?.ToString() ?? "")));
+                builder.CloseElement();
+                break;
+            case FormFieldTypes.Radio:
+                {
+                    var seq = 0;
+                    builder.OpenElement(seq++, "div");
+                    builder.AddAttribute(seq++, "class", "h-radio-group");
+                    foreach (var opt in field.Options)
+                    {
+                        builder.OpenElement(seq++, "label");
+                        builder.AddAttribute(seq++, "class", "h-radio-button");
+                        builder.OpenElement(seq++, "input");
+                        builder.AddAttribute(seq++, "type", "radio");
+                        builder.AddAttribute(seq++, "name", field.Id);
+                        builder.AddAttribute(seq++, "checked", current == opt);
+                        var optValue = opt;
+                        builder.AddAttribute(seq++, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, _ => SetValue(field.Id, optValue)));
+                        builder.CloseElement();
+                        builder.AddContent(seq++, opt);
+                        builder.CloseElement();
+                    }
+                    builder.CloseElement();
+                }
+                break;
+            case FormFieldTypes.Checkbox:
+                {
+                    var selectedSet = current.Split(',', StringSplitOptions.RemoveEmptyEntries).ToHashSet();
+                    var seq = 0;
+                    builder.OpenElement(seq++, "div");
+                    builder.AddAttribute(seq++, "class", "h-radio-group");
+                    foreach (var opt in field.Options)
+                    {
+                        builder.OpenElement(seq++, "label");
+                        builder.AddAttribute(seq++, "class", "h-radio-button");
+                        builder.OpenElement(seq++, "input");
+                        builder.AddAttribute(seq++, "type", "checkbox");
+                        builder.AddAttribute(seq++, "checked", selectedSet.Contains(opt));
+                        var optValue = opt;
+                        builder.AddAttribute(seq++, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => ToggleCheckbox(field.Id, optValue, e.Value is bool b && b)));
+                        builder.CloseElement();
+                        builder.AddContent(seq++, opt);
+                        builder.CloseElement();
+                    }
+                    builder.CloseElement();
+                }
+                break;
+            default:
+                builder.OpenElement(0, "input");
+                builder.AddAttribute(1, "class", "h-input");
+                builder.AddAttribute(2, "placeholder", placeholder);
+                builder.AddAttribute(3, "value", current);
+                builder.AddAttribute(4, "oninput", EventCallback.Factory.Create<ChangeEventArgs>(this, e => SetValue(field.Id, e.Value?.ToString() ?? "")));
+                builder.CloseElement();
+                break;
+        }
+    };
+
+    private void SetValue(string id, string value)
+    {
+        formValues[id] = value;
+    }
+
+    private void ToggleCheckbox(string id, string option, bool check)
+    {
+        var set = (formValues.TryGetValue(id, out var v) ? v : "")
+            .Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
+        if (check)
+        {
+            if (!set.Contains(option)) set.Add(option);
+        }
+        else
+        {
+            set.Remove(option);
+        }
+        formValues[id] = string.Join(",", set);
+    }
+
+    private async Task OnFinish()
+    {
+        if (string.IsNullOrWhiteSpace(model.Title))
+        {
+            await JS.InvokeVoidAsync("alert", "请输入审批标题");
+            return;
+        }
+
+        // 必填校验
+        foreach (var field in schema.Fields.Where(f => f.Required && f.Type != FormFieldTypes.Description))
+        {
+            var val = formValues.TryGetValue(field.Id, out var v) ? v : "";
+            if (string.IsNullOrWhiteSpace(val))
+            {
+                await JS.InvokeVoidAsync("alert", $"请填写：{field.Label}");
+                return;
+            }
+        }
+
+        // 组装表单变量
+        if (schema.Fields.Any())
+        {
+            var payload = new Dictionary<string, string>();
+            foreach (var field in schema.Fields.Where(f => f.Type != FormFieldTypes.Description))
+            {
+                var key = string.IsNullOrWhiteSpace(field.Label) ? field.Id : field.Label;
+                payload[key] = formValues.TryGetValue(field.Id, out var v) ? v : "";
+            }
+            model.VariablesJson = System.Text.Json.JsonSerializer.Serialize(payload);
+        }
+        else
+        {
+            model.VariablesJson = fallbackDescription;
+        }
+
+        isSubmitting = true;
+        try
+        {
+            var result = await InstanceService.StartAsync(model);
+            await JS.InvokeVoidAsync("alert", "审批已提交");
+            Nav.NavigateTo($"/approval/detail/{result.Id}");
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"提交失败: {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void BackToStart()
+    {
+        Nav.NavigateTo("/approval/start");
+    }
+}

@@ -24,5 +24,6 @@ public class ApprovalEntityFrameworkCoreModule : AbpModule
         context.Services.AddTransient<IApprovalDefinitionRepository, ApprovalDefinitionRepository>();
         context.Services.AddTransient<IApprovalInstanceRepository, ApprovalInstanceRepository>();
         context.Services.AddTransient<IApprovalTaskRepository, ApprovalTaskRepository>();
+        context.Services.AddTransient<IApprovalCategoryRepository, ApprovalCategoryRepository>();
     }
 }

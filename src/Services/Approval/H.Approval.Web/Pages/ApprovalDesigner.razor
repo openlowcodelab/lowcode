@@ -24,6 +24,10 @@ else
     {
         <BasicSettings Definition="@definition" OnSettingsChanged="OnBasicSettingsChanged" />
     }
+    else if (DesignerLayout?.ActiveTab == "form")
+    {
+        <FormDesigner FormJson="@definition.FormJson" FormName="@definition.Name" OnFormChanged="OnFormChanged" />
+    }
     else if (DesignerLayout?.ActiveTab == "flow")
     {
         <div class="flow-design-container">
@@ -199,6 +203,14 @@ else
     {
         StateHasChanged();
     }
+
+    private void OnFormChanged(string formJson)
+    {
+        if (definition != null)
+        {
+            definition.FormJson = formJson;
+        }
+    }
     
     private void OnDeleteNode(NodeModelBase nodeToDelete)
     {
@@ -298,6 +310,7 @@ else
                     SpecifiedStarters = definition.SpecifiedStarters,
                     AdminType = definition.AdminType,
                     SpecifiedAdmins = definition.SpecifiedAdmins,
+                    FormJson = definition.FormJson,
                     DefinitionJson = json
                 });
                 
@@ -319,6 +332,7 @@ else
                     SpecifiedStarters = definition.SpecifiedStarters,
                     AdminType = definition.AdminType,
                     SpecifiedAdmins = definition.SpecifiedAdmins,
+                    FormJson = definition.FormJson,
                     DefinitionJson = json
                 });
             }
@@ -357,6 +371,7 @@ else
                     SpecifiedStarters = definition.SpecifiedStarters,
                     AdminType = definition.AdminType,
                     SpecifiedAdmins = definition.SpecifiedAdmins,
+                    FormJson = definition.FormJson,
                     DefinitionJson = json
                 });
                 ApprovalId = result.Id;
@@ -375,6 +390,7 @@ else
                     SpecifiedStarters = definition.SpecifiedStarters,
                     AdminType = definition.AdminType,
                     SpecifiedAdmins = definition.SpecifiedAdmins,
+                    FormJson = definition.FormJson,
                     DefinitionJson = json
                 });
             }

@@ -25,6 +25,11 @@ public class ApprovalDbContext : AbpDbContext<ApprovalDbContext>
     /// </summary>
     public virtual DbSet<ApprovalTask> ApprovalTasks { get; set; }
 
+    /// <summary>
+    /// 审批分类(分组)集合
+    /// </summary>
+    public virtual DbSet<ApprovalCategory> ApprovalCategories { get; set; }
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -36,6 +41,7 @@ public class ApprovalDbContext : AbpDbContext<ApprovalDbContext>
             entity.Property(e => e.Name).IsRequired().HasMaxLength(256);
             entity.Property(e => e.Description).HasMaxLength(1024);
             entity.Property(e => e.DefinitionJson).HasColumnType("nvarchar(max)");
+            entity.Property(e => e.FormJson).HasColumnType("nvarchar(max)");
         });
         
         // 配置审批实例表
@@ -76,6 +82,14 @@ public class ApprovalDbContext : AbpDbContext<ApprovalDbContext>
             entity.HasIndex(e => e.InstanceId);
             entity.HasIndex(e => e.NodeId);
             entity.HasIndex(e => e.Status);
+        });
+
+        // 配置审批分类表
+        builder.Entity<ApprovalCategory>(entity =>
+        {
+            entity.ToTable("ApprovalCategories");
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(256);
+            entity.HasIndex(e => e.Name);
         });
         
         // Elsa 相关表由 Elsa.EntityFrameworkCore 自动配置

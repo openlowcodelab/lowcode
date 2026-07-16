@@ -37,7 +37,7 @@
 
             @if (showUserPicker)
             {
-                <UserPickerDialog SelectedIds="@pickerSelectedIds" SelectedNames="@pickerSelectedNames" OnConfirm="OnUserPickerConfirm" />
+                <UserPickerDialog SelectedIds="@pickerSelectedIds" SelectedNames="@pickerSelectedNames" OnConfirm="OnUserPickerConfirm" OnCancel="HideUserPicker" />
             }
             else
             {
@@ -107,6 +107,11 @@
         pickerSelectedIds = new List<string>(Node.SpecifiedUsers ?? new List<string>());
         pickerSelectedNames = new List<string>(Node.SpecifiedUserNames ?? new List<string>());
         showUserPicker = true;
+    }
+
+    private void HideUserPicker()
+    {
+        showUserPicker = false;
     }
 
     private void OnUserPickerConfirm((List<string> Ids, List<string> Names) result)

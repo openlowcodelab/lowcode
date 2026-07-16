@@ -32,6 +32,9 @@ public class ApprovalDefinition : Entity<string>
     /// <summary>审批定义JSON</summary>
     public virtual string DefinitionJson { get; set; } = string.Empty;
 
+    /// <summary>表单设计JSON(字段Schema)</summary>
+    public virtual string? FormJson { get; set; }
+
     /// <summary>审批图标(emoji)</summary>
     public virtual string? Icon { get; set; }
 

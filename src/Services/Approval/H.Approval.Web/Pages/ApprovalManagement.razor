@@ -3,49 +3,167 @@
 @layout ApprovalLayout
 
 @inject IApprovalDefinitionAppService DefinitionService
+@inject IApprovalCategoryAppService CategoryService
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
-<button class="h-btn h-btn-primary" @onclick="CreateNew">新建审批</button>
-
-<div style="margin-top: 16px;">
-    <HTable ShowEmpty="@(!definitions.Any())">
-        <thead>
-        <tr>
-            <th>审批名称</th>
-            <th>描述</th>
-            <th>版本</th>
-            <th>状态</th>
-            <th>创建时间</th>
-            <th>操作</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in definitions)
-        {
-            <tr>
-                <td>@item.Name</td>
-                <td>@item.Description</td>
-                <td>@item.Version</td>
-                <td>
-                    <span class="h-tag @(item.IsEnabled ? "h-tag-green" : "h-tag-red")">
-                        @(item.IsEnabled ? "启用" : "禁用")
-                    </span>
-                </td>
-                <td>@item.CreationTime</td>
-                <td>
-                    <button class="h-btn h-btn-ghost h-btn-sm" @onclick="() => Edit(item.Id)">编辑</button>
-                    <button class="h-btn h-btn-ghost h-btn-sm" @onclick="() => ToggleEnabled(item)">@(@item.IsEnabled ? "禁用" : "启用")</button>
-                    <button class="h-btn h-btn-danger h-btn-sm" @onclick="() => Delete(item.Id)">删除</button>
-                </td>
-            </tr>
-        }
-    </tbody>
-    </HTable>
+<div class="mgmt-header">
+    <h3 class="mgmt-title">表单管理</h3>
+    <div class="mgmt-actions">
+        <button class="h-btn" @onclick="OpenCreateCategory">新建分组</button>
+        <button class="h-btn h-btn-primary" @onclick="CreateNew">创建审批表单</button>
+    </div>
 </div>
 
+<div class="mgmt-tabs">
+    <a class="mgmt-tab @(string.IsNullOrEmpty(selectedCategory) ? "active" : "")" @onclick='() => selectedCategory = string.Empty'>全部</a>
+    @foreach (var group in Groups)
+    {
+        <a class="mgmt-tab @(selectedCategory == group.Key ? "active" : "")" @onclick="() => selectedCategory = group.Key">@group.Key</a>
+    }
+</div>
+
+@if (isLoading)
+{
+    <div class="h-spin"><span class="h-spin-dot"></span><span class="h-spin-text">加载中...</span></div>
+}
+else if (!VisibleGroups.Any())
+{
+    <HTable ShowEmpty="true">
+        <thead><tr><th>表单</th></tr></thead>
+        <tbody></tbody>
+    </HTable>
+}
+else
+{
+    @foreach (var group in VisibleGroups)
+    {
+        <div class="mgmt-group">
+            <div class="mgmt-group-header">
+                <span class="mgmt-group-name">@group.Key（@group.Value.Count）</span>
+                @{
+                    var cat = FindCategory(group.Key);
+                }
+                @if (cat != null)
+                {
+                    <span class="mgmt-group-ops">
+                        <a @onclick="() => OpenRenameCategory(cat)">重命名</a>
+                        <a class="danger" @onclick="() => DeleteCategory(cat)">删除</a>
+                    </span>
+                }
+            </div>
+            <HTable>
+                <thead>
+                    <tr>
+                        <th>审批名称</th>
+                        <th>描述</th>
+                        <th>版本</th>
+                        <th>状态</th>
+                        <th>创建时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in group.Value)
+                    {
+                        <tr>
+                            <td>@(string.IsNullOrEmpty(item.Icon) ? "📄" : item.Icon) @item.Name</td>
+                            <td>@item.Description</td>
+                            <td>@item.Version</td>
+                            <td>
+                                <span class="h-tag @(item.IsEnabled ? "h-tag-green" : "h-tag-red")">
+                                    @(item.IsEnabled ? "启用" : "禁用")
+                                </span>
+                            </td>
+                            <td>@item.CreationTime.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>
+                                <button class="h-btn h-btn-ghost h-btn-sm" @onclick="() => Edit(item.Id)">编辑</button>
+                                <button class="h-btn h-btn-ghost h-btn-sm" @onclick="() => ToggleEnabled(item)">@(item.IsEnabled ? "禁用" : "启用")</button>
+                                <button class="h-btn h-btn-danger h-btn-sm" @onclick="() => Delete(item.Id)">删除</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </HTable>
+        </div>
+    }
+}
+
+@if (showCategoryDialog)
+{
+    <div class="setting-drawer-overlay" @onclick="CloseCategoryDialog"></div>
+    <div class="mgmt-category-dialog">
+        <div class="mgmt-category-header">
+            <h4>@(categoryEditId == null ? "新建分组" : "重命名分组")</h4>
+            <button class="h-btn h-btn-ghost h-btn-sm" @onclick="CloseCategoryDialog">&times;</button>
+        </div>
+        <div class="h-form-item">
+            <label class="h-form-label"><span class="h-required">*</span> 分组名称</label>
+            <input class="h-input" @bind="categoryName" placeholder="请输入分组名称" />
+        </div>
+        <div class="mgmt-category-footer">
+            <button class="h-btn" @onclick="CloseCategoryDialog">取消</button>
+            <button class="h-btn h-btn-primary" style="margin-left: 8px;" disabled="@isSavingCategory" @onclick="SaveCategory">
+                @(isSavingCategory ? "保存中..." : "确定")
+            </button>
+        </div>
+    </div>
+}
+
 @code {
+    private const string UncategorizedName = "其他";
+
     private List<ApprovalDefinitionDto> definitions = new();
+    private List<ApprovalCategoryDto> categories = new();
+    private bool isLoading = true;
+    private string selectedCategory = string.Empty;
+
+    private bool showCategoryDialog;
+    private string? categoryEditId;
+    private string categoryName = string.Empty;
+    private bool isSavingCategory;
+
+    private List<KeyValuePair<string, List<ApprovalDefinitionDto>>> Groups
+    {
+        get
+        {
+            var defGroups = definitions
+                .GroupBy(d => string.IsNullOrWhiteSpace(d.CategoryName) ? UncategorizedName : d.CategoryName!)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            var result = new List<KeyValuePair<string, List<ApprovalDefinitionDto>>>();
+
+            // 先按已定义分类顺序展示(即使无表单也展示,便于管理)
+            foreach (var cat in categories)
+            {
+                var list = defGroups.TryGetValue(cat.Name, out var items) ? items : new List<ApprovalDefinitionDto>();
+                result.Add(new KeyValuePair<string, List<ApprovalDefinitionDto>>(cat.Name, list));
+                defGroups.Remove(cat.Name);
+            }
+
+            // 剩余未登记分类名(历史数据)
+            foreach (var kv in defGroups.Where(k => k.Key != UncategorizedName).OrderBy(k => k.Key))
+            {
+                result.Add(new KeyValuePair<string, List<ApprovalDefinitionDto>>(kv.Key, kv.Value));
+            }
+
+            // 未分类置底
+            if (defGroups.TryGetValue(UncategorizedName, out var uncategorized))
+            {
+                result.Add(new KeyValuePair<string, List<ApprovalDefinitionDto>>(UncategorizedName, uncategorized));
+            }
+
+            return result;
+        }
+    }
+
+    private List<KeyValuePair<string, List<ApprovalDefinitionDto>>> VisibleGroups
+        => string.IsNullOrEmpty(selectedCategory)
+            ? Groups
+            : Groups.Where(g => g.Key == selectedCategory).ToList();
+
+    private ApprovalCategoryDto? FindCategory(string name)
+        => categories.FirstOrDefault(c => c.Name == name);
 
     protected override async Task OnInitializedAsync()
     {
@@ -54,18 +172,25 @@
 
     private async Task LoadData()
     {
+        isLoading = true;
         try
         {
             definitions = await DefinitionService.GetAllAsync();
+            categories = await CategoryService.GetAllAsync();
         }
         catch (Exception ex)
         {
             await JS.InvokeVoidAsync("alert", $"加载数据失败: {ex.Message}");
             definitions = new List<ApprovalDefinitionDto>();
+            categories = new List<ApprovalCategoryDto>();
+        }
+        finally
+        {
+            isLoading = false;
         }
     }
 
-    private async Task CreateNew()
+    private void CreateNew()
     {
         Nav.NavigateTo($"/approval/designer/_new");
     }
@@ -97,6 +222,79 @@
         {
             await DefinitionService.DeleteAsync(id);
             await JS.InvokeVoidAsync("alert", "删除成功");
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"删除失败: {ex.Message}");
+        }
+    }
+
+    private void OpenCreateCategory()
+    {
+        categoryEditId = null;
+        categoryName = string.Empty;
+        showCategoryDialog = true;
+    }
+
+    private void OpenRenameCategory(ApprovalCategoryDto category)
+    {
+        categoryEditId = category.Id;
+        categoryName = category.Name;
+        showCategoryDialog = true;
+    }
+
+    private void CloseCategoryDialog()
+    {
+        showCategoryDialog = false;
+        categoryEditId = null;
+    }
+
+    private async Task SaveCategory()
+    {
+        if (string.IsNullOrWhiteSpace(categoryName))
+        {
+            await JS.InvokeVoidAsync("alert", "请输入分组名称");
+            return;
+        }
+
+        isSavingCategory = true;
+        try
+        {
+            if (categoryEditId == null)
+            {
+                await CategoryService.CreateAsync(new CreateApprovalCategoryDto { Name = categoryName.Trim() });
+            }
+            else
+            {
+                await CategoryService.RenameAsync(new RenameApprovalCategoryDto { Id = categoryEditId, Name = categoryName.Trim() });
+            }
+            showCategoryDialog = false;
+            categoryEditId = null;
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"保存失败: {ex.Message}");
+        }
+        finally
+        {
+            isSavingCategory = false;
+        }
+    }
+
+    private async Task DeleteCategory(ApprovalCategoryDto category)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm", $"确认删除分组「{category.Name}」? 该分组下的审批表单将归入「其他」。");
+        if (!confirmed) return;
+
+        try
+        {
+            await CategoryService.DeleteAsync(category.Id);
+            if (selectedCategory == category.Name)
+            {
+                selectedCategory = string.Empty;
+            }
             await LoadData();
         }
         catch (Exception ex)

@@ -166,3 +166,59 @@ public class ApprovalTaskRepository : IApprovalTaskRepository
         await _dbContext.SaveChangesAsync();
     }
 }
+
+/// <summary>
+/// 审批分类(分组)仓储实现
+/// </summary>
+public class ApprovalCategoryRepository : IApprovalCategoryRepository
+{
+    private readonly ApprovalDbContext _dbContext;
+
+    public ApprovalCategoryRepository(ApprovalDbContext dbContext)
+    {
+        _dbContext = dbContext;
+    }
+
+    public async Task<List<ApprovalCategory>> GetAllAsync()
+    {
+        return await _dbContext.ApprovalCategories
+            .OrderBy(c => c.Sort)
+            .ThenBy(c => c.CreationTime)
+            .ToListAsync();
+    }
+
+    public async Task<ApprovalCategory?> GetByIdAsync(string id)
+    {
+        return await _dbContext.ApprovalCategories.FindAsync(id);
+    }
+
+    public async Task<ApprovalCategory?> GetByNameAsync(string name)
+    {
+        return await _dbContext.ApprovalCategories
+            .FirstOrDefaultAsync(c => c.Name == name);
+    }
+
+    public async Task<ApprovalCategory> InsertAsync(ApprovalCategory entity)
+    {
+        await _dbContext.ApprovalCategories.AddAsync(entity);
+        await _dbContext.SaveChangesAsync();
+        return entity;
+    }
+
+    public async Task<ApprovalCategory> UpdateAsync(ApprovalCategory entity)
+    {
+        _dbContext.ApprovalCategories.Update(entity);
+        await _dbContext.SaveChangesAsync();
+        return entity;
+    }
+
+    public async Task DeleteAsync(string id)
+    {
+        var entity = await _dbContext.ApprovalCategories.FindAsync(id);
+        if (entity != null)
+        {
+            _dbContext.ApprovalCategories.Remove(entity);
+            await _dbContext.SaveChangesAsync();
+        }
+    }
+}

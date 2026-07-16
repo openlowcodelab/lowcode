@@ -50,6 +50,7 @@ public class ApprovalDefinitionAppService : ApplicationService, IApprovalDefinit
             Name = input.Name,
             Description = input.Description,
             DefinitionJson = input.DefinitionJson,
+            FormJson = input.FormJson,
             Icon = input.Icon,
             CategoryId = input.CategoryId,
             CategoryName = input.CategoryName,
@@ -82,6 +83,7 @@ public class ApprovalDefinitionAppService : ApplicationService, IApprovalDefinit
         entity.Name = input.Name;
         entity.Description = input.Description;
         entity.DefinitionJson = input.DefinitionJson;
+        entity.FormJson = input.FormJson;
         entity.Icon = input.Icon;
         entity.CategoryId = input.CategoryId;
         entity.CategoryName = input.CategoryName;
@@ -130,6 +132,7 @@ public class ApprovalDefinitionAppService : ApplicationService, IApprovalDefinit
             Name = entity.Name,
             Description = entity.Description,
             DefinitionJson = entity.DefinitionJson,
+            FormJson = entity.FormJson,
             Icon = entity.Icon,
             CategoryId = entity.CategoryId,
             CategoryName = entity.CategoryName,
