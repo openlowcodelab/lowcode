@@ -1,0 +1,130 @@
+@namespace H.Approval.Web
+
+@inject IUserAppService UserAppService
+@inject IJSRuntime JS
+
+<div class="user-picker">
+    <div class="user-picker-header">
+        <input type="text" class="user-picker-search" placeholder="搜索用户名/邮箱..."
+               value="@keyword" @oninput="OnSearchInput" />
+    </div>
+
+    <div class="user-picker-body">
+        @if (isLoading)
+        {
+            <div class="user-picker-loading">加载中...</div>
+        }
+        else if (!users.Any())
+        {
+            <div class="user-picker-empty">暂无用户</div>
+        }
+        else
+        {
+            @foreach (var user in users)
+            {
+                var isSelected = SelectedIds.Contains(user.Id.ToString());
+                <div class="user-picker-item @(isSelected ? "selected" : "")"
+                     @onclick="() => ToggleUser(user)">
+                    <input type="checkbox" checked="@isSelected" @onclick:stopPropagation />
+                    <span class="user-name">@user.UserName</span>
+                    <span class="user-email">@(string.IsNullOrEmpty(user.Email) ? "" : $"({user.Email})")</span>
+                </div>
+            }
+        }
+    </div>
+
+    <div class="user-picker-footer">
+        <span class="selected-count">已选 @SelectedIds.Count 人</span>
+        <button class="h-btn h-btn-ghost h-btn-sm" @onclick="ClearAll">清空</button>
+        <button class="h-btn h-btn-primary h-btn-sm" @onclick="Confirm">确 定</button>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public List<string> SelectedIds { get; set; } = new();
+
+    [Parameter]
+    public List<string> SelectedNames { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<(List<string> Ids, List<string> Names)> OnConfirm { get; set; }
+
+    private string keyword = "";
+    private List<UserDto> users = new();
+    private bool isLoading = false;
+    private System.Threading.CancellationTokenSource? searchCts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsers();
+    }
+
+    private async Task LoadUsers()
+    {
+        isLoading = true;
+        try
+        {
+            var result = await UserAppService.GetPagedUsersAsync(new UserQueryParams
+            {
+                Keyword = string.IsNullOrWhiteSpace(keyword) ? null : keyword,
+                PageIndex = 1,
+                PageSize = 50
+            });
+            users = result.Items.Where(u => u.IsActive).ToList();
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("console.error", $"加载用户列表失败: {ex.Message}");
+            users = new List<UserDto>();
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async void OnSearchInput(ChangeEventArgs e)
+    {
+        keyword = e.Value?.ToString() ?? "";
+        searchCts?.Cancel();
+        searchCts = new System.Threading.CancellationTokenSource();
+        try
+        {
+            await Task.Delay(300, searchCts.Token);
+            await LoadUsers();
+            StateHasChanged();
+        }
+        catch (TaskCanceledException)
+        {
+            // 搜索被取消,忽略
+        }
+    }
+
+    private void ToggleUser(UserDto user)
+    {
+        var userId = user.Id.ToString();
+        var index = SelectedIds.IndexOf(userId);
+        if (index >= 0)
+        {
+            SelectedIds.RemoveAt(index);
+            if (index < SelectedNames.Count) SelectedNames.RemoveAt(index);
+        }
+        else
+        {
+            SelectedIds.Add(userId);
+            SelectedNames.Add(user.UserName);
+        }
+    }
+
+    private void ClearAll()
+    {
+        SelectedIds.Clear();
+        SelectedNames.Clear();
+    }
+
+    private async Task Confirm()
+    {
+        await OnConfirm.InvokeAsync((new List<string>(SelectedIds), new List<string>(SelectedNames)));
+    }
+}

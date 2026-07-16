@@ -44,17 +44,20 @@ public class ApprovalDbContext : AbpDbContext<ApprovalDbContext>
             entity.ToTable("ApprovalInstances");
             entity.Property(e => e.DefinitionId).IsRequired().HasMaxLength(128);
             entity.Property(e => e.DefinitionName).IsRequired().HasMaxLength(256);
+            entity.Property(e => e.Title).IsRequired().HasMaxLength(512);
             entity.Property(e => e.CreatorId).IsRequired().HasMaxLength(128);
             entity.Property(e => e.CreatorName).IsRequired().HasMaxLength(256);
+            entity.Property(e => e.CurrentNodeId).HasMaxLength(128);
             entity.Property(e => e.CurrentNodeName).HasMaxLength(256);
-            
+            entity.Property(e => e.VariablesJson).HasColumnType("nvarchar(max)");
+
             // 配置与任务的关系
             entity.HasMany(e => e.Tasks)
                 .WithOne()
                 .HasForeignKey(e => e.InstanceId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
-        
+
         // 配置审批任务表
         builder.Entity<ApprovalTask>(entity =>
         {
@@ -62,14 +65,16 @@ public class ApprovalDbContext : AbpDbContext<ApprovalDbContext>
             entity.Property(e => e.InstanceId).IsRequired().HasMaxLength(450);
             entity.Property(e => e.ApprovalName).IsRequired().HasMaxLength(256);
             entity.Property(e => e.InstanceTitle).HasMaxLength(512);
+            entity.Property(e => e.NodeId).IsRequired().HasMaxLength(128);
             entity.Property(e => e.NodeName).IsRequired().HasMaxLength(256);
             entity.Property(e => e.AssigneeId).IsRequired().HasMaxLength(128);
             entity.Property(e => e.AssigneeName).IsRequired().HasMaxLength(256);
             entity.Property(e => e.Comment).HasMaxLength(1024);
-            
+
             // 添加索引
             entity.HasIndex(e => e.AssigneeId);
             entity.HasIndex(e => e.InstanceId);
+            entity.HasIndex(e => e.NodeId);
             entity.HasIndex(e => e.Status);
         });
         

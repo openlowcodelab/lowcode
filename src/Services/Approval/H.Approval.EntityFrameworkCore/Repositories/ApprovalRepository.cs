@@ -132,6 +132,22 @@ public class ApprovalTaskRepository : IApprovalTaskRepository
             .ToListAsync();
     }
 
+    public async Task<List<ApprovalTask>> GetByInstanceIdAsync(string instanceId)
+    {
+        return await _dbContext.ApprovalTasks
+            .Where(t => t.InstanceId == instanceId)
+            .OrderBy(t => t.CreationTime)
+            .ToListAsync();
+    }
+
+    public async Task<List<ApprovalTask>> GetByNodeIdAsync(string instanceId, string nodeId)
+    {
+        return await _dbContext.ApprovalTasks
+            .Where(t => t.InstanceId == instanceId && t.NodeId == nodeId)
+            .OrderBy(t => t.CreationTime)
+            .ToListAsync();
+    }
+
     public async Task<ApprovalTask?> GetByIdAsync(string id)
     {
         return await _dbContext.ApprovalTasks.FindAsync(id);
@@ -142,5 +158,11 @@ public class ApprovalTaskRepository : IApprovalTaskRepository
         _dbContext.ApprovalTasks.Update(entity);
         await _dbContext.SaveChangesAsync();
         return entity;
+    }
+
+    public async Task UpdateRangeAsync(List<ApprovalTask> entities)
+    {
+        _dbContext.ApprovalTasks.UpdateRange(entities);
+        await _dbContext.SaveChangesAsync();
     }
 }

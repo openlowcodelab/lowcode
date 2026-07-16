@@ -11,17 +11,17 @@ public interface IApprovalInstanceAppService : IApplicationService
     /// 启动审批实例
     /// </summary>
     Task<ApprovalInstanceDto> StartAsync(StartApprovalInstanceDto input);
-    
+
     /// <summary>
-    /// 获取我发起的审批实例
+    /// 获取我发起的审批实例(当前登录用户)
     /// </summary>
-    Task<List<ApprovalInstanceDto>> GetMyApprovalsAsync(string userId);
-    
+    Task<List<ApprovalInstanceDto>> GetMyApprovalsAsync();
+
     /// <summary>
-    /// 获取审批实例详情
+    /// 获取审批实例详情(含任务历史)
     /// </summary>
     Task<ApprovalInstanceDto> GetByIdAsync(string id);
-    
+
     /// <summary>
     /// 取消审批实例
     /// </summary>

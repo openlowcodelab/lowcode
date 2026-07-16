@@ -33,6 +33,9 @@ public interface IApprovalTaskRepository
     Task<ApprovalTask> InsertAsync(ApprovalTask entity);
     Task<List<ApprovalTask>> GetPendingByAssigneeIdAsync(string assigneeId);
     Task<List<ApprovalTask>> GetCompletedByAssigneeIdAsync(string assigneeId);
+    Task<List<ApprovalTask>> GetByInstanceIdAsync(string instanceId);
+    Task<List<ApprovalTask>> GetByNodeIdAsync(string instanceId, string nodeId);
     Task<ApprovalTask?> GetByIdAsync(string id);
     Task<ApprovalTask> UpdateAsync(ApprovalTask entity);
+    Task UpdateRangeAsync(List<ApprovalTask> entities);
 }

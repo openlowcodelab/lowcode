@@ -1,41 +1,120 @@
 @namespace H.Approval.Web
 
-<div class="add-node-popover">
-    <div class="add-node-popover-body">
-        <a class="add-node-popover-item approver" @onclick="()=>AddApproveNode()">
-            <div class="item-wrapper">
-                <span class="iconfont">✓</span>
-            </div>
-            <span>审批人</span>
-        </a>
-        <a class="add-node-popover-item notifier" @onclick="()=>AddCarbonCopyNode()">
-            <div class="item-wrapper">
-                <span class="iconfont">📧</span>
-            </div>
-            <span>抄送人</span>
-        </a>
-        <a class="add-node-popover-item route" @onclick="()=>AddConditionNode()">
-            <div class="item-wrapper">
-                <span class="iconfont">⚡</span>
-            </div>
-            <span>条件分支</span>
-        </a>
+<div class="setting-panel">
+    <div class="setting-section">
+        <div class="setting-label">条件名称</div>
+        <input class="h-input" value="@Node.NodeName" @oninput="OnNameInput" placeholder="请输入条件名称" />
+    </div>
+
+    <div class="setting-section">
+        <div class="setting-label">条件规则</div>
+        <div class="setting-hint">设置满足此分支的条件,多个规则为"且"的关系</div>
+
+        @if (rules.Count == 0)
+        {
+            <div style="color: #999; padding: 8px 0; font-size: 13px;">暂无条件规则,默认总是满足</div>
+        }
+        else
+        {
+            @for (var i = 0; i < rules.Count; i++)
+            {
+                var idx = i;
+                <div class="condition-rule-row">
+                    <input class="h-input condition-field" placeholder="变量名"
+                           value="@rules[idx].Field" @oninput="@(e => OnFieldInput(idx, e))" />
+                    <select class="h-select condition-op" value="@rules[idx].Operator" @onchange="@(e => OnOpChanged(idx, e))">
+                        <option value="==">等于</option>
+                        <option value="!=">不等于</option>
+                        <option value=">">大于</option>
+                        <option value="<">小于</option>
+                        <option value=">=">大于等于</option>
+                        <option value="<=">小于等于</option>
+                        <option value="contains">包含</option>
+                    </select>
+                    <input class="h-input condition-value" placeholder="值"
+                           value="@rules[idx].Value" @oninput="@(e => OnValueInput(idx, e))" />
+                    <button class="h-btn h-btn-danger h-btn-sm" @onclick="() => RemoveRule(idx)">&times;</button>
+                </div>
+            }
+        }
+
+        <button class="add-user-btn" @onclick="AddRule" style="margin-top: 8px;">
+            <span>+</span> 添加条件
+        </button>
+    </div>
+
+    <div class="setting-section">
+        <label class="h-radio-button" style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+            <input type="checkbox" checked="@Node.IsDefault" @onchange="OnDefaultChanged" />
+            <span>设为默认分支(所有条件都不满足时走此分支)</span>
+        </label>
+    </div>
+
+    <div class="setting-actions">
+        <button class="h-btn h-btn-primary" @onclick="SaveSettings">确 定</button>
     </div>
 </div>
 
 @code {
-    private void AddApproveNode()
+    [Parameter]
+    public ConditionModel Node { get; set; } = null!;
+
+    [Parameter]
+    public EventCallback OnSave { get; set; }
+
+    private List<ConditionRule> rules = new();
+
+    protected override void OnParametersSet()
     {
-        
+        if (Node != null)
+        {
+            Node.Rules ??= new List<ConditionRule>();
+            rules = Node.Rules;
+        }
     }
 
-    private void AddCarbonCopyNode()
+    private void OnNameInput(ChangeEventArgs e)
     {
-        
+        Node.NodeName = e.Value?.ToString() ?? "";
     }
 
-    private void AddConditionNode()
+    private void AddRule()
     {
-        
+        rules.Add(new ConditionRule());
+        StateHasChanged();
+    }
+
+    private void RemoveRule(int index)
+    {
+        if (index >= 0 && index < rules.Count)
+        {
+            rules.RemoveAt(index);
+        }
+    }
+
+    private void OnFieldInput(int index, ChangeEventArgs e)
+    {
+        if (index < rules.Count) rules[index].Field = e.Value?.ToString() ?? "";
+    }
+
+    private void OnOpChanged(int index, ChangeEventArgs e)
+    {
+        if (index < rules.Count) rules[index].Operator = e.Value?.ToString() ?? "==";
+    }
+
+    private void OnValueInput(int index, ChangeEventArgs e)
+    {
+        if (index < rules.Count) rules[index].Value = e.Value?.ToString() ?? "";
+    }
+
+    private void OnDefaultChanged(ChangeEventArgs e)
+    {
+        Node.IsDefault = e.Value is true;
+    }
+
+    private async Task SaveSettings()
+    {
+        Node.Rules = rules;
+        await OnSave.InvokeAsync();
     }
 }

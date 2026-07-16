@@ -23,12 +23,12 @@
         }
         else if (Node.NodeType == NodeTypeEnum.Condition)
         {
-            <ConditionNode Node="@Node" OnAddNode="AddChildNode" OnNodeTreeChanged="NotifyTreeChanged" />
+            <ConditionNode Node="@Node" OnAddNode="AddChildNode" OnNodeTreeChanged="NotifyTreeChanged" OnNodeClick="HandleNodeClick" OnDeleteNode="OnDeleteNode" />
         }
         else if (Node.NodeType == NodeTypeEnum.Branch)
         {
             <div class="branch-wrap">
-                <BranchNode Node="@Node" OnNodeTreeChanged="NotifyTreeChanged" />
+                <BranchNode Node="@Node" OnNodeTreeChanged="NotifyTreeChanged" OnNodeClick="HandleNodeClick" OnDeleteNode="OnDeleteNode" />
             </div>
             
             @*递归渲染子节点*@

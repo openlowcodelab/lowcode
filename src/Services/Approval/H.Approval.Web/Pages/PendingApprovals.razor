@@ -1,61 +1,144 @@
 @page "/approval/pending"
 @layout ApprovalLayout
 
+@inject IApprovalTaskAppService TaskService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
 <h3>待我审批</h3>
 
-<HTable ShowEmpty="@(!pendingTasks.Any())">
-    <thead>
-        <tr>
-            <th>审批标题</th>
-            <th>审批名称</th>
-            <th>当前节点</th>
-            <th>到达时间</th>
-            <th>操作</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in pendingTasks)
-        {
+@if (isLoading)
+{
+    <div class="h-spin"><span class="h-spin-dot"></span><span class="h-spin-text">加载中...</span></div>
+}
+else
+{
+    <HTable ShowEmpty="@(!pendingTasks.Any())">
+        <thead>
             <tr>
-                <td>@item.InstanceTitle</td>
-                <td>@item.ApprovalName</td>
-                <td>@item.NodeName</td>
-                <td>@item.CreationTime</td>
-                <td>
-                    <button class="h-btn h-btn-primary h-btn-sm" @onclick="() => Approve(item)">通过</button>
-                    <button class="h-btn h-btn-danger h-btn-sm" @onclick="() => Reject(item)">驳回</button>
-                    <button class="h-btn h-btn-ghost h-btn-sm">详情</button>
-                </td>
+                <th>审批标题</th>
+                <th>审批名称</th>
+                <th>当前节点</th>
+                <th>到达时间</th>
+                <th>操作</th>
             </tr>
-        }
-    </tbody>
-</HTable>
+        </thead>
+        <tbody>
+            @foreach (var item in pendingTasks)
+            {
+                <tr>
+                    <td>@item.InstanceTitle</td>
+                    <td>@item.ApprovalName</td>
+                    <td>@item.NodeName</td>
+                    <td>@item.CreationTime.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>
+                        <button class="h-btn h-btn-primary h-btn-sm" @onclick="() => OpenAction(item, 1)">通过</button>
+                        <button class="h-btn h-btn-danger h-btn-sm" @onclick="() => OpenAction(item, 2)">驳回</button>
+                        <button class="h-btn h-btn-ghost h-btn-sm" @onclick="() => View(item.InstanceId)">详情</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </HTable>
+}
+
+@if (showActionDialog)
+{
+    <div class="setting-drawer-overlay" @onclick="CloseAction"></div>
+    <div style="position: fixed; right: 0; top: 0; bottom: 0; width: 420px; background: #fff; box-shadow: -2px 0 8px rgba(0,0,0,0.15); z-index: 1000; overflow-y: auto; padding: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h4 style="margin: 0;">@(actionType == 1 ? "审批通过" : "审批驳回")</h4>
+            <button class="h-btn h-btn-ghost h-btn-sm" @onclick="CloseAction">&times;</button>
+        </div>
+        <div class="h-form-item">
+            <label class="h-form-label">审批意见</label>
+            <textarea class="h-textarea" rows="4" @bind="actionComment" placeholder="请输入审批意见"></textarea>
+        </div>
+        <div style="margin-top: 16px; text-align: right;">
+            <button class="h-btn" @onclick="CloseAction">取消</button>
+            <button class="h-btn @(actionType == 1 ? "h-btn-primary" : "h-btn-danger")" style="margin-left: 8px;" disabled="@isSubmitting" @onclick="SubmitAction">
+                @(isSubmitting ? "处理中..." : "确定")
+            </button>
+        </div>
+    </div>
+}
 
 @code {
     private List<ApprovalTaskDto> pendingTasks = new();
-    
+    private bool isLoading = true;
+
+    private bool showActionDialog;
+    private ApprovalTaskDto? currentTask;
+    private int actionType = 1;
+    private string actionComment = "";
+    private bool isSubmitting;
+
     protected override async Task OnInitializedAsync()
     {
-        pendingTasks = new List<ApprovalTaskDto>
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        try
         {
-            new() 
-            { 
-                Id = "TASK001",
-                InstanceTitle = "张三的请假申请", 
-                ApprovalName = "请假审批",
-                NodeName = "部门经理审批",
-                CreationTime = DateTime.Now.AddHours(-2)
-            }
-        };
+            pendingTasks = await TaskService.GetPendingTasksAsync();
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"加载失败: {ex.Message}");
+            pendingTasks = new List<ApprovalTaskDto>();
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
-    
-    private async Task Approve(ApprovalTaskDto task)
+
+    private void OpenAction(ApprovalTaskDto task, int type)
     {
-        Console.WriteLine($"审批通过: {task.InstanceTitle}");
+        currentTask = task;
+        actionType = type;
+        actionComment = "";
+        showActionDialog = true;
     }
-    
-    private async Task Reject(ApprovalTaskDto task)
+
+    private void CloseAction()
     {
-        Console.WriteLine($"审批驳回: {task.InstanceTitle}");
+        showActionDialog = false;
+        currentTask = null;
+    }
+
+    private async Task SubmitAction()
+    {
+        if (currentTask == null) return;
+
+        isSubmitting = true;
+        try
+        {
+            await TaskService.ApproveAsync(new ApprovalTaskActionDto
+            {
+                TaskId = currentTask.Id,
+                Action = actionType,
+                Comment = actionComment
+            });
+            showActionDialog = false;
+            currentTask = null;
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"操作失败: {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void View(string instanceId)
+    {
+        Nav.NavigateTo($"/approval/detail/{instanceId}");
     }
 }

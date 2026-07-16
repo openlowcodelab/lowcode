@@ -28,6 +28,11 @@ public class ApprovalTaskDto
     public string InstanceTitle { get; set; } = string.Empty;
     
     /// <summary>
+    /// 工作流节点ID
+    /// </summary>
+    public string NodeId { get; set; } = string.Empty;
+
+    /// <summary>
     /// 当前节点名称
     /// </summary>
     public string NodeName { get; set; } = string.Empty;

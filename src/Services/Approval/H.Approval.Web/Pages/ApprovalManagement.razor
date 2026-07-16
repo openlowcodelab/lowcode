@@ -8,8 +8,9 @@
 
 <button class="h-btn h-btn-primary" @onclick="CreateNew">新建审批</button>
 
-<HTable ShowEmpty="@(!definitions.Any())" Style="margin-top: 16px;">
-    <thead>
+<div style="margin-top: 16px;">
+    <HTable ShowEmpty="@(!definitions.Any())">
+        <thead>
         <tr>
             <th>审批名称</th>
             <th>描述</th>
@@ -34,16 +35,17 @@
                 <td>@item.CreationTime</td>
                 <td>
                     <button class="h-btn h-btn-ghost h-btn-sm" @onclick="() => Edit(item.Id)">编辑</button>
+                    <button class="h-btn h-btn-ghost h-btn-sm" @onclick="() => ToggleEnabled(item)">@(@item.IsEnabled ? "禁用" : "启用")</button>
                     <button class="h-btn h-btn-danger h-btn-sm" @onclick="() => Delete(item.Id)">删除</button>
                 </td>
             </tr>
         }
     </tbody>
-</HTable>
+    </HTable>
+</div>
 
 @code {
     private List<ApprovalDefinitionDto> definitions = new();
-    private List<ApprovalInstanceDto> instances = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -72,7 +74,20 @@
     {
         Nav.NavigateTo($"/approval/designer/{id}");
     }
-    
+
+    private async Task ToggleEnabled(ApprovalDefinitionDto item)
+    {
+        try
+        {
+            await DefinitionService.ToggleEnabledAsync(item.Id, !item.IsEnabled);
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"操作失败: {ex.Message}");
+        }
+    }
+
     private async Task Delete(string id)
     {
         var confirmed = await JS.InvokeAsync<bool>("confirm", "确认删除?");

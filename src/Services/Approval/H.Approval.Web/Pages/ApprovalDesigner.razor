@@ -61,6 +61,10 @@ else
                     {
                         <CarbonCopySettingDialog Node="@((CarbonCopyModel)editingNode)" OnSave="OnNodeSettingSaved" />
                     }
+                    else if (editingNode.NodeType == NodeTypeEnum.Condition)
+                    {
+                        <ConditionSettingDialog Node="@((ConditionModel)editingNode)" OnSave="OnNodeSettingSaved" />
+                    }
                 }
             </div>
         }
@@ -232,6 +236,7 @@ else
             NodeTypeEnum.Start => "发起人设置",
             NodeTypeEnum.Approve => "审批人设置",
             NodeTypeEnum.CarbonCopy => "抄送人设置",
+            NodeTypeEnum.Condition => "条件设置",
             _ => "节点设置"
         };
         isSettingDrawerVisible = true;

@@ -23,5 +23,10 @@ public enum ApprovalStatusEnum
     /// <summary>
     /// 已取消
     /// </summary>
-    Cancelled = 3
+    Cancelled = 3,
+
+    /// <summary>
+    /// 已驳回
+    /// </summary>
+    Rejected = 4
 }

@@ -4,6 +4,7 @@ using H.Approval.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Volo.Abp.EntityFrameworkCore;
 
@@ -12,9 +13,11 @@ using Volo.Abp.EntityFrameworkCore;
 namespace H.Approval.DbMigrator.Migrations
 {
     [DbContext(typeof(ApprovalDbContext))]
-    partial class ApprovalDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260715152321_UpdateApprovalInstanceFields")]
+    partial class UpdateApprovalInstanceFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -70,6 +73,10 @@ namespace H.Approval.DbMigrator.Migrations
                     b.Property<string>("SpecifiedStarters")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
+
                     b.Property<int>("Version")
                         .HasColumnType("int");
 
@@ -124,13 +131,14 @@ namespace H.Approval.DbMigrator.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(512)
                         .HasColumnType("nvarchar(512)");
-
-                    b.Property<string>("VariablesJson")
-                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -177,11 +185,6 @@ namespace H.Approval.DbMigrator.Migrations
                         .HasMaxLength(512)
                         .HasColumnType("nvarchar(512)");
 
-                    b.Property<string>("NodeId")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("nvarchar(128)");
-
                     b.Property<string>("NodeName")
                         .IsRequired()
                         .HasMaxLength(256)
@@ -190,13 +193,15 @@ namespace H.Approval.DbMigrator.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
+
                     b.HasKey("Id");
 
                     b.HasIndex("AssigneeId");
 
                     b.HasIndex("InstanceId");
-
-                    b.HasIndex("NodeId");
 
                     b.HasIndex("Status");
 

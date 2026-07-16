@@ -3,6 +3,7 @@ using Elsa.Persistence.EFCore.Modules.Management;
 using Elsa.Persistence.EFCore.Modules.Runtime;
 using Elsa.Extensions;
 using H.Approval.Application.Contracts;
+using H.Approval.Application.Services;
 using H.Approval.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,13 +31,9 @@ public class ApprovalApplicationModule : AbpModule
                 ef.UseSqlServer(connectionString!)));
 
             elsa.UseWorkflowsApi();
-
-            // 注册自定义审批活动
-            //elsa.AddActivity<StartApprovalActivity>()
-            //.AddActivity<ApprovalTaskActivity>()
-            //.AddActivity<ConditionActivity>()
-            //.AddActivity<CarbonCopyActivity>()
-            //.AddActivity<ApprovalEndActivity>();
         });
+
+        // 注册自包含审批工作流引擎
+        context.Services.AddTransient<ApprovalWorkflowEngine>();
     }
 }

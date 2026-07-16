@@ -1,12 +1,8 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
-namespace H.Approval.Web;
+namespace H.Approval.Application.Contracts;
 
 /// <summary>
 /// 节点基类
@@ -14,23 +10,17 @@ namespace H.Approval.Web;
 [JsonConverter(typeof(NodeModelBaseConverter))]
 public abstract class NodeModelBase
 {
-    public NodeModelBase()
-    {
-        ChildNodes = new List<NodeModelBase>();
-        ConditionNodes = new List<NodeModelBase>();
-    }
+    public string Id { get; set; } = string.Empty;
 
-    public string Id { get; set; }
+    public string NodeName { get; set; } = string.Empty;
 
-    public string NodeName {  get; set; }
-
-    public NodeTypeEnum NodeType {  get; set; }
+    public NodeTypeEnum NodeType { get; set; }
 
     public bool IsInput { get; set; }
 
-    public List<NodeModelBase> ChildNodes {  get; set; }
+    public List<NodeModelBase> ChildNodes { get; set; } = new();
 
-    public List<NodeModelBase> ConditionNodes { get; set; }
+    public List<NodeModelBase> ConditionNodes { get; set; } = new();
 }
 
 public enum NodeTypeEnum
@@ -53,7 +43,7 @@ public class NodeModelBaseConverter : JsonConverter<NodeModelBase>
         WriteIndented = false
     };
 
-    public override NodeModelBase? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    public override NodeModelBase? Read(ref Utf8JsonReader reader, System.Type typeToConvert, JsonSerializerOptions options)
     {
         using var doc = JsonDocument.ParseValue(ref reader);
         var root = doc.RootElement;
