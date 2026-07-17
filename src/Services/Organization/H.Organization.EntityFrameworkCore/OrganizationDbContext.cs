@@ -47,6 +47,11 @@ public class OrganizationDbContext : AbpDbContext<OrganizationDbContext>
     /// </summary>
     public DbSet<RoleMember> RoleMembers { get; set; } = null!;
 
+    /// <summary>
+    /// 组织邀请
+    /// </summary>
+    public DbSet<OrgInviteEntity> OrgInvites { get; set; } = null!;
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -117,6 +122,23 @@ public class OrganizationDbContext : AbpDbContext<OrganizationDbContext>
             entity.HasOne(e => e.Member)
                 .WithMany()
                 .HasForeignKey(e => e.MemberId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // OrgInvite 配置
+        modelBuilder.Entity<OrgInviteEntity>(entity =>
+        {
+            entity.ToTable("Organization_Invites");
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.Token).IsRequired().HasMaxLength(64);
+            entity.Property(e => e.Phone).HasMaxLength(20);
+
+            entity.HasIndex(e => e.Token).IsUnique();
+
+            entity.HasOne(e => e.Organization)
+                .WithMany()
+                .HasForeignKey(e => e.OrganizationId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }

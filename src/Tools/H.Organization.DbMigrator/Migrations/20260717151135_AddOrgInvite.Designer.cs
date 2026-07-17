@@ -4,6 +4,7 @@ using H.Organization.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Volo.Abp.EntityFrameworkCore;
 
@@ -12,9 +13,11 @@ using Volo.Abp.EntityFrameworkCore;
 namespace H.Organization.DbMigrator.Migrations
 {
     [DbContext(typeof(OrganizationDbContext))]
-    partial class OrganizationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260717151135_AddOrgInvite")]
+    partial class AddOrgInvite
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

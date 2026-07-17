@@ -5,6 +5,7 @@
 @inject IOrganizationAppService OrgService
 @inject IMemberAppService MemberService
 @inject IRoleAppService RoleService
+@inject IOrgInviteAppService InviteService
 @inject IJSRuntime JS
 
 <div class="org-container">
@@ -200,60 +201,17 @@
     </div>
 </HModal>
 
-<!-- 添加成员 对话框 -->
-<HModal Title="添加成员" Visible="@showAddMemberDialog" OnOk="@SaveAddMember" OnCancel="@(() => showAddMemberDialog = false)" ConfirmLoading="@isSubmitting">
-    <div class="h-form-item h-form-horizontal">
-        <label class="h-form-label">选择用户</label>
-        <div class="h-form-control">
-            <div class="h-input-group">
-                <input type="text" @bind-value="@userKeyword" @bind-value:event="oninput" placeholder="输入用户名/邮箱搜索" class="h-input" />
-                <button class="h-btn" @onclick="SearchUsers">搜索</button>
-            </div>
-            <div class="org-user-search-list">
-                @if (userSearchResults == null)
-                {
-                    <div class="h-empty">输入关键字后点击搜索</div>
-                }
-                else if (userSearchResults.Count == 0)
-                {
-                    <div class="h-empty">未找到用户</div>
-                }
-                else
-                {
-                    @foreach (var u in userSearchResults)
-                    {
-                        <div class="org-user-item @(selectedUser?.UserId == u.UserId ? "selected" : "")" @onclick="@(() => selectedUser = u)">
-                            <span>@u.UserName</span>
-                            <span style="color:#999;font-size:12px;">@u.Email</span>
-                        </div>
-                    }
-                }
-            </div>
-            @if (selectedUser != null)
-            {
-                <div style="margin-top:8px;">已选择：<span class="h-tag h-tag-blue">@selectedUser.UserName</span></div>
-            }
-        </div>
+<!-- 添加成员（邀请）对话框 -->
+<HModal Title="添加成员" Visible="@showAddMemberDialog" OnCancel="@(() => showAddMemberDialog = false)" ShowFooter="false">
+    <div class="org-invite-tabs">
+        <button class="h-btn @(inviteMethod == 1 ? "h-btn-primary" : "")" @onclick="@(() => SwitchInviteMethod(1))">手动新增</button>
+        <button class="h-btn @(inviteMethod == 2 ? "h-btn-primary" : "")" @onclick="@(() => SwitchInviteMethod(2))">邀请链接</button>
     </div>
-    <div class="h-form-item h-form-horizontal">
-        <label class="h-form-label">所属部门</label>
-        <div class="h-form-control">
-            <div class="org-checkbox-list">
-                @foreach (var o in allOrgs)
-                {
-                    <label class="org-checkbox-item">
-                        <input type="checkbox" checked="@selectedOrgIds.Contains(o.Id)"
-                               @onchange="@(e => ToggleOrgSelection(o.Id, e))" />
-                        <span>@o.Name</span>
-                    </label>
-                }
-            </div>
-        </div>
-    </div>
+
     <div class="h-form-item h-form-horizontal">
         <label class="h-form-label">成员类型</label>
         <div class="h-form-control">
-            <select @bind="@addMember.MemberType" class="h-select">
+            <select @bind="@inviteInput.MemberType" class="h-select">
                 <option value="1">普通成员</option>
                 <option value="2">部门负责人</option>
                 <option value="3">部门经理</option>
@@ -261,26 +219,47 @@
         </div>
     </div>
     <div class="h-form-item h-form-horizontal">
-        <label class="h-form-label">排序</label>
+        <label class="h-form-label">有效期(天)</label>
         <div class="h-form-control">
-            <input type="number" @bind="@addMember.Sort" class="h-input" />
+            <input type="number" @bind="@inviteInput.ExpireDays" class="h-input" />
         </div>
     </div>
-    <div class="h-form-item h-form-horizontal">
-        <label class="h-form-label">设为主部门</label>
-        <div class="h-form-control">
-            <label class="h-switch">
-                <input type="checkbox" @bind="@addMember.IsMain" />
-                <span class="h-switch-slider"></span>
-            </label>
+
+    @if (inviteMethod == 1)
+    {
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">手机号</label>
+            <div class="h-form-control">
+                <input type="text" @bind-value="@inviteInput.Phone" placeholder="请输入被邀请人手机号" class="h-input" />
+            </div>
         </div>
-    </div>
-    <div class="h-form-item h-form-horizontal">
-        <label class="h-form-label">备注</label>
-        <div class="h-form-control">
-            <textarea @bind="@addMember.Remark" placeholder="请输入备注" rows="2" class="h-textarea"></textarea>
+        <div style="text-align:right;">
+            <button class="h-btn h-btn-primary" disabled="@isSubmitting" @onclick="SendSmsInvite">发送短信邀请</button>
         </div>
-    </div>
+        @if (smsInviteSent)
+        {
+            <div class="h-alert h-alert-success" style="margin-top:12px;">
+                <span class="h-alert-icon">✓</span>
+                <span>短信邀请已发送至 @lastInvitePhone</span>
+            </div>
+        }
+    }
+    else
+    {
+        <div style="text-align:right;">
+            <button class="h-btn h-btn-primary" disabled="@isSubmitting" @onclick="GenerateInviteLink">生成邀请链接</button>
+        </div>
+        @if (!string.IsNullOrEmpty(generatedInviteUrl))
+        {
+            <div class="h-form-item" style="margin-top:12px;">
+                <div class="h-input-group">
+                    <input type="text" value="@generatedInviteUrl" class="h-input" readonly />
+                    <button class="h-btn" @onclick="CopyInviteLink">复制</button>
+                </div>
+                <div style="color:#999;font-size:12px;margin-top:6px;">链接为一次性使用，@(inviteExpiresAtText) 前有效。</div>
+            </div>
+        }
+    }
 </HModal>
 
 <!-- 编辑成员 对话框 -->
@@ -375,13 +354,14 @@
     private bool isOrgEdit;
     private OrganizationDto currentOrg = new();
 
-    // 添加成员对话框
+    // 添加成员（邀请）对话框
     private bool showAddMemberDialog;
-    private string? userKeyword;
-    private List<AssignableUserDto>? userSearchResults;
-    private AssignableUserDto? selectedUser;
-    private HashSet<Guid> selectedOrgIds = new();
-    private AddMemberBatchDto addMember = new() { MemberType = 1 };
+    private int inviteMethod = 1; // 1-手动新增(短信) 2-邀请链接
+    private CreateInviteDto inviteInput = new() { MemberType = 1, ExpireDays = 7 };
+    private bool smsInviteSent;
+    private string? lastInvitePhone;
+    private string? generatedInviteUrl;
+    private string inviteExpiresAtText = string.Empty;
 
     // 编辑成员对话框
     private bool showEditMemberDialog;
@@ -563,60 +543,46 @@
         }
     }
 
-    // ===== 添加成员 =====
+    // ===== 添加成员（邀请） =====
     private void ShowAddMemberDialog()
     {
         if (selectedOrgId == null) return;
-        addMember = new AddMemberBatchDto { MemberType = 1 };
-        selectedUser = null;
-        userKeyword = null;
-        userSearchResults = null;
-        // 默认勾选当前选中部门
-        selectedOrgIds = new HashSet<Guid> { selectedOrgId.Value };
+        inviteMethod = 1;
+        inviteInput = new CreateInviteDto { OrganizationId = selectedOrgId.Value, MemberType = 1, ExpireDays = 7 };
+        smsInviteSent = false;
+        lastInvitePhone = null;
+        generatedInviteUrl = null;
+        inviteExpiresAtText = string.Empty;
         showAddMemberDialog = true;
     }
 
-    private async Task SearchUsers()
+    private void SwitchInviteMethod(int method)
     {
-        userSearchResults = await MemberService.SearchAssignableUsersAsync(userKeyword);
+        inviteMethod = method;
+        smsInviteSent = false;
+        generatedInviteUrl = null;
     }
 
-    private void ToggleOrgSelection(Guid id, ChangeEventArgs e)
+    private async Task SendSmsInvite()
     {
-        var isChecked = e.Value is bool b && b;
-        if (isChecked)
-            selectedOrgIds.Add(id);
-        else
-            selectedOrgIds.Remove(id);
-    }
-
-    private async Task SaveAddMember()
-    {
-        if (selectedUser == null)
+        if (selectedOrgId == null) return;
+        if (string.IsNullOrWhiteSpace(inviteInput.Phone))
         {
-            await JS.InvokeVoidAsync("alert", "请先选择用户");
-            return;
-        }
-        if (selectedOrgIds.Count == 0)
-        {
-            await JS.InvokeVoidAsync("alert", "请至少选择一个部门");
+            await JS.InvokeVoidAsync("alert", "请输入手机号");
             return;
         }
         isSubmitting = true;
         try
         {
-            await MemberService.AddBatchAsync(new AddMemberBatchDto
+            var result = await InviteService.CreateInviteAsync(new CreateInviteDto
             {
-                UserId = selectedUser.UserId,
-                OrganizationIds = selectedOrgIds.ToList(),
-                MemberType = addMember.MemberType,
-                Sort = addMember.Sort,
-                IsMain = addMember.IsMain,
-                Remark = addMember.Remark
+                OrganizationId = selectedOrgId.Value,
+                MemberType = inviteInput.MemberType,
+                Phone = inviteInput.Phone,
+                ExpireDays = inviteInput.ExpireDays
             });
-            showAddMemberDialog = false;
-            await LoadTree();
-            await LoadMembers();
+            smsInviteSent = result.SmsSent;
+            lastInvitePhone = inviteInput.Phone;
         }
         catch (Exception ex)
         {
@@ -625,6 +591,46 @@
         finally
         {
             isSubmitting = false;
+        }
+    }
+
+    private async Task GenerateInviteLink()
+    {
+        if (selectedOrgId == null) return;
+        isSubmitting = true;
+        try
+        {
+            var result = await InviteService.CreateInviteAsync(new CreateInviteDto
+            {
+                OrganizationId = selectedOrgId.Value,
+                MemberType = inviteInput.MemberType,
+                Phone = null,
+                ExpireDays = inviteInput.ExpireDays
+            });
+            generatedInviteUrl = result.InviteUrl;
+            inviteExpiresAtText = result.ExpiresAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm");
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", ex.Message);
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private async Task CopyInviteLink()
+    {
+        if (string.IsNullOrEmpty(generatedInviteUrl)) return;
+        try
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", generatedInviteUrl);
+            await JS.InvokeVoidAsync("alert", "邀请链接已复制");
+        }
+        catch
+        {
+            // 忽略剪贴板错误
         }
     }
 
