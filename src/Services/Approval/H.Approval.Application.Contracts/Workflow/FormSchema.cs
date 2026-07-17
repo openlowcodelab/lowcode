@@ -13,6 +13,7 @@ public static class FormFieldTypes
     public const string Number = "number";         // 数字输入框
     public const string Amount = "amount";         // 金额
     public const string Date = "date";             // 日期
+    public const string DateRange = "daterange";   // 日期区间(开始~结束,支持上午/下午,自动算天数)
     public const string Radio = "radio";           // 单选框
     public const string Checkbox = "checkbox";     // 多选框
     public const string Description = "description";// 说明文字

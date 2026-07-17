@@ -124,6 +124,7 @@
         new(FormFieldTypes.Number, "数字输入框", "123"),
         new(FormFieldTypes.Amount, "金额", "￥"),
         new(FormFieldTypes.Date, "日期", "📅"),
+        new(FormFieldTypes.DateRange, "日期区间", "🗓"),
         new(FormFieldTypes.Radio, "单选框", "◉"),
         new(FormFieldTypes.Checkbox, "多选框", "☑"),
         new(FormFieldTypes.Description, "说明文字", "❗"),
@@ -245,6 +246,13 @@
                 builder.AddAttribute(3, "disabled", true);
                 builder.CloseElement();
                 break;
+            case FormFieldTypes.DateRange:
+                builder.OpenElement(0, "input");
+                builder.AddAttribute(1, "class", "h-input");
+                builder.AddAttribute(2, "placeholder", "开始(上午/下午) 至 结束(上午/下午)，自动算天数");
+                builder.AddAttribute(3, "disabled", true);
+                builder.CloseElement();
+                break;
             case FormFieldTypes.Radio:
             case FormFieldTypes.Checkbox:
                 builder.OpenElement(0, "div");
@@ -280,6 +288,7 @@
         FormFieldTypes.Number => "数字",
         FormFieldTypes.Amount => "金额（元）",
         FormFieldTypes.Date => "日期",
+        FormFieldTypes.DateRange => "日期区间",
         FormFieldTypes.Radio => "单选",
         FormFieldTypes.Checkbox => "多选",
         FormFieldTypes.Description => "说明文字",

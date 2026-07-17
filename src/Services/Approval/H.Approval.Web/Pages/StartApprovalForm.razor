@@ -152,6 +152,82 @@ else
                 builder.AddAttribute(4, "oninput", EventCallback.Factory.Create<ChangeEventArgs>(this, e => SetValue(field.Id, e.Value?.ToString() ?? "")));
                 builder.CloseElement();
                 break;
+            case FormFieldTypes.DateRange:
+                {
+                    var state = GetDateRangeState(field.Id);
+                    var seq = 0;
+                    builder.OpenElement(seq++, "div");
+                    builder.AddAttribute(seq++, "class", "h-daterange");
+
+                    // 开始
+                    builder.OpenElement(seq++, "div");
+                    builder.AddAttribute(seq++, "class", "h-daterange-row");
+                    builder.OpenElement(seq++, "input");
+                    builder.AddAttribute(seq++, "class", "h-input");
+                    builder.AddAttribute(seq++, "type", "date");
+                    builder.AddAttribute(seq++, "value", state.StartDate);
+                    builder.AddAttribute(seq++, "oninput", EventCallback.Factory.Create<ChangeEventArgs>(this, e => SetDateRangePart(field, "startDate", e.Value?.ToString() ?? "")));
+                    builder.CloseElement();
+                    builder.OpenElement(seq++, "select");
+                    builder.AddAttribute(seq++, "class", "h-input h-daterange-slot");
+                    builder.AddAttribute(seq++, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => SetDateRangePart(field, "startSlot", e.Value?.ToString() ?? "0")));
+                    builder.OpenElement(seq++, "option");
+                    builder.AddAttribute(seq++, "value", "0");
+                    builder.AddAttribute(seq++, "selected", state.StartSlot == 0);
+                    builder.AddContent(seq++, "上午");
+                    builder.CloseElement();
+                    builder.OpenElement(seq++, "option");
+                    builder.AddAttribute(seq++, "value", "1");
+                    builder.AddAttribute(seq++, "selected", state.StartSlot == 1);
+                    builder.AddContent(seq++, "下午");
+                    builder.CloseElement();
+                    builder.CloseElement(); // select
+                    builder.CloseElement(); // row
+
+                    // 至
+                    builder.OpenElement(seq++, "div");
+                    builder.AddAttribute(seq++, "class", "h-daterange-sep");
+                    builder.AddContent(seq++, "至");
+                    builder.CloseElement();
+
+                    // 结束
+                    builder.OpenElement(seq++, "div");
+                    builder.AddAttribute(seq++, "class", "h-daterange-row");
+                    builder.OpenElement(seq++, "input");
+                    builder.AddAttribute(seq++, "class", "h-input");
+                    builder.AddAttribute(seq++, "type", "date");
+                    builder.AddAttribute(seq++, "value", state.EndDate);
+                    builder.AddAttribute(seq++, "oninput", EventCallback.Factory.Create<ChangeEventArgs>(this, e => SetDateRangePart(field, "endDate", e.Value?.ToString() ?? "")));
+                    builder.CloseElement();
+                    builder.OpenElement(seq++, "select");
+                    builder.AddAttribute(seq++, "class", "h-input h-daterange-slot");
+                    builder.AddAttribute(seq++, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => SetDateRangePart(field, "endSlot", e.Value?.ToString() ?? "1")));
+                    builder.OpenElement(seq++, "option");
+                    builder.AddAttribute(seq++, "value", "0");
+                    builder.AddAttribute(seq++, "selected", state.EndSlot == 0);
+                    builder.AddContent(seq++, "上午");
+                    builder.CloseElement();
+                    builder.OpenElement(seq++, "option");
+                    builder.AddAttribute(seq++, "value", "1");
+                    builder.AddAttribute(seq++, "selected", state.EndSlot == 1);
+                    builder.AddContent(seq++, "下午");
+                    builder.CloseElement();
+                    builder.CloseElement(); // select
+                    builder.CloseElement(); // row
+
+                    // 天数显示
+                    var days = ComputeDateRangeDays(state);
+                    if (days.HasValue)
+                    {
+                        builder.OpenElement(seq++, "div");
+                        builder.AddAttribute(seq++, "class", "h-daterange-days");
+                        builder.AddContent(seq++, $"共 {FormatDays(days.Value)} 天");
+                        builder.CloseElement();
+                    }
+
+                    builder.CloseElement(); // container
+                }
+                break;
             case FormFieldTypes.Radio:
                 {
                     var seq = 0;
@@ -212,6 +288,74 @@ else
         formValues[id] = value;
     }
 
+    // 日期区间(半天粒度)子状态
+    private class DateRangeState
+    {
+        public string StartDate { get; set; } = string.Empty;
+        public int StartSlot { get; set; } = 0; // 0=上午, 1=下午
+        public string EndDate { get; set; } = string.Empty;
+        public int EndSlot { get; set; } = 1;   // 0=上午, 1=下午
+    }
+
+    private readonly Dictionary<string, DateRangeState> dateRangeStates = new();
+
+    private DateRangeState GetDateRangeState(string id)
+    {
+        if (!dateRangeStates.TryGetValue(id, out var state))
+        {
+            state = new DateRangeState();
+            dateRangeStates[id] = state;
+        }
+        return state;
+    }
+
+    private void SetDateRangePart(FormFieldModel field, string part, string value)
+    {
+        var state = GetDateRangeState(field.Id);
+        switch (part)
+        {
+            case "startDate": state.StartDate = value; break;
+            case "startSlot": state.StartSlot = value == "1" ? 1 : 0; break;
+            case "endDate": state.EndDate = value; break;
+            case "endSlot": state.EndSlot = value == "1" ? 1 : 0; break;
+        }
+        // 同步为显示字符串,供必填校验与变量提交使用
+        formValues[field.Id] = BuildDateRangeDisplay(state);
+    }
+
+    /// <summary>
+    /// 按半天粒度计算天数(上午=0, 下午=1)
+    /// </summary>
+    private static double? ComputeDateRangeDays(DateRangeState state)
+    {
+        if (!DateTime.TryParse(state.StartDate, out var start) || !DateTime.TryParse(state.EndDate, out var end))
+        {
+            return null;
+        }
+        var totalHalfDays = ((end.Date - start.Date).Days * 2) + (state.EndSlot - state.StartSlot) + 1;
+        if (totalHalfDays < 1)
+        {
+            return null; // 结束早于开始
+        }
+        return totalHalfDays / 2.0;
+    }
+
+    private static string FormatDays(double days)
+        => days % 1 == 0 ? ((int)days).ToString() : days.ToString("0.0");
+
+    private static string SlotName(int slot) => slot == 1 ? "下午" : "上午";
+
+    private static string BuildDateRangeDisplay(DateRangeState state)
+    {
+        if (string.IsNullOrWhiteSpace(state.StartDate) || string.IsNullOrWhiteSpace(state.EndDate))
+        {
+            return string.Empty;
+        }
+        var days = ComputeDateRangeDays(state);
+        var text = $"{state.StartDate} {SlotName(state.StartSlot)} 至 {state.EndDate} {SlotName(state.EndSlot)}";
+        return days.HasValue ? $"{text}，共 {FormatDays(days.Value)} 天" : text;
+    }
+
     private void ToggleCheckbox(string id, string option, bool check)
     {
         var set = (formValues.TryGetValue(id, out var v) ? v : "")
@@ -254,6 +398,16 @@ else
             {
                 var key = string.IsNullOrWhiteSpace(field.Label) ? field.Id : field.Label;
                 payload[key] = formValues.TryGetValue(field.Id, out var v) ? v : "";
+
+                // 日期区间额外写入天数变量
+                if (field.Type == FormFieldTypes.DateRange && dateRangeStates.TryGetValue(field.Id, out var st))
+                {
+                    var days = ComputeDateRangeDays(st);
+                    if (days.HasValue)
+                    {
+                        payload[$"{key}(天数)"] = FormatDays(days.Value);
+                    }
+                }
             }
             model.VariablesJson = System.Text.Json.JsonSerializer.Serialize(payload);
         }
