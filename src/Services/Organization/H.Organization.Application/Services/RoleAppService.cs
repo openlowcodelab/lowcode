@@ -3,16 +3,16 @@ using H.Organization.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Volo.Abp.Application.Services;
 
-namespace H.Organization.Application.Services;
+namespace H.Organization.Application;
 
 /// <summary>
 /// 角色服务实现
 /// </summary>
-public class RoleService : ApplicationService, IRoleService
+public class RoleAppService : ApplicationService, IRoleAppService
 {
     private readonly OrganizationDbContext _context;
 
-    public RoleService(OrganizationDbContext context)
+    public RoleAppService(OrganizationDbContext context)
     {
         _context = context;
     }
@@ -213,6 +213,24 @@ public class RoleService : ApplicationService, IRoleService
                 CreatedAt = x.CreatedAt,
                 Remark = x.Remark,
                 MembersCount = x.RoleMembers.Count
+            })
+            .ToListAsync();
+    }
+
+    /// <summary>
+    /// 获取角色已分配成员
+    /// </summary>
+    public async Task<List<RoleMemberDto>> GetRoleMembersAsync(Guid roleId)
+    {
+        return await _context.RoleMembers
+            .Where(x => x.RoleId == roleId && x.Member != null)
+            .OrderBy(x => x.Member!.Sort)
+            .Select(x => new RoleMemberDto
+            {
+                MemberId = x.MemberId,
+                UserId = x.Member!.UserId,
+                UserName = x.Member!.UserName,
+                OrganizationName = x.Member!.Organization != null ? x.Member!.Organization.Name : string.Empty
             })
             .ToListAsync();
     }

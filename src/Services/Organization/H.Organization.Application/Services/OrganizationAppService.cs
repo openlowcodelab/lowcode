@@ -3,16 +3,16 @@ using H.Organization.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Volo.Abp.Application.Services;
 
-namespace H.Organization.Application.Services;
+namespace H.Organization.Application;
 
 /// <summary>
 /// 部门服务实现
 /// </summary>
-public class OrganizationService : ApplicationService, IOrganizationService
+public class OrganizationAppService : ApplicationService, IOrganizationAppService
 {
     private readonly OrganizationDbContext _context;
 
-    public OrganizationService(OrganizationDbContext context)
+    public OrganizationAppService(OrganizationDbContext context)
     {
         _context = context;
     }

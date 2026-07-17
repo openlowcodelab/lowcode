@@ -67,6 +67,32 @@ public class RoleDto
 }
 
 /// <summary>
+/// 角色已分配成员 DTO
+/// </summary>
+public class RoleMemberDto
+{
+    /// <summary>
+    /// 成员ID
+    /// </summary>
+    public Guid MemberId { get; set; }
+
+    /// <summary>
+    /// 用户ID
+    /// </summary>
+    public Guid UserId { get; set; }
+
+    /// <summary>
+    /// 用户名
+    /// </summary>
+    public string UserName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 部门名称
+    /// </summary>
+    public string OrganizationName { get; set; } = string.Empty;
+}
+
+/// <summary>
 /// 创建角色请求
 /// </summary>
 public class CreateRoleDto

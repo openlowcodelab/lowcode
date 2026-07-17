@@ -5,7 +5,7 @@ namespace H.Organization.Application.Contracts;
 /// <summary>
 /// 部门服务接口
 /// </summary>
-public interface IOrganizationService : IApplicationService
+public interface IOrganizationAppService : IApplicationService
 {
     /// <summary>
     /// 获取所有部门（树形结构）

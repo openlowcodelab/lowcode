@@ -1,21 +1,20 @@
-using H.Account.Application.Contracts;
 using H.SystemPortal.Application.Contracts;
 using H.Organization.Application.Contracts;
 using H.Organization.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Volo.Abp.Application.Services;
 
-namespace H.Organization.Application.Services;
+namespace H.Organization.Application;
 
 /// <summary>
 /// 成员服务实现
 /// </summary>
-public class MemberService : ApplicationService, IMemberService
+public class MemberAppService : ApplicationService, IMemberAppService
 {
     private readonly OrganizationDbContext _context;
     private readonly IUserAppService _userService;
 
-    public MemberService(OrganizationDbContext context, IUserAppService userService)
+    public MemberAppService(OrganizationDbContext context, IUserAppService userService)
     {
         _context = context;
         _userService = userService;
@@ -69,7 +68,11 @@ public class MemberService : ApplicationService, IMemberService
                 IsMain = x.IsMain,
                 IsEnabled = x.IsEnabled,
                 CreatedAt = x.CreatedAt,
-                Remark = x.Remark
+                Remark = x.Remark,
+                RoleNames = _context.RoleMembers
+                    .Where(rm => rm.MemberId == x.Id && rm.Role != null)
+                    .Select(rm => rm.Role!.Name)
+                    .ToList()
             })
             .ToListAsync();
 
@@ -208,6 +211,149 @@ public class MemberService : ApplicationService, IMemberService
     }
 
     /// <summary>
+    /// 批量添加成员（一个用户关联多个部门）
+    /// </summary>
+    public async Task<List<MemberDto>> AddBatchAsync(AddMemberBatchDto input)
+    {
+        if (input.OrganizationIds == null || input.OrganizationIds.Count == 0)
+            throw new Exception("请选择至少一个部门");
+
+        // 从 Account 服务获取用户信息
+        string userName = string.Empty;
+        try
+        {
+            var user = await _userService.GetUserDtoByIdAsync(input.UserId);
+            if (user != null)
+            {
+                userName = user.UserName;
+            }
+        }
+        catch
+        {
+            throw new Exception("无法获取用户信息，请确认用户是否存在于Account服务中");
+        }
+
+        if (string.IsNullOrEmpty(userName))
+            throw new Exception("用户不存在");
+
+        // 如果设置为主部门，先取消该用户已有的主部门
+        if (input.IsMain)
+        {
+            var currentMain = await _context.Members
+                .Where(x => x.UserId == input.UserId && x.IsMain)
+                .ToListAsync();
+            foreach (var member in currentMain)
+            {
+                member.IsMain = false;
+            }
+        }
+
+        var distinctOrgIds = input.OrganizationIds.Distinct().ToList();
+        var createdIds = new List<Guid>();
+        var isFirst = true;
+
+        foreach (var orgId in distinctOrgIds)
+        {
+            // 跳过已存在的部门成员
+            var exists = await _context.Members.AnyAsync(x =>
+                x.OrganizationId == orgId && x.UserId == input.UserId);
+            if (exists)
+                continue;
+
+            var entity = new MemberEntity
+            {
+                Id = Guid.NewGuid(),
+                OrganizationId = orgId,
+                UserId = input.UserId,
+                UserName = userName,
+                MemberType = input.MemberType,
+                Sort = input.Sort,
+                // 主部门全局唯一，仅首个新增部门可设为主部门
+                IsMain = input.IsMain && isFirst,
+                Remark = input.Remark,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.Members.Add(entity);
+            createdIds.Add(entity.Id);
+            isFirst = false;
+        }
+
+        await _context.SaveChangesAsync();
+
+        var result = new List<MemberDto>();
+        foreach (var id in createdIds)
+        {
+            var dto = await GetByIdAsync(id);
+            if (dto != null)
+                result.Add(dto);
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// 搜索可分配用户（用于成员选择器）
+    /// </summary>
+    public async Task<List<AssignableUserDto>> SearchAssignableUsersAsync(string? keyword)
+    {
+        var result = await _userService.GetPagedUsersAsync(new H.SystemPortal.Application.Contracts.UserQueryParams
+        {
+            Keyword = keyword,
+            PageIndex = 1,
+            PageSize = 50
+        });
+
+        return result.Items.Select(u => new AssignableUserDto
+        {
+            UserId = u.Id,
+            UserName = u.UserName,
+            Email = u.Email,
+            PhoneNumber = u.PhoneNumber
+        }).ToList();
+    }
+
+    /// <summary>
+    /// 为成员分配角色（全量重建）
+    /// </summary>
+    public async Task AssignRolesAsync(Guid memberId, AssignMemberRolesDto input)
+    {
+        var member = await _context.Members.FindAsync(memberId);
+        if (member == null)
+            throw new Exception("成员不存在");
+
+        // 删除现有关联
+        var existing = await _context.RoleMembers
+            .Where(x => x.MemberId == memberId)
+            .ToListAsync();
+        _context.RoleMembers.RemoveRange(existing);
+
+        // 按 RoleIds 重建
+        foreach (var roleId in input.RoleIds.Distinct())
+        {
+            _context.RoleMembers.Add(new RoleMember
+            {
+                Id = Guid.NewGuid(),
+                RoleId = roleId,
+                MemberId = memberId,
+                CreatedAt = DateTime.UtcNow
+            });
+        }
+
+        await _context.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// 获取成员已授角色ID列表
+    /// </summary>
+    public async Task<List<Guid>> GetMemberRoleIdsAsync(Guid memberId)
+    {
+        return await _context.RoleMembers
+            .Where(x => x.MemberId == memberId)
+            .Select(x => x.RoleId)
+            .ToListAsync();
+    }
+
+    /// <summary>
     /// 更新成员
     /// </summary>
     public async Task<MemberDto> UpdateAsync(Guid id, UpdateMemberDto input)
@@ -286,7 +432,11 @@ public class MemberService : ApplicationService, IMemberService
                 IsMain = x.IsMain,
                 IsEnabled = x.IsEnabled,
                 CreatedAt = x.CreatedAt,
-                Remark = x.Remark
+                Remark = x.Remark,
+                RoleNames = _context.RoleMembers
+                    .Where(rm => rm.MemberId == x.Id && rm.Role != null)
+                    .Select(rm => rm.Role!.Name)
+                    .ToList()
             })
             .ToListAsync();
 

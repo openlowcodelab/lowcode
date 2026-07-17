@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Volo.Abp.Data;
 using Volo.Abp.EntityFrameworkCore;
 
 namespace H.Organization.EntityFrameworkCore;
@@ -7,6 +8,7 @@ namespace H.Organization.EntityFrameworkCore;
 /// 组织架构数据库上下文
 /// 继承 AbpDbContext 以启用多租户自动过滤
 /// </summary>
+[ConnectionStringName("OrganizationDb")]
 public class OrganizationDbContext : AbpDbContext<OrganizationDbContext>
 {
     public OrganizationDbContext(DbContextOptions<OrganizationDbContext> options)

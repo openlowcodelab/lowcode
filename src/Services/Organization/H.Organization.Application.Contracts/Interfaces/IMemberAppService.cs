@@ -5,7 +5,7 @@ namespace H.Organization.Application.Contracts;
 /// <summary>
 /// 成员服务接口
 /// </summary>
-public interface IMemberService : IApplicationService
+public interface IMemberAppService : IApplicationService
 {
     /// <summary>
     /// 获取成员列表
@@ -21,6 +21,26 @@ public interface IMemberService : IApplicationService
     /// 添加成员（从Account服务获取用户信息）
     /// </summary>
     Task<MemberDto> AddAsync(AddMemberDto input);
+
+    /// <summary>
+    /// 批量添加成员（一个用户关联多个部门）
+    /// </summary>
+    Task<List<MemberDto>> AddBatchAsync(AddMemberBatchDto input);
+
+    /// <summary>
+    /// 搜索可分配用户（用于成员选择器）
+    /// </summary>
+    Task<List<AssignableUserDto>> SearchAssignableUsersAsync(string? keyword);
+
+    /// <summary>
+    /// 为成员分配角色（全量重建）
+    /// </summary>
+    Task AssignRolesAsync(Guid memberId, AssignMemberRolesDto input);
+
+    /// <summary>
+    /// 获取成员已授角色ID列表
+    /// </summary>
+    Task<List<Guid>> GetMemberRoleIdsAsync(Guid memberId);
 
     /// <summary>
     /// 更新成员

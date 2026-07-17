@@ -1,61 +1,143 @@
 @page "/organization"
+@page "/organization/member"
 
 @layout OrganizationLayout
-@inject IOrganizationService IOrganizationService
+@inject IOrganizationAppService OrgService
+@inject IMemberAppService MemberService
+@inject IRoleAppService RoleService
 @inject IJSRuntime JS
 
-<HCard Title="组织管理">
-    <div style="margin-bottom: 16px;">
-        <button class="h-btn h-btn-primary" @onclick="@ShowCreateDialog">新增部门</button>
+<div class="org-container">
+    <!-- 左侧：部门树 -->
+    <div class="org-tree-panel">
+        <HCard Title="部门">
+            <div class="org-toolbar">
+                <span style="color:#999;font-size:12px;">选择部门查看成员</span>
+                <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => ShowOrgDialog(null))">新增根部门</button>
+            </div>
+            @if (tree == null)
+            {
+                <div class="h-spin"><span class="h-spin-dot"></span></div>
+            }
+            else if (flatNodes.Count == 0)
+            {
+                <div class="h-empty">暂无部门</div>
+            }
+            else
+            {
+                <ul class="org-tree">
+                    @foreach (var item in flatNodes)
+                    {
+                        <li>
+                            <div class="org-tree-node @(selectedOrgId == item.Node.Id ? "selected" : "")"
+                                 style="padding-left:@(item.Level * 16 + 8)px"
+                                 @onclick="@(() => SelectOrg(item.Node.Id))">
+                                <span class="org-tree-toggle" @onclick:stopPropagation="true" @onclick="@(() => ToggleCollapse(item.Node.Id))">
+                                    @if (item.HasChildren)
+                                    {
+                                        @(collapsed.Contains(item.Node.Id) ? "▶" : "▼")
+                                    }
+                                </span>
+                                <span class="org-tree-name">@item.Node.Name</span>
+                                <span class="org-tree-actions" @onclick:stopPropagation="true">
+                                    <button class="org-tree-icon-btn" title="新增子部门" @onclick="@(() => ShowOrgDialog(item.Node.Id))">＋</button>
+                                    <button class="org-tree-icon-btn" title="编辑" @onclick="@(() => EditOrg(item.Node.Id))">✎</button>
+                                    <button class="org-tree-icon-btn" title="删除" @onclick="@(() => ConfirmDeleteOrg(item.Node.Id))">✕</button>
+                                </span>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            }
+        </HCard>
     </div>
 
-    <HTable Loading="@(organizations == null)" ShowEmpty="@(organizations != null && !organizations.Any())">
-        <thead>
-            <tr>
-                <th>部门名称</th>
-                <th>编码</th>
-                <th>负责人</th>
-                <th>电话</th>
-                <th>邮箱</th>
-                <th>状态</th>
-                <th>操作</th>
-            </tr>
-        </thead>
-        <tbody>
-            @if (organizations != null)
-            {
-                @foreach (var context in organizations)
-                {
-                    <tr>
-                        <td>@context.Name</td>
-                        <td>@context.Code</td>
-                        <td>@context.LeaderName</td>
-                        <td>@context.Phone</td>
-                        <td>@context.Email</td>
-                        <td>
-                            @if (context.IsEnabled)
-                            {
-                                <span class="h-tag h-tag-green">启用</span>
-                            }
-                            else
-                            {
-                                <span class="h-tag h-tag-red">禁用</span>
-                            }
-                        </td>
-                        <td>
-                            <span class="h-space">
-                                <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => Edit(context))">编辑</button>
-                                <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => ConfirmDelete(context.Id))">删除</button>
-                            </span>
-                        </td>
-                    </tr>
-                }
-            }
-        </tbody>
-    </HTable>
-</HCard>
+    <!-- 右侧：成员列表 -->
+    <div class="org-member-panel">
+        <HCard Title="@(selectedOrg != null ? $"成员 - {selectedOrg.Name}" : "成员")">
+            <div class="org-toolbar">
+                <span style="color:#999;font-size:12px;">
+                    @(selectedOrgId == null ? "请先在左侧选择部门" : $"共 {members?.Count ?? 0} 名成员")
+                </span>
+                <button class="h-btn h-btn-primary" disabled="@(selectedOrgId == null)" @onclick="ShowAddMemberDialog">添加成员</button>
+            </div>
 
-<HModal Title="@(isEdit ? "编辑部门" : "新增部门")" Visible="@showDialog" OnOk="@Save" OnCancel="@CloseDialog" ConfirmLoading="@isSubmitting">
+            <HTable Loading="@(selectedOrgId != null && members == null)" ShowEmpty="@(members != null && members.Count == 0)">
+                <thead>
+                    <tr>
+                        <th>用户名</th>
+                        <th>邮箱</th>
+                        <th>手机号</th>
+                        <th>成员类型</th>
+                        <th>主部门</th>
+                        <th>角色</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (members != null)
+                    {
+                        @foreach (var m in members)
+                        {
+                            <tr>
+                                <td>@m.UserName</td>
+                                <td>@m.Email</td>
+                                <td>@m.PhoneNumber</td>
+                                <td>@m.MemberTypeName</td>
+                                <td>
+                                    @if (m.IsMain)
+                                    {
+                                        <span class="h-tag h-tag-blue">是</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="h-tag">否</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="org-role-tags">
+                                        @if (m.RoleNames.Count == 0)
+                                        {
+                                            <span style="color:#bbb;">-</span>
+                                        }
+                                        else
+                                        {
+                                            @foreach (var r in m.RoleNames)
+                                            {
+                                                <span class="h-tag h-tag-blue">@r</span>
+                                            }
+                                        }
+                                    </span>
+                                </td>
+                                <td>
+                                    @if (m.IsEnabled)
+                                    {
+                                        <span class="h-tag h-tag-green">启用</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="h-tag h-tag-red">禁用</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="h-space">
+                                        <button class="h-btn h-btn-sm" @onclick="@(() => ShowAssignRolesDialog(m))">分配角色</button>
+                                        <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => EditMember(m))">编辑</button>
+                                        <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => ConfirmDeleteMember(m.Id))">删除</button>
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </HTable>
+        </HCard>
+    </div>
+</div>
+
+<!-- 部门 新增/编辑 对话框 -->
+<HModal Title="@(isOrgEdit ? "编辑部门" : "新增部门")" Visible="@showOrgDialog" OnOk="@SaveOrg" OnCancel="@(() => showOrgDialog = false)" ConfirmLoading="@isSubmitting">
     <div class="h-form-item h-form-horizontal">
         <label class="h-form-label">部门名称</label>
         <div class="h-form-control">
@@ -72,10 +154,10 @@
         <label class="h-form-label">父部门</label>
         <div class="h-form-control">
             <select @bind="@currentOrg.ParentId" class="h-select">
-                <option value="">无</option>
-                @foreach (var org in organizations ?? new List<OrganizationDto>())
+                <option value="">无（根部门）</option>
+                @foreach (var o in allOrgs)
                 {
-                    <option value="@org.Id">@org.Name</option>
+                    <option value="@o.Id">@o.Name</option>
                 }
             </select>
         </div>
@@ -98,6 +180,18 @@
             <input type="number" @bind="@currentOrg.Sort" class="h-input" />
         </div>
     </div>
+    @if (isOrgEdit)
+    {
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">启用</label>
+            <div class="h-form-control">
+                <label class="h-switch">
+                    <input type="checkbox" @bind="@currentOrg.IsEnabled" />
+                    <span class="h-switch-slider"></span>
+                </label>
+            </div>
+        </div>
+    }
     <div class="h-form-item h-form-horizontal">
         <label class="h-form-label">备注</label>
         <div class="h-form-control">
@@ -106,33 +200,287 @@
     </div>
 </HModal>
 
+<!-- 添加成员 对话框 -->
+<HModal Title="添加成员" Visible="@showAddMemberDialog" OnOk="@SaveAddMember" OnCancel="@(() => showAddMemberDialog = false)" ConfirmLoading="@isSubmitting">
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">选择用户</label>
+        <div class="h-form-control">
+            <div class="h-input-group">
+                <input type="text" @bind-value="@userKeyword" @bind-value:event="oninput" placeholder="输入用户名/邮箱搜索" class="h-input" />
+                <button class="h-btn" @onclick="SearchUsers">搜索</button>
+            </div>
+            <div class="org-user-search-list">
+                @if (userSearchResults == null)
+                {
+                    <div class="h-empty">输入关键字后点击搜索</div>
+                }
+                else if (userSearchResults.Count == 0)
+                {
+                    <div class="h-empty">未找到用户</div>
+                }
+                else
+                {
+                    @foreach (var u in userSearchResults)
+                    {
+                        <div class="org-user-item @(selectedUser?.UserId == u.UserId ? "selected" : "")" @onclick="@(() => selectedUser = u)">
+                            <span>@u.UserName</span>
+                            <span style="color:#999;font-size:12px;">@u.Email</span>
+                        </div>
+                    }
+                }
+            </div>
+            @if (selectedUser != null)
+            {
+                <div style="margin-top:8px;">已选择：<span class="h-tag h-tag-blue">@selectedUser.UserName</span></div>
+            }
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">所属部门</label>
+        <div class="h-form-control">
+            <div class="org-checkbox-list">
+                @foreach (var o in allOrgs)
+                {
+                    <label class="org-checkbox-item">
+                        <input type="checkbox" checked="@selectedOrgIds.Contains(o.Id)"
+                               @onchange="@(e => ToggleOrgSelection(o.Id, e))" />
+                        <span>@o.Name</span>
+                    </label>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">成员类型</label>
+        <div class="h-form-control">
+            <select @bind="@addMember.MemberType" class="h-select">
+                <option value="1">普通成员</option>
+                <option value="2">部门负责人</option>
+                <option value="3">部门经理</option>
+            </select>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">排序</label>
+        <div class="h-form-control">
+            <input type="number" @bind="@addMember.Sort" class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">设为主部门</label>
+        <div class="h-form-control">
+            <label class="h-switch">
+                <input type="checkbox" @bind="@addMember.IsMain" />
+                <span class="h-switch-slider"></span>
+            </label>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">备注</label>
+        <div class="h-form-control">
+            <textarea @bind="@addMember.Remark" placeholder="请输入备注" rows="2" class="h-textarea"></textarea>
+        </div>
+    </div>
+</HModal>
+
+<!-- 编辑成员 对话框 -->
+<HModal Title="编辑成员" Visible="@showEditMemberDialog" OnOk="@SaveEditMember" OnCancel="@(() => showEditMemberDialog = false)" ConfirmLoading="@isSubmitting">
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">用户名</label>
+        <div class="h-form-control">
+            <input type="text" value="@editMember.UserName" class="h-input" disabled />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">成员类型</label>
+        <div class="h-form-control">
+            <select @bind="@editMember.MemberType" class="h-select">
+                <option value="1">普通成员</option>
+                <option value="2">部门负责人</option>
+                <option value="3">部门经理</option>
+            </select>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">排序</label>
+        <div class="h-form-control">
+            <input type="number" @bind="@editMember.Sort" class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">设为主部门</label>
+        <div class="h-form-control">
+            <label class="h-switch">
+                <input type="checkbox" @bind="@editMember.IsMain" />
+                <span class="h-switch-slider"></span>
+            </label>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">启用</label>
+        <div class="h-form-control">
+            <label class="h-switch">
+                <input type="checkbox" @bind="@editMember.IsEnabled" />
+                <span class="h-switch-slider"></span>
+            </label>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">备注</label>
+        <div class="h-form-control">
+            <textarea @bind="@editMember.Remark" placeholder="请输入备注" rows="2" class="h-textarea"></textarea>
+        </div>
+    </div>
+</HModal>
+
+<!-- 分配角色 对话框 -->
+<HModal Title="@($"分配角色 - {roleMemberName}")" Visible="@showRolesDialog" OnOk="@SaveAssignRoles" OnCancel="@(() => showRolesDialog = false)" ConfirmLoading="@isSubmitting">
+    @if (allRoles.Count == 0)
+    {
+        <div class="h-empty">暂无可用角色</div>
+    }
+    else
+    {
+        <div class="org-checkbox-list">
+            @foreach (var role in allRoles)
+            {
+                <label class="org-checkbox-item">
+                    <input type="checkbox" checked="@selectedRoleIds.Contains(role.Id)"
+                           @onchange="@(e => ToggleRoleSelection(role.Id, e))" />
+                    <span>@role.Name</span>
+                    @if (!string.IsNullOrEmpty(role.Code))
+                    {
+                        <span style="color:#999;font-size:12px;">(@role.Code)</span>
+                    }
+                </label>
+            }
+        </div>
+    }
+</HModal>
+
 @code {
-    private List<OrganizationDto>? organizations;
-    private bool showDialog;
-    private bool isEdit;
-    private bool isSubmitting;
+    // 部门树
+    private List<OrganizationTreeDto>? tree;
+    private List<FlatNode> flatNodes = new();
+    private HashSet<Guid> collapsed = new();
+    private List<OrganizationDto> allOrgs = new();
+
+    // 选中部门与成员
+    private Guid? selectedOrgId;
+    private OrganizationDto? selectedOrg;
+    private List<MemberDto>? members;
+
+    // 部门对话框
+    private bool showOrgDialog;
+    private bool isOrgEdit;
     private OrganizationDto currentOrg = new();
+
+    // 添加成员对话框
+    private bool showAddMemberDialog;
+    private string? userKeyword;
+    private List<AssignableUserDto>? userSearchResults;
+    private AssignableUserDto? selectedUser;
+    private HashSet<Guid> selectedOrgIds = new();
+    private AddMemberBatchDto addMember = new() { MemberType = 1 };
+
+    // 编辑成员对话框
+    private bool showEditMemberDialog;
+    private MemberDto editMember = new();
+
+    // 分配角色对话框
+    private bool showRolesDialog;
+    private Guid rolesMemberId;
+    private string roleMemberName = string.Empty;
+    private List<RoleDto> allRoles = new();
+    private HashSet<Guid> selectedRoleIds = new();
+
+    private bool isSubmitting;
+
+    public class FlatNode
+    {
+        public OrganizationTreeDto Node { get; set; } = default!;
+        public int Level { get; set; }
+        public bool HasChildren { get; set; }
+    }
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadData();
+        await LoadTree();
     }
 
-    private async Task LoadData()
+    private async Task LoadTree()
     {
-        var result = await IOrganizationService.GetListAsync(new OrganizationQueryParams { PageSize = 100 });
-        organizations = result.Items;
+        tree = await OrgService.GetAllAsTreeAsync();
+        var orgResult = await OrgService.GetListAsync(new OrganizationQueryParams { PageSize = 500 });
+        allOrgs = orgResult.Items;
+        RebuildFlatNodes();
     }
 
-    private void ShowCreateDialog()
+    private void RebuildFlatNodes()
     {
-        currentOrg = new OrganizationDto();
-        isEdit = false;
-        showDialog = true;
+        flatNodes = new List<FlatNode>();
+        if (tree != null)
+        {
+            AppendNodes(tree, 0);
+        }
     }
 
-    private void Edit(OrganizationDto org)
+    private void AppendNodes(List<OrganizationTreeDto> nodes, int level)
     {
+        foreach (var node in nodes.OrderBy(x => x.Sort))
+        {
+            flatNodes.Add(new FlatNode
+            {
+                Node = node,
+                Level = level,
+                HasChildren = node.Children.Count > 0
+            });
+            if (node.Children.Count > 0 && !collapsed.Contains(node.Id))
+            {
+                AppendNodes(node.Children, level + 1);
+            }
+        }
+    }
+
+    private void ToggleCollapse(Guid id)
+    {
+        if (!collapsed.Add(id))
+        {
+            collapsed.Remove(id);
+        }
+        RebuildFlatNodes();
+    }
+
+    private async Task SelectOrg(Guid id)
+    {
+        selectedOrgId = id;
+        selectedOrg = allOrgs.FirstOrDefault(x => x.Id == id);
+        await LoadMembers();
+    }
+
+    private async Task LoadMembers()
+    {
+        if (selectedOrgId == null)
+        {
+            members = null;
+            return;
+        }
+        members = null;
+        members = await MemberService.GetMembersByOrganizationIdAsync(selectedOrgId.Value);
+    }
+
+    // ===== 部门 CRUD =====
+    private void ShowOrgDialog(Guid? parentId)
+    {
+        currentOrg = new OrganizationDto { ParentId = parentId };
+        isOrgEdit = false;
+        showOrgDialog = true;
+    }
+
+    private void EditOrg(Guid id)
+    {
+        var org = allOrgs.FirstOrDefault(x => x.Id == id);
+        if (org == null) return;
         currentOrg = new OrganizationDto
         {
             Id = org.Id,
@@ -142,20 +490,21 @@
             Phone = org.Phone,
             Email = org.Email,
             Sort = org.Sort,
+            IsEnabled = org.IsEnabled,
             Remark = org.Remark
         };
-        isEdit = true;
-        showDialog = true;
+        isOrgEdit = true;
+        showOrgDialog = true;
     }
 
-    private async Task Save()
+    private async Task SaveOrg()
     {
         isSubmitting = true;
         try
         {
-            if (isEdit)
+            if (isOrgEdit)
             {
-                await IOrganizationService.UpdateAsync(currentOrg.Id, new UpdateOrganizationDto
+                await OrgService.UpdateAsync(currentOrg.Id, new UpdateOrganizationDto
                 {
                     Name = currentOrg.Name,
                     Code = currentOrg.Code,
@@ -169,7 +518,7 @@
             }
             else
             {
-                await IOrganizationService.CreateAsync(new CreateOrganizationDto
+                await OrgService.CreateAsync(new CreateOrganizationDto
                 {
                     Name = currentOrg.Name,
                     Code = currentOrg.Code,
@@ -180,9 +529,12 @@
                     Remark = currentOrg.Remark
                 });
             }
-
-            CloseDialog();
-            await LoadData();
+            showOrgDialog = false;
+            await LoadTree();
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", ex.Message);
         }
         finally
         {
@@ -190,23 +542,191 @@
         }
     }
 
-    private async Task ConfirmDelete(Guid id)
+    private async Task ConfirmDeleteOrg(Guid id)
     {
         var confirmed = await JS.InvokeAsync<bool>("confirm", "确定要删除这个部门吗？");
-        if (confirmed)
+        if (!confirmed) return;
+        try
         {
-            await Delete(id);
+            await OrgService.DeleteAsync(id);
+            if (selectedOrgId == id)
+            {
+                selectedOrgId = null;
+                selectedOrg = null;
+                members = null;
+            }
+            await LoadTree();
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", ex.Message);
         }
     }
 
-    private async Task Delete(Guid id)
+    // ===== 添加成员 =====
+    private void ShowAddMemberDialog()
     {
-        await IOrganizationService.DeleteAsync(id);
-        await LoadData();
+        if (selectedOrgId == null) return;
+        addMember = new AddMemberBatchDto { MemberType = 1 };
+        selectedUser = null;
+        userKeyword = null;
+        userSearchResults = null;
+        // 默认勾选当前选中部门
+        selectedOrgIds = new HashSet<Guid> { selectedOrgId.Value };
+        showAddMemberDialog = true;
     }
 
-    private void CloseDialog()
+    private async Task SearchUsers()
     {
-        showDialog = false;
+        userSearchResults = await MemberService.SearchAssignableUsersAsync(userKeyword);
+    }
+
+    private void ToggleOrgSelection(Guid id, ChangeEventArgs e)
+    {
+        var isChecked = e.Value is bool b && b;
+        if (isChecked)
+            selectedOrgIds.Add(id);
+        else
+            selectedOrgIds.Remove(id);
+    }
+
+    private async Task SaveAddMember()
+    {
+        if (selectedUser == null)
+        {
+            await JS.InvokeVoidAsync("alert", "请先选择用户");
+            return;
+        }
+        if (selectedOrgIds.Count == 0)
+        {
+            await JS.InvokeVoidAsync("alert", "请至少选择一个部门");
+            return;
+        }
+        isSubmitting = true;
+        try
+        {
+            await MemberService.AddBatchAsync(new AddMemberBatchDto
+            {
+                UserId = selectedUser.UserId,
+                OrganizationIds = selectedOrgIds.ToList(),
+                MemberType = addMember.MemberType,
+                Sort = addMember.Sort,
+                IsMain = addMember.IsMain,
+                Remark = addMember.Remark
+            });
+            showAddMemberDialog = false;
+            await LoadTree();
+            await LoadMembers();
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", ex.Message);
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    // ===== 编辑成员 =====
+    private void EditMember(MemberDto m)
+    {
+        editMember = new MemberDto
+        {
+            Id = m.Id,
+            OrganizationId = m.OrganizationId,
+            UserId = m.UserId,
+            UserName = m.UserName,
+            MemberType = m.MemberType,
+            Sort = m.Sort,
+            IsMain = m.IsMain,
+            IsEnabled = m.IsEnabled,
+            Remark = m.Remark
+        };
+        showEditMemberDialog = true;
+    }
+
+    private async Task SaveEditMember()
+    {
+        isSubmitting = true;
+        try
+        {
+            await MemberService.UpdateAsync(editMember.Id, new UpdateMemberDto
+            {
+                MemberType = editMember.MemberType,
+                Sort = editMember.Sort,
+                IsMain = editMember.IsMain,
+                IsEnabled = editMember.IsEnabled,
+                Remark = editMember.Remark
+            });
+            showEditMemberDialog = false;
+            await LoadMembers();
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", ex.Message);
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private async Task ConfirmDeleteMember(Guid id)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm", "确定要移除这个成员吗？");
+        if (!confirmed) return;
+        try
+        {
+            await MemberService.DeleteAsync(id);
+            await LoadMembers();
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", ex.Message);
+        }
+    }
+
+    // ===== 分配角色 =====
+    private async Task ShowAssignRolesDialog(MemberDto m)
+    {
+        rolesMemberId = m.Id;
+        roleMemberName = m.UserName;
+        var roleResult = await RoleService.GetListAsync(new RoleQueryParams { PageSize = 500, IsEnabled = true });
+        allRoles = roleResult.Items;
+        var assigned = await MemberService.GetMemberRoleIdsAsync(m.Id);
+        selectedRoleIds = new HashSet<Guid>(assigned);
+        showRolesDialog = true;
+    }
+
+    private void ToggleRoleSelection(Guid id, ChangeEventArgs e)
+    {
+        var isChecked = e.Value is bool b && b;
+        if (isChecked)
+            selectedRoleIds.Add(id);
+        else
+            selectedRoleIds.Remove(id);
+    }
+
+    private async Task SaveAssignRoles()
+    {
+        isSubmitting = true;
+        try
+        {
+            await MemberService.AssignRolesAsync(rolesMemberId, new AssignMemberRolesDto
+            {
+                RoleIds = selectedRoleIds.ToList()
+            });
+            showRolesDialog = false;
+            await LoadMembers();
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", ex.Message);
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
     }
 }

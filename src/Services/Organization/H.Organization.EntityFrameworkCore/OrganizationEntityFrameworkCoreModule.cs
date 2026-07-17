@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Volo.Abp.Data;
 using Volo.Abp.EntityFrameworkCore;
 using Volo.Abp.Modularity;
 
@@ -18,9 +19,14 @@ public class OrganizationEntityFrameworkCoreModule : AbpModule
             options.AddDefaultRepositories(includeAllEntities: true);
         });
 
-        context.Services.AddDbContext<OrganizationDbContext>(options =>
+        Configure<AbpDbContextOptions>(options =>
         {
-            options.UseSqlServer(connectionString);
+            options.UseSqlServer();
+        });
+
+        Configure<AbpDbConnectionOptions>(options =>
+        {
+            options.ConnectionStrings["OrganizationDb"] = connectionString;
         });
     }
 }

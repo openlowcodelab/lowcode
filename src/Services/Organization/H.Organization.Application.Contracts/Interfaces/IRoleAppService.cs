@@ -5,7 +5,7 @@ namespace H.Organization.Application.Contracts;
 /// <summary>
 /// 角色服务接口
 /// </summary>
-public interface IRoleService : IApplicationService
+public interface IRoleAppService : IApplicationService
 {
     /// <summary>
     /// 获取角色列表
@@ -41,4 +41,9 @@ public interface IRoleService : IApplicationService
     /// 获取所有启用的角色
     /// </summary>
     Task<List<RoleDto>> GetAllEnabledAsync();
+
+    /// <summary>
+    /// 获取角色已分配成员
+    /// </summary>
+    Task<List<RoleMemberDto>> GetRoleMembersAsync(Guid roleId);
 }
