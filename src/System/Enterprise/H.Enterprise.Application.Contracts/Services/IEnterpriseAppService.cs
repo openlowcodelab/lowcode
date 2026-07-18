@@ -28,6 +28,11 @@ public interface IEnterpriseAppService : IApplicationService
     Task<EnterpriseDto> UpdateAsync(Guid id, UpdateEnterpriseDto input);
 
     /// <summary>
+    /// 更新当前企业信息（仅企业拥有者 Owner 可操作）
+    /// </summary>
+    Task<EnterpriseDto> UpdateCurrentEnterpriseAsync(UpdateEnterpriseDto input);
+
+    /// <summary>
     /// 删除企业（仅 Pending/Disabled 可删除）
     /// </summary>
     Task DeleteAsync(Guid id);
@@ -58,7 +63,19 @@ public interface IEnterpriseAppService : IApplicationService
     Task SelectEnterpriseAsync(Guid enterpriseId);
 
     /// <summary>
+    /// 登录后自动选择企业：
+    /// 当用户仅有 1 个可用企业，或存在上一次登录（默认）企业时，直接选择并进入该企业；
+    /// 否则不做选择，由调用方引导用户进入企业选择页。
+    /// </summary>
+    Task<EnterpriseAutoSelectResultDto> AutoSelectEnterpriseAsync();
+
+    /// <summary>
     /// 获取当前选择的企业信息
     /// </summary>
     Task<EnterpriseDto?> GetCurrentEnterpriseAsync();
+
+    /// <summary>
+    /// 获取当前用户在当前企业中的角色（Owner/Admin/Member 等），未选择企业时返回 null
+    /// </summary>
+    Task<string?> GetCurrentEnterpriseRoleAsync();
 }

@@ -25,6 +25,22 @@ public class EnterpriseDto
 }
 
 /// <summary>
+/// 登录后自动选择企业的结果
+/// </summary>
+public class EnterpriseAutoSelectResultDto
+{
+    /// <summary>
+    /// 是否已自动选择并进入企业（用户只有 1 个可用企业，或存在上一次登录的企业）
+    /// </summary>
+    public bool Selected { get; set; }
+
+    /// <summary>
+    /// 用户是否拥有至少一个可用（已激活且启用）的企业
+    /// </summary>
+    public bool HasEnterprise { get; set; }
+}
+
+/// <summary>
 /// 创建企业 DTO
 /// </summary>
 public class CreateEnterpriseDto

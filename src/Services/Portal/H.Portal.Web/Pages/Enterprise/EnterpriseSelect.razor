@@ -53,17 +53,11 @@
             </div>
         </div>
     }
-    else if (activeEnterprises.Count == 1 && pendingEnterprises.Count == 0)
-    {
-        <div>
-            <h3>正在进入 @activeEnterprises[0].Name ...</h3>
-        </div>
-    }
     else
     {
         <div>
             <h2>🏭 选择企业</h2>
-            <p style="color: #666; margin-top: 8px; margin-bottom: 24px;">您关联了多个企业，请选择要进入的企业</p>
+            <p style="color: #666; margin-top: 8px; margin-bottom: 24px;">请选择要进入的企业，或创建一个新的企业</p>
             <div style="display: flex; flex-direction: column; gap: 12px;">
                 @foreach (var enterprise in activeEnterprises)
                 {
@@ -95,6 +89,9 @@
                         </div>
                     </div>
                 }
+            </div>
+            <div style="margin-top: 24px;">
+                <button class="h-btn" @onclick="GoToCreate">创建新企业</button>
             </div>
         </div>
     }
@@ -184,12 +181,6 @@
 
         loading = false;
         StateHasChanged();
-
-        // 只有一个已激活企业时自动选择
-        if (activeEnterprises.Count == 1 && pendingEnterprises.Count == 0)
-        {
-            await SelectAndEnter(activeEnterprises[0].Id);
-        }
     }
 
     private async Task SelectAndEnter(Guid enterpriseId)

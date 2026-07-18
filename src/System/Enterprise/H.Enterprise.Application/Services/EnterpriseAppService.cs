@@ -160,6 +160,28 @@ public class EnterpriseAppService : ApplicationService, IEnterpriseAppService
         return MapToDto(entity);
     }
 
+    [IgnoreAntiforgeryToken]
+    public async Task<EnterpriseDto> UpdateCurrentEnterpriseAsync(UpdateEnterpriseDto input)
+    {
+        var httpContext = _httpContextAccessor.HttpContext
+            ?? throw new Exception("无法获取 HTTP 上下文");
+        var userId = GetCurrentUserId() ?? throw new Exception("未登录");
+
+        var enterpriseIdClaim = httpContext.User.FindFirst("EnterpriseId")?.Value;
+        if (string.IsNullOrEmpty(enterpriseIdClaim) || !Guid.TryParse(enterpriseIdClaim, out var enterpriseId))
+            throw new Exception("未选择企业");
+
+        // 验证当前用户为该企业的拥有者
+        var userEnterprise = await _context.EnterpriseUsers
+            .FirstOrDefaultAsync(eu => eu.EnterpriseId == enterpriseId && eu.UserId == userId)
+            ?? throw new Exception("您不属于该企业");
+
+        if (!string.Equals(userEnterprise.Role, "Owner", StringComparison.OrdinalIgnoreCase))
+            throw new Exception("仅企业拥有者可修改企业信息");
+
+        return await UpdateAsync(enterpriseId, input);
+    }
+
     public async Task DeleteAsync(Guid id)
     {
         var entity = await _context.Enterprises
@@ -267,9 +289,69 @@ public class EnterpriseAppService : ApplicationService, IEnterpriseAppService
             .FirstOrDefaultAsync(eu => eu.EnterpriseId == enterpriseId && eu.UserId == currentUserId)
             ?? throw new Exception("您不属于该企业");
 
+        await SelectEnterpriseCoreAsync(currentUserId, userEnterprise);
+    }
+
+    [IgnoreAntiforgeryToken]
+    public async Task<EnterpriseAutoSelectResultDto> AutoSelectEnterpriseAsync()
+    {
+        var result = new EnterpriseAutoSelectResultDto();
+
+        var currentUserId = GetCurrentUserId();
+        if (currentUserId == null)
+            return result;
+
+        // 用户关联的所有企业
+        var userEnterprises = await _context.EnterpriseUsers
+            .Include(eu => eu.Enterprise)
+            .Where(eu => eu.UserId == currentUserId.Value)
+            .ToListAsync();
+
+        // 仅考虑已激活且启用的企业
+        var activeUserEnterprises = userEnterprises
+            .Where(eu => eu.Enterprise != null
+                && eu.Enterprise.IsActivated
+                && eu.Enterprise.Status == EnterpriseStatus.Active)
+            .ToList();
+
+        result.HasEnterprise = activeUserEnterprises.Count > 0;
+        if (activeUserEnterprises.Count == 0)
+            return result;
+
+        // 优先进入上一次登录（默认）企业
+        var target = activeUserEnterprises.FirstOrDefault(eu => eu.IsDefault);
+
+        // 无上次登录企业但仅有一个可用企业时，自动进入该企业
+        if (target == null && activeUserEnterprises.Count == 1)
+            target = activeUserEnterprises[0];
+
+        // 多个企业且无上次登录企业，需用户手动选择
+        if (target == null)
+            return result;
+
+        await SelectEnterpriseCoreAsync(currentUserId.Value, target);
+        result.Selected = true;
+        return result;
+    }
+
+    /// <summary>
+    /// 选择企业的核心逻辑：记录为上一次登录（默认）企业，并重新签发携带企业信息的 Cookie。
+    /// </summary>
+    private async Task SelectEnterpriseCoreAsync(Guid userId, EnterpriseUserEntity userEnterprise)
+    {
         var enterprise = userEnterprise.Enterprise!;
         if (!enterprise.IsActivated || enterprise.Status != EnterpriseStatus.Active)
             throw new Exception("该企业未激活或已禁用");
+
+        // 将当前选择的企业记录为上一次登录（默认）企业，便于下次登录自动进入
+        var allUserEnterprises = await _context.EnterpriseUsers
+            .Where(eu => eu.UserId == userId)
+            .ToListAsync();
+        foreach (var eu in allUserEnterprises)
+        {
+            eu.IsDefault = eu.EnterpriseId == enterprise.Id;
+        }
+        await _context.SaveChangesAsync();
 
         // 重新签发 Cookie，追加 TenantId 和 EnterpriseName Claims
         var httpContext = _httpContextAccessor.HttpContext
@@ -320,6 +402,26 @@ public class EnterpriseAppService : ApplicationService, IEnterpriseAppService
             .FirstOrDefaultAsync(e => e.Id == enterpriseId);
 
         return entity != null ? MapToDto(entity) : null;
+    }
+
+    public async Task<string?> GetCurrentEnterpriseRoleAsync()
+    {
+        var httpContext = _httpContextAccessor.HttpContext;
+        if (httpContext?.User?.Identity?.IsAuthenticated != true)
+            return null;
+
+        var userId = GetCurrentUserId();
+        var enterpriseIdClaim = httpContext.User.FindFirst("EnterpriseId")?.Value;
+        if (userId == null || string.IsNullOrEmpty(enterpriseIdClaim) || !Guid.TryParse(enterpriseIdClaim, out var enterpriseId))
+        {
+            // 未选择企业时回退到 Cookie 中的角色声明
+            return httpContext.User.FindFirst("EnterpriseRole")?.Value;
+        }
+
+        var userEnterprise = await _context.EnterpriseUsers
+            .FirstOrDefaultAsync(eu => eu.EnterpriseId == enterpriseId && eu.UserId == userId.Value);
+
+        return userEnterprise?.Role ?? httpContext.User.FindFirst("EnterpriseRole")?.Value;
     }
 
     #region 辅助方法

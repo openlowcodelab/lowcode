@@ -64,7 +64,7 @@
     private bool submitting = false;
     private string? errorMessage;
 
-    private void GoBack() => Navigation.NavigateTo("/enterprise");
+    private void GoBack() => Navigation.NavigateTo("/enterprise/select", forceLoad: true);
 
     private async Task Submit()
     {
@@ -78,8 +78,9 @@
         errorMessage = null;
         try
         {
-            var result = await EnterpriseService.CreateAsync(model);
-            Navigation.NavigateTo($"/enterprise/{result.Id}");
+            await EnterpriseService.CreateAsync(model);
+            // 新建企业为待激活状态，返回企业选择页查看激活状态
+            Navigation.NavigateTo("/enterprise/select", forceLoad: true);
         }
         catch (Exception ex)
         {
