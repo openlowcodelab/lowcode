@@ -25,9 +25,32 @@
         .myapps .card-title-text:hover {
             color: #40a9ff;
         }
+
+    .myapps {
+        flex: 1 1 280px;
+        max-width: 340px;
+    }
+
+    .myapps .h-card-body {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .myapps-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: auto;
+        padding-top: 16px;
+    }
+
+    .myapps-actions > div {
+        display: flex;
+        gap: 12px;
+    }
 </style>
 
-<div style="margin:-24px -24px 0px -24px; padding: 0 50px; background-size: 100% 80px;
+<div style="margin:-20px -20px 0px -20px; padding: 0 50px; background-size: 100% 80px;
         background-image:url(_content/H.LowCode.MyApp/images/banner_myapps.png)">
     <div style="width:80%; line-height:80px; margin:auto;">
         <div style="display: flex; justify-content: space-between; margin: 0 0 8px 5px;">
@@ -41,7 +64,7 @@
         </div>
     </div>
 </div>
-<div style="width:80%; overflow: hidden; margin:auto; padding: 10px;">
+<div class="page-container" style="padding: 10px;">
     <div style="display: flex; justify-content: space-between; margin: 0 0 8px 5px;">
         <div style="text-align: left; width:500px;">
             <div style="width: 200px;">
@@ -59,17 +82,23 @@
 
     @if (_appList != null)
     {
-        @foreach (var app in _appList)
-        {
-            <HCard Title="@app.Name" Description="@app.Description" Class="myapps" Style="float:left; width:300px; margin:5px;">
-                <div style="display:flex; gap:8px;">
-                    <a href="@($"/designengine/myapp/{app.Id}/pagemanager")" title="开发应用" target="_blank">&#x1F5A5;</a>
-                    <a href="@(string.IsNullOrEmpty(app.SiteUrl) ? "#" : $"{app.SiteUrl}/renderengine/app/{app.Id}/index")" title="访问应用" target="_blank">&#x1F310;</a>
-                    <a @onclick='() => EditApp(app.Id)' title="编辑">&#x270F;</a>
-                    <a href="@($"/designengine/myapp/{app.Id}/appsettings")" title="应用设置" target="_blank">&#x2699;</a>
-                </div>
-            </HCard>
-        }
+        <div class="h-card-grid">
+            @foreach (var app in _appList)
+            {
+                <HCard Title="@app.Name" Description="@app.Description" Class="myapps">
+                    <div class="myapps-actions">
+                        <div>
+                            <a class="h-link-icon" href="@($"/designengine/myapp/{app.Id}/pagemanager")" title="开发应用" target="_blank">&#x1F5A5;</a>
+                            <a class="h-link-icon" href="@(string.IsNullOrEmpty(app.SiteUrl) ? "#" : $"{app.SiteUrl}/renderengine/app/{app.Id}/index")" title="访问应用" target="_blank">&#x1F310;</a>
+                        </div>
+                        <div>
+                            <a class="h-link-icon" @onclick='() => EditApp(app.Id)' title="编辑">&#x270F;</a>
+                            <a class="h-link-icon" href="@($"/designengine/myapp/{app.Id}/appsettings")" title="应用设置" target="_blank">&#x2699;</a>
+                        </div>
+                    </div>
+                </HCard>
+            }
+        </div>
     }
 </div>
 

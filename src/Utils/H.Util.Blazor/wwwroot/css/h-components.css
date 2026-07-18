@@ -1,5 +1,30 @@
 /* H.Util.Blazor - Component Styles for Native HTML Replacements */
 
+/* Root reset - 消除浏览器默认 body margin 导致的外层滚动条与横向滚动条 */
+html, body { margin: 0; height: 100%; }
+
+/* Links - 全局链接基础样式（主题色，默认无下划线，hover 变深并显示下划线） */
+a { color: #667eea; text-decoration: none; transition: color 0.2s; }
+a:hover { color: #5570d6; text-decoration: underline; }
+/* 图标/操作型链接：继承文本颜色、无下划线，hover 仅变主题色 */
+.h-link-icon { color: inherit; text-decoration: none; font-size: 16px; }
+.h-link-icon:hover { color: #667eea; text-decoration: none; }
+
+/* Link list - 导航型链接列表（块级行、悬停背景、前置箭头），避免裸链接显得粗糙 */
+.link-list { display: flex; flex-direction: column; gap: 2px; }
+.link-list a { display: flex; align-items: center; padding: 8px 12px; border-radius: 6px; color: #4a5568; text-decoration: none; font-size: 14px; transition: background 0.2s, color 0.2s; }
+.link-list a::before { content: "\203A"; margin-right: 8px; color: #667eea; font-weight: 700; transition: transform 0.2s; }
+.link-list a:hover { background: #f0f2ff; color: #667eea; text-decoration: none; }
+.link-list a:hover::before { transform: translateX(2px); }
+
+/* Page container - 统一各页 width:80%;margin:auto 写法 */
+.page-container { width: 80%; margin: 0 auto; box-sizing: border-box; }
+
+/* Card grid - 等高卡片栅格，替代各页 float 布局 */
+.h-card-grid { display: flex; flex-wrap: wrap; gap: 16px; align-items: stretch; }
+.h-card-grid > * { display: flex; }
+.h-card-grid .h-card { width: 100%; }
+
 /* Buttons */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 4px 16px; height: 32px; border-radius: 6px; cursor: pointer; border: 1px solid #d9d9d9; background: #fff; color: #333; transition: all 0.2s; white-space: nowrap; font-size: 14px; font-family: inherit; }
 .btn:hover { border-color: #667eea; color: #667eea; }

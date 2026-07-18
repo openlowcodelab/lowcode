@@ -1,4 +1,4 @@
-﻿@page "/designengine/solutions"
+@page "/designengine/solutions"
 @namespace H.LowCode.Workbench
 @inherits LowCodePageComponentBase
 @layout WorkbenchNavLayout
@@ -11,9 +11,14 @@
         height: 160px;
         line-height: 160px;
         overflow: hidden;
-        margin: -24px -24px 10px -24px;
+        margin: -20px -20px 10px -20px;
         background-size: 100% 160px;
         background-image: url(_content/H.Admin.Portal/images/banner_solution.jpg);
+    }
+
+    .solution-card {
+        flex: 1 1 260px;
+        max-width: 320px;
     }
 </style>
 
@@ -30,8 +35,8 @@
     private string _activeTab = "tab_template_app";
 }
 
-<div class="tabs" style="width: 80%; margin: auto;">
-    <div class="tab-buttons">
+<div class="page-container">
+    <div class="tabs-header">
         <button class='tab-btn @(_activeTab == "tab_solution_industry" ? "active" : "")' @onclick='() => _activeTab = "tab_solution_industry"'>行业解决方案</button>
         <button class='tab-btn @(_activeTab == "tab_template_integration" ? "active" : "")' @onclick='() => _activeTab = "tab_template_integration"'>集成解决方案</button>
         <button class='tab-btn @(_activeTab == "tab_template_capabilities" ? "active" : "")' @onclick='() => _activeTab = "tab_template_capabilities"'>开放能力</button>
@@ -39,60 +44,66 @@
     <div class="tab-content">
         @if (_activeTab == "tab_solution_industry")
         {
-            <HCard Title="智慧医院" Style="float:left; width:300px; margin:5px;">
-                <a href="#">查看</a>
-                <p>Card content</p>
-            </HCard>
-            <HCard Title="餐饮连锁" Style="float:left; width:300px; margin:5px;">
-                <a href="#">查看</a>
-                <p>Card content</p>
-            </HCard>
-            <HCard Title="酒店行业" Style="float:left; width:300px; margin:5px;">
-                <a href="#">查看</a>
-                <p>Card content</p>
-            </HCard>
+            <div class="h-card-grid">
+                <HCard Title="智慧医院" Class="solution-card">
+                    <a href="#">查看</a>
+                    <p>Card content</p>
+                </HCard>
+                <HCard Title="餐饮连锁" Class="solution-card">
+                    <a href="#">查看</a>
+                    <p>Card content</p>
+                </HCard>
+                <HCard Title="酒店行业" Class="solution-card">
+                    <a href="#">查看</a>
+                    <p>Card content</p>
+                </HCard>
+            </div>
         }
         else if (_activeTab == "tab_template_integration")
         {
-            <HCard Title="微信集成" Style="float:left; width:300px; margin:5px;">
-                <a href="#">查看</a>
-                <p>Card content</p>
-            </HCard>
-            <HCard Title="钉钉集成" Style="float:left; width:300px; margin:5px;">
-                <a href="#">查看</a>
-                <p>Card content</p>
-            </HCard>
-            <HCard Title="飞书集成" Style="float:left; width:300px; margin:5px;">
-                <a href="#">查看</a>
-                <p>Card content</p>
-            </HCard>
-            <HCard Title="页面集成" Style="float:left; width:300px; margin:5px;">
-                <a href="#">查看</a>
-                <p>Card content</p>
-            </HCard>
-            <HCard Title="数据集成" Style="float:left; width:300px; margin:5px;">
-                <a href="#">查看</a>
-                <p>Card content</p>
-            </HCard>
-            <HCard Title="流程审批集成" Style="float:left; width:300px; margin:5px;">
-                <a href="#">查看</a>
-                <p>Card content</p>
-            </HCard>
-            <HCard Title="报表集成" Style="float:left; width:300px; margin:5px;">
-                <a href="#">查看</a>
-                <p>Card content</p>
-            </HCard>
+            <div class="h-card-grid">
+                <HCard Title="微信集成" Class="solution-card">
+                    <a href="#">查看</a>
+                    <p>Card content</p>
+                </HCard>
+                <HCard Title="钉钉集成" Class="solution-card">
+                    <a href="#">查看</a>
+                    <p>Card content</p>
+                </HCard>
+                <HCard Title="飞书集成" Class="solution-card">
+                    <a href="#">查看</a>
+                    <p>Card content</p>
+                </HCard>
+                <HCard Title="页面集成" Class="solution-card">
+                    <a href="#">查看</a>
+                    <p>Card content</p>
+                </HCard>
+                <HCard Title="数据集成" Class="solution-card">
+                    <a href="#">查看</a>
+                    <p>Card content</p>
+                </HCard>
+                <HCard Title="流程审批集成" Class="solution-card">
+                    <a href="#">查看</a>
+                    <p>Card content</p>
+                </HCard>
+                <HCard Title="报表集成" Class="solution-card">
+                    <a href="#">查看</a>
+                    <p>Card content</p>
+                </HCard>
+            </div>
         }
         else if (_activeTab == "tab_template_capabilities")
         {
-            <HCard Title="JAVA SDK" Style="float:left; width:300px; margin:5px;">
-                <a href="#">查看</a>
-                <p>Card content</p>
-            </HCard>
-            <HCard Title="个性化定制" Style="float:left; width:300px; margin:5px;">
-                <a href="#">查看</a>
-                <p>Card content</p>
-            </HCard>
+            <div class="h-card-grid">
+                <HCard Title="JAVA SDK" Class="solution-card">
+                    <a href="#">查看</a>
+                    <p>Card content</p>
+                </HCard>
+                <HCard Title="个性化定制" Class="solution-card">
+                    <a href="#">查看</a>
+                    <p>Card content</p>
+                </HCard>
+            </div>
         }
     </div>
 </div>

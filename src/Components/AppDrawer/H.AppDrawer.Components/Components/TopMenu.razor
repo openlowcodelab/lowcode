@@ -2,9 +2,9 @@
 
 <style>
 .navbar-menu { display: flex; align-items: center; gap: 5px; flex: 1; }
-.menu-item-top { display: flex; align-items: center; gap: 6px; padding: 8px 16px; cursor: pointer; transition: all 0.3s; color: #333; border-radius: 4px; font-size: 14px; }
-.menu-item-top:hover { background-color: #f0f7ff; color: #1890ff; }
-.menu-item-top.active { background-color: #e6f7ff; color: #1890ff; font-weight: 500; }
+.menu-item-top { display: flex; align-items: center; height:44px; gap: 6px; padding: 8px 16px; cursor: pointer; transition: all 0.3s; color: #333; font-size: 14px; border-bottom: 2px solid transparent; }
+.menu-item-top:hover { color: #1890ff; border-bottom-color: #1890ff; }
+.menu-item-top.active { color: #1890ff; font-weight: 500; border-bottom-color: #1890ff; }
 .menu-icon-top { font-size: 16px; }
 </style>
 
@@ -42,9 +42,16 @@
     {
         if (string.IsNullOrEmpty(url))
             return false;
-            
-        var currentPath = NavigationManager.Uri.Replace(NavigationManager.BaseUri, "");
-        return currentPath.StartsWith(url, StringComparison.OrdinalIgnoreCase);
+
+        // 使用 ToBaseRelativePath 获取不带前导斜杠的相对路径，并去除 query/hash
+        var currentPath = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        var separatorIndex = currentPath.IndexOfAny(new[] { '?', '#' });
+        if (separatorIndex >= 0)
+            currentPath = currentPath.Substring(0, separatorIndex);
+
+        // 菜单 Url 可能带前导斜杠，统一去除后比较
+        var target = url.TrimStart('/');
+        return currentPath.StartsWith(target, StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>

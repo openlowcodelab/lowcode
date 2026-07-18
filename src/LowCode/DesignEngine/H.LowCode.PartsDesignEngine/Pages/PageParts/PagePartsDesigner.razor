@@ -9,8 +9,8 @@
 
 <CascadingValue Value="@_pageCascadingModel" Name="pageCascading">
     <div class="designpage layout" style="padding:0 2px; background-color: #f7f7f7;">
-        <div class="layout-header" style="background-color: white; padding:0 20px;">
-            <div style="float:left;">
+        <div class="layout-header" style="background-color: white; padding:0 20px; display: flex; align-items: center; justify-content: space-between;">
+            <div>
                 <a href="javascript:void(0)"> @("<") 返回 </a>
             </div>
             @*<div style="text-align:center;">
@@ -19,7 +19,7 @@
             <MenuItem Key="2">Mobile</MenuItem>
             </Menu>
             </div>*@
-            <div style="float:right;">
+            <div>
                 <button class="btn">预览</button>
                 <button class="btn btn-primary" @onclick="() => SavePagePartsSchemaAsync()">保存</button>
             </div>
