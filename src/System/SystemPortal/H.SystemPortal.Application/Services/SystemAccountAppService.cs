@@ -64,13 +64,20 @@ public class SystemAccountAppService : ApplicationService, ISystemAccountAppServ
             return new AuthResponseDto { Success = false, Message = "用户名或密码错误" };
 
         // 验证是否拥有系统管理员角色
-        var roles = await _userManager.GetRolesAsync(user);
+        IList<string>? roles = null;
+        using (_currentTenant.Change(null))
+        {
+            roles = await _userManager.GetRolesAsync(user);
+        }
+        if (roles == null || roles.Count == 0)
+            return new AuthResponseDto { Success = false, Message = "无权限访问" };
+
         var isSystemAdmin = roles.Any(r =>
             r.Equals(SystemRoleNames.SuperAdmin, StringComparison.OrdinalIgnoreCase) ||
             r.Equals(SystemRoleNames.Admin, StringComparison.OrdinalIgnoreCase));
 
         if (!isSystemAdmin)
-            return new AuthResponseDto { Success = false, Message = "无系统管理员权限" };
+            return new AuthResponseDto { Success = false, Message = "无权限访问" };
 
         // 更新最后登录时间
         user.LastModificationTime = DateTime.UtcNow;

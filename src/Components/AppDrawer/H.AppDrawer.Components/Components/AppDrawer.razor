@@ -245,6 +245,7 @@
     {
         await HandleCloseAsync();
         await Task.Delay(100);
-        NavigationManager.NavigateTo("/system");
+
+        await JSRuntime.InvokeVoidAsync("open", "/system", "_blank");
     }
 }

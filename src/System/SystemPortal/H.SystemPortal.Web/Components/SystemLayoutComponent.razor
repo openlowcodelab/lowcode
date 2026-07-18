@@ -4,7 +4,7 @@
 .layout-container { display: flex; flex-direction: column; height: 100vh; }
 .menu-container { display: flex; flex: 1; }
 .content-container { flex: 1; overflow-y: auto; background-color: #f0f2f5; padding: 20px; }
-.top-navbar { display: flex; justify-content: space-between; align-items: center; height: 60px; padding: 0 20px 0 5px; background-color: #fff; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); z-index: 100; }
+.top-navbar { display: flex; justify-content: space-between; align-items: center; height: 60px; flex-shrink: 0; padding: 0 20px 0 5px; background-color: #fff; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); z-index: 100; }
 .navbar-left { display: flex; align-items: center; gap: 15px; }
 .navbar-left h3 { margin: 0; font-size: 18px; color: #333; }
 .navbar-logo { height: 32px; width: 32px; object-fit: contain; }
@@ -231,6 +231,10 @@
 
         if (string.IsNullOrEmpty(menuUrl)) return false;
         if (currentPath.Equals(menuUrl, StringComparison.OrdinalIgnoreCase)) return true;
+
+        // 对于 /system 这种根路径菜单，仅在精确匹配时高亮
+        if (menuUrl.Split('/').Length == 1) return false;
+
         return currentPath.StartsWith(menuUrl + "/", StringComparison.OrdinalIgnoreCase);
     }
 }
