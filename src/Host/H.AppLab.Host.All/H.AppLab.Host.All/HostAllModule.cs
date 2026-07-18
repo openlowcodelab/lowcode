@@ -19,6 +19,7 @@ using H.Order.Application;
 using H.SupplyChain.Application;
 using H.YunXiaoMcpServer;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Volo.Abp.AspNetCore.MultiTenancy;
 using Volo.Abp.AspNetCore.Mvc;
 using Volo.Abp.AspNetCore.Mvc.AntiForgery;
 using Volo.Abp.Autofac;
@@ -34,6 +35,7 @@ namespace H.AppLab.Host.All;
     //abp
     typeof(AbpAutofacModule),
     typeof(AbpAspNetCoreMvcModule),
+    typeof(AbpAspNetCoreMultiTenancyModule),
     // DesignEngine
     typeof(DesignEngineApplicationModule),
     typeof(DesignEngineEntityFrameworkCoreModule),
@@ -167,5 +169,12 @@ public class HostAllModule : AbpModule
 
         // 注册自定义 ITenantStore（从 Enterprise 数据库读取租户配置）
         context.Services.AddTransient<ITenantStore, EnterpriseTenantStore>();
+
+        // 从认证 Cookie 的 "TenantId" Claim 解析当前租户（企业选择后写入）
+        // 置于解析器链首位，优先于 ABP 内置解析器生效
+        Configure<AbpTenantResolveOptions>(options =>
+        {
+            options.TenantResolvers.Insert(0, new ClaimsTenantResolveContributor());
+        });
     }
 }

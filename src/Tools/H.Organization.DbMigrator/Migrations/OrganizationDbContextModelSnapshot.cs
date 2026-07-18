@@ -27,14 +27,25 @@ namespace H.Organization.DbMigrator.Migrations
             modelBuilder.Entity("H.Organization.EntityFrameworkCore.MemberEntity", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)")
+                        .HasColumnName("ConcurrencyStamp");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<Guid?>("CreatedBy")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ExtraProperties")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("ExtraProperties");
 
                     b.Property<bool>("IsEnabled")
                         .HasColumnType("bit");
@@ -56,7 +67,8 @@ namespace H.Organization.DbMigrator.Migrations
                         .HasColumnType("int");
 
                     b.Property<Guid?>("TenantId")
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -85,8 +97,14 @@ namespace H.Organization.DbMigrator.Migrations
             modelBuilder.Entity("H.Organization.EntityFrameworkCore.OrgInviteEntity", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)")
+                        .HasColumnName("ConcurrencyStamp");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -96,6 +114,11 @@ namespace H.Organization.DbMigrator.Migrations
 
                     b.Property<DateTime>("ExpiresAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("ExtraProperties")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("ExtraProperties");
 
                     b.Property<bool>("IsUsed")
                         .HasColumnType("bit");
@@ -111,7 +134,8 @@ namespace H.Organization.DbMigrator.Migrations
                         .HasColumnType("nvarchar(20)");
 
                     b.Property<Guid?>("TenantId")
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
 
                     b.Property<string>("Token")
                         .IsRequired()
@@ -137,12 +161,18 @@ namespace H.Organization.DbMigrator.Migrations
             modelBuilder.Entity("H.Organization.EntityFrameworkCore.OrganizationEntity", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Code")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)")
+                        .HasColumnName("ConcurrencyStamp");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -153,6 +183,11 @@ namespace H.Organization.DbMigrator.Migrations
                     b.Property<string>("Email")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ExtraProperties")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("ExtraProperties");
 
                     b.Property<bool>("IsEnabled")
                         .HasColumnType("bit");
@@ -180,7 +215,8 @@ namespace H.Organization.DbMigrator.Migrations
                         .HasColumnType("int");
 
                     b.Property<Guid?>("TenantId")
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -198,12 +234,18 @@ namespace H.Organization.DbMigrator.Migrations
             modelBuilder.Entity("H.Organization.EntityFrameworkCore.RoleEntity", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Code")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)")
+                        .HasColumnName("ConcurrencyStamp");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -213,6 +255,11 @@ namespace H.Organization.DbMigrator.Migrations
 
                     b.Property<int>("DataScope")
                         .HasColumnType("int");
+
+                    b.Property<string>("ExtraProperties")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("ExtraProperties");
 
                     b.Property<bool>("IsEnabled")
                         .HasColumnType("bit");
@@ -233,7 +280,8 @@ namespace H.Organization.DbMigrator.Migrations
                         .HasColumnType("int");
 
                     b.Property<Guid?>("TenantId")
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -253,11 +301,22 @@ namespace H.Organization.DbMigrator.Migrations
             modelBuilder.Entity("H.Organization.EntityFrameworkCore.RoleMember", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)")
+                        .HasColumnName("ConcurrencyStamp");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("ExtraProperties")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("ExtraProperties");
 
                     b.Property<Guid>("MemberId")
                         .HasColumnType("uniqueidentifier");
@@ -266,7 +325,8 @@ namespace H.Organization.DbMigrator.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid?>("TenantId")
-                        .HasColumnType("uniqueidentifier");
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
 
                     b.HasKey("Id");
 

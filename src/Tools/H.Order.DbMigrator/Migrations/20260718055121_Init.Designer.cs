@@ -13,7 +13,7 @@ using Volo.Abp.EntityFrameworkCore;
 namespace H.Order.DbMigrator.Migrations
 {
     [DbContext(typeof(OrderDbContext))]
-    [Migration("20260712053711_Init")]
+    [Migration("20260718055121_Init")]
     partial class Init
     {
         /// <inheritdoc />
@@ -98,6 +98,10 @@ namespace H.Order.DbMigrator.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("nvarchar(64)");
 
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
+
                     b.HasKey("Id");
 
                     b.HasIndex("NextRetryTime");
@@ -176,6 +180,10 @@ namespace H.Order.DbMigrator.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
+
                     b.Property<decimal>("TotalAmount")
                         .HasColumnType("decimal(18,2)");
 
@@ -233,6 +241,10 @@ namespace H.Order.DbMigrator.Migrations
 
                     b.Property<Guid>("OrderId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
 
                     b.HasKey("Id");
 
@@ -305,6 +317,10 @@ namespace H.Order.DbMigrator.Migrations
                         .IsRequired()
                         .HasMaxLength(64)
                         .HasColumnType("nvarchar(64)");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
 
                     b.HasKey("Id");
 
@@ -386,6 +402,10 @@ namespace H.Order.DbMigrator.Migrations
                     b.Property<string>("Remark")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
 
                     b.HasKey("Id");
 

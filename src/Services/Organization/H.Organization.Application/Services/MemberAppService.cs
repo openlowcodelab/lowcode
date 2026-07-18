@@ -191,9 +191,8 @@ public class MemberAppService : ApplicationService, IMemberAppService
             throw new Exception("用户不存在");
         }
 
-        var entity = new MemberEntity
+        var entity = new MemberEntity(Guid.NewGuid())
         {
-            Id = Guid.NewGuid(),
             OrganizationId = input.OrganizationId,
             UserId = input.UserId,
             UserName = userName,
@@ -260,9 +259,8 @@ public class MemberAppService : ApplicationService, IMemberAppService
             if (exists)
                 continue;
 
-            var entity = new MemberEntity
+            var entity = new MemberEntity(Guid.NewGuid())
             {
-                Id = Guid.NewGuid(),
                 OrganizationId = orgId,
                 UserId = input.UserId,
                 UserName = userName,
@@ -330,9 +328,8 @@ public class MemberAppService : ApplicationService, IMemberAppService
         // 按 RoleIds 重建
         foreach (var roleId in input.RoleIds.Distinct())
         {
-            _context.RoleMembers.Add(new RoleMember
+            _context.RoleMembers.Add(new RoleMember(Guid.NewGuid())
             {
-                Id = Guid.NewGuid(),
                 RoleId = roleId,
                 MemberId = memberId,
                 CreatedAt = DateTime.UtcNow

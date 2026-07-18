@@ -87,6 +87,7 @@ app.MapStaticAssets();
 
 app.UseRouting();
 app.UseAuthentication();
+app.UseMultiTenancy();
 app.UseAuthorization();
 app.UseAntiforgery();
 

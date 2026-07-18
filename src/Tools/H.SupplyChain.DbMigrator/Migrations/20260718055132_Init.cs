@@ -16,12 +16,15 @@ namespace H.SupplyChain.DbMigrator.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     Code = table.Column<string>(type: "nvarchar(64)", maxLength: 64, nullable: false),
                     Name = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
                     InterfaceType = table.Column<int>(type: "int", nullable: false),
                     HttpMethod = table.Column<string>(type: "nvarchar(16)", maxLength: 16, nullable: false),
                     Path = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
                     Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    RequestFieldsJson = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ResponseFieldsJson = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     IsEnabled = table.Column<bool>(type: "bit", nullable: false),
                     Remark = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     CreationTime = table.Column<DateTime>(type: "datetime2", nullable: false),
@@ -42,6 +45,7 @@ namespace H.SupplyChain.DbMigrator.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     ProductCode = table.Column<string>(type: "nvarchar(64)", maxLength: 64, nullable: false),
                     Name = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
                     Category = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: true),
@@ -66,6 +70,7 @@ namespace H.SupplyChain.DbMigrator.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     Code = table.Column<string>(type: "nvarchar(64)", maxLength: 64, nullable: false),
                     Name = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
                     DisplayName = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: true),
@@ -94,6 +99,7 @@ namespace H.SupplyChain.DbMigrator.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     ProductId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     SkuCode = table.Column<string>(type: "nvarchar(64)", maxLength: 64, nullable: false),
                     SkuName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
@@ -126,6 +132,7 @@ namespace H.SupplyChain.DbMigrator.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     SupplierId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     InterfaceId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     SupplierApiUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
@@ -163,6 +170,7 @@ namespace H.SupplyChain.DbMigrator.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     SkuId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     SupplierId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     SupplierSkuCode = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),

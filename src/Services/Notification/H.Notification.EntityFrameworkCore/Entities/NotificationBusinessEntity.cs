@@ -1,12 +1,18 @@
 using Volo.Abp.Domain.Entities.Auditing;
+using Volo.Abp.MultiTenancy;
 
 namespace H.Notification.EntityFrameworkCore;
 
 /// <summary>
 /// 通知业务实体
 /// </summary>
-public class NotificationBusinessEntity : FullAuditedEntity<Guid>
+public class NotificationBusinessEntity : FullAuditedEntity<Guid>, IMultiTenant
 {
+    /// <summary>
+    /// 租户ID（多租户）
+    /// </summary>
+    public virtual Guid? TenantId { get; set; }
+
     /// <summary>
     /// 业务名称
     /// </summary>
@@ -36,8 +42,13 @@ public class NotificationBusinessEntity : FullAuditedEntity<Guid>
 /// <summary>
 /// 通知方式配置实体
 /// </summary>
-public class NotificationMethodConfigEntity : FullAuditedEntity<Guid>
+public class NotificationMethodConfigEntity : FullAuditedEntity<Guid>, IMultiTenant
 {
+    /// <summary>
+    /// 租户ID（多租户）
+    /// </summary>
+    public virtual Guid? TenantId { get; set; }
+
     /// <summary>
     /// 关联的业务ID
     /// </summary>

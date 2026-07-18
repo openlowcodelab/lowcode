@@ -1,12 +1,16 @@
 using Volo.Abp.Domain.Entities.Auditing;
+using Volo.Abp.MultiTenancy;
 
 namespace H.Order.EntityFrameworkCore;
 
 /// <summary>
 /// 订单实体（核心表，仅行业无关的最小属性集）
 /// </summary>
-public class OrderEntity : FullAuditedEntity<Guid>
+public class OrderEntity : FullAuditedEntity<Guid>, IMultiTenant
 {
+    /// <summary>租户ID（多租户）</summary>
+    public virtual Guid? TenantId { get; set; }
+
     /// <summary>订单号</summary>
     public string OrderNo { get; set; } = string.Empty;
 
@@ -35,8 +39,11 @@ public class OrderEntity : FullAuditedEntity<Guid>
 /// <summary>
 /// 订单扩展实体（按行业存储特有属性，JSON 格式）
 /// </summary>
-public class OrderExtensionEntity : FullAuditedEntity<Guid>
+public class OrderExtensionEntity : FullAuditedEntity<Guid>, IMultiTenant
 {
+    /// <summary>租户ID（多租户）</summary>
+    public virtual Guid? TenantId { get; set; }
+
     /// <summary>订单ID（一对一）</summary>
     public Guid OrderId { get; set; }
 
@@ -50,8 +57,11 @@ public class OrderExtensionEntity : FullAuditedEntity<Guid>
 /// <summary>
 /// 供应商定义
 /// </summary>
-public class SupplierEntity : FullAuditedEntity<Guid>
+public class SupplierEntity : FullAuditedEntity<Guid>, IMultiTenant
 {
+    /// <summary>租户ID（多租户）</summary>
+    public virtual Guid? TenantId { get; set; }
+
     /// <summary>供应商编码（唯一）</summary>
     public string Code { get; set; } = string.Empty;
 
@@ -86,8 +96,11 @@ public class SupplierEntity : FullAuditedEntity<Guid>
 /// <summary>
 /// 路由规则
 /// </summary>
-public class RouteRuleEntity : FullAuditedEntity<Guid>
+public class RouteRuleEntity : FullAuditedEntity<Guid>, IMultiTenant
 {
+    /// <summary>租户ID（多租户）</summary>
+    public virtual Guid? TenantId { get; set; }
+
     /// <summary>规则名称</summary>
     public string Name { get; set; } = string.Empty;
 
@@ -116,8 +129,11 @@ public class RouteRuleEntity : FullAuditedEntity<Guid>
 /// <summary>
 /// 下发日志
 /// </summary>
-public class DispatchLogEntity : FullAuditedEntity<Guid>
+public class DispatchLogEntity : FullAuditedEntity<Guid>, IMultiTenant
 {
+    /// <summary>租户ID（多租户）</summary>
+    public virtual Guid? TenantId { get; set; }
+
     /// <summary>订单ID</summary>
     public Guid OrderId { get; set; }
 

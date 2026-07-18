@@ -16,6 +16,7 @@ namespace H.Notification.DbMigrator.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     BusinessName = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
                     BusinessCode = table.Column<string>(type: "nvarchar(64)", maxLength: 64, nullable: false),
                     Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
@@ -38,6 +39,7 @@ namespace H.Notification.DbMigrator.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     BusinessId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     MethodType = table.Column<int>(type: "int", nullable: false),
                     IsEnabled = table.Column<bool>(type: "bit", nullable: false),

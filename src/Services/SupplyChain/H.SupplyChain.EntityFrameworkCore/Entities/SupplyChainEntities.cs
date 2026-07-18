@@ -1,12 +1,16 @@
 using Volo.Abp.Domain.Entities.Auditing;
+using Volo.Abp.MultiTenancy;
 
 namespace H.SupplyChain.EntityFrameworkCore;
 
 /// <summary>
 /// 供应商定义
 /// </summary>
-public class SupplierEntity : FullAuditedEntity<Guid>
+public class SupplierEntity : FullAuditedEntity<Guid>, IMultiTenant
 {
+    /// <summary>租户ID（多租户）</summary>
+    public virtual Guid? TenantId { get; set; }
+
     /// <summary>供应商编码（唯一）</summary>
     public string Code { get; set; } = string.Empty;
 
@@ -41,8 +45,11 @@ public class SupplierEntity : FullAuditedEntity<Guid>
 /// <summary>
 /// 接口定义（菜单接口、商品接口、下单接口等统一定义）
 /// </summary>
-public class ApiInterfaceEntity : FullAuditedEntity<Guid>
+public class ApiInterfaceEntity : FullAuditedEntity<Guid>, IMultiTenant
 {
+    /// <summary>租户ID（多租户）</summary>
+    public virtual Guid? TenantId { get; set; }
+
     /// <summary>接口编码（唯一，如 menu / product-detail / place-order）</summary>
     public string Code { get; set; } = string.Empty;
 
@@ -78,8 +85,11 @@ public class ApiInterfaceEntity : FullAuditedEntity<Guid>
 /// 供应商接口映射。
 /// 基于接口定义，配置对应供应商的接口请求参数映射、返回值字段映射。
 /// </summary>
-public class SupplierInterfaceMappingEntity : FullAuditedEntity<Guid>
+public class SupplierInterfaceMappingEntity : FullAuditedEntity<Guid>, IMultiTenant
 {
+    /// <summary>租户ID（多租户）</summary>
+    public virtual Guid? TenantId { get; set; }
+
     /// <summary>供应商ID</summary>
     public Guid SupplierId { get; set; }
 

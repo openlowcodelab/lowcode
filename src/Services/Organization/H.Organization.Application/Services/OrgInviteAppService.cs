@@ -34,9 +34,8 @@ public class OrgInviteAppService : ApplicationService, IOrgInviteAppService
 
         var expireDays = input.ExpireDays <= 0 ? 7 : input.ExpireDays;
 
-        var entity = new OrgInviteEntity
+        var entity = new OrgInviteEntity(Guid.NewGuid())
         {
-            Id = Guid.NewGuid(),
             Token = Guid.NewGuid().ToString("N"),
             OrganizationId = input.OrganizationId,
             MemberType = input.MemberType <= 0 ? 1 : input.MemberType,
@@ -123,9 +122,8 @@ public class OrgInviteAppService : ApplicationService, IOrgInviteAppService
 
         if (!exists)
         {
-            var member = new MemberEntity
+            var member = new MemberEntity(Guid.NewGuid())
             {
-                Id = Guid.NewGuid(),
                 OrganizationId = invite.OrganizationId,
                 UserId = userId,
                 UserName = CurrentUser.UserName ?? string.Empty,

@@ -4,6 +4,7 @@ using System.Linq;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Identity;
+using Volo.Abp.MultiTenancy;
 
 namespace H.SystemPortal.Application;
 
@@ -11,41 +12,50 @@ public class UserAppService : ApplicationService, IUserAppService
 {
     private readonly IdentityUserManager _userManager;
     private readonly IRepository<Volo.Abp.Identity.IdentityUser, Guid> _userRepository;
+    private readonly ICurrentTenant _currentTenant;
 
     public UserAppService(
         IdentityUserManager userManager,
-        IRepository<Volo.Abp.Identity.IdentityUser, Guid> userRepository)
+        IRepository<Volo.Abp.Identity.IdentityUser, Guid> userRepository,
+        ICurrentTenant currentTenant)
     {
         _userManager = userManager;
         _userRepository = userRepository;
+        _currentTenant = currentTenant;
     }
 
     public async Task<UserDto?> GetUserByUserNameAsync(string userName)
     {
+        // Account/用户为全局跨租户数据，所有操作需在 Host 上下文进行
+        using var _tenant = _currentTenant.Change(null);
         var user = await _userManager.FindByNameAsync(userName);
         return user != null ? await MapToUserDtoAsync(user) : null;
     }
 
     public async Task<UserDto?> GetUserByEmailAsync(string email)
     {
+        using var _tenant = _currentTenant.Change(null);
         var user = await _userManager.FindByEmailAsync(email);
         return user != null ? await MapToUserDtoAsync(user) : null;
     }
 
     public async Task<UserDto?> GetUserByIdAsync(Guid userId)
     {
+        using var _tenant = _currentTenant.Change(null);
         var user = await _userManager.FindByIdAsync(userId.ToString());
         return user != null ? await MapToUserDtoAsync(user) : null;
     }
 
     public async Task<UserDto?> GetUserDtoByIdAsync(Guid userId)
     {
+        using var _tenant = _currentTenant.Change(null);
         var user = await _userManager.FindByIdAsync(userId.ToString());
         return user != null ? await MapToUserDtoAsync(user) : null;
     }
 
     public async Task<UserDto> CreateUserAsync(UserDto user)
     {
+        using var _tenant = _currentTenant.Change(null);
         var identityUser = new Volo.Abp.Identity.IdentityUser(
             GuidGenerator.Create(),
             user.UserName,
@@ -71,6 +81,7 @@ public class UserAppService : ApplicationService, IUserAppService
 
     public async Task<UserDto> CreateUserAsync(CreateUserDto dto, Guid? currentUserId = null)
     {
+        using var _tenant = _currentTenant.Change(null);
         var identityUser = new Volo.Abp.Identity.IdentityUser(
             GuidGenerator.Create(),
             dto.UserName,
@@ -105,6 +116,7 @@ public class UserAppService : ApplicationService, IUserAppService
 
     public async Task<bool> UpdateUserAsync(UserDto user)
     {
+        using var _tenant = _currentTenant.Change(null);
         var existingUser = await _userManager.FindByIdAsync(user.Id.ToString());
         if (existingUser == null)
         {
@@ -123,6 +135,7 @@ public class UserAppService : ApplicationService, IUserAppService
 
     public async Task<bool> UpdateUserAsync(Guid userId, UpdateUserDto dto, Guid? currentUserId = null)
     {
+        using var _tenant = _currentTenant.Change(null);
         var existingUser = await _userManager.FindByIdAsync(userId.ToString());
         if (existingUser == null)
         {
@@ -154,6 +167,7 @@ public class UserAppService : ApplicationService, IUserAppService
 
     public async Task UpdateUserStatusAsync(Guid userId, UpdateUserStatusDto dto, Guid? currentUserId = null)
     {
+        using var _tenant = _currentTenant.Change(null);
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null)
         {
@@ -181,6 +195,7 @@ public class UserAppService : ApplicationService, IUserAppService
 
     public async Task ResetPasswordAsync(Guid userId, ResetPasswordDto dto)
     {
+        using var _tenant = _currentTenant.Change(null);
         if (dto.NewPassword != dto.ConfirmPassword)
         {
             throw new Exception("两次密码输入不一致");
@@ -203,6 +218,7 @@ public class UserAppService : ApplicationService, IUserAppService
 
     public async Task DeleteUserAsync(Guid userId)
     {
+        using var _tenant = _currentTenant.Change(null);
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null)
         {
@@ -218,18 +234,21 @@ public class UserAppService : ApplicationService, IUserAppService
 
     public async Task<bool> ExistsByUserNameAsync(string userName, Guid? excludeId = null)
     {
+        using var _tenant = _currentTenant.Change(null);
         var user = await _userManager.FindByNameAsync(userName);
         return user != null && user.Id != excludeId;
     }
 
     public async Task<bool> ExistsByEmailAsync(string email, Guid? excludeId = null)
     {
+        using var _tenant = _currentTenant.Change(null);
         var user = await _userManager.FindByEmailAsync(email);
         return user != null && user.Id != excludeId;
     }
 
     public async Task<bool> VerifyPasswordAsync(string userName, string password)
     {
+        using var _tenant = _currentTenant.Change(null);
         var user = await _userManager.FindByNameAsync(userName);
         if (user == null) return false;
 
@@ -238,6 +257,7 @@ public class UserAppService : ApplicationService, IUserAppService
 
     public async Task UpdateLastLoginTimeAsync(Guid userId)
     {
+        using var _tenant = _currentTenant.Change(null);
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user != null)
         {
@@ -248,6 +268,7 @@ public class UserAppService : ApplicationService, IUserAppService
 
     public async Task<PagedResult<UserDto>> GetPagedUsersAsync(UserQueryParams queryParams)
     {
+        using var _tenant = _currentTenant.Change(null);
         var query = await _userRepository.GetListAsync();
 
         // 关键字搜索
@@ -304,6 +325,7 @@ public class UserAppService : ApplicationService, IUserAppService
 
     public async Task AssignRolesToUserAsync(Guid userId, List<string> roleNames)
     {
+        using var _tenant = _currentTenant.Change(null);
         var user = await _userManager.FindByIdAsync(userId.ToString())
             ?? throw new Exception("用户不存在");
 
@@ -319,6 +341,7 @@ public class UserAppService : ApplicationService, IUserAppService
 
     public async Task<List<string>> GetUserRoleNamesAsync(Guid userId)
     {
+        using var _tenant = _currentTenant.Change(null);
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null) return new List<string>();
 
@@ -328,6 +351,7 @@ public class UserAppService : ApplicationService, IUserAppService
 
     private async Task<UserDto> MapToUserDtoAsync(Volo.Abp.Identity.IdentityUser user)
     {
+        using var _tenant = _currentTenant.Change(null);
         var roles = await _userManager.GetRolesAsync(user);
         return new UserDto
         {

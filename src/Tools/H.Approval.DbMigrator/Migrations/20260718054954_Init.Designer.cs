@@ -13,8 +13,8 @@ using Volo.Abp.EntityFrameworkCore;
 namespace H.Approval.DbMigrator.Migrations
 {
     [DbContext(typeof(ApprovalDbContext))]
-    [Migration("20260716151831_AddApprovalCategory")]
-    partial class AddApprovalCategory
+    [Migration("20260718054954_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -42,6 +42,10 @@ namespace H.Approval.DbMigrator.Migrations
 
                     b.Property<int>("Sort")
                         .HasColumnType("int");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
 
                     b.HasKey("Id");
 
@@ -76,6 +80,9 @@ namespace H.Approval.DbMigrator.Migrations
                         .HasMaxLength(1024)
                         .HasColumnType("nvarchar(1024)");
 
+                    b.Property<string>("FormJson")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Icon")
                         .HasColumnType("nvarchar(max)");
 
@@ -95,6 +102,10 @@ namespace H.Approval.DbMigrator.Migrations
 
                     b.Property<string>("SpecifiedStarters")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
 
                     b.Property<int>("Version")
                         .HasColumnType("int");
@@ -149,6 +160,10 @@ namespace H.Approval.DbMigrator.Migrations
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -215,6 +230,10 @@ namespace H.Approval.DbMigrator.Migrations
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
 
                     b.HasKey("Id");
 

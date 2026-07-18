@@ -1,3 +1,4 @@
+using Volo.Abp.Domain.Entities;
 using Volo.Abp.MultiTenancy;
 
 namespace H.Organization.EntityFrameworkCore;
@@ -5,12 +6,16 @@ namespace H.Organization.EntityFrameworkCore;
 /// <summary>
 /// 组织邀请（一次性 + 限时令牌）
 /// </summary>
-public class OrgInviteEntity : IMultiTenant
+public class OrgInviteEntity : AggregateRoot<Guid>, IMultiTenant
 {
-    /// <summary>
-    /// 邀请ID
-    /// </summary>
-    public Guid Id { get; set; }
+    public OrgInviteEntity()
+    {
+    }
+
+    public OrgInviteEntity(Guid id)
+        : base(id)
+    {
+    }
 
     /// <summary>
     /// 邀请令牌（唯一）

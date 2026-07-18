@@ -13,7 +13,7 @@ using Volo.Abp.EntityFrameworkCore;
 namespace H.Notification.DbMigrator.Migrations
 {
     [DbContext(typeof(NotificationDbContext))]
-    [Migration("20260704104835_Init")]
+    [Migration("20260718055059_Init")]
     partial class Init
     {
         /// <inheritdoc />
@@ -78,6 +78,10 @@ namespace H.Notification.DbMigrator.Migrations
                     b.Property<Guid?>("LastModifierId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("LastModifierId");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
 
                     b.HasKey("Id");
 
@@ -144,6 +148,10 @@ namespace H.Notification.DbMigrator.Migrations
                     b.Property<string>("SmsTemplateId")
                         .HasMaxLength(128)
                         .HasColumnType("nvarchar(128)");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
 
                     b.Property<string>("WebhookUrl")
                         .HasMaxLength(500)

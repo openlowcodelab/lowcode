@@ -76,6 +76,10 @@ namespace H.Notification.DbMigrator.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("LastModifierId");
 
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
+
                     b.HasKey("Id");
 
                     b.HasIndex("BusinessCode")
@@ -141,6 +145,10 @@ namespace H.Notification.DbMigrator.Migrations
                     b.Property<string>("SmsTemplateId")
                         .HasMaxLength(128)
                         .HasColumnType("nvarchar(128)");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
 
                     b.Property<string>("WebhookUrl")
                         .HasMaxLength(500)

@@ -6,7 +6,6 @@ namespace H.Organization.EntityFrameworkCore;
 
 /// <summary>
 /// 组织架构数据库上下文
-/// 继承 AbpDbContext 以启用多租户自动过滤
 /// </summary>
 [ConnectionStringName("OrganizationDb")]
 public class OrganizationDbContext : AbpDbContext<OrganizationDbContext>

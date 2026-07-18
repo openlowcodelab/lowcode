@@ -40,6 +40,10 @@ namespace H.Approval.DbMigrator.Migrations
                     b.Property<int>("Sort")
                         .HasColumnType("int");
 
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Name");
@@ -96,6 +100,10 @@ namespace H.Approval.DbMigrator.Migrations
                     b.Property<string>("SpecifiedStarters")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
+
                     b.Property<int>("Version")
                         .HasColumnType("int");
 
@@ -149,6 +157,10 @@ namespace H.Approval.DbMigrator.Migrations
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -215,6 +227,10 @@ namespace H.Approval.DbMigrator.Migrations
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
 
                     b.HasKey("Id");
 

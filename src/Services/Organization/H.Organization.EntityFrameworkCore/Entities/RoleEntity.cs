@@ -1,3 +1,4 @@
+using Volo.Abp.Domain.Entities;
 using Volo.Abp.MultiTenancy;
 
 namespace H.Organization.EntityFrameworkCore;
@@ -5,12 +6,16 @@ namespace H.Organization.EntityFrameworkCore;
 /// <summary>
 /// 角色
 /// </summary>
-public class RoleEntity : IMultiTenant
+public class RoleEntity : AggregateRoot<Guid>, IMultiTenant
 {
-    /// <summary>
-    /// 角色ID
-    /// </summary>
-    public Guid Id { get; set; }
+    public RoleEntity()
+    {
+    }
+
+    public RoleEntity(Guid id)
+        : base(id)
+    {
+    }
 
     /// <summary>
     /// 角色名称
@@ -81,12 +86,16 @@ public class RoleEntity : IMultiTenant
 /// <summary>
 /// 角色成员关联
 /// </summary>
-public class RoleMember : IMultiTenant
+public class RoleMember : AggregateRoot<Guid>, IMultiTenant
 {
-    /// <summary>
-    /// ID
-    /// </summary>
-    public Guid Id { get; set; }
+    public RoleMember()
+    {
+    }
+
+    public RoleMember(Guid id)
+        : base(id)
+    {
+    }
 
     /// <summary>
     /// 角色ID

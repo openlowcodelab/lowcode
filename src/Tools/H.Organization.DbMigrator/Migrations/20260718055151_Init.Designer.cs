@@ -13,8 +13,8 @@ using Volo.Abp.EntityFrameworkCore;
 namespace H.Organization.DbMigrator.Migrations
 {
     [DbContext(typeof(OrganizationDbContext))]
-    [Migration("20260717151135_AddOrgInvite")]
-    partial class AddOrgInvite
+    [Migration("20260718055151_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

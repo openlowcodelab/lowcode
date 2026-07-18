@@ -113,9 +113,8 @@ public class RoleAppService : ApplicationService, IRoleAppService
                 throw new Exception("角色编码已存在");
         }
 
-        var entity = new RoleEntity
+        var entity = new RoleEntity(Guid.NewGuid())
         {
-            Id = Guid.NewGuid(),
             Name = input.Name,
             Code = input.Code,
             RoleType = input.RoleType,

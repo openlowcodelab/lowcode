@@ -150,9 +150,8 @@ public class OrganizationAppService : ApplicationService, IOrganizationAppServic
     /// </summary>
     public async Task<OrganizationDto> CreateAsync(CreateOrganizationDto input)
     {
-        var entity = new OrganizationEntity
+        var entity = new OrganizationEntity(Guid.NewGuid())
         {
-            Id = Guid.NewGuid(),
             ParentId = input.ParentId,
             Name = input.Name,
             Code = input.Code,

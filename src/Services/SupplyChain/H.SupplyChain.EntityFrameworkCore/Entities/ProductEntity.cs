@@ -2,14 +2,18 @@
 using System.Collections.Generic;
 using System.Text;
 using Volo.Abp.Domain.Entities.Auditing;
+using Volo.Abp.MultiTenancy;
 
 namespace H.SupplyChain.EntityFrameworkCore;
 
 /// <summary>
 /// 商品主表（存储商品基本信息）
 /// </summary>
-public class ProductEntity : FullAuditedEntity<Guid>
+public class ProductEntity : FullAuditedEntity<Guid>, IMultiTenant
 {
+    /// <summary>租户ID（多租户）</summary>
+    public virtual Guid? TenantId { get; set; }
+
     /// <summary>商品编码（唯一）</summary>
     public string ProductCode { get; set; } = string.Empty;
 

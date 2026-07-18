@@ -16,6 +16,7 @@ namespace H.Order.DbMigrator.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     OrderId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     SupplierCode = table.Column<string>(type: "nvarchar(64)", maxLength: 64, nullable: false),
                     Status = table.Column<int>(type: "int", nullable: false),
@@ -45,6 +46,7 @@ namespace H.Order.DbMigrator.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     OrderNo = table.Column<string>(type: "nvarchar(64)", maxLength: 64, nullable: false),
                     ProductName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
                     BuyerId = table.Column<string>(type: "nvarchar(64)", maxLength: 64, nullable: false),
@@ -71,6 +73,7 @@ namespace H.Order.DbMigrator.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     Name = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
                     SupplierCode = table.Column<string>(type: "nvarchar(64)", maxLength: 64, nullable: false),
                     RuleType = table.Column<int>(type: "int", nullable: false),
@@ -97,6 +100,7 @@ namespace H.Order.DbMigrator.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     Code = table.Column<string>(type: "nvarchar(64)", maxLength: 64, nullable: false),
                     Name = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
                     DisplayName = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: true),
@@ -125,6 +129,7 @@ namespace H.Order.DbMigrator.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     OrderId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     AttributesJson = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CreationTime = table.Column<DateTime>(type: "datetime2", nullable: false),

@@ -28,7 +28,8 @@ namespace H.Organization.DbMigrator.Migrations
                     UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     CreatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     UpdatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    Remark = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
+                    Remark = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -56,11 +57,40 @@ namespace H.Organization.DbMigrator.Migrations
                     UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     CreatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     UpdatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    Remark = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
+                    Remark = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Organization_Roles", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Organization_Invites",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Token = table.Column<string>(type: "nvarchar(64)", maxLength: 64, nullable: false),
+                    OrganizationId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    MemberType = table.Column<int>(type: "int", nullable: false),
+                    Phone = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    ExpiresAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    IsUsed = table.Column<bool>(type: "bit", nullable: false),
+                    UsedByUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    UsedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Organization_Invites", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Organization_Invites_Organization_Organizations_OrganizationId",
+                        column: x => x.OrganizationId,
+                        principalTable: "Organization_Organizations",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -79,7 +109,8 @@ namespace H.Organization.DbMigrator.Migrations
                     UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
                     CreatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     UpdatedBy = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    Remark = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
+                    Remark = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -99,7 +130,8 @@ namespace H.Organization.DbMigrator.Migrations
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     RoleId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     MemberId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    TenantId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -117,6 +149,17 @@ namespace H.Organization.DbMigrator.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Organization_Invites_OrganizationId",
+                table: "Organization_Invites",
+                column: "OrganizationId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Organization_Invites_Token",
+                table: "Organization_Invites",
+                column: "Token",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Organization_Members_OrganizationId_UserId",
@@ -156,6 +199,9 @@ namespace H.Organization.DbMigrator.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "Organization_Invites");
+
             migrationBuilder.DropTable(
                 name: "Organization_RoleMembers");
 

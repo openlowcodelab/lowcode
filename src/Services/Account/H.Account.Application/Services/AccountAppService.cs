@@ -219,8 +219,12 @@ public class AccountAppService : ApplicationService, IAccountAppService
 
     public async Task<UserDto?> GetUserByIdAsync(Guid userId)
     {
-        var user = await _userManager.FindByIdAsync(userId.ToString());
-        return user != null ? await MapToUserDtoAsync(user) : null;
+        // Account 为全局跨租户数据，用户查找需在 Host 上下文进行
+        using (_currentTenant.Change(null))
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            return user != null ? await MapToUserDtoAsync(user) : null;
+        }
     }
 
     public async Task<bool> ValidateTokenAsync(string token)
@@ -270,11 +274,16 @@ public class AccountAppService : ApplicationService, IAccountAppService
         if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
             return null;
 
-        var user = await _userManager.FindByIdAsync(userId.ToString());
-        if (user == null)
-            return null;
+        // Account 为全局跨租户数据，用户查找需在 Host 上下文进行
+        // （企业选择后 Cookie 携带 TenantId，若不切回 Host 上下文会因租户过滤而找不到用户）
+        using (_currentTenant.Change(null))
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user == null)
+                return null;
 
-        return await MapToUserDtoAsync(user);
+            return await MapToUserDtoAsync(user);
+        }
     }
 
     private string GenerateJwtToken(IdentityUser user)
@@ -309,7 +318,12 @@ public class AccountAppService : ApplicationService, IAccountAppService
 
     private async Task<UserDto> MapToUserDtoAsync(IdentityUser user)
     {
-        var roles = await _userManager.GetRolesAsync(user);
+        // 角色数据同属 Account 全局跨租户，需在 Host 上下文读取
+        IList<string> roles;
+        using (_currentTenant.Change(null))
+        {
+            roles = await _userManager.GetRolesAsync(user);
+        }
         return new UserDto
         {
             Id = user.Id,

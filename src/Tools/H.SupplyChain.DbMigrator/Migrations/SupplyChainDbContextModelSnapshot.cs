@@ -99,6 +99,10 @@ namespace H.SupplyChain.DbMigrator.Migrations
                     b.Property<string>("ResponseFieldsJson")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Code")
@@ -167,6 +171,10 @@ namespace H.SupplyChain.DbMigrator.Migrations
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
 
                     b.HasKey("Id");
 
@@ -243,6 +251,10 @@ namespace H.SupplyChain.DbMigrator.Migrations
 
                     b.Property<int>("Stock")
                         .HasColumnType("int");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
 
                     b.HasKey("Id");
 
@@ -326,6 +338,10 @@ namespace H.SupplyChain.DbMigrator.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Code")
@@ -391,6 +407,10 @@ namespace H.SupplyChain.DbMigrator.Migrations
 
                     b.Property<Guid>("SupplierId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
 
                     b.HasKey("Id");
 
@@ -464,6 +484,10 @@ namespace H.SupplyChain.DbMigrator.Migrations
                         .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
 
                     b.HasKey("Id");
 
