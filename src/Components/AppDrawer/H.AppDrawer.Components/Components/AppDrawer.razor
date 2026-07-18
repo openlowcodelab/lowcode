@@ -61,6 +61,11 @@
                     <div class="empty-state">暂无应用</div>
                 }
             </div>
+            <div class="drawer-footer">
+                <button class="system-backend-btn" @onclick="NavigateToSystem" title="系统后台">
+                    ⚙️
+                </button>
+            </div>
         </div>
     </div>
 }
@@ -234,5 +239,12 @@
         {
             NavigationManager.NavigateTo(app.Url);
         }
+    }
+
+    private async Task NavigateToSystem()
+    {
+        await HandleCloseAsync();
+        await Task.Delay(100);
+        NavigationManager.NavigateTo("/system");
     }
 }
