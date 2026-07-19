@@ -1,0 +1,58 @@
+@namespace H.LowCode.Components.Defaults
+
+<div class="hc-tabs" style="@Style">
+    <div class="hc-tabs-header">
+        @if (_tabs != null && _tabs.Count > 0)
+        {
+            @foreach (var tab in _tabs)
+            {
+                <div class="hc-tab-item @(_activeKey == tab.Key ? "hc-tab-active" : "")" @onclick="() => ActivateTab(tab.Key)">
+                    @tab.Label
+                </div>
+            }
+        }
+    </div>
+    <div class="hc-tabs-content">
+        @ChildContent
+    </div>
+</div>
+
+@code {
+    [Parameter] public string DefaultActiveKey { get; set; } = "tab1";
+    [Parameter] public string TabPosition { get; set; } = "Top";
+    [Parameter] public string Size { get; set; } = "Default";
+    [Parameter] public bool Animated { get; set; } = true;
+    [Parameter] public RenderFragment ChildContent { get; set; }
+    [Parameter] public string Style { get; set; }
+
+    private string _activeKey;
+    private List<TabItem> _tabs = new();
+
+    protected override void OnParametersSet()
+    {
+        _activeKey = DefaultActiveKey ?? "tab1";
+        // Default tabs if no TabPane children
+        if (_tabs.Count == 0)
+        {
+            _tabs.Add(new TabItem { Key = "tab1", Label = "标签页1" });
+            _tabs.Add(new TabItem { Key = "tab2", Label = "标签页2" });
+        }
+    }
+
+    private void ActivateTab(string key)
+    {
+        _activeKey = key;
+    }
+
+    public void AddTab(TabItem tab)
+    {
+        _tabs.Add(tab);
+        StateHasChanged();
+    }
+
+    public class TabItem
+    {
+        public string Key { get; set; }
+        public string Label { get; set; }
+    }
+}

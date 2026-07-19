@@ -1,0 +1,19 @@
+@namespace H.LowCode.Components.Defaults
+
+<div class="hc-checkbox-group @(Direction == "vertical" ? "hc-checkbox-vertical" : "hc-checkbox-horizontal")" style="@Style">
+    @if (ChildContent != null)
+    {
+        @ChildContent
+    }
+    else
+    {
+        <span class="hc-checkbox-empty">暂无选项</span>
+    }
+</div>
+
+@code {
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public string Direction { get; set; } = "horizontal";
+    [Parameter] public RenderFragment ChildContent { get; set; }
+    [Parameter] public string Style { get; set; }
+}

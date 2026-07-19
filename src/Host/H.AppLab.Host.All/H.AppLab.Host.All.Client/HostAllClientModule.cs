@@ -3,6 +3,7 @@ using H.Approval.Application.Contracts;
 using H.Assistant.Application.Contracts;
 using H.AutoTest.Application.Contracts;
 using H.Enterprise.Application.Contracts;
+using H.LowCode.Application.Contracts;
 using H.LowCode.ComponentBase;
 using H.LowCode.DesignEngine.Application.Contracts;
 using H.LowCode.RenderEngine.Application.Contracts;
@@ -68,6 +69,11 @@ public class HostAllClientModule : AbpModule
     private void ConfigureHttpClientProxies(ServiceConfigurationContext context)
     {
         //动态API代理
+        context.Services.AddHttpClientProxies(
+            typeof(LowCodeApplicationContractsModule).Assembly,
+            DesignEngineRemoteServiceName
+        );
+
         context.Services.AddHttpClientProxies(
             typeof(DesignEngineApplicationContractsModule).Assembly,
             DesignEngineRemoteServiceName

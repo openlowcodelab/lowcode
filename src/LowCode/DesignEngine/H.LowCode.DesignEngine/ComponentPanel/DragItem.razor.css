@@ -1,4 +1,41 @@
-﻿/* ================== DragItem.razor ==================== */
+﻿/* ================== DragItem 组件面板拖拽项 ==================== */
+.dragitem {
+    float: left;
+    width: calc(50% - 8px);
+    min-width: 90px;
+    height: 38px;
+    margin: 4px 6px 4px 2px;
+    cursor: grab;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #444;
+    font-size: 13px;
+    background-color: #fff;
+    border: 1px solid #e8e8e8;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    user-select: none;
+}
+
+.dragitem:hover {
+    border-color: #2f6feb;
+    color: #2f6feb;
+    background-color: #f0f5ff;
+    box-shadow: 0 2px 8px rgba(47, 111, 235, 0.12);
+    transform: translateY(-1px);
+}
+
+.dragitem:active {
+    cursor: grabbing;
+    transform: scale(0.97);
+    box-shadow: 0 1px 4px rgba(47, 111, 235, 0.15);
+}
+/* ================== DragItem.razor ==================== */
 .dragitem {
     float: left;
     width: calc(50% - 10px);

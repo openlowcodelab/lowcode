@@ -1,0 +1,15 @@
+@namespace H.LowCode.Components.Defaults
+
+<div class="hc-placeholder" style="@Style">
+    <div class="hc-placeholder-content">
+        <span class="hc-placeholder-icon">⬚</span>
+        <span class="hc-placeholder-label">@(string.IsNullOrEmpty(Label) ? "占位组件" : Label)</span>
+    </div>
+    @ChildContent
+</div>
+
+@code {
+    [Parameter] public string Label { get; set; }
+    [Parameter] public string Style { get; set; }
+    [Parameter] public RenderFragment ChildContent { get; set; }
+}

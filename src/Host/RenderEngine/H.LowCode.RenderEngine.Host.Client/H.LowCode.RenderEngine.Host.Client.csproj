@@ -18,4 +18,8 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\LowCode\RenderEngine\H.LowCode.Themes.AntBlazor\H.LowCode.Themes.AntBlazor.csproj" />
   </ItemGroup>
+  <!-- 防止 Release/AOT 裁剪掉仅被字符串反射引用的组件类型 -->
+  <ItemGroup>
+    <TrimmerRootAssembly Include="H.LowCode.Components.Defaults" />
+  </ItemGroup>
 </Project>

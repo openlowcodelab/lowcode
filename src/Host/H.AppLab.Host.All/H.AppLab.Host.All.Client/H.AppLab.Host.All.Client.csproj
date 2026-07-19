@@ -9,6 +9,10 @@
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
     <RunAOTCompilation>true</RunAOTCompilation>
   </PropertyGroup>
+  <!-- 防止 Release/AOT 裁剪掉仅被字符串反射引用的组件类型 -->
+  <ItemGroup>
+    <TrimmerRootAssembly Include="H.LowCode.Components.Defaults" />
+  </ItemGroup>
   <!-- 延迟加载: 这些程序集不在启动时下载，而是导航到对应路由时按需加载 -->
   <!-- 注意: 被 ABP [DependsOn] 引用的模块不能懒加载，否则启动时报错 -->
   <ItemGroup>

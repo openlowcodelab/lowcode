@@ -2,15 +2,14 @@
 @inherits LowCodeComponentBase
 @implements IAsyncDisposable
 
-@inject DragDropStateService DragDropStateService
 @inject IJSRuntime JSRuntime
 
 <script src="@Assets["_content/H.LowCode.DesignEngineBase/js/elementUtils.js"]"></script>
 
 <div @ref="itemRef" class="draggableitem-box @DraggableItemBoxClassMapper"
-    draggable="@Component.DesignState.IsSelected"
+    draggable="true"
      style="float:left;
-        width: @((Component.Style.ItemWidth > 4 ? Component.Style.ItemWidth : (IsInRootContainer ? 24/PageCascading.PageLayout : 24))  /24 * 100)%;
+        width: @((Component.Style.ItemWidth > 4 ? Component.Style.ItemWidth : (IsInRootContainer ? 24/_pageLayout : 24)) / 24.0 * 100)%;
         min-height: @(Component.Style.ItemHeight)px;
         transform: @Component.DesignState.AnimationTransform;
         will-change: @(Component.DesignState.IsAnimating ? "transform" : "auto");
@@ -31,20 +30,18 @@
      @onmouseout="OnMouseOut" @onmouseout:stopPropagation>
 
     <div class="draggableitem @DraggableItemClassMapper" style="@Component.DesignState.DragEffectStyle">
-        @if (Component.DesignState.IsSelected)
-        {
-            <div draggable="true" class="draggableitem-icon-move">
-                <span class="icon-drag">⠿</span>
+        <div draggable="true" class="draggableitem-icon-move">
+            <span class="icon-drag">⠿</span>
+        </div>
+        @* 删除/复制按钮：hover 时通过 CSS 显示 *@
+        <div class="draggableitem-pointer-wrapper">
+            <div class="draggableitem-pointer" @onclick="OnDelete">
+                <span class="icon-delete">✕</span>
             </div>
-            <div class="draggableitem-pointer-wrapper">
-                <div class="draggableitem-pointer" @onclick="OnDelete">
-                    <span class="icon-delete">✕</span>
-                </div>
-                <div class="draggableitem-pointer" @onclick="OnCopy">
-                    <span class="icon-copy">📋</span>
-                </div>
+            <div class="draggableitem-pointer" @onclick="OnCopy">
+                <span class="icon-copy">📋</span>
             </div>
-        }
+        </div>
 
         <DynamicComponentItem Component="@Component"></DynamicComponentItem>
     </div>
@@ -72,7 +69,7 @@
     [Parameter]
     public Action<ComponentPartsSchema> OnItemCopy { get; set; }
 
-    private string DraggableItemBoxClassMapper => string.Empty;
+    private string DraggableItemBoxClassMapper => Component.DesignState.IsSelected ? "draggableitem-selected" : string.Empty;
     private string DraggableItemClassMapper => string.Empty;
 
     private ElementReference itemRef;
@@ -82,11 +79,17 @@
     private double initialX = 0;
     private double initialY = 0;
 
+    /// <summary>
+    /// 本地缓存的页面布局列数，用于宽度计算
+    /// </summary>
+    private int _pageLayout = 2;
+
     #region Init
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
 
+        _pageLayout = PageCascading?.PageLayout ?? 2;
         Init();
     }
 
@@ -128,7 +131,9 @@
             {
                 if (value != null)
                 {
-                    PageCascading.PageLayout = (int)value;
+                    var newLayout = (int)value;
+                    PageCascading.PageLayout = newLayout;
+                    _pageLayout = newLayout;
                     // 使用InvokeAsync确保在正确的线程上下文中执行
                     InvokeAsync(StateHasChanged);
                 }
@@ -232,18 +237,12 @@
 
     private void OnMouseOver()
     {
-        if (Component.DesignState.IsSelected == false)
-        {
-            Component.DesignState.DragEffectStyle = "outline: #1890ff dashed 1.5px;";
-        }
+        // hover 边框由 CSS 处理，此处不再设置 outline
     }
 
     private void OnMouseOut()
     {
-        if (Component.DesignState.IsSelected == false)
-        {
-            Component.DesignState.DragEffectStyle = string.Empty;
-        }
+        // hover 边框由 CSS 处理，此处不再清除 outline
     }
 
     private void TriggerCurrentSiblingAnimation(double clientX, double clientY)

@@ -1,0 +1,10 @@
+@namespace H.LowCode.Components.Defaults
+
+<div class="hc-flex" style="@Style">
+    @ChildContent
+</div>
+
+@code {
+    [Parameter] public string Style { get; set; } = "height:100%;";
+    [Parameter] public RenderFragment ChildContent { get; set; }
+}

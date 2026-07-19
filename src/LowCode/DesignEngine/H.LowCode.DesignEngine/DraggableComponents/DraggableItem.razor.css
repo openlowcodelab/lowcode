@@ -1,15 +1,27 @@
+/* ================== DraggableItem 画布组件项样式 ================== */
+/* 默认边框 */
 .draggableitem-box {
     height: 85px;
-    border: #f0f2f5 solid 2px;
-    transition: transform 0.3s cubic-bezier(0.2, 0, 0.2, 1);
-    will-change: transform;
-    /* 增强边框清晰度 */
-/*    outline: 1px solid rgba(0, 0, 0, 0.05);*/
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-    /* 确保文字清晰度 */
+    border: 1px solid transparent;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    box-sizing: border-box;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+}
+
+/* hover: 虚线边框 */
+.draggableitem-box:hover {
+    border: 1px dashed #2f6feb;
+    box-shadow: 0 2px 8px rgba(47, 111, 235, 0.12);
+}
+
+/* 选中: 实线边框 */
+.draggableitem-box.draggableitem-selected {
+    border: 2px solid #2f6feb;
+    box-shadow: 0 2px 8px rgba(47, 111, 235, 0.15);
 }
 
 .draggableitem-box-layout {
@@ -25,100 +37,99 @@
     position: relative;
     display: flex;
     height: 100%;
-    margin: 1px;
-    border: #ffffff solid 2px;
+    margin: 0;
+    border-radius: 6px;
     background-color: #ffffff;
     transform: translate3d(0, 0, 0);
     backface-visibility: hidden;
     perspective: 1000px;
-    /* 增强文字和组件清晰度 */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
-    /* 增强对比度 */
-    filter: contrast(1.05);
 }
-
-    /* 无法阻止冒泡, 改用 onmouseover, onmouseout 实现 */
-    /*.draggableitem:not(.draggableitem-selected):hover {
-        outline: #1890ff dashed 1.5px;
-        pointer-events: auto;
-    }*/
 
 .draggableitem-container {
     padding: 0;
 }
 
 .draggableitem-component {
-    padding: 20px 8px 5px 8px;
+    padding: 30px 12px 8px 50px;
 }
 
 .draggableitem-selected {
-    outline: #1890ff solid 2px;
+    outline: 2px solid #2f6feb;
+    outline-offset: -1px;
 }
 
 .draggableitem-border-top {
-    border-top: 2px dashed #1890ff;
+    border-top: 2px dashed #2f6feb;
 }
 
 .draggableitem-border-bottom {
-    border-bottom: 2px dashed #1890ff;
+    border-bottom: 2px dashed #2f6feb;
 }
 
 .draggableitem-icon-move {
     position: absolute;
     z-index: 20;
-    top: -2px;
-    left: -2px;
-    height: 24px;
-    width: 24px;
+    top: 0;
+    left: 0;
+    height: 22px;
+    width: 22px;
     color: #fff;
-    background-color: #409eff;
+    background-color: #2f6feb;
     cursor: move;
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
-    /* 增强图标清晰度 */
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    filter: contrast(1.1) saturate(1.05);
+    font-size: 12px;
+}
+
+/* 选中时显示拖拽图标 */
+.draggableitem-selected .draggableitem-icon-move {
+    display: flex;
 }
 
 .draggableitem-pointer-wrapper {
     position: absolute;
     z-index: 20;
-    bottom: -2px;
-    right: -2px;
-    height: 24px;
-    border-top-left-radius: 8px;
-    background: #409eff;
-    display: flex;
+    bottom: -1px;
+    right: -1px;
+    height: 22px;
+    background: #2f6feb;
+    display: none;
     justify-content: center;
     align-items: center;
-    padding: 0 4px;
-    /* 添加边框增强可见性 */
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+    padding: 0 2px;
+    border-radius: 6px 0 0 0;
+}
+
+/* hover 时显示删除/复制按钮 */
+.draggableitem-box:hover .draggableitem-pointer-wrapper {
+    display: flex;
 }
 
 .draggableitem-pointer {
     color: #fff;
-    padding: 0 4px;
-    /* 增强图标清晰度 */
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    filter: contrast(1.1) saturate(1.05);
+    padding: 0 5px;
+    font-size: 12px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    transition: background 0.15s;
 }
 
-    .draggableitem-pointer:hover {
-        cursor: pointer;
-    }
+.draggableitem-pointer:hover {
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.15);
+}
 
-/* 添加拖拽动画相关样式 */
+/* 拖拽动画 */
 .draggableitem-dragging {
     z-index: 9999;
     transform: translate3d(0, 0, 0) scale(1.02);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 16px rgba(47, 111, 235, 0.2);
+    border-radius: 6px;
     transition: all 0.2s cubic-bezier(0.2, 0, 0.2, 1);
 }
 
@@ -128,20 +139,9 @@
     transition: all 0.2s cubic-bezier(0.2, 0, 0.2, 1);
 }
 
-/* 确保组件内部元素清晰度 */
+/* 组件内部文字清晰度 */
 .draggableitem * {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
-}
-
-/* 特别优化Ant Design组件的清晰度 */
-.draggableitem .ant-typography,
-.draggableitem .ant-input,
-.draggableitem .ant-select,
-.draggableitem .ant-btn {
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    text-rendering: optimizeLegibility;
-    filter: contrast(1.05) saturate(1.02);
 }
