@@ -89,7 +89,7 @@
                     <div class="myapps-actions">
                         <div>
                             <a class="h-link-icon" href="@($"/designengine/myapp/{app.Id}/pagemanager")" title="开发应用" target="_blank">&#x1F5A5;</a>
-                            <a class="h-link-icon" href="@(string.IsNullOrEmpty(app.SiteUrl) ? "#" : $"{app.SiteUrl}/renderengine/app/{app.Id}/index")" title="访问应用" target="_blank">&#x1F310;</a>
+                            <a class="h-link-icon" href="@(string.IsNullOrEmpty(app.SiteUrl) ? "#" : $"{app.SiteUrl}/app/{app.Id}/index")" title="访问应用" target="_blank">&#x1F310;</a>
                         </div>
                         <div>
                             <a class="h-link-icon" @onclick='() => EditApp(app.Id)' title="编辑">&#x270F;</a>

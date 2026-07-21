@@ -240,8 +240,10 @@ body {
 
 /* 组件网格 */
 .component-grid {
-    padding: 8px 6px;
-    overflow: hidden;
+    padding: 8px 10px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
 }
 
 /* 空状态 */
@@ -486,18 +488,24 @@ body {
 }
 
 /* ====================== 画布空态引导 ====================== */
-.designpage main:empty::before {
-    content: '从左侧拖拽组件到此处开始设计';
+.designpanel-empty-guide {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 8px;
     height: 100%;
+    min-height: 320px;
     color: #bbb;
     font-size: 15px;
     border: 2px dashed #d9d9d9;
     border-radius: 12px;
-    margin: 16px;
-    background: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.6);
+}
+
+.designpanel-empty-guide .guide-icon {
+    font-size: 40px;
+    opacity: 0.6;
 }
 
 /* ====================== 滚动条美化 ====================== */

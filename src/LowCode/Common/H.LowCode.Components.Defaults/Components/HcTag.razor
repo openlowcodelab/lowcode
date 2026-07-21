@@ -1,0 +1,10 @@
+@namespace H.LowCode.Components.Defaults
+
+<span class="hc-tag hc-tag-@Color" style="@Style">@Text@ChildContent</span>
+
+@code {
+    [Parameter] public string Text { get; set; } = "标签";
+    [Parameter] public string Color { get; set; } = "default";
+    [Parameter] public string Style { get; set; }
+    [Parameter] public RenderFragment ChildContent { get; set; }
+}

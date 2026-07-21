@@ -1,7 +1,7 @@
 using H.Account.Application;
 using H.Assistant.Application;
 using H.Approval.Application;
-using H.AutoTest.Application;
+using H.Testing.Application;
 using H.Enterprise.Application;
 using H.Enterprise.EntityFrameworkCore;
 using H.LowCode.ComponentBase;
@@ -52,8 +52,8 @@ namespace H.AppLab.Host.All;
     typeof(OrganizationApplicationModule),
     // Approval
     typeof(ApprovalApplicationModule),
-    // AutoTest
-    typeof(AutoTestApplicationModule),
+    // Testing
+    typeof(TestingApplicationModule),
     // Portal
     typeof(PortalApplicationModule),
     // SystemPortal
@@ -136,7 +136,7 @@ public class HostAllModule : AbpModule
             options.ConventionalControllers.Create(typeof(DesignEngineApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(RenderEngineApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(ApprovalApplicationModule).Assembly);
-            options.ConventionalControllers.Create(typeof(AutoTestApplicationModule).Assembly);
+            options.ConventionalControllers.Create(typeof(TestingApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(PortalApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(SystemPortalApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(NotificationApplicationModule).Assembly);

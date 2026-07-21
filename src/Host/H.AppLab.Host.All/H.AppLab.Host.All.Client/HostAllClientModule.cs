@@ -1,7 +1,7 @@
 using H.Account.Application.Contracts;
 using H.Approval.Application.Contracts;
 using H.Assistant.Application.Contracts;
-using H.AutoTest.Application.Contracts;
+using H.Testing.Application.Contracts;
 using H.Enterprise.Application.Contracts;
 using H.LowCode.Application.Contracts;
 using H.LowCode.ComponentBase;
@@ -33,7 +33,7 @@ public class HostAllClientModule : AbpModule
     public const string OrganizationRemoteServiceName = "Organization";
     public const string DesignEngineRemoteServiceName = "DesignEngine";
     public const string RenderEngineRemoteServiceName = "RenderEngine";
-    public const string AutoTestRemoteServiceName = "AutoTest";
+    public const string TestingRemoteServiceName = "Testing";
     public const string PortalRemoteServiceName = "Portal";
     public const string NotificationRemoteServiceName = "Notification";
     public const string OrderRemoteServiceName = "Order";
@@ -54,7 +54,7 @@ public class HostAllClientModule : AbpModule
         //应用状态
         context.Services.AddSingleton(new LowCodeAppState(true));
 
-        // AutoTest 测试执行事件通知器（WASM 端本地单例，避免 AppService 接口上的事件被 ABP ValidationInterceptor 反射崩溃）
+        // Testing 测试执行事件通知器（WASM 端本地单例，避免 AppService 接口上的事件被 ABP ValidationInterceptor 反射崩溃）
         context.Services.AddSingleton<ITestExecutionEventNotifier, TestExecutionEventNotifier>();
     }
 
@@ -101,8 +101,8 @@ public class HostAllClientModule : AbpModule
         );
 
         context.Services.AddHttpClientProxies(
-            typeof(AutoTestApplicationContractsModule).Assembly,
-            AutoTestRemoteServiceName
+            typeof(TestingApplicationContractsModule).Assembly,
+            TestingRemoteServiceName
         );
 
         context.Services.AddHttpClientProxies(

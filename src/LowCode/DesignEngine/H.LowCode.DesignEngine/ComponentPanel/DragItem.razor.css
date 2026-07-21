@@ -1,10 +1,6 @@
-﻿/* ================== DragItem 组件面板拖拽项 ==================== */
+﻿/* ================== DragItem 组件面板拖拽项（扁平简约） ==================== */
 .dragitem {
-    float: left;
-    width: calc(50% - 8px);
-    min-width: 90px;
-    height: 38px;
-    margin: 4px 6px 4px 2px;
+    height: 36px;
     cursor: grab;
     display: flex;
     justify-content: center;
@@ -14,7 +10,7 @@
     background-color: #fff;
     border: 1px solid #e8e8e8;
     border-radius: 6px;
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
     box-sizing: border-box;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -26,7 +22,7 @@
     border-color: #2f6feb;
     color: #2f6feb;
     background-color: #f0f5ff;
-    box-shadow: 0 2px 8px rgba(47, 111, 235, 0.12);
+    box-shadow: 0 2px 6px rgba(47, 111, 235, 0.12);
     transform: translateY(-1px);
 }
 
@@ -35,38 +31,3 @@
     transform: scale(0.97);
     box-shadow: 0 1px 4px rgba(47, 111, 235, 0.15);
 }
-/* ================== DragItem.razor ==================== */
-.dragitem {
-    float: left;
-    width: calc(50% - 10px);
-    min-width: 90px;
-    height: 36px;
-    margin: 4px 8px 4px 0;
-    cursor: grab;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: #333;
-    font-size: 13px;
-    background-color: #fafafa;
-    border: 1px solid #e8e8e8;
-    border-radius: 4px;
-    transition: all 0.3s ease;
-    box-sizing: border-box;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-    .dragitem:hover {
-        border-color: #409eff;
-        color: #409eff;
-        background-color: #f0f7ff;
-        box-shadow: 0 2px 8px rgba(64, 158, 255, 0.15);
-        transform: translateY(-1px);
-    }
-
-    .dragitem:active {
-        cursor: grabbing;
-        transform: scale(0.98);
-    }

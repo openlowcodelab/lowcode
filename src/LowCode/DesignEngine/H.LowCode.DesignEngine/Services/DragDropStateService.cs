@@ -198,6 +198,7 @@ internal static class DragDropStateService
             {
                 child.DesignState.AnimationTransform = string.Empty;
                 child.DesignState.IsAnimating = false;
+                child.DesignState.ShowDropIndicator = false;
                 child.RefreshState();
             }
         }

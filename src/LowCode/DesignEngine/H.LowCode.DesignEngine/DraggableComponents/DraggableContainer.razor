@@ -13,6 +13,14 @@
         <DraggableItem Component="comp" IsInRootContainer="@IsRootContainer" OnItemClick="OnItemClick" OnItemDelete="OnItemDelete" OnItemCopy="OnItemCopy" />
     }
 
+    @if (IsRootContainer && (ContainerComponent.Childrens == null || ContainerComponent.Childrens.Count == 0))
+    {
+        <div class="designpanel-empty-guide">
+            <div class="guide-icon">➕</div>
+            <div>从左侧拖拽组件到此处开始设计</div>
+        </div>
+    }
+
 </div>
 
 @code {
@@ -255,6 +263,7 @@
             {
                 child.DesignState.AnimationTransform = string.Empty;
                 child.DesignState.IsAnimating = false;
+                child.DesignState.ShowDropIndicator = false;
                 child.RefreshState();
             }
         }

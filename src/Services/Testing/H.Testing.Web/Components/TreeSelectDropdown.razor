@@ -1,0 +1,74 @@
+@namespace H.Testing.Web
+
+<select class="h-select" style="width: 100%;" value="@((Value ?? SelectedValue)?.ToString() ?? string.Empty)" @onchange="OnValueChanged">
+    @if (ShowEmptyOption)
+    {
+        <option value="">@EmptyOptionText</option>
+    }
+    @foreach (var item in GetFlatItems())
+    {
+        <option value="@item.Id">@item.DisplayName</option>
+    }
+</select>
+
+@code {
+    [Parameter] public List<ProjectCaseCategory> Categories { get; set; } = new();
+    [Parameter] public long? Value { get; set; }
+    [Parameter] public EventCallback<long?> ValueChanged { get; set; }
+
+    [Parameter] public long? SelectedValue { get; set; }
+    [Parameter] public EventCallback<long?> SelectedValueChanged { get; set; }
+
+    [Parameter] public bool ShowEmptyOption { get; set; } = true;
+    [Parameter] public string EmptyOptionText { get; set; } = "无分类";
+    [Parameter] public string Placeholder { get; set; } = "请选择分类";
+
+    public class FlatCategoryItem
+    {
+        public long Id { get; set; }
+        public string DisplayName { get; set; } = string.Empty;
+    }
+
+    private List<FlatCategoryItem> GetFlatItems()
+    {
+        var items = new List<FlatCategoryItem>();
+        foreach (var root in Categories.OrderBy(c => c.Order))
+        {
+            AppendCategory(items, root, 0);
+        }
+        return items;
+    }
+
+    private void AppendCategory(List<FlatCategoryItem> items, ProjectCaseCategory category, int level)
+    {
+        var prefix = level == 0 ? string.Empty : new string('\u3000', level) + "└ ";
+        items.Add(new FlatCategoryItem
+        {
+            Id = category.Id,
+            DisplayName = prefix + category.Name
+        });
+        if (category.Childrens is { Length: > 0 })
+        {
+            foreach (var child in category.Childrens.OrderBy(c => c.Order))
+            {
+                AppendCategory(items, child, level + 1);
+            }
+        }
+    }
+
+    private async Task OnValueChanged(ChangeEventArgs e)
+    {
+        var newValue = e.Value?.ToString();
+        long? normalized = string.IsNullOrEmpty(newValue) ? null : (long.TryParse(newValue, out var v) ? v : null);
+        Value = normalized;
+        SelectedValue = normalized;
+        if (ValueChanged.HasDelegate)
+        {
+            await ValueChanged.InvokeAsync(normalized);
+        }
+        if (SelectedValueChanged.HasDelegate)
+        {
+            await SelectedValueChanged.InvokeAsync(normalized);
+        }
+    }
+}

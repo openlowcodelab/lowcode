@@ -24,6 +24,24 @@
     box-shadow: 0 2px 8px rgba(47, 111, 235, 0.15);
 }
 
+/* 拖拽放置指示: 顶部插入指示线 */
+.draggableitem-box.draggableitem-drop-target {
+    position: relative;
+}
+
+.draggableitem-box.draggableitem-drop-target::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: #2f6feb;
+    border-radius: 2px;
+    box-shadow: 0 0 6px rgba(47, 111, 235, 0.5);
+    z-index: 30;
+}
+
 .draggableitem-box-layout {
     height: auto;
 }

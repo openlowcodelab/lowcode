@@ -4,8 +4,6 @@
 
 @inject IJSRuntime JSRuntime
 
-<script src="@Assets["_content/H.LowCode.DesignEngineBase/js/elementUtils.js"]"></script>
-
 <div @ref="itemRef" class="draggableitem-box @DraggableItemBoxClassMapper"
     draggable="true"
      style="float:left;
@@ -69,7 +67,16 @@
     [Parameter]
     public Action<ComponentPartsSchema> OnItemCopy { get; set; }
 
-    private string DraggableItemBoxClassMapper => Component.DesignState.IsSelected ? "draggableitem-selected" : string.Empty;
+    private string DraggableItemBoxClassMapper
+    {
+        get
+        {
+            var cls = Component.DesignState.IsSelected ? "draggableitem-selected" : string.Empty;
+            if (Component.DesignState.ShowDropIndicator)
+                cls += " draggableitem-drop-target";
+            return cls;
+        }
+    }
     private string DraggableItemClassMapper => string.Empty;
 
     private ElementReference itemRef;
@@ -179,6 +186,7 @@
     {
         // 更新最后悬停目标，但避免全量重置以防频繁进出同一目标导致闪烁
         DragDropStateService.SetLastDragOverComponent(PageCascading.AppId, PageCascading.PageId, Component);
+        SetDropIndicator();
     }
 
     private void OnDragOver(DragEventArgs dragEventArgs)
@@ -210,6 +218,8 @@
             return;
 
         Component.DesignState.DragEffectStyle = string.Empty;
+        Component.DesignState.ShowDropIndicator = false;
+        Component.RefreshState();
 
         //清理让位动画
         //ClearSiblingAnimation();
@@ -226,6 +236,7 @@
         Component.DesignState.DragEffectStyle = string.Empty;
         Component.DesignState.AnimationTransform = string.Empty;
         Component.DesignState.IsAnimating = false;
+        Component.DesignState.ShowDropIndicator = false;
         //重置所有组件的动画状态
         ResetAllAnimationStates();
     }
@@ -282,6 +293,30 @@
 
     #region Animation Methods
     /// <summary>
+    /// 设置当前组件为放置指示目标，并清除其他兄弟组件的指示线
+    /// </summary>
+    private void SetDropIndicator()
+    {
+        var currentDragComponent = DragDropStateService.GetCurrentDragComponent(PageCascading.AppId, PageCascading.PageId);
+        if (ReferenceEquals(currentDragComponent, Component))
+            return;
+
+        var rootComponent = DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId);
+        if (rootComponent?.Childrens != null)
+        {
+            foreach (var child in rootComponent.Childrens)
+            {
+                var show = ReferenceEquals(child, Component);
+                if (child.DesignState.ShowDropIndicator != show)
+                {
+                    child.DesignState.ShowDropIndicator = show;
+                    child.RefreshState();
+                }
+            }
+        }
+    }
+
+    /// <summary>
     /// 重置所有组件的动画状态
     /// </summary>
     private void ResetAllAnimationStates()
@@ -293,6 +328,7 @@
             {
                 child.DesignState.AnimationTransform = string.Empty;
                 child.DesignState.IsAnimating = false;
+                child.DesignState.ShowDropIndicator = false;
                 child.RefreshState();
             }
         }

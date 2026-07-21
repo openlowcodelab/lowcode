@@ -253,3 +253,84 @@
 }
 .hc-placeholder-content { display: flex; align-items: center; gap: 8px; color: var(--hc-text-placeholder); font-size: 14px; }
 .hc-placeholder-icon { font-size: 20px; }
+
+/* ========================================
+ * Statistic 统计卡片
+ * ======================================== */
+.hc-statistic { padding: 4px 0; }
+.hc-statistic-title { color: var(--hc-text-secondary); font-size: 13px; margin-bottom: 6px; }
+.hc-statistic-content { display: flex; align-items: baseline; gap: 4px; }
+.hc-statistic-value { font-size: 26px; font-weight: 600; color: var(--hc-text); line-height: 1.2; }
+.hc-statistic-prefix, .hc-statistic-suffix { font-size: 14px; color: var(--hc-text-secondary); }
+
+/* ========================================
+ * Tag 标签
+ * ======================================== */
+.hc-tag {
+    display: inline-flex; align-items: center;
+    padding: 1px 8px; font-size: 12px; line-height: 20px;
+    border-radius: 4px; border: 1px solid transparent; white-space: nowrap;
+}
+.hc-tag-default { background: #f5f5f5; color: #595959; border-color: #d9d9d9; }
+.hc-tag-primary, .hc-tag-blue { background: #e8f0fe; color: #2f6feb; border-color: #adc6ff; }
+.hc-tag-success, .hc-tag-green { background: #eafbf0; color: #38a169; border-color: #b7eb8f; }
+.hc-tag-warning, .hc-tag-orange { background: #fff7e6; color: #d46b08; border-color: #ffd591; }
+.hc-tag-error, .hc-tag-red { background: #fff1f0; color: #e53e3e; border-color: #ffa39e; }
+
+/* ========================================
+ * Alert 提示条
+ * ======================================== */
+.hc-alert {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 8px 12px; border-radius: var(--hc-border-radius);
+    border: 1px solid transparent; font-size: 13px;
+}
+.hc-alert-icon {
+    flex: 0 0 auto; width: 16px; height: 16px; margin-top: 2px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 50%; font-size: 11px; font-weight: 700; color: #fff;
+}
+.hc-alert-content { flex: 1; }
+.hc-alert-message { font-weight: 500; }
+.hc-alert-description { color: var(--hc-text-secondary); margin-top: 2px; }
+.hc-alert-info { background: #e8f0fe; border-color: #adc6ff; color: #1a5bd6; }
+.hc-alert-info .hc-alert-icon { background: #2f6feb; }
+.hc-alert-success { background: #eafbf0; border-color: #b7eb8f; color: #237a45; }
+.hc-alert-success .hc-alert-icon { background: #38a169; }
+.hc-alert-warning { background: #fff7e6; border-color: #ffd591; color: #ad4e00; }
+.hc-alert-warning .hc-alert-icon { background: #d46b08; }
+.hc-alert-error { background: #fff1f0; border-color: #ffa39e; color: #cf1322; }
+.hc-alert-error .hc-alert-icon { background: #e53e3e; }
+
+/* ========================================
+ * Divider 分割线
+ * ======================================== */
+.hc-divider-horizontal { display: flex; align-items: center; margin: 12px 0; }
+.hc-divider-horizontal:not(.hc-divider-with-text) { border-top: 1px solid #ededed; height: 0; }
+.hc-divider-vertical { display: inline-block; height: 1em; margin: 0 8px; border-left: 1px solid #ededed; vertical-align: middle; }
+.hc-divider-with-text { color: var(--hc-text-secondary); font-size: 13px; }
+.hc-divider-with-text::before, .hc-divider-with-text::after { content: ''; flex: 1; border-top: 1px solid #ededed; }
+.hc-divider-with-text .hc-divider-text { padding: 0 12px; white-space: nowrap; }
+.hc-divider-left.hc-divider-with-text::before { flex: 0 0 24px; }
+.hc-divider-right.hc-divider-with-text::after { flex: 0 0 24px; }
+
+/* ========================================
+ * Descriptions 描述列表
+ * ======================================== */
+.hc-descriptions { width: 100%; }
+.hc-descriptions-title { font-weight: 600; font-size: 15px; color: var(--hc-text); margin-bottom: 12px; }
+.hc-descriptions-body { display: flex; flex-wrap: wrap; gap: 4px; }
+.hc-descriptions-bordered .hc-descriptions-body {
+    border: 1px solid #ededed; border-radius: var(--hc-border-radius);
+    padding: 12px; gap: 8px;
+}
+
+/* ========================================
+ * Radio / Checkbox 选项项（旧 AntDesign 数据兼容）
+ * ======================================== */
+.hc-radio-option, .hc-checkbox-option {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-right: 16px; font-size: 14px; color: var(--hc-text); cursor: pointer;
+}
+.hc-radio-option input, .hc-checkbox-option input { cursor: pointer; }
+.hc-radio-option-disabled, .hc-checkbox-option-disabled { color: var(--hc-text-placeholder); cursor: not-allowed; }
