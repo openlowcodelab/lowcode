@@ -105,8 +105,9 @@
         if (firstRender)
         {
             await UpdateDimensions();
-            //设置拖拽图像（自定义 DragImage）   -- 暂时屏蔽此逻辑，拖拽已改为跟随鼠标移动，无需设置拖拽图像
-            //try { await JSRuntime.InvokeVoidAsync("elementUtils.attachDragImage", itemRef, Component?.Label ?? "组件"); } catch { }
+            //设置拖拽图像（自定义 DragImage）：使用跟随鼠标的克隆覆盖层实现平滑跟手。
+            //改由 JS 在 requestAnimationFrame 中直接更新覆盖层 transform，避免通过 Blazor 逐个 drag 事件渲染带来的跟随延迟。
+            try { await JSRuntime.InvokeVoidAsync("elementUtils.attachDragImage", itemRef, Component?.Label ?? "组件"); } catch { }
             RegisterEventDispatcher();
         }
     }
@@ -170,8 +171,11 @@
 
     private void OnDragStart(DragEventArgs dragEventArgs)
     {
-        //标记正在拖拽中
-        isDragging = true;
+        //注意：此处不要立即设置 isDragging=true。
+        //isDragging 会改变被拖拽元素自身的 position/opacity/pointer-events 等内联样式，
+        //而在 dragstart 处理过程中同步改动拖拽源节点会导致浏览器立即取消原生拖拽
+        //（表现为 dragstart 后立刻触发 dragend，drag/dragover 均不触发，让位动画失效）。
+        //因此将 isDragging 的置位推迟到首个 drag 事件（此时原生拖拽已开始，改动源节点不会中断拖拽）。
         initialX = dragEventArgs.ClientX;
         initialY = dragEventArgs.ClientY;
         Console.WriteLine($"拖拽开始:{initialX}-{initialY}");
@@ -243,7 +247,11 @@
 
     private void OnDrag(DragEventArgs dragEventArgs)
     {
-        TriggerCurrentSiblingAnimation(dragEventArgs.ClientX, dragEventArgs.ClientY);
+        //原生拖拽已开始后再置位 isDragging，避免在 dragstart 阶段改动源节点导致拖拽被取消
+        //跟随鼠标的平滑动画由 JS 覆盖层（elementUtils.attachDragImage）处理，
+        //此处不再通过 Blazor 逐事件设置 transform（逐事件渲染会导致明显的跟随延迟）。
+        if (!isDragging)
+            isDragging = true;
     }
 
     private void OnMouseOver()
