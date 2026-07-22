@@ -12,6 +12,9 @@ public class DesignEngineJsonFileRepositoryModule : AbpModule
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         context.Services.AddScoped<IAppRepository, AppFileRepository>();
+        context.Services.AddScoped<IAppPublishRepository, AppPublishFileRepository>();
+        context.Services.AddScoped<IAppMemberRepository, AppMemberFileRepository>();
+        context.Services.AddScoped<IAppRoleRepository, AppRoleFileRepository>();
         context.Services.AddScoped<IMenuRepository, MenuFileRepository>();
         context.Services.AddScoped<IPageRepository, PageFileRepository>();
         context.Services.AddScoped<IDataSourceRepository, DataSourceFileRepository>();

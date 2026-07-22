@@ -4,9 +4,9 @@
 .menu-sidebar { width: 220px; background-color: #fff; border-right: 1px solid #e8e8e8; overflow-y: auto; padding: 10px 0; }
 .menu-list { list-style: none; margin: 0; padding: 0; }
 .menu-item { display: flex; align-items: center; padding: 12px 20px; cursor: pointer; transition: all 0.3s; color: #333; }
-.menu-item:hover { background-color: #f0f7ff; color: #1890ff; }
-.menu-item.active { background-color: #e6f7ff; color: #1890ff; border-right: 3px solid #1890ff; }
-.menu-icon { margin-right: 10px; font-size: 18px; width: 20px; text-align: center; }
+.menu-item:hover { background-color: var(--h-primary-soft, #f0f7ff); color: var(--h-primary, #1890ff); }
+.menu-item.active { background-color: var(--h-primary-soft, #e6f7ff); color: var(--h-primary, #1890ff); border-right: 3px solid var(--h-primary, #1890ff); }
+.menu-icon { margin-right: 10px; font-size: 17px; width: 20px; display: inline-flex; align-items: center; justify-content: center; }
 .menu-text { font-size: 14px; flex: 1; }
 .menu-arrow { font-size: 12px; transition: transform 0.2s; margin-left: 4px; }
 .menu-arrow.expanded { transform: rotate(90deg); }
@@ -110,7 +110,7 @@
         <li class="menu-item @(isActive ? "active" : "")"
             style="padding-left: @(paddingLeft)px"
             @onclick="() => HandleClick(item)">
-            <span class="menu-icon">@GetIcon(item.Icon)</span>
+            <span class="menu-icon">@MenuIcons.GetSvg(item.Icon)</span>
             <span class="menu-text">@item.Name</span>
             @if (hasChildren)
             {
@@ -167,27 +167,5 @@
             }
         }
         return false;
-    }
-
-    private string GetIcon(string? icon)
-    {
-        return icon switch
-        {
-            "home" => "🏠",
-            "appstore" => "⊞",
-            "api" => "🔌",
-            "cloud" => "☁",
-            "cloud-upload" => "☁",
-            "deployment-unit" => "🔧",
-            "question-circle" => "❓",
-            "profile" => "📋",
-            "menu" => "📝",
-            "database" => "🗄",
-            "setting" => "⚙",
-            "edit" => "✏",
-            "global" => "🌐",
-            "desktop" => "🖥",
-            _ => string.IsNullOrEmpty(icon) ? "📄" : icon
-        };
     }
 }

@@ -5,9 +5,75 @@
 
 <PageTitle>流程自动化</PageTitle>
 
-<h1>流程自动化</h1>
+<style>
+    .auto-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+    .auto-card { display: flex; flex-direction: column; }
+    .auto-head { display: flex; align-items: center; gap: 12px; }
+    .auto-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--h-primary-soft); color: var(--h-primary); flex-shrink: 0; }
+    .auto-icon svg { width: 22px; height: 22px; }
+    .auto-name { font-size: 15px; font-weight: 600; color: var(--h-text); }
+    .auto-body { color: var(--h-text-3); font-size: 13px; line-height: 1.6; margin: 12px 0 16px; flex: 1; }
+</style>
 
+<div class="page-header">
+    <div>
+        <h2 class="page-header-title">流程自动化</h2>
+        <div class="page-header-subtitle">通过触发器与动作编排，实现无人值守的业务自动化</div>
+    </div>
+    <button class="btn btn-primary" @onclick="CreateFlow">+ 新建自动化</button>
+</div>
+
+@if (_flows.Count == 0)
+{
+    <div class="auto-grid">
+        @foreach (var t in _templates)
+        {
+            <div class="card card-hoverable auto-card">
+                <div class="auto-head">
+                    <div class="auto-icon">@MenuIcons.GetSvg(t.Icon)</div>
+                    <div class="auto-name">@t.Name</div>
+                </div>
+                <div class="auto-body">@t.Description</div>
+                <button class="btn btn-sm btn-block" @onclick="CreateFlow">使用此模板</button>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <table class="data-table">
+        <thead>
+            <tr><th>名称</th><th>触发条件</th><th>状态</th><th>操作</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var f in _flows)
+            {
+                <tr>
+                    <td>@f.Name</td>
+                    <td>@f.Trigger</td>
+                    <td><span class="tag @(f.Enabled ? "tag-green" : "tag-default")">@(f.Enabled ? "运行中" : "已停用")</span></td>
+                    <td><button class="btn btn-sm btn-text" @onclick="() => f.Enabled = !f.Enabled">@(f.Enabled ? "停用" : "启用")</button></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
 
 @code {
+    private class FlowTemplate { public string Name { get; set; } public string Icon { get; set; } public string Description { get; set; } }
+    private class FlowItem { public string Name { get; set; } public string Trigger { get; set; } public bool Enabled { get; set; } }
 
+    private readonly List<FlowTemplate> _templates = new()
+    {
+        new() { Name = "定时任务", Icon = "tool", Description = "按固定周期（每天/每周/每月）自动执行数据处理或通知。" },
+        new() { Name = "数据触发器", Icon = "database", Description = "当数据表新增或更新时，自动触发后续动作。" },
+        new() { Name = "消息通知", Icon = "cloud", Description = "在指定事件发生时，向成员发送站内/邮件/短信通知。" }
+    };
+
+    private List<FlowItem> _flows = new();
+
+    private async Task CreateFlow()
+    {
+        await Message.InfoAsync("自动化流程编排器将在后续版本开放，敬请期待");
+    }
 }

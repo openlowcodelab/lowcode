@@ -64,4 +64,15 @@ public class AppFileRepository : FileRepositoryBase, IAppRepository
         var appSchema = appSchemaJson.FromJson<AppPartsSchema>();
         return await Task.FromResult(appSchema);
     }
+
+    public async Task DeleteAsync(string appId)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(appId);
+
+        var appDir = Path.Combine(_metaBaseDir, appId);
+        if (Directory.Exists(appDir))
+            Directory.Delete(appDir, recursive: true);
+
+        await Task.CompletedTask;
+    }
 }

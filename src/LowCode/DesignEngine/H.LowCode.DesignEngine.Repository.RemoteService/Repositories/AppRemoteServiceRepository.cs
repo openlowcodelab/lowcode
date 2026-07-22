@@ -28,4 +28,9 @@ public class AppRemoteServiceRepository : RemoteServiceRepositoryBase, IAppRepos
     {
         throw new NotImplementedException();
     }
+
+    public Task DeleteAsync(string appId)
+    {
+        throw new NotImplementedException();
+    }
 }

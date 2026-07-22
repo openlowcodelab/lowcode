@@ -3,11 +3,229 @@
 @inherits LowCodePageComponentBase
 @layout MyAppLayout
 
+@inject IAppApplicationService AppApplicationService
+@inject IPageAppService PageAppService
+
 <PageTitle>应用设置</PageTitle>
 
-<h1>应用设置</h1>
+<style>
+    .as-actions { display: flex; gap: 8px; margin-top: 8px; }
+    .as-platforms { display: flex; gap: 20px; }
+</style>
 
+<div class="page-header">
+    <div>
+        <h2 class="page-header-title">应用设置</h2>
+        <div class="page-header-subtitle">配置应用的基础信息、访问权限与外观主题</div>
+    </div>
+    <button class="btn btn-primary" @onclick="SaveAsync" disabled="@_saving">
+        @if (_saving) { <span class="btn-loading"></span> }
+        保存设置
+    </button>
+</div>
+
+@if (_app != null)
+{
+    <div class="settings-layout">
+        <div class="settings-nav">
+            <button class="settings-nav-item @(_section == "basic" ? "active" : "")" @onclick='() => _section = "basic"'>基础信息</button>
+            <button class="settings-nav-item @(_section == "access" ? "active" : "")" @onclick='() => _section = "access"'>访问控制</button>
+            <button class="settings-nav-item @(_section == "theme" ? "active" : "")" @onclick='() => _section = "theme"'>外观主题</button>
+            <button class="settings-nav-item @(_section == "danger" ? "active" : "")" @onclick='() => _section = "danger"'>危险操作</button>
+        </div>
+
+        <div class="settings-content">
+            @if (_section == "basic")
+            {
+                <div class="settings-section">
+                    <div class="settings-section-title">基础信息</div>
+                    <div class="settings-section-desc">应用的名称、描述与版本信息</div>
+
+                    <div class="form-item">
+                        <label>应用名称</label>
+                        <input class="inp" @bind="_app.Name" placeholder="请输入应用名称" />
+                    </div>
+                    <div class="form-item">
+                        <label>应用图标 / Logo</label>
+                        <input class="inp" @bind="_app.Icon" placeholder="图标地址 URL，如 /images/logo.png" />
+                        <div class="form-item-hint">留空则使用默认图标</div>
+                    </div>
+                    <div class="form-item">
+                        <label>应用描述</label>
+                        <textarea class="ta" rows="3" @bind="_app.Description" placeholder="一句话描述这个应用的用途"></textarea>
+                    </div>
+                    <div class="form-item">
+                        <label>版本号</label>
+                        <input class="inp" style="width:200px;" @bind="_app.Version" placeholder="如 1.0.0" />
+                    </div>
+                    <div class="form-item">
+                        <label>支持平台</label>
+                        <div class="as-platforms">
+                            <label class="chk-label">
+                                <input type="checkbox" checked="@HasPlatform(SupportPlatformEnum.Web)" @onchange="e => TogglePlatform(SupportPlatformEnum.Web, e)" /> Web
+                            </label>
+                            <label class="chk-label">
+                                <input type="checkbox" checked="@HasPlatform(SupportPlatformEnum.Mobile)" @onchange="e => TogglePlatform(SupportPlatformEnum.Mobile, e)" /> App
+                            </label>
+                            <label class="chk-label">
+                                <input type="checkbox" checked="@HasPlatform(SupportPlatformEnum.WXMiniApp)" @onchange="e => TogglePlatform(SupportPlatformEnum.WXMiniApp, e)" /> 小程序
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            }
+            else if (_section == "access")
+            {
+                <div class="settings-section">
+                    <div class="settings-section-title">访问控制</div>
+                    <div class="settings-section-desc">控制谁可以访问已发布的应用</div>
+
+                    <div class="form-item">
+                        <label>访问模式</label>
+                        <div class="radio-group radio-group-vertical">
+                            <label class="radio-label">
+                                <input type="radio" name="access" checked="@(_app.AccessMode == AppAccessModeEnum.Public)" @onchange="() => _app.AccessMode = AppAccessModeEnum.Public" />
+                                公开访问（任何人无需登录即可访问）
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="access" checked="@(_app.AccessMode == AppAccessModeEnum.LoginRequired)" @onchange="() => _app.AccessMode = AppAccessModeEnum.LoginRequired" />
+                                登录后可访问
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="access" checked="@(_app.AccessMode == AppAccessModeEnum.MemberOnly)" @onchange="() => _app.AccessMode = AppAccessModeEnum.MemberOnly" />
+                                仅应用成员可访问（在“成员权限”中管理成员）
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-item">
+                        <label>默认首页</label>
+                        <select class="sel" style="width:320px;" @bind="_app.HomePageId">
+                            <option value="">-- 未设置 --</option>
+                            @foreach (var p in _pages)
+                            {
+                                <option value="@p.PageId">@p.PageName</option>
+                            }
+                        </select>
+                        <div class="form-item-hint">用户访问应用时默认打开的页面</div>
+                    </div>
+                </div>
+            }
+            else if (_section == "theme")
+            {
+                <div class="settings-section">
+                    <div class="settings-section-title">外观主题</div>
+                    <div class="settings-section-desc">选择应用的主题主色</div>
+
+                    <div class="form-item">
+                        <label>主题主色</label>
+                        <div class="color-swatches">
+                            @foreach (var color in _presetColors)
+                            {
+                                <div class="color-swatch @(_app.ThemeColor == color ? "active" : "")"
+                                     style="background:@color" title="@color"
+                                     @onclick="() => _app.ThemeColor = color"></div>
+                            }
+                        </div>
+                        <div class="form-item-hint">当前：@(_app.ThemeColor ?? "默认 #2f6feb")</div>
+                    </div>
+                </div>
+            }
+            else if (_section == "danger")
+            {
+                <div class="settings-section danger-zone">
+                    <div class="settings-section-title">危险操作</div>
+                    <div class="settings-section-desc">以下操作不可恢复，请谨慎执行</div>
+
+                    <div class="form-item">
+                        <label>删除应用</label>
+                        <div class="form-item-hint">将永久删除该应用及其所有页面、菜单、数据源配置</div>
+                        <div class="as-actions">
+                            <button class="btn btn-danger" @onclick="() => _deleteVisible = true">删除此应用</button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+<HModal Title="删除应用" Visible="@_deleteVisible" OnOk="DeleteAsync" OnCancel="() => _deleteVisible = false">
+    <div class="alert alert-error">此操作将永久删除应用「@_app?.Name」及其全部配置，且无法恢复。</div>
+    <p>确认删除请点击「确定」。</p>
+</HModal>
 
 @code {
+    [PersistentState]
+    public AppPartsSchema _app { get; set; }
 
+    [PersistentState]
+    public List<PageListModel> _pages { get; set; } = new();
+
+    private string _section = "basic";
+    private bool _saving;
+    private bool _deleteVisible;
+
+    private readonly string[] _presetColors =
+    {
+        "#2f6feb", "#1890ff", "#722ed1", "#13c2c2", "#52c41a", "#fa8c16", "#eb2f96", "#f5222d"
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        _app = await AppApplicationService.GetByIdAsync(AppId);
+        _pages = await PageAppService.GetListAsync(AppId);
+    }
+
+    private bool HasPlatform(SupportPlatformEnum platform)
+    {
+        return _app.SupportPlatforms != null && _app.SupportPlatforms.Contains(platform);
+    }
+
+    private void TogglePlatform(SupportPlatformEnum platform, ChangeEventArgs e)
+    {
+        var set = new HashSet<SupportPlatformEnum>(_app.SupportPlatforms ?? Array.Empty<SupportPlatformEnum>());
+        if (e.Value is bool b && b)
+            set.Add(platform);
+        else
+            set.Remove(platform);
+        _app.SupportPlatforms = set.OrderBy(x => x).ToArray();
+    }
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        try
+        {
+            var isSuccess = await AppApplicationService.SaveAsync(_app);
+            if (isSuccess)
+                await Message.SuccessAsync("保存成功");
+            else
+                await Message.ErrorAsync("保存失败");
+        }
+        catch (Exception ex)
+        {
+            await Message.ErrorAsync(ex.Message);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private async Task DeleteAsync()
+    {
+        _deleteVisible = false;
+        try
+        {
+            await AppApplicationService.DeleteAsync(AppId);
+            await Message.SuccessAsync("应用已删除");
+            NavigateTo("/designengine/myapps", forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            await Message.ErrorAsync(ex.Message);
+        }
+    }
 }

@@ -7,12 +7,19 @@
 
 <PageTitle>页面管理</PageTitle>
 
-<div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
-    <div style="width:250px;">
-        <input type="search" class="inp" placeholder="页面名称" />
+<div class="page-header">
+    <div>
+        <h2 class="page-header-title">页面管理</h2>
+        <div class="page-header-subtitle">管理应用内的所有页面，支持表单、列表、报表等类型</div>
     </div>
-    <div style="width:80px; line-height:32px; margin: 0 8px 0 0;">
-        <button class="btn btn-primary" @onclick='() => CreateAsync(string.Empty)'>新建页面</button>
+    <button class="btn btn-primary" @onclick='() => CreateAsync(string.Empty)'>+ 新建页面</button>
+</div>
+
+<div class="toolbar">
+    <div class="toolbar-left">
+        <div style="width:250px;">
+            <input type="search" class="inp" placeholder="搜索页面名称" />
+        </div>
     </div>
 </div>
 
@@ -44,9 +51,9 @@
                 </td>
                 <td>
                     <div class="space">
-                        <a href="@($"/designengine/designer/{AppId}/{item.PageId}")" target="_blank" style="padding: 7px;border: solid #b7eb8f 1px;border-radius: 2px;line-height: 11px;height: 26px;display: block;background-color: #f6ffed;color: #389e0d;">设计</a>
-                        <a @onclick='() => EditAsync(item.PageId)'>编辑</a>
-                        <a @onclick='() => DeleteAsync(item.PageId)' style="color:#ff4d4f">删除</a>
+                        <a class="btn btn-sm" href="@($"/designengine/designer/{AppId}/{item.PageId}")" target="_blank">设计</a>
+                        <button class="btn btn-sm btn-text" @onclick='() => EditAsync(item.PageId)'>编辑</button>
+                        <button class="btn btn-sm btn-text btn-danger" @onclick='() => DeleteAsync(item.PageId)'>删除</button>
                     </div>
                 </td>
             </tr>

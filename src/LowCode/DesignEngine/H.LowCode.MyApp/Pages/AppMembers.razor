@@ -1,0 +1,273 @@
+﻿@page "/designengine/myapp/{AppId}/members"
+@namespace H.LowCode.MyApp
+@inherits LowCodePageComponentBase
+@layout MyAppLayout
+
+@inject IAppRbacAppService AppRbacAppService
+
+<PageTitle>成员权限</PageTitle>
+
+<div class="page-header">
+    <div>
+        <h2 class="page-header-title">成员权限</h2>
+        <div class="page-header-subtitle">管理应用成员及其角色权限</div>
+    </div>
+    @if (_tab == "member")
+    {
+        <button class="btn btn-primary" @onclick="CreateMember">+ 添加成员</button>
+    }
+    else
+    {
+        <button class="btn btn-primary" @onclick="CreateRole">+ 新建角色</button>
+    }
+</div>
+
+<div class="tabs-header">
+    <button class="tab-btn @(_tab == "member" ? "active" : "")" @onclick='() => _tab = "member"'>成员</button>
+    <button class="tab-btn @(_tab == "role" ? "active" : "")" @onclick='() => _tab = "role"'>角色</button>
+</div>
+
+@if (_tab == "member")
+{
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>用户名</th>
+                <th>用户ID</th>
+                <th>角色</th>
+                <th>加入时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (_members.Count == 0)
+            {
+                <tr><td colspan="5" class="empty-state">暂无成员，点击右上角添加</td></tr>
+            }
+            @foreach (var m in _members)
+            {
+                <tr>
+                    <td>@m.UserName</td>
+                    <td>@m.UserId</td>
+                    <td><span class="tag tag-blue">@GetRoleName(m.RoleKey)</span></td>
+                    <td>@m.JoinTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>
+                        <div class="space">
+                            <button class="btn btn-sm btn-text" @onclick="() => EditMember(m)">编辑</button>
+                            <button class="btn btn-sm btn-text btn-danger" @onclick="() => DeleteMemberAsync(m.Id)">移除</button>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>角色名称</th>
+                <th>标识</th>
+                <th>权限</th>
+                <th>说明</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var r in _roles)
+            {
+                <tr>
+                    <td>@r.Name @if (r.IsBuiltin) { <span class="tag tag-default">内置</span> }</td>
+                    <td>@r.Key</td>
+                    <td>
+                        @foreach (var p in r.Permissions)
+                        {
+                            <span class="tag" style="margin-right:4px;">@PermName(p)</span>
+                        }
+                    </td>
+                    <td>@r.Description</td>
+                    <td>
+                        <div class="space">
+                            <button class="btn btn-sm btn-text" @onclick="() => EditRole(r)">编辑</button>
+                            @if (!r.IsBuiltin)
+                            {
+                                <button class="btn btn-sm btn-text btn-danger" @onclick="() => DeleteRoleAsync(r.Key)">删除</button>
+                            }
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<HModal Title="成员" Visible="@_memberVisible" OnOk="SaveMemberAsync" OnCancel="() => _memberVisible = false">
+    <div class="form-item">
+        <label>用户名</label>
+        <input class="inp" @bind="_member.UserName" placeholder="请输入用户名" />
+    </div>
+    <div class="form-item">
+        <label>用户ID</label>
+        <input class="inp" @bind="_member.UserId" placeholder="请输入用户ID / 账号" />
+    </div>
+    <div class="form-item">
+        <label>角色</label>
+        <select class="sel" @bind="_member.RoleKey">
+            @foreach (var r in _roles)
+            {
+                <option value="@r.Key">@r.Name</option>
+            }
+        </select>
+    </div>
+</HModal>
+
+<HModal Title="角色" Visible="@_roleVisible" OnOk="SaveRoleAsync" OnCancel="() => _roleVisible = false">
+    <div class="form-item">
+        <label>角色名称</label>
+        <input class="inp" @bind="_role.Name" placeholder="请输入角色名称" />
+    </div>
+    <div class="form-item">
+        <label>角色标识</label>
+        <input class="inp" @bind="_role.Key" disabled="@_roleEditing" placeholder="英文标识，如 editor" />
+    </div>
+    <div class="form-item">
+        <label>说明</label>
+        <input class="inp" @bind="_role.Description" placeholder="角色说明" />
+    </div>
+    <div class="form-item">
+        <label>权限</label>
+        <div class="radio-group radio-group-vertical">
+            @foreach (var p in _allPermissions)
+            {
+                <label class="chk-label">
+                    <input type="checkbox" checked="@_role.Permissions.Contains(p.Key)" @onchange="e => TogglePerm(p.Key, e)" /> @p.Value
+                </label>
+            }
+        </div>
+    </div>
+</HModal>
+
+@code {
+    [PersistentState]
+    public List<AppMemberSchema> _members { get; set; } = new();
+
+    [PersistentState]
+    public List<AppRoleSchema> _roles { get; set; } = new();
+
+    private string _tab = "member";
+
+    private bool _memberVisible;
+    private AppMemberSchema _member = new();
+
+    private bool _roleVisible;
+    private bool _roleEditing;
+    private AppRoleSchema _role = new();
+
+    private readonly Dictionary<string, string> _allPermissions = new()
+    {
+        ["app.manage"] = "应用管理",
+        ["page.view"] = "页面查看",
+        ["data.read"] = "数据读取",
+        ["data.write"] = "数据写入"
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _roles = await AppRbacAppService.GetRolesAsync(AppId);
+        _members = await AppRbacAppService.GetMembersAsync(AppId);
+    }
+
+    private string GetRoleName(string key) => _roles.FirstOrDefault(t => t.Key == key)?.Name ?? key;
+
+    private string PermName(string key) => _allPermissions.GetValueOrDefault(key, key);
+
+    private void CreateMember()
+    {
+        _member = new AppMemberSchema { AppId = AppId, RoleKey = _roles.FirstOrDefault()?.Key };
+        _memberVisible = true;
+    }
+
+    private void EditMember(AppMemberSchema m)
+    {
+        _member = new AppMemberSchema { AppId = AppId, Id = m.Id, UserId = m.UserId, UserName = m.UserName, RoleKey = m.RoleKey, JoinTime = m.JoinTime };
+        _memberVisible = true;
+    }
+
+    private async Task SaveMemberAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_member.UserName))
+        {
+            await Message.WarningAsync("请填写用户名");
+            return;
+        }
+        await AppRbacAppService.SaveMemberAsync(_member);
+        _memberVisible = false;
+        await LoadAsync();
+        await Message.SuccessAsync("保存成功");
+    }
+
+    private async Task DeleteMemberAsync(string id)
+    {
+        await AppRbacAppService.DeleteMemberAsync(AppId, id);
+        await LoadAsync();
+        await Message.SuccessAsync("已移除");
+    }
+
+    private void CreateRole()
+    {
+        _role = new AppRoleSchema { AppId = AppId, Permissions = ["page.view"] };
+        _roleEditing = false;
+        _roleVisible = true;
+    }
+
+    private void EditRole(AppRoleSchema r)
+    {
+        _role = new AppRoleSchema { AppId = AppId, Key = r.Key, Name = r.Name, Description = r.Description, Permissions = [.. r.Permissions], IsBuiltin = r.IsBuiltin };
+        _roleEditing = true;
+        _roleVisible = true;
+    }
+
+    private void TogglePerm(string key, ChangeEventArgs e)
+    {
+        var set = new HashSet<string>(_role.Permissions ?? []);
+        if (e.Value is bool b && b)
+            set.Add(key);
+        else
+            set.Remove(key);
+        _role.Permissions = [.. set];
+    }
+
+    private async Task SaveRoleAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_role.Name) || string.IsNullOrWhiteSpace(_role.Key))
+        {
+            await Message.WarningAsync("请填写角色名称与标识");
+            return;
+        }
+        await AppRbacAppService.SaveRoleAsync(_role);
+        _roleVisible = false;
+        await LoadAsync();
+        await Message.SuccessAsync("保存成功");
+    }
+
+    private async Task DeleteRoleAsync(string key)
+    {
+        try
+        {
+            await AppRbacAppService.DeleteRoleAsync(AppId, key);
+            await LoadAsync();
+            await Message.SuccessAsync("已删除");
+        }
+        catch (Exception ex)
+        {
+            await Message.ErrorAsync(ex.Message);
+        }
+    }
+}

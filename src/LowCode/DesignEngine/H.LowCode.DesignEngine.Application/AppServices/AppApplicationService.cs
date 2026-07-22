@@ -30,7 +30,8 @@ public class AppApplicationService : ApplicationService, IAppApplicationService
             SiteUrl = _sites.FirstOrDefault(t => t.AppId.Equals(x.Id, StringComparison.OrdinalIgnoreCase))?.SiteUrl,
             Name = x.Name,
             Description = x.Description,
-            Order = x.Order
+            Order = x.Order,
+            PublishStatus = x.PublishStatus
         });
 
         return [.. apps.OrderBy(t => t.Order)];
@@ -52,6 +53,14 @@ public class AppApplicationService : ApplicationService, IAppApplicationService
         ArgumentException.ThrowIfNullOrEmpty(appSchema.Id);
 
         await _repository.SaveAsync(appSchema);
+        return true;
+    }
+
+    public async Task<bool> DeleteAsync(string appId)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(appId);
+
+        await _repository.DeleteAsync(appId);
         return true;
     }
 }

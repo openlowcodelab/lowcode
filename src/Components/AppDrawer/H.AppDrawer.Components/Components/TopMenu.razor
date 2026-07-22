@@ -3,9 +3,9 @@
 <style>
 .navbar-menu { display: flex; align-items: center; gap: 5px; flex: 1; }
 .menu-item-top { display: flex; align-items: center; height:44px; gap: 6px; padding: 8px 16px; cursor: pointer; transition: all 0.3s; color: #333; font-size: 14px; border-bottom: 2px solid transparent; }
-.menu-item-top:hover { color: #1890ff; border-bottom-color: #1890ff; }
-.menu-item-top.active { color: #1890ff; font-weight: 500; border-bottom-color: #1890ff; }
-.menu-icon-top { font-size: 16px; }
+.menu-item-top:hover { color: var(--h-primary, #1890ff); border-bottom-color: var(--h-primary, #1890ff); }
+.menu-item-top.active { color: var(--h-primary, #1890ff); font-weight: 500; border-bottom-color: var(--h-primary, #1890ff); }
+.menu-icon-top { font-size: 16px; display: inline-flex; align-items: center; }
 </style>
 
 @if (MenuItems != null && MenuItems.Any())
@@ -18,7 +18,7 @@
             <div class="menu-item-top @(isActive ? "active" : "")"
                  style="cursor: pointer;"
                  @onclick="() => NavigateToMenuItem(menuItem)">
-                <span class="menu-icon-top">@GetIcon(item.Icon)</span>
+                <span class="menu-icon-top">@MenuIcons.GetSvg(item.Icon)</span>
                 <span>@item.Name</span>
             </div>
         }
@@ -64,22 +64,5 @@
             await Task.Delay(10);
             NavigationManager.NavigateTo(item.Url, forceLoad: false);
         }
-    }
-
-    /// <summary>
-    /// 获取图标
-    /// </summary>
-    private string GetIcon(string? icon)
-    {
-        return icon switch
-        {
-            "home" => "🏠",
-            "appstore" => "⊞",
-            "api" => "🔌",
-            "cloud" => "☁",
-            "deployment-unit" => "🔧",
-            "question-circle" => "❓",
-            _ => string.IsNullOrEmpty(icon) ? "📄" : icon
-        };
     }
 }

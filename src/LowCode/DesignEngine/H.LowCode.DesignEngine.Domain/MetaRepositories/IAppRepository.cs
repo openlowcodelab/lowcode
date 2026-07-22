@@ -11,4 +11,6 @@ public interface IAppRepository
     Task<AppPartsSchema> GetAsync(string appId);
 
     Task SaveAsync(AppPartsSchema appSchema);
+
+    Task DeleteAsync(string appId);
 }

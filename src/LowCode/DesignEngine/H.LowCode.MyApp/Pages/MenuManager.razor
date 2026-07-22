@@ -36,12 +36,19 @@
     }
 </style>
 
-<div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
-    <div style="width:250px;">
-        <input type="search" class="inp" placeholder="菜单名称" />
+<div class="page-header">
+    <div>
+        <h2 class="page-header-title">菜单管理</h2>
+        <div class="page-header-subtitle">配置应用导航菜单与目录结构</div>
     </div>
-    <div style="width:80px; line-height:32px; margin: 0 8px 0 0;">
-        <button class="btn btn-primary" @onclick='() => CreateAsync(string.Empty)'>新建菜单</button>
+    <button class="btn btn-primary" @onclick='() => CreateAsync(string.Empty)'>+ 新建菜单</button>
+</div>
+
+<div class="toolbar">
+    <div class="toolbar-left">
+        <div style="width:250px;">
+            <input type="search" class="inp" placeholder="搜索菜单名称" />
+        </div>
     </div>
 </div>
 
