@@ -6,62 +6,74 @@
 
 <div class="componentpanel" style="padding-left:8px;">
     <div class="tabs-header" style="width:270px; padding:0px 4px;">
-        <button class='tab-btn @(_panelTabKey == "11" ? "tab-active" : "")' @onclick='() => _panelTabKey = "11"'>组件库</button>
-        <button class='tab-btn @(_panelTabKey == "12" ? "tab-active" : "")' @onclick='() => _panelTabKey = "12"'>页面库</button>
+        <button class='tab-btn tab-active'>组件库</button>
     </div>
-    @if (_panelTabKey == "11")
-    {
-        <div style="height:100%; overflow-y: auto; padding: 4px 0;">
-            @if (_componentPartsList != null)
+    <div style="padding: 4px 8px;">
+        <select class="sel" @bind="_selectedLibraryId" @bind:after="OnLibraryChanged">
+            @if (_componentLibraries != null)
             {
-                @foreach (var component in _componentPartsList)
+                @foreach (var lib in _componentLibraries)
                 {
-                    <DragItem Component="component"></DragItem>
+                    <option value="@lib.LibraryId">@lib.LibraryName</option>
                 }
             }
-        </div>
-    }
-    @if (_panelTabKey == "12")
-    {
-        <div style="height:100%; overflow-y: auto;">
-            @* @foreach (var pageTemplateProvider in PageTemplateProviders)
+        </select>
+    </div>
+    <div style="height:100%; overflow-y: auto; padding: 4px 0;">
+        @if (_componentPartsList != null && _componentPartsList.Count > 0)
+        {
+            @foreach (var component in _componentPartsList)
             {
-                <div style="display: inline-block; padding-bottom: 20px;">
-                    <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:5px 0;">@pageTemplateProvider.Label</div>
-                    @foreach (var component in pageTemplateProvider.LoadPageTemplate())
-                    {
-                        <DragItem Component="component"></DragItem>
-                    }
-                </div>
-            } *@
-        </div>
-    }
+                <DragItem Component="component"></DragItem>
+            }
+        }
+        else
+        {
+            <div style="padding: 12px; color:#999; font-size:12px;">该组件库暂无可用的原子组件</div>
+        }
+    </div>
 </div>
 
 @code {
-    [PersistentState]
-    public IList<ComponentPartsSchema> _componentPartsList { get; set; }
+    [CascadingParameter(Name = "partsCascading")]
+    public PartsCascadingModel PartsCascading { get; set; }
 
-    private string _panelTabKey = "11";
+    private IList<ComponentLibrarySchema> _componentLibraries { get; set; }
+
+    private IList<ComponentPartsSchema> _componentPartsList { get; set; }
+
+    private string _selectedLibraryId;
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
 
-        // _componentLibraries = await ComponentLibrariesState.GetOrAddAsync(this, async () =>
-        // {
-        //     return await LoadComponentLibraries();
-        // });
-        _componentPartsList = await LoadComponentPartsAsync();
+        _componentLibraries = await ComponentLibraryAppService.GetListAsync();
+
+        //默认选中当前设计上下文所在组件库（上下文库不存在时回退到第一个库）
+        var contextLibraryId = PartsCascading?.LibraryId;
+        _selectedLibraryId = (_componentLibraries?.Any(l => l.LibraryId == contextLibraryId) == true)
+            ? contextLibraryId
+            : _componentLibraries?.FirstOrDefault()?.LibraryId;
+
+        _componentPartsList = await LoadAtomicComponentsAsync(_selectedLibraryId);
     }
 
-    private async Task<IList<ComponentLibrarySchema>> LoadComponentLibraries()
+    private async Task OnLibraryChanged()
     {
-        return await ComponentLibraryAppService.GetListAsync();
+        _componentPartsList = await LoadAtomicComponentsAsync(_selectedLibraryId);
     }
 
-    private async Task<IList<ComponentPartsSchema>> LoadComponentPartsAsync()
+    /// <summary>
+    /// 加载指定组件库下已发布的原子组件（低代码组件由原子组件拼装而来）
+    /// </summary>
+    private async Task<IList<ComponentPartsSchema>> LoadAtomicComponentsAsync(string libraryId)
     {
-        return await ComponentPartsAppService.GetAllComponentsAsync("antdesign");
+        if (string.IsNullOrEmpty(libraryId))
+            return new List<ComponentPartsSchema>();
+
+        var allComponents = await ComponentPartsAppService.GetAllComponentsAsync(libraryId);
+        //仅原子组件（ComponentType==1），GetAllComponentsAsync 已过滤为已发布
+        return allComponents.Where(t => t.ComponentType == 1).ToList();
     }
 }

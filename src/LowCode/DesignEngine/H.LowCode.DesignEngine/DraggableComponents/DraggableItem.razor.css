@@ -1,7 +1,8 @@
 /* ================== DraggableItem 画布组件项样式 ================== */
 /* 默认边框 */
 .draggableitem-box {
-    height: 85px;
+    display: flex;
+    min-height: 85px;
     border: 1px solid transparent;
     border-radius: 6px;
     transition: all 0.2s ease;
@@ -18,9 +19,9 @@
     box-shadow: 0 2px 8px rgba(47, 111, 235, 0.12);
 }
 
-/* 选中: 实线边框 */
+/* 选中: 实线边框（宽度与 hover 保持一致，均为 1px） */
 .draggableitem-box.draggableitem-selected {
-    border: 2px solid #2f6feb;
+    border: 1px solid #2f6feb;
     box-shadow: 0 2px 8px rgba(47, 111, 235, 0.15);
 }
 
@@ -54,8 +55,13 @@
 .draggableitem {
     position: relative;
     display: flex;
+    align-items: center;
+    flex: 1 1 auto;
+    min-width: 0;
     height: 100%;
     margin: 0;
+    padding: 12px 18px 12px 8px;
+    box-sizing: border-box;
     border-radius: 6px;
     background-color: #ffffff;
     transform: translate3d(0, 0, 0);
@@ -72,11 +78,6 @@
 
 .draggableitem-component {
     padding: 30px 12px 8px 50px;
-}
-
-.draggableitem-selected {
-    outline: 2px solid #2f6feb;
-    outline-offset: -1px;
 }
 
 .draggableitem-border-top {
@@ -103,8 +104,9 @@
     font-size: 12px;
 }
 
-/* 选中时显示拖拽图标 */
-.draggableitem-selected .draggableitem-icon-move {
+/* hover 或选中时均显示拖拽图标 */
+.draggableitem-box:hover .draggableitem-icon-move,
+.draggableitem-box.draggableitem-selected .draggableitem-icon-move {
     display: flex;
 }
 
@@ -122,8 +124,9 @@
     border-radius: 6px 0 0 0;
 }
 
-/* hover 时显示删除/复制按钮 */
-.draggableitem-box:hover .draggableitem-pointer-wrapper {
+/* hover 或选中时均显示删除/复制按钮 */
+.draggableitem-box:hover .draggableitem-pointer-wrapper,
+.draggableitem-box.draggableitem-selected .draggableitem-pointer-wrapper {
     display: flex;
 }
 

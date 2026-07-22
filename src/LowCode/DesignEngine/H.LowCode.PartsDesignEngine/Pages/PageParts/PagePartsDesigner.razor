@@ -1,126 +1,156 @@
-﻿@page "/designengine/myparts/page/designer/{PartsId}"
+﻿@page "/designengine/myparts/page/designer/{TemplateId}"
 @namespace H.LowCode.PartsDesignEngine
 @inherits LowCodePageComponentBase
 @layout PartsDesignEngineLayout
 
-<PageTitle>@($"{_pageCascadingModel.PageName} - 页面物料设计器")</PageTitle>
+@inject IPageTemplateAppService PageTemplateAppService
 
-<CascadingValue Value="@_pageCascadingModel" Name="pageCascading">
-    <div class="designpage layout" style="padding:0 2px; background-color: #f7f7f7;">
-        <div class="layout-header" style="background-color: white; padding:0 20px; display: flex; align-items: center; justify-content: space-between;">
-            <div>
-                <a href="javascript:void(0)"> @("<") 返回 </a>
-            </div>
-            @*<div style="text-align:center;">
-            <Menu Theme="MenuTheme.Light" Mode="MenuMode.Horizontal" DefaultSelectedKeys=@(new[]{"2"})>
-            <MenuItem Key="1">PC</MenuItem>
-            <MenuItem Key="2">Mobile</MenuItem>
-            </Menu>
-            </div>*@
-            <div>
-                <button class="btn">预览</button>
-                <button class="btn btn-primary" @onclick="() => SavePagePartsSchemaAsync()">保存</button>
-            </div>
-        </div>
-        <div class="layout-body">
-            <div class="layout-sider" style="min-width: 200px; flex: auto; max-width: max-content;">
-                <ComponentPanel></ComponentPanel>
-            </div>
-            <div class="layout-main">
-                <div class="designpage layout-content">
-                    <PageDesignPanel @ref="_designPanel"></PageDesignPanel>
+<PageTitle>@($"{_partsCascading?.PartsName} - 页面物料设计器")</PageTitle>
+
+@if (_loading)
+{
+    <div style="display: flex; justify-content: center; align-items: center; height: 100vh;">
+        <div class="loading-spinner">加载中...</div>
+    </div>
+}
+else
+{
+    <CascadingValue Value="@_partsCascading" Name="partsCascading">
+        <div class="designpage layout" style="padding:0 2px; background-color: #f7f7f7;">
+            <div class="layout-header" style="background-color: white; padding:0 20px; display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                    <a href="javascript:void(0)" @onclick="GoBack"> @("<") 返回 </a>
+                </div>
+                <div style="text-align: center;">
+                    <h3 style="margin: 0; line-height: 64px;">页面物料设计器 - @_template?.Name</h3>
+                </div>
+                <div>
+                    <button class="btn btn-primary" @onclick="SavePageTemplateAsync" disabled="@_saving">保存</button>
                 </div>
             </div>
-            <div class="layout-sider designpage" style="flex: auto; max-width: max-content; min-width: 250px;">
-                <PartsSettingPanel></PartsSettingPanel>
+            <div class="layout-body">
+                <div class="layout-sider" style="min-width: 200px; flex: auto; max-width: max-content;">
+                    <ComponentPanel></ComponentPanel>
+                </div>
+                <div class="layout-main">
+                    <div class="designpage layout-content">
+                        <PageDesignPanel @ref="_designPanel"></PageDesignPanel>
+                    </div>
+                </div>
+                <div class="layout-sider designpage" style="flex: auto; max-width: max-content; min-width: 250px;">
+                    <PartsSettingPanel></PartsSettingPanel>
+                </div>
             </div>
         </div>
-    </div>
-</CascadingValue>
+    </CascadingValue>
+}
 
 @code
 {
     [Parameter]
-    public string PartsId { get; set; }
+    public string TemplateId { get; set; }
+
+    /// <summary>
+    /// 页面模板设计使用的虚拟组件库Id（用于拖拽状态服务 Key）
+    /// </summary>
+    private const string PageTemplateLibId = "__pagetpl__";
 
     private PageDesignPanel _designPanel;
 
-    private PagePartsSchema _partsSchema;
-    private PageCascadingModel _pageCascadingModel;
-    private bool _isNewPage;
+    private PartsCascadingModel _partsCascading;
+    private PageTemplateSchema _template;
+
+    private bool _loading = true;
+    private bool _saving = false;
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
 
-        _pageCascadingModel = new() { AppId = string.Empty, PageId = PartsId, PageName = "..." };
+        _partsCascading = new() { LibraryId = PageTemplateLibId, PartsId = TemplateId, PartsName = "..." };
 
-        _partsSchema = LoadPartsSchemaAsync();
-        SetPageModel(_partsSchema);
+        await LoadTemplateAsync();
     }
 
-    private PagePartsSchema LoadPartsSchemaAsync()
+    private async Task LoadTemplateAsync()
     {
-        if (string.Equals("newparts", PartsId))
+        try
         {
-            _isNewPage = true;
-            PartsId = ShortIdGenerator.Generate();
-            var newPage = new PagePartsSchema() { Id = PartsId, Name = "newparts" };
+            _loading = true;
+            StateHasChanged();
 
-            //DragDropStateService.SetPage(AppId, newPage);
-            return newPage;
-        }
-
-        PagePartsSchema pageParts = new();
-
-        if (_designPanel != null)
-        {
-            //DragDropStateService.SetPage(AppId, pageParts);
-            //_designPanel.Reload(pageParts);
-        }
-
-        return pageParts;
-    }
-
-    private async Task SavePagePartsSchemaAsync()
-    {
-        PagePartsSchema pageParts = CreatePagePartsSchema();
-        if (pageParts.Components.Count == 0)
-        {
-            await Message.WarningAsync("请先添加组件后再保存！");
-            return;
-        }
-
-        var isSuccess = true;
-        if (isSuccess)
-        {
-            if (_isNewPage)
+            _template = await PageTemplateAppService.GetByIdAsync(TemplateId);
+            if (_template == null)
             {
-                _isNewPage = false;
-                base.NavigateTo($"/designengine/designer/pageparts/{pageParts.Id}");
+                await Message.ErrorAsync("页面模板不存在！");
+                GoBack();
+                return;
             }
 
-            await Message.SuccessAsync("保存成功！");
+            _template.Components ??= new List<ComponentPartsSchema>();
+            _partsCascading.PartsName = _template.Name;
+
+            //将模板组件树装入拖拽状态服务的根容器（PageDesignPanel 初始化时会读取）
+            var rootComponent = new ComponentPartsSchema
+            {
+                Id = "root",
+                PartsId = "root",
+                Name = "root",
+                IsContainer = true,
+                Childrens = _template.Components
+            };
+            rootComponent.Refresh = StateHasChanged;
+            PartsDragDropStateService.SetRootComponent(PageTemplateLibId, TemplateId, rootComponent);
         }
-        else
+        catch (Exception ex)
         {
-            await Message.ErrorAsync("保存失败");
+            await Message.ErrorAsync($"加载页面模板失败: {ex.Message}");
+            GoBack();
+        }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
         }
     }
 
-    private PagePartsSchema CreatePagePartsSchema()
+    private async Task SavePageTemplateAsync()
     {
-        if (_partsSchema == null)
-            throw new NullReferenceException(nameof(_partsSchema));
+        if (_template == null) return;
 
-        //_partsSchema.Components = PartsDragDropStateService.GetRootComponent(_partsSchema.AppId, _partsSchema.Id).Childrens;
-        //_partsSchema.PageProperty = PartsDragDropStateService.GetGlobalPageProperty(AppId, PageId);
-        return _partsSchema;
+        try
+        {
+            _saving = true;
+            StateHasChanged();
+
+            var rootComponent = PartsDragDropStateService.GetRootComponent(PageTemplateLibId, TemplateId);
+            _template.Components = rootComponent?.Childrens ?? new List<ComponentPartsSchema>();
+
+            if (_template.Components.Count == 0)
+            {
+                await Message.WarningAsync("请先添加组件后再保存！");
+                return;
+            }
+
+            var success = await PageTemplateAppService.SaveAsync(_template);
+            if (success)
+                await Message.SuccessAsync("保存成功！");
+            else
+                await Message.ErrorAsync("保存失败！");
+        }
+        catch (Exception ex)
+        {
+            await Message.ErrorAsync($"保存失败: {ex.Message}");
+        }
+        finally
+        {
+            _saving = false;
+            StateHasChanged();
+        }
     }
 
-    private void SetPageModel(PagePartsSchema pageParts)
+    private void GoBack()
     {
-        _pageCascadingModel.PageName = pageParts.Name;
-        //_pageCascadingModel.PageLayout = pageParts.PageProperty.PageLayout;
+        NavigateTo("/designengine/myparts/pagelibraries");
     }
 }

@@ -6,12 +6,12 @@
 
 <div @ref="itemRef" class="draggableitem-box @DraggableItemBoxClassMapper"
     draggable="true"
-     style="float:left;
+     style="flex: 0 0 auto;
         width: @((Component.Style.ItemWidth > 4 ? Component.Style.ItemWidth : (IsInRootContainer ? 24/_pageLayout : 24)) / 24.0 * 100)%;
         min-height: @(Component.Style.ItemHeight)px;
         transform: @Component.DesignState.AnimationTransform;
-        will-change: @(Component.DesignState.IsAnimating ? "transform" : "auto");
-        transition: @(Component.DesignState.IsAnimating && !isDragging ? "transform 0.2s ease-out" : "none");
+        will-change: @(isDragging || Component.DesignState.IsAnimating ? "transform" : "auto");
+        transition: @(isDragging ? "none" : "transform 0.25s cubic-bezier(0.22, 0.61, 0.36, 1)");
         z-index: @(isDragging ? "9999" : "auto");
         position: @(isDragging ? "relative" : "static");
         opacity: @(isDragging ? "0.6" : "1");

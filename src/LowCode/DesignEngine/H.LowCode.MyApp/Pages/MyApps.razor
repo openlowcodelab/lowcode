@@ -4,6 +4,7 @@
 @layout WorkbenchNavLayout
 
 @inject IAppApplicationService AppApplicationService
+@inject IAppTemplateAppService AppTemplateAppService
 
 <PageTitle>我的应用 - H.LowCode</PageTitle>
 
@@ -72,6 +73,9 @@
                             <button class="icon-btn" @onclick='() => EditApp(app.Id)' title="编辑">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                             </button>
+                            <button class="icon-btn" @onclick='() => ShowSaveAsTemplate(app.Id, app.Name)' title="另存为模板">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                            </button>
                             <a class="icon-btn" href="@($"/designengine/myapp/{app.Id}/appsettings")" title="应用设置" target="_blank">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                             </a>
@@ -91,6 +95,19 @@
     <AppForm AppSchema="_currentApp" OnSubmit="ReloadApps" @ref="@_appForm"></AppForm>
 </HModal>
 
+<HModal Title="另存为应用模板" Visible="@_saveTemplateVisible" OnOk="OnSaveTemplateConfirm" OnCancel='() => _saveTemplateVisible = false'>
+    <div style="padding: 8px 16px;">
+        <div style="margin-bottom: 16px;">
+            <label style="display:block; margin-bottom:4px; font-weight:500;"><span style="color:red;">*</span> 模板名称</label>
+            <input class="inp" @bind="_templateName" placeholder="请输入模板名称" />
+        </div>
+        <div style="margin-bottom: 16px;">
+            <label style="display:block; margin-bottom:4px; font-weight:500;">模板描述</label>
+            <textarea class="ta" rows="3" @bind="_templateDescription" placeholder="请输入模板描述"></textarea>
+        </div>
+    </div>
+</HModal>
+
 @code {
     [PersistentState]
     public IList<AppListModel> _appList { get; set; }
@@ -100,6 +117,11 @@
     private bool _createVisible = false;
     private bool _editVisible = false;
     private AppForm _appForm;
+
+    private bool _saveTemplateVisible = false;
+    private string _templateSourceAppId = "";
+    private string _templateName = "";
+    private string _templateDescription = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -142,5 +164,34 @@
         _currentApp = await AppApplicationService.GetByIdAsync(id);
         _editVisible = true;
         StateHasChanged();
+    }
+
+    private void ShowSaveAsTemplate(string appId, string appName)
+    {
+        _templateSourceAppId = appId;
+        _templateName = $"{appName}-模板";
+        _templateDescription = string.Empty;
+        _saveTemplateVisible = true;
+        StateHasChanged();
+    }
+
+    private async Task OnSaveTemplateConfirm()
+    {
+        if (string.IsNullOrWhiteSpace(_templateName))
+        {
+            await Message.ErrorAsync("请输入模板名称");
+            return;
+        }
+
+        try
+        {
+            await AppTemplateAppService.SaveFromAppAsync(_templateSourceAppId, _templateName, _templateDescription);
+            _saveTemplateVisible = false;
+            await Message.SuccessAsync("已保存为应用模板！可在\"我的物料-应用模板\"中查看");
+        }
+        catch (Exception ex)
+        {
+            await Message.ErrorAsync($"保存模板失败：{ex.Message}");
+        }
     }
 }

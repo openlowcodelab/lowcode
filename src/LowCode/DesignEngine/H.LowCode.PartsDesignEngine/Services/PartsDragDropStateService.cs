@@ -93,7 +93,7 @@ internal static class PartsDragDropStateService
     public static DateTime GetLastDragOverTime(string libId, string partsId)
     {
         var stateSchema = GetStateSchema(libId, partsId);
-        if (stateSchema != null) return DateTime.Now;
+        if (stateSchema == null) return DateTime.Now;
         return stateSchema.LastDragOverTime;
     }
 

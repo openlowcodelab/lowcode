@@ -4,6 +4,7 @@
 @layout MyAppLayout
 
 @inject IPageAppService PageAppService
+@inject IPageTemplateAppService PageTemplateAppService
 
 <PageTitle>页面管理</PageTitle>
 
@@ -63,6 +64,29 @@
 
 <HModal Title="新建页面" Visible="@_visible" OnOk="OnConfirmAsync" OnCancel='() => _visible = false'>
     <form>
+        @if (_isNew)
+        {
+            <div class="form-item">
+                <label>创建方式</label>
+                <div class="radio-group">
+                    <label class="radio-label"><input type="radio" name="create-mode" checked='@(_createMode == "blank")' @onchange='() => _createMode = "blank"' /> 空白页面</label>
+                    <label class="radio-label"><input type="radio" name="create-mode" checked='@(_createMode == "template")' @onchange='() => _createMode = "template"' /> 从模板新建</label>
+                </div>
+            </div>
+            @if (_createMode == "template")
+            {
+                <div class="form-item">
+                    <label>选择模板</label>
+                    <select class="sel" @bind="_selectedTemplateId">
+                        <option value="">请选择页面模板</option>
+                        @foreach (var tpl in _templates)
+                        {
+                            <option value="@tpl.TemplateId">@tpl.Name</option>
+                        }
+                    </select>
+                </div>
+            }
+        }
         <div class="form-item">
             <label>页面名称</label>
             <input class="inp" @bind="_pageSchema.Name" />
@@ -99,6 +123,11 @@
     private bool _visible;
     private PagePartsSchema _pageSchema = new PagePartsSchema();
 
+    private bool _isNew;
+    private string _createMode = "blank";
+    private string _selectedTemplateId = "";
+    private IList<PageTemplateListModel> _templates = new List<PageTemplateListModel>();
+
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
@@ -117,17 +146,25 @@
         return await PageAppService.GetByIdAsync(AppId, pageId);
     }
 
-    private void CreateAsync(string parentId)
+    private async Task CreateAsync(string parentId)
     {
+        _isNew = true;
+        _createMode = "blank";
+        _selectedTemplateId = "";
         _pageSchema = new PagePartsSchema();
         _pageSchema.AppId = AppId;
-        _visible = true;
 
+        //加载已发布的页面模板供"从模板新建"使用
+        _templates = (await PageTemplateAppService.GetListAsync())
+            .Where(t => t.PublishStatus == 1).ToList();
+
+        _visible = true;
         StateHasChanged();
     }
 
     private async Task EditAsync(string id)
     {
+        _isNew = false;
         _pageSchema = await GetPageAsync(id);
         _visible = true;
 
@@ -143,10 +180,32 @@
 
     private async Task OnConfirmAsync()
     {
+        //从模板新建：克隆模板组件树（重新生成组件Id）到新页面
+        if (_isNew && _createMode == "template")
+        {
+            if (string.IsNullOrWhiteSpace(_selectedTemplateId))
+            {
+                await Message.WarningAsync("请选择一个页面模板");
+                return;
+            }
+
+            var template = await PageTemplateAppService.GetByIdAsync(_selectedTemplateId);
+            if (template != null)
+            {
+                _pageSchema.Components = template.Components?
+                    .Select(c => c.DeepClone())
+                    .ToList() ?? new List<ComponentPartsSchema>();
+                _pageSchema.PageProperty = template.PageProperty ?? _pageSchema.PageProperty;
+                if (_pageSchema.PageType == PageTypeEnum.Normal)
+                    _pageSchema.PageType = template.PageType;
+            }
+        }
+
         var isSuccess = await SavePageSchemaAsync();
         if (isSuccess)
         {
             _visible = false;
+            _pageList = await LoadPagesAsync(1, 50);
             await Message.SuccessAsync("保存成功！");
         }
         else

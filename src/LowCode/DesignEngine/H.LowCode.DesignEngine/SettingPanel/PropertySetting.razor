@@ -3,7 +3,7 @@
 @using H.LowCode.MetaSchema
 @using H.LowCode.MetaSchema.DesignEngine
 
-<div style="height:100%; overflow-y:auto">
+<div class="propertysetting-wrapper">
     @if (Component != null)
     {
         @* 基础属性 *@
@@ -16,8 +16,8 @@
         <ExtensionPropertyItem Component="@Component"></ExtensionPropertyItem>
 
         @*校验属性*@
-        <div style="border-left: 5px solid #d0d4da;padding: 0 0 0 8px; margin:30px 0 10px;">
-            校验设置
+        <div class="setting-group-title">
+            <span class="setting-group-title-icon">✓</span>校验设置
         </div>
         
         <div class="propertysetting-item">
@@ -27,7 +27,7 @@
 
         @if (_isValidationEnabled)
         {
-            <div style="border-left: 5px solid #1890ff; padding: 0 0 0 8px; margin: 20px 0 10px;">
+            <div class="setting-group-title setting-group-title-sub">
                 校验规则
             </div>
 

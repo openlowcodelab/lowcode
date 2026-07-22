@@ -11,10 +11,14 @@ body {
     height: 100%;
 }
 
-/* 拖拽容器：清除浮动，铺满宽度 */
+/* 拖拽容器：flex 换行布局，同一行组件等高对齐（避免短组件底部露出灰色画布） */
 .draggablecontainer {
     width: 100%;
     overflow-x: hidden;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    align-content: flex-start;
 }
 
 /* ====================== 设计器整体布局 ====================== */
@@ -346,6 +350,59 @@ body {
     border-bottom-color: #2f6feb;
 }
 
+/* 设置面板内容滚动区 */
+.settingpanel-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 4px 12px 24px;
+}
+
+.propertysetting-wrapper {
+    height: 100%;
+}
+
+/* ====================== 设置面板分组标题 ====================== */
+.setting-group-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1f2329;
+    margin: 22px 0 12px;
+    padding: 8px 12px;
+    background: linear-gradient(90deg, rgba(47, 111, 235, 0.09), rgba(47, 111, 235, 0.01));
+    border-left: 3px solid #2f6feb;
+    border-radius: 0 8px 8px 0;
+    letter-spacing: 0.3px;
+}
+
+/* 首个分组标题去除多余上边距 */
+.settingpanel-body > *:first-child .setting-group-title:first-child,
+.propertysetting-wrapper > .setting-group-title:first-child {
+    margin-top: 6px;
+}
+
+.setting-group-title-sub {
+    background: linear-gradient(90deg, rgba(24, 144, 255, 0.08), rgba(24, 144, 255, 0.01));
+    border-left-color: #1890ff;
+    font-weight: 500;
+}
+
+.setting-group-title-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    font-size: 11px;
+    color: #fff;
+    background: #2f6feb;
+    border-radius: 50%;
+    line-height: 1;
+}
+
 /* ====================== 属性表单 ====================== */
 .propertysetting-item {
     margin: 8px 16px 20px 12px;
@@ -501,6 +558,7 @@ body {
     border: 2px dashed #d9d9d9;
     border-radius: 12px;
     background: rgba(255, 255, 255, 0.6);
+    flex: 1 0 100%;
 }
 
 .designpanel-empty-guide .guide-icon {

@@ -21,6 +21,8 @@ public class DesignEngineJsonFileRepositoryModule : AbpModule
 
         context.Services.AddScoped<IComponentLibraryRepository, ComponentLibraryRepository>();
         context.Services.AddScoped<IComponentPartsRepository, ComponentPartsRepository>();
+        context.Services.AddScoped<IPageTemplateRepository, PageTemplateRepository>();
+        context.Services.AddScoped<IAppTemplateRepository, AppTemplateFileRepository>();
 
         var configuration = context.Services.GetConfiguration();
         context.Services.Configure<MetaOption>(configuration.GetSection(MetaOption.SectionName));
