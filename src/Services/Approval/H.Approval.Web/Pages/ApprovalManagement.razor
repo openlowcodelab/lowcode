@@ -11,7 +11,7 @@
     <h3 class="mgmt-title">表单管理</h3>
     <div class="mgmt-actions">
         <button class="h-btn" @onclick="OpenCreateCategory">新建分组</button>
-        <button class="h-btn h-btn-primary" @onclick="CreateNew">创建审批表单</button>
+        <button class="h-btn h-btn-primary" @onclick="OpenCreateDialog">创建审批表单</button>
     </div>
 </div>
 
@@ -110,6 +110,163 @@ else
     </div>
 }
 
+@if (showCreateDialog)
+{
+    <div class="mgmt-modal-overlay" @onclick="CloseCreateDialog"></div>
+    <div class="mgmt-create-modal">
+        @if (previewTemplate != null)
+        {
+            <div class="mgmt-create-header">
+                <h4><a class="mgmt-preview-back" @onclick="ClosePreview">‹ 返回</a></h4>
+                <button class="h-btn h-btn-ghost h-btn-sm" @onclick="CloseCreateDialog">&times;</button>
+            </div>
+
+            <div class="mgmt-preview-body">
+                <div class="mgmt-preview-head">
+                    <span class="mgmt-preview-icon">@(string.IsNullOrEmpty(previewTemplate.Icon) ? "📄" : previewTemplate.Icon)</span>
+                    <div>
+                        <div class="mgmt-preview-name">@previewTemplate.Name</div>
+                        @if (!string.IsNullOrWhiteSpace(previewTemplate.Description))
+                        {
+                            <div class="mgmt-preview-desc">@previewTemplate.Description</div>
+                        }
+                    </div>
+                </div>
+
+                @if (previewSteps.Any())
+                {
+                    <div class="mgmt-preview-section-title">审批流程</div>
+                    <div class="mgmt-preview-flow">
+                        @for (var i = 0; i < previewSteps.Count; i++)
+                        {
+                            <span class="mgmt-preview-flow-node">@previewSteps[i]</span>
+                            @if (i < previewSteps.Count - 1)
+                            {
+                                <span class="mgmt-preview-flow-arrow">→</span>
+                            }
+                        }
+                    </div>
+                }
+
+                <div class="mgmt-preview-section-title">表单字段</div>
+                <div class="mgmt-preview-form">
+                    @if (!previewSchema.Fields.Any())
+                    {
+                        <div class="mgmt-preview-empty">该模板暂无预置字段</div>
+                    }
+                    @foreach (var field in previewSchema.Fields)
+                    {
+                        @if (field.Type == FormFieldTypes.Description)
+                        {
+                            <div class="h-alert">@field.Label</div>
+                        }
+                        else
+                        {
+                            <div class="h-form-item">
+                                <label class="h-form-label">
+                                    @if (field.Required)
+                                    {
+                                        <span class="h-required">*</span>
+                                    }
+                                    @field.Label
+                                </label>
+                                <div class="h-form-control">
+                                    @if (field.Type == FormFieldTypes.Textarea)
+                                    {
+                                        <textarea class="h-textarea" rows="2" disabled placeholder="@Placeholder(field)"></textarea>
+                                    }
+                                    else if (field.Type == FormFieldTypes.Radio || field.Type == FormFieldTypes.Checkbox)
+                                    {
+                                        <div class="h-radio-group">
+                                            @foreach (var opt in field.Options)
+                                            {
+                                                <label class="h-radio-button mgmt-preview-opt">@opt</label>
+                                            }
+                                        </div>
+                                    }
+                                    else if (field.Type == FormFieldTypes.DateRange)
+                                    {
+                                        <div class="h-daterange">
+                                            <input class="h-input" type="date" disabled />
+                                            <span class="h-daterange-sep">至</span>
+                                            <input class="h-input" type="date" disabled />
+                                        </div>
+                                    }
+                                    else if (field.Type == FormFieldTypes.Date)
+                                    {
+                                        <input class="h-input" type="date" disabled />
+                                    }
+                                    else if (field.Type == FormFieldTypes.Number || field.Type == FormFieldTypes.Amount)
+                                    {
+                                        <input class="h-input" type="number" disabled placeholder="@Placeholder(field)" />
+                                    }
+                                    else
+                                    {
+                                        <input class="h-input" disabled placeholder="@Placeholder(field)" />
+                                    }
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+
+            <div class="mgmt-preview-footer">
+                <button class="h-btn" @onclick="ClosePreview">返回</button>
+                <button class="h-btn h-btn-primary" style="margin-left: 8px;" @onclick="() => CreateFromTemplate(previewTemplate.Id)">使用该模板</button>
+            </div>
+        }
+        else
+        {
+            <div class="mgmt-create-header">
+                <h4>创建审批表单</h4>
+                <button class="h-btn h-btn-ghost h-btn-sm" @onclick="CloseCreateDialog">&times;</button>
+            </div>
+
+            <div class="mgmt-template-body">
+                <div class="mgmt-template-group">
+                    <div class="mgmt-template-group-title">全新创建</div>
+                    <div class="mgmt-template-grid">
+                        <div class="mgmt-template-card mgmt-template-card-blank" @onclick="CreateBlank">
+                            <span class="mgmt-template-icon">➕</span>
+                            <span class="mgmt-template-name">全新创建</span>
+                            <span class="mgmt-template-desc">从空白表单开始自定义设计</span>
+                        </div>
+                    </div>
+                </div>
+
+                @if (isLoadingTemplates)
+                {
+                    <div class="h-spin"><span class="h-spin-dot"></span><span class="h-spin-text">加载模板中...</span></div>
+                }
+                else
+                {
+                    @foreach (var group in TemplateGroups)
+                    {
+                        <div class="mgmt-template-group">
+                            <div class="mgmt-template-group-title">@group.Key</div>
+                            <div class="mgmt-template-grid">
+                                @foreach (var tpl in group.Value)
+                                {
+                                    <div class="mgmt-template-card" @onclick="() => OpenPreview(tpl)">
+                                        <span class="mgmt-template-icon">@(string.IsNullOrEmpty(tpl.Icon) ? "📄" : tpl.Icon)</span>
+                                        <span class="mgmt-template-name">@tpl.Name</span>
+                                        <span class="mgmt-template-desc">@tpl.Description</span>
+                                        <div class="mgmt-template-card-actions">
+                                            <a class="mgmt-template-preview-btn" @onclick="() => OpenPreview(tpl)" @onclick:stopPropagation="true">预览</a>
+                                            <a class="mgmt-template-use-btn" @onclick="() => CreateFromTemplate(tpl.Id)" @onclick:stopPropagation="true">使用</a>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        }
+    </div>
+}
+
 @code {
     private const string UncategorizedName = "其他";
 
@@ -122,6 +279,14 @@ else
     private string? categoryEditId;
     private string categoryName = string.Empty;
     private bool isSavingCategory;
+
+    private bool showCreateDialog;
+    private List<ApprovalTemplateDto> templates = new();
+    private bool isLoadingTemplates;
+
+    private ApprovalTemplateDto? previewTemplate;
+    private FormSchema previewSchema = new();
+    private List<string> previewSteps = new();
 
     private List<KeyValuePair<string, List<ApprovalDefinitionDto>>> Groups
     {
@@ -190,10 +355,93 @@ else
         }
     }
 
-    private void CreateNew()
+    private async Task OpenCreateDialog()
     {
-        Nav.NavigateTo($"/approval/designer/_new");
+        showCreateDialog = true;
+        if (templates.Count == 0)
+        {
+            isLoadingTemplates = true;
+            try
+            {
+                templates = await DefinitionService.GetTemplatesAsync();
+            }
+            catch (Exception ex)
+            {
+                await JS.InvokeVoidAsync("alert", $"加载模板失败: {ex.Message}");
+                templates = new List<ApprovalTemplateDto>();
+            }
+            finally
+            {
+                isLoadingTemplates = false;
+            }
+        }
     }
+
+    private void CloseCreateDialog()
+    {
+        showCreateDialog = false;
+        previewTemplate = null;
+    }
+
+    private void OpenPreview(ApprovalTemplateDto tpl)
+    {
+        previewTemplate = tpl;
+        previewSchema = FormSchema.Parse(tpl.FormJson);
+        previewSteps = GetFlowSteps(tpl.DefinitionJson);
+    }
+
+    private void ClosePreview()
+    {
+        previewTemplate = null;
+    }
+
+    private static string Placeholder(FormFieldModel field)
+        => string.IsNullOrEmpty(field.Placeholder) ? "请输入" : field.Placeholder;
+
+    private static List<string> GetFlowSteps(string definitionJson)
+    {
+        var steps = new List<string>();
+        try
+        {
+            var node = NodeSerializer.Deserialize(definitionJson);
+            while (node != null)
+            {
+                if (!string.IsNullOrWhiteSpace(node.NodeName))
+                {
+                    steps.Add(node.NodeName);
+                }
+                node = node.ChildNodes.FirstOrDefault();
+            }
+        }
+        catch
+        {
+            // 忽略解析异常，预览仅作展示
+        }
+        steps.Add("结束");
+        return steps;
+    }
+
+    private void CreateBlank()
+    {
+        showCreateDialog = false;
+        Nav.NavigateTo("/approval/designer/_new");
+    }
+
+    private void CreateFromTemplate(string templateId)
+    {
+        showCreateDialog = false;
+        Nav.NavigateTo($"/approval/designer/_new?template={Uri.EscapeDataString(templateId)}");
+    }
+
+    private List<KeyValuePair<string, List<ApprovalTemplateDto>>> TemplateGroups
+        => templates
+            .GroupBy(t => string.IsNullOrWhiteSpace(t.CategoryName) ? UncategorizedName : t.CategoryName!)
+            .OrderBy(g => g.Min(t => t.CategorySort))
+            .ThenBy(g => g.Key)
+            .Select(g => new KeyValuePair<string, List<ApprovalTemplateDto>>(
+                g.Key,
+                g.OrderBy(t => t.Sort).ThenBy(t => t.Name).ToList()))
+            .ToList();
 
     private void Edit(string id)
     {

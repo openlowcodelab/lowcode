@@ -1,0 +1,116 @@
+{
+  "categories": [
+    {
+      "name": "报销",
+      "sort": 1,
+      "templates": [
+        {
+          "id": "expense-reimburse",
+          "name": "费用报销",
+          "icon": "💰",
+          "sort": 1,
+          "description": "员工日常费用报销申请",
+          "fields": [
+            { "id": "fld_extype", "type": "radio", "label": "报销类型", "required": true, "options": [ "差旅费", "办公用品", "招待费", "其它" ] },
+            { "id": "fld_examount", "type": "amount", "label": "报销金额", "required": true, "placeholder": "请输入报销金额" },
+            { "id": "fld_exdetail", "type": "textarea", "label": "费用明细", "placeholder": "请填写费用明细" },
+            { "id": "fld_exremark", "type": "input", "label": "备注", "placeholder": "选填" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "出勤休假",
+      "sort": 2,
+      "templates": [
+        {
+          "id": "leave",
+          "name": "请假",
+          "icon": "🌴",
+          "sort": 1,
+          "description": "请假申请(自动计算请假天数)",
+          "fields": [
+            { "id": "fld_leavetype", "type": "radio", "label": "请假类型", "required": true, "options": [ "年假", "事假", "病假", "调休", "婚假", "产假", "陪产假", "丧假" ] },
+            { "id": "fld_leavetime", "type": "daterange", "label": "请假时间", "required": true },
+            { "id": "fld_leavereason", "type": "textarea", "label": "请假事由", "required": true, "placeholder": "请填写请假事由" }
+          ]
+        },
+        {
+          "id": "business-trip",
+          "name": "出差",
+          "icon": "✈️",
+          "sort": 2,
+          "description": "出差申请(自动计算出差天数)",
+          "fields": [
+            { "id": "fld_tripplace", "type": "input", "label": "出差地点", "required": true, "placeholder": "请输入出差地点" },
+            { "id": "fld_triptime", "type": "daterange", "label": "出差时间", "required": true },
+            { "id": "fld_tripvehicle", "type": "radio", "label": "交通工具", "options": [ "飞机", "高铁", "汽车", "其它" ] },
+            { "id": "fld_tripreason", "type": "textarea", "label": "出差事由", "placeholder": "请填写出差事由" }
+          ]
+        },
+        {
+          "id": "go-out",
+          "name": "外出",
+          "icon": "🚶",
+          "sort": 3,
+          "description": "工作时间外出申请",
+          "fields": [
+            { "id": "fld_outtime", "type": "daterange", "label": "外出时间", "required": true },
+            { "id": "fld_outreason", "type": "textarea", "label": "外出事由", "required": true, "placeholder": "请填写外出事由" }
+          ]
+        },
+        {
+          "id": "clock-fix",
+          "name": "补卡",
+          "icon": "🔄",
+          "sort": 4,
+          "description": "漏打卡补卡申请",
+          "fields": [
+            { "id": "fld_fixdate", "type": "date", "label": "补卡日期", "required": true },
+            { "id": "fld_fixperiod", "type": "radio", "label": "补卡时段", "required": true, "options": [ "上班", "下班" ] },
+            { "id": "fld_fixreason", "type": "textarea", "label": "补卡原因", "required": true, "placeholder": "请填写补卡原因" }
+          ]
+        },
+        {
+          "id": "overtime",
+          "name": "加班",
+          "icon": "⏰",
+          "sort": 5,
+          "description": "加班申请",
+          "fields": [
+            { "id": "fld_ottime", "type": "daterange", "label": "加班时间", "required": true },
+            { "id": "fld_otreason", "type": "textarea", "label": "加班事由", "required": true, "placeholder": "请填写加班事由" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "其它",
+      "sort": 3,
+      "templates": [
+        {
+          "id": "goods-requisition",
+          "name": "物品领用",
+          "icon": "📦",
+          "sort": 1,
+          "description": "办公物品领用申请",
+          "fields": [
+            { "id": "fld_goodsname", "type": "input", "label": "领用物品", "required": true, "placeholder": "请输入领用物品名称" },
+            { "id": "fld_goodsqty", "type": "number", "label": "领用数量", "required": true, "placeholder": "请输入数量" },
+            { "id": "fld_goodsuse", "type": "textarea", "label": "领用用途", "placeholder": "请填写领用用途" }
+          ]
+        },
+        {
+          "id": "general-approval",
+          "name": "通用审批",
+          "icon": "📝",
+          "sort": 2,
+          "description": "通用事项审批",
+          "fields": [
+            { "id": "fld_genitem", "type": "textarea", "label": "审批事项", "required": true, "placeholder": "请填写需要审批的事项" }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -3,7 +3,7 @@ using H.Approval.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Volo.Abp.Application.Services;
 
-namespace H.Approval.Application.Services;
+namespace H.Approval.Application;
 
 /// <summary>
 /// 审批定义应用服务
@@ -12,13 +12,16 @@ public class ApprovalDefinitionAppService : ApplicationService, IApprovalDefinit
 {
     private readonly ILogger<ApprovalDefinitionAppService> _logger;
     private readonly IApprovalDefinitionRepository _definitionRepository;
+    private readonly ApprovalTemplateProvider _templateProvider;
 
     public ApprovalDefinitionAppService(
         ILogger<ApprovalDefinitionAppService> logger,
-        IApprovalDefinitionRepository definitionRepository)
+        IApprovalDefinitionRepository definitionRepository,
+        ApprovalTemplateProvider templateProvider)
     {
         _logger = logger;
         _definitionRepository = definitionRepository;
+        _templateProvider = templateProvider;
     }
     
     public async Task<List<ApprovalDefinitionDto>> GetAllAsync()
@@ -122,6 +125,11 @@ public class ApprovalDefinitionAppService : ApplicationService, IApprovalDefinit
             
             _logger.LogInformation("审批定义已{Action}: Id={Id}", enabled ? "启用" : "禁用", id);
         }
+    }
+
+    public Task<List<ApprovalTemplateDto>> GetTemplatesAsync()
+    {
+        return Task.FromResult(_templateProvider.GetTemplates());
     }
     
     private static ApprovalDefinitionDto MapToDto(ApprovalDefinition entity)

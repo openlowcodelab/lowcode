@@ -36,4 +36,9 @@ public interface IApprovalDefinitionAppService : IApplicationService
     /// 启用/禁用审批定义
     /// </summary>
     Task ToggleEnabledAsync(string id, bool enabled);
+
+    /// <summary>
+    /// 获取预置审批模板(用于"从模板创建")
+    /// </summary>
+    Task<List<ApprovalTemplateDto>> GetTemplatesAsync();
 }

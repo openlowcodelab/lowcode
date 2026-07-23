@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
 
-namespace H.Approval.Application.Services;
+namespace H.Approval.Application;
 
 /// <summary>
 /// 审批分类(分组)应用服务

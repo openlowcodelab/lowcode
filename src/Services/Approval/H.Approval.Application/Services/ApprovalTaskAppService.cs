@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Volo.Abp.Application.Services;
 
-namespace H.Approval.Application.Services;
+namespace H.Approval.Application;
 
 /// <summary>
 /// 审批任务应用服务

@@ -4,7 +4,7 @@ using System.Text.Json;
 using H.Approval.Application.Contracts;
 using Microsoft.Extensions.Logging;
 
-namespace H.Approval.Application.Services;
+namespace H.Approval.Application;
 
 /// <summary>
 /// 审批工作流引擎(自包含,直接解释设计器产出的节点树JSON)

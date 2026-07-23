@@ -118,3 +118,251 @@
     margin-top: 16px;
     text-align: right;
 }
+
+/* ===== 创建方式 / 模板选择 ===== */
+.mgmt-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 1000;
+}
+
+.mgmt-create-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 720px;
+    max-width: calc(100vw - 32px);
+    max-height: calc(100vh - 64px);
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
+    z-index: 1001;
+    overflow-y: auto;
+    padding: 20px 24px 24px;
+}
+
+.mgmt-create-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.mgmt-create-header h4 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.mgmt-create-options {
+    display: flex;
+    gap: 16px;
+}
+
+.mgmt-create-option {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 28px 16px;
+    border: 1px solid #e5e6eb;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.mgmt-create-option:hover {
+    border-color: #3370ff;
+    box-shadow: 0 2px 8px rgba(51, 112, 255, 0.15);
+}
+
+.mgmt-create-option-icon {
+    font-size: 32px;
+}
+
+.mgmt-create-option-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1d2129;
+}
+
+.mgmt-create-option-desc {
+    font-size: 12px;
+    color: #86909c;
+    text-align: center;
+}
+
+.mgmt-create-back {
+    margin-bottom: 12px;
+}
+
+.mgmt-create-back a {
+    color: #3370ff;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.mgmt-template-group {
+    margin-bottom: 20px;
+}
+
+.mgmt-template-group-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #4e5969;
+    margin-bottom: 10px;
+}
+
+.mgmt-template-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.mgmt-template-card {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px;
+    border: 1px solid #e5e6eb;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.mgmt-template-card:hover {
+    border-color: #3370ff;
+    box-shadow: 0 2px 8px rgba(51, 112, 255, 0.15);
+}
+
+.mgmt-template-card-blank {
+    border-style: dashed;
+    border-color: #c9cdd4;
+}
+
+.mgmt-template-icon {
+    font-size: 22px;
+}
+
+.mgmt-template-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1d2129;
+}
+
+.mgmt-template-desc {
+    font-size: 12px;
+    color: #86909c;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mgmt-template-card-actions {
+    display: flex;
+    gap: 14px;
+    margin-top: 8px;
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+
+.mgmt-template-card:hover .mgmt-template-card-actions {
+    opacity: 1;
+}
+
+.mgmt-template-preview-btn,
+.mgmt-template-use-btn {
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.mgmt-template-preview-btn {
+    color: #4e5969;
+}
+
+.mgmt-template-use-btn {
+    color: #3370ff;
+}
+
+/* ===== 模板预览 ===== */
+.mgmt-preview-back {
+    color: #3370ff;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 400;
+}
+
+.mgmt-preview-body {
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.mgmt-preview-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f0f0f0;
+    margin-bottom: 12px;
+}
+
+.mgmt-preview-icon {
+    font-size: 28px;
+}
+
+.mgmt-preview-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1d2129;
+}
+
+.mgmt-preview-desc {
+    font-size: 12px;
+    color: #86909c;
+    margin-top: 2px;
+}
+
+.mgmt-preview-section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #4e5969;
+    margin: 16px 0 10px;
+}
+
+.mgmt-preview-flow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.mgmt-preview-flow-node {
+    padding: 4px 12px;
+    background: #f2f3f5;
+    border-radius: 14px;
+    font-size: 13px;
+    color: #1d2129;
+}
+
+.mgmt-preview-flow-arrow {
+    color: #c9cdd4;
+}
+
+.mgmt-preview-opt {
+    cursor: default;
+}
+
+.mgmt-preview-empty {
+    font-size: 13px;
+    color: #86909c;
+    padding: 8px 0;
+}
+
+.mgmt-preview-footer {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid #f0f0f0;
+    text-align: right;
+}
