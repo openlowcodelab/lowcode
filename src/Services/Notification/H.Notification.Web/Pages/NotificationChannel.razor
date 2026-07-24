@@ -1,0 +1,337 @@
+@page "/notification/channel"
+
+@layout NotificationLayout
+@using System.Text.Json
+@inject INotificationChannelAppService ChannelAppService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<h2>通知渠道配置</h2>
+<div style="margin-bottom:12px;">
+    <button class="h-btn h-btn-sm" @onclick="@(() => Nav.NavigateTo("/notification"))">← 返回通知业务</button>
+</div>
+
+<HCard>
+    <div class="h-toolbar">
+        <input type="text" @bind-value="@searchFilter" placeholder="搜索名称或编码" class="h-input" style="width: 250px;" />
+        <button class="h-btn h-btn-primary" @onclick="@LoadData">搜索</button>
+        <button class="h-btn h-btn-primary" @onclick="@ShowCreateDialog">新增渠道</button>
+        <button class="h-btn" @onclick="@LoadData">刷新</button>
+    </div>
+
+    <HTable Loading="@loading" ShowEmpty="@(!loading && !list.Any())">
+        <thead>
+            <tr>
+                <th>渠道名称</th>
+                <th>编码</th>
+                <th>类型</th>
+                <th>描述</th>
+                <th>状态</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in list)
+            {
+                <tr>
+                    <td>@item.Name</td>
+                    <td>@item.Code</td>
+                    <td><span class="h-tag h-tag-blue">@GetChannelName(item.ChannelType)</span></td>
+                    <td>@(item.Description ?? "-")</td>
+                    <td>
+                        @if (item.IsEnabled)
+                        {
+                            <span class="h-tag h-tag-green">启用</span>
+                        }
+                        else
+                        {
+                            <span class="h-tag h-tag-red">禁用</span>
+                        }
+                    </td>
+                    <td>
+                        <span class="h-space">
+                            <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => Edit(item))">编辑</button>
+                            <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => ConfirmDelete(item.Id))">删除</button>
+                        </span>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </HTable>
+</HCard>
+
+<HModal Title="@(isEdit ? "编辑渠道" : "新增渠道")" Visible="@showModal" OnOk="@Save" OnCancel="@Close" ConfirmLoading="@saving" Style="width:640px;">
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">渠道名称</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@current.Name" placeholder="请输入渠道名称" class="h-input" />
+        </div>
+    </div>
+    @if (!isEdit)
+    {
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">渠道编码</label>
+            <div class="h-form-control">
+                <input type="text" @bind-value="@current.Code" placeholder="请输入渠道编码" class="h-input" />
+            </div>
+        </div>
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">渠道类型</label>
+            <div class="h-form-control">
+                <select @bind="current.ChannelType" class="h-input">
+                    @foreach (NotificationChannelType type in Enum.GetValues(typeof(NotificationChannelType)))
+                    {
+                        <option value="@type">@GetChannelName(type)</option>
+                    }
+                </select>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">渠道类型</label>
+            <div class="h-form-control"><span class="h-tag h-tag-blue">@GetChannelName(current.ChannelType)</span></div>
+        </div>
+    }
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">描述</label>
+        <div class="h-form-control">
+            <textarea @bind="@current.Description" placeholder="请输入描述" rows="2" class="h-textarea"></textarea>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">启用</label>
+        <div class="h-form-control">
+            <label class="h-switch">
+                <input type="checkbox" @bind="@current.IsEnabled" />
+                <span class="h-switch-slider"></span>
+            </label>
+        </div>
+    </div>
+
+    <div class="h-divider" style="justify-content: flex-start;">渠道配置</div>
+
+    @if (current.ChannelType == NotificationChannelType.Email)
+    {
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">SMTP 主机</label>
+            <div class="h-form-control"><input type="text" @bind-value="@email.Host" placeholder="smtp.example.com" class="h-input" /></div>
+        </div>
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">端口</label>
+            <div class="h-form-control"><input type="number" @bind-value="@email.Port" class="h-input" style="width:120px;" /></div>
+        </div>
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">使用 SSL</label>
+            <div class="h-form-control">
+                <label class="h-switch"><input type="checkbox" @bind="@email.UseSsl" /><span class="h-switch-slider"></span></label>
+            </div>
+        </div>
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">用户名</label>
+            <div class="h-form-control"><input type="text" @bind-value="@email.UserName" class="h-input" /></div>
+        </div>
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">密码</label>
+            <div class="h-form-control"><input type="password" @bind-value="@email.Password" class="h-input" /></div>
+        </div>
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">发件邮箱</label>
+            <div class="h-form-control"><input type="text" @bind-value="@email.From" placeholder="noreply@example.com" class="h-input" /></div>
+        </div>
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">发件人名称</label>
+            <div class="h-form-control"><input type="text" @bind-value="@email.FromName" class="h-input" /></div>
+        </div>
+    }
+    else if (current.ChannelType == NotificationChannelType.Webhook)
+    {
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">自定义请求头</label>
+            <div class="h-form-control">
+                <textarea @bind="@rawConfig" placeholder='{"Headers":{"Authorization":"Bearer xxx"}}' rows="4" class="h-textarea"></textarea>
+            </div>
+        </div>
+    }
+    else if (current.ChannelType == NotificationChannelType.Sms)
+    {
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">网关配置(JSON)</label>
+            <div class="h-form-control">
+                <textarea @bind="@rawConfig" placeholder='{"accessKey":"","secret":"","sign":""}' rows="4" class="h-textarea"></textarea>
+            </div>
+        </div>
+        <div class="h-alert" style="background:#fffbe6;border:1px solid #ffe58f;color:#faad14;">
+            <span class="h-alert-icon">⚠</span>
+            <span>短信为桩实现，当前不会真实发送。</span>
+        </div>
+    }
+    else
+    {
+        <div class="h-alert" style="background:#e6f7ff;border:1px solid #91d5ff;color:#1890ff;">
+            <span class="h-alert-icon">ℹ</span>
+            <span>站内通知无需额外配置。</span>
+        </div>
+    }
+</HModal>
+
+@code {
+    private List<NotificationChannelDto> list = new();
+    private bool loading;
+    private bool saving;
+    private string searchFilter = string.Empty;
+
+    private bool showModal;
+    private bool isEdit;
+    private Guid? editId;
+    private CreateNotificationChannelDto current = new();
+
+    private EmailChannelConfigModel email = new();
+    private string rawConfig = string.Empty;
+
+    protected override async Task OnInitializedAsync() => await LoadData();
+
+    private async Task LoadData()
+    {
+        loading = true;
+        try
+        {
+            var result = await ChannelAppService.GetListAsync(new NotificationChannelQueryDto { MaxResultCount = 100, Filter = searchFilter });
+            list = result.Items.ToList();
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private void ShowCreateDialog()
+    {
+        current = new CreateNotificationChannelDto { IsEnabled = true, ChannelType = NotificationChannelType.InApp };
+        email = new EmailChannelConfigModel();
+        rawConfig = string.Empty;
+        isEdit = false;
+        editId = null;
+        showModal = true;
+    }
+
+    private void Edit(NotificationChannelDto item)
+    {
+        current = new CreateNotificationChannelDto
+        {
+            Name = item.Name,
+            Code = item.Code,
+            ChannelType = item.ChannelType,
+            Description = item.Description,
+            IsEnabled = item.IsEnabled,
+            ConfigJson = item.ConfigJson
+        };
+        email = new EmailChannelConfigModel();
+        rawConfig = item.ConfigJson ?? string.Empty;
+
+        if (item.ChannelType == NotificationChannelType.Email && !string.IsNullOrWhiteSpace(item.ConfigJson))
+        {
+            try
+            {
+                email = JsonSerializer.Deserialize<EmailChannelConfigModel>(item.ConfigJson,
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new EmailChannelConfigModel();
+            }
+            catch { }
+        }
+
+        isEdit = true;
+        editId = item.Id;
+        showModal = true;
+    }
+
+    private string? BuildConfigJson()
+    {
+        return current.ChannelType switch
+        {
+            NotificationChannelType.Email => JsonSerializer.Serialize(email),
+            NotificationChannelType.Webhook => string.IsNullOrWhiteSpace(rawConfig) ? null : rawConfig,
+            NotificationChannelType.Sms => string.IsNullOrWhiteSpace(rawConfig) ? null : rawConfig,
+            _ => null
+        };
+    }
+
+    private async Task Save()
+    {
+        saving = true;
+        try
+        {
+            var configJson = BuildConfigJson();
+            if (isEdit && editId.HasValue)
+            {
+                await ChannelAppService.UpdateAsync(editId.Value, new UpdateNotificationChannelDto
+                {
+                    Name = current.Name,
+                    Description = current.Description,
+                    IsEnabled = current.IsEnabled,
+                    ConfigJson = configJson
+                });
+            }
+            else
+            {
+                current.ConfigJson = configJson;
+                await ChannelAppService.CreateAsync(current);
+            }
+            await JS.InvokeVoidAsync("alert", $"渠道{(isEdit ? "更新" : "创建")}成功");
+            Close();
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}");
+        }
+        finally
+        {
+            saving = false;
+        }
+    }
+
+    private void Close()
+    {
+        showModal = false;
+        current = new CreateNotificationChannelDto();
+        editId = null;
+        isEdit = false;
+    }
+
+    private async Task ConfirmDelete(Guid id)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm", "确定要删除该渠道吗？");
+        if (!confirmed) return;
+        try
+        {
+            await ChannelAppService.DeleteAsync(id);
+            await JS.InvokeVoidAsync("alert", "删除成功");
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"删除失败：{ex.Message}");
+        }
+    }
+
+    private string GetChannelName(NotificationChannelType type) => type switch
+    {
+        NotificationChannelType.InApp => "站内信",
+        NotificationChannelType.Email => "邮件",
+        NotificationChannelType.Sms => "短信",
+        NotificationChannelType.Webhook => "Webhook",
+        _ => type.ToString()
+    };
+
+    public class EmailChannelConfigModel
+    {
+        public string? Host { get; set; }
+        public int Port { get; set; } = 587;
+        public bool UseSsl { get; set; } = true;
+        public string? UserName { get; set; }
+        public string? Password { get; set; }
+        public string? From { get; set; }
+        public string? FromName { get; set; }
+    }
+}

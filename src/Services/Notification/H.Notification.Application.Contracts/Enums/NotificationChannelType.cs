@@ -1,9 +1,9 @@
 namespace H.Notification.Application.Contracts;
 
 /// <summary>
-/// 通知方式类型
+/// 通知渠道类型
 /// </summary>
-public enum NotificationMethodType
+public enum NotificationChannelType
 {
     /// <summary>
     /// 站内通知

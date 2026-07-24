@@ -16,7 +16,10 @@ public class NotificationApplicationModule : AbpModule
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
         context.Services.AddHttpContextAccessor();
-        
+
+        // Webhook 渠道发送使用的 HttpClient
+        context.Services.AddHttpClient();
+
         Configure<AbpAutoMapperOptions>(options =>
         {
             options.AddMaps<NotificationApplicationModule>();

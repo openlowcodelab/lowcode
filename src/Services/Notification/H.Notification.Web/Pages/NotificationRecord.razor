@@ -1,0 +1,202 @@
+@page "/notification/record"
+
+@layout NotificationLayout
+@inject INotificationRecordAppService RecordAppService
+
+<h2>通知记录</h2>
+
+<div class="h-toolbar" style="margin-bottom:16px;">
+    <button class="h-btn @(activeTab == 0 ? "h-btn-primary" : "")" @onclick="@(() => SwitchTab(0))">通知事件</button>
+    <button class="h-btn @(activeTab == 1 ? "h-btn-primary" : "")" @onclick="@(() => SwitchTab(1))">站内信</button>
+    <button class="h-btn @(activeTab == 2 ? "h-btn-primary" : "")" @onclick="@(() => SwitchTab(2))">邮件</button>
+    <button class="h-btn @(activeTab == 3 ? "h-btn-primary" : "")" @onclick="@(() => SwitchTab(3))">短信</button>
+    <button class="h-btn @(activeTab == 4 ? "h-btn-primary" : "")" @onclick="@(() => SwitchTab(4))">Webhook</button>
+</div>
+
+<HCard>
+    <div class="h-toolbar">
+        @if (activeTab != 0)
+        {
+            <select @bind="statusFilter" class="h-input" style="width:150px;">
+                <option value="">全部状态</option>
+                @foreach (DeliveryStatus st in Enum.GetValues(typeof(DeliveryStatus)))
+                {
+                    <option value="@st">@GetStatusName(st)</option>
+                }
+            </select>
+            <input type="text" @bind-value="@channelFilter" placeholder="搜索联系人/地址" class="h-input" style="width:220px;" />
+        }
+        <button class="h-btn h-btn-primary" @onclick="@LoadCurrent">查询</button>
+    </div>
+
+    @if (activeTab == 0)
+    {
+        <HTable Loading="@loading" ShowEmpty="@(!loading && !master.Any())">
+            <thead>
+                <tr>
+                    <th>业务名称</th>
+                    <th>业务编码</th>
+                    <th>级别</th>
+                    <th>标题</th>
+                    <th>总数</th>
+                    <th>成功</th>
+                    <th>失败</th>
+                    <th>触发来源</th>
+                    <th>时间</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in master)
+                {
+                    <tr>
+                        <td>@(r.BusinessName ?? "-")</td>
+                        <td>@(r.BusinessCode ?? "-")</td>
+                        <td><span class="h-tag @LevelTagClass(r.Level)">@GetLevelName(r.Level)</span></td>
+                        <td>@(r.Title ?? "-")</td>
+                        <td>@r.TotalCount</td>
+                        <td style="color:#52c41a;">@r.SuccessCount</td>
+                        <td style="color:#f5222d;">@r.FailedCount</td>
+                        <td>@(r.TriggerSource ?? "-")</td>
+                        <td>@r.CreationTime.ToString("yyyy-MM-dd HH:mm")</td>
+                    </tr>
+                }
+            </tbody>
+        </HTable>
+    }
+    else
+    {
+        <HTable Loading="@loading" ShowEmpty="@(!loading && !channelRows.Any())">
+            <thead>
+                <tr>
+                    <th>业务</th>
+                    <th>级别</th>
+                    <th>联系人</th>
+                    <th>@AddressColumnName</th>
+                    <th>标题</th>
+                    <th>状态</th>
+                    @if (activeTab == 1)
+                    {
+                        <th>已读</th>
+                    }
+                    <th>时间</th>
+                    <th>错误</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in channelRows)
+                {
+                    <tr>
+                        <td>@(r.BusinessName ?? "-")</td>
+                        <td><span class="h-tag @LevelTagClass(r.Level)">@GetLevelName(r.Level)</span></td>
+                        <td>@(r.ContactName ?? "-")</td>
+                        <td>@(r.Address ?? "-")</td>
+                        <td>@(r.Title ?? "-")</td>
+                        <td><span class="h-tag @StatusTagClass(r.Status)">@GetStatusName(r.Status)</span></td>
+                        @if (activeTab == 1)
+                        {
+                            <td>@(r.IsRead ? "已读" : "未读")</td>
+                        }
+                        <td>@r.CreationTime.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td style="color:#f5222d;">@(r.ErrorMessage ?? "-")</td>
+                    </tr>
+                }
+            </tbody>
+        </HTable>
+    }
+</HCard>
+
+@code {
+    private int activeTab;
+    private bool loading;
+    private DeliveryStatus? statusFilter;
+    private string channelFilter = string.Empty;
+
+    private List<NotificationRecordDto> master = new();
+    private List<ChannelRow> channelRows = new();
+
+    private string AddressColumnName => activeTab switch
+    {
+        1 => "站内标识",
+        2 => "邮箱",
+        3 => "手机号",
+        4 => "Webhook",
+        _ => "地址"
+    };
+
+    protected override async Task OnInitializedAsync() => await LoadCurrent();
+
+    private async Task SwitchTab(int tab)
+    {
+        activeTab = tab;
+        statusFilter = null;
+        channelFilter = string.Empty;
+        await LoadCurrent();
+    }
+
+    private async Task LoadCurrent()
+    {
+        loading = true;
+        try
+        {
+            if (activeTab == 0)
+            {
+                var result = await RecordAppService.GetMasterListAsync(new NotificationRecordQueryDto { MaxResultCount = 100 });
+                master = result.Items.ToList();
+                return;
+            }
+
+            var query = new ChannelRecordQueryDto { MaxResultCount = 100, Status = statusFilter, Filter = channelFilter };
+            channelRows = activeTab switch
+            {
+                1 => (await RecordAppService.GetInAppListAsync(query)).Items
+                        .Select(x => new ChannelRow(x.BusinessName, x.Level, x.ContactName, x.TargetUserId, x.Title, x.Status, x.ErrorMessage, x.CreationTime, x.IsRead)).ToList(),
+                2 => (await RecordAppService.GetEmailListAsync(query)).Items
+                        .Select(x => new ChannelRow(x.BusinessName, x.Level, x.ContactName, x.ToAddress, x.Title, x.Status, x.ErrorMessage, x.CreationTime, false)).ToList(),
+                3 => (await RecordAppService.GetSmsListAsync(query)).Items
+                        .Select(x => new ChannelRow(x.BusinessName, x.Level, x.ContactName, x.Phone, x.Title, x.Status, x.ErrorMessage, x.CreationTime, false)).ToList(),
+                4 => (await RecordAppService.GetWebhookListAsync(query)).Items
+                        .Select(x => new ChannelRow(x.BusinessName, x.Level, x.ContactName, x.Url, x.Title, x.Status, x.ErrorMessage, x.CreationTime, false)).ToList(),
+                _ => new List<ChannelRow>()
+            };
+        }
+        finally { loading = false; }
+    }
+
+    private record ChannelRow(string? BusinessName, NotificationLevel Level, string? ContactName, string? Address, string? Title, DeliveryStatus Status, string? ErrorMessage, DateTime CreationTime, bool IsRead);
+
+    private string GetLevelName(NotificationLevel level) => level switch
+    {
+        NotificationLevel.Normal => "普通",
+        NotificationLevel.Important => "重要",
+        NotificationLevel.Urgent => "紧急",
+        NotificationLevel.Critical => "严重",
+        _ => level.ToString()
+    };
+
+    private string GetStatusName(DeliveryStatus status) => status switch
+    {
+        DeliveryStatus.Pending => "待发送",
+        DeliveryStatus.Sent => "已发送",
+        DeliveryStatus.Failed => "失败",
+        DeliveryStatus.Read => "已读",
+        _ => status.ToString()
+    };
+
+    private string StatusTagClass(DeliveryStatus status) => status switch
+    {
+        DeliveryStatus.Sent => "h-tag-green",
+        DeliveryStatus.Read => "h-tag-green",
+        DeliveryStatus.Failed => "h-tag-red",
+        DeliveryStatus.Pending => "h-tag-orange",
+        _ => ""
+    };
+
+    private string LevelTagClass(NotificationLevel level) => level switch
+    {
+        NotificationLevel.Normal => "",
+        NotificationLevel.Important => "h-tag-blue",
+        NotificationLevel.Urgent => "h-tag-orange",
+        NotificationLevel.Critical => "h-tag-red",
+        _ => ""
+    };
+}

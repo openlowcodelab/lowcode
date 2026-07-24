@@ -1,0 +1,724 @@
+@page "/notification"
+
+@layout NotificationLayout
+@inject INotificationBusinessAppService BusinessAppService
+@inject INotificationCategoryAppService CategoryAppService
+@inject IContactGroupAppService ContactGroupAppService
+@inject INotificationSendAppService SendAppService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<h2>通知业务</h2>
+
+<style>
+    .h-cat-item:hover { background:#f5f5f5; }
+    .h-cat-item.active { background:#e6f7ff; color:#1890ff; font-weight:600; }
+</style>
+
+<div style="display:flex;gap:16px;align-items:flex-start;">
+    <!-- 左侧分类目录 -->
+    <HCard Style="width:260px;flex-shrink:0;">
+        <div class="h-toolbar" style="justify-content:space-between;">
+            <strong>分类</strong>
+            <button class="h-btn h-btn-primary h-btn-sm" @onclick="@ShowCreateCategory">新增</button>
+        </div>
+        <ul class="h-cat-list" style="list-style:none;padding:0;margin:8px 0 0;">
+            <li class="@CatItemClass(null)" @onclick="@(() => SelectCategory(null))"
+                style="padding:8px 10px;border-radius:4px;cursor:pointer;">
+                全部业务
+            </li>
+            @foreach (var c in categories)
+            {
+                var cat = c;
+                <li class="@CatItemClass(cat.Id)" @onclick="@(() => SelectCategory(cat.Id))"
+                    style="padding:8px 10px;border-radius:4px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;">
+                    <span>
+                        @cat.Name
+                        <span style="color:#999;">(@cat.BusinessCount)</span>
+                        @if (!cat.IsEnabled)
+                        {
+                            <span class="h-tag h-tag-red" style="margin-left:4px;">禁用</span>
+                        }
+                    </span>
+                    <span class="h-space" @onclick:stopPropagation="true">
+                        <a href="javascript:void(0)" @onclick="@(() => EditCategory(cat))" style="color:#1890ff;">改</a>
+                        <a href="javascript:void(0)" @onclick="@(() => DeleteCategory(cat.Id))" style="color:#f5222d;">删</a>
+                    </span>
+                </li>
+            }
+        </ul>
+    </HCard>
+
+    <!-- 右侧业务列表 -->
+    <HCard Style="flex:1;">
+        <div class="h-toolbar">
+            <input type="text" @bind-value="@searchFilter" placeholder="搜索业务名称或编码" class="h-input" style="width: 220px;" />
+            <button class="h-btn h-btn-primary" @onclick="@LoadBusinesses">搜索</button>
+            <button class="h-btn h-btn-primary" @onclick="@ShowCreateBusiness">新增业务</button>
+            <button class="h-btn" @onclick="@(() => Nav.NavigateTo("/notification/channel"))">渠道配置</button>
+            <button class="h-btn" @onclick="@LoadBusinesses">刷新</button>
+        </div>
+
+        <HTable Loading="@loading" ShowEmpty="@(!loading && !businessList.Any())">
+            <thead>
+                <tr>
+                    <th>业务名称</th>
+                    <th>业务编码</th>
+                    <th>默认级别</th>
+                    <th>已配置渠道</th>
+                    <th>联系人组</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var b in businessList)
+                {
+                    <tr>
+                        <td>@b.BusinessName</td>
+                        <td>@b.BusinessCode</td>
+                        <td><span class="h-tag @LevelTagClass(b.DefaultLevel)">@GetLevelName(b.DefaultLevel)</span></td>
+                        <td>
+                            <span class="h-space">
+                                @foreach (var ch in b.ConfiguredChannels)
+                                {
+                                    <span class="h-tag h-tag-blue">@GetChannelName(ch)</span>
+                                }
+                                @if (!b.ConfiguredChannels.Any())
+                                {
+                                    <span class="h-tag">未配置</span>
+                                }
+                            </span>
+                        </td>
+                        <td>@b.GroupCount 组</td>
+                        <td>@(b.IsEnabled ? (MarkupString)"<span class=\"h-tag h-tag-green\">启用</span>" : (MarkupString)"<span class=\"h-tag h-tag-red\">禁用</span>")</td>
+                        <td>
+                            <span class="h-space">
+                                <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => EditBusiness(b))">编辑</button>
+                                <button class="h-btn h-btn-sm" @onclick="@(() => OpenSpecs(b))">通知规则</button>
+                                <button class="h-btn h-btn-sm" @onclick="@(() => OpenGroups(b))">联系人组</button>
+                                <button class="h-btn h-btn-sm" @onclick="@(() => OpenTestSend(b))">测试发送</button>
+                                <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => DeleteBusiness(b.Id))">删除</button>
+                            </span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </HTable>
+    </HCard>
+</div>
+
+@* ============ 分类弹窗 ============ *@
+<HModal Title="@(isCatEdit ? "编辑分类" : "新增分类")" Visible="@showCatModal" OnOk="@SaveCategory" OnCancel="@(() => showCatModal = false)" ConfirmLoading="@saving" Style="width:520px;">
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">分类名称</label>
+        <div class="h-form-control"><input type="text" @bind-value="@currentCat.Name" class="h-input" /></div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">描述</label>
+        <div class="h-form-control"><textarea @bind="@currentCat.Description" rows="2" class="h-textarea"></textarea></div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">排序</label>
+        <div class="h-form-control"><input type="number" @bind-value="@currentCat.Sort" class="h-input" style="width:120px;" /></div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">启用</label>
+        <div class="h-form-control"><label class="h-switch"><input type="checkbox" @bind="@currentCat.IsEnabled" /><span class="h-switch-slider"></span></label></div>
+    </div>
+</HModal>
+
+@* ============ 业务弹窗 ============ *@
+<HModal Title="@(isBizEdit ? "编辑通知业务" : "新增通知业务")" Visible="@showBizModal" OnOk="@SaveBusiness" OnCancel="@(() => showBizModal = false)" ConfirmLoading="@saving" Style="width:820px;">
+    <div class="h-toolbar" style="margin-bottom:16px;">
+        <button class="h-btn @(bizTab == 0 ? "h-btn-primary" : "")" @onclick="@(() => bizTab = 0)">基础信息</button>
+        <button class="h-btn @(bizTab == 1 ? "h-btn-primary" : "")" @onclick="@(() => bizTab = 1)">模板</button>
+    </div>
+
+    @if (bizTab == 0)
+    {
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">所属分类</label>
+            <div class="h-form-control">
+                @if (isBizEdit)
+                {
+                    <span>@(categories.FirstOrDefault(c => c.Id == currentBiz.CategoryId)?.Name ?? currentBiz.CategoryId.ToString())</span>
+                }
+                else
+                {
+                    <select @bind="currentBiz.CategoryId" class="h-input">
+                        @foreach (var c in categories)
+                        {
+                            <option value="@c.Id">@c.Name</option>
+                        }
+                    </select>
+                }
+            </div>
+        </div>
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">业务名称</label>
+            <div class="h-form-control"><input type="text" @bind-value="@currentBiz.BusinessName" class="h-input" /></div>
+        </div>
+        @if (!isBizEdit)
+        {
+            <div class="h-form-item h-form-horizontal">
+                <label class="h-form-label">业务编码</label>
+                <div class="h-form-control">
+                    <input type="text" @bind-value="@currentBiz.CodeSuffix" @bind-value:event="oninput" placeholder="3-16位小写字母" class="h-input" />
+                    <div style="color:#999;margin-top:4px;">完整编码：<code>@currentBiz.CategoryId-@(string.IsNullOrEmpty(currentBiz.CodeSuffix) ? "xxx" : currentBiz.CodeSuffix)</code></div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="h-form-item h-form-horizontal">
+                <label class="h-form-label">业务编码</label>
+                <div class="h-form-control"><code>@editBizCode</code></div>
+            </div>
+        }
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">默认级别</label>
+            <div class="h-form-control">
+                <select @bind="currentBiz.DefaultLevel" class="h-input">
+                    @foreach (NotificationLevel lv in Enum.GetValues(typeof(NotificationLevel)))
+                    {
+                        <option value="@lv">@GetLevelName(lv)</option>
+                    }
+                </select>
+            </div>
+        </div>
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">描述</label>
+            <div class="h-form-control"><textarea @bind="@currentBiz.Description" rows="2" class="h-textarea"></textarea></div>
+        </div>
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">启用</label>
+            <div class="h-form-control"><label class="h-switch"><input type="checkbox" @bind="@currentBiz.IsEnabled" /><span class="h-switch-slider"></span></label></div>
+        </div>
+    }
+    else
+    {
+        <p style="color:#888;margin-bottom:8px;">模板支持 <code>{{变量名}}</code> 占位符。留空则用业务名称作为标题。</p>
+        @foreach (NotificationChannelType ch in Enum.GetValues(typeof(NotificationChannelType)))
+        {
+            var tpl = GetTemplate(ch);
+            <div class="h-card" style="margin-bottom:12px;padding:12px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                    <strong>@GetChannelName(ch)</strong>
+                    <label class="h-switch"><input type="checkbox" @bind="@tpl.IsEnabled" /><span class="h-switch-slider"></span></label>
+                </div>
+                <div style="margin-bottom:8px;"><input type="text" @bind-value="@tpl.Title" placeholder="标题模板" class="h-input" /></div>
+                <div><textarea @bind="@tpl.Content" placeholder="内容模板" rows="2" class="h-textarea"></textarea></div>
+            </div>
+        }
+    }
+</HModal>
+
+@* ============ 通知规则弹窗 ============ *@
+<HModal Title="@($"通知规则 - {specBusinessName}")" Visible="@showSpecModal" OnOk="@SaveSpecs" OnCancel="@(() => showSpecModal = false)" ConfirmLoading="@saving" Style="width:820px;">
+    <p style="color:#888;margin-bottom:8px;">阈值及报警级别 *</p>
+    @foreach (NotificationLevel lv in LevelOrder)
+    {
+        var model = GetSpec(lv);
+        <div class="h-card" style="margin-bottom:14px;padding:0;border-left:4px solid @LevelColor(lv);overflow:hidden;">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;">
+                <strong>@GetLevelName(lv)（@lv）</strong>
+                <span class="h-space" style="color:#999;">
+                    @foreach (NotificationChannelType ch in Enum.GetValues(typeof(NotificationChannelType)))
+                    {
+                        var channel = ch;
+                        <label style="display:inline-flex;align-items:center;gap:4px;">
+                            <input type="checkbox" checked="@model.Channels.Contains(channel)" @onchange="e => ToggleSpecChannel(model, channel, (bool)e.Value!)" />
+                            @GetChannelName(channel)
+                        </label>
+                    }
+                    <label style="display:inline-flex;align-items:center;gap:4px;margin-left:8px;">
+                        启用 <input type="checkbox" @bind="@model.IsEnabled" />
+                    </label>
+                </span>
+            </div>
+            <div style="padding:0 16px 16px;display:flex;gap:8px;flex-wrap:wrap;">
+                <span style="display:inline-flex;align-items:center;gap:4px;">连续
+                    <input type="number" @bind-value="@model.ConsecutivePeriods" class="h-input" style="width:70px;" /> 个周期
+                </span>
+                <span style="display:inline-flex;align-items:center;gap:4px;">1周期=
+                    <input type="number" @bind-value="@model.PeriodMinutes" class="h-input" style="width:70px;" /> 分钟
+                </span>
+                <select @bind="model.Aggregation" class="h-input" style="width:120px;">
+                    @foreach (AggregationType agg in Enum.GetValues(typeof(AggregationType)))
+                    {
+                        <option value="@agg">@GetAggName(agg)</option>
+                    }
+                </select>
+                <select @bind="model.Comparison" class="h-input" style="width:100px;">
+                    @foreach (ComparisonOperator op in Enum.GetValues(typeof(ComparisonOperator)))
+                    {
+                        <option value="@op">@GetOpName(op)</option>
+                    }
+                </select>
+                <input type="number" @bind-value="@model.Threshold" placeholder="阈值" class="h-input" style="width:120px;" />
+            </div>
+        </div>
+    }
+</HModal>
+
+@* ============ 联系人组弹窗 ============ *@
+<HModal Title="@($"联系人组 - {groupBusinessName}")" Visible="@showGroupModal" OnOk="@SaveGroups" OnCancel="@(() => showGroupModal = false)" ConfirmLoading="@saving" Style="width:560px;">
+    <p style="color:#888;margin-bottom:8px;">选择该业务通知的联系人组：</p>
+    @if (!allGroups.Any())
+    {
+        <span class="h-tag">暂无联系人组，请先在「联系人」中创建</span>
+    }
+    <div class="h-space" style="flex-wrap:wrap;gap:8px;">
+        @foreach (var g in allGroups)
+        {
+            var gid = g.Id;
+            <label style="display:inline-flex;align-items:center;gap:4px;margin-right:12px;">
+                <input type="checkbox" checked="@selectedGroupIds.Contains(gid)" @onchange="e => ToggleGroup(gid, (bool)e.Value!)" />
+                @g.Name (@g.ContactCount)
+            </label>
+        }
+    </div>
+</HModal>
+
+@* ============ 测试发送弹窗 ============ *@
+<HModal Title="测试发送" Visible="@showTestModal" OnOk="@DoTestSend" OnCancel="@(() => showTestModal = false)" ConfirmLoading="@testSending" Style="width:600px;">
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">业务</label>
+        <div class="h-form-control"><input type="text" value="@testBusinessName" class="h-input" disabled /></div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">级别</label>
+        <div class="h-form-control">
+            <select @bind="testLevel" class="h-input">
+                @foreach (NotificationLevel lv in Enum.GetValues(typeof(NotificationLevel)))
+                {
+                    <option value="@lv">@GetLevelName(lv)</option>
+                }
+            </select>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">变量数据(JSON)</label>
+        <div class="h-form-control"><textarea @bind="@testDataJson" placeholder='{"name":"张三"}' rows="3" class="h-textarea"></textarea></div>
+    </div>
+    @if (!string.IsNullOrEmpty(testResult))
+    {
+        <div class="h-alert" style="background:#f6ffed;border:1px solid #b7eb8f;color:#52c41a;">
+            <span class="h-alert-icon">✓</span><span>@testResult</span>
+        </div>
+    }
+</HModal>
+
+@code {
+    private static readonly NotificationLevel[] LevelOrder = { NotificationLevel.Critical, NotificationLevel.Urgent, NotificationLevel.Important, NotificationLevel.Normal };
+
+    private List<NotificationCategoryDto> categories = new();
+    private List<NotificationBusinessDto> businessList = new();
+    private List<ContactGroupDto> allGroups = new();
+    private long? selectedCategoryId;
+    private bool loading;
+    private bool saving;
+    private string searchFilter = string.Empty;
+
+    // 分类弹窗
+    private bool showCatModal;
+    private bool isCatEdit;
+    private long? editCatId;
+    private CreateNotificationCategoryDto currentCat = new();
+
+    // 业务弹窗
+    private bool showBizModal;
+    private bool isBizEdit;
+    private int bizTab;
+    private Guid? editBizId;
+    private string editBizCode = string.Empty;
+    private CreateNotificationBusinessDto currentBiz = new();
+    private List<NotificationTemplateDto> templates = new();
+
+    // 规格弹窗
+    private bool showSpecModal;
+    private Guid specBusinessId;
+    private string specBusinessName = string.Empty;
+    private Dictionary<NotificationLevel, SpecEditModel> specModels = new();
+
+    // 联系人组弹窗
+    private bool showGroupModal;
+    private Guid groupBusinessId;
+    private string groupBusinessName = string.Empty;
+    private HashSet<long> selectedGroupIds = new();
+
+    // 测试发送
+    private bool showTestModal;
+    private bool testSending;
+    private string testBusinessName = string.Empty;
+    private string testBusinessCode = string.Empty;
+    private NotificationLevel testLevel = NotificationLevel.Normal;
+    private string testDataJson = string.Empty;
+    private string testResult = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCategories();
+        await LoadBusinesses();
+    }
+
+    private async Task LoadCategories()
+    {
+        categories = await CategoryAppService.GetAllAsync();
+    }
+
+    private async Task LoadBusinesses()
+    {
+        loading = true;
+        try
+        {
+            var result = await BusinessAppService.GetListAsync(new NotificationBusinessQueryDto
+            {
+                MaxResultCount = 100,
+                Filter = searchFilter,
+                CategoryId = selectedCategoryId
+            });
+            businessList = result.Items.ToList();
+        }
+        finally { loading = false; }
+    }
+
+    private async Task SelectCategory(long? id)
+    {
+        selectedCategoryId = id;
+        await LoadBusinesses();
+    }
+
+    private string CatItemClass(long? id) => selectedCategoryId == id ? "h-cat-item active" : "h-cat-item";
+
+    // ===== 分类 =====
+    private void ShowCreateCategory()
+    {
+        currentCat = new CreateNotificationCategoryDto { IsEnabled = true };
+        isCatEdit = false;
+        editCatId = null;
+        showCatModal = true;
+    }
+
+    private void EditCategory(NotificationCategoryDto c)
+    {
+        currentCat = new CreateNotificationCategoryDto { Name = c.Name, Description = c.Description, Sort = c.Sort, IsEnabled = c.IsEnabled };
+        isCatEdit = true;
+        editCatId = c.Id;
+        showCatModal = true;
+    }
+
+    private async Task SaveCategory()
+    {
+        saving = true;
+        try
+        {
+            if (isCatEdit && editCatId.HasValue)
+            {
+                await CategoryAppService.UpdateAsync(editCatId.Value, new UpdateNotificationCategoryDto
+                {
+                    Name = currentCat.Name,
+                    Description = currentCat.Description,
+                    Sort = currentCat.Sort,
+                    IsEnabled = currentCat.IsEnabled
+                });
+            }
+            else
+            {
+                await CategoryAppService.CreateAsync(currentCat);
+            }
+            showCatModal = false;
+            await LoadCategories();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}"); }
+        finally { saving = false; }
+    }
+
+    private async Task DeleteCategory(long id)
+    {
+        if (!await JS.InvokeAsync<bool>("confirm", "确定要删除该分类吗？")) return;
+        try
+        {
+            await CategoryAppService.DeleteAsync(id);
+            if (selectedCategoryId == id) selectedCategoryId = null;
+            await LoadCategories();
+            await LoadBusinesses();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"删除失败：{ex.Message}"); }
+    }
+
+    // ===== 业务 =====
+    private async Task ShowCreateBusiness()
+    {
+        if (!categories.Any())
+        {
+            await JS.InvokeVoidAsync("alert", "请先创建分类");
+            return;
+        }
+        currentBiz = new CreateNotificationBusinessDto
+        {
+            IsEnabled = true,
+            DefaultLevel = NotificationLevel.Normal,
+            CategoryId = selectedCategoryId ?? categories.First().Id
+        };
+        templates = new();
+        bizTab = 0;
+        isBizEdit = false;
+        editBizId = null;
+        showBizModal = true;
+    }
+
+    private async Task EditBusiness(NotificationBusinessDto b)
+    {
+        var detail = await BusinessAppService.GetAsync(b.Id);
+        currentBiz = new CreateNotificationBusinessDto
+        {
+            CategoryId = detail.CategoryId,
+            BusinessName = detail.BusinessName,
+            Description = detail.Description,
+            DefaultLevel = detail.DefaultLevel,
+            IsEnabled = detail.IsEnabled
+        };
+        templates = detail.Templates.ToList();
+        editBizCode = detail.BusinessCode;
+        bizTab = 0;
+        isBizEdit = true;
+        editBizId = b.Id;
+        showBizModal = true;
+    }
+
+    private NotificationTemplateDto GetTemplate(NotificationChannelType channel)
+    {
+        var tpl = templates.FirstOrDefault(t => t.ChannelType == channel);
+        if (tpl == null)
+        {
+            tpl = new NotificationTemplateDto { ChannelType = channel, IsEnabled = false };
+            templates.Add(tpl);
+        }
+        return tpl;
+    }
+
+    private async Task SaveBusiness()
+    {
+        saving = true;
+        try
+        {
+            var validTemplates = templates.Where(t => t.IsEnabled || !string.IsNullOrWhiteSpace(t.Title) || !string.IsNullOrWhiteSpace(t.Content)).ToList();
+            if (isBizEdit && editBizId.HasValue)
+            {
+                await BusinessAppService.UpdateAsync(editBizId.Value, new UpdateNotificationBusinessDto
+                {
+                    BusinessName = currentBiz.BusinessName,
+                    Description = currentBiz.Description,
+                    DefaultLevel = currentBiz.DefaultLevel,
+                    IsEnabled = currentBiz.IsEnabled,
+                    Templates = validTemplates
+                });
+            }
+            else
+            {
+                currentBiz.Templates = validTemplates;
+                await BusinessAppService.CreateAsync(currentBiz);
+            }
+            showBizModal = false;
+            await LoadCategories();
+            await LoadBusinesses();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}"); }
+        finally { saving = false; }
+    }
+
+    private async Task DeleteBusiness(Guid id)
+    {
+        if (!await JS.InvokeAsync<bool>("confirm", "确定要删除该业务吗？相关规格、模板、联系人组绑定将一并删除。")) return;
+        try
+        {
+            await BusinessAppService.DeleteAsync(id);
+            await LoadCategories();
+            await LoadBusinesses();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"删除失败：{ex.Message}"); }
+    }
+
+    // ===== 通知规则 =====
+    private async Task OpenSpecs(NotificationBusinessDto b)
+    {
+        specBusinessId = b.Id;
+        specBusinessName = b.BusinessName;
+        specModels = LevelOrder.ToDictionary(lv => lv, lv => new SpecEditModel { Level = lv });
+        var specs = await BusinessAppService.GetSpecsAsync(b.Id);
+        foreach (var s in specs)
+        {
+            if (specModels.TryGetValue(s.Level, out var m))
+            {
+                m.IsEnabled = s.IsEnabled;
+                m.Channels = s.Channels.ToHashSet();
+                m.ConsecutivePeriods = s.ConsecutivePeriods;
+                m.PeriodMinutes = s.PeriodMinutes;
+                m.Aggregation = s.Aggregation;
+                m.Comparison = s.Comparison;
+                m.Threshold = s.Threshold;
+            }
+        }
+        showSpecModal = true;
+    }
+
+    private SpecEditModel GetSpec(NotificationLevel lv) => specModels[lv];
+
+    private void ToggleSpecChannel(SpecEditModel model, NotificationChannelType channel, bool selected)
+    {
+        if (selected) model.Channels.Add(channel);
+        else model.Channels.Remove(channel);
+    }
+
+    private async Task SaveSpecs()
+    {
+        saving = true;
+        try
+        {
+            var specs = specModels.Values.Select(m => new NotificationSpecDto
+            {
+                Level = m.Level,
+                IsEnabled = m.IsEnabled,
+                Channels = m.Channels.ToList(),
+                ConsecutivePeriods = m.ConsecutivePeriods,
+                PeriodMinutes = m.PeriodMinutes,
+                Aggregation = m.Aggregation,
+                Comparison = m.Comparison,
+                Threshold = m.Threshold
+            }).ToList();
+            await BusinessAppService.SetSpecsAsync(specBusinessId, specs);
+            showSpecModal = false;
+            await LoadBusinesses();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}"); }
+        finally { saving = false; }
+    }
+
+    // ===== 联系人组 =====
+    private async Task OpenGroups(NotificationBusinessDto b)
+    {
+        groupBusinessId = b.Id;
+        groupBusinessName = b.BusinessName;
+        allGroups = await ContactGroupAppService.GetAllEnabledAsync();
+        var bound = await BusinessAppService.GetGroupIdsAsync(b.Id);
+        selectedGroupIds = bound.ToHashSet();
+        showGroupModal = true;
+    }
+
+    private void ToggleGroup(long id, bool selected)
+    {
+        if (selected) selectedGroupIds.Add(id);
+        else selectedGroupIds.Remove(id);
+    }
+
+    private async Task SaveGroups()
+    {
+        saving = true;
+        try
+        {
+            await BusinessAppService.SetGroupsAsync(groupBusinessId, selectedGroupIds.ToList());
+            showGroupModal = false;
+            await LoadBusinesses();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}"); }
+        finally { saving = false; }
+    }
+
+    // ===== 测试发送 =====
+    private void OpenTestSend(NotificationBusinessDto b)
+    {
+        testBusinessName = b.BusinessName;
+        testBusinessCode = b.BusinessCode;
+        testLevel = b.DefaultLevel;
+        testDataJson = string.Empty;
+        testResult = string.Empty;
+        showTestModal = true;
+    }
+
+    private async Task DoTestSend()
+    {
+        testSending = true;
+        try
+        {
+            var data = new Dictionary<string, string>();
+            if (!string.IsNullOrWhiteSpace(testDataJson))
+            {
+                data = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(testDataJson) ?? new();
+            }
+            var result = await SendAppService.TestSendAsync(new TestSendInput { BusinessCode = testBusinessCode, Level = testLevel, Data = data });
+            testResult = result.Message ?? "已提交";
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"测试发送失败：{ex.Message}"); }
+        finally { testSending = false; }
+    }
+
+    // ===== 展示辅助 =====
+    private string GetChannelName(NotificationChannelType type) => type switch
+    {
+        NotificationChannelType.InApp => "站内信",
+        NotificationChannelType.Email => "邮件",
+        NotificationChannelType.Sms => "短信",
+        NotificationChannelType.Webhook => "Webhook",
+        _ => type.ToString()
+    };
+
+    private string GetLevelName(NotificationLevel level) => level switch
+    {
+        NotificationLevel.Normal => "普通",
+        NotificationLevel.Important => "重要",
+        NotificationLevel.Urgent => "紧急",
+        NotificationLevel.Critical => "严重",
+        _ => level.ToString()
+    };
+
+    private string LevelColor(NotificationLevel level) => level switch
+    {
+        NotificationLevel.Critical => "#f5222d",
+        NotificationLevel.Urgent => "#fa8c16",
+        NotificationLevel.Important => "#fadb14",
+        NotificationLevel.Normal => "#1890ff",
+        _ => "#d9d9d9"
+    };
+
+    private string LevelTagClass(NotificationLevel level) => level switch
+    {
+        NotificationLevel.Normal => "",
+        NotificationLevel.Important => "h-tag-blue",
+        NotificationLevel.Urgent => "h-tag-orange",
+        NotificationLevel.Critical => "h-tag-red",
+        _ => ""
+    };
+
+    private string GetAggName(AggregationType agg) => agg switch
+    {
+        AggregationType.Average => "平均值",
+        AggregationType.Max => "最大值",
+        AggregationType.Min => "最小值",
+        AggregationType.Sum => "求和",
+        _ => agg.ToString()
+    };
+
+    private string GetOpName(ComparisonOperator op) => op switch
+    {
+        ComparisonOperator.GreaterOrEqual => ">=",
+        ComparisonOperator.Greater => ">",
+        ComparisonOperator.LessOrEqual => "<=",
+        ComparisonOperator.Less => "<",
+        ComparisonOperator.Equal => "==",
+        _ => op.ToString()
+    };
+
+    public class SpecEditModel
+    {
+        public NotificationLevel Level { get; set; }
+        public bool IsEnabled { get; set; }
+        public HashSet<NotificationChannelType> Channels { get; set; } = new();
+        public int ConsecutivePeriods { get; set; } = 3;
+        public int PeriodMinutes { get; set; } = 1;
+        public AggregationType Aggregation { get; set; } = AggregationType.Average;
+        public ComparisonOperator Comparison { get; set; } = ComparisonOperator.GreaterOrEqual;
+        public decimal? Threshold { get; set; }
+    }
+}

@@ -8,13 +8,8 @@ public class NotificationProfile : Profile
 {
     public NotificationProfile()
     {
-        // NotificationBusiness 映射
-        CreateMap<NotificationBusinessEntity, NotificationBusinessDto>();
-        CreateMap<CreateNotificationBusinessDto, NotificationBusinessEntity>();
-        CreateMap<UpdateNotificationBusinessDto, NotificationBusinessEntity>();
-
-        // NotificationMethodConfig 映射
-        CreateMap<NotificationMethodConfigEntity, NotificationMethodConfigDto>();
-        CreateMap<CreateNotificationMethodConfigDto, NotificationMethodConfigEntity>();
+        // 渠道
+        CreateMap<NotificationChannelEntity, NotificationChannelDto>();
+        CreateMap<CreateNotificationChannelDto, NotificationChannelEntity>();
     }
 }

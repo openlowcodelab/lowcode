@@ -1,0 +1,364 @@
+@page "/notification/contact"
+
+@layout NotificationLayout
+@inject IContactAppService ContactAppService
+@inject IContactGroupAppService ContactGroupAppService
+@inject IJSRuntime JS
+
+<h2>联系人</h2>
+
+<div class="h-toolbar" style="margin-bottom:16px;">
+    <button class="h-btn @(activeTab == 0 ? "h-btn-primary" : "")" @onclick="@(() => SwitchTab(0))">联系人</button>
+    <button class="h-btn @(activeTab == 1 ? "h-btn-primary" : "")" @onclick="@(() => SwitchTab(1))">联系人分组</button>
+</div>
+
+@if (activeTab == 0)
+{
+    <HCard>
+        <div class="h-toolbar">
+            <input type="text" @bind-value="@contactFilter" placeholder="搜索名称或邮箱" class="h-input" style="width: 220px;" />
+            <select @bind="contactGroupFilter" class="h-input" style="width:180px;">
+                <option value="">全部分组</option>
+                @foreach (var g in groups)
+                {
+                    <option value="@g.Id">@g.Name</option>
+                }
+            </select>
+            <button class="h-btn h-btn-primary" @onclick="@LoadContacts">搜索</button>
+            <button class="h-btn h-btn-primary" @onclick="@ShowCreateContact">新增联系人</button>
+        </div>
+
+        <HTable Loading="@contactLoading" ShowEmpty="@(!contactLoading && !contacts.Any())">
+            <thead>
+                <tr>
+                    <th>名称</th>
+                    <th>站内标识</th>
+                    <th>邮箱</th>
+                    <th>手机号</th>
+                    <th>Webhook</th>
+                    <th>分组数</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var c in contacts)
+                {
+                    <tr>
+                        <td>@c.Name</td>
+                        <td>@(c.InAppUserId ?? "-")</td>
+                        <td>@(c.Email ?? "-")</td>
+                        <td>@(c.Phone ?? "-")</td>
+                        <td>@(string.IsNullOrEmpty(c.WebhookUrl) ? "-" : "已配置")</td>
+                        <td>@c.GroupIds.Count</td>
+                        <td>@(c.IsEnabled ? (MarkupString)"<span class=\"h-tag h-tag-green\">启用</span>" : (MarkupString)"<span class=\"h-tag h-tag-red\">禁用</span>")</td>
+                        <td>
+                            <span class="h-space">
+                                <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => EditContact(c))">编辑</button>
+                                <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => DeleteContact(c.Id))">删除</button>
+                            </span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </HTable>
+    </HCard>
+}
+else
+{
+    <HCard>
+        <div class="h-toolbar">
+            <input type="text" @bind-value="@groupFilter" placeholder="搜索分组名称" class="h-input" style="width: 220px;" />
+            <button class="h-btn h-btn-primary" @onclick="@LoadGroups">搜索</button>
+            <button class="h-btn h-btn-primary" @onclick="@ShowCreateGroup">新增分组</button>
+        </div>
+
+        <HTable Loading="@groupLoading" ShowEmpty="@(!groupLoading && !groups.Any())">
+            <thead>
+                <tr>
+                    <th>分组ID</th>
+                    <th>分组名称</th>
+                    <th>描述</th>
+                    <th>联系人数</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var g in groups)
+                {
+                    <tr>
+                        <td>@g.Id</td>
+                        <td>@g.Name</td>
+                        <td>@(g.Description ?? "-")</td>
+                        <td>@g.ContactCount</td>
+                        <td>@(g.IsEnabled ? (MarkupString)"<span class=\"h-tag h-tag-green\">启用</span>" : (MarkupString)"<span class=\"h-tag h-tag-red\">禁用</span>")</td>
+                        <td>
+                            <span class="h-space">
+                                <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => EditGroup(g))">编辑</button>
+                                <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => DeleteGroup(g.Id))">删除</button>
+                            </span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </HTable>
+    </HCard>
+}
+
+<HModal Title="@(isContactEdit ? "编辑联系人" : "新增联系人")" Visible="@showContactModal" OnOk="@SaveContact" OnCancel="@(() => showContactModal = false)" ConfirmLoading="@saving" Style="width:640px;">
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">名称</label>
+        <div class="h-form-control"><input type="text" @bind-value="@currentContact.Name" class="h-input" /></div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">描述</label>
+        <div class="h-form-control"><textarea @bind="@currentContact.Description" rows="2" class="h-textarea"></textarea></div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">站内标识</label>
+        <div class="h-form-control"><input type="text" @bind-value="@currentContact.InAppUserId" placeholder="用户ID或用户名（站内信目标）" class="h-input" /></div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">邮箱</label>
+        <div class="h-form-control"><input type="text" @bind-value="@currentContact.Email" class="h-input" /></div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">手机号</label>
+        <div class="h-form-control"><input type="text" @bind-value="@currentContact.Phone" class="h-input" /></div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">Webhook地址</label>
+        <div class="h-form-control"><input type="text" @bind-value="@currentContact.WebhookUrl" class="h-input" /></div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">启用</label>
+        <div class="h-form-control">
+            <label class="h-switch"><input type="checkbox" @bind="@currentContact.IsEnabled" /><span class="h-switch-slider"></span></label>
+        </div>
+    </div>
+</HModal>
+
+<HModal Title="@(isGroupEdit ? "编辑分组" : "新增分组")" Visible="@showGroupModal" OnOk="@SaveGroup" OnCancel="@(() => showGroupModal = false)" ConfirmLoading="@saving" Style="width:560px;">
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">分组名称</label>
+        <div class="h-form-control"><input type="text" @bind-value="@currentGroup.Name" class="h-input" /></div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">描述</label>
+        <div class="h-form-control"><textarea @bind="@currentGroup.Description" rows="2" class="h-textarea"></textarea></div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">分组成员</label>
+        <div class="h-form-control">
+            @if (!allContacts.Any())
+            {
+                <span class="h-tag">暂无联系人，请先在「联系人」中创建</span>
+            }
+            <div class="h-space" style="flex-wrap:wrap;gap:8px;">
+                @foreach (var ct in allContacts)
+                {
+                    var cid = ct.Id;
+                    <label style="display:inline-flex;align-items:center;gap:4px;margin-right:12px;">
+                        <input type="checkbox" checked="@selectedContactIds.Contains(cid)" @onchange="e => ToggleMember(cid, (bool)e.Value!)" />
+                        @ct.Name
+                    </label>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">启用</label>
+        <div class="h-form-control">
+            <label class="h-switch"><input type="checkbox" @bind="@currentGroup.IsEnabled" /><span class="h-switch-slider"></span></label>
+        </div>
+    </div>
+</HModal>
+
+@code {
+    private int activeTab;
+
+    // 联系人
+    private List<ContactDto> contacts = new();
+    private bool contactLoading;
+    private string contactFilter = string.Empty;
+    private long? contactGroupFilter;
+    private bool showContactModal;
+    private bool isContactEdit;
+    private Guid? editContactId;
+    private CreateContactDto currentContact = new();
+
+    // 分组
+    private List<ContactGroupDto> groups = new();
+    private bool groupLoading;
+    private string groupFilter = string.Empty;
+    private bool showGroupModal;
+    private bool isGroupEdit;
+    private long? editGroupId;
+    private CreateContactGroupDto currentGroup = new();
+    private List<ContactDto> allContacts = new();
+    private HashSet<Guid> selectedContactIds = new();
+
+    private bool saving;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadGroups();
+        await LoadContacts();
+    }
+
+    private async Task SwitchTab(int tab)
+    {
+        activeTab = tab;
+        if (tab == 0) await LoadContacts();
+        else await LoadGroups();
+    }
+
+    private async Task LoadContacts()
+    {
+        contactLoading = true;
+        try
+        {
+            var result = await ContactAppService.GetListAsync(new ContactQueryDto { MaxResultCount = 100, Filter = contactFilter, GroupId = contactGroupFilter });
+            contacts = result.Items.ToList();
+        }
+        finally { contactLoading = false; }
+    }
+
+    private async Task LoadGroups()
+    {
+        groupLoading = true;
+        try
+        {
+            var result = await ContactGroupAppService.GetListAsync(new ContactGroupQueryDto { MaxResultCount = 200, Filter = groupFilter });
+            groups = result.Items.ToList();
+        }
+        finally { groupLoading = false; }
+    }
+
+    private void ShowCreateContact()
+    {
+        currentContact = new CreateContactDto { IsEnabled = true };
+        isContactEdit = false;
+        editContactId = null;
+        showContactModal = true;
+    }
+
+    private async Task EditContact(ContactDto c)
+    {
+        var detail = await ContactAppService.GetAsync(c.Id);
+        currentContact = new CreateContactDto
+        {
+            Name = detail.Name,
+            Description = detail.Description,
+            IsEnabled = detail.IsEnabled,
+            InAppUserId = detail.InAppUserId,
+            Email = detail.Email,
+            Phone = detail.Phone,
+            WebhookUrl = detail.WebhookUrl
+        };
+        isContactEdit = true;
+        editContactId = c.Id;
+        showContactModal = true;
+    }
+
+    private async Task SaveContact()
+    {
+        saving = true;
+        try
+        {
+            if (isContactEdit && editContactId.HasValue)
+            {
+                await ContactAppService.UpdateAsync(editContactId.Value, new UpdateContactDto
+                {
+                    Name = currentContact.Name,
+                    Description = currentContact.Description,
+                    IsEnabled = currentContact.IsEnabled,
+                    InAppUserId = currentContact.InAppUserId,
+                    Email = currentContact.Email,
+                    Phone = currentContact.Phone,
+                    WebhookUrl = currentContact.WebhookUrl
+                });
+            }
+            else
+            {
+                await ContactAppService.CreateAsync(currentContact);
+            }
+            await JS.InvokeVoidAsync("alert", $"联系人{(isContactEdit ? "更新" : "创建")}成功");
+            showContactModal = false;
+            await LoadContacts();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}"); }
+        finally { saving = false; }
+    }
+
+    private async Task DeleteContact(Guid id)
+    {
+        if (!await JS.InvokeAsync<bool>("confirm", "确定要删除该联系人吗？")) return;
+        try { await ContactAppService.DeleteAsync(id); await LoadContacts(); }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"删除失败：{ex.Message}"); }
+    }
+
+    private async Task ShowCreateGroup()
+    {
+        currentGroup = new CreateContactGroupDto { IsEnabled = true };
+        allContacts = await ContactAppService.GetAllEnabledAsync();
+        selectedContactIds = new();
+        isGroupEdit = false;
+        editGroupId = null;
+        showGroupModal = true;
+    }
+
+    private async Task EditGroup(ContactGroupDto g)
+    {
+        var detail = await ContactGroupAppService.GetAsync(g.Id);
+        currentGroup = new CreateContactGroupDto { Name = detail.Name, Description = detail.Description, IsEnabled = detail.IsEnabled };
+        allContacts = await ContactAppService.GetAllEnabledAsync();
+        selectedContactIds = detail.ContactIds.ToHashSet();
+        isGroupEdit = true;
+        editGroupId = g.Id;
+        showGroupModal = true;
+    }
+
+    private void ToggleMember(Guid id, bool selected)
+    {
+        if (selected) selectedContactIds.Add(id);
+        else selectedContactIds.Remove(id);
+    }
+
+    private async Task SaveGroup()
+    {
+        saving = true;
+        try
+        {
+            if (isGroupEdit && editGroupId.HasValue)
+            {
+                await ContactGroupAppService.UpdateAsync(editGroupId.Value, new UpdateContactGroupDto
+                {
+                    Name = currentGroup.Name,
+                    Description = currentGroup.Description,
+                    IsEnabled = currentGroup.IsEnabled,
+                    ContactIds = selectedContactIds.ToList()
+                });
+            }
+            else
+            {
+                currentGroup.ContactIds = selectedContactIds.ToList();
+                await ContactGroupAppService.CreateAsync(currentGroup);
+            }
+            await JS.InvokeVoidAsync("alert", $"分组{(isGroupEdit ? "更新" : "创建")}成功");
+            showGroupModal = false;
+            await LoadGroups();
+            if (activeTab == 0) await LoadContacts();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}"); }
+        finally { saving = false; }
+    }
+
+    private async Task DeleteGroup(long id)
+    {
+        if (!await JS.InvokeAsync<bool>("confirm", "确定要删除该分组吗？分组内成员关系将一并解除。")) return;
+        try { await ContactGroupAppService.DeleteAsync(id); await LoadGroups(); }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"删除失败：{ex.Message}"); }
+    }
+}
