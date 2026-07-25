@@ -31,9 +31,6 @@ public class Program
 
                 Console.WriteLine("数据库迁移完成");
 
-                // 种子数据：系统内置角色
-                await SeedSystemRolesAsync(dbContext);
-
                 // 种子数据：系统管理员用户
                 await SeedSystemUserAsync(dbContext);
             }
@@ -49,35 +46,6 @@ public class Program
     }
 
     /// <summary>
-    /// 系统内置角色种子数据
-    /// </summary>
-    private static async Task SeedSystemRolesAsync(MigratorDbContext dbContext)
-    {
-        var roles = dbContext.Set<IdentityRole>();
-        var builtInRoles = new[] { "SuperAdmin", "Admin" };
-
-        foreach (var roleName in builtInRoles)
-        {
-            var existing = await roles.FirstOrDefaultAsync(r => r.Name == roleName);
-            if (existing == null)
-            {
-                var role = new IdentityRole(Guid.NewGuid(), roleName);
-                role.IsStatic = true;
-                roles.Add(role);
-                Console.WriteLine($"已创建内置角色: {roleName}");
-            }
-            else if (!existing.IsStatic)
-            {
-                existing.IsStatic = true;
-                Console.WriteLine($"已更新内置角色 IsStatic: {roleName}");
-            }
-        }
-
-        await dbContext.SaveChangesAsync();
-        Console.WriteLine("角色种子数据完成");
-    }
-
-    /// <summary>
     /// 超级管理员用户种子数据
     /// </summary>
     private static async Task SeedSystemUserAsync(MigratorDbContext dbContext)
@@ -87,7 +55,6 @@ public class Program
         const string email = "sys@applab.com";
 
         var users = dbContext.Set<IdentityUser>();
-        var roles = dbContext.Set<IdentityRole>();
 
         var existingUser = await users.FirstOrDefaultAsync(u => u.UserName == userName);
         if (existingUser != null)
@@ -124,15 +91,6 @@ public class Program
             true, false, false, true, true, false,
             0, false, false, false,
             now, 1, "{}");
-
-        // 将用户关联到 SuperAdmin 角色（使用原始 SQL 插入关联关系）
-        var superAdminRole = await roles.FirstOrDefaultAsync(r => r.Name == "SuperAdmin");
-        if (superAdminRole != null)
-        {
-            await dbContext.Database.ExecuteSqlRawAsync(
-                "INSERT INTO AbpUserRoles (UserId, RoleId) VALUES ({0}, {1})",
-                userId, superAdminRole.Id);
-        }
 
         Console.WriteLine($"已创建超级管理员用户: {userName}，默认密码: {password}");
     }

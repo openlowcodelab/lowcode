@@ -189,13 +189,6 @@ public class AccountAppService : ApplicationService, IAccountAppService
                 claims.Add(new Claim(ClaimTypes.MobilePhone, user.PhoneNumber));
             }
 
-            // 加载用户的系统角色并写入 Cookie Claims
-            var roles = await _userManager.GetRolesAsync(user);
-            foreach (var role in roles)
-            {
-                claims.Add(new Claim(ClaimTypes.Role, role));
-            }
-
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             var authProperties = new AuthenticationProperties
             {
@@ -316,22 +309,14 @@ public class AccountAppService : ApplicationService, IAccountAppService
         return tokenHandler.WriteToken(token);
     }
 
-    private async Task<UserDto> MapToUserDtoAsync(IdentityUser user)
+    private Task<UserDto> MapToUserDtoAsync(IdentityUser user)
     {
-        // 角色数据同属 Account 全局跨租户，需在 Host 上下文读取
-        IList<string> roles;
-        using (_currentTenant.Change(null))
-        {
-            roles = await _userManager.GetRolesAsync(user);
-        }
-        return new UserDto
+        var dto = new UserDto
         {
             Id = user.Id,
             UserName = user.UserName ?? "",
             Email = user.Email ?? "",
             PhoneNumber = user.PhoneNumber ?? "",
-            RoleNames = roles.ToList(),
-            UserType = DeriveUserType(roles),
             IsActive = !user.LockoutEnabled || user.LockoutEnd == null || user.LockoutEnd <= DateTimeOffset.UtcNow,
             EmailConfirmed = user.EmailConfirmed,
             PhoneNumberConfirmed = user.PhoneNumberConfirmed,
@@ -341,15 +326,7 @@ public class AccountAppService : ApplicationService, IAccountAppService
             UpdatedAt = user.LastModificationTime,
             LastLoginAt = user.LastModificationTime
         };
-    }
-
-    private static UserType DeriveUserType(IList<string> roles)
-    {
-        if (roles.Contains(SystemRoleNames.SuperAdmin, StringComparer.OrdinalIgnoreCase))
-            return UserType.SuperAdmin;
-        if (roles.Contains(SystemRoleNames.Admin, StringComparer.OrdinalIgnoreCase))
-            return UserType.Admin;
-        return UserType.Normal;
+        return Task.FromResult(dto);
     }
 
     /// <summary>

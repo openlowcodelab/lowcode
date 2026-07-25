@@ -110,13 +110,6 @@ public class ExternalLoginAppService : ApplicationService, IExternalLoginAppServ
                 new("LoginProvider", request.Provider)
             };
 
-            // 加载用户的系统角色并写入 Cookie Claims
-            var roles = await _userManager.GetRolesAsync(user);
-            foreach (var role in roles)
-            {
-                claims.Add(new Claim(ClaimTypes.Role, role));
-            }
-
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             var authProperties = new AuthenticationProperties
             {
@@ -209,16 +202,14 @@ public class ExternalLoginAppService : ApplicationService, IExternalLoginAppServ
         }).ToList();
     }
 
-    private async Task<UserDto> MapToUserDtoAsync(IdentityUser user)
+    private Task<UserDto> MapToUserDtoAsync(IdentityUser user)
     {
-        var roles = await _userManager.GetRolesAsync(user);
-        return new UserDto
+        var dto = new UserDto
         {
             Id = user.Id,
             UserName = user.UserName ?? "",
             Email = user.Email ?? "",
             PhoneNumber = user.PhoneNumber ?? "",
-            RoleNames = roles.ToList(),
             IsActive = !user.LockoutEnabled || user.LockoutEnd == null || user.LockoutEnd <= DateTimeOffset.UtcNow,
             EmailConfirmed = user.EmailConfirmed,
             PhoneNumberConfirmed = user.PhoneNumberConfirmed,
@@ -228,6 +219,7 @@ public class ExternalLoginAppService : ApplicationService, IExternalLoginAppServ
             UpdatedAt = user.LastModificationTime,
             LastLoginAt = user.LastModificationTime
         };
+        return Task.FromResult(dto);
     }
 
     /// <summary>
