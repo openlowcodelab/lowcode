@@ -1,5 +1,4 @@
 using H.Account.Application.Contracts;
-using H.SystemPortal.Application.Contracts;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;

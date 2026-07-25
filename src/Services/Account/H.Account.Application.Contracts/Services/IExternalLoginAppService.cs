@@ -1,4 +1,3 @@
-using H.SystemPortal.Application.Contracts;
 using Volo.Abp.Application.Services;
 
 namespace H.Account.Application.Contracts;

@@ -1,378 +1,254 @@
 using H.SystemPortal.Application.Contracts;
-using Microsoft.EntityFrameworkCore;
-using System.Linq;
 using Volo.Abp.Application.Services;
-using Volo.Abp.Domain.Repositories;
-using Volo.Abp.Identity;
-using Volo.Abp.MultiTenancy;
 
 namespace H.SystemPortal.Application;
 
 public class UserAppService : ApplicationService, IUserAppService
 {
-    private readonly IdentityUserManager _userManager;
-    private readonly IRepository<Volo.Abp.Identity.IdentityUser, Guid> _userRepository;
-    private readonly ICurrentTenant _currentTenant;
+    private readonly SystemUserStore _store;
 
-    public UserAppService(
-        IdentityUserManager userManager,
-        IRepository<Volo.Abp.Identity.IdentityUser, Guid> userRepository,
-        ICurrentTenant currentTenant)
+    public UserAppService(SystemUserStore store)
     {
-        _userManager = userManager;
-        _userRepository = userRepository;
-        _currentTenant = currentTenant;
+        _store = store;
     }
 
-    public async Task<UserDto?> GetUserByUserNameAsync(string userName)
+    public Task<UserDto?> GetUserByUserNameAsync(string userName)
     {
-        // Account/用户为全局跨租户数据，所有操作需在 Host 上下文进行
-        using var _tenant = _currentTenant.Change(null);
-        var user = await _userManager.FindByNameAsync(userName);
-        return user != null ? await MapToUserDtoAsync(user) : null;
+        var user = _store.FindByUserName(userName);
+        return Task.FromResult(user != null ? MapToDto(user) : null);
     }
 
-    public async Task<UserDto?> GetUserByEmailAsync(string email)
+    public Task<UserDto?> GetUserByEmailAsync(string email)
     {
-        using var _tenant = _currentTenant.Change(null);
-        var user = await _userManager.FindByEmailAsync(email);
-        return user != null ? await MapToUserDtoAsync(user) : null;
+        var user = _store.FindByEmail(email);
+        return Task.FromResult(user != null ? MapToDto(user) : null);
     }
 
-    public async Task<UserDto?> GetUserByIdAsync(Guid userId)
+    public Task<UserDto?> GetUserByIdAsync(Guid userId)
     {
-        using var _tenant = _currentTenant.Change(null);
-        var user = await _userManager.FindByIdAsync(userId.ToString());
-        return user != null ? await MapToUserDtoAsync(user) : null;
+        var user = _store.FindById(userId);
+        return Task.FromResult(user != null ? MapToDto(user) : null);
     }
 
-    public async Task<UserDto?> GetUserDtoByIdAsync(Guid userId)
+    public Task<UserDto?> GetUserDtoByIdAsync(Guid userId)
     {
-        using var _tenant = _currentTenant.Change(null);
-        var user = await _userManager.FindByIdAsync(userId.ToString());
-        return user != null ? await MapToUserDtoAsync(user) : null;
+        return GetUserByIdAsync(userId);
     }
 
-    public async Task<UserDto> CreateUserAsync(UserDto user)
+    public Task<UserDto> CreateUserAsync(UserDto user)
     {
-        using var _tenant = _currentTenant.Change(null);
-        var identityUser = new Volo.Abp.Identity.IdentityUser(
-            GuidGenerator.Create(),
-            user.UserName,
-            user.Email);
-
-        identityUser.SetPhoneNumber(user.PhoneNumber, false);
-
-        var result = await _userManager.CreateAsync(identityUser, user.Password);
-        if (!result.Succeeded)
+        var entity = new SystemUserEntity
         {
-            throw new Exception(string.Join(", ", result.Errors.Select(e => e.Description)));
-        }
+            Id = Guid.NewGuid(),
+            UserName = user.UserName,
+            Email = user.Email,
+            PhoneNumber = user.PhoneNumber,
+            PasswordHash = SystemUserStore.HashPassword(user.Password),
+            UserType = user.UserType,
+            RoleNames = user.RoleNames,
+            IsActive = user.IsActive,
+            CreatedAt = DateTime.UtcNow
+        };
 
-        // 如果需要禁用用户
-        if (!user.IsActive)
-        {
-            await _userManager.SetLockoutEnabledAsync(identityUser, true);
-            await _userManager.SetLockoutEndDateAsync(identityUser, DateTimeOffset.MaxValue);
-        }
-
-        return await MapToUserDtoAsync(identityUser);
+        _store.Add(entity);
+        return Task.FromResult(MapToDto(entity));
     }
 
-    public async Task<UserDto> CreateUserAsync(CreateUserDto dto, Guid? currentUserId = null)
+    public Task<UserDto> CreateUserAsync(CreateUserDto dto, Guid? currentUserId = null)
     {
-        using var _tenant = _currentTenant.Change(null);
-        var identityUser = new Volo.Abp.Identity.IdentityUser(
-            GuidGenerator.Create(),
-            dto.UserName,
-            dto.Email);
+        if (_store.FindByUserName(dto.UserName) != null)
+            throw new Exception("用户名已存在");
 
-        identityUser.SetPhoneNumber(dto.PhoneNumber, false);
+        if (!string.IsNullOrEmpty(dto.Email) && _store.FindByEmail(dto.Email) != null)
+            throw new Exception("邮箱已存在");
 
-        var result = await _userManager.CreateAsync(identityUser, dto.Password);
-        if (!result.Succeeded)
-        {
-            throw new Exception(string.Join(", ", result.Errors.Select(e => e.Description)));
-        }
-
-        // 分配角色
-        if (dto.RoleNames != null && dto.RoleNames.Any())
-        {
-            var addRoleResult = await _userManager.AddToRolesAsync(identityUser, dto.RoleNames);
-            if (!addRoleResult.Succeeded)
-            {
-                throw new Exception(string.Join(", ", addRoleResult.Errors.Select(e => e.Description)));
-            }
-        }
-
-        if (!dto.IsActive)
-        {
-            await _userManager.SetLockoutEnabledAsync(identityUser, true);
-            await _userManager.SetLockoutEndDateAsync(identityUser, DateTimeOffset.MaxValue);
-        }
-
-        return await MapToUserDtoAsync(identityUser);
-    }
-
-    public async Task<bool> UpdateUserAsync(UserDto user)
-    {
-        using var _tenant = _currentTenant.Change(null);
-        var existingUser = await _userManager.FindByIdAsync(user.Id.ToString());
-        if (existingUser == null)
-        {
-            return false;
-        }
-
-        await _userManager.SetUserNameAsync(existingUser, user.UserName);
-        await _userManager.SetEmailAsync(existingUser, user.Email);
-        await _userManager.SetPhoneNumberAsync(existingUser, user.PhoneNumber);
-        
-        existingUser.LastModificationTime = DateTime.UtcNow;
-
-        var result = await _userManager.UpdateAsync(existingUser);
-        return result.Succeeded;
-    }
-
-    public async Task<bool> UpdateUserAsync(Guid userId, UpdateUserDto dto, Guid? currentUserId = null)
-    {
-        using var _tenant = _currentTenant.Change(null);
-        var existingUser = await _userManager.FindByIdAsync(userId.ToString());
-        if (existingUser == null)
-        {
-            return false;
-        }
-
-        await _userManager.SetUserNameAsync(existingUser, dto.UserName);
-        await _userManager.SetEmailAsync(existingUser, dto.Email);
-        await _userManager.SetPhoneNumberAsync(existingUser, dto.PhoneNumber);
-        
-        // 更新角色
-        if (dto.RoleNames != null)
-        {
-            var currentRoles = await _userManager.GetRolesAsync(existingUser);
-            var rolesToRemove = currentRoles.Except(dto.RoleNames, StringComparer.OrdinalIgnoreCase).ToList();
-            var rolesToAdd = dto.RoleNames.Except(currentRoles, StringComparer.OrdinalIgnoreCase).ToList();
-
-            if (rolesToRemove.Any())
-                await _userManager.RemoveFromRolesAsync(existingUser, rolesToRemove);
-            if (rolesToAdd.Any())
-                await _userManager.AddToRolesAsync(existingUser, rolesToAdd);
-        }
-        
-        existingUser.LastModificationTime = DateTime.UtcNow;
-
-        var result = await _userManager.UpdateAsync(existingUser);
-        return result.Succeeded;
-    }
-
-    public async Task UpdateUserStatusAsync(Guid userId, UpdateUserStatusDto dto, Guid? currentUserId = null)
-    {
-        using var _tenant = _currentTenant.Change(null);
-        var user = await _userManager.FindByIdAsync(userId.ToString());
-        if (user == null)
-        {
-            throw new Exception("用户不存在");
-        }
-
-        // 使用 Lockout 来启用/禁用用户
-        if (dto.IsActive)
-        {
-            await _userManager.SetLockoutEndDateAsync(user, null);
-        }
-        else
-        {
-            await _userManager.SetLockoutEnabledAsync(user, true);
-            await _userManager.SetLockoutEndDateAsync(user, DateTimeOffset.MaxValue);
-        }
-
-        user.LastModificationTime = DateTime.UtcNow;
-        var result = await _userManager.UpdateAsync(user);
-        if (!result.Succeeded)
-        {
-            throw new Exception(string.Join(", ", result.Errors.Select(e => e.Description)));
-        }
-    }
-
-    public async Task ResetPasswordAsync(Guid userId, ResetPasswordDto dto)
-    {
-        using var _tenant = _currentTenant.Change(null);
-        if (dto.NewPassword != dto.ConfirmPassword)
-        {
+        if (dto.Password != dto.ConfirmPassword)
             throw new Exception("两次密码输入不一致");
-        }
 
-        var user = await _userManager.FindByIdAsync(userId.ToString());
-        if (user == null)
+        var entity = new SystemUserEntity
         {
-            throw new Exception("用户不存在");
-        }
+            Id = Guid.NewGuid(),
+            UserName = dto.UserName,
+            Email = dto.Email,
+            PhoneNumber = dto.PhoneNumber ?? "",
+            PasswordHash = SystemUserStore.HashPassword(dto.Password),
+            UserType = dto.UserType,
+            RoleNames = dto.RoleNames ?? new(),
+            IsActive = dto.IsActive,
+            CreatedAt = DateTime.UtcNow,
+            Remark = dto.Remark
+        };
 
-        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-        var result = await _userManager.ResetPasswordAsync(user, token, dto.NewPassword);
-        
-        if (!result.Succeeded)
-        {
-            throw new Exception(string.Join(", ", result.Errors.Select(e => e.Description)));
-        }
+        _store.Add(entity);
+        return Task.FromResult(MapToDto(entity));
     }
 
-    public async Task DeleteUserAsync(Guid userId)
+    public Task<bool> UpdateUserAsync(UserDto user)
     {
-        using var _tenant = _currentTenant.Change(null);
-        var user = await _userManager.FindByIdAsync(userId.ToString());
-        if (user == null)
-        {
-            throw new Exception("用户不存在");
-        }
+        var existing = _store.FindById(user.Id);
+        if (existing == null) return Task.FromResult(false);
 
-        var result = await _userManager.DeleteAsync(user);
-        if (!result.Succeeded)
-        {
-            throw new Exception(string.Join(", ", result.Errors.Select(e => e.Description)));
-        }
+        existing.UserName = user.UserName;
+        existing.Email = user.Email;
+        existing.PhoneNumber = user.PhoneNumber;
+        _store.Update(existing);
+        return Task.FromResult(true);
     }
 
-    public async Task<bool> ExistsByUserNameAsync(string userName, Guid? excludeId = null)
+    public Task<bool> UpdateUserAsync(Guid userId, UpdateUserDto dto, Guid? currentUserId = null)
     {
-        using var _tenant = _currentTenant.Change(null);
-        var user = await _userManager.FindByNameAsync(userName);
-        return user != null && user.Id != excludeId;
+        var existing = _store.FindById(userId);
+        if (existing == null) return Task.FromResult(false);
+
+        existing.UserName = dto.UserName;
+        existing.Email = dto.Email;
+        existing.PhoneNumber = dto.PhoneNumber ?? "";
+        existing.UserType = dto.UserType;
+        existing.RoleNames = dto.RoleNames ?? existing.RoleNames;
+        existing.IsActive = dto.IsActive;
+        existing.Remark = dto.Remark;
+        _store.Update(existing);
+        return Task.FromResult(true);
     }
 
-    public async Task<bool> ExistsByEmailAsync(string email, Guid? excludeId = null)
+    public Task UpdateUserStatusAsync(Guid userId, UpdateUserStatusDto dto, Guid? currentUserId = null)
     {
-        using var _tenant = _currentTenant.Change(null);
-        var user = await _userManager.FindByEmailAsync(email);
-        return user != null && user.Id != excludeId;
+        var existing = _store.FindById(userId);
+        if (existing == null) throw new Exception("用户不存在");
+
+        existing.IsActive = dto.IsActive;
+        _store.Update(existing);
+        return Task.CompletedTask;
     }
 
-    public async Task<bool> VerifyPasswordAsync(string userName, string password)
+    public Task ResetPasswordAsync(Guid userId, ResetPasswordDto dto)
     {
-        using var _tenant = _currentTenant.Change(null);
-        var user = await _userManager.FindByNameAsync(userName);
-        if (user == null) return false;
+        if (dto.NewPassword != dto.ConfirmPassword)
+            throw new Exception("两次密码输入不一致");
 
-        return await _userManager.CheckPasswordAsync(user, password);
+        var existing = _store.FindById(userId);
+        if (existing == null) throw new Exception("用户不存在");
+
+        existing.PasswordHash = SystemUserStore.HashPassword(dto.NewPassword);
+        _store.Update(existing);
+        return Task.CompletedTask;
     }
 
-    public async Task UpdateLastLoginTimeAsync(Guid userId)
+    public Task DeleteUserAsync(Guid userId)
     {
-        using var _tenant = _currentTenant.Change(null);
-        var user = await _userManager.FindByIdAsync(userId.ToString());
+        var existing = _store.FindById(userId);
+        if (existing == null) throw new Exception("用户不存在");
+
+        _store.Delete(userId);
+        return Task.CompletedTask;
+    }
+
+    public Task<bool> ExistsByUserNameAsync(string userName, Guid? excludeId = null)
+    {
+        var user = _store.FindByUserName(userName);
+        var exists = user != null && user.Id != excludeId;
+        return Task.FromResult(exists);
+    }
+
+    public Task<bool> ExistsByEmailAsync(string email, Guid? excludeId = null)
+    {
+        var user = _store.FindByEmail(email);
+        var exists = user != null && user.Id != excludeId;
+        return Task.FromResult(exists);
+    }
+
+    public Task<bool> VerifyPasswordAsync(string userName, string password)
+    {
+        var user = _store.FindByUserName(userName);
+        if (user == null) return Task.FromResult(false);
+        return Task.FromResult(_store.VerifyPassword(user, password));
+    }
+
+    public Task UpdateLastLoginTimeAsync(Guid userId)
+    {
+        var user = _store.FindById(userId);
         if (user != null)
         {
-            user.LastModificationTime = DateTime.UtcNow;
-            await _userManager.UpdateAsync(user);
+            user.LastLoginAt = DateTime.UtcNow;
+            _store.Update(user);
         }
+        return Task.CompletedTask;
     }
 
-    public async Task<PagedResult<UserDto>> GetPagedUsersAsync(UserQueryParams queryParams)
+    public Task<PagedResult<UserDto>> GetPagedUsersAsync(UserQueryParams queryParams)
     {
-        using var _tenant = _currentTenant.Change(null);
-        var query = await _userRepository.GetListAsync();
+        var allUsers = _store.GetAll().AsEnumerable();
 
-        // 关键字搜索
         if (!string.IsNullOrWhiteSpace(queryParams.Keyword))
         {
-            query = query.Where(u => u.UserName!.Contains(queryParams.Keyword) ||
-                                     u.Email!.Contains(queryParams.Keyword) ||
-                                     (u.PhoneNumber != null && u.PhoneNumber.Contains(queryParams.Keyword))).ToList();
+            allUsers = allUsers.Where(u =>
+                u.UserName.Contains(queryParams.Keyword, StringComparison.OrdinalIgnoreCase) ||
+                u.Email.Contains(queryParams.Keyword, StringComparison.OrdinalIgnoreCase) ||
+                (!string.IsNullOrEmpty(u.PhoneNumber) && u.PhoneNumber.Contains(queryParams.Keyword)));
         }
 
-        // 用户类型筛选：根据角色名过滤
         if (queryParams.UserType.HasValue)
         {
-            var targetRoleName = queryParams.UserType.Value switch
-            {
-                UserType.SuperAdmin => SystemRoleNames.SuperAdmin,
-                UserType.Admin => SystemRoleNames.Admin,
-                _ => null
-            };
-
-            if (targetRoleName != null)
-            {
-                var usersInRole = await _userManager.GetUsersInRoleAsync(targetRoleName);
-                var userIds = usersInRole.Select(u => u.Id).ToHashSet();
-                query = query.Where(u => userIds.Contains(u.Id)).ToList();
-            }
+            allUsers = allUsers.Where(u => u.UserType == queryParams.UserType.Value);
         }
-        
-        // 状态筛选
+
         if (queryParams.IsActive.HasValue)
         {
-            query = query.Where(u => u.IsActive == queryParams.IsActive.Value).ToList();
+            allUsers = allUsers.Where(u => u.IsActive == queryParams.IsActive.Value);
         }
 
-        var total = query.Count();
-        var items = query
+        var list = allUsers.ToList();
+        var total = list.Count;
+        var items = list
             .Skip((queryParams.PageIndex - 1) * queryParams.PageSize)
-            .Take(queryParams.PageSize);
+            .Take(queryParams.PageSize)
+            .Select(MapToDto)
+            .ToList();
 
-        var dtoItems = new List<UserDto>();
-        foreach (var item in items)
+        return Task.FromResult(new PagedResult<UserDto>
         {
-            dtoItems.Add(await MapToUserDtoAsync(item));
-        }
-
-        return new PagedResult<UserDto>
-        {
-            Items = dtoItems,
+            Items = items,
             Total = total,
             PageIndex = queryParams.PageIndex,
             PageSize = queryParams.PageSize
-        };
+        });
     }
 
-    public async Task AssignRolesToUserAsync(Guid userId, List<string> roleNames)
+    public Task AssignRolesToUserAsync(Guid userId, List<string> roleNames)
     {
-        using var _tenant = _currentTenant.Change(null);
-        var user = await _userManager.FindByIdAsync(userId.ToString())
-            ?? throw new Exception("用户不存在");
+        var user = _store.FindById(userId);
+        if (user == null) throw new Exception("用户不存在");
 
-        var currentRoles = await _userManager.GetRolesAsync(user);
-        var rolesToRemove = currentRoles.Except(roleNames, StringComparer.OrdinalIgnoreCase).ToList();
-        var rolesToAdd = roleNames.Except(currentRoles, StringComparer.OrdinalIgnoreCase).ToList();
-
-        if (rolesToRemove.Any())
-            await _userManager.RemoveFromRolesAsync(user, rolesToRemove);
-        if (rolesToAdd.Any())
-            await _userManager.AddToRolesAsync(user, rolesToAdd);
+        user.RoleNames = roleNames;
+        user.UserType = DeriveUserType(roleNames);
+        _store.Update(user);
+        return Task.CompletedTask;
     }
 
-    public async Task<List<string>> GetUserRoleNamesAsync(Guid userId)
+    public Task<List<string>> GetUserRoleNamesAsync(Guid userId)
     {
-        using var _tenant = _currentTenant.Change(null);
-        var user = await _userManager.FindByIdAsync(userId.ToString());
-        if (user == null) return new List<string>();
-
-        var roles = await _userManager.GetRolesAsync(user);
-        return roles.ToList();
+        var user = _store.FindById(userId);
+        return Task.FromResult(user?.RoleNames ?? new List<string>());
     }
 
-    private async Task<UserDto> MapToUserDtoAsync(Volo.Abp.Identity.IdentityUser user)
+    private static UserDto MapToDto(SystemUserEntity entity)
     {
-        using var _tenant = _currentTenant.Change(null);
-        var roles = await _userManager.GetRolesAsync(user);
         return new UserDto
         {
-            Id = user.Id,
-            UserName = user.UserName ?? "",
-            Email = user.Email ?? "",
-            PhoneNumber = user.PhoneNumber ?? "",
-            RoleNames = roles.ToList(),
-            UserType = DeriveUserType(roles),
-            IsActive = !user.LockoutEnabled || user.LockoutEnd == null || user.LockoutEnd <= DateTimeOffset.UtcNow,
-            EmailConfirmed = user.EmailConfirmed,
-            PhoneNumberConfirmed = user.PhoneNumberConfirmed,
-            LockoutEnd = user.LockoutEnd?.DateTime,
-            AccessFailedCount = user.AccessFailedCount,
-            CreatedAt = user.CreationTime,
-            UpdatedAt = user.LastModificationTime,
-            LastLoginAt = user.LastModificationTime
+            Id = entity.Id,
+            UserName = entity.UserName,
+            Email = entity.Email,
+            PhoneNumber = entity.PhoneNumber,
+            UserType = entity.UserType,
+            RoleNames = entity.RoleNames,
+            IsActive = entity.IsActive,
+            CreatedAt = entity.CreatedAt,
+            LastLoginAt = entity.LastLoginAt,
+            Remark = entity.Remark
         };
     }
 
-    private static UserType DeriveUserType(IList<string> roles)
+    private static UserType DeriveUserType(List<string> roles)
     {
         if (roles.Contains(SystemRoleNames.SuperAdmin, StringComparer.OrdinalIgnoreCase))
             return UserType.SuperAdmin;

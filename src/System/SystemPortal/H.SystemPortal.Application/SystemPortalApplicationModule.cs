@@ -1,4 +1,5 @@
 using H.SystemPortal.Application.Contracts;
+using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Modularity;
 
 namespace H.SystemPortal.Application;
@@ -10,6 +11,6 @@ public class SystemPortalApplicationModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
-        // 注册应用服务
+        context.Services.AddSingleton<SystemUserStore>();
     }
 }

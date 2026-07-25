@@ -1,5 +1,3 @@
-using H.SystemPortal.Application.Contracts;
-
 namespace H.Account.Application.Contracts;
 
 /// <summary>

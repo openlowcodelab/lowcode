@@ -1,4 +1,4 @@
-using H.SystemPortal.Application.Contracts;
+using H.Account.Application.Contracts;
 using H.Organization.Application.Contracts;
 using H.Organization.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -12,9 +12,9 @@ namespace H.Organization.Application;
 public class MemberAppService : ApplicationService, IMemberAppService
 {
     private readonly OrganizationDbContext _context;
-    private readonly IUserAppService _userService;
+    private readonly IAccountUserAppService _userService;
 
-    public MemberAppService(OrganizationDbContext context, IUserAppService userService)
+    public MemberAppService(OrganizationDbContext context, IAccountUserAppService userService)
     {
         _context = context;
         _userService = userService;
@@ -294,7 +294,7 @@ public class MemberAppService : ApplicationService, IMemberAppService
     /// </summary>
     public async Task<List<AssignableUserDto>> SearchAssignableUsersAsync(string? keyword)
     {
-        var result = await _userService.GetPagedUsersAsync(new H.SystemPortal.Application.Contracts.UserQueryParams
+        var result = await _userService.GetPagedUsersAsync(new H.Account.Application.Contracts.UserQueryParams
         {
             Keyword = keyword,
             PageIndex = 1,

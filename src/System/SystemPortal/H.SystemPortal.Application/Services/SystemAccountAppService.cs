@@ -1,57 +1,36 @@
 using H.SystemPortal.Application.Contracts;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using Volo.Abp.Application.Services;
-using Volo.Abp.Identity;
-using Volo.Abp.MultiTenancy;
 
 namespace H.SystemPortal.Application;
 
 public class SystemAccountAppService : ApplicationService, ISystemAccountAppService
 {
-    private readonly IdentityUserManager _userManager;
-    private readonly ICurrentTenant _currentTenant;
+    private readonly SystemUserStore _store;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
     public SystemAccountAppService(
-        IdentityUserManager userManager,
-        ICurrentTenant currentTenant,
+        SystemUserStore store,
         IHttpContextAccessor httpContextAccessor)
     {
-        _userManager = userManager;
-        _currentTenant = currentTenant;
+        _store = store;
         _httpContextAccessor = httpContextAccessor;
     }
 
     private const string SystemCookieScheme = "SystemCookies";
 
-    [IgnoreAntiforgeryToken]
     public async Task<AuthResponseDto> SystemLoginAsync(LoginRequestDto request)
     {
-        IdentityUser? user = null;
         var loginType = DetectLoginType(request.Account);
 
-        // 系统用户跨租户查找
-        using (_currentTenant.Change(null))
+        SystemUserEntity? user = loginType switch
         {
-            switch (loginType)
-            {
-                case LoginType.Email:
-                    user = await _userManager.FindByEmailAsync(request.Account);
-                    break;
-                case LoginType.PhoneNumber:
-                    var allUsers = await _userManager.Users.ToListAsync();
-                    user = allUsers.FirstOrDefault(u => u.PhoneNumber == request.Account);
-                    break;
-                default:
-                    user = await _userManager.FindByNameAsync(request.Account);
-                    break;
-            }
-        }
+            LoginType.Email => _store.FindByEmail(request.Account),
+            LoginType.PhoneNumber => _store.FindByPhoneNumber(request.Account),
+            _ => _store.FindByUserName(request.Account)
+        };
 
         if (user == null)
             return new AuthResponseDto { Success = false, Message = "用户名或密码错误" };
@@ -59,20 +38,11 @@ public class SystemAccountAppService : ApplicationService, ISystemAccountAppServ
         if (!user.IsActive)
             return new AuthResponseDto { Success = false, Message = "账户已被禁用" };
 
-        var passwordValid = await _userManager.CheckPasswordAsync(user, request.Password);
-        if (!passwordValid)
+        if (!_store.VerifyPassword(user, request.Password))
             return new AuthResponseDto { Success = false, Message = "用户名或密码错误" };
 
         // 验证是否拥有系统管理员角色
-        IList<string>? roles = null;
-        using (_currentTenant.Change(null))
-        {
-            roles = await _userManager.GetRolesAsync(user);
-        }
-        if (roles == null || roles.Count == 0)
-            return new AuthResponseDto { Success = false, Message = "无权限访问" };
-
-        var isSystemAdmin = roles.Any(r =>
+        var isSystemAdmin = user.RoleNames.Any(r =>
             r.Equals(SystemRoleNames.SuperAdmin, StringComparison.OrdinalIgnoreCase) ||
             r.Equals(SystemRoleNames.Admin, StringComparison.OrdinalIgnoreCase));
 
@@ -80,16 +50,17 @@ public class SystemAccountAppService : ApplicationService, ISystemAccountAppServ
             return new AuthResponseDto { Success = false, Message = "无权限访问" };
 
         // 更新最后登录时间
-        user.LastModificationTime = DateTime.UtcNow;
-        await _userManager.UpdateAsync(user);
+        user.LastLoginAt = DateTime.UtcNow;
+        _store.Update(user);
 
         var userDto = new UserDto
         {
             Id = user.Id,
-            UserName = user.UserName ?? "",
-            Email = user.Email ?? "",
-            PhoneNumber = user.PhoneNumber ?? "",
-            RoleNames = roles.ToList(),
+            UserName = user.UserName,
+            Email = user.Email,
+            PhoneNumber = user.PhoneNumber,
+            RoleNames = user.RoleNames,
+            UserType = user.UserType,
             LoginMode = "System",
             IsActive = true
         };
@@ -100,12 +71,12 @@ public class SystemAccountAppService : ApplicationService, ISystemAccountAppServ
         {
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.UserName ?? ""),
-                new Claim(ClaimTypes.Email, user.Email ?? "")
+                new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new(ClaimTypes.Name, user.UserName),
+                new(ClaimTypes.Email, user.Email)
             };
 
-            foreach (var role in roles)
+            foreach (var role in user.RoleNames)
             {
                 claims.Add(new Claim(ClaimTypes.Role, role));
             }
@@ -114,7 +85,9 @@ public class SystemAccountAppService : ApplicationService, ISystemAccountAppServ
             var authProperties = new AuthenticationProperties
             {
                 IsPersistent = request.RememberMe,
-                ExpiresUtc = request.RememberMe ? DateTimeOffset.UtcNow.AddDays(7) : DateTimeOffset.UtcNow.AddHours(24)
+                ExpiresUtc = request.RememberMe
+                    ? DateTimeOffset.UtcNow.AddDays(7)
+                    : DateTimeOffset.UtcNow.AddHours(24)
             };
 
             await httpContext.SignInAsync(
@@ -131,7 +104,6 @@ public class SystemAccountAppService : ApplicationService, ISystemAccountAppServ
         };
     }
 
-    [IgnoreAntiforgeryToken]
     public async Task SystemLogoutAsync()
     {
         var httpContext = _httpContextAccessor.HttpContext;
@@ -141,51 +113,45 @@ public class SystemAccountAppService : ApplicationService, ISystemAccountAppServ
         }
     }
 
-    public async Task<UserDto?> GetCurrentUserAsync()
+    public Task<UserDto?> GetCurrentUserAsync()
     {
         var httpContext = _httpContextAccessor.HttpContext;
         if (httpContext == null)
-            return null;
+            return Task.FromResult<UserDto?>(null);
 
-        // 显式认证 SystemCookies 方案（UseAuthentication 只认证默认方案）
-        var authResult = await httpContext.AuthenticateAsync(SystemCookieScheme);
+        // 显式认证 SystemCookies 方案
+        var authResult = httpContext.AuthenticateAsync(SystemCookieScheme).GetAwaiter().GetResult();
         if (!authResult.Succeeded || authResult.Principal == null)
-            return null;
+            return Task.FromResult<UserDto?>(null);
 
-        // 从认证结果中获取用户 ID
         var userIdClaim = authResult.Principal.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null)
-            return null;
+        if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+            return Task.FromResult<UserDto?>(null);
 
-        var userId = Guid.Parse(userIdClaim.Value);
+        var user = _store.FindById(userId);
+        if (user == null || !user.IsActive)
+            return Task.FromResult<UserDto?>(null);
 
-        // 系统用户跨租户查找
-        using (_currentTenant.Change(null))
+        var isSystemAdmin = user.RoleNames.Any(r =>
+            r.Equals(SystemRoleNames.SuperAdmin, StringComparison.OrdinalIgnoreCase) ||
+            r.Equals(SystemRoleNames.Admin, StringComparison.OrdinalIgnoreCase));
+
+        if (!isSystemAdmin)
+            return Task.FromResult<UserDto?>(null);
+
+        var dto = new UserDto
         {
-            var user = await _userManager.FindByIdAsync(userId.ToString());
-            if (user == null || !user.IsActive)
-                return null;
+            Id = user.Id,
+            UserName = user.UserName,
+            Email = user.Email,
+            PhoneNumber = user.PhoneNumber,
+            RoleNames = user.RoleNames,
+            UserType = user.UserType,
+            LoginMode = "System",
+            IsActive = true
+        };
 
-            // 验证是否拥有系统管理员角色
-            var roles = await _userManager.GetRolesAsync(user);
-            var isSystemAdmin = roles.Any(r =>
-                r.Equals(SystemRoleNames.SuperAdmin, StringComparison.OrdinalIgnoreCase) ||
-                r.Equals(SystemRoleNames.Admin, StringComparison.OrdinalIgnoreCase));
-
-            if (!isSystemAdmin)
-                return null;
-
-            return new UserDto
-            {
-                Id = user.Id,
-                UserName = user.UserName ?? "",
-                Email = user.Email ?? "",
-                PhoneNumber = user.PhoneNumber ?? "",
-                RoleNames = roles.ToList(),
-                LoginMode = "System",
-                IsActive = true
-            };
-        }
+        return Task.FromResult<UserDto?>(dto);
     }
 
     private static LoginType DetectLoginType(string account)

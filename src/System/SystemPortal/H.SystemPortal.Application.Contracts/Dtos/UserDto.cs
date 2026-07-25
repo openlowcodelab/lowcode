@@ -32,27 +32,6 @@ public class UserDto
 }
 
 /// <summary>
-/// 系统角色 DTO
-/// </summary>
-public class SystemRoleDto
-{
-    public Guid Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public bool IsBuiltIn { get; set; }
-    public int UserCount { get; set; }
-}
-
-/// <summary>
-/// 创建系统自定义角色 DTO
-/// </summary>
-public class CreateSystemRoleDto
-{
-    [Required, MaxLength(50)]
-    public string Name { get; set; } = string.Empty;
-    public string? Remark { get; set; }
-}
-
-/// <summary>
 /// 分配角色 DTO
 /// </summary>
 public class AssignRolesDto

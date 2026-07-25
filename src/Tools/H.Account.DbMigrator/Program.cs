@@ -30,9 +30,6 @@ public class Program
                 await dbContext.Database.MigrateAsync();
 
                 Console.WriteLine("数据库迁移完成");
-
-                // 种子数据：系统管理员用户
-                await SeedSystemUserAsync(dbContext);
             }
             catch (Exception ex)
             {
@@ -43,56 +40,6 @@ public class Program
 
         Console.WriteLine("按任意键退出...");
         Console.ReadKey();
-    }
-
-    /// <summary>
-    /// 超级管理员用户种子数据
-    /// </summary>
-    private static async Task SeedSystemUserAsync(MigratorDbContext dbContext)
-    {
-        const string userName = "sys";
-        const string password = "Sys,123456";
-        const string email = "sys@applab.com";
-
-        var users = dbContext.Set<IdentityUser>();
-
-        var existingUser = await users.FirstOrDefaultAsync(u => u.UserName == userName);
-        if (existingUser != null)
-        {
-            Console.WriteLine($"超级管理员用户 '{userName}' 已存在，跳过创建");
-            return;
-        }
-
-        // 使用 ASP.NET Core Identity 的 PasswordHasher 生成密码哈希
-        var userId = Guid.NewGuid();
-        var securityStamp = Guid.NewGuid().ToString("N");
-        var concurrencyStamp = Guid.NewGuid().ToString("N");
-        var now = DateTime.UtcNow;
-
-        // PasswordHasher 需要 IdentityUser 实例，但只用于生成标准哈希格式
-        var tempUser = new IdentityUser(userId, userName, email);
-        var passwordHasher = new Microsoft.AspNetCore.Identity.PasswordHasher<IdentityUser>();
-        var hashedPassword = passwordHasher.HashPassword(tempUser, password);
-
-        // 使用原始 SQL 插入用户记录（ABP IdentityUser 属性 setter 受保护，无法直接赋值）
-        await dbContext.Database.ExecuteSqlRawAsync(
-            @"INSERT INTO AbpUsers 
-                (Id, UserName, NormalizedUserName, Email, NormalizedEmail, PasswordHash, SecurityStamp, ConcurrencyStamp, 
-                 IsActive, IsDeleted, IsExternal, EmailConfirmed, PhoneNumberConfirmed, LockoutEnabled, 
-                 AccessFailedCount, TwoFactorEnabled, ShouldChangePasswordOnNextLogin, Leaved, 
-                 CreationTime, EntityVersion, ExtraProperties)
-              VALUES 
-                ({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, 
-                 {8}, {9}, {10}, {11}, {12}, {13}, 
-                 {14}, {15}, {16}, {17}, 
-                 {18}, {19}, {20})",
-            userId, userName, userName.ToUpperInvariant(), email, email.ToUpperInvariant(),
-            hashedPassword, securityStamp, concurrencyStamp,
-            true, false, false, true, true, false,
-            0, false, false, false,
-            now, 1, "{}");
-
-        Console.WriteLine($"已创建超级管理员用户: {userName}，默认密码: {password}");
     }
 
     static IHostBuilder CreateHostBuilder(string[] args) =>
