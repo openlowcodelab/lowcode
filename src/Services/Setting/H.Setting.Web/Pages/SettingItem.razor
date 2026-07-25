@@ -1,0 +1,196 @@
+@page "/setting/item"
+
+@layout SettingLayout
+@inject ISettingValueAppService ValueService
+@inject IJSRuntime JS
+
+<h2>配置项</h2>
+
+<HCard>
+    <div class="h-toolbar">
+        <input type="text" @bind-value="@filter" placeholder="配置名称" class="h-input" style="width: 220px;" />
+        <select @bind="@providerFilter" class="h-input" style="width: 140px;">
+            <option value="">全部提供者</option>
+            <option value="G">全局 (G)</option>
+            <option value="T">租户 (T)</option>
+            <option value="U">用户 (U)</option>
+        </select>
+        <button class="h-btn h-btn-primary" @onclick="@LoadData">查询</button>
+        <button class="h-btn h-btn-primary" @onclick="@ShowCreateDialog">新增配置项</button>
+        <button class="h-btn" @onclick="@LoadData">刷新</button>
+    </div>
+
+    <HTable Loading="@loading" ShowEmpty="@(!loading && !items.Any())">
+        <thead>
+            <tr>
+                <th>配置名称</th>
+                <th>显示名称</th>
+                <th>配置值</th>
+                <th>提供者</th>
+                <th>提供者键</th>
+                <th>更新时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var v in items)
+            {
+                <tr>
+                    <td>@v.Name</td>
+                    <td>@(string.IsNullOrEmpty(v.DisplayName) ? "-" : v.DisplayName)</td>
+                    <td>@(string.IsNullOrEmpty(v.Value) ? "-" : v.Value)</td>
+                    <td>@v.ProviderName</td>
+                    <td>@(string.IsNullOrEmpty(v.ProviderKey) ? "-" : v.ProviderKey)</td>
+                    <td>@((v.LastModificationTime ?? v.CreationTime).ToString("yyyy-MM-dd HH:mm"))</td>
+                    <td>
+                        <span class="h-space">
+                            <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => ShowEditDialog(v))">编辑</button>
+                            <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => ConfirmDelete(v.Id))">删除</button>
+                        </span>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </HTable>
+</HCard>
+
+<HModal Title="@modalTitle" Visible="@showModal" OnOk="@Save" OnCancel="@CloseModal" ConfirmLoading="@saving" Style="width:600px;">
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">配置名称</label>
+        <div class="h-form-control">
+            <select @bind="@current.Name" class="h-input">
+                <option value="">请选择配置定义</option>
+                @foreach (var d in definitions)
+                {
+                    <option value="@d.Name">@d.Name（@d.DisplayName）</option>
+                }
+            </select>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">配置值</label>
+        <div class="h-form-control">
+            <textarea @bind="@current.Value" rows="3" class="h-textarea"></textarea>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">提供者</label>
+        <div class="h-form-control">
+            <select @bind="@current.ProviderName" class="h-input" style="width:auto">
+                <option value="G">全局 (G)</option>
+                <option value="T">租户 (T)</option>
+                <option value="U">用户 (U)</option>
+            </select>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">提供者键</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@current.ProviderKey" placeholder="全局留空；租户/用户填对应Id" class="h-input" />
+        </div>
+    </div>
+</HModal>
+
+@code {
+    private List<SettingValueDto> items = new();
+    private List<SettingDefinitionLookupDto> definitions = new();
+    private bool loading;
+    private string filter = string.Empty;
+    private string providerFilter = string.Empty;
+
+    private bool showModal;
+    private bool saving;
+    private string modalTitle = "新增配置项";
+    private Guid? editingId;
+    private CreateUpdateSettingValueDto current = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDefinitions();
+        await LoadData();
+    }
+
+    private async Task LoadDefinitions()
+    {
+        try { definitions = await ValueService.GetDefinitionLookupAsync(); }
+        catch { definitions = new(); }
+    }
+
+    private async Task LoadData()
+    {
+        loading = true;
+        try
+        {
+            var input = new SettingValueQueryDto
+            {
+                MaxResultCount = 100,
+                Filter = string.IsNullOrWhiteSpace(filter) ? null : filter,
+                ProviderName = string.IsNullOrWhiteSpace(providerFilter) ? null : providerFilter
+            };
+            var result = await ValueService.GetListAsync(input);
+            items = result.Items.ToList();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载失败：{ex.Message}"); }
+        finally { loading = false; }
+    }
+
+    private void ShowCreateDialog()
+    {
+        editingId = null;
+        modalTitle = "新增配置项";
+        current = new CreateUpdateSettingValueDto { ProviderName = SettingValueProviders.Global };
+        showModal = true;
+    }
+
+    private void ShowEditDialog(SettingValueDto v)
+    {
+        editingId = v.Id;
+        modalTitle = "编辑配置项";
+        current = new CreateUpdateSettingValueDto
+        {
+            Name = v.Name,
+            Value = v.Value,
+            ProviderName = v.ProviderName,
+            ProviderKey = v.ProviderKey
+        };
+        showModal = true;
+    }
+
+    private async Task Save()
+    {
+        saving = true;
+        try
+        {
+            if (string.IsNullOrWhiteSpace(current.Name))
+            {
+                await JS.InvokeVoidAsync("alert", "请选择配置名称");
+                return;
+            }
+            if (editingId.HasValue)
+                await ValueService.UpdateAsync(editingId.Value, current);
+            else
+                await ValueService.CreateAsync(current);
+
+            CloseModal();
+            await LoadData();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}"); }
+        finally { saving = false; }
+    }
+
+    private void CloseModal() { showModal = false; current = new(); editingId = null; }
+
+    private async Task ConfirmDelete(Guid id)
+    {
+        var ok = await JS.InvokeAsync<bool>("confirm", "确定删除该配置项？");
+        if (ok)
+        {
+            try
+            {
+                await ValueService.DeleteAsync(id);
+                await LoadData();
+            }
+            catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"删除失败：{ex.Message}"); }
+        }
+    }
+}

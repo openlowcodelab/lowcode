@@ -1,0 +1,123 @@
+@page "/background-task/records"
+
+@layout BackgroundTaskLayout
+@inject IJobExecutionRecordAppService RecordService
+@inject IJSRuntime JS
+
+<h2>执行记录</h2>
+
+<HCard>
+    <div class="h-toolbar">
+        <select @bind="@statusFilter" class="h-input" style="width: auto;">
+            <option value="">全部状态</option>
+            <option value="@JobExecutionStatus.Success">成功</option>
+            <option value="@JobExecutionStatus.Failed">失败</option>
+        </select>
+        <button class="h-btn h-btn-primary" @onclick="@LoadData">查询</button>
+        <button class="h-btn" @onclick="@LoadData">刷新</button>
+    </div>
+
+    <HTable Loading="@loading" ShowEmpty="@(!loading && !records.Any())">
+        <thead>
+            <tr>
+                <th>任务名称</th>
+                <th>类型</th>
+                <th>状态</th>
+                <th>开始时间</th>
+                <th>耗时(ms)</th>
+                <th>结果 / 错误</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var r in records)
+            {
+                <tr>
+                    <td>@r.JobName</td>
+                    <td><span class="h-tag h-tag-blue">@r.ExecuteType</span></td>
+                    <td>
+                        @if (r.Status == JobExecutionStatus.Success)
+                        {
+                            <span class="h-tag h-tag-green">成功</span>
+                        }
+                        else
+                        {
+                            <span class="h-tag h-tag-red">失败</span>
+                        }
+                    </td>
+                    <td>@r.StartTime.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                    <td>@r.DurationMs</td>
+                    <td>
+                        <button class="h-btn h-btn-sm" @onclick="@(() => ShowDetail(r))">查看</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </HTable>
+</HCard>
+
+<HModal Title="执行详情" Visible="@showModal" OnOk="@CloseModal" OnCancel="@CloseModal" Style="width:720px;">
+    @if (detail is not null)
+    {
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">任务名称</label>
+            <div class="h-form-control">@detail.JobName</div>
+        </div>
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">开始 / 结束</label>
+            <div class="h-form-control">
+                @detail.StartTime.ToString("yyyy-MM-dd HH:mm:ss") ~ @(detail.EndTime?.ToString("HH:mm:ss") ?? "-")
+            </div>
+        </div>
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">执行结果</label>
+            <div class="h-form-control">
+                <pre class="h-code">@(detail.Result ?? "-")</pre>
+            </div>
+        </div>
+        @if (!string.IsNullOrEmpty(detail.ErrorMessage))
+        {
+            <div class="h-form-item h-form-horizontal">
+                <label class="h-form-label">错误信息</label>
+                <div class="h-form-control">
+                    <pre class="h-code" style="color:#d4380d;">@detail.ErrorMessage</pre>
+                </div>
+            </div>
+        }
+    }
+</HModal>
+
+@code {
+    private List<JobExecutionRecordDto> records = new();
+    private bool loading;
+    private string statusFilter = string.Empty;
+
+    private bool showModal;
+    private JobExecutionRecordDto? detail;
+
+    protected override async Task OnInitializedAsync() => await LoadData();
+
+    private async Task LoadData()
+    {
+        loading = true;
+        try
+        {
+            var input = new JobExecutionRecordQueryDto
+            {
+                MaxResultCount = 50,
+                Status = string.IsNullOrEmpty(statusFilter) ? null : Enum.Parse<JobExecutionStatus>(statusFilter)
+            };
+            var result = await RecordService.GetListAsync(input);
+            records = result.Items.ToList();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载失败：{ex.Message}"); }
+        finally { loading = false; }
+    }
+
+    private void ShowDetail(JobExecutionRecordDto r)
+    {
+        detail = r;
+        showModal = true;
+    }
+
+    private void CloseModal() { showModal = false; detail = null; }
+}

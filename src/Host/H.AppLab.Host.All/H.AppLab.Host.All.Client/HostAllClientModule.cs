@@ -9,7 +9,9 @@ using H.LowCode.DesignEngine.Application.Contracts;
 using H.LowCode.RenderEngine.Application.Contracts;
 using H.Notification.Application.Contracts;
 using H.Order.Application.Contracts;
+using H.Setting.Application.Contracts;
 using H.Organization.Application.Contracts;
+using H.BackgroundTask.Application.Contracts;
 using H.Portal.Application.Contracts;
 using H.SupplyChain.Application.Contracts;
 using H.SystemPortal.Application.Contracts;
@@ -37,7 +39,9 @@ public class HostAllClientModule : AbpModule
     public const string PortalRemoteServiceName = "Portal";
     public const string NotificationRemoteServiceName = "Notification";
     public const string OrderRemoteServiceName = "Order";
+    public const string SettingRemoteServiceName = "Setting";
     public const string SupplyChainRemoteServiceName = "SupplyChain";
+    public const string BackgroundTaskRemoteServiceName = "BackgroundTask";
 
     public const string EnterpriseRemoteServiceName = "Enterprise";
     public const string SystemPortalRemoteServiceName = "SystemPortal";
@@ -136,8 +140,18 @@ public class HostAllClientModule : AbpModule
         );
 
         context.Services.AddHttpClientProxies(
+            typeof(SettingApplicationContractsModule).Assembly,
+            SettingRemoteServiceName
+        );
+
+        context.Services.AddHttpClientProxies(
             typeof(SupplyChainApplicationContractsModule).Assembly,
             SupplyChainRemoteServiceName
+        );
+
+        context.Services.AddHttpClientProxies(
+            typeof(BackgroundTaskApplicationContractsModule).Assembly,
+            BackgroundTaskRemoteServiceName
         );
     }
 }

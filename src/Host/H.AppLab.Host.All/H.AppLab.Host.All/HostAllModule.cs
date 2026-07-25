@@ -16,7 +16,9 @@ using H.Portal.Application;
 using H.SystemPortal.Application;
 using H.Notification.Application;
 using H.Order.Application;
+using H.Setting.Application;
 using H.SupplyChain.Application;
+using H.BackgroundTask.Application;
 using H.YunXiaoMcpServer;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Volo.Abp.AspNetCore.MultiTenancy;
@@ -64,8 +66,12 @@ namespace H.AppLab.Host.All;
     typeof(EnterpriseApplicationModule),
     // Order
     typeof(OrderApplicationModule),
+    // Setting（配置管理）
+    typeof(SettingApplicationModule),
     // SupplyChain
     typeof(SupplyChainApplicationModule),
+    // BackgroundTask
+    typeof(BackgroundTaskApplicationModule),
     // YunXiao MCP Server
     typeof(YunXiaoMcpServerModule)
 )]
@@ -142,7 +148,9 @@ public class HostAllModule : AbpModule
             options.ConventionalControllers.Create(typeof(NotificationApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(EnterpriseApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(OrderApplicationModule).Assembly);
+            options.ConventionalControllers.Create(typeof(SettingApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(SupplyChainApplicationModule).Assembly);
+            options.ConventionalControllers.Create(typeof(BackgroundTaskApplicationModule).Assembly);
         });
     }
 

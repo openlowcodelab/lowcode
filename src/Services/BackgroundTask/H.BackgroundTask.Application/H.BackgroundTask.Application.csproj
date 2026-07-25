@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../../../common.props" />
+  <PropertyGroup>
+    <RootNamespace>H.BackgroundTask.Application</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Volo.Abp.AspNetCore.Mvc" />
+    <PackageReference Include="Hangfire.Core" />
+    <PackageReference Include="Hangfire.AspNetCore" />
+    <PackageReference Include="Hangfire.SqlServer" />
+    <PackageReference Include="Microsoft.Data.SqlClient" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\H.BackgroundTask.Application.Contracts\H.BackgroundTask.Application.Contracts.csproj" />
+    <ProjectReference Include="..\H.BackgroundTask.EntityFrameworkCore\H.BackgroundTask.EntityFrameworkCore.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,6 +1,7 @@
 using H.AppLab.Host.All.Components;
 using H.YunXiaoMcpServer;
 using H.AppLab.Host.All;
+using Hangfire;
 using Microsoft.AspNetCore.ResponseCompression;
 using System.IO.Compression;
 
@@ -86,6 +87,9 @@ app.UseAntiforgery();
 app.MapControllers();
 app.MapMcp("/yunxiao").AllowAnonymous();
 
+// Hangfire 后台任务仪表盘
+app.UseHangfireDashboard("/hangfire");
+
 app.MapRazorComponents<App>()
     .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(
@@ -104,6 +108,7 @@ app.MapRazorComponents<App>()
         typeof(H.Notification.Web._Imports).Assembly,
         typeof(H.Assistant.Web._Imports).Assembly,
         typeof(H.Order.Web._Imports).Assembly,
-        typeof(H.SupplyChain.Web._Imports).Assembly);
+        typeof(H.SupplyChain.Web._Imports).Assembly,
+        typeof(H.BackgroundTask.Web._Imports).Assembly);
 
 app.Run();
