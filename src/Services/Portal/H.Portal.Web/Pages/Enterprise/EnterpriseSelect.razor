@@ -22,13 +22,13 @@
     {
         <div>
             <h2>🏭 欢迎</h2>
-            <p style="color: #666; margin-top: 12px;">您还不属于任何企业，请创建一个企业后开始使用系统。</p>
+            <p style="color: #4E5969; margin-top: 12px;">您还不属于任何企业，请创建一个企业后开始使用系统。</p>
             <div style="margin-top: 24px;">
                 <button class="h-btn h-btn-primary" @onclick="GoToCreate" style="padding: 10px 32px; font-size: 16px;">
                     创建企业
                 </button>
             </div>
-            <p style="color: #999; margin-top: 16px; font-size: 12px;">
+            <p style="color: #86909C; margin-top: 16px; font-size: 12px;">
                 创建企业后需要等待管理员激活
             </p>
         </div>
@@ -37,16 +37,16 @@
     {
         <div>
             <h2>🏭 等待激活</h2>
-            <p style="color: #666; margin-top: 12px;">您创建的企业正在等待管理员激活：</p>
+            <p style="color: #4E5969; margin-top: 12px;">您创建的企业正在等待管理员激活：</p>
             <div style="margin-top: 16px; display: flex; flex-direction: column; gap: 8px; align-items: center;">
                 @foreach (var pe in pendingEnterprises)
                 {
-                    <div style="padding: 10px 20px; border: 1px solid #faad14; border-radius: 6px; background: #fffbe6; color: #ad6800;">
+                    <div style="padding: 10px 20px; border: 1px solid #FF7D00; border-radius: 6px; background: #FFF7E8; color: #ad6800;">
                         🕐 @pe.Name - 待激活
                     </div>
                 }
             </div>
-            <p style="color: #999; margin-top: 16px; font-size: 12px;">激活后即可使用系统，您也可以继续创建新企业</p>
+            <p style="color: #86909C; margin-top: 16px; font-size: 12px;">激活后即可使用系统，您也可以继续创建新企业</p>
             <div style="margin-top: 16px;">
                 <button class="h-btn" @onclick="GoToCreate">创建新企业</button>
             </div>
@@ -56,20 +56,20 @@
     {
         <div>
             <h2>🏭 选择企业</h2>
-            <p style="color: #666; margin-top: 8px; margin-bottom: 24px;">请选择要进入的企业，或创建一个新的企业</p>
+            <p style="color: #4E5969; margin-top: 8px; margin-bottom: 24px;">请选择要进入的企业，或创建一个新的企业</p>
             <div style="display: flex; flex-direction: column; gap: 12px;">
                 @foreach (var enterprise in activeEnterprises)
                 {
-                    <div style="padding: 16px; border: 1px solid #e8e8e8; border-radius: 8px; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 12px; transition: all 0.2s;"
+                    <div style="padding: 16px; border: 1px solid #E5E6EB; border-radius: 8px; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 12px; transition: all 0.2s;"
                          @onclick="() => SelectAndEnter(enterprise.Id)"
-                         onmouseover="this.style.borderColor='#1890ff';this.style.boxShadow='0 2px 8px rgba(24,144,255,0.15)'"
-                         onmouseout="this.style.borderColor='#e8e8e8';this.style.boxShadow='none'">
-                        <div style="width: 40px; height: 40px; background: #1890ff; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px;">
+                         onmouseover="this.style.borderColor='#165DFF';this.style.boxShadow='0 2px 8px rgba(22,93,255,0.15)'"
+                         onmouseout="this.style.borderColor='#E5E6EB';this.style.boxShadow='none'">
+                        <div style="width: 40px; height: 40px; background: #165DFF; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px;">
                             🏭
                         </div>
                         <div>
                             <div style="font-weight: 600; font-size: 15px;">@enterprise.Name</div>
-                            <div style="color: #999; font-size: 12px; margin-top: 2px;">
+                            <div style="color: #86909C; font-size: 12px; margin-top: 2px;">
                                 @(enterprise.DatabaseMode == "Shared" ? "共用数据库" : "独立数据库")
                                 · @enterprise.UserCount 名成员
                             </div>
@@ -78,8 +78,8 @@
                 }
                 @foreach (var pe in pendingEnterprises)
                 {
-                    <div style="padding: 16px; border: 1px solid #faad14; border-radius: 8px; text-align: left; display: flex; align-items: center; gap: 12px; background: #fffbe6; opacity: 0.7;">
-                        <div style="width: 40px; height: 40px; background: #faad14; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px;">
+                    <div style="padding: 16px; border: 1px solid #FF7D00; border-radius: 8px; text-align: left; display: flex; align-items: center; gap: 12px; background: #FFF7E8; opacity: 0.7;">
+                        <div style="width: 40px; height: 40px; background: #FF7D00; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 20px;">
                             🕐
                         </div>
                         <div>

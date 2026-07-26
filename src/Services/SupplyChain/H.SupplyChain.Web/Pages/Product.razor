@@ -41,10 +41,10 @@
                     <td>@(skuCounts.GetValueOrDefault(p.Id))</td>
                     <td>@p.CreationTime.ToString("yyyy-MM-dd HH:mm")</td>
                     <td>
-                        <span class="h-space">
-                            <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => Edit(p))">编辑</button>
-                            <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => OpenSkuModal(p))">SKU管理</button>
-                            <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => Delete(p.Id))">删除</button>
+                        <span class="row-actions">
+                            <a @onclick="@(() => Edit(p))">编辑</a>
+                            <a @onclick="@(() => OpenSkuModal(p))">SKU管理</a>
+                            <a class="danger" @onclick="@(() => Delete(p.Id))">删除</a>
                         </span>
                     </td>
                 </tr>
@@ -123,8 +123,8 @@
                 <tbody>
                     @foreach (var s in skus)
                     {
-                        <tr style="background-color:@(s.Id == selectedSkuId ? "#e6f7ff" : "")">
-                            <td><span style="color:#1890ff;cursor:pointer;text-decoration:underline;" @onclick="@(() => SelectSku(s.Id))">@s.SkuCode</span></td>
+                        <tr style="background-color:@(s.Id == selectedSkuId ? "#E8F3FF" : "")">
+                            <td><span style="color:#165DFF;cursor:pointer;text-decoration:underline;" @onclick="@(() => SelectSku(s.Id))">@s.SkuCode</span></td>
                             <td>@s.SkuName</td>
                             <td style="max-width:200px;"><pre style="white-space:pre-wrap;">@(s.SpecsJson ?? "-")</pre></td>
                             <td>@s.Price.ToString("F2")</td>
@@ -134,10 +134,10 @@
                                 else { <span class="h-tag h-tag-red">禁用</span> }
                             </td>
                             <td>
-                                <span class="h-space">
-                                    <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => SelectSku(s.Id))">查看供应商</button>
-                                    <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => EditSku(s))">编辑</button>
-                                    <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => DeleteSku(s.Id))">删除</button>
+                                <span class="row-actions">
+                                    <a @onclick="@(() => SelectSku(s.Id))">查看供应商</a>
+                                    <a @onclick="@(() => EditSku(s))">编辑</a>
+                                    <a class="danger" @onclick="@(() => DeleteSku(s.Id))">删除</a>
                                 </span>
                             </td>
                         </tr>
@@ -182,9 +182,9 @@
                                     else { <span class="h-tag h-tag-red">禁用</span> }
                                 </td>
                                 <td>
-                                    <span class="h-space">
-                                        <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => EditMapping(m))">编辑</button>
-                                        <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => DeleteMapping(m.Id))">删除</button>
+                                    <span class="row-actions">
+                                        <a @onclick="@(() => EditMapping(m))">编辑</a>
+                                        <a class="danger" @onclick="@(() => DeleteMapping(m.Id))">删除</a>
                                     </span>
                                 </td>
                             </tr>
@@ -194,7 +194,7 @@
             }
             else
             {
-                <div style="color:#888;padding:16px;text-align:center;">请点击上方 SKU 行的编码或"查看供应商"按钮，查看该 SKU 关联的供应商映射</div>
+                <div style="color:#86909C;padding:16px;text-align:center;">请点击上方 SKU 行的编码或"查看供应商"按钮，查看该 SKU 关联的供应商映射</div>
             }
         </div>
     </div>

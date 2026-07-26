@@ -1,4 +1,4 @@
-﻿@namespace H.LowCode.MyApp
+@namespace H.LowCode.MyApp
 @inherits LowCodeComponentBase
 
 <div style="display: flex; justify-content: space-between; margin: 0 0 8px 0;">
@@ -35,10 +35,10 @@
                     </label>
                 </td>
                 <td>
-                    <div class="space">
+                    <div class="row-actions">
                         <a @onclick='() => EditAsync(item)'>编辑</a>
-                        <a @onclick='() => DeleteAsync(item.Id)' style="color:#ff4d4f">删除</a>
-                        <a @onclick='() => PublishAsync(item.Id)' style="color:green">发布</a>
+                        <a @onclick='() => DeleteAsync(item.Id)' class="danger">删除</a>
+                        <a @onclick='() => PublishAsync(item.Id)'>发布</a>
                     </div>
                 </td>
             </tr>

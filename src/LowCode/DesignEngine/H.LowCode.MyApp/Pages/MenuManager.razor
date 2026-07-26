@@ -1,4 +1,4 @@
-﻿@page "/designengine/myapp/{AppId}/menumanager"
+@page "/designengine/myapp/{AppId}/menumanager"
 @namespace H.LowCode.MyApp
 @inherits LowCodePageComponentBase
 @layout MyAppLayout
@@ -28,7 +28,7 @@
         cursor: pointer;
     }
     .icon-select-menu .dropdown-item:hover {
-        background-color: #f5f5f5;
+        background-color: #F2F3F5;
     }
     .icon-select-menu .icon-label {
         margin-left: 6px;
@@ -52,22 +52,24 @@
     </div>
 </div>
 
-<table class="data-table">
-    <thead>
-        <tr>
-            <th>菜单名称</th>
-            <th>排序</th>
-            <th>图标</th>
-            <th>类型</th>
-            <th>菜单地址</th>
-            <th>修改时间</th>
-            <th>操作</th>
-        </tr>
-    </thead>
-    <tbody>
-        @RenderFlatMenuRows(_menuList, 0)
-    </tbody>
-</table>
+<div class="table-wrap">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>菜单名称</th>
+                <th>排序</th>
+                <th>图标</th>
+                <th>类型</th>
+                <th>菜单地址</th>
+                <th>修改时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @RenderFlatMenuRows(_menuList, 0)
+        </tbody>
+    </table>
+</div>
 
 <HModal Title="新建菜单" Visible="@_visible" OnOk="OnConfirmAsync" OnCancel='() => _visible = false'>
     <form>
@@ -96,10 +98,11 @@
             <label>图标</label>
             <div style="display:flex; gap:8px; align-items:center;">
                 <input class="inp" @bind="_menuSchema.Icon" readonly style="width:220px;" />
-                <div class="dropdown">
+                <div class="dropdown" style="position:relative;">
                     <button class="btn btn-default btn-sm" type="button" @onclick='() => _iconDropdownOpen = !_iconDropdownOpen'>选择图标</button>
                     @if (_iconDropdownOpen)
                     {
+                        <div class="h-dropdown-mask" @onclick='() => _iconDropdownOpen = false'></div>
                         <div class="dropdown-menu icon-select-menu" style="max-width:480px;">
                             @foreach (var icon in _iconList)
                             {
@@ -294,30 +297,33 @@
             builder.AddContent(13, m.ModificationTime?.ToString("yyyy-MM-dd HH:mm:ss"));
             builder.CloseElement();
             builder.OpenElement(14, "td");
+            builder.OpenElement(15, "div");
+            builder.AddAttribute(16, "class", "row-actions");
             if (m.MenuType == 1)
             {
-                builder.OpenElement(15, "a");
-                builder.AddAttribute(16, "onclick", EventCallback.Factory.Create(this, () => CreateAsync(m.Id)));
-                builder.AddAttribute(17, "href", "javascript:void(0)");
-                builder.AddContent(18, "新增子菜单");
+                builder.OpenElement(17, "a");
+                builder.AddAttribute(18, "onclick", EventCallback.Factory.Create(this, () => CreateAsync(m.Id)));
+                builder.AddAttribute(19, "href", "javascript:void(0)");
+                builder.AddContent(20, "新增子菜单");
                 builder.CloseElement();
             }
-            builder.OpenElement(19, "a");
-            builder.AddAttribute(20, "onclick", EventCallback.Factory.Create(this, () => EditAsync(m.Id)));
-            builder.AddAttribute(21, "href", "javascript:void(0)");
-            builder.AddContent(22, "编辑");
+            builder.OpenElement(21, "a");
+            builder.AddAttribute(22, "onclick", EventCallback.Factory.Create(this, () => EditAsync(m.Id)));
+            builder.AddAttribute(23, "href", "javascript:void(0)");
+            builder.AddContent(24, "编辑");
             builder.CloseElement();
-            builder.OpenElement(23, "a");
-            builder.AddAttribute(24, "onclick", EventCallback.Factory.Create(this, () => DeleteAsync(m.Id)));
-            builder.AddAttribute(25, "href", "javascript:void(0)");
-            builder.AddAttribute(26, "style", "color:#ff4d4f");
-            builder.AddContent(27, "删除");
+            builder.OpenElement(25, "a");
+            builder.AddAttribute(26, "onclick", EventCallback.Factory.Create(this, () => DeleteAsync(m.Id)));
+            builder.AddAttribute(27, "href", "javascript:void(0)");
+            builder.AddAttribute(28, "class", "danger");
+            builder.AddContent(29, "删除");
+            builder.CloseElement();
             builder.CloseElement();
             builder.CloseElement();
             builder.CloseElement();
             if (m.Childrens != null && m.Childrens.Count > 0)
             {
-                builder.AddContent(28, RenderFlatMenuRows(m.Childrens, depth + 1));
+                builder.AddContent(30, RenderFlatMenuRows(m.Childrens, depth + 1));
             }
         }
     };

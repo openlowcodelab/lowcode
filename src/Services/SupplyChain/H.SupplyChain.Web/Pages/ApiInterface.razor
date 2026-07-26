@@ -25,31 +25,31 @@
         @* ==================== 左侧：接口列表 + 标准字段 ==================== *@
         <div style="width:44%;display:flex;flex-direction:column;gap:12px;">
             @* 接口列表 *@
-            <div style="border:1px solid #e8e8e8;border-radius:6px;overflow-y:auto;max-height:260px;">
+            <div style="border:1px solid #E5E6EB;border-radius:6px;overflow-y:auto;max-height:260px;">
                 @if (interfaceLoading)
                 {
-                    <div style="padding:24px;text-align:center;color:#888;">加载中...</div>
+                    <div style="padding:24px;text-align:center;color:#86909C;">加载中...</div>
                 }
                 else if (!interfaces.Any())
                 {
-                    <div style="padding:24px;text-align:center;color:#888;">暂无接口</div>
+                    <div style="padding:24px;text-align:center;color:#86909C;">暂无接口</div>
                 }
                 else
                 {
                     @foreach (var i in interfaces)
                     {
                         <div @onclick="@(() => SelectInterface(i.Id))"
-                             style="padding:10px 16px;cursor:pointer;border-bottom:1px solid #f0f0f0;background-color:@(i.Id == selectedInterfaceId ? "#e6f7ff" : "")">
+                             style="padding:10px 16px;cursor:pointer;border-bottom:1px solid #F2F3F5;background-color:@(i.Id == selectedInterfaceId ? "#E8F3FF" : "")">
                             <div style="display:flex;justify-content:space-between;align-items:center;">
                                 <div>
-                                    <div style="font-weight:600;color:#1890ff;">@i.Code</div>
-                                    <div style="font-size:13px;color:#666;">@i.Name</div>
-                                    <div style="font-size:12px;color:#999;">@i.InterfaceType · @i.HttpMethod · @(i.Path ?? "-")</div>
+                                    <div style="font-weight:600;color:#165DFF;">@i.Code</div>
+                                    <div style="font-size:13px;color:#4E5969;">@i.Name</div>
+                                    <div style="font-size:12px;color:#86909C;">@i.InterfaceType · @i.HttpMethod · @(i.Path ?? "-")</div>
                                 </div>
                                 <div @onclick:stopPropagation>
-                                    <span class="h-space">
-                                        <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => Edit(i))">编辑</button>
-                                        <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => Delete(i.Id))">删除</button>
+                                    <span class="row-actions">
+                                        <a @onclick="@(() => Edit(i))">编辑</a>
+                                        <a class="danger" @onclick="@(() => Delete(i.Id))">删除</a>
                                     </span>
                                 </div>
                             </div>
@@ -61,16 +61,16 @@
             @* 选中接口的标准字段定义 *@
             @if (selectedInterface is not null)
             {
-                <div style="border:1px solid #e8e8e8;border-radius:6px;padding:12px;">
-                    <div style="font-weight:600;margin-bottom:8px;color:#1890ff;">标准接口格式 - @selectedInterface.Code</div>
+                <div style="border:1px solid #E5E6EB;border-radius:6px;padding:12px;">
+                    <div style="font-weight:600;margin-bottom:8px;color:#165DFF;">标准接口格式 - @selectedInterface.Code</div>
 
                     <div style="margin-bottom:10px;">
-                        <div style="font-weight:600;font-size:13px;color:#555;margin-bottom:4px;">请求字段（标准）</div>
+                        <div style="font-weight:600;font-size:13px;color:#4E5969;margin-bottom:4px;">请求字段（标准）</div>
                         @if (standardRequestFields.Any())
                         {
                             <table style="width:100%;font-size:12px;border-collapse:collapse;">
                                 <thead>
-                                    <tr style="background:#fafafa;">
+                                    <tr style="background:#F7F8FA;">
                                         <th style="padding:4px 6px;border:1px solid #eee;text-align:left;">字段</th>
                                         <th style="padding:4px 6px;border:1px solid #eee;text-align:left;">类型</th>
                                         <th style="padding:4px 6px;border:1px solid #eee;text-align:left;">必填</th>
@@ -82,9 +82,9 @@
                                     {
                                         <tr>
                                             <td style="padding:4px 6px;border:1px solid #eee;">@f.Name</td>
-                                            <td style="padding:4px 6px;border:1px solid #eee;color:#888;">@f.DataType</td>
-                                            <td style="padding:4px 6px;border:1px solid #eee;color:@(f.IsRequired ? "#f5222d" : "#999");">@(f.IsRequired ? "是" : "否")</td>
-                                            <td style="padding:4px 6px;border:1px solid #eee;color:#888;">@(f.Description ?? "-")</td>
+                                            <td style="padding:4px 6px;border:1px solid #eee;color:#86909C;">@f.DataType</td>
+                                            <td style="padding:4px 6px;border:1px solid #eee;color:@(f.IsRequired ? "#F53F3F" : "#86909C");">@(f.IsRequired ? "是" : "否")</td>
+                                            <td style="padding:4px 6px;border:1px solid #eee;color:#86909C;">@(f.Description ?? "-")</td>
                                         </tr>
                                     }
                                 </tbody>
@@ -92,17 +92,17 @@
                         }
                         else
                         {
-                            <div style="color:#999;font-size:12px;">暂无请求字段定义</div>
+                            <div style="color:#86909C;font-size:12px;">暂无请求字段定义</div>
                         }
                     </div>
 
                     <div>
-                        <div style="font-weight:600;font-size:13px;color:#555;margin-bottom:4px;">返回字段（标准）</div>
+                        <div style="font-weight:600;font-size:13px;color:#4E5969;margin-bottom:4px;">返回字段（标准）</div>
                         @if (standardResponseFields.Any())
                         {
                             <table style="width:100%;font-size:12px;border-collapse:collapse;">
                                 <thead>
-                                    <tr style="background:#fafafa;">
+                                    <tr style="background:#F7F8FA;">
                                         <th style="padding:4px 6px;border:1px solid #eee;text-align:left;">字段</th>
                                         <th style="padding:4px 6px;border:1px solid #eee;text-align:left;">类型</th>
                                         <th style="padding:4px 6px;border:1px solid #eee;text-align:left;">必填</th>
@@ -114,9 +114,9 @@
                                     {
                                         <tr>
                                             <td style="padding:4px 6px;border:1px solid #eee;">@f.Name</td>
-                                            <td style="padding:4px 6px;border:1px solid #eee;color:#888;">@f.DataType</td>
-                                            <td style="padding:4px 6px;border:1px solid #eee;color:@(f.IsRequired ? "#f5222d" : "#999");">@(f.IsRequired ? "是" : "否")</td>
-                                            <td style="padding:4px 6px;border:1px solid #eee;color:#888;">@(f.Description ?? "-")</td>
+                                            <td style="padding:4px 6px;border:1px solid #eee;color:#86909C;">@f.DataType</td>
+                                            <td style="padding:4px 6px;border:1px solid #eee;color:@(f.IsRequired ? "#F53F3F" : "#86909C");">@(f.IsRequired ? "是" : "否")</td>
+                                            <td style="padding:4px 6px;border:1px solid #eee;color:#86909C;">@(f.Description ?? "-")</td>
                                         </tr>
                                     }
                                 </tbody>
@@ -124,7 +124,7 @@
                         }
                         else
                         {
-                            <div style="color:#999;font-size:12px;">暂无返回字段定义</div>
+                            <div style="color:#86909C;font-size:12px;">暂无返回字段定义</div>
                         }
                     </div>
                 </div>
@@ -135,16 +135,16 @@
         <div style="flex:1;">
             @if (!selectedSupplierId.HasValue)
             {
-                <div style="border:1px solid #e8e8e8;border-radius:6px;color:#888;text-align:center;padding:48px 0;">请在顶部选择一个供应商</div>
+                <div style="border:1px solid #E5E6EB;border-radius:6px;color:#86909C;text-align:center;padding:48px 0;">请在顶部选择一个供应商</div>
             }
             else if (!selectedInterfaceId.HasValue)
             {
-                <div style="border:1px solid #e8e8e8;border-radius:6px;color:#888;text-align:center;padding:48px 0;">请在左侧选择一个接口</div>
+                <div style="border:1px solid #E5E6EB;border-radius:6px;color:#86909C;text-align:center;padding:48px 0;">请在左侧选择一个接口</div>
             }
             else
             {
-                <div style="border:1px solid #e8e8e8;border-radius:6px;padding:16px;">
-                    <div style="font-weight:600;margin-bottom:12px;color:#1890ff;">
+                <div style="border:1px solid #E5E6EB;border-radius:6px;padding:16px;">
+                    <div style="font-weight:600;margin-bottom:12px;color:#165DFF;">
                         供应商映射配置 - @selectedInterfaceCode
                     </div>
 
@@ -157,12 +157,12 @@
 
                     @* 请求字段映射表（逐字段配） *@
                     <div style="margin:12px 0;">
-                        <div style="font-weight:600;font-size:13px;color:#555;margin-bottom:6px;">请求参数映射（标准字段 → 供应商字段）</div>
+                        <div style="font-weight:600;font-size:13px;color:#4E5969;margin-bottom:6px;">请求参数映射（标准字段 → 供应商字段）</div>
                         @if (requestMappings.Any())
                         {
                             <table style="width:100%;font-size:13px;border-collapse:collapse;">
                                 <thead>
-                                    <tr style="background:#fafafa;">
+                                    <tr style="background:#F7F8FA;">
                                         <th style="padding:6px 8px;border:1px solid #eee;text-align:left;width:24%;">标准字段</th>
                                         <th style="padding:6px 8px;border:1px solid #eee;text-align:left;width:3%;"></th>
                                         <th style="padding:6px 8px;border:1px solid #eee;text-align:left;width:26%;">供应商字段</th>
@@ -176,8 +176,8 @@
                                     {
                                         var m = requestMappings[idx];
                                         <tr>
-                                            <td style="padding:4px 8px;border:1px solid #eee;font-weight:600;color:#1890ff;">@m.SourceField</td>
-                                            <td style="padding:4px 8px;border:1px solid #eee;text-align:center;color:#999;">→</td>
+                                            <td style="padding:4px 8px;border:1px solid #eee;font-weight:600;color:#165DFF;">@m.SourceField</td>
+                                            <td style="padding:4px 8px;border:1px solid #eee;text-align:center;color:#86909C;">→</td>
                                             <td style="padding:4px 8px;border:1px solid #eee;">
                                                 <input type="text" @bind-value="@m.TargetField" class="h-input" style="width:100%;" placeholder="供应商字段名" />
                                             </td>
@@ -187,7 +187,7 @@
                                             <td style="padding:4px 8px;border:1px solid #eee;text-align:center;">
                                                 <input type="checkbox" @bind="@m.IsRequired" />
                                             </td>
-                                            <td style="padding:4px 8px;border:1px solid #eee;text-align:center;color:#52c41a;"></td>
+                                            <td style="padding:4px 8px;border:1px solid #eee;text-align:center;color:#00B42A;"></td>
                                         </tr>
                                     }
                                 </tbody>
@@ -195,18 +195,18 @@
                         }
                         else
                         {
-                            <div style="color:#999;font-size:12px;">该接口未定义标准请求字段</div>
+                            <div style="color:#86909C;font-size:12px;">该接口未定义标准请求字段</div>
                         }
                     </div>
 
                     @* 返回字段映射表（逐字段配） *@
                     <div style="margin:12px 0;">
-                        <div style="font-weight:600;font-size:13px;color:#555;margin-bottom:6px;">返回值字段映射（供应商字段 → 标准字段）</div>
+                        <div style="font-weight:600;font-size:13px;color:#4E5969;margin-bottom:6px;">返回值字段映射（供应商字段 → 标准字段）</div>
                         @if (responseMappings.Any())
                         {
                             <table style="width:100%;font-size:13px;border-collapse:collapse;">
                                 <thead>
-                                    <tr style="background:#fafafa;">
+                                    <tr style="background:#F7F8FA;">
                                         <th style="padding:6px 8px;border:1px solid #eee;text-align:left;width:24%;">标准字段</th>
                                         <th style="padding:6px 8px;border:1px solid #eee;text-align:left;width:3%;"></th>
                                         <th style="padding:6px 8px;border:1px solid #eee;text-align:left;width:26%;">供应商应答路径</th>
@@ -220,8 +220,8 @@
                                     {
                                         var m = responseMappings[idx];
                                         <tr>
-                                            <td style="padding:4px 8px;border:1px solid #eee;font-weight:600;color:#1890ff;">@m.TargetField</td>
-                                            <td style="padding:4px 8px;border:1px solid #eee;text-align:center;color:#999;">←</td>
+                                            <td style="padding:4px 8px;border:1px solid #eee;font-weight:600;color:#165DFF;">@m.TargetField</td>
+                                            <td style="padding:4px 8px;border:1px solid #eee;text-align:center;color:#86909C;">←</td>
                                             <td style="padding:4px 8px;border:1px solid #eee;">
                                                 <input type="text" @bind-value="@m.SourceField" class="h-input" style="width:100%;" placeholder="如 data.orderNo" />
                                             </td>
@@ -231,7 +231,7 @@
                                             <td style="padding:4px 8px;border:1px solid #eee;">
                                                 <input type="checkbox" @bind="@m.IsRequired" />
                                             </td>
-                                            <td style="padding:4px 8px;border:1px solid #eee;text-align:center;color:#52c41a;"></td>
+                                            <td style="padding:4px 8px;border:1px solid #eee;text-align:center;color:#00B42A;"></td>
                                         </tr>
                                     }
                                 </tbody>
@@ -239,7 +239,7 @@
                         }
                         else
                         {
-                            <div style="color:#999;font-size:12px;">该接口未定义标准返回字段</div>
+                            <div style="color:#86909C;font-size:12px;">该接口未定义标准返回字段</div>
                         }
                     </div>
 
@@ -325,7 +325,7 @@
         <label class="h-form-label">标准请求字段 (JSON)</label>
         <div class="h-form-control">
             <textarea @bind="@current.RequestFieldsJson" rows="6" class="h-textarea" placeholder='[{"name":"skuCode","dataType":"string","isRequired":true,"description":"商品SKU编码"}]'></textarea>
-            <div style="color:#888;font-size:12px;">name=字段名，dataType=类型，isRequired=是否必填，description=说明</div>
+            <div style="color:#86909C;font-size:12px;">name=字段名，dataType=类型，isRequired=是否必填，description=说明</div>
         </div>
     </div>
     <div class="h-form-item h-form-horizontal">

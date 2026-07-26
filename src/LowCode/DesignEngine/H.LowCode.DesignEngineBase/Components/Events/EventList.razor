@@ -1,4 +1,4 @@
-﻿@namespace H.LowCode.DesignEngineBase
+@namespace H.LowCode.DesignEngineBase
 @inherits LowCodeComponentBase
 
 @inject IPageAppService PageAppService
@@ -6,7 +6,7 @@
 
 <div style="height: 550px; display: flex;">
     <aside style="background:#ffffff">
-        <ul class="tree" style="height:100%; border:solid 1px #e8e8e8; padding-top:5px; margin-right:5px;">
+        <ul class="tree" style="height:100%; border:solid 1px #E5E6EB; padding-top:5px; margin-right:5px;">
             @foreach(var ev in Events)
             {
                 <li class='@(_currentEvent?.EventName == ev.EventName ? "tree-node selected" : "tree-node")' @onclick='() => { _currentEvent = ev; }'>@ev.EventName</li>
@@ -49,7 +49,7 @@
             <div class="propertysetting-item">
                 <label>设置参数：</label>
                 <div style="margin-top: 10px;">
-                    <label style="font-size: 12px; color: #666;">固定参数：</label>
+                    <label style="font-size: 12px; color: #4E5969;">固定参数：</label>
                     @if (_currentEvent.EventArgs == null)
                     {
                         _currentEvent.EventArgs = new Dictionary<string, string>();
@@ -67,7 +67,7 @@
                     <button class="btn btn-dashed btn-sm" @onclick="AddEventArg">添加固定参数</button>
                 </div>
                 <div style="margin-top: 15px;">
-                    <label style="font-size: 12px; color: #666;">行数据参数映射：</label>
+                    <label style="font-size: 12px; color: #4E5969;">行数据参数映射：</label>
                     @if (_currentEvent.RowDataParams == null)
                     {
                         _currentEvent.RowDataParams = new Dictionary<string, string>();

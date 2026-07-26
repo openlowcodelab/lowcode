@@ -34,20 +34,20 @@
     align-items: center;
     justify-content: space-between;
     padding: 16px 24px;
-    border-bottom: 1px solid #f0f0f0;
+    border-bottom: 1px solid #F2F3F5;
 }
 
 .h-modal-title {
     font-size: 16px;
     font-weight: 600;
-    color: #1a1a2e;
+    color: #1D2129;
 }
 
 .h-modal-close {
     background: none;
     border: none;
     font-size: 20px;
-    color: #999;
+    color: #86909C;
     cursor: pointer;
     padding: 0;
     line-height: 1;
@@ -60,8 +60,8 @@
 }
 
 .h-modal-close:hover {
-    background: #f5f5f5;
-    color: #333;
+    background: #F2F3F5;
+    color: #1D2129;
 }
 
 .h-modal-body {
@@ -75,61 +75,8 @@
     justify-content: flex-end;
     gap: 8px;
     padding: 12px 24px;
-    border-top: 1px solid #f0f0f0;
+    border-top: 1px solid #F2F3F5;
 }
 
-.h-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 4px 16px;
-    height: 32px;
-    border-radius: 6px;
-    font-size: 14px;
-    cursor: pointer;
-    border: 1px solid #d9d9d9;
-    background: #fff;
-    color: #333;
-    transition: all 0.2s;
-}
-
-.h-btn:hover {
-    border-color: #667eea;
-    color: #667eea;
-}
-
-.h-btn:disabled {
-    opacity: 0.65;
-    cursor: not-allowed;
-}
-
-.h-btn-primary {
-    background: #667eea;
-    border-color: #667eea;
-    color: #fff;
-}
-
-.h-btn-primary:hover {
-    background: #5570d6;
-    border-color: #5570d6;
-    color: #fff;
-}
-
-.h-btn-default {
-    background: #fff;
-}
-
-.h-btn-loading {
-    display: inline-block;
-    width: 12px;
-    height: 12px;
-    border: 2px solid currentColor;
-    border-right-color: transparent;
-    border-radius: 50%;
-    animation: h-spin 0.6s linear infinite;
-}
-
-@@keyframes h-spin {
-    to { transform: rotate(360deg); }
-}
+/* 按钮样式统一由全局 h-components.css 提供, 此处不再重复定义,
+   避免 scoped 样式以更高特异性覆盖全局规范造成弹窗内外按钮不一致 */

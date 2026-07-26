@@ -57,18 +57,18 @@
                     </td>
                     <td>@LastExecText(j)</td>
                     <td>
-                        <span class="h-space">
-                            <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => ShowEditDialog(j))">编辑</button>
-                            <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => Trigger(j.Id))">执行</button>
+                        <span class="row-actions">
+                            <a @onclick="@(() => ShowEditDialog(j))">编辑</a>
+                            <a @onclick="@(() => Trigger(j.Id))">执行</a>
                             @if (j.IsEnabled)
                             {
-                                <button class="h-btn h-btn-sm" @onclick="@(() => Disable(j.Id))">停用</button>
+                                <a class="link-action-muted" @onclick="@(() => Disable(j.Id))">停用</a>
                             }
                             else
                             {
-                                <button class="h-btn h-btn-sm" @onclick="@(() => Enable(j.Id))">启用</button>
+                                <a @onclick="@(() => Enable(j.Id))">启用</a>
                             }
-                            <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => ConfirmDelete(j.Id))">删除</button>
+                            <a class="danger" @onclick="@(() => ConfirmDelete(j.Id))">删除</a>
                         </span>
                     </td>
                 </tr>

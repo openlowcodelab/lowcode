@@ -37,9 +37,9 @@
                         else { <span class="h-tag h-tag-red">禁用</span> }
                     </td>
                     <td>
-                        <span class="h-space">
-                            <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => Edit(r))">编辑</button>
-                            <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => Delete(r.Id))">删除</button>
+                        <span class="row-actions">
+                            <a @onclick="@(() => Edit(r))">编辑</a>
+                            <a class="danger" @onclick="@(() => Delete(r.Id))">删除</a>
                         </span>
                     </td>
                 </tr>
@@ -90,7 +90,7 @@
                 <input type="checkbox" @bind="@current.Fallback" />
                 <span class="h-switch-slider"></span>
             </label>
-            <span style="margin-left:8px;color:#888;">勾选后无需条件即可命中，其余规则未命中时使用</span>
+            <span style="margin-left:8px;color:#86909C;">勾选后无需条件即可命中，其余规则未命中时使用</span>
         </div>
     </div>
     <div class="h-form-item h-form-horizontal">
@@ -106,7 +106,7 @@
         <label class="h-form-label">条件 (JSON)</label>
         <div class="h-form-control">
             <textarea @bind="@current.ConditionsJson" rows="6" class="h-textarea" placeholder='[{"field":"Industry","op":"eq","value":"餐饮"},{"field":"TotalAmount","op":"between","value":"100,1000"}]'></textarea>
-            <div style="color:#888;font-size:12px;">支持字段：Industry / ProductCategory / TotalAmount / OrderStatus；操作符：eq,ne,in,gt,lt,gte,lte,between,contains。多条件 AND 组合。</div>
+            <div style="color:#86909C;font-size:12px;">支持字段：Industry / ProductCategory / TotalAmount / OrderStatus；操作符：eq,ne,in,gt,lt,gte,lte,between,contains。多条件 AND 组合。</div>
         </div>
     </div>
     <div class="h-form-item h-form-horizontal">

@@ -11,8 +11,8 @@
 <h2>通知业务</h2>
 
 <style>
-    .h-cat-item:hover { background:#f5f5f5; }
-    .h-cat-item.active { background:#e6f7ff; color:#1890ff; font-weight:600; }
+    .h-cat-item:hover { background:#F2F3F5; }
+    .h-cat-item.active { background:#E8F3FF; color:#165DFF; font-weight:600; }
 </style>
 
 <div style="display:flex;gap:16px;align-items:flex-start;">
@@ -34,15 +34,15 @@
                     style="padding:8px 10px;border-radius:4px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;">
                     <span>
                         @cat.Name
-                        <span style="color:#999;">(@cat.BusinessCount)</span>
+                        <span style="color:#86909C;">(@cat.BusinessCount)</span>
                         @if (!cat.IsEnabled)
                         {
                             <span class="h-tag h-tag-red" style="margin-left:4px;">禁用</span>
                         }
                     </span>
-                    <span class="h-space" @onclick:stopPropagation="true">
-                        <a href="javascript:void(0)" @onclick="@(() => EditCategory(cat))" style="color:#1890ff;">改</a>
-                        <a href="javascript:void(0)" @onclick="@(() => DeleteCategory(cat.Id))" style="color:#f5222d;">删</a>
+                    <span class="row-actions" @onclick:stopPropagation="true">
+                        <a href="javascript:void(0)" @onclick="@(() => EditCategory(cat))">编辑</a>
+                        <a href="javascript:void(0)" @onclick="@(() => DeleteCategory(cat.Id))" class="danger">删除</a>
                     </span>
                 </li>
             }
@@ -93,12 +93,12 @@
                         <td>@b.GroupCount 组</td>
                         <td>@(b.IsEnabled ? (MarkupString)"<span class=\"h-tag h-tag-green\">启用</span>" : (MarkupString)"<span class=\"h-tag h-tag-red\">禁用</span>")</td>
                         <td>
-                            <span class="h-space">
-                                <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => EditBusiness(b))">编辑</button>
-                                <button class="h-btn h-btn-sm" @onclick="@(() => OpenSpecs(b))">通知规则</button>
-                                <button class="h-btn h-btn-sm" @onclick="@(() => OpenGroups(b))">联系人组</button>
-                                <button class="h-btn h-btn-sm" @onclick="@(() => OpenTestSend(b))">测试发送</button>
-                                <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => DeleteBusiness(b.Id))">删除</button>
+                            <span class="row-actions">
+                                <a @onclick="@(() => EditBusiness(b))">编辑</a>
+                                <a @onclick="@(() => OpenSpecs(b))">通知规则</a>
+                                <a @onclick="@(() => OpenGroups(b))">联系人组</a>
+                                <a @onclick="@(() => OpenTestSend(b))">测试发送</a>
+                                <a class="danger" @onclick="@(() => DeleteBusiness(b.Id))">删除</a>
                             </span>
                         </td>
                     </tr>
@@ -165,7 +165,7 @@
                 <label class="h-form-label">业务编码</label>
                 <div class="h-form-control">
                     <input type="text" @bind-value="@currentBiz.CodeSuffix" @bind-value:event="oninput" placeholder="3-16位小写字母" class="h-input" />
-                    <div style="color:#999;margin-top:4px;">完整编码：<code>@currentBiz.CategoryId-@(string.IsNullOrEmpty(currentBiz.CodeSuffix) ? "xxx" : currentBiz.CodeSuffix)</code></div>
+                    <div style="color:#86909C;margin-top:4px;">完整编码：<code>@currentBiz.CategoryId-@(string.IsNullOrEmpty(currentBiz.CodeSuffix) ? "xxx" : currentBiz.CodeSuffix)</code></div>
                 </div>
             </div>
         }
@@ -198,7 +198,7 @@
     }
     else
     {
-        <p style="color:#888;margin-bottom:8px;">模板支持 <code>{{变量名}}</code> 占位符。留空则用业务名称作为标题。</p>
+        <p style="color:#86909C;margin-bottom:8px;">模板支持 <code>{{变量名}}</code> 占位符。留空则用业务名称作为标题。</p>
         @foreach (NotificationChannelType ch in Enum.GetValues(typeof(NotificationChannelType)))
         {
             var tpl = GetTemplate(ch);
@@ -216,14 +216,14 @@
 
 @* ============ 通知规则弹窗 ============ *@
 <HModal Title="@($"通知规则 - {specBusinessName}")" Visible="@showSpecModal" OnOk="@SaveSpecs" OnCancel="@(() => showSpecModal = false)" ConfirmLoading="@saving" Style="width:820px;">
-    <p style="color:#888;margin-bottom:8px;">阈值及报警级别 *</p>
+    <p style="color:#86909C;margin-bottom:8px;">阈值及报警级别 *</p>
     @foreach (NotificationLevel lv in LevelOrder)
     {
         var model = GetSpec(lv);
         <div class="h-card" style="margin-bottom:14px;padding:0;border-left:4px solid @LevelColor(lv);overflow:hidden;">
             <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;">
                 <strong>@GetLevelName(lv)（@lv）</strong>
-                <span class="h-space" style="color:#999;">
+                <span class="h-space" style="color:#86909C;">
                     @foreach (NotificationChannelType ch in Enum.GetValues(typeof(NotificationChannelType)))
                     {
                         var channel = ch;
@@ -264,7 +264,7 @@
 
 @* ============ 联系人组弹窗 ============ *@
 <HModal Title="@($"联系人组 - {groupBusinessName}")" Visible="@showGroupModal" OnOk="@SaveGroups" OnCancel="@(() => showGroupModal = false)" ConfirmLoading="@saving" Style="width:560px;">
-    <p style="color:#888;margin-bottom:8px;">选择该业务通知的联系人组：</p>
+    <p style="color:#86909C;margin-bottom:8px;">选择该业务通知的联系人组：</p>
     @if (!allGroups.Any())
     {
         <span class="h-tag">暂无联系人组，请先在「联系人」中创建</span>
@@ -304,7 +304,7 @@
     </div>
     @if (!string.IsNullOrEmpty(testResult))
     {
-        <div class="h-alert" style="background:#f6ffed;border:1px solid #b7eb8f;color:#52c41a;">
+        <div class="h-alert" style="background:#E8FFEA;border:1px solid #AFF0B5;color:#00B42A;">
             <span class="h-alert-icon">✓</span><span>@testResult</span>
         </div>
     }
@@ -675,11 +675,11 @@
 
     private string LevelColor(NotificationLevel level) => level switch
     {
-        NotificationLevel.Critical => "#f5222d",
-        NotificationLevel.Urgent => "#fa8c16",
+        NotificationLevel.Critical => "#F53F3F",
+        NotificationLevel.Urgent => "#FF7D00",
         NotificationLevel.Important => "#fadb14",
-        NotificationLevel.Normal => "#1890ff",
-        _ => "#d9d9d9"
+        NotificationLevel.Normal => "#165DFF",
+        _ => "#E5E6EB"
     };
 
     private string LevelTagClass(NotificationLevel level) => level switch

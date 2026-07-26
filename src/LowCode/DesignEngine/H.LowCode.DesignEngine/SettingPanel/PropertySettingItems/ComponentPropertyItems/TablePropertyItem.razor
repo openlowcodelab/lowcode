@@ -6,7 +6,7 @@
         表格列
     </div>
     <div style="text-align: center; width:22px;">
-        <a onclick="@(() => CreateColumn())" style="border: solid #c4c4c4 1px; line-height: 18px;height: 22px;display: block;background-color: #fafafa; color:#2c2c2c">+</a>
+        <a onclick="@(() => CreateColumn())" style="border: solid #c4c4c4 1px; line-height: 18px;height: 22px;display: block;background-color: #F7F8FA; color:#2c2c2c">+</a>
     </div>
 </div>
 <hr color="#f6f6f6" />
@@ -15,8 +15,8 @@
     <div>
         <span draggable="true" style="cursor: move; display: inline-block; width: 10px; margin: 0 auto; writing-mode: vertical-lr;">...</span>
         <span style="display:inline-block; width:140px;">@column.Title</span>
-        <a href="javascript:void(0)" @onclick="() => EditColumn(column.Id)" style="cursor:pointer; margin:0 3px;" title="编辑">✏️</a>
-        <a href="javascript:void(0)" @onclick="() => DeleteColumn(column.Id)" style="cursor:pointer; margin:0 3px;" title="删除">🗑️</a>
+        <a href="javascript:void(0)" class="h-link-icon" @onclick="() => EditColumn(column.Id)" style="margin:0 3px;" title="编辑">✏️</a>
+        <a href="javascript:void(0)" class="h-link-icon" @onclick="() => DeleteColumn(column.Id)" style="margin:0 3px;" title="删除">🗑️</a>
     </div>
 }
 <hr color="#f6f6f6" />
@@ -26,7 +26,7 @@
         表格按钮
     </div>
     <div style="text-align: center; width:22px;">
-        <a onclick="@(() => CreateButton(true))" style="border: solid #c4c4c4 1px; line-height: 18px;height: 22px;display: block;background-color: #fafafa; color:#2c2c2c">+</a>
+        <a onclick="@(() => CreateButton(true))" style="border: solid #c4c4c4 1px; line-height: 18px;height: 22px;display: block;background-color: #F7F8FA; color:#2c2c2c">+</a>
     </div>
 </div>
 <hr color="#f6f6f6" />
@@ -35,9 +35,9 @@
     <div>
         <span draggable="true" style="cursor: move; display: inline-block; width: 10px; margin: 0 auto; writing-mode: vertical-lr;">...</span>
         <span style="display:inline-block; width:140px;">@topBtn.Title</span>
-        <a href="javascript:void(0)" @onclick="() => EditButton(topBtn.Id, true)" style="cursor:pointer; margin:0 3px;" title="编辑">✏️</a>
-        <a href="javascript:void(0)" @onclick="() => EditButtonEvent(topBtn.Id, true)" style="cursor:pointer; margin:0 3px;" title="事件">⚡</a>
-        <a href="javascript:void(0)" @onclick="() => DeleteButton(topBtn.Id, true)" style="cursor:pointer; margin:0 3px;" title="删除">🗑️</a>
+        <a href="javascript:void(0)" class="h-link-icon" @onclick="() => EditButton(topBtn.Id, true)" style="margin:0 3px;" title="编辑">✏️</a>
+        <a href="javascript:void(0)" class="h-link-icon" @onclick="() => EditButtonEvent(topBtn.Id, true)" style="margin:0 3px;" title="事件">⚡</a>
+        <a href="javascript:void(0)" class="h-link-icon" @onclick="() => DeleteButton(topBtn.Id, true)" style="margin:0 3px;" title="删除">🗑️</a>
     </div>
 }
 <hr color="#f6f6f6" />
@@ -47,7 +47,7 @@
         行按钮
     </div>
     <div style="text-align: center; width:22px;">
-        <a onclick="@(() => CreateButton(false))" style="border: solid #c4c4c4 1px; line-height: 18px;height: 22px;display: block;background-color: #fafafa; color:#2c2c2c">+</a>
+        <a onclick="@(() => CreateButton(false))" style="border: solid #c4c4c4 1px; line-height: 18px;height: 22px;display: block;background-color: #F7F8FA; color:#2c2c2c">+</a>
     </div>
 </div>
 <hr color="#f6f6f6" />
@@ -56,9 +56,9 @@
     <div>
         <span draggable="true" style="cursor: move; display: inline-block; width: 10px; margin: 0 auto; writing-mode: vertical-lr;">...</span>
         <span style="display:inline-block; width:140px;">@rowBtn.Title</span>
-        <a href="javascript:void(0)" @onclick="() => EditButton(rowBtn.Id, false)" style="cursor:pointer; margin:0 3px;" title="编辑">✏️</a>
-        <a href="javascript:void(0)" @onclick="() => EditButtonEvent(rowBtn.Id, false)" style="cursor:pointer; margin:0 3px;" title="事件">⚡</a>
-        <a href="javascript:void(0)" @onclick="() => DeleteButton(rowBtn.Id, false)" style="cursor:pointer; margin:0 3px;" title="删除">🗑️</a>
+        <a href="javascript:void(0)" class="h-link-icon" @onclick="() => EditButton(rowBtn.Id, false)" style="margin:0 3px;" title="编辑">✏️</a>
+        <a href="javascript:void(0)" class="h-link-icon" @onclick="() => EditButtonEvent(rowBtn.Id, false)" style="margin:0 3px;" title="事件">⚡</a>
+        <a href="javascript:void(0)" class="h-link-icon" @onclick="() => DeleteButton(rowBtn.Id, false)" style="margin:0 3px;" title="删除">🗑️</a>
     </div>
 }
 <hr color="#f6f6f6" />

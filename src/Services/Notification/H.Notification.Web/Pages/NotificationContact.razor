@@ -53,9 +53,9 @@
                         <td>@c.GroupIds.Count</td>
                         <td>@(c.IsEnabled ? (MarkupString)"<span class=\"h-tag h-tag-green\">启用</span>" : (MarkupString)"<span class=\"h-tag h-tag-red\">禁用</span>")</td>
                         <td>
-                            <span class="h-space">
-                                <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => EditContact(c))">编辑</button>
-                                <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => DeleteContact(c.Id))">删除</button>
+                            <span class="row-actions">
+                                <a @onclick="@(() => EditContact(c))">编辑</a>
+                                <a class="danger" @onclick="@(() => DeleteContact(c.Id))">删除</a>
                             </span>
                         </td>
                     </tr>
@@ -94,9 +94,9 @@ else
                         <td>@g.ContactCount</td>
                         <td>@(g.IsEnabled ? (MarkupString)"<span class=\"h-tag h-tag-green\">启用</span>" : (MarkupString)"<span class=\"h-tag h-tag-red\">禁用</span>")</td>
                         <td>
-                            <span class="h-space">
-                                <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => EditGroup(g))">编辑</button>
-                                <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => DeleteGroup(g.Id))">删除</button>
+                            <span class="row-actions">
+                                <a @onclick="@(() => EditGroup(g))">编辑</a>
+                                <a class="danger" @onclick="@(() => DeleteGroup(g.Id))">删除</a>
                             </span>
                         </td>
                     </tr>

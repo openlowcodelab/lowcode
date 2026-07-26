@@ -37,9 +37,9 @@
                     <td>@(d.IsInherited ? "是" : "否")</td>
                     <td>@(d.IsEncrypted ? "是" : "否")</td>
                     <td>
-                        <span class="h-space">
-                            <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => ShowEditDialog(d))">编辑</button>
-                            <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => ConfirmDelete(d.Id))">删除</button>
+                        <span class="row-actions">
+                            <a @onclick="@(() => ShowEditDialog(d))">编辑</a>
+                            <a class="danger" @onclick="@(() => ConfirmDelete(d.Id))">删除</a>
                         </span>
                     </td>
                 </tr>

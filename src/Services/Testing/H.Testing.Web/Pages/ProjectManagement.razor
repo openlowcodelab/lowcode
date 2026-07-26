@@ -56,10 +56,11 @@ else if (filteredProjects.Any())
                             <button class="h-btn h-btn-sm h-btn-ghost" @onclick="() => ToggleProjectDropdown(project.Id)" @onclick:stopPropagation>⋯</button>
                             @if (openProjectDropdownId == project.Id)
                             {
-                                <div style="position: absolute; right: 0; top: 100%; z-index: 100; background: #fff; border: 1px solid #d9d9d9; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); min-width: 120px;">
-                                    <div style="padding: 6px 12px; cursor: pointer;" @onclick="() => { openProjectDropdownId = null; ShowEditProjectModal(project); }">✏️ 编辑</div>
-                                    <div style="border-top: 1px solid #f0f0f0;"></div>
-                                    <div style="padding: 6px 12px; cursor: pointer; color: #ff4d4f;" @onclick="() => { openProjectDropdownId = null; DeleteProject(project.Id); }">🗑️ 删除</div>
+                                <div class="h-dropdown-mask" @onclick="() => openProjectDropdownId = null" @onclick:stopPropagation></div>
+                                <div class="h-dropdown-panel">
+                                    <div class="h-dropdown-item" @onclick="() => { openProjectDropdownId = null; ShowEditProjectModal(project); }">编辑</div>
+                                    <div class="h-dropdown-divider"></div>
+                                    <div class="h-dropdown-item danger" @onclick="() => { openProjectDropdownId = null; DeleteProject(project.Id); }">删除</div>
                                 </div>
                             }
                         </div>
@@ -70,12 +71,12 @@ else if (filteredProjects.Any())
                             <strong style="font-size: 16px;">@project.Name</strong>
                             <span class="h-tag h-tag-@GetStatusTagClass(project.Status)">@GetStatusDisplayName(project.Status)</span>
                         </div>
-                        <p style="color: #666; margin-bottom: 12px; min-height: 40px;">@(string.IsNullOrEmpty(project.Description) ? "暂无描述" : project.Description)</p>
-                        <div style="color: #999; font-size: 13px; margin-bottom: 12px;">🌍 环境数量：@GetProjectEnvironments(project.Id).Count 个</div>
+                        <p style="color: #4E5969; margin-bottom: 12px; min-height: 40px;">@(string.IsNullOrEmpty(project.Description) ? "暂无描述" : project.Description)</p>
+                        <div style="color: #86909C; font-size: 13px; margin-bottom: 12px;">🌍 环境数量：@GetProjectEnvironments(project.Id).Count 个</div>
                     </div>
-                    <div style="display: flex; gap: 8px; padding-top: 12px; border-top: 1px solid #f0f0f0;">
-                        <button class="h-btn h-btn-sm h-btn-ghost" @onclick="() => ManageProjectServices(project)">⚙️ 服务</button>
-                        <button class="h-btn h-btn-sm h-btn-ghost" @onclick="async () => await ManageEnvironments(project)">🌐 环境</button>
+                    <div style="display: flex; gap: 8px; padding-top: 12px; border-top: 1px solid #F2F3F5;">
+                        <button class="h-btn h-btn-sm" @onclick="() => ManageProjectServices(project)">⚙️ 服务</button>
+                        <button class="h-btn h-btn-sm" @onclick="async () => await ManageEnvironments(project)">🌐 环境</button>
                         <button class="h-btn h-btn-sm h-btn-primary" @onclick="async () => await NavigateToProjectCases(project.Id)">📝 用例</button>
                     </div>
                     </ChildContent>
@@ -86,7 +87,7 @@ else if (filteredProjects.Any())
 }
 else
 {
-    <div style="text-align: center; padding: 60px 20px; color: #999;">
+    <div style="text-align: center; padding: 60px 20px; color: #86909C;">
         <div style="font-size: 48px; margin-bottom: 16px;">📋</div>
         <h3>暂无项目数据</h3>
         <p>点击「新建项目」按钮创建您的第一个项目</p>
@@ -126,7 +127,7 @@ else
         </div>
     </div>
     
-    <div Style="text-align: right; padding-top: 16px; border-top: 1px solid #f0f0f0; margin-top: 24px;">
+    <div Style="text-align: right; padding-top: 16px; border-top: 1px solid #F2F3F5; margin-top: 24px;">
         <button class="h-btn h-btn-default" @onclick="HideProjectModal" Style="margin-right: 8px;">取消</button>
         <button class="h-btn h-btn-primary" @onclick="SaveProject">@(isEditingProject ? "更新" : "保存")</button>
     </div>
@@ -137,7 +138,7 @@ else
 }
 <HModal Visible="showEnvironmentModal" Title="@envModalTitle" OnCancel="HideEnvironmentModal" ShowFooter="false" Style="width: 1100px;">
     <div Style="display: flex; min-height: 600px;">
-        <div Style="width: 280px; border-right: 1px solid #f0f0f0; padding: 16px; background-color: #fafafa;">
+        <div Style="width: 280px; border-right: 1px solid #F2F3F5; padding: 16px; background-color: #F7F8FA;">
             <div Style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                 <span Style="font-weight: 500;">环境列表</span>
                 <button class="h-btn h-btn-sm h-btn-primary" @onclick="ShowAddEnvironmentModal">➕</button>
@@ -149,10 +150,10 @@ else
                     @foreach (var env in projectEnvironments)
                     {
                         var isSelected = selectedEnvironment?.Id == env.Id;
-                        var bgColor = isSelected ? "#1890ff" : "#fff";
-                        var textColor = isSelected ? "#fff" : "#333";
-                        var subTextColor = isSelected ? "rgba(255,255,255,0.8)" : "#999";
-                        var borderColor = isSelected ? "#1890ff" : "#d9d9d9";
+                        var bgColor = isSelected ? "#165DFF" : "#fff";
+                        var textColor = isSelected ? "#fff" : "#1D2129";
+                        var subTextColor = isSelected ? "rgba(255,255,255,0.8)" : "#86909C";
+                        var borderColor = isSelected ? "#165DFF" : "#E5E6EB";
                         
                         <div @onclick="() => SelectEnvironment(env)" 
                              Style="padding: 12px; border-radius: 4px; cursor: pointer; background-color: @bgColor; color: @textColor; border: 1px solid @borderColor;">
@@ -165,10 +166,11 @@ else
                                     <button class="h-btn h-btn-sm" style="background: transparent; border: none; color: inherit;" @onclick:stopPropagation @onclick="() => ToggleEnvDropdown(env.Id)">⋯</button>
                                     @if (openEnvDropdownId == env.Id)
                                     {
-                                        <div style="position: absolute; right: 0; top: 100%; z-index: 100; background: #fff; border: 1px solid #d9d9d9; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); min-width: 120px;">
-                                            <div style="padding: 6px 12px; cursor: pointer; color: #333;" @onclick="() => { openEnvDropdownId = null; EditEnvironment(env); }">✏️ 编辑</div>
-                                            <div style="border-top: 1px solid #f0f0f0;"></div>
-                                            <div style="padding: 6px 12px; cursor: pointer; color: #ff4d4f;" @onclick="() => { openEnvDropdownId = null; DeleteEnvironment(env.Id); }">🗑️ 删除</div>
+                                        <div class="h-dropdown-mask" @onclick="() => openEnvDropdownId = null" @onclick:stopPropagation></div>
+                                        <div class="h-dropdown-panel">
+                                            <div class="h-dropdown-item" @onclick="() => { openEnvDropdownId = null; EditEnvironment(env); }">编辑</div>
+                                            <div class="h-dropdown-divider"></div>
+                                            <div class="h-dropdown-item danger" @onclick="() => { openEnvDropdownId = null; DeleteEnvironment(env.Id); }">删除</div>
                                         </div>
                                     }
                                 </div>
@@ -179,7 +181,7 @@ else
             }
             else
             {
-                <div Style="text-align: center; padding: 40px 20px; color: #999;">
+                <div Style="text-align: center; padding: 40px 20px; color: #86909C;">
                     <p>暂无环境</p>
                     <button class="h-btn h-btn-sm h-btn-default" @onclick="ShowAddEnvironmentModal">添加环境</button>
                 </div>
@@ -190,8 +192,8 @@ else
             @if (selectedEnvironment != null)
             {
                 <div>
-                    <div Style="margin-bottom: 24px; border: 1px solid #d9d9d9; border-radius: 4px;">
-                        <div Style="padding: 12px 16px; background-color: #fafafa; border-bottom: 1px solid #d9d9d9; font-weight: 500;">
+                    <div Style="margin-bottom: 24px; border: 1px solid #E5E6EB; border-radius: 4px;">
+                        <div Style="padding: 12px 16px; background-color: #F7F8FA; border-bottom: 1px solid #E5E6EB; font-weight: 500;">
                             💻 服务配置
                         </div>
                         <div Style="padding: 16px;">
@@ -199,7 +201,7 @@ else
                             {
                                 <table class="table" Style="width: 100%; border-collapse: collapse;">
                                     <thead>
-                                        <tr Style="background-color: #fafafa; border-bottom: 1px solid #d9d9d9;">
+                                        <tr Style="background-color: #F7F8FA; border-bottom: 1px solid #E5E6EB;">
                                             <th Style="padding: 12px 16px; text-align: left; font-weight: 500;">服务名称</th>
                                             <th Style="padding: 12px 16px; text-align: left; font-weight: 500;">基础URL</th>
                                             <th Style="padding: 12px 16px; text-align: left; font-weight: 500; width: 120px;">操作</th>
@@ -208,27 +210,29 @@ else
                                     <tbody>
                                         @foreach (var config in serviceConfigViews)
                                         {
-                                            <tr Style="border-bottom: 1px solid #f0f0f0;">
+                                            <tr Style="border-bottom: 1px solid #F2F3F5;">
                                                 <td Style="padding: 12px 16px;"><strong>@config.ProjectService.Name</strong></td>
                                                 <td Style="padding: 12px 16px;">
                                                     @if (config.EnvironmentConfig != null)
                                                     {
-                                                        <a href="@config.EnvironmentConfig.BaseUrl" target="_blank" Style="color: #1890ff;">@config.EnvironmentConfig.BaseUrl</a>
+                                                        <a href="@config.EnvironmentConfig.BaseUrl" target="_blank" Style="color: #165DFF;">@config.EnvironmentConfig.BaseUrl</a>
                                                     }
                                                     else
                                                     {
-                                                        <span Style="color: #999;">未配置</span>
+                                                        <span Style="color: #86909C;">未配置</span>
                                                     }
                                                 </td>
                                                 <td Style="padding: 12px 16px;">
                                                     @if (config.EnvironmentConfig != null)
                                                     {
-                                                        <button class="h-btn h-btn-sm" @onclick="() => EditServiceConfig(config.EnvironmentConfig!)" Style="margin-right: 4px; color: #1890ff; border-color: #1890ff;">✏️</button>
-                                                        <button class="h-btn h-btn-sm" @onclick="() => DeleteServiceConfig(config.EnvironmentConfig!.Id)" Style="color: #ff4d4f; border-color: #ff4d4f;">🗑️</button>
+                                                        <div class="row-actions">
+                                                            <a class="link-action" @onclick="() => EditServiceConfig(config.EnvironmentConfig!)">编辑</a>
+                                                            <a class="link-action-danger" @onclick="() => DeleteServiceConfig(config.EnvironmentConfig!.Id)">删除</a>
+                                                        </div>
                                                     }
                                                     else
                                                     {
-                                                        <button class="h-btn h-btn-sm h-btn-default" @onclick="() => AddServiceConfig(config.ProjectService)">➕ 配置</button>
+                                                        <a class="link-action" @onclick="() => AddServiceConfig(config.ProjectService)">配置</a>
                                                     }
                                                 </td>
                                             </tr>
@@ -238,13 +242,13 @@ else
                             }
                             else
                             {
-                                <div Style="text-align: center; padding: 20px; color: #999;">暂无服务配置</div>
+                                <div Style="text-align: center; padding: 20px; color: #86909C;">暂无服务配置</div>
                             }
                         </div>
                     </div>
                     
-                    <div Style="border: 1px solid #d9d9d9; border-radius: 4px;">
-                        <div Style="padding: 12px 16px; background-color: #fafafa; border-bottom: 1px solid #d9d9d9; display: flex; justify-content: space-between; align-items: center;">
+                    <div Style="border: 1px solid #E5E6EB; border-radius: 4px;">
+                        <div Style="padding: 12px 16px; background-color: #F7F8FA; border-bottom: 1px solid #E5E6EB; display: flex; justify-content: space-between; align-items: center;">
                             <span Style="font-weight: 500;">📊 环境变量</span>
                             <button class="h-btn h-btn-sm h-btn-primary" @onclick="ShowAddVariableModal">➕ 添加变量</button>
                         </div>
@@ -253,7 +257,7 @@ else
                             {
                                 <table class="table" Style="width: 100%; border-collapse: collapse;">
                                     <thead>
-                                        <tr Style="background-color: #fafafa; border-bottom: 1px solid #d9d9d9;">
+                                        <tr Style="background-color: #F7F8FA; border-bottom: 1px solid #E5E6EB;">
                                             <th Style="padding: 12px 16px; text-align: left; font-weight: 500;">变量名</th>
                                             <th Style="padding: 12px 16px; text-align: left; font-weight: 500;">变量值</th>
                                             <th Style="padding: 12px 16px; text-align: left; font-weight: 500; width: 100px;">操作</th>
@@ -262,12 +266,14 @@ else
                                     <tbody>
                                         @foreach (var kvp in selectedEnvironment.Variables)
                                         {
-                                            <tr Style="border-bottom: 1px solid #f0f0f0;">
+                                            <tr Style="border-bottom: 1px solid #F2F3F5;">
                                                 <td Style="padding: 12px 16px;"><strong>@kvp.Key</strong></td>
-                                                <td Style="padding: 12px 16px;"><span Style="color: #1890ff; word-break: break-all;">@kvp.Value</span></td>
+                                                <td Style="padding: 12px 16px;"><span Style="color: #165DFF; word-break: break-all;">@kvp.Value</span></td>
                                                 <td Style="padding: 12px 16px;">
-                                                    <button class="h-btn h-btn-sm h-btn-default" @onclick="() => EditVariable(kvp.Key, kvp.Value)" Style="margin-right: 4px;">✏️</button>
-                                                    <button class="h-btn h-btn-sm" @onclick="() => DeleteVariable(kvp.Key)" Style="color: #ff4d4f; border-color: #ff4d4f;">🗑️</button>
+                                                    <div class="row-actions">
+                                                        <a class="link-action" @onclick="() => EditVariable(kvp.Key, kvp.Value)">编辑</a>
+                                                        <a class="link-action-danger" @onclick="() => DeleteVariable(kvp.Key)">删除</a>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         }
@@ -276,7 +282,7 @@ else
                             }
                             else
                             {
-                                <div Style="text-align: center; padding: 20px; color: #999;">暂无环境变量</div>
+                                <div Style="text-align: center; padding: 20px; color: #86909C;">暂无环境变量</div>
                             }
                         </div>
                     </div>
@@ -284,7 +290,7 @@ else
             }
             else
             {
-                <div Style="display: flex; align-items: center; justify-content: center; height: 100%; color: #999;">
+                <div Style="display: flex; align-items: center; justify-content: center; height: 100%; color: #86909C;">
                     <div Style="text-align: center;">
                         <h4 Style="margin-bottom: 16px;">选择一个环境</h4>
                         <p>请从左侧列表中选择一个环境来查看详情</p>
@@ -294,11 +300,11 @@ else
         </div>
     </div>
     
-    <div Style="text-align: right; padding-top: 16px; border-top: 1px solid #f0f0f0; margin-top: 24px;">
+    <div Style="text-align: right; padding-top: 16px; border-top: 1px solid #F2F3F5; margin-top: 24px;">
         <button class="h-btn h-btn-default" @onclick="HideEnvironmentModal" Style="margin-right: 8px;">关闭</button>
         @if (selectedEnvironment != null)
         {
-            <button class="h-btn" @onclick="SaveEnvironmentChanges" Style="background-color: #52c41a; border-color: #52c41a; color: #fff;">保存更改</button>
+            <button class="h-btn" @onclick="SaveEnvironmentChanges" Style="background-color: #00B42A; border-color: #00B42A; color: #fff;">保存更改</button>
         }
     </div>
 </HModal>
@@ -328,7 +334,7 @@ else
             </div>
         </div>
         
-        <div Style="text-align: right; padding-top: 16px; border-top: 1px solid #f0f0f0; margin-top: 24px;">
+        <div Style="text-align: right; padding-top: 16px; border-top: 1px solid #F2F3F5; margin-top: 24px;">
             <button class="h-btn h-btn-default" @onclick="HideAddEnvironmentModal" Style="margin-right: 8px;">取消</button>
             <button class="h-btn h-btn-primary" @onclick="SaveEnvironment">保存</button>
         </div>
@@ -350,7 +356,7 @@ else
             </div>
         </div>
     </div>
-    <div Style="text-align: right; padding-top: 16px; border-top: 1px solid #f0f0f0; margin-top: 24px;">
+    <div Style="text-align: right; padding-top: 16px; border-top: 1px solid #F2F3F5; margin-top: 24px;">
         <button class="h-btn h-btn-default" @onclick="HideAddVariableModal" Style="margin-right: 8px;">取消</button>
         <button class="h-btn h-btn-primary" @onclick="SaveNewVariable">保存</button>
     </div>
@@ -371,7 +377,7 @@ else
             </div>
         </div>
     </div>
-    <div Style="text-align: right; padding-top: 16px; border-top: 1px solid #f0f0f0; margin-top: 24px;">
+    <div Style="text-align: right; padding-top: 16px; border-top: 1px solid #F2F3F5; margin-top: 24px;">
         <button class="h-btn h-btn-default" @onclick="HideEditVariableModal" Style="margin-right: 8px;">取消</button>
         <button class="h-btn h-btn-primary" @onclick="SaveEditVariable">保存</button>
     </div>
@@ -404,13 +410,15 @@ else
                             <strong>@svc.Name</strong>
                             @if (!string.IsNullOrEmpty(svc.Description))
                             {
-                                <br /><span Style="color: #999; font-size: 12px;">@svc.Description</span>
+                                <br /><span Style="color: #86909C; font-size: 12px;">@svc.Description</span>
                             }
                         </td>
                         <td>@svc.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
                         <td>
-                            <button class="h-btn h-btn-sm h-btn-primary" @onclick="() => EditProjectService(svc)" Style="margin-right: 8px;">✏️</button>
-                            <button class="h-btn h-btn-sm" @onclick="() => DeleteProjectService(svc.Id)" Style="color: #ff4d4f; border-color: #ff4d4f;">🗑️</button>
+                            <div class="row-actions">
+                                <a class="link-action" @onclick="() => EditProjectService(svc)">编辑</a>
+                                <a class="link-action-danger" @onclick="() => DeleteProjectService(svc.Id)">删除</a>
+                            </div>
                         </td>
                     </tr>
                 }
@@ -419,13 +427,13 @@ else
     }
     else
     {
-        <div Style="text-align: center; padding: 40px; color: #999;">
+        <div Style="text-align: center; padding: 40px; color: #86909C;">
             <p>暂无服务配置</p>
             <button class="h-btn h-btn-primary" @onclick="ShowAddProjectServiceModal">添加第一个服务</button>
         </div>
     }
     
-    <div Style="text-align: right; padding-top: 16px; border-top: 1px solid #f0f0f0; margin-top: 24px;">
+    <div Style="text-align: right; padding-top: 16px; border-top: 1px solid #F2F3F5; margin-top: 24px;">
         <button class="h-btn h-btn-default" @onclick="HideProjectServiceManagementModal">关闭</button>
     </div>
 </HModal>
@@ -452,7 +460,7 @@ else
             </div>
         </div>
         
-        <div Style="text-align: right; padding-top: 16px; border-top: 1px solid #f0f0f0; margin-top: 24px;">
+        <div Style="text-align: right; padding-top: 16px; border-top: 1px solid #F2F3F5; margin-top: 24px;">
             <button class="h-btn h-btn-default" @onclick="HideProjectServiceModal" Style="margin-right: 8px;">取消</button>
             <button class="h-btn h-btn-primary" @onclick="SaveProjectService">@(isEditingProjectService ? "更新" : "保存")</button>
         </div>
@@ -475,7 +483,7 @@ else
         </div>
     </EditForm>
     
-    <div Style="text-align: right; padding-top: 16px; border-top: 1px solid #f0f0f0; margin-top: 24px;">
+    <div Style="text-align: right; padding-top: 16px; border-top: 1px solid #F2F3F5; margin-top: 24px;">
         <button class="h-btn h-btn-default" @onclick="HideServiceConfigModal" Style="margin-right: 8px;">取消</button>
         <button class="h-btn h-btn-primary" @onclick="SaveServiceConfig">@(isEditingServiceConfig ? "更新" : "添加")</button>
     </div>

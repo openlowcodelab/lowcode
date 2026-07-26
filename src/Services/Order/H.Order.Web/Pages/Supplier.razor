@@ -34,9 +34,9 @@
                         else { <span class="h-tag h-tag-red">禁用</span> }
                     </td>
                     <td>
-                        <span class="h-space">
-                            <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => Edit(s))">编辑</button>
-                            <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => Delete(s.Id))">删除</button>
+                        <span class="row-actions">
+                            <a @onclick="@(() => Edit(s))">编辑</a>
+                            <a class="danger" @onclick="@(() => Delete(s.Id))">删除</a>
                         </span>
                     </td>
                 </tr>

@@ -12,7 +12,7 @@ public class AppPartsSchema : AppSchemaBase
     public string? HomePageId { get; set; }
 
     /// <summary>
-    /// 主题主色（十六进制色值，如 #2f6feb）
+    /// 主题主色（十六进制色值，如 #165DFF）
     /// </summary>
     [JsonPropertyName("theme")]
     public string? ThemeColor { get; set; }

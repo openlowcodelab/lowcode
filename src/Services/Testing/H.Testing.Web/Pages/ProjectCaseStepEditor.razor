@@ -12,8 +12,8 @@
 @inject IJSRuntime JSRuntime
 
 <style>
-    .testing-step-editor .card { background: #fff; border: 1px solid #f0f0f0; border-radius: 6px; margin-bottom: 16px; }
-    .testing-step-editor .card-header { padding: 10px 16px; background: #fafafa; border-bottom: 1px solid #f0f0f0; border-radius: 6px 6px 0 0; font-weight: 600; }
+    .testing-step-editor .card { background: #fff; border: 1px solid #F2F3F5; border-radius: 6px; margin-bottom: 16px; }
+    .testing-step-editor .card-header { padding: 10px 16px; background: #F7F8FA; border-bottom: 1px solid #F2F3F5; border-radius: 6px 6px 0 0; font-weight: 600; }
     .testing-step-editor .card-header h6 { margin: 0; font-size: 14px; }
     .testing-step-editor .card-body { padding: 16px; }
     .testing-step-editor .row { display: flex; flex-wrap: wrap; margin-left: -8px; margin-right: -8px; }
@@ -25,42 +25,42 @@
     .testing-step-editor .col-md-6 { flex: 0 0 50%; max-width: 50%; }
     .testing-step-editor .col-md-7 { flex: 0 0 58.333%; max-width: 58.333%; }
     .testing-step-editor .form-label { display: block; margin-bottom: 4px; font-size: 13px; color: rgba(0,0,0,.85); }
-    .testing-step-editor .form-control, .testing-step-editor .form-select { display: block; width: 100%; height: 32px; padding: 4px 11px; font-size: 14px; line-height: 1.5715; color: rgba(0,0,0,.85); background: #fff; border: 1px solid #d9d9d9; border-radius: 2px; box-sizing: border-box; transition: all .3s; }
-    .testing-step-editor .form-control:focus, .testing-step-editor .form-select:focus { outline: none; border-color: #40a9ff; box-shadow: 0 0 0 2px rgba(24,144,255,.2); }
+    .testing-step-editor .form-control, .testing-step-editor .form-select { display: block; width: 100%; height: 32px; padding: 4px 11px; font-size: 14px; line-height: 1.5715; color: rgba(0,0,0,.85); background: #fff; border: 1px solid #E5E6EB; border-radius: 2px; box-sizing: border-box; transition: all .3s; }
+    .testing-step-editor .form-control:focus, .testing-step-editor .form-select:focus { outline: none; border-color: #4080FF; box-shadow: 0 0 0 2px rgba(22,93,255,.2); }
     .testing-step-editor textarea.form-control { height: auto; min-height: 64px; }
     .testing-step-editor .form-control-sm, .testing-step-editor .form-select-sm { height: 28px; padding: 2px 8px; font-size: 12px; }
     .testing-step-editor .form-check { display: inline-flex; align-items: center; gap: 6px; }
     .testing-step-editor .form-check-input { width: 14px; height: 14px; margin: 0; }
     .testing-step-editor .form-check-label { font-size: 13px; }
-    .testing-step-editor .btn { display: inline-flex; align-items: center; justify-content: center; padding: 4px 15px; height: 32px; font-size: 14px; line-height: 1.5715; border: 1px solid transparent; border-radius: 2px; cursor: pointer; transition: all .3s; white-space: nowrap; background: #fff; color: rgba(0,0,0,.85); border-color: #d9d9d9; }
-    .testing-step-editor .btn:hover { color: #40a9ff; border-color: #40a9ff; }
+    .testing-step-editor .btn { display: inline-flex; align-items: center; justify-content: center; padding: 4px 15px; height: 32px; font-size: 14px; line-height: 1.5715; border: 1px solid transparent; border-radius: 2px; cursor: pointer; transition: all .3s; white-space: nowrap; background: #fff; color: rgba(0,0,0,.85); border-color: #E5E6EB; }
+    .testing-step-editor .btn:hover { color: #4080FF; border-color: #4080FF; }
     .testing-step-editor .btn-sm { height: 24px; padding: 0 7px; font-size: 12px; }
-    .testing-step-editor .btn-outline-primary { color: #1890ff; border-color: #1890ff; }
-    .testing-step-editor .btn-outline-primary:hover { background: #1890ff; color: #fff; }
-    .testing-step-editor .btn-outline-danger { color: #ff4d4f; border-color: #ff4d4f; }
-    .testing-step-editor .btn-outline-danger:hover { background: #ff4d4f; color: #fff; }
-    .testing-step-editor .nav-tabs { display: flex; list-style: none; padding: 0; margin: 0 0 16px 0; border-bottom: 1px solid #f0f0f0; gap: 2px; }
+    .testing-step-editor .btn-outline-primary { color: #165DFF; border-color: #165DFF; }
+    .testing-step-editor .btn-outline-primary:hover { background: #165DFF; color: #fff; }
+    .testing-step-editor .btn-outline-danger { color: #F53F3F; border-color: #F53F3F; }
+    .testing-step-editor .btn-outline-danger:hover { background: #F53F3F; color: #fff; }
+    .testing-step-editor .nav-tabs { display: flex; list-style: none; padding: 0; margin: 0 0 16px 0; border-bottom: 1px solid #F2F3F5; gap: 2px; }
     .testing-step-editor .nav-tabs .nav-item { list-style: none; margin: 0; }
     .testing-step-editor .nav-tabs .nav-link { background: transparent; border: none; padding: 8px 16px; font-size: 14px; color: rgba(0,0,0,.65); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
-    .testing-step-editor .nav-tabs .nav-link:hover { color: #40a9ff; }
-    .testing-step-editor .nav-tabs .nav-link.active { color: #1890ff; border-bottom-color: #1890ff; font-weight: 600; }
+    .testing-step-editor .nav-tabs .nav-link:hover { color: #4080FF; }
+    .testing-step-editor .nav-tabs .nav-link.active { color: #165DFF; border-bottom-color: #165DFF; font-weight: 600; }
     .testing-step-editor .tab-content { padding-top: 8px; }
     .testing-step-editor .tab-pane { display: none; }
     .testing-step-editor .tab-pane.show.active { display: block; }
     .testing-step-editor .badge { display: inline-block; padding: 0 7px; font-size: 12px; line-height: 18px; color: #fff; border-radius: 10px; margin-left: 4px; }
-    .testing-step-editor .bg-primary { background: #1890ff; }
+    .testing-step-editor .bg-primary { background: #165DFF; }
     .testing-step-editor .bg-info { background: #13c2c2; }
-    .testing-step-editor .bg-success { background: #52c41a; }
+    .testing-step-editor .bg-success { background: #00B42A; }
     .testing-step-editor .alert { padding: 8px 15px; border-radius: 2px; margin-bottom: 12px; font-size: 13px; }
-    .testing-step-editor .alert-info { background: #e6f7ff; border: 1px solid #91d5ff; color: rgba(0,0,0,.85); }
+    .testing-step-editor .alert-info { background: #E8F3FF; border: 1px solid #94BFFF; color: rgba(0,0,0,.85); }
     .testing-step-editor .table { width: 100%; border-collapse: collapse; font-size: 14px; }
-    .testing-step-editor .table th, .testing-step-editor .table td { padding: 8px 12px; border-bottom: 1px solid #f0f0f0; text-align: left; }
-    .testing-step-editor .table thead th { background: #fafafa; font-weight: 600; }
+    .testing-step-editor .table th, .testing-step-editor .table td { padding: 8px 12px; border-bottom: 1px solid #F2F3F5; text-align: left; }
+    .testing-step-editor .table thead th { background: #F7F8FA; font-weight: 600; }
     .testing-step-editor .table-sm th, .testing-step-editor .table-sm td { padding: 6px 10px; }
     .testing-step-editor .table-responsive { overflow-x: auto; }
     .testing-step-editor .text-muted { color: rgba(0,0,0,.45); }
     .testing-step-editor .small { font-size: 12px; }
-    .testing-step-editor .border { border: 1px solid #f0f0f0; }
+    .testing-step-editor .border { border: 1px solid #F2F3F5; }
     .testing-step-editor .rounded { border-radius: 4px; }
     .testing-step-editor .p-3 { padding: 12px; }
     .testing-step-editor .mb-0 { margin-bottom: 0 !important; }
@@ -72,14 +72,14 @@
 
 <div class="testing-step-editor" style="display: flex; height: calc(100vh - 80px);">
     <!-- 左侧：步骤列表 -->
-    <div style="width: 400px; height: 100%; overflow-y: auto; border-right: 1px solid #f0f0f0; padding: 12px;">
+    <div style="width: 400px; height: 100%; overflow-y: auto; border-right: 1px solid #F2F3F5; padding: 12px;">
         <div style="margin-bottom: 16px;">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
                 <div>
                     <div style="font-size: 15px; font-weight: 600; margin-bottom: 4px;">📋 测试步骤</div>
-                    <small style="color: #999;">@(isNewTestCase ? "新建测试用例" : currentTestCase.Name)</small>
+                    <small style="color: #86909C;">@(isNewTestCase ? "新建测试用例" : currentTestCase.Name)</small>
                 </div>
-                <button class="h-btn h-btn-sm" style="color:#ff4d4f;border-color:#ff4d4f;" @onclick="GoBack">← 返回</button>
+                <button class="h-btn h-btn-sm" style="color:#F53F3F;border-color:#F53F3F;" @onclick="GoBack">← 返回</button>
             </div>
             <span class="h-space" style="flex-wrap:wrap;justify-content:flex-end;width:100%;display:flex;">
                 <button class="h-btn h-btn-sm h-btn-primary"
@@ -88,7 +88,7 @@
                     ➕ 添加
                 </button>
                 <button class="h-btn h-btn-sm"
-                        style="background-color:#52c41a;border-color:#52c41a;color:#fff;"
+                        style="background-color:#00B42A;border-color:#00B42A;color:#fff;"
                         disabled="@(currentTestCase.TemplateId.HasValue)"
                         @onclick="ShowRecorderModal">
                     🎥 录制
@@ -108,7 +108,7 @@
                 @foreach (var step in currentTestCase.Steps.OrderBy(s => s.Order))
                 {
                     var isSelected = selectedStep?.Id == step.Id;
-                    <div style="@($"padding: 10px 12px; border: 1px solid {(isSelected ? "#1890ff" : "#f0f0f0")}; border-radius: 4px; margin-bottom: 6px; cursor: pointer; background: {(isSelected ? "#e6f7ff" : "#fff")};")"
+                    <div style="@($"padding: 10px 12px; border: 1px solid {(isSelected ? "#165DFF" : "#F2F3F5")}; border-radius: 4px; margin-bottom: 6px; cursor: pointer; background: {(isSelected ? "#E8F3FF" : "#fff")};")"
                          @onclick="() => SelectStep(step)">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div style="flex: 1; min-width: 0;">
@@ -120,7 +120,7 @@
                                         <span class="h-tag h-tag-orange">禁用</span>
                                     }
                                 </div>
-                                <small style="color: #999;">@GetStepTypeDisplayName(step.Type)</small>
+                                <small style="color: #86909C;">@GetStepTypeDisplayName(step.Type)</small>
                             </div>
                             <span class="h-space">
                                 <button class="h-btn h-btn-sm"
@@ -131,7 +131,7 @@
                                         disabled="@(step.Order >= currentTestCase.Steps.Count || currentTestCase.TemplateId.HasValue)"
                                         @onclick="@(async () => { await Task.CompletedTask; MoveStepDown(step); })"
                                         @onclick:stopPropagation>↓</button>
-                                <button class="h-btn h-btn-sm" style="color:#ff4d4f;border-color:#ff4d4f;"
+                                <button class="h-btn h-btn-sm" style="color:#F53F3F;border-color:#F53F3F;"
                                         disabled="@(currentTestCase.TemplateId.HasValue)"
                                         @onclick="@(async () => { await Task.CompletedTask; DeleteStep(step.Id); })"
                                         @onclick:stopPropagation>🗑</button>
@@ -145,7 +145,7 @@
         {
             <div style="text-align: center; padding: 40px 0;">
                 <div class="h-empty">暂无测试步骤</div>
-                <div style="color: #999; margin-top: 12px; margin-bottom: 12px;">点击上方按钮添加第一个测试步骤</div>
+                <div style="color: #86909C; margin-top: 12px; margin-bottom: 12px;">点击上方按钮添加第一个测试步骤</div>
                 <button class="h-btn h-btn-sm h-btn-primary" @onclick="AddStep">➕ 添加步骤</button>
             </div>
         }
@@ -163,7 +163,7 @@
                     <div style="display:flex;gap:16px;">
                         <div style="flex:2;">
                             <div style="margin-bottom: 12px;">
-                                <div style="margin-bottom: 4px;">步骤名称 <span style="color: #ff4d4f;">*</span></div>
+                                <div style="margin-bottom: 4px;">步骤名称 <span style="color: #F53F3F;">*</span></div>
                                 <input class="h-input" @bind-value="selectedStep.Name" />
                             </div>
                         </div>
@@ -271,7 +271,7 @@
 
     <table style="width: 100%; border-collapse: collapse;">
         <thead>
-            <tr style="background: #fafafa; border-bottom: 1px solid #f0f0f0;">
+            <tr style="background: #F7F8FA; border-bottom: 1px solid #F2F3F5;">
                 <th style="padding: 8px 12px; text-align: left; font-weight: 600;">变量名 (Key)</th>
                 <th style="padding: 8px 12px; text-align: left; font-weight: 600;">变量值 (Value)</th>
                 <th style="padding: 8px 12px; text-align: left; font-weight: 600; width: 100px;">操作</th>
@@ -280,29 +280,29 @@
         <tbody>
             @foreach (var kvp in currentTestCase.TestData)
             {
-                <tr style="border-bottom: 1px solid #f0f0f0;">
+                <tr style="border-bottom: 1px solid #F2F3F5;">
                     <td style="padding: 8px 12px;">@kvp.Key</td>
                     <td style="padding: 8px 12px;">
                         <input class="h-input" value="@(kvp.Value?.ToString() ?? "")"
                                @onchange="@((ChangeEventArgs e) => currentTestCase.TestData[kvp.Key] = e.Value?.ToString() ?? "")" />
                     </td>
                     <td style="padding: 8px 12px;">
-                        <button class="h-btn h-btn-sm" style="color:#ff4d4f;border-color:#ff4d4f;" @onclick="@(() => RemoveTestData(kvp.Key))">🗑 删除</button>
+                        <button class="h-btn h-btn-sm" style="color:#F53F3F;border-color:#F53F3F;" @onclick="@(() => RemoveTestData(kvp.Key))">🗑 删除</button>
                     </td>
                 </tr>
             }
         </tbody>
     </table>
 
-    <div style="display: flex; gap: 8px; margin-top: 16px; padding-top: 12px; border-top: 1px solid #f0f0f0;">
+    <div style="display: flex; gap: 8px; margin-top: 16px; padding-top: 12px; border-top: 1px solid #F2F3F5;">
         <input class="h-input" placeholder="新变量名" @bind-value="newTestDataKey" style="flex: 1;" />
         <input class="h-input" placeholder="变量值" @bind-value="newTestDataValue" style="flex: 1;" />
         <button class="h-btn h-btn-primary"
-                style="background-color: #52c41a; border-color: #52c41a;"
+                style="background-color: #00B42A; border-color: #00B42A;"
                 @onclick="AddTestData">➕ 添加</button>
     </div>
 
-    <div style="text-align: right; margin-top: 16px; padding-top: 12px; border-top: 1px solid #f0f0f0;">
+    <div style="text-align: right; margin-top: 16px; padding-top: 12px; border-top: 1px solid #F2F3F5;">
         <button class="h-btn h-btn-primary" @onclick="ToggleTestDataModal">完成</button>
     </div>
 </HModal>

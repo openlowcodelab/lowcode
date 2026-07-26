@@ -1,4 +1,4 @@
-﻿@page "/designengine/myapp/{AppId}/appsettings"
+@page "/designengine/myapp/{AppId}/appsettings"
 @namespace H.LowCode.MyApp
 @inherits LowCodePageComponentBase
 @layout MyAppLayout
@@ -126,7 +126,7 @@
                                      @onclick="() => _app.ThemeColor = color"></div>
                             }
                         </div>
-                        <div class="form-item-hint">当前：@(_app.ThemeColor ?? "默认 #2f6feb")</div>
+                        <div class="form-item-hint">当前：@(_app.ThemeColor ?? "默认 #165DFF")</div>
                     </div>
                 </div>
             }
@@ -167,7 +167,7 @@
 
     private readonly string[] _presetColors =
     {
-        "#2f6feb", "#1890ff", "#722ed1", "#13c2c2", "#52c41a", "#fa8c16", "#eb2f96", "#f5222d"
+        "#165DFF", "#165DFF", "#722ed1", "#13c2c2", "#00B42A", "#FF7D00", "#eb2f96", "#F53F3F"
     };
 
     protected override async Task OnInitializedAsync()

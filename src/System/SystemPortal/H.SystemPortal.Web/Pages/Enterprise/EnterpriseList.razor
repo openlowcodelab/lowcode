@@ -56,20 +56,20 @@
                     <td>@item.UserCount</td>
                     <td>@item.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
                     <td>
-                        <span class="h-space">
-                            <button class="h-btn h-btn-primary h-btn-sm" @onclick="() => ViewDetail(item.Id)">详情</button>
+                        <span class="row-actions">
+                            <a @onclick="() => ViewDetail(item.Id)">详情</a>
                             @if (!item.IsActivated)
                             {
-                                <button class="h-btn h-btn-success h-btn-sm" @onclick="() => Activate(item.Id)">激活</button>
+                                <a @onclick="() => Activate(item.Id)">激活</a>
                             }
                             @if (item.Status == "Active")
                             {
-                                <button class="h-btn h-btn-danger h-btn-sm" @onclick="() => Disable(item.Id)">禁用</button>
+                                <a class="danger" @onclick="() => Disable(item.Id)">禁用</a>
                             }
                             @if (item.Status == "Disabled")
                             {
-                                <button class="h-btn h-btn-sm" @onclick="() => Enable(item.Id)">启用</button>
-                                <button class="h-btn h-btn-danger h-btn-sm" @onclick="() => Delete(item.Id)">删除</button>
+                                <a @onclick="() => Enable(item.Id)">启用</a>
+                                <a class="danger" @onclick="() => Delete(item.Id)">删除</a>
                             }
                         </span>
                     </td>

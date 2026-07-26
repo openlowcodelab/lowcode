@@ -8,11 +8,11 @@
     <div style="max-width: 640px;">
         @if (loading)
         {
-            <div style="padding: 40px; color: #999;">加载中...</div>
+            <div style="padding: 40px; color: #86909C;">加载中...</div>
         }
         else if (enterprise == null)
         {
-            <div style="padding: 24px; color: #999;">
+            <div style="padding: 24px; color: #86909C;">
                 未选择企业，请先选择或创建企业。
             </div>
         }
@@ -20,20 +20,20 @@
         {
             @if (!string.IsNullOrEmpty(message))
             {
-                <div style="color: #52c41a; margin-bottom: 16px; padding: 8px; background: #f6ffed; border: 1px solid #b7eb8f; border-radius: 4px;">
+                <div style="color: #00B42A; margin-bottom: 16px; padding: 8px; background: #E8FFEA; border: 1px solid #AFF0B5; border-radius: 4px;">
                     @message
                 </div>
             }
             @if (!string.IsNullOrEmpty(errorMessage))
             {
-                <div style="color: red; margin-bottom: 16px; padding: 8px; background: #fff2f0; border: 1px solid #ffccc7; border-radius: 4px;">
+                <div style="color: red; margin-bottom: 16px; padding: 8px; background: #FFECE8; border: 1px solid #FDCDC5; border-radius: 4px;">
                     @errorMessage
                 </div>
             }
 
             @if (!isOwner)
             {
-                <div style="margin-bottom: 16px; color: #999; font-size: 13px;">
+                <div style="margin-bottom: 16px; color: #86909C; font-size: 13px;">
                     仅企业拥有者可修改企业信息，当前为只读。
                 </div>
             }
@@ -81,7 +81,7 @@
                 </div>
             </div>
 
-            <div style="margin: 24px 0 8px; border-top: 1px solid #f0f0f0;"></div>
+            <div style="margin: 24px 0 8px; border-top: 1px solid #F2F3F5;"></div>
 
             <div class="h-form-item h-form-horizontal">
                 <label class="h-form-label">状态</label>
@@ -92,7 +92,7 @@
                     }
                     else if (enterprise.Status == "Pending")
                     {
-                        <span class="h-tag" style="background:#fffbe6;color:#ad6800;border:1px solid #ffe58f;">待激活</span>
+                        <span class="h-tag" style="background:#FFF7E8;color:#ad6800;border:1px solid #FFCF8B;">待激活</span>
                     }
                     else
                     {

@@ -1,4 +1,4 @@
-﻿@namespace H.LowCode.MyApp
+@namespace H.LowCode.MyApp
 @inherits LowCodeComponentBase
 
 @inject IDataSourceAppService DataSourceAppService
@@ -39,9 +39,9 @@
                     </label>
                 </td>
                 <td>
-                    <div class="space">
+                    <div class="row-actions">
                         <a @onclick='() => EditAsync(item.Id)'>编辑</a>
-                        <a @onclick='() => DeleteAsync(item.Id)' style="color:#ff4d4f">删除</a>
+                        <a @onclick='() => DeleteAsync(item.Id)' class="danger">删除</a>
                     </div>
                 </td>
             </tr>

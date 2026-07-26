@@ -13,7 +13,7 @@
     <div class="org-tree-panel">
         <HCard Title="部门">
             <div class="org-toolbar">
-                <span style="color:#999;font-size:12px;">选择部门查看成员</span>
+                <span style="color:#86909C;font-size:12px;">选择部门查看成员</span>
                 <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => ShowOrgDialog(null))">新增根部门</button>
             </div>
             @if (tree == null)
@@ -57,7 +57,7 @@
     <div class="org-member-panel">
         <HCard Title="@(selectedOrg != null ? $"成员 - {selectedOrg.Name}" : "成员")">
             <div class="org-toolbar">
-                <span style="color:#999;font-size:12px;">
+                <span style="color:#86909C;font-size:12px;">
                     @(selectedOrgId == null ? "请先在左侧选择部门" : $"共 {members?.Count ?? 0} 名成员")
                 </span>
                 <button class="h-btn h-btn-primary" disabled="@(selectedOrgId == null)" @onclick="ShowAddMemberDialog">添加成员</button>
@@ -100,7 +100,7 @@
                                     <span class="org-role-tags">
                                         @if (m.RoleNames.Count == 0)
                                         {
-                                            <span style="color:#bbb;">-</span>
+                                            <span style="color:#C9CDD4;">-</span>
                                         }
                                         else
                                         {
@@ -122,10 +122,10 @@
                                     }
                                 </td>
                                 <td>
-                                    <span class="h-space">
-                                        <button class="h-btn h-btn-sm" @onclick="@(() => ShowAssignRolesDialog(m))">分配角色</button>
-                                        <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => EditMember(m))">编辑</button>
-                                        <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => ConfirmDeleteMember(m.Id))">删除</button>
+                                    <span class="row-actions">
+                                        <a @onclick="@(() => ShowAssignRolesDialog(m))">分配角色</a>
+                                        <a @onclick="@(() => EditMember(m))">编辑</a>
+                                        <a class="danger" @onclick="@(() => ConfirmDeleteMember(m.Id))">删除</a>
                                     </span>
                                 </td>
                             </tr>
@@ -256,7 +256,7 @@
                     <input type="text" value="@generatedInviteUrl" class="h-input" readonly />
                     <button class="h-btn" @onclick="CopyInviteLink">复制</button>
                 </div>
-                <div style="color:#999;font-size:12px;margin-top:6px;">链接为一次性使用，@(inviteExpiresAtText) 前有效。</div>
+                <div style="color:#86909C;font-size:12px;margin-top:6px;">链接为一次性使用，@(inviteExpiresAtText) 前有效。</div>
             </div>
         }
     }
@@ -329,7 +329,7 @@
                     <span>@role.Name</span>
                     @if (!string.IsNullOrEmpty(role.Code))
                     {
-                        <span style="color:#999;font-size:12px;">(@role.Code)</span>
+                        <span style="color:#86909C;font-size:12px;">(@role.Code)</span>
                     }
                 </label>
             }

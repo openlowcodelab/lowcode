@@ -2,33 +2,35 @@
 @inject NavigationManager Navigation
 
 <style>
-.top-navbar { display: flex; justify-content: space-between; align-items: center; height: 60px; flex-shrink: 0; padding: 0 20px 0 5px; background-color: #fff; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); z-index: 100; }
-.navbar-left { display: flex; align-items: center; gap: 15px; }
-.navbar-center { display: flex; align-items: center; flex: 1; margin-left: 50px; }
-.drawer-toggle { background: none; border: none; font-size: 24px; cursor: pointer; padding: 5px 10px; border-radius: 4px; }
-.drawer-toggle:hover { background-color: #f0f0f0; }
-.app-name h3 { margin: 0; font-size: 18px; color: #333; }
-.navbar-logo { height: 32px; width: 32px; object-fit: contain; }
+.top-navbar { display: flex; justify-content: space-between; align-items: center; height: 56px; flex-shrink: 0; padding: 0 20px 0 8px; background-color: #fff; border-bottom: 1px solid var(--h-border-2, #E5E6EB); z-index: 100; }
+.navbar-left { display: flex; align-items: center; gap: 12px; }
+.navbar-center { display: flex; align-items: center; flex: 1; margin-left: 40px; }
+.drawer-toggle { background: none; border: none; font-size: 20px; color: var(--h-text-2, #4E5969); cursor: pointer; padding: 6px 10px; border-radius: 4px; transition: all 0.15s; }
+.drawer-toggle:hover { background-color: var(--h-fill-2, #F2F3F5); color: var(--h-text, #1D2129); }
+.app-name h3 { margin: 0; font-size: 16px; font-weight: 600; color: var(--h-text, #1D2129); }
+.navbar-logo { height: 30px; width: 30px; object-fit: contain; }
 .navbar-right { display: flex; align-items: center; gap: 10px; }
-.user-avatar { width: 36px; height: 36px; border-radius: 50%; overflow: hidden; }
-.user-name span { color: #666; font-size: 14px; }
-.login-btn { padding: 6px 16px; background-color: #1890ff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+.user-avatar { width: 32px; height: 32px; border-radius: 50%; overflow: hidden; }
+.user-name span { color: var(--h-text-2, #4E5969); font-size: 14px; }
+.login-btn { padding: 5px 16px; background-color: var(--h-primary, #165DFF); color: white; border: none; border-radius: 4px; font-size: 14px; cursor: pointer; transition: background 0.15s; }
+.login-btn:hover { background-color: var(--h-primary-hover, #4080FF); }
 .user-dropdown { position: relative; cursor: pointer; }
-.user-info { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border-radius: 4px; }
-.user-info:hover { background-color: #f5f5f5; }
+.user-info { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border-radius: 4px; transition: background 0.15s; }
+.user-info:hover { background-color: var(--h-fill-2, #F2F3F5); }
+.dropdown-mask { position: fixed; inset: 0; z-index: 999; background: transparent; }
 .dropdown-menu { 
     position: absolute; top: 100%; right: 0; background: white; 
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15); border-radius: 4px; 
-    width: 200px; z-index: 1000; margin-top: 8px; overflow: hidden;
+    box-shadow: 0 6px 18px rgba(29,33,41,0.10); border: 1px solid var(--h-border-light, #F2F3F5); border-radius: 8px; 
+    width: 200px; z-index: 1000; margin-top: 8px; overflow: hidden; padding: 4px;
 }
-.dropdown-item { padding: 8px 16px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
-.dropdown-item:hover { background-color: #f5f5f5; }
-.dropdown-section-title { padding: 8px 16px 4px; font-size: 12px; color: #999; font-weight: 500; }
-.enterprise-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-radius: 6px; margin: 4px 4px 8px; cursor: pointer; box-sizing: border-box; max-width: calc(100% - 8px); }
-.enterprise-item:hover { background-color: #f5f5f5; }
+.dropdown-item { padding: 8px 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--h-text, #1D2129); border-radius: 4px; transition: background 0.15s; }
+.dropdown-item:hover { background-color: var(--h-fill-1, #F7F8FA); }
+.dropdown-section-title { padding: 8px 12px 4px; font-size: 12px; color: var(--h-text-3, #86909C); font-weight: 500; }
+.enterprise-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-radius: 4px; margin: 0 0 4px; cursor: pointer; box-sizing: border-box; max-width: 100%; transition: background 0.15s; }
+.enterprise-item:hover { background-color: var(--h-fill-1, #F7F8FA); }
 .enterprise-item .enterprise-name-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .enterprise-item .enterprise-name-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
-.enterprise-item .enterprise-switch { display: flex; align-items: center; gap: 4px; color: #999; white-space: nowrap; margin-left: 12px; font-size: 13px; }
+.enterprise-item .enterprise-switch { display: flex; align-items: center; gap: 4px; color: var(--h-text-3, #86909C); white-space: nowrap; margin-left: 12px; font-size: 13px; }
 </style>
 
 <div class="top-navbar">
@@ -59,7 +61,7 @@
         {
             <div class="user-dropdown" @onclick:stopPropagation="true">
                 <div class="user-info" @onclick="ToggleDropdown">
-                    <div class="user-avatar" style="background-color: #1890ff; display: flex; align-items: center; justify-content: center;">
+                    <div class="user-avatar" style="background-color: var(--h-primary, #165DFF); display: flex; align-items: center; justify-content: center;">
                         <svg viewBox="0 0 100 100" style="width: 100%; height: 100%;">
                             <circle fill="#fff" cx="50" cy="35" r="20"/>
                             <path fill="#fff" d="M50 60 Q20 60 20 85 L80 85 Q80 60 50 60"/>
@@ -72,6 +74,7 @@
                 
                 @if (showDropdown)
                 {
+                    <div class="dropdown-mask" @onclick="CloseDropdown"></div>
                     <div class="dropdown-menu">
                         <div class="dropdown-item" @onclick="GoToProfile">
                             个人设置
@@ -81,7 +84,7 @@
                         </div>
                         @if (!string.IsNullOrEmpty(EnterpriseName))
                         {
-                            <div style="margin: 8px 0; border-top: 1px solid #f0f0f0;"></div>
+                            <div style="margin: 4px 0; border-top: 1px solid var(--h-border-light, #F2F3F5);"></div>
                             <div class="dropdown-section-title">组织</div>
                             <div class="enterprise-item" @onclick="GoToEnterpriseSelect">
                                 <div class="enterprise-name-left">
@@ -172,6 +175,11 @@
     private void ToggleDropdown()
     {
         showDropdown = !showDropdown;
+    }
+
+    private void CloseDropdown()
+    {
+        showDropdown = false;
     }
 
     private void GoToProfile()

@@ -1,14 +1,14 @@
 @namespace H.AppDrawer.Components
 
 <style>
-.menu-sidebar { width: 220px; background-color: #fff; border-right: 1px solid #e8e8e8; overflow-y: auto; padding: 10px 0; }
+.menu-sidebar { width: 220px; background-color: #fff; border-right: 1px solid var(--h-border-light, #F2F3F5); overflow-y: auto; padding: 5px 0 10px; box-sizing: border-box; }
 .menu-list { list-style: none; margin: 0; padding: 0; }
-.menu-item { display: flex; align-items: center; padding: 12px 20px; cursor: pointer; transition: all 0.3s; color: #333; }
-.menu-item:hover { background-color: var(--h-primary-soft, #f0f7ff); color: var(--h-primary, #1890ff); }
-.menu-item.active { background-color: var(--h-primary-soft, #e6f7ff); color: var(--h-primary, #1890ff); border-right: 3px solid var(--h-primary, #1890ff); }
+.menu-item { display: flex; align-items: center; padding: 12px 20px; cursor: pointer; transition: all 0.15s; color: var(--h-text-2, #4E5969); }
+.menu-item:hover { background-color: var(--h-fill-1, #F7F8FA); color: var(--h-text, #1D2129); }
+.menu-item.active { background-color: var(--h-primary-soft, #E8F3FF); color: var(--h-primary, #165DFF); font-weight: 500; border-right: 3px solid var(--h-primary, #165DFF); }
 .menu-icon { margin-right: 10px; font-size: 17px; width: 20px; display: inline-flex; align-items: center; justify-content: center; }
 .menu-text { font-size: 14px; flex: 1; }
-.menu-arrow { font-size: 12px; transition: transform 0.2s; margin-left: 4px; }
+.menu-arrow { font-size: 12px; transition: transform 0.2s; margin-left: 4px; color: var(--h-text-3, #86909C); }
 .menu-arrow.expanded { transform: rotate(90deg); }
 .submenu { list-style: none; margin: 0; padding: 0; overflow: hidden; }
 .submenu .menu-item { padding-top: 10px; padding-bottom: 10px; font-size: 13px; }

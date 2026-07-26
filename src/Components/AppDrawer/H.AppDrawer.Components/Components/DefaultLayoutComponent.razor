@@ -3,7 +3,15 @@
 <style>
 .layout-container { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 .menu-container { display: flex; flex: 1; min-height: 0; }
-.content-container { flex: 1; overflow-y: auto; overflow-x: hidden; background-color: #f0f2f5; padding: 20px; min-width: 0; box-sizing: border-box; }
+.content-container { flex: 1; overflow-y: auto; overflow-x: hidden; background-color: var(--h-bg-page, #F2F3F5); padding: 20px; min-width: 0; box-sizing: border-box; display: flex; flex-direction: column; }
+/* 内容区占满: 防止内容超高时头部/工具栏被压缩 */
+.content-container > * { flex-shrink: 0; }
+/* 主体卡片/表格容器拉伸占满剩余高度, 数据少时底部呈现白卡而非大片灰底 */
+.content-container > .h-card,
+.content-container > .card,
+.content-container > .table-wrap,
+.content-container > .h-table-wrapper,
+.content-container > .page-fill { flex: 1 0 auto; }
 </style>
 
 <div class="layout-container">

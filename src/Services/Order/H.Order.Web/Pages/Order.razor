@@ -42,10 +42,10 @@
                     <td><span class="h-tag @StatusTag(o.OrderStatus)">@o.OrderStatus</span></td>
                     <td>@o.CreationTime.ToString("yyyy-MM-dd HH:mm")</td>
                     <td>
-                        <span class="h-space">
-                            <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => Nav.NavigateTo($"/order/detail/{o.Id}"))">详情</button>
-                            <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => Trigger(o.Id))">下发</button>
-                            <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => ConfirmDelete(o.Id))">删除</button>
+                        <span class="row-actions">
+                            <a @onclick="@(() => Nav.NavigateTo($"/order/detail/{o.Id}"))">详情</a>
+                            <a @onclick="@(() => Trigger(o.Id))">下发</a>
+                            <a class="danger" @onclick="@(() => ConfirmDelete(o.Id))">删除</a>
                         </span>
                     </td>
                 </tr>

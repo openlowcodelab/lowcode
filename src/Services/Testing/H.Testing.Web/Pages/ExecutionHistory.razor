@@ -13,7 +13,7 @@
 <div style="display:flex;gap:16px;justify-content:space-between;align-items:center;margin-bottom:16px;">
     <div>
         <div style="font-size:18px;font-weight:600;margin-bottom:4px;">📊 执行历史记录</div>
-        <nav style="margin-bottom:0;"><a href="/testing/project-cases" style="color:#1890ff;">测试用例</a> / <span>执行历史</span></nav>
+        <nav style="margin-bottom:0;"><a href="/testing/project-cases" style="color:#165DFF;">测试用例</a> / <span>执行历史</span></nav>
     </div>
     <span class="h-space">
         <button class="h-btn h-btn-default" @onclick="RefreshData">🔄 刷新</button>
@@ -53,7 +53,7 @@ else
                                 }
                                 else
                                 {
-                                    <span style="color:#999;">无</span>
+                                    <span style="color:#86909C;">无</span>
                                 }
                             </td>
                         </tr>
@@ -65,28 +65,28 @@ else
                 <Body>
                     <div style="display:flex;gap:8px;">
                         <div style="flex:1;text-align:center;">
-                            <div style="font-size:24px;color:#1890ff;font-weight:500;">@executionRecords.Count</div>
-                            <div style="color:#999;font-size:12px;">总执行次数</div>
+                            <div style="font-size:24px;color:#165DFF;font-weight:500;">@executionRecords.Count</div>
+                            <div style="color:#86909C;font-size:12px;">总执行次数</div>
                         </div>
                         <div style="flex:1;text-align:center;">
-                            <div style="font-size:24px;color:#52c41a;font-weight:500;">@executionRecords.Count(r => r.Status == ExecutionStatus.Success)</div>
-                            <div style="color:#999;font-size:12px;">成功次数</div>
+                            <div style="font-size:24px;color:#00B42A;font-weight:500;">@executionRecords.Count(r => r.Status == ExecutionStatus.Success)</div>
+                            <div style="color:#86909C;font-size:12px;">成功次数</div>
                         </div>
                     </div>
                     <div style="display:flex;gap:8px;margin-top:16px;">
                         <div style="flex:1;text-align:center;">
-                            <div style="font-size:24px;color:#ff4d4f;font-weight:500;">@executionRecords.Count(r => r.Status == ExecutionStatus.Failed)</div>
-                            <div style="color:#999;font-size:12px;">失败次数</div>
+                            <div style="font-size:24px;color:#F53F3F;font-weight:500;">@executionRecords.Count(r => r.Status == ExecutionStatus.Failed)</div>
+                            <div style="color:#86909C;font-size:12px;">失败次数</div>
                         </div>
                         <div style="flex:1;text-align:center;">
                             @{
                                 var successRate = executionRecords.Count > 0
                                     ? (double)executionRecords.Count(r => r.Status == ExecutionStatus.Success) / executionRecords.Count * 100
                                     : 0;
-                                var successRateColor = successRate >= 80 ? "#52c41a" : successRate >= 60 ? "#faad14" : "#ff4d4f";
+                                var successRateColor = successRate >= 80 ? "#00B42A" : successRate >= 60 ? "#FF7D00" : "#F53F3F";
                             }
                             <div style="font-size:24px;color:@successRateColor;font-weight:500;">@successRate.ToString("F1")%</div>
-                            <div style="color:#999;font-size:12px;">成功率</div>
+                            <div style="color:#86909C;font-size:12px;">成功率</div>
                         </div>
                     </div>
 
@@ -97,9 +97,9 @@ else
                             .Select(r => (double)r.Duration)
                             .DefaultIfEmpty(0)
                             .Average();
-                        <div style="margin-top:16px;text-align:center;padding-top:12px;border-top:1px solid #f0f0f0;">
+                        <div style="margin-top:16px;text-align:center;padding-top:12px;border-top:1px solid #F2F3F5;">
                             <div style="font-size:16px;color:#13c2c2;">@(avgDuration.ToString("F0"))ms</div>
-                            <small style="color:#999;">平均执行时间</small>
+                            <small style="color:#86909C;">平均执行时间</small>
                         </div>
                     }
                 </Body>
@@ -134,16 +134,16 @@ else
                             @foreach (var record in filteredRecords.Take(20))
                             {
                                 var isSelected = selectedRecordId == record.Id;
-                                <div style="@($"padding:12px;border:1px solid {(isSelected ? "#1890ff" : "#f0f0f0")};border-radius:4px;margin-bottom:8px;cursor:pointer;background:{(isSelected ? "#e6f7ff" : "#fff")};")"
+                                <div style="@($"padding:12px;border:1px solid {(isSelected ? "#165DFF" : "#F2F3F5")};border-radius:4px;margin-bottom:8px;cursor:pointer;background:{(isSelected ? "#E8F3FF" : "#fff")};")"
                                      @onclick="() => SelectRecord(record.Id)">
                                     <div style="display:flex;justify-content:space-between;align-items:flex-start;">
                                         <div style="flex:1;">
                                             <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
                                                 <span class="h-tag h-tag-@GetExecutionStatusTagClass(record.Status)">@GetExecutionStatusDisplayName(record.Status)</span>
                                                 <strong>@record.EnvironmentName</strong>
-                                                <span style="color:#999;font-size:12px;">@record.StartTime.ToString("yyyy-MM-dd HH:mm:ss")</span>
+                                                <span style="color:#86909C;font-size:12px;">@record.StartTime.ToString("yyyy-MM-dd HH:mm:ss")</span>
                                             </div>
-                                            <div style="color:#666;font-size:12px;">
+                                            <div style="color:#4E5969;font-size:12px;">
                                                 步骤: @record.SuccessSteps 成功 / @record.FailedSteps 失败 / @record.SkippedSteps 跳过
                                                 @if (record.Duration > 0)
                                                 {
@@ -152,20 +152,20 @@ else
                                             </div>
                                             @if (!string.IsNullOrEmpty(record.ErrorMessage))
                                             {
-                                                <div style="color:#ff4d4f;font-size:12px;margin-top:4px;">
+                                                <div style="color:#F53F3F;font-size:12px;margin-top:4px;">
                                                     ⚠ @record.ErrorMessage
                                                 </div>
                                             }
                                         </div>
-                                        <span class="h-space">
-                                            <button class="h-btn h-btn-sm h-btn-primary"
-                                                    @onclick="@(async (MouseEventArgs e) => { await JSRuntime.InvokeVoidAsync("event.stopPropagation"); SelectRecord(record.Id); })">
-                                                👁 查看详情
-                                            </button>
-                                            <button class="h-btn h-btn-sm" style="border-color:#ff4d4f;color:#ff4d4f;"
-                                                    @onclick="@(async (MouseEventArgs e) => await DeleteRecord(record.Id))">
-                                                🗑 删除
-                                            </button>
+                                        <span class="row-actions">
+                                            <a class="link-action"
+                                               @onclick="@(async (MouseEventArgs e) => { await JSRuntime.InvokeVoidAsync("event.stopPropagation"); SelectRecord(record.Id); })">
+                                                查看详情
+                                            </a>
+                                            <a class="link-action-danger"
+                                               @onclick="@(async (MouseEventArgs e) => await DeleteRecord(record.Id))">
+                                                删除
+                                            </a>
                                         </span>
                                     </div>
                                 </div>
@@ -174,7 +174,7 @@ else
 
                         @if (filteredRecords.Count > 20)
                         {
-                            <div style="padding:12px;text-align:center;color:#999;">
+                            <div style="padding:12px;text-align:center;color:#86909C;">
                                 显示前 20 条记录，共 @filteredRecords.Count 条
                             </div>
                         }
@@ -199,20 +199,20 @@ else
 
             <div style="display:flex;gap:16px;margin-bottom:16px;">
                 <div style="flex:1;text-align:center;">
-                    <div style="font-size:24px;color:#1890ff;font-weight:500;">@selectedRecord.TotalSteps</div>
-                    <div style="color:#999;font-size:12px;">总步骤</div>
+                    <div style="font-size:24px;color:#165DFF;font-weight:500;">@selectedRecord.TotalSteps</div>
+                    <div style="color:#86909C;font-size:12px;">总步骤</div>
                 </div>
                 <div style="flex:1;text-align:center;">
-                    <div style="font-size:24px;color:#52c41a;font-weight:500;">@selectedRecord.SuccessSteps</div>
-                    <div style="color:#999;font-size:12px;">成功</div>
+                    <div style="font-size:24px;color:#00B42A;font-weight:500;">@selectedRecord.SuccessSteps</div>
+                    <div style="color:#86909C;font-size:12px;">成功</div>
                 </div>
                 <div style="flex:1;text-align:center;">
-                    <div style="font-size:24px;color:#ff4d4f;font-weight:500;">@selectedRecord.FailedSteps</div>
-                    <div style="color:#999;font-size:12px;">失败</div>
+                    <div style="font-size:24px;color:#F53F3F;font-weight:500;">@selectedRecord.FailedSteps</div>
+                    <div style="color:#86909C;font-size:12px;">失败</div>
                 </div>
                 <div style="flex:1;text-align:center;">
                     <div style="font-size:24px;color:#13c2c2;font-weight:500;">@selectedRecord.Duration</div>
-                    <div style="color:#999;font-size:12px;">执行时间 (ms)</div>
+                    <div style="color:#86909C;font-size:12px;">执行时间 (ms)</div>
                 </div>
             </div>
 
@@ -238,7 +238,7 @@ else
                 <div style="font-weight:600;margin-bottom:8px;">步骤执行详情</div>
                 @foreach (var stepRecord in selectedRecord.StepRecords.OrderBy(s => s.Order))
                 {
-                    <details style="border:1px solid #f0f0f0;border-radius:4px;margin-bottom:8px;">
+                    <details style="border:1px solid #F2F3F5;border-radius:4px;margin-bottom:8px;">
                         <summary style="padding:10px 12px;cursor:pointer;display:flex;align-items:center;gap:8px;">
                             <span class="h-tag h-tag-@GetStepStatusTagClass(stepRecord.Status)">@stepRecord.Order</span>
                             <strong>@stepRecord.StepName</strong>
@@ -246,7 +246,7 @@ else
                             <span class="h-tag h-tag-@GetStepStatusTagClass(stepRecord.Status)">@GetStepStatusDisplayName(stepRecord.Status)</span>
                             @if (stepRecord.Duration > 0)
                             {
-                                <span style="color:#999;font-size:12px;margin-left:auto;">@(stepRecord.Duration)ms</span>
+                                <span style="color:#86909C;font-size:12px;margin-left:auto;">@(stepRecord.Duration)ms</span>
                             }
                         </summary>
                         <div style="padding:0 12px 12px;">
@@ -262,7 +262,7 @@ else
                             {
                                 <div style="margin-bottom:12px;">
                                     <div style="font-weight:600;margin-bottom:4px;">请求数据</div>
-                                    <pre style="background:#fafafa;padding:8px;border-radius:4px;border:1px solid #f0f0f0;white-space:pre-wrap;word-break:break-all;"><code>@stepRecord.RequestData</code></pre>
+                                    <pre style="background:#F7F8FA;padding:8px;border-radius:4px;border:1px solid #F2F3F5;white-space:pre-wrap;word-break:break-all;"><code>@stepRecord.RequestData</code></pre>
                                 </div>
                             }
 
@@ -270,7 +270,7 @@ else
                             {
                                 <div style="margin-bottom:12px;">
                                     <div style="font-weight:600;margin-bottom:4px;">响应数据</div>
-                                    <pre style="background:#fafafa;padding:8px;border-radius:4px;border:1px solid #f0f0f0;white-space:pre-wrap;word-break:break-all;"><code>@stepRecord.ResponseData</code></pre>
+                                    <pre style="background:#F7F8FA;padding:8px;border-radius:4px;border:1px solid #F2F3F5;white-space:pre-wrap;word-break:break-all;"><code>@stepRecord.ResponseData</code></pre>
                                 </div>
                             }
 
@@ -289,7 +289,7 @@ else
                                             <span>@assertion.Expected</span>
                                             @if (!assertion.Passed)
                                             {
-                                                <span style="color:#ff4d4f;">(实际: @assertion.Actual)</span>
+                                                <span style="color:#F53F3F;">(实际: @assertion.Actual)</span>
                                             }
                                         </div>
                                     }
@@ -332,10 +332,10 @@ else
                                     <div style="display:flex;flex-wrap:wrap;gap:8px;">
                                         @foreach (var screenshotPath in screenshotPaths)
                                         {
-                                            <div style="background:#fff;border:1px solid #e8e8e8;border-radius:8px;margin-bottom:8px;flex:0 0 calc(50% - 4px);padding:8px;">
+                                            <div style="background:#fff;border:1px solid #E5E6EB;border-radius:8px;margin-bottom:8px;flex:0 0 calc(50% - 4px);padding:8px;">
                                                 <img src="@GetRelativeScreenshotPath(screenshotPath)" alt="截图"
                                                      style="width:100%;max-height:200px;object-fit:contain;" />
-                                                <div style="padding:4px;font-size:12px;color:#999;text-align:center;">
+                                                <div style="padding:4px;font-size:12px;color:#86909C;text-align:center;">
                                                     @Path.GetFileName(screenshotPath)
                                                 </div>
                                             </div>
@@ -348,7 +348,7 @@ else
                 }
             }
 
-            <div style="text-align:right;margin-top:16px;padding-top:12px;border-top:1px solid #f0f0f0;">
+            <div style="text-align:right;margin-top:16px;padding-top:12px;border-top:1px solid #F2F3F5;">
                 <button class="h-btn" @onclick="CloseModal">关闭</button>
             </div>
         }

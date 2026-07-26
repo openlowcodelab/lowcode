@@ -43,9 +43,9 @@
                     <td>@(string.IsNullOrEmpty(v.ProviderKey) ? "-" : v.ProviderKey)</td>
                     <td>@((v.LastModificationTime ?? v.CreationTime).ToString("yyyy-MM-dd HH:mm"))</td>
                     <td>
-                        <span class="h-space">
-                            <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => ShowEditDialog(v))">编辑</button>
-                            <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => ConfirmDelete(v.Id))">删除</button>
+                        <span class="row-actions">
+                            <a @onclick="@(() => ShowEditDialog(v))">编辑</a>
+                            <a class="danger" @onclick="@(() => ConfirmDelete(v.Id))">删除</a>
                         </span>
                     </td>
                 </tr>

@@ -54,8 +54,8 @@
                         <td><span class="h-tag @LevelTagClass(r.Level)">@GetLevelName(r.Level)</span></td>
                         <td>@(r.Title ?? "-")</td>
                         <td>@r.TotalCount</td>
-                        <td style="color:#52c41a;">@r.SuccessCount</td>
-                        <td style="color:#f5222d;">@r.FailedCount</td>
+                        <td style="color:#00B42A;">@r.SuccessCount</td>
+                        <td style="color:#F53F3F;">@r.FailedCount</td>
                         <td>@(r.TriggerSource ?? "-")</td>
                         <td>@r.CreationTime.ToString("yyyy-MM-dd HH:mm")</td>
                     </tr>
@@ -97,7 +97,7 @@
                             <td>@(r.IsRead ? "已读" : "未读")</td>
                         }
                         <td>@r.CreationTime.ToString("yyyy-MM-dd HH:mm")</td>
-                        <td style="color:#f5222d;">@(r.ErrorMessage ?? "-")</td>
+                        <td style="color:#F53F3F;">@(r.ErrorMessage ?? "-")</td>
                     </tr>
                 }
             </tbody>

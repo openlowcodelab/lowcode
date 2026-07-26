@@ -7,13 +7,13 @@
         Style="width: 720px;">
     <EditForm Model="CurrentTestCase" OnValidSubmit="SaveTestCase">
         <DataAnnotationsValidator />
-        <ValidationSummary Style="color: #ff4d4f;" />
+        <ValidationSummary Style="color: #F53F3F;" />
 
         <div class="h-form-item">
             <label class="h-form-label" style="width: 100px;">用例编号</label>
             <div class="h-form-control" style="flex: 1;">
                 <input class="h-input" @bind-value="CurrentTestCase.CaseNumber" placeholder="如：TC001, TEST_01等" />
-                <div style="color: #999; font-size: 12px; margin-top: 4px;">可选字段，3-12 位字母、数字、下划线组合</div>
+                <div style="color: #86909C; font-size: 12px; margin-top: 4px;">可选字段，3-12 位字母、数字、下划线组合</div>
                 <ValidationMessage For="() => CurrentTestCase.CaseNumber" />
             </div>
         </div>
@@ -36,7 +36,7 @@
         <div class="h-form-item">
             <label class="h-form-label" style="width: 100px;">用例级别</label>
             <div class="h-form-control" style="flex: 1;">
-                <div style="display: flex; flex-wrap: wrap; gap: 12px; padding: 8px 12px; border: 1px solid #d9d9d9; border-radius: 4px;">
+                <div style="display: flex; flex-wrap: wrap; gap: 12px; padding: 8px 12px; border: 1px solid #E5E6EB; border-radius: 4px;">
                     @foreach (var level in AvailableLevels)
                     {
                         var checkedValue = CurrentTestCase.Levels.Contains(level);
@@ -46,7 +46,7 @@
                         </label>
                     }
                 </div>
-                <div style="color: #999; font-size: 12px; margin-top: 4px;">可多选，P0 为最高级别</div>
+                <div style="color: #86909C; font-size: 12px; margin-top: 4px;">可多选，P0 为最高级别</div>
             </div>
         </div>
 
@@ -65,16 +65,16 @@
             <label class="h-form-label" style="width: 100px;">排序</label>
             <div class="h-form-control" style="flex: 1;">
                 <input type="number" class="h-input" style="width: 200px;" @bind-value="CurrentTestCase.Order" />
-                <div style="color: #999; font-size: 12px; margin-top: 4px;">数值越小排序越靠前，默认为 0</div>
+                <div style="color: #86909C; font-size: 12px; margin-top: 4px;">数值越小排序越靠前，默认为 0</div>
             </div>
         </div>
 
-        <div style="text-align: right; margin-top: 16px; padding-top: 12px; border-top: 1px solid #f0f0f0;">
+        <div style="text-align: right; margin-top: 16px; padding-top: 12px; border-top: 1px solid #F2F3F5;">
             <span class="h-space">
                 <button class="h-btn h-btn-default" @onclick="HideModal">取消</button>
                 @if (!IsEditing)
                 {
-                    <button class="h-btn" style="background-color: #52c41a; border-color: #52c41a; color: white;" @onclick="SaveOnly">仅保存</button>
+                    <button class="h-btn" @onclick="SaveOnly">仅保存</button>
                 }
                 <button type="submit" class="h-btn h-btn-primary">@(IsEditing ? "更新" : "保存并继续编辑步骤")</button>
             </span>

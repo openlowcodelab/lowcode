@@ -12,7 +12,7 @@
     }
     else
     {
-        <div style="padding: 20px; text-align: center; color: #999;">
+        <div style="padding: 20px; text-align: center; color: #86909C;">
             <small>暂无分类数据</small>
         </div>
     }
@@ -136,15 +136,16 @@
                     <button type="button" class="btn btn-sm btn-link tree-node-action-btn" @onclick="() => ToggleDropdown(category.Id)" @onclick:stopPropagation>⋯</button>
                     @if (openDropdownId == category.Id)
                     {
-                        <div style="position: absolute; right: 0; top: 100%; z-index: 100; background: #fff; border: 1px solid #d9d9d9; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); min-width: 120px;">
-                            <div style="padding: 6px 12px; cursor: pointer; white-space: nowrap;" @onclick="async () => { CloseDropdown(); await OnAddChild.InvokeAsync(category); }">
+                        <div class="h-dropdown-mask" @onclick="CloseDropdown" @onclick:stopPropagation></div>
+                        <div class="h-dropdown-panel">
+                            <div class="h-dropdown-item" @onclick="async () => { CloseDropdown(); await OnAddChild.InvokeAsync(category); }">
                                 添加子分类
                             </div>
-                            <div style="padding: 6px 12px; cursor: pointer; white-space: nowrap;" @onclick="async () => { CloseDropdown(); await OnEdit.InvokeAsync(category); }">
+                            <div class="h-dropdown-item" @onclick="async () => { CloseDropdown(); await OnEdit.InvokeAsync(category); }">
                                 编辑
                             </div>
-                            <div style="border-top: 1px solid #f0f0f0;"></div>
-                            <div style="padding: 6px 12px; cursor: pointer; white-space: nowrap; color: #ff4d4f;" @onclick="async () => { CloseDropdown(); await OnDelete.InvokeAsync(category); }">
+                            <div class="h-dropdown-divider"></div>
+                            <div class="h-dropdown-item danger" @onclick="async () => { CloseDropdown(); await OnDelete.InvokeAsync(category); }">
                                 删除
                             </div>
                         </div>

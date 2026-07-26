@@ -1,4 +1,4 @@
-﻿@namespace H.LowCode.MyApp
+@namespace H.LowCode.MyApp
 @inherits LowCodeComponentBase
 
 @inject IDataSourceAppService DataSourceAppService
@@ -37,9 +37,9 @@
                     </label>
                 </td>
                 <td>
-                    <div class="space">
+                    <div class="row-actions">
                         <a @onclick='() => EditAsync(item.Id)'>编辑</a>
-                        <a @onclick='() => DeleteAsync(item.Id)' style="color:#ff4d4f">删除</a>
+                        <a @onclick='() => DeleteAsync(item.Id)' class="danger">删除</a>
                     </div>
                 </td>
             </tr>
@@ -128,7 +128,7 @@
                         {
                             @if (field.IsPrimaryKey)
                             {
-                                <span style="color:#ff4d4f;">是</span>
+                                <span style="color:#F53F3F;">是</span>
                             }
                             else
                             {
@@ -145,7 +145,7 @@
                         {
                             @if(field.IsUnique)
                             {
-                                <span style="color:#ff4d4f;">是</span>
+                                <span style="color:#F53F3F;">是</span>
                             }
                             else
                             {
@@ -166,7 +166,7 @@
                             }
                             else
                             {
-                                <span style="color:#ff4d4f;">否</span>
+                                <span style="color:#F53F3F;">否</span>
                             }
                         }
                         else
@@ -175,16 +175,18 @@
                         }
                     </td>
                     <td>
+                        <div class="row-actions">
                         @if (!_fieldEditCache[field.Id].edit)
                         {
                             <a @onclick='() => FieldStartEdit(field.Id)'>编辑</a>
-                            <a @onclick='() => DeleteFieldAsync(field.Id)' style="color:#ff4d4f">删除</a>
+                            <a @onclick='() => DeleteFieldAsync(field.Id)' class="danger">删除</a>
                         }
                         else
                         {
                             <a @onclick='() => SaveFieldAsync(field.Id)' class="save">保存</a>
                             <a @onclick='() => FieldCancelEditAsync(field.Id)'>取消</a>
                         }
+                        </div>
                     </td>
                 </tr>
             }

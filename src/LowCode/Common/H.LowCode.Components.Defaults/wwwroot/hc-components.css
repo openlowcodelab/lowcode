@@ -1,21 +1,22 @@
 /* ========================================
  * Hc Components - 现代扁平风组件库样式
- * 设计令牌: 圆角 6px, 边框 #d9d9d9, 主色 #2f6feb
+ * 设计语言: Arco Design Pro (与 h-components.css 对齐)
+ * 设计令牌: 圆角 4px, 边框 #E5E6EB, 主色 #165DFF
  * ======================================== */
 
 :root {
-    --hc-primary: #2f6feb;
-    --hc-primary-hover: #1a5bd6;
-    --hc-border: #d9d9d9;
-    --hc-border-radius: 6px;
-    --hc-text: #333;
-    --hc-text-secondary: #666;
-    --hc-text-placeholder: #999;
+    --hc-primary: #165DFF;
+    --hc-primary-hover: #4080FF;
+    --hc-border: #E5E6EB;
+    --hc-border-radius: 4px;
+    --hc-text: #1D2129;
+    --hc-text-secondary: #4E5969;
+    --hc-text-placeholder: #86909C;
     --hc-bg: #fff;
-    --hc-bg-hover: #f5f7fa;
-    --hc-bg-disabled: #f5f5f5;
-    --hc-danger: #e53e3e;
-    --hc-success: #38a169;
+    --hc-bg-hover: #F7F8FA;
+    --hc-bg-disabled: #F2F3F5;
+    --hc-danger: #F53F3F;
+    --hc-success: #00B42A;
 }
 
 /* ========================================
@@ -65,7 +66,7 @@
     transition: border-color 0.2s, box-shadow 0.2s;
     box-sizing: border-box;
 }
-.hc-input:focus { border-color: var(--hc-primary); box-shadow: 0 0 0 2px rgba(47,111,235,0.15); }
+.hc-input:focus { border-color: var(--hc-primary); box-shadow: 0 0 0 2px rgba(22,93,255,0.12); }
 .hc-input:hover:not(:disabled) { border-color: var(--hc-primary); }
 .hc-input-disabled { background: var(--hc-bg-disabled); cursor: not-allowed; }
 .hc-input-clear { position: absolute; right: 8px; cursor: pointer; color: var(--hc-text-secondary); font-size: 14px; }
@@ -90,7 +91,7 @@
     transition: border-color 0.2s;
     box-sizing: border-box;
 }
-.hc-textarea:focus { border-color: var(--hc-primary); box-shadow: 0 0 0 2px rgba(47,111,235,0.15); }
+.hc-textarea:focus { border-color: var(--hc-primary); box-shadow: 0 0 0 2px rgba(22,93,255,0.12); }
 .hc-textarea-disabled { background: var(--hc-bg-disabled); cursor: not-allowed; }
 .hc-textarea-count { display: block; text-align: right; font-size: 12px; color: var(--hc-text-secondary); margin-top: 2px; }
 
@@ -124,7 +125,7 @@
     min-height: 34px;
 }
 .hc-select:hover:not(.hc-select-disabled) { border-color: var(--hc-primary); }
-.hc-select-open { border-color: var(--hc-primary); box-shadow: 0 0 0 2px rgba(47,111,235,0.15); }
+.hc-select-open { border-color: var(--hc-primary); box-shadow: 0 0 0 2px rgba(22,93,255,0.12); }
 .hc-select-disabled { background: var(--hc-bg-disabled); cursor: not-allowed; }
 .hc-select-value { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; color: var(--hc-text); }
 .hc-select-value:empty::before, .hc-select-value:not(:empty) { color: var(--hc-text-placeholder); }
@@ -137,7 +138,7 @@
     background: var(--hc-bg);
     border: 1px solid var(--hc-border);
     border-radius: var(--hc-border-radius);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-shadow: 0 6px 18px rgba(29,33,41,0.10);
     max-height: 256px; overflow-y: auto;
 }
 .hc-select-empty { padding: 12px; text-align: center; color: var(--hc-text-placeholder); font-size: 14px; }
@@ -157,7 +158,7 @@
     position: relative; display: inline-flex; align-items: center;
     width: 44px; height: 22px;
     padding: 0; border: none; border-radius: 11px;
-    background: #ccc; cursor: pointer;
+    background: #C9CDD4; cursor: pointer;
     transition: all 0.2s;
 }
 .hc-switch-checked { background: var(--hc-primary); }
@@ -184,14 +185,14 @@
 .hc-datepicker, .hc-timepicker { width: 100%; }
 
 /* ========================================
- * Card
+ * Card - Arco 风格: 大圆角/浅描边/轻阴影
  * ======================================== */
-.hc-card { background: var(--hc-bg); border-radius: var(--hc-border-radius); }
-.hc-card-bordered { border: 1px solid var(--hc-border); }
-.hc-card-hoverable { transition: box-shadow 0.2s; }
-.hc-card-hoverable:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-.hc-card-header { padding: 12px 16px; border-bottom: 1px solid var(--hc-border); }
-.hc-card-title { font-size: 16px; font-weight: 500; color: var(--hc-text); }
+.hc-card { background: var(--hc-bg); border-radius: 8px; box-shadow: 0 2px 8px rgba(29,33,41,0.05); transition: box-shadow 0.25s; }
+.hc-card-bordered { border: 1px solid #F2F3F5; }
+.hc-card-hoverable { transition: box-shadow 0.25s, transform 0.25s; }
+.hc-card-hoverable:hover { box-shadow: 0 6px 18px rgba(29,33,41,0.10); transform: translateY(-2px); }
+.hc-card-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid #F2F3F5; }
+.hc-card-title { font-size: 16px; font-weight: 600; color: var(--hc-text); }
 .hc-card-body { padding: 16px; }
 .hc-card-loading { padding: 24px; text-align: center; color: var(--hc-text-placeholder); }
 
@@ -269,13 +270,13 @@
 .hc-tag {
     display: inline-flex; align-items: center;
     padding: 1px 8px; font-size: 12px; line-height: 20px;
-    border-radius: 4px; border: 1px solid transparent; white-space: nowrap;
+    border-radius: 2px; border: 1px solid transparent; white-space: nowrap;
 }
-.hc-tag-default { background: #f5f5f5; color: #595959; border-color: #d9d9d9; }
-.hc-tag-primary, .hc-tag-blue { background: #e8f0fe; color: #2f6feb; border-color: #adc6ff; }
-.hc-tag-success, .hc-tag-green { background: #eafbf0; color: #38a169; border-color: #b7eb8f; }
-.hc-tag-warning, .hc-tag-orange { background: #fff7e6; color: #d46b08; border-color: #ffd591; }
-.hc-tag-error, .hc-tag-red { background: #fff1f0; color: #e53e3e; border-color: #ffa39e; }
+.hc-tag-default { background: #F2F3F5; color: #4E5969; }
+.hc-tag-primary, .hc-tag-blue { background: #E8F3FF; color: #165DFF; }
+.hc-tag-success, .hc-tag-green { background: #E8FFEA; color: #00B42A; }
+.hc-tag-warning, .hc-tag-orange { background: #FFF7E8; color: #FF7D00; }
+.hc-tag-error, .hc-tag-red { background: #FFECE8; color: #F53F3F; }
 
 /* ========================================
  * Alert 提示条
@@ -293,23 +294,23 @@
 .hc-alert-content { flex: 1; }
 .hc-alert-message { font-weight: 500; }
 .hc-alert-description { color: var(--hc-text-secondary); margin-top: 2px; }
-.hc-alert-info { background: #e8f0fe; border-color: #adc6ff; color: #1a5bd6; }
-.hc-alert-info .hc-alert-icon { background: #2f6feb; }
-.hc-alert-success { background: #eafbf0; border-color: #b7eb8f; color: #237a45; }
-.hc-alert-success .hc-alert-icon { background: #38a169; }
-.hc-alert-warning { background: #fff7e6; border-color: #ffd591; color: #ad4e00; }
-.hc-alert-warning .hc-alert-icon { background: #d46b08; }
-.hc-alert-error { background: #fff1f0; border-color: #ffa39e; color: #cf1322; }
-.hc-alert-error .hc-alert-icon { background: #e53e3e; }
+.hc-alert-info { background: #E8F3FF; border-color: transparent; color: #1D2129; }
+.hc-alert-info .hc-alert-icon { background: #165DFF; }
+.hc-alert-success { background: #E8FFEA; border-color: transparent; color: #1D2129; }
+.hc-alert-success .hc-alert-icon { background: #00B42A; }
+.hc-alert-warning { background: #FFF7E8; border-color: transparent; color: #1D2129; }
+.hc-alert-warning .hc-alert-icon { background: #FF7D00; }
+.hc-alert-error { background: #FFECE8; border-color: transparent; color: #1D2129; }
+.hc-alert-error .hc-alert-icon { background: #F53F3F; }
 
 /* ========================================
  * Divider 分割线
  * ======================================== */
 .hc-divider-horizontal { display: flex; align-items: center; margin: 12px 0; }
-.hc-divider-horizontal:not(.hc-divider-with-text) { border-top: 1px solid #ededed; height: 0; }
-.hc-divider-vertical { display: inline-block; height: 1em; margin: 0 8px; border-left: 1px solid #ededed; vertical-align: middle; }
+.hc-divider-horizontal:not(.hc-divider-with-text) { border-top: 1px solid #F2F3F5; height: 0; }
+.hc-divider-vertical { display: inline-block; height: 1em; margin: 0 8px; border-left: 1px solid #F2F3F5; vertical-align: middle; }
 .hc-divider-with-text { color: var(--hc-text-secondary); font-size: 13px; }
-.hc-divider-with-text::before, .hc-divider-with-text::after { content: ''; flex: 1; border-top: 1px solid #ededed; }
+.hc-divider-with-text::before, .hc-divider-with-text::after { content: ''; flex: 1; border-top: 1px solid #F2F3F5; }
 .hc-divider-with-text .hc-divider-text { padding: 0 12px; white-space: nowrap; }
 .hc-divider-left.hc-divider-with-text::before { flex: 0 0 24px; }
 .hc-divider-right.hc-divider-with-text::after { flex: 0 0 24px; }
@@ -321,7 +322,7 @@
 .hc-descriptions-title { font-weight: 600; font-size: 15px; color: var(--hc-text); margin-bottom: 12px; }
 .hc-descriptions-body { display: flex; flex-wrap: wrap; gap: 4px; }
 .hc-descriptions-bordered .hc-descriptions-body {
-    border: 1px solid #ededed; border-radius: var(--hc-border-radius);
+    border: 1px solid #F2F3F5; border-radius: var(--hc-border-radius);
     padding: 12px; gap: 8px;
 }
 

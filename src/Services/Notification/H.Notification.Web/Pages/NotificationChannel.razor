@@ -49,9 +49,9 @@
                         }
                     </td>
                     <td>
-                        <span class="h-space">
-                            <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => Edit(item))">编辑</button>
-                            <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => ConfirmDelete(item.Id))">删除</button>
+                        <span class="row-actions">
+                            <a @onclick="@(() => Edit(item))">编辑</a>
+                            <a class="danger" @onclick="@(() => ConfirmDelete(item.Id))">删除</a>
                         </span>
                     </td>
                 </tr>
@@ -162,14 +162,14 @@
                 <textarea @bind="@rawConfig" placeholder='{"accessKey":"","secret":"","sign":""}' rows="4" class="h-textarea"></textarea>
             </div>
         </div>
-        <div class="h-alert" style="background:#fffbe6;border:1px solid #ffe58f;color:#faad14;">
+        <div class="h-alert" style="background:#FFF7E8;border:1px solid #FFCF8B;color:#FF7D00;">
             <span class="h-alert-icon">⚠</span>
             <span>短信为桩实现，当前不会真实发送。</span>
         </div>
     }
     else
     {
-        <div class="h-alert" style="background:#e6f7ff;border:1px solid #91d5ff;color:#1890ff;">
+        <div class="h-alert" style="background:#E8F3FF;border:1px solid #94BFFF;color:#165DFF;">
             <span class="h-alert-icon">ℹ</span>
             <span>站内通知无需额外配置。</span>
         </div>

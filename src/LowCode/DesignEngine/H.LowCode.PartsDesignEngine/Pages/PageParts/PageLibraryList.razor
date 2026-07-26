@@ -1,11 +1,11 @@
-﻿@namespace H.LowCode.PartsDesignEngine
+@namespace H.LowCode.PartsDesignEngine
 @inherits LowCodeComponentBase
 @layout PartsDesignEngineLayout
 
 @inject IPageTemplateAppService PageTemplateAppService
 
 <div style="height: 100%; min-height: 0; display: flex; flex-direction: column; background: white; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.03); overflow: hidden;">
-    <div style="padding: 16px; border-bottom: 1px solid #f0f0f0; background: #fafafa; display:flex; justify-content:space-between; align-items:center; gap:12px;">
+    <div style="padding: 16px; border-bottom: 1px solid #F2F3F5; background: #F7F8FA; display:flex; justify-content:space-between; align-items:center; gap:12px;">
         <div style="display:flex; gap:12px; align-items:center;">
             <input type="search" class="inp" style="width:220px;" placeholder="搜索页面模板" @onchange="@(e => _searchText = e.Value?.ToString() ?? "")" />
             <select class="sel" style="width:140px;" @bind="_categoryFilter">
@@ -25,13 +25,13 @@
             <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
                 @foreach (var tpl in FilteredTemplates)
                 {
-                    <HCard Style="border: 1px solid #f0f0f0;">
+                    <HCard Style="border: 1px solid #F2F3F5;">
                         <div style="padding: 8px;">
                             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
                                 <span style="font-weight: 500;">@tpl.Name</span>
-                                <span style="font-size: 12px; color: #999;">@tpl.Order</span>
+                                <span style="font-size: 12px; color: #86909C;">@tpl.Order</span>
                             </div>
-                            <div style="font-size: 12px; color: #666; margin-bottom: 8px; min-height: 32px;">@tpl.Description</div>
+                            <div style="font-size: 12px; color: #4E5969; margin-bottom: 8px; min-height: 32px;">@tpl.Description</div>
                             <div style="display: flex; gap: 4px; margin-bottom: 12px; flex-wrap: wrap;">
                                 <span class="tag tag-blue">@GetCategoryName(tpl.Category)</span>
                                 <span class="tag tag-gray">@tpl.PageType</span>
@@ -40,7 +40,7 @@
                                 </span>
                             </div>
                             <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span style="font-size: 12px; color: #999;">@tpl.ModifiedTime.ToString("MM-dd HH:mm")</span>
+                                <span style="font-size: 12px; color: #86909C;">@tpl.ModifiedTime.ToString("MM-dd HH:mm")</span>
                                 <div style="display: flex; gap: 8px;">
                                     <button class="btn btn-link btn-sm" @onclick="@(() => DesignTemplate(tpl.TemplateId))">设计</button>
                                     <button class="btn btn-link btn-sm" @onclick="@(() => ShowEditModal(tpl.TemplateId))">编辑信息</button>
@@ -62,7 +62,7 @@
         }
         else
         {
-            <div style="text-align:center; padding:40px 20px; color:#999;">暂无页面模板</div>
+            <div style="text-align:center; padding:40px 20px; color:#86909C;">暂无页面模板</div>
         }
     </div>
 </div>

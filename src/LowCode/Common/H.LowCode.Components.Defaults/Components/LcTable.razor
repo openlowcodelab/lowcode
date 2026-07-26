@@ -76,14 +76,14 @@
     @if (_total > _pageSize)
     {
         <div class="flex items-center gap-2" style="justify-content:flex-end; padding:8px 0;">
-            <span style="font-size:13px;color:#999;">共 @_total 条</span>
+            <span style="font-size:13px;color:#86909C;">共 @_total 条</span>
             <select class="sel" style="width:80px;" @bind="@_pageSize" @bind:after="() => OnChange(_pageIndex, _pageSize)">
                 <option value="10">10条/页</option>
                 <option value="20">20条/页</option>
                 <option value="50">50条/页</option>
             </select>
             <button class="btn btn-sm" disabled="@(_pageIndex <= 1)" @onclick="() => OnChange(1, _pageSize)">上一页</button>
-            <span style="font-size:13px;color:#333;">@_pageIndex / @((int)Math.Ceiling((double)_total / _pageSize))</span>
+            <span style="font-size:13px;color:#1D2129;">@_pageIndex / @((int)Math.Ceiling((double)_total / _pageSize))</span>
             <button class="btn btn-sm" disabled="@(_pageIndex >= Math.Ceiling((double)_total / _pageSize))" @onclick="() => OnChange(_pageIndex + 1, _pageSize)">下一页</button>
         </div>
     }

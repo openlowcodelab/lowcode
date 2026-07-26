@@ -1,4 +1,4 @@
-﻿@namespace H.LowCode.DesignEngineBase
+@namespace H.LowCode.DesignEngineBase
 @inherits LowCodeComponentBase
 
 @if (APIParams != null)
@@ -45,16 +45,18 @@
                         }
                     </td>
                     <td>
+                        <div class="row-actions">
                         @if (!_optionEditCache[context.Id].edit)
                         {
                             <a @onclick='() => RowStartEdit(context.Id)'>编辑</a>
-                            <a @onclick='() => RowDeleteAsync(context.Id)' style="color:#ff4d4f">删除</a>
+                            <a @onclick='() => RowDeleteAsync(context.Id)' class="danger">删除</a>
                         }
                         else
                         {
                             <a @onclick='() => RowSaveAsync(context.Id)' class="save">保存</a>
                             <a @onclick='() => RowCancelEditAsync(context.Id)'>取消</a>
                         }
+                        </div>
                     </td>
                 </tr>
             }

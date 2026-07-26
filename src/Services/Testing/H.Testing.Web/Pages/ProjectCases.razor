@@ -32,20 +32,20 @@
         <div style="flex: 1;">
             <div style="display: flex; justify-content: space-around;">
                 <div style="text-align: center;">
-                    <div style="font-size: 24px; color: #1890ff; font-weight: 500;">@filteredTestCases.Count</div>
-                    <div style="color: #999; font-size: 12px;">总用例</div>
+                    <div style="font-size: 24px; color: #165DFF; font-weight: 500;">@filteredTestCases.Count</div>
+                    <div style="color: #86909C; font-size: 12px;">总用例</div>
                 </div>
                 <div style="text-align: center;">
-                    <div style="font-size: 24px; color: #ff4d4f; font-weight: 500;">@filteredTestCases.Count(tc => tc.Levels.Contains("T0"))</div>
-                    <div style="color: #999; font-size: 12px;">T0级别</div>
+                    <div style="font-size: 24px; color: #F53F3F; font-weight: 500;">@filteredTestCases.Count(tc => tc.Levels.Contains("T0"))</div>
+                    <div style="color: #86909C; font-size: 12px;">T0级别</div>
                 </div>
                 <div style="text-align: center;">
-                    <div style="font-size: 24px; color: #faad14; font-weight: 500;">@filteredTestCases.Count(tc => tc.Levels.Contains("T1"))</div>
-                    <div style="color: #999; font-size: 12px;">T1级别</div>
+                    <div style="font-size: 24px; color: #FF7D00; font-weight: 500;">@filteredTestCases.Count(tc => tc.Levels.Contains("T1"))</div>
+                    <div style="color: #86909C; font-size: 12px;">T1级别</div>
                 </div>
                 <div style="text-align: center;">
-                    <div style="font-size: 24px; color: #52c41a; font-weight: 500;">@selectedTestCases.Count</div>
-                    <div style="color: #999; font-size: 12px;">已选中</div>
+                    <div style="font-size: 24px; color: #00B42A; font-weight: 500;">@selectedTestCases.Count</div>
+                    <div style="color: #86909C; font-size: 12px;">已选中</div>
                 </div>
             </div>
         </div>
@@ -53,7 +53,7 @@
         <div style="flex: 0 0 25%;">
             <div style="display: flex; gap: 8px; justify-content: flex-end;">
                 <button class="h-btn" 
-                        style="background-color: #52c41a; border-color: #52c41a; color: white;"
+                        style="background-color: #00B42A; border-color: #00B42A; color: white;"
                         @onclick="ExecuteSelectedTests" 
                         disabled="@(!selectedTestCases.Any() || selectedProjectId == 0)">
                     ▶ 执行选中
@@ -125,7 +125,7 @@
                                 {
                                     <tr>
                                         <td>
-                                            <span style="color: #999;">@context.CaseNumber</span>
+                                            <span style="color: #86909C;">@context.CaseNumber</span>
                                         </td>
                                         <td>
                                             <div>
@@ -140,7 +140,7 @@
                                                 }
                                                 @if (!string.IsNullOrEmpty(context.Description))
                                                 {
-                                                    <div style="color: #999; font-size: 12px; margin-top: 4px;">@context.Description</div>
+                                                    <div style="color: #86909C; font-size: 12px; margin-top: 4px;">@context.Description</div>
                                                 }
                                             </div>
                                         </td>
@@ -153,12 +153,12 @@
                                                 }
                                                 @if (context.Levels.Count > 3)
                                                 {
-                                                    <span style="color: #999; font-size: 12px;">+@(context.Levels.Count - 3)</span>
+                                                    <span style="color: #86909C; font-size: 12px;">+@(context.Levels.Count - 3)</span>
                                                 }
                                             }
                                             else
                                             {
-                                                <span style="color: #999;">无</span>
+                                                <span style="color: #86909C;">无</span>
                                             }
                                         </td>
                                         <td>
@@ -172,35 +172,30 @@
                                                 </span>
                                                 @if (context.LastExecutionTime.HasValue)
                                                 {
-                                                    <div style="color: #999; font-size: 12px; margin-top: 4px;">@context.LastExecutionTime.Value.ToString("MM-dd HH:mm")</div>
+                                                    <div style="color: #86909C; font-size: 12px; margin-top: 4px;">@context.LastExecutionTime.Value.ToString("MM-dd HH:mm")</div>
                                                 }
                                             }
                                             else
                                             {
-                                                <span style="color: #999;">未执行</span>
+                                                <span style="color: #86909C;">未执行</span>
                                             }
                                         </td>
                                         <td>
-                                            <div style="display: flex; gap: 8px; align-items: center;">
-                                                <button class="h-btn h-btn-sm" @onclick="() => ExecuteSingleTest(context)" Style="color: #52c41a; padding: 0; background: none; border: none;">
-                                                    执行
-                                                </button>
-                                                <button class="h-btn h-btn-sm" @onclick="() => EditTestCaseSteps(context)" Style="color: #1890ff; padding: 0; background: none; border: none;">
-                                                    测试步骤
-                                                </button>
+                                            <div class="row-actions">
+                                                <a class="link-action" style="color: #00B42A;" @onclick="() => ExecuteSingleTest(context)">执行</a>
+                                                <a class="link-action" @onclick="() => EditTestCaseSteps(context)">测试步骤</a>
                                                 <div style="position: relative;">
-                                                    <button class="h-btn h-btn-sm" @onclick="() => ToggleTestCaseDropdown(context.Id)" Style="color: #666; padding: 0; background: none; border: none;">
-                                                        更多 ▾
-                                                    </button>
+                                                    <a class="link-action link-action-muted" @onclick="() => ToggleTestCaseDropdown(context.Id)">更多 ▾</a>
                                                     @if (openTestCaseDropdownId == context.Id)
                                                     {
-                                                        <div style="position: absolute; right: 0; top: 100%; z-index: 100; background: #fff; border: 1px solid #d9d9d9; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); min-width: 120px;">
-                                                            <div style="padding: 6px 12px; cursor: pointer;" @onclick="() => { openTestCaseDropdownId = null; ShowTemplateSettingsModal(context); }">模板设置</div>
-                                                            <div style="padding: 6px 12px; cursor: pointer;" @onclick="() => { openTestCaseDropdownId = null; ViewExecutionHistory(context); }">测试报告</div>
-                                                            <div style="padding: 6px 12px; cursor: pointer;" @onclick="() => { openTestCaseDropdownId = null; CopyTestCase(context); }">复制</div>
-                                                            <div style="padding: 6px 12px; cursor: pointer;" @onclick="() => { openTestCaseDropdownId = null; ShowEditBasicInfoModal(context); }">编辑</div>
-                                                            <div style="border-top: 1px solid #f0f0f0;"></div>
-                                                            <div style="padding: 6px 12px; cursor: pointer; color: #ff4d4f;" @onclick="() => { openTestCaseDropdownId = null; DeleteTestCase(context.Id); }">删除</div>
+                                                        <div class="h-dropdown-mask" @onclick="() => openTestCaseDropdownId = null"></div>
+                                                        <div class="h-dropdown-panel">
+                                                            <div class="h-dropdown-item" @onclick="() => { openTestCaseDropdownId = null; ShowTemplateSettingsModal(context); }">模板设置</div>
+                                                            <div class="h-dropdown-item" @onclick="() => { openTestCaseDropdownId = null; ViewExecutionHistory(context); }">测试报告</div>
+                                                            <div class="h-dropdown-item" @onclick="() => { openTestCaseDropdownId = null; CopyTestCase(context); }">复制</div>
+                                                            <div class="h-dropdown-item" @onclick="() => { openTestCaseDropdownId = null; ShowEditBasicInfoModal(context); }">编辑</div>
+                                                            <div class="h-dropdown-divider"></div>
+                                                            <div class="h-dropdown-item danger" @onclick="() => { openTestCaseDropdownId = null; DeleteTestCase(context.Id); }">删除</div>
                                                         </div>
                                                     }
                                                 </div>
@@ -272,7 +267,7 @@
                 <span class="h-switch-slider"></span>
             </label>
             <span Style="margin-left: 8px;">设为测试模板</span>
-            <div Style="color: #999; font-size: 12px; margin-top: 4px;">将此用例设为模板，供其他用例继承。</div>
+            <div Style="color: #86909C; font-size: 12px; margin-top: 4px;">将此用例设为模板，供其他用例继承。</div>
         </div>
         
         @if (!editingTestCase.IsTemplate)
@@ -286,10 +281,10 @@
                         <option value="@template.Id">@(template.Name + (string.IsNullOrEmpty(template.CaseNumber) ? "" : $"({template.CaseNumber})"))</option>
                     }
                 </select>
-                <div Style="color: #999; font-size: 12px; margin-top: 4px;">
+                <div Style="color: #86909C; font-size: 12px; margin-top: 4px;">
                     选择模板后，此用例将自动使用模板中的步骤。您只需在此处维护测试数据。
                     <br>
-                    <span Style="color: #ff4d4f;">注意：继承模板后，当前用例的步骤将被覆盖且不可编辑。</span>
+                    <span Style="color: #F53F3F;">注意：继承模板后，当前用例的步骤将被覆盖且不可编辑。</span>
                 </div>
             </div>
         }

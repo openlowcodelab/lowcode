@@ -19,18 +19,18 @@
 <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
     <div style="flex:1;">
         <h3 style="margin:0;font-weight:600;">@(IsBatchMode ? "批量执行测试用例" : "执行测试用例")</h3>
-        <nav style="margin-top:4px;font-size:13px;color:#999;">
+        <nav style="margin-top:4px;font-size:13px;color:#86909C;">
             @if (IsBatchMode)
             {
-                <a href="@($"/testing/project-cases/{ProjectId}")" style="color:#1890ff;">测试用例</a>
+                <a href="@($"/testing/project-cases/{ProjectId}")" style="color:#165DFF;">测试用例</a>
             }
             else if (testCase != null && testCase.ProjectId != 0)
             {
-                <a href="@($"/testing/project-cases/{testCase.ProjectId}")" style="color:#1890ff;">测试用例</a>
+                <a href="@($"/testing/project-cases/{testCase.ProjectId}")" style="color:#165DFF;">测试用例</a>
             }
             else
             {
-                <a href="/testing/project-cases" style="color:#1890ff;">测试用例</a>
+                <a href="/testing/project-cases" style="color:#165DFF;">测试用例</a>
             }
             <span> / </span>
             <span>@(IsBatchMode ? "批量执行" : "执行测试")</span>
@@ -74,7 +74,7 @@ else
                                     }
                                     else
                                     {
-                                        <span style="color:#999;">请选择要执行的用例</span>
+                                        <span style="color:#86909C;">请选择要执行的用例</span>
                                     }
                                 </td>
                             </tr>
@@ -90,7 +90,7 @@ else
                                     全选/全不选
                                 </label>
                             </div>
-                            <div style="max-height:220px;overflow-y:auto;border:1px solid #f0f0f0;border-radius:4px;padding:8px;">
+                            <div style="max-height:220px;overflow-y:auto;border:1px solid #F2F3F5;border-radius:4px;padding:8px;">
                                 @foreach (var tc in testCases)
                                 {
                                     <div style="margin-bottom:4px;">
@@ -98,7 +98,7 @@ else
                                             <input type="checkbox" checked="@selectedTestCaseIds.Contains(tc.Id)"
                                                    @onchange="@((ChangeEventArgs e) => ToggleTestCaseSelection(tc.Id, (bool)(e.Value ?? false)))" />
                                             @tc.Name
-                                            <span style="color:#999;margin-left:4px;">(@tc.Steps.Count 步骤)</span>
+                                            <span style="color:#86909C;margin-left:4px;">(@tc.Steps.Count 步骤)</span>
                                         </label>
                                     </div>
                                 }
@@ -123,7 +123,7 @@ else
                                     }
                                     else
                                     {
-                                        <span style="color:#999;">无</span>
+                                        <span style="color:#86909C;">无</span>
                                     }
                                 </td>
                             </tr>
@@ -131,7 +131,7 @@ else
                     }
 
                     <div style="margin-top:16px;">
-                        <div style="margin-bottom:6px;">选择执行环境 <span style="color:#ff4d4f;">*</span></div>
+                        <div style="margin-bottom:6px;">选择执行环境 <span style="color:#F53F3F;">*</span></div>
                         <select class="h-select" style="width:100%;" value="@selectedEnvironmentId"
                                 @onchange="@((ChangeEventArgs e) => { selectedEnvironmentId = long.TryParse(e.Value?.ToString(), out var v) ? v : 0; StateHasChanged(); })">
                             <option value="">请选择环境</option>
@@ -145,7 +145,7 @@ else
                             var selectedEnv = environments.FirstOrDefault(e => e.Id == selectedEnvironmentId);
                             if (selectedEnv != null && !string.IsNullOrEmpty(selectedEnv.Description))
                             {
-                                <div style="color:#999;font-size:12px;margin-top:4px;">@selectedEnv.Description</div>
+                                <div style="color:#86909C;font-size:12px;margin-top:4px;">@selectedEnv.Description</div>
                             }
                         }
                     </div>
@@ -159,42 +159,42 @@ else
                         </div>
                         @if (showPerformanceSettings)
                         {
-                            <div style="background:#fafafa;border:1px solid #f0f0f0;border-radius:4px;padding:12px;">
+                            <div style="background:#F7F8FA;border:1px solid #F2F3F5;border-radius:4px;padding:12px;">
                                 <div style="margin-bottom:12px;">
                                     <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
                                         <input type="checkbox" @bind="performanceSettings.IsPerformanceTestEnabled" />
                                         启用性能测试模式
                                     </label>
-                                    <div style="color:#999;font-size:12px;margin-left:22px;">启用后将按照性能测试参数执行测试用例</div>
+                                    <div style="color:#86909C;font-size:12px;margin-left:22px;">启用后将按照性能测试参数执行测试用例</div>
                                 </div>
 
                                 @if (performanceSettings.IsPerformanceTestEnabled)
                                 {
                                     <div style="display:flex;flex-wrap:wrap;gap:12px;">
                                         <div style="flex:0 0 calc(50% - 6px);">
-                                            <div style="margin-bottom:4px;">并发数 <span style="color:#ff4d4f;">*</span></div>
+                                            <div style="margin-bottom:4px;">并发数 <span style="color:#F53F3F;">*</span></div>
                                             <input type="number" class="h-input" @bind="performanceSettings.ConcurrentUsers" min="1" max="1000" />
-                                            <div style="color:#999;font-size:12px;">1-1000，根据服务器性能设置</div>
+                                            <div style="color:#86909C;font-size:12px;">1-1000，根据服务器性能设置</div>
                                         </div>
                                         <div style="flex:0 0 calc(50% - 6px);">
-                                            <div style="margin-bottom:4px;">运行时间（秒） <span style="color:#ff4d4f;">*</span></div>
+                                            <div style="margin-bottom:4px;">运行时间（秒） <span style="color:#F53F3F;">*</span></div>
                                             <input type="number" class="h-input" @bind="performanceSettings.DurationSeconds" min="1" max="86400" />
-                                            <div style="color:#999;font-size:12px;">1-86400 秒（24 小时）</div>
+                                            <div style="color:#86909C;font-size:12px;">1-86400 秒（24 小时）</div>
                                         </div>
                                         <div style="flex:0 0 calc(50% - 6px);">
                                             <div style="margin-bottom:4px;">爬坡时间（秒）</div>
                                             <input type="number" class="h-input" @bind="performanceSettings.RampUpSeconds" min="0" max="3600" />
-                                            <div style="color:#999;font-size:12px;">0-3600，0 表示立即达到</div>
+                                            <div style="color:#86909C;font-size:12px;">0-3600，0 表示立即达到</div>
                                         </div>
                                         <div style="flex:0 0 calc(50% - 6px);">
                                             <div style="margin-bottom:4px;">思考时间（毫秒）</div>
                                             <input type="number" class="h-input" @bind="performanceSettings.ThinkTimeMs" min="0" max="60000" />
-                                            <div style="color:#999;font-size:12px;">0-60000 毫秒</div>
+                                            <div style="color:#86909C;font-size:12px;">0-60000 毫秒</div>
                                         </div>
                                         <div style="flex:0 0 calc(50% - 6px);">
                                             <div style="margin-bottom:4px;">最大错误率（%）</div>
                                             <input type="number" class="h-input" @bind="performanceSettings.MaxErrorRate" min="0" max="100" step="0.1" />
-                                            <div style="color:#999;font-size:12px;">0-100%，建议 5-20%</div>
+                                            <div style="color:#86909C;font-size:12px;">0-100%，建议 5-20%</div>
                                         </div>
                                     </div>
 
@@ -214,7 +214,7 @@ else
                     </div>
 
                     <div style="margin-top:20px;">
-                        <button class="h-btn" style="background-color:#52c41a;border-color:#52c41a;color:white;width:100%;"
+                        <button class="h-btn" style="background-color:#00B42A;border-color:#00B42A;color:white;width:100%;"
                                 disabled="@(selectedEnvironmentId == 0 || isExecuting || (IsBatchMode && !selectedTestCaseIds.Any()))"
                                 @onclick="StartExecution">
                             @if (isExecuting)
@@ -229,7 +229,7 @@ else
 
                         @if (isExecuting && cancellationTokenSource != null)
                         {
-                            <button class="h-btn" style="border-color:#ff4d4f;color:#ff4d4f;width:100%;margin-top:8px;"
+                            <button class="h-btn" style="border-color:#F53F3F;color:#F53F3F;width:100%;margin-top:8px;"
                                     @onclick="CancelExecution">
                                 ✕ 取消执行
                             </button>
@@ -266,20 +266,20 @@ else
                         {
                             <div style="display:flex;gap:16px;margin-bottom:16px;">
                                 <div style="flex:1;text-align:center;">
-                                    <div style="font-size:24px;color:#1890ff;font-weight:500;">@executionRecords.Count</div>
-                                    <div style="color:#999;font-size:12px;">总用例</div>
+                                    <div style="font-size:24px;color:#165DFF;font-weight:500;">@executionRecords.Count</div>
+                                    <div style="color:#86909C;font-size:12px;">总用例</div>
                                 </div>
                                 <div style="flex:1;text-align:center;">
-                                    <div style="font-size:24px;color:#52c41a;font-weight:500;">@executionRecords.Count(r => r.Status == ExecutionStatus.Success)</div>
-                                    <div style="color:#999;font-size:12px;">成功</div>
+                                    <div style="font-size:24px;color:#00B42A;font-weight:500;">@executionRecords.Count(r => r.Status == ExecutionStatus.Success)</div>
+                                    <div style="color:#86909C;font-size:12px;">成功</div>
                                 </div>
                                 <div style="flex:1;text-align:center;">
-                                    <div style="font-size:24px;color:#ff4d4f;font-weight:500;">@executionRecords.Count(r => r.Status == ExecutionStatus.Failed)</div>
-                                    <div style="color:#999;font-size:12px;">失败</div>
+                                    <div style="font-size:24px;color:#F53F3F;font-weight:500;">@executionRecords.Count(r => r.Status == ExecutionStatus.Failed)</div>
+                                    <div style="color:#86909C;font-size:12px;">失败</div>
                                 </div>
                                 <div style="flex:1;text-align:center;">
-                                    <div style="font-size:24px;color:#faad14;font-weight:500;">@executionRecords.Count(r => r.Status == ExecutionStatus.Running)</div>
-                                    <div style="color:#999;font-size:12px;">执行中</div>
+                                    <div style="font-size:24px;color:#FF7D00;font-weight:500;">@executionRecords.Count(r => r.Status == ExecutionStatus.Running)</div>
+                                    <div style="color:#86909C;font-size:12px;">执行中</div>
                                 </div>
                             </div>
 
@@ -287,12 +287,12 @@ else
                             var totalCases = executionRecords.Count;
                             var batchProgressPercentage = totalCases > 0 ? (int)((double)completedCases / totalCases * 100) : 0;
                             <div style="margin-bottom:16px;">
-                                <div style="display:flex;justify-content:space-between;color:#999;font-size:12px;margin-bottom:4px;">
+                                <div style="display:flex;justify-content:space-between;color:#86909C;font-size:12px;margin-bottom:4px;">
                                     <span>批量执行进度</span>
                                     <span>@completedCases / @totalCases</span>
                                 </div>
-                                <div style="background:#f0f0f0;border-radius:4px;height:8px;overflow:hidden;">
-                                    <div style="background:#667eea;height:100%;border-radius:4px;width:@(batchProgressPercentage)%;transition:width 0.3s;"></div>
+                                <div style="background:#F2F3F5;border-radius:4px;height:8px;overflow:hidden;">
+                                    <div style="background:#165DFF;height:100%;border-radius:4px;width:@(batchProgressPercentage)%;transition:width 0.3s;"></div>
                                 </div>
                             </div>
                         }
@@ -303,20 +303,20 @@ else
                             {
                                 <div style="display:flex;gap:16px;margin-bottom:16px;">
                                     <div style="flex:1;text-align:center;">
-                                        <div style="font-size:24px;color:#1890ff;font-weight:500;">@executionRecord.TotalSteps</div>
-                                        <div style="color:#999;font-size:12px;">总步骤</div>
+                                        <div style="font-size:24px;color:#165DFF;font-weight:500;">@executionRecord.TotalSteps</div>
+                                        <div style="color:#86909C;font-size:12px;">总步骤</div>
                                     </div>
                                     <div style="flex:1;text-align:center;">
-                                        <div style="font-size:24px;color:#52c41a;font-weight:500;">@executionRecord.SuccessSteps</div>
-                                        <div style="color:#999;font-size:12px;">成功</div>
+                                        <div style="font-size:24px;color:#00B42A;font-weight:500;">@executionRecord.SuccessSteps</div>
+                                        <div style="color:#86909C;font-size:12px;">成功</div>
                                     </div>
                                     <div style="flex:1;text-align:center;">
-                                        <div style="font-size:24px;color:#ff4d4f;font-weight:500;">@executionRecord.FailedSteps</div>
-                                        <div style="color:#999;font-size:12px;">失败</div>
+                                        <div style="font-size:24px;color:#F53F3F;font-weight:500;">@executionRecord.FailedSteps</div>
+                                        <div style="color:#86909C;font-size:12px;">失败</div>
                                     </div>
                                     <div style="flex:1;text-align:center;">
-                                        <div style="font-size:24px;color:#faad14;font-weight:500;">@executionRecord.SkippedSteps</div>
-                                        <div style="color:#999;font-size:12px;">跳过</div>
+                                        <div style="font-size:24px;color:#FF7D00;font-weight:500;">@executionRecord.SkippedSteps</div>
+                                        <div style="color:#86909C;font-size:12px;">跳过</div>
                                     </div>
                                 </div>
 
@@ -325,19 +325,19 @@ else
                                     var completedSteps = executionRecord.SuccessSteps + executionRecord.FailedSteps + executionRecord.SkippedSteps;
                                     var progressPercentage = (int)((double)completedSteps / executionRecord.TotalSteps * 100);
                                     <div style="margin-bottom:16px;">
-                                        <div style="display:flex;justify-content:space-between;color:#999;font-size:12px;margin-bottom:4px;">
+                                        <div style="display:flex;justify-content:space-between;color:#86909C;font-size:12px;margin-bottom:4px;">
                                             <span>执行进度</span>
                                             <span>@completedSteps / @executionRecord.TotalSteps</span>
                                         </div>
-                                        <div style="background:#f0f0f0;border-radius:4px;height:8px;overflow:hidden;">
-                                            <div style="background:#667eea;height:100%;border-radius:4px;width:@(progressPercentage)%;transition:width 0.3s;"></div>
+                                        <div style="background:#F2F3F5;border-radius:4px;height:8px;overflow:hidden;">
+                                            <div style="background:#165DFF;height:100%;border-radius:4px;width:@(progressPercentage)%;transition:width 0.3s;"></div>
                                         </div>
                                     </div>
                                 }
 
                                 @if (executionRecord.Duration > 0)
                                 {
-                                    <div style="color:#999;margin-bottom:8px;">
+                                    <div style="color:#86909C;margin-bottom:8px;">
                                         执行时间: @(executionRecord.Duration)ms
                                     </div>
                                 }
@@ -358,7 +358,7 @@ else
                                 <h4 style="margin-bottom:12px;">用例执行详情</h4>
                                 @foreach (var record in executionRecords.OrderBy(r => r.TestCaseName))
                                 {
-                                    <details style="border:1px solid #f0f0f0;border-radius:4px;margin-bottom:8px;">
+                                    <details style="border:1px solid #F2F3F5;border-radius:4px;margin-bottom:8px;">
                                         <summary style="padding:10px 12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;">
                                             <div style="display:flex;align-items:center;gap:8px;">
                                                 <strong>@record.TestCaseName</strong>
@@ -366,7 +366,7 @@ else
                                                     @GetExecutionStatusDisplayName(record.Status)
                                                 </span>
                                             </div>
-                                            <div style="color:#999;font-size:12px;text-align:right;">
+                                            <div style="color:#86909C;font-size:12px;text-align:right;">
                                                 <div>@record.SuccessSteps / @record.TotalSteps 步骤</div>
                                                 @if (record.Duration > 0)
                                                 {
@@ -412,10 +412,10 @@ else
 @code {
     private RenderFragment RenderStepList(List<StepExecutionRecord> stepRecords) => __builder =>
     {
-        <div style="border:1px solid #f0f0f0;border-radius:4px;">
+        <div style="border:1px solid #F2F3F5;border-radius:4px;">
             @foreach (var stepRecord in stepRecords.OrderBy(s => s.Order))
             {
-                <div style="padding:10px 12px;border-bottom:1px solid #f0f0f0;">
+                <div style="padding:10px 12px;border-bottom:1px solid #F2F3F5;">
                     <div style="display:flex;justify-content:space-between;align-items:flex-start;">
                         <div style="flex:1;">
                             <div style="display:flex;align-items:center;margin-bottom:4px;gap:8px;">
@@ -425,16 +425,16 @@ else
                             </div>
                             @if (!string.IsNullOrEmpty(stepRecord.ErrorMessage))
                             {
-                                <div style="color:#ff4d4f;font-size:12px;">@stepRecord.ErrorMessage</div>
+                                <div style="color:#F53F3F;font-size:12px;">@stepRecord.ErrorMessage</div>
                             }
                             @if (stepRecord.Logs.Any())
                             {
                                 <details style="margin-top:6px;">
-                                    <summary style="color:#999;font-size:12px;cursor:pointer;">查看日志 (@stepRecord.Logs.Count 条)</summary>
-                                    <div style="margin-top:6px;background:#fafafa;padding:8px;border-radius:4px;">
+                                    <summary style="color:#86909C;font-size:12px;cursor:pointer;">查看日志 (@stepRecord.Logs.Count 条)</summary>
+                                    <div style="margin-top:6px;background:#F7F8FA;padding:8px;border-radius:4px;">
                                         @foreach (var log in stepRecord.Logs)
                                         {
-                                            <div style="color:#666;font-size:12px;font-family:monospace;">@log</div>
+                                            <div style="color:#4E5969;font-size:12px;font-family:monospace;">@log</div>
                                         }
                                     </div>
                                 </details>
@@ -446,7 +446,7 @@ else
                             </span>
                             @if (stepRecord.Duration > 0)
                             {
-                                <div style="color:#999;font-size:12px;margin-top:4px;">@(stepRecord.Duration)ms</div>
+                                <div style="color:#86909C;font-size:12px;margin-top:4px;">@(stepRecord.Duration)ms</div>
                             }
                         </div>
                     </div>

@@ -11,13 +11,13 @@
     }
     
     .library-item:hover {
-        background-color: #f5f5f5;
-        border-color: #d9d9d9;
+        background-color: #F2F3F5;
+        border-color: #E5E6EB;
     }
     
     .library-item.selected {
-        background-color: #e6f7ff;
-        border-color: #1890ff;
+        background-color: #E8F3FF;
+        border-color: #165DFF;
     }
     
     .library-item.selected:hover {
@@ -41,7 +41,7 @@
     .empty-state {
         text-align: center;
         padding: 40px 20px;
-        color: #999;
+        color: #86909C;
     }
     
 </style>
@@ -49,7 +49,7 @@
 <div style="height: 100%; min-height: 0; display: flex; gap: 16px;">
     <!-- 左侧组件库列表 -->
     <div style="width: 300px; background: white; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.03); overflow: hidden;">
-        <div style="padding: 16px; border-bottom: 1px solid #f0f0f0; background: #fafafa;">
+        <div style="padding: 16px; border-bottom: 1px solid #F2F3F5; background: #F7F8FA;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                 <h3 style="margin: 0; font-size: 16px; font-weight: 600;">组件库</h3>
                 <button class="btn btn-primary btn-sm" @onclick="@CreateComponentLibrary">+ 新建</button>
@@ -68,7 +68,7 @@
                         <div style="display: flex; align-items: center; justify-content: space-between;">
                             <div style="flex: 1;">
                                 <div style="font-weight: 500; margin-bottom: 4px;">@library.LibraryName</div>
-                                <div style="font-size: 12px; color: #666; line-height: 1.4;">@library.Description</div>
+                                <div style="font-size: 12px; color: #4E5969; line-height: 1.4;">@library.Description</div>
                             </div>
                             <div style="margin-left: 8px;">
                                 <details class="dropdown">
@@ -96,7 +96,7 @@
     <div style="flex: 1; background: white; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.03); overflow: hidden;">
         @if (!string.IsNullOrEmpty(_selectedLibraryId))
         {
-            <div style="padding: 16px; border-bottom: 1px solid #f0f0f0; background: #fafafa;">
+            <div style="padding: 16px; border-bottom: 1px solid #F2F3F5; background: #F7F8FA;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                     <h3 style="margin: 0; font-size: 16px; font-weight: 600;">
                         @(_selectedLibrary?.LibraryName ?? "组件列表")
@@ -112,18 +112,18 @@
                     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
                         @foreach (var component in FilteredComponents)
                         {
-                            <HCard Class="component-card" Style="border: 1px solid #f0f0f0;">
+                            <HCard Class="component-card" Style="border: 1px solid #F2F3F5;">
                                 <div style="padding: 8px;">
                                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
                                         <div style="display: flex; align-items: center;">
-                                            <span class='icon' style='margin-right: 8px; color: @(component.ComponentType == 1 ? "#52c41a" : "#1890ff")'>&#9881;</span>
+                                            <span class='icon' style='margin-right: 8px; color: @(component.ComponentType == 1 ? "#00B42A" : "#165DFF")'>&#9881;</span>
                                             <span style="font-weight: 500;">@component.Label</span>
                                         </div>
-                                        <div style="font-size: 12px; color: #999; padding: 2px; border-radius: 10px;">
+                                        <div style="font-size: 12px; color: #86909C; padding: 2px; border-radius: 10px;">
                                             @component.Order
                                         </div>
                                     </div>
-                                    <div style="font-size: 12px; color: #666; margin-bottom: 8px;">
+                                    <div style="font-size: 12px; color: #4E5969; margin-bottom: 8px;">
                                         @component.ComponentId
                                     </div>
                                     <div style="display: flex; gap: 4px; margin-bottom: 12px;">
@@ -143,7 +143,7 @@
                                         </span>
                                     </div>
                                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                                        <span style="font-size: 12px; color: #999;">
+                                        <span style="font-size: 12px; color: #86909C;">
                                             @component.ModifiedTime.ToString("MM-dd HH:mm")
                                         </span>
                                         <div style="display: flex; gap: 8px;">
@@ -176,7 +176,7 @@
                 {
                     <div style="text-align: center; padding: 60px 0;">
                         <span class="spinner spinner-large"></span>
-                        <div style="margin-top: 16px; color: #666;">加载组件列表中...</div>
+                        <div style="margin-top: 16px; color: #4E5969;">加载组件列表中...</div>
                     </div>
                 }
                 else
@@ -189,9 +189,9 @@
         }
         else
         {
-            <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #999;">
+            <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #86909C;">
                 <div style="text-align: center;">
-                    <div style="font-size: 48px; color: #d9d9d9; margin-bottom: 16px;">&#9635;</div>
+                    <div style="font-size: 48px; color: #E5E6EB; margin-bottom: 16px;">&#9635;</div>
                     <div>请选择一个组件库查看组件列表</div>
                 </div>
             </div>
