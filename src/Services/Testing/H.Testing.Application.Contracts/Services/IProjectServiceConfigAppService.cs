@@ -2,14 +2,14 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
-using Volo.Abp.Application.Services;
+using H.Abstractions;
 
 namespace H.Testing.Application.Contracts;
 
 /// <summary>
 /// 项目服务配置管理服务接口
 /// </summary>
-public interface IProjectServiceConfigAppService : IApplicationService
+public interface IProjectServiceConfigAppService : IAppService
 {
     /// <summary>
     /// 获取项目的所有服务

@@ -7,6 +7,7 @@ using H.LowCode.Application.Contracts;
 using H.LowCode.ComponentBase;
 using H.LowCode.DesignEngine.Application.Contracts;
 using H.LowCode.RenderEngine.Application.Contracts;
+using H.LowCode.RenderEngineBase;
 using H.Notification.Application.Contracts;
 using H.Order.Application.Contracts;
 using H.Setting.Application.Contracts;
@@ -15,20 +16,16 @@ using H.BackgroundTask.Application.Contracts;
 using H.Portal.Application.Contracts;
 using H.SupplyChain.Application.Contracts;
 using H.SystemPortal.Application.Contracts;
-using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using Volo.Abp.Autofac.WebAssembly;
-using Volo.Abp.Http.Client;
-using Volo.Abp.Modularity;
+using H.HttpClientProxy;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace H.AppLab.Host.All.Client;
 
-[DependsOn(
-    //abp
-    typeof(AbpAutofacWebAssemblyModule),
-    //动态API代理
-    typeof(AbpHttpClientModule)
-)]
-public class HostAllClientModule : AbpModule
+/// <summary>
+/// 客户端服务注册（替代原有 ABP 模块系统）
+/// </summary>
+public static class ClientServices
 {
     public const string ApprovalRemoteServiceName = "Approval";
     public const string AccountRemoteServiceName = "Account";
@@ -42,114 +39,134 @@ public class HostAllClientModule : AbpModule
     public const string SettingRemoteServiceName = "Setting";
     public const string SupplyChainRemoteServiceName = "SupplyChain";
     public const string BackgroundTaskRemoteServiceName = "BackgroundTask";
-
     public const string EnterpriseRemoteServiceName = "Enterprise";
     public const string SystemPortalRemoteServiceName = "SystemPortal";
-
     public const string AssistantRemoteServiceName = "Assistant";
 
-    public override void ConfigureServices(ServiceConfigurationContext context)
+    public static void Configure(IServiceCollection services, IConfiguration configuration, string baseAddress)
     {
-        var environment = context.Services.GetSingletonInstance<IWebAssemblyHostEnvironment>();
+        // 加载远程服务配置
+        services.AddRemoteServices(configuration);
 
-        ConfigureHttpClient(context, environment);
-        ConfigureHttpClientProxies(context);
-
-        //应用状态
-        context.Services.AddSingleton(new LowCodeAppState(true));
-
-        // Testing 测试执行事件通知器（WASM 端本地单例，避免 AppService 接口上的事件被 ABP ValidationInterceptor 反射崩溃）
-        context.Services.AddSingleton<ITestExecutionEventNotifier, TestExecutionEventNotifier>();
-    }
-
-    private static void ConfigureHttpClient(ServiceConfigurationContext context, IWebAssemblyHostEnvironment environment)
-    {
-        context.Services.AddTransient(sp => new HttpClient
+        // 默认 HttpClient（组件直接注入 HttpClient 时使用，相对路径基于宿主地址）
+        services.AddScoped(sp => new HttpClient
         {
-            BaseAddress = new Uri(environment.BaseAddress)
+            BaseAddress = new Uri(baseAddress)
         });
+
+        // 注册 HttpClient，并为每个命名客户端添加 CookieHandler，
+        // 使 Blazor WASM 的 fetch 请求携带认证 Cookie
+        services.AddHttpClient();
+        services.AddTransient<CookieHandler>();
+
+        string[] serviceNames =
+        [
+            DesignEngineRemoteServiceName, RenderEngineRemoteServiceName,
+            AccountRemoteServiceName, OrganizationRemoteServiceName,
+            ApprovalRemoteServiceName, TestingRemoteServiceName,
+            PortalRemoteServiceName, NotificationRemoteServiceName,
+            AssistantRemoteServiceName, EnterpriseRemoteServiceName,
+            SystemPortalRemoteServiceName, OrderRemoteServiceName,
+            SettingRemoteServiceName, SupplyChainRemoteServiceName,
+            BackgroundTaskRemoteServiceName
+        ];
+
+        foreach (var name in serviceNames)
+        {
+            services.AddHttpClient(name).AddHttpMessageHandler<CookieHandler>();
+        }
+
+        // 注册动态 API 代理
+        ConfigureHttpClientProxies(services);
+
+        // 应用状态
+        services.AddSingleton(new LowCodeAppState(true));
+
+        // RenderEngineBase 服务（List 数据操作管理器等）
+        services.AddRenderEngineBase();
+
+        // Testing 测试执行事件通知器
+        services.AddSingleton<ITestExecutionEventNotifier, TestExecutionEventNotifier>();
     }
 
-    private void ConfigureHttpClientProxies(ServiceConfigurationContext context)
+    private static void ConfigureHttpClientProxies(IServiceCollection services)
     {
-        //动态API代理
-        context.Services.AddHttpClientProxies(
+        services.AddHttpClientProxies(
             typeof(LowCodeApplicationContractsModule).Assembly,
             DesignEngineRemoteServiceName
         );
 
-        context.Services.AddHttpClientProxies(
+        services.AddHttpClientProxies(
             typeof(DesignEngineApplicationContractsModule).Assembly,
             DesignEngineRemoteServiceName
         );
 
-        context.Services.AddHttpClientProxies(
+        services.AddHttpClientProxies(
             typeof(RenderEngineApplicationContractsModule).Assembly,
             RenderEngineRemoteServiceName
         );
 
-        // 注册 HTTP Client 代理
-        context.Services.AddHttpClientProxies(
+        services.AddHttpClientProxies(
             typeof(AccountApplicationContractsModule).Assembly,
             AccountRemoteServiceName
         );
 
-        context.Services.AddHttpClientProxies(
+        services.AddHttpClientProxies(
             typeof(OrganizationApplicationContractsModule).Assembly,
             OrganizationRemoteServiceName
         );
-        
-        context.Services.AddHttpClientProxies(
+
+        services.AddHttpClientProxies(
             typeof(ApprovalApplicationContractsModule).Assembly,
             ApprovalRemoteServiceName
         );
 
-        context.Services.AddHttpClientProxies(
+        services.AddHttpClientProxies(
             typeof(TestingApplicationContractsModule).Assembly,
             TestingRemoteServiceName
         );
 
-        context.Services.AddHttpClientProxies(
+        services.AddHttpClientProxies(
             typeof(PortalApplicationContractsModule).Assembly,
             PortalRemoteServiceName
         );
 
-        context.Services.AddHttpClientProxies(
+        services.AddHttpClientProxies(
             typeof(NotificationApplicationContractsModule).Assembly,
             NotificationRemoteServiceName
         );
 
-        context.Services.AddHttpClientProxies(
+        services.AddHttpClientProxies(
             typeof(AssistantApplicationContractsModule).Assembly,
             AssistantRemoteServiceName
         );
 
-        context.Services.AddHttpClientProxies(
+        services.AddHttpClientProxies(
             typeof(EnterpriseApplicationContractsModule).Assembly,
             EnterpriseRemoteServiceName
         );
 
-        context.Services.AddHttpClientProxies(
+        services.AddHttpClientProxies(
             typeof(SystemPortalApplicationContractsModule).Assembly,
             SystemPortalRemoteServiceName
         );
 
-        context.Services.AddHttpClientProxies(
+        services.AddHttpClientProxies(
             typeof(OrderApplicationContractsModule).Assembly,
             OrderRemoteServiceName
         );
 
-        context.Services.AddHttpClientProxies(
+        services.AddHttpClientProxies(
             typeof(SettingApplicationContractsModule).Assembly,
             SettingRemoteServiceName
         );
 
-        context.Services.AddHttpClientProxies(
+        services.AddHttpClientProxies(
             typeof(SupplyChainApplicationContractsModule).Assembly,
             SupplyChainRemoteServiceName
         );
 
-        context.Services.AddHttpClientProxies(
+        services.AddHttpClientProxies(
             typeof(BackgroundTaskApplicationContractsModule).Assembly,
             BackgroundTaskRemoteServiceName
         );

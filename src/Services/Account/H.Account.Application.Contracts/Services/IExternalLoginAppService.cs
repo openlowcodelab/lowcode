@@ -1,11 +1,11 @@
-using Volo.Abp.Application.Services;
+using H.Abstractions;
 
 namespace H.Account.Application.Contracts;
 
 /// <summary>
 /// 外部登录应用服务接口
 /// </summary>
-public interface IExternalLoginAppService : IApplicationService
+public interface IExternalLoginAppService : IAppService
 {
     /// <summary>
     /// 处理外部登录（查找绑定 → 自动注册/直接登录 → 写 Cookie）

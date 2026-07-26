@@ -1,12 +1,12 @@
+using H.Abstractions;
 using H.LowCode.MetaSchema;
-using Volo.Abp.Application.Services;
 
 namespace H.LowCode.Application.Contracts;
 
 /// <summary>
 /// 表单校验服务接口
 /// </summary>
-public interface IFormValidationAppService : IApplicationService
+public interface IFormValidationAppService : IAppService
 {
     /// <summary>
     /// 校验单个字段值

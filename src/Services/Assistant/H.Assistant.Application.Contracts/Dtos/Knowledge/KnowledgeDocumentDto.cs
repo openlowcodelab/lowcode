@@ -1,4 +1,4 @@
-using Volo.Abp.Application.Dtos;
+using H.Abstractions;
 
 namespace H.Assistant.Application.Contracts;
 

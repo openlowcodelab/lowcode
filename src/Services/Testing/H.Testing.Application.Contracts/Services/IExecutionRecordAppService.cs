@@ -2,14 +2,14 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
-using Volo.Abp.Application.Services;
+using H.Abstractions;
 
 namespace H.Testing.Application.Contracts;
 
 /// <summary>
 /// 测试执行记录服务接口
 /// </summary>
-public interface IExecutionRecordAppService : IApplicationService
+public interface IExecutionRecordAppService : IAppService
 {
     /// <summary>
     /// 获取指定项目的所有执行记录

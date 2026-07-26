@@ -3,13 +3,6 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
-var application = await builder.AddApplicationAsync<AccountHostClientModule>(options =>
-{
-    options.UseAutofac();
-});
+ClientServices.Configure(builder.Services, builder.Configuration, builder.HostEnvironment.BaseAddress);
 
-var host = builder.Build();
-
-await application.InitializeApplicationAsync(host.Services);
-
-await host.RunAsync();
+await builder.Build().RunAsync();

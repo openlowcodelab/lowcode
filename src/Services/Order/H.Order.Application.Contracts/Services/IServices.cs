@@ -1,5 +1,4 @@
-using Volo.Abp.Application.Dtos;
-using Volo.Abp.Application.Services;
+using H.Abstractions;
 
 namespace H.Order.Application.Contracts;
 
@@ -20,7 +19,7 @@ public interface IRouteRuleAppService : ICrudAppService<RouteRuleDto, Guid, Rout
 /// <summary>
 /// 下发日志查询接口
 /// </summary>
-public interface IDispatchLogAppService : IApplicationService
+public interface IDispatchLogAppService : IAppService
 {
     /// <summary>分页查询下发日志</summary>
     Task<PagedResultDto<DispatchLogDto>> GetListAsync(DispatchLogQueryDto input);

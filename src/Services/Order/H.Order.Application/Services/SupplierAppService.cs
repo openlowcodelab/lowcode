@@ -2,7 +2,7 @@ using H.Order.Application.Contracts;
 using H.Order.Application.Mapping;
 using H.Order.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Volo.Abp.Application.Dtos;
+using H.Abstractions;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 
@@ -12,12 +12,20 @@ namespace H.Order.Application.Services;
 /// 供应商管理：CRUD
 /// </summary>
 public class SupplierAppService
-    : CrudAppService<SupplierEntity, SupplierDto, Guid, SupplierQueryDto, CreateSupplierDto, UpdateSupplierDto>,
+    : ApplicationService,
       ISupplierAppService
 {
-    public SupplierAppService(IRepository<SupplierEntity, Guid> repository) : base(repository) { }
+    protected readonly IRepository<SupplierEntity, Guid> Repository;
 
-    public override async Task<PagedResultDto<SupplierDto>> GetListAsync(SupplierQueryDto input)
+    public SupplierAppService(IRepository<SupplierEntity, Guid> repository) { Repository = repository; }
+
+    public async Task<SupplierDto> GetAsync(Guid id)
+    {
+        var entity = await Repository.GetAsync(id);
+        return entity.ToDto();
+    }
+
+    public async Task<PagedResultDto<SupplierDto>> GetListAsync(SupplierQueryDto input)
     {
         var query = await Repository.GetQueryableAsync();
         if (!string.IsNullOrWhiteSpace(input.Filter))
@@ -34,7 +42,7 @@ public class SupplierAppService
         return new PagedResultDto<SupplierDto>(totalCount, dtos);
     }
 
-    public override async Task<SupplierDto> CreateAsync(CreateSupplierDto input)
+    public async Task<SupplierDto> CreateAsync(CreateSupplierDto input)
     {
         var existsQuery = await Repository.GetQueryableAsync();
         var exists = await AsyncExecuter.AnyAsync(existsQuery.Where(x => x.Code == input.Code));
@@ -49,7 +57,7 @@ public class SupplierAppService
         return entity.ToDto();
     }
 
-    public override async Task<SupplierDto> UpdateAsync(Guid id, UpdateSupplierDto input)
+    public async Task<SupplierDto> UpdateAsync(Guid id, UpdateSupplierDto input)
     {
         var entity = await Repository.GetAsync(id);
         input.Apply(entity);
@@ -57,18 +65,31 @@ public class SupplierAppService
         await CurrentUnitOfWork.SaveChangesAsync();
         return entity.ToDto();
     }
+
+    public async Task DeleteAsync(Guid id)
+    {
+        await Repository.DeleteAsync(id);
+    }
 }
 
 /// <summary>
 /// 路由规则管理：CRUD
 /// </summary>
 public class RouteRuleAppService
-    : CrudAppService<RouteRuleEntity, RouteRuleDto, Guid, RouteRuleQueryDto, CreateRouteRuleDto, UpdateRouteRuleDto>,
+    : ApplicationService,
       IRouteRuleAppService
 {
-    public RouteRuleAppService(IRepository<RouteRuleEntity, Guid> repository) : base(repository) { }
+    protected readonly IRepository<RouteRuleEntity, Guid> Repository;
 
-    public override async Task<PagedResultDto<RouteRuleDto>> GetListAsync(RouteRuleQueryDto input)
+    public RouteRuleAppService(IRepository<RouteRuleEntity, Guid> repository) { Repository = repository; }
+
+    public async Task<RouteRuleDto> GetAsync(Guid id)
+    {
+        var entity = await Repository.GetAsync(id);
+        return entity.ToDto();
+    }
+
+    public async Task<PagedResultDto<RouteRuleDto>> GetListAsync(RouteRuleQueryDto input)
     {
         var query = await Repository.GetQueryableAsync();
         if (!string.IsNullOrWhiteSpace(input.Filter))
@@ -87,7 +108,7 @@ public class RouteRuleAppService
         return new PagedResultDto<RouteRuleDto>(totalCount, dtos);
     }
 
-    public override async Task<RouteRuleDto> CreateAsync(CreateRouteRuleDto input)
+    public async Task<RouteRuleDto> CreateAsync(CreateRouteRuleDto input)
     {
         var entity = input.ToEntity();
         await Repository.InsertAsync(entity);
@@ -95,13 +116,18 @@ public class RouteRuleAppService
         return entity.ToDto();
     }
 
-    public override async Task<RouteRuleDto> UpdateAsync(Guid id, UpdateRouteRuleDto input)
+    public async Task<RouteRuleDto> UpdateAsync(Guid id, UpdateRouteRuleDto input)
     {
         var entity = await Repository.GetAsync(id);
         input.Apply(entity);
         await Repository.UpdateAsync(entity);
         await CurrentUnitOfWork.SaveChangesAsync();
         return entity.ToDto();
+    }
+
+    public async Task DeleteAsync(Guid id)
+    {
+        await Repository.DeleteAsync(id);
     }
 }
 

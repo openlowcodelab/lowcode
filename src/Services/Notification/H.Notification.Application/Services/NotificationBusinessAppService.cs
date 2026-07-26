@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using H.Notification.Application.Contracts;
 using H.Notification.EntityFrameworkCore;
 using Volo.Abp;
-using Volo.Abp.Application.Dtos;
+using H.Abstractions;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;

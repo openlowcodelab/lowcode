@@ -1,9 +1,9 @@
-﻿using H.LowCode.MetaSchema.DesignEngine;
-using Volo.Abp.Application.Services;
+﻿using H.Abstractions;
+using H.LowCode.MetaSchema.DesignEngine;
 
 namespace H.LowCode.DesignEngine.Application.Contracts;
 
-public interface IAppPublishAppService : IApplicationService
+public interface IAppPublishAppService : IAppService
 {
     Task<List<AppPublishRecordSchema>> GetRecordsAsync(string appId);
 

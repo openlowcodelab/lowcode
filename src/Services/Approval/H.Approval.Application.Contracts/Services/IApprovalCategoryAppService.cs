@@ -1,11 +1,11 @@
-using Volo.Abp.Application.Services;
+using H.Abstractions;
 
 namespace H.Approval.Application.Contracts;
 
 /// <summary>
 /// 审批分类(分组)服务接口
 /// </summary>
-public interface IApprovalCategoryAppService : IApplicationService
+public interface IApprovalCategoryAppService : IAppService
 {
     /// <summary>
     /// 获取所有分类

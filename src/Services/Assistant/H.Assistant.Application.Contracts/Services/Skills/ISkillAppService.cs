@@ -1,9 +1,8 @@
-using Volo.Abp.Application.Dtos;
-using Volo.Abp.Application.Services;
+using H.Abstractions;
 
 namespace H.Assistant.Application.Contracts;
 
-public interface ISkillAppService : IApplicationService
+public interface ISkillAppService : IAppService
 {
     Task<SkillDto> GetAsync(Guid id);
     Task<PagedResultDto<SkillDto>> GetListAsync(SkillDefinitionQueryDto input);

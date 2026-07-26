@@ -1,12 +1,11 @@
-using Volo.Abp.Application.Dtos;
-using Volo.Abp.Application.Services;
+using H.Abstractions;
 
 namespace H.Assistant.Application.Contracts;
 
 /// <summary>
 /// Assistant 聊天服务接口
 /// </summary>
-public interface IChatMessageAppService : IApplicationService
+public interface IChatMessageAppService : IAppService
 {
     /// <summary>
     /// 发送消息并获取响应

@@ -1,21 +1,30 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 using System.Diagnostics.CodeAnalysis;
-using Volo.Abp.AspNetCore.Components;
 
 namespace H.LowCode.ComponentBase;
 
 /// <summary>
 /// 组件基类
 /// </summary>
-public abstract class LowCodeComponentBase : AbpComponentBase
+public abstract class LowCodeComponentBase : Microsoft.AspNetCore.Components.ComponentBase
 {
     [Inject] private LowCodeAppState LowCodeAppState { get; set; }
 
     [Inject] protected NavigationManager NavigationManager { get; set; }
 
     [Inject] protected IJSRuntime JSRuntime { get; set; }
+
+    [Inject] private ILoggerFactory LoggerFactory { get; set; }
+
+    private ILogger _logger;
+
+    /// <summary>
+    /// 日志记录器（按实际组件类型创建）
+    /// </summary>
+    protected ILogger Logger => _logger ??= LoggerFactory.CreateLogger(GetType());
 
     protected LowCodeMessageService Message => new(JSRuntime);
 

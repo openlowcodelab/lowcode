@@ -1,5 +1,5 @@
 using H.LowCode.Application.Contracts;
-using Volo.Abp.Application.Dtos;
+using H.Abstractions;
 using Volo.Abp.Domain.Repositories;
 
 namespace H.LowCode.RenderEngine.Domain;

@@ -1,5 +1,4 @@
-using Volo.Abp.Application.Dtos;
-using Volo.Abp.Application.Services;
+using H.Abstractions;
 
 namespace H.BackgroundTask.Application.Contracts;
 
@@ -7,7 +6,7 @@ namespace H.BackgroundTask.Application.Contracts;
 /// 后台任务应用服务接口（对外开放）。
 /// ABP 约定控制器将自动生成 RESTful 端点。
 /// </summary>
-public interface IBackgroundJobAppService : IApplicationService
+public interface IBackgroundJobAppService : IAppService
 {
     /// <summary>分页查询任务</summary>
     Task<PagedResultDto<BackgroundJobDto>> GetListAsync(BackgroundJobQueryDto input);

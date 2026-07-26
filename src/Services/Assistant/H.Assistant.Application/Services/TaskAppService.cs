@@ -5,7 +5,7 @@ using H.Assistant.Core;
 using H.Assistant.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Volo.Abp.Application.Dtos;
+using H.Abstractions;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;

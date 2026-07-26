@@ -1,11 +1,8 @@
-﻿using Volo.Abp.Modularity;
+﻿namespace H.LowCode.ComponentBase;
 
-namespace H.LowCode.ComponentBase;
-
-public class LowCodeComponentBaseModule : AbpModule
+/// <summary>
+/// ComponentBase 模块标记类
+/// </summary>
+public static class LowCodeComponentBaseModule
 {
-    public override void ConfigureServices(ServiceConfigurationContext context)
-    {
-
-    }
 }

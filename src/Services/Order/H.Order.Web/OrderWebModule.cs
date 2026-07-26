@@ -1,10 +1,8 @@
-using Volo.Abp.Modularity;
-
 namespace H.Order.Web;
 
-public class OrderWebModule : AbpModule
+/// <summary>
+/// Order Web 模块标记类
+/// </summary>
+public static class OrderWebModule
 {
-    public override void ConfigureServices(ServiceConfigurationContext context)
-    {
-    }
 }

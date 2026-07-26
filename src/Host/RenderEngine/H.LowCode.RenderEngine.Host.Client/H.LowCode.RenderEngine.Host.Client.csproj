@@ -10,12 +10,10 @@
 	
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
-    <PackageReference Include="Volo.Abp.AspNetCore.Components.WebAssembly" />
-    <PackageReference Include="Volo.Abp.Autofac.WebAssembly" />
-    <PackageReference Include="Volo.Abp.Http.Client" />
   </ItemGroup>
 	
   <ItemGroup>
+    <ProjectReference Include="..\..\..\Utils\H.HttpClientProxy\H.HttpClientProxy.csproj" />
     <ProjectReference Include="..\..\..\LowCode\RenderEngine\H.LowCode.Themes.AntBlazor\H.LowCode.Themes.AntBlazor.csproj" />
   </ItemGroup>
   <!-- 防止 Release/AOT 裁剪掉仅被字符串反射引用的组件类型 -->

@@ -1,11 +1,11 @@
-using Volo.Abp.Application.Services;
+using H.Abstractions;
 
 namespace H.Organization.Application.Contracts;
 
 /// <summary>
 /// 角色服务接口
 /// </summary>
-public interface IRoleAppService : IApplicationService
+public interface IRoleAppService : IAppService
 {
     /// <summary>
     /// 获取角色列表

@@ -6,7 +6,6 @@ using Volo.Abp.Modularity;
 namespace H.Enterprise.Application;
 
 [DependsOn(
-    typeof(EnterpriseApplicationContractsModule),
     typeof(EnterpriseEntityFrameworkCoreModule)
 )]
 public class EnterpriseApplicationModule : AbpModule

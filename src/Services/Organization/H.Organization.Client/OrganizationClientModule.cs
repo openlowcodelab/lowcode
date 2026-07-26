@@ -1,30 +1,22 @@
 using H.Organization.Application.Contracts;
+using H.HttpClientProxy;
 using Microsoft.Extensions.DependencyInjection;
-using Volo.Abp.Autofac.WebAssembly;
-using Volo.Abp.Http.Client;
-using Volo.Abp.Modularity;
 
 namespace H.Organization.Client;
 
-[DependsOn(
-    typeof(AbpAutofacWebAssemblyModule),
-    typeof(AbpHttpClientModule),
-    typeof(OrganizationApplicationContractsModule)
-)]
-public class OrganizationClientModule : AbpModule
+/// <summary>
+/// Organization 客户端代理注册
+/// </summary>
+public static class OrganizationClientModule
 {
     public const string RemoteServiceName = "Organization";
 
-    public override void ConfigureServices(ServiceConfigurationContext context)
+    public static IServiceCollection AddOrganizationClientProxies(this IServiceCollection services)
     {
-        ConfigureHttpClientProxies(context);
-    }
-
-    private void ConfigureHttpClientProxies(ServiceConfigurationContext context)
-    {
-        context.Services.AddHttpClientProxies(
+        services.AddHttpClientProxies(
             typeof(OrganizationApplicationContractsModule).Assembly,
             RemoteServiceName
         );
+        return services;
     }
 }

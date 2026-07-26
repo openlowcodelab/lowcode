@@ -1,12 +1,11 @@
-using Volo.Abp.Application.Dtos;
-using Volo.Abp.Application.Services;
+using H.Abstractions;
 
 namespace H.BackgroundTask.Application.Contracts;
 
 /// <summary>
 /// 任务执行记录查询接口
 /// </summary>
-public interface IJobExecutionRecordAppService : IApplicationService
+public interface IJobExecutionRecordAppService : IAppService
 {
     /// <summary>分页查询执行记录</summary>
     Task<PagedResultDto<JobExecutionRecordDto>> GetListAsync(JobExecutionRecordQueryDto input);

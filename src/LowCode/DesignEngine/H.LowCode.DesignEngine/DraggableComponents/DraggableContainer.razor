@@ -190,7 +190,8 @@
             //if (dragOverComponent.DesignState.IsDropedAfter)
             //    containerComponent.Childrens.InsertAfter(dragOverComponent, currentDragComponent);
             //else
-            containerComponent.Childrens.InsertBefore(dragOverComponent, currentDragComponent);
+            var insertIndex = containerComponent.Childrens.IndexOf(dragOverComponent);
+            containerComponent.Childrens.Insert(insertIndex < 0 ? 0 : insertIndex, currentDragComponent);
         }
         else    //添加到末尾
         {

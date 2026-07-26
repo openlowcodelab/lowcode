@@ -1,10 +1,8 @@
-using Volo.Abp.Modularity;
-
 namespace H.BackgroundTask.Web;
 
-public class BackgroundTaskWebModule : AbpModule
+/// <summary>
+/// BackgroundTask Web 模块标记类
+/// </summary>
+public static class BackgroundTaskWebModule
 {
-    public override void ConfigureServices(ServiceConfigurationContext context)
-    {
-    }
 }

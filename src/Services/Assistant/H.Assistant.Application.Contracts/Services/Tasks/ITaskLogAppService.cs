@@ -1,12 +1,11 @@
-using Volo.Abp.Application.Dtos;
-using Volo.Abp.Application.Services;
+using H.Abstractions;
 
 namespace H.Assistant.Application.Contracts;
 
 /// <summary>
 /// 任务执行日志查询服务接口
 /// </summary>
-public interface ITaskLogAppService : IApplicationService
+public interface ITaskLogAppService : IAppService
 {
     /// <summary>
     /// 获取执行日志列表（分页）

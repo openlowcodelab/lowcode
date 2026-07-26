@@ -1,9 +1,9 @@
-﻿using H.LowCode.MetaSchema.DesignEngine;
-using Volo.Abp.Application.Services;
+﻿using H.Abstractions;
+using H.LowCode.MetaSchema.DesignEngine;
 
 namespace H.LowCode.DesignEngine.Application.Contracts;
 
-public interface IAppRbacAppService : IApplicationService
+public interface IAppRbacAppService : IAppService
 {
     Task<List<AppMemberSchema>> GetMembersAsync(string appId);
 

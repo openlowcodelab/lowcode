@@ -1,9 +1,8 @@
-using Volo.Abp.Application.Dtos;
-using Volo.Abp.Application.Services;
+using H.Abstractions;
 
 namespace H.Assistant.Application.Contracts;
 
-public interface IAgentAppService : IApplicationService
+public interface IAgentAppService : IAppService
 {
     Task<AgentDto> GetAsync(Guid id);
     Task<PagedResultDto<AgentDto>> GetListAsync(AgentQueryDto input);

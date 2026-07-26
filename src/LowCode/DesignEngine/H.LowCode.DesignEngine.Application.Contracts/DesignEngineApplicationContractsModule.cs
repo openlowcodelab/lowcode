@@ -1,23 +1,9 @@
-﻿using H.LowCode.Application.Contracts;
-using System.Reflection;
-using Volo.Abp.Modularity;
-using Volo.Abp.Validation;
+﻿namespace H.LowCode.DesignEngine.Application.Contracts;
 
-namespace H.LowCode.DesignEngine.Application.Contracts;
-
-[DependsOn(
-    typeof(LowCodeApplicationContractsModule)
-    )]
-public class DesignEngineApplicationContractsModule : AbpModule
+/// <summary>
+/// DesignEngine 应用契约程序集标记类（用于程序集引用定位）
+/// </summary>
+public static class DesignEngineApplicationContractsModule
 {
-    public override void ConfigureServices(ServiceConfigurationContext context)
-    {
-        //TODO: 临时解决异常: Property accessor 'IsSecurityCritical' on object 'System.Reflection.RuntimeMethodInfo' threw the following exception:'The method or operation is not implemented.'
-        //      System.Reflection.TargetInvocationException: Property accessor 'IsSecurityCritical' on object 'System.Reflection.RuntimeMethodInfo' threw the following exception:'The method or operation is not implemented.'
-        Configure<AbpValidationOptions>(options =>
-        {
-            options.IgnoredTypes.Add(typeof(MethodBase));
-            options.IgnoredTypes.Add(typeof(MethodInfo));
-        });
-    }
+    public static System.Reflection.Assembly Assembly => typeof(DesignEngineApplicationContractsModule).Assembly;
 }

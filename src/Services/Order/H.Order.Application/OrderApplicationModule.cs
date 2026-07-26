@@ -11,7 +11,6 @@ using Volo.Abp.Modularity;
 namespace H.Order.Application;
 
 [DependsOn(
-    typeof(OrderApplicationContractsModule),
     typeof(OrderEntityFrameworkCoreModule)
 )]
 public class OrderApplicationModule : AbpModule

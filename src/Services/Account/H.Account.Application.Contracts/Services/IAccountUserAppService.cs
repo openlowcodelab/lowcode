@@ -1,4 +1,4 @@
-using Volo.Abp.Application.Services;
+using H.Abstractions;
 
 namespace H.Account.Application.Contracts;
 
@@ -6,7 +6,7 @@ namespace H.Account.Application.Contracts;
 /// 企业级用户管理服务接口
 /// 提供企业用户的查询、密码管理等功能
 /// </summary>
-public interface IAccountUserAppService : IApplicationService
+public interface IAccountUserAppService : IAppService
 {
     /// <summary>
     /// 根据用户ID获取用户信息

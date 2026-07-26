@@ -1,12 +1,12 @@
 using H.AppDrawer.Components;
-using Volo.Abp.Application.Services;
+using H.Abstractions;
 
 namespace H.Portal.Application.Contracts;
 
 /// <summary>
 /// 应用查询服务接口（只读），用于应用抽屉等场景获取应用数据
 /// </summary>
-public interface IAppQueryAppService : IApplicationService
+public interface IAppQueryAppService : IAppService
 {
     /// <summary>
     /// 获取所有应用分类

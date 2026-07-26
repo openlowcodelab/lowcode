@@ -2,7 +2,7 @@ using H.LowCode.Application.Contracts;
 using H.LowCode.RenderEngine.Domain;
 using H.LowCode.RenderEngine.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
-using Volo.Abp.Application.Dtos;
+using H.Abstractions;
 
 namespace H.LowCode.RenderEngine.EntityFrameworkCore;
 

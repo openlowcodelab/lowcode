@@ -1,13 +1,16 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Volo.Abp.Modularity;
 
 namespace H.LowCode.RenderEngineBase;
 
-public class RenderEngineBaseModule : AbpModule
+/// <summary>
+/// RenderEngineBase 服务注册扩展
+/// </summary>
+public static class RenderEngineBaseModule
 {
-    public override void ConfigureServices(ServiceConfigurationContext context)
+    public static IServiceCollection AddRenderEngineBase(this IServiceCollection services)
     {
         // 注册 List 数据操作管理器（使用 Singleton 确保 WebAssembly 中状态保持）
-        context.Services.AddSingleton<ListDataOperationManager>();
+        services.AddSingleton<ListDataOperationManager>();
+        return services;
     }
 }

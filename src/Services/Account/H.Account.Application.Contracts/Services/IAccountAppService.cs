@@ -1,8 +1,8 @@
-using Volo.Abp.Application.Services;
+using H.Abstractions;
 
 namespace H.Account.Application.Contracts;
 
-public interface IAccountAppService : IApplicationService
+public interface IAccountAppService : IAppService
 {
     Task<AuthResponseDto> RegisterAsync(RegisterRequestDto request);
     Task<AuthResponseDto> LoginAsync(LoginRequestDto request);

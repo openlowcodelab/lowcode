@@ -2,14 +2,14 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
-using Volo.Abp.Application.Services;
+using H.Abstractions;
 
 namespace H.Testing.Application.Contracts;
 
 /// <summary>
 /// 项目环境服务接口
 /// </summary>
-public interface IProjectEnvironmentAppService : IApplicationService
+public interface IProjectEnvironmentAppService : IAppService
 {
     /// <summary>
     /// 获取所有项目环境（所有项目）

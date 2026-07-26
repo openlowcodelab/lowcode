@@ -1,8 +1,8 @@
-using Volo.Abp.Application.Services;
+using H.Abstractions;
 
 namespace H.SystemPortal.Application.Contracts;
 
-public interface IUserAppService : IApplicationService
+public interface IUserAppService : IAppService
 {
     Task<UserDto?> GetUserByUserNameAsync(string userName);
     Task<UserDto?> GetUserByEmailAsync(string email);

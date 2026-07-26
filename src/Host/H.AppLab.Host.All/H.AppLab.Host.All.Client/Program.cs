@@ -3,9 +3,6 @@ using H.AppLab.Host.All.Client;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
-var application = await builder.AddApplicationAsync<HostAllClientModule>(options =>
-{
-    options.UseAutofac();
-});
+ClientServices.Configure(builder.Services, builder.Configuration, builder.HostEnvironment.BaseAddress);
 
 await builder.Build().RunAsync();

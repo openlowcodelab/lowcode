@@ -7,7 +7,6 @@ using Volo.Abp.Modularity;
 namespace H.Notification.Application;
 
 [DependsOn(
-    typeof(NotificationApplicationContractsModule),
     typeof(NotificationEntityFrameworkCoreModule),
     typeof(AbpAutoMapperModule)
 )]

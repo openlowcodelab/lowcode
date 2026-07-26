@@ -4,9 +4,6 @@ using Volo.Abp.Modularity;
 
 namespace H.SystemPortal.Application;
 
-[DependsOn(
-    typeof(SystemPortalApplicationContractsModule)
-)]
 public class SystemPortalApplicationModule : AbpModule
 {
     public override void ConfigureServices(ServiceConfigurationContext context)

@@ -1,10 +1,8 @@
-using Volo.Abp.Modularity;
-
 namespace H.SupplyChain.Web;
 
-public class SupplyChainWebModule : AbpModule
+/// <summary>
+/// SupplyChain Web 模块标记类
+/// </summary>
+public static class SupplyChainWebModule
 {
-    public override void ConfigureServices(ServiceConfigurationContext context)
-    {
-    }
 }

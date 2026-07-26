@@ -10,7 +10,6 @@ using Volo.Abp.Modularity;
 namespace H.Assistant.Application;
 
 [DependsOn(
-    typeof(AssistantApplicationContractsModule),
     typeof(AssistantEntityFrameworkCoreModule),
     typeof(AbpAutoMapperModule),
     typeof(AssistantCoreModule)

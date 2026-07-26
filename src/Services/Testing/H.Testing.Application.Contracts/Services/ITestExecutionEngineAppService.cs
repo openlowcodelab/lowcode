@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
-using Volo.Abp.Application.Services;
+using H.Abstractions;
 
 namespace H.Testing.Application.Contracts;
 
@@ -15,7 +15,7 @@ namespace H.Testing.Application.Contracts;
 /// 包括 event add/remove，这会对 Action&lt;,&gt; 委托参数递归反射属性，
 /// 触发 Type.GenericParameterAttributes 抛 Arg_NotGenericParameter。
 /// </remarks>
-public interface ITestExecutionEngineAppService : IApplicationService
+public interface ITestExecutionEngineAppService : IAppService
 {
     /// <summary>
     /// 执行测试用例

@@ -1,10 +1,10 @@
-﻿using H.LowCode.DesignEngine.Model;
+﻿using H.Abstractions;
+using H.LowCode.DesignEngine.Model;
 using H.LowCode.MetaSchema.DesignEngine;
-using Volo.Abp.Application.Services;
 
 namespace H.LowCode.DesignEngine.Application.Contracts;
 
-public interface IAppApplicationService : IApplicationService
+public interface IAppApplicationService : IAppService
 {
     Task<IList<AppListModel>> GetAppsAsync();
 

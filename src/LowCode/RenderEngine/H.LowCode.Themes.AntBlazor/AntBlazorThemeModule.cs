@@ -1,20 +1,8 @@
-﻿using H.LowCode.RenderEngine;
-using H.LowCode.RenderEngine.Application.Contracts;
-using H.LowCode.RenderEngineBase;
-using Volo.Abp.Modularity;
+﻿namespace H.LowCode.Themes.AntBlazor;
 
-namespace H.LowCode.Themes.AntBlazor;
-
-[DependsOn(
-    typeof(RenderEngineBaseModule),
-    typeof(RenderEngineModule),
-    //Contracts
-    typeof(RenderEngineApplicationContractsModule)
-)]
-public class AntBlazorThemeModule : AbpModule
+/// <summary>
+/// AntBlazor 主题模块标记类
+/// </summary>
+public static class AntBlazorThemeModule
 {
-    public override void ConfigureServices(ServiceConfigurationContext context)
-    {
-        
-    }
 }

@@ -1,31 +1,22 @@
 using H.Account.Application.Contracts;
-using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using H.HttpClientProxy;
 using Microsoft.Extensions.DependencyInjection;
-using Volo.Abp.Autofac.WebAssembly;
-using Volo.Abp.Http.Client;
-using Volo.Abp.Modularity;
 
 namespace H.Account.Client;
 
-[DependsOn(
-    typeof(AbpAutofacWebAssemblyModule),
-    typeof(AbpHttpClientModule),
-    typeof(AccountApplicationContractsModule)
-)]
-public class AccountClientModule : AbpModule
+/// <summary>
+/// Account 客户端代理注册
+/// </summary>
+public static class AccountClientModule
 {
     public const string RemoteServiceName = "Account";
 
-    public override void ConfigureServices(ServiceConfigurationContext context)
+    public static IServiceCollection AddAccountClientProxies(this IServiceCollection services)
     {
-        ConfigureHttpClientProxies(context);
-    }
-
-    private void ConfigureHttpClientProxies(ServiceConfigurationContext context)
-    {
-        context.Services.AddHttpClientProxies(
+        services.AddHttpClientProxies(
             typeof(AccountApplicationContractsModule).Assembly,
             RemoteServiceName
         );
+        return services;
     }
 }

@@ -2,7 +2,7 @@ using H.BackgroundTask.Application.Contracts;
 using H.BackgroundTask.Application.Mapping;
 using H.BackgroundTask.EntityFrameworkCore;
 using Volo.Abp;
-using Volo.Abp.Application.Dtos;
+using H.Abstractions;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 

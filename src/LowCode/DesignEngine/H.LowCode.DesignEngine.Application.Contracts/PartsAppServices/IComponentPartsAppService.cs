@@ -1,11 +1,11 @@
-﻿using H.LowCode.DesignEngine.Model;
+﻿using H.Abstractions;
+using H.LowCode.DesignEngine.Model;
 using H.LowCode.MetaSchema.DesignEngine;
 using System;
-using Volo.Abp.Application.Services;
 
 namespace H.LowCode.DesignEngine.Application.Contracts;
 
-public interface IComponentPartsAppService : IApplicationService
+public interface IComponentPartsAppService : IAppService
 {
     Task<List<ComponentPartsListModel>> GetListAsync(string libraryId);
 

@@ -2,7 +2,7 @@ using H.SupplyChain.Application.Contracts;
 using H.SupplyChain.Application.Mapping;
 using H.SupplyChain.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Volo.Abp.Application.Dtos;
+using H.Abstractions;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 
@@ -12,12 +12,20 @@ namespace H.SupplyChain.Application.Services;
 /// 供应商管理：CRUD
 /// </summary>
 public class SupplyChainSupplierAppService
-    : CrudAppService<SupplierEntity, SupplierDto, Guid, SupplierQueryDto, CreateSupplierDto, UpdateSupplierDto>,
+    : ApplicationService,
       ISupplyChainSupplierAppService
 {
-    public SupplyChainSupplierAppService(IRepository<SupplierEntity, Guid> repository) : base(repository) { }
+    protected readonly IRepository<SupplierEntity, Guid> Repository;
 
-    public override async Task<PagedResultDto<SupplierDto>> GetListAsync(SupplierQueryDto input)
+    public SupplyChainSupplierAppService(IRepository<SupplierEntity, Guid> repository) { Repository = repository; }
+
+    public async Task<SupplierDto> GetAsync(Guid id)
+    {
+        var entity = await Repository.GetAsync(id);
+        return entity.ToDto();
+    }
+
+    public async Task<PagedResultDto<SupplierDto>> GetListAsync(SupplierQueryDto input)
     {
         var query = await Repository.GetQueryableAsync();
         if (!string.IsNullOrWhiteSpace(input.Filter))
@@ -34,7 +42,7 @@ public class SupplyChainSupplierAppService
         return new PagedResultDto<SupplierDto>(totalCount, dtos);
     }
 
-    public override async Task<SupplierDto> CreateAsync(CreateSupplierDto input)
+    public async Task<SupplierDto> CreateAsync(CreateSupplierDto input)
     {
         var existsQuery = await Repository.GetQueryableAsync();
         var exists = await AsyncExecuter.AnyAsync(existsQuery.Where(x => x.Code == input.Code));
@@ -49,7 +57,7 @@ public class SupplyChainSupplierAppService
         return entity.ToDto();
     }
 
-    public override async Task<SupplierDto> UpdateAsync(Guid id, UpdateSupplierDto input)
+    public async Task<SupplierDto> UpdateAsync(Guid id, UpdateSupplierDto input)
     {
         var entity = await Repository.GetAsync(id);
         input.Apply(entity);
@@ -57,25 +65,38 @@ public class SupplyChainSupplierAppService
         await CurrentUnitOfWork.SaveChangesAsync();
         return entity.ToDto();
     }
+
+    public async Task DeleteAsync(Guid id)
+    {
+        await Repository.DeleteAsync(id);
+    }
 }
 
 /// <summary>
 /// 商品管理：CRUD + 详情（含 SKU 列表）
 /// </summary>
 public class ProductAppService
-    : CrudAppService<ProductEntity, ProductDto, Guid, ProductQueryDto, CreateProductDto, UpdateProductDto>,
+    : ApplicationService,
       IProductAppService
 {
+    protected readonly IRepository<ProductEntity, Guid> Repository;
     private readonly IRepository<ProductSkuEntity, Guid> _skuRepo;
 
     public ProductAppService(
         IRepository<ProductEntity, Guid> repository,
-        IRepository<ProductSkuEntity, Guid> skuRepo) : base(repository)
+        IRepository<ProductSkuEntity, Guid> skuRepo)
     {
+        Repository = repository;
         _skuRepo = skuRepo;
     }
 
-    public override async Task<PagedResultDto<ProductDto>> GetListAsync(ProductQueryDto input)
+    public async Task<ProductDto> GetAsync(Guid id)
+    {
+        var entity = await Repository.GetAsync(id);
+        return entity.ToDto();
+    }
+
+    public async Task<PagedResultDto<ProductDto>> GetListAsync(ProductQueryDto input)
     {
         var query = await Repository.GetQueryableAsync();
         if (!string.IsNullOrWhiteSpace(input.Filter))
@@ -94,7 +115,7 @@ public class ProductAppService
         return new PagedResultDto<ProductDto>(totalCount, dtos);
     }
 
-    public override async Task<ProductDto> CreateAsync(CreateProductDto input)
+    public async Task<ProductDto> CreateAsync(CreateProductDto input)
     {
         var existsQuery = await Repository.GetQueryableAsync();
         var exists = await AsyncExecuter.AnyAsync(existsQuery.Where(x => x.ProductCode == input.ProductCode));
@@ -109,13 +130,18 @@ public class ProductAppService
         return entity.ToDto();
     }
 
-    public override async Task<ProductDto> UpdateAsync(Guid id, UpdateProductDto input)
+    public async Task<ProductDto> UpdateAsync(Guid id, UpdateProductDto input)
     {
         var entity = await Repository.GetAsync(id);
         input.Apply(entity);
         await Repository.UpdateAsync(entity);
         await CurrentUnitOfWork.SaveChangesAsync();
         return entity.ToDto();
+    }
+
+    public async Task DeleteAsync(Guid id)
+    {
+        await Repository.DeleteAsync(id);
     }
 
     /// <summary>商品详情：主表信息 + SKU 列表</summary>
@@ -136,12 +162,20 @@ public class ProductAppService
 /// 商品 SKU 管理：CRUD
 /// </summary>
 public class ProductSkuAppService
-    : CrudAppService<ProductSkuEntity, ProductSkuDto, Guid, ProductSkuQueryDto, CreateProductSkuDto, UpdateProductSkuDto>,
+    : ApplicationService,
       IProductSkuAppService
 {
-    public ProductSkuAppService(IRepository<ProductSkuEntity, Guid> repository) : base(repository) { }
+    protected readonly IRepository<ProductSkuEntity, Guid> Repository;
 
-    public override async Task<PagedResultDto<ProductSkuDto>> GetListAsync(ProductSkuQueryDto input)
+    public ProductSkuAppService(IRepository<ProductSkuEntity, Guid> repository) { Repository = repository; }
+
+    public async Task<ProductSkuDto> GetAsync(Guid id)
+    {
+        var entity = await Repository.GetAsync(id);
+        return entity.ToDto();
+    }
+
+    public async Task<PagedResultDto<ProductSkuDto>> GetListAsync(ProductSkuQueryDto input)
     {
         var query = await Repository.GetQueryableAsync();
         if (input.ProductId.HasValue)
@@ -160,7 +194,7 @@ public class ProductSkuAppService
         return new PagedResultDto<ProductSkuDto>(totalCount, dtos);
     }
 
-    public override async Task<ProductSkuDto> CreateAsync(CreateProductSkuDto input)
+    public async Task<ProductSkuDto> CreateAsync(CreateProductSkuDto input)
     {
         var existsQuery = await Repository.GetQueryableAsync();
         var exists = await AsyncExecuter.AnyAsync(existsQuery.Where(x => x.SkuCode == input.SkuCode));
@@ -175,12 +209,17 @@ public class ProductSkuAppService
         return entity.ToDto();
     }
 
-    public override async Task<ProductSkuDto> UpdateAsync(Guid id, UpdateProductSkuDto input)
+    public async Task<ProductSkuDto> UpdateAsync(Guid id, UpdateProductSkuDto input)
     {
         var entity = await Repository.GetAsync(id);
         input.Apply(entity);
         await Repository.UpdateAsync(entity);
         await CurrentUnitOfWork.SaveChangesAsync();
         return entity.ToDto();
+    }
+
+    public async Task DeleteAsync(Guid id)
+    {
+        await Repository.DeleteAsync(id);
     }
 }

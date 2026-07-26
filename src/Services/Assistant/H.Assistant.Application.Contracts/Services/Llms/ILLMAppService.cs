@@ -1,12 +1,12 @@
 using System;
-using Volo.Abp.Application.Services;
+using H.Abstractions;
 
 namespace H.Assistant.Application.Contracts;
 
 /// <summary>
 /// LLM 配置服务接口
 /// </summary>
-public interface ILLMAppService : IApplicationService
+public interface ILLMAppService : IAppService
 {
     /// <summary>
     /// 获取所有配置

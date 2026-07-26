@@ -1,6 +1,6 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using Volo.Abp.Application.Dtos;
+using H.Abstractions;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 using H.Assistant.EntityFrameworkCore;
@@ -49,7 +49,7 @@ public class AgentAppService : ApplicationService, IAgentAppService
 
         var totalCount = await AsyncExecuter.CountAsync(query);
 
-        var entities = await AsyncExecuter.ToListAsync(query.OrderByDescending(x => x.CreationTime).PageBy(input));
+        var entities = await AsyncExecuter.ToListAsync(query.OrderByDescending(x => x.CreationTime).Skip(input.SkipCount).Take(input.MaxResultCount));
         var dtos = entities.Select(MapToDto).ToList();
 
         return new PagedResultDto<AgentDto>(totalCount, dtos);

@@ -1,10 +1,8 @@
-using Volo.Abp.Modularity;
-
 namespace H.Notification.Web;
 
-public class NotificationWebModule : AbpModule
+/// <summary>
+/// Notification Web 模块标记类
+/// </summary>
+public static class NotificationWebModule
 {
-    public override void ConfigureServices(ServiceConfigurationContext context)
-    {
-    }
 }

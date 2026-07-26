@@ -1,6 +1,5 @@
 using H.Util.Ids;
 using System.Text.Json.Serialization;
-using Volo.Abp.Validation;
 using System.Linq;
 
 namespace H.LowCode.MetaSchema.DesignEngine;
@@ -93,7 +92,6 @@ public class ComponentPartsSchema : ComponentSchemaBase
     public ComponentDesignStateSchema DesignState { get; set; } = new();
 
     [JsonIgnore]
-    [DisableValidation]
     public Action? Refresh { get; set; }
 
     public void RefreshState()

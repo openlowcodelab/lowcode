@@ -155,7 +155,7 @@
 
     private void Init()
     {
-        if (DataSource?.DataSourceValue.IsNullOrEmpty() == false)
+        if (!string.IsNullOrEmpty(DataSource?.DataSourceValue))
         {
             _tableSchema = DataSource.DataSourceValue.FromJson<TablePropertySchema>();
         }

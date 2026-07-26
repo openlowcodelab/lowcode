@@ -1,5 +1,4 @@
-using Volo.Abp.Application.Dtos;
-using Volo.Abp.Application.Services;
+using H.Abstractions;
 
 namespace H.SupplyChain.Application.Contracts;
 

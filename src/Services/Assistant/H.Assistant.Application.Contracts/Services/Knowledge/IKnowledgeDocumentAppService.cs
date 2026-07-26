@@ -1,8 +1,8 @@
-using Volo.Abp.Application.Services;
+using H.Abstractions;
 
 namespace H.Assistant.Application.Contracts;
 
-public interface IKnowledgeDocumentAppService : IApplicationService
+public interface IKnowledgeDocumentAppService : IAppService
 {
     // Node (tree structure) operations
     Task<List<KnowledgeNodeDto>> GetTreeAsync();

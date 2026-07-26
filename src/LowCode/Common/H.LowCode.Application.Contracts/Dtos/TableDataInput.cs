@@ -1,5 +1,5 @@
 using System;
-using Volo.Abp.Application.Dtos;
+using H.Abstractions;
 
 namespace H.LowCode.Application.Contracts;
 

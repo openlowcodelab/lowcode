@@ -3,7 +3,7 @@ using H.Order.Application.Contracts;
 using H.Order.Application.Mapping;
 using H.Order.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Volo.Abp.Application.Dtos;
+using H.Abstractions;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 
@@ -15,9 +15,10 @@ namespace H.Order.Application.Services;
 /// 详情接口才会按订单ID单独查询扩展表，合并返回全部行业特有属性。
 /// </summary>
 public class OrderAppService
-    : CrudAppService<OrderEntity, OrderDto, Guid, OrderQueryDto, CreateOrderDto, UpdateOrderDto>,
+    : ApplicationService,
       IOrderAppService
 {
+    protected readonly IRepository<OrderEntity, Guid> Repository;
     private readonly IRepository<OrderExtensionEntity, Guid> _extensionRepo;
     private readonly IRepository<DispatchLogEntity, Guid> _dispatchLogRepo;
     private readonly IDispatchService _dispatchService;
@@ -29,8 +30,8 @@ public class OrderAppService
         IRepository<DispatchLogEntity, Guid> dispatchLogRepo,
         IDispatchService dispatchService,
         ICapPublisher capPublisher)
-        : base(repository)
     {
+        Repository = repository;
         _extensionRepo = extensionRepo;
         _dispatchLogRepo = dispatchLogRepo;
         _dispatchService = dispatchService;
@@ -40,7 +41,7 @@ public class OrderAppService
     /// <summary>
     /// 订单列表：仅核心字段，不关联扩展属性表
     /// </summary>
-    public override async Task<PagedResultDto<OrderDto>> GetListAsync(OrderQueryDto input)
+    public async Task<PagedResultDto<OrderDto>> GetListAsync(OrderQueryDto input)
     {
         var query = await Repository.GetQueryableAsync();
         query = ApplyFilters(query, input);
@@ -80,6 +81,12 @@ public class OrderAppService
         return query;
     }
 
+    public async Task<OrderDto> GetAsync(Guid id)
+    {
+        var entity = await Repository.GetAsync(id);
+        return entity.ToDto();
+    }
+
     /// <summary>
     /// 订单详情：核心字段 + 行业扩展属性 + 最近下发状态
     /// </summary>
@@ -99,7 +106,7 @@ public class OrderAppService
     /// <summary>
     /// 创建订单：核心字段 + 扩展属同事务写入；进入待下发状态则发布 CAP 事件
     /// </summary>
-    public override async Task<OrderDto> CreateAsync(CreateOrderDto input)
+    public async Task<OrderDto> CreateAsync(CreateOrderDto input)
     {
         var entity = input.ToEntity();
         entity.OrderNo = string.IsNullOrWhiteSpace(input.OrderNo)
@@ -137,7 +144,7 @@ public class OrderAppService
         return entity.ToDto();
     }
 
-    public override async Task<OrderDto> UpdateAsync(Guid id, UpdateOrderDto input)
+    public async Task<OrderDto> UpdateAsync(Guid id, UpdateOrderDto input)
     {
         var entity = await Repository.GetAsync(id);
         input.Apply(entity);
@@ -173,7 +180,7 @@ public class OrderAppService
         return entity.ToDto();
     }
 
-    public override async Task DeleteAsync(Guid id)
+    public async Task DeleteAsync(Guid id)
     {
         var entity = await Repository.GetAsync(id);
         await Repository.DeleteAsync(entity);

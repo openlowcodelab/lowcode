@@ -7,7 +7,6 @@ using Volo.Abp.Identity;
 namespace H.Account.Application;
 
 [DependsOn(
-    typeof(AccountApplicationContractsModule),
     typeof(AccountEntityFrameworkCoreModule),
     typeof(AbpIdentityDomainModule)
 )]

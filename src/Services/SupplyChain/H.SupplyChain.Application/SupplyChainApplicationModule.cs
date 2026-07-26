@@ -7,7 +7,6 @@ using Volo.Abp.Modularity;
 namespace H.SupplyChain.Application;
 
 [DependsOn(
-    typeof(SupplyChainApplicationContractsModule),
     typeof(SupplyChainEntityFrameworkCoreModule)
 )]
 public class SupplyChainApplicationModule : AbpModule

@@ -1,10 +1,10 @@
-﻿using H.LowCode.DesignEngine.Model;
+﻿using H.Abstractions;
+using H.LowCode.DesignEngine.Model;
 using H.LowCode.MetaSchema;
-using Volo.Abp.Application.Services;
 
 namespace H.LowCode.DesignEngine.Application.Contracts;
 
-public interface IDataSourceAppService : IApplicationService
+public interface IDataSourceAppService : IAppService
 {
     Task<IList<DataSourceListModel>> GetListAsync(string appId, DataSourceInput input);
 

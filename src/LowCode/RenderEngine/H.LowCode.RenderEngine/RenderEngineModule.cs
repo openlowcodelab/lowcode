@@ -1,13 +1,8 @@
-using System;
-using Microsoft.Extensions.DependencyInjection;
-using Volo.Abp.Modularity;
-
 namespace H.LowCode.RenderEngine;
 
-public class RenderEngineModule : AbpModule
+/// <summary>
+/// RenderEngine 模块标记类
+/// </summary>
+public static class RenderEngineModule
 {
-    public override void ConfigureServices(ServiceConfigurationContext context)
-    {
-
-    }
 }

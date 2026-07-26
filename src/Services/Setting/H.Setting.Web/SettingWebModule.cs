@@ -1,10 +1,8 @@
-using Volo.Abp.Modularity;
-
 namespace H.Setting.Web;
 
-public class SettingWebModule : AbpModule
+/// <summary>
+/// Setting Web 模块标记类
+/// </summary>
+public static class SettingWebModule
 {
-    public override void ConfigureServices(ServiceConfigurationContext context)
-    {
-    }
 }

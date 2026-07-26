@@ -104,7 +104,7 @@
     private async Task RowSaveAsync(string id)
     {
         await Task.Delay(1);
-        var index = DataSource.FindIndex(item => item.Id == id);
+        var index = DataSource.ToList().FindIndex(item => item.Id == id);
         DataSource[index] = _optionEditCache[id].option;
         _optionEditCache[id] = (false, DataSource[index]);
 

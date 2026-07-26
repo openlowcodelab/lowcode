@@ -1,14 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Volo.Abp.Application.Services;
+using H.Abstractions;
 
 namespace H.Testing.Application.Contracts;
 
 /// <summary>
 /// 测试用例分类服务接口
 /// </summary>
-public interface IProjectCaseCategoryAppService : IApplicationService
+public interface IProjectCaseCategoryAppService : IAppService
 {
     /// <summary>
     /// 根据项目 ID 获取分类列表

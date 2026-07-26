@@ -3,14 +3,14 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Volo.Abp.Application.Services;
+using H.Abstractions;
 
 namespace H.Testing.Application.Contracts;
 
 /// <summary>
 /// 批量执行服务接口
 /// </summary>
-public interface IBatchExecutionAppService : IApplicationService
+public interface IBatchExecutionAppService : IAppService
 {
     /// <summary>
     /// 批量执行测试用例

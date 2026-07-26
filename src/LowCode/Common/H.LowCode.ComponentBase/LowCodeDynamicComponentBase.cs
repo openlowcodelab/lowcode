@@ -164,7 +164,7 @@ public abstract class LowCodeDynamicComponentBase : LowCodeComponentBase
         //    }));
         //}
 
-        if (attr.AttributeClrType.IsNullOrEmpty())
+        if (string.IsNullOrEmpty(attr.AttributeClrType))
             return;
 
         var attrType = Type.GetType(attr.AttributeClrType, throwOnError: false);

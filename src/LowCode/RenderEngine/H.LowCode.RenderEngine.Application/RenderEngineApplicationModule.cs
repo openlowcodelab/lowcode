@@ -11,7 +11,6 @@ namespace H.LowCode.RenderEngine.Application;
 [DependsOn(
     //abp
     typeof(AbpAutoMapperModule),
-    typeof(RenderEngineApplicationContractsModule),
     //lowcode
     typeof(LowCodeApplicationModule),
     typeof(RenderEngineDomainModule)

@@ -1,10 +1,9 @@
-using Volo.Abp.Modularity;
-
 namespace H.BackgroundTask.Application.Contracts;
 
-public class BackgroundTaskApplicationContractsModule : AbpModule
+/// <summary>
+/// BackgroundTask 应用契约程序集标记类（用于程序集引用定位）
+/// </summary>
+public static class BackgroundTaskApplicationContractsModule
 {
-    public override void ConfigureServices(ServiceConfigurationContext context)
-    {
-    }
+    public static System.Reflection.Assembly Assembly => typeof(BackgroundTaskApplicationContractsModule).Assembly;
 }

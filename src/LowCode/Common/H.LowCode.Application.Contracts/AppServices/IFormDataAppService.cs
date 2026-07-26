@@ -1,9 +1,8 @@
-﻿using Volo.Abp.Http;
-using Volo.Abp.Application.Services;
+﻿using H.Abstractions;
 
 namespace H.LowCode.Application.Contracts;
 
-public interface IFormDataAppService : IApplicationService
+public interface IFormDataAppService : IAppService
 {
     Task<bool> SaveAsync(FormDataDto dto);
 

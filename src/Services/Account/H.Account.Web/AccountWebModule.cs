@@ -1,10 +1,8 @@
-using Volo.Abp.Modularity;
-
 namespace H.Account.Web;
 
-public class AccountWebModule : AbpModule
+/// <summary>
+/// Account Web 模块标记类
+/// </summary>
+public static class AccountWebModule
 {
-    public override void ConfigureServices(ServiceConfigurationContext context)
-    {
-    }
 }

@@ -5,7 +5,6 @@ using Volo.Abp.Modularity;
 namespace H.Setting.Application;
 
 [DependsOn(
-    typeof(SettingApplicationContractsModule),
     typeof(SettingEntityFrameworkCoreModule)
 )]
 public class SettingApplicationModule : AbpModule

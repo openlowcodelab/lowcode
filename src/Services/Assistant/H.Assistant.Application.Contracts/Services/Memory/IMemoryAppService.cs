@@ -1,8 +1,8 @@
-using Volo.Abp.Application.Services;
+using H.Abstractions;
 
 namespace H.Assistant.Application.Contracts;
 
-public interface IMemoryAppService : IApplicationService
+public interface IMemoryAppService : IAppService
 {
     Task<List<KnowledgeNodeDto>> GetTreeAsync();
     Task<KnowledgeNodeDto> CreateNodeAsync(CreateKnowledgeNodeDto input);

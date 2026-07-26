@@ -1,11 +1,11 @@
-using Volo.Abp.Application.Services;
+using H.Abstractions;
 
 namespace H.Approval.Application.Contracts;
 
 /// <summary>
 /// 审批任务服务接口
 /// </summary>
-public interface IApprovalTaskAppService : IApplicationService
+public interface IApprovalTaskAppService : IAppService
 {
     /// <summary>
     /// 获取待我审批的任务列表(当前登录用户)

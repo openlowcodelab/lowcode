@@ -1,4 +1,4 @@
-using Volo.Abp.Application.Services;
+using H.Abstractions;
 
 namespace H.SupplyChain.Application.Contracts;
 
@@ -9,7 +9,7 @@ namespace H.SupplyChain.Application.Contracts;
 ///  - GET  /api/supply-chain/supply-chain-api/product-detail
 ///  - POST /api/supply-chain/supply-chain-api/place-order
 /// </summary>
-public interface ISupplyChainApiAppService : IApplicationService
+public interface ISupplyChainApiAppService : IAppService
 {
     /// <summary>
     /// 菜单接口：返回内部商品目录（可按供应商映射后展示供应商侧 SKU 编码）。

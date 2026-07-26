@@ -1,8 +1,8 @@
-using Volo.Abp.Application.Services;
+using H.Abstractions;
 
 namespace H.Assistant.Application.Contracts;
 
-public interface IMcpServerAppService : IApplicationService
+public interface IMcpServerAppService : IAppService
 {
     Task<List<McpServerDto>> GetAllAsync();
     Task<McpServerDto> CreateAsync(CreateMcpServerDto input);

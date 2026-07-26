@@ -53,7 +53,7 @@ public abstract class DynamicComponentBase : LowCodeDynamicComponentBase
         {
             RenderChildFragments(componentId, component, componentFragment, builder, index);
         }
-        else if (componentFragment.Content.IsNullOrWhiteSpace() == false)
+        else if (string.IsNullOrWhiteSpace(componentFragment.Content) == false)
         {
             RenderContent(componentId, component, componentFragment, builder, index);
         }
@@ -285,7 +285,7 @@ public abstract class DynamicComponentBase : LowCodeDynamicComponentBase
         ComponentPartsFragmentSchema componentFragment,
         RenderTreeBuilder builder, int index)
     {
-        if (componentFragment.Content.IsNullOrWhiteSpace())
+        if (string.IsNullOrWhiteSpace(componentFragment.Content))
             return;
 
         if (string.Equals(componentFragment.Content, $"$({nameof(DraggableContainer)})",

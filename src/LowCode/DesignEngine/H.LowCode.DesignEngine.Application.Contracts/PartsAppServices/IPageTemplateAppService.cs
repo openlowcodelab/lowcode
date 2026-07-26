@@ -1,10 +1,10 @@
+using H.Abstractions;
 using H.LowCode.DesignEngine.Model;
 using H.LowCode.MetaSchema.DesignEngine;
-using Volo.Abp.Application.Services;
 
 namespace H.LowCode.DesignEngine.Application.Contracts;
 
-public interface IPageTemplateAppService : IApplicationService
+public interface IPageTemplateAppService : IAppService
 {
     Task<List<PageTemplateListModel>> GetListAsync();
 

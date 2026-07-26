@@ -1,11 +1,8 @@
-using Volo.Abp.Modularity;
-
 namespace H.Assistant.Web;
 
-public class AssistantWebModule : AbpModule
+/// <summary>
+/// Assistant Web 模块标记类
+/// </summary>
+public static class AssistantWebModule
 {
-    public override void ConfigureServices(ServiceConfigurationContext context)
-    {
-        
-    }
 }

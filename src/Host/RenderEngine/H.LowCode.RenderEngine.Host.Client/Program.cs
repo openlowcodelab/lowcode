@@ -4,15 +4,6 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
-#region  LowCode
-var application = await builder.AddApplicationAsync<RenderEngineHostClientModule>(options =>
-{
-    options.UseAutofac();
-});
-#endregion
+ClientServices.Configure(builder.Services, builder.Configuration, builder.HostEnvironment.BaseAddress);
 
-var host = builder.Build();
-
-await application.InitializeApplicationAsync(host.Services);
-
-await host.RunAsync();
+await builder.Build().RunAsync();

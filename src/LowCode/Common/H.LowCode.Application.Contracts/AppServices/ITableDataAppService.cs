@@ -1,6 +1,4 @@
-using Volo.Abp;
-using Volo.Abp.Application.Dtos;
-using Volo.Abp.Application.Services;
+using H.Abstractions;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -9,7 +7,7 @@ namespace H.LowCode.Application.Contracts;
 /// <summary>
 /// 列表数据查询
 /// </summary>
-public interface ITableDataAppService : IApplicationService
+public interface ITableDataAppService : IAppService
 {
     /// <summary>
     /// 获取表格数据

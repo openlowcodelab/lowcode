@@ -133,10 +133,10 @@
     private async Task SaveDataSourceSchemaAsync()
     {
         _dataSource.API.Queries = _dataSource.API.Queries
-            .Where(t => !t.Name.IsNullOrEmpty() && !t.Type.IsNullOrEmpty())
+            .Where(t => !string.IsNullOrEmpty(t.Name) && !string.IsNullOrEmpty(t.Type))
             .ToList();
         _dataSource.API.Headers = _dataSource.API.Headers
-            .Where(t => !t.Name.IsNullOrEmpty() && !t.Type.IsNullOrEmpty())
+            .Where(t => !string.IsNullOrEmpty(t.Name) && !string.IsNullOrEmpty(t.Type))
             .ToList();
 
         await DataSourceAppService.SaveAsync(AppId, _dataSource);

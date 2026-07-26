@@ -5,7 +5,6 @@ using Volo.Abp.Modularity;
 namespace H.Organization.Application;
 
 [DependsOn(
-    typeof(OrganizationApplicationContractsModule),
     typeof(OrganizationEntityFrameworkCoreModule)
 )]
 public class OrganizationApplicationModule : AbpModule

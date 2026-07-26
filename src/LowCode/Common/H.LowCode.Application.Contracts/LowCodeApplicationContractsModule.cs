@@ -1,18 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
-using Volo.Abp.Modularity;
-using Volo.Abp.Validation;
+﻿namespace H.LowCode.Application.Contracts;
 
-namespace H.LowCode.Application.Contracts;
-
-public class LowCodeApplicationContractsModule : AbpModule
+/// <summary>
+/// LowCode 应用契约程序集标记类（用于程序集引用定位）
+/// </summary>
+public static class LowCodeApplicationContractsModule
 {
-    public override void ConfigureServices(ServiceConfigurationContext context)
-    {
-
-    }
+    public static System.Reflection.Assembly Assembly => typeof(LowCodeApplicationContractsModule).Assembly;
 }

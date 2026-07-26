@@ -95,7 +95,7 @@
     private async Task RowSaveAsync(string id)
     {
         await Task.Delay(1);
-        var index = APIParams.FindIndex(item => item.Id == id);
+        var index = APIParams.ToList().FindIndex(item => item.Id == id);
         APIParams[index] = _optionEditCache[id].param;
         _optionEditCache[id] = (false, APIParams[index]);
 

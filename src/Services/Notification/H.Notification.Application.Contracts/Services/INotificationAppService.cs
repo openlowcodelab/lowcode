@@ -1,12 +1,11 @@
-using Volo.Abp.Application.Dtos;
-using Volo.Abp.Application.Services;
+using H.Abstractions;
 
 namespace H.Notification.Application.Contracts;
 
 /// <summary>
 /// 通知分类管理接口
 /// </summary>
-public interface INotificationCategoryAppService : IApplicationService
+public interface INotificationCategoryAppService : IAppService
 {
     Task<List<NotificationCategoryDto>> GetAllAsync();
     Task<NotificationCategoryDto> GetAsync(long id);
@@ -18,7 +17,7 @@ public interface INotificationCategoryAppService : IApplicationService
 /// <summary>
 /// 联系人管理接口
 /// </summary>
-public interface IContactAppService : IApplicationService
+public interface IContactAppService : IAppService
 {
     Task<PagedResultDto<ContactDto>> GetListAsync(ContactQueryDto input);
     Task<List<ContactDto>> GetAllEnabledAsync();
@@ -31,7 +30,7 @@ public interface IContactAppService : IApplicationService
 /// <summary>
 /// 联系人分组管理接口
 /// </summary>
-public interface IContactGroupAppService : IApplicationService
+public interface IContactGroupAppService : IAppService
 {
     Task<PagedResultDto<ContactGroupDto>> GetListAsync(ContactGroupQueryDto input);
     Task<List<ContactGroupDto>> GetAllEnabledAsync();
@@ -44,7 +43,7 @@ public interface IContactGroupAppService : IApplicationService
 /// <summary>
 /// 通知渠道管理接口
 /// </summary>
-public interface INotificationChannelAppService : IApplicationService
+public interface INotificationChannelAppService : IAppService
 {
     Task<PagedResultDto<NotificationChannelDto>> GetListAsync(NotificationChannelQueryDto input);
     Task<List<NotificationChannelDto>> GetAllEnabledAsync();
@@ -57,7 +56,7 @@ public interface INotificationChannelAppService : IApplicationService
 /// <summary>
 /// 通知业务管理接口
 /// </summary>
-public interface INotificationBusinessAppService : IApplicationService
+public interface INotificationBusinessAppService : IAppService
 {
     Task<PagedResultDto<NotificationBusinessDto>> GetListAsync(NotificationBusinessQueryDto input);
     Task<NotificationBusinessDto> GetAsync(Guid id);
@@ -89,7 +88,7 @@ public interface INotificationBusinessAppService : IApplicationService
 /// <summary>
 /// 通知发送接口
 /// </summary>
-public interface INotificationSendAppService : IApplicationService
+public interface INotificationSendAppService : IAppService
 {
     Task<SendNotificationResult> SendAsync(SendNotificationInput input);
     Task<SendNotificationResult> TestSendAsync(TestSendInput input);
@@ -98,7 +97,7 @@ public interface INotificationSendAppService : IApplicationService
 /// <summary>
 /// 通知记录查询接口
 /// </summary>
-public interface INotificationRecordAppService : IApplicationService
+public interface INotificationRecordAppService : IAppService
 {
     Task<PagedResultDto<NotificationRecordDto>> GetMasterListAsync(NotificationRecordQueryDto input);
     Task<PagedResultDto<InAppRecordDto>> GetInAppListAsync(ChannelRecordQueryDto input);

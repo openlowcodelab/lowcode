@@ -2,7 +2,7 @@ using H.SupplyChain.Application.Contracts;
 using H.SupplyChain.Application.Mapping;
 using H.SupplyChain.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Volo.Abp.Application.Dtos;
+using H.Abstractions;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 
@@ -12,22 +12,24 @@ namespace H.SupplyChain.Application.Services;
 /// 供应商 SKU 映射管理：CRUD（一个内部 SKU 可映射多个供应商）
 /// </summary>
 public class SupplierSkuMappingAppService
-    : CrudAppService<SupplierSkuMappingEntity, SupplierSkuMappingDto, Guid, SupplierSkuMappingQueryDto, CreateSupplierSkuMappingDto, UpdateSupplierSkuMappingDto>,
+    : ApplicationService,
       ISupplierSkuMappingAppService
 {
+    protected readonly IRepository<SupplierSkuMappingEntity, Guid> Repository;
     private readonly IRepository<ProductSkuEntity, Guid> _skuRepo;
     private readonly IRepository<SupplierEntity, Guid> _supplierRepo;
 
     public SupplierSkuMappingAppService(
         IRepository<SupplierSkuMappingEntity, Guid> repository,
         IRepository<ProductSkuEntity, Guid> skuRepo,
-        IRepository<SupplierEntity, Guid> supplierRepo) : base(repository)
+        IRepository<SupplierEntity, Guid> supplierRepo)
     {
+        Repository = repository;
         _skuRepo = skuRepo;
         _supplierRepo = supplierRepo;
     }
 
-    public override async Task<PagedResultDto<SupplierSkuMappingDto>> GetListAsync(SupplierSkuMappingQueryDto input)
+    public async Task<PagedResultDto<SupplierSkuMappingDto>> GetListAsync(SupplierSkuMappingQueryDto input)
     {
         var query = await Repository.GetQueryableAsync();
         if (input.SkuId.HasValue)
@@ -46,13 +48,13 @@ public class SupplierSkuMappingAppService
         return new PagedResultDto<SupplierSkuMappingDto>(totalCount, dtos);
     }
 
-    public override async Task<SupplierSkuMappingDto> GetAsync(Guid id)
+    public async Task<SupplierSkuMappingDto> GetAsync(Guid id)
     {
         var entity = await Repository.GetAsync(id);
         return (await BuildDtosAsync(new[] { entity }))[0];
     }
 
-    public override async Task<SupplierSkuMappingDto> CreateAsync(CreateSupplierSkuMappingDto input)
+    public async Task<SupplierSkuMappingDto> CreateAsync(CreateSupplierSkuMappingDto input)
     {
         var existsQuery = await Repository.GetQueryableAsync();
         var exists = await AsyncExecuter.AnyAsync(
@@ -68,13 +70,18 @@ public class SupplierSkuMappingAppService
         return (await BuildDtosAsync(new[] { entity }))[0];
     }
 
-    public override async Task<SupplierSkuMappingDto> UpdateAsync(Guid id, UpdateSupplierSkuMappingDto input)
+    public async Task<SupplierSkuMappingDto> UpdateAsync(Guid id, UpdateSupplierSkuMappingDto input)
     {
         var entity = await Repository.GetAsync(id);
         input.Apply(entity);
         await Repository.UpdateAsync(entity);
         await CurrentUnitOfWork.SaveChangesAsync();
         return (await BuildDtosAsync(new[] { entity }))[0];
+    }
+
+    public async Task DeleteAsync(Guid id)
+    {
+        await Repository.DeleteAsync(id);
     }
 
     /// <summary>加载 SKU 编码与供应商编码，组装展示 DTO</summary>
@@ -105,12 +112,20 @@ public class SupplierSkuMappingAppService
 /// 接口定义管理：CRUD（菜单接口、商品接口、下单接口等）
 /// </summary>
 public class ApiInterfaceAppService
-    : CrudAppService<ApiInterfaceEntity, ApiInterfaceDto, Guid, ApiInterfaceQueryDto, CreateApiInterfaceDto, UpdateApiInterfaceDto>,
+    : ApplicationService,
       IApiInterfaceAppService
 {
-    public ApiInterfaceAppService(IRepository<ApiInterfaceEntity, Guid> repository) : base(repository) { }
+    protected readonly IRepository<ApiInterfaceEntity, Guid> Repository;
 
-    public override async Task<PagedResultDto<ApiInterfaceDto>> GetListAsync(ApiInterfaceQueryDto input)
+    public ApiInterfaceAppService(IRepository<ApiInterfaceEntity, Guid> repository) { Repository = repository; }
+
+    public async Task<ApiInterfaceDto> GetAsync(Guid id)
+    {
+        var entity = await Repository.GetAsync(id);
+        return entity.ToDto();
+    }
+
+    public async Task<PagedResultDto<ApiInterfaceDto>> GetListAsync(ApiInterfaceQueryDto input)
     {
         var query = await Repository.GetQueryableAsync();
         if (!string.IsNullOrWhiteSpace(input.Filter))
@@ -129,7 +144,7 @@ public class ApiInterfaceAppService
         return new PagedResultDto<ApiInterfaceDto>(totalCount, dtos);
     }
 
-    public override async Task<ApiInterfaceDto> CreateAsync(CreateApiInterfaceDto input)
+    public async Task<ApiInterfaceDto> CreateAsync(CreateApiInterfaceDto input)
     {
         var existsQuery = await Repository.GetQueryableAsync();
         var exists = await AsyncExecuter.AnyAsync(existsQuery.Where(x => x.Code == input.Code));
@@ -144,12 +159,17 @@ public class ApiInterfaceAppService
         return entity.ToDto();
     }
 
-    public override async Task<ApiInterfaceDto> UpdateAsync(Guid id, UpdateApiInterfaceDto input)
+    public async Task<ApiInterfaceDto> UpdateAsync(Guid id, UpdateApiInterfaceDto input)
     {
         var entity = await Repository.GetAsync(id);
         input.Apply(entity);
         await Repository.UpdateAsync(entity);
         await CurrentUnitOfWork.SaveChangesAsync();
         return entity.ToDto();
+    }
+
+    public async Task DeleteAsync(Guid id)
+    {
+        await Repository.DeleteAsync(id);
     }
 }

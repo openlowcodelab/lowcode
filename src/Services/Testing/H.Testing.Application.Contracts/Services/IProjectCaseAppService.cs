@@ -2,14 +2,14 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
-using Volo.Abp.Application.Services;
+using H.Abstractions;
 
 namespace H.Testing.Application.Contracts;
 
 /// <summary>
 /// 测试用例服务接口
 /// </summary>
-public interface IProjectCaseAppService : IApplicationService
+public interface IProjectCaseAppService : IAppService
 {
     /// <summary>
     /// 获取所有测试用例（所有项目）

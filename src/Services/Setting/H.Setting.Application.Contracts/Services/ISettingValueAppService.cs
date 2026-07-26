@@ -1,12 +1,11 @@
-using Volo.Abp.Application.Dtos;
-using Volo.Abp.Application.Services;
+using H.Abstractions;
 
 namespace H.Setting.Application.Contracts;
 
 /// <summary>
 /// 配置项管理接口
 /// </summary>
-public interface ISettingValueAppService : IApplicationService
+public interface ISettingValueAppService : IAppService
 {
     Task<PagedResultDto<SettingValueDto>> GetListAsync(SettingValueQueryDto input);
     Task<SettingValueDto> GetAsync(Guid id);

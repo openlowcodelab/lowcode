@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Volo.Abp.Application.Services;
+using H.Abstractions;
 
 namespace H.Testing.Application.Contracts;
 
-public interface IPlaywrightRecorderAppService : IApplicationService
+public interface IPlaywrightRecorderAppService : IAppService
 {
     Task<StartRecordingResponse> StartRecordingAsync(string startUrl);
 

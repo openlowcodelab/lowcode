@@ -10,7 +10,6 @@ using Volo.Abp.Modularity;
 namespace H.BackgroundTask.Application;
 
 [DependsOn(
-    typeof(BackgroundTaskApplicationContractsModule),
     typeof(BackgroundTaskEntityFrameworkCoreModule)
 )]
 public class BackgroundTaskApplicationModule : AbpModule

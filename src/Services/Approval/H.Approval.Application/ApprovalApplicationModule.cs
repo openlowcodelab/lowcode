@@ -11,7 +11,6 @@ using Volo.Abp.Modularity;
 namespace H.Approval.Application;
 
 [DependsOn(
-    typeof(ApprovalApplicationContractsModule),
     typeof(ApprovalEntityFrameworkCoreModule)
 )]
 public class ApprovalApplicationModule : AbpModule

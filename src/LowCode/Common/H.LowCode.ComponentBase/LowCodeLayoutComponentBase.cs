@@ -30,7 +30,7 @@ public abstract class LowCodeLayoutComponentBase : LayoutComponentBase
     {
         get
         {
-            if (_appId.IsNullOrEmpty())
+            if (string.IsNullOrEmpty(_appId))
             {
                 _appId = GetRouteValue("AppId");
                 return _appId;

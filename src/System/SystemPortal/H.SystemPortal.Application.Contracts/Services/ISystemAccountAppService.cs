@@ -1,8 +1,8 @@
-using Volo.Abp.Application.Services;
+using H.Abstractions;
 
 namespace H.SystemPortal.Application.Contracts;
 
-public interface ISystemAccountAppService : IApplicationService
+public interface ISystemAccountAppService : IAppService
 {
     /// <summary>
     /// 验证系统用户登录凭据，成功返回 UserDto，失败返回 null

@@ -1,10 +1,8 @@
-using Volo.Abp.Modularity;
-
 namespace H.SystemPortal.Web;
 
-public class SystemPortalWebModule : AbpModule
+/// <summary>
+/// SystemPortal Web 模块标记类
+/// </summary>
+public static class SystemPortalWebModule
 {
-    public override void ConfigureServices(ServiceConfigurationContext context)
-    {
-    }
 }

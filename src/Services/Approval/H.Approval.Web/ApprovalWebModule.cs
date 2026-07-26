@@ -1,10 +1,8 @@
-using Volo.Abp.Modularity;
-
 namespace H.Approval.Web;
 
-public class ApprovalWebModule : AbpModule
+/// <summary>
+/// Approval Web 模块标记类
+/// </summary>
+public static class ApprovalWebModule
 {
-    public override void ConfigureServices(ServiceConfigurationContext context)
-    {
-    }
 }

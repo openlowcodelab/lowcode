@@ -1,11 +1,11 @@
-using Volo.Abp.Application.Services;
+using H.Abstractions;
 
 namespace H.Approval.Application.Contracts;
 
 /// <summary>
 /// 审批实例服务接口
 /// </summary>
-public interface IApprovalInstanceAppService : IApplicationService
+public interface IApprovalInstanceAppService : IAppService
 {
     /// <summary>
     /// 启动审批实例

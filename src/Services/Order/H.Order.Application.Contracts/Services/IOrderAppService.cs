@@ -1,5 +1,4 @@
-using Volo.Abp.Application.Dtos;
-using Volo.Abp.Application.Services;
+using H.Abstractions;
 
 namespace H.Order.Application.Contracts;
 
@@ -15,7 +14,7 @@ namespace H.Order.Application.Contracts;
 ///  - GET    /api/order/order/{id}/dispatch-status     查询下发状态
 ///  - GET    /api/order/order/{id}/detail              详情（含扩展属性）
 /// </summary>
-public interface IOrderAppService : IApplicationService
+public interface IOrderAppService : IAppService
 {
     /// <summary>分页查询订单（仅核心字段，不关联扩展表）</summary>
     Task<PagedResultDto<OrderDto>> GetListAsync(OrderQueryDto input);

@@ -1,11 +1,11 @@
-using Volo.Abp.Application.Services;
+using H.Abstractions;
 
 namespace H.Enterprise.Application.Contracts;
 
 /// <summary>
 /// 企业用户管理服务接口
 /// </summary>
-public interface IEnterpriseUserAppService : IApplicationService
+public interface IEnterpriseUserAppService : IAppService
 {
     /// <summary>
     /// 获取企业的用户列表

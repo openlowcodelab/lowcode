@@ -1,11 +1,11 @@
-using Volo.Abp.Application.Services;
+using H.Abstractions;
 
 namespace H.Organization.Application.Contracts;
 
 /// <summary>
 /// 组织邀请服务接口
 /// </summary>
-public interface IOrgInviteAppService : IApplicationService
+public interface IOrgInviteAppService : IAppService
 {
     /// <summary>
     /// 创建邀请（生成令牌；若填写手机号则发送短信邀请链接）

@@ -20,6 +20,7 @@ using H.Setting.Application;
 using H.SupplyChain.Application;
 using H.BackgroundTask.Application;
 using H.YunXiaoMcpServer;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Volo.Abp.AspNetCore.MultiTenancy;
 using Volo.Abp.AspNetCore.Mvc;
@@ -183,6 +184,19 @@ public class HostAllModule : AbpModule
         Configure<AbpTenantResolveOptions>(options =>
         {
             options.TenantResolvers.Insert(0, new ClaimsTenantResolveContributor());
+        });
+
+        // 租户无效（如陈旧 __tenant Cookie 指向已删除的租户）时：
+        // 清理 Cookie 并重定向到首页，而不是返回 404 阻断所有请求
+        Configure<AbpAspNetCoreMultiTenancyOptions>(options =>
+        {
+            options.MultiTenancyMiddlewareErrorPageBuilder = async (httpContext, exception) =>
+            {
+                httpContext.Response.Cookies.Delete("__tenant");
+                await httpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+                httpContext.Response.Redirect("/");
+                return true;
+            };
         });
     }
 }
