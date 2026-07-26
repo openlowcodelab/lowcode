@@ -4,16 +4,15 @@ using H.Assistant.Application.Contracts;
 using H.Testing.Application.Contracts;
 using H.Enterprise.Application.Contracts;
 using H.LowCode.Application.Contracts;
-using H.LowCode.ComponentBase;
 using H.LowCode.DesignEngine.Application.Contracts;
 using H.LowCode.RenderEngine.Application.Contracts;
 using H.LowCode.RenderEngineBase;
+using H.LowCode.ComponentBase;
 using H.Notification.Application.Contracts;
 using H.Order.Application.Contracts;
 using H.Setting.Application.Contracts;
 using H.Organization.Application.Contracts;
 using H.BackgroundTask.Application.Contracts;
-using H.Portal.Application.Contracts;
 using H.SupplyChain.Application.Contracts;
 using H.SystemPortal.Application.Contracts;
 using H.Abp.HttpClientProxy;
@@ -77,10 +76,8 @@ public static class ClientServices
             services.AddHttpClient(name).AddHttpMessageHandler<CookieHandler>();
         }
 
-        // 首页（Portal）与企业选择所需代理，启动时立即注册；
-        // 其余模块的 Contracts 程序集已配置懒加载，代理在导航时延迟注册
-        services.AddHttpClientProxies(typeof(PortalApplicationContractsModule).Assembly, PortalRemoteServiceName);
-        services.AddHttpClientProxies(typeof(EnterpriseApplicationContractsModule).Assembly, EnterpriseRemoteServiceName);
+        // 首页（Portal）仅依赖默认 HttpClient（AppDrawer、企业选择/创建页均直接调用 API），
+        // 无需在启动时注册任何业务代理；各模块 Contracts 代理均在导航时延迟注册
     }
 
     /// <summary>
@@ -127,7 +124,11 @@ public static class ClientServices
         ["assistant"] = (s, _) =>
             s.AddHttpClientProxies(typeof(AssistantApplicationContractsModule).Assembly, AssistantRemoteServiceName),
         ["system"] = (s, _) =>
-            s.AddHttpClientProxies(typeof(SystemPortalApplicationContractsModule).Assembly, SystemPortalRemoteServiceName),
+        {
+            s.AddHttpClientProxies(typeof(SystemPortalApplicationContractsModule).Assembly, SystemPortalRemoteServiceName);
+            // SystemPortal.Web 使用 Enterprise 代理（System 层内部依赖，合法）
+            s.AddHttpClientProxies(typeof(EnterpriseApplicationContractsModule).Assembly, EnterpriseRemoteServiceName);
+        },
         // 设计器与应用渲染共享的 LowCode 基础服务
         ["lowcode-render"] = (s, _) =>
         {

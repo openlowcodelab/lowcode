@@ -1,7 +1,8 @@
 @page "/enterprise/create"
+@using System.Net.Http.Json
 
 @layout PortalLayout
-@inject IEnterpriseAppService EnterpriseService
+@inject HttpClient HttpClient
 @inject NavigationManager Navigation
 
 <HCard Title="创建企业">
@@ -60,7 +61,7 @@
 </HCard>
 
 @code {
-    private CreateEnterpriseDto model = new();
+    private CreateEnterpriseModel model = new();
     private bool submitting = false;
     private string? errorMessage;
 
@@ -78,9 +79,29 @@
         errorMessage = null;
         try
         {
-            await EnterpriseService.CreateAsync(model);
-            // 新建企业为待激活状态，返回企业选择页查看激活状态
-            Navigation.NavigateTo("/enterprise/select", forceLoad: true);
+            // 通过门户网关接口创建企业（前端不依赖 Enterprise Contracts）
+            var response = await HttpClient.PostAsJsonAsync("/api/app/portal-enterprise", model);
+            if (response.IsSuccessStatusCode)
+            {
+                // 新建企业为待激活状态，返回企业选择页查看激活状态
+                Navigation.NavigateTo("/enterprise/select", forceLoad: true);
+            }
+            else
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                try
+                {
+                    using var doc = System.Text.Json.JsonDocument.Parse(content);
+                    errorMessage = doc.RootElement.TryGetProperty("error", out var error)
+                        && error.TryGetProperty("message", out var msgProp)
+                        ? msgProp.GetString() ?? "创建失败"
+                        : "创建失败";
+                }
+                catch
+                {
+                    errorMessage = "创建失败";
+                }
+            }
         }
         catch (Exception ex)
         {

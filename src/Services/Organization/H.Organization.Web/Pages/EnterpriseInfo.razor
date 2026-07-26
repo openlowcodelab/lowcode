@@ -1,8 +1,8 @@
 @page "/organization/enterprise"
 
 @layout OrganizationLayout
-@using H.Enterprise.Application.Contracts
-@inject IEnterpriseAppService EnterpriseService
+@using System.Net.Http.Json
+@inject HttpClient HttpClient
 
 <HCard Title="基本信息">
     <div style="max-width: 640px;">
@@ -128,13 +128,63 @@
 </HCard>
 
 @code {
-    private EnterpriseDto? enterprise;
-    private UpdateEnterpriseDto editModel = new();
+    private EnterpriseInfoModel? enterprise;
+    private UpdateEnterpriseModel editModel = new();
     private bool isOwner;
     private bool loading = true;
     private bool submitting;
     private string? message;
     private string? errorMessage;
+
+    // 企业信息视图模型（通过 HttpClient 调用 /api/app/enterprise/*，不依赖 System 层 Contracts）
+    private class EnterpriseInfoModel
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string? Code { get; set; }
+        public string? Description { get; set; }
+        public string? Logo { get; set; }
+        public string? ContactName { get; set; }
+        public string? ContactPhone { get; set; }
+        public string? ContactEmail { get; set; }
+        public string Status { get; set; } = string.Empty;
+        public string DatabaseMode { get; set; } = string.Empty;
+        public DateTime CreatedAt { get; set; }
+        public string? Remark { get; set; }
+        public int UserCount { get; set; }
+    }
+
+    private class UpdateEnterpriseModel
+    {
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public string? Logo { get; set; }
+        public string? ContactName { get; set; }
+        public string? ContactPhone { get; set; }
+        public string? ContactEmail { get; set; }
+        public string? Remark { get; set; }
+    }
+
+    /// <summary>
+    /// GET 并反序列化；服务端返回 null 时（204 或空 body）返回 default；
+    /// string 结果兼容裸文本响应（ABP 对 string 返回值输出 text/plain）
+    /// </summary>
+    private async Task<T?> GetJsonOrDefaultAsync<T>(string url)
+    {
+        var response = await HttpClient.GetAsync(url);
+        response.EnsureSuccessStatusCode();
+        var content = await response.Content.ReadAsStringAsync();
+        if (string.IsNullOrWhiteSpace(content) || content == "null")
+        {
+            return default;
+        }
+        if (typeof(T) == typeof(string) && !content.StartsWith('"'))
+        {
+            return (T)(object)content;
+        }
+        return System.Text.Json.JsonSerializer.Deserialize<T>(content,
+            new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web));
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -146,13 +196,13 @@
         loading = true;
         try
         {
-            enterprise = await EnterpriseService.GetCurrentEnterpriseAsync();
-            var role = await EnterpriseService.GetCurrentEnterpriseRoleAsync();
+            enterprise = await GetJsonOrDefaultAsync<EnterpriseInfoModel>("/api/app/enterprise/current-enterprise");
+            var role = await GetJsonOrDefaultAsync<string>("/api/app/enterprise/current-enterprise-role");
             isOwner = string.Equals(role, "Owner", StringComparison.OrdinalIgnoreCase);
 
             if (enterprise != null)
             {
-                editModel = new UpdateEnterpriseDto
+                editModel = new UpdateEnterpriseModel
                 {
                     Name = enterprise.Name,
                     Description = enterprise.Description,
@@ -190,8 +240,28 @@
         message = null;
         try
         {
-            enterprise = await EnterpriseService.UpdateCurrentEnterpriseAsync(editModel);
-            message = "保存成功";
+            var response = await HttpClient.PutAsJsonAsync("/api/app/enterprise/current-enterprise", editModel);
+            if (response.IsSuccessStatusCode)
+            {
+                enterprise = await response.Content.ReadFromJsonAsync<EnterpriseInfoModel>();
+                message = "保存成功";
+            }
+            else
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                try
+                {
+                    using var doc = System.Text.Json.JsonDocument.Parse(content);
+                    errorMessage = doc.RootElement.TryGetProperty("error", out var error)
+                        && error.TryGetProperty("message", out var msgProp)
+                        ? msgProp.GetString() ?? "保存失败"
+                        : "保存失败";
+                }
+                catch
+                {
+                    errorMessage = "保存失败";
+                }
+            }
         }
         catch (Exception ex)
         {

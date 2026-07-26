@@ -2,7 +2,6 @@
 @using System.Net.Http.Json
 
 @layout PortalLayout
-@inject IEnterpriseAppService EnterpriseService
 @inject NavigationManager Navigation
 @inject IServiceProvider ServiceProvider
 @inject HttpClient HttpClient
@@ -103,9 +102,9 @@
 </div>
 
 @code {
-    private List<EnterpriseDto> myEnterprises = new();
-    private List<EnterpriseDto> activeEnterprises => myEnterprises.Where(e => e.Status == "Active" && e.IsActivated).ToList();
-    private List<EnterpriseDto> pendingEnterprises => myEnterprises.Where(e => e.Status == "Pending" || !e.IsActivated).ToList();
+    private List<EnterpriseModel> myEnterprises = new();
+    private List<EnterpriseModel> activeEnterprises => myEnterprises.Where(e => e.Status == "Active" && e.IsActivated).ToList();
+    private List<EnterpriseModel> pendingEnterprises => myEnterprises.Where(e => e.Status == "Pending" || !e.IsActivated).ToList();
     private bool loading = true;
     private bool isLoggedIn = false;
     private string? errorMessage;
@@ -172,7 +171,9 @@
     {
         try
         {
-            myEnterprises = await EnterpriseService.GetMyEnterprisesAsync(currentUserId!.Value);
+            // 通过门户网关接口获取我的企业列表（前端不依赖 Enterprise Contracts）
+            myEnterprises = await HttpClient.GetFromJsonAsync<List<EnterpriseModel>>(
+                $"/api/app/portal-enterprise/my-enterprises/{currentUserId!.Value}") ?? new();
         }
         catch (Exception ex)
         {
@@ -189,7 +190,7 @@
         try
         {
             var response = await HttpClient.PostAsync(
-                $"/api/app/enterprise/select-enterprise/{enterpriseId}",
+                $"/api/app/portal-enterprise/select-enterprise/{enterpriseId}",
                 null);
 
             if (response.IsSuccessStatusCode)

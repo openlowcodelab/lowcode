@@ -1,5 +1,4 @@
 using H.AppDrawer.Components;
-using H.Portal.Application.Contracts;
 using System.Text.Json;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
@@ -8,9 +7,10 @@ namespace H.Portal.Application;
 
 /// <summary>
 /// 应用查询服务（只读），负责从 JSON 文件读取应用数据
+/// 前端通过 HttpClient 调用 /api/app/app-query/*（ABP 约定路由）
 /// </summary>
 [RemoteService]
-public class AppQueryAppService : ApplicationService, IAppQueryAppService
+public class AppQueryAppService : ApplicationService
 {
     private readonly string _jsonFilePath;
 

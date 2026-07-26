@@ -1,4 +1,3 @@
-using H.Portal.Application.Contracts;
 using Volo.Abp.Modularity;
 
 namespace H.Portal.Application;
