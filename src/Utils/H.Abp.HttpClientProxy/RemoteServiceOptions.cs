@@ -1,4 +1,4 @@
-namespace H.HttpClientProxy;
+namespace H.Abp.HttpClientProxy;
 
 /// <summary>
 /// 远程服务配置项

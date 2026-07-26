@@ -1,4 +1,4 @@
-namespace H.Abstractions;
+namespace H.Abp.Application.Contracts;
 
 public abstract class AuditedEntityDto<TKey> : EntityDto<TKey>
 {

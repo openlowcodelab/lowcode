@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using H.Abstractions;
+using H.Abp.Application.Contracts;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 using H.Assistant.EntityFrameworkCore;

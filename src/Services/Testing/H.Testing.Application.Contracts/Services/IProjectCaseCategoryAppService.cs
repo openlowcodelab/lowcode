@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using H.Abstractions;
+using H.Abp.Application.Contracts;
 
 namespace H.Testing.Application.Contracts;
 

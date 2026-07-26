@@ -1,5 +1,5 @@
 using System;
-using H.Abstractions;
+using H.Abp.Application.Contracts;
 
 namespace H.LowCode.Application.Contracts;
 

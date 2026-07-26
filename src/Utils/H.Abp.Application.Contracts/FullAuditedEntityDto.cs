@@ -1,4 +1,4 @@
-namespace H.Abstractions;
+namespace H.Abp.Application.Contracts;
 
 /// <summary>
 /// 带审计信息的实体 DTO 基类（与 ABP 的 FullAuditedEntityDto 保持相同 JSON 序列化结构）

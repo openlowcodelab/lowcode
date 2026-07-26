@@ -1,9 +1,9 @@
 using System.Reflection;
-using H.Abstractions;
+using H.Abp.Application.Contracts;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace H.HttpClientProxy;
+namespace H.Abp.HttpClientProxy;
 
 /// <summary>
 /// IServiceCollection 扩展方法，提供 HTTP 客户端代理注册功能

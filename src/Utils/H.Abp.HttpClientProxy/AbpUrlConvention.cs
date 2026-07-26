@@ -1,6 +1,6 @@
 using System.Text.RegularExpressions;
 
-namespace H.HttpClientProxy;
+namespace H.Abp.HttpClientProxy;
 
 /// <summary>
 /// ABP URL 约定工具类，将接口名和方法名转换为 ABP 风格的 API URL

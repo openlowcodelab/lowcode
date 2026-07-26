@@ -1,4 +1,4 @@
-using H.Abstractions;
+using H.Abp.Application.Contracts;
 
 namespace H.Assistant.Application.Contracts;
 

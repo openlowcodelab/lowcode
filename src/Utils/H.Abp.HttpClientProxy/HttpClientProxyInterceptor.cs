@@ -3,7 +3,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Web;
 
-namespace H.HttpClientProxy;
+namespace H.Abp.HttpClientProxy;
 
 /// <summary>
 /// 基于 DispatchProxy 的 HTTP 客户端代理，拦截接口方法调用并转换为 HTTP 请求

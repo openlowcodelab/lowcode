@@ -1,4 +1,4 @@
-namespace H.Abstractions;
+namespace H.Abp.Application.Contracts;
 
 /// <summary>
 /// 分页查询结果 DTO（与 ABP 的 PagedResultDto 保持相同 JSON 序列化结构）

@@ -16,7 +16,7 @@ using H.BackgroundTask.Application.Contracts;
 using H.Portal.Application.Contracts;
 using H.SupplyChain.Application.Contracts;
 using H.SystemPortal.Application.Contracts;
-using H.HttpClientProxy;
+using H.Abp.HttpClientProxy;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 

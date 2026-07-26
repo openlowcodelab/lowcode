@@ -1,4 +1,4 @@
-using H.Abstractions;
+using H.Abp.Application.Contracts;
 using H.LowCode.MetaSchema;
 
 namespace H.LowCode.Application.Contracts;

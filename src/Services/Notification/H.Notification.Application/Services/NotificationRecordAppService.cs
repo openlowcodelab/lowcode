@@ -1,6 +1,6 @@
 using H.Notification.Application.Contracts;
 using H.Notification.EntityFrameworkCore;
-using H.Abstractions;
+using H.Abp.Application.Contracts;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 

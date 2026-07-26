@@ -1,5 +1,6 @@
 using H.LowCode.Application.Contracts;
-using H.Abstractions;
+using H.Abp.Application.Contracts;
+using Volo.Abp;
 using Volo.Abp.Application.Services;
 
 namespace H.LowCode.ComponentBase.Services;
@@ -7,7 +8,7 @@ namespace H.LowCode.ComponentBase.Services;
 /// <summary>
 /// 默认表格数据提供者（提供模拟数据）
 /// </summary>
-[H.Abstractions.RemoteService(Name = "DesignEngine")]
+[RemoteService]
 public class TableDataAppService : ApplicationService, ITableDataAppService
 {
     public async Task<PagedResultDto<Dictionary<string, object>>> GetListAsync(TableDataInput request)

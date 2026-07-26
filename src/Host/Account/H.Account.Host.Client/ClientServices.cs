@@ -1,5 +1,5 @@
 using H.Account.Application.Contracts;
-using H.HttpClientProxy;
+using H.Abp.HttpClientProxy;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 

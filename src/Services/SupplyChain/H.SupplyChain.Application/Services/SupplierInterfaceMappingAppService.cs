@@ -2,7 +2,7 @@ using H.SupplyChain.Application.Contracts;
 using H.SupplyChain.Application.Mapping;
 using H.SupplyChain.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using H.Abstractions;
+using H.Abp.Application.Contracts;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 

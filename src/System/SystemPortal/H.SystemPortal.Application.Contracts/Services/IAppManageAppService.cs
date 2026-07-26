@@ -1,5 +1,5 @@
 using H.AppDrawer.Components;
-using H.Abstractions;
+using H.Abp.Application.Contracts;
 
 namespace H.SystemPortal.Application.Contracts;
 

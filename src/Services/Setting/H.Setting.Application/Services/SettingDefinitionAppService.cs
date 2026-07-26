@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using H.Setting.Application.Contracts;
 using H.Setting.EntityFrameworkCore;
 using Volo.Abp;
-using H.Abstractions;
+using H.Abp.Application.Contracts;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 

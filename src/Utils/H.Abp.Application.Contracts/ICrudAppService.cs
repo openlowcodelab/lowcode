@@ -1,4 +1,4 @@
-namespace H.Abstractions;
+namespace H.Abp.Application.Contracts;
 
 /// <summary>
 /// CRUD 应用服务接口（与 ABP 的 ICrudAppService 保持相同签名）
