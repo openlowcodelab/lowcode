@@ -1,0 +1,32 @@
+services:
+  redis:
+    image: redis:8.8-alpine   # 使用精简版，更小更快
+    container_name: redis
+    hostname: redishost
+    restart: always
+    # 通过环境变量传参，更安全（避免明文暴露在ps中）
+    environment:
+      - TZ=Asia/Shanghai
+      - LANG=en_US.UTF-8
+      # 方式一：使用 REDIS_ARGS（推荐）
+      - REDIS_ARGS=--requirepass secure_password_here
+    ports:
+      - "6379:6379"           # 建议加引号防止YAML解析问题
+    command: redis-server --requirepass "123456"
+
+  rabbitmq:
+    image: rabbitmq:4.0-management-alpine  # 升级到最新的4.x稳定版
+    container_name: rabbitmq
+    restart: on-failure
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq    # 推荐用子目录命名更清晰
+    environment:
+      - RABBITMQ_DEFAULT_USER=root
+      - RABBITMQ_DEFAULT_PASS=123456
+      - TZ=Asia/Shanghai
+
+volumes:
+  rabbitmq_data: # RabbitMQ专用卷
