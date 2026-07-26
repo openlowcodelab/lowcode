@@ -67,16 +67,17 @@ internal static partial class AbpUrlConvention
     }
 
     /// <summary>
-    /// PascalCase → kebab-case
-    /// 例如: GetById → get-by-id, ByIdWithDefine → by-id-with-define
+    /// PascalCase → kebab-case（与 ABP StringExtensions.ToKebabCase 保持一致：先转 camelCase 再拆分）
+    /// 例如: GetById → get-by-id, LLM → l-lm（与 ABP 服务端路由一致）
     /// </summary>
     public static string ToKebabCase(string input)
     {
         if (string.IsNullOrEmpty(input))
             return string.Empty;
 
-        // 在大写字母前插入连字符（连续大写除外）
-        var result = KebabRegex().Replace(input, "$1-$2");
+        // 与 ABP 一致：先将首字母小写（camelCase），再在小写字母/数字与大写字母之间插入连字符
+        var camel = char.ToLowerInvariant(input[0]) + input[1..];
+        var result = KebabRegex().Replace(camel, "$1-$2");
         return result.ToLowerInvariant();
     }
 

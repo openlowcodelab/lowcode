@@ -16,7 +16,7 @@ namespace H.Assistant.Application;
 /// <summary>
 /// 定时任务管理应用服务
 /// </summary>
-public class AssistantScheduledTaskAppService : ApplicationService, ITaskAppService
+public class TaskAppService : ApplicationService, ITaskAppService
 {
     private readonly IRepository<TaskEntity, Guid> _taskRepository;
     private readonly IRepository<TaskLogEntity, Guid> _logRepository;
@@ -24,7 +24,7 @@ public class AssistantScheduledTaskAppService : ApplicationService, ITaskAppServ
     private readonly IAsyncQueryableExecuter _asyncExecuter;
     private readonly AgentFactory _agentFactory;
 
-    public AssistantScheduledTaskAppService(
+    public TaskAppService(
         IRepository<TaskEntity, Guid> taskRepository,
         IRepository<TaskLogEntity, Guid> logRepository,
         IMapper objectMapper,
