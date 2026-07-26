@@ -38,6 +38,11 @@ public class ApprovalDefinitionDto
     public string DefinitionJson { get; set; } = string.Empty;
     
     /// <summary>
+    /// 表单设计 JSON(字段Schema)
+    /// </summary>
+    public string? FormJson { get; set; }
+    
+    /// <summary>
     /// 审批图标(emoji)
     /// </summary>
     public string? Icon { get; set; }
@@ -104,6 +109,11 @@ public class CreateApprovalDefinitionDto
     public string DefinitionJson { get; set; } = string.Empty;
     
     /// <summary>
+    /// 表单设计 JSON(字段Schema)
+    /// </summary>
+    public string? FormJson { get; set; }
+    
+    /// <summary>
     /// 审批图标(emoji)
     /// </summary>
     public string? Icon { get; set; }
@@ -163,6 +173,11 @@ public class UpdateApprovalDefinitionDto
     /// 审批定义 JSON
     /// </summary>
     public string DefinitionJson { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// 表单设计 JSON(字段Schema)
+    /// </summary>
+    public string? FormJson { get; set; }
     
     /// <summary>
     /// 审批图标(emoji)

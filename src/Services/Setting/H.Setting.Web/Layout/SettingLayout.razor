@@ -1,0 +1,17 @@
+@namespace H.Setting.Web
+
+@inherits LayoutComponentBase
+
+<DefaultLayoutComponent
+    AppName="配置管理"
+    MenuItems="@MenuItems">
+    @Body
+</DefaultLayoutComponent>
+
+@code {
+    private static List<AppMenuItem> MenuItems => new()
+    {
+        new AppMenuItem { Name = "配置定义", Url = "/setting/definition", Icon = "🧩" },
+        new AppMenuItem { Name = "配置项",   Url = "/setting/item",       Icon = "⚙️" }
+    };
+}

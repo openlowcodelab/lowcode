@@ -28,11 +28,31 @@
             <div class="setting-label">
                 @(Node.ApproverType == ApproverTypeEnum.Specified ? "指定审批人" : "可选审批人范围")
             </div>
-            <div class="setting-hint">暂未集成人员选择器，请手动输入成员ID（逗号分隔）</div>
-            <textarea class="h-textarea" rows="3"
-                      value="@specifiedUsersText"
-                      @oninput="OnSpecifiedUsersInput"
-                      placeholder="请输入成员ID，多个用逗号分隔"></textarea>
+
+            @if ((Node.SpecifiedUserNames ?? new List<string>()).Any())
+            {
+                <div class="selected-users">
+                    @for (var i = 0; i < Node.SpecifiedUserNames.Count; i++)
+                    {
+                        var idx = i;
+                        <span class="selected-user-tag">
+                            @Node.SpecifiedUserNames[idx]
+                            <span class="remove-btn" @onclick="() => RemoveUser(idx)">&times;</span>
+                        </span>
+                    }
+                </div>
+            }
+
+            @if (showUserPicker)
+            {
+                <UserPickerDialog SelectedIds="@pickerSelectedIds" SelectedNames="@pickerSelectedNames" OnConfirm="OnUserPickerConfirm" OnCancel="HideUserPicker" />
+            }
+            else
+            {
+                <button class="add-user-btn" @onclick="ShowUserPicker">
+                    <span>+</span> 添加审批人
+                </button>
+            }
         </div>
     }
 
@@ -40,11 +60,11 @@
     {
         <div class="setting-section">
             <div class="setting-label">指定角色</div>
-            <div class="setting-hint">暂未集成角色选择器，请手动输入角色ID（逗号分隔）</div>
+            <div class="setting-hint">请输入角色名称(逗号分隔)</div>
             <textarea class="h-textarea" rows="3"
                       value="@specifiedRolesText"
                       @oninput="OnSpecifiedRolesInput"
-                      placeholder="请输入角色ID，多个用逗号分隔"></textarea>
+                      placeholder="请输入角色名称，多个用逗号分隔"></textarea>
         </div>
     }
 
@@ -83,8 +103,10 @@
 
     private int approverTypeValue;
     private int approverModeValue;
-    private string specifiedUsersText = "";
     private string specifiedRolesText = "";
+    private bool showUserPicker = false;
+    private List<string> pickerSelectedIds = new();
+    private List<string> pickerSelectedNames = new();
 
     protected override void OnParametersSet()
     {
@@ -92,8 +114,9 @@
         {
             approverTypeValue = (int)Node.ApproverType;
             approverModeValue = (int)Node.ApproverMode;
-            specifiedUsersText = string.Join(",", Node.SpecifiedUsers ?? new List<string>());
             specifiedRolesText = string.Join(",", Node.SpecifiedRoles ?? new List<string>());
+            Node.SpecifiedUsers ??= new List<string>();
+            Node.SpecifiedUserNames ??= new List<string>();
         }
     }
 
@@ -107,18 +130,38 @@
         Node.ApproverMode = (ApproverModeEnum)value;
     }
 
-    private void OnSpecifiedUsersInput(ChangeEventArgs e)
-    {
-        specifiedUsersText = e.Value?.ToString() ?? "";
-        Node.SpecifiedUsers = specifiedUsersText.Split(',', StringSplitOptions.RemoveEmptyEntries)
-            .Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s)).ToList();
-    }
-
     private void OnSpecifiedRolesInput(ChangeEventArgs e)
     {
         specifiedRolesText = e.Value?.ToString() ?? "";
         Node.SpecifiedRoles = specifiedRolesText.Split(',', StringSplitOptions.RemoveEmptyEntries)
             .Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s)).ToList();
+        Node.SpecifiedRoleNames = new List<string>(Node.SpecifiedRoles);
+    }
+
+    private void ShowUserPicker()
+    {
+        pickerSelectedIds = new List<string>(Node.SpecifiedUsers ?? new List<string>());
+        pickerSelectedNames = new List<string>(Node.SpecifiedUserNames ?? new List<string>());
+        showUserPicker = true;
+    }
+
+    private void HideUserPicker()
+    {
+        showUserPicker = false;
+    }
+
+    private void OnUserPickerConfirm((List<string> Ids, List<string> Names) result)
+    {
+        Node.SpecifiedUsers = result.Ids;
+        Node.SpecifiedUserNames = result.Names;
+        showUserPicker = false;
+        StateHasChanged();
+    }
+
+    private void RemoveUser(int index)
+    {
+        if (index < Node.SpecifiedUsers.Count) Node.SpecifiedUsers.RemoveAt(index);
+        if (index < Node.SpecifiedUserNames.Count) Node.SpecifiedUserNames.RemoveAt(index);
     }
 
     private async Task SaveSettings()

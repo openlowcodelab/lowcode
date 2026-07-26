@@ -1,3 +1,4 @@
+using Volo.Abp.Domain.Entities;
 using Volo.Abp.MultiTenancy;
 
 namespace H.Organization.EntityFrameworkCore;
@@ -5,12 +6,16 @@ namespace H.Organization.EntityFrameworkCore;
 /// <summary>
 /// 成员（关联Account服务的用户）
 /// </summary>
-public class MemberEntity : IMultiTenant
+public class MemberEntity : AggregateRoot<Guid>, IMultiTenant
 {
-    /// <summary>
-    /// 成员ID
-    /// </summary>
-    public Guid Id { get; set; }
+    public MemberEntity()
+    {
+    }
+
+    public MemberEntity(Guid id)
+        : base(id)
+    {
+    }
 
     /// <summary>
     /// 部门ID

@@ -2,32 +2,213 @@
 @inherits LowCodeComponentBase
 @layout PartsDesignEngineLayout
 
-<div style="display: flex; justify-content: space-between; margin: 0 0 8px 5px;">
-    <div style="width:250px;">
-        <input class="inp" placeholder="页面库名称" />
+@inject IPageTemplateAppService PageTemplateAppService
+
+<div style="height: 100%; min-height: 0; display: flex; flex-direction: column; background: white; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.03); overflow: hidden;">
+    <div style="padding: 16px; border-bottom: 1px solid #f0f0f0; background: #fafafa; display:flex; justify-content:space-between; align-items:center; gap:12px;">
+        <div style="display:flex; gap:12px; align-items:center;">
+            <input type="search" class="inp" style="width:220px;" placeholder="搜索页面模板" @onchange="@(e => _searchText = e.Value?.ToString() ?? "")" />
+            <select class="sel" style="width:140px;" @bind="_categoryFilter">
+                <option value="-1">全部分类</option>
+                @foreach (var cat in Enum.GetValues<PageTemplateCategoryEnum>())
+                {
+                    <option value="@((int)cat)">@GetCategoryName(cat)</option>
+                }
+            </select>
+        </div>
+        <button class="btn btn-primary btn-sm" @onclick="ShowCreateModal">+ 新建页面模板</button>
+    </div>
+
+    <div style="flex:1; min-height:0; overflow-y:auto; padding:16px;">
+        @if (FilteredTemplates.Any())
+        {
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+                @foreach (var tpl in FilteredTemplates)
+                {
+                    <HCard Style="border: 1px solid #f0f0f0;">
+                        <div style="padding: 8px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                                <span style="font-weight: 500;">@tpl.Name</span>
+                                <span style="font-size: 12px; color: #999;">@tpl.Order</span>
+                            </div>
+                            <div style="font-size: 12px; color: #666; margin-bottom: 8px; min-height: 32px;">@tpl.Description</div>
+                            <div style="display: flex; gap: 4px; margin-bottom: 12px; flex-wrap: wrap;">
+                                <span class="tag tag-blue">@GetCategoryName(tpl.Category)</span>
+                                <span class="tag tag-gray">@tpl.PageType</span>
+                                <span class='tag @(tpl.PublishStatus == 1 ? "tag-green" : "tag-gray")'>
+                                    @(tpl.PublishStatus == 1 ? "已发布" : "待发布")
+                                </span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 12px; color: #999;">@tpl.ModifiedTime.ToString("MM-dd HH:mm")</span>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="btn btn-link btn-sm" @onclick="@(() => DesignTemplate(tpl.TemplateId))">设计</button>
+                                    <button class="btn btn-link btn-sm" @onclick="@(() => ShowEditModal(tpl.TemplateId))">编辑信息</button>
+                                    @if (tpl.PublishStatus == 0)
+                                    {
+                                        <button class="btn btn-link btn-sm" @onclick="@(() => PublishTemplate(tpl.TemplateId, true))">发布</button>
+                                        <button class="btn btn-link btn-sm btn-danger" @onclick="@(() => DeleteTemplate(tpl.TemplateId))">删除</button>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-link btn-sm" @onclick="@(() => PublishTemplate(tpl.TemplateId, false))">取消发布</button>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </HCard>
+                }
+            </div>
+        }
+        else
+        {
+            <div style="text-align:center; padding:40px 20px; color:#999;">暂无页面模板</div>
+        }
     </div>
 </div>
 
-<HCard Title="仪表盘" Style="float:left; width:300px; margin:5px;">
-    <a href="#">查看</a>
-    <p>Card content</p>
-</HCard>
-<HCard Title="表单页" Style="float:left; width:300px; margin:5px;">
-    <a href="#">查看</a>
-    <p>Card content</p>
-</HCard>
-<HCard Title="列表页" Style="float:left; width:300px; margin:5px;">
-    <a href="#">查看</a>
-    <p>Card content</p>
-</HCard>
-<HCard Title="统计页" Style="float:left; width:300px; margin:5px;">
-    <a href="#">查看</a>
-    <p>Card content</p>
-</HCard>
+<HModal Title="@(_isEdit ? "编辑页面模板" : "新建页面模板")" Visible="@_modalVisible" OnOk="OnConfirm" OnCancel="() => _modalVisible = false">
+    <div style="padding: 8px 16px;">
+        <div style="margin-bottom: 16px;">
+            <label style="display:block; margin-bottom:4px; font-weight:500;"><span style="color:red;">*</span> 模板名称</label>
+            <input class="inp" @bind="_form.Name" placeholder="请输入模板名称" />
+        </div>
+        <div style="margin-bottom: 16px;">
+            <label style="display:block; margin-bottom:4px; font-weight:500;">分类</label>
+            <select class="sel" @bind="_form.Category">
+                @foreach (var cat in Enum.GetValues<PageTemplateCategoryEnum>())
+                {
+                    <option value="@cat">@GetCategoryName(cat)</option>
+                }
+            </select>
+        </div>
+        <div style="margin-bottom: 16px;">
+            <label style="display:block; margin-bottom:4px; font-weight:500;">页面类型</label>
+            <select class="sel" @bind="_form.PageType">
+                @foreach (var pt in Enum.GetValues<PageTypeEnum>())
+                {
+                    <option value="@pt">@pt</option>
+                }
+            </select>
+        </div>
+        <div style="margin-bottom: 16px;">
+            <label style="display:block; margin-bottom:4px; font-weight:500;">描述</label>
+            <textarea class="ta" rows="3" @bind="_form.Description" placeholder="请输入模板描述"></textarea>
+        </div>
+        <div style="margin-bottom: 16px;">
+            <label style="display:block; margin-bottom:4px; font-weight:500;">排序</label>
+            <input type="number" class="inp" min="0" @bind="_form.Order" />
+        </div>
+    </div>
+</HModal>
 
 @code {
+    private IList<PageTemplateListModel> _templates = new List<PageTemplateListModel>();
+
+    private string _searchText = "";
+    private int _categoryFilter = -1;
+
+    private bool _modalVisible = false;
+    private bool _isEdit = false;
+    private PageTemplateSchema _form = new() { TemplateId = "" };
+
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
+        await LoadTemplatesAsync();
     }
+
+    private async Task LoadTemplatesAsync()
+    {
+        _templates = await PageTemplateAppService.GetListAsync();
+    }
+
+    private IEnumerable<PageTemplateListModel> FilteredTemplates =>
+        _templates.Where(t =>
+            (_categoryFilter == -1 || (int)t.Category == _categoryFilter) &&
+            (string.IsNullOrWhiteSpace(_searchText) ||
+             (t.Name?.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ?? false)));
+
+    private void ShowCreateModal()
+    {
+        _isEdit = false;
+        _form = new PageTemplateSchema
+        {
+            TemplateId = ShortIdGenerator.Generate(),
+            Category = PageTemplateCategoryEnum.Blank,
+            PageType = PageTypeEnum.Normal,
+            Order = 0,
+            PublishStatus = 0
+        };
+        _modalVisible = true;
+        StateHasChanged();
+    }
+
+    private async Task ShowEditModal(string templateId)
+    {
+        _isEdit = true;
+        _form = await PageTemplateAppService.GetByIdAsync(templateId);
+        _modalVisible = true;
+        StateHasChanged();
+    }
+
+    private async Task OnConfirm()
+    {
+        if (string.IsNullOrWhiteSpace(_form.Name))
+        {
+            await Message.ErrorAsync("请输入模板名称");
+            return;
+        }
+
+        var success = await PageTemplateAppService.SaveAsync(_form);
+        if (!success)
+        {
+            await Message.ErrorAsync("保存失败");
+            return;
+        }
+
+        _modalVisible = false;
+        await Message.SuccessAsync(_isEdit ? "更新成功" : "创建成功");
+
+        if (!_isEdit)
+        {
+            //新建后直接进入设计器
+            DesignTemplate(_form.TemplateId);
+            return;
+        }
+
+        await LoadTemplatesAsync();
+        StateHasChanged();
+    }
+
+    private void DesignTemplate(string templateId)
+    {
+        NavigateTo($"/designengine/myparts/page/designer/{templateId}");
+    }
+
+    private async Task PublishTemplate(string templateId, bool publish)
+    {
+        var tpl = await PageTemplateAppService.GetByIdAsync(templateId);
+        tpl.PublishStatus = publish ? 1 : 0;
+        await PageTemplateAppService.SaveAsync(tpl);
+        await LoadTemplatesAsync();
+        await Message.SuccessAsync(publish ? "已发布" : "已取消发布");
+    }
+
+    private async Task DeleteTemplate(string templateId)
+    {
+        await PageTemplateAppService.DeleteAsync(templateId);
+        await LoadTemplatesAsync();
+        await Message.SuccessAsync("删除成功");
+    }
+
+    private static string GetCategoryName(PageTemplateCategoryEnum category) => category switch
+    {
+        PageTemplateCategoryEnum.Blank => "空白页",
+        PageTemplateCategoryEnum.Dashboard => "仪表盘",
+        PageTemplateCategoryEnum.Form => "表单页",
+        PageTemplateCategoryEnum.List => "列表页",
+        PageTemplateCategoryEnum.Statistic => "统计页",
+        _ => "其他"
+    };
 }

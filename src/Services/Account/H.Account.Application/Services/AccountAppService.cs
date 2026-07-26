@@ -9,6 +9,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Identity;
 using Volo.Abp.Guids;
@@ -39,6 +40,7 @@ public class AccountAppService : ApplicationService, IAccountAppService
         _currentTenant = currentTenant;
     }
 
+    [IgnoreAntiforgeryToken]
     public async Task<AuthResponseDto> RegisterAsync(RegisterRequestDto request)
     {
         // 验证密码确认
@@ -105,10 +107,11 @@ public class AccountAppService : ApplicationService, IAccountAppService
         {
             Success = true,
             Message = "注册成功",
-            User = MapToUserDto(user)
+            User = await MapToUserDtoAsync(user)
         };
     }
 
+    [IgnoreAntiforgeryToken]
     public async Task<AuthResponseDto> LoginAsync(LoginRequestDto request)
     {
         IdentityUser? user = null;
@@ -202,32 +205,18 @@ public class AccountAppService : ApplicationService, IAccountAppService
         {
             Success = true,
             Message = "登录成功",
-            User = MapToUserDto(user)
+            User = await MapToUserDtoAsync(user)
         };
-    }
-
-    public async Task<UserDto?> GetCurrentUserAsync()
-    {
-        var httpContext = _httpContextAccessor.HttpContext;
-        if (httpContext?.User?.Identity?.IsAuthenticated != true)
-        {
-            return null;
-        }
-
-        var userIdClaim = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-        if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
-        {
-            return null;
-        }
-
-        var user = await _userManager.FindByIdAsync(userId.ToString());
-        return user != null ? MapToUserDto(user) : null;
     }
 
     public async Task<UserDto?> GetUserByIdAsync(Guid userId)
     {
-        var user = await _userManager.FindByIdAsync(userId.ToString());
-        return user != null ? MapToUserDto(user) : null;
+        // Account 为全局跨租户数据，用户查找需在 Host 上下文进行
+        using (_currentTenant.Change(null))
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            return user != null ? await MapToUserDtoAsync(user) : null;
+        }
     }
 
     public async Task<bool> ValidateTokenAsync(string token)
@@ -257,12 +246,35 @@ public class AccountAppService : ApplicationService, IAccountAppService
         }
     }
 
+    [IgnoreAntiforgeryToken]
     public async Task LogoutAsync()
     {
         var httpContext = _httpContextAccessor.HttpContext;
         if (httpContext != null)
         {
             await httpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        }
+    }
+
+    public async Task<UserDto?> GetCurrentUserAsync()
+    {
+        var httpContext = _httpContextAccessor.HttpContext;
+        if (httpContext == null)
+            return null;
+
+        var userIdClaim = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+        if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+            return null;
+
+        // Account 为全局跨租户数据，用户查找需在 Host 上下文进行
+        // （企业选择后 Cookie 携带 TenantId，若不切回 Host 上下文会因租户过滤而找不到用户）
+        using (_currentTenant.Change(null))
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            if (user == null)
+                return null;
+
+            return await MapToUserDtoAsync(user);
         }
     }
 
@@ -296,9 +308,9 @@ public class AccountAppService : ApplicationService, IAccountAppService
         return tokenHandler.WriteToken(token);
     }
 
-    private UserDto MapToUserDto(IdentityUser user)
+    private Task<UserDto> MapToUserDtoAsync(IdentityUser user)
     {
-        return new UserDto
+        var dto = new UserDto
         {
             Id = user.Id,
             UserName = user.UserName ?? "",
@@ -313,6 +325,7 @@ public class AccountAppService : ApplicationService, IAccountAppService
             UpdatedAt = user.LastModificationTime,
             LastLoginAt = user.LastModificationTime
         };
+        return Task.FromResult(dto);
     }
 
     /// <summary>

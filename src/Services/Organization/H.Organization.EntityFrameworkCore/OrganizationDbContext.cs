@@ -1,12 +1,13 @@
 using Microsoft.EntityFrameworkCore;
+using Volo.Abp.Data;
 using Volo.Abp.EntityFrameworkCore;
 
 namespace H.Organization.EntityFrameworkCore;
 
 /// <summary>
 /// 组织架构数据库上下文
-/// 继承 AbpDbContext 以启用多租户自动过滤
 /// </summary>
+[ConnectionStringName("OrganizationDb")]
 public class OrganizationDbContext : AbpDbContext<OrganizationDbContext>
 {
     public OrganizationDbContext(DbContextOptions<OrganizationDbContext> options)
@@ -44,6 +45,11 @@ public class OrganizationDbContext : AbpDbContext<OrganizationDbContext>
     /// 角色成员关联
     /// </summary>
     public DbSet<RoleMember> RoleMembers { get; set; } = null!;
+
+    /// <summary>
+    /// 组织邀请
+    /// </summary>
+    public DbSet<OrgInviteEntity> OrgInvites { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -115,6 +121,23 @@ public class OrganizationDbContext : AbpDbContext<OrganizationDbContext>
             entity.HasOne(e => e.Member)
                 .WithMany()
                 .HasForeignKey(e => e.MemberId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // OrgInvite 配置
+        modelBuilder.Entity<OrgInviteEntity>(entity =>
+        {
+            entity.ToTable("Organization_Invites");
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.Token).IsRequired().HasMaxLength(64);
+            entity.Property(e => e.Phone).HasMaxLength(20);
+
+            entity.HasIndex(e => e.Token).IsUnique();
+
+            entity.HasOne(e => e.Organization)
+                .WithMany()
+                .HasForeignKey(e => e.OrganizationId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }

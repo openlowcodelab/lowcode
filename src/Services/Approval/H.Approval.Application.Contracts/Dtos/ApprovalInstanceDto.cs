@@ -21,26 +21,46 @@ public class ApprovalInstanceDto
     /// 审批定义名称
     /// </summary>
     public string DefinitionName { get; set; } = string.Empty;
-    
+
+    /// <summary>
+    /// 审批实例标题
+    /// </summary>
+    public string Title { get; set; } = string.Empty;
+
     /// <summary>
     /// 审批状态
     /// </summary>
     public ApprovalStatusEnum Status { get; set; }
-    
+
     /// <summary>
     /// 发起人 ID
     /// </summary>
     public string CreatorId { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// 发起人姓名
     /// </summary>
     public string CreatorName { get; set; } = string.Empty;
-    
+
+    /// <summary>
+    /// 当前节点ID
+    /// </summary>
+    public string? CurrentNodeId { get; set; }
+
     /// <summary>
     /// 当前节点名称
     /// </summary>
     public string? CurrentNodeName { get; set; }
+
+    /// <summary>
+    /// 审批变量JSON(用于条件分支求值)
+    /// </summary>
+    public string? VariablesJson { get; set; }
+
+    /// <summary>
+    /// 当前审批任务列表
+    /// </summary>
+    public List<ApprovalTaskDto> Tasks { get; set; } = new();
     
     /// <summary>
     /// 创建时间

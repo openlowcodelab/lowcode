@@ -5,17 +5,18 @@
     <div class="branch-box">
         <button class="add-branch" @onclick="AddBranchNode">添加条件</button>
         @*渲染条件子节点*@
-        @foreach(var conditionNode in Node.ConditionNodes)
+        @for (var i = 0; i < Node.ConditionNodes.Count; i++)
         {
+            var idx = i;
             <div class="col-box">
-                <NodeWrap Node="@conditionNode" OnNodeTreeChanged="OnNodeTreeChanged" />
+                <NodeWrap Node="@Node.ConditionNodes[idx]" OnNodeTreeChanged="OnNodeTreeChanged" OnNodeClick="OnNodeClick" OnDeleteNode="OnDeleteNode" />
                 
-                @if (conditionNode == Node.ConditionNodes.First())
+                @if (idx == 0)
                 {
                     <div class="top-left-cover-line"></div>
                     <div class="bottom-left-cover-line"></div>
                 }
-                else if (conditionNode == Node.ConditionNodes.Last())
+                else if (idx == Node.ConditionNodes.Count - 1)
                 {
                     <div class="top-right-cover-line"></div>
                     <div class="bottom-right-cover-line"></div>
@@ -29,12 +30,18 @@
 @code {
     [Parameter]
     public NodeModelBase Node { get; set; } = null!;
-    
+
     [Parameter]
     public EventCallback<NodeModelBase> OnAddNode { get; set; }
-    
+
     [Parameter]
     public EventCallback OnNodeTreeChanged { get; set; }
+
+    [Parameter]
+    public EventCallback<NodeModelBase> OnNodeClick { get; set; }
+
+    [Parameter]
+    public EventCallback<NodeModelBase> OnDeleteNode { get; set; }
 
     private void AddBranchNode()
     {

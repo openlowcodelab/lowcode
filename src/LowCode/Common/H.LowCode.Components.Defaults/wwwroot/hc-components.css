@@ -1,0 +1,336 @@
+/* ========================================
+ * Hc Components - 现代扁平风组件库样式
+ * 设计令牌: 圆角 6px, 边框 #d9d9d9, 主色 #2f6feb
+ * ======================================== */
+
+:root {
+    --hc-primary: #2f6feb;
+    --hc-primary-hover: #1a5bd6;
+    --hc-border: #d9d9d9;
+    --hc-border-radius: 6px;
+    --hc-text: #333;
+    --hc-text-secondary: #666;
+    --hc-text-placeholder: #999;
+    --hc-bg: #fff;
+    --hc-bg-hover: #f5f7fa;
+    --hc-bg-disabled: #f5f5f5;
+    --hc-danger: #e53e3e;
+    --hc-success: #38a169;
+}
+
+/* ========================================
+ * Button
+ * ======================================== */
+.hc-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px 16px;
+    font-size: 14px;
+    line-height: 1.5;
+    border: 1px solid var(--hc-border);
+    border-radius: var(--hc-border-radius);
+    background: var(--hc-bg);
+    color: var(--hc-text);
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+.hc-btn:hover { border-color: var(--hc-primary); color: var(--hc-primary); }
+.hc-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.hc-btn-primary, .hc-btn-default { }
+.hc-btn-primary { background: var(--hc-primary); color: #fff; border-color: var(--hc-primary); }
+.hc-btn-primary:hover { background: var(--hc-primary-hover); }
+.hc-btn-dashed { border-style: dashed; }
+.hc-btn-text { border: none; background: transparent; }
+.hc-btn-text:hover { background: var(--hc-bg-hover); }
+.hc-btn-loading { width: 14px; height: 14px; border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: hc-spin 0.6s linear infinite; }
+@keyframes hc-spin { to { transform: rotate(360deg); } }
+
+/* ========================================
+ * Input
+ * ======================================== */
+.hc-input-wrapper { position: relative; display: flex; align-items: center; }
+.hc-input {
+    width: 100%;
+    padding: 6px 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    border: 1px solid var(--hc-border);
+    border-radius: var(--hc-border-radius);
+    background: var(--hc-bg);
+    color: var(--hc-text);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+}
+.hc-input:focus { border-color: var(--hc-primary); box-shadow: 0 0 0 2px rgba(47,111,235,0.15); }
+.hc-input:hover:not(:disabled) { border-color: var(--hc-primary); }
+.hc-input-disabled { background: var(--hc-bg-disabled); cursor: not-allowed; }
+.hc-input-clear { position: absolute; right: 8px; cursor: pointer; color: var(--hc-text-secondary); font-size: 14px; }
+.hc-input-clear:hover { color: var(--hc-text); }
+
+/* ========================================
+ * Textarea
+ * ======================================== */
+.hc-textarea-wrapper { position: relative; }
+.hc-textarea {
+    width: 100%;
+    padding: 6px 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    border: 1px solid var(--hc-border);
+    border-radius: var(--hc-border-radius);
+    background: var(--hc-bg);
+    color: var(--hc-text);
+    outline: none;
+    resize: vertical;
+    font-family: inherit;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+.hc-textarea:focus { border-color: var(--hc-primary); box-shadow: 0 0 0 2px rgba(47,111,235,0.15); }
+.hc-textarea-disabled { background: var(--hc-bg-disabled); cursor: not-allowed; }
+.hc-textarea-count { display: block; text-align: right; font-size: 12px; color: var(--hc-text-secondary); margin-top: 2px; }
+
+/* ========================================
+ * InputNumber
+ * ======================================== */
+.hc-inputnumber-wrapper { display: inline-flex; align-items: center; border: 1px solid var(--hc-border); border-radius: var(--hc-border-radius); overflow: hidden; }
+.hc-inputnumber-btn {
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    border: none; background: var(--hc-bg-hover); cursor: pointer;
+    font-size: 16px; color: var(--hc-text-secondary);
+    transition: all 0.2s;
+}
+.hc-inputnumber-btn:hover:not(:disabled) { background: var(--hc-border); color: var(--hc-text); }
+.hc-inputnumber-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.hc-inputnumber-input { width: 60px; text-align: center; border: none; border-left: 1px solid var(--hc-border); border-right: 1px solid var(--hc-border); outline: none; padding: 6px 4px; font-size: 14px; }
+
+/* ========================================
+ * Select
+ * ======================================== */
+.hc-select-wrapper { position: relative; display: inline-block; width: 100%; }
+.hc-select {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 12px;
+    border: 1px solid var(--hc-border);
+    border-radius: var(--hc-border-radius);
+    background: var(--hc-bg);
+    cursor: pointer;
+    transition: border-color 0.2s;
+    min-height: 34px;
+}
+.hc-select:hover:not(.hc-select-disabled) { border-color: var(--hc-primary); }
+.hc-select-open { border-color: var(--hc-primary); box-shadow: 0 0 0 2px rgba(47,111,235,0.15); }
+.hc-select-disabled { background: var(--hc-bg-disabled); cursor: not-allowed; }
+.hc-select-value { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; color: var(--hc-text); }
+.hc-select-value:empty::before, .hc-select-value:not(:empty) { color: var(--hc-text-placeholder); }
+.hc-select-arrow { font-size: 10px; color: var(--hc-text-secondary); margin-left: 4px; transition: transform 0.2s; }
+.hc-select-open .hc-select-arrow { transform: rotate(180deg); }
+.hc-select-clear { position: absolute; right: 28px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--hc-text-secondary); font-size: 14px; z-index: 1; }
+.hc-select-dropdown {
+    position: absolute; top: 100%; left: 0; right: 0; z-index: 100;
+    margin-top: 4px; padding: 4px 0;
+    background: var(--hc-bg);
+    border: 1px solid var(--hc-border);
+    border-radius: var(--hc-border-radius);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    max-height: 256px; overflow-y: auto;
+}
+.hc-select-empty { padding: 12px; text-align: center; color: var(--hc-text-placeholder); font-size: 14px; }
+
+/* ========================================
+ * Checkbox / Radio
+ * ======================================== */
+.hc-checkbox-group, .hc-radio-group { display: flex; gap: 12px; }
+.hc-checkbox-horizontal, .hc-radio-horizontal { flex-direction: row; flex-wrap: wrap; }
+.hc-checkbox-vertical, .hc-radio-vertical { flex-direction: column; }
+.hc-checkbox-empty, .hc-radio-empty { color: var(--hc-text-placeholder); font-size: 14px; }
+
+/* ========================================
+ * Switch
+ * ======================================== */
+.hc-switch {
+    position: relative; display: inline-flex; align-items: center;
+    width: 44px; height: 22px;
+    padding: 0; border: none; border-radius: 11px;
+    background: #ccc; cursor: pointer;
+    transition: all 0.2s;
+}
+.hc-switch-checked { background: var(--hc-primary); }
+.hc-switch-disabled { opacity: 0.5; cursor: not-allowed; }
+.hc-switch-small { width: 28px; height: 16px; border-radius: 8px; }
+.hc-switch-handle {
+    position: absolute; top: 2px; left: 2px;
+    width: 18px; height: 18px;
+    background: #fff; border-radius: 50%;
+    transition: transform 0.2s;
+    display: flex; align-items: center; justify-content: center;
+}
+.hc-switch-checked .hc-switch-handle { transform: translateX(22px); }
+.hc-switch-small .hc-switch-handle { width: 12px; height: 12px; }
+.hc-switch-checked.hc-switch-small .hc-switch-handle { transform: translateX(12px); }
+.hc-switch-inner { font-size: 12px; color: #fff; margin-left: 24px; }
+.hc-switch-checked .hc-switch-inner { margin-left: 0; margin-right: 24px; }
+.hc-switch-loading { width: 10px; height: 10px; border: 2px solid var(--hc-primary); border-top-color: transparent; border-radius: 50%; animation: hc-spin 0.6s linear infinite; }
+
+/* ========================================
+ * DatePicker / TimePicker
+ * ======================================== */
+.hc-datepicker-wrapper, .hc-timepicker-wrapper { position: relative; display: flex; align-items: center; }
+.hc-datepicker, .hc-timepicker { width: 100%; }
+
+/* ========================================
+ * Card
+ * ======================================== */
+.hc-card { background: var(--hc-bg); border-radius: var(--hc-border-radius); }
+.hc-card-bordered { border: 1px solid var(--hc-border); }
+.hc-card-hoverable { transition: box-shadow 0.2s; }
+.hc-card-hoverable:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+.hc-card-header { padding: 12px 16px; border-bottom: 1px solid var(--hc-border); }
+.hc-card-title { font-size: 16px; font-weight: 500; color: var(--hc-text); }
+.hc-card-body { padding: 16px; }
+.hc-card-loading { padding: 24px; text-align: center; color: var(--hc-text-placeholder); }
+
+/* ========================================
+ * Layout / Sider / Content
+ * ======================================== */
+.hc-layout { display: flex; width: 100%; }
+.hc-sider { flex: 0 0 200px; border-right: 1px solid var(--hc-border); overflow: auto; }
+.hc-content { flex: 1; overflow: auto; }
+
+/* ========================================
+ * Flex
+ * ======================================== */
+.hc-flex { display: flex; width: 100%; }
+
+/* ========================================
+ * Row / Col
+ * ======================================== */
+.hc-row { display: flex; width: 100%; }
+.hc-col { box-sizing: border-box; }
+
+/* ========================================
+ * Image
+ * ======================================== */
+.hc-image-wrapper { display: inline-block; }
+.hc-image { display: block; object-fit: cover; border-radius: var(--hc-border-radius); }
+.hc-image-placeholder {
+    display: flex; align-items: center; justify-content: center;
+    width: 100%; min-height: 120px;
+    background: var(--hc-bg-hover); border: 1px dashed var(--hc-border);
+    border-radius: var(--hc-border-radius);
+    color: var(--hc-text-placeholder); font-size: 14px;
+}
+
+/* ========================================
+ * Tabs
+ * ======================================== */
+.hc-tabs { width: 100%; }
+.hc-tabs-header { display: flex; border-bottom: 1px solid var(--hc-border); }
+.hc-tab-item {
+    padding: 8px 16px; cursor: pointer;
+    font-size: 14px; color: var(--hc-text-secondary);
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+}
+.hc-tab-item:hover { color: var(--hc-primary); }
+.hc-tab-active { color: var(--hc-primary); border-bottom-color: var(--hc-primary); }
+.hc-tabs-content { padding: 12px 0; }
+
+/* ========================================
+ * Placeholder
+ * ======================================== */
+.hc-placeholder {
+    width: 100%; min-height: 60px;
+    border: 1px dashed var(--hc-border);
+    border-radius: var(--hc-border-radius);
+    background: var(--hc-bg-hover);
+    display: flex; align-items: center; justify-content: center;
+}
+.hc-placeholder-content { display: flex; align-items: center; gap: 8px; color: var(--hc-text-placeholder); font-size: 14px; }
+.hc-placeholder-icon { font-size: 20px; }
+
+/* ========================================
+ * Statistic 统计卡片
+ * ======================================== */
+.hc-statistic { padding: 4px 0; }
+.hc-statistic-title { color: var(--hc-text-secondary); font-size: 13px; margin-bottom: 6px; }
+.hc-statistic-content { display: flex; align-items: baseline; gap: 4px; }
+.hc-statistic-value { font-size: 26px; font-weight: 600; color: var(--hc-text); line-height: 1.2; }
+.hc-statistic-prefix, .hc-statistic-suffix { font-size: 14px; color: var(--hc-text-secondary); }
+
+/* ========================================
+ * Tag 标签
+ * ======================================== */
+.hc-tag {
+    display: inline-flex; align-items: center;
+    padding: 1px 8px; font-size: 12px; line-height: 20px;
+    border-radius: 4px; border: 1px solid transparent; white-space: nowrap;
+}
+.hc-tag-default { background: #f5f5f5; color: #595959; border-color: #d9d9d9; }
+.hc-tag-primary, .hc-tag-blue { background: #e8f0fe; color: #2f6feb; border-color: #adc6ff; }
+.hc-tag-success, .hc-tag-green { background: #eafbf0; color: #38a169; border-color: #b7eb8f; }
+.hc-tag-warning, .hc-tag-orange { background: #fff7e6; color: #d46b08; border-color: #ffd591; }
+.hc-tag-error, .hc-tag-red { background: #fff1f0; color: #e53e3e; border-color: #ffa39e; }
+
+/* ========================================
+ * Alert 提示条
+ * ======================================== */
+.hc-alert {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 8px 12px; border-radius: var(--hc-border-radius);
+    border: 1px solid transparent; font-size: 13px;
+}
+.hc-alert-icon {
+    flex: 0 0 auto; width: 16px; height: 16px; margin-top: 2px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 50%; font-size: 11px; font-weight: 700; color: #fff;
+}
+.hc-alert-content { flex: 1; }
+.hc-alert-message { font-weight: 500; }
+.hc-alert-description { color: var(--hc-text-secondary); margin-top: 2px; }
+.hc-alert-info { background: #e8f0fe; border-color: #adc6ff; color: #1a5bd6; }
+.hc-alert-info .hc-alert-icon { background: #2f6feb; }
+.hc-alert-success { background: #eafbf0; border-color: #b7eb8f; color: #237a45; }
+.hc-alert-success .hc-alert-icon { background: #38a169; }
+.hc-alert-warning { background: #fff7e6; border-color: #ffd591; color: #ad4e00; }
+.hc-alert-warning .hc-alert-icon { background: #d46b08; }
+.hc-alert-error { background: #fff1f0; border-color: #ffa39e; color: #cf1322; }
+.hc-alert-error .hc-alert-icon { background: #e53e3e; }
+
+/* ========================================
+ * Divider 分割线
+ * ======================================== */
+.hc-divider-horizontal { display: flex; align-items: center; margin: 12px 0; }
+.hc-divider-horizontal:not(.hc-divider-with-text) { border-top: 1px solid #ededed; height: 0; }
+.hc-divider-vertical { display: inline-block; height: 1em; margin: 0 8px; border-left: 1px solid #ededed; vertical-align: middle; }
+.hc-divider-with-text { color: var(--hc-text-secondary); font-size: 13px; }
+.hc-divider-with-text::before, .hc-divider-with-text::after { content: ''; flex: 1; border-top: 1px solid #ededed; }
+.hc-divider-with-text .hc-divider-text { padding: 0 12px; white-space: nowrap; }
+.hc-divider-left.hc-divider-with-text::before { flex: 0 0 24px; }
+.hc-divider-right.hc-divider-with-text::after { flex: 0 0 24px; }
+
+/* ========================================
+ * Descriptions 描述列表
+ * ======================================== */
+.hc-descriptions { width: 100%; }
+.hc-descriptions-title { font-weight: 600; font-size: 15px; color: var(--hc-text); margin-bottom: 12px; }
+.hc-descriptions-body { display: flex; flex-wrap: wrap; gap: 4px; }
+.hc-descriptions-bordered .hc-descriptions-body {
+    border: 1px solid #ededed; border-radius: var(--hc-border-radius);
+    padding: 12px; gap: 8px;
+}
+
+/* ========================================
+ * Radio / Checkbox 选项项（旧 AntDesign 数据兼容）
+ * ======================================== */
+.hc-radio-option, .hc-checkbox-option {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-right: 16px; font-size: 14px; color: var(--hc-text); cursor: pointer;
+}
+.hc-radio-option input, .hc-checkbox-option input { cursor: pointer; }
+.hc-radio-option-disabled, .hc-checkbox-option-disabled { color: var(--hc-text-placeholder); cursor: not-allowed; }

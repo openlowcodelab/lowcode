@@ -1,8 +1,6 @@
 @namespace H.LowCode.PartsDesignEngine
 @inherits LowCodeComponentBase
 
-@inject PartsDragDropStateService PartsDragDropStateService
-
 <div class="settingpanel" style="width:250px; padding:0px 8px;">
     @if (_showPropertyPanel)
     {
@@ -25,8 +23,8 @@
 </div>
 
 @code {
-    [CascadingParameter(Name = "pageCascading")]
-    public PageCascadingModel PageCascading { get; set; }
+    [CascadingParameter(Name = "partsCascading")]
+    public PartsCascadingModel PartsCascading { get; set; }
 
     private ComponentPartsSchema _component { get; set; }
 

@@ -1,0 +1,27 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Threading.Tasks;
+using Volo.Abp.Application.Services;
+
+namespace H.Testing.Application.Contracts;
+
+/// <summary>
+/// 测试执行引擎服务接口
+/// </summary>
+/// <remarks>
+/// 注意：StepUpdated/ExecutionUpdated 实时进度事件已移至 <see cref="ITestExecutionEventNotifier"/>，
+/// 因为 ABP 会为 IApplicationService 生成动态代理并以 ValidationInterceptor 拦截所有方法，
+/// 包括 event add/remove，这会对 Action&lt;,&gt; 委托参数递归反射属性，
+/// 触发 Type.GenericParameterAttributes 抛 Arg_NotGenericParameter。
+/// </remarks>
+public interface ITestExecutionEngineAppService : IApplicationService
+{
+    /// <summary>
+    /// 执行测试用例
+    /// </summary>
+    Task<ExecutionRecordDto> ExecuteTestCaseAsync(
+        ProjectCaseDto testCase,
+        long environmentId,
+        CancellationToken cancellationToken = default);
+}

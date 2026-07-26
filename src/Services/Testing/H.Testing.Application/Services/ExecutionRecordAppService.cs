@@ -1,0 +1,123 @@
+using H.Testing.Application.Contracts;
+using H.Testing.Application.Mapping;
+using H.Testing.EntityFrameworkCore;
+using Volo.Abp.Application.Services;
+using Volo.Abp.Domain.Repositories;
+
+namespace H.Testing.Application;
+
+/// <summary>
+/// 测试执行记录服务（数据库存储）
+/// </summary>
+public class ExecutionRecordAppService : ApplicationService, IExecutionRecordAppService
+{
+    private readonly IRepository<TestingExecutionRecord, long> _repository;
+
+    public ExecutionRecordAppService(IRepository<TestingExecutionRecord, long> repository)
+    {
+        _repository = repository;
+    }
+
+    public async Task<List<ExecutionRecordDto>> GetByProjectIdAsync(long projectId)
+    {
+        var query = await _repository.GetQueryableAsync();
+        var list = await AsyncExecuter.ToListAsync(
+            query.Where(r => r.ProjectId == projectId).OrderByDescending(r => r.StartTime));
+        return list.Select(e => e.ToDto()).ToList();
+    }
+
+    public async Task<List<ExecutionRecordDto>> GetByTestCaseIdAsync(long projectId, long testCaseId)
+    {
+        var query = await _repository.GetQueryableAsync();
+        var list = await AsyncExecuter.ToListAsync(
+            query.Where(r => r.ProjectId == projectId && r.TestCaseId == testCaseId)
+                 .OrderByDescending(r => r.StartTime));
+        return list.Select(e => e.ToDto()).ToList();
+    }
+
+    public async Task<ExecutionRecordDto?> GetByIdAsync(long projectId, long id)
+    {
+        var entity = await _repository.FindAsync(id);
+        return entity != null && entity.ProjectId == projectId ? entity.ToDto() : null;
+    }
+
+    public async Task<ExecutionRecordDto> CreateAsync(ExecutionRecordDto record)
+    {
+        if (record.StartTime == default)
+        {
+            record.StartTime = DateTime.Now;
+        }
+
+        var entity = new TestingExecutionRecord();
+        record.Apply(entity);
+        entity = await _repository.InsertAsync(entity, autoSave: true);
+        return entity.ToDto();
+    }
+
+    public async Task<bool> UpdateAsync(long projectId, ExecutionRecordDto record)
+    {
+        var entity = await _repository.FindAsync(record.Id);
+        if (entity == null)
+        {
+            return false;
+        }
+
+        record.Apply(entity);
+        await _repository.UpdateAsync(entity, autoSave: true);
+        return true;
+    }
+
+    public async Task<bool> DeleteAsync(long projectId, long id)
+    {
+        var entity = await _repository.FindAsync(id);
+        if (entity == null || entity.ProjectId != projectId)
+        {
+            return false;
+        }
+
+        await _repository.DeleteAsync(entity, autoSave: true);
+        return true;
+    }
+
+    public async Task CleanupOldRecordsAsync(long projectId, int keepCount = 100)
+    {
+        var query = await _repository.GetQueryableAsync();
+        var oldRecords = await AsyncExecuter.ToListAsync(
+            query.Where(r => r.ProjectId == projectId)
+                 .OrderByDescending(r => r.StartTime)
+                 .Skip(keepCount));
+
+        if (oldRecords.Count > 0)
+        {
+            await _repository.DeleteManyAsync(oldRecords, autoSave: true);
+        }
+    }
+
+    public async Task<ExecutionStatistics> GetStatisticsAsync(long projectId, DateTime? startDate = null, DateTime? endDate = null)
+    {
+        var query = await _repository.GetQueryableAsync();
+        query = query.Where(r => r.ProjectId == projectId);
+
+        if (startDate.HasValue)
+        {
+            query = query.Where(r => r.StartTime >= startDate.Value);
+        }
+
+        if (endDate.HasValue)
+        {
+            query = query.Where(r => r.StartTime <= endDate.Value);
+        }
+
+        var records = await AsyncExecuter.ToListAsync(query);
+
+        return new ExecutionStatistics
+        {
+            TotalExecutions = records.Count,
+            SuccessExecutions = records.Count(r => r.Status == (int)ExecutionStatus.Success),
+            FailedExecutions = records.Count(r => r.Status == (int)ExecutionStatus.Failed),
+            CancelledExecutions = records.Count(r => r.Status == (int)ExecutionStatus.Cancelled),
+            AverageDuration = records.Count > 0 ? records.Average(r => r.Duration) : 0,
+            TotalDuration = records.Sum(r => r.Duration)
+        };
+    }
+}

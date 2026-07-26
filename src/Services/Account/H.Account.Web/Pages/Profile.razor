@@ -2,7 +2,7 @@
 
 @layout AccountLayout
 @inject HttpClient HttpClient
-@inject IUserAppService UserService
+@inject IAccountUserAppService UserService
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
 
@@ -46,8 +46,8 @@
                             <span class="h-tag" style="margin-left: 8px;">未验证</span>
                         }
                     </td>
-                    <th>用户类型</th>
-                    <td>@GetUserTypeText(user.UserType)</td>
+                    <th>账户类型</th>
+                    <td>普通用户</td>
                 </tr>
                 <tr>
                     <th>状态</th>
@@ -227,13 +227,8 @@
         }
     }
 
-    private string GetUserTypeText(UserType type)
+    private string GetUserTypeText()
     {
-        return type switch
-        {
-            UserType.SuperAdmin => "超级管理员",
-            UserType.Admin => "管理员",
-            _ => "普通用户"
-        };
+        return "普通用户";
     }
 }

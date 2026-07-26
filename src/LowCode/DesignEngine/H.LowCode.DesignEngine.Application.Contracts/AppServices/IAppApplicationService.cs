@@ -13,4 +13,6 @@ public interface IAppApplicationService : IApplicationService
     Task<AppPartsSchema> GetByIdAsync(string appId);
 
     Task<bool> SaveAsync(AppPartsSchema appSchema);
+
+    Task<bool> DeleteAsync(string appId);
 }

@@ -25,6 +25,11 @@ public class ApprovalDbContext : AbpDbContext<ApprovalDbContext>
     /// </summary>
     public virtual DbSet<ApprovalTask> ApprovalTasks { get; set; }
 
+    /// <summary>
+    /// 审批分类(分组)集合
+    /// </summary>
+    public virtual DbSet<ApprovalCategory> ApprovalCategories { get; set; }
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -36,6 +41,7 @@ public class ApprovalDbContext : AbpDbContext<ApprovalDbContext>
             entity.Property(e => e.Name).IsRequired().HasMaxLength(256);
             entity.Property(e => e.Description).HasMaxLength(1024);
             entity.Property(e => e.DefinitionJson).HasColumnType("nvarchar(max)");
+            entity.Property(e => e.FormJson).HasColumnType("nvarchar(max)");
         });
         
         // 配置审批实例表
@@ -44,17 +50,20 @@ public class ApprovalDbContext : AbpDbContext<ApprovalDbContext>
             entity.ToTable("ApprovalInstances");
             entity.Property(e => e.DefinitionId).IsRequired().HasMaxLength(128);
             entity.Property(e => e.DefinitionName).IsRequired().HasMaxLength(256);
+            entity.Property(e => e.Title).IsRequired().HasMaxLength(512);
             entity.Property(e => e.CreatorId).IsRequired().HasMaxLength(128);
             entity.Property(e => e.CreatorName).IsRequired().HasMaxLength(256);
+            entity.Property(e => e.CurrentNodeId).HasMaxLength(128);
             entity.Property(e => e.CurrentNodeName).HasMaxLength(256);
-            
+            entity.Property(e => e.VariablesJson).HasColumnType("nvarchar(max)");
+
             // 配置与任务的关系
             entity.HasMany(e => e.Tasks)
                 .WithOne()
                 .HasForeignKey(e => e.InstanceId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
-        
+
         // 配置审批任务表
         builder.Entity<ApprovalTask>(entity =>
         {
@@ -62,15 +71,25 @@ public class ApprovalDbContext : AbpDbContext<ApprovalDbContext>
             entity.Property(e => e.InstanceId).IsRequired().HasMaxLength(450);
             entity.Property(e => e.ApprovalName).IsRequired().HasMaxLength(256);
             entity.Property(e => e.InstanceTitle).HasMaxLength(512);
+            entity.Property(e => e.NodeId).IsRequired().HasMaxLength(128);
             entity.Property(e => e.NodeName).IsRequired().HasMaxLength(256);
             entity.Property(e => e.AssigneeId).IsRequired().HasMaxLength(128);
             entity.Property(e => e.AssigneeName).IsRequired().HasMaxLength(256);
             entity.Property(e => e.Comment).HasMaxLength(1024);
-            
+
             // 添加索引
             entity.HasIndex(e => e.AssigneeId);
             entity.HasIndex(e => e.InstanceId);
+            entity.HasIndex(e => e.NodeId);
             entity.HasIndex(e => e.Status);
+        });
+
+        // 配置审批分类表
+        builder.Entity<ApprovalCategory>(entity =>
+        {
+            entity.ToTable("ApprovalCategories");
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(256);
+            entity.HasIndex(e => e.Name);
         });
         
         // Elsa 相关表由 Elsa.EntityFrameworkCore 自动配置

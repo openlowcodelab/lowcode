@@ -2,36 +2,121 @@
 @inherits LowCodeComponentBase
 @layout PartsDesignEngineLayout
 
-<div style="display: flex; justify-content: space-between; margin: 0 0 8px 5px;">
-    <div style="width:250px;">
-        <input class="inp" placeholder="应用名称" />
+@inject IAppTemplateAppService AppTemplateAppService
+
+<div style="height: 100%; min-height: 0; display: flex; flex-direction: column; background: white; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.03); overflow: hidden;">
+    <div style="padding: 16px; border-bottom: 1px solid #f0f0f0; background: #fafafa; display:flex; justify-content:space-between; align-items:center;">
+        <input type="search" class="inp" style="width:220px;" placeholder="搜索应用模板" @onchange="@(e => _searchText = e.Value?.ToString() ?? "")" />
+        <span style="font-size:12px; color:#999;">应用模板可在"我的应用"中通过"另存为模板"生成</span>
+    </div>
+
+    <div style="flex:1; min-height:0; overflow-y:auto; padding:16px;">
+        @if (FilteredTemplates.Any())
+        {
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+                @foreach (var tpl in FilteredTemplates)
+                {
+                    <HCard Style="border: 1px solid #f0f0f0;">
+                        <div style="padding: 8px;">
+                            <div style="font-weight: 500; margin-bottom: 8px;">@tpl.Name</div>
+                            <div style="font-size: 12px; color: #666; margin-bottom: 8px; min-height: 32px;">@tpl.Description</div>
+                            <div style="display:flex; gap:4px; margin-bottom:12px;">
+                                <span class="tag tag-blue">@tpl.PageCount 个页面</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 12px; color: #999;">@tpl.ModifiedTime.ToString("MM-dd HH:mm")</span>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="btn btn-link btn-sm" @onclick="@(() => ShowUseModal(tpl))">使用</button>
+                                    <button class="btn btn-link btn-sm btn-danger" @onclick="@(() => DeleteTemplate(tpl.TemplateId))">删除</button>
+                                </div>
+                            </div>
+                        </div>
+                    </HCard>
+                }
+            </div>
+        }
+        else
+        {
+            <div style="text-align:center; padding:40px 20px; color:#999;">暂无应用模板</div>
+        }
     </div>
 </div>
 
-<HCard Title="图书管理系统" Style="float:left; width:300px; margin:5px;">
-    <a href="javascript:void(0)">使用</a>
-    <p>Card content</p>
-</HCard>
-<HCard Title="学生管理系统" Style="float:left; width:300px; margin:5px;">
-    <a href="javascript:void(0)">使用</a>
-    <p>Card content</p>
-</HCard>
+<HModal Title="从模板创建应用" Visible="@_useModalVisible" OnOk="OnUseConfirm" OnCancel="() => _useModalVisible = false">
+    <div style="padding: 8px 16px;">
+        <div style="margin-bottom: 12px; color:#666;">基于模板：<b>@_selectedTemplate?.Name</b></div>
+        <div style="margin-bottom: 16px;">
+            <label style="display:block; margin-bottom:4px; font-weight:500;"><span style="color:red;">*</span> 应用标识</label>
+            <input class="inp" @bind="_newAppId" placeholder="请输入应用标识（英文/数字）" />
+        </div>
+        <div style="margin-bottom: 16px;">
+            <label style="display:block; margin-bottom:4px; font-weight:500;"><span style="color:red;">*</span> 应用名称</label>
+            <input class="inp" @bind="_newAppName" placeholder="请输入应用名称" />
+        </div>
+    </div>
+</HModal>
 
 @code {
     [PersistentState]
-    public IList<AppPartsSchema> _appParts { get; set; }
+    public IList<AppTemplateListModel> _appTemplates { get; set; }
+
+    private string _searchText = "";
+
+    private bool _useModalVisible = false;
+    private AppTemplateListModel _selectedTemplate;
+    private string _newAppId = "";
+    private string _newAppName = "";
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
-
-        _appParts = await LoadAppPartsAsync(1, 50);
+        await LoadTemplatesAsync();
     }
 
-    private async Task<IList<AppPartsSchema>> LoadAppPartsAsync(int pageIndex, int pageSize)
+    private async Task LoadTemplatesAsync()
     {
-        await Task.Delay(100);
-        IList<AppPartsSchema> result = [];
-        return result;
+        _appTemplates = await AppTemplateAppService.GetListAsync();
+    }
+
+    private IEnumerable<AppTemplateListModel> FilteredTemplates =>
+        (_appTemplates ?? new List<AppTemplateListModel>()).Where(t =>
+            string.IsNullOrWhiteSpace(_searchText) ||
+            (t.Name?.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ?? false));
+
+    private void ShowUseModal(AppTemplateListModel tpl)
+    {
+        _selectedTemplate = tpl;
+        _newAppId = ShortIdGenerator.Generate();
+        _newAppName = $"{tpl.Name}-副本";
+        _useModalVisible = true;
+        StateHasChanged();
+    }
+
+    private async Task OnUseConfirm()
+    {
+        if (string.IsNullOrWhiteSpace(_newAppId) || string.IsNullOrWhiteSpace(_newAppName))
+        {
+            await Message.ErrorAsync("请填写应用标识和名称");
+            return;
+        }
+
+        try
+        {
+            var app = await AppTemplateAppService.CreateAppFromTemplateAsync(_selectedTemplate.TemplateId, _newAppId, _newAppName);
+            _useModalVisible = false;
+            await Message.SuccessAsync("已从模板创建应用！");
+            NavigateTo($"/designengine/myapp/{app.Id}/pagemanager");
+        }
+        catch (Exception ex)
+        {
+            await Message.ErrorAsync($"创建失败：{ex.Message}");
+        }
+    }
+
+    private async Task DeleteTemplate(string templateId)
+    {
+        await AppTemplateAppService.DeleteAsync(templateId);
+        await LoadTemplatesAsync();
+        await Message.SuccessAsync("删除成功");
     }
 }

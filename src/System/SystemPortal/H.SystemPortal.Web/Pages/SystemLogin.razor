@@ -1,0 +1,118 @@
+@page "/system/login"
+@attribute [AllowAnonymous]
+
+@layout SystemLoginLayout
+@inject NavigationManager Navigation
+@inject HttpClient HttpClient
+
+<div class="auth-card">
+    <div class="auth-card-title">系统用户登录</div>
+    <div class="auth-card-subtitle">仅限系统管理员访问</div>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="sys-alert sys-alert-error">
+            <span>&#9888;</span>
+            <span>@errorMessage</span>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+        <div class="sys-alert sys-alert-success">
+            <span>&#10004;</span>
+            <span>@successMessage</span>
+        </div>
+    }
+
+    <EditForm Model="@loginModel" OnValidSubmit="@HandleLogin">
+        <div class="h-form-item">
+            <input type="text" @bind-value="@loginModel.Account" placeholder="请输入管理员账号" class="h-input" />
+        </div>
+
+        <div class="h-form-item">
+            <input type="password" @bind-value="@loginModel.Password" placeholder="请输入密码" class="h-input" />
+        </div>
+
+        <div class="h-form-item" style="margin-top: 24px; margin-bottom: 0;">
+            <button type="submit" class="h-btn h-btn-primary" disabled="@isLoading">
+                @(isLoading ? "登录中..." : "登 录")
+            </button>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    private LoginModel loginModel { get; set; } = new();
+    private string errorMessage = "";
+    private string successMessage = "";
+    private string returnUrl = "/system";
+    private bool isLoading = false;
+
+    protected override void OnInitialized()
+    {
+        var uri = new Uri(Navigation.Uri);
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        returnUrl = query["returnUrl"] ?? "/system";
+    }
+
+    private async Task HandleLogin()
+    {
+        if (string.IsNullOrWhiteSpace(loginModel.Account) || string.IsNullOrWhiteSpace(loginModel.Password))
+        {
+            errorMessage = "请输入账号和密码";
+            return;
+        }
+
+        isLoading = true;
+        errorMessage = "";
+        successMessage = "";
+
+        try
+        {
+            var payload = new LoginRequestDto
+            {
+                Account = loginModel.Account,
+                Password = loginModel.Password,
+                RememberMe = false
+            };
+
+            var response = await HttpClient.PostAsJsonAsync("/api/app/system-account/system-login", payload);
+            var result = await response.Content.ReadFromJsonAsync<AuthResponseDto>();
+
+            if (result != null && result.Success)
+            {
+                successMessage = "登录成功！正在跳转...";
+                errorMessage = string.Empty;
+
+                var targetUrl = (returnUrl == "/" || string.IsNullOrWhiteSpace(returnUrl)) ? "/system" : returnUrl;
+                Navigation.NavigateTo(targetUrl, forceLoad: true);
+            }
+            else
+            {
+                errorMessage = "登录失败：" + (result?.Message ?? "未知错误");
+                successMessage = string.Empty;
+            }
+        }
+        catch (Microsoft.AspNetCore.Components.NavigationException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"登录失败: {ex.Message}";
+            successMessage = "";
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private class LoginModel
+    {
+        public string Account { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+}

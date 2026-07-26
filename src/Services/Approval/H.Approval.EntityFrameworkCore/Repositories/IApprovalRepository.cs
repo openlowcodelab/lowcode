@@ -33,6 +33,22 @@ public interface IApprovalTaskRepository
     Task<ApprovalTask> InsertAsync(ApprovalTask entity);
     Task<List<ApprovalTask>> GetPendingByAssigneeIdAsync(string assigneeId);
     Task<List<ApprovalTask>> GetCompletedByAssigneeIdAsync(string assigneeId);
+    Task<List<ApprovalTask>> GetByInstanceIdAsync(string instanceId);
+    Task<List<ApprovalTask>> GetByNodeIdAsync(string instanceId, string nodeId);
     Task<ApprovalTask?> GetByIdAsync(string id);
     Task<ApprovalTask> UpdateAsync(ApprovalTask entity);
+    Task UpdateRangeAsync(List<ApprovalTask> entities);
+}
+
+/// <summary>
+/// 审批分类(分组)仓储接口
+/// </summary>
+public interface IApprovalCategoryRepository
+{
+    Task<List<ApprovalCategory>> GetAllAsync();
+    Task<ApprovalCategory?> GetByIdAsync(string id);
+    Task<ApprovalCategory?> GetByNameAsync(string name);
+    Task<ApprovalCategory> InsertAsync(ApprovalCategory entity);
+    Task<ApprovalCategory> UpdateAsync(ApprovalCategory entity);
+    Task DeleteAsync(string id);
 }

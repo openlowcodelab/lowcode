@@ -1,0 +1,42 @@
+@namespace H.LowCode.Components.Defaults
+
+<div class="hc-textarea-wrapper" style="@Style">
+    <textarea class="hc-textarea @(Disabled ? "hc-textarea-disabled" : "")"
+              placeholder="@Placeholder"
+              disabled="@Disabled"
+              maxlength="@(MaxLength > 0 ? MaxLength : int.MaxValue)"
+              readonly="@ReadOnly"
+              rows="@Rows"
+              value="@_value"
+              @oninput="OnInputHandler"></textarea>
+    @if (ShowCount && MaxLength > 0)
+    {
+        <span class="hc-textarea-count">@(_value?.Length ?? 0) / @MaxLength</span>
+    }
+</div>
+
+@code {
+    [Parameter] public string Placeholder { get; set; } = "";
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public int MaxLength { get; set; }
+    [Parameter] public bool ReadOnly { get; set; }
+    [Parameter] public bool AllowClear { get; set; }
+    [Parameter] public int Rows { get; set; } = 4;
+    [Parameter] public bool ShowCount { get; set; }
+    [Parameter] public string Value { get; set; }
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public string Style { get; set; }
+
+    private string _value;
+
+    protected override void OnParametersSet()
+    {
+        _value = Value ?? "";
+    }
+
+    private async Task OnInputHandler(ChangeEventArgs e)
+    {
+        _value = e.Value?.ToString() ?? "";
+        await ValueChanged.InvokeAsync(_value);
+    }
+}

@@ -10,6 +10,7 @@
     <PackageReference Include="Volo.Abp.Autofac" />
     <PackageReference Include="Volo.Abp.AspNetCore.Mvc" />
     <PackageReference Include="Volo.Abp.MultiTenancy" />
+    <PackageReference Include="Volo.Abp.AspNetCore.MultiTenancy" />
   </ItemGroup>
 	
   <ItemGroup>
@@ -35,14 +36,28 @@
     <ProjectReference Include="..\..\..\Services\Organization\H.Organization.Application\H.Organization.Application.csproj" />
     <!-- Approval -->
     <ProjectReference Include="..\..\..\Services\Approval\H.Approval.Application\H.Approval.Application.csproj" />
-    <!-- AutoTest -->
-    <ProjectReference Include="..\..\..\Services\AutoTest\H.AutoTest.Application\H.AutoTest.Application.csproj" />
+    <!-- Testing -->
+    <ProjectReference Include="..\..\..\Services\Testing\H.Testing.Application\H.Testing.Application.csproj" />
 	<!-- Portal -->
     <ProjectReference Include="..\..\..\Services\Portal\H.Portal.Application\H.Portal.Application.csproj" />
-    <!-- SystemManagement -->
-    <ProjectReference Include="..\..\..\Services\SystemManagement\H.SystemManagement.Application\H.SystemManagement.Application.csproj" />
-    <ProjectReference Include="..\..\..\Services\SystemManagement\H.SystemManagement.EntityFrameworkCore\H.SystemManagement.EntityFrameworkCore.csproj" />
+    <!-- SystemPortal -->
+    <ProjectReference Include="..\..\..\System\SystemPortal\H.SystemPortal.Application\H.SystemPortal.Application.csproj" />
+    <!-- Notification -->
+    <ProjectReference Include="..\..\..\Services\Notification\H.Notification.Application\H.Notification.Application.csproj" />
+    <ProjectReference Include="..\..\..\Services\Notification\H.Notification.EntityFrameworkCore\H.Notification.EntityFrameworkCore.csproj" />
     <!-- Enterprise -->
-    <ProjectReference Include="..\..\..\Services\Enterprise\H.Enterprise.Application\H.Enterprise.Application.csproj" />
+    <ProjectReference Include="..\..\..\System\Enterprise\H.Enterprise.Application\H.Enterprise.Application.csproj" />
+    <!-- Order -->
+    <ProjectReference Include="..\..\..\Services\Order\H.Order.Application\H.Order.Application.csproj" />
+    <ProjectReference Include="..\..\..\Services\Order\H.Order.EntityFrameworkCore\H.Order.EntityFrameworkCore.csproj" />
+    <!-- Setting（配置管理） -->
+    <ProjectReference Include="..\..\..\Services\Setting\H.Setting.Application\H.Setting.Application.csproj" />
+    <ProjectReference Include="..\..\..\Services\Setting\H.Setting.EntityFrameworkCore\H.Setting.EntityFrameworkCore.csproj" />
+    <!-- SupplyChain -->
+    <ProjectReference Include="..\..\..\Services\SupplyChain\H.SupplyChain.Application\H.SupplyChain.Application.csproj" />
+    <ProjectReference Include="..\..\..\Services\SupplyChain\H.SupplyChain.EntityFrameworkCore\H.SupplyChain.EntityFrameworkCore.csproj" />
+    <!-- BackgroundTask -->
+    <ProjectReference Include="..\..\..\Services\BackgroundTask\H.BackgroundTask.Application\H.BackgroundTask.Application.csproj" />
+    <ProjectReference Include="..\..\..\Services\BackgroundTask\H.BackgroundTask.EntityFrameworkCore\H.BackgroundTask.EntityFrameworkCore.csproj" />
   </ItemGroup>
 </Project>

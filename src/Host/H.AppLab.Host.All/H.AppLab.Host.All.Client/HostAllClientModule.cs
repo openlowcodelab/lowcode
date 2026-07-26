@@ -1,14 +1,20 @@
 using H.Account.Application.Contracts;
 using H.Approval.Application.Contracts;
 using H.Assistant.Application.Contracts;
-using H.AutoTest.Application.Contracts;
+using H.Testing.Application.Contracts;
 using H.Enterprise.Application.Contracts;
+using H.LowCode.Application.Contracts;
 using H.LowCode.ComponentBase;
 using H.LowCode.DesignEngine.Application.Contracts;
 using H.LowCode.RenderEngine.Application.Contracts;
+using H.Notification.Application.Contracts;
+using H.Order.Application.Contracts;
+using H.Setting.Application.Contracts;
 using H.Organization.Application.Contracts;
+using H.BackgroundTask.Application.Contracts;
 using H.Portal.Application.Contracts;
-using H.SystemManagement.Application.Contracts;
+using H.SupplyChain.Application.Contracts;
+using H.SystemPortal.Application.Contracts;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Volo.Abp.Autofac.WebAssembly;
 using Volo.Abp.Http.Client;
@@ -24,16 +30,23 @@ namespace H.AppLab.Host.All.Client;
 )]
 public class HostAllClientModule : AbpModule
 {
-    public const string DesignEngineRemoteServiceName = "DesignEngine";
-    public const string RenderEngineRemoteServiceName = "RenderEngine";
+    public const string ApprovalRemoteServiceName = "Approval";
     public const string AccountRemoteServiceName = "Account";
     public const string OrganizationRemoteServiceName = "Organization";
-    public const string ApprovalRemoteServiceName = "Approval";
-    public const string AutoTestRemoteServiceName = "AutoTest";
+    public const string DesignEngineRemoteServiceName = "DesignEngine";
+    public const string RenderEngineRemoteServiceName = "RenderEngine";
+    public const string TestingRemoteServiceName = "Testing";
     public const string PortalRemoteServiceName = "Portal";
-    public const string SystemManagementRemoteServiceName = "SystemManagement";
-    public const string AssistantRemoteServiceName = "Assistant";
+    public const string NotificationRemoteServiceName = "Notification";
+    public const string OrderRemoteServiceName = "Order";
+    public const string SettingRemoteServiceName = "Setting";
+    public const string SupplyChainRemoteServiceName = "SupplyChain";
+    public const string BackgroundTaskRemoteServiceName = "BackgroundTask";
+
     public const string EnterpriseRemoteServiceName = "Enterprise";
+    public const string SystemPortalRemoteServiceName = "SystemPortal";
+
+    public const string AssistantRemoteServiceName = "Assistant";
 
     public override void ConfigureServices(ServiceConfigurationContext context)
     {
@@ -45,7 +58,7 @@ public class HostAllClientModule : AbpModule
         //应用状态
         context.Services.AddSingleton(new LowCodeAppState(true));
 
-        // AutoTest 测试执行事件通知器（WASM 端本地单例，避免 AppService 接口上的事件被 ABP ValidationInterceptor 反射崩溃）
+        // Testing 测试执行事件通知器（WASM 端本地单例，避免 AppService 接口上的事件被 ABP ValidationInterceptor 反射崩溃）
         context.Services.AddSingleton<ITestExecutionEventNotifier, TestExecutionEventNotifier>();
     }
 
@@ -60,6 +73,11 @@ public class HostAllClientModule : AbpModule
     private void ConfigureHttpClientProxies(ServiceConfigurationContext context)
     {
         //动态API代理
+        context.Services.AddHttpClientProxies(
+            typeof(LowCodeApplicationContractsModule).Assembly,
+            DesignEngineRemoteServiceName
+        );
+
         context.Services.AddHttpClientProxies(
             typeof(DesignEngineApplicationContractsModule).Assembly,
             DesignEngineRemoteServiceName
@@ -87,8 +105,8 @@ public class HostAllClientModule : AbpModule
         );
 
         context.Services.AddHttpClientProxies(
-            typeof(AutoTestApplicationContractsModule).Assembly,
-            AutoTestRemoteServiceName
+            typeof(TestingApplicationContractsModule).Assembly,
+            TestingRemoteServiceName
         );
 
         context.Services.AddHttpClientProxies(
@@ -97,8 +115,8 @@ public class HostAllClientModule : AbpModule
         );
 
         context.Services.AddHttpClientProxies(
-            typeof(SystemManagementApplicationContractsModule).Assembly,
-            SystemManagementRemoteServiceName
+            typeof(NotificationApplicationContractsModule).Assembly,
+            NotificationRemoteServiceName
         );
 
         context.Services.AddHttpClientProxies(
@@ -109,6 +127,31 @@ public class HostAllClientModule : AbpModule
         context.Services.AddHttpClientProxies(
             typeof(EnterpriseApplicationContractsModule).Assembly,
             EnterpriseRemoteServiceName
+        );
+
+        context.Services.AddHttpClientProxies(
+            typeof(SystemPortalApplicationContractsModule).Assembly,
+            SystemPortalRemoteServiceName
+        );
+
+        context.Services.AddHttpClientProxies(
+            typeof(OrderApplicationContractsModule).Assembly,
+            OrderRemoteServiceName
+        );
+
+        context.Services.AddHttpClientProxies(
+            typeof(SettingApplicationContractsModule).Assembly,
+            SettingRemoteServiceName
+        );
+
+        context.Services.AddHttpClientProxies(
+            typeof(SupplyChainApplicationContractsModule).Assembly,
+            SupplyChainRemoteServiceName
+        );
+
+        context.Services.AddHttpClientProxies(
+            typeof(BackgroundTaskApplicationContractsModule).Assembly,
+            BackgroundTaskRemoteServiceName
         );
     }
 }

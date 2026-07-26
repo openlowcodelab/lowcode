@@ -5,9 +5,61 @@
 
 <PageTitle>集成</PageTitle>
 
-<h1>集成</h1>
+<style>
+    .intg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+    .intg-card { display: flex; flex-direction: column; }
+    .intg-card-head { display: flex; align-items: center; gap: 12px; }
+    .intg-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--h-primary-soft); color: var(--h-primary); flex-shrink: 0; }
+    .intg-icon svg { width: 22px; height: 22px; }
+    .intg-name { font-size: 15px; font-weight: 600; color: var(--h-text); }
+    .intg-body { color: var(--h-text-3); font-size: 13px; line-height: 1.6; margin: 12px 0 16px; flex: 1; }
+    .intg-foot { display: flex; justify-content: space-between; align-items: center; }
+</style>
 
+<div class="page-header">
+    <div>
+        <h2 class="page-header-title">集成</h2>
+        <div class="page-header-subtitle">为应用接入审批流、开放接口、Webhook 与第三方服务</div>
+    </div>
+</div>
+
+<div class="intg-grid">
+    @foreach (var it in _integrations)
+    {
+        <div class="card card-hoverable intg-card">
+            <div class="intg-card-head">
+                <div class="intg-icon">@MenuIcons.GetSvg(it.Icon)</div>
+                <div class="intg-name">@it.Name</div>
+            </div>
+            <div class="intg-body">@it.Description</div>
+            <div class="intg-foot">
+                <span class="tag @(it.Enabled ? "tag-green" : "tag-default")">@(it.Enabled ? "已启用" : "未启用")</span>
+                <button class="btn btn-sm" @onclick="() => Toggle(it)">@(it.Enabled ? "配置" : "启用")</button>
+            </div>
+        </div>
+    }
+</div>
 
 @code {
+    private class IntegrationItem
+    {
+        public string Name { get; set; }
+        public string Icon { get; set; }
+        public string Description { get; set; }
+        public bool Enabled { get; set; }
+    }
 
+    private List<IntegrationItem> _integrations = new()
+    {
+        new() { Name = "审批流", Icon = "deployment-unit", Description = "为表单页面绑定审批流程，支持多级审批、条件分支与抄送。", Enabled = false },
+        new() { Name = "开放 API", Icon = "api", Description = "以 REST API 形式对外提供应用数据的增删改查能力。", Enabled = false },
+        new() { Name = "Webhook", Icon = "cloud", Description = "在数据变更、审批完成等事件发生时向外部系统推送通知。", Enabled = false },
+        new() { Name = "第三方登录", Icon = "team", Description = "接入微信、钉钉、飞书等第三方身份认证与组织架构。", Enabled = false }
+    };
+
+    private async Task Toggle(IntegrationItem it)
+    {
+        it.Enabled = !it.Enabled;
+        await Message.InfoAsync($"{it.Name} 已{(it.Enabled ? "启用" : "关闭")}（配置能力将在后续版本开放）");
+    }
 }

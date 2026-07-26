@@ -24,6 +24,10 @@ else
     {
         <BasicSettings Definition="@definition" OnSettingsChanged="OnBasicSettingsChanged" />
     }
+    else if (DesignerLayout?.ActiveTab == "form")
+    {
+        <FormDesigner FormJson="@definition.FormJson" FormName="@definition.Name" OnFormChanged="OnFormChanged" />
+    }
     else if (DesignerLayout?.ActiveTab == "flow")
     {
         <div class="flow-design-container">
@@ -61,6 +65,10 @@ else
                     {
                         <CarbonCopySettingDialog Node="@((CarbonCopyModel)editingNode)" OnSave="OnNodeSettingSaved" />
                     }
+                    else if (editingNode.NodeType == NodeTypeEnum.Condition)
+                    {
+                        <ConditionSettingDialog Node="@((ConditionModel)editingNode)" OnSave="OnNodeSettingSaved" />
+                    }
                 }
             </div>
         }
@@ -70,6 +78,9 @@ else
 @code {
     [Parameter]
     public string ApprovalId { get; set; } = string.Empty;
+
+    [SupplyParameterFromQuery(Name = "template")]
+    public string? TemplateId { get; set; }
     
     [CascadingParameter]
     public ApprovalDesignerLayout? DesignerLayout { get; set; }
@@ -101,6 +112,22 @@ else
                     WhoCanStart = "All",
                     AdminType = "All"
                 };
+
+                // 从模板创建: 预填表单与默认审批流
+                if (!string.IsNullOrEmpty(TemplateId))
+                {
+                    var templates = await ApprovalDefinitionAppService.GetTemplatesAsync();
+                    var template = templates.FirstOrDefault(t => t.Id == TemplateId);
+                    if (template != null)
+                    {
+                        definition.Name = template.Name;
+                        definition.Icon = template.Icon;
+                        definition.Description = template.Description;
+                        definition.CategoryName = template.CategoryName;
+                        definition.FormJson = template.FormJson;
+                        definition.DefinitionJson = template.DefinitionJson;
+                    }
+                }
             }
             else
             {
@@ -195,6 +222,14 @@ else
     {
         StateHasChanged();
     }
+
+    private void OnFormChanged(string formJson)
+    {
+        if (definition != null)
+        {
+            definition.FormJson = formJson;
+        }
+    }
     
     private void OnDeleteNode(NodeModelBase nodeToDelete)
     {
@@ -232,6 +267,7 @@ else
             NodeTypeEnum.Start => "发起人设置",
             NodeTypeEnum.Approve => "审批人设置",
             NodeTypeEnum.CarbonCopy => "抄送人设置",
+            NodeTypeEnum.Condition => "条件设置",
             _ => "节点设置"
         };
         isSettingDrawerVisible = true;
@@ -293,6 +329,7 @@ else
                     SpecifiedStarters = definition.SpecifiedStarters,
                     AdminType = definition.AdminType,
                     SpecifiedAdmins = definition.SpecifiedAdmins,
+                    FormJson = definition.FormJson,
                     DefinitionJson = json
                 });
                 
@@ -314,6 +351,7 @@ else
                     SpecifiedStarters = definition.SpecifiedStarters,
                     AdminType = definition.AdminType,
                     SpecifiedAdmins = definition.SpecifiedAdmins,
+                    FormJson = definition.FormJson,
                     DefinitionJson = json
                 });
             }
@@ -352,6 +390,7 @@ else
                     SpecifiedStarters = definition.SpecifiedStarters,
                     AdminType = definition.AdminType,
                     SpecifiedAdmins = definition.SpecifiedAdmins,
+                    FormJson = definition.FormJson,
                     DefinitionJson = json
                 });
                 ApprovalId = result.Id;
@@ -370,6 +409,7 @@ else
                     SpecifiedStarters = definition.SpecifiedStarters,
                     AdminType = definition.AdminType,
                     SpecifiedAdmins = definition.SpecifiedAdmins,
+                    FormJson = definition.FormJson,
                     DefinitionJson = json
                 });
             }

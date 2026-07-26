@@ -3,7 +3,6 @@
 @inherits LowCodePageComponentBase
 @layout PartsDesignEngineLayout
 
-@inject PartsDragDropStateService PartsDragDropStateService
 @inject IComponentPartsAppService ComponentPartsAppService
 
 <PageTitle>@($"{_partsCascading.PartsName} - 组件物料设计器")</PageTitle>
@@ -43,15 +42,18 @@ else
                             </div>
                         </div>
                         <div class="tabs-section">
-                            <div class="tabs-section-header">组件属性</div>
+                            <div class="tabs-section-header">低代码组件属性</div>
                             <div class="tabs-section-body">
                                 @if (_partsSchema != null)
                                 {
                                     <div style="padding: 16px; height: calc(100vh - 160px); overflow-y: auto;">
-                                        <ComponentPartsEditor ComponentParts="_partsSchema" 
+                                        <ComponentPartsEditor ComponentParts="_partsSchema"
                                         ComponentPartsChanged="OnComponentPartsChanged"
-                                        OnSave="OnSaveFromEditor" 
-                                        OnCancel="OnCancelFromEditor" />
+                                        ShowComponentType="false"
+                                        ShowFragment="false"
+                                        ShowStyleTab="false"
+                                        ShowDataSourceTab="false"
+                                        ShowActions="false" />
                                     </div>
                                 }
                             </div>
@@ -195,7 +197,7 @@ else
 
     private void GoBack()
     {
-        NavigateTo($"/designengine/myparts?libIraryd={_partsCascading.LibraryId}");
+        NavigateTo($"/designengine/myparts?libId={_partsCascading.LibraryId}");
     }
 
     private async Task PreviewComponent()

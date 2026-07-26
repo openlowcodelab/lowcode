@@ -1,0 +1,130 @@
+@page "/system/users/{userId:guid}/detail"
+
+@layout SystemPortalLayout
+@inject IUserAppService UserService
+@inject NavigationManager Navigation
+
+<HCard Title="用户详情" Extra="@BackButton">
+    @if (user != null)
+    {
+        <table class="h-descriptions">
+            <tbody>
+                <tr>
+                    <th>用户名</th>
+                    <td>@user.UserName</td>
+                    <th>邮箱</th>
+                    <td>@user.Email</td>
+                </tr>
+                <tr>
+                    <th>手机号</th>
+                    <td>@user.PhoneNumber</td>
+                    <th>用户类型</th>
+                    <td>@GetUserTypeText(user.UserType)</td>
+                </tr>
+                <tr>
+                    <th>状态</th>
+                    <td>
+                        <span class="h-tag @(user.IsActive ? "h-tag-green" : "h-tag-red")">
+                            @(user.IsActive ? "启用" : "禁用")
+                        </span>
+                    </td>
+                    <th>邮箱验证</th>
+                    <td>
+                        <span class="h-tag @(user.EmailConfirmed ? "h-tag-green" : "h-tag-default")">
+                            @(user.EmailConfirmed ? "已验证" : "未验证")
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <th>手机验证</th>
+                    <td>
+                        <span class="h-tag @(user.PhoneNumberConfirmed ? "h-tag-green" : "h-tag-default")">
+                            @(user.PhoneNumberConfirmed ? "已验证" : "未验证")
+                        </span>
+                    </td>
+                    <th>最后登录</th>
+                    <td>@user.LastLoginAt?.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                </tr>
+                <tr>
+                    <th>创建时间</th>
+                    <td>@user.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                    <th>更新时间</th>
+                    <td>@user.UpdatedAt?.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                </tr>
+                <tr>
+                    <th>备注</th>
+                    <td colspan="3">@user.Remark</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="h-divider">绑定的第三方账号</div>
+
+        @if (user.ExternalAccounts.Any())
+        {
+            <HTable Loading="false">
+                <thead>
+                    <tr>
+                        <th>平台</th>
+                        <th>账号ID</th>
+                        <th>显示名称</th>
+                        <th>绑定时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var context in user.ExternalAccounts)
+                    {
+                        <tr>
+                            <td>@context.Provider</td>
+                            <td>@context.ProviderKey</td>
+                            <td>@context.DisplayName</td>
+                            <td>@context.BoundAt.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>
+                                <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => ConfirmUnbind(context.Provider))">解绑</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </HTable>
+        }
+        else
+        {
+            <div class="h-empty">暂无绑定的第三方账号</div>
+        }
+    }
+    else
+    {
+        <div class="h-spin"><span class="h-spin-dot"></span><span class="h-spin-text">加载中...</span></div>
+    }
+</HCard>
+
+@code {
+    private UserDto? user;
+
+    [Microsoft.AspNetCore.Components.Parameter]
+    public Guid userId { get; set; }
+
+    private RenderFragment BackButton => @<button class="h-btn" @onclick="@(() => Navigation.NavigateTo("/system/users"))">返回</button>;
+
+    protected override async Task OnInitializedAsync()
+    {
+        user = await UserService.GetUserDtoByIdAsync(userId);
+    }
+
+    private string GetUserTypeText(UserType type)
+    {
+        return type switch
+        {
+            UserType.SuperAdmin => "超级管理员",
+            UserType.Admin => "管理员",
+            _ => "普通用户"
+        };
+    }
+
+    private async Task ConfirmUnbind(string provider)
+    {
+        // TODO: 实现解绑逻辑
+        await Task.CompletedTask;
+    }
+}

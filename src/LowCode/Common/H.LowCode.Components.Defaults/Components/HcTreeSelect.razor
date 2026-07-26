@@ -1,0 +1,29 @@
+@namespace H.LowCode.Components.Defaults
+
+<div class="hc-select-wrapper" style="@Style">
+    <div class="hc-select @(Disabled ? "hc-select-disabled" : "")" @onclick="ToggleOpen">
+        <span class="hc-select-value">@(!string.IsNullOrEmpty(Value) ? Value : Placeholder)</span>
+        <span class="hc-select-arrow">▼</span>
+    </div>
+    @if (_isOpen)
+    {
+        <div class="hc-select-dropdown">
+            <div class="hc-select-empty">树选择 (待完善)</div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string Placeholder { get; set; } = "请选择";
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public string Value { get; set; }
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public string Style { get; set; }
+
+    private bool _isOpen;
+
+    private void ToggleOpen()
+    {
+        if (!Disabled) _isOpen = !_isOpen;
+    }
+}

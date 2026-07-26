@@ -56,7 +56,7 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
 
         Type componentType = componentFragment.TypeName.ResolveType();
         if (componentType == null)
-            throw new NullReferenceException($"componentId={componentId}, type={componentFragment.TypeName}");
+            return; // 无法解析的类型跳过渲染，避免整页崩溃
 
         builder.OpenComponent(index++, componentType);
 
@@ -227,14 +227,18 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
             || dataSource.FiexdOptionDataSource.Count == 0)
             return;
 
+        // 无 DataSourceFragment（Hc 风格选项组件）时不渲染选项，避免空引用
+        if (dataSource.DataSourceFragment == null)
+            return;
+
         builder.AddAttribute(index++, "ChildContent", (RenderFragment)(childBuilder =>
         {
             if (string.IsNullOrEmpty(dataSource.DataSourceFragment.TypeName))
-                throw new NullReferenceException($"componentId={componentId}, {nameof(dataSource.DataSourceFragment.TypeName)}");
+                return;
 
             Type childComponentType = dataSource.DataSourceFragment.TypeName.ResolveType();
             if (childComponentType == null)
-                throw new NullReferenceException($"componentId={componentId}, type={dataSource.DataSourceFragment.TypeName}");
+                return;
 
             foreach (var option in dataSource.FiexdOptionDataSource)
             {
@@ -367,11 +371,11 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
         builder.AddAttribute(index++, "ChildContent", (RenderFragment<object>)((item) => (childBuilder) =>
         {
             if (string.IsNullOrEmpty(fragment.TypeName))
-                throw new NullReferenceException($"componentId={componentId}, ItemTemplate TypeName is null");
+                return;
 
             Type itemComponentType = fragment.TypeName.ResolveType();
             if (itemComponentType == null)
-                throw new NullReferenceException($"componentId={componentId}, ItemTemplate type={fragment.TypeName}");
+                return;
 
             childBuilder.OpenComponent(index++, itemComponentType);
 

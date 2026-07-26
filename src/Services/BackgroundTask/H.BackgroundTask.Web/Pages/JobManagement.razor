@@ -1,0 +1,363 @@
+@page "/background-task/jobs"
+
+@layout BackgroundTaskLayout
+@inject IBackgroundJobAppService JobService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<h2>任务管理</h2>
+
+<HCard>
+    <div class="h-toolbar">
+        <input type="text" @bind-value="@filter" placeholder="任务名称" class="h-input" style="width: 200px;" />
+        <select @bind="@triggerFilter" class="h-input" style="width: auto;">
+            <option value="">全部调度方式</option>
+            <option value="@JobTriggerKind.OneTime">一次性任务</option>
+            <option value="@JobTriggerKind.Recurring">周期任务</option>
+        </select>
+        <select @bind="@typeFilter" class="h-input" style="width: auto;">
+            <option value="">全部类型</option>
+            <option value="@JobExecuteType.Api">API</option>
+            <option value="@JobExecuteType.Sql">SQL</option>
+        </select>
+        <button class="h-btn h-btn-primary" @onclick="@LoadData">查询</button>
+        <button class="h-btn h-btn-primary" @onclick="@ShowCreateDialog">新增任务</button>
+        <button class="h-btn" @onclick="@LoadData">刷新</button>
+    </div>
+
+    <HTable Loading="@loading" ShowEmpty="@(!loading && !jobs.Any())">
+        <thead>
+            <tr>
+                <th>任务名称</th>
+                <th>调度方式</th>
+                <th>类型</th>
+                <th>调度计划</th>
+                <th>启用</th>
+                <th>最近执行</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var j in jobs)
+            {
+                <tr>
+                    <td>@j.Name</td>
+                    <td>@TriggerText(j.TriggerKind)</td>
+                    <td><span class="h-tag h-tag-blue">@j.ExecuteType</span></td>
+                    <td>@ScheduleText(j)</td>
+                    <td>
+                        @if (j.IsEnabled)
+                        {
+                            <span class="h-tag h-tag-green">已启用</span>
+                        }
+                        else
+                        {
+                            <span class="h-tag">已停用</span>
+                        }
+                    </td>
+                    <td>@LastExecText(j)</td>
+                    <td>
+                        <span class="h-space">
+                            <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => ShowEditDialog(j))">编辑</button>
+                            <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => Trigger(j.Id))">执行</button>
+                            @if (j.IsEnabled)
+                            {
+                                <button class="h-btn h-btn-sm" @onclick="@(() => Disable(j.Id))">停用</button>
+                            }
+                            else
+                            {
+                                <button class="h-btn h-btn-sm" @onclick="@(() => Enable(j.Id))">启用</button>
+                            }
+                            <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => ConfirmDelete(j.Id))">删除</button>
+                        </span>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </HTable>
+</HCard>
+
+<HModal Title="@(isEdit ? "编辑任务" : "新增任务")" Visible="@showModal" OnOk="@Save" OnCancel="@CloseModal" ConfirmLoading="@saving" Style="width:760px;">
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">任务名称</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@current.Name" placeholder="请输入任务名称" class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">调度方式</label>
+        <div class="h-form-control">
+            <select @bind="@current.TriggerKind" class="h-input" style="width:auto">
+                <option value="@JobTriggerKind.OneTime">一次性任务</option>
+                <option value="@JobTriggerKind.Recurring">周期任务</option>
+            </select>
+        </div>
+    </div>
+    @if (current.TriggerKind == JobTriggerKind.Recurring)
+    {
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">Cron 表达式</label>
+            <div class="h-form-control">
+                <input type="text" @bind-value="@current.CronExpression" placeholder="例如：0 */5 * * * (每5分钟)" class="h-input" />
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">计划执行时间</label>
+            <div class="h-form-control">
+                <input type="datetime-local" @bind-value="@scheduledTimeInput" class="h-input" style="width:auto" />
+                <span class="h-form-help">留空表示保存后立即执行</span>
+            </div>
+        </div>
+    }
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">执行类型</label>
+        <div class="h-form-control">
+            <select @bind="@current.ExecuteType" class="h-input" style="width:auto">
+                <option value="@JobExecuteType.Api">API</option>
+                <option value="@JobExecuteType.Sql">SQL</option>
+            </select>
+        </div>
+    </div>
+
+    @if (current.ExecuteType == JobExecuteType.Api)
+    {
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">API 地址</label>
+            <div class="h-form-control">
+                <input type="text" @bind-value="@current.ApiUrl" placeholder="https://example.com/api/task" class="h-input" />
+            </div>
+        </div>
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">HTTP 方法</label>
+            <div class="h-form-control">
+                <select @bind="@current.ApiHttpMethod" class="h-input" style="width:auto">
+                    <option value="GET">GET</option>
+                    <option value="POST">POST</option>
+                    <option value="PUT">PUT</option>
+                    <option value="DELETE">DELETE</option>
+                </select>
+            </div>
+        </div>
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">请求头 (JSON)</label>
+            <div class="h-form-control">
+                <textarea @bind="@current.ApiHeaders" rows="2" placeholder='{"Authorization":"Bearer xxx"}' class="h-textarea"></textarea>
+            </div>
+        </div>
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">请求参数 (JSON)</label>
+            <div class="h-form-control">
+                <textarea @bind="@current.ApiBody" rows="3" placeholder='{"key":"value"}' class="h-textarea"></textarea>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">数据源</label>
+            <div class="h-form-control">
+                <input type="text" @bind-value="@current.SqlConnectionString" placeholder="Server=...;Database=...;User Id=...;Password=...;" class="h-input" />
+            </div>
+        </div>
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">SQL 语句</label>
+            <div class="h-form-control">
+                <textarea @bind="@current.SqlStatement" rows="4" placeholder="UPDATE ... / DELETE ... / EXEC ..." class="h-textarea"></textarea>
+            </div>
+        </div>
+    }
+
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">备注</label>
+        <div class="h-form-control">
+            <textarea @bind="@current.Remark" rows="2" class="h-textarea"></textarea>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">是否启用</label>
+        <div class="h-form-control">
+            <input type="checkbox" @bind="@current.IsEnabled" />
+        </div>
+    </div>
+</HModal>
+
+@code {
+    private List<BackgroundJobDto> jobs = new();
+    private bool loading;
+    private string filter = string.Empty;
+    private string triggerFilter = string.Empty;
+    private string typeFilter = string.Empty;
+
+    private bool showModal;
+    private bool saving;
+    private bool isEdit;
+    private Guid editingId;
+    private CreateBackgroundJobDto current = new();
+    private DateTime? scheduledTimeInput;
+
+    protected override async Task OnInitializedAsync() => await LoadData();
+
+    private async Task LoadData()
+    {
+        loading = true;
+        try
+        {
+            var input = new BackgroundJobQueryDto
+            {
+                MaxResultCount = 50,
+                Filter = string.IsNullOrWhiteSpace(filter) ? null : filter,
+                TriggerKind = string.IsNullOrEmpty(triggerFilter) ? null : Enum.Parse<JobTriggerKind>(triggerFilter),
+                ExecuteType = string.IsNullOrEmpty(typeFilter) ? null : Enum.Parse<JobExecuteType>(typeFilter)
+            };
+            var result = await JobService.GetListAsync(input);
+            jobs = result.Items.ToList();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载失败：{ex.Message}"); }
+        finally { loading = false; }
+    }
+
+    private void ShowCreateDialog()
+    {
+        isEdit = false;
+        editingId = Guid.Empty;
+        current = new CreateBackgroundJobDto { TriggerKind = JobTriggerKind.OneTime, ExecuteType = JobExecuteType.Api, ApiHttpMethod = "GET", IsEnabled = true };
+        scheduledTimeInput = null;
+        showModal = true;
+    }
+
+    private void ShowEditDialog(BackgroundJobDto j)
+    {
+        isEdit = true;
+        editingId = j.Id;
+        current = new CreateBackgroundJobDto
+        {
+            Name = j.Name,
+            TriggerKind = j.TriggerKind,
+            ExecuteType = j.ExecuteType,
+            CronExpression = j.CronExpression,
+            ScheduledTime = j.ScheduledTime,
+            ApiUrl = j.ApiUrl,
+            ApiHttpMethod = string.IsNullOrWhiteSpace(j.ApiHttpMethod) ? "GET" : j.ApiHttpMethod,
+            ApiHeaders = j.ApiHeaders,
+            ApiBody = j.ApiBody,
+            SqlConnectionString = j.SqlConnectionString,
+            SqlStatement = j.SqlStatement,
+            IsEnabled = j.IsEnabled,
+            Remark = j.Remark
+        };
+        scheduledTimeInput = j.ScheduledTime;
+        showModal = true;
+    }
+
+    private async Task Save()
+    {
+        saving = true;
+        try
+        {
+            if (string.IsNullOrWhiteSpace(current.Name))
+            {
+                await JS.InvokeVoidAsync("alert", "任务名称不能为空");
+                return;
+            }
+
+            if (current.TriggerKind == JobTriggerKind.OneTime)
+            {
+                current.ScheduledTime = scheduledTimeInput;
+                current.CronExpression = null;
+            }
+            else
+            {
+                current.ScheduledTime = null;
+            }
+
+            if (isEdit)
+            {
+                var update = new UpdateBackgroundJobDto
+                {
+                    Name = current.Name,
+                    TriggerKind = current.TriggerKind,
+                    ExecuteType = current.ExecuteType,
+                    CronExpression = current.CronExpression,
+                    ScheduledTime = current.ScheduledTime,
+                    ApiUrl = current.ApiUrl,
+                    ApiHttpMethod = current.ApiHttpMethod,
+                    ApiHeaders = current.ApiHeaders,
+                    ApiBody = current.ApiBody,
+                    SqlConnectionString = current.SqlConnectionString,
+                    SqlStatement = current.SqlStatement,
+                    IsEnabled = current.IsEnabled,
+                    Remark = current.Remark
+                };
+                await JobService.UpdateAsync(editingId, update);
+            }
+            else
+            {
+                await JobService.CreateAsync(current);
+            }
+
+            CloseModal();
+            await LoadData();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}"); }
+        finally { saving = false; }
+    }
+
+    private void CloseModal() { showModal = false; current = new(); scheduledTimeInput = null; }
+
+    private async Task Trigger(Guid id)
+    {
+        try
+        {
+            await JobService.TriggerAsync(id);
+            await JS.InvokeVoidAsync("alert", "已提交执行请求，稍后可在“执行记录”中查看结果");
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"触发失败：{ex.Message}"); }
+    }
+
+    private async Task Enable(Guid id)
+    {
+        try { await JobService.EnableAsync(id); await LoadData(); }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"启用失败：{ex.Message}"); }
+    }
+
+    private async Task Disable(Guid id)
+    {
+        try { await JobService.DisableAsync(id); await LoadData(); }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"停用失败：{ex.Message}"); }
+    }
+
+    private async Task ConfirmDelete(Guid id)
+    {
+        var ok = await JS.InvokeAsync<bool>("confirm", "确定删除任务？将同时移除其调度。");
+        if (ok)
+        {
+            await JobService.DeleteAsync(id);
+            await LoadData();
+        }
+    }
+
+    private static string TriggerText(JobTriggerKind kind) => kind switch
+    {
+        JobTriggerKind.OneTime => "一次性",
+        JobTriggerKind.Recurring => "周期",
+        _ => kind.ToString()
+    };
+
+    private static string ScheduleText(BackgroundJobDto j) => j.TriggerKind switch
+    {
+        JobTriggerKind.Recurring => j.CronExpression ?? "-",
+        JobTriggerKind.OneTime => j.ScheduledTime?.ToString("yyyy-MM-dd HH:mm") ?? "立即",
+        _ => "-"
+    };
+
+    private static string LastExecText(BackgroundJobDto j)
+    {
+        if (j.LastExecutionTime is null) return "未执行";
+        var time = j.LastExecutionTime.Value.ToString("MM-dd HH:mm");
+        var status = j.LastExecutionStatus == JobExecutionStatus.Success ? "成功" : "失败";
+        return $"{time} {status}";
+    }
+}

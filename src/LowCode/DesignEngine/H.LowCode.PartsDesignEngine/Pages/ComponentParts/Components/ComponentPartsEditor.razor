@@ -2,46 +2,63 @@
 @inherits LowCodeComponentBase
 
 <div class="component-parts-editor">
-    <div class="tabs-section">
-        <div class="tabs-section-header">基本信息</div>
-        <div class="tabs-section-body">
+    <div class="tabs-header">
+        <button class='tab-btn @(_activeTab == "basic" ? "active" : "")' @onclick='() => _activeTab = "basic"'>基本信息</button>
+        <button class='tab-btn @(_activeTab == "attribute" ? "active" : "")' @onclick='() => _activeTab = "attribute"'>属性</button>
+        <button class='tab-btn @(_activeTab == "event" ? "active" : "")' @onclick='() => _activeTab = "event"'>事件</button>
+        @if (ShowStyleTab)
+        {
+            <button class='tab-btn @(_activeTab == "style" ? "active" : "")' @onclick='() => _activeTab = "style"'>样式</button>
+        }
+        @if (ShowDataSourceTab && ComponentParts.IsContainer == false)
+        {
+            <button class='tab-btn @(_activeTab == "datasource" ? "active" : "")' @onclick='() => _activeTab = "datasource"'>数据源</button>
+        }
+    </div>
+
+    <div class="tabs-body" style="padding-top:16px;">
+        @if (_activeTab == "basic")
+        {
             <div class="row">
                 <div class="col col-12">
                     <div style="margin-bottom: 16px;">
                         <label style="display: block; margin-bottom: 4px; font-weight: 500;">
                             组件Id <span style="color: #ff4d4f;">*</span>
                         </label>
-                        <input class="inp" @bind="ComponentParts.PartsId" placeholder="组件Name" />
+                        <input class="inp" @bind="ComponentParts.PartsId" @bind:after="NotifyChanged" placeholder="组件Id" />
                     </div>
                 </div>
                 <div class="col col-12">
                     <div style="margin-bottom: 16px;">
                         <label style="display: block; margin-bottom: 4px; font-weight: 500;">显示名称</label>
-                        <input class="inp" @bind="ComponentParts.Label" placeholder="显示名称" />
+                        <input class="inp" @bind="ComponentParts.Label" @bind:after="NotifyChanged" placeholder="显示名称" />
                     </div>
                 </div>
             </div>
 
             <div class="row">
-                <div class="col col-8">
-                    <div style="margin-bottom: 16px;">
-                        <label style="display: block; margin-bottom: 4px; font-weight: 500;">组件类型</label>
-                        <div class="radio-group">
-                            <label class="radio-label"><input type="radio" name="componentType" value="1" checked="@(ComponentParts.ComponentType == 1)" @onchange="() => ComponentParts.ComponentType = 1" />原子组件</label>
-                            <label class="radio-label"><input type="radio" name="componentType" value="2" checked="@(ComponentParts.ComponentType == 2)" @onchange="() => ComponentParts.ComponentType = 2" />低代码组件</label>
+                @if (ShowComponentType)
+                {
+                    <div class="col col-8">
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; margin-bottom: 4px; font-weight: 500;">组件类型</label>
+                            <div class="radio-group">
+                                <label class="radio-label"><input type="radio" name="componentType" checked="@(ComponentParts.ComponentType == 1)" @onchange="() => OnComponentTypeChange(1)" />原子组件</label>
+                                <label class="radio-label"><input type="radio" name="componentType" checked="@(ComponentParts.ComponentType == 2)" @onchange="() => OnComponentTypeChange(2)" />低代码组件</label>
+                            </div>
                         </div>
                     </div>
-                </div>
+                }
                 <div class="col col-8">
                     <div style="margin-bottom: 16px;">
                         <label style="display: block; margin-bottom: 4px; font-weight: 500;">排序</label>
-                        <input type="number" class="inp" @bind="ComponentParts.Order" min="0" />
+                        <input type="number" class="inp" @bind="ComponentParts.Order" @bind:after="NotifyChanged" min="0" />
                     </div>
                 </div>
                 <div class="col col-8">
                     <div style="margin-bottom: 16px;">
                         <label style="display: block; margin-bottom: 4px; font-weight: 500;">版本</label>
-                        <input class="inp" @bind="ComponentParts.Version" placeholder="版本号" />
+                        <input class="inp" @bind="ComponentParts.Version" @bind:after="NotifyChanged" placeholder="版本号" />
                     </div>
                 </div>
             </div>
@@ -50,37 +67,42 @@
                 <div class="col col-8">
                     <div style="margin-bottom: 16px;">
                         <label style="display: block; margin-bottom: 4px; font-weight: 500;">是否容器</label>
-                        <label class="switch"><input type="checkbox" @bind="ComponentParts.IsContainer"></label>
+                        <label class="switch"><input type="checkbox" @bind="ComponentParts.IsContainer" @bind:after="NotifyChanged"></label>
                     </div>
                 </div>
                 <div class="col col-8">
                     <div style="margin-bottom: 16px;">
                         <label style="display: block; margin-bottom: 4px; font-weight: 500;">支持数据源</label>
-                        <label class="switch"><input type="checkbox" @bind="ComponentParts.IsSupportDataSource" disabled="@ComponentParts.IsContainer"></label>
+                        <label class="switch"><input type="checkbox" @bind="ComponentParts.IsSupportDataSource" @bind:after="NotifyChanged" disabled="@ComponentParts.IsContainer"></label>
                     </div>
                 </div>
                 <div class="col col-8">
                     <div style="margin-bottom: 16px;">
                         <label style="display: block; margin-bottom: 4px; font-weight: 500;">隐藏标签</label>
-                        <label class="switch"><input type="checkbox" @bind="ComponentParts.IsHiddenLabel"></label>
+                        <label class="switch"><input type="checkbox" @bind="ComponentParts.IsHiddenLabel" @bind:after="NotifyChanged"></label>
                     </div>
                 </div>
             </div>
 
             <div style="margin-bottom: 16px;">
                 <label style="display: block; margin-bottom: 4px; font-weight: 500;">组件描述</label>
-                <textarea class="ta" @bind="ComponentParts.Description" rows="3" placeholder="组件描述"></textarea>
+                <textarea class="ta" @bind="ComponentParts.Description" @bind:after="NotifyChanged" rows="3" placeholder="组件描述"></textarea>
             </div>
-            <div style="margin-top: 16px;">
-                <ComponentFragmentEditor @bind-Fragment="@ComponentParts.Fragment" />
-            </div>
+
+            @if (ShowFragment)
+            {
+                <div style="margin-top: 16px;">
+                    <ComponentFragmentEditor Fragment="@ComponentParts.Fragment" FragmentChanged="OnFragmentChanged" />
+                </div>
+            }
+
             <div style="margin-top: 16px;">
                 <HCard Title="基础样式">
                     <div class="row">
                         <div class="col col-8">
                             <div style="margin-bottom: 16px;">
                                 <label style="display: block; margin-bottom: 4px; font-weight: 500;">组件宽度(24栅格)</label>
-                                <input type="range" value="@ComponentParts.Style.ItemWidth" min="4" max="24" @onchange='(e) => { ComponentParts.Style.ItemWidth = double.Parse(e.Value?.ToString() ?? "4"); OnBasicStyleChange(); }' />
+                                <input type="range" value="@ComponentParts.Style.ItemWidth" min="4" max="24" @onchange='(e) => { ComponentParts.Style.ItemWidth = double.Parse(e.Value?.ToString() ?? "4"); _ = NotifyChanged(); }' />
                             </div>
                         </div>
                         @if (ComponentParts.IsHiddenLabel == false && ComponentParts.IsContainer == false)
@@ -88,14 +110,14 @@
                             <div class="col col-8">
                                 <div style="margin-bottom: 16px;">
                                     <label style="display: block; margin-bottom: 4px; font-weight: 500;">标签宽度(px)</label>
-                                    <input type="range" value="@ComponentParts.Style.LabelWidth" min="4" max="300" @onchange='(e) => { ComponentParts.Style.LabelWidth = double.Parse(e.Value?.ToString() ?? "180"); OnBasicStyleChange(); }' />
+                                    <input type="range" value="@ComponentParts.Style.LabelWidth" min="4" max="300" @onchange='(e) => { ComponentParts.Style.LabelWidth = double.Parse(e.Value?.ToString() ?? "180"); _ = NotifyChanged(); }' />
                                 </div>
                             </div>
                         }
                         <div class="col col-8">
                             <div style="margin-bottom: 16px;">
                                 <label style="display: block; margin-bottom: 4px; font-weight: 500;">组件高度(px)</label>
-                                <input type="range" value="@ComponentParts.Style.ItemHeight" min="40" max="500" @onchange='(e) => { ComponentParts.Style.ItemHeight = double.Parse(e.Value?.ToString() ?? "85"); OnBasicStyleChange(); }' />
+                                <input type="range" value="@ComponentParts.Style.ItemHeight" min="40" max="500" @onchange='(e) => { ComponentParts.Style.ItemHeight = double.Parse(e.Value?.ToString() ?? "85"); _ = NotifyChanged(); }' />
                             </div>
                         </div>
                     </div>
@@ -103,64 +125,96 @@
                         <div class="col col-24">
                             <div style="margin-bottom: 16px;">
                                 <label style="display: block; margin-bottom: 4px; font-weight: 500;">默认样式</label>
-                                <textarea class="ta" @bind="ComponentParts.Style.DefaultStyle" rows="4" placeholder="例如：margin:8px; padding:4px;"></textarea>
+                                <textarea class="ta" @bind="ComponentParts.Style.DefaultStyle" @bind:after="NotifyChanged" rows="4" placeholder="例如：margin:8px; padding:4px;"></textarea>
                             </div>
                         </div>
                     </div>
                 </HCard>
             </div>
-        </div>
+        }
+
+        @if (_activeTab == "attribute")
+        {
+            <AttributeDefineGroupEditor AttributeDefineGroups="@ComponentParts.AttributeDefineGroups" AttributeDefineGroupsChanged="OnAttributeGroupsChanged" />
+        }
+
+        @if (_activeTab == "event")
+        {
+            <EventDefineEditor EventDefines="@ComponentParts.EventDefines" EventDefinesChanged="OnEventDefinesChanged" />
+        }
+
+        @if (ShowStyleTab && _activeTab == "style")
+        {
+            <StyleDefineEditor StyleDefines="@ComponentParts.StyleDefines" StyleDefinesChanged="OnStyleDefinesChanged" />
+        }
+
+        @if (ShowDataSourceTab && _activeTab == "datasource" && ComponentParts.IsContainer == false)
+        {
+            <ComponentDataSourceEditor DataSource="@ComponentParts.DataSource" DataSourceChanged="OnDataSourceChanged" />
+        }
     </div>
 
-    <div class="tabs-section">
-        <div class="tabs-section-header">组件设计属性</div>
-        <div class="tabs-section-body">
-            <AttributeDefineGroupEditor @bind-AttributeDefineGroups="@ComponentParts.AttributeDefineGroups" />
+    @if (ShowActions)
+    {
+        <div class="editor-actions" style="margin-top: 16px; text-align: right;">
+            <div class="space">
+                <button class="btn" @onclick="OnCancel">取消</button>
+                <button class="btn btn-primary" @onclick="HandleSave" disabled="@_saving">保存</button>
+            </div>
         </div>
-    </div>
-
-    <div class="tabs-section">
-        <div class="tabs-section-header">数据源</div>
-        <div class="tabs-section-body">
-            <ComponentDataSourceEditor @bind-DataSource="@ComponentParts.DataSource" />
-        </div>
-    </div>
-
-    <div class="tabs-section">
-        <div class="tabs-section-header">事件定义</div>
-        <div class="tabs-section-body">
-            <EventDefineEditor @bind-EventDefines="@ComponentParts.EventDefines" />
-        </div>
-    </div>
-
-    <div class="tabs-section">
-        <div class="tabs-section-header">样式定义</div>
-        <div class="tabs-section-body">
-            <StyleDefineEditor StyleDefines="@ComponentParts.StyleDefines" />
-        </div>
-    </div>
-
-    <div class="editor-actions" style="margin-top: 16px; text-align: right;">
-        <div class="space">
-            <button class="btn" @onclick="OnCancel">取消</button>
-            <button class="btn btn-primary" @onclick="HandleSave" disabled="@_saving">保存</button>
-        </div>
-    </div>
+    }
 </div>
 
 @code {
     [Parameter]
     public ComponentPartsSchema? ComponentParts { get; set; }
-    
+
     [Parameter]
     public EventCallback<ComponentPartsSchema> ComponentPartsChanged { get; set; }
-    
+
     [Parameter]
     public EventCallback OnCancel { get; set; }
-    
+
     [Parameter]
     public EventCallback<ComponentPartsSchema> OnSave { get; set; }
 
+    /// <summary>
+    /// 任一配置变更时触发（用于外部实时预览刷新）
+    /// </summary>
+    [Parameter]
+    public EventCallback OnChanged { get; set; }
+
+    /// <summary>
+    /// 是否显示底部保存/取消操作区（页面自带头部保存时可关闭）
+    /// </summary>
+    [Parameter]
+    public bool ShowActions { get; set; } = true;
+
+    /// <summary>
+    /// 是否显示组件类型单选（低代码设计器复用时关闭）
+    /// </summary>
+    [Parameter]
+    public bool ShowComponentType { get; set; } = true;
+
+    /// <summary>
+    /// 是否显示渲染 Fragment 编辑（低代码组件无单一 Fragment，可关闭）
+    /// </summary>
+    [Parameter]
+    public bool ShowFragment { get; set; } = true;
+
+    /// <summary>
+    /// 是否显示样式定义 Tab
+    /// </summary>
+    [Parameter]
+    public bool ShowStyleTab { get; set; } = true;
+
+    /// <summary>
+    /// 是否显示数据源 Tab
+    /// </summary>
+    [Parameter]
+    public bool ShowDataSourceTab { get; set; } = true;
+
+    private string _activeTab = "basic";
     private bool _saving = false;
 
     protected override void OnParametersSet()
@@ -178,26 +232,57 @@
                 StyleDefines = new List<ComponentPartsStyleDefineSchema>()
             };
         }
-        
-        // 确保集合不为空
-        if (ComponentParts.AttributeDefineGroups == null)
-        {
-            ComponentParts.AttributeDefineGroups = new List<ComponentPartsAttributeDefineGroupSchema>();
-        }
-        
-        if (ComponentParts.EventDefines == null)
-        {
-            ComponentParts.EventDefines = new List<ComponentPartsEventDefineSchema>();
-        }
-        
-        if (ComponentParts.StyleDefines == null)
-        {
-            ComponentParts.StyleDefines = new List<ComponentPartsStyleDefineSchema>();
-        }
+
+        ComponentParts.AttributeDefineGroups ??= new List<ComponentPartsAttributeDefineGroupSchema>();
+        ComponentParts.EventDefines ??= new List<ComponentPartsEventDefineSchema>();
+        ComponentParts.StyleDefines ??= new List<ComponentPartsStyleDefineSchema>();
     }
 
-    private void OnBasicStyleChange()
+    private async Task NotifyChanged()
     {
+        await ComponentPartsChanged.InvokeAsync(ComponentParts);
+        await OnChanged.InvokeAsync();
+    }
+
+    private async Task OnComponentTypeChange(int type)
+    {
+        if (type == 2)
+        {
+            await Message.WarningAsync("低代码组件请使用组件设计器进行拖拽设计");
+            return;
+        }
+        ComponentParts.ComponentType = type;
+        await NotifyChanged();
+    }
+
+    private async Task OnFragmentChanged(ComponentPartsFragmentSchema fragment)
+    {
+        ComponentParts.Fragment = fragment;
+        await NotifyChanged();
+    }
+
+    private async Task OnAttributeGroupsChanged(IEnumerable<ComponentPartsAttributeDefineGroupSchema> groups)
+    {
+        ComponentParts.AttributeDefineGroups = groups;
+        await NotifyChanged();
+    }
+
+    private async Task OnEventDefinesChanged(List<ComponentPartsEventDefineSchema> events)
+    {
+        ComponentParts.EventDefines = events;
+        await NotifyChanged();
+    }
+
+    private async Task OnStyleDefinesChanged(IEnumerable<ComponentPartsStyleDefineSchema> styles)
+    {
+        ComponentParts.StyleDefines = styles.ToList();
+        await NotifyChanged();
+    }
+
+    private async Task OnDataSourceChanged(ComponentPartsDataSourceSchema dataSource)
+    {
+        ComponentParts.DataSource = dataSource;
+        await NotifyChanged();
     }
 
     private async Task HandleSave()
@@ -216,10 +301,10 @@
 }
 
 <style>
-    .component-parts-editor .tabs-section-body {
-        padding: 16px 0;
+    .component-parts-editor .tabs-body {
+        min-height: 200px;
     }
-    
+
     .editor-actions {
         border-top: 1px solid #f0f0f0;
         padding-top: 16px;

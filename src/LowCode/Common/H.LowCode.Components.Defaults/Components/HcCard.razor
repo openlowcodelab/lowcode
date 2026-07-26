@@ -1,0 +1,30 @@
+@namespace H.LowCode.Components.Defaults
+
+<div class="hc-card @(Bordered ? "hc-card-bordered" : "") @(Hoverable ? "hc-card-hoverable" : "")" style="@Style">
+    @if (!string.IsNullOrEmpty(Title))
+    {
+        <div class="hc-card-header">
+            <span class="hc-card-title">@Title</span>
+        </div>
+    }
+    <div class="hc-card-body" style="@BodyStyle">
+        @if (Loading)
+        {
+            <div class="hc-card-loading">加载中...</div>
+        }
+        else
+        {
+            @ChildContent
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; }
+    [Parameter] public bool Bordered { get; set; } = true;
+    [Parameter] public bool Hoverable { get; set; }
+    [Parameter] public bool Loading { get; set; }
+    [Parameter] public string Style { get; set; }
+    [Parameter] public string BodyStyle { get; set; }
+    [Parameter] public RenderFragment ChildContent { get; set; }
+}

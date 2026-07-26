@@ -3,11 +3,178 @@
 @inherits LowCodePageComponentBase
 @layout MyAppLayout
 
+@inject IAppApplicationService AppApplicationService
+@inject IAppPublishAppService AppPublishAppService
+@inject IPageAppService PageAppService
+
 <PageTitle>应用发布</PageTitle>
 
-<h1>应用发布</h1>
+<div class="page-header">
+    <div>
+        <h2 class="page-header-title">应用发布</h2>
+        <div class="page-header-subtitle">发布应用到线上环境，并管理历史版本</div>
+    </div>
+    <button class="btn btn-primary" @onclick="() => _publishVisible = true">
+        @(_isPublished ? "重新发布" : "发布应用")
+    </button>
+</div>
 
+@if (_app != null)
+{
+    <div class="stat-grid" style="margin-bottom:20px;">
+        <div class="stat-card">
+            <div class="stat-card-label">发布状态</div>
+            <div class="stat-card-value">
+                <span class="tag @(_isPublished ? "tag-green" : "tag-gold")">
+                    @(_isPublished ? "已发布" : "开发中")
+                </span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-label">当前版本</div>
+            <div class="stat-card-value">@(string.IsNullOrEmpty(_app.Version) ? "-" : _app.Version)</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-label">页面数量</div>
+            <div class="stat-card-value">@_pageCount</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-label">站点地址</div>
+            <div class="stat-card-value" style="font-size:14px;">
+                @if (!string.IsNullOrEmpty(_siteUrl))
+                {
+                    <a href="@($"{_siteUrl}/app/{_app.Id}/index")" target="_blank">访问站点</a>
+                }
+                else
+                {
+                    <span style="color:var(--h-text-3)">未配置</span>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="settings-section-title" style="margin-bottom:12px;">发布历史</div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>版本</th>
+                <th>状态</th>
+                <th>页面数</th>
+                <th>操作人</th>
+                <th>发布时间</th>
+                <th>说明</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (_records.Count == 0)
+            {
+                <tr><td colspan="7" class="empty-state">暂无发布记录</td></tr>
+            }
+            @foreach (var r in _records)
+            {
+                <tr>
+                    <td>@r.Version</td>
+                    <td>
+                        <span class="tag @(r.Status == AppPublishStatusEnum.Published ? "tag-green" : "tag-red")">
+                            @(r.Status == AppPublishStatusEnum.Published ? "已发布" : "已回滚")
+                        </span>
+                    </td>
+                    <td>@r.PageCount</td>
+                    <td>@r.Operator</td>
+                    <td>@r.PublishTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</td>
+                    <td>@r.Description</td>
+                    <td>
+                        @if (r.Status == AppPublishStatusEnum.Published)
+                        {
+                            <button class="btn btn-sm btn-text btn-danger" @onclick="() => RollbackAsync(r.Id)">回滚</button>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<HModal Title="发布应用" Visible="@_publishVisible" OnOk="PublishAsync" OnCancel="() => _publishVisible = false">
+    <div class="form-item">
+        <label>版本号</label>
+        <input class="inp" @bind="_publishVersion" placeholder="如 1.0.0" />
+    </div>
+    <div class="form-item">
+        <label>发布说明</label>
+        <textarea class="ta" rows="3" @bind="_publishDesc" placeholder="本次发布的变更说明"></textarea>
+    </div>
+</HModal>
 
 @code {
+    [PersistentState]
+    public AppPartsSchema _app { get; set; }
 
+    [PersistentState]
+    public List<AppPublishRecordSchema> _records { get; set; } = new();
+
+    private int _pageCount;
+    private string _siteUrl;
+    private bool _isPublished => _app?.PublishStatus == PublishStatusEnum.Published;
+
+    private bool _publishVisible;
+    private string _publishVersion = "1.0.0";
+    private string _publishDesc;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _app = await AppApplicationService.GetByIdAsync(AppId);
+        _records = await AppPublishAppService.GetRecordsAsync(AppId);
+
+        var pages = await PageAppService.GetListAsync(AppId);
+        _pageCount = pages?.Count ?? 0;
+
+        var apps = await AppApplicationService.GetAppsAsync();
+        _siteUrl = apps.FirstOrDefault(t => t.Id == AppId)?.SiteUrl;
+
+        if (!string.IsNullOrEmpty(_app?.Version))
+            _publishVersion = _app.Version;
+    }
+
+    private async Task PublishAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_publishVersion))
+        {
+            await Message.WarningAsync("请填写版本号");
+            return;
+        }
+
+        _publishVisible = false;
+        try
+        {
+            await AppPublishAppService.PublishAsync(AppId, _publishVersion, _publishDesc);
+            await LoadAsync();
+            await Message.SuccessAsync("发布成功");
+        }
+        catch (Exception ex)
+        {
+            await Message.ErrorAsync(ex.Message);
+        }
+    }
+
+    private async Task RollbackAsync(string recordId)
+    {
+        try
+        {
+            await AppPublishAppService.RollbackAsync(AppId, recordId);
+            await LoadAsync();
+            await Message.SuccessAsync("已回滚");
+        }
+        catch (Exception ex)
+        {
+            await Message.ErrorAsync(ex.Message);
+        }
+    }
 }

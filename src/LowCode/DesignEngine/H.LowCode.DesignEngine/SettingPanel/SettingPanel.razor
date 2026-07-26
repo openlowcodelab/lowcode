@@ -1,33 +1,35 @@
 @namespace H.LowCode.DesignEngine
 @inherits LowCodeComponentBase
 
-<div class="tab-bar" style="width:250px; padding:0px 8px; display:flex; gap:0; border-bottom:1px solid #d9d9d9;">
-    @if (_showPropertyPanel)
-    {
-        <button class='tab-btn @(_activeTabKey == "tab_property" ? "active" : "")' @onclick='() => _activeTabKey = "tab_property"'>属性</button>
-        <button class='tab-btn @(_activeTabKey == "tab_style" ? "active" : "")' @onclick='() => _activeTabKey = "tab_style"'>样式</button>
-    }
-    <button class='tab-btn @(_activeTabKey == "tab_page" ? "active" : "")' @onclick='() => _activeTabKey = "tab_page"'>页面</button>
-</div>
-<div style="width:250px; padding:0px 8px;">
-    @if (_showPropertyPanel)
-    {
-        @if (_component.IsContainer == false)
+<div class="settingpanel">
+    <div class="tab-bar">
+        @if (_showPropertyPanel)
         {
-            @if (_activeTabKey == "tab_property")
+            <button class='tab-btn @(_activeTabKey == "tab_property" ? "active" : "")' @onclick='() => _activeTabKey = "tab_property"'>属性</button>
+            <button class='tab-btn @(_activeTabKey == "tab_style" ? "active" : "")' @onclick='() => _activeTabKey = "tab_style"'>样式</button>
+        }
+        <button class='tab-btn @(_activeTabKey == "tab_page" ? "active" : "")' @onclick='() => _activeTabKey = "tab_page"'>页面</button>
+    </div>
+    <div class="settingpanel-body">
+        @if (_showPropertyPanel)
+        {
+            @if (_component.IsContainer == false)
             {
-                <PropertySetting Component="@_component"></PropertySetting>
+                @if (_activeTabKey == "tab_property")
+                {
+                    <PropertySetting Component="@_component"></PropertySetting>
+                }
+            }
+            @if (_activeTabKey == "tab_style")
+            {
+                <StyleSetting Component="@_component"></StyleSetting>
             }
         }
-        @if (_activeTabKey == "tab_style")
+        @if (_activeTabKey == "tab_page")
         {
-            <StyleSetting Component="@_component"></StyleSetting>
+            <PageSetting Page="@Page"></PageSetting>
         }
-    }
-    @if (_activeTabKey == "tab_page")
-    {
-        <PageSetting Page="@Page"></PageSetting>
-    }
+    </div>
 </div>
 
 @code {

@@ -6,103 +6,36 @@
 <PageTitle>工作台 - OpenLowCode</PageTitle>
 
 <style>
-    .grid-space {
-        margin: 10px;
-        padding: 15px;
-        background-color: #fff;
-        border-radius: 5px;
-    }
-    .card-space {
-        float: left;
-        width: 31%;
-        margin: 5px;
-        height: 150px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+    .workbench-card {
+        flex: 1 1 320px;
+        max-width: 420px;
     }
 </style>
 
-<div style="width:80%; margin:auto;">
-    <div style="display:flex; gap:16px;">
-        <div style="flex:0 0 75%; max-width:75%;">
-            <div class="row grid-space">
-                <div class="col col-24">
-                    <HCard>
-                        <a href="javascript:void(0)" onclick="@(()=>{ })"></a>
-                    </HCard>
-                </div>
+<div class="page-container">
+    <div class="h-card-grid">
+        <HCard Title="页面设计示例 (快捷入口)" Class="workbench-card">
+            <div class="link-list">
+                <a href="/designengine/designer/testapp/_new" target="_blank">页面设计器 (新增)</a>
+                <a href="/designengine/designer/caseapp/g0qcqxzd" target="_blank">页面设计器 (基础列表)</a>
+                <a href="/designengine/designer/caseapp/fhumgxyk" target="_blank">页面设计器 (基础表单)</a>
             </div>
-            <div class="row grid-space">
-                <div class="col col-24">
-                    <HCard Class="card-space">
-                        <a href="javascript:void(0)" onclick="@(()=>{ })"></a>
-                    </HCard>
-                    <HCard Class="card-space">
-                        <a href="javascript:void(0)" onclick="@(()=>{ })"></a>
-                    </HCard>
-                    <HCard Class="card-space">
-                        <a href="javascript:void(0)" onclick="@(()=>{ })"></a>
-                    </HCard>
-                    <HCard Class="card-space">
-                        <a href="javascript:void(0)" onclick="@(()=>{ })"></a>
-                    </HCard>
-                    <HCard Class="card-space">
-                        <a href="javascript:void(0)" onclick="@(()=>{ })"></a>
-                    </HCard>
-                    <HCard Class="card-space">
-                        <a href="javascript:void(0)" onclick="@(()=>{ })"></a>
-                    </HCard>
-                </div>
+        </HCard>
+        <HCard Title="页面渲染示例 (快捷入口)" Class="workbench-card">
+            <div class="link-list">
+                <a href="https://localhost:5191/app/caseapp/g0qcqxzd" target="_blank">页面渲染 (基础列表)</a>
+                <a href="https://localhost:5191/app/caseapp/fhumgxyk" target="_blank">页面渲染 (基础表单-新增)</a>
+                <a href="https://localhost:5191/app/caseapp/fhumgxyk?id=123" target="_blank">页面渲染 (基础表单-修改)</a>
+                <a href="https://localhost:5191/app/caseapp/test" target="_blank">页面渲染 (测试页)</a>
+                <a href="https://localhost:5191/app/survey/page_survey_editor" target="_blank">问卷编辑页面</a>
             </div>
-        </div>
-        <div style="flex:0 0 25%; max-width:25%;">
-            <div class="row grid-space">
-                <div class="col col-24">
-                    <p>页面设计示例 (快捷入口)：</p>
-                    <p>
-                        <a href="/designengine/designer/testapp/_new" target="_blank">页面设计器 (新增)</a>
-                    </p>
-                    <p>
-                        <a href="/designengine/designer/caseapp/g0qcqxzd" target="_blank">页面设计器 (基础列表)</a>
-                    </p>
-                    <p>
-                        <a href="/designengine/designer/caseapp/fhumgxyk" target="_blank">页面设计器 (基础表单)</a>
-                    </p>
-                </div>
+        </HCard>
+        <HCard Title="物料设计示例 (快捷入口)" Class="workbench-card">
+            <div class="link-list">
+                <a href="/designengine/designer/componentparts/newparts" target="_blank">组件物料设计器（新增）</a>
+                <a href="/designengine/designer/pageparts/newparts" target="_blank">页面物料设计器（新增）</a>
             </div>
-            <div class="row grid-space">
-                <div class="col col-24">
-                    <p>页面渲染示例 (快捷入口)：</p>
-                    <p>
-                        <a href="https://localhost:5191/caseapp/g0qcqxzd" target="_blank">页面渲染 (基础列表)</a>
-                    </p>
-                    <p>
-                        <a href="https://localhost:5191/caseapp/fhumgxyk" target="_blank">页面渲染 (基础表单-新增)</a>
-                    </p>
-                    <p>
-                        <a href="https://localhost:5191/caseapp/fhumgxyk?id=123" target="_blank">页面渲染 (基础表单-修改)</a>
-                    </p>
-                    <p>
-                        <a href="https://localhost:5191/caseapp/test" target="_blank">页面渲染 (测试页)</a>
-                    </p>
-                    <p>
-                        <a href="https://localhost:5191/survey/page_survey_editor" target="_blank">问卷编辑页面</a>
-                    </p>
-                </div>
-            </div>
-            <div class="row grid-space">
-                <div class="col col-24">
-                    <p>物料设计示例 (快捷入口)：</p>
-                    <p>
-                        <a href="/designengine/designer/componentparts/newparts" target="_blank">组件物料设计器（新增）</a>
-                    </p>
-                    <p>
-                        <a href="/designengine/designer/pageparts/newparts" target="_blank">页面物料设计器（新增）</a>
-                    </p>
-                </div>
-            </div>
-        </div>
+        </HCard>
     </div>
 </div>
 

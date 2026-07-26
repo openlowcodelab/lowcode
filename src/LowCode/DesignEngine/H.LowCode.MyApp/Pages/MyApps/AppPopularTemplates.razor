@@ -2,34 +2,99 @@
 @inherits LowCodeComponentBase
 @layout MyAppLayout
 
-<HCard Title="图书管理系统" Style="float:left; width:250px; margin:5px;">
-    <a href="javascript:void(0)">使用</a>
-    <p>Card content</p>
-</HCard>
-<HCard Title="学生管理系统" Style="float:left; width:250px; margin:5px;">
-    <a href="javascript:void(0)">使用</a>
-    <p>Card content</p>
-</HCard>
-<HCard Title="xx系统" Style="float:left; width:250px; margin:5px;">
-    <a href="javascript:void(0)">使用</a>
-    <p>Card content</p>
-</HCard>
-<HCard Title="xx系统" Style="float:left; width:250px; margin:5px;">
-    <a href="javascript:void(0)">使用</a>
-    <p>Card content</p>
-</HCard>
-<HCard Title="xx系统" Style="float:left; width:250px; margin:5px;">
-    <a href="javascript:void(0)">使用</a>
-    <p>Card content</p>
-</HCard>
-<HCard Title="xx系统" Style="float:left; width:250px; margin:5px;">
-    <a href="javascript:void(0)">使用</a>
-    <p>Card content</p>
-</HCard>
-<HCard Title="xx系统" Style="float:left; width:250px; margin:5px;">
-    <a href="javascript:void(0)">使用</a>
-    <p>Card content</p>
-</HCard>
-<HCard Style="float:left; width:250px; margin:5px; height:142px;display: flex; align-items: center; justify-content: center;">
-    <a href="/designengine/ecosystems">更多模板</a>
-</HCard>
+@inject IAppTemplateAppService AppTemplateAppService
+
+<style>
+    .template-card {
+        flex: 1 1 220px;
+        max-width: 280px;
+    }
+</style>
+
+<div class="h-card-grid">
+    @if (_templates != null && _templates.Count > 0)
+    {
+        @foreach (var tpl in _templates)
+        {
+            <HCard Title="@tpl.Name" Class="template-card">
+                <a href="javascript:void(0)" @onclick="@(() => ShowUseModal(tpl))">使用</a>
+                <p>@(string.IsNullOrEmpty(tpl.Description) ? $"{tpl.PageCount} 个页面" : tpl.Description)</p>
+            </HCard>
+        }
+    }
+    else
+    {
+        <HCard Class="template-card">
+            <p style="color:#999;">暂无应用模板，可在"我的应用"中通过"另存为模板"生成</p>
+        </HCard>
+    }
+    <HCard Class="template-card">
+        <a href="/designengine/ecosystems">更多模板</a>
+    </HCard>
+</div>
+
+<HModal Title="从模板创建应用" Visible="@_useModalVisible" OnOk="OnUseConfirm" OnCancel="() => _useModalVisible = false">
+    <div style="padding: 8px 16px;">
+        <div style="margin-bottom: 12px; color:#666;">基于模板：<b>@_selectedTemplate?.Name</b></div>
+        <div style="margin-bottom: 16px;">
+            <label style="display:block; margin-bottom:4px; font-weight:500;"><span style="color:red;">*</span> 应用标识</label>
+            <input class="inp" @bind="_newAppId" placeholder="请输入应用标识（英文/数字）" />
+        </div>
+        <div style="margin-bottom: 16px;">
+            <label style="display:block; margin-bottom:4px; font-weight:500;"><span style="color:red;">*</span> 应用名称</label>
+            <input class="inp" @bind="_newAppName" placeholder="请输入应用名称" />
+        </div>
+    </div>
+</HModal>
+
+@code {
+    [Parameter]
+    public EventCallback OnUsed { get; set; }
+
+    private IList<AppTemplateListModel> _templates = new List<AppTemplateListModel>();
+
+    private bool _useModalVisible = false;
+    private AppTemplateListModel _selectedTemplate;
+    private string _newAppId = "";
+    private string _newAppName = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        _templates = await AppTemplateAppService.GetListAsync();
+    }
+
+    private void ShowUseModal(AppTemplateListModel tpl)
+    {
+        _selectedTemplate = tpl;
+        _newAppId = ShortIdGenerator.Generate();
+        _newAppName = $"{tpl.Name}-副本";
+        _useModalVisible = true;
+        StateHasChanged();
+    }
+
+    private async Task OnUseConfirm()
+    {
+        if (string.IsNullOrWhiteSpace(_newAppId) || string.IsNullOrWhiteSpace(_newAppName))
+        {
+            await Message.ErrorAsync("请填写应用标识和名称");
+            return;
+        }
+
+        try
+        {
+            var app = await AppTemplateAppService.CreateAppFromTemplateAsync(_selectedTemplate.TemplateId, _newAppId, _newAppName);
+            _useModalVisible = false;
+
+            if (OnUsed.HasDelegate)
+                await OnUsed.InvokeAsync();
+
+            await Message.SuccessAsync("已从模板创建应用！");
+            NavigateTo($"/designengine/myapp/{app.Id}/pagemanager");
+        }
+        catch (Exception ex)
+        {
+            await Message.ErrorAsync($"创建失败：{ex.Message}");
+        }
+    }
+}

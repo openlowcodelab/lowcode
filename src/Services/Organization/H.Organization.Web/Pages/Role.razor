@@ -1,7 +1,7 @@
 @page "/organization/role"
 
 @layout OrganizationLayout
-@inject IRoleService IRoleService
+@inject IRoleAppService IRoleService
 @inject IJSRuntime JS
 
 <HCard Title="角色管理">
@@ -44,6 +44,7 @@
                         </td>
                         <td>
                             <span class="h-space">
+                                <button class="h-btn h-btn-sm" @onclick="@(() => ShowMembers(context))">成员</button>
                                 <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => Edit(context))">编辑</button>
                                 <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => ConfirmDelete(context.Id))">删除</button>
                             </span>
@@ -113,12 +114,47 @@
     </div>
 </HModal>
 
+<HModal Title="@($"角色成员 - {membersRoleName}")" Visible="@showMembersDialog" OnCancel="@(() => showMembersDialog = false)" ShowFooter="false">
+    @if (roleMembers == null)
+    {
+        <div class="h-spin"><span class="h-spin-dot"></span></div>
+    }
+    else if (roleMembers.Count == 0)
+    {
+        <div class="h-empty">该角色暂无成员</div>
+    }
+    else
+    {
+        <HTable>
+            <thead>
+                <tr>
+                    <th>用户名</th>
+                    <th>所属部门</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var rm in roleMembers)
+                {
+                    <tr>
+                        <td>@rm.UserName</td>
+                        <td>@rm.OrganizationName</td>
+                    </tr>
+                }
+            </tbody>
+        </HTable>
+    }
+</HModal>
+
 @code {
     private List<RoleDto>? roles;
     private bool showDialog;
     private bool isEdit;
     private bool isSubmitting;
     private RoleDto currentRole = new() { RoleType = 2, DataScope = 1 };
+
+    private bool showMembersDialog;
+    private string membersRoleName = string.Empty;
+    private List<RoleMemberDto>? roleMembers;
 
     protected override async Task OnInitializedAsync()
     {
@@ -213,5 +249,13 @@
     private void CloseDialog()
     {
         showDialog = false;
+    }
+
+    private async Task ShowMembers(RoleDto role)
+    {
+        membersRoleName = role.Name;
+        roleMembers = null;
+        showMembersDialog = true;
+        roleMembers = await IRoleService.GetRoleMembersAsync(role.Id);
     }
 }

@@ -4,9 +4,11 @@
 @inject IJSRuntime JS
 @inject ITableDataAppService TableDataAppService
 
+@if (_tableSchema != null)
+{
 <div class="flex flex-col gap-2">
     <div class="flex justify-between items-center" style="gap:8px;">
-        @foreach (var topBtn in _tableSchema.TopButtons)
+        @foreach (var topBtn in (_tableSchema.TopButtons ?? []))
         {
             <button class="btn btn-primary" disabled="@topBtn.Disabled" @onclick="@(() => ButtonActionAsync(topBtn))">@topBtn.Title</button>
         }
@@ -17,7 +19,7 @@
             <tr>
                 @foreach (var key in (_data?.FirstOrDefault()?.Keys.ToArray() ?? new string[0]))
                 {
-                    var column = _tableSchema.Columns.FirstOrDefault(t => string.Equals(t.Name, key, StringComparison.OrdinalIgnoreCase));
+                    var column = (_tableSchema.Columns ?? []).FirstOrDefault(t => string.Equals(t.Name, key, StringComparison.OrdinalIgnoreCase));
                     if (column != null)
                     {
                         <th>@column.Title</th>
@@ -30,16 +32,16 @@
             </tr>
         </thead>
         <tbody>
-            @foreach (var row in _data)
+            @foreach (var row in (_data ?? []))
             {
-                var primaryKeyColumn = _tableSchema.Columns.FirstOrDefault(t => t.IsPrimaryKey);
+                var primaryKeyColumn = (_tableSchema.Columns ?? []).FirstOrDefault(t => t.IsPrimaryKey);
                 var primaryKeyValue = primaryKeyColumn != null && row.ContainsKey(primaryKeyColumn.Name) ? row[primaryKeyColumn.Name]?.ToString() : null;
                 var isEditing = !string.IsNullOrEmpty(primaryKeyValue) && _editingRows.ContainsKey(primaryKeyValue);
 
                 <tr>
                     @foreach (var key in row.Keys)
                     {
-                        var column = _tableSchema.Columns.FirstOrDefault(t => string.Equals(t.Name, key, StringComparison.OrdinalIgnoreCase));
+                        var column = (_tableSchema.Columns ?? []).FirstOrDefault(t => string.Equals(t.Name, key, StringComparison.OrdinalIgnoreCase));
                         if (column != null)
                         {
                             <td>
@@ -86,6 +88,7 @@
         </div>
     }
 </div>
+}
 
 @code {
     [CascadingParameter(Name = "pageCascading")]
@@ -98,7 +101,7 @@
     public TablePropertySchema _tableSchema { get; set; }
 
     [PersistentState]
-    public List<Dictionary<string, object>> _data { get; set; }
+    public List<Dictionary<string, object>> _data { get; set; } = [];
 
     int _pageIndex = 1;
     int _pageSize = 10;
@@ -174,13 +177,20 @@
         }
 
         var tableSchema = dataSource.FromJson<TablePropertySchema>();
-        if(tableSchema?.Columns != null && tableSchema.Columns.Any() == false)
+        if (tableSchema == null)
+        {
+            tableSchema = new TablePropertySchema();
+        }
+        if (tableSchema.Columns == null || !tableSchema.Columns.Any())
         {
             tableSchema.Columns = new List<TableColumnSchema>()
             {
                 new() { Name = "_temp", Title = "(待添加列)" }
             };
         }
+        tableSchema.TopButtons ??= [];
+        tableSchema.RowButtons ??= [];
+        tableSchema.SearchItems ??= [];
 
         return tableSchema;
     }

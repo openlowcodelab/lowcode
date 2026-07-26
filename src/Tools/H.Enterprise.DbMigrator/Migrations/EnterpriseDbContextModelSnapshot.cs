@@ -139,6 +139,8 @@ namespace H.Enterprise.DbMigrator.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Role");
+
                     b.HasIndex("UserId");
 
                     b.HasIndex("EnterpriseId", "UserId")

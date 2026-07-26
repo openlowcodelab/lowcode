@@ -32,4 +32,10 @@ public class ComponentDesignStateSchema
     /// </summary>
     [JsonIgnore]
     public bool IsAnimating { get; set; }
+
+    /// <summary>
+    /// 是否显示拖拽放置指示线（当前拖拽经过的目标）
+    /// </summary>
+    [JsonIgnore]
+    public bool ShowDropIndicator { get; set; }
 }

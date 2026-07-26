@@ -5,6 +5,7 @@ using H.LowCode.MetaSchema.DesignEngine;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
+using Volo.Abp.Validation;
 
 namespace H.LowCode.DesignEngine.Application;
 
@@ -43,6 +44,7 @@ public class PageAppService : ApplicationService, IPageAppService
         return pageSchema;
     }
 
+    [DisableValidation]
     public async Task<bool> SaveAsync(PagePartsSchema pageSchema)
     {
         ArgumentNullException.ThrowIfNull(pageSchema);

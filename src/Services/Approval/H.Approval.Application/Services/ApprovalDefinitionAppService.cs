@@ -3,7 +3,7 @@ using H.Approval.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Volo.Abp.Application.Services;
 
-namespace H.Approval.Application.Services;
+namespace H.Approval.Application;
 
 /// <summary>
 /// 审批定义应用服务
@@ -12,13 +12,16 @@ public class ApprovalDefinitionAppService : ApplicationService, IApprovalDefinit
 {
     private readonly ILogger<ApprovalDefinitionAppService> _logger;
     private readonly IApprovalDefinitionRepository _definitionRepository;
+    private readonly ApprovalTemplateProvider _templateProvider;
 
     public ApprovalDefinitionAppService(
         ILogger<ApprovalDefinitionAppService> logger,
-        IApprovalDefinitionRepository definitionRepository)
+        IApprovalDefinitionRepository definitionRepository,
+        ApprovalTemplateProvider templateProvider)
     {
         _logger = logger;
         _definitionRepository = definitionRepository;
+        _templateProvider = templateProvider;
     }
     
     public async Task<List<ApprovalDefinitionDto>> GetAllAsync()
@@ -50,6 +53,7 @@ public class ApprovalDefinitionAppService : ApplicationService, IApprovalDefinit
             Name = input.Name,
             Description = input.Description,
             DefinitionJson = input.DefinitionJson,
+            FormJson = input.FormJson,
             Icon = input.Icon,
             CategoryId = input.CategoryId,
             CategoryName = input.CategoryName,
@@ -82,6 +86,7 @@ public class ApprovalDefinitionAppService : ApplicationService, IApprovalDefinit
         entity.Name = input.Name;
         entity.Description = input.Description;
         entity.DefinitionJson = input.DefinitionJson;
+        entity.FormJson = input.FormJson;
         entity.Icon = input.Icon;
         entity.CategoryId = input.CategoryId;
         entity.CategoryName = input.CategoryName;
@@ -121,6 +126,11 @@ public class ApprovalDefinitionAppService : ApplicationService, IApprovalDefinit
             _logger.LogInformation("审批定义已{Action}: Id={Id}", enabled ? "启用" : "禁用", id);
         }
     }
+
+    public Task<List<ApprovalTemplateDto>> GetTemplatesAsync()
+    {
+        return Task.FromResult(_templateProvider.GetTemplates());
+    }
     
     private static ApprovalDefinitionDto MapToDto(ApprovalDefinition entity)
     {
@@ -130,6 +140,7 @@ public class ApprovalDefinitionAppService : ApplicationService, IApprovalDefinit
             Name = entity.Name,
             Description = entity.Description,
             DefinitionJson = entity.DefinitionJson,
+            FormJson = entity.FormJson,
             Icon = entity.Icon,
             CategoryId = entity.CategoryId,
             CategoryName = entity.CategoryName,

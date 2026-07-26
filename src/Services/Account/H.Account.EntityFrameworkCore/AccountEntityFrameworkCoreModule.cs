@@ -5,13 +5,11 @@ using Volo.Abp.Data;
 using Volo.Abp.EntityFrameworkCore;
 using Volo.Abp.Identity.EntityFrameworkCore;
 using Volo.Abp.Modularity;
-using Volo.Abp.SettingManagement.EntityFrameworkCore;
 
 namespace H.Account.EntityFrameworkCore;
 
 [DependsOn(
-    typeof(AbpIdentityEntityFrameworkCoreModule),
-    typeof(AbpSettingManagementEntityFrameworkCoreModule)
+    typeof(AbpIdentityEntityFrameworkCoreModule)
 )]
 public class AccountEntityFrameworkCoreModule : AbpModule
 {
@@ -34,7 +32,6 @@ public class AccountEntityFrameworkCoreModule : AbpModule
         {
             options.ConnectionStrings["AccountDb"] = connectionString;
             options.ConnectionStrings["AbpIdentity"] = connectionString;
-            options.ConnectionStrings["AbpSettingManagement"] = connectionString;
         });
     }
 }

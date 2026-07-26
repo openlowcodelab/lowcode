@@ -1,3 +1,4 @@
+using Volo.Abp.Domain.Entities;
 using Volo.Abp.MultiTenancy;
 
 namespace H.Organization.EntityFrameworkCore;
@@ -5,12 +6,16 @@ namespace H.Organization.EntityFrameworkCore;
 /// <summary>
 /// 部门/组织
 /// </summary>
-public class OrganizationEntity : IMultiTenant
+public class OrganizationEntity : AggregateRoot<Guid>, IMultiTenant
 {
-    /// <summary>
-    /// 部门ID
-    /// </summary>
-    public Guid Id { get; set; }
+    public OrganizationEntity()
+    {
+    }
+
+    public OrganizationEntity(Guid id)
+        : base(id)
+    {
+    }
 
     /// <summary>
     /// 父部门ID

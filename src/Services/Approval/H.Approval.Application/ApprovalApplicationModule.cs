@@ -30,13 +30,9 @@ public class ApprovalApplicationModule : AbpModule
                 ef.UseSqlServer(connectionString!)));
 
             elsa.UseWorkflowsApi();
-
-            // 注册自定义审批活动
-            //elsa.AddActivity<StartApprovalActivity>()
-            //.AddActivity<ApprovalTaskActivity>()
-            //.AddActivity<ConditionActivity>()
-            //.AddActivity<CarbonCopyActivity>()
-            //.AddActivity<ApprovalEndActivity>();
         });
+
+        // 注册自包含审批工作流引擎
+        context.Services.AddTransient<ApprovalWorkflowEngine>();
     }
 }

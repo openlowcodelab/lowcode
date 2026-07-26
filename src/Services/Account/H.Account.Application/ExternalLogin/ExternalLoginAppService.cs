@@ -127,7 +127,7 @@ public class ExternalLoginAppService : ApplicationService, IExternalLoginAppServ
             Success = true,
             Message = isNewUser ? "注册并登录成功" : "登录成功",
             IsNewUser = isNewUser,
-            User = MapToUserDto(user)
+            User = await MapToUserDtoAsync(user)
         };
     }
 
@@ -201,9 +201,9 @@ public class ExternalLoginAppService : ApplicationService, IExternalLoginAppServ
         }).ToList();
     }
 
-    private UserDto MapToUserDto(IdentityUser user)
+    private Task<UserDto> MapToUserDtoAsync(IdentityUser user)
     {
-        return new UserDto
+        var dto = new UserDto
         {
             Id = user.Id,
             UserName = user.UserName ?? "",
@@ -218,6 +218,7 @@ public class ExternalLoginAppService : ApplicationService, IExternalLoginAppServ
             UpdatedAt = user.LastModificationTime,
             LastLoginAt = user.LastModificationTime
         };
+        return Task.FromResult(dto);
     }
 
     /// <summary>

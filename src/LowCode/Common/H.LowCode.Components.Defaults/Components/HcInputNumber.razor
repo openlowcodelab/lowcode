@@ -1,0 +1,59 @@
+@namespace H.LowCode.Components.Defaults
+
+<div class="hc-inputnumber-wrapper" style="@Style">
+    <button class="hc-inputnumber-btn hc-inputnumber-btn-minus" disabled="@(Disabled || _value <= Min)" @onclick="Decrement">−</button>
+    <input class="hc-input hc-inputnumber-input @(Disabled ? "hc-input-disabled" : "")"
+           type="number"
+           disabled="@Disabled"
+           value="@_value"
+           step="@Step"
+           min="@Min"
+           max="@Max"
+           @oninput="OnInputHandler" />
+    <button class="hc-inputnumber-btn hc-inputnumber-btn-plus" disabled="@(Disabled || _value >= Max)" @onclick="Increment">+</button>
+</div>
+
+@code {
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public int Min { get; set; }
+    [Parameter] public int Max { get; set; } = int.MaxValue;
+    [Parameter] public int Step { get; set; } = 1;
+    [Parameter] public int Precision { get; set; }
+    [Parameter] public int Value { get; set; }
+    [Parameter] public EventCallback<int> ValueChanged { get; set; }
+    [Parameter] public string Style { get; set; }
+
+    private int _value;
+
+    protected override void OnParametersSet()
+    {
+        _value = Value;
+    }
+
+    private async Task OnInputHandler(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var val))
+        {
+            _value = Math.Clamp(val, Min, Max);
+            await ValueChanged.InvokeAsync(_value);
+        }
+    }
+
+    private async Task Increment()
+    {
+        if (!Disabled && _value < Max)
+        {
+            _value = Math.Min(_value + Step, Max);
+            await ValueChanged.InvokeAsync(_value);
+        }
+    }
+
+    private async Task Decrement()
+    {
+        if (!Disabled && _value > Min)
+        {
+            _value = Math.Max(_value - Step, Min);
+            await ValueChanged.InvokeAsync(_value);
+        }
+    }
+}

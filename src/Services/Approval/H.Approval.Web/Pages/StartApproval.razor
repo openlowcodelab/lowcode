@@ -1,69 +1,119 @@
 @page "/approval/start"
 @layout ApprovalLayout
 
-<h3>发起审批</h3>
+@inject IApprovalDefinitionAppService DefinitionService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
 
-<div class="h-alert h-alert-success">选择审批审批类型并填写相关信息</div>
+<div class="start-approval">
+    <div class="start-header">
+        <div class="start-search">
+            <span class="start-search-icon">🔍</span>
+            <input class="start-search-input" @bind="keyword" @bind:event="oninput" placeholder="请输入审批单名称" />
+        </div>
+        <div class="start-shortcuts">
+            <a class="start-shortcut" @onclick='() => GoCenter("pending")'>待处理的 ›</a>
+            <a class="start-shortcut" @onclick='() => GoCenter("completed")'>已处理的 ›</a>
+            <a class="start-shortcut" @onclick='() => GoCenter("my")'>我发起的 ›</a>
+            <a class="start-shortcut" @onclick='() => GoCenter("cc")'>抄送我的 ›</a>
+        </div>
+    </div>
 
-<form @onsubmit="OnFinish">
-    <div class="h-form-item h-form-horizontal">
-        <label class="h-form-label"><span class="h-required">*</span> 审批审批</label>
-        <div class="h-form-control">
-            <select class="h-select" @bind="model.DefinitionId">
-                <option value="">请选择审批审批</option>
-                @foreach (var def in approvalDefinitions)
-                {
-                    <option value="@def.Id">@def.Name</option>
-                }
-            </select>
+    @if (isLoading)
+    {
+        <div class="h-spin"><span class="h-spin-dot"></span><span class="h-spin-text">加载中...</span></div>
+    }
+    else if (!FilteredGroups.Any())
+    {
+        <div class="h-alert h-alert-error">
+            <span>暂无已启用的审批流程,请先在「审批管理」中创建并发布。</span>
         </div>
-    </div>
-    
-    <div class="h-form-item h-form-horizontal">
-        <label class="h-form-label"><span class="h-required">*</span> 审批标题</label>
-        <div class="h-form-control">
-            <input class="h-input" @bind="model.Title" />
+    }
+    else
+    {
+        <div class="start-tabs">
+            <a class="start-tab @(string.IsNullOrEmpty(selectedCategory) ? "active" : "")" @onclick='() => selectedCategory = string.Empty'>全部</a>
+            @foreach (var group in FilteredGroups)
+            {
+                <a class="start-tab @(selectedCategory == group.Key ? "active" : "")" @onclick="() => selectedCategory = group.Key">@group.Key</a>
+            }
         </div>
-    </div>
-    
-    <div class="h-form-item h-form-horizontal">
-        <label class="h-form-label">审批说明</label>
-        <div class="h-form-control">
-            <textarea class="h-textarea" rows="4" @bind="model.VariablesJson"></textarea>
+
+        <div class="start-body">
+            @foreach (var group in VisibleGroups)
+            {
+                <div class="start-group">
+                    <div class="start-group-title">@group.Key</div>
+                    <div class="start-card-grid">
+                        @foreach (var def in group.Value)
+                        {
+                            <div class="start-card" @onclick="() => StartDefinition(def.Id)">
+                                <span class="start-card-icon">@(string.IsNullOrEmpty(def.Icon) ? "📄" : def.Icon)</span>
+                                <span class="start-card-name">@def.Name</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
         </div>
-    </div>
-    
-    <div class="h-form-item h-form-horizontal">
-        <label class="h-form-label"></label>
-        <div class="h-form-control">
-            <button type="submit" class="h-btn h-btn-primary">提交审批</button>
-            <button type="button" class="h-btn" style="margin-left: 8px;" @onclick="Reset">重置</button>
-        </div>
-    </div>
-</form>
+    }
+</div>
 
 @code {
-    private StartApprovalInstanceDto model = new();
     private List<ApprovalDefinitionDto> approvalDefinitions = new();
-    
+    private bool isLoading = true;
+    private string keyword = string.Empty;
+    private string selectedCategory = string.Empty;
+
+    private const string UncategorizedName = "其他";
+
+    private List<KeyValuePair<string, List<ApprovalDefinitionDto>>> FilteredGroups
+    {
+        get
+        {
+            var filtered = approvalDefinitions
+                .Where(d => string.IsNullOrWhiteSpace(keyword)
+                            || d.Name.Contains(keyword, StringComparison.OrdinalIgnoreCase));
+
+            return filtered
+                .GroupBy(d => string.IsNullOrWhiteSpace(d.CategoryName) ? UncategorizedName : d.CategoryName!)
+                .Select(g => new KeyValuePair<string, List<ApprovalDefinitionDto>>(g.Key, g.ToList()))
+                .OrderBy(g => g.Key == UncategorizedName ? 1 : 0)
+                .ThenBy(g => g.Key)
+                .ToList();
+        }
+    }
+
+    private List<KeyValuePair<string, List<ApprovalDefinitionDto>>> VisibleGroups
+        => string.IsNullOrEmpty(selectedCategory)
+            ? FilteredGroups
+            : FilteredGroups.Where(g => g.Key == selectedCategory).ToList();
+
     protected override async Task OnInitializedAsync()
     {
-        approvalDefinitions = new List<ApprovalDefinitionDto>
+        try
         {
-            new() { Id = "1", Name = "请假审批" },
-            new() { Id = "2", Name = "报销审批" },
-            new() { Id = "3", Name = "采购审批" }
-        };
+            var all = await DefinitionService.GetAllAsync();
+            // 仅展示已启用的审批定义
+            approvalDefinitions = all.Where(d => d.IsEnabled).ToList();
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"加载审批定义失败: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
-    
-    private async Task OnFinish()
+
+    private void StartDefinition(string id)
     {
-        Console.WriteLine($"启动审批: {model.Title}");
+        Nav.NavigateTo($"/approval/start/{id}");
     }
-    
-    private void Reset()
+
+    private void GoCenter(string tab)
     {
-        model = new StartApprovalInstanceDto();
-        StateHasChanged();
+        Nav.NavigateTo($"/approval/center?tab={tab}");
     }
 }

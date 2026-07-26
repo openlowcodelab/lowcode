@@ -1,0 +1,440 @@
+@page "/approval/start/{DefinitionId}"
+@layout ApprovalLayout
+
+@inject IApprovalDefinitionAppService DefinitionService
+@inject IApprovalInstanceAppService InstanceService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+@if (isLoading)
+{
+    <div class="h-spin"><span class="h-spin-dot"></span><span class="h-spin-text">加载中...</span></div>
+}
+else if (definition == null)
+{
+    <div class="h-alert h-alert-error">
+        <span>审批流程不存在或已被删除。</span>
+    </div>
+    <button class="h-btn" style="margin-top: 12px;" @onclick="BackToStart">返回发起审批</button>
+}
+else
+{
+    <h3>@(string.IsNullOrEmpty(definition.Icon) ? "📄" : definition.Icon) @definition.Name</h3>
+    @if (!string.IsNullOrWhiteSpace(definition.Description))
+    {
+        <div class="h-alert h-alert-success">@definition.Description</div>
+    }
+
+    <form @onsubmit="OnFinish">
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label"><span class="h-required">*</span> 审批标题</label>
+            <div class="h-form-control">
+                <input class="h-input" @bind="model.Title" placeholder="请输入审批标题" />
+            </div>
+        </div>
+
+        @if (schema.Fields.Any())
+        {
+            @foreach (var field in schema.Fields)
+            {
+                @if (field.Type == FormFieldTypes.Description)
+                {
+                    <div class="h-form-item h-form-horizontal">
+                        <label class="h-form-label"></label>
+                        <div class="h-form-control">
+                            <div class="h-alert">@field.Label</div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="h-form-item h-form-horizontal">
+                        <label class="h-form-label">
+                            @if (field.Required)
+                            {
+                                <span class="h-required">*</span>
+                            }
+                            @field.Label
+                        </label>
+                        <div class="h-form-control">
+                            @RenderField(field)
+                        </div>
+                    </div>
+                }
+            }
+        }
+        else
+        {
+            <div class="h-form-item h-form-horizontal">
+                <label class="h-form-label">审批说明</label>
+                <div class="h-form-control">
+                    <textarea class="h-textarea" rows="4" @bind="fallbackDescription"></textarea>
+                </div>
+            </div>
+        }
+
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label"></label>
+            <div class="h-form-control">
+                <button type="submit" class="h-btn h-btn-primary" disabled="@isSubmitting">
+                    @if (isSubmitting)
+                    {
+                        <span class="h-btn-loading"></span>
+                    }
+                    提交审批
+                </button>
+                <button type="button" class="h-btn" style="margin-left: 8px;" @onclick="BackToStart">取消</button>
+            </div>
+        </div>
+    </form>
+}
+
+@code {
+    [Parameter] public string DefinitionId { get; set; } = string.Empty;
+
+    private StartApprovalInstanceDto model = new();
+    private ApprovalDefinitionDto? definition;
+    private FormSchema schema = new();
+    private Dictionary<string, string> formValues = new();
+    private string fallbackDescription = string.Empty;
+    private bool isLoading = true;
+    private bool isSubmitting;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            definition = await DefinitionService.GetByIdAsync(DefinitionId);
+            model.DefinitionId = DefinitionId;
+            schema = FormSchema.Parse(definition?.FormJson);
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"加载审批定义失败: {ex.Message}");
+            definition = null;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private RenderFragment RenderField(FormFieldModel field) => builder =>
+    {
+        var placeholder = string.IsNullOrEmpty(field.Placeholder) ? "请输入" : field.Placeholder;
+        var current = formValues.TryGetValue(field.Id, out var v) ? v : "";
+        switch (field.Type)
+        {
+            case FormFieldTypes.Textarea:
+                builder.OpenElement(0, "textarea");
+                builder.AddAttribute(1, "class", "h-textarea");
+                builder.AddAttribute(2, "rows", "3");
+                builder.AddAttribute(3, "placeholder", placeholder);
+                builder.AddAttribute(4, "value", current);
+                builder.AddAttribute(5, "oninput", EventCallback.Factory.Create<ChangeEventArgs>(this, e => SetValue(field.Id, e.Value?.ToString() ?? "")));
+                builder.CloseElement();
+                break;
+            case FormFieldTypes.Number:
+            case FormFieldTypes.Amount:
+                builder.OpenElement(0, "input");
+                builder.AddAttribute(1, "class", "h-input");
+                builder.AddAttribute(2, "type", "number");
+                builder.AddAttribute(3, "placeholder", placeholder);
+                builder.AddAttribute(4, "value", current);
+                builder.AddAttribute(5, "oninput", EventCallback.Factory.Create<ChangeEventArgs>(this, e => SetValue(field.Id, e.Value?.ToString() ?? "")));
+                builder.CloseElement();
+                break;
+            case FormFieldTypes.Date:
+                builder.OpenElement(0, "input");
+                builder.AddAttribute(1, "class", "h-input");
+                builder.AddAttribute(2, "type", "date");
+                builder.AddAttribute(3, "value", current);
+                builder.AddAttribute(4, "oninput", EventCallback.Factory.Create<ChangeEventArgs>(this, e => SetValue(field.Id, e.Value?.ToString() ?? "")));
+                builder.CloseElement();
+                break;
+            case FormFieldTypes.DateRange:
+                {
+                    var state = GetDateRangeState(field.Id);
+                    var seq = 0;
+                    builder.OpenElement(seq++, "div");
+                    builder.AddAttribute(seq++, "class", "h-daterange");
+
+                    // 开始
+                    builder.OpenElement(seq++, "div");
+                    builder.AddAttribute(seq++, "class", "h-daterange-row");
+                    builder.OpenElement(seq++, "input");
+                    builder.AddAttribute(seq++, "class", "h-input");
+                    builder.AddAttribute(seq++, "type", "date");
+                    builder.AddAttribute(seq++, "value", state.StartDate);
+                    builder.AddAttribute(seq++, "oninput", EventCallback.Factory.Create<ChangeEventArgs>(this, e => SetDateRangePart(field, "startDate", e.Value?.ToString() ?? "")));
+                    builder.CloseElement();
+                    builder.OpenElement(seq++, "select");
+                    builder.AddAttribute(seq++, "class", "h-input h-daterange-slot");
+                    builder.AddAttribute(seq++, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => SetDateRangePart(field, "startSlot", e.Value?.ToString() ?? "0")));
+                    builder.OpenElement(seq++, "option");
+                    builder.AddAttribute(seq++, "value", "0");
+                    builder.AddAttribute(seq++, "selected", state.StartSlot == 0);
+                    builder.AddContent(seq++, "上午");
+                    builder.CloseElement();
+                    builder.OpenElement(seq++, "option");
+                    builder.AddAttribute(seq++, "value", "1");
+                    builder.AddAttribute(seq++, "selected", state.StartSlot == 1);
+                    builder.AddContent(seq++, "下午");
+                    builder.CloseElement();
+                    builder.CloseElement(); // select
+                    builder.CloseElement(); // row
+
+                    // 至
+                    builder.OpenElement(seq++, "div");
+                    builder.AddAttribute(seq++, "class", "h-daterange-sep");
+                    builder.AddContent(seq++, "至");
+                    builder.CloseElement();
+
+                    // 结束
+                    builder.OpenElement(seq++, "div");
+                    builder.AddAttribute(seq++, "class", "h-daterange-row");
+                    builder.OpenElement(seq++, "input");
+                    builder.AddAttribute(seq++, "class", "h-input");
+                    builder.AddAttribute(seq++, "type", "date");
+                    builder.AddAttribute(seq++, "value", state.EndDate);
+                    builder.AddAttribute(seq++, "oninput", EventCallback.Factory.Create<ChangeEventArgs>(this, e => SetDateRangePart(field, "endDate", e.Value?.ToString() ?? "")));
+                    builder.CloseElement();
+                    builder.OpenElement(seq++, "select");
+                    builder.AddAttribute(seq++, "class", "h-input h-daterange-slot");
+                    builder.AddAttribute(seq++, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => SetDateRangePart(field, "endSlot", e.Value?.ToString() ?? "1")));
+                    builder.OpenElement(seq++, "option");
+                    builder.AddAttribute(seq++, "value", "0");
+                    builder.AddAttribute(seq++, "selected", state.EndSlot == 0);
+                    builder.AddContent(seq++, "上午");
+                    builder.CloseElement();
+                    builder.OpenElement(seq++, "option");
+                    builder.AddAttribute(seq++, "value", "1");
+                    builder.AddAttribute(seq++, "selected", state.EndSlot == 1);
+                    builder.AddContent(seq++, "下午");
+                    builder.CloseElement();
+                    builder.CloseElement(); // select
+                    builder.CloseElement(); // row
+
+                    // 天数显示
+                    var days = ComputeDateRangeDays(state);
+                    if (days.HasValue)
+                    {
+                        builder.OpenElement(seq++, "div");
+                        builder.AddAttribute(seq++, "class", "h-daterange-days");
+                        builder.AddContent(seq++, $"共 {FormatDays(days.Value)} 天");
+                        builder.CloseElement();
+                    }
+
+                    builder.CloseElement(); // container
+                }
+                break;
+            case FormFieldTypes.Radio:
+                {
+                    var seq = 0;
+                    builder.OpenElement(seq++, "div");
+                    builder.AddAttribute(seq++, "class", "h-radio-group");
+                    foreach (var opt in field.Options)
+                    {
+                        builder.OpenElement(seq++, "label");
+                        builder.AddAttribute(seq++, "class", "h-radio-button");
+                        builder.OpenElement(seq++, "input");
+                        builder.AddAttribute(seq++, "type", "radio");
+                        builder.AddAttribute(seq++, "name", field.Id);
+                        builder.AddAttribute(seq++, "checked", current == opt);
+                        var optValue = opt;
+                        builder.AddAttribute(seq++, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, _ => SetValue(field.Id, optValue)));
+                        builder.CloseElement();
+                        builder.AddContent(seq++, opt);
+                        builder.CloseElement();
+                    }
+                    builder.CloseElement();
+                }
+                break;
+            case FormFieldTypes.Checkbox:
+                {
+                    var selectedSet = current.Split(',', StringSplitOptions.RemoveEmptyEntries).ToHashSet();
+                    var seq = 0;
+                    builder.OpenElement(seq++, "div");
+                    builder.AddAttribute(seq++, "class", "h-radio-group");
+                    foreach (var opt in field.Options)
+                    {
+                        builder.OpenElement(seq++, "label");
+                        builder.AddAttribute(seq++, "class", "h-radio-button");
+                        builder.OpenElement(seq++, "input");
+                        builder.AddAttribute(seq++, "type", "checkbox");
+                        builder.AddAttribute(seq++, "checked", selectedSet.Contains(opt));
+                        var optValue = opt;
+                        builder.AddAttribute(seq++, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => ToggleCheckbox(field.Id, optValue, e.Value is bool b && b)));
+                        builder.CloseElement();
+                        builder.AddContent(seq++, opt);
+                        builder.CloseElement();
+                    }
+                    builder.CloseElement();
+                }
+                break;
+            default:
+                builder.OpenElement(0, "input");
+                builder.AddAttribute(1, "class", "h-input");
+                builder.AddAttribute(2, "placeholder", placeholder);
+                builder.AddAttribute(3, "value", current);
+                builder.AddAttribute(4, "oninput", EventCallback.Factory.Create<ChangeEventArgs>(this, e => SetValue(field.Id, e.Value?.ToString() ?? "")));
+                builder.CloseElement();
+                break;
+        }
+    };
+
+    private void SetValue(string id, string value)
+    {
+        formValues[id] = value;
+    }
+
+    // 日期区间(半天粒度)子状态
+    private class DateRangeState
+    {
+        public string StartDate { get; set; } = string.Empty;
+        public int StartSlot { get; set; } = 0; // 0=上午, 1=下午
+        public string EndDate { get; set; } = string.Empty;
+        public int EndSlot { get; set; } = 1;   // 0=上午, 1=下午
+    }
+
+    private readonly Dictionary<string, DateRangeState> dateRangeStates = new();
+
+    private DateRangeState GetDateRangeState(string id)
+    {
+        if (!dateRangeStates.TryGetValue(id, out var state))
+        {
+            state = new DateRangeState();
+            dateRangeStates[id] = state;
+        }
+        return state;
+    }
+
+    private void SetDateRangePart(FormFieldModel field, string part, string value)
+    {
+        var state = GetDateRangeState(field.Id);
+        switch (part)
+        {
+            case "startDate": state.StartDate = value; break;
+            case "startSlot": state.StartSlot = value == "1" ? 1 : 0; break;
+            case "endDate": state.EndDate = value; break;
+            case "endSlot": state.EndSlot = value == "1" ? 1 : 0; break;
+        }
+        // 同步为显示字符串,供必填校验与变量提交使用
+        formValues[field.Id] = BuildDateRangeDisplay(state);
+    }
+
+    /// <summary>
+    /// 按半天粒度计算天数(上午=0, 下午=1)
+    /// </summary>
+    private static double? ComputeDateRangeDays(DateRangeState state)
+    {
+        if (!DateTime.TryParse(state.StartDate, out var start) || !DateTime.TryParse(state.EndDate, out var end))
+        {
+            return null;
+        }
+        var totalHalfDays = ((end.Date - start.Date).Days * 2) + (state.EndSlot - state.StartSlot) + 1;
+        if (totalHalfDays < 1)
+        {
+            return null; // 结束早于开始
+        }
+        return totalHalfDays / 2.0;
+    }
+
+    private static string FormatDays(double days)
+        => days % 1 == 0 ? ((int)days).ToString() : days.ToString("0.0");
+
+    private static string SlotName(int slot) => slot == 1 ? "下午" : "上午";
+
+    private static string BuildDateRangeDisplay(DateRangeState state)
+    {
+        if (string.IsNullOrWhiteSpace(state.StartDate) || string.IsNullOrWhiteSpace(state.EndDate))
+        {
+            return string.Empty;
+        }
+        var days = ComputeDateRangeDays(state);
+        var text = $"{state.StartDate} {SlotName(state.StartSlot)} 至 {state.EndDate} {SlotName(state.EndSlot)}";
+        return days.HasValue ? $"{text}，共 {FormatDays(days.Value)} 天" : text;
+    }
+
+    private void ToggleCheckbox(string id, string option, bool check)
+    {
+        var set = (formValues.TryGetValue(id, out var v) ? v : "")
+            .Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
+        if (check)
+        {
+            if (!set.Contains(option)) set.Add(option);
+        }
+        else
+        {
+            set.Remove(option);
+        }
+        formValues[id] = string.Join(",", set);
+    }
+
+    private async Task OnFinish()
+    {
+        if (string.IsNullOrWhiteSpace(model.Title))
+        {
+            await JS.InvokeVoidAsync("alert", "请输入审批标题");
+            return;
+        }
+
+        // 必填校验
+        foreach (var field in schema.Fields.Where(f => f.Required && f.Type != FormFieldTypes.Description))
+        {
+            var val = formValues.TryGetValue(field.Id, out var v) ? v : "";
+            if (string.IsNullOrWhiteSpace(val))
+            {
+                await JS.InvokeVoidAsync("alert", $"请填写：{field.Label}");
+                return;
+            }
+        }
+
+        // 组装表单变量
+        if (schema.Fields.Any())
+        {
+            var payload = new Dictionary<string, string>();
+            foreach (var field in schema.Fields.Where(f => f.Type != FormFieldTypes.Description))
+            {
+                var key = string.IsNullOrWhiteSpace(field.Label) ? field.Id : field.Label;
+                payload[key] = formValues.TryGetValue(field.Id, out var v) ? v : "";
+
+                // 日期区间额外写入天数变量
+                if (field.Type == FormFieldTypes.DateRange && dateRangeStates.TryGetValue(field.Id, out var st))
+                {
+                    var days = ComputeDateRangeDays(st);
+                    if (days.HasValue)
+                    {
+                        payload[$"{key}(天数)"] = FormatDays(days.Value);
+                    }
+                }
+            }
+            model.VariablesJson = System.Text.Json.JsonSerializer.Serialize(payload);
+        }
+        else
+        {
+            model.VariablesJson = fallbackDescription;
+        }
+
+        isSubmitting = true;
+        try
+        {
+            var result = await InstanceService.StartAsync(model);
+            await JS.InvokeVoidAsync("alert", "审批已提交");
+            Nav.NavigateTo($"/approval/detail/{result.Id}");
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"提交失败: {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void BackToStart()
+    {
+        Nav.NavigateTo("/approval/start");
+    }
+}

@@ -1,0 +1,237 @@
+.fd-container {
+    display: flex;
+    gap: 12px;
+    height: calc(100vh - 72px);
+    padding: 12px;
+    box-sizing: border-box;
+    background: #f5f6f8;
+}
+
+.fd-palette {
+    width: 220px;
+    flex-shrink: 0;
+    background: #fff;
+    border-radius: 6px;
+    padding: 12px;
+    overflow-y: auto;
+}
+
+.fd-palette-group-title {
+    font-size: 13px;
+    color: #86909c;
+    margin-bottom: 10px;
+}
+
+.fd-palette-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.fd-palette-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px;
+    border: 1px solid #eef0f3;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #1d2129;
+    cursor: pointer;
+}
+
+.fd-palette-item:hover {
+    border-color: #3370ff;
+    color: #3370ff;
+    background: #f5f9ff;
+}
+
+.fd-palette-icon {
+    width: 20px;
+    text-align: center;
+    color: #3370ff;
+    font-size: 13px;
+}
+
+.fd-palette-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fd-canvas {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    justify-content: center;
+    overflow-y: auto;
+}
+
+.fd-form-card {
+    width: 560px;
+    max-width: 100%;
+    background: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    min-height: 300px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    height: fit-content;
+}
+
+.fd-form-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1d2129;
+    margin-bottom: 16px;
+}
+
+.fd-empty {
+    padding: 80px 0;
+    text-align: center;
+    color: #c9cdd4;
+    font-size: 14px;
+    border: 1px dashed #e5e6eb;
+    border-radius: 8px;
+}
+
+.fd-field {
+    position: relative;
+    padding: 12px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    cursor: pointer;
+}
+
+.fd-field:hover {
+    background: #f7f8fa;
+}
+
+.fd-field.selected {
+    border-color: #3370ff;
+    background: #f5f9ff;
+}
+
+.fd-field-label {
+    font-size: 14px;
+    color: #1d2129;
+    margin-bottom: 8px;
+}
+
+.fd-field-desc {
+    font-size: 13px;
+    color: #86909c;
+    line-height: 1.6;
+}
+
+.fd-req {
+    color: #f53f3f;
+    margin-right: 2px;
+}
+
+.fd-field-control .h-input,
+.fd-field-control .h-textarea {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.fd-preview-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.fd-preview-option {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    color: #4e5969;
+}
+
+.fd-field-ops {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    display: none;
+    gap: 10px;
+}
+
+.fd-field:hover .fd-field-ops,
+.fd-field.selected .fd-field-ops {
+    display: flex;
+}
+
+.fd-op {
+    cursor: pointer;
+    color: #4e5969;
+    font-size: 14px;
+}
+
+.fd-op:hover {
+    color: #3370ff;
+}
+
+.fd-op.danger:hover {
+    color: #f53f3f;
+}
+
+.fd-props {
+    width: 300px;
+    flex-shrink: 0;
+    background: #fff;
+    border-radius: 6px;
+    padding: 16px;
+    overflow-y: auto;
+}
+
+.fd-props-empty {
+    padding: 60px 0;
+    text-align: center;
+    color: #c9cdd4;
+    font-size: 13px;
+}
+
+.fd-props-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1d2129;
+    margin-bottom: 16px;
+}
+
+.fd-prop-item {
+    margin-bottom: 16px;
+}
+
+.fd-prop-item .h-input {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.fd-prop-label {
+    display: block;
+    font-size: 13px;
+    color: #4e5969;
+    margin-bottom: 6px;
+}
+
+.fd-prop-inline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.fd-prop-inline .fd-prop-label {
+    margin-bottom: 0;
+}
+
+.fd-option-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.fd-option-row .h-input {
+    flex: 1;
+}

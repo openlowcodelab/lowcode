@@ -2,7 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using H.Account.EntityFrameworkCore;
+using Volo.Abp.Identity;
+using IdentityUser = Volo.Abp.Identity.IdentityUser;
 
 namespace H.Account.DbMigrator;
 
@@ -18,7 +19,10 @@ public class Program
 
             try
             {
-                var dbContext = services.GetRequiredService<AccountDbContext>();
+                // 使用 MigratorDbContext 而非 AccountDbContext，因为后者继承自 AbpDbContext，
+                // 其模型配置依赖 ABP 模块系统初始化。MigratorDbContext 是原生 DbContext，
+                // 显式调用 ConfigureIdentity() 配置模型，适合在 DbMigrator 中使用。
+                var dbContext = services.GetRequiredService<MigratorDbContext>();
 
                 Console.WriteLine("开始执行数据库迁移...");
 
@@ -51,7 +55,7 @@ public class Program
                 var connectionString = configuration.GetConnectionString("AccountDb");
 
                 // MigrationsAssembly 用于指定迁移文件所在的程序集
-                services.AddDbContext<AccountDbContext>(options =>
+                services.AddDbContext<MigratorDbContext>(options =>
                     options.UseSqlServer(connectionString, b => b.MigrationsAssembly(typeof(Program).Namespace)));
             });
 }

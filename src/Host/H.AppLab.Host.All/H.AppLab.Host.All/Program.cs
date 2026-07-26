@@ -1,6 +1,7 @@
 using H.AppLab.Host.All.Components;
 using H.YunXiaoMcpServer;
 using H.AppLab.Host.All;
+using Hangfire;
 using Microsoft.AspNetCore.ResponseCompression;
 using System.IO.Compression;
 
@@ -68,30 +69,26 @@ app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages:
 app.UseHttpsRedirection();
 
 app.UseResponseCompression();
-app.UseStaticFiles(new StaticFileOptions
-{
-    OnPrepareResponse = ctx =>
-    {
-        // _framework 目录下的 WASM 资源使用指纹文件名，可以长期缓存
-        if (ctx.Context.Request.Path.StartsWithSegments("/_framework"))
-        {
-            ctx.Context.Response.Headers.Append("Cache-Control", "public,max-age=31536000,immutable");
-        }
-        else
-        {
-            ctx.Context.Response.Headers.Append("Cache-Control", "public,max-age=3600");
-        }
-    }
-});
+
+// 由 MapStaticAssets 统一处理静态资源缓存：
+// 指纹化(内容哈希)的 WASM 程序集会自动应用 immutable 长缓存，而 Blazor 启动清单
+// (boot manifest，本身不带指纹)会保留重新校验语义。
+// 切勿手动把整个 /_framework 标记为 immutable —— 否则应用重新构建后指纹程序集文件名
+// 变化，但浏览器仍复用过期的启动清单，去请求已不存在的旧指纹程序集(静默 404)，
+// 导致 WASM 运行时无法完成启动，页面永久卡在“加载中...”，且前后端均无错误日志。
 app.MapStaticAssets();
 
 app.UseRouting();
 app.UseAuthentication();
+app.UseMultiTenancy();
 app.UseAuthorization();
 app.UseAntiforgery();
 
 app.MapControllers();
 app.MapMcp("/yunxiao").AllowAnonymous();
+
+// Hangfire 后台任务仪表盘
+app.UseHangfireDashboard("/hangfire");
 
 app.MapRazorComponents<App>()
     .AddInteractiveWebAssemblyRenderMode()
@@ -107,9 +104,11 @@ app.MapRazorComponents<App>()
         typeof(H.LowCode.PartsDesignEngine._Imports).Assembly,
         typeof(H.LowCode.Themes.AntBlazor._Imports).Assembly,
         typeof(H.Util.Blazor._Imports).Assembly,
-        typeof(H.AutoTest.Web._Imports).Assembly,
-        typeof(H.SystemManagement.Web._Imports).Assembly,
+        typeof(H.Testing.Web._Imports).Assembly,
+        typeof(H.Notification.Web._Imports).Assembly,
         typeof(H.Assistant.Web._Imports).Assembly,
-        typeof(H.Enterprise.Web._Imports).Assembly);
+        typeof(H.Order.Web._Imports).Assembly,
+        typeof(H.SupplyChain.Web._Imports).Assembly,
+        typeof(H.BackgroundTask.Web._Imports).Assembly);
 
 app.Run();

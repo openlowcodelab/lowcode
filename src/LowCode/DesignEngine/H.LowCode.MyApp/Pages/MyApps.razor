@@ -4,53 +4,47 @@
 @layout WorkbenchNavLayout
 
 @inject IAppApplicationService AppApplicationService
+@inject IAppTemplateAppService AppTemplateAppService
 
 <PageTitle>我的应用 - H.LowCode</PageTitle>
 
 <style>
-    .myapps .card-title {
-        cursor: pointer;
+    .myapps-banner {
+        margin: -20px -20px 0 -20px;
+        padding: 28px 0;
+        background: linear-gradient(120deg, #2f6feb 0%, #5b8def 55%, #7c5cfc 100%);
+        color: #fff;
     }
+    .myapps-banner-inner { width: 80%; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
+    .myapps-banner-title { font-size: 22px; font-weight: 600; margin: 0; }
+    .myapps-banner-sub { font-size: 13px; opacity: 0.85; margin-top: 6px; }
+    .myapps-banner .btn-create { background: #fff; color: #2f6feb; border: none; font-weight: 600; height: 38px; padding: 0 22px; border-radius: 8px; }
+    .myapps-banner .btn-create:hover { background: #f0f4ff; color: #1a5bd6; }
 
-    .myapps .card-desc {
-        color: #a2a3a5;
-        font-size: 12px;
-    }
-
-    .myapps .card-title-text {
-        color: #171a1d;
-        font-size: 16px;
-    }
-
-        .myapps .card-title-text:hover {
-            color: #40a9ff;
-        }
+    .myapp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+    .myapp-card-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--h-border-light); }
 </style>
 
-<div style="margin:-24px -24px 0px -24px; padding: 0 50px; background-size: 100% 80px;
-        background-image:url(_content/H.LowCode.MyApp/images/banner_myapps.png)">
-    <div style="width:80%; line-height:80px; margin:auto;">
-        <div style="display: flex; justify-content: space-between; margin: 0 0 8px 5px;">
-            <div style="width:500px;">
-                <span style="font-size: large; margin-right:20px;">XXX 你好!</span>
-                <span style="color:#c0baba;">你可以从这里开始创建应用～</span>
-            </div>
-            <div style="width:80px; margin-right:10px;">
-                <button class="btn btn-primary" @onclick="CreateApp">创建应用</button>
-            </div>
+<div class="myapps-banner">
+    <div class="myapps-banner-inner">
+        <div>
+            <div class="myapps-banner-title">你好，欢迎回来</div>
+            <div class="myapps-banner-sub">从这里开始创建与管理你的低代码应用</div>
         </div>
+        <button class="btn btn-create" @onclick="CreateApp">+ 创建应用</button>
     </div>
 </div>
-<div style="width:80%; overflow: hidden; margin:auto; padding: 10px;">
-    <div style="display: flex; justify-content: space-between; margin: 0 0 8px 5px;">
-        <div style="text-align: left; width:500px;">
-            <div style="width: 200px;">
-                <input type="search" class="inp" placeholder="应用名称" />
+
+<div class="page-container" style="padding: 20px 0;">
+    <div class="toolbar">
+        <div class="toolbar-left">
+            <div style="width: 220px;">
+                <input type="search" class="inp" placeholder="搜索应用名称" />
             </div>
         </div>
-        <div style="line-height:32px; margin-right:10px;">
-            <select class="sel" style="width:100px">
-                <option value="all">全部</option>
+        <div class="toolbar-right">
+            <select class="sel" style="width:120px">
+                <option value="all">全部状态</option>
                 <option value="published">已发布</option>
                 <option value="unpublished">未发布</option>
             </select>
@@ -59,26 +53,59 @@
 
     @if (_appList != null)
     {
-        @foreach (var app in _appList)
-        {
-            <HCard Title="@app.Name" Description="@app.Description" Class="myapps" Style="float:left; width:300px; margin:5px;">
-                <div style="display:flex; gap:8px;">
-                    <a href="@($"/designengine/myapp/{app.Id}/pagemanager")" title="开发应用" target="_blank">&#x1F5A5;</a>
-                    <a href="@(string.IsNullOrEmpty(app.SiteUrl) ? "#" : $"{app.SiteUrl}/renderengine/app/{app.Id}/index")" title="访问应用" target="_blank">&#x1F310;</a>
-                    <a @onclick='() => EditApp(app.Id)' title="编辑">&#x270F;</a>
-                    <a href="@($"/designengine/myapp/{app.Id}/appsettings")" title="应用设置" target="_blank">&#x2699;</a>
+        <div class="myapp-grid">
+            @foreach (var app in _appList)
+            {
+                <div class="card card-hoverable">
+                    <a class="card-title" href="@($"/designengine/myapp/{app.Id}/pagemanager")" target="_blank">@app.Name</a>
+                    <div class="card-desc">@app.Description</div>
+                    <div class="myapp-card-footer">
+                        <span class="tag @(app.PublishStatus == PublishStatusEnum.Published ? "tag-green" : "tag-gold")">
+                            @(app.PublishStatus == PublishStatusEnum.Published ? "已发布" : "开发中")
+                        </span>
+                        <div class="actions">
+                            <a class="icon-btn" href="@($"/designengine/myapp/{app.Id}/pagemanager")" title="开发应用" target="_blank">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                            </a>
+                            <a class="icon-btn" href="@(string.IsNullOrEmpty(app.SiteUrl) ? "#" : $"{app.SiteUrl}/app/{app.Id}/index")" title="访问应用" target="_blank">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                            </a>
+                            <button class="icon-btn" @onclick='() => EditApp(app.Id)' title="编辑">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                            </button>
+                            <button class="icon-btn" @onclick='() => ShowSaveAsTemplate(app.Id, app.Name)' title="另存为模板">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                            </button>
+                            <a class="icon-btn" href="@($"/designengine/myapp/{app.Id}/appsettings")" title="应用设置" target="_blank">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                            </a>
+                        </div>
+                    </div>
                 </div>
-            </HCard>
-        }
+            }
+        </div>
     }
 </div>
 
-<HModal Title="创建应用" Visible="@_createVisible" Width="1100" OnCancel='() => _createVisible = false'>
+<HModal Title="创建应用" Visible="@_createVisible" Style="width:1100px;" OnCancel='() => _createVisible = false'>
     <AppCreateFromTemplate OnSubmit="ReloadApps"></AppCreateFromTemplate>
 </HModal>
 
 <HModal Title="编辑应用" Visible="@_editVisible" OnOk="OnConfirm" OnCancel='() => _editVisible = false'>
     <AppForm AppSchema="_currentApp" OnSubmit="ReloadApps" @ref="@_appForm"></AppForm>
+</HModal>
+
+<HModal Title="另存为应用模板" Visible="@_saveTemplateVisible" OnOk="OnSaveTemplateConfirm" OnCancel='() => _saveTemplateVisible = false'>
+    <div style="padding: 8px 16px;">
+        <div style="margin-bottom: 16px;">
+            <label style="display:block; margin-bottom:4px; font-weight:500;"><span style="color:red;">*</span> 模板名称</label>
+            <input class="inp" @bind="_templateName" placeholder="请输入模板名称" />
+        </div>
+        <div style="margin-bottom: 16px;">
+            <label style="display:block; margin-bottom:4px; font-weight:500;">模板描述</label>
+            <textarea class="ta" rows="3" @bind="_templateDescription" placeholder="请输入模板描述"></textarea>
+        </div>
+    </div>
 </HModal>
 
 @code {
@@ -90,6 +117,11 @@
     private bool _createVisible = false;
     private bool _editVisible = false;
     private AppForm _appForm;
+
+    private bool _saveTemplateVisible = false;
+    private string _templateSourceAppId = "";
+    private string _templateName = "";
+    private string _templateDescription = "";
 
     protected override async Task OnInitializedAsync()
     {
@@ -132,5 +164,34 @@
         _currentApp = await AppApplicationService.GetByIdAsync(id);
         _editVisible = true;
         StateHasChanged();
+    }
+
+    private void ShowSaveAsTemplate(string appId, string appName)
+    {
+        _templateSourceAppId = appId;
+        _templateName = $"{appName}-模板";
+        _templateDescription = string.Empty;
+        _saveTemplateVisible = true;
+        StateHasChanged();
+    }
+
+    private async Task OnSaveTemplateConfirm()
+    {
+        if (string.IsNullOrWhiteSpace(_templateName))
+        {
+            await Message.ErrorAsync("请输入模板名称");
+            return;
+        }
+
+        try
+        {
+            await AppTemplateAppService.SaveFromAppAsync(_templateSourceAppId, _templateName, _templateDescription);
+            _saveTemplateVisible = false;
+            await Message.SuccessAsync("已保存为应用模板！可在\"我的物料-应用模板\"中查看");
+        }
+        catch (Exception ex)
+        {
+            await Message.ErrorAsync($"保存模板失败：{ex.Message}");
+        }
     }
 }

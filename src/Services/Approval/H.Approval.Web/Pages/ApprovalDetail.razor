@@ -1,0 +1,139 @@
+@page "/approval/detail/{InstanceId}"
+@layout ApprovalLayout
+
+@inject IApprovalInstanceAppService InstanceService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<PageTitle>审批详情</PageTitle>
+
+@if (instance == null)
+{
+    <div class="h-spin"><span class="h-spin-dot"></span><span class="h-spin-text">加载中...</span></div>
+}
+else
+{
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="margin: 0;">@instance.Title</h3>
+        <button class="h-btn h-btn-ghost h-btn-sm" @onclick="GoBack">返回</button>
+    </div>
+
+    <HCard Title="基本信息">
+        <table class="h-descriptions">
+            <tbody>
+                <tr>
+                    <th>审批名称</th>
+                    <td>@instance.DefinitionName</td>
+                    <th>状态</th>
+                    <td>
+                        <span class="h-tag @GetStatusClass(instance.Status)">
+                            @GetStatusText(instance.Status)
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <th>发起人</th>
+                    <td>@instance.CreatorName</td>
+                    <th>当前节点</th>
+                    <td>@(instance.CurrentNodeName ?? "-")</td>
+                </tr>
+                <tr>
+                    <th>发起时间</th>
+                    <td>@instance.CreationTime.ToString("yyyy-MM-dd HH:mm")</td>
+                    <th>完成时间</th>
+                    <td>@(instance.CompletionTime?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                </tr>
+            </tbody>
+        </table>
+    </HCard>
+
+    <div style="margin-top: 16px;">
+        <HCard Title="审批流程">
+            <HTable ShowEmpty="@(!instance.Tasks.Any())">
+                <thead>
+                    <tr>
+                        <th>节点</th>
+                        <th>审批人</th>
+                        <th>状态</th>
+                        <th>审批时间</th>
+                        <th>审批意见</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var task in instance.Tasks)
+                    {
+                        <tr>
+                            <td>@task.NodeName</td>
+                            <td>@task.AssigneeName</td>
+                            <td>
+                                <span class="h-tag @GetTaskStatusClass(task.Status)">
+                                    @GetTaskStatusText(task.Status)
+                                </span>
+                            </td>
+                            <td>@(task.ApprovalTime?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                            <td>@(task.Comment ?? "-")</td>
+                        </tr>
+                    }
+                </tbody>
+            </HTable>
+        </HCard>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public string InstanceId { get; set; } = string.Empty;
+
+    private ApprovalInstanceDto? instance;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            instance = await InstanceService.GetByIdAsync(InstanceId);
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"加载失败: {ex.Message}");
+        }
+    }
+
+    private void GoBack()
+    {
+        Nav.NavigateTo("/approval/center");
+    }
+
+    private string GetStatusText(ApprovalStatusEnum status) => status switch
+    {
+        ApprovalStatusEnum.Running => "运行中",
+        ApprovalStatusEnum.Completed => "已完成",
+        ApprovalStatusEnum.Cancelled => "已取消",
+        ApprovalStatusEnum.Rejected => "已驳回",
+        _ => status.ToString()
+    };
+
+    private string GetStatusClass(ApprovalStatusEnum status) => status switch
+    {
+        ApprovalStatusEnum.Running => "h-tag-blue",
+        ApprovalStatusEnum.Completed => "h-tag-green",
+        ApprovalStatusEnum.Cancelled => "h-tag-default",
+        ApprovalStatusEnum.Rejected => "h-tag-red",
+        _ => "h-tag-default"
+    };
+
+    private string GetTaskStatusText(int status) => status switch
+    {
+        0 => "待审批",
+        1 => "已通过",
+        2 => "已驳回",
+        _ => status.ToString()
+    };
+
+    private string GetTaskStatusClass(int status) => status switch
+    {
+        0 => "h-tag-blue",
+        1 => "h-tag-green",
+        2 => "h-tag-red",
+        _ => "h-tag-default"
+    };
+}

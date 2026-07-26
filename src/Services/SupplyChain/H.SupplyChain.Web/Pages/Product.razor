@@ -1,0 +1,679 @@
+@page "/supply-chain/product"
+
+@layout SupplyChainLayout
+@inject IProductAppService ProductService
+@inject IProductSkuAppService SkuService
+@inject ISupplierSkuMappingAppService SkuMappingService
+@inject ISupplyChainSupplierAppService SupplierService
+@inject IJSRuntime JS
+
+<HCard Title="商品管理">
+    <div class="h-toolbar">
+        <input type="text" @bind-value="@filter" placeholder="商品编码或名称" class="h-input" style="width:220px;" />
+        <input type="text" @bind-value="@categoryFilter" placeholder="类别" class="h-input" style="width:140px;" />
+        <button class="h-btn h-btn-primary" @onclick="@LoadData">查询</button>
+        <button class="h-btn h-btn-primary" @onclick="@ShowCreate">新增商品</button>
+        <button class="h-btn" @onclick="@LoadData">刷新</button>
+    </div>
+    <HTable Loading="@loading" ShowEmpty="@(!loading && !products.Any())">
+        <thead>
+            <tr>
+                <th>商品编码</th>
+                <th>商品名称</th>
+                <th>类别</th>
+                <th>状态</th>
+                <th>SKU 数</th>
+                <th>创建时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in products)
+            {
+                <tr>
+                    <td>@p.ProductCode</td>
+                    <td>@p.Name</td>
+                    <td>@(p.Category ?? "-")</td>
+                    <td>
+                        @if (p.Status == ProductStatusEnum.OnShelf) { <span class="h-tag h-tag-green">上架</span> }
+                        else { <span class="h-tag h-tag-red">下架</span> }
+                    </td>
+                    <td>@(skuCounts.GetValueOrDefault(p.Id))</td>
+                    <td>@p.CreationTime.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>
+                        <span class="h-space">
+                            <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => Edit(p))">编辑</button>
+                            <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => OpenSkuModal(p))">SKU管理</button>
+                            <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => Delete(p.Id))">删除</button>
+                        </span>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </HTable>
+</HCard>
+
+@* ===== 商品编辑弹窗 ===== *@
+<HModal Title="@(isEdit ? "编辑商品" : "新增商品")" Visible="@showModal" OnOk="@Save" OnCancel="@CloseModal" ConfirmLoading="@saving" Style="width:720px;">
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">商品编码</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@current.ProductCode" disabled="@isEdit" class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">商品名称</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@current.Name" class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">类别</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@current.Category" class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">描述</label>
+        <div class="h-form-control">
+            <textarea @bind="@current.Description" rows="3" class="h-textarea"></textarea>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">状态</label>
+        <div class="h-form-control">
+            <select @bind="@current.Status" class="h-input" style="width:auto">
+                @foreach (var s in Enum.GetValues<ProductStatusEnum>())
+                {
+                    <option value="@s">@s</option>
+                }
+            </select>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">备注</label>
+        <div class="h-form-control">
+            <textarea @bind="@current.Remark" rows="2" class="h-textarea"></textarea>
+        </div>
+    </div>
+</HModal>
+
+@* ===== SKU 管理主弹窗（上方 SKU 列表 + 下方供应商映射） ===== *@
+<HModal Title="@($"SKU 管理 - {skuModalProductName}")" Visible="@showSkuModal" OnCancel="@CloseSkuModal" Style="width:980px;">
+    <div style="display:flex;gap:16px;flex-direction:column;">
+        @* 上方：商品 SKU 列表 *@
+        <div>
+            <div class="h-toolbar" style="margin-bottom:8px;">
+                <span style="font-weight:600;">商品 SKU</span>
+                <button class="h-btn h-btn-primary h-btn-sm" @onclick="@ShowCreateSku">新增 SKU</button>
+                <button class="h-btn h-btn-sm" @onclick="@LoadSkus">刷新</button>
+            </div>
+            <HTable Loading="@skuLoading" ShowEmpty="@(!skuLoading && !skus.Any())">
+                <thead>
+                    <tr>
+                        <th>SKU 编码</th>
+                        <th>SKU 名称</th>
+                        <th>规格</th>
+                        <th>售价</th>
+                        <th>库存</th>
+                        <th>启用</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var s in skus)
+                    {
+                        <tr style="background-color:@(s.Id == selectedSkuId ? "#e6f7ff" : "")">
+                            <td><span style="color:#1890ff;cursor:pointer;text-decoration:underline;" @onclick="@(() => SelectSku(s.Id))">@s.SkuCode</span></td>
+                            <td>@s.SkuName</td>
+                            <td style="max-width:200px;"><pre style="white-space:pre-wrap;">@(s.SpecsJson ?? "-")</pre></td>
+                            <td>@s.Price.ToString("F2")</td>
+                            <td>@s.Stock</td>
+                            <td>
+                                @if (s.IsEnabled) { <span class="h-tag h-tag-green">启用</span> }
+                                else { <span class="h-tag h-tag-red">禁用</span> }
+                            </td>
+                            <td>
+                                <span class="h-space">
+                                    <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => SelectSku(s.Id))">查看供应商</button>
+                                    <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => EditSku(s))">编辑</button>
+                                    <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => DeleteSku(s.Id))">删除</button>
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </HTable>
+        </div>
+
+        @* 下方：选中 SKU 的供应商映射 *@
+        <div>
+            <div class="h-toolbar" style="margin-bottom:8px;">
+                <span style="font-weight:600;">供应商映射@(selectedSkuId.HasValue ? " - " + selectedSkuCode : "")</span>
+                @if (selectedSkuId.HasValue)
+                {
+                    <button class="h-btn h-btn-primary h-btn-sm" @onclick="@ShowCreateMapping">新增供应商映射</button>
+                    <button class="h-btn h-btn-sm" @onclick="@LoadMappings">刷新</button>
+                }
+            </div>
+            @if (selectedSkuId.HasValue)
+            {
+                <HTable Loading="@mappingLoading" ShowEmpty="@(!mappingLoading && !skuMappings.Any())">
+                    <thead>
+                        <tr>
+                            <th>供应商</th>
+                            <th>供应商 SKU 编码</th>
+                            <th>供应商 SKU 名称</th>
+                            <th>供货价</th>
+                            <th>启用</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var m in skuMappings)
+                        {
+                            <tr>
+                                <td>@m.SupplierCode</td>
+                                <td>@m.SupplierSkuCode</td>
+                                <td>@m.SupplierSkuName</td>
+                                <td>@m.SupplierPrice.ToString("F2")</td>
+                                <td>
+                                    @if (m.IsEnabled) { <span class="h-tag h-tag-green">启用</span> }
+                                    else { <span class="h-tag h-tag-red">禁用</span> }
+                                </td>
+                                <td>
+                                    <span class="h-space">
+                                        <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => EditMapping(m))">编辑</button>
+                                        <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => DeleteMapping(m.Id))">删除</button>
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </HTable>
+            }
+            else
+            {
+                <div style="color:#888;padding:16px;text-align:center;">请点击上方 SKU 行的编码或"查看供应商"按钮，查看该 SKU 关联的供应商映射</div>
+            }
+        </div>
+    </div>
+</HModal>
+
+@* ===== SKU 编辑子弹窗 ===== *@
+<HModal Title="@(isSkuEdit ? "编辑 SKU" : "新增 SKU")" Visible="@showSkuEditModal" OnOk="@SaveSku" OnCancel="@CloseSkuEditModal" ConfirmLoading="@skuSaving" Style="width:680px;">
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">SKU 编码</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@currentSku.SkuCode" disabled="@isSkuEdit" class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">SKU 名称</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@currentSku.SkuName" class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">规格 (JSON)</label>
+        <div class="h-form-control">
+            <textarea @bind="@currentSku.SpecsJson" rows="3" class="h-textarea" placeholder='{"color":"red","size":"XL"}'></textarea>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">售价</label>
+        <div class="h-form-control">
+            <input type="number" @bind-value="@currentSku.Price" class="h-input" style="width:180px;" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">库存</label>
+        <div class="h-form-control">
+            <input type="number" @bind-value="@currentSku.Stock" class="h-input" style="width:180px;" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">启用</label>
+        <div class="h-form-control">
+            <label class="h-switch">
+                <input type="checkbox" @bind="@currentSku.IsEnabled" />
+                <span class="h-switch-slider"></span>
+            </label>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">备注</label>
+        <div class="h-form-control">
+            <textarea @bind="@currentSku.Remark" rows="2" class="h-textarea"></textarea>
+        </div>
+    </div>
+</HModal>
+
+@* ===== 供应商映射编辑子弹窗 ===== *@
+<HModal Title="@(isMappingEdit ? "编辑供应商映射" : "新增供应商映射")" Visible="@showMappingEditModal" OnOk="@SaveMapping" OnCancel="@CloseMappingEditModal" ConfirmLoading="@mappingSaving" Style="width:680px;">
+    @if (!isMappingEdit)
+    {
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">供应商</label>
+            <div class="h-form-control">
+                <select @bind="@currentMapping.SupplierId" class="h-input" style="width:auto">
+                    @foreach (var s in suppliers)
+                    {
+                        <option value="@s.Id">@s.Code - @s.Name</option>
+                    }
+                </select>
+            </div>
+        </div>
+    }
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">供应商 SKU 编码</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@currentMapping.SupplierSkuCode" class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">供应商 SKU 名称</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@currentMapping.SupplierSkuName" class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">供货价</label>
+        <div class="h-form-control">
+            <input type="number" @bind-value="@currentMapping.SupplierPrice" class="h-input" style="width:180px;" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">启用</label>
+        <div class="h-form-control">
+            <label class="h-switch">
+                <input type="checkbox" @bind="@currentMapping.IsEnabled" />
+                <span class="h-switch-slider"></span>
+            </label>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">备注</label>
+        <div class="h-form-control">
+            <textarea @bind="@currentMapping.Remark" rows="2" class="h-textarea"></textarea>
+        </div>
+    </div>
+</HModal>
+
+@code {
+    private List<ProductDto> products = new();
+    private Dictionary<Guid, int> skuCounts = new();
+    private bool loading;
+    private string filter = string.Empty;
+    private string categoryFilter = string.Empty;
+
+    // 商品编辑
+    private bool showModal;
+    private bool saving;
+    private bool isEdit;
+    private Guid? editId;
+    private CreateProductDto current = new();
+
+    // SKU 管理弹窗
+    private bool showSkuModal;
+    private Guid skuModalProductId;
+    private string skuModalProductName = string.Empty;
+    private List<ProductSkuDto> skus = new();
+    private bool skuLoading;
+    private Guid? selectedSkuId;
+    private string selectedSkuCode = string.Empty;
+    private List<SupplierSkuMappingDto> skuMappings = new();
+    private bool mappingLoading;
+    private List<SupplierDto> suppliers = new();
+
+    // SKU 编辑子弹窗
+    private bool showSkuEditModal;
+    private bool isSkuEdit;
+    private Guid? skuEditId;
+    private bool skuSaving;
+    private CreateProductSkuDto currentSku = new();
+
+    // 供应商映射编辑子弹窗
+    private bool showMappingEditModal;
+    private bool isMappingEdit;
+    private Guid? mappingEditId;
+    private bool mappingSaving;
+    private CreateSupplierSkuMappingDto currentMapping = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSuppliers();
+        await LoadData();
+    }
+
+    private async Task LoadSuppliers()
+    {
+        try
+        {
+            var r = await SupplierService.GetListAsync(new SupplierQueryDto { MaxResultCount = 200 });
+            suppliers = r.Items.ToList();
+        }
+        catch { }
+    }
+
+    private async Task LoadData()
+    {
+        loading = true;
+        try
+        {
+            var input = new ProductQueryDto { MaxResultCount = 100, Filter = string.IsNullOrWhiteSpace(filter) ? null : filter };
+            input.Category = string.IsNullOrWhiteSpace(categoryFilter) ? null : categoryFilter;
+            var result = await ProductService.GetListAsync(input);
+            products = result.Items.ToList();
+
+            skuCounts.Clear();
+            foreach (var p in products)
+            {
+                var skus = await SkuService.GetListAsync(new ProductSkuQueryDto { ProductId = p.Id, MaxResultCount = 1 });
+                skuCounts[p.Id] = (int)skus.TotalCount;
+            }
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载失败：{ex.Message}"); }
+        finally { loading = false; }
+    }
+
+    private void ShowCreate()
+    {
+        current = new CreateProductDto { Status = ProductStatusEnum.OnShelf };
+        isEdit = false;
+        editId = null;
+        showModal = true;
+    }
+
+    private void Edit(ProductDto p)
+    {
+        current = new CreateProductDto
+        {
+            ProductCode = p.ProductCode,
+            Name = p.Name,
+            Category = p.Category,
+            Description = p.Description,
+            Status = p.Status,
+            Remark = p.Remark
+        };
+        isEdit = true;
+        editId = p.Id;
+        showModal = true;
+    }
+
+    private async Task Save()
+    {
+        saving = true;
+        try
+        {
+            if (string.IsNullOrWhiteSpace(current.ProductCode) || string.IsNullOrWhiteSpace(current.Name))
+            {
+                await JS.InvokeVoidAsync("alert", "商品编码和名称不能为空");
+                return;
+            }
+
+            if (isEdit && editId.HasValue)
+            {
+                await ProductService.UpdateAsync(editId.Value, new UpdateProductDto
+                {
+                    Name = current.Name,
+                    Category = current.Category,
+                    Description = current.Description,
+                    Status = current.Status,
+                    Remark = current.Remark
+                });
+                await JS.InvokeVoidAsync("alert", "更新成功");
+            }
+            else
+            {
+                await ProductService.CreateAsync(current);
+                await JS.InvokeVoidAsync("alert", "创建成功");
+            }
+
+            CloseModal();
+            await LoadData();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}"); }
+        finally { saving = false; }
+    }
+
+    private void CloseModal() { showModal = false; current = new(); editId = null; isEdit = false; }
+
+    private async Task Delete(Guid id)
+    {
+        var ok = await JS.InvokeAsync<bool>("confirm", "确定删除该商品（含 SKU 将一并删除）？");
+        if (!ok) return;
+        try
+        {
+            await ProductService.DeleteAsync(id);
+            await JS.InvokeVoidAsync("alert", "已删除");
+            await LoadData();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"删除失败：{ex.Message}"); }
+    }
+
+    // ==================== SKU 管理 ====================
+    private async Task OpenSkuModal(ProductDto p)
+    {
+        skuModalProductId = p.Id;
+        skuModalProductName = p.Name;
+        selectedSkuId = null;
+        selectedSkuCode = string.Empty;
+        skuMappings = new();
+        showSkuModal = true;
+        await LoadSkus();
+    }
+
+    private void CloseSkuModal()
+    {
+        showSkuModal = false;
+        skus = new();
+        skuMappings = new();
+        selectedSkuId = null;
+    }
+
+    private async Task LoadSkus()
+    {
+        skuLoading = true;
+        try
+        {
+            var r = await SkuService.GetListAsync(new ProductSkuQueryDto { ProductId = skuModalProductId, MaxResultCount = 200 });
+            skus = r.Items.ToList();
+            // 默认选中第一个
+            if (skus.Any() && !selectedSkuId.HasValue)
+            {
+                await SelectSku(skus[0].Id);
+            }
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载 SKU 失败：{ex.Message}"); }
+        finally { skuLoading = false; }
+    }
+
+    private async Task SelectSku(Guid skuId)
+    {
+        selectedSkuId = skuId;
+        var sku = skus.FirstOrDefault(x => x.Id == skuId);
+        selectedSkuCode = sku?.SkuCode ?? string.Empty;
+        await LoadMappings();
+    }
+
+    private async Task LoadMappings()
+    {
+        if (!selectedSkuId.HasValue)
+        {
+            skuMappings = new();
+            return;
+        }
+        mappingLoading = true;
+        try
+        {
+            var r = await SkuMappingService.GetListAsync(new SupplierSkuMappingQueryDto { SkuId = selectedSkuId.Value, MaxResultCount = 200 });
+            skuMappings = r.Items.ToList();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载供应商映射失败：{ex.Message}"); }
+        finally { mappingLoading = false; }
+    }
+
+    // ===== SKU 增删改 =====
+    private void ShowCreateSku()
+    {
+        currentSku = new CreateProductSkuDto { ProductId = skuModalProductId, IsEnabled = true };
+        isSkuEdit = false;
+        skuEditId = null;
+        showSkuEditModal = true;
+    }
+
+    private void EditSku(ProductSkuDto s)
+    {
+        currentSku = new CreateProductSkuDto
+        {
+            ProductId = s.ProductId,
+            SkuCode = s.SkuCode,
+            SkuName = s.SkuName,
+            SpecsJson = s.SpecsJson,
+            Price = s.Price,
+            Stock = s.Stock,
+            IsEnabled = s.IsEnabled,
+            Remark = s.Remark
+        };
+        isSkuEdit = true;
+        skuEditId = s.Id;
+        showSkuEditModal = true;
+    }
+
+    private async Task SaveSku()
+    {
+        skuSaving = true;
+        try
+        {
+            if (string.IsNullOrWhiteSpace(currentSku.SkuCode) || string.IsNullOrWhiteSpace(currentSku.SkuName))
+            {
+                await JS.InvokeVoidAsync("alert", "SKU 编码、名称不能为空");
+                return;
+            }
+
+            if (isSkuEdit && skuEditId.HasValue)
+            {
+                await SkuService.UpdateAsync(skuEditId.Value, new UpdateProductSkuDto
+                {
+                    SkuName = currentSku.SkuName,
+                    SpecsJson = currentSku.SpecsJson,
+                    Price = currentSku.Price,
+                    Stock = currentSku.Stock,
+                    IsEnabled = currentSku.IsEnabled,
+                    Remark = currentSku.Remark
+                });
+                await JS.InvokeVoidAsync("alert", "更新成功");
+            }
+            else
+            {
+                await SkuService.CreateAsync(currentSku);
+                await JS.InvokeVoidAsync("alert", "创建成功");
+            }
+            CloseSkuEditModal();
+            await LoadSkus();
+            _ = LoadData(); // 刷新外层 sku 计数
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}"); }
+        finally { skuSaving = false; }
+    }
+
+    private void CloseSkuEditModal() { showSkuEditModal = false; currentSku = new(); skuEditId = null; isSkuEdit = false; }
+
+    private async Task DeleteSku(Guid id)
+    {
+        var ok = await JS.InvokeAsync<bool>("confirm", "确定删除该 SKU（含供应商映射将一并删除）？");
+        if (!ok) return;
+        try
+        {
+            await SkuService.DeleteAsync(id);
+            await JS.InvokeVoidAsync("alert", "已删除");
+            if (selectedSkuId == id)
+            {
+                selectedSkuId = null;
+                skuMappings = new();
+            }
+            await LoadSkus();
+            _ = LoadData();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"删除失败：{ex.Message}"); }
+    }
+
+    // ===== 供应商映射 增删改 =====
+    private void ShowCreateMapping()
+    {
+        if (!selectedSkuId.HasValue) return;
+        currentMapping = new CreateSupplierSkuMappingDto { SkuId = selectedSkuId.Value, IsEnabled = true };
+        if (suppliers.Any()) currentMapping.SupplierId = suppliers[0].Id;
+        isMappingEdit = false;
+        mappingEditId = null;
+        showMappingEditModal = true;
+    }
+
+    private void EditMapping(SupplierSkuMappingDto m)
+    {
+        currentMapping = new CreateSupplierSkuMappingDto
+        {
+            SkuId = m.SkuId,
+            SupplierId = m.SupplierId,
+            SupplierSkuCode = m.SupplierSkuCode,
+            SupplierSkuName = m.SupplierSkuName,
+            SupplierPrice = m.SupplierPrice,
+            IsEnabled = m.IsEnabled,
+            Remark = m.Remark
+        };
+        isMappingEdit = true;
+        mappingEditId = m.Id;
+        showMappingEditModal = true;
+    }
+
+    private async Task SaveMapping()
+    {
+        mappingSaving = true;
+        try
+        {
+            if (currentMapping.SupplierId == Guid.Empty || string.IsNullOrWhiteSpace(currentMapping.SupplierSkuCode))
+            {
+                await JS.InvokeVoidAsync("alert", "供应商和供应商 SKU 编码不能为空");
+                return;
+            }
+
+            if (isMappingEdit && mappingEditId.HasValue)
+            {
+                await SkuMappingService.UpdateAsync(mappingEditId.Value, new UpdateSupplierSkuMappingDto
+                {
+                    SupplierSkuCode = currentMapping.SupplierSkuCode,
+                    SupplierSkuName = currentMapping.SupplierSkuName,
+                    SupplierPrice = currentMapping.SupplierPrice,
+                    IsEnabled = currentMapping.IsEnabled,
+                    Remark = currentMapping.Remark
+                });
+                await JS.InvokeVoidAsync("alert", "更新成功");
+            }
+            else
+            {
+                await SkuMappingService.CreateAsync(currentMapping);
+                await JS.InvokeVoidAsync("alert", "创建成功");
+            }
+            CloseMappingEditModal();
+            await LoadMappings();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}"); }
+        finally { mappingSaving = false; }
+    }
+
+    private void CloseMappingEditModal() { showMappingEditModal = false; currentMapping = new(); mappingEditId = null; isMappingEdit = false; }
+
+    private async Task DeleteMapping(Guid id)
+    {
+        var ok = await JS.InvokeAsync<bool>("confirm", "确定删除该供应商映射？");
+        if (!ok) return;
+        try
+        {
+            await SkuMappingService.DeleteAsync(id);
+            await JS.InvokeVoidAsync("alert", "已删除");
+            await LoadMappings();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"删除失败：{ex.Message}"); }
+    }
+}

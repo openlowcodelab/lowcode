@@ -2,11 +2,9 @@
 @using System.Reflection
 @inherits LowCodeComponentBase
 
-@inject DragDropStateService DragDropStateService
-
 @if (_rootComponent != null)
 {
-    <div class="designpanel" style="margin:5px; height:100%; overflow-y: auto;">
+    <div class="designpanel" style="height:100%; overflow-y: auto; padding: 8px;">
         <DraggableContainer ContainerComponent="@_rootComponent" IsRootContainer="true"></DraggableContainer>
     </div>
 }

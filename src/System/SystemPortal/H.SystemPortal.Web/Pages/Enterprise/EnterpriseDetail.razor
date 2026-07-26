@@ -1,0 +1,172 @@
+@page "/system/enterprise/{id:guid}"
+
+@layout SystemPortalLayout
+@inject IEnterpriseAppService EnterpriseService
+@inject IEnterpriseUserAppService EnterpriseUserService
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+@if (loading)
+{
+    <div style="padding: 20px; text-align: center;">加载中...</div>
+}
+else if (enterprise != null)
+{
+    <HCard Title="@($"企业详情 - {enterprise.Name}")">
+        <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+            <button class="h-btn" @onclick="GoToList">返回列表</button>
+            @if (!enterprise.IsActivated)
+            {
+                <button class="h-btn h-btn-primary" @onclick="ShowActivateDialog">激活企业</button>
+            }
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; max-width: 800px;">
+            <div><strong>企业名称:</strong> @enterprise.Name</div>
+            <div><strong>企业编码:</strong> @(enterprise.Code ?? "-")</div>
+            <div><strong>状态:</strong>
+                @if (enterprise.Status == "Active")
+                {
+                    <span class="h-tag h-tag-green">已激活</span>
+                }
+                else if (enterprise.Status == "Pending")
+                {
+                    <span class="h-tag h-tag-yellow">待审核</span>
+                }
+                else
+                {
+                    <span class="h-tag h-tag-red">已禁用</span>
+                }
+            </div>
+            <div><strong>数据库模式:</strong> @(enterprise.DatabaseMode == "Shared" ? "共用数据库" : "独立数据库")</div>
+            <div><strong>联系人:</strong> @(enterprise.ContactName ?? "-")</div>
+            <div><strong>联系电话:</strong> @(enterprise.ContactPhone ?? "-")</div>
+            <div><strong>联系邮箱:</strong> @(enterprise.ContactEmail ?? "-")</div>
+            <div><strong>创建时间:</strong> @enterprise.CreatedAt.ToString("yyyy-MM-dd HH:mm")</div>
+            @if (enterprise.IsActivated)
+            {
+                <div><strong>激活时间:</strong> @(enterprise.ActivatedAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</div>
+            }
+            <div style="grid-column: span 2"><strong>描述:</strong> @(enterprise.Description ?? "-")</div>
+        </div>
+    </HCard>
+
+    <HCard Title="@($"企业成员 ({members.Count})")" style="margin-top: 16px;">
+        <HTable Loading="@(members == null)" ShowEmpty="@(members.Count == 0)">
+            <thead>
+                <tr>
+                    <th>用户名</th>
+                    <th>角色</th>
+                    <th>加入时间</th>
+                    <th>默认企业</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var member in members)
+                {
+                    <tr>
+                        <td>@member.UserName</td>
+                        <td>
+                            <span class="h-tag @(member.Role == "Owner" ? "h-tag-blue" : "h-tag-gray")">@member.Role</span>
+                        </td>
+                        <td>@member.JoinedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>@(member.IsDefault ? "是" : "否")</td>
+                    </tr>
+                }
+            </tbody>
+        </HTable>
+    </HCard>
+}
+
+@* 激活对话框 *@
+<HModal Title="激活企业" Visible="@showActivate" OnOk="DoActivate" OnCancel="() => showActivate = false" ConfirmLoading="@activating">
+    <div style="color: #faad14; margin-bottom: 16px;">
+        ⚠️ 激活后数据库模式不可更改，请谨慎选择！
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">数据库模式</label>
+        <div class="h-form-control">
+            <select @bind="@activateModel.DatabaseMode" class="h-select">
+                <option value="Shared">共用数据库（推荐，数据通过 TenantId 逻辑隔离）</option>
+                <option value="Independent">独立数据库（每个企业独立数据库实例）</option>
+            </select>
+        </div>
+    </div>
+    @if (activateModel.DatabaseMode == "Independent")
+    {
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">连接字符串</label>
+            <div class="h-form-control">
+                <input type="text" @bind-value="@activateModel.ConnectionString" placeholder="Server=...;Database=...;..." class="h-input" />
+            </div>
+        </div>
+    }
+    @if (!string.IsNullOrEmpty(activateError))
+    {
+        <div style="color: red; margin-top: 8px;">@activateError</div>
+    }
+</HModal>
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    private EnterpriseDto? enterprise;
+    private List<EnterpriseUserDto> members = new();
+    private bool loading = true;
+    private bool showActivate = false;
+    private bool activating = false;
+    private ActivateEnterpriseDto activateModel = new();
+    private string? activateError;
+
+    private void GoToList() => Navigation.NavigateTo("/system/enterprise");
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        loading = true;
+        try
+        {
+            enterprise = await EnterpriseService.GetByIdAsync(Id);
+            if (enterprise != null)
+            {
+                members = await EnterpriseUserService.GetEnterpriseUsersAsync(Id);
+            }
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private void ShowActivateDialog()
+    {
+        activateModel = new ActivateEnterpriseDto { DatabaseMode = "Shared" };
+        activateError = null;
+        showActivate = true;
+    }
+
+    private async Task DoActivate()
+    {
+        activating = true;
+        activateError = null;
+        try
+        {
+            await EnterpriseService.ActivateAsync(Id, activateModel);
+            showActivate = false;
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            activateError = ex.Message;
+        }
+        finally
+        {
+            activating = false;
+        }
+    }
+}

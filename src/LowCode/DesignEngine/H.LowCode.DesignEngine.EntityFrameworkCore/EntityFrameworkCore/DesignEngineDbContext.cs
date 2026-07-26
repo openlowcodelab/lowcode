@@ -81,6 +81,36 @@ public class DesignEngineDbContext : DbContext
         return formEntity;
     }
 
+    /// <summary>
+    /// 删除数据 (实体含 IsDeleted 字段则逻辑删除, 否则物理删除)
+    /// </summary>
+    public async Task<bool> DeleteAsync(string tableName, string id)
+    {
+        var entityType = GetEntityType(tableName);
+        var entity = await FindAsync(entityType, id);
+        if (entity == null)
+            return false;
+
+        var isDeletedProp = entityType.GetProperty("IsDeleted");
+        if (isDeletedProp != null)
+        {
+            //逻辑删除
+            if (isDeletedProp.PropertyType == typeof(bool))
+                isDeletedProp.SetValue(entity, true);
+            else
+                isDeletedProp.SetValue(entity, 1);
+            Update(entity);
+        }
+        else
+        {
+            //物理删除
+            Remove(entity);
+        }
+
+        await SaveChangesAsync();
+        return true;
+    }
+
     public int SaveChangesAsync(FormEntity formEntity)
     {
         var entityType = GetEntityType(formEntity.Name);

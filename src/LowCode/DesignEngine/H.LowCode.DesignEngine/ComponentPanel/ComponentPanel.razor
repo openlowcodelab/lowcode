@@ -4,64 +4,86 @@
 @inject IComponentLibraryAppService ComponentLibraryAppService
 @inject IComponentPartsAppService ComponentPartsAppService
 
-@* Outer tabs *@
-<div class="componentpanel-tabs" style="display:flex; flex-direction:column; height:100%;">
-    <div style="display:flex; border-bottom:1px solid #e8e8e8;">
-        <button class='tab-btn @(_activeTab == "1" ? "active" : "")' @onclick='() => _activeTab = "1"' title="组件库"><span>📦</span></button>
-        <button class='tab-btn @(_activeTab == "2" ? "active" : "")' @onclick='() => _activeTab = "2"' title="数据源"><span>🗄️</span></button>
-        <button class='tab-btn @(_activeTab == "3" ? "active" : "")' @onclick='() => _activeTab = "3"' title="在线编码"><span>💻</span></button>
+<div class="componentpanel-layout">
+    @* 左侧垂直图标栏 *@
+    <div class="componentpanel-iconbar">
+        <div class="iconbar-item @(_activeTab == "1" ? "active" : "")" @onclick='() => _activeTab = "1"' title="组件库">
+            <span class="iconbar-icon">📦</span>
+        </div>
+        <div class="iconbar-item @(_activeTab == "2" ? "active" : "")" @onclick='() => _activeTab = "2"' title="数据源">
+            <span class="iconbar-icon">🗃</span>
+        </div>
+        <div class="iconbar-item @(_activeTab == "3" ? "active" : "")" @onclick='() => _activeTab = "3"' title="在线编码">
+            <span class="iconbar-icon">💻</span>
+        </div>
     </div>
-    <div style="flex:1; overflow:hidden;">
+
+    @* 右侧内容区 *@
+    <div class="componentpanel-content">
         @if (_activeTab == "1")
         {
-            @* Inner tabs *@
-            <div style="display:flex;">
-                <button class='tab-btn-sm @(_activeInnerTab == "11" ? "active" : "")' @onclick='() => _activeInnerTab = "11"'>组件库</button>
-                <button class='tab-btn-sm @(_activeInnerTab == "12" ? "active" : "")' @onclick='() => _activeInnerTab = "12"'>页面库</button>
-            </div>
-            <div>
-                @if (_activeInnerTab == "11")
-                {
-                    <div style="height:100%; overflow-y: auto; padding: 4px 0;">
-                        @if (ComponentsByLibrary != null && ComponentsByLibrary.Count > 0)
-                        {
-                            @foreach (var libraryGroup in ComponentsByLibrary)
+            @* Tab 页：组件库 / 页面库 *@
+            <div class="componentpanel-tabs">
+                <div class="tab-header">
+                    <div class="tab-item @(_activeInnerTab == "11" ? "active" : "")" @onclick='() => _activeInnerTab = "11"'>组件库</div>
+                    <div class="tab-item @(_activeInnerTab == "12" ? "active" : "")" @onclick='() => _activeInnerTab = "12"'>页面库</div>
+                </div>
+                <div class="tab-body">
+                    @if (_activeInnerTab == "11")
+                    {
+                        <div class="tab-content-scroll">
+                            @if (ComponentsByLibrary != null && ComponentsByLibrary.Count > 0)
                             {
-                                <details open="@(libraryGroup.Key == "antdesign" || libraryGroup.Key == "common")">
-                                    <summary style="padding:4px 8px; cursor:pointer; font-weight:500;">@libraryGroup.Key</summary>
-                                    <div style="padding: 2px 0; overflow: hidden;">
-                                        @if (libraryGroup.Value != null)
-                                        {
-                                            @foreach (var component in libraryGroup.Value)
+                                @foreach (var libraryGroup in ComponentsByLibrary)
+                                {
+                                    <details open="@(libraryGroup.Key == "antdesign" || libraryGroup.Key == "common")">
+                                        <summary>@libraryGroup.Key</summary>
+                                        <div class="component-grid">
+                                            @if (libraryGroup.Value != null)
                                             {
-                                                <DragItem Component="component"></DragItem>
+                                                @foreach (var component in libraryGroup.Value)
+                                                {
+                                                    <DragItem Component="component"></DragItem>
+                                                }
                                             }
-                                        }
-                                    </div>
-                                </details>
+                                        </div>
+                                    </details>
+                                }
                             }
-                        }
-                        else
-                        {
-                            <div style="padding: 16px; text-align: center; color: #999;">暂无组件</div>
-                        }
-                    </div>
-                }
-                @if (_activeInnerTab == "12")
-                {
-                    <div style="height:100%; overflow-y: auto;">
-                        @* page library content *@
-                    </div>
-                }
+                            else
+                            {
+                                <div class="empty-state">
+                                    <div class="empty-icon"></div>
+                                    <div>暂无组件</div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    @if (_activeInnerTab == "12")
+                    {
+                        <div class="tab-content-scroll">
+                            <div class="empty-state">
+                                <div class="empty-icon">📄</div>
+                                <div>暂无页面</div>
+                            </div>
+                        </div>
+                    }
+                </div>
             </div>
         }
         @if (_activeTab == "2")
         {
-            <div style="padding:16px;">数据源</div>
+            <div class="placeholder-content">
+                <div class="empty-icon">🗃</div>
+                <div>数据源</div>
+            </div>
         }
         @if (_activeTab == "3")
         {
-            <div style="padding:16px;">在线编码</div>
+            <div class="placeholder-content">
+                <div class="empty-icon">💻</div>
+                <div>在线编码</div>
+            </div>
         }
     </div>
 </div>

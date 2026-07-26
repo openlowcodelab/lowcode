@@ -24,6 +24,33 @@ namespace H.Approval.DbMigrator.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("H.Approval.EntityFrameworkCore.ApprovalCategory", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<int>("Sort")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name");
+
+                    b.ToTable("ApprovalCategories", (string)null);
+                });
+
             modelBuilder.Entity("H.Approval.EntityFrameworkCore.ApprovalDefinition", b =>
                 {
                     b.Property<string>("Id")
@@ -50,6 +77,9 @@ namespace H.Approval.DbMigrator.Migrations
                         .HasMaxLength(1024)
                         .HasColumnType("nvarchar(1024)");
 
+                    b.Property<string>("FormJson")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Icon")
                         .HasColumnType("nvarchar(max)");
 
@@ -69,6 +99,10 @@ namespace H.Approval.DbMigrator.Migrations
 
                     b.Property<string>("SpecifiedStarters")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
 
                     b.Property<int>("Version")
                         .HasColumnType("int");
@@ -103,6 +137,10 @@ namespace H.Approval.DbMigrator.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
+                    b.Property<string>("CurrentNodeId")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
                     b.Property<string>("CurrentNodeName")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
@@ -119,6 +157,18 @@ namespace H.Approval.DbMigrator.Migrations
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
+
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<string>("VariablesJson")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -165,6 +215,11 @@ namespace H.Approval.DbMigrator.Migrations
                         .HasMaxLength(512)
                         .HasColumnType("nvarchar(512)");
 
+                    b.Property<string>("NodeId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
                     b.Property<string>("NodeName")
                         .IsRequired()
                         .HasMaxLength(256)
@@ -173,11 +228,17 @@ namespace H.Approval.DbMigrator.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
+                    b.Property<Guid?>("TenantId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("TenantId");
+
                     b.HasKey("Id");
 
                     b.HasIndex("AssigneeId");
 
                     b.HasIndex("InstanceId");
+
+                    b.HasIndex("NodeId");
 
                     b.HasIndex("Status");
 

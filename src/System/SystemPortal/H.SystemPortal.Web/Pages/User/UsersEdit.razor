@@ -1,0 +1,302 @@
+@page "/system/users/{Id:guid}/edit"
+
+@layout SystemPortalLayout
+@inject IUserAppService UserService
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<PageTitle>编辑用户</PageTitle>
+
+<HCard Title="编辑用户">
+    @if (isLoading)
+    {
+        <div class="h-spin"><span class="h-spin-dot"></span><span class="h-spin-text">加载中...</span></div>
+    }
+    else if (user != null)
+    {
+        <EditForm Model="@updateUserDto" OnValidSubmit="@HandleSubmit">
+            <div class="h-form-row">
+                <div class="h-form-col">
+                    <div class="h-form-item h-form-horizontal">
+                        <label class="h-form-label">用户名 <span class="h-required">*</span></label>
+                        <div class="h-form-control">
+                            <input type="text" @bind-value="@updateUserDto.UserName" placeholder="请输入用户名" class="h-input" />
+                        </div>
+                    </div>
+                </div>
+                <div class="h-form-col">
+                    <div class="h-form-item h-form-horizontal">
+                        <label class="h-form-label">邮箱 <span class="h-required">*</span></label>
+                        <div class="h-form-control">
+                            <input type="text" @bind-value="@updateUserDto.Email" placeholder="请输入邮箱" class="h-input" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="h-form-row">
+                <div class="h-form-col">
+                    <div class="h-form-item h-form-horizontal">
+                        <label class="h-form-label">手机号</label>
+                        <div class="h-form-control">
+                            <input type="text" @bind-value="@updateUserDto.PhoneNumber" placeholder="请输入手机号" class="h-input" />
+                        </div>
+                    </div>
+                </div>
+                <div class="h-form-col">
+                    <div class="h-form-item h-form-horizontal">
+                        <label class="h-form-label">用户类型</label>
+                        <div class="h-form-control">
+                            <select @bind="@updateUserDto.UserType" class="h-select">
+                                <option value="@UserType.Normal">普通用户</option>
+                                <option value="@UserType.Admin">管理员</option>
+                                <option value="@UserType.SuperAdmin">超级管理员</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="h-form-row">
+                <div class="h-form-col">
+                    <div class="h-form-item h-form-horizontal">
+                        <label class="h-form-label">角色</label>
+                        <div class="h-form-control">
+                            <input type="text" @bind-value="@rolesText" placeholder="逗号分隔多个角色" class="h-input" />
+                        </div>
+                    </div>
+                </div>
+                <div class="h-form-col">
+                    <div class="h-form-item h-form-horizontal">
+                        <label class="h-form-label">账户激活</label>
+                        <div class="h-form-control">
+                            <label class="h-switch">
+                                <input type="checkbox" @bind="@updateUserDto.IsActive" />
+                                <span class="h-switch-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="h-form-row">
+                <div class="h-form-col" style="flex: 0 0 33.33%;">
+                    <div class="h-form-item h-form-horizontal">
+                        <label class="h-form-label">邮箱已验证</label>
+                        <div class="h-form-control">
+                            <label class="h-switch">
+                                <input type="checkbox" @bind="@updateUserDto.EmailConfirmed" />
+                                <span class="h-switch-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="h-form-col" style="flex: 0 0 33.33%;">
+                    <div class="h-form-item h-form-horizontal">
+                        <label class="h-form-label">手机号已验证</label>
+                        <div class="h-form-control">
+                            <label class="h-switch">
+                                <input type="checkbox" @bind="@updateUserDto.PhoneNumberConfirmed" />
+                                <span class="h-switch-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="h-form-item h-form-horizontal">
+                <label class="h-form-label">备注</label>
+                <div class="h-form-control">
+                    <textarea @bind="@updateUserDto.Remark" placeholder="请输入备注" rows="3" class="h-textarea"></textarea>
+                </div>
+            </div>
+
+            <div class="h-form-item h-form-horizontal">
+                <label class="h-form-label"></label>
+                <div class="h-form-control">
+                    <span class="h-space">
+                        <button type="submit" class="h-btn h-btn-primary" disabled="@isSubmitting">
+                            @if (isSubmitting)
+                            {
+                                <span class="h-btn-loading"></span>
+                            }
+                            保存修改
+                        </button>
+                        <a href="/system/users" class="h-btn" style="text-decoration:none;">返回</a>
+                        <button type="button" class="h-btn h-btn-ghost" @onclick="@ShowResetPassword">重置密码</button>
+                    </span>
+                </div>
+            </div>
+        </EditForm>
+
+        <div class="h-divider"></div>
+
+        <table class="h-descriptions">
+            <thead>
+                <tr><th colspan="4" style="font-weight:600; font-size:15px;">用户信息</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <th>ID</th>
+                    <td>@user.Id</td>
+                    <th>创建时间</th>
+                    <td>@user.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                </tr>
+                <tr>
+                    <th>最后登录</th>
+                    <td>@(user.LastLoginAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? "从未登录")</td>
+                    <th>更新时间</th>
+                    <td>@(user.UpdatedAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? "未更新")</td>
+                </tr>
+            </tbody>
+        </table>
+    }
+    else if (!isLoading)
+    {
+        <div class="h-alert h-alert-error">
+            <span class="h-alert-icon">&#9888;</span>
+            <span>用户不存在</span>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="h-alert h-alert-error" style="margin-top: 16px;">
+            <span class="h-alert-icon">&#9888;</span>
+            <span>@errorMessage</span>
+        </div>
+    }
+</HCard>
+
+<HModal Title="重置密码" Visible="@showResetPasswordModal" OnOk="@SubmitResetPassword" OnCancel="@CloseResetPassword">
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">新密码</label>
+        <div class="h-form-control">
+            <input type="password" @bind-value="@resetPasswordDto.NewPassword" placeholder="请输入新密码" class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">确认密码</label>
+        <div class="h-form-control">
+            <input type="password" @bind-value="@resetPasswordDto.ConfirmPassword" placeholder="请再次输入密码" class="h-input" />
+        </div>
+    </div>
+    @if (!string.IsNullOrEmpty(resetPasswordError))
+    {
+        <div class="h-alert h-alert-error">
+            <span class="h-alert-icon">&#9888;</span>
+            <span>@resetPasswordError</span>
+        </div>
+    }
+</HModal>
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    private UserDto? user;
+    private UpdateUserDto updateUserDto = new();
+    private ResetPasswordDto resetPasswordDto = new();
+    private string rolesText = "";
+    private bool isLoading = true;
+    private bool isSubmitting = false;
+    private bool showResetPasswordModal = false;
+    private string errorMessage = "";
+    private string resetPasswordError = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUser();
+    }
+
+    private async Task LoadUser()
+    {
+        isLoading = true;
+        try
+        {
+            user = await UserService.GetUserDtoByIdAsync(Id);
+            if (user != null)
+            {
+                updateUserDto = new UpdateUserDto
+                {
+                    UserName = user.UserName,
+                    Email = user.Email,
+                    PhoneNumber = user.PhoneNumber,
+                    UserType = user.UserType,
+                    RoleNames = user.RoleNames,
+                    IsActive = user.IsActive,
+                    EmailConfirmed = user.EmailConfirmed,
+                    PhoneNumberConfirmed = user.PhoneNumberConfirmed,
+                    Remark = user.Remark
+                };
+                rolesText = string.Join(", ", user.RoleNames);
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"加载用户失败：{ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        isSubmitting = true;
+        errorMessage = "";
+
+        try
+        {
+            updateUserDto.RoleNames = string.IsNullOrWhiteSpace(rolesText)
+                ? new List<string>()
+                : rolesText.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+            await UserService.UpdateUserAsync(Id, updateUserDto);
+            Navigation.NavigateTo("/system/users");
+        }
+        catch (ArgumentException ex)
+        {
+            errorMessage = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"保存失败：{ex.Message}";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void ShowResetPassword()
+    {
+        showResetPasswordModal = true;
+        resetPasswordDto = new ResetPasswordDto();
+        resetPasswordError = "";
+    }
+
+    private void CloseResetPassword()
+    {
+        showResetPasswordModal = false;
+        resetPasswordError = "";
+    }
+
+    private async Task SubmitResetPassword()
+    {
+        try
+        {
+            await UserService.ResetPasswordAsync(Id, resetPasswordDto);
+            showResetPasswordModal = false;
+            _ = JS.InvokeVoidAsync("alert", "密码重置成功");
+        }
+        catch (ArgumentException ex)
+        {
+            resetPasswordError = ex.Message;
+        }
+        catch (Exception ex)
+        {
+            resetPasswordError = $"重置密码失败：{ex.Message}";
+        }
+    }
+}

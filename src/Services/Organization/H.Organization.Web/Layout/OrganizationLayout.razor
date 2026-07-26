@@ -2,7 +2,7 @@
 
 @inherits LayoutComponentBase
 
-<DefaultLayoutComponent 
+<DefaultLayoutComponent
     AppName="组织管理" 
     MenuItems="@MenuItems">
     @Body
@@ -11,8 +11,8 @@
 @code {
     private static List<AppMenuItem> MenuItems => new()
     {
-        new AppMenuItem { Name = "组织管理", Url = "/organization", Icon = "🏢" },
-        new AppMenuItem { Name = "成员管理", Url = "/organization/member", Icon = "👥" },
-        new AppMenuItem { Name = "角色管理", Url = "/organization/role", Icon = "🔑" }
+        new AppMenuItem { Name = "组织管理", Url = "/organization", Icon = "👥" },
+        new AppMenuItem { Name = "角色管理", Url = "/organization/role", Icon = "🔑" },
+        new AppMenuItem { Name = "基本信息", Url = "/organization/enterprise", Icon = "🏢" }
     };
 }

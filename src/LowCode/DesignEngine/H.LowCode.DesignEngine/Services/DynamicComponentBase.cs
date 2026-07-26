@@ -34,9 +34,9 @@ public abstract class DynamicComponentBase : LowCodeDynamicComponentBase
         if (string.IsNullOrEmpty(componentFragment.TypeName))
             throw new NullReferenceException($"componentId={componentId}, {nameof(componentFragment.TypeName)}");
 
-        Type componentType = Type.GetType(componentFragment.TypeName, true);
+        Type componentType = ResolveComponentType(componentFragment.TypeName);
         if (componentType == null)
-            throw new NullReferenceException($"componentId={componentId}, type={componentFragment.TypeName}");
+            return; // 无法解析的类型跳过渲染，避免整页崩溃
 
         builder.OpenComponent(index++, componentType);
 
@@ -103,14 +103,18 @@ public abstract class DynamicComponentBase : LowCodeDynamicComponentBase
             || dataSource.FiexdOptionDataSource.Count == 0)
             return;
 
+        // 无 DataSourceFragment（Hc 风格的选项组件）时，设计时不预览选项，避免空引用
+        if (dataSource.DataSourceFragment == null)
+            return;
+
         builder.AddAttribute(index++, "ChildContent", (RenderFragment)(childBuilder =>
         {
             if (string.IsNullOrEmpty(dataSource.DataSourceFragment.TypeName))
-                throw new NullReferenceException($"componentId={componentId}, {nameof(dataSource.DataSourceFragment.TypeName)}");
+                return;
 
-            Type childComponentType = Type.GetType(dataSource.DataSourceFragment.TypeName, true);
+            Type childComponentType = ResolveComponentType(dataSource.DataSourceFragment.TypeName);
             if (childComponentType == null)
-                throw new NullReferenceException($"componentId={componentId}, type={dataSource.DataSourceFragment.TypeName}");
+                return;
 
             foreach (var option in dataSource.FiexdOptionDataSource)
             {
@@ -187,7 +191,7 @@ public abstract class DynamicComponentBase : LowCodeDynamicComponentBase
                 if (string.IsNullOrEmpty(dataSource.DataSourceFragment.TypeName))
                     return;
 
-                Type itemComponentType = Type.GetType(dataSource.DataSourceFragment.TypeName, true);
+                Type itemComponentType = ResolveComponentType(dataSource.DataSourceFragment.TypeName);
                 if (itemComponentType == null)
                     return;
 

@@ -2,19 +2,16 @@
 @inherits LowCodeComponentBase
 @implements IAsyncDisposable
 
-@inject DragDropStateService DragDropStateService
 @inject IJSRuntime JSRuntime
 
-<script src="@Assets["_content/H.LowCode.DesignEngineBase/js/elementUtils.js"]"></script>
-
 <div @ref="itemRef" class="draggableitem-box @DraggableItemBoxClassMapper"
-    draggable="@Component.DesignState.IsSelected"
-     style="float:left;
-        width: @((Component.Style.ItemWidth > 4 ? Component.Style.ItemWidth : (IsInRootContainer ? 24/PageCascading.PageLayout : 24))  /24 * 100)%;
+    draggable="true"
+     style="flex: 0 0 auto;
+        width: @((Component.Style.ItemWidth > 4 ? Component.Style.ItemWidth : (IsInRootContainer ? 24/_pageLayout : 24)) / 24.0 * 100)%;
         min-height: @(Component.Style.ItemHeight)px;
         transform: @Component.DesignState.AnimationTransform;
-        will-change: @(Component.DesignState.IsAnimating ? "transform" : "auto");
-        transition: @(Component.DesignState.IsAnimating && !isDragging ? "transform 0.2s ease-out" : "none");
+        will-change: @(isDragging || Component.DesignState.IsAnimating ? "transform" : "auto");
+        transition: @(isDragging ? "none" : "transform 0.25s cubic-bezier(0.22, 0.61, 0.36, 1)");
         z-index: @(isDragging ? "9999" : "auto");
         position: @(isDragging ? "relative" : "static");
         opacity: @(isDragging ? "0.6" : "1");
@@ -31,20 +28,18 @@
      @onmouseout="OnMouseOut" @onmouseout:stopPropagation>
 
     <div class="draggableitem @DraggableItemClassMapper" style="@Component.DesignState.DragEffectStyle">
-        @if (Component.DesignState.IsSelected)
-        {
-            <div draggable="true" class="draggableitem-icon-move">
-                <span class="icon-drag">⠿</span>
+        <div draggable="true" class="draggableitem-icon-move">
+            <span class="icon-drag">⠿</span>
+        </div>
+        @* 删除/复制按钮：hover 时通过 CSS 显示 *@
+        <div class="draggableitem-pointer-wrapper">
+            <div class="draggableitem-pointer" @onclick="OnDelete">
+                <span class="icon-delete">✕</span>
             </div>
-            <div class="draggableitem-pointer-wrapper">
-                <div class="draggableitem-pointer" @onclick="OnDelete">
-                    <span class="icon-delete">✕</span>
-                </div>
-                <div class="draggableitem-pointer" @onclick="OnCopy">
-                    <span class="icon-copy">📋</span>
-                </div>
+            <div class="draggableitem-pointer" @onclick="OnCopy">
+                <span class="icon-copy">📋</span>
             </div>
-        }
+        </div>
 
         <DynamicComponentItem Component="@Component"></DynamicComponentItem>
     </div>
@@ -72,7 +67,16 @@
     [Parameter]
     public Action<ComponentPartsSchema> OnItemCopy { get; set; }
 
-    private string DraggableItemBoxClassMapper => string.Empty;
+    private string DraggableItemBoxClassMapper
+    {
+        get
+        {
+            var cls = Component.DesignState.IsSelected ? "draggableitem-selected" : string.Empty;
+            if (Component.DesignState.ShowDropIndicator)
+                cls += " draggableitem-drop-target";
+            return cls;
+        }
+    }
     private string DraggableItemClassMapper => string.Empty;
 
     private ElementReference itemRef;
@@ -82,11 +86,17 @@
     private double initialX = 0;
     private double initialY = 0;
 
+    /// <summary>
+    /// 本地缓存的页面布局列数，用于宽度计算
+    /// </summary>
+    private int _pageLayout = 2;
+
     #region Init
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
 
+        _pageLayout = PageCascading?.PageLayout ?? 2;
         Init();
     }
 
@@ -95,8 +105,9 @@
         if (firstRender)
         {
             await UpdateDimensions();
-            //设置拖拽图像（自定义 DragImage）   -- 暂时屏蔽此逻辑，拖拽已改为跟随鼠标移动，无需设置拖拽图像
-            //try { await JSRuntime.InvokeVoidAsync("elementUtils.attachDragImage", itemRef, Component?.Label ?? "组件"); } catch { }
+            //设置拖拽图像（自定义 DragImage）：使用跟随鼠标的克隆覆盖层实现平滑跟手。
+            //改由 JS 在 requestAnimationFrame 中直接更新覆盖层 transform，避免通过 Blazor 逐个 drag 事件渲染带来的跟随延迟。
+            try { await JSRuntime.InvokeVoidAsync("elementUtils.attachDragImage", itemRef, Component?.Label ?? "组件"); } catch { }
             RegisterEventDispatcher();
         }
     }
@@ -128,7 +139,9 @@
             {
                 if (value != null)
                 {
-                    PageCascading.PageLayout = (int)value;
+                    var newLayout = (int)value;
+                    PageCascading.PageLayout = newLayout;
+                    _pageLayout = newLayout;
                     // 使用InvokeAsync确保在正确的线程上下文中执行
                     InvokeAsync(StateHasChanged);
                 }
@@ -158,8 +171,11 @@
 
     private void OnDragStart(DragEventArgs dragEventArgs)
     {
-        //标记正在拖拽中
-        isDragging = true;
+        //注意：此处不要立即设置 isDragging=true。
+        //isDragging 会改变被拖拽元素自身的 position/opacity/pointer-events 等内联样式，
+        //而在 dragstart 处理过程中同步改动拖拽源节点会导致浏览器立即取消原生拖拽
+        //（表现为 dragstart 后立刻触发 dragend，drag/dragover 均不触发，让位动画失效）。
+        //因此将 isDragging 的置位推迟到首个 drag 事件（此时原生拖拽已开始，改动源节点不会中断拖拽）。
         initialX = dragEventArgs.ClientX;
         initialY = dragEventArgs.ClientY;
         Console.WriteLine($"拖拽开始:{initialX}-{initialY}");
@@ -174,6 +190,7 @@
     {
         // 更新最后悬停目标，但避免全量重置以防频繁进出同一目标导致闪烁
         DragDropStateService.SetLastDragOverComponent(PageCascading.AppId, PageCascading.PageId, Component);
+        SetDropIndicator();
     }
 
     private void OnDragOver(DragEventArgs dragEventArgs)
@@ -205,6 +222,8 @@
             return;
 
         Component.DesignState.DragEffectStyle = string.Empty;
+        Component.DesignState.ShowDropIndicator = false;
+        Component.RefreshState();
 
         //清理让位动画
         //ClearSiblingAnimation();
@@ -221,29 +240,28 @@
         Component.DesignState.DragEffectStyle = string.Empty;
         Component.DesignState.AnimationTransform = string.Empty;
         Component.DesignState.IsAnimating = false;
+        Component.DesignState.ShowDropIndicator = false;
         //重置所有组件的动画状态
         ResetAllAnimationStates();
     }
 
     private void OnDrag(DragEventArgs dragEventArgs)
     {
-        TriggerCurrentSiblingAnimation(dragEventArgs.ClientX, dragEventArgs.ClientY);
+        //原生拖拽已开始后再置位 isDragging，避免在 dragstart 阶段改动源节点导致拖拽被取消
+        //跟随鼠标的平滑动画由 JS 覆盖层（elementUtils.attachDragImage）处理，
+        //此处不再通过 Blazor 逐事件设置 transform（逐事件渲染会导致明显的跟随延迟）。
+        if (!isDragging)
+            isDragging = true;
     }
 
     private void OnMouseOver()
     {
-        if (Component.DesignState.IsSelected == false)
-        {
-            Component.DesignState.DragEffectStyle = "outline: #1890ff dashed 1.5px;";
-        }
+        // hover 边框由 CSS 处理，此处不再设置 outline
     }
 
     private void OnMouseOut()
     {
-        if (Component.DesignState.IsSelected == false)
-        {
-            Component.DesignState.DragEffectStyle = string.Empty;
-        }
+        // hover 边框由 CSS 处理，此处不再清除 outline
     }
 
     private void TriggerCurrentSiblingAnimation(double clientX, double clientY)
@@ -283,6 +301,30 @@
 
     #region Animation Methods
     /// <summary>
+    /// 设置当前组件为放置指示目标，并清除其他兄弟组件的指示线
+    /// </summary>
+    private void SetDropIndicator()
+    {
+        var currentDragComponent = DragDropStateService.GetCurrentDragComponent(PageCascading.AppId, PageCascading.PageId);
+        if (ReferenceEquals(currentDragComponent, Component))
+            return;
+
+        var rootComponent = DragDropStateService.GetRootComponent(PageCascading.AppId, PageCascading.PageId);
+        if (rootComponent?.Childrens != null)
+        {
+            foreach (var child in rootComponent.Childrens)
+            {
+                var show = ReferenceEquals(child, Component);
+                if (child.DesignState.ShowDropIndicator != show)
+                {
+                    child.DesignState.ShowDropIndicator = show;
+                    child.RefreshState();
+                }
+            }
+        }
+    }
+
+    /// <summary>
     /// 重置所有组件的动画状态
     /// </summary>
     private void ResetAllAnimationStates()
@@ -294,6 +336,7 @@
             {
                 child.DesignState.AnimationTransform = string.Empty;
                 child.DesignState.IsAnimating = false;
+                child.DesignState.ShowDropIndicator = false;
                 child.RefreshState();
             }
         }

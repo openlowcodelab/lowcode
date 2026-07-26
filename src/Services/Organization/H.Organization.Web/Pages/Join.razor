@@ -1,0 +1,111 @@
+@page "/organization/join"
+
+@layout OrganizationLayout
+@inject IOrgInviteAppService InviteService
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<div style="display:flex; justify-content:center; padding-top:48px;">
+    <HCard Title="加入组织" Style="width:420px;">
+        @if (loading)
+        {
+            <div class="h-spin"><span class="h-spin-dot"></span><span class="h-spin-text">加载中...</span></div>
+        }
+        else if (info == null || !info.Valid)
+        {
+            <div class="h-alert h-alert-error">
+                <span class="h-alert-icon">✕</span>
+                <span>@(info?.Message ?? "邀请链接无效")</span>
+            </div>
+            <div style="text-align:center; margin-top:16px;">
+                <button class="h-btn" @onclick="GoHome">返回首页</button>
+            </div>
+        }
+        else if (joined)
+        {
+            <div class="h-alert h-alert-success">
+                <span class="h-alert-icon">✓</span>
+                <span>已成功加入「@info.OrganizationName」</span>
+            </div>
+            <div style="text-align:center; margin-top:16px;">
+                <button class="h-btn h-btn-primary" @onclick="GoOrganization">前往组织管理</button>
+            </div>
+        }
+        else
+        {
+            <div style="text-align:center; padding:8px 0 16px;">
+                <p style="font-size:15px;">邀请你加入</p>
+                <p style="font-size:20px; font-weight:600; margin:8px 0;">@info.OrganizationName</p>
+                <p style="color:#999; font-size:13px;">成员类型：@MemberTypeName(info.MemberType)</p>
+            </div>
+            <div style="text-align:center;">
+                <button class="h-btn h-btn-primary h-btn-block" disabled="@submitting" @onclick="Accept">确认加入</button>
+            </div>
+        }
+    </HCard>
+</div>
+
+@code {
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "token")]
+    public string? Token { get; set; }
+
+    private bool loading = true;
+    private bool submitting;
+    private bool joined;
+    private InviteInfoDto? info;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (string.IsNullOrWhiteSpace(Token))
+        {
+            info = new InviteInfoDto { Valid = false, Message = "缺少邀请令牌" };
+            loading = false;
+            return;
+        }
+
+        try
+        {
+            info = await InviteService.GetInviteInfoAsync(Token);
+        }
+        catch (Exception ex)
+        {
+            info = new InviteInfoDto { Valid = false, Message = ex.Message };
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private async Task Accept()
+    {
+        if (string.IsNullOrWhiteSpace(Token)) return;
+        submitting = true;
+        try
+        {
+            await InviteService.AcceptInviteAsync(Token);
+            joined = true;
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", ex.Message);
+        }
+        finally
+        {
+            submitting = false;
+        }
+    }
+
+    private void GoHome() => Navigation.NavigateTo("/");
+
+    private void GoOrganization() => Navigation.NavigateTo("/organization");
+
+    private static string MemberTypeName(int memberType) => memberType switch
+    {
+        1 => "普通成员",
+        2 => "部门负责人",
+        3 => "部门经理",
+        _ => "普通成员"
+    };
+}

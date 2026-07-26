@@ -5,29 +5,36 @@
 
 <PageTitle>我的物料 - H.LowCode</PageTitle>
 
-<div class="tabs-header" style="width: 80%; margin: auto;">
-    <button class='tab-btn @(_tabKey == "componentlibraries" ? "tab-active" : "")' @onclick='() => _tabKey = "componentlibraries"'>组件库</button>
-    <button class='tab-btn @(_tabKey == "pagelibraries" ? "tab-active" : "")' @onclick='() => _tabKey = "pagelibraries"'>页面库</button>
-    <button class='tab-btn @(_tabKey == "apptemplates" ? "tab-active" : "")' @onclick='() => _tabKey = "apptemplates"'>应用模板</button>
-    <button class='tab-btn @(_tabKey == "themes" ? "tab-active" : "")' @onclick='() => _tabKey = "themes"'>主题</button>
-</div>
-<div>
-    @if (_tabKey == "componentlibraries")
-    {
-        <ComponentLibraryManager></ComponentLibraryManager>
-    }
-    @if (_tabKey == "pagelibraries")
-    {
-        <PageLibraryList></PageLibraryList>
-    }
-    @if (_tabKey == "apptemplates")
-    {
-        <AppPartsList></AppPartsList>
-    }
-    @if (_tabKey == "themes")
-    {
-        <ThemePartsList></ThemePartsList>
-    }
+<style>
+    .myparts-page { height: 100%; display: flex; flex-direction: column; }
+    .myparts-body { flex: 1; min-height: 0; overflow: auto; width: 80%; margin: 0 auto; }
+</style>
+
+<div class="myparts-page">
+    <div class="tabs-header page-container">
+        <button class='tab-btn @(_tabKey == "componentlibraries" ? "active" : "")' @onclick='() => _tabKey = "componentlibraries"'>组件库</button>
+        <button class='tab-btn @(_tabKey == "pagelibraries" ? "active" : "")' @onclick='() => _tabKey = "pagelibraries"'>页面库</button>
+        <button class='tab-btn @(_tabKey == "apptemplates" ? "active" : "")' @onclick='() => _tabKey = "apptemplates"'>应用模板</button>
+        <button class='tab-btn @(_tabKey == "themes" ? "active" : "")' @onclick='() => _tabKey = "themes"'>主题</button>
+    </div>
+    <div class="myparts-body">
+        @if (_tabKey == "componentlibraries")
+        {
+            <ComponentLibraryManager></ComponentLibraryManager>
+        }
+        @if (_tabKey == "pagelibraries")
+        {
+            <PageLibraryList></PageLibraryList>
+        }
+        @if (_tabKey == "apptemplates")
+        {
+            <AppPartsList></AppPartsList>
+        }
+        @if (_tabKey == "themes")
+        {
+            <ThemePartsList></ThemePartsList>
+        }
+    </div>
 </div>
 
 @code {

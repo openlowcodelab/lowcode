@@ -1,0 +1,17 @@
+@namespace H.BackgroundTask.Web
+
+@inherits LayoutComponentBase
+
+<DefaultLayoutComponent
+    AppName="后台任务"
+    MenuItems="@MenuItems">
+    @Body
+</DefaultLayoutComponent>
+
+@code {
+    private static List<AppMenuItem> MenuItems => new()
+    {
+        new AppMenuItem { Name = "任务管理", Url = "/background-task/jobs",    Icon = "⏱️" },
+        new AppMenuItem { Name = "执行记录", Url = "/background-task/records", Icon = "📋" }
+    };
+}

@@ -33,11 +33,11 @@ public class FormDataRepository : IFormDataRepository
 
     public Task<bool> UpdateAsync(FormEntity entity)
     {
-        throw new NotImplementedException();
+        return _dbContext.UpdateAsync(entity);
     }
 
     public Task<bool> DeleteAsync(string entityName, string id)
     {
-        throw new NotImplementedException();
+        return _dbContext.DeleteAsync(entityName, id);
     }
 }

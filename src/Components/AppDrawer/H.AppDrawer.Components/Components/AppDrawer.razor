@@ -61,6 +61,11 @@
                     <div class="empty-state">暂无应用</div>
                 }
             </div>
+            <div class="drawer-footer">
+                <button class="system-backend-btn" @onclick="NavigateToSystem" title="系统后台">
+                    ⚙️
+                </button>
+            </div>
         </div>
     </div>
 }
@@ -127,8 +132,8 @@
 
             // 直接调用 API 获取应用分类数据
             // ABP 路由规则: /api/app/{service-name}/{method-name-simplified}
-            // IAppManageAppService.GetAllCategoriesAsync -> /api/app/app-manage/categories
-            var response = await HttpClient.GetFromJsonAsync<AppCategoryInfo[]>("/api/app/app-manage/categories");
+            // IAppQueryAppService.GetAllCategoriesAsync -> /api/app/app-query/categories
+            var response = await HttpClient.GetFromJsonAsync<AppCategoryInfo[]>("/api/app/app-query/categories");
 
             if (response != null)
             {
@@ -234,5 +239,13 @@
         {
             NavigationManager.NavigateTo(app.Url);
         }
+    }
+
+    private async Task NavigateToSystem()
+    {
+        await HandleCloseAsync();
+        await Task.Delay(100);
+
+        await JSRuntime.InvokeVoidAsync("open", "/system", "_blank");
     }
 }

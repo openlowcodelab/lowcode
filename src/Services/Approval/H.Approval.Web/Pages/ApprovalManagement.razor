@@ -3,47 +3,332 @@
 @layout ApprovalLayout
 
 @inject IApprovalDefinitionAppService DefinitionService
+@inject IApprovalCategoryAppService CategoryService
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
-<button class="h-btn h-btn-primary" @onclick="CreateNew">新建审批</button>
+<div class="mgmt-header">
+    <h3 class="mgmt-title">表单管理</h3>
+    <div class="mgmt-actions">
+        <button class="h-btn" @onclick="OpenCreateCategory">新建分组</button>
+        <button class="h-btn h-btn-primary" @onclick="OpenCreateDialog">创建审批表单</button>
+    </div>
+</div>
 
-<HTable ShowEmpty="@(!definitions.Any())" Style="margin-top: 16px;">
-    <thead>
-        <tr>
-            <th>审批名称</th>
-            <th>描述</th>
-            <th>版本</th>
-            <th>状态</th>
-            <th>创建时间</th>
-            <th>操作</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in definitions)
-        {
-            <tr>
-                <td>@item.Name</td>
-                <td>@item.Description</td>
-                <td>@item.Version</td>
-                <td>
-                    <span class="h-tag @(item.IsEnabled ? "h-tag-green" : "h-tag-red")">
-                        @(item.IsEnabled ? "启用" : "禁用")
+<div class="mgmt-tabs">
+    <a class="mgmt-tab @(string.IsNullOrEmpty(selectedCategory) ? "active" : "")" @onclick='() => selectedCategory = string.Empty'>全部</a>
+    @foreach (var group in Groups)
+    {
+        <a class="mgmt-tab @(selectedCategory == group.Key ? "active" : "")" @onclick="() => selectedCategory = group.Key">@group.Key</a>
+    }
+</div>
+
+@if (isLoading)
+{
+    <div class="h-spin"><span class="h-spin-dot"></span><span class="h-spin-text">加载中...</span></div>
+}
+else if (!VisibleGroups.Any())
+{
+    <HTable ShowEmpty="true">
+        <thead><tr><th>表单</th></tr></thead>
+        <tbody></tbody>
+    </HTable>
+}
+else
+{
+    @foreach (var group in VisibleGroups)
+    {
+        <div class="mgmt-group">
+            <div class="mgmt-group-header">
+                <span class="mgmt-group-name">@group.Key（@group.Value.Count）</span>
+                @{
+                    var cat = FindCategory(group.Key);
+                }
+                @if (cat != null)
+                {
+                    <span class="mgmt-group-ops">
+                        <a @onclick="() => OpenRenameCategory(cat)">重命名</a>
+                        <a class="danger" @onclick="() => DeleteCategory(cat)">删除</a>
                     </span>
-                </td>
-                <td>@item.CreationTime</td>
-                <td>
-                    <button class="h-btn h-btn-ghost h-btn-sm" @onclick="() => Edit(item.Id)">编辑</button>
-                    <button class="h-btn h-btn-danger h-btn-sm" @onclick="() => Delete(item.Id)">删除</button>
-                </td>
-            </tr>
+                }
+            </div>
+            <HTable>
+                <thead>
+                    <tr>
+                        <th>审批名称</th>
+                        <th>描述</th>
+                        <th>版本</th>
+                        <th>状态</th>
+                        <th>创建时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in group.Value)
+                    {
+                        <tr>
+                            <td>@(string.IsNullOrEmpty(item.Icon) ? "📄" : item.Icon) @item.Name</td>
+                            <td>@item.Description</td>
+                            <td>@item.Version</td>
+                            <td>
+                                <span class="h-tag @(item.IsEnabled ? "h-tag-green" : "h-tag-red")">
+                                    @(item.IsEnabled ? "启用" : "禁用")
+                                </span>
+                            </td>
+                            <td>@item.CreationTime.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>
+                                <button class="h-btn h-btn-ghost h-btn-sm" @onclick="() => Edit(item.Id)">编辑</button>
+                                <button class="h-btn h-btn-ghost h-btn-sm" @onclick="() => ToggleEnabled(item)">@(item.IsEnabled ? "禁用" : "启用")</button>
+                                <button class="h-btn h-btn-danger h-btn-sm" @onclick="() => Delete(item.Id)">删除</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </HTable>
+        </div>
+    }
+}
+
+@if (showCategoryDialog)
+{
+    <div class="setting-drawer-overlay" @onclick="CloseCategoryDialog"></div>
+    <div class="mgmt-category-dialog">
+        <div class="mgmt-category-header">
+            <h4>@(categoryEditId == null ? "新建分组" : "重命名分组")</h4>
+            <button class="h-btn h-btn-ghost h-btn-sm" @onclick="CloseCategoryDialog">&times;</button>
+        </div>
+        <div class="h-form-item">
+            <label class="h-form-label"><span class="h-required">*</span> 分组名称</label>
+            <input class="h-input" @bind="categoryName" placeholder="请输入分组名称" />
+        </div>
+        <div class="mgmt-category-footer">
+            <button class="h-btn" @onclick="CloseCategoryDialog">取消</button>
+            <button class="h-btn h-btn-primary" style="margin-left: 8px;" disabled="@isSavingCategory" @onclick="SaveCategory">
+                @(isSavingCategory ? "保存中..." : "确定")
+            </button>
+        </div>
+    </div>
+}
+
+@if (showCreateDialog)
+{
+    <div class="mgmt-modal-overlay" @onclick="CloseCreateDialog"></div>
+    <div class="mgmt-create-modal">
+        @if (previewTemplate != null)
+        {
+            <div class="mgmt-create-header">
+                <h4><a class="mgmt-preview-back" @onclick="ClosePreview">‹ 返回</a></h4>
+                <button class="h-btn h-btn-ghost h-btn-sm" @onclick="CloseCreateDialog">&times;</button>
+            </div>
+
+            <div class="mgmt-preview-body">
+                <div class="mgmt-preview-head">
+                    <span class="mgmt-preview-icon">@(string.IsNullOrEmpty(previewTemplate.Icon) ? "📄" : previewTemplate.Icon)</span>
+                    <div>
+                        <div class="mgmt-preview-name">@previewTemplate.Name</div>
+                        @if (!string.IsNullOrWhiteSpace(previewTemplate.Description))
+                        {
+                            <div class="mgmt-preview-desc">@previewTemplate.Description</div>
+                        }
+                    </div>
+                </div>
+
+                @if (previewSteps.Any())
+                {
+                    <div class="mgmt-preview-section-title">审批流程</div>
+                    <div class="mgmt-preview-flow">
+                        @for (var i = 0; i < previewSteps.Count; i++)
+                        {
+                            <span class="mgmt-preview-flow-node">@previewSteps[i]</span>
+                            @if (i < previewSteps.Count - 1)
+                            {
+                                <span class="mgmt-preview-flow-arrow">→</span>
+                            }
+                        }
+                    </div>
+                }
+
+                <div class="mgmt-preview-section-title">表单字段</div>
+                <div class="mgmt-preview-form">
+                    @if (!previewSchema.Fields.Any())
+                    {
+                        <div class="mgmt-preview-empty">该模板暂无预置字段</div>
+                    }
+                    @foreach (var field in previewSchema.Fields)
+                    {
+                        @if (field.Type == FormFieldTypes.Description)
+                        {
+                            <div class="h-alert">@field.Label</div>
+                        }
+                        else
+                        {
+                            <div class="h-form-item">
+                                <label class="h-form-label">
+                                    @if (field.Required)
+                                    {
+                                        <span class="h-required">*</span>
+                                    }
+                                    @field.Label
+                                </label>
+                                <div class="h-form-control">
+                                    @if (field.Type == FormFieldTypes.Textarea)
+                                    {
+                                        <textarea class="h-textarea" rows="2" disabled placeholder="@Placeholder(field)"></textarea>
+                                    }
+                                    else if (field.Type == FormFieldTypes.Radio || field.Type == FormFieldTypes.Checkbox)
+                                    {
+                                        <div class="h-radio-group">
+                                            @foreach (var opt in field.Options)
+                                            {
+                                                <label class="h-radio-button mgmt-preview-opt">@opt</label>
+                                            }
+                                        </div>
+                                    }
+                                    else if (field.Type == FormFieldTypes.DateRange)
+                                    {
+                                        <div class="h-daterange">
+                                            <input class="h-input" type="date" disabled />
+                                            <span class="h-daterange-sep">至</span>
+                                            <input class="h-input" type="date" disabled />
+                                        </div>
+                                    }
+                                    else if (field.Type == FormFieldTypes.Date)
+                                    {
+                                        <input class="h-input" type="date" disabled />
+                                    }
+                                    else if (field.Type == FormFieldTypes.Number || field.Type == FormFieldTypes.Amount)
+                                    {
+                                        <input class="h-input" type="number" disabled placeholder="@Placeholder(field)" />
+                                    }
+                                    else
+                                    {
+                                        <input class="h-input" disabled placeholder="@Placeholder(field)" />
+                                    }
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+
+            <div class="mgmt-preview-footer">
+                <button class="h-btn" @onclick="ClosePreview">返回</button>
+                <button class="h-btn h-btn-primary" style="margin-left: 8px;" @onclick="() => CreateFromTemplate(previewTemplate.Id)">使用该模板</button>
+            </div>
         }
-    </tbody>
-</HTable>
+        else
+        {
+            <div class="mgmt-create-header">
+                <h4>创建审批表单</h4>
+                <button class="h-btn h-btn-ghost h-btn-sm" @onclick="CloseCreateDialog">&times;</button>
+            </div>
+
+            <div class="mgmt-template-body">
+                <div class="mgmt-template-group">
+                    <div class="mgmt-template-group-title">全新创建</div>
+                    <div class="mgmt-template-grid">
+                        <div class="mgmt-template-card mgmt-template-card-blank" @onclick="CreateBlank">
+                            <span class="mgmt-template-icon">➕</span>
+                            <span class="mgmt-template-name">全新创建</span>
+                            <span class="mgmt-template-desc">从空白表单开始自定义设计</span>
+                        </div>
+                    </div>
+                </div>
+
+                @if (isLoadingTemplates)
+                {
+                    <div class="h-spin"><span class="h-spin-dot"></span><span class="h-spin-text">加载模板中...</span></div>
+                }
+                else
+                {
+                    @foreach (var group in TemplateGroups)
+                    {
+                        <div class="mgmt-template-group">
+                            <div class="mgmt-template-group-title">@group.Key</div>
+                            <div class="mgmt-template-grid">
+                                @foreach (var tpl in group.Value)
+                                {
+                                    <div class="mgmt-template-card" @onclick="() => OpenPreview(tpl)">
+                                        <span class="mgmt-template-icon">@(string.IsNullOrEmpty(tpl.Icon) ? "📄" : tpl.Icon)</span>
+                                        <span class="mgmt-template-name">@tpl.Name</span>
+                                        <span class="mgmt-template-desc">@tpl.Description</span>
+                                        <div class="mgmt-template-card-actions">
+                                            <a class="mgmt-template-preview-btn" @onclick="() => OpenPreview(tpl)" @onclick:stopPropagation="true">预览</a>
+                                            <a class="mgmt-template-use-btn" @onclick="() => CreateFromTemplate(tpl.Id)" @onclick:stopPropagation="true">使用</a>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        }
+    </div>
+}
 
 @code {
+    private const string UncategorizedName = "其他";
+
     private List<ApprovalDefinitionDto> definitions = new();
-    private List<ApprovalInstanceDto> instances = new();
+    private List<ApprovalCategoryDto> categories = new();
+    private bool isLoading = true;
+    private string selectedCategory = string.Empty;
+
+    private bool showCategoryDialog;
+    private string? categoryEditId;
+    private string categoryName = string.Empty;
+    private bool isSavingCategory;
+
+    private bool showCreateDialog;
+    private List<ApprovalTemplateDto> templates = new();
+    private bool isLoadingTemplates;
+
+    private ApprovalTemplateDto? previewTemplate;
+    private FormSchema previewSchema = new();
+    private List<string> previewSteps = new();
+
+    private List<KeyValuePair<string, List<ApprovalDefinitionDto>>> Groups
+    {
+        get
+        {
+            var defGroups = definitions
+                .GroupBy(d => string.IsNullOrWhiteSpace(d.CategoryName) ? UncategorizedName : d.CategoryName!)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            var result = new List<KeyValuePair<string, List<ApprovalDefinitionDto>>>();
+
+            // 先按已定义分类顺序展示(即使无表单也展示,便于管理)
+            foreach (var cat in categories)
+            {
+                var list = defGroups.TryGetValue(cat.Name, out var items) ? items : new List<ApprovalDefinitionDto>();
+                result.Add(new KeyValuePair<string, List<ApprovalDefinitionDto>>(cat.Name, list));
+                defGroups.Remove(cat.Name);
+            }
+
+            // 剩余未登记分类名(历史数据)
+            foreach (var kv in defGroups.Where(k => k.Key != UncategorizedName).OrderBy(k => k.Key))
+            {
+                result.Add(new KeyValuePair<string, List<ApprovalDefinitionDto>>(kv.Key, kv.Value));
+            }
+
+            // 未分类置底
+            if (defGroups.TryGetValue(UncategorizedName, out var uncategorized))
+            {
+                result.Add(new KeyValuePair<string, List<ApprovalDefinitionDto>>(UncategorizedName, uncategorized));
+            }
+
+            return result;
+        }
+    }
+
+    private List<KeyValuePair<string, List<ApprovalDefinitionDto>>> VisibleGroups
+        => string.IsNullOrEmpty(selectedCategory)
+            ? Groups
+            : Groups.Where(g => g.Key == selectedCategory).ToList();
+
+    private ApprovalCategoryDto? FindCategory(string name)
+        => categories.FirstOrDefault(c => c.Name == name);
 
     protected override async Task OnInitializedAsync()
     {
@@ -52,27 +337,130 @@
 
     private async Task LoadData()
     {
+        isLoading = true;
         try
         {
             definitions = await DefinitionService.GetAllAsync();
+            categories = await CategoryService.GetAllAsync();
         }
         catch (Exception ex)
         {
             await JS.InvokeVoidAsync("alert", $"加载数据失败: {ex.Message}");
             definitions = new List<ApprovalDefinitionDto>();
+            categories = new List<ApprovalCategoryDto>();
+        }
+        finally
+        {
+            isLoading = false;
         }
     }
 
-    private async Task CreateNew()
+    private async Task OpenCreateDialog()
     {
-        Nav.NavigateTo($"/approval/designer/_new");
+        showCreateDialog = true;
+        if (templates.Count == 0)
+        {
+            isLoadingTemplates = true;
+            try
+            {
+                templates = await DefinitionService.GetTemplatesAsync();
+            }
+            catch (Exception ex)
+            {
+                await JS.InvokeVoidAsync("alert", $"加载模板失败: {ex.Message}");
+                templates = new List<ApprovalTemplateDto>();
+            }
+            finally
+            {
+                isLoadingTemplates = false;
+            }
+        }
     }
+
+    private void CloseCreateDialog()
+    {
+        showCreateDialog = false;
+        previewTemplate = null;
+    }
+
+    private void OpenPreview(ApprovalTemplateDto tpl)
+    {
+        previewTemplate = tpl;
+        previewSchema = FormSchema.Parse(tpl.FormJson);
+        previewSteps = GetFlowSteps(tpl.DefinitionJson);
+    }
+
+    private void ClosePreview()
+    {
+        previewTemplate = null;
+    }
+
+    private static string Placeholder(FormFieldModel field)
+        => string.IsNullOrEmpty(field.Placeholder) ? "请输入" : field.Placeholder;
+
+    private static List<string> GetFlowSteps(string definitionJson)
+    {
+        var steps = new List<string>();
+        try
+        {
+            var node = NodeSerializer.Deserialize(definitionJson);
+            while (node != null)
+            {
+                if (!string.IsNullOrWhiteSpace(node.NodeName))
+                {
+                    steps.Add(node.NodeName);
+                }
+                node = node.ChildNodes.FirstOrDefault();
+            }
+        }
+        catch
+        {
+            // 忽略解析异常，预览仅作展示
+        }
+        steps.Add("结束");
+        return steps;
+    }
+
+    private void CreateBlank()
+    {
+        showCreateDialog = false;
+        Nav.NavigateTo("/approval/designer/_new");
+    }
+
+    private void CreateFromTemplate(string templateId)
+    {
+        showCreateDialog = false;
+        Nav.NavigateTo($"/approval/designer/_new?template={Uri.EscapeDataString(templateId)}");
+    }
+
+    private List<KeyValuePair<string, List<ApprovalTemplateDto>>> TemplateGroups
+        => templates
+            .GroupBy(t => string.IsNullOrWhiteSpace(t.CategoryName) ? UncategorizedName : t.CategoryName!)
+            .OrderBy(g => g.Min(t => t.CategorySort))
+            .ThenBy(g => g.Key)
+            .Select(g => new KeyValuePair<string, List<ApprovalTemplateDto>>(
+                g.Key,
+                g.OrderBy(t => t.Sort).ThenBy(t => t.Name).ToList()))
+            .ToList();
 
     private void Edit(string id)
     {
         Nav.NavigateTo($"/approval/designer/{id}");
     }
-    
+
+    private async Task ToggleEnabled(ApprovalDefinitionDto item)
+    {
+        try
+        {
+            await DefinitionService.ToggleEnabledAsync(item.Id, !item.IsEnabled);
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"操作失败: {ex.Message}");
+        }
+    }
+
     private async Task Delete(string id)
     {
         var confirmed = await JS.InvokeAsync<bool>("confirm", "确认删除?");
@@ -82,6 +470,79 @@
         {
             await DefinitionService.DeleteAsync(id);
             await JS.InvokeVoidAsync("alert", "删除成功");
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"删除失败: {ex.Message}");
+        }
+    }
+
+    private void OpenCreateCategory()
+    {
+        categoryEditId = null;
+        categoryName = string.Empty;
+        showCategoryDialog = true;
+    }
+
+    private void OpenRenameCategory(ApprovalCategoryDto category)
+    {
+        categoryEditId = category.Id;
+        categoryName = category.Name;
+        showCategoryDialog = true;
+    }
+
+    private void CloseCategoryDialog()
+    {
+        showCategoryDialog = false;
+        categoryEditId = null;
+    }
+
+    private async Task SaveCategory()
+    {
+        if (string.IsNullOrWhiteSpace(categoryName))
+        {
+            await JS.InvokeVoidAsync("alert", "请输入分组名称");
+            return;
+        }
+
+        isSavingCategory = true;
+        try
+        {
+            if (categoryEditId == null)
+            {
+                await CategoryService.CreateAsync(new CreateApprovalCategoryDto { Name = categoryName.Trim() });
+            }
+            else
+            {
+                await CategoryService.RenameAsync(new RenameApprovalCategoryDto { Id = categoryEditId, Name = categoryName.Trim() });
+            }
+            showCategoryDialog = false;
+            categoryEditId = null;
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"保存失败: {ex.Message}");
+        }
+        finally
+        {
+            isSavingCategory = false;
+        }
+    }
+
+    private async Task DeleteCategory(ApprovalCategoryDto category)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm", $"确认删除分组「{category.Name}」? 该分组下的审批表单将归入「其他」。");
+        if (!confirmed) return;
+
+        try
+        {
+            await CategoryService.DeleteAsync(category.Id);
+            if (selectedCategory == category.Name)
+            {
+                selectedCategory = string.Empty;
+            }
             await LoadData();
         }
         catch (Exception ex)

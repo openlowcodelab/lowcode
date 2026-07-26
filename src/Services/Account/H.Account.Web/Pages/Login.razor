@@ -49,7 +49,9 @@
             </div>
 
             <div class="h-form-item" style="margin-top: 24px; margin-bottom: 20px;">
-                <button type="submit" class="h-btn h-btn-primary h-btn-block auth-btn-primary">登 录</button>
+                <button type="submit" class="h-btn h-btn-primary h-btn-block auth-btn-primary" disabled="@isLoading">
+                    @(isLoading ? "登录中..." : "登 录")
+                </button>
             </div>
         </EditForm>
     }
@@ -70,7 +72,9 @@
             <div class="auth-form-links-spacer"></div>
 
             <div class="h-form-item" style="margin-top: 24px; margin-bottom: 20px;">
-                <button type="submit" class="h-btn h-btn-primary h-btn-block auth-btn-primary">登 录</button>
+                <button type="submit" class="h-btn h-btn-primary h-btn-block auth-btn-primary" disabled="@isLoading">
+                    @(isLoading ? "登录中..." : "登 录")
+                </button>
             </div>
         </EditForm>
     }
@@ -100,6 +104,7 @@
     private string successMessage = "";
     private string returnUrl = "/";
     private LoginMode loginMode = LoginMode.AccountPassword;
+    private bool isLoading = false;
 
     private int smsCountdown = 0;
     private string sendCodeButtonText = "发送验证码";
@@ -128,6 +133,46 @@
         successMessage = "";
     }
 
+    /// <summary>
+    /// 登录成功后解析跳转目标：
+    /// - 无论是否指定 returnUrl，都先调用后端自动选择企业，确保登录后携带企业上下文；
+    /// - 若用户仅有 1 个企业或存在上一次登录企业，则已自动进入企业，前往期望地址（returnUrl 或首页），
+    ///   避免落地页因无企业上下文而再次中转到 /enterprise/select 造成短暂空白；
+    /// - 若无企业或多个企业且无上次登录企业，则进入企业选择页。
+    /// </summary>
+    private async Task<string> ResolvePostLoginTargetAsync()
+    {
+        // 登录后期望进入的地址（默认首页）
+        var desiredUrl = (returnUrl == "/" || string.IsNullOrWhiteSpace(returnUrl)) ? "/" : returnUrl;
+
+        try
+        {
+            // 无论是否指定 returnUrl，都先尝试自动选择企业，以便携带企业上下文直接进入目标页
+            var response = await HttpClient.PostAsync("/api/app/enterprise/auto-select-enterprise", null);
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                if (!string.IsNullOrEmpty(content) && content != "null")
+                {
+                    using var doc = System.Text.Json.JsonDocument.Parse(content);
+                    if (doc.RootElement.TryGetProperty("selected", out var selectedProp)
+                        && selectedProp.ValueKind == System.Text.Json.JsonValueKind.True)
+                    {
+                        // 已自动进入企业（单企业或上一次登录企业），前往期望地址
+                        return desiredUrl;
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // 企业接口不可用时回退到企业选择页
+        }
+
+        // 无企业或多个企业且无上次登录企业，进入企业选择页手动选择/创建
+        return "/enterprise/select";
+    }
+
     private async Task HandleLogin()
     {
         if (loginModel == null)
@@ -136,16 +181,21 @@
             return;
         }
 
+        isLoading = true;
+        errorMessage = "";
+        successMessage = "";
+        StateHasChanged();
+
         try
         {
             var result = await AccountAppService.LoginAsync(loginModel);
 
             if (result.Success)
             {
-                successMessage = "登录成功！正在跳转到企业选择...";
+                successMessage = "登录成功！正在跳转...";
                 errorMessage = string.Empty;
-                // 登录成功后跳转到企业选择页面
-                var targetUrl = (returnUrl == "/" || string.IsNullOrWhiteSpace(returnUrl)) ? "/enterprise/select" : returnUrl;
+                // 登录成功后根据企业情况决定跳转目标，避免不必要的企业选择页中转
+                var targetUrl = await ResolvePostLoginTargetAsync();
                 Navigation.NavigateTo(targetUrl, forceLoad: true);
             }
             else
@@ -163,6 +213,11 @@
             errorMessage = $"登录失败: {ex.Message}";
             successMessage = string.Empty;
         }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
     }
 
     private async Task HandlePhoneLogin()
@@ -178,16 +233,21 @@
             return;
         }
 
+        isLoading = true;
+        errorMessage = "";
+        successMessage = "";
+        StateHasChanged();
+
         try
         {
             var response = await HttpClient.PostAsJsonAsync("/api/app/account/phone-login", phoneLoginModel);
 
             if (response.IsSuccessStatusCode)
             {
-                successMessage = "登录成功！正在跳转到企业选择...";
+                successMessage = "登录成功！正在跳转...";
                 errorMessage = string.Empty;
-                // 登录成功后跳转到企业选择页面
-                var targetUrl = (returnUrl == "/" || string.IsNullOrWhiteSpace(returnUrl)) ? "/enterprise/select" : returnUrl;
+                // 登录成功后根据企业情况决定跳转目标，避免不必要的企业选择页中转
+                var targetUrl = await ResolvePostLoginTargetAsync();
                 Navigation.NavigateTo(targetUrl, forceLoad: true);
             }
             else
@@ -201,6 +261,11 @@
         {
             errorMessage = $"登录失败: {ex.Message}";
             successMessage = string.Empty;
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
         }
     }
 

@@ -1,0 +1,19 @@
+@namespace H.Order.Web
+
+@inherits LayoutComponentBase
+
+<DefaultLayoutComponent
+    AppName="订单管理"
+    MenuItems="@MenuItems">
+    @Body
+</DefaultLayoutComponent>
+
+@code {
+    private static List<AppMenuItem> MenuItems => new()
+    {
+        new AppMenuItem { Name = "订单列表",   Url = "/order",          Icon = "📦" },
+        new AppMenuItem { Name = "供应商管理", Url = "/order/supplier",   Icon = "🏭" },
+        new AppMenuItem { Name = "路由规则",   Url = "/order/route-rule", Icon = "🧭" },
+        new AppMenuItem { Name = "下发日志",   Url = "/order/dispatch-log", Icon = "📋" }
+    };
+}

@@ -1,0 +1,80 @@
+@page "/order/detail/{OrderId}"
+@layout OrderLayout
+@inject IOrderAppService OrderService
+@inject IJSRuntime JS
+
+<h2>订单详情</h2>
+
+@if (detail is null)
+{
+    <p><em>加载中...</em></p>
+}
+else
+{
+    <HCard Title="核心信息">
+        <div><b>订单号：</b>@detail.OrderNo</div>
+        <div><b>商品名称：</b>@detail.ProductName</div>
+        <div><b>买家ID：</b>@detail.BuyerId</div>
+        <div><b>行业：</b>@(detail.Industry ?? "-")</div>
+        <div><b>商品类别：</b>@(detail.ProductCategory ?? "-")</div>
+        <div><b>总金额：</b>@detail.TotalAmount.ToString("F2")</div>
+        <div><b>状态：</b><span class="h-tag">@detail.OrderStatus</span></div>
+        <div><b>备注：</b>@(detail.Remark ?? "-")</div>
+        <div><b>创建时间：</b>@detail.CreationTime.ToString("yyyy-MM-dd HH:mm:ss")</div>
+    </HCard>
+
+    <HCard Title="行业特有属性 (扩展)" Style="margin-top:16px;">
+        @if (string.IsNullOrWhiteSpace(detail.AttributesJson))
+        {
+            <em>无行业扩展属性</em>
+        }
+        else
+        {
+            <pre style="background:#f6f8fa;padding:12px;border-radius:4px;white-space:pre-wrap;">@detail.AttributesJson</pre>
+        }
+    </HCard>
+
+    <HCard Title="下发状态" Style="margin-top:16px;">
+        @if (detail.DispatchStatus is null)
+        {
+            <em>暂无下发记录</em>
+        }
+        else
+        {
+            <div><b>供应商：</b>@detail.DispatchStatus.SupplierCode</div>
+            <div><b>状态：</b><span class="h-tag">@detail.DispatchStatus.Status</span></div>
+            <div><b>最近请求时间：</b>@(detail.DispatchStatus.RequestTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "-")</div>
+            <div><b>错误信息：</b>@(detail.DispatchStatus.ErrorMessage ?? "-")</div>
+        }
+        <div style="margin-top:12px;">
+            <button class="h-btn h-btn-primary h-btn-sm" @onclick="@TriggerDispatch">手动触发下发</button>
+            <button class="h-btn h-btn-sm" @onclick="@Reload">刷新</button>
+        </div>
+    </HCard>
+}
+
+@code {
+    [Parameter] public Guid OrderId { get; set; }
+    private OrderDetailDto detail;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (detail is null || detail.Id != OrderId)
+        {
+            await Reload();
+        }
+    }
+
+    private async Task Reload()
+    {
+        try { detail = await OrderService.GetDetailAsync(OrderId); }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载失败：{ex.Message}"); }
+    }
+
+    private async Task TriggerDispatch()
+    {
+        var r = await OrderService.TriggerDispatchAsync(OrderId);
+        await JS.InvokeVoidAsync("alert", r.Success ? "下发成功" : $"下发失败：{r.Message}");
+        await Reload();
+    }
+}

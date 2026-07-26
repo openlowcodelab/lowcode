@@ -1,0 +1,205 @@
+@page "/organization/enterprise"
+
+@layout OrganizationLayout
+@using H.Enterprise.Application.Contracts
+@inject IEnterpriseAppService EnterpriseService
+
+<HCard Title="基本信息">
+    <div style="max-width: 640px;">
+        @if (loading)
+        {
+            <div style="padding: 40px; color: #999;">加载中...</div>
+        }
+        else if (enterprise == null)
+        {
+            <div style="padding: 24px; color: #999;">
+                未选择企业，请先选择或创建企业。
+            </div>
+        }
+        else
+        {
+            @if (!string.IsNullOrEmpty(message))
+            {
+                <div style="color: #52c41a; margin-bottom: 16px; padding: 8px; background: #f6ffed; border: 1px solid #b7eb8f; border-radius: 4px;">
+                    @message
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div style="color: red; margin-bottom: 16px; padding: 8px; background: #fff2f0; border: 1px solid #ffccc7; border-radius: 4px;">
+                    @errorMessage
+                </div>
+            }
+
+            @if (!isOwner)
+            {
+                <div style="margin-bottom: 16px; color: #999; font-size: 13px;">
+                    仅企业拥有者可修改企业信息，当前为只读。
+                </div>
+            }
+
+            <div class="h-form-item h-form-horizontal">
+                <label class="h-form-label">企业名称 @if (isOwner) { <span style="color:red">*</span> }</label>
+                <div class="h-form-control">
+                    <input type="text" @bind-value="@editModel.Name" placeholder="请输入企业名称" class="h-input" disabled="@(!isOwner)" />
+                </div>
+            </div>
+            <div class="h-form-item h-form-horizontal">
+                <label class="h-form-label">企业编码</label>
+                <div class="h-form-control">
+                    <input type="text" value="@enterprise.Code" class="h-input" disabled />
+                </div>
+            </div>
+            <div class="h-form-item h-form-horizontal">
+                <label class="h-form-label">企业描述</label>
+                <div class="h-form-control">
+                    <textarea @bind="@editModel.Description" placeholder="请输入企业描述" class="h-input" rows="3" disabled="@(!isOwner)"></textarea>
+                </div>
+            </div>
+            <div class="h-form-item h-form-horizontal">
+                <label class="h-form-label">联系人</label>
+                <div class="h-form-control">
+                    <input type="text" @bind-value="@editModel.ContactName" placeholder="请输入联系人姓名" class="h-input" disabled="@(!isOwner)" />
+                </div>
+            </div>
+            <div class="h-form-item h-form-horizontal">
+                <label class="h-form-label">联系电话</label>
+                <div class="h-form-control">
+                    <input type="text" @bind-value="@editModel.ContactPhone" placeholder="请输入联系电话" class="h-input" disabled="@(!isOwner)" />
+                </div>
+            </div>
+            <div class="h-form-item h-form-horizontal">
+                <label class="h-form-label">联系邮箱</label>
+                <div class="h-form-control">
+                    <input type="email" @bind-value="@editModel.ContactEmail" placeholder="请输入联系邮箱" class="h-input" disabled="@(!isOwner)" />
+                </div>
+            </div>
+            <div class="h-form-item h-form-horizontal">
+                <label class="h-form-label">备注</label>
+                <div class="h-form-control">
+                    <textarea @bind="@editModel.Remark" placeholder="请输入备注" class="h-input" rows="2" disabled="@(!isOwner)"></textarea>
+                </div>
+            </div>
+
+            <div style="margin: 24px 0 8px; border-top: 1px solid #f0f0f0;"></div>
+
+            <div class="h-form-item h-form-horizontal">
+                <label class="h-form-label">状态</label>
+                <div class="h-form-control" style="padding-top: 6px;">
+                    @if (enterprise.Status == "Active")
+                    {
+                        <span class="h-tag h-tag-green">已激活</span>
+                    }
+                    else if (enterprise.Status == "Pending")
+                    {
+                        <span class="h-tag" style="background:#fffbe6;color:#ad6800;border:1px solid #ffe58f;">待激活</span>
+                    }
+                    else
+                    {
+                        <span class="h-tag h-tag-red">已禁用</span>
+                    }
+                </div>
+            </div>
+            <div class="h-form-item h-form-horizontal">
+                <label class="h-form-label">数据库模式</label>
+                <div class="h-form-control" style="padding-top: 6px;">
+                    @(enterprise.DatabaseMode == "Shared" ? "共用数据库" : "独立数据库")
+                </div>
+            </div>
+            <div class="h-form-item h-form-horizontal">
+                <label class="h-form-label">成员数量</label>
+                <div class="h-form-control" style="padding-top: 6px;">@enterprise.UserCount 名成员</div>
+            </div>
+            <div class="h-form-item h-form-horizontal">
+                <label class="h-form-label">创建时间</label>
+                <div class="h-form-control" style="padding-top: 6px;">@enterprise.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</div>
+            </div>
+
+            @if (isOwner)
+            {
+                <div style="margin-top: 24px;">
+                    <button class="h-btn h-btn-primary" @onclick="Save" disabled="@submitting">
+                        @(submitting ? "保存中..." : "保存")
+                    </button>
+                </div>
+            }
+        }
+    </div>
+</HCard>
+
+@code {
+    private EnterpriseDto? enterprise;
+    private UpdateEnterpriseDto editModel = new();
+    private bool isOwner;
+    private bool loading = true;
+    private bool submitting;
+    private string? message;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        loading = true;
+        try
+        {
+            enterprise = await EnterpriseService.GetCurrentEnterpriseAsync();
+            var role = await EnterpriseService.GetCurrentEnterpriseRoleAsync();
+            isOwner = string.Equals(role, "Owner", StringComparison.OrdinalIgnoreCase);
+
+            if (enterprise != null)
+            {
+                editModel = new UpdateEnterpriseDto
+                {
+                    Name = enterprise.Name,
+                    Description = enterprise.Description,
+                    Logo = enterprise.Logo,
+                    ContactName = enterprise.ContactName,
+                    ContactPhone = enterprise.ContactPhone,
+                    ContactEmail = enterprise.ContactEmail,
+                    Remark = enterprise.Remark
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private async Task Save()
+    {
+        if (!isOwner) return;
+
+        if (string.IsNullOrWhiteSpace(editModel.Name))
+        {
+            errorMessage = "企业名称不能为空";
+            message = null;
+            return;
+        }
+
+        submitting = true;
+        errorMessage = null;
+        message = null;
+        try
+        {
+            enterprise = await EnterpriseService.UpdateCurrentEnterpriseAsync(editModel);
+            message = "保存成功";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            submitting = false;
+        }
+    }
+}

@@ -36,6 +36,7 @@
 @code {
     [Parameter] public string? Title { get; set; }
     [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback<bool> VisibleChanged { get; set; }
     [Parameter] public EventCallback OnOk { get; set; }
     [Parameter] public EventCallback OnCancel { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
@@ -54,13 +55,15 @@
 
     private async Task HandleCancel()
     {
+        if (VisibleChanged.HasDelegate)
+            await VisibleChanged.InvokeAsync(false);
         if (OnCancel.HasDelegate)
             await OnCancel.InvokeAsync();
     }
 
     private async Task HandleMaskClick()
     {
-        if (MaskClosable && OnCancel.HasDelegate)
-            await OnCancel.InvokeAsync();
+        if (MaskClosable)
+            await HandleCancel();
     }
 }

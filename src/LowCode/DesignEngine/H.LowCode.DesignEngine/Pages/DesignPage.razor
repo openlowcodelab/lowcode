@@ -4,43 +4,44 @@
 @layout DesignEngineLayout
 
 @inject IPageAppService PageAppService
-@inject DragDropStateService DragDropStateService
 
 <PageTitle>@($"{_pageCascadingModel.PageName} - 页面设计器")</PageTitle>
 
 <link href="@Assets["_content/H.LowCode.DesignEngine/designengine.css"]" rel="stylesheet" />
+<link href="@Assets["_content/H.LowCode.Components.Defaults/hc-components.css"]" rel="stylesheet" />
 
 <CascadingValue Value="@_pageCascadingModel" Name="pageCascading">
-    <div class="designpage layout" style="padding:0 2px; background-color: #f7f7f7;">
-        <header style="background-color: white; padding:0 20px;">
-            <div style="float:left;">
-                <a href="javascript:void(0)"> @("<") 返回 </a>
-            </div>
-            @*<div style="text-align:center;">
-            <Menu Theme="MenuTheme.Light" Mode="MenuMode.Horizontal" DefaultSelectedKeys=@(new[]{"2"})>
-            <MenuItem Key="1">PC</MenuItem>
-            <MenuItem Key="2">Mobile</MenuItem>
-            </Menu>
-            </div>*@
-            <div style="float:right;">
-                <button class="btn" type="button">预览</button>
-                <button class="btn btn-primary" type="button" onclick="() => SavePageSchemaAsync()">保存</button>
-            </div>
-        </header>
-        <div class="layout">
-            <aside style="min-width: 200px; flex: auto; max-width: max-content;">
-                <ComponentPanel></ComponentPanel>
-            </aside>
+    @if (_pageSchema != null && _pageCascadingModel != null)
+    {
+        <div class="designpage layout">
+            <header>
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <a href="javascript:void(0)" @onclick="GoBack" class="btn-link">&#8249; 返回</a>
+                </div>
+                <div style="text-align:center; flex:1;">
+                    <span style="font-size:15px; font-weight:600; color:#333;">@(_pageCascadingModel?.PageName ?? "...")</span>
+                    <span style="font-size:12px; color:#999; margin-left:8px;">页面设计器</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:4px;">
+                    <button class="btn" type="button" @onclick="PreviewPage">&#128065; 预览</button>
+                    <button class="btn btn-primary" type="button" @onclick="SavePageSchemaAsync">&#128190; 保存</button>
+                </div>
+            </header>
             <div class="layout">
-                <main class="designpage">
-                    <DesignPanel Components="@_pageSchema.Components"></DesignPanel>
-                </main>
+                <aside style="width: 240px; flex: 0 0 auto;">
+                    <ComponentPanel></ComponentPanel>
+                </aside>
+                <div class="layout">
+                    <main class="designpage">
+                        <DesignPanel Components="@_pageSchema.Components"></DesignPanel>
+                    </main>
+                </div>
+                <aside class="designpage" style="width: 280px; flex: 0 0 auto;">
+                    <SettingPanel Page="_pageSchema"></SettingPanel>
+                </aside>
             </div>
-            <aside class="designpage" style="flex: auto; max-width: max-content; min-width: 250px;">
-                <SettingPanel Page="_pageSchema"></SettingPanel>
-            </aside>
         </div>
-    </div>
+    }
 </CascadingValue>
 
 @code
@@ -61,6 +62,9 @@
         _pageCascadingModel = new() { AppId = AppId, PageId = PageId, PageName = "..." };
 
         _pageSchema = await LoadPageSchemaAsync();
+
+        // 同步 PageId（_new 场景下 PageId 会被替换为新 GUID）
+        _pageCascadingModel.PageId = PageId;
 
         SetPageCascadingModel(_pageSchema);
     }
@@ -122,9 +126,8 @@
         if (_pageSchema == null)
             throw new NullReferenceException(nameof(_pageSchema));
 
-        var pageAllComponents = DragDropStateService.GetRootComponent(_pageSchema.AppId, _pageSchema.Id).Childrens;
-
-        _pageSchema.Components = pageAllComponents;
+        var rootComponent = DragDropStateService.GetRootComponent(_pageSchema.AppId, _pageSchema.Id);
+        _pageSchema.Components = rootComponent?.Childrens ?? [];
         return _pageSchema;
     }
 
@@ -132,6 +135,21 @@
     {
         _pageCascadingModel.PageName = pageSchema.Name;
         _pageCascadingModel.PageLayout = pageSchema.PageProperty.PageLayout;
+    }
+
+    private void GoBack()
+    {
+        // 返回应用管理页面
+        base.NavigateTo($"/designengine/myapp/{AppId}/pagemanager");
+    }
+
+    private void PreviewPage()
+    {
+        if (_pageSchema != null)
+        {
+            // 跳转到渲染引擎预览路由
+            base.NavigateTo($"/app/{AppId}/{PageId}");
+        }
     }
 
     /// <summary>

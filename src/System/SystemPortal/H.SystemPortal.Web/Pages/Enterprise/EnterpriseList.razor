@@ -1,0 +1,162 @@
+@page "/system/enterprise"
+
+@layout SystemPortalLayout
+@inject IEnterpriseAppService EnterpriseService
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<HCard Title="企业管理">
+    <div style="margin-bottom: 16px; display: flex; gap: 10px; align-items: center;">
+        <input type="text" @bind-value="@keyword" @bind-value:event="oninput" placeholder="搜索企业名称/编码" class="h-input" style="width: 200px;" />
+        <select @bind="@statusFilter" class="h-select" style="width: 120px;">
+            <option value="">全部状态</option>
+            <option value="Pending">待审核</option>
+            <option value="Active">已激活</option>
+            <option value="Disabled">已禁用</option>
+        </select>
+        <button class="h-btn h-btn-primary" @onclick="LoadData">搜索</button>
+        <button class="h-btn" @onclick="GoToCreate">创建企业</button>
+    </div>
+
+    <HTable Loading="@loading" ShowEmpty="@(!loading && enterprises.Count == 0)">
+        <thead>
+            <tr>
+                <th>企业名称</th>
+                <th>编码</th>
+                <th>联系人</th>
+                <th>状态</th>
+                <th>数据库模式</th>
+                <th>成员数</th>
+                <th>创建时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in enterprises)
+            {
+                <tr>
+                    <td>@item.Name</td>
+                    <td>@item.Code</td>
+                    <td>@item.ContactName</td>
+                    <td>
+                        @if (item.Status == "Active")
+                        {
+                            <span class="h-tag h-tag-green">已激活</span>
+                        }
+                        else if (item.Status == "Pending")
+                        {
+                            <span class="h-tag h-tag-yellow">待审核</span>
+                        }
+                        else
+                        {
+                            <span class="h-tag h-tag-red">已禁用</span>
+                        }
+                    </td>
+                    <td>@(item.DatabaseMode == "Shared" ? "共用数据库" : "独立数据库")</td>
+                    <td>@item.UserCount</td>
+                    <td>@item.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td>
+                        <span class="h-space">
+                            <button class="h-btn h-btn-primary h-btn-sm" @onclick="() => ViewDetail(item.Id)">详情</button>
+                            @if (!item.IsActivated)
+                            {
+                                <button class="h-btn h-btn-success h-btn-sm" @onclick="() => Activate(item.Id)">激活</button>
+                            }
+                            @if (item.Status == "Active")
+                            {
+                                <button class="h-btn h-btn-danger h-btn-sm" @onclick="() => Disable(item.Id)">禁用</button>
+                            }
+                            @if (item.Status == "Disabled")
+                            {
+                                <button class="h-btn h-btn-sm" @onclick="() => Enable(item.Id)">启用</button>
+                                <button class="h-btn h-btn-danger h-btn-sm" @onclick="() => Delete(item.Id)">删除</button>
+                            }
+                        </span>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </HTable>
+
+    @if (totalCount > pageSize)
+    {
+        <div style="margin-top: 16px; display: flex; gap: 8px; align-items: center;">
+            <button class="h-btn h-btn-sm" disabled="@(!hasPrev)" @onclick="PrevPage">上一页</button>
+            <span>第 @pageIndex / @totalPages 页，共 @totalCount 条</span>
+            <button class="h-btn h-btn-sm" disabled="@(!hasNext)" @onclick="NextPage">下一页</button>
+        </div>
+    }
+</HCard>
+
+@code {
+    private List<EnterpriseDto> enterprises = new();
+    private bool loading = true;
+    private string keyword = "";
+    private string statusFilter = "";
+    private int pageIndex = 1;
+    private int pageSize = 20;
+    private int totalCount;
+    private int totalPages => (int)Math.Ceiling(totalCount / (double)pageSize);
+    private bool hasPrev => pageIndex > 1;
+    private bool hasNext => pageIndex < totalPages;
+
+    private void GoToCreate() => Navigation.NavigateTo("/enterprise/create");
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        loading = true;
+        try
+        {
+            var result = await EnterpriseService.GetListAsync(new EnterpriseQueryParams
+            {
+                Keyword = string.IsNullOrWhiteSpace(keyword) ? null : keyword,
+                Status = string.IsNullOrWhiteSpace(statusFilter) ? null : statusFilter,
+                PageIndex = pageIndex,
+                PageSize = pageSize
+            });
+            enterprises = result.Items;
+            totalCount = result.TotalCount;
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private void ViewDetail(Guid id) => Navigation.NavigateTo($"/system/enterprise/{id}");
+    private void Activate(Guid id) => Navigation.NavigateTo($"/system/enterprise/{id}?action=activate");
+
+    private async Task Enable(Guid id)
+    {
+        await EnterpriseService.EnableAsync(id);
+        await LoadData();
+    }
+
+    private async Task Disable(Guid id)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm", "确定禁用该企业吗？");
+        if (confirmed)
+        {
+            await EnterpriseService.DisableAsync(id);
+            await LoadData();
+        }
+    }
+
+    private async Task Delete(Guid id)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm", "确定删除该企业吗？此操作不可恢复！");
+        if (confirmed)
+        {
+            await EnterpriseService.DeleteAsync(id);
+            await LoadData();
+        }
+    }
+
+    private async Task PrevPage() { pageIndex--; await LoadData(); }
+    private async Task NextPage() { pageIndex++; await LoadData(); }
+}

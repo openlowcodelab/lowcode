@@ -1,0 +1,18 @@
+@namespace H.Notification.Web
+
+@inherits LayoutComponentBase
+
+<DefaultLayoutComponent 
+    AppName="通知中心" 
+    MenuItems="@MenuItems">
+    @Body
+</DefaultLayoutComponent>
+
+@code {
+    private static List<AppMenuItem> MenuItems => new()
+    {
+        new AppMenuItem { Name = "通知业务", Url = "/notification", Icon = "🔔" },
+        new AppMenuItem { Name = "联系人", Url = "/notification/contact", Icon = "👤" },
+        new AppMenuItem { Name = "通知记录", Url = "/notification/record", Icon = "📜" }
+    };
+}

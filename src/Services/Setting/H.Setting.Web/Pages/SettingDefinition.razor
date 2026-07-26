@@ -1,0 +1,195 @@
+@page "/setting/definition"
+
+@layout SettingLayout
+@inject ISettingDefinitionAppService DefinitionService
+@inject IJSRuntime JS
+
+<h2>配置定义</h2>
+
+<HCard>
+    <div class="h-toolbar">
+        <input type="text" @bind-value="@filter" placeholder="配置名称或显示名称" class="h-input" style="width: 240px;" />
+        <button class="h-btn h-btn-primary" @onclick="@LoadData">查询</button>
+        <button class="h-btn h-btn-primary" @onclick="@ShowCreateDialog">新增配置定义</button>
+        <button class="h-btn" @onclick="@LoadData">刷新</button>
+    </div>
+
+    <HTable Loading="@loading" ShowEmpty="@(!loading && !items.Any())">
+        <thead>
+            <tr>
+                <th>配置名称</th>
+                <th>显示名称</th>
+                <th>默认值</th>
+                <th>客户端可见</th>
+                <th>可继承</th>
+                <th>加密</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var d in items)
+            {
+                <tr>
+                    <td>@d.Name</td>
+                    <td>@d.DisplayName</td>
+                    <td>@(string.IsNullOrEmpty(d.DefaultValue) ? "-" : d.DefaultValue)</td>
+                    <td>@(d.IsVisibleToClients ? "是" : "否")</td>
+                    <td>@(d.IsInherited ? "是" : "否")</td>
+                    <td>@(d.IsEncrypted ? "是" : "否")</td>
+                    <td>
+                        <span class="h-space">
+                            <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => ShowEditDialog(d))">编辑</button>
+                            <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => ConfirmDelete(d.Id))">删除</button>
+                        </span>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </HTable>
+</HCard>
+
+<HModal Title="@modalTitle" Visible="@showModal" OnOk="@Save" OnCancel="@CloseModal" ConfirmLoading="@saving" Style="width:640px;">
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">配置名称</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@current.Name" placeholder="唯一标识，如 App.Feature.Enabled" class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">显示名称</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@current.DisplayName" placeholder="请输入显示名称" class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">默认值</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@current.DefaultValue" class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">描述</label>
+        <div class="h-form-control">
+            <textarea @bind="@current.Description" rows="2" class="h-textarea"></textarea>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">允许的提供者</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@current.Providers" placeholder="逗号分隔，如 G,T,U" class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">客户端可见</label>
+        <div class="h-form-control">
+            <input type="checkbox" @bind="@current.IsVisibleToClients" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">可被继承</label>
+        <div class="h-form-control">
+            <input type="checkbox" @bind="@current.IsInherited" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">加密存储</label>
+        <div class="h-form-control">
+            <input type="checkbox" @bind="@current.IsEncrypted" />
+        </div>
+    </div>
+</HModal>
+
+@code {
+    private List<SettingDefinitionDto> items = new();
+    private bool loading;
+    private string filter = string.Empty;
+
+    private bool showModal;
+    private bool saving;
+    private string modalTitle = "新增配置定义";
+    private Guid? editingId;
+    private CreateUpdateSettingDefinitionDto current = new();
+
+    protected override async Task OnInitializedAsync() => await LoadData();
+
+    private async Task LoadData()
+    {
+        loading = true;
+        try
+        {
+            var input = new SettingDefinitionQueryDto
+            {
+                MaxResultCount = 100,
+                Filter = string.IsNullOrWhiteSpace(filter) ? null : filter
+            };
+            var result = await DefinitionService.GetListAsync(input);
+            items = result.Items.ToList();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载失败：{ex.Message}"); }
+        finally { loading = false; }
+    }
+
+    private void ShowCreateDialog()
+    {
+        editingId = null;
+        modalTitle = "新增配置定义";
+        current = new CreateUpdateSettingDefinitionDto { IsInherited = true };
+        showModal = true;
+    }
+
+    private void ShowEditDialog(SettingDefinitionDto d)
+    {
+        editingId = d.Id;
+        modalTitle = "编辑配置定义";
+        current = new CreateUpdateSettingDefinitionDto
+        {
+            Name = d.Name,
+            DisplayName = d.DisplayName,
+            Description = d.Description,
+            DefaultValue = d.DefaultValue,
+            IsVisibleToClients = d.IsVisibleToClients,
+            Providers = d.Providers,
+            IsInherited = d.IsInherited,
+            IsEncrypted = d.IsEncrypted
+        };
+        showModal = true;
+    }
+
+    private async Task Save()
+    {
+        saving = true;
+        try
+        {
+            if (string.IsNullOrWhiteSpace(current.Name) || string.IsNullOrWhiteSpace(current.DisplayName))
+            {
+                await JS.InvokeVoidAsync("alert", "配置名称和显示名称不能为空");
+                return;
+            }
+            if (editingId.HasValue)
+                await DefinitionService.UpdateAsync(editingId.Value, current);
+            else
+                await DefinitionService.CreateAsync(current);
+
+            CloseModal();
+            await LoadData();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}"); }
+        finally { saving = false; }
+    }
+
+    private void CloseModal() { showModal = false; current = new(); editingId = null; }
+
+    private async Task ConfirmDelete(Guid id)
+    {
+        var ok = await JS.InvokeAsync<bool>("confirm", "确定删除该配置定义？");
+        if (ok)
+        {
+            try
+            {
+                await DefinitionService.DeleteAsync(id);
+                await LoadData();
+            }
+            catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"删除失败：{ex.Message}"); }
+        }
+    }
+}

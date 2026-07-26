@@ -1,9 +1,9 @@
 @namespace H.AppDrawer.Components
 
 <style>
-.layout-container { display: flex; flex-direction: column; height: 100vh; }
-.menu-container { display: flex; flex: 1; }
-.content-container { flex: 1; overflow-y: auto; background-color: #f0f2f5; padding: 20px; }
+.layout-container { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+.menu-container { display: flex; flex: 1; min-height: 0; }
+.content-container { flex: 1; overflow-y: auto; overflow-x: hidden; background-color: #f0f2f5; padding: 20px; min-width: 0; box-sizing: border-box; }
 </style>
 
 <div class="layout-container">
@@ -48,7 +48,7 @@
     /// Logo 图片路径
     /// </summary>
     [Parameter]
-    public string? Logo { get; set; }
+    public string Logo { get; set; } = "/favicon.png";
 
     /// <summary>
     /// 菜单列表（不传则不渲染菜单）
@@ -104,12 +104,14 @@
         if (IsAuthenticatedViaHttpContext())
         {
             var httpContextAccessor = ServiceProvider.GetService<IHttpContextAccessor>();
-            var name = httpContextAccessor?.HttpContext?.User?.Identity?.Name;
+            var user = httpContextAccessor?.HttpContext?.User;
+
+            var name = user?.Identity?.Name;
             if (!string.IsNullOrEmpty(name))
                 _userName = name;
 
             // 从 Claims 中读取当前企业信息
-            _enterpriseName = httpContextAccessor?.HttpContext?.User?.FindFirst("EnterpriseName")?.Value;
+            _enterpriseName = user?.FindFirst("EnterpriseName")?.Value;
 
             _isLoggedIn = true;
             _authChecked = true;
@@ -145,13 +147,15 @@
 
         _authChecked = true;
 
-        // 强制认证模式下，未登录跳转登录页
+        var returnUrl = Uri.EscapeDataString(NavigationManager.Uri);
+
+        // 访问控制逻辑
         if (AuthMode == AuthenticationMode.Required && !_isLoggedIn)
         {
-            var returnUrl = Uri.EscapeDataString(NavigationManager.Uri);
+            // 强制认证模式下，未登录跳转登录页
             NavigationManager.NavigateTo($"{LoginUrl}?returnUrl={returnUrl}");
         }
-        // 已登录但没有 TenantId，且不在企业管理页面 → 重定向到企业选择
+        // 已登录且没有企业 → 重定向到企业选择
         else if (_isLoggedIn && string.IsNullOrEmpty(_enterpriseName))
         {
             var currentPath = NavigationManager.ToAbsoluteUri(NavigationManager.Uri).AbsolutePath;
@@ -209,7 +213,7 @@
             using var doc = System.Text.Json.JsonDocument.Parse(content);
             var root = doc.RootElement;
 
-            // JSON null 表示未登录（ABP 返回 UserDto?）
+            // JSON null 表示未登录
             if (root.ValueKind == System.Text.Json.JsonValueKind.Null)
                 return (false, null);
 

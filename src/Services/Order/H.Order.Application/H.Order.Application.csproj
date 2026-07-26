@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../../../common.props" />
+  <PropertyGroup>
+    <RootNamespace>H.Order.Application</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Volo.Abp.AspNetCore.Mvc" />
+    <PackageReference Include="DotNetCore.CAP" />
+    <PackageReference Include="DotNetCore.CAP.SqlServer" />
+    <PackageReference Include="Savorboard.CAP.InMemoryMessageQueue" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\H.Order.Application.Contracts\H.Order.Application.Contracts.csproj" />
+    <ProjectReference Include="..\H.Order.EntityFrameworkCore\H.Order.EntityFrameworkCore.csproj" />
+  </ItemGroup>
+
+</Project>

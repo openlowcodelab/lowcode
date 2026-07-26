@@ -1,7 +1,7 @@
 using H.Account.Application;
 using H.Assistant.Application;
 using H.Approval.Application;
-using H.AutoTest.Application;
+using H.Testing.Application;
 using H.Enterprise.Application;
 using H.Enterprise.EntityFrameworkCore;
 using H.LowCode.ComponentBase;
@@ -13,11 +13,17 @@ using H.LowCode.RenderEngine.EntityFrameworkCore;
 using H.LowCode.RenderEngine.Repository.JsonFile;
 using H.Organization.Application;
 using H.Portal.Application;
-using H.SystemManagement.Application;
+using H.SystemPortal.Application;
+using H.Notification.Application;
+using H.Order.Application;
+using H.Setting.Application;
+using H.SupplyChain.Application;
+using H.BackgroundTask.Application;
 using H.YunXiaoMcpServer;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.Extensions.Options;
+using Volo.Abp.AspNetCore.MultiTenancy;
 using Volo.Abp.AspNetCore.Mvc;
+using Volo.Abp.AspNetCore.Mvc.AntiForgery;
 using Volo.Abp.Autofac;
 using Volo.Abp.Modularity;
 using Volo.Abp.MultiTenancy;
@@ -31,6 +37,7 @@ namespace H.AppLab.Host.All;
     //abp
     typeof(AbpAutofacModule),
     typeof(AbpAspNetCoreMvcModule),
+    typeof(AbpAspNetCoreMultiTenancyModule),
     // DesignEngine
     typeof(DesignEngineApplicationModule),
     typeof(DesignEngineEntityFrameworkCoreModule),
@@ -47,14 +54,24 @@ namespace H.AppLab.Host.All;
     typeof(OrganizationApplicationModule),
     // Approval
     typeof(ApprovalApplicationModule),
-    // AutoTest
-    typeof(AutoTestApplicationModule),
+    // Testing
+    typeof(TestingApplicationModule),
     // Portal
     typeof(PortalApplicationModule),
-    // SystemManagement
-    typeof(SystemManagementApplicationModule),
+    // SystemPortal
+    typeof(SystemPortalApplicationModule),
+    // Notification
+    typeof(NotificationApplicationModule),
     // Enterprise
     typeof(EnterpriseApplicationModule),
+    // Order
+    typeof(OrderApplicationModule),
+    // Setting（配置管理）
+    typeof(SettingApplicationModule),
+    // SupplyChain
+    typeof(SupplyChainApplicationModule),
+    // BackgroundTask
+    typeof(BackgroundTaskApplicationModule),
     // YunXiao MCP Server
     typeof(YunXiaoMcpServerModule)
 )]
@@ -83,7 +100,16 @@ public class HostAllModule : AbpModule
 
         // 配置统一的 API 控制器
         ConfigureAutoApiControllers();
+
+        // WASM 应用使用 JSON API + Cookie 认证，不需要服务端 CSRF 验证
+        // SameSite Cookie 已提供足够的 CSRF 保护
+        Configure<AbpAntiForgeryOptions>(options =>
+        {
+            options.AutoValidate = false;
+        });
     }
+
+    private const string SystemCookieScheme = "SystemCookies";
 
     private void ConfigureAuthentication(ServiceConfigurationContext context)
     {
@@ -92,6 +118,14 @@ public class HostAllModule : AbpModule
             {
                 options.LoginPath = "/account/login";
                 options.AccessDeniedPath = "/account/login";
+                options.ExpireTimeSpan = TimeSpan.FromHours(24);
+                options.SlidingExpiration = true;
+            })
+            .AddCookie(SystemCookieScheme, options =>
+            {
+                options.Cookie.Name = ".AspNetCore.SystemCookies";
+                options.LoginPath = "/system/login";
+                options.AccessDeniedPath = "/system/login";
                 options.ExpireTimeSpan = TimeSpan.FromHours(24);
                 options.SlidingExpiration = true;
             });
@@ -108,10 +142,15 @@ public class HostAllModule : AbpModule
             options.ConventionalControllers.Create(typeof(DesignEngineApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(RenderEngineApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(ApprovalApplicationModule).Assembly);
-            options.ConventionalControllers.Create(typeof(AutoTestApplicationModule).Assembly);
+            options.ConventionalControllers.Create(typeof(TestingApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(PortalApplicationModule).Assembly);
-            options.ConventionalControllers.Create(typeof(SystemManagementApplicationModule).Assembly);
+            options.ConventionalControllers.Create(typeof(SystemPortalApplicationModule).Assembly);
+            options.ConventionalControllers.Create(typeof(NotificationApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(EnterpriseApplicationModule).Assembly);
+            options.ConventionalControllers.Create(typeof(OrderApplicationModule).Assembly);
+            options.ConventionalControllers.Create(typeof(SettingApplicationModule).Assembly);
+            options.ConventionalControllers.Create(typeof(SupplyChainApplicationModule).Assembly);
+            options.ConventionalControllers.Create(typeof(BackgroundTaskApplicationModule).Assembly);
         });
     }
 
@@ -138,5 +177,12 @@ public class HostAllModule : AbpModule
 
         // 注册自定义 ITenantStore（从 Enterprise 数据库读取租户配置）
         context.Services.AddTransient<ITenantStore, EnterpriseTenantStore>();
+
+        // 从认证 Cookie 的 "TenantId" Claim 解析当前租户（企业选择后写入）
+        // 置于解析器链首位，优先于 ABP 内置解析器生效
+        Configure<AbpTenantResolveOptions>(options =>
+        {
+            options.TenantResolvers.Insert(0, new ClaimsTenantResolveContributor());
+        });
     }
 }

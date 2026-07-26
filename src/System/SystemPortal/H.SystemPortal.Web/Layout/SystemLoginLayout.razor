@@ -1,0 +1,133 @@
+@namespace H.SystemPortal.Web
+
+@inherits LayoutComponentBase
+
+<div class="sys-login-page">
+    <div class="sys-login-bg"></div>
+    <div class="sys-login-content">
+        @Body
+    </div>
+</div>
+
+<style>
+    .sys-login-page {
+        min-height: 100vh;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .sys-login-bg {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%);
+    }
+
+    .sys-login-content {
+        position: relative;
+        z-index: 2;
+        width: 100%;
+        max-width: 400px;
+        padding: 0 20px;
+    }
+
+        .sys-login-content .auth-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 40px 36px;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.25), 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .sys-login-content .auth-card-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: #1a1a2e;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .sys-login-content .auth-card-subtitle {
+            font-size: 13px;
+            color: #999;
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .sys-login-content .h-input {
+            background: #f7f8fa;
+            border: 1px solid #e0e0e0;
+            color: #333;
+            border-radius: 8px;
+            height: 42px;
+            width: 100%;
+            padding: 4px 11px;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+            .sys-login-content .h-input:focus {
+                outline: none;
+                border-color: #4a5fd7;
+                background: #fff;
+                box-shadow: 0 0 0 3px rgba(74, 95, 215, 0.1);
+            }
+
+        .sys-login-content .h-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: 42px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            width: 100%;
+        }
+
+        .sys-login-content .h-btn-primary {
+            background: linear-gradient(135deg, #4a5fd7, #6c63ff);
+            color: #fff;
+        }
+
+            .sys-login-content .h-btn-primary:hover {
+                background: linear-gradient(135deg, #3d4fc4, #5a52e6);
+                box-shadow: 0 4px 12px rgba(74, 95, 215, 0.35);
+            }
+
+            .sys-login-content .h-btn-primary:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+            }
+
+        .sys-login-content .h-form-item {
+            margin-bottom: 16px;
+        }
+
+    .sys-alert {
+        padding: 10px 14px;
+        border-radius: 8px;
+        font-size: 13px;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .sys-alert-error {
+        background: #fff2f0;
+        border: 1px solid #ffccc7;
+        color: #cf1322;
+    }
+
+    .sys-alert-success {
+        background: #f6ffed;
+        border: 1px solid #b7eb8f;
+        color: #389e0d;
+    }
+</style>

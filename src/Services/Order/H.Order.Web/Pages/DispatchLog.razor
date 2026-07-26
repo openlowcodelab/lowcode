@@ -1,0 +1,98 @@
+@page "/order/dispatch-log"
+@layout OrderLayout
+@inject IDispatchLogAppService DispatchLogService
+@inject IJSRuntime JS
+
+<HCard Title="下发日志">
+    <div class="h-toolbar">
+        <input type="text" @bind-value="@supplierCodeFilter" placeholder="供应商编码" class="h-input" style="width:160px;" />
+        <input type="text" @bind-value="@orderIdFilter" placeholder="订单ID (GUID)" class="h-input" style="width:280px;" />
+        <select @bind="@statusFilter" class="h-input" style="width:140px;">
+            <option value="">全部状态</option>
+            @foreach (var s in Enum.GetValues<DispatchStatusEnum>())
+            {
+                <option value="@s">@s</option>
+            }
+        </select>
+        <button class="h-btn h-btn-primary" @onclick="@LoadData">查询</button>
+        <button class="h-btn" @onclick="@LoadData">刷新</button>
+    </div>
+    <HTable Loading="@loading" ShowEmpty="@(!loading && !logs.Any())">
+        <thead>
+            <tr>
+                <th>订单ID</th>
+                <th>供应商</th>
+                <th>状态</th>
+                <th>尝试次数</th>
+                <th>请求时间</th>
+                <th>响应时间</th>
+                <th>错误信息</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var l in logs)
+            {
+                <tr>
+                    <td style="font-family:monospace;">@l.OrderId</td>
+                    <td>@(string.IsNullOrEmpty(l.SupplierCode) ? "-" : l.SupplierCode)</td>
+                    <td><span class="h-tag @StatusTag(l.Status)">@l.Status</span></td>
+                    <td>@l.AttemptCount</td>
+                    <td>@(l.RequestTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "-")</td>
+                    <td>@(l.ResponseTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "-")</td>
+                    <td style="max-width:280px;">@(l.ErrorMessage ?? "-")</td>
+                    <td>
+                        <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => Retry(l.Id))">重试</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </HTable>
+</HCard>
+
+@code {
+    private List<DispatchLogDto> logs = new();
+    private bool loading;
+    private string supplierCodeFilter = string.Empty;
+    private string orderIdFilter = string.Empty;
+    private DispatchStatusEnum? statusFilter;
+
+    protected override async Task OnInitializedAsync() => await LoadData();
+
+    private async Task LoadData()
+    {
+        loading = true;
+        try
+        {
+            var input = new DispatchLogQueryDto { MaxResultCount = 100 };
+            if (!string.IsNullOrWhiteSpace(supplierCodeFilter)) input.SupplierCode = supplierCodeFilter;
+            if (!string.IsNullOrWhiteSpace(orderIdFilter) && Guid.TryParse(orderIdFilter, out var oid)) input.OrderId = oid;
+            input.Status = statusFilter;
+
+            var r = await DispatchLogService.GetListAsync(input);
+            logs = r.Items.ToList();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载失败：{ex.Message}"); }
+        finally { loading = false; }
+    }
+
+    private async Task Retry(Guid logId)
+    {
+        try
+        {
+            var r = await DispatchLogService.RetryAsync(logId);
+            await JS.InvokeVoidAsync("alert", r.Success ? $"重试成功：{r.Message}" : $"重试失败：{r.Message}");
+            await LoadData();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"重试失败：{ex.Message}"); }
+    }
+
+    private string StatusTag(DispatchStatusEnum s) => s switch
+    {
+        DispatchStatusEnum.Success => "h-tag-green",
+        DispatchStatusEnum.Failed => "h-tag-red",
+        DispatchStatusEnum.Retrying => "h-tag-warning",
+        DispatchStatusEnum.Pending => "h-tag-blue",
+        _ => ""
+    };
+}

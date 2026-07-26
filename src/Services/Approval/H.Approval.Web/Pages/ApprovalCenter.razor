@@ -1,0 +1,326 @@
+@page "/approval/center"
+@layout ApprovalLayout
+
+@inject IApprovalTaskAppService TaskService
+@inject IApprovalInstanceAppService InstanceService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<div class="center-layout">
+    <div class="center-menu">
+        @foreach (var t in Tabs)
+        {
+            <a class="center-menu-item @(activeTab == t.Key ? "active" : "")" @onclick="() => SwitchTab(t.Key)">
+                <span class="center-menu-icon">@t.Icon</span>
+                <span class="center-menu-text">@t.Text</span>
+            </a>
+        }
+    </div>
+
+    <div class="center-content">
+        @if (isLoading)
+        {
+            <div class="h-spin"><span class="h-spin-dot"></span><span class="h-spin-text">加载中...</span></div>
+        }
+        else
+        {
+            @switch (activeTab)
+            {
+                case "pending":
+                    <HTable ShowEmpty="@(!pendingTasks.Any())">
+                        <thead>
+                            <tr>
+                                <th>审批标题</th>
+                                <th>审批名称</th>
+                                <th>当前节点</th>
+                                <th>到达时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in pendingTasks)
+                            {
+                                <tr>
+                                    <td>@item.InstanceTitle</td>
+                                    <td>@item.ApprovalName</td>
+                                    <td>@item.NodeName</td>
+                                    <td>@item.CreationTime.ToString("yyyy-MM-dd HH:mm")</td>
+                                    <td>
+                                        <button class="h-btn h-btn-primary h-btn-sm" @onclick="() => OpenAction(item, 1)">通过</button>
+                                        <button class="h-btn h-btn-danger h-btn-sm" @onclick="() => OpenAction(item, 2)">驳回</button>
+                                        <button class="h-btn h-btn-ghost h-btn-sm" @onclick="() => View(item.InstanceId)">详情</button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </HTable>
+                    break;
+
+                case "completed":
+                    <HTable ShowEmpty="@(!completedTasks.Any())">
+                        <thead>
+                            <tr>
+                                <th>审批标题</th>
+                                <th>审批名称</th>
+                                <th>当前节点</th>
+                                <th>处理结果</th>
+                                <th>处理时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in completedTasks)
+                            {
+                                <tr>
+                                    <td>@item.InstanceTitle</td>
+                                    <td>@item.ApprovalName</td>
+                                    <td>@item.NodeName</td>
+                                    <td>
+                                        <span class="h-tag @GetTaskStatusClass(item.Status)">@GetTaskStatusText(item.Status)</span>
+                                    </td>
+                                    <td>@(item.ApprovalTime?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                                    <td>
+                                        <button class="h-btn h-btn-ghost h-btn-sm" @onclick="() => View(item.InstanceId)">详情</button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </HTable>
+                    break;
+
+                case "my":
+                    <HTable ShowEmpty="@(!myApprovals.Any())">
+                        <thead>
+                            <tr>
+                                <th>审批标题</th>
+                                <th>审批名称</th>
+                                <th>状态</th>
+                                <th>当前节点</th>
+                                <th>发起时间</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in myApprovals)
+                            {
+                                <tr>
+                                    <td>@item.Title</td>
+                                    <td>@item.DefinitionName</td>
+                                    <td>
+                                        <span class="h-tag @GetStatusClass(item.Status)">@GetStatusText(item.Status)</span>
+                                    </td>
+                                    <td>@(item.CurrentNodeName ?? "-")</td>
+                                    <td>@item.CreationTime.ToString("yyyy-MM-dd HH:mm")</td>
+                                    <td>
+                                        <button class="h-btn h-btn-ghost h-btn-sm" @onclick="() => View(item.Id)">查看</button>
+                                        @if (item.Status == ApprovalStatusEnum.Running)
+                                        {
+                                            <button class="h-btn h-btn-danger h-btn-sm" @onclick="() => Cancel(item.Id)">取消</button>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </HTable>
+                    break;
+
+                case "cc":
+                    <div class="center-empty">
+                        <div class="center-empty-icon">📭</div>
+                        <div class="center-empty-text">暂无内容</div>
+                    </div>
+                    break;
+            }
+        }
+    </div>
+</div>
+
+@if (showActionDialog)
+{
+    <div class="setting-drawer-overlay" @onclick="CloseAction"></div>
+    <div class="center-action-drawer">
+        <div class="center-action-header">
+            <h4>@(actionType == 1 ? "审批通过" : "审批驳回")</h4>
+            <button class="h-btn h-btn-ghost h-btn-sm" @onclick="CloseAction">&times;</button>
+        </div>
+        <div class="h-form-item">
+            <label class="h-form-label">审批意见</label>
+            <textarea class="h-textarea" rows="4" @bind="actionComment" placeholder="请输入审批意见"></textarea>
+        </div>
+        <div class="center-action-footer">
+            <button class="h-btn" @onclick="CloseAction">取消</button>
+            <button class="h-btn @(actionType == 1 ? "h-btn-primary" : "h-btn-danger")" style="margin-left: 8px;" disabled="@isSubmitting" @onclick="SubmitAction">
+                @(isSubmitting ? "处理中..." : "确定")
+            </button>
+        </div>
+    </div>
+}
+
+@code {
+    [SupplyParameterFromQuery(Name = "tab")]
+    public string? TabQuery { get; set; }
+
+    private string activeTab = "pending";
+    private bool isLoading = true;
+
+    private List<ApprovalTaskDto> pendingTasks = new();
+    private List<ApprovalTaskDto> completedTasks = new();
+    private List<ApprovalInstanceDto> myApprovals = new();
+
+    private bool showActionDialog;
+    private ApprovalTaskDto? currentTask;
+    private int actionType = 1;
+    private string actionComment = "";
+    private bool isSubmitting;
+
+    private static readonly (string Key, string Text, string Icon)[] Tabs =
+    {
+        ("pending", "待处理的", "📋"),
+        ("completed", "已处理的", "✅"),
+        ("my", "我发起的", "📤"),
+        ("cc", "抄送我的", "📎")
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!string.IsNullOrEmpty(TabQuery) && Tabs.Any(t => t.Key == TabQuery))
+        {
+            activeTab = TabQuery!;
+        }
+        await LoadData();
+    }
+
+    private async Task SwitchTab(string tab)
+    {
+        if (activeTab == tab) return;
+        activeTab = tab;
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        try
+        {
+            switch (activeTab)
+            {
+                case "pending":
+                    pendingTasks = await TaskService.GetPendingTasksAsync();
+                    break;
+                case "completed":
+                    completedTasks = await TaskService.GetCompletedTasksAsync();
+                    break;
+                case "my":
+                    myApprovals = await InstanceService.GetMyApprovalsAsync();
+                    break;
+                case "cc":
+                    // 抄送我的: 暂无后端数据源
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"加载失败: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void OpenAction(ApprovalTaskDto task, int type)
+    {
+        currentTask = task;
+        actionType = type;
+        actionComment = "";
+        showActionDialog = true;
+    }
+
+    private void CloseAction()
+    {
+        showActionDialog = false;
+        currentTask = null;
+    }
+
+    private async Task SubmitAction()
+    {
+        if (currentTask == null) return;
+
+        isSubmitting = true;
+        try
+        {
+            await TaskService.ApproveAsync(new ApprovalTaskActionDto
+            {
+                TaskId = currentTask.Id,
+                Action = actionType,
+                Comment = actionComment
+            });
+            showActionDialog = false;
+            currentTask = null;
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"操作失败: {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private async Task Cancel(string id)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm", "确认取消该审批实例?");
+        if (!confirmed) return;
+        try
+        {
+            await InstanceService.CancelAsync(id);
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"取消失败: {ex.Message}");
+        }
+    }
+
+    private void View(string instanceId)
+    {
+        Nav.NavigateTo($"/approval/detail/{instanceId}");
+    }
+
+    private string GetStatusText(ApprovalStatusEnum status) => status switch
+    {
+        ApprovalStatusEnum.Draft => "草稿",
+        ApprovalStatusEnum.Running => "运行中",
+        ApprovalStatusEnum.Completed => "已完成",
+        ApprovalStatusEnum.Cancelled => "已取消",
+        ApprovalStatusEnum.Rejected => "已驳回",
+        _ => status.ToString()
+    };
+
+    private string GetStatusClass(ApprovalStatusEnum status) => status switch
+    {
+        ApprovalStatusEnum.Running => "h-tag-blue",
+        ApprovalStatusEnum.Completed => "h-tag-green",
+        ApprovalStatusEnum.Cancelled => "h-tag-default",
+        ApprovalStatusEnum.Rejected => "h-tag-red",
+        _ => "h-tag-default"
+    };
+
+    private string GetTaskStatusText(int status) => status switch
+    {
+        1 => "已通过",
+        2 => "已驳回",
+        3 => "已取消",
+        _ => "待审批"
+    };
+
+    private string GetTaskStatusClass(int status) => status switch
+    {
+        1 => "h-tag-green",
+        2 => "h-tag-red",
+        3 => "h-tag-default",
+        _ => "h-tag-blue"
+    };
+}

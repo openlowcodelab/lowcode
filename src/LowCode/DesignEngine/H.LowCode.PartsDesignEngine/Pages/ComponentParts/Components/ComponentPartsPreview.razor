@@ -1,0 +1,86 @@
+@namespace H.LowCode.PartsDesignEngine
+@inherits DynamicComponentPartsBase
+
+@if (Component?.Fragment == null || string.IsNullOrWhiteSpace(Component.Fragment.DefaultTypeName))
+{
+    <div class="component-parts-preview-empty">
+        请在"基本信息"中配置组件的默认类型名（Fragment）后查看预览
+    </div>
+}
+else if (_renderFragment != null)
+{
+    <div class="component-parts-preview-item">
+        @if (Component.IsHiddenLabel == false && Component.IsContainer == false && !string.IsNullOrEmpty(Component.Label))
+        {
+            <div style="margin-bottom:6px; font-weight:500;">@Component.Label</div>
+        }
+        @_renderFragment
+    </div>
+}
+else
+{
+    <div class="component-parts-preview-empty">无法渲染该组件，请检查默认类型名是否正确</div>
+}
+
+@code {
+    [Parameter]
+    public ComponentPartsSchema Component { get; set; }
+
+    private RenderFragment _renderFragment;
+
+    protected override void OnParametersSet()
+    {
+        BuildPreview();
+    }
+
+    /// <summary>
+    /// 供外部（编辑器变更时）主动刷新预览
+    /// </summary>
+    public void RefreshPreview()
+    {
+        BuildPreview();
+        StateHasChanged();
+    }
+
+    private void BuildPreview()
+    {
+        if (Component?.Fragment == null || string.IsNullOrWhiteSpace(Component.Fragment.DefaultTypeName))
+        {
+            _renderFragment = null;
+            return;
+        }
+
+        try
+        {
+            //预览始终使用默认类型名
+            Component.Fragment.TypeName = Component.Fragment.DefaultTypeName;
+            if (string.IsNullOrEmpty(Component.Name))
+                Component.Name = $"{Component.PartsId}_preview";
+
+            _renderFragment = RenderComponent(Component);
+        }
+        catch
+        {
+            _renderFragment = null;
+        }
+    }
+}
+
+<style>
+    .component-parts-preview-empty {
+        color: #999;
+        font-size: 13px;
+        padding: 40px 16px;
+        text-align: center;
+        border: 1px dashed #d9d9d9;
+        border-radius: 6px;
+        background: #fafafa;
+    }
+
+    .component-parts-preview-item {
+        padding: 16px;
+        border: 1px solid #f0f0f0;
+        border-radius: 6px;
+        background: #fff;
+    }
+</style>

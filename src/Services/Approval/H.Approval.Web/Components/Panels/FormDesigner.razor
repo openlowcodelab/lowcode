@@ -1,0 +1,310 @@
+@namespace H.Approval.Web
+
+<div class="fd-container">
+    <div class="fd-palette">
+        <div class="fd-palette-group-title">基础控件</div>
+        <div class="fd-palette-list">
+            @foreach (var ctrl in Controls)
+            {
+                <div class="fd-palette-item" @onclick="() => AddField(ctrl.Type)">
+                    <span class="fd-palette-icon">@ctrl.Icon</span>
+                    <span class="fd-palette-name">@ctrl.Name</span>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="fd-canvas">
+        <div class="fd-form-card">
+            <div class="fd-form-title">@(string.IsNullOrEmpty(FormName) ? "表单预览" : FormName)</div>
+
+            @if (!schema.Fields.Any())
+            {
+                <div class="fd-empty">点击左侧控件添加表单字段</div>
+            }
+            else
+            {
+                @for (var i = 0; i < schema.Fields.Count; i++)
+                {
+                    var idx = i;
+                    var field = schema.Fields[idx];
+                    <div class="fd-field @(selectedId == field.Id ? "selected" : "")" @onclick="() => SelectField(field.Id)">
+                        <div class="fd-field-main">
+                            @if (field.Type == FormFieldTypes.Description)
+                            {
+                                <div class="fd-field-desc">@(string.IsNullOrEmpty(field.Label) ? "说明文字" : field.Label)</div>
+                            }
+                            else
+                            {
+                                <div class="fd-field-label">
+                                    @if (field.Required)
+                                    {
+                                        <span class="fd-req">*</span>
+                                    }
+                                    @field.Label
+                                </div>
+                                <div class="fd-field-control">
+                                    @RenderPreviewControl(field)
+                                </div>
+                            }
+                        </div>
+                        <div class="fd-field-ops" @onclick:stopPropagation>
+                            <span class="fd-op" title="上移" @onclick="() => MoveField(idx, -1)">↑</span>
+                            <span class="fd-op" title="下移" @onclick="() => MoveField(idx, 1)">↓</span>
+                            <span class="fd-op danger" title="删除" @onclick="() => RemoveField(idx)">🗑</span>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+
+    <div class="fd-props">
+        @if (Selected == null)
+        {
+            <div class="fd-props-empty">请选择一个字段进行编辑</div>
+        }
+        else
+        {
+            <div class="fd-props-title">字段属性</div>
+
+            <div class="fd-prop-item">
+                <label class="fd-prop-label">标题</label>
+                <input class="h-input" value="@Selected.Label" @oninput="OnLabelInput" />
+            </div>
+
+            @if (Selected.Type != FormFieldTypes.Description)
+            {
+                <div class="fd-prop-item">
+                    <label class="fd-prop-label">提示文字</label>
+                    <input class="h-input" value="@Selected.Placeholder" @oninput="OnPlaceholderInput" />
+                </div>
+
+                <div class="fd-prop-item fd-prop-inline">
+                    <label class="fd-prop-label">必填</label>
+                    <input type="checkbox" checked="@Selected.Required" @onchange="OnRequiredChange" />
+                </div>
+            }
+
+            @if (Selected.Type == FormFieldTypes.Radio || Selected.Type == FormFieldTypes.Checkbox)
+            {
+                <div class="fd-prop-item">
+                    <label class="fd-prop-label">选项</label>
+                    @for (var oi = 0; oi < Selected.Options.Count; oi++)
+                    {
+                        var optIdx = oi;
+                        <div class="fd-option-row">
+                            <input class="h-input" value="@Selected.Options[optIdx]" @oninput="(e) => OnOptionInput(optIdx, e)" />
+                            <span class="fd-op danger" @onclick="() => RemoveOption(optIdx)">&times;</span>
+                        </div>
+                    }
+                    <button class="h-btn h-btn-sm" @onclick="AddOption">+ 添加选项</button>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public string? FormJson { get; set; }
+    [Parameter] public string? FormName { get; set; }
+    [Parameter] public EventCallback<string> OnFormChanged { get; set; }
+
+    private FormSchema schema = new();
+    private string? selectedId;
+
+    private FormFieldModel? Selected => schema.Fields.FirstOrDefault(f => f.Id == selectedId);
+
+    private record ControlDef(string Type, string Name, string Icon);
+
+    private static readonly List<ControlDef> Controls = new()
+    {
+        new(FormFieldTypes.Input, "单行输入框", "Aa"),
+        new(FormFieldTypes.Textarea, "多行输入框", "☰"),
+        new(FormFieldTypes.Number, "数字输入框", "123"),
+        new(FormFieldTypes.Amount, "金额", "￥"),
+        new(FormFieldTypes.Date, "日期", "📅"),
+        new(FormFieldTypes.DateRange, "日期区间", "🗓"),
+        new(FormFieldTypes.Radio, "单选框", "◉"),
+        new(FormFieldTypes.Checkbox, "多选框", "☑"),
+        new(FormFieldTypes.Description, "说明文字", "❗"),
+    };
+
+    protected override void OnInitialized()
+    {
+        schema = FormSchema.Parse(FormJson);
+    }
+
+    private void AddField(string type)
+    {
+        var field = new FormFieldModel
+        {
+            Id = Guid.NewGuid().ToString("N"),
+            Type = type,
+            Label = DefaultLabel(type),
+            Placeholder = DefaultPlaceholder(type),
+            Required = false
+        };
+        if (type == FormFieldTypes.Radio || type == FormFieldTypes.Checkbox)
+        {
+            field.Options = new List<string> { "选项1", "选项2" };
+        }
+        schema.Fields.Add(field);
+        selectedId = field.Id;
+        Emit();
+    }
+
+    private void SelectField(string id)
+    {
+        selectedId = id;
+    }
+
+    private void RemoveField(int index)
+    {
+        if (index < 0 || index >= schema.Fields.Count) return;
+        if (schema.Fields[index].Id == selectedId) selectedId = null;
+        schema.Fields.RemoveAt(index);
+        Emit();
+    }
+
+    private void MoveField(int index, int direction)
+    {
+        var target = index + direction;
+        if (index < 0 || index >= schema.Fields.Count) return;
+        if (target < 0 || target >= schema.Fields.Count) return;
+        (schema.Fields[index], schema.Fields[target]) = (schema.Fields[target], schema.Fields[index]);
+        Emit();
+    }
+
+    private void OnLabelInput(ChangeEventArgs e)
+    {
+        if (Selected == null) return;
+        Selected.Label = e.Value?.ToString() ?? "";
+        Emit();
+    }
+
+    private void OnPlaceholderInput(ChangeEventArgs e)
+    {
+        if (Selected == null) return;
+        Selected.Placeholder = e.Value?.ToString() ?? "";
+        Emit();
+    }
+
+    private void OnRequiredChange(ChangeEventArgs e)
+    {
+        if (Selected == null) return;
+        Selected.Required = e.Value is bool b && b;
+        Emit();
+    }
+
+    private void OnOptionInput(int index, ChangeEventArgs e)
+    {
+        if (Selected == null || index < 0 || index >= Selected.Options.Count) return;
+        Selected.Options[index] = e.Value?.ToString() ?? "";
+        Emit();
+    }
+
+    private void AddOption()
+    {
+        if (Selected == null) return;
+        Selected.Options.Add($"选项{Selected.Options.Count + 1}");
+        Emit();
+    }
+
+    private void RemoveOption(int index)
+    {
+        if (Selected == null || index < 0 || index >= Selected.Options.Count) return;
+        Selected.Options.RemoveAt(index);
+        Emit();
+    }
+
+    private RenderFragment RenderPreviewControl(FormFieldModel field) => builder =>
+    {
+        var placeholder = string.IsNullOrEmpty(field.Placeholder) ? "请输入" : field.Placeholder;
+        switch (field.Type)
+        {
+            case FormFieldTypes.Textarea:
+                builder.OpenElement(0, "textarea");
+                builder.AddAttribute(1, "class", "h-textarea");
+                builder.AddAttribute(2, "rows", "2");
+                builder.AddAttribute(3, "placeholder", placeholder);
+                builder.AddAttribute(4, "disabled", true);
+                builder.CloseElement();
+                break;
+            case FormFieldTypes.Number:
+            case FormFieldTypes.Amount:
+                builder.OpenElement(0, "input");
+                builder.AddAttribute(1, "class", "h-input");
+                builder.AddAttribute(2, "placeholder", field.Type == FormFieldTypes.Amount ? "请输入金额" : placeholder);
+                builder.AddAttribute(3, "disabled", true);
+                builder.CloseElement();
+                break;
+            case FormFieldTypes.Date:
+                builder.OpenElement(0, "input");
+                builder.AddAttribute(1, "class", "h-input");
+                builder.AddAttribute(2, "placeholder", "请选择日期");
+                builder.AddAttribute(3, "disabled", true);
+                builder.CloseElement();
+                break;
+            case FormFieldTypes.DateRange:
+                builder.OpenElement(0, "input");
+                builder.AddAttribute(1, "class", "h-input");
+                builder.AddAttribute(2, "placeholder", "开始(上午/下午) 至 结束(上午/下午)，自动算天数");
+                builder.AddAttribute(3, "disabled", true);
+                builder.CloseElement();
+                break;
+            case FormFieldTypes.Radio:
+            case FormFieldTypes.Checkbox:
+                builder.OpenElement(0, "div");
+                builder.AddAttribute(1, "class", "fd-preview-options");
+                var seq = 2;
+                foreach (var opt in field.Options)
+                {
+                    builder.OpenElement(seq++, "label");
+                    builder.AddAttribute(seq++, "class", "fd-preview-option");
+                    builder.OpenElement(seq++, "input");
+                    builder.AddAttribute(seq++, "type", field.Type == FormFieldTypes.Radio ? "radio" : "checkbox");
+                    builder.AddAttribute(seq++, "disabled", true);
+                    builder.CloseElement();
+                    builder.AddContent(seq++, opt);
+                    builder.CloseElement();
+                }
+                builder.CloseElement();
+                break;
+            default:
+                builder.OpenElement(0, "input");
+                builder.AddAttribute(1, "class", "h-input");
+                builder.AddAttribute(2, "placeholder", placeholder);
+                builder.AddAttribute(3, "disabled", true);
+                builder.CloseElement();
+                break;
+        }
+    };
+
+    private static string DefaultLabel(string type) => type switch
+    {
+        FormFieldTypes.Input => "单行输入",
+        FormFieldTypes.Textarea => "多行输入",
+        FormFieldTypes.Number => "数字",
+        FormFieldTypes.Amount => "金额（元）",
+        FormFieldTypes.Date => "日期",
+        FormFieldTypes.DateRange => "日期区间",
+        FormFieldTypes.Radio => "单选",
+        FormFieldTypes.Checkbox => "多选",
+        FormFieldTypes.Description => "说明文字",
+        _ => "字段"
+    };
+
+    private static string DefaultPlaceholder(string type) => type switch
+    {
+        FormFieldTypes.Textarea => "请输入",
+        FormFieldTypes.Number => "请输入数字",
+        FormFieldTypes.Amount => "请输入金额",
+        _ => "请输入"
+    };
+
+    private void Emit()
+    {
+        OnFormChanged.InvokeAsync(schema.Serialize());
+    }
+}

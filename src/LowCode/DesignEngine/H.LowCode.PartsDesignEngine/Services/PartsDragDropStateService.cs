@@ -6,98 +6,98 @@ namespace H.LowCode.PartsDesignEngine;
 /// <summary>
 /// 拖拽状态服务
 /// </summary>
-internal class PartsDragDropStateService
+internal static class PartsDragDropStateService
 {
     #region 拖拽对象状态管理
-    private IDictionary<string, DragDropStateSchema> schemaStates = new Dictionary<string, DragDropStateSchema>();
+    private static readonly IDictionary<string, DragDropStateSchema> schemaStates = new Dictionary<string, DragDropStateSchema>();
     #endregion
 
-    public ComponentPartsSchema GetRootComponent(string libId, string partsId)
+    public static ComponentPartsSchema GetRootComponent(string libId, string partsId)
     {
         var stateSchema = GetStateSchema(libId, partsId);
         return stateSchema?.RootComponent;
     }
 
-    public void SetRootComponent(string libId, string partsId, ComponentPartsSchema rootComponent)
+    public static void SetRootComponent(string libId, string partsId, ComponentPartsSchema rootComponent)
     {
         SetStateSchema(libId, partsId, (stateSchema) => {
             stateSchema.RootComponent = rootComponent;
         });
     }
 
-    public PagePartsSchema GetPage(string libId, string partsId)
+    public static PagePartsSchema GetPage(string libId, string partsId)
     {
         var stateSchema = GetStateSchema(libId, partsId);
         return stateSchema?.Page;
     }
 
-    public void SetPage(string libId, PagePartsSchema page)
+    public static void SetPage(string libId, PagePartsSchema page)
     {
         SetStateSchema(libId, page.Id, (stateSchema) => {
             stateSchema.Page = page;
         });
     }
 
-    public ComponentPartsSchema GetLastSelectedComponent(string libId, string partsId)
+    public static ComponentPartsSchema GetLastSelectedComponent(string libId, string partsId)
     {
         var stateSchema = GetStateSchema(libId, partsId);
         return stateSchema?.LastSelectedComponent;
     }
 
-    public void SetLastSelectedComponent(string libId, string partsId, ComponentPartsSchema lastSelectedComponent)
+    public static void SetLastSelectedComponent(string libId, string partsId, ComponentPartsSchema lastSelectedComponent)
     {
         SetStateSchema(libId, partsId, (stateSchema) => {
             stateSchema.LastSelectedComponent = lastSelectedComponent;
         });
     }
 
-    public ComponentPartsSchema? GetCurrentDragComponent(string libId, string partsId)
+    public static ComponentPartsSchema? GetCurrentDragComponent(string libId, string partsId)
     {
         var stateSchema = GetStateSchema(libId, partsId);
         return stateSchema?.CurrentDragComponent;
     }
 
-    public void SetCurrentDragComponent(string libId, string partsId, ComponentPartsSchema currentDragComponent)
+    public static void SetCurrentDragComponent(string libId, string partsId, ComponentPartsSchema currentDragComponent)
     {
         SetStateSchema(libId, partsId, (stateSchema) => {
             stateSchema.CurrentDragComponent = currentDragComponent;
         });
     }
 
-    public ComponentPartsSchema? GetLastDragOverComponent(string libId, string partsId)
+    public static ComponentPartsSchema? GetLastDragOverComponent(string libId, string partsId)
     {
         var stateSchema = GetStateSchema(libId, partsId);
         return stateSchema?.LastDragOverComponent;
     }
 
-    public void SetLastDragOverComponent(string libId, string partsId, ComponentPartsSchema? lastDragOverComponent)
+    public static void SetLastDragOverComponent(string libId, string partsId, ComponentPartsSchema? lastDragOverComponent)
     {
         SetStateSchema(libId, partsId, (stateSchema) => {
             stateSchema.LastDragOverComponent = lastDragOverComponent;
         });
     }
 
-    public ComponentPartsSchema GetLastDropComponent(string libId, string partsId)
+    public static ComponentPartsSchema GetLastDropComponent(string libId, string partsId)
     {
         var stateSchema = GetStateSchema(libId, partsId);
         return stateSchema?.LastDropComponent;
     }
 
-    public void SetLastDropComponent(string libId, string partsId, ComponentPartsSchema lastDropComponent)
+    public static void SetLastDropComponent(string libId, string partsId, ComponentPartsSchema lastDropComponent)
     {
         SetStateSchema(libId, partsId, (stateSchema) => {
             stateSchema.LastDropComponent = lastDropComponent;
         });
     }
 
-    public DateTime GetLastDragOverTime(string libId, string partsId)
+    public static DateTime GetLastDragOverTime(string libId, string partsId)
     {
         var stateSchema = GetStateSchema(libId, partsId);
-        if (stateSchema != null) return DateTime.Now;
+        if (stateSchema == null) return DateTime.Now;
         return stateSchema.LastDragOverTime;
     }
 
-    public void SetLastDragOverTime(string libId, string partsId, DateTime lastDragOverTime)
+    public static void SetLastDragOverTime(string libId, string partsId, DateTime lastDragOverTime)
     {
         SetStateSchema(libId, partsId, (stateSchema) => {
             stateSchema.LastDragOverTime = lastDragOverTime;
@@ -105,7 +105,7 @@ internal class PartsDragDropStateService
     }
 
     #region method
-    private DragDropStateSchema? GetStateSchema(string libId, string partsId)
+    private static DragDropStateSchema? GetStateSchema(string libId, string partsId)
     {
         string key = $"{libId}-{partsId}";
 
@@ -117,7 +117,7 @@ internal class PartsDragDropStateService
         return null;
     }
 
-    private void SetStateSchema(string libId, string partsId, Action<DragDropStateSchema> action)
+    private static void SetStateSchema(string libId, string partsId, Action<DragDropStateSchema> action)
     {
         string key = $"{libId}-{partsId}";
 
@@ -133,7 +133,7 @@ internal class PartsDragDropStateService
         }
     }
 
-    public ComponentPartsSchema FindComponentById(string libId, string partsId, string componentId)
+    public static ComponentPartsSchema FindComponentById(string libId, string partsId, string componentId)
     {
         var rootComponent = GetStateSchema(libId, partsId)?.RootComponent;
         if (rootComponent == null) return null;
@@ -144,7 +144,7 @@ internal class PartsDragDropStateService
         return FindComponentByIdRecursive(componentId, rootComponent.Childrens);
     }
 
-    private ComponentPartsSchema FindComponentByIdRecursive(string componentId, IList<ComponentPartsSchema> childrens)
+    private static ComponentPartsSchema FindComponentByIdRecursive(string componentId, IList<ComponentPartsSchema> childrens)
     {
         foreach (var component in childrens)
         {
@@ -157,7 +157,7 @@ internal class PartsDragDropStateService
         return null;
     }
 
-    public void ResetComponent(string libId, string partsId)
+    public static void ResetComponent(string libId, string partsId)
     {
         var stateSchema = GetStateSchema(libId, partsId);
         if (stateSchema == null) return;
@@ -167,7 +167,7 @@ internal class PartsDragDropStateService
         stateSchema.LastDragOverComponent = default;
     }
 
-    public void ResetDragStyle(string libId, string partsId)
+    public static void ResetDragStyle(string libId, string partsId)
     {
         var stateSchema = GetStateSchema(libId, partsId);
         if (stateSchema == null) return;

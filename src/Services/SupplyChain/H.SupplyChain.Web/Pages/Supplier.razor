@@ -1,0 +1,229 @@
+@page "/supply-chain/supplier"
+@layout SupplyChainLayout
+@inject ISupplyChainSupplierAppService SupplierService
+@inject IJSRuntime JS
+
+<HCard Title="供应商管理">
+    <div class="h-toolbar">
+        <button class="h-btn h-btn-primary" @onclick="@ShowCreate">新增供应商</button>
+        <button class="h-btn" @onclick="@LoadData">刷新</button>
+    </div>
+    <HTable Loading="@loading" ShowEmpty="@(!loading && !suppliers.Any())">
+        <thead>
+            <tr>
+                <th>编码</th>
+                <th>名称</th>
+                <th>协议</th>
+                <th>认证</th>
+                <th>API 地址</th>
+                <th>启用</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var s in suppliers)
+            {
+                <tr>
+                    <td>@s.Code</td>
+                    <td>@s.Name</td>
+                    <td>@s.Protocol</td>
+                    <td>@s.AuthType</td>
+                    <td>@(s.ApiUrl ?? "-")</td>
+                    <td>
+                        @if (s.IsEnabled) { <span class="h-tag h-tag-green">启用</span> }
+                        else { <span class="h-tag h-tag-red">禁用</span> }
+                    </td>
+                    <td>
+                        <span class="h-space">
+                            <button class="h-btn h-btn-primary h-btn-sm" @onclick="@(() => Edit(s))">编辑</button>
+                            <button class="h-btn h-btn-danger h-btn-sm" @onclick="@(() => Delete(s.Id))">删除</button>
+                        </span>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </HTable>
+</HCard>
+
+<HModal Title="@(isEdit ? "编辑供应商" : "新增供应商")" Visible="@showModal" OnOk="@Save" OnCancel="@CloseModal" ConfirmLoading="@saving" Style="width:720px;">
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">编码</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@current.Code" placeholder="唯一编码" disabled="@isEdit" class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">名称</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@current.Name" class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">显示名称</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@current.DisplayName" class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">API 地址</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@current.ApiUrl" placeholder="https://..." class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">对接协议</label>
+        <div class="h-form-control">
+            <select @bind="@current.Protocol" class="h-input" style="width:auto">
+                @foreach (var p in Enum.GetValues<SupplierProtocolEnum>())
+                {
+                    <option value="@p">@p</option>
+                }
+            </select>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">认证方式</label>
+        <div class="h-form-control">
+            <select @bind="@current.AuthType" class="h-input" style="width:auto">
+                @foreach (var a in Enum.GetValues<AuthTypeEnum>())
+                {
+                    <option value="@a">@a</option>
+                }
+            </select>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">认证配置 (JSON)</label>
+        <div class="h-form-control">
+            <textarea @bind="@current.AuthConfig" rows="3" class="h-textarea" placeholder='{"keyName":"X-Api-Key","value":"abc","in":"header"}'></textarea>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">协议配置 (JSON)</label>
+        <div class="h-form-control">
+            <textarea @bind="@current.ProtocolConfig" rows="2" class="h-textarea"></textarea>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">启用</label>
+        <div class="h-form-control">
+            <label class="h-switch">
+                <input type="checkbox" @bind="@current.IsEnabled" />
+                <span class="h-switch-slider"></span>
+            </label>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">备注</label>
+        <div class="h-form-control">
+            <textarea @bind="@current.Remark" rows="2" class="h-textarea"></textarea>
+        </div>
+    </div>
+</HModal>
+
+@code {
+    private List<SupplierDto> suppliers = new();
+    private bool loading;
+    private bool showModal;
+    private bool saving;
+    private bool isEdit;
+    private Guid? editId;
+    private CreateSupplierDto current = new();
+
+    protected override async Task OnInitializedAsync() => await LoadData();
+
+    private async Task LoadData()
+    {
+        loading = true;
+        try
+        {
+            var result = await SupplierService.GetListAsync(new SupplierQueryDto { MaxResultCount = 50 });
+            suppliers = result.Items.ToList();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载失败：{ex.Message}"); }
+        finally { loading = false; }
+    }
+
+    private void ShowCreate()
+    {
+        isEdit = false;
+        editId = null;
+        current = new CreateSupplierDto { IsEnabled = true, Protocol = SupplierProtocolEnum.Http, AuthType = AuthTypeEnum.None };
+        showModal = true;
+    }
+
+    private void Edit(SupplierDto s)
+    {
+        isEdit = true;
+        editId = s.Id;
+        current = new CreateSupplierDto
+        {
+            Code = s.Code,
+            Name = s.Name,
+            DisplayName = s.DisplayName,
+            ApiUrl = s.ApiUrl,
+            Protocol = s.Protocol,
+            AuthType = s.AuthType,
+            AuthConfig = s.AuthConfig,
+            ProtocolConfig = s.ProtocolConfig,
+            IsEnabled = s.IsEnabled,
+            Remark = s.Remark
+        };
+        showModal = true;
+    }
+
+    private async Task Save()
+    {
+        saving = true;
+        try
+        {
+            if (string.IsNullOrWhiteSpace(current.Name) || string.IsNullOrWhiteSpace(current.Code))
+            {
+                await JS.InvokeVoidAsync("alert", "编码和名称不能为空");
+                return;
+            }
+
+            if (isEdit && editId.HasValue)
+            {
+                await SupplierService.UpdateAsync(editId.Value, new UpdateSupplierDto
+                {
+                    Name = current.Name,
+                    DisplayName = current.DisplayName,
+                    ApiUrl = current.ApiUrl,
+                    Protocol = current.Protocol,
+                    AuthType = current.AuthType,
+                    AuthConfig = current.AuthConfig,
+                    ProtocolConfig = current.ProtocolConfig,
+                    IsEnabled = current.IsEnabled,
+                    Remark = current.Remark
+                });
+                await JS.InvokeVoidAsync("alert", "更新成功");
+            }
+            else
+            {
+                await SupplierService.CreateAsync(current);
+                await JS.InvokeVoidAsync("alert", "创建成功");
+            }
+
+            CloseModal();
+            await LoadData();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}"); }
+        finally { saving = false; }
+    }
+
+    private void CloseModal() { showModal = false; current = new(); editId = null; isEdit = false; }
+
+    private async Task Delete(Guid id)
+    {
+        var ok = await JS.InvokeAsync<bool>("confirm", "确定删除该供应商？");
+        if (!ok) return;
+        try
+        {
+            await SupplierService.DeleteAsync(id);
+            await JS.InvokeVoidAsync("alert", "已删除");
+            await LoadData();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"删除失败：{ex.Message}"); }
+    }
+}

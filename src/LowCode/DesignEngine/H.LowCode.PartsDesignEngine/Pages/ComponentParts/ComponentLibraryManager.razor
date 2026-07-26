@@ -46,7 +46,7 @@
     
 </style>
 
-<div style="height: calc(100vh - 120px); display: flex; gap: 16px;">
+<div style="height: 100%; min-height: 0; display: flex; gap: 16px;">
     <!-- 左侧组件库列表 -->
     <div style="width: 300px; background: white; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.03); overflow: hidden;">
         <div style="padding: 16px; border-bottom: 1px solid #f0f0f0; background: #fafafa;">
@@ -147,10 +147,14 @@
                                             @component.ModifiedTime.ToString("MM-dd HH:mm")
                                         </span>
                                         <div style="display: flex; gap: 8px;">
-                                            <button class="btn btn-link btn-sm" @onclick="@(() => EditComponent(component))">编辑</button>
-                                            @if (component.ComponentType == 2)
+                                            @if (component.ComponentType == 1)
+                                            {
+                                                <button class="btn btn-link btn-sm" @onclick="@(() => EditComponent(component))">编辑</button>
+                                            }
+                                            else
                                             {
                                                 <button class="btn btn-link btn-sm" @onclick="@(() => DesignComponent(component))">设计</button>
+                                                <button class="btn btn-link btn-sm" @onclick="@(() => EditComponentInfo(component))">编辑信息</button>
                                             }
                                             @if (component.PublishStatus == 0)
                                             {
@@ -430,13 +434,19 @@
         {
             NavigateTo($"/designengine/myparts/component/edit/{component.LibraryId}/{component.ComponentId}");
         }
-        else if (component.ComponentType == 2) // 低代码组件
+        else if (component.ComponentType == 2) // 低代码组件 → 设计器
         {
-            _isEditMode = true;
-            _editingComponentId = component.ComponentId;
-            _showComponentFormModal = true;
-            StateHasChanged();
+            DesignComponent(component);
         }
+    }
+
+    private void EditComponentInfo(ComponentPartsListModel component)
+    {
+        //编辑低代码组件的基本信息（弹窗）
+        _isEditMode = true;
+        _editingComponentId = component.ComponentId;
+        _showComponentFormModal = true;
+        StateHasChanged();
     }
 
     private void DesignComponent(ComponentPartsListModel component)
