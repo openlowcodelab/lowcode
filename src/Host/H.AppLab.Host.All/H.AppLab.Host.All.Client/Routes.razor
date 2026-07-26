@@ -1,5 +1,6 @@
 @using Microsoft.AspNetCore.Components.WebAssembly.Services
 @inject LazyAssemblyLoader AssemblyLoader
+@inject LazyModuleRegistry ModuleRegistry
 @inject IJSRuntime JS
 
 <Router AppAssembly="typeof(Program).Assembly"
@@ -17,28 +18,62 @@
 
 @code {
     // 路由首段 → 懒加载程序集映射（基于精确路径段匹配，避免 /system 误匹配 /systemmanagement）
+    // 各路由除 .Web 外还包含其依赖的 Contracts 与 LowCode 基础库（均已配置 BlazorWebAssemblyLazyLoad）
     private static readonly Dictionary<string, string[]> LazyAssemblies = new(StringComparer.OrdinalIgnoreCase)
     {
-        ["organization"] = ["H.Organization.Web.dll"],
-        ["approval"] = ["H.Approval.Web.dll"],
-        ["testing"] = ["H.Testing.Web.dll"],
-        ["notification"] = ["H.Notification.Web.dll"],
-        ["order"] = ["H.Order.Web.dll"],
-        ["setting"] = ["H.Setting.Web.dll"],
-        ["supply-chain"] = ["H.SupplyChain.Web.dll"],
-        ["background-task"] = ["H.BackgroundTask.Web.dll"],
-        ["account"] = ["H.Account.Web.dll"],
-        ["assistant"] = ["H.Assistant.Web.dll"],
-        ["system"] = ["H.SystemPortal.Web.dll"],
+        ["organization"] = ["H.Organization.Web.dll", "H.Organization.Application.Contracts.dll"],
+        ["approval"] = [
+            "H.Approval.Web.dll",
+            "H.Approval.Application.Contracts.dll",
+            // Approval.Web 交叉引用了 Organization 的 Contracts
+            "H.Organization.Application.Contracts.dll"
+        ],
+        ["testing"] = ["H.Testing.Web.dll", "H.Testing.Application.Contracts.dll"],
+        ["notification"] = ["H.Notification.Web.dll", "H.Notification.Application.Contracts.dll"],
+        ["order"] = ["H.Order.Web.dll", "H.Order.Application.Contracts.dll"],
+        ["setting"] = ["H.Setting.Web.dll", "H.Setting.Application.Contracts.dll"],
+        ["supply-chain"] = ["H.SupplyChain.Web.dll", "H.SupplyChain.Application.Contracts.dll"],
+        ["background-task"] = ["H.BackgroundTask.Web.dll", "H.BackgroundTask.Application.Contracts.dll"],
+        ["account"] = ["H.Account.Web.dll", "H.Account.Application.Contracts.dll"],
+        ["assistant"] = ["H.Assistant.Web.dll", "H.Assistant.Application.Contracts.dll", "Markdig.dll"],
+        ["system"] = ["H.SystemPortal.Web.dll", "H.SystemPortal.Application.Contracts.dll"],
         ["designengine"] = [
+            // 设计器入口
             "H.LowCode.Workbench.dll",
             "H.LowCode.DesignEngine.dll",
             "H.LowCode.MyApp.dll",
-            "H.LowCode.PartsDesignEngine.dll"
+            "H.LowCode.PartsDesignEngine.dll",
+            // 设计器依赖链
+            "H.LowCode.DesignEngineBase.dll",
+            "H.LowCode.DesignEngine.Model.dll",
+            "H.LowCode.DesignEngine.Application.Contracts.dll",
+            "H.LowCode.MetaSchema.DesignEngine.dll",
+            // 渲染链（设计时预览也需要）
+            "H.LowCode.Themes.AntBlazor.dll",
+            "H.LowCode.RenderEngine.dll",
+            "H.LowCode.RenderEngineBase.dll",
+            "H.LowCode.RenderEngine.Application.Contracts.dll",
+            "H.LowCode.MetaSchema.RenderEngine.dll",
+            // 公共基础库
+            "H.LowCode.MetaSchema.dll",
+            "H.LowCode.ComponentBase.dll",
+            "H.LowCode.Components.Defaults.dll",
+            "H.LowCode.Application.Contracts.dll",
+            "H.Util.Ids.dll",
+            "Sqids.dll"
         ],
         ["app"] = [
             "H.LowCode.Themes.AntBlazor.dll",
-            "H.LowCode.RenderEngine.dll"
+            "H.LowCode.RenderEngine.dll",
+            "H.LowCode.RenderEngineBase.dll",
+            "H.LowCode.RenderEngine.Application.Contracts.dll",
+            "H.LowCode.MetaSchema.RenderEngine.dll",
+            "H.LowCode.MetaSchema.dll",
+            "H.LowCode.ComponentBase.dll",
+            "H.LowCode.Components.Defaults.dll",
+            "H.LowCode.Application.Contracts.dll",
+            "H.Util.Ids.dll",
+            "Sqids.dll"
         ],
     };
 
@@ -76,6 +111,9 @@
                     _loadedAssemblies[asm.GetName().Name + ".dll"] = asm;
                 }
             }
+
+            // 程序集就绪后注册模块延迟服务（内部按模块 key 去重），确保页面渲染前服务可解析
+            ClientServices.RegisterLazyModule(ModuleRegistry, firstSegment);
         }
 
         _additionalAssemblies = [..EagerAssemblies, .._loadedAssemblies.Values];

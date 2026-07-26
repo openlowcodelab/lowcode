@@ -1,6 +1,5 @@
 @namespace H.Approval.Web
 
-@inject IUserAppService UserAppService
 @inject IOrganizationAppService OrganizationService
 @inject IMemberAppService MemberService
 @inject IJSRuntime JS
@@ -182,14 +181,16 @@
         loadingLevel = true;
         try
         {
-            var userResult = await UserAppService.GetPagedUsersAsync(new UserQueryParams
+            var memberResult = await MemberService.GetListAsync(new MemberQueryParams
             {
                 PageIndex = 1,
-                PageSize = 500
+                PageSize = 500,
+                IsEnabled = true
             });
-            allUsers = userResult.Items
-                .Where(u => u.IsActive)
-                .Select(u => new SimpleUser { Id = u.Id.ToString(), Name = u.UserName })
+            // 一个用户可能隶属多个部门，按 UserId 去重
+            allUsers = memberResult.Items
+                .GroupBy(m => m.UserId)
+                .Select(g => new SimpleUser { Id = g.Key.ToString(), Name = g.First().UserName })
                 .ToList();
         }
         catch (Exception ex)
