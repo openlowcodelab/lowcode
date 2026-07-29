@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace H.YunXiaoMcpServer;
+namespace H.Mcp.YunXiao;
 
 public class YunXiaoApiClient
 {

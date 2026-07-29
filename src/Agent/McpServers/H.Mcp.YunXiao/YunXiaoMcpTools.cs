@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using ModelContextProtocol.Server;
 
-namespace H.YunXiaoMcpServer;
+namespace H.Mcp.YunXiao;
 
 [McpServerToolType]
 public class YunXiaoMcpTools

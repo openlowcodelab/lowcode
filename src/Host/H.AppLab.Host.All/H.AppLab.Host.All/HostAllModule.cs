@@ -19,7 +19,7 @@ using H.Order.Application;
 using H.Setting.Application;
 using H.SupplyChain.Application;
 using H.BackgroundTask.Application;
-using H.YunXiaoMcpServer;
+using H.Mcp.YunXiao;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Volo.Abp.AspNetCore.MultiTenancy;

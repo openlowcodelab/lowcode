@@ -2,7 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Modularity;
 
-namespace H.YunXiaoMcpServer;
+namespace H.Mcp.YunXiao;
 
 public class YunXiaoMcpServerModule : AbpModule
 {

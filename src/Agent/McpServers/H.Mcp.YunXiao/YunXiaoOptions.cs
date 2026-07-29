@@ -1,4 +1,4 @@
-namespace H.YunXiaoMcpServer;
+namespace H.Mcp.YunXiao;
 
 public class YunXiaoOptions
 {

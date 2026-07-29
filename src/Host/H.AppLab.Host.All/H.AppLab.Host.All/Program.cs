@@ -1,5 +1,5 @@
 using H.AppLab.Host.All.Components;
-using H.YunXiaoMcpServer;
+using H.Mcp.YunXiao;
 using H.AppLab.Host.All;
 using Hangfire;
 using Microsoft.AspNetCore.ResponseCompression;
