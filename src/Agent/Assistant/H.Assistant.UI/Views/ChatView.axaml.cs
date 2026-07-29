@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Data.Converters;
+using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Threading;
 using H.Assistant.UI.ViewModels;
@@ -38,5 +39,17 @@ public partial class ChatView : UserControl
         {
             this.FindControl<ScrollViewer>("MessagesScroll")?.ScrollToEnd();
         }, DispatcherPriority.Background);
+    }
+
+    /// <summary>
+    /// 无标题栏模式下，聊天头部兼作窗口拖拽区
+    /// </summary>
+    private void OnHeaderPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (TopLevel.GetTopLevel(this) is Window window &&
+            e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+        {
+            window.BeginMoveDrag(e);
+        }
     }
 }

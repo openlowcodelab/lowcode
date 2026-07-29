@@ -3,7 +3,8 @@
              x:Class="H.Assistant.UI.Views.ChatInputView"
              x:Name="Root">
   <Panel>
-    <Border CornerRadius="8" BorderBrush="#d0d0d0" BorderThickness="1" Padding="6" Background="#ffffff">
+    <!-- 无边框输入容器，浅灰底色区分区域，铺满宽度 -->
+    <Border CornerRadius="0" Padding="10,8" Background="#f7f7f8">
       <DockPanel>
         <!-- 底部工具栏 -->
         <Grid DockPanel.Dock="Bottom" ColumnDefinitions="*,Auto" Margin="0,8,0,0">
@@ -114,6 +115,23 @@
   </Panel>
 
   <UserControl.Styles>
+    <!-- 输入框去除聚焦/悬停时的高亮边框与背景变化 -->
+    <Style Selector="TextBox#InputBox /template/ Border#PART_BorderElement">
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="BorderBrush" Value="Transparent" />
+      <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="TextBox#InputBox:pointerover /template/ Border#PART_BorderElement">
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="BorderBrush" Value="Transparent" />
+      <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="TextBox#InputBox:focus /template/ Border#PART_BorderElement">
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="BorderBrush" Value="Transparent" />
+      <Setter Property="Background" Value="Transparent" />
+    </Style>
+
     <Style Selector="Button.selectorBtn">
       <Setter Property="Padding" Value="8,3" />
       <Setter Property="Background" Value="Transparent" />

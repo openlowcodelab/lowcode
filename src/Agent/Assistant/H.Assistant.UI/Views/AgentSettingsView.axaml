@@ -3,17 +3,15 @@
              x:Class="H.Assistant.UI.Views.AgentSettingsView"
              x:Name="AgentRoot">
   <Panel>
-    <ScrollViewer Padding="24">
+    <ScrollViewer Padding="24,14,24,24">
       <StackPanel>
-        <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,24">
-          <TextBlock Grid.Column="0" Text="智能体管理" FontSize="20" VerticalAlignment="Center" />
-          <Button Grid.Column="1" Classes="btn assistantPrimary small" Command="{Binding ShowAddCommand}">
-            <StackPanel Orientation="Horizontal" Spacing="6">
-              <TextBlock Text="＋" /><TextBlock Text="新建智能体" />
-            </StackPanel>
-          </Button>
-        </Grid>
-        <Border Height="1" Background="#e8e8e8" Margin="0,0,0,24" />
+        <TextBlock Text="智能体管理" FontSize="20" Margin="0,0,0,14" />
+        <Button Classes="btn assistantPrimary small" HorizontalAlignment="Right" Margin="0,0,0,14"
+                Command="{Binding ShowAddCommand}">
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <TextBlock Text="＋" /><TextBlock Text="新建智能体" />
+          </StackPanel>
+        </Button>
 
         <StackPanel IsVisible="{Binding Loading}" HorizontalAlignment="Center" Margin="0,40" Spacing="12">
           <ProgressBar IsIndeterminate="True" Width="120" Height="4" Foreground="#a6a6a6" />

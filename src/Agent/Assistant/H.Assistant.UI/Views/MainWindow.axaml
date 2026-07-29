@@ -5,18 +5,22 @@
         Width="1280" Height="820"
         MinWidth="960" MinHeight="600"
         WindowStartupLocation="CenterScreen"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaTitleBarHeightHint="-1"
         FontFamily="Microsoft YaHei UI, Segoe UI, Inter"
         FontSize="14"
         Foreground="#262626"
         Background="#ffffff">
-  <Panel>
+  <!-- 无标题栏模式下，最大化时客户区会扩展到屏幕外，用 OffScreenMargin 修正内容被裁剪 -->
+  <Panel Margin="{Binding $parent[Window].OffScreenMargin}">
     <!-- ========== 主布局：会话侧栏 + 页面内容（对应 ChatLayout） ========== -->
     <Grid ColumnDefinitions="280,*" IsVisible="{Binding !IsSettingsPage}">
       <!-- 会话侧栏 -->
-      <Border Grid.Column="0" Background="#fafafa" BorderBrush="#e8e8e8" BorderThickness="0,0,1,0">
+      <Border Grid.Column="0" Background="#fafafa" BorderBrush="#f5f5f5" BorderThickness="0,0,1,0">
         <DockPanel>
-          <!-- 顶部：新建会话 -->
-          <Border DockPanel.Dock="Top" BorderBrush="#e8e8e8" BorderThickness="0,0,0,1" Padding="16">
+          <!-- 顶部：新建会话（兼作窗口拖拽区） -->
+          <Border DockPanel.Dock="Top" Padding="16" Background="Transparent"
+                  PointerPressed="OnDragAreaPointerPressed">
             <Button Classes="iconBtn" HorizontalAlignment="Right" Command="{Binding NewChatCommand}"
                     ToolTip.Tip="新建会话">
               <TextBlock Text="＋" FontSize="16" />
@@ -40,7 +44,7 @@
           </Button>
 
           <!-- 用户区域（底部） -->
-          <Border DockPanel.Dock="Bottom" BorderBrush="#e8e8e8" BorderThickness="0,1,0,0" Padding="12,8" Background="#fafafa">
+          <Border DockPanel.Dock="Bottom" BorderBrush="#f5f5f5" BorderThickness="0,1,0,0" Padding="12,8" Background="#fafafa">
             <Grid ColumnDefinitions="Auto,*,Auto">
               <Border Grid.Column="0" Width="32" Height="32" CornerRadius="16" Background="#bfbfbf">
                 <TextBlock Text="👤" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center" />

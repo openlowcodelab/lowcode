@@ -3,19 +3,17 @@
              x:Class="H.Assistant.UI.Views.LlmSettingsView"
              x:Name="LlmRoot">
   <Panel>
-    <ScrollViewer Padding="24">
+    <ScrollViewer Padding="24,14,24,24">
       <StackPanel>
-        <!-- 头部 -->
-        <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,24" >
-          <TextBlock Grid.Column="0" Text="模型管理" FontSize="20" VerticalAlignment="Center" />
-          <Button Grid.Column="1" Classes="btn assistantPrimary small" Command="{Binding ShowAddCommand}">
-            <StackPanel Orientation="Horizontal" Spacing="6">
-              <TextBlock Text="＋" />
-              <TextBlock Text="添加" />
-            </StackPanel>
-          </Button>
-        </Grid>
-        <Border Height="1" Background="#e8e8e8" Margin="0,0,0,24" />
+        <!-- 标题与窗口按钮同水平，操作按钮下移一行避开窗口按钮 -->
+        <TextBlock Text="模型管理" FontSize="20" Margin="0,0,0,14" />
+        <Button Classes="btn assistantPrimary small" HorizontalAlignment="Right" Margin="0,0,0,14"
+                Command="{Binding ShowAddCommand}">
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <TextBlock Text="＋" />
+            <TextBlock Text="添加" />
+          </StackPanel>
+        </Button>
 
         <!-- 加载中 -->
         <StackPanel IsVisible="{Binding Loading}" HorizontalAlignment="Center" Margin="0,40" Spacing="12">

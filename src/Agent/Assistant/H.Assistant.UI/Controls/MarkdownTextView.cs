@@ -264,13 +264,15 @@ public class MarkdownTextView : ContentControl
 
     private static SelectableTextBlock CreateTextBlock(double fontSize, FontWeight weight)
     {
+        // 注意：不要设置 LineSpacing，Avalonia 测量高度不含行距，
+        // 会导致长文本实际渲染高度大于布局高度，滚动区底部内容无法滚动到
         return new SelectableTextBlock
         {
             FontSize = fontSize,
             FontWeight = weight,
             Foreground = TextBrush,
             TextWrapping = TextWrapping.Wrap,
-            LineSpacing = 4
+            LineHeight = fontSize * 1.6
         };
     }
 

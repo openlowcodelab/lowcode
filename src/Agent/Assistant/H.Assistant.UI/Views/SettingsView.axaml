@@ -5,9 +5,9 @@
              x:Name="SettingsRoot">
   <Grid ColumnDefinitions="220,*">
     <!-- ========== 左侧菜单 ========== -->
-    <Border Grid.Column="0" Background="#fafafa" BorderBrush="#e8e8e8" BorderThickness="0,0,1,0">
+    <Border Grid.Column="0" Background="#fafafa" BorderBrush="#f5f5f5" BorderThickness="0,0,1,0">
       <DockPanel>
-        <Border DockPanel.Dock="Top" Padding="16" BorderBrush="#e8e8e8" BorderThickness="0,0,0,1">
+        <Border DockPanel.Dock="Top" Padding="16" BorderBrush="#f5f5f5" BorderThickness="0,0,0,1">
           <Button Classes="btn" Command="{Binding GoBackCommand}">
             <StackPanel Orientation="Horizontal" Spacing="6">
               <TextBlock Text="←" />
@@ -32,11 +32,9 @@
     <!-- ========== 右侧内容 ========== -->
     <Panel Grid.Column="1" Background="#ffffff">
       <!-- 通用设置 -->
-      <ScrollViewer IsVisible="{Binding IsGeneral}" Padding="24">
+      <ScrollViewer IsVisible="{Binding IsGeneral}" Padding="24,14,24,24">
         <StackPanel MaxWidth="600" HorizontalAlignment="Left">
-          <Border Padding="0,0,0,16" Margin="0,0,0,24" BorderBrush="#e8e8e8" BorderThickness="0,0,0,1">
-            <TextBlock Text="通用设置" FontSize="20" />
-          </Border>
+          <TextBlock Text="通用设置" FontSize="20" Margin="0,0,0,24" />
           <StackPanel Margin="0,0,0,32" Spacing="16">
             <TextBlock Text="外观" FontSize="16" Foreground="#262626" />
             <StackPanel>
@@ -64,11 +62,15 @@
         </StackPanel>
       </ScrollViewer>
 
-      <!-- 模型 / 智能体 / MCP / 技能 -->
-      <views:LlmSettingsView DataContext="{Binding Llm}" IsVisible="{Binding IsModel}" />
-      <views:AgentSettingsView DataContext="{Binding Agents}" IsVisible="{Binding IsAgent}" />
-      <views:McpSettingsView DataContext="{Binding Mcp}" IsVisible="{Binding IsMcp}" />
-      <views:SkillSettingsView DataContext="{Binding Skills}" IsVisible="{Binding IsSkill}" />
+      <!-- 模型 / 智能体 / MCP / 技能（IsVisible 需绑到父级 DataContext，子视图 DataContext 已被替换） -->
+      <views:LlmSettingsView DataContext="{Binding Llm}"
+                             IsVisible="{Binding DataContext.IsModel, ElementName=SettingsRoot}" />
+      <views:AgentSettingsView DataContext="{Binding Agents}"
+                               IsVisible="{Binding DataContext.IsAgent, ElementName=SettingsRoot}" />
+      <views:McpSettingsView DataContext="{Binding Mcp}"
+                             IsVisible="{Binding DataContext.IsMcp, ElementName=SettingsRoot}" />
+      <views:SkillSettingsView DataContext="{Binding Skills}"
+                               IsVisible="{Binding DataContext.IsSkill, ElementName=SettingsRoot}" />
     </Panel>
   </Grid>
 

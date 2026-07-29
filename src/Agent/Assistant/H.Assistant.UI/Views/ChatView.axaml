@@ -6,17 +6,16 @@
   <Panel Background="#ffffff">
     <!-- ========== 会话视图（已选择会话或流式中） ========== -->
     <DockPanel IsVisible="{Binding HasSession}">
-      <!-- 头部 -->
-      <Border DockPanel.Dock="Top" Padding="16" BorderBrush="#e8e8e8" BorderThickness="0,0,0,1">
+      <!-- 头部（兼作窗口拖拽区） -->
+      <Border DockPanel.Dock="Top" Padding="16" Background="Transparent"
+              PointerPressed="OnHeaderPointerPressed">
         <TextBlock FontSize="14" Foreground="#262626">
           <Run Text="Agent: " /><Run Text="{Binding SelectedAgentDisplayName}" />
         </TextBlock>
       </Border>
 
-      <!-- 输入区 -->
-      <Border DockPanel.Dock="Bottom" Padding="16" Background="#fafafa" BorderBrush="#e8e8e8" BorderThickness="0,1,0,0">
-        <views:ChatInputView />
-      </Border>
+      <!-- 输入区（铺满底部，无外边距） -->
+      <views:ChatInputView DockPanel.Dock="Bottom" />
 
       <!-- 消息区 -->
       <ScrollViewer Name="MessagesScroll" Padding="20">
@@ -43,7 +42,7 @@
                     <StackPanel MaxWidth="620" Spacing="4">
                       <Border Background="#595959" CornerRadius="8" Padding="12">
                         <SelectableTextBlock Text="{Binding Content}" Foreground="White" FontSize="14"
-                                             TextWrapping="Wrap" LineSpacing="4" />
+                                             TextWrapping="Wrap" LineHeight="22" />
                       </Border>
                       <TextBlock Text="{Binding TimeText}" FontSize="12" Foreground="#8c8c8c" HorizontalAlignment="Right" />
                     </StackPanel>
