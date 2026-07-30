@@ -1,0 +1,110 @@
+{
+  "summary": {
+    "projectName": "AppLab",
+    "locale": "zh-CN",
+    "modelId": "agent-work-loop-v4",
+    "reportContractVersion": 25,
+    "overview": "项目拥有基础的上下文规则，但缺乏可执行的验证路线和完整的 Agent 配置，会话证据不足限制了行为评估深度。",
+    "aiAgentPractice": {
+      "inspectedSurfaces": [
+        "Rules",
+        "Custom Agents"
+      ],
+      "coverageRows": [
+        {
+          "surface": "Rules",
+          "scopes": [
+            "Project"
+          ],
+          "count": 2,
+          "paths": [
+            ".qoder/rules/Drag_and_Drop_Animation.md",
+            ".qoder/rules/Project.md"
+          ]
+        },
+        {
+          "surface": "Custom Agents",
+          "scopes": [
+            "Project"
+          ],
+          "count": 2,
+          "paths": [
+            ".qoder/agents/lowcode.md",
+            ".qoder/agents/builtin/researcher.md"
+          ]
+        }
+      ]
+    },
+    "assignmentSummaries": [],
+    "dimensions": [
+      {
+        "id": "task-understanding",
+        "label": "任务理解",
+        "score": 52,
+        "summary": "项目规则提供了低代码平台的架构上下文，但缺少可观测的意图和范围边界证据。",
+        "findingRefs": []
+      },
+      {
+        "id": "controlled-execution",
+        "label": "可控执行",
+        "score": 45,
+        "summary": "自定义 Agent researcher 存在但无可用 prompt 内容，无法支持其声明的操作路线。",
+        "findingRefs": [
+          "researcher-agent-no-prompt",
+          "no-discoverable-test-entrypoint"
+        ]
+      },
+      {
+        "id": "change-validation",
+        "label": "改动验证",
+        "score": 38,
+        "summary": "638 个源文件无对应测试文件，任何实现变更均无项目级验证覆盖。",
+        "findingRefs": []
+      },
+      {
+        "id": "reliable-delivery",
+        "label": "可靠交付",
+        "score": 45,
+        "summary": "在当前观察窗口内未发现交付验收或恢复路线的证据。",
+        "findingRefs": []
+      },
+      {
+        "id": "learning-capture",
+        "label": "经验沉淀",
+        "score": 35,
+        "summary": "观察窗口内无合格会话，无法评估重复模式或持续改进路线。",
+        "findingRefs": []
+      }
+    ]
+  },
+  "findings": [
+    {
+      "id": "researcher-agent-no-prompt",
+      "title": "自定义 Agent researcher 无法执行任何操作",
+      "severity": "Low",
+      "reason": "Lint 检测确认 .qoder/agents/builtin/researcher.md 没有 system-prompt 内容、没有路由描述、也没有显式工具边界。该 Agent 已注册但在任何任务中均无法被有效调用。",
+      "expectedOutput": [
+        "researcher.md 包含明确的 system-prompt、路由描述和工具边界声明，通过 agent-lint 检查。"
+      ],
+      "expectedArtifact": "Agent Configuration",
+      "aiFixPrompt": "/better-harness fix this issue\n\n为 .qoder/agents/builtin/researcher.md 补充最小可用的 system-prompt 内容和路由描述，使其能被正确触发和使用。\n\n## Validation\n\n- 重新运行 agent-lint 检查，确认 researcher 不再产生 error 或 warning\n- 确认 Agent 可被 Qoder 正确识别并出现在可用列表中",
+      "dimensionRefs": [
+        "controlled-execution"
+      ]
+    },
+    {
+      "id": "no-discoverable-test-entrypoint",
+      "title": "项目无可发现的测试入口供 Agent 调用",
+      "severity": "Low",
+      "reason": "项目结构分析确认 638 个 C# 源文件对应 0 个测试文件。当 Agent 需要验证编辑结果时，无法发现任何 dotnet test 入口或等效验证命令。这是项目结构的确定性缺失，而非会话行为观察。",
+      "expectedOutput": [
+        "至少一个核心模块拥有可发现的测试入口，Agent 可调用 dotnet test 进行结果验证。"
+      ],
+      "expectedArtifact": "Test Project",
+      "aiFixPrompt": "/better-harness fix this issue\n\n为项目核心模块建立最小可发现的测试入口：至少为一个核心组件（如 MetaSchema 或 ComponentBase）添加一个可执行的 dotnet test 项目和基础测试用例。\n\n## Validation\n\n- 运行 dotnet test 并确认至少一个测试通过\n- 确认项目中存在可被 Agent 发现和调用的测试命令入口",
+      "dimensionRefs": [
+        "controlled-execution"
+      ]
+    }
+  ]
+}

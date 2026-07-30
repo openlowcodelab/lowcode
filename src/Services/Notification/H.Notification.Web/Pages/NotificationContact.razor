@@ -5,16 +5,14 @@
 @inject IContactGroupAppService ContactGroupAppService
 @inject IJSRuntime JS
 
-<h2>联系人</h2>
+<HCard Title="联系人">
+    <div class="h-toolbar" style="margin-bottom:16px;">
+        <button class="h-btn @(activeTab == 0 ? "h-btn-primary" : "")" @onclick="@(() => SwitchTab(0))">联系人</button>
+        <button class="h-btn @(activeTab == 1 ? "h-btn-primary" : "")" @onclick="@(() => SwitchTab(1))">联系人分组</button>
+    </div>
 
-<div class="h-toolbar" style="margin-bottom:16px;">
-    <button class="h-btn @(activeTab == 0 ? "h-btn-primary" : "")" @onclick="@(() => SwitchTab(0))">联系人</button>
-    <button class="h-btn @(activeTab == 1 ? "h-btn-primary" : "")" @onclick="@(() => SwitchTab(1))">联系人分组</button>
-</div>
-
-@if (activeTab == 0)
-{
-    <HCard>
+    @if (activeTab == 0)
+    {
         <div class="h-toolbar">
             <input type="text" @bind-value="@contactFilter" placeholder="搜索名称或邮箱" class="h-input" style="width: 220px;" />
             <select @bind="contactGroupFilter" class="h-input" style="width:180px;">
@@ -62,11 +60,9 @@
                 }
             </tbody>
         </HTable>
-    </HCard>
-}
-else
-{
-    <HCard>
+    }
+    else
+    {
         <div class="h-toolbar">
             <input type="text" @bind-value="@groupFilter" placeholder="搜索分组名称" class="h-input" style="width: 220px;" />
             <button class="h-btn h-btn-primary" @onclick="@LoadGroups">搜索</button>
@@ -103,8 +99,8 @@ else
                 }
             </tbody>
         </HTable>
-    </HCard>
-}
+    }
+</HCard>
 
 <HModal Title="@(isContactEdit ? "编辑联系人" : "新增联系人")" Visible="@showContactModal" OnOk="@SaveContact" OnCancel="@(() => showContactModal = false)" ConfirmLoading="@saving" Style="width:640px;">
     <div class="h-form-item h-form-horizontal">

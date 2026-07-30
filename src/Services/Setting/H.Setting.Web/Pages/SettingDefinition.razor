@@ -4,9 +4,7 @@
 @inject ISettingDefinitionAppService DefinitionService
 @inject IJSRuntime JS
 
-<h2>配置定义</h2>
-
-<HCard>
+<HCard Title="配置定义">
     <div class="h-toolbar">
         <input type="text" @bind-value="@filter" placeholder="配置名称或显示名称" class="h-input" style="width: 240px;" />
         <button class="h-btn h-btn-primary" @onclick="@LoadData">查询</button>

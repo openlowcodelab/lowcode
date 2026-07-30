@@ -101,12 +101,6 @@
                 </div>
             </div>
             <div class="h-form-item h-form-horizontal">
-                <label class="h-form-label">数据库模式</label>
-                <div class="h-form-control" style="padding-top: 6px;">
-                    @(enterprise.DatabaseMode == "Shared" ? "共用数据库" : "独立数据库")
-                </div>
-            </div>
-            <div class="h-form-item h-form-horizontal">
                 <label class="h-form-label">成员数量</label>
                 <div class="h-form-control" style="padding-top: 6px;">@enterprise.UserCount 名成员</div>
             </div>
@@ -148,7 +142,6 @@
         public string? ContactPhone { get; set; }
         public string? ContactEmail { get; set; }
         public string Status { get; set; } = string.Empty;
-        public string DatabaseMode { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
         public string? Remark { get; set; }
         public int UserCount { get; set; }

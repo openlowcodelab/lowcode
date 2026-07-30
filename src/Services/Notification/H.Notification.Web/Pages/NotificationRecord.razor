@@ -3,17 +3,15 @@
 @layout NotificationLayout
 @inject INotificationRecordAppService RecordAppService
 
-<h2>通知记录</h2>
+<HCard Title="通知记录">
+    <div class="h-toolbar" style="margin-bottom:16px;">
+        <button class="h-btn @(activeTab == 0 ? "h-btn-primary" : "")" @onclick="@(() => SwitchTab(0))">通知事件</button>
+        <button class="h-btn @(activeTab == 1 ? "h-btn-primary" : "")" @onclick="@(() => SwitchTab(1))">站内信</button>
+        <button class="h-btn @(activeTab == 2 ? "h-btn-primary" : "")" @onclick="@(() => SwitchTab(2))">邮件</button>
+        <button class="h-btn @(activeTab == 3 ? "h-btn-primary" : "")" @onclick="@(() => SwitchTab(3))">短信</button>
+        <button class="h-btn @(activeTab == 4 ? "h-btn-primary" : "")" @onclick="@(() => SwitchTab(4))">Webhook</button>
+    </div>
 
-<div class="h-toolbar" style="margin-bottom:16px;">
-    <button class="h-btn @(activeTab == 0 ? "h-btn-primary" : "")" @onclick="@(() => SwitchTab(0))">通知事件</button>
-    <button class="h-btn @(activeTab == 1 ? "h-btn-primary" : "")" @onclick="@(() => SwitchTab(1))">站内信</button>
-    <button class="h-btn @(activeTab == 2 ? "h-btn-primary" : "")" @onclick="@(() => SwitchTab(2))">邮件</button>
-    <button class="h-btn @(activeTab == 3 ? "h-btn-primary" : "")" @onclick="@(() => SwitchTab(3))">短信</button>
-    <button class="h-btn @(activeTab == 4 ? "h-btn-primary" : "")" @onclick="@(() => SwitchTab(4))">Webhook</button>
-</div>
-
-<HCard>
     <div class="h-toolbar">
         @if (activeTab != 0)
         {

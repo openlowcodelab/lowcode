@@ -8,21 +8,19 @@
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
-<h2>通知业务</h2>
-
 <style>
     .h-cat-item:hover { background:#F2F3F5; }
     .h-cat-item.active { background:#E8F3FF; color:#165DFF; font-weight:600; }
 </style>
 
-<div style="display:flex;gap:16px;align-items:flex-start;">
+<div class="h-split-page">
     <!-- 左侧分类目录 -->
-    <HCard Style="width:260px;flex-shrink:0;">
-        <div class="h-toolbar" style="justify-content:space-between;">
-            <strong>分类</strong>
+    <HCard Title="分类" Style="width:260px;flex-shrink:0;">
+        <Extra>
             <button class="h-btn h-btn-primary h-btn-sm" @onclick="@ShowCreateCategory">新增</button>
-        </div>
-        <ul class="h-cat-list" style="list-style:none;padding:0;margin:8px 0 0;">
+        </Extra>
+        <ChildContent>
+        <ul class="h-cat-list" style="list-style:none;padding:0;margin:0;">
             <li class="@CatItemClass(null)" @onclick="@(() => SelectCategory(null))"
                 style="padding:8px 10px;border-radius:4px;cursor:pointer;">
                 全部业务
@@ -47,10 +45,11 @@
                 </li>
             }
         </ul>
+        </ChildContent>
     </HCard>
 
     <!-- 右侧业务列表 -->
-    <HCard Style="flex:1;">
+    <HCard Title="通知业务" Style="flex:1;">
         <div class="h-toolbar">
             <input type="text" @bind-value="@searchFilter" placeholder="搜索业务名称或编码" class="h-input" style="width: 220px;" />
             <button class="h-btn h-btn-primary" @onclick="@LoadBusinesses">搜索</button>

@@ -3,7 +3,8 @@
 @inject IOrderAppService OrderService
 @inject IJSRuntime JS
 
-<h2>订单详情</h2>
+<div class="page-fill">
+<h2 style="margin-top:0;">订单详情</h2>
 
 @if (detail is null)
 {
@@ -52,6 +53,7 @@ else
         </div>
     </HCard>
 }
+</div>
 
 @code {
     [Parameter] public Guid OrderId { get; set; }

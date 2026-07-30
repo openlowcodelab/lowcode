@@ -15,8 +15,9 @@
 
 <PageTitle>测试用例管理</PageTitle>
 
-<div style="margin-bottom: 16px;">
-    <div style="display: flex; gap: 16px; margin-bottom: 16px; align-items: center;">
+<div style="height: 100%; display: flex; flex-direction: column; gap: 2px;">
+<div class="page-fill" style="flex-shrink: 0; padding: 12px 16px;">
+    <div style="display: flex; gap: 16px; align-items: center;">
         <div style="flex: 0 0 25%;">
             <div style="display: flex; align-items: center; gap: 8px;">
                 <span>选择项目:</span>
@@ -66,8 +67,8 @@
     </div>
 </div>
 
-<div style="height: calc(100vh - 220px); min-height: 500px;">
-    <div style="display: flex; gap: 16px; height: 100%;">
+<div style="flex: 1; min-height: 0;">
+    <div style="display: flex; gap: 2px; height: 100%;">
         <div style="flex: 0 0 20%; height: 100%;">
             <HCard Style="height: 100%; display: flex; flex-direction: column;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
@@ -92,7 +93,7 @@
             </HCard>
         </div>
 
-        <div style="flex: 1; height: 100%;">
+        <div style="flex: 1; height: 100%; min-width: 0;">
             <HCard Style="height: 100%; display: flex; flex-direction: column;">
                 <div style="margin-bottom: 12px;">
                     <input class="h-input" Placeholder="搜索用例..."
@@ -214,6 +215,7 @@
             </HCard>
         </div>
     </div>
+</div>
 </div>
 
 @{

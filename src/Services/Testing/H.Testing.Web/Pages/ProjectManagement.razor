@@ -19,6 +19,7 @@
     }
 </style>
 
+<div class="page-fill">
 <div style="display: flex; gap: 16px; margin-bottom: 16px; align-items: center;">
     <div style="flex: 0 0 33%;">
         <input class="h-input" @bind-value="searchTerm" @bind-value:event="oninput" placeholder="搜索项目..." @onkeyup="@(async (KeyboardEventArgs e) => { if (e.Key == "Enter") await SearchProjects(); })" />
@@ -93,6 +94,7 @@ else
         <p>点击「新建项目」按钮创建您的第一个项目</p>
     </div>
 }
+</div>
 
 @{
     var projectModalTitle = isEditingProject ? "编辑项目" : "新建项目";

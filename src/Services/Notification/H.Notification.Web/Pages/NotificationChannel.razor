@@ -6,12 +6,11 @@
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
-<h2>通知渠道配置</h2>
-<div style="margin-bottom:12px;">
-    <button class="h-btn h-btn-sm" @onclick="@(() => Nav.NavigateTo("/notification"))">← 返回通知业务</button>
-</div>
-
-<HCard>
+<HCard Title="通知渠道配置">
+    <Extra>
+        <button class="h-btn h-btn-sm" @onclick="@(() => Nav.NavigateTo("/notification"))">← 返回通知业务</button>
+    </Extra>
+    <ChildContent>
     <div class="h-toolbar">
         <input type="text" @bind-value="@searchFilter" placeholder="搜索名称或编码" class="h-input" style="width: 250px;" />
         <button class="h-btn h-btn-primary" @onclick="@LoadData">搜索</button>
@@ -58,6 +57,7 @@
             }
         </tbody>
     </HTable>
+    </ChildContent>
 </HCard>
 
 <HModal Title="@(isEdit ? "编辑渠道" : "新增渠道")" Visible="@showModal" OnOk="@Save" OnCancel="@Close" ConfirmLoading="@saving" Style="width:640px;">

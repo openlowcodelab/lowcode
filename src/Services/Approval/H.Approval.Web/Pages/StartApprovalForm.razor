@@ -19,7 +19,8 @@ else if (definition == null)
 }
 else
 {
-    <h3>@(string.IsNullOrEmpty(definition.Icon) ? "📄" : definition.Icon) @definition.Name</h3>
+    <div class="page-fill">
+    <h3 style="margin-top: 0;">@(string.IsNullOrEmpty(definition.Icon) ? "📄" : definition.Icon) @definition.Name</h3>
     @if (!string.IsNullOrWhiteSpace(definition.Description))
     {
         <div class="h-alert h-alert-success">@definition.Description</div>
@@ -87,6 +88,7 @@ else
             </div>
         </div>
     </form>
+    </div>
 }
 
 @code {

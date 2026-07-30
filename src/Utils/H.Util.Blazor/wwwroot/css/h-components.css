@@ -65,6 +65,14 @@ a:hover { color: var(--h-primary-hover); text-decoration: none; }
 /* Page container - 统一各页 width:80%;margin:auto 写法 */
 .page-container { width: 80%; margin: 0 auto; box-sizing: border-box; }
 
+/* Page fill - 页面级白底容器: 白底铺满 content-container, 灰底仅在间隙露出 (配合布局中 .content-container > .page-fill 的拉伸规则) */
+.page-fill { background: #fff; border-radius: 8px; border: 1px solid #F2F3F5; box-shadow: 0 2px 8px rgba(29, 33, 41, 0.05); padding: 20px; box-sizing: border-box; }
+
+/* Split page - 左右分栏卡片铺满内容区高度, 卡片间呈现灰色间隙 (与组织管理 org-container 一致) */
+.h-split-page { display: flex; gap: 2px; align-items: stretch; height: 100%; }
+.h-split-page > .h-card { height: 100%; display: flex; flex-direction: column; min-width: 0; }
+.h-split-page > .h-card > .h-card-body { flex: 1; min-height: 0; overflow: auto; }
+
 /* Card grid - 等高卡片栅格，替代各页 float 布局 */
 .h-card-grid { display: flex; flex-wrap: wrap; gap: 16px; align-items: stretch; }
 .h-card-grid > * { display: flex; }
