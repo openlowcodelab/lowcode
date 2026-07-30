@@ -1,0 +1,183 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="using:H.Assistant.Desktop.Views"
+             xmlns:controls="using:H.Assistant.Desktop.Controls"
+             x:Class="H.Assistant.Desktop.Views.ChatView">
+  <Panel Background="#ffffff">
+    <!-- ========== 会话视图（已选择会话或流式中） ========== -->
+    <DockPanel IsVisible="{Binding HasSession}">
+      <!-- 头部（兼作窗口拖拽区） -->
+      <Border DockPanel.Dock="Top" Padding="16" Background="Transparent"
+              PointerPressed="OnHeaderPointerPressed">
+        <TextBlock FontSize="14" Foreground="#262626">
+          <Run Text="Agent: " /><Run Text="{Binding SelectedAgentDisplayName}" />
+        </TextBlock>
+      </Border>
+
+      <!-- 输入区（铺满底部，无外边距） -->
+      <views:ChatInputView DockPanel.Dock="Bottom" />
+
+      <!-- 消息区 -->
+      <ScrollViewer Name="MessagesScroll" Padding="20">
+        <StackPanel Spacing="16">
+          <!-- 加载中 -->
+          <StackPanel IsVisible="{Binding LoadingMessages}" HorizontalAlignment="Center" Margin="0,40" Spacing="12">
+            <ProgressBar IsIndeterminate="True" Width="120" Height="4" Foreground="#a6a6a6" />
+            <TextBlock Text="Loading..." Foreground="#8c8c8c" HorizontalAlignment="Center" />
+          </StackPanel>
+
+          <!-- 消息列表 -->
+          <ItemsControl ItemsSource="{Binding Messages}" IsVisible="{Binding !LoadingMessages}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <StackPanel Spacing="16" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Panel>
+                  <!-- 用户消息（右对齐） -->
+                  <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="12"
+                              IsVisible="{Binding IsUser}">
+                    <StackPanel MaxWidth="620" Spacing="4">
+                      <Border Background="#595959" CornerRadius="8" Padding="12">
+                        <SelectableTextBlock Text="{Binding Content}" Foreground="White" FontSize="14"
+                                             TextWrapping="Wrap" LineHeight="22" />
+                      </Border>
+                      <TextBlock Text="{Binding TimeText}" FontSize="12" Foreground="#8c8c8c" HorizontalAlignment="Right" />
+                    </StackPanel>
+                    <Border Width="36" Height="36" CornerRadius="18" Background="#a6a6a6" VerticalAlignment="Top">
+                      <TextBlock Text="👤" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                  </StackPanel>
+
+                  <!-- 助手消息（左对齐） -->
+                  <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Spacing="12"
+                              IsVisible="{Binding !IsUser}">
+                    <Border Width="36" Height="36" CornerRadius="18" Background="#bfbfbf" VerticalAlignment="Top">
+                      <TextBlock Text="🤖" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel MaxWidth="620" Spacing="4">
+                      <Border Background="#f0f0f0" CornerRadius="8" Padding="12">
+                        <controls:MarkdownTextView Markdown="{Binding Content}" />
+                      </Border>
+                      <TextBlock Text="{Binding TimeText}" FontSize="12" Foreground="#8c8c8c" />
+                    </StackPanel>
+                  </StackPanel>
+                </Panel>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+
+          <!-- ReAct 步骤可视化 -->
+          <StackPanel Orientation="Horizontal" Spacing="12" IsVisible="{Binding HasReactSteps}">
+            <Border Width="36" Height="36" CornerRadius="18" Background="#bfbfbf" VerticalAlignment="Top">
+              <TextBlock Text="🤖" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <StackPanel MaxWidth="760" Spacing="8">
+              <ItemsControl ItemsSource="{Binding ReactSteps}">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <StackPanel Spacing="8" />
+                  </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <StackPanel Spacing="8">
+                      <!-- 思考中 -->
+                      <Border IsVisible="{Binding HasThinking}"
+                              BorderBrush="#1890ff" BorderThickness="3,0,0,0"
+                              Background="#f6f8fa" CornerRadius="0,6,6,0" Padding="12,8">
+                        <StackPanel Spacing="4">
+                          <TextBlock Text="ⓘ 思考中" FontSize="12" Foreground="#1890ff" FontWeight="Medium" />
+                          <controls:MarkdownTextView Markdown="{Binding ThinkingContent}" />
+                        </StackPanel>
+                      </Border>
+                      <!-- 工具调用 -->
+                      <ItemsControl ItemsSource="{Binding ToolCalls}">
+                        <ItemsControl.ItemsPanel>
+                          <ItemsPanelTemplate>
+                            <StackPanel Spacing="8" />
+                          </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate>
+                            <Border BorderBrush="#e8e8e8" BorderThickness="1" CornerRadius="6">
+                              <StackPanel>
+                                <!-- 工具头 -->
+                                <Border Background="#fafafa" Padding="12,8" CornerRadius="6,6,0,0">
+                                  <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <TextBlock Grid.Column="0" Text="🔧" FontSize="13" Margin="0,0,6,0" />
+                                    <TextBlock Grid.Column="1" Text="{Binding FriendlyToolName}" FontSize="13" FontWeight="SemiBold" Foreground="#262626" />
+                                    <TextBlock Grid.Column="2" Text="● 执行中..." FontSize="12" Foreground="#faad14"
+                                               IsVisible="{Binding IsExecuting}" />
+                                  </Grid>
+                                </Border>
+                                <!-- 参数 -->
+                                <Expander Header="参数" FontSize="12" IsVisible="{Binding HasArguments}"
+                                          Padding="12,4" Background="Transparent" BorderThickness="0">
+                                  <Border Background="#f5f5f5" CornerRadius="4" Padding="8">
+                                    <SelectableTextBlock Text="{Binding FormattedArguments}" FontSize="12"
+                                                         FontFamily="Consolas,Monaco,Courier New" TextWrapping="Wrap"
+                                                         Foreground="#595959" />
+                                  </Border>
+                                </Expander>
+                                <!-- 结果 -->
+                                <Border IsVisible="{Binding HasResult}" BorderBrush="#e8e8e8" BorderThickness="0,1,0,0" Padding="12,8">
+                                  <StackPanel Spacing="4">
+                                    <TextBlock Text="{Binding ResultLabel}" FontSize="11" FontWeight="SemiBold"
+                                               Foreground="{Binding IsError, Converter={x:Static views:ChatView.ResultLabelBrushConverter}}" />
+                                    <ScrollViewer MaxHeight="200">
+                                      <SelectableTextBlock Text="{Binding TruncatedResult}" FontSize="12"
+                                                           FontFamily="Consolas,Monaco,Courier New" TextWrapping="Wrap"
+                                                           Foreground="#595959" />
+                                    </ScrollViewer>
+                                  </StackPanel>
+                                </Border>
+                              </StackPanel>
+                            </Border>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                    </StackPanel>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+
+              <!-- 最终回答 -->
+              <Border IsVisible="{Binding HasReactAnswer}" Background="#f0f0f0" CornerRadius="8" Padding="12">
+                <controls:MarkdownTextView Markdown="{Binding ReactAnswerContent}" />
+              </Border>
+            </StackPanel>
+          </StackPanel>
+
+          <!-- 纯流式回复（无 ReAct） -->
+          <StackPanel Orientation="Horizontal" Spacing="12" IsVisible="{Binding ShowPlainStreaming}">
+            <Border Width="36" Height="36" CornerRadius="18" Background="#bfbfbf" VerticalAlignment="Top">
+              <TextBlock Text="🤖" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <Border Background="#f0f0f0" CornerRadius="8" Padding="12" MaxWidth="620">
+              <controls:MarkdownTextView Markdown="{Binding StreamingResponse}" />
+            </Border>
+          </StackPanel>
+
+          <!-- 等待响应指示 -->
+          <StackPanel Orientation="Horizontal" Spacing="12" IsVisible="{Binding ShowThinkingIndicator}">
+            <Border Width="36" Height="36" CornerRadius="18" Background="#bfbfbf" VerticalAlignment="Top">
+              <TextBlock Text="🤖" FontSize="15" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <Border Background="#f0f0f0" CornerRadius="8" Padding="12">
+              <TextBlock Text="● ● ●" FontSize="10" Foreground="#8c8c8c" />
+            </Border>
+          </StackPanel>
+        </StackPanel>
+      </ScrollViewer>
+    </DockPanel>
+
+    <!-- ========== 新会话视图（居中输入框） ========== -->
+    <Border IsVisible="{Binding !HasSession}" MaxWidth="800" Padding="60,40"
+            HorizontalAlignment="Stretch" VerticalAlignment="Center">
+      <views:ChatInputView />
+    </Border>
+  </Panel>
+</UserControl>
