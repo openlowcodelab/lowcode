@@ -1,0 +1,36 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="H.AppLab.Desktop.Host.Views.HomeView">
+  <!-- 首页：欢迎信息 + 应用快捷入口 -->
+  <ScrollViewer>
+    <StackPanel Margin="48,40" MaxWidth="1080" HorizontalAlignment="Left" Spacing="8">
+      <TextBlock Text="欢迎使用 AppLab" FontSize="28" FontWeight="SemiBold" />
+      <TextBlock Text="所有客户端应用的统一宿主，通过左侧快捷菜单可随时切换应用。"
+                 FontSize="14" Foreground="#8c8c8c" />
+
+      <TextBlock Text="快捷入口" FontSize="16" FontWeight="Medium" Margin="0,32,0,12" />
+      <ItemsControl ItemsSource="{Binding Apps}">
+        <ItemsControl.ItemsPanel>
+          <ItemsPanelTemplate>
+            <WrapPanel />
+          </ItemsPanelTemplate>
+        </ItemsControl.ItemsPanel>
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <Border Classes="appCard">
+              <StackPanel Spacing="10">
+                <TextBlock Text="{Binding Icon}" FontSize="30" />
+                <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="Medium" />
+                <TextBlock Text="{Binding Description}" FontSize="12" Foreground="#8c8c8c"
+                           TextWrapping="Wrap" MinHeight="32" />
+                <Button Classes="appOpen" HorizontalAlignment="Left" Command="{Binding OpenCommand}">
+                  <TextBlock Text="打开" />
+                </Button>
+              </StackPanel>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

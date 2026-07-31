@@ -1,0 +1,58 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="H.AppLab.Desktop.Host.App"
+             RequestedThemeVariant="Light">
+  <Application.Styles>
+    <FluentTheme />
+
+    <!-- ========== 左侧快捷菜单（图标 + 文字，参考网盘客户端侧栏） ========== -->
+    <Style Selector="Button.navItem">
+      <Setter Property="Width" Value="60" />
+      <Setter Property="Padding" Value="0,10" />
+      <Setter Property="Margin" Value="8,4" />
+      <Setter Property="CornerRadius" Value="10" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Foreground" Value="#595959" />
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.navItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#f0f0f0" />
+      <Setter Property="Foreground" Value="#262626" />
+    </Style>
+    <Style Selector="Button.navItemActive">
+      <Setter Property="Background" Value="#ececec" />
+      <Setter Property="Foreground" Value="#262626" />
+      <Setter Property="FontWeight" Value="Medium" />
+    </Style>
+    <Style Selector="Button.navItemActive:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#ececec" />
+      <Setter Property="Foreground" Value="#262626" />
+    </Style>
+
+    <!-- ========== 应用卡片（首页 / 应用中心共用） ========== -->
+    <Style Selector="Border.appCard">
+      <Setter Property="Width" Value="240" />
+      <Setter Property="Padding" Value="20" />
+      <Setter Property="Margin" Value="0,0,16,16" />
+      <Setter Property="CornerRadius" Value="10" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="BorderBrush" Value="#e8e8e8" />
+      <Setter Property="Background" Value="#ffffff" />
+    </Style>
+
+    <Style Selector="Button.appOpen">
+      <Setter Property="Padding" Value="16,5" />
+      <Setter Property="FontSize" Value="13" />
+      <Setter Property="CornerRadius" Value="6" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Background" Value="#262626" />
+      <Setter Property="Foreground" Value="#ffffff" />
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.appOpen:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#404040" />
+      <Setter Property="Foreground" Value="#ffffff" />
+    </Style>
+  </Application.Styles>
+</Application>

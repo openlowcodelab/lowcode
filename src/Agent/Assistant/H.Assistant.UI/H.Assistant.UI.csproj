@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../../../common.props" />
+  <PropertyGroup>
+    <AvaloniaUseCompiledBindingsByDefault>false</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="Markdig" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\H.Assistant.Application.Contracts\H.Assistant.Application.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\Utils\H.Abp.HttpClientProxy\H.Abp.HttpClientProxy.csproj" />
+    <ProjectReference Include="..\..\..\Host\H.AppLab.Desktop.Contracts\H.AppLab.Desktop.Contracts.csproj" />
+  </ItemGroup>
+</Project>

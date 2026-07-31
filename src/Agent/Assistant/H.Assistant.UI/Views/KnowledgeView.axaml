@@ -1,0 +1,45 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="using:H.Assistant.UI.Views"
+             x:Class="H.Assistant.UI.Views.KnowledgeView">
+  <DockPanel Background="#ffffff">
+    <!-- Tab 栏 -->
+    <Border DockPanel.Dock="Top" Background="#fafafa" BorderBrush="#f5f5f5" BorderThickness="0,0,0,1" Padding="16,0">
+      <StackPanel Orientation="Horizontal">
+        <Button Classes="knowTab" Classes.knowTabActive="{Binding IsKnowledgeTab}"
+                Command="{Binding SwitchTabCommand}" CommandParameter="knowledge" Content="知识库" />
+        <Button Classes="knowTab" Classes.knowTabActive="{Binding IsMemoryTab}"
+                Command="{Binding SwitchTabCommand}" CommandParameter="memory" Content="记忆" />
+      </StackPanel>
+    </Border>
+
+    <Panel>
+      <ContentControl Content="{Binding KnowledgeSection}" IsVisible="{Binding IsKnowledgeTab}" />
+      <ContentControl Content="{Binding MemorySection}" IsVisible="{Binding IsMemoryTab}" />
+    </Panel>
+  </DockPanel>
+
+  <UserControl.Styles>
+    <Style Selector="Button.knowTab">
+      <Setter Property="Padding" Value="20,12" />
+      <Setter Property="FontSize" Value="14" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0,0,0,2" />
+      <Setter Property="BorderBrush" Value="Transparent" />
+      <Setter Property="Foreground" Value="#595959" />
+      <Setter Property="CornerRadius" Value="0" />
+    </Style>
+    <Style Selector="Button.knowTab:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="#1890ff" />
+    </Style>
+    <Style Selector="Button.knowTabActive">
+      <Setter Property="Foreground" Value="#1890ff" />
+      <Setter Property="FontWeight" Value="Medium" />
+      <Setter Property="BorderBrush" Value="#1890ff" />
+    </Style>
+    <Style Selector="Button.knowTabActive:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Foreground" Value="#1890ff" />
+    </Style>
+  </UserControl.Styles>
+</UserControl>
