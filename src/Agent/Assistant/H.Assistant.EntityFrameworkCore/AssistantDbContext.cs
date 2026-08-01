@@ -17,6 +17,7 @@ public class AssistantDbContext : AbpDbContext<AssistantDbContext>
     public DbSet<KnowledgeNodeEntity> KnowledgeNodes { get; set; } = null!;
     public DbSet<KnowledgeDocumentEntity> KnowledgeDocuments { get; set; } = null!;
     public DbSet<McpServerEntity> McpServers { get; set; } = null!;
+    public DbSet<CategoryEntity> Categories { get; set; } = null!;
 
     public AssistantDbContext(DbContextOptions<AssistantDbContext> options)
         : base(options)
@@ -169,6 +170,16 @@ public class AssistantDbContext : AbpDbContext<AssistantDbContext>
 
             b.HasIndex(x => x.Name).IsUnique();
             b.HasIndex(x => x.IsEnabled);
+        });
+
+        modelBuilder.Entity<CategoryEntity>(b =>
+        {
+            b.ToTable("Category");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Name).IsRequired().HasMaxLength(50);
+            b.Property(x => x.Sort).HasDefaultValue(0);
+
+            b.HasIndex(x => x.Name).IsUnique();
         });
     }
 }

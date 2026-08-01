@@ -1,0 +1,206 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="H.AppLab.Desktop.Views.SkillSettingsView"
+             x:Name="SkillRoot">
+  <Panel>
+    <ScrollViewer Padding="24,14,24,24">
+      <StackPanel>
+        <TextBlock Text="技能管理" FontSize="20" Margin="0,0,0,16" />
+
+        <!-- Skill / Tool 选项卡 -->
+        <Border BorderBrush="#e8e8e8" BorderThickness="0,0,0,2" Margin="0,0,0,16">
+          <StackPanel Orientation="Horizontal">
+            <Button Classes="tabItem" Classes.tabItemActive="{Binding IsSkillTab}"
+                    Command="{Binding SwitchTabCommand}" CommandParameter="skill" Content="Skill 列表" />
+            <Button Classes="tabItem" Classes.tabItemActive="{Binding IsToolTab}"
+                    Command="{Binding SwitchTabCommand}" CommandParameter="tool" Content="Tool 列表" />
+          </StackPanel>
+        </Border>
+
+        <!-- Skill 列表 -->
+        <StackPanel IsVisible="{Binding IsSkillTab}">
+          <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,16">
+            <Button Grid.Column="1" Classes="btn assistantPrimary small" Command="{Binding ShowAddCommand}">
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <TextBlock Text="＋" /><TextBlock Text="添加" />
+              </StackPanel>
+            </Button>
+          </Grid>
+
+          <StackPanel IsVisible="{Binding Loading}" HorizontalAlignment="Center" Margin="0,40" Spacing="12">
+            <ProgressBar IsIndeterminate="True" Width="120" Height="4" Foreground="#a6a6a6" />
+            <TextBlock Text="加载中..." Foreground="#8c8c8c" HorizontalAlignment="Center" />
+          </StackPanel>
+
+          <ItemsControl ItemsSource="{Binding Skills}" IsVisible="{Binding HasSkills}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Border Classes="card" Margin="0,0,0,12" ClipToBounds="True">
+                  <StackPanel>
+                    <Border Background="#fafafa" Padding="16,12" BorderBrush="#e8e8e8" BorderThickness="0,0,0,1">
+                      <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                          <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                          <Border Classes="tag tagBlue"><TextBlock Text="{Binding SkillName}" /></Border>
+                          <Border Classes="tag tagGreen" IsVisible="{Binding IsEnabled}"><TextBlock Text="已启用" /></Border>
+                          <Border Classes="tag tagDefault" IsVisible="{Binding !IsEnabled}"><TextBlock Text="已禁用" /></Border>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                          <Button Classes="link small" Content="{Binding ToggleText}"
+                                  Command="{Binding DataContext.ToggleCommand, ElementName=SkillRoot}" CommandParameter="{Binding}" />
+                          <Button Classes="link small" Content="编辑"
+                                  Command="{Binding DataContext.EditCommand, ElementName=SkillRoot}" CommandParameter="{Binding}" />
+                          <Button Classes="link small danger" Content="删除"
+                                  Command="{Binding DataContext.DeleteCommand, ElementName=SkillRoot}" CommandParameter="{Binding}" />
+                        </StackPanel>
+                      </Grid>
+                    </Border>
+                    <StackPanel Margin="16,12" Spacing="4">
+                      <StackPanel Orientation="Horizontal" Spacing="6">
+                        <TextBlock Text="类型:" FontSize="13" Foreground="#8c8c8c" />
+                        <TextBlock Text="{Binding SkillType}" FontSize="13" Foreground="#595959" />
+                      </StackPanel>
+                      <StackPanel Orientation="Horizontal" Spacing="6">
+                        <TextBlock Text="描述:" FontSize="13" Foreground="#8c8c8c" />
+                        <TextBlock Text="{Binding Description}" FontSize="13" Foreground="#595959" TextWrapping="Wrap" />
+                      </StackPanel>
+                      <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding HasImplementationClass}">
+                        <TextBlock Text="实现类:" FontSize="13" Foreground="#8c8c8c" />
+                        <TextBlock Text="{Binding ImplementationClass}" FontSize="13" Foreground="#595959"
+                                   FontFamily="Consolas,Monaco,Courier New" />
+                      </StackPanel>
+                      <StackPanel Orientation="Horizontal" Spacing="6">
+                        <TextBlock Text="使用次数:" FontSize="13" Foreground="#8c8c8c" />
+                        <TextBlock Text="{Binding UsageCountText}" FontSize="13" Foreground="#595959" />
+                        <TextBlock Text="最后使用:" FontSize="13" Foreground="#8c8c8c" Margin="10,0,0,0" IsVisible="{Binding HasLastUsedTime}" />
+                        <TextBlock Text="{Binding LastUsedTimeText}" FontSize="13" Foreground="#595959" IsVisible="{Binding HasLastUsedTime}" />
+                      </StackPanel>
+                    </StackPanel>
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+
+          <StackPanel HorizontalAlignment="Center" Margin="0,60" Spacing="12">
+            <StackPanel.IsVisible>
+              <MultiBinding Converter="{x:Static BoolConverters.And}">
+                <Binding Path="!Loading" /><Binding Path="!HasSkills" />
+              </MultiBinding>
+            </StackPanel.IsVisible>
+            <TextBlock Text="📥" FontSize="40" Foreground="#d9d9d9" HorizontalAlignment="Center" />
+            <TextBlock Text="暂无技能，点击添加按钮新增" Foreground="#8c8c8c" />
+          </StackPanel>
+        </StackPanel>
+
+        <!-- Tool 列表 -->
+        <StackPanel IsVisible="{Binding IsToolTab}">
+          <ItemsControl ItemsSource="{Binding Tools}" IsVisible="{Binding HasTools}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Border Classes="card" Margin="0,0,0,12" ClipToBounds="True">
+                  <StackPanel>
+                    <Border Background="#fafafa" Padding="16,12" BorderBrush="#e8e8e8" BorderThickness="0,0,0,1">
+                      <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding ClassName}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                        <Border Classes="tag tagGreen" IsVisible="{Binding IsEnabled}"><TextBlock Text="已启用" /></Border>
+                        <Border Classes="tag tagDefault" IsVisible="{Binding !IsEnabled}"><TextBlock Text="已禁用" /></Border>
+                      </StackPanel>
+                    </Border>
+                    <StackPanel Margin="16,12" Spacing="4">
+                      <StackPanel Orientation="Horizontal" Spacing="6">
+                        <TextBlock Text="描述:" FontSize="13" Foreground="#8c8c8c" />
+                        <TextBlock Text="{Binding Description}" FontSize="13" Foreground="#595959" TextWrapping="Wrap" />
+                      </StackPanel>
+                      <StackPanel Orientation="Horizontal" Spacing="6">
+                        <TextBlock Text="实现类:" FontSize="13" Foreground="#8c8c8c" />
+                        <TextBlock Text="{Binding FullName}" FontSize="13" Foreground="#595959"
+                                   FontFamily="Consolas,Monaco,Courier New" />
+                      </StackPanel>
+                      <StackPanel Orientation="Horizontal" Spacing="6">
+                        <TextBlock Text="关联 Skill:" FontSize="13" Foreground="#8c8c8c" />
+                        <TextBlock Text="{Binding SkillName}" FontSize="13" Foreground="#595959" TextWrapping="Wrap" />
+                      </StackPanel>
+                    </StackPanel>
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+
+          <StackPanel HorizontalAlignment="Center" Margin="0,60" Spacing="12" IsVisible="{Binding !HasTools}">
+            <TextBlock Text="📥" FontSize="40" Foreground="#d9d9d9" HorizontalAlignment="Center" />
+            <TextBlock Text="暂无 Tool" Foreground="#8c8c8c" />
+          </StackPanel>
+        </StackPanel>
+      </StackPanel>
+    </ScrollViewer>
+
+    <!-- ========== 对话框 ========== -->
+    <Panel IsVisible="{Binding ShowDialog}">
+      <Border Background="#73000000" PointerPressed="OnOverlayPressed" />
+      <Border Background="#ffffff" CornerRadius="8" Width="460" MaxHeight="760"
+              HorizontalAlignment="Center" VerticalAlignment="Center">
+        <DockPanel>
+          <Border DockPanel.Dock="Top" Padding="24,16" BorderBrush="#e8e8e8" BorderThickness="0,0,0,1">
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Grid.Column="0" Text="{Binding DialogTitle}" FontSize="16" VerticalAlignment="Center" />
+              <Button Grid.Column="1" Classes="ghostIcon" Command="{Binding CloseDialogCommand}">
+                <TextBlock Text="✕" FontSize="14" />
+              </Button>
+            </Grid>
+          </Border>
+          <Border DockPanel.Dock="Bottom" Padding="24,16">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+              <Button Classes="modalCancel" Content="取消" Command="{Binding CloseDialogCommand}" />
+              <Button Classes="modalPrimary" Content="{Binding DialogSaveText}" IsEnabled="{Binding !Saving}" Command="{Binding SaveCommand}" />
+            </StackPanel>
+          </Border>
+          <ScrollViewer Padding="24,20,24,12">
+            <StackPanel Spacing="14">
+              <StackPanel IsVisible="{Binding ShowSkillNameField}">
+                <TextBlock Classes="formLabel"><Run Text="* " Foreground="#ff4d4f" /><Run Text="技能名称" /></TextBlock>
+                <TextBox Classes="modalInput" Text="{Binding EditSkillName, Mode=TwoWay}" Watermark="英文标识，如 weather_query" />
+              </StackPanel>
+              <StackPanel>
+                <TextBlock Classes="formLabel"><Run Text="* " Foreground="#ff4d4f" /><Run Text="显示名称" /></TextBlock>
+                <TextBox Classes="modalInput" Text="{Binding EditDisplayName, Mode=TwoWay}" Watermark="如：天气查询" />
+              </StackPanel>
+              <StackPanel>
+                <TextBlock Classes="formLabel"><Run Text="* " Foreground="#ff4d4f" /><Run Text="描述" /></TextBlock>
+                <TextBox Classes="modalInput" Text="{Binding EditDescription, Mode=TwoWay}" AcceptsReturn="True"
+                         TextWrapping="Wrap" MinHeight="60" Watermark="描述技能的功能，AI 会根据描述自动选择使用此技能" />
+              </StackPanel>
+              <StackPanel>
+                <TextBlock Classes="formLabel"><Run Text="* " Foreground="#ff4d4f" /><Run Text="类型" /></TextBlock>
+                <ComboBox Classes="modalSelect" ItemsSource="{Binding SkillTypeOptions}"
+                          SelectedItem="{Binding EditSkillType, Mode=TwoWay}">
+                  <ComboBox.ItemTemplate>
+                    <DataTemplate><TextBlock Text="{Binding Label}" /></DataTemplate>
+                  </ComboBox.ItemTemplate>
+                </ComboBox>
+              </StackPanel>
+              <StackPanel>
+                <TextBlock Classes="formLabel" Text="实现类" />
+                <TextBox Classes="modalInput" Text="{Binding EditImplementationClass, Mode=TwoWay}"
+                         Watermark="完整类名，如 H.Assistant.Core.Tools.WeatherTool" />
+              </StackPanel>
+              <StackPanel>
+                <TextBlock Classes="formLabel" Text="配置 (JSON)" />
+                <TextBox Classes="modalInput" Text="{Binding EditConfig, Mode=TwoWay}" AcceptsReturn="True"
+                         TextWrapping="Wrap" MinHeight="60" Watermark='可选，如 {"api_key": "xxx"}' />
+              </StackPanel>
+              <StackPanel>
+                <TextBlock Classes="formLabel" Text="参数 Schema (JSON)" />
+                <TextBox Classes="modalInput" Text="{Binding EditParameterSchema, Mode=TwoWay}" AcceptsReturn="True"
+                         TextWrapping="Wrap" MinHeight="60" Watermark="可选，JSON Schema 格式" />
+              </StackPanel>
+              <CheckBox Content="启用" IsChecked="{Binding EditIsEnabled, Mode=TwoWay}" />
+              <CheckBox Content="需要审批" IsChecked="{Binding EditRequiresApproval, Mode=TwoWay}" />
+            </StackPanel>
+          </ScrollViewer>
+        </DockPanel>
+      </Border>
+    </Panel>
+  </Panel>
+</UserControl>

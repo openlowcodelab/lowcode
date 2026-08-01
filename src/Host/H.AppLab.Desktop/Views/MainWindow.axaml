@@ -1,0 +1,66 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="H.AppLab.Desktop.Views.MainWindow"
+        Title="AppLab"
+        Width="1360" Height="860"
+        MinWidth="1024" MinHeight="640"
+        WindowStartupLocation="CenterScreen"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaTitleBarHeightHint="-1"
+        FontFamily="Microsoft YaHei UI, Segoe UI, Inter"
+        FontSize="14"
+        Foreground="#262626"
+        Background="#ffffff">
+  <!-- 宿主外壳：左侧快捷菜单图标栏 + 应用内容区（无系统标题栏，客户区扩展到顶部） -->
+  <!-- 无标题栏模式下，最大化时客户区会扩展到屏幕外，用 OffScreenMargin 修正内容被裁剪 -->
+  <Panel Margin="{Binding $parent[Window].OffScreenMargin}">
+    <Grid ColumnDefinitions="76,*">
+      <!-- 左侧快捷菜单 -->
+      <Border Grid.Column="0" Background="#fafafa" BorderBrush="#f0f0f0" BorderThickness="0,0,1,0">
+        <DockPanel>
+          <!-- Logo（兼作窗口拖拽区） -->
+          <Border DockPanel.Dock="Top" Background="Transparent" Padding="0,16,0,12"
+                  PointerPressed="OnDragAreaPointerPressed">
+            <Border Width="44" Height="44" CornerRadius="12" HorizontalAlignment="Center">
+              <Border.Background>
+                <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                  <GradientStop Color="#5b8def" Offset="0" />
+                  <GradientStop Color="#7f5bef" Offset="1" />
+                </LinearGradientBrush>
+              </Border.Background>
+              <TextBlock Text="A" FontSize="28" FontWeight="Bold" Foreground="#ffffff"
+                         HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+          </Border>
+
+          <!-- 底部设置入口（仅展示图标，固定在菜单栏最下方） -->
+          <Button DockPanel.Dock="Bottom" Classes="navItem"
+                  Classes.navItemActive="{Binding SettingsNav.IsActive}"
+                  Command="{Binding SettingsNav.SelectCommand}"
+                  Margin="8,8,8,16" ToolTip.Tip="设置">
+            <TextBlock Text="{Binding SettingsNav.Icon}" FontSize="20" HorizontalAlignment="Center" />
+          </Button>
+
+          <!-- 快捷菜单：会话 / 任务 / 应用 -->
+          <ItemsControl ItemsSource="{Binding NavItems}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Button Classes="navItem"
+                        Classes.navItemActive="{Binding IsActive}"
+                        Command="{Binding SelectCommand}">
+                  <StackPanel Spacing="4">
+                    <TextBlock Text="{Binding Icon}" FontSize="20" HorizontalAlignment="Center" />
+                    <TextBlock Text="{Binding Title}" FontSize="12" HorizontalAlignment="Center" />
+                  </StackPanel>
+                </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </DockPanel>
+      </Border>
+
+      <!-- 内容区：当前选中的内置页面或插件应用视图 -->
+      <ContentControl Grid.Column="1" Content="{Binding CurrentContent}" />
+    </Grid>
+  </Panel>
+</Window>

@@ -1,0 +1,595 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="using:H.AppLab.Desktop"
+             xmlns:controls="using:H.AppLab.Desktop.Controls"
+             x:Class="H.AppLab.Desktop.Views.TasksView"
+             x:Name="TasksRoot">
+  <Panel Background="#ffffff">
+    <DockPanel>
+      <Panel>
+        <!-- ========== 任务列表 ========== -->
+        <DockPanel IsVisible="{Binding IsTasksView}">
+          <!-- 顶部：标题 + 新建任务 -->
+          <Border DockPanel.Dock="Top" Padding="16,40,16,16" BorderBrush="#f5f5f5" BorderThickness="0,0,0,1">
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Grid.Column="0" Text="任务" VerticalAlignment="Center" />
+              <Button Grid.Column="1" Classes="btn primary" Command="{Binding CreateNewTaskCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                  <TextBlock Text="＋" />
+                  <TextBlock Text="新建任务" />
+                </StackPanel>
+              </Button>
+            </Grid>
+          </Border>
+
+          <!-- 任务分类筛选 -->
+          <Border DockPanel.Dock="Top" Padding="16,10" BorderBrush="#f5f5f5" BorderThickness="0,0,0,1">
+            <Grid ColumnDefinitions="*,Auto">
+              <ItemsControl Grid.Column="0" ItemsSource="{Binding FilterCategories}">
+                <ItemsControl.ItemsPanel>
+                  <ItemsPanelTemplate>
+                    <WrapPanel />
+                  </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Button Classes="categoryChip" Classes.categoryChipActive="{Binding IsActive}"
+                            Command="{Binding DataContext.SelectCategoryCommand, ElementName=TasksRoot}"
+                            CommandParameter="{Binding Name}" Margin="0,0,8,6">
+                      <TextBlock Text="{Binding Name}" />
+                    </Button>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <Button Grid.Column="1" Classes="btn small" Command="{Binding StartAddCategoryCommand}"
+                      VerticalAlignment="Center" Margin="0,0,0,6">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                  <TextBlock Text="＋" FontSize="12" />
+                  <TextBlock Text="新增分类" />
+                </StackPanel>
+              </Button>
+            </Grid>
+          </Border>
+
+          <Panel>
+            <!-- 加载中 -->
+            <StackPanel IsVisible="{Binding LoadingTasks}" HorizontalAlignment="Center" Margin="0,40" Spacing="12">
+              <ProgressBar IsIndeterminate="True" Width="120" Height="4" Foreground="#a6a6a6" />
+              <TextBlock Text="Loading..." Foreground="#8c8c8c" HorizontalAlignment="Center" />
+            </StackPanel>
+
+            <!-- 按分类分组展示任务 -->
+            <ScrollViewer Padding="16">
+              <ScrollViewer.IsVisible>
+                <MultiBinding Converter="{x:Static BoolConverters.Or}">
+                  <Binding Path="HasTaskGroups" />
+                  <Binding Path="IsAddingCategory" />
+                </MultiBinding>
+              </ScrollViewer.IsVisible>
+              <StackPanel Spacing="16">
+                <!-- 新增分类输入框 -->
+                <Border IsVisible="{Binding IsAddingCategory}" Background="#f9f9f9"
+                        BorderBrush="#e8e8e8" BorderThickness="1" CornerRadius="6" Padding="12">
+                  <StackPanel Spacing="8">
+                    <TextBlock Text="新增分类" FontSize="13" FontWeight="Medium" Foreground="#595959" />
+                    <Grid ColumnDefinitions="*,Auto">
+                      <TextBox Grid.Column="0" Classes="modalInput" Text="{Binding NewCategoryName, Mode=TwoWay}"
+                               Watermark="输入分类名称" KeyDown="OnNewCategoryKeyDown" />
+                      <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" Margin="8,0,0,0"
+                                  VerticalAlignment="Center">
+                        <Button Classes="btn small primary" Content="确认"
+                                Command="{Binding ConfirmAddCategoryCommand}" />
+                        <Button Classes="btn small" Content="取消"
+                                Command="{Binding CancelAddCategoryCommand}" />
+                      </StackPanel>
+                    </Grid>
+                  </StackPanel>
+                </Border>
+
+                <!-- 分组列表 -->
+                <ItemsControl ItemsSource="{Binding TaskGroups}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <StackPanel Spacing="8">
+                        <!-- 分组标题 -->
+                        <Grid ColumnDefinitions="*,Auto" Margin="0,8,0,0">
+                          <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="{Binding CategoryName}" FontSize="15" FontWeight="SemiBold"
+                                       Foreground="#262626" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding Tasks.Count, StringFormat='({0})'}" FontSize="12"
+                                       Foreground="#8c8c8c" VerticalAlignment="Center" />
+                          </StackPanel>
+                          <!-- 编辑/删除分类（非"其它"分组显示） -->
+                          <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4"
+                                      IsVisible="{Binding !IsOtherGroup}">
+                            <Button Classes="btn small link"
+                                    Command="{Binding DataContext.StartEditCategoryCommand, ElementName=TasksRoot}"
+                                    CommandParameter="{Binding}">
+                              <TextBlock Text="编辑" FontSize="12" />
+                            </Button>
+                            <Button Classes="btn small link danger"
+                                    Command="{Binding DataContext.DeleteCategoryCommand, ElementName=TasksRoot}"
+                                    CommandParameter="{Binding}">
+                              <TextBlock Text="删除" FontSize="12" />
+                            </Button>
+                          </StackPanel>
+                        </Grid>
+                        <!-- 编辑分类输入框 -->
+                        <Border IsVisible="{Binding IsEditing}" Background="#f9f9f9"
+                                BorderBrush="#e8e8e8" BorderThickness="1" CornerRadius="6" Padding="12">
+                          <Grid ColumnDefinitions="*,Auto">
+                            <TextBox Grid.Column="0" Classes="modalInput" Text="{Binding EditName, Mode=TwoWay}"
+                                     Watermark="输入分类名称" />
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" Margin="8,0,0,0"
+                                        VerticalAlignment="Center">
+                              <Button Classes="btn small primary" Content="保存"
+                                      Command="{Binding DataContext.ConfirmEditCategoryCommand, ElementName=TasksRoot}"
+                                      CommandParameter="{Binding}" />
+                              <Button Classes="btn small" Content="取消"
+                                      Command="{Binding DataContext.CancelEditCategoryCommand, ElementName=TasksRoot}" />
+                            </StackPanel>
+                          </Grid>
+                        </Border>
+                        <!-- 任务卡片列表（两列） -->
+                        <ItemsControl ItemsSource="{Binding Tasks}">
+                          <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                              <WrapPanel />
+                            </ItemsPanelTemplate>
+                          </ItemsControl.ItemsPanel>
+                          <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                              <Border Classes="card" Margin="0,0,8,8" Padding="16,14"
+                                      Opacity="{Binding IsEnabled, Converter={x:Static ui:Converters.EnabledOpacity}}">
+                                <StackPanel Spacing="6">
+                                  <Grid ColumnDefinitions="*,Auto,Auto">
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8"
+                                                VerticalAlignment="Center">
+                                      <TextBlock Text="{Binding TaskName}" FontWeight="Medium"
+                                                 Foreground="#262626" TextTrimming="CharacterEllipsis"
+                                                 VerticalAlignment="Center" />
+                                    </StackPanel>
+                                    <!-- 启用开关 -->
+                                    <Button Grid.Column="1" Padding="0" Background="Transparent"
+                                            BorderThickness="0" Command="{Binding ToggleEnableCommand}"
+                                            Margin="6,0" VerticalAlignment="Center">
+                                      <Border Width="32" Height="18" CornerRadius="9"
+                                              Background="{Binding IsEnabled, Converter={x:Static ui:Converters.ToggleTrackBrush}}">
+                                        <Ellipse Width="14" Height="14" Fill="White" Margin="2"
+                                                 HorizontalAlignment="{Binding IsEnabled, Converter={x:Static ui:Converters.ToggleThumbAlignment}}" />
+                                      </Border>
+                                    </Button>
+                                    <!-- 更多操作 -->
+                                    <Button Grid.Column="2" Classes="ghostIcon" VerticalAlignment="Center">
+                                      <TextBlock Text="⋮" FontSize="14" />
+                                      <Button.Flyout>
+                                        <MenuFlyout Placement="BottomEdgeAlignedRight">
+                                          <MenuItem Header="编辑" Command="{Binding EditTaskCommand}" />
+                                          <MenuItem Header="立即执行" Command="{Binding ExecuteNowCommand}" />
+                                          <MenuItem Header="执行记录" Command="{Binding ViewLogsCommand}" />
+                                          <MenuItem Header="删除任务" Foreground="#ff4d4f"
+                                                    Command="{Binding DeleteCommand}" />
+                                        </MenuFlyout>
+                                      </Button.Flyout>
+                                    </Button>
+                                  </Grid>
+                                  <TextBlock Text="{Binding TaskDescription}" FontSize="12" Foreground="#8c8c8c"
+                                             IsVisible="{Binding HasDescription}" TextWrapping="Wrap" />
+                                  <!-- 创建方式 + 执行方式 -->
+                                  <StackPanel Orientation="Horizontal" Spacing="12">
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                      <TextBlock Text="{Binding SourceTypeIcon}" FontSize="11" Foreground="#bfbfbf" />
+                                      <TextBlock Text="{Binding SourceTypeDisplayText}" FontSize="12"
+                                                 Foreground="#8c8c8c" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                      <TextBlock Text="⚡" FontSize="11" Foreground="#bfbfbf" />
+                                      <TextBlock Text="{Binding ScheduleDisplayText}" FontSize="12"
+                                                 Foreground="#8c8c8c" />
+                                    </StackPanel>
+                                  </StackPanel>
+                                  <StackPanel Orientation="Horizontal" Spacing="4"
+                                              IsVisible="{Binding ShowNextExecution}">
+                                    <TextBlock Text="⏲" FontSize="11" Foreground="#bfbfbf" />
+                                    <TextBlock Text="{Binding NextExecutionText}" FontSize="12"
+                                               Foreground="#8c8c8c" />
+                                  </StackPanel>
+                                </StackPanel>
+                              </Border>
+                            </DataTemplate>
+                          </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                      </StackPanel>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+            </ScrollViewer>
+
+            <!-- 空状态 -->
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
+              <StackPanel.IsVisible>
+                <MultiBinding Converter="{x:Static BoolConverters.And}">
+                  <Binding Path="!LoadingTasks" />
+                  <Binding Path="!HasTaskGroups" />
+                  <Binding Path="!IsAddingCategory" />
+                </MultiBinding>
+              </StackPanel.IsVisible>
+              <TextBlock Text="📄" FontSize="40" Foreground="#d9d9d9" HorizontalAlignment="Center" />
+              <TextBlock Text="暂无任务，点击上方按钮创建" Foreground="#8c8c8c" />
+            </StackPanel>
+          </Panel>
+        </DockPanel>
+
+        <!-- ========== 执行记录（单个任务） ========== -->
+        <DockPanel IsVisible="{Binding IsLogsView}">
+          <Border DockPanel.Dock="Top" Padding="16" BorderBrush="#f5f5f5" BorderThickness="0,0,0,1">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+              <Button Grid.Column="0" Classes="btn small" Command="{Binding BackToTasksCommand}" Margin="0,0,12,0">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                  <TextBlock Text="←" />
+                  <TextBlock Text="返回任务" />
+                </StackPanel>
+              </Button>
+              <TextBlock Grid.Column="1" VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
+                <Run Text="执行记录" />
+                <Run Text=" · " Foreground="#bfbfbf" />
+                <Run Text="{Binding LogsTaskName}" Foreground="#8c8c8c" />
+              </TextBlock>
+              <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+                <Button Classes="btn small" Content="{Binding SelectAllText}" IsVisible="{Binding IsLogSelectionMode}"
+                        Command="{Binding ToggleLogSelectAllCommand}" />
+                <Button Classes="btn small danger" Content="删除选中" IsVisible="{Binding IsLogSelectionMode}"
+                        IsEnabled="{Binding CanBatchDelete}" Command="{Binding ConfirmBatchDeleteLogsCommand}" />
+                <Button Classes="btn small" Content="取消" IsVisible="{Binding IsLogSelectionMode}"
+                        Command="{Binding ExitLogSelectionModeCommand}" />
+                <Button Classes="btn" Content="多选" IsVisible="{Binding !IsLogSelectionMode}"
+                        Command="{Binding ToggleLogSelectionModeCommand}" />
+              </StackPanel>
+            </Grid>
+          </Border>
+
+          <Panel>
+            <!-- 加载中 -->
+            <StackPanel IsVisible="{Binding LoadingTaskLogs}" HorizontalAlignment="Center" Margin="0,40" Spacing="12">
+              <ProgressBar IsIndeterminate="True" Width="120" Height="4" Foreground="#a6a6a6" />
+              <TextBlock Text="Loading..." Foreground="#8c8c8c" HorizontalAlignment="Center" />
+            </StackPanel>
+
+            <!-- 左右分栏 -->
+            <Grid ColumnDefinitions="280,*" IsVisible="{Binding HasLogs}">
+              <!-- 左：摘要列表 -->
+              <Border Grid.Column="0" Background="#fafafa" BorderBrush="#f5f5f5" BorderThickness="0,0,1,0">
+                <ScrollViewer>
+                  <ItemsControl ItemsSource="{Binding TaskLogs}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Button Classes="logItem" Classes.logItemActive="{Binding IsSelected}"
+                                Command="{Binding DataContext.SelectLogCommand, ElementName=TasksRoot}"
+                                CommandParameter="{Binding}">
+                          <StackPanel Orientation="Horizontal" Spacing="10">
+                            <CheckBox IsChecked="{Binding IsChecked, Mode=TwoWay}"
+                                      IsVisible="{Binding DataContext.IsLogSelectionMode, ElementName=TasksRoot}"
+                                      VerticalAlignment="Top" Padding="0" MinWidth="0" />
+                            <Ellipse Width="8" Height="8" Margin="0,6,0,0" VerticalAlignment="Top"
+                                     Fill="{Binding StatusColor, Converter={x:Static ui:Converters.StringToBrush}}" />
+                            <StackPanel Spacing="3" MaxWidth="190">
+                              <TextBlock Text="{Binding TaskName}" FontSize="13" FontWeight="Medium"
+                                         Foreground="#262626" TextTrimming="CharacterEllipsis" />
+                              <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="{Binding StartTimeText}" FontSize="12" Foreground="#8c8c8c" />
+                                <TextBlock Text="{Binding DurationText}" FontSize="12" Foreground="#bfbfbf"
+                                           IsVisible="{Binding HasDuration}" />
+                              </StackPanel>
+                            </StackPanel>
+                          </StackPanel>
+                        </Button>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </ScrollViewer>
+              </Border>
+
+              <!-- 右：详情 -->
+              <Panel Grid.Column="1">
+                <DockPanel IsVisible="{Binding HasSelectedLog}">
+                  <Border DockPanel.Dock="Top" Padding="16,12" BorderBrush="#f5f5f5" BorderThickness="0,0,0,1">
+                    <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+                      <Border Grid.Column="0" CornerRadius="4" Padding="8,2" Margin="0,0,10,0"
+                              Background="{Binding SelectedLog.StatusBackground, Converter={x:Static ui:Converters.StringToBrush}}">
+                        <TextBlock Text="{Binding SelectedLog.StatusText}" FontSize="12" FontWeight="Medium"
+                                   Foreground="{Binding SelectedLog.StatusColor, Converter={x:Static ui:Converters.StringToBrush}}" />
+                      </Border>
+                      <TextBlock Grid.Column="1" Text="{Binding SelectedLog.TaskName}" FontWeight="Medium"
+                                 Foreground="#262626" VerticalAlignment="Center" />
+                      <TextBlock Grid.Column="3" FontSize="12" Foreground="#8c8c8c" VerticalAlignment="Center">
+                        <Run Text="{Binding SelectedLog.FullStartTimeText}" />
+                        <Run Text="{Binding SelectedLog.DurationText}" />
+                      </TextBlock>
+                    </Grid>
+                  </Border>
+                  <ScrollViewer Padding="16">
+                    <StackPanel Spacing="12">
+                      <Border IsVisible="{Binding SelectedLog.HasResult}" Background="#f9f9f9"
+                              CornerRadius="6" Padding="16,12">
+                        <controls:MarkdownTextView Markdown="{Binding SelectedLog.Result}" />
+                      </Border>
+                      <Border IsVisible="{Binding SelectedLog.HasError}" Background="#fff1f0"
+                              CornerRadius="4" Padding="8">
+                        <SelectableTextBlock Text="{Binding SelectedLog.ErrorMessage}" FontSize="13"
+                                             Foreground="#ff4d4f" TextWrapping="Wrap" />
+                      </Border>
+                    </StackPanel>
+                  </ScrollViewer>
+                </DockPanel>
+                <StackPanel IsVisible="{Binding !HasSelectedLog}" HorizontalAlignment="Center"
+                            VerticalAlignment="Center" Spacing="12">
+                  <TextBlock Text="📥" FontSize="40" Foreground="#d9d9d9" HorizontalAlignment="Center" />
+                  <TextBlock Text="请选择一条执行记录" Foreground="#8c8c8c" />
+                </StackPanel>
+              </Panel>
+            </Grid>
+
+            <!-- 空状态 -->
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
+              <StackPanel.IsVisible>
+                <MultiBinding Converter="{x:Static BoolConverters.And}">
+                  <Binding Path="!LoadingTaskLogs" />
+                  <Binding Path="!HasLogs" />
+                </MultiBinding>
+              </StackPanel.IsVisible>
+              <TextBlock Text="📥" FontSize="40" Foreground="#d9d9d9" HorizontalAlignment="Center" />
+              <TextBlock Text="暂无执行记录" Foreground="#8c8c8c" />
+            </StackPanel>
+          </Panel>
+        </DockPanel>
+      </Panel>
+    </DockPanel>
+
+    <!-- ========== 任务创建/编辑对话框 ========== -->
+    <Panel IsVisible="{Binding ShowTaskDialog}">
+      <Border Background="#80000000" PointerPressed="OnOverlayPressed" />
+      <Border Background="#ffffff" CornerRadius="8" MaxWidth="640" MaxHeight="680"
+              HorizontalAlignment="Center" VerticalAlignment="Center" BoxShadow="0 4 12 0 #26000000">
+        <DockPanel>
+          <Border DockPanel.Dock="Top" Padding="20,16" BorderBrush="#e8e8e8" BorderThickness="0,0,0,1">
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Grid.Column="0" Text="{Binding DialogTitle}" FontSize="16" FontWeight="SemiBold" />
+              <Button Grid.Column="1" Classes="ghostIcon" Command="{Binding CloseTaskDialogCommand}">
+                <TextBlock Text="✕" FontSize="14" />
+              </Button>
+            </Grid>
+          </Border>
+          <Border DockPanel.Dock="Bottom" Padding="20,12" BorderBrush="#e8e8e8" BorderThickness="0,1,0,0">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+              <Button Classes="modalCancel" Content="取消" Command="{Binding CloseTaskDialogCommand}" />
+              <Button Classes="modalPrimary" Content="{Binding DialogSaveText}" Command="{Binding SaveScheduledTaskCommand}" />
+            </StackPanel>
+          </Border>
+          <ScrollViewer Padding="20" MinWidth="560">
+            <StackPanel Spacing="16">
+              <!-- 任务名称 -->
+              <StackPanel>
+                <TextBlock Classes="formLabel"><Run Text="任务名称 " /><Run Text="*" Foreground="#ff4d4f" /></TextBlock>
+                <TextBox Classes="modalInput" Text="{Binding EditTaskModel.TaskName, Mode=TwoWay}" Watermark="输入任务名称" />
+              </StackPanel>
+
+              <!-- 任务分类 + Agent 类型 -->
+              <Grid ColumnDefinitions="*,16,*">
+                <StackPanel Grid.Column="0">
+                  <TextBlock Classes="formLabel" Text="任务分类" />
+                  <ComboBox Classes="modalSelect" ItemsSource="{Binding CategoryOptions}"
+                            SelectedItem="{Binding EditTaskModel.Category, Mode=TwoWay}" />
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                  <TextBlock Classes="formLabel" Text="Agent 类型" />
+                  <ComboBox Classes="modalSelect" ItemsSource="{Binding AvailableAgents}"
+                            SelectedItem="{Binding DialogSelectedAgent, Mode=TwoWay}">
+                    <ComboBox.ItemTemplate>
+                      <DataTemplate>
+                        <TextBlock Text="{Binding DisplayName}" />
+                      </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                  </ComboBox>
+                </StackPanel>
+              </Grid>
+
+              <!-- 创建方式 -->
+              <StackPanel>
+                <TextBlock Classes="formLabel" Text="创建方式" />
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                  <Button Classes="segBtn" Classes.segBtnActive="{Binding EditTaskModel.IsPromptSource}"
+                          Command="{Binding SetSourceTypeCommand}" CommandParameter="Prompt">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                      <TextBlock Text="💬" />
+                      <TextBlock Text="提示词" />
+                    </StackPanel>
+                  </Button>
+                  <Button Classes="segBtn" Classes.segBtnActive="{Binding EditTaskModel.IsWorkflowSource}"
+                          Command="{Binding SetSourceTypeCommand}" CommandParameter="Workflow">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                      <TextBlock Text="🔀" />
+                      <TextBlock Text="工作流" />
+                    </StackPanel>
+                  </Button>
+                </StackPanel>
+              </StackPanel>
+
+              <!-- 提示词内容（提示词方式） -->
+              <StackPanel IsVisible="{Binding EditTaskModel.IsPromptSource}">
+                <TextBlock Classes="formLabel"><Run Text="提示词内容 " /><Run Text="*" Foreground="#ff4d4f" /></TextBlock>
+                <TextBox Classes="modalInput" Text="{Binding EditTaskModel.PromptContent, Mode=TwoWay}"
+                         Watermark="输入要执行的任务内容..." AcceptsReturn="True" TextWrapping="Wrap" MinHeight="100" />
+              </StackPanel>
+
+              <!-- 工作流步骤（工作流方式） -->
+              <StackPanel IsVisible="{Binding EditTaskModel.IsWorkflowSource}" Spacing="8">
+                <Grid ColumnDefinitions="*,Auto">
+                  <TextBlock Grid.Column="0" Classes="formLabel" Margin="0"><Run Text="工作流步骤 " /><Run Text="*" Foreground="#ff4d4f" /></TextBlock>
+                  <Button Grid.Column="1" Classes="btn small" Command="{Binding AddWorkflowStepCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                      <TextBlock Text="＋" />
+                      <TextBlock Text="添加步骤" />
+                    </StackPanel>
+                  </Button>
+                </Grid>
+                <ItemsControl ItemsSource="{Binding EditTaskModel.WorkflowSteps}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Border Background="#f9f9f9" BorderBrush="#e8e8e8" BorderThickness="1" CornerRadius="4"
+                              Padding="10" Margin="0,0,0,8">
+                        <StackPanel Spacing="6">
+                          <Grid ColumnDefinitions="*,Auto">
+                            <TextBox Grid.Column="0" Classes="modalInput" Text="{Binding Name, Mode=TwoWay}" Watermark="步骤名称" />
+                            <Button Grid.Column="1" Classes="ghostIcon" Margin="6,0,0,0" ToolTip.Tip="删除步骤"
+                                    Command="{Binding DataContext.RemoveWorkflowStepCommand, ElementName=TasksRoot}"
+                                    CommandParameter="{Binding}">
+                              <TextBlock Text="✕" FontSize="12" />
+                            </Button>
+                          </Grid>
+                          <TextBox Classes="modalInput" Text="{Binding Prompt, Mode=TwoWay}"
+                                   Watermark="步骤提示词/指令..." AcceptsReturn="True" TextWrapping="Wrap" MinHeight="60" />
+                        </StackPanel>
+                      </Border>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </StackPanel>
+
+              <!-- 执行方式 -->
+              <StackPanel>
+                <TextBlock Classes="formLabel" Text="执行方式" />
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                  <Button Classes="segBtn" Classes.segBtnActive="{Binding EditTaskModel.IsManualMode}"
+                          Command="{Binding SetExecutionModeCommand}" CommandParameter="Manual">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                      <TextBlock Text="👆" />
+                      <TextBlock Text="手动" />
+                    </StackPanel>
+                  </Button>
+                  <Button Classes="segBtn" Classes.segBtnActive="{Binding EditTaskModel.IsAutoMode}"
+                          Command="{Binding SetExecutionModeCommand}" CommandParameter="Auto">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                      <TextBlock Text="🤖" />
+                      <TextBlock Text="自动" />
+                    </StackPanel>
+                  </Button>
+                </StackPanel>
+                <TextBlock Text="手动任务需点击“立即执行”触发；自动任务按配置的调度规则执行（单次或周期性）。"
+                           FontSize="12" Foreground="#bfbfbf" Margin="0,6,0,0" TextWrapping="Wrap" />
+              </StackPanel>
+
+              <!-- 调度配置（自动模式） -->
+              <Border IsVisible="{Binding EditTaskModel.IsAutoMode}" Background="#f9f9f9"
+                      BorderBrush="#e8e8e8" BorderThickness="1" CornerRadius="4" Padding="12">
+                <StackPanel Spacing="10">
+                  <StackPanel>
+                    <TextBlock Classes="formLabel" Text="调度类型" />
+                    <ComboBox Classes="modalSelect" ItemsSource="{Binding ScheduleTypeOptions}"
+                              SelectedItem="{Binding EditTaskModel.ScheduleType, Mode=TwoWay}">
+                      <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                          <TextBlock Text="{Binding Label}" />
+                        </DataTemplate>
+                      </ComboBox.ItemTemplate>
+                    </ComboBox>
+                  </StackPanel>
+
+                  <!-- 执行时间配置 -->
+                  <StackPanel IsVisible="{Binding EditTaskModel.ShowTimeConfig}" Spacing="8">
+                    <TextBlock Text="执行时间" FontSize="13" FontWeight="Medium" Foreground="#595959" />
+                    <Grid ColumnDefinitions="*,12,*,12,*">
+                      <StackPanel Grid.Column="0" IsVisible="{Binding EditTaskModel.ShowWeeklyConfig}">
+                        <TextBlock Text="星期" FontSize="12" Foreground="#8c8c8c" Margin="0,0,0,4" />
+                        <ComboBox Classes="modalSelect" ItemsSource="{Binding DayOfWeekOptions}"
+                                  SelectedItem="{Binding EditTaskModel.DayOfWeek, Mode=TwoWay}">
+                          <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                              <TextBlock Text="{Binding Label}" />
+                            </DataTemplate>
+                          </ComboBox.ItemTemplate>
+                        </ComboBox>
+                      </StackPanel>
+                      <StackPanel Grid.Column="0" IsVisible="{Binding EditTaskModel.ShowMonthlyConfig}">
+                        <TextBlock Text="日期" FontSize="12" Foreground="#8c8c8c" Margin="0,0,0,4" />
+                        <NumericUpDown Classes="modalInput" Minimum="1" Maximum="31" FormatString="0"
+                                       Value="{Binding EditTaskModel.DayOfMonth, Mode=TwoWay}" />
+                      </StackPanel>
+                      <StackPanel Grid.Column="2">
+                        <TextBlock Text="小时" FontSize="12" Foreground="#8c8c8c" Margin="0,0,0,4" />
+                        <NumericUpDown Classes="modalInput" Minimum="0" Maximum="23" FormatString="0"
+                                       Value="{Binding EditTaskModel.Hour, Mode=TwoWay}" />
+                      </StackPanel>
+                      <StackPanel Grid.Column="4">
+                        <TextBlock Text="分钟" FontSize="12" Foreground="#8c8c8c" Margin="0,0,0,4" />
+                        <NumericUpDown Classes="modalInput" Minimum="0" Maximum="59" FormatString="0"
+                                       Value="{Binding EditTaskModel.Minute, Mode=TwoWay}" />
+                      </StackPanel>
+                    </Grid>
+                  </StackPanel>
+
+                  <!-- Cron 表达式 -->
+                  <StackPanel IsVisible="{Binding EditTaskModel.ShowCronConfig}" Spacing="8">
+                    <TextBlock Text="Cron 表达式" FontSize="13" FontWeight="Medium" Foreground="#595959" />
+                    <TextBox Classes="modalInput" Text="{Binding EditTaskModel.CronExpression, Mode=TwoWay}"
+                             Watermark="例如: 0 */2 * * *" />
+                  </StackPanel>
+                </StackPanel>
+              </Border>
+            </StackPanel>
+          </ScrollViewer>
+        </DockPanel>
+      </Border>
+    </Panel>
+
+    <!-- ========== 批量删除确认对话框 ========== -->
+    <Panel IsVisible="{Binding ShowBatchDeleteConfirm}">
+      <Border Background="#80000000" />
+      <Border Background="#ffffff" CornerRadius="8" Width="400"
+              HorizontalAlignment="Center" VerticalAlignment="Center" BoxShadow="0 4 12 0 #26000000">
+        <DockPanel>
+          <Border DockPanel.Dock="Top" Padding="20,16" BorderBrush="#e8e8e8" BorderThickness="0,0,0,1">
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock Grid.Column="0" Text="确认批量删除" FontSize="16" FontWeight="SemiBold" />
+              <Button Grid.Column="1" Classes="ghostIcon" Command="{Binding CancelBatchDeleteCommand}">
+                <TextBlock Text="✕" FontSize="14" />
+              </Button>
+            </Grid>
+          </Border>
+          <Border DockPanel.Dock="Bottom" Padding="20,12" BorderBrush="#e8e8e8" BorderThickness="0,1,0,0">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+              <Button Classes="modalCancel" Content="取消" Command="{Binding CancelBatchDeleteCommand}" />
+              <Button Classes="modalPrimary" Content="删除" Background="#ff4d4f" Command="{Binding BatchDeleteLogsCommand}" />
+            </StackPanel>
+          </Border>
+          <TextBlock Text="{Binding BatchDeleteMessage}" FontSize="14" Foreground="#595959"
+                     TextAlignment="Center" Margin="20,32" TextWrapping="Wrap" />
+        </DockPanel>
+      </Border>
+    </Panel>
+
+  </Panel>
+
+  <UserControl.Styles>
+    <Style Selector="Button.logItem">
+      <Setter Property="Padding" Value="14,12" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0,0,0,1" />
+      <Setter Property="BorderBrush" Value="#f0f0f0" />
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Left" />
+      <Setter Property="CornerRadius" Value="0" />
+    </Style>
+    <Style Selector="Button.logItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#f0f0f0" />
+    </Style>
+    <Style Selector="Button.logItemActive">
+      <Setter Property="Background" Value="#e6f7ff" />
+      <Setter Property="BorderThickness" Value="3,0,0,1" />
+      <Setter Property="BorderBrush" Value="#1890ff" />
+    </Style>
+    <Style Selector="Button.logItemActive:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#e6f7ff" />
+    </Style>
+  </UserControl.Styles>
+</UserControl>

@@ -25,5 +25,8 @@ public class AssistantMapperProfile : Profile
 
         // Knowledge document (content) mapping
         CreateMap<KnowledgeDocumentEntity, KnowledgeDocumentDto>();
+
+        // Category mapping
+        CreateMap<CategoryEntity, CategoryDto>();
     }
 }
