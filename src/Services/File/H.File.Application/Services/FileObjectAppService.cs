@@ -1,5 +1,7 @@
+using System.Text.RegularExpressions;
 using H.File.Application.Contracts;
 using H.File.EntityFrameworkCore;
+using Volo.Abp;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 
@@ -11,13 +13,16 @@ namespace H.File.Application.Services;
 public class FileObjectAppService : ApplicationService, IFileObjectAppService
 {
     private readonly IRepository<FileProjectEntity, Guid> _repository;
+    private readonly IRepository<FileFolderEntity, Guid> _folderRepository;
     private readonly MinioStorageService _storage;
 
     public FileObjectAppService(
         IRepository<FileProjectEntity, Guid> repository,
+        IRepository<FileFolderEntity, Guid> folderRepository,
         MinioStorageService storage)
     {
         _repository = repository;
+        _folderRepository = folderRepository;
         _storage = storage;
     }
 
@@ -30,7 +35,8 @@ public class FileObjectAppService : ApplicationService, IFileObjectAppService
         var result = new List<FileObjectDto>();
         foreach (var (key, size, lastModified) in objects)
         {
-            var isFolder = key.EndsWith('/');
+            // 文件夹只在左侧分类树展示，右侧列表仅展示文件
+            if (key.EndsWith('/')) continue;
             var fileName = GetFileName(key);
             result.Add(new FileObjectDto
             {
@@ -38,54 +44,39 @@ public class FileObjectAppService : ApplicationService, IFileObjectAppService
                 FileName = fileName,
                 Size = size,
                 LastModified = lastModified,
-                IsFolder = isFolder,
-                ContentType = isFolder ? null : GetContentType(fileName)
+                IsFolder = false,
+                ContentType = GetContentType(fileName)
             });
         }
 
-        // 文件夹在前，文件在后
-        return result.OrderByDescending(x => x.IsFolder).ThenBy(x => x.FileName).ToList();
+        return result.OrderBy(x => x.FileName).ToList();
     }
 
     public async Task<List<FileFolderDto>> GetFolderTreeAsync(Guid projectId)
     {
-        var entity = await _repository.GetAsync(projectId);
-        var objects = await _storage.ListAllObjectsAsync(entity.BucketName);
+        await _repository.GetAsync(projectId);
+        var folders = await _folderRepository.GetListAsync(f => f.ProjectId == projectId);
 
-        var root = new List<FileFolderDto>();
-        var folderSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var (key, _, _) in objects)
+        var nodes = new Dictionary<string, FileFolderDto>(StringComparer.OrdinalIgnoreCase);
+        foreach (var f in folders)
         {
-            var parts = key.Split('/', StringSplitOptions.RemoveEmptyEntries);
-            for (int i = 0; i < parts.Length - 1; i++)
-            {
-                var path = string.Join('/', parts[..(i + 1)]) + "/";
-                folderSet.Add(path);
-            }
+            nodes[f.Path] = new FileFolderDto { Path = f.Path, Code = f.Code, Name = f.Name };
         }
 
-        // 构建树
-        foreach (var path in folderSet.OrderBy(p => p))
+        var roots = new List<FileFolderDto>();
+        foreach (var f in folders.OrderBy(x => x.Name))
         {
-            var parts = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
-            var name = parts[^1];
-            var parentPath = parts.Length > 1 ? string.Join('/', parts[..^1]) + "/" : "";
-
-            var node = new FileFolderDto { Path = path, Name = name };
-
-            if (string.IsNullOrEmpty(parentPath))
-            {
-                root.Add(node);
-            }
+            var node = nodes[f.Path];
+            var parentPath = GetParentPath(f.Path, f.Code);
+            if (parentPath.Length == 0)
+                roots.Add(node);
+            else if (nodes.TryGetValue(parentPath, out var parent))
+                parent.Children.Add(node);
             else
-            {
-                var parent = FindNode(root, parentPath);
-                parent?.Children.Add(node);
-            }
+                roots.Add(node);
         }
 
-        return root;
+        return roots;
     }
 
     public async Task<FileUploadResultDto> UploadAsync(Guid projectId, string folderPath, string fileName, byte[] content, string? contentType = null)
@@ -152,8 +143,15 @@ public class FileObjectAppService : ApplicationService, IFileObjectAppService
         }
         else if (preview.PreviewType == "office")
         {
-            // Office 文件提供下载URL，前端使用第三方预览
+            // Office 文件：前端使用 docx-preview / xlsx / pptx-preview 等库解析 Base64 内容渲染预览
             preview.PreviewUrl = await _storage.GetPresignedDownloadUrlAsync(entity.BucketName, fileKey, 30);
+            var size = await _storage.GetObjectSizeAsync(entity.BucketName, fileKey);
+            preview.Size = size ?? 0;
+            if (size.HasValue && size.Value <= MaxOfficePreviewSize)
+            {
+                var data = await _storage.GetObjectAsync(entity.BucketName, fileKey);
+                preview.Base64Content = Convert.ToBase64String(data);
+            }
         }
 
         return preview;
@@ -165,12 +163,52 @@ public class FileObjectAppService : ApplicationService, IFileObjectAppService
         await _storage.RemoveObjectAsync(entity.BucketName, fileKey);
     }
 
-    public async Task CreateFolderAsync(Guid projectId, string folderPath)
+    public async Task CreateFolderAsync(Guid projectId, CreateFolderInput input)
     {
+        if (string.IsNullOrWhiteSpace(input.Name))
+            throw new UserFriendlyException("分类名称不能为空");
+        if (input.Name.Contains('/'))
+            throw new UserFriendlyException("分类名称不能包含 / 字符");
+
         var entity = await _repository.GetAsync(projectId);
-        var objectKey = EnsureTrailingSlash(folderPath);
-        // MinIO 中文件夹通过空对象 + 尾部斜杠表示
-        await _storage.PutObjectAsync(entity.BucketName, objectKey, Array.Empty<byte>(), "application/x-directory");
+        var parentPath = NormalizeParentPath(input.ParentPath);
+
+        var code = string.IsNullOrWhiteSpace(input.Code)
+            ? await GenerateUniqueFolderCodeAsync(projectId, parentPath)
+            : input.Code.Trim().ToLowerInvariant();
+
+        if (!FolderCodeRegex.IsMatch(code))
+            throw new UserFriendlyException("分类编号需为 3-20 位小写字母");
+
+        var path = parentPath + code + "/";
+        if (await _folderRepository.AnyAsync(f => f.ProjectId == projectId && f.Path == path))
+            throw new UserFriendlyException($"分类编号「{code}」在该层级已存在");
+
+        await _storage.PutObjectAsync(entity.BucketName, path, Array.Empty<byte>(), "application/x-directory");
+
+        await _folderRepository.InsertAsync(new FileFolderEntity
+        {
+            ProjectId = projectId,
+            Code = code,
+            Name = input.Name.Trim(),
+            Path = path
+        });
+    }
+
+    public async Task RenameFolderAsync(Guid projectId, string folderPath, string newName)
+    {
+        if (string.IsNullOrWhiteSpace(newName))
+            throw new UserFriendlyException("分类名称不能为空");
+        if (newName.Contains('/'))
+            throw new UserFriendlyException("分类名称不能包含 / 字符");
+
+        var folder = await _folderRepository.FirstOrDefaultAsync(f =>
+            f.ProjectId == projectId && f.Path == EnsureTrailingSlash(folderPath));
+        if (folder == null)
+            throw new UserFriendlyException("分类不存在");
+
+        folder.Name = newName.Trim();
+        await _folderRepository.UpdateAsync(folder);
     }
 
     public async Task DeleteFolderAsync(Guid projectId, string folderPath)
@@ -178,30 +216,63 @@ public class FileObjectAppService : ApplicationService, IFileObjectAppService
         var entity = await _repository.GetAsync(projectId);
         var prefix = EnsureTrailingSlash(folderPath);
         await _storage.RemoveObjectsByPrefixAsync(entity.BucketName, prefix);
+
+        var toDelete = await _folderRepository.GetListAsync(f =>
+            f.ProjectId == projectId && (f.Path == prefix || f.Path.StartsWith(prefix)));
+        await _folderRepository.DeleteManyAsync(toDelete);
     }
 
     #region 辅助方法
 
+    /// <summary>Office 文件在线预览的最大大小（超过则提示下载查看）</summary>
+    private const long MaxOfficePreviewSize = 30L * 1024 * 1024;
+
+    private const string FolderCodeChars = "abcdefghijklmnopqrstuvwxyz";
+
+    private static readonly Regex FolderCodeRegex = new("^[a-z]{3,20}$", RegexOptions.Compiled);
+
     private static string EnsureTrailingSlash(string path)
         => path.EndsWith('/') ? path : path + "/";
+
+    private static string NormalizeParentPath(string? parentPath)
+    {
+        if (string.IsNullOrEmpty(parentPath))
+            return string.Empty;
+        return parentPath.EndsWith('/') ? parentPath : parentPath + "/";
+    }
+
+    private static string GetParentPath(string path, string code)
+    {
+        var segment = code + "/";
+        return path.EndsWith(segment, StringComparison.OrdinalIgnoreCase)
+            ? path[..^segment.Length]
+            : string.Empty;
+    }
+
+    private static string GenerateRandomCode()
+    {
+        var chars = new char[8];
+        for (int i = 0; i < chars.Length; i++)
+            chars[i] = FolderCodeChars[Random.Shared.Next(FolderCodeChars.Length)];
+        return new string(chars);
+    }
+
+    private async Task<string> GenerateUniqueFolderCodeAsync(Guid projectId, string parentPath)
+    {
+        for (int i = 0; i < 10; i++)
+        {
+            var code = GenerateRandomCode();
+            if (!await _folderRepository.AnyAsync(f => f.ProjectId == projectId && f.Path == parentPath + code + "/"))
+                return code;
+        }
+        throw new UserFriendlyException("无法生成唯一的分类编号，请重试");
+    }
 
     private static string GetFileName(string key)
     {
         var trimmed = key.TrimEnd('/');
         var idx = trimmed.LastIndexOf('/');
         return idx >= 0 ? trimmed[(idx + 1)..] : trimmed;
-    }
-
-    private static FileFolderDto? FindNode(List<FileFolderDto> nodes, string path)
-    {
-        foreach (var node in nodes)
-        {
-            if (node.Path.Equals(path, StringComparison.OrdinalIgnoreCase))
-                return node;
-            var found = FindNode(node.Children, path);
-            if (found != null) return found;
-        }
-        return null;
     }
 
     private static string GetContentType(string fileName)

@@ -47,8 +47,24 @@ public class FileObjectDto
 public class FileFolderDto
 {
     public string Path { get; set; } = string.Empty;
+    public string Code { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public List<FileFolderDto> Children { get; set; } = new();
+}
+
+/// <summary>
+/// 创建分类输入
+/// </summary>
+public class CreateFolderInput
+{
+    /// <summary>父分类的 MinIO 目录前缀（以 / 结尾，根分类为空）</summary>
+    public string? ParentPath { get; set; }
+
+    /// <summary>分类显示名称</summary>
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>分类编号（3-20 位小写字母，留空则自动生成 8 位），作为 MinIO 目录名</summary>
+    public string? Code { get; set; }
 }
 
 /// <summary>
@@ -77,4 +93,6 @@ public class FilePreviewDto
     public string? PreviewUrl { get; set; }
     /// <summary>文本内容（用于txt、md、html等文本文件）</summary>
     public string? TextContent { get; set; }
+    /// <summary>文件内容 Base64（用于 docx/xlsx/pptx 等需要前端解析预览的文件）</summary>
+    public string? Base64Content { get; set; }
 }

@@ -72,6 +72,8 @@ public class MinioStorageService
     /// <summary>上传对象</summary>
     public async Task PutObjectAsync(string bucketName, string objectName, byte[] data, string? contentType = null)
     {
+        if (data.Length == 0)
+            data = [0];
         using var stream = new MemoryStream(data);
         var args = new PutObjectArgs()
             .WithBucket(bucketName)
@@ -107,6 +109,18 @@ public class MinioStorageService
             .WithObject(objectName));
     }
 
+    /// <summary>复制对象（服务端复制）</summary>
+    public async Task CopyObjectAsync(string bucketName, string sourceObjectName, string targetObjectName)
+    {
+        var args = new CopyObjectArgs()
+            .WithBucket(bucketName)
+            .WithObject(targetObjectName)
+            .WithCopyObjectSource(new CopySourceObjectArgs()
+                .WithBucket(bucketName)
+                .WithObject(sourceObjectName));
+        await _client.CopyObjectAsync(args);
+    }
+
     /// <summary>删除多个对象（按前缀）</summary>
     public async Task RemoveObjectsByPrefixAsync(string bucketName, string prefix)
     {
@@ -137,6 +151,22 @@ public class MinioStorageService
                 .WithBucket(bucketName)
                 .WithObject(objectName));
             return stat.ContentType;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>获取对象大小（字节）</summary>
+    public async Task<long?> GetObjectSizeAsync(string bucketName, string objectName)
+    {
+        try
+        {
+            var stat = await _client.StatObjectAsync(new StatObjectArgs()
+                .WithBucket(bucketName)
+                .WithObject(objectName));
+            return (long)stat.Size;
         }
         catch
         {

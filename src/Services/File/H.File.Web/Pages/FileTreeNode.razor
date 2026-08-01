@@ -1,9 +1,12 @@
 @namespace H.File.Web
 
 <div class="file-tree-node @(SelectedFolder == Node.Path ? "active" : "")" @onclick="@(() => OnSelect.InvokeAsync(Node.Path))">
-    📁 @Node.Name
+    <span class="node-label">📁 <span class="node-name">@Node.Name</span></span>
+    <span class="node-code" title="分类编号">@Node.Code</span>
     <span class="node-actions">
-        <a class="danger" @onclick:stopPropagation="true" @onclick="@(() => OnDelete.InvokeAsync(Node))">✕</a>
+        <a title="新增子分类" @onclick:stopPropagation="true" @onclick="@(() => OnAddChild.InvokeAsync(Node))">＋</a>
+        <a title="重命名" @onclick:stopPropagation="true" @onclick="@(() => OnRename.InvokeAsync(Node))">✏️</a>
+        <a title="删除" class="danger" @onclick:stopPropagation="true" @onclick="@(() => OnDelete.InvokeAsync(Node))">✕</a>
     </span>
 </div>
 @if (Node.Children.Any())
@@ -11,7 +14,7 @@
     <div class="file-tree-children">
         @foreach (var child in Node.Children)
         {
-            <FileTreeNode Node="@child" SelectedFolder="@SelectedFolder" OnSelect="@OnSelect" OnDelete="@OnDelete" />
+            <FileTreeNode Node="@child" SelectedFolder="@SelectedFolder" OnSelect="@OnSelect" OnAddChild="@OnAddChild" OnRename="@OnRename" OnDelete="@OnDelete" />
         }
     </div>
 }
@@ -20,5 +23,7 @@
     [Parameter] public FileFolderDto Node { get; set; } = new();
     [Parameter] public string? SelectedFolder { get; set; }
     [Parameter] public EventCallback<string?> OnSelect { get; set; }
+    [Parameter] public EventCallback<FileFolderDto> OnAddChild { get; set; }
+    [Parameter] public EventCallback<FileFolderDto> OnRename { get; set; }
     [Parameter] public EventCallback<FileFolderDto> OnDelete { get; set; }
 }

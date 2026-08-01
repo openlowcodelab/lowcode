@@ -5,9 +5,9 @@ namespace H.File.Application;
 /// </summary>
 public class MinioOptions
 {
-    public string Endpoint { get; set; } = "localhost:9000";
-    public string AccessKey { get; set; } = "minioadmin";
-    public string SecretKey { get; set; } = "minioadmin";
+    public string Endpoint { get; set; } = default!;
+    public string AccessKey { get; set; } = default!;
+    public string SecretKey { get; set; } = default!;
     public bool UseSsl { get; set; }
     /// <summary>外部访问地址（用于生成预览/下载URL）</summary>
     public string? ExternalEndpoint { get; set; }
