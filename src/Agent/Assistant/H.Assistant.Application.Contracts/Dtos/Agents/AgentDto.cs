@@ -6,7 +6,7 @@ namespace H.Assistant.Application.Contracts;
 /// <summary>
 /// Agent DTO
 /// </summary>
-public class AgentDto : FullAuditedEntityDto<Guid>
+public class AgentDto : AuditedEntityDto<Guid>
 {
     public string AgentType { get; set; } = string.Empty;
     public string DisplayName { get; set; } = string.Empty;

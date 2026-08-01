@@ -6,7 +6,7 @@ namespace H.File.EntityFrameworkCore;
 /// <summary>
 /// 文件项目实体（对应 MinIO Bucket 的元数据）
 /// </summary>
-public class FileProjectEntity : FullAuditedEntity<Guid>, IMultiTenant
+public class FileProjectEntity : AuditedEntity<Guid>, IMultiTenant
 {
     public virtual Guid? TenantId { get; set; }
 

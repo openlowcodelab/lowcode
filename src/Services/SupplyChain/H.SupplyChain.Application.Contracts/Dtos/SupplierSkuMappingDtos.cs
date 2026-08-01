@@ -6,7 +6,7 @@ namespace H.SupplyChain.Application.Contracts;
 /// 供应商 SKU 映射 DTO。
 /// 一个内部 SKU 可映射多个供应商，用于向不同供应商下单。
 /// </summary>
-public class SupplierSkuMappingDto : FullAuditedEntityDto<Guid>
+public class SupplierSkuMappingDto : AuditedEntityDto<Guid>
 {
     /// <summary>内部 SKU ID</summary>
     public Guid SkuId { get; set; }

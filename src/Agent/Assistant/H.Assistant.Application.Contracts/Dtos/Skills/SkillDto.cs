@@ -6,7 +6,7 @@ namespace H.Assistant.Application.Contracts;
 /// <summary>
 /// 技能 DTO
 /// </summary>
-public class SkillDto : FullAuditedEntityDto<Guid>
+public class SkillDto : AuditedEntityDto<Guid>
 {
     public string SkillName { get; set; } = string.Empty;
     public string DisplayName { get; set; } = string.Empty;

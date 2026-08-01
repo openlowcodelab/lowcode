@@ -5,7 +5,7 @@ namespace H.SupplyChain.Application.Contracts;
 /// <summary>
 /// 供应商 DTO
 /// </summary>
-public class SupplierDto : FullAuditedEntityDto<Guid>
+public class SupplierDto : AuditedEntityDto<Guid>
 {
     /// <summary>供应商编码（唯一）</summary>
     public string Code { get; set; } = string.Empty;

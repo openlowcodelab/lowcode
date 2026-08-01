@@ -17,7 +17,7 @@ public class NotificationTemplateDto
 /// <summary>
 /// 通知业务DTO
 /// </summary>
-public class NotificationBusinessDto : FullAuditedEntityDto<Guid>
+public class NotificationBusinessDto : AuditedEntityDto<Guid>
 {
     public long CategoryId { get; set; }
     public string? CategoryName { get; set; }

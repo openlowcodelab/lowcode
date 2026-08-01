@@ -10,7 +10,7 @@ namespace H.SupplyChain.EntityFrameworkCore;
 /// 供应商 SKU 映射表。
 /// 存储供应商对应的 SKU 值，支持一个内部 SKU 映射多个供应商，用于向供应商下单等场景。
 /// </summary>
-public class SupplierSkuMappingEntity : FullAuditedEntity<Guid>, IMultiTenant
+public class SupplierSkuMappingEntity : AuditedEntity<Guid>, IMultiTenant
 {
     /// <summary>租户ID（多租户）</summary>
     public virtual Guid? TenantId { get; set; }

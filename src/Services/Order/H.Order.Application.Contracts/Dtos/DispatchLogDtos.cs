@@ -5,7 +5,7 @@ namespace H.Order.Application.Contracts;
 /// <summary>
 /// 下发日志 DTO
 /// </summary>
-public class DispatchLogDto : FullAuditedEntityDto<Guid>
+public class DispatchLogDto : AuditedEntityDto<Guid>
 {
     /// <summary>订单ID</summary>
     public Guid OrderId { get; set; }

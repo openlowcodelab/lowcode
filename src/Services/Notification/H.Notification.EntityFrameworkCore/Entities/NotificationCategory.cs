@@ -6,7 +6,7 @@ namespace H.Notification.EntityFrameworkCore;
 /// <summary>
 /// 通知分类实体（主键 long，从 1000 自增）
 /// </summary>
-public class NotificationCategory : FullAuditedEntity<long>, IMultiTenant
+public class NotificationCategory : AuditedEntity<long>, IMultiTenant
 {
     public virtual Guid? TenantId { get; set; }
 

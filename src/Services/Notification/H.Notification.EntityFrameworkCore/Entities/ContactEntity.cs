@@ -7,7 +7,7 @@ namespace H.Notification.EntityFrameworkCore;
 /// <summary>
 /// 联系人实体
 /// </summary>
-public class ContactEntity : FullAuditedEntity<Guid>, IMultiTenant
+public class ContactEntity : AuditedEntity<Guid>, IMultiTenant
 {
     public ContactEntity()
     {
@@ -41,7 +41,7 @@ public class ContactEntity : FullAuditedEntity<Guid>, IMultiTenant
 /// <summary>
 /// 联系人分组实体（主键 long，从 10000 自增）
 /// </summary>
-public class ContactGroupEntity : FullAuditedEntity<long>, IMultiTenant
+public class ContactGroupEntity : AuditedEntity<long>, IMultiTenant
 {
     public virtual Guid? TenantId { get; set; }
 

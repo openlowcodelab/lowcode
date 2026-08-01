@@ -8,7 +8,7 @@ namespace H.Notification.EntityFrameworkCore;
 /// <summary>
 /// 通知业务实体（事件类型）
 /// </summary>
-public class NotificationBusinessEntity : FullAuditedEntity<Guid>, IMultiTenant
+public class NotificationBusinessEntity : AuditedEntity<Guid>, IMultiTenant
 {
     public NotificationBusinessEntity()
     {
@@ -129,7 +129,7 @@ public class NotificationSpecEntity : Entity<Guid>, IMultiTenant
 /// <summary>
 /// 通知模板实体
 /// </summary>
-public class NotificationTemplateEntity : FullAuditedEntity<Guid>, IMultiTenant
+public class NotificationTemplateEntity : AuditedEntity<Guid>, IMultiTenant
 {
     public NotificationTemplateEntity()
     {

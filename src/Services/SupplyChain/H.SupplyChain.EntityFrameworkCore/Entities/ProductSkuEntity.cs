@@ -9,7 +9,7 @@ namespace H.SupplyChain.EntityFrameworkCore;
 /// <summary>
 /// 商品 SKU 表（存储商品 SKU 信息）
 /// </summary>
-public class ProductSkuEntity : FullAuditedEntity<Guid>, IMultiTenant
+public class ProductSkuEntity : AuditedEntity<Guid>, IMultiTenant
 {
     /// <summary>租户ID（多租户）</summary>
     public virtual Guid? TenantId { get; set; }

@@ -5,7 +5,7 @@ namespace H.BackgroundTask.Application.Contracts;
 /// <summary>
 /// 后台任务 DTO
 /// </summary>
-public class BackgroundJobDto : FullAuditedEntityDto<Guid>
+public class BackgroundJobDto : AuditedEntityDto<Guid>
 {
     /// <summary>任务名称</summary>
     public string Name { get; set; } = string.Empty;

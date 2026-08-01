@@ -5,7 +5,7 @@ namespace H.SupplyChain.Application.Contracts;
 /// <summary>
 /// 商品 SKU DTO（商品最小可售卖单元）
 /// </summary>
-public class ProductSkuDto : FullAuditedEntityDto<Guid>
+public class ProductSkuDto : AuditedEntityDto<Guid>
 {
     /// <summary>商品ID</summary>
     public Guid ProductId { get; set; }

@@ -5,7 +5,7 @@ namespace H.Assistant.EntityFrameworkCore;
 /// <summary>
 /// Agent 实体
 /// </summary>
-public class AgentEntity : FullAuditedEntity<Guid>
+public class AgentEntity : AuditedEntity<Guid>
 {
     /// <summary>
     /// Agent 类型标识（唯一）

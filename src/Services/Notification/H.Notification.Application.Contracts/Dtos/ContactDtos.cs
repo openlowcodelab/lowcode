@@ -5,7 +5,7 @@ namespace H.Notification.Application.Contracts;
 /// <summary>
 /// 联系人DTO
 /// </summary>
-public class ContactDto : FullAuditedEntityDto<Guid>
+public class ContactDto : AuditedEntityDto<Guid>
 {
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
@@ -66,7 +66,7 @@ public class ContactQueryDto : PagedResultRequestDto
 /// <summary>
 /// 联系人分组DTO
 /// </summary>
-public class ContactGroupDto : FullAuditedEntityDto<long>
+public class ContactGroupDto : AuditedEntityDto<long>
 {
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }

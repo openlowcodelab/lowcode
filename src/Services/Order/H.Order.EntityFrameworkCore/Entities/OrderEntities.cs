@@ -6,7 +6,7 @@ namespace H.Order.EntityFrameworkCore;
 /// <summary>
 /// 订单实体（核心表，仅行业无关的最小属性集）
 /// </summary>
-public class OrderEntity : FullAuditedEntity<Guid>, IMultiTenant
+public class OrderEntity : AuditedEntity<Guid>, IMultiTenant
 {
     /// <summary>租户ID（多租户）</summary>
     public virtual Guid? TenantId { get; set; }
@@ -39,7 +39,7 @@ public class OrderEntity : FullAuditedEntity<Guid>, IMultiTenant
 /// <summary>
 /// 订单扩展实体（按行业存储特有属性，JSON 格式）
 /// </summary>
-public class OrderExtensionEntity : FullAuditedEntity<Guid>, IMultiTenant
+public class OrderExtensionEntity : AuditedEntity<Guid>, IMultiTenant
 {
     /// <summary>租户ID（多租户）</summary>
     public virtual Guid? TenantId { get; set; }
@@ -57,7 +57,7 @@ public class OrderExtensionEntity : FullAuditedEntity<Guid>, IMultiTenant
 /// <summary>
 /// 供应商定义
 /// </summary>
-public class SupplierEntity : FullAuditedEntity<Guid>, IMultiTenant
+public class SupplierEntity : AuditedEntity<Guid>, IMultiTenant
 {
     /// <summary>租户ID（多租户）</summary>
     public virtual Guid? TenantId { get; set; }
@@ -96,7 +96,7 @@ public class SupplierEntity : FullAuditedEntity<Guid>, IMultiTenant
 /// <summary>
 /// 路由规则
 /// </summary>
-public class RouteRuleEntity : FullAuditedEntity<Guid>, IMultiTenant
+public class RouteRuleEntity : AuditedEntity<Guid>, IMultiTenant
 {
     /// <summary>租户ID（多租户）</summary>
     public virtual Guid? TenantId { get; set; }
@@ -129,7 +129,7 @@ public class RouteRuleEntity : FullAuditedEntity<Guid>, IMultiTenant
 /// <summary>
 /// 下发日志
 /// </summary>
-public class DispatchLogEntity : FullAuditedEntity<Guid>, IMultiTenant
+public class DispatchLogEntity : AuditedEntity<Guid>, IMultiTenant
 {
     /// <summary>租户ID（多租户）</summary>
     public virtual Guid? TenantId { get; set; }

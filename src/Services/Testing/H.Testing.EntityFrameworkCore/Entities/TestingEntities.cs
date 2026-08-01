@@ -6,7 +6,7 @@ namespace H.Testing.EntityFrameworkCore;
 /// <summary>
 /// 测试项目
 /// </summary>
-public class TestingProject : FullAuditedEntity<long>, IMultiTenant
+public class TestingProject : AuditedEntity<long>, IMultiTenant
 {
     /// <summary>租户ID（多租户）</summary>
     public virtual Guid? TenantId { get; set; }
@@ -36,7 +36,7 @@ public class TestingProject : FullAuditedEntity<long>, IMultiTenant
 /// <summary>
 /// 项目级别服务定义
 /// </summary>
-public class TestingProjectService : FullAuditedEntity<long>, IMultiTenant
+public class TestingProjectService : AuditedEntity<long>, IMultiTenant
 {
     public virtual Guid? TenantId { get; set; }
 
@@ -55,7 +55,7 @@ public class TestingProjectService : FullAuditedEntity<long>, IMultiTenant
 /// <summary>
 /// 项目环境
 /// </summary>
-public class TestingProjectEnvironment : FullAuditedEntity<long>, IMultiTenant
+public class TestingProjectEnvironment : AuditedEntity<long>, IMultiTenant
 {
     public virtual Guid? TenantId { get; set; }
 
@@ -89,7 +89,7 @@ public class TestingProjectEnvironment : FullAuditedEntity<long>, IMultiTenant
 /// <summary>
 /// 环境服务配置（环境 + 服务 的 BaseUrl 绑定）
 /// </summary>
-public class TestingEnvironmentServiceConfig : FullAuditedEntity<long>, IMultiTenant
+public class TestingEnvironmentServiceConfig : AuditedEntity<long>, IMultiTenant
 {
     public virtual Guid? TenantId { get; set; }
 
@@ -108,7 +108,7 @@ public class TestingEnvironmentServiceConfig : FullAuditedEntity<long>, IMultiTe
 /// <summary>
 /// 测试用例分类（树形，自引用 ParentId）
 /// </summary>
-public class TestingProjectCaseCategory : FullAuditedEntity<long>, IMultiTenant
+public class TestingProjectCaseCategory : AuditedEntity<long>, IMultiTenant
 {
     public virtual Guid? TenantId { get; set; }
 
@@ -130,7 +130,7 @@ public class TestingProjectCaseCategory : FullAuditedEntity<long>, IMultiTenant
 /// <summary>
 /// 测试用例
 /// </summary>
-public class TestingProjectCase : FullAuditedEntity<long>, IMultiTenant
+public class TestingProjectCase : AuditedEntity<long>, IMultiTenant
 {
     public virtual Guid? TenantId { get; set; }
 
@@ -185,7 +185,7 @@ public class TestingProjectCase : FullAuditedEntity<long>, IMultiTenant
 /// <summary>
 /// 测试执行记录
 /// </summary>
-public class TestingExecutionRecord : FullAuditedEntity<long>, IMultiTenant
+public class TestingExecutionRecord : AuditedEntity<long>, IMultiTenant
 {
     public virtual Guid? TenantId { get; set; }
 

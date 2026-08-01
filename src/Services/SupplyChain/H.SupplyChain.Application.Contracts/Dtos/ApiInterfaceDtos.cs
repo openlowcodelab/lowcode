@@ -5,7 +5,7 @@ namespace H.SupplyChain.Application.Contracts;
 /// <summary>
 /// 接口定义 DTO（菜单接口、商品接口、下单接口等统一定义）
 /// </summary>
-public class ApiInterfaceDto : FullAuditedEntityDto<Guid>
+public class ApiInterfaceDto : AuditedEntityDto<Guid>
 {
     /// <summary>接口编码（唯一，如 menu / product-detail / place-order）</summary>
     public string Code { get; set; } = string.Empty;

@@ -5,7 +5,7 @@ namespace H.Notification.Application.Contracts;
 /// <summary>
 /// 通知渠道DTO
 /// </summary>
-public class NotificationChannelDto : FullAuditedEntityDto<Guid>
+public class NotificationChannelDto : AuditedEntityDto<Guid>
 {
     public NotificationChannelType ChannelType { get; set; }
     public string Name { get; set; } = string.Empty;

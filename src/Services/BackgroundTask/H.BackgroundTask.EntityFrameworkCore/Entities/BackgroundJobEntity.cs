@@ -6,7 +6,7 @@ namespace H.BackgroundTask.EntityFrameworkCore;
 /// <summary>
 /// 后台任务定义实体
 /// </summary>
-public class BackgroundJobEntity : FullAuditedEntity<Guid>, IMultiTenant
+public class BackgroundJobEntity : AuditedEntity<Guid>, IMultiTenant
 {
     /// <summary>租户ID（多租户）</summary>
     public virtual Guid? TenantId { get; set; }

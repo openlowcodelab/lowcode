@@ -151,10 +151,7 @@ public class SkillAppService : ApplicationService, ISkillAppService
             CreationTime = entity.CreationTime,
             CreatorId = entity.CreatorId,
             LastModificationTime = entity.LastModificationTime,
-            LastModifierId = entity.LastModifierId,
-            IsDeleted = entity.IsDeleted,
-            DeletionTime = entity.DeletionTime,
-            DeleterId = entity.DeleterId
+            LastModifierId = entity.LastModifierId
         };
     }
 }

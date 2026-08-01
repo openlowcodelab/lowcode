@@ -6,7 +6,7 @@ namespace H.Setting.EntityFrameworkCore;
 /// <summary>
 /// 配置定义实体（结构参考 ABP SettingManagement 的 SettingDefinitionRecord）
 /// </summary>
-public class SettingDefinition : FullAuditedEntity<Guid>, IMultiTenant
+public class SettingDefinition : AuditedEntity<Guid>, IMultiTenant
 {
     /// <summary>租户ID（多租户）</summary>
     public virtual Guid? TenantId { get; set; }

@@ -5,7 +5,7 @@ namespace H.Order.Application.Contracts;
 /// <summary>
 /// 订单列表/核心 DTO（仅包含所有行业共有的最小属性集，不含扩展属性）
 /// </summary>
-public class OrderDto : FullAuditedEntityDto<Guid>
+public class OrderDto : AuditedEntityDto<Guid>
 {
     /// <summary>
     /// 订单号

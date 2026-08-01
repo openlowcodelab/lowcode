@@ -5,7 +5,7 @@ namespace H.Order.Application.Contracts;
 /// <summary>
 /// 路由规则 DTO
 /// </summary>
-public class RouteRuleDto : FullAuditedEntityDto<Guid>
+public class RouteRuleDto : AuditedEntityDto<Guid>
 {
     /// <summary>规则名称</summary>
     public string Name { get; set; } = string.Empty;

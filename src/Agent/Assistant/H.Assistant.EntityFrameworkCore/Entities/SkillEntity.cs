@@ -5,7 +5,7 @@ namespace H.Assistant.EntityFrameworkCore;
 /// <summary>
 /// 技能实体
 /// </summary>
-public class SkillEntity : FullAuditedEntity<Guid>
+public class SkillEntity : AuditedEntity<Guid>
 {
     /// <summary>
     /// 技能名称（唯一）

@@ -6,7 +6,7 @@ namespace H.File.EntityFrameworkCore;
 /// <summary>
 /// 分类实体（对应 MinIO 中一个目录的元数据）
 /// </summary>
-public class FileFolderEntity : FullAuditedEntity<Guid>, IMultiTenant
+public class FileFolderEntity : AuditedEntity<Guid>, IMultiTenant
 {
     public virtual Guid? TenantId { get; set; }
 

@@ -7,7 +7,7 @@ namespace H.Notification.EntityFrameworkCore;
 /// <summary>
 /// 通知渠道实体（可复用的 provider 配置）
 /// </summary>
-public class NotificationChannelEntity : FullAuditedEntity<Guid>, IMultiTenant
+public class NotificationChannelEntity : AuditedEntity<Guid>, IMultiTenant
 {
     public virtual Guid? TenantId { get; set; }
 

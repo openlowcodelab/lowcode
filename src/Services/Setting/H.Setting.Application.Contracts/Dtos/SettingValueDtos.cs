@@ -5,7 +5,7 @@ namespace H.Setting.Application.Contracts;
 /// <summary>
 /// 配置项 DTO（对应 ABP SettingManagement 的设置值）
 /// </summary>
-public class SettingValueDto : FullAuditedEntityDto<Guid>
+public class SettingValueDto : AuditedEntityDto<Guid>
 {
     /// <summary>配置名称（关联配置定义的 Name）</summary>
     public string Name { get; set; } = string.Empty;

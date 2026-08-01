@@ -6,7 +6,7 @@ namespace H.SupplyChain.Application.Contracts;
 /// 供应商接口映射 DTO。
 /// 基于接口定义，配置对应供应商的请求参数映射与返回值字段映射。
 /// </summary>
-public class SupplierInterfaceMappingDto : FullAuditedEntityDto<Guid>
+public class SupplierInterfaceMappingDto : AuditedEntityDto<Guid>
 {
     /// <summary>供应商ID</summary>
     public Guid SupplierId { get; set; }

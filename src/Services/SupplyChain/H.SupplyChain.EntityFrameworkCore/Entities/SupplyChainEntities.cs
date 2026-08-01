@@ -6,7 +6,7 @@ namespace H.SupplyChain.EntityFrameworkCore;
 /// <summary>
 /// 供应商定义
 /// </summary>
-public class SupplierEntity : FullAuditedEntity<Guid>, IMultiTenant
+public class SupplierEntity : AuditedEntity<Guid>, IMultiTenant
 {
     /// <summary>租户ID（多租户）</summary>
     public virtual Guid? TenantId { get; set; }
@@ -45,7 +45,7 @@ public class SupplierEntity : FullAuditedEntity<Guid>, IMultiTenant
 /// <summary>
 /// 接口定义（菜单接口、商品接口、下单接口等统一定义）
 /// </summary>
-public class ApiInterfaceEntity : FullAuditedEntity<Guid>, IMultiTenant
+public class ApiInterfaceEntity : AuditedEntity<Guid>, IMultiTenant
 {
     /// <summary>租户ID（多租户）</summary>
     public virtual Guid? TenantId { get; set; }
@@ -85,7 +85,7 @@ public class ApiInterfaceEntity : FullAuditedEntity<Guid>, IMultiTenant
 /// 供应商接口映射。
 /// 基于接口定义，配置对应供应商的接口请求参数映射、返回值字段映射。
 /// </summary>
-public class SupplierInterfaceMappingEntity : FullAuditedEntity<Guid>, IMultiTenant
+public class SupplierInterfaceMappingEntity : AuditedEntity<Guid>, IMultiTenant
 {
     /// <summary>租户ID（多租户）</summary>
     public virtual Guid? TenantId { get; set; }

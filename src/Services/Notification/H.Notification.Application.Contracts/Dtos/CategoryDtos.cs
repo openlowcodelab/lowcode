@@ -5,7 +5,7 @@ namespace H.Notification.Application.Contracts;
 /// <summary>
 /// 通知分类DTO
 /// </summary>
-public class NotificationCategoryDto : FullAuditedEntityDto<long>
+public class NotificationCategoryDto : AuditedEntityDto<long>
 {
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
