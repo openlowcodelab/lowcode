@@ -23,6 +23,26 @@ public class TaskEntity : AuditedEntity<Guid>
     public string TaskType { get; set; } = string.Empty;
 
     /// <summary>
+    /// 任务分类
+    /// </summary>
+    public string Category { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 创建方式：Prompt(提示词)/Workflow(工作流)
+    /// </summary>
+    public string SourceType { get; set; } = "Prompt";
+
+    /// <summary>
+    /// 工作流步骤（JSON，创建方式为工作流时使用）
+    /// </summary>
+    public string? WorkflowContent { get; set; }
+
+    /// <summary>
+    /// 执行方式：Manual(手动)/Auto(自动)
+    /// </summary>
+    public string ExecutionMode { get; set; } = "Auto";
+
+    /// <summary>
     /// 提示词内容
     /// </summary>
     public string PromptContent { get; set; } = string.Empty;

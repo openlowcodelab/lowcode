@@ -1,4 +1,5 @@
 using System.Linq.Dynamic.Core;
+using System.Text.Json;
 using AutoMapper;
 using H.Assistant.Application.Contracts;
 using H.Assistant.Core;
@@ -59,6 +60,11 @@ public class TaskAppService : ApplicationService, ITaskAppService
             query = query.Where(t => t.IsEnabled == input.IsEnabled.Value);
         }
 
+        if (!string.IsNullOrWhiteSpace(input.Category))
+        {
+            query = query.Where(t => t.Category == input.Category);
+        }
+
         var totalCount = await AsyncExecuter.CountAsync(query);
 
         query = query.OrderByDescending(t => t.CreationTime);
@@ -89,11 +95,16 @@ public class TaskAppService : ApplicationService, ITaskAppService
 
     public async Task<TaskDto> CreateAsync(CreateTaskDto input)
     {
+        var isManual = input.ExecutionMode == "Manual";
         var task = new TaskEntity
         {
             TaskName = input.TaskName,
             TaskDescription = input.TaskDescription,
-            TaskType = "scheduled",
+            TaskType = isManual ? "manual" : "scheduled",
+            Category = input.Category,
+            SourceType = string.IsNullOrWhiteSpace(input.SourceType) ? "Prompt" : input.SourceType,
+            WorkflowContent = input.WorkflowContent,
+            ExecutionMode = isManual ? "Manual" : "Auto",
             PromptContent = input.PromptContent,
             AgentType = input.AgentType,
             ModelConfigId = input.ModelConfigId,
@@ -106,8 +117,10 @@ public class TaskAppService : ApplicationService, ITaskAppService
             IsEnabled = input.IsEnabled,
             ExecutionCount = 0,
             Status = "Active",
-            NextExecutionTime = CalculateNextExecutionTime(
-                input.ScheduleType, input.CronExpression, input.Hour, input.Minute, input.DayOfWeek, input.DayOfMonth)
+            NextExecutionTime = isManual
+                ? null
+                : CalculateNextExecutionTime(
+                    input.ScheduleType, input.CronExpression, input.Hour, input.Minute, input.DayOfWeek, input.DayOfMonth)
         };
 
         await _taskRepository.InsertAsync(task);
@@ -123,8 +136,14 @@ public class TaskAppService : ApplicationService, ITaskAppService
             throw new EntityNotFoundException(typeof(TaskEntity), id);
         }
 
+        var isManual = input.ExecutionMode == "Manual";
         task.TaskName = input.TaskName;
         task.TaskDescription = input.TaskDescription;
+        task.TaskType = isManual ? "manual" : "scheduled";
+        task.Category = input.Category;
+        task.SourceType = string.IsNullOrWhiteSpace(input.SourceType) ? "Prompt" : input.SourceType;
+        task.WorkflowContent = input.WorkflowContent;
+        task.ExecutionMode = isManual ? "Manual" : "Auto";
         task.PromptContent = input.PromptContent;
         task.AgentType = input.AgentType;
         task.ModelConfigId = input.ModelConfigId;
@@ -135,8 +154,10 @@ public class TaskAppService : ApplicationService, ITaskAppService
         task.DayOfWeek = input.DayOfWeek;
         task.DayOfMonth = input.DayOfMonth;
         task.IsEnabled = input.IsEnabled;
-        task.NextExecutionTime = CalculateNextExecutionTime(
-            input.ScheduleType, input.CronExpression, input.Hour, input.Minute, input.DayOfWeek, input.DayOfMonth);
+        task.NextExecutionTime = isManual
+            ? null
+            : CalculateNextExecutionTime(
+                input.ScheduleType, input.CronExpression, input.Hour, input.Minute, input.DayOfWeek, input.DayOfMonth);
 
         await _taskRepository.UpdateAsync(task);
 
@@ -173,8 +194,11 @@ public class TaskAppService : ApplicationService, ITaskAppService
         else if (task.Status == "Paused")
         {
             task.Status = "Active";
-            task.NextExecutionTime = CalculateNextExecutionTime(
-                task.ScheduleType, task.CronExpression, task.Hour, task.Minute, task.DayOfWeek, task.DayOfMonth);
+            // 手动任务不参与调度，无需计算下次执行时间
+            task.NextExecutionTime = task.ExecutionMode == "Manual"
+                ? null
+                : CalculateNextExecutionTime(
+                    task.ScheduleType, task.CronExpression, task.Hour, task.Minute, task.DayOfWeek, task.DayOfMonth);
         }
 
         await _taskRepository.UpdateAsync(task);
@@ -242,8 +266,8 @@ public class TaskAppService : ApplicationService, ITaskAppService
                 throw new InvalidOperationException($"无法创建 Agent 实例: {task.AgentType}");
             }
 
-            // 执行 Prompt
-            var response = await agent.ProcessMessageAsync(task.PromptContent, new List<string>());
+            // 执行任务内容（提示词或工作流）
+            var response = await ExecuteTaskContentAsync(agent, task);
 
             // 插入成功日志
             await _logRepository.InsertAsync(new TaskLogEntity
@@ -258,10 +282,13 @@ public class TaskAppService : ApplicationService, ITaskAppService
             // 更新任务执行统计
             task.LastExecutionTime = DateTime.Now;
             task.ExecutionCount++;
-            task.NextExecutionTime = CalculateNextExecutionTime(
-                task.ScheduleType, task.CronExpression, task.Hour, task.Minute, task.DayOfWeek, task.DayOfMonth);
+            // 手动任务不参与调度，保持下次执行时间为空
+            task.NextExecutionTime = task.ExecutionMode == "Manual"
+                ? null
+                : CalculateNextExecutionTime(
+                    task.ScheduleType, task.CronExpression, task.Hour, task.Minute, task.DayOfWeek, task.DayOfMonth);
 
-            if (task.ScheduleType == "Once")
+            if (task.ExecutionMode == "Auto" && task.ScheduleType == "Once")
             {
                 task.Status = "Completed";
                 task.IsEnabled = false;
@@ -292,6 +319,45 @@ public class TaskAppService : ApplicationService, ITaskAppService
                 Logger.LogError(logEx, "记录任务失败日志时出错: TaskId={TaskId}", taskId);
             }
         }
+    }
+
+    /// <summary>
+    /// 执行任务内容：根据创建方式选择提示词或工作流执行
+    /// </summary>
+    private async Task<string> ExecuteTaskContentAsync(IAgentInstance agent, TaskEntity task)
+    {
+        // 工作流任务：按顺序执行各步骤，上一步结果作为下一步的上下文
+        if (task.SourceType == "Workflow" && !string.IsNullOrWhiteSpace(task.WorkflowContent))
+        {
+            var steps = JsonSerializer.Deserialize<List<WorkflowStepDto>>(task.WorkflowContent)
+                ?? new List<WorkflowStepDto>();
+
+            if (steps.Count == 0)
+            {
+                throw new InvalidOperationException("工作流任务未配置有效步骤");
+            }
+
+            var history = new List<string>();
+            var lastResult = string.Empty;
+            for (var i = 0; i < steps.Count; i++)
+            {
+                var step = steps[i];
+                var stepPrompt = string.IsNullOrWhiteSpace(step.Prompt) ? step.Name : step.Prompt;
+                if (i > 0 && !string.IsNullOrEmpty(lastResult))
+                {
+                    stepPrompt = $"上一步骤「{steps[i - 1].Name}」的执行结果如下：\n{lastResult}\n\n请基于上述结果，继续执行当前步骤：{stepPrompt}";
+                }
+
+                Logger.LogInformation("执行工作流步骤 {Index}/{Count}: {StepName} (TaskId={TaskId})",
+                    i + 1, steps.Count, step.Name, task.Id);
+                lastResult = await agent.ProcessMessageAsync(stepPrompt, history);
+            }
+
+            return lastResult;
+        }
+
+        // 提示词任务：直接执行提示词
+        return await agent.ProcessMessageAsync(task.PromptContent, new List<string>());
     }
 
     /// <summary>

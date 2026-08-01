@@ -1,0 +1,27 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="using:H.Assistant.UI.Views"
+             x:Class="H.Assistant.UI.Views.SettingsPageView"
+             FontFamily="Microsoft YaHei UI, Segoe UI, Inter"
+             FontSize="14"
+             Foreground="#262626"
+             Background="#ffffff">
+  <!-- 设置页宿主容器：整页承载设置视图并附带 Toast 提示（供 H.AppLab.Desktop.Host 内容区展示） -->
+  <UserControl.Styles>
+    <StyleInclude Source="avares://H.Assistant.UI/Themes/AssistantStyles.axaml" />
+  </UserControl.Styles>
+
+  <Panel>
+    <!-- 设置主体（左侧菜单 + 右侧内容） -->
+    <views:SettingsView />
+
+    <!-- Toast -->
+    <Border IsVisible="{Binding Toast.IsVisible}"
+            Background="{Binding Toast.Background}"
+            CornerRadius="6" Padding="16,10"
+            HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,24,0,0"
+            BoxShadow="0 2 8 0 #33000000">
+      <TextBlock Text="{Binding Toast.Message}" Foreground="White" FontSize="13" />
+    </Border>
+  </Panel>
+</UserControl>

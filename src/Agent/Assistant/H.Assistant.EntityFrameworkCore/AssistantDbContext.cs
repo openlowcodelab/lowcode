@@ -75,7 +75,11 @@ public class AssistantDbContext : AbpDbContext<AssistantDbContext>
             b.Property(x => x.TaskName).IsRequired().HasMaxLength(100);
             b.Property(x => x.TaskDescription).HasMaxLength(500);
             b.Property(x => x.TaskType).IsRequired().HasMaxLength(50);
-            b.Property(x => x.PromptContent).IsRequired().HasMaxLength(8000);
+            b.Property(x => x.Category).HasMaxLength(50);
+            b.Property(x => x.SourceType).IsRequired().HasMaxLength(20).HasDefaultValue("Prompt");
+            b.Property(x => x.WorkflowContent).HasMaxLength(8000);
+            b.Property(x => x.ExecutionMode).IsRequired().HasMaxLength(20).HasDefaultValue("Auto");
+            b.Property(x => x.PromptContent).HasMaxLength(8000);
             b.Property(x => x.AgentType).IsRequired().HasMaxLength(50);
             b.Property(x => x.ScheduleType).IsRequired().HasMaxLength(20);
             b.Property(x => x.CronExpression).HasMaxLength(100);
@@ -84,6 +88,7 @@ public class AssistantDbContext : AbpDbContext<AssistantDbContext>
             
             b.HasIndex(x => new { x.IsEnabled, x.Status });
             b.HasIndex(x => x.NextExecutionTime);
+            b.HasIndex(x => x.Category);
         });
 
         modelBuilder.Entity<TaskLogEntity>(b =>

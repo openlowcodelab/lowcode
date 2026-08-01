@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using H.Assistant.Application.Contracts;
@@ -7,7 +8,7 @@ using H.Assistant.UI.Services;
 namespace H.Assistant.UI.ViewModels;
 
 /// <summary>
-/// 定时任务页 ViewModel（对应 Web 端 Tasks.razor）
+/// 任务页 ViewModel（支持任务分类、提示词/工作流创建、手动/自动执行）
 /// </summary>
 public partial class TasksViewModel : ObservableObject
 {
@@ -18,9 +19,24 @@ public partial class TasksViewModel : ObservableObject
 
     private bool _initialized;
 
+    /// <summary>全量任务列表（后端返回）</summary>
     public ObservableCollection<TaskCardItem> Tasks { get; } = [];
+
+    /// <summary>按分类过滤后的任务列表（界面绑定）</summary>
+    public ObservableCollection<TaskCardItem> FilteredTasks { get; } = [];
+
+    /// <summary>分类筛选项（首项为“全部”）</summary>
+    public ObservableCollection<CategoryChipItem> FilterCategories { get; } = [];
+
     public ObservableCollection<TaskLogItem> TaskLogs { get; } = [];
     public ObservableCollection<AgentConfigDto> AvailableAgents { get; } = [];
+
+    /// <summary>任务分类可选项（创建/编辑对话框使用）</summary>
+    public List<string> CategoryOptions { get; } = ["办公", "开发", "运维", "数据", "生活", "其他"];
+
+    /// <summary>当前选中的分类（“全部”表示不过滤）</summary>
+    [ObservableProperty]
+    private string selectedCategory = "全部";
 
     public List<ScheduleTypeOption> ScheduleTypeOptions { get; } =
     [
@@ -37,13 +53,19 @@ public partial class TasksViewModel : ObservableObject
         new("5", "周五"), new("6", "周六"), new("0", "周日")
     ];
 
+    /// <summary>是否处于某个任务的执行记录视图（false 为任务列表视图）</summary>
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsTasksTab))]
-    [NotifyPropertyChangedFor(nameof(IsLogsTab))]
-    private string activeTab = "tasks";
+    [NotifyPropertyChangedFor(nameof(IsTasksView))]
+    private bool isLogsView;
 
-    public bool IsTasksTab => ActiveTab == "tasks";
-    public bool IsLogsTab => ActiveTab == "logs";
+    public bool IsTasksView => !IsLogsView;
+
+    /// <summary>当前查看执行记录的任务名称</summary>
+    [ObservableProperty]
+    private string logsTaskName = string.Empty;
+
+    /// <summary>当前查看执行记录的任务 Id</summary>
+    private Guid? _logsTaskId;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasTasks))]
@@ -54,6 +76,7 @@ public partial class TasksViewModel : ObservableObject
     private bool loadingTaskLogs;
 
     public bool HasTasks => !LoadingTasks && Tasks.Count > 0;
+    public bool HasFilteredTasks => !LoadingTasks && FilteredTasks.Count > 0;
     public bool HasLogs => !LoadingTaskLogs && TaskLogs.Count > 0;
 
     [ObservableProperty]
@@ -64,7 +87,7 @@ public partial class TasksViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(DialogSaveText))]
     private bool isEditingTask;
 
-    public string DialogTitle => IsEditingTask ? "编辑定时任务" : "创建定时任务";
+    public string DialogTitle => IsEditingTask ? "编辑任务" : "创建任务";
     public string DialogSaveText => IsEditingTask ? "保存" : "创建";
 
     private Guid? _editingTaskId;
@@ -118,22 +141,25 @@ public partial class TasksViewModel : ObservableObject
         _initialized = true;
         await LoadAvailableAgentsAsync();
         await LoadTasksAsync();
+    }
+
+    /// <summary>查看某个任务的执行记录</summary>
+    [RelayCommand]
+    private async Task ViewTaskLogsAsync(TaskCardItem item)
+    {
+        CloseTaskMenus();
+        _logsTaskId = item.Dto.Id;
+        LogsTaskName = item.Dto.TaskName;
+        IsLogsView = true;
         await LoadTaskLogsAsync();
     }
 
+    /// <summary>从执行记录视图返回任务列表</summary>
     [RelayCommand]
-    private async Task SwitchTabAsync(string tab)
+    private void BackToTasks()
     {
-        ActiveTab = tab;
-        CloseTaskMenus();
-        if (tab == "logs")
-        {
-            await LoadTaskLogsAsync();
-        }
-        else
-        {
-            await LoadTasksAsync();
-        }
+        IsLogsView = false;
+        ExitLogSelectionMode();
     }
 
     private async Task LoadAvailableAgentsAsync()
@@ -164,6 +190,8 @@ public partial class TasksViewModel : ObservableObject
             {
                 Tasks.Add(new TaskCardItem(task, this));
             }
+            RebuildFilterCategories();
+            ApplyCategoryFilter();
         }
         catch (Exception ex)
         {
@@ -173,7 +201,58 @@ public partial class TasksViewModel : ObservableObject
         {
             LoadingTasks = false;
             OnPropertyChanged(nameof(HasTasks));
+            OnPropertyChanged(nameof(HasFilteredTasks));
         }
+    }
+
+    /// <summary>重建分类筛选项（全部 + 任务中出现过的分类）</summary>
+    private void RebuildFilterCategories()
+    {
+        var names = new List<string> { "全部" };
+        names.AddRange(Tasks.Select(t => t.Category)
+            .Where(c => !string.IsNullOrWhiteSpace(c))
+            .Distinct()
+            .OrderBy(c => c));
+
+        if (SelectedCategory != "全部" && !names.Contains(SelectedCategory))
+        {
+            SelectedCategory = "全部";
+        }
+
+        FilterCategories.Clear();
+        foreach (var name in names)
+        {
+            FilterCategories.Add(new CategoryChipItem { Name = name, IsActive = name == SelectedCategory });
+        }
+    }
+
+    /// <summary>按当前选中分类过滤任务列表</summary>
+    private void ApplyCategoryFilter()
+    {
+        FilteredTasks.Clear();
+        foreach (var task in Tasks)
+        {
+            if (SelectedCategory == "全部" || string.IsNullOrEmpty(SelectedCategory) || task.Category == SelectedCategory)
+            {
+                FilteredTasks.Add(task);
+            }
+        }
+        OnPropertyChanged(nameof(HasFilteredTasks));
+    }
+
+    [RelayCommand]
+    private void SelectCategory(string category)
+    {
+        if (SelectedCategory == category)
+        {
+            return;
+        }
+        SelectedCategory = category;
+        foreach (var chip in FilterCategories)
+        {
+            chip.IsActive = chip.Name == category;
+        }
+        ApplyCategoryFilter();
     }
 
     private async Task LoadTaskLogsAsync()
@@ -181,7 +260,7 @@ public partial class TasksViewModel : ObservableObject
         LoadingTaskLogs = true;
         try
         {
-            var result = await _taskLogAppService.GetListAsync(new TaskLogQueryDto { MaxResultCount = 50 });
+            var result = await _taskLogAppService.GetListAsync(new TaskLogQueryDto { TaskId = _logsTaskId, MaxResultCount = 50 });
             TaskLogs.Clear();
             foreach (var log in result.Items)
             {
@@ -254,8 +333,19 @@ public partial class TasksViewModel : ObservableObject
     [RelayCommand]
     private async Task SaveScheduledTaskAsync()
     {
-        if (string.IsNullOrWhiteSpace(EditTaskModel.TaskName) || string.IsNullOrWhiteSpace(EditTaskModel.PromptContent))
+        if (string.IsNullOrWhiteSpace(EditTaskModel.TaskName))
         {
+            _toast.Show("请输入任务名称", "error");
+            return;
+        }
+        if (EditTaskModel.IsPromptSource && string.IsNullOrWhiteSpace(EditTaskModel.PromptContent))
+        {
+            _toast.Show("请输入提示词内容", "error");
+            return;
+        }
+        if (EditTaskModel.IsWorkflowSource && !EditTaskModel.HasValidWorkflowSteps)
+        {
+            _toast.Show("请至少配置一个有效的工作流步骤", "error");
             return;
         }
 
@@ -334,6 +424,34 @@ public partial class TasksViewModel : ObservableObject
         var newValue = !item.IsMenuOpen;
         CloseTaskMenus();
         item.IsMenuOpen = newValue;
+    }
+
+    /// <summary>切换创建方式（提示词/工作流）</summary>
+    [RelayCommand]
+    private void SetSourceType(string sourceType)
+    {
+        EditTaskModel.SourceType = sourceType;
+    }
+
+    /// <summary>切换执行方式（手动/自动）</summary>
+    [RelayCommand]
+    private void SetExecutionMode(string executionMode)
+    {
+        EditTaskModel.ExecutionMode = executionMode;
+    }
+
+    /// <summary>添加工作流步骤</summary>
+    [RelayCommand]
+    private void AddWorkflowStep()
+    {
+        EditTaskModel.AddStep();
+    }
+
+    /// <summary>删除工作流步骤</summary>
+    [RelayCommand]
+    private void RemoveWorkflowStep(WorkflowStepEditModel step)
+    {
+        EditTaskModel.RemoveStep(step);
     }
 
     private void CloseTaskMenus()
@@ -419,6 +537,17 @@ public partial class TasksViewModel : ObservableObject
 public record ScheduleTypeOption(string Value, string Label);
 
 /// <summary>
+/// 分类筛选 chip 项
+/// </summary>
+public partial class CategoryChipItem : ObservableObject
+{
+    public string Name { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    private bool isActive;
+}
+
+/// <summary>
 /// 任务卡片项
 /// </summary>
 public partial class TaskCardItem : ObservableObject
@@ -438,9 +567,21 @@ public partial class TaskCardItem : ObservableObject
     public bool HasDescription => !string.IsNullOrEmpty(Dto.TaskDescription);
     public bool IsEnabled => Dto.IsEnabled;
     public string ScheduleDisplayText => Dto.ScheduleDisplayText;
-    public bool ShowNextExecution => Dto.IsEnabled && Dto.NextExecutionTime.HasValue;
+    public bool ShowNextExecution => Dto.IsEnabled && Dto.ExecutionMode != "Manual" && Dto.NextExecutionTime.HasValue;
     public string NextExecutionText => Dto.NextExecutionTime.HasValue ? $"下次执行: {Dto.NextExecutionTime.Value:MM-dd HH:mm}" : "";
     public double CardOpacity => Dto.IsEnabled ? 1.0 : 0.55;
+
+    /// <summary>任务分类</summary>
+    public string Category => Dto.Category;
+    public bool HasCategory => !string.IsNullOrWhiteSpace(Dto.Category);
+
+    /// <summary>创建方式图标（提示词/工作流）</summary>
+    public string SourceTypeIcon => Dto.SourceType == "Workflow" ? "🔀" : "💬";
+    public string SourceTypeDisplayText => Dto.SourceTypeDisplayText;
+
+    /// <summary>执行方式（手动/自动）</summary>
+    public string ExecutionModeDisplayText => Dto.ExecutionModeDisplayText;
+    public bool IsManual => Dto.ExecutionMode == "Manual";
 
     [ObservableProperty]
     private bool isMenuOpen;
@@ -450,6 +591,9 @@ public partial class TaskCardItem : ObservableObject
 
     [RelayCommand]
     private Task ExecuteNowAsync() => _owner.ExecuteTaskNowCommand.ExecuteAsync(this);
+
+    [RelayCommand]
+    private Task ViewLogsAsync() => _owner.ViewTaskLogsCommand.ExecuteAsync(this);
 
     [RelayCommand]
     private Task DeleteAsync() => _owner.DeleteScheduledTaskCommand.ExecuteAsync(this);
@@ -535,6 +679,22 @@ public partial class TaskEditModel : ObservableObject
     [ObservableProperty]
     private string taskDescription = string.Empty;
 
+    /// <summary>任务分类</summary>
+    [ObservableProperty]
+    private string category = string.Empty;
+
+    /// <summary>创建方式：Prompt(提示词)/Workflow(工作流)</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsPromptSource))]
+    [NotifyPropertyChangedFor(nameof(IsWorkflowSource))]
+    private string sourceType = "Prompt";
+
+    /// <summary>执行方式：Manual(手动)/Auto(自动)</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsManualMode))]
+    [NotifyPropertyChangedFor(nameof(IsAutoMode))]
+    private string executionMode = "Auto";
+
     [ObservableProperty]
     private string promptContent = string.Empty;
 
@@ -542,6 +702,9 @@ public partial class TaskEditModel : ObservableObject
     private string agentType = string.Empty;
 
     public Guid? ModelConfigId { get; set; }
+
+    /// <summary>工作流步骤列表</summary>
+    public ObservableCollection<WorkflowStepEditModel> WorkflowSteps { get; } = [];
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ShowTimeConfig))]
@@ -567,18 +730,42 @@ public partial class TaskEditModel : ObservableObject
 
     public bool IsEnabled { get; set; } = true;
 
+    public bool IsPromptSource => SourceType == "Prompt";
+    public bool IsWorkflowSource => SourceType == "Workflow";
+    public bool IsManualMode => ExecutionMode == "Manual";
+    public bool IsAutoMode => ExecutionMode == "Auto";
+
     public bool ShowTimeConfig => ScheduleType?.Value is "Daily" or "Weekly" or "Monthly";
     public bool ShowCronConfig => ScheduleType?.Value == "Cron";
     public bool ShowWeeklyConfig => ScheduleType?.Value == "Weekly";
     public bool ShowMonthlyConfig => ScheduleType?.Value == "Monthly";
 
+    /// <summary>是否存在有效的工作流步骤（名称或提示词不为空）</summary>
+    public bool HasValidWorkflowSteps => WorkflowSteps.Any(s =>
+        !string.IsNullOrWhiteSpace(s.Name) || !string.IsNullOrWhiteSpace(s.Prompt));
+
+    public void AddStep()
+    {
+        WorkflowSteps.Add(new WorkflowStepEditModel { Name = $"步骤 {WorkflowSteps.Count + 1}" });
+    }
+
+    public void RemoveStep(WorkflowStepEditModel step)
+    {
+        WorkflowSteps.Remove(step);
+    }
+
     public void Reset(string defaultAgentType)
     {
         TaskName = string.Empty;
         TaskDescription = string.Empty;
+        Category = string.Empty;
+        SourceType = "Prompt";
+        ExecutionMode = "Auto";
         PromptContent = string.Empty;
         AgentType = defaultAgentType;
         ModelConfigId = null;
+        WorkflowSteps.Clear();
+        AddStep();
         ScheduleType = new ScheduleTypeOption("Daily", "每天");
         CronExpression = null;
         Hour = 9;
@@ -592,9 +779,35 @@ public partial class TaskEditModel : ObservableObject
     {
         TaskName = task.TaskName;
         TaskDescription = task.TaskDescription;
+        Category = task.Category;
+        SourceType = string.IsNullOrWhiteSpace(task.SourceType) ? "Prompt" : task.SourceType;
+        ExecutionMode = string.IsNullOrWhiteSpace(task.ExecutionMode) ? "Auto" : task.ExecutionMode;
         PromptContent = task.PromptContent;
         AgentType = task.AgentType;
         ModelConfigId = task.ModelConfigId;
+        WorkflowSteps.Clear();
+        if (!string.IsNullOrWhiteSpace(task.WorkflowContent))
+        {
+            try
+            {
+                var steps = JsonSerializer.Deserialize<List<WorkflowStepDto>>(task.WorkflowContent);
+                if (steps != null)
+                {
+                    foreach (var step in steps)
+                    {
+                        WorkflowSteps.Add(new WorkflowStepEditModel { Name = step.Name, Prompt = step.Prompt });
+                    }
+                }
+            }
+            catch
+            {
+                // 忽略无效的工作流内容
+            }
+        }
+        if (SourceType == "Workflow" && WorkflowSteps.Count == 0)
+        {
+            AddStep();
+        }
         ScheduleType = new ScheduleTypeOption(task.ScheduleType,
             task.ScheduleType switch { "Once" => "仅一次", "Daily" => "每天", "Weekly" => "每周", "Monthly" => "每月", "Cron" => "Cron 表达式", _ => task.ScheduleType });
         CronExpression = task.CronExpression;
@@ -612,10 +825,28 @@ public partial class TaskEditModel : ObservableObject
         0 => "周日", 1 => "周一", 2 => "周二", 3 => "周三", 4 => "周四", 5 => "周五", 6 => "周六", _ => ""
     };
 
+    /// <summary>序列化工作流步骤为 JSON（非工作流任务返回 null）</summary>
+    private string? BuildWorkflowContent()
+    {
+        if (!IsWorkflowSource)
+        {
+            return null;
+        }
+        var steps = WorkflowSteps
+            .Where(s => !string.IsNullOrWhiteSpace(s.Name) || !string.IsNullOrWhiteSpace(s.Prompt))
+            .Select(s => new WorkflowStepDto { Name = s.Name, Prompt = s.Prompt })
+            .ToList();
+        return JsonSerializer.Serialize(steps);
+    }
+
     public CreateTaskDto ToCreateDto() => new()
     {
         TaskName = TaskName,
         TaskDescription = TaskDescription,
+        Category = Category,
+        SourceType = SourceType,
+        WorkflowContent = BuildWorkflowContent(),
+        ExecutionMode = ExecutionMode,
         PromptContent = PromptContent,
         AgentType = AgentType,
         ModelConfigId = ModelConfigId,
@@ -632,6 +863,10 @@ public partial class TaskEditModel : ObservableObject
     {
         TaskName = TaskName,
         TaskDescription = TaskDescription,
+        Category = Category,
+        SourceType = SourceType,
+        WorkflowContent = BuildWorkflowContent(),
+        ExecutionMode = ExecutionMode,
         PromptContent = PromptContent,
         AgentType = AgentType,
         ModelConfigId = ModelConfigId,
@@ -643,4 +878,16 @@ public partial class TaskEditModel : ObservableObject
         DayOfMonth = (int?)DayOfMonth,
         IsEnabled = IsEnabled
     };
+}
+
+/// <summary>
+/// 工作流步骤编辑模型
+/// </summary>
+public partial class WorkflowStepEditModel : ObservableObject
+{
+    [ObservableProperty]
+    private string name = string.Empty;
+
+    [ObservableProperty]
+    private string prompt = string.Empty;
 }

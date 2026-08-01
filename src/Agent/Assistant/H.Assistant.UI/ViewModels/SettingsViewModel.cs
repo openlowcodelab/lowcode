@@ -13,6 +13,9 @@ public partial class SettingsViewModel : ObservableObject
     /// <summary>返回聊天页</summary>
     public event Action? BackRequested;
 
+    /// <summary>全局 Toast 服务（供承载设置页的宿主容器渲染提示）</summary>
+    public ToastService Toast { get; }
+
     public LlmSettingsViewModel Llm { get; }
     public AgentSettingsViewModel Agents { get; }
     public McpSettingsViewModel Mcp { get; }
@@ -61,6 +64,7 @@ public partial class SettingsViewModel : ObservableObject
     public SettingsViewModel(ILLMAppService llmAppService, IAgentAppService agentAppService,
         ISkillAppService skillAppService, IMcpServerAppService mcpServerAppService, ToastService toast)
     {
+        Toast = toast;
         Llm = new LlmSettingsViewModel(llmAppService, toast);
         Agents = new AgentSettingsViewModel(agentAppService, skillAppService, llmAppService, toast);
         Mcp = new McpSettingsViewModel(mcpServerAppService, toast);

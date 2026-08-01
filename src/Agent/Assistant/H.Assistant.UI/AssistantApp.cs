@@ -12,7 +12,7 @@ namespace H.Assistant.UI;
 
 /// <summary>
 /// Assistant 桌面应用插件（与 Web 端共用 Assistant 远程服务），
-/// 以 "助手" 应用的形式接入 H.AppLab.Desktop.Host 宿主外壳
+/// 以 "会话" 应用的形式接入 H.AppLab.Desktop.Host 宿主外壳
 /// </summary>
 public sealed class AssistantApp : IDesktopApp
 {
@@ -20,11 +20,11 @@ public sealed class AssistantApp : IDesktopApp
 
     public string Id => "assistant";
 
-    public string Name => "助手";
+    public string Name => "会话";
 
-    public string Icon => "🤖";
+    public string Icon => "💬";
 
-    public string Description => "Agent 助手：会话、定时任务与知识中心";
+    public string Description => "Agent 助手：会话与知识中心";
 
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {

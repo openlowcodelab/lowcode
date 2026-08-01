@@ -14,7 +14,19 @@ public class CreateTaskDto
     [StringLength(500, ErrorMessage = "任务描述不能超过500个字符")]
     public string TaskDescription { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "提示词内容不能为空")]
+    /// <summary>任务分类</summary>
+    [StringLength(50, ErrorMessage = "任务分类不能超过50个字符")]
+    public string Category { get; set; } = string.Empty;
+
+    /// <summary>创建方式：Prompt(提示词)/Workflow(工作流)</summary>
+    public string SourceType { get; set; } = "Prompt";
+
+    /// <summary>工作流步骤（JSON，创建方式为工作流时使用）</summary>
+    public string? WorkflowContent { get; set; }
+
+    /// <summary>执行方式：Manual(手动)/Auto(自动)</summary>
+    public string ExecutionMode { get; set; } = "Auto";
+
     public string PromptContent { get; set; } = string.Empty;
 
     public string AgentType { get; set; } = string.Empty;

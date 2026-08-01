@@ -16,23 +16,17 @@
     <DataTemplate DataType="{x:Type vm:ChatViewModel}">
       <views:ChatView />
     </DataTemplate>
-    <DataTemplate DataType="{x:Type vm:TasksViewModel}">
-      <views:TasksView />
-    </DataTemplate>
     <DataTemplate DataType="{x:Type vm:KnowledgeViewModel}">
       <views:KnowledgeView />
     </DataTemplate>
     <DataTemplate DataType="{x:Type vm:KnowledgeSectionViewModel}">
       <views:KnowledgeSectionView />
     </DataTemplate>
-    <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
-      <views:SettingsView />
-    </DataTemplate>
   </UserControl.DataTemplates>
 
   <Panel>
     <!-- ========== 主布局：会话侧栏 + 页面内容（对应 ChatLayout） ========== -->
-    <Grid ColumnDefinitions="280,*" IsVisible="{Binding !IsSettingsPage}">
+    <Grid ColumnDefinitions="280,*">
       <!-- 会话侧栏 -->
       <Border Grid.Column="0" Background="#fafafa" BorderBrush="#f5f5f5" BorderThickness="0,0,1,0">
         <DockPanel>
@@ -44,30 +38,10 @@
             </Button>
           </Border>
 
-          <!-- 定时任务菜单项 -->
-          <Button DockPanel.Dock="Top" Classes="sideMenuItem"
-                  Classes.sideMenuActive="{Binding IsTasksPage}"
-                  Command="{Binding GoToTasksCommand}">
-            <StackPanel Orientation="Horizontal" Spacing="8">
-              <TextBlock Text="🕒" FontSize="14" />
-              <TextBlock Text="定时任务" />
-            </StackPanel>
-          </Button>
-
           <!-- 会话标题 -->
           <Button DockPanel.Dock="Top" Classes="sectionTitle" Command="{Binding GoToChatCommand}"
                   IsHitTestVisible="{Binding SessionTitleClickable}">
             <TextBlock Text="会话" />
-          </Button>
-
-          <!-- 设置菜单项（底部） -->
-          <Button DockPanel.Dock="Bottom" Classes="sideMenuItem"
-                  Classes.sideMenuActive="{Binding IsSettingsPage}"
-                  Command="{Binding GoToSettingsCommand}">
-            <StackPanel Orientation="Horizontal" Spacing="8">
-              <TextBlock Text="⚙" FontSize="14" />
-              <TextBlock Text="设置" />
-            </StackPanel>
           </Button>
 
           <!-- 知识中心菜单项（底部） -->
@@ -123,9 +97,6 @@
       <!-- 右侧页面内容 -->
       <ContentControl Grid.Column="1" Content="{Binding CurrentPage}" />
     </Grid>
-
-    <!-- ========== 设置页（全屏，对应 AssistantLayout 的 Settings 页面） ========== -->
-    <ContentControl Content="{Binding Settings}" IsVisible="{Binding IsSettingsPage}" />
 
     <!-- ========== Toast ========== -->
     <Border IsVisible="{Binding Toast.IsVisible}"

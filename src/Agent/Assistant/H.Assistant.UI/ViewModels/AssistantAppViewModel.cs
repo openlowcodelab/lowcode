@@ -15,20 +15,12 @@ public partial class AssistantAppViewModel : ObservableObject
 
     public ToastService Toast { get; }
     public ChatViewModel Chat { get; }
-    public TasksViewModel Tasks { get; }
     public KnowledgeViewModel Knowledge { get; }
-    public SettingsViewModel Settings { get; }
 
     public ObservableCollection<SessionItem> Sessions { get; } = [];
 
     [ObservableProperty]
     private object? currentPage;
-
-    [ObservableProperty]
-    private bool isSettingsPage;
-
-    [ObservableProperty]
-    private bool isTasksPage;
 
     [ObservableProperty]
     private bool isKnowledgePage;
@@ -43,27 +35,22 @@ public partial class AssistantAppViewModel : ObservableObject
     public bool HasSessions => Sessions.Count > 0;
 
     /// <summary>会话标题是否可点击返回聊天</summary>
-    public bool SessionTitleClickable => IsTasksPage || IsKnowledgePage;
+    public bool SessionTitleClickable => IsKnowledgePage;
 
     public AssistantAppViewModel(IChatMessageAppService chatMessageAppService, ToastService toast,
-        ChatViewModel chat, TasksViewModel tasks, KnowledgeViewModel knowledge, SettingsViewModel settings)
+        ChatViewModel chat, KnowledgeViewModel knowledge)
     {
         _chatMessageAppService = chatMessageAppService;
         Toast = toast;
         Chat = chat;
-        Tasks = tasks;
         Knowledge = knowledge;
-        Settings = settings;
 
         Chat.SessionCreated += OnSessionCreated;
         Chat.SessionsChanged += () => _ = LoadSessionsAsync();
-        Settings.BackRequested += () => _ = GoToChatAsync();
 
         CurrentPage = Chat;
         _ = InitializeAsync();
     }
-
-    partial void OnIsTasksPageChanged(bool value) => OnPropertyChanged(nameof(SessionTitleClickable));
 
     partial void OnIsKnowledgePageChanged(bool value) => OnPropertyChanged(nameof(SessionTitleClickable));
 
@@ -114,7 +101,6 @@ public partial class AssistantAppViewModel : ObservableObject
         {
             session.IsSelected = false;
         }
-        IsTasksPage = false;
         IsKnowledgePage = false;
         CurrentPage = Chat;
         await Chat.StartNewChatAsync();
@@ -128,7 +114,6 @@ public partial class AssistantAppViewModel : ObservableObject
         {
             item.IsSelected = item == session;
         }
-        IsTasksPage = false;
         IsKnowledgePage = false;
         CurrentPage = Chat;
         await Chat.OpenSessionAsync(session.Dto.Id);
@@ -138,10 +123,8 @@ public partial class AssistantAppViewModel : ObservableObject
     private async Task GoToChatAsync()
     {
         CloseMenus();
-        IsSettingsPage = false;
-        if (IsTasksPage || IsKnowledgePage || CurrentPage != Chat)
+        if (IsKnowledgePage || CurrentPage != Chat)
         {
-            IsTasksPage = false;
             IsKnowledgePage = false;
             CurrentPage = Chat;
             if (!Chat.HasSession)
@@ -152,37 +135,15 @@ public partial class AssistantAppViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private async Task GoToTasksAsync()
-    {
-        CloseMenus();
-        if (!IsTasksPage)
-        {
-            IsTasksPage = true;
-            IsKnowledgePage = false;
-            CurrentPage = Tasks;
-            await Tasks.InitializeAsync();
-        }
-    }
-
-    [RelayCommand]
     private async Task GoToKnowledgeAsync()
     {
         CloseMenus();
         if (!IsKnowledgePage)
         {
             IsKnowledgePage = true;
-            IsTasksPage = false;
             CurrentPage = Knowledge;
             await Knowledge.InitializeAsync();
         }
-    }
-
-    [RelayCommand]
-    private void GoToSettings()
-    {
-        CloseMenus();
-        IsSettingsPage = true;
-        Settings.SelectMenu("general");
     }
 
     [RelayCommand]

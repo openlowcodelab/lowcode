@@ -4,28 +4,37 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using H.AppLab.Desktop.Contracts;
 using H.AppLab.Desktop.Host.Views;
+using H.Assistant.UI.ViewModels;
+using H.Assistant.UI.Views;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace H.AppLab.Desktop.Host.ViewModels;
 
 /// <summary>
-/// 宿主外壳主窗口 ViewModel：左侧快捷菜单（首页 / 各应用 / 任务 / 应用）+ 内容区。
+/// 宿主外壳主窗口 ViewModel：左侧快捷菜单（各应用 / 任务 / 应用）+ 内容区。
 /// 插件应用视图按需创建并缓存，切换菜单时保留应用内状态。
 /// </summary>
 public partial class MainWindowViewModel : ObservableObject
 {
-    private const string HomeMenuId = "home";
     private const string TasksMenuId = "tasks";
     private const string AppsMenuId = "apps";
+    private const string SettingsMenuId = "settings";
 
     private readonly IServiceProvider _services;
     private readonly Dictionary<string, Control> _appViews = [];
 
-    private HomeView? _homeView;
-    private HostTasksView? _tasksView;
+    private Control? _tasksView;
     private AppsView? _appsView;
+    private Control? _settingsView;
+
+    /// <summary>回退时恢复的上一个内容菜单项（非设置）</summary>
+    private NavItemViewModel? _lastContentNav;
 
     /// <summary>左侧快捷菜单项</summary>
     public ObservableCollection<NavItemViewModel> NavItems { get; } = [];
+
+    /// <summary>底部设置入口（仅展示图标）</summary>
+    public NavItemViewModel SettingsNav { get; }
 
     /// <summary>已接入的全部插件应用（应用中心/首页展示）</summary>
     public ObservableCollection<AppCardViewModel> Apps { get; } = [];
@@ -42,8 +51,7 @@ public partial class MainWindowViewModel : ObservableObject
             Apps.Add(new AppCardViewModel(app, this));
         }
 
-        // 快捷菜单：首页 + 各插件应用 + 任务 + 应用
-        NavItems.Add(new NavItemViewModel(HomeMenuId, "首页", "🏠", this));
+        // 快捷菜单：各插件应用 + 任务 + 应用
         foreach (var card in Apps)
         {
             NavItems.Add(new NavItemViewModel(card.App.Id, card.App.Name, card.App.Icon, this) { AppId = card.App.Id });
@@ -51,25 +59,70 @@ public partial class MainWindowViewModel : ObservableObject
         NavItems.Add(new NavItemViewModel(TasksMenuId, "任务", "🗓", this));
         NavItems.Add(new NavItemViewModel(AppsMenuId, "应用", "🧩", this));
 
+        // 底部设置入口（仅展示图标）
+        SettingsNav = new NavItemViewModel(SettingsMenuId, "设置", "⚙", this);
+
         Navigate(NavItems[0]);
     }
 
     [RelayCommand]
     private void Navigate(NavItemViewModel item)
     {
+        if (item.Id != SettingsMenuId)
+        {
+            _lastContentNav = item;
+        }
+
         foreach (var nav in NavItems)
         {
             nav.IsActive = nav == item;
+        }
+        SettingsNav.IsActive = item == SettingsNav;
+
+        if (item.Id == SettingsMenuId)
+        {
+            CurrentContent = GetSettingsView();
+            return;
         }
 
         CurrentContent = item.AppId is not null
             ? GetAppView(item.AppId)
             : item.Id switch
             {
-                TasksMenuId => _tasksView ??= new HostTasksView { DataContext = this },
-                AppsMenuId => _appsView ??= new AppsView { DataContext = this },
-                _ => _homeView ??= new HomeView { DataContext = this }
+                TasksMenuId => GetTasksView(),
+                _ => _appsView ??= new AppsView { DataContext = this }
             };
+    }
+
+    /// <summary>
+    /// 任务页（复用 H.Assistant.UI 的任务中心视图，按需创建并缓存）
+    /// </summary>
+    private Control GetTasksView()
+    {
+        if (_tasksView is null)
+        {
+            var vm = _services.GetRequiredService<TasksViewModel>();
+            _tasksView = new TasksView { DataContext = vm };
+            _ = vm.InitializeAsync();
+        }
+        return _tasksView;
+    }
+
+    /// <summary>
+    /// 设置页（来自 H.Assistant.UI，按需创建并缓存）：每次进入重置到“通用”页，
+    /// “返回”按钮回到进入设置前的内容页。
+    /// </summary>
+    private Control GetSettingsView()
+    {
+        if (_settingsView is null)
+        {
+            var vm = _services.GetRequiredService<SettingsViewModel>();
+            vm.BackRequested += () => Navigate(_lastContentNav ?? NavItems[0]);
+            _settingsView = new SettingsPageView { DataContext = vm };
+        }
+
+        (_settingsView.DataContext as SettingsViewModel)?.SelectMenu("general");
+        return _settingsView;
     }
 
     /// <summary>

@@ -33,7 +33,15 @@
             </Border>
           </Border>
 
-          <!-- 快捷菜单：首页 / 助手 / 任务 / 应用 -->
+          <!-- 底部设置入口（仅展示图标，固定在菜单栏最下方） -->
+          <Button DockPanel.Dock="Bottom" Classes="navItem"
+                  Classes.navItemActive="{Binding SettingsNav.IsActive}"
+                  Command="{Binding SettingsNav.SelectCommand}"
+                  Margin="8,8,8,16" ToolTip.Tip="设置">
+            <TextBlock Text="{Binding SettingsNav.Icon}" FontSize="20" HorizontalAlignment="Center" />
+          </Button>
+
+          <!-- 快捷菜单：会话 / 任务 / 应用 -->
           <ItemsControl ItemsSource="{Binding NavItems}">
             <ItemsControl.ItemTemplate>
               <DataTemplate>
