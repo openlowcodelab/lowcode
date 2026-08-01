@@ -1,0 +1,180 @@
+@page "/file"
+
+@layout FileLayout
+@inject IFileProjectAppService ProjectService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<HCard Title="项目管理">
+    <Extra>
+        <button class="h-btn h-btn-primary" @onclick="@ShowCreateDialog">+ 新建项目</button>
+    </Extra>
+    <ChildContent>
+    @if (loading)
+    {
+        <div style="text-align:center;padding:40px;color:#86909C;">加载中...</div>
+    }
+    else if (!projects.Any())
+    {
+        <div style="text-align:center;padding:60px;color:#86909C;">
+            <div style="font-size:48px;margin-bottom:12px;">📂</div>
+            <div>暂无项目，点击右上角创建</div>
+        </div>
+    }
+    else
+    {
+        <div class="file-project-grid">
+            @foreach (var p in projects)
+            {
+                <div class="file-project-card" @onclick="@(() => GoToFiles(p.Id))">
+                    <div class="file-project-icon">@(p.Icon ?? "📁")</div>
+                    <div class="file-project-name">@p.Name</div>
+                    <div class="file-project-desc">@(p.Description ?? "暂无描述")</div>
+                    <div class="file-project-stats">
+                        <span>📄 @p.FileCount 个文件</span>
+                        <span>💾 @FormatSize(p.TotalSize)</span>
+                    </div>
+                    <div class="file-project-time">@p.CreationTime.ToString("yyyy-MM-dd HH:mm")</div>
+                    <div class="file-project-actions" @onclick:stopPropagation="true">
+                        <a @onclick="@(() => ShowEditDialog(p))">编辑</a>
+                        <a class="danger" @onclick="@(() => ConfirmDelete(p))">删除</a>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    </ChildContent>
+</HCard>
+
+<HModal Title="@(isEdit ? "编辑项目" : "新建项目")" Visible="@showModal" OnOk="@Save" OnCancel="@CloseModal" ConfirmLoading="@saving">
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">项目名称</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@current.Name" placeholder="请输入项目名称" class="h-input" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">图标</label>
+        <div class="h-form-control">
+            <input type="text" @bind-value="@current.Icon" placeholder="输入 Emoji 图标，如 📁" class="h-input" style="width:120px" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">描述</label>
+        <div class="h-form-control">
+            <textarea @bind="@current.Description" rows="3" placeholder="项目描述（可选）" class="h-textarea"></textarea>
+        </div>
+    </div>
+</HModal>
+
+<style>
+    .file-project-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 16px;
+    }
+    .file-project-card {
+        border: 1px solid #F2F3F5;
+        border-radius: 8px;
+        padding: 20px;
+        cursor: pointer;
+        transition: all 0.2s;
+        position: relative;
+    }
+    .file-project-card:hover {
+        border-color: #165DFF;
+        box-shadow: 0 4px 12px rgba(22,93,255,0.1);
+    }
+    .file-project-icon { font-size: 36px; margin-bottom: 12px; }
+    .file-project-name { font-size: 16px; font-weight: 600; color: #1D2129; margin-bottom: 6px; }
+    .file-project-desc { font-size: 13px; color: #86909C; margin-bottom: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .file-project-stats { display: flex; gap: 16px; font-size: 12px; color: #4E5969; margin-bottom: 8px; }
+    .file-project-time { font-size: 12px; color: #C9CDD4; }
+    .file-project-actions { position: absolute; top: 12px; right: 12px; display: none; gap: 8px; }
+    .file-project-card:hover .file-project-actions { display: flex; }
+    .file-project-actions a { font-size: 12px; color: #165DFF; cursor: pointer; }
+    .file-project-actions a.danger { color: #F53F3F; }
+</style>
+
+@code {
+    private List<FileProjectDto> projects = new();
+    private bool loading;
+    private bool showModal;
+    private bool saving;
+    private bool isEdit;
+    private Guid editId;
+    private CreateFileProjectDto current = new();
+
+    protected override async Task OnInitializedAsync() => await LoadData();
+
+    private async Task LoadData()
+    {
+        loading = true;
+        try { projects = await ProjectService.GetListAsync(); }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载失败：{ex.Message}"); }
+        finally { loading = false; }
+    }
+
+    private void ShowCreateDialog()
+    {
+        isEdit = false;
+        current = new CreateFileProjectDto { Icon = "📁" };
+        showModal = true;
+    }
+
+    private void ShowEditDialog(FileProjectDto p)
+    {
+        isEdit = true;
+        editId = p.Id;
+        current = new CreateFileProjectDto { Name = p.Name, Description = p.Description, Icon = p.Icon };
+        showModal = true;
+    }
+
+    private async Task Save()
+    {
+        if (string.IsNullOrWhiteSpace(current.Name))
+        {
+            await JS.InvokeVoidAsync("alert", "项目名称不能为空");
+            return;
+        }
+        saving = true;
+        try
+        {
+            if (isEdit)
+                await ProjectService.UpdateAsync(editId, new UpdateFileProjectDto { Name = current.Name, Description = current.Description, Icon = current.Icon });
+            else
+                await ProjectService.CreateAsync(current);
+            CloseModal();
+            await LoadData();
+        }
+        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}"); }
+        finally { saving = false; }
+    }
+
+    private void CloseModal() { showModal = false; }
+
+    private async Task ConfirmDelete(FileProjectDto p)
+    {
+        var ok = await JS.InvokeAsync<bool>("confirm", $"确定删除项目「{p.Name}」？\n该项目下所有文件将被永久删除！");
+        if (ok)
+        {
+            try
+            {
+                await ProjectService.DeleteAsync(p.Id);
+                await JS.InvokeVoidAsync("alert", "已删除");
+                await LoadData();
+            }
+            catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"删除失败：{ex.Message}"); }
+        }
+    }
+
+    private void GoToFiles(Guid projectId) => Nav.NavigateTo($"/file/objects?project={projectId}");
+
+    private static string FormatSize(long bytes) => bytes switch
+    {
+        < 1024 => $"{bytes} B",
+        < 1024 * 1024 => $"{bytes / 1024.0:F1} KB",
+        < 1024 * 1024 * 1024 => $"{bytes / (1024.0 * 1024):F1} MB",
+        _ => $"{bytes / (1024.0 * 1024 * 1024):F2} GB"
+    };
+}

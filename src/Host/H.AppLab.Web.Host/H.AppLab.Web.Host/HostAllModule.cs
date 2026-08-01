@@ -19,6 +19,7 @@ using H.Order.Application;
 using H.Setting.Application;
 using H.SupplyChain.Application;
 using H.BackgroundTask.Application;
+using H.File.Application;
 using H.Mcp.YunXiao;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -73,6 +74,8 @@ namespace H.AppLab.Web.Host;
     typeof(SupplyChainApplicationModule),
     // BackgroundTask
     typeof(BackgroundTaskApplicationModule),
+    // File（文件管理）
+    typeof(FileApplicationModule),
     // YunXiao MCP Server
     typeof(YunXiaoMcpServerModule)
 )]
@@ -152,6 +155,7 @@ public class HostAllModule : AbpModule
             options.ConventionalControllers.Create(typeof(SettingApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(SupplyChainApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(BackgroundTaskApplicationModule).Assembly);
+            options.ConventionalControllers.Create(typeof(FileApplicationModule).Assembly);
         });
     }
 

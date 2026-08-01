@@ -1,0 +1,24 @@
+@namespace H.File.Web
+
+<div class="file-tree-node @(SelectedFolder == Node.Path ? "active" : "")" @onclick="@(() => OnSelect.InvokeAsync(Node.Path))">
+    📁 @Node.Name
+    <span class="node-actions">
+        <a class="danger" @onclick:stopPropagation="true" @onclick="@(() => OnDelete.InvokeAsync(Node))">✕</a>
+    </span>
+</div>
+@if (Node.Children.Any())
+{
+    <div class="file-tree-children">
+        @foreach (var child in Node.Children)
+        {
+            <FileTreeNode Node="@child" SelectedFolder="@SelectedFolder" OnSelect="@OnSelect" OnDelete="@OnDelete" />
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public FileFolderDto Node { get; set; } = new();
+    [Parameter] public string? SelectedFolder { get; set; }
+    [Parameter] public EventCallback<string?> OnSelect { get; set; }
+    [Parameter] public EventCallback<FileFolderDto> OnDelete { get; set; }
+}

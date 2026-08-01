@@ -28,5 +28,21 @@ services:
       - RABBITMQ_DEFAULT_PASS=123456
       - TZ=Asia/Shanghai
 
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    restart: on-failure
+    ports:
+      - "9000:9000"       # API 端口
+      - "9001:9001"       # 控制台端口
+    volumes:
+      - minio_data:/data
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+      - TZ=Asia/Shanghai
+    command: server /data --console-address ":9001"
+
 volumes:
   rabbitmq_data: # RabbitMQ专用卷
+  minio_data:    # MinIO专用卷

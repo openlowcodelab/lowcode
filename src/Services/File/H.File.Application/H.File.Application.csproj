@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../../../common.props" />
+  <PropertyGroup>
+    <RootNamespace>H.File.Application</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Volo.Abp.AspNetCore.Mvc" />
+    <PackageReference Include="Minio" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\H.File.Application.Contracts\H.File.Application.Contracts.csproj" />
+    <ProjectReference Include="..\H.File.EntityFrameworkCore\H.File.EntityFrameworkCore.csproj" />
+  </ItemGroup>
+</Project>

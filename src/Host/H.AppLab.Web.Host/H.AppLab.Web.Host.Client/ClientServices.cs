@@ -13,6 +13,7 @@ using H.Order.Application.Contracts;
 using H.Setting.Application.Contracts;
 using H.Organization.Application.Contracts;
 using H.BackgroundTask.Application.Contracts;
+using H.File.Application.Contracts;
 using H.SupplyChain.Application.Contracts;
 using H.SystemPortal.Application.Contracts;
 using H.Abp.HttpClientProxy;
@@ -39,6 +40,7 @@ public static class ClientServices
     public const string SettingRemoteServiceName = "Setting";
     public const string SupplyChainRemoteServiceName = "SupplyChain";
     public const string BackgroundTaskRemoteServiceName = "BackgroundTask";
+    public const string FileRemoteServiceName = "File";
     public const string EnterpriseRemoteServiceName = "Enterprise";
     public const string SystemPortalRemoteServiceName = "SystemPortal";
     public const string AssistantRemoteServiceName = "Assistant";
@@ -68,7 +70,7 @@ public static class ClientServices
             AssistantRemoteServiceName, EnterpriseRemoteServiceName,
             SystemPortalRemoteServiceName, OrderRemoteServiceName,
             SettingRemoteServiceName, SupplyChainRemoteServiceName,
-            BackgroundTaskRemoteServiceName
+            BackgroundTaskRemoteServiceName, FileRemoteServiceName
         ];
 
         foreach (var name in serviceNames)
@@ -119,6 +121,8 @@ public static class ClientServices
             s.AddHttpClientProxies(typeof(SupplyChainApplicationContractsModule).Assembly, SupplyChainRemoteServiceName),
         ["background-task"] = (s, _) =>
             s.AddHttpClientProxies(typeof(BackgroundTaskApplicationContractsModule).Assembly, BackgroundTaskRemoteServiceName),
+        ["file"] = (s, _) =>
+            s.AddHttpClientProxies(typeof(FileApplicationContractsModule).Assembly, FileRemoteServiceName),
         ["account"] = (s, _) =>
             s.AddHttpClientProxies(typeof(AccountApplicationContractsModule).Assembly, AccountRemoteServiceName),
         ["assistant"] = (s, _) =>

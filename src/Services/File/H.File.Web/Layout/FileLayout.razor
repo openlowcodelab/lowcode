@@ -1,0 +1,17 @@
+@namespace H.File.Web
+
+@inherits LayoutComponentBase
+
+<DefaultLayoutComponent
+    AppName="文件管理"
+    MenuItems="@MenuItems">
+    @Body
+</DefaultLayoutComponent>
+
+@code {
+    private static List<AppMenuItem> MenuItems => new()
+    {
+        new AppMenuItem { Name = "项目管理", Url = "/file",        Icon = "📂" },
+        new AppMenuItem { Name = "文件管理", Url = "/file/objects", Icon = "📄" }
+    };
+}
