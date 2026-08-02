@@ -30,20 +30,18 @@ public class FileProjectAppService : ApplicationService, IFileProjectAppService
         var queryable = await _repository.GetQueryableAsync();
         var entities = await AsyncExecuter.ToListAsync(queryable.OrderByDescending(x => x.CreationTime));
 
-        var dtos = new List<FileProjectDto>();
-        foreach (var e in entities)
+        // 直接从数据库读取统计信息，不再调用 minio
+        var dtos = entities.Select(e => new FileProjectDto
         {
-            var dto = MapToDto(e);
-            // 获取 bucket 统计信息
-            try
-            {
-                var objects = await _storage.ListAllObjectsAsync(e.BucketName);
-                dto.FileCount = objects.Count;
-                dto.TotalSize = objects.Sum(o => o.Size);
-            }
-            catch { /* bucket 可能不存在 */ }
-            dtos.Add(dto);
-        }
+            Id = e.Id,
+            Name = e.Name,
+            Description = e.Description,
+            Icon = e.Icon,
+            FileCount = e.FileCount,
+            TotalSize = e.TotalSize,
+            CreationTime = e.CreationTime
+        }).ToList();
+
         return dtos;
     }
 

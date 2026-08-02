@@ -21,4 +21,10 @@ public class FileProjectEntity : AuditedEntity<Guid>, IMultiTenant
 
     /// <summary>MinIO Bucket 名称（全局唯一，含租户前缀）</summary>
     public string BucketName { get; set; } = string.Empty;
+
+    /// <summary>文件数量（缓存值，上传/删除时同步更新）</summary>
+    public int FileCount { get; set; }
+
+    /// <summary>文件总大小（缓存值，上传/删除时同步更新）</summary>
+    public long TotalSize { get; set; }
 }

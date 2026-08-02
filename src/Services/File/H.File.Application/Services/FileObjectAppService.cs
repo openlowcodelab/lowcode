@@ -14,42 +14,38 @@ public class FileObjectAppService : ApplicationService, IFileObjectAppService
 {
     private readonly IRepository<FileProjectEntity, Guid> _repository;
     private readonly IRepository<FileFolderEntity, Guid> _folderRepository;
+    private readonly IRepository<FileObjectEntity, Guid> _objectRepository;
     private readonly MinioStorageService _storage;
 
     public FileObjectAppService(
         IRepository<FileProjectEntity, Guid> repository,
         IRepository<FileFolderEntity, Guid> folderRepository,
+        IRepository<FileObjectEntity, Guid> objectRepository,
         MinioStorageService storage)
     {
         _repository = repository;
         _folderRepository = folderRepository;
+        _objectRepository = objectRepository;
         _storage = storage;
     }
 
     public async Task<List<FileObjectDto>> GetFilesAsync(Guid projectId, string? folderPath = null)
     {
-        var entity = await _repository.GetAsync(projectId);
-        var prefix = string.IsNullOrEmpty(folderPath) ? null : EnsureTrailingSlash(folderPath);
-        var objects = await _storage.ListObjectsAsync(entity.BucketName, prefix);
+        var prefix = string.IsNullOrEmpty(folderPath) ? string.Empty : EnsureTrailingSlash(folderPath);
 
-        var result = new List<FileObjectDto>();
-        foreach (var (key, size, lastModified) in objects)
+        var queryable = await _objectRepository.GetQueryableAsync();
+        var entities = await AsyncExecuter.ToListAsync(
+            queryable.Where(o => o.ProjectId == projectId && o.FolderPath == prefix));
+
+        return entities.Select(e => new FileObjectDto
         {
-            // 文件夹只在左侧分类树展示，右侧列表仅展示文件
-            if (key.EndsWith('/')) continue;
-            var fileName = GetFileName(key);
-            result.Add(new FileObjectDto
-            {
-                Key = key,
-                FileName = fileName,
-                Size = size,
-                LastModified = lastModified,
-                IsFolder = false,
-                ContentType = GetContentType(fileName)
-            });
-        }
-
-        return result.OrderBy(x => x.FileName).ToList();
+            Key = e.Key,
+            FileName = e.FileName,
+            Size = e.Size,
+            ContentType = e.ContentType,
+            LastModified = e.CreationTime,
+            IsFolder = false
+        }).OrderBy(x => x.FileName).ToList();
     }
 
     public async Task<List<FileFolderDto>> GetFolderTreeAsync(Guid projectId)
@@ -88,6 +84,23 @@ public class FileObjectAppService : ApplicationService, IFileObjectAppService
         try
         {
             await _storage.PutObjectAsync(entity.BucketName, objectKey, content, contentType);
+
+            // 写入文件元数据到数据库
+            await _objectRepository.InsertAsync(new FileObjectEntity
+            {
+                ProjectId = projectId,
+                Key = objectKey,
+                FileName = fileName,
+                Size = content.Length,
+                ContentType = contentType,
+                FolderPath = string.IsNullOrEmpty(folderPath) ? string.Empty : EnsureTrailingSlash(folderPath)
+            });
+
+            // 更新项目统计信息
+            entity.FileCount += 1;
+            entity.TotalSize += content.Length;
+            await _repository.UpdateAsync(entity);
+
             return new FileUploadResultDto
             {
                 Key = objectKey,
@@ -160,7 +173,24 @@ public class FileObjectAppService : ApplicationService, IFileObjectAppService
     public async Task DeleteAsync(Guid projectId, string fileKey)
     {
         var entity = await _repository.GetAsync(projectId);
+
+        // 获取文件大小
+        var fileSize = await _storage.GetObjectSizeAsync(entity.BucketName, fileKey) ?? 0;
         await _storage.RemoveObjectAsync(entity.BucketName, fileKey);
+
+        // 从数据库删除文件元数据
+        var queryable = await _objectRepository.GetQueryableAsync();
+        var fileEntity = await AsyncExecuter.FirstOrDefaultAsync(
+            queryable.Where(o => o.ProjectId == projectId && o.Key == fileKey));
+        if (fileEntity != null)
+        {
+            await _objectRepository.DeleteAsync(fileEntity);
+        }
+
+        // 更新项目统计信息
+        entity.FileCount -= 1;
+        entity.TotalSize -= fileSize;
+        await _repository.UpdateAsync(entity);
     }
 
     public async Task CreateFolderAsync(Guid projectId, CreateFolderInput input)
@@ -217,9 +247,24 @@ public class FileObjectAppService : ApplicationService, IFileObjectAppService
         var prefix = EnsureTrailingSlash(folderPath);
         await _storage.RemoveObjectsByPrefixAsync(entity.BucketName, prefix);
 
-        var toDelete = await _folderRepository.GetListAsync(f =>
+        // 从数据库删除该文件夹下的所有文件元数据
+        var queryable = await _objectRepository.GetQueryableAsync();
+        var toDelete = await AsyncExecuter.ToListAsync(
+            queryable.Where(o => o.ProjectId == projectId && o.FolderPath.StartsWith(prefix)));
+        if (toDelete.Any())
+        {
+            // 更新项目统计信息
+            entity.FileCount -= toDelete.Count;
+            entity.TotalSize -= toDelete.Sum(o => o.Size);
+            await _repository.UpdateAsync(entity);
+
+            await _objectRepository.DeleteManyAsync(toDelete);
+        }
+
+        // 删除文件夹记录
+        var toDeleteFolders = await _folderRepository.GetListAsync(f =>
             f.ProjectId == projectId && (f.Path == prefix || f.Path.StartsWith(prefix)));
-        await _folderRepository.DeleteManyAsync(toDelete);
+        await _folderRepository.DeleteManyAsync(toDeleteFolders);
     }
 
     #region 辅助方法
