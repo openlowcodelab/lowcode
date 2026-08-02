@@ -136,55 +136,53 @@
 <!-- 文件预览遮罩层 -->
 @if (showPreview && previewData != null)
 {
-    <div class="file-preview-overlay" @onclick="() => showPreview = false">
-        <div class="file-preview-container" @onclick:stopPropagation="true">
-            <div class="file-preview-header">
-                <span class="file-preview-title">📄 @previewData.FileName</span>
-                <button class="h-btn h-btn-sm" @onclick="() => showPreview = false">关闭</button>
-            </div>
-            <div class="file-preview-body">
-                @switch (previewData.PreviewType)
-                {
-                    case "image":
-                        <div class="file-preview-center">
-                            <img src="@previewData.PreviewUrl" class="file-preview-image" alt="@previewData.FileName" />
+    <div class="fp-overlay" @onclick="() => showPreview = false">
+        <div class="fp-topbar">
+            <span class="fp-filename">@previewData.FileName</span>
+            <button class="fp-close" @onclick="() => showPreview = false" title="关闭">✕</button>
+        </div>
+        <div class="fp-content">
+            <div class="fp-content-inner">
+            @switch (previewData.PreviewType)
+            {
+                case "image":
+                    <img src="@previewData.PreviewUrl" class="fp-image" alt="@previewData.FileName" @onclick:stopPropagation="true" />
+                    break;
+                case "text":
+                    <pre class="fp-text" @onclick:stopPropagation="true">@previewData.TextContent</pre>
+                    break;
+                case "markdown":
+                    <div class="fp-markdown" @onclick:stopPropagation="true">@((MarkupString)Markdown.ToHtml(previewData.TextContent ?? string.Empty))</div>
+                    break;
+                case "html":
+                    <iframe srcdoc="@previewData.TextContent" class="fp-iframe" @onclick:stopPropagation="true"></iframe>
+                    break;
+                case "pdf":
+                    <iframe src="@previewData.PreviewUrl" class="fp-iframe" @onclick:stopPropagation="true"></iframe>
+                    break;
+                case "office":
+                    if (previewData.Base64Content == null)
+                    {
+                        <div class="fp-empty" @onclick:stopPropagation="true">
+                            <div style="font-size:48px;margin-bottom:16px;">📊</div>
+                            <div>文件过大，暂不支持在线预览</div>
+                            <a href="@previewData.PreviewUrl" class="fp-download-btn">下载查看</a>
                         </div>
-                        break;
-                    case "text":
-                        <pre class="file-preview-text">@previewData.TextContent</pre>
-                        break;
-                    case "markdown":
-                        <div class="file-preview-markdown">@((MarkupString)Markdown.ToHtml(previewData.TextContent ?? string.Empty))</div>
-                        break;
-                    case "html":
-                        <iframe srcdoc="@previewData.TextContent" class="file-preview-iframe"></iframe>
-                        break;
-                    case "pdf":
-                        <iframe src="@previewData.PreviewUrl" class="file-preview-iframe"></iframe>
-                        break;
-                    case "office":
-                        if (previewData.Base64Content == null)
-                        {
-                            <div class="file-preview-center">
-                                <div style="font-size:36px;margin-bottom:12px;">📊</div>
-                                <div>文件过大，暂不支持在线预览</div>
-                                <a href="@previewData.PreviewUrl" target="_blank" class="h-btn h-btn-primary" style="margin-top:16px;display:inline-block;">下载查看</a>
-                            </div>
-                        }
-                        else
-                        {
-                            <div id="office-preview-container" class="file-preview-office">
-                                <div style="text-align:center;padding:40px;color:#86909C;">⏳ 正在解析预览，请稍候...</div>
-                            </div>
-                        }
-                        break;
-                    default:
-                        <div class="file-preview-center">
-                            <div style="font-size:36px;margin-bottom:12px;">📎</div>
-                            <div>该文件类型暂不支持预览</div>
+                    }
+                    else
+                    {
+                        <div id="office-preview-container" class="fp-office" @onclick:stopPropagation="true">
+                            <div style="text-align:center;padding:40px;color:#86909C;">⏳ 正在解析预览，请稍候...</div>
                         </div>
-                        break;
-                }
+                    }
+                    break;
+                default:
+                    <div class="fp-empty" @onclick:stopPropagation="true">
+                        <div style="font-size:48px;margin-bottom:12px;">📎</div>
+                        <div>该文件类型暂不支持预览</div>
+                    </div>
+                    break;
+            }
             </div>
         </div>
     </div>
@@ -228,15 +226,33 @@
     .file-preview-office table td, .file-preview-office table th { border: 1px solid #E5E6EB; padding: 6px 8px; }
     .h-btn-sm { padding: 4px 10px; font-size: 12px; }
     .h-form-tip { font-size: 12px; color: #86909C; margin-top: 4px; }
-    .file-preview-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); z-index: 9999; display: flex; align-items: center; justify-content: center; animation: file-preview-fade-in 0.15s ease-out; }
-    .file-preview-container { background: #fff; border-radius: 8px; width: 85vw; max-width: 1200px; height: 85vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25); }
-    .file-preview-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid #F2F3F5; font-size: 14px; font-weight: 600; }
-    .file-preview-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 16px; }
-    .file-preview-body { flex: 1; overflow: hidden; padding: 16px; display: flex; flex-direction: column; }
-    .file-preview-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #86909C; }
-    .file-preview-image { max-width: 100%; max-height: 100%; object-fit: contain; }
-    .file-preview-iframe { flex: 1; width: 100%; border: none; border-radius: 4px; }
-    @@keyframes file-preview-fade-in { from { opacity: 0; } to { opacity: 1; } }
+    .fp-overlay { position: fixed; inset: 0; z-index: 9999; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: flex; flex-direction: column; animation: fp-fade-in 0.2s ease-out; }
+    .fp-topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; flex-shrink: 0; }
+    .fp-filename { color: rgba(255,255,255,0.9); font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+    .fp-close { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.1); border: none; color: rgba(255,255,255,0.8); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.15s, color 0.15s; flex-shrink: 0; }
+    .fp-close:hover { background: rgba(255,255,255,0.25); color: #fff; }
+    .fp-content { flex: 1; display: flex; align-items: center; justify-content: center; padding: 0 40px 40px; overflow: hidden; }
+    .fp-content-inner { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+    .fp-image { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 4px; box-shadow: 0 4px 24px rgba(0,0,0,0.4); }
+    .fp-text { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.9); padding: 20px 24px; border-radius: 8px; flex: 1; overflow: auto; font-size: 13px; line-height: 1.7; white-space: pre-wrap; word-break: break-all; max-width: 900px; max-height: 100%; margin: auto; border: 1px solid rgba(255,255,255,0.08); }
+    .fp-markdown { flex: 1; overflow: auto; color: rgba(255,255,255,0.9); background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 20px 24px; font-size: 14px; line-height: 1.7; word-break: break-word; max-width: 900px; max-height: 100%; margin: auto; }
+    .fp-markdown h1, .fp-markdown h2, .fp-markdown h3 { margin: 0.6em 0 0.4em; color: #fff; }
+    .fp-markdown h1 { font-size: 1.5em; } .fp-markdown h2 { font-size: 1.3em; } .fp-markdown h3 { font-size: 1.15em; }
+    .fp-markdown p { margin: 0.5em 0; }
+    .fp-markdown ul, .fp-markdown ol { padding-left: 1.5em; margin: 0.5em 0; }
+    .fp-markdown pre { background: rgba(0,0,0,0.3); padding: 12px; border-radius: 4px; overflow: auto; }
+    .fp-markdown code { background: rgba(255,255,255,0.1); padding: 1px 4px; border-radius: 3px; font-size: 0.9em; }
+    .fp-markdown table { border-collapse: collapse; width: 100%; }
+    .fp-markdown table td, .fp-markdown table th { border: 1px solid rgba(255,255,255,0.15); padding: 6px 8px; }
+    .fp-markdown blockquote { border-left: 3px solid rgba(255,255,255,0.2); margin: 0.5em 0; padding-left: 12px; color: rgba(255,255,255,0.6); }
+    .fp-iframe { flex: 1; width: 100%; height: 100%; border: none; border-radius: 8px; background: #fff; }
+    .fp-office { flex: 1; overflow: auto; background: rgba(255,255,255,0.95); border-radius: 8px; padding: 12px; max-width: 1100px; max-height: 100%; margin: auto; }
+    .fp-office table { border-collapse: collapse; width: 100%; font-size: 13px; }
+    .fp-office table td, .fp-office table th { border: 1px solid #E5E6EB; padding: 6px 8px; }
+    .fp-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; color: rgba(255,255,255,0.7); padding: 60px 40px; }
+    .fp-download-btn { display: inline-block; padding: 10px 28px; border-radius: 6px; background: #165DFF; color: #fff; text-decoration: none; font-size: 14px; font-weight: 500; transition: background 0.15s; }
+    .fp-download-btn:hover { background: #4080FF; }
+    @@keyframes fp-fade-in { from { opacity: 0; } to { opacity: 1; } }
 </style>
 
 @code {
@@ -425,7 +441,7 @@
         try
         {
             var url = await FileService.GetDownloadUrlAsync(selectedProjectId, f.Key);
-            await JS.InvokeVoidAsync("open", url, "_blank");
+            await JS.InvokeVoidAsync("eval", $"(function(){{var a=document.createElement('a');a.href='{url}';a.download='{f.FileName}';document.body.appendChild(a);a.click();document.body.removeChild(a);}})()");
         }
         catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"获取下载链接失败：{ex.Message}"); }
     }
