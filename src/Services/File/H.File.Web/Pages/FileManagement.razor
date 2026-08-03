@@ -528,8 +528,10 @@
     {
         try
         {
-            var url = await FileService.GetDownloadUrlAsync(selectedProjectId, f.Key);
-            await JS.InvokeVoidAsync("eval", $"(function(){{var a=document.createElement('a');a.href='{url}';a.download='{f.FileName}';document.body.appendChild(a);a.click();document.body.removeChild(a);}})()");
+            var url = Nav.ToAbsoluteUri($"/api/file/download?projectId={selectedProjectId}&fileKey={Uri.EscapeDataString(f.Key)}").ToString();
+            var urlJson = System.Text.Json.JsonSerializer.Serialize(url);
+            var fileNameJson = System.Text.Json.JsonSerializer.Serialize(f.FileName);
+            await JS.InvokeVoidAsync("eval", $"(function(){{var a=document.createElement('a');a.href={urlJson};a.download={fileNameJson};document.body.appendChild(a);a.click();document.body.removeChild(a);}})()");
         }
         catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"获取下载链接失败：{ex.Message}"); }
     }

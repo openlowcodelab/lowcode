@@ -81,6 +81,14 @@ public class FileUploadResultDto
 }
 
 /// <summary>
+/// 文件下载信息（下载地址不能以裸字符串返回，否则 ABP 约定 API 会以 text/plain 输出导致客户端 JSON 反序列化失败）
+/// </summary>
+public class FileDownloadResultDto
+{
+    public string Url { get; set; } = string.Empty;
+}
+
+/// <summary>
 /// 文件预览信息
 /// </summary>
 public class FilePreviewDto

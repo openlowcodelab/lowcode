@@ -122,10 +122,11 @@ public class FileObjectAppService : ApplicationService, IFileObjectAppService
         }
     }
 
-    public async Task<string> GetDownloadUrlAsync(Guid projectId, string fileKey)
+    public async Task<FileDownloadResultDto> GetDownloadUrlAsync(Guid projectId, string fileKey)
     {
         var entity = await _repository.GetAsync(projectId);
-        return await _storage.GetPresignedDownloadUrlAsync(entity.BucketName, fileKey);
+        var url = await _storage.GetPresignedDownloadUrlAsync(entity.BucketName, fileKey);
+        return new FileDownloadResultDto { Url = url };
     }
 
     public async Task<FilePreviewDto> GetPreviewAsync(Guid projectId, string fileKey)

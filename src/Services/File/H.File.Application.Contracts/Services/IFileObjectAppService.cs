@@ -17,7 +17,7 @@ public interface IFileObjectAppService : IAppService
     Task<FileUploadResultDto> UploadAsync(Guid projectId, string folderPath, string fileName, byte[] content, string? contentType = null);
 
     /// <summary>获取文件下载URL</summary>
-    Task<string> GetDownloadUrlAsync(Guid projectId, string fileKey);
+    Task<FileDownloadResultDto> GetDownloadUrlAsync(Guid projectId, string fileKey);
 
     /// <summary>获取文件预览信息</summary>
     Task<FilePreviewDto> GetPreviewAsync(Guid projectId, string fileKey);
