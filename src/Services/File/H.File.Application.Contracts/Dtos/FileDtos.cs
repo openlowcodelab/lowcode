@@ -9,6 +9,7 @@ public class FileProjectDto
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string? Icon { get; set; }
+    public string BucketName { get; set; } = string.Empty;
     public long TotalSize { get; set; }
     public int FileCount { get; set; }
     public DateTime CreationTime { get; set; }
@@ -96,3 +97,78 @@ public class FilePreviewDto
     /// <summary>文件内容 Base64（用于 docx/xlsx/pptx 等需要前端解析预览的文件）</summary>
     public string? Base64Content { get; set; }
 }
+
+#region 分片上传
+
+/// <summary>
+/// 分片大小（5MB）
+/// </summary>
+public static class MultipartUploadConstants
+{
+    public const int DefaultPartSize = 5 * 1024 * 1024;
+}
+
+/// <summary>
+/// 初始化分片上传 - 输出
+/// </summary>
+public class MultipartUploadDto
+{
+    /// <summary>MinIO Multipart Upload ID</summary>
+    public string UploadId { get; set; } = string.Empty;
+    /// <summary>MinIO 对象 Key</summary>
+    public string ObjectKey { get; set; } = string.Empty;
+    /// <summary>总分片数</summary>
+    public int TotalParts { get; set; }
+    /// <summary>每片大小（字节）</summary>
+    public int PartSize { get; set; }
+}
+
+/// <summary>
+/// 上传分片 - 输入
+/// </summary>
+public class UploadPartInput
+{
+    public string UploadId { get; set; } = string.Empty;
+    public string ObjectKey { get; set; } = string.Empty;
+    public string BucketName { get; set; } = string.Empty;
+    public int PartIndex { get; set; }
+    public byte[] Data { get; set; } = [];
+}
+
+/// <summary>
+/// 上传分片 - 结果
+/// </summary>
+public class UploadPartResult
+{
+    public int PartIndex { get; set; }
+    public string ETag { get; set; } = string.Empty;
+    public bool Success { get; set; }
+    public string? Message { get; set; }
+}
+
+/// <summary>
+/// 完成分片上传 - 输入
+/// </summary>
+public class CompleteMultipartUploadInput
+{
+    public Guid ProjectId { get; set; }
+    public string UploadId { get; set; } = string.Empty;
+    public string ObjectKey { get; set; } = string.Empty;
+    public string FileName { get; set; } = string.Empty;
+    public long FileSize { get; set; }
+    public string? ContentType { get; set; }
+    public string FolderPath { get; set; } = string.Empty;
+    public List<UploadPartResult> Parts { get; set; } = [];
+}
+
+/// <summary>
+/// 已上传分片信息
+/// </summary>
+public class UploadedPartDto
+{
+    public int PartNumber { get; set; }
+    public string ETag { get; set; } = string.Empty;
+    public long Size { get; set; }
+}
+
+#endregion

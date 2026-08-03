@@ -37,6 +37,7 @@ public class FileProjectAppService : ApplicationService, IFileProjectAppService
             Name = e.Name,
             Description = e.Description,
             Icon = e.Icon,
+            BucketName = e.BucketName,
             FileCount = e.FileCount,
             TotalSize = e.TotalSize,
             CreationTime = e.CreationTime
@@ -56,7 +57,7 @@ public class FileProjectAppService : ApplicationService, IFileProjectAppService
         // 生成 bucket 名称：租户前缀 + 项目名称（小写、去特殊字符），最长 63 字符（MinIO 限制）
         var tenantPrefix = _currentTenant.Id?.ToString("N")[..8] ?? "default";
         var safeName = new string(input.Name.Where(c => char.IsLetterOrDigit(c) || c == '-').ToArray()).ToLowerInvariant();
-        var rawBucketName = $"{tenantPrefix}-{safeName}-{Guid.NewGuid():N}";
+        var rawBucketName = $"{tenantPrefix}-{safeName}";
         var bucketName = (rawBucketName.Length > 63 ? rawBucketName[..63] : rawBucketName).TrimEnd('-');
 
         // 创建 MinIO Bucket
@@ -109,6 +110,7 @@ public class FileProjectAppService : ApplicationService, IFileProjectAppService
         Name = e.Name,
         Description = e.Description,
         Icon = e.Icon,
+        BucketName = e.BucketName,
         CreationTime = e.CreationTime
     };
 }

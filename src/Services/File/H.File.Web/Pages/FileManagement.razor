@@ -61,7 +61,9 @@
 
                 @if (uploading)
                 {
-                    <div style="padding:8px 12px;color:#165DFF;font-size:13px;">⏳ 正在上传...</div>
+                    <div style="padding:8px 12px;color:#165DFF;font-size:13px;">
+                        ⏳ 正在上传... @(uploadingProgress > 0 ? $"({uploadingProgress}%)" : "")
+                    </div>
                 }
 
                 <HTable Loading="@loadingFiles" ShowEmpty="@(!loadingFiles && !files.Any())">
@@ -259,11 +261,13 @@
     private List<FileProjectDto> projects = new();
     private string selectedProjectIdStr = string.Empty;
     private Guid selectedProjectId => Guid.TryParse(selectedProjectIdStr, out var id) ? id : Guid.Empty;
+    private FileProjectDto? currentProject => projects.FirstOrDefault(p => p.Id == selectedProjectId);
     private List<FileFolderDto> folderTree = new();
     private List<FileObjectDto> files = new();
     private string? currentFolder;
     private bool loadingFiles;
     private bool uploading;
+    private int uploadingProgress;
     private bool showFolderModal;
     private string newFolderName = string.Empty;
     private string newFolderCode = string.Empty;
@@ -418,22 +422,106 @@
     private async Task OnFileSelected(InputFileChangeEventArgs e)
     {
         uploading = true;
+        uploadingProgress = 0;
         try
         {
             foreach (var file in e.GetMultipleFiles(20))
             {
-                using var stream = file.OpenReadStream(maxAllowedSize: 200 * 1024 * 1024);
-                using var ms = new MemoryStream();
-                await stream.CopyToAsync(ms);
-                var result = await FileService.UploadAsync(selectedProjectId, currentFolder ?? "", file.Name, ms.ToArray(), file.ContentType);
-                if (!result.Success)
-                    await JS.InvokeVoidAsync("alert", $"上传 {file.Name} 失败：{result.Message}");
+                if (file.Size <= MultipartUploadConstants.DefaultPartSize)
+                {
+                    // 小文件：直接上传
+                    await UploadSmallFile(file);
+                }
+                else
+                {
+                    // 大文件：分片上传
+                    await UploadLargeFile(file);
+                }
             }
             await LoadFiles();
             await LoadFolderTree();
         }
         catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"上传失败：{ex.Message}"); }
-        finally { uploading = false; }
+        finally { uploading = false; uploadingProgress = 0; }
+    }
+
+    private async Task UploadSmallFile(IBrowserFile file)
+    {
+        using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024L);
+        using var ms = new MemoryStream();
+        await stream.CopyToAsync(ms);
+        var result = await FileService.UploadAsync(selectedProjectId, currentFolder ?? "", file.Name, ms.ToArray(), file.ContentType);
+        if (!result.Success)
+            await JS.InvokeVoidAsync("alert", $"上传 {file.Name} 失败：{result.Message}");
+    }
+
+    private async Task UploadLargeFile(IBrowserFile file)
+    {
+        var totalParts = (int)Math.Ceiling((double)file.Size / MultipartUploadConstants.DefaultPartSize);
+
+        // 1. 初始化分片上传
+        var initResult = await FileService.InitMultipartUploadAsync(
+            selectedProjectId, currentFolder ?? "", file.Name, file.Size, file.ContentType);
+
+        // 2. 断点续传：查询已上传的分片
+        var existingParts = await FileService.ListUploadedPartsAsync(initResult.UploadId, initResult.ObjectKey);
+        var uploadedSet = existingParts.Select(p => p.PartNumber).ToHashSet();
+
+        // 3. 逐片上传（跳过已上传的分片）
+        var uploadedParts = new List<UploadPartResult>();
+        using var stream = file.OpenReadStream(maxAllowedSize: 10L * 1024 * 1024 * 1024);
+
+        for (int i = 1; i <= totalParts; i++)
+        {
+            if (uploadedSet.Contains(i))
+            {
+                var existing = existingParts.First(p => p.PartNumber == i);
+                uploadedParts.Add(new UploadPartResult { PartIndex = i, ETag = existing.ETag, Success = true });
+                uploadingProgress = (int)((double)i / totalParts * 100);
+                StateHasChanged();
+                continue;
+            }
+
+            var buffer = new byte[MultipartUploadConstants.DefaultPartSize];
+            var bytesRead = await stream.ReadAsync(buffer);
+            if (bytesRead < MultipartUploadConstants.DefaultPartSize)
+                buffer = buffer[..bytesRead];
+
+            var partResult = await FileService.UploadPartAsync(new UploadPartInput
+            {
+                UploadId = initResult.UploadId,
+                ObjectKey = initResult.ObjectKey,
+                BucketName = currentProject?.BucketName ?? "",
+                PartIndex = i,
+                Data = buffer
+            });
+
+            if (!partResult.Success)
+            {
+                await JS.InvokeVoidAsync("alert", $"上传 {file.Name} 第 {i} 片失败：{partResult.Message}");
+                return;
+            }
+
+            uploadedParts.Add(partResult);
+            uploadingProgress = (int)((double)i / totalParts * 100);
+            StateHasChanged();
+        }
+
+        // 4. 合并分片
+        var result = await FileService.CompleteMultipartUploadAsync(new CompleteMultipartUploadInput
+        {
+            ProjectId = selectedProjectId,
+            UploadId = initResult.UploadId,
+            ObjectKey = initResult.ObjectKey,
+            FileName = file.Name,
+            FileSize = file.Size,
+            ContentType = file.ContentType,
+            FolderPath = currentFolder ?? "",
+            Parts = uploadedParts
+        });
+
+        if (!result.Success)
+            await JS.InvokeVoidAsync("alert", $"上传 {file.Name} 失败：{result.Message}");
     }
 
     private async Task DownloadFile(FileObjectDto f)

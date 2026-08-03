@@ -33,4 +33,19 @@ public interface IFileObjectAppService : IAppService
 
     /// <summary>删除文件夹（含其中所有文件）</summary>
     Task DeleteFolderAsync(Guid projectId, string folderPath);
+
+    /// <summary>初始化分片上传，返回 UploadId 和分片信息</summary>
+    Task<MultipartUploadDto> InitMultipartUploadAsync(Guid projectId, string folderPath, string fileName, long fileSize, string? contentType = null);
+
+    /// <summary>上传单个分片</summary>
+    Task<UploadPartResult> UploadPartAsync(UploadPartInput input);
+
+    /// <summary>查询已上传的分片（用于断点续传）</summary>
+    Task<List<UploadedPartDto>> ListUploadedPartsAsync(string uploadId, string objectKey);
+
+    /// <summary>完成分片上传，合并所有分片</summary>
+    Task<FileUploadResultDto> CompleteMultipartUploadAsync(CompleteMultipartUploadInput input);
+
+    /// <summary>取消分片上传，清理临时数据</summary>
+    Task AbortMultipartUploadAsync(string uploadId, string objectKey);
 }

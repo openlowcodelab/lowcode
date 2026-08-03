@@ -69,8 +69,8 @@ public class MinioStorageService
         return items.Select(i => (i.Key, (long)i.Size, i.LastModifiedDateTime ?? DateTime.MinValue)).ToList();
     }
 
-    /// <summary>上传对象</summary>
-    public async Task PutObjectAsync(string bucketName, string objectName, byte[] data, string? contentType = null)
+    /// <summary>上传对象（SDK 自动处理分片：>5MB 自动使用 multipart upload）</summary>
+    public async Task PutObjectAsync(string bucketName, string objectName, byte[] data, string? contentType = null, IProgress<Minio.DataModel.ProgressReport>? progress = null)
     {
         if (data.Length == 0)
             data = [0];
@@ -83,6 +83,9 @@ public class MinioStorageService
 
         if (!string.IsNullOrEmpty(contentType))
             args = args.WithContentType(contentType);
+
+        if (progress != null)
+            args = args.WithProgress(progress);
 
         await _client.PutObjectAsync(args);
     }
