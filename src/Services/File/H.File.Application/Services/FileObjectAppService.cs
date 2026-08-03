@@ -75,8 +75,10 @@ public class FileObjectAppService : ApplicationService, IFileObjectAppService
         return roots;
     }
 
-    public async Task<FileUploadResultDto> UploadAsync(Guid projectId, string folderPath, string fileName, byte[] content, string? contentType = null)
+    public async Task<FileUploadResultDto> UploadAsync(Guid projectId, string? folderPath = null, string fileName = "", byte[]? content = null, string? contentType = null)
     {
+        if (content is null)
+            throw new UserFriendlyException("文件内容不能为空");
         var entity = await _repository.GetAsync(projectId);
         var objectKey = string.IsNullOrEmpty(folderPath) ? fileName : $"{EnsureTrailingSlash(folderPath)}{fileName}";
         contentType ??= GetContentType(fileName);
@@ -124,9 +126,8 @@ public class FileObjectAppService : ApplicationService, IFileObjectAppService
 
     public async Task<FileDownloadResultDto> GetDownloadUrlAsync(Guid projectId, string fileKey)
     {
-        var entity = await _repository.GetAsync(projectId);
-        var url = await _storage.GetPresignedDownloadUrlAsync(entity.BucketName, fileKey);
-        return new FileDownloadResultDto { Url = url };
+        // 通过服务端代理下载，避免预签名 URL 对中文等特殊字符对象名处理异常
+        return new FileDownloadResultDto { Url = $"/api/file/download?projectId={projectId}&fileKey={Uri.EscapeDataString(fileKey)}" };
     }
 
     public async Task<FilePreviewDto> GetPreviewAsync(Guid projectId, string fileKey)
@@ -152,19 +153,23 @@ public class FileObjectAppService : ApplicationService, IFileObjectAppService
         }
         else if (preview.PreviewType is "image" or "pdf")
         {
-            // 图片和PDF使用预签名URL预览
-            preview.PreviewUrl = await _storage.GetPresignedDownloadUrlAsync(entity.BucketName, fileKey, 30);
+            // 图片和PDF通过服务端代理内联预览（避免预签名 URL 对中文等特殊字符对象名处理异常）
+            preview.PreviewUrl = $"/api/file/preview?projectId={projectId}&fileKey={Uri.EscapeDataString(fileKey)}";
         }
         else if (preview.PreviewType == "office")
         {
             // Office 文件：前端使用 docx-preview / xlsx / pptx-preview 等库解析 Base64 内容渲染预览
-            preview.PreviewUrl = await _storage.GetPresignedDownloadUrlAsync(entity.BucketName, fileKey, 30);
             var size = await _storage.GetObjectSizeAsync(entity.BucketName, fileKey);
             preview.Size = size ?? 0;
             if (size.HasValue && size.Value <= MaxOfficePreviewSize)
             {
                 var data = await _storage.GetObjectAsync(entity.BucketName, fileKey);
                 preview.Base64Content = Convert.ToBase64String(data);
+            }
+            else
+            {
+                // 文件过大时提供下载查看入口
+                preview.PreviewUrl = $"/api/file/download?projectId={projectId}&fileKey={Uri.EscapeDataString(fileKey)}";
             }
         }
 
@@ -268,7 +273,7 @@ public class FileObjectAppService : ApplicationService, IFileObjectAppService
         await _folderRepository.DeleteManyAsync(toDeleteFolders);
     }
 
-    public async Task<MultipartUploadDto> InitMultipartUploadAsync(Guid projectId, string folderPath, string fileName, long fileSize, string? contentType = null)
+    public async Task<MultipartUploadDto> InitMultipartUploadAsync(Guid projectId, string? folderPath = null, string fileName = "", long fileSize = 0, string? contentType = null)
     {
         var entity = await _repository.GetAsync(projectId);
         var objectKey = string.IsNullOrEmpty(folderPath) ? fileName : $"{EnsureTrailingSlash(folderPath)}{fileName}";

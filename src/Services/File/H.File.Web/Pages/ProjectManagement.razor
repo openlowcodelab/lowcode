@@ -29,6 +29,7 @@
                 <div class="file-project-card" @onclick="@(() => GoToFiles(p.Id))">
                     <div class="file-project-icon">@(p.Icon ?? "📁")</div>
                     <div class="file-project-name">@p.Name</div>
+                    <div class="file-project-code">编号：@p.Code</div>
                     <div class="file-project-desc">@(p.Description ?? "暂无描述")</div>
                     <div class="file-project-stats">
                         <span>📄 @p.FileCount 个文件</span>
@@ -53,6 +54,15 @@
             <input type="text" @bind-value="@current.Name" placeholder="请输入项目名称" class="h-input" />
         </div>
     </div>
+    @if (!isEdit)
+    {
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">项目编号</label>
+            <div class="h-form-control">
+                <input type="text" @bind-value="@current.Code" placeholder="3-20 位小写字母，不填自动生成" class="h-input" />
+            </div>
+        </div>
+    }
     <div class="h-form-item h-form-horizontal">
         <label class="h-form-label">图标</label>
         <div class="h-form-control">
@@ -87,6 +97,7 @@
     }
     .file-project-icon { font-size: 36px; margin-bottom: 12px; }
     .file-project-name { font-size: 16px; font-weight: 600; color: #1D2129; margin-bottom: 6px; }
+    .file-project-code { font-size: 12px; color: #86909C; margin-bottom: 6px; }
     .file-project-desc { font-size: 13px; color: #86909C; margin-bottom: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .file-project-stats { display: flex; gap: 16px; font-size: 12px; color: #4E5969; margin-bottom: 8px; }
     .file-project-time { font-size: 12px; color: #C9CDD4; }

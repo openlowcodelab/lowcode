@@ -14,7 +14,7 @@ public interface IFileObjectAppService : IAppService
     Task<List<FileFolderDto>> GetFolderTreeAsync(Guid projectId);
 
     /// <summary>上传文件</summary>
-    Task<FileUploadResultDto> UploadAsync(Guid projectId, string folderPath, string fileName, byte[] content, string? contentType = null);
+    Task<FileUploadResultDto> UploadAsync(Guid projectId, string? folderPath = null, string fileName = "", byte[]? content = null, string? contentType = null);
 
     /// <summary>获取文件下载URL</summary>
     Task<FileDownloadResultDto> GetDownloadUrlAsync(Guid projectId, string fileKey);
@@ -35,7 +35,7 @@ public interface IFileObjectAppService : IAppService
     Task DeleteFolderAsync(Guid projectId, string folderPath);
 
     /// <summary>初始化分片上传，返回 UploadId 和分片信息</summary>
-    Task<MultipartUploadDto> InitMultipartUploadAsync(Guid projectId, string folderPath, string fileName, long fileSize, string? contentType = null);
+    Task<MultipartUploadDto> InitMultipartUploadAsync(Guid projectId, string? folderPath = null, string fileName = "", long fileSize = 0, string? contentType = null);
 
     /// <summary>上传单个分片</summary>
     Task<UploadPartResult> UploadPartAsync(UploadPartInput input);

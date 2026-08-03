@@ -13,6 +13,9 @@ public class FileProjectEntity : AuditedEntity<Guid>, IMultiTenant
     /// <summary>项目名称</summary>
     public string Name { get; set; } = string.Empty;
 
+    /// <summary>项目编号（3-20 位小写字母，全局唯一，用于生成 Bucket 名称）</summary>
+    public string Code { get; set; } = string.Empty;
+
     /// <summary>项目描述</summary>
     public string? Description { get; set; }
 

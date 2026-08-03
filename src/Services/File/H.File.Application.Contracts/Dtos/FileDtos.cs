@@ -7,6 +7,8 @@ public class FileProjectDto
 {
     public Guid Id { get; set; }
     public string Name { get; set; } = string.Empty;
+    /// <summary>项目编号（3-20 位小写字母，用于生成 Bucket 名称）</summary>
+    public string Code { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string? Icon { get; set; }
     public string BucketName { get; set; } = string.Empty;
@@ -18,6 +20,8 @@ public class FileProjectDto
 public class CreateFileProjectDto
 {
     public string Name { get; set; } = string.Empty;
+    /// <summary>项目编号（3-20 位小写字母，留空则自动生成 8 位），作为 Bucket 名称的一部分</summary>
+    public string? Code { get; set; }
     public string? Description { get; set; }
     public string? Icon { get; set; }
 }
@@ -165,7 +169,7 @@ public class CompleteMultipartUploadInput
     public string FileName { get; set; } = string.Empty;
     public long FileSize { get; set; }
     public string? ContentType { get; set; }
-    public string FolderPath { get; set; } = string.Empty;
+    public string? FolderPath { get; set; }
     public List<UploadPartResult> Parts { get; set; } = [];
 }
 

@@ -22,6 +22,7 @@ public class FileDbContext : AbpDbContext<FileDbContext>
             b.ToTable("FileProjects");
             b.HasKey(x => x.Id);
             b.Property(x => x.Name).IsRequired().HasMaxLength(50);
+            b.Property(x => x.Code).IsRequired().IsUnicode(false).HasMaxLength(20);
             b.Property(x => x.Description).HasMaxLength(50);
             b.Property(x => x.Icon).HasMaxLength(64);
             b.Property(x => x.BucketName).IsRequired().IsUnicode(false).HasMaxLength(20);

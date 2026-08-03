@@ -36,6 +36,18 @@ public class FileDownloadController : Controller
         return File(data, contentType, fileName);
     }
 
+    /// <summary>
+    /// 预览文件（GET /api/file/preview?projectId=xxx&amp;fileKey=xxx），内联返回内容，供 img/iframe 直接渲染
+    /// </summary>
+    [HttpGet("preview")]
+    public async Task<IActionResult> PreviewAsync(Guid projectId, string fileKey)
+    {
+        var entity = await _repository.GetAsync(projectId);
+        var data = await _storage.GetObjectAsync(entity.BucketName, fileKey);
+        var contentType = await _storage.GetObjectContentTypeAsync(entity.BucketName, fileKey) ?? "application/octet-stream";
+        return File(data, contentType, enableRangeProcessing: true);
+    }
+
     private static string GetFileName(string key)
     {
         var trimmed = key.TrimEnd('/');

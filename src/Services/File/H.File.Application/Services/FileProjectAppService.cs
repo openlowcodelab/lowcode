@@ -1,5 +1,7 @@
+using System.Text.RegularExpressions;
 using H.File.Application.Contracts;
 using H.File.EntityFrameworkCore;
+using Volo.Abp;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.MultiTenancy;
@@ -11,6 +13,9 @@ namespace H.File.Application.Services;
 /// </summary>
 public class FileProjectAppService : ApplicationService, IFileProjectAppService
 {
+    private const string ProjectCodeChars = "abcdefghijklmnopqrstuvwxyz";
+    private static readonly Regex ProjectCodeRegex = new("^[a-z]{3,20}$", RegexOptions.Compiled);
+
     private readonly IRepository<FileProjectEntity, Guid> _repository;
     private readonly MinioStorageService _storage;
     private readonly ICurrentTenant _currentTenant;
@@ -35,6 +40,7 @@ public class FileProjectAppService : ApplicationService, IFileProjectAppService
         {
             Id = e.Id,
             Name = e.Name,
+            Code = e.Code,
             Description = e.Description,
             Icon = e.Icon,
             BucketName = e.BucketName,
@@ -54,11 +60,22 @@ public class FileProjectAppService : ApplicationService, IFileProjectAppService
 
     public async Task<FileProjectDto> CreateAsync(CreateFileProjectDto input)
     {
-        // 生成 bucket 名称：租户前缀 + 项目名称（小写、去特殊字符），最长 63 字符（MinIO 限制）
+        if (string.IsNullOrWhiteSpace(input.Name))
+            throw new UserFriendlyException("项目名称不能为空");
+
+        // 项目编号：留空自动生成 8 位小写字母，否则校验 3-20 位小写字母
+        var code = string.IsNullOrWhiteSpace(input.Code)
+            ? await GenerateUniqueCodeAsync()
+            : input.Code.Trim().ToLowerInvariant();
+        if (!ProjectCodeRegex.IsMatch(code))
+            throw new UserFriendlyException("项目编号需为 3-20 位小写字母");
+
+        // 生成 bucket 名称：租户前缀 + 项目编号（全局唯一，含租户前缀）
         var tenantPrefix = _currentTenant.Id?.ToString("N")[..8] ?? "default";
-        var safeName = new string(input.Name.Where(c => char.IsLetterOrDigit(c) || c == '-').ToArray()).ToLowerInvariant();
-        var rawBucketName = $"{tenantPrefix}-{safeName}";
-        var bucketName = (rawBucketName.Length > 63 ? rawBucketName[..63] : rawBucketName).TrimEnd('-');
+        var bucketName = $"{tenantPrefix}-{code}";
+
+        if (await _repository.AnyAsync(x => x.BucketName == bucketName))
+            throw new UserFriendlyException($"项目编号「{code}」已存在");
 
         // 创建 MinIO Bucket
         await _storage.CreateBucketAsync(bucketName);
@@ -66,6 +83,7 @@ public class FileProjectAppService : ApplicationService, IFileProjectAppService
         var entity = new FileProjectEntity
         {
             Name = input.Name,
+            Code = code,
             Description = input.Description,
             Icon = input.Icon ?? "📁",
             BucketName = bucketName
@@ -108,9 +126,30 @@ public class FileProjectAppService : ApplicationService, IFileProjectAppService
     {
         Id = e.Id,
         Name = e.Name,
+        Code = e.Code,
         Description = e.Description,
         Icon = e.Icon,
         BucketName = e.BucketName,
         CreationTime = e.CreationTime
     };
+
+    private static string GenerateRandomCode()
+    {
+        var chars = new char[8];
+        for (int i = 0; i < chars.Length; i++)
+            chars[i] = ProjectCodeChars[Random.Shared.Next(ProjectCodeChars.Length)];
+        return new string(chars);
+    }
+
+    private async Task<string> GenerateUniqueCodeAsync()
+    {
+        var bucketPrefix = $"{_currentTenant.Id?.ToString("N")[..8] ?? "default"}-";
+        for (int i = 0; i < 10; i++)
+        {
+            var code = GenerateRandomCode();
+            if (!await _repository.AnyAsync(x => x.BucketName == bucketPrefix + code))
+                return code;
+        }
+        throw new UserFriendlyException("无法生成唯一的项目编号，请重试");
+    }
 }
