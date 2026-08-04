@@ -58,9 +58,9 @@ namespace H.File.DbMigrator.Migrations
 
                     b.Property<string>("Path")
                         .IsRequired()
-                        .HasMaxLength(20)
+                        .HasMaxLength(130)
                         .IsUnicode(false)
-                        .HasColumnType("varchar(20)");
+                        .HasColumnType("varchar(130)");
 
                     b.Property<Guid>("ProjectId")
                         .HasColumnType("uniqueidentifier");

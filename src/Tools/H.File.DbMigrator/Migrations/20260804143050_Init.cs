@@ -20,7 +20,7 @@ namespace H.File.DbMigrator.Migrations
                     ProjectId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Code = table.Column<string>(type: "varchar(20)", unicode: false, maxLength: 20, nullable: false),
                     Name = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    Path = table.Column<string>(type: "varchar(20)", unicode: false, maxLength: 20, nullable: false),
+                    Path = table.Column<string>(type: "varchar(20)", unicode: false, maxLength: 130, nullable: false),
                     CreationTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     CreatorId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
                     LastModificationTime = table.Column<DateTime>(type: "datetime2", nullable: true),

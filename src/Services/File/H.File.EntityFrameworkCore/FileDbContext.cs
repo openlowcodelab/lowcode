@@ -38,7 +38,7 @@ public class FileDbContext : AbpDbContext<FileDbContext>
             b.Property(x => x.ProjectId).IsRequired();
             b.Property(x => x.Code).IsRequired().IsUnicode(false).HasMaxLength(20);
             b.Property(x => x.Name).IsRequired().HasMaxLength(50);
-            b.Property(x => x.Path).IsRequired().IsUnicode(false).HasMaxLength(20);
+            b.Property(x => x.Path).IsRequired().IsUnicode(false).HasMaxLength(130);
 
             b.HasIndex(x => x.ProjectId);
         });
