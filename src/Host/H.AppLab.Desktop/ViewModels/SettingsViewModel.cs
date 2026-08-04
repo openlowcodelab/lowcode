@@ -10,9 +10,6 @@ namespace H.AppLab.Desktop.ViewModels;
 /// </summary>
 public partial class SettingsViewModel : ObservableObject
 {
-    /// <summary>返回聊天页</summary>
-    public event Action? BackRequested;
-
     /// <summary>全局 Toast 服务（供承载设置页的宿主容器渲染提示）</summary>
     public ToastService Toast { get; }
 
@@ -66,15 +63,25 @@ public partial class SettingsViewModel : ObservableObject
     {
         Toast = toast;
         Llm = new LlmSettingsViewModel(llmAppService, toast);
-        Agents = new AgentSettingsViewModel(agentAppService, skillAppService, llmAppService, toast);
+        Agents = new AgentSettingsViewModel(agentAppService, toast);
         Mcp = new McpSettingsViewModel(mcpServerAppService, toast);
         Skills = new SkillSettingsViewModel(skillAppService, toast);
+        UpdateActiveMenuHighlight();
     }
 
     public void SelectMenu(string key)
     {
         ActiveMenu = key;
+        UpdateActiveMenuHighlight();
         _ = LoadActiveMenuAsync(key);
+    }
+
+    private void UpdateActiveMenuHighlight()
+    {
+        foreach (var item in MenuItems)
+        {
+            item.IsActive = item.Key == ActiveMenu;
+        }
     }
 
     private async Task LoadActiveMenuAsync(string key)
@@ -103,12 +110,6 @@ public partial class SettingsViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void GoBack()
-    {
-        BackRequested?.Invoke();
-    }
-
-    [RelayCommand]
     private void SetThemeMode(string mode)
     {
         ThemeMode = mode;
@@ -121,4 +122,11 @@ public partial class SettingsViewModel : ObservableObject
     }
 }
 
-public record SettingsMenuItem(string Key, string Label);
+public partial class SettingsMenuItem(string key, string label) : ObservableObject
+{
+    public string Key { get; } = key;
+    public string Label { get; } = label;
+
+    [ObservableProperty]
+    private bool isActive;
+}

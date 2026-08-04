@@ -2,18 +2,23 @@
 
 @inherits LayoutComponentBase
 
-<div class="assistant-layout">
+<DefaultLayoutComponent
+    AppName="Agent 助手"
+    MenuItems="@MenuItems">
     @Body
-</div>
+</DefaultLayoutComponent>
+
+@code {
+    private static List<AppMenuItem> MenuItems => new()
+    {
+        new AppMenuItem { Name = "智能体", Url = "/assistant/agents", Icon = "🤖" },
+        new AppMenuItem { Name = "模型", Url = "/assistant/llms", Icon = "🧠" },
+        new AppMenuItem { Name = "技能", Url = "/assistant/skills", Icon = "⚡" },
+        new AppMenuItem { Name = "MCP", Url = "/assistant/mcps", Icon = "🔌" }
+    };
+}
 
 <style>
-    /* ========== Layout Base ========== */
-    .assistant-layout {
-        height: 100vh;
-        display: flex;
-        flex-direction: column;
-    }
-
     /* ========== Buttons (shared by Settings and other pages) ========== */
     .btn {
         display: inline-flex;
@@ -123,8 +128,7 @@
     }
 
     /* ========== SVG Icons (shared by Settings and other pages) ========== */
-    .btn svg,
-    .menu-item svg {
+    .btn svg {
         width: 16px;
         height: 16px;
         flex-shrink: 0;

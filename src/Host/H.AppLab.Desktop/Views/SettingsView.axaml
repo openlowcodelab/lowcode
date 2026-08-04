@@ -7,18 +7,11 @@
     <!-- ========== 左侧菜单 ========== -->
     <Border Grid.Column="0" Background="#fafafa" BorderBrush="#f5f5f5" BorderThickness="0,0,1,0">
       <DockPanel>
-        <Border DockPanel.Dock="Top" Padding="16" BorderBrush="#f5f5f5" BorderThickness="0,0,0,1">
-          <Button Classes="btn" Command="{Binding GoBackCommand}">
-            <StackPanel Orientation="Horizontal" Spacing="6">
-              <TextBlock Text="←" />
-              <TextBlock Text="返回" />
-            </StackPanel>
-          </Button>
-        </Border>
-        <ItemsControl ItemsSource="{Binding MenuItems}" Margin="8">
+        <ItemsControl ItemsSource="{Binding MenuItems}" Margin="8,16,8,8">
           <ItemsControl.ItemTemplate>
             <DataTemplate>
               <Button Classes="settingsMenuItem"
+                      Classes.settingsMenuItemActive="{Binding IsActive}"
                       Command="{Binding DataContext.NavigateCommand, ElementName=SettingsRoot}"
                       CommandParameter="{Binding}">
                 <TextBlock Text="{Binding Label}" />
@@ -87,6 +80,12 @@
       <Setter Property="HorizontalContentAlignment" Value="Left" />
     </Style>
     <Style Selector="Button.settingsMenuItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="#f0f0f0" />
+    </Style>
+    <Style Selector="Button.settingsMenuItemActive">
+      <Setter Property="Background" Value="#f0f0f0" />
+    </Style>
+    <Style Selector="Button.settingsMenuItemActive:pointerover /template/ ContentPresenter#PART_ContentPresenter">
       <Setter Property="Background" Value="#f0f0f0" />
     </Style>
   </UserControl.Styles>

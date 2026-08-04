@@ -15,15 +15,11 @@ public partial class AssistantAppViewModel : ObservableObject
 
     public ToastService Toast { get; }
     public ChatViewModel Chat { get; }
-    public KnowledgeViewModel Knowledge { get; }
 
     public ObservableCollection<SessionItem> Sessions { get; } = [];
 
     [ObservableProperty]
     private object? currentPage;
-
-    [ObservableProperty]
-    private bool isKnowledgePage;
 
     [ObservableProperty]
     private bool showUserMenu;
@@ -34,16 +30,12 @@ public partial class AssistantAppViewModel : ObservableObject
 
     public bool HasSessions => Sessions.Count > 0;
 
-    /// <summary>会话标题是否可点击返回聊天</summary>
-    public bool SessionTitleClickable => IsKnowledgePage;
-
     public AssistantAppViewModel(IChatMessageAppService chatMessageAppService, ToastService toast,
-        ChatViewModel chat, KnowledgeViewModel knowledge)
+        ChatViewModel chat)
     {
         _chatMessageAppService = chatMessageAppService;
         Toast = toast;
         Chat = chat;
-        Knowledge = knowledge;
 
         Chat.SessionCreated += OnSessionCreated;
         Chat.SessionsChanged += () => _ = LoadSessionsAsync();
@@ -51,8 +43,6 @@ public partial class AssistantAppViewModel : ObservableObject
         CurrentPage = Chat;
         _ = InitializeAsync();
     }
-
-    partial void OnIsKnowledgePageChanged(bool value) => OnPropertyChanged(nameof(SessionTitleClickable));
 
     private async Task InitializeAsync()
     {
@@ -101,7 +91,6 @@ public partial class AssistantAppViewModel : ObservableObject
         {
             session.IsSelected = false;
         }
-        IsKnowledgePage = false;
         CurrentPage = Chat;
         await Chat.StartNewChatAsync();
     }
@@ -114,36 +103,8 @@ public partial class AssistantAppViewModel : ObservableObject
         {
             item.IsSelected = item == session;
         }
-        IsKnowledgePage = false;
         CurrentPage = Chat;
         await Chat.OpenSessionAsync(session.Dto.Id);
-    }
-
-    [RelayCommand]
-    private async Task GoToChatAsync()
-    {
-        CloseMenus();
-        if (IsKnowledgePage || CurrentPage != Chat)
-        {
-            IsKnowledgePage = false;
-            CurrentPage = Chat;
-            if (!Chat.HasSession)
-            {
-                await Chat.StartNewChatAsync();
-            }
-        }
-    }
-
-    [RelayCommand]
-    private async Task GoToKnowledgeAsync()
-    {
-        CloseMenus();
-        if (!IsKnowledgePage)
-        {
-            IsKnowledgePage = true;
-            CurrentPage = Knowledge;
-            await Knowledge.InitializeAsync();
-        }
     }
 
     [RelayCommand]

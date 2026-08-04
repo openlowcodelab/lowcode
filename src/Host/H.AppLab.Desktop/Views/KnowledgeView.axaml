@@ -1,7 +1,18 @@
 ﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:H.AppLab.Desktop.ViewModels"
              xmlns:views="using:H.AppLab.Desktop.Views"
              x:Class="H.AppLab.Desktop.Views.KnowledgeView">
+  <UserControl.Styles>
+    <StyleInclude Source="avares://H.AppLab.Desktop/Themes/AssistantStyles.axaml" />
+  </UserControl.Styles>
+
+  <UserControl.DataTemplates>
+    <DataTemplate DataType="{x:Type vm:KnowledgeSectionViewModel}">
+      <views:KnowledgeSectionView />
+    </DataTemplate>
+  </UserControl.DataTemplates>
+
   <DockPanel Background="#ffffff">
     <!-- Tab 栏 -->
     <Border DockPanel.Dock="Top" Background="#fafafa" BorderBrush="#f5f5f5" BorderThickness="0,0,0,1" Padding="16,0">

@@ -23,7 +23,7 @@ public sealed class AssistantApp : IDesktopApp
 
     public string Icon => "💬";
 
-    public string Description => "Agent 助手：会话与知识中心";
+    public string Description => "Agent 助手：会话";
 
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {

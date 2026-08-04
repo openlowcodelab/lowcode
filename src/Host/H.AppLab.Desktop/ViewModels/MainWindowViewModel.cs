@@ -15,6 +15,7 @@ public partial class MainWindowViewModel : ObservableObject
 {
     private const string TasksMenuId = "tasks";
     private const string AppsMenuId = "apps";
+    private const string KnowledgeMenuId = "knowledge";
     private const string SettingsMenuId = "settings";
 
     private readonly IServiceProvider _services;
@@ -22,13 +23,14 @@ public partial class MainWindowViewModel : ObservableObject
 
     private Control? _tasksView;
     private AppsView? _appsView;
+    private Control? _knowledgeView;
     private Control? _settingsView;
-
-    /// <summary>回退时恢复的上一个内容菜单项（非设置）</summary>
-    private NavItemViewModel? _lastContentNav;
 
     /// <summary>左侧快捷菜单项</summary>
     public ObservableCollection<NavItemViewModel> NavItems { get; } = [];
+
+    /// <summary>底部知识中心入口（仅展示图标）</summary>
+    public NavItemViewModel KnowledgeNav { get; }
 
     /// <summary>底部设置入口（仅展示图标）</summary>
     public NavItemViewModel SettingsNav { get; }
@@ -56,7 +58,8 @@ public partial class MainWindowViewModel : ObservableObject
         NavItems.Add(new NavItemViewModel(TasksMenuId, "任务", "🗓", this));
         NavItems.Add(new NavItemViewModel(AppsMenuId, "应用", "🧩", this));
 
-        // 底部设置入口（仅展示图标）
+        // 底部知识中心 / 设置入口（仅展示图标）
+        KnowledgeNav = new NavItemViewModel(KnowledgeMenuId, "知识中心", "📖", this);
         SettingsNav = new NavItemViewModel(SettingsMenuId, "设置", "⚙", this);
 
         Navigate(NavItems[0]);
@@ -65,20 +68,22 @@ public partial class MainWindowViewModel : ObservableObject
     [RelayCommand]
     private void Navigate(NavItemViewModel item)
     {
-        if (item.Id != SettingsMenuId)
-        {
-            _lastContentNav = item;
-        }
-
         foreach (var nav in NavItems)
         {
             nav.IsActive = nav == item;
         }
+        KnowledgeNav.IsActive = item == KnowledgeNav;
         SettingsNav.IsActive = item == SettingsNav;
 
         if (item.Id == SettingsMenuId)
         {
             CurrentContent = GetSettingsView();
+            return;
+        }
+
+        if (item.Id == KnowledgeMenuId)
+        {
+            CurrentContent = GetKnowledgeView();
             return;
         }
 
@@ -106,15 +111,27 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 设置页（来自 H.Assistant.UI，按需创建并缓存）：每次进入重置到“通用”页，
-    /// “返回”按钮回到进入设置前的内容页。
+    /// 知识中心页（按需创建并缓存）
+    /// </summary>
+    private Control GetKnowledgeView()
+    {
+        if (_knowledgeView is null)
+        {
+            var vm = _services.GetRequiredService<KnowledgeViewModel>();
+            _knowledgeView = new KnowledgeView { DataContext = vm };
+            _ = vm.InitializeAsync();
+        }
+        return _knowledgeView;
+    }
+
+    /// <summary>
+    /// 设置页（来自 H.Assistant.UI，按需创建并缓存）：每次进入重置到“通用”页。
     /// </summary>
     private Control GetSettingsView()
     {
         if (_settingsView is null)
         {
             var vm = _services.GetRequiredService<SettingsViewModel>();
-            vm.BackRequested += () => Navigate(_lastContentNav ?? NavItems[0]);
             _settingsView = new SettingsPageView { DataContext = vm };
         }
 

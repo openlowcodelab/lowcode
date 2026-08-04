@@ -16,12 +16,6 @@
     <DataTemplate DataType="{x:Type vm:ChatViewModel}">
       <views:ChatView />
     </DataTemplate>
-    <DataTemplate DataType="{x:Type vm:KnowledgeViewModel}">
-      <views:KnowledgeView />
-    </DataTemplate>
-    <DataTemplate DataType="{x:Type vm:KnowledgeSectionViewModel}">
-      <views:KnowledgeSectionView />
-    </DataTemplate>
   </UserControl.DataTemplates>
 
   <Panel>
@@ -39,20 +33,7 @@
           </Border>
 
           <!-- 会话标题 -->
-          <Button DockPanel.Dock="Top" Classes="sectionTitle" Command="{Binding GoToChatCommand}"
-                  IsHitTestVisible="{Binding SessionTitleClickable}">
-            <TextBlock Text="会话" />
-          </Button>
-
-          <!-- 知识中心菜单项（底部） -->
-          <Button DockPanel.Dock="Bottom" Classes="sideMenuItem"
-                  Classes.sideMenuActive="{Binding IsKnowledgePage}"
-                  Command="{Binding GoToKnowledgeCommand}">
-            <StackPanel Orientation="Horizontal" Spacing="8">
-              <TextBlock Text="📖" FontSize="14" />
-              <TextBlock Text="知识中心" />
-            </StackPanel>
-          </Button>
+          <TextBlock DockPanel.Dock="Top" Classes="sectionTitle" Text="会话" />
 
           <!-- 会话列表 -->
           <ScrollViewer>
