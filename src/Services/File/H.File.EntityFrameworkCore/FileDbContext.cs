@@ -40,7 +40,7 @@ public class FileDbContext : AbpDbContext<FileDbContext>
             b.Property(x => x.Name).IsRequired().HasMaxLength(50);
             b.Property(x => x.Path).IsRequired().IsUnicode(false).HasMaxLength(20);
 
-            b.HasIndex(x => x.ProjectId).IsUnique();
+            b.HasIndex(x => x.ProjectId);
         });
 
         modelBuilder.Entity<FileObjectEntity>(b =>
@@ -50,8 +50,8 @@ public class FileDbContext : AbpDbContext<FileDbContext>
             b.Property(x => x.ProjectId).IsRequired();
             b.Property(x => x.FileName).IsRequired().HasMaxLength(50);
             b.Property(x => x.Size).IsRequired();
-            b.Property(x => x.ContentType).IsRequired().IsUnicode(false).HasMaxLength(20);
-            b.Property(x => x.FolderPath).IsRequired().IsUnicode(false).HasMaxLength(120);
+            b.Property(x => x.ContentType).IsRequired().IsUnicode(false).HasMaxLength(50);
+            b.Property(x => x.FolderPath).IsRequired().IsUnicode(false).HasMaxLength(130);
 
             b.HasIndex(x => new { x.ProjectId, x.FolderPath });
         });

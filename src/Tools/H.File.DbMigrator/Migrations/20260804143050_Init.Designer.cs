@@ -13,7 +13,7 @@ using Volo.Abp.EntityFrameworkCore;
 namespace H.File.DbMigrator.Migrations
 {
     [DbContext(typeof(FileDbContext))]
-    [Migration("20260804140427_Init")]
+    [Migration("20260804143050_Init")]
     partial class Init
     {
         /// <inheritdoc />
@@ -74,8 +74,7 @@ namespace H.File.DbMigrator.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProjectId")
-                        .IsUnique();
+                    b.HasIndex("ProjectId");
 
                     b.ToTable("FileFolders", (string)null);
                 });
@@ -87,9 +86,9 @@ namespace H.File.DbMigrator.Migrations
 
                     b.Property<string>("ContentType")
                         .IsRequired()
-                        .HasMaxLength(20)
+                        .HasMaxLength(50)
                         .IsUnicode(false)
-                        .HasColumnType("varchar(20)");
+                        .HasColumnType("varchar(50)");
 
                     b.Property<DateTime>("CreationTime")
                         .HasColumnType("datetime2")
@@ -106,9 +105,9 @@ namespace H.File.DbMigrator.Migrations
 
                     b.Property<string>("FolderPath")
                         .IsRequired()
-                        .HasMaxLength(120)
+                        .HasMaxLength(130)
                         .IsUnicode(false)
-                        .HasColumnType("varchar(120)");
+                        .HasColumnType("varchar(130)");
 
                     b.Property<Guid>("ProjectId")
                         .HasColumnType("uniqueidentifier");

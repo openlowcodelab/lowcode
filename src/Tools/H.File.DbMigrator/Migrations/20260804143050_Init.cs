@@ -40,8 +40,8 @@ namespace H.File.DbMigrator.Migrations
                     ProjectId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     FileName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     Size = table.Column<long>(type: "bigint", nullable: false),
-                    ContentType = table.Column<string>(type: "varchar(20)", unicode: false, maxLength: 20, nullable: false),
-                    FolderPath = table.Column<string>(type: "varchar(120)", unicode: false, maxLength: 120, nullable: false),
+                    ContentType = table.Column<string>(type: "varchar(50)", unicode: false, maxLength: 50, nullable: false),
+                    FolderPath = table.Column<string>(type: "varchar(130)", unicode: false, maxLength: 130, nullable: false),
                     CreationTime = table.Column<DateTime>(type: "datetime2", nullable: false),
                     CreatorId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
@@ -76,8 +76,7 @@ namespace H.File.DbMigrator.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_FileFolders_ProjectId",
                 table: "FileFolders",
-                column: "ProjectId",
-                unique: true);
+                column: "ProjectId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_FileObjects_ProjectId_FolderPath",
