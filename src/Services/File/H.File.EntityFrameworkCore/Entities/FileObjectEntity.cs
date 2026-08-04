@@ -8,13 +8,16 @@ namespace H.File.EntityFrameworkCore;
 /// </summary>
 public class FileObjectEntity : CreationAuditedEntity<Guid>, IMultiTenant
 {
+    /// <summary>用于 EF Core 等框架的反序列化</summary>
+    protected FileObjectEntity() { }
+
+    /// <summary>构造时指定主键（主键同时作为 MinIO 对象名，完整对象路径为 FolderPath + Id）</summary>
+    public FileObjectEntity(Guid id) : base(id) { }
+
     public virtual Guid? TenantId { get; set; }
 
     /// <summary>所属项目 ID</summary>
     public Guid ProjectId { get; set; }
-
-    /// <summary>文件在 MinIO 中的完整路径（Key）</summary>
-    public string Key { get; set; } = string.Empty;
 
     /// <summary>文件名（不含路径）</summary>
     public string FileName { get; set; } = string.Empty;

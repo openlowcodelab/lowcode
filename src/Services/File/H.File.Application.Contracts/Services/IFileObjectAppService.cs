@@ -17,13 +17,13 @@ public interface IFileObjectAppService : IAppService
     Task<FileUploadResultDto> UploadAsync(Guid projectId, string? folderPath = null, string fileName = "", byte[]? content = null, string? contentType = null);
 
     /// <summary>获取文件下载URL</summary>
-    Task<FileDownloadResultDto> GetDownloadUrlAsync(Guid projectId, string fileKey);
+    Task<FileDownloadResultDto> GetDownloadUrlAsync(Guid projectId, Guid fileId);
 
     /// <summary>获取文件预览信息</summary>
-    Task<FilePreviewDto> GetPreviewAsync(Guid projectId, string fileKey);
+    Task<FilePreviewDto> GetPreviewAsync(Guid projectId, Guid fileId);
 
     /// <summary>删除文件</summary>
-    Task DeleteAsync(Guid projectId, string fileKey);
+    Task DeleteAsync(Guid projectId, Guid fileId);
 
     /// <summary>创建分类（编号为 MinIO 目录名，留空自动生成）</summary>
     Task CreateFolderAsync(Guid projectId, CreateFolderInput input);

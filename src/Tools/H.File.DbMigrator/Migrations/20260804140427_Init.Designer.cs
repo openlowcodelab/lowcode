@@ -13,8 +13,8 @@ using Volo.Abp.EntityFrameworkCore;
 namespace H.File.DbMigrator.Migrations
 {
     [DbContext(typeof(FileDbContext))]
-    [Migration("20260803150447_AddProjectCode")]
-    partial class AddProjectCode
+    [Migration("20260804140427_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -74,7 +74,7 @@ namespace H.File.DbMigrator.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProjectId", "Path")
+                    b.HasIndex("ProjectId")
                         .IsUnique();
 
                     b.ToTable("FileFolders", (string)null);
@@ -106,15 +106,9 @@ namespace H.File.DbMigrator.Migrations
 
                     b.Property<string>("FolderPath")
                         .IsRequired()
-                        .HasMaxLength(20)
+                        .HasMaxLength(120)
                         .IsUnicode(false)
-                        .HasColumnType("varchar(20)");
-
-                    b.Property<string>("Key")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(20)");
+                        .HasColumnType("varchar(120)");
 
                     b.Property<Guid>("ProjectId")
                         .HasColumnType("uniqueidentifier");
@@ -129,9 +123,6 @@ namespace H.File.DbMigrator.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ProjectId", "FolderPath");
-
-                    b.HasIndex("ProjectId", "Key")
-                        .IsUnique();
 
                     b.ToTable("FileObjects", (string)null);
                 });

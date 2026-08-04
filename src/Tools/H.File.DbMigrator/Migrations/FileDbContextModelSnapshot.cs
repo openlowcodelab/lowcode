@@ -71,7 +71,7 @@ namespace H.File.DbMigrator.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProjectId", "Path")
+                    b.HasIndex("ProjectId")
                         .IsUnique();
 
                     b.ToTable("FileFolders", (string)null);
@@ -103,15 +103,9 @@ namespace H.File.DbMigrator.Migrations
 
                     b.Property<string>("FolderPath")
                         .IsRequired()
-                        .HasMaxLength(20)
+                        .HasMaxLength(120)
                         .IsUnicode(false)
-                        .HasColumnType("varchar(20)");
-
-                    b.Property<string>("Key")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(20)");
+                        .HasColumnType("varchar(120)");
 
                     b.Property<Guid>("ProjectId")
                         .HasColumnType("uniqueidentifier");
@@ -126,9 +120,6 @@ namespace H.File.DbMigrator.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ProjectId", "FolderPath");
-
-                    b.HasIndex("ProjectId", "Key")
-                        .IsUnique();
 
                     b.ToTable("FileObjects", (string)null);
                 });

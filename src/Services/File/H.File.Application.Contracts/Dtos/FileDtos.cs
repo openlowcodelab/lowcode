@@ -38,7 +38,7 @@ public class UpdateFileProjectDto
 /// </summary>
 public class FileObjectDto
 {
-    public string Key { get; set; } = string.Empty;
+    public Guid Id { get; set; }
     public string FileName { get; set; } = string.Empty;
     public long Size { get; set; }
     public string? ContentType { get; set; }
@@ -77,7 +77,7 @@ public class CreateFolderInput
 /// </summary>
 public class FileUploadResultDto
 {
-    public string Key { get; set; } = string.Empty;
+    public Guid Id { get; set; }
     public string FileName { get; set; } = string.Empty;
     public long Size { get; set; }
     public bool Success { get; set; }
@@ -127,7 +127,9 @@ public class MultipartUploadDto
 {
     /// <summary>MinIO Multipart Upload ID</summary>
     public string UploadId { get; set; } = string.Empty;
-    /// <summary>MinIO 对象 Key</summary>
+    /// <summary>文件实体主键（同时作为 MinIO 对象名）</summary>
+    public Guid ObjectId { get; set; }
+    /// <summary>MinIO 对象完整路径（FolderPath + ObjectId）</summary>
     public string ObjectKey { get; set; } = string.Empty;
     /// <summary>总分片数</summary>
     public int TotalParts { get; set; }
@@ -165,6 +167,9 @@ public class CompleteMultipartUploadInput
 {
     public Guid ProjectId { get; set; }
     public string UploadId { get; set; } = string.Empty;
+    /// <summary>文件实体主键（Init 阶段预生成）</summary>
+    public Guid ObjectId { get; set; }
+    /// <summary>MinIO 对象完整路径（FolderPath + ObjectId）</summary>
     public string ObjectKey { get; set; } = string.Empty;
     public string FileName { get; set; } = string.Empty;
     public long FileSize { get; set; }
