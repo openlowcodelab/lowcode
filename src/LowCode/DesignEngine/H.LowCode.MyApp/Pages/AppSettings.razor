@@ -13,11 +13,8 @@
     .as-platforms { display: flex; gap: 20px; }
 </style>
 
-<div class="page-header">
-    <div>
-        <h2 class="page-header-title">应用设置</h2>
-        <div class="page-header-subtitle">配置应用的基础信息、访问权限与外观主题</div>
-    </div>
+<div class="toolbar">
+    <div class="toolbar-left"></div>
     <button class="btn btn-primary" @onclick="SaveAsync" disabled="@_saving">
         @if (_saving) { <span class="btn-loading"></span> }
         保存设置
