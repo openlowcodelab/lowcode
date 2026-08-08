@@ -704,7 +704,11 @@
         border-radius: 8px;
         font-size: 14px;
         transition: all 0.2s ease;
-        background: #F7F8FA;
+        background: #fff;
+    }
+
+    .app-mgmt-form-control:hover:not(:disabled):not([readonly]) {
+        border-color: #C9CDD4;
     }
 
     .app-mgmt-form-control:focus {
@@ -714,8 +718,10 @@
         box-shadow: 0 0 0 2px rgba(22, 93, 255, 0.1);
     }
 
-    .app-mgmt-form-control:disabled {
+    .app-mgmt-form-control:disabled,
+    .app-mgmt-form-control[readonly] {
         background: #F2F3F5;
+        color: #86909C;
         cursor: not-allowed;
     }
 

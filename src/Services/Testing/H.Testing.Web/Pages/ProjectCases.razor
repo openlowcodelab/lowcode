@@ -243,6 +243,7 @@
             <div class="h-form-control" style="flex: 1;">
                 <TreeSelectDropdown Categories="GetAvailableParentCategories()" 
                                    SelectedValue="currentCategory.ParentId" 
+                                   SelectedValueChanged="@(v => currentCategory.ParentId = v)"
                                    EmptyOptionText="无(根分类)" 
                                    Placeholder="请选择父级分类" />
             </div>
@@ -670,6 +671,7 @@
             Id = category.Id,
             Name = category.Name,
             ProjectId = category.ProjectId,
+            ParentId = category.ParentId,
             Order = category.Order,
             Childrens = category.Childrens
         };
@@ -709,17 +711,38 @@
 
     private List<ProjectCaseCategory> GetAvailableParentCategories()
     {
-        var all = FlattenCategories(categories).ToList();
-        if (isEditingCategory)
+        if (!isEditingCategory)
         {
-            var excludeIds = new HashSet<long> { currentCategory.Id };
-            AddChildCategoryIds(currentCategory.Id, excludeIds);
-            return all.Where(c => !excludeIds.Contains(c.Id)).ToList();
+            return categories.OrderBy(c => c.Order).ToList();
         }
-        else
+
+        var excludeIds = new HashSet<long> { currentCategory.Id };
+        AddChildCategoryIds(currentCategory.Id, excludeIds);
+        return FilterCategoryTree(categories, excludeIds);
+    }
+
+    private List<ProjectCaseCategory> FilterCategoryTree(IEnumerable<ProjectCaseCategory> nodes, HashSet<long> excludeIds)
+    {
+        var result = new List<ProjectCaseCategory>();
+        foreach (var node in nodes.OrderBy(c => c.Order))
         {
-            return all;
+            if (excludeIds.Contains(node.Id))
+            {
+                continue;
+            }
+
+            result.Add(new ProjectCaseCategory
+            {
+                Id = node.Id,
+                Name = node.Name,
+                Description = node.Description,
+                ProjectId = node.ProjectId,
+                ParentId = node.ParentId,
+                Order = node.Order,
+                Childrens = FilterCategoryTree(node.Childrens ?? [], excludeIds).ToArray()
+            });
         }
+        return result;
     }
 
     private void AddChildCategoryIds(long categoryId, HashSet<long> excludeIds)
