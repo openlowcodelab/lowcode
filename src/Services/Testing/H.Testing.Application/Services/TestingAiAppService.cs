@@ -689,6 +689,7 @@ public class TestingAiAppService : ApplicationService, ITestingAiAppService
         - categories：tempId 依次为 c1、c2……；子分类的 parentTempId 填写其父分类的 tempId，根分类为 null；分类层级最多 2 层；按功能模块或测试类型划分，数量建议 2~8 个。
         - cases：名称清晰可执行；description 包含关键测试点与预期结果；levels 从 P0/P1/P2/P3 中选择，P0 为最重要；覆盖正常流程、异常场景与边界条件。
         - steps：每个用例设计 2~6 个具体可执行的步骤，按执行顺序排列；接口类项目用 type=api（method、url 为相对路径、serviceRef 引用服务 tempId、body 为 JSON 字符串、无请求体填空字符串）；界面类项目用 type=ui（action 从 navigate/click/input/select/wait/assert 中选，selector 为元素定位符，value 为输入值或期望值）；每个步骤的 description 写预期结果。
+        - assert 步骤的 selector 应使用能定位到具体元素的 CSS 选择器（避免宽泛的标签组合），value 填写元素内应包含的预期文本，仅验证元素可见时 value 填空字符串，不要填 visible。
         - 所有名称与描述使用中文。
         """;
 

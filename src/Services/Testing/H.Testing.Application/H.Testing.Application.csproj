@@ -18,4 +18,9 @@
 		<PackageReference Include="Microsoft.Extensions.Http" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<!-- 随项目携带的本地浏览器（data/chrome/chrome.exe），供 UI 测试执行使用 -->
+		<None Include="data\**" CopyToOutputDirectory="PreserveNewest" />
+	</ItemGroup>
+
 </Project>

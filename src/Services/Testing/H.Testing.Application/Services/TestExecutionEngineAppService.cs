@@ -105,7 +105,7 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
             if (testCase.Steps.Any(s => IsUiStepType(s.Type)))
             {
                 playwright = await Playwright.CreateAsync();
-                browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+                var launchOptions = new BrowserTypeLaunchOptions
                 {
                     Headless = false, // 设置为false可以看到浏览器操作
                     Args = new[] {
@@ -113,7 +113,16 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
                         "--activate", // 激活窗口（macOS）
                         "--foreground" // 前台运行
                     }
-                });
+                };
+
+                // 优先使用随项目携带的本地浏览器（data 目录），避免依赖 Playwright 浏览器下载
+                var localChromePath = ResolveLocalChromePath();
+                if (localChromePath != null)
+                {
+                    launchOptions.ExecutablePath = localChromePath;
+                }
+
+                browser = await playwright.Chromium.LaunchAsync(launchOptions);
                 context = await browser.NewContextAsync(new BrowserNewContextOptions
                 {
                     ViewportSize = null // 使用最大视口尺寸
@@ -445,8 +454,8 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
                 case "type":
                 case "input":
                     try {
-                        // 使用更可靠的方式等待元素可见
-                        var locator = page.Locator(config.Selector);
+                        // 使用更可靠的方式等待元素可见（选择器匹配多个元素时取第一个）
+                        var locator = await ResolveSingleLocatorAsync(page, config.Selector, stepRecord);
                         stepRecord.Logs.Add($"等待元素 '{config.Selector}' 可见，超时时间: {config.TimeoutMs}ms");
                         
                         // 先尝试等待元素存在于DOM中
@@ -491,8 +500,8 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
 
                 case "click":
                     try {
-                        // 使用更可靠的方式等待元素可点击
-                        var locator = page.Locator(config.Selector);
+                        // 使用更可靠的方式等待元素可点击（选择器匹配多个元素时取第一个）
+                        var locator = await ResolveSingleLocatorAsync(page, config.Selector, stepRecord);
                         stepRecord.Logs.Add($"等待元素 '{config.Selector}' 可点击，超时时间: {config.TimeoutMs}ms");
                         
                         // 先等待元素存在于DOM中
@@ -537,36 +546,68 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
 
                 case "assert":
                     try {
-                        // 使用更可靠的方式等待元素可见并断言
+                        // 断言采用多元素语义：选择器匹配到至少一个可见元素即通过，避免 Playwright 严格模式限制
                         var locator = page.Locator(config.Selector);
                         stepRecord.Logs.Add($"等待元素 '{config.Selector}' 可见用于断言，超时时间: {config.TimeoutMs}ms");
                         
                         // 先等待页面加载完成
                         await page.WaitForLoadStateAsync(LoadState.NetworkIdle, new PageWaitForLoadStateOptions { Timeout = config.TimeoutMs });
                         
-                        // 等待元素存在于DOM中
-                        await locator.WaitForAsync(new LocatorWaitForOptions { 
-                            State = WaitForSelectorState.Attached, 
-                            Timeout = config.TimeoutMs 
-                        });
-                        
-                        // 再等待元素可见
-                        await locator.WaitForAsync(new LocatorWaitForOptions { 
-                            State = WaitForSelectorState.Visible, 
-                            Timeout = config.TimeoutMs 
-                        });
-                        
-                        // 获取元素文本内容
-                        var textContent = await locator.TextContentAsync();
-                        
-                        // 断言文本内容
-                        if (string.IsNullOrEmpty(config.Value) || textContent.Contains(config.Value))
+                        var count = await locator.CountAsync();
+                        var deadline = DateTime.Now.AddMilliseconds(config.TimeoutMs);
+                        while (count == 0 && DateTime.Now < deadline)
                         {
-                            stepRecord.Logs.Add($"断言通过: 元素 '{config.Selector}' 包含文本 '{config.Value}'");
+                            await page.WaitForTimeoutAsync(500);
+                            count = await locator.CountAsync();
+                        }
+                        
+                        if (count == 0)
+                        {
+                            throw new Exception($"断言失败: 页面中未找到元素 '{config.Selector}'");
+                        }
+                        
+                        // 等待至少一个匹配元素可见
+                        var visibleIndex = -1;
+                        for (var i = 0; i < count; i++)
+                        {
+                            if (await locator.Nth(i).IsVisibleAsync())
+                            {
+                                visibleIndex = i;
+                                break;
+                            }
+                        }
+                        
+                        if (visibleIndex < 0)
+                        {
+                            throw new Exception($"断言失败: 元素 '{config.Selector}' 匹配到 {count} 个元素但均不可见");
+                        }
+                        
+                        // 断言文本内容：任一匹配元素包含预期文本即通过；value 为可见性描述词时仅验证可见性
+                        if (string.IsNullOrEmpty(config.Value) || IsVisibilityAssertion(config.Value))
+                        {
+                            stepRecord.Logs.Add($"断言通过: 元素 '{config.Selector}' 匹配到 {count} 个元素且至少一个可见");
                         }
                         else
                         {
-                            throw new Exception($"断言失败: 元素 '{config.Selector}' 不包含文本 '{config.Value}'。实际内容: {textContent}");
+                            string? matchedText = null;
+                            for (var i = 0; i < count; i++)
+                            {
+                                var text = await locator.Nth(i).TextContentAsync();
+                                if (text != null && text.Contains(config.Value))
+                                {
+                                    matchedText = text;
+                                    break;
+                                }
+                            }
+                            
+                            if (matchedText != null)
+                            {
+                                stepRecord.Logs.Add($"断言通过: 元素 '{config.Selector}' 包含文本 '{config.Value}'");
+                            }
+                            else
+                            {
+                                throw new Exception($"断言失败: 元素 '{config.Selector}' 匹配到 {count} 个元素，均不包含文本 '{config.Value}'");
+                            }
                         }
                     }
                     catch (Exception ex) {
@@ -879,6 +920,49 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
                stepType == StepType.Scroll || 
                stepType == StepType.Hover || 
                stepType == StepType.KeyPress;
+    }
+    
+    /// <summary>
+    /// 判断断言预期值是否为可见性描述词（如 visible/可见）；这类值表示验证元素可见而非匹配文本
+    /// </summary>
+    private static bool IsVisibilityAssertion(string? value) => value != null
+        && VisibilityAssertionValues.Contains(value.Trim());
+
+    private static readonly HashSet<string> VisibilityAssertionValues = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "visible", "visibility", "displayed", "exists", "exist", "present", "true",
+        "可见", "存在", "显示", "展示", "正常展示"
+    };
+    
+    /// <summary>
+    /// 解析 UI 操作的目标元素：选择器匹配多个元素时自动取第一个，避免 Playwright 严格模式报错
+    /// </summary>
+    private static async Task<ILocator> ResolveSingleLocatorAsync(IPage page, string selector, StepExecutionRecord stepRecord)
+    {
+        var locator = page.Locator(selector);
+        var count = await locator.CountAsync();
+        if (count > 1)
+        {
+            stepRecord.Logs.Add($"选择器 '{selector}' 匹配到 {count} 个元素，自动使用第一个");
+            return locator.First;
+        }
+
+        return locator;
+    }
+    
+    /// <summary>
+    /// 解析 Testing 项目 data 目录中随项目携带的本地浏览器可执行文件
+    /// 优先 data/chrome/chrome.exe（完整浏览器目录），其次 data/chrome.exe；不存在时返回 null 回退 Playwright 内置浏览器
+    /// </summary>
+    private static string? ResolveLocalChromePath()
+    {
+        var candidates = new[]
+        {
+            Path.Combine(AppContext.BaseDirectory, "data", "chrome", "chrome.exe"),
+            Path.Combine(AppContext.BaseDirectory, "data", "chrome.exe")
+        };
+
+        return candidates.FirstOrDefault(File.Exists);
     }
     
     /// <summary>
