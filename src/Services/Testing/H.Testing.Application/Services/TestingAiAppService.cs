@@ -26,17 +26,23 @@ public class TestingAiAppService : ApplicationService, ITestingAiAppService
     private readonly IProjectAppService _projectService;
     private readonly IProjectCaseCategoryAppService _categoryService;
     private readonly IProjectCaseAppService _caseService;
+    private readonly IProjectServiceConfigAppService _serviceConfigService;
+    private readonly IProjectEnvironmentAppService _environmentService;
 
     public TestingAiAppService(
         IAiCompletionAppService aiCompletion,
         IProjectAppService projectService,
         IProjectCaseCategoryAppService categoryService,
-        IProjectCaseAppService caseService)
+        IProjectCaseAppService caseService,
+        IProjectServiceConfigAppService serviceConfigService,
+        IProjectEnvironmentAppService environmentService)
     {
         _aiCompletion = aiCompletion;
         _projectService = projectService;
         _categoryService = categoryService;
         _caseService = caseService;
+        _serviceConfigService = serviceConfigService;
+        _environmentService = environmentService;
     }
 
     #region 生成测试项目
@@ -50,7 +56,7 @@ public class TestingAiAppService : ApplicationService, ITestingAiAppService
             SystemPrompt = CreateProjectSystemPrompt,
             UserMessage = input.Description,
             Temperature = 0.3f,
-            MaxTokens = 8192
+            MaxTokens = 16384
         });
 
         var generated = ParseJson<AiGeneratedProjectDto>(result.Content);
@@ -79,11 +85,57 @@ public class TestingAiAppService : ApplicationService, ITestingAiAppService
             Status = ProjectStatus.Active
         });
 
+        // 1. 创建被测服务（tempId → 服务ID）
+        var serviceIdMap = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
+        foreach (var aiService in generated.Services.Where(s => !string.IsNullOrWhiteSpace(s.Name)))
+        {
+            var created = await _serviceConfigService.CreateProjectServiceAsync(new ProjectServiceDto
+            {
+                ProjectId = projectId,
+                Name = Truncate(aiService.Name, 100),
+                Description = Truncate(aiService.Description, 500)
+            });
+            if (!string.IsNullOrEmpty(aiService.TempId))
+            {
+                serviceIdMap[aiService.TempId] = created.Id;
+            }
+        }
+
+        // 2. 创建环境与各服务的基础地址配置
+        foreach (var aiEnv in generated.Environments.Where(e => !string.IsNullOrWhiteSpace(e.Name)))
+        {
+            var environmentId = await _environmentService.CreateAsync(new ProjectEnvironmentDto
+            {
+                ProjectId = projectId,
+                Name = Truncate(aiEnv.Name, 100),
+                Description = Truncate(aiEnv.Description, 500),
+                Type = ParseEnvironmentType(aiEnv.Type),
+                Variables = aiEnv.Variables ?? []
+            });
+
+            foreach (var config in aiEnv.ServiceConfigs.Where(c => !string.IsNullOrWhiteSpace(c.BaseUrl)))
+            {
+                if (!serviceIdMap.TryGetValue(config.ServiceTempId ?? string.Empty, out var projectServiceId))
+                {
+                    continue;
+                }
+
+                await _serviceConfigService.CreateEnvironmentServiceConfigAsync(new EnvironmentServiceConfigDto
+                {
+                    EnvironmentId = environmentId,
+                    ProjectServiceId = projectServiceId,
+                    BaseUrl = config.BaseUrl.Trim()
+                });
+            }
+        }
+
+        // 3. 创建分类
         var tempIdMap = await CreateCategoriesInOrderAsync(
             projectId,
             generated.Categories.Select(c => (c.TempId, c.Name, c.Description, ParentRef: c.ParentTempId)).ToList(),
             ResolveTempIdOnly);
 
+        // 4. 创建用例（含测试步骤）
         var caseNumberGenerator = new CaseNumberGenerator(await _caseService.GetByProjectIdAsync(projectId));
         foreach (var category in generated.Categories)
         {
@@ -103,7 +155,8 @@ public class TestingAiAppService : ApplicationService, ITestingAiAppService
                     CategoryId = categoryId,
                     Levels = NormalizeLevels(aiCase.Levels),
                     Tags = NormalizeTags(aiCase.Tags),
-                    Status = ProjectCaseStatus.Active
+                    Status = ProjectCaseStatus.Active,
+                    Steps = MapSteps(aiCase.Steps, serviceIdMap)
                 });
             }
         }
@@ -394,6 +447,8 @@ public class TestingAiAppService : ApplicationService, ITestingAiAppService
         generated.Name = Truncate(generated.Name, MaxNameLength);
         generated.Description = Truncate(generated.Description, MaxDescriptionLength);
         generated.Categories ??= [];
+        generated.Services ??= [];
+        generated.Environments ??= [];
 
         // 补齐缺失的 TempId，并过滤自引用
         for (var i = 0; i < generated.Categories.Count; i++)
@@ -410,8 +465,105 @@ public class TestingAiAppService : ApplicationService, ITestingAiAppService
             }
 
             category.Cases ??= [];
+            foreach (var aiCase in category.Cases)
+            {
+                aiCase.Steps ??= [];
+            }
+        }
+
+        for (var i = 0; i < generated.Services.Count; i++)
+        {
+            if (string.IsNullOrWhiteSpace(generated.Services[i].TempId))
+            {
+                generated.Services[i].TempId = $"s{i + 1}";
+            }
+        }
+
+        foreach (var environment in generated.Environments)
+        {
+            environment.ServiceConfigs ??= [];
         }
     }
+
+    /// <summary>
+    /// 将 AI 生成的步骤映射为用例步骤（api → HttpRequest，ui → 对应界面操作类型）
+    /// </summary>
+    private static List<ProjectCaseStep> MapSteps(List<AiGeneratedStepDto>? aiSteps, Dictionary<string, long> serviceIdMap)
+    {
+        var steps = new List<ProjectCaseStep>();
+        if (aiSteps == null)
+        {
+            return steps;
+        }
+
+        var order = 0;
+        foreach (var aiStep in aiSteps.Where(s => !string.IsNullOrWhiteSpace(s.Name)))
+        {
+            var step = new ProjectCaseStep
+            {
+                Name = Truncate(aiStep.Name, MaxNameLength),
+                ExpectedResult = Truncate(aiStep.Description, MaxDescriptionLength),
+                Order = order++
+            };
+
+            var type = (aiStep.Type ?? string.Empty).Trim().ToLowerInvariant();
+            if (type is "api" or "http" or "httprequest")
+            {
+                step.Type = StepType.HttpRequest;
+                step.ApiConfig = new ApiStepConfig
+                {
+                    Method = NormalizeHttpMethod(aiStep.Method),
+                    Url = (aiStep.Url ?? string.Empty).Trim(),
+                    Body = aiStep.Body ?? string.Empty,
+                    ServiceId = serviceIdMap.TryGetValue(aiStep.ServiceRef ?? string.Empty, out var serviceId) ? serviceId : 0
+                };
+            }
+            else
+            {
+                var action = (aiStep.Action ?? type).Trim().ToLowerInvariant();
+                step.Type = MapUiAction(action);
+                step.UiConfig = new UiStepConfig
+                {
+                    Action = action,
+                    Selector = (aiStep.Selector ?? string.Empty).Trim(),
+                    Value = aiStep.Value ?? string.Empty
+                };
+            }
+
+            steps.Add(step);
+        }
+
+        return steps;
+    }
+
+    private static StepType MapUiAction(string action) => action switch
+    {
+        "navigate" or "open" => StepType.Navigate,
+        "click" => StepType.Click,
+        "input" or "type" => StepType.Input,
+        "select" => StepType.Select,
+        "wait" => StepType.Wait,
+        "assert" or "verify" => StepType.Assert,
+        "screenshot" => StepType.Screenshot,
+        "scroll" => StepType.Scroll,
+        "hover" => StepType.Hover,
+        "keypress" or "key" => StepType.KeyPress,
+        _ => StepType.Assert
+    };
+
+    private static string NormalizeHttpMethod(string? method)
+    {
+        var normalized = (method ?? string.Empty).Trim().ToUpperInvariant();
+        return normalized is "GET" or "POST" or "PUT" or "DELETE" or "PATCH" or "HEAD" or "OPTIONS" ? normalized : "GET";
+    }
+
+    private static EnvironmentType ParseEnvironmentType(string? type) => (type ?? string.Empty).Trim().ToLowerInvariant() switch
+    {
+        "testing" or "test" => EnvironmentType.Testing,
+        "staging" => EnvironmentType.Staging,
+        "production" or "prod" => EnvironmentType.Production,
+        _ => EnvironmentType.Development
+    };
 
     private static void NormalizeModificationPlan(AiModificationPlanDto plan)
     {
@@ -491,13 +643,25 @@ public class TestingAiAppService : ApplicationService, ITestingAiAppService
     }
 
     private const string CreateProjectSystemPrompt = """
-        你是一名资深软件测试架构师。请根据用户的口语化描述，设计一个完整的测试项目方案，包含项目信息、测试用例分类和测试用例。
+        你是一名资深软件测试架构师。请根据用户的口语化描述，设计一个完整的测试项目方案，包含项目信息、被测服务、测试环境、测试用例分类、测试用例与测试步骤。
         输出要求：
         1. 只输出一个 JSON 对象，不要输出任何解释文字，也不要使用 markdown 代码块标记。
         2. JSON 结构如下：
         {
           "name": "项目名称（简洁）",
           "description": "项目描述",
+          "services": [
+            { "tempId": "s1", "name": "服务名称（如用户服务）", "description": "服务说明" }
+          ],
+          "environments": [
+            {
+              "name": "环境名称（如开发环境）",
+              "type": "development",
+              "description": "环境说明，可为空字符串",
+              "variables": { "变量名": "变量值" },
+              "serviceConfigs": [{ "serviceTempId": "s1", "baseUrl": "http://localhost:8080" }]
+            }
+          ],
           "categories": [
             {
               "tempId": "c1",
@@ -505,16 +669,26 @@ public class TestingAiAppService : ApplicationService, ITestingAiAppService
               "description": "分类描述，可为空字符串",
               "parentTempId": null,
               "cases": [
-                { "name": "用例名称", "description": "测试要点与预期结果", "levels": ["P0"], "tags": ["标签"] }
+                {
+                  "name": "用例名称",
+                  "description": "测试要点与预期结果",
+                  "levels": ["P0"],
+                  "tags": ["标签"],
+                  "steps": [
+                    { "name": "步骤名称", "type": "api", "method": "POST", "url": "/api/login", "serviceRef": "s1", "body": "{\"username\":\"test\"}", "description": "预期结果" },
+                    { "name": "步骤名称", "type": "ui", "action": "click", "selector": "#login-btn", "value": "", "description": "预期结果" }
+                  ]
+                }
               ]
             }
           ]
         }
         3. 规则：
-        - tempId 依次为 c1、c2、c3……；子分类的 parentTempId 填写其父分类的 tempId，根分类为 null；分类层级最多 2 层。
-        - 按功能模块或测试类型合理划分类别，数量建议 2~8 个。
-        - 用例名称清晰可执行；description 包含关键测试点与预期结果；levels 从 P0/P1/P2/P3 中选择，P0 为最重要。
-        - 覆盖正常流程、异常场景与边界条件，设计充分的测试用例。
+        - services：按被测系统/服务划分（如 Web前端、用户服务、订单服务），tempId 依次为 s1、s2……。
+        - environments：默认创建一个开发环境（type 从 development/testing/staging/production 中选）；用户描述中提到的地址要提取到对应环境的 serviceConfigs.baseUrl 中；未提供地址时 baseUrl 用合理的占位地址（如 http://localhost:8080）；常用配置可放入 variables。
+        - categories：tempId 依次为 c1、c2……；子分类的 parentTempId 填写其父分类的 tempId，根分类为 null；分类层级最多 2 层；按功能模块或测试类型划分，数量建议 2~8 个。
+        - cases：名称清晰可执行；description 包含关键测试点与预期结果；levels 从 P0/P1/P2/P3 中选择，P0 为最重要；覆盖正常流程、异常场景与边界条件。
+        - steps：每个用例设计 2~6 个具体可执行的步骤，按执行顺序排列；接口类项目用 type=api（method、url 为相对路径、serviceRef 引用服务 tempId、body 为 JSON 字符串、无请求体填空字符串）；界面类项目用 type=ui（action 从 navigate/click/input/select/wait/assert 中选，selector 为元素定位符，value 为输入值或期望值）；每个步骤的 description 写预期结果。
         - 所有名称与描述使用中文。
         """;
 

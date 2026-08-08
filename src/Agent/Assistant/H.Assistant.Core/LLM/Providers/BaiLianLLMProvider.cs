@@ -36,7 +36,9 @@ public class BaiLianLLMProvider : ILLMProvider
         {
             var errorBody = await response.Content.ReadAsStringAsync(ct);
             throw new HttpRequestException(
-                $"DashScope API 返回 {(int)response.StatusCode} ({response.StatusCode}): {errorBody}");
+                $"DashScope API 返回 {(int)response.StatusCode} ({response.StatusCode}): {errorBody}",
+                null,
+                response.StatusCode);
         }
         
         var result = await response.Content.ReadFromJsonAsync<QwenResponse>(ct);
@@ -66,7 +68,9 @@ public class BaiLianLLMProvider : ILLMProvider
         {
             var errorBody = await response.Content.ReadAsStringAsync(ct);
             throw new HttpRequestException(
-                $"DashScope API 返回 {(int)response.StatusCode} ({response.StatusCode}): {errorBody}");
+                $"DashScope API 返回 {(int)response.StatusCode} ({response.StatusCode}): {errorBody}",
+                null,
+                response.StatusCode);
         }
         
         await using var stream = await response.Content.ReadAsStreamAsync(ct);

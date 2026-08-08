@@ -45,7 +45,15 @@ public class AiCompletionAppService : ApplicationService, IAiCompletionAppServic
 
         request.Messages.Add(new Message { Role = "user", Content = input.UserMessage });
 
-        var response = await provider.ChatAsync(request);
+        LLMResponse response;
+        try
+        {
+            response = await provider.ChatAsync(request);
+        }
+        catch (HttpRequestException ex)
+        {
+            throw ConvertHttpError(ex);
+        }
 
         return new AiCompletionResultDto
         {
@@ -53,5 +61,18 @@ public class AiCompletionAppService : ApplicationService, IAiCompletionAppServic
             Model = response.Model,
             UsageTokens = response.UsageTokens
         };
+    }
+
+    /// <summary>
+    /// 将模型服务的 HTTP 错误转为友好提示（401 通常为 API Key 错误）
+    /// </summary>
+    private static UserFriendlyException ConvertHttpError(HttpRequestException ex)
+    {
+        if (ex.StatusCode == System.Net.HttpStatusCode.Unauthorized || ex.StatusCode == System.Net.HttpStatusCode.Forbidden)
+        {
+            return new UserFriendlyException("AI 模型认证失败（API Key 无效或已过期），请在智能助手应用的模型管理中检查并更新 API Key");
+        }
+
+        return new UserFriendlyException($"AI 模型调用失败：{ex.Message}");
     }
 }

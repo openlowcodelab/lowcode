@@ -167,6 +167,38 @@ else
                     <div Style="color: #4E5969; margin-top: 4px;">@aiGenerated.Description</div>
                 }
             </div>
+            @if (aiGenerated.Services.Any())
+            {
+                <div Style="margin-bottom: 12px;">
+                    <div Style="font-weight: 500; margin-bottom: 6px;">⚙️ 被测服务 (@aiGenerated.Services.Count)</div>
+                    @foreach (var service in aiGenerated.Services)
+                    {
+                        <div Style="padding-left: 24px; color: #4E5969; font-size: 13px; margin-top: 2px;">
+                            @service.Name
+                            @if (!string.IsNullOrEmpty(service.Description))
+                            {
+                                <span Style="color: #86909C;">- @service.Description</span>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+            @if (aiGenerated.Environments.Any())
+            {
+                <div Style="margin-bottom: 12px;">
+                    <div Style="font-weight: 500; margin-bottom: 6px;">🌐 测试环境 (@aiGenerated.Environments.Count)</div>
+                    @foreach (var env in aiGenerated.Environments)
+                    {
+                        <div Style="padding-left: 24px; color: #4E5969; font-size: 13px; margin-top: 2px;">
+                            @env.Name <span class="h-tag h-tag-blue" style="margin-left: 4px;">@GetAiEnvTypeName(env.Type)</span>
+                            @foreach (var config in env.ServiceConfigs)
+                            {
+                                <span Style="color: #86909C; margin-left: 8px;">@GetAiServiceName(config.ServiceTempId): @config.BaseUrl</span>
+                            }
+                        </div>
+                    }
+                </div>
+            }
             @foreach (var (category, depth) in GetAiCategoryDisplayList())
             {
                 <div Style="padding: 6px 0; border-bottom: 1px solid #F2F3F5;">
@@ -178,6 +210,10 @@ else
                             @foreach (var level in aiCase.Levels)
                             {
                                 <span class="h-tag h-tag-blue" style="margin-left: 4px;">@level</span>
+                            }
+                            @if (aiCase.Steps.Any())
+                            {
+                                <span Style="color: #86909C; font-size: 12px; margin-left: 4px;">(@aiCase.Steps.Count 个步骤)</span>
                             }
                         </div>
                     }
@@ -657,6 +693,23 @@ else
             aiApplying = false;
         }
     }
+
+    /// <summary>
+    /// AI 环境类型中文名
+    /// </summary>
+    private static string GetAiEnvTypeName(string? type) => (type ?? "").Trim().ToLowerInvariant() switch
+    {
+        "testing" or "test" => "测试",
+        "staging" => "预发布",
+        "production" or "prod" => "生产",
+        _ => "开发"
+    };
+
+    /// <summary>
+    /// 根据服务 TempId 获取服务名称
+    /// </summary>
+    private string GetAiServiceName(string? tempId) =>
+        aiGenerated?.Services.FirstOrDefault(s => s.TempId == tempId)?.Name ?? tempId ?? "";
 
     /// <summary>
     /// 将 AI 生成的平铺分类转为带层级的展示列表
