@@ -15,7 +15,7 @@
 
 <PageTitle>测试用例管理</PageTitle>
 
-<div style="height: 100%; display: flex; flex-direction: column; gap: 2px;">
+<div class="cases-page">
 <div class="page-fill" style="flex-shrink: 0; padding: 12px 16px;">
     <div style="display: flex; gap: 16px; align-items: center;">
         <div style="flex: 0 0 25%;">
@@ -67,15 +67,14 @@
     </div>
 </div>
 
-<div style="flex: 1; min-height: 0;">
-    <div style="display: flex; gap: 2px; height: 100%;">
-        <div style="flex: 0 0 20%; height: 100%;">
-            <HCard Style="height: 100%; display: flex; flex-direction: column;">
+<div class="cases-body">
+        <div class="cases-tree-panel">
+            <HCard>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                     <span style="font-weight: 500;">📁 分类</span>
                     <button class="h-btn h-btn-sm h-btn-primary" @onclick="ShowAddCategoryModal">➕</button>
                 </div>
-                <div style="flex: 1; overflow-y: auto;">
+                <div class="cases-scroll">
                     <button class="tree-node-row py-2 @(selectedCategoryId == 0 ? "selected" : "")"
                             @onclick="() => SelectCategory(null)" 
                             style="cursor: pointer; width: 100%; border: none; border-radius: 4px; margin-bottom: 2px;">
@@ -93,15 +92,15 @@
             </HCard>
         </div>
 
-        <div style="flex: 1; height: 100%; min-width: 0;">
-            <HCard Style="height: 100%; display: flex; flex-direction: column;">
+        <div class="cases-list-panel">
+            <HCard>
                 <div style="margin-bottom: 12px;">
                     <input class="h-input" Placeholder="搜索用例..."
                                      @bind-value="searchTerm" @bind-value:event="oninput"
                                      Style="width: 300px;" />
                 </div>
 
-                <div style="flex: 1; overflow-y: auto;">
+                <div class="cases-scroll">
                     @if (loading)
                     {
                         <div style="text-align: center; padding: 40px;">
@@ -185,21 +184,19 @@
                                             <div class="row-actions">
                                                 <a class="link-action" style="color: #00B42A;" @onclick="() => ExecuteSingleTest(context)">执行</a>
                                                 <a class="link-action" @onclick="() => EditTestCaseSteps(context)">测试步骤</a>
-                                                <div style="position: relative;">
-                                                    <a class="link-action link-action-muted" @onclick="() => ToggleTestCaseDropdown(context.Id)">更多 ▾</a>
-                                                    @if (openTestCaseDropdownId == context.Id)
-                                                    {
-                                                        <div class="h-dropdown-mask" @onclick="() => openTestCaseDropdownId = null"></div>
-                                                        <div class="h-dropdown-panel">
-                                                            <div class="h-dropdown-item" @onclick="() => { openTestCaseDropdownId = null; ShowTemplateSettingsModal(context); }">模板设置</div>
-                                                            <div class="h-dropdown-item" @onclick="() => { openTestCaseDropdownId = null; ViewExecutionHistory(context); }">测试报告</div>
-                                                            <div class="h-dropdown-item" @onclick="() => { openTestCaseDropdownId = null; CopyTestCase(context); }">复制</div>
-                                                            <div class="h-dropdown-item" @onclick="() => { openTestCaseDropdownId = null; ShowEditBasicInfoModal(context); }">编辑</div>
-                                                            <div class="h-dropdown-divider"></div>
-                                                            <div class="h-dropdown-item danger" @onclick="() => { openTestCaseDropdownId = null; DeleteTestCase(context.Id); }">删除</div>
-                                                        </div>
-                                                    }
-                                                </div>
+                                                <a class="link-action link-action-muted" @onclick="e => ToggleTestCaseDropdown(context.Id, e)">更多 ▾</a>
+                                                @if (openTestCaseDropdownId == context.Id)
+                                                {
+                                                    <div class="h-dropdown-mask" @onclick="() => openTestCaseDropdownId = null"></div>
+                                                    <div class="h-dropdown-panel h-dropdown-panel-fixed" style="@GetDropdownPanelStyle()">
+                                                        <div class="h-dropdown-item" @onclick="() => { openTestCaseDropdownId = null; ShowTemplateSettingsModal(context); }">模板设置</div>
+                                                        <div class="h-dropdown-item" @onclick="() => { openTestCaseDropdownId = null; ViewExecutionHistory(context); }">测试报告</div>
+                                                        <div class="h-dropdown-item" @onclick="() => { openTestCaseDropdownId = null; CopyTestCase(context); }">复制</div>
+                                                        <div class="h-dropdown-item" @onclick="() => { openTestCaseDropdownId = null; ShowEditBasicInfoModal(context); }">编辑</div>
+                                                        <div class="h-dropdown-divider"></div>
+                                                        <div class="h-dropdown-item danger" @onclick="() => { openTestCaseDropdownId = null; DeleteTestCase(context.Id); }">删除</div>
+                                                    </div>
+                                                }
                                             </div>
                                         </td>
                                     </tr>
@@ -215,7 +212,6 @@
             </HCard>
         </div>
     </div>
-</div>
 </div>
 
 @{
@@ -327,6 +323,7 @@
     private long selectedCategoryId = 0;
     private string searchTerm = "";
     private long? openTestCaseDropdownId = null;
+    private (double X, double Y) testCaseDropdownPosition;
 
     private bool showBasicInfoModal = false;
     private bool isEditingBasicInfo = false;
@@ -335,9 +332,26 @@
 
     private Dictionary<long, int> categoryTestCaseCounts = new();
 
-    private void ToggleTestCaseDropdown(long testCaseId)
+    private void ToggleTestCaseDropdown(long testCaseId, MouseEventArgs e)
     {
-        openTestCaseDropdownId = openTestCaseDropdownId == testCaseId ? null : testCaseId;
+        if (openTestCaseDropdownId == testCaseId)
+        {
+            openTestCaseDropdownId = null;
+            return;
+        }
+
+        testCaseDropdownPosition = (e.ClientX, e.ClientY);
+        openTestCaseDropdownId = testCaseId;
+    }
+
+    // 面板用 fixed 定位脱离表格滚动容器, 避免展开时计入滚动溢出导致出现滚动条;
+    // 右对齐到点击位置, 并限制最大高度防止超出视口底部
+    private string GetDropdownPanelStyle()
+    {
+        var (x, y) = testCaseDropdownPosition;
+        var top = y + 4;
+        return FormattableString.Invariant(
+            $"left: {x}px; top: {top}px; transform: translateX(-100%); max-height: calc(100vh - {top}px - 8px); overflow-y: auto;");
     }
 
     protected override async Task OnInitializedAsync()

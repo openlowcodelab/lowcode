@@ -363,11 +363,14 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16p
 
 /* ========================================
  * H-Dropdown - 统一下拉菜单 (触发器容器 + 透明遮罩外击关闭 + 面板)
- * 用法: 触发元素外层 position:relative; 打开时先渲染 .h-dropdown-mask
- * (点击关闭), 再渲染 .h-dropdown-panel
+ * 用法: 打开时先渲染 .h-dropdown-mask (点击关闭), 再渲染 .h-dropdown-panel
+ * 面板默认 absolute (跟随触发器); 在表格等滚动容器内使用时追加
+ * .h-dropdown-panel-fixed, 由调用方通过内联 style 传入视口坐标
+ * (position: fixed), 避免面板计入滚动溢出导致容器出现滚动条
  * ======================================== */
 .h-dropdown-mask { position: fixed; inset: 0; z-index: 998; background: transparent; }
 .h-dropdown-panel { position: absolute; top: 100%; right: 0; margin-top: 4px; min-width: 120px; background: #fff; border: 1px solid var(--h-border-light); border-radius: var(--h-radius-lg); box-shadow: var(--h-shadow-2); padding: 4px; z-index: 999; }
+.h-dropdown-panel-fixed { position: fixed; top: auto; right: auto; margin-top: 0; }
 .h-dropdown-item { display: flex; align-items: center; gap: 8px; padding: 8px 12px; font-size: 14px; color: var(--h-text); border-radius: var(--h-radius); cursor: pointer; white-space: nowrap; transition: background 0.15s; }
 .h-dropdown-item:hover { background: var(--h-fill-1); }
 .h-dropdown-item.danger { color: var(--h-danger); }

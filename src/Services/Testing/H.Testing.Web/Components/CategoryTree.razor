@@ -29,6 +29,7 @@
 
     private HashSet<long> expandedCategories = new();
     private long? openDropdownId = null;
+    private (double X, double Y) dropdownPosition;
 
     private List<ProjectCaseCategory> GetRootCategories()
     {
@@ -93,14 +94,30 @@
         return 0;
     }
 
-    private void ToggleDropdown(long categoryId)
+    private void ToggleDropdown(long categoryId, MouseEventArgs e)
     {
-        openDropdownId = openDropdownId == categoryId ? null : categoryId;
+        if (openDropdownId == categoryId)
+        {
+            openDropdownId = null;
+            return;
+        }
+
+        dropdownPosition = (e.ClientX, e.ClientY);
+        openDropdownId = categoryId;
     }
 
     private void CloseDropdown()
     {
         openDropdownId = null;
+    }
+
+    // 面板用 fixed 定位脱离分类树滚动容器, 避免展开时计入滚动溢出导致出现滚动条
+    private string GetDropdownPanelStyle()
+    {
+        var (x, y) = dropdownPosition;
+        var top = y + 4;
+        return FormattableString.Invariant(
+            $"left: {x}px; top: {top}px; transform: translateX(-100%); max-height: calc(100vh - {top}px - 8px); overflow-y: auto;");
     }
 
     private RenderFragment RenderTreeNode(ProjectCaseCategory category, int level) => __builder =>
@@ -132,12 +149,12 @@
                     @testCaseCount
                 </span>
 
-                <div class="tree-node-actions" style="position: relative;">
-                    <button type="button" class="btn btn-sm btn-link tree-node-action-btn" @onclick="() => ToggleDropdown(category.Id)" @onclick:stopPropagation>⋯</button>
+                <div class="tree-node-actions">
+                    <button type="button" class="btn btn-sm btn-link tree-node-action-btn" @onclick="e => ToggleDropdown(category.Id, e)" @onclick:stopPropagation>⋯</button>
                     @if (openDropdownId == category.Id)
                     {
                         <div class="h-dropdown-mask" @onclick="CloseDropdown" @onclick:stopPropagation></div>
-                        <div class="h-dropdown-panel">
+                        <div class="h-dropdown-panel h-dropdown-panel-fixed" style="@GetDropdownPanelStyle()">
                             <div class="h-dropdown-item" @onclick="async () => { CloseDropdown(); await OnAddChild.InvokeAsync(category); }">
                                 添加子分类
                             </div>
