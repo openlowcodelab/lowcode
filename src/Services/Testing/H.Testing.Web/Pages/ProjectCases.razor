@@ -10,6 +10,7 @@
 @inject IProjectCaseCategoryAppService ProjectCaseCategoryAppService
 @inject IProjectCaseAppService ProjectCaseService
 @inject IBatchExecutionAppService BatchExecutionAppService
+@inject ITestingAiAppService TestingAiService
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
 
@@ -58,6 +59,12 @@
                         @onclick="ExecuteSelectedTests" 
                         disabled="@(!selectedTestCases.Any() || selectedProjectId == 0)">
                     ▶ 执行选中
+                </button>
+                <button class="h-btn"
+                        style="background-color: #722ED1; border-color: #722ED1; color: #fff;"
+                        @onclick="ShowAiModal"
+                        disabled="@(selectedProjectId == 0 || aiGenerating)">
+                    ✨ AI 生成
                 </button>
                 <button class="h-btn h-btn-primary" @onclick="CreateNewTestCase">
                     ➕ 新建用例
@@ -290,6 +297,117 @@
     </div>
 </HModal>
 
+<HModal Visible="showAiModal" Title="✨ AI 新增/修改分类与用例" OnCancel="HideAiModal" ShowFooter="false" Style="width: 800px;">
+    @if (aiPlan == null)
+    {
+        <div Style="padding: 8px 0;">
+            <label Style="display: block; margin-bottom: 8px; font-weight: 500;">用口语描述你想新增或修改的内容</label>
+            <textarea class="h-textarea" rows="6" @bind="aiDescription" disabled="@aiGenerating"
+                      placeholder="例如：在登录模块下加一个异常场景分类，补充密码错误和账号锁定两个用例；把支付分类的名字改成订单支付"></textarea>
+            @if (!string.IsNullOrEmpty(aiError))
+            {
+                <div Style="color: #F53F3F; margin-top: 8px;">@aiError</div>
+            }
+            <div Style="color: #86909C; font-size: 12px; margin-top: 8px;">AI 将基于当前项目的分类与用例生成变更计划，预览确认后生效。</div>
+        </div>
+        <div Style="text-align: right; padding-top: 16px; border-top: 1px solid #F2F3F5; margin-top: 16px;">
+            <button class="h-btn h-btn-default" @onclick="HideAiModal" Style="margin-right: 8px;">取消</button>
+            <button class="h-btn" style="background-color: #722ED1; border-color: #722ED1; color: #fff;" @onclick="GenerateAiPlan" disabled="@aiGenerating">
+                @(aiGenerating ? "⏳ AI 生成中..." : "✨ 生成")
+            </button>
+        </div>
+    }
+    else
+    {
+        <div Style="padding: 8px 0; max-height: 480px; overflow-y: auto;">
+            @if (!aiPlan.AddCategories.Any() && !aiPlan.UpdateCategories.Any() && !aiPlan.AddCases.Any() && !aiPlan.UpdateCases.Any())
+            {
+                <div Style="text-align: center; color: #86909C; padding: 24px;">AI 判断无需变更，请补充需求描述后重试</div>
+            }
+            @if (aiPlan.AddCategories.Any())
+            {
+                <div Style="margin-bottom: 12px;">
+                    <div Style="font-weight: 500; margin-bottom: 6px;">📁 新增分类</div>
+                    @foreach (var cat in aiPlan.AddCategories)
+                    {
+                        <div Style="padding-left: 16px; color: #4E5969; font-size: 13px; margin-top: 4px;">
+                            @cat.Name <span Style="color: #86909C;">(父分类：@GetAiRefName(cat.ParentRef))</span>
+                            @if (!string.IsNullOrEmpty(cat.Description))
+                            {
+                                <div Style="color: #86909C; font-size: 12px;">@cat.Description</div>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+            @if (aiPlan.UpdateCategories.Any())
+            {
+                <div Style="margin-bottom: 12px;">
+                    <div Style="font-weight: 500; margin-bottom: 6px;">✏️ 修改分类</div>
+                    @foreach (var cat in aiPlan.UpdateCategories)
+                    {
+                        <div Style="padding-left: 16px; color: #4E5969; font-size: 13px; margin-top: 4px;">
+                            @GetAiCategoryName(cat.Id)
+                            @if (!string.IsNullOrEmpty(cat.Name)) { <span>→ @cat.Name</span> }
+                            @if (!string.IsNullOrEmpty(cat.Description)) { <div Style="color: #86909C; font-size: 12px;">描述：@cat.Description</div> }
+                        </div>
+                    }
+                </div>
+            }
+            @if (aiPlan.AddCases.Any())
+            {
+                <div Style="margin-bottom: 12px;">
+                    <div Style="font-weight: 500; margin-bottom: 6px;">📝 新增用例</div>
+                    @foreach (var aiCase in aiPlan.AddCases)
+                    {
+                        <div Style="padding-left: 16px; color: #4E5969; font-size: 13px; margin-top: 4px;">
+                            @aiCase.Name
+                            <span Style="color: #86909C;">(分类：@GetAiRefName(aiCase.CategoryRef))</span>
+                            @foreach (var level in aiCase.Levels)
+                            {
+                                <span class="h-tag h-tag-blue" style="margin-left: 4px;">@level</span>
+                            }
+                            @if (!string.IsNullOrEmpty(aiCase.Description))
+                            {
+                                <div Style="color: #86909C; font-size: 12px;">@aiCase.Description</div>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+            @if (aiPlan.UpdateCases.Any())
+            {
+                <div Style="margin-bottom: 12px;">
+                    <div Style="font-weight: 500; margin-bottom: 6px;">✏️ 修改用例</div>
+                    @foreach (var aiCase in aiPlan.UpdateCases)
+                    {
+                        <div Style="padding-left: 16px; color: #4E5969; font-size: 13px; margin-top: 4px;">
+                            @GetAiCaseName(aiCase.Id)
+                            @if (!string.IsNullOrEmpty(aiCase.Name)) { <span>→ @aiCase.Name</span> }
+                            @foreach (var level in aiCase.Levels)
+                            {
+                                <span class="h-tag h-tag-blue" style="margin-left: 4px;">@level</span>
+                            }
+                            @if (!string.IsNullOrEmpty(aiCase.Description))
+                            {
+                                <div Style="color: #86909C; font-size: 12px;">描述：@aiCase.Description</div>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(aiError))
+            {
+                <div Style="color: #F53F3F; margin-top: 8px;">@aiError</div>
+            }
+        </div>
+        <div Style="text-align: right; padding-top: 16px; border-top: 1px solid #F2F3F5; margin-top: 16px;">
+            <button class="h-btn h-btn-default" @onclick="BackToAiInput" Style="margin-right: 8px;" disabled="@aiApplying">返回修改</button>
+            <button class="h-btn h-btn-primary" @onclick="ConfirmApplyAiPlan" disabled="@aiApplying">@(aiApplying ? "⏳ 应用中..." : "确认应用")</button>
+        </div>
+    }
+</HModal>
+
 <ProjectCaseBasicInfoModal ShowModal="showBasicInfoModal" 
                         CurrentTestCase="currentTestCase" 
                         Categories="categories" 
@@ -331,6 +449,105 @@
     private HashSet<long> expandedCategories = new();
 
     private Dictionary<long, int> categoryTestCaseCounts = new();
+
+    // === AI 生成 ===
+    private bool showAiModal = false;
+    private string aiDescription = "";
+    private bool aiGenerating = false;
+    private bool aiApplying = false;
+    private string? aiError;
+    private AiModificationPlanDto? aiPlan;
+
+    private void ShowAiModal()
+    {
+        if (selectedProjectId == 0)
+        {
+            JSRuntime.InvokeVoidAsync("alert", "请先选择一个项目");
+            return;
+        }
+
+        aiDescription = "";
+        aiPlan = null;
+        aiError = null;
+        showAiModal = true;
+    }
+
+    private void HideAiModal() { showAiModal = false; }
+
+    private void BackToAiInput() { aiPlan = null; aiError = null; }
+
+    private async Task GenerateAiPlan()
+    {
+        if (string.IsNullOrWhiteSpace(aiDescription))
+        {
+            aiError = "请输入需求描述";
+            return;
+        }
+
+        aiGenerating = true;
+        aiError = null;
+        StateHasChanged();
+
+        try
+        {
+            aiPlan = await TestingAiService.GenerateModificationAsync(selectedProjectId, new AiGenerateInputDto { Description = aiDescription });
+        }
+        catch (Exception ex)
+        {
+            aiError = $"生成失败: {ex.Message}";
+        }
+        finally
+        {
+            aiGenerating = false;
+        }
+    }
+
+    private async Task ConfirmApplyAiPlan()
+    {
+        if (aiPlan == null) return;
+
+        aiApplying = true;
+        aiError = null;
+        StateHasChanged();
+
+        try
+        {
+            await TestingAiService.ApplyModificationAsync(selectedProjectId, aiPlan);
+            showAiModal = false;
+            await LoadProjectData();
+        }
+        catch (Exception ex)
+        {
+            aiError = $"应用失败: {ex.Message}";
+        }
+        finally
+        {
+            aiApplying = false;
+        }
+    }
+
+    /// <summary>
+    /// 解析分类引用名称：新增分类的 TempId 或已有分类 ID
+    /// </summary>
+    private string GetAiRefName(string? reference)
+    {
+        if (string.IsNullOrWhiteSpace(reference)) return "无";
+
+        var newCategory = aiPlan?.AddCategories.FirstOrDefault(c => c.TempId == reference);
+        if (newCategory != null) return $"{newCategory.Name}(新增)";
+
+        if (long.TryParse(reference, out var id))
+        {
+            var existing = FlattenCategories(categories).FirstOrDefault(c => c.Id == id);
+            if (existing != null) return existing.Name;
+        }
+
+        return reference;
+    }
+
+    private string GetAiCategoryName(long id) => FlattenCategories(categories).FirstOrDefault(c => c.Id == id)?.Name ?? id.ToString();
+
+    private string GetAiCaseName(long id) => testCases.FirstOrDefault(c => c.Id == id)?.Name ?? id.ToString();
 
     private void ToggleTestCaseDropdown(long testCaseId, MouseEventArgs e)
     {

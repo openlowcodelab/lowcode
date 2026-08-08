@@ -7,6 +7,7 @@
 @inject IProjectAppService ProjectService
 @inject IProjectEnvironmentAppService ProjectEnvironmentService
 @inject IProjectServiceConfigAppService ProjectServiceConfigService
+@inject ITestingAiAppService TestingAiService
 @inject IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager
 
@@ -35,6 +36,7 @@
         </select>
     </div>
     <div style="flex: 1; text-align: right;">
+        <button class="h-btn" style="background-color: #722ED1; border-color: #722ED1; color: #fff; margin-right: 8px;" @onclick="ShowAiModal" disabled="@aiGenerating">✨ AI 创建</button>
         <button class="h-btn h-btn-primary" @onclick="ShowAddProjectModal">➕ 新建项目</button>
     </div>
 </div>
@@ -133,6 +135,64 @@ else
         <button class="h-btn h-btn-default" @onclick="HideProjectModal" Style="margin-right: 8px;">取消</button>
         <button class="h-btn h-btn-primary" @onclick="SaveProject">@(isEditingProject ? "更新" : "保存")</button>
     </div>
+</HModal>
+
+<HModal Visible="showAiModal" Title="✨ AI 创建测试项目" OnCancel="HideAiModal" ShowFooter="false" Style="width: 800px;">
+    @if (aiGenerated == null)
+    {
+        <div Style="padding: 8px 0;">
+            <label Style="display: block; margin-bottom: 8px; font-weight: 500;">用口语描述你想创建的测试项目</label>
+            <textarea class="h-textarea" rows="6" @bind="aiDescription" disabled="@aiGenerating"
+                      placeholder="例如：帮我创建一个电商网站的自动化测试项目，要覆盖登录注册、商品搜索、购物车和下单支付，重点关注支付异常和库存边界场景"></textarea>
+            @if (!string.IsNullOrEmpty(aiError))
+            {
+                <div Style="color: #F53F3F; margin-top: 8px;">@aiError</div>
+            }
+            <div Style="color: #86909C; font-size: 12px; margin-top: 8px;">AI 将根据描述自动生成项目、用例分类与测试用例，生成后可预览确认。</div>
+        </div>
+        <div Style="text-align: right; padding-top: 16px; border-top: 1px solid #F2F3F5; margin-top: 16px;">
+            <button class="h-btn h-btn-default" @onclick="HideAiModal" Style="margin-right: 8px;">取消</button>
+            <button class="h-btn" style="background-color: #722ED1; border-color: #722ED1; color: #fff;" @onclick="GenerateAiProject" disabled="@aiGenerating">
+                @(aiGenerating ? "⏳ AI 生成中..." : "✨ 生成")
+            </button>
+        </div>
+    }
+    else
+    {
+        <div Style="padding: 8px 0; max-height: 480px; overflow-y: auto;">
+            <div Style="margin-bottom: 12px;">
+                <strong Style="font-size: 16px;">@aiGenerated.Name</strong>
+                @if (!string.IsNullOrEmpty(aiGenerated.Description))
+                {
+                    <div Style="color: #4E5969; margin-top: 4px;">@aiGenerated.Description</div>
+                }
+            </div>
+            @foreach (var (category, depth) in GetAiCategoryDisplayList())
+            {
+                <div Style="padding: 6px 0; border-bottom: 1px solid #F2F3F5;">
+                    <div Style="padding-left: @(depth * 20)px; font-weight: 500;">📁 @category.Name <span Style="color: #86909C; font-size: 12px; font-weight: normal;">(@(category.Cases.Count) 个用例)</span></div>
+                    @foreach (var aiCase in category.Cases)
+                    {
+                        <div Style="padding-left: @(depth * 20 + 24)px; color: #4E5969; font-size: 13px; margin-top: 4px;">
+                            📝 @aiCase.Name
+                            @foreach (var level in aiCase.Levels)
+                            {
+                                <span class="h-tag h-tag-blue" style="margin-left: 4px;">@level</span>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(aiError))
+            {
+                <div Style="color: #F53F3F; margin-top: 8px;">@aiError</div>
+            }
+        </div>
+        <div Style="text-align: right; padding-top: 16px; border-top: 1px solid #F2F3F5; margin-top: 16px;">
+            <button class="h-btn h-btn-default" @onclick="BackToAiInput" Style="margin-right: 8px;" disabled="@aiApplying">返回修改</button>
+            <button class="h-btn h-btn-primary" @onclick="ConfirmCreateAiProject" disabled="@aiApplying">@(aiApplying ? "⏳ 创建中..." : "确认创建")</button>
+        </div>
+    }
 </HModal>
 
 @{
@@ -525,6 +585,107 @@ else
     private bool isEditingServiceConfig = false;
     private long? openProjectDropdownId = null;
     private long? openEnvDropdownId = null;
+
+    // === AI 创建 ===
+    private bool showAiModal = false;
+    private string aiDescription = "";
+    private bool aiGenerating = false;
+    private bool aiApplying = false;
+    private string? aiError;
+    private AiGeneratedProjectDto? aiGenerated;
+
+    private void ShowAiModal()
+    {
+        aiDescription = "";
+        aiGenerated = null;
+        aiError = null;
+        showAiModal = true;
+    }
+
+    private void HideAiModal() { showAiModal = false; }
+
+    private void BackToAiInput() { aiGenerated = null; aiError = null; }
+
+    private async Task GenerateAiProject()
+    {
+        if (string.IsNullOrWhiteSpace(aiDescription))
+        {
+            aiError = "请输入需求描述";
+            return;
+        }
+
+        aiGenerating = true;
+        aiError = null;
+        StateHasChanged();
+
+        try
+        {
+            aiGenerated = await TestingAiService.GenerateProjectAsync(new AiGenerateInputDto { Description = aiDescription });
+        }
+        catch (Exception ex)
+        {
+            aiError = $"生成失败: {ex.Message}";
+        }
+        finally
+        {
+            aiGenerating = false;
+        }
+    }
+
+    private async Task ConfirmCreateAiProject()
+    {
+        if (aiGenerated == null) return;
+
+        aiApplying = true;
+        aiError = null;
+        StateHasChanged();
+
+        try
+        {
+            var projectId = await TestingAiService.CreateProjectFromAiAsync(aiGenerated);
+            showAiModal = false;
+            await LoadData();
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", "lastSelectedProjectId", projectId.ToString());
+            NavigationManager.NavigateTo($"/testing/project-cases/{projectId}");
+        }
+        catch (Exception ex)
+        {
+            aiError = $"创建失败: {ex.Message}";
+        }
+        finally
+        {
+            aiApplying = false;
+        }
+    }
+
+    /// <summary>
+    /// 将 AI 生成的平铺分类转为带层级的展示列表
+    /// </summary>
+    private List<(AiGeneratedCategoryDto Category, int Depth)> GetAiCategoryDisplayList()
+    {
+        var result = new List<(AiGeneratedCategoryDto, int)>();
+        if (aiGenerated == null) return result;
+
+        var tempIds = aiGenerated.Categories.Select(c => c.TempId).ToHashSet();
+        var visited = new HashSet<string>();
+
+        void Add(AiGeneratedCategoryDto category, int depth)
+        {
+            if (!visited.Add(category.TempId)) return;
+            result.Add((category, depth));
+            foreach (var child in aiGenerated.Categories.Where(c => c.ParentTempId == category.TempId))
+            {
+                Add(child, depth + 1);
+            }
+        }
+
+        foreach (var root in aiGenerated.Categories.Where(c => string.IsNullOrEmpty(c.ParentTempId) || !tempIds.Contains(c.ParentTempId!)))
+        {
+            Add(root, 0);
+        }
+
+        return result;
+    }
 
     private void ToggleProjectDropdown(long projectId)
     {
