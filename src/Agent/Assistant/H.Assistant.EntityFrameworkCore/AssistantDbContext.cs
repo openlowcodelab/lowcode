@@ -16,6 +16,7 @@ public class AssistantDbContext : AbpDbContext<AssistantDbContext>
     public DbSet<SkillEntity> Skills { get; set; } = null!;
     public DbSet<KnowledgeNodeEntity> KnowledgeNodes { get; set; } = null!;
     public DbSet<KnowledgeDocumentEntity> KnowledgeDocuments { get; set; } = null!;
+    public DbSet<KnowledgeBaseEntity> KnowledgeBases { get; set; } = null!;
     public DbSet<McpServerEntity> McpServers { get; set; } = null!;
     public DbSet<CategoryEntity> Categories { get; set; } = null!;
 
@@ -137,6 +138,16 @@ public class AssistantDbContext : AbpDbContext<AssistantDbContext>
             b.HasIndex(x => x.SkillType);
         });
 
+        modelBuilder.Entity<KnowledgeBaseEntity>(b =>
+        {
+            b.ToTable("KnowledgeBase");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Name).IsRequired().HasMaxLength(100);
+            b.Property(x => x.Description).HasMaxLength(500);
+
+            b.HasIndex(x => x.Name).IsUnique();
+        });
+
         modelBuilder.Entity<KnowledgeNodeEntity>(b =>
         {
             b.ToTable("KnowledgeNode");
@@ -145,7 +156,7 @@ public class AssistantDbContext : AbpDbContext<AssistantDbContext>
             b.Property(x => x.NodeType).IsRequired().HasMaxLength(20);
             b.Property(x => x.OwnerType).IsRequired().HasMaxLength(20).HasDefaultValue("Knowledge");
             
-            b.HasIndex(x => new { x.OwnerType, x.ParentId });
+            b.HasIndex(x => new { x.OwnerType, x.KnowledgeBaseId, x.ParentId });
         });
 
         modelBuilder.Entity<KnowledgeDocumentEntity>(b =>

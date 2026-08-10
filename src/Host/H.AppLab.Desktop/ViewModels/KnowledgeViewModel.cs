@@ -12,6 +12,10 @@ namespace H.AppLab.Desktop.ViewModels;
 public partial class KnowledgeViewModel : ObservableObject
 {
     private bool _initialized;
+    private readonly IKnowledgeBaseAppService _knowledgeBaseAppService;
+
+    /// <summary> 桌面端使用默认（首个）知识库 </summary>
+    private Guid? _knowledgeBaseId;
 
     public KnowledgeSectionViewModel KnowledgeSection { get; }
     public KnowledgeSectionViewModel MemorySection { get; }
@@ -24,13 +28,20 @@ public partial class KnowledgeViewModel : ObservableObject
     public bool IsKnowledgeTab => ActiveTab == "knowledge";
     public bool IsMemoryTab => ActiveTab == "memory";
 
-    public KnowledgeViewModel(IKnowledgeDocumentAppService knowledgeDocumentAppService,
+    public KnowledgeViewModel(IKnowledgeBaseAppService knowledgeBaseAppService,
+        IKnowledgeDocumentAppService knowledgeDocumentAppService,
         IMemoryAppService memoryAppService, ToastService toast)
     {
+        _knowledgeBaseAppService = knowledgeBaseAppService;
+
         // 知识库与记忆共用同一套节点/文档操作，方法签名一致，用适配器委托复用逻辑
         KnowledgeSection = new KnowledgeSectionViewModel(toast, new KnowledgeServiceAdapter(
-            knowledgeDocumentAppService.GetTreeAsync,
-            knowledgeDocumentAppService.CreateNodeAsync,
+            () => knowledgeDocumentAppService.GetTreeAsync(GetKnowledgeBaseId()),
+            input =>
+            {
+                input.KnowledgeBaseId = _knowledgeBaseId;
+                return knowledgeDocumentAppService.CreateNodeAsync(input);
+            },
             knowledgeDocumentAppService.UpdateNodeAsync,
             knowledgeDocumentAppService.DeleteNodeAsync,
             knowledgeDocumentAppService.GetDocumentAsync,
@@ -70,8 +81,28 @@ public partial class KnowledgeViewModel : ObservableObject
             return;
         }
         _initialized = true;
-        await KnowledgeSection.LoadTreeAsync();
+
+        // 解析默认知识库（列表首个），无可用库时跳过知识树加载
+        try
+        {
+            var bases = await _knowledgeBaseAppService.GetListAsync();
+            _knowledgeBaseId = bases.FirstOrDefault()?.Id;
+        }
+        catch
+        {
+            _knowledgeBaseId = null;
+        }
+
+        if (_knowledgeBaseId.HasValue)
+        {
+            await KnowledgeSection.LoadTreeAsync();
+        }
         await MemorySection.LoadTreeAsync();
+    }
+
+    private Guid GetKnowledgeBaseId()
+    {
+        return _knowledgeBaseId ?? throw new InvalidOperationException("未找到可用的知识库");
     }
 
     [RelayCommand]

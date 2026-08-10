@@ -19,6 +19,10 @@ public class AssistantMapperProfile : Profile
         CreateMap<TaskEntity, TaskDto>();
         CreateMap<TaskLogEntity, TaskLogDto>();
 
+        // Knowledge base mapping
+        CreateMap<KnowledgeBaseEntity, KnowledgeBaseDto>();
+        CreateMap<CreateKnowledgeBaseDto, KnowledgeBaseEntity>();
+
         // Knowledge node (tree structure) mapping
         CreateMap<KnowledgeNodeEntity, KnowledgeNodeDto>();
         CreateMap<CreateKnowledgeNodeDto, KnowledgeNodeEntity>();

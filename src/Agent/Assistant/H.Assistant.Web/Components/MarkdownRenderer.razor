@@ -1,0 +1,192 @@
+@namespace H.Assistant.Web
+
+@using Markdig
+
+@if (!string.IsNullOrEmpty(Content))
+{
+    <div class="markdown-content">
+        @((MarkupString)RenderedContent)
+    </div>
+}
+
+@code {
+    [Parameter]
+    public string Content { get; set; } = string.Empty;
+
+    private string RenderedContent => ParseMarkdown(Content);
+
+    private string ParseMarkdown(string markdown)
+    {
+        if (string.IsNullOrEmpty(markdown))
+            return string.Empty;
+
+        // 配置 Markdig 以支持更多扩展语法
+        var pipeline = new MarkdownPipelineBuilder()
+            .UseAdvancedExtensions()
+            .UseEmojiAndSmiley()
+            .UseCustomContainers()
+            .Build();
+
+        var html = Markdown.ToHtml(markdown, pipeline);
+
+        // 为代码块添加样式类
+        html = AddCodeBlockStyles(html);
+
+        return html;
+    }
+
+    private string AddCodeBlockStyles(string html)
+    {
+        html = html.Replace("<pre><code", "<pre class=\"markdown-code-block\"><code");
+        html = html.Replace("<code>", "<code class=\"markdown-inline-code\">");
+        return html;
+    }
+}
+
+<style>
+    .markdown-content {
+        line-height: 1.8;
+    }
+
+    .markdown-content h1,
+    .markdown-content h2,
+    .markdown-content h3,
+    .markdown-content h4,
+    .markdown-content h5,
+    .markdown-content h6 {
+        margin-top: 1em;
+        margin-bottom: 0.5em;
+        font-weight: 600;
+        line-height: 1.25;
+    }
+
+    .markdown-content h1 {
+        font-size: 1.75em;
+        border-bottom: 1px solid #e8e8e8;
+        padding-bottom: 0.3em;
+    }
+
+    .markdown-content h2 {
+        font-size: 1.5em;
+        border-bottom: 1px solid #e8e8e8;
+        padding-bottom: 0.3em;
+    }
+
+    .markdown-content h3 {
+        font-size: 1.25em;
+    }
+
+    .markdown-content h4 {
+        font-size: 1em;
+    }
+
+    .markdown-content p {
+        margin-bottom: 0.5em;
+        margin-top: 0;
+    }
+
+    .markdown-content ul,
+    .markdown-content ol {
+        margin-bottom: 1em;
+        padding-left: 2em;
+    }
+
+    .markdown-content ul li,
+    .markdown-content ol li {
+        margin-bottom: 0.25em;
+    }
+
+    .markdown-content ul {
+        list-style-type: disc;
+    }
+
+    .markdown-content ol {
+        list-style-type: decimal;
+    }
+
+    .markdown-content blockquote {
+        margin: 1em 0;
+        padding: 0.5em 1em;
+        border-left: 4px solid #d9d9d9;
+        background: #fafafa;
+        color: #595959;
+    }
+
+    .markdown-content pre {
+        background: #f5f5f5;
+        border: 1px solid #e8e8e8;
+        border-radius: 6px;
+        padding: 1em;
+        overflow-x: auto;
+        margin: 1em 0;
+    }
+
+    .markdown-content code {
+        background: #f0f0f0;
+        color: #d4380d;
+        border-radius: 3px;
+        padding: 0.2em 0.4em;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        font-size: 0.9em;
+    }
+
+    .markdown-content pre code {
+        background: transparent;
+        color: #262626;
+        padding: 0;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    .markdown-content table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1em 0;
+    }
+
+    .markdown-content table th,
+    .markdown-content table td {
+        padding: 0.5em 1em;
+        border: 1px solid #e8e8e8;
+        text-align: left;
+    }
+
+    .markdown-content table th {
+        background: #fafafa;
+        font-weight: 600;
+    }
+
+    .markdown-content table tr:nth-child(even) {
+        background: #fafafa;
+    }
+
+    .markdown-content hr {
+        border: none;
+        border-top: 1px solid #e8e8e8;
+        margin: 1.5em 0;
+    }
+
+    .markdown-content a {
+        color: #1890ff;
+        text-decoration: none;
+    }
+
+    .markdown-content a:hover {
+        color: #40a9ff;
+        text-decoration: underline;
+    }
+
+    .markdown-content img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 4px;
+    }
+
+    .markdown-content strong {
+        font-weight: 600;
+    }
+
+    .markdown-content em {
+        font-style: italic;
+    }
+</style>

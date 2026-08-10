@@ -10,6 +10,9 @@ public class KnowledgeNodeEntity : CreationAuditedEntity<Guid>
     /// <summary> 父节点 ID，null 表示根节点 </summary>
     public Guid? ParentId { get; set; }
 
+    /// <summary> 所属知识库 ID（仅 Knowledge 类型节点） </summary>
+    public Guid? KnowledgeBaseId { get; set; }
+
     /// <summary> 标题 </summary>
     public string Title { get; set; } = string.Empty;
 

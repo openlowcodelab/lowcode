@@ -8,15 +8,18 @@ namespace H.Assistant.Application;
 
 public class KnowledgeDocumentAppService : ApplicationService, IKnowledgeDocumentAppService
 {
+    private readonly IRepository<KnowledgeBaseEntity, Guid> _knowledgeBaseRepository;
     private readonly IRepository<KnowledgeNodeEntity, Guid> _nodeRepository;
     private readonly IRepository<KnowledgeDocumentEntity, Guid> _documentRepository;
     private readonly IMapper _objectMapper;
 
     public KnowledgeDocumentAppService(
+        IRepository<KnowledgeBaseEntity, Guid> knowledgeBaseRepository,
         IRepository<KnowledgeNodeEntity, Guid> nodeRepository,
         IRepository<KnowledgeDocumentEntity, Guid> documentRepository,
         IMapper objectMapper)
     {
+        _knowledgeBaseRepository = knowledgeBaseRepository;
         _nodeRepository = nodeRepository;
         _documentRepository = documentRepository;
         _objectMapper = objectMapper;
@@ -24,11 +27,12 @@ public class KnowledgeDocumentAppService : ApplicationService, IKnowledgeDocumen
 
     #region Node (Tree Structure) Operations
 
-    public async Task<List<KnowledgeNodeDto>> GetTreeAsync()
+    public async Task<List<KnowledgeNodeDto>> GetTreeAsync(Guid knowledgeBaseId)
     {
         var queryable = await _nodeRepository.GetQueryableAsync();
         var allNodes = await AsyncExecuter.ToListAsync(
-            queryable.Where(x => x.OwnerType == OwnerTypes.Knowledge).OrderBy(x => x.SortOrder));
+            queryable.Where(x => x.OwnerType == OwnerTypes.Knowledge && x.KnowledgeBaseId == knowledgeBaseId)
+                .OrderBy(x => x.SortOrder));
 
         var allDtos = allNodes.Select(x => _objectMapper.Map<KnowledgeNodeEntity, KnowledgeNodeDto>(x)).ToList();
 
@@ -60,6 +64,17 @@ public class KnowledgeDocumentAppService : ApplicationService, IKnowledgeDocumen
             {
                 throw new InvalidOperationException($"父节点 {input.ParentId} 不存在");
             }
+
+            // 子节点继承父节点所属知识库
+            input.KnowledgeBaseId = parent.KnowledgeBaseId;
+        }
+        else if (!input.KnowledgeBaseId.HasValue)
+        {
+            throw new InvalidOperationException("根节点必须指定所属知识库");
+        }
+        else if (await _knowledgeBaseRepository.FindAsync(input.KnowledgeBaseId.Value) == null)
+        {
+            throw new InvalidOperationException($"知识库 {input.KnowledgeBaseId} 不存在");
         }
 
         var entity = _objectMapper.Map<KnowledgeNodeEntity>(input);

@@ -5,7 +5,7 @@ namespace H.Assistant.Application.Contracts;
 public interface IKnowledgeDocumentAppService : IAppService
 {
     // Node (tree structure) operations
-    Task<List<KnowledgeNodeDto>> GetTreeAsync();
+    Task<List<KnowledgeNodeDto>> GetTreeAsync(Guid knowledgeBaseId);
     Task<KnowledgeNodeDto> CreateNodeAsync(CreateKnowledgeNodeDto input);
     Task<KnowledgeNodeDto> UpdateNodeAsync(Guid nodeId, UpdateKnowledgeNodeDto input);
     Task DeleteNodeAsync(Guid nodeId);

@@ -9,6 +9,9 @@ public class CreateKnowledgeNodeDto
 {
     public Guid? ParentId { get; set; }
 
+    /// <summary> 所属知识库 ID（根节点必传，子节点继承父节点） </summary>
+    public Guid? KnowledgeBaseId { get; set; }
+
     [Required]
     [StringLength(200)]
     public string Title { get; set; } = string.Empty;
