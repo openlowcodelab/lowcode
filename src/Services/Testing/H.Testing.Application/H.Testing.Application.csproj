@@ -21,6 +21,8 @@
 	<ItemGroup>
 		<!-- 随项目携带的本地浏览器（data/chrome/chrome.exe），供 UI 测试执行使用 -->
 		<None Include="data\**" CopyToOutputDirectory="PreserveNewest" />
+		<!-- 项目模板数据（../data：projects.json 索引 + 各模板子目录），输出到 data/templates -->
+		<None Include="..\data\**" Link="data\templates\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
 	</ItemGroup>
 
 </Project>

@@ -210,7 +210,7 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
             //     playwright.Dispose();
             
             // 输出提示信息
-            Console.WriteLine("UI自动化测试完成，浏览器窗口保持打开状态");
+            Console.WriteLine("UI测试用例执行完成，浏览器窗口保持打开状态");
         }
         
         // 更新执行记录
