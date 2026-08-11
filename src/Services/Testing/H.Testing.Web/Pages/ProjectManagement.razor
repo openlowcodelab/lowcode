@@ -9,6 +9,7 @@
 @inject IProjectServiceConfigAppService ProjectServiceConfigService
 @inject IProjectTemplateAppService ProjectTemplateService
 @inject ITestingAiAppService TestingAiService
+@inject IProjectKnowledgeAppService ProjectKnowledgeService
 @inject IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager
 
@@ -38,6 +39,25 @@
         border-color: #0d6efd !important;
         background: #F0F5FF;
         box-shadow: 0 2px 8px rgba(13,110,253,.15);
+    }
+
+    .kb-node-row {
+        display: flex;
+        align-items: center;
+        padding: 6px 8px;
+        border-radius: 4px;
+        cursor: pointer;
+        gap: 4px;
+    }
+
+    .kb-node-row:hover .kb-node-actions {
+        visibility: visible;
+    }
+
+    .kb-node-actions {
+        visibility: hidden;
+        margin-left: auto;
+        white-space: nowrap;
     }
 </style>
 
@@ -103,6 +123,7 @@ else if (filteredProjects.Any())
                     <div style="display: flex; gap: 8px; padding-top: 12px; border-top: 1px solid #F2F3F5;">
                         <button class="h-btn h-btn-sm" @onclick="() => ManageProjectServices(project)">⚙️ 服务</button>
                         <button class="h-btn h-btn-sm" @onclick="async () => await ManageEnvironments(project)">🌐 环境</button>
+                        <button class="h-btn h-btn-sm" @onclick="async () => await ManageKnowledge(project)">📚 知识库</button>
                         <button class="h-btn h-btn-sm h-btn-primary" @onclick="async () => await NavigateToProjectCases(project.Id)">📝 用例</button>
                     </div>
                     </ChildContent>
@@ -747,6 +768,129 @@ else
     </div>
 </HModal>
 
+@{
+    var knowledgeModalTitle = knowledgeProject != null ? $"知识库 - {knowledgeProject.Name}" : "知识库";
+}
+<HModal Visible="showKnowledgeModal" Title="@knowledgeModalTitle" OnCancel="HideKnowledgeModal" ShowFooter="false" Style="width: 1100px;">
+    @if (knowledgeLoading)
+    {
+        <div style="text-align: center; padding: 40px;">
+            <div class="h-spin"><span class="h-spin-dot"></span><span class="h-spin-text">知识库加载中...</span></div>
+        </div>
+    }
+    else
+    {
+    <div Style="display: flex; min-height: 600px;">
+        <div Style="width: 300px; border-right: 1px solid #F2F3F5; padding: 16px; background-color: #F7F8FA; display: flex; flex-direction: column;">
+            <div Style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <span Style="font-weight: 500;">📚 知识目录</span>
+                <div style="display: flex; gap: 4px;">
+                    <button class="h-btn h-btn-sm" @onclick="AddKnowledgeDirectory">➕ 目录</button>
+                    <button class="h-btn h-btn-sm h-btn-primary" @onclick="AddKnowledgeDocument">➕ 文档</button>
+                </div>
+            </div>
+            <div Style="flex: 1; overflow-y: auto;">
+                @if (knowledgeTreeNodes.Any())
+                {
+                    @foreach (var (node, depth) in GetKnowledgeDisplayList())
+                    {
+                        var isSelected = selectedKnowledgeNode?.Id == node.Id;
+                        var bgColor = isSelected ? "#E8F3FF" : "transparent";
+                        <div class="kb-node-row" style="background-color: @bgColor; padding-left: @(8 + depth * 16)px;"
+                             @onclick="async () => await SelectKnowledgeNode(node)">
+                            <span>@(node.NodeType == "Directory" ? "📁" : "📄")</span>
+                            @if (renamingNodeId == node.Id)
+                            {
+                                <input class="h-input" style="height: 26px; font-size: 13px;" @bind-value="renamingTitle"
+                                       @onkeyup="@(async (KeyboardEventArgs e) => { if (e.Key == "Enter") await SaveRenameKnowledgeNode(); if (e.Key == "Escape") CancelRenameKnowledgeNode(); })"
+                                       @onclick:stopPropagation />
+                            }
+                            else
+                            {
+                                <span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">@node.Title</span>
+                                <span class="kb-node-actions" @onclick:stopPropagation>
+                                    <a class="link-action" style="margin-right: 6px;" @onclick="() => StartRenameKnowledgeNode(node)">重命名</a>
+                                    <a class="link-action-danger" @onclick="async () => await DeleteKnowledgeNode(node)">删除</a>
+                                </span>
+                            }
+                        </div>
+                        @if (renamingNodeId == node.Id)
+                        {
+                            <div style="padding-left: @(8 + depth * 16)px; padding-bottom: 4px;">
+                                <button class="h-btn h-btn-sm h-btn-primary" @onclick="SaveRenameKnowledgeNode">确定</button>
+                                <button class="h-btn h-btn-sm h-btn-default" style="margin-left: 4px;" @onclick="CancelRenameKnowledgeNode">取消</button>
+                            </div>
+                        }
+                    }
+                }
+                else
+                {
+                    <div Style="text-align: center; padding: 40px 20px; color: #86909C;">
+                        <p>暂无知识文档</p>
+                        <p style="font-size: 12px;">可新建文档，或使用 AI 生成</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div Style="flex: 1; padding: 16px; display: flex; flex-direction: column;">
+            <div Style="border: 1px solid #E5E6EB; border-radius: 4px; margin-bottom: 16px;">
+                <div Style="padding: 10px 16px; background-color: #F7F8FA; border-bottom: 1px solid #E5E6EB; font-weight: 500;">✨ AI 生成知识</div>
+                <div Style="padding: 12px 16px;">
+                    @if (aiKbGenerated == null)
+                    {
+                        <div style="display: flex; gap: 8px;">
+                            <input class="h-input" style="flex: 1;" placeholder="口语化描述项目功能与逻辑，如：用户通过手机号注册，需校验验证码……" @bind-value="aiKbDescription" />
+                            <button class="h-btn" style="background-color: #722ED1; border-color: #722ED1; color: #fff;" @onclick="GenerateKbWithAi" disabled="@aiKbGenerating">
+                                @(aiKbGenerating ? "⏳ AI 生成中..." : "✨ AI 生成")
+                            </button>
+                        </div>
+                        @if (!string.IsNullOrEmpty(aiKbError))
+                        {
+                            <div Style="color: #F53F3F; margin-top: 8px;">@aiKbError</div>
+                        }
+                        <div Style="color: #86909C; font-size: 12px; margin-top: 8px;">AI 将根据描述生成结构化知识文档，预览确认后保存。</div>
+                    }
+                    else
+                    {
+                        <div Style="margin-bottom: 8px; font-weight: 500;">标题：<input class="h-input" style="width: 320px;" @bind-value="aiKbGenerated.Title" /></div>
+                        <textarea class="h-textarea" rows="10" @bind="aiKbGenerated.Content" Style="font-family: Consolas, monospace;"></textarea>
+                        <div Style="text-align: right; margin-top: 8px;">
+                            <button class="h-btn h-btn-default" @onclick="DiscardAiKnowledge" Style="margin-right: 8px;" disabled="@aiKbSaving">放弃</button>
+                            <button class="h-btn h-btn-primary" @onclick="SaveAiKnowledgeDocument" disabled="@aiKbSaving">@(aiKbSaving ? "保存中..." : "保存为新文档")</button>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @if (selectedKnowledgeNode != null && selectedKnowledgeNode.NodeType == "Document")
+            {
+                <div Style="flex: 1; display: flex; flex-direction: column;">
+                    <div Style="font-weight: 500; margin-bottom: 8px;">📄 @selectedKnowledgeNode.Title</div>
+                    <textarea class="h-textarea" style="flex: 1; min-height: 260px; font-family: Consolas, monospace;" placeholder="请输入知识内容（支持 Markdown）" @bind="docContent"></textarea>
+                    <div Style="text-align: right; margin-top: 8px;">
+                        <button class="h-btn h-btn-primary" @onclick="SaveKnowledgeDocument" disabled="@docSaving">@(docSaving ? "保存中..." : "💾 保存")</button>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div Style="flex: 1; display: flex; align-items: center; justify-content: center; color: #86909C;">
+                    <div Style="text-align: center;">
+                        <h4 Style="margin-bottom: 16px;">选择一篇文档</h4>
+                        <p>从左侧选择文档查看与编辑内容，或使用 AI 生成新知识</p>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+    }
+
+    <div Style="text-align: right; padding-top: 16px; border-top: 1px solid #F2F3F5; margin-top: 24px;">
+        <button class="h-btn h-btn-default" @onclick="HideKnowledgeModal">关闭</button>
+    </div>
+</HModal>
+
 @code {
     private List<ProjectDto> projects = new();
     private List<ProjectDto> filteredProjects = new();
@@ -802,6 +946,22 @@ else
     private ProjectTemplateDto saveTemplateInfo = new();
     private ProjectTemplateDto editTemplateInfo = new();
     private string editingTemplateId = "";
+
+    // === 项目知识库 ===
+    private ProjectDto? knowledgeProject;
+    private bool showKnowledgeModal = false;
+    private bool knowledgeLoading = false;
+    private List<ProjectKnowledgeNodeDto> knowledgeTreeNodes = new();
+    private ProjectKnowledgeNodeDto? selectedKnowledgeNode;
+    private string docContent = "";
+    private bool docSaving = false;
+    private Guid? renamingNodeId;
+    private string renamingTitle = "";
+    private string aiKbDescription = "";
+    private bool aiKbGenerating = false;
+    private bool aiKbSaving = false;
+    private string? aiKbError;
+    private AiKnowledgeDocumentDto? aiKbGenerated;
 
     private void ShowAiModal()
     {
@@ -1283,5 +1443,162 @@ else
             HideServiceConfigModal();
             StateHasChanged();
         }
+    }
+
+    // === 项目知识库 ===
+
+    private async Task ManageKnowledge(ProjectDto project)
+    {
+        knowledgeProject = project;
+        selectedKnowledgeNode = null;
+        docContent = "";
+        aiKbGenerated = null;
+        aiKbDescription = "";
+        aiKbError = null;
+        renamingNodeId = null;
+        showKnowledgeModal = true;
+        knowledgeLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            await ProjectKnowledgeService.GetOrCreateAsync(project.Id);
+            await LoadKnowledgeTree();
+        }
+        catch (Exception ex) { await JSRuntime.InvokeVoidAsync("alert", $"加载知识库失败: {ex.Message}"); }
+        finally { knowledgeLoading = false; }
+    }
+
+    private void HideKnowledgeModal() { showKnowledgeModal = false; knowledgeProject = null; selectedKnowledgeNode = null; }
+
+    private async Task LoadKnowledgeTree()
+    {
+        if (knowledgeProject == null) return;
+        knowledgeTreeNodes = await ProjectKnowledgeService.GetTreeAsync(knowledgeProject.Id);
+    }
+
+    /// <summary>
+    /// 将知识库树平铺为带层级的展示列表
+    /// </summary>
+    private List<(ProjectKnowledgeNodeDto Node, int Depth)> GetKnowledgeDisplayList()
+    {
+        var result = new List<(ProjectKnowledgeNodeDto, int)>();
+        void Add(ProjectKnowledgeNodeDto node, int depth)
+        {
+            result.Add((node, depth));
+            foreach (var child in node.Children) Add(child, depth + 1);
+        }
+        foreach (var node in knowledgeTreeNodes) Add(node, 0);
+        return result;
+    }
+
+    private async Task SelectKnowledgeNode(ProjectKnowledgeNodeDto node)
+    {
+        if (node.NodeType != "Document") return;
+        selectedKnowledgeNode = node;
+        docContent = await ProjectKnowledgeService.GetDocumentContentAsync(node.Id);
+        StateHasChanged();
+    }
+
+    private Task AddKnowledgeDirectory() => AddKnowledgeNode("Directory");
+    private Task AddKnowledgeDocument() => AddKnowledgeNode("Document");
+
+    private async Task AddKnowledgeNode(string nodeType)
+    {
+        if (knowledgeProject == null) return;
+        try
+        {
+            var title = nodeType == "Directory" ? "新建目录" : "新建文档";
+            var created = await ProjectKnowledgeService.CreateNodeAsync(knowledgeProject.Id, new CreateProjectKnowledgeNodeInput { Title = title, NodeType = nodeType });
+            await LoadKnowledgeTree();
+            if (created.NodeType == "Document") await SelectKnowledgeNode(created);
+            renamingNodeId = created.Id;
+            renamingTitle = created.Title;
+            StateHasChanged();
+        }
+        catch (Exception ex) { await JSRuntime.InvokeVoidAsync("alert", $"创建失败: {ex.Message}"); }
+    }
+
+    private void StartRenameKnowledgeNode(ProjectKnowledgeNodeDto node) { renamingNodeId = node.Id; renamingTitle = node.Title; }
+    private void CancelRenameKnowledgeNode() { renamingNodeId = null; renamingTitle = ""; }
+
+    private async Task SaveRenameKnowledgeNode()
+    {
+        if (renamingNodeId == null) return;
+        var id = renamingNodeId.Value;
+        renamingNodeId = null;
+        if (string.IsNullOrWhiteSpace(renamingTitle)) { StateHasChanged(); return; }
+        try
+        {
+            await ProjectKnowledgeService.RenameNodeAsync(id, renamingTitle.Trim());
+            await LoadKnowledgeTree();
+            if (selectedKnowledgeNode?.Id == id) selectedKnowledgeNode = FindKnowledgeNode(id);
+            StateHasChanged();
+        }
+        catch (Exception ex) { await JSRuntime.InvokeVoidAsync("alert", $"重命名失败: {ex.Message}"); }
+    }
+
+    private ProjectKnowledgeNodeDto? FindKnowledgeNode(Guid id) =>
+        GetKnowledgeDisplayList().Select(t => t.Node).FirstOrDefault(n => n.Id == id);
+
+    private async Task DeleteKnowledgeNode(ProjectKnowledgeNodeDto node)
+    {
+        if (!await JSRuntime.InvokeAsync<bool>("confirm", $"确定要删除 '{node.Title}' 吗？")) return;
+        await ProjectKnowledgeService.DeleteNodeAsync(node.Id);
+        if (selectedKnowledgeNode?.Id == node.Id) { selectedKnowledgeNode = null; docContent = ""; }
+        await LoadKnowledgeTree();
+        StateHasChanged();
+    }
+
+    private async Task SaveKnowledgeDocument()
+    {
+        if (selectedKnowledgeNode == null) return;
+        docSaving = true;
+        StateHasChanged();
+        try
+        {
+            await ProjectKnowledgeService.SaveDocumentAsync(selectedKnowledgeNode.Id, docContent);
+            await JSRuntime.InvokeVoidAsync("alert", "文档已保存");
+        }
+        catch (Exception ex) { await JSRuntime.InvokeVoidAsync("alert", $"保存失败: {ex.Message}"); }
+        finally { docSaving = false; }
+    }
+
+    private async Task GenerateKbWithAi()
+    {
+        if (knowledgeProject == null) return;
+        if (string.IsNullOrWhiteSpace(aiKbDescription)) { aiKbError = "请输入需求描述"; return; }
+        aiKbGenerating = true;
+        aiKbError = null;
+        StateHasChanged();
+        try
+        {
+            aiKbGenerated = await ProjectKnowledgeService.GenerateWithAiAsync(knowledgeProject.Id, aiKbDescription);
+        }
+        catch (Exception ex) { aiKbError = $"生成失败: {ex.Message}"; }
+        finally { aiKbGenerating = false; }
+    }
+
+    private void DiscardAiKnowledge() { aiKbGenerated = null; }
+
+    private async Task SaveAiKnowledgeDocument()
+    {
+        if (knowledgeProject == null || aiKbGenerated == null) return;
+        aiKbSaving = true;
+        StateHasChanged();
+        try
+        {
+            var title = string.IsNullOrWhiteSpace(aiKbGenerated.Title) ? "AI 生成知识" : aiKbGenerated.Title;
+            var created = await ProjectKnowledgeService.CreateNodeAsync(knowledgeProject.Id, new CreateProjectKnowledgeNodeInput { Title = title, NodeType = "Document" });
+            await ProjectKnowledgeService.SaveDocumentAsync(created.Id, aiKbGenerated.Content);
+            await LoadKnowledgeTree();
+            selectedKnowledgeNode = FindKnowledgeNode(created.Id);
+            docContent = aiKbGenerated.Content;
+            aiKbGenerated = null;
+            aiKbDescription = "";
+            StateHasChanged();
+        }
+        catch (Exception ex) { await JSRuntime.InvokeVoidAsync("alert", $"保存失败: {ex.Message}"); }
+        finally { aiKbSaving = false; }
     }
 }

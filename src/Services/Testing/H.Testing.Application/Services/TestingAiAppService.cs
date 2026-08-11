@@ -28,6 +28,7 @@ public class TestingAiAppService : ApplicationService, ITestingAiAppService
     private readonly IProjectCaseAppService _caseService;
     private readonly IProjectServiceConfigAppService _serviceConfigService;
     private readonly IProjectEnvironmentAppService _environmentService;
+    private readonly IProjectKnowledgeAppService _knowledgeService;
 
     public TestingAiAppService(
         IAiCompletionAppService aiCompletion,
@@ -35,7 +36,8 @@ public class TestingAiAppService : ApplicationService, ITestingAiAppService
         IProjectCaseCategoryAppService categoryService,
         IProjectCaseAppService caseService,
         IProjectServiceConfigAppService serviceConfigService,
-        IProjectEnvironmentAppService environmentService)
+        IProjectEnvironmentAppService environmentService,
+        IProjectKnowledgeAppService knowledgeService)
     {
         _aiCompletion = aiCompletion;
         _projectService = projectService;
@@ -43,6 +45,7 @@ public class TestingAiAppService : ApplicationService, ITestingAiAppService
         _caseService = caseService;
         _serviceConfigService = serviceConfigService;
         _environmentService = environmentService;
+        _knowledgeService = knowledgeService;
     }
 
     #region 生成测试项目
@@ -184,10 +187,16 @@ public class TestingAiAppService : ApplicationService, ITestingAiAppService
             cases = cases.Select(c => new { c.Id, c.CaseNumber, c.Name, c.CategoryId })
         }, JsonOptions);
 
+        // 读取项目知识库内容作为生成上下文，辅助编写更贴合业务的用例
+        var knowledgeDigest = await _knowledgeService.GetKnowledgeDigestAsync(projectId);
+        var knowledgeSection = string.IsNullOrEmpty(knowledgeDigest)
+            ? string.Empty
+            : $"\n\n项目知识库（描述项目功能与逻辑，设计用例时应优先覆盖其中的关键流程与规则）：\n{knowledgeDigest}";
+
         var result = await _aiCompletion.CompleteAsync(new AiCompletionInputDto
         {
             SystemPrompt = ModificationSystemPrompt,
-            UserMessage = $"已有项目结构：\n{context}\n\n用户需求：\n{input.Description}",
+            UserMessage = $"已有项目结构：\n{context}{knowledgeSection}\n\n用户需求：\n{input.Description}",
             Temperature = 0.3f,
             MaxTokens = 8192
         });
@@ -710,6 +719,7 @@ public class TestingAiAppService : ApplicationService, ITestingAiAppService
         - 修改操作只填写需要变更的字段，不需要变更的字段填空字符串或空数组（空值将被忽略）。
         - 只输出必要的操作，无需变更时输出空数组；不要包含任何删除操作。
         - 新增用例应优先挂到合适的已有分类下；levels 从 P0/P1/P2/P3 中选择。
+        - 若提供了项目知识库内容，须优先依据知识库描述的功能与业务规则设计用例，使其覆盖知识库中提到的关键流程、校验规则与异常场景。
         - 所有名称与描述使用中文。
         """;
 
