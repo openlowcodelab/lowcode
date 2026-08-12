@@ -11,12 +11,12 @@ namespace H.Testing.Application;
 /// </summary>
 public class ProjectServiceConfigAppService : ApplicationService, IProjectServiceConfigAppService
 {
-    private readonly IRepository<TestingProjectService, long> _serviceRepository;
-    private readonly IRepository<TestingEnvironmentServiceConfig, long> _configRepository;
+    private readonly IRepository<ProjectServiceEntity, long> _serviceRepository;
+    private readonly IRepository<ProjectEnvConfigEntity, long> _configRepository;
 
     public ProjectServiceConfigAppService(
-        IRepository<TestingProjectService, long> serviceRepository,
-        IRepository<TestingEnvironmentServiceConfig, long> configRepository)
+        IRepository<ProjectServiceEntity, long> serviceRepository,
+        IRepository<ProjectEnvConfigEntity, long> configRepository)
     {
         _serviceRepository = serviceRepository;
         _configRepository = configRepository;
@@ -31,7 +31,7 @@ public class ProjectServiceConfigAppService : ApplicationService, IProjectServic
 
     public async Task<ProjectServiceDto> CreateProjectServiceAsync(ProjectServiceDto service)
     {
-        var entity = new TestingProjectService();
+        var entity = new ProjectServiceEntity();
         service.Apply(entity);
         entity = await _serviceRepository.InsertAsync(entity, autoSave: true);
         return entity.ToDto();
@@ -47,7 +47,6 @@ public class ProjectServiceConfigAppService : ApplicationService, IProjectServic
 
         entity.Name = service.Name;
         entity.Description = service.Description;
-        entity.UpdatedBy = service.UpdatedBy;
         await _serviceRepository.UpdateAsync(entity, autoSave: true);
         return entity.ToDto();
     }
@@ -59,20 +58,20 @@ public class ProjectServiceConfigAppService : ApplicationService, IProjectServic
         await _configRepository.DeleteAsync(c => c.ProjectServiceId == serviceId, autoSave: true);
     }
 
-    public async Task<List<EnvironmentServiceConfigDto>> GetEnvironmentServiceConfigsAsync(long environmentId)
+    public async Task<List<ProjectEnvConfigDto>> GetEnvironmentServiceConfigsAsync(long environmentId)
     {
         var query = await _configRepository.GetQueryableAsync();
-        var list = await AsyncExecuter.ToListAsync(query.Where(c => c.EnvironmentId == environmentId));
+        var list = await AsyncExecuter.ToListAsync(query.Where(c => c.EnvId == environmentId));
         return list.Select(e => e.ToDto()).ToList();
     }
 
-    public async Task<EnvironmentServiceConfigDto?> GetEnvironmentServiceConfigAsync(long configId)
+    public async Task<ProjectEnvConfigDto?> GetEnvironmentServiceConfigAsync(long configId)
     {
         var entity = await _configRepository.FindAsync(configId);
         return entity?.ToDto();
     }
 
-    public async Task<EnvironmentServiceConfigDto> UpdateEnvironmentServiceConfigAsync(EnvironmentServiceConfigDto config)
+    public async Task<ProjectEnvConfigDto> UpdateEnvironmentServiceConfigAsync(ProjectEnvConfigDto config)
     {
         var entity = config.Id > 0 ? await _configRepository.FindAsync(config.Id) : null;
         if (entity != null)
@@ -82,15 +81,15 @@ public class ProjectServiceConfigAppService : ApplicationService, IProjectServic
             return entity.ToDto();
         }
 
-        entity = new TestingEnvironmentServiceConfig();
+        entity = new ProjectEnvConfigEntity();
         config.Apply(entity);
         entity = await _configRepository.InsertAsync(entity, autoSave: true);
         return entity.ToDto();
     }
 
-    public async Task<EnvironmentServiceConfigDto> CreateEnvironmentServiceConfigAsync(EnvironmentServiceConfigDto config)
+    public async Task<ProjectEnvConfigDto> CreateEnvironmentServiceConfigAsync(ProjectEnvConfigDto config)
     {
-        var entity = new TestingEnvironmentServiceConfig();
+        var entity = new ProjectEnvConfigEntity();
         config.Apply(entity);
         entity = await _configRepository.InsertAsync(entity, autoSave: true);
         return entity.ToDto();

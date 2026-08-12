@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace H.Approval.Application.Contracts;
 
 /// <summary>

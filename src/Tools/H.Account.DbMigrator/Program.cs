@@ -2,8 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Volo.Abp.Identity;
-using IdentityUser = Volo.Abp.Identity.IdentityUser;
 
 namespace H.Account.DbMigrator;
 

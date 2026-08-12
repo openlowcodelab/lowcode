@@ -9,7 +9,7 @@ public enum MenuPosition
     /// 左侧菜单
     /// </summary>
     Left,
-    
+
     /// <summary>
     /// 顶部菜单
     /// </summary>

@@ -1,8 +1,8 @@
+using H.Notification.Application.Contracts;
+using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Net.Mail;
 using System.Text.Json;
-using H.Notification.Application.Contracts;
-using Microsoft.Extensions.Logging;
 using Volo.Abp.DependencyInjection;
 
 namespace H.Notification.Application.Sending;

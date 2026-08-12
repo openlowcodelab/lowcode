@@ -1,6 +1,6 @@
-using System.Text.Json;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 
 namespace H.Assistant.Core.Agents;
 

@@ -67,8 +67,8 @@ public class SearchTool
             };
 
             // 禁用非 ASCII 字符转义，确保中文等字符正常显示
-            return JsonSerializer.Serialize(result, new JsonSerializerOptions 
-            { 
+            return JsonSerializer.Serialize(result, new JsonSerializerOptions
+            {
                 WriteIndented = false,
                 Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
             });
@@ -110,8 +110,8 @@ public class SearchTool
             };
 
             // 禁用非 ASCII 字符转义，确保中文等字符正常显示
-            return JsonSerializer.Serialize(result, new JsonSerializerOptions 
-            { 
+            return JsonSerializer.Serialize(result, new JsonSerializerOptions
+            {
                 WriteIndented = false,
                 Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
             });

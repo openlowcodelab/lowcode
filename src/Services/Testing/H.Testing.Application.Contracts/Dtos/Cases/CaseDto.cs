@@ -5,72 +5,64 @@ namespace H.Testing.Application.Contracts;
 /// <summary>
 /// 测试用例模型
 /// </summary>
-public class ProjectCaseDto
+public class CaseDto
 {
     public long Id { get; set; }
-    
+
     /// <summary>
     /// 用例编号，用于标识和排序
     /// </summary>
     [StringLength(12, MinimumLength = 3, ErrorMessage = "用例编号长度必须在3-12个字符之间")]
     [RegularExpression(@"^[a-zA-Z0-9_]+$", ErrorMessage = "用例编号只能包含字母、数字和下划线")]
     public string CaseNumber { get; set; } = string.Empty;
-    
+
     [Required(ErrorMessage = "测试用例名称不能为空")]
-    [StringLength(200, ErrorMessage = "测试用例名称长度不能超过200个字符")]
+    [StringLength(20, ErrorMessage = "测试用例名称长度不能超过20个字符")]
     public string Name { get; set; } = string.Empty;
-    
-    [StringLength(1000, ErrorMessage = "测试用例描述长度不能超过1000个字符")]
+
+    [StringLength(100, ErrorMessage = "测试用例描述长度不能超过100个字符")]
     public string Description { get; set; } = string.Empty;
-    
+
     [Required(ErrorMessage = "所属项目不能为空")]
     public long ProjectId { get; set; }
-    
 
-    
+
+
     public long? CategoryId { get; set; }
-    
+
     /// <summary>
     /// 是否为测试模板
     /// </summary>
     public bool IsTemplate { get; set; } = false;
-    
+
     /// <summary>
     /// 关联的模板ID（如果是基于模板创建的用例）
     /// </summary>
     public long? TemplateId { get; set; }
-    
+
     /// <summary>
     /// 用例级别，如 P0、P1、P2、P3，可多选
     /// </summary>
     public List<string> Levels { get; set; } = new();
-    
+
     public List<ProjectCaseStep> Steps { get; set; } = new();
-    
+
     public Dictionary<string, object> TestData { get; set; } = new();
-    
+
     public List<string> Tags { get; set; } = new();
-    
+
     /// <summary>
     /// 排序字段，数值越小排序越靠前
     /// </summary>
     public int Order { get; set; } = 0;
-    
+
     public ProjectCaseStatus Status { get; set; } = ProjectCaseStatus.Active;
-    
-    public DateTime CreatedAt { get; set; } = DateTime.Now;
-    
-    public DateTime UpdatedAt { get; set; } = DateTime.Now;
-    
-    public string CreatedBy { get; set; } = "System";
-    
-    public string UpdatedBy { get; set; } = "System";
-    
+
     /// <summary>
     /// 上一次执行结果
     /// </summary>
     public ExecutionStatus? LastExecutionResult { get; set; }
-    
+
     /// <summary>
     /// 上一次执行时间
     /// </summary>
@@ -83,27 +75,27 @@ public class ProjectCaseDto
 public class ProjectCaseStep
 {
     public string Id { get; set; } = Guid.NewGuid().ToString();
-    
+
     [Required(ErrorMessage = "步骤名称不能为空")]
     public string Name { get; set; } = string.Empty;
-    
+
     [Required(ErrorMessage = "步骤类型不能为空")]
     public StepType Type { get; set; }
-    
+
     public Dictionary<string, object> Parameters { get; set; } = new();
-    
+
     public string ExpectedResult { get; set; } = string.Empty;
-    
+
     public int Order { get; set; }
-    
+
     public bool IsEnabled { get; set; } = true;
-    
+
     // API 项目步骤特有属性
     public ApiStepConfig? ApiConfig { get; set; }
-    
+
     // UI 项目步骤特有属性
     public UiStepConfig? UiConfig { get; set; }
-    
+
     // 脚本步骤特有属性
     public ScriptStepConfig? ScriptConfig { get; set; }
 }
@@ -114,46 +106,46 @@ public class ProjectCaseStep
 public class ApiStepConfig
 {
     public string Method { get; set; } = "GET"; // GET, POST, PUT, DELETE, etc.
-    
+
     /// <summary>
     /// 关联的项目服务ID，用于拼接完整URL
     /// </summary>
     public long ServiceId { get; set; }
-    
+
     public string Url { get; set; } = string.Empty;
-    
+
     public Dictionary<string, string> Headers { get; set; } = new();
-    
+
     public Dictionary<string, string> Params { get; set; } = new();
-    
+
     public string Body { get; set; } = string.Empty;
-    
+
     public string BodyType { get; set; } = "json"; // json, form-data, x-www-form-urlencoded, raw, etc.
-    
+
     public List<ApiAssertion> Assertions { get; set; } = new();
-    
+
     public Dictionary<string, string> VariableExtractions { get; set; } = new(); // 从响应中提取变量
-    
+
     /// <summary>
     /// Cookie配置
     /// </summary>
     public Dictionary<string, string> Cookies { get; set; } = new();
-    
+
     /// <summary>
     /// 认证配置
     /// </summary>
     public AuthConfig Auth { get; set; } = new();
-    
+
     /// <summary>
     /// 超时时间（毫秒）
     /// </summary>
     public int TimeoutMs { get; set; } = 30000;
-    
+
     /// <summary>
     /// 是否跟随重定向
     /// </summary>
     public bool FollowRedirects { get; set; } = true;
-    
+
     /// <summary>
     /// 是否验证SSL证书
     /// </summary>
@@ -169,32 +161,32 @@ public class AuthConfig
     /// 认证类型：None, Basic, Bearer, ApiKey, OAuth2
     /// </summary>
     public string Type { get; set; } = "None";
-    
+
     /// <summary>
     /// 用户名（Basic认证）
     /// </summary>
     public string Username { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// 密码（Basic认证）
     /// </summary>
     public string Password { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// Token（Bearer认证）
     /// </summary>
     public string Token { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// API Key名称
     /// </summary>
     public string ApiKeyName { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// API Key值
     /// </summary>
     public string ApiKeyValue { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// API Key位置：Header, Query
     /// </summary>
@@ -207,13 +199,13 @@ public class AuthConfig
 public class ApiAssertion
 {
     public string Type { get; set; } = string.Empty; // status_code, response_time, json_path, header, etc.
-    
+
     public string Target { get; set; } = string.Empty; // 断言目标，如json路径
-    
+
     public string Operator { get; set; } = string.Empty; // equals, contains, gt, lt, etc.
-    
+
     public string ExpectedValue { get; set; } = string.Empty;
-    
+
     public string Description { get; set; } = string.Empty;
 }
 
@@ -223,17 +215,17 @@ public class ApiAssertion
 public class UiStepConfig
 {
     public string Action { get; set; } = string.Empty; // navigate, click, type, wait, assert, etc.
-    
+
     public string Selector { get; set; } = string.Empty; // CSS选择器或XPath
-    
+
     public string SelectorType { get; set; } = "css"; // css, xpath, id, name, etc.
-    
+
     public string Value { get; set; } = string.Empty; // 输入值或期望值
-    
+
     public int TimeoutMs { get; set; } = 30000;
-    
+
     public bool TakeScreenshot { get; set; } = false;
-    
+
     public Dictionary<string, string> Options { get; set; } = new(); // 额外选项
 }
 
@@ -246,32 +238,32 @@ public class ScriptStepConfig
     /// 脚本类型：Javascript, CSharp
     /// </summary>
     public string ScriptType { get; set; } = "Javascript";
-    
+
     /// <summary>
     /// 脚本内容
     /// </summary>
     public string ScriptContent { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// 脚本参数
     /// </summary>
     public Dictionary<string, object> Parameters { get; set; } = new();
-    
+
     /// <summary>
     /// 超时时间（毫秒）
     /// </summary>
     public int TimeoutMs { get; set; } = 30000;
-    
+
     /// <summary>
     /// 是否捕获输出
     /// </summary>
     public bool CaptureOutput { get; set; } = true;
-    
+
     /// <summary>
     /// 变量提取配置
     /// </summary>
     public Dictionary<string, string> VariableExtractions { get; set; } = new();
-    
+
     /// <summary>
     /// 预期返回值类型：string, number, boolean, object
     /// </summary>
@@ -298,7 +290,7 @@ public enum StepType
     HttpRequest = 1,
     ApiAssertion = 2,
     VariableExtraction = 3,
-    
+
     // UI项目步骤
     Navigate = 10,
     Click = 11,
@@ -310,13 +302,13 @@ public enum StepType
     Scroll = 17,
     Hover = 18,
     KeyPress = 19,
-    
+
     // 通用步骤
     Script = 20,
     Delay = 21,
     SetVariable = 22,
     Condition = 23,
-    
+
     // 脚本步骤
     JavascriptScript = 30,
     CSharpScript = 31

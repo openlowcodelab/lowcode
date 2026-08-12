@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.MultiTenancy;
 using Volo.Abp.Security.Claims;
 

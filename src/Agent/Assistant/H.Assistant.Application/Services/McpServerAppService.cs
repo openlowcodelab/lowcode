@@ -1,7 +1,7 @@
+using H.Assistant.Application.Contracts;
+using H.Assistant.EntityFrameworkCore;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
-using H.Assistant.EntityFrameworkCore;
-using H.Assistant.Application.Contracts;
 
 namespace H.Assistant.Application;
 

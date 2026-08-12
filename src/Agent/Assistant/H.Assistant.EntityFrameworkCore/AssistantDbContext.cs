@@ -40,7 +40,7 @@ public class AssistantDbContext : AbpDbContext<AssistantDbContext>
             b.Property(x => x.BaseUrl).HasMaxLength(500);
             b.Property(x => x.Model).IsRequired().HasMaxLength(100);
             b.Property(x => x.ExtraConfig).HasMaxLength(2000);
-            
+
             b.HasIndex(x => new { x.ProviderName, x.Model }).IsUnique();
         });
 
@@ -50,7 +50,7 @@ public class AssistantDbContext : AbpDbContext<AssistantDbContext>
             b.HasKey(x => x.Id);
             b.Property(x => x.Title).IsRequired().HasMaxLength(200);
             b.Property(x => x.AgentType).IsRequired().HasMaxLength(50);
-            
+
             b.HasMany(x => x.Messages)
              .WithOne()
              .HasForeignKey(x => x.SessionId)
@@ -66,7 +66,7 @@ public class AssistantDbContext : AbpDbContext<AssistantDbContext>
             b.Property(x => x.Content).IsRequired().HasMaxLength(8000);
             b.Property(x => x.ToolName).HasMaxLength(100);
             b.Property(x => x.ToolResult).HasMaxLength(2000);
-            
+
             b.HasIndex(x => x.SessionId);
         });
 
@@ -87,7 +87,7 @@ public class AssistantDbContext : AbpDbContext<AssistantDbContext>
             b.Property(x => x.CronExpression).HasMaxLength(100);
             b.Property(x => x.Status).IsRequired().HasMaxLength(20);
             b.Property(x => x.HangfireJobId).HasMaxLength(100);
-            
+
             b.HasIndex(x => new { x.IsEnabled, x.Status });
             b.HasIndex(x => x.NextExecutionTime);
             b.HasIndex(x => x.Category);
@@ -101,7 +101,7 @@ public class AssistantDbContext : AbpDbContext<AssistantDbContext>
             b.Property(x => x.Status).IsRequired().HasMaxLength(20);
             b.Property(x => x.Result).HasMaxLength(8000);
             b.Property(x => x.ErrorMessage).HasMaxLength(2000);
-            
+
             b.HasIndex(x => x.TaskId);
             b.HasIndex(x => x.StartTime);
         });
@@ -116,7 +116,7 @@ public class AssistantDbContext : AbpDbContext<AssistantDbContext>
             b.Property(x => x.SystemPrompt).IsRequired().HasMaxLength(4000);
             b.Property(x => x.Metadata).HasMaxLength(4000);
             b.Property(x => x.SkillIds).HasMaxLength(2000);
-            
+
             b.HasIndex(x => x.AgentType).IsUnique();
             b.HasIndex(x => x.IsEnabled);
         });
@@ -132,7 +132,7 @@ public class AssistantDbContext : AbpDbContext<AssistantDbContext>
             b.Property(x => x.ImplementationClass).HasMaxLength(500);
             b.Property(x => x.Config).HasMaxLength(4000);
             b.Property(x => x.ParameterSchema).HasMaxLength(4000);
-            
+
             b.HasIndex(x => x.SkillName).IsUnique();
             b.HasIndex(x => x.IsEnabled);
             b.HasIndex(x => x.SkillType);
@@ -155,7 +155,7 @@ public class AssistantDbContext : AbpDbContext<AssistantDbContext>
             b.Property(x => x.Title).IsRequired().HasMaxLength(200);
             b.Property(x => x.NodeType).IsRequired().HasMaxLength(20);
             b.Property(x => x.OwnerType).IsRequired().HasMaxLength(20).HasDefaultValue("Knowledge");
-            
+
             b.HasIndex(x => new { x.OwnerType, x.KnowledgeBaseId, x.ParentId });
         });
 

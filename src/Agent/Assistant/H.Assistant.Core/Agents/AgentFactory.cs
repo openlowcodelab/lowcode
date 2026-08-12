@@ -1,7 +1,6 @@
 using H.Assistant.Application.Contracts;
 using H.Assistant.Core.Agents;
 using H.Assistant.Core.Mcp;
-using Microsoft.Agents.AI;
 using Microsoft.Extensions.Logging;
 
 namespace H.Assistant.Core;
@@ -21,7 +20,7 @@ public class AgentFactory
     private readonly ILogger<ReactAgentInstance> _reactInstanceLogger;
     private readonly ILogger<ToolExecutor> _toolExecutorLogger;
     private bool _mcpInitialized;
-    
+
     /// <summary>
     /// 内置默认智能体定义，当数据库中无已启用 Agent 时使用
     /// </summary>
@@ -40,7 +39,7 @@ public class AgentFactory
         MaxTokens = 2000,
         Skills = new List<string>()
     };
-    
+
     public AgentFactory(
         LLMProviderFactory llmProviderFactory,
         IAgentAppService agentDefinitionAppService,
@@ -86,7 +85,7 @@ public class AgentFactory
             }
         }
     }
-    
+
     /// <summary>
     /// 创建 Agent 实例（根据 configId 选择模型）
     /// </summary>
@@ -98,7 +97,7 @@ public class AgentFactory
         var definition = await ResolveAgentDefinitionAsync(agentType);
         return await BuildAgentInstanceAsync(llmProvider, definition);
     }
-    
+
     /// <summary>
     /// 创建 Assistant 实例（根据 ProviderName 选择模型，向后兼容）
     /// </summary>

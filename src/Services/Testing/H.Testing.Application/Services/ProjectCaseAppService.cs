@@ -11,21 +11,21 @@ namespace H.Testing.Application;
 /// </summary>
 public class ProjectCaseAppService : ApplicationService, IProjectCaseAppService
 {
-    private readonly IRepository<TestingProjectCase, long> _repository;
+    private readonly IRepository<CaseEntity, long> _repository;
 
-    public ProjectCaseAppService(IRepository<TestingProjectCase, long> repository)
+    public ProjectCaseAppService(IRepository<CaseEntity, long> repository)
     {
         _repository = repository;
     }
 
-    public async Task<List<ProjectCaseDto>> GetAllAsync()
+    public async Task<List<CaseDto>> GetAllAsync()
     {
         var query = await _repository.GetQueryableAsync();
         var list = await AsyncExecuter.ToListAsync(query.OrderBy(c => c.Order).ThenBy(c => c.Id));
         return list.Select(e => e.ToDto()).ToList();
     }
 
-    public async Task<List<ProjectCaseDto>> GetByProjectIdAsync(long projectId)
+    public async Task<List<CaseDto>> GetByProjectIdAsync(long projectId)
     {
         var query = await _repository.GetQueryableAsync();
         var list = await AsyncExecuter.ToListAsync(
@@ -33,21 +33,21 @@ public class ProjectCaseAppService : ApplicationService, IProjectCaseAppService
         return list.Select(e => e.ToDto()).ToList();
     }
 
-    public async Task<ProjectCaseDto?> GetByIdAsync(long id)
+    public async Task<CaseDto?> GetByIdAsync(long id)
     {
         var entity = await _repository.FindAsync(id);
         return entity?.ToDto();
     }
 
-    public async Task<long> CreateAsync(ProjectCaseDto projectCase)
+    public async Task<long> CreateAsync(CaseDto projectCase)
     {
-        var entity = new TestingProjectCase();
+        var entity = new CaseEntity();
         projectCase.Apply(entity);
         entity = await _repository.InsertAsync(entity, autoSave: true);
         return entity.Id;
     }
 
-    public async Task<bool> UpdateAsync(long id, ProjectCaseDto projectCase)
+    public async Task<bool> UpdateAsync(long id, CaseDto projectCase)
     {
         var entity = await _repository.FindAsync(id);
         if (entity == null)
@@ -72,26 +72,26 @@ public class ProjectCaseAppService : ApplicationService, IProjectCaseAppService
         return true;
     }
 
-    public async Task<List<ProjectCaseDto>> GetActiveProjectCasesAsync()
+    public async Task<List<CaseDto>> GetActiveProjectCasesAsync()
     {
         var query = await _repository.GetQueryableAsync();
         var list = await AsyncExecuter.ToListAsync(query.Where(c => c.Status == (int)ProjectCaseStatus.Active));
         return list.Select(e => e.ToDto()).ToList();
     }
 
-    public async Task<List<ProjectCaseDto>> GetByTagsAsync(string tag)
+    public async Task<List<CaseDto>> GetByTagsAsync(string tag)
     {
         var all = await GetAllAsync();
         return all.Where(tc => tc.Tags.Contains(tag)).ToList();
     }
 
-    public async Task<List<ProjectCaseDto>> GetByLevelAsync(string level)
+    public async Task<List<CaseDto>> GetByLevelAsync(string level)
     {
         var all = await GetAllAsync();
         return all.Where(tc => tc.Levels.Contains(level)).ToList();
     }
 
-    public async Task<List<ProjectCaseDto>> SearchAsync(string keyword)
+    public async Task<List<CaseDto>> SearchAsync(string keyword)
     {
         var all = await GetAllAsync();
         if (string.IsNullOrWhiteSpace(keyword))
@@ -114,7 +114,7 @@ public class ProjectCaseAppService : ApplicationService, IProjectCaseAppService
             throw new ArgumentException($"Test case with ID {id} not found");
         }
 
-        var copiedCase = new ProjectCaseDto
+        var copiedCase = new CaseDto
         {
             CaseNumber = GenerateNewCaseNumber(originalCase.CaseNumber),
             Name = $"{originalCase.Name} - 副本",
@@ -126,8 +126,6 @@ public class ProjectCaseAppService : ApplicationService, IProjectCaseAppService
             Order = originalCase.Order,
             Status = originalCase.Status,
             TestData = new Dictionary<string, object>(originalCase.TestData),
-            CreatedBy = originalCase.CreatedBy,
-            UpdatedBy = originalCase.UpdatedBy,
             Steps = CopySteps(originalCase.Steps)
         };
 

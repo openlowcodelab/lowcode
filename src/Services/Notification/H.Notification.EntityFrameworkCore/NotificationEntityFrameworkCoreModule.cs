@@ -23,7 +23,7 @@ public class NotificationEntityFrameworkCoreModule : AbpModule
         {
             options.UseSqlServer();
         });
-        
+
         Configure<AbpDbConnectionOptions>(options =>
         {
             options.ConnectionStrings["NotificationDb"] = connectionString;

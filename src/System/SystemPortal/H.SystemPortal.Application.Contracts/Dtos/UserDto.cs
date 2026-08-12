@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace H.SystemPortal.Application.Contracts;
 
 /// <summary>
@@ -27,7 +25,7 @@ public class UserDto
     public Guid? CreatedBy { get; set; }
     public Guid? UpdatedBy { get; set; }
     public string? Remark { get; set; }
-    
+
     public List<ExternalAccountDto> ExternalAccounts { get; set; } = new();
 }
 

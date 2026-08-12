@@ -1,7 +1,7 @@
-using System.Reflection;
 using H.Abp.Application.Contracts;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System.Reflection;
 
 namespace H.Abp.HttpClientProxy;
 

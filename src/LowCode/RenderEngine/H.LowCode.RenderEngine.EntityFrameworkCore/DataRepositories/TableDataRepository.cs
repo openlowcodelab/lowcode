@@ -1,8 +1,8 @@
+using H.Abp.Application.Contracts;
 using H.LowCode.Application.Contracts;
 using H.LowCode.RenderEngine.Domain;
 using H.LowCode.RenderEngine.Domain.Repositories;
 using Microsoft.EntityFrameworkCore;
-using H.Abp.Application.Contracts;
 
 namespace H.LowCode.RenderEngine.EntityFrameworkCore;
 
@@ -171,9 +171,9 @@ public class TableDataRepository : ITableDataRepository
             var properties = entityType.GetProperties();
             foreach (var updateField in request.UpdateData)
             {
-                var property = properties.FirstOrDefault(p => 
+                var property = properties.FirstOrDefault(p =>
                     string.Equals(p.Name, updateField.Key, StringComparison.OrdinalIgnoreCase));
-                
+
                 if (property != null && property.CanWrite)
                 {
                     // 类型转换
@@ -190,7 +190,7 @@ public class TableDataRepository : ITableDataRepository
                             continue;
                         }
                     }
-                    
+
                     property.SetValue(entity, value);
                 }
             }

@@ -1,5 +1,5 @@
-using System.Collections.ObjectModel;
 using H.Assistant.Application.Contracts;
+using System.Collections.ObjectModel;
 
 namespace H.AppLab.Desktop.Services;
 

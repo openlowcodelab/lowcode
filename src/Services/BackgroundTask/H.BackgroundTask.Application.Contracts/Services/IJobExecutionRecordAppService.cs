@@ -8,8 +8,8 @@ namespace H.BackgroundTask.Application.Contracts;
 public interface IJobExecutionRecordAppService : IAppService
 {
     /// <summary>分页查询执行记录</summary>
-    Task<PagedResultDto<JobExecutionRecordDto>> GetListAsync(JobExecutionRecordQueryDto input);
+    Task<PagedResultDto<JobCaseExecutionRecordDto>> GetListAsync(JobExecutionRecordQueryDto input);
 
     /// <summary>获取单条执行记录</summary>
-    Task<JobExecutionRecordDto> GetAsync(Guid id);
+    Task<JobCaseExecutionRecordDto> GetAsync(Guid id);
 }

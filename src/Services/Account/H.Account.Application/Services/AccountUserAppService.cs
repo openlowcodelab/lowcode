@@ -1,5 +1,4 @@
 using H.Account.Application.Contracts;
-using Microsoft.EntityFrameworkCore;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Identity;

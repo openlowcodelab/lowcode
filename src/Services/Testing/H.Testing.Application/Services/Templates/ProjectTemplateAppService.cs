@@ -1,7 +1,7 @@
-using System.Text.Json.Nodes;
 using H.Testing.Application.Contracts;
 using H.Testing.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using System.Text.Json.Nodes;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
@@ -16,21 +16,21 @@ namespace H.Testing.Application;
 /// </summary>
 public class ProjectTemplateAppService : ApplicationService, IProjectTemplateAppService
 {
-    private readonly IRepository<TestingProject, long> _repository;
-    private readonly IRepository<TestingProjectService, long> _serviceRepository;
-    private readonly IRepository<TestingProjectEnvironment, long> _environmentRepository;
-    private readonly IRepository<TestingEnvironmentServiceConfig, long> _serviceConfigRepository;
-    private readonly IRepository<TestingProjectCaseCategory, long> _categoryRepository;
-    private readonly IRepository<TestingProjectCase, long> _caseRepository;
+    private readonly IRepository<ProjectEntity, long> _repository;
+    private readonly IRepository<ProjectServiceEntity, long> _serviceRepository;
+    private readonly IRepository<ProjectEnvEntity, long> _environmentRepository;
+    private readonly IRepository<ProjectEnvConfigEntity, long> _serviceConfigRepository;
+    private readonly IRepository<CaseCategoryEntity, long> _categoryRepository;
+    private readonly IRepository<CaseEntity, long> _caseRepository;
     private readonly IConfiguration _configuration;
 
     public ProjectTemplateAppService(
-        IRepository<TestingProject, long> repository,
-        IRepository<TestingProjectService, long> serviceRepository,
-        IRepository<TestingProjectEnvironment, long> environmentRepository,
-        IRepository<TestingEnvironmentServiceConfig, long> serviceConfigRepository,
-        IRepository<TestingProjectCaseCategory, long> categoryRepository,
-        IRepository<TestingProjectCase, long> caseRepository,
+        IRepository<ProjectEntity, long> repository,
+        IRepository<ProjectServiceEntity, long> serviceRepository,
+        IRepository<ProjectEnvEntity, long> environmentRepository,
+        IRepository<ProjectEnvConfigEntity, long> serviceConfigRepository,
+        IRepository<CaseCategoryEntity, long> categoryRepository,
+        IRepository<CaseEntity, long> caseRepository,
         IConfiguration configuration)
     {
         _repository = repository;
@@ -62,8 +62,7 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
                 ServiceCount = TemplateJson.ReadArray(Path.Combine(dir, "project-services.json")).Count,
                 EnvironmentCount = TemplateJson.ReadArray(Path.Combine(dir, "project-environments.json")).Count,
                 CategoryCount = TemplateJson.ReadArray(Path.Combine(dir, "project-case-categories.json")).Count,
-                CaseCount = TemplateJson.ReadArray(Path.Combine(dir, "project-cases.json")).Count,
-                UpdatedAt = TemplateJson.DateVal(o, "updatedAt") ?? DateTime.MinValue
+                CaseCount = TemplateJson.ReadArray(Path.Combine(dir, "project-cases.json")).Count
             });
         }
         return Task.FromResult(result);
@@ -123,16 +122,15 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
             .FirstOrDefault(o => string.Equals(TemplateJson.Str(o, "id"), templateId, StringComparison.OrdinalIgnoreCase));
 
         // 1. 项目
-        var project = new TestingProject
+        var project = new ProjectEntity
         {
             Name = name.Trim(),
             Description = string.IsNullOrWhiteSpace(description) ? TemplateJson.Str(entry ?? new JsonObject(), "description") : description,
             Status = 1,
-            EnvironmentIdsJson = "[]",
-            MetadataJson = "{}",
-            CreatedBy = "System",
-            UpdatedBy = "System"
+            //EnvironmentIdsJson = "[]",
+            //MetadataJson = "{}"
         };
+
         project = await _repository.InsertAsync(project, autoSave: true);
         var projectId = project.Id;
 
@@ -140,13 +138,11 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
         var serviceMap = new Dictionary<string, long>();
         foreach (var o in TemplateJson.ReadArray(Path.Combine(dir, "project-services.json")))
         {
-            var entity = await _serviceRepository.InsertAsync(new TestingProjectService
+            var entity = await _serviceRepository.InsertAsync(new ProjectServiceEntity
             {
                 ProjectId = projectId,
                 Name = TemplateJson.Str(o, "name"),
-                Description = TemplateJson.Str(o, "description"),
-                CreatedBy = "System",
-                UpdatedBy = "System"
+                Description = TemplateJson.Str(o, "description")
             }, autoSave: true);
             var oldId = TemplateJson.Str(o, "id");
             if (!string.IsNullOrEmpty(oldId)) serviceMap[oldId] = entity.Id;
@@ -156,7 +152,7 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
         var envMap = new Dictionary<string, long>();
         foreach (var o in TemplateJson.ReadArray(Path.Combine(dir, "project-environments.json")))
         {
-            var entity = await _environmentRepository.InsertAsync(new TestingProjectEnvironment
+            var entity = await _environmentRepository.InsertAsync(new ProjectEnvEntity
             {
                 ProjectId = projectId,
                 Name = TemplateJson.Str(o, "name"),
@@ -166,48 +162,44 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
                 VariablesJson = TemplateJson.RawJson(o, "variables"),
                 HeadersJson = TemplateJson.RawJson(o, "headers"),
                 DatabaseConfigJson = TemplateJson.RawJson(o, "databaseConfig"),
-                CreatedBy = "System",
-                UpdatedBy = "System"
             }, autoSave: true);
             var oldId = TemplateJson.Str(o, "id");
             if (!string.IsNullOrEmpty(oldId)) envMap[oldId] = entity.Id;
         }
 
         // 4. 环境服务配置
-        var configs = new List<TestingEnvironmentServiceConfig>();
+        var configs = new List<ProjectEnvConfigEntity>();
         foreach (var o in TemplateJson.ReadArray(Path.Combine(dir, "environment-service-configs.json")))
         {
             if (!envMap.TryGetValue(TemplateJson.Str(o, "environmentId"), out var envId)) continue;
             if (!serviceMap.TryGetValue(TemplateJson.Str(o, "projectServiceId"), out var serviceId)) continue;
-            configs.Add(new TestingEnvironmentServiceConfig
+            configs.Add(new ProjectEnvConfigEntity
             {
-                EnvironmentId = envId,
+                EnvId = envId,
                 ProjectServiceId = serviceId,
-                BaseUrl = TemplateJson.Str(o, "baseUrl"),
-                CreatedBy = "System"
+                BaseUrl = TemplateJson.Str(o, "baseUrl")
             });
         }
         if (configs.Count > 0) await _serviceConfigRepository.InsertManyAsync(configs, autoSave: true);
 
         // 5. 用例分类（两遍回填父级引用）
-        var categoryPairs = new List<(string OldId, string OldParentId, TestingProjectCaseCategory Entity)>();
+        var categoryPairs = new List<(string OldId, string OldParentId, CaseCategoryEntity Entity)>();
         foreach (var o in TemplateJson.ReadArray(Path.Combine(dir, "project-case-categories.json")))
         {
             var oldId = TemplateJson.Str(o, "id");
             if (string.IsNullOrEmpty(oldId)) continue;
-            categoryPairs.Add((oldId, TemplateJson.Str(o, "parentId"), new TestingProjectCaseCategory
+            categoryPairs.Add((oldId, TemplateJson.Str(o, "parentId"), new CaseCategoryEntity
             {
                 ProjectId = projectId,
                 ParentId = null,
                 Name = TemplateJson.Str(o, "name"),
                 Description = TemplateJson.Str(o, "description"),
-                Order = TemplateJson.IntVal(o, "order"),
-                CreatedBy = "System"
+                Order = TemplateJson.IntVal(o, "order")
             }));
         }
         await _categoryRepository.InsertManyAsync(categoryPairs.Select(p => p.Entity).ToList(), autoSave: true);
         var categoryMap = categoryPairs.ToDictionary(p => p.OldId, p => p.Entity.Id);
-        var categoriesToUpdate = new List<TestingProjectCaseCategory>();
+        var categoriesToUpdate = new List<CaseCategoryEntity>();
         foreach (var (_, oldParentId, entity) in categoryPairs)
         {
             if (!string.IsNullOrEmpty(oldParentId) && categoryMap.TryGetValue(oldParentId, out var parentId))
@@ -219,7 +211,7 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
         if (categoriesToUpdate.Count > 0) await _categoryRepository.UpdateManyAsync(categoriesToUpdate, autoSave: true);
 
         // 6. 用例（重映射分类/服务引用；两遍回填模板引用）
-        var casePairs = new List<(string OldId, string OldTemplateId, TestingProjectCase Entity)>();
+        var casePairs = new List<(string OldId, string OldTemplateId, CaseEntity Entity)>();
         foreach (var o in TemplateJson.ReadArray(Path.Combine(dir, "project-cases.json")))
         {
             var oldId = TemplateJson.Str(o, "id");
@@ -229,13 +221,13 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
             var oldCategoryId = TemplateJson.Str(o, "categoryId");
             if (!string.IsNullOrEmpty(oldCategoryId) && categoryMap.TryGetValue(oldCategoryId, out var cid)) categoryId = cid;
 
-            casePairs.Add((oldId, TemplateJson.Str(o, "templateId"), new TestingProjectCase
+            casePairs.Add((oldId, TemplateJson.Str(o, "templateId"), new CaseEntity
             {
                 ProjectId = projectId,
                 CategoryId = categoryId,
                 TemplateId = null,
                 CaseNumber = TemplateJson.Str(o, "caseNumber"),
-                Name = TemplateJson.Str(o, "name"),
+                CaseName = TemplateJson.Str(o, "name"),
                 Description = TemplateJson.Str(o, "description"),
                 IsTemplate = TemplateJson.BoolVal(o, "isTemplate"),
                 LevelsJson = TemplateJson.RawJson(o, "levels"),
@@ -243,14 +235,13 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
                 StepsJson = RemapStepsToDb(TemplateJson.Get(o, "steps"), serviceMap),
                 TestDataJson = TemplateJson.RawJson(o, "testData"),
                 Order = TemplateJson.IntVal(o, "order"),
-                Status = TemplateJson.IntVal(o, "status", 1),
-                CreatedBy = "System",
-                UpdatedBy = "System"
+                Status = TemplateJson.IntVal(o, "status", 1)
             }));
         }
+
         await _caseRepository.InsertManyAsync(casePairs.Select(p => p.Entity).ToList(), autoSave: true);
         var caseMap = casePairs.ToDictionary(p => p.OldId, p => p.Entity.Id);
-        var casesToUpdate = new List<TestingProjectCase>();
+        var casesToUpdate = new List<CaseEntity>();
         foreach (var (_, oldTemplateId, entity) in casePairs)
         {
             if (!string.IsNullOrEmpty(oldTemplateId) && caseMap.TryGetValue(oldTemplateId, out var templateCaseId))
@@ -282,7 +273,7 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
         var environments = await ProjectChildrenAsync(_environmentRepository, e => e.ProjectId == projectId, e => e.Id);
         var envIds = environments.Select(e => e.Id).ToList();
         var configs = await AsyncExecuter.ToListAsync((await _serviceConfigRepository.GetQueryableAsync())
-            .Where(c => envIds.Contains(c.EnvironmentId)).OrderBy(c => c.Id));
+            .Where(c => envIds.Contains(c.EnvId)).OrderBy(c => c.Id));
         var categories = await ProjectChildrenAsync(_categoryRepository, c => c.ProjectId == projectId, c => c.Order);
         var cases = await ProjectChildrenAsync(_caseRepository, c => c.ProjectId == projectId, c => c.Order);
 
@@ -298,11 +289,7 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
             ["id"] = s.Id.ToString(),
             ["name"] = s.Name,
             ["description"] = s.Description ?? string.Empty,
-            ["projectId"] = templateId,
-            ["createdAt"] = s.CreationTime.ToString("O"),
-            ["updatedAt"] = (s.LastModificationTime ?? s.CreationTime).ToString("O"),
-            ["createdBy"] = s.CreatedBy ?? "System",
-            ["updatedBy"] = s.UpdatedBy ?? "System"
+            ["projectId"] = templateId
         }).ToArray()));
 
         // 环境
@@ -317,23 +304,16 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
             ["Variables"] = ParseNode(e.VariablesJson) ?? new JsonObject(),
             ["Headers"] = ParseNode(e.HeadersJson) ?? new JsonObject(),
             ["DatabaseConfig"] = ParseNode(e.DatabaseConfigJson),
-            ["Status"] = e.Status,
-            ["CreatedAt"] = e.CreationTime.ToString("O"),
-            ["UpdatedAt"] = (e.LastModificationTime ?? e.CreationTime).ToString("O"),
-            ["CreatedBy"] = e.CreatedBy ?? "System",
-            ["UpdatedBy"] = e.UpdatedBy ?? "System"
+            ["Status"] = e.Status
         }).ToArray()));
 
         // 环境服务配置
         TemplateJson.Write(Path.Combine(dir, "environment-service-configs.json"), new JsonArray(configs.Select(c => (JsonNode)new JsonObject
         {
             ["id"] = c.Id.ToString(),
-            ["environmentId"] = EnvId(c.EnvironmentId),
+            ["environmentId"] = EnvId(c.EnvId),
             ["projectServiceId"] = SvcId(c.ProjectServiceId),
-            ["baseUrl"] = c.BaseUrl ?? string.Empty,
-            ["createdAt"] = c.CreationTime.ToString("O"),
-            ["createdBy"] = c.CreatedBy ?? string.Empty,
-            ["updatedAt"] = (c.LastModificationTime ?? c.CreationTime).ToString("O")
+            ["baseUrl"] = c.BaseUrl ?? string.Empty
         }).ToArray()));
 
         // 用例分类
@@ -344,9 +324,7 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
             ["Description"] = c.Description ?? string.Empty,
             ["ProjectId"] = templateId,
             ["ParentId"] = CatId(c.ParentId),
-            ["Order"] = c.Order,
-            ["CreatedAt"] = c.CreationTime.ToString("O"),
-            ["CreatedBy"] = c.CreatedBy ?? "System"
+            ["Order"] = c.Order
         }).ToArray()));
 
         // 用例（模板不包含执行状态；步骤内的服务引用重映射为字符串 ID）
@@ -354,7 +332,7 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
         {
             ["Id"] = c.Id.ToString(),
             ["CaseNumber"] = c.CaseNumber ?? string.Empty,
-            ["Name"] = c.Name,
+            ["Name"] = c.CaseName,
             ["Description"] = c.Description ?? string.Empty,
             ["ProjectId"] = templateId,
             ["CategoryId"] = CatId(c.CategoryId),
@@ -366,10 +344,6 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
             ["Tags"] = ParseNode(c.TagsJson) ?? new JsonArray(),
             ["Order"] = c.Order,
             ["Status"] = c.Status,
-            ["CreatedAt"] = c.CreationTime.ToString("O"),
-            ["UpdatedAt"] = (c.LastModificationTime ?? c.CreationTime).ToString("O"),
-            ["CreatedBy"] = c.CreatedBy ?? "System",
-            ["UpdatedBy"] = c.UpdatedBy ?? "System",
             ["LastExecutionResult"] = null,
             ["LastExecutionTime"] = null
         }).ToArray()));

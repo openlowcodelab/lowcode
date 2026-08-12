@@ -1,5 +1,3 @@
-using System;
-
 namespace H.Approval.Application.Contracts;
 
 /// <summary>
@@ -11,12 +9,12 @@ public class ApprovalInstanceDto
     /// 审批实例 ID
     /// </summary>
     public string Id { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// 审批定义 ID
     /// </summary>
     public string DefinitionId { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// 审批定义名称
     /// </summary>
@@ -61,12 +59,12 @@ public class ApprovalInstanceDto
     /// 当前审批任务列表
     /// </summary>
     public List<ApprovalTaskDto> Tasks { get; set; } = new();
-    
+
     /// <summary>
     /// 创建时间
     /// </summary>
     public DateTime CreationTime { get; set; }
-    
+
     /// <summary>
     /// 完成时间
     /// </summary>
@@ -82,12 +80,12 @@ public class StartApprovalInstanceDto
     /// 审批定义 ID
     /// </summary>
     public string DefinitionId { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// 审批实例标题
     /// </summary>
     public string Title { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// 审批变量 (JSON 格式)
     /// </summary>

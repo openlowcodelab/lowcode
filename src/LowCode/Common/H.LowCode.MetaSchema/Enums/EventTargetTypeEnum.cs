@@ -1,5 +1,3 @@
-using System;
-
 namespace H.LowCode.MetaSchema;
 
 public enum EventTargetTypeEnum

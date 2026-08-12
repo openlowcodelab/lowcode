@@ -1,7 +1,7 @@
+using H.Abp.Application.Contracts;
 using H.BackgroundTask.Application.Contracts;
 using H.BackgroundTask.Application.Mapping;
 using H.BackgroundTask.EntityFrameworkCore;
-using H.Abp.Application.Contracts;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 
@@ -19,7 +19,7 @@ public class JobExecutionRecordAppService : ApplicationService, IJobExecutionRec
         _repository = repository;
     }
 
-    public async Task<PagedResultDto<JobExecutionRecordDto>> GetListAsync(JobExecutionRecordQueryDto input)
+    public async Task<PagedResultDto<JobCaseExecutionRecordDto>> GetListAsync(JobExecutionRecordQueryDto input)
     {
         var query = await _repository.GetQueryableAsync();
 
@@ -34,10 +34,10 @@ public class JobExecutionRecordAppService : ApplicationService, IJobExecutionRec
             query.OrderByDescending(x => x.StartTime).Skip(input.SkipCount).Take(maxResult));
 
         var dtos = entities.Select(e => e.ToDto()).ToList();
-        return new PagedResultDto<JobExecutionRecordDto>(totalCount, dtos);
+        return new PagedResultDto<JobCaseExecutionRecordDto>(totalCount, dtos);
     }
 
-    public async Task<JobExecutionRecordDto> GetAsync(Guid id)
+    public async Task<JobCaseExecutionRecordDto> GetAsync(Guid id)
     {
         var entity = await _repository.GetAsync(id);
         return entity.ToDto();

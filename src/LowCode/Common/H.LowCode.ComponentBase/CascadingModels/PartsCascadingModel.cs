@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace H.LowCode.ComponentBase;
+﻿namespace H.LowCode.ComponentBase;
 
 public class PartsCascadingModel
 {

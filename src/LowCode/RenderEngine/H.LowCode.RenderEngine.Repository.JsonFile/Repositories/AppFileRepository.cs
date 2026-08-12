@@ -1,9 +1,7 @@
 ﻿using H.LowCode.Configuration;
-using H.LowCode.RenderEngine.Domain.Repositories;
 using H.LowCode.MetaSchema;
+using H.LowCode.RenderEngine.Domain.Repositories;
 using Microsoft.Extensions.Options;
-using System.Collections.Generic;
-using System.Text;
 
 namespace H.LowCode.RenderEngine.Repository.JsonFile;
 
@@ -13,7 +11,7 @@ public class AppFileRepository : FileRepositoryBase, IAppRepository
 
     public AppFileRepository(IOptions<MetaOption> metaOption) : base(metaOption)
     {
-        
+
     }
 
     public async Task<IList<AppSchema>> GetListAsync()

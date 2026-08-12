@@ -1,6 +1,4 @@
-﻿using H.LowCode.MetaSchema;
-using H.LowCode.MetaSchema.DesignEngine;
-using Volo.Abp.Domain.Repositories;
+﻿using H.LowCode.MetaSchema.DesignEngine;
 
 namespace H.LowCode.DesignEngine.Domain.Repositories;
 

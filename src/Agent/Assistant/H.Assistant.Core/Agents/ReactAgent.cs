@@ -1,7 +1,6 @@
-using System.Runtime.CompilerServices;
-using System.Text.Json;
-using System.Threading.Channels;
 using Microsoft.Extensions.Logging;
+using System.Runtime.CompilerServices;
+using System.Threading.Channels;
 
 namespace H.Assistant.Core.Agents;
 
@@ -71,7 +70,7 @@ public class ReactAgent
                 Tools = _toolDefs.Count > 0 ? _toolDefs : null
             };
 
-            _logger.LogDebug("LLM 请求: 消息数={MsgCount}, 工具数={ToolCount}", 
+            _logger.LogDebug("LLM 请求: 消息数={MsgCount}, 工具数={ToolCount}",
                 messages.Count, _toolDefs?.Count ?? 0);
 
             // 流式调用 LLM - 使用 Channel 桥接 try-catch 和 yield return

@@ -14,12 +14,12 @@ public class ApprovalDbContext : AbpDbContext<ApprovalDbContext>
     /// 审批定义集合
     /// </summary>
     public virtual DbSet<ApprovalDefinition> ApprovalDefinitions { get; set; }
-    
+
     /// <summary>
     /// 审批实例集合
     /// </summary>
     public virtual DbSet<ApprovalInstance> ApprovalInstances { get; set; }
-    
+
     /// <summary>
     /// 审批任务集合
     /// </summary>
@@ -33,7 +33,7 @@ public class ApprovalDbContext : AbpDbContext<ApprovalDbContext>
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
-        
+
         // 配置审批定义表
         builder.Entity<ApprovalDefinition>(entity =>
         {
@@ -43,7 +43,7 @@ public class ApprovalDbContext : AbpDbContext<ApprovalDbContext>
             entity.Property(e => e.DefinitionJson).HasColumnType("nvarchar(max)");
             entity.Property(e => e.FormJson).HasColumnType("nvarchar(max)");
         });
-        
+
         // 配置审批实例表
         builder.Entity<ApprovalInstance>(entity =>
         {
@@ -91,7 +91,7 @@ public class ApprovalDbContext : AbpDbContext<ApprovalDbContext>
             entity.Property(e => e.Name).IsRequired().HasMaxLength(256);
             entity.HasIndex(e => e.Name);
         });
-        
+
         // Elsa 相关表由 Elsa.EntityFrameworkCore 自动配置
     }
 }

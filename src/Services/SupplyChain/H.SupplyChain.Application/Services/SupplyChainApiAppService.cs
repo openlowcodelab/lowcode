@@ -1,6 +1,5 @@
 using H.SupplyChain.Application.Contracts;
 using H.SupplyChain.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 

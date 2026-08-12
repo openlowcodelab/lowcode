@@ -1,5 +1,3 @@
-using System;
-
 namespace H.LowCode.Application.Contracts;
 
 /// <summary>

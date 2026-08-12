@@ -1,9 +1,9 @@
 ﻿using Avalonia.Controls;
 using H.Abp.HttpClientProxy;
-using H.Assistant.Application.Contracts;
 using H.AppLab.Desktop.Services;
 using H.AppLab.Desktop.ViewModels;
 using H.AppLab.Desktop.Views;
+using H.Assistant.Application.Contracts;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 

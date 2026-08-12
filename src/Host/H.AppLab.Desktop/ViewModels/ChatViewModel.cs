@@ -1,10 +1,10 @@
-﻿using System.Collections.ObjectModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using H.AppLab.Desktop.Services;
+using H.Assistant.Application.Contracts;
+using System.Collections.ObjectModel;
 using System.Text.Encodings.Web;
 using System.Text.Json;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using H.Assistant.Application.Contracts;
-using H.AppLab.Desktop.Services;
 
 namespace H.AppLab.Desktop.ViewModels;
 

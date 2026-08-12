@@ -11,9 +11,9 @@ namespace H.Testing.Application;
 /// </summary>
 public class ProjectCaseCategoryAppService : ApplicationService, IProjectCaseCategoryAppService
 {
-    private readonly IRepository<TestingProjectCaseCategory, long> _repository;
+    private readonly IRepository<CaseCategoryEntity, long> _repository;
 
-    public ProjectCaseCategoryAppService(IRepository<TestingProjectCaseCategory, long> repository)
+    public ProjectCaseCategoryAppService(IRepository<CaseCategoryEntity, long> repository)
     {
         _repository = repository;
     }
@@ -31,7 +31,7 @@ public class ProjectCaseCategoryAppService : ApplicationService, IProjectCaseCat
 
     public async Task<ProjectCaseCategory> CreateAsync(ProjectCaseCategory category)
     {
-        var entity = new TestingProjectCaseCategory();
+        var entity = new CaseCategoryEntity();
         category.Apply(entity);
         entity = await _repository.InsertAsync(entity, autoSave: true);
         return entity.ToDto();

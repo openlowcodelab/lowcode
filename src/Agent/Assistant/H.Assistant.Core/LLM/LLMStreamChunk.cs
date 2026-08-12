@@ -9,12 +9,12 @@ public class LLMStreamChunk
     /// 文本增量
     /// </summary>
     public string? Content { get; set; }
-    
+
     /// <summary>
     /// 工具调用增量
     /// </summary>
     public ToolCallDelta? ToolCallDelta { get; set; }
-    
+
     /// <summary>
     /// 完成原因: "stop" | "tool_calls"
     /// </summary>

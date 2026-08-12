@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-
 namespace H.Testing.Application.Contracts;
 
 /// <summary>
@@ -12,27 +9,27 @@ public class ServiceConfigView
     /// 项目服务
     /// </summary>
     public ProjectServiceDto ProjectService { get; set; } = new();
-    
+
     /// <summary>
     /// 环境配置
     /// </summary>
-    public EnvironmentServiceConfigDto? EnvironmentConfig { get; set; }
-    
+    public ProjectEnvConfigDto? EnvironmentConfig { get; set; }
+
     /// <summary>
     /// 是否已配置
     /// </summary>
     public bool IsConfigured { get; set; }
-    
+
     /// <summary>
     /// 状态文本
     /// </summary>
     public string StatusText { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// 状态样式类
     /// </summary>
     public string StatusClass { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// 环境服务配置ID
     /// </summary>
@@ -50,7 +47,7 @@ public class ExecutionStatistics
     public int CancelledExecutions { get; set; }
     public double AverageDuration { get; set; }
     public long TotalDuration { get; set; }
-    
+
     public double SuccessRate => TotalExecutions > 0 ? (double)SuccessExecutions / TotalExecutions * 100 : 0;
 }
 
@@ -65,32 +62,32 @@ public class BatchExecutionResult
     public TimeSpan Duration { get; set; }
     public ExecutionStatus Status { get; set; }
     public string ErrorMessage { get; set; } = string.Empty;
-    
+
     public BatchExecutionSettings Settings { get; set; } = new();
     public long EnvironmentId { get; set; }
-    
+
     public int TotalTestCases { get; set; }
     public int SuccessfulTestCases { get; set; }
     public int FailedTestCases { get; set; }
     public int TotalExecutions { get; set; } // 性能测试时的总执行次数
-    
-    public List<ExecutionRecordDto> ExecutionRecords { get; set; } = new();
+
+    public List<CaseExecutionRecordDto> ExecutionRecords { get; set; } = new();
     public List<string> Errors { get; set; } = new();
-    
+
     /// <summary>
     /// 成功率
     /// </summary>
     public double SuccessRate => TotalExecutions > 0 ? (double)SuccessfulTestCases / TotalExecutions * 100 : 0;
-    
+
     /// <summary>
     /// 错误率
     /// </summary>
     public double ErrorRate => TotalExecutions > 0 ? (double)FailedTestCases / TotalExecutions * 100 : 0;
-    
+
     /// <summary>
     /// 平均执行时间
     /// </summary>
-    public TimeSpan AverageExecutionTime => ExecutionRecords.Any() 
+    public TimeSpan AverageExecutionTime => ExecutionRecords.Any()
         ? TimeSpan.FromMilliseconds(ExecutionRecords.Average(r => r.Duration))
         : TimeSpan.Zero;
 }

@@ -1,5 +1,3 @@
-using System;
-
 namespace H.Approval.Application.Contracts;
 
 /// <summary>

@@ -54,7 +54,7 @@ public class EntityTypeManager
 
             //创建实体类
             var entityType = EntityFactory.CreateEntityType(_dynamicModule, entity.Name, fields);
-            
+
             var dynamicEntity = new DynamicEntityInfo()
             {
                 EntityName = entity.Name,

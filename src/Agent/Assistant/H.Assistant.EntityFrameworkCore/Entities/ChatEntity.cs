@@ -11,12 +11,12 @@ public class ChatEntity : CreationAuditedEntity<Guid>
     /// 会话标题
     /// </summary>
     public string Title { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// 最后消息时间
     /// </summary>
     public DateTime LastMessageTime { get; set; }
-    
+
     /// <summary>
     /// 消息数量
     /// </summary>
@@ -26,7 +26,7 @@ public class ChatEntity : CreationAuditedEntity<Guid>
     /// Agent 类型
     /// </summary>
     public string AgentType { get; set; } = string.Empty;
-    
+
     /// <summary>
     /// 导航属性：该会话下的消息
     /// </summary>

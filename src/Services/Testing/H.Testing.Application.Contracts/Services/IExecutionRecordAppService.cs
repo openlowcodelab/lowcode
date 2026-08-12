@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
-using H.Abp.Application.Contracts;
+﻿using H.Abp.Application.Contracts;
 
 namespace H.Testing.Application.Contracts;
 
@@ -14,38 +10,38 @@ public interface IExecutionRecordAppService : IAppService
     /// <summary>
     /// 获取指定项目的所有执行记录
     /// </summary>
-    Task<List<ExecutionRecordDto>> GetByProjectIdAsync(long projectId);
-    
+    Task<List<CaseExecutionRecordDto>> GetByProjectIdAsync(long projectId);
+
     /// <summary>
     /// 获取指定测试用例的执行记录
     /// </summary>
-    Task<List<ExecutionRecordDto>> GetByTestCaseIdAsync(long projectId, long testCaseId);
-    
+    Task<List<CaseExecutionRecordDto>> GetByTestCaseIdAsync(long projectId, long testCaseId);
+
     /// <summary>
     /// 根据ID获取执行记录
     /// </summary>
-    Task<ExecutionRecordDto?> GetByIdAsync(long projectId, long id);
-    
+    Task<CaseExecutionRecordDto?> GetByIdAsync(long projectId, long id);
+
     /// <summary>
     /// 创建新的执行记录
     /// </summary>
-    Task<ExecutionRecordDto> CreateAsync(ExecutionRecordDto record);
-    
+    Task<CaseExecutionRecordDto> CreateAsync(CaseExecutionRecordDto record);
+
     /// <summary>
     /// 更新执行记录
     /// </summary>
-    Task<bool> UpdateAsync(long projectId, ExecutionRecordDto record);
-    
+    Task<bool> UpdateAsync(long projectId, CaseExecutionRecordDto record);
+
     /// <summary>
     /// 删除执行记录
     /// </summary>
     Task<bool> DeleteAsync(long projectId, long id);
-    
+
     /// <summary>
     /// 清理旧的执行记录（保留最近N条）
     /// </summary>
     Task CleanupOldRecordsAsync(long projectId, int keepCount = 100);
-    
+
     /// <summary>
     /// 获取执行统计信息
     /// </summary>

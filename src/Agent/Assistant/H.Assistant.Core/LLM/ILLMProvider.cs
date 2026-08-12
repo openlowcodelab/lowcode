@@ -9,12 +9,12 @@ public interface ILLMProvider
     /// Provider 名称
     /// </summary>
     string ProviderName { get; }
-    
+
     /// <summary>
     /// 同步对话
     /// </summary>
     Task<LLMResponse> ChatAsync(LLMRequest request, CancellationToken ct = default);
-    
+
     /// <summary>
     /// 流式对话（返回结构化 chunk，支持 tool_calls 增量）
     /// </summary>

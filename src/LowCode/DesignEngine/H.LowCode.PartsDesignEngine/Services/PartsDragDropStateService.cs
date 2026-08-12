@@ -20,7 +20,8 @@ internal static class PartsDragDropStateService
 
     public static void SetRootComponent(string libId, string partsId, ComponentPartsSchema rootComponent)
     {
-        SetStateSchema(libId, partsId, (stateSchema) => {
+        SetStateSchema(libId, partsId, (stateSchema) =>
+        {
             stateSchema.RootComponent = rootComponent;
         });
     }
@@ -33,7 +34,8 @@ internal static class PartsDragDropStateService
 
     public static void SetPage(string libId, PagePartsSchema page)
     {
-        SetStateSchema(libId, page.Id, (stateSchema) => {
+        SetStateSchema(libId, page.Id, (stateSchema) =>
+        {
             stateSchema.Page = page;
         });
     }
@@ -46,7 +48,8 @@ internal static class PartsDragDropStateService
 
     public static void SetLastSelectedComponent(string libId, string partsId, ComponentPartsSchema lastSelectedComponent)
     {
-        SetStateSchema(libId, partsId, (stateSchema) => {
+        SetStateSchema(libId, partsId, (stateSchema) =>
+        {
             stateSchema.LastSelectedComponent = lastSelectedComponent;
         });
     }
@@ -59,7 +62,8 @@ internal static class PartsDragDropStateService
 
     public static void SetCurrentDragComponent(string libId, string partsId, ComponentPartsSchema currentDragComponent)
     {
-        SetStateSchema(libId, partsId, (stateSchema) => {
+        SetStateSchema(libId, partsId, (stateSchema) =>
+        {
             stateSchema.CurrentDragComponent = currentDragComponent;
         });
     }
@@ -72,7 +76,8 @@ internal static class PartsDragDropStateService
 
     public static void SetLastDragOverComponent(string libId, string partsId, ComponentPartsSchema? lastDragOverComponent)
     {
-        SetStateSchema(libId, partsId, (stateSchema) => {
+        SetStateSchema(libId, partsId, (stateSchema) =>
+        {
             stateSchema.LastDragOverComponent = lastDragOverComponent;
         });
     }
@@ -85,7 +90,8 @@ internal static class PartsDragDropStateService
 
     public static void SetLastDropComponent(string libId, string partsId, ComponentPartsSchema lastDropComponent)
     {
-        SetStateSchema(libId, partsId, (stateSchema) => {
+        SetStateSchema(libId, partsId, (stateSchema) =>
+        {
             stateSchema.LastDropComponent = lastDropComponent;
         });
     }
@@ -99,7 +105,8 @@ internal static class PartsDragDropStateService
 
     public static void SetLastDragOverTime(string libId, string partsId, DateTime lastDragOverTime)
     {
-        SetStateSchema(libId, partsId, (stateSchema) => {
+        SetStateSchema(libId, partsId, (stateSchema) =>
+        {
             stateSchema.LastDragOverTime = lastDragOverTime;
         });
     }

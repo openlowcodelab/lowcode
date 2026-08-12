@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace H.Account.Application.Contracts;
 
 /// <summary>

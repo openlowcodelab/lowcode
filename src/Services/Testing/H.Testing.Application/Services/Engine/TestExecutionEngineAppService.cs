@@ -3,7 +3,6 @@ using H.Util.Ids;
 using Microsoft.Playwright;
 using System.Diagnostics;
 using System.Text;
-using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using Volo.Abp.Application.Services;
@@ -14,14 +13,14 @@ namespace H.Testing.Application;
 /// 测试执行引擎
 /// </summary>
 public class TestExecutionEngineAppService : ApplicationService, ITestExecutionEngineAppService
-{    
+{
     private readonly HttpClient _httpClient;
     private readonly IExecutionRecordAppService _executionRecordService;
     private readonly IEnvironmentAppService _environmentService;
     private readonly IProjectCaseAppService _projectCaseService;
     private readonly ITestExecutionEventNotifier _eventNotifier;
     private readonly Dictionary<string, string> _variables;
-    
+
     public TestExecutionEngineAppService(
         HttpClient httpClient,
         IExecutionRecordAppService executionRecordService,
@@ -40,16 +39,16 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
     /// <summary>
     /// 获取截图存储目录
     /// </summary>
-    private static string GetScreenshotDir(ProjectCaseDto testCase)
+    private static string GetScreenshotDir(CaseDto testCase)
         => Path.Combine(AppContext.BaseDirectory, "testing-screenshots",
             testCase.ProjectId.ToString(), testCase.Id.ToString());
-    
+
     /// <summary>
     /// 执行测试用例
     /// </summary>
-    public async Task<ExecutionRecordDto> ExecuteTestCaseAsync(
-        ProjectCaseDto testCase, 
-        long environmentId, 
+    public async Task<CaseExecutionRecordDto> ExecuteTestCaseAsync(
+        CaseDto testCase,
+        long environmentId,
         CancellationToken cancellationToken = default)
     {
         var environment = await _environmentService.GetByIdAsync(testCase.ProjectId, environmentId);
@@ -68,15 +67,15 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
                 // 注意：这里我们临时替换 steps 用于执行，不修改原始对象
                 var originalSteps = testCase.Steps;
                 testCase.Steps = templateCase.Steps;
-                
+
                 // 如果当前用例没有步骤，或者我们决定完全使用模板步骤
                 // 如果需要支持"部分覆盖"或"追加步骤"，逻辑会更复杂
                 // 目前假设：如果有 TemplateId，则完全使用模板的步骤
             }
         }
-        
+
         // 创建执行记录
-        var executionRecord = new ExecutionRecordDto
+        var executionRecord = new CaseExecutionRecordDto
         {
             TestCaseId = testCase.Id,
             TestCaseName = testCase.Name,
@@ -87,15 +86,15 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
             TotalSteps = testCase.Steps.Count,
             EnvironmentSnapshot = environment.Config
         };
-        
+
         await _executionRecordService.CreateAsync(executionRecord);
-        
+
         // 初始化 Playwright（在整个测试用例执行期间保持同一个浏览器实例）
         IPlaywright playwright = null;
         IBrowser browser = null;
         IBrowserContext context = null;
         IPage page = null;
-        
+
         try
         {
             // 初始化变量
@@ -152,13 +151,13 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
                     executionRecord.Status = ExecutionStatus.Cancelled;
                     break;
                 }
-                
+
                 var stepRecord = await ExecuteStepAsync(step, environment, page, cancellationToken, testCase);
                 if (!executionRecord.StepRecords.Contains(stepRecord))
                 {
                     executionRecord.StepRecords.Add(stepRecord);
                 }
-                
+
                 // 更新统计
                 switch (stepRecord.Status)
                 {
@@ -175,20 +174,20 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
                         executionRecord.SkippedSteps++;
                         break;
                 }
-                
+
                 // 通知执行记录更新
                 _eventNotifier.RaiseExecutionUpdated(testCase.Id, executionRecord);
             }
-            
-            ExecutionComplete:
+
+        ExecutionComplete:
             stopwatch.Stop();
-            
+
             // 如果没有失败且没有取消，则标记为成功
             if (executionRecord.Status == ExecutionStatus.Running)
             {
                 executionRecord.Status = ExecutionStatus.Success;
             }
-            
+
             executionRecord.EndTime = DateTime.Now;
             executionRecord.Duration = stopwatch.ElapsedMilliseconds;
         }
@@ -208,14 +207,14 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
             //     await browser.CloseAsync();
             // if (playwright != null)
             //     playwright.Dispose();
-            
+
             // 输出提示信息
             Console.WriteLine("UI测试用例执行完成，浏览器窗口保持打开状态");
         }
-        
+
         // 更新执行记录
         await _executionRecordService.UpdateAsync(executionRecord.ProjectId, executionRecord);
-        
+
         // 更新测试用例的执行结果
         try
         {
@@ -228,19 +227,19 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
             // 记录更新失败的日志，但不影响主流程
             Console.WriteLine($"Failed to update test case execution result: {ex.Message}");
         }
-        
+
         return executionRecord;
     }
-    
+
     /// <summary>
     /// 执行单个步骤
     /// </summary>
     private async Task<StepExecutionRecord> ExecuteStepAsync(
-        ProjectCaseStep step, 
-        EnvironmentDto environment, 
+        ProjectCaseStep step,
+        EnvironmentDto environment,
         IPage page,
         CancellationToken cancellationToken,
-        ProjectCaseDto testCase)
+        CaseDto testCase)
     {
         var stepRecord = new StepExecutionRecord
         {
@@ -252,12 +251,12 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
             Status = StepExecutionStatus.Running,
             StartTime = DateTime.Now
         };
-        
+
         // 通知步骤开始执行
         _eventNotifier.RaiseStepUpdated(testCase.Id, stepRecord);
-        
+
         var stopwatch = Stopwatch.StartNew();
-        
+
         try
         {
             // 根据步骤类型执行相应的逻辑
@@ -281,7 +280,7 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
             {
                 throw new NotSupportedException($"Step type {step.Type} is not supported");
             }
-            
+
             stepRecord.Status = StepExecutionStatus.Success;
         }
         catch (Exception ex)
@@ -295,54 +294,54 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
             stopwatch.Stop();
             stepRecord.EndTime = DateTime.Now;
             stepRecord.Duration = stopwatch.ElapsedMilliseconds;
-            
+
             // 通知步骤执行完成
             _eventNotifier.RaiseStepUpdated(testCase.Id, stepRecord);
         }
-        
+
         return stepRecord;
     }
-    
+
     /// <summary>
     /// 执行API步骤
     /// </summary>
     private async Task ExecuteApiStepAsync(
-        ProjectCaseStep step, 
-        StepExecutionRecord stepRecord, 
-        EnvironmentDto environment, 
+        ProjectCaseStep step,
+        StepExecutionRecord stepRecord,
+        EnvironmentDto environment,
         CancellationToken cancellationToken)
     {
         if (step.ApiConfig == null)
         {
             throw new InvalidOperationException("API configuration is required for API step");
         }
-        
+
         var config = step.ApiConfig;
-        
+
         // 构建请求URL
         var baseUrl = GetServiceEndpoint(environment, config.ServiceId);
         var url = baseUrl.TrimEnd('/') + '/' + config.Url.TrimStart('/');
         url = ReplaceVariables(url);
-        
+
         // 添加查询参数
         if (config.Params.Any())
         {
             var queryParams = config.Params.Select(p => $"{p.Key}={Uri.EscapeDataString(ReplaceVariables(p.Value?.ToString() ?? ""))}");
             url += (url.Contains('?') ? "&" : "?") + string.Join("&", queryParams);
         }
-        
+
         stepRecord.Logs.Add($"Request URL: {url}");
-        
+
         // 创建HTTP请求
         var request = new HttpRequestMessage(new HttpMethod(config.Method), url);
-        
+
         // 设置请求头
         foreach (var header in config.Headers)
         {
             var headerValue = ReplaceVariables(header.Value);
             request.Headers.TryAddWithoutValidation(header.Key, headerValue);
         }
-        
+
         // 设置认证
         if (config.Auth?.Type == "Bearer" && !string.IsNullOrEmpty(config.Auth.Token))
         {
@@ -350,13 +349,13 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
             request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
             stepRecord.Logs.Add($"Authorization: Bearer {token.Substring(0, Math.Min(10, token.Length))}...");
         }
-        
+
         // 设置请求体
         if (!string.IsNullOrEmpty(config.Body))
         {
             var body = ReplaceVariables(config.Body);
             stepRecord.RequestData = body;
-            
+
             if (config.BodyType == "json")
             {
                 request.Content = new StringContent(body, Encoding.UTF8, "application/json");
@@ -366,7 +365,7 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
                 request.Content = new StringContent(body, Encoding.UTF8, "text/plain");
             }
         }
-        
+
         // 记录完整的请求信息
         var requestInfo = new
         {
@@ -377,17 +376,17 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
             Auth = config.Auth?.Type == "Bearer" ? $"Bearer {ReplaceVariables(config.Auth.Token ?? "")}" : null
         };
         stepRecord.Logs.Add($"Complete Request Info: {System.Text.Json.JsonSerializer.Serialize(requestInfo, new System.Text.Json.JsonSerializerOptions { WriteIndented = true })}");
-        
+
         // 发送请求
         stepRecord.Logs.Add($"Sending {config.Method} request...");
-        
+
         using var response = await _httpClient.SendAsync(request, cancellationToken);
         var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-        
+
         stepRecord.ResponseData = responseContent;
         stepRecord.Logs.Add($"Response Status: {(int)response.StatusCode} {response.StatusCode}");
         stepRecord.Logs.Add($"Response Content: {responseContent}");
-        
+
         // 执行断言
         if (config.Assertions.Any())
         {
@@ -395,14 +394,14 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
             {
                 var result = ExecuteAssertion(assertion, responseContent, (int)response.StatusCode);
                 stepRecord.AssertionResults.Add(result);
-                
+
                 if (!result.Passed)
                 {
                     throw new Exception($"Assertion failed: {result.ErrorMessage}");
                 }
             }
         }
-        
+
         // 提取变量
         if (config.VariableExtractions.Any())
         {
@@ -418,17 +417,17 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
             }
         }
     }
-    
+
     /// <summary>
     /// 执行UI步骤（使用Playwright实现）
     /// </summary>
     private async Task ExecuteUiStepAsync(
-        ProjectCaseStep step, 
-        StepExecutionRecord stepRecord, 
-        EnvironmentDto environment, 
+        ProjectCaseStep step,
+        StepExecutionRecord stepRecord,
+        EnvironmentDto environment,
         IPage page,
         CancellationToken cancellationToken,
-        ProjectCaseDto testCase)
+        CaseDto testCase)
     {
         if (step.UiConfig == null)
         {
@@ -450,38 +449,43 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
                     await page.WaitForTimeoutAsync(2000); // 额外等待2秒确保页面元素完全渲染
                     stepRecord.Logs.Add($"Navigated to {config.Value} and waited for page to load");
                     break;
-                    
+
                 case "type":
                 case "input":
-                    try {
+                    try
+                    {
                         // 使用更可靠的方式等待元素可见（选择器匹配多个元素时取第一个）
                         var locator = await ResolveSingleLocatorAsync(page, config.Selector, stepRecord);
                         stepRecord.Logs.Add($"等待元素 '{config.Selector}' 可见，超时时间: {config.TimeoutMs}ms");
-                        
+
                         // 先尝试等待元素存在于DOM中
-                        await locator.WaitForAsync(new LocatorWaitForOptions { 
-                            State = WaitForSelectorState.Attached, 
-                            Timeout = config.TimeoutMs 
+                        await locator.WaitForAsync(new LocatorWaitForOptions
+                        {
+                            State = WaitForSelectorState.Attached,
+                            Timeout = config.TimeoutMs
                         });
-                        
+
                         // 再等待元素可见
-                        await locator.WaitForAsync(new LocatorWaitForOptions { 
-                            State = WaitForSelectorState.Visible, 
-                            Timeout = config.TimeoutMs 
+                        await locator.WaitForAsync(new LocatorWaitForOptions
+                        {
+                            State = WaitForSelectorState.Visible,
+                            Timeout = config.TimeoutMs
                         });
-                        
+
                         // 确保元素可交互
                         await page.WaitForTimeoutAsync(500); // 短暂等待确保元素完全可交互
-                        
+
                         // 填充内容
                         await locator.FillAsync(config.Value);
                         stepRecord.Logs.Add($"成功填充 '{config.Value}' 到元素 '{config.Selector}'");
                     }
-                    catch (Exception ex) {
+                    catch (Exception ex)
+                    {
                         // 记录详细错误信息
                         stepRecord.Logs.Add($"元素操作失败: {ex.Message}");
                         // 尝试截图记录当前页面状态
-                        try {
+                        try
+                        {
                             var screenshotDir = GetScreenshotDir(testCase);
                             if (!Directory.Exists(screenshotDir))
                             {
@@ -491,7 +495,8 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
                             await page.ScreenshotAsync(new PageScreenshotOptions { Path = errorScreenshotPath });
                             stepRecord.Logs.Add($"错误截图已保存: {errorScreenshotPath}");
                         }
-                        catch (Exception screenshotEx) {
+                        catch (Exception screenshotEx)
+                        {
                             stepRecord.Logs.Add($"截图保存失败: {screenshotEx.Message}");
                         }
                         throw; // 重新抛出异常
@@ -499,35 +504,40 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
                     break;
 
                 case "click":
-                    try {
+                    try
+                    {
                         // 使用更可靠的方式等待元素可点击（选择器匹配多个元素时取第一个）
                         var locator = await ResolveSingleLocatorAsync(page, config.Selector, stepRecord);
                         stepRecord.Logs.Add($"等待元素 '{config.Selector}' 可点击，超时时间: {config.TimeoutMs}ms");
-                        
+
                         // 先等待元素存在于DOM中
-                        await locator.WaitForAsync(new LocatorWaitForOptions { 
-                            State = WaitForSelectorState.Attached, 
-                            Timeout = config.TimeoutMs 
+                        await locator.WaitForAsync(new LocatorWaitForOptions
+                        {
+                            State = WaitForSelectorState.Attached,
+                            Timeout = config.TimeoutMs
                         });
-                        
+
                         // 再等待元素可见
-                        await locator.WaitForAsync(new LocatorWaitForOptions { 
-                            State = WaitForSelectorState.Visible, 
-                            Timeout = config.TimeoutMs 
+                        await locator.WaitForAsync(new LocatorWaitForOptions
+                        {
+                            State = WaitForSelectorState.Visible,
+                            Timeout = config.TimeoutMs
                         });
-                        
+
                         // 确保元素可交互
                         await page.WaitForTimeoutAsync(500); // 短暂等待确保元素完全可交互
-                        
+
                         // 点击元素
                         await locator.ClickAsync(new LocatorClickOptions { Timeout = config.TimeoutMs });
                         stepRecord.Logs.Add($"成功点击元素 '{config.Selector}'");
                     }
-                    catch (Exception ex) {
+                    catch (Exception ex)
+                    {
                         // 记录详细错误信息
                         stepRecord.Logs.Add($"元素点击失败: {ex.Message}");
                         // 尝试截图记录当前页面状态
-                        try {
+                        try
+                        {
                             var screenshotDir = GetScreenshotDir(testCase);
                             if (!Directory.Exists(screenshotDir))
                             {
@@ -537,7 +547,8 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
                             await page.ScreenshotAsync(new PageScreenshotOptions { Path = errorScreenshotPath });
                             stepRecord.Logs.Add($"错误截图已保存: {errorScreenshotPath}");
                         }
-                        catch (Exception screenshotEx) {
+                        catch (Exception screenshotEx)
+                        {
                             stepRecord.Logs.Add($"截图保存失败: {screenshotEx.Message}");
                         }
                         throw; // 重新抛出异常
@@ -545,14 +556,15 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
                     break;
 
                 case "assert":
-                    try {
+                    try
+                    {
                         // 断言采用多元素语义：选择器匹配到至少一个可见元素即通过，避免 Playwright 严格模式限制
                         var locator = page.Locator(config.Selector);
                         stepRecord.Logs.Add($"等待元素 '{config.Selector}' 可见用于断言，超时时间: {config.TimeoutMs}ms");
-                        
+
                         // 先等待页面加载完成
                         await page.WaitForLoadStateAsync(LoadState.NetworkIdle, new PageWaitForLoadStateOptions { Timeout = config.TimeoutMs });
-                        
+
                         var count = await locator.CountAsync();
                         var deadline = DateTime.Now.AddMilliseconds(config.TimeoutMs);
                         while (count == 0 && DateTime.Now < deadline)
@@ -560,12 +572,12 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
                             await page.WaitForTimeoutAsync(500);
                             count = await locator.CountAsync();
                         }
-                        
+
                         if (count == 0)
                         {
                             throw new Exception($"断言失败: 页面中未找到元素 '{config.Selector}'");
                         }
-                        
+
                         // 等待至少一个匹配元素可见
                         var visibleIndex = -1;
                         for (var i = 0; i < count; i++)
@@ -576,12 +588,12 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
                                 break;
                             }
                         }
-                        
+
                         if (visibleIndex < 0)
                         {
                             throw new Exception($"断言失败: 元素 '{config.Selector}' 匹配到 {count} 个元素但均不可见");
                         }
-                        
+
                         // 断言文本内容：任一匹配元素包含预期文本即通过；value 为可见性描述词时仅验证可见性
                         if (string.IsNullOrEmpty(config.Value) || IsVisibilityAssertion(config.Value))
                         {
@@ -599,7 +611,7 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
                                     break;
                                 }
                             }
-                            
+
                             if (matchedText != null)
                             {
                                 stepRecord.Logs.Add($"断言通过: 元素 '{config.Selector}' 包含文本 '{config.Value}'");
@@ -610,11 +622,13 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
                             }
                         }
                     }
-                    catch (Exception ex) {
+                    catch (Exception ex)
+                    {
                         // 记录详细错误信息
                         stepRecord.Logs.Add($"断言失败: {ex.Message}");
                         // 尝试截图记录当前页面状态
-                        try {
+                        try
+                        {
                             var screenshotDir = GetScreenshotDir(testCase);
                             if (!Directory.Exists(screenshotDir))
                             {
@@ -624,7 +638,8 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
                             await page.ScreenshotAsync(new PageScreenshotOptions { Path = errorScreenshotPath });
                             stepRecord.Logs.Add($"错误截图已保存: {errorScreenshotPath}");
                         }
-                        catch (Exception screenshotEx) {
+                        catch (Exception screenshotEx)
+                        {
                             stepRecord.Logs.Add($"截图保存失败: {screenshotEx.Message}");
                         }
                         throw; // 重新抛出异常
@@ -670,27 +685,27 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
             throw;
         }
     }
-    
+
     /// <summary>
     /// 执行脚本步骤
     /// </summary>
     private async Task ExecuteScriptStepAsync(
-        ProjectCaseStep step, 
-        StepExecutionRecord stepRecord, 
-        EnvironmentDto environment, 
+        ProjectCaseStep step,
+        StepExecutionRecord stepRecord,
+        EnvironmentDto environment,
         CancellationToken cancellationToken)
     {
         if (step.ScriptConfig == null)
         {
             throw new InvalidOperationException("Script configuration is required for script steps");
         }
-        
+
         stepRecord.Logs.Add($"Executing {step.ScriptConfig.ScriptType} script: {step.Name}");
-        
+
         try
         {
             string result;
-            
+
             if (step.Type == StepType.JavascriptScript)
             {
                 result = await ExecuteJavaScriptAsync(step.ScriptConfig, cancellationToken);
@@ -703,9 +718,9 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
             {
                 throw new NotSupportedException($"Script type {step.Type} is not supported");
             }
-            
+
             stepRecord.Logs.Add($"Script execution completed. Result: {result}");
-            
+
             // 提取变量
             if (step.ScriptConfig.VariableExtractions.Any())
             {
@@ -724,7 +739,7 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
             throw;
         }
     }
-    
+
     /// <summary>
     /// 执行延时步骤
     /// </summary>
@@ -743,27 +758,27 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
         await Task.Delay(delayMs, cancellationToken);
         stepRecord.Logs.Add($"Waited for {delayMs} ms");
     }
-    
+
     /// <summary>
     /// 初始化变量
     /// </summary>
     private void InitializeVariables(EnvironmentDto environment, Dictionary<string, object> testData)
     {
         _variables.Clear();
-        
+
         // 添加环境变量
         foreach (var config in environment.Config)
         {
             _variables[config.Key] = config.Value?.ToString() ?? "";
         }
-        
+
         // 添加测试数据
         foreach (var data in testData)
         {
             _variables[data.Key] = data.Value?.ToString() ?? "";
         }
     }
-    
+
     /// <summary>
     /// 替换变量占位符
     /// </summary>
@@ -771,7 +786,7 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
     {
         if (string.IsNullOrEmpty(input))
             return input;
-        
+
         var pattern = @"\{\{([^}]+)\}\}";
         return Regex.Replace(input, pattern, match =>
         {
@@ -786,11 +801,11 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
             {
                 return SnowflakeIdGenerator.NextId().ToString();
             }
-            
+
             return _variables.TryGetValue(variableName, out var value) ? value : match.Value;
         });
     }
-    
+
     /// <summary>
     /// 获取服务端点
     /// </summary>
@@ -800,16 +815,16 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
         {
             return endpoint;
         }
-        
+
         // 如果没有找到特定的服务端点，尝试使用默认的baseUrl
         if (environment.Config.TryGetValue("baseUrl", out var baseUrl))
         {
             return baseUrl.ToString() ?? "";
         }
-        
+
         throw new InvalidOperationException($"Service endpoint for {serviceId} not found in environment configuration");
     }
-    
+
     /// <summary>
     /// 执行断言
     /// </summary>
@@ -821,11 +836,11 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
             Expected = assertion.ExpectedValue,
             Operator = assertion.Operator
         };
-        
+
         try
         {
             string actualValue;
-            
+
             if (assertion.Type == "JsonPath")
             {
                 var json = JsonNode.Parse(responseContent);
@@ -840,9 +855,9 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
             {
                 actualValue = responseContent;
             }
-            
+
             result.Actual = actualValue;
-            
+
             // 执行比较
             result.Passed = assertion.Operator.ToLower() switch
             {
@@ -854,7 +869,7 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
                 "lessthan" => double.TryParse(actualValue, out var actual2) && double.TryParse(assertion.ExpectedValue, out var expected2) && actual2 < expected2,
                 _ => false
             };
-            
+
             if (!result.Passed)
             {
                 result.ErrorMessage = $"Expected {assertion.ExpectedValue} but got {actualValue}";
@@ -865,10 +880,10 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
             result.Passed = false;
             result.ErrorMessage = ex.Message;
         }
-        
+
         return result;
     }
-    
+
     /// <summary>
     /// 提取变量
     /// </summary>
@@ -894,34 +909,34 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
             return "";
         }
     }
-    
+
     /// <summary>
     /// 判断是否为API步骤类型
     /// </summary>
     private static bool IsApiStepType(StepType stepType)
     {
-        return stepType == StepType.HttpRequest || 
-               stepType == StepType.ApiAssertion || 
+        return stepType == StepType.HttpRequest ||
+               stepType == StepType.ApiAssertion ||
                stepType == StepType.VariableExtraction;
     }
-    
+
     /// <summary>
     /// 判断是否为UI步骤类型
     /// </summary>
     private static bool IsUiStepType(StepType stepType)
     {
-        return stepType == StepType.Navigate || 
-               stepType == StepType.Click || 
-               stepType == StepType.Input || 
-               stepType == StepType.Select || 
-               stepType == StepType.Wait || 
-               stepType == StepType.Assert || 
-               stepType == StepType.Screenshot || 
-               stepType == StepType.Scroll || 
-               stepType == StepType.Hover || 
+        return stepType == StepType.Navigate ||
+               stepType == StepType.Click ||
+               stepType == StepType.Input ||
+               stepType == StepType.Select ||
+               stepType == StepType.Wait ||
+               stepType == StepType.Assert ||
+               stepType == StepType.Screenshot ||
+               stepType == StepType.Scroll ||
+               stepType == StepType.Hover ||
                stepType == StepType.KeyPress;
     }
-    
+
     /// <summary>
     /// 判断断言预期值是否为可见性描述词（如 visible/可见）；这类值表示验证元素可见而非匹配文本
     /// </summary>
@@ -933,7 +948,7 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
         "visible", "visibility", "displayed", "exists", "exist", "present", "true",
         "可见", "存在", "显示", "展示", "正常展示"
     };
-    
+
     /// <summary>
     /// 解析 UI 操作的目标元素：选择器匹配多个元素时自动取第一个，避免 Playwright 严格模式报错
     /// </summary>
@@ -949,7 +964,7 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
 
         return locator;
     }
-    
+
     /// <summary>
     /// 解析 Testing 项目 data 目录中随项目携带的本地浏览器可执行文件
     /// 优先 data/chrome/chrome.exe（完整浏览器目录），其次 data/chrome.exe；不存在时返回 null 回退 Playwright 内置浏览器
@@ -964,16 +979,16 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
 
         return candidates.FirstOrDefault(File.Exists);
     }
-    
+
     /// <summary>
     /// 判断是否为脚本步骤类型
     /// </summary>
     private static bool IsScriptStepType(StepType stepType)
     {
-        return stepType == StepType.JavascriptScript || 
+        return stepType == StepType.JavascriptScript ||
                stepType == StepType.CSharpScript;
     }
-    
+
     /// <summary>
     /// 执行JavaScript脚本
     /// </summary>
@@ -982,12 +997,12 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
         // 这里是JavaScript执行的占位符实现
         // 实际实现可能需要集成JavaScript引擎，如V8或Jint
         await Task.Delay(100, cancellationToken); // 模拟执行时间
-        
+
         // 简单的模拟执行结果
         var result = $"JavaScript executed: {config.ScriptContent.Substring(0, Math.Min(50, config.ScriptContent.Length))}...";
         return result;
     }
-    
+
     /// <summary>
     /// 执行C#脚本
     /// </summary>
@@ -996,12 +1011,12 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
         // 这里是C#脚本执行的占位符实现
         // 实际实现可能需要集成Roslyn编译器或其他C#脚本引擎
         await Task.Delay(100, cancellationToken); // 模拟执行时间
-        
+
         // 简单的模拟执行结果
         var result = $"C# script executed: {config.ScriptContent.Substring(0, Math.Min(50, config.ScriptContent.Length))}...";
         return result;
     }
-    
+
     /// <summary>
     /// 简单的 JSONPath 解析器（支持 $.property.nestedProperty 格式）
     /// </summary>

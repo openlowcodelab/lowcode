@@ -1,7 +1,7 @@
-using System.Text.Encodings.Web;
-using System.Text.Json;
 using H.Testing.Application.Contracts;
 using H.Testing.EntityFrameworkCore;
+using System.Text.Encodings.Web;
+using System.Text.Json;
 
 namespace H.Testing.Application.Mapping;
 
@@ -33,73 +33,55 @@ public static class TestingMappers
         => string.IsNullOrWhiteSpace(json) ? null : JsonSerializer.Deserialize<T>(json, JsonOptions);
 
     // === Project ===
-    public static ProjectDto ToDto(this TestingProject e) => new()
+    public static ProjectDto ToDto(this ProjectEntity e) => new()
     {
         Id = e.Id,
         Name = e.Name,
         Description = e.Description ?? string.Empty,
         Status = (ProjectStatus)e.Status,
-        EnvironmentIds = DeserializeList<long>(e.EnvironmentIdsJson),
-        Metadata = DeserializeDict<object>(e.MetadataJson),
-        CreatedAt = e.CreationTime,
-        UpdatedAt = e.LastModificationTime ?? e.CreationTime,
-        CreatedBy = e.CreatedBy ?? "System",
-        UpdatedBy = e.UpdatedBy ?? "System"
+        //EnvironmentIds = DeserializeList<long>(e.EnvironmentIdsJson),
+        //Metadata = DeserializeDict<object>(e.MetadataJson)
     };
 
-    public static void Apply(this ProjectDto dto, TestingProject e)
+    public static void Apply(this ProjectDto dto, ProjectEntity e)
     {
         e.Name = dto.Name;
         e.Description = dto.Description;
         e.Status = (int)dto.Status;
-        e.EnvironmentIdsJson = Serialize(dto.EnvironmentIds);
-        e.MetadataJson = Serialize(dto.Metadata);
-        e.CreatedBy = dto.CreatedBy;
-        e.UpdatedBy = dto.UpdatedBy;
     }
 
     // === ProjectService ===
-    public static ProjectServiceDto ToDto(this TestingProjectService e) => new()
+    public static ProjectServiceDto ToDto(this ProjectServiceEntity e) => new()
     {
         Id = e.Id,
         Name = e.Name,
         Description = e.Description ?? string.Empty,
-        ProjectId = e.ProjectId,
-        CreatedAt = e.CreationTime,
-        UpdatedAt = e.LastModificationTime ?? e.CreationTime,
-        CreatedBy = e.CreatedBy ?? "System",
-        UpdatedBy = e.UpdatedBy ?? "System"
+        ProjectId = e.ProjectId
     };
 
-    public static void Apply(this ProjectServiceDto dto, TestingProjectService e)
+    public static void Apply(this ProjectServiceDto dto, ProjectServiceEntity e)
     {
         e.Name = dto.Name;
         e.Description = dto.Description;
         e.ProjectId = dto.ProjectId;
-        e.CreatedBy = dto.CreatedBy;
-        e.UpdatedBy = dto.UpdatedBy;
     }
 
     // === ProjectEnvironment ===
-    public static ProjectEnvironmentDto ToDto(this TestingProjectEnvironment e) => new()
+    public static ProjectEnvDto ToDto(this ProjectEnvEntity e) => new()
     {
         Id = e.Id,
         Name = e.Name,
         Description = e.Description ?? string.Empty,
         ProjectId = e.ProjectId,
         Type = (EnvironmentType)e.Type,
-        EnvironmentServiceConfigs = new List<EnvironmentServiceConfigDto>(),
+        EnvironmentServiceConfigs = new List<ProjectEnvConfigDto>(),
         Variables = DeserializeDict<string>(e.VariablesJson),
         Headers = DeserializeDict<string>(e.HeadersJson),
         DatabaseConfig = DeserializeObj<DatabaseConfig>(e.DatabaseConfigJson),
-        Status = (EnvironmentStatus)e.Status,
-        CreatedAt = e.CreationTime,
-        UpdatedAt = e.LastModificationTime ?? e.CreationTime,
-        CreatedBy = e.CreatedBy ?? "System",
-        UpdatedBy = e.UpdatedBy ?? "System"
+        Status = (EnvironmentStatus)e.Status
     };
 
-    public static void Apply(this ProjectEnvironmentDto dto, TestingProjectEnvironment e)
+    public static void Apply(this ProjectEnvDto dto, ProjectEnvEntity e)
     {
         e.Name = dto.Name;
         e.Description = dto.Description;
@@ -109,32 +91,26 @@ public static class TestingMappers
         e.HeadersJson = Serialize(dto.Headers);
         e.DatabaseConfigJson = Serialize(dto.DatabaseConfig);
         e.Status = (int)dto.Status;
-        e.CreatedBy = dto.CreatedBy;
-        e.UpdatedBy = dto.UpdatedBy;
     }
 
     // === EnvironmentServiceConfig ===
-    public static EnvironmentServiceConfigDto ToDto(this TestingEnvironmentServiceConfig e) => new()
+    public static ProjectEnvConfigDto ToDto(this ProjectEnvConfigEntity e) => new()
     {
         Id = e.Id,
-        EnvironmentId = e.EnvironmentId,
+        EnvironmentId = e.EnvId,
         ProjectServiceId = e.ProjectServiceId,
-        BaseUrl = e.BaseUrl ?? string.Empty,
-        CreatedAt = e.CreationTime,
-        UpdatedAt = e.LastModificationTime ?? e.CreationTime,
-        CreatedBy = e.CreatedBy ?? string.Empty
+        BaseUrl = e.BaseUrl ?? string.Empty
     };
 
-    public static void Apply(this EnvironmentServiceConfigDto dto, TestingEnvironmentServiceConfig e)
+    public static void Apply(this ProjectEnvConfigDto dto, ProjectEnvConfigEntity e)
     {
-        e.EnvironmentId = dto.EnvironmentId;
+        e.EnvId = dto.EnvironmentId;
         e.ProjectServiceId = dto.ProjectServiceId;
         e.BaseUrl = dto.BaseUrl;
-        e.CreatedBy = dto.CreatedBy;
     }
 
     // === ProjectCaseCategory ===
-    public static ProjectCaseCategory ToDto(this TestingProjectCaseCategory e) => new()
+    public static ProjectCaseCategory ToDto(this CaseCategoryEntity e) => new()
     {
         Id = e.Id,
         Name = e.Name,
@@ -142,27 +118,24 @@ public static class TestingMappers
         ProjectId = e.ProjectId,
         ParentId = e.ParentId,
         Order = e.Order,
-        CreatedAt = e.CreationTime,
-        CreatedBy = e.CreatedBy ?? string.Empty,
         Childrens = System.Array.Empty<ProjectCaseCategory>()
     };
 
-    public static void Apply(this ProjectCaseCategory dto, TestingProjectCaseCategory e)
+    public static void Apply(this ProjectCaseCategory dto, CaseCategoryEntity e)
     {
         e.Name = dto.Name;
         e.Description = dto.Description;
         e.ProjectId = dto.ProjectId;
         e.ParentId = dto.ParentId;
         e.Order = dto.Order;
-        e.CreatedBy = dto.CreatedBy;
     }
 
     // === ProjectCase ===
-    public static ProjectCaseDto ToDto(this TestingProjectCase e) => new()
+    public static CaseDto ToDto(this CaseEntity e) => new()
     {
         Id = e.Id,
         CaseNumber = e.CaseNumber ?? string.Empty,
-        Name = e.Name,
+        Name = e.CaseName,
         Description = e.Description ?? string.Empty,
         ProjectId = e.ProjectId,
         CategoryId = e.CategoryId,
@@ -174,18 +147,14 @@ public static class TestingMappers
         Tags = DeserializeList<string>(e.TagsJson),
         Order = e.Order,
         Status = (ProjectCaseStatus)e.Status,
-        CreatedAt = e.CreationTime,
-        UpdatedAt = e.LastModificationTime ?? e.CreationTime,
-        CreatedBy = e.CreatedBy ?? "System",
-        UpdatedBy = e.UpdatedBy ?? "System",
         LastExecutionResult = e.LastExecutionResult.HasValue ? (ExecutionStatus)e.LastExecutionResult.Value : null,
         LastExecutionTime = e.LastExecutionTime
     };
 
-    public static void Apply(this ProjectCaseDto dto, TestingProjectCase e)
+    public static void Apply(this CaseDto dto, CaseEntity e)
     {
         e.CaseNumber = dto.CaseNumber;
-        e.Name = dto.Name;
+        e.CaseName = dto.Name;
         e.Description = dto.Description;
         e.ProjectId = dto.ProjectId;
         e.CategoryId = dto.CategoryId;
@@ -199,16 +168,14 @@ public static class TestingMappers
         e.Status = (int)dto.Status;
         e.LastExecutionResult = dto.LastExecutionResult.HasValue ? (int)dto.LastExecutionResult.Value : null;
         e.LastExecutionTime = dto.LastExecutionTime;
-        e.CreatedBy = dto.CreatedBy;
-        e.UpdatedBy = dto.UpdatedBy;
     }
 
     // === ExecutionRecord ===
-    public static ExecutionRecordDto ToDto(this TestingExecutionRecord e) => new()
+    public static CaseExecutionRecordDto ToDto(this CaseExecutionRecordEntity e) => new()
     {
         Id = e.Id,
         TestCaseId = e.TestCaseId,
-        TestCaseName = e.TestCaseName ?? string.Empty,
+        TestCaseName = e.CaseName ?? string.Empty,
         ProjectId = e.ProjectId,
         EnvironmentId = e.EnvironmentId,
         EnvironmentName = e.EnvironmentName ?? string.Empty,
@@ -226,10 +193,10 @@ public static class TestingMappers
         EnvironmentSnapshot = DeserializeDict<object>(e.EnvironmentSnapshotJson)
     };
 
-    public static void Apply(this ExecutionRecordDto dto, TestingExecutionRecord e)
+    public static void Apply(this CaseExecutionRecordDto dto, CaseExecutionRecordEntity e)
     {
         e.TestCaseId = dto.TestCaseId;
-        e.TestCaseName = dto.TestCaseName;
+        e.CaseName = dto.TestCaseName;
         e.ProjectId = dto.ProjectId;
         e.EnvironmentId = dto.EnvironmentId;
         e.EnvironmentName = dto.EnvironmentName;

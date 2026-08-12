@@ -15,7 +15,7 @@ public abstract class AppSchemaBase : MetaSchemaBase
     public string? Picture { get; set; }
 
     [JsonPropertyName("desc")]
-    public string? Description {  get; set; }
+    public string? Description { get; set; }
 
     [JsonPropertyName("order")]
     public int Order { get; set; }

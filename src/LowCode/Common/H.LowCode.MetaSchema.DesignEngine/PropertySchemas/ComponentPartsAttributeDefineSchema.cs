@@ -85,7 +85,7 @@ public class ComponentPartsAttributeDefineSchema : ComponentAttributeDefineSchem
                 return false;
 
             var val = AttributeValue.ConvertToRealType(typeof(bool));
-            if(val == null)
+            if (val == null)
                 return false;
 
             return (bool)val;

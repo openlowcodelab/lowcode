@@ -1,5 +1,3 @@
-using System;
-
 namespace H.Testing.Application.Contracts;
 
 /// <summary>
@@ -16,7 +14,7 @@ public interface ITestExecutionEventNotifier
     /// <summary>
     /// 执行记录更新事件（testCaseId, executionRecord）。
     /// </summary>
-    event Action<long, ExecutionRecordDto> ExecutionUpdated;
+    event Action<long, CaseExecutionRecordDto> ExecutionUpdated;
 
     /// <summary>
     /// 由 AppService 内部调用以广播步骤更新。
@@ -26,5 +24,5 @@ public interface ITestExecutionEventNotifier
     /// <summary>
     /// 由 AppService 内部调用以广播执行记录更新。
     /// </summary>
-    void RaiseExecutionUpdated(long testCaseId, ExecutionRecordDto executionRecord);
+    void RaiseExecutionUpdated(long testCaseId, CaseExecutionRecordDto executionRecord);
 }

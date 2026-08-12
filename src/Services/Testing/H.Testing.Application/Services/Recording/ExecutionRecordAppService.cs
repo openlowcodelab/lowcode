@@ -11,14 +11,14 @@ namespace H.Testing.Application;
 /// </summary>
 public class ExecutionRecordAppService : ApplicationService, IExecutionRecordAppService
 {
-    private readonly IRepository<TestingExecutionRecord, long> _repository;
+    private readonly IRepository<CaseExecutionRecordEntity, long> _repository;
 
-    public ExecutionRecordAppService(IRepository<TestingExecutionRecord, long> repository)
+    public ExecutionRecordAppService(IRepository<CaseExecutionRecordEntity, long> repository)
     {
         _repository = repository;
     }
 
-    public async Task<List<ExecutionRecordDto>> GetByProjectIdAsync(long projectId)
+    public async Task<List<CaseExecutionRecordDto>> GetByProjectIdAsync(long projectId)
     {
         var query = await _repository.GetQueryableAsync();
         var list = await AsyncExecuter.ToListAsync(
@@ -26,7 +26,7 @@ public class ExecutionRecordAppService : ApplicationService, IExecutionRecordApp
         return list.Select(e => e.ToDto()).ToList();
     }
 
-    public async Task<List<ExecutionRecordDto>> GetByTestCaseIdAsync(long projectId, long testCaseId)
+    public async Task<List<CaseExecutionRecordDto>> GetByTestCaseIdAsync(long projectId, long testCaseId)
     {
         var query = await _repository.GetQueryableAsync();
         var list = await AsyncExecuter.ToListAsync(
@@ -35,26 +35,26 @@ public class ExecutionRecordAppService : ApplicationService, IExecutionRecordApp
         return list.Select(e => e.ToDto()).ToList();
     }
 
-    public async Task<ExecutionRecordDto?> GetByIdAsync(long projectId, long id)
+    public async Task<CaseExecutionRecordDto?> GetByIdAsync(long projectId, long id)
     {
         var entity = await _repository.FindAsync(id);
         return entity != null && entity.ProjectId == projectId ? entity.ToDto() : null;
     }
 
-    public async Task<ExecutionRecordDto> CreateAsync(ExecutionRecordDto record)
+    public async Task<CaseExecutionRecordDto> CreateAsync(CaseExecutionRecordDto record)
     {
         if (record.StartTime == default)
         {
             record.StartTime = DateTime.Now;
         }
 
-        var entity = new TestingExecutionRecord();
+        var entity = new CaseExecutionRecordEntity();
         record.Apply(entity);
         entity = await _repository.InsertAsync(entity, autoSave: true);
         return entity.ToDto();
     }
 
-    public async Task<bool> UpdateAsync(long projectId, ExecutionRecordDto record)
+    public async Task<bool> UpdateAsync(long projectId, CaseExecutionRecordDto record)
     {
         var entity = await _repository.FindAsync(record.Id);
         if (entity == null)

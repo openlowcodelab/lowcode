@@ -21,7 +21,7 @@ public class DesignEngineDbContext : DbContext
     {
         _dbOptions = options;
         _entityTypeManager = entityTypeManager;
-        
+
         // 从应用上下文服务获取当前 AppId
         AppId = currentApp.CurrentAppId;
     }
@@ -213,7 +213,7 @@ public class DesignEngineDbContext : DbContext
     {
         foreach (var field in dynamicEntity.Fields)
         {
-            if(field.Name == dynamicEntity.PrimaryKey)
+            if (field.Name == dynamicEntity.PrimaryKey)
             {
                 field.MaxLength = 50;
                 field.IsUnicode = false;

@@ -43,7 +43,7 @@ public class ValidationResult
     public ValidationRuleTypeEnum? FailedRuleType { get; set; }
 
     public static ValidationResult Success() => new() { IsValid = true };
-    public static ValidationResult Failure(string errorMessage, ValidationRuleTypeEnum? ruleType = null) => 
+    public static ValidationResult Failure(string errorMessage, ValidationRuleTypeEnum? ruleType = null) =>
         new() { IsValid = false, ErrorMessage = errorMessage, FailedRuleType = ruleType };
 }
 

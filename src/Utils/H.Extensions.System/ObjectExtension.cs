@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq.Expressions;
 using System.Text.Json;
 
 namespace System;
@@ -54,13 +51,13 @@ public static class ObjectExtension
         try
         {
             Type underlyingType = Nullable.GetUnderlyingType(targetType) ?? targetType;
-            
+
             // 处理枚举类型
             if (underlyingType.IsEnum)
             {
                 return Enum.Parse(underlyingType, stringValue);
             }
-            
+
             var value = Convert.ChangeType(stringValue, underlyingType);
             return value;
         }

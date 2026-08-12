@@ -10,13 +10,13 @@ namespace H.Testing.EntityFrameworkCore;
 [ConnectionStringName("TestingDb")]
 public class TestingDbContext : AbpDbContext<TestingDbContext>
 {
-    public DbSet<TestingProject> Projects { get; set; } = null!;
-    public DbSet<TestingProjectService> ProjectServices { get; set; } = null!;
-    public DbSet<TestingProjectEnvironment> ProjectEnvironments { get; set; } = null!;
-    public DbSet<TestingEnvironmentServiceConfig> EnvironmentServiceConfigs { get; set; } = null!;
-    public DbSet<TestingProjectCaseCategory> ProjectCaseCategories { get; set; } = null!;
-    public DbSet<TestingProjectCase> ProjectCases { get; set; } = null!;
-    public DbSet<TestingExecutionRecord> ExecutionRecords { get; set; } = null!;
+    public DbSet<ProjectEntity> Projects { get; set; } = null!;
+    public DbSet<ProjectServiceEntity> ProjectServices { get; set; } = null!;
+    public DbSet<ProjectEnvEntity> ProjectEnvironments { get; set; } = null!;
+    public DbSet<ProjectEnvConfigEntity> EnvironmentServiceConfigs { get; set; } = null!;
+    public DbSet<CaseCategoryEntity> ProjectCaseCategories { get; set; } = null!;
+    public DbSet<CaseEntity> ProjectCases { get; set; } = null!;
+    public DbSet<CaseExecutionRecordEntity> ExecutionRecords { get; set; } = null!;
 
     public TestingDbContext(DbContextOptions<TestingDbContext> options) : base(options)
     {
@@ -26,108 +26,104 @@ public class TestingDbContext : AbpDbContext<TestingDbContext>
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.Entity<TestingProject>(b =>
+        modelBuilder.Entity<ProjectEntity>(b =>
         {
-            b.ToTable("TestingProjects");
+            b.ToTable("Project");
             b.HasKey(x => x.Id);
-            b.Property(x => x.Id).UseIdentityColumn(10000, 1);
-            b.Property(x => x.Name).IsRequired().HasMaxLength(200);
-            b.Property(x => x.Description).HasMaxLength(1000);
-            b.Property(x => x.EnvironmentIdsJson).HasColumnType("nvarchar(max)");
-            b.Property(x => x.MetadataJson).HasColumnType("nvarchar(max)");
-            b.Property(x => x.CreatedBy).HasMaxLength(128);
-            b.Property(x => x.UpdatedBy).HasMaxLength(128);
+
+            b.Property(x => x.Id).UseIdentityColumn(100000, 1);
+            b.Property(x => x.Name).IsRequired().HasMaxLength(20);
+            b.Property(x => x.Status);
+            b.Property(x => x.KnowledgeBaseId).HasMaxLength(36);
+            b.Property(x => x.Description).HasMaxLength(100);
+
             b.HasIndex(x => x.TenantId);
         });
 
-        modelBuilder.Entity<TestingProjectService>(b =>
+        modelBuilder.Entity<ProjectServiceEntity>(b =>
         {
-            b.ToTable("TestingProjectServices");
+            b.ToTable("ProjectService");
             b.HasKey(x => x.Id);
-            b.Property(x => x.Id).UseIdentityColumn(10000, 1);
-            b.Property(x => x.Name).IsRequired().HasMaxLength(100);
-            b.Property(x => x.Description).HasMaxLength(500);
-            b.Property(x => x.CreatedBy).HasMaxLength(128);
-            b.Property(x => x.UpdatedBy).HasMaxLength(128);
+
+            b.Property(x => x.Id).UseIdentityColumn(2000000, 1);
+            b.Property(x => x.Name).IsRequired().HasMaxLength(20);
+            b.Property(x => x.ProjectId).IsRequired();
+            b.Property(x => x.Description).HasMaxLength(100);
+
             b.HasIndex(x => x.ProjectId);
-            b.HasIndex(x => x.TenantId);
         });
 
-        modelBuilder.Entity<TestingProjectEnvironment>(b =>
+        modelBuilder.Entity<ProjectEnvEntity>(b =>
         {
-            b.ToTable("TestingProjectEnvironments");
+            b.ToTable("ProjectEnv");
             b.HasKey(x => x.Id);
-            b.Property(x => x.Id).UseIdentityColumn(10000, 1);
-            b.Property(x => x.Name).IsRequired().HasMaxLength(100);
-            b.Property(x => x.Description).HasMaxLength(500);
-            b.Property(x => x.VariablesJson).HasColumnType("nvarchar(max)");
-            b.Property(x => x.HeadersJson).HasColumnType("nvarchar(max)");
-            b.Property(x => x.DatabaseConfigJson).HasColumnType("nvarchar(max)");
-            b.Property(x => x.CreatedBy).HasMaxLength(128);
-            b.Property(x => x.UpdatedBy).HasMaxLength(128);
+
+            b.Property(x => x.Id).UseIdentityColumn(3000000, 1);
+            b.Property(x => x.Name).IsRequired().HasMaxLength(20);
+            b.Property(x => x.Status);
+            b.Property(x => x.Description).HasMaxLength(100);
+            b.Property(x => x.VariablesJson).HasMaxLength(2000);
+            b.Property(x => x.HeadersJson).HasMaxLength(1000);
+            b.Property(x => x.DatabaseConfigJson).HasMaxLength(1000);
+
             b.HasIndex(x => x.ProjectId);
-            b.HasIndex(x => x.TenantId);
         });
 
-        modelBuilder.Entity<TestingEnvironmentServiceConfig>(b =>
+        modelBuilder.Entity<ProjectEnvConfigEntity>(b =>
         {
-            b.ToTable("TestingEnvironmentServiceConfigs");
+            b.ToTable("ProjectEnvConfig");
             b.HasKey(x => x.Id);
-            b.Property(x => x.Id).UseIdentityColumn(10000, 1);
-            b.Property(x => x.BaseUrl).HasMaxLength(500);
-            b.Property(x => x.CreatedBy).HasMaxLength(128);
-            b.HasIndex(x => x.EnvironmentId);
+
+            b.Property(x => x.Id).UseIdentityColumn(5000000, 1);
+            b.HasIndex(x => x.EnvId);
             b.HasIndex(x => x.ProjectServiceId);
+            b.Property(x => x.BaseUrl).HasMaxLength(100);
+
             b.HasIndex(x => x.TenantId);
         });
 
-        modelBuilder.Entity<TestingProjectCaseCategory>(b =>
+        modelBuilder.Entity<CaseCategoryEntity>(b =>
         {
-            b.ToTable("TestingProjectCaseCategories");
+            b.ToTable("CaseCategory");
             b.HasKey(x => x.Id);
-            b.Property(x => x.Id).UseIdentityColumn(10000, 1);
-            b.Property(x => x.Name).IsRequired().HasMaxLength(200);
-            b.Property(x => x.Description).HasMaxLength(1000);
-            b.Property(x => x.CreatedBy).HasMaxLength(128);
+
+            b.Property(x => x.Id).UseIdentityColumn(7000000, 1);
+            b.Property(x => x.Name).IsRequired().HasMaxLength(20);
+            b.Property(x => x.Description).HasMaxLength(100);
+
             b.HasIndex(x => x.ProjectId);
-            b.HasIndex(x => x.ParentId);
-            b.HasIndex(x => x.TenantId);
         });
 
-        modelBuilder.Entity<TestingProjectCase>(b =>
+        modelBuilder.Entity<CaseEntity>(b =>
         {
-            b.ToTable("TestingProjectCases");
+            b.ToTable("Case");
             b.HasKey(x => x.Id);
-            b.Property(x => x.Id).UseIdentityColumn(10000, 1);
-            b.Property(x => x.CaseNumber).HasMaxLength(64);
-            b.Property(x => x.Name).IsRequired().HasMaxLength(200);
-            b.Property(x => x.Description).HasMaxLength(1000);
-            b.Property(x => x.LevelsJson).HasColumnType("nvarchar(max)");
-            b.Property(x => x.TagsJson).HasColumnType("nvarchar(max)");
-            b.Property(x => x.StepsJson).HasColumnType("nvarchar(max)");
-            b.Property(x => x.TestDataJson).HasColumnType("nvarchar(max)");
-            b.Property(x => x.CreatedBy).HasMaxLength(128);
-            b.Property(x => x.UpdatedBy).HasMaxLength(128);
+
+            b.Property(x => x.Id).UseIdentityColumn(8000000, 1);
+            b.Property(x => x.CaseName).IsRequired().HasMaxLength(20);
+            b.Property(x => x.Description).HasMaxLength(100);
+            b.Property(x => x.LevelsJson).HasMaxLength(1000);
+            b.Property(x => x.TagsJson).HasMaxLength(1000);
+            b.Property(x => x.StepsJson).HasMaxLength(1000);
+            b.Property(x => x.TestDataJson).HasMaxLength(1000);
+
             b.HasIndex(x => x.ProjectId);
-            b.HasIndex(x => x.CategoryId);
-            b.HasIndex(x => x.TenantId);
         });
 
-        modelBuilder.Entity<TestingExecutionRecord>(b =>
+        modelBuilder.Entity<CaseExecutionRecordEntity>(b =>
         {
-            b.ToTable("TestingExecutionRecords");
+            b.ToTable("CaseExecutionRecord");
             b.HasKey(x => x.Id);
-            b.Property(x => x.Id).UseIdentityColumn(10000, 1);
-            b.Property(x => x.TestCaseName).HasMaxLength(200);
-            b.Property(x => x.EnvironmentName).HasMaxLength(100);
-            b.Property(x => x.StepRecordsJson).HasColumnType("nvarchar(max)");
-            b.Property(x => x.EnvironmentSnapshotJson).HasColumnType("nvarchar(max)");
-            b.Property(x => x.ErrorMessage).HasColumnType("nvarchar(max)");
-            b.Property(x => x.ExecutedBy).HasMaxLength(128);
-            b.HasIndex(x => x.ProjectId);
+
+            b.Property(x => x.Id).UseIdentityColumn(9000000, 1);
+            b.Property(x => x.CaseName).HasMaxLength(20);
+            b.Property(x => x.EnvironmentName).HasMaxLength(20);
+            b.Property(x => x.StepRecordsJson).HasMaxLength(1000);
+            b.Property(x => x.EnvironmentSnapshotJson).HasMaxLength(1000);
+            b.Property(x => x.ErrorMessage).HasMaxLength(1000);
+            b.Property(x => x.ExecutedBy).HasMaxLength(20);
+
             b.HasIndex(x => x.TestCaseId);
-            b.HasIndex(x => x.EnvironmentId);
-            b.HasIndex(x => x.TenantId);
         });
     }
 }

@@ -458,16 +458,16 @@ else
     [Parameter] public long TestCaseId { get; set; }
     [Parameter] public long ProjectId { get; set; }
 
-    private ProjectCaseDto? testCase;
-    private List<ProjectCaseDto> testCases = new();
+    private CaseDto? testCase;
+    private List<CaseDto> testCases = new();
     private List<EnvironmentDto> environments = new();
     private long selectedEnvironmentId = 0;
     private bool loading = true;
     private bool isExecuting = false;
-    private List<ExecutionRecordDto> executionRecords = new();
+    private List<CaseExecutionRecordDto> executionRecords = new();
     private HashSet<long> selectedTestCaseIds = new();
     private CancellationTokenSource? cancellationTokenSource;
-    private Dictionary<long, ExecutionRecordDto> currentExecutionRecords = new();
+    private Dictionary<long, CaseExecutionRecordDto> currentExecutionRecords = new();
 
     private PerformanceTestSettingsDto performanceSettings = new();
     private bool showPerformanceSettings = false;
@@ -613,7 +613,7 @@ else
             }
             else
             {
-                var initialRecord = new ExecutionRecordDto
+                var initialRecord = new CaseExecutionRecordDto
                 {
                     TestCaseId = testCase!.Id,
                     TestCaseName = testCase.Name,
@@ -787,7 +787,7 @@ else
         });
     }
 
-    private void OnExecutionUpdated(long testCaseId, ExecutionRecordDto executionRecord)
+    private void OnExecutionUpdated(long testCaseId, CaseExecutionRecordDto executionRecord)
     {
         InvokeAsync(() =>
         {

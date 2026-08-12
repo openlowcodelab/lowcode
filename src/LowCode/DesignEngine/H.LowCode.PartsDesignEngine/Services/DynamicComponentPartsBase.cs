@@ -127,7 +127,7 @@ public abstract class DynamicComponentPartsBase : LowCodeDynamicComponentBase
                 childBuilder.OpenComponent(index++, childComponentType);
                 foreach (var fragAttr in dataSource.DataSourceFragment.Attributes)
                 {
-                    if(string.IsNullOrEmpty(fragAttr.AttributeName))
+                    if (string.IsNullOrEmpty(fragAttr.AttributeName))
                         throw new NullReferenceException($"componentId={componentId}, {nameof(fragAttr.AttributeName)} is null");
 
                     childBuilder.AddAttribute(index++, fragAttr.AttributeName, option.Value);
@@ -230,7 +230,7 @@ public abstract class DynamicComponentPartsBase : LowCodeDynamicComponentBase
             IsContainer = true,
             IsInnerContainer = true,
             ParentId = component.Id,
-            
+
             // 初始化 Childrens 为空列表，并从父组件复制子组件
             Childrens = component.Childrens != null ? new List<ComponentPartsSchema>(component.Childrens) : new List<ComponentPartsSchema>()
         };

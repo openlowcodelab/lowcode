@@ -9,17 +9,17 @@ public enum ApprovalStatusEnum
     /// 草稿
     /// </summary>
     Draft = 0,
-    
+
     /// <summary>
     /// 运行中
     /// </summary>
     Running = 1,
-    
+
     /// <summary>
     /// 已完成
     /// </summary>
     Completed = 2,
-    
+
     /// <summary>
     /// 已取消
     /// </summary>

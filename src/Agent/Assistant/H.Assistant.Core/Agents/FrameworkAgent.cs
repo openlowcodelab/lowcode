@@ -1,6 +1,6 @@
+using H.Assistant.Application.Contracts;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
-using H.Assistant.Application.Contracts;
 using System.Text.Json;
 
 namespace H.Assistant.Core;

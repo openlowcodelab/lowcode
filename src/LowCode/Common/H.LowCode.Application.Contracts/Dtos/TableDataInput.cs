@@ -1,4 +1,3 @@
-using System;
 using H.Abp.Application.Contracts;
 
 namespace H.LowCode.Application.Contracts;

@@ -1,4 +1,3 @@
-using System;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.MultiTenancy;
 

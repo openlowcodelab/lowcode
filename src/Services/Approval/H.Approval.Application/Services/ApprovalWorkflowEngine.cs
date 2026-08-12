@@ -1,8 +1,6 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
 using H.Approval.Application.Contracts;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 
 namespace H.Approval.Application;
 

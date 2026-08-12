@@ -1,8 +1,7 @@
-using H.Assistant.Application.Contracts;
 using H.Assistant.Application.Workers;
-using H.Assistant.EntityFrameworkCore;
 using H.Assistant.Core;
 using H.Assistant.Core.Mcp;
+using H.Assistant.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.AutoMapper;
 using Volo.Abp.Modularity;

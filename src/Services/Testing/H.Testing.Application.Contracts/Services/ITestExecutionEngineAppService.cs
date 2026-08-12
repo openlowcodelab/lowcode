@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
-using H.Abp.Application.Contracts;
+﻿using H.Abp.Application.Contracts;
 
 namespace H.Testing.Application.Contracts;
 
@@ -20,8 +16,8 @@ public interface ITestExecutionEngineAppService : IAppService
     /// <summary>
     /// 执行测试用例
     /// </summary>
-    Task<ExecutionRecordDto> ExecuteTestCaseAsync(
-        ProjectCaseDto testCase,
+    Task<CaseExecutionRecordDto> ExecuteTestCaseAsync(
+        CaseDto testCase,
         long environmentId,
         CancellationToken cancellationToken = default);
 }

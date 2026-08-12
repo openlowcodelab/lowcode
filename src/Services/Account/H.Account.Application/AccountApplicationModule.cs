@@ -1,8 +1,7 @@
-using H.Account.Application.Contracts;
 using H.Account.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Volo.Abp.Modularity;
 using Volo.Abp.Identity;
+using Volo.Abp.Modularity;
 
 namespace H.Account.Application;
 

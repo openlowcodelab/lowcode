@@ -12,7 +12,7 @@ public class AppFileRepository : FileRepositoryBase, IAppRepository
 
     public AppFileRepository(IOptions<MetaOption> metaOption) : base(metaOption)
     {
-        
+
     }
 
     public async Task<IList<AppPartsSchema>> GetListAsync()

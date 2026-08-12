@@ -1,5 +1,4 @@
-﻿using H.LowCode.MetaSchema;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace H.LowCode.MetaSchema.DesignEngine;
 

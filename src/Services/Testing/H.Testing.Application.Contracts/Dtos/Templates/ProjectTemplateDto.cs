@@ -26,5 +26,7 @@ public class ProjectTemplateDto
     /// <summary>用例数量</summary>
     public int CaseCount { get; set; }
 
-    public DateTime UpdatedAt { get; set; }
+    public DateTime CreationTime { get; set; }
+
+    public DateTime? ModificationTime { get; set; }
 }

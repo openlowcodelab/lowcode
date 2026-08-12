@@ -21,7 +21,7 @@ public class RenderEngineDbContext : DbContext
     {
         _dbOptions = options;
         _entityTypeManager = entityTypeManager;
-        
+
         // 从应用上下文服务获取当前 AppId
         AppId = currentApp.CurrentAppId;
     }
@@ -38,7 +38,7 @@ public class RenderEngineDbContext : DbContext
             {
                 // 获取属性的实际类型
                 var propertyType = propertyInfo.PropertyType;
-                
+
                 // 获取字段值并转换为正确的类型
                 var fieldValue = field.Value;
                 if (fieldValue != null)
@@ -77,7 +77,7 @@ public class RenderEngineDbContext : DbContext
             {
                 // 获取属性的实际类型
                 var propertyType = propertyInfo.PropertyType;
-                
+
                 // 获取字段值并转换为正确的类型
                 var fieldValue = field.Value;
                 if (fieldValue != null)
@@ -236,7 +236,7 @@ public class RenderEngineDbContext : DbContext
     {
         foreach (var field in dynamicEntity.Fields)
         {
-            if(field.Name == dynamicEntity.PrimaryKey)
+            if (field.Name == dynamicEntity.PrimaryKey)
             {
                 field.MaxLength = 50;
                 field.IsUnicode = false;

@@ -11,42 +11,42 @@ namespace H.Testing.Application;
 /// </summary>
 public class ProjectEnvironmentAppService : ApplicationService, IProjectEnvironmentAppService
 {
-    private readonly IRepository<TestingProjectEnvironment, long> _repository;
+    private readonly IRepository<ProjectEnvEntity, long> _repository;
 
-    public ProjectEnvironmentAppService(IRepository<TestingProjectEnvironment, long> repository)
+    public ProjectEnvironmentAppService(IRepository<ProjectEnvEntity, long> repository)
     {
         _repository = repository;
     }
 
-    public async Task<List<ProjectEnvironmentDto>> GetAllAsync()
+    public async Task<List<ProjectEnvDto>> GetAllAsync()
     {
         var query = await _repository.GetQueryableAsync();
         var list = await AsyncExecuter.ToListAsync(query.OrderBy(e => e.Id));
         return list.Select(e => e.ToDto()).ToList();
     }
 
-    public async Task<List<ProjectEnvironmentDto>> GetByProjectIdAsync(long projectId)
+    public async Task<List<ProjectEnvDto>> GetByProjectIdAsync(long projectId)
     {
         var query = await _repository.GetQueryableAsync();
         var list = await AsyncExecuter.ToListAsync(query.Where(e => e.ProjectId == projectId).OrderBy(e => e.Id));
         return list.Select(e => e.ToDto()).ToList();
     }
 
-    public async Task<ProjectEnvironmentDto?> GetByIdAsync(long id)
+    public async Task<ProjectEnvDto?> GetByIdAsync(long id)
     {
         var entity = await _repository.FindAsync(id);
         return entity?.ToDto();
     }
 
-    public async Task<long> CreateAsync(ProjectEnvironmentDto environment)
+    public async Task<long> CreateAsync(ProjectEnvDto environment)
     {
-        var entity = new TestingProjectEnvironment();
+        var entity = new ProjectEnvEntity();
         environment.Apply(entity);
         entity = await _repository.InsertAsync(entity, autoSave: true);
         return entity.Id;
     }
 
-    public async Task<bool> UpdateAsync(long id, ProjectEnvironmentDto environment)
+    public async Task<bool> UpdateAsync(long id, ProjectEnvDto environment)
     {
         var entity = await _repository.FindAsync(id);
         if (entity == null)
@@ -71,21 +71,21 @@ public class ProjectEnvironmentAppService : ApplicationService, IProjectEnvironm
         return true;
     }
 
-    public async Task<List<ProjectEnvironmentDto>> GetByTypeAsync(EnvironmentType type)
+    public async Task<List<ProjectEnvDto>> GetByTypeAsync(EnvironmentType type)
     {
         var query = await _repository.GetQueryableAsync();
         var list = await AsyncExecuter.ToListAsync(query.Where(e => e.Type == (int)type));
         return list.Select(e => e.ToDto()).ToList();
     }
 
-    public async Task<List<ProjectEnvironmentDto>> GetActiveEnvironmentsAsync()
+    public async Task<List<ProjectEnvDto>> GetActiveEnvironmentsAsync()
     {
         var query = await _repository.GetQueryableAsync();
         var list = await AsyncExecuter.ToListAsync(query.Where(e => e.Status == (int)EnvironmentStatus.Active));
         return list.Select(e => e.ToDto()).ToList();
     }
 
-    public async Task<List<ProjectEnvironmentDto>> GetActiveEnvironmentsByProjectAsync(long projectId)
+    public async Task<List<ProjectEnvDto>> GetActiveEnvironmentsByProjectAsync(long projectId)
     {
         var query = await _repository.GetQueryableAsync();
         var list = await AsyncExecuter.ToListAsync(

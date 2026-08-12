@@ -1,5 +1,5 @@
-using H.Account.Host.Components;
 using H.Account.Host;
+using H.Account.Host.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 

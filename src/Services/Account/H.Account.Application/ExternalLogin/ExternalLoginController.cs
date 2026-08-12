@@ -1,4 +1,3 @@
-using H.Account.Application;
 using H.Account.Application.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;

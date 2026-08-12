@@ -1,12 +1,11 @@
-using System.Linq.Dynamic.Core;
-using System.Text.Json;
 using AutoMapper;
+using H.Abp.Application.Contracts;
 using H.Assistant.Application.Contracts;
 using H.Assistant.Core;
 using H.Assistant.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using H.Abp.Application.Contracts;
+using System.Linq.Dynamic.Core;
+using System.Text.Json;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
@@ -260,7 +259,7 @@ public class TaskAppService : ApplicationService, ITaskAppService
         {
             // 获取 Agent 实例
             IAgentInstance? agent = await _agentFactory.CreateAgentAsync(task.AgentType, task.ModelConfigId);
-            
+
             if (agent == null)
             {
                 throw new InvalidOperationException($"无法创建 Agent 实例: {task.AgentType}");

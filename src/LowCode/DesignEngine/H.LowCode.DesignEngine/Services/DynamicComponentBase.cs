@@ -121,7 +121,7 @@ public abstract class DynamicComponentBase : LowCodeDynamicComponentBase
                 childBuilder.OpenComponent(index++, childComponentType);
                 foreach (var fragAttr in dataSource.DataSourceFragment.Attributes)
                 {
-                    if(string.IsNullOrEmpty(fragAttr.AttributeName))
+                    if (string.IsNullOrEmpty(fragAttr.AttributeName))
                         throw new NullReferenceException($"componentId={componentId}, {nameof(fragAttr.AttributeName)} is null");
 
                     childBuilder.AddAttribute(index++, fragAttr.AttributeName, option.Value);
@@ -206,7 +206,7 @@ public abstract class DynamicComponentBase : LowCodeDynamicComponentBase
                             continue;
 
                         var attrValue = ResolveAttributeValue(attr, item);
-                        
+
                         if (!string.IsNullOrEmpty(attr.AttributeClrType))
                         {
                             var attrType = Type.GetType(attr.AttributeClrType);
@@ -263,7 +263,7 @@ public abstract class DynamicComponentBase : LowCodeDynamicComponentBase
         if (valueStr.StartsWith("$(item.") && valueStr.EndsWith(")"))
         {
             var fieldName = valueStr.Substring(7, valueStr.Length - 8);
-            
+
             if (dataItem is Dictionary<string, object> dict)
             {
                 return dict.ContainsKey(fieldName) ? dict[fieldName] : null;

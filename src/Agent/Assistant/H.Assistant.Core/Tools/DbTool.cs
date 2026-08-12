@@ -1,7 +1,7 @@
+using Microsoft.Data.SqlClient;
 using System.ComponentModel;
 using System.Data;
 using System.Text.Json;
-using Microsoft.Data.SqlClient;
 
 namespace H.Assistant.Core.Tools;
 

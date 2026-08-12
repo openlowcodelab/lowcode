@@ -5,7 +5,7 @@ namespace H.BackgroundTask.Application.Contracts;
 /// <summary>
 /// 任务执行记录 DTO
 /// </summary>
-public class JobExecutionRecordDto : EntityDto<Guid>
+public class JobCaseExecutionRecordDto : EntityDto<Guid>
 {
     /// <summary>任务ID</summary>
     public Guid JobId { get; set; }

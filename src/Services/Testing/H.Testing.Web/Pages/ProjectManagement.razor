@@ -1,7 +1,6 @@
 @page "/testing"
 @page "/testing/projects"
 
-@namespace H.Testing.Web
 @layout TestingLayout
 
 @inject IProjectAppService ProjectService
@@ -273,7 +272,7 @@ else
                             }
                         </td>
                         <td Style="color: #4E5969; font-size: 13px;">@tpl.ServiceCount 服务 / @tpl.EnvironmentCount 环境 / @tpl.CategoryCount 分类 / @tpl.CaseCount 用例</td>
-                        <td>@(tpl.UpdatedAt == DateTime.MinValue ? "-" : tpl.UpdatedAt.ToString("yyyy-MM-dd HH:mm"))</td>
+                        <td>@(tpl.ModificationTime.HasValue ? tpl.ModificationTime.Value.ToString("yyyy-MM-dd HH:mm") : "-")</td>
                         <td>
                             <div class="row-actions">
                                 <a class="link-action" @onclick="() => ShowEditTemplateModal(tpl)">编辑</a>
@@ -692,7 +691,7 @@ else
                                 <br /><span Style="color: #86909C; font-size: 12px;">@svc.Description</span>
                             }
                         </td>
-                        <td>@svc.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td>@svc.CreationTime.ToString("yyyy-MM-dd HH:mm")</td>
                         <td>
                             <div class="row-actions">
                                 <a class="link-action" @onclick="() => EditProjectService(svc)">编辑</a>
@@ -894,11 +893,11 @@ else
 @code {
     private List<ProjectDto> projects = new();
     private List<ProjectDto> filteredProjects = new();
-    private List<ProjectEnvironmentDto> environments = new();
-    private List<ProjectEnvironmentDto> projectEnvironments = new();
+    private List<ProjectEnvDto> environments = new();
+    private List<ProjectEnvDto> projectEnvironments = new();
     private ProjectDto currentProject = new();
-    private ProjectEnvironmentDto currentEnvironment = new();
-    private ProjectEnvironmentDto? selectedEnvironment;
+    private ProjectEnvDto currentEnvironment = new();
+    private ProjectEnvDto? selectedEnvironment;
     private ProjectDto? selectedProject;
     private bool loading = true;
     private bool showProjectModal = false;
@@ -920,7 +919,7 @@ else
     private List<ServiceConfigView> serviceConfigViews = new();
     private ProjectServiceDto currentProjectService = new();
     private ProjectDto? selectedProjectForServices;
-    private EnvironmentServiceConfigDto currentServiceConfig = new();
+    private ProjectEnvConfigDto currentServiceConfig = new();
     private bool showServiceConfigModal = false;
     private bool isEditingServiceConfig = false;
     private long? openProjectDropdownId = null;
@@ -1096,13 +1095,13 @@ else
         StateHasChanged();
     }
 
-    private List<ProjectEnvironmentDto> GetProjectEnvironments(long projectId) => environments.Where(e => e.ProjectId == projectId).ToList();
+    private List<ProjectEnvDto> GetProjectEnvironments(long projectId) => environments.Where(e => e.ProjectId == projectId).ToList();
 
     private void ShowAddProjectModal() { currentProject = new ProjectDto(); isEditingProject = false; createMode = "blank"; selectedTemplateId = null; showProjectModal = true; }
 
     private void ShowEditProjectModal(ProjectDto project)
     {
-        currentProject = new ProjectDto { Id = project.Id, Name = project.Name, Description = project.Description, Status = project.Status, Metadata = new Dictionary<string, object>(project.Metadata), CreatedAt = project.CreatedAt, CreatedBy = project.CreatedBy };
+        currentProject = new ProjectDto { Id = project.Id, Name = project.Name, Description = project.Description, Status = project.Status, Metadata = new Dictionary<string, object>(project.Metadata) };
         isEditingProject = true;
         showProjectModal = true;
     }
@@ -1253,15 +1252,15 @@ else
     
     private void HideEnvironmentModal() { showEnvironmentModal = false; selectedProject = null; selectedEnvironment = null; }
     
-    private async Task SelectEnvironment(ProjectEnvironmentDto environment)
+    private async Task SelectEnvironment(ProjectEnvDto environment)
     {
         selectedEnvironment = environment;
         if (selectedEnvironment != null && selectedProject != null) await LoadEnvironmentServiceConfigs();
         StateHasChanged();
     }
     
-    private void ShowAddEnvironmentModal() { currentEnvironment = new ProjectEnvironmentDto { ProjectId = selectedProject?.Id ?? 0 }; showAddEnvironmentModal = true; }
-    private void HideAddEnvironmentModal() { showAddEnvironmentModal = false; currentEnvironment = new ProjectEnvironmentDto(); }
+    private void ShowAddEnvironmentModal() { currentEnvironment = new ProjectEnvDto { ProjectId = selectedProject?.Id ?? 0 }; showAddEnvironmentModal = true; }
+    private void HideAddEnvironmentModal() { showAddEnvironmentModal = false; currentEnvironment = new ProjectEnvDto(); }
     
     private async Task SaveEnvironment()
     {
@@ -1272,9 +1271,9 @@ else
         StateHasChanged();
     }
     
-    private void EditEnvironment(ProjectEnvironmentDto environment)
+    private void EditEnvironment(ProjectEnvDto environment)
     {
-        currentEnvironment = new ProjectEnvironmentDto { Id = environment.Id, Name = environment.Name, ProjectId = environment.ProjectId, Type = environment.Type, Variables = new Dictionary<string, string>(environment.Variables), Headers = new Dictionary<string, string>(environment.Headers) };
+        currentEnvironment = new ProjectEnvDto { Id = environment.Id, Name = environment.Name, ProjectId = environment.ProjectId, Type = environment.Type, Variables = new Dictionary<string, string>(environment.Variables), Headers = new Dictionary<string, string>(environment.Headers) };
         showAddEnvironmentModal = true;
     }
     
@@ -1382,7 +1381,7 @@ else
     
     private void EditProjectService(ProjectServiceDto service)
     {
-        currentProjectService = new ProjectServiceDto { Id = service.Id, Name = service.Name, Description = service.Description, ProjectId = service.ProjectId, CreatedAt = service.CreatedAt, CreatedBy = service.CreatedBy };
+        currentProjectService = new ProjectServiceDto { Id = service.Id, Name = service.Name, Description = service.Description, ProjectId = service.ProjectId };
         isEditingProjectService = true;
         showProjectServiceModal = true;
     }
@@ -1417,21 +1416,21 @@ else
     
     private async Task DeleteServiceConfig(long configId) { await ProjectServiceConfigService.DeleteEnvironmentServiceConfigAsync(configId); await LoadEnvironmentServiceConfigs(); }
     
-    private void EditServiceConfig(EnvironmentServiceConfigDto config)
+    private void EditServiceConfig(ProjectEnvConfigDto config)
     {
-        currentServiceConfig = new EnvironmentServiceConfigDto { Id = config.Id, EnvironmentId = config.EnvironmentId, ProjectServiceId = config.ProjectServiceId, BaseUrl = config.BaseUrl, CreatedAt = config.CreatedAt, CreatedBy = config.CreatedBy };
+        currentServiceConfig = new ProjectEnvConfigDto { Id = config.Id, EnvironmentId = config.EnvironmentId, ProjectServiceId = config.ProjectServiceId, BaseUrl = config.BaseUrl };
         isEditingServiceConfig = true;
         showServiceConfigModal = true;
     }
     
     private void AddServiceConfig(ProjectServiceDto service)
     {
-        currentServiceConfig = new EnvironmentServiceConfigDto { EnvironmentId = selectedEnvironment?.Id ?? 0, ProjectServiceId = service.Id, BaseUrl = "" };
+        currentServiceConfig = new ProjectEnvConfigDto { EnvironmentId = selectedEnvironment?.Id ?? 0, ProjectServiceId = service.Id, BaseUrl = "" };
         isEditingServiceConfig = false;
         showServiceConfigModal = true;
     }
     
-    private void HideServiceConfigModal() { showServiceConfigModal = false; currentServiceConfig = new EnvironmentServiceConfigDto(); isEditingServiceConfig = false; }
+    private void HideServiceConfigModal() { showServiceConfigModal = false; currentServiceConfig = new ProjectEnvConfigDto(); isEditingServiceConfig = false; }
     
     private async Task SaveServiceConfig()
     {
@@ -1446,7 +1445,6 @@ else
     }
 
     // === 项目知识库 ===
-
     private async Task ManageKnowledge(ProjectDto project)
     {
         knowledgeProject = project;

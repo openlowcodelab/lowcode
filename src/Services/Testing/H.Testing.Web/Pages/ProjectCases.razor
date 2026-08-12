@@ -418,20 +418,20 @@
 
 @code {
     private List<ProjectDto> projects = new();
-    private List<ProjectCaseDto> testCases = new();
-    private List<ProjectCaseDto> filteredTestCases = new();
-    private List<ProjectCaseDto> displayTestCases = new();
+    private List<CaseDto> testCases = new();
+    private List<CaseDto> filteredTestCases = new();
+    private List<CaseDto> displayTestCases = new();
     private List<ProjectCaseCategory> categories = new();
     private HashSet<long> selectedTestCases = new();
 
-    private ProjectCaseDto currentTestCase = new();
-    private ProjectCaseDto editingTestCase = new();
+    private CaseDto currentTestCase = new();
+    private CaseDto editingTestCase = new();
     private ProjectCaseCategory currentCategory = new();
 
     private bool loading = true;
     private bool showCategoryModal = false;
     private bool showTemplateSettingsModal = false;
-    private List<ProjectCaseDto> availableTemplates = new();
+    private List<CaseDto> availableTemplates = new();
     private bool isEditingCategory = false;
 
     [Parameter]
@@ -677,7 +677,6 @@
         })
         .OrderBy(tc => string.IsNullOrEmpty(tc.CaseNumber) ? "zzz" : tc.CaseNumber)
         .ThenBy(tc => tc.Order)
-        .ThenBy(tc => tc.CreatedAt)
         .ToList();
         
         StateHasChanged();
@@ -798,17 +797,17 @@
         Navigation.NavigateTo($"/testing/test-execution/batch/{selectedProjectId}?selectedIds={selectedIds}");
     }
 
-    private async Task ExecuteSingleTest(ProjectCaseDto testCase)
+    private async Task ExecuteSingleTest(CaseDto testCase)
     {
         Navigation.NavigateTo($"/testing/test-execution/{testCase.Id}");
     }
     
-    private void ViewExecutionHistory(ProjectCaseDto testCase)
+    private void ViewExecutionHistory(CaseDto testCase)
     {
         Navigation.NavigateTo($"/testing/execution-history/{testCase.Id}?returnProjectId={selectedProjectId}");
     }
     
-    private void EditTestCase(ProjectCaseDto testCase)
+    private void EditTestCase(CaseDto testCase)
     {
         Navigation.NavigateTo($"/testing/project-cases/{testCase.Id}/edit");
     }
@@ -821,7 +820,7 @@
             return;
         }
         
-        currentTestCase = new ProjectCaseDto 
+        currentTestCase = new CaseDto 
         { 
             ProjectId = selectedProjectId,
             CategoryId = selectedCategoryId == 0 ? (long?)null : selectedCategoryId
@@ -836,7 +835,7 @@
         await LoadProjectData();
     }
 
-    private async Task CopyTestCase(ProjectCaseDto testCase)
+    private async Task CopyTestCase(CaseDto testCase)
     {
         try
         {
@@ -850,10 +849,10 @@
         }
     }
 
-    private void ShowTemplateSettingsModal(ProjectCaseDto testCase)
+    private void ShowTemplateSettingsModal(CaseDto testCase)
     {
         var json = System.Text.Json.JsonSerializer.Serialize(testCase);
-        editingTestCase = System.Text.Json.JsonSerializer.Deserialize<ProjectCaseDto>(json)!;
+        editingTestCase = System.Text.Json.JsonSerializer.Deserialize<CaseDto>(json)!;
         availableTemplates = testCases.Where(c => c.IsTemplate && c.Id != editingTestCase.Id).ToList();
         showTemplateSettingsModal = true;
     }
@@ -1039,9 +1038,9 @@
         }
     }
 
-    private void ShowEditBasicInfoModal(ProjectCaseDto testCase)
+    private void ShowEditBasicInfoModal(CaseDto testCase)
     {
-        currentTestCase = new ProjectCaseDto
+        currentTestCase = new CaseDto
         {
             Id = testCase.Id,
             CaseNumber = testCase.CaseNumber,
@@ -1053,16 +1052,14 @@
             Order = testCase.Order,
             Status = testCase.Status,
             Tags = new List<string>(testCase.Tags),
-            Steps = testCase.Steps,
-            CreatedAt = testCase.CreatedAt,
-            CreatedBy = testCase.CreatedBy
+            Steps = testCase.Steps
         };
         
         isEditingBasicInfo = true;
         showBasicInfoModal = true;
     }
     
-    private void EditTestCaseSteps(ProjectCaseDto testCase)
+    private void EditTestCaseSteps(CaseDto testCase)
     {
         Navigation.NavigateTo($"/testing/project-cases/{testCase.Id}/steps");
     }
@@ -1070,12 +1067,12 @@
     private Task HideBasicInfoModal()
     {
         showBasicInfoModal = false;
-        currentTestCase = new ProjectCaseDto();
+        currentTestCase = new CaseDto();
         isEditingBasicInfo = false;
         return Task.CompletedTask;
     }
     
-    private async Task SaveBasicInfo(ProjectCaseDto testCase)
+    private async Task SaveBasicInfo(CaseDto testCase)
     {
         try
         {
@@ -1101,7 +1098,7 @@
         }
     }
     
-    private async Task SaveBasicInfoOnly(ProjectCaseDto testCase)
+    private async Task SaveBasicInfoOnly(CaseDto testCase)
     {
         try
         {

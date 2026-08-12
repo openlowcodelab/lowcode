@@ -69,7 +69,7 @@ public static class BackgroundTaskMappers
     }
 
     // === JobExecutionRecord ===
-    public static JobExecutionRecordDto ToDto(this JobExecutionRecordEntity e) => new()
+    public static JobCaseExecutionRecordDto ToDto(this JobExecutionRecordEntity e) => new()
     {
         Id = e.Id,
         JobId = e.JobId,

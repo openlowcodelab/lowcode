@@ -1,8 +1,8 @@
+using H.Assistant.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Volo.Abp.Data;
 using Volo.Abp.DependencyInjection;
 using Volo.Abp.Domain.Repositories;
-using H.Assistant.EntityFrameworkCore;
 
 namespace H.Assistant.Data;
 
@@ -31,7 +31,7 @@ public class AgentSkillDataSeeder : IDataSeedContributor, ITransientDependency
     {
         var query = await _skillRepository.GetQueryableAsync();
         var existingSkills = await query.ToListAsync();
-        
+
         // 定义所有需要的 Skill
         var skillDefinitions = new List<SkillEntity>
         {

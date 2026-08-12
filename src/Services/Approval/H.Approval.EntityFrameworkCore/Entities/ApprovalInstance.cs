@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using H.Approval.Application.Contracts;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.MultiTenancy;

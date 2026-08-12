@@ -1,12 +1,11 @@
-﻿using H.Util.Ids;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace H.LowCode.MetaSchema;
 
 public class MenuSchema : MetaSchemaBase
 {
     [JsonPropertyName("aid")]
-    public required string AppId {  get; set; }
+    public required string AppId { get; set; }
 
     public required string Id { get; set; }
 
@@ -23,7 +22,7 @@ public class MenuSchema : MetaSchemaBase
     [JsonPropertyName("type")]
     public int MenuType { get; set; }
 
-    public string? Icon {  get; set; }
+    public string? Icon { get; set; }
 
     /// <summary>
     /// 菜单地址

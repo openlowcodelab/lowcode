@@ -85,12 +85,12 @@
 </HModal>
 
 @code {
-    private List<JobExecutionRecordDto> records = new();
+    private List<JobCaseExecutionRecordDto> records = new();
     private bool loading;
     private string statusFilter = string.Empty;
 
     private bool showModal;
-    private JobExecutionRecordDto? detail;
+    private JobCaseExecutionRecordDto? detail;
 
     protected override async Task OnInitializedAsync() => await LoadData();
 
@@ -111,7 +111,7 @@
         finally { loading = false; }
     }
 
-    private void ShowDetail(JobExecutionRecordDto r)
+    private void ShowDetail(JobCaseExecutionRecordDto r)
     {
         detail = r;
         showModal = true;

@@ -67,7 +67,7 @@ public class MigrationCurrentApp : ICurrentApp
         {
             // 设置当前 AppId
             SetAppId(appId);
-            
+
             try
             {
                 await action(appId);
@@ -78,7 +78,7 @@ public class MigrationCurrentApp : ICurrentApp
                 throw;
             }
         }
-        
+
         // 清空当前 AppId
         SetAppId(null);
     }

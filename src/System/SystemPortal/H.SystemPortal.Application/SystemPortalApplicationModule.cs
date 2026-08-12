@@ -1,4 +1,3 @@
-using H.SystemPortal.Application.Contracts;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Modularity;
 

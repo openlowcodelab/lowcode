@@ -10,7 +10,7 @@ public class AssistantMapperProfile : Profile
     {
         CreateMap<LLMEntity, LLMDto>();
         CreateMap<CreateLLMDto, LLMEntity>();
-        
+
         // Chat session & message mapping
         CreateMap<ChatEntity, ChatDto>();
         CreateMap<ChatMessageEntity, ChatMessageDto>();

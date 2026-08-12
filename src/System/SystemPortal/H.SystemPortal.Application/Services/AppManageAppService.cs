@@ -50,7 +50,7 @@ public class AppManageAppService : ApplicationService, IAppManageAppService
         {
             var appData = LoadAppData();
             var category = appData.AppCategories.FirstOrDefault(c => c.CategoryName == categoryId);
-            
+
             if (category == null)
             {
                 // 创建新分类
@@ -61,22 +61,22 @@ public class AppManageAppService : ApplicationService, IAppManageAppService
                 };
                 appData.AppCategories.Add(category);
             }
-            
+
             if (category.Apps == null)
             {
                 category.Apps = [];
             }
-            
+
             // 检查 ID 是否已存在
             if (category.Apps.Any(a => a.Id == app.Id))
             {
                 throw new Exception($"应用 ID '{app.Id}' 已存在");
             }
-            
+
             category.Apps.Add(app);
-            
+
             await SaveAppDataAsync(appData);
-            
+
             return true;
         }
         catch (Exception ex)
@@ -94,21 +94,21 @@ public class AppManageAppService : ApplicationService, IAppManageAppService
         try
         {
             var appData = LoadAppData();
-            
+
             foreach (var category in appData.AppCategories)
             {
                 var appIndex = category.Apps?.FindIndex(a => a.Id == appId) ?? -1;
-                
+
                 if (appIndex >= 0 && category.Apps != null)
                 {
                     category.Apps[appIndex] = updatedApp;
-                    
+
                     await SaveAppDataAsync(appData);
-                    
+
                     return true;
                 }
             }
-            
+
             throw new Exception($"应用 ID '{appId}' 不存在");
         }
         catch (Exception ex)
@@ -126,21 +126,21 @@ public class AppManageAppService : ApplicationService, IAppManageAppService
         try
         {
             var appData = LoadAppData();
-            
+
             foreach (var category in appData.AppCategories)
             {
                 var app = category.Apps?.FirstOrDefault(a => a.Id == appId);
-                
+
                 if (app != null && category.Apps != null)
                 {
                     category.Apps.Remove(app);
-                    
+
                     await SaveAppDataAsync(appData);
-                    
+
                     return true;
                 }
             }
-            
+
             throw new Exception($"应用 ID '{appId}' 不存在");
         }
         catch (Exception ex)
@@ -158,20 +158,20 @@ public class AppManageAppService : ApplicationService, IAppManageAppService
         try
         {
             var appData = LoadAppData();
-            
+
             if (appData.AppCategories.Any(c => c.CategoryName == categoryName))
             {
                 throw new Exception($"分类 '{categoryName}' 已存在");
             }
-            
+
             appData.AppCategories.Add(new AppCategoryInfo
             {
                 CategoryName = categoryName,
                 Apps = new List<AppItemInfo>()
             });
-            
+
             await SaveAppDataAsync(appData);
-            
+
             return true;
         }
         catch (Exception ex)
@@ -190,21 +190,21 @@ public class AppManageAppService : ApplicationService, IAppManageAppService
         {
             var appData = LoadAppData();
             var category = appData.AppCategories.FirstOrDefault(c => c.CategoryName == categoryName);
-            
+
             if (category == null)
             {
                 throw new Exception($"分类 '{categoryName}' 不存在");
             }
-            
+
             if (category.Apps != null && category.Apps.Count > 0)
             {
                 throw new Exception($"分类 '{categoryName}' 下还有应用，无法删除");
             }
-            
+
             appData.AppCategories.Remove(category);
-            
+
             await SaveAppDataAsync(appData);
-            
+
             return true;
         }
         catch (Exception ex)
@@ -223,9 +223,9 @@ public class AppManageAppService : ApplicationService, IAppManageAppService
         {
             return new AppData();
         }
-        
+
         var jsonContent = File.ReadAllText(_jsonFilePath);
-                
+
         var appData = jsonContent.FromJson<AppData>();
         return appData ?? new AppData();
     }
@@ -240,16 +240,16 @@ public class AppManageAppService : ApplicationService, IAppManageAppService
             WriteIndented = true,
             Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
         };
-        
+
         var jsonContent = JsonSerializer.Serialize(appData, options);
-        
+
         // 确保目录存在
         var directory = Path.GetDirectoryName(_jsonFilePath);
         if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
         {
             Directory.CreateDirectory(directory);
         }
-        
+
         await File.WriteAllTextAsync(_jsonFilePath, jsonContent);
     }
 

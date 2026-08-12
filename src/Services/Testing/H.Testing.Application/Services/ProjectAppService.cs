@@ -1,4 +1,3 @@
-using System.Text.Json;
 using H.Assistant.Application.Contracts;
 using H.Testing.Application.Contracts;
 using H.Testing.Application.Mapping;
@@ -13,24 +12,24 @@ namespace H.Testing.Application;
 /// </summary>
 public class ProjectAppService : ApplicationService, IProjectAppService
 {
-    private readonly IRepository<TestingProject, long> _repository;
-    private readonly IRepository<TestingProjectService, long> _serviceRepository;
-    private readonly IRepository<TestingProjectEnvironment, long> _environmentRepository;
-    private readonly IRepository<TestingEnvironmentServiceConfig, long> _serviceConfigRepository;
-    private readonly IRepository<TestingProjectCaseCategory, long> _categoryRepository;
-    private readonly IRepository<TestingProjectCase, long> _caseRepository;
-    private readonly IRepository<TestingExecutionRecord, long> _executionRepository;
+    private readonly IRepository<ProjectEntity, long> _repository;
+    private readonly IRepository<ProjectServiceEntity, long> _serviceRepository;
+    private readonly IRepository<ProjectEnvEntity, long> _environmentRepository;
+    private readonly IRepository<ProjectEnvConfigEntity, long> _serviceConfigRepository;
+    private readonly IRepository<CaseCategoryEntity, long> _categoryRepository;
+    private readonly IRepository<CaseEntity, long> _caseRepository;
+    private readonly IRepository<CaseExecutionRecordEntity, long> _executionRepository;
     private readonly IProjectEnvironmentAppService _environmentService;
     private readonly IKnowledgeBaseAppService _knowledgeBaseService;
 
     public ProjectAppService(
-        IRepository<TestingProject, long> repository,
-        IRepository<TestingProjectService, long> serviceRepository,
-        IRepository<TestingProjectEnvironment, long> environmentRepository,
-        IRepository<TestingEnvironmentServiceConfig, long> serviceConfigRepository,
-        IRepository<TestingProjectCaseCategory, long> categoryRepository,
-        IRepository<TestingProjectCase, long> caseRepository,
-        IRepository<TestingExecutionRecord, long> executionRepository,
+        IRepository<ProjectEntity, long> repository,
+        IRepository<ProjectServiceEntity, long> serviceRepository,
+        IRepository<ProjectEnvEntity, long> environmentRepository,
+        IRepository<ProjectEnvConfigEntity, long> serviceConfigRepository,
+        IRepository<CaseCategoryEntity, long> categoryRepository,
+        IRepository<CaseEntity, long> caseRepository,
+        IRepository<CaseExecutionRecordEntity, long> executionRepository,
         IProjectEnvironmentAppService environmentService,
         IKnowledgeBaseAppService knowledgeBaseService)
     {
@@ -60,7 +59,7 @@ public class ProjectAppService : ApplicationService, IProjectAppService
 
     public async Task<long> CreateAsync(ProjectDto project)
     {
-        var entity = new TestingProject();
+        var entity = new ProjectEntity();
         project.Apply(entity);
         entity = await _repository.InsertAsync(entity, autoSave: true);
         return entity.Id;
@@ -94,7 +93,7 @@ public class ProjectAppService : ApplicationService, IProjectAppService
         var envIds = await AsyncExecuter.ToListAsync(envQuery.Where(e => e.ProjectId == id).Select(e => e.Id));
         if (envIds.Count > 0)
         {
-            await _serviceConfigRepository.DeleteAsync(c => envIds.Contains(c.EnvironmentId), autoSave: true);
+            await _serviceConfigRepository.DeleteAsync(c => envIds.Contains(c.EnvId), autoSave: true);
         }
 
         await _caseRepository.DeleteAsync(c => c.ProjectId == id, autoSave: true);
@@ -110,18 +109,16 @@ public class ProjectAppService : ApplicationService, IProjectAppService
         return true;
     }
 
-    private async Task TryDeleteLinkedKnowledgeBaseAsync(TestingProject entity)
+    private async Task TryDeleteLinkedKnowledgeBaseAsync(ProjectEntity entity)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(entity.MetadataJson))
+            if (string.IsNullOrWhiteSpace(entity.KnowledgeBaseId))
             {
                 return;
             }
 
-            using var document = JsonDocument.Parse(entity.MetadataJson);
-            if (document.RootElement.TryGetProperty("knowledgeBaseId", out var property)
-                && Guid.TryParse(property.GetString()?.Trim().Trim('"'), out var knowledgeBaseId))
+            if (Guid.TryParse(entity.KnowledgeBaseId, out var knowledgeBaseId))
             {
                 await _knowledgeBaseService.DeleteAsync(knowledgeBaseId);
             }
@@ -132,7 +129,7 @@ public class ProjectAppService : ApplicationService, IProjectAppService
         }
     }
 
-    public async Task<List<ProjectEnvironmentDto>> GetProjectEnvironmentsAsync(long projectId)
+    public async Task<List<ProjectEnvDto>> GetProjectEnvironmentsAsync(long projectId)
     {
         return await _environmentService.GetByProjectIdAsync(projectId);
     }

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace H.LowCode.DesignEngineBase;
+﻿namespace H.LowCode.DesignEngineBase;
 
 public class DragDropElementDimensions
 {

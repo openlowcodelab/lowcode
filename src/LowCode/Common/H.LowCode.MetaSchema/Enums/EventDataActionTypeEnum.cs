@@ -1,5 +1,3 @@
-using System;
-
 namespace H.LowCode.MetaSchema;
 
 public enum EventDataActionTypeEnum
@@ -11,7 +9,7 @@ public enum EventDataActionTypeEnum
     CancelEdit = 40, // 取消编辑
     AddRow = 50, // 添加行
     RefreshData = 60, // 刷新数据
-    
+
     // List 数据操作
     MoveUp = 70, // 上移
     MoveDown = 80, // 下移

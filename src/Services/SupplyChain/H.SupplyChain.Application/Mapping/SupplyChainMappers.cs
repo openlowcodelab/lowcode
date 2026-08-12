@@ -150,22 +150,22 @@ public static class SupplyChainMappers
     // === SupplierSkuMapping ===
     public static SupplierSkuMappingDto ToDto(
         this SupplierSkuMappingEntity e, string skuCode, string supplierCode) => new()
-    {
-        Id = e.Id,
-        SkuId = e.SkuId,
-        SkuCode = skuCode,
-        SupplierId = e.SupplierId,
-        SupplierCode = supplierCode,
-        SupplierSkuCode = e.SupplierSkuCode,
-        SupplierSkuName = e.SupplierSkuName,
-        SupplierPrice = e.SupplierPrice,
-        IsEnabled = e.IsEnabled,
-        Remark = e.Remark,
-        CreationTime = e.CreationTime,
-        CreatorId = e.CreatorId,
-        LastModificationTime = e.LastModificationTime,
-        LastModifierId = e.LastModifierId
-    };
+        {
+            Id = e.Id,
+            SkuId = e.SkuId,
+            SkuCode = skuCode,
+            SupplierId = e.SupplierId,
+            SupplierCode = supplierCode,
+            SupplierSkuCode = e.SupplierSkuCode,
+            SupplierSkuName = e.SupplierSkuName,
+            SupplierPrice = e.SupplierPrice,
+            IsEnabled = e.IsEnabled,
+            Remark = e.Remark,
+            CreationTime = e.CreationTime,
+            CreatorId = e.CreatorId,
+            LastModificationTime = e.LastModificationTime,
+            LastModifierId = e.LastModifierId
+        };
 
     public static SupplierSkuMappingEntity ToEntity(this CreateSupplierSkuMappingDto input) => new()
     {
@@ -237,22 +237,22 @@ public static class SupplyChainMappers
     // === SupplierInterfaceMapping ===
     public static SupplierInterfaceMappingDto ToDto(
         this SupplierInterfaceMappingEntity e, string supplierCode, string interfaceCode) => new()
-    {
-        Id = e.Id,
-        SupplierId = e.SupplierId,
-        SupplierCode = supplierCode,
-        InterfaceId = e.InterfaceId,
-        InterfaceCode = interfaceCode,
-        SupplierApiUrl = e.SupplierApiUrl,
-        RequestMappingJson = e.RequestMappingJson,
-        ResponseMappingJson = e.ResponseMappingJson,
-        IsEnabled = e.IsEnabled,
-        Remark = e.Remark,
-        CreationTime = e.CreationTime,
-        CreatorId = e.CreatorId,
-        LastModificationTime = e.LastModificationTime,
-        LastModifierId = e.LastModifierId
-    };
+        {
+            Id = e.Id,
+            SupplierId = e.SupplierId,
+            SupplierCode = supplierCode,
+            InterfaceId = e.InterfaceId,
+            InterfaceCode = interfaceCode,
+            SupplierApiUrl = e.SupplierApiUrl,
+            RequestMappingJson = e.RequestMappingJson,
+            ResponseMappingJson = e.ResponseMappingJson,
+            IsEnabled = e.IsEnabled,
+            Remark = e.Remark,
+            CreationTime = e.CreationTime,
+            CreatorId = e.CreatorId,
+            LastModificationTime = e.LastModificationTime,
+            LastModifierId = e.LastModifierId
+        };
 
     public static SupplierInterfaceMappingEntity ToEntity(this CreateSupplierInterfaceMappingDto input) => new()
     {

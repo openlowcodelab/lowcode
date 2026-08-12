@@ -1,6 +1,6 @@
-using System.Text.Json;
 using H.Assistant.Application.Contracts;
 using H.Testing.Application.Contracts;
+using System.Text.Json;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
 
@@ -107,7 +107,7 @@ public class TestingAiAppService : ApplicationService, ITestingAiAppService
         // 2. 创建环境与各服务的基础地址配置
         foreach (var aiEnv in generated.Environments.Where(e => !string.IsNullOrWhiteSpace(e.Name)))
         {
-            var environmentId = await _environmentService.CreateAsync(new ProjectEnvironmentDto
+            var environmentId = await _environmentService.CreateAsync(new ProjectEnvDto
             {
                 ProjectId = projectId,
                 Name = Truncate(aiEnv.Name, 100),
@@ -123,7 +123,7 @@ public class TestingAiAppService : ApplicationService, ITestingAiAppService
                     continue;
                 }
 
-                await _serviceConfigService.CreateEnvironmentServiceConfigAsync(new EnvironmentServiceConfigDto
+                await _serviceConfigService.CreateEnvironmentServiceConfigAsync(new ProjectEnvConfigDto
                 {
                     EnvironmentId = environmentId,
                     ProjectServiceId = projectServiceId,
@@ -149,7 +149,7 @@ public class TestingAiAppService : ApplicationService, ITestingAiAppService
 
             foreach (var aiCase in category.Cases.Where(c => !string.IsNullOrWhiteSpace(c.Name)))
             {
-                await _caseService.CreateAsync(new ProjectCaseDto
+                await _caseService.CreateAsync(new CaseDto
                 {
                     CaseNumber = caseNumberGenerator.Next(),
                     Name = Truncate(aiCase.Name, MaxNameLength),
@@ -249,7 +249,7 @@ public class TestingAiAppService : ApplicationService, ITestingAiAppService
         var caseNumberGenerator = new CaseNumberGenerator(await _caseService.GetByProjectIdAsync(projectId));
         foreach (var aiCase in plan.AddCases.Where(c => !string.IsNullOrWhiteSpace(c.Name)))
         {
-            await _caseService.CreateAsync(new ProjectCaseDto
+            await _caseService.CreateAsync(new CaseDto
             {
                 CaseNumber = caseNumberGenerator.Next(),
                 Name = Truncate(aiCase.Name, MaxNameLength),
@@ -733,7 +733,7 @@ public class TestingAiAppService : ApplicationService, ITestingAiAppService
         private readonly string _prefix = $"TC{DateTime.Now:yyMMdd}";
         private int _sequence;
 
-        public CaseNumberGenerator(IEnumerable<ProjectCaseDto> existingCases)
+        public CaseNumberGenerator(IEnumerable<CaseDto> existingCases)
         {
             _sequence = existingCases
                 .Select(c => c.CaseNumber)

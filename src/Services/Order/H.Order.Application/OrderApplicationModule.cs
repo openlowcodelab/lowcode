@@ -1,5 +1,3 @@
-using DotNetCore.CAP;
-using DotNetCore.CAP.SqlServer;
 using H.Order.Application.Contracts;
 using H.Order.Application.Services;
 using H.Order.EntityFrameworkCore;

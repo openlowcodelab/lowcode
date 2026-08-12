@@ -84,12 +84,12 @@
 
 @code {
     [Parameter] public bool ShowModal { get; set; }
-    [Parameter] public ProjectCaseDto CurrentTestCase { get; set; } = new();
+    [Parameter] public CaseDto CurrentTestCase { get; set; } = new();
     [Parameter] public List<ProjectCaseCategory> Categories { get; set; } = new();
     [Parameter] public bool IsEditing { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
-    [Parameter] public EventCallback<ProjectCaseDto> OnSave { get; set; }
-    [Parameter] public EventCallback<ProjectCaseDto> OnSaveOnly { get; set; }
+    [Parameter] public EventCallback<CaseDto> OnSave { get; set; }
+    [Parameter] public EventCallback<CaseDto> OnSaveOnly { get; set; }
 
     private readonly List<string> AvailableLevels = new() { "P0", "P1", "P2", "P3" };
 

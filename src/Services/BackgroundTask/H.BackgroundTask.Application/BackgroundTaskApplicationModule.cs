@@ -1,4 +1,3 @@
-using H.BackgroundTask.Application.Contracts;
 using H.BackgroundTask.Application.Services;
 using H.BackgroundTask.EntityFrameworkCore;
 using Hangfire;

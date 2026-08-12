@@ -1,8 +1,8 @@
+using H.Testing.Application.Contracts;
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
-using H.Testing.Application.Contracts;
-using System.Text.RegularExpressions;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 using Volo.Abp.Application.Services;
 
 namespace H.Testing.Application;
@@ -36,7 +36,7 @@ public class PlaywrightRecorderAppService : ApplicationService, IPlaywrightRecor
         try
         {
             _logger.LogInformation("Starting Playwright recorder...");
-            
+
             // 创建临时文件来保存录制的代码
             var tempDir = Path.Combine(Path.GetTempPath(), "playwright-recordings");
             Directory.CreateDirectory(tempDir);
@@ -45,7 +45,7 @@ public class PlaywrightRecorderAppService : ApplicationService, IPlaywrightRecor
             // 构建 Playwright 录制命令
             var playwrightPath = GetPlaywrightPath();
             var arguments = "";
-            
+
             // 检查是否使用node.exe
             if (playwrightPath.EndsWith("node.exe"))
             {
@@ -59,13 +59,13 @@ public class PlaywrightRecorderAppService : ApplicationService, IPlaywrightRecor
                 // 直接使用playwright命令
                 arguments = "codegen --target=csharp";
             }
-            
+
             // 添加优化的录制参数
             arguments += $" --output=\"{recordingFile}\"";
             arguments += " --viewport-size=1280,720";  // 设置固定的视口大小
             arguments += " --timeout=30000";           // 设置30秒超时
             arguments += " --ignore-https-errors";     // 忽略HTTPS错误
-            
+
             // 如果有起始URL，添加到参数中
             if (!string.IsNullOrEmpty(startUrl))
             {
@@ -87,7 +87,7 @@ public class PlaywrightRecorderAppService : ApplicationService, IPlaywrightRecor
             };
 
             _recorderProcess = Process.Start(processStartInfo);
-            
+
             if (_recorderProcess == null)
             {
                 throw new InvalidOperationException("Failed to start Playwright process");
@@ -99,7 +99,7 @@ public class PlaywrightRecorderAppService : ApplicationService, IPlaywrightRecor
             _logger.LogInformation($"Recording file will be saved to: {recordingFile}");
             _logger.LogInformation($"Working directory: {tempDir}");
             _logger.LogInformation($"Full command: {playwrightPath} {arguments}");
-            
+
             // 启动异步读取输出和错误流
             _ = Task.Run(async () =>
             {
@@ -119,7 +119,7 @@ public class PlaywrightRecorderAppService : ApplicationService, IPlaywrightRecor
                     _logger.LogWarning($"Error reading Playwright output: {ex.Message}");
                 }
             });
-            
+
             _ = Task.Run(async () =>
             {
                 try
@@ -138,17 +138,17 @@ public class PlaywrightRecorderAppService : ApplicationService, IPlaywrightRecor
                     _logger.LogWarning($"Error reading Playwright error stream: {ex.Message}");
                 }
             });
-            
+
             // 等待一下让进程启动
             await Task.Delay(3000);
-            
+
             // 检查进程是否还在运行
             if (_recorderProcess.HasExited)
             {
                 _logger.LogError($"Playwright process exited immediately with code: {_recorderProcess.ExitCode}");
                 throw new InvalidOperationException($"Playwright process exited with code: {_recorderProcess.ExitCode}");
             }
-            
+
             // 返回录制文件路径作为会话ID
             return new StartRecordingResponse
             {
@@ -174,34 +174,34 @@ public class PlaywrightRecorderAppService : ApplicationService, IPlaywrightRecor
         try
         {
             _logger.LogInformation("Stopping Playwright recorder...");
-            
+
             _isRecording = false;
 
             // 停止录制进程
             if (_recorderProcess != null && !_recorderProcess.HasExited)
             {
                 _logger.LogInformation($"Terminating Playwright process with PID: {_recorderProcess.Id}");
-                
+
                 // 尝试优雅关闭
                 _recorderProcess.CloseMainWindow();
-                
+
                 // 等待一段时间让进程自然退出
                 if (!_recorderProcess.WaitForExit(5000))
                 {
                     _logger.LogInformation("Process did not exit gracefully, forcing termination");
                     _recorderProcess.Kill();
                 }
-                
+
                 _recorderProcess.Dispose();
                 _recorderProcess = null;
             }
 
             // 等待文件写入完成，并检查文件是否存在
             _logger.LogInformation($"Waiting for recording file: {sessionId}");
-            
+
             var maxWaitTime = TimeSpan.FromSeconds(10);
             var startTime = DateTime.Now;
-            
+
             while (DateTime.Now - startTime < maxWaitTime)
             {
                 if (File.Exists(sessionId))
@@ -219,7 +219,7 @@ public class PlaywrightRecorderAppService : ApplicationService, IPlaywrightRecor
                 var recordedCode = await File.ReadAllTextAsync(sessionId);
                 _logger.LogInformation($"Recording stopped. Code length: {recordedCode.Length}");
                 _logger.LogInformation($"Recording file content preview: {recordedCode.Substring(0, Math.Min(200, recordedCode.Length))}...");
-                
+
                 // 清理临时文件
                 try
                 {
@@ -263,7 +263,7 @@ public class PlaywrightRecorderAppService : ApplicationService, IPlaywrightRecor
     public List<ProjectCaseStep> ParseRecordedCode(string recordedCode)
     {
         var steps = new List<ProjectCaseStep>();
-        
+
         if (string.IsNullOrEmpty(recordedCode))
             return steps;
 
@@ -485,7 +485,7 @@ public class PlaywrightRecorderAppService : ApplicationService, IPlaywrightRecor
             return "text";
         if (selector.Contains("[") && selector.Contains("]"))
             return "css";
-        
+
         return "css"; // 默认为CSS选择器
     }
 
@@ -496,10 +496,10 @@ public class PlaywrightRecorderAppService : ApplicationService, IPlaywrightRecor
     {
         // 获取当前应用程序的基础目录
         var baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
-        
+
         // 构建 Playwright node.exe 路径
         var nodePath = Path.Combine(baseDirectory, ".playwright", "node", "win32_x64", "node.exe");
-        
+
         if (File.Exists(nodePath))
         {
             _logger.LogInformation($"Found Playwright node.exe at: {nodePath}");
@@ -508,11 +508,11 @@ public class PlaywrightRecorderAppService : ApplicationService, IPlaywrightRecor
 
         // 如果找不到，记录错误并尝试全局路径
         _logger.LogWarning($"Playwright node.exe not found at: {nodePath}");
-        
+
         // 尝试全局安装路径
         var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         var playwrightPath = Path.Combine(userProfile, ".dotnet", "tools", "playwright.exe");
-        
+
         if (File.Exists(playwrightPath))
         {
             _logger.LogInformation($"Found global Playwright at: {playwrightPath}");
@@ -540,17 +540,17 @@ public class PlaywrightRecorderAppService : ApplicationService, IPlaywrightRecor
         }
 
         _recorderProcess?.Dispose();
-        
+
         if (_context != null)
         {
             await _context.DisposeAsync();
         }
-        
+
         if (_browser != null)
         {
             await _browser.DisposeAsync();
         }
-        
+
         _playwright?.Dispose();
     }
 }

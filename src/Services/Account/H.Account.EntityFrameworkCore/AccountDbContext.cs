@@ -9,7 +9,7 @@ namespace H.Account.EntityFrameworkCore;
 [ConnectionStringName("AccountDb")]
 public class AccountDbContext : AbpDbContext<AccountDbContext>
 {
-    public AccountDbContext(DbContextOptions<AccountDbContext> options) 
+    public AccountDbContext(DbContextOptions<AccountDbContext> options)
         : base(options)
     {
     }
@@ -21,7 +21,7 @@ public class AccountDbContext : AbpDbContext<AccountDbContext>
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        
+
         // 配置 Identity 实体
         modelBuilder.ConfigureIdentity();
     }

@@ -9,7 +9,7 @@ public class AppRemoteServiceRepository : RemoteServiceRepositoryBase, IAppRepos
 {
     public AppRemoteServiceRepository(IOptions<MetaOption> metaOption)
     {
-        
+
     }
 
     public bool? IsChangeTrackingEnabled => false;

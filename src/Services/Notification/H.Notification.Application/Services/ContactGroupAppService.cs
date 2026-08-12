@@ -1,7 +1,7 @@
-using Microsoft.EntityFrameworkCore;
+using H.Abp.Application.Contracts;
 using H.Notification.Application.Contracts;
 using H.Notification.EntityFrameworkCore;
-using H.Abp.Application.Contracts;
+using Microsoft.EntityFrameworkCore;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 

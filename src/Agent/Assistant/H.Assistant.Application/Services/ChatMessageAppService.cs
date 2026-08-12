@@ -1,10 +1,10 @@
 using H.Abp.Application.Contracts;
-using Volo.Abp.Application.Services;
 using H.Assistant.Application.Contracts;
 using H.Assistant.Core;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System.Text.Json;
+using Volo.Abp.Application.Services;
 
 namespace H.Assistant.Application;
 
@@ -14,9 +14,9 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
     private readonly AgentFactory _agentFactory;
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<ChatMessageAppService> _logger;
-    
+
     public ChatMessageAppService(
-        IChatAppService sessionAppService, 
+        IChatAppService sessionAppService,
         AgentFactory agentFactory,
         IServiceProvider serviceProvider,
         ILogger<ChatMessageAppService> logger)
@@ -26,12 +26,12 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
         _serviceProvider = serviceProvider;
         _logger = logger;
     }
-    
+
     public async Task<ChatResponseDto> SendMessageAsync(SendChatMessageInputDto input)
     {
         var agentType = input.AgentType ?? "general";
         Guid sessionId;
-        
+
         // 如果是新会话（SessionId 为 null），创建新会话
         if (!input.SessionId.HasValue)
         {
@@ -43,7 +43,7 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
             // 使用已存在的会话
             sessionId = input.SessionId.Value;
         }
-        
+
         // 添加用户消息
         var userMessage = new ChatMessageDto
         {
@@ -53,16 +53,16 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
             Content = input.Message,
             CreationTime = DateTime.UtcNow
         };
-        
+
         // 获取历史消息（在添加当前用户消息之前，避免 ProcessMessageAsync 中重复添加）
         var history = await _sessionAppService.GetMessagesAsync(sessionId);
         var conversationHistory = history.Select(m => $"{m.Role}: {m.Content}").ToList();
-        
+
         await _sessionAppService.AddMessageAsync(sessionId, userMessage);
-        
+
         // 获取 Assistant 实例
         IAgentInstance? agent = await _agentFactory.CreateAgentAsync(agentType, input.ModelConfigId);
-        
+
         if (agent == null)
         {
             _logger.LogError("无法创建 Agent 实例，agentType={AgentType}, modelConfigId={ModelConfigId}", agentType, input.ModelConfigId);
@@ -70,10 +70,10 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
                 $"无法创建 Assistant 实例: {agentType}。" +
                 $"请检查: 1) LLM 配置是否存在且已启用; 2) API Key 是否正确配置; 3) Agent 定义是否存在。");
         }
-        
+
         // 处理消息
         var response = await agent.ProcessMessageAsync(input.Message, conversationHistory);
-        
+
         // 添加 AI 响应消息
         var aiMessage = new ChatMessageDto
         {
@@ -84,10 +84,10 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
             CreationTime = DateTime.UtcNow
         };
         await _sessionAppService.AddMessageAsync(sessionId, aiMessage);
-        
+
         // Trigger memory extraction in background
         _ = Task.Run(() => TryExtractMemoryAsync(sessionId));
-        
+
         return new ChatResponseDto
         {
             SessionId = sessionId,
@@ -97,12 +97,12 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
             ToolCalls = agent.GetAvailableTools()
         };
     }
-    
+
     public async IAsyncEnumerable<string> SendMessageStreamAsync(SendChatMessageInputDto input)
     {
         var agentType = input.AgentType ?? "general";
         Guid sessionId;
-        
+
         // 如果是新会话（SessionId 为 null），创建新会话
         if (!input.SessionId.HasValue)
         {
@@ -114,7 +114,7 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
             // 使用已存在的会话
             sessionId = input.SessionId.Value;
         }
-        
+
         // 添加用户消息
         var userMessage = new ChatMessageDto
         {
@@ -124,13 +124,13 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
             Content = input.Message,
             CreationTime = DateTime.UtcNow
         };
-        
+
         // 获取历史消息
         var history = await _sessionAppService.GetMessagesAsync(sessionId);
         var conversationHistory = history.Select(m => $"{m.Role}: {m.Content}").ToList();
-        
+
         await _sessionAppService.AddMessageAsync(sessionId, userMessage);
-        
+
         // 获取 Assistant 实例
         IAgentInstance? agent;
         if (input.ModelConfigId.HasValue)
@@ -141,22 +141,22 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
         {
             agent = await _agentFactory.CreateAgentAsync(agentType, input.ProviderName);
         }
-        
+
         if (agent == null)
         {
-            _logger.LogError("无法创建 Agent 实例(流式)，agentType={AgentType}, providerName={ProviderName}, modelConfigId={ModelConfigId}", 
+            _logger.LogError("无法创建 Agent 实例(流式)，agentType={AgentType}, providerName={ProviderName}, modelConfigId={ModelConfigId}",
                 agentType, input.ProviderName, input.ModelConfigId);
             throw new InvalidOperationException(
                 $"无法创建 Assistant 实例: {agentType}。" +
                 $"请检查: 1) LLM 配置是否存在且已启用; 2) API Key 是否正确配置; 3) Agent 定义是否存在。");
         }
-        
+
         // 如果 Assistant 支持流式响应，使用流式处理
         if (agent is IStreamingAgent streamingAgent)
         {
             var fullResponse = string.Empty;
             var reactSteps = new List<object>();
-            
+
             // 逐块接收 ReAct 事件并推送给客户端
             await foreach (var chunk in streamingAgent.ProcessMessageStreamAsync(input.Message, conversationHistory))
             {
@@ -165,18 +165,18 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
                 {
                     using var doc = JsonDocument.Parse(chunk);
                     var root = doc.RootElement;
-                    
+
                     if (root.TryGetProperty("type", out var typeProp))
                     {
                         var eventType = typeProp.GetString();
-                        
+
                         // 累积最终回答内容（来自 answer 事件）
                         if (eventType == "answer" && root.TryGetProperty("content", out var contentProp))
                         {
                             var content = contentProp.GetString() ?? "";
                             fullResponse += content;
                         }
-                        
+
                         // 收集 ReAct 步骤数据（thinking、tool_call、tool_result）
                         if (eventType == "thinking" || eventType == "tool_call" || eventType == "tool_result")
                         {
@@ -186,7 +186,7 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
                                 ["type"] = eventType,
                                 ["iteration"] = iteration
                             };
-                            
+
                             if (eventType == "thinking" && root.TryGetProperty("content", out var tc))
                             {
                                 stepData["content"] = tc.GetString();
@@ -202,7 +202,7 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
                                 if (root.TryGetProperty("result", out var res)) stepData["result"] = res.GetString();
                                 if (root.TryGetProperty("isError", out var ie)) stepData["isError"] = ie.GetBoolean();
                             }
-                            
+
                             reactSteps.Add(stepData);
                         }
                     }
@@ -212,15 +212,15 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
                     // 非 JSON 格式（向后兼容旧格式），直接累积
                     fullResponse += chunk;
                 }
-                
+
                 yield return chunk;
             }
-            
+
             // 保存完整的 AI 响应消息（将 ReAct 步骤嵌入 Content 字段）
             if (!string.IsNullOrWhiteSpace(fullResponse))
             {
                 var contentToSave = fullResponse;
-                
+
                 // 如果有 ReAct 步骤，将其与最终回答一起打包为 JSON 格式
                 if (reactSteps.Count > 0)
                 {
@@ -229,12 +229,12 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
                         ["answer"] = fullResponse,
                         ["reactSteps"] = reactSteps
                     };
-                    contentToSave = JsonSerializer.Serialize(enrichedContent, new JsonSerializerOptions 
-                    { 
-                        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping 
+                    contentToSave = JsonSerializer.Serialize(enrichedContent, new JsonSerializerOptions
+                    {
+                        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
                     });
                 }
-                
+
                 var aiMessage = new ChatMessageDto
                 {
                     Id = Guid.NewGuid(),
@@ -244,7 +244,7 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
                     CreationTime = DateTime.UtcNow
                 };
                 await _sessionAppService.AddMessageAsync(sessionId, aiMessage);
-                
+
                 // Trigger memory extraction in background
                 _ = Task.Run(() => TryExtractMemoryAsync(sessionId));
             }
@@ -253,7 +253,7 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
         {
             // 降级到同步处理
             var response = await agent.ProcessMessageAsync(input.Message, conversationHistory);
-            
+
             var aiMessage = new ChatMessageDto
             {
                 Id = Guid.NewGuid(),
@@ -263,38 +263,38 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
                 CreationTime = DateTime.UtcNow
             };
             await _sessionAppService.AddMessageAsync(sessionId, aiMessage);
-            
+
             // Trigger memory extraction in background
             _ = Task.Run(() => TryExtractMemoryAsync(sessionId));
-            
+
             // 一次性返回完整响应
             yield return response;
         }
     }
-    
+
     public async Task<PagedResultDto<ChatDto>> GetSessionsAsync(SessionQueryDto input)
     {
         var sessions = await _sessionAppService.GetSessionsAsync(input.Filter);
-        
+
         var totalCount = sessions.Count;
         var pagedSessions = sessions
             .Skip(input.SkipCount)
             .Take(input.MaxResultCount)
             .ToList();
-        
+
         return new PagedResultDto<ChatDto>(totalCount, pagedSessions);
     }
-    
+
     public async Task<List<ChatMessageDto>> GetMessagesAsync(Guid sessionId)
     {
         return await _sessionAppService.GetMessagesAsync(sessionId);
     }
-    
+
     public async Task DeleteSessionAsync(Guid sessionId)
     {
         await _sessionAppService.DeleteSessionAsync(sessionId);
     }
-    
+
     public async Task<List<AgentConfigDto>> GetAvailableAgentsAsync()
     {
         var agents = await _agentFactory.GetAvailableAgentsAsync();

@@ -311,7 +311,7 @@
     [Parameter] public long? TestCaseId { get; set; }
     [Parameter] public long? ProjectId { get; set; }
     
-    private ProjectCaseDto currentTestCase = new();
+    private CaseDto currentTestCase = new();
     private ProjectCaseStep? selectedStep;
     private bool isNewTestCase = false;
     private List<H.Testing.Application.Contracts.ProjectServiceDto> projectServices = new();
@@ -334,7 +334,7 @@
     private string newAssertionExpectedValue = "";
 
     // 模板和测试数据相关
-    private List<ProjectCaseDto> availableTemplates = new();
+    private List<CaseDto> availableTemplates = new();
     private bool showSettingsModal = false;
     private bool showTestDataModal = false;
     private string newTestDataKey = "";
@@ -360,7 +360,7 @@
         {
             // 创建新测试用例
             isNewTestCase = true;
-            currentTestCase = new ProjectCaseDto { ProjectId = ProjectId.Value };
+            currentTestCase = new CaseDto { ProjectId = ProjectId.Value };
         }
         else
         {
@@ -570,7 +570,7 @@
             if (currentTestCase.TemplateId.HasValue)
             {
                 var json = System.Text.Json.JsonSerializer.Serialize(currentTestCase);
-                caseToSave = System.Text.Json.JsonSerializer.Deserialize<ProjectCaseDto>(json)!;
+                caseToSave = System.Text.Json.JsonSerializer.Deserialize<CaseDto>(json)!;
                 caseToSave.Steps.Clear();
             }
 

@@ -1,5 +1,5 @@
-using System.ComponentModel.DataAnnotations;
 using H.Abp.Application.Contracts;
+using System.ComponentModel.DataAnnotations;
 
 namespace H.Assistant.Application.Contracts;
 
@@ -40,10 +40,10 @@ public class CreateAgentDto
 
     public bool IsEnabled { get; set; } = true;
     public bool SupportsStreaming { get; set; } = true;
-    
+
     [Range(0, 1)]
     public float Temperature { get; set; } = 0.7f;
-    
+
     public int MaxTokens { get; set; } = 2000;
     public Guid? DefaultModelConfigId { get; set; }
     public string? Metadata { get; set; }
@@ -65,10 +65,10 @@ public class UpdateAgentDto
 
     public bool IsEnabled { get; set; } = true;
     public bool SupportsStreaming { get; set; } = true;
-    
+
     [Range(0, 1)]
     public float Temperature { get; set; } = 0.7f;
-    
+
     public int MaxTokens { get; set; } = 2000;
     public Guid? DefaultModelConfigId { get; set; }
     public string? Metadata { get; set; }

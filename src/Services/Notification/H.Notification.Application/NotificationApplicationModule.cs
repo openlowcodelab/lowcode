@@ -1,4 +1,3 @@
-using H.Notification.Application.Contracts;
 using H.Notification.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.AutoMapper;

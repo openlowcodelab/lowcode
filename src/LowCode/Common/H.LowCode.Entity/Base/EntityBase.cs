@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace H.LowCode.Entity;
+﻿namespace H.LowCode.Entity;
 
 public abstract class EntityBase
 {

@@ -1,10 +1,8 @@
-﻿using System;
-
-namespace H.LowCode.MetaSchema.DesignEngine;
+﻿namespace H.LowCode.MetaSchema.DesignEngine;
 
 public abstract class PartsMetaSchemaBase
 {
-    public string CreatedUser {  get; set; }
+    public string CreatedUser { get; set; }
 
     public DateTime CreatedTime { get; set; }
 

@@ -1,8 +1,8 @@
+using H.BackgroundTask.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using H.BackgroundTask.EntityFrameworkCore;
 
 namespace H.BackgroundTask.DbMigrator;
 

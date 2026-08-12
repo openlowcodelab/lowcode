@@ -2,17 +2,16 @@ using H.Account.Application.Contracts;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using System.Linq;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Mvc;
 using Volo.Abp.Application.Services;
-using Volo.Abp.Identity;
 using Volo.Abp.Guids;
+using Volo.Abp.Identity;
 using Volo.Abp.MultiTenancy;
 using IdentityUser = Volo.Abp.Identity.IdentityUser;
 
@@ -167,7 +166,7 @@ public class AccountAppService : ApplicationService, IAccountAppService
         }
 
         await _userManager.ResetAccessFailedCountAsync(user);
-        
+
         // 更新最后登录时间
         user.LastModificationTime = DateTime.UtcNow;
         await _userManager.UpdateAsync(user);
@@ -225,7 +224,7 @@ public class AccountAppService : ApplicationService, IAccountAppService
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(_configuration["Jwt:SecretKey"] ?? "YourSuperSecretKey12345678901234567890");
-            
+
             tokenHandler.ValidateToken(token, new TokenValidationParameters
             {
                 ValidateIssuerSigningKey = true,
@@ -237,7 +236,7 @@ public class AccountAppService : ApplicationService, IAccountAppService
                 ValidateLifetime = true,
                 ClockSkew = TimeSpan.Zero
             }, out _);
-            
+
             return true;
         }
         catch
@@ -282,7 +281,7 @@ public class AccountAppService : ApplicationService, IAccountAppService
     {
         var tokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.ASCII.GetBytes(_configuration["Jwt:SecretKey"] ?? "YourSuperSecretKey12345678901234567890");
-        
+
         var claims = new List<Claim>
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),

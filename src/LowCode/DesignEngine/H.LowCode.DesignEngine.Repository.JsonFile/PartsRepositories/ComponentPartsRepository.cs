@@ -1,14 +1,9 @@
 using H.LowCode.Configuration;
-using H.LowCode.DesignEngine.Model;
 using H.LowCode.DesignEngine.Domain.Repositories;
-using H.LowCode.MetaSchema;
+using H.LowCode.DesignEngine.Model;
 using H.LowCode.MetaSchema.DesignEngine;
 using Microsoft.Extensions.Options;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace H.LowCode.DesignEngine.Repository.JsonFile;
 
@@ -115,7 +110,7 @@ public class ComponentPartsRepository : PartsFileRepositoryBase, IComponentParts
 
         // 组件定义中使用 DefaultTypeName 即可，无需保存 TypeName
         // 组件保存 json 文件时，强制设置 TypeName 为 null
-        if(componentParts.Fragment != null)
+        if (componentParts.Fragment != null)
             componentParts.Fragment.TypeName = null;
 
         string fileName = string.Format(componentPartsFileName_Format, _metaBaseDir, componentParts.LibraryId, componentParts.PartsId);

@@ -1,8 +1,8 @@
+using H.Enterprise.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using H.Enterprise.EntityFrameworkCore;
 
 namespace H.Enterprise.DbMigrator;
 

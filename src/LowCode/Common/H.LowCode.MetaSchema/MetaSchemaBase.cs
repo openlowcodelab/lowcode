@@ -1,12 +1,11 @@
-﻿using System;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace H.LowCode.MetaSchema;
 
 public abstract class MetaSchemaBase : StateHasChangeSchema
 {
     [JsonPropertyName("cid")]
-    public string? CreatorId {  get; set; }
+    public string? CreatorId { get; set; }
 
     [JsonPropertyName("ct")]
     public DateTime? CreationTime { get; set; }

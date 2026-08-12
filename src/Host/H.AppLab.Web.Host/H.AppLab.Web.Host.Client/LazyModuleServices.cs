@@ -1,5 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
-
 namespace H.AppLab.Web.Host.Client;
 
 /// <summary>

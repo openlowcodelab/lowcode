@@ -1,5 +1,4 @@
 ﻿using H.LowCode.MetaSchema;
-using Volo.Abp.Domain.Repositories;
 
 namespace H.LowCode.DesignEngine.Domain.Repositories;
 

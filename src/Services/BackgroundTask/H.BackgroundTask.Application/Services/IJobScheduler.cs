@@ -1,4 +1,3 @@
-using H.BackgroundTask.Application.Contracts;
 using H.BackgroundTask.EntityFrameworkCore;
 
 namespace H.BackgroundTask.Application.Services;

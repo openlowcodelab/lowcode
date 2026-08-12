@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace H.Util.Blazor;
+﻿namespace H.Util.Blazor;
 
 public static class BlazorEventDispatcher
 {

@@ -27,7 +27,7 @@ public class AccountEntityFrameworkCoreModule : AbpModule
         {
             options.UseSqlServer();
         });
-        
+
         Configure<AbpDbConnectionOptions>(options =>
         {
             options.ConnectionStrings["AccountDb"] = connectionString;

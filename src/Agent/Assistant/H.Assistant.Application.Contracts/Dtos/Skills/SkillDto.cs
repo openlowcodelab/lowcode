@@ -1,5 +1,5 @@
-using System.ComponentModel.DataAnnotations;
 using H.Abp.Application.Contracts;
+using System.ComponentModel.DataAnnotations;
 
 namespace H.Assistant.Application.Contracts;
 

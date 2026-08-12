@@ -1,4 +1,3 @@
-using H.Setting.Application.Contracts;
 using H.Setting.EntityFrameworkCore;
 using Volo.Abp.Modularity;
 

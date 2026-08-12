@@ -358,13 +358,13 @@ else
 @code {
     [Parameter] public long TestCaseId { get; set; }
 
-    private ProjectCaseDto? testCase;
-    private List<ExecutionRecordDto> executionRecords = new();
-    private List<ExecutionRecordDto> filteredRecords = new();
+    private CaseDto? testCase;
+    private List<CaseExecutionRecordDto> executionRecords = new();
+    private List<CaseExecutionRecordDto> filteredRecords = new();
     private bool loading = true;
     private string statusFilter = string.Empty;
     private long selectedRecordId = 0;
-    private ExecutionRecordDto? selectedRecord;
+    private CaseExecutionRecordDto? selectedRecord;
 
     protected override async Task OnInitializedAsync()
     {

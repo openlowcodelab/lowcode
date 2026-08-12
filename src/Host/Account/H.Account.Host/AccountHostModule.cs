@@ -1,19 +1,10 @@
 using H.Account.Application;
-using H.Account.Application.Contracts;
 using H.Account.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
-using System.Security.Claims;
-using System.Text.Json;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.Extensions.Options;
 using Volo.Abp.AspNetCore.Mvc;
 using Volo.Abp.Autofac;
-using Volo.Abp.Modularity;
-using Volo.Abp.Identity;
 using Volo.Abp.Identity.EntityFrameworkCore;
-using IdentityUser = Volo.Abp.Identity.IdentityUser;
+using Volo.Abp.Modularity;
 
 namespace H.Account.Host;
 
@@ -35,7 +26,7 @@ public class AccountHostModule : AbpModule
         context.Services.AddHttpContextAccessor();
 
         ConfigureAutoApiControllers();
-        
+
         ConfigureAuthentication(context);
         ConfigureExternalLogin(context);
     }
@@ -47,7 +38,7 @@ public class AccountHostModule : AbpModule
             options.ConventionalControllers.Create(typeof(AccountApplicationModule).Assembly);
         });
     }
-    
+
     private const string SystemCookieScheme = "SystemCookies";
 
     private void ConfigureAuthentication(ServiceConfigurationContext context)

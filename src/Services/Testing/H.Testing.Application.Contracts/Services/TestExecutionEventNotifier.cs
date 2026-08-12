@@ -1,5 +1,3 @@
-using System;
-
 namespace H.Testing.Application.Contracts;
 
 /// <summary>
@@ -11,14 +9,14 @@ namespace H.Testing.Application.Contracts;
 public class TestExecutionEventNotifier : ITestExecutionEventNotifier
 {
     public event Action<long, StepExecutionRecord>? StepUpdated;
-    public event Action<long, ExecutionRecordDto>? ExecutionUpdated;
+    public event Action<long, CaseExecutionRecordDto>? ExecutionUpdated;
 
     public void RaiseStepUpdated(long testCaseId, StepExecutionRecord stepRecord)
     {
         StepUpdated?.Invoke(testCaseId, stepRecord);
     }
 
-    public void RaiseExecutionUpdated(long testCaseId, ExecutionRecordDto executionRecord)
+    public void RaiseExecutionUpdated(long testCaseId, CaseExecutionRecordDto executionRecord)
     {
         ExecutionUpdated?.Invoke(testCaseId, executionRecord);
     }

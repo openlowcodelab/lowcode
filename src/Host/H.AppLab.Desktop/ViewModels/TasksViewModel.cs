@@ -1,9 +1,9 @@
-﻿using System.Collections.ObjectModel;
-using System.Text.Json;
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using H.Assistant.Application.Contracts;
 using H.AppLab.Desktop.Services;
+using H.Assistant.Application.Contracts;
+using System.Collections.ObjectModel;
+using System.Text.Json;
 
 namespace H.AppLab.Desktop.ViewModels;
 
@@ -1010,7 +1010,14 @@ public partial class TaskEditModel : ObservableObject
 
     private static string DayOfWeekLabel(int day) => day switch
     {
-        0 => "周日", 1 => "周一", 2 => "周二", 3 => "周三", 4 => "周四", 5 => "周五", 6 => "周六", _ => ""
+        0 => "周日",
+        1 => "周一",
+        2 => "周二",
+        3 => "周三",
+        4 => "周四",
+        5 => "周五",
+        6 => "周六",
+        _ => ""
     };
 
     /// <summary>序列化工作流步骤为 JSON（非工作流任务返回 null）</summary>

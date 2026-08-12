@@ -1,6 +1,4 @@
-using H.Enterprise.Application.Contracts;
 using H.Enterprise.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Modularity;
 
 namespace H.Enterprise.Application;
