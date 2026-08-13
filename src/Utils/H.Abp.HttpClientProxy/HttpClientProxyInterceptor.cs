@@ -202,7 +202,23 @@ public class HttpClientProxyInterceptor<TService> : DispatchProxy where TService
         if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
             return default;
 
-        return await response.Content.ReadFromJsonAsync<T>(JsonOptions);
+        // 空响应体（如服务端返回空字符串）无法 JSON 反序列化，按类型返回默认值
+        var content = await response.Content.ReadAsStringAsync();
+        if (string.IsNullOrEmpty(content))
+        {
+            if (typeof(T) == typeof(string))
+                return (T)(object)string.Empty;
+            return default;
+        }
+
+        // 服务端对 string 返回值以纯文本输出（非 JSON），直接返回原文
+        if (typeof(T) == typeof(string) &&
+            response.Content.Headers.ContentType?.MediaType?.StartsWith("text/", StringComparison.OrdinalIgnoreCase) == true)
+        {
+            return (T)(object)content;
+        }
+
+        return JsonSerializer.Deserialize<T>(content, JsonOptions);
     }
 
     /// <summary>

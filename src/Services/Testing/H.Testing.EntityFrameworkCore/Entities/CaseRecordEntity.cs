@@ -4,9 +4,9 @@ using Volo.Abp.MultiTenancy;
 namespace H.Testing.EntityFrameworkCore;
 
 /// <summary>
-/// 测试执行记录
+/// 用例执行记录
 /// </summary>
-public class CaseExecutionRecordEntity : AuditedEntity<long>, IMultiTenant
+public class CaseRecordEntity : AuditedEntity<long>, IMultiTenant
 {
     public virtual Guid? TenantId { get; set; }
 

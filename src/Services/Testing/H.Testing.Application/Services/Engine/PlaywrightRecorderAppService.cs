@@ -260,9 +260,9 @@ public class PlaywrightRecorderAppService : ApplicationService, IPlaywrightRecor
     /// </summary>
     /// <param name="recordedCode">录制的代码</param>
     /// <returns>测试步骤列表</returns>
-    public List<ProjectCaseStep> ParseRecordedCode(string recordedCode)
+    public List<CaseStepDto> ParseRecordedCode(string recordedCode)
     {
-        var steps = new List<ProjectCaseStep>();
+        var steps = new List<CaseStepDto>();
 
         if (string.IsNullOrEmpty(recordedCode))
             return steps;
@@ -299,7 +299,7 @@ public class PlaywrightRecorderAppService : ApplicationService, IPlaywrightRecor
     /// <summary>
     /// 解析单行代码为测试步骤
     /// </summary>
-    private ProjectCaseStep? ParseCodeLineToStep(string codeLine, int order)
+    private CaseStepDto? ParseCodeLineToStep(string codeLine, int order)
     {
         try
         {
@@ -309,7 +309,7 @@ public class PlaywrightRecorderAppService : ApplicationService, IPlaywrightRecor
                 var urlMatch = Regex.Match(codeLine, @"\.GotoAsync\(""([^""]+)""\)");
                 if (urlMatch.Success)
                 {
-                    return new ProjectCaseStep
+                    return new CaseStepDto
                     {
                         Id = Guid.NewGuid().ToString(),
                         Name = $"导航到页面",
@@ -334,7 +334,7 @@ public class PlaywrightRecorderAppService : ApplicationService, IPlaywrightRecor
                 if (selectorMatch.Success)
                 {
                     var selector = selectorMatch.Groups[1].Value;
-                    return new ProjectCaseStep
+                    return new CaseStepDto
                     {
                         Id = Guid.NewGuid().ToString(),
                         Name = $"点击元素",
@@ -361,7 +361,7 @@ public class PlaywrightRecorderAppService : ApplicationService, IPlaywrightRecor
                 {
                     var selector = fillMatch.Groups[1].Value;
                     var value = fillMatch.Groups[2].Value;
-                    return new ProjectCaseStep
+                    return new CaseStepDto
                     {
                         Id = Guid.NewGuid().ToString(),
                         Name = $"输入文本",
@@ -389,7 +389,7 @@ public class PlaywrightRecorderAppService : ApplicationService, IPlaywrightRecor
                 {
                     var selector = selectMatch.Groups[1].Value;
                     var value = selectMatch.Groups[2].Value;
-                    return new ProjectCaseStep
+                    return new CaseStepDto
                     {
                         Id = Guid.NewGuid().ToString(),
                         Name = $"选择选项",
@@ -416,7 +416,7 @@ public class PlaywrightRecorderAppService : ApplicationService, IPlaywrightRecor
                 if (waitMatch.Success)
                 {
                     var selector = waitMatch.Groups[1].Value;
-                    return new ProjectCaseStep
+                    return new CaseStepDto
                     {
                         Id = Guid.NewGuid().ToString(),
                         Name = $"等待元素出现",
@@ -442,7 +442,7 @@ public class PlaywrightRecorderAppService : ApplicationService, IPlaywrightRecor
                 if (textMatch.Success)
                 {
                     var selector = textMatch.Groups[1].Value;
-                    return new ProjectCaseStep
+                    return new CaseStepDto
                     {
                         Id = Guid.NewGuid().ToString(),
                         Name = $"验证文本内容",

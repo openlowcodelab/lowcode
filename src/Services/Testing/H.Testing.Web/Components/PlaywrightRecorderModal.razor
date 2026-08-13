@@ -181,13 +181,13 @@
 
     [Parameter] public bool ShowModal { get; set; }
     [Parameter] public EventCallback OnHide { get; set; }
-    [Parameter] public EventCallback<List<ProjectCaseStep>> OnStepsGenerated { get; set; }
+    [Parameter] public EventCallback<List<CaseStepDto>> OnStepsGenerated { get; set; }
 
     private string startUrl = "";
     private bool isRecording = false;
     private bool isProcessing = false;
     private string currentSessionId = "";
-    private List<ProjectCaseStep> recordedSteps = new();
+    private List<CaseStepDto> recordedSteps = new();
     private HashSet<int> selectedStepIndices = new();
     private string errorMessage = "";
 
@@ -358,7 +358,7 @@
 
     private class ParseRecordingResponse
     {
-        public List<ProjectCaseStep> Steps { get; set; } = new();
+        public List<CaseStepDto> Steps { get; set; } = new();
         public bool IsSuccess { get; set; }
         public string Message { get; set; } = string.Empty;
     }

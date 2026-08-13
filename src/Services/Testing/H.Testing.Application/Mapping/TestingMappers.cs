@@ -39,8 +39,7 @@ public static class TestingMappers
         Name = e.Name,
         Description = e.Description ?? string.Empty,
         Status = (ProjectStatus)e.Status,
-        //EnvironmentIds = DeserializeList<long>(e.EnvironmentIdsJson),
-        //Metadata = DeserializeDict<object>(e.MetadataJson)
+        KnowledgeBaseId = e.KnowledgeBaseId
     };
 
     public static void Apply(this ProjectDto dto, ProjectEntity e)
@@ -48,6 +47,7 @@ public static class TestingMappers
         e.Name = dto.Name;
         e.Description = dto.Description;
         e.Status = (int)dto.Status;
+        e.KnowledgeBaseId = dto.KnowledgeBaseId;
     }
 
     // === ProjectService ===
@@ -56,7 +56,8 @@ public static class TestingMappers
         Id = e.Id,
         Name = e.Name,
         Description = e.Description ?? string.Empty,
-        ProjectId = e.ProjectId
+        ProjectId = e.ProjectId,
+        CreationTime = e.CreationTime
     };
 
     public static void Apply(this ProjectServiceDto dto, ProjectServiceEntity e)
@@ -109,6 +110,21 @@ public static class TestingMappers
         e.BaseUrl = dto.BaseUrl;
     }
 
+    // === Environment（执行时视图，由环境 + 服务配置组合而成） ===
+    public static EnvironmentDto ToEnvironmentDto(this ProjectEnvEntity e, IEnumerable<ProjectEnvConfigEntity> configs) => new()
+    {
+        Id = e.Id,
+        Name = e.Name,
+        Description = e.Description ?? string.Empty,
+        ProjectId = e.ProjectId,
+        Config = DeserializeDict<string>(e.VariablesJson)
+            .ToDictionary(kv => kv.Key, kv => (object)(kv.Value ?? string.Empty)),
+        ServiceEndpoints = configs
+            .Where(c => c.EnvId == e.Id && !string.IsNullOrWhiteSpace(c.BaseUrl))
+            .ToDictionary(c => c.ProjectServiceId, c => c.BaseUrl!),
+        Status = (EnvironmentStatus)e.Status
+    };
+
     // === ProjectCaseCategory ===
     public static ProjectCaseCategory ToDto(this CaseCategoryEntity e) => new()
     {
@@ -131,7 +147,7 @@ public static class TestingMappers
     }
 
     // === ProjectCase ===
-    public static CaseDto ToDto(this CaseEntity e) => new()
+    public static CaseDto ToDto(this CaseEntity e, List<CaseStepDto>? steps = null) => new()
     {
         Id = e.Id,
         CaseNumber = e.CaseNumber ?? string.Empty,
@@ -142,11 +158,11 @@ public static class TestingMappers
         IsTemplate = e.IsTemplate,
         TemplateId = e.TemplateId,
         Levels = DeserializeList<string>(e.LevelsJson),
-        Steps = DeserializeList<ProjectCaseStep>(e.StepsJson),
+        Steps = steps ?? new List<CaseStepDto>(),
         TestData = DeserializeDict<object>(e.TestDataJson),
         Tags = DeserializeList<string>(e.TagsJson),
         Order = e.Order,
-        Status = (ProjectCaseStatus)e.Status,
+        Status = (CaseStatus)e.Status,
         LastExecutionResult = e.LastExecutionResult.HasValue ? (ExecutionStatus)e.LastExecutionResult.Value : null,
         LastExecutionTime = e.LastExecutionTime
     };
@@ -161,7 +177,6 @@ public static class TestingMappers
         e.IsTemplate = dto.IsTemplate;
         e.TemplateId = dto.TemplateId;
         e.LevelsJson = Serialize(dto.Levels);
-        e.StepsJson = Serialize(dto.Steps);
         e.TestDataJson = Serialize(dto.TestData);
         e.TagsJson = Serialize(dto.Tags);
         e.Order = dto.Order;
@@ -170,8 +185,38 @@ public static class TestingMappers
         e.LastExecutionTime = dto.LastExecutionTime;
     }
 
+    // === CaseStep ===
+    public static CaseStepDto ToDto(this CaseStepEntity e) => new()
+    {
+        Id = e.StepKey,
+        Name = e.Name,
+        Type = (StepType)e.Type,
+        Parameters = DeserializeDict<object>(e.ParametersJson),
+        ExpectedResult = e.ExpectedResult ?? string.Empty,
+        Order = e.Order,
+        IsEnabled = e.IsEnabled,
+        ApiConfig = DeserializeObj<ApiStepConfig>(e.ApiConfigJson),
+        UiConfig = DeserializeObj<UiStepConfig>(e.UiConfigJson),
+        ScriptConfig = DeserializeObj<ScriptStepConfig>(e.ScriptConfigJson)
+    };
+
+    public static CaseStepEntity ToEntity(this CaseStepDto dto, long caseId) => new()
+    {
+        CaseId = caseId,
+        StepKey = string.IsNullOrWhiteSpace(dto.Id) ? Guid.NewGuid().ToString() : dto.Id,
+        Name = dto.Name,
+        Type = (int)dto.Type,
+        ParametersJson = Serialize(dto.Parameters),
+        ExpectedResult = dto.ExpectedResult,
+        Order = dto.Order,
+        IsEnabled = dto.IsEnabled,
+        ApiConfigJson = Serialize(dto.ApiConfig),
+        UiConfigJson = Serialize(dto.UiConfig),
+        ScriptConfigJson = Serialize(dto.ScriptConfig)
+    };
+
     // === ExecutionRecord ===
-    public static CaseExecutionRecordDto ToDto(this CaseExecutionRecordEntity e) => new()
+    public static CaseExecutionRecordDto ToDto(this CaseRecordEntity e) => new()
     {
         Id = e.Id,
         TestCaseId = e.TestCaseId,
@@ -193,7 +238,7 @@ public static class TestingMappers
         EnvironmentSnapshot = DeserializeDict<object>(e.EnvironmentSnapshotJson)
     };
 
-    public static void Apply(this CaseExecutionRecordDto dto, CaseExecutionRecordEntity e)
+    public static void Apply(this CaseExecutionRecordDto dto, CaseRecordEntity e)
     {
         e.TestCaseId = dto.TestCaseId;
         e.CaseName = dto.TestCaseName;

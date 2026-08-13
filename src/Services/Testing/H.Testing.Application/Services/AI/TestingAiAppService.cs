@@ -158,7 +158,7 @@ public class TestingAiAppService : ApplicationService, ITestingAiAppService
                     CategoryId = categoryId,
                     Levels = NormalizeLevels(aiCase.Levels),
                     Tags = NormalizeTags(aiCase.Tags),
-                    Status = ProjectCaseStatus.Active,
+                    Status = CaseStatus.Active,
                     Steps = MapSteps(aiCase.Steps, serviceIdMap)
                 });
             }
@@ -258,7 +258,7 @@ public class TestingAiAppService : ApplicationService, ITestingAiAppService
                 CategoryId = ResolveCategoryRef(aiCase.CategoryRef, existingCategoryIds) ?? (tempIdMap.TryGetValue(aiCase.CategoryRef ?? string.Empty, out var newId) ? newId : null),
                 Levels = NormalizeLevels(aiCase.Levels),
                 Tags = NormalizeTags(aiCase.Tags),
-                Status = ProjectCaseStatus.Active
+                Status = CaseStatus.Active
             });
         }
 
@@ -497,9 +497,9 @@ public class TestingAiAppService : ApplicationService, ITestingAiAppService
     /// <summary>
     /// 将 AI 生成的步骤映射为用例步骤（api → HttpRequest，ui → 对应界面操作类型）
     /// </summary>
-    private static List<ProjectCaseStep> MapSteps(List<AiGeneratedStepDto>? aiSteps, Dictionary<string, long> serviceIdMap)
+    private static List<CaseStepDto> MapSteps(List<AiGeneratedStepDto>? aiSteps, Dictionary<string, long> serviceIdMap)
     {
-        var steps = new List<ProjectCaseStep>();
+        var steps = new List<CaseStepDto>();
         if (aiSteps == null)
         {
             return steps;
@@ -508,7 +508,7 @@ public class TestingAiAppService : ApplicationService, ITestingAiAppService
         var order = 0;
         foreach (var aiStep in aiSteps.Where(s => !string.IsNullOrWhiteSpace(s.Name)))
         {
-            var step = new ProjectCaseStep
+            var step = new CaseStepDto
             {
                 Name = Truncate(aiStep.Name, MaxNameLength),
                 ExpectedResult = Truncate(aiStep.Description, MaxDescriptionLength),

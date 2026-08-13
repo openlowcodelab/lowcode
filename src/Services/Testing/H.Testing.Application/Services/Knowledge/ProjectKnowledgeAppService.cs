@@ -13,9 +13,6 @@ namespace H.Testing.Application;
 /// </summary>
 public class ProjectKnowledgeAppService : ApplicationService, IProjectKnowledgeAppService
 {
-    /// <summary> 项目 Metadata 中存储关联知识库 ID 的键 </summary>
-    private const string MetadataKey = "knowledgeBaseId";
-
     private const int MaxBaseNameLength = 100;
     private const int MaxNodeTitleLength = 200;
 
@@ -203,7 +200,7 @@ public class ProjectKnowledgeAppService : ApplicationService, IProjectKnowledgeA
         var project = await _projectService.GetByIdAsync(projectId)
             ?? throw new UserFriendlyException("项目不存在");
 
-        if (TryGetKnowledgeBaseId(project.Metadata, out var knowledgeBaseId))
+        if (TryGetKnowledgeBaseId(project.KnowledgeBaseId, out var knowledgeBaseId))
         {
             try
             {
@@ -226,7 +223,7 @@ public class ProjectKnowledgeAppService : ApplicationService, IProjectKnowledgeA
         var project = await _projectService.GetByIdAsync(projectId)
             ?? throw new UserFriendlyException("项目不存在");
 
-        if (TryGetKnowledgeBaseId(project.Metadata, out var knowledgeBaseId))
+        if (TryGetKnowledgeBaseId(project.KnowledgeBaseId, out var knowledgeBaseId))
         {
             return knowledgeBaseId;
         }
@@ -243,22 +240,20 @@ public class ProjectKnowledgeAppService : ApplicationService, IProjectKnowledgeA
             Description = Truncate($"测试项目「{project.Name}」的功能与逻辑知识，用于辅助编写测试用例", 500)
         });
 
-        project.Metadata[MetadataKey] = knowledgeBase.Id.ToString();
+        project.KnowledgeBaseId = knowledgeBase.Id.ToString();
         await _projectService.UpdateAsync(project.Id, project);
         return knowledgeBase;
     }
 
-    private static bool TryGetKnowledgeBaseId(Dictionary<string, object> metadata, out Guid knowledgeBaseId)
+    private static bool TryGetKnowledgeBaseId(string? raw, out Guid knowledgeBaseId)
     {
         knowledgeBaseId = Guid.Empty;
-        if (metadata == null || !metadata.TryGetValue(MetadataKey, out var value))
+        if (string.IsNullOrWhiteSpace(raw))
         {
             return false;
         }
 
-        // Metadata 值经 JSON 序列化往返后可能为带引号的字符串，需去除后再解析
-        var raw = value?.ToString()?.Trim().Trim('"');
-        return Guid.TryParse(raw, out knowledgeBaseId);
+        return Guid.TryParse(raw.Trim().Trim('"'), out knowledgeBaseId);
     }
 
     private static void CollectDocuments(List<KnowledgeNodeDto> nodes, List<KnowledgeNodeDto> documents)

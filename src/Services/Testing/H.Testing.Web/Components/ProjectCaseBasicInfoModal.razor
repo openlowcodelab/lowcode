@@ -71,10 +71,10 @@
 
         <div style="text-align: right; margin-top: 16px; padding-top: 12px; border-top: 1px solid #F2F3F5;">
             <span class="h-space">
-                <button class="h-btn h-btn-default" @onclick="HideModal">取消</button>
+                <button type="button" class="h-btn h-btn-default" @onclick="HideModal">取消</button>
                 @if (!IsEditing)
                 {
-                    <button class="h-btn" @onclick="SaveOnly">仅保存</button>
+                    <button type="button" class="h-btn" @onclick="SaveOnly">仅保存</button>
                 }
                 <button type="submit" class="h-btn h-btn-primary">@(IsEditing ? "更新" : "保存并继续编辑步骤")</button>
             </span>

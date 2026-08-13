@@ -16,7 +16,8 @@ public class TestingDbContext : AbpDbContext<TestingDbContext>
     public DbSet<ProjectEnvConfigEntity> EnvironmentServiceConfigs { get; set; } = null!;
     public DbSet<CaseCategoryEntity> ProjectCaseCategories { get; set; } = null!;
     public DbSet<CaseEntity> ProjectCases { get; set; } = null!;
-    public DbSet<CaseExecutionRecordEntity> ExecutionRecords { get; set; } = null!;
+    public DbSet<CaseStepEntity> CaseSteps { get; set; } = null!;
+    public DbSet<CaseRecordEntity> ExecutionRecords { get; set; } = null!;
 
     public TestingDbContext(DbContextOptions<TestingDbContext> options) : base(options)
     {
@@ -104,13 +105,32 @@ public class TestingDbContext : AbpDbContext<TestingDbContext>
             b.Property(x => x.Description).HasMaxLength(100);
             b.Property(x => x.LevelsJson).HasMaxLength(1000);
             b.Property(x => x.TagsJson).HasMaxLength(1000);
-            b.Property(x => x.StepsJson).HasMaxLength(1000);
             b.Property(x => x.TestDataJson).HasMaxLength(1000);
 
             b.HasIndex(x => x.ProjectId);
         });
 
-        modelBuilder.Entity<CaseExecutionRecordEntity>(b =>
+        modelBuilder.Entity<CaseStepEntity>(b =>
+        {
+            b.ToTable("CaseStep");
+            b.HasKey(x => x.Id);
+
+            b.Property(x => x.Id).UseIdentityColumn(8500000, 1);
+            b.Property(x => x.StepKey).IsRequired().HasMaxLength(36);
+            b.Property(x => x.Name).IsRequired().HasMaxLength(50);
+            b.Property(x => x.Order);
+            b.Property(x => x.Type);
+            b.Property(x => x.IsEnabled);
+            b.Property(x => x.ParametersJson).HasMaxLength(1000);
+            b.Property(x => x.ApiConfigJson).HasMaxLength(1000);
+            b.Property(x => x.UiConfigJson).HasMaxLength(1000);
+            b.Property(x => x.ScriptConfigJson).HasMaxLength(1000);
+            b.Property(x => x.ExpectedResult).HasMaxLength(1000);
+
+            b.HasIndex(x => x.CaseId);
+        });
+
+        modelBuilder.Entity<CaseRecordEntity>(b =>
         {
             b.ToTable("CaseExecutionRecord");
             b.HasKey(x => x.Id);

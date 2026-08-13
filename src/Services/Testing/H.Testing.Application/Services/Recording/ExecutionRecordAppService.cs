@@ -11,9 +11,9 @@ namespace H.Testing.Application;
 /// </summary>
 public class ExecutionRecordAppService : ApplicationService, IExecutionRecordAppService
 {
-    private readonly IRepository<CaseExecutionRecordEntity, long> _repository;
+    private readonly IRepository<CaseRecordEntity, long> _repository;
 
-    public ExecutionRecordAppService(IRepository<CaseExecutionRecordEntity, long> repository)
+    public ExecutionRecordAppService(IRepository<CaseRecordEntity, long> repository)
     {
         _repository = repository;
     }
@@ -48,7 +48,7 @@ public class ExecutionRecordAppService : ApplicationService, IExecutionRecordApp
             record.StartTime = DateTime.Now;
         }
 
-        var entity = new CaseExecutionRecordEntity();
+        var entity = new CaseRecordEntity();
         record.Apply(entity);
         entity = await _repository.InsertAsync(entity, autoSave: true);
         return entity.ToDto();

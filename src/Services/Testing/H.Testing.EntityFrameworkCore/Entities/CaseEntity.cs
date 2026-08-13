@@ -35,9 +35,6 @@ public class CaseEntity : AuditedEntity<long>, IMultiTenant
     /// <summary>标签（List&lt;string&gt; 序列化）</summary>
     public string? TagsJson { get; set; }
 
-    /// <summary>步骤（List&lt;ProjectCaseStep&gt; 序列化）</summary>
-    public string? StepsJson { get; set; }
-
     /// <summary>测试数据（Dictionary 序列化）</summary>
     public string? TestDataJson { get; set; }
 

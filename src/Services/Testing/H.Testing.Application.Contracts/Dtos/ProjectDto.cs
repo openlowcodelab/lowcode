@@ -18,6 +18,11 @@ public class ProjectDto
 
     public ProjectStatus Status { get; set; } = ProjectStatus.Active;
 
+    /// <summary>
+    /// 关联的知识库ID
+    /// </summary>
+    public string? KnowledgeBaseId { get; set; }
+
     public List<long> EnvironmentIds { get; set; } = new();
 
     public Dictionary<string, object> Metadata { get; set; } = new();

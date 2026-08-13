@@ -12,17 +12,21 @@ namespace H.Testing.Application;
 public class ProjectCaseAppService : ApplicationService, IProjectCaseAppService
 {
     private readonly IRepository<CaseEntity, long> _repository;
+    private readonly IRepository<CaseStepEntity, long> _stepRepository;
 
-    public ProjectCaseAppService(IRepository<CaseEntity, long> repository)
+    public ProjectCaseAppService(
+        IRepository<CaseEntity, long> repository,
+        IRepository<CaseStepEntity, long> stepRepository)
     {
         _repository = repository;
+        _stepRepository = stepRepository;
     }
 
     public async Task<List<CaseDto>> GetAllAsync()
     {
         var query = await _repository.GetQueryableAsync();
         var list = await AsyncExecuter.ToListAsync(query.OrderBy(c => c.Order).ThenBy(c => c.Id));
-        return list.Select(e => e.ToDto()).ToList();
+        return await ToDtoListAsync(list);
     }
 
     public async Task<List<CaseDto>> GetByProjectIdAsync(long projectId)
@@ -30,13 +34,19 @@ public class ProjectCaseAppService : ApplicationService, IProjectCaseAppService
         var query = await _repository.GetQueryableAsync();
         var list = await AsyncExecuter.ToListAsync(
             query.Where(c => c.ProjectId == projectId).OrderBy(c => c.Order).ThenBy(c => c.Id));
-        return list.Select(e => e.ToDto()).ToList();
+        return await ToDtoListAsync(list);
     }
 
     public async Task<CaseDto?> GetByIdAsync(long id)
     {
         var entity = await _repository.FindAsync(id);
-        return entity?.ToDto();
+        if (entity == null)
+        {
+            return null;
+        }
+
+        var steps = await GetStepsAsync(id);
+        return entity.ToDto(steps);
     }
 
     public async Task<long> CreateAsync(CaseDto projectCase)
@@ -44,6 +54,7 @@ public class ProjectCaseAppService : ApplicationService, IProjectCaseAppService
         var entity = new CaseEntity();
         projectCase.Apply(entity);
         entity = await _repository.InsertAsync(entity, autoSave: true);
+        await SaveStepsAsync(entity.Id, projectCase.Steps);
         return entity.Id;
     }
 
@@ -57,6 +68,8 @@ public class ProjectCaseAppService : ApplicationService, IProjectCaseAppService
 
         projectCase.Apply(entity);
         await _repository.UpdateAsync(entity, autoSave: true);
+        await _stepRepository.DeleteAsync(s => s.CaseId == id, autoSave: true);
+        await SaveStepsAsync(id, projectCase.Steps);
         return true;
     }
 
@@ -68,6 +81,7 @@ public class ProjectCaseAppService : ApplicationService, IProjectCaseAppService
             return false;
         }
 
+        await _stepRepository.DeleteAsync(s => s.CaseId == id, autoSave: true);
         await _repository.DeleteAsync(entity, autoSave: true);
         return true;
     }
@@ -75,8 +89,8 @@ public class ProjectCaseAppService : ApplicationService, IProjectCaseAppService
     public async Task<List<CaseDto>> GetActiveProjectCasesAsync()
     {
         var query = await _repository.GetQueryableAsync();
-        var list = await AsyncExecuter.ToListAsync(query.Where(c => c.Status == (int)ProjectCaseStatus.Active));
-        return list.Select(e => e.ToDto()).ToList();
+        var list = await AsyncExecuter.ToListAsync(query.Where(c => c.Status == (int)CaseStatus.Active));
+        return await ToDtoListAsync(list);
     }
 
     public async Task<List<CaseDto>> GetByTagsAsync(string tag)
@@ -168,12 +182,55 @@ public class ProjectCaseAppService : ApplicationService, IProjectCaseAppService
         return $"{originalCaseNumber}_copy";
     }
 
-    private static List<ProjectCaseStep> CopySteps(List<ProjectCaseStep> originalSteps)
+    /// <summary>
+    /// 批量加载用例步骤并按用例分组（避免逐个用例查询）
+    /// </summary>
+    private async Task<Dictionary<long, List<CaseStepDto>>> LoadStepsMapAsync(IEnumerable<long> caseIds)
     {
-        var copiedSteps = new List<ProjectCaseStep>();
+        var ids = caseIds.ToList();
+        if (ids.Count == 0)
+        {
+            return new Dictionary<long, List<CaseStepDto>>();
+        }
+
+        var query = await _stepRepository.GetQueryableAsync();
+        var steps = await AsyncExecuter.ToListAsync(
+            query.Where(s => ids.Contains(s.CaseId)).OrderBy(s => s.Order).ThenBy(s => s.Id));
+        return steps.GroupBy(s => s.CaseId)
+            .ToDictionary(g => g.Key, g => g.Select(e => e.ToDto()).ToList());
+    }
+
+    private async Task<List<CaseStepDto>> GetStepsAsync(long caseId)
+    {
+        var query = await _stepRepository.GetQueryableAsync();
+        var steps = await AsyncExecuter.ToListAsync(
+            query.Where(s => s.CaseId == caseId).OrderBy(s => s.Order).ThenBy(s => s.Id));
+        return steps.Select(e => e.ToDto()).ToList();
+    }
+
+    private async Task<List<CaseDto>> ToDtoListAsync(List<CaseEntity> entities)
+    {
+        var stepsMap = await LoadStepsMapAsync(entities.Select(e => e.Id));
+        return entities.Select(e => e.ToDto(stepsMap.GetValueOrDefault(e.Id))).ToList();
+    }
+
+    private async Task SaveStepsAsync(long caseId, List<CaseStepDto> steps)
+    {
+        if (steps.Count == 0)
+        {
+            return;
+        }
+
+        var entities = steps.Select(s => s.ToEntity(caseId)).ToList();
+        await _stepRepository.InsertManyAsync(entities, autoSave: true);
+    }
+
+    private static List<CaseStepDto> CopySteps(List<CaseStepDto> originalSteps)
+    {
+        var copiedSteps = new List<CaseStepDto>();
         foreach (var originalStep in originalSteps)
         {
-            var copiedStep = new ProjectCaseStep
+            var copiedStep = new CaseStepDto
             {
                 Id = Guid.NewGuid().ToString(),
                 Name = originalStep.Name,

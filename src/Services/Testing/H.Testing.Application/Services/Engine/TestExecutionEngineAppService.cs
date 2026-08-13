@@ -57,20 +57,15 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
             throw new ArgumentException($"Environment with ID {environmentId} not found");
         }
 
-        // 处理模板继承逻辑
+        // 处理模板继承逻辑：有 TemplateId 时使用模板的步骤执行，但不修改用例自身的步骤
+        var executionSteps = testCase.Steps;
         if (testCase.TemplateId.HasValue)
         {
             var templateCase = await _projectCaseService.GetByIdAsync(testCase.TemplateId.Value);
-            if (templateCase != null)
+            if (templateCase != null && templateCase.Steps.Count > 0)
             {
-                // 使用模板的步骤，但保持当前用例的变量/数据
-                // 注意：这里我们临时替换 steps 用于执行，不修改原始对象
-                var originalSteps = testCase.Steps;
-                testCase.Steps = templateCase.Steps;
-
-                // 如果当前用例没有步骤，或者我们决定完全使用模板步骤
-                // 如果需要支持"部分覆盖"或"追加步骤"，逻辑会更复杂
-                // 目前假设：如果有 TemplateId，则完全使用模板的步骤
+                // 目前策略：有 TemplateId 则完全使用模板的步骤执行，变量/测试数据仍用当前用例的
+                executionSteps = templateCase.Steps;
             }
         }
 
@@ -83,7 +78,7 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
             EnvironmentId = environmentId,
             EnvironmentName = environment.Name,
             Status = ExecutionStatus.Running,
-            TotalSteps = testCase.Steps.Count,
+            TotalSteps = executionSteps.Count,
             EnvironmentSnapshot = environment.Config
         };
 
@@ -101,7 +96,7 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
             InitializeVariables(environment, testCase.TestData);
 
             // 初始化 Playwright（仅对包含 UI 步骤的测试用例）
-            if (testCase.Steps.Any(s => IsUiStepType(s.Type)))
+            if (executionSteps.Any(s => IsUiStepType(s.Type)))
             {
                 playwright = await Playwright.CreateAsync();
                 var launchOptions = new BrowserTypeLaunchOptions
@@ -144,7 +139,7 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
             var stopwatch = Stopwatch.StartNew();
 
             // 按顺序执行步骤
-            foreach (var step in testCase.Steps.OrderBy(s => s.Order))
+            foreach (var step in executionSteps.OrderBy(s => s.Order))
             {
                 if (cancellationToken.IsCancellationRequested)
                 {
@@ -235,7 +230,7 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
     /// 执行单个步骤
     /// </summary>
     private async Task<StepExecutionRecord> ExecuteStepAsync(
-        ProjectCaseStep step,
+        CaseStepDto step,
         EnvironmentDto environment,
         IPage page,
         CancellationToken cancellationToken,
@@ -306,7 +301,7 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
     /// 执行API步骤
     /// </summary>
     private async Task ExecuteApiStepAsync(
-        ProjectCaseStep step,
+        CaseStepDto step,
         StepExecutionRecord stepRecord,
         EnvironmentDto environment,
         CancellationToken cancellationToken)
@@ -422,7 +417,7 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
     /// 执行UI步骤（使用Playwright实现）
     /// </summary>
     private async Task ExecuteUiStepAsync(
-        ProjectCaseStep step,
+        CaseStepDto step,
         StepExecutionRecord stepRecord,
         EnvironmentDto environment,
         IPage page,
@@ -690,7 +685,7 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
     /// 执行脚本步骤
     /// </summary>
     private async Task ExecuteScriptStepAsync(
-        ProjectCaseStep step,
+        CaseStepDto step,
         StepExecutionRecord stepRecord,
         EnvironmentDto environment,
         CancellationToken cancellationToken)
@@ -744,7 +739,7 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
     /// 执行延时步骤
     /// </summary>
     private async Task ExecuteDelayStepAsync(
-        ProjectCaseStep step,
+        CaseStepDto step,
         StepExecutionRecord stepRecord,
         CancellationToken cancellationToken)
     {

@@ -20,7 +20,7 @@ public class ProjectEnvDto
     public long ProjectId { get; set; }
 
     [Required(ErrorMessage = "环境类型不能为空")]
-    public EnvironmentType Type { get; set; }
+    public EnvironmentType Type { get; set; } = EnvironmentType.Development;
 
     /// <summary>
     /// 环境服务配置列表

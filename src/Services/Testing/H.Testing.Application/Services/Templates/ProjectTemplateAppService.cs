@@ -1,6 +1,8 @@
 using H.Testing.Application.Contracts;
+using H.Testing.Application.Mapping;
 using H.Testing.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
@@ -22,6 +24,7 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
     private readonly IRepository<ProjectEnvConfigEntity, long> _serviceConfigRepository;
     private readonly IRepository<CaseCategoryEntity, long> _categoryRepository;
     private readonly IRepository<CaseEntity, long> _caseRepository;
+    private readonly IRepository<CaseStepEntity, long> _stepRepository;
     private readonly IConfiguration _configuration;
 
     public ProjectTemplateAppService(
@@ -31,6 +34,7 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
         IRepository<ProjectEnvConfigEntity, long> serviceConfigRepository,
         IRepository<CaseCategoryEntity, long> categoryRepository,
         IRepository<CaseEntity, long> caseRepository,
+        IRepository<CaseStepEntity, long> stepRepository,
         IConfiguration configuration)
     {
         _repository = repository;
@@ -39,6 +43,7 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
         _serviceConfigRepository = serviceConfigRepository;
         _categoryRepository = categoryRepository;
         _caseRepository = caseRepository;
+        _stepRepository = stepRepository;
         _configuration = configuration;
     }
 
@@ -211,7 +216,7 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
         if (categoriesToUpdate.Count > 0) await _categoryRepository.UpdateManyAsync(categoriesToUpdate, autoSave: true);
 
         // 6. 用例（重映射分类/服务引用；两遍回填模板引用）
-        var casePairs = new List<(string OldId, string OldTemplateId, CaseEntity Entity)>();
+        var casePairs = new List<(string OldId, string OldTemplateId, CaseEntity Entity, JsonNode? StepsNode)>();
         foreach (var o in TemplateJson.ReadArray(Path.Combine(dir, "project-cases.json")))
         {
             var oldId = TemplateJson.Str(o, "id");
@@ -232,17 +237,28 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
                 IsTemplate = TemplateJson.BoolVal(o, "isTemplate"),
                 LevelsJson = TemplateJson.RawJson(o, "levels"),
                 TagsJson = TemplateJson.RawJson(o, "tags"),
-                StepsJson = RemapStepsToDb(TemplateJson.Get(o, "steps"), serviceMap),
                 TestDataJson = TemplateJson.RawJson(o, "testData"),
                 Order = TemplateJson.IntVal(o, "order"),
                 Status = TemplateJson.IntVal(o, "status", 1)
-            }));
+            }, TemplateJson.Get(o, "steps")));
         }
 
         await _caseRepository.InsertManyAsync(casePairs.Select(p => p.Entity).ToList(), autoSave: true);
+
+        // 6.1 用例步骤（重映射步骤内的服务引用后写入 CaseStep 表）
+        var stepEntities = new List<CaseStepEntity>();
+        foreach (var (_, _, entity, stepsNode) in casePairs)
+        {
+            foreach (var step in DeserializeSteps(RemapStepsToDb(stepsNode, serviceMap)))
+            {
+                stepEntities.Add(step.ToEntity(entity.Id));
+            }
+        }
+        if (stepEntities.Count > 0) await _stepRepository.InsertManyAsync(stepEntities, autoSave: true);
+
         var caseMap = casePairs.ToDictionary(p => p.OldId, p => p.Entity.Id);
         var casesToUpdate = new List<CaseEntity>();
-        foreach (var (_, oldTemplateId, entity) in casePairs)
+        foreach (var (_, oldTemplateId, entity, _) in casePairs)
         {
             if (!string.IsNullOrEmpty(oldTemplateId) && caseMap.TryGetValue(oldTemplateId, out var templateCaseId))
             {
@@ -276,6 +292,12 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
             .Where(c => envIds.Contains(c.EnvId)).OrderBy(c => c.Id));
         var categories = await ProjectChildrenAsync(_categoryRepository, c => c.ProjectId == projectId, c => c.Order);
         var cases = await ProjectChildrenAsync(_caseRepository, c => c.ProjectId == projectId, c => c.Order);
+        var caseIds = cases.Select(c => c.Id).ToList();
+        var stepQuery = await _stepRepository.GetQueryableAsync();
+        var stepEntities = await AsyncExecuter.ToListAsync(
+            stepQuery.Where(s => caseIds.Contains(s.CaseId)).OrderBy(s => s.Order).ThenBy(s => s.Id));
+        var stepsByCase = stepEntities.GroupBy(s => s.CaseId)
+            .ToDictionary(g => g.Key, g => g.Select(e => e.ToDto()).ToList());
 
         // 数据库 long ID → 模板字符串 ID
         string SvcId(long id) => services.FirstOrDefault(s => s.Id == id)?.Id.ToString() ?? string.Empty;
@@ -339,7 +361,7 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
             ["IsTemplate"] = c.IsTemplate,
             ["TemplateId"] = CaseId(c.TemplateId),
             ["Levels"] = ParseNode(c.LevelsJson) ?? new JsonArray(),
-            ["Steps"] = RemapStepsToFile(c.StepsJson, SvcId) ?? new JsonArray(),
+            ["Steps"] = RemapStepsToFile(SerializeSteps(stepsByCase.GetValueOrDefault(c.Id)), SvcId) ?? new JsonArray(),
             ["TestData"] = ParseNode(c.TestDataJson) ?? new JsonObject(),
             ["Tags"] = ParseNode(c.TagsJson) ?? new JsonArray(),
             ["Order"] = c.Order,
@@ -487,6 +509,20 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
 
     private static JsonNode? ParseNode(string? json)
         => string.IsNullOrWhiteSpace(json) ? null : JsonNode.Parse(json);
+
+    /// <summary>
+    /// 导入：将模板步骤 JSON 反序列化为步骤 DTO 列表
+    /// </summary>
+    private static List<CaseStepDto> DeserializeSteps(string? json)
+        => string.IsNullOrWhiteSpace(json)
+            ? new List<CaseStepDto>()
+            : JsonSerializer.Deserialize<List<CaseStepDto>>(json, TestingMappers.JsonOptions) ?? new List<CaseStepDto>();
+
+    /// <summary>
+    /// 导出：将步骤 DTO 列表序列化为 JSON
+    /// </summary>
+    private static string? SerializeSteps(List<CaseStepDto>? steps)
+        => steps == null || steps.Count == 0 ? null : JsonSerializer.Serialize(steps, TestingMappers.JsonOptions);
 
     #endregion
 }

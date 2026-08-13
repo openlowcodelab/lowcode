@@ -18,7 +18,8 @@ public class ProjectAppService : ApplicationService, IProjectAppService
     private readonly IRepository<ProjectEnvConfigEntity, long> _serviceConfigRepository;
     private readonly IRepository<CaseCategoryEntity, long> _categoryRepository;
     private readonly IRepository<CaseEntity, long> _caseRepository;
-    private readonly IRepository<CaseExecutionRecordEntity, long> _executionRepository;
+    private readonly IRepository<CaseStepEntity, long> _caseStepRepository;
+    private readonly IRepository<CaseRecordEntity, long> _executionRepository;
     private readonly IProjectEnvironmentAppService _environmentService;
     private readonly IKnowledgeBaseAppService _knowledgeBaseService;
 
@@ -29,7 +30,8 @@ public class ProjectAppService : ApplicationService, IProjectAppService
         IRepository<ProjectEnvConfigEntity, long> serviceConfigRepository,
         IRepository<CaseCategoryEntity, long> categoryRepository,
         IRepository<CaseEntity, long> caseRepository,
-        IRepository<CaseExecutionRecordEntity, long> executionRepository,
+        IRepository<CaseStepEntity, long> caseStepRepository,
+        IRepository<CaseRecordEntity, long> executionRepository,
         IProjectEnvironmentAppService environmentService,
         IKnowledgeBaseAppService knowledgeBaseService)
     {
@@ -39,6 +41,7 @@ public class ProjectAppService : ApplicationService, IProjectAppService
         _serviceConfigRepository = serviceConfigRepository;
         _categoryRepository = categoryRepository;
         _caseRepository = caseRepository;
+        _caseStepRepository = caseStepRepository;
         _executionRepository = executionRepository;
         _environmentService = environmentService;
         _knowledgeBaseService = knowledgeBaseService;
@@ -89,6 +92,8 @@ public class ProjectAppService : ApplicationService, IProjectAppService
         }
 
         // 级联删除项目下的所有相关数据
+        var caseQuery = await _caseRepository.GetQueryableAsync();
+        var caseIds = await AsyncExecuter.ToListAsync(caseQuery.Where(c => c.ProjectId == id).Select(c => c.Id));
         var envQuery = await _environmentRepository.GetQueryableAsync();
         var envIds = await AsyncExecuter.ToListAsync(envQuery.Where(e => e.ProjectId == id).Select(e => e.Id));
         if (envIds.Count > 0)
@@ -96,6 +101,7 @@ public class ProjectAppService : ApplicationService, IProjectAppService
             await _serviceConfigRepository.DeleteAsync(c => envIds.Contains(c.EnvId), autoSave: true);
         }
 
+        await _caseStepRepository.DeleteAsync(s => caseIds.Contains(s.CaseId), autoSave: true);
         await _caseRepository.DeleteAsync(c => c.ProjectId == id, autoSave: true);
         await _categoryRepository.DeleteAsync(c => c.ProjectId == id, autoSave: true);
         await _serviceRepository.DeleteAsync(s => s.ProjectId == id, autoSave: true);

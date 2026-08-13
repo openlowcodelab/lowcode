@@ -12,10 +12,14 @@ namespace H.Testing.Application;
 public class ProjectEnvironmentAppService : ApplicationService, IProjectEnvironmentAppService
 {
     private readonly IRepository<ProjectEnvEntity, long> _repository;
+    private readonly IRepository<ProjectEnvConfigEntity, long> _configRepository;
 
-    public ProjectEnvironmentAppService(IRepository<ProjectEnvEntity, long> repository)
+    public ProjectEnvironmentAppService(
+        IRepository<ProjectEnvEntity, long> repository,
+        IRepository<ProjectEnvConfigEntity, long> configRepository)
     {
         _repository = repository;
+        _configRepository = configRepository;
     }
 
     public async Task<List<ProjectEnvDto>> GetAllAsync()
@@ -68,6 +72,8 @@ public class ProjectEnvironmentAppService : ApplicationService, IProjectEnvironm
         }
 
         await _repository.DeleteAsync(entity, autoSave: true);
+        // 级联删除该环境下的服务配置，避免孤儿数据
+        await _configRepository.DeleteAsync(c => c.EnvId == id, autoSave: true);
         return true;
     }
 

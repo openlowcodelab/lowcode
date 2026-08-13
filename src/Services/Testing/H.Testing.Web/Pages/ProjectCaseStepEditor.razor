@@ -312,7 +312,7 @@
     [Parameter] public long? ProjectId { get; set; }
     
     private CaseDto currentTestCase = new();
-    private ProjectCaseStep? selectedStep;
+    private CaseStepDto? selectedStep;
     private bool isNewTestCase = false;
     private List<H.Testing.Application.Contracts.ProjectServiceDto> projectServices = new();
     private string activeApiTab = "Params"; // 当前活动的API配置tab页
@@ -400,7 +400,7 @@
         {
             // 深拷贝步骤列表用于显示
             var json = System.Text.Json.JsonSerializer.Serialize(template.Steps);
-            currentTestCase.Steps = System.Text.Json.JsonSerializer.Deserialize<List<ProjectCaseStep>>(json) ?? new List<ProjectCaseStep>();
+            currentTestCase.Steps = System.Text.Json.JsonSerializer.Deserialize<List<CaseStepDto>>(json) ?? new List<CaseStepDto>();
             
             // 如果当前选中的步骤不在新列表中，取消选中
             if (selectedStep != null && !currentTestCase.Steps.Any(s => s.Id == selectedStep.Id))
@@ -438,7 +438,7 @@
         }
     }
     
-    private void SelectStep(ProjectCaseStep step)
+    private void SelectStep(CaseStepDto step)
     {
         selectedStep = step;
         
@@ -461,7 +461,7 @@
     
     private void AddStep()
     {
-        var newStep = new ProjectCaseStep
+        var newStep = new CaseStepDto
         {
             Name = $"步骤 {currentTestCase.Steps.Count + 1}",
             Order = currentTestCase.Steps.Count + 1,
@@ -497,7 +497,7 @@
         }
     }
     
-    private void MoveStepUp(ProjectCaseStep step)
+    private void MoveStepUp(CaseStepDto step)
     {
         if (step.Order > 1)
         {
@@ -511,7 +511,7 @@
         }
     }
     
-    private void MoveStepDown(ProjectCaseStep step)
+    private void MoveStepDown(CaseStepDto step)
     {
         if (step.Order < currentTestCase.Steps.Count)
         {
@@ -652,7 +652,7 @@
         }
     }
     
-    private void RenderApiAssertions(ProjectCaseStep step, RenderTreeBuilder builder, int sequence)
+    private void RenderApiAssertions(CaseStepDto step, RenderTreeBuilder builder, int sequence)
     {
         builder.OpenElement(sequence, "div");
         builder.AddAttribute(sequence + 1, "class", "card mb-3");
@@ -729,7 +729,7 @@
         builder.CloseElement(); // card
     }
     
-    private void RenderVariableExtraction(ProjectCaseStep step, RenderTreeBuilder builder, int sequence)
+    private void RenderVariableExtraction(CaseStepDto step, RenderTreeBuilder builder, int sequence)
     {
         builder.OpenElement(sequence, "div");
         builder.AddAttribute(sequence + 1, "class", "card mb-3");
@@ -813,7 +813,7 @@
     };
     
     // 断言和变量提取操作
-    private void AddAssertion(ProjectCaseStep step)
+    private void AddAssertion(CaseStepDto step)
     {
         step.ApiConfig.Assertions.Add(new ApiAssertion
         {
@@ -826,7 +826,7 @@
     }
     
     // 使用用户输入值添加新断言
-    private void AddNewAssertion(ProjectCaseStep step)
+    private void AddNewAssertion(CaseStepDto step)
     {
         if (string.IsNullOrWhiteSpace(newAssertionType) || 
             string.IsNullOrWhiteSpace(newAssertionOperator))
@@ -852,7 +852,7 @@
         StateHasChanged();
     }
     
-    private void RemoveAssertion(ProjectCaseStep step, int index)
+    private void RemoveAssertion(CaseStepDto step, int index)
     {
         Console.WriteLine($"RemoveAssertion called: index={index}, count={step.ApiConfig.Assertions.Count}");
         if (index >= 0 && index < step.ApiConfig.Assertions.Count)
@@ -870,7 +870,7 @@
     }
     
     // 断言配置更新方法
-    private void UpdateAssertionType(ProjectCaseStep step, int index, string type)
+    private void UpdateAssertionType(CaseStepDto step, int index, string type)
     {
         if (index >= 0 && index < step.ApiConfig.Assertions.Count)
         {
@@ -897,7 +897,7 @@
         }
     }
     
-    private void UpdateAssertionTarget(ProjectCaseStep step, int index, string target)
+    private void UpdateAssertionTarget(CaseStepDto step, int index, string target)
     {
         if (index >= 0 && index < step.ApiConfig.Assertions.Count)
         {
@@ -906,7 +906,7 @@
         }
     }
     
-    private void UpdateAssertionOperator(ProjectCaseStep step, int index, string operatorValue)
+    private void UpdateAssertionOperator(CaseStepDto step, int index, string operatorValue)
     {
         if (index >= 0 && index < step.ApiConfig.Assertions.Count)
         {
@@ -915,7 +915,7 @@
         }
     }
     
-    private void UpdateAssertionExpectedValue(ProjectCaseStep step, int index, string expectedValue)
+    private void UpdateAssertionExpectedValue(CaseStepDto step, int index, string expectedValue)
     {
         if (index >= 0 && index < step.ApiConfig.Assertions.Count)
         {
@@ -1016,7 +1016,7 @@
     }
     
     // 验证所有断言配置
-    private bool ValidateAllAssertions(ProjectCaseStep step, out List<string> errorMessages)
+    private bool ValidateAllAssertions(CaseStepDto step, out List<string> errorMessages)
     {
         errorMessages = new List<string>();
         
@@ -1038,7 +1038,7 @@
     }
     
     // 变量提取操作
-    private void AddVariableExtraction(ProjectCaseStep step)
+    private void AddVariableExtraction(CaseStepDto step)
     {
         if (!string.IsNullOrWhiteSpace(newVariableName) && !string.IsNullOrWhiteSpace(newVariablePath))
         {
@@ -1049,7 +1049,7 @@
         }
     }
     
-    private void RemoveVariableExtraction(ProjectCaseStep step, string variableName)
+    private void RemoveVariableExtraction(CaseStepDto step, string variableName)
     {
         if (step.ApiConfig.VariableExtractions.ContainsKey(variableName))
         {
@@ -1058,7 +1058,7 @@
         }
     }
     
-    private void UpdateVariableExtraction(ProjectCaseStep step, string oldName, string newName, string newPath)
+    private void UpdateVariableExtraction(CaseStepDto step, string oldName, string newName, string newPath)
     {
         if (step.ApiConfig.VariableExtractions.ContainsKey(oldName))
         {
@@ -1090,7 +1090,7 @@
 
 @* 渲染API步骤配置 *@
 @code {
-    private RenderFragment RenderApiStepConfig(ProjectCaseStep step) => builder =>
+    private RenderFragment RenderApiStepConfig(CaseStepDto step) => builder =>
     {
         if (step.ApiConfig == null) return;
         
@@ -2218,7 +2218,7 @@
         }
     };
     
-    private RenderFragment RenderUiStepConfig(ProjectCaseStep step) => builder =>
+    private RenderFragment RenderUiStepConfig(CaseStepDto step) => builder =>
     {
         if (step.UiConfig == null) return;
         
@@ -2383,7 +2383,7 @@
         builder.CloseElement(); // card
     };
     
-    private RenderFragment RenderGeneralStepConfig(ProjectCaseStep step) => builder =>
+    private RenderFragment RenderGeneralStepConfig(CaseStepDto step) => builder =>
     {
         builder.OpenElement(0, "div");
         builder.AddAttribute(1, "class", "card mb-3");
@@ -2478,7 +2478,7 @@
         builder.CloseElement(); // card
     };
     
-    private RenderFragment RenderScriptStepConfig(ProjectCaseStep step) => builder =>
+    private RenderFragment RenderScriptStepConfig(CaseStepDto step) => builder =>
     {
         if (step.ScriptConfig == null) return;
         
@@ -2678,7 +2678,7 @@
         StateHasChanged();
     }
 
-    private async Task OnRecordedStepsGenerated(List<ProjectCaseStep> recordedSteps)
+    private async Task OnRecordedStepsGenerated(List<CaseStepDto> recordedSteps)
     {
         if (recordedSteps?.Any() == true)
         {

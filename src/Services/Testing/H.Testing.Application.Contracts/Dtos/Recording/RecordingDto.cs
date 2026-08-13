@@ -34,7 +34,7 @@ public class ParseRecordingRequest
 
 public class ParseRecordingResponse
 {
-    public List<ProjectCaseStep> Steps { get; set; } = new();
+    public List<CaseStepDto> Steps { get; set; } = new();
     public bool IsSuccess { get; set; }
     public string Message { get; set; } = string.Empty;
 }
