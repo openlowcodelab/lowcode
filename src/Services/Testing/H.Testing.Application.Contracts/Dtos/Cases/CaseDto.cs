@@ -34,15 +34,9 @@ public class CaseDto
     public long? TemplateId { get; set; }
 
     /// <summary>
-    /// 用例级别，如 P0、P1、P2、P3，可多选
+    /// 用例级别（单选）
     /// </summary>
-    public List<string> Levels { get; set; } = new();
-
-    public List<CaseStepDto> Steps { get; set; } = new();
-
-    public Dictionary<string, object> TestData { get; set; } = new();
-
-    public List<string> Tags { get; set; } = new();
+    public CaseLevel Level { get; set; } = CaseLevel.P1;
 
     /// <summary>
     /// 排序字段，数值越小排序越靠前
@@ -71,4 +65,15 @@ public enum CaseStatus
     Inactive = 2,
     Archived = 3,
     Draft = 4
+}
+
+/// <summary>
+/// 用例级别
+/// </summary>
+public enum CaseLevel
+{
+    P0 = 1,
+    P1 = 2,
+    P2 = 3,
+    P3 = 4
 }

@@ -13,7 +13,7 @@ using Volo.Abp.EntityFrameworkCore;
 namespace H.Testing.DbMigrator.Migrations
 {
     [DbContext(typeof(TestingDbContext))]
-    [Migration("20260813153833_Init")]
+    [Migration("20260813165629_Init")]
     partial class Init
     {
         /// <inheritdoc />
@@ -125,9 +125,8 @@ namespace H.Testing.DbMigrator.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("LastModifierId");
 
-                    b.Property<string>("LevelsJson")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
+                    b.Property<int>("Level")
+                        .HasColumnType("int");
 
                     b.Property<int>("Order")
                         .HasColumnType("int");
@@ -138,20 +137,12 @@ namespace H.Testing.DbMigrator.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
-                    b.Property<string>("TagsJson")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
                     b.Property<long?>("TemplateId")
                         .HasColumnType("bigint");
 
                     b.Property<Guid?>("TenantId")
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("TenantId");
-
-                    b.Property<string>("TestDataJson")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
 
                     b.HasKey("Id");
 

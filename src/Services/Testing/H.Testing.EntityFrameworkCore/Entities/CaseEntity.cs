@@ -26,14 +26,8 @@ public class CaseEntity : AuditedEntity<long>, IMultiTenant
     /// <summary>是否为测试模板</summary>
     public bool IsTemplate { get; set; }
 
-    /// <summary>用例级别（List&lt;string&gt; 序列化）</summary>
-    public string? LevelsJson { get; set; }
-
-    /// <summary>标签（List&lt;string&gt; 序列化）</summary>
-    public string? TagsJson { get; set; }
-
-    /// <summary>测试数据（Dictionary 序列化）</summary>
-    public string? TestDataJson { get; set; }
+    /// <summary>用例级别（CaseLevel）</summary>
+    public int Level { get; set; }
 
     /// <summary>排序</summary>
     public int Order { get; set; }

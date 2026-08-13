@@ -387,9 +387,9 @@ else
                     {
                         <div Style="padding-left: @(depth * 20 + 24)px; color: #4E5969; font-size: 13px; margin-top: 4px;">
                             📝 @aiCase.Name
-                            @foreach (var level in aiCase.Levels)
+                            @if (!string.IsNullOrEmpty(aiCase.Level))
                             {
-                                <span class="h-tag h-tag-blue" style="margin-left: 4px;">@level</span>
+                                <span class="h-tag h-tag-blue" style="margin-left: 4px;">@aiCase.Level</span>
                             }
                             @if (aiCase.Steps.Any())
                             {

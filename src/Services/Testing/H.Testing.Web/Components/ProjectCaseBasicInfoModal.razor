@@ -36,16 +36,16 @@
             <label class="h-form-label" style="width: 100px;">用例级别</label>
             <div class="h-form-control" style="flex: 1;">
                 <div style="display: flex; flex-wrap: wrap; gap: 12px; padding: 8px 12px; border: 1px solid #E5E6EB; border-radius: 4px;">
-                    @foreach (var level in AvailableLevels)
+                    @foreach (var level in Enum.GetValues<CaseLevel>())
                     {
-                        var checkedValue = CurrentTestCase.Levels.Contains(level);
+                        var checkedValue = CurrentTestCase.Level == level;
                         <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
-                            <input type="checkbox" checked="@checkedValue" @onchange="@(e => ToggleLevel(level, (bool)(e.Value ?? false)))" />
-                            <span class="h-tag h-tag-@GetLevelTagClass(level)">@level</span>
+                            <input type="radio" name="caseLevel" checked="@checkedValue" @onchange="@(e => SelectLevel(level, (bool)(e.Value ?? false)))" />
+                            <span class="h-tag h-tag-@GetLevelTagClass(level.ToString())">@level</span>
                         </label>
                     }
                 </div>
-                <div style="color: #86909C; font-size: 12px; margin-top: 4px;">可多选，P0 为最高级别</div>
+                <div style="color: #86909C; font-size: 12px; margin-top: 4px;">单选，P0 为最高级别</div>
             </div>
         </div>
 
@@ -90,22 +90,12 @@
     [Parameter] public EventCallback<CaseDto> OnSave { get; set; }
     [Parameter] public EventCallback<CaseDto> OnSaveOnly { get; set; }
 
-    private readonly List<string> AvailableLevels = new() { "P0", "P1", "P2", "P3" };
-
-    private void ToggleLevel(string level, bool isChecked)
+    private void SelectLevel(CaseLevel level, bool isChecked)
     {
         if (isChecked)
         {
-            if (!CurrentTestCase.Levels.Contains(level))
-            {
-                CurrentTestCase.Levels.Add(level);
-            }
+            CurrentTestCase.Level = level;
         }
-        else
-        {
-            CurrentTestCase.Levels.Remove(level);
-        }
-        CurrentTestCase.Levels = CurrentTestCase.Levels.OrderBy(l => l).ToList();
     }
 
     private async Task OnCategoryChanged(long? categoryId)

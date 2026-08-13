@@ -5,6 +5,7 @@
 @layout TestingLayout
 
 @inject ICaseAppService ProjectCaseService
+@inject ICaseStepAppService CaseStepService
 @inject IProjectAppService ProjectService
 @inject ICaseCategoryAppService CategoryService
 @inject IProjectServiceConfigAppService ProjectServiceConfigService
@@ -93,19 +94,14 @@
                         @onclick="ShowRecorderModal">
                     🎥 录制
                 </button>
-                <button class="h-btn h-btn-sm"
-                        style="background-color:#13c2c2;border-color:#13c2c2;color:#fff;"
-                        @onclick="ToggleTestDataModal" title="管理测试数据">
-                    📊 数据
-                </button>
                 <button class="h-btn h-btn-sm" @onclick="SaveTestCase">✓ 保存</button>
             </span>
         </div>
 
-        @if (currentTestCase.Steps.Any())
+        @if (steps.Any())
         {
             <div>
-                @foreach (var step in currentTestCase.Steps.OrderBy(s => s.Order))
+                @foreach (var step in steps.OrderBy(s => s.Order))
                 {
                     var isSelected = selectedStep?.Id == step.Id;
                     <div style="@($"padding: 10px 12px; border: 1px solid {(isSelected ? "#165DFF" : "#F2F3F5")}; border-radius: 4px; margin-bottom: 6px; cursor: pointer; background: {(isSelected ? "#E8F3FF" : "#fff")};")"
@@ -128,7 +124,7 @@
                                         @onclick="@(async () => { await Task.CompletedTask; MoveStepUp(step); })"
                                         @onclick:stopPropagation>↑</button>
                                 <button class="h-btn h-btn-sm"
-                                        disabled="@(step.Order >= currentTestCase.Steps.Count || currentTestCase.TemplateId.HasValue)"
+                                        disabled="@(step.Order >= steps.Count || currentTestCase.TemplateId.HasValue)"
                                         @onclick="@(async () => { await Task.CompletedTask; MoveStepDown(step); })"
                                         @onclick:stopPropagation>↓</button>
                                 <button class="h-btn h-btn-sm" style="color:#F53F3F;border-color:#F53F3F;"
@@ -248,7 +244,7 @@
             <div style="display: flex; align-items: center; justify-content: center; min-height: 400px;">
                 <div style="text-align: center;">
                     <div class="h-empty">请从左侧列表中选择一个步骤来编辑详情</div>
-                    @if (!currentTestCase.Steps.Any())
+                    @if (!steps.Any())
                     {
                         <div style="margin-top: 16px;">
                             <button class="h-btn h-btn-primary" @onclick="AddStep">➕ 创建第一个步骤</button>
@@ -259,53 +255,6 @@
         }
     </div>
 </div>
-
-<HModal Visible="@showTestDataModal"
-        Title="测试数据管理"
-        OnCancel="ToggleTestDataModal"
-        ShowFooter="false"
-        Style="width:800px;">
-    <div class="h-alert h-alert-info" style="margin-bottom: 16px;">
-        在此定义测试数据变量。这些变量可在测试步骤中通过 {{VariableName}} 引用。如果此用例继承了模板，这些变量将覆盖模板中的同名变量。
-    </div>
-
-    <table style="width: 100%; border-collapse: collapse;">
-        <thead>
-            <tr style="background: #F7F8FA; border-bottom: 1px solid #F2F3F5;">
-                <th style="padding: 8px 12px; text-align: left; font-weight: 600;">变量名 (Key)</th>
-                <th style="padding: 8px 12px; text-align: left; font-weight: 600;">变量值 (Value)</th>
-                <th style="padding: 8px 12px; text-align: left; font-weight: 600; width: 100px;">操作</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var kvp in currentTestCase.TestData)
-            {
-                <tr style="border-bottom: 1px solid #F2F3F5;">
-                    <td style="padding: 8px 12px;">@kvp.Key</td>
-                    <td style="padding: 8px 12px;">
-                        <input class="h-input" value="@(kvp.Value?.ToString() ?? "")"
-                               @onchange="@((ChangeEventArgs e) => currentTestCase.TestData[kvp.Key] = e.Value?.ToString() ?? "")" />
-                    </td>
-                    <td style="padding: 8px 12px;">
-                        <button class="h-btn h-btn-sm" style="color:#F53F3F;border-color:#F53F3F;" @onclick="@(() => RemoveTestData(kvp.Key))">🗑 删除</button>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-
-    <div style="display: flex; gap: 8px; margin-top: 16px; padding-top: 12px; border-top: 1px solid #F2F3F5;">
-        <input class="h-input" placeholder="新变量名" @bind-value="newTestDataKey" style="flex: 1;" />
-        <input class="h-input" placeholder="变量值" @bind-value="newTestDataValue" style="flex: 1;" />
-        <button class="h-btn h-btn-primary"
-                style="background-color: #00B42A; border-color: #00B42A;"
-                @onclick="AddTestData">➕ 添加</button>
-    </div>
-
-    <div style="text-align: right; margin-top: 16px; padding-top: 12px; border-top: 1px solid #F2F3F5;">
-        <button class="h-btn h-btn-primary" @onclick="ToggleTestDataModal">完成</button>
-    </div>
-</HModal>
 
 @code {
     [Parameter] public long? TestCaseId { get; set; }
@@ -333,12 +282,12 @@
     private string newAssertionOperator = "equals";
     private string newAssertionExpectedValue = "";
 
-    // 模板和测试数据相关
+    // 模板相关
     private List<CaseDto> availableTemplates = new();
     private bool showSettingsModal = false;
-    private bool showTestDataModal = false;
-    private string newTestDataKey = "";
-    private string newTestDataValue = "";
+
+    // 当前用例的步骤列表（独立于用例基本信息存储）
+    private List<CaseStepDto> steps = new();
     
     protected override async Task OnInitializedAsync()
     {
@@ -349,6 +298,7 @@
             if (testCase != null)
             {
                 currentTestCase = testCase;
+                steps = await CaseStepService.GetByCaseIdAsync(testCase.Id);
             }
             else
             {
@@ -386,58 +336,28 @@
         }
 
         // 默认选中第一个步骤
-        if (currentTestCase.Steps.Any())
+        if (steps.Any())
         {
-            var firstStep = currentTestCase.Steps.OrderBy(s => s.Order).First();
+            var firstStep = steps.OrderBy(s => s.Order).First();
             SelectStep(firstStep);
         }
     }
     
     private async Task LoadTemplateSteps(long templateId)
     {
-        var template = await ProjectCaseService.GetByIdAsync(templateId);
-        if (template != null)
+        // 深拷贝模板步骤列表用于显示
+        var templateSteps = await CaseStepService.GetByCaseIdAsync(templateId);
+        var json = System.Text.Json.JsonSerializer.Serialize(templateSteps);
+        steps = System.Text.Json.JsonSerializer.Deserialize<List<CaseStepDto>>(json) ?? new List<CaseStepDto>();
+
+        // 如果当前选中的步骤不在新列表中，取消选中
+        if (selectedStep != null && !steps.Any(s => s.Id == selectedStep.Id))
         {
-            // 深拷贝步骤列表用于显示
-            var json = System.Text.Json.JsonSerializer.Serialize(template.Steps);
-            currentTestCase.Steps = System.Text.Json.JsonSerializer.Deserialize<List<CaseStepDto>>(json) ?? new List<CaseStepDto>();
-            
-            // 如果当前选中的步骤不在新列表中，取消选中
-            if (selectedStep != null && !currentTestCase.Steps.Any(s => s.Id == selectedStep.Id))
-            {
-                selectedStep = null;
-            }
-            StateHasChanged();
+            selectedStep = null;
         }
+        StateHasChanged();
     }
 
-    private void ToggleTestDataModal() => showTestDataModal = !showTestDataModal;
-
-    private void AddTestData()
-    {
-        if (!string.IsNullOrWhiteSpace(newTestDataKey))
-        {
-            if (currentTestCase.TestData.ContainsKey(newTestDataKey))
-            {
-                 currentTestCase.TestData[newTestDataKey] = newTestDataValue;
-            }
-            else
-            {
-                 currentTestCase.TestData.Add(newTestDataKey, newTestDataValue);
-            }
-            newTestDataKey = "";
-            newTestDataValue = "";
-        }
-    }
-    
-    private void RemoveTestData(string key)
-    {
-        if (currentTestCase.TestData.ContainsKey(key))
-        {
-            currentTestCase.TestData.Remove(key);
-        }
-    }
-    
     private void SelectStep(CaseStepDto step)
     {
         selectedStep = step;
@@ -463,28 +383,28 @@
     {
         var newStep = new CaseStepDto
         {
-            Name = $"步骤 {currentTestCase.Steps.Count + 1}",
-            Order = currentTestCase.Steps.Count + 1,
+            Name = $"步骤 {steps.Count + 1}",
+            Order = steps.Count + 1,
             Type = StepType.HttpRequest,
             ApiConfig = new ApiStepConfig()
         };
         
-        currentTestCase.Steps.Add(newStep);
+        steps.Add(newStep);
         selectedStep = newStep;
         StateHasChanged();
     }
     
     private async Task DeleteStep(string stepId)
     {
-        var stepToRemove = currentTestCase.Steps.FirstOrDefault(s => s.Id == stepId);
+        var stepToRemove = steps.FirstOrDefault(s => s.Id == stepId);
         if (stepToRemove != null)
         {
-            currentTestCase.Steps.Remove(stepToRemove);
+            steps.Remove(stepToRemove);
             
             // 重新排序
-            for (int i = 0; i < currentTestCase.Steps.Count; i++)
+            for (int i = 0; i < steps.Count; i++)
             {
-                currentTestCase.Steps[i].Order = i + 1;
+                steps[i].Order = i + 1;
             }
             
             // 如果删除的是当前选中的步骤，清除选择
@@ -501,7 +421,7 @@
     {
         if (step.Order > 1)
         {
-            var prevStep = currentTestCase.Steps.FirstOrDefault(s => s.Order == step.Order - 1);
+            var prevStep = steps.FirstOrDefault(s => s.Order == step.Order - 1);
             if (prevStep != null)
             {
                 prevStep.Order++;
@@ -513,9 +433,9 @@
     
     private void MoveStepDown(CaseStepDto step)
     {
-        if (step.Order < currentTestCase.Steps.Count)
+        if (step.Order < steps.Count)
         {
-            var nextStep = currentTestCase.Steps.FirstOrDefault(s => s.Order == step.Order + 1);
+            var nextStep = steps.FirstOrDefault(s => s.Order == step.Order + 1);
             if (nextStep != null)
             {
                 nextStep.Order--;
@@ -565,28 +485,24 @@
     {
         try
         {
-            // 如果使用了模板，保存时不保存步骤（步骤由模板定义）
-            var caseToSave = currentTestCase;
-            if (currentTestCase.TemplateId.HasValue)
-            {
-                var json = System.Text.Json.JsonSerializer.Serialize(currentTestCase);
-                caseToSave = System.Text.Json.JsonSerializer.Deserialize<CaseDto>(json)!;
-                caseToSave.Steps.Clear();
-            }
-
             if (isNewTestCase)
             {
-                var newId = await ProjectCaseService.CreateAsync(caseToSave);
+                var newId = await ProjectCaseService.CreateAsync(currentTestCase);
                 // 如果是新建，更新当前对象的ID，防止重复创建
                 currentTestCase.Id = newId;
-                caseToSave.Id = newId;
                 isNewTestCase = false;
                 await JSRuntime.InvokeVoidAsync("alert", "测试用例创建成功！");
             }
             else
             {
-                await ProjectCaseService.UpdateAsync(caseToSave.Id, caseToSave);
+                await ProjectCaseService.UpdateAsync(currentTestCase.Id, currentTestCase);
                 await JSRuntime.InvokeVoidAsync("alert", "测试用例保存成功！");
+            }
+
+            // 如果使用了模板，不保存步骤（步骤由模板定义）
+            if (!currentTestCase.TemplateId.HasValue)
+            {
+                await CaseStepService.SyncAsync(currentTestCase.Id, steps);
             }
         }
         catch (Exception ex)
@@ -2683,13 +2599,13 @@
         if (recordedSteps?.Any() == true)
         {
             // 获取当前最大的 Order 值
-            int maxOrder = currentTestCase.Steps.Any() ? currentTestCase.Steps.Max(s => s.Order) : 0;
+            int maxOrder = steps.Any() ? steps.Max(s => s.Order) : 0;
             
             // 为录制的步骤分配新的 Order 值
             foreach (var step in recordedSteps)
             {
                 step.Order = ++maxOrder;
-                currentTestCase.Steps.Add(step);
+                steps.Add(step);
             }
             
             // 选中第一个新添加的步骤

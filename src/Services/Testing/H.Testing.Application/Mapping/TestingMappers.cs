@@ -145,7 +145,7 @@ public static class TestingMappers
     }
 
     // === ProjectCase ===
-    public static CaseDto ToDto(this CaseEntity e, List<CaseStepDto>? steps = null) => new()
+    public static CaseDto ToDto(this CaseEntity e) => new()
     {
         Id = e.Id,
         Name = e.CaseName,
@@ -154,10 +154,7 @@ public static class TestingMappers
         CategoryId = e.CategoryId,
         IsTemplate = e.IsTemplate,
         TemplateId = e.TemplateId,
-        Levels = DeserializeList<string>(e.LevelsJson),
-        Steps = steps ?? new List<CaseStepDto>(),
-        TestData = DeserializeDict<object>(e.TestDataJson),
-        Tags = DeserializeList<string>(e.TagsJson),
+        Level = (CaseLevel)e.Level,
         Order = e.Order,
         Status = (CaseStatus)e.Status,
         LastExecutionResult = e.LastExecutionResult.HasValue ? (ExecutionStatus)e.LastExecutionResult.Value : null,
@@ -172,9 +169,7 @@ public static class TestingMappers
         e.CategoryId = dto.CategoryId;
         e.IsTemplate = dto.IsTemplate;
         e.TemplateId = dto.TemplateId;
-        e.LevelsJson = Serialize(dto.Levels);
-        e.TestDataJson = Serialize(dto.TestData);
-        e.TagsJson = Serialize(dto.Tags);
+        e.Level = (int)dto.Level;
         e.Order = dto.Order;
         e.Status = (int)dto.Status;
         e.LastExecutionResult = dto.LastExecutionResult.HasValue ? (int)dto.LastExecutionResult.Value : null;

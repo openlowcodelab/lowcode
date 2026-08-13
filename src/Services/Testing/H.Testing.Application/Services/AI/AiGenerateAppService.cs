@@ -20,12 +20,11 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
     private const int MaxNameLength = 200;
     private const int MaxDescriptionLength = 1000;
 
-    private static readonly HashSet<string> ValidLevels = ["P0", "P1", "P2", "P3"];
-
     private readonly IAiCompletionAppService _aiCompletion;
     private readonly IProjectAppService _projectService;
     private readonly ICaseCategoryAppService _categoryService;
     private readonly ICaseAppService _caseService;
+    private readonly ICaseStepAppService _caseStepService;
     private readonly IProjectServiceConfigAppService _serviceConfigService;
     private readonly IProjectEnvAppService _environmentService;
     private readonly IProjectKnowledgeAppService _knowledgeService;
@@ -35,6 +34,7 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
         IProjectAppService projectService,
         ICaseCategoryAppService categoryService,
         ICaseAppService caseService,
+        ICaseStepAppService caseStepService,
         IProjectServiceConfigAppService serviceConfigService,
         IProjectEnvAppService environmentService,
         IProjectKnowledgeAppService knowledgeService)
@@ -43,6 +43,7 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
         _projectService = projectService;
         _categoryService = categoryService;
         _caseService = caseService;
+        _caseStepService = caseStepService;
         _serviceConfigService = serviceConfigService;
         _environmentService = environmentService;
         _knowledgeService = knowledgeService;
@@ -148,17 +149,21 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
 
             foreach (var aiCase in category.Cases.Where(c => !string.IsNullOrWhiteSpace(c.Name)))
             {
-                await _caseService.CreateAsync(new CaseDto
+                var caseId = await _caseService.CreateAsync(new CaseDto
                 {
                     Name = Truncate(aiCase.Name, MaxNameLength),
                     Description = Truncate(aiCase.Description, MaxDescriptionLength),
                     ProjectId = projectId,
                     CategoryId = categoryId,
-                    Levels = NormalizeLevels(aiCase.Levels),
-                    Tags = NormalizeTags(aiCase.Tags),
-                    Status = CaseStatus.Active,
-                    Steps = MapSteps(aiCase.Steps, serviceIdMap)
+                    Level = NormalizeLevel(aiCase.Level),
+                    Status = CaseStatus.Active
                 });
+
+                var steps = MapSteps(aiCase.Steps, serviceIdMap);
+                if (steps.Count > 0)
+                {
+                    await _caseStepService.SaveAsync(caseId, steps);
+                }
             }
         }
 
@@ -252,8 +257,7 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
                 Description = Truncate(aiCase.Description, MaxDescriptionLength),
                 ProjectId = projectId,
                 CategoryId = ResolveCategoryRef(aiCase.CategoryRef, existingCategoryIds) ?? (tempIdMap.TryGetValue(aiCase.CategoryRef ?? string.Empty, out var newId) ? newId : null),
-                Levels = NormalizeLevels(aiCase.Levels),
-                Tags = NormalizeTags(aiCase.Tags),
+                Level = NormalizeLevel(aiCase.Level),
                 Status = CaseStatus.Active
             });
         }
@@ -269,13 +273,9 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
 
             current.Name = string.IsNullOrWhiteSpace(update.Name) ? current.Name : Truncate(update.Name, MaxNameLength);
             current.Description = string.IsNullOrWhiteSpace(update.Description) ? current.Description : Truncate(update.Description, MaxDescriptionLength);
-            if (update.Levels is { Count: > 0 })
+            if (!string.IsNullOrWhiteSpace(update.Level))
             {
-                current.Levels = NormalizeLevels(update.Levels);
-            }
-            if (update.Tags is { Count: > 0 })
-            {
-                current.Tags = NormalizeTags(update.Tags);
+                current.Level = NormalizeLevel(update.Level);
             }
 
             await _caseService.UpdateAsync(update.Id, current);
@@ -592,33 +592,13 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
         }
     }
 
-    private static List<string> NormalizeLevels(List<string>? levels)
+    /// <summary>
+    /// 归一化 AI 返回的用例级别（单选，无效时默认 P1）
+    /// </summary>
+    private static CaseLevel NormalizeLevel(string? level)
     {
-        if (levels == null)
-        {
-            return [];
-        }
-
-        return levels
-            .Where(l => !string.IsNullOrWhiteSpace(l))
-            .Select(l => l.Trim().ToUpperInvariant())
-            .Where(ValidLevels.Contains)
-            .Distinct()
-            .ToList();
-    }
-
-    private static List<string> NormalizeTags(List<string>? tags)
-    {
-        if (tags == null)
-        {
-            return [];
-        }
-
-        return tags
-            .Where(t => !string.IsNullOrWhiteSpace(t))
-            .Select(t => t.Trim())
-            .Distinct()
-            .ToList();
+        var value = level?.Trim().ToUpperInvariant();
+        return value is "P0" or "P1" or "P2" or "P3" ? Enum.Parse<CaseLevel>(value) : CaseLevel.P1;
     }
 
     private static string Truncate(string? value, int maxLength)
@@ -677,8 +657,7 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
                 {
                   "name": "用例名称",
                   "description": "测试要点与预期结果",
-                  "levels": ["P0"],
-                  "tags": ["标签"],
+                  "level": "P0",
                   "steps": [
                     { "name": "步骤名称", "type": "api", "method": "POST", "url": "/api/login", "serviceRef": "s1", "body": "{\"username\":\"test\"}", "description": "预期结果" },
                     { "name": "步骤名称", "type": "ui", "action": "click", "selector": "#login-btn", "value": "", "description": "预期结果" }
@@ -692,7 +671,7 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
         - services：按被测系统/服务划分（如 Web前端、用户服务、订单服务），tempId 依次为 s1、s2……。
         - environments：默认创建一个开发环境（type 从 development/testing/staging/production 中选）；用户描述中提到的地址要提取到对应环境的 serviceConfigs.baseUrl 中；未提供地址时 baseUrl 用合理的占位地址（如 http://localhost:8080）；常用配置可放入 variables。
         - categories：tempId 依次为 c1、c2……；子分类的 parentTempId 填写其父分类的 tempId，根分类为 null；分类层级最多 2 层；按功能模块或测试类型划分，数量建议 2~8 个。
-        - cases：名称清晰可执行；description 包含关键测试点与预期结果；levels 从 P0/P1/P2/P3 中选择，P0 为最重要；覆盖正常流程、异常场景与边界条件。
+        - cases：名称清晰可执行；description 包含关键测试点与预期结果；level 从 P0/P1/P2/P3 中单选一个，P0 为最重要；覆盖正常流程、异常场景与边界条件。
         - steps：每个用例设计 2~6 个具体可执行的步骤，按执行顺序排列；接口类项目用 type=api（method、url 为相对路径、serviceRef 引用服务 tempId、body 为 JSON 字符串、无请求体填空字符串）；界面类项目用 type=ui（action 从 navigate/click/input/select/wait/assert 中选，selector 为元素定位符，value 为输入值或期望值）；每个步骤的 description 写预期结果。
         - assert 步骤的 selector 应使用能定位到具体元素的 CSS 选择器（避免宽泛的标签组合），value 填写元素内应包含的预期文本，仅验证元素可见时 value 填空字符串，不要填 visible。
         - 所有名称与描述使用中文。
@@ -706,15 +685,15 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
         {
           "addCategories": [{ "tempId": "c1", "name": "分类名称", "description": "", "parentRef": null }],
           "updateCategories": [{ "id": 123, "name": "新名称", "description": "" }],
-          "addCases": [{ "name": "用例名称", "description": "测试要点与预期结果", "levels": ["P1"], "tags": [], "categoryRef": "c1" }],
-          "updateCases": [{ "id": 456, "name": "新名称", "description": "", "levels": [], "tags": [] }]
+          "addCases": [{ "name": "用例名称", "description": "测试要点与预期结果", "level": "P1", "categoryRef": "c1" }],
+          "updateCases": [{ "id": 456, "name": "新名称", "description": "", "level": "" }]
         }
         3. 规则：
         - parentRef 与 categoryRef 可填写已有分类的 id（数字），或本次新增分类的 tempId（如 c1）；根分类或未分类填 null。
         - tempId 依次为 c1、c2、c3……
-        - 修改操作只填写需要变更的字段，不需要变更的字段填空字符串或空数组（空值将被忽略）。
+        - 修改操作只填写需要变更的字段，不需要变更的字段填空字符串（空值将被忽略）。
         - 只输出必要的操作，无需变更时输出空数组；不要包含任何删除操作。
-        - 新增用例应优先挂到合适的已有分类下；levels 从 P0/P1/P2/P3 中选择。
+        - 新增用例应优先挂到合适的已有分类下；level 从 P0/P1/P2/P3 中单选一个。
         - 若提供了项目知识库内容，须优先依据知识库描述的功能与业务规则设计用例，使其覆盖知识库中提到的关键流程、校验规则与异常场景。
         - 所有名称与描述使用中文。
         """;

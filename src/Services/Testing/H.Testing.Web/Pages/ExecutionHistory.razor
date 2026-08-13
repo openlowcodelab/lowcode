@@ -4,6 +4,7 @@
 @layout TestingLayout
 
 @inject ICaseAppService ProjectCaseService
+@inject ICaseStepAppService CaseStepService
 @inject IExecutionRecordAppService ExecutionRecordService
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
@@ -40,21 +41,11 @@ else
                     <table class="h-descriptions">
                         <tr><th>用例名称</th><td>@testCase.Name</td></tr>
                         <tr><th>描述</th><td>@(string.IsNullOrEmpty(testCase.Description) ? "无" : testCase.Description)</td></tr>
-                        <tr><th>步骤数量</th><td>@testCase.Steps.Count</td></tr>
+                        <tr><th>步骤数量</th><td>@testCaseStepCount</td></tr>
                         <tr>
                             <th>测试级别</th>
                             <td>
-                                @if (testCase.Levels.Any())
-                                {
-                                    @foreach (var level in testCase.Levels)
-                                    {
-                                        <span class="h-tag h-tag-@GetLevelTagClass(level)" style="margin-right:4px;">@level</span>
-                                    }
-                                }
-                                else
-                                {
-                                    <span style="color:#86909C;">无</span>
-                                }
+                                <span class="h-tag h-tag-@GetLevelTagClass(testCase.Level.ToString())">@testCase.Level</span>
                             </td>
                         </tr>
                     </table>
@@ -359,6 +350,7 @@ else
     [Parameter] public long TestCaseId { get; set; }
 
     private CaseDto? testCase;
+    private int testCaseStepCount;
     private List<CaseExecutionRecordDto> executionRecords = new();
     private List<CaseExecutionRecordDto> filteredRecords = new();
     private bool loading = true;
@@ -381,6 +373,7 @@ else
 
             if (testCase != null)
             {
+                testCaseStepCount = (await CaseStepService.GetByCaseIdAsync(TestCaseId)).Count;
                 executionRecords = await ExecutionRecordService.GetByTestCaseIdAsync(testCase.ProjectId, TestCaseId);
                 ApplyFilter();
             }

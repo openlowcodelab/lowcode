@@ -18,6 +18,7 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
     private readonly IExecutionRecordAppService _executionRecordService;
     private readonly IEnvironmentAppService _environmentService;
     private readonly ICaseAppService _projectCaseService;
+    private readonly ICaseStepAppService _caseStepService;
     private readonly ITestExecutionEventNotifier _eventNotifier;
     private readonly Dictionary<string, string> _variables;
 
@@ -26,12 +27,14 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
         IExecutionRecordAppService executionRecordService,
         IEnvironmentAppService environmentService,
         ICaseAppService projectCaseService,
+        ICaseStepAppService caseStepService,
         ITestExecutionEventNotifier eventNotifier)
     {
         _httpClient = httpClient;
         _executionRecordService = executionRecordService;
         _environmentService = environmentService;
         _projectCaseService = projectCaseService;
+        _caseStepService = caseStepService;
         _eventNotifier = eventNotifier;
         _variables = new Dictionary<string, string>();
     }
@@ -58,14 +61,14 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
         }
 
         // 处理模板继承逻辑：有 TemplateId 时使用模板的步骤执行，但不修改用例自身的步骤
-        var executionSteps = testCase.Steps;
+        var executionSteps = await _caseStepService.GetByCaseIdAsync(testCase.Id);
         if (testCase.TemplateId.HasValue)
         {
-            var templateCase = await _projectCaseService.GetByIdAsync(testCase.TemplateId.Value);
-            if (templateCase != null && templateCase.Steps.Count > 0)
+            var templateSteps = await _caseStepService.GetByCaseIdAsync(testCase.TemplateId.Value);
+            if (templateSteps.Count > 0)
             {
-                // 目前策略：有 TemplateId 则完全使用模板的步骤执行，变量/测试数据仍用当前用例的
-                executionSteps = templateCase.Steps;
+                // 目前策略：有 TemplateId 则完全使用模板的步骤执行，变量仍用当前环境的
+                executionSteps = templateSteps;
             }
         }
 
@@ -93,7 +96,7 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
         try
         {
             // 初始化变量
-            InitializeVariables(environment, testCase.TestData);
+            InitializeVariables(environment);
 
             // 初始化 Playwright（仅对包含 UI 步骤的测试用例）
             if (executionSteps.Any(s => IsUiStepType(s.Type)))
@@ -757,7 +760,7 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
     /// <summary>
     /// 初始化变量
     /// </summary>
-    private void InitializeVariables(EnvironmentDto environment, Dictionary<string, object> testData)
+    private void InitializeVariables(EnvironmentDto environment)
     {
         _variables.Clear();
 
@@ -765,12 +768,6 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
         foreach (var config in environment.Config)
         {
             _variables[config.Key] = config.Value?.ToString() ?? "";
-        }
-
-        // 添加测试数据
-        foreach (var data in testData)
-        {
-            _variables[data.Key] = data.Value?.ToString() ?? "";
         }
     }
 

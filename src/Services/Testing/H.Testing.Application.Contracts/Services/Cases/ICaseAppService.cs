@@ -43,14 +43,9 @@ public interface ICaseAppService : IAppService
     Task<List<CaseDto>> GetActiveProjectCasesAsync();
 
     /// <summary>
-    /// 根据标签获取测试用例
-    /// </summary>
-    Task<List<CaseDto>> GetByTagsAsync(string tag);
-
-    /// <summary>
     /// 根据级别获取测试用例
     /// </summary>
-    Task<List<CaseDto>> GetByLevelAsync(string level);
+    Task<List<CaseDto>> GetByLevelAsync(CaseLevel level);
 
     /// <summary>
     /// 搜索测试用例

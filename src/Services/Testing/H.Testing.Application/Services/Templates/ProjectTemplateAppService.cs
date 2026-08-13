@@ -232,9 +232,7 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
                 CaseName = TemplateJson.Str(o, "name"),
                 Description = TemplateJson.Str(o, "description"),
                 IsTemplate = TemplateJson.BoolVal(o, "isTemplate"),
-                LevelsJson = TemplateJson.RawJson(o, "levels"),
-                TagsJson = TemplateJson.RawJson(o, "tags"),
-                TestDataJson = TemplateJson.RawJson(o, "testData"),
+                Level = ParseLevel(o),
                 Order = TemplateJson.IntVal(o, "order"),
                 Status = TemplateJson.IntVal(o, "status", 1)
             }, TemplateJson.Get(o, "steps")));
@@ -356,10 +354,8 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
             ["CategoryId"] = CatId(c.CategoryId),
             ["IsTemplate"] = c.IsTemplate,
             ["TemplateId"] = CaseId(c.TemplateId),
-            ["Levels"] = ParseNode(c.LevelsJson) ?? new JsonArray(),
+            ["Level"] = ((CaseLevel)c.Level).ToString(),
             ["Steps"] = RemapStepsToFile(SerializeSteps(stepsByCase.GetValueOrDefault(c.Id)), SvcId) ?? new JsonArray(),
-            ["TestData"] = ParseNode(c.TestDataJson) ?? new JsonObject(),
-            ["Tags"] = ParseNode(c.TagsJson) ?? new JsonArray(),
             ["Order"] = c.Order,
             ["Status"] = c.Status,
             ["LastExecutionResult"] = null,
@@ -505,6 +501,28 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
 
     private static JsonNode? ParseNode(string? json)
         => string.IsNullOrWhiteSpace(json) ? null : JsonNode.Parse(json);
+
+    /// <summary>
+    /// 导入：解析模板级别（新格式 level 字符串 / 旧格式 levels 数组取首个有效值），无则默认 P1
+    /// </summary>
+    private static int ParseLevel(JsonObject o)
+    {
+        var value = TemplateJson.Str(o, "level");
+        if (string.IsNullOrWhiteSpace(value) && TemplateJson.Get(o, "levels") is JsonArray levels)
+        {
+            foreach (var item in levels)
+            {
+                var candidate = item?.ToString().Trim().ToUpperInvariant();
+                if (candidate is "P0" or "P1" or "P2" or "P3")
+                {
+                    return (int)Enum.Parse<CaseLevel>(candidate);
+                }
+            }
+        }
+
+        value = value?.Trim().ToUpperInvariant();
+        return value is "P0" or "P1" or "P2" or "P3" ? (int)Enum.Parse<CaseLevel>(value) : (int)CaseLevel.P1;
+    }
 
     /// <summary>
     /// 导入：将模板步骤 JSON 反序列化为步骤 DTO 列表

@@ -9,6 +9,7 @@
 @inject IProjectAppService ProjectService
 @inject ICaseCategoryAppService CaseCategoryAppService
 @inject ICaseAppService ProjectCaseService
+@inject ICaseStepAppService CaseStepService
 @inject IBatchExecutionAppService BatchExecutionAppService
 @inject IAiGenerateAppService TestingAiService
 @inject NavigationManager Navigation
@@ -38,11 +39,11 @@
                     <div style="color: #86909C; font-size: 12px;">总用例</div>
                 </div>
                 <div style="text-align: center;">
-                    <div style="font-size: 24px; color: #F53F3F; font-weight: 500;">@filteredTestCases.Count(tc => tc.Levels.Contains("P0"))</div>
+                    <div style="font-size: 24px; color: #F53F3F; font-weight: 500;">@filteredTestCases.Count(tc => tc.Level == CaseLevel.P0)</div>
                     <div style="color: #86909C; font-size: 12px;">P0级别</div>
                 </div>
                 <div style="text-align: center;">
-                    <div style="font-size: 24px; color: #FF7D00; font-weight: 500;">@filteredTestCases.Count(tc => tc.Levels.Contains("P1"))</div>
+                    <div style="font-size: 24px; color: #FF7D00; font-weight: 500;">@filteredTestCases.Count(tc => tc.Level == CaseLevel.P1)</div>
                     <div style="color: #86909C; font-size: 12px;">P1级别</div>
                 </div>
                 <div style="text-align: center;">
@@ -152,24 +153,10 @@
                                             </div>
                                         </td>
                                         <td>
-                                            @if (context.Levels.Any())
-                                            {
-                                                @foreach (var level in context.Levels.Take(3))
-                                                {
-                                                    <span class="h-tag h-tag-@GetLevelTagClass(level)" style="margin-right: 4px;">@level</span>
-                                                }
-                                                @if (context.Levels.Count > 3)
-                                                {
-                                                    <span style="color: #86909C; font-size: 12px;">+@(context.Levels.Count - 3)</span>
-                                                }
-                                            }
-                                            else
-                                            {
-                                                <span style="color: #86909C;">无</span>
-                                            }
+                                            <span class="h-tag h-tag-@GetLevelTagClass(context.Level.ToString())">@context.Level</span>
                                         </td>
                                         <td>
-                                            @context.Steps.Count
+                                            @GetStepCount(context.Id)
                                         </td>
                                         <td>
                                             @if (context.LastExecutionResult.HasValue)
@@ -363,9 +350,9 @@
                         <div Style="padding-left: 16px; color: #4E5969; font-size: 13px; margin-top: 4px;">
                             @aiCase.Name
                             <span Style="color: #86909C;">(分类：@GetAiRefName(aiCase.CategoryRef))</span>
-                            @foreach (var level in aiCase.Levels)
+                            @if (!string.IsNullOrEmpty(aiCase.Level))
                             {
-                                <span class="h-tag h-tag-blue" style="margin-left: 4px;">@level</span>
+                                <span class="h-tag h-tag-blue" style="margin-left: 4px;">@aiCase.Level</span>
                             }
                             @if (!string.IsNullOrEmpty(aiCase.Description))
                             {
@@ -384,9 +371,9 @@
                         <div Style="padding-left: 16px; color: #4E5969; font-size: 13px; margin-top: 4px;">
                             @GetAiCaseName(aiCase.Id)
                             @if (!string.IsNullOrEmpty(aiCase.Name)) { <span>→ @aiCase.Name</span> }
-                            @foreach (var level in aiCase.Levels)
+                            @if (!string.IsNullOrEmpty(aiCase.Level))
                             {
-                                <span class="h-tag h-tag-blue" style="margin-left: 4px;">@level</span>
+                                <span class="h-tag h-tag-blue" style="margin-left: 4px;">@aiCase.Level</span>
                             }
                             @if (!string.IsNullOrEmpty(aiCase.Description))
                             {
@@ -419,6 +406,7 @@
 @code {
     private List<ProjectDto> projects = new();
     private List<CaseDto> testCases = new();
+    private Dictionary<long, int> caseStepCounts = new();
     private List<CaseDto> filteredTestCases = new();
     private List<CaseDto> displayTestCases = new();
     private List<CaseCategoryDto> categories = new();
@@ -606,6 +594,8 @@
         {
             categories = await CaseCategoryAppService.GetByProjectIdAsync(selectedProjectId);
             testCases = await ProjectCaseService.GetByProjectIdAsync(selectedProjectId);
+            caseStepCounts = (await CaseStepService.GetByCaseIdsAsync(testCases.Select(c => c.Id)))
+                .ToDictionary(kv => kv.Key, kv => kv.Value.Count);
 
             filteredTestCases = testCases;
             CalculateCategoryTestCaseCounts();
@@ -617,6 +607,7 @@
             filteredTestCases.Clear();
             displayTestCases.Clear();
             categoryTestCaseCounts.Clear();
+            caseStepCounts.Clear();
         }
 
         selectedTestCases.Clear();
@@ -872,11 +863,6 @@
     {
         try
         {
-            if (editingTestCase.TemplateId.HasValue)
-            {
-                editingTestCase.Steps.Clear();
-            }
-
             await ProjectCaseService.UpdateAsync(editingTestCase.Id, editingTestCase);
             await LoadProjectData();
             showTemplateSettingsModal = false;
@@ -1047,11 +1033,9 @@
             Description = testCase.Description,
             ProjectId = testCase.ProjectId,
             CategoryId = testCase.CategoryId,
-            Levels = new List<string>(testCase.Levels),
+            Level = testCase.Level,
             Order = testCase.Order,
-            Status = testCase.Status,
-            Tags = new List<string>(testCase.Tags),
-            Steps = testCase.Steps
+            Status = testCase.Status
         };
         
         isEditingBasicInfo = true;
@@ -1113,6 +1097,8 @@
         }
     }
     
+    private int GetStepCount(long caseId) => caseStepCounts.GetValueOrDefault(caseId);
+
     private string GetLevelTagColor(string level) => level switch
     {
         "P0" => "red",

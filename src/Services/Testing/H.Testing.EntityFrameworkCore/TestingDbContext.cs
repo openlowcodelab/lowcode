@@ -88,9 +88,7 @@ public class TestingDbContext : AbpDbContext<TestingDbContext>
             b.Property(x => x.Id).UseIdentityColumn(8000000, 1);
             b.Property(x => x.CaseName).IsRequired().HasMaxLength(20);
             b.Property(x => x.Description).HasMaxLength(100);
-            b.Property(x => x.LevelsJson).HasMaxLength(1000);
-            b.Property(x => x.TagsJson).HasMaxLength(1000);
-            b.Property(x => x.TestDataJson).HasMaxLength(1000);
+            b.Property(x => x.Level);
 
             b.HasIndex(x => x.ProjectId);
         });

@@ -148,11 +148,8 @@ public class AiGeneratedCaseDto
     /// <summary>用例描述（测试要点与预期结果）</summary>
     public string Description { get; set; } = string.Empty;
 
-    /// <summary>用例级别（P0~P3）</summary>
-    public List<string> Levels { get; set; } = new();
-
-    /// <summary>标签</summary>
-    public List<string> Tags { get; set; } = new();
+    /// <summary>用例级别（单选，P0~P3）</summary>
+    public string Level { get; set; } = string.Empty;
 
     /// <summary>测试步骤</summary>
     public List<AiGeneratedStepDto> Steps { get; set; } = new();
@@ -220,11 +217,8 @@ public class AiAddCaseDto
     /// <summary>用例描述（测试要点与预期结果）</summary>
     public string Description { get; set; } = string.Empty;
 
-    /// <summary>用例级别（P0~P3）</summary>
-    public List<string> Levels { get; set; } = new();
-
-    /// <summary>标签</summary>
-    public List<string> Tags { get; set; } = new();
+    /// <summary>用例级别（单选，P0~P3）</summary>
+    public string Level { get; set; } = string.Empty;
 
     /// <summary>所属分类引用：已有分类ID（数字）或本次新增分类的 TempId，未分类为 null</summary>
     public string? CategoryRef { get; set; }
@@ -244,9 +238,6 @@ public class AiUpdateCaseDto
     /// <summary>新描述（为空表示不修改）</summary>
     public string Description { get; set; } = string.Empty;
 
-    /// <summary>新级别（为空数组表示不修改）</summary>
-    public List<string> Levels { get; set; } = new();
-
-    /// <summary>新标签（为空数组表示不修改）</summary>
-    public List<string> Tags { get; set; } = new();
+    /// <summary>新级别（单选，P0~P3，为空字符串表示不修改）</summary>
+    public string Level { get; set; } = string.Empty;
 }
