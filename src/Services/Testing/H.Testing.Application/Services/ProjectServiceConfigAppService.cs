@@ -7,19 +7,19 @@ using Volo.Abp.Domain.Repositories;
 namespace H.Testing.Application;
 
 /// <summary>
-/// 项目服务配置管理服务（数据库存储）
+/// 项目服务配置管理服务（数据库存储，环境服务配置存于环境的 ServiceConfigsJson 字段）
 /// </summary>
 public class ProjectServiceConfigAppService : ApplicationService, IProjectServiceConfigAppService
 {
     private readonly IRepository<ProjectServiceEntity, long> _serviceRepository;
-    private readonly IRepository<ProjectEnvConfigEntity, long> _configRepository;
+    private readonly IRepository<ProjectEnvEntity, long> _envRepository;
 
     public ProjectServiceConfigAppService(
         IRepository<ProjectServiceEntity, long> serviceRepository,
-        IRepository<ProjectEnvConfigEntity, long> configRepository)
+        IRepository<ProjectEnvEntity, long> envRepository)
     {
         _serviceRepository = serviceRepository;
-        _configRepository = configRepository;
+        _envRepository = envRepository;
     }
 
     public async Task<List<ProjectServiceDto>> GetProjectServicesAsync(long projectId)
@@ -54,50 +54,69 @@ public class ProjectServiceConfigAppService : ApplicationService, IProjectServic
     public async Task DeleteProjectServiceAsync(long projectId, long serviceId)
     {
         await _serviceRepository.DeleteAsync(s => s.Id == serviceId, autoSave: true);
-        // 删除相关的环境服务配置
-        await _configRepository.DeleteAsync(c => c.ProjectServiceId == serviceId, autoSave: true);
+        // 移除项目下各环境中对该服务的基础URL配置
+        var query = await _envRepository.GetQueryableAsync();
+        var envs = await AsyncExecuter.ToListAsync(query.Where(e => e.ProjectId == projectId));
+        var changed = new List<ProjectEnvEntity>();
+        foreach (var env in envs)
+        {
+            var configs = TestingMappers.DeserializeServiceConfigs(env.ServiceConfigsJson);
+            if (configs.Remove(serviceId))
+            {
+                env.ServiceConfigsJson = TestingMappers.SerializeServiceConfigs(configs);
+                changed.Add(env);
+            }
+        }
+        if (changed.Count > 0) await _envRepository.UpdateManyAsync(changed, autoSave: true);
     }
 
     public async Task<List<ProjectEnvConfigDto>> GetEnvironmentServiceConfigsAsync(long environmentId)
     {
-        var query = await _configRepository.GetQueryableAsync();
-        var list = await AsyncExecuter.ToListAsync(query.Where(c => c.EnvId == environmentId));
-        return list.Select(e => e.ToDto()).ToList();
+        var entity = await _envRepository.FindAsync(environmentId);
+        return entity?.ToConfigDtos() ?? new List<ProjectEnvConfigDto>();
     }
 
-    public async Task<ProjectEnvConfigDto?> GetEnvironmentServiceConfigAsync(long configId)
-    {
-        var entity = await _configRepository.FindAsync(configId);
-        return entity?.ToDto();
-    }
+    public Task<ProjectEnvConfigDto> UpdateEnvironmentServiceConfigAsync(ProjectEnvConfigDto config)
+        => UpsertEnvironmentServiceConfigAsync(config);
 
-    public async Task<ProjectEnvConfigDto> UpdateEnvironmentServiceConfigAsync(ProjectEnvConfigDto config)
+    public Task<ProjectEnvConfigDto> CreateEnvironmentServiceConfigAsync(ProjectEnvConfigDto config)
+        => UpsertEnvironmentServiceConfigAsync(config);
+
+    /// <summary>
+    /// 新增或更新环境服务配置（以 环境Id + 项目服务Id 为键写入环境的 ServiceConfigsJson）
+    /// </summary>
+    private async Task<ProjectEnvConfigDto> UpsertEnvironmentServiceConfigAsync(ProjectEnvConfigDto config)
     {
-        var entity = config.Id > 0 ? await _configRepository.FindAsync(config.Id) : null;
-        if (entity != null)
+        var entity = await _envRepository.FindAsync(config.EnvironmentId)
+            ?? throw new ArgumentException($"Environment with ID {config.EnvironmentId} not found");
+
+        var configs = TestingMappers.DeserializeServiceConfigs(entity.ServiceConfigsJson);
+        configs[config.ProjectServiceId] = config.BaseUrl ?? string.Empty;
+        entity.ServiceConfigsJson = TestingMappers.SerializeServiceConfigs(configs);
+        await _envRepository.UpdateAsync(entity, autoSave: true);
+
+        return new ProjectEnvConfigDto
         {
-            config.Apply(entity);
-            await _configRepository.UpdateAsync(entity, autoSave: true);
-            return entity.ToDto();
+            EnvironmentId = entity.Id,
+            ProjectServiceId = config.ProjectServiceId,
+            BaseUrl = config.BaseUrl ?? string.Empty
+        };
+    }
+
+    public async Task DeleteEnvironmentServiceConfigAsync(long environmentId, long projectServiceId)
+    {
+        var entity = await _envRepository.FindAsync(environmentId);
+        if (entity == null)
+        {
+            return;
         }
 
-        entity = new ProjectEnvConfigEntity();
-        config.Apply(entity);
-        entity = await _configRepository.InsertAsync(entity, autoSave: true);
-        return entity.ToDto();
-    }
-
-    public async Task<ProjectEnvConfigDto> CreateEnvironmentServiceConfigAsync(ProjectEnvConfigDto config)
-    {
-        var entity = new ProjectEnvConfigEntity();
-        config.Apply(entity);
-        entity = await _configRepository.InsertAsync(entity, autoSave: true);
-        return entity.ToDto();
-    }
-
-    public async Task DeleteEnvironmentServiceConfigAsync(long configId)
-    {
-        await _configRepository.DeleteAsync(c => c.Id == configId, autoSave: true);
+        var configs = TestingMappers.DeserializeServiceConfigs(entity.ServiceConfigsJson);
+        if (configs.Remove(projectServiceId))
+        {
+            entity.ServiceConfigsJson = TestingMappers.SerializeServiceConfigs(configs);
+            await _envRepository.UpdateAsync(entity, autoSave: true);
+        }
     }
 
     public async Task<List<ServiceConfigView>> GetServiceConfigViewsAsync(long environmentId, long projectId)
@@ -116,7 +135,7 @@ public class ProjectServiceConfigAppService : ApplicationService, IProjectServic
                 IsConfigured = config != null,
                 StatusText = config != null ? "已配置" : "未配置",
                 StatusClass = config != null ? "text-success" : "text-muted",
-                EnvironmentServiceConfigId = config?.Id
+                EnvironmentServiceConfigId = config != null ? service.Id : null
             });
         }
 

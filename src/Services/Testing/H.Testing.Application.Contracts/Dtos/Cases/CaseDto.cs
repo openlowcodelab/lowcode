@@ -9,13 +9,6 @@ public class CaseDto
 {
     public long Id { get; set; }
 
-    /// <summary>
-    /// 用例编号，用于标识和排序
-    /// </summary>
-    [StringLength(12, MinimumLength = 3, ErrorMessage = "用例编号长度必须在3-12个字符之间")]
-    [RegularExpression(@"^[a-zA-Z0-9_]+$", ErrorMessage = "用例编号只能包含字母、数字和下划线")]
-    public string CaseNumber { get; set; } = string.Empty;
-
     [Required(ErrorMessage = "测试用例名称不能为空")]
     [StringLength(20, ErrorMessage = "测试用例名称长度不能超过20个字符")]
     public string Name { get; set; } = string.Empty;

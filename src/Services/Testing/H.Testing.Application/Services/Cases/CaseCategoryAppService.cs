@@ -9,11 +9,11 @@ namespace H.Testing.Application;
 /// <summary>
 /// 测试用例分类服务（数据库存储）
 /// </summary>
-public class ProjectCaseCategoryAppService : ApplicationService, IProjectCaseCategoryAppService
+public class CaseCategoryAppService : ApplicationService, ICaseCategoryAppService
 {
     private readonly IRepository<CaseCategoryEntity, long> _repository;
 
-    public ProjectCaseCategoryAppService(IRepository<CaseCategoryEntity, long> repository)
+    public CaseCategoryAppService(IRepository<CaseCategoryEntity, long> repository)
     {
         _repository = repository;
     }
@@ -21,7 +21,7 @@ public class ProjectCaseCategoryAppService : ApplicationService, IProjectCaseCat
     /// <summary>
     /// 获取指定项目分类（树形结构）
     /// </summary>
-    public async Task<List<ProjectCaseCategory>> GetByProjectIdAsync(long projectId)
+    public async Task<List<CaseCategoryDto>> GetByProjectIdAsync(long projectId)
     {
         var query = await _repository.GetQueryableAsync();
         var list = await AsyncExecuter.ToListAsync(query.Where(c => c.ProjectId == projectId));
@@ -29,7 +29,7 @@ public class ProjectCaseCategoryAppService : ApplicationService, IProjectCaseCat
         return BuildCategoryTree(flat);
     }
 
-    public async Task<ProjectCaseCategory> CreateAsync(ProjectCaseCategory category)
+    public async Task<CaseCategoryDto> CreateAsync(CaseCategoryDto category)
     {
         var entity = new CaseCategoryEntity();
         category.Apply(entity);
@@ -37,7 +37,7 @@ public class ProjectCaseCategoryAppService : ApplicationService, IProjectCaseCat
         return entity.ToDto();
     }
 
-    public async Task<bool> UpdateAsync(long id, ProjectCaseCategory category)
+    public async Task<bool> UpdateAsync(long id, CaseCategoryDto category)
     {
         var entity = await _repository.FindAsync(id);
         if (entity == null)
@@ -62,7 +62,7 @@ public class ProjectCaseCategoryAppService : ApplicationService, IProjectCaseCat
         return true;
     }
 
-    public async Task<List<ProjectCaseCategory>> GetTreeStructureAsync(long projectId)
+    public async Task<List<CaseCategoryDto>> GetTreeStructureAsync(long projectId)
     {
         return await GetByProjectIdAsync(projectId);
     }
@@ -70,21 +70,21 @@ public class ProjectCaseCategoryAppService : ApplicationService, IProjectCaseCat
     /// <summary>
     /// 将平铺的分类数据构建为树形结构
     /// </summary>
-    private static List<ProjectCaseCategory> BuildCategoryTree(List<ProjectCaseCategory> flatCategories)
+    private static List<CaseCategoryDto> BuildCategoryTree(List<CaseCategoryDto> flatCategories)
     {
         if (flatCategories == null || flatCategories.Count == 0)
         {
-            return new List<ProjectCaseCategory>();
+            return new List<CaseCategoryDto>();
         }
 
-        var categoryMap = new Dictionary<long, ProjectCaseCategory>();
+        var categoryMap = new Dictionary<long, CaseCategoryDto>();
         foreach (var category in flatCategories)
         {
-            category.Childrens = System.Array.Empty<ProjectCaseCategory>();
+            category.Childrens = System.Array.Empty<CaseCategoryDto>();
             categoryMap[category.Id] = category;
         }
 
-        var rootCategories = new List<ProjectCaseCategory>();
+        var rootCategories = new List<CaseCategoryDto>();
         foreach (var category in flatCategories)
         {
             if (category.ParentId == null || !categoryMap.ContainsKey(category.ParentId.Value))

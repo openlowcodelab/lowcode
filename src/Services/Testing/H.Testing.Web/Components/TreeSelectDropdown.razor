@@ -12,7 +12,7 @@
 </select>
 
 @code {
-    [Parameter] public List<ProjectCaseCategory> Categories { get; set; } = new();
+    [Parameter] public List<CaseCategoryDto> Categories { get; set; } = new();
     [Parameter] public long? Value { get; set; }
     [Parameter] public EventCallback<long?> ValueChanged { get; set; }
 
@@ -39,7 +39,7 @@
         return items;
     }
 
-    private void AppendCategory(List<FlatCategoryItem> items, ProjectCaseCategory category, int level)
+    private void AppendCategory(List<FlatCategoryItem> items, CaseCategoryDto category, int level)
     {
         var prefix = level == 0 ? string.Empty : new string('\u3000', level) + "└ ";
         items.Add(new FlatCategoryItem

@@ -75,11 +75,9 @@ public static class TestingMappers
         Description = e.Description ?? string.Empty,
         ProjectId = e.ProjectId,
         Type = (EnvironmentType)e.Type,
-        EnvironmentServiceConfigs = new List<ProjectEnvConfigDto>(),
+        EnvironmentServiceConfigs = e.ToConfigDtos(),
         Variables = DeserializeDict<string>(e.VariablesJson),
-        Headers = DeserializeDict<string>(e.HeadersJson),
-        DatabaseConfig = DeserializeObj<DatabaseConfig>(e.DatabaseConfigJson),
-        Status = (EnvironmentStatus)e.Status
+        Headers = DeserializeDict<string>(e.HeadersJson)
     };
 
     public static void Apply(this ProjectEnvDto dto, ProjectEnvEntity e)
@@ -90,28 +88,29 @@ public static class TestingMappers
         e.Type = (int)dto.Type;
         e.VariablesJson = Serialize(dto.Variables);
         e.HeadersJson = Serialize(dto.Headers);
-        e.DatabaseConfigJson = Serialize(dto.DatabaseConfig);
-        e.Status = (int)dto.Status;
+        // 服务配置由 ProjectServiceConfigAppService 单独维护，此处不覆盖 ServiceConfigsJson
     }
 
-    // === EnvironmentServiceConfig ===
-    public static ProjectEnvConfigDto ToDto(this ProjectEnvConfigEntity e) => new()
-    {
-        Id = e.Id,
-        EnvironmentId = e.EnvId,
-        ProjectServiceId = e.ProjectServiceId,
-        BaseUrl = e.BaseUrl ?? string.Empty
-    };
+    // === EnvironmentServiceConfig（存储于环境的 ServiceConfigsJson 字段） ===
+    public static Dictionary<long, string> DeserializeServiceConfigs(string? json)
+        => string.IsNullOrWhiteSpace(json)
+            ? new Dictionary<long, string>()
+            : JsonSerializer.Deserialize<Dictionary<long, string>>(json, JsonOptions) ?? new Dictionary<long, string>();
 
-    public static void Apply(this ProjectEnvConfigDto dto, ProjectEnvConfigEntity e)
-    {
-        e.EnvId = dto.EnvironmentId;
-        e.ProjectServiceId = dto.ProjectServiceId;
-        e.BaseUrl = dto.BaseUrl;
-    }
+    public static string SerializeServiceConfigs(Dictionary<long, string> configs)
+        => JsonSerializer.Serialize(configs, JsonOptions);
+
+    public static List<ProjectEnvConfigDto> ToConfigDtos(this ProjectEnvEntity e)
+        => DeserializeServiceConfigs(e.ServiceConfigsJson)
+            .Select(kv => new ProjectEnvConfigDto
+            {
+                EnvironmentId = e.Id,
+                ProjectServiceId = kv.Key,
+                BaseUrl = kv.Value ?? string.Empty
+            }).ToList();
 
     // === Environment（执行时视图，由环境 + 服务配置组合而成） ===
-    public static EnvironmentDto ToEnvironmentDto(this ProjectEnvEntity e, IEnumerable<ProjectEnvConfigEntity> configs) => new()
+    public static EnvironmentDto ToEnvironmentDto(this ProjectEnvEntity e) => new()
     {
         Id = e.Id,
         Name = e.Name,
@@ -119,14 +118,13 @@ public static class TestingMappers
         ProjectId = e.ProjectId,
         Config = DeserializeDict<string>(e.VariablesJson)
             .ToDictionary(kv => kv.Key, kv => (object)(kv.Value ?? string.Empty)),
-        ServiceEndpoints = configs
-            .Where(c => c.EnvId == e.Id && !string.IsNullOrWhiteSpace(c.BaseUrl))
-            .ToDictionary(c => c.ProjectServiceId, c => c.BaseUrl!),
-        Status = (EnvironmentStatus)e.Status
+        ServiceEndpoints = DeserializeServiceConfigs(e.ServiceConfigsJson)
+            .Where(kv => !string.IsNullOrWhiteSpace(kv.Value))
+            .ToDictionary(kv => kv.Key, kv => kv.Value)
     };
 
     // === ProjectCaseCategory ===
-    public static ProjectCaseCategory ToDto(this CaseCategoryEntity e) => new()
+    public static CaseCategoryDto ToDto(this CaseCategoryEntity e) => new()
     {
         Id = e.Id,
         Name = e.Name,
@@ -134,10 +132,10 @@ public static class TestingMappers
         ProjectId = e.ProjectId,
         ParentId = e.ParentId,
         Order = e.Order,
-        Childrens = System.Array.Empty<ProjectCaseCategory>()
+        Childrens = System.Array.Empty<CaseCategoryDto>()
     };
 
-    public static void Apply(this ProjectCaseCategory dto, CaseCategoryEntity e)
+    public static void Apply(this CaseCategoryDto dto, CaseCategoryEntity e)
     {
         e.Name = dto.Name;
         e.Description = dto.Description;
@@ -150,7 +148,6 @@ public static class TestingMappers
     public static CaseDto ToDto(this CaseEntity e, List<CaseStepDto>? steps = null) => new()
     {
         Id = e.Id,
-        CaseNumber = e.CaseNumber ?? string.Empty,
         Name = e.CaseName,
         Description = e.Description ?? string.Empty,
         ProjectId = e.ProjectId,
@@ -169,7 +166,6 @@ public static class TestingMappers
 
     public static void Apply(this CaseDto dto, CaseEntity e)
     {
-        e.CaseNumber = dto.CaseNumber;
         e.CaseName = dto.Name;
         e.Description = dto.Description;
         e.ProjectId = dto.ProjectId;
@@ -188,7 +184,7 @@ public static class TestingMappers
     // === CaseStep ===
     public static CaseStepDto ToDto(this CaseStepEntity e) => new()
     {
-        Id = e.StepKey,
+        Id = e.Id.ToString(),
         Name = e.Name,
         Type = (StepType)e.Type,
         Parameters = DeserializeDict<object>(e.ParametersJson),
@@ -203,7 +199,6 @@ public static class TestingMappers
     public static CaseStepEntity ToEntity(this CaseStepDto dto, long caseId) => new()
     {
         CaseId = caseId,
-        StepKey = string.IsNullOrWhiteSpace(dto.Id) ? Guid.NewGuid().ToString() : dto.Id,
         Name = dto.Name,
         Type = (int)dto.Type,
         ParametersJson = Serialize(dto.Parameters),
@@ -214,6 +209,19 @@ public static class TestingMappers
         UiConfigJson = Serialize(dto.UiConfig),
         ScriptConfigJson = Serialize(dto.ScriptConfig)
     };
+
+    public static void Apply(this CaseStepDto dto, CaseStepEntity e)
+    {
+        e.Name = dto.Name;
+        e.Type = (int)dto.Type;
+        e.ParametersJson = Serialize(dto.Parameters);
+        e.ExpectedResult = dto.ExpectedResult;
+        e.Order = dto.Order;
+        e.IsEnabled = dto.IsEnabled;
+        e.ApiConfigJson = Serialize(dto.ApiConfig);
+        e.UiConfigJson = Serialize(dto.UiConfig);
+        e.ScriptConfigJson = Serialize(dto.ScriptConfig);
+    }
 
     // === ExecutionRecord ===
     public static CaseExecutionRecordDto ToDto(this CaseRecordEntity e) => new()

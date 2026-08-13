@@ -31,7 +31,7 @@ public class ServiceConfigView
     public string StatusClass { get; set; } = string.Empty;
 
     /// <summary>
-    /// 环境服务配置ID
+    /// 环境服务配置标识（即项目服务Id，用于删除配置）
     /// </summary>
     public long? EnvironmentServiceConfigId { get; set; }
 }

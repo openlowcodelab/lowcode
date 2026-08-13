@@ -13,7 +13,6 @@ public class TestingDbContext : AbpDbContext<TestingDbContext>
     public DbSet<ProjectEntity> Projects { get; set; } = null!;
     public DbSet<ProjectServiceEntity> ProjectServices { get; set; } = null!;
     public DbSet<ProjectEnvEntity> ProjectEnvironments { get; set; } = null!;
-    public DbSet<ProjectEnvConfigEntity> EnvironmentServiceConfigs { get; set; } = null!;
     public DbSet<CaseCategoryEntity> ProjectCaseCategories { get; set; } = null!;
     public DbSet<CaseEntity> ProjectCases { get; set; } = null!;
     public DbSet<CaseStepEntity> CaseSteps { get; set; } = null!;
@@ -61,26 +60,12 @@ public class TestingDbContext : AbpDbContext<TestingDbContext>
 
             b.Property(x => x.Id).UseIdentityColumn(3000000, 1);
             b.Property(x => x.Name).IsRequired().HasMaxLength(20);
-            b.Property(x => x.Status);
             b.Property(x => x.Description).HasMaxLength(100);
             b.Property(x => x.VariablesJson).HasMaxLength(2000);
             b.Property(x => x.HeadersJson).HasMaxLength(1000);
-            b.Property(x => x.DatabaseConfigJson).HasMaxLength(1000);
+            b.Property(x => x.ServiceConfigsJson).HasMaxLength(1000);
 
             b.HasIndex(x => x.ProjectId);
-        });
-
-        modelBuilder.Entity<ProjectEnvConfigEntity>(b =>
-        {
-            b.ToTable("ProjectEnvConfig");
-            b.HasKey(x => x.Id);
-
-            b.Property(x => x.Id).UseIdentityColumn(5000000, 1);
-            b.HasIndex(x => x.EnvId);
-            b.HasIndex(x => x.ProjectServiceId);
-            b.Property(x => x.BaseUrl).HasMaxLength(100);
-
-            b.HasIndex(x => x.TenantId);
         });
 
         modelBuilder.Entity<CaseCategoryEntity>(b =>
@@ -116,16 +101,15 @@ public class TestingDbContext : AbpDbContext<TestingDbContext>
             b.HasKey(x => x.Id);
 
             b.Property(x => x.Id).UseIdentityColumn(8500000, 1);
-            b.Property(x => x.StepKey).IsRequired().HasMaxLength(36);
             b.Property(x => x.Name).IsRequired().HasMaxLength(50);
             b.Property(x => x.Order);
             b.Property(x => x.Type);
             b.Property(x => x.IsEnabled);
-            b.Property(x => x.ParametersJson).HasMaxLength(1000);
-            b.Property(x => x.ApiConfigJson).HasMaxLength(1000);
-            b.Property(x => x.UiConfigJson).HasMaxLength(1000);
-            b.Property(x => x.ScriptConfigJson).HasMaxLength(1000);
-            b.Property(x => x.ExpectedResult).HasMaxLength(1000);
+            b.Property(x => x.ParametersJson).HasMaxLength(4000);
+            b.Property(x => x.ApiConfigJson).HasMaxLength(4000);
+            b.Property(x => x.UiConfigJson).HasMaxLength(4000);
+            b.Property(x => x.ScriptConfigJson).HasMaxLength(4000);
+            b.Property(x => x.ExpectedResult).HasMaxLength(4000);
 
             b.HasIndex(x => x.CaseId);
         });
@@ -138,10 +122,10 @@ public class TestingDbContext : AbpDbContext<TestingDbContext>
             b.Property(x => x.Id).UseIdentityColumn(9000000, 1);
             b.Property(x => x.CaseName).HasMaxLength(20);
             b.Property(x => x.EnvironmentName).HasMaxLength(20);
-            b.Property(x => x.StepRecordsJson).HasMaxLength(1000);
-            b.Property(x => x.EnvironmentSnapshotJson).HasMaxLength(1000);
+            b.Property(x => x.StepRecordsJson).HasMaxLength(4000);
+            b.Property(x => x.EnvironmentSnapshotJson).HasMaxLength(4000);
             b.Property(x => x.ErrorMessage).HasMaxLength(1000);
-            b.Property(x => x.ExecutedBy).HasMaxLength(20);
+            b.Property(x => x.ExecutedBy).HasMaxLength(36).IsUnicode(false);
 
             b.HasIndex(x => x.TestCaseId);
         });

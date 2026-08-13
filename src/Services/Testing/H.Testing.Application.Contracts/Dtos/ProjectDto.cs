@@ -29,27 +29,6 @@ public class ProjectDto
 }
 
 /// <summary>
-/// 测试用例分类
-/// </summary>
-public class ProjectCaseCategory
-{
-    public long Id { get; set; }
-
-    [Required(ErrorMessage = "分类名称不能为空")]
-    public string Name { get; set; } = string.Empty;
-
-    public string Description { get; set; } = string.Empty;
-
-    public long ProjectId { get; set; }
-
-    public long? ParentId { get; set; }
-
-    public int Order { get; set; } = 0;
-
-    public ProjectCaseCategory[] Childrens { get; set; } = [];
-}
-
-/// <summary>
 /// 项目状态
 /// </summary>
 public enum ProjectStatus

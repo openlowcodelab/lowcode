@@ -6,7 +6,7 @@
 
 @implements IDisposable
 
-@inject IProjectCaseAppService ProjectCaseService
+@inject ICaseAppService ProjectCaseService
 @inject IEnvironmentAppService EnvironmentService
 @inject ITestExecutionEngineAppService ExecutionEngine
 @inject ITestExecutionEventNotifier ExecutionEventNotifier
@@ -137,7 +137,7 @@ else
                             <option value="">请选择环境</option>
                             @foreach (var env in environments)
                             {
-                                <option value="@env.Id">@env.Name (@env.Status)</option>
+                                <option value="@env.Id">@env.Name</option>
                             }
                         </select>
                         @if (selectedEnvironmentId != 0)

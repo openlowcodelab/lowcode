@@ -19,9 +19,6 @@ public class CaseEntity : AuditedEntity<long>, IMultiTenant
     /// <summary>关联模板用例ID</summary>
     public long? TemplateId { get; set; }
 
-    /// <summary>用例编号（业务字符串）</summary>
-    public string? CaseNumber { get; set; }
-
     public string CaseName { get; set; } = string.Empty;
 
     public string? Description { get; set; }

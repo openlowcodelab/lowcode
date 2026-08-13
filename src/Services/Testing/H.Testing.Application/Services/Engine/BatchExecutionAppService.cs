@@ -10,11 +10,11 @@ namespace H.Testing.Application;
 public class BatchExecutionAppService : ApplicationService, IBatchExecutionAppService
 {
     private readonly ITestExecutionEngineAppService _testExecutionEngine;
-    private readonly IProjectCaseAppService _projectCaseService;
+    private readonly ICaseAppService _projectCaseService;
 
     public BatchExecutionAppService(
         ITestExecutionEngineAppService testExecutionEngine,
-        IProjectCaseAppService projectCaseService)
+        ICaseAppService projectCaseService)
     {
         _testExecutionEngine = testExecutionEngine;
         _projectCaseService = projectCaseService;

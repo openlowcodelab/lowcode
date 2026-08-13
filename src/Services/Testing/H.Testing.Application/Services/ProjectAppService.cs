@@ -15,30 +15,27 @@ public class ProjectAppService : ApplicationService, IProjectAppService
     private readonly IRepository<ProjectEntity, long> _repository;
     private readonly IRepository<ProjectServiceEntity, long> _serviceRepository;
     private readonly IRepository<ProjectEnvEntity, long> _environmentRepository;
-    private readonly IRepository<ProjectEnvConfigEntity, long> _serviceConfigRepository;
     private readonly IRepository<CaseCategoryEntity, long> _categoryRepository;
     private readonly IRepository<CaseEntity, long> _caseRepository;
     private readonly IRepository<CaseStepEntity, long> _caseStepRepository;
     private readonly IRepository<CaseRecordEntity, long> _executionRepository;
-    private readonly IProjectEnvironmentAppService _environmentService;
+    private readonly IProjectEnvAppService _environmentService;
     private readonly IKnowledgeBaseAppService _knowledgeBaseService;
 
     public ProjectAppService(
         IRepository<ProjectEntity, long> repository,
         IRepository<ProjectServiceEntity, long> serviceRepository,
         IRepository<ProjectEnvEntity, long> environmentRepository,
-        IRepository<ProjectEnvConfigEntity, long> serviceConfigRepository,
         IRepository<CaseCategoryEntity, long> categoryRepository,
         IRepository<CaseEntity, long> caseRepository,
         IRepository<CaseStepEntity, long> caseStepRepository,
         IRepository<CaseRecordEntity, long> executionRepository,
-        IProjectEnvironmentAppService environmentService,
+        IProjectEnvAppService environmentService,
         IKnowledgeBaseAppService knowledgeBaseService)
     {
         _repository = repository;
         _serviceRepository = serviceRepository;
         _environmentRepository = environmentRepository;
-        _serviceConfigRepository = serviceConfigRepository;
         _categoryRepository = categoryRepository;
         _caseRepository = caseRepository;
         _caseStepRepository = caseStepRepository;
@@ -91,15 +88,9 @@ public class ProjectAppService : ApplicationService, IProjectAppService
             return false;
         }
 
-        // 级联删除项目下的所有相关数据
+        // 级联删除项目下的所有相关数据（服务配置随环境一同删除）
         var caseQuery = await _caseRepository.GetQueryableAsync();
         var caseIds = await AsyncExecuter.ToListAsync(caseQuery.Where(c => c.ProjectId == id).Select(c => c.Id));
-        var envQuery = await _environmentRepository.GetQueryableAsync();
-        var envIds = await AsyncExecuter.ToListAsync(envQuery.Where(e => e.ProjectId == id).Select(e => e.Id));
-        if (envIds.Count > 0)
-        {
-            await _serviceConfigRepository.DeleteAsync(c => envIds.Contains(c.EnvId), autoSave: true);
-        }
 
         await _caseStepRepository.DeleteAsync(s => caseIds.Contains(s.CaseId), autoSave: true);
         await _caseRepository.DeleteAsync(c => c.ProjectId == id, autoSave: true);

@@ -13,9 +13,6 @@ public class CaseStepEntity : AuditedEntity<long>, IMultiTenant
     /// <summary>所属测试用例ID</summary>
     public long CaseId { get; set; }
 
-    /// <summary>步骤业务标识（字符串 GUID，与前端及执行记录中的 StepId 对应）</summary>
-    public string StepKey { get; set; } = string.Empty;
-
     public string Name { get; set; } = string.Empty;
 
     /// <summary>步骤类型（StepType）</summary>

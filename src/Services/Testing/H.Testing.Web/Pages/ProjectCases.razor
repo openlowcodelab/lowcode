@@ -7,10 +7,10 @@
 <link href="_content/H.Testing.Web/css/category-tree.css" rel="stylesheet" />
 
 @inject IProjectAppService ProjectService
-@inject IProjectCaseCategoryAppService ProjectCaseCategoryAppService
-@inject IProjectCaseAppService ProjectCaseService
+@inject ICaseCategoryAppService CaseCategoryAppService
+@inject ICaseAppService ProjectCaseService
 @inject IBatchExecutionAppService BatchExecutionAppService
-@inject ITestingAiAppService TestingAiService
+@inject IAiGenerateAppService TestingAiService
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
 
@@ -132,7 +132,7 @@
                                 {
                                     <tr>
                                         <td>
-                                            <span style="color: #86909C;">@context.CaseNumber</span>
+                                            <span style="color: #86909C;">@context.Id</span>
                                         </td>
                                         <td>
                                             <div>
@@ -284,7 +284,7 @@
                     <option value="">无(独立用例)</option>
                     @foreach (var template in availableTemplates)
                     {
-                        <option value="@template.Id">@(template.Name + (string.IsNullOrEmpty(template.CaseNumber) ? "" : $"({template.CaseNumber})"))</option>
+                        <option value="@template.Id">@(template.Name + $"({template.Id})")</option>
                     }
                 </select>
                 <div Style="color: #86909C; font-size: 12px; margin-top: 4px;">
@@ -421,12 +421,12 @@
     private List<CaseDto> testCases = new();
     private List<CaseDto> filteredTestCases = new();
     private List<CaseDto> displayTestCases = new();
-    private List<ProjectCaseCategory> categories = new();
+    private List<CaseCategoryDto> categories = new();
     private HashSet<long> selectedTestCases = new();
 
     private CaseDto currentTestCase = new();
     private CaseDto editingTestCase = new();
-    private ProjectCaseCategory currentCategory = new();
+    private CaseCategoryDto currentCategory = new();
 
     private bool loading = true;
     private bool showCategoryModal = false;
@@ -604,7 +604,7 @@
     {
         if (selectedProjectId != 0)
         {
-            categories = await ProjectCaseCategoryAppService.GetByProjectIdAsync(selectedProjectId);
+            categories = await CaseCategoryAppService.GetByProjectIdAsync(selectedProjectId);
             testCases = await ProjectCaseService.GetByProjectIdAsync(selectedProjectId);
 
             filteredTestCases = testCases;
@@ -613,7 +613,7 @@
         }
         else
         {
-            categories = new List<ProjectCaseCategory>();
+            categories = new List<CaseCategoryDto>();
             filteredTestCases.Clear();
             displayTestCases.Clear();
             categoryTestCaseCounts.Clear();
@@ -675,7 +675,7 @@
             
             return matchesSearch && matchesCategory;
         })
-        .OrderBy(tc => string.IsNullOrEmpty(tc.CaseNumber) ? "zzz" : tc.CaseNumber)
+        .OrderBy(tc => tc.Id)
         .ThenBy(tc => tc.Order)
         .ToList();
         
@@ -702,7 +702,7 @@
         }
     }
 
-    private ProjectCaseCategory? FindCategoryInTree(long id, IEnumerable<ProjectCaseCategory> nodes)
+    private CaseCategoryDto? FindCategoryInTree(long id, IEnumerable<CaseCategoryDto> nodes)
     {
         foreach (var n in nodes)
         {
@@ -716,7 +716,7 @@
         return null;
     }
 
-    private IEnumerable<ProjectCaseCategory> FlattenCategories(IEnumerable<ProjectCaseCategory> nodes)
+    private IEnumerable<CaseCategoryDto> FlattenCategories(IEnumerable<CaseCategoryDto> nodes)
     {
         foreach (var n in nodes)
         {
@@ -731,7 +731,7 @@
         }
     }
     
-    private List<ProjectCaseCategory> GetRootCategories()
+    private List<CaseCategoryDto> GetRootCategories()
     {
         return categories.OrderBy(c => c.Order).ToList();
     }
@@ -750,23 +750,23 @@
         }
     }
 
-    private void ShowAddChildCategoryModal(ProjectCaseCategory parentCategory)
+    private void ShowAddChildCategoryModal(CaseCategoryDto parentCategory)
     {
-        currentCategory = new ProjectCaseCategory 
+        currentCategory = new CaseCategoryDto 
         { 
             ProjectId = selectedProjectId
         };
         
         if (parentCategory.Childrens == null)
         {
-            parentCategory.Childrens = Array.Empty<ProjectCaseCategory>();
+            parentCategory.Childrens = Array.Empty<CaseCategoryDto>();
         }
         
         isEditingCategory = false;
         showCategoryModal = true;
     }
 
-    private async Task HandleDeleteCategory(ProjectCaseCategory category)
+    private async Task HandleDeleteCategory(CaseCategoryDto category)
     {
         var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"确定要删除分类 '{category.Name}' 吗?其子分类也会被删除。");
         if (confirmed)
@@ -889,14 +889,14 @@
 
     private void ShowAddCategoryModal()
     {
-        currentCategory = new ProjectCaseCategory { ProjectId = selectedProjectId };
+        currentCategory = new CaseCategoryDto { ProjectId = selectedProjectId };
         isEditingCategory = false;
         showCategoryModal = true;
     }
 
-    private void ShowEditCategoryModal(ProjectCaseCategory category)
+    private void ShowEditCategoryModal(CaseCategoryDto category)
     {
-        currentCategory = new ProjectCaseCategory
+        currentCategory = new CaseCategoryDto
         {
             Id = category.Id,
             Name = category.Name,
@@ -912,7 +912,7 @@
     private void HideCategoryModal()
     {
         showCategoryModal = false;
-        currentCategory = new ProjectCaseCategory();
+        currentCategory = new CaseCategoryDto();
         isEditingCategory = false;
     }
 
@@ -922,14 +922,14 @@
         {
             if (isEditingCategory)
             {
-                await ProjectCaseCategoryAppService.UpdateAsync(currentCategory.Id, currentCategory);
+                await CaseCategoryAppService.UpdateAsync(currentCategory.Id, currentCategory);
             }
             else
             {
-                await ProjectCaseCategoryAppService.CreateAsync(currentCategory);
+                await CaseCategoryAppService.CreateAsync(currentCategory);
             }
             
-            categories = await ProjectCaseCategoryAppService.GetByProjectIdAsync(selectedProjectId);
+            categories = await CaseCategoryAppService.GetByProjectIdAsync(selectedProjectId);
             HideCategoryModal();
             StateHasChanged();
         }
@@ -939,7 +939,7 @@
         }
     }
 
-    private List<ProjectCaseCategory> GetAvailableParentCategories()
+    private List<CaseCategoryDto> GetAvailableParentCategories()
     {
         if (!isEditingCategory)
         {
@@ -951,9 +951,9 @@
         return FilterCategoryTree(categories, excludeIds);
     }
 
-    private List<ProjectCaseCategory> FilterCategoryTree(IEnumerable<ProjectCaseCategory> nodes, HashSet<long> excludeIds)
+    private List<CaseCategoryDto> FilterCategoryTree(IEnumerable<CaseCategoryDto> nodes, HashSet<long> excludeIds)
     {
-        var result = new List<ProjectCaseCategory>();
+        var result = new List<CaseCategoryDto>();
         foreach (var node in nodes.OrderBy(c => c.Order))
         {
             if (excludeIds.Contains(node.Id))
@@ -961,7 +961,7 @@
                 continue;
             }
 
-            result.Add(new ProjectCaseCategory
+            result.Add(new CaseCategoryDto
             {
                 Id = node.Id,
                 Name = node.Name,
@@ -988,16 +988,16 @@
         }
     }
 
-    private void AddChildCategory(ProjectCaseCategory parentCategory)
+    private void AddChildCategory(CaseCategoryDto parentCategory)
     {
-        currentCategory = new ProjectCaseCategory 
+        currentCategory = new CaseCategoryDto 
         { 
             ProjectId = selectedProjectId
         };
         
         if (parentCategory.Childrens == null)
         {
-            parentCategory.Childrens = Array.Empty<ProjectCaseCategory>();
+            parentCategory.Childrens = Array.Empty<CaseCategoryDto>();
         }
         
         isEditingCategory = false;
@@ -1020,8 +1020,8 @@
     private async Task DeleteCategory(long categoryId)
     {
         await DeleteChildCategories(categoryId);
-        await ProjectCaseCategoryAppService.DeleteAsync(selectedProjectId, categoryId);
-        categories = await ProjectCaseCategoryAppService.GetByProjectIdAsync(selectedProjectId);
+        await CaseCategoryAppService.DeleteAsync(selectedProjectId, categoryId);
+        categories = await CaseCategoryAppService.GetByProjectIdAsync(selectedProjectId);
         StateHasChanged();
     }
 
@@ -1033,7 +1033,7 @@
             foreach (var child in category.Childrens)
             {
                 await DeleteChildCategories(child.Id);
-                await ProjectCaseCategoryAppService.DeleteAsync(selectedProjectId, child.Id);
+                await CaseCategoryAppService.DeleteAsync(selectedProjectId, child.Id);
             }
         }
     }
@@ -1043,7 +1043,6 @@
         currentTestCase = new CaseDto
         {
             Id = testCase.Id,
-            CaseNumber = testCase.CaseNumber,
             Name = testCase.Name,
             Description = testCase.Description,
             ProjectId = testCase.ProjectId,

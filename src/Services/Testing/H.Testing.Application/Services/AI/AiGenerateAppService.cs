@@ -10,7 +10,7 @@ namespace H.Testing.Application;
 /// 测试项目 AI 服务
 /// 基于口语化描述生成/变更测试项目（分类、用例），AI 基础能力依赖 Assistant 应用
 /// </summary>
-public class TestingAiAppService : ApplicationService, ITestingAiAppService
+public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -24,19 +24,19 @@ public class TestingAiAppService : ApplicationService, ITestingAiAppService
 
     private readonly IAiCompletionAppService _aiCompletion;
     private readonly IProjectAppService _projectService;
-    private readonly IProjectCaseCategoryAppService _categoryService;
-    private readonly IProjectCaseAppService _caseService;
+    private readonly ICaseCategoryAppService _categoryService;
+    private readonly ICaseAppService _caseService;
     private readonly IProjectServiceConfigAppService _serviceConfigService;
-    private readonly IProjectEnvironmentAppService _environmentService;
+    private readonly IProjectEnvAppService _environmentService;
     private readonly IProjectKnowledgeAppService _knowledgeService;
 
-    public TestingAiAppService(
+    public AiGenerateAppService(
         IAiCompletionAppService aiCompletion,
         IProjectAppService projectService,
-        IProjectCaseCategoryAppService categoryService,
-        IProjectCaseAppService caseService,
+        ICaseCategoryAppService categoryService,
+        ICaseAppService caseService,
         IProjectServiceConfigAppService serviceConfigService,
-        IProjectEnvironmentAppService environmentService,
+        IProjectEnvAppService environmentService,
         IProjectKnowledgeAppService knowledgeService)
     {
         _aiCompletion = aiCompletion;
@@ -139,7 +139,6 @@ public class TestingAiAppService : ApplicationService, ITestingAiAppService
             ResolveTempIdOnly);
 
         // 4. 创建用例（含测试步骤）
-        var caseNumberGenerator = new CaseNumberGenerator(await _caseService.GetByProjectIdAsync(projectId));
         foreach (var category in generated.Categories)
         {
             if (category.Cases == null || !tempIdMap.TryGetValue(category.TempId, out var categoryId))
@@ -151,7 +150,6 @@ public class TestingAiAppService : ApplicationService, ITestingAiAppService
             {
                 await _caseService.CreateAsync(new CaseDto
                 {
-                    CaseNumber = caseNumberGenerator.Next(),
                     Name = Truncate(aiCase.Name, MaxNameLength),
                     Description = Truncate(aiCase.Description, MaxDescriptionLength),
                     ProjectId = projectId,
@@ -184,7 +182,7 @@ public class TestingAiAppService : ApplicationService, ITestingAiAppService
         {
             project = new { project.Name, project.Description },
             categories = categories.Select(c => new { c.Id, c.Name, c.ParentId }),
-            cases = cases.Select(c => new { c.Id, c.CaseNumber, c.Name, c.CategoryId })
+            cases = cases.Select(c => new { c.Id, c.Name, c.CategoryId })
         }, JsonOptions);
 
         // 读取项目知识库内容作为生成上下文，辅助编写更贴合业务的用例
@@ -234,7 +232,7 @@ public class TestingAiAppService : ApplicationService, ITestingAiAppService
                 continue;
             }
 
-            await _categoryService.UpdateAsync(update.Id, new ProjectCaseCategory
+            await _categoryService.UpdateAsync(update.Id, new CaseCategoryDto
             {
                 Id = current.Id,
                 Name = string.IsNullOrWhiteSpace(update.Name) ? current.Name : Truncate(update.Name, MaxNameLength),
@@ -246,12 +244,10 @@ public class TestingAiAppService : ApplicationService, ITestingAiAppService
         }
 
         // 3. 新增用例
-        var caseNumberGenerator = new CaseNumberGenerator(await _caseService.GetByProjectIdAsync(projectId));
         foreach (var aiCase in plan.AddCases.Where(c => !string.IsNullOrWhiteSpace(c.Name)))
         {
             await _caseService.CreateAsync(new CaseDto
             {
-                CaseNumber = caseNumberGenerator.Next(),
                 Name = Truncate(aiCase.Name, MaxNameLength),
                 Description = Truncate(aiCase.Description, MaxDescriptionLength),
                 ProjectId = projectId,
@@ -319,7 +315,7 @@ public class TestingAiAppService : ApplicationService, ITestingAiAppService
                     continue;
                 }
 
-                var created = await _categoryService.CreateAsync(new ProjectCaseCategory
+                var created = await _categoryService.CreateAsync(new CaseCategoryDto
                 {
                     Name = Truncate(category.Name, MaxNameLength),
                     Description = Truncate(category.Description, MaxDescriptionLength),
@@ -341,7 +337,7 @@ public class TestingAiAppService : ApplicationService, ITestingAiAppService
         // 剩余分类的父引用无法解析（如循环引用），作为根分类创建
         foreach (var category in remaining)
         {
-            var created = await _categoryService.CreateAsync(new ProjectCaseCategory
+            var created = await _categoryService.CreateAsync(new CaseCategoryDto
             {
                 Name = Truncate(category.Name, MaxNameLength),
                 Description = Truncate(category.Description, MaxDescriptionLength),
@@ -636,9 +632,9 @@ public class TestingAiAppService : ApplicationService, ITestingAiAppService
         return value.Length <= maxLength ? value : value[..maxLength];
     }
 
-    private static List<ProjectCaseCategory> FlattenCategoryTree(IEnumerable<ProjectCaseCategory> nodes)
+    private static List<CaseCategoryDto> FlattenCategoryTree(IEnumerable<CaseCategoryDto> nodes)
     {
-        var result = new List<ProjectCaseCategory>();
+        var result = new List<CaseCategoryDto>();
         foreach (var node in nodes)
         {
             result.Add(node);
@@ -724,25 +720,4 @@ public class TestingAiAppService : ApplicationService, ITestingAiAppService
         """;
 
     #endregion
-
-    /// <summary>
-    /// 用例编号生成器：TC + 日期 + 3位序号，保证项目内唯一（编号规则：3-12位字母数字下划线）
-    /// </summary>
-    private sealed class CaseNumberGenerator
-    {
-        private readonly string _prefix = $"TC{DateTime.Now:yyMMdd}";
-        private int _sequence;
-
-        public CaseNumberGenerator(IEnumerable<CaseDto> existingCases)
-        {
-            _sequence = existingCases
-                .Select(c => c.CaseNumber)
-                .Where(n => n != null && n.StartsWith(_prefix, StringComparison.OrdinalIgnoreCase))
-                .Select(n => int.TryParse(n![_prefix.Length..], out var seq) ? seq : 0)
-                .DefaultIfEmpty(0)
-                .Max();
-        }
-
-        public string Next() => $"{_prefix}{++_sequence:000}";
-    }
 }

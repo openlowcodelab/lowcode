@@ -21,7 +21,6 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
     private readonly IRepository<ProjectEntity, long> _repository;
     private readonly IRepository<ProjectServiceEntity, long> _serviceRepository;
     private readonly IRepository<ProjectEnvEntity, long> _environmentRepository;
-    private readonly IRepository<ProjectEnvConfigEntity, long> _serviceConfigRepository;
     private readonly IRepository<CaseCategoryEntity, long> _categoryRepository;
     private readonly IRepository<CaseEntity, long> _caseRepository;
     private readonly IRepository<CaseStepEntity, long> _stepRepository;
@@ -31,7 +30,6 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
         IRepository<ProjectEntity, long> repository,
         IRepository<ProjectServiceEntity, long> serviceRepository,
         IRepository<ProjectEnvEntity, long> environmentRepository,
-        IRepository<ProjectEnvConfigEntity, long> serviceConfigRepository,
         IRepository<CaseCategoryEntity, long> categoryRepository,
         IRepository<CaseEntity, long> caseRepository,
         IRepository<CaseStepEntity, long> stepRepository,
@@ -40,7 +38,6 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
         _repository = repository;
         _serviceRepository = serviceRepository;
         _environmentRepository = environmentRepository;
-        _serviceConfigRepository = serviceConfigRepository;
         _categoryRepository = categoryRepository;
         _caseRepository = caseRepository;
         _stepRepository = stepRepository;
@@ -155,6 +152,7 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
 
         // 3. 环境
         var envMap = new Dictionary<string, long>();
+        var envEntities = new List<ProjectEnvEntity>();
         foreach (var o in TemplateJson.ReadArray(Path.Combine(dir, "project-environments.json")))
         {
             var entity = await _environmentRepository.InsertAsync(new ProjectEnvEntity
@@ -163,29 +161,29 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
                 Name = TemplateJson.Str(o, "name"),
                 Description = TemplateJson.Str(o, "description"),
                 Type = TemplateJson.IntVal(o, "type", 1),
-                Status = TemplateJson.IntVal(o, "status", 1),
                 VariablesJson = TemplateJson.RawJson(o, "variables"),
-                HeadersJson = TemplateJson.RawJson(o, "headers"),
-                DatabaseConfigJson = TemplateJson.RawJson(o, "databaseConfig"),
+                HeadersJson = TemplateJson.RawJson(o, "headers")
             }, autoSave: true);
+            envEntities.Add(entity);
             var oldId = TemplateJson.Str(o, "id");
             if (!string.IsNullOrEmpty(oldId)) envMap[oldId] = entity.Id;
         }
 
-        // 4. 环境服务配置
-        var configs = new List<ProjectEnvConfigEntity>();
+        // 4. 环境服务配置（重映射后合并写入环境的 ServiceConfigsJson）
+        var configsByEnv = new Dictionary<long, Dictionary<long, string>>();
         foreach (var o in TemplateJson.ReadArray(Path.Combine(dir, "environment-service-configs.json")))
         {
             if (!envMap.TryGetValue(TemplateJson.Str(o, "environmentId"), out var envId)) continue;
             if (!serviceMap.TryGetValue(TemplateJson.Str(o, "projectServiceId"), out var serviceId)) continue;
-            configs.Add(new ProjectEnvConfigEntity
-            {
-                EnvId = envId,
-                ProjectServiceId = serviceId,
-                BaseUrl = TemplateJson.Str(o, "baseUrl")
-            });
+            if (!configsByEnv.TryGetValue(envId, out var serviceConfigs)) configsByEnv[envId] = serviceConfigs = new Dictionary<long, string>();
+            serviceConfigs[serviceId] = TemplateJson.Str(o, "baseUrl");
         }
-        if (configs.Count > 0) await _serviceConfigRepository.InsertManyAsync(configs, autoSave: true);
+        var envsToUpdate = envEntities.Where(e => configsByEnv.ContainsKey(e.Id)).ToList();
+        foreach (var env in envsToUpdate)
+        {
+            env.ServiceConfigsJson = TestingMappers.SerializeServiceConfigs(configsByEnv[env.Id]);
+        }
+        if (envsToUpdate.Count > 0) await _environmentRepository.UpdateManyAsync(envsToUpdate, autoSave: true);
 
         // 5. 用例分类（两遍回填父级引用）
         var categoryPairs = new List<(string OldId, string OldParentId, CaseCategoryEntity Entity)>();
@@ -231,7 +229,6 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
                 ProjectId = projectId,
                 CategoryId = categoryId,
                 TemplateId = null,
-                CaseNumber = TemplateJson.Str(o, "caseNumber"),
                 CaseName = TemplateJson.Str(o, "name"),
                 Description = TemplateJson.Str(o, "description"),
                 IsTemplate = TemplateJson.BoolVal(o, "isTemplate"),
@@ -287,9 +284,6 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
 
         var services = await ProjectChildrenAsync(_serviceRepository, s => s.ProjectId == projectId, s => s.Id);
         var environments = await ProjectChildrenAsync(_environmentRepository, e => e.ProjectId == projectId, e => e.Id);
-        var envIds = environments.Select(e => e.Id).ToList();
-        var configs = await AsyncExecuter.ToListAsync((await _serviceConfigRepository.GetQueryableAsync())
-            .Where(c => envIds.Contains(c.EnvId)).OrderBy(c => c.Id));
         var categories = await ProjectChildrenAsync(_categoryRepository, c => c.ProjectId == projectId, c => c.Order);
         var cases = await ProjectChildrenAsync(_caseRepository, c => c.ProjectId == projectId, c => c.Order);
         var caseIds = cases.Select(c => c.Id).ToList();
@@ -301,7 +295,6 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
 
         // 数据库 long ID → 模板字符串 ID
         string SvcId(long id) => services.FirstOrDefault(s => s.Id == id)?.Id.ToString() ?? string.Empty;
-        string EnvId(long id) => environments.FirstOrDefault(e => e.Id == id)?.Id.ToString() ?? string.Empty;
         string CatId(long? id) => id.HasValue ? categories.FirstOrDefault(c => c.Id == id)?.Id.ToString() ?? string.Empty : string.Empty;
         string CaseId(long? id) => id.HasValue ? cases.FirstOrDefault(c => c.Id == id)?.Id.ToString() ?? string.Empty : string.Empty;
 
@@ -322,21 +315,25 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
             ["Description"] = e.Description ?? string.Empty,
             ["ProjectId"] = templateId,
             ["Type"] = e.Type,
-            ["EnvironmentServiceConfigs"] = new JsonArray(),
             ["Variables"] = ParseNode(e.VariablesJson) ?? new JsonObject(),
-            ["Headers"] = ParseNode(e.HeadersJson) ?? new JsonObject(),
-            ["DatabaseConfig"] = ParseNode(e.DatabaseConfigJson),
-            ["Status"] = e.Status
+            ["Headers"] = ParseNode(e.HeadersJson) ?? new JsonObject()
         }).ToArray()));
 
-        // 环境服务配置
-        TemplateJson.Write(Path.Combine(dir, "environment-service-configs.json"), new JsonArray(configs.Select(c => (JsonNode)new JsonObject
+        // 环境服务配置（从环境的 ServiceConfigsJson 提取，服务引用重映射为字符串 ID）
+        var configNodes = new List<JsonNode>();
+        foreach (var e in environments)
         {
-            ["id"] = c.Id.ToString(),
-            ["environmentId"] = EnvId(c.EnvId),
-            ["projectServiceId"] = SvcId(c.ProjectServiceId),
-            ["baseUrl"] = c.BaseUrl ?? string.Empty
-        }).ToArray()));
+            foreach (var kv in TestingMappers.DeserializeServiceConfigs(e.ServiceConfigsJson))
+            {
+                configNodes.Add(new JsonObject
+                {
+                    ["environmentId"] = e.Id.ToString(),
+                    ["projectServiceId"] = SvcId(kv.Key),
+                    ["baseUrl"] = kv.Value ?? string.Empty
+                });
+            }
+        }
+        TemplateJson.Write(Path.Combine(dir, "environment-service-configs.json"), new JsonArray(configNodes.ToArray()));
 
         // 用例分类
         TemplateJson.Write(Path.Combine(dir, "project-case-categories.json"), new JsonArray(categories.Select(c => (JsonNode)new JsonObject
@@ -353,7 +350,6 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
         TemplateJson.Write(Path.Combine(dir, "project-cases.json"), new JsonArray(cases.Select(c => (JsonNode)new JsonObject
         {
             ["Id"] = c.Id.ToString(),
-            ["CaseNumber"] = c.CaseNumber ?? string.Empty,
             ["Name"] = c.CaseName,
             ["Description"] = c.Description ?? string.Empty,
             ["ProjectId"] = templateId,

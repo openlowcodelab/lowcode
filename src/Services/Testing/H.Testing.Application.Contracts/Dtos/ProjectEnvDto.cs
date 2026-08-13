@@ -23,37 +23,39 @@ public class ProjectEnvDto
     public EnvironmentType Type { get; set; } = EnvironmentType.Development;
 
     /// <summary>
-    /// 环境服务配置列表
+    /// 环境服务配置列表（随环境一同持久化）
     /// </summary>
     public List<ProjectEnvConfigDto> EnvironmentServiceConfigs { get; set; } = new();
 
     public Dictionary<string, string> Variables { get; set; } = new();
 
     public Dictionary<string, string> Headers { get; set; } = new();
-
-    public DatabaseConfig? DatabaseConfig { get; set; }
-
-    public EnvironmentStatus Status { get; set; } = EnvironmentStatus.Active;
 }
 
 /// <summary>
-/// 数据库配置
+/// 环境服务配置（存储于环境的 ServiceConfigsJson 字段，无独立 Id，以 环境Id + 项目服务Id 定位）
 /// </summary>
-public class DatabaseConfig
+public class ProjectEnvConfigDto
 {
-    public string ConnectionString { get; set; } = string.Empty;
+    /// <summary>
+    /// 配置ID（已废弃，始终为 0，仅为兼容保留）
+    /// </summary>
+    public long Id { get; set; }
 
-    public DatabaseType Type { get; set; }
+    /// <summary>
+    /// 环境ID
+    /// </summary>
+    public long EnvironmentId { get; set; }
 
-    public string Host { get; set; } = string.Empty;
+    /// <summary>
+    /// 项目服务ID
+    /// </summary>
+    public long ProjectServiceId { get; set; }
 
-    public int Port { get; set; }
-
-    public string Database { get; set; } = string.Empty;
-
-    public string Username { get; set; } = string.Empty;
-
-    public string Password { get; set; } = string.Empty;
+    /// <summary>
+    /// 服务基础URL
+    /// </summary>
+    public string BaseUrl { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -65,18 +67,4 @@ public enum EnvironmentType
     Testing = 2,
     Staging = 3,
     Production = 4
-}
-
-
-
-/// <summary>
-/// 数据库类型
-/// </summary>
-public enum DatabaseType
-{
-    SqlServer = 1,
-    MySQL = 2,
-    PostgreSQL = 3,
-    Oracle = 4,
-    SQLite = 5
 }

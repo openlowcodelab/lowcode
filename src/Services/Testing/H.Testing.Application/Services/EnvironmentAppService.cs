@@ -8,19 +8,15 @@ namespace H.Testing.Application;
 
 /// <summary>
 /// 测试环境服务（执行时视图）
-/// 将环境与环境服务配置组合为执行引擎使用的 <see cref="EnvironmentDto"/>
+/// 将环境（含服务配置）组合为执行引擎使用的 <see cref="EnvironmentDto"/>
 /// </summary>
 public class EnvironmentAppService : ApplicationService, IEnvironmentAppService
 {
     private readonly IRepository<ProjectEnvEntity, long> _envRepository;
-    private readonly IRepository<ProjectEnvConfigEntity, long> _configRepository;
 
-    public EnvironmentAppService(
-        IRepository<ProjectEnvEntity, long> envRepository,
-        IRepository<ProjectEnvConfigEntity, long> configRepository)
+    public EnvironmentAppService(IRepository<ProjectEnvEntity, long> envRepository)
     {
         _envRepository = envRepository;
-        _configRepository = configRepository;
     }
 
     public async Task<List<EnvironmentDto>> GetByProjectIdAsync(long projectId)
@@ -28,15 +24,7 @@ public class EnvironmentAppService : ApplicationService, IEnvironmentAppService
         var envQuery = await _envRepository.GetQueryableAsync();
         var envs = await AsyncExecuter.ToListAsync(
             envQuery.Where(e => e.ProjectId == projectId).OrderBy(e => e.Id));
-        if (envs.Count == 0)
-        {
-            return new List<EnvironmentDto>();
-        }
-
-        var envIds = envs.Select(e => e.Id).ToList();
-        var configQuery = await _configRepository.GetQueryableAsync();
-        var configs = await AsyncExecuter.ToListAsync(configQuery.Where(c => envIds.Contains(c.EnvId)));
-        return envs.Select(e => e.ToEnvironmentDto(configs)).ToList();
+        return envs.Select(e => e.ToEnvironmentDto()).ToList();
     }
 
     public async Task<EnvironmentDto?> GetByIdAsync(long projectId, long id)
@@ -47,9 +35,7 @@ public class EnvironmentAppService : ApplicationService, IEnvironmentAppService
             return null;
         }
 
-        var configQuery = await _configRepository.GetQueryableAsync();
-        var configs = await AsyncExecuter.ToListAsync(configQuery.Where(c => c.EnvId == id));
-        return entity.ToEnvironmentDto(configs);
+        return entity.ToEnvironmentDto();
     }
 
     public async Task<EnvironmentDto> CreateAsync(EnvironmentDto environment)
@@ -59,7 +45,6 @@ public class EnvironmentAppService : ApplicationService, IEnvironmentAppService
             ProjectId = environment.ProjectId,
             Name = environment.Name,
             Description = environment.Description,
-            Status = (int)environment.Status,
             VariablesJson = System.Text.Json.JsonSerializer.Serialize(
                 environment.Config.ToDictionary(kv => kv.Key, kv => kv.Value?.ToString() ?? string.Empty))
         };
@@ -78,7 +63,6 @@ public class EnvironmentAppService : ApplicationService, IEnvironmentAppService
 
         entity.Name = environment.Name;
         entity.Description = environment.Description;
-        entity.Status = (int)environment.Status;
         entity.VariablesJson = System.Text.Json.JsonSerializer.Serialize(
             environment.Config.ToDictionary(kv => kv.Key, kv => kv.Value?.ToString() ?? string.Empty));
         await _envRepository.UpdateAsync(entity, autoSave: true);
@@ -94,7 +78,6 @@ public class EnvironmentAppService : ApplicationService, IEnvironmentAppService
         }
 
         await _envRepository.DeleteAsync(entity, autoSave: true);
-        await _configRepository.DeleteAsync(c => c.EnvId == id, autoSave: true);
         return true;
     }
 }

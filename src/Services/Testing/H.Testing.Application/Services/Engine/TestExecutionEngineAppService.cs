@@ -17,7 +17,7 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
     private readonly HttpClient _httpClient;
     private readonly IExecutionRecordAppService _executionRecordService;
     private readonly IEnvironmentAppService _environmentService;
-    private readonly IProjectCaseAppService _projectCaseService;
+    private readonly ICaseAppService _projectCaseService;
     private readonly ITestExecutionEventNotifier _eventNotifier;
     private readonly Dictionary<string, string> _variables;
 
@@ -25,7 +25,7 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
         HttpClient httpClient,
         IExecutionRecordAppService executionRecordService,
         IEnvironmentAppService environmentService,
-        IProjectCaseAppService projectCaseService,
+        ICaseAppService projectCaseService,
         ITestExecutionEventNotifier eventNotifier)
     {
         _httpClient = httpClient;

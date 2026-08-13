@@ -5,7 +5,7 @@ namespace H.Testing.Application.Contracts;
 /// <summary>
 /// 测试用例服务接口
 /// </summary>
-public interface IProjectCaseAppService : IAppService
+public interface ICaseAppService : IAppService
 {
     /// <summary>
     /// 获取所有测试用例（所有项目）

@@ -19,24 +19,24 @@
 </div>
 
 @code {
-    [Parameter] public List<ProjectCaseCategory> Categories { get; set; } = new();
+    [Parameter] public List<CaseCategoryDto> Categories { get; set; } = new();
     [Parameter] public long? SelectedCategoryId { get; set; }
     [Parameter] public EventCallback<long?> OnCategorySelected { get; set; }
-    [Parameter] public EventCallback<ProjectCaseCategory> OnAddChild { get; set; }
-    [Parameter] public EventCallback<ProjectCaseCategory> OnEdit { get; set; }
-    [Parameter] public EventCallback<ProjectCaseCategory> OnDelete { get; set; }
+    [Parameter] public EventCallback<CaseCategoryDto> OnAddChild { get; set; }
+    [Parameter] public EventCallback<CaseCategoryDto> OnEdit { get; set; }
+    [Parameter] public EventCallback<CaseCategoryDto> OnDelete { get; set; }
     [Parameter] public Dictionary<long, int> TestCaseCounts { get; set; } = new();
 
     private HashSet<long> expandedCategories = new();
     private long? openDropdownId = null;
     private (double X, double Y) dropdownPosition;
 
-    private List<ProjectCaseCategory> GetRootCategories()
+    private List<CaseCategoryDto> GetRootCategories()
     {
         return Categories.OrderBy(c => c.Order).ToList();
     }
 
-    private ProjectCaseCategory? FindCategoryInTree(long id, IEnumerable<ProjectCaseCategory> nodes)
+    private CaseCategoryDto? FindCategoryInTree(long id, IEnumerable<CaseCategoryDto> nodes)
     {
         foreach (var n in nodes)
         {
@@ -50,10 +50,10 @@
         return null;
     }
 
-    private List<ProjectCaseCategory> GetChildCategories(long categoryId)
+    private List<CaseCategoryDto> GetChildCategories(long categoryId)
     {
         var category = FindCategoryInTree(categoryId, Categories);
-        return category?.Childrens?.OrderBy(c => c.Order).ToList() ?? new List<ProjectCaseCategory>();
+        return category?.Childrens?.OrderBy(c => c.Order).ToList() ?? new List<CaseCategoryDto>();
     }
 
     private bool HasChildren(long categoryId)
@@ -120,7 +120,7 @@
             $"left: {x}px; top: {top}px; transform: translateX(-100%); max-height: calc(100vh - {top}px - 8px); overflow-y: auto;");
     }
 
-    private RenderFragment RenderTreeNode(ProjectCaseCategory category, int level) => __builder =>
+    private RenderFragment RenderTreeNode(CaseCategoryDto category, int level) => __builder =>
     {
         var isSelected = SelectedCategoryId == category.Id;
         var hasChildren = HasChildren(category.Id);

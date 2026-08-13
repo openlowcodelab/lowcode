@@ -20,15 +20,12 @@ public class ProjectEnvEntity : AuditedEntity<long>, IMultiTenant
     /// <summary>环境类型</summary>
     public int Type { get; set; }
 
-    /// <summary>环境状态</summary>
-    public int Status { get; set; }
-
     /// <summary>环境变量（Dictionary 序列化）</summary>
     public string? VariablesJson { get; set; }
 
     /// <summary>请求头（Dictionary 序列化）</summary>
     public string? HeadersJson { get; set; }
 
-    /// <summary>数据库配置（对象 序列化）</summary>
-    public string? DatabaseConfigJson { get; set; }
+    /// <summary>环境服务配置（Dictionary&lt;项目服务ID, BaseUrl&gt; 序列化）</summary>
+    public string? ServiceConfigsJson { get; set; }
 }

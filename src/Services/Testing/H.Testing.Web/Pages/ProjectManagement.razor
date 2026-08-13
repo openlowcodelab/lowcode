@@ -4,10 +4,10 @@
 @layout TestingLayout
 
 @inject IProjectAppService ProjectService
-@inject IProjectEnvironmentAppService ProjectEnvironmentService
+@inject IProjectEnvAppService ProjectEnvAppService
 @inject IProjectServiceConfigAppService ProjectServiceConfigService
 @inject IProjectTemplateAppService ProjectTemplateService
-@inject ITestingAiAppService TestingAiService
+@inject IAiGenerateAppService TestingAiService
 @inject IProjectKnowledgeAppService ProjectKnowledgeService
 @inject IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager
@@ -505,7 +505,7 @@ else
                                                     {
                                                         <div class="row-actions">
                                                             <a class="link-action" @onclick="() => EditServiceConfig(config.EnvironmentConfig!)">编辑</a>
-                                                            <a class="link-action-danger" @onclick="() => DeleteServiceConfig(config.EnvironmentConfig!.Id)">删除</a>
+                                                            <a class="link-action-danger" @onclick="() => DeleteServiceConfig(config.EnvironmentConfig!.EnvironmentId, config.EnvironmentConfig!.ProjectServiceId)">删除</a>
                                                         </div>
                                                     }
                                                     else
@@ -1088,7 +1088,7 @@ else
     {
         loading = true;
         projects = await ProjectService.GetAllAsync();
-        environments = await ProjectEnvironmentService.GetAllAsync();
+        environments = await ProjectEnvAppService.GetAllAsync();
         templates = await ProjectTemplateService.GetTemplatesAsync();
         filteredProjects = projects.ToList();
         loading = false;
@@ -1264,8 +1264,8 @@ else
     
     private async Task SaveEnvironment()
     {
-        await ProjectEnvironmentService.CreateAsync(currentEnvironment);
-        environments = await ProjectEnvironmentService.GetAllAsync();
+        await ProjectEnvAppService.CreateAsync(currentEnvironment);
+        environments = await ProjectEnvAppService.GetAllAsync();
         if (selectedProject != null) projectEnvironments = GetProjectEnvironments(selectedProject.Id);
         HideAddEnvironmentModal();
         StateHasChanged();
@@ -1279,8 +1279,8 @@ else
     
     private async Task DeleteEnvironment(long environmentId)
     {
-        await ProjectEnvironmentService.DeleteAsync(environmentId);
-        environments = await ProjectEnvironmentService.GetAllAsync();
+        await ProjectEnvAppService.DeleteAsync(environmentId);
+        environments = await ProjectEnvAppService.GetAllAsync();
         if (selectedProject != null)
         {
             projectEnvironments = GetProjectEnvironments(selectedProject.Id);
@@ -1297,8 +1297,8 @@ else
         if (selectedEnvironment != null && !string.IsNullOrWhiteSpace(newVariableName) && !string.IsNullOrWhiteSpace(newVariableValue))
         {
             selectedEnvironment.Variables[newVariableName] = newVariableValue;
-            await ProjectEnvironmentService.UpdateAsync(selectedEnvironment.Id, selectedEnvironment);
-            environments = await ProjectEnvironmentService.GetAllAsync();
+            await ProjectEnvAppService.UpdateAsync(selectedEnvironment.Id, selectedEnvironment);
+            environments = await ProjectEnvAppService.GetAllAsync();
             if (selectedProject != null) { projectEnvironments = GetProjectEnvironments(selectedProject.Id); selectedEnvironment = projectEnvironments.FirstOrDefault(e => e.Id == selectedEnvironment.Id); }
             HideAddVariableModal();
             StateHasChanged();
@@ -1313,8 +1313,8 @@ else
         if (selectedEnvironment != null && !string.IsNullOrWhiteSpace(editVariableName) && !string.IsNullOrWhiteSpace(editVariableValue))
         {
             selectedEnvironment.Variables[editVariableName] = editVariableValue;
-            await ProjectEnvironmentService.UpdateAsync(selectedEnvironment.Id, selectedEnvironment);
-            environments = await ProjectEnvironmentService.GetAllAsync();
+            await ProjectEnvAppService.UpdateAsync(selectedEnvironment.Id, selectedEnvironment);
+            environments = await ProjectEnvAppService.GetAllAsync();
             if (selectedProject != null) { projectEnvironments = GetProjectEnvironments(selectedProject.Id); selectedEnvironment = projectEnvironments.FirstOrDefault(e => e.Id == selectedEnvironment.Id); }
             HideEditVariableModal();
             StateHasChanged();
@@ -1326,8 +1326,8 @@ else
         if (selectedEnvironment != null)
         {
             selectedEnvironment.Variables.Remove(key);
-            await ProjectEnvironmentService.UpdateAsync(selectedEnvironment.Id, selectedEnvironment);
-            environments = await ProjectEnvironmentService.GetAllAsync();
+            await ProjectEnvAppService.UpdateAsync(selectedEnvironment.Id, selectedEnvironment);
+            environments = await ProjectEnvAppService.GetAllAsync();
             if (selectedProject != null) { projectEnvironments = GetProjectEnvironments(selectedProject.Id); selectedEnvironment = projectEnvironments.FirstOrDefault(e => e.Id == selectedEnvironment.Id); }
             StateHasChanged();
         }
@@ -1335,7 +1335,7 @@ else
 
     private async Task SaveEnvironmentChanges()
     {
-        if (selectedEnvironment != null) { await ProjectEnvironmentService.UpdateAsync(selectedEnvironment.Id, selectedEnvironment); await JSRuntime.InvokeVoidAsync("alert", "环境修改已保存"); }
+        if (selectedEnvironment != null) { await ProjectEnvAppService.UpdateAsync(selectedEnvironment.Id, selectedEnvironment); await JSRuntime.InvokeVoidAsync("alert", "环境修改已保存"); }
     }
 
     private void OnSearchChanged(ChangeEventArgs e) { searchTerm = e.Value?.ToString() ?? ""; FilterProjects(); }
@@ -1403,7 +1403,6 @@ else
     private async Task DeleteProjectService(long serviceId)
     {
         await ProjectServiceConfigService.DeleteProjectServiceAsync(selectedProjectForServices.Id, serviceId);
-        await ProjectServiceConfigService.DeleteEnvironmentServiceConfigAsync(serviceId);
         projectServices = await ProjectServiceConfigService.GetProjectServicesAsync(selectedProjectForServices.Id);
         await LoadEnvironmentServiceConfigs();
         StateHasChanged();
@@ -1414,7 +1413,7 @@ else
         if (selectedEnvironment != null && selectedProject != null) { serviceConfigViews = await ProjectServiceConfigService.GetServiceConfigViewsAsync(selectedEnvironment.Id, selectedProject.Id); StateHasChanged(); }
     }
     
-    private async Task DeleteServiceConfig(long configId) { await ProjectServiceConfigService.DeleteEnvironmentServiceConfigAsync(configId); await LoadEnvironmentServiceConfigs(); }
+    private async Task DeleteServiceConfig(long environmentId, long projectServiceId) { await ProjectServiceConfigService.DeleteEnvironmentServiceConfigAsync(environmentId, projectServiceId); await LoadEnvironmentServiceConfigs(); }
     
     private void EditServiceConfig(ProjectEnvConfigDto config)
     {

@@ -9,17 +9,13 @@ namespace H.Testing.Application;
 /// <summary>
 /// 项目环境服务（数据库存储）
 /// </summary>
-public class ProjectEnvironmentAppService : ApplicationService, IProjectEnvironmentAppService
+public class ProjectEnvAppService : ApplicationService, IProjectEnvAppService
 {
     private readonly IRepository<ProjectEnvEntity, long> _repository;
-    private readonly IRepository<ProjectEnvConfigEntity, long> _configRepository;
 
-    public ProjectEnvironmentAppService(
-        IRepository<ProjectEnvEntity, long> repository,
-        IRepository<ProjectEnvConfigEntity, long> configRepository)
+    public ProjectEnvAppService(IRepository<ProjectEnvEntity, long> repository)
     {
         _repository = repository;
-        _configRepository = configRepository;
     }
 
     public async Task<List<ProjectEnvDto>> GetAllAsync()
@@ -72,8 +68,6 @@ public class ProjectEnvironmentAppService : ApplicationService, IProjectEnvironm
         }
 
         await _repository.DeleteAsync(entity, autoSave: true);
-        // 级联删除该环境下的服务配置，避免孤儿数据
-        await _configRepository.DeleteAsync(c => c.EnvId == id, autoSave: true);
         return true;
     }
 
@@ -81,21 +75,6 @@ public class ProjectEnvironmentAppService : ApplicationService, IProjectEnvironm
     {
         var query = await _repository.GetQueryableAsync();
         var list = await AsyncExecuter.ToListAsync(query.Where(e => e.Type == (int)type));
-        return list.Select(e => e.ToDto()).ToList();
-    }
-
-    public async Task<List<ProjectEnvDto>> GetActiveEnvironmentsAsync()
-    {
-        var query = await _repository.GetQueryableAsync();
-        var list = await AsyncExecuter.ToListAsync(query.Where(e => e.Status == (int)EnvironmentStatus.Active));
-        return list.Select(e => e.ToDto()).ToList();
-    }
-
-    public async Task<List<ProjectEnvDto>> GetActiveEnvironmentsByProjectAsync(long projectId)
-    {
-        var query = await _repository.GetQueryableAsync();
-        var list = await AsyncExecuter.ToListAsync(
-            query.Where(e => e.ProjectId == projectId && e.Status == (int)EnvironmentStatus.Active));
         return list.Select(e => e.ToDto()).ToList();
     }
 }

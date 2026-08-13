@@ -30,22 +30,7 @@ public class EnvironmentDto
     public Dictionary<long, string> ServiceEndpoints { get; set; } = new();
 
     /// <summary>
-    /// 环境状态
-    /// </summary>
-    public EnvironmentStatus Status { get; set; } = EnvironmentStatus.Active;
-
-    /// <summary>
     /// 排序字段，数值越小排序越靠前
     /// </summary>
     public int Order { get; set; }
-}
-
-/// <summary>
-/// 环境状态
-/// </summary>
-public enum EnvironmentStatus
-{
-    Active = 1,
-    Inactive = 2,
-    Maintenance = 3
 }

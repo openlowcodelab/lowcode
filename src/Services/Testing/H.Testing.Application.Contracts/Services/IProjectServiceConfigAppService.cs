@@ -33,24 +33,19 @@ public interface IProjectServiceConfigAppService : IAppService
     Task<List<ProjectEnvConfigDto>> GetEnvironmentServiceConfigsAsync(long environmentId);
 
     /// <summary>
-    /// 获取单个环境服务配置
-    /// </summary>
-    Task<ProjectEnvConfigDto?> GetEnvironmentServiceConfigAsync(long configId);
-
-    /// <summary>
-    /// 更新环境服务配置
+    /// 更新环境服务配置（同一 环境+服务 已存在时覆盖）
     /// </summary>
     Task<ProjectEnvConfigDto> UpdateEnvironmentServiceConfigAsync(ProjectEnvConfigDto config);
 
     /// <summary>
-    /// 创建环境服务配置
+    /// 创建环境服务配置（同一 环境+服务 已存在时覆盖）
     /// </summary>
     Task<ProjectEnvConfigDto> CreateEnvironmentServiceConfigAsync(ProjectEnvConfigDto config);
 
     /// <summary>
     /// 删除环境服务配置
     /// </summary>
-    Task DeleteEnvironmentServiceConfigAsync(long configId);
+    Task DeleteEnvironmentServiceConfigAsync(long environmentId, long projectServiceId);
 
     /// <summary>
     /// 获取服务配置视图（包含服务信息）
