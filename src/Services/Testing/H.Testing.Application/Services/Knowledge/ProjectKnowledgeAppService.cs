@@ -236,8 +236,8 @@ public class ProjectKnowledgeAppService : ApplicationService, IProjectKnowledgeA
     {
         var knowledgeBase = await _knowledgeBaseService.CreateAsync(new CreateKnowledgeBaseDto
         {
-            Name = Truncate($"测试知识库-{project.Name}-{project.Id}", MaxBaseNameLength),
-            Description = Truncate($"测试项目「{project.Name}」的功能与逻辑知识，用于辅助编写测试用例", 500)
+            Name = Truncate($"Testing-{project.Name}", MaxBaseNameLength),
+            Description = Truncate($"自动化测试项目「{project.Name}」的功能与逻辑知识，用于辅助编写测试用例", 500)
         });
 
         project.KnowledgeBaseId = knowledgeBase.Id.ToString();

@@ -9,8 +9,6 @@
 @inject IProjectAppService ProjectService
 @inject ICaseCategoryAppService CaseCategoryAppService
 @inject ICaseAppService ProjectCaseService
-@inject ICaseStepAppService CaseStepService
-@inject IBatchExecutionAppService BatchExecutionAppService
 @inject IAiGenerateAppService TestingAiService
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
@@ -85,9 +83,9 @@
                 <div class="cases-scroll">
                     <button class="tree-node-row py-2 @(selectedCategoryId == 0 ? "selected" : "")"
                             @onclick="() => SelectCategory(null)" 
-                            style="cursor: pointer; width: 100%; border: none; border-radius: 4px; margin-bottom: 2px;">
-                        <span class="tree-node-expand-icon placeholder"></span>
-                        <span class="tree-node-title"><small><i class="oi oi-list"></i> 全部 (@testCases.Count)</small></span>
+                            style="cursor: pointer; width: 100%; border: none; border-radius: 4px;">
+                        <span class="tree-node-expand-icon placeholder" style="width: 8px;"></span>
+                        <span class="tree-node-title">全部 (@testCases.Count)</span>
                     </button>
                     <CategoryTree Categories="categories"
                                  SelectedCategoryId="selectedCategoryId"
@@ -123,8 +121,7 @@
                                     <th style="width: 100px;">用例编号</th>
                                     <th>用例名称</th>
                                     <th style="width: 120px;">级别</th>
-                                    <th style="width: 60px;">步骤数</th>
-                                    <th style="width: 100px;">执行结果</th>
+                                    <th style="width: 100px;">上次执行</th>
                                     <th style="width: 180px;">操作</th>
                                 </tr>
                             </thead>
@@ -154,9 +151,6 @@
                                         </td>
                                         <td>
                                             <span class="h-tag h-tag-@GetLevelTagClass(context.Level.ToString())">@context.Level</span>
-                                        </td>
-                                        <td>
-                                            @GetStepCount(context.Id)
                                         </td>
                                         <td>
                                             @if (context.LastExecutionResult.HasValue)
@@ -406,7 +400,6 @@
 @code {
     private List<ProjectDto> projects = new();
     private List<CaseDto> testCases = new();
-    private Dictionary<long, int> caseStepCounts = new();
     private List<CaseDto> filteredTestCases = new();
     private List<CaseDto> displayTestCases = new();
     private List<CaseCategoryDto> categories = new();
@@ -594,8 +587,6 @@
         {
             categories = await CaseCategoryAppService.GetByProjectIdAsync(selectedProjectId);
             testCases = await ProjectCaseService.GetByProjectIdAsync(selectedProjectId);
-            caseStepCounts = (await CaseStepService.GetByCaseIdsAsync(testCases.Select(c => c.Id)))
-                .ToDictionary(kv => kv.Key, kv => kv.Value.Count);
 
             filteredTestCases = testCases;
             CalculateCategoryTestCaseCounts();
@@ -607,7 +598,6 @@
             filteredTestCases.Clear();
             displayTestCases.Clear();
             categoryTestCaseCounts.Clear();
-            caseStepCounts.Clear();
         }
 
         selectedTestCases.Clear();
@@ -1097,8 +1087,6 @@
         }
     }
     
-    private int GetStepCount(long caseId) => caseStepCounts.GetValueOrDefault(caseId);
-
     private string GetLevelTagColor(string level) => level switch
     {
         "P0" => "red",
