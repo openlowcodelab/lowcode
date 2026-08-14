@@ -120,6 +120,11 @@ public class StepExecutionRecord
     public long Duration { get; set; }
 
     /// <summary>
+    /// 执行参数（步骤类型相关：API 请求信息 / UI 操作参数 / 脚本类型等）
+    /// </summary>
+    public Dictionary<string, object> Parameters { get; set; } = new();
+
+    /// <summary>
     /// 请求数据
     /// </summary>
     public string? RequestData { get; set; }

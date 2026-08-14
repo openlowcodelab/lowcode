@@ -1,5 +1,6 @@
 @page "/testing/execution-history/{testCaseId:long}"
 
+@using System.Text.Json
 @namespace H.Testing.Web
 @layout TestingLayout
 
@@ -150,10 +151,12 @@ else
                                         </div>
                                         <span class="row-actions">
                                             <a class="link-action"
-                                               @onclick="@(async (MouseEventArgs e) => { await JSRuntime.InvokeVoidAsync("event.stopPropagation"); SelectRecord(record.Id); })">
+                                               @onclick:stopPropagation
+                                               @onclick="() => SelectRecord(record.Id)">
                                                 查看详情
                                             </a>
                                             <a class="link-action-danger"
+                                               @onclick:stopPropagation
                                                @onclick="@(async (MouseEventArgs e) => await DeleteRecord(record.Id))">
                                                 删除
                                             </a>
@@ -216,6 +219,31 @@ else
                 </Body>
             </HCard>
 
+            <HCard Title="执行信息" Style="margin-bottom:16px;">
+                <Body>
+                    <table class="h-descriptions">
+                        <tr><th>执行人</th><td>@selectedRecord.ExecutedBy</td></tr>
+                        <tr><th>开始时间</th><td>@selectedRecord.StartTime.ToString("yyyy-MM-dd HH:mm:ss")</td></tr>
+                        <tr><th>结束时间</th><td>@(selectedRecord.EndTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "-")</td></tr>
+                        <tr><th>总耗时</th><td>@(selectedRecord.Duration)ms</td></tr>
+                    </table>
+                </Body>
+            </HCard>
+
+            @if (selectedRecord.EnvironmentSnapshot.Any())
+            {
+                <HCard Title="执行参数（环境变量）" Style="margin-bottom:16px;">
+                    <Body>
+                        <table class="h-descriptions">
+                            @foreach (var kv in selectedRecord.EnvironmentSnapshot)
+                            {
+                                <tr><th>@kv.Key</th><td>@FormatParameterValue(kv.Value)</td></tr>
+                            }
+                        </table>
+                    </Body>
+                </HCard>
+            }
+
             @if (!string.IsNullOrEmpty(selectedRecord.ErrorMessage))
             {
                 <div class="h-alert h-alert-error" style="margin-bottom:16px;">
@@ -246,6 +274,19 @@ else
                                 <div class="h-alert h-alert-error" style="margin-bottom:12px;">
                                     <strong>错误</strong>
                                     <div>@stepRecord.ErrorMessage</div>
+                                </div>
+                            }
+
+                            @if (stepRecord.Parameters.Any())
+                            {
+                                <div style="margin-bottom:12px;">
+                                    <div style="font-weight:600;margin-bottom:4px;">执行参数</div>
+                                    <table class="h-descriptions">
+                                        @foreach (var kv in stepRecord.Parameters)
+                                        {
+                                            <tr><th>@GetParameterDisplayName(kv.Key)</th><td>@FormatParameterValue(kv.Value)</td></tr>
+                                        }
+                                    </table>
                                 </div>
                             }
 
@@ -337,6 +378,18 @@ else
                         </div>
                     </details>
                 }
+            }
+            else
+            {
+                <div class="h-empty" style="padding:24px 0;">
+                    暂无步骤执行详情
+                    @if (selectedRecord.Status == ExecutionStatus.Running)
+                    {
+                        <div style="color:#86909C;font-size:12px;margin-top:8px;">
+                            该记录处于“执行中”状态且未回写执行结果，可能是执行被中断，或为历史版本遗留的旧记录，可删除后重新执行用例
+                        </div>
+                    }
+                </div>
             }
 
             <div style="text-align:right;margin-top:16px;padding-top:12px;border-top:1px solid #F2F3F5;">
@@ -546,4 +599,46 @@ else
         StepExecutionStatus.Skipped => "跳过",
         _ => "未知"
     };
+
+    private static readonly Dictionary<string, string> ParameterDisplayNames = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["Method"] = "请求方法",
+        ["Url"] = "请求地址",
+        ["QueryParams"] = "查询参数",
+        ["Headers"] = "请求头",
+        ["AuthType"] = "认证方式",
+        ["Action"] = "操作类型",
+        ["Selector"] = "选择器",
+        ["Value"] = "值",
+        ["TimeoutMs"] = "超时时间(ms)",
+        ["ScriptType"] = "脚本类型",
+        ["DelayMs"] = "延时(ms)"
+    };
+
+    private string GetParameterDisplayName(string key)
+        => ParameterDisplayNames.TryGetValue(key, out var name) ? name : key;
+
+    private string FormatParameterValue(object? value)
+    {
+        if (value == null)
+        {
+            return "-";
+        }
+
+        if (value is JsonElement jsonElement)
+        {
+            return jsonElement.ValueKind == JsonValueKind.String
+                ? jsonElement.GetString() ?? string.Empty
+                : jsonElement.GetRawText();
+        }
+
+        if (value is System.Collections.IDictionary dictionary)
+        {
+            var lines = dictionary.Keys.Cast<object>()
+                .Select(k => $"{k}: {dictionary[k]}");
+            return string.Join("\n", lines);
+        }
+
+        return value.ToString() ?? string.Empty;
+    }
 }

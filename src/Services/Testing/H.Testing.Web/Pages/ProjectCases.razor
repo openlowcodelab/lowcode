@@ -178,16 +178,20 @@
                                             }
                                         </td>
                                         <td @onclick:stopPropagation>
-                                            <div class="row-actions">
-                                                <a class="link-action" style="color: #00B42A;" @onclick="() => ExecuteSingleTest(context)">执行</a>
-                                                <a class="link-action" @onclick="() => EditTestCaseSteps(context)">测试步骤</a>
-                                                <a class="link-action link-action-muted" @onclick="e => ToggleTestCaseDropdown(context.Id, e)">更多 ▾</a>
+                                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                                <div class="row-actions">
+                                                    <a class="link-action" @onclick="() => EditTestCaseSteps(context)">测试步骤</a>
+                                                    <a class="link-action" @onclick="() => ViewExecutionHistory(context)">测试报告</a>
+                                                </div>
+                                                <div class="row-actions">
+                                                    <a class="link-action" style="color: #00B42A;" @onclick="() => ExecuteSingleTest(context)">立即执行</a>
+                                                    <a class="link-action link-action-muted" @onclick="e => ToggleTestCaseDropdown(context.Id, e)">更多 ▾</a>
+                                                </div>
                                                 @if (openTestCaseDropdownId == context.Id)
                                                 {
                                                     <div class="h-dropdown-mask" @onclick="() => openTestCaseDropdownId = null"></div>
                                                     <div class="h-dropdown-panel h-dropdown-panel-fixed" style="@GetDropdownPanelStyle()">
                                                         <div class="h-dropdown-item" @onclick="() => { openTestCaseDropdownId = null; ShowTemplateSettingsModal(context); }">模板设置</div>
-                                                        <div class="h-dropdown-item" @onclick="() => { openTestCaseDropdownId = null; ViewExecutionHistory(context); }">测试报告</div>
                                                         <div class="h-dropdown-item" @onclick="() => { openTestCaseDropdownId = null; CopyTestCase(context); }">复制</div>
                                                         <div class="h-dropdown-item" @onclick="() => { openTestCaseDropdownId = null; ShowEditBasicInfoModal(context); }">编辑</div>
                                                         <div class="h-dropdown-divider"></div>

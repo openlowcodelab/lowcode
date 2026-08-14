@@ -1,6 +1,7 @@
 using H.Testing.Application.Contracts;
 using H.Testing.Application.Mapping;
 using H.Testing.EntityFrameworkCore;
+using Volo.Abp;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 
@@ -30,7 +31,7 @@ public class ExecutionRecordAppService : ApplicationService, IExecutionRecordApp
     {
         var query = await _repository.GetQueryableAsync();
         var list = await AsyncExecuter.ToListAsync(
-            query.Where(r => r.ProjectId == projectId && r.TestCaseId == testCaseId)
+            query.Where(r => r.ProjectId == projectId && r.CaseId == testCaseId)
                  .OrderByDescending(r => r.StartTime));
         return list.Select(e => e.ToDto()).ToList();
     }
@@ -56,8 +57,13 @@ public class ExecutionRecordAppService : ApplicationService, IExecutionRecordApp
 
     public async Task<bool> UpdateAsync(long projectId, CaseExecutionRecordDto record)
     {
+        if (record.Id == 0)
+        {
+            throw new UserFriendlyException("执行记录更新失败：记录尚未持久化（Id 为空）");
+        }
+
         var entity = await _repository.FindAsync(record.Id);
-        if (entity == null)
+        if (entity == null || entity.ProjectId != projectId)
         {
             return false;
         }

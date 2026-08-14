@@ -85,7 +85,8 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
             EnvironmentSnapshot = environment.Config
         };
 
-        await _executionRecordService.CreateAsync(executionRecord);
+        // 创建执行记录（必须接收返回值，否则 Id 保持 0，后续 UpdateAsync 无法定位记录，步骤详情将不会持久化）
+        executionRecord = await _executionRecordService.CreateAsync(executionRecord);
 
         // 初始化 Playwright（在整个测试用例执行期间保持同一个浏览器实例）
         IPlaywright playwright = null;
@@ -210,8 +211,12 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
             Console.WriteLine("UI测试用例执行完成，浏览器窗口保持打开状态");
         }
 
-        // 更新执行记录
-        await _executionRecordService.UpdateAsync(executionRecord.ProjectId, executionRecord);
+        // 更新执行记录（含步骤执行详情、断言结果等）
+        var updated = await _executionRecordService.UpdateAsync(executionRecord.ProjectId, executionRecord);
+        if (!updated)
+        {
+            Console.WriteLine($"Failed to update execution record {executionRecord.Id} for test case {testCase.Id}");
+        }
 
         // 更新测试用例的执行结果
         try
@@ -375,6 +380,24 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
         };
         stepRecord.Logs.Add($"Complete Request Info: {System.Text.Json.JsonSerializer.Serialize(requestInfo, new System.Text.Json.JsonSerializerOptions { WriteIndented = true })}");
 
+        // 记录执行参数（执行报告详情展示用）
+        stepRecord.Parameters["Method"] = config.Method;
+        stepRecord.Parameters["Url"] = url;
+        if (config.Params.Any())
+        {
+            stepRecord.Parameters["QueryParams"] = config.Params
+                .ToDictionary(p => p.Key, p => (object)ReplaceVariables(p.Value));
+        }
+        if (config.Headers.Any())
+        {
+            stepRecord.Parameters["Headers"] = config.Headers
+                .ToDictionary(h => h.Key, h => (object)ReplaceVariables(h.Value));
+        }
+        if (config.Auth?.Type == "Bearer")
+        {
+            stepRecord.Parameters["AuthType"] = "Bearer";
+        }
+
         // 发送请求
         stepRecord.Logs.Add($"Sending {config.Method} request...");
 
@@ -434,6 +457,18 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
 
         var config = step.UiConfig;
         stepRecord.Logs.Add($"Executing UI step: {step.Name} (Action: {config.Action})");
+
+        // 记录执行参数（执行报告详情展示用）
+        stepRecord.Parameters["Action"] = config.Action;
+        if (!string.IsNullOrEmpty(config.Selector))
+        {
+            stepRecord.Parameters["Selector"] = config.Selector;
+        }
+        if (!string.IsNullOrEmpty(config.Value))
+        {
+            stepRecord.Parameters["Value"] = config.Value;
+        }
+        stepRecord.Parameters["TimeoutMs"] = config.TimeoutMs;
 
         try
         {
@@ -596,6 +631,14 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
                         if (string.IsNullOrEmpty(config.Value) || IsVisibilityAssertion(config.Value))
                         {
                             stepRecord.Logs.Add($"断言通过: 元素 '{config.Selector}' 匹配到 {count} 个元素且至少一个可见");
+                            stepRecord.AssertionResults.Add(new AssertionResult
+                            {
+                                Expression = config.Selector,
+                                Operator = "visible",
+                                Expected = "可见",
+                                Actual = $"匹配到 {count} 个元素且至少一个可见",
+                                Passed = true
+                            });
                         }
                         else
                         {
@@ -613,6 +656,14 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
                             if (matchedText != null)
                             {
                                 stepRecord.Logs.Add($"断言通过: 元素 '{config.Selector}' 包含文本 '{config.Value}'");
+                                stepRecord.AssertionResults.Add(new AssertionResult
+                                {
+                                    Expression = config.Selector,
+                                    Operator = "contains",
+                                    Expected = config.Value,
+                                    Actual = matchedText,
+                                    Passed = true
+                                });
                             }
                             else
                             {
@@ -624,6 +675,19 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
                     {
                         // 记录详细错误信息
                         stepRecord.Logs.Add($"断言失败: {ex.Message}");
+                        // 记录失败的断言结果（执行报告详情展示用）
+                        if (!stepRecord.AssertionResults.Any(a => !a.Passed))
+                        {
+                            stepRecord.AssertionResults.Add(new AssertionResult
+                            {
+                                Expression = config.Selector,
+                                Operator = string.IsNullOrEmpty(config.Value) ? "visible" : "contains",
+                                Expected = string.IsNullOrEmpty(config.Value) ? "可见" : config.Value,
+                                Actual = ex.Message,
+                                Passed = false,
+                                ErrorMessage = ex.Message
+                            });
+                        }
                         // 尝试截图记录当前页面状态
                         try
                         {
@@ -700,6 +764,9 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
 
         stepRecord.Logs.Add($"Executing {step.ScriptConfig.ScriptType} script: {step.Name}");
 
+        // 记录执行参数（执行报告详情展示用）
+        stepRecord.Parameters["ScriptType"] = step.ScriptConfig.ScriptType;
+
         try
         {
             string result;
@@ -752,6 +819,7 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
             int.TryParse(delayValue.ToString(), out delayMs);
         }
 
+        stepRecord.Parameters["DelayMs"] = delayMs;
         stepRecord.Logs.Add($"Waiting for {delayMs} ms...");
         await Task.Delay(delayMs, cancellationToken);
         stepRecord.Logs.Add($"Waited for {delayMs} ms");

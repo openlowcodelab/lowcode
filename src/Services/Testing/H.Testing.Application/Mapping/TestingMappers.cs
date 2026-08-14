@@ -220,7 +220,7 @@ public static class TestingMappers
     public static CaseExecutionRecordDto ToDto(this CaseRecordEntity e) => new()
     {
         Id = e.Id,
-        TestCaseId = e.TestCaseId,
+        TestCaseId = e.CaseId,
         TestCaseName = e.CaseName ?? string.Empty,
         ProjectId = e.ProjectId,
         EnvironmentId = e.EnvironmentId,
@@ -241,7 +241,7 @@ public static class TestingMappers
 
     public static void Apply(this CaseExecutionRecordDto dto, CaseRecordEntity e)
     {
-        e.TestCaseId = dto.TestCaseId;
+        e.CaseId = dto.TestCaseId;
         e.CaseName = dto.TestCaseName;
         e.ProjectId = dto.ProjectId;
         e.EnvironmentId = dto.EnvironmentId;

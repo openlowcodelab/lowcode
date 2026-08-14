@@ -14,7 +14,7 @@ public class CaseRecordEntity : AuditedEntity<long>, IMultiTenant
     public long ProjectId { get; set; }
 
     /// <summary>测试用例ID</summary>
-    public long TestCaseId { get; set; }
+    public long CaseId { get; set; }
 
     /// <summary>执行环境ID</summary>
     public long EnvironmentId { get; set; }
