@@ -43,10 +43,6 @@ namespace H.Testing.DbMigrator.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("CreatorId");
 
-                    b.Property<string>("Description")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2")
                         .HasColumnName("LastModificationTime");
@@ -90,8 +86,8 @@ namespace H.Testing.DbMigrator.Migrations
 
                     b.Property<string>("CaseName")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<long?>("CategoryId")
                         .HasColumnType("bigint");
@@ -105,8 +101,8 @@ namespace H.Testing.DbMigrator.Migrations
                         .HasColumnName("CreatorId");
 
                     b.Property<string>("Description")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<bool>("IsTemplate")
                         .HasColumnType("bit");
@@ -160,8 +156,8 @@ namespace H.Testing.DbMigrator.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 9000000L);
 
                     b.Property<string>("CaseName")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<DateTime>("CreationTime")
                         .HasColumnType("datetime2")

@@ -196,7 +196,6 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
                 ProjectId = projectId,
                 ParentId = null,
                 Name = TemplateJson.Str(o, "name"),
-                Description = TemplateJson.Str(o, "description"),
                 Order = TemplateJson.IntVal(o, "order")
             }));
         }
@@ -338,7 +337,6 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
         {
             ["Id"] = c.Id.ToString(),
             ["Name"] = c.Name,
-            ["Description"] = c.Description ?? string.Empty,
             ["ProjectId"] = templateId,
             ["ParentId"] = CatId(c.ParentId),
             ["Order"] = c.Order

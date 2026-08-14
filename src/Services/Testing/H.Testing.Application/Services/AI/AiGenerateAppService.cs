@@ -17,8 +17,10 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
         PropertyNameCaseInsensitive = true
     };
 
-    private const int MaxNameLength = 200;
-    private const int MaxDescriptionLength = 1000;
+    private const int MaxNameLength = 20;
+    private const int MaxCaseNameLength = 50;
+    private const int MaxDescriptionLength = 100;
+    private const int MaxCaseDescriptionLength = 200;
 
     private readonly IAiCompletionAppService _aiCompletion;
     private readonly IProjectAppService _projectService;
@@ -136,7 +138,7 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
         // 3. 创建分类
         var tempIdMap = await CreateCategoriesInOrderAsync(
             projectId,
-            generated.Categories.Select(c => (c.TempId, c.Name, c.Description, ParentRef: c.ParentTempId)).ToList(),
+            generated.Categories.Select(c => (c.TempId, c.Name, ParentRef: c.ParentTempId)).ToList(),
             ResolveTempIdOnly);
 
         // 4. 创建用例（含测试步骤）
@@ -151,8 +153,8 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
             {
                 var caseId = await _caseService.CreateAsync(new CaseDto
                 {
-                    Name = Truncate(aiCase.Name, MaxNameLength),
-                    Description = Truncate(aiCase.Description, MaxDescriptionLength),
+                    Name = Truncate(aiCase.Name, MaxCaseNameLength),
+                    Description = Truncate(aiCase.Description, MaxCaseDescriptionLength),
                     ProjectId = projectId,
                     CategoryId = categoryId,
                     Level = NormalizeLevel(aiCase.Level),
@@ -225,7 +227,7 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
         // 1. 新增分类（父分类优先）
         var tempIdMap = await CreateCategoriesInOrderAsync(
             projectId,
-            plan.AddCategories.Select(c => (c.TempId, c.Name, c.Description, c.ParentRef)).ToList(),
+            plan.AddCategories.Select(c => (c.TempId, c.Name, c.ParentRef)).ToList(),
             reference => ResolveCategoryRef(reference, existingCategoryIds));
 
         // 2. 修改分类
@@ -241,7 +243,6 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
             {
                 Id = current.Id,
                 Name = string.IsNullOrWhiteSpace(update.Name) ? current.Name : Truncate(update.Name, MaxNameLength),
-                Description = string.IsNullOrWhiteSpace(update.Description) ? current.Description : Truncate(update.Description, MaxDescriptionLength),
                 ProjectId = projectId,
                 ParentId = current.ParentId,
                 Order = current.Order
@@ -254,7 +255,7 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
             await _caseService.CreateAsync(new CaseDto
             {
                 Name = Truncate(aiCase.Name, MaxNameLength),
-                Description = Truncate(aiCase.Description, MaxDescriptionLength),
+                Description = Truncate(aiCase.Description, MaxCaseDescriptionLength),
                 ProjectId = projectId,
                 CategoryId = ResolveCategoryRef(aiCase.CategoryRef, existingCategoryIds) ?? (tempIdMap.TryGetValue(aiCase.CategoryRef ?? string.Empty, out var newId) ? newId : null),
                 Level = NormalizeLevel(aiCase.Level),
@@ -272,7 +273,7 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
             }
 
             current.Name = string.IsNullOrWhiteSpace(update.Name) ? current.Name : Truncate(update.Name, MaxNameLength);
-            current.Description = string.IsNullOrWhiteSpace(update.Description) ? current.Description : Truncate(update.Description, MaxDescriptionLength);
+            current.Description = string.IsNullOrWhiteSpace(update.Description) ? current.Description : Truncate(update.Description, MaxCaseDescriptionLength);
             if (!string.IsNullOrWhiteSpace(update.Level))
             {
                 current.Level = NormalizeLevel(update.Level);
@@ -291,7 +292,7 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
     /// </summary>
     private async Task<Dictionary<string, long>> CreateCategoriesInOrderAsync(
         long projectId,
-        List<(string TempId, string Name, string Description, string? ParentRef)> categories,
+        List<(string TempId, string Name, string? ParentRef)> categories,
         Func<string?, long?> parentResolver)
     {
         var tempIdMap = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
@@ -318,7 +319,6 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
                 var created = await _categoryService.CreateAsync(new CaseCategoryDto
                 {
                     Name = Truncate(category.Name, MaxNameLength),
-                    Description = Truncate(category.Description, MaxDescriptionLength),
                     ProjectId = projectId,
                     ParentId = ResolveParentId(category.ParentRef, tempIdMap, parentResolver),
                     Order = order++
@@ -340,7 +340,6 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
             var created = await _categoryService.CreateAsync(new CaseCategoryDto
             {
                 Name = Truncate(category.Name, MaxNameLength),
-                Description = Truncate(category.Description, MaxDescriptionLength),
                 ProjectId = projectId,
                 ParentId = null,
                 Order = order++

@@ -75,7 +75,6 @@ public class TestingDbContext : AbpDbContext<TestingDbContext>
 
             b.Property(x => x.Id).UseIdentityColumn(7000000, 1);
             b.Property(x => x.Name).IsRequired().HasMaxLength(20);
-            b.Property(x => x.Description).HasMaxLength(100);
 
             b.HasIndex(x => x.ProjectId);
         });
@@ -86,8 +85,8 @@ public class TestingDbContext : AbpDbContext<TestingDbContext>
             b.HasKey(x => x.Id);
 
             b.Property(x => x.Id).UseIdentityColumn(8000000, 1);
-            b.Property(x => x.CaseName).IsRequired().HasMaxLength(20);
-            b.Property(x => x.Description).HasMaxLength(100);
+            b.Property(x => x.CaseName).IsRequired().HasMaxLength(50);
+            b.Property(x => x.Description).HasMaxLength(200);
             b.Property(x => x.Level);
 
             b.HasIndex(x => x.ProjectId);
@@ -118,7 +117,7 @@ public class TestingDbContext : AbpDbContext<TestingDbContext>
             b.HasKey(x => x.Id);
 
             b.Property(x => x.Id).UseIdentityColumn(9000000, 1);
-            b.Property(x => x.CaseName).HasMaxLength(20);
+            b.Property(x => x.CaseName).HasMaxLength(50);
             b.Property(x => x.EnvironmentName).HasMaxLength(20);
             b.Property(x => x.StepRecordsJson).HasMaxLength(4000);
             b.Property(x => x.EnvironmentSnapshotJson).HasMaxLength(4000);

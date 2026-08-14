@@ -12,8 +12,6 @@ public class CaseCategoryDto
     [Required(ErrorMessage = "分类名称不能为空")]
     public string Name { get; set; } = string.Empty;
 
-    public string Description { get; set; } = string.Empty;
-
     public long ProjectId { get; set; }
 
     public long? ParentId { get; set; }

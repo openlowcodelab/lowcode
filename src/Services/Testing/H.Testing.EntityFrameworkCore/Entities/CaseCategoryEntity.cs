@@ -18,7 +18,5 @@ public class CaseCategoryEntity : AuditedEntity<long>, IMultiTenant
 
     public string Name { get; set; } = string.Empty;
 
-    public string? Description { get; set; }
-
     public int Order { get; set; }
 }

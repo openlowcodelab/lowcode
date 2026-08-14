@@ -127,9 +127,6 @@ public class AiGeneratedCategoryDto
     /// <summary>分类名称</summary>
     public string Name { get; set; } = string.Empty;
 
-    /// <summary>分类描述</summary>
-    public string Description { get; set; } = string.Empty;
-
     /// <summary>父分类临时ID（根分类为 null）</summary>
     public string? ParentTempId { get; set; }
 
@@ -184,9 +181,6 @@ public class AiAddCategoryDto
     /// <summary>分类名称</summary>
     public string Name { get; set; } = string.Empty;
 
-    /// <summary>分类描述</summary>
-    public string Description { get; set; } = string.Empty;
-
     /// <summary>父分类引用：已有分类ID（数字）或本次新增分类的 TempId，根分类为 null</summary>
     public string? ParentRef { get; set; }
 }
@@ -201,9 +195,6 @@ public class AiUpdateCategoryDto
 
     /// <summary>新名称（为空表示不修改）</summary>
     public string Name { get; set; } = string.Empty;
-
-    /// <summary>新描述（为空表示不修改）</summary>
-    public string Description { get; set; } = string.Empty;
 }
 
 /// <summary>

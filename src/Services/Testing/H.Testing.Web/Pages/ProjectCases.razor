@@ -118,6 +118,11 @@
                         <HTable>
                             <thead>
                                 <tr>
+                                    <th style="width: 40px;">
+                                        <input type="checkbox" checked="@IsAllDisplayedSelected"
+                                               indeterminate="@IsPartialDisplayedSelected"
+                                               @onchange="@((ChangeEventArgs e) => ToggleSelectAllDisplayed((bool)(e.Value ?? false)))" />
+                                    </th>
                                     <th style="width: 100px;">用例编号</th>
                                     <th>用例名称</th>
                                     <th style="width: 120px;">级别</th>
@@ -128,7 +133,11 @@
                             <tbody>
                                 @foreach (var context in displayTestCases)
                                 {
-                                    <tr>
+                                    <tr @onclick="() => ToggleRowSelection(context.Id)">
+                                        <td @onclick:stopPropagation>
+                                            <input type="checkbox" checked="@selectedTestCases.Contains(context.Id)"
+                                                   @onchange="@((ChangeEventArgs e) => ToggleTestCaseSelection(context.Id, (bool)(e.Value ?? false)))" />
+                                        </td>
                                         <td>
                                             <span style="color: #86909C;">@context.Id</span>
                                         </td>
@@ -168,7 +177,7 @@
                                                 <span style="color: #86909C;">未执行</span>
                                             }
                                         </td>
-                                        <td>
+                                        <td @onclick:stopPropagation>
                                             <div class="row-actions">
                                                 <a class="link-action" style="color: #00B42A;" @onclick="() => ExecuteSingleTest(context)">执行</a>
                                                 <a class="link-action" @onclick="() => EditTestCaseSteps(context)">测试步骤</a>
@@ -313,10 +322,6 @@
                     {
                         <div Style="padding-left: 16px; color: #4E5969; font-size: 13px; margin-top: 4px;">
                             @cat.Name <span Style="color: #86909C;">(父分类：@GetAiRefName(cat.ParentRef))</span>
-                            @if (!string.IsNullOrEmpty(cat.Description))
-                            {
-                                <div Style="color: #86909C; font-size: 12px;">@cat.Description</div>
-                            }
                         </div>
                     }
                 </div>
@@ -330,7 +335,6 @@
                         <div Style="padding-left: 16px; color: #4E5969; font-size: 13px; margin-top: 4px;">
                             @GetAiCategoryName(cat.Id)
                             @if (!string.IsNullOrEmpty(cat.Name)) { <span>→ @cat.Name</span> }
-                            @if (!string.IsNullOrEmpty(cat.Description)) { <div Style="color: #86909C; font-size: 12px;">描述：@cat.Description</div> }
                         </div>
                     }
                 </div>
@@ -757,6 +761,34 @@
         }
     }
 
+    private bool IsAllDisplayedSelected => displayTestCases.Count > 0 && displayTestCases.All(tc => selectedTestCases.Contains(tc.Id));
+
+    private bool IsPartialDisplayedSelected => !IsAllDisplayedSelected && displayTestCases.Any(tc => selectedTestCases.Contains(tc.Id));
+
+    private void ToggleSelectAllDisplayed(bool selectAll)
+    {
+        if (selectAll)
+        {
+            foreach (var testCase in displayTestCases)
+            {
+                selectedTestCases.Add(testCase.Id);
+            }
+        }
+        else
+        {
+            foreach (var testCase in displayTestCases)
+            {
+                selectedTestCases.Remove(testCase.Id);
+            }
+        }
+        StateHasChanged();
+    }
+
+    private void ToggleRowSelection(long testCaseId)
+    {
+        ToggleTestCaseSelection(testCaseId, !selectedTestCases.Contains(testCaseId));
+    }
+
     private void ToggleTestCaseSelection(long testCaseId, bool? isSelected)
     {
         if (isSelected == true)
@@ -941,7 +973,6 @@
             {
                 Id = node.Id,
                 Name = node.Name,
-                Description = node.Description,
                 ProjectId = node.ProjectId,
                 ParentId = node.ParentId,
                 Order = node.Order,

@@ -128,7 +128,6 @@ public static class TestingMappers
     {
         Id = e.Id,
         Name = e.Name,
-        Description = e.Description ?? string.Empty,
         ProjectId = e.ProjectId,
         ParentId = e.ParentId,
         Order = e.Order,
@@ -138,7 +137,6 @@ public static class TestingMappers
     public static void Apply(this CaseCategoryDto dto, CaseCategoryEntity e)
     {
         e.Name = dto.Name;
-        e.Description = dto.Description;
         e.ProjectId = dto.ProjectId;
         e.ParentId = dto.ParentId;
         e.Order = dto.Order;
