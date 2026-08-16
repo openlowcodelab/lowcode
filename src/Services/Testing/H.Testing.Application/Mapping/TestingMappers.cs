@@ -220,11 +220,11 @@ public static class TestingMappers
     public static CaseExecutionRecordDto ToDto(this CaseRecordEntity e) => new()
     {
         Id = e.Id,
-        TestCaseId = e.CaseId,
-        TestCaseName = e.CaseName ?? string.Empty,
+        CaseId = e.CaseId,
+        CaseName = e.CaseName ?? string.Empty,
         ProjectId = e.ProjectId,
-        EnvironmentId = e.EnvironmentId,
-        EnvironmentName = e.EnvironmentName ?? string.Empty,
+        EnvId = e.EnvId,
+        EnvName = e.EnvName ?? string.Empty,
         Status = (ExecutionStatus)e.Status,
         StartTime = e.StartTime,
         EndTime = e.EndTime,
@@ -236,16 +236,16 @@ public static class TestingMappers
         StepRecords = DeserializeList<StepExecutionRecord>(e.StepRecordsJson),
         ErrorMessage = e.ErrorMessage,
         ExecutedBy = e.ExecutedBy ?? "System",
-        EnvironmentSnapshot = DeserializeDict<object>(e.EnvironmentSnapshotJson)
+        EnvSnapshot = DeserializeDict<object>(e.EnvSnapshotJson)
     };
 
     public static void Apply(this CaseExecutionRecordDto dto, CaseRecordEntity e)
     {
-        e.CaseId = dto.TestCaseId;
-        e.CaseName = dto.TestCaseName;
+        e.CaseId = dto.CaseId;
+        e.CaseName = dto.CaseName;
         e.ProjectId = dto.ProjectId;
-        e.EnvironmentId = dto.EnvironmentId;
-        e.EnvironmentName = dto.EnvironmentName;
+        e.EnvId = dto.EnvId;
+        e.EnvName = dto.EnvName;
         e.Status = (int)dto.Status;
         e.StartTime = dto.StartTime;
         e.EndTime = dto.EndTime;
@@ -257,6 +257,6 @@ public static class TestingMappers
         e.StepRecordsJson = Serialize(dto.StepRecords);
         e.ErrorMessage = dto.ErrorMessage;
         e.ExecutedBy = dto.ExecutedBy;
-        e.EnvironmentSnapshotJson = Serialize(dto.EnvironmentSnapshot);
+        e.EnvSnapshotJson = Serialize(dto.EnvSnapshot);
     }
 }

@@ -360,6 +360,10 @@
                             {
                                 <div Style="color: #86909C; font-size: 12px;">@aiCase.Description</div>
                             }
+                            @if (aiCase.Steps.Any())
+                            {
+                                <div Style="color: #86909C; font-size: 12px;">📋 测试步骤：@aiCase.Steps.Count 步</div>
+                            }
                         </div>
                     }
                 </div>
@@ -380,6 +384,10 @@
                             @if (!string.IsNullOrEmpty(aiCase.Description))
                             {
                                 <div Style="color: #86909C; font-size: 12px;">描述：@aiCase.Description</div>
+                            }
+                            @if (aiCase.Steps.Any())
+                            {
+                                <div Style="color: #86909C; font-size: 12px;">📋 新增测试步骤：@aiCase.Steps.Count 步</div>
                             }
                         </div>
                     }

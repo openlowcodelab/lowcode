@@ -213,6 +213,9 @@ public class AiAddCaseDto
 
     /// <summary>所属分类引用：已有分类ID（数字）或本次新增分类的 TempId，未分类为 null</summary>
     public string? CategoryRef { get; set; }
+
+    /// <summary>测试步骤</summary>
+    public List<AiGeneratedStepDto> Steps { get; set; } = new();
 }
 
 /// <summary>
@@ -231,4 +234,7 @@ public class AiUpdateCaseDto
 
     /// <summary>新级别（单选，P0~P3，为空字符串表示不修改）</summary>
     public string Level { get; set; } = string.Empty;
+
+    /// <summary>新增测试步骤（追加到用例已有步骤之后，为空表示不新增步骤）</summary>
+    public List<AiGeneratedStepDto> Steps { get; set; } = new();
 }

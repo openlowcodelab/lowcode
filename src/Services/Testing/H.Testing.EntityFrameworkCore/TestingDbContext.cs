@@ -118,10 +118,10 @@ public class TestingDbContext : AbpDbContext<TestingDbContext>
 
             b.Property(x => x.Id).UseIdentityColumn(9000000, 1);
             b.Property(x => x.CaseName).HasMaxLength(50);
-            b.Property(x => x.EnvironmentName).HasMaxLength(20);
+            b.Property(x => x.EnvName).HasMaxLength(20);
             // 步骤执行详情（含执行参数、断言结果、日志等）内容较大，使用 nvarchar(max) 避免截断
             b.Property(x => x.StepRecordsJson).HasColumnType("nvarchar(max)");
-            b.Property(x => x.EnvironmentSnapshotJson).HasMaxLength(4000);
+            b.Property(x => x.EnvSnapshotJson).HasMaxLength(4000);
             b.Property(x => x.ErrorMessage).HasMaxLength(1000);
             b.Property(x => x.ExecutedBy).HasMaxLength(36).IsUnicode(false);
 

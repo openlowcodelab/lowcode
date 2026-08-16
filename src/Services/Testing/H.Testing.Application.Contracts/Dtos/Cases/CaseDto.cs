@@ -10,10 +10,10 @@ public class CaseDto
     public long Id { get; set; }
 
     [Required(ErrorMessage = "测试用例名称不能为空")]
-    [StringLength(20, ErrorMessage = "测试用例名称长度不能超过20个字符")]
+    [StringLength(50, ErrorMessage = "测试用例名称长度不能超过50个字符")]
     public string Name { get; set; } = string.Empty;
 
-    [StringLength(100, ErrorMessage = "测试用例描述长度不能超过100个字符")]
+    [StringLength(200, ErrorMessage = "测试用例描述长度不能超过200个字符")]
     public string Description { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "所属项目不能为空")]

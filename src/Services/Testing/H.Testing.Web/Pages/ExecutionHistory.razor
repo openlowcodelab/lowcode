@@ -132,7 +132,7 @@ else
                                         <div style="flex:1;">
                                             <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
                                                 <span class="h-tag h-tag-@GetExecutionStatusTagClass(record.Status)">@GetExecutionStatusDisplayName(record.Status)</span>
-                                                <strong>@record.EnvironmentName</strong>
+                                                <strong>@record.EnvName</strong>
                                                 <span style="color:#86909C;font-size:12px;">@record.StartTime.ToString("yyyy-MM-dd HH:mm:ss")</span>
                                             </div>
                                             <div style="color:#4E5969;font-size:12px;">
@@ -213,8 +213,8 @@ else
             <HCard Title="环境信息" Style="margin-bottom:16px;">
                 <Body>
                     <table class="h-descriptions">
-                        <tr><th>环境名称</th><td>@selectedRecord.EnvironmentName</td></tr>
-                        <tr><th>环境ID</th><td>@selectedRecord.EnvironmentId</td></tr>
+                        <tr><th>环境名称</th><td>@selectedRecord.EnvName</td></tr>
+                        <tr><th>环境ID</th><td>@selectedRecord.EnvId</td></tr>
                     </table>
                 </Body>
             </HCard>
@@ -230,12 +230,12 @@ else
                 </Body>
             </HCard>
 
-            @if (selectedRecord.EnvironmentSnapshot.Any())
+            @if (selectedRecord.EnvSnapshot.Any())
             {
                 <HCard Title="执行参数（环境变量）" Style="margin-bottom:16px;">
                     <Body>
                         <table class="h-descriptions">
-                            @foreach (var kv in selectedRecord.EnvironmentSnapshot)
+                            @foreach (var kv in selectedRecord.EnvSnapshot)
                             {
                                 <tr><th>@kv.Key</th><td>@FormatParameterValue(kv.Value)</td></tr>
                             }

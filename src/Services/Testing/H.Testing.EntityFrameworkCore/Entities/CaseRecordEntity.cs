@@ -17,11 +17,11 @@ public class CaseRecordEntity : AuditedEntity<long>, IMultiTenant
     public long CaseId { get; set; }
 
     /// <summary>执行环境ID</summary>
-    public long EnvironmentId { get; set; }
+    public long EnvId { get; set; }
 
     public string? CaseName { get; set; }
 
-    public string? EnvironmentName { get; set; }
+    public string? EnvName { get; set; }
 
     /// <summary>执行状态</summary>
     public int Status { get; set; }
@@ -49,5 +49,5 @@ public class CaseRecordEntity : AuditedEntity<long>, IMultiTenant
     public string? ExecutedBy { get; set; }
 
     /// <summary>环境配置快照（Dictionary 序列化）</summary>
-    public string? EnvironmentSnapshotJson { get; set; }
+    public string? EnvSnapshotJson { get; set; }
 }

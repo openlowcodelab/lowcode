@@ -184,12 +184,21 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
             ?? throw new UserFriendlyException("项目不存在");
         var categories = FlattenCategoryTree(await _categoryService.GetByProjectIdAsync(projectId));
         var cases = await _caseService.GetByProjectIdAsync(projectId);
+        var services = await _serviceConfigService.GetProjectServicesAsync(projectId);
+        var caseSteps = await _caseStepService.GetByCaseIdsAsync(cases.Select(c => c.Id));
 
         var context = JsonSerializer.Serialize(new
         {
             project = new { project.Name, project.Description },
+            services = services.Select(s => new { s.Id, s.Name }),
             categories = categories.Select(c => new { c.Id, c.Name, c.ParentId }),
-            cases = cases.Select(c => new { c.Id, c.Name, c.CategoryId })
+            cases = cases.Select(c => new
+            {
+                c.Id,
+                c.Name,
+                c.CategoryId,
+                Steps = caseSteps.TryGetValue(c.Id, out var steps) ? steps.Select(s => s.Name).ToList() : new List<string>()
+            })
         }, JsonOptions);
 
         // 读取项目知识库内容作为生成上下文，辅助编写更贴合业务的用例
@@ -203,7 +212,7 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
             SystemPrompt = ModificationSystemPrompt,
             UserMessage = $"已有项目结构：\n{context}{knowledgeSection}\n\n用户需求：\n{input.Description}",
             Temperature = 0.3f,
-            MaxTokens = 8192
+            MaxTokens = 16384
         });
 
         var plan = ParseJson<AiModificationPlanDto>(result.Content)
@@ -223,6 +232,17 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
 
         var existingCategories = FlattenCategoryTree(await _categoryService.GetByProjectIdAsync(projectId));
         var existingCategoryIds = existingCategories.Select(c => c.Id).ToHashSet();
+
+        // 已有服务引用映射：AI 可用服务 ID 或服务名称引用，用于步骤关联服务
+        var serviceRefMap = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
+        foreach (var service in await _serviceConfigService.GetProjectServicesAsync(projectId))
+        {
+            serviceRefMap[service.Id.ToString()] = service.Id;
+            if (!string.IsNullOrWhiteSpace(service.Name))
+            {
+                serviceRefMap[service.Name] = service.Id;
+            }
+        }
 
         // 1. 新增分类（父分类优先）
         var tempIdMap = await CreateCategoriesInOrderAsync(
@@ -249,10 +269,10 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
             });
         }
 
-        // 3. 新增用例
+        // 3. 新增用例（含测试步骤）
         foreach (var aiCase in plan.AddCases.Where(c => !string.IsNullOrWhiteSpace(c.Name)))
         {
-            await _caseService.CreateAsync(new CaseDto
+            var caseId = await _caseService.CreateAsync(new CaseDto
             {
                 Name = Truncate(aiCase.Name, MaxNameLength),
                 Description = Truncate(aiCase.Description, MaxCaseDescriptionLength),
@@ -261,6 +281,12 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
                 Level = NormalizeLevel(aiCase.Level),
                 Status = CaseStatus.Active
             });
+
+            var steps = MapSteps(aiCase.Steps, serviceRefMap);
+            if (steps.Count > 0)
+            {
+                await _caseStepService.SaveAsync(caseId, steps);
+            }
         }
 
         // 4. 修改用例
@@ -280,6 +306,20 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
             }
 
             await _caseService.UpdateAsync(update.Id, current);
+
+            // 新步骤追加到已有步骤之后（保留已有步骤不变）；继承模板的用例使用模板步骤，跳过
+            var newSteps = MapSteps(update.Steps, serviceRefMap);
+            if (newSteps.Count > 0 && current.TemplateId == null)
+            {
+                var currentSteps = await _caseStepService.GetByCaseIdAsync(update.Id);
+                foreach (var step in newSteps)
+                {
+                    step.Order = currentSteps.Count;
+                    currentSteps.Add(step);
+                }
+
+                await _caseStepService.SyncAsync(update.Id, currentSteps);
+            }
         }
     }
 
@@ -576,6 +616,16 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
         plan.AddCases ??= [];
         plan.UpdateCases ??= [];
 
+        foreach (var aiCase in plan.AddCases)
+        {
+            aiCase.Steps ??= [];
+        }
+
+        foreach (var aiCase in plan.UpdateCases)
+        {
+            aiCase.Steps ??= [];
+        }
+
         for (var i = 0; i < plan.AddCategories.Count; i++)
         {
             var category = plan.AddCategories[i];
@@ -677,15 +727,15 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
         """;
 
     private const string ModificationSystemPrompt = """
-        你是一名资深软件测试架构师。用户已有一个测试项目，请根据用户的口语化描述，针对已有项目生成增量变更操作（新增/修改分类与测试用例）。
+        你是一名资深软件测试架构师。用户已有一个测试项目，请根据用户的口语化描述，针对已有项目生成增量变更操作（新增/修改分类、测试用例与测试步骤）。
         输出要求：
         1. 只输出一个 JSON 对象，不要输出任何解释文字，也不要使用 markdown 代码块标记。
         2. JSON 结构如下：
         {
           "addCategories": [{ "tempId": "c1", "name": "分类名称", "description": "", "parentRef": null }],
           "updateCategories": [{ "id": 123, "name": "新名称", "description": "" }],
-          "addCases": [{ "name": "用例名称", "description": "测试要点与预期结果", "level": "P1", "categoryRef": "c1" }],
-          "updateCases": [{ "id": 456, "name": "新名称", "description": "", "level": "" }]
+          "addCases": [{ "name": "用例名称", "description": "测试要点与预期结果", "level": "P1", "categoryRef": "c1", "steps": [ { "name": "步骤名称", "type": "ui", "action": "click", "selector": "#login-btn", "value": "", "description": "预期结果" } ] }],
+          "updateCases": [{ "id": 456, "name": "", "description": "", "level": "", "steps": [] }]
         }
         3. 规则：
         - parentRef 与 categoryRef 可填写已有分类的 id（数字），或本次新增分类的 tempId（如 c1）；根分类或未分类填 null。
@@ -693,6 +743,10 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
         - 修改操作只填写需要变更的字段，不需要变更的字段填空字符串（空值将被忽略）。
         - 只输出必要的操作，无需变更时输出空数组；不要包含任何删除操作。
         - 新增用例应优先挂到合适的已有分类下；level 从 P0/P1/P2/P3 中单选一个。
+        - steps 是具体可执行的测试步骤，每个用例设计 2~6 个，按执行顺序排列；description 只写简短的测试要点，严禁把步骤内容写入用例的 description。
+        - 已有用例已带 steps 信息（可能为空）：需要完善/补充步骤时，在 updateCases 对应项的 steps 中只输出需要新增的步骤（会追加到已有步骤之后），不要重复已有步骤；无需调整步骤时 steps 填空数组。
+        - 步骤格式：接口类用 type=api（method、url 为相对路径、serviceRef 填写已有项目结构中服务的 id 或名称、body 为 JSON 字符串、无请求体填空字符串）；界面类用 type=ui（action 从 navigate/click/input/select/wait/assert/scroll/hover 中选，navigate 的 selector 填页面路径，value 为输入值或期望值）；每个步骤的 description 写预期结果。
+        - assert 步骤的 selector 应使用能定位到具体元素的 CSS 选择器（避免宽泛的标签组合），value 填写元素内应包含的预期文本，仅验证元素可见时 value 填空字符串，不要填 visible。
         - 若提供了项目知识库内容，须优先依据知识库描述的功能与业务规则设计用例，使其覆盖知识库中提到的关键流程、校验规则与异常场景。
         - 所有名称与描述使用中文。
         """;

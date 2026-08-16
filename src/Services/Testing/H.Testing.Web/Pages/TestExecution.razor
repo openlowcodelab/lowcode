@@ -347,12 +347,12 @@ else
                         {
                             <div style="margin-top:16px;">
                                 <h4 style="margin-bottom:12px;">用例执行详情</h4>
-                                @foreach (var record in executionRecords.OrderBy(r => r.TestCaseName))
+                                @foreach (var record in executionRecords.OrderBy(r => r.CaseName))
                                 {
                                     <details style="border:1px solid #F2F3F5;border-radius:4px;margin-bottom:8px;">
                                         <summary style="padding:10px 12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;">
                                             <div style="display:flex;align-items:center;gap:8px;">
-                                                <strong>@record.TestCaseName</strong>
+                                                <strong>@record.CaseName</strong>
                                                 <span class="h-tag h-tag-@GetExecutionStatusTagClass(record.Status)">
                                                     @GetExecutionStatusDisplayName(record.Status)
                                                 </span>
@@ -582,7 +582,7 @@ else
                     executionRecords.AddRange(batchResult.ExecutionRecords);
                     foreach (var record in batchResult.ExecutionRecords)
                     {
-                        currentExecutionRecords[record.TestCaseId] = record;
+                        currentExecutionRecords[record.CaseId] = record;
                     }
 
                     StateHasChanged();
@@ -612,8 +612,8 @@ else
             {
                 var initialRecord = new CaseExecutionRecordDto
                 {
-                    TestCaseId = testCase!.Id,
-                    TestCaseName = testCase.Name,
+                    CaseId = testCase!.Id,
+                    CaseName = testCase.Name,
                     Status = ExecutionStatus.Running,
                     StartTime = DateTime.Now,
                     TotalSteps = GetStepCount(testCase!.Id),
@@ -632,7 +632,7 @@ else
                     selectedEnvironmentId,
                     cancellationTokenSource.Token);
 
-                var index = executionRecords.FindIndex(r => r.TestCaseId == testCase.Id);
+                var index = executionRecords.FindIndex(r => r.CaseId == testCase.Id);
                 if (index >= 0)
                 {
                     executionRecords[index] = record;
@@ -790,7 +790,7 @@ else
         {
             currentExecutionRecords[testCaseId] = executionRecord;
 
-            var existingRecord = executionRecords.FirstOrDefault(r => r.TestCaseId == testCaseId);
+            var existingRecord = executionRecords.FirstOrDefault(r => r.CaseId == testCaseId);
             if (existingRecord != null)
             {
                 var index = executionRecords.IndexOf(existingRecord);

@@ -75,14 +75,14 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
         // 创建执行记录
         var executionRecord = new CaseExecutionRecordDto
         {
-            TestCaseId = testCase.Id,
-            TestCaseName = testCase.Name,
+            CaseId = testCase.Id,
+            CaseName = testCase.Name,
             ProjectId = testCase.ProjectId,
-            EnvironmentId = environmentId,
-            EnvironmentName = environment.Name,
+            EnvId = environmentId,
+            EnvName = environment.Name,
             Status = ExecutionStatus.Running,
             TotalSteps = executionSteps.Count,
-            EnvironmentSnapshot = environment.Config
+            EnvSnapshot = environment.Config
         };
 
         // 创建执行记录（必须接收返回值，否则 Id 保持 0，后续 UpdateAsync 无法定位记录，步骤详情将不会持久化）

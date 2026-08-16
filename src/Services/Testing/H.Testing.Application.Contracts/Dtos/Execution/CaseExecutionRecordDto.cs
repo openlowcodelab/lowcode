@@ -10,18 +10,18 @@ public class CaseExecutionRecordDto
     public long Id { get; set; }
 
     [Required(ErrorMessage = "测试用例ID不能为空")]
-    public long TestCaseId { get; set; }
+    public long CaseId { get; set; }
 
     [Required(ErrorMessage = "测试用例名称不能为空")]
-    public string TestCaseName { get; set; } = string.Empty;
+    public string CaseName { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "所属项目不能为空")]
     public long ProjectId { get; set; }
 
     [Required(ErrorMessage = "执行环境不能为空")]
-    public long EnvironmentId { get; set; }
+    public long EnvId { get; set; }
 
-    public string EnvironmentName { get; set; } = string.Empty;
+    public string EnvName { get; set; } = string.Empty;
 
     /// <summary>
     /// 执行状态
@@ -81,7 +81,7 @@ public class CaseExecutionRecordDto
     /// <summary>
     /// 执行环境配置快照
     /// </summary>
-    public Dictionary<string, object> EnvironmentSnapshot { get; set; } = new();
+    public Dictionary<string, object> EnvSnapshot { get; set; } = new();
 }
 
 /// <summary>
