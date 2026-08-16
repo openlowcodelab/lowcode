@@ -1,0 +1,54 @@
+/* 执行历史页面布局: 顶部标题栏 + 左右分栏卡片铺满内容区高度, 块间保留灰色间隙 (与测试用例页 cases-page 一致) */
+.history-page {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    height: 100%;
+}
+
+.history-body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    gap: 2px;
+    align-items: stretch;
+}
+
+.history-left {
+    flex: 0 0 400px;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.history-right {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+}
+
+/* 左侧上下两张卡片, 底部卡片填充剩余高度; 右侧卡片铺满整列 */
+.history-left ::deep .h-card {
+    display: flex;
+    flex-direction: column;
+}
+
+.history-left ::deep .h-card:last-child {
+    flex: 1;
+    min-height: 0;
+}
+
+.history-right ::deep .h-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 卡片内容区内部滚动 */
+.history-body ::deep .h-card-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+}

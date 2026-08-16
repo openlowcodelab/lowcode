@@ -71,16 +71,16 @@
     .testing-step-editor .ms-1 { margin-left: 4px; }
 </style>
 
-<div class="testing-step-editor" style="display: flex; height: calc(100vh - 80px);">
+<div class="testing-step-editor" style="display: flex; gap: 2px; height: 100%;">
     <!-- 左侧：步骤列表 -->
-    <div style="width: 400px; height: 100%; overflow-y: auto; border-right: 1px solid #F2F3F5; padding: 12px;">
+    <div class="page-fill" style="width: 400px; height: 100%; overflow-y: auto; padding: 12px;">
         <div style="margin-bottom: 16px;">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
                 <div>
                     <div style="font-size: 15px; font-weight: 600; margin-bottom: 4px;">📋 测试步骤</div>
                     <small style="color: #86909C;">@(isNewTestCase ? "新建测试用例" : currentTestCase.Name)</small>
                 </div>
-                <button class="h-btn h-btn-sm" style="color:#F53F3F;border-color:#F53F3F;" @onclick="GoBack">← 返回</button>
+                <button class="h-btn h-btn-sm" @onclick="GoBack">← 返回</button>
             </div>
             <span class="h-space" style="flex-wrap:wrap;justify-content:flex-end;width:100%;display:flex;">
                 <button class="h-btn h-btn-sm h-btn-primary"
@@ -148,7 +148,7 @@
     </div>
 
     <!-- 右侧：步骤详情编辑 -->
-    <div style="flex: 1; height: 100%; overflow-y: auto;">
+    <div class="page-fill" style="flex: 1; height: 100%; overflow-y: auto; padding: 8px;">
         @if (selectedStep != null)
         {
             <div style="padding: 12px;">

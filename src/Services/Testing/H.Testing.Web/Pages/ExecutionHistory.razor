@@ -12,33 +12,26 @@
 
 <PageTitle>执行历史记录</PageTitle>
 
-<div style="display:flex;gap:16px;justify-content:space-between;align-items:center;margin-bottom:16px;">
-    <div>
-        <div style="font-size:18px;font-weight:600;margin-bottom:4px;">📊 执行历史记录</div>
-        <nav style="margin-bottom:0;"><a href="/testing/project-cases" style="color:#165DFF;">测试用例</a> / <span>执行历史</span></nav>
-    </div>
-    <span class="h-space">
-        <button class="h-btn h-btn-default" @onclick="RefreshData">🔄 刷新</button>
-        <button class="h-btn h-btn-default" @onclick="GoBack">← 返回</button>
-    </span>
-</div>
-
+<div class="history-page">
 @if (loading)
 {
-    <div style="text-align:center;padding:60px 0;">
+    <div class="page-fill" style="flex:1;text-align:center;padding:60px 20px;">
         <div class="h-spin"><span class="h-spin-dot"></span><span class="h-spin-text">正在加载执行历史...</span></div>
     </div>
 }
 else if (testCase == null)
 {
-    <div class="h-alert h-alert-error">未找到指定的测试用例</div>
+    <div class="page-fill" style="flex:1;"><div class="h-alert h-alert-error">未找到指定的测试用例</div></div>
 }
 else
 {
-    <div style="display:flex;gap:16px;">
-        <div style="flex:0 0 33.33%;">
-            <HCard Title="📋 测试用例信息" Style="margin-bottom:16px;">
-                <Body>
+    <div class="history-body">
+        <div class="history-left">
+            <HCard Title="📋 测试用例信息">
+                <Extra>
+                    <button class="h-btn h-btn-sm" @onclick="GoBack">← 返回</button>
+                </Extra>
+                <ChildContent>
                     <table class="h-descriptions">
                         <tr><th>用例名称</th><td>@testCase.Name</td></tr>
                         <tr><th>描述</th><td>@(string.IsNullOrEmpty(testCase.Description) ? "无" : testCase.Description)</td></tr>
@@ -50,7 +43,7 @@ else
                             </td>
                         </tr>
                     </table>
-                </Body>
+                </ChildContent>
             </HCard>
 
             <HCard Title="📈 执行统计">
@@ -98,7 +91,7 @@ else
             </HCard>
         </div>
 
-        <div style="flex:1;">
+        <div class="history-right">
             <HCard>
                 <TitleTemplate>
                     <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -122,7 +115,7 @@ else
                     }
                     else
                     {
-                        <div style="max-height:600px;overflow-y:auto;">
+                        <div>
                             @foreach (var record in filteredRecords.Take(20))
                             {
                                 var isSelected = selectedRecordId == record.Id;
@@ -177,8 +170,10 @@ else
             </HCard>
         </div>
     </div>
+}
+</div>
 
-    <HModal Visible="@(selectedRecord != null)"
+<HModal Visible="@(selectedRecord != null)"
             Title="@($"执行详情 - {selectedRecord?.StartTime.ToString("yyyy-MM-dd HH:mm:ss")}")"
             OnCancel="CloseModal"
             ShowFooter="false"
@@ -396,8 +391,7 @@ else
                 <button class="h-btn" @onclick="CloseModal">关闭</button>
             </div>
         }
-    </HModal>
-}
+</HModal>
 
 @code {
     [Parameter] public long TestCaseId { get; set; }
@@ -440,11 +434,6 @@ else
             loading = false;
             StateHasChanged();
         }
-    }
-
-    private async Task RefreshData()
-    {
-        await LoadData();
     }
 
     private void HandleStatusFilterChange(ChangeEventArgs e)
