@@ -672,8 +672,6 @@
             
             return matchesSearch && matchesCategory;
         })
-        .OrderBy(tc => tc.Id)
-        .ThenBy(tc => tc.Order)
         .ToList();
         
         StateHasChanged();
@@ -728,13 +726,6 @@
         }
     }
     
-    private List<CaseCategoryDto> GetRootCategories()
-    {
-        return categories.OrderBy(c => c.Order).ToList();
-    }
-    
-
-
     private void CalculateCategoryTestCaseCounts()
     {
         categoryTestCaseCounts.Clear();
@@ -963,7 +954,7 @@
     {
         if (!isEditingCategory)
         {
-            return categories.OrderBy(c => c.Order).ToList();
+            return categories.ToList();
         }
 
         var excludeIds = new HashSet<long> { currentCategory.Id };
@@ -974,7 +965,7 @@
     private List<CaseCategoryDto> FilterCategoryTree(IEnumerable<CaseCategoryDto> nodes, HashSet<long> excludeIds)
     {
         var result = new List<CaseCategoryDto>();
-        foreach (var node in nodes.OrderBy(c => c.Order))
+        foreach (var node in nodes)
         {
             if (excludeIds.Contains(node.Id))
             {

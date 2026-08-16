@@ -24,7 +24,7 @@ public class CaseCategoryAppService : ApplicationService, ICaseCategoryAppServic
     public async Task<List<CaseCategoryDto>> GetByProjectIdAsync(long projectId)
     {
         var query = await _repository.GetQueryableAsync();
-        var list = await AsyncExecuter.ToListAsync(query.Where(c => c.ProjectId == projectId));
+        var list = await AsyncExecuter.ToListAsync(query.Where(c => c.ProjectId == projectId).OrderBy(t => t.Order));
         var flat = list.Select(e => e.ToDto()).ToList();
         return BuildCategoryTree(flat);
     }

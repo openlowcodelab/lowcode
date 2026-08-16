@@ -1,1226 +1,16 @@
 [
   {
-    "Id": "8000003",
-    "Name": "多子订单",
-    "Description": "成功回调+失败回调",
-    "ProjectId": "在线点餐",
-    "CategoryId": "7000002",
-    "IsTemplate": false,
-    "TemplateId": "8000006",
-    "Level": "P0",
-    "Steps": [
-      {
-        "Id": "8500015",
-        "Name": "Shop 授权",
-        "Type": 1,
-        "Parameters": {},
-        "ExpectedResult": "",
-        "Order": 1,
-        "IsEnabled": true,
-        "ApiConfig": {
-          "Method": "POST",
-          "Url": "/api/account/AccessToken",
-          "Headers": {},
-          "Params": {},
-          "Body": "{\n    \"appId\": \"{{appid}}\",\n    \"secretKey\": \"{{secretKey}}\"\n}",
-          "BodyType": "json",
-          "Assertions": [
-            {
-              "Type": "StatusCode",
-              "Target": "",
-              "Operator": "equals",
-              "ExpectedValue": "200",
-              "Description": "检查JsonPath"
-            },
-            {
-              "Type": "JsonPath",
-              "Target": "$.success",
-              "Operator": "equals",
-              "ExpectedValue": "True",
-              "Description": "检查JsonPath"
-            }
-          ],
-          "VariableExtractions": {
-            "shop_accessToken": "$.data.accessToken"
-          },
-          "Cookies": {},
-          "Auth": {
-            "Type": "None",
-            "Username": "",
-            "Password": "",
-            "Token": "",
-            "ApiKeyName": "",
-            "ApiKeyValue": "",
-            "ApiKeyLocation": "Header"
-          },
-          "TimeoutMs": 30000,
-          "FollowRedirects": true,
-          "VerifySSL": true,
-          "ServiceId": "2000001"
-        },
-        "UiConfig": null,
-        "ScriptConfig": null
-      },
-      {
-        "Id": "8500012",
-        "Name": "Shop 下单",
-        "Type": 1,
-        "Parameters": {},
-        "ExpectedResult": "",
-        "Order": 2,
-        "IsEnabled": true,
-        "ApiConfig": {
-          "Method": "POST",
-          "Url": "/api/order/CreateAndPlace",
-          "Headers": {
-            "Content-Type": "application/json",
-            "appid": "{{appid}}",
-            "mockType": "{{mockType}}"
-          },
-          "Params": {},
-          "Body": "{\n    \"categoryCode\": \"mcd\",\n    \"storeCode\": \"1960262\",\n    \"packFlag\": 0,\n    \"orderCode\": \"\",\n    \"customeOrderNo\": \"{{MockData.SnowId}}\",\n    \"phoneNo\": \"\",\n    \"goods\": [\n        {\n            \"goodsId\": \"9ce8d4db-93b0-8254-413e-3a15edef75c9\",\n            \"quantity\": 1,\n            \"skuId\": \"eefe0ef1-942c-5150-a3e4-3a1db7db6471\",\n            \"specOptions\": [\n                {\n                    \"specId\": \"019aa5ae-8a19-7551-87c0-8e3347992f1a\",\n                    \"optionId\": \"019aa5ae-8a19-7602-bbde-77c7b7329348\",\n                    \"quantity\": 1\n                }\n            ]\n        },\n        {\n            \"goodsId\": \"9ce8d4db-93b0-8254-413e-3a15edef75c9\",\n            \"quantity\": 1,\n            \"skuId\": \"eefe0ef1-942c-5150-a3e4-3a1db7db6471\",\n            \"specOptions\": [\n                {\n                    \"specId\": \"019aa5ae-8a19-7551-87c0-8e3347992f1a\",\n                    \"optionId\": \"019aa5ae-8a19-7602-bbde-77c7b7329348\",\n                    \"quantity\": 1\n                }\n            ]\n        },\n        {\n            \"goodsId\": \"9ce8d4db-93b0-8254-413e-3a15edef75c9\",\n            \"quantity\": 1,\n            \"skuId\": \"eefe0ef1-942c-5150-a3e4-3a1db7db6471\",\n            \"specOptions\": [\n                {\n                    \"specId\": \"019aa5ae-8a19-7551-87c0-8e3347992f1a\",\n                    \"optionId\": \"019aa5ae-8a19-7602-bbde-77c7b7329348\",\n                    \"quantity\": 1\n                }\n            ]\n        }\n    ]\n}",
-          "BodyType": "json",
-          "Assertions": [
-            {
-              "Type": "StatusCode",
-              "Target": "",
-              "Operator": "equals",
-              "ExpectedValue": "200",
-              "Description": "检查JsonPath"
-            }
-          ],
-          "VariableExtractions": {
-            "orderId": "$.data.id"
-          },
-          "Cookies": {},
-          "Auth": {
-            "Type": "Bearer",
-            "Username": "",
-            "Password": "",
-            "Token": "{{shop_accessToken}}",
-            "ApiKeyName": "",
-            "ApiKeyValue": "",
-            "ApiKeyLocation": "Header"
-          },
-          "TimeoutMs": 30000,
-          "FollowRedirects": true,
-          "VerifySSL": true,
-          "ServiceId": "2000001"
-        },
-        "UiConfig": null,
-        "ScriptConfig": null
-      },
-      {
-        "Id": "8500016",
-        "Name": "Delivery 授权",
-        "Type": 1,
-        "Parameters": {},
-        "ExpectedResult": "",
-        "Order": 3,
-        "IsEnabled": true,
-        "ApiConfig": {
-          "Method": "GET",
-          "Url": "/api/app/account/access-token-by-app-secret",
-          "Headers": {},
-          "Params": {
-            "AppSecret": "{{delivery_appKey}}",
-            "AppId": "{{delivery_appId}}"
-          },
-          "Body": "",
-          "BodyType": "json",
-          "Assertions": [
-            {
-              "Type": "StatusCode",
-              "Target": "",
-              "Operator": "equals",
-              "ExpectedValue": "200",
-              "Description": "检查StatusCode"
-            },
-            {
-              "Type": "JsonPath",
-              "Target": "$.success",
-              "Operator": "equals",
-              "ExpectedValue": "True",
-              "Description": "检查JsonPath"
-            }
-          ],
-          "VariableExtractions": {
-            "delivery_accessToken": "$.data.accessToken"
-          },
-          "Cookies": {},
-          "Auth": {
-            "Type": "None",
-            "Username": "",
-            "Password": "",
-            "Token": "",
-            "ApiKeyName": "",
-            "ApiKeyValue": "",
-            "ApiKeyLocation": "Header"
-          },
-          "TimeoutMs": 30000,
-          "FollowRedirects": true,
-          "VerifySSL": true,
-          "ServiceId": "2000000"
-        },
-        "UiConfig": null,
-        "ScriptConfig": null
-      },
-      {
-        "Id": "8500017",
-        "Name": "延时等待(10s)",
-        "Type": 21,
-        "Parameters": {
-          "delay": 10000
-        },
-        "ExpectedResult": "",
-        "Order": 4,
-        "IsEnabled": true,
-        "ApiConfig": null,
-        "UiConfig": null,
-        "ScriptConfig": null
-      },
-      {
-        "Id": "8500013",
-        "Name": "Delivery 订单断言",
-        "Type": 1,
-        "Parameters": {},
-        "ExpectedResult": "",
-        "Order": 5,
-        "IsEnabled": true,
-        "ApiConfig": {
-          "Method": "GET",
-          "Url": "/api/Order/GetOrderDetail",
-          "Headers": {
-            "Content-Type": "application/json"
-          },
-          "Params": {
-            "orderId": "{{orderId}}"
-          },
-          "Body": "",
-          "BodyType": "json",
-          "Assertions": [
-            {
-              "Type": "StatusCode",
-              "Target": "",
-              "Operator": "equals",
-              "ExpectedValue": "200",
-              "Description": ""
-            },
-            {
-              "Type": "JsonPath",
-              "Target": "$.success",
-              "Operator": "equals",
-              "ExpectedValue": "True",
-              "Description": "检查JsonPath"
-            }
-          ],
-          "VariableExtractions": {},
-          "Cookies": {},
-          "Auth": {
-            "Type": "Bearer",
-            "Username": "",
-            "Password": "",
-            "Token": "{{delivery_accessToken}}",
-            "ApiKeyName": "",
-            "ApiKeyValue": "",
-            "ApiKeyLocation": "Header"
-          },
-          "TimeoutMs": 30000,
-          "FollowRedirects": true,
-          "VerifySSL": true,
-          "ServiceId": "2000000"
-        },
-        "UiConfig": null,
-        "ScriptConfig": null
-      },
-      {
-        "Id": "8500014",
-        "Name": "Shop 订单断言",
-        "Type": 1,
-        "Parameters": {},
-        "ExpectedResult": "",
-        "Order": 6,
-        "IsEnabled": true,
-        "ApiConfig": {
-          "Method": "POST",
-          "Url": "/api/Order/GetOrder",
-          "Headers": {
-            "Content-Type": "application/json",
-            "appid": "{{appid}}"
-          },
-          "Params": {
-            "orderId": "{{orderId}}"
-          },
-          "Body": "{\n    \"orderId\": \"{{orderId}}\"\n}",
-          "BodyType": "json",
-          "Assertions": [
-            {
-              "Type": "StatusCode",
-              "Target": "",
-              "Operator": "equals",
-              "ExpectedValue": "200",
-              "Description": ""
-            },
-            {
-              "Type": "JsonPath",
-              "Target": "$.success",
-              "Operator": "equals",
-              "ExpectedValue": "True",
-              "Description": "检查JsonPath"
-            }
-          ],
-          "VariableExtractions": {},
-          "Cookies": {},
-          "Auth": {
-            "Type": "Bearer",
-            "Username": "",
-            "Password": "",
-            "Token": "{{shop_accessToken}}",
-            "ApiKeyName": "",
-            "ApiKeyValue": "",
-            "ApiKeyLocation": "Header"
-          },
-          "TimeoutMs": 30000,
-          "FollowRedirects": true,
-          "VerifySSL": true,
-          "ServiceId": "2000001"
-        },
-        "UiConfig": null,
-        "ScriptConfig": null
-      }
-    ],
-    "Order": 0,
-    "Status": 1,
-    "LastExecutionResult": null,
-    "LastExecutionTime": null
-  },
-  {
-    "Id": "8000004",
-    "Name": "供应商切换",
-    "Description": "",
-    "ProjectId": "在线点餐",
-    "CategoryId": "7000002",
-    "IsTemplate": false,
-    "TemplateId": "8000006",
-    "Level": "P1",
-    "Steps": [],
-    "Order": 0,
-    "Status": 1,
-    "LastExecutionResult": null,
-    "LastExecutionTime": null
-  },
-  {
-    "Id": "8000005",
-    "Name": "失败回调",
-    "Description": "供应商 FA 回调",
-    "ProjectId": "在线点餐",
-    "CategoryId": "7000002",
-    "IsTemplate": false,
-    "TemplateId": "8000006",
-    "Level": "P0",
-    "Steps": [
-      {
-        "Id": "8500021",
-        "Name": "Shop 授权",
-        "Type": 1,
-        "Parameters": {},
-        "ExpectedResult": "",
-        "Order": 1,
-        "IsEnabled": true,
-        "ApiConfig": {
-          "Method": "POST",
-          "Url": "/api/account/AccessToken",
-          "Headers": {},
-          "Params": {},
-          "Body": "{\n    \"appId\": \"{{appid}}\",\n    \"secretKey\": \"{{secretKey}}\"\n}",
-          "BodyType": "json",
-          "Assertions": [
-            {
-              "Type": "StatusCode",
-              "Target": "",
-              "Operator": "equals",
-              "ExpectedValue": "200",
-              "Description": "检查JsonPath"
-            },
-            {
-              "Type": "JsonPath",
-              "Target": "$.success",
-              "Operator": "equals",
-              "ExpectedValue": "True",
-              "Description": "检查JsonPath"
-            }
-          ],
-          "VariableExtractions": {
-            "shop_accessToken": "$.data.accessToken"
-          },
-          "Cookies": {},
-          "Auth": {
-            "Type": "None",
-            "Username": "",
-            "Password": "",
-            "Token": "",
-            "ApiKeyName": "",
-            "ApiKeyValue": "",
-            "ApiKeyLocation": "Header"
-          },
-          "TimeoutMs": 30000,
-          "FollowRedirects": true,
-          "VerifySSL": true,
-          "ServiceId": "2000001"
-        },
-        "UiConfig": null,
-        "ScriptConfig": null
-      },
-      {
-        "Id": "8500018",
-        "Name": "Shop 下单",
-        "Type": 1,
-        "Parameters": {},
-        "ExpectedResult": "",
-        "Order": 2,
-        "IsEnabled": true,
-        "ApiConfig": {
-          "Method": "POST",
-          "Url": "/api/order/CreateAndPlace",
-          "Headers": {
-            "Content-Type": "application/json",
-            "appid": "{{appid}}",
-            "mockType": "{{mockType}}"
-          },
-          "Params": {},
-          "Body": "{\n    \"categoryCode\": \"mcd\",\n    \"storeCode\": \"1960262\",\n    \"packFlag\": 0,\n    \"orderCode\": \"\",\n    \"customeOrderNo\": \"{{MockData.SnowId}}\",\n    \"phoneNo\": \"\",\n    \"goods\": [\n        {\n            \"goodsId\": \"9ce8d4db-93b0-8254-413e-3a15edef75c9\",\n            \"quantity\": 1,\n            \"skuId\": \"eefe0ef1-942c-5150-a3e4-3a1db7db6471\",\n            \"specOptions\": [\n                {\n                    \"specId\": \"019aa5ae-8a19-7551-87c0-8e3347992f1a\",\n                    \"optionId\": \"019aa5ae-8a19-7602-bbde-77c7b7329348\",\n                    \"quantity\": 1\n                }\n            ]\n        },\n        {\n            \"goodsId\": \"9ce8d4db-93b0-8254-413e-3a15edef75c9\",\n            \"quantity\": 1,\n            \"skuId\": \"eefe0ef1-942c-5150-a3e4-3a1db7db6471\",\n            \"specOptions\": [\n                {\n                    \"specId\": \"019aa5ae-8a19-7551-87c0-8e3347992f1a\",\n                    \"optionId\": \"019aa5ae-8a19-7602-bbde-77c7b7329348\",\n                    \"quantity\": 1\n                }\n            ]\n        },\n        {\n            \"goodsId\": \"9ce8d4db-93b0-8254-413e-3a15edef75c9\",\n            \"quantity\": 1,\n            \"skuId\": \"eefe0ef1-942c-5150-a3e4-3a1db7db6471\",\n            \"specOptions\": [\n                {\n                    \"specId\": \"019aa5ae-8a19-7551-87c0-8e3347992f1a\",\n                    \"optionId\": \"019aa5ae-8a19-7602-bbde-77c7b7329348\",\n                    \"quantity\": 1\n                }\n            ]\n        }\n    ]\n}",
-          "BodyType": "json",
-          "Assertions": [
-            {
-              "Type": "StatusCode",
-              "Target": "",
-              "Operator": "equals",
-              "ExpectedValue": "200",
-              "Description": "检查JsonPath"
-            }
-          ],
-          "VariableExtractions": {
-            "orderId": "$.data.id"
-          },
-          "Cookies": {},
-          "Auth": {
-            "Type": "Bearer",
-            "Username": "",
-            "Password": "",
-            "Token": "{{shop_accessToken}}",
-            "ApiKeyName": "",
-            "ApiKeyValue": "",
-            "ApiKeyLocation": "Header"
-          },
-          "TimeoutMs": 30000,
-          "FollowRedirects": true,
-          "VerifySSL": true,
-          "ServiceId": "2000001"
-        },
-        "UiConfig": null,
-        "ScriptConfig": null
-      },
-      {
-        "Id": "8500022",
-        "Name": "Delivery 授权",
-        "Type": 1,
-        "Parameters": {},
-        "ExpectedResult": "",
-        "Order": 3,
-        "IsEnabled": true,
-        "ApiConfig": {
-          "Method": "GET",
-          "Url": "/api/app/account/access-token-by-app-secret",
-          "Headers": {},
-          "Params": {
-            "AppSecret": "{{delivery_appKey}}",
-            "AppId": "{{delivery_appId}}"
-          },
-          "Body": "",
-          "BodyType": "json",
-          "Assertions": [
-            {
-              "Type": "StatusCode",
-              "Target": "",
-              "Operator": "equals",
-              "ExpectedValue": "200",
-              "Description": "检查StatusCode"
-            },
-            {
-              "Type": "JsonPath",
-              "Target": "$.success",
-              "Operator": "equals",
-              "ExpectedValue": "True",
-              "Description": "检查JsonPath"
-            }
-          ],
-          "VariableExtractions": {
-            "delivery_accessToken": "$.data.accessToken"
-          },
-          "Cookies": {},
-          "Auth": {
-            "Type": "None",
-            "Username": "",
-            "Password": "",
-            "Token": "",
-            "ApiKeyName": "",
-            "ApiKeyValue": "",
-            "ApiKeyLocation": "Header"
-          },
-          "TimeoutMs": 30000,
-          "FollowRedirects": true,
-          "VerifySSL": true,
-          "ServiceId": "2000000"
-        },
-        "UiConfig": null,
-        "ScriptConfig": null
-      },
-      {
-        "Id": "8500023",
-        "Name": "延时等待(10s)",
-        "Type": 21,
-        "Parameters": {
-          "delay": 10000
-        },
-        "ExpectedResult": "",
-        "Order": 4,
-        "IsEnabled": true,
-        "ApiConfig": null,
-        "UiConfig": null,
-        "ScriptConfig": null
-      },
-      {
-        "Id": "8500019",
-        "Name": "Delivery 订单断言",
-        "Type": 1,
-        "Parameters": {},
-        "ExpectedResult": "",
-        "Order": 5,
-        "IsEnabled": true,
-        "ApiConfig": {
-          "Method": "GET",
-          "Url": "/api/Order/GetOrderDetail",
-          "Headers": {
-            "Content-Type": "application/json"
-          },
-          "Params": {
-            "orderId": "{{orderId}}"
-          },
-          "Body": "",
-          "BodyType": "json",
-          "Assertions": [
-            {
-              "Type": "StatusCode",
-              "Target": "",
-              "Operator": "equals",
-              "ExpectedValue": "200",
-              "Description": ""
-            },
-            {
-              "Type": "JsonPath",
-              "Target": "$.success",
-              "Operator": "equals",
-              "ExpectedValue": "True",
-              "Description": "检查JsonPath"
-            }
-          ],
-          "VariableExtractions": {},
-          "Cookies": {},
-          "Auth": {
-            "Type": "Bearer",
-            "Username": "",
-            "Password": "",
-            "Token": "{{delivery_accessToken}}",
-            "ApiKeyName": "",
-            "ApiKeyValue": "",
-            "ApiKeyLocation": "Header"
-          },
-          "TimeoutMs": 30000,
-          "FollowRedirects": true,
-          "VerifySSL": true,
-          "ServiceId": "2000000"
-        },
-        "UiConfig": null,
-        "ScriptConfig": null
-      },
-      {
-        "Id": "8500020",
-        "Name": "Shop 订单断言",
-        "Type": 1,
-        "Parameters": {},
-        "ExpectedResult": "",
-        "Order": 6,
-        "IsEnabled": true,
-        "ApiConfig": {
-          "Method": "POST",
-          "Url": "/api/Order/GetOrder",
-          "Headers": {
-            "Content-Type": "application/json",
-            "appid": "{{appid}}"
-          },
-          "Params": {
-            "orderId": "{{orderId}}"
-          },
-          "Body": "{\n    \"orderId\": \"{{orderId}}\"\n}",
-          "BodyType": "json",
-          "Assertions": [
-            {
-              "Type": "StatusCode",
-              "Target": "",
-              "Operator": "equals",
-              "ExpectedValue": "200",
-              "Description": ""
-            },
-            {
-              "Type": "JsonPath",
-              "Target": "$.success",
-              "Operator": "equals",
-              "ExpectedValue": "True",
-              "Description": "检查JsonPath"
-            }
-          ],
-          "VariableExtractions": {},
-          "Cookies": {},
-          "Auth": {
-            "Type": "Bearer",
-            "Username": "",
-            "Password": "",
-            "Token": "{{shop_accessToken}}",
-            "ApiKeyName": "",
-            "ApiKeyValue": "",
-            "ApiKeyLocation": "Header"
-          },
-          "TimeoutMs": 30000,
-          "FollowRedirects": true,
-          "VerifySSL": true,
-          "ServiceId": "2000001"
-        },
-        "UiConfig": null,
-        "ScriptConfig": null
-      }
-    ],
-    "Order": 1,
-    "Status": 1,
-    "LastExecutionResult": null,
-    "LastExecutionTime": null
-  },
-  {
-    "Id": "8000000",
-    "Name": "多子订单",
-    "Description": "成功回调+下单失败",
-    "ProjectId": "在线点餐",
-    "CategoryId": "7000002",
-    "IsTemplate": false,
-    "TemplateId": "8000006",
-    "Level": "P0",
-    "Steps": [],
-    "Order": 1,
-    "Status": 1,
-    "LastExecutionResult": null,
-    "LastExecutionTime": null
-  },
-  {
-    "Id": "8000002",
-    "Name": "下单失败",
-    "Description": "Delivery 下单失败",
-    "ProjectId": "在线点餐",
-    "CategoryId": "7000002",
-    "IsTemplate": false,
-    "TemplateId": "8000006",
-    "Level": "P0",
-    "Steps": [
-      {
-        "Id": "8500009",
-        "Name": "Shop 授权",
-        "Type": 1,
-        "Parameters": {},
-        "ExpectedResult": "",
-        "Order": 1,
-        "IsEnabled": true,
-        "ApiConfig": {
-          "Method": "POST",
-          "Url": "/api/account/AccessToken",
-          "Headers": {},
-          "Params": {},
-          "Body": "{\n    \"appId\": \"{{appid}}\",\n    \"secretKey\": \"{{secretKey}}\"\n}",
-          "BodyType": "json",
-          "Assertions": [
-            {
-              "Type": "StatusCode",
-              "Target": "",
-              "Operator": "equals",
-              "ExpectedValue": "200",
-              "Description": "检查JsonPath"
-            },
-            {
-              "Type": "JsonPath",
-              "Target": "$.success",
-              "Operator": "equals",
-              "ExpectedValue": "True",
-              "Description": "检查JsonPath"
-            }
-          ],
-          "VariableExtractions": {
-            "shop_accessToken": "$.data.accessToken"
-          },
-          "Cookies": {},
-          "Auth": {
-            "Type": "None",
-            "Username": "",
-            "Password": "",
-            "Token": "",
-            "ApiKeyName": "",
-            "ApiKeyValue": "",
-            "ApiKeyLocation": "Header"
-          },
-          "TimeoutMs": 30000,
-          "FollowRedirects": true,
-          "VerifySSL": true,
-          "ServiceId": "2000001"
-        },
-        "UiConfig": null,
-        "ScriptConfig": null
-      },
-      {
-        "Id": "8500006",
-        "Name": "Shop 下单",
-        "Type": 1,
-        "Parameters": {},
-        "ExpectedResult": "",
-        "Order": 2,
-        "IsEnabled": true,
-        "ApiConfig": {
-          "Method": "POST",
-          "Url": "/api/order/CreateAndPlace",
-          "Headers": {
-            "Content-Type": "application/json",
-            "appid": "{{appid}}",
-            "mockType": "{{mockType}}"
-          },
-          "Params": {},
-          "Body": "{\n    \"categoryCode\": \"mcd\",\n    \"storeCode\": \"1960262\",\n    \"packFlag\": 0,\n    \"orderCode\": \"\",\n    \"customeOrderNo\": \"{{MockData.SnowId}}\",\n    \"phoneNo\": \"\",\n    \"goods\": [\n        {\n            \"goodsId\": \"9ce8d4db-93b0-8254-413e-3a15edef75c9\",\n            \"quantity\": 1,\n            \"skuId\": \"eefe0ef1-942c-5150-a3e4-3a1db7db6471\",\n            \"specOptions\": [\n                {\n                    \"specId\": \"019aa5ae-8a19-7551-87c0-8e3347992f1a\",\n                    \"optionId\": \"019aa5ae-8a19-7602-bbde-77c7b7329348\",\n                    \"quantity\": 1\n                }\n            ]\n        },\n        {\n            \"goodsId\": \"9ce8d4db-93b0-8254-413e-3a15edef75c9\",\n            \"quantity\": 1,\n            \"skuId\": \"eefe0ef1-942c-5150-a3e4-3a1db7db6471\",\n            \"specOptions\": [\n                {\n                    \"specId\": \"019aa5ae-8a19-7551-87c0-8e3347992f1a\",\n                    \"optionId\": \"019aa5ae-8a19-7602-bbde-77c7b7329348\",\n                    \"quantity\": 1\n                }\n            ]\n        },\n        {\n            \"goodsId\": \"9ce8d4db-93b0-8254-413e-3a15edef75c9\",\n            \"quantity\": 1,\n            \"skuId\": \"eefe0ef1-942c-5150-a3e4-3a1db7db6471\",\n            \"specOptions\": [\n                {\n                    \"specId\": \"019aa5ae-8a19-7551-87c0-8e3347992f1a\",\n                    \"optionId\": \"019aa5ae-8a19-7602-bbde-77c7b7329348\",\n                    \"quantity\": 1\n                }\n            ]\n        }\n    ]\n}",
-          "BodyType": "json",
-          "Assertions": [
-            {
-              "Type": "StatusCode",
-              "Target": "",
-              "Operator": "equals",
-              "ExpectedValue": "200",
-              "Description": "检查JsonPath"
-            }
-          ],
-          "VariableExtractions": {
-            "orderId": "$.data.id"
-          },
-          "Cookies": {},
-          "Auth": {
-            "Type": "Bearer",
-            "Username": "",
-            "Password": "",
-            "Token": "{{shop_accessToken}}",
-            "ApiKeyName": "",
-            "ApiKeyValue": "",
-            "ApiKeyLocation": "Header"
-          },
-          "TimeoutMs": 30000,
-          "FollowRedirects": true,
-          "VerifySSL": true,
-          "ServiceId": "2000001"
-        },
-        "UiConfig": null,
-        "ScriptConfig": null
-      },
-      {
-        "Id": "8500010",
-        "Name": "Delivery 授权",
-        "Type": 1,
-        "Parameters": {},
-        "ExpectedResult": "",
-        "Order": 3,
-        "IsEnabled": true,
-        "ApiConfig": {
-          "Method": "GET",
-          "Url": "/api/app/account/access-token-by-app-secret",
-          "Headers": {},
-          "Params": {
-            "AppSecret": "{{delivery_appKey}}",
-            "AppId": "{{delivery_appId}}"
-          },
-          "Body": "",
-          "BodyType": "json",
-          "Assertions": [
-            {
-              "Type": "StatusCode",
-              "Target": "",
-              "Operator": "equals",
-              "ExpectedValue": "200",
-              "Description": "检查StatusCode"
-            },
-            {
-              "Type": "JsonPath",
-              "Target": "$.success",
-              "Operator": "equals",
-              "ExpectedValue": "True",
-              "Description": "检查JsonPath"
-            }
-          ],
-          "VariableExtractions": {
-            "delivery_accessToken": "$.data.accessToken"
-          },
-          "Cookies": {},
-          "Auth": {
-            "Type": "None",
-            "Username": "",
-            "Password": "",
-            "Token": "",
-            "ApiKeyName": "",
-            "ApiKeyValue": "",
-            "ApiKeyLocation": "Header"
-          },
-          "TimeoutMs": 30000,
-          "FollowRedirects": true,
-          "VerifySSL": true,
-          "ServiceId": "2000000"
-        },
-        "UiConfig": null,
-        "ScriptConfig": null
-      },
-      {
-        "Id": "8500011",
-        "Name": "延时等待(10s)",
-        "Type": 21,
-        "Parameters": {
-          "delay": 10000
-        },
-        "ExpectedResult": "",
-        "Order": 4,
-        "IsEnabled": true,
-        "ApiConfig": null,
-        "UiConfig": null,
-        "ScriptConfig": null
-      },
-      {
-        "Id": "8500007",
-        "Name": "Delivery 订单断言",
-        "Type": 1,
-        "Parameters": {},
-        "ExpectedResult": "",
-        "Order": 5,
-        "IsEnabled": true,
-        "ApiConfig": {
-          "Method": "GET",
-          "Url": "/api/Order/GetOrderDetail",
-          "Headers": {
-            "Content-Type": "application/json"
-          },
-          "Params": {
-            "orderId": "{{orderId}}"
-          },
-          "Body": "",
-          "BodyType": "json",
-          "Assertions": [
-            {
-              "Type": "StatusCode",
-              "Target": "",
-              "Operator": "equals",
-              "ExpectedValue": "200",
-              "Description": ""
-            },
-            {
-              "Type": "JsonPath",
-              "Target": "$.success",
-              "Operator": "equals",
-              "ExpectedValue": "True",
-              "Description": "检查JsonPath"
-            }
-          ],
-          "VariableExtractions": {},
-          "Cookies": {},
-          "Auth": {
-            "Type": "Bearer",
-            "Username": "",
-            "Password": "",
-            "Token": "{{delivery_accessToken}}",
-            "ApiKeyName": "",
-            "ApiKeyValue": "",
-            "ApiKeyLocation": "Header"
-          },
-          "TimeoutMs": 30000,
-          "FollowRedirects": true,
-          "VerifySSL": true,
-          "ServiceId": "2000000"
-        },
-        "UiConfig": null,
-        "ScriptConfig": null
-      },
-      {
-        "Id": "8500008",
-        "Name": "Shop 订单断言",
-        "Type": 1,
-        "Parameters": {},
-        "ExpectedResult": "",
-        "Order": 6,
-        "IsEnabled": true,
-        "ApiConfig": {
-          "Method": "POST",
-          "Url": "/api/Order/GetOrder",
-          "Headers": {
-            "Content-Type": "application/json",
-            "appid": "{{appid}}"
-          },
-          "Params": {
-            "orderId": "{{orderId}}"
-          },
-          "Body": "{\n    \"orderId\": \"{{orderId}}\"\n}",
-          "BodyType": "json",
-          "Assertions": [
-            {
-              "Type": "StatusCode",
-              "Target": "",
-              "Operator": "equals",
-              "ExpectedValue": "200",
-              "Description": ""
-            },
-            {
-              "Type": "JsonPath",
-              "Target": "$.success",
-              "Operator": "equals",
-              "ExpectedValue": "True",
-              "Description": "检查JsonPath"
-            }
-          ],
-          "VariableExtractions": {},
-          "Cookies": {},
-          "Auth": {
-            "Type": "Bearer",
-            "Username": "",
-            "Password": "",
-            "Token": "{{shop_accessToken}}",
-            "ApiKeyName": "",
-            "ApiKeyValue": "",
-            "ApiKeyLocation": "Header"
-          },
-          "TimeoutMs": 30000,
-          "FollowRedirects": true,
-          "VerifySSL": true,
-          "ServiceId": "2000001"
-        },
-        "UiConfig": null,
-        "ScriptConfig": null
-      }
-    ],
-    "Order": 1,
-    "Status": 1,
-    "LastExecutionResult": null,
-    "LastExecutionTime": null
-  },
-  {
-    "Id": "8000001",
-    "Name": "部分退款",
-    "Description": "子订单 SU 且含部分退款",
-    "ProjectId": "在线点餐",
-    "CategoryId": "7000002",
-    "IsTemplate": false,
-    "TemplateId": "8000006",
-    "Level": "P0",
-    "Steps": [
-      {
-        "Id": "8500003",
-        "Name": "Shop 授权",
-        "Type": 1,
-        "Parameters": {},
-        "ExpectedResult": "",
-        "Order": 1,
-        "IsEnabled": true,
-        "ApiConfig": {
-          "Method": "POST",
-          "Url": "/api/account/AccessToken",
-          "Headers": {},
-          "Params": {},
-          "Body": "{\n    \"appId\": \"{{appid}}\",\n    \"secretKey\": \"{{secretKey}}\"\n}",
-          "BodyType": "json",
-          "Assertions": [
-            {
-              "Type": "StatusCode",
-              "Target": "",
-              "Operator": "equals",
-              "ExpectedValue": "200",
-              "Description": "检查JsonPath"
-            },
-            {
-              "Type": "JsonPath",
-              "Target": "$.success",
-              "Operator": "equals",
-              "ExpectedValue": "True",
-              "Description": "检查JsonPath"
-            }
-          ],
-          "VariableExtractions": {
-            "shop_accessToken": "$.data.accessToken"
-          },
-          "Cookies": {},
-          "Auth": {
-            "Type": "None",
-            "Username": "",
-            "Password": "",
-            "Token": "",
-            "ApiKeyName": "",
-            "ApiKeyValue": "",
-            "ApiKeyLocation": "Header"
-          },
-          "TimeoutMs": 30000,
-          "FollowRedirects": true,
-          "VerifySSL": true,
-          "ServiceId": "2000001"
-        },
-        "UiConfig": null,
-        "ScriptConfig": null
-      },
-      {
-        "Id": "8500000",
-        "Name": "Shop 下单",
-        "Type": 1,
-        "Parameters": {},
-        "ExpectedResult": "",
-        "Order": 2,
-        "IsEnabled": true,
-        "ApiConfig": {
-          "Method": "POST",
-          "Url": "/api/order/CreateAndPlace",
-          "Headers": {
-            "Content-Type": "application/json",
-            "appid": "{{appid}}",
-            "mockType": "{{mockType}}"
-          },
-          "Params": {},
-          "Body": "{\n    \"categoryCode\": \"mcd\",\n    \"storeCode\": \"1960262\",\n    \"packFlag\": 0,\n    \"orderCode\": \"\",\n    \"customeOrderNo\": \"{{MockData.SnowId}}\",\n    \"phoneNo\": \"\",\n    \"goods\": [\n        {\n            \"goodsId\": \"9ce8d4db-93b0-8254-413e-3a15edef75c9\",\n            \"quantity\": 1,\n            \"skuId\": \"eefe0ef1-942c-5150-a3e4-3a1db7db6471\",\n            \"specOptions\": [\n                {\n                    \"specId\": \"019aa5ae-8a19-7551-87c0-8e3347992f1a\",\n                    \"optionId\": \"019aa5ae-8a19-7602-bbde-77c7b7329348\",\n                    \"quantity\": 1\n                }\n            ]\n        },\n        {\n            \"goodsId\": \"9ce8d4db-93b0-8254-413e-3a15edef75c9\",\n            \"quantity\": 1,\n            \"skuId\": \"eefe0ef1-942c-5150-a3e4-3a1db7db6471\",\n            \"specOptions\": [\n                {\n                    \"specId\": \"019aa5ae-8a19-7551-87c0-8e3347992f1a\",\n                    \"optionId\": \"019aa5ae-8a19-7602-bbde-77c7b7329348\",\n                    \"quantity\": 1\n                }\n            ]\n        },\n        {\n            \"goodsId\": \"9ce8d4db-93b0-8254-413e-3a15edef75c9\",\n            \"quantity\": 1,\n            \"skuId\": \"eefe0ef1-942c-5150-a3e4-3a1db7db6471\",\n            \"specOptions\": [\n                {\n                    \"specId\": \"019aa5ae-8a19-7551-87c0-8e3347992f1a\",\n                    \"optionId\": \"019aa5ae-8a19-7602-bbde-77c7b7329348\",\n                    \"quantity\": 1\n                }\n            ]\n        }\n    ]\n}",
-          "BodyType": "json",
-          "Assertions": [
-            {
-              "Type": "StatusCode",
-              "Target": "",
-              "Operator": "equals",
-              "ExpectedValue": "200",
-              "Description": "检查JsonPath"
-            }
-          ],
-          "VariableExtractions": {
-            "orderId": "$.data.id"
-          },
-          "Cookies": {},
-          "Auth": {
-            "Type": "Bearer",
-            "Username": "",
-            "Password": "",
-            "Token": "{{shop_accessToken}}",
-            "ApiKeyName": "",
-            "ApiKeyValue": "",
-            "ApiKeyLocation": "Header"
-          },
-          "TimeoutMs": 30000,
-          "FollowRedirects": true,
-          "VerifySSL": true,
-          "ServiceId": "2000001"
-        },
-        "UiConfig": null,
-        "ScriptConfig": null
-      },
-      {
-        "Id": "8500004",
-        "Name": "Delivery 授权",
-        "Type": 1,
-        "Parameters": {},
-        "ExpectedResult": "",
-        "Order": 3,
-        "IsEnabled": true,
-        "ApiConfig": {
-          "Method": "GET",
-          "Url": "/api/app/account/access-token-by-app-secret",
-          "Headers": {},
-          "Params": {
-            "AppSecret": "{{delivery_appKey}}",
-            "AppId": "{{delivery_appId}}"
-          },
-          "Body": "",
-          "BodyType": "json",
-          "Assertions": [
-            {
-              "Type": "StatusCode",
-              "Target": "",
-              "Operator": "equals",
-              "ExpectedValue": "200",
-              "Description": "检查StatusCode"
-            },
-            {
-              "Type": "JsonPath",
-              "Target": "$.success",
-              "Operator": "equals",
-              "ExpectedValue": "True",
-              "Description": "检查JsonPath"
-            }
-          ],
-          "VariableExtractions": {
-            "delivery_accessToken": "$.data.accessToken"
-          },
-          "Cookies": {},
-          "Auth": {
-            "Type": "None",
-            "Username": "",
-            "Password": "",
-            "Token": "",
-            "ApiKeyName": "",
-            "ApiKeyValue": "",
-            "ApiKeyLocation": "Header"
-          },
-          "TimeoutMs": 30000,
-          "FollowRedirects": true,
-          "VerifySSL": true,
-          "ServiceId": "2000000"
-        },
-        "UiConfig": null,
-        "ScriptConfig": null
-      },
-      {
-        "Id": "8500005",
-        "Name": "延时等待(10s)",
-        "Type": 21,
-        "Parameters": {
-          "delay": 10000
-        },
-        "ExpectedResult": "",
-        "Order": 4,
-        "IsEnabled": true,
-        "ApiConfig": null,
-        "UiConfig": null,
-        "ScriptConfig": null
-      },
-      {
-        "Id": "8500001",
-        "Name": "Delivery 订单断言",
-        "Type": 1,
-        "Parameters": {},
-        "ExpectedResult": "",
-        "Order": 5,
-        "IsEnabled": true,
-        "ApiConfig": {
-          "Method": "GET",
-          "Url": "/api/Order/GetOrderDetail",
-          "Headers": {
-            "Content-Type": "application/json"
-          },
-          "Params": {
-            "orderId": "{{orderId}}"
-          },
-          "Body": "",
-          "BodyType": "json",
-          "Assertions": [
-            {
-              "Type": "StatusCode",
-              "Target": "",
-              "Operator": "equals",
-              "ExpectedValue": "200",
-              "Description": ""
-            },
-            {
-              "Type": "JsonPath",
-              "Target": "$.success",
-              "Operator": "equals",
-              "ExpectedValue": "True",
-              "Description": "检查JsonPath"
-            }
-          ],
-          "VariableExtractions": {},
-          "Cookies": {},
-          "Auth": {
-            "Type": "Bearer",
-            "Username": "",
-            "Password": "",
-            "Token": "{{delivery_accessToken}}",
-            "ApiKeyName": "",
-            "ApiKeyValue": "",
-            "ApiKeyLocation": "Header"
-          },
-          "TimeoutMs": 30000,
-          "FollowRedirects": true,
-          "VerifySSL": true,
-          "ServiceId": "2000000"
-        },
-        "UiConfig": null,
-        "ScriptConfig": null
-      },
-      {
-        "Id": "8500002",
-        "Name": "Shop 订单断言",
-        "Type": 1,
-        "Parameters": {},
-        "ExpectedResult": "",
-        "Order": 6,
-        "IsEnabled": true,
-        "ApiConfig": {
-          "Method": "POST",
-          "Url": "/api/Order/GetOrder",
-          "Headers": {
-            "Content-Type": "application/json",
-            "appid": "{{appid}}"
-          },
-          "Params": {
-            "orderId": "{{orderId}}"
-          },
-          "Body": "{\n    \"orderId\": \"{{orderId}}\"\n}",
-          "BodyType": "json",
-          "Assertions": [
-            {
-              "Type": "StatusCode",
-              "Target": "",
-              "Operator": "equals",
-              "ExpectedValue": "200",
-              "Description": ""
-            },
-            {
-              "Type": "JsonPath",
-              "Target": "$.success",
-              "Operator": "equals",
-              "ExpectedValue": "True",
-              "Description": "检查JsonPath"
-            }
-          ],
-          "VariableExtractions": {},
-          "Cookies": {},
-          "Auth": {
-            "Type": "Bearer",
-            "Username": "",
-            "Password": "",
-            "Token": "{{shop_accessToken}}",
-            "ApiKeyName": "",
-            "ApiKeyValue": "",
-            "ApiKeyLocation": "Header"
-          },
-          "TimeoutMs": 30000,
-          "FollowRedirects": true,
-          "VerifySSL": true,
-          "ServiceId": "2000001"
-        },
-        "UiConfig": null,
-        "ScriptConfig": null
-      }
-    ],
-    "Order": 3,
-    "Status": 1,
-    "LastExecutionResult": null,
-    "LastExecutionTime": null
-  },
-  {
-    "Id": "8000006",
+    "Id": "8000020",
     "Name": "成功",
     "Description": "",
     "ProjectId": "在线点餐",
-    "CategoryId": "7000002",
-    "IsTemplate": true,
+    "CategoryId": "7000012",
+    "IsTemplate": false,
     "TemplateId": "",
     "Level": "P0",
     "Steps": [
       {
-        "Id": "8500027",
+        "Id": "8500084",
         "Name": "Shop 授权",
         "Type": 1,
         "Parameters": {},
@@ -1266,13 +56,13 @@
           "TimeoutMs": 30000,
           "FollowRedirects": true,
           "VerifySSL": true,
-          "ServiceId": "2000001"
+          "ServiceId": "2000005"
         },
         "UiConfig": null,
         "ScriptConfig": null
       },
       {
-        "Id": "8500024",
+        "Id": "8500085",
         "Name": "Shop 下单",
         "Type": 1,
         "Parameters": {},
@@ -1315,13 +105,13 @@
           "TimeoutMs": 30000,
           "FollowRedirects": true,
           "VerifySSL": true,
-          "ServiceId": "2000001"
+          "ServiceId": "2000005"
         },
         "UiConfig": null,
         "ScriptConfig": null
       },
       {
-        "Id": "8500028",
+        "Id": "8500086",
         "Name": "Delivery 授权",
         "Type": 1,
         "Parameters": {},
@@ -1370,13 +160,13 @@
           "TimeoutMs": 30000,
           "FollowRedirects": true,
           "VerifySSL": true,
-          "ServiceId": "2000000"
+          "ServiceId": "2000004"
         },
         "UiConfig": null,
         "ScriptConfig": null
       },
       {
-        "Id": "8500029",
+        "Id": "8500087",
         "Name": "延时等待(10s)",
         "Type": 21,
         "Parameters": {
@@ -1390,7 +180,7 @@
         "ScriptConfig": null
       },
       {
-        "Id": "8500025",
+        "Id": "8500088",
         "Name": "Delivery 订单断言",
         "Type": 1,
         "Parameters": {},
@@ -1438,13 +228,13 @@
           "TimeoutMs": 30000,
           "FollowRedirects": true,
           "VerifySSL": true,
-          "ServiceId": "2000000"
+          "ServiceId": "2000004"
         },
         "UiConfig": null,
         "ScriptConfig": null
       },
       {
-        "Id": "8500026",
+        "Id": "8500089",
         "Name": "Shop 订单断言",
         "Type": 1,
         "Parameters": {},
@@ -1493,13 +283,1223 @@
           "TimeoutMs": 30000,
           "FollowRedirects": true,
           "VerifySSL": true,
-          "ServiceId": "2000001"
+          "ServiceId": "2000005"
         },
         "UiConfig": null,
         "ScriptConfig": null
       }
     ],
-    "Order": 3,
+    "Order": 0,
+    "Status": 1,
+    "LastExecutionResult": null,
+    "LastExecutionTime": null
+  },
+  {
+    "Id": "8000018",
+    "Name": "下单失败",
+    "Description": "Delivery 下单失败",
+    "ProjectId": "在线点餐",
+    "CategoryId": "7000012",
+    "IsTemplate": false,
+    "TemplateId": "8000020",
+    "Level": "P0",
+    "Steps": [
+      {
+        "Id": "8500072",
+        "Name": "Shop 授权",
+        "Type": 1,
+        "Parameters": {},
+        "ExpectedResult": "",
+        "Order": 1,
+        "IsEnabled": true,
+        "ApiConfig": {
+          "Method": "POST",
+          "Url": "/api/account/AccessToken",
+          "Headers": {},
+          "Params": {},
+          "Body": "{\n    \"appId\": \"{{appid}}\",\n    \"secretKey\": \"{{secretKey}}\"\n}",
+          "BodyType": "json",
+          "Assertions": [
+            {
+              "Type": "StatusCode",
+              "Target": "",
+              "Operator": "equals",
+              "ExpectedValue": "200",
+              "Description": "检查JsonPath"
+            },
+            {
+              "Type": "JsonPath",
+              "Target": "$.success",
+              "Operator": "equals",
+              "ExpectedValue": "True",
+              "Description": "检查JsonPath"
+            }
+          ],
+          "VariableExtractions": {
+            "shop_accessToken": "$.data.accessToken"
+          },
+          "Cookies": {},
+          "Auth": {
+            "Type": "None",
+            "Username": "",
+            "Password": "",
+            "Token": "",
+            "ApiKeyName": "",
+            "ApiKeyValue": "",
+            "ApiKeyLocation": "Header"
+          },
+          "TimeoutMs": 30000,
+          "FollowRedirects": true,
+          "VerifySSL": true,
+          "ServiceId": "2000005"
+        },
+        "UiConfig": null,
+        "ScriptConfig": null
+      },
+      {
+        "Id": "8500073",
+        "Name": "Shop 下单",
+        "Type": 1,
+        "Parameters": {},
+        "ExpectedResult": "",
+        "Order": 2,
+        "IsEnabled": true,
+        "ApiConfig": {
+          "Method": "POST",
+          "Url": "/api/order/CreateAndPlace",
+          "Headers": {
+            "Content-Type": "application/json",
+            "appid": "{{appid}}",
+            "mockType": "{{mockType}}"
+          },
+          "Params": {},
+          "Body": "{\n    \"categoryCode\": \"mcd\",\n    \"storeCode\": \"1960262\",\n    \"packFlag\": 0,\n    \"orderCode\": \"\",\n    \"customeOrderNo\": \"{{MockData.SnowId}}\",\n    \"phoneNo\": \"\",\n    \"goods\": [\n        {\n            \"goodsId\": \"9ce8d4db-93b0-8254-413e-3a15edef75c9\",\n            \"quantity\": 1,\n            \"skuId\": \"eefe0ef1-942c-5150-a3e4-3a1db7db6471\",\n            \"specOptions\": [\n                {\n                    \"specId\": \"019aa5ae-8a19-7551-87c0-8e3347992f1a\",\n                    \"optionId\": \"019aa5ae-8a19-7602-bbde-77c7b7329348\",\n                    \"quantity\": 1\n                }\n            ]\n        },\n        {\n            \"goodsId\": \"9ce8d4db-93b0-8254-413e-3a15edef75c9\",\n            \"quantity\": 1,\n            \"skuId\": \"eefe0ef1-942c-5150-a3e4-3a1db7db6471\",\n            \"specOptions\": [\n                {\n                    \"specId\": \"019aa5ae-8a19-7551-87c0-8e3347992f1a\",\n                    \"optionId\": \"019aa5ae-8a19-7602-bbde-77c7b7329348\",\n                    \"quantity\": 1\n                }\n            ]\n        },\n        {\n            \"goodsId\": \"9ce8d4db-93b0-8254-413e-3a15edef75c9\",\n            \"quantity\": 1,\n            \"skuId\": \"eefe0ef1-942c-5150-a3e4-3a1db7db6471\",\n            \"specOptions\": [\n                {\n                    \"specId\": \"019aa5ae-8a19-7551-87c0-8e3347992f1a\",\n                    \"optionId\": \"019aa5ae-8a19-7602-bbde-77c7b7329348\",\n                    \"quantity\": 1\n                }\n            ]\n        }\n    ]\n}",
+          "BodyType": "json",
+          "Assertions": [
+            {
+              "Type": "StatusCode",
+              "Target": "",
+              "Operator": "equals",
+              "ExpectedValue": "200",
+              "Description": "检查JsonPath"
+            }
+          ],
+          "VariableExtractions": {
+            "orderId": "$.data.id"
+          },
+          "Cookies": {},
+          "Auth": {
+            "Type": "Bearer",
+            "Username": "",
+            "Password": "",
+            "Token": "{{shop_accessToken}}",
+            "ApiKeyName": "",
+            "ApiKeyValue": "",
+            "ApiKeyLocation": "Header"
+          },
+          "TimeoutMs": 30000,
+          "FollowRedirects": true,
+          "VerifySSL": true,
+          "ServiceId": "2000005"
+        },
+        "UiConfig": null,
+        "ScriptConfig": null
+      },
+      {
+        "Id": "8500074",
+        "Name": "Delivery 授权",
+        "Type": 1,
+        "Parameters": {},
+        "ExpectedResult": "",
+        "Order": 3,
+        "IsEnabled": true,
+        "ApiConfig": {
+          "Method": "GET",
+          "Url": "/api/app/account/access-token-by-app-secret",
+          "Headers": {},
+          "Params": {
+            "AppSecret": "{{delivery_appKey}}",
+            "AppId": "{{delivery_appId}}"
+          },
+          "Body": "",
+          "BodyType": "json",
+          "Assertions": [
+            {
+              "Type": "StatusCode",
+              "Target": "",
+              "Operator": "equals",
+              "ExpectedValue": "200",
+              "Description": "检查StatusCode"
+            },
+            {
+              "Type": "JsonPath",
+              "Target": "$.success",
+              "Operator": "equals",
+              "ExpectedValue": "True",
+              "Description": "检查JsonPath"
+            }
+          ],
+          "VariableExtractions": {
+            "delivery_accessToken": "$.data.accessToken"
+          },
+          "Cookies": {},
+          "Auth": {
+            "Type": "None",
+            "Username": "",
+            "Password": "",
+            "Token": "",
+            "ApiKeyName": "",
+            "ApiKeyValue": "",
+            "ApiKeyLocation": "Header"
+          },
+          "TimeoutMs": 30000,
+          "FollowRedirects": true,
+          "VerifySSL": true,
+          "ServiceId": "2000004"
+        },
+        "UiConfig": null,
+        "ScriptConfig": null
+      },
+      {
+        "Id": "8500075",
+        "Name": "延时等待(10s)",
+        "Type": 21,
+        "Parameters": {
+          "delay": 10000
+        },
+        "ExpectedResult": "",
+        "Order": 4,
+        "IsEnabled": true,
+        "ApiConfig": null,
+        "UiConfig": null,
+        "ScriptConfig": null
+      },
+      {
+        "Id": "8500076",
+        "Name": "Delivery 订单断言",
+        "Type": 1,
+        "Parameters": {},
+        "ExpectedResult": "",
+        "Order": 5,
+        "IsEnabled": true,
+        "ApiConfig": {
+          "Method": "GET",
+          "Url": "/api/Order/GetOrderDetail",
+          "Headers": {
+            "Content-Type": "application/json"
+          },
+          "Params": {
+            "orderId": "{{orderId}}"
+          },
+          "Body": "",
+          "BodyType": "json",
+          "Assertions": [
+            {
+              "Type": "StatusCode",
+              "Target": "",
+              "Operator": "equals",
+              "ExpectedValue": "200",
+              "Description": ""
+            },
+            {
+              "Type": "JsonPath",
+              "Target": "$.success",
+              "Operator": "equals",
+              "ExpectedValue": "True",
+              "Description": "检查JsonPath"
+            }
+          ],
+          "VariableExtractions": {},
+          "Cookies": {},
+          "Auth": {
+            "Type": "Bearer",
+            "Username": "",
+            "Password": "",
+            "Token": "{{delivery_accessToken}}",
+            "ApiKeyName": "",
+            "ApiKeyValue": "",
+            "ApiKeyLocation": "Header"
+          },
+          "TimeoutMs": 30000,
+          "FollowRedirects": true,
+          "VerifySSL": true,
+          "ServiceId": "2000004"
+        },
+        "UiConfig": null,
+        "ScriptConfig": null
+      },
+      {
+        "Id": "8500077",
+        "Name": "Shop 订单断言",
+        "Type": 1,
+        "Parameters": {},
+        "ExpectedResult": "",
+        "Order": 6,
+        "IsEnabled": true,
+        "ApiConfig": {
+          "Method": "POST",
+          "Url": "/api/Order/GetOrder",
+          "Headers": {
+            "Content-Type": "application/json",
+            "appid": "{{appid}}"
+          },
+          "Params": {
+            "orderId": "{{orderId}}"
+          },
+          "Body": "{\n    \"orderId\": \"{{orderId}}\"\n}",
+          "BodyType": "json",
+          "Assertions": [
+            {
+              "Type": "StatusCode",
+              "Target": "",
+              "Operator": "equals",
+              "ExpectedValue": "200",
+              "Description": ""
+            },
+            {
+              "Type": "JsonPath",
+              "Target": "$.success",
+              "Operator": "equals",
+              "ExpectedValue": "True",
+              "Description": "检查JsonPath"
+            }
+          ],
+          "VariableExtractions": {},
+          "Cookies": {},
+          "Auth": {
+            "Type": "Bearer",
+            "Username": "",
+            "Password": "",
+            "Token": "{{shop_accessToken}}",
+            "ApiKeyName": "",
+            "ApiKeyValue": "",
+            "ApiKeyLocation": "Header"
+          },
+          "TimeoutMs": 30000,
+          "FollowRedirects": true,
+          "VerifySSL": true,
+          "ServiceId": "2000005"
+        },
+        "UiConfig": null,
+        "ScriptConfig": null
+      }
+    ],
+    "Order": 1,
+    "Status": 1,
+    "LastExecutionResult": null,
+    "LastExecutionTime": null
+  },
+  {
+    "Id": "8000016",
+    "Name": "失败回调",
+    "Description": "供应商 FA 回调",
+    "ProjectId": "在线点餐",
+    "CategoryId": "7000012",
+    "IsTemplate": false,
+    "TemplateId": "",
+    "Level": "P0",
+    "Steps": [
+      {
+        "Id": "8500066",
+        "Name": "Shop 授权",
+        "Type": 1,
+        "Parameters": {},
+        "ExpectedResult": "",
+        "Order": 1,
+        "IsEnabled": true,
+        "ApiConfig": {
+          "Method": "POST",
+          "Url": "/api/account/AccessToken",
+          "Headers": {},
+          "Params": {},
+          "Body": "{\n    \"appId\": \"{{appid}}\",\n    \"secretKey\": \"{{secretKey}}\"\n}",
+          "BodyType": "json",
+          "Assertions": [
+            {
+              "Type": "StatusCode",
+              "Target": "",
+              "Operator": "equals",
+              "ExpectedValue": "200",
+              "Description": "检查JsonPath"
+            },
+            {
+              "Type": "JsonPath",
+              "Target": "$.success",
+              "Operator": "equals",
+              "ExpectedValue": "True",
+              "Description": "检查JsonPath"
+            }
+          ],
+          "VariableExtractions": {
+            "shop_accessToken": "$.data.accessToken"
+          },
+          "Cookies": {},
+          "Auth": {
+            "Type": "None",
+            "Username": "",
+            "Password": "",
+            "Token": "",
+            "ApiKeyName": "",
+            "ApiKeyValue": "",
+            "ApiKeyLocation": "Header"
+          },
+          "TimeoutMs": 30000,
+          "FollowRedirects": true,
+          "VerifySSL": true,
+          "ServiceId": "2000005"
+        },
+        "UiConfig": null,
+        "ScriptConfig": null
+      },
+      {
+        "Id": "8500067",
+        "Name": "Shop 下单",
+        "Type": 1,
+        "Parameters": {},
+        "ExpectedResult": "",
+        "Order": 2,
+        "IsEnabled": true,
+        "ApiConfig": {
+          "Method": "POST",
+          "Url": "/api/order/CreateAndPlace",
+          "Headers": {
+            "Content-Type": "application/json",
+            "appid": "{{appid}}",
+            "mockType": "{{mockType}}"
+          },
+          "Params": {},
+          "Body": "{\n    \"categoryCode\": \"mcd\",\n    \"storeCode\": \"1960262\",\n    \"packFlag\": 0,\n    \"orderCode\": \"\",\n    \"customeOrderNo\": \"{{MockData.SnowId}}\",\n    \"phoneNo\": \"\",\n    \"goods\": [\n        {\n            \"goodsId\": \"9ce8d4db-93b0-8254-413e-3a15edef75c9\",\n            \"quantity\": 1,\n            \"skuId\": \"eefe0ef1-942c-5150-a3e4-3a1db7db6471\",\n            \"specOptions\": [\n                {\n                    \"specId\": \"019aa5ae-8a19-7551-87c0-8e3347992f1a\",\n                    \"optionId\": \"019aa5ae-8a19-7602-bbde-77c7b7329348\",\n                    \"quantity\": 1\n                }\n            ]\n        },\n        {\n            \"goodsId\": \"9ce8d4db-93b0-8254-413e-3a15edef75c9\",\n            \"quantity\": 1,\n            \"skuId\": \"eefe0ef1-942c-5150-a3e4-3a1db7db6471\",\n            \"specOptions\": [\n                {\n                    \"specId\": \"019aa5ae-8a19-7551-87c0-8e3347992f1a\",\n                    \"optionId\": \"019aa5ae-8a19-7602-bbde-77c7b7329348\",\n                    \"quantity\": 1\n                }\n            ]\n        },\n        {\n            \"goodsId\": \"9ce8d4db-93b0-8254-413e-3a15edef75c9\",\n            \"quantity\": 1,\n            \"skuId\": \"eefe0ef1-942c-5150-a3e4-3a1db7db6471\",\n            \"specOptions\": [\n                {\n                    \"specId\": \"019aa5ae-8a19-7551-87c0-8e3347992f1a\",\n                    \"optionId\": \"019aa5ae-8a19-7602-bbde-77c7b7329348\",\n                    \"quantity\": 1\n                }\n            ]\n        }\n    ]\n}",
+          "BodyType": "json",
+          "Assertions": [
+            {
+              "Type": "StatusCode",
+              "Target": "",
+              "Operator": "equals",
+              "ExpectedValue": "200",
+              "Description": "检查JsonPath"
+            }
+          ],
+          "VariableExtractions": {
+            "orderId": "$.data.id"
+          },
+          "Cookies": {},
+          "Auth": {
+            "Type": "Bearer",
+            "Username": "",
+            "Password": "",
+            "Token": "{{shop_accessToken}}",
+            "ApiKeyName": "",
+            "ApiKeyValue": "",
+            "ApiKeyLocation": "Header"
+          },
+          "TimeoutMs": 30000,
+          "FollowRedirects": true,
+          "VerifySSL": true,
+          "ServiceId": "2000005"
+        },
+        "UiConfig": null,
+        "ScriptConfig": null
+      },
+      {
+        "Id": "8500068",
+        "Name": "Delivery 授权",
+        "Type": 1,
+        "Parameters": {},
+        "ExpectedResult": "",
+        "Order": 3,
+        "IsEnabled": true,
+        "ApiConfig": {
+          "Method": "GET",
+          "Url": "/api/app/account/access-token-by-app-secret",
+          "Headers": {},
+          "Params": {
+            "AppSecret": "{{delivery_appKey}}",
+            "AppId": "{{delivery_appId}}"
+          },
+          "Body": "",
+          "BodyType": "json",
+          "Assertions": [
+            {
+              "Type": "StatusCode",
+              "Target": "",
+              "Operator": "equals",
+              "ExpectedValue": "200",
+              "Description": "检查StatusCode"
+            },
+            {
+              "Type": "JsonPath",
+              "Target": "$.success",
+              "Operator": "equals",
+              "ExpectedValue": "True",
+              "Description": "检查JsonPath"
+            }
+          ],
+          "VariableExtractions": {
+            "delivery_accessToken": "$.data.accessToken"
+          },
+          "Cookies": {},
+          "Auth": {
+            "Type": "None",
+            "Username": "",
+            "Password": "",
+            "Token": "",
+            "ApiKeyName": "",
+            "ApiKeyValue": "",
+            "ApiKeyLocation": "Header"
+          },
+          "TimeoutMs": 30000,
+          "FollowRedirects": true,
+          "VerifySSL": true,
+          "ServiceId": "2000004"
+        },
+        "UiConfig": null,
+        "ScriptConfig": null
+      },
+      {
+        "Id": "8500069",
+        "Name": "延时等待(10s)",
+        "Type": 21,
+        "Parameters": {
+          "delay": 10000
+        },
+        "ExpectedResult": "",
+        "Order": 4,
+        "IsEnabled": true,
+        "ApiConfig": null,
+        "UiConfig": null,
+        "ScriptConfig": null
+      },
+      {
+        "Id": "8500070",
+        "Name": "Delivery 订单断言",
+        "Type": 1,
+        "Parameters": {},
+        "ExpectedResult": "",
+        "Order": 5,
+        "IsEnabled": true,
+        "ApiConfig": {
+          "Method": "GET",
+          "Url": "/api/Order/GetOrderDetail",
+          "Headers": {
+            "Content-Type": "application/json"
+          },
+          "Params": {
+            "orderId": "{{orderId}}"
+          },
+          "Body": "",
+          "BodyType": "json",
+          "Assertions": [
+            {
+              "Type": "StatusCode",
+              "Target": "",
+              "Operator": "equals",
+              "ExpectedValue": "200",
+              "Description": ""
+            },
+            {
+              "Type": "JsonPath",
+              "Target": "$.success",
+              "Operator": "equals",
+              "ExpectedValue": "True",
+              "Description": "检查JsonPath"
+            }
+          ],
+          "VariableExtractions": {},
+          "Cookies": {},
+          "Auth": {
+            "Type": "Bearer",
+            "Username": "",
+            "Password": "",
+            "Token": "{{delivery_accessToken}}",
+            "ApiKeyName": "",
+            "ApiKeyValue": "",
+            "ApiKeyLocation": "Header"
+          },
+          "TimeoutMs": 30000,
+          "FollowRedirects": true,
+          "VerifySSL": true,
+          "ServiceId": "2000004"
+        },
+        "UiConfig": null,
+        "ScriptConfig": null
+      },
+      {
+        "Id": "8500071",
+        "Name": "Shop 订单断言",
+        "Type": 1,
+        "Parameters": {},
+        "ExpectedResult": "",
+        "Order": 6,
+        "IsEnabled": true,
+        "ApiConfig": {
+          "Method": "POST",
+          "Url": "/api/Order/GetOrder",
+          "Headers": {
+            "Content-Type": "application/json",
+            "appid": "{{appid}}"
+          },
+          "Params": {
+            "orderId": "{{orderId}}"
+          },
+          "Body": "{\n    \"orderId\": \"{{orderId}}\"\n}",
+          "BodyType": "json",
+          "Assertions": [
+            {
+              "Type": "StatusCode",
+              "Target": "",
+              "Operator": "equals",
+              "ExpectedValue": "200",
+              "Description": ""
+            },
+            {
+              "Type": "JsonPath",
+              "Target": "$.success",
+              "Operator": "equals",
+              "ExpectedValue": "True",
+              "Description": "检查JsonPath"
+            }
+          ],
+          "VariableExtractions": {},
+          "Cookies": {},
+          "Auth": {
+            "Type": "Bearer",
+            "Username": "",
+            "Password": "",
+            "Token": "{{shop_accessToken}}",
+            "ApiKeyName": "",
+            "ApiKeyValue": "",
+            "ApiKeyLocation": "Header"
+          },
+          "TimeoutMs": 30000,
+          "FollowRedirects": true,
+          "VerifySSL": true,
+          "ServiceId": "2000005"
+        },
+        "UiConfig": null,
+        "ScriptConfig": null
+      }
+    ],
+    "Order": 2,
+    "Status": 1,
+    "LastExecutionResult": null,
+    "LastExecutionTime": null
+  },
+  {
+    "Id": "8000019",
+    "Name": "部分退款",
+    "Description": "子订单 SU 且含部分退款",
+    "ProjectId": "在线点餐",
+    "CategoryId": "7000012",
+    "IsTemplate": false,
+    "TemplateId": "",
+    "Level": "P0",
+    "Steps": [
+      {
+        "Id": "8500078",
+        "Name": "Shop 授权",
+        "Type": 1,
+        "Parameters": {},
+        "ExpectedResult": "",
+        "Order": 1,
+        "IsEnabled": true,
+        "ApiConfig": {
+          "Method": "POST",
+          "Url": "/api/account/AccessToken",
+          "Headers": {},
+          "Params": {},
+          "Body": "{\n    \"appId\": \"{{appid}}\",\n    \"secretKey\": \"{{secretKey}}\"\n}",
+          "BodyType": "json",
+          "Assertions": [
+            {
+              "Type": "StatusCode",
+              "Target": "",
+              "Operator": "equals",
+              "ExpectedValue": "200",
+              "Description": "检查JsonPath"
+            },
+            {
+              "Type": "JsonPath",
+              "Target": "$.success",
+              "Operator": "equals",
+              "ExpectedValue": "True",
+              "Description": "检查JsonPath"
+            }
+          ],
+          "VariableExtractions": {
+            "shop_accessToken": "$.data.accessToken"
+          },
+          "Cookies": {},
+          "Auth": {
+            "Type": "None",
+            "Username": "",
+            "Password": "",
+            "Token": "",
+            "ApiKeyName": "",
+            "ApiKeyValue": "",
+            "ApiKeyLocation": "Header"
+          },
+          "TimeoutMs": 30000,
+          "FollowRedirects": true,
+          "VerifySSL": true,
+          "ServiceId": "2000005"
+        },
+        "UiConfig": null,
+        "ScriptConfig": null
+      },
+      {
+        "Id": "8500079",
+        "Name": "Shop 下单",
+        "Type": 1,
+        "Parameters": {},
+        "ExpectedResult": "",
+        "Order": 2,
+        "IsEnabled": true,
+        "ApiConfig": {
+          "Method": "POST",
+          "Url": "/api/order/CreateAndPlace",
+          "Headers": {
+            "Content-Type": "application/json",
+            "appid": "{{appid}}",
+            "mockType": "{{mockType}}"
+          },
+          "Params": {},
+          "Body": "{\n    \"categoryCode\": \"mcd\",\n    \"storeCode\": \"1960262\",\n    \"packFlag\": 0,\n    \"orderCode\": \"\",\n    \"customeOrderNo\": \"{{MockData.SnowId}}\",\n    \"phoneNo\": \"\",\n    \"goods\": [\n        {\n            \"goodsId\": \"9ce8d4db-93b0-8254-413e-3a15edef75c9\",\n            \"quantity\": 1,\n            \"skuId\": \"eefe0ef1-942c-5150-a3e4-3a1db7db6471\",\n            \"specOptions\": [\n                {\n                    \"specId\": \"019aa5ae-8a19-7551-87c0-8e3347992f1a\",\n                    \"optionId\": \"019aa5ae-8a19-7602-bbde-77c7b7329348\",\n                    \"quantity\": 1\n                }\n            ]\n        },\n        {\n            \"goodsId\": \"9ce8d4db-93b0-8254-413e-3a15edef75c9\",\n            \"quantity\": 1,\n            \"skuId\": \"eefe0ef1-942c-5150-a3e4-3a1db7db6471\",\n            \"specOptions\": [\n                {\n                    \"specId\": \"019aa5ae-8a19-7551-87c0-8e3347992f1a\",\n                    \"optionId\": \"019aa5ae-8a19-7602-bbde-77c7b7329348\",\n                    \"quantity\": 1\n                }\n            ]\n        },\n        {\n            \"goodsId\": \"9ce8d4db-93b0-8254-413e-3a15edef75c9\",\n            \"quantity\": 1,\n            \"skuId\": \"eefe0ef1-942c-5150-a3e4-3a1db7db6471\",\n            \"specOptions\": [\n                {\n                    \"specId\": \"019aa5ae-8a19-7551-87c0-8e3347992f1a\",\n                    \"optionId\": \"019aa5ae-8a19-7602-bbde-77c7b7329348\",\n                    \"quantity\": 1\n                }\n            ]\n        }\n    ]\n}",
+          "BodyType": "json",
+          "Assertions": [
+            {
+              "Type": "StatusCode",
+              "Target": "",
+              "Operator": "equals",
+              "ExpectedValue": "200",
+              "Description": "检查JsonPath"
+            }
+          ],
+          "VariableExtractions": {
+            "orderId": "$.data.id"
+          },
+          "Cookies": {},
+          "Auth": {
+            "Type": "Bearer",
+            "Username": "",
+            "Password": "",
+            "Token": "{{shop_accessToken}}",
+            "ApiKeyName": "",
+            "ApiKeyValue": "",
+            "ApiKeyLocation": "Header"
+          },
+          "TimeoutMs": 30000,
+          "FollowRedirects": true,
+          "VerifySSL": true,
+          "ServiceId": "2000005"
+        },
+        "UiConfig": null,
+        "ScriptConfig": null
+      },
+      {
+        "Id": "8500080",
+        "Name": "Delivery 授权",
+        "Type": 1,
+        "Parameters": {},
+        "ExpectedResult": "",
+        "Order": 3,
+        "IsEnabled": true,
+        "ApiConfig": {
+          "Method": "GET",
+          "Url": "/api/app/account/access-token-by-app-secret",
+          "Headers": {},
+          "Params": {
+            "AppSecret": "{{delivery_appKey}}",
+            "AppId": "{{delivery_appId}}"
+          },
+          "Body": "",
+          "BodyType": "json",
+          "Assertions": [
+            {
+              "Type": "StatusCode",
+              "Target": "",
+              "Operator": "equals",
+              "ExpectedValue": "200",
+              "Description": "检查StatusCode"
+            },
+            {
+              "Type": "JsonPath",
+              "Target": "$.success",
+              "Operator": "equals",
+              "ExpectedValue": "True",
+              "Description": "检查JsonPath"
+            }
+          ],
+          "VariableExtractions": {
+            "delivery_accessToken": "$.data.accessToken"
+          },
+          "Cookies": {},
+          "Auth": {
+            "Type": "None",
+            "Username": "",
+            "Password": "",
+            "Token": "",
+            "ApiKeyName": "",
+            "ApiKeyValue": "",
+            "ApiKeyLocation": "Header"
+          },
+          "TimeoutMs": 30000,
+          "FollowRedirects": true,
+          "VerifySSL": true,
+          "ServiceId": "2000004"
+        },
+        "UiConfig": null,
+        "ScriptConfig": null
+      },
+      {
+        "Id": "8500081",
+        "Name": "延时等待(10s)",
+        "Type": 21,
+        "Parameters": {
+          "delay": 10000
+        },
+        "ExpectedResult": "",
+        "Order": 4,
+        "IsEnabled": true,
+        "ApiConfig": null,
+        "UiConfig": null,
+        "ScriptConfig": null
+      },
+      {
+        "Id": "8500082",
+        "Name": "Delivery 订单断言",
+        "Type": 1,
+        "Parameters": {},
+        "ExpectedResult": "",
+        "Order": 5,
+        "IsEnabled": true,
+        "ApiConfig": {
+          "Method": "GET",
+          "Url": "/api/Order/GetOrderDetail",
+          "Headers": {
+            "Content-Type": "application/json"
+          },
+          "Params": {
+            "orderId": "{{orderId}}"
+          },
+          "Body": "",
+          "BodyType": "json",
+          "Assertions": [
+            {
+              "Type": "StatusCode",
+              "Target": "",
+              "Operator": "equals",
+              "ExpectedValue": "200",
+              "Description": ""
+            },
+            {
+              "Type": "JsonPath",
+              "Target": "$.success",
+              "Operator": "equals",
+              "ExpectedValue": "True",
+              "Description": "检查JsonPath"
+            }
+          ],
+          "VariableExtractions": {},
+          "Cookies": {},
+          "Auth": {
+            "Type": "Bearer",
+            "Username": "",
+            "Password": "",
+            "Token": "{{delivery_accessToken}}",
+            "ApiKeyName": "",
+            "ApiKeyValue": "",
+            "ApiKeyLocation": "Header"
+          },
+          "TimeoutMs": 30000,
+          "FollowRedirects": true,
+          "VerifySSL": true,
+          "ServiceId": "2000004"
+        },
+        "UiConfig": null,
+        "ScriptConfig": null
+      },
+      {
+        "Id": "8500083",
+        "Name": "Shop 订单断言",
+        "Type": 1,
+        "Parameters": {},
+        "ExpectedResult": "",
+        "Order": 6,
+        "IsEnabled": true,
+        "ApiConfig": {
+          "Method": "POST",
+          "Url": "/api/Order/GetOrder",
+          "Headers": {
+            "Content-Type": "application/json",
+            "appid": "{{appid}}"
+          },
+          "Params": {
+            "orderId": "{{orderId}}"
+          },
+          "Body": "{\n    \"orderId\": \"{{orderId}}\"\n}",
+          "BodyType": "json",
+          "Assertions": [
+            {
+              "Type": "StatusCode",
+              "Target": "",
+              "Operator": "equals",
+              "ExpectedValue": "200",
+              "Description": ""
+            },
+            {
+              "Type": "JsonPath",
+              "Target": "$.success",
+              "Operator": "equals",
+              "ExpectedValue": "True",
+              "Description": "检查JsonPath"
+            }
+          ],
+          "VariableExtractions": {},
+          "Cookies": {},
+          "Auth": {
+            "Type": "Bearer",
+            "Username": "",
+            "Password": "",
+            "Token": "{{shop_accessToken}}",
+            "ApiKeyName": "",
+            "ApiKeyValue": "",
+            "ApiKeyLocation": "Header"
+          },
+          "TimeoutMs": 30000,
+          "FollowRedirects": true,
+          "VerifySSL": true,
+          "ServiceId": "2000005"
+        },
+        "UiConfig": null,
+        "ScriptConfig": null
+      }
+    ],
+    "Order": 5,
+    "Status": 1,
+    "LastExecutionResult": null,
+    "LastExecutionTime": null
+  },
+  {
+    "Id": "8000015",
+    "Name": "供应商切换",
+    "Description": "",
+    "ProjectId": "在线点餐",
+    "CategoryId": "7000012",
+    "IsTemplate": false,
+    "TemplateId": "",
+    "Level": "P1",
+    "Steps": [],
+    "Order": 7,
+    "Status": 1,
+    "LastExecutionResult": null,
+    "LastExecutionTime": null
+  },
+  {
+    "Id": "8000014",
+    "Name": "多子订单",
+    "Description": "成功回调+失败回调",
+    "ProjectId": "在线点餐",
+    "CategoryId": "7000012",
+    "IsTemplate": false,
+    "TemplateId": "",
+    "Level": "P0",
+    "Steps": [
+      {
+        "Id": "8500060",
+        "Name": "Shop 授权",
+        "Type": 1,
+        "Parameters": {},
+        "ExpectedResult": "",
+        "Order": 1,
+        "IsEnabled": true,
+        "ApiConfig": {
+          "Method": "POST",
+          "Url": "/api/account/AccessToken",
+          "Headers": {},
+          "Params": {},
+          "Body": "{\n    \"appId\": \"{{appid}}\",\n    \"secretKey\": \"{{secretKey}}\"\n}",
+          "BodyType": "json",
+          "Assertions": [
+            {
+              "Type": "StatusCode",
+              "Target": "",
+              "Operator": "equals",
+              "ExpectedValue": "200",
+              "Description": "检查JsonPath"
+            },
+            {
+              "Type": "JsonPath",
+              "Target": "$.success",
+              "Operator": "equals",
+              "ExpectedValue": "True",
+              "Description": "检查JsonPath"
+            }
+          ],
+          "VariableExtractions": {
+            "shop_accessToken": "$.data.accessToken"
+          },
+          "Cookies": {},
+          "Auth": {
+            "Type": "None",
+            "Username": "",
+            "Password": "",
+            "Token": "",
+            "ApiKeyName": "",
+            "ApiKeyValue": "",
+            "ApiKeyLocation": "Header"
+          },
+          "TimeoutMs": 30000,
+          "FollowRedirects": true,
+          "VerifySSL": true,
+          "ServiceId": "2000005"
+        },
+        "UiConfig": null,
+        "ScriptConfig": null
+      },
+      {
+        "Id": "8500061",
+        "Name": "Shop 下单",
+        "Type": 1,
+        "Parameters": {},
+        "ExpectedResult": "",
+        "Order": 2,
+        "IsEnabled": true,
+        "ApiConfig": {
+          "Method": "POST",
+          "Url": "/api/order/CreateAndPlace",
+          "Headers": {
+            "Content-Type": "application/json",
+            "appid": "{{appid}}",
+            "mockType": "{{mockType}}"
+          },
+          "Params": {},
+          "Body": "{\n    \"categoryCode\": \"mcd\",\n    \"storeCode\": \"1960262\",\n    \"packFlag\": 0,\n    \"orderCode\": \"\",\n    \"customeOrderNo\": \"{{MockData.SnowId}}\",\n    \"phoneNo\": \"\",\n    \"goods\": [\n        {\n            \"goodsId\": \"9ce8d4db-93b0-8254-413e-3a15edef75c9\",\n            \"quantity\": 1,\n            \"skuId\": \"eefe0ef1-942c-5150-a3e4-3a1db7db6471\",\n            \"specOptions\": [\n                {\n                    \"specId\": \"019aa5ae-8a19-7551-87c0-8e3347992f1a\",\n                    \"optionId\": \"019aa5ae-8a19-7602-bbde-77c7b7329348\",\n                    \"quantity\": 1\n                }\n            ]\n        },\n        {\n            \"goodsId\": \"9ce8d4db-93b0-8254-413e-3a15edef75c9\",\n            \"quantity\": 1,\n            \"skuId\": \"eefe0ef1-942c-5150-a3e4-3a1db7db6471\",\n            \"specOptions\": [\n                {\n                    \"specId\": \"019aa5ae-8a19-7551-87c0-8e3347992f1a\",\n                    \"optionId\": \"019aa5ae-8a19-7602-bbde-77c7b7329348\",\n                    \"quantity\": 1\n                }\n            ]\n        },\n        {\n            \"goodsId\": \"9ce8d4db-93b0-8254-413e-3a15edef75c9\",\n            \"quantity\": 1,\n            \"skuId\": \"eefe0ef1-942c-5150-a3e4-3a1db7db6471\",\n            \"specOptions\": [\n                {\n                    \"specId\": \"019aa5ae-8a19-7551-87c0-8e3347992f1a\",\n                    \"optionId\": \"019aa5ae-8a19-7602-bbde-77c7b7329348\",\n                    \"quantity\": 1\n                }\n            ]\n        }\n    ]\n}",
+          "BodyType": "json",
+          "Assertions": [
+            {
+              "Type": "StatusCode",
+              "Target": "",
+              "Operator": "equals",
+              "ExpectedValue": "200",
+              "Description": "检查JsonPath"
+            }
+          ],
+          "VariableExtractions": {
+            "orderId": "$.data.id"
+          },
+          "Cookies": {},
+          "Auth": {
+            "Type": "Bearer",
+            "Username": "",
+            "Password": "",
+            "Token": "{{shop_accessToken}}",
+            "ApiKeyName": "",
+            "ApiKeyValue": "",
+            "ApiKeyLocation": "Header"
+          },
+          "TimeoutMs": 30000,
+          "FollowRedirects": true,
+          "VerifySSL": true,
+          "ServiceId": "2000005"
+        },
+        "UiConfig": null,
+        "ScriptConfig": null
+      },
+      {
+        "Id": "8500062",
+        "Name": "Delivery 授权",
+        "Type": 1,
+        "Parameters": {},
+        "ExpectedResult": "",
+        "Order": 3,
+        "IsEnabled": true,
+        "ApiConfig": {
+          "Method": "GET",
+          "Url": "/api/app/account/access-token-by-app-secret",
+          "Headers": {},
+          "Params": {
+            "AppSecret": "{{delivery_appKey}}",
+            "AppId": "{{delivery_appId}}"
+          },
+          "Body": "",
+          "BodyType": "json",
+          "Assertions": [
+            {
+              "Type": "StatusCode",
+              "Target": "",
+              "Operator": "equals",
+              "ExpectedValue": "200",
+              "Description": "检查StatusCode"
+            },
+            {
+              "Type": "JsonPath",
+              "Target": "$.success",
+              "Operator": "equals",
+              "ExpectedValue": "True",
+              "Description": "检查JsonPath"
+            }
+          ],
+          "VariableExtractions": {
+            "delivery_accessToken": "$.data.accessToken"
+          },
+          "Cookies": {},
+          "Auth": {
+            "Type": "None",
+            "Username": "",
+            "Password": "",
+            "Token": "",
+            "ApiKeyName": "",
+            "ApiKeyValue": "",
+            "ApiKeyLocation": "Header"
+          },
+          "TimeoutMs": 30000,
+          "FollowRedirects": true,
+          "VerifySSL": true,
+          "ServiceId": "2000004"
+        },
+        "UiConfig": null,
+        "ScriptConfig": null
+      },
+      {
+        "Id": "8500063",
+        "Name": "延时等待(10s)",
+        "Type": 21,
+        "Parameters": {
+          "delay": 10000
+        },
+        "ExpectedResult": "",
+        "Order": 4,
+        "IsEnabled": true,
+        "ApiConfig": null,
+        "UiConfig": null,
+        "ScriptConfig": null
+      },
+      {
+        "Id": "8500064",
+        "Name": "Delivery 订单断言",
+        "Type": 1,
+        "Parameters": {},
+        "ExpectedResult": "",
+        "Order": 5,
+        "IsEnabled": true,
+        "ApiConfig": {
+          "Method": "GET",
+          "Url": "/api/Order/GetOrderDetail",
+          "Headers": {
+            "Content-Type": "application/json"
+          },
+          "Params": {
+            "orderId": "{{orderId}}"
+          },
+          "Body": "",
+          "BodyType": "json",
+          "Assertions": [
+            {
+              "Type": "StatusCode",
+              "Target": "",
+              "Operator": "equals",
+              "ExpectedValue": "200",
+              "Description": ""
+            },
+            {
+              "Type": "JsonPath",
+              "Target": "$.success",
+              "Operator": "equals",
+              "ExpectedValue": "True",
+              "Description": "检查JsonPath"
+            }
+          ],
+          "VariableExtractions": {},
+          "Cookies": {},
+          "Auth": {
+            "Type": "Bearer",
+            "Username": "",
+            "Password": "",
+            "Token": "{{delivery_accessToken}}",
+            "ApiKeyName": "",
+            "ApiKeyValue": "",
+            "ApiKeyLocation": "Header"
+          },
+          "TimeoutMs": 30000,
+          "FollowRedirects": true,
+          "VerifySSL": true,
+          "ServiceId": "2000004"
+        },
+        "UiConfig": null,
+        "ScriptConfig": null
+      },
+      {
+        "Id": "8500065",
+        "Name": "Shop 订单断言",
+        "Type": 1,
+        "Parameters": {},
+        "ExpectedResult": "",
+        "Order": 6,
+        "IsEnabled": true,
+        "ApiConfig": {
+          "Method": "POST",
+          "Url": "/api/Order/GetOrder",
+          "Headers": {
+            "Content-Type": "application/json",
+            "appid": "{{appid}}"
+          },
+          "Params": {
+            "orderId": "{{orderId}}"
+          },
+          "Body": "{\n    \"orderId\": \"{{orderId}}\"\n}",
+          "BodyType": "json",
+          "Assertions": [
+            {
+              "Type": "StatusCode",
+              "Target": "",
+              "Operator": "equals",
+              "ExpectedValue": "200",
+              "Description": ""
+            },
+            {
+              "Type": "JsonPath",
+              "Target": "$.success",
+              "Operator": "equals",
+              "ExpectedValue": "True",
+              "Description": "检查JsonPath"
+            }
+          ],
+          "VariableExtractions": {},
+          "Cookies": {},
+          "Auth": {
+            "Type": "Bearer",
+            "Username": "",
+            "Password": "",
+            "Token": "{{shop_accessToken}}",
+            "ApiKeyName": "",
+            "ApiKeyValue": "",
+            "ApiKeyLocation": "Header"
+          },
+          "TimeoutMs": 30000,
+          "FollowRedirects": true,
+          "VerifySSL": true,
+          "ServiceId": "2000005"
+        },
+        "UiConfig": null,
+        "ScriptConfig": null
+      }
+    ],
+    "Order": 11,
+    "Status": 1,
+    "LastExecutionResult": null,
+    "LastExecutionTime": null
+  },
+  {
+    "Id": "8000017",
+    "Name": "多子订单",
+    "Description": "成功回调+下单失败",
+    "ProjectId": "在线点餐",
+    "CategoryId": "7000012",
+    "IsTemplate": false,
+    "TemplateId": "",
+    "Level": "P0",
+    "Steps": [],
+    "Order": 13,
     "Status": 1,
     "LastExecutionResult": null,
     "LastExecutionTime": null
