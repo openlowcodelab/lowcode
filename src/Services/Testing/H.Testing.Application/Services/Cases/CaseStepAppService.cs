@@ -1,6 +1,7 @@
 using H.Testing.Application.Contracts;
 using H.Testing.Application.Mapping;
 using H.Testing.EntityFrameworkCore;
+using H.Util.Base;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 
@@ -18,41 +19,42 @@ public class CaseStepAppService : ApplicationService, ICaseStepAppService
         _repository = repository;
     }
 
-    public async Task<List<CaseStepDto>> GetByCaseIdAsync(long caseId)
+    public async Task<BaseOutput<List<CaseStepDto>>> GetByCaseIdAsync(long caseId)
     {
         var query = await _repository.GetQueryableAsync();
         var steps = await AsyncExecuter.ToListAsync(
             query.Where(s => s.CaseId == caseId).OrderBy(s => s.Order).ThenBy(s => s.Id));
-        return steps.Select(e => e.ToDto()).ToList();
+        return new(steps.Select(e => e.ToDto()).ToList());
     }
 
-    public async Task<Dictionary<long, List<CaseStepDto>>> GetByCaseIdsAsync(IEnumerable<long> caseIds)
+    public async Task<BaseOutput<Dictionary<long, List<CaseStepDto>>>> GetByCaseIdsAsync(IEnumerable<long> caseIds)
     {
         var ids = caseIds.ToList();
         if (ids.Count == 0)
         {
-            return new Dictionary<long, List<CaseStepDto>>();
+            return new(new Dictionary<long, List<CaseStepDto>>());
         }
 
         var query = await _repository.GetQueryableAsync();
         var steps = await AsyncExecuter.ToListAsync(
             query.Where(s => ids.Contains(s.CaseId)).OrderBy(s => s.Order).ThenBy(s => s.Id));
-        return steps.GroupBy(s => s.CaseId)
-            .ToDictionary(g => g.Key, g => g.Select(e => e.ToDto()).ToList());
+        return new(steps.GroupBy(s => s.CaseId)
+            .ToDictionary(g => g.Key, g => g.Select(e => e.ToDto()).ToList()));
     }
 
-    public async Task SaveAsync(long caseId, List<CaseStepDto> steps)
+    public async Task<BaseOutput> SaveAsync(long caseId, List<CaseStepDto> steps)
     {
         if (steps.Count == 0)
         {
-            return;
+            return new();
         }
 
         var entities = steps.Select(s => s.ToEntity(caseId)).ToList();
         await _repository.InsertManyAsync(entities, autoSave: true);
+        return new();
     }
 
-    public async Task SyncAsync(long caseId, List<CaseStepDto> steps)
+    public async Task<BaseOutput> SyncAsync(long caseId, List<CaseStepDto> steps)
     {
         var query = await _repository.GetQueryableAsync();
         var existing = await AsyncExecuter.ToListAsync(query.Where(s => s.CaseId == caseId));
@@ -79,10 +81,12 @@ public class CaseStepAppService : ApplicationService, ICaseStepAppService
         if (toDelete.Count > 0) await _repository.DeleteManyAsync(toDelete, autoSave: true);
         if (toUpdate.Count > 0) await _repository.UpdateManyAsync(toUpdate, autoSave: true);
         if (toInsert.Count > 0) await _repository.InsertManyAsync(toInsert, autoSave: true);
+        return new();
     }
 
-    public async Task DeleteByCaseIdAsync(long caseId)
+    public async Task<BaseOutput> DeleteByCaseIdAsync(long caseId)
     {
         await _repository.DeleteAsync(s => s.CaseId == caseId, autoSave: true);
+        return new();
     }
 }

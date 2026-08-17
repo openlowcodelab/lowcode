@@ -1,6 +1,7 @@
 using AutoMapper;
 using H.Assistant.Application.Contracts;
 using H.Assistant.EntityFrameworkCore;
+using H.Util.Base;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 
@@ -25,7 +26,7 @@ public class KnowledgeBaseAppService : ApplicationService, IKnowledgeBaseAppServ
         _objectMapper = objectMapper;
     }
 
-    public async Task<List<KnowledgeBaseDto>> GetListAsync()
+    public async Task<BaseOutput<List<KnowledgeBaseDto>>> GetListAsync()
     {
         var queryable = await _knowledgeBaseRepository.GetQueryableAsync();
         var bases = await AsyncExecuter.ToListAsync(queryable.OrderBy(x => x.SortOrder));
@@ -46,10 +47,10 @@ public class KnowledgeBaseAppService : ApplicationService, IKnowledgeBaseAppServ
             return dto;
         }).ToList();
 
-        return result;
+        return new(result);
     }
 
-    public async Task<KnowledgeBaseDto> GetAsync(Guid id)
+    public async Task<BaseOutput<KnowledgeBaseDto>> GetAsync(Guid id)
     {
         var entity = await _knowledgeBaseRepository.FindAsync(id);
         if (entity == null)
@@ -57,20 +58,20 @@ public class KnowledgeBaseAppService : ApplicationService, IKnowledgeBaseAppServ
             throw new InvalidOperationException($"知识库 {id} 不存在");
         }
 
-        return _objectMapper.Map<KnowledgeBaseEntity, KnowledgeBaseDto>(entity);
+        return new(_objectMapper.Map<KnowledgeBaseEntity, KnowledgeBaseDto>(entity));
     }
 
-    public async Task<KnowledgeBaseDto> CreateAsync(CreateKnowledgeBaseDto input)
+    public async Task<BaseOutput<KnowledgeBaseDto>> CreateAsync(CreateKnowledgeBaseDto input)
     {
         await EnsureNameUniqueAsync(input.Name);
 
         var entity = _objectMapper.Map<KnowledgeBaseEntity>(input);
-        await _knowledgeBaseRepository.InsertAsync(entity);
+        entity = await _knowledgeBaseRepository.InsertAsync(entity);
 
-        return _objectMapper.Map<KnowledgeBaseEntity, KnowledgeBaseDto>(entity);
+        return new(_objectMapper.Map<KnowledgeBaseEntity, KnowledgeBaseDto>(entity));
     }
 
-    public async Task<KnowledgeBaseDto> UpdateAsync(Guid id, UpdateKnowledgeBaseDto input)
+    public async Task<BaseOutput<KnowledgeBaseDto>> UpdateAsync(Guid id, UpdateKnowledgeBaseDto input)
     {
         var entity = await _knowledgeBaseRepository.FindAsync(id);
         if (entity == null)
@@ -83,12 +84,12 @@ public class KnowledgeBaseAppService : ApplicationService, IKnowledgeBaseAppServ
         entity.Name = input.Name;
         entity.Description = input.Description;
         entity.SortOrder = input.SortOrder;
-        await _knowledgeBaseRepository.UpdateAsync(entity);
+        entity = await _knowledgeBaseRepository.UpdateAsync(entity);
 
-        return _objectMapper.Map<KnowledgeBaseEntity, KnowledgeBaseDto>(entity);
+        return new(_objectMapper.Map<KnowledgeBaseEntity, KnowledgeBaseDto>(entity));
     }
 
-    public async Task DeleteAsync(Guid id)
+    public async Task<BaseOutput> DeleteAsync(Guid id)
     {
         var entity = await _knowledgeBaseRepository.FindAsync(id);
         if (entity == null)
@@ -115,6 +116,8 @@ public class KnowledgeBaseAppService : ApplicationService, IKnowledgeBaseAppServ
         }
 
         await _knowledgeBaseRepository.DeleteAsync(entity);
+
+        return new();
     }
 
     private async Task EnsureNameUniqueAsync(string name, Guid? excludeId = null)

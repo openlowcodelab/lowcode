@@ -1,6 +1,7 @@
 using H.Account.Application.Contracts;
 using H.Organization.Application.Contracts;
 using H.Organization.EntityFrameworkCore;
+using H.Util.Base;
 using Microsoft.EntityFrameworkCore;
 using Volo.Abp.Application.Services;
 
@@ -23,7 +24,7 @@ public class MemberAppService : ApplicationService, IMemberAppService
     /// <summary>
     /// 获取成员列表
     /// </summary>
-    public async Task<H.Organization.Application.Contracts.PagedResult<MemberDto>> GetListAsync(MemberQueryParams queryParams)
+    public async Task<BaseOutput<H.Organization.Application.Contracts.PagedResult<MemberDto>>> GetListAsync(MemberQueryParams queryParams)
     {
         var query = _context.Members
             .Include(x => x.Organization)
@@ -81,7 +82,7 @@ public class MemberAppService : ApplicationService, IMemberAppService
         {
             try
             {
-                var user = await _userService.GetUserDtoByIdAsync(item.UserId);
+                var user = (await _userService.GetUserDtoByIdAsync(item.UserId)).Data;
                 if (user != null)
                 {
                     item.Email = user.Email;
@@ -94,25 +95,25 @@ public class MemberAppService : ApplicationService, IMemberAppService
             }
         }
 
-        return new H.Organization.Application.Contracts.PagedResult<MemberDto>
+        return new(new H.Organization.Application.Contracts.PagedResult<MemberDto>
         {
             Items = items,
             TotalCount = totalCount,
             PageIndex = queryParams.PageIndex,
             PageSize = queryParams.PageSize
-        };
+        });
     }
 
     /// <summary>
     /// 获取成员详情
     /// </summary>
-    public async Task<MemberDto?> GetByIdAsync(Guid id)
+    public async Task<BaseOutput<MemberDto>> GetByIdAsync(Guid id)
     {
         var entity = await _context.Members
             .Include(x => x.Organization)
             .FirstOrDefaultAsync(x => x.Id == id);
 
-        if (entity == null) return null;
+        if (entity == null) return new(null);
 
         var dto = new MemberDto
         {
@@ -133,7 +134,7 @@ public class MemberAppService : ApplicationService, IMemberAppService
         // 尝试从 Account 服务获取用户的邮箱和手机号
         try
         {
-            var user = await _userService.GetUserDtoByIdAsync(entity.UserId);
+            var user = (await _userService.GetUserDtoByIdAsync(entity.UserId)).Data;
             if (user != null)
             {
                 dto.Email = user.Email;
@@ -145,13 +146,13 @@ public class MemberAppService : ApplicationService, IMemberAppService
             // 忽略错误，使用本地数据
         }
 
-        return dto;
+        return new(dto);
     }
 
     /// <summary>
     /// 添加成员（从Account服务获取用户信息）
     /// </summary>
-    public async Task<MemberDto> AddAsync(AddMemberDto input)
+    public async Task<BaseOutput<MemberDto>> AddAsync(AddMemberDto input)
     {
         // 检查用户是否已是部门成员
         var exists = await _context.Members.AnyAsync(x =>
@@ -175,7 +176,7 @@ public class MemberAppService : ApplicationService, IMemberAppService
         string userName = string.Empty;
         try
         {
-            var user = await _userService.GetUserDtoByIdAsync(input.UserId);
+            var user = (await _userService.GetUserDtoByIdAsync(input.UserId)).Data;
             if (user != null)
             {
                 userName = user.UserName;
@@ -206,13 +207,14 @@ public class MemberAppService : ApplicationService, IMemberAppService
         _context.Members.Add(entity);
         await _context.SaveChangesAsync();
 
-        return await GetByIdAsync(entity.Id) ?? throw new Exception("添加成员失败");
+        var added = await GetByIdAsync(entity.Id);
+        return new(added.Data ?? throw new Exception("添加成员失败"));
     }
 
     /// <summary>
     /// 批量添加成员（一个用户关联多个部门）
     /// </summary>
-    public async Task<List<MemberDto>> AddBatchAsync(AddMemberBatchDto input)
+    public async Task<BaseOutput<List<MemberDto>>> AddBatchAsync(AddMemberBatchDto input)
     {
         if (input.OrganizationIds == null || input.OrganizationIds.Count == 0)
             throw new Exception("请选择至少一个部门");
@@ -221,7 +223,7 @@ public class MemberAppService : ApplicationService, IMemberAppService
         string userName = string.Empty;
         try
         {
-            var user = await _userService.GetUserDtoByIdAsync(input.UserId);
+            var user = (await _userService.GetUserDtoByIdAsync(input.UserId)).Data;
             if (user != null)
             {
                 userName = user.UserName;
@@ -282,17 +284,17 @@ public class MemberAppService : ApplicationService, IMemberAppService
         var result = new List<MemberDto>();
         foreach (var id in createdIds)
         {
-            var dto = await GetByIdAsync(id);
+            var dto = (await GetByIdAsync(id)).Data;
             if (dto != null)
                 result.Add(dto);
         }
-        return result;
+        return new(result);
     }
 
     /// <summary>
     /// 搜索可分配用户（用于成员选择器）
     /// </summary>
-    public async Task<List<AssignableUserDto>> SearchAssignableUsersAsync(string? keyword)
+    public async Task<BaseOutput<List<AssignableUserDto>>> SearchAssignableUsersAsync(string? keyword)
     {
         var result = await _userService.GetPagedUsersAsync(new H.Account.Application.Contracts.UserQueryParams
         {
@@ -301,19 +303,21 @@ public class MemberAppService : ApplicationService, IMemberAppService
             PageSize = 50
         });
 
-        return result.Items.Select(u => new AssignableUserDto
+        var users = result.Data?.Items ?? new List<H.Account.Application.Contracts.UserDto>();
+
+        return new(users.Select(u => new AssignableUserDto
         {
             UserId = u.Id,
             UserName = u.UserName,
             Email = u.Email,
             PhoneNumber = u.PhoneNumber
-        }).ToList();
+        }).ToList());
     }
 
     /// <summary>
     /// 为成员分配角色（全量重建）
     /// </summary>
-    public async Task AssignRolesAsync(Guid memberId, AssignMemberRolesDto input)
+    public async Task<BaseOutput> AssignRolesAsync(Guid memberId, AssignMemberRolesDto input)
     {
         var member = await _context.Members.FindAsync(memberId);
         if (member == null)
@@ -337,23 +341,25 @@ public class MemberAppService : ApplicationService, IMemberAppService
         }
 
         await _context.SaveChangesAsync();
+        return new();
     }
 
     /// <summary>
     /// 获取成员已授角色ID列表
     /// </summary>
-    public async Task<List<Guid>> GetMemberRoleIdsAsync(Guid memberId)
+    public async Task<BaseOutput<List<Guid>>> GetMemberRoleIdsAsync(Guid memberId)
     {
-        return await _context.RoleMembers
+        var roleIds = await _context.RoleMembers
             .Where(x => x.MemberId == memberId)
             .Select(x => x.RoleId)
             .ToListAsync();
+        return new(roleIds);
     }
 
     /// <summary>
     /// 更新成员
     /// </summary>
-    public async Task<MemberDto> UpdateAsync(Guid id, UpdateMemberDto input)
+    public async Task<BaseOutput<MemberDto>> UpdateAsync(Guid id, UpdateMemberDto input)
     {
         var entity = await _context.Members.FindAsync(id);
         if (entity == null)
@@ -380,13 +386,14 @@ public class MemberAppService : ApplicationService, IMemberAppService
 
         await _context.SaveChangesAsync();
 
-        return await GetByIdAsync(id) ?? throw new Exception("更新成员失败");
+        var updated = await GetByIdAsync(id);
+        return new(updated.Data ?? throw new Exception("更新成员失败"));
     }
 
     /// <summary>
     /// 删除成员
     /// </summary>
-    public async Task DeleteAsync(Guid id)
+    public async Task<BaseOutput> DeleteAsync(Guid id)
     {
         var entity = await _context.Members.FindAsync(id);
         if (entity == null)
@@ -394,23 +401,25 @@ public class MemberAppService : ApplicationService, IMemberAppService
 
         _context.Members.Remove(entity);
         await _context.SaveChangesAsync();
+        return new();
     }
 
     /// <summary>
     /// 批量删除成员
     /// </summary>
-    public async Task BatchDeleteAsync(List<Guid> ids)
+    public async Task<BaseOutput> BatchDeleteAsync(List<Guid> ids)
     {
         foreach (var id in ids)
         {
             await DeleteAsync(id);
         }
+        return new();
     }
 
     /// <summary>
     /// 获取部门下所有成员
     /// </summary>
-    public async Task<List<MemberDto>> GetMembersByOrganizationIdAsync(Guid organizationId)
+    public async Task<BaseOutput<List<MemberDto>>> GetMembersByOrganizationIdAsync(Guid organizationId)
     {
         var items = await _context.Members
             .Include(x => x.Organization)
@@ -442,7 +451,7 @@ public class MemberAppService : ApplicationService, IMemberAppService
         {
             try
             {
-                var user = await _userService.GetUserDtoByIdAsync(item.UserId);
+                var user = (await _userService.GetUserDtoByIdAsync(item.UserId)).Data;
                 if (user != null)
                 {
                     item.Email = user.Email;
@@ -455,16 +464,17 @@ public class MemberAppService : ApplicationService, IMemberAppService
             }
         }
 
-        return items;
+        return new(items);
     }
 
     /// <summary>
     /// 检查用户是否已是部门成员
     /// </summary>
-    public async Task<bool> ExistsAsync(Guid organizationId, Guid userId)
+    public async Task<BaseOutput<bool>> ExistsAsync(Guid organizationId, Guid userId)
     {
-        return await _context.Members.AnyAsync(x =>
+        var exists = await _context.Members.AnyAsync(x =>
             x.OrganizationId == organizationId && x.UserId == userId);
+        return new(exists);
     }
 
     private static string GetMemberTypeName(int memberType)

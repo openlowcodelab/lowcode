@@ -1,5 +1,6 @@
 using H.Approval.Application.Contracts;
 using H.Approval.EntityFrameworkCore;
+using H.Util.Base;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System.Security.Claims;
@@ -38,32 +39,32 @@ public class ApprovalTaskAppService : ApplicationService, IApprovalTaskAppServic
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public async Task<List<ApprovalTaskDto>> GetPendingTasksAsync()
+    public async Task<BaseOutput<List<ApprovalTaskDto>>> GetPendingTasksAsync()
     {
         var (userId, _) = GetCurrentUser();
         _logger.LogInformation("获取待审批任务: UserId={UserId}", userId);
 
         var entities = await _taskRepository.GetPendingByAssigneeIdAsync(userId);
-        return entities.Select(MapToDto).ToList();
+        return new(entities.Select(MapToDto).ToList());
     }
 
-    public async Task<List<ApprovalTaskDto>> GetCompletedTasksAsync()
+    public async Task<BaseOutput<List<ApprovalTaskDto>>> GetCompletedTasksAsync()
     {
         var (userId, _) = GetCurrentUser();
         _logger.LogInformation("获取已审批任务: UserId={UserId}", userId);
 
         var entities = await _taskRepository.GetCompletedByAssigneeIdAsync(userId);
-        return entities.Select(MapToDto).ToList();
+        return new(entities.Select(MapToDto).ToList());
     }
 
-    public async Task<List<ApprovalTaskDto>> GetByInstanceIdAsync(string instanceId)
+    public async Task<BaseOutput<List<ApprovalTaskDto>>> GetByInstanceIdAsync(string instanceId)
     {
         _logger.LogInformation("获取实例任务历史: InstanceId={InstanceId}", instanceId);
         var entities = await _taskRepository.GetByInstanceIdAsync(instanceId);
-        return entities.Select(MapToDto).ToList();
+        return new(entities.Select(MapToDto).ToList());
     }
 
-    public async Task ApproveAsync(ApprovalTaskActionDto input)
+    public async Task<BaseOutput> ApproveAsync(ApprovalTaskActionDto input)
     {
         var approved = input.Action == 1;
         _logger.LogInformation("审批任务: TaskId={TaskId}, Action={Action}",
@@ -91,7 +92,7 @@ public class ApprovalTaskAppService : ApplicationService, IApprovalTaskAppServic
         if (instance == null)
         {
             _logger.LogWarning("审批任务对应的实例不存在: InstanceId={InstanceId}", entity.InstanceId);
-            return;
+            return new();
         }
 
         if (!approved)
@@ -103,11 +104,11 @@ public class ApprovalTaskAppService : ApplicationService, IApprovalTaskAppServic
             instance.CurrentNodeName = $"{entity.NodeName}(已驳回)";
             await _instanceRepository.UpdateAsync(instance);
             _logger.LogInformation("审批已驳回,实例结束: InstanceId={InstanceId}", instance.Id);
-            return;
+            return new();
         }
 
         // 通过: 需要判断审批模式
-        var definition = await _definitionService.GetByIdAsync(instance.DefinitionId);
+        var definition = (await _definitionService.GetByIdAsync(instance.DefinitionId)).Data!;
         var root = _workflowEngine.ParseDefinition(definition.DefinitionJson);
 
         if (root == null || string.IsNullOrEmpty(instance.CurrentNodeId))
@@ -116,7 +117,7 @@ public class ApprovalTaskAppService : ApplicationService, IApprovalTaskAppServic
             instance.CompletionTime = DateTime.Now;
             await _instanceRepository.UpdateAsync(instance);
             _logger.LogInformation("无后续流程节点,实例完成: InstanceId={InstanceId}", instance.Id);
-            return;
+            return new();
         }
 
         // 查找当前审批节点
@@ -134,12 +135,14 @@ public class ApprovalTaskAppService : ApplicationService, IApprovalTaskAppServic
             {
                 // 会签: 还有其他审批人未处理,等待
                 _logger.LogInformation("会签模式: 等待其他审批人处理: NodeId={NodeId}", entity.NodeId);
-                return;
+                return new();
             }
         }
 
         // 流转到下一节点
         await AdvanceToNextNode(instance, entity, root, definition.Name);
+
+        return new();
     }
 
     /// <summary>

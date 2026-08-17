@@ -1,4 +1,5 @@
 using H.Abp.Application.Contracts;
+using H.Util.Base;
 
 namespace H.Testing.Application.Contracts;
 
@@ -10,25 +11,25 @@ public interface ICaseCategoryAppService : IAppService
     /// <summary>
     /// 根据项目 ID 获取分类列表
     /// </summary>
-    Task<List<CaseCategoryDto>> GetByProjectIdAsync(long projectId);
+    Task<BaseOutput<List<CaseCategoryDto>>> GetByProjectIdAsync(long projectId);
 
     /// <summary>
     /// 创建新的测试用例分类
     /// </summary>
-    Task<CaseCategoryDto> CreateAsync(CaseCategoryDto category);
+    Task<BaseOutput<CaseCategoryDto>> CreateAsync(CaseCategoryDto category);
 
     /// <summary>
     /// 更新测试用例分类
     /// </summary>
-    Task<bool> UpdateAsync(long id, CaseCategoryDto category);
+    Task<BaseOutput<bool>> UpdateAsync(long id, CaseCategoryDto category);
 
     /// <summary>
     /// 删除测试用例分类
     /// </summary>
-    Task<bool> DeleteAsync(long projectId, long id);
+    Task<BaseOutput<bool>> DeleteAsync(long projectId, long id);
 
     /// <summary>
     /// 获取树形结构的分类列表
     /// </summary>
-    Task<List<CaseCategoryDto>> GetTreeStructureAsync(long projectId);
+    Task<BaseOutput<List<CaseCategoryDto>>> GetTreeStructureAsync(long projectId);
 }

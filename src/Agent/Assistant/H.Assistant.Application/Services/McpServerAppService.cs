@@ -1,5 +1,6 @@
 using H.Assistant.Application.Contracts;
 using H.Assistant.EntityFrameworkCore;
+using H.Util.Base;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 
@@ -17,14 +18,14 @@ public class McpServerAppService : ApplicationService, IMcpServerAppService
         _repository = repository;
     }
 
-    public async Task<List<McpServerDto>> GetAllAsync()
+    public async Task<BaseOutput<List<McpServerDto>>> GetAllAsync()
     {
         var query = await _repository.GetQueryableAsync();
         var entities = await AsyncExecuter.ToListAsync(query.OrderBy(x => x.Name));
-        return entities.Select(MapToDto).ToList();
+        return new(entities.Select(MapToDto).ToList());
     }
 
-    public async Task<McpServerDto> CreateAsync(CreateMcpServerDto input)
+    public async Task<BaseOutput<McpServerDto>> CreateAsync(CreateMcpServerDto input)
     {
         var query = await _repository.GetQueryableAsync();
         if (await AsyncExecuter.AnyAsync(query.Where(x => x.Name == input.Name)))
@@ -45,11 +46,11 @@ public class McpServerAppService : ApplicationService, IMcpServerAppService
             IsEnabled = input.IsEnabled
         };
 
-        await _repository.InsertAsync(entity);
-        return MapToDto(entity);
+        entity = await _repository.InsertAsync(entity);
+        return new(MapToDto(entity));
     }
 
-    public async Task<McpServerDto> UpdateAsync(Guid id, UpdateMcpServerDto input)
+    public async Task<BaseOutput<McpServerDto>> UpdateAsync(Guid id, UpdateMcpServerDto input)
     {
         var entity = await _repository.GetAsync(id);
 
@@ -62,20 +63,22 @@ public class McpServerAppService : ApplicationService, IMcpServerAppService
         entity.TimeoutSeconds = input.TimeoutSeconds;
         entity.IsEnabled = input.IsEnabled;
 
-        await _repository.UpdateAsync(entity);
-        return MapToDto(entity);
+        entity = await _repository.UpdateAsync(entity);
+        return new(MapToDto(entity));
     }
 
-    public async Task DeleteAsync(Guid id)
+    public async Task<BaseOutput> DeleteAsync(Guid id)
     {
         await _repository.DeleteAsync(id);
+        return new();
     }
 
-    public async Task ToggleEnabledAsync(Guid id, bool isEnabled)
+    public async Task<BaseOutput> ToggleEnabledAsync(Guid id, bool isEnabled)
     {
         var entity = await _repository.GetAsync(id);
         entity.IsEnabled = isEnabled;
         await _repository.UpdateAsync(entity);
+        return new();
     }
 
     private static McpServerDto MapToDto(McpServerEntity entity)

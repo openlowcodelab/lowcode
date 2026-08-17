@@ -32,7 +32,7 @@ public partial class McpSettingsViewModel : ObservableObject
         Loading = true;
         try
         {
-            var servers = await _mcpServerAppService.GetAllAsync();
+            var servers = (await _mcpServerAppService.GetAllAsync()).Data ?? [];
             Servers.Clear();
             foreach (var server in servers)
             {

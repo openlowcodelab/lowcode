@@ -104,7 +104,7 @@
         await base.OnInitializedAsync();
 
         // 先尝试获取所有组件库
-        var libraries = await ComponentLibraryAppService.GetListAsync();
+        var libraries = (await ComponentLibraryAppService.GetListAsync()).Data;
 
         if (libraries != null && libraries.Count > 0)
         {
@@ -113,7 +113,7 @@
 
             foreach (var lib in libraries)
             {
-                var components = await ComponentPartsAppService.GetAllComponentsAsync(lib.LibraryId);
+                var components = (await ComponentPartsAppService.GetAllComponentsAsync(lib.LibraryId)).Data;
                 if (components != null && components.Count > 0)
                 {
                     ComponentsByLibrary[lib.LibraryId] = new List<ComponentPartsSchema>(components);

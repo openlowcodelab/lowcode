@@ -988,7 +988,7 @@ else
 
         try
         {
-            aiGenerated = await TestingAiService.GenerateProjectAsync(new AiGenerateInputDto { Description = aiDescription });
+            aiGenerated = (await TestingAiService.GenerateProjectAsync(new AiGenerateInputDto { Description = aiDescription })).Data;
         }
         catch (Exception ex)
         {
@@ -1010,7 +1010,7 @@ else
 
         try
         {
-            var projectId = await TestingAiService.CreateProjectFromAiAsync(aiGenerated);
+            var projectId = (await TestingAiService.CreateProjectFromAiAsync(aiGenerated)).Data;
             showAiModal = false;
             await LoadData();
             await JSRuntime.InvokeVoidAsync("localStorage.setItem", "lastSelectedProjectId", projectId.ToString());
@@ -1087,9 +1087,9 @@ else
     private async Task LoadData()
     {
         loading = true;
-        projects = await ProjectService.GetAllAsync();
-        environments = await ProjectEnvAppService.GetAllAsync();
-        templates = await ProjectTemplateService.GetTemplatesAsync();
+        projects = (await ProjectService.GetAllAsync()).Data ?? [];
+        environments = (await ProjectEnvAppService.GetAllAsync()).Data ?? [];
+        templates = (await ProjectTemplateService.GetTemplatesAsync()).Data ?? [];
         filteredProjects = projects.ToList();
         loading = false;
         StateHasChanged();
@@ -1130,7 +1130,7 @@ else
             }
             else if (selectedTemplateId != null)
             {
-                var projectId = await ProjectTemplateService.CreateProjectFromTemplateAsync(selectedTemplateId, currentProject.Name, currentProject.Description);
+                var projectId = (await ProjectTemplateService.CreateProjectFromTemplateAsync(selectedTemplateId, currentProject.Name, currentProject.Description)).Data;
                 HideProjectModal();
                 await LoadData();
                 await JSRuntime.InvokeVoidAsync("localStorage.setItem", "lastSelectedProjectId", projectId.ToString());
@@ -1189,7 +1189,7 @@ else
     // === 模板管理 ===
     private async Task ShowTemplateManagementModal()
     {
-        templates = await ProjectTemplateService.GetTemplatesAsync();
+        templates = (await ProjectTemplateService.GetTemplatesAsync()).Data ?? [];
         showTemplateManagementModal = true;
     }
 
@@ -1211,7 +1211,7 @@ else
         {
             await ProjectTemplateService.UpdateTemplateAsync(editingTemplateId, editTemplateInfo.Name, editTemplateInfo.Description);
             HideEditTemplateModal();
-            templates = await ProjectTemplateService.GetTemplatesAsync();
+            templates = (await ProjectTemplateService.GetTemplatesAsync()).Data ?? [];
         }
         catch (Exception ex) { await JSRuntime.InvokeVoidAsync("alert", $"保存模板失败: {ex.Message}"); }
     }
@@ -1221,7 +1221,7 @@ else
         if (await JSRuntime.InvokeAsync<bool>("confirm", $"确定要删除模板 '{tpl.Name}' 吗？"))
         {
             await ProjectTemplateService.DeleteTemplateAsync(tpl.Id);
-            templates = await ProjectTemplateService.GetTemplatesAsync();
+            templates = (await ProjectTemplateService.GetTemplatesAsync()).Data ?? [];
         }
     }
 
@@ -1265,7 +1265,7 @@ else
     private async Task SaveEnvironment()
     {
         await ProjectEnvAppService.CreateAsync(currentEnvironment);
-        environments = await ProjectEnvAppService.GetAllAsync();
+        environments = (await ProjectEnvAppService.GetAllAsync()).Data ?? [];
         if (selectedProject != null) projectEnvironments = GetProjectEnvironments(selectedProject.Id);
         HideAddEnvironmentModal();
         StateHasChanged();
@@ -1280,7 +1280,7 @@ else
     private async Task DeleteEnvironment(long environmentId)
     {
         await ProjectEnvAppService.DeleteAsync(environmentId);
-        environments = await ProjectEnvAppService.GetAllAsync();
+        environments = (await ProjectEnvAppService.GetAllAsync()).Data ?? [];
         if (selectedProject != null)
         {
             projectEnvironments = GetProjectEnvironments(selectedProject.Id);
@@ -1298,7 +1298,7 @@ else
         {
             selectedEnvironment.Variables[newVariableName] = newVariableValue;
             await ProjectEnvAppService.UpdateAsync(selectedEnvironment.Id, selectedEnvironment);
-            environments = await ProjectEnvAppService.GetAllAsync();
+            environments = (await ProjectEnvAppService.GetAllAsync()).Data ?? [];
             if (selectedProject != null) { projectEnvironments = GetProjectEnvironments(selectedProject.Id); selectedEnvironment = projectEnvironments.FirstOrDefault(e => e.Id == selectedEnvironment.Id); }
             HideAddVariableModal();
             StateHasChanged();
@@ -1314,7 +1314,7 @@ else
         {
             selectedEnvironment.Variables[editVariableName] = editVariableValue;
             await ProjectEnvAppService.UpdateAsync(selectedEnvironment.Id, selectedEnvironment);
-            environments = await ProjectEnvAppService.GetAllAsync();
+            environments = (await ProjectEnvAppService.GetAllAsync()).Data ?? [];
             if (selectedProject != null) { projectEnvironments = GetProjectEnvironments(selectedProject.Id); selectedEnvironment = projectEnvironments.FirstOrDefault(e => e.Id == selectedEnvironment.Id); }
             HideEditVariableModal();
             StateHasChanged();
@@ -1327,7 +1327,7 @@ else
         {
             selectedEnvironment.Variables.Remove(key);
             await ProjectEnvAppService.UpdateAsync(selectedEnvironment.Id, selectedEnvironment);
-            environments = await ProjectEnvAppService.GetAllAsync();
+            environments = (await ProjectEnvAppService.GetAllAsync()).Data ?? [];
             if (selectedProject != null) { projectEnvironments = GetProjectEnvironments(selectedProject.Id); selectedEnvironment = projectEnvironments.FirstOrDefault(e => e.Id == selectedEnvironment.Id); }
             StateHasChanged();
         }
@@ -1375,7 +1375,7 @@ else
     };
     private string GetEnvironmentTypeDisplayName(EnvironmentType type) => type switch { EnvironmentType.Development => "开发环境", EnvironmentType.Testing => "集成环境", EnvironmentType.Staging => "预发环境", EnvironmentType.Production => "生产环境", _ => "未知" };
     
-    private async Task ManageProjectServices(ProjectDto project) { selectedProjectForServices = project; projectServices = await ProjectServiceConfigService.GetProjectServicesAsync(project.Id); showProjectServiceManagementModal = true; }
+    private async Task ManageProjectServices(ProjectDto project) { selectedProjectForServices = project; projectServices = (await ProjectServiceConfigService.GetProjectServicesAsync(project.Id)).Data ?? []; showProjectServiceManagementModal = true; }
     private void HideProjectServiceManagementModal() { showProjectServiceManagementModal = false; selectedProjectForServices = null; projectServices.Clear(); }
     private void ShowAddProjectServiceModal() { currentProjectService = new ProjectServiceDto { ProjectId = selectedProjectForServices?.Id ?? 0 }; isEditingProjectService = false; showProjectServiceModal = true; }
     
@@ -1394,7 +1394,7 @@ else
         {
             if (isEditingProjectService) await ProjectServiceConfigService.UpdateProjectServiceAsync(currentProjectService.Id, currentProjectService);
             else await ProjectServiceConfigService.CreateProjectServiceAsync(currentProjectService);
-            projectServices = await ProjectServiceConfigService.GetProjectServicesAsync(selectedProjectForServices.Id);
+            projectServices = (await ProjectServiceConfigService.GetProjectServicesAsync(selectedProjectForServices.Id)).Data ?? [];
             HideProjectServiceModal();
             StateHasChanged();
         }
@@ -1403,14 +1403,14 @@ else
     private async Task DeleteProjectService(long serviceId)
     {
         await ProjectServiceConfigService.DeleteProjectServiceAsync(selectedProjectForServices.Id, serviceId);
-        projectServices = await ProjectServiceConfigService.GetProjectServicesAsync(selectedProjectForServices.Id);
+        projectServices = (await ProjectServiceConfigService.GetProjectServicesAsync(selectedProjectForServices.Id)).Data ?? [];
         await LoadEnvironmentServiceConfigs();
         StateHasChanged();
     }
     
     private async Task LoadEnvironmentServiceConfigs()
     {
-        if (selectedEnvironment != null && selectedProject != null) { serviceConfigViews = await ProjectServiceConfigService.GetServiceConfigViewsAsync(selectedEnvironment.Id, selectedProject.Id); StateHasChanged(); }
+        if (selectedEnvironment != null && selectedProject != null) { serviceConfigViews = (await ProjectServiceConfigService.GetServiceConfigViewsAsync(selectedEnvironment.Id, selectedProject.Id)).Data ?? []; StateHasChanged(); }
     }
     
     private async Task DeleteServiceConfig(long environmentId, long projectServiceId) { await ProjectServiceConfigService.DeleteEnvironmentServiceConfigAsync(environmentId, projectServiceId); await LoadEnvironmentServiceConfigs(); }
@@ -1471,7 +1471,7 @@ else
     private async Task LoadKnowledgeTree()
     {
         if (knowledgeProject == null) return;
-        knowledgeTreeNodes = await ProjectKnowledgeService.GetTreeAsync(knowledgeProject.Id);
+        knowledgeTreeNodes = (await ProjectKnowledgeService.GetTreeAsync(knowledgeProject.Id)).Data ?? [];
     }
 
     /// <summary>
@@ -1493,7 +1493,7 @@ else
     {
         if (node.NodeType != "Document") return;
         selectedKnowledgeNode = node;
-        docContent = await ProjectKnowledgeService.GetDocumentContentAsync(node.Id);
+        docContent = (await ProjectKnowledgeService.GetDocumentContentAsync(node.Id)).Data ?? string.Empty;
         StateHasChanged();
     }
 
@@ -1506,7 +1506,7 @@ else
         try
         {
             var title = nodeType == "Directory" ? "新建目录" : "新建文档";
-            var created = await ProjectKnowledgeService.CreateNodeAsync(knowledgeProject.Id, new CreateProjectKnowledgeNodeInput { Title = title, NodeType = nodeType });
+            var created = (await ProjectKnowledgeService.CreateNodeAsync(knowledgeProject.Id, new CreateProjectKnowledgeNodeInput { Title = title, NodeType = nodeType })).Data!;
             await LoadKnowledgeTree();
             if (created.NodeType == "Document") await SelectKnowledgeNode(created);
             renamingNodeId = created.Id;
@@ -1570,7 +1570,7 @@ else
         StateHasChanged();
         try
         {
-            aiKbGenerated = await ProjectKnowledgeService.GenerateWithAiAsync(knowledgeProject.Id, aiKbDescription);
+            aiKbGenerated = (await ProjectKnowledgeService.GenerateWithAiAsync(knowledgeProject.Id, aiKbDescription)).Data;
         }
         catch (Exception ex) { aiKbError = $"生成失败: {ex.Message}"; }
         finally { aiKbGenerating = false; }
@@ -1586,7 +1586,7 @@ else
         try
         {
             var title = string.IsNullOrWhiteSpace(aiKbGenerated.Title) ? "AI 生成知识" : aiKbGenerated.Title;
-            var created = await ProjectKnowledgeService.CreateNodeAsync(knowledgeProject.Id, new CreateProjectKnowledgeNodeInput { Title = title, NodeType = "Document" });
+            var created = (await ProjectKnowledgeService.CreateNodeAsync(knowledgeProject.Id, new CreateProjectKnowledgeNodeInput { Title = title, NodeType = "Document" })).Data!;
             await ProjectKnowledgeService.SaveDocumentAsync(created.Id, aiKbGenerated.Content);
             await LoadKnowledgeTree();
             selectedKnowledgeNode = FindKnowledgeNode(created.Id);

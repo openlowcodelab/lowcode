@@ -124,7 +124,7 @@
             _loading = true;
             StateHasChanged();
 
-            _componentParts = await ComponentPartsAppService.GetByIdAsync(LibraryId, ComponentId);
+            _componentParts = (await ComponentPartsAppService.GetByIdAsync(LibraryId, ComponentId)).Data;
 
             if (_componentParts == null)
             {
@@ -214,7 +214,7 @@
         };
 
         // 保存基本信息
-        var isSuccess = await ComponentPartsAppService.SaveAsync(componentParts);
+        var isSuccess = (await ComponentPartsAppService.SaveAsync(componentParts)).Data == true;
         if (isSuccess)
         {
             await Message.SuccessAsync("组件创建成功！");
@@ -235,7 +235,7 @@
     private async Task UpdateComponent()
     {
         // 获取现有组件数据
-        var componentParts = await ComponentPartsAppService.GetByIdAsync(LibraryId, ComponentId);
+        var componentParts = (await ComponentPartsAppService.GetByIdAsync(LibraryId, ComponentId)).Data!;
         
         // 更新基本信息
         componentParts.Label = _componentParts.Label;
@@ -248,7 +248,7 @@
         componentParts.Description = _componentParts.Description;
 
         // 保存更新
-        var isSuccess = await ComponentPartsAppService.SaveAsync(componentParts);
+        var isSuccess = (await ComponentPartsAppService.SaveAsync(componentParts)).Data == true;
         if (isSuccess)
         {
             await Message.SuccessAsync("组件更新成功！");

@@ -81,7 +81,7 @@
             return newPage;
         }
 
-        var pageSchema = await PageAppService.GetByIdWithDefineAsync(AppId, PageId);
+        var pageSchema = (await PageAppService.GetByIdWithDefineAsync(AppId, PageId)).Data;
         DragDropStateService.SetPage(AppId, pageSchema);
 
         return pageSchema;
@@ -98,7 +98,7 @@
 
         try
         {
-            var isSuccess = await PageAppService.SaveAsync(pageSchema);
+            var isSuccess = (await PageAppService.SaveAsync(pageSchema)).Data == true;
             if (isSuccess)
             {
                 if (_isNewPage)

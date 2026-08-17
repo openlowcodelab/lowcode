@@ -1,7 +1,8 @@
-﻿using H.LowCode.Application.Contracts;
+using H.LowCode.Application.Contracts;
 using H.LowCode.Entity;
 using H.LowCode.RenderEngine.Domain;
 using H.LowCode.RenderEngine.Domain.Repositories;
+using H.Util.Base;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Volo.Abp;
@@ -16,7 +17,7 @@ public class FormDataAppService : ApplicationService, IFormDataAppService
     private IFormDataRepository _formDataRepository => LazyServiceProvider.GetRequiredService<IFormDataRepository>();
     private IPageRepository _pageRepository => LazyServiceProvider.GetRequiredService<IPageRepository>();
 
-    public async Task<FormDataDto> GetAsync(string appId, string pageId, string id)
+    public async Task<BaseOutput<FormDataDto>> GetAsync(string appId, string pageId, string id)
     {
         var formPageSchema = await _pageRepository.GetAsync(appId, pageId);
         if (formPageSchema == null)
@@ -38,7 +39,7 @@ public class FormDataAppService : ApplicationService, IFormDataAppService
                     }).ToList()
             };
             var defaultDto = ObjectMapper.Map<FormEntity, FormDataDto>(defaultEntity);
-            return defaultDto;
+            return new(defaultDto);
         }
 
         var entity = await _formDataRepository.GetAsync(entityName, id);
@@ -46,10 +47,10 @@ public class FormDataAppService : ApplicationService, IFormDataAppService
             throw new EntityNotFoundException($"Entity {entityName} Not Found: {id}");
 
         var dto = ObjectMapper.Map<FormEntity, FormDataDto>(entity);
-        return dto;
+        return new(dto);
     }
 
-    public async Task<bool> SaveAsync(FormDataDto dto)
+    public async Task<BaseOutput<bool>> SaveAsync(FormDataDto dto)
     {
         if (dto == null)
             throw new ArgumentNullException(nameof(dto));
@@ -109,7 +110,7 @@ public class FormDataAppService : ApplicationService, IFormDataAppService
                 // 更新记录
                 await _formDataRepository.UpdateAsync(entity);
             }
-            return true;
+            return new(true);
         }
         catch (Exception ex)
         {
@@ -342,10 +343,10 @@ public class FormDataAppService : ApplicationService, IFormDataAppService
         }
     }
 
-    public async Task<bool> DeleteAsync(string appId, string pageId, string id)
+    public async Task<BaseOutput<bool>> DeleteAsync(string appId, string pageId, string id)
     {
         var formPageSchema = await _pageRepository.GetAsync(appId, pageId);
 
-        return await _formDataRepository.DeleteAsync(formPageSchema.DataSource.DataSourceValue, id);
+        return new(await _formDataRepository.DeleteAsync(formPageSchema.DataSource.DataSourceValue, id));
     }
 }

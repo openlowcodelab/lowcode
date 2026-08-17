@@ -1,5 +1,6 @@
 using H.Notification.Application.Contracts;
 using H.Notification.Application.Sending;
+using H.Util.Base;
 using Volo.Abp.Application.Services;
 
 namespace H.Notification.Application;
@@ -13,13 +14,15 @@ public class NotificationSendAppService : ApplicationService, INotificationSendA
         _dispatcher = dispatcher;
     }
 
-    public Task<SendNotificationResult> SendAsync(SendNotificationInput input)
+    public async Task<BaseOutput<SendNotificationResult>> SendAsync(SendNotificationInput input)
     {
-        return _dispatcher.DispatchAsync(input.BusinessCode, input.Level, input.Data, input.RecipientIds, "Api");
+        var result = await _dispatcher.DispatchAsync(input.BusinessCode, input.Level, input.Data, input.RecipientIds, "Api");
+        return new(result);
     }
 
-    public Task<SendNotificationResult> TestSendAsync(TestSendInput input)
+    public async Task<BaseOutput<SendNotificationResult>> TestSendAsync(TestSendInput input)
     {
-        return _dispatcher.DispatchAsync(input.BusinessCode, input.Level, input.Data, input.RecipientIds, "Test");
+        var result = await _dispatcher.DispatchAsync(input.BusinessCode, input.Level, input.Data, input.RecipientIds, "Test");
+        return new(result);
     }
 }

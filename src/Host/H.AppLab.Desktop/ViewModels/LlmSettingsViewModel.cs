@@ -32,7 +32,7 @@ public partial class LlmSettingsViewModel : ObservableObject
         Loading = true;
         try
         {
-            var configs = await _llmAppService.GetAllAsync();
+            var configs = (await _llmAppService.GetAllAsync()).Data ?? [];
             Configs.Clear();
             foreach (var config in configs)
             {

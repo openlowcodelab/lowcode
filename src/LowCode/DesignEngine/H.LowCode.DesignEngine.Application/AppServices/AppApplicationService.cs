@@ -3,6 +3,7 @@ using H.LowCode.DesignEngine.Application.Contracts;
 using H.LowCode.DesignEngine.Domain.Repositories;
 using H.LowCode.DesignEngine.Model;
 using H.LowCode.MetaSchema.DesignEngine;
+using H.Util.Base;
 using Microsoft.Extensions.Options;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
@@ -21,9 +22,9 @@ public class AppApplicationService : ApplicationService, IAppApplicationService
         _repository = repository;
     }
 
-    public async Task<IList<AppListModel>> GetAppsAsync()
+    public async Task<BaseOutput<IList<AppListModel>>> GetAppsAsync()
     {
-        var appSchemas = await GetListAsync();
+        var appSchemas = (await GetListAsync()).Data ?? [];
         var apps = appSchemas.Select(x => new AppListModel
         {
             Id = x.Id,
@@ -34,33 +35,33 @@ public class AppApplicationService : ApplicationService, IAppApplicationService
             PublishStatus = x.PublishStatus
         });
 
-        return [.. apps.OrderBy(t => t.Order)];
+        return new([.. apps.OrderBy(t => t.Order)]);
     }
 
-    public async Task<IList<AppPartsSchema>> GetListAsync()
+    public async Task<BaseOutput<IList<AppPartsSchema>>> GetListAsync()
     {
-        return await _repository.GetListAsync();
+        return new(await _repository.GetListAsync());
     }
 
-    public async Task<AppPartsSchema> GetByIdAsync(string appId)
+    public async Task<BaseOutput<AppPartsSchema>> GetByIdAsync(string appId)
     {
-        return await _repository.GetAsync(appId);
+        return new(await _repository.GetAsync(appId));
     }
 
-    public async Task<bool> SaveAsync(AppPartsSchema appSchema)
+    public async Task<BaseOutput<bool>> SaveAsync(AppPartsSchema appSchema)
     {
         ArgumentNullException.ThrowIfNull(appSchema);
         ArgumentException.ThrowIfNullOrEmpty(appSchema.Id);
 
         await _repository.SaveAsync(appSchema);
-        return true;
+        return new(true);
     }
 
-    public async Task<bool> DeleteAsync(string appId)
+    public async Task<BaseOutput<bool>> DeleteAsync(string appId)
     {
         ArgumentException.ThrowIfNullOrEmpty(appId);
 
         await _repository.DeleteAsync(appId);
-        return true;
+        return new(true);
     }
 }

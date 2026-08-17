@@ -1,6 +1,7 @@
 using AutoMapper;
 using H.Assistant.Application.Contracts;
 using H.Assistant.EntityFrameworkCore;
+using H.Util.Base;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 
@@ -27,7 +28,7 @@ public class KnowledgeDocumentAppService : ApplicationService, IKnowledgeDocumen
 
     #region Node (Tree Structure) Operations
 
-    public async Task<List<KnowledgeNodeDto>> GetTreeAsync(Guid knowledgeBaseId)
+    public async Task<BaseOutput<List<KnowledgeNodeDto>>> GetTreeAsync(Guid knowledgeBaseId)
     {
         var queryable = await _nodeRepository.GetQueryableAsync();
         var allNodes = await AsyncExecuter.ToListAsync(
@@ -52,10 +53,10 @@ public class KnowledgeDocumentAppService : ApplicationService, IKnowledgeDocumen
         var roots = lookup[null].ToList();
         AssignChildren(roots);
 
-        return roots;
+        return new(roots);
     }
 
-    public async Task<KnowledgeNodeDto> CreateNodeAsync(CreateKnowledgeNodeDto input)
+    public async Task<BaseOutput<KnowledgeNodeDto>> CreateNodeAsync(CreateKnowledgeNodeDto input)
     {
         if (input.ParentId.HasValue)
         {
@@ -79,7 +80,7 @@ public class KnowledgeDocumentAppService : ApplicationService, IKnowledgeDocumen
 
         var entity = _objectMapper.Map<KnowledgeNodeEntity>(input);
         entity.OwnerType = OwnerTypes.Knowledge;
-        await _nodeRepository.InsertAsync(entity);
+        entity = await _nodeRepository.InsertAsync(entity);
 
         // If creating a Document node, also create an empty document content
         if (entity.NodeType == "Document")
@@ -92,10 +93,10 @@ public class KnowledgeDocumentAppService : ApplicationService, IKnowledgeDocumen
             await _documentRepository.InsertAsync(document);
         }
 
-        return _objectMapper.Map<KnowledgeNodeEntity, KnowledgeNodeDto>(entity);
+        return new(_objectMapper.Map<KnowledgeNodeEntity, KnowledgeNodeDto>(entity));
     }
 
-    public async Task<KnowledgeNodeDto> UpdateNodeAsync(Guid nodeId, UpdateKnowledgeNodeDto input)
+    public async Task<BaseOutput<KnowledgeNodeDto>> UpdateNodeAsync(Guid nodeId, UpdateKnowledgeNodeDto input)
     {
         var entity = await _nodeRepository.FindAsync(nodeId);
         if (entity == null)
@@ -138,12 +139,12 @@ public class KnowledgeDocumentAppService : ApplicationService, IKnowledgeDocumen
             }
         }
 
-        await _nodeRepository.UpdateAsync(entity);
+        entity = await _nodeRepository.UpdateAsync(entity);
 
-        return _objectMapper.Map<KnowledgeNodeEntity, KnowledgeNodeDto>(entity);
+        return new(_objectMapper.Map<KnowledgeNodeEntity, KnowledgeNodeDto>(entity));
     }
 
-    public async Task DeleteNodeAsync(Guid nodeId)
+    public async Task<BaseOutput> DeleteNodeAsync(Guid nodeId)
     {
         var entity = await _nodeRepository.FindAsync(nodeId);
         if (entity == null)
@@ -169,6 +170,8 @@ public class KnowledgeDocumentAppService : ApplicationService, IKnowledgeDocumen
             await _nodeRepository.DeleteAsync(desc);
         }
         await _nodeRepository.DeleteAsync(entity);
+
+        return new();
     }
 
     private static void CollectDescendants(List<KnowledgeNodeEntity> allNodes, Guid parentId, List<KnowledgeNodeEntity> result)
@@ -187,7 +190,7 @@ public class KnowledgeDocumentAppService : ApplicationService, IKnowledgeDocumen
 
     #region Document Content Operations
 
-    public async Task<KnowledgeDocumentDto?> GetDocumentAsync(Guid nodeId)
+    public async Task<BaseOutput<KnowledgeDocumentDto?>> GetDocumentAsync(Guid nodeId)
     {
         var queryable = await _documentRepository.GetQueryableAsync();
         var doc = await AsyncExecuter.FirstOrDefaultAsync(
@@ -195,13 +198,13 @@ public class KnowledgeDocumentAppService : ApplicationService, IKnowledgeDocumen
 
         if (doc == null)
         {
-            return null;
+            return new(null);
         }
 
-        return _objectMapper.Map<KnowledgeDocumentEntity, KnowledgeDocumentDto>(doc);
+        return new(_objectMapper.Map<KnowledgeDocumentEntity, KnowledgeDocumentDto>(doc));
     }
 
-    public async Task<KnowledgeDocumentDto> SaveDocumentAsync(Guid nodeId, SaveKnowledgeDocumentDto input)
+    public async Task<BaseOutput<KnowledgeDocumentDto>> SaveDocumentAsync(Guid nodeId, SaveKnowledgeDocumentDto input)
     {
         var queryable = await _documentRepository.GetQueryableAsync();
         var doc = await AsyncExecuter.FirstOrDefaultAsync(
@@ -226,15 +229,15 @@ public class KnowledgeDocumentAppService : ApplicationService, IKnowledgeDocumen
                 NodeId = nodeId,
                 Content = input.Content
             };
-            await _documentRepository.InsertAsync(doc);
+            doc = await _documentRepository.InsertAsync(doc);
         }
         else
         {
             doc.Content = input.Content;
-            await _documentRepository.UpdateAsync(doc);
+            doc = await _documentRepository.UpdateAsync(doc);
         }
 
-        return _objectMapper.Map<KnowledgeDocumentEntity, KnowledgeDocumentDto>(doc);
+        return new(_objectMapper.Map<KnowledgeDocumentEntity, KnowledgeDocumentDto>(doc));
     }
 
     #endregion

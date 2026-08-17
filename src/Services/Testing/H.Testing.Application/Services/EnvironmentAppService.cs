@@ -1,6 +1,7 @@
 using H.Testing.Application.Contracts;
 using H.Testing.Application.Mapping;
 using H.Testing.EntityFrameworkCore;
+using H.Util.Base;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 
@@ -19,26 +20,26 @@ public class EnvironmentAppService : ApplicationService, IEnvironmentAppService
         _envRepository = envRepository;
     }
 
-    public async Task<List<EnvironmentDto>> GetByProjectIdAsync(long projectId)
+    public async Task<BaseOutput<List<EnvironmentDto>>> GetByProjectIdAsync(long projectId)
     {
         var envQuery = await _envRepository.GetQueryableAsync();
         var envs = await AsyncExecuter.ToListAsync(
             envQuery.Where(e => e.ProjectId == projectId).OrderBy(e => e.Id));
-        return envs.Select(e => e.ToEnvironmentDto()).ToList();
+        return new(envs.Select(e => e.ToEnvironmentDto()).ToList());
     }
 
-    public async Task<EnvironmentDto?> GetByIdAsync(long projectId, long id)
+    public async Task<BaseOutput<EnvironmentDto?>> GetByIdAsync(long projectId, long id)
     {
         var entity = await _envRepository.FindAsync(id);
         if (entity == null || entity.ProjectId != projectId)
         {
-            return null;
+            return new(null);
         }
 
-        return entity.ToEnvironmentDto();
+        return new(entity.ToEnvironmentDto());
     }
 
-    public async Task<EnvironmentDto> CreateAsync(EnvironmentDto environment)
+    public async Task<BaseOutput<EnvironmentDto>> CreateAsync(EnvironmentDto environment)
     {
         var entity = new ProjectEnvEntity
         {
@@ -50,15 +51,15 @@ public class EnvironmentAppService : ApplicationService, IEnvironmentAppService
         };
         entity = await _envRepository.InsertAsync(entity, autoSave: true);
         environment.Id = entity.Id;
-        return environment;
+        return new(environment);
     }
 
-    public async Task<bool> UpdateAsync(long id, EnvironmentDto environment)
+    public async Task<BaseOutput<bool>> UpdateAsync(long id, EnvironmentDto environment)
     {
         var entity = await _envRepository.FindAsync(id);
         if (entity == null)
         {
-            return false;
+            return new(false);
         }
 
         entity.Name = environment.Name;
@@ -66,18 +67,18 @@ public class EnvironmentAppService : ApplicationService, IEnvironmentAppService
         entity.VariablesJson = System.Text.Json.JsonSerializer.Serialize(
             environment.Config.ToDictionary(kv => kv.Key, kv => kv.Value?.ToString() ?? string.Empty));
         await _envRepository.UpdateAsync(entity, autoSave: true);
-        return true;
+        return new(true);
     }
 
-    public async Task<bool> DeleteAsync(long projectId, long id)
+    public async Task<BaseOutput<bool>> DeleteAsync(long projectId, long id)
     {
         var entity = await _envRepository.FindAsync(id);
         if (entity == null || entity.ProjectId != projectId)
         {
-            return false;
+            return new(false);
         }
 
         await _envRepository.DeleteAsync(entity, autoSave: true);
-        return true;
+        return new(true);
     }
 }

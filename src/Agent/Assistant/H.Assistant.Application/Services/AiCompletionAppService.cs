@@ -1,5 +1,6 @@
 using H.Assistant.Application.Contracts;
 using H.Assistant.Core;
+using H.Util.Base;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
 
@@ -18,7 +19,7 @@ public class AiCompletionAppService : ApplicationService, IAiCompletionAppServic
         _providerFactory = providerFactory;
     }
 
-    public async Task<AiCompletionResultDto> CompleteAsync(AiCompletionInputDto input)
+    public async Task<BaseOutput<AiCompletionResultDto>> CompleteAsync(AiCompletionInputDto input)
     {
         if (string.IsNullOrWhiteSpace(input.UserMessage))
         {
@@ -55,16 +56,16 @@ public class AiCompletionAppService : ApplicationService, IAiCompletionAppServic
             throw ConvertHttpError(ex);
         }
 
-        return new AiCompletionResultDto
+        return new(new AiCompletionResultDto
         {
             Content = response.Content,
             Model = response.Model,
             UsageTokens = response.UsageTokens
-        };
+        });
     }
 
     /// <summary>
-    /// 将模型服务的 HTTP 错误转为友好提示（401 通常为 API Key 错误）
+    /// 将模型服务的 HTTP 错误转为友好提示（401 通常是 API Key 错误）
     /// </summary>
     private static UserFriendlyException ConvertHttpError(HttpRequestException ex)
     {

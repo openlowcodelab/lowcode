@@ -112,13 +112,13 @@
         loading = true;
         try
         {
-            var result = await EnterpriseService.GetListAsync(new EnterpriseQueryParams
+            var result = (await EnterpriseService.GetListAsync(new EnterpriseQueryParams
             {
                 Keyword = string.IsNullOrWhiteSpace(keyword) ? null : keyword,
                 Status = string.IsNullOrWhiteSpace(statusFilter) ? null : statusFilter,
                 PageIndex = pageIndex,
                 PageSize = pageSize
-            });
+            })).Data!;
             enterprises = result.Items;
             totalCount = result.TotalCount;
         }

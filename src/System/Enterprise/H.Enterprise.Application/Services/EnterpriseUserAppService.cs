@@ -1,6 +1,7 @@
 using H.Enterprise.Application.Contracts;
 using H.Enterprise.EntityFrameworkCore;
 using H.Enterprise.EntityFrameworkCore.Entities;
+using H.Util.Base;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -24,7 +25,7 @@ public class EnterpriseUserAppService : ApplicationService, IEnterpriseUserAppSe
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public async Task<List<EnterpriseUserDto>> GetEnterpriseUsersAsync(Guid enterpriseId)
+    public async Task<BaseOutput<List<EnterpriseUserDto>>> GetEnterpriseUsersAsync(Guid enterpriseId)
     {
         var users = await _context.EnterpriseUsers
             .Include(eu => eu.Enterprise)
@@ -33,7 +34,7 @@ public class EnterpriseUserAppService : ApplicationService, IEnterpriseUserAppSe
             .ThenByDescending(eu => eu.JoinedAt)
             .ToListAsync();
 
-        return users.Select(u => new EnterpriseUserDto
+        return new(users.Select(u => new EnterpriseUserDto
         {
             Id = u.Id,
             EnterpriseId = u.EnterpriseId,
@@ -43,10 +44,10 @@ public class EnterpriseUserAppService : ApplicationService, IEnterpriseUserAppSe
             Role = u.Role,
             IsDefault = u.IsDefault,
             JoinedAt = u.JoinedAt
-        }).ToList();
+        }).ToList());
     }
 
-    public async Task AddUserAsync(AddEnterpriseUserDto input)
+    public async Task<BaseOutput> AddUserAsync(AddEnterpriseUserDto input)
     {
         // 检查是否已存在
         var exists = await _context.EnterpriseUsers
@@ -70,9 +71,10 @@ public class EnterpriseUserAppService : ApplicationService, IEnterpriseUserAppSe
 
         _context.EnterpriseUsers.Add(entity);
         await _context.SaveChangesAsync();
+        return new();
     }
 
-    public async Task RemoveUserAsync(Guid enterpriseId, Guid userId)
+    public async Task<BaseOutput> RemoveUserAsync(Guid enterpriseId, Guid userId)
     {
         var entity = await _context.EnterpriseUsers
             .FirstOrDefaultAsync(eu => eu.EnterpriseId == enterpriseId && eu.UserId == userId)
@@ -84,9 +86,10 @@ public class EnterpriseUserAppService : ApplicationService, IEnterpriseUserAppSe
 
         _context.EnterpriseUsers.Remove(entity);
         await _context.SaveChangesAsync();
+        return new();
     }
 
-    public async Task SetDefaultEnterpriseAsync(Guid enterpriseId)
+    public async Task<BaseOutput> SetDefaultEnterpriseAsync(Guid enterpriseId)
     {
         var userId = GetCurrentUserId() ?? throw new Exception("未登录");
 
@@ -101,9 +104,10 @@ public class EnterpriseUserAppService : ApplicationService, IEnterpriseUserAppSe
         }
 
         await _context.SaveChangesAsync();
+        return new();
     }
 
-    public async Task UpdateUserRoleAsync(Guid enterpriseId, Guid userId, string role)
+    public async Task<BaseOutput> UpdateUserRoleAsync(Guid enterpriseId, Guid userId, string role)
     {
         var entity = await _context.EnterpriseUsers
             .FirstOrDefaultAsync(eu => eu.EnterpriseId == enterpriseId && eu.UserId == userId)
@@ -115,6 +119,7 @@ public class EnterpriseUserAppService : ApplicationService, IEnterpriseUserAppSe
 
         entity.Role = role;
         await _context.SaveChangesAsync();
+        return new();
     }
 
     private Guid? GetCurrentUserId()

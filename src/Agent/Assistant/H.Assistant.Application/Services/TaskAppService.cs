@@ -3,6 +3,7 @@ using H.Abp.Application.Contracts;
 using H.Assistant.Application.Contracts;
 using H.Assistant.Core;
 using H.Assistant.EntityFrameworkCore;
+using H.Util.Base;
 using Microsoft.Extensions.Logging;
 using System.Linq.Dynamic.Core;
 using System.Text.Json;
@@ -38,7 +39,7 @@ public class TaskAppService : ApplicationService, ITaskAppService
         _agentFactory = agentFactory;
     }
 
-    public async Task<PagedResultDto<TaskDto>> GetListAsync(TaskQueryDto input)
+    public async Task<BaseOutput<PagedResultDto<TaskDto>>> GetListAsync(TaskQueryDto input)
     {
         var queryable = await _taskRepository.GetQueryableAsync();
 
@@ -78,10 +79,10 @@ public class TaskAppService : ApplicationService, ITaskAppService
             .Select(t => _objectMapper.Map<TaskEntity, TaskDto>(t))
             .ToList();
 
-        return new PagedResultDto<TaskDto>(totalCount, dtos);
+        return new(new PagedResultDto<TaskDto>(totalCount, dtos));
     }
 
-    public async Task<TaskDto> GetAsync(Guid id)
+    public async Task<BaseOutput<TaskDto>> GetAsync(Guid id)
     {
         var task = await _taskRepository.FindAsync(id);
         if (task == null)
@@ -89,10 +90,10 @@ public class TaskAppService : ApplicationService, ITaskAppService
             throw new EntityNotFoundException(typeof(TaskEntity), id);
         }
 
-        return _objectMapper.Map<TaskEntity, TaskDto>(task);
+        return new(_objectMapper.Map<TaskEntity, TaskDto>(task));
     }
 
-    public async Task<TaskDto> CreateAsync(CreateTaskDto input)
+    public async Task<BaseOutput<TaskDto>> CreateAsync(CreateTaskDto input)
     {
         var isManual = input.ExecutionMode == "Manual";
         var task = new TaskEntity
@@ -122,12 +123,12 @@ public class TaskAppService : ApplicationService, ITaskAppService
                     input.ScheduleType, input.CronExpression, input.Hour, input.Minute, input.DayOfWeek, input.DayOfMonth)
         };
 
-        await _taskRepository.InsertAsync(task);
+        task = await _taskRepository.InsertAsync(task);
 
-        return _objectMapper.Map<TaskEntity, TaskDto>(task);
+        return new(_objectMapper.Map<TaskEntity, TaskDto>(task));
     }
 
-    public async Task<TaskDto> UpdateAsync(Guid id, UpdateTaskDto input)
+    public async Task<BaseOutput<TaskDto>> UpdateAsync(Guid id, UpdateTaskDto input)
     {
         var task = await _taskRepository.FindAsync(id);
         if (task == null)
@@ -158,12 +159,12 @@ public class TaskAppService : ApplicationService, ITaskAppService
             : CalculateNextExecutionTime(
                 input.ScheduleType, input.CronExpression, input.Hour, input.Minute, input.DayOfWeek, input.DayOfMonth);
 
-        await _taskRepository.UpdateAsync(task);
+        task = await _taskRepository.UpdateAsync(task);
 
-        return _objectMapper.Map<TaskEntity, TaskDto>(task);
+        return new(_objectMapper.Map<TaskEntity, TaskDto>(task));
     }
 
-    public async Task DeleteAsync(Guid id)
+    public async Task<BaseOutput> DeleteAsync(Guid id)
     {
         // 删除关联的执行日志
         var logQueryable = await _logRepository.GetQueryableAsync();
@@ -174,9 +175,11 @@ public class TaskAppService : ApplicationService, ITaskAppService
         }
 
         await _taskRepository.DeleteAsync(id);
+
+        return new();
     }
 
-    public async Task ToggleEnableAsync(Guid id)
+    public async Task<BaseOutput> ToggleEnableAsync(Guid id)
     {
         var task = await _taskRepository.FindAsync(id);
         if (task == null)
@@ -201,14 +204,17 @@ public class TaskAppService : ApplicationService, ITaskAppService
         }
 
         await _taskRepository.UpdateAsync(task);
+
+        return new();
     }
 
-    public async Task ExecuteNowAsync(Guid id)
+    public async Task<BaseOutput> ExecuteNowAsync(Guid id)
     {
         await ExecuteTaskAsync(id);
+        return new();
     }
 
-    public async Task<List<TaskLogDto>> GetExecutionLogsAsync(Guid taskId, int maxResultCount = 10)
+    public async Task<BaseOutput<List<TaskLogDto>>> GetExecutionLogsAsync(Guid taskId, int maxResultCount = 10)
     {
         var queryable = await _logRepository.GetQueryableAsync();
 
@@ -223,28 +229,30 @@ public class TaskAppService : ApplicationService, ITaskAppService
         var task = await _taskRepository.FindAsync(taskId);
         var taskName = task?.TaskName ?? string.Empty;
 
-        return logs
+        return new(logs
             .Select(l =>
             {
                 var dto = _objectMapper.Map<TaskLogEntity, TaskLogDto>(l);
                 dto.TaskName = taskName;
                 return dto;
             })
-            .ToList();
+            .ToList());
     }
 
     /// <summary>
     /// 执行单个任务
     /// </summary>
-    public async Task ExecuteTaskAsync(Guid taskId)
+    public async Task<BaseOutput> ExecuteTaskAsync(Guid taskId)
     {
         var task = await _taskRepository.FindAsync(taskId);
         if (task == null)
         {
-            return;
+            return new();
         }
 
         await ExecuteTaskInternalAsync(task);
+
+        return new();
     }
 
     private async Task ExecuteTaskInternalAsync(TaskEntity task)
@@ -253,7 +261,7 @@ public class TaskAppService : ApplicationService, ITaskAppService
         var taskId = task.Id;
         var taskName = task.TaskName;
 
-        Logger.LogInformation("开始执行定时任务: {TaskName} (Id={TaskId})", taskName, taskId);
+        Logger.LogInformation("开始执行定时任务 {TaskName} (Id={TaskId})", taskName, taskId);
 
         try
         {
@@ -315,7 +323,7 @@ public class TaskAppService : ApplicationService, ITaskAppService
             }
             catch (Exception logEx)
             {
-                Logger.LogError(logEx, "记录任务失败日志时出错: TaskId={TaskId}", taskId);
+                Logger.LogError(logEx, "记录任务失败日志时出错 TaskId={TaskId}", taskId);
             }
         }
     }

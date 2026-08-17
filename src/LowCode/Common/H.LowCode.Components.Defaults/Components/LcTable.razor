@@ -209,7 +209,7 @@
 
         try
         {
-            var result = await TableDataAppService.GetListAsync(request);
+            var result = (await TableDataAppService.GetListAsync(request)).Data!;
             _data = result.Items.ToList();
             _total = (int)result.TotalCount;
         }

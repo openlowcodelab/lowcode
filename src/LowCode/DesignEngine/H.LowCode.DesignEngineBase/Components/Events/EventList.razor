@@ -174,13 +174,13 @@
 
     private async Task LoadPagesAsync()
     {
-        var result = await PageAppService.GetListAsync(PageCascading.AppId);
+        var result = (await PageAppService.GetListAsync(PageCascading.AppId)).Data;
         _pageList = result?.ToArray() ?? [];
     }
 
     private async Task LoadComponentsAsync()
     {
-        var result = await PageAppService.GetByIdAsync(PageCascading.AppId, PageCascading.PageId);
+        var result = (await PageAppService.GetByIdAsync(PageCascading.AppId, PageCascading.PageId)).Data;
         _componentList = result?.Components
             ?.Select(t =>
                 new ComponentListModel()
@@ -199,7 +199,7 @@
 
     private async Task LoadComponentEventTargetActionsAsync(string componentId)
     {
-        var component = await PageAppService.GetPageComponentAsync(PageCascading.AppId, PageCascading.PageId, componentId);
+        var component = (await PageAppService.GetPageComponentAsync(PageCascading.AppId, PageCascading.PageId, componentId)).Data;
         _componentEventTargetActions = component?.EventConsumes?.ToArray() ?? [];
     }
 

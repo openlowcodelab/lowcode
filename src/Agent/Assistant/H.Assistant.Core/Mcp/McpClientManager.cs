@@ -33,7 +33,7 @@ public class McpClientManager : IAsyncDisposable
 
         try
         {
-            var servers = await _mcpServerAppService.GetAllAsync();
+            var servers = (await _mcpServerAppService.GetAllAsync()).Data ?? [];
             var enabledServers = servers.Where(s => s.IsEnabled).ToList();
 
             foreach (var server in enabledServers)

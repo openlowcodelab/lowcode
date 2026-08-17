@@ -1,5 +1,6 @@
 using H.Assistant.Application.Contracts;
 using H.Testing.Application.Contracts;
+using H.Util.Base;
 using System.Text;
 using System.Text.Json;
 using Volo.Abp;
@@ -38,20 +39,20 @@ public class ProjectKnowledgeAppService : ApplicationService, IProjectKnowledgeA
         _aiCompletion = aiCompletion;
     }
 
-    public async Task<ProjectKnowledgeDto> GetOrCreateAsync(long projectId)
+    public async Task<BaseOutput<ProjectKnowledgeDto>> GetOrCreateAsync(long projectId)
     {
         var knowledgeBase = await ResolveKnowledgeBaseAsync(projectId);
-        return Map(knowledgeBase);
+        return new(Map(knowledgeBase));
     }
 
-    public async Task<List<ProjectKnowledgeNodeDto>> GetTreeAsync(long projectId)
+    public async Task<BaseOutput<List<ProjectKnowledgeNodeDto>>> GetTreeAsync(long projectId)
     {
         var knowledgeBaseId = await ResolveKnowledgeBaseIdAsync(projectId);
-        var tree = await _knowledgeDocumentService.GetTreeAsync(knowledgeBaseId);
-        return tree.Select(MapNode).ToList();
+        var tree = (await _knowledgeDocumentService.GetTreeAsync(knowledgeBaseId)).Data ?? [];
+        return new(tree.Select(MapNode).ToList());
     }
 
-    public async Task<ProjectKnowledgeNodeDto> CreateNodeAsync(long projectId, CreateProjectKnowledgeNodeInput input)
+    public async Task<BaseOutput<ProjectKnowledgeNodeDto>> CreateNodeAsync(long projectId, CreateProjectKnowledgeNodeInput input)
     {
         if (input == null || string.IsNullOrWhiteSpace(input.Title))
         {
@@ -59,60 +60,63 @@ public class ProjectKnowledgeAppService : ApplicationService, IProjectKnowledgeA
         }
 
         var knowledgeBaseId = await ResolveKnowledgeBaseIdAsync(projectId);
-        var node = await _knowledgeDocumentService.CreateNodeAsync(new CreateKnowledgeNodeDto
+        var node = (await _knowledgeDocumentService.CreateNodeAsync(new CreateKnowledgeNodeDto
         {
             KnowledgeBaseId = knowledgeBaseId,
             ParentId = input.ParentId,
             Title = Truncate(input.Title, MaxNodeTitleLength),
             NodeType = input.NodeType == "Directory" ? "Directory" : "Document"
-        });
-        return MapNode(node);
+        })).Data!;
+        return new(MapNode(node));
     }
 
-    public async Task<ProjectKnowledgeNodeDto> RenameNodeAsync(Guid nodeId, string title)
+    public async Task<BaseOutput<ProjectKnowledgeNodeDto>> RenameNodeAsync(Guid nodeId, string title)
     {
         if (string.IsNullOrWhiteSpace(title))
         {
             throw new UserFriendlyException("节点标题不能为空");
         }
 
-        var node = await _knowledgeDocumentService.UpdateNodeAsync(nodeId, new UpdateKnowledgeNodeDto
+        var node = (await _knowledgeDocumentService.UpdateNodeAsync(nodeId, new UpdateKnowledgeNodeDto
         {
             Title = Truncate(title, MaxNodeTitleLength)
-        });
-        return MapNode(node);
+        })).Data!;
+        return new(MapNode(node));
     }
 
-    public Task DeleteNodeAsync(Guid nodeId) => _knowledgeDocumentService.DeleteNodeAsync(nodeId);
+    public Task<BaseOutput> DeleteNodeAsync(Guid nodeId) => _knowledgeDocumentService.DeleteNodeAsync(nodeId);
 
-    public async Task<string> GetDocumentContentAsync(Guid nodeId)
+    public async Task<BaseOutput<string>> GetDocumentContentAsync(Guid nodeId)
     {
-        var document = await _knowledgeDocumentService.GetDocumentAsync(nodeId);
-        return document?.Content ?? string.Empty;
+        var document = (await _knowledgeDocumentService.GetDocumentAsync(nodeId)).Data;
+        return new(document?.Content ?? string.Empty);
     }
 
-    public Task SaveDocumentAsync(Guid nodeId, string content) =>
-        _knowledgeDocumentService.SaveDocumentAsync(nodeId, new SaveKnowledgeDocumentDto { Content = content ?? string.Empty });
+    public async Task<BaseOutput> SaveDocumentAsync(Guid nodeId, string content)
+    {
+        await _knowledgeDocumentService.SaveDocumentAsync(nodeId, new SaveKnowledgeDocumentDto { Content = content ?? string.Empty });
+        return new();
+    }
 
-    public async Task<AiKnowledgeDocumentDto> GenerateWithAiAsync(long projectId, string description)
+    public async Task<BaseOutput<AiKnowledgeDocumentDto>> GenerateWithAiAsync(long projectId, string description)
     {
         if (string.IsNullOrWhiteSpace(description))
         {
             throw new UserFriendlyException("请输入需求描述");
         }
 
-        var project = await _projectService.GetByIdAsync(projectId)
+        var project = (await _projectService.GetByIdAsync(projectId)).Data
             ?? throw new UserFriendlyException("项目不存在");
 
-        var result = await _aiCompletion.CompleteAsync(new AiCompletionInputDto
+        var result = (await _aiCompletion.CompleteAsync(new AiCompletionInputDto
         {
             SystemPrompt = GenerateKnowledgeSystemPrompt,
             UserMessage = $"项目信息：\n名称：{project.Name}\n描述：{project.Description}\n\n用户的口语化描述：\n{description.Trim()}",
             Temperature = 0.3f,
             MaxTokens = 8192
-        });
+        })).Data;
 
-        var generated = ParseJson<AiKnowledgeDocumentDto>(result.Content);
+        var generated = ParseJson<AiKnowledgeDocumentDto>(result!.Content);
         if (generated == null || (string.IsNullOrWhiteSpace(generated.Title) && string.IsNullOrWhiteSpace(generated.Content)))
         {
             throw new UserFriendlyException("AI 返回的知识内容无效，请补充描述后重试");
@@ -120,10 +124,10 @@ public class ProjectKnowledgeAppService : ApplicationService, IProjectKnowledgeA
 
         generated.Title = Truncate(string.IsNullOrWhiteSpace(generated.Title) ? "AI 生成知识" : generated.Title, MaxNodeTitleLength);
         generated.Content = generated.Content ?? string.Empty;
-        return generated;
+        return new(generated);
     }
 
-    public async Task<string> GetKnowledgeDigestAsync(long projectId, int maxLength = 10000)
+    public async Task<BaseOutput<string>> GetKnowledgeDigestAsync(long projectId, int maxLength = 10000)
     {
         Guid knowledgeBaseId;
         try
@@ -132,24 +136,24 @@ public class ProjectKnowledgeAppService : ApplicationService, IProjectKnowledgeA
         }
         catch
         {
-            return string.Empty;
+            return new(string.Empty);
         }
 
         List<KnowledgeNodeDto> tree;
         try
         {
-            tree = await _knowledgeDocumentService.GetTreeAsync(knowledgeBaseId);
+            tree = (await _knowledgeDocumentService.GetTreeAsync(knowledgeBaseId)).Data ?? [];
         }
         catch
         {
-            return string.Empty;
+            return new(string.Empty);
         }
 
         var documents = new List<KnowledgeNodeDto>();
         CollectDocuments(tree, documents);
         if (documents.Count == 0)
         {
-            return string.Empty;
+            return new(string.Empty);
         }
 
         var builder = new StringBuilder();
@@ -158,7 +162,7 @@ public class ProjectKnowledgeAppService : ApplicationService, IProjectKnowledgeA
             string? content;
             try
             {
-                var document = await _knowledgeDocumentService.GetDocumentAsync(node.Id);
+                var document = (await _knowledgeDocumentService.GetDocumentAsync(node.Id)).Data;
                 content = document?.Content;
             }
             catch
@@ -186,7 +190,7 @@ public class ProjectKnowledgeAppService : ApplicationService, IProjectKnowledgeA
             builder.Append(section);
         }
 
-        return builder.ToString().Trim();
+        return new(builder.ToString().Trim());
     }
 
     #region 私有方法
@@ -197,14 +201,14 @@ public class ProjectKnowledgeAppService : ApplicationService, IProjectKnowledgeA
     /// </summary>
     private async Task<KnowledgeBaseDto> ResolveKnowledgeBaseAsync(long projectId)
     {
-        var project = await _projectService.GetByIdAsync(projectId)
+        var project = (await _projectService.GetByIdAsync(projectId)).Data
             ?? throw new UserFriendlyException("项目不存在");
 
         if (TryGetKnowledgeBaseId(project.KnowledgeBaseId, out var knowledgeBaseId))
         {
             try
             {
-                return await _knowledgeBaseService.GetAsync(knowledgeBaseId);
+                return (await _knowledgeBaseService.GetAsync(knowledgeBaseId)).Data!;
             }
             catch
             {
@@ -220,7 +224,7 @@ public class ProjectKnowledgeAppService : ApplicationService, IProjectKnowledgeA
     /// </summary>
     private async Task<Guid> ResolveKnowledgeBaseIdAsync(long projectId)
     {
-        var project = await _projectService.GetByIdAsync(projectId)
+        var project = (await _projectService.GetByIdAsync(projectId)).Data
             ?? throw new UserFriendlyException("项目不存在");
 
         if (TryGetKnowledgeBaseId(project.KnowledgeBaseId, out var knowledgeBaseId))
@@ -234,11 +238,11 @@ public class ProjectKnowledgeAppService : ApplicationService, IProjectKnowledgeA
 
     private async Task<KnowledgeBaseDto> CreateAndBindKnowledgeBaseAsync(ProjectDto project)
     {
-        var knowledgeBase = await _knowledgeBaseService.CreateAsync(new CreateKnowledgeBaseDto
+        var knowledgeBase = (await _knowledgeBaseService.CreateAsync(new CreateKnowledgeBaseDto
         {
             Name = Truncate($"Testing-{project.Name}", MaxBaseNameLength),
             Description = Truncate($"自动化测试项目「{project.Name}」的功能与逻辑知识，用于辅助编写测试用例", 500)
-        });
+        })).Data!;
 
         project.KnowledgeBaseId = knowledgeBase.Id.ToString();
         await _projectService.UpdateAsync(project.Id, project);

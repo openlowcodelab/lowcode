@@ -38,6 +38,6 @@ public abstract class ThemePartLayoutBase : LowCodeLayoutComponentBase
 
     private async Task<IList<MenuSchema>> GetMenuListAsync(string appId)
     {
-        return await MetaAppService.GetMenusAsync(appId);
+        return (await MetaAppService.GetMenusAsync(appId)).Data ?? [];
     }
 }

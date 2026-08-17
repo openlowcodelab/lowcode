@@ -1,4 +1,5 @@
 using H.Abp.Application.Contracts;
+using H.Util.Base;
 
 namespace H.Order.Application.Contracts;
 
@@ -22,13 +23,13 @@ public interface IRouteRuleAppService : ICrudAppService<RouteRuleDto, Guid, Rout
 public interface IDispatchLogAppService : IAppService
 {
     /// <summary>分页查询下发日志</summary>
-    Task<PagedResultDto<DispatchLogDto>> GetListAsync(DispatchLogQueryDto input);
+    Task<BaseOutput<PagedResultDto<DispatchLogDto>>> GetListAsync(DispatchLogQueryDto input);
 
     /// <summary>按订单ID获取最新下发日志</summary>
-    Task<DispatchLogDto?> GetLatestByOrderIdAsync(Guid orderId);
+    Task<BaseOutput<DispatchLogDto>> GetLatestByOrderIdAsync(Guid orderId);
 
     /// <summary>根据日志ID手动重试下发</summary>
-    Task<TriggerDispatchResultDto> RetryAsync(Guid logId);
+    Task<BaseOutput<TriggerDispatchResultDto>> RetryAsync(Guid logId);
 }
 
 /// <summary>

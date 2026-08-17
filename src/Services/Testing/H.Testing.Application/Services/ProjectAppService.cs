@@ -2,6 +2,7 @@ using H.Assistant.Application.Contracts;
 using H.Testing.Application.Contracts;
 using H.Testing.Application.Mapping;
 using H.Testing.EntityFrameworkCore;
+using H.Util.Base;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 
@@ -44,48 +45,48 @@ public class ProjectAppService : ApplicationService, IProjectAppService
         _knowledgeBaseService = knowledgeBaseService;
     }
 
-    public async Task<List<ProjectDto>> GetAllAsync()
+    public async Task<BaseOutput<List<ProjectDto>>> GetAllAsync()
     {
         var query = await _repository.GetQueryableAsync();
         var list = await AsyncExecuter.ToListAsync(query.OrderBy(p => p.Id));
-        return list.Select(e => e.ToDto()).ToList();
+        return new(list.Select(e => e.ToDto()).ToList());
     }
 
-    public async Task<ProjectDto?> GetByIdAsync(long id)
+    public async Task<BaseOutput<ProjectDto?>> GetByIdAsync(long id)
     {
         var entity = await _repository.FindAsync(id);
-        return entity?.ToDto();
+        return new(entity?.ToDto());
     }
 
-    public async Task<long> CreateAsync(ProjectDto project)
+    public async Task<BaseOutput<long>> CreateAsync(ProjectDto project)
     {
         var entity = new ProjectEntity();
         project.Apply(entity);
         entity = await _repository.InsertAsync(entity, autoSave: true);
-        return entity.Id;
+        return new(entity.Id);
     }
 
-    public Task<long> CreateProjectAsync(ProjectDto project) => CreateAsync(project);
+    public Task<BaseOutput<long>> CreateProjectAsync(ProjectDto project) => CreateAsync(project);
 
-    public async Task<bool> UpdateAsync(long id, ProjectDto project)
+    public async Task<BaseOutput<bool>> UpdateAsync(long id, ProjectDto project)
     {
         var entity = await _repository.FindAsync(id);
         if (entity == null)
         {
-            return false;
+            return new(false);
         }
 
         project.Apply(entity);
         await _repository.UpdateAsync(entity, autoSave: true);
-        return true;
+        return new(true);
     }
 
-    public async Task<bool> DeleteAsync(long id)
+    public async Task<BaseOutput<bool>> DeleteAsync(long id)
     {
         var entity = await _repository.FindAsync(id);
         if (entity == null)
         {
-            return false;
+            return new(false);
         }
 
         // 级联删除项目下的所有相关数据（服务配置随环境一同删除）
@@ -103,7 +104,7 @@ public class ProjectAppService : ApplicationService, IProjectAppService
         await TryDeleteLinkedKnowledgeBaseAsync(entity);
 
         await _repository.DeleteAsync(entity, autoSave: true);
-        return true;
+        return new(true);
     }
 
     private async Task TryDeleteLinkedKnowledgeBaseAsync(ProjectEntity entity)
@@ -126,7 +127,7 @@ public class ProjectAppService : ApplicationService, IProjectAppService
         }
     }
 
-    public async Task<List<ProjectEnvDto>> GetProjectEnvironmentsAsync(long projectId)
+    public async Task<BaseOutput<List<ProjectEnvDto>>> GetProjectEnvironmentsAsync(long projectId)
     {
         return await _environmentService.GetByProjectIdAsync(projectId);
     }

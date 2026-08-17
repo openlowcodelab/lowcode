@@ -1,5 +1,6 @@
 using H.Assistant.Application.Contracts;
 using H.Testing.Application.Contracts;
+using H.Util.Base;
 using System.Text.Json;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
@@ -53,29 +54,29 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
 
     #region 生成测试项目
 
-    public async Task<AiGeneratedProjectDto> GenerateProjectAsync(AiGenerateInputDto input)
+    public async Task<BaseOutput<AiGeneratedProjectDto>> GenerateProjectAsync(AiGenerateInputDto input)
     {
         EnsureDescription(input);
 
-        var result = await _aiCompletion.CompleteAsync(new AiCompletionInputDto
+        var result = (await _aiCompletion.CompleteAsync(new AiCompletionInputDto
         {
             SystemPrompt = CreateProjectSystemPrompt,
             UserMessage = input.Description,
             Temperature = 0.3f,
             MaxTokens = 16384
-        });
+        })).Data;
 
-        var generated = ParseJson<AiGeneratedProjectDto>(result.Content);
+        var generated = ParseJson<AiGeneratedProjectDto>(result!.Content);
         if (generated == null || string.IsNullOrWhiteSpace(generated.Name))
         {
             throw new UserFriendlyException("AI 返回的项目结构无效，请补充需求描述后重试");
         }
 
         NormalizeGeneratedProject(generated);
-        return generated;
+        return new(generated);
     }
 
-    public async Task<long> CreateProjectFromAiAsync(AiGeneratedProjectDto generated)
+    public async Task<BaseOutput<long>> CreateProjectFromAiAsync(AiGeneratedProjectDto generated)
     {
         if (generated == null || string.IsNullOrWhiteSpace(generated.Name))
         {
@@ -84,23 +85,23 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
 
         NormalizeGeneratedProject(generated);
 
-        var projectId = await _projectService.CreateAsync(new ProjectDto
+        var projectId = (await _projectService.CreateAsync(new ProjectDto
         {
             Name = generated.Name,
             Description = generated.Description,
             Status = ProjectStatus.Active
-        });
+        })).Data;
 
         // 1. 创建被测服务（tempId → 服务ID）
         var serviceIdMap = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
         foreach (var aiService in generated.Services.Where(s => !string.IsNullOrWhiteSpace(s.Name)))
         {
-            var created = await _serviceConfigService.CreateProjectServiceAsync(new ProjectServiceDto
+            var created = (await _serviceConfigService.CreateProjectServiceAsync(new ProjectServiceDto
             {
                 ProjectId = projectId,
                 Name = Truncate(aiService.Name, 100),
                 Description = Truncate(aiService.Description, 500)
-            });
+            })).Data!;
             if (!string.IsNullOrEmpty(aiService.TempId))
             {
                 serviceIdMap[aiService.TempId] = created.Id;
@@ -110,14 +111,14 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
         // 2. 创建环境与各服务的基础地址配置
         foreach (var aiEnv in generated.Environments.Where(e => !string.IsNullOrWhiteSpace(e.Name)))
         {
-            var environmentId = await _environmentService.CreateAsync(new ProjectEnvDto
+            var environmentId = (await _environmentService.CreateAsync(new ProjectEnvDto
             {
                 ProjectId = projectId,
                 Name = Truncate(aiEnv.Name, 100),
                 Description = Truncate(aiEnv.Description, 500),
                 Type = ParseEnvironmentType(aiEnv.Type),
                 Variables = aiEnv.Variables ?? []
-            });
+            })).Data;
 
             foreach (var config in aiEnv.ServiceConfigs.Where(c => !string.IsNullOrWhiteSpace(c.BaseUrl)))
             {
@@ -151,7 +152,7 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
 
             foreach (var aiCase in category.Cases.Where(c => !string.IsNullOrWhiteSpace(c.Name)))
             {
-                var caseId = await _caseService.CreateAsync(new CaseDto
+                var caseId = (await _caseService.CreateAsync(new CaseDto
                 {
                     Name = Truncate(aiCase.Name, MaxCaseNameLength),
                     Description = Truncate(aiCase.Description, MaxCaseDescriptionLength),
@@ -159,7 +160,7 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
                     CategoryId = categoryId,
                     Level = NormalizeLevel(aiCase.Level),
                     Status = CaseStatus.Active
-                });
+                })).Data;
 
                 var steps = MapSteps(aiCase.Steps, serviceIdMap);
                 if (steps.Count > 0)
@@ -169,23 +170,23 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
             }
         }
 
-        return projectId;
+        return new(projectId);
     }
 
     #endregion
 
     #region 变更已有项目
 
-    public async Task<AiModificationPlanDto> GenerateModificationAsync(long projectId, AiGenerateInputDto input)
+    public async Task<BaseOutput<AiModificationPlanDto>> GenerateModificationAsync(long projectId, AiGenerateInputDto input)
     {
         EnsureDescription(input);
 
-        var project = await _projectService.GetByIdAsync(projectId)
+        var project = (await _projectService.GetByIdAsync(projectId)).Data
             ?? throw new UserFriendlyException("项目不存在");
-        var categories = FlattenCategoryTree(await _categoryService.GetByProjectIdAsync(projectId));
-        var cases = await _caseService.GetByProjectIdAsync(projectId);
-        var services = await _serviceConfigService.GetProjectServicesAsync(projectId);
-        var caseSteps = await _caseStepService.GetByCaseIdsAsync(cases.Select(c => c.Id));
+        var categories = FlattenCategoryTree((await _categoryService.GetByProjectIdAsync(projectId)).Data ?? []);
+        var cases = (await _caseService.GetByProjectIdAsync(projectId)).Data ?? [];
+        var services = (await _serviceConfigService.GetProjectServicesAsync(projectId)).Data ?? [];
+        var caseSteps = (await _caseStepService.GetByCaseIdsAsync(cases.Select(c => c.Id))).Data ?? [];
 
         var context = JsonSerializer.Serialize(new
         {
@@ -202,26 +203,26 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
         }, JsonOptions);
 
         // 读取项目知识库内容作为生成上下文，辅助编写更贴合业务的用例
-        var knowledgeDigest = await _knowledgeService.GetKnowledgeDigestAsync(projectId);
+        var knowledgeDigest = (await _knowledgeService.GetKnowledgeDigestAsync(projectId)).Data;
         var knowledgeSection = string.IsNullOrEmpty(knowledgeDigest)
             ? string.Empty
             : $"\n\n项目知识库（描述项目功能与逻辑，设计用例时应优先覆盖其中的关键流程与规则）：\n{knowledgeDigest}";
 
-        var result = await _aiCompletion.CompleteAsync(new AiCompletionInputDto
+        var result = (await _aiCompletion.CompleteAsync(new AiCompletionInputDto
         {
             SystemPrompt = ModificationSystemPrompt,
             UserMessage = $"已有项目结构：\n{context}{knowledgeSection}\n\n用户需求：\n{input.Description}",
             Temperature = 0.3f,
             MaxTokens = 16384
-        });
+        })).Data;
 
-        var plan = ParseJson<AiModificationPlanDto>(result.Content)
+        var plan = ParseJson<AiModificationPlanDto>(result!.Content)
             ?? throw new UserFriendlyException("AI 返回的变更计划无效，请补充需求描述后重试");
         NormalizeModificationPlan(plan);
-        return plan;
+        return new(plan);
     }
 
-    public async Task ApplyModificationAsync(long projectId, AiModificationPlanDto plan)
+    public async Task<BaseOutput> ApplyModificationAsync(long projectId, AiModificationPlanDto plan)
     {
         if (plan == null)
         {
@@ -230,12 +231,12 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
 
         NormalizeModificationPlan(plan);
 
-        var existingCategories = FlattenCategoryTree(await _categoryService.GetByProjectIdAsync(projectId));
+        var existingCategories = FlattenCategoryTree((await _categoryService.GetByProjectIdAsync(projectId)).Data ?? []);
         var existingCategoryIds = existingCategories.Select(c => c.Id).ToHashSet();
 
         // 已有服务引用映射：AI 可用服务 ID 或服务名称引用，用于步骤关联服务
         var serviceRefMap = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
-        foreach (var service in await _serviceConfigService.GetProjectServicesAsync(projectId))
+        foreach (var service in (await _serviceConfigService.GetProjectServicesAsync(projectId)).Data ?? [])
         {
             serviceRefMap[service.Id.ToString()] = service.Id;
             if (!string.IsNullOrWhiteSpace(service.Name))
@@ -272,7 +273,7 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
         // 3. 新增用例（含测试步骤）
         foreach (var aiCase in plan.AddCases.Where(c => !string.IsNullOrWhiteSpace(c.Name)))
         {
-            var caseId = await _caseService.CreateAsync(new CaseDto
+            var caseId = (await _caseService.CreateAsync(new CaseDto
             {
                 Name = Truncate(aiCase.Name, MaxNameLength),
                 Description = Truncate(aiCase.Description, MaxCaseDescriptionLength),
@@ -280,7 +281,7 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
                 CategoryId = ResolveCategoryRef(aiCase.CategoryRef, existingCategoryIds) ?? (tempIdMap.TryGetValue(aiCase.CategoryRef ?? string.Empty, out var newId) ? newId : null),
                 Level = NormalizeLevel(aiCase.Level),
                 Status = CaseStatus.Active
-            });
+            })).Data;
 
             var steps = MapSteps(aiCase.Steps, serviceRefMap);
             if (steps.Count > 0)
@@ -292,7 +293,7 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
         // 4. 修改用例
         foreach (var update in plan.UpdateCases)
         {
-            var current = await _caseService.GetByIdAsync(update.Id);
+            var current = (await _caseService.GetByIdAsync(update.Id)).Data;
             if (current == null || current.ProjectId != projectId)
             {
                 continue;
@@ -311,7 +312,7 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
             var newSteps = MapSteps(update.Steps, serviceRefMap);
             if (newSteps.Count > 0 && current.TemplateId == null)
             {
-                var currentSteps = await _caseStepService.GetByCaseIdAsync(update.Id);
+                var currentSteps = (await _caseStepService.GetByCaseIdAsync(update.Id)).Data ?? [];
                 foreach (var step in newSteps)
                 {
                     step.Order = currentSteps.Count;
@@ -321,6 +322,8 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
                 await _caseStepService.SyncAsync(update.Id, currentSteps);
             }
         }
+
+        return new();
     }
 
     #endregion
@@ -356,13 +359,13 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
                     continue;
                 }
 
-                var created = await _categoryService.CreateAsync(new CaseCategoryDto
+                var created = (await _categoryService.CreateAsync(new CaseCategoryDto
                 {
                     Name = Truncate(category.Name, MaxNameLength),
                     ProjectId = projectId,
                     ParentId = ResolveParentId(category.ParentRef, tempIdMap, parentResolver),
                     Order = order++
-                });
+                })).Data!;
 
                 if (!string.IsNullOrEmpty(category.TempId))
                 {
@@ -377,13 +380,13 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
         // 剩余分类的父引用无法解析（如循环引用），作为根分类创建
         foreach (var category in remaining)
         {
-            var created = await _categoryService.CreateAsync(new CaseCategoryDto
+            var created = (await _categoryService.CreateAsync(new CaseCategoryDto
             {
                 Name = Truncate(category.Name, MaxNameLength),
                 ProjectId = projectId,
                 ParentId = null,
                 Order = order++
-            });
+            })).Data!;
 
             if (!string.IsNullOrEmpty(category.TempId))
             {

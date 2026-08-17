@@ -1,4 +1,5 @@
 using H.Abp.Application.Contracts;
+using H.Util.Base;
 
 namespace H.Approval.Application.Contracts;
 
@@ -10,20 +11,20 @@ public interface IApprovalInstanceAppService : IAppService
     /// <summary>
     /// 启动审批实例
     /// </summary>
-    Task<ApprovalInstanceDto> StartAsync(StartApprovalInstanceDto input);
+    Task<BaseOutput<ApprovalInstanceDto>> StartAsync(StartApprovalInstanceDto input);
 
     /// <summary>
     /// 获取我发起的审批实例(当前登录用户)
     /// </summary>
-    Task<List<ApprovalInstanceDto>> GetMyApprovalsAsync();
+    Task<BaseOutput<List<ApprovalInstanceDto>>> GetMyApprovalsAsync();
 
     /// <summary>
     /// 获取审批实例详情(含任务历史)
     /// </summary>
-    Task<ApprovalInstanceDto> GetByIdAsync(string id);
+    Task<BaseOutput<ApprovalInstanceDto>> GetByIdAsync(string id);
 
     /// <summary>
     /// 取消审批实例
     /// </summary>
-    Task CancelAsync(string id);
+    Task<BaseOutput> CancelAsync(string id);
 }

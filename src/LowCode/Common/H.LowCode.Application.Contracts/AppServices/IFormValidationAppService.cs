@@ -1,5 +1,6 @@
 using H.Abp.Application.Contracts;
 using H.LowCode.MetaSchema;
+using H.Util.Base;
 
 namespace H.LowCode.Application.Contracts;
 
@@ -14,7 +15,7 @@ public interface IFormValidationAppService : IAppService
     /// <param name="value">字段值</param>
     /// <param name="validationRules">校验规则</param>
     /// <returns>校验结果</returns>
-    ValidationResult ValidateField(object? value, IList<ValidationRuleSchema>? validationRules);
+    BaseOutput<ValidationResult> ValidateField(object? value, IList<ValidationRuleSchema>? validationRules);
 
     /// <summary>
     /// 校验表单数据
@@ -22,7 +23,7 @@ public interface IFormValidationAppService : IAppService
     /// <param name="formData">表单数据</param>
     /// <param name="components">组件列表</param>
     /// <returns>校验结果</returns>
-    FormValidationResult ValidateForm(Dictionary<string, object?> formData, IList<ComponentSchemaBase> components);
+    BaseOutput<FormValidationResult> ValidateForm(Dictionary<string, object?> formData, IList<ComponentSchemaBase> components);
 
     /// <summary>
     /// 获取字段的校验规则
@@ -30,7 +31,7 @@ public interface IFormValidationAppService : IAppService
     /// <param name="componentId">组件ID</param>
     /// <param name="components">组件列表</param>
     /// <returns>校验规则</returns>
-    IList<ValidationRuleSchema>? GetValidationRules(string componentId, IList<ComponentSchemaBase> components);
+    BaseOutput<IList<ValidationRuleSchema>> GetValidationRules(string componentId, IList<ComponentSchemaBase> components);
 }
 
 /// <summary>

@@ -1,5 +1,6 @@
 using H.Organization.Application.Contracts;
 using H.Organization.EntityFrameworkCore;
+using H.Util.Base;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Volo.Abp;
@@ -26,7 +27,7 @@ public class OrgInviteAppService : ApplicationService, IOrgInviteAppService
     /// <summary>
     /// 创建邀请
     /// </summary>
-    public async Task<InviteDto> CreateInviteAsync(CreateInviteDto input)
+    public async Task<BaseOutput<InviteDto>> CreateInviteAsync(CreateInviteDto input)
     {
         var org = await _context.Organizations.FirstOrDefaultAsync(x => x.Id == input.OrganizationId);
         if (org == null)
@@ -59,7 +60,7 @@ public class OrgInviteAppService : ApplicationService, IOrgInviteAppService
             smsSent = true;
         }
 
-        return new InviteDto
+        return new(new InviteDto
         {
             Token = entity.Token,
             InviteUrl = inviteUrl,
@@ -67,39 +68,39 @@ public class OrgInviteAppService : ApplicationService, IOrgInviteAppService
             OrganizationName = org.Name,
             ExpiresAt = entity.ExpiresAt,
             SmsSent = smsSent
-        };
+        });
     }
 
     /// <summary>
     /// 获取邀请信息
     /// </summary>
-    public async Task<InviteInfoDto> GetInviteInfoAsync(string token)
+    public async Task<BaseOutput<InviteInfoDto>> GetInviteInfoAsync(string token)
     {
         var invite = await _context.OrgInvites
             .Include(x => x.Organization)
             .FirstOrDefaultAsync(x => x.Token == token);
 
         if (invite == null)
-            return new InviteInfoDto { Valid = false, Message = "邀请链接无效" };
+            return new(new InviteInfoDto { Valid = false, Message = "邀请链接无效" });
 
         if (invite.IsUsed)
-            return new InviteInfoDto { Valid = false, Message = "邀请链接已被使用" };
+            return new(new InviteInfoDto { Valid = false, Message = "邀请链接已被使用" });
 
         if (invite.ExpiresAt < DateTime.UtcNow)
-            return new InviteInfoDto { Valid = false, Message = "邀请链接已过期" };
+            return new(new InviteInfoDto { Valid = false, Message = "邀请链接已过期" });
 
-        return new InviteInfoDto
+        return new(new InviteInfoDto
         {
             Valid = true,
             OrganizationName = invite.Organization?.Name ?? string.Empty,
             MemberType = invite.MemberType
-        };
+        });
     }
 
     /// <summary>
     /// 接受邀请
     /// </summary>
-    public async Task AcceptInviteAsync(string token)
+    public async Task<BaseOutput> AcceptInviteAsync(string token)
     {
         if (CurrentUser.Id == null)
             throw new UserFriendlyException("请先登录后再加入组织");
@@ -142,6 +143,7 @@ public class OrgInviteAppService : ApplicationService, IOrgInviteAppService
         invite.UsedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
+        return new();
     }
 
     private string GetBaseUrl()

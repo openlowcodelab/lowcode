@@ -132,7 +132,7 @@
 
     private async Task<IList<AppListModel>> LoadAppsAsync()
     {
-        return await AppApplicationService.GetAppsAsync();
+        return (await AppApplicationService.GetAppsAsync()).Data ?? [];
     }
 
     private async Task OnConfirm()
@@ -161,7 +161,7 @@
 
     private async Task EditApp(string id)
     {
-        _currentApp = await AppApplicationService.GetByIdAsync(id);
+        _currentApp = (await AppApplicationService.GetByIdAsync(id)).Data!;
         _editVisible = true;
         StateHasChanged();
     }

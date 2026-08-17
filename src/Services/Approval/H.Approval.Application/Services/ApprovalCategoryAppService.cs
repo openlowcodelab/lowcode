@@ -1,5 +1,6 @@
 using H.Approval.Application.Contracts;
 using H.Approval.EntityFrameworkCore;
+using H.Util.Base;
 using Microsoft.Extensions.Logging;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
@@ -25,13 +26,13 @@ public class ApprovalCategoryAppService : ApplicationService, IApprovalCategoryA
         _definitionRepository = definitionRepository;
     }
 
-    public async Task<List<ApprovalCategoryDto>> GetAllAsync()
+    public async Task<BaseOutput<List<ApprovalCategoryDto>>> GetAllAsync()
     {
         var entities = await _categoryRepository.GetAllAsync();
-        return entities.Select(MapToDto).ToList();
+        return new(entities.Select(MapToDto).ToList());
     }
 
-    public async Task<ApprovalCategoryDto> CreateAsync(CreateApprovalCategoryDto input)
+    public async Task<BaseOutput<ApprovalCategoryDto>> CreateAsync(CreateApprovalCategoryDto input)
     {
         var name = (input.Name ?? string.Empty).Trim();
         if (string.IsNullOrEmpty(name))
@@ -55,13 +56,13 @@ public class ApprovalCategoryAppService : ApplicationService, IApprovalCategoryA
             CreationTime = DateTime.Now
         };
 
-        await _categoryRepository.InsertAsync(entity);
+        entity = await _categoryRepository.InsertAsync(entity);
         _logger.LogInformation("审批分类已创建: Id={Id}, Name={Name}", entity.Id, name);
 
-        return MapToDto(entity);
+        return new(MapToDto(entity));
     }
 
-    public async Task<ApprovalCategoryDto> RenameAsync(RenameApprovalCategoryDto input)
+    public async Task<BaseOutput<ApprovalCategoryDto>> RenameAsync(RenameApprovalCategoryDto input)
     {
         var newName = (input.Name ?? string.Empty).Trim();
         if (string.IsNullOrEmpty(newName))
@@ -84,11 +85,11 @@ public class ApprovalCategoryAppService : ApplicationService, IApprovalCategoryA
         var oldName = entity.Name;
         if (oldName == newName)
         {
-            return MapToDto(entity);
+            return new(MapToDto(entity));
         }
 
         entity.Name = newName;
-        await _categoryRepository.UpdateAsync(entity);
+        entity = await _categoryRepository.UpdateAsync(entity);
 
         // 同步更新引用该分类名的审批定义
         var definitions = await _definitionRepository.GetAllAsync();
@@ -101,15 +102,15 @@ public class ApprovalCategoryAppService : ApplicationService, IApprovalCategoryA
 
         _logger.LogInformation("审批分类已重命名: Id={Id}, {OldName} -> {NewName}", entity.Id, oldName, newName);
 
-        return MapToDto(entity);
+        return new(MapToDto(entity));
     }
 
-    public async Task DeleteAsync(string id)
+    public async Task<BaseOutput> DeleteAsync(string id)
     {
         var entity = await _categoryRepository.GetByIdAsync(id);
         if (entity == null)
         {
-            return;
+            return new();
         }
 
         // 将引用该分类的审批定义归入未分类
@@ -124,6 +125,8 @@ public class ApprovalCategoryAppService : ApplicationService, IApprovalCategoryA
 
         await _categoryRepository.DeleteAsync(id);
         _logger.LogInformation("审批分类已删除: Id={Id}, Name={Name}", id, entity.Name);
+
+        return new();
     }
 
     private static ApprovalCategoryDto MapToDto(ApprovalCategory entity)

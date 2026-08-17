@@ -95,12 +95,12 @@
 
     private async Task<IList<DataSourceListModel>> LoadDataSourcesAsync(int pageIndex, int pageSize)
     {
-        return await DataSourceAppService.GetListAsync(AppId, new() { DataSourceType = ComponentDataSourceTypeEnum.API });
+        return (await DataSourceAppService.GetListAsync(AppId, new() { DataSourceType = ComponentDataSourceTypeEnum.API })).Data;
     }
 
     private async Task<DataSourceSchema> GetDataSourceAsync(string dataSourceId)
     {
-        var dataSourceSchema = await DataSourceAppService.GetByIdAsync(AppId, dataSourceId);
+        var dataSourceSchema = (await DataSourceAppService.GetByIdAsync(AppId, dataSourceId)).Data;
         if (dataSourceSchema == null)
             throw new NullReferenceException(nameof(dataSourceSchema));
 

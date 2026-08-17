@@ -3,6 +3,7 @@ using H.LowCode.DesignEngine.Domain.Repositories;
 using H.LowCode.DesignEngine.Model;
 using H.LowCode.MetaSchema;
 using H.LowCode.MetaSchema.DesignEngine;
+using H.Util.Base;
 using H.Util.Ids;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp;
@@ -20,26 +21,26 @@ public class AppTemplateAppService : ApplicationService, IAppTemplateAppService
     private IMenuRepository _menuRepository => LazyServiceProvider.GetRequiredService<IMenuRepository>();
     private IDataSourceRepository _dataSourceRepository => LazyServiceProvider.GetRequiredService<IDataSourceRepository>();
 
-    public async Task<List<AppTemplateListModel>> GetListAsync()
+    public async Task<BaseOutput<List<AppTemplateListModel>>> GetListAsync()
     {
-        return await _templateRepository.GetListAsync();
+        return new(await _templateRepository.GetListAsync());
     }
 
-    public async Task<AppTemplateSchema> GetByIdAsync(string templateId)
+    public async Task<BaseOutput<AppTemplateSchema>> GetByIdAsync(string templateId)
     {
-        return await _templateRepository.GetByIdAsync(templateId);
+        return new(await _templateRepository.GetByIdAsync(templateId));
     }
 
-    public async Task<bool> DeleteAsync(string templateId)
+    public async Task<BaseOutput<bool>> DeleteAsync(string templateId)
     {
-        return await _templateRepository.DeleteAsync(templateId);
+        return new(await _templateRepository.DeleteAsync(templateId));
     }
 
     /// <summary>
     /// 将已有应用另存为应用模板
     /// </summary>
     [DisableValidation]
-    public async Task<bool> SaveFromAppAsync(string appId, string name, string description)
+    public async Task<BaseOutput<bool>> SaveFromAppAsync(string appId, string name, string description)
     {
         ArgumentException.ThrowIfNullOrEmpty(appId);
 
@@ -79,14 +80,14 @@ public class AppTemplateAppService : ApplicationService, IAppTemplateAppService
             DataSources = dataSources
         };
 
-        return await _templateRepository.SaveAsync(template);
+        return new(await _templateRepository.SaveAsync(template));
     }
 
     /// <summary>
     /// 从模板创建新应用
     /// </summary>
     [DisableValidation]
-    public async Task<AppPartsSchema> CreateAppFromTemplateAsync(string templateId, string newAppId, string newName)
+    public async Task<BaseOutput<AppPartsSchema>> CreateAppFromTemplateAsync(string templateId, string newAppId, string newName)
     {
         ArgumentException.ThrowIfNullOrEmpty(templateId);
         ArgumentException.ThrowIfNullOrEmpty(newAppId);
@@ -129,7 +130,7 @@ public class AppTemplateAppService : ApplicationService, IAppTemplateAppService
             await _dataSourceRepository.SaveAsync(newAppId, newDs);
         }
 
-        return newApp;
+        return new(newApp);
     }
 
     private static T Clone<T>(T source) where T : class

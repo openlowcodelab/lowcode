@@ -172,7 +172,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        try { Categories = await CategoryService.GetAllAsync(); }
+        try { Categories = (await CategoryService.GetAllAsync()).Data ?? new(); }
         catch { Categories = new(); }
     }
 

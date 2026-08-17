@@ -69,13 +69,13 @@ else
 
     private async Task Reload()
     {
-        try { detail = await OrderService.GetDetailAsync(OrderId); }
+        try { detail = (await OrderService.GetDetailAsync(OrderId)).Data!; }
         catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载失败：{ex.Message}"); }
     }
 
     private async Task TriggerDispatch()
     {
-        var r = await OrderService.TriggerDispatchAsync(OrderId);
+        var r = (await OrderService.TriggerDispatchAsync(OrderId)).Data!;
         await JS.InvokeVoidAsync("alert", r.Success ? "下发成功" : $"下发失败：{r.Message}");
         await Reload();
     }

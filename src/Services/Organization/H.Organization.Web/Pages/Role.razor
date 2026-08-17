@@ -163,7 +163,7 @@
 
     private async Task LoadData()
     {
-        var result = await IRoleService.GetListAsync(new RoleQueryParams { PageSize = 100 });
+        var result = (await IRoleService.GetListAsync(new RoleQueryParams { PageSize = 100 })).Data!;
         roles = result.Items;
     }
 
@@ -256,6 +256,6 @@
         membersRoleName = role.Name;
         roleMembers = null;
         showMembersDialog = true;
-        roleMembers = await IRoleService.GetRoleMembersAsync(role.Id);
+        roleMembers = (await IRoleService.GetRoleMembersAsync(role.Id)).Data;
     }
 }

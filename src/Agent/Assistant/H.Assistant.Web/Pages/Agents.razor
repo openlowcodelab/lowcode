@@ -224,7 +224,7 @@
 
     private async Task LoadLLMConfigs()
     {
-        try { llmConfigs = await LLMConfigAppService.GetAllAsync(); }
+        try { llmConfigs = (await LLMConfigAppService.GetAllAsync()).Data ?? []; }
         catch (Exception ex) { ShowToast("加载模型配置失败: " + ex.Message, "error"); }
     }
 
@@ -233,10 +233,10 @@
         loadingAgents = true;
         try
         {
-            var result = await AgentDefinitionAppService.GetListAsync(new AgentQueryDto
+            var result = (await AgentDefinitionAppService.GetListAsync(new AgentQueryDto
             {
                 MaxResultCount = 100
-            });
+            })).Data!;
             agentsFromDb = result.Items.ToList();
 
             agentSkillDetails.Clear();
@@ -244,7 +244,7 @@
             {
                 try
                 {
-                    var skills = await AgentDefinitionAppService.GetAgentSkillsAsync(agent.Id);
+                    var skills = (await AgentDefinitionAppService.GetAgentSkillsAsync(agent.Id)).Data ?? [];
                     agentSkillDetails[agent.Id] = skills;
                 }
                 catch { }
@@ -258,7 +258,7 @@
     {
         try
         {
-            availableSkills = await SkillDefinitionAppService.GetEnabledSkillsAsync();
+            availableSkills = (await SkillDefinitionAppService.GetEnabledSkillsAsync()).Data ?? [];
         }
         catch (Exception ex) { ShowToast("加载可用技能失败: " + ex.Message, "error"); }
     }
@@ -318,7 +318,7 @@
 
         try
         {
-            var currentSkills = await AgentDefinitionAppService.GetAgentSkillsAsync(agent.Id);
+            var currentSkills = (await AgentDefinitionAppService.GetAgentSkillsAsync(agent.Id)).Data ?? [];
             editAgent.SelectedSkillIds = currentSkills.Select(s => s.Id).ToList();
         }
         catch { }

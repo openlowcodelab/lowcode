@@ -1,4 +1,5 @@
 using H.Testing.Application.Contracts;
+using H.Util.Base;
 using System.Collections.Concurrent;
 using Volo.Abp.Application.Services;
 
@@ -23,7 +24,7 @@ public class BatchExecutionAppService : ApplicationService, IBatchExecutionAppSe
     /// <summary>
     /// 批量执行测试用例
     /// </summary>
-    public async Task<BatchExecutionResult> ExecuteBatchAsync(
+    public async Task<BaseOutput<BatchExecutionResult>> ExecuteBatchAsync(
         BatchExecutionSettings settings,
         long environmentId,
         CancellationToken cancellationToken = default)
@@ -42,7 +43,7 @@ public class BatchExecutionAppService : ApplicationService, IBatchExecutionAppSe
             var testCases = new List<CaseDto>();
             foreach (var testCaseId in settings.SelectedTestCaseIds)
             {
-                var testCase = await _projectCaseService.GetByIdAsync(testCaseId);
+                var testCase = (await _projectCaseService.GetByIdAsync(testCaseId)).Data;
                 if (testCase != null)
                 {
                     testCases.Add(testCase);
@@ -79,7 +80,7 @@ public class BatchExecutionAppService : ApplicationService, IBatchExecutionAppSe
             result.ErrorMessage = ex.Message;
         }
 
-        return result;
+        return new(result);
     }
 
     /// <summary>
@@ -99,8 +100,8 @@ public class BatchExecutionAppService : ApplicationService, IBatchExecutionAppSe
 
             try
             {
-                var executionRecord = await _testExecutionEngine.ExecuteTestCaseAsync(
-                    testCase, environmentId, cancellationToken);
+                var executionRecord = (await _testExecutionEngine.ExecuteTestCaseAsync(
+                    testCase, environmentId, cancellationToken)).Data!;
 
                 result.ExecutionRecords.Add(executionRecord);
 
@@ -153,8 +154,8 @@ public class BatchExecutionAppService : ApplicationService, IBatchExecutionAppSe
                 await semaphore.WaitAsync(cancellationToken);
                 try
                 {
-                    var executionRecord = await _testExecutionEngine.ExecuteTestCaseAsync(
-                        testCase, environmentId, cancellationToken);
+                    var executionRecord = (await _testExecutionEngine.ExecuteTestCaseAsync(
+                        testCase, environmentId, cancellationToken)).Data!;
 
                     lock (lockObject)
                     {
@@ -258,8 +259,8 @@ public class BatchExecutionAppService : ApplicationService, IBatchExecutionAppSe
                     var random = new Random();
                     var testCase = testCases[random.Next(testCases.Count)];
 
-                    var executionRecord = await _testExecutionEngine.ExecuteTestCaseAsync(
-                        testCase, environmentId, cancellationToken);
+                    var executionRecord = (await _testExecutionEngine.ExecuteTestCaseAsync(
+                        testCase, environmentId, cancellationToken)).Data!;
 
                     lock (lockObject)
                     {

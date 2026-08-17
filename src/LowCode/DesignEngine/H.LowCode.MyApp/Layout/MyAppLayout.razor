@@ -34,7 +34,7 @@
 
     private async Task<AppPartsSchema> GetAppSchemaAsync(string appId)
     {
-        return await AppApplicationService.GetByIdAsync(appId);
+        return (await AppApplicationService.GetByIdAsync(appId)).Data!;
     }
 
     private List<AppMenuItem> InitMenuData(string appId)

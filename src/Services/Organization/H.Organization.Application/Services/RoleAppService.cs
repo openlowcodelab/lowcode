@@ -1,5 +1,6 @@
 using H.Organization.Application.Contracts;
 using H.Organization.EntityFrameworkCore;
+using H.Util.Base;
 using Microsoft.EntityFrameworkCore;
 using Volo.Abp.Application.Services;
 
@@ -20,7 +21,7 @@ public class RoleAppService : ApplicationService, IRoleAppService
     /// <summary>
     /// 获取角色列表
     /// </summary>
-    public async Task<PagedResult<RoleDto>> GetListAsync(RoleQueryParams queryParams)
+    public async Task<BaseOutput<PagedResult<RoleDto>>> GetListAsync(RoleQueryParams queryParams)
     {
         var query = _context.Roles.AsQueryable();
 
@@ -63,27 +64,27 @@ public class RoleAppService : ApplicationService, IRoleAppService
             })
             .ToListAsync();
 
-        return new PagedResult<RoleDto>
+        return new(new PagedResult<RoleDto>
         {
             Items = items,
             TotalCount = totalCount,
             PageIndex = queryParams.PageIndex,
             PageSize = queryParams.PageSize
-        };
+        });
     }
 
     /// <summary>
     /// 获取角色详情
     /// </summary>
-    public async Task<RoleDto?> GetByIdAsync(Guid id)
+    public async Task<BaseOutput<RoleDto>> GetByIdAsync(Guid id)
     {
         var entity = await _context.Roles
             .Include(x => x.RoleMembers)
             .FirstOrDefaultAsync(x => x.Id == id);
 
-        if (entity == null) return null;
+        if (entity == null) return new(null);
 
-        return new RoleDto
+        return new(new RoleDto
         {
             Id = entity.Id,
             Name = entity.Name,
@@ -97,13 +98,13 @@ public class RoleAppService : ApplicationService, IRoleAppService
             CreatedAt = entity.CreatedAt,
             Remark = entity.Remark,
             MembersCount = entity.RoleMembers.Count
-        };
+        });
     }
 
     /// <summary>
     /// 创建角色
     /// </summary>
-    public async Task<RoleDto> CreateAsync(CreateRoleDto input)
+    public async Task<BaseOutput<RoleDto>> CreateAsync(CreateRoleDto input)
     {
         // 检查编码是否已存在
         if (!string.IsNullOrWhiteSpace(input.Code))
@@ -127,13 +128,14 @@ public class RoleAppService : ApplicationService, IRoleAppService
         _context.Roles.Add(entity);
         await _context.SaveChangesAsync();
 
-        return await GetByIdAsync(entity.Id) ?? throw new Exception("创建失败");
+        var created = await GetByIdAsync(entity.Id);
+        return new(created.Data ?? throw new Exception("创建失败"));
     }
 
     /// <summary>
     /// 更新角色
     /// </summary>
-    public async Task<RoleDto> UpdateAsync(Guid id, UpdateRoleDto input)
+    public async Task<BaseOutput<RoleDto>> UpdateAsync(Guid id, UpdateRoleDto input)
     {
         var entity = await _context.Roles.FindAsync(id);
         if (entity == null)
@@ -158,13 +160,14 @@ public class RoleAppService : ApplicationService, IRoleAppService
 
         await _context.SaveChangesAsync();
 
-        return await GetByIdAsync(id) ?? throw new Exception("更新失败");
+        var updated = await GetByIdAsync(id);
+        return new(updated.Data ?? throw new Exception("更新失败"));
     }
 
     /// <summary>
     /// 删除角色
     /// </summary>
-    public async Task DeleteAsync(Guid id)
+    public async Task<BaseOutput> DeleteAsync(Guid id)
     {
         var entity = await _context.Roles.FindAsync(id);
         if (entity == null)
@@ -177,25 +180,27 @@ public class RoleAppService : ApplicationService, IRoleAppService
 
         _context.Roles.Remove(entity);
         await _context.SaveChangesAsync();
+        return new();
     }
 
     /// <summary>
     /// 批量删除角色
     /// </summary>
-    public async Task BatchDeleteAsync(List<Guid> ids)
+    public async Task<BaseOutput> BatchDeleteAsync(List<Guid> ids)
     {
         foreach (var id in ids)
         {
             await DeleteAsync(id);
         }
+        return new();
     }
 
     /// <summary>
     /// 获取所有启用的角色
     /// </summary>
-    public async Task<List<RoleDto>> GetAllEnabledAsync()
+    public async Task<BaseOutput<List<RoleDto>>> GetAllEnabledAsync()
     {
-        return await _context.Roles
+        var roles = await _context.Roles
             .Where(x => x.IsEnabled)
             .OrderBy(x => x.Sort)
             .Select(x => new RoleDto
@@ -214,14 +219,15 @@ public class RoleAppService : ApplicationService, IRoleAppService
                 MembersCount = x.RoleMembers.Count
             })
             .ToListAsync();
+        return new(roles);
     }
 
     /// <summary>
     /// 获取角色已分配成员
     /// </summary>
-    public async Task<List<RoleMemberDto>> GetRoleMembersAsync(Guid roleId)
+    public async Task<BaseOutput<List<RoleMemberDto>>> GetRoleMembersAsync(Guid roleId)
     {
-        return await _context.RoleMembers
+        var members = await _context.RoleMembers
             .Where(x => x.RoleId == roleId && x.Member != null)
             .OrderBy(x => x.Member!.Sort)
             .Select(x => new RoleMemberDto
@@ -232,6 +238,7 @@ public class RoleAppService : ApplicationService, IRoleAppService
                 OrganizationName = x.Member!.Organization != null ? x.Member!.Organization.Name : string.Empty
             })
             .ToListAsync();
+        return new(members);
     }
 
     private static string GetRoleTypeName(int roleType)

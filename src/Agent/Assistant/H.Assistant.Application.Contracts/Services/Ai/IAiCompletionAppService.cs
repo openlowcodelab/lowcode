@@ -1,4 +1,5 @@
 using H.Abp.Application.Contracts;
+using H.Util.Base;
 
 namespace H.Assistant.Application.Contracts;
 
@@ -11,5 +12,5 @@ public interface IAiCompletionAppService : IAppService
     /// <summary>
     /// 文本生成（同步，单轮对话）
     /// </summary>
-    Task<AiCompletionResultDto> CompleteAsync(AiCompletionInputDto input);
+    Task<BaseOutput<AiCompletionResultDto>> CompleteAsync(AiCompletionInputDto input);
 }

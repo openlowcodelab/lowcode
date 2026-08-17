@@ -54,7 +54,7 @@ public partial class AssistantAppViewModel : ObservableObject
     {
         try
         {
-            var result = await _chatMessageAppService.GetSessionsAsync(new SessionQueryDto { MaxResultCount = 50, SkipCount = 0 });
+            var result = (await _chatMessageAppService.GetSessionsAsync(new SessionQueryDto { MaxResultCount = 50, SkipCount = 0 })).Data!;
             var selectedId = Chat.SessionId;
             Sessions.Clear();
             foreach (var chat in result.Items)

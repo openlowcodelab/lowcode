@@ -152,10 +152,10 @@
         try
         {
             var dbInput = new DataSourceInput { DataSourceType = ComponentDataSourceTypeEnum.DB };
-            _dbDataSources = await DataSourceAppService.GetListAsync(Page.AppId, dbInput);
+            _dbDataSources = (await DataSourceAppService.GetListAsync(Page.AppId, dbInput)).Data;
 
             var apiInput = new DataSourceInput { DataSourceType = ComponentDataSourceTypeEnum.API };
-            _apiDataSources = await DataSourceAppService.GetListAsync(Page.AppId, apiInput);
+            _apiDataSources = (await DataSourceAppService.GetListAsync(Page.AppId, apiInput)).Data;
         }
         catch (Exception ex)
         {
@@ -182,7 +182,7 @@
         if (string.IsNullOrEmpty(_selectedDbDataSourceId)) return;
         try
         {
-            _selectedDbDataSource = await DataSourceAppService.GetByIdAsync(Page.AppId, _selectedDbDataSourceId);
+            _selectedDbDataSource = (await DataSourceAppService.GetByIdAsync(Page.AppId, _selectedDbDataSourceId)).Data;
         }
         catch (Exception ex)
         {
@@ -195,7 +195,7 @@
         if (string.IsNullOrEmpty(_selectedApiDataSourceId)) return;
         try
         {
-            _selectedApiDataSource = await DataSourceAppService.GetByIdAsync(Page.AppId, _selectedApiDataSourceId);
+            _selectedApiDataSource = (await DataSourceAppService.GetByIdAsync(Page.AppId, _selectedApiDataSourceId)).Data;
         }
         catch (Exception ex)
         {

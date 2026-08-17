@@ -1,4 +1,5 @@
 using H.Abp.Application.Contracts;
+using H.Util.Base;
 
 namespace H.Organization.Application.Contracts;
 
@@ -10,40 +11,40 @@ public interface IRoleAppService : IAppService
     /// <summary>
     /// 获取角色列表
     /// </summary>
-    Task<PagedResult<RoleDto>> GetListAsync(RoleQueryParams queryParams);
+    Task<BaseOutput<PagedResult<RoleDto>>> GetListAsync(RoleQueryParams queryParams);
 
     /// <summary>
     /// 获取角色详情
     /// </summary>
-    Task<RoleDto?> GetByIdAsync(Guid id);
+    Task<BaseOutput<RoleDto>> GetByIdAsync(Guid id);
 
     /// <summary>
     /// 创建角色
     /// </summary>
-    Task<RoleDto> CreateAsync(CreateRoleDto input);
+    Task<BaseOutput<RoleDto>> CreateAsync(CreateRoleDto input);
 
     /// <summary>
     /// 更新角色
     /// </summary>
-    Task<RoleDto> UpdateAsync(Guid id, UpdateRoleDto input);
+    Task<BaseOutput<RoleDto>> UpdateAsync(Guid id, UpdateRoleDto input);
 
     /// <summary>
     /// 删除角色
     /// </summary>
-    Task DeleteAsync(Guid id);
+    Task<BaseOutput> DeleteAsync(Guid id);
 
     /// <summary>
     /// 批量删除角色
     /// </summary>
-    Task BatchDeleteAsync(List<Guid> ids);
+    Task<BaseOutput> BatchDeleteAsync(List<Guid> ids);
 
     /// <summary>
     /// 获取所有启用的角色
     /// </summary>
-    Task<List<RoleDto>> GetAllEnabledAsync();
+    Task<BaseOutput<List<RoleDto>>> GetAllEnabledAsync();
 
     /// <summary>
     /// 获取角色已分配成员
     /// </summary>
-    Task<List<RoleMemberDto>> GetRoleMembersAsync(Guid roleId);
+    Task<BaseOutput<List<RoleMemberDto>>> GetRoleMembersAsync(Guid roleId);
 }

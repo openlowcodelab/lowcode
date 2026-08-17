@@ -214,7 +214,7 @@
         isLoading = true;
         try
         {
-            user = await UserService.GetUserDtoByIdAsync(Id);
+            user = (await UserService.GetUserDtoByIdAsync(Id)).Data;
             if (user != null)
             {
                 updateUserDto = new UpdateUserDto

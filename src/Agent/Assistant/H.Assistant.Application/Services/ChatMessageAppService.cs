@@ -1,6 +1,7 @@
 using H.Abp.Application.Contracts;
 using H.Assistant.Application.Contracts;
 using H.Assistant.Core;
+using H.Util.Base;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
@@ -27,7 +28,7 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
         _logger = logger;
     }
 
-    public async Task<ChatResponseDto> SendMessageAsync(SendChatMessageInputDto input)
+    public async Task<BaseOutput<ChatResponseDto>> SendMessageAsync(SendChatMessageInputDto input)
     {
         var agentType = input.AgentType ?? "general";
         Guid sessionId;
@@ -36,7 +37,7 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
         if (!input.SessionId.HasValue)
         {
             var title = input.Message.Length > 30 ? input.Message[..30] + "..." : input.Message;
-            sessionId = await _sessionAppService.CreateSessionAsync(title, agentType);
+            sessionId = (await _sessionAppService.CreateSessionAsync(title, agentType)).Data;
         }
         else
         {
@@ -55,7 +56,7 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
         };
 
         // 获取历史消息（在添加当前用户消息之前，避免 ProcessMessageAsync 中重复添加）
-        var history = await _sessionAppService.GetMessagesAsync(sessionId);
+        var history = (await _sessionAppService.GetMessagesAsync(sessionId)).Data ?? [];
         var conversationHistory = history.Select(m => $"{m.Role}: {m.Content}").ToList();
 
         await _sessionAppService.AddMessageAsync(sessionId, userMessage);
@@ -67,8 +68,8 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
         {
             _logger.LogError("无法创建 Agent 实例，agentType={AgentType}, modelConfigId={ModelConfigId}", agentType, input.ModelConfigId);
             throw new InvalidOperationException(
-                $"无法创建 Assistant 实例: {agentType}。" +
-                $"请检查: 1) LLM 配置是否存在且已启用; 2) API Key 是否正确配置; 3) Agent 定义是否存在。");
+                $"无法创建 Assistant 实例: {agentType}" +
+                $"请检查: 1) LLM 配置是否存在且已启用; 2) API Key 是否正确配置; 3) Agent 定义是否存在");
         }
 
         // 处理消息
@@ -88,14 +89,14 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
         // Trigger memory extraction in background
         _ = Task.Run(() => TryExtractMemoryAsync(sessionId));
 
-        return new ChatResponseDto
+        return new(new ChatResponseDto
         {
             SessionId = sessionId,
             MessageId = aiMessage.Id,
             Response = response,
             IsStreaming = false,
             ToolCalls = agent.GetAvailableTools()
-        };
+        });
     }
 
     public async IAsyncEnumerable<string> SendMessageStreamAsync(SendChatMessageInputDto input)
@@ -107,7 +108,7 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
         if (!input.SessionId.HasValue)
         {
             var title = input.Message.Length > 30 ? input.Message[..30] + "..." : input.Message;
-            sessionId = await _sessionAppService.CreateSessionAsync(title, agentType);
+            sessionId = (await _sessionAppService.CreateSessionAsync(title, agentType)).Data;
         }
         else
         {
@@ -126,7 +127,7 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
         };
 
         // 获取历史消息
-        var history = await _sessionAppService.GetMessagesAsync(sessionId);
+        var history = (await _sessionAppService.GetMessagesAsync(sessionId)).Data ?? [];
         var conversationHistory = history.Select(m => $"{m.Role}: {m.Content}").ToList();
 
         await _sessionAppService.AddMessageAsync(sessionId, userMessage);
@@ -147,8 +148,8 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
             _logger.LogError("无法创建 Agent 实例(流式)，agentType={AgentType}, providerName={ProviderName}, modelConfigId={ModelConfigId}",
                 agentType, input.ProviderName, input.ModelConfigId);
             throw new InvalidOperationException(
-                $"无法创建 Assistant 实例: {agentType}。" +
-                $"请检查: 1) LLM 配置是否存在且已启用; 2) API Key 是否正确配置; 3) Agent 定义是否存在。");
+                $"无法创建 Assistant 实例: {agentType}" +
+                $"请检查: 1) LLM 配置是否存在且已启用; 2) API Key 是否正确配置; 3) Agent 定义是否存在");
         }
 
         // 如果 Assistant 支持流式响应，使用流式处理
@@ -272,9 +273,9 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
         }
     }
 
-    public async Task<PagedResultDto<ChatDto>> GetSessionsAsync(SessionQueryDto input)
+    public async Task<BaseOutput<PagedResultDto<ChatDto>>> GetSessionsAsync(SessionQueryDto input)
     {
-        var sessions = await _sessionAppService.GetSessionsAsync(input.Filter);
+        var sessions = (await _sessionAppService.GetSessionsAsync(input.Filter)).Data ?? [];
 
         var totalCount = sessions.Count;
         var pagedSessions = sessions
@@ -282,29 +283,30 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
             .Take(input.MaxResultCount)
             .ToList();
 
-        return new PagedResultDto<ChatDto>(totalCount, pagedSessions);
+        return new(new PagedResultDto<ChatDto>(totalCount, pagedSessions));
     }
 
-    public async Task<List<ChatMessageDto>> GetMessagesAsync(Guid sessionId)
+    public async Task<BaseOutput<List<ChatMessageDto>>> GetMessagesAsync(Guid sessionId)
     {
         return await _sessionAppService.GetMessagesAsync(sessionId);
     }
 
-    public async Task DeleteSessionAsync(Guid sessionId)
+    public async Task<BaseOutput> DeleteSessionAsync(Guid sessionId)
     {
         await _sessionAppService.DeleteSessionAsync(sessionId);
+        return new();
     }
 
-    public async Task<List<AgentConfigDto>> GetAvailableAgentsAsync()
+    public async Task<BaseOutput<List<AgentConfigDto>>> GetAvailableAgentsAsync()
     {
         var agents = await _agentFactory.GetAvailableAgentsAsync();
-        return agents.Select(a => new AgentConfigDto
+        return new(agents.Select(a => new AgentConfigDto
         {
             AgentType = a.AgentType,
             DisplayName = a.DisplayName,
             Description = a.Description,
             Capabilities = a.Capabilities
-        }).ToList();
+        }).ToList());
     }
 
     /// <summary>
@@ -320,7 +322,7 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
             var chatService = scope.ServiceProvider.GetRequiredService<IChatAppService>();
 
             // Get recent messages from this session
-            var messages = await chatService.GetMessagesAsync(sessionId);
+            var messages = (await chatService.GetMessagesAsync(sessionId)).Data ?? [];
             if (messages.Count < 2) return; // Need at least 1 user + 1 assistant message
 
             // Only take the last 10 messages for extraction
@@ -341,7 +343,7 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
             var systemPrompt = @"你是一个信息提取助手。请从以下对话中提取值得记住的关键信息，包括：用户偏好、项目信息、技术决策、重要事实等。
 以 JSON 数组格式返回，每项包含 title、content、category 字段。category 可选值：用户偏好、项目信息、技术决策、重要事实、其他。
 如果没有值得提取的信息，返回空数组 []。
-只返回 JSON，不要其他内容。";
+只返回 JSON，不要其他内容";
 
             var request = new LLMRequest
             {

@@ -1,6 +1,7 @@
 using H.Abp.Application.Contracts;
 using H.Notification.Application.Contracts;
 using H.Notification.EntityFrameworkCore;
+using H.Util.Base;
 using Microsoft.EntityFrameworkCore;
 using System.Text.RegularExpressions;
 using Volo.Abp;
@@ -31,7 +32,7 @@ public class NotificationBusinessAppService : ApplicationService, INotificationB
         _categoryRepository = categoryRepository;
     }
 
-    public async Task<PagedResultDto<NotificationBusinessDto>> GetListAsync(NotificationBusinessQueryDto input)
+    public async Task<BaseOutput<PagedResultDto<NotificationBusinessDto>>> GetListAsync(NotificationBusinessQueryDto input)
     {
         var query = (await _businessRepository.WithDetailsAsync(x => x.Specs, x => x.Templates, x => x.Groups))
             .WhereIf(!string.IsNullOrWhiteSpace(input.Filter),
@@ -44,17 +45,17 @@ public class NotificationBusinessAppService : ApplicationService, INotificationB
 
         var categoryNames = await GetCategoryNameMapAsync(entities.Select(e => e.CategoryId));
         var dtos = entities.Select(e => MapToDto(e, categoryNames)).ToList();
-        return new PagedResultDto<NotificationBusinessDto>(totalCount, dtos);
+        return new(new PagedResultDto<NotificationBusinessDto>(totalCount, dtos));
     }
 
-    public async Task<NotificationBusinessDto> GetAsync(Guid id)
+    public async Task<BaseOutput<NotificationBusinessDto>> GetAsync(Guid id)
     {
         var entity = await GetWithDetailsAsync(id);
         var categoryNames = await GetCategoryNameMapAsync(new[] { entity.CategoryId });
-        return MapToDto(entity, categoryNames);
+        return new(MapToDto(entity, categoryNames));
     }
 
-    public async Task<NotificationBusinessDto> CreateAsync(CreateNotificationBusinessDto input)
+    public async Task<BaseOutput<NotificationBusinessDto>> CreateAsync(CreateNotificationBusinessDto input)
     {
         var suffix = (input.CodeSuffix ?? string.Empty).Trim().ToLowerInvariant();
         if (!CodeSuffixRegex.IsMatch(suffix))
@@ -84,11 +85,11 @@ public class NotificationBusinessAppService : ApplicationService, INotificationB
         };
         ApplyTemplates(entity, input.Templates);
 
-        await _businessRepository.InsertAsync(entity, autoSave: true);
+        entity = await _businessRepository.InsertAsync(entity, autoSave: true);
         return await GetAsync(entity.Id);
     }
 
-    public async Task<NotificationBusinessDto> UpdateAsync(Guid id, UpdateNotificationBusinessDto input)
+    public async Task<BaseOutput<NotificationBusinessDto>> UpdateAsync(Guid id, UpdateNotificationBusinessDto input)
     {
         var entity = await GetWithDetailsAsync(id);
         entity.BusinessName = input.BusinessName;
@@ -99,23 +100,24 @@ public class NotificationBusinessAppService : ApplicationService, INotificationB
         entity.Templates.Clear();
         ApplyTemplates(entity, input.Templates);
 
-        await _businessRepository.UpdateAsync(entity, autoSave: true);
+        entity = await _businessRepository.UpdateAsync(entity, autoSave: true);
         return await GetAsync(entity.Id);
     }
 
-    public async Task DeleteAsync(Guid id)
+    public async Task<BaseOutput> DeleteAsync(Guid id)
     {
         await _businessRepository.DeleteAsync(id);
+        return new();
     }
 
-    public async Task<List<NotificationSpecDto>> GetSpecsAsync(Guid businessId)
+    public async Task<BaseOutput<List<NotificationSpecDto>>> GetSpecsAsync(Guid businessId)
     {
         var specs = await AsyncExecuter.ToListAsync(
             (await _specRepository.GetQueryableAsync()).Where(s => s.BusinessId == businessId));
-        return specs.Select(MapSpecToDto).OrderBy(s => s.Level).ToList();
+        return new(specs.Select(MapSpecToDto).OrderBy(s => s.Level).ToList());
     }
 
-    public async Task SetSpecsAsync(Guid businessId, List<NotificationSpecDto> specs)
+    public async Task<BaseOutput> SetSpecsAsync(Guid businessId, List<NotificationSpecDto> specs)
     {
         var existing = await AsyncExecuter.ToListAsync(
             (await _specRepository.GetQueryableAsync()).Where(s => s.BusinessId == businessId));
@@ -134,15 +136,17 @@ public class NotificationBusinessAppService : ApplicationService, INotificationB
             Threshold = s.Threshold
         }).ToList();
         await _specRepository.InsertManyAsync(newSpecs, autoSave: true);
+        return new();
     }
 
-    public async Task<List<long>> GetGroupIdsAsync(Guid businessId)
+    public async Task<BaseOutput<List<long>>> GetGroupIdsAsync(Guid businessId)
     {
-        return await AsyncExecuter.ToListAsync(
+        var groupIds = await AsyncExecuter.ToListAsync(
             (await _groupBindingRepository.GetQueryableAsync()).Where(g => g.BusinessId == businessId).Select(g => g.GroupId));
+        return new(groupIds);
     }
 
-    public async Task SetGroupsAsync(Guid businessId, List<long> groupIds)
+    public async Task<BaseOutput> SetGroupsAsync(Guid businessId, List<long> groupIds)
     {
         var existing = await AsyncExecuter.ToListAsync(
             (await _groupBindingRepository.GetQueryableAsync()).Where(g => g.BusinessId == businessId));
@@ -154,6 +158,7 @@ public class NotificationBusinessAppService : ApplicationService, INotificationB
             GroupId = gid
         }).ToList();
         await _groupBindingRepository.InsertManyAsync(bindings, autoSave: true);
+        return new();
     }
 
     private async Task<NotificationBusinessEntity> GetWithDetailsAsync(Guid id)

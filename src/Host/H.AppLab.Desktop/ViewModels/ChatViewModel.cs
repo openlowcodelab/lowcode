@@ -122,7 +122,7 @@ public partial class ChatViewModel : ObservableObject
     {
         try
         {
-            var agents = await _chatMessageAppService.GetAvailableAgentsAsync();
+            var agents = (await _chatMessageAppService.GetAvailableAgentsAsync()).Data ?? [];
             AvailableAgents.Clear();
             foreach (var agent in agents)
             {
@@ -140,7 +140,7 @@ public partial class ChatViewModel : ObservableObject
     {
         try
         {
-            var allConfigs = await _llmAppService.GetAllAsync();
+            var allConfigs = (await _llmAppService.GetAllAsync()).Data ?? [];
             var enabled = allConfigs.Where(c => c.IsEnabled).ToList();
             AvailableModels.Clear();
             foreach (var model in enabled)
@@ -197,7 +197,7 @@ public partial class ChatViewModel : ObservableObject
         LoadingMessages = true;
         try
         {
-            var messages = await _chatMessageAppService.GetMessagesAsync(sessionId);
+            var messages = (await _chatMessageAppService.GetMessagesAsync(sessionId)).Data ?? [];
 
             ReactSteps.Clear();
             HasReactSteps = false;

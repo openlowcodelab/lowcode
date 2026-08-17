@@ -177,8 +177,8 @@ else
 
     private async Task LoadAsync()
     {
-        _roles = await AppRbacAppService.GetRolesAsync(AppId);
-        _members = await AppRbacAppService.GetMembersAsync(AppId);
+        _roles = (await AppRbacAppService.GetRolesAsync(AppId)).Data;
+        _members = (await AppRbacAppService.GetMembersAsync(AppId)).Data;
     }
 
     private string GetRoleName(string key) => _roles.FirstOrDefault(t => t.Key == key)?.Name ?? key;

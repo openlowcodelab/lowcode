@@ -1,6 +1,7 @@
 using H.Abp.Application.Contracts;
 using H.Notification.Application.Contracts;
 using H.Notification.EntityFrameworkCore;
+using H.Util.Base;
 using Microsoft.EntityFrameworkCore;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
@@ -20,7 +21,7 @@ public class ContactAppService : ApplicationService, IContactAppService
         _memberRepository = memberRepository;
     }
 
-    public async Task<PagedResultDto<ContactDto>> GetListAsync(ContactQueryDto input)
+    public async Task<BaseOutput<PagedResultDto<ContactDto>>> GetListAsync(ContactQueryDto input)
     {
         var query = (await _contactRepository.GetQueryableAsync())
             .WhereIf(!string.IsNullOrWhiteSpace(input.Filter),
@@ -43,24 +44,24 @@ public class ContactAppService : ApplicationService, IContactAppService
         var groupMap = members.GroupBy(m => m.ContactId).ToDictionary(g => g.Key, g => g.Select(x => x.GroupId).ToList());
 
         var dtos = entities.Select(e => MapToDto(e, groupMap.TryGetValue(e.Id, out var gs) ? gs : new List<long>())).ToList();
-        return new PagedResultDto<ContactDto>(totalCount, dtos);
+        return new(new PagedResultDto<ContactDto>(totalCount, dtos));
     }
 
-    public async Task<List<ContactDto>> GetAllEnabledAsync()
+    public async Task<BaseOutput<List<ContactDto>>> GetAllEnabledAsync()
     {
         var entities = await AsyncExecuter.ToListAsync((await _contactRepository.GetQueryableAsync()).Where(x => x.IsEnabled));
-        return entities.Select(e => MapToDto(e, new List<long>())).ToList();
+        return new(entities.Select(e => MapToDto(e, new List<long>())).ToList());
     }
 
-    public async Task<ContactDto> GetAsync(Guid id)
+    public async Task<BaseOutput<ContactDto>> GetAsync(Guid id)
     {
         var entity = await _contactRepository.GetAsync(id);
         var groups = await AsyncExecuter.ToListAsync(
             (await _memberRepository.GetQueryableAsync()).Where(m => m.ContactId == id).Select(m => m.GroupId));
-        return MapToDto(entity, groups);
+        return new(MapToDto(entity, groups));
     }
 
-    public async Task<ContactDto> CreateAsync(CreateContactDto input)
+    public async Task<BaseOutput<ContactDto>> CreateAsync(CreateContactDto input)
     {
         var entity = new ContactEntity(GuidGenerator.Create())
         {
@@ -72,11 +73,11 @@ public class ContactAppService : ApplicationService, IContactAppService
             Phone = input.Phone,
             WebhookUrl = input.WebhookUrl
         };
-        await _contactRepository.InsertAsync(entity, autoSave: true);
-        return MapToDto(entity, new List<long>());
+        entity = await _contactRepository.InsertAsync(entity, autoSave: true);
+        return new(MapToDto(entity, new List<long>()));
     }
 
-    public async Task<ContactDto> UpdateAsync(Guid id, UpdateContactDto input)
+    public async Task<BaseOutput<ContactDto>> UpdateAsync(Guid id, UpdateContactDto input)
     {
         var entity = await _contactRepository.GetAsync(id);
         entity.Name = input.Name;
@@ -86,16 +87,17 @@ public class ContactAppService : ApplicationService, IContactAppService
         entity.Email = input.Email;
         entity.Phone = input.Phone;
         entity.WebhookUrl = input.WebhookUrl;
-        await _contactRepository.UpdateAsync(entity, autoSave: true);
+        entity = await _contactRepository.UpdateAsync(entity, autoSave: true);
 
         var groups = await (await _memberRepository.GetQueryableAsync())
             .Where(m => m.ContactId == id).Select(m => m.GroupId).ToListAsync();
-        return MapToDto(entity, groups);
+        return new(MapToDto(entity, groups));
     }
 
-    public async Task DeleteAsync(Guid id)
+    public async Task<BaseOutput> DeleteAsync(Guid id)
     {
         await _contactRepository.DeleteAsync(id);
+        return new();
     }
 
     private static ContactDto MapToDto(ContactEntity e, List<long> groupIds) => new()

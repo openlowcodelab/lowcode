@@ -1,4 +1,5 @@
 using H.Abp.Application.Contracts;
+using H.Util.Base;
 
 namespace H.Setting.Application.Contracts;
 
@@ -7,9 +8,9 @@ namespace H.Setting.Application.Contracts;
 /// </summary>
 public interface ISettingDefinitionAppService : IAppService
 {
-    Task<PagedResultDto<SettingDefinitionDto>> GetListAsync(SettingDefinitionQueryDto input);
-    Task<SettingDefinitionDto> GetAsync(Guid id);
-    Task<SettingDefinitionDto> CreateAsync(CreateUpdateSettingDefinitionDto input);
-    Task<SettingDefinitionDto> UpdateAsync(Guid id, CreateUpdateSettingDefinitionDto input);
-    Task DeleteAsync(Guid id);
+    Task<BaseOutput<PagedResultDto<SettingDefinitionDto>>> GetListAsync(SettingDefinitionQueryDto input);
+    Task<BaseOutput<SettingDefinitionDto>> GetAsync(Guid id);
+    Task<BaseOutput<SettingDefinitionDto>> CreateAsync(CreateUpdateSettingDefinitionDto input);
+    Task<BaseOutput<SettingDefinitionDto>> UpdateAsync(Guid id, CreateUpdateSettingDefinitionDto input);
+    Task<BaseOutput> DeleteAsync(Guid id);
 }

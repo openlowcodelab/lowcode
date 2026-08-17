@@ -131,10 +131,10 @@ else if (enterprise != null)
         loading = true;
         try
         {
-            enterprise = await EnterpriseService.GetByIdAsync(Id);
+            enterprise = (await EnterpriseService.GetByIdAsync(Id)).Data;
             if (enterprise != null)
             {
-                members = await EnterpriseUserService.GetEnterpriseUsersAsync(Id);
+                members = (await EnterpriseUserService.GetEnterpriseUsersAsync(Id)).Data ?? new();
             }
         }
         finally

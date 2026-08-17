@@ -1,6 +1,7 @@
 using H.Abp.Application.Contracts;
 using H.Assistant.Application.Contracts;
 using H.Assistant.EntityFrameworkCore;
+using H.Util.Base;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 
@@ -18,13 +19,13 @@ public class SkillAppService : ApplicationService, ISkillAppService
         _skillRepository = skillRepository;
     }
 
-    public async Task<SkillDto> GetAsync(Guid id)
+    public async Task<BaseOutput<SkillDto>> GetAsync(Guid id)
     {
         var entity = await _skillRepository.GetAsync(id);
-        return MapToDto(entity);
+        return new(MapToDto(entity));
     }
 
-    public async Task<PagedResultDto<SkillDto>> GetListAsync(SkillDefinitionQueryDto input)
+    public async Task<BaseOutput<PagedResultDto<SkillDto>>> GetListAsync(SkillDefinitionQueryDto input)
     {
         var query = await _skillRepository.GetQueryableAsync();
 
@@ -51,10 +52,10 @@ public class SkillAppService : ApplicationService, ISkillAppService
         var entities = await AsyncExecuter.ToListAsync(query.OrderByDescending(x => x.CreationTime).Skip(input.SkipCount).Take(input.MaxResultCount));
         var dtos = entities.Select(MapToDto).ToList();
 
-        return new PagedResultDto<SkillDto>(totalCount, dtos);
+        return new(new PagedResultDto<SkillDto>(totalCount, dtos));
     }
 
-    public async Task<SkillDto> CreateAsync(CreateSkillDefinitionDto input)
+    public async Task<BaseOutput<SkillDto>> CreateAsync(CreateSkillDefinitionDto input)
     {
         // 检查技能名称是否已存在
         var query = await _skillRepository.GetQueryableAsync();
@@ -77,11 +78,11 @@ public class SkillAppService : ApplicationService, ISkillAppService
             UsageCount = 0
         };
 
-        await _skillRepository.InsertAsync(entity);
-        return MapToDto(entity);
+        entity = await _skillRepository.InsertAsync(entity);
+        return new(MapToDto(entity));
     }
 
-    public async Task<SkillDto> UpdateAsync(Guid id, UpdateSkillDefinitionDto input)
+    public async Task<BaseOutput<SkillDto>> UpdateAsync(Guid id, UpdateSkillDefinitionDto input)
     {
         var entity = await _skillRepository.GetAsync(id);
 
@@ -93,42 +94,45 @@ public class SkillAppService : ApplicationService, ISkillAppService
         entity.IsEnabled = input.IsEnabled;
         entity.RequiresApproval = input.RequiresApproval;
 
-        await _skillRepository.UpdateAsync(entity);
-        return MapToDto(entity);
+        entity = await _skillRepository.UpdateAsync(entity);
+        return new(MapToDto(entity));
     }
 
-    public async Task DeleteAsync(Guid id)
+    public async Task<BaseOutput> DeleteAsync(Guid id)
     {
         await _skillRepository.DeleteAsync(id);
+        return new();
     }
 
-    public async Task ToggleEnabledAsync(Guid id, bool isEnabled)
+    public async Task<BaseOutput> ToggleEnabledAsync(Guid id, bool isEnabled)
     {
         var entity = await _skillRepository.GetAsync(id);
         entity.IsEnabled = isEnabled;
         await _skillRepository.UpdateAsync(entity);
+        return new();
     }
 
-    public async Task<List<SkillDto>> GetEnabledSkillsAsync()
+    public async Task<BaseOutput<List<SkillDto>>> GetEnabledSkillsAsync()
     {
         var query = await _skillRepository.GetQueryableAsync();
         var entities = await AsyncExecuter.ToListAsync(query.Where(x => x.IsEnabled));
-        return entities.Select(MapToDto).ToList();
+        return new(entities.Select(MapToDto).ToList());
     }
 
-    public async Task<List<SkillDto>> GetSkillsByTypeAsync(string skillType)
+    public async Task<BaseOutput<List<SkillDto>>> GetSkillsByTypeAsync(string skillType)
     {
         var query = await _skillRepository.GetQueryableAsync();
         var entities = await AsyncExecuter.ToListAsync(query.Where(x => x.SkillType == skillType && x.IsEnabled));
-        return entities.Select(MapToDto).ToList();
+        return new(entities.Select(MapToDto).ToList());
     }
 
-    public async Task IncrementUsageCountAsync(Guid id)
+    public async Task<BaseOutput> IncrementUsageCountAsync(Guid id)
     {
         var entity = await _skillRepository.GetAsync(id);
         entity.UsageCount++;
         entity.LastUsedTime = DateTime.UtcNow;
         await _skillRepository.UpdateAsync(entity);
+        return new();
     }
 
     private static SkillDto MapToDto(SkillEntity entity)

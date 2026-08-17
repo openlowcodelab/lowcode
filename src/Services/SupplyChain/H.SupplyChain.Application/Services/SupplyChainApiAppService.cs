@@ -1,5 +1,6 @@
 using H.SupplyChain.Application.Contracts;
 using H.SupplyChain.EntityFrameworkCore;
+using H.Util.Base;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 
@@ -48,7 +49,7 @@ public class SupplyChainApiAppService : ApplicationService, ISupplyChainApiAppSe
     /// 菜单接口：返回内部商品目录。
     /// 指定供应商时，菜单项 SKU 附加该供应商侧 SKU 编码，用于外部系统向该供应商下单。
     /// </summary>
-    public async Task<MenuResultDto> GetMenuAsync(MenuQueryDto input)
+    public async Task<BaseOutput<MenuResultDto>> GetMenuAsync(MenuQueryDto input)
     {
         var productQuery = await _productRepo.GetQueryableAsync();
         var products = productQuery.Where(x => x.Status == (int)ProductStatusEnum.OnShelf);
@@ -110,18 +111,18 @@ public class SupplyChainApiAppService : ApplicationService, ISupplyChainApiAppSe
             return item;
         }).ToList();
 
-        return new MenuResultDto
+        return new(new MenuResultDto
         {
             SupplierCode = input.SupplierCode,
             Items = items
-        };
+        });
     }
 
     /// <summary>
     /// 商品详情接口：返回商品主信息 + SKU 列表。
     /// 指定供应商时，按其「商品详情」接口映射调用供应商，并合并返回供应商侧字段。
     /// </summary>
-    public async Task<ProductDetailResultDto> GetProductDetailAsync(ProductDetailQueryDto input)
+    public async Task<BaseOutput<ProductDetailResultDto>> GetProductDetailAsync(ProductDetailQueryDto input)
     {
         var productQuery = await _productRepo.GetQueryableAsync();
         var product = string.IsNullOrWhiteSpace(input.ProductCode)
@@ -141,7 +142,7 @@ public class SupplyChainApiAppService : ApplicationService, ISupplyChainApiAppSe
 
         if (product is null)
         {
-            return new ProductDetailResultDto();
+            return new(new ProductDetailResultDto());
         }
 
         var skusQuery = await _skuRepo.GetQueryableAsync();
@@ -187,7 +188,7 @@ public class SupplyChainApiAppService : ApplicationService, ISupplyChainApiAppSe
             }
         }
 
-        return result;
+        return new(result);
     }
 
     /// <summary>
@@ -195,27 +196,27 @@ public class SupplyChainApiAppService : ApplicationService, ISupplyChainApiAppSe
     /// 输入内部 SKU 编码 -> 查找供应商 SKU 映射 -> 构造标准输入 -> 调用供应商下单接口 ->
     /// 按 ResponseMapping 解析供应商订单号等字段。
     /// </summary>
-    public async Task<PlaceOrderResultDto> PlaceOrderAsync(PlaceOrderDto input)
+    public async Task<BaseOutput<PlaceOrderResultDto>> PlaceOrderAsync(PlaceOrderDto input)
     {
         var result = new PlaceOrderResultDto { SupplierCode = input.SupplierCode };
 
         if (string.IsNullOrWhiteSpace(input.SupplierCode) || string.IsNullOrWhiteSpace(input.SkuCode))
         {
             result.Message = "供应商编码与 SKU 编码不能为空";
-            return result;
+            return new(result);
         }
 
         var supplier = await GetSupplierByCodeAsync(input.SupplierCode);
         if (supplier is null)
         {
             result.Message = $"供应商 {input.SupplierCode} 不存在";
-            return result;
+            return new(result);
         }
 
         if (!supplier.IsEnabled)
         {
             result.Message = $"供应商 {input.SupplierCode} 已禁用";
-            return result;
+            return new(result);
         }
 
         // 内部 SKU 查找
@@ -224,7 +225,7 @@ public class SupplyChainApiAppService : ApplicationService, ISupplyChainApiAppSe
         if (sku is null)
         {
             result.Message = $"内部 SKU {input.SkuCode} 不存在";
-            return result;
+            return new(result);
         }
 
         // 供应商 SKU 映射查找
@@ -234,7 +235,7 @@ public class SupplyChainApiAppService : ApplicationService, ISupplyChainApiAppSe
         if (skuMapping is null)
         {
             result.Message = $"未找到 SKU {input.SkuCode} 到供应商 {input.SupplierCode} 的映射";
-            return result;
+            return new(result);
         }
 
         // 构造标准输入（供应商映射值 + 下单业务字段）
@@ -254,7 +255,7 @@ public class SupplyChainApiAppService : ApplicationService, ISupplyChainApiAppSe
         if (resp is null)
         {
             result.Message = $"供应商 {input.SupplierCode} 未配置下单接口映射";
-            return result;
+            return new(result);
         }
 
         result.RawResponse = resp.ResponseBody;
@@ -263,7 +264,7 @@ public class SupplyChainApiAppService : ApplicationService, ISupplyChainApiAppSe
         {
             result.Status = OrderPlaceStatusEnum.Failed;
             result.Message = resp.ErrorMessage ?? "下单失败";
-            return result;
+            return new(result);
         }
 
         result.Status = OrderPlaceStatusEnum.Success;
@@ -272,7 +273,7 @@ public class SupplyChainApiAppService : ApplicationService, ISupplyChainApiAppSe
         // 约定：返回值字段映射中 TargetField 为 supplierOrderNo 的项为供应商订单号
         result.SupplierOrderNo = resp.MappedFields.TryGetValue("supplierOrderNo", out var orderNo) ? orderNo : null;
         result.Message = "下单成功";
-        return result;
+        return new(result);
     }
 
     /// <summary>

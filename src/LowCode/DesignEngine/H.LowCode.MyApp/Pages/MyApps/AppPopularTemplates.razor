@@ -61,7 +61,7 @@
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
-        _templates = await AppTemplateAppService.GetListAsync();
+        _templates = (await AppTemplateAppService.GetListAsync()).Data;
     }
 
     private void ShowUseModal(AppTemplateListModel tpl)
@@ -83,7 +83,7 @@
 
         try
         {
-            var app = await AppTemplateAppService.CreateAppFromTemplateAsync(_selectedTemplate.TemplateId, _newAppId, _newAppName);
+            var app = (await AppTemplateAppService.CreateAppFromTemplateAsync(_selectedTemplate.TemplateId, _newAppId, _newAppName)).Data!;
             _useModalVisible = false;
 
             if (OnUsed.HasDelegate)

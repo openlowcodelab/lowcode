@@ -123,7 +123,7 @@
     private async Task LoadData()
     {
         loading = true;
-        try { projects = await ProjectService.GetListAsync(); }
+        try { projects = (await ProjectService.GetListAsync()).Data ?? new(); }
         catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载失败：{ex.Message}"); }
         finally { loading = false; }
     }

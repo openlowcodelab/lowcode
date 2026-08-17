@@ -1,6 +1,7 @@
 using H.Abp.Application.Contracts;
 using H.Notification.Application.Contracts;
 using H.Notification.EntityFrameworkCore;
+using H.Util.Base;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 
@@ -28,7 +29,7 @@ public class NotificationRecordAppService : ApplicationService, INotificationRec
         _webhookRepository = webhookRepository;
     }
 
-    public async Task<PagedResultDto<NotificationRecordDto>> GetMasterListAsync(NotificationRecordQueryDto input)
+    public async Task<BaseOutput<PagedResultDto<NotificationRecordDto>>> GetMasterListAsync(NotificationRecordQueryDto input)
     {
         var query = (await _recordRepository.GetQueryableAsync())
             .WhereIf(input.BusinessId.HasValue, x => x.BusinessId == input.BusinessId)
@@ -54,10 +55,10 @@ public class NotificationRecordAppService : ApplicationService, INotificationRec
             CreationTime = e.CreationTime
         }).ToList();
 
-        return new PagedResultDto<NotificationRecordDto>(totalCount, dtos);
+        return new(new PagedResultDto<NotificationRecordDto>(totalCount, dtos));
     }
 
-    public async Task<PagedResultDto<InAppRecordDto>> GetInAppListAsync(ChannelRecordQueryDto input)
+    public async Task<BaseOutput<PagedResultDto<InAppRecordDto>>> GetInAppListAsync(ChannelRecordQueryDto input)
     {
         var query = (await _inAppRepository.GetQueryableAsync())
             .WhereIf(input.Status.HasValue, x => x.Status == input.Status)
@@ -87,10 +88,10 @@ public class NotificationRecordAppService : ApplicationService, INotificationRec
             ReadTime = x.ReadTime
         }).ToList();
 
-        return new PagedResultDto<InAppRecordDto>(totalCount, dtos);
+        return new(new PagedResultDto<InAppRecordDto>(totalCount, dtos));
     }
 
-    public async Task<PagedResultDto<EmailRecordDto>> GetEmailListAsync(ChannelRecordQueryDto input)
+    public async Task<BaseOutput<PagedResultDto<EmailRecordDto>>> GetEmailListAsync(ChannelRecordQueryDto input)
     {
         var query = (await _emailRepository.GetQueryableAsync())
             .WhereIf(input.Status.HasValue, x => x.Status == input.Status)
@@ -118,10 +119,10 @@ public class NotificationRecordAppService : ApplicationService, INotificationRec
             ToAddress = x.ToAddress
         }).ToList();
 
-        return new PagedResultDto<EmailRecordDto>(totalCount, dtos);
+        return new(new PagedResultDto<EmailRecordDto>(totalCount, dtos));
     }
 
-    public async Task<PagedResultDto<SmsRecordDto>> GetSmsListAsync(ChannelRecordQueryDto input)
+    public async Task<BaseOutput<PagedResultDto<SmsRecordDto>>> GetSmsListAsync(ChannelRecordQueryDto input)
     {
         var query = (await _smsRepository.GetQueryableAsync())
             .WhereIf(input.Status.HasValue, x => x.Status == input.Status)
@@ -149,10 +150,10 @@ public class NotificationRecordAppService : ApplicationService, INotificationRec
             Phone = x.Phone
         }).ToList();
 
-        return new PagedResultDto<SmsRecordDto>(totalCount, dtos);
+        return new(new PagedResultDto<SmsRecordDto>(totalCount, dtos));
     }
 
-    public async Task<PagedResultDto<WebhookRecordDto>> GetWebhookListAsync(ChannelRecordQueryDto input)
+    public async Task<BaseOutput<PagedResultDto<WebhookRecordDto>>> GetWebhookListAsync(ChannelRecordQueryDto input)
     {
         var query = (await _webhookRepository.GetQueryableAsync())
             .WhereIf(input.Status.HasValue, x => x.Status == input.Status)
@@ -181,6 +182,6 @@ public class NotificationRecordAppService : ApplicationService, INotificationRec
             HttpStatus = x.HttpStatus
         }).ToList();
 
-        return new PagedResultDto<WebhookRecordDto>(totalCount, dtos);
+        return new(new PagedResultDto<WebhookRecordDto>(totalCount, dtos));
     }
 }

@@ -160,7 +160,8 @@
 
     /// <summary>
     /// GET 并反序列化；服务端返回 null 时（204 或空 body）返回 default；
-    /// string 结果兼容裸文本响应（ABP 对 string 返回值输出 text/plain）
+    /// string 结果兼容裸文本响应（ABP 对 string 返回值输出 text/plain）；
+    /// BaseOutput 包装：从 data 字段解包业务数据
     /// </summary>
     private async Task<T?> GetJsonOrDefaultAsync<T>(string url)
     {
@@ -171,6 +172,21 @@
         {
             return default;
         }
+
+        // BaseOutput 包装：响应为 { success, code, message, data } 时从 data 字段解包
+        using (var doc = System.Text.Json.JsonDocument.Parse(content))
+        {
+            if (doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object &&
+                doc.RootElement.TryGetProperty("data", out var dataProp))
+            {
+                if (dataProp.ValueKind == System.Text.Json.JsonValueKind.Null)
+                {
+                    return default;
+                }
+                content = dataProp.GetRawText();
+            }
+        }
+
         if (typeof(T) == typeof(string) && !content.StartsWith('"'))
         {
             return (T)(object)content;
@@ -236,7 +252,19 @@
             var response = await HttpClient.PutAsJsonAsync("/api/app/enterprise/current-enterprise", editModel);
             if (response.IsSuccessStatusCode)
             {
-                enterprise = await response.Content.ReadFromJsonAsync<EnterpriseInfoModel>();
+                // BaseOutput 包装：从 data 字段解包企业信息
+                var savedContent = await response.Content.ReadAsStringAsync();
+                enterprise = null;
+                if (!string.IsNullOrWhiteSpace(savedContent) && savedContent != "null")
+                {
+                    using var doc = System.Text.Json.JsonDocument.Parse(savedContent);
+                    if (doc.RootElement.TryGetProperty("data", out var dataProp) &&
+                        dataProp.ValueKind != System.Text.Json.JsonValueKind.Null)
+                    {
+                        enterprise = System.Text.Json.JsonSerializer.Deserialize<EnterpriseInfoModel>(dataProp.GetRawText(),
+                            new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web));
+                    }
+                }
                 message = "保存成功";
             }
             else

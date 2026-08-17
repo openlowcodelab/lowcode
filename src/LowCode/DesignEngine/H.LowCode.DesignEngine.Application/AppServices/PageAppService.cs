@@ -1,7 +1,8 @@
-﻿using H.LowCode.DesignEngine.Application.Contracts;
+using H.LowCode.DesignEngine.Application.Contracts;
 using H.LowCode.DesignEngine.Domain.Repositories;
 using H.LowCode.DesignEngine.Model;
 using H.LowCode.MetaSchema.DesignEngine;
+using H.Util.Base;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
@@ -15,14 +16,14 @@ public class PageAppService : ApplicationService, IPageAppService
     private IPageRepository _repository => LazyServiceProvider.GetRequiredService<IPageRepository>();
     private IComponentPartsAppService _componentPartsAppService => LazyServiceProvider.GetRequiredService<IComponentPartsAppService>();
 
-    public async Task<List<PageListModel>> GetListAsync(string appId)
+    public async Task<BaseOutput<List<PageListModel>>> GetListAsync(string appId)
     {
-        return await _repository.GetListAsync(appId);
+        return new(await _repository.GetListAsync(appId));
     }
 
-    public async Task<PagePartsSchema> GetByIdAsync(string appId, string pageId)
+    public async Task<BaseOutput<PagePartsSchema>> GetByIdAsync(string appId, string pageId)
     {
-        return await _repository.GetByIdAsync(appId, pageId);
+        return new(await _repository.GetByIdAsync(appId, pageId));
     }
 
     /// <summary>
@@ -31,7 +32,7 @@ public class PageAppService : ApplicationService, IPageAppService
     /// <param name="appId"></param>
     /// <param name="pageId"></param>
     /// <returns></returns>
-    public async Task<PagePartsSchema> GetByIdWithDefineAsync(string appId, string pageId)
+    public async Task<BaseOutput<PagePartsSchema>> GetByIdWithDefineAsync(string appId, string pageId)
     {
         var pageSchema = await _repository.GetByIdAsync(appId, pageId);
 
@@ -41,23 +42,23 @@ public class PageAppService : ApplicationService, IPageAppService
             await MergeComponentPartsDefineRecursive(component);
         }
 
-        return pageSchema;
+        return new(pageSchema);
     }
 
     [DisableValidation]
-    public async Task<bool> SaveAsync(PagePartsSchema pageSchema)
+    public async Task<BaseOutput<bool>> SaveAsync(PagePartsSchema pageSchema)
     {
         ArgumentNullException.ThrowIfNull(pageSchema);
         ArgumentException.ThrowIfNullOrEmpty(pageSchema.Id);
 
         await _repository.SaveAsync(pageSchema);
-        return true;
+        return new(true);
     }
 
-    public async Task<bool> DeleteAsync(string appId, string pageId)
+    public async Task<BaseOutput<bool>> DeleteAsync(string appId, string pageId)
     {
         await _repository.DeleteAsync(appId, pageId);
-        return true;
+        return new(true);
     }
 
     /// <summary>
@@ -68,8 +69,8 @@ public class PageAppService : ApplicationService, IPageAppService
     private async Task MergeComponentPartsDefineRecursive(ComponentPartsSchema component)
     {
         //组件定义 Schema
-        var componentPartsDefine = await _componentPartsAppService.GetByIdAsync(component.LibraryId,
-            component.PartsId);
+        var componentPartsDefine = (await _componentPartsAppService.GetByIdAsync(component.LibraryId,
+            component.PartsId)).Data;
 
         //组件实例与组件定义合并,保证历史组件实例升级到最新组件特性
         component.MergeComponentPartsDefine(componentPartsDefine);
@@ -86,9 +87,9 @@ public class PageAppService : ApplicationService, IPageAppService
         }
     }
 
-    public async Task<ComponentPartsSchema> GetPageComponentAsync(string appId, string pageId, string componentId)
+    public async Task<BaseOutput<ComponentPartsSchema>> GetPageComponentAsync(string appId, string pageId, string componentId)
     {
-        var page = await GetByIdAsync(appId, pageId);
+        var page = (await GetByIdAsync(appId, pageId)).Data;
         if (page == null)
         {
             throw new BusinessException("Page not found.");
@@ -107,6 +108,6 @@ public class PageAppService : ApplicationService, IPageAppService
 
         await MergeComponentPartsDefineRecursive(component);
 
-        return component;
+        return new(component);
     }
 }

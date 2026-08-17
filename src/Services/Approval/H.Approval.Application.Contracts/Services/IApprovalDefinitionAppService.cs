@@ -1,4 +1,5 @@
 using H.Abp.Application.Contracts;
+using H.Util.Base;
 
 namespace H.Approval.Application.Contracts;
 
@@ -10,35 +11,35 @@ public interface IApprovalDefinitionAppService : IAppService
     /// <summary>
     /// 获取所有审批定义
     /// </summary>
-    Task<List<ApprovalDefinitionDto>> GetAllAsync();
+    Task<BaseOutput<List<ApprovalDefinitionDto>>> GetAllAsync();
 
     /// <summary>
     /// 根据 ID 获取审批定义
     /// </summary>
-    Task<ApprovalDefinitionDto> GetByIdAsync(string id);
+    Task<BaseOutput<ApprovalDefinitionDto>> GetByIdAsync(string id);
 
     /// <summary>
     /// 创建审批定义
     /// </summary>
-    Task<ApprovalDefinitionDto> CreateAsync(CreateApprovalDefinitionDto input);
+    Task<BaseOutput<ApprovalDefinitionDto>> CreateAsync(CreateApprovalDefinitionDto input);
 
     /// <summary>
     /// 更新审批定义
     /// </summary>
-    Task<ApprovalDefinitionDto> UpdateAsync(UpdateApprovalDefinitionDto input);
+    Task<BaseOutput<ApprovalDefinitionDto>> UpdateAsync(UpdateApprovalDefinitionDto input);
 
     /// <summary>
     /// 删除审批定义
     /// </summary>
-    Task DeleteAsync(string id);
+    Task<BaseOutput> DeleteAsync(string id);
 
     /// <summary>
     /// 启用/禁用审批定义
     /// </summary>
-    Task ToggleEnabledAsync(string id, bool enabled);
+    Task<BaseOutput> ToggleEnabledAsync(string id, bool enabled);
 
     /// <summary>
     /// 获取预置审批模板(用于"从模板创建")
     /// </summary>
-    Task<List<ApprovalTemplateDto>> GetTemplatesAsync();
+    Task<BaseOutput<List<ApprovalTemplateDto>>> GetTemplatesAsync();
 }

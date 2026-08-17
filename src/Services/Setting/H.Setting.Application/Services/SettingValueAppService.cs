@@ -1,6 +1,7 @@
 using H.Abp.Application.Contracts;
 using H.Setting.Application.Contracts;
 using H.Setting.EntityFrameworkCore;
+using H.Util.Base;
 using Microsoft.EntityFrameworkCore;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
@@ -24,7 +25,7 @@ public class SettingValueAppService : ApplicationService, ISettingValueAppServic
         _definitionRepository = definitionRepository;
     }
 
-    public async Task<PagedResultDto<SettingValueDto>> GetListAsync(SettingValueQueryDto input)
+    public async Task<BaseOutput<PagedResultDto<SettingValueDto>>> GetListAsync(SettingValueQueryDto input)
     {
         var query = await _valueRepository.GetQueryableAsync();
 
@@ -59,16 +60,16 @@ public class SettingValueAppService : ApplicationService, ISettingValueAppServic
             return dto;
         }).ToList();
 
-        return new PagedResultDto<SettingValueDto>(totalCount, dtos);
+        return new(new PagedResultDto<SettingValueDto>(totalCount, dtos));
     }
 
-    public async Task<SettingValueDto> GetAsync(Guid id)
+    public async Task<BaseOutput<SettingValueDto>> GetAsync(Guid id)
     {
         var entity = await _valueRepository.GetAsync(id);
-        return MapToDto(entity);
+        return new(MapToDto(entity));
     }
 
-    public async Task<SettingValueDto> CreateAsync(CreateUpdateSettingValueDto input)
+    public async Task<BaseOutput<SettingValueDto>> CreateAsync(CreateUpdateSettingValueDto input)
     {
         var name = NormalizeName(input.Name);
         var providerName = NormalizeProviderName(input.ProviderName);
@@ -82,11 +83,11 @@ public class SettingValueAppService : ApplicationService, ISettingValueAppServic
             ProviderName = providerName,
             ProviderKey = input.ProviderKey
         };
-        await _valueRepository.InsertAsync(entity, autoSave: true);
-        return MapToDto(entity);
+        entity = await _valueRepository.InsertAsync(entity, autoSave: true);
+        return new(MapToDto(entity));
     }
 
-    public async Task<SettingValueDto> UpdateAsync(Guid id, CreateUpdateSettingValueDto input)
+    public async Task<BaseOutput<SettingValueDto>> UpdateAsync(Guid id, CreateUpdateSettingValueDto input)
     {
         var entity = await _valueRepository.GetAsync(id);
 
@@ -105,26 +106,27 @@ public class SettingValueAppService : ApplicationService, ISettingValueAppServic
         entity.ProviderName = providerName;
         entity.ProviderKey = input.ProviderKey;
 
-        await _valueRepository.UpdateAsync(entity, autoSave: true);
-        return MapToDto(entity);
+        entity = await _valueRepository.UpdateAsync(entity, autoSave: true);
+        return new(MapToDto(entity));
     }
 
-    public async Task DeleteAsync(Guid id)
+    public async Task<BaseOutput> DeleteAsync(Guid id)
     {
         await _valueRepository.DeleteAsync(id);
+        return new();
     }
 
-    public async Task<List<SettingDefinitionLookupDto>> GetDefinitionLookupAsync()
+    public async Task<BaseOutput<List<SettingDefinitionLookupDto>>> GetDefinitionLookupAsync()
     {
         var entities = await AsyncExecuter.ToListAsync(
             (await _definitionRepository.GetQueryableAsync()).OrderBy(x => x.Name));
 
-        return entities.Select(x => new SettingDefinitionLookupDto
+        return new(entities.Select(x => new SettingDefinitionLookupDto
         {
             Name = x.Name,
             DisplayName = x.DisplayName,
             DefaultValue = x.DefaultValue
-        }).ToList();
+        }).ToList());
     }
 
     private static string NormalizeName(string? name)

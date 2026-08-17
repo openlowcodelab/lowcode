@@ -1,4 +1,5 @@
 using H.Abp.Application.Contracts;
+using H.Util.Base;
 
 namespace H.Assistant.Application.Contracts;
 
@@ -10,20 +11,20 @@ public interface ICategoryAppService : IAppService
     /// <summary>
     /// 获取分类列表
     /// </summary>
-    Task<List<CategoryDto>> GetListAsync();
+    Task<BaseOutput<List<CategoryDto>>> GetListAsync();
 
     /// <summary>
     /// 创建分类
     /// </summary>
-    Task<CategoryDto> CreateAsync(CreateCategoryDto input);
+    Task<BaseOutput<CategoryDto>> CreateAsync(CreateCategoryDto input);
 
     /// <summary>
     /// 更新分类
     /// </summary>
-    Task<CategoryDto> UpdateAsync(Guid id, UpdateCategoryDto input);
+    Task<BaseOutput<CategoryDto>> UpdateAsync(Guid id, UpdateCategoryDto input);
 
     /// <summary>
     /// 删除分类
     /// </summary>
-    Task DeleteAsync(Guid id);
+    Task<BaseOutput> DeleteAsync(Guid id);
 }

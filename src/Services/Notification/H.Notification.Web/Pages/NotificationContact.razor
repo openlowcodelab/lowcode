@@ -215,7 +215,7 @@
         contactLoading = true;
         try
         {
-            var result = await ContactAppService.GetListAsync(new ContactQueryDto { MaxResultCount = 100, Filter = contactFilter, GroupId = contactGroupFilter });
+            var result = (await ContactAppService.GetListAsync(new ContactQueryDto { MaxResultCount = 100, Filter = contactFilter, GroupId = contactGroupFilter })).Data!;
             contacts = result.Items.ToList();
         }
         finally { contactLoading = false; }
@@ -226,7 +226,7 @@
         groupLoading = true;
         try
         {
-            var result = await ContactGroupAppService.GetListAsync(new ContactGroupQueryDto { MaxResultCount = 200, Filter = groupFilter });
+            var result = (await ContactGroupAppService.GetListAsync(new ContactGroupQueryDto { MaxResultCount = 200, Filter = groupFilter })).Data!;
             groups = result.Items.ToList();
         }
         finally { groupLoading = false; }
@@ -242,7 +242,7 @@
 
     private async Task EditContact(ContactDto c)
     {
-        var detail = await ContactAppService.GetAsync(c.Id);
+        var detail = (await ContactAppService.GetAsync(c.Id)).Data!;
         currentContact = new CreateContactDto
         {
             Name = detail.Name,
@@ -298,7 +298,7 @@
     private async Task ShowCreateGroup()
     {
         currentGroup = new CreateContactGroupDto { IsEnabled = true };
-        allContacts = await ContactAppService.GetAllEnabledAsync();
+        allContacts = (await ContactAppService.GetAllEnabledAsync()).Data!;
         selectedContactIds = new();
         isGroupEdit = false;
         editGroupId = null;
@@ -307,9 +307,9 @@
 
     private async Task EditGroup(ContactGroupDto g)
     {
-        var detail = await ContactGroupAppService.GetAsync(g.Id);
+        var detail = (await ContactGroupAppService.GetAsync(g.Id)).Data!;
         currentGroup = new CreateContactGroupDto { Name = detail.Name, Description = detail.Description, IsEnabled = detail.IsEnabled };
-        allContacts = await ContactAppService.GetAllEnabledAsync();
+        allContacts = (await ContactAppService.GetAllEnabledAsync()).Data!;
         selectedContactIds = detail.ContactIds.ToHashSet();
         isGroupEdit = true;
         editGroupId = g.Id;

@@ -33,7 +33,7 @@
 * Utils 工具类库
   * H.Abp.Application.Contracts：应用服务基础契约 (IAppService 等)
   * H.Abp.HttpClientProxy：基于 IAppService 接口的 HTTP 动态代理
-  * H.Util.Blazor / H.Util.Ids / H.Extensions.System：Blazor 工具、ID 生成、系统扩展等
+  * H.Util.Blazor / H.Util.Ids / H.Util.Base：Blazor 工具、ID 生成、基础工具与统一返回包装等
 
 ### 本地开发
 #### 环境准备

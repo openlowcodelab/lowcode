@@ -1,6 +1,7 @@
 using AutoMapper;
 using H.Assistant.Application.Contracts;
 using H.Assistant.EntityFrameworkCore;
+using H.Util.Base;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 
@@ -24,7 +25,7 @@ public class MemoryAppService : ApplicationService, IMemoryAppService
 
     #region Node (Tree Structure) Operations
 
-    public async Task<List<KnowledgeNodeDto>> GetTreeAsync()
+    public async Task<BaseOutput<List<KnowledgeNodeDto>>> GetTreeAsync()
     {
         var queryable = await _nodeRepository.GetQueryableAsync();
         var allNodes = await AsyncExecuter.ToListAsync(
@@ -48,10 +49,10 @@ public class MemoryAppService : ApplicationService, IMemoryAppService
         var roots = lookup[null].ToList();
         AssignChildren(roots);
 
-        return roots;
+        return new(roots);
     }
 
-    public async Task<KnowledgeNodeDto> CreateNodeAsync(CreateKnowledgeNodeDto input)
+    public async Task<BaseOutput<KnowledgeNodeDto>> CreateNodeAsync(CreateKnowledgeNodeDto input)
     {
         if (input.ParentId.HasValue)
         {
@@ -68,7 +69,7 @@ public class MemoryAppService : ApplicationService, IMemoryAppService
 
         var entity = _objectMapper.Map<KnowledgeNodeEntity>(input);
         entity.OwnerType = OwnerTypes.Memory;
-        await _nodeRepository.InsertAsync(entity);
+        entity = await _nodeRepository.InsertAsync(entity);
 
         // If creating a Document node, also create an empty document content
         if (entity.NodeType == "Document")
@@ -81,10 +82,10 @@ public class MemoryAppService : ApplicationService, IMemoryAppService
             await _documentRepository.InsertAsync(document);
         }
 
-        return _objectMapper.Map<KnowledgeNodeEntity, KnowledgeNodeDto>(entity);
+        return new(_objectMapper.Map<KnowledgeNodeEntity, KnowledgeNodeDto>(entity));
     }
 
-    public async Task<KnowledgeNodeDto> UpdateNodeAsync(Guid nodeId, UpdateKnowledgeNodeDto input)
+    public async Task<BaseOutput<KnowledgeNodeDto>> UpdateNodeAsync(Guid nodeId, UpdateKnowledgeNodeDto input)
     {
         var entity = await _nodeRepository.FindAsync(nodeId);
         if (entity == null)
@@ -125,12 +126,12 @@ public class MemoryAppService : ApplicationService, IMemoryAppService
             }
         }
 
-        await _nodeRepository.UpdateAsync(entity);
+        entity = await _nodeRepository.UpdateAsync(entity);
 
-        return _objectMapper.Map<KnowledgeNodeEntity, KnowledgeNodeDto>(entity);
+        return new(_objectMapper.Map<KnowledgeNodeEntity, KnowledgeNodeDto>(entity));
     }
 
-    public async Task DeleteNodeAsync(Guid nodeId)
+    public async Task<BaseOutput> DeleteNodeAsync(Guid nodeId)
     {
         var entity = await _nodeRepository.FindAsync(nodeId);
         if (entity == null)
@@ -154,6 +155,8 @@ public class MemoryAppService : ApplicationService, IMemoryAppService
             await _nodeRepository.DeleteAsync(desc);
         }
         await _nodeRepository.DeleteAsync(entity);
+
+        return new();
     }
 
     private static void CollectDescendants(List<KnowledgeNodeEntity> allNodes, Guid parentId, List<KnowledgeNodeEntity> result)
@@ -172,7 +175,7 @@ public class MemoryAppService : ApplicationService, IMemoryAppService
 
     #region Document Content Operations
 
-    public async Task<KnowledgeDocumentDto?> GetDocumentAsync(Guid nodeId)
+    public async Task<BaseOutput<KnowledgeDocumentDto?>> GetDocumentAsync(Guid nodeId)
     {
         var queryable = await _documentRepository.GetQueryableAsync();
         var doc = await AsyncExecuter.FirstOrDefaultAsync(
@@ -180,13 +183,13 @@ public class MemoryAppService : ApplicationService, IMemoryAppService
 
         if (doc == null)
         {
-            return null;
+            return new(null);
         }
 
-        return _objectMapper.Map<KnowledgeDocumentEntity, KnowledgeDocumentDto>(doc);
+        return new(_objectMapper.Map<KnowledgeDocumentEntity, KnowledgeDocumentDto>(doc));
     }
 
-    public async Task<KnowledgeDocumentDto> SaveDocumentAsync(Guid nodeId, SaveKnowledgeDocumentDto input)
+    public async Task<BaseOutput<KnowledgeDocumentDto>> SaveDocumentAsync(Guid nodeId, SaveKnowledgeDocumentDto input)
     {
         var queryable = await _documentRepository.GetQueryableAsync();
         var doc = await AsyncExecuter.FirstOrDefaultAsync(
@@ -201,7 +204,7 @@ public class MemoryAppService : ApplicationService, IMemoryAppService
             }
             if (node.OwnerType != OwnerTypes.Memory)
             {
-                throw new InvalidOperationException($"节点 {nodeId} 不属于记忆");
+            throw new InvalidOperationException($"节点 {nodeId} 不属于记忆");
             }
 
             doc = new KnowledgeDocumentEntity
@@ -209,22 +212,22 @@ public class MemoryAppService : ApplicationService, IMemoryAppService
                 NodeId = nodeId,
                 Content = input.Content
             };
-            await _documentRepository.InsertAsync(doc);
+            doc = await _documentRepository.InsertAsync(doc);
         }
         else
         {
             doc.Content = input.Content;
-            await _documentRepository.UpdateAsync(doc);
+            doc = await _documentRepository.UpdateAsync(doc);
         }
 
-        return _objectMapper.Map<KnowledgeDocumentEntity, KnowledgeDocumentDto>(doc);
+        return new(_objectMapper.Map<KnowledgeDocumentEntity, KnowledgeDocumentDto>(doc));
     }
 
     #endregion
 
     #region Memory-specific Operations
 
-    public async Task<KnowledgeNodeDto> CreateMemoryEntryAsync(CreateMemoryEntryDto input)
+    public async Task<BaseOutput<KnowledgeNodeDto>> CreateMemoryEntryAsync(CreateMemoryEntryDto input)
     {
         var category = input.Category?.Trim() ?? "其他";
 
@@ -245,7 +248,7 @@ public class MemoryAppService : ApplicationService, IMemoryAppService
                 OwnerType = OwnerTypes.Memory,
                 ParentId = null
             };
-            await _nodeRepository.InsertAsync(categoryNode);
+            categoryNode = await _nodeRepository.InsertAsync(categoryNode);
         }
 
         // Create a Document node under the category directory
@@ -256,7 +259,7 @@ public class MemoryAppService : ApplicationService, IMemoryAppService
             OwnerType = OwnerTypes.Memory,
             ParentId = categoryNode.Id
         };
-        await _nodeRepository.InsertAsync(memoryNode);
+        memoryNode = await _nodeRepository.InsertAsync(memoryNode);
 
         // Create document content
         var document = new KnowledgeDocumentEntity
@@ -266,7 +269,7 @@ public class MemoryAppService : ApplicationService, IMemoryAppService
         };
         await _documentRepository.InsertAsync(document);
 
-        return _objectMapper.Map<KnowledgeNodeEntity, KnowledgeNodeDto>(memoryNode);
+        return new(_objectMapper.Map<KnowledgeNodeEntity, KnowledgeNodeDto>(memoryNode));
     }
 
     #endregion

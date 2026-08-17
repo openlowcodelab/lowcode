@@ -51,7 +51,7 @@ public class MigrationCurrentApp : ICurrentApp
     /// <returns>应用 ID 列表</returns>
     public async Task<IList<string>> GetAllAppIdsAsync()
     {
-        var apps = await _appService.GetAppsAsync();
+        var apps = (await _appService.GetAppsAsync()).Data ?? [];
         return [.. apps.Select(a => a.Id)];
     }
 

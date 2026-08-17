@@ -205,13 +205,13 @@
             switch (activeTab)
             {
                 case "pending":
-                    pendingTasks = await TaskService.GetPendingTasksAsync();
+                    pendingTasks = (await TaskService.GetPendingTasksAsync()).Data ?? new();
                     break;
                 case "completed":
-                    completedTasks = await TaskService.GetCompletedTasksAsync();
+                    completedTasks = (await TaskService.GetCompletedTasksAsync()).Data ?? new();
                     break;
                 case "my":
-                    myApprovals = await InstanceService.GetMyApprovalsAsync();
+                    myApprovals = (await InstanceService.GetMyApprovalsAsync()).Data ?? new();
                     break;
                 case "cc":
                     // 抄送我的: 暂无后端数据源

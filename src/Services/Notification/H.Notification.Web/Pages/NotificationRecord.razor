@@ -138,7 +138,7 @@
         {
             if (activeTab == 0)
             {
-                var result = await RecordAppService.GetMasterListAsync(new NotificationRecordQueryDto { MaxResultCount = 100 });
+                var result = (await RecordAppService.GetMasterListAsync(new NotificationRecordQueryDto { MaxResultCount = 100 })).Data!;
                 master = result.Items.ToList();
                 return;
             }
@@ -146,13 +146,13 @@
             var query = new ChannelRecordQueryDto { MaxResultCount = 100, Status = statusFilter, Filter = channelFilter };
             channelRows = activeTab switch
             {
-                1 => (await RecordAppService.GetInAppListAsync(query)).Items
+                1 => (await RecordAppService.GetInAppListAsync(query)).Data!.Items
                         .Select(x => new ChannelRow(x.BusinessName, x.Level, x.ContactName, x.TargetUserId, x.Title, x.Status, x.ErrorMessage, x.CreationTime, x.IsRead)).ToList(),
-                2 => (await RecordAppService.GetEmailListAsync(query)).Items
+                2 => (await RecordAppService.GetEmailListAsync(query)).Data!.Items
                         .Select(x => new ChannelRow(x.BusinessName, x.Level, x.ContactName, x.ToAddress, x.Title, x.Status, x.ErrorMessage, x.CreationTime, false)).ToList(),
-                3 => (await RecordAppService.GetSmsListAsync(query)).Items
+                3 => (await RecordAppService.GetSmsListAsync(query)).Data!.Items
                         .Select(x => new ChannelRow(x.BusinessName, x.Level, x.ContactName, x.Phone, x.Title, x.Status, x.ErrorMessage, x.CreationTime, false)).ToList(),
-                4 => (await RecordAppService.GetWebhookListAsync(query)).Items
+                4 => (await RecordAppService.GetWebhookListAsync(query)).Data!.Items
                         .Select(x => new ChannelRow(x.BusinessName, x.Level, x.ContactName, x.Url, x.Title, x.Status, x.ErrorMessage, x.CreationTime, false)).ToList(),
                 _ => new List<ChannelRow>()
             };

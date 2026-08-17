@@ -75,7 +75,7 @@
 
     private async Task LoadTemplatesAsync()
     {
-        _appTemplates = await AppTemplateAppService.GetListAsync();
+        _appTemplates = (await AppTemplateAppService.GetListAsync()).Data;
     }
 
     private IEnumerable<AppTemplateListModel> FilteredTemplates =>
@@ -102,7 +102,7 @@
 
         try
         {
-            var app = await AppTemplateAppService.CreateAppFromTemplateAsync(_selectedTemplate.TemplateId, _newAppId, _newAppName);
+            var app = (await AppTemplateAppService.CreateAppFromTemplateAsync(_selectedTemplate.TemplateId, _newAppId, _newAppName)).Data!;
             _useModalVisible = false;
             await Message.SuccessAsync("已从模板创建应用！");
             NavigateTo($"/designengine/myapp/{app.Id}/pagemanager");

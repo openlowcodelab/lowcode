@@ -100,7 +100,7 @@
             _loading = true;
             StateHasChanged();
 
-            _componentParts = await ComponentPartsAppService.GetByIdAsync(LibraryId, ComponentId);
+            _componentParts = (await ComponentPartsAppService.GetByIdAsync(LibraryId, ComponentId)).Data;
         }
         catch (Exception ex)
         {

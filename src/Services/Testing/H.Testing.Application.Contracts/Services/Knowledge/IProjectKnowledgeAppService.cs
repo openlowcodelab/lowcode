@@ -1,4 +1,5 @@
 using H.Abp.Application.Contracts;
+using H.Util.Base;
 
 namespace H.Testing.Application.Contracts;
 
@@ -11,47 +12,47 @@ public interface IProjectKnowledgeAppService : IAppService
     /// <summary>
     /// 获取项目关联的知识库（不存在时自动创建并绑定）
     /// </summary>
-    Task<ProjectKnowledgeDto> GetOrCreateAsync(long projectId);
+    Task<BaseOutput<ProjectKnowledgeDto>> GetOrCreateAsync(long projectId);
 
     /// <summary>
     /// 获取知识库节点树
     /// </summary>
-    Task<List<ProjectKnowledgeNodeDto>> GetTreeAsync(long projectId);
+    Task<BaseOutput<List<ProjectKnowledgeNodeDto>>> GetTreeAsync(long projectId);
 
     /// <summary>
     /// 创建节点（目录或文档）
     /// </summary>
-    Task<ProjectKnowledgeNodeDto> CreateNodeAsync(long projectId, CreateProjectKnowledgeNodeInput input);
+    Task<BaseOutput<ProjectKnowledgeNodeDto>> CreateNodeAsync(long projectId, CreateProjectKnowledgeNodeInput input);
 
     /// <summary>
     /// 重命名节点
     /// </summary>
-    Task<ProjectKnowledgeNodeDto> RenameNodeAsync(Guid nodeId, string title);
+    Task<BaseOutput<ProjectKnowledgeNodeDto>> RenameNodeAsync(Guid nodeId, string title);
 
     /// <summary>
     /// 删除节点（含子节点）
     /// </summary>
-    Task DeleteNodeAsync(Guid nodeId);
+    Task<BaseOutput> DeleteNodeAsync(Guid nodeId);
 
     /// <summary>
     /// 获取文档内容
     /// </summary>
-    Task<string> GetDocumentContentAsync(Guid nodeId);
+    Task<BaseOutput<string>> GetDocumentContentAsync(Guid nodeId);
 
     /// <summary>
     /// 保存文档内容
     /// </summary>
-    Task SaveDocumentAsync(Guid nodeId, string content);
+    Task<BaseOutput> SaveDocumentAsync(Guid nodeId, string content);
 
     /// <summary>
     /// AI 口语化描述生成知识文档内容（预览后由前端保存）
     /// </summary>
-    Task<AiKnowledgeDocumentDto> GenerateWithAiAsync(long projectId, string description);
+    Task<BaseOutput<AiKnowledgeDocumentDto>> GenerateWithAiAsync(long projectId, string description);
 
     /// <summary>
     /// 读取知识库全部文档内容（标题 + 内容拼接），供 AI 生成用例时作为上下文
     /// </summary>
-    Task<string> GetKnowledgeDigestAsync(long projectId, int maxLength = 10000);
+    Task<BaseOutput<string>> GetKnowledgeDigestAsync(long projectId, int maxLength = 10000);
 }
 
 /// <summary>

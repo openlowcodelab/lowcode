@@ -189,7 +189,18 @@
                 return null;
 
             using var doc = System.Text.Json.JsonDocument.Parse(content);
-            if (doc.RootElement.TryGetProperty("name", out var nameProp))
+            var root = doc.RootElement;
+
+            // BaseOutput 包装：从 data 字段解包企业信息（data 为 null 表示未选择企业）
+            if (root.ValueKind == System.Text.Json.JsonValueKind.Object &&
+                root.TryGetProperty("data", out var dataProp))
+            {
+                if (dataProp.ValueKind != System.Text.Json.JsonValueKind.Object)
+                    return null;
+                root = dataProp;
+            }
+
+            if (root.TryGetProperty("name", out var nameProp))
                 return nameProp.GetString();
 
             return null;
@@ -236,12 +247,22 @@
                 return (true, userName);
             }
 
-            // 格式2: ABP UserDto 格式 { id, userName, email, ... }
-            var abpUserName = root.TryGetProperty("userName", out var abpNameProp)
-                ? abpNameProp.GetString()
+            // 格式2: BaseOutput 包装的 ABP UserDto 格式 { success, code, message, data: { id, userName, email, ... } }
+            if (root.TryGetProperty("data", out var dataProp) && dataProp.ValueKind == System.Text.Json.JsonValueKind.Object)
+            {
+                var abpUserName = dataProp.TryGetProperty("userName", out var abpNameProp)
+                    ? abpNameProp.GetString()
+                    : null;
+                if (!string.IsNullOrEmpty(abpUserName))
+                    return (true, abpUserName);
+            }
+
+            // 格式3: 旧版 ABP UserDto 格式 { id, userName, email, ... }
+            var legacyUserName = root.TryGetProperty("userName", out var legacyNameProp)
+                ? legacyNameProp.GetString()
                 : null;
-            if (!string.IsNullOrEmpty(abpUserName))
-                return (true, abpUserName);
+            if (!string.IsNullOrEmpty(legacyUserName))
+                return (true, legacyUserName);
 
             return (false, null);
         }

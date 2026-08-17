@@ -342,8 +342,8 @@ else
         isLoading = true;
         try
         {
-            definitions = await DefinitionService.GetAllAsync();
-            categories = await CategoryService.GetAllAsync();
+            definitions = (await DefinitionService.GetAllAsync()).Data ?? new();
+            categories = (await CategoryService.GetAllAsync()).Data ?? new();
         }
         catch (Exception ex)
         {
@@ -365,7 +365,7 @@ else
             isLoadingTemplates = true;
             try
             {
-                templates = await DefinitionService.GetTemplatesAsync();
+                templates = (await DefinitionService.GetTemplatesAsync()).Data ?? new();
             }
             catch (Exception ex)
             {

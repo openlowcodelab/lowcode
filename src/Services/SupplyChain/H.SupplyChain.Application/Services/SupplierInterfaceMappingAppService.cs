@@ -2,6 +2,7 @@ using H.Abp.Application.Contracts;
 using H.SupplyChain.Application.Contracts;
 using H.SupplyChain.Application.Mapping;
 using H.SupplyChain.EntityFrameworkCore;
+using H.Util.Base;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 
@@ -29,7 +30,7 @@ public class SupplierInterfaceMappingAppService
         _interfaceRepo = interfaceRepo;
     }
 
-    public async Task<PagedResultDto<SupplierInterfaceMappingDto>> GetListAsync(SupplierInterfaceMappingQueryDto input)
+    public async Task<BaseOutput<PagedResultDto<SupplierInterfaceMappingDto>>> GetListAsync(SupplierInterfaceMappingQueryDto input)
     {
         var query = await Repository.GetQueryableAsync();
         if (input.SupplierId.HasValue)
@@ -45,16 +46,16 @@ public class SupplierInterfaceMappingAppService
             query.OrderByDescending(x => x.CreationTime).Skip(input.SkipCount).Take(maxResult));
 
         var dtos = await BuildDtosAsync(entities);
-        return new PagedResultDto<SupplierInterfaceMappingDto>(totalCount, dtos);
+        return new(new PagedResultDto<SupplierInterfaceMappingDto>(totalCount, dtos));
     }
 
-    public async Task<SupplierInterfaceMappingDto> GetAsync(Guid id)
+    public async Task<BaseOutput<SupplierInterfaceMappingDto>> GetAsync(Guid id)
     {
         var entity = await Repository.GetAsync(id);
-        return (await BuildDtosAsync(new[] { entity }))[0];
+        return new((await BuildDtosAsync(new[] { entity }))[0]);
     }
 
-    public async Task<SupplierInterfaceMappingDto> CreateAsync(CreateSupplierInterfaceMappingDto input)
+    public async Task<BaseOutput<SupplierInterfaceMappingDto>> CreateAsync(CreateSupplierInterfaceMappingDto input)
     {
         var existsQuery = await Repository.GetQueryableAsync();
         var exists = await AsyncExecuter.AnyAsync(
@@ -65,23 +66,24 @@ public class SupplierInterfaceMappingAppService
         }
 
         var entity = input.ToEntity();
-        await Repository.InsertAsync(entity);
+        entity = await Repository.InsertAsync(entity);
         await CurrentUnitOfWork.SaveChangesAsync();
-        return (await BuildDtosAsync(new[] { entity }))[0];
+        return new((await BuildDtosAsync(new[] { entity }))[0]);
     }
 
-    public async Task<SupplierInterfaceMappingDto> UpdateAsync(Guid id, UpdateSupplierInterfaceMappingDto input)
+    public async Task<BaseOutput<SupplierInterfaceMappingDto>> UpdateAsync(Guid id, UpdateSupplierInterfaceMappingDto input)
     {
         var entity = await Repository.GetAsync(id);
         input.Apply(entity);
-        await Repository.UpdateAsync(entity);
+        entity = await Repository.UpdateAsync(entity);
         await CurrentUnitOfWork.SaveChangesAsync();
-        return (await BuildDtosAsync(new[] { entity }))[0];
+        return new((await BuildDtosAsync(new[] { entity }))[0]);
     }
 
-    public async Task DeleteAsync(Guid id)
+    public async Task<BaseOutput> DeleteAsync(Guid id)
     {
         await Repository.DeleteAsync(id);
+        return new();
     }
 
     /// <summary>加载供应商编码与接口编码，组装展示 DTO</summary>

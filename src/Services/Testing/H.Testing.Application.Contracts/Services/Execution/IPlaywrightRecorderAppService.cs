@@ -1,10 +1,11 @@
 ﻿using H.Abp.Application.Contracts;
+using H.Util.Base;
 
 namespace H.Testing.Application.Contracts;
 
 public interface IPlaywrightRecorderAppService : IAppService
 {
-    Task<StartRecordingResponse> StartRecordingAsync(string startUrl);
+    Task<BaseOutput<StartRecordingResponse>> StartRecordingAsync(string startUrl);
 
-    Task<StopRecordingResponse> StopRecordingAsync(string sessionId);
+    Task<BaseOutput<StopRecordingResponse>> StopRecordingAsync(string sessionId);
 }

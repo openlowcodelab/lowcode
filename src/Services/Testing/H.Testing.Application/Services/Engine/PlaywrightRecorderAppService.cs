@@ -1,4 +1,5 @@
 using H.Testing.Application.Contracts;
+using H.Util.Base;
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
 using System.Diagnostics;
@@ -31,7 +32,7 @@ public class PlaywrightRecorderAppService : ApplicationService, IPlaywrightRecor
     /// </summary>
     /// <param name="startUrl">起始URL</param>
     /// <returns>录制会话ID</returns>
-    public async Task<StartRecordingResponse> StartRecordingAsync(string startUrl = "")
+    public async Task<BaseOutput<StartRecordingResponse>> StartRecordingAsync(string startUrl = "")
     {
         try
         {
@@ -150,12 +151,12 @@ public class PlaywrightRecorderAppService : ApplicationService, IPlaywrightRecor
             }
 
             // 返回录制文件路径作为会话ID
-            return new StartRecordingResponse
+            return new(new StartRecordingResponse
             {
                 SessionId = recordingFile,
                 IsSuccess = true,
                 Message = "Playwright recorder started successfully"
-            };
+            });
         }
         catch (Exception ex)
         {
@@ -169,7 +170,7 @@ public class PlaywrightRecorderAppService : ApplicationService, IPlaywrightRecor
     /// </summary>
     /// <param name="sessionId">录制会话ID（录制文件路径）</param>
     /// <returns>录制的代码内容</returns>
-    public async Task<StopRecordingResponse> StopRecordingAsync(string sessionId)
+    public async Task<BaseOutput<StopRecordingResponse>> StopRecordingAsync(string sessionId)
     {
         try
         {
@@ -230,22 +231,22 @@ public class PlaywrightRecorderAppService : ApplicationService, IPlaywrightRecor
                     _logger.LogWarning(ex, "Failed to delete temporary recording file");
                 }
 
-                return new StopRecordingResponse
+                return new(new StopRecordingResponse
                 {
                     RecordedCode = recordedCode,
                     IsSuccess = true,
                     Message = "Playwright recorder stopped successfully"
-                };
+                });
             }
             else
             {
                 _logger.LogWarning($"Recording file not found: {sessionId}");
-                return new StopRecordingResponse
+                return new(new StopRecordingResponse
                 {
                     RecordedCode = string.Empty,
                     IsSuccess = false,
                     Message = "Playwright recorder stopped but no recording found"
-                };
+                });
             }
         }
         catch (Exception ex)

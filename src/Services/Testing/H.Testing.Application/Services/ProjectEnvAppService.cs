@@ -1,6 +1,7 @@
 using H.Testing.Application.Contracts;
 using H.Testing.Application.Mapping;
 using H.Testing.EntityFrameworkCore;
+using H.Util.Base;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 
@@ -18,63 +19,63 @@ public class ProjectEnvAppService : ApplicationService, IProjectEnvAppService
         _repository = repository;
     }
 
-    public async Task<List<ProjectEnvDto>> GetAllAsync()
+    public async Task<BaseOutput<List<ProjectEnvDto>>> GetAllAsync()
     {
         var query = await _repository.GetQueryableAsync();
         var list = await AsyncExecuter.ToListAsync(query.OrderBy(e => e.Id));
-        return list.Select(e => e.ToDto()).ToList();
+        return new(list.Select(e => e.ToDto()).ToList());
     }
 
-    public async Task<List<ProjectEnvDto>> GetByProjectIdAsync(long projectId)
+    public async Task<BaseOutput<List<ProjectEnvDto>>> GetByProjectIdAsync(long projectId)
     {
         var query = await _repository.GetQueryableAsync();
         var list = await AsyncExecuter.ToListAsync(query.Where(e => e.ProjectId == projectId).OrderBy(e => e.Id));
-        return list.Select(e => e.ToDto()).ToList();
+        return new(list.Select(e => e.ToDto()).ToList());
     }
 
-    public async Task<ProjectEnvDto?> GetByIdAsync(long id)
+    public async Task<BaseOutput<ProjectEnvDto?>> GetByIdAsync(long id)
     {
         var entity = await _repository.FindAsync(id);
-        return entity?.ToDto();
+        return new(entity?.ToDto());
     }
 
-    public async Task<long> CreateAsync(ProjectEnvDto environment)
+    public async Task<BaseOutput<long>> CreateAsync(ProjectEnvDto environment)
     {
         var entity = new ProjectEnvEntity();
         environment.Apply(entity);
         entity = await _repository.InsertAsync(entity, autoSave: true);
-        return entity.Id;
+        return new(entity.Id);
     }
 
-    public async Task<bool> UpdateAsync(long id, ProjectEnvDto environment)
+    public async Task<BaseOutput<bool>> UpdateAsync(long id, ProjectEnvDto environment)
     {
         var entity = await _repository.FindAsync(id);
         if (entity == null)
         {
-            return false;
+            return new(false);
         }
 
         environment.Apply(entity);
         await _repository.UpdateAsync(entity, autoSave: true);
-        return true;
+        return new(true);
     }
 
-    public async Task<bool> DeleteAsync(long id)
+    public async Task<BaseOutput<bool>> DeleteAsync(long id)
     {
         var entity = await _repository.FindAsync(id);
         if (entity == null)
         {
-            return false;
+            return new(false);
         }
 
         await _repository.DeleteAsync(entity, autoSave: true);
-        return true;
+        return new(true);
     }
 
-    public async Task<List<ProjectEnvDto>> GetByTypeAsync(EnvironmentType type)
+    public async Task<BaseOutput<List<ProjectEnvDto>>> GetByTypeAsync(EnvironmentType type)
     {
         var query = await _repository.GetQueryableAsync();
         var list = await AsyncExecuter.ToListAsync(query.Where(e => e.Type == (int)type));
-        return list.Select(e => e.ToDto()).ToList();
+        return new(list.Select(e => e.ToDto()).ToList());
     }
 }

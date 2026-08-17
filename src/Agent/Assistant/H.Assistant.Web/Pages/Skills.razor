@@ -267,10 +267,10 @@
         loadingSkills = true;
         try
         {
-            var result = await SkillDefinitionAppService.GetListAsync(new SkillDefinitionQueryDto
+            var result = (await SkillDefinitionAppService.GetListAsync(new SkillDefinitionQueryDto
             {
                 MaxResultCount = 100
-            });
+            })).Data!;
             skills = result.Items.ToList();
 
             tools = skills

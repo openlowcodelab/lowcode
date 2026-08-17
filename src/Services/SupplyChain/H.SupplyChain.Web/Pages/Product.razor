@@ -350,7 +350,7 @@
     {
         try
         {
-            var r = await SupplierService.GetListAsync(new SupplierQueryDto { MaxResultCount = 200 });
+            var r = (await SupplierService.GetListAsync(new SupplierQueryDto { MaxResultCount = 200 })).Data!;
             suppliers = r.Items.ToList();
         }
         catch { }
@@ -363,13 +363,13 @@
         {
             var input = new ProductQueryDto { MaxResultCount = 100, Filter = string.IsNullOrWhiteSpace(filter) ? null : filter };
             input.Category = string.IsNullOrWhiteSpace(categoryFilter) ? null : categoryFilter;
-            var result = await ProductService.GetListAsync(input);
+            var result = (await ProductService.GetListAsync(input)).Data!;
             products = result.Items.ToList();
 
             skuCounts.Clear();
             foreach (var p in products)
             {
-                var skus = await SkuService.GetListAsync(new ProductSkuQueryDto { ProductId = p.Id, MaxResultCount = 1 });
+                var skus = (await SkuService.GetListAsync(new ProductSkuQueryDto { ProductId = p.Id, MaxResultCount = 1 })).Data!;
                 skuCounts[p.Id] = (int)skus.TotalCount;
             }
         }
@@ -477,7 +477,7 @@
         skuLoading = true;
         try
         {
-            var r = await SkuService.GetListAsync(new ProductSkuQueryDto { ProductId = skuModalProductId, MaxResultCount = 200 });
+            var r = (await SkuService.GetListAsync(new ProductSkuQueryDto { ProductId = skuModalProductId, MaxResultCount = 200 })).Data!;
             skus = r.Items.ToList();
             // 默认选中第一个
             if (skus.Any() && !selectedSkuId.HasValue)
@@ -507,7 +507,7 @@
         mappingLoading = true;
         try
         {
-            var r = await SkuMappingService.GetListAsync(new SupplierSkuMappingQueryDto { SkuId = selectedSkuId.Value, MaxResultCount = 200 });
+            var r = (await SkuMappingService.GetListAsync(new SupplierSkuMappingQueryDto { SkuId = selectedSkuId.Value, MaxResultCount = 200 })).Data!;
             skuMappings = r.Items.ToList();
         }
         catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载供应商映射失败：{ex.Message}"); }

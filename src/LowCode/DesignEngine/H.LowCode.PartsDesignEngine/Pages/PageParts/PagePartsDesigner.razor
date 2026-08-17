@@ -79,7 +79,7 @@ else
             _loading = true;
             StateHasChanged();
 
-            _template = await PageTemplateAppService.GetByIdAsync(TemplateId);
+            _template = (await PageTemplateAppService.GetByIdAsync(TemplateId)).Data;
             if (_template == null)
             {
                 await Message.ErrorAsync("页面模板不存在！");
@@ -132,7 +132,7 @@ else
                 return;
             }
 
-            var success = await PageTemplateAppService.SaveAsync(_template);
+            var success = (await PageTemplateAppService.SaveAsync(_template)).Data == true;
             if (success)
                 await Message.SuccessAsync("保存成功！");
             else

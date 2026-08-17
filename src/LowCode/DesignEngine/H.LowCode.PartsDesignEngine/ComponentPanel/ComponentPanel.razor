@@ -48,7 +48,7 @@
     {
         await base.OnInitializedAsync();
 
-        _componentLibraries = await ComponentLibraryAppService.GetListAsync();
+        _componentLibraries = (await ComponentLibraryAppService.GetListAsync()).Data;
 
         //默认选中当前设计上下文所在组件库（上下文库不存在时回退到第一个库）
         var contextLibraryId = PartsCascading?.LibraryId;
@@ -72,7 +72,7 @@
         if (string.IsNullOrEmpty(libraryId))
             return new List<ComponentPartsSchema>();
 
-        var allComponents = await ComponentPartsAppService.GetAllComponentsAsync(libraryId);
+        var allComponents = (await ComponentPartsAppService.GetAllComponentsAsync(libraryId)).Data ?? [];
         //仅原子组件（ComponentType==1），GetAllComponentsAsync 已过滤为已发布
         return allComponents.Where(t => t.ComponentType == 1).ToList();
     }

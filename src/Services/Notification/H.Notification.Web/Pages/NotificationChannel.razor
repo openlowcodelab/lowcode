@@ -197,7 +197,7 @@
         loading = true;
         try
         {
-            var result = await ChannelAppService.GetListAsync(new NotificationChannelQueryDto { MaxResultCount = 100, Filter = searchFilter });
+            var result = (await ChannelAppService.GetListAsync(new NotificationChannelQueryDto { MaxResultCount = 100, Filter = searchFilter })).Data!;
             list = result.Items.ToList();
         }
         finally

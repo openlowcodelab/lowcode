@@ -1,4 +1,5 @@
 using H.Abp.Application.Contracts;
+using H.Util.Base;
 
 namespace H.LowCode.Application.Contracts;
 
@@ -10,15 +11,15 @@ public interface ITableDataAppService : IAppService
     /// <summary>
     /// 获取表格数据
     /// </summary>
-    Task<PagedResultDto<Dictionary<string, object>>> GetListAsync(TableDataInput request);
+    Task<BaseOutput<PagedResultDto<Dictionary<string, object>>>> GetListAsync(TableDataInput request);
 
     /// <summary>
     /// 删除数据
     /// </summary>
-    Task DeleteAsync(TableDataDeleteInput request);
+    Task<BaseOutput> DeleteAsync(TableDataDeleteInput request);
 
     /// <summary>
     /// 更新数据
     /// </summary>
-    Task UpdateAsync(TableDataUpdateInput request);
+    Task<BaseOutput> UpdateAsync(TableDataUpdateInput request);
 }

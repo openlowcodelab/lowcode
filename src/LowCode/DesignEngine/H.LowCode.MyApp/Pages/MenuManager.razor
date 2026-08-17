@@ -140,12 +140,12 @@
 
     public async Task<IList<MenuSchema>> GetMenuListAsync()
     {
-        return await MenuAppService.GetListAsync(AppId);
+        return (await MenuAppService.GetListAsync(AppId)).Data;
     }
 
     private async Task<MenuSchema> GetMenuAsync(string id)
     {
-        return await MenuAppService.GetByIdAsync(AppId, id);
+        return (await MenuAppService.GetByIdAsync(AppId, id)).Data;
     }
 
     private void CreateAsync(string parentId)
@@ -194,7 +194,7 @@
 
     private async Task<bool> SaveMenuSchemaAsync()
     {
-        return await MenuAppService.SaveAsync(_menuSchema);
+        return (await MenuAppService.SaveAsync(_menuSchema)).Data == true;
     }
 
     private readonly string[] _iconList = new[]

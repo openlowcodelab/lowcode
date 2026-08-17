@@ -1,15 +1,16 @@
 ﻿using H.Abp.Application.Contracts;
 using H.LowCode.MetaSchema.DesignEngine;
+using H.Util.Base;
 
 namespace H.LowCode.DesignEngine.Application.Contracts;
 
 public interface IComponentLibraryAppService : IAppService
 {
-    Task<List<ComponentLibrarySchema>> GetListAsync();
+    Task<BaseOutput<List<ComponentLibrarySchema>>> GetListAsync();
 
-    Task<ComponentLibrarySchema> GetByIdAsync(string libraryId);
+    Task<BaseOutput<ComponentLibrarySchema>> GetByIdAsync(string libraryId);
 
-    Task<bool> SaveAsync(ComponentLibrarySchema componentLibrary);
+    Task<BaseOutput<bool>> SaveAsync(ComponentLibrarySchema componentLibrary);
 
-    Task<bool> DeleteAsync(string libraryId);
+    Task<BaseOutput<bool>> DeleteAsync(string libraryId);
 }

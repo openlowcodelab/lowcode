@@ -1,29 +1,30 @@
 using H.Abp.Application.Contracts;
+using H.Util.Base;
 
 namespace H.SystemPortal.Application.Contracts;
 
 public interface IUserAppService : IAppService
 {
-    Task<UserDto?> GetUserByUserNameAsync(string userName);
-    Task<UserDto?> GetUserByEmailAsync(string email);
-    Task<UserDto> CreateUserAsync(UserDto user);
-    Task<bool> UpdateUserAsync(UserDto user);
-    Task<UserDto?> GetUserByIdAsync(Guid userId);
+    Task<BaseOutput<UserDto?>> GetUserByUserNameAsync(string userName);
+    Task<BaseOutput<UserDto?>> GetUserByEmailAsync(string email);
+    Task<BaseOutput<UserDto>> CreateUserAsync(UserDto user);
+    Task<BaseOutput<bool>> UpdateUserAsync(UserDto user);
+    Task<BaseOutput<UserDto?>> GetUserByIdAsync(Guid userId);
 
     // 用户管理方法
-    Task<PagedResult<UserDto>> GetPagedUsersAsync(UserQueryParams queryParams);
-    Task<UserDto?> GetUserDtoByIdAsync(Guid userId);
-    Task<UserDto> CreateUserAsync(CreateUserDto dto, Guid? currentUserId = null);
-    Task<bool> UpdateUserAsync(Guid userId, UpdateUserDto dto, Guid? currentUserId = null);
-    Task UpdateUserStatusAsync(Guid userId, UpdateUserStatusDto dto, Guid? currentUserId = null);
-    Task ResetPasswordAsync(Guid userId, ResetPasswordDto dto);
-    Task DeleteUserAsync(Guid userId);
-    Task<bool> ExistsByUserNameAsync(string userName, Guid? excludeId = null);
-    Task<bool> ExistsByEmailAsync(string email, Guid? excludeId = null);
-    Task<bool> VerifyPasswordAsync(string userName, string password);
-    Task UpdateLastLoginTimeAsync(Guid userId);
+    Task<BaseOutput<PagedResult<UserDto>>> GetPagedUsersAsync(UserQueryParams queryParams);
+    Task<BaseOutput<UserDto?>> GetUserDtoByIdAsync(Guid userId);
+    Task<BaseOutput<UserDto>> CreateUserAsync(CreateUserDto dto, Guid? currentUserId = null);
+    Task<BaseOutput<bool>> UpdateUserAsync(Guid userId, UpdateUserDto dto, Guid? currentUserId = null);
+    Task<BaseOutput> UpdateUserStatusAsync(Guid userId, UpdateUserStatusDto dto, Guid? currentUserId = null);
+    Task<BaseOutput> ResetPasswordAsync(Guid userId, ResetPasswordDto dto);
+    Task<BaseOutput> DeleteUserAsync(Guid userId);
+    Task<BaseOutput<bool>> ExistsByUserNameAsync(string userName, Guid? excludeId = null);
+    Task<BaseOutput<bool>> ExistsByEmailAsync(string email, Guid? excludeId = null);
+    Task<BaseOutput<bool>> VerifyPasswordAsync(string userName, string password);
+    Task<BaseOutput> UpdateLastLoginTimeAsync(Guid userId);
 
     // 角色管理
-    Task AssignRolesToUserAsync(Guid userId, List<string> roleNames);
-    Task<List<string>> GetUserRoleNamesAsync(Guid userId);
+    Task<BaseOutput> AssignRolesToUserAsync(Guid userId, List<string> roleNames);
+    Task<BaseOutput<List<string>>> GetUserRoleNamesAsync(Guid userId);
 }

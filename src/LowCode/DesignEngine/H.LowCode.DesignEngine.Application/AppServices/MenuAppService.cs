@@ -1,6 +1,7 @@
-﻿using H.LowCode.DesignEngine.Application.Contracts;
+using H.LowCode.DesignEngine.Application.Contracts;
 using H.LowCode.DesignEngine.Domain.Repositories;
 using H.LowCode.MetaSchema;
+using H.Util.Base;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
@@ -12,28 +13,28 @@ public class MenuAppService : ApplicationService, IMenuAppService
 {
     private IMenuRepository _repository => LazyServiceProvider.GetRequiredService<IMenuRepository>();
 
-    public async Task<IList<MenuSchema>> GetListAsync(string appId)
+    public async Task<BaseOutput<IList<MenuSchema>>> GetListAsync(string appId)
     {
-        return await _repository.GetListAsync(appId);
+        return new(await _repository.GetListAsync(appId));
     }
 
-    public async Task<MenuSchema> GetByIdAsync(string appId, string menuId)
+    public async Task<BaseOutput<MenuSchema>> GetByIdAsync(string appId, string menuId)
     {
-        return await _repository.GetAsync(appId, menuId);
+        return new(await _repository.GetAsync(appId, menuId));
     }
 
-    public async Task<bool> SaveAsync(MenuSchema menuSchema)
+    public async Task<BaseOutput<bool>> SaveAsync(MenuSchema menuSchema)
     {
         ArgumentNullException.ThrowIfNull(menuSchema);
         ArgumentException.ThrowIfNullOrEmpty(menuSchema.Id);
 
         await _repository.SaveAsync(menuSchema);
-        return true;
+        return new(true);
     }
 
-    public async Task<bool> DeleteAsync(string appId, string menuId)
+    public async Task<BaseOutput<bool>> DeleteAsync(string appId, string menuId)
     {
         await _repository.DeleteAsync(appId, menuId);
-        return true;
+        return new(true);
     }
 }

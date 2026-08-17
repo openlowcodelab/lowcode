@@ -110,7 +110,7 @@
 
     private async Task LoadDefinitions()
     {
-        try { definitions = await ValueService.GetDefinitionLookupAsync(); }
+        try { definitions = (await ValueService.GetDefinitionLookupAsync()).Data ?? []; }
         catch { definitions = new(); }
     }
 
@@ -125,7 +125,7 @@
                 Filter = string.IsNullOrWhiteSpace(filter) ? null : filter,
                 ProviderName = string.IsNullOrWhiteSpace(providerFilter) ? null : providerFilter
             };
-            var result = await ValueService.GetListAsync(input);
+            var result = (await ValueService.GetListAsync(input)).Data!;
             items = result.Items.ToList();
         }
         catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载失败：{ex.Message}"); }

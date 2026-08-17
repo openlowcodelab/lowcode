@@ -1,6 +1,7 @@
-﻿using H.LowCode.DesignEngine.Application.Contracts;
+using H.LowCode.DesignEngine.Application.Contracts;
 using H.LowCode.DesignEngine.Domain.Repositories;
 using H.LowCode.MetaSchema.DesignEngine;
+using H.Util.Base;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
@@ -13,27 +14,27 @@ public class AppRbacAppService : ApplicationService, IAppRbacAppService
     private IAppMemberRepository _memberRepository => LazyServiceProvider.GetRequiredService<IAppMemberRepository>();
     private IAppRoleRepository _roleRepository => LazyServiceProvider.GetRequiredService<IAppRoleRepository>();
 
-    public async Task<List<AppMemberSchema>> GetMembersAsync(string appId)
+    public async Task<BaseOutput<List<AppMemberSchema>>> GetMembersAsync(string appId)
     {
-        return await _memberRepository.GetListAsync(appId);
+        return new(await _memberRepository.GetListAsync(appId));
     }
 
-    public async Task<bool> SaveMemberAsync(AppMemberSchema member)
+    public async Task<BaseOutput<bool>> SaveMemberAsync(AppMemberSchema member)
     {
         ArgumentNullException.ThrowIfNull(member);
         ArgumentException.ThrowIfNullOrEmpty(member.AppId);
 
         await _memberRepository.SaveAsync(member);
-        return true;
+        return new(true);
     }
 
-    public async Task<bool> DeleteMemberAsync(string appId, string id)
+    public async Task<BaseOutput<bool>> DeleteMemberAsync(string appId, string id)
     {
         await _memberRepository.DeleteAsync(appId, id);
-        return true;
+        return new(true);
     }
 
-    public async Task<List<AppRoleSchema>> GetRolesAsync(string appId)
+    public async Task<BaseOutput<List<AppRoleSchema>>> GetRolesAsync(string appId)
     {
         var roles = await _roleRepository.GetListAsync(appId);
 
@@ -45,20 +46,20 @@ public class AppRbacAppService : ApplicationService, IAppRbacAppService
             roles.Add(new AppRoleSchema { AppId = appId, Key = "viewer", Name = "只读访客", Description = "仅可查看", IsBuiltin = true, Permissions = ["page.view", "data.read"] });
         }
 
-        return roles;
+        return new(roles);
     }
 
-    public async Task<bool> SaveRoleAsync(AppRoleSchema role)
+    public async Task<BaseOutput<bool>> SaveRoleAsync(AppRoleSchema role)
     {
         ArgumentNullException.ThrowIfNull(role);
         ArgumentException.ThrowIfNullOrEmpty(role.AppId);
         ArgumentException.ThrowIfNullOrEmpty(role.Key);
 
         await _roleRepository.SaveAsync(role);
-        return true;
+        return new(true);
     }
 
-    public async Task<bool> DeleteRoleAsync(string appId, string key)
+    public async Task<BaseOutput<bool>> DeleteRoleAsync(string appId, string key)
     {
         var roles = await _roleRepository.GetListAsync(appId);
         var role = roles.FirstOrDefault(t => t.Key == key);
@@ -66,6 +67,6 @@ public class AppRbacAppService : ApplicationService, IAppRbacAppService
             throw new BusinessException("内置角色不可删除");
 
         await _roleRepository.DeleteAsync(appId, key);
-        return true;
+        return new(true);
     }
 }

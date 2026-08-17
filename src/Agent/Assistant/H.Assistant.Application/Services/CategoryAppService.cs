@@ -1,6 +1,7 @@
 using AutoMapper;
 using H.Assistant.Application.Contracts;
 using H.Assistant.EntityFrameworkCore;
+using H.Util.Base;
 using Microsoft.EntityFrameworkCore;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
@@ -23,14 +24,14 @@ public class CategoryAppService : ApplicationService, ICategoryAppService
         _objectMapper = objectMapper;
     }
 
-    public async Task<List<CategoryDto>> GetListAsync()
+    public async Task<BaseOutput<List<CategoryDto>>> GetListAsync()
     {
         var queryable = await _categoryRepository.GetQueryableAsync();
         var list = await queryable.OrderBy(x => x.Sort).ThenBy(x => x.Name).ToListAsync();
-        return list.Select(x => _objectMapper.Map<CategoryEntity, CategoryDto>(x)).ToList();
+        return new(list.Select(x => _objectMapper.Map<CategoryEntity, CategoryDto>(x)).ToList());
     }
 
-    public async Task<CategoryDto> CreateAsync(CreateCategoryDto input)
+    public async Task<BaseOutput<CategoryDto>> CreateAsync(CreateCategoryDto input)
     {
         var entity = new CategoryEntity
         {
@@ -38,22 +39,23 @@ public class CategoryAppService : ApplicationService, ICategoryAppService
             Sort = input.Sort
         };
 
-        await _categoryRepository.InsertAsync(entity);
-        return _objectMapper.Map<CategoryEntity, CategoryDto>(entity);
+        entity = await _categoryRepository.InsertAsync(entity);
+        return new(_objectMapper.Map<CategoryEntity, CategoryDto>(entity));
     }
 
-    public async Task<CategoryDto> UpdateAsync(Guid id, UpdateCategoryDto input)
+    public async Task<BaseOutput<CategoryDto>> UpdateAsync(Guid id, UpdateCategoryDto input)
     {
         var entity = await _categoryRepository.GetAsync(id);
         entity.Name = input.Name.Trim();
         entity.Sort = input.Sort;
 
-        await _categoryRepository.UpdateAsync(entity);
-        return _objectMapper.Map<CategoryEntity, CategoryDto>(entity);
+        entity = await _categoryRepository.UpdateAsync(entity);
+        return new(_objectMapper.Map<CategoryEntity, CategoryDto>(entity));
     }
 
-    public async Task DeleteAsync(Guid id)
+    public async Task<BaseOutput> DeleteAsync(Guid id)
     {
         await _categoryRepository.DeleteAsync(id);
+        return new();
     }
 }

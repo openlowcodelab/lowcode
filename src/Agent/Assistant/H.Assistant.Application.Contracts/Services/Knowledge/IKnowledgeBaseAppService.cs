@@ -1,4 +1,5 @@
 using H.Abp.Application.Contracts;
+using H.Util.Base;
 
 namespace H.Assistant.Application.Contracts;
 
@@ -7,9 +8,9 @@ namespace H.Assistant.Application.Contracts;
 /// </summary>
 public interface IKnowledgeBaseAppService : IAppService
 {
-    Task<List<KnowledgeBaseDto>> GetListAsync();
-    Task<KnowledgeBaseDto> GetAsync(Guid id);
-    Task<KnowledgeBaseDto> CreateAsync(CreateKnowledgeBaseDto input);
-    Task<KnowledgeBaseDto> UpdateAsync(Guid id, UpdateKnowledgeBaseDto input);
-    Task DeleteAsync(Guid id);
+    Task<BaseOutput<List<KnowledgeBaseDto>>> GetListAsync();
+    Task<BaseOutput<KnowledgeBaseDto>> GetAsync(Guid id);
+    Task<BaseOutput<KnowledgeBaseDto>> CreateAsync(CreateKnowledgeBaseDto input);
+    Task<BaseOutput<KnowledgeBaseDto>> UpdateAsync(Guid id, UpdateKnowledgeBaseDto input);
+    Task<BaseOutput> DeleteAsync(Guid id);
 }

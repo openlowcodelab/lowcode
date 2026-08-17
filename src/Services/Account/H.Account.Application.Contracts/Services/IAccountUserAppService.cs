@@ -1,4 +1,5 @@
 using H.Abp.Application.Contracts;
+using H.Util.Base;
 
 namespace H.Account.Application.Contracts;
 
@@ -11,15 +12,15 @@ public interface IAccountUserAppService : IAppService
     /// <summary>
     /// 根据用户ID获取用户信息
     /// </summary>
-    Task<UserDto?> GetUserDtoByIdAsync(Guid userId);
+    Task<BaseOutput<UserDto?>> GetUserDtoByIdAsync(Guid userId);
 
     /// <summary>
     /// 分页查询用户列表
     /// </summary>
-    Task<PagedResult<UserDto>> GetPagedUsersAsync(UserQueryParams queryParams);
+    Task<BaseOutput<PagedResult<UserDto>>> GetPagedUsersAsync(UserQueryParams queryParams);
 
     /// <summary>
     /// 重置密码
     /// </summary>
-    Task ResetPasswordAsync(Guid userId, ResetPasswordDto dto);
+    Task<BaseOutput> ResetPasswordAsync(Guid userId, ResetPasswordDto dto);
 }

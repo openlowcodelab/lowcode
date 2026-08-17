@@ -1,6 +1,7 @@
 using H.Enterprise.Application.Contracts;
 using H.Enterprise.EntityFrameworkCore;
 using H.Enterprise.EntityFrameworkCore.Entities;
+using H.Util.Base;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
@@ -31,7 +32,7 @@ public class EnterpriseAppService : ApplicationService, IEnterpriseAppService
         _userAppService = userAppService;
     }
 
-    public async Task<PagedResult<EnterpriseDto>> GetListAsync(EnterpriseQueryParams queryParams)
+    public async Task<BaseOutput<PagedResult<EnterpriseDto>>> GetListAsync(EnterpriseQueryParams queryParams)
     {
         var query = _context.Enterprises
             .Include(e => e.EnterpriseUsers)
@@ -68,25 +69,25 @@ public class EnterpriseAppService : ApplicationService, IEnterpriseAppService
             .Take(queryParams.PageSize)
             .ToListAsync();
 
-        return new PagedResult<EnterpriseDto>
+        return new(new PagedResult<EnterpriseDto>
         {
             Items = items.Select(MapToDto).ToList(),
             TotalCount = totalCount,
             PageIndex = queryParams.PageIndex,
             PageSize = queryParams.PageSize
-        };
+        });
     }
 
-    public async Task<EnterpriseDto?> GetByIdAsync(Guid id)
+    public async Task<BaseOutput<EnterpriseDto?>> GetByIdAsync(Guid id)
     {
         var entity = await _context.Enterprises
             .Include(e => e.EnterpriseUsers)
             .FirstOrDefaultAsync(e => e.Id == id);
 
-        return entity != null ? MapToDto(entity) : null;
+        return new(entity != null ? MapToDto(entity) : null);
     }
 
-    public async Task<EnterpriseDto> CreateAsync(CreateEnterpriseDto input)
+    public async Task<BaseOutput<EnterpriseDto>> CreateAsync(CreateEnterpriseDto input)
     {
         // 检查编码唯一性
         if (!string.IsNullOrWhiteSpace(input.Code))
@@ -136,10 +137,10 @@ public class EnterpriseAppService : ApplicationService, IEnterpriseAppService
         }
 
         await _context.SaveChangesAsync();
-        return MapToDto(entity);
+        return new(MapToDto(entity));
     }
 
-    public async Task<EnterpriseDto> UpdateAsync(Guid id, UpdateEnterpriseDto input)
+    public async Task<BaseOutput<EnterpriseDto>> UpdateAsync(Guid id, UpdateEnterpriseDto input)
     {
         var entity = await _context.Enterprises
             .Include(e => e.EnterpriseUsers)
@@ -157,11 +158,11 @@ public class EnterpriseAppService : ApplicationService, IEnterpriseAppService
         entity.UpdatedBy = GetCurrentUserId();
 
         await _context.SaveChangesAsync();
-        return MapToDto(entity);
+        return new(MapToDto(entity));
     }
 
     [IgnoreAntiforgeryToken]
-    public async Task<EnterpriseDto> UpdateCurrentEnterpriseAsync(UpdateEnterpriseDto input)
+    public async Task<BaseOutput<EnterpriseDto>> UpdateCurrentEnterpriseAsync(UpdateEnterpriseDto input)
     {
         var httpContext = _httpContextAccessor.HttpContext
             ?? throw new Exception("无法获取 HTTP 上下文");
@@ -182,7 +183,7 @@ public class EnterpriseAppService : ApplicationService, IEnterpriseAppService
         return await UpdateAsync(enterpriseId, input);
     }
 
-    public async Task DeleteAsync(Guid id)
+    public async Task<BaseOutput> DeleteAsync(Guid id)
     {
         var entity = await _context.Enterprises
             .Include(e => e.EnterpriseUsers)
@@ -194,9 +195,10 @@ public class EnterpriseAppService : ApplicationService, IEnterpriseAppService
 
         _context.Enterprises.Remove(entity);
         await _context.SaveChangesAsync();
+        return new();
     }
 
-    public async Task ActivateAsync(Guid id, ActivateEnterpriseDto input)
+    public async Task<BaseOutput> ActivateAsync(Guid id, ActivateEnterpriseDto input)
     {
         var entity = await _context.Enterprises
             .FirstOrDefaultAsync(e => e.Id == id)
@@ -232,9 +234,10 @@ public class EnterpriseAppService : ApplicationService, IEnterpriseAppService
         entity.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
+        return new();
     }
 
-    public async Task EnableAsync(Guid id)
+    public async Task<BaseOutput> EnableAsync(Guid id)
     {
         var entity = await _context.Enterprises
             .FirstOrDefaultAsync(e => e.Id == id)
@@ -248,9 +251,10 @@ public class EnterpriseAppService : ApplicationService, IEnterpriseAppService
         entity.UpdatedBy = GetCurrentUserId();
 
         await _context.SaveChangesAsync();
+        return new();
     }
 
-    public async Task DisableAsync(Guid id)
+    public async Task<BaseOutput> DisableAsync(Guid id)
     {
         var entity = await _context.Enterprises
             .FirstOrDefaultAsync(e => e.Id == id)
@@ -261,9 +265,10 @@ public class EnterpriseAppService : ApplicationService, IEnterpriseAppService
         entity.UpdatedBy = GetCurrentUserId();
 
         await _context.SaveChangesAsync();
+        return new();
     }
 
-    public async Task<List<EnterpriseDto>> GetMyEnterprisesAsync(Guid userId)
+    public async Task<BaseOutput<List<EnterpriseDto>>> GetMyEnterprisesAsync(Guid userId)
     {
         var userEnterprises = await _context.EnterpriseUsers
             .Include(eu => eu.Enterprise)
@@ -272,14 +277,14 @@ public class EnterpriseAppService : ApplicationService, IEnterpriseAppService
             .ThenByDescending(eu => eu.JoinedAt)
             .ToListAsync();
 
-        return userEnterprises
+        return new(userEnterprises
             .Where(eu => eu.Enterprise != null)
             .Select(eu => MapToDto(eu.Enterprise!))
-            .ToList();
+            .ToList());
     }
 
     [IgnoreAntiforgeryToken]
-    public async Task SelectEnterpriseAsync(Guid enterpriseId)
+    public async Task<BaseOutput> SelectEnterpriseAsync(Guid enterpriseId)
     {
         var currentUserId = GetCurrentUserId() ?? throw new Exception("未登录");
 
@@ -290,16 +295,17 @@ public class EnterpriseAppService : ApplicationService, IEnterpriseAppService
             ?? throw new Exception("您不属于该企业");
 
         await SelectEnterpriseCoreAsync(currentUserId, userEnterprise);
+        return new();
     }
 
     [IgnoreAntiforgeryToken]
-    public async Task<EnterpriseAutoSelectResultDto> AutoSelectEnterpriseAsync()
+    public async Task<BaseOutput<EnterpriseAutoSelectResultDto>> AutoSelectEnterpriseAsync()
     {
         var result = new EnterpriseAutoSelectResultDto();
 
         var currentUserId = GetCurrentUserId();
         if (currentUserId == null)
-            return result;
+            return new(result);
 
         // 用户关联的所有企业
         var userEnterprises = await _context.EnterpriseUsers
@@ -316,7 +322,7 @@ public class EnterpriseAppService : ApplicationService, IEnterpriseAppService
 
         result.HasEnterprise = activeUserEnterprises.Count > 0;
         if (activeUserEnterprises.Count == 0)
-            return result;
+            return new(result);
 
         // 优先进入上一次登录（默认）企业
         var target = activeUserEnterprises.FirstOrDefault(eu => eu.IsDefault);
@@ -327,11 +333,11 @@ public class EnterpriseAppService : ApplicationService, IEnterpriseAppService
 
         // 多个企业且无上次登录企业，需用户手动选择
         if (target == null)
-            return result;
+            return new(result);
 
         await SelectEnterpriseCoreAsync(currentUserId.Value, target);
         result.Selected = true;
-        return result;
+        return new(result);
     }
 
     /// <summary>
@@ -387,41 +393,41 @@ public class EnterpriseAppService : ApplicationService, IEnterpriseAppService
             authProperties);
     }
 
-    public async Task<EnterpriseDto?> GetCurrentEnterpriseAsync()
+    public async Task<BaseOutput<EnterpriseDto?>> GetCurrentEnterpriseAsync()
     {
         var httpContext = _httpContextAccessor.HttpContext;
         if (httpContext?.User?.Identity?.IsAuthenticated != true)
-            return null;
+            return new(null);
 
         var enterpriseIdClaim = httpContext.User.FindFirst("EnterpriseId")?.Value;
         if (string.IsNullOrEmpty(enterpriseIdClaim) || !Guid.TryParse(enterpriseIdClaim, out var enterpriseId))
-            return null;
+            return new(null);
 
         var entity = await _context.Enterprises
             .Include(e => e.EnterpriseUsers)
             .FirstOrDefaultAsync(e => e.Id == enterpriseId);
 
-        return entity != null ? MapToDto(entity) : null;
+        return new(entity != null ? MapToDto(entity) : null);
     }
 
-    public async Task<string?> GetCurrentEnterpriseRoleAsync()
+    public async Task<BaseOutput<string?>> GetCurrentEnterpriseRoleAsync()
     {
         var httpContext = _httpContextAccessor.HttpContext;
         if (httpContext?.User?.Identity?.IsAuthenticated != true)
-            return null;
+            return new(null);
 
         var userId = GetCurrentUserId();
         var enterpriseIdClaim = httpContext.User.FindFirst("EnterpriseId")?.Value;
         if (userId == null || string.IsNullOrEmpty(enterpriseIdClaim) || !Guid.TryParse(enterpriseIdClaim, out var enterpriseId))
         {
             // 未选择企业时回退到 Cookie 中的角色声明
-            return httpContext.User.FindFirst("EnterpriseRole")?.Value;
+            return new(httpContext.User.FindFirst("EnterpriseRole")?.Value);
         }
 
         var userEnterprise = await _context.EnterpriseUsers
             .FirstOrDefaultAsync(eu => eu.EnterpriseId == enterpriseId && eu.UserId == userId.Value);
 
-        return userEnterprise?.Role ?? httpContext.User.FindFirst("EnterpriseRole")?.Value;
+        return new(userEnterprise?.Role ?? httpContext.User.FindFirst("EnterpriseRole")?.Value);
     }
 
     #region 辅助方法
@@ -439,7 +445,7 @@ public class EnterpriseAppService : ApplicationService, IEnterpriseAppService
     {
         try
         {
-            var user = await _userAppService.GetUserByIdAsync(userId);
+            var user = (await _userAppService.GetUserByIdAsync(userId)).Data;
             return user?.UserName ?? userId.ToString();
         }
         catch

@@ -1,4 +1,5 @@
 ﻿using H.Abp.Application.Contracts;
+using H.Util.Base;
 
 namespace H.Testing.Application.Contracts;
 
@@ -10,7 +11,7 @@ public interface IBatchExecutionAppService : IAppService
     /// <summary>
     /// 批量执行测试用例
     /// </summary>
-    Task<BatchExecutionResult> ExecuteBatchAsync(
+    Task<BaseOutput<BatchExecutionResult>> ExecuteBatchAsync(
         BatchExecutionSettings settings,
         long environmentId,
         CancellationToken cancellationToken = default);

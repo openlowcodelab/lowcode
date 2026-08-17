@@ -1,6 +1,7 @@
 using H.Testing.Application.Contracts;
 using H.Testing.Application.Mapping;
 using H.Testing.EntityFrameworkCore;
+using H.Util.Base;
 using Microsoft.Extensions.Configuration;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -46,7 +47,7 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
 
     #region 模板查询与管理
 
-    public Task<List<ProjectTemplateDto>> GetTemplatesAsync()
+    public Task<BaseOutput<List<ProjectTemplateDto>>> GetTemplatesAsync()
     {
         var root = ResolveTemplatesRoot();
         var result = new List<ProjectTemplateDto>();
@@ -67,10 +68,10 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
                 CaseCount = TemplateJson.ReadArray(Path.Combine(dir, "project-cases.json")).Count
             });
         }
-        return Task.FromResult(result);
+        return Task.FromResult(new BaseOutput<List<ProjectTemplateDto>>(result));
     }
 
-    public Task<bool> UpdateTemplateAsync(string templateId, string name, string? description)
+    public Task<BaseOutput<bool>> UpdateTemplateAsync(string templateId, string name, string? description)
     {
         ValidateTemplateId(templateId);
         if (string.IsNullOrWhiteSpace(name)) throw new UserFriendlyException("模板名称不能为空");
@@ -78,17 +79,17 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
         var root = ResolveTemplatesRoot();
         var index = TemplateJson.ReadArray(Path.Combine(root, "projects.json"));
         var entry = index.FirstOrDefault(o => string.Equals(TemplateJson.Str(o, "id"), templateId, StringComparison.OrdinalIgnoreCase));
-        if (entry == null) return Task.FromResult(false);
+        if (entry == null) return Task.FromResult(new BaseOutput<bool>(false));
 
         foreach (var key in KeysOf(entry, "name")) entry[key] = name.Trim();
         foreach (var key in KeysOf(entry, "description")) entry[key] = description ?? string.Empty;
         foreach (var key in KeysOf(entry, "updatedAt")) entry[key] = DateTime.Now.ToString("O");
 
         TemplateJson.Write(Path.Combine(root, "projects.json"), new JsonArray(index.Select(o => (JsonNode)o.DeepClone()).ToArray()));
-        return Task.FromResult(true);
+        return Task.FromResult(new BaseOutput<bool>(true));
     }
 
-    public Task<bool> DeleteTemplateAsync(string templateId)
+    public Task<BaseOutput<bool>> DeleteTemplateAsync(string templateId)
     {
         ValidateTemplateId(templateId);
 
@@ -97,21 +98,21 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
         var remaining = index.Where(o => !string.Equals(TemplateJson.Str(o, "id"), templateId, StringComparison.OrdinalIgnoreCase)).ToList();
         if (remaining.Count == index.Count && !Directory.Exists(Path.Combine(root, templateId)))
         {
-            return Task.FromResult(false);
+            return Task.FromResult(new BaseOutput<bool>(false));
         }
 
         TemplateJson.Write(Path.Combine(root, "projects.json"), new JsonArray(remaining.Select(o => (JsonNode)o.DeepClone()).ToArray()));
 
         var dir = Path.Combine(root, templateId);
         if (Directory.Exists(dir)) Directory.Delete(dir, recursive: true);
-        return Task.FromResult(true);
+        return Task.FromResult(new BaseOutput<bool>(true));
     }
 
     #endregion
 
     #region 从模板创建项目
 
-    public async Task<long> CreateProjectFromTemplateAsync(string templateId, string name, string? description)
+    public async Task<BaseOutput<long>> CreateProjectFromTemplateAsync(string templateId, string name, string? description)
     {
         ValidateTemplateId(templateId);
         if (string.IsNullOrWhiteSpace(name)) throw new UserFriendlyException("项目名称不能为空");
@@ -262,14 +263,14 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
         }
         if (casesToUpdate.Count > 0) await _caseRepository.UpdateManyAsync(casesToUpdate, autoSave: true);
 
-        return projectId;
+        return new(projectId);
     }
 
     #endregion
 
     #region 保存项目为模板
 
-    public async Task<string> SaveProjectAsTemplateAsync(long projectId, string name, string? description)
+    public async Task<BaseOutput<string>> SaveProjectAsTemplateAsync(long projectId, string name, string? description)
     {
         if (string.IsNullOrWhiteSpace(name)) throw new UserFriendlyException("模板名称不能为空");
         var project = await _repository.FindAsync(projectId) ?? throw new UserFriendlyException("项目不存在");
@@ -378,7 +379,7 @@ public class ProjectTemplateAppService : ApplicationService, IProjectTemplateApp
         });
         TemplateJson.Write(indexPath, new JsonArray(index.Select(o => (JsonNode)o.DeepClone()).ToArray()));
 
-        return templateId;
+        return new(templateId);
     }
 
     #endregion

@@ -229,7 +229,7 @@
     private async Task LoadLLMConfigs()
     {
         loadingModels = true;
-        try { llmConfigs = await LLMConfigAppService.GetAllAsync(); }
+        try { llmConfigs = (await LLMConfigAppService.GetAllAsync()).Data ?? []; }
         catch (Exception ex) { ShowToast("加载模型配置失败: " + ex.Message, "error"); }
         finally { loadingModels = false; }
     }

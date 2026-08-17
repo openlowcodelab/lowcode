@@ -1,6 +1,7 @@
-﻿using H.Testing.Application.Contracts;
+using H.Testing.Application.Contracts;
 using H.Testing.Application.Mapping;
 using H.Testing.EntityFrameworkCore;
+using H.Util.Base;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 
@@ -21,48 +22,48 @@ public class CaseCategoryAppService : ApplicationService, ICaseCategoryAppServic
     /// <summary>
     /// 获取指定项目分类（树形结构）
     /// </summary>
-    public async Task<List<CaseCategoryDto>> GetByProjectIdAsync(long projectId)
+    public async Task<BaseOutput<List<CaseCategoryDto>>> GetByProjectIdAsync(long projectId)
     {
         var query = await _repository.GetQueryableAsync();
         var list = await AsyncExecuter.ToListAsync(query.Where(c => c.ProjectId == projectId).OrderBy(t => t.Order));
         var flat = list.Select(e => e.ToDto()).ToList();
-        return BuildCategoryTree(flat);
+        return new(BuildCategoryTree(flat));
     }
 
-    public async Task<CaseCategoryDto> CreateAsync(CaseCategoryDto category)
+    public async Task<BaseOutput<CaseCategoryDto>> CreateAsync(CaseCategoryDto category)
     {
         var entity = new CaseCategoryEntity();
         category.Apply(entity);
         entity = await _repository.InsertAsync(entity, autoSave: true);
-        return entity.ToDto();
+        return new(entity.ToDto());
     }
 
-    public async Task<bool> UpdateAsync(long id, CaseCategoryDto category)
+    public async Task<BaseOutput<bool>> UpdateAsync(long id, CaseCategoryDto category)
     {
         var entity = await _repository.FindAsync(id);
         if (entity == null)
         {
-            return false;
+            return new(false);
         }
 
         category.Apply(entity);
         await _repository.UpdateAsync(entity, autoSave: true);
-        return true;
+        return new(true);
     }
 
-    public async Task<bool> DeleteAsync(long projectId, long id)
+    public async Task<BaseOutput<bool>> DeleteAsync(long projectId, long id)
     {
         var entity = await _repository.FindAsync(id);
         if (entity == null || entity.ProjectId != projectId)
         {
-            return false;
+            return new(false);
         }
 
         await _repository.DeleteAsync(entity, autoSave: true);
-        return true;
+        return new(true);
     }
 
-    public async Task<List<CaseCategoryDto>> GetTreeStructureAsync(long projectId)
+    public async Task<BaseOutput<List<CaseCategoryDto>>> GetTreeStructureAsync(long projectId)
     {
         return await GetByProjectIdAsync(projectId);
     }

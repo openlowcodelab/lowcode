@@ -50,7 +50,7 @@ public partial class SkillSettingsViewModel : ObservableObject
         Loading = true;
         try
         {
-            var result = await _skillAppService.GetListAsync(new SkillDefinitionQueryDto { MaxResultCount = 100 });
+            var result = (await _skillAppService.GetListAsync(new SkillDefinitionQueryDto { MaxResultCount = 100 })).Data!;
             Skills.Clear();
             foreach (var skill in result.Items)
             {

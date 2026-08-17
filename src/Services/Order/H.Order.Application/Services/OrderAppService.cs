@@ -3,6 +3,7 @@ using H.Abp.Application.Contracts;
 using H.Order.Application.Contracts;
 using H.Order.Application.Mapping;
 using H.Order.EntityFrameworkCore;
+using H.Util.Base;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 
@@ -40,7 +41,7 @@ public class OrderAppService
     /// <summary>
     /// 订单列表：仅核心字段，不关联扩展属性表
     /// </summary>
-    public async Task<PagedResultDto<OrderDto>> GetListAsync(OrderQueryDto input)
+    public async Task<BaseOutput<PagedResultDto<OrderDto>>> GetListAsync(OrderQueryDto input)
     {
         var query = await Repository.GetQueryableAsync();
         query = ApplyFilters(query, input);
@@ -54,7 +55,7 @@ public class OrderAppService
                  .Take(maxResult));
 
         var dtos = entities.Select(e => e.ToDto()).ToList();
-        return new PagedResultDto<OrderDto>(totalCount, dtos);
+        return new(new PagedResultDto<OrderDto>(totalCount, dtos));
     }
 
     protected virtual IQueryable<OrderEntity> ApplyFilters(IQueryable<OrderEntity> query, OrderQueryDto input)
@@ -80,16 +81,16 @@ public class OrderAppService
         return query;
     }
 
-    public async Task<OrderDto> GetAsync(Guid id)
+    public async Task<BaseOutput<OrderDto>> GetAsync(Guid id)
     {
         var entity = await Repository.GetAsync(id);
-        return entity.ToDto();
+        return new(entity.ToDto());
     }
 
     /// <summary>
     /// 订单详情：核心字段 + 行业扩展属性 + 最近下发状态
     /// </summary>
-    public async Task<OrderDetailDto> GetDetailAsync(Guid id)
+    public async Task<BaseOutput<OrderDetailDto>> GetDetailAsync(Guid id)
     {
         var order = await Repository.GetAsync(id);
 
@@ -99,13 +100,13 @@ public class OrderAppService
         var dto = order.ToDetailDto();
         dto.AttributesJson = ext?.AttributesJson;
         dto.DispatchStatus = await GetDispatchStatusInternalAsync(id);
-        return dto;
+        return new(dto);
     }
 
     /// <summary>
     /// 创建订单：核心字段 + 扩展属同事务写入；进入待下发状态则发布 CAP 事件
     /// </summary>
-    public async Task<OrderDto> CreateAsync(CreateOrderDto input)
+    public async Task<BaseOutput<OrderDto>> CreateAsync(CreateOrderDto input)
     {
         var entity = input.ToEntity();
         entity.OrderNo = string.IsNullOrWhiteSpace(input.OrderNo)
@@ -120,7 +121,7 @@ public class OrderAppService
             throw new Exception($"订单号 {entity.OrderNo} 已存在");
         }
 
-        await Repository.InsertAsync(entity);
+        entity = await Repository.InsertAsync(entity);
         // entity.Id 由 ABP IGuidGenerator 在 InsertAsync 时赋值
 
         if (!string.IsNullOrWhiteSpace(input.AttributesJson))
@@ -140,10 +141,10 @@ public class OrderAppService
             await PublishPendingDispatchEventAsync(entity);
         }
 
-        return entity.ToDto();
+        return new(entity.ToDto());
     }
 
-    public async Task<OrderDto> UpdateAsync(Guid id, UpdateOrderDto input)
+    public async Task<BaseOutput<OrderDto>> UpdateAsync(Guid id, UpdateOrderDto input)
     {
         var entity = await Repository.GetAsync(id);
         input.Apply(entity);
@@ -176,10 +177,10 @@ public class OrderAppService
             await PublishPendingDispatchEventAsync(entity);
         }
 
-        return entity.ToDto();
+        return new(entity.ToDto());
     }
 
-    public async Task DeleteAsync(Guid id)
+    public async Task<BaseOutput> DeleteAsync(Guid id)
     {
         var entity = await Repository.GetAsync(id);
         await Repository.DeleteAsync(entity);
@@ -190,18 +191,19 @@ public class OrderAppService
         {
             await _extensionRepo.DeleteAsync(ext);
         }
+        return new();
     }
 
     /// <summary>手动触发订单下发</summary>
-    public async Task<TriggerDispatchResultDto> TriggerDispatchAsync(Guid id)
+    public async Task<BaseOutput<TriggerDispatchResultDto>> TriggerDispatchAsync(Guid id)
     {
-        return await _dispatchService.DispatchAsync(id);
+        return new(await _dispatchService.DispatchAsync(id));
     }
 
     /// <summary>查询订单最近一次下发状态</summary>
-    public async Task<DispatchStatusDto?> GetDispatchStatusAsync(Guid id)
+    public async Task<BaseOutput<DispatchStatusDto>> GetDispatchStatusAsync(Guid id)
     {
-        return await GetDispatchStatusInternalAsync(id);
+        return new(await GetDispatchStatusInternalAsync(id));
     }
 
     private async Task<DispatchStatusDto?> GetDispatchStatusInternalAsync(Guid id)

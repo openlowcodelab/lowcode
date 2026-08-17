@@ -32,14 +32,14 @@ public partial class AgentSettingsViewModel : ObservableObject
         Loading = true;
         try
         {
-            var result = await _agentAppService.GetListAsync(new AgentQueryDto { MaxResultCount = 100 });
+            var result = (await _agentAppService.GetListAsync(new AgentQueryDto { MaxResultCount = 100 })).Data!;
             Agents.Clear();
             foreach (var agent in result.Items)
             {
                 var item = new AgentCardItem(agent);
                 try
                 {
-                    var skills = await _agentAppService.GetAgentSkillsAsync(agent.Id);
+                    var skills = (await _agentAppService.GetAgentSkillsAsync(agent.Id)).Data ?? [];
                     item.SetSkills(skills);
                 }
                 catch

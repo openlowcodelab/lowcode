@@ -210,8 +210,8 @@
                 TriggerKind = string.IsNullOrEmpty(triggerFilter) ? null : Enum.Parse<JobTriggerKind>(triggerFilter),
                 ExecuteType = string.IsNullOrEmpty(typeFilter) ? null : Enum.Parse<JobExecuteType>(typeFilter)
             };
-            var result = await JobService.GetListAsync(input);
-            jobs = result.Items.ToList();
+            var result = (await JobService.GetListAsync(input)).Data;
+            jobs = result?.Items.ToList() ?? new();
         }
         catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载失败：{ex.Message}"); }
         finally { loading = false; }

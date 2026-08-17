@@ -1,6 +1,7 @@
 using H.Testing.Application.Contracts;
 using H.Testing.Application.Mapping;
 using H.Testing.EntityFrameworkCore;
+using H.Util.Base;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 
@@ -22,92 +23,92 @@ public class CaseAppService : ApplicationService, ICaseAppService
         _stepService = stepService;
     }
 
-    public async Task<List<CaseDto>> GetAllAsync()
+    public async Task<BaseOutput<List<CaseDto>>> GetAllAsync()
     {
         var query = await _repository.GetQueryableAsync();
         var list = await AsyncExecuter.ToListAsync(query.OrderBy(c => c.Order).ThenBy(c => c.Id));
-        return list.Select(e => e.ToDto()).ToList();
+        return new(list.Select(e => e.ToDto()).ToList());
     }
 
-    public async Task<List<CaseDto>> GetByProjectIdAsync(long projectId)
+    public async Task<BaseOutput<List<CaseDto>>> GetByProjectIdAsync(long projectId)
     {
         var query = await _repository.GetQueryableAsync();
         var list = await AsyncExecuter.ToListAsync(
             query.Where(c => c.ProjectId == projectId).OrderBy(c => c.Order).ThenBy(c => c.Id));
-        return list.Select(e => e.ToDto()).ToList();
+        return new(list.Select(e => e.ToDto()).ToList());
     }
 
-    public async Task<CaseDto?> GetByIdAsync(long id)
+    public async Task<BaseOutput<CaseDto?>> GetByIdAsync(long id)
     {
         var entity = await _repository.FindAsync(id);
-        return entity?.ToDto();
+        return new(entity?.ToDto());
     }
 
-    public async Task<long> CreateAsync(CaseDto projectCase)
+    public async Task<BaseOutput<long>> CreateAsync(CaseDto projectCase)
     {
         var entity = new CaseEntity();
         projectCase.Apply(entity);
         entity = await _repository.InsertAsync(entity, autoSave: true);
-        return entity.Id;
+        return new(entity.Id);
     }
 
-    public async Task<bool> UpdateAsync(long id, CaseDto projectCase)
+    public async Task<BaseOutput<bool>> UpdateAsync(long id, CaseDto projectCase)
     {
         var entity = await _repository.FindAsync(id);
         if (entity == null)
         {
-            return false;
+            return new(false);
         }
 
         projectCase.Apply(entity);
         await _repository.UpdateAsync(entity, autoSave: true);
-        return true;
+        return new(true);
     }
 
-    public async Task<bool> DeleteAsync(long id)
+    public async Task<BaseOutput<bool>> DeleteAsync(long id)
     {
         var entity = await _repository.FindAsync(id);
         if (entity == null)
         {
-            return false;
+            return new(false);
         }
 
         await _stepService.DeleteByCaseIdAsync(id);
         await _repository.DeleteAsync(entity, autoSave: true);
-        return true;
+        return new(true);
     }
 
-    public async Task<List<CaseDto>> GetActiveProjectCasesAsync()
+    public async Task<BaseOutput<List<CaseDto>>> GetActiveProjectCasesAsync()
     {
         var query = await _repository.GetQueryableAsync();
         var list = await AsyncExecuter.ToListAsync(query.Where(c => c.Status == (int)CaseStatus.Active));
-        return list.Select(e => e.ToDto()).ToList();
+        return new(list.Select(e => e.ToDto()).ToList());
     }
 
-    public async Task<List<CaseDto>> GetByLevelAsync(CaseLevel level)
+    public async Task<BaseOutput<List<CaseDto>>> GetByLevelAsync(CaseLevel level)
     {
         var query = await _repository.GetQueryableAsync();
         var list = await AsyncExecuter.ToListAsync(query.Where(c => c.Level == (int)level));
-        return list.Select(e => e.ToDto()).ToList();
+        return new(list.Select(e => e.ToDto()).ToList());
     }
 
-    public async Task<List<CaseDto>> SearchAsync(string keyword)
+    public async Task<BaseOutput<List<CaseDto>>> SearchAsync(string keyword)
     {
-        var all = await GetAllAsync();
+        var all = (await GetAllAsync()).Data ?? [];
         if (string.IsNullOrWhiteSpace(keyword))
         {
-            return all;
+            return new(all);
         }
 
-        return all.Where(tc =>
+        return new(all.Where(tc =>
             tc.Name.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
             tc.Description.Contains(keyword, StringComparison.OrdinalIgnoreCase)
-        ).ToList();
+        ).ToList());
     }
 
-    public async Task<long> CopyAsync(long id)
+    public async Task<BaseOutput<long>> CopyAsync(long id)
     {
-        var originalCase = await GetByIdAsync(id);
+        var originalCase = (await GetByIdAsync(id)).Data;
         if (originalCase == null)
         {
             throw new ArgumentException($"Test case with ID {id} not found");
@@ -124,16 +125,16 @@ public class CaseAppService : ApplicationService, ICaseAppService
             Status = originalCase.Status
         };
 
-        var newId = await CreateAsync(copiedCase);
+        var newId = (await CreateAsync(copiedCase)).Data;
 
         // 复制原用例的步骤（步骤 Id 置空以生成新行）
-        var originalSteps = await _stepService.GetByCaseIdAsync(id);
+        var originalSteps = (await _stepService.GetByCaseIdAsync(id)).Data ?? [];
         if (originalSteps.Count > 0)
         {
             await _stepService.SaveAsync(newId, CopySteps(originalSteps));
         }
 
-        return newId;
+        return new(newId);
     }
 
     public async Task<List<long>> CopyBatchAsync(List<long> ids)
@@ -143,7 +144,7 @@ public class CaseAppService : ApplicationService, ICaseAppService
         {
             try
             {
-                copiedIds.Add(await CopyAsync(id));
+                copiedIds.Add((await CopyAsync(id)).Data);
             }
             catch (Exception)
             {

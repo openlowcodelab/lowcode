@@ -1,4 +1,5 @@
 using H.Abp.Application.Contracts;
+using H.Util.Base;
 
 namespace H.SupplyChain.Application.Contracts;
 
@@ -17,7 +18,7 @@ public interface IProductAppService
     : ICrudAppService<ProductDto, Guid, ProductQueryDto, CreateProductDto, UpdateProductDto>
 {
     /// <summary>获取商品详情（含 SKU 列表）</summary>
-    Task<ProductDetailDto> GetDetailAsync(Guid id);
+    Task<BaseOutput<ProductDetailDto>> GetDetailAsync(Guid id);
 }
 
 /// <summary>

@@ -175,7 +175,7 @@
     {
         try
         {
-            var kb = await KnowledgeBaseAppService.GetAsync(KnowledgeBaseId);
+            var kb = (await KnowledgeBaseAppService.GetAsync(KnowledgeBaseId)).Data!;
             kbName = kb.Name;
         }
         catch
@@ -200,7 +200,7 @@
     {
         try
         {
-            knowledgeTree = await KnowledgeDocumentAppService.GetTreeAsync(KnowledgeBaseId);
+            knowledgeTree = (await KnowledgeDocumentAppService.GetTreeAsync(KnowledgeBaseId)).Data ?? [];
             docFlatMap.Clear();
             BuildDocFlatMap(knowledgeTree);
         }
@@ -235,7 +235,7 @@
                 // 文档内容单独加载
                 try
                 {
-                    var doc = await KnowledgeDocumentAppService.GetDocumentAsync(nodeId);
+                    var doc = (await KnowledgeDocumentAppService.GetDocumentAsync(nodeId)).Data;
                     selectedDocContent = doc?.Content;
                 }
                 catch
@@ -415,7 +415,7 @@
     {
         try
         {
-            memoryTree = await MemoryAppService.GetTreeAsync();
+            memoryTree = (await MemoryAppService.GetTreeAsync()).Data ?? [];
             memFlatMap.Clear();
             BuildMemFlatMap(memoryTree);
         }
@@ -449,7 +449,7 @@
             {
                 try
                 {
-                    var doc = await MemoryAppService.GetDocumentAsync(nodeId);
+                    var doc = (await MemoryAppService.GetDocumentAsync(nodeId)).Data;
                     selectedMemContent = doc?.Content;
                 }
                 catch

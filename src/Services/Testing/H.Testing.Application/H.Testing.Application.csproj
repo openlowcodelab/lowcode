@@ -1,8 +1,8 @@
-ï»¿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 	<Import Project="../../../common.props" />
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Utils\H.Extensions.System\H.Extensions.System.csproj" />
+    <ProjectReference Include="..\..\..\Utils\H.Util.Base\H.Util.Base.csproj" />
     <ProjectReference Include="..\H.Testing.Application.Contracts\H.Testing.Application.Contracts.csproj" />
     <ProjectReference Include="..\H.Testing.EntityFrameworkCore\H.Testing.EntityFrameworkCore.csproj" />
     <ProjectReference Include="..\..\..\Utils\H.Util.Ids\H.Util.Ids.csproj" />
@@ -19,9 +19,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<!-- éšé¡¹ç›®æºå¸¦çš„æœ¬åœ°æµè§ˆå™¨ï¼ˆdata/chrome/chrome.exeï¼‰ï¼Œä¾› UI æµ‹è¯•æ‰§è¡Œä½¿ç”¨ -->
+		<!-- ËæÏîÄ¿Ð¯´øµÄ±¾µØä¯ÀÀÆ÷£¨data/chrome/chrome.exe£©£¬¹© UI ²âÊÔÖ´ÐÐÊ¹ÓÃ -->
 		<None Include="data\**" CopyToOutputDirectory="PreserveNewest" />
-		<!-- é¡¹ç›®æ¨¡æ¿æ•°æ®ï¼ˆ../dataï¼šprojects.json ç´¢å¼• + å„æ¨¡æ¿å­ç›®å½•ï¼‰ï¼Œè¾“å‡ºåˆ° data/templates -->
+		<!-- ÏîÄ¿Ä£°åÊý¾Ý£¨../data£ºprojects.json Ë÷Òý + ¸÷Ä£°å×ÓÄ¿Â¼£©£¬Êä³öµ½ data/templates -->
 		<None Include="..\data\**" Link="data\templates\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
 	</ItemGroup>
 

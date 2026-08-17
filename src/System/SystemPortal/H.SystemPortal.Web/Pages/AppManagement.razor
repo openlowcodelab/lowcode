@@ -796,7 +796,7 @@
         loading = true;
         try
         {
-            categories = await AppManageAppService.GetAllCategoriesAsync();
+            categories = (await AppManageAppService.GetAllCategoriesAsync()).Data ?? [];
         }
         finally
         {
@@ -868,11 +868,11 @@
             bool success;
             if (isEditing)
             {
-                success = await AppManageAppService.UpdateAppAsync(editingApp.Id, editingApp);
+                success = (await AppManageAppService.UpdateAppAsync(editingApp.Id, editingApp)).Data == true;
             }
             else
             {
-                success = await AppManageAppService.AddAppAsync(selectedCategory, editingApp);
+                success = (await AppManageAppService.AddAppAsync(selectedCategory, editingApp)).Data == true;
             }
 
             if (success)
@@ -897,7 +897,7 @@
         var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"确定要删除应用 '{appId}' 吗？");
         if (confirmed)
         {
-            var success = await AppManageAppService.DeleteAppAsync(appId);
+            var success = (await AppManageAppService.DeleteAppAsync(appId)).Data == true;
             if (success)
             {
                 await LoadApps();
@@ -933,7 +933,7 @@
         saving = true;
         try
         {
-            var success = await AppManageAppService.AddCategoryAsync(newCategoryName);
+            var success = (await AppManageAppService.AddCategoryAsync(newCategoryName)).Data == true;
             if (success)
             {
                 CloseCategoryModal();
@@ -956,7 +956,7 @@
         var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"确定要删除分类 '{categoryName}' 吗？");
         if (confirmed)
         {
-            var success = await AppManageAppService.DeleteCategoryAsync(categoryName);
+            var success = (await AppManageAppService.DeleteCategoryAsync(categoryName)).Data == true;
             if (success)
             {
                 await LoadApps();

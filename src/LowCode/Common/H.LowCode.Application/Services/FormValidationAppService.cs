@@ -1,5 +1,6 @@
 using H.LowCode.Application.Contracts;
 using H.LowCode.MetaSchema;
+using H.Util.Base;
 using System.Text.RegularExpressions;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
@@ -12,10 +13,10 @@ namespace H.LowCode.Application;
 [RemoteService]
 public class FormValidationAppService : ApplicationService, IFormValidationAppService
 {
-    public ValidationResult ValidateField(object? value, IList<ValidationRuleSchema>? validationRules)
+    public BaseOutput<ValidationResult> ValidateField(object? value, IList<ValidationRuleSchema>? validationRules)
     {
         if (validationRules == null || !validationRules.Any())
-            return ValidationResult.Success();
+            return new(ValidationResult.Success());
 
         // 按优先级排序校验规则
         var sortedRules = validationRules
@@ -27,13 +28,13 @@ public class FormValidationAppService : ApplicationService, IFormValidationAppSe
         {
             var result = ValidateSingleRule(value, rule);
             if (!result.IsValid)
-                return result;
+                return new(result);
         }
 
-        return ValidationResult.Success();
+        return new(ValidationResult.Success());
     }
 
-    public FormValidationResult ValidateForm(Dictionary<string, object?> formData, IList<ComponentSchemaBase> components)
+    public BaseOutput<FormValidationResult> ValidateForm(Dictionary<string, object?> formData, IList<ComponentSchemaBase> components)
     {
         var result = new FormValidationResult { IsValid = true };
 
@@ -45,20 +46,20 @@ public class FormValidationAppService : ApplicationService, IFormValidationAppSe
             var fieldName = component.Name ?? component.Id;
             var fieldValue = formData.ContainsKey(fieldName) ? formData[fieldName] : null;
 
-            var validationResult = ValidateField(fieldValue, component.ValidationRules);
+            var validationResult = ValidateField(fieldValue, component.ValidationRules).Data!;
             result.AddFieldResult(fieldName, validationResult);
 
             if (!validationResult.IsValid)
                 result.IsValid = false;
         }
 
-        return result;
+        return new(result);
     }
 
-    public IList<ValidationRuleSchema>? GetValidationRules(string componentId, IList<ComponentSchemaBase> components)
+    public BaseOutput<IList<ValidationRuleSchema>> GetValidationRules(string componentId, IList<ComponentSchemaBase> components)
     {
         var component = components.FirstOrDefault(c => c.Id == componentId);
-        return component?.ValidationRules;
+        return new(component?.ValidationRules);
     }
 
     private ValidationResult ValidateSingleRule(object? value, ValidationRuleSchema rule)

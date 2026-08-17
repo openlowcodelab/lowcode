@@ -127,13 +127,13 @@
 
     private async Task LoadAsync()
     {
-        _app = await AppApplicationService.GetByIdAsync(AppId);
-        _records = await AppPublishAppService.GetRecordsAsync(AppId);
+        _app = (await AppApplicationService.GetByIdAsync(AppId)).Data!;
+        _records = (await AppPublishAppService.GetRecordsAsync(AppId)).Data;
 
-        var pages = await PageAppService.GetListAsync(AppId);
+        var pages = (await PageAppService.GetListAsync(AppId)).Data;
         _pageCount = pages?.Count ?? 0;
 
-        var apps = await AppApplicationService.GetAppsAsync();
+        var apps = (await AppApplicationService.GetAppsAsync()).Data ?? [];
         _siteUrl = apps.FirstOrDefault(t => t.Id == AppId)?.SiteUrl;
 
         if (!string.IsNullOrEmpty(_app?.Version))

@@ -1,4 +1,5 @@
 using H.SystemPortal.Application.Contracts;
+using H.Util.Base;
 using Volo.Abp.Application.Services;
 
 namespace H.SystemPortal.Application;
@@ -12,30 +13,30 @@ public class UserAppService : ApplicationService, IUserAppService
         _store = store;
     }
 
-    public Task<UserDto?> GetUserByUserNameAsync(string userName)
+    public Task<BaseOutput<UserDto?>> GetUserByUserNameAsync(string userName)
     {
         var user = _store.FindByUserName(userName);
-        return Task.FromResult(user != null ? MapToDto(user) : null);
+        return Task.FromResult(new BaseOutput<UserDto?>(user != null ? MapToDto(user) : null));
     }
 
-    public Task<UserDto?> GetUserByEmailAsync(string email)
+    public Task<BaseOutput<UserDto?>> GetUserByEmailAsync(string email)
     {
         var user = _store.FindByEmail(email);
-        return Task.FromResult(user != null ? MapToDto(user) : null);
+        return Task.FromResult(new BaseOutput<UserDto?>(user != null ? MapToDto(user) : null));
     }
 
-    public Task<UserDto?> GetUserByIdAsync(Guid userId)
+    public Task<BaseOutput<UserDto?>> GetUserByIdAsync(Guid userId)
     {
         var user = _store.FindById(userId);
-        return Task.FromResult(user != null ? MapToDto(user) : null);
+        return Task.FromResult(new BaseOutput<UserDto?>(user != null ? MapToDto(user) : null));
     }
 
-    public Task<UserDto?> GetUserDtoByIdAsync(Guid userId)
+    public Task<BaseOutput<UserDto?>> GetUserDtoByIdAsync(Guid userId)
     {
         return GetUserByIdAsync(userId);
     }
 
-    public Task<UserDto> CreateUserAsync(UserDto user)
+    public Task<BaseOutput<UserDto>> CreateUserAsync(UserDto user)
     {
         var entity = new SystemUserEntity
         {
@@ -51,10 +52,10 @@ public class UserAppService : ApplicationService, IUserAppService
         };
 
         _store.Add(entity);
-        return Task.FromResult(MapToDto(entity));
+        return Task.FromResult(new BaseOutput<UserDto>(MapToDto(entity)));
     }
 
-    public Task<UserDto> CreateUserAsync(CreateUserDto dto, Guid? currentUserId = null)
+    public Task<BaseOutput<UserDto>> CreateUserAsync(CreateUserDto dto, Guid? currentUserId = null)
     {
         if (_store.FindByUserName(dto.UserName) != null)
             throw new Exception("用户名已存在");
@@ -80,25 +81,25 @@ public class UserAppService : ApplicationService, IUserAppService
         };
 
         _store.Add(entity);
-        return Task.FromResult(MapToDto(entity));
+        return Task.FromResult(new BaseOutput<UserDto>(MapToDto(entity)));
     }
 
-    public Task<bool> UpdateUserAsync(UserDto user)
+    public Task<BaseOutput<bool>> UpdateUserAsync(UserDto user)
     {
         var existing = _store.FindById(user.Id);
-        if (existing == null) return Task.FromResult(false);
+        if (existing == null) return Task.FromResult(new BaseOutput<bool>(false));
 
         existing.UserName = user.UserName;
         existing.Email = user.Email;
         existing.PhoneNumber = user.PhoneNumber;
         _store.Update(existing);
-        return Task.FromResult(true);
+        return Task.FromResult(new BaseOutput<bool>(true));
     }
 
-    public Task<bool> UpdateUserAsync(Guid userId, UpdateUserDto dto, Guid? currentUserId = null)
+    public Task<BaseOutput<bool>> UpdateUserAsync(Guid userId, UpdateUserDto dto, Guid? currentUserId = null)
     {
         var existing = _store.FindById(userId);
-        if (existing == null) return Task.FromResult(false);
+        if (existing == null) return Task.FromResult(new BaseOutput<bool>(false));
 
         existing.UserName = dto.UserName;
         existing.Email = dto.Email;
@@ -108,20 +109,20 @@ public class UserAppService : ApplicationService, IUserAppService
         existing.IsActive = dto.IsActive;
         existing.Remark = dto.Remark;
         _store.Update(existing);
-        return Task.FromResult(true);
+        return Task.FromResult(new BaseOutput<bool>(true));
     }
 
-    public Task UpdateUserStatusAsync(Guid userId, UpdateUserStatusDto dto, Guid? currentUserId = null)
+    public Task<BaseOutput> UpdateUserStatusAsync(Guid userId, UpdateUserStatusDto dto, Guid? currentUserId = null)
     {
         var existing = _store.FindById(userId);
         if (existing == null) throw new Exception("用户不存在");
 
         existing.IsActive = dto.IsActive;
         _store.Update(existing);
-        return Task.CompletedTask;
+        return Task.FromResult(new BaseOutput());
     }
 
-    public Task ResetPasswordAsync(Guid userId, ResetPasswordDto dto)
+    public Task<BaseOutput> ResetPasswordAsync(Guid userId, ResetPasswordDto dto)
     {
         if (dto.NewPassword != dto.ConfirmPassword)
             throw new Exception("两次密码输入不一致");
@@ -131,40 +132,40 @@ public class UserAppService : ApplicationService, IUserAppService
 
         existing.PasswordHash = SystemUserStore.HashPassword(dto.NewPassword);
         _store.Update(existing);
-        return Task.CompletedTask;
+        return Task.FromResult(new BaseOutput());
     }
 
-    public Task DeleteUserAsync(Guid userId)
+    public Task<BaseOutput> DeleteUserAsync(Guid userId)
     {
         var existing = _store.FindById(userId);
         if (existing == null) throw new Exception("用户不存在");
 
         _store.Delete(userId);
-        return Task.CompletedTask;
+        return Task.FromResult(new BaseOutput());
     }
 
-    public Task<bool> ExistsByUserNameAsync(string userName, Guid? excludeId = null)
+    public Task<BaseOutput<bool>> ExistsByUserNameAsync(string userName, Guid? excludeId = null)
     {
         var user = _store.FindByUserName(userName);
         var exists = user != null && user.Id != excludeId;
-        return Task.FromResult(exists);
+        return Task.FromResult(new BaseOutput<bool>(exists));
     }
 
-    public Task<bool> ExistsByEmailAsync(string email, Guid? excludeId = null)
+    public Task<BaseOutput<bool>> ExistsByEmailAsync(string email, Guid? excludeId = null)
     {
         var user = _store.FindByEmail(email);
         var exists = user != null && user.Id != excludeId;
-        return Task.FromResult(exists);
+        return Task.FromResult(new BaseOutput<bool>(exists));
     }
 
-    public Task<bool> VerifyPasswordAsync(string userName, string password)
+    public Task<BaseOutput<bool>> VerifyPasswordAsync(string userName, string password)
     {
         var user = _store.FindByUserName(userName);
-        if (user == null) return Task.FromResult(false);
-        return Task.FromResult(_store.VerifyPassword(user, password));
+        if (user == null) return Task.FromResult(new BaseOutput<bool>(false));
+        return Task.FromResult(new BaseOutput<bool>(_store.VerifyPassword(user, password)));
     }
 
-    public Task UpdateLastLoginTimeAsync(Guid userId)
+    public Task<BaseOutput> UpdateLastLoginTimeAsync(Guid userId)
     {
         var user = _store.FindById(userId);
         if (user != null)
@@ -172,10 +173,10 @@ public class UserAppService : ApplicationService, IUserAppService
             user.LastLoginAt = DateTime.UtcNow;
             _store.Update(user);
         }
-        return Task.CompletedTask;
+        return Task.FromResult(new BaseOutput());
     }
 
-    public Task<PagedResult<UserDto>> GetPagedUsersAsync(UserQueryParams queryParams)
+    public Task<BaseOutput<PagedResult<UserDto>>> GetPagedUsersAsync(UserQueryParams queryParams)
     {
         var allUsers = _store.GetAll().AsEnumerable();
 
@@ -205,16 +206,16 @@ public class UserAppService : ApplicationService, IUserAppService
             .Select(MapToDto)
             .ToList();
 
-        return Task.FromResult(new PagedResult<UserDto>
+        return Task.FromResult(new BaseOutput<PagedResult<UserDto>>(new PagedResult<UserDto>
         {
             Items = items,
             Total = total,
             PageIndex = queryParams.PageIndex,
             PageSize = queryParams.PageSize
-        });
+        }));
     }
 
-    public Task AssignRolesToUserAsync(Guid userId, List<string> roleNames)
+    public Task<BaseOutput> AssignRolesToUserAsync(Guid userId, List<string> roleNames)
     {
         var user = _store.FindById(userId);
         if (user == null) throw new Exception("用户不存在");
@@ -222,13 +223,13 @@ public class UserAppService : ApplicationService, IUserAppService
         user.RoleNames = roleNames;
         user.UserType = DeriveUserType(roleNames);
         _store.Update(user);
-        return Task.CompletedTask;
+        return Task.FromResult(new BaseOutput());
     }
 
-    public Task<List<string>> GetUserRoleNamesAsync(Guid userId)
+    public Task<BaseOutput<List<string>>> GetUserRoleNamesAsync(Guid userId)
     {
         var user = _store.FindById(userId);
-        return Task.FromResult(user?.RoleNames ?? new List<string>());
+        return Task.FromResult(new BaseOutput<List<string>>(user?.RoleNames ?? new List<string>()));
     }
 
     private static UserDto MapToDto(SystemUserEntity entity)
