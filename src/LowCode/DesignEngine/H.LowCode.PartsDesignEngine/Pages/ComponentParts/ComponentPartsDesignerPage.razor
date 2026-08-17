@@ -100,7 +100,7 @@ else
             _loading = true;
             StateHasChanged();
 
-            _partsSchema = await ComponentPartsAppService.GetByIdAsync(_partsCascading.LibraryId, _partsCascading.PartsId);
+            _partsSchema = (await ComponentPartsAppService.GetByIdAsync(_partsCascading.LibraryId, _partsCascading.PartsId)).Data;
             if (_partsSchema == null)
             {
                 await Message.ErrorAsync("组件不存在！");
@@ -156,7 +156,7 @@ else
             _partsSchema.ModifiedTime = DateTime.UtcNow;
 
             // 保存组件
-            var success = await ComponentPartsAppService.SaveAsync(_partsSchema);
+            var success = (await ComponentPartsAppService.SaveAsync(_partsSchema)).Data == true;
             
             if (success)
             {

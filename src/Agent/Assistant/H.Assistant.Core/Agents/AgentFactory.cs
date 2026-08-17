@@ -144,7 +144,7 @@ public class AgentFactory
     /// </summary>
     private async Task<AgentDto> ResolveAgentDefinitionAsync(string agentType)
     {
-        var agents = await _agentDefinitionAppService.GetEnabledAgentsAsync();
+        var agents = (await _agentDefinitionAppService.GetEnabledAgentsAsync()).Data ?? [];
         var definition = agents.FirstOrDefault(a => a.AgentType == agentType);
 
         if (definition == null && string.IsNullOrEmpty(agentType))
@@ -172,7 +172,7 @@ public class AgentFactory
 
         // 注册技能工具
         var skills = definition.Id != Guid.Empty
-            ? await _agentDefinitionAppService.GetAgentSkillsAsync(definition.Id)
+            ? (await _agentDefinitionAppService.GetAgentSkillsAsync(definition.Id)).Data ?? []
             : new List<SkillDto>();
 
         if (skills.Count > 0)
@@ -208,7 +208,7 @@ public class AgentFactory
 
         try
         {
-            var dbAgents = await _agentDefinitionAppService.GetEnabledAgentsAsync();
+            var dbAgents = (await _agentDefinitionAppService.GetEnabledAgentsAsync()).Data ?? [];
             agents.AddRange(dbAgents.Select(a => new AgentDefinition
             {
                 AgentType = a.AgentType,

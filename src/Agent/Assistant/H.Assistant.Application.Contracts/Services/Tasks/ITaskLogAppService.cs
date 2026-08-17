@@ -1,4 +1,5 @@
 using H.Abp.Application.Contracts;
+using H.Util.Base;
 
 namespace H.Assistant.Application.Contracts;
 
@@ -10,15 +11,15 @@ public interface ITaskLogAppService : IAppService
     /// <summary>
     /// 获取执行日志列表（分页）
     /// </summary>
-    Task<PagedResultDto<TaskLogDto>> GetListAsync(TaskLogQueryDto input);
+    Task<BaseOutput<PagedResultDto<TaskLogDto>>> GetListAsync(TaskLogQueryDto input);
 
     /// <summary>
     /// 获取单个执行日志
     /// </summary>
-    Task<TaskLogDto> GetAsync(Guid id);
+    Task<BaseOutput<TaskLogDto>> GetAsync(Guid id);
 
     /// <summary>
     /// 删除执行日志
     /// </summary>
-    Task DeleteAsync(Guid id);
+    Task<BaseOutput> DeleteAsync(Guid id);
 }

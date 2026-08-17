@@ -78,7 +78,8 @@
             };
 
             var response = await HttpClient.PostAsJsonAsync("/api/app/system-account/system-login", payload);
-            var result = await response.Content.ReadFromJsonAsync<AuthResponseDto>();
+            // BaseOutput 包装：从 data 字段解包登录结果
+            var result = (await response.Content.ReadFromJsonAsync<BaseOutput<AuthResponseDto>>())?.Data;
 
             if (result != null && result.Success)
             {

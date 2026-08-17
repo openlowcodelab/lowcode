@@ -1,6 +1,7 @@
 using AutoMapper;
 using H.Assistant.Application.Contracts;
 using H.Assistant.EntityFrameworkCore;
+using H.Util.Base;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 
@@ -27,7 +28,7 @@ public class KnowledgeDocumentAppService : ApplicationService, IKnowledgeDocumen
 
     #region Node (Tree Structure) Operations
 
-    public async Task<List<KnowledgeNodeDto>> GetTreeAsync(Guid knowledgeBaseId)
+    public async Task<BaseOutput<List<KnowledgeNodeDto>>> GetTreeAsync(Guid knowledgeBaseId)
     {
         var queryable = await _nodeRepository.GetQueryableAsync();
         var allNodes = await AsyncExecuter.ToListAsync(
@@ -52,17 +53,17 @@ public class KnowledgeDocumentAppService : ApplicationService, IKnowledgeDocumen
         var roots = lookup[null].ToList();
         AssignChildren(roots);
 
-        return roots;
+        return new() { Data = roots };
     }
 
-    public async Task<KnowledgeNodeDto> CreateNodeAsync(CreateKnowledgeNodeDto input)
+    public async Task<BaseOutput<KnowledgeNodeDto>> CreateNodeAsync(CreateKnowledgeNodeDto input)
     {
         if (input.ParentId.HasValue)
         {
             var parent = await _nodeRepository.FindAsync(input.ParentId.Value);
             if (parent == null)
             {
-                throw new InvalidOperationException($"父节点 {input.ParentId} 不存在");
+                throw new InvalidOperationException($"父节�?{input.ParentId} 不存�?);
             }
 
             // 子节点继承父节点所属知识库
@@ -74,7 +75,7 @@ public class KnowledgeDocumentAppService : ApplicationService, IKnowledgeDocumen
         }
         else if (await _knowledgeBaseRepository.FindAsync(input.KnowledgeBaseId.Value) == null)
         {
-            throw new InvalidOperationException($"知识库 {input.KnowledgeBaseId} 不存在");
+            throw new InvalidOperationException($"知识�?{input.KnowledgeBaseId} 不存�?);
         }
 
         var entity = _objectMapper.Map<KnowledgeNodeEntity>(input);
@@ -92,15 +93,15 @@ public class KnowledgeDocumentAppService : ApplicationService, IKnowledgeDocumen
             await _documentRepository.InsertAsync(document);
         }
 
-        return _objectMapper.Map<KnowledgeNodeEntity, KnowledgeNodeDto>(entity);
+        return new() { Data = _objectMapper.Map<KnowledgeNodeEntity, KnowledgeNodeDto>(entity) };
     }
 
-    public async Task<KnowledgeNodeDto> UpdateNodeAsync(Guid nodeId, UpdateKnowledgeNodeDto input)
+    public async Task<BaseOutput<KnowledgeNodeDto>> UpdateNodeAsync(Guid nodeId, UpdateKnowledgeNodeDto input)
     {
         var entity = await _nodeRepository.FindAsync(nodeId);
         if (entity == null)
         {
-            throw new InvalidOperationException($"节点 {nodeId} 不存在");
+            throw new InvalidOperationException($"节点 {nodeId} 不存�?);
         }
         if (entity.OwnerType != OwnerTypes.Knowledge)
         {
@@ -140,15 +141,15 @@ public class KnowledgeDocumentAppService : ApplicationService, IKnowledgeDocumen
 
         await _nodeRepository.UpdateAsync(entity);
 
-        return _objectMapper.Map<KnowledgeNodeEntity, KnowledgeNodeDto>(entity);
+        return new() { Data = _objectMapper.Map<KnowledgeNodeEntity, KnowledgeNodeDto>(entity) };
     }
 
-    public async Task DeleteNodeAsync(Guid nodeId)
+    public async Task<BaseOutput> DeleteNodeAsync(Guid nodeId)
     {
         var entity = await _nodeRepository.FindAsync(nodeId);
         if (entity == null)
         {
-            throw new InvalidOperationException($"节点 {nodeId} 不存在");
+            throw new InvalidOperationException($"节点 {nodeId} 不存�?);
         }
         if (entity.OwnerType != OwnerTypes.Knowledge)
         {
@@ -169,6 +170,8 @@ public class KnowledgeDocumentAppService : ApplicationService, IKnowledgeDocumen
             await _nodeRepository.DeleteAsync(desc);
         }
         await _nodeRepository.DeleteAsync(entity);
+
+        return new();
     }
 
     private static void CollectDescendants(List<KnowledgeNodeEntity> allNodes, Guid parentId, List<KnowledgeNodeEntity> result)
@@ -187,7 +190,7 @@ public class KnowledgeDocumentAppService : ApplicationService, IKnowledgeDocumen
 
     #region Document Content Operations
 
-    public async Task<KnowledgeDocumentDto?> GetDocumentAsync(Guid nodeId)
+    public async Task<BaseOutput<KnowledgeDocumentDto?>> GetDocumentAsync(Guid nodeId)
     {
         var queryable = await _documentRepository.GetQueryableAsync();
         var doc = await AsyncExecuter.FirstOrDefaultAsync(
@@ -195,13 +198,13 @@ public class KnowledgeDocumentAppService : ApplicationService, IKnowledgeDocumen
 
         if (doc == null)
         {
-            return null;
+            return new() { Data = null };
         }
 
-        return _objectMapper.Map<KnowledgeDocumentEntity, KnowledgeDocumentDto>(doc);
+        return new() { Data = _objectMapper.Map<KnowledgeDocumentEntity, KnowledgeDocumentDto>(doc) };
     }
 
-    public async Task<KnowledgeDocumentDto> SaveDocumentAsync(Guid nodeId, SaveKnowledgeDocumentDto input)
+    public async Task<BaseOutput<KnowledgeDocumentDto>> SaveDocumentAsync(Guid nodeId, SaveKnowledgeDocumentDto input)
     {
         var queryable = await _documentRepository.GetQueryableAsync();
         var doc = await AsyncExecuter.FirstOrDefaultAsync(
@@ -234,7 +237,7 @@ public class KnowledgeDocumentAppService : ApplicationService, IKnowledgeDocumen
             await _documentRepository.UpdateAsync(doc);
         }
 
-        return _objectMapper.Map<KnowledgeDocumentEntity, KnowledgeDocumentDto>(doc);
+        return new() { Data = _objectMapper.Map<KnowledgeDocumentEntity, KnowledgeDocumentDto>(doc) };
     }
 
     #endregion

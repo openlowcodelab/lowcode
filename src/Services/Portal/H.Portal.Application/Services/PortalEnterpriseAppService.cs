@@ -1,3 +1,4 @@
+using H.Util.Base;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Json;
@@ -34,20 +35,22 @@ public class PortalEnterpriseAppService : ApplicationService
     /// 获取当前用户关联的所有企业列表
     /// GET /api/app/portal-enterprise/my-enterprises/{userId}
     /// </summary>
-    public async Task<List<PortalEnterpriseDto>> GetMyEnterprisesAsync(Guid userId)
+    public async Task<BaseOutput<List<PortalEnterpriseDto>>> GetMyEnterprisesAsync(Guid userId)
     {
-        return await SendAsync<List<PortalEnterpriseDto>>(
+        var data = await SendAsync<List<PortalEnterpriseDto>>(
             HttpMethod.Get, $"/api/app/enterprise/my-enterprises/{userId}") ?? [];
+        return BaseOutput<List<PortalEnterpriseDto>>.Ok(data);
     }
 
     /// <summary>
     /// 创建企业（用户自行注册，待管理员激活）
     /// POST /api/app/portal-enterprise
     /// </summary>
-    public async Task<PortalEnterpriseDto?> CreateAsync(PortalCreateEnterpriseDto input)
+    public async Task<BaseOutput<PortalEnterpriseDto?>> CreateAsync(PortalCreateEnterpriseDto input)
     {
-        return await SendAsync<PortalEnterpriseDto>(
+        var data = await SendAsync<PortalEnterpriseDto>(
             HttpMethod.Post, "/api/app/enterprise", input);
+        return BaseOutput<PortalEnterpriseDto?>.Ok(data);
     }
 
     /// <summary>
@@ -55,10 +58,11 @@ public class PortalEnterpriseAppService : ApplicationService
     /// 本网关将下游 Set-Cookie 回传给浏览器
     /// POST /api/app/portal-enterprise/select-enterprise/{enterpriseId}
     /// </summary>
-    public async Task SelectEnterpriseAsync(Guid enterpriseId)
+    public async Task<BaseOutput> SelectEnterpriseAsync(Guid enterpriseId)
     {
         await SendAsync<object>(
             HttpMethod.Post, $"/api/app/enterprise/select-enterprise/{enterpriseId}");
+        return BaseOutput.Ok();
     }
 
     /// <summary>
@@ -108,7 +112,15 @@ public class PortalEnterpriseAppService : ApplicationService
             return default;
         }
 
-        return JsonSerializer.Deserialize<T>(content, JsonOptions);
+        // Enterprise 端点已完成 BaseOutput 改造，响应 JSON 为 { success, code, message, data }，
+        // 需先反序列化包装结构再从 data 字段解包业务数据
+        var envelope = JsonSerializer.Deserialize<BaseOutput<T>>(content, JsonOptions);
+        if (envelope?.Success != true)
+        {
+            throw new UserFriendlyException(envelope?.Message ?? "企业服务调用失败");
+        }
+
+        return envelope.Data;
     }
 
     /// <summary>

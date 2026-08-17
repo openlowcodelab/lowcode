@@ -1,4 +1,5 @@
 ﻿using H.Abp.Application.Contracts;
+using H.Util.Base;
 
 namespace H.Testing.Application.Contracts;
 
@@ -10,40 +11,40 @@ public interface IExecutionRecordAppService : IAppService
     /// <summary>
     /// 获取指定项目的所有执行记录
     /// </summary>
-    Task<List<CaseExecutionRecordDto>> GetByProjectIdAsync(long projectId);
+    Task<BaseOutput<List<CaseExecutionRecordDto>>> GetByProjectIdAsync(long projectId);
 
     /// <summary>
     /// 获取指定测试用例的执行记录
     /// </summary>
-    Task<List<CaseExecutionRecordDto>> GetByTestCaseIdAsync(long projectId, long testCaseId);
+    Task<BaseOutput<List<CaseExecutionRecordDto>>> GetByTestCaseIdAsync(long projectId, long testCaseId);
 
     /// <summary>
     /// 根据ID获取执行记录
     /// </summary>
-    Task<CaseExecutionRecordDto?> GetByIdAsync(long projectId, long id);
+    Task<BaseOutput<CaseExecutionRecordDto?>> GetByIdAsync(long projectId, long id);
 
     /// <summary>
     /// 创建新的执行记录
     /// </summary>
-    Task<CaseExecutionRecordDto> CreateAsync(CaseExecutionRecordDto record);
+    Task<BaseOutput<CaseExecutionRecordDto>> CreateAsync(CaseExecutionRecordDto record);
 
     /// <summary>
     /// 更新执行记录
     /// </summary>
-    Task<bool> UpdateAsync(long projectId, CaseExecutionRecordDto record);
+    Task<BaseOutput<bool>> UpdateAsync(long projectId, CaseExecutionRecordDto record);
 
     /// <summary>
     /// 删除执行记录
     /// </summary>
-    Task<bool> DeleteAsync(long projectId, long id);
+    Task<BaseOutput<bool>> DeleteAsync(long projectId, long id);
 
     /// <summary>
     /// 清理旧的执行记录（保留最近N条）
     /// </summary>
-    Task CleanupOldRecordsAsync(long projectId, int keepCount = 100);
+    Task<BaseOutput> CleanupOldRecordsAsync(long projectId, int keepCount = 100);
 
     /// <summary>
     /// 获取执行统计信息
     /// </summary>
-    Task<ExecutionStatistics> GetStatisticsAsync(long projectId, DateTime? startDate = null, DateTime? endDate = null);
+    Task<BaseOutput<ExecutionStatistics>> GetStatisticsAsync(long projectId, DateTime? startDate = null, DateTime? endDate = null);
 }

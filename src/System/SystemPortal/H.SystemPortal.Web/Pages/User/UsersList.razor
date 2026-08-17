@@ -129,7 +129,7 @@
             if (searchIsActive.HasValue)
                 queryParams.IsActive = searchIsActive.Value;
 
-            var result = await UserService.GetPagedUsersAsync(queryParams);
+            var result = (await UserService.GetPagedUsersAsync(queryParams)).Data;
             if (result != null)
             {
                 users = result;

@@ -1,6 +1,7 @@
 using H.Testing.Application.Contracts;
 using H.Testing.Application.Mapping;
 using H.Testing.EntityFrameworkCore;
+using H.Util.Base;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
@@ -19,30 +20,30 @@ public class ExecutionRecordAppService : ApplicationService, IExecutionRecordApp
         _repository = repository;
     }
 
-    public async Task<List<CaseExecutionRecordDto>> GetByProjectIdAsync(long projectId)
+    public async Task<BaseOutput<List<CaseExecutionRecordDto>>> GetByProjectIdAsync(long projectId)
     {
         var query = await _repository.GetQueryableAsync();
         var list = await AsyncExecuter.ToListAsync(
             query.Where(r => r.ProjectId == projectId).OrderByDescending(r => r.StartTime));
-        return list.Select(e => e.ToDto()).ToList();
+        return BaseOutput<List<CaseExecutionRecordDto>>.Ok(list.Select(e => e.ToDto()).ToList());
     }
 
-    public async Task<List<CaseExecutionRecordDto>> GetByTestCaseIdAsync(long projectId, long testCaseId)
+    public async Task<BaseOutput<List<CaseExecutionRecordDto>>> GetByTestCaseIdAsync(long projectId, long testCaseId)
     {
         var query = await _repository.GetQueryableAsync();
         var list = await AsyncExecuter.ToListAsync(
             query.Where(r => r.ProjectId == projectId && r.CaseId == testCaseId)
                  .OrderByDescending(r => r.StartTime));
-        return list.Select(e => e.ToDto()).ToList();
+        return BaseOutput<List<CaseExecutionRecordDto>>.Ok(list.Select(e => e.ToDto()).ToList());
     }
 
-    public async Task<CaseExecutionRecordDto?> GetByIdAsync(long projectId, long id)
+    public async Task<BaseOutput<CaseExecutionRecordDto?>> GetByIdAsync(long projectId, long id)
     {
         var entity = await _repository.FindAsync(id);
-        return entity != null && entity.ProjectId == projectId ? entity.ToDto() : null;
+        return BaseOutput<CaseExecutionRecordDto?>.Ok(entity != null && entity.ProjectId == projectId ? entity.ToDto() : null);
     }
 
-    public async Task<CaseExecutionRecordDto> CreateAsync(CaseExecutionRecordDto record)
+    public async Task<BaseOutput<CaseExecutionRecordDto>> CreateAsync(CaseExecutionRecordDto record)
     {
         if (record.StartTime == default)
         {
@@ -52,10 +53,10 @@ public class ExecutionRecordAppService : ApplicationService, IExecutionRecordApp
         var entity = new CaseRecordEntity();
         record.Apply(entity);
         entity = await _repository.InsertAsync(entity, autoSave: true);
-        return entity.ToDto();
+        return BaseOutput<CaseExecutionRecordDto>.Ok(entity.ToDto());
     }
 
-    public async Task<bool> UpdateAsync(long projectId, CaseExecutionRecordDto record)
+    public async Task<BaseOutput<bool>> UpdateAsync(long projectId, CaseExecutionRecordDto record)
     {
         if (record.Id == 0)
         {
@@ -65,27 +66,27 @@ public class ExecutionRecordAppService : ApplicationService, IExecutionRecordApp
         var entity = await _repository.FindAsync(record.Id);
         if (entity == null || entity.ProjectId != projectId)
         {
-            return false;
+            return BaseOutput<bool>.Ok(false);
         }
 
         record.Apply(entity);
         await _repository.UpdateAsync(entity, autoSave: true);
-        return true;
+        return BaseOutput<bool>.Ok(true);
     }
 
-    public async Task<bool> DeleteAsync(long projectId, long id)
+    public async Task<BaseOutput<bool>> DeleteAsync(long projectId, long id)
     {
         var entity = await _repository.FindAsync(id);
         if (entity == null || entity.ProjectId != projectId)
         {
-            return false;
+            return BaseOutput<bool>.Ok(false);
         }
 
         await _repository.DeleteAsync(entity, autoSave: true);
-        return true;
+        return BaseOutput<bool>.Ok(true);
     }
 
-    public async Task CleanupOldRecordsAsync(long projectId, int keepCount = 100)
+    public async Task<BaseOutput> CleanupOldRecordsAsync(long projectId, int keepCount = 100)
     {
         var query = await _repository.GetQueryableAsync();
         var oldRecords = await AsyncExecuter.ToListAsync(
@@ -97,9 +98,10 @@ public class ExecutionRecordAppService : ApplicationService, IExecutionRecordApp
         {
             await _repository.DeleteManyAsync(oldRecords, autoSave: true);
         }
+        return BaseOutput.Ok();
     }
 
-    public async Task<ExecutionStatistics> GetStatisticsAsync(long projectId, DateTime? startDate = null, DateTime? endDate = null)
+    public async Task<BaseOutput<ExecutionStatistics>> GetStatisticsAsync(long projectId, DateTime? startDate = null, DateTime? endDate = null)
     {
         var query = await _repository.GetQueryableAsync();
         query = query.Where(r => r.ProjectId == projectId);
@@ -116,7 +118,7 @@ public class ExecutionRecordAppService : ApplicationService, IExecutionRecordApp
 
         var records = await AsyncExecuter.ToListAsync(query);
 
-        return new ExecutionStatistics
+        return BaseOutput<ExecutionStatistics>.Ok(new ExecutionStatistics
         {
             TotalExecutions = records.Count,
             SuccessExecutions = records.Count(r => r.Status == (int)ExecutionStatus.Success),
@@ -124,6 +126,6 @@ public class ExecutionRecordAppService : ApplicationService, IExecutionRecordApp
             CancelledExecutions = records.Count(r => r.Status == (int)ExecutionStatus.Cancelled),
             AverageDuration = records.Count > 0 ? records.Average(r => r.Duration) : 0,
             TotalDuration = records.Sum(r => r.Duration)
-        };
+        });
     }
 }

@@ -144,8 +144,11 @@
                     if (!string.IsNullOrEmpty(content) && content != "null")
                     {
                         using var doc = System.Text.Json.JsonDocument.Parse(content);
+                        // BaseOutput 包装：从 data 字段解包用户信息
                         if (doc.RootElement.ValueKind != System.Text.Json.JsonValueKind.Null &&
-                            doc.RootElement.TryGetProperty("id", out var idProp))
+                            doc.RootElement.TryGetProperty("data", out var dataProp) &&
+                            dataProp.ValueKind != System.Text.Json.JsonValueKind.Null &&
+                            dataProp.TryGetProperty("id", out var idProp))
                         {
                             isLoggedIn = true;
                             currentUserId = Guid.Parse(idProp.GetString()!);
@@ -172,8 +175,9 @@
         try
         {
             // 通过门户网关接口获取我的企业列表（前端不依赖 Enterprise Contracts）
-            myEnterprises = await HttpClient.GetFromJsonAsync<List<EnterpriseModel>>(
-                $"/api/app/portal-enterprise/my-enterprises/{currentUserId!.Value}") ?? new();
+            // BaseOutput 包装：从 data 字段解包企业列表
+            myEnterprises = (await HttpClient.GetFromJsonAsync<BaseOutput<List<EnterpriseModel>>>(
+                $"/api/app/portal-enterprise/my-enterprises/{currentUserId!.Value}"))?.Data ?? new();
         }
         catch (Exception ex)
         {

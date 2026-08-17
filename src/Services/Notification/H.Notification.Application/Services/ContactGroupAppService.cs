@@ -1,6 +1,7 @@
 using H.Abp.Application.Contracts;
 using H.Notification.Application.Contracts;
 using H.Notification.EntityFrameworkCore;
+using H.Util.Base;
 using Microsoft.EntityFrameworkCore;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
@@ -20,7 +21,7 @@ public class ContactGroupAppService : ApplicationService, IContactGroupAppServic
         _memberRepository = memberRepository;
     }
 
-    public async Task<PagedResultDto<ContactGroupDto>> GetListAsync(ContactGroupQueryDto input)
+    public async Task<BaseOutput<PagedResultDto<ContactGroupDto>>> GetListAsync(ContactGroupQueryDto input)
     {
         var query = (await _groupRepository.GetQueryableAsync())
             .WhereIf(!string.IsNullOrWhiteSpace(input.Filter), x => x.Name.Contains(input.Filter!));
@@ -37,16 +38,16 @@ public class ContactGroupAppService : ApplicationService, IContactGroupAppServic
         var countMap = counts.ToDictionary(x => x.GroupId, x => x.Count);
 
         var dtos = entities.Select(e => MapToDto(e, countMap.TryGetValue(e.Id, out var n) ? n : 0)).ToList();
-        return new PagedResultDto<ContactGroupDto>(totalCount, dtos);
+        return BaseOutput<PagedResultDto<ContactGroupDto>>.Ok(new PagedResultDto<ContactGroupDto>(totalCount, dtos));
     }
 
-    public async Task<List<ContactGroupDto>> GetAllEnabledAsync()
+    public async Task<BaseOutput<List<ContactGroupDto>>> GetAllEnabledAsync()
     {
         var entities = await AsyncExecuter.ToListAsync((await _groupRepository.GetQueryableAsync()).Where(x => x.IsEnabled));
-        return entities.Select(e => MapToDto(e, 0)).ToList();
+        return BaseOutput<List<ContactGroupDto>>.Ok(entities.Select(e => MapToDto(e, 0)).ToList());
     }
 
-    public async Task<ContactGroupDto> GetAsync(long id)
+    public async Task<BaseOutput<ContactGroupDto>> GetAsync(long id)
     {
         var entity = await _groupRepository.GetAsync(id);
         var dto = MapToDto(entity, 0);
@@ -54,10 +55,10 @@ public class ContactGroupAppService : ApplicationService, IContactGroupAppServic
             .Where(m => m.GroupId == id).Select(m => m.ContactId).ToListAsync();
         dto.ContactIds = members;
         dto.ContactCount = members.Count;
-        return dto;
+        return BaseOutput<ContactGroupDto>.Ok(dto);
     }
 
-    public async Task<ContactGroupDto> CreateAsync(CreateContactGroupDto input)
+    public async Task<BaseOutput<ContactGroupDto>> CreateAsync(CreateContactGroupDto input)
     {
         var entity = new ContactGroupEntity
         {
@@ -69,10 +70,10 @@ public class ContactGroupAppService : ApplicationService, IContactGroupAppServic
         await ReplaceMembersAsync(entity.Id, input.ContactIds);
         var dto = MapToDto(entity, input.ContactIds.Distinct().Count());
         dto.ContactIds = input.ContactIds.Distinct().ToList();
-        return dto;
+        return BaseOutput<ContactGroupDto>.Ok(dto);
     }
 
-    public async Task<ContactGroupDto> UpdateAsync(long id, UpdateContactGroupDto input)
+    public async Task<BaseOutput<ContactGroupDto>> UpdateAsync(long id, UpdateContactGroupDto input)
     {
         var entity = await _groupRepository.GetAsync(id);
         entity.Name = input.Name;
@@ -82,7 +83,7 @@ public class ContactGroupAppService : ApplicationService, IContactGroupAppServic
         await ReplaceMembersAsync(id, input.ContactIds);
         var dto = MapToDto(entity, input.ContactIds.Distinct().Count());
         dto.ContactIds = input.ContactIds.Distinct().ToList();
-        return dto;
+        return BaseOutput<ContactGroupDto>.Ok(dto);
     }
 
     private async Task ReplaceMembersAsync(long groupId, List<Guid> contactIds)
@@ -99,13 +100,14 @@ public class ContactGroupAppService : ApplicationService, IContactGroupAppServic
         await _memberRepository.InsertManyAsync(members, autoSave: true);
     }
 
-    public async Task DeleteAsync(long id)
+    public async Task<BaseOutput> DeleteAsync(long id)
     {
         // 先删除分组成员关系
         var members = await AsyncExecuter.ToListAsync(
             (await _memberRepository.GetQueryableAsync()).Where(m => m.GroupId == id));
         await _memberRepository.DeleteManyAsync(members);
         await _groupRepository.DeleteAsync(id);
+        return BaseOutput.Ok();
     }
 
     private static ContactGroupDto MapToDto(ContactGroupEntity e, int count) => new()

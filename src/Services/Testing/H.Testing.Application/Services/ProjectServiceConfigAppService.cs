@@ -1,6 +1,7 @@
 using H.Testing.Application.Contracts;
 using H.Testing.Application.Mapping;
 using H.Testing.EntityFrameworkCore;
+using H.Util.Base;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 
@@ -22,22 +23,22 @@ public class ProjectServiceConfigAppService : ApplicationService, IProjectServic
         _envRepository = envRepository;
     }
 
-    public async Task<List<ProjectServiceDto>> GetProjectServicesAsync(long projectId)
+    public async Task<BaseOutput<List<ProjectServiceDto>>> GetProjectServicesAsync(long projectId)
     {
         var query = await _serviceRepository.GetQueryableAsync();
         var list = await AsyncExecuter.ToListAsync(query.Where(s => s.ProjectId == projectId).OrderBy(s => s.Id));
-        return list.Select(e => e.ToDto()).ToList();
+        return BaseOutput<List<ProjectServiceDto>>.Ok(list.Select(e => e.ToDto()).ToList());
     }
 
-    public async Task<ProjectServiceDto> CreateProjectServiceAsync(ProjectServiceDto service)
+    public async Task<BaseOutput<ProjectServiceDto>> CreateProjectServiceAsync(ProjectServiceDto service)
     {
         var entity = new ProjectServiceEntity();
         service.Apply(entity);
         entity = await _serviceRepository.InsertAsync(entity, autoSave: true);
-        return entity.ToDto();
+        return BaseOutput<ProjectServiceDto>.Ok(entity.ToDto());
     }
 
-    public async Task<ProjectServiceDto> UpdateProjectServiceAsync(long serviceId, ProjectServiceDto service)
+    public async Task<BaseOutput<ProjectServiceDto>> UpdateProjectServiceAsync(long serviceId, ProjectServiceDto service)
     {
         var entity = await _serviceRepository.FindAsync(serviceId);
         if (entity == null)
@@ -48,10 +49,10 @@ public class ProjectServiceConfigAppService : ApplicationService, IProjectServic
         entity.Name = service.Name;
         entity.Description = service.Description;
         await _serviceRepository.UpdateAsync(entity, autoSave: true);
-        return entity.ToDto();
+        return BaseOutput<ProjectServiceDto>.Ok(entity.ToDto());
     }
 
-    public async Task DeleteProjectServiceAsync(long projectId, long serviceId)
+    public async Task<BaseOutput> DeleteProjectServiceAsync(long projectId, long serviceId)
     {
         await _serviceRepository.DeleteAsync(s => s.Id == serviceId, autoSave: true);
         // 移除项目下各环境中对该服务的基础URL配置
@@ -68,19 +69,20 @@ public class ProjectServiceConfigAppService : ApplicationService, IProjectServic
             }
         }
         if (changed.Count > 0) await _envRepository.UpdateManyAsync(changed, autoSave: true);
+        return BaseOutput.Ok();
     }
 
-    public async Task<List<ProjectEnvConfigDto>> GetEnvironmentServiceConfigsAsync(long environmentId)
+    public async Task<BaseOutput<List<ProjectEnvConfigDto>>> GetEnvironmentServiceConfigsAsync(long environmentId)
     {
         var entity = await _envRepository.FindAsync(environmentId);
-        return entity?.ToConfigDtos() ?? new List<ProjectEnvConfigDto>();
+        return BaseOutput<List<ProjectEnvConfigDto>>.Ok(entity?.ToConfigDtos() ?? new List<ProjectEnvConfigDto>());
     }
 
-    public Task<ProjectEnvConfigDto> UpdateEnvironmentServiceConfigAsync(ProjectEnvConfigDto config)
-        => UpsertEnvironmentServiceConfigAsync(config);
+    public async Task<BaseOutput<ProjectEnvConfigDto>> UpdateEnvironmentServiceConfigAsync(ProjectEnvConfigDto config)
+        => BaseOutput<ProjectEnvConfigDto>.Ok(await UpsertEnvironmentServiceConfigAsync(config));
 
-    public Task<ProjectEnvConfigDto> CreateEnvironmentServiceConfigAsync(ProjectEnvConfigDto config)
-        => UpsertEnvironmentServiceConfigAsync(config);
+    public async Task<BaseOutput<ProjectEnvConfigDto>> CreateEnvironmentServiceConfigAsync(ProjectEnvConfigDto config)
+        => BaseOutput<ProjectEnvConfigDto>.Ok(await UpsertEnvironmentServiceConfigAsync(config));
 
     /// <summary>
     /// 新增或更新环境服务配置（以 环境Id + 项目服务Id 为键写入环境的 ServiceConfigsJson）
@@ -103,12 +105,12 @@ public class ProjectServiceConfigAppService : ApplicationService, IProjectServic
         };
     }
 
-    public async Task DeleteEnvironmentServiceConfigAsync(long environmentId, long projectServiceId)
+    public async Task<BaseOutput> DeleteEnvironmentServiceConfigAsync(long environmentId, long projectServiceId)
     {
         var entity = await _envRepository.FindAsync(environmentId);
         if (entity == null)
         {
-            return;
+            return BaseOutput.Ok();
         }
 
         var configs = TestingMappers.DeserializeServiceConfigs(entity.ServiceConfigsJson);
@@ -117,12 +119,13 @@ public class ProjectServiceConfigAppService : ApplicationService, IProjectServic
             entity.ServiceConfigsJson = TestingMappers.SerializeServiceConfigs(configs);
             await _envRepository.UpdateAsync(entity, autoSave: true);
         }
+        return BaseOutput.Ok();
     }
 
-    public async Task<List<ServiceConfigView>> GetServiceConfigViewsAsync(long environmentId, long projectId)
+    public async Task<BaseOutput<List<ServiceConfigView>>> GetServiceConfigViewsAsync(long environmentId, long projectId)
     {
-        var services = await GetProjectServicesAsync(projectId);
-        var configs = await GetEnvironmentServiceConfigsAsync(environmentId);
+        var services = (await GetProjectServicesAsync(projectId)).Data ?? [];
+        var configs = (await GetEnvironmentServiceConfigsAsync(environmentId)).Data ?? [];
 
         var views = new List<ServiceConfigView>();
         foreach (var service in services)
@@ -139,6 +142,6 @@ public class ProjectServiceConfigAppService : ApplicationService, IProjectServic
             });
         }
 
-        return views;
+        return BaseOutput<List<ServiceConfigView>>.Ok(views);
     }
 }

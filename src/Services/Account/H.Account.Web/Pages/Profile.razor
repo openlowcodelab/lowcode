@@ -169,7 +169,11 @@
             if (string.IsNullOrEmpty(content) || content == "null")
                 return;
 
-            user = content.FromJson<UserDto>();
+            // BaseOutput 包装：从 data 字段解包用户信息
+            using var doc = System.Text.Json.JsonDocument.Parse(content);
+            user = doc.RootElement.TryGetProperty("data", out var dataProp) && dataProp.ValueKind != System.Text.Json.JsonValueKind.Null
+                ? dataProp.GetRawText().FromJson<UserDto>()
+                : null;
         }
         catch (Exception ex)
         {

@@ -181,12 +181,12 @@
         loadingLevel = true;
         try
         {
-            var memberResult = await MemberService.GetListAsync(new MemberQueryParams
+            var memberResult = (await MemberService.GetListAsync(new MemberQueryParams
             {
                 PageIndex = 1,
                 PageSize = 500,
                 IsEnabled = true
-            });
+            })).Data!;
             // 一个用户可能隶属多个部门，按 UserId 去重
             allUsers = memberResult.Items
                 .GroupBy(m => m.UserId)
@@ -201,11 +201,11 @@
 
         try
         {
-            var orgResult = await OrganizationService.GetListAsync(new OrganizationQueryParams
+            var orgResult = (await OrganizationService.GetListAsync(new OrganizationQueryParams
             {
                 PageSize = 1000,
                 IsEnabled = true
-            });
+            })).Data!;
             allDepts = orgResult.Items.ToList();
         }
         catch (Exception ex)
@@ -268,7 +268,7 @@
         currentDepts = allDepts.Where(d => d.ParentId == orgId).OrderBy(d => d.Sort).ToList();
         try
         {
-            var members = await MemberService.GetMembersByOrganizationIdAsync(orgId);
+            var members = (await MemberService.GetMembersByOrganizationIdAsync(orgId)).Data ?? [];
             currentMembers = members
                 .Select(m => new SimpleUser { Id = m.UserId.ToString(), Name = m.UserName })
                 .ToList();

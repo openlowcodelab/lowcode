@@ -172,16 +172,16 @@ public class ExternalLoginController : Controller
             }
 
             // 调用应用服务处理登录
-            var result = await _externalLoginService.ExternalLoginAsync(loginRequest);
+            var result = (await _externalLoginService.ExternalLoginAsync(loginRequest)).Data;
 
-            if (result.Success)
+            if (result?.Success == true)
             {
                 var returnUrl = stateData.ReturnUrl ?? "/account/external-callback";
                 return Redirect($"{returnUrl}?success=true&isNewUser={result.IsNewUser}");
             }
             else
             {
-                return Redirect($"/account/login?error={Uri.EscapeDataString(result.Message)}");
+                return Redirect($"/account/login?error={Uri.EscapeDataString(result?.Message ?? "外部登录失败")}");
             }
         }
         catch (Exception ex)

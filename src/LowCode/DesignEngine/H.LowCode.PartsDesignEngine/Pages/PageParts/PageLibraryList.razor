@@ -120,7 +120,7 @@
 
     private async Task LoadTemplatesAsync()
     {
-        _templates = await PageTemplateAppService.GetListAsync();
+        _templates = (await PageTemplateAppService.GetListAsync()).Data ?? [];
     }
 
     private IEnumerable<PageTemplateListModel> FilteredTemplates =>
@@ -147,7 +147,7 @@
     private async Task ShowEditModal(string templateId)
     {
         _isEdit = true;
-        _form = await PageTemplateAppService.GetByIdAsync(templateId);
+        _form = (await PageTemplateAppService.GetByIdAsync(templateId)).Data!;
         _modalVisible = true;
         StateHasChanged();
     }
@@ -160,7 +160,7 @@
             return;
         }
 
-        var success = await PageTemplateAppService.SaveAsync(_form);
+        var success = (await PageTemplateAppService.SaveAsync(_form)).Data == true;
         if (!success)
         {
             await Message.ErrorAsync("保存失败");
@@ -188,7 +188,7 @@
 
     private async Task PublishTemplate(string templateId, bool publish)
     {
-        var tpl = await PageTemplateAppService.GetByIdAsync(templateId);
+        var tpl = (await PageTemplateAppService.GetByIdAsync(templateId)).Data!;
         tpl.PublishStatus = publish ? 1 : 0;
         await PageTemplateAppService.SaveAsync(tpl);
         await LoadTemplatesAsync();

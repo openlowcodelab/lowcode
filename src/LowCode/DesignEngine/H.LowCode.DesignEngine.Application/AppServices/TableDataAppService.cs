@@ -1,5 +1,6 @@
 using H.Abp.Application.Contracts;
 using H.LowCode.Application.Contracts;
+using H.Util.Base;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
 
@@ -11,7 +12,7 @@ namespace H.LowCode.ComponentBase.Services;
 [RemoteService]
 public class TableDataAppService : ApplicationService, ITableDataAppService
 {
-    public async Task<PagedResultDto<Dictionary<string, object>>> GetListAsync(TableDataInput request)
+    public async Task<BaseOutput<PagedResultDto<Dictionary<string, object>>>> GetListAsync(TableDataInput request)
     {
         await Task.Delay(100); // 模拟异步操作
 
@@ -30,23 +31,24 @@ public class TableDataAppService : ApplicationService, ITableDataAppService
             items.Add(row);
         }
 
-        return new()
+        return BaseOutput<PagedResultDto<Dictionary<string, object>>>.Ok(new()
         {
             Items = items,
             TotalCount = 3
-        };
+        });
     }
 
-    public async Task DeleteAsync(TableDataDeleteInput request)
+    public async Task<BaseOutput> DeleteAsync(TableDataDeleteInput request)
     {
         await Task.Delay(100); // 模拟异步操作
 
         // 在设计引擎中，这只是模拟删除操作
         // 实际上不会删除任何数据，只是为了演示功能
         Console.WriteLine($"模拟删除数据: AppId={request.AppId}, PageId={request.PageId}, DataSourceId={request.DataSourceId}, Id={request.Id}");
+        return BaseOutput.Ok();
     }
 
-    public async Task UpdateAsync(TableDataUpdateInput request)
+    public async Task<BaseOutput> UpdateAsync(TableDataUpdateInput request)
     {
         await Task.Delay(100); // 模拟异步操作
 
@@ -54,5 +56,6 @@ public class TableDataAppService : ApplicationService, ITableDataAppService
         // 实际上不会更新任何数据，只是为了演示功能
         Console.WriteLine($"模拟更新数据: AppId={request.AppId}, PageId={request.PageId}, DataSourceId={request.DataSourceId}, Id={request.Id}");
         Console.WriteLine($"更新字段: {string.Join(", ", request.UpdateData?.Select(kv => $"{kv.Key}={kv.Value}") ?? new string[0])}");
+        return BaseOutput.Ok();
     }
 }

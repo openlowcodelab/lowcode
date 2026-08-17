@@ -1,4 +1,5 @@
 using H.Abp.Application.Contracts;
+using H.Util.Base;
 
 namespace H.Order.Application.Contracts;
 
@@ -17,26 +18,26 @@ namespace H.Order.Application.Contracts;
 public interface IOrderAppService : IAppService
 {
     /// <summary>分页查询订单（仅核心字段，不关联扩展表）</summary>
-    Task<PagedResultDto<OrderDto>> GetListAsync(OrderQueryDto input);
+    Task<BaseOutput<PagedResultDto<OrderDto>>> GetListAsync(OrderQueryDto input);
 
     /// <summary>按ID获取订单核心 DTO（不含扩展属性）</summary>
-    Task<OrderDto> GetAsync(Guid id);
+    Task<BaseOutput<OrderDto>> GetAsync(Guid id);
 
     /// <summary>获取订单详情（含行业扩展属性及最近下发状态）</summary>
-    Task<OrderDetailDto> GetDetailAsync(Guid id);
+    Task<BaseOutput<OrderDetailDto>> GetDetailAsync(Guid id);
 
     /// <summary>创建订单（核心字段 + 扩展属性同事务写入；若进入待下发则发布 CAP 事件）</summary>
-    Task<OrderDto> CreateAsync(CreateOrderDto input);
+    Task<BaseOutput<OrderDto>> CreateAsync(CreateOrderDto input);
 
     /// <summary>更新订单</summary>
-    Task<OrderDto> UpdateAsync(Guid id, UpdateOrderDto input);
+    Task<BaseOutput<OrderDto>> UpdateAsync(Guid id, UpdateOrderDto input);
 
     /// <summary>删除订单（同步删除扩展属性）</summary>
-    Task DeleteAsync(Guid id);
+    Task<BaseOutput> DeleteAsync(Guid id);
 
     /// <summary>手动触发订单下发到上游供应商</summary>
-    Task<TriggerDispatchResultDto> TriggerDispatchAsync(Guid id);
+    Task<BaseOutput<TriggerDispatchResultDto>> TriggerDispatchAsync(Guid id);
 
     /// <summary>查询订单最近一次下发状态</summary>
-    Task<DispatchStatusDto?> GetDispatchStatusAsync(Guid id);
+    Task<BaseOutput<DispatchStatusDto>> GetDispatchStatusAsync(Guid id);
 }

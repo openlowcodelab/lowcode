@@ -2,6 +2,7 @@ using AutoMapper;
 using H.Abp.Application.Contracts;
 using H.Assistant.Application.Contracts;
 using H.Assistant.EntityFrameworkCore;
+using H.Util.Base;
 using System.Linq.Dynamic.Core;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Entities;
@@ -28,7 +29,7 @@ public class TaskLogAppService : ApplicationService, ITaskLogAppService
         _objectMapper = objectMapper;
     }
 
-    public async Task<PagedResultDto<TaskLogDto>> GetListAsync(TaskLogQueryDto input)
+    public async Task<BaseOutput<PagedResultDto<TaskLogDto>>> GetListAsync(TaskLogQueryDto input)
     {
         var queryable = await _logRepository.GetQueryableAsync();
 
@@ -80,10 +81,10 @@ public class TaskLogAppService : ApplicationService, ITaskLogAppService
             })
             .ToList();
 
-        return new PagedResultDto<TaskLogDto>(totalCount, dtos);
+        return new() { Data = new PagedResultDto<TaskLogDto>(totalCount, dtos) };
     }
 
-    public async Task<TaskLogDto> GetAsync(Guid id)
+    public async Task<BaseOutput<TaskLogDto>> GetAsync(Guid id)
     {
         var log = await _logRepository.FindAsync(id);
         if (log == null)
@@ -99,11 +100,12 @@ public class TaskLogAppService : ApplicationService, ITaskLogAppService
             dto.TaskName = task.TaskName;
         }
 
-        return dto;
+        return new() { Data = dto };
     }
 
-    public async Task DeleteAsync(Guid id)
+    public async Task<BaseOutput> DeleteAsync(Guid id)
     {
         await _logRepository.DeleteAsync(id);
+        return new();
     }
 }

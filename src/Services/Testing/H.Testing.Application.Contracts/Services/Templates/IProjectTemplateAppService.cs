@@ -1,4 +1,5 @@
 using H.Abp.Application.Contracts;
+using H.Util.Base;
 
 namespace H.Testing.Application.Contracts;
 
@@ -11,25 +12,25 @@ public interface IProjectTemplateAppService : IAppService
     /// <summary>
     /// 获取所有模板
     /// </summary>
-    Task<List<ProjectTemplateDto>> GetTemplatesAsync();
+    Task<BaseOutput<List<ProjectTemplateDto>>> GetTemplatesAsync();
 
     /// <summary>
     /// 从模板创建项目（项目、服务、环境、分类、用例）
     /// </summary>
-    Task<long> CreateProjectFromTemplateAsync(string templateId, string name, string? description);
+    Task<BaseOutput<long>> CreateProjectFromTemplateAsync(string templateId, string name, string? description);
 
     /// <summary>
     /// 将已有项目保存为模板，返回模板ID
     /// </summary>
-    Task<string> SaveProjectAsTemplateAsync(long projectId, string name, string? description);
+    Task<BaseOutput<string>> SaveProjectAsTemplateAsync(long projectId, string name, string? description);
 
     /// <summary>
     /// 更新模板名称与描述
     /// </summary>
-    Task<bool> UpdateTemplateAsync(string templateId, string name, string? description);
+    Task<BaseOutput<bool>> UpdateTemplateAsync(string templateId, string name, string? description);
 
     /// <summary>
     /// 删除模板
     /// </summary>
-    Task<bool> DeleteTemplateAsync(string templateId);
+    Task<BaseOutput<bool>> DeleteTemplateAsync(string templateId);
 }

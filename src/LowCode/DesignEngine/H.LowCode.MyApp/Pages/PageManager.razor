@@ -131,12 +131,12 @@
 
     private async Task<IList<PageListModel>> LoadPagesAsync(int pageIndex, int pageSize)
     {
-        return await PageAppService.GetListAsync(AppId);
+        return (await PageAppService.GetListAsync(AppId)).Data;
     }
 
     private async Task<PagePartsSchema> GetPageAsync(string pageId)
     {
-        return await PageAppService.GetByIdAsync(AppId, pageId);
+        return (await PageAppService.GetByIdAsync(AppId, pageId)).Data;
     }
 
     private async Task CreateAsync(string parentId)
@@ -148,8 +148,8 @@
         _pageSchema.AppId = AppId;
 
         //加载已发布的页面模板供"从模板新建"使用
-        _templates = (await PageTemplateAppService.GetListAsync())
-            .Where(t => t.PublishStatus == 1).ToList();
+        _templates = (await PageTemplateAppService.GetListAsync()).Data?
+            .Where(t => t.PublishStatus == 1).ToList() ?? [];
 
         _visible = true;
         StateHasChanged();
@@ -182,7 +182,7 @@
                 return;
             }
 
-            var template = await PageTemplateAppService.GetByIdAsync(_selectedTemplateId);
+            var template = (await PageTemplateAppService.GetByIdAsync(_selectedTemplateId)).Data;
             if (template != null)
             {
                 _pageSchema.Components = template.Components?
@@ -216,6 +216,6 @@
 
     private async Task<bool> SavePageSchemaAsync()
     {
-        return await PageAppService.SaveAsync(_pageSchema);
+        return (await PageAppService.SaveAsync(_pageSchema)).Data == true;
     }
 }

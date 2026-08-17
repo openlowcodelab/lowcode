@@ -1,5 +1,6 @@
 using H.Notification.Application.Contracts;
 using H.Notification.EntityFrameworkCore;
+using H.Util.Base;
 using Microsoft.EntityFrameworkCore;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
@@ -20,7 +21,7 @@ public class NotificationCategoryAppService : ApplicationService, INotificationC
         _businessRepository = businessRepository;
     }
 
-    public async Task<List<NotificationCategoryDto>> GetAllAsync()
+    public async Task<BaseOutput<List<NotificationCategoryDto>>> GetAllAsync()
     {
         var categories = await AsyncExecuter.ToListAsync(
             (await _categoryRepository.GetQueryableAsync()).OrderBy(x => x.Sort).ThenBy(x => x.Id));
@@ -30,7 +31,7 @@ public class NotificationCategoryAppService : ApplicationService, INotificationC
             businessQuery.GroupBy(x => x.CategoryId).Select(g => new { CategoryId = g.Key, Count = g.Count() }));
         var countMap = counts.ToDictionary(x => x.CategoryId, x => x.Count);
 
-        return categories.Select(c => new NotificationCategoryDto
+        return BaseOutput<List<NotificationCategoryDto>>.Ok(categories.Select(c => new NotificationCategoryDto
         {
             Id = c.Id,
             Name = c.Name,
@@ -39,16 +40,16 @@ public class NotificationCategoryAppService : ApplicationService, INotificationC
             IsEnabled = c.IsEnabled,
             CreationTime = c.CreationTime,
             BusinessCount = countMap.TryGetValue(c.Id, out var n) ? n : 0
-        }).ToList();
+        }).ToList());
     }
 
-    public async Task<NotificationCategoryDto> GetAsync(long id)
+    public async Task<BaseOutput<NotificationCategoryDto>> GetAsync(long id)
     {
         var entity = await _categoryRepository.GetAsync(id);
-        return MapToDto(entity);
+        return BaseOutput<NotificationCategoryDto>.Ok(MapToDto(entity));
     }
 
-    public async Task<NotificationCategoryDto> CreateAsync(CreateNotificationCategoryDto input)
+    public async Task<BaseOutput<NotificationCategoryDto>> CreateAsync(CreateNotificationCategoryDto input)
     {
         var entity = new NotificationCategory
         {
@@ -58,10 +59,10 @@ public class NotificationCategoryAppService : ApplicationService, INotificationC
             IsEnabled = input.IsEnabled
         };
         await _categoryRepository.InsertAsync(entity, autoSave: true);
-        return MapToDto(entity);
+        return BaseOutput<NotificationCategoryDto>.Ok(MapToDto(entity));
     }
 
-    public async Task<NotificationCategoryDto> UpdateAsync(long id, UpdateNotificationCategoryDto input)
+    public async Task<BaseOutput<NotificationCategoryDto>> UpdateAsync(long id, UpdateNotificationCategoryDto input)
     {
         var entity = await _categoryRepository.GetAsync(id);
         entity.Name = input.Name;
@@ -69,10 +70,10 @@ public class NotificationCategoryAppService : ApplicationService, INotificationC
         entity.Sort = input.Sort;
         entity.IsEnabled = input.IsEnabled;
         await _categoryRepository.UpdateAsync(entity, autoSave: true);
-        return MapToDto(entity);
+        return BaseOutput<NotificationCategoryDto>.Ok(MapToDto(entity));
     }
 
-    public async Task DeleteAsync(long id)
+    public async Task<BaseOutput> DeleteAsync(long id)
     {
         var hasBusiness = await (await _businessRepository.GetQueryableAsync()).AnyAsync(x => x.CategoryId == id);
         if (hasBusiness)
@@ -80,6 +81,7 @@ public class NotificationCategoryAppService : ApplicationService, INotificationC
             throw new UserFriendlyException("该分类下存在通知业务，无法删除");
         }
         await _categoryRepository.DeleteAsync(id);
+        return BaseOutput.Ok();
     }
 
     private static NotificationCategoryDto MapToDto(NotificationCategory entity) => new()

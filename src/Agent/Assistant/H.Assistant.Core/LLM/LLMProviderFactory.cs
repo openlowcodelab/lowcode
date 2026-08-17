@@ -19,7 +19,7 @@ public class LLMProviderFactory
     /// </summary>
     public async Task<ILLMProvider?> CreateProviderAsync(Guid configId, CancellationToken ct = default)
     {
-        var config = await _configService.GetAsync(configId);
+        var config = (await _configService.GetAsync(configId)).Data;
         return CreateFromConfig(config);
     }
 
@@ -28,7 +28,7 @@ public class LLMProviderFactory
     /// </summary>
     public async Task<ILLMProvider?> CreateProviderAsync(string providerName, CancellationToken ct = default)
     {
-        var config = await _configService.GetConfigAsync(providerName, ct);
+        var config = (await _configService.GetConfigAsync(providerName, ct)).Data;
         return CreateFromConfig(config);
     }
 
@@ -37,7 +37,7 @@ public class LLMProviderFactory
     /// </summary>
     public async Task<ILLMProvider?> GetDefaultProviderAsync(CancellationToken ct = default)
     {
-        var defaultConfig = await _configService.GetDefaultConfigAsync(ct);
+        var defaultConfig = (await _configService.GetDefaultConfigAsync(ct)).Data;
         return CreateFromConfig(defaultConfig);
     }
 
@@ -62,7 +62,7 @@ public class LLMProviderFactory
     /// </summary>
     public async Task<List<string>> GetAvailableProvidersAsync(CancellationToken ct = default)
     {
-        var configs = await _configService.GetAllAsync();
+        var configs = (await _configService.GetAllAsync()).Data ?? [];
         return configs
             .Where(c => c.IsEnabled && !string.IsNullOrEmpty(c.ApiKey))
             .Select(c => c.ProviderName)

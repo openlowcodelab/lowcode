@@ -390,8 +390,8 @@
 
     private async Task LoadTree()
     {
-        tree = await OrgService.GetAllAsTreeAsync();
-        var orgResult = await OrgService.GetListAsync(new OrganizationQueryParams { PageSize = 500 });
+        tree = (await OrgService.GetAllAsTreeAsync()).Data;
+        var orgResult = (await OrgService.GetListAsync(new OrganizationQueryParams { PageSize = 500 })).Data!;
         allOrgs = orgResult.Items;
         RebuildFlatNodes();
     }
@@ -446,7 +446,7 @@
             return;
         }
         members = null;
-        members = await MemberService.GetMembersByOrganizationIdAsync(selectedOrgId.Value);
+        members = (await MemberService.GetMembersByOrganizationIdAsync(selectedOrgId.Value)).Data;
     }
 
     // ===== 部门 CRUD =====
@@ -574,13 +574,13 @@
         isSubmitting = true;
         try
         {
-            var result = await InviteService.CreateInviteAsync(new CreateInviteDto
+            var result = (await InviteService.CreateInviteAsync(new CreateInviteDto
             {
                 OrganizationId = selectedOrgId.Value,
                 MemberType = inviteInput.MemberType,
                 Phone = inviteInput.Phone,
                 ExpireDays = inviteInput.ExpireDays
-            });
+            })).Data!;
             smsInviteSent = result.SmsSent;
             lastInvitePhone = inviteInput.Phone;
         }
@@ -600,13 +600,13 @@
         isSubmitting = true;
         try
         {
-            var result = await InviteService.CreateInviteAsync(new CreateInviteDto
+            var result = (await InviteService.CreateInviteAsync(new CreateInviteDto
             {
                 OrganizationId = selectedOrgId.Value,
                 MemberType = inviteInput.MemberType,
                 Phone = null,
                 ExpireDays = inviteInput.ExpireDays
-            });
+            })).Data!;
             generatedInviteUrl = result.InviteUrl;
             inviteExpiresAtText = result.ExpiresAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm");
         }
@@ -698,9 +698,9 @@
     {
         rolesMemberId = m.Id;
         roleMemberName = m.UserName;
-        var roleResult = await RoleService.GetListAsync(new RoleQueryParams { PageSize = 500, IsEnabled = true });
+        var roleResult = (await RoleService.GetListAsync(new RoleQueryParams { PageSize = 500, IsEnabled = true })).Data!;
         allRoles = roleResult.Items;
-        var assigned = await MemberService.GetMemberRoleIdsAsync(m.Id);
+        var assigned = (await MemberService.GetMemberRoleIdsAsync(m.Id)).Data!;
         selectedRoleIds = new HashSet<Guid>(assigned);
         showRolesDialog = true;
     }

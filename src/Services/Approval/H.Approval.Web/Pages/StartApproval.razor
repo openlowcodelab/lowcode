@@ -93,7 +93,7 @@
     {
         try
         {
-            var all = await DefinitionService.GetAllAsync();
+            var all = (await DefinitionService.GetAllAsync()).Data ?? new List<ApprovalDefinitionDto>();
             // 仅展示已启用的审批定义
             approvalDefinitions = all.Where(d => d.IsEnabled).ToList();
         }

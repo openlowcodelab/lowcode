@@ -104,8 +104,8 @@
                 MaxResultCount = 50,
                 Status = string.IsNullOrEmpty(statusFilter) ? null : Enum.Parse<JobExecutionStatus>(statusFilter)
             };
-            var result = await RecordService.GetListAsync(input);
-            records = result.Items.ToList();
+            var result = (await RecordService.GetListAsync(input)).Data;
+            records = result?.Items.ToList() ?? new();
         }
         catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载失败：{ex.Message}"); }
         finally { loading = false; }

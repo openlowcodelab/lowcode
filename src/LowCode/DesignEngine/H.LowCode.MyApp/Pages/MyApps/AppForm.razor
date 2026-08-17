@@ -67,7 +67,7 @@
 
     private async Task<bool> SaveAppSchema()
     {
-        bool isSuccess = await AppApplicationService.SaveAsync(AppSchema);
+        bool isSuccess = (await AppApplicationService.SaveAsync(AppSchema)).Data == true;
         if (isSuccess)
         {
             await Message.SuccessAsync("新建成功！");

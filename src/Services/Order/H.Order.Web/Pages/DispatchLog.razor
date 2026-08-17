@@ -69,7 +69,7 @@
             if (!string.IsNullOrWhiteSpace(orderIdFilter) && Guid.TryParse(orderIdFilter, out var oid)) input.OrderId = oid;
             input.Status = statusFilter;
 
-            var r = await DispatchLogService.GetListAsync(input);
+            var r = (await DispatchLogService.GetListAsync(input)).Data!;
             logs = r.Items.ToList();
         }
         catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载失败：{ex.Message}"); }
@@ -80,7 +80,7 @@
     {
         try
         {
-            var r = await DispatchLogService.RetryAsync(logId);
+            var r = (await DispatchLogService.RetryAsync(logId)).Data!;
             await JS.InvokeVoidAsync("alert", r.Success ? $"重试成功：{r.Message}" : $"重试失败：{r.Message}");
             await LoadData();
         }

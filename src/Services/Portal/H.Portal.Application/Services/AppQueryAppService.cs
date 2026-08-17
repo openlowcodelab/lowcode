@@ -1,4 +1,5 @@
 using H.AppDrawer.Components;
+using H.Util.Base;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
 
@@ -35,17 +36,17 @@ public class AppQueryAppService : ApplicationService
     /// <summary>
     /// 获取所有应用分类
     /// </summary>
-    public async Task<AppCategoryInfo[]> GetAllCategoriesAsync()
+    public async Task<BaseOutput<AppCategoryInfo[]>> GetAllCategoriesAsync()
     {
-        return LoadAppsFromJson();
+        return BaseOutput<AppCategoryInfo[]>.Ok(LoadAppsFromJson());
     }
 
     /// <summary>
     /// 获取所有应用（扁平化）
     /// </summary>
-    public async Task<AppItemInfo[]> GetAllAppsAsync()
+    public async Task<BaseOutput<AppItemInfo[]>> GetAllAppsAsync()
     {
-        var categories = await GetAllCategoriesAsync();
+        var categories = (await GetAllCategoriesAsync()).Data ?? [];
         var allApps = new List<AppItemInfo>();
 
         foreach (var category in categories)
@@ -56,26 +57,26 @@ public class AppQueryAppService : ApplicationService
             }
         }
 
-        return allApps.OrderBy(a => a.Order).ToArray();
+        return BaseOutput<AppItemInfo[]>.Ok(allApps.OrderBy(a => a.Order).ToArray());
     }
 
     /// <summary>
     /// 根据 ID 获取应用
     /// </summary>
-    public async Task<AppItemInfo?> GetAppByIdAsync(string appId)
+    public async Task<BaseOutput<AppItemInfo?>> GetAppByIdAsync(string appId)
     {
-        var categories = await GetAllCategoriesAsync();
+        var categories = (await GetAllCategoriesAsync()).Data ?? [];
 
         foreach (var category in categories)
         {
             var app = category.Apps?.FirstOrDefault(a => a.Id == appId);
             if (app != null)
             {
-                return app;
+                return BaseOutput<AppItemInfo?>.Ok(app);
             }
         }
 
-        return null;
+        return BaseOutput<AppItemInfo?>.Ok(null);
     }
 
     /// <summary>

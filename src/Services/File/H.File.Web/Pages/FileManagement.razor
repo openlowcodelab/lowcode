@@ -312,7 +312,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        projects = await ProjectService.GetListAsync();
+        projects = (await ProjectService.GetListAsync()).Data ?? new();
         // 优先使用 URL 参数指定的项目，否则默认选择第一个项目
         var uri = Nav.ToAbsoluteUri(Nav.Uri);
         var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
@@ -342,7 +342,7 @@
 
     private async Task LoadFolderTree()
     {
-        try { folderTree = await FileService.GetFolderTreeAsync(selectedProjectId); }
+        try { folderTree = (await FileService.GetFolderTreeAsync(selectedProjectId)).Data ?? new(); }
         catch { folderTree = new(); }
     }
 
@@ -350,7 +350,7 @@
     {
         if (selectedProjectId == Guid.Empty) return;
         loadingFiles = true;
-        try { files = await FileService.GetFilesAsync(selectedProjectId, currentFolder); }
+        try { files = (await FileService.GetFilesAsync(selectedProjectId, currentFolder)).Data ?? new(); }
         catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载文件失败：{ex.Message}"); }
         finally { loadingFiles = false; }
     }
@@ -487,9 +487,9 @@
             using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024L);
             using var ms = new MemoryStream();
             await stream.CopyToAsync(ms);
-            var result = await FileService.UploadAsync(selectedProjectId, currentFolder ?? "", file.Name, ms.ToArray(), file.ContentType);
-            if (!result.Success)
-                await JS.InvokeVoidAsync("alert", $"上传 {file.Name} 失败：{result.Message}");
+            var result = (await FileService.UploadAsync(selectedProjectId, currentFolder ?? "", file.Name, ms.ToArray(), file.ContentType)).Data;
+            if (result is not { Success: true })
+                await JS.InvokeVoidAsync("alert", $"上传 {file.Name} 失败：{result?.Message}");
         }
         finally { uploadingFiles.Remove(item); }
     }
@@ -503,11 +503,11 @@
             var totalParts = (int)Math.Ceiling((double)file.Size / MultipartUploadConstants.DefaultPartSize);
 
             // 1. 初始化分片上传
-            var initResult = await FileService.InitMultipartUploadAsync(
-                selectedProjectId, currentFolder ?? "", file.Name, file.Size, file.ContentType);
+            var initResult = (await FileService.InitMultipartUploadAsync(
+                selectedProjectId, currentFolder ?? "", file.Name, file.Size, file.ContentType)).Data!;
 
             // 2. 断点续传：查询已上传的分片
-            var existingParts = await FileService.ListUploadedPartsAsync(initResult.UploadId, initResult.ObjectKey);
+            var existingParts = (await FileService.ListUploadedPartsAsync(initResult.UploadId, initResult.ObjectKey)).Data ?? new List<UploadedPartDto>();
             var uploadedSet = existingParts.Select(p => p.PartNumber).ToHashSet();
 
             // 3. 逐片上传（跳过已上传的分片）
@@ -530,14 +530,14 @@
                 if (bytesRead < MultipartUploadConstants.DefaultPartSize)
                     buffer = buffer[..bytesRead];
 
-                var partResult = await FileService.UploadPartAsync(new UploadPartInput
+                var partResult = (await FileService.UploadPartAsync(new UploadPartInput
                 {
                     UploadId = initResult.UploadId,
                     ObjectKey = initResult.ObjectKey,
                     BucketName = currentProject?.BucketName ?? "",
                     PartIndex = i,
                     Data = buffer
-                });
+                })).Data!;
 
                 if (!partResult.Success)
                 {
@@ -551,7 +551,7 @@
             }
 
             // 4. 合并分片
-            var result = await FileService.CompleteMultipartUploadAsync(new CompleteMultipartUploadInput
+            var result = (await FileService.CompleteMultipartUploadAsync(new CompleteMultipartUploadInput
             {
                 ProjectId = selectedProjectId,
                 UploadId = initResult.UploadId,
@@ -562,10 +562,10 @@
                 ContentType = file.ContentType,
                 FolderPath = currentFolder ?? "",
                 Parts = uploadedParts
-            });
+            })).Data;
 
-            if (!result.Success)
-                await JS.InvokeVoidAsync("alert", $"上传 {file.Name} 失败：{result.Message}");
+            if (result is not { Success: true })
+                await JS.InvokeVoidAsync("alert", $"上传 {file.Name} 失败：{result?.Message}");
         }
         finally { uploadingFiles.Remove(item); }
     }
@@ -594,8 +594,8 @@
     {
         try
         {
-            previewData = await FileService.GetPreviewAsync(selectedProjectId, f.Id);
-            officeRenderPending = previewData?.PreviewType == "office" && previewData.Base64Content != null;
+            previewData = (await FileService.GetPreviewAsync(selectedProjectId, f.Id)).Data;
+            officeRenderPending = previewData?.PreviewType == "office" && previewData?.Base64Content != null;
             showPreview = true;
         }
         catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"预览失败：{ex.Message}"); }

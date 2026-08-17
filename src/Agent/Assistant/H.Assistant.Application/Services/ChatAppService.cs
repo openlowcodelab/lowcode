@@ -1,6 +1,7 @@
 using AutoMapper;
 using H.Assistant.Application.Contracts;
 using H.Assistant.EntityFrameworkCore;
+using H.Util.Base;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Linq;
@@ -26,7 +27,7 @@ public class ChatAppService : ApplicationService, IChatAppService
         _asyncExecuter = asyncExecuter;
     }
 
-    public async Task<Guid> CreateSessionAsync(string title, string agentType = "general")
+    public async Task<BaseOutput<Guid>> CreateSessionAsync(string title, string agentType = "general")
     {
         var session = new ChatEntity
         {
@@ -38,19 +39,19 @@ public class ChatAppService : ApplicationService, IChatAppService
 
         await _sessionRepository.InsertAsync(session);
 
-        return session.Id;
+        return new() { Data = session.Id };
     }
 
-    public async Task<ChatDto?> GetSessionAsync(Guid sessionId)
+    public async Task<BaseOutput<ChatDto?>> GetSessionAsync(Guid sessionId)
     {
         var session = await _sessionRepository.FindAsync(sessionId);
         if (session == null)
-            return null;
+            return new() { Data = null };
 
-        return _objectMapper.Map<ChatEntity, ChatDto>(session);
+        return new() { Data = _objectMapper.Map<ChatEntity, ChatDto>(session) };
     }
 
-    public async Task<List<ChatDto>> GetSessionsAsync(string? filter = null)
+    public async Task<BaseOutput<List<ChatDto>>> GetSessionsAsync(string? filter = null)
     {
         var queryable = await _sessionRepository.GetQueryableAsync();
 
@@ -65,12 +66,12 @@ public class ChatAppService : ApplicationService, IChatAppService
 
         var sessions = await _asyncExecuter.ToListAsync(query);
 
-        return sessions
+        return new() { Data = sessions
             .Select(s => _objectMapper.Map<ChatEntity, ChatDto>(s))
-            .ToList();
+            .ToList() };
     }
 
-    public async Task AddMessageAsync(Guid sessionId, ChatMessageDto message)
+    public async Task<BaseOutput> AddMessageAsync(Guid sessionId, ChatMessageDto message)
     {
         var session = await _sessionRepository.FindAsync(sessionId);
 
@@ -94,9 +95,11 @@ public class ChatAppService : ApplicationService, IChatAppService
         session.MessageCount++;
 
         await _sessionRepository.UpdateAsync(session);
+
+        return new();
     }
 
-    public async Task<List<ChatMessageDto>> GetMessagesAsync(Guid sessionId)
+    public async Task<BaseOutput<List<ChatMessageDto>>> GetMessagesAsync(Guid sessionId)
     {
         var queryable = await _messageRepository.GetQueryableAsync();
 
@@ -106,12 +109,12 @@ public class ChatAppService : ApplicationService, IChatAppService
                 .OrderBy(m => m.CreationTime)
         );
 
-        return messages
+        return new() { Data = messages
             .Select(m => _objectMapper.Map<ChatMessageEntity, ChatMessageDto>(m))
-            .ToList();
+            .ToList() };
     }
 
-    public async Task DeleteSessionAsync(Guid sessionId)
+    public async Task<BaseOutput> DeleteSessionAsync(Guid sessionId)
     {
         var messageQueryable = await _messageRepository.GetQueryableAsync();
         var messages = await _asyncExecuter.ToListAsync(
@@ -124,5 +127,7 @@ public class ChatAppService : ApplicationService, IChatAppService
         }
 
         await _sessionRepository.DeleteAsync(sessionId);
+
+        return new();
     }
 }

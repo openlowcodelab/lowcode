@@ -3,6 +3,7 @@ using H.Abp.Application.Contracts;
 using H.Assistant.Application.Contracts;
 using H.Assistant.Core;
 using H.Assistant.EntityFrameworkCore;
+using H.Util.Base;
 using Microsoft.Extensions.Logging;
 using System.Linq.Dynamic.Core;
 using System.Text.Json;
@@ -38,7 +39,7 @@ public class TaskAppService : ApplicationService, ITaskAppService
         _agentFactory = agentFactory;
     }
 
-    public async Task<PagedResultDto<TaskDto>> GetListAsync(TaskQueryDto input)
+    public async Task<BaseOutput<PagedResultDto<TaskDto>>> GetListAsync(TaskQueryDto input)
     {
         var queryable = await _taskRepository.GetQueryableAsync();
 
@@ -78,10 +79,10 @@ public class TaskAppService : ApplicationService, ITaskAppService
             .Select(t => _objectMapper.Map<TaskEntity, TaskDto>(t))
             .ToList();
 
-        return new PagedResultDto<TaskDto>(totalCount, dtos);
+        return new() { Data = new PagedResultDto<TaskDto>(totalCount, dtos) };
     }
 
-    public async Task<TaskDto> GetAsync(Guid id)
+    public async Task<BaseOutput<TaskDto>> GetAsync(Guid id)
     {
         var task = await _taskRepository.FindAsync(id);
         if (task == null)
@@ -89,10 +90,10 @@ public class TaskAppService : ApplicationService, ITaskAppService
             throw new EntityNotFoundException(typeof(TaskEntity), id);
         }
 
-        return _objectMapper.Map<TaskEntity, TaskDto>(task);
+        return new() { Data = _objectMapper.Map<TaskEntity, TaskDto>(task) };
     }
 
-    public async Task<TaskDto> CreateAsync(CreateTaskDto input)
+    public async Task<BaseOutput<TaskDto>> CreateAsync(CreateTaskDto input)
     {
         var isManual = input.ExecutionMode == "Manual";
         var task = new TaskEntity
@@ -124,10 +125,10 @@ public class TaskAppService : ApplicationService, ITaskAppService
 
         await _taskRepository.InsertAsync(task);
 
-        return _objectMapper.Map<TaskEntity, TaskDto>(task);
+        return new() { Data = _objectMapper.Map<TaskEntity, TaskDto>(task) };
     }
 
-    public async Task<TaskDto> UpdateAsync(Guid id, UpdateTaskDto input)
+    public async Task<BaseOutput<TaskDto>> UpdateAsync(Guid id, UpdateTaskDto input)
     {
         var task = await _taskRepository.FindAsync(id);
         if (task == null)
@@ -160,12 +161,12 @@ public class TaskAppService : ApplicationService, ITaskAppService
 
         await _taskRepository.UpdateAsync(task);
 
-        return _objectMapper.Map<TaskEntity, TaskDto>(task);
+        return new() { Data = _objectMapper.Map<TaskEntity, TaskDto>(task) };
     }
 
-    public async Task DeleteAsync(Guid id)
+    public async Task<BaseOutput> DeleteAsync(Guid id)
     {
-        // 删除关联的执行日志
+        // 删除关联的执行日�?
         var logQueryable = await _logRepository.GetQueryableAsync();
         var logs = await AsyncExecuter.ToListAsync(logQueryable.Where(l => l.TaskId == id));
         foreach (var log in logs)
@@ -174,9 +175,11 @@ public class TaskAppService : ApplicationService, ITaskAppService
         }
 
         await _taskRepository.DeleteAsync(id);
+
+        return new();
     }
 
-    public async Task ToggleEnableAsync(Guid id)
+    public async Task<BaseOutput> ToggleEnableAsync(Guid id)
     {
         var task = await _taskRepository.FindAsync(id);
         if (task == null)
@@ -201,14 +204,17 @@ public class TaskAppService : ApplicationService, ITaskAppService
         }
 
         await _taskRepository.UpdateAsync(task);
+
+        return new();
     }
 
-    public async Task ExecuteNowAsync(Guid id)
+    public async Task<BaseOutput> ExecuteNowAsync(Guid id)
     {
         await ExecuteTaskAsync(id);
+        return new();
     }
 
-    public async Task<List<TaskLogDto>> GetExecutionLogsAsync(Guid taskId, int maxResultCount = 10)
+    public async Task<BaseOutput<List<TaskLogDto>>> GetExecutionLogsAsync(Guid taskId, int maxResultCount = 10)
     {
         var queryable = await _logRepository.GetQueryableAsync();
 
@@ -223,28 +229,30 @@ public class TaskAppService : ApplicationService, ITaskAppService
         var task = await _taskRepository.FindAsync(taskId);
         var taskName = task?.TaskName ?? string.Empty;
 
-        return logs
+        return new() { Data = logs
             .Select(l =>
             {
                 var dto = _objectMapper.Map<TaskLogEntity, TaskLogDto>(l);
                 dto.TaskName = taskName;
                 return dto;
             })
-            .ToList();
+            .ToList() };
     }
 
     /// <summary>
     /// 执行单个任务
     /// </summary>
-    public async Task ExecuteTaskAsync(Guid taskId)
+    public async Task<BaseOutput> ExecuteTaskAsync(Guid taskId)
     {
         var task = await _taskRepository.FindAsync(taskId);
         if (task == null)
         {
-            return;
+            return new();
         }
 
         await ExecuteTaskInternalAsync(task);
+
+        return new();
     }
 
     private async Task ExecuteTaskInternalAsync(TaskEntity task)
@@ -253,7 +261,7 @@ public class TaskAppService : ApplicationService, ITaskAppService
         var taskId = task.Id;
         var taskName = task.TaskName;
 
-        Logger.LogInformation("开始执行定时任务: {TaskName} (Id={TaskId})", taskName, taskId);
+        Logger.LogInformation("开始执行定时任�? {TaskName} (Id={TaskId})", taskName, taskId);
 
         try
         {
@@ -265,7 +273,7 @@ public class TaskAppService : ApplicationService, ITaskAppService
                 throw new InvalidOperationException($"无法创建 Agent 实例: {task.AgentType}");
             }
 
-            // 执行任务内容（提示词或工作流）
+            // 执行任务内容（提示词或工作流�?
             var response = await ExecuteTaskContentAsync(agent, task);
 
             // 插入成功日志
@@ -315,17 +323,17 @@ public class TaskAppService : ApplicationService, ITaskAppService
             }
             catch (Exception logEx)
             {
-                Logger.LogError(logEx, "记录任务失败日志时出错: TaskId={TaskId}", taskId);
+                Logger.LogError(logEx, "记录任务失败日志时出�? TaskId={TaskId}", taskId);
             }
         }
     }
 
     /// <summary>
-    /// 执行任务内容：根据创建方式选择提示词或工作流执行
+    /// 执行任务内容：根据创建方式选择提示词或工作流执�?
     /// </summary>
     private async Task<string> ExecuteTaskContentAsync(IAgentInstance agent, TaskEntity task)
     {
-        // 工作流任务：按顺序执行各步骤，上一步结果作为下一步的上下文
+        // 工作流任务：按顺序执行各步骤，上一步结果作为下一步的上下�?
         if (task.SourceType == "Workflow" && !string.IsNullOrWhiteSpace(task.WorkflowContent))
         {
             var steps = JsonSerializer.Deserialize<List<WorkflowStepDto>>(task.WorkflowContent)
@@ -347,7 +355,7 @@ public class TaskAppService : ApplicationService, ITaskAppService
                     stepPrompt = $"上一步骤「{steps[i - 1].Name}」的执行结果如下：\n{lastResult}\n\n请基于上述结果，继续执行当前步骤：{stepPrompt}";
                 }
 
-                Logger.LogInformation("执行工作流步骤 {Index}/{Count}: {StepName} (TaskId={TaskId})",
+                Logger.LogInformation("执行工作流步�?{Index}/{Count}: {StepName} (TaskId={TaskId})",
                     i + 1, steps.Count, step.Name, task.Id);
                 lastResult = await agent.ProcessMessageAsync(stepPrompt, history);
             }
@@ -355,7 +363,7 @@ public class TaskAppService : ApplicationService, ITaskAppService
             return lastResult;
         }
 
-        // 提示词任务：直接执行提示词
+        // 提示词任务：直接执行提示�?
         return await agent.ProcessMessageAsync(task.PromptContent, new List<string>());
     }
 
@@ -374,7 +382,7 @@ public class TaskAppService : ApplicationService, ITaskAppService
 
         return scheduleType switch
         {
-            "Once" => now, // 立即执行一次
+            "Once" => now, // 立即执行一�?
             "Daily" => CreateDailyDateTime(now, hour, minute),
             "Weekly" => CreateWeeklyDateTime(now, dayOfWeek, hour, minute),
             "Monthly" => CreateMonthlyDateTime(now, dayOfMonth, hour, minute),
@@ -405,7 +413,7 @@ public class TaskAppService : ApplicationService, ITaskAppService
 
         if (daysUntilTarget == 0)
         {
-            // 今天就是目标日，检查时间是否已过
+            // 今天就是目标日，检查时间是否已�?
             var result = now.Date.AddHours(hour ?? 0).AddMinutes(minute ?? 0);
             if (result <= now)
             {
@@ -444,7 +452,7 @@ public class TaskAppService : ApplicationService, ITaskAppService
 
     private DateTime? ParseCronNextRun(string cronExpression, DateTime now)
     {
-        // 简化实现：假设标准 Cron 格式，使用 NCrontab 库解析
+        // 简化实现：假设标准 Cron 格式，使�?NCrontab 库解�?
         // 这里返回一个占位时间，实际应由后台 Worker 处理
         return now.AddMinutes(1);
     }

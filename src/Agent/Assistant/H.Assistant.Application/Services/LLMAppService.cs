@@ -1,6 +1,7 @@
 using AutoMapper;
 using H.Assistant.Application.Contracts;
 using H.Assistant.EntityFrameworkCore;
+using H.Util.Base;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 
@@ -20,39 +21,39 @@ public class LLMAppService : ApplicationService, ILLMAppService
         _objectMapper = objectMapper;
     }
 
-    public async Task<List<LLMDto>> GetAllAsync()
+    public async Task<BaseOutput<List<LLMDto>>> GetAllAsync()
     {
         var entities = await AsyncExecuter.ToListAsync(
             (await _repository.GetQueryableAsync()).OrderBy(x => x.ProviderName)
         );
-        return _objectMapper.Map<List<LLMEntity>, List<LLMDto>>(entities);
+        return new() { Data = _objectMapper.Map<List<LLMEntity>, List<LLMDto>>(entities) };
     }
 
-    public async Task<LLMDto?> GetConfigAsync(string providerName, CancellationToken ct = default)
+    public async Task<BaseOutput<LLMDto?>> GetConfigAsync(string providerName, CancellationToken ct = default)
     {
         var entity = await AsyncExecuter.FirstOrDefaultAsync(
             (await _repository.GetQueryableAsync()).Where(x => x.ProviderName == providerName),
             ct
         );
-        return entity == null ? null : _objectMapper.Map<LLMEntity, LLMDto>(entity);
+        return new() { Data = entity == null ? null : _objectMapper.Map<LLMEntity, LLMDto>(entity) };
     }
 
-    public async Task<LLMDto?> GetAsync(Guid id)
+    public async Task<BaseOutput<LLMDto?>> GetAsync(Guid id)
     {
         var entity = await _repository.FindAsync(id);
-        return entity == null ? null : _objectMapper.Map<LLMEntity, LLMDto>(entity);
+        return new() { Data = entity == null ? null : _objectMapper.Map<LLMEntity, LLMDto>(entity) };
     }
 
-    public async Task<LLMDto?> GetDefaultConfigAsync(CancellationToken ct = default)
+    public async Task<BaseOutput<LLMDto?>> GetDefaultConfigAsync(CancellationToken ct = default)
     {
         var entity = await AsyncExecuter.FirstOrDefaultAsync(
             (await _repository.GetQueryableAsync()).Where(x => x.IsDefault),
             ct
         );
-        return entity == null ? null : _objectMapper.Map<LLMEntity, LLMDto>(entity);
+        return new() { Data = entity == null ? null : _objectMapper.Map<LLMEntity, LLMDto>(entity) };
     }
 
-    public async Task<LLMDto> CreateAsync(CreateLLMDto input)
+    public async Task<BaseOutput<LLMDto>> CreateAsync(CreateLLMDto input)
     {
         // 如果设置为默认，取消其他默认
         if (input.IsEnabled)
@@ -65,10 +66,10 @@ public class LLMAppService : ApplicationService, ILLMAppService
 
         await _repository.InsertAsync(entity);
 
-        return _objectMapper.Map<LLMEntity, LLMDto>(entity);
+        return new() { Data = _objectMapper.Map<LLMEntity, LLMDto>(entity) };
     }
 
-    public async Task<LLMDto> UpdateAsync(Guid id, UpdateLLMDto input)
+    public async Task<BaseOutput<LLMDto>> UpdateAsync(Guid id, UpdateLLMDto input)
     {
         var entity = await _repository.GetAsync(id);
 
@@ -89,15 +90,16 @@ public class LLMAppService : ApplicationService, ILLMAppService
 
         await _repository.UpdateAsync(entity);
 
-        return _objectMapper.Map<LLMEntity, LLMDto>(entity);
+        return new() { Data = _objectMapper.Map<LLMEntity, LLMDto>(entity) };
     }
 
-    public async Task DeleteAsync(Guid id)
+    public async Task<BaseOutput> DeleteAsync(Guid id)
     {
         await _repository.DeleteAsync(id);
+        return new();
     }
 
-    public async Task SetDefaultAsync(string providerName)
+    public async Task<BaseOutput> SetDefaultAsync(string providerName)
     {
         await ClearDefaultAsync();
 
@@ -110,6 +112,8 @@ public class LLMAppService : ApplicationService, ILLMAppService
             entity.IsDefault = true;
             await _repository.UpdateAsync(entity);
         }
+
+        return new();
     }
 
     private async Task ClearDefaultAsync()

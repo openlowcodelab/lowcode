@@ -1,6 +1,7 @@
 using AutoMapper;
 using H.Assistant.Application.Contracts;
 using H.Assistant.EntityFrameworkCore;
+using H.Util.Base;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 
@@ -24,7 +25,7 @@ public class MemoryAppService : ApplicationService, IMemoryAppService
 
     #region Node (Tree Structure) Operations
 
-    public async Task<List<KnowledgeNodeDto>> GetTreeAsync()
+    public async Task<BaseOutput<List<KnowledgeNodeDto>>> GetTreeAsync()
     {
         var queryable = await _nodeRepository.GetQueryableAsync();
         var allNodes = await AsyncExecuter.ToListAsync(
@@ -48,21 +49,21 @@ public class MemoryAppService : ApplicationService, IMemoryAppService
         var roots = lookup[null].ToList();
         AssignChildren(roots);
 
-        return roots;
+        return new() { Data = roots };
     }
 
-    public async Task<KnowledgeNodeDto> CreateNodeAsync(CreateKnowledgeNodeDto input)
+    public async Task<BaseOutput<KnowledgeNodeDto>> CreateNodeAsync(CreateKnowledgeNodeDto input)
     {
         if (input.ParentId.HasValue)
         {
             var parent = await _nodeRepository.FindAsync(input.ParentId.Value);
             if (parent == null)
             {
-                throw new InvalidOperationException($"父节点 {input.ParentId} 不存在");
+                throw new InvalidOperationException($"父节�?{input.ParentId} 不存�?);
             }
             if (parent.OwnerType != OwnerTypes.Memory)
             {
-                throw new InvalidOperationException($"父节点 {input.ParentId} 不属于记忆");
+                throw new InvalidOperationException($"父节�?{input.ParentId} 不属于记�?);
             }
         }
 
@@ -81,19 +82,19 @@ public class MemoryAppService : ApplicationService, IMemoryAppService
             await _documentRepository.InsertAsync(document);
         }
 
-        return _objectMapper.Map<KnowledgeNodeEntity, KnowledgeNodeDto>(entity);
+        return new() { Data = _objectMapper.Map<KnowledgeNodeEntity, KnowledgeNodeDto>(entity) };
     }
 
-    public async Task<KnowledgeNodeDto> UpdateNodeAsync(Guid nodeId, UpdateKnowledgeNodeDto input)
+    public async Task<BaseOutput<KnowledgeNodeDto>> UpdateNodeAsync(Guid nodeId, UpdateKnowledgeNodeDto input)
     {
         var entity = await _nodeRepository.FindAsync(nodeId);
         if (entity == null)
         {
-            throw new InvalidOperationException($"节点 {nodeId} 不存在");
+            throw new InvalidOperationException($"节点 {nodeId} 不存�?);
         }
         if (entity.OwnerType != OwnerTypes.Memory)
         {
-            throw new InvalidOperationException($"节点 {nodeId} 不属于记忆");
+            throw new InvalidOperationException($"节点 {nodeId} 不属于记�?);
         }
 
         entity.Title = input.Title;
@@ -127,19 +128,19 @@ public class MemoryAppService : ApplicationService, IMemoryAppService
 
         await _nodeRepository.UpdateAsync(entity);
 
-        return _objectMapper.Map<KnowledgeNodeEntity, KnowledgeNodeDto>(entity);
+        return new() { Data = _objectMapper.Map<KnowledgeNodeEntity, KnowledgeNodeDto>(entity) };
     }
 
-    public async Task DeleteNodeAsync(Guid nodeId)
+    public async Task<BaseOutput> DeleteNodeAsync(Guid nodeId)
     {
         var entity = await _nodeRepository.FindAsync(nodeId);
         if (entity == null)
         {
-            throw new InvalidOperationException($"节点 {nodeId} 不存在");
+            throw new InvalidOperationException($"节点 {nodeId} 不存�?);
         }
         if (entity.OwnerType != OwnerTypes.Memory)
         {
-            throw new InvalidOperationException($"节点 {nodeId} 不属于记忆");
+            throw new InvalidOperationException($"节点 {nodeId} 不属于记�?);
         }
 
         // Recursively collect all descendant nodes (self-ref FK is NoAction)
@@ -154,6 +155,8 @@ public class MemoryAppService : ApplicationService, IMemoryAppService
             await _nodeRepository.DeleteAsync(desc);
         }
         await _nodeRepository.DeleteAsync(entity);
+
+        return new();
     }
 
     private static void CollectDescendants(List<KnowledgeNodeEntity> allNodes, Guid parentId, List<KnowledgeNodeEntity> result)
@@ -172,7 +175,7 @@ public class MemoryAppService : ApplicationService, IMemoryAppService
 
     #region Document Content Operations
 
-    public async Task<KnowledgeDocumentDto?> GetDocumentAsync(Guid nodeId)
+    public async Task<BaseOutput<KnowledgeDocumentDto?>> GetDocumentAsync(Guid nodeId)
     {
         var queryable = await _documentRepository.GetQueryableAsync();
         var doc = await AsyncExecuter.FirstOrDefaultAsync(
@@ -180,13 +183,13 @@ public class MemoryAppService : ApplicationService, IMemoryAppService
 
         if (doc == null)
         {
-            return null;
+            return new() { Data = null };
         }
 
-        return _objectMapper.Map<KnowledgeDocumentEntity, KnowledgeDocumentDto>(doc);
+        return new() { Data = _objectMapper.Map<KnowledgeDocumentEntity, KnowledgeDocumentDto>(doc) };
     }
 
-    public async Task<KnowledgeDocumentDto> SaveDocumentAsync(Guid nodeId, SaveKnowledgeDocumentDto input)
+    public async Task<BaseOutput<KnowledgeDocumentDto>> SaveDocumentAsync(Guid nodeId, SaveKnowledgeDocumentDto input)
     {
         var queryable = await _documentRepository.GetQueryableAsync();
         var doc = await AsyncExecuter.FirstOrDefaultAsync(
@@ -201,7 +204,7 @@ public class MemoryAppService : ApplicationService, IMemoryAppService
             }
             if (node.OwnerType != OwnerTypes.Memory)
             {
-                throw new InvalidOperationException($"节点 {nodeId} 不属于记忆");
+                throw new InvalidOperationException($"节点 {nodeId} 不属于记�?);
             }
 
             doc = new KnowledgeDocumentEntity
@@ -217,14 +220,14 @@ public class MemoryAppService : ApplicationService, IMemoryAppService
             await _documentRepository.UpdateAsync(doc);
         }
 
-        return _objectMapper.Map<KnowledgeDocumentEntity, KnowledgeDocumentDto>(doc);
+        return new() { Data = _objectMapper.Map<KnowledgeDocumentEntity, KnowledgeDocumentDto>(doc) };
     }
 
     #endregion
 
     #region Memory-specific Operations
 
-    public async Task<KnowledgeNodeDto> CreateMemoryEntryAsync(CreateMemoryEntryDto input)
+    public async Task<BaseOutput<KnowledgeNodeDto>> CreateMemoryEntryAsync(CreateMemoryEntryDto input)
     {
         var category = input.Category?.Trim() ?? "其他";
 
@@ -266,7 +269,7 @@ public class MemoryAppService : ApplicationService, IMemoryAppService
         };
         await _documentRepository.InsertAsync(document);
 
-        return _objectMapper.Map<KnowledgeNodeEntity, KnowledgeNodeDto>(memoryNode);
+        return new() { Data = _objectMapper.Map<KnowledgeNodeEntity, KnowledgeNodeDto>(memoryNode) };
     }
 
     #endregion

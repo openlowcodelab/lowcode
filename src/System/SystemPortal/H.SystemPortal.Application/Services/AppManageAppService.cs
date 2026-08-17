@@ -1,5 +1,6 @@
 using H.AppDrawer.Components;
 using H.SystemPortal.Application.Contracts;
+using H.Util.Base;
 using System.Text.Json;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
@@ -36,15 +37,15 @@ public class AppManageAppService : ApplicationService, IAppManageAppService
     /// <summary>
     /// 获取所有应用分类
     /// </summary>
-    public async Task<AppCategoryInfo[]> GetAllCategoriesAsync()
+    public async Task<BaseOutput<AppCategoryInfo[]>> GetAllCategoriesAsync()
     {
-        return LoadAppsFromJson();
+        return BaseOutput<AppCategoryInfo[]>.Ok(LoadAppsFromJson());
     }
 
     /// <summary>
     /// 添加新应用
     /// </summary>
-    public async Task<bool> AddAppAsync(string categoryId, AppItemInfo app)
+    public async Task<BaseOutput<bool>> AddAppAsync(string categoryId, AppItemInfo app)
     {
         try
         {
@@ -77,19 +78,19 @@ public class AppManageAppService : ApplicationService, IAppManageAppService
 
             await SaveAppDataAsync(appData);
 
-            return true;
+            return BaseOutput<bool>.Ok(true);
         }
         catch (Exception ex)
         {
             Console.WriteLine($"添加应用失败: {ex.Message}");
-            return false;
+            return BaseOutput<bool>.Ok(false);
         }
     }
 
     /// <summary>
     /// 更新应用
     /// </summary>
-    public async Task<bool> UpdateAppAsync(string appId, AppItemInfo updatedApp)
+    public async Task<BaseOutput<bool>> UpdateAppAsync(string appId, AppItemInfo updatedApp)
     {
         try
         {
@@ -105,7 +106,7 @@ public class AppManageAppService : ApplicationService, IAppManageAppService
 
                     await SaveAppDataAsync(appData);
 
-                    return true;
+                    return BaseOutput<bool>.Ok(true);
                 }
             }
 
@@ -114,14 +115,14 @@ public class AppManageAppService : ApplicationService, IAppManageAppService
         catch (Exception ex)
         {
             Console.WriteLine($"更新应用失败: {ex.Message}");
-            return false;
+            return BaseOutput<bool>.Ok(false);
         }
     }
 
     /// <summary>
     /// 删除应用
     /// </summary>
-    public async Task<bool> DeleteAppAsync(string appId)
+    public async Task<BaseOutput<bool>> DeleteAppAsync(string appId)
     {
         try
         {
@@ -137,7 +138,7 @@ public class AppManageAppService : ApplicationService, IAppManageAppService
 
                     await SaveAppDataAsync(appData);
 
-                    return true;
+                    return BaseOutput<bool>.Ok(true);
                 }
             }
 
@@ -146,14 +147,14 @@ public class AppManageAppService : ApplicationService, IAppManageAppService
         catch (Exception ex)
         {
             Console.WriteLine($"删除应用失败: {ex.Message}");
-            return false;
+            return BaseOutput<bool>.Ok(false);
         }
     }
 
     /// <summary>
     /// 添加分类
     /// </summary>
-    public async Task<bool> AddCategoryAsync(string categoryName)
+    public async Task<BaseOutput<bool>> AddCategoryAsync(string categoryName)
     {
         try
         {
@@ -172,19 +173,19 @@ public class AppManageAppService : ApplicationService, IAppManageAppService
 
             await SaveAppDataAsync(appData);
 
-            return true;
+            return BaseOutput<bool>.Ok(true);
         }
         catch (Exception ex)
         {
             Console.WriteLine($"添加分类失败: {ex.Message}");
-            return false;
+            return BaseOutput<bool>.Ok(false);
         }
     }
 
     /// <summary>
     /// 删除分类
     /// </summary>
-    public async Task<bool> DeleteCategoryAsync(string categoryName)
+    public async Task<BaseOutput<bool>> DeleteCategoryAsync(string categoryName)
     {
         try
         {
@@ -205,12 +206,12 @@ public class AppManageAppService : ApplicationService, IAppManageAppService
 
             await SaveAppDataAsync(appData);
 
-            return true;
+            return BaseOutput<bool>.Ok(true);
         }
         catch (Exception ex)
         {
             Console.WriteLine($"删除分类失败: {ex.Message}");
-            return false;
+            return BaseOutput<bool>.Ok(false);
         }
     }
 

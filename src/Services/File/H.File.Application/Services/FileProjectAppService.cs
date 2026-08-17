@@ -1,5 +1,6 @@
 using H.File.Application.Contracts;
 using H.File.EntityFrameworkCore;
+using H.Util.Base;
 using System.Text.RegularExpressions;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
@@ -30,7 +31,7 @@ public class FileProjectAppService : ApplicationService, IFileProjectAppService
         _currentTenant = currentTenant;
     }
 
-    public async Task<List<FileProjectDto>> GetListAsync()
+    public async Task<BaseOutput<List<FileProjectDto>>> GetListAsync()
     {
         var queryable = await _repository.GetQueryableAsync();
         var entities = await AsyncExecuter.ToListAsync(queryable.OrderByDescending(x => x.CreationTime));
@@ -49,16 +50,16 @@ public class FileProjectAppService : ApplicationService, IFileProjectAppService
             CreationTime = e.CreationTime
         }).ToList();
 
-        return dtos;
+        return BaseOutput<List<FileProjectDto>>.Ok(dtos);
     }
 
-    public async Task<FileProjectDto> GetAsync(Guid id)
+    public async Task<BaseOutput<FileProjectDto>> GetAsync(Guid id)
     {
         var entity = await _repository.GetAsync(id);
-        return MapToDto(entity);
+        return BaseOutput<FileProjectDto>.Ok(MapToDto(entity));
     }
 
-    public async Task<FileProjectDto> CreateAsync(CreateFileProjectDto input)
+    public async Task<BaseOutput<FileProjectDto>> CreateAsync(CreateFileProjectDto input)
     {
         if (string.IsNullOrWhiteSpace(input.Name))
             throw new UserFriendlyException("项目名称不能为空");
@@ -92,10 +93,10 @@ public class FileProjectAppService : ApplicationService, IFileProjectAppService
         await _repository.InsertAsync(entity);
         await CurrentUnitOfWork.SaveChangesAsync();
 
-        return MapToDto(entity);
+        return BaseOutput<FileProjectDto>.Ok(MapToDto(entity));
     }
 
-    public async Task<FileProjectDto> UpdateAsync(Guid id, UpdateFileProjectDto input)
+    public async Task<BaseOutput<FileProjectDto>> UpdateAsync(Guid id, UpdateFileProjectDto input)
     {
         var entity = await _repository.GetAsync(id);
 
@@ -109,10 +110,10 @@ public class FileProjectAppService : ApplicationService, IFileProjectAppService
         await _repository.UpdateAsync(entity);
         await CurrentUnitOfWork.SaveChangesAsync();
 
-        return MapToDto(entity);
+        return BaseOutput<FileProjectDto>.Ok(MapToDto(entity));
     }
 
-    public async Task DeleteAsync(Guid id)
+    public async Task<BaseOutput> DeleteAsync(Guid id)
     {
         var entity = await _repository.GetAsync(id);
 
@@ -120,6 +121,8 @@ public class FileProjectAppService : ApplicationService, IFileProjectAppService
         await _storage.DeleteBucketAsync(entity.BucketName);
 
         await _repository.DeleteAsync(entity);
+
+        return BaseOutput.Ok();
     }
 
     private static FileProjectDto MapToDto(FileProjectEntity e) => new()

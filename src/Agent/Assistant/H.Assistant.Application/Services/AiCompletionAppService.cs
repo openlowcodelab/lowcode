@@ -1,5 +1,6 @@
 using H.Assistant.Application.Contracts;
 using H.Assistant.Core;
+using H.Util.Base;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
 
@@ -7,7 +8,7 @@ namespace H.Assistant.Application;
 
 /// <summary>
 /// AI 基础能力服务
-/// 基于 Assistant 默认模型配置，向其它应用提供统一的文本生成能力
+/// 基于 Assistant 默认模型配置，向其它应用提供统一的文本生成能�?
 /// </summary>
 public class AiCompletionAppService : ApplicationService, IAiCompletionAppService
 {
@@ -18,7 +19,7 @@ public class AiCompletionAppService : ApplicationService, IAiCompletionAppServic
         _providerFactory = providerFactory;
     }
 
-    public async Task<AiCompletionResultDto> CompleteAsync(AiCompletionInputDto input)
+    public async Task<BaseOutput<AiCompletionResultDto>> CompleteAsync(AiCompletionInputDto input)
     {
         if (string.IsNullOrWhiteSpace(input.UserMessage))
         {
@@ -55,16 +56,16 @@ public class AiCompletionAppService : ApplicationService, IAiCompletionAppServic
             throw ConvertHttpError(ex);
         }
 
-        return new AiCompletionResultDto
+        return new() { Data = new AiCompletionResultDto
         {
             Content = response.Content,
             Model = response.Model,
             UsageTokens = response.UsageTokens
-        };
+        } };
     }
 
     /// <summary>
-    /// 将模型服务的 HTTP 错误转为友好提示（401 通常为 API Key 错误）
+    /// 将模型服务的 HTTP 错误转为友好提示�?01 通常�?API Key 错误�?
     /// </summary>
     private static UserFriendlyException ConvertHttpError(HttpRequestException ex)
     {

@@ -1,5 +1,6 @@
 using H.Organization.Application.Contracts;
 using H.Organization.EntityFrameworkCore;
+using H.Util.Base;
 using Microsoft.EntityFrameworkCore;
 using Volo.Abp.Application.Services;
 
@@ -20,14 +21,14 @@ public class OrganizationAppService : ApplicationService, IOrganizationAppServic
     /// <summary>
     /// 获取所有部门（树形结构）
     /// </summary>
-    public async Task<List<OrganizationTreeDto>> GetAllAsTreeAsync()
+    public async Task<BaseOutput<List<OrganizationTreeDto>>> GetAllAsTreeAsync()
     {
         var organizations = await _context.Organizations
             .Where(x => x.IsEnabled)
             .OrderBy(x => x.Sort)
             .ToListAsync();
 
-        return BuildTree(organizations);
+        return BaseOutput<List<OrganizationTreeDto>>.Ok(BuildTree(organizations));
     }
 
     private List<OrganizationTreeDto> BuildTree(List<OrganizationEntity> organizations)
@@ -62,7 +63,7 @@ public class OrganizationAppService : ApplicationService, IOrganizationAppServic
     /// <summary>
     /// 获取部门列表
     /// </summary>
-    public async Task<PagedResult<OrganizationDto>> GetListAsync(OrganizationQueryParams queryParams)
+    public async Task<BaseOutput<PagedResult<OrganizationDto>>> GetListAsync(OrganizationQueryParams queryParams)
     {
         var query = _context.Organizations.AsQueryable();
 
@@ -106,28 +107,28 @@ public class OrganizationAppService : ApplicationService, IOrganizationAppServic
             })
             .ToListAsync();
 
-        return new PagedResult<OrganizationDto>
+        return BaseOutput<PagedResult<OrganizationDto>>.Ok(new PagedResult<OrganizationDto>
         {
             Items = items,
             TotalCount = totalCount,
             PageIndex = queryParams.PageIndex,
             PageSize = queryParams.PageSize
-        };
+        });
     }
 
     /// <summary>
     /// 获取部门详情
     /// </summary>
-    public async Task<OrganizationDto?> GetByIdAsync(Guid id)
+    public async Task<BaseOutput<OrganizationDto>> GetByIdAsync(Guid id)
     {
         var entity = await _context.Organizations
             .Include(x => x.Children)
             .Include(x => x.Members)
             .FirstOrDefaultAsync(x => x.Id == id);
 
-        if (entity == null) return null;
+        if (entity == null) return BaseOutput<OrganizationDto>.Ok(null);
 
-        return new OrganizationDto
+        return BaseOutput<OrganizationDto>.Ok(new OrganizationDto
         {
             Id = entity.Id,
             ParentId = entity.ParentId,
@@ -142,13 +143,13 @@ public class OrganizationAppService : ApplicationService, IOrganizationAppServic
             Remark = entity.Remark,
             ChildrenCount = entity.Children.Count,
             MembersCount = entity.Members.Count
-        };
+        });
     }
 
     /// <summary>
     /// 创建部门
     /// </summary>
-    public async Task<OrganizationDto> CreateAsync(CreateOrganizationDto input)
+    public async Task<BaseOutput<OrganizationDto>> CreateAsync(CreateOrganizationDto input)
     {
         var entity = new OrganizationEntity(Guid.NewGuid())
         {
@@ -166,13 +167,14 @@ public class OrganizationAppService : ApplicationService, IOrganizationAppServic
         _context.Organizations.Add(entity);
         await _context.SaveChangesAsync();
 
-        return await GetByIdAsync(entity.Id) ?? throw new Exception("创建失败");
+        var created = await GetByIdAsync(entity.Id);
+        return BaseOutput<OrganizationDto>.Ok(created.Data ?? throw new Exception("创建失败"));
     }
 
     /// <summary>
     /// 更新部门
     /// </summary>
-    public async Task<OrganizationDto> UpdateAsync(Guid id, UpdateOrganizationDto input)
+    public async Task<BaseOutput<OrganizationDto>> UpdateAsync(Guid id, UpdateOrganizationDto input)
     {
         var entity = await _context.Organizations.FindAsync(id);
         if (entity == null)
@@ -191,13 +193,14 @@ public class OrganizationAppService : ApplicationService, IOrganizationAppServic
 
         await _context.SaveChangesAsync();
 
-        return await GetByIdAsync(id) ?? throw new Exception("更新失败");
+        var updated = await GetByIdAsync(id);
+        return BaseOutput<OrganizationDto>.Ok(updated.Data ?? throw new Exception("更新失败"));
     }
 
     /// <summary>
     /// 删除部门
     /// </summary>
-    public async Task DeleteAsync(Guid id)
+    public async Task<BaseOutput> DeleteAsync(Guid id)
     {
         var entity = await _context.Organizations.FindAsync(id);
         if (entity == null)
@@ -215,23 +218,25 @@ public class OrganizationAppService : ApplicationService, IOrganizationAppServic
 
         _context.Organizations.Remove(entity);
         await _context.SaveChangesAsync();
+        return BaseOutput.Ok();
     }
 
     /// <summary>
     /// 批量删除部门
     /// </summary>
-    public async Task BatchDeleteAsync(List<Guid> ids)
+    public async Task<BaseOutput> BatchDeleteAsync(List<Guid> ids)
     {
         foreach (var id in ids)
         {
             await DeleteAsync(id);
         }
+        return BaseOutput.Ok();
     }
 
     /// <summary>
     /// 获取部门用户（包含子部门用户）
     /// </summary>
-    public async Task<List<Guid>> GetOrganizationUserIdsAsync(Guid organizationId, bool includeChildren = true)
+    public async Task<BaseOutput<List<Guid>>> GetOrganizationUserIdsAsync(Guid organizationId, bool includeChildren = true)
     {
         var userIds = new List<Guid>();
 
@@ -254,7 +259,7 @@ public class OrganizationAppService : ApplicationService, IOrganizationAppServic
                 .ToListAsync();
         }
 
-        return userIds;
+        return BaseOutput<List<Guid>>.Ok(userIds);
     }
 
     private async Task<List<Guid>> GetAllChildOrganizationIdsAsync(Guid parentId)

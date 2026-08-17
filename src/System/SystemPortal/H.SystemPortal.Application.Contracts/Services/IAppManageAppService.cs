@@ -1,5 +1,6 @@
 using H.Abp.Application.Contracts;
 using H.AppDrawer.Components;
+using H.Util.Base;
 
 namespace H.SystemPortal.Application.Contracts;
 
@@ -11,30 +12,30 @@ public interface IAppManageAppService : IAppService
     /// <summary>
     /// 获取所有应用分类
     /// </summary>
-    Task<AppCategoryInfo[]> GetAllCategoriesAsync();
+    Task<BaseOutput<AppCategoryInfo[]>> GetAllCategoriesAsync();
 
     /// <summary>
     /// 添加应用
     /// </summary>
-    Task<bool> AddAppAsync(string categoryName, AppItemInfo app);
+    Task<BaseOutput<bool>> AddAppAsync(string categoryName, AppItemInfo app);
 
     /// <summary>
     /// 更新应用
     /// </summary>
-    Task<bool> UpdateAppAsync(string appId, AppItemInfo updatedApp);
+    Task<BaseOutput<bool>> UpdateAppAsync(string appId, AppItemInfo updatedApp);
 
     /// <summary>
     /// 删除应用
     /// </summary>
-    Task<bool> DeleteAppAsync(string appId);
+    Task<BaseOutput<bool>> DeleteAppAsync(string appId);
 
     /// <summary>
     /// 添加分类
     /// </summary>
-    Task<bool> AddCategoryAsync(string categoryName);
+    Task<BaseOutput<bool>> AddCategoryAsync(string categoryName);
 
     /// <summary>
     /// 删除分类
     /// </summary>
-    Task<bool> DeleteCategoryAsync(string categoryName);
+    Task<BaseOutput<bool>> DeleteCategoryAsync(string categoryName);
 }

@@ -2,6 +2,7 @@ using H.Abp.Application.Contracts;
 using H.BackgroundTask.Application.Contracts;
 using H.BackgroundTask.Application.Mapping;
 using H.BackgroundTask.EntityFrameworkCore;
+using H.Util.Base;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
@@ -24,7 +25,7 @@ public class BackgroundJobAppService : ApplicationService, IBackgroundJobAppServ
         _scheduler = scheduler;
     }
 
-    public async Task<PagedResultDto<BackgroundJobDto>> GetListAsync(BackgroundJobQueryDto input)
+    public async Task<BaseOutput<PagedResultDto<BackgroundJobDto>>> GetListAsync(BackgroundJobQueryDto input)
     {
         var query = await _repository.GetQueryableAsync();
 
@@ -43,16 +44,16 @@ public class BackgroundJobAppService : ApplicationService, IBackgroundJobAppServ
             query.OrderByDescending(x => x.CreationTime).Skip(input.SkipCount).Take(maxResult));
 
         var dtos = entities.Select(e => e.ToDto()).ToList();
-        return new PagedResultDto<BackgroundJobDto>(totalCount, dtos);
+        return BaseOutput<PagedResultDto<BackgroundJobDto>>.Ok(new PagedResultDto<BackgroundJobDto>(totalCount, dtos));
     }
 
-    public async Task<BackgroundJobDto> GetAsync(Guid id)
+    public async Task<BaseOutput<BackgroundJobDto>> GetAsync(Guid id)
     {
         var entity = await _repository.GetAsync(id);
-        return entity.ToDto();
+        return BaseOutput<BackgroundJobDto>.Ok(entity.ToDto());
     }
 
-    public async Task<BackgroundJobDto> CreateAsync(CreateBackgroundJobDto input)
+    public async Task<BaseOutput<BackgroundJobDto>> CreateAsync(CreateBackgroundJobDto input)
     {
         ValidateInput(input.TriggerKind, input.ExecuteType, input.CronExpression, input.ApiUrl, input.SqlConnectionString, input.SqlStatement);
 
@@ -63,10 +64,10 @@ public class BackgroundJobAppService : ApplicationService, IBackgroundJobAppServ
         entity.HangfireJobId = _scheduler.Schedule(entity);
         await _repository.UpdateAsync(entity, autoSave: true);
 
-        return entity.ToDto();
+        return BaseOutput<BackgroundJobDto>.Ok(entity.ToDto());
     }
 
-    public async Task<BackgroundJobDto> UpdateAsync(Guid id, UpdateBackgroundJobDto input)
+    public async Task<BaseOutput<BackgroundJobDto>> UpdateAsync(Guid id, UpdateBackgroundJobDto input)
     {
         ValidateInput(input.TriggerKind, input.ExecuteType, input.CronExpression, input.ApiUrl, input.SqlConnectionString, input.SqlStatement);
 
@@ -79,38 +80,46 @@ public class BackgroundJobAppService : ApplicationService, IBackgroundJobAppServ
         entity.HangfireJobId = _scheduler.Schedule(entity);
         await _repository.UpdateAsync(entity, autoSave: true);
 
-        return entity.ToDto();
+        return BaseOutput<BackgroundJobDto>.Ok(entity.ToDto());
     }
 
-    public async Task DeleteAsync(Guid id)
+    public async Task<BaseOutput> DeleteAsync(Guid id)
     {
         var entity = await _repository.GetAsync(id);
         _scheduler.Remove(entity);
         await _repository.DeleteAsync(entity, autoSave: true);
+
+        return BaseOutput.Ok();
     }
 
-    public async Task EnableAsync(Guid id)
+    public async Task<BaseOutput> EnableAsync(Guid id)
     {
         var entity = await _repository.GetAsync(id);
         entity.IsEnabled = true;
         entity.HangfireJobId = _scheduler.Schedule(entity);
         await _repository.UpdateAsync(entity, autoSave: true);
+
+        return BaseOutput.Ok();
     }
 
-    public async Task DisableAsync(Guid id)
+    public async Task<BaseOutput> DisableAsync(Guid id)
     {
         var entity = await _repository.GetAsync(id);
         _scheduler.Remove(entity);
         entity.IsEnabled = false;
         entity.HangfireJobId = null;
         await _repository.UpdateAsync(entity, autoSave: true);
+
+        return BaseOutput.Ok();
     }
 
-    public async Task TriggerAsync(Guid id)
+    public async Task<BaseOutput> TriggerAsync(Guid id)
     {
         // 确认任务存在
         await _repository.GetAsync(id);
         _scheduler.Trigger(id);
+
+        return BaseOutput.Ok();
     }
 
     private static void ValidateInput(

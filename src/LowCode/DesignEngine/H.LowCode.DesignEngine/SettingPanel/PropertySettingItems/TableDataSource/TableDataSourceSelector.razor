@@ -63,7 +63,7 @@
                 DataSourceType = ComponentDataSourceTypeEnum.DB
             };
             
-            _dataSourceList = await DataSourceAppService.GetListAsync(AppId, input);
+            _dataSourceList = (await DataSourceAppService.GetListAsync(AppId, input)).Data;
         }
         catch (Exception ex)
         {
@@ -87,7 +87,7 @@
         {
             try
             {
-                _selectedDataSource = await DataSourceAppService.GetByIdAsync(AppId, _selectedDataSourceId);
+                _selectedDataSource = (await DataSourceAppService.GetByIdAsync(AppId, _selectedDataSourceId)).Data;
             }
             catch (Exception ex)
             {

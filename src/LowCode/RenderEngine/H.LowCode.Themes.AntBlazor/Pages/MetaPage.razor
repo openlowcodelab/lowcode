@@ -64,7 +64,7 @@
 
     private async Task<PageSchema> LoadPageSchemaAsync()
     {
-        var pageSchema = await MetaAppService.GetPageWithDefineAsync(AppId, PageId);
+        var pageSchema = (await MetaAppService.GetPageWithDefineAsync(AppId, PageId)).Data!;
         return pageSchema;
     }
 

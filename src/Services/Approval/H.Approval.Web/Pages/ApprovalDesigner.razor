@@ -116,7 +116,7 @@ else
                 // 从模板创建: 预填表单与默认审批流
                 if (!string.IsNullOrEmpty(TemplateId))
                 {
-                    var templates = await ApprovalDefinitionAppService.GetTemplatesAsync();
+                    var templates = (await ApprovalDefinitionAppService.GetTemplatesAsync()).Data ?? new List<ApprovalTemplateDto>();
                     var template = templates.FirstOrDefault(t => t.Id == TemplateId);
                     if (template != null)
                     {
@@ -131,7 +131,7 @@ else
             }
             else
             {
-                definition = await ApprovalDefinitionAppService.GetByIdAsync(ApprovalId);
+                definition = (await ApprovalDefinitionAppService.GetByIdAsync(ApprovalId)).Data;
             }
             
             if (definition != null && !string.IsNullOrEmpty(definition.DefinitionJson) && definition.DefinitionJson != "{}")
@@ -318,7 +318,7 @@ else
             
             if (isNewDefinition)
             {
-                var result = await ApprovalDefinitionAppService.CreateAsync(new CreateApprovalDefinitionDto
+                var result = (await ApprovalDefinitionAppService.CreateAsync(new CreateApprovalDefinitionDto
                 {
                     Name = definition.Name,
                     Description = definition.Description,
@@ -331,10 +331,10 @@ else
                     SpecifiedAdmins = definition.SpecifiedAdmins,
                     FormJson = definition.FormJson,
                     DefinitionJson = json
-                });
+                })).Data;
                 
                 isNewDefinition = false;
-                ApprovalId = result.Id;
+                ApprovalId = result!.Id;
                 definition.Id = result.Id;
             }
             else
@@ -379,7 +379,7 @@ else
             
             if (isNewDefinition)
             {
-                var result = await ApprovalDefinitionAppService.CreateAsync(new CreateApprovalDefinitionDto
+                var result = (await ApprovalDefinitionAppService.CreateAsync(new CreateApprovalDefinitionDto
                 {
                     Name = definition.Name,
                     Description = definition.Description,
@@ -392,8 +392,8 @@ else
                     SpecifiedAdmins = definition.SpecifiedAdmins,
                     FormJson = definition.FormJson,
                     DefinitionJson = json
-                });
-                ApprovalId = result.Id;
+                })).Data;
+                ApprovalId = result!.Id;
             }
             else
             {

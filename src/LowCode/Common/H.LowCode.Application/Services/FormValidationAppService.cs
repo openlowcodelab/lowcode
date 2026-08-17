@@ -1,5 +1,6 @@
 using H.LowCode.Application.Contracts;
 using H.LowCode.MetaSchema;
+using H.Util.Base;
 using System.Text.RegularExpressions;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
@@ -12,10 +13,10 @@ namespace H.LowCode.Application;
 [RemoteService]
 public class FormValidationAppService : ApplicationService, IFormValidationAppService
 {
-    public ValidationResult ValidateField(object? value, IList<ValidationRuleSchema>? validationRules)
+    public BaseOutput<ValidationResult> ValidateField(object? value, IList<ValidationRuleSchema>? validationRules)
     {
         if (validationRules == null || !validationRules.Any())
-            return ValidationResult.Success();
+            return new() { Data = ValidationResult.Success() };
 
         // 按优先级排序校验规则
         var sortedRules = validationRules
@@ -27,13 +28,13 @@ public class FormValidationAppService : ApplicationService, IFormValidationAppSe
         {
             var result = ValidateSingleRule(value, rule);
             if (!result.IsValid)
-                return result;
+                return new() { Data = result };
         }
 
-        return ValidationResult.Success();
+        return new() { Data = ValidationResult.Success() };
     }
 
-    public FormValidationResult ValidateForm(Dictionary<string, object?> formData, IList<ComponentSchemaBase> components)
+    public BaseOutput<FormValidationResult> ValidateForm(Dictionary<string, object?> formData, IList<ComponentSchemaBase> components)
     {
         var result = new FormValidationResult { IsValid = true };
 
@@ -45,20 +46,20 @@ public class FormValidationAppService : ApplicationService, IFormValidationAppSe
             var fieldName = component.Name ?? component.Id;
             var fieldValue = formData.ContainsKey(fieldName) ? formData[fieldName] : null;
 
-            var validationResult = ValidateField(fieldValue, component.ValidationRules);
+            var validationResult = ValidateField(fieldValue, component.ValidationRules).Data!;
             result.AddFieldResult(fieldName, validationResult);
 
             if (!validationResult.IsValid)
                 result.IsValid = false;
         }
 
-        return result;
+        return new() { Data = result };
     }
 
-    public IList<ValidationRuleSchema>? GetValidationRules(string componentId, IList<ComponentSchemaBase> components)
+    public BaseOutput<IList<ValidationRuleSchema>> GetValidationRules(string componentId, IList<ComponentSchemaBase> components)
     {
         var component = components.FirstOrDefault(c => c.Id == componentId);
-        return component?.ValidationRules;
+        return new() { Data = component?.ValidationRules };
     }
 
     private ValidationResult ValidateSingleRule(object? value, ValidationRuleSchema rule)
@@ -112,7 +113,7 @@ public class FormValidationAppService : ApplicationService, IFormValidationAppSe
         if (value == null || string.IsNullOrWhiteSpace(value.ToString()))
         {
             return ValidationResult.Failure(
-                rule.ErrorMessage ?? "此字段为必填项",
+                rule.ErrorMessage ?? "此字段为必填�?,
                 ValidationRuleTypeEnum.Required);
         }
         return ValidationResult.Success();
@@ -126,7 +127,7 @@ public class FormValidationAppService : ApplicationService, IFormValidationAppSe
         if (stringValue != null && stringValue.Length < rule.MinLength)
         {
             return ValidationResult.Failure(
-                rule.ErrorMessage ?? $"最少需要 {rule.MinLength} 个字符",
+                rule.ErrorMessage ?? $"最少需�?{rule.MinLength} 个字�?,
                 ValidationRuleTypeEnum.MinLength);
         }
         return ValidationResult.Success();
@@ -140,7 +141,7 @@ public class FormValidationAppService : ApplicationService, IFormValidationAppSe
         if (stringValue != null && stringValue.Length > rule.MaxLength)
         {
             return ValidationResult.Failure(
-                rule.ErrorMessage ?? $"最多允许 {rule.MaxLength} 个字符",
+                rule.ErrorMessage ?? $"最多允�?{rule.MaxLength} 个字�?,
                 ValidationRuleTypeEnum.MaxLength);
         }
         return ValidationResult.Success();
@@ -155,7 +156,7 @@ public class FormValidationAppService : ApplicationService, IFormValidationAppSe
             if (numericValue < rule.MinValue)
             {
                 return ValidationResult.Failure(
-                    rule.ErrorMessage ?? $"值不能小于 {rule.MinValue}",
+                    rule.ErrorMessage ?? $"值不能小�?{rule.MinValue}",
                     ValidationRuleTypeEnum.MinValue);
             }
         }
@@ -171,7 +172,7 @@ public class FormValidationAppService : ApplicationService, IFormValidationAppSe
             if (numericValue > rule.MaxValue)
             {
                 return ValidationResult.Failure(
-                    rule.ErrorMessage ?? $"值不能大于 {rule.MaxValue}",
+                    rule.ErrorMessage ?? $"值不能大�?{rule.MaxValue}",
                     ValidationRuleTypeEnum.MaxValue);
             }
         }
@@ -188,7 +189,7 @@ public class FormValidationAppService : ApplicationService, IFormValidationAppSe
             if (!regex.IsMatch(value.ToString() ?? ""))
             {
                 return ValidationResult.Failure(
-                    rule.ErrorMessage ?? "格式不正确",
+                    rule.ErrorMessage ?? "格式不正�?,
                     ValidationRuleTypeEnum.Pattern);
             }
         }
@@ -245,7 +246,7 @@ public class FormValidationAppService : ApplicationService, IFormValidationAppSe
         if (!string.IsNullOrEmpty(rule.Expression))
         {
             // TODO: 实现自定义表达式校验
-            // 可以使用JavaScript引擎或其他表达式解析器
+            // 可以使用JavaScript引擎或其他表达式解析�?
         }
         return ValidationResult.Success();
     }

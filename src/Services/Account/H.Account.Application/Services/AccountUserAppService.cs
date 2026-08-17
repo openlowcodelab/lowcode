@@ -1,4 +1,5 @@
 using H.Account.Application.Contracts;
+using H.Util.Base;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Identity;
@@ -25,14 +26,14 @@ public class AccountUserAppService : ApplicationService, IAccountUserAppService
         _currentTenant = currentTenant;
     }
 
-    public async Task<UserDto?> GetUserDtoByIdAsync(Guid userId)
+    public async Task<BaseOutput<UserDto?>> GetUserDtoByIdAsync(Guid userId)
     {
         using var _ = _currentTenant.Change(null);
         var user = await _userManager.FindByIdAsync(userId.ToString());
-        return user != null ? MapToUserDto(user) : null;
+        return BaseOutput<UserDto?>.Ok(user != null ? MapToUserDto(user) : null);
     }
 
-    public async Task<PagedResult<UserDto>> GetPagedUsersAsync(UserQueryParams queryParams)
+    public async Task<BaseOutput<PagedResult<UserDto>>> GetPagedUsersAsync(UserQueryParams queryParams)
     {
         using var _ = _currentTenant.Change(null);
         var query = await _userRepository.GetListAsync();
@@ -58,16 +59,16 @@ public class AccountUserAppService : ApplicationService, IAccountUserAppService
             .Select(MapToUserDto)
             .ToList();
 
-        return new PagedResult<UserDto>
+        return BaseOutput<PagedResult<UserDto>>.Ok(new PagedResult<UserDto>
         {
             Items = items,
             Total = total,
             PageIndex = queryParams.PageIndex,
             PageSize = queryParams.PageSize
-        };
+        });
     }
 
-    public async Task ResetPasswordAsync(Guid userId, ResetPasswordDto dto)
+    public async Task<BaseOutput> ResetPasswordAsync(Guid userId, ResetPasswordDto dto)
     {
         using var _ = _currentTenant.Change(null);
 
@@ -89,6 +90,8 @@ public class AccountUserAppService : ApplicationService, IAccountUserAppService
         {
             throw new Exception(string.Join(", ", result.Errors.Select(e => e.Description)));
         }
+
+        return BaseOutput.Ok();
     }
 
     private static UserDto MapToUserDto(Volo.Abp.Identity.IdentityUser user)

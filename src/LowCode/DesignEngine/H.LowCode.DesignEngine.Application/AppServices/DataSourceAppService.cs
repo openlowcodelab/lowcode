@@ -2,6 +2,7 @@
 using H.LowCode.DesignEngine.Domain.Repositories;
 using H.LowCode.DesignEngine.Model;
 using H.LowCode.MetaSchema;
+using H.Util.Base;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
@@ -13,7 +14,7 @@ public class DataSourceAppService : ApplicationService, IDataSourceAppService
 {
     private IDataSourceRepository _repository => LazyServiceProvider.GetRequiredService<IDataSourceRepository>();
 
-    public async Task<IList<DataSourceListModel>> GetListAsync(string appId, DataSourceInput input)
+    public async Task<BaseOutput<IList<DataSourceListModel>>> GetListAsync(string appId, DataSourceInput input)
     {
         var dataSources = await _repository.GetListAsync(appId);
 
@@ -35,26 +36,26 @@ public class DataSourceAppService : ApplicationService, IDataSourceAppService
             list.Add(model);
         }
 
-        return list.Where(t => t.DataSourceType == input.DataSourceType).OrderBy(t => t.Order).ToList();
+        return BaseOutput<IList<DataSourceListModel>>.Ok(list.Where(t => t.DataSourceType == input.DataSourceType).OrderBy(t => t.Order).ToList());
     }
 
-    public async Task<DataSourceSchema> GetByIdAsync(string appId, string id)
+    public async Task<BaseOutput<DataSourceSchema>> GetByIdAsync(string appId, string id)
     {
-        return await _repository.GetAsync(appId, id);
+        return BaseOutput<DataSourceSchema>.Ok(await _repository.GetAsync(appId, id));
     }
 
-    public async Task<bool> SaveAsync(string appId, DataSourceSchema dataSourceSchema)
+    public async Task<BaseOutput<bool>> SaveAsync(string appId, DataSourceSchema dataSourceSchema)
     {
         ArgumentNullException.ThrowIfNull(dataSourceSchema);
         ArgumentException.ThrowIfNullOrEmpty(dataSourceSchema.Id);
 
         await _repository.SaveAsync(appId, dataSourceSchema);
-        return true;
+        return BaseOutput<bool>.Ok(true);
     }
 
-    public async Task<bool> DeleteAsync(string appId, string id)
+    public async Task<BaseOutput<bool>> DeleteAsync(string appId, string id)
     {
         await _repository.DeleteAsync(appId, id);
-        return true;
+        return BaseOutput<bool>.Ok(true);
     }
 }

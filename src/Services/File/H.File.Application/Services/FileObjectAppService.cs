@@ -1,5 +1,6 @@
 using H.File.Application.Contracts;
 using H.File.EntityFrameworkCore;
+using H.Util.Base;
 using System.Text.RegularExpressions;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
@@ -29,7 +30,7 @@ public class FileObjectAppService : ApplicationService, IFileObjectAppService
         _storage = storage;
     }
 
-    public async Task<List<FileObjectDto>> GetFilesAsync(Guid projectId, string? folderPath = null)
+    public async Task<BaseOutput<List<FileObjectDto>>> GetFilesAsync(Guid projectId, string? folderPath = null)
     {
         var prefix = string.IsNullOrEmpty(folderPath) ? string.Empty : EnsureTrailingSlash(folderPath);
 
@@ -37,7 +38,7 @@ public class FileObjectAppService : ApplicationService, IFileObjectAppService
         var entities = await AsyncExecuter.ToListAsync(
             queryable.Where(o => o.ProjectId == projectId && o.FolderPath == prefix));
 
-        return entities.Select(e => new FileObjectDto
+        return BaseOutput<List<FileObjectDto>>.Ok(entities.Select(e => new FileObjectDto
         {
             Id = e.Id,
             FileName = e.FileName,
@@ -45,10 +46,10 @@ public class FileObjectAppService : ApplicationService, IFileObjectAppService
             ContentType = e.ContentType,
             LastModified = e.CreationTime,
             IsFolder = false
-        }).OrderBy(x => x.FileName).ToList();
+        }).OrderBy(x => x.FileName).ToList());
     }
 
-    public async Task<List<FileFolderDto>> GetFolderTreeAsync(Guid projectId)
+    public async Task<BaseOutput<List<FileFolderDto>>> GetFolderTreeAsync(Guid projectId)
     {
         await _repository.GetAsync(projectId);
         var folders = await _folderRepository.GetListAsync(f => f.ProjectId == projectId);
@@ -72,10 +73,10 @@ public class FileObjectAppService : ApplicationService, IFileObjectAppService
                 roots.Add(node);
         }
 
-        return roots;
+        return BaseOutput<List<FileFolderDto>>.Ok(roots);
     }
 
-    public async Task<FileUploadResultDto> UploadAsync(Guid projectId, string? folderPath = null, string fileName = "", byte[]? content = null, string? contentType = null)
+    public async Task<BaseOutput<FileUploadResultDto>> UploadAsync(Guid projectId, string? folderPath = null, string fileName = "", byte[]? content = null, string? contentType = null)
     {
         if (content is null)
             throw new UserFriendlyException("文件内容不能为空");
@@ -105,34 +106,34 @@ public class FileObjectAppService : ApplicationService, IFileObjectAppService
             entity.TotalSize += content.Length;
             await _repository.UpdateAsync(entity);
 
-            return new FileUploadResultDto
+            return BaseOutput<FileUploadResultDto>.Ok(new FileUploadResultDto
             {
                 Id = objectId,
                 FileName = fileName,
                 Size = content.Length,
                 Success = true
-            };
+            });
         }
         catch (Exception ex)
         {
-            return new FileUploadResultDto
+            return BaseOutput<FileUploadResultDto>.Ok(new FileUploadResultDto
             {
                 Id = objectId,
                 FileName = fileName,
                 Size = content.Length,
                 Success = false,
                 Message = ex.Message
-            };
+            });
         }
     }
 
-    public async Task<FileDownloadResultDto> GetDownloadUrlAsync(Guid projectId, Guid fileId)
+    public async Task<BaseOutput<FileDownloadResultDto>> GetDownloadUrlAsync(Guid projectId, Guid fileId)
     {
         // 通过服务端代理下载，避免预签名 URL 对中文等特殊字符对象名处理异常
-        return new FileDownloadResultDto { Url = $"/api/file/download?projectId={projectId}&fileId={fileId}" };
+        return BaseOutput<FileDownloadResultDto>.Ok(new FileDownloadResultDto { Url = $"/api/file/download?projectId={projectId}&fileId={fileId}" });
     }
 
-    public async Task<FilePreviewDto> GetPreviewAsync(Guid projectId, Guid fileId)
+    public async Task<BaseOutput<FilePreviewDto>> GetPreviewAsync(Guid projectId, Guid fileId)
     {
         var entity = await _repository.GetAsync(projectId);
         // 对象名为 FolderPath + 实体主键，显示文件名/类型从数据库元数据获取
@@ -180,10 +181,10 @@ public class FileObjectAppService : ApplicationService, IFileObjectAppService
             }
         }
 
-        return preview;
+        return BaseOutput<FilePreviewDto>.Ok(preview);
     }
 
-    public async Task DeleteAsync(Guid projectId, Guid fileId)
+    public async Task<BaseOutput> DeleteAsync(Guid projectId, Guid fileId)
     {
         var entity = await _repository.GetAsync(projectId);
 
@@ -199,9 +200,11 @@ public class FileObjectAppService : ApplicationService, IFileObjectAppService
         entity.FileCount -= 1;
         entity.TotalSize -= fileEntity.Size;
         await _repository.UpdateAsync(entity);
+
+        return BaseOutput.Ok();
     }
 
-    public async Task CreateFolderAsync(Guid projectId, CreateFolderInput input)
+    public async Task<BaseOutput> CreateFolderAsync(Guid projectId, CreateFolderInput input)
     {
         if (string.IsNullOrWhiteSpace(input.Name))
             throw new UserFriendlyException("分类名称不能为空");
@@ -233,9 +236,11 @@ public class FileObjectAppService : ApplicationService, IFileObjectAppService
             Name = input.Name.Trim(),
             Path = path
         });
+
+        return BaseOutput.Ok();
     }
 
-    public async Task RenameFolderAsync(Guid projectId, string folderPath, string newName)
+    public async Task<BaseOutput> RenameFolderAsync(Guid projectId, string folderPath, string newName)
     {
         if (string.IsNullOrWhiteSpace(newName))
             throw new UserFriendlyException("分类名称不能为空");
@@ -249,9 +254,11 @@ public class FileObjectAppService : ApplicationService, IFileObjectAppService
 
         folder.Name = newName.Trim();
         await _folderRepository.UpdateAsync(folder);
+
+        return BaseOutput.Ok();
     }
 
-    public async Task DeleteFolderAsync(Guid projectId, string folderPath)
+    public async Task<BaseOutput> DeleteFolderAsync(Guid projectId, string folderPath)
     {
         var entity = await _repository.GetAsync(projectId);
         var prefix = EnsureTrailingSlash(folderPath);
@@ -275,9 +282,11 @@ public class FileObjectAppService : ApplicationService, IFileObjectAppService
         var toDeleteFolders = await _folderRepository.GetListAsync(f =>
             f.ProjectId == projectId && (f.Path == prefix || f.Path.StartsWith(prefix)));
         await _folderRepository.DeleteManyAsync(toDeleteFolders);
+
+        return BaseOutput.Ok();
     }
 
-    public async Task<MultipartUploadDto> InitMultipartUploadAsync(Guid projectId, string? folderPath = null, string fileName = "", long fileSize = 0, string? contentType = null)
+    public async Task<BaseOutput<MultipartUploadDto>> InitMultipartUploadAsync(Guid projectId, string? folderPath = null, string fileName = "", long fileSize = 0, string? contentType = null)
     {
         var entity = await _repository.GetAsync(projectId);
         // 预生成文件实体主键作为 MinIO 对象名，按 FolderPath 存入对应目录（合并完成时以此主键写入数据库）
@@ -288,17 +297,17 @@ public class FileObjectAppService : ApplicationService, IFileObjectAppService
         var uploadId = Guid.NewGuid().ToString("N");
         var totalParts = (int)Math.Ceiling((double)fileSize / MultipartUploadConstants.DefaultPartSize);
 
-        return new MultipartUploadDto
+        return BaseOutput<MultipartUploadDto>.Ok(new MultipartUploadDto
         {
             UploadId = uploadId,
             ObjectId = objectId,
             ObjectKey = objectKey,
             TotalParts = totalParts,
             PartSize = MultipartUploadConstants.DefaultPartSize
-        };
+        });
     }
 
-    public async Task<UploadPartResult> UploadPartAsync(UploadPartInput input)
+    public async Task<BaseOutput<UploadPartResult>> UploadPartAsync(UploadPartInput input)
     {
         try
         {
@@ -311,30 +320,30 @@ public class FileObjectAppService : ApplicationService, IFileObjectAppService
             // 分片上传时需要知道 bucketName，通过临时存储解决
             await _storage.PutObjectAsync(input.BucketName, partKey, input.Data);
 
-            return new UploadPartResult
+            return BaseOutput<UploadPartResult>.Ok(new UploadPartResult
             {
                 PartIndex = input.PartIndex,
                 ETag = $"part-{input.PartIndex}",
                 Success = true
-            };
+            });
         }
         catch (Exception ex)
         {
-            return new UploadPartResult
+            return BaseOutput<UploadPartResult>.Ok(new UploadPartResult
             {
                 PartIndex = input.PartIndex,
                 Success = false,
                 Message = ex.Message
-            };
+            });
         }
     }
 
-    public Task<List<UploadedPartDto>> ListUploadedPartsAsync(string uploadId, string objectKey)
+    public Task<BaseOutput<List<UploadedPartDto>>> ListUploadedPartsAsync(string uploadId, string objectKey)
     {
-        return Task.FromResult(new List<UploadedPartDto>());
+        return Task.FromResult(BaseOutput<List<UploadedPartDto>>.Ok(new List<UploadedPartDto>()));
     }
 
-    public async Task<FileUploadResultDto> CompleteMultipartUploadAsync(CompleteMultipartUploadInput input)
+    public async Task<BaseOutput<FileUploadResultDto>> CompleteMultipartUploadAsync(CompleteMultipartUploadInput input)
     {
         try
         {
@@ -373,29 +382,29 @@ public class FileObjectAppService : ApplicationService, IFileObjectAppService
             entity.TotalSize += input.FileSize;
             await _repository.UpdateAsync(entity);
 
-            return new FileUploadResultDto
+            return BaseOutput<FileUploadResultDto>.Ok(new FileUploadResultDto
             {
                 Id = fileId,
                 FileName = input.FileName,
                 Size = input.FileSize,
                 Success = true
-            };
+            });
         }
         catch (Exception ex)
         {
-            return new FileUploadResultDto
+            return BaseOutput<FileUploadResultDto>.Ok(new FileUploadResultDto
             {
                 FileName = input.FileName,
                 Size = input.FileSize,
                 Success = false,
                 Message = ex.Message
-            };
+            });
         }
     }
 
-    public Task AbortMultipartUploadAsync(string uploadId, string objectKey)
+    public Task<BaseOutput> AbortMultipartUploadAsync(string uploadId, string objectKey)
     {
-        return Task.CompletedTask;
+        return Task.FromResult(BaseOutput.Ok());
     }
 
     #region 辅助方法

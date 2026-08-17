@@ -19,7 +19,7 @@ public class CategoryService
 
     public async Task LoadAsync()
     {
-        var list = await _categoryAppService.GetListAsync();
+        var list = (await _categoryAppService.GetListAsync()).Data ?? [];
         Categories.Clear();
         foreach (var item in list)
         {
@@ -36,7 +36,7 @@ public class CategoryService
 
         try
         {
-            var dto = await _categoryAppService.CreateAsync(new CreateCategoryDto { Name = name.Trim() });
+            var dto = (await _categoryAppService.CreateAsync(new CreateCategoryDto { Name = name.Trim() })).Data!;
             Categories.Add(dto);
             return dto;
         }
@@ -55,7 +55,7 @@ public class CategoryService
 
         try
         {
-            var dto = await _categoryAppService.UpdateAsync(id, new UpdateCategoryDto { Name = name.Trim() });
+            var dto = (await _categoryAppService.UpdateAsync(id, new UpdateCategoryDto { Name = name.Trim() })).Data!;
             var index = Categories.ToList().FindIndex(c => c.Id == id);
             if (index >= 0)
             {

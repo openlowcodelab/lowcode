@@ -171,8 +171,8 @@
     {
         await base.OnInitializedAsync();
 
-        _app = await AppApplicationService.GetByIdAsync(AppId);
-        _pages = await PageAppService.GetListAsync(AppId);
+        _app = (await AppApplicationService.GetByIdAsync(AppId)).Data!;
+        _pages = (await PageAppService.GetListAsync(AppId)).Data;
     }
 
     private bool HasPlatform(SupportPlatformEnum platform)
@@ -195,7 +195,7 @@
         _saving = true;
         try
         {
-            var isSuccess = await AppApplicationService.SaveAsync(_app);
+            var isSuccess = (await AppApplicationService.SaveAsync(_app)).Data == true;
             if (isSuccess)
                 await Message.SuccessAsync("保存成功");
             else

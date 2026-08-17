@@ -2,6 +2,7 @@
 using H.LowCode.DesignEngine.Domain.Repositories;
 using H.LowCode.DesignEngine.Model;
 using H.LowCode.MetaSchema.DesignEngine;
+using H.Util.Base;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
@@ -13,28 +14,28 @@ public class ComponentPartsAppService : ApplicationService, IComponentPartsAppSe
 {
     private IComponentPartsRepository _repository => LazyServiceProvider.GetRequiredService<IComponentPartsRepository>();
 
-    public async Task<List<ComponentPartsSchema>> GetAllComponentsAsync(string libraryId)
+    public async Task<BaseOutput<List<ComponentPartsSchema>>> GetAllComponentsAsync(string libraryId)
     {
-        return await _repository.GetAllComponentsAsync(libraryId);
+        return BaseOutput<List<ComponentPartsSchema>>.Ok(await _repository.GetAllComponentsAsync(libraryId));
     }
 
-    public async Task<ComponentPartsSchema> GetByIdAsync(string libraryId, string partsId)
+    public async Task<BaseOutput<ComponentPartsSchema>> GetByIdAsync(string libraryId, string partsId)
     {
-        return await _repository.GetByIdAsync(libraryId, partsId);
+        return BaseOutput<ComponentPartsSchema>.Ok(await _repository.GetByIdAsync(libraryId, partsId));
     }
 
-    public async Task<List<ComponentPartsListModel>> GetListAsync(string libraryId)
+    public async Task<BaseOutput<List<ComponentPartsListModel>>> GetListAsync(string libraryId)
     {
-        return await _repository.GetListAsync(libraryId);
+        return BaseOutput<List<ComponentPartsListModel>>.Ok(await _repository.GetListAsync(libraryId));
     }
 
-    public async Task<bool> SaveAsync(ComponentPartsSchema componentParts)
+    public async Task<BaseOutput<bool>> SaveAsync(ComponentPartsSchema componentParts)
     {
-        return await _repository.SaveAsync(componentParts);
+        return BaseOutput<bool>.Ok(await _repository.SaveAsync(componentParts));
     }
 
-    public async Task<bool> DeleteAsync(string libraryId, string partsId)
+    public async Task<BaseOutput<bool>> DeleteAsync(string libraryId, string partsId)
     {
-        return await _repository.DeleteAsync(libraryId, partsId);
+        return BaseOutput<bool>.Ok(await _repository.DeleteAsync(libraryId, partsId));
     }
 }

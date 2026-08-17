@@ -1,6 +1,7 @@
 using H.Abp.Application.Contracts;
 using H.Setting.Application.Contracts;
 using H.Setting.EntityFrameworkCore;
+using H.Util.Base;
 using Microsoft.EntityFrameworkCore;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
@@ -24,7 +25,7 @@ public class SettingDefinitionAppService : ApplicationService, ISettingDefinitio
         _valueRepository = valueRepository;
     }
 
-    public async Task<PagedResultDto<SettingDefinitionDto>> GetListAsync(SettingDefinitionQueryDto input)
+    public async Task<BaseOutput<PagedResultDto<SettingDefinitionDto>>> GetListAsync(SettingDefinitionQueryDto input)
     {
         var query = await _definitionRepository.GetQueryableAsync();
 
@@ -40,16 +41,16 @@ public class SettingDefinitionAppService : ApplicationService, ISettingDefinitio
             query.OrderBy(x => x.Name).Skip(input.SkipCount).Take(maxResult));
 
         var dtos = entities.Select(MapToDto).ToList();
-        return new PagedResultDto<SettingDefinitionDto>(totalCount, dtos);
+        return BaseOutput<PagedResultDto<SettingDefinitionDto>>.Ok(new PagedResultDto<SettingDefinitionDto>(totalCount, dtos));
     }
 
-    public async Task<SettingDefinitionDto> GetAsync(Guid id)
+    public async Task<BaseOutput<SettingDefinitionDto>> GetAsync(Guid id)
     {
         var entity = await _definitionRepository.GetAsync(id);
-        return MapToDto(entity);
+        return BaseOutput<SettingDefinitionDto>.Ok(MapToDto(entity));
     }
 
-    public async Task<SettingDefinitionDto> CreateAsync(CreateUpdateSettingDefinitionDto input)
+    public async Task<BaseOutput<SettingDefinitionDto>> CreateAsync(CreateUpdateSettingDefinitionDto input)
     {
         await CheckNameDuplicateAsync(input.Name);
 
@@ -65,10 +66,10 @@ public class SettingDefinitionAppService : ApplicationService, ISettingDefinitio
             IsEncrypted = input.IsEncrypted
         };
         await _definitionRepository.InsertAsync(entity, autoSave: true);
-        return MapToDto(entity);
+        return BaseOutput<SettingDefinitionDto>.Ok(MapToDto(entity));
     }
 
-    public async Task<SettingDefinitionDto> UpdateAsync(Guid id, CreateUpdateSettingDefinitionDto input)
+    public async Task<BaseOutput<SettingDefinitionDto>> UpdateAsync(Guid id, CreateUpdateSettingDefinitionDto input)
     {
         var entity = await _definitionRepository.GetAsync(id);
 
@@ -87,10 +88,10 @@ public class SettingDefinitionAppService : ApplicationService, ISettingDefinitio
         entity.IsEncrypted = input.IsEncrypted;
 
         await _definitionRepository.UpdateAsync(entity, autoSave: true);
-        return MapToDto(entity);
+        return BaseOutput<SettingDefinitionDto>.Ok(MapToDto(entity));
     }
 
-    public async Task DeleteAsync(Guid id)
+    public async Task<BaseOutput> DeleteAsync(Guid id)
     {
         var entity = await _definitionRepository.GetAsync(id);
         var hasValues = await (await _valueRepository.GetQueryableAsync()).AnyAsync(x => x.Name == entity.Name);
@@ -99,6 +100,7 @@ public class SettingDefinitionAppService : ApplicationService, ISettingDefinitio
             throw new UserFriendlyException("该配置定义下存在配置项，无法删除");
         }
         await _definitionRepository.DeleteAsync(id);
+        return BaseOutput.Ok();
     }
 
     private async Task CheckNameDuplicateAsync(string? name, Guid? excludeId = null)

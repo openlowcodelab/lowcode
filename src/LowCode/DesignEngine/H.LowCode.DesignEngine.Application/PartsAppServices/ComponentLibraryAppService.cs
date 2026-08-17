@@ -1,6 +1,7 @@
 ﻿using H.LowCode.DesignEngine.Application.Contracts;
 using H.LowCode.DesignEngine.Domain.Repositories;
 using H.LowCode.MetaSchema.DesignEngine;
+using H.Util.Base;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
@@ -12,23 +13,23 @@ public class ComponentLibraryAppService : ApplicationService, IComponentLibraryA
 {
     private IComponentLibraryRepository _repository => LazyServiceProvider.GetRequiredService<IComponentLibraryRepository>();
 
-    public Task<List<ComponentLibrarySchema>> GetListAsync()
+    public async Task<BaseOutput<List<ComponentLibrarySchema>>> GetListAsync()
     {
-        return _repository.GetListAsync();
+        return BaseOutput<List<ComponentLibrarySchema>>.Ok(await _repository.GetListAsync());
     }
 
-    public async Task<ComponentLibrarySchema> GetByIdAsync(string libraryId)
+    public async Task<BaseOutput<ComponentLibrarySchema>> GetByIdAsync(string libraryId)
     {
-        return await _repository.GetByIdAsync(libraryId);
+        return BaseOutput<ComponentLibrarySchema>.Ok(await _repository.GetByIdAsync(libraryId));
     }
 
-    public async Task<bool> SaveAsync(ComponentLibrarySchema componentLibrary)
+    public async Task<BaseOutput<bool>> SaveAsync(ComponentLibrarySchema componentLibrary)
     {
-        return await _repository.SaveAsync(componentLibrary);
+        return BaseOutput<bool>.Ok(await _repository.SaveAsync(componentLibrary));
     }
 
-    public async Task<bool> DeleteAsync(string libraryId)
+    public async Task<BaseOutput<bool>> DeleteAsync(string libraryId)
     {
-        return await _repository.DeleteAsync(libraryId);
+        return BaseOutput<bool>.Ok(await _repository.DeleteAsync(libraryId));
     }
 }

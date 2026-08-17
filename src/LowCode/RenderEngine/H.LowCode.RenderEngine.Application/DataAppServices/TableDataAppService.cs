@@ -1,6 +1,7 @@
 using H.Abp.Application.Contracts;
 using H.LowCode.Application.Contracts;
 using H.LowCode.RenderEngine.Domain;
+using H.Util.Base;
 using Volo.Abp.Application.Services;
 
 namespace H.LowCode.RenderEngine.Application;
@@ -17,18 +18,20 @@ public class TableDataAppService : ApplicationService, ITableDataAppService
         _tableDataRepository = tableDataRepository;
     }
 
-    public async Task<PagedResultDto<Dictionary<string, object>>> GetListAsync(TableDataInput input)
+    public async Task<BaseOutput<PagedResultDto<Dictionary<string, object>>>> GetListAsync(TableDataInput input)
     {
-        return await _tableDataRepository.GetListAsync(input);
+        return BaseOutput<PagedResultDto<Dictionary<string, object>>>.Ok(await _tableDataRepository.GetListAsync(input));
     }
 
-    public async Task DeleteAsync(TableDataDeleteInput request)
+    public async Task<BaseOutput> DeleteAsync(TableDataDeleteInput request)
     {
         await _tableDataRepository.DeleteAsync(request);
+        return BaseOutput.Ok();
     }
 
-    public async Task UpdateAsync(TableDataUpdateInput request)
+    public async Task<BaseOutput> UpdateAsync(TableDataUpdateInput request)
     {
         await _tableDataRepository.UpdateAsync(request);
+        return BaseOutput.Ok();
     }
 }

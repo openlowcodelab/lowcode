@@ -1,6 +1,7 @@
 using H.Abp.Application.Contracts;
 using H.Assistant.Application.Contracts;
 using H.Assistant.Core;
+using H.Util.Base;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
@@ -27,16 +28,16 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
         _logger = logger;
     }
 
-    public async Task<ChatResponseDto> SendMessageAsync(SendChatMessageInputDto input)
+    public async Task<BaseOutput<ChatResponseDto>> SendMessageAsync(SendChatMessageInputDto input)
     {
         var agentType = input.AgentType ?? "general";
         Guid sessionId;
 
-        // 如果是新会话（SessionId 为 null），创建新会话
+        // 如果是新会话（SessionId �?null），创建新会�?
         if (!input.SessionId.HasValue)
         {
             var title = input.Message.Length > 30 ? input.Message[..30] + "..." : input.Message;
-            sessionId = await _sessionAppService.CreateSessionAsync(title, agentType);
+            sessionId = (await _sessionAppService.CreateSessionAsync(title, agentType)).Data;
         }
         else
         {
@@ -54,8 +55,8 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
             CreationTime = DateTime.UtcNow
         };
 
-        // 获取历史消息（在添加当前用户消息之前，避免 ProcessMessageAsync 中重复添加）
-        var history = await _sessionAppService.GetMessagesAsync(sessionId);
+        // 获取历史消息（在添加当前用户消息之前，避�?ProcessMessageAsync 中重复添加）
+        var history = (await _sessionAppService.GetMessagesAsync(sessionId)).Data ?? [];
         var conversationHistory = history.Select(m => $"{m.Role}: {m.Content}").ToList();
 
         await _sessionAppService.AddMessageAsync(sessionId, userMessage);
@@ -67,8 +68,8 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
         {
             _logger.LogError("无法创建 Agent 实例，agentType={AgentType}, modelConfigId={ModelConfigId}", agentType, input.ModelConfigId);
             throw new InvalidOperationException(
-                $"无法创建 Assistant 实例: {agentType}。" +
-                $"请检查: 1) LLM 配置是否存在且已启用; 2) API Key 是否正确配置; 3) Agent 定义是否存在。");
+                $"无法创建 Assistant 实例: {agentType}�? +
+                $"请检�? 1) LLM 配置是否存在且已启用; 2) API Key 是否正确配置; 3) Agent 定义是否存在�?);
         }
 
         // 处理消息
@@ -88,14 +89,14 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
         // Trigger memory extraction in background
         _ = Task.Run(() => TryExtractMemoryAsync(sessionId));
 
-        return new ChatResponseDto
+        return new() { Data = new ChatResponseDto
         {
             SessionId = sessionId,
             MessageId = aiMessage.Id,
             Response = response,
             IsStreaming = false,
             ToolCalls = agent.GetAvailableTools()
-        };
+        } };
     }
 
     public async IAsyncEnumerable<string> SendMessageStreamAsync(SendChatMessageInputDto input)
@@ -103,11 +104,11 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
         var agentType = input.AgentType ?? "general";
         Guid sessionId;
 
-        // 如果是新会话（SessionId 为 null），创建新会话
+        // 如果是新会话（SessionId �?null），创建新会�?
         if (!input.SessionId.HasValue)
         {
             var title = input.Message.Length > 30 ? input.Message[..30] + "..." : input.Message;
-            sessionId = await _sessionAppService.CreateSessionAsync(title, agentType);
+            sessionId = (await _sessionAppService.CreateSessionAsync(title, agentType)).Data;
         }
         else
         {
@@ -126,7 +127,7 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
         };
 
         // 获取历史消息
-        var history = await _sessionAppService.GetMessagesAsync(sessionId);
+        var history = (await _sessionAppService.GetMessagesAsync(sessionId)).Data ?? [];
         var conversationHistory = history.Select(m => $"{m.Role}: {m.Content}").ToList();
 
         await _sessionAppService.AddMessageAsync(sessionId, userMessage);
@@ -147,20 +148,20 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
             _logger.LogError("无法创建 Agent 实例(流式)，agentType={AgentType}, providerName={ProviderName}, modelConfigId={ModelConfigId}",
                 agentType, input.ProviderName, input.ModelConfigId);
             throw new InvalidOperationException(
-                $"无法创建 Assistant 实例: {agentType}。" +
-                $"请检查: 1) LLM 配置是否存在且已启用; 2) API Key 是否正确配置; 3) Agent 定义是否存在。");
+                $"无法创建 Assistant 实例: {agentType}�? +
+                $"请检�? 1) LLM 配置是否存在且已启用; 2) API Key 是否正确配置; 3) Agent 定义是否存在�?);
         }
 
-        // 如果 Assistant 支持流式响应，使用流式处理
+        // 如果 Assistant 支持流式响应，使用流式处�?
         if (agent is IStreamingAgent streamingAgent)
         {
             var fullResponse = string.Empty;
             var reactSteps = new List<object>();
 
-            // 逐块接收 ReAct 事件并推送给客户端
+            // 逐块接收 ReAct 事件并推送给客户�?
             await foreach (var chunk in streamingAgent.ProcessMessageStreamAsync(input.Message, conversationHistory))
             {
-                // 解析 JSON 事件，提取内容用于保存
+                // 解析 JSON 事件，提取内容用于保�?
                 try
                 {
                     using var doc = JsonDocument.Parse(chunk);
@@ -170,14 +171,14 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
                     {
                         var eventType = typeProp.GetString();
 
-                        // 累积最终回答内容（来自 answer 事件）
+                        // 累积最终回答内容（来自 answer 事件�?
                         if (eventType == "answer" && root.TryGetProperty("content", out var contentProp))
                         {
                             var content = contentProp.GetString() ?? "";
                             fullResponse += content;
                         }
 
-                        // 收集 ReAct 步骤数据（thinking、tool_call、tool_result）
+                        // 收集 ReAct 步骤数据（thinking、tool_call、tool_result�?
                         if (eventType == "thinking" || eventType == "tool_call" || eventType == "tool_result")
                         {
                             var iteration = root.TryGetProperty("iteration", out var iterProp) ? iterProp.GetInt32() : 0;
@@ -209,19 +210,19 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
                 }
                 catch
                 {
-                    // 非 JSON 格式（向后兼容旧格式），直接累积
+                    // �?JSON 格式（向后兼容旧格式），直接累积
                     fullResponse += chunk;
                 }
 
                 yield return chunk;
             }
 
-            // 保存完整的 AI 响应消息（将 ReAct 步骤嵌入 Content 字段）
+            // 保存完整�?AI 响应消息（将 ReAct 步骤嵌入 Content 字段�?
             if (!string.IsNullOrWhiteSpace(fullResponse))
             {
                 var contentToSave = fullResponse;
 
-                // 如果有 ReAct 步骤，将其与最终回答一起打包为 JSON 格式
+                // 如果�?ReAct 步骤，将其与最终回答一起打包为 JSON 格式
                 if (reactSteps.Count > 0)
                 {
                     var enrichedContent = new Dictionary<string, object?>
@@ -251,7 +252,7 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
         }
         else
         {
-            // 降级到同步处理
+            // 降级到同步处�?
             var response = await agent.ProcessMessageAsync(input.Message, conversationHistory);
 
             var aiMessage = new ChatMessageDto
@@ -267,14 +268,14 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
             // Trigger memory extraction in background
             _ = Task.Run(() => TryExtractMemoryAsync(sessionId));
 
-            // 一次性返回完整响应
+            // 一次性返回完整响�?
             yield return response;
         }
     }
 
-    public async Task<PagedResultDto<ChatDto>> GetSessionsAsync(SessionQueryDto input)
+    public async Task<BaseOutput<PagedResultDto<ChatDto>>> GetSessionsAsync(SessionQueryDto input)
     {
-        var sessions = await _sessionAppService.GetSessionsAsync(input.Filter);
+        var sessions = (await _sessionAppService.GetSessionsAsync(input.Filter)).Data ?? [];
 
         var totalCount = sessions.Count;
         var pagedSessions = sessions
@@ -282,33 +283,34 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
             .Take(input.MaxResultCount)
             .ToList();
 
-        return new PagedResultDto<ChatDto>(totalCount, pagedSessions);
+        return new() { Data = new PagedResultDto<ChatDto>(totalCount, pagedSessions) };
     }
 
-    public async Task<List<ChatMessageDto>> GetMessagesAsync(Guid sessionId)
+    public async Task<BaseOutput<List<ChatMessageDto>>> GetMessagesAsync(Guid sessionId)
     {
         return await _sessionAppService.GetMessagesAsync(sessionId);
     }
 
-    public async Task DeleteSessionAsync(Guid sessionId)
+    public async Task<BaseOutput> DeleteSessionAsync(Guid sessionId)
     {
         await _sessionAppService.DeleteSessionAsync(sessionId);
+        return new();
     }
 
-    public async Task<List<AgentConfigDto>> GetAvailableAgentsAsync()
+    public async Task<BaseOutput<List<AgentConfigDto>>> GetAvailableAgentsAsync()
     {
         var agents = await _agentFactory.GetAvailableAgentsAsync();
-        return agents.Select(a => new AgentConfigDto
+        return new() { Data = agents.Select(a => new AgentConfigDto
         {
             AgentType = a.AgentType,
             DisplayName = a.DisplayName,
             Description = a.Description,
             Capabilities = a.Capabilities
-        }).ToList();
+        }).ToList() };
     }
 
     /// <summary>
-    /// 从对话中异步提取记忆（后台执行，不影响主流程）
+    /// 从对话中异步提取记忆（后台执行，不影响主流程�?
     /// </summary>
     private async Task TryExtractMemoryAsync(Guid sessionId)
     {
@@ -320,7 +322,7 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
             var chatService = scope.ServiceProvider.GetRequiredService<IChatAppService>();
 
             // Get recent messages from this session
-            var messages = await chatService.GetMessagesAsync(sessionId);
+            var messages = (await chatService.GetMessagesAsync(sessionId)).Data ?? [];
             if (messages.Count < 2) return; // Need at least 1 user + 1 assistant message
 
             // Only take the last 10 messages for extraction
@@ -338,10 +340,10 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
             }
 
             // Build extraction prompt
-            var systemPrompt = @"你是一个信息提取助手。请从以下对话中提取值得记住的关键信息，包括：用户偏好、项目信息、技术决策、重要事实等。
-以 JSON 数组格式返回，每项包含 title、content、category 字段。category 可选值：用户偏好、项目信息、技术决策、重要事实、其他。
-如果没有值得提取的信息，返回空数组 []。
-只返回 JSON，不要其他内容。";
+            var systemPrompt = @"你是一个信息提取助手。请从以下对话中提取值得记住的关键信息，包括：用户偏好、项目信息、技术决策、重要事实等�?
+�?JSON 数组格式返回，每项包�?title、content、category 字段。category 可选值：用户偏好、项目信息、技术决策、重要事实、其他�?
+如果没有值得提取的信息，返回空数�?[]�?
+只返�?JSON，不要其他内容�?;
 
             var request = new LLMRequest
             {
@@ -389,12 +391,12 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
                     });
                 }
 
-                _logger.LogInformation("从会话 {SessionId} 中提取了 {Count} 条记忆", sessionId, memories.Count);
+                _logger.LogInformation("从会�?{SessionId} 中提取了 {Count} 条记�?, sessionId, memories.Count);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "从会话 {SessionId} 提取记忆失败", sessionId);
+            _logger.LogWarning(ex, "从会�?{SessionId} 提取记忆失败", sessionId);
         }
     }
 

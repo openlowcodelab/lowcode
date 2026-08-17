@@ -218,7 +218,7 @@
             isProcessing = true;
             StateHasChanged();
 
-            var resp = await PlaywrightRecorderAppService.StartRecordingAsync("/");
+            var resp = (await PlaywrightRecorderAppService.StartRecordingAsync("/")).Data!;
             currentSessionId = resp.SessionId;            
         }
         catch (Exception ex)
@@ -239,7 +239,7 @@
             isProcessing = true;
             StateHasChanged();
 
-            var resp = await PlaywrightRecorderAppService.StopRecordingAsync(currentSessionId);
+            var resp = (await PlaywrightRecorderAppService.StopRecordingAsync(currentSessionId)).Data!;
                 
             if (resp.IsSuccess)
             {

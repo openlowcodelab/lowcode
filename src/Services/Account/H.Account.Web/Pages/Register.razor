@@ -123,7 +123,7 @@
         
         try
         {
-            var result = await AccountAppService.RegisterAsync(registerModel);
+            var result = (await AccountAppService.RegisterAsync(registerModel)).Data!;
             
             if (result.Success)
             {

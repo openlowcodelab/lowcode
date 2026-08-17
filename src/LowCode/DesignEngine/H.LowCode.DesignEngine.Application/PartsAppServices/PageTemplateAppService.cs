@@ -2,6 +2,7 @@ using H.LowCode.DesignEngine.Application.Contracts;
 using H.LowCode.DesignEngine.Domain.Repositories;
 using H.LowCode.DesignEngine.Model;
 using H.LowCode.MetaSchema.DesignEngine;
+using H.Util.Base;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
@@ -14,27 +15,27 @@ public class PageTemplateAppService : ApplicationService, IPageTemplateAppServic
 {
     private IPageTemplateRepository _repository => LazyServiceProvider.GetRequiredService<IPageTemplateRepository>();
 
-    public async Task<List<PageTemplateListModel>> GetListAsync()
+    public async Task<BaseOutput<List<PageTemplateListModel>>> GetListAsync()
     {
-        return await _repository.GetListAsync();
+        return BaseOutput<List<PageTemplateListModel>>.Ok(await _repository.GetListAsync());
     }
 
-    public async Task<PageTemplateSchema> GetByIdAsync(string templateId)
+    public async Task<BaseOutput<PageTemplateSchema>> GetByIdAsync(string templateId)
     {
-        return await _repository.GetByIdAsync(templateId);
+        return BaseOutput<PageTemplateSchema>.Ok(await _repository.GetByIdAsync(templateId));
     }
 
     [DisableValidation]
-    public async Task<bool> SaveAsync(PageTemplateSchema pageTemplate)
+    public async Task<BaseOutput<bool>> SaveAsync(PageTemplateSchema pageTemplate)
     {
         ArgumentNullException.ThrowIfNull(pageTemplate);
         ArgumentException.ThrowIfNullOrEmpty(pageTemplate.TemplateId);
 
-        return await _repository.SaveAsync(pageTemplate);
+        return BaseOutput<bool>.Ok(await _repository.SaveAsync(pageTemplate));
     }
 
-    public async Task<bool> DeleteAsync(string templateId)
+    public async Task<BaseOutput<bool>> DeleteAsync(string templateId)
     {
-        return await _repository.DeleteAsync(templateId);
+        return BaseOutput<bool>.Ok(await _repository.DeleteAsync(templateId));
     }
 }

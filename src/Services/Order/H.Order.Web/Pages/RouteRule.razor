@@ -137,7 +137,7 @@
     {
         try
         {
-            var r = await SupplierService.GetListAsync(new SupplierQueryDto { MaxResultCount = 100 });
+            var r = (await SupplierService.GetListAsync(new SupplierQueryDto { MaxResultCount = 100 })).Data!;
             suppliers = r.Items.ToList();
         }
         catch { }
@@ -148,7 +148,7 @@
         loading = true;
         try
         {
-            var r = await RouteRuleService.GetListAsync(new RouteRuleQueryDto { MaxResultCount = 100 });
+            var r = (await RouteRuleService.GetListAsync(new RouteRuleQueryDto { MaxResultCount = 100 })).Data!;
             rules = r.Items.OrderBy(x => x.Priority).ToList();
         }
         catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载失败：{ex.Message}"); }

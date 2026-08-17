@@ -1,5 +1,6 @@
 using H.Approval.Application.Contracts;
 using H.Approval.EntityFrameworkCore;
+using H.Util.Base;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System.Security.Claims;
@@ -35,13 +36,13 @@ public class ApprovalInstanceAppService : ApplicationService, IApprovalInstanceA
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public async Task<ApprovalInstanceDto> StartAsync(StartApprovalInstanceDto input)
+    public async Task<BaseOutput<ApprovalInstanceDto>> StartAsync(StartApprovalInstanceDto input)
     {
         _logger.LogInformation("启动审批实例: DefinitionId={DefinitionId}, Title={Title}",
             input.DefinitionId, input.Title);
 
         // 1. 获取审批定义
-        var definition = await _definitionService.GetByIdAsync(input.DefinitionId);
+        var definition = (await _definitionService.GetByIdAsync(input.DefinitionId)).Data!;
 
         // 2. 解析节点树
         var root = _workflowEngine.ParseDefinition(definition.DefinitionJson);
@@ -76,7 +77,7 @@ public class ApprovalInstanceAppService : ApplicationService, IApprovalInstanceA
             entity.CompletionTime = DateTime.Now;
             await _instanceRepository.InsertAsync(entity);
             _logger.LogInformation("审批定义无审批节点,实例直接完成: InstanceId={InstanceId}", entity.Id);
-            return MapToDto(entity);
+            return BaseOutput<ApprovalInstanceDto>.Ok(MapToDto(entity));
         }
 
         var (node, assignees) = first.Value;
@@ -90,7 +91,7 @@ public class ApprovalInstanceAppService : ApplicationService, IApprovalInstanceA
         _logger.LogInformation("审批实例已启动: InstanceId={InstanceId}, 首节点={NodeName}, 审批模式={Mode}, 审批人数={Count}",
             entity.Id, node.NodeName, node.ApproverMode, assignees.Count);
 
-        return MapToDto(entity);
+        return BaseOutput<ApprovalInstanceDto>.Ok(MapToDto(entity));
     }
 
     /// <summary>
@@ -146,16 +147,16 @@ public class ApprovalInstanceAppService : ApplicationService, IApprovalInstanceA
         await _taskRepository.InsertAsync(task);
     }
 
-    public async Task<List<ApprovalInstanceDto>> GetMyApprovalsAsync()
+    public async Task<BaseOutput<List<ApprovalInstanceDto>>> GetMyApprovalsAsync()
     {
         var (userId, _) = GetCurrentUser();
         _logger.LogInformation("获取我发起的审批: UserId={UserId}", userId);
 
         var entities = await _instanceRepository.GetByCreatorIdAsync(userId);
-        return entities.Select(MapToDto).ToList();
+        return BaseOutput<List<ApprovalInstanceDto>>.Ok(entities.Select(MapToDto).ToList());
     }
 
-    public async Task<ApprovalInstanceDto> GetByIdAsync(string id)
+    public async Task<BaseOutput<ApprovalInstanceDto>> GetByIdAsync(string id)
     {
         _logger.LogInformation("获取审批实例详情: Id={Id}", id);
 
@@ -168,17 +169,17 @@ public class ApprovalInstanceAppService : ApplicationService, IApprovalInstanceA
         var dto = MapToDto(entity);
         var tasks = await _taskRepository.GetByInstanceIdAsync(id);
         dto.Tasks = tasks.Select(MapTaskToDto).ToList();
-        return dto;
+        return BaseOutput<ApprovalInstanceDto>.Ok(dto);
     }
 
-    public async Task CancelAsync(string id)
+    public async Task<BaseOutput> CancelAsync(string id)
     {
         _logger.LogInformation("取消审批实例: Id={Id}", id);
 
         var entity = await _instanceRepository.GetByIdAsync(id);
         if (entity == null)
         {
-            return;
+            return BaseOutput.Ok();
         }
 
         entity.Status = ApprovalStatusEnum.Cancelled;
@@ -196,6 +197,8 @@ public class ApprovalInstanceAppService : ApplicationService, IApprovalInstanceA
         }
 
         _logger.LogInformation("审批实例已取消: Id={Id}", id);
+
+        return BaseOutput.Ok();
     }
 
     private (string Id, string Name) GetCurrentUser()

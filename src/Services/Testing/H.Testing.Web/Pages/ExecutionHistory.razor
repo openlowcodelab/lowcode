@@ -416,12 +416,12 @@ else
         {
             loading = true;
 
-            testCase = await ProjectCaseService.GetByIdAsync(TestCaseId);
+            testCase = (await ProjectCaseService.GetByIdAsync(TestCaseId)).Data;
 
             if (testCase != null)
             {
-                testCaseStepCount = (await CaseStepService.GetByCaseIdAsync(TestCaseId)).Count;
-                executionRecords = await ExecutionRecordService.GetByTestCaseIdAsync(testCase.ProjectId, TestCaseId);
+                testCaseStepCount = ((await CaseStepService.GetByCaseIdAsync(TestCaseId)).Data ?? []).Count;
+                executionRecords = (await ExecutionRecordService.GetByTestCaseIdAsync(testCase.ProjectId, TestCaseId)).Data ?? [];
                 ApplyFilter();
             }
         }
@@ -474,7 +474,7 @@ else
 
         try
         {
-            var success = await ExecutionRecordService.DeleteAsync(testCase.ProjectId, recordId);
+            var success = (await ExecutionRecordService.DeleteAsync(testCase.ProjectId, recordId)).Data;
             if (success)
             {
                 if (selectedRecordId == recordId)

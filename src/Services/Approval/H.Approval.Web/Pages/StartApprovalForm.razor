@@ -106,7 +106,7 @@ else
     {
         try
         {
-            definition = await DefinitionService.GetByIdAsync(DefinitionId);
+            definition = (await DefinitionService.GetByIdAsync(DefinitionId)).Data;
             model.DefinitionId = DefinitionId;
             schema = FormSchema.Parse(definition?.FormJson);
         }
@@ -421,9 +421,9 @@ else
         isSubmitting = true;
         try
         {
-            var result = await InstanceService.StartAsync(model);
+            var result = (await InstanceService.StartAsync(model)).Data;
             await JS.InvokeVoidAsync("alert", "审批已提交");
-            Nav.NavigateTo($"/approval/detail/{result.Id}");
+            Nav.NavigateTo($"/approval/detail/{result!.Id}");
         }
         catch (Exception ex)
         {

@@ -78,7 +78,7 @@
             return false;
         }
 
-        isSuccess = await ComponentLibraryAppService.SaveAsync(ComponentLibrary);
+        isSuccess = (await ComponentLibraryAppService.SaveAsync(ComponentLibrary)).Data == true;
         if (isSuccess)
         {
             // 重置表单

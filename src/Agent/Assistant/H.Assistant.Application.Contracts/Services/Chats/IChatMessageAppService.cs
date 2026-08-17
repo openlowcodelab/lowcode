@@ -1,4 +1,5 @@
 using H.Abp.Application.Contracts;
+using H.Util.Base;
 
 namespace H.Assistant.Application.Contracts;
 
@@ -10,7 +11,7 @@ public interface IChatMessageAppService : IAppService
     /// <summary>
     /// 发送消息并获取响应
     /// </summary>
-    Task<ChatResponseDto> SendMessageAsync(SendChatMessageInputDto input);
+    Task<BaseOutput<ChatResponseDto>> SendMessageAsync(SendChatMessageInputDto input);
 
     /// <summary>
     /// 发送消息并获取流式响应（SSE）
@@ -20,20 +21,20 @@ public interface IChatMessageAppService : IAppService
     /// <summary>
     /// 获取会话列表
     /// </summary>
-    Task<PagedResultDto<ChatDto>> GetSessionsAsync(SessionQueryDto input);
+    Task<BaseOutput<PagedResultDto<ChatDto>>> GetSessionsAsync(SessionQueryDto input);
 
     /// <summary>
     /// 获取会话消息历史
     /// </summary>
-    Task<List<ChatMessageDto>> GetMessagesAsync(Guid sessionId);
+    Task<BaseOutput<List<ChatMessageDto>>> GetMessagesAsync(Guid sessionId);
 
     /// <summary>
     /// 删除会话
     /// </summary>
-    Task DeleteSessionAsync(Guid sessionId);
+    Task<BaseOutput> DeleteSessionAsync(Guid sessionId);
 
     /// <summary>
     /// 获取可用的 Agent 列表
     /// </summary>
-    Task<List<AgentConfigDto>> GetAvailableAgentsAsync();
+    Task<BaseOutput<List<AgentConfigDto>>> GetAvailableAgentsAsync();
 }

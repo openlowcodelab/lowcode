@@ -186,7 +186,7 @@ public partial class TasksViewModel : ObservableObject
     {
         try
         {
-            var agents = await _chatMessageAppService.GetAvailableAgentsAsync();
+            var agents = (await _chatMessageAppService.GetAvailableAgentsAsync()).Data ?? [];
             AvailableAgents.Clear();
             foreach (var agent in agents)
             {
@@ -204,7 +204,7 @@ public partial class TasksViewModel : ObservableObject
         LoadingTasks = true;
         try
         {
-            var result = await _taskAppService.GetListAsync(new TaskQueryDto { MaxResultCount = 50 });
+            var result = (await _taskAppService.GetListAsync(new TaskQueryDto { MaxResultCount = 50 })).Data!;
             Tasks.Clear();
             foreach (var task in result.Items)
             {
@@ -287,7 +287,7 @@ public partial class TasksViewModel : ObservableObject
         LoadingTaskLogs = true;
         try
         {
-            var result = await _taskLogAppService.GetListAsync(new TaskLogQueryDto { TaskId = _logsTaskId, MaxResultCount = 50 });
+            var result = (await _taskLogAppService.GetListAsync(new TaskLogQueryDto { TaskId = _logsTaskId, MaxResultCount = 50 })).Data!;
             TaskLogs.Clear();
             foreach (var log in result.Items)
             {

@@ -1,4 +1,5 @@
 using H.Abp.Application.Contracts;
+using H.Util.Base;
 
 namespace H.BackgroundTask.Application.Contracts;
 
@@ -9,26 +10,26 @@ namespace H.BackgroundTask.Application.Contracts;
 public interface IBackgroundJobAppService : IAppService
 {
     /// <summary>分页查询任务</summary>
-    Task<PagedResultDto<BackgroundJobDto>> GetListAsync(BackgroundJobQueryDto input);
+    Task<BaseOutput<PagedResultDto<BackgroundJobDto>>> GetListAsync(BackgroundJobQueryDto input);
 
     /// <summary>按ID获取任务</summary>
-    Task<BackgroundJobDto> GetAsync(Guid id);
+    Task<BaseOutput<BackgroundJobDto>> GetAsync(Guid id);
 
     /// <summary>创建任务（同时注册到 Hangfire）</summary>
-    Task<BackgroundJobDto> CreateAsync(CreateBackgroundJobDto input);
+    Task<BaseOutput<BackgroundJobDto>> CreateAsync(CreateBackgroundJobDto input);
 
     /// <summary>更新任务（同步更新 Hangfire 调度）</summary>
-    Task<BackgroundJobDto> UpdateAsync(Guid id, UpdateBackgroundJobDto input);
+    Task<BaseOutput<BackgroundJobDto>> UpdateAsync(Guid id, UpdateBackgroundJobDto input);
 
     /// <summary>删除任务（同时移除 Hangfire 作业）</summary>
-    Task DeleteAsync(Guid id);
+    Task<BaseOutput> DeleteAsync(Guid id);
 
     /// <summary>启用任务</summary>
-    Task EnableAsync(Guid id);
+    Task<BaseOutput> EnableAsync(Guid id);
 
     /// <summary>禁用任务</summary>
-    Task DisableAsync(Guid id);
+    Task<BaseOutput> DisableAsync(Guid id);
 
     /// <summary>手动立即触发一次执行</summary>
-    Task TriggerAsync(Guid id);
+    Task<BaseOutput> TriggerAsync(Guid id);
 }

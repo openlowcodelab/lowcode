@@ -129,7 +129,7 @@
             var input = new OrderQueryDto { MaxResultCount = 50, Filter = filter, Status = null };
             input.Industry = string.IsNullOrWhiteSpace(industryFilter) ? null : industryFilter;
             input.BuyerId = string.IsNullOrWhiteSpace(buyerFilter) ? null : buyerFilter;
-            var result = await OrderService.GetListAsync(input);
+            var result = (await OrderService.GetListAsync(input)).Data!;
             orders = result.Items.ToList();
         }
         catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载失败：{ex.Message}"); }
@@ -167,7 +167,7 @@
     {
         try
         {
-            var r = await OrderService.TriggerDispatchAsync(id);
+            var r = (await OrderService.TriggerDispatchAsync(id)).Data!;
             await JS.InvokeVoidAsync("alert", r.Success ? $"下发成功：{r.Message ?? ""}" : $"下发失败：{r.Message}");
             await LoadData();
         }

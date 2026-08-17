@@ -1,4 +1,5 @@
 ﻿using H.Abp.Application.Contracts;
+using H.Util.Base;
 
 namespace H.Testing.Application.Contracts;
 
@@ -16,7 +17,7 @@ public interface ITestExecutionEngineAppService : IAppService
     /// <summary>
     /// 执行测试用例
     /// </summary>
-    Task<CaseExecutionRecordDto> ExecuteTestCaseAsync(
+    Task<BaseOutput<CaseExecutionRecordDto>> ExecuteTestCaseAsync(
         CaseDto testCase,
         long environmentId,
         CancellationToken cancellationToken = default);

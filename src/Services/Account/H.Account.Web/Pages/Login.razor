@@ -155,7 +155,10 @@
                 if (!string.IsNullOrEmpty(content) && content != "null")
                 {
                     using var doc = System.Text.Json.JsonDocument.Parse(content);
-                    if (doc.RootElement.TryGetProperty("selected", out var selectedProp)
+                    // BaseOutput 包装：从 data 字段解包自动选择结果
+                    if (doc.RootElement.TryGetProperty("data", out var dataProp)
+                        && dataProp.ValueKind == System.Text.Json.JsonValueKind.Object
+                        && dataProp.TryGetProperty("selected", out var selectedProp)
                         && selectedProp.ValueKind == System.Text.Json.JsonValueKind.True)
                     {
                         // 已自动进入企业（单企业或上一次登录企业），前往期望地址
@@ -188,7 +191,7 @@
 
         try
         {
-            var result = await AccountAppService.LoginAsync(loginModel);
+            var result = (await AccountAppService.LoginAsync(loginModel)).Data!;
 
             if (result.Success)
             {

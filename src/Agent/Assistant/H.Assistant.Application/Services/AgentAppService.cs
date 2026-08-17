@@ -1,6 +1,7 @@
 using H.Abp.Application.Contracts;
 using H.Assistant.Application.Contracts;
 using H.Assistant.EntityFrameworkCore;
+using H.Util.Base;
 using System.Text.Json;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
@@ -23,13 +24,13 @@ public class AgentAppService : ApplicationService, IAgentAppService
         _skillRepository = skillRepository;
     }
 
-    public async Task<AgentDto> GetAsync(Guid id)
+    public async Task<BaseOutput<AgentDto>> GetAsync(Guid id)
     {
         var entity = await _agentRepository.GetAsync(id);
-        return MapToDto(entity);
+        return new() { Data = MapToDto(entity) };
     }
 
-    public async Task<PagedResultDto<AgentDto>> GetListAsync(AgentQueryDto input)
+    public async Task<BaseOutput<PagedResultDto<AgentDto>>> GetListAsync(AgentQueryDto input)
     {
         var query = await _agentRepository.GetQueryableAsync();
 
@@ -51,16 +52,16 @@ public class AgentAppService : ApplicationService, IAgentAppService
         var entities = await AsyncExecuter.ToListAsync(query.OrderByDescending(x => x.CreationTime).Skip(input.SkipCount).Take(input.MaxResultCount));
         var dtos = entities.Select(MapToDto).ToList();
 
-        return new PagedResultDto<AgentDto>(totalCount, dtos);
+        return new() { Data = new PagedResultDto<AgentDto>(totalCount, dtos) };
     }
 
-    public async Task<AgentDto> CreateAsync(CreateAgentDto input)
+    public async Task<BaseOutput<AgentDto>> CreateAsync(CreateAgentDto input)
     {
-        // 检查 AgentType 是否已存在
+        // 检�?AgentType 是否已存�?
         var query = await _agentRepository.GetQueryableAsync();
         if (await AsyncExecuter.AnyAsync(query.Where(x => x.AgentType == input.AgentType)))
         {
-            throw new InvalidOperationException($"Agent 类型 '{input.AgentType}' 已存在");
+            throw new InvalidOperationException($"Agent 类型 '{input.AgentType}' 已存�?);
         }
 
         var entity = new AgentEntity
@@ -79,10 +80,11 @@ public class AgentAppService : ApplicationService, IAgentAppService
         };
 
         await _agentRepository.InsertAsync(entity);
-        return MapToDto(entity);
+
+        return new() { Data = MapToDto(entity) };
     }
 
-    public async Task<AgentDto> UpdateAsync(Guid id, UpdateAgentDto input)
+    public async Task<BaseOutput<AgentDto>> UpdateAsync(Guid id, UpdateAgentDto input)
     {
         var entity = await _agentRepository.GetAsync(id);
 
@@ -98,29 +100,31 @@ public class AgentAppService : ApplicationService, IAgentAppService
         entity.SkillIds = input.SkillIds.Any() ? JsonSerializer.Serialize(input.SkillIds) : null;
 
         await _agentRepository.UpdateAsync(entity);
-        return MapToDto(entity);
+        return new() { Data = MapToDto(entity) };
     }
 
-    public async Task DeleteAsync(Guid id)
+    public async Task<BaseOutput> DeleteAsync(Guid id)
     {
         await _agentRepository.DeleteAsync(id);
+        return new();
     }
 
-    public async Task ToggleEnabledAsync(Guid id, bool isEnabled)
+    public async Task<BaseOutput> ToggleEnabledAsync(Guid id, bool isEnabled)
     {
         var entity = await _agentRepository.GetAsync(id);
         entity.IsEnabled = isEnabled;
         await _agentRepository.UpdateAsync(entity);
+        return new();
     }
 
-    public async Task<List<AgentDto>> GetEnabledAgentsAsync()
+    public async Task<BaseOutput<List<AgentDto>>> GetEnabledAgentsAsync()
     {
         var query = await _agentRepository.GetQueryableAsync();
         var entities = await AsyncExecuter.ToListAsync(query.Where(x => x.IsEnabled));
-        return entities.Select(MapToDto).ToList();
+        return new() { Data = entities.Select(MapToDto).ToList() };
     }
 
-    public async Task AddSkillAsync(Guid agentId, Guid skillId)
+    public async Task<BaseOutput> AddSkillAsync(Guid agentId, Guid skillId)
     {
         var agent = await _agentRepository.GetAsync(agentId);
         var skillIds = GetSkillIds(agent);
@@ -131,9 +135,11 @@ public class AgentAppService : ApplicationService, IAgentAppService
             agent.SkillIds = JsonSerializer.Serialize(skillIds);
             await _agentRepository.UpdateAsync(agent);
         }
+
+        return new();
     }
 
-    public async Task RemoveSkillAsync(Guid agentId, Guid skillId)
+    public async Task<BaseOutput> RemoveSkillAsync(Guid agentId, Guid skillId)
     {
         var agent = await _agentRepository.GetAsync(agentId);
         var skillIds = GetSkillIds(agent);
@@ -143,21 +149,23 @@ public class AgentAppService : ApplicationService, IAgentAppService
             agent.SkillIds = skillIds.Any() ? JsonSerializer.Serialize(skillIds) : null;
             await _agentRepository.UpdateAsync(agent);
         }
+
+        return new();
     }
 
-    public async Task<List<SkillDto>> GetAgentSkillsAsync(Guid agentId)
+    public async Task<BaseOutput<List<SkillDto>>> GetAgentSkillsAsync(Guid agentId)
     {
         var agent = await _agentRepository.GetAsync(agentId);
         var skillIds = GetSkillIds(agent);
 
         if (!skillIds.Any())
         {
-            return new List<SkillDto>();
+            return new() { Data = new List<SkillDto>() };
         }
 
         var query = await _skillRepository.GetQueryableAsync();
         var skills = await AsyncExecuter.ToListAsync(query.Where(x => skillIds.Contains(x.Id)));
-        return skills.Select(MapSkillToDto).ToList();
+        return new() { Data = skills.Select(MapSkillToDto).ToList() };
     }
 
     private static List<Guid> GetSkillIds(AgentEntity agent)

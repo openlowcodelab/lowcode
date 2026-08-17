@@ -179,6 +179,15 @@
             if (root.ValueKind == System.Text.Json.JsonValueKind.Null)
                 return (false, null, false);
 
+            // BaseOutput 包装：从 data 字段解包用户信息（data 为 null 表示未登录）
+            if (root.ValueKind == System.Text.Json.JsonValueKind.Object &&
+                root.TryGetProperty("data", out var dataProp))
+            {
+                if (dataProp.ValueKind != System.Text.Json.JsonValueKind.Object)
+                    return (false, null, false);
+                root = dataProp;
+            }
+
             var isSystemUser = root.TryGetProperty("loginMode", out var lmProp)
                 && lmProp.GetString() == "System";
 

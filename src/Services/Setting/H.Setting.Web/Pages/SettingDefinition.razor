@@ -120,7 +120,7 @@
                 MaxResultCount = 100,
                 Filter = string.IsNullOrWhiteSpace(filter) ? null : filter
             };
-            var result = await DefinitionService.GetListAsync(input);
+            var result = (await DefinitionService.GetListAsync(input)).Data!;
             items = result.Items.ToList();
         }
         catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载失败：{ex.Message}"); }

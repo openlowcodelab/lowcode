@@ -45,7 +45,7 @@ public class ChatController : ControllerBase
             {
                 var agentType = input.AgentType ?? "general";
                 var title = input.Message.Length > 30 ? input.Message[..30] + "..." : input.Message;
-                sessionId = await _sessionAppService.CreateSessionAsync(title, agentType);
+                sessionId = (await _sessionAppService.CreateSessionAsync(title, agentType)).Data;
                 input.SessionId = sessionId;
 
                 // 发送 session 事件，让前端获取 sessionId（包含 type 字段保持事件格式一致）

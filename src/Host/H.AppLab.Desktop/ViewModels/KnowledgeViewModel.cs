@@ -36,16 +36,16 @@ public partial class KnowledgeViewModel : ObservableObject
 
         // 知识库与记忆共用同一套节点/文档操作，方法签名一致，用适配器委托复用逻辑
         KnowledgeSection = new KnowledgeSectionViewModel(toast, new KnowledgeServiceAdapter(
-            () => knowledgeDocumentAppService.GetTreeAsync(GetKnowledgeBaseId()),
-            input =>
+            async () => (await knowledgeDocumentAppService.GetTreeAsync(GetKnowledgeBaseId())).Data ?? [],
+            async input =>
             {
                 input.KnowledgeBaseId = _knowledgeBaseId;
-                return knowledgeDocumentAppService.CreateNodeAsync(input);
+                return (await knowledgeDocumentAppService.CreateNodeAsync(input)).Data!;
             },
-            knowledgeDocumentAppService.UpdateNodeAsync,
+            async (nodeId, input) => (await knowledgeDocumentAppService.UpdateNodeAsync(nodeId, input)).Data!,
             knowledgeDocumentAppService.DeleteNodeAsync,
-            knowledgeDocumentAppService.GetDocumentAsync,
-            knowledgeDocumentAppService.SaveDocumentAsync))
+            async nodeId => (await knowledgeDocumentAppService.GetDocumentAsync(nodeId)).Data,
+            async (nodeId, input) => (await knowledgeDocumentAppService.SaveDocumentAsync(nodeId, input)).Data!))
         {
             LoadFailedMessage = "加载知识库失败",
             RootDirectoryTitle = "新建目录",
@@ -57,12 +57,12 @@ public partial class KnowledgeViewModel : ObservableObject
         };
 
         MemorySection = new KnowledgeSectionViewModel(toast, new KnowledgeServiceAdapter(
-            memoryAppService.GetTreeAsync,
-            memoryAppService.CreateNodeAsync,
-            memoryAppService.UpdateNodeAsync,
+            async () => (await memoryAppService.GetTreeAsync()).Data ?? [],
+            async input => (await memoryAppService.CreateNodeAsync(input)).Data!,
+            async (nodeId, input) => (await memoryAppService.UpdateNodeAsync(nodeId, input)).Data!,
             memoryAppService.DeleteNodeAsync,
-            memoryAppService.GetDocumentAsync,
-            memoryAppService.SaveDocumentAsync))
+            async nodeId => (await memoryAppService.GetDocumentAsync(nodeId)).Data,
+            async (nodeId, input) => (await memoryAppService.SaveDocumentAsync(nodeId, input)).Data!))
         {
             LoadFailedMessage = "加载记忆失败",
             RootDirectoryTitle = "新建分类",
@@ -85,7 +85,7 @@ public partial class KnowledgeViewModel : ObservableObject
         // 解析默认知识库（列表首个），无可用库时跳过知识树加载
         try
         {
-            var bases = await _knowledgeBaseAppService.GetListAsync();
+            var bases = (await _knowledgeBaseAppService.GetListAsync()).Data ?? [];
             _knowledgeBaseId = bases.FirstOrDefault()?.Id;
         }
         catch

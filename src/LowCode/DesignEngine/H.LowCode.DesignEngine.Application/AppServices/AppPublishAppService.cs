@@ -2,6 +2,7 @@
 using H.LowCode.DesignEngine.Domain.Repositories;
 using H.LowCode.MetaSchema;
 using H.LowCode.MetaSchema.DesignEngine;
+using H.Util.Base;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp;
 using Volo.Abp.Application.Services;
@@ -15,12 +16,12 @@ public class AppPublishAppService : ApplicationService, IAppPublishAppService
     private IAppRepository _appRepository => LazyServiceProvider.GetRequiredService<IAppRepository>();
     private IPageRepository _pageRepository => LazyServiceProvider.GetRequiredService<IPageRepository>();
 
-    public async Task<List<AppPublishRecordSchema>> GetRecordsAsync(string appId)
+    public async Task<BaseOutput<List<AppPublishRecordSchema>>> GetRecordsAsync(string appId)
     {
-        return await _publishRepository.GetListAsync(appId);
+        return BaseOutput<List<AppPublishRecordSchema>>.Ok(await _publishRepository.GetListAsync(appId));
     }
 
-    public async Task<AppPublishRecordSchema> PublishAsync(string appId, string version, string description)
+    public async Task<BaseOutput<AppPublishRecordSchema>> PublishAsync(string appId, string version, string description)
     {
         ArgumentException.ThrowIfNullOrEmpty(appId);
         ArgumentException.ThrowIfNullOrEmpty(version);
@@ -47,10 +48,10 @@ public class AppPublishAppService : ApplicationService, IAppPublishAppService
         app.Version = version;
         await _appRepository.SaveAsync(app);
 
-        return record;
+        return BaseOutput<AppPublishRecordSchema>.Ok(record);
     }
 
-    public async Task<bool> RollbackAsync(string appId, string recordId)
+    public async Task<BaseOutput<bool>> RollbackAsync(string appId, string recordId)
     {
         ArgumentException.ThrowIfNullOrEmpty(appId);
         ArgumentException.ThrowIfNullOrEmpty(recordId);
@@ -70,6 +71,6 @@ public class AppPublishAppService : ApplicationService, IAppPublishAppService
             await _appRepository.SaveAsync(app);
         }
 
-        return true;
+        return BaseOutput<bool>.Ok(true);
     }
 }

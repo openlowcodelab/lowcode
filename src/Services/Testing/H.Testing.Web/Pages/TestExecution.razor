@@ -439,19 +439,19 @@ else
 
             if (IsBatchMode)
             {
-                testCases = await ProjectCaseService.GetByProjectIdAsync(ProjectId);
+                testCases = (await ProjectCaseService.GetByProjectIdAsync(ProjectId)).Data ?? [];
             }
             else
             {
-                var targetCase = await ProjectCaseService.GetByIdAsync(TestCaseId);
+                var targetCase = (await ProjectCaseService.GetByIdAsync(TestCaseId)).Data;
                 testCases = targetCase != null ? new List<CaseDto> { targetCase } : new List<CaseDto>();
             }
 
             if (testCases.Any())
             {
-                caseStepCounts = (await CaseStepService.GetByCaseIdsAsync(testCases.Select(tc => tc.Id)))
+                caseStepCounts = ((await CaseStepService.GetByCaseIdsAsync(testCases.Select(tc => tc.Id))).Data ?? [])
                     .ToDictionary(kv => kv.Key, kv => kv.Value.Count);
-                environments = await EnvironmentService.GetByProjectIdAsync(testCases[0].ProjectId);
+                environments = (await EnvironmentService.GetByProjectIdAsync(testCases[0].ProjectId)).Data ?? [];
 
                 if (environments.Count > 0)
                 {
@@ -515,10 +515,10 @@ else
                 ContinueOnFailure = true
             };
 
-            var batchResult = await BatchExecutionService.ExecuteBatchAsync(
+            var batchResult = (await BatchExecutionService.ExecuteBatchAsync(
                 batchSettings,
                 selectedEnvironmentId,
-                cancellationTokenSource.Token);
+                cancellationTokenSource.Token)).Data!;
 
             // 按 CaseId 用最终执行结果替换预创建记录, 避免重复
             foreach (var record in batchResult.ExecutionRecords)

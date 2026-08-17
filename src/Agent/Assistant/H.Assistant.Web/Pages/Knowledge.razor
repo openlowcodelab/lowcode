@@ -146,7 +146,7 @@
         loading = true;
         try
         {
-            knowledgeBases = await KnowledgeBaseAppService.GetListAsync();
+            knowledgeBases = (await KnowledgeBaseAppService.GetListAsync()).Data ?? [];
         }
         catch (Exception ex)
         {

@@ -194,7 +194,7 @@
     private async Task LoadServers()
     {
         loadingServers = true;
-        try { servers = await McpServerAppService.GetAllAsync(); }
+        try { servers = (await McpServerAppService.GetAllAsync()).Data ?? []; }
         catch (Exception ex) { ShowToast("加载 MCP 服务列表失败: " + ex.Message, "error"); }
         finally { loadingServers = false; }
     }

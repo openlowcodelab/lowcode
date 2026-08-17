@@ -1,4 +1,5 @@
 using H.SystemPortal.Application.Contracts;
+using H.Util.Base;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
@@ -21,7 +22,7 @@ public class SystemAccountAppService : ApplicationService, ISystemAccountAppServ
 
     private const string SystemCookieScheme = "SystemCookies";
 
-    public async Task<AuthResponseDto> SystemLoginAsync(LoginRequestDto request)
+    public async Task<BaseOutput<AuthResponseDto>> SystemLoginAsync(LoginRequestDto request)
     {
         var loginType = DetectLoginType(request.Account);
 
@@ -33,13 +34,13 @@ public class SystemAccountAppService : ApplicationService, ISystemAccountAppServ
         };
 
         if (user == null)
-            return new AuthResponseDto { Success = false, Message = "用户名或密码错误" };
+            return BaseOutput<AuthResponseDto>.Ok(new AuthResponseDto { Success = false, Message = "用户名或密码错误" });
 
         if (!user.IsActive)
-            return new AuthResponseDto { Success = false, Message = "账户已被禁用" };
+            return BaseOutput<AuthResponseDto>.Ok(new AuthResponseDto { Success = false, Message = "账户已被禁用" });
 
         if (!_store.VerifyPassword(user, request.Password))
-            return new AuthResponseDto { Success = false, Message = "用户名或密码错误" };
+            return BaseOutput<AuthResponseDto>.Ok(new AuthResponseDto { Success = false, Message = "用户名或密码错误" });
 
         // 验证是否拥有系统管理员角色
         var isSystemAdmin = user.RoleNames.Any(r =>
@@ -47,7 +48,7 @@ public class SystemAccountAppService : ApplicationService, ISystemAccountAppServ
             r.Equals(SystemRoleNames.Admin, StringComparison.OrdinalIgnoreCase));
 
         if (!isSystemAdmin)
-            return new AuthResponseDto { Success = false, Message = "无权限访问" };
+            return BaseOutput<AuthResponseDto>.Ok(new AuthResponseDto { Success = false, Message = "无权限访问" });
 
         // 更新最后登录时间
         user.LastLoginAt = DateTime.UtcNow;
@@ -96,48 +97,49 @@ public class SystemAccountAppService : ApplicationService, ISystemAccountAppServ
                 authProperties);
         }
 
-        return new AuthResponseDto
+        return BaseOutput<AuthResponseDto>.Ok(new AuthResponseDto
         {
             Success = true,
             Message = "登录成功",
             User = userDto
-        };
+        });
     }
 
-    public async Task SystemLogoutAsync()
+    public async Task<BaseOutput> SystemLogoutAsync()
     {
         var httpContext = _httpContextAccessor.HttpContext;
         if (httpContext != null)
         {
             await httpContext.SignOutAsync(SystemCookieScheme);
         }
+        return BaseOutput.Ok();
     }
 
-    public Task<UserDto?> GetCurrentUserAsync()
+    public Task<BaseOutput<UserDto?>> GetCurrentUserAsync()
     {
         var httpContext = _httpContextAccessor.HttpContext;
         if (httpContext == null)
-            return Task.FromResult<UserDto?>(null);
+            return Task.FromResult(BaseOutput<UserDto?>.Ok((UserDto?)null));
 
         // 显式认证 SystemCookies 方案
         var authResult = httpContext.AuthenticateAsync(SystemCookieScheme).GetAwaiter().GetResult();
         if (!authResult.Succeeded || authResult.Principal == null)
-            return Task.FromResult<UserDto?>(null);
+            return Task.FromResult(BaseOutput<UserDto?>.Ok((UserDto?)null));
 
         var userIdClaim = authResult.Principal.FindFirst(ClaimTypes.NameIdentifier);
         if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
-            return Task.FromResult<UserDto?>(null);
+            return Task.FromResult(BaseOutput<UserDto?>.Ok((UserDto?)null));
 
         var user = _store.FindById(userId);
         if (user == null || !user.IsActive)
-            return Task.FromResult<UserDto?>(null);
+            return Task.FromResult(BaseOutput<UserDto?>.Ok((UserDto?)null));
 
         var isSystemAdmin = user.RoleNames.Any(r =>
             r.Equals(SystemRoleNames.SuperAdmin, StringComparison.OrdinalIgnoreCase) ||
             r.Equals(SystemRoleNames.Admin, StringComparison.OrdinalIgnoreCase));
 
         if (!isSystemAdmin)
-            return Task.FromResult<UserDto?>(null);
+            return Task.FromResult(BaseOutput<UserDto?>.Ok((UserDto?)null));
 
         var dto = new UserDto
         {
@@ -151,7 +153,7 @@ public class SystemAccountAppService : ApplicationService, ISystemAccountAppServ
             IsActive = true
         };
 
-        return Task.FromResult<UserDto?>(dto);
+        return Task.FromResult(BaseOutput<UserDto?>.Ok(dto));
     }
 
     private static LoginType DetectLoginType(string account)

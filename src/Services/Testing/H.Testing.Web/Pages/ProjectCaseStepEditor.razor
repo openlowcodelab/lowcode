@@ -294,11 +294,11 @@
         if (TestCaseId.HasValue)
         {
             // 编辑现有测试用例
-            var testCase = await ProjectCaseService.GetByIdAsync(TestCaseId.Value);
+            var testCase = (await ProjectCaseService.GetByIdAsync(TestCaseId.Value)).Data;
             if (testCase != null)
             {
                 currentTestCase = testCase;
-                steps = await CaseStepService.GetByCaseIdAsync(testCase.Id);
+                steps = (await CaseStepService.GetByCaseIdAsync(testCase.Id)).Data ?? [];
             }
             else
             {
@@ -322,10 +322,10 @@
         var projectId = currentTestCase.ProjectId;
         if (projectId != 0)
         {
-            projectServices = await ProjectServiceConfigService.GetProjectServicesAsync(projectId);
+            projectServices = (await ProjectServiceConfigService.GetProjectServicesAsync(projectId)).Data ?? [];
             
             // 加载可用模板
-            var allCases = await ProjectCaseService.GetByProjectIdAsync(projectId);
+            var allCases = (await ProjectCaseService.GetByProjectIdAsync(projectId)).Data ?? [];
             availableTemplates = allCases.Where(c => c.IsTemplate && c.Id != currentTestCase.Id).ToList();
         }
         
@@ -346,7 +346,7 @@
     private async Task LoadTemplateSteps(long templateId)
     {
         // 深拷贝模板步骤列表用于显示
-        var templateSteps = await CaseStepService.GetByCaseIdAsync(templateId);
+        var templateSteps = (await CaseStepService.GetByCaseIdAsync(templateId)).Data ?? [];
         var json = System.Text.Json.JsonSerializer.Serialize(templateSteps);
         steps = System.Text.Json.JsonSerializer.Deserialize<List<CaseStepDto>>(json) ?? new List<CaseStepDto>();
 
@@ -487,7 +487,7 @@
         {
             if (isNewTestCase)
             {
-                var newId = await ProjectCaseService.CreateAsync(currentTestCase);
+                var newId = (await ProjectCaseService.CreateAsync(currentTestCase)).Data;
                 // 如果是新建，更新当前对象的ID，防止重复创建
                 currentTestCase.Id = newId;
                 isNewTestCase = false;

@@ -364,7 +364,7 @@
 
     private async Task LoadCategories()
     {
-        categories = await CategoryAppService.GetAllAsync();
+        categories = (await CategoryAppService.GetAllAsync()).Data!;
     }
 
     private async Task LoadBusinesses()
@@ -372,12 +372,12 @@
         loading = true;
         try
         {
-            var result = await BusinessAppService.GetListAsync(new NotificationBusinessQueryDto
+            var result = (await BusinessAppService.GetListAsync(new NotificationBusinessQueryDto
             {
                 MaxResultCount = 100,
                 Filter = searchFilter,
                 CategoryId = selectedCategoryId
-            });
+            })).Data!;
             businessList = result.Items.ToList();
         }
         finally { loading = false; }
@@ -470,7 +470,7 @@
 
     private async Task EditBusiness(NotificationBusinessDto b)
     {
-        var detail = await BusinessAppService.GetAsync(b.Id);
+        var detail = (await BusinessAppService.GetAsync(b.Id)).Data!;
         currentBiz = new CreateNotificationBusinessDto
         {
             CategoryId = detail.CategoryId,
@@ -546,7 +546,7 @@
         specBusinessId = b.Id;
         specBusinessName = b.BusinessName;
         specModels = LevelOrder.ToDictionary(lv => lv, lv => new SpecEditModel { Level = lv });
-        var specs = await BusinessAppService.GetSpecsAsync(b.Id);
+        var specs = (await BusinessAppService.GetSpecsAsync(b.Id)).Data!;
         foreach (var s in specs)
         {
             if (specModels.TryGetValue(s.Level, out var m))
@@ -600,8 +600,8 @@
     {
         groupBusinessId = b.Id;
         groupBusinessName = b.BusinessName;
-        allGroups = await ContactGroupAppService.GetAllEnabledAsync();
-        var bound = await BusinessAppService.GetGroupIdsAsync(b.Id);
+        allGroups = (await ContactGroupAppService.GetAllEnabledAsync()).Data!;
+        var bound = (await BusinessAppService.GetGroupIdsAsync(b.Id)).Data!;
         selectedGroupIds = bound.ToHashSet();
         showGroupModal = true;
     }
@@ -647,7 +647,7 @@
                 data = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(testDataJson) ?? new();
             }
             var result = await SendAppService.TestSendAsync(new TestSendInput { BusinessCode = testBusinessCode, Level = testLevel, Data = data });
-            testResult = result.Message ?? "已提交";
+            testResult = result.Data?.Message ?? "已提交";
         }
         catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"测试发送失败：{ex.Message}"); }
         finally { testSending = false; }

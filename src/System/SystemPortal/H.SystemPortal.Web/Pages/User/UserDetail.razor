@@ -109,7 +109,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        user = await UserService.GetUserDtoByIdAsync(userId);
+        user = (await UserService.GetUserDtoByIdAsync(userId)).Data;
     }
 
     private string GetUserTypeText(UserType type)

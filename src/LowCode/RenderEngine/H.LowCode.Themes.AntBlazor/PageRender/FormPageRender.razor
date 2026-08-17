@@ -55,7 +55,7 @@
         }
         else
         {
-            _formDto = await FormDataAppService.GetAsync(Page.AppId, Page.Id, Id);
+            _formDto = (await FormDataAppService.GetAsync(Page.AppId, Page.Id, Id)).Data;
         }
 
         _fieldDictData = (_formDto.Fields == null)
@@ -69,7 +69,7 @@
             return;
 
         // 执行表单校验
-        var validationResult = FormValidationAppService.ValidateForm(_fieldDictData, Page.Components.Cast<ComponentSchemaBase>().ToList());
+        var validationResult = FormValidationAppService.ValidateForm(_fieldDictData, Page.Components.Cast<ComponentSchemaBase>().ToList()).Data!;
         if (!validationResult.IsValid)
         {
             var errorMessage = string.Join("\n", validationResult.ErrorMessages);
@@ -87,7 +87,7 @@
         
         try
         {
-            var success = await FormDataAppService.SaveAsync(_formDto);
+            var success = (await FormDataAppService.SaveAsync(_formDto)).Data == true;
             if (success)
                 await Message.SuccessAsync("保存成功");
             else

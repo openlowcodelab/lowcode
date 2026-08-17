@@ -1,4 +1,5 @@
 using H.Account.Application.Contracts;
+using H.Util.Base;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
@@ -40,16 +41,16 @@ public class AccountAppService : ApplicationService, IAccountAppService
     }
 
     [IgnoreAntiforgeryToken]
-    public async Task<AuthResponseDto> RegisterAsync(RegisterRequestDto request)
+    public async Task<BaseOutput<AuthResponseDto>> RegisterAsync(RegisterRequestDto request)
     {
         // 验证密码确认
         if (request.Password != request.ConfirmPassword)
         {
-            return new AuthResponseDto
+            return BaseOutput<AuthResponseDto>.Ok(new AuthResponseDto
             {
                 Success = false,
                 Message = "密码和确认密码不匹配"
-            };
+            });
         }
 
         IdentityUser user;
@@ -58,23 +59,23 @@ public class AccountAppService : ApplicationService, IAccountAppService
         {
             case RegisterType.Email:
                 if (string.IsNullOrWhiteSpace(request.Email))
-                    return new AuthResponseDto { Success = false, Message = "邮箱不能为空" };
+                    return BaseOutput<AuthResponseDto>.Ok(new AuthResponseDto { Success = false, Message = "邮箱不能为空" });
 
                 var existingEmail = await _userManager.FindByEmailAsync(request.Email);
                 if (existingEmail != null)
-                    return new AuthResponseDto { Success = false, Message = "邮箱已被注册" };
+                    return BaseOutput<AuthResponseDto>.Ok(new AuthResponseDto { Success = false, Message = "邮箱已被注册" });
 
                 user = new IdentityUser(_guidGenerator.Create(), request.Email, request.Email);
                 break;
 
             case RegisterType.PhoneNumber:
                 if (string.IsNullOrWhiteSpace(request.PhoneNumber))
-                    return new AuthResponseDto { Success = false, Message = "手机号不能为空" };
+                    return BaseOutput<AuthResponseDto>.Ok(new AuthResponseDto { Success = false, Message = "手机号不能为空" });
 
                 var allUsers = await _userManager.Users.ToListAsync();
                 var existingPhone = allUsers.FirstOrDefault(u => u.PhoneNumber == request.PhoneNumber);
                 if (existingPhone != null)
-                    return new AuthResponseDto { Success = false, Message = "手机号已被注册" };
+                    return BaseOutput<AuthResponseDto>.Ok(new AuthResponseDto { Success = false, Message = "手机号已被注册" });
 
                 user = new IdentityUser(_guidGenerator.Create(), request.PhoneNumber, $"{request.PhoneNumber}@temp.local");
                 user.SetPhoneNumber(request.PhoneNumber, false);
@@ -82,11 +83,11 @@ public class AccountAppService : ApplicationService, IAccountAppService
 
             default: // UserName
                 if (string.IsNullOrWhiteSpace(request.UserName))
-                    return new AuthResponseDto { Success = false, Message = "用户名不能为空" };
+                    return BaseOutput<AuthResponseDto>.Ok(new AuthResponseDto { Success = false, Message = "用户名不能为空" });
 
                 var existingUser = await _userManager.FindByNameAsync(request.UserName);
                 if (existingUser != null)
-                    return new AuthResponseDto { Success = false, Message = "用户名已存在" };
+                    return BaseOutput<AuthResponseDto>.Ok(new AuthResponseDto { Success = false, Message = "用户名已存在" });
 
                 user = new IdentityUser(_guidGenerator.Create(), request.UserName, request.Email ?? $"{request.UserName}@temp.local");
                 break;
@@ -95,23 +96,23 @@ public class AccountAppService : ApplicationService, IAccountAppService
         var result = await _userManager.CreateAsync(user, request.Password);
         if (!result.Succeeded)
         {
-            return new AuthResponseDto
+            return BaseOutput<AuthResponseDto>.Ok(new AuthResponseDto
             {
                 Success = false,
                 Message = string.Join(", ", result.Errors.Select(e => e.Description))
-            };
+            });
         }
 
-        return new AuthResponseDto
+        return BaseOutput<AuthResponseDto>.Ok(new AuthResponseDto
         {
             Success = true,
             Message = "注册成功",
             User = await MapToUserDtoAsync(user)
-        };
+        });
     }
 
     [IgnoreAntiforgeryToken]
-    public async Task<AuthResponseDto> LoginAsync(LoginRequestDto request)
+    public async Task<BaseOutput<AuthResponseDto>> LoginAsync(LoginRequestDto request)
     {
         IdentityUser? user = null;
 
@@ -138,31 +139,31 @@ public class AccountAppService : ApplicationService, IAccountAppService
 
         if (user == null)
         {
-            return new AuthResponseDto
+            return BaseOutput<AuthResponseDto>.Ok(new AuthResponseDto
             {
                 Success = false,
                 Message = "用户名或密码错误"
-            };
+            });
         }
 
         if (!user.IsActive)
         {
-            return new AuthResponseDto
+            return BaseOutput<AuthResponseDto>.Ok(new AuthResponseDto
             {
                 Success = false,
                 Message = "账户已被禁用"
-            };
+            });
         }
 
         var passwordValid = await _userManager.CheckPasswordAsync(user, request.Password);
         if (!passwordValid)
         {
             await _userManager.AccessFailedAsync(user);
-            return new AuthResponseDto
+            return BaseOutput<AuthResponseDto>.Ok(new AuthResponseDto
             {
                 Success = false,
                 Message = "用户名或密码错误"
-            };
+            });
         }
 
         await _userManager.ResetAccessFailedCountAsync(user);
@@ -200,25 +201,25 @@ public class AccountAppService : ApplicationService, IAccountAppService
                 authProperties);
         }
 
-        return new AuthResponseDto
+        return BaseOutput<AuthResponseDto>.Ok(new AuthResponseDto
         {
             Success = true,
             Message = "登录成功",
             User = await MapToUserDtoAsync(user)
-        };
+        });
     }
 
-    public async Task<UserDto?> GetUserByIdAsync(Guid userId)
+    public async Task<BaseOutput<UserDto?>> GetUserByIdAsync(Guid userId)
     {
         // Account 为全局跨租户数据，用户查找需在 Host 上下文进行
         using (_currentTenant.Change(null))
         {
             var user = await _userManager.FindByIdAsync(userId.ToString());
-            return user != null ? await MapToUserDtoAsync(user) : null;
+            return BaseOutput<UserDto?>.Ok(user != null ? await MapToUserDtoAsync(user) : null);
         }
     }
 
-    public async Task<bool> ValidateTokenAsync(string token)
+    public async Task<BaseOutput<bool>> ValidateTokenAsync(string token)
     {
         try
         {
@@ -237,33 +238,35 @@ public class AccountAppService : ApplicationService, IAccountAppService
                 ClockSkew = TimeSpan.Zero
             }, out _);
 
-            return true;
+            return BaseOutput<bool>.Ok(true);
         }
         catch
         {
-            return false;
+            return BaseOutput<bool>.Ok(false);
         }
     }
 
     [IgnoreAntiforgeryToken]
-    public async Task LogoutAsync()
+    public async Task<BaseOutput> LogoutAsync()
     {
         var httpContext = _httpContextAccessor.HttpContext;
         if (httpContext != null)
         {
             await httpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         }
+
+        return BaseOutput.Ok();
     }
 
-    public async Task<UserDto?> GetCurrentUserAsync()
+    public async Task<BaseOutput<UserDto?>> GetCurrentUserAsync()
     {
         var httpContext = _httpContextAccessor.HttpContext;
         if (httpContext == null)
-            return null;
+            return BaseOutput<UserDto?>.Ok(null);
 
         var userIdClaim = httpContext.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
         if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
-            return null;
+            return BaseOutput<UserDto?>.Ok(null);
 
         // Account 为全局跨租户数据，用户查找需在 Host 上下文进行
         // （企业选择后 Cookie 携带 TenantId，若不切回 Host 上下文会因租户过滤而找不到用户）
@@ -271,9 +274,9 @@ public class AccountAppService : ApplicationService, IAccountAppService
         {
             var user = await _userManager.FindByIdAsync(userId.ToString());
             if (user == null)
-                return null;
+                return BaseOutput<UserDto?>.Ok(null);
 
-            return await MapToUserDtoAsync(user);
+            return BaseOutput<UserDto?>.Ok(await MapToUserDtoAsync(user));
         }
     }
 

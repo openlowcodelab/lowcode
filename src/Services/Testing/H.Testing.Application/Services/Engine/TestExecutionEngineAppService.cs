@@ -1,4 +1,5 @@
 using H.Testing.Application.Contracts;
+using H.Util.Base;
 using H.Util.Ids;
 using Microsoft.Playwright;
 using System.Diagnostics;
@@ -49,22 +50,22 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
     /// <summary>
     /// 执行测试用例
     /// </summary>
-    public async Task<CaseExecutionRecordDto> ExecuteTestCaseAsync(
+    public async Task<BaseOutput<CaseExecutionRecordDto>> ExecuteTestCaseAsync(
         CaseDto testCase,
         long environmentId,
         CancellationToken cancellationToken = default)
     {
-        var environment = await _environmentService.GetByIdAsync(testCase.ProjectId, environmentId);
+        var environment = (await _environmentService.GetByIdAsync(testCase.ProjectId, environmentId)).Data;
         if (environment == null)
         {
             throw new ArgumentException($"Environment with ID {environmentId} not found");
         }
 
         // 处理模板继承逻辑：有 TemplateId 时使用模板的步骤执行，但不修改用例自身的步骤
-        var executionSteps = await _caseStepService.GetByCaseIdAsync(testCase.Id);
+        var executionSteps = (await _caseStepService.GetByCaseIdAsync(testCase.Id)).Data ?? [];
         if (testCase.TemplateId.HasValue)
         {
-            var templateSteps = await _caseStepService.GetByCaseIdAsync(testCase.TemplateId.Value);
+            var templateSteps = (await _caseStepService.GetByCaseIdAsync(testCase.TemplateId.Value)).Data ?? [];
             if (templateSteps.Count > 0)
             {
                 // 目前策略：有 TemplateId 则完全使用模板的步骤执行，变量仍用当前环境的
@@ -86,7 +87,7 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
         };
 
         // 创建执行记录（必须接收返回值，否则 Id 保持 0，后续 UpdateAsync 无法定位记录，步骤详情将不会持久化）
-        executionRecord = await _executionRecordService.CreateAsync(executionRecord);
+        executionRecord = (await _executionRecordService.CreateAsync(executionRecord)).Data!;
 
         // 初始化 Playwright（在整个测试用例执行期间保持同一个浏览器实例）
         IPlaywright playwright = null;
@@ -212,7 +213,7 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
         }
 
         // 更新执行记录（含步骤执行详情、断言结果等）
-        var updated = await _executionRecordService.UpdateAsync(executionRecord.ProjectId, executionRecord);
+        var updated = (await _executionRecordService.UpdateAsync(executionRecord.ProjectId, executionRecord)).Data;
         if (!updated)
         {
             Console.WriteLine($"Failed to update execution record {executionRecord.Id} for test case {testCase.Id}");
@@ -231,7 +232,7 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
             Console.WriteLine($"Failed to update test case execution result: {ex.Message}");
         }
 
-        return executionRecord;
+        return BaseOutput<CaseExecutionRecordDto>.Ok(executionRecord);
     }
 
     /// <summary>

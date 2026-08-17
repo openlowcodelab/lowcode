@@ -252,7 +252,7 @@
 
     private async Task LoadComponentLibrariesAsync()
     {
-        _componentLibraries = await ComponentLibraryAppService.GetListAsync();
+        _componentLibraries = (await ComponentLibraryAppService.GetListAsync()).Data;
     }
 
     private async Task OnLibraryCreated()
@@ -286,7 +286,7 @@
         if (string.IsNullOrEmpty(_selectedLibraryId))
             return;
 
-        _componentParts = await ComponentPartsAppService.GetListAsync(_selectedLibraryId);
+        _componentParts = (await ComponentPartsAppService.GetListAsync(_selectedLibraryId)).Data;
     }
 
     private void OnSearchLibrary(string searchText)
@@ -476,7 +476,7 @@
     {
         try
         {
-            var comp = await ComponentPartsAppService.GetByIdAsync(_selectedLibraryId, componentId);
+            var comp = (await ComponentPartsAppService.GetByIdAsync(_selectedLibraryId, componentId)).Data!;
             comp.PublishStatus = 1;
             await ComponentPartsAppService.SaveAsync(comp);
             await LoadComponentPartsAsync();
@@ -492,7 +492,7 @@
     {
         try
         {
-            var comp = await ComponentPartsAppService.GetByIdAsync(_selectedLibraryId, componentId);
+            var comp = (await ComponentPartsAppService.GetByIdAsync(_selectedLibraryId, componentId)).Data!;
             comp.PublishStatus = 0;
             await ComponentPartsAppService.SaveAsync(comp);
             await LoadComponentPartsAsync();

@@ -487,7 +487,7 @@
 
         try
         {
-            aiPlan = await TestingAiService.GenerateModificationAsync(selectedProjectId, new AiGenerateInputDto { Description = aiDescription });
+            aiPlan = (await TestingAiService.GenerateModificationAsync(selectedProjectId, new AiGenerateInputDto { Description = aiDescription })).Data;
         }
         catch (Exception ex)
         {
@@ -576,7 +576,7 @@
     private async Task LoadData()
     {
         loading = true;
-        projects = await ProjectService.GetAllAsync();
+        projects = (await ProjectService.GetAllAsync()).Data ?? [];
 
         if (ProjectId.HasValue && projects.Any(p => p.Id == ProjectId.Value))
         {
@@ -601,8 +601,8 @@
     {
         if (selectedProjectId != 0)
         {
-            categories = await CaseCategoryAppService.GetByProjectIdAsync(selectedProjectId);
-            testCases = await ProjectCaseService.GetByProjectIdAsync(selectedProjectId);
+            categories = (await CaseCategoryAppService.GetByProjectIdAsync(selectedProjectId)).Data ?? [];
+            testCases = (await ProjectCaseService.GetByProjectIdAsync(selectedProjectId)).Data ?? [];
 
             filteredTestCases = testCases;
             CalculateCategoryTestCaseCounts();
@@ -855,7 +855,7 @@
     {
         try
         {
-            var copiedId = await ProjectCaseService.CopyAsync(testCase.Id);
+            var copiedId = (await ProjectCaseService.CopyAsync(testCase.Id)).Data;
             await JSRuntime.InvokeVoidAsync("alert", $"测试用例 '{testCase.Name}' 复制成功！");
             await LoadProjectData();
         }
@@ -940,7 +940,7 @@
                 await CaseCategoryAppService.CreateAsync(currentCategory);
             }
             
-            categories = await CaseCategoryAppService.GetByProjectIdAsync(selectedProjectId);
+            categories = (await CaseCategoryAppService.GetByProjectIdAsync(selectedProjectId)).Data ?? [];
             HideCategoryModal();
             StateHasChanged();
         }
@@ -1031,7 +1031,7 @@
     {
         await DeleteChildCategories(categoryId);
         await CaseCategoryAppService.DeleteAsync(selectedProjectId, categoryId);
-        categories = await CaseCategoryAppService.GetByProjectIdAsync(selectedProjectId);
+        categories = (await CaseCategoryAppService.GetByProjectIdAsync(selectedProjectId)).Data ?? [];
         StateHasChanged();
     }
 

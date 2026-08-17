@@ -92,7 +92,7 @@ else
     {
         try
         {
-            instance = await InstanceService.GetByIdAsync(InstanceId);
+            instance = (await InstanceService.GetByIdAsync(InstanceId)).Data;
         }
         catch (Exception ex)
         {

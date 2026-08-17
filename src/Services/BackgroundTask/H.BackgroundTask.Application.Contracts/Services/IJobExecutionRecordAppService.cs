@@ -1,4 +1,5 @@
 using H.Abp.Application.Contracts;
+using H.Util.Base;
 
 namespace H.BackgroundTask.Application.Contracts;
 
@@ -8,8 +9,8 @@ namespace H.BackgroundTask.Application.Contracts;
 public interface IJobExecutionRecordAppService : IAppService
 {
     /// <summary>分页查询执行记录</summary>
-    Task<PagedResultDto<JobCaseExecutionRecordDto>> GetListAsync(JobExecutionRecordQueryDto input);
+    Task<BaseOutput<PagedResultDto<JobCaseExecutionRecordDto>>> GetListAsync(JobExecutionRecordQueryDto input);
 
     /// <summary>获取单条执行记录</summary>
-    Task<JobCaseExecutionRecordDto> GetAsync(Guid id);
+    Task<BaseOutput<JobCaseExecutionRecordDto>> GetAsync(Guid id);
 }
