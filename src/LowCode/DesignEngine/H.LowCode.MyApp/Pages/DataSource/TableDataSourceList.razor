@@ -248,7 +248,7 @@
         {
             _visible = false;
             //_form.Submit();
-            await Message.SuccessAsync("保存成功");
+            Toast.Success("保存成功");
             //_form.Reset();
 
             //StateHasChanged();
@@ -256,7 +256,7 @@
         else
         {
             _visible = true;
-            await Message.ErrorAsync($"保存失败");
+            Toast.Error($"保存失败");
         }
         // }
         // else
@@ -309,7 +309,7 @@
     {
         await DataSourceAppService.DeleteAsync(AppId, id);
 
-        await Message.SuccessAsync("删除成功！");
+        Toast.Success("删除成功！");
     }
 
     private async Task PublishAsync(string id)

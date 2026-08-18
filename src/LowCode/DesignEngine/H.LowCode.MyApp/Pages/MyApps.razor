@@ -179,7 +179,7 @@
     {
         if (string.IsNullOrWhiteSpace(_templateName))
         {
-            await Message.ErrorAsync("请输入模板名称");
+            Toast.Error("请输入模板名称");
             return;
         }
 
@@ -187,11 +187,11 @@
         {
             await AppTemplateAppService.SaveFromAppAsync(_templateSourceAppId, _templateName, _templateDescription);
             _saveTemplateVisible = false;
-            await Message.SuccessAsync("已保存为应用模板！可在\"我的物料-应用模板\"中查看");
+            Toast.Success("已保存为应用模板！可在\"我的物料-应用模板\"中查看");
         }
         catch (Exception ex)
         {
-            await Message.ErrorAsync($"保存模板失败：{ex.Message}");
+            Toast.Error($"保存模板失败：{ex.Message}");
         }
     }
 }

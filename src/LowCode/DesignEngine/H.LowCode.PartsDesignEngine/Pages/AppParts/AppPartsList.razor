@@ -96,7 +96,7 @@
     {
         if (string.IsNullOrWhiteSpace(_newAppId) || string.IsNullOrWhiteSpace(_newAppName))
         {
-            await Message.ErrorAsync("请填写应用标识和名称");
+            Toast.Error("请填写应用标识和名称");
             return;
         }
 
@@ -104,12 +104,12 @@
         {
             var app = (await AppTemplateAppService.CreateAppFromTemplateAsync(_selectedTemplate.TemplateId, _newAppId, _newAppName)).Data!;
             _useModalVisible = false;
-            await Message.SuccessAsync("已从模板创建应用！");
+            Toast.Success("已从模板创建应用！");
             NavigateTo($"/designengine/myapp/{app.Id}/pagemanager");
         }
         catch (Exception ex)
         {
-            await Message.ErrorAsync($"创建失败：{ex.Message}");
+            Toast.Error($"创建失败：{ex.Message}");
         }
     }
 
@@ -117,6 +117,6 @@
     {
         await AppTemplateAppService.DeleteAsync(templateId);
         await LoadTemplatesAsync();
-        await Message.SuccessAsync("删除成功");
+        Toast.Success("删除成功");
     }
 }

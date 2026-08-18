@@ -1,4 +1,4 @@
-﻿@page "/designengine/myapp/{AppId}/publish"
+@page "/designengine/myapp/{AppId}/publish"
 @namespace H.LowCode.MyApp
 @inherits LowCodePageComponentBase
 @layout MyAppLayout
@@ -144,7 +144,7 @@
     {
         if (string.IsNullOrWhiteSpace(_publishVersion))
         {
-            await Message.WarningAsync("请填写版本号");
+            Toast.Warning("请填写版本号");
             return;
         }
 
@@ -153,11 +153,11 @@
         {
             await AppPublishAppService.PublishAsync(AppId, _publishVersion, _publishDesc);
             await LoadAsync();
-            await Message.SuccessAsync("发布成功");
+            Toast.Success("发布成功");
         }
         catch (Exception ex)
         {
-            await Message.ErrorAsync(ex.Message);
+            Toast.Error(ex.Message);
         }
     }
 
@@ -167,11 +167,11 @@
         {
             await AppPublishAppService.RollbackAsync(AppId, recordId);
             await LoadAsync();
-            await Message.SuccessAsync("已回滚");
+            Toast.Success("已回滚");
         }
         catch (Exception ex)
         {
-            await Message.ErrorAsync(ex.Message);
+            Toast.Error(ex.Message);
         }
     }
 }

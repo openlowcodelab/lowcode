@@ -4,6 +4,7 @@
 @inject ISupplierInterfaceMappingAppService MappingService
 @inject ISupplyChainSupplierAppService SupplierService
 @inject IJSRuntime JS
+@inject H.Util.Blazor.HToastService Toast
 
 <HCard Title="接口配置">
     @* 顶部：供应商下拉框 + 新增接口 *@
@@ -413,7 +414,7 @@
                 ClearMappingForm();
             }
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"加载失败：{ex.Message}"); }
         finally { interfaceLoading = false; }
     }
 
@@ -466,7 +467,7 @@
                 currentMappingId = existing.Id;
             }
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载映射失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"加载映射失败：{ex.Message}"); }
         finally { mappingLoading = false; }
     }
 
@@ -580,7 +581,7 @@
         {
             if (string.IsNullOrWhiteSpace(current.Code) || string.IsNullOrWhiteSpace(current.Name))
             {
-                await JS.InvokeVoidAsync("alert", "编码和名称不能为空");
+                Toast.Warning("编码和名称不能为空");
                 return;
             }
 
@@ -598,12 +599,12 @@
                     IsEnabled = current.IsEnabled,
                     Remark = current.Remark
                 });
-                await JS.InvokeVoidAsync("alert", "更新成功");
+                Toast.Success("更新成功");
             }
             else
             {
                 await InterfaceService.CreateAsync(current);
-                await JS.InvokeVoidAsync("alert", "创建成功");
+                Toast.Success("创建成功");
             }
 
             CloseModal();
@@ -614,7 +615,7 @@
                 await SelectInterface(selectedInterfaceId.Value);
             }
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"保存失败：{ex.Message}"); }
         finally { saving = false; }
     }
 
@@ -627,7 +628,7 @@
         try
         {
             await InterfaceService.DeleteAsync(id);
-            await JS.InvokeVoidAsync("alert", "已删除");
+            Toast.Success("已删除");
             if (selectedInterfaceId == id)
             {
                 selectedInterfaceId = null;
@@ -639,7 +640,7 @@
             }
             await LoadInterfaces();
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"删除失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"删除失败：{ex.Message}"); }
     }
 
     // ===== 供应商映射保存/删除 =====
@@ -661,7 +662,7 @@
                     IsEnabled = mappingForm.IsEnabled,
                     Remark = mappingForm.Remark
                 });
-                await JS.InvokeVoidAsync("alert", "保存成功");
+                Toast.Success("保存成功");
             }
             else
             {
@@ -676,11 +677,11 @@
                     Remark = mappingForm.Remark
                 };
                 await MappingService.CreateAsync(createDto);
-                await JS.InvokeVoidAsync("alert", "创建成功");
+                Toast.Success("创建成功");
             }
             await LoadMapping();
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"保存失败：{ex.Message}"); }
     }
 
     private async Task DeleteMapping()
@@ -691,10 +692,10 @@
         try
         {
             await MappingService.DeleteAsync(currentMappingId.Value);
-            await JS.InvokeVoidAsync("alert", "已删除");
+            Toast.Success("已删除");
             await LoadMapping();
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"删除失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"删除失败：{ex.Message}"); }
     }
 
     // 映射表单脱敏（仅 UI 用）

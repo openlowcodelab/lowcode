@@ -2,6 +2,7 @@
 @layout SupplyChainLayout
 @inject ISupplyChainSupplierAppService SupplierService
 @inject IJSRuntime JS
+@inject H.Util.Blazor.HToastService Toast
 
 <HCard Title="供应商管理">
     <div class="h-toolbar">
@@ -140,7 +141,7 @@
             var result = (await SupplierService.GetListAsync(new SupplierQueryDto { MaxResultCount = 50 })).Data!;
             suppliers = result.Items.ToList();
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"加载失败：{ex.Message}"); }
         finally { loading = false; }
     }
 
@@ -179,7 +180,7 @@
         {
             if (string.IsNullOrWhiteSpace(current.Name) || string.IsNullOrWhiteSpace(current.Code))
             {
-                await JS.InvokeVoidAsync("alert", "编码和名称不能为空");
+                Toast.Warning("编码和名称不能为空");
                 return;
             }
 
@@ -197,18 +198,18 @@
                     IsEnabled = current.IsEnabled,
                     Remark = current.Remark
                 });
-                await JS.InvokeVoidAsync("alert", "更新成功");
+                Toast.Success("更新成功");
             }
             else
             {
                 await SupplierService.CreateAsync(current);
-                await JS.InvokeVoidAsync("alert", "创建成功");
+                Toast.Success("创建成功");
             }
 
             CloseModal();
             await LoadData();
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"保存失败：{ex.Message}"); }
         finally { saving = false; }
     }
 
@@ -221,9 +222,9 @@
         try
         {
             await SupplierService.DeleteAsync(id);
-            await JS.InvokeVoidAsync("alert", "已删除");
+            Toast.Success("已删除");
             await LoadData();
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"删除失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"删除失败：{ex.Message}"); }
     }
 }

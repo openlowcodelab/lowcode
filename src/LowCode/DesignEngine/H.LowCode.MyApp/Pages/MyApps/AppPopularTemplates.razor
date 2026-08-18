@@ -77,7 +77,7 @@
     {
         if (string.IsNullOrWhiteSpace(_newAppId) || string.IsNullOrWhiteSpace(_newAppName))
         {
-            await Message.ErrorAsync("请填写应用标识和名称");
+            Toast.Error("请填写应用标识和名称");
             return;
         }
 
@@ -89,12 +89,12 @@
             if (OnUsed.HasDelegate)
                 await OnUsed.InvokeAsync();
 
-            await Message.SuccessAsync("已从模板创建应用！");
+            Toast.Success("已从模板创建应用！");
             NavigateTo($"/designengine/myapp/{app.Id}/pagemanager");
         }
         catch (Exception ex)
         {
-            await Message.ErrorAsync($"创建失败：{ex.Message}");
+            Toast.Error($"创建失败：{ex.Message}");
         }
     }
 }

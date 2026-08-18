@@ -3,6 +3,7 @@
 @inject IRouteRuleAppService RouteRuleService
 @inject ISupplierAppService SupplierService
 @inject IJSRuntime JS
+@inject H.Util.Blazor.HToastService Toast
 
 <HCard Title="路由规则管理">
     <div class="h-toolbar">
@@ -151,7 +152,7 @@
             var r = (await RouteRuleService.GetListAsync(new RouteRuleQueryDto { MaxResultCount = 100 })).Data!;
             rules = r.Items.OrderBy(x => x.Priority).ToList();
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"加载失败：{ex.Message}"); }
         finally { loading = false; }
     }
 
@@ -188,7 +189,7 @@
         {
             if (string.IsNullOrWhiteSpace(current.Name) || string.IsNullOrWhiteSpace(current.SupplierCode))
             {
-                await JS.InvokeVoidAsync("alert", "名称和命中供应商不能为空");
+                Toast.Warning("名称和命中供应商不能为空");
                 return;
             }
 
@@ -205,18 +206,18 @@
                     Fallback = current.Fallback,
                     Remark = current.Remark
                 });
-                await JS.InvokeVoidAsync("alert", "更新成功");
+                Toast.Success("更新成功");
             }
             else
             {
                 await RouteRuleService.CreateAsync(current);
-                await JS.InvokeVoidAsync("alert", "创建成功");
+                Toast.Success("创建成功");
             }
 
             CloseModal();
             await LoadData();
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"保存失败：{ex.Message}"); }
         finally { saving = false; }
     }
 
@@ -229,9 +230,9 @@
         try
         {
             await RouteRuleService.DeleteAsync(id);
-            await JS.InvokeVoidAsync("alert", "已删除");
+            Toast.Success("已删除");
             await LoadData();
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"删除失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"删除失败：{ex.Message}"); }
     }
 }

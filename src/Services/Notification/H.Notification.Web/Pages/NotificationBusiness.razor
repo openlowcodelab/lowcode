@@ -7,6 +7,7 @@
 @inject INotificationSendAppService SendAppService
 @inject NavigationManager Nav
 @inject IJSRuntime JS
+@inject H.Util.Blazor.HToastService Toast
 
 <style>
     .h-cat-item:hover { background:#F2F3F5; }
@@ -430,7 +431,7 @@
             showCatModal = false;
             await LoadCategories();
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"保存失败：{ex.Message}"); }
         finally { saving = false; }
     }
 
@@ -444,7 +445,7 @@
             await LoadCategories();
             await LoadBusinesses();
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"删除失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"删除失败：{ex.Message}"); }
     }
 
     // ===== 业务 =====
@@ -452,7 +453,7 @@
     {
         if (!categories.Any())
         {
-            await JS.InvokeVoidAsync("alert", "请先创建分类");
+            Toast.Warning("请先创建分类");
             return;
         }
         currentBiz = new CreateNotificationBusinessDto
@@ -524,7 +525,7 @@
             await LoadCategories();
             await LoadBusinesses();
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"保存失败：{ex.Message}"); }
         finally { saving = false; }
     }
 
@@ -537,7 +538,7 @@
             await LoadCategories();
             await LoadBusinesses();
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"删除失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"删除失败：{ex.Message}"); }
     }
 
     // ===== 通知规则 =====
@@ -591,7 +592,7 @@
             showSpecModal = false;
             await LoadBusinesses();
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"保存失败：{ex.Message}"); }
         finally { saving = false; }
     }
 
@@ -621,7 +622,7 @@
             showGroupModal = false;
             await LoadBusinesses();
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"保存失败：{ex.Message}"); }
         finally { saving = false; }
     }
 
@@ -649,7 +650,7 @@
             var result = await SendAppService.TestSendAsync(new TestSendInput { BusinessCode = testBusinessCode, Level = testLevel, Data = data });
             testResult = result.Data?.Message ?? "已提交";
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"测试发送失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"测试发送失败：{ex.Message}"); }
         finally { testSending = false; }
     }
 

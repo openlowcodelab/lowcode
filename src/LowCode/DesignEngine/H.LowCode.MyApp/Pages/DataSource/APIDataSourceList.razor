@@ -116,12 +116,12 @@
         {
             await SaveDataSourceSchemaAsync();
             _visible = false;
-            await Message.SuccessAsync("保存成功！");
+            Toast.Success("保存成功！");
         }
         catch (Exception ex)
         {
             _visible = true;
-            await Message.ErrorAsync($"保存失败: {ex.Message}");
+            Toast.Error($"保存失败: {ex.Message}");
         }
     }
 
@@ -174,7 +174,7 @@
     {
         await DataSourceAppService.DeleteAsync(AppId, id);
         
-        await Message.SuccessAsync("删除成功！");
+        Toast.Success("删除成功！");
     }
 
     private async Task PublishAsync(string id)

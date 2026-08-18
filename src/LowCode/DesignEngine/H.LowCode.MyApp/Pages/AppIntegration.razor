@@ -1,4 +1,4 @@
-﻿@page "/designengine/myapp/{AppId}/integration"
+@page "/designengine/myapp/{AppId}/integration"
 @namespace H.LowCode.MyApp
 @inherits LowCodePageComponentBase
 @layout MyAppLayout
@@ -53,6 +53,6 @@
     private async Task Toggle(IntegrationItem it)
     {
         it.Enabled = !it.Enabled;
-        await Message.InfoAsync($"{it.Name} 已{(it.Enabled ? "启用" : "关闭")}（配置能力将在后续版本开放）");
+        Toast.Info($"{it.Name} 已{(it.Enabled ? "启用" : "关闭")}（配置能力将在后续版本开放）");
     }
 }

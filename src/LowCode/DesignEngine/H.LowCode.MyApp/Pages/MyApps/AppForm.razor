@@ -1,4 +1,4 @@
-﻿@namespace H.LowCode.MyApp
+@namespace H.LowCode.MyApp
 @inherits LowCodeComponentBase
 @layout MyAppLayout
 
@@ -70,11 +70,11 @@
         bool isSuccess = (await AppApplicationService.SaveAsync(AppSchema)).Data == true;
         if (isSuccess)
         {
-            await Message.SuccessAsync("新建成功！");
+            Toast.Success("新建成功！");
         }
         else
         {
-            await Message.ErrorAsync("新建失败");
+            Toast.Error("新建失败");
         }
         return isSuccess;
     }

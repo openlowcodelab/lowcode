@@ -5,6 +5,7 @@
 @inject IApprovalInstanceAppService InstanceService
 @inject NavigationManager Nav
 @inject IJSRuntime JS
+@inject H.Util.Blazor.HToastService Toast
 
 <div class="center-layout page-fill">
     <div class="center-menu">
@@ -220,7 +221,7 @@
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", $"加载失败: {ex.Message}");
+            Toast.Error($"加载失败: {ex.Message}");
         }
         finally
         {
@@ -261,7 +262,7 @@
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", $"操作失败: {ex.Message}");
+            Toast.Error($"操作失败: {ex.Message}");
         }
         finally
         {
@@ -280,7 +281,7 @@
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", $"取消失败: {ex.Message}");
+            Toast.Error($"取消失败: {ex.Message}");
         }
     }
 

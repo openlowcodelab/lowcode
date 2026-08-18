@@ -12,6 +12,7 @@
 @inject IAiGenerateAppService TestingAiService
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
+@inject H.Util.Blazor.HToastService Toast
 
 <PageTitle>测试用例</PageTitle>
 
@@ -459,7 +460,7 @@
     {
         if (selectedProjectId == 0)
         {
-            JSRuntime.InvokeVoidAsync("alert", "请先选择一个项目");
+            Toast.Warning("请先选择一个项目");
             return;
         }
 
@@ -832,7 +833,7 @@
     {
         if (selectedProjectId == 0)
         {
-            JSRuntime.InvokeVoidAsync("alert", "请先选择一个项目");
+            Toast.Warning("请先选择一个项目");
             return;
         }
         
@@ -856,12 +857,12 @@
         try
         {
             var copiedId = (await ProjectCaseService.CopyAsync(testCase.Id)).Data;
-            await JSRuntime.InvokeVoidAsync("alert", $"测试用例 '{testCase.Name}' 复制成功！");
+            Toast.Success($"测试用例 '{testCase.Name}' 复制成功！");
             await LoadProjectData();
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"复制失败: {ex.Message}");
+            Toast.Error($"复制失败: {ex.Message}");
         }
     }
 
@@ -894,7 +895,7 @@
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"保存失败: {ex.Message}");
+            Toast.Error($"保存失败: {ex.Message}");
         }
     }
 
@@ -946,7 +947,7 @@
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"保存失败: {ex.Message}");
+            Toast.Error($"保存失败: {ex.Message}");
         }
     }
 
@@ -1086,12 +1087,12 @@
             if (isEditingBasicInfo)
             {
                 await ProjectCaseService.UpdateAsync(testCase.Id, testCase);
-                await JSRuntime.InvokeVoidAsync("alert", "测试用例基本信息更新成功！");
+                Toast.Success("测试用例基本信息更新成功！");
             }
             else
             {
                 await ProjectCaseService.CreateAsync(testCase);
-                await JSRuntime.InvokeVoidAsync("alert", "测试用例创建成功！");
+                Toast.Success("测试用例创建成功！");
                 Navigation.NavigateTo($"/testing/project-cases/{testCase.Id}/steps");
                 return;
             }
@@ -1101,7 +1102,7 @@
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"保存失败: {ex.Message}");
+            Toast.Error($"保存失败: {ex.Message}");
         }
     }
     
@@ -1110,14 +1111,14 @@
         try
         {
             await ProjectCaseService.CreateAsync(testCase);
-            await JSRuntime.InvokeVoidAsync("alert", "测试用例保存成功！");
+            Toast.Success("测试用例保存成功！");
             
             await HideBasicInfoModal();
             await LoadProjectData();
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"保存失败: {ex.Message}");
+            Toast.Error($"保存失败: {ex.Message}");
         }
     }
     

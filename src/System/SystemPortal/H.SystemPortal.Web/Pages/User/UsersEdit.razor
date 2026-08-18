@@ -4,6 +4,7 @@
 @inject IUserAppService UserService
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
+@inject H.Util.Blazor.HToastService Toast
 
 <PageTitle>编辑用户</PageTitle>
 
@@ -288,7 +289,7 @@
         {
             await UserService.ResetPasswordAsync(Id, resetPasswordDto);
             showResetPasswordModal = false;
-            _ = JS.InvokeVoidAsync("alert", "密码重置成功");
+            Toast.Success("密码重置成功");
         }
         catch (ArgumentException ex)
         {

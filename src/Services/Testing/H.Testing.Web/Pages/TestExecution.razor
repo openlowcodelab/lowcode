@@ -13,6 +13,7 @@
 @inject IBatchExecutionAppService BatchExecutionService
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
+@inject H.Util.Blazor.HToastService Toast
 
 <PageTitle>@(IsBatchMode ? "批量执行测试用例" : "执行测试用例")</PageTitle>
 
@@ -466,7 +467,7 @@ else
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"加载数据失败: {ex.Message}");
+            Toast.Error($"加载数据失败: {ex.Message}");
         }
         finally
         {
@@ -558,11 +559,11 @@ else
                            $"平均执行时间: {batchResult.AverageExecutionTime.TotalMilliseconds:F0}ms";
             }
 
-            await JSRuntime.InvokeVoidAsync("alert", message);
+            Toast.Info(message);
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"执行失败: {ex.Message}");
+            Toast.Error($"执行失败: {ex.Message}");
         }
         finally
         {

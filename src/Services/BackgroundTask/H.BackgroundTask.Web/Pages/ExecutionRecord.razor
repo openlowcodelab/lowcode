@@ -3,6 +3,7 @@
 @layout BackgroundTaskLayout
 @inject IJobExecutionRecordAppService RecordService
 @inject IJSRuntime JS
+@inject H.Util.Blazor.HToastService Toast
 
 <HCard Title="执行记录">
     <div class="h-toolbar">
@@ -107,7 +108,7 @@
             var result = (await RecordService.GetListAsync(input)).Data;
             records = result?.Items.ToList() ?? new();
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"加载失败：{ex.Message}"); }
         finally { loading = false; }
     }
 

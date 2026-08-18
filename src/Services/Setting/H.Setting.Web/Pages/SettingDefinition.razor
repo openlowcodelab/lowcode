@@ -3,6 +3,7 @@
 @layout SettingLayout
 @inject ISettingDefinitionAppService DefinitionService
 @inject IJSRuntime JS
+@inject H.Util.Blazor.HToastService Toast
 
 <HCard Title="配置定义">
     <div class="h-toolbar">
@@ -123,7 +124,7 @@
             var result = (await DefinitionService.GetListAsync(input)).Data!;
             items = result.Items.ToList();
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"加载失败：{ex.Message}"); }
         finally { loading = false; }
     }
 
@@ -160,7 +161,7 @@
         {
             if (string.IsNullOrWhiteSpace(current.Name) || string.IsNullOrWhiteSpace(current.DisplayName))
             {
-                await JS.InvokeVoidAsync("alert", "配置名称和显示名称不能为空");
+                Toast.Warning("配置名称和显示名称不能为空");
                 return;
             }
             if (editingId.HasValue)
@@ -171,7 +172,7 @@
             CloseModal();
             await LoadData();
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"保存失败：{ex.Message}"); }
         finally { saving = false; }
     }
 
@@ -187,7 +188,7 @@
                 await DefinitionService.DeleteAsync(id);
                 await LoadData();
             }
-            catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"删除失败：{ex.Message}"); }
+            catch (Exception ex) { Toast.Error($"删除失败：{ex.Message}"); }
         }
     }
 }

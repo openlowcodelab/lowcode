@@ -11,6 +11,7 @@
 @inject IProjectKnowledgeAppService ProjectKnowledgeService
 @inject IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager
+@inject H.Util.Blazor.HToastService Toast
 
 <PageTitle>项目管理</PageTitle>
 
@@ -1119,7 +1120,7 @@ else
         {
             if (!isEditingProject && createMode == "template" && selectedTemplateId == null)
             {
-                await JSRuntime.InvokeVoidAsync("alert", "请先选择一个模板");
+                Toast.Warning("请先选择一个模板");
                 return;
             }
             if (isEditingProject)
@@ -1143,8 +1144,8 @@ else
                 await LoadData();
             }
         }
-        catch (InvalidOperationException ex) { await JSRuntime.InvokeVoidAsync("alert", ex.Message); }
-        catch (Exception ex) { await JSRuntime.InvokeVoidAsync("alert", $"保存项目时发生错误: {ex.Message}"); }
+        catch (InvalidOperationException ex) { Toast.Warning(ex.Message); }
+        catch (Exception ex) { Toast.Error($"保存项目时发生错误: {ex.Message}"); }
     }
 
     /// <summary>
@@ -1171,7 +1172,7 @@ else
     private async Task SaveAsTemplate()
     {
         if (saveAsTemplateProject == null) return;
-        if (string.IsNullOrWhiteSpace(saveTemplateInfo.Name)) { await JSRuntime.InvokeVoidAsync("alert", "模板名称不能为空"); return; }
+        if (string.IsNullOrWhiteSpace(saveTemplateInfo.Name)) { Toast.Warning("模板名称不能为空"); return; }
 
         templateSaving = true;
         StateHasChanged();
@@ -1180,9 +1181,9 @@ else
             await ProjectTemplateService.SaveProjectAsTemplateAsync(saveAsTemplateProject.Id, saveTemplateInfo.Name, saveTemplateInfo.Description);
             HideSaveAsTemplateModal();
             await LoadData();
-            await JSRuntime.InvokeVoidAsync("alert", "模板保存成功");
+            Toast.Success("模板保存成功");
         }
-        catch (Exception ex) { await JSRuntime.InvokeVoidAsync("alert", $"保存模板失败: {ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"保存模板失败: {ex.Message}"); }
         finally { templateSaving = false; }
     }
 
@@ -1206,14 +1207,14 @@ else
 
     private async Task SaveEditTemplate()
     {
-        if (string.IsNullOrWhiteSpace(editTemplateInfo.Name)) { await JSRuntime.InvokeVoidAsync("alert", "模板名称不能为空"); return; }
+        if (string.IsNullOrWhiteSpace(editTemplateInfo.Name)) { Toast.Warning("模板名称不能为空"); return; }
         try
         {
             await ProjectTemplateService.UpdateTemplateAsync(editingTemplateId, editTemplateInfo.Name, editTemplateInfo.Description);
             HideEditTemplateModal();
             templates = (await ProjectTemplateService.GetTemplatesAsync()).Data ?? [];
         }
-        catch (Exception ex) { await JSRuntime.InvokeVoidAsync("alert", $"保存模板失败: {ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"保存模板失败: {ex.Message}"); }
     }
 
     private async Task DeleteTemplate(ProjectTemplateDto tpl)
@@ -1335,7 +1336,7 @@ else
 
     private async Task SaveEnvironmentChanges()
     {
-        if (selectedEnvironment != null) { await ProjectEnvAppService.UpdateAsync(selectedEnvironment.Id, selectedEnvironment); await JSRuntime.InvokeVoidAsync("alert", "环境修改已保存"); }
+        if (selectedEnvironment != null) { await ProjectEnvAppService.UpdateAsync(selectedEnvironment.Id, selectedEnvironment); Toast.Success("环境修改已保存"); }
     }
 
     private void OnSearchChanged(ChangeEventArgs e) { searchTerm = e.Value?.ToString() ?? ""; FilterProjects(); }
@@ -1462,7 +1463,7 @@ else
             await ProjectKnowledgeService.GetOrCreateAsync(project.Id);
             await LoadKnowledgeTree();
         }
-        catch (Exception ex) { await JSRuntime.InvokeVoidAsync("alert", $"加载知识库失败: {ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"加载知识库失败: {ex.Message}"); }
         finally { knowledgeLoading = false; }
     }
 
@@ -1513,7 +1514,7 @@ else
             renamingTitle = created.Title;
             StateHasChanged();
         }
-        catch (Exception ex) { await JSRuntime.InvokeVoidAsync("alert", $"创建失败: {ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"创建失败: {ex.Message}"); }
     }
 
     private void StartRenameKnowledgeNode(ProjectKnowledgeNodeDto node) { renamingNodeId = node.Id; renamingTitle = node.Title; }
@@ -1532,7 +1533,7 @@ else
             if (selectedKnowledgeNode?.Id == id) selectedKnowledgeNode = FindKnowledgeNode(id);
             StateHasChanged();
         }
-        catch (Exception ex) { await JSRuntime.InvokeVoidAsync("alert", $"重命名失败: {ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"重命名失败: {ex.Message}"); }
     }
 
     private ProjectKnowledgeNodeDto? FindKnowledgeNode(Guid id) =>
@@ -1555,9 +1556,9 @@ else
         try
         {
             await ProjectKnowledgeService.SaveDocumentAsync(selectedKnowledgeNode.Id, docContent);
-            await JSRuntime.InvokeVoidAsync("alert", "文档已保存");
+            Toast.Success("文档已保存");
         }
-        catch (Exception ex) { await JSRuntime.InvokeVoidAsync("alert", $"保存失败: {ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"保存失败: {ex.Message}"); }
         finally { docSaving = false; }
     }
 
@@ -1595,7 +1596,7 @@ else
             aiKbDescription = "";
             StateHasChanged();
         }
-        catch (Exception ex) { await JSRuntime.InvokeVoidAsync("alert", $"保存失败: {ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"保存失败: {ex.Message}"); }
         finally { aiKbSaving = false; }
     }
 }

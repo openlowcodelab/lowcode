@@ -7,6 +7,7 @@ using H.Enterprise.Application.Contracts;
 using H.File.Application.Contracts;
 using H.LowCode.Application.Contracts;
 using H.LowCode.ComponentBase;
+using H.Util.Blazor;
 using H.LowCode.DesignEngine.Application.Contracts;
 using H.LowCode.RenderEngine.Application.Contracts;
 using H.LowCode.RenderEngineBase;
@@ -53,6 +54,9 @@ public static class ClientServices
         {
             BaseAddress = new Uri(baseAddress)
         });
+
+        // 全局 Toast 提示服务
+        services.AddScoped<HToastService>();
 
         // 注册 HttpClient，并为每个命名客户端添加 CookieHandler，
         // 使 Blazor WASM 的 fetch 请求携带认证 Cookie

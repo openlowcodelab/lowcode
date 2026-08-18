@@ -4,6 +4,7 @@
 @inject IApprovalInstanceAppService InstanceService
 @inject NavigationManager Nav
 @inject IJSRuntime JS
+@inject H.Util.Blazor.HToastService Toast
 
 <PageTitle>审批详情</PageTitle>
 
@@ -96,7 +97,7 @@ else
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", $"加载失败: {ex.Message}");
+            Toast.Error($"加载失败: {ex.Message}");
         }
     }
 

@@ -3,6 +3,7 @@
 @layout SettingLayout
 @inject ISettingValueAppService ValueService
 @inject IJSRuntime JS
+@inject H.Util.Blazor.HToastService Toast
 
 <HCard Title="配置项">
     <div class="h-toolbar">
@@ -128,7 +129,7 @@
             var result = (await ValueService.GetListAsync(input)).Data!;
             items = result.Items.ToList();
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"加载失败：{ex.Message}"); }
         finally { loading = false; }
     }
 
@@ -161,7 +162,7 @@
         {
             if (string.IsNullOrWhiteSpace(current.Name))
             {
-                await JS.InvokeVoidAsync("alert", "请选择配置名称");
+                Toast.Warning("请选择配置名称");
                 return;
             }
             if (editingId.HasValue)
@@ -172,7 +173,7 @@
             CloseModal();
             await LoadData();
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"保存失败：{ex.Message}"); }
         finally { saving = false; }
     }
 
@@ -188,7 +189,7 @@
                 await ValueService.DeleteAsync(id);
                 await LoadData();
             }
-            catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"删除失败：{ex.Message}"); }
+            catch (Exception ex) { Toast.Error($"删除失败：{ex.Message}"); }
         }
     }
 }

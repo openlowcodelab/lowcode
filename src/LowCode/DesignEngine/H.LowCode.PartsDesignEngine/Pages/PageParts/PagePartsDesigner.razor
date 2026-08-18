@@ -1,4 +1,4 @@
-﻿@page "/designengine/myparts/page/designer/{TemplateId}"
+@page "/designengine/myparts/page/designer/{TemplateId}"
 @namespace H.LowCode.PartsDesignEngine
 @inherits LowCodePageComponentBase
 @layout PartsDesignEngineLayout
@@ -82,7 +82,7 @@ else
             _template = (await PageTemplateAppService.GetByIdAsync(TemplateId)).Data;
             if (_template == null)
             {
-                await Message.ErrorAsync("页面模板不存在！");
+                Toast.Error("页面模板不存在！");
                 GoBack();
                 return;
             }
@@ -104,7 +104,7 @@ else
         }
         catch (Exception ex)
         {
-            await Message.ErrorAsync($"加载页面模板失败: {ex.Message}");
+            Toast.Error($"加载页面模板失败: {ex.Message}");
             GoBack();
         }
         finally
@@ -128,19 +128,19 @@ else
 
             if (_template.Components.Count == 0)
             {
-                await Message.WarningAsync("请先添加组件后再保存！");
+                Toast.Warning("请先添加组件后再保存！");
                 return;
             }
 
             var success = (await PageTemplateAppService.SaveAsync(_template)).Data == true;
             if (success)
-                await Message.SuccessAsync("保存成功！");
+                Toast.Success("保存成功！");
             else
-                await Message.ErrorAsync("保存失败！");
+                Toast.Error("保存失败！");
         }
         catch (Exception ex)
         {
-            await Message.ErrorAsync($"保存失败: {ex.Message}");
+            Toast.Error($"保存失败: {ex.Message}");
         }
         finally
         {

@@ -6,6 +6,7 @@
 @inject IApprovalCategoryAppService CategoryService
 @inject NavigationManager Nav
 @inject IJSRuntime JS
+@inject H.Util.Blazor.HToastService Toast
 
 <div class="page-fill">
 <div class="mgmt-header">
@@ -347,7 +348,7 @@ else
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", $"加载数据失败: {ex.Message}");
+            Toast.Error($"加载数据失败: {ex.Message}");
             definitions = new List<ApprovalDefinitionDto>();
             categories = new List<ApprovalCategoryDto>();
         }
@@ -369,7 +370,7 @@ else
             }
             catch (Exception ex)
             {
-                await JS.InvokeVoidAsync("alert", $"加载模板失败: {ex.Message}");
+                Toast.Error($"加载模板失败: {ex.Message}");
                 templates = new List<ApprovalTemplateDto>();
             }
             finally
@@ -459,7 +460,7 @@ else
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", $"操作失败: {ex.Message}");
+            Toast.Error($"操作失败: {ex.Message}");
         }
     }
 
@@ -471,12 +472,12 @@ else
         try
         {
             await DefinitionService.DeleteAsync(id);
-            await JS.InvokeVoidAsync("alert", "删除成功");
+            Toast.Success("删除成功");
             await LoadData();
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", $"删除失败: {ex.Message}");
+            Toast.Error($"删除失败: {ex.Message}");
         }
     }
 
@@ -504,7 +505,7 @@ else
     {
         if (string.IsNullOrWhiteSpace(categoryName))
         {
-            await JS.InvokeVoidAsync("alert", "请输入分组名称");
+            Toast.Warning("请输入分组名称");
             return;
         }
 
@@ -525,7 +526,7 @@ else
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", $"保存失败: {ex.Message}");
+            Toast.Error($"保存失败: {ex.Message}");
         }
         finally
         {
@@ -549,7 +550,7 @@ else
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", $"删除失败: {ex.Message}");
+            Toast.Error($"删除失败: {ex.Message}");
         }
     }
 }

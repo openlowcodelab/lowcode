@@ -4,6 +4,7 @@
 @inject IOrderAppService OrderService
 @inject NavigationManager Nav
 @inject IJSRuntime JS
+@inject H.Util.Blazor.HToastService Toast
 
 <HCard Title="订单列表">
     <div class="h-toolbar">
@@ -132,7 +133,7 @@
             var result = (await OrderService.GetListAsync(input)).Data!;
             orders = result.Items.ToList();
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"加载失败：{ex.Message}"); }
         finally { loading = false; }
     }
 
@@ -149,15 +150,15 @@
         {
             if (string.IsNullOrWhiteSpace(current.ProductName) || string.IsNullOrWhiteSpace(current.BuyerId))
             {
-                await JS.InvokeVoidAsync("alert", "商品名称和买家ID不能为空");
+                Toast.Warning("商品名称和买家ID不能为空");
                 return;
             }
             await OrderService.CreateAsync(current);
-            await JS.InvokeVoidAsync("alert", "订单创建成功，进入待下发状态后将自动触发上游下发");
+            Toast.Success("订单创建成功，进入待下发状态后将自动触发上游下发");
             CloseModal();
             await LoadData();
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"保存失败：{ex.Message}"); }
         finally { saving = false; }
     }
 
@@ -168,10 +169,10 @@
         try
         {
             var r = (await OrderService.TriggerDispatchAsync(id)).Data!;
-            await JS.InvokeVoidAsync("alert", r.Success ? $"下发成功：{r.Message ?? ""}" : $"下发失败：{r.Message}");
+            if (r.Success) Toast.Success($"下发成功：{r.Message ?? ""}"); else Toast.Error($"下发失败：{r.Message}");
             await LoadData();
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"触发失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"触发失败：{ex.Message}"); }
     }
 
     private async Task ConfirmDelete(Guid id)
@@ -180,7 +181,7 @@
         if (ok)
         {
             await OrderService.DeleteAsync(id);
-            await JS.InvokeVoidAsync("alert", "已删除");
+            Toast.Success("已删除");
             await LoadData();
         }
     }

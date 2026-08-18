@@ -2,6 +2,7 @@
 @layout OrderLayout
 @inject IDispatchLogAppService DispatchLogService
 @inject IJSRuntime JS
+@inject H.Util.Blazor.HToastService Toast
 
 <HCard Title="下发日志">
     <div class="h-toolbar">
@@ -72,7 +73,7 @@
             var r = (await DispatchLogService.GetListAsync(input)).Data!;
             logs = r.Items.ToList();
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"加载失败：{ex.Message}"); }
         finally { loading = false; }
     }
 
@@ -81,10 +82,10 @@
         try
         {
             var r = (await DispatchLogService.RetryAsync(logId)).Data!;
-            await JS.InvokeVoidAsync("alert", r.Success ? $"重试成功：{r.Message}" : $"重试失败：{r.Message}");
+            if (r.Success) Toast.Success($"重试成功：{r.Message}"); else Toast.Error($"重试失败：{r.Message}");
             await LoadData();
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"重试失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"重试失败：{ex.Message}"); }
     }
 
     private string StatusTag(DispatchStatusEnum s) => s switch

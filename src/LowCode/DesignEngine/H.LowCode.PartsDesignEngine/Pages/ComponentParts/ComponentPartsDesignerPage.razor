@@ -103,7 +103,7 @@ else
             _partsSchema = (await ComponentPartsAppService.GetByIdAsync(_partsCascading.LibraryId, _partsCascading.PartsId)).Data;
             if (_partsSchema == null)
             {
-                await Message.ErrorAsync("组件不存在！");
+                Toast.Error("组件不存在！");
                 GoBack();
                 return;
             }
@@ -118,7 +118,7 @@ else
         }
         catch (Exception ex)
         {
-            await Message.ErrorAsync($"加载组件失败: {ex.Message}");
+            Toast.Error($"加载组件失败: {ex.Message}");
             GoBack();
         }
         finally
@@ -140,13 +140,13 @@ else
             // 验证必填字段
             if (string.IsNullOrWhiteSpace(_partsSchema.PartsId))
             {
-                await Message.WarningAsync("请输入组件Id！");
+                Toast.Warning("请输入组件Id！");
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(_partsSchema.Name))
             {
-                await Message.WarningAsync("请输入组件标识！");
+                Toast.Warning("请输入组件标识！");
                 return;
             }
 
@@ -160,16 +160,16 @@ else
             
             if (success)
             {
-                await Message.SuccessAsync("保存成功！");
+                Toast.Success("保存成功！");
             }
             else
             {
-                await Message.ErrorAsync("保存失败！");
+                Toast.Error("保存失败！");
             }
         }
         catch (Exception ex)
         {
-            await Message.ErrorAsync($"保存失败: {ex.Message}");
+            Toast.Error($"保存失败: {ex.Message}");
         }
         finally
         {
@@ -203,6 +203,6 @@ else
     private async Task PreviewComponent()
     {
         // TODO: 实现组件预览功能
-        await Message.InfoAsync("预览功能开发中...");
+        Toast.Info("预览功能开发中...");
     }
 }

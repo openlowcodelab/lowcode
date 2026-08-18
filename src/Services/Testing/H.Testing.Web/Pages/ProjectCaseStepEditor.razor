@@ -11,6 +11,7 @@
 @inject IProjectServiceConfigAppService ProjectServiceConfigService
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
+@inject H.Util.Blazor.HToastService Toast
 
 <style>
     .testing-step-editor .card { background: #fff; border: 1px solid #F2F3F5; border-radius: 6px; margin-bottom: 16px; }
@@ -491,12 +492,12 @@
                 // 如果是新建，更新当前对象的ID，防止重复创建
                 currentTestCase.Id = newId;
                 isNewTestCase = false;
-                await JSRuntime.InvokeVoidAsync("alert", "测试用例创建成功！");
+                Toast.Success("测试用例创建成功！");
             }
             else
             {
                 await ProjectCaseService.UpdateAsync(currentTestCase.Id, currentTestCase);
-                await JSRuntime.InvokeVoidAsync("alert", "测试用例保存成功！");
+                Toast.Success("测试用例保存成功！");
             }
 
             // 如果使用了模板，不保存步骤（步骤由模板定义）
@@ -507,7 +508,7 @@
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"保存失败: {ex.Message}");
+            Toast.Error($"保存失败: {ex.Message}");
         }
     }
     
@@ -2617,7 +2618,7 @@
             StateHasChanged();
             
             // 显示成功消息
-            await JSRuntime.InvokeVoidAsync("alert", $"成功添加了 {recordedSteps.Count} 个录制步骤！");
+            Toast.Success($"成功添加了 {recordedSteps.Count} 个录制步骤！");
         }
     }
 }

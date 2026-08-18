@@ -104,7 +104,7 @@
         }
         catch (Exception ex)
         {
-            await Message.ErrorAsync($"加载组件失败: {ex.Message}");
+            Toast.Error($"加载组件失败: {ex.Message}");
             _componentParts = null;
         }
         finally
@@ -136,11 +136,11 @@
 
             _componentParts.LibraryId = LibraryId;
             await ComponentPartsAppService.SaveAsync(_componentParts);
-            await Message.SuccessAsync("保存成功");
+            Toast.Success("保存成功");
         }
         catch (Exception ex)
         {
-            await Message.ErrorAsync($"保存失败: {ex.Message}");
+            Toast.Error($"保存失败: {ex.Message}");
         }
         finally
         {

@@ -74,7 +74,7 @@
         if (string.IsNullOrWhiteSpace(ComponentLibrary.LibraryId) || 
             string.IsNullOrWhiteSpace(ComponentLibrary.LibraryName))
         {
-            await Message.ErrorAsync("请填写必填字段");
+            Toast.Error("请填写必填字段");
             return false;
         }
 

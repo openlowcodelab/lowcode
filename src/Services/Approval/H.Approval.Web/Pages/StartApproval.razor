@@ -4,6 +4,7 @@
 @inject IApprovalDefinitionAppService DefinitionService
 @inject NavigationManager Nav
 @inject IJSRuntime JS
+@inject H.Util.Blazor.HToastService Toast
 
 <div class="start-approval page-fill">
     <div class="start-header">
@@ -99,7 +100,7 @@
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", $"加载审批定义失败: {ex.Message}");
+            Toast.Error($"加载审批定义失败: {ex.Message}");
         }
         finally
         {

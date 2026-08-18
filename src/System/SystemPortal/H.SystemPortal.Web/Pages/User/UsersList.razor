@@ -4,6 +4,7 @@
 @inject IUserAppService UserService
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
+@inject H.Util.Blazor.HToastService Toast
 
 <PageTitle>用户管理</PageTitle>
 
@@ -178,7 +179,7 @@
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", $"删除失败：{ex.Message}");
+            Toast.Error($"删除失败：{ex.Message}");
         }
     }
 

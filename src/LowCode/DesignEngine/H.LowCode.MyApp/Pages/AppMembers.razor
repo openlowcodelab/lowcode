@@ -1,4 +1,4 @@
-﻿@page "/designengine/myapp/{AppId}/members"
+@page "/designengine/myapp/{AppId}/members"
 @namespace H.LowCode.MyApp
 @inherits LowCodePageComponentBase
 @layout MyAppLayout
@@ -201,20 +201,20 @@ else
     {
         if (string.IsNullOrWhiteSpace(_member.UserName))
         {
-            await Message.WarningAsync("请填写用户名");
+            Toast.Warning("请填写用户名");
             return;
         }
         await AppRbacAppService.SaveMemberAsync(_member);
         _memberVisible = false;
         await LoadAsync();
-        await Message.SuccessAsync("保存成功");
+        Toast.Success("保存成功");
     }
 
     private async Task DeleteMemberAsync(string id)
     {
         await AppRbacAppService.DeleteMemberAsync(AppId, id);
         await LoadAsync();
-        await Message.SuccessAsync("已移除");
+        Toast.Success("已移除");
     }
 
     private void CreateRole()
@@ -245,13 +245,13 @@ else
     {
         if (string.IsNullOrWhiteSpace(_role.Name) || string.IsNullOrWhiteSpace(_role.Key))
         {
-            await Message.WarningAsync("请填写角色名称与标识");
+            Toast.Warning("请填写角色名称与标识");
             return;
         }
         await AppRbacAppService.SaveRoleAsync(_role);
         _roleVisible = false;
         await LoadAsync();
-        await Message.SuccessAsync("保存成功");
+        Toast.Success("保存成功");
     }
 
     private async Task DeleteRoleAsync(string key)
@@ -260,11 +260,11 @@ else
         {
             await AppRbacAppService.DeleteRoleAsync(AppId, key);
             await LoadAsync();
-            await Message.SuccessAsync("已删除");
+            Toast.Success("已删除");
         }
         catch (Exception ex)
         {
-            await Message.ErrorAsync(ex.Message);
+            Toast.Error(ex.Message);
         }
     }
 }

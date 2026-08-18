@@ -6,6 +6,7 @@
 @inject ISupplierSkuMappingAppService SkuMappingService
 @inject ISupplyChainSupplierAppService SupplierService
 @inject IJSRuntime JS
+@inject H.Util.Blazor.HToastService Toast
 
 <HCard Title="商品管理">
     <div class="h-toolbar">
@@ -373,7 +374,7 @@
                 skuCounts[p.Id] = (int)skus.TotalCount;
             }
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"加载失败：{ex.Message}"); }
         finally { loading = false; }
     }
 
@@ -408,7 +409,7 @@
         {
             if (string.IsNullOrWhiteSpace(current.ProductCode) || string.IsNullOrWhiteSpace(current.Name))
             {
-                await JS.InvokeVoidAsync("alert", "商品编码和名称不能为空");
+                Toast.Warning("商品编码和名称不能为空");
                 return;
             }
 
@@ -422,18 +423,18 @@
                     Status = current.Status,
                     Remark = current.Remark
                 });
-                await JS.InvokeVoidAsync("alert", "更新成功");
+                Toast.Success("更新成功");
             }
             else
             {
                 await ProductService.CreateAsync(current);
-                await JS.InvokeVoidAsync("alert", "创建成功");
+                Toast.Success("创建成功");
             }
 
             CloseModal();
             await LoadData();
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"保存失败：{ex.Message}"); }
         finally { saving = false; }
     }
 
@@ -446,10 +447,10 @@
         try
         {
             await ProductService.DeleteAsync(id);
-            await JS.InvokeVoidAsync("alert", "已删除");
+            Toast.Success("已删除");
             await LoadData();
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"删除失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"删除失败：{ex.Message}"); }
     }
 
     // ==================== SKU 管理 ====================
@@ -485,7 +486,7 @@
                 await SelectSku(skus[0].Id);
             }
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载 SKU 失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"加载 SKU 失败：{ex.Message}"); }
         finally { skuLoading = false; }
     }
 
@@ -510,7 +511,7 @@
             var r = (await SkuMappingService.GetListAsync(new SupplierSkuMappingQueryDto { SkuId = selectedSkuId.Value, MaxResultCount = 200 })).Data!;
             skuMappings = r.Items.ToList();
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载供应商映射失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"加载供应商映射失败：{ex.Message}"); }
         finally { mappingLoading = false; }
     }
 
@@ -548,7 +549,7 @@
         {
             if (string.IsNullOrWhiteSpace(currentSku.SkuCode) || string.IsNullOrWhiteSpace(currentSku.SkuName))
             {
-                await JS.InvokeVoidAsync("alert", "SKU 编码、名称不能为空");
+                Toast.Warning("SKU 编码、名称不能为空");
                 return;
             }
 
@@ -563,18 +564,18 @@
                     IsEnabled = currentSku.IsEnabled,
                     Remark = currentSku.Remark
                 });
-                await JS.InvokeVoidAsync("alert", "更新成功");
+                Toast.Success("更新成功");
             }
             else
             {
                 await SkuService.CreateAsync(currentSku);
-                await JS.InvokeVoidAsync("alert", "创建成功");
+                Toast.Success("创建成功");
             }
             CloseSkuEditModal();
             await LoadSkus();
             _ = LoadData(); // 刷新外层 sku 计数
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"保存失败：{ex.Message}"); }
         finally { skuSaving = false; }
     }
 
@@ -587,7 +588,7 @@
         try
         {
             await SkuService.DeleteAsync(id);
-            await JS.InvokeVoidAsync("alert", "已删除");
+            Toast.Success("已删除");
             if (selectedSkuId == id)
             {
                 selectedSkuId = null;
@@ -596,7 +597,7 @@
             await LoadSkus();
             _ = LoadData();
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"删除失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"删除失败：{ex.Message}"); }
     }
 
     // ===== 供应商映射 增删改 =====
@@ -634,7 +635,7 @@
         {
             if (currentMapping.SupplierId == Guid.Empty || string.IsNullOrWhiteSpace(currentMapping.SupplierSkuCode))
             {
-                await JS.InvokeVoidAsync("alert", "供应商和供应商 SKU 编码不能为空");
+                Toast.Warning("供应商和供应商 SKU 编码不能为空");
                 return;
             }
 
@@ -648,17 +649,17 @@
                     IsEnabled = currentMapping.IsEnabled,
                     Remark = currentMapping.Remark
                 });
-                await JS.InvokeVoidAsync("alert", "更新成功");
+                Toast.Success("更新成功");
             }
             else
             {
                 await SkuMappingService.CreateAsync(currentMapping);
-                await JS.InvokeVoidAsync("alert", "创建成功");
+                Toast.Success("创建成功");
             }
             CloseMappingEditModal();
             await LoadMappings();
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"保存失败：{ex.Message}"); }
         finally { mappingSaving = false; }
     }
 
@@ -671,9 +672,9 @@
         try
         {
             await SkuMappingService.DeleteAsync(id);
-            await JS.InvokeVoidAsync("alert", "已删除");
+            Toast.Success("已删除");
             await LoadMappings();
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"删除失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"删除失败：{ex.Message}"); }
     }
 }

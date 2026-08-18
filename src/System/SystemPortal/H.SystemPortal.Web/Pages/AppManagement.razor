@@ -3,6 +3,7 @@
 @layout SystemPortalLayout
 @inject IAppManageAppService AppManageAppService
 @inject IJSRuntime JSRuntime
+@inject H.Util.Blazor.HToastService Toast
 
 <PageTitle>应用管理</PageTitle>
 
@@ -858,7 +859,7 @@
             string.IsNullOrWhiteSpace(editingApp.Name) || 
             string.IsNullOrWhiteSpace(editingApp.Url))
         {
-            await JSRuntime.InvokeVoidAsync("alert", "请填写必填字段（应用ID、名称、跳转地址）");
+            Toast.Warning("请填写必填字段（应用ID、名称、跳转地址）");
             return;
         }
 
@@ -879,11 +880,11 @@
             {
                 CloseAppModal();
                 await LoadApps();
-                await JSRuntime.InvokeVoidAsync("alert", "保存成功");
+                Toast.Success("保存成功");
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", "保存失败，请检查日志");
+                Toast.Error("保存失败，请检查日志");
             }
         }
         finally
@@ -901,11 +902,11 @@
             if (success)
             {
                 await LoadApps();
-                await JSRuntime.InvokeVoidAsync("alert", "删除成功");
+                Toast.Success("删除成功");
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", "删除失败，请检查日志");
+                Toast.Error("删除失败，请检查日志");
             }
         }
     }
@@ -926,7 +927,7 @@
     {
         if (string.IsNullOrWhiteSpace(newCategoryName))
         {
-            await JSRuntime.InvokeVoidAsync("alert", "请输入分类名称");
+            Toast.Warning("请输入分类名称");
             return;
         }
 
@@ -938,11 +939,11 @@
             {
                 CloseCategoryModal();
                 await LoadApps();
-                await JSRuntime.InvokeVoidAsync("alert", "分类添加成功");
+                Toast.Success("分类添加成功");
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", "添加失败，分类可能已存在");
+                Toast.Error("添加失败，分类可能已存在");
             }
         }
         finally
@@ -960,11 +961,11 @@
             if (success)
             {
                 await LoadApps();
-                await JSRuntime.InvokeVoidAsync("alert", "删除成功");
+                Toast.Success("删除成功");
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", "删除失败，分类下可能还有应用");
+                Toast.Error("删除失败，分类下可能还有应用");
             }
         }
     }

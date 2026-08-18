@@ -4,6 +4,7 @@
 @inject IContactAppService ContactAppService
 @inject IContactGroupAppService ContactGroupAppService
 @inject IJSRuntime JS
+@inject H.Util.Blazor.HToastService Toast
 
 <HCard Title="联系人">
     <div class="h-toolbar" style="margin-bottom:16px;">
@@ -280,11 +281,11 @@
             {
                 await ContactAppService.CreateAsync(currentContact);
             }
-            await JS.InvokeVoidAsync("alert", $"联系人{(isContactEdit ? "更新" : "创建")}成功");
+            Toast.Success($"联系人{(isContactEdit ? "更新" : "创建")}成功");
             showContactModal = false;
             await LoadContacts();
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"保存失败：{ex.Message}"); }
         finally { saving = false; }
     }
 
@@ -292,7 +293,7 @@
     {
         if (!await JS.InvokeAsync<bool>("confirm", "确定要删除该联系人吗？")) return;
         try { await ContactAppService.DeleteAsync(id); await LoadContacts(); }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"删除失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"删除失败：{ex.Message}"); }
     }
 
     private async Task ShowCreateGroup()
@@ -342,12 +343,12 @@
                 currentGroup.ContactIds = selectedContactIds.ToList();
                 await ContactGroupAppService.CreateAsync(currentGroup);
             }
-            await JS.InvokeVoidAsync("alert", $"分组{(isGroupEdit ? "更新" : "创建")}成功");
+            Toast.Success($"分组{(isGroupEdit ? "更新" : "创建")}成功");
             showGroupModal = false;
             await LoadGroups();
             if (activeTab == 0) await LoadContacts();
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"保存失败：{ex.Message}"); }
         finally { saving = false; }
     }
 
@@ -355,6 +356,6 @@
     {
         if (!await JS.InvokeAsync<bool>("confirm", "确定要删除该分组吗？分组内成员关系将一并解除。")) return;
         try { await ContactGroupAppService.DeleteAsync(id); await LoadGroups(); }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"删除失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"删除失败：{ex.Message}"); }
     }
 }

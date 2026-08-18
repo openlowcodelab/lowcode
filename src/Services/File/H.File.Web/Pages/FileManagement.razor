@@ -7,6 +7,7 @@
 @inject IFileObjectAppService FileService
 @inject NavigationManager Nav
 @inject IJSRuntime JS
+@inject H.Util.Blazor.HToastService Toast
 
 <PageTitle>文件列表 - 文件管理</PageTitle>
 
@@ -351,7 +352,7 @@
         if (selectedProjectId == Guid.Empty) return;
         loadingFiles = true;
         try { files = (await FileService.GetFilesAsync(selectedProjectId, currentFolder)).Data ?? new(); }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载文件失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"加载文件失败：{ex.Message}"); }
         finally { loadingFiles = false; }
     }
 
@@ -365,7 +366,7 @@
     {
         if (!string.IsNullOrEmpty(parentPath) && parentPath.Split('/', StringSplitOptions.RemoveEmptyEntries).Length >= 5)
         {
-            _ = JS.InvokeVoidAsync("alert", "分类层级最多只能 5 层");
+            Toast.Warning("分类层级最多只能 5 层");
             return;
         }
         newFolderName = string.Empty;
@@ -390,18 +391,18 @@
     {
         if (string.IsNullOrWhiteSpace(newFolderName))
         {
-            await JS.InvokeVoidAsync("alert", "分类名称不能为空");
+            Toast.Warning("分类名称不能为空");
             return;
         }
         if (newFolderName.Contains('/'))
         {
-            await JS.InvokeVoidAsync("alert", "分类名称不能包含 / 字符");
+            Toast.Warning("分类名称不能包含 / 字符");
             return;
         }
         var code = newFolderCode.Trim();
         if (!string.IsNullOrEmpty(code) && !Regex.IsMatch(code, "^[a-z]{3,20}$"))
         {
-            await JS.InvokeVoidAsync("alert", "分类编号需为 3-20 位小写字母（a-z）");
+            Toast.Warning("分类编号需为 3-20 位小写字母（a-z）");
             return;
         }
         if (string.IsNullOrEmpty(code))
@@ -418,7 +419,7 @@
             showFolderModal = false;
             await LoadFolderTree();
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"创建失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"创建失败：{ex.Message}"); }
     }
 
     private static string GenerateRandomCode(int length)
@@ -433,12 +434,12 @@
         if (renameTarget == null) return;
         if (string.IsNullOrWhiteSpace(renameFolderName))
         {
-            await JS.InvokeVoidAsync("alert", "分类名称不能为空");
+            Toast.Warning("分类名称不能为空");
             return;
         }
         if (renameFolderName.Contains('/'))
         {
-            await JS.InvokeVoidAsync("alert", "分类名称不能包含 / 字符");
+            Toast.Warning("分类名称不能包含 / 字符");
             return;
         }
         if (renameTarget.Name.Equals(renameFolderName.Trim(), StringComparison.OrdinalIgnoreCase))
@@ -452,7 +453,7 @@
             showRenameModal = false;
             await LoadFolderTree();
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"重命名失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"重命名失败：{ex.Message}"); }
     }
 
     private async Task OnFileSelected(InputFileChangeEventArgs e)
@@ -475,7 +476,7 @@
             await LoadFiles();
             await LoadFolderTree();
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"上传失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"上传失败：{ex.Message}"); }
     }
 
     private async Task UploadSmallFile(IBrowserFile file)
@@ -489,7 +490,7 @@
             await stream.CopyToAsync(ms);
             var result = (await FileService.UploadAsync(selectedProjectId, currentFolder ?? "", file.Name, ms.ToArray(), file.ContentType)).Data;
             if (result is not { Success: true })
-                await JS.InvokeVoidAsync("alert", $"上传 {file.Name} 失败：{result?.Message}");
+                Toast.Error($"上传 {file.Name} 失败：{result?.Message}");
         }
         finally { uploadingFiles.Remove(item); }
     }
@@ -541,7 +542,7 @@
 
                 if (!partResult.Success)
                 {
-                    await JS.InvokeVoidAsync("alert", $"上传 {file.Name} 第 {i} 片失败：{partResult.Message}");
+                    Toast.Error($"上传 {file.Name} 第 {i} 片失败：{partResult.Message}");
                     return;
                 }
 
@@ -565,7 +566,7 @@
             })).Data;
 
             if (result is not { Success: true })
-                await JS.InvokeVoidAsync("alert", $"上传 {file.Name} 失败：{result?.Message}");
+                Toast.Error($"上传 {file.Name} 失败：{result?.Message}");
         }
         finally { uploadingFiles.Remove(item); }
     }
@@ -587,7 +588,7 @@
             var fileNameJson = System.Text.Json.JsonSerializer.Serialize(f.FileName);
             await JS.InvokeVoidAsync("eval", $"(function(){{var a=document.createElement('a');a.href={urlJson};a.download={fileNameJson};document.body.appendChild(a);a.click();document.body.removeChild(a);}})()");
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"获取下载链接失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"获取下载链接失败：{ex.Message}"); }
     }
 
     private async Task PreviewFile(FileObjectDto f)
@@ -598,7 +599,7 @@
             officeRenderPending = previewData?.PreviewType == "office" && previewData?.Base64Content != null;
             showPreview = true;
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"预览失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"预览失败：{ex.Message}"); }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -619,7 +620,7 @@
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", $"Office 预览失败：{ex.Message}");
+            Toast.Error($"Office 预览失败：{ex.Message}");
         }
     }
 

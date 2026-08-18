@@ -6,6 +6,7 @@ using H.Enterprise.Application;
 using H.Enterprise.EntityFrameworkCore;
 using H.File.Application;
 using H.LowCode.ComponentBase;
+using H.Util.Blazor;
 using H.LowCode.DesignEngine.Application;
 using H.LowCode.DesignEngine.EntityFrameworkCore;
 using H.LowCode.DesignEngine.Repository.JsonFile;
@@ -101,6 +102,9 @@ public class HostAllModule : AbpModule
 
         // 注册 LowCodeAppState (设计时为 true)
         context.Services.AddScoped(sp => new LowCodeAppState(isDesign: true));
+
+        // 全局 Toast 提示服务
+        context.Services.AddScoped<HToastService>();
 
         // 配置统一的 API 控制器
         ConfigureAutoApiControllers();

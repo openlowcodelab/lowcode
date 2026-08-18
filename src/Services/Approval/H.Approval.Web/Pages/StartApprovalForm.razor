@@ -5,6 +5,7 @@
 @inject IApprovalInstanceAppService InstanceService
 @inject NavigationManager Nav
 @inject IJSRuntime JS
+@inject H.Util.Blazor.HToastService Toast
 
 @if (isLoading)
 {
@@ -112,7 +113,7 @@ else
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", $"加载审批定义失败: {ex.Message}");
+            Toast.Error($"加载审批定义失败: {ex.Message}");
             definition = null;
         }
         finally
@@ -377,7 +378,7 @@ else
     {
         if (string.IsNullOrWhiteSpace(model.Title))
         {
-            await JS.InvokeVoidAsync("alert", "请输入审批标题");
+            Toast.Warning("请输入审批标题");
             return;
         }
 
@@ -387,7 +388,7 @@ else
             var val = formValues.TryGetValue(field.Id, out var v) ? v : "";
             if (string.IsNullOrWhiteSpace(val))
             {
-                await JS.InvokeVoidAsync("alert", $"请填写：{field.Label}");
+                Toast.Warning($"请填写：{field.Label}");
                 return;
             }
         }
@@ -422,12 +423,12 @@ else
         try
         {
             var result = (await InstanceService.StartAsync(model)).Data;
-            await JS.InvokeVoidAsync("alert", "审批已提交");
+            Toast.Success("审批已提交");
             Nav.NavigateTo($"/approval/detail/{result!.Id}");
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", $"提交失败: {ex.Message}");
+            Toast.Error($"提交失败: {ex.Message}");
         }
         finally
         {

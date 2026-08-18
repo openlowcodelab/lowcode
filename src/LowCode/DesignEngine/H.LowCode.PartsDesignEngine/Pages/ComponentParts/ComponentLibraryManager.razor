@@ -270,7 +270,7 @@
         _currentComponentLibrary = null;
         _isEditingLibrary = false;
 
-        await Message.SuccessAsync("操作成功");
+        Toast.Success("操作成功");
         //StateHasChanged();
     }
 
@@ -339,7 +339,7 @@
         {
             if (_componentLibraryForm == null)
             {
-                await Message.ErrorAsync("表单组件未初始化");
+                Toast.Error("表单组件未初始化");
                 return;
             }
 
@@ -355,7 +355,7 @@
                     await SelectLibraryAsync(_currentComponentLibrary);
                 }
                 
-                await Message.SuccessAsync(_isEditingLibrary ? "组件库更新成功！" : "组件库创建成功！");
+                Toast.Success(_isEditingLibrary ? "组件库更新成功！" : "组件库创建成功！");
                 
                 // 重置状态
                 _currentComponentLibrary = null;
@@ -365,7 +365,7 @@
         }
         catch (Exception ex)
         {
-            await Message.ErrorAsync($"操作失败：{ex.Message}");
+            Toast.Error($"操作失败：{ex.Message}");
         }
     }
 
@@ -391,7 +391,7 @@
             }
         }
         
-        await Message.SuccessAsync("删除成功");
+        Toast.Success("删除成功");
         // StateHasChanged();
     }
 
@@ -403,7 +403,7 @@
     {
         if (string.IsNullOrEmpty(_selectedLibraryId))
         {
-            Message.Warning("请先选择一个组件库");
+            Toast.Warning("请先选择一个组件库");
             return;
         }
         _isEditMode = false;
@@ -415,7 +415,7 @@
     {
         // 刷新当前组件库的组件列表
         await LoadComponentPartsAsync();
-        await Message.SuccessAsync("组件创建成功！");
+        Toast.Success("组件创建成功！");
 
         // 根据组件类型跳转到不同的编辑页面
         if (componentParts.ComponentType == 1) // 原子组件
@@ -463,12 +463,12 @@
             // 重新加载组件列表
             await LoadComponentPartsAsync();
             
-            await Message.SuccessAsync("组件删除成功！");
+            Toast.Success("组件删除成功！");
             // StateHasChanged();
         }
         catch (Exception ex)
         {
-            await Message.ErrorAsync($"删除失败：{ex.Message}");
+            Toast.Error($"删除失败：{ex.Message}");
         }
     }
 
@@ -480,11 +480,11 @@
             comp.PublishStatus = 1;
             await ComponentPartsAppService.SaveAsync(comp);
             await LoadComponentPartsAsync();
-            await Message.SuccessAsync("组件已发布");
+            Toast.Success("组件已发布");
         }
         catch (Exception ex)
         {
-            await Message.ErrorAsync($"发布失败：{ex.Message}");
+            Toast.Error($"发布失败：{ex.Message}");
         }
     }
 
@@ -496,11 +496,11 @@
             comp.PublishStatus = 0;
             await ComponentPartsAppService.SaveAsync(comp);
             await LoadComponentPartsAsync();
-            await Message.SuccessAsync("已取消发布");
+            Toast.Success("已取消发布");
         }
         catch (Exception ex)
         {
-            await Message.ErrorAsync($"取消发布失败：{ex.Message}");
+            Toast.Error($"取消发布失败：{ex.Message}");
         }
     }
 

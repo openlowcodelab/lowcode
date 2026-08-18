@@ -9,6 +9,7 @@
 @inject IExecutionRecordAppService ExecutionRecordService
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
+@inject H.Util.Blazor.HToastService Toast
 
 <PageTitle>执行历史记录</PageTitle>
 
@@ -427,7 +428,7 @@ else
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"加载数据失败: {ex.Message}");
+            Toast.Error($"加载数据失败: {ex.Message}");
         }
         finally
         {
@@ -487,12 +488,12 @@ else
             }
             else
             {
-                await JSRuntime.InvokeVoidAsync("alert", "删除失败");
+                Toast.Error("删除失败");
             }
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", $"删除出错: {ex.Message}");
+            Toast.Error($"删除出错: {ex.Message}");
         }
     }
 

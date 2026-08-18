@@ -7,6 +7,7 @@
 @inject IRoleAppService RoleService
 @inject IOrgInviteAppService InviteService
 @inject IJSRuntime JS
+@inject H.Util.Blazor.HToastService Toast
 
 <div class="org-container">
     <!-- 左侧：部门树 -->
@@ -514,7 +515,7 @@
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", ex.Message);
+            Toast.Error(ex.Message);
         }
         finally
         {
@@ -539,7 +540,7 @@
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", ex.Message);
+            Toast.Error(ex.Message);
         }
     }
 
@@ -568,7 +569,7 @@
         if (selectedOrgId == null) return;
         if (string.IsNullOrWhiteSpace(inviteInput.Phone))
         {
-            await JS.InvokeVoidAsync("alert", "请输入手机号");
+            Toast.Warning("请输入手机号");
             return;
         }
         isSubmitting = true;
@@ -586,7 +587,7 @@
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", ex.Message);
+            Toast.Error(ex.Message);
         }
         finally
         {
@@ -612,7 +613,7 @@
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", ex.Message);
+            Toast.Error(ex.Message);
         }
         finally
         {
@@ -626,7 +627,7 @@
         try
         {
             await JS.InvokeVoidAsync("navigator.clipboard.writeText", generatedInviteUrl);
-            await JS.InvokeVoidAsync("alert", "邀请链接已复制");
+            Toast.Success("邀请链接已复制");
         }
         catch
         {
@@ -670,7 +671,7 @@
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", ex.Message);
+            Toast.Error(ex.Message);
         }
         finally
         {
@@ -689,7 +690,7 @@
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", ex.Message);
+            Toast.Error(ex.Message);
         }
     }
 
@@ -728,7 +729,7 @@
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", ex.Message);
+            Toast.Error(ex.Message);
         }
         finally
         {

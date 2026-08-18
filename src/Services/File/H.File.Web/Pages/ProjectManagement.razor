@@ -4,6 +4,7 @@
 @inject IFileProjectAppService ProjectService
 @inject NavigationManager Nav
 @inject IJSRuntime JS
+@inject H.Util.Blazor.HToastService Toast
 
 <PageTitle>项目管理 - 文件管理</PageTitle>
 
@@ -124,7 +125,7 @@
     {
         loading = true;
         try { projects = (await ProjectService.GetListAsync()).Data ?? new(); }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"加载失败：{ex.Message}"); }
         finally { loading = false; }
     }
 
@@ -147,7 +148,7 @@
     {
         if (string.IsNullOrWhiteSpace(current.Name))
         {
-            await JS.InvokeVoidAsync("alert", "项目名称不能为空");
+            Toast.Warning("项目名称不能为空");
             return;
         }
         saving = true;
@@ -160,7 +161,7 @@
             CloseModal();
             await LoadData();
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"保存失败：{ex.Message}"); }
         finally { saving = false; }
     }
 
@@ -174,10 +175,10 @@
             try
             {
                 await ProjectService.DeleteAsync(p.Id);
-                await JS.InvokeVoidAsync("alert", "已删除");
+                Toast.Success("已删除");
                 await LoadData();
             }
-            catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"删除失败：{ex.Message}"); }
+            catch (Exception ex) { Toast.Error($"删除失败：{ex.Message}"); }
         }
     }
 

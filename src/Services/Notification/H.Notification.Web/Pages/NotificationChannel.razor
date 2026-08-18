@@ -5,6 +5,7 @@
 @inject INotificationChannelAppService ChannelAppService
 @inject NavigationManager Nav
 @inject IJSRuntime JS
+@inject H.Util.Blazor.HToastService Toast
 
 <HCard Title="通知渠道配置">
     <Extra>
@@ -277,13 +278,13 @@
                 current.ConfigJson = configJson;
                 await ChannelAppService.CreateAsync(current);
             }
-            await JS.InvokeVoidAsync("alert", $"渠道{(isEdit ? "更新" : "创建")}成功");
+            Toast.Success($"渠道{(isEdit ? "更新" : "创建")}成功");
             Close();
             await LoadData();
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}");
+            Toast.Error($"保存失败：{ex.Message}");
         }
         finally
         {
@@ -306,12 +307,12 @@
         try
         {
             await ChannelAppService.DeleteAsync(id);
-            await JS.InvokeVoidAsync("alert", "删除成功");
+            Toast.Success("删除成功");
             await LoadData();
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", $"删除失败：{ex.Message}");
+            Toast.Error($"删除失败：{ex.Message}");
         }
     }
 

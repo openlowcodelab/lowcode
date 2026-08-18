@@ -128,7 +128,7 @@
 
             if (_componentParts == null)
             {
-                await Message.ErrorAsync("未找到组件数据");
+                Toast.Error("未找到组件数据");
                 Visible = false;
                 await VisibleChanged.InvokeAsync(Visible);
             }
@@ -139,7 +139,7 @@
         }
         catch (Exception ex)
         {
-            await Message.ErrorAsync($"加载组件数据失败：{ex.Message}");
+            Toast.Error($"加载组件数据失败：{ex.Message}");
         }
         finally
         {
@@ -153,13 +153,13 @@
         // 手动验证必填字段
         if (string.IsNullOrWhiteSpace(_componentParts.PartsId))
         {
-            await Message.ErrorAsync("请输入组件Id");
+            Toast.Error("请输入组件Id");
             return;
         }
         
         if (string.IsNullOrWhiteSpace(_componentParts.Label))
         {
-            await Message.ErrorAsync("请输入组件标签");
+            Toast.Error("请输入组件标签");
             return;
         }
 
@@ -179,7 +179,7 @@
         }
         catch (Exception ex)
         {
-            await Message.ErrorAsync($"操作失败：{ex.Message}");
+            Toast.Error($"操作失败：{ex.Message}");
         }
         finally
         {
@@ -217,7 +217,7 @@
         var isSuccess = (await ComponentPartsAppService.SaveAsync(componentParts)).Data == true;
         if (isSuccess)
         {
-            await Message.SuccessAsync("组件创建成功！");
+            Toast.Success("组件创建成功！");
             
             // 关闭模态框
             Visible = false;
@@ -228,7 +228,7 @@
         }
         else
         {
-            await Message.ErrorAsync("组件创建失败");
+            Toast.Error("组件创建失败");
         }
     }
 
@@ -251,7 +251,7 @@
         var isSuccess = (await ComponentPartsAppService.SaveAsync(componentParts)).Data == true;
         if (isSuccess)
         {
-            await Message.SuccessAsync("组件更新成功！");
+            Toast.Success("组件更新成功！");
             
             // 关闭模态框
             Visible = false;
@@ -262,7 +262,7 @@
         }
         else
         {
-            await Message.ErrorAsync("组件更新失败");
+            Toast.Error("组件更新失败");
         }
     }
 

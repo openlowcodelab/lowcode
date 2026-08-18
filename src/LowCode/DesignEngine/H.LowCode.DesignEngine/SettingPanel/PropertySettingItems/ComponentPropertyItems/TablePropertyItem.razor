@@ -207,7 +207,7 @@
             var otherPrimaryKeys = _tableSchema.Columns.Where(c => c.IsPrimaryKey && c.Id != id).ToList();
             if (!otherPrimaryKeys.Any())
             {
-                Message.Warning("无法删除该列：这是表格中唯一的主键列，删除后将影响数据操作功能");
+                Toast.Warning("无法删除该列：这是表格中唯一的主键列，删除后将影响数据操作功能");
                 return;
             }
         }
@@ -253,7 +253,7 @@
         if (!hasPrimaryKey)
         {
             // 如果没有主键，显示警告消息
-            Message.Warning("表格配置警告：建议至少设置一个主键列以确保数据操作的正确性");
+            Toast.Warning("表格配置警告：建议至少设置一个主键列以确保数据操作的正确性");
         }
 
         return true;

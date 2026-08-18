@@ -197,13 +197,13 @@
         {
             var isSuccess = (await AppApplicationService.SaveAsync(_app)).Data == true;
             if (isSuccess)
-                await Message.SuccessAsync("保存成功");
+                Toast.Success("保存成功");
             else
-                await Message.ErrorAsync("保存失败");
+                Toast.Error("保存失败");
         }
         catch (Exception ex)
         {
-            await Message.ErrorAsync(ex.Message);
+            Toast.Error(ex.Message);
         }
         finally
         {
@@ -217,12 +217,12 @@
         try
         {
             await AppApplicationService.DeleteAsync(AppId);
-            await Message.SuccessAsync("应用已删除");
+            Toast.Success("应用已删除");
             NavigateTo("/designengine/myapps", forceLoad: true);
         }
         catch (Exception ex)
         {
-            await Message.ErrorAsync(ex.Message);
+            Toast.Error(ex.Message);
         }
     }
 }

@@ -156,19 +156,19 @@
     {
         if (string.IsNullOrWhiteSpace(_form.Name))
         {
-            await Message.ErrorAsync("请输入模板名称");
+            Toast.Error("请输入模板名称");
             return;
         }
 
         var success = (await PageTemplateAppService.SaveAsync(_form)).Data == true;
         if (!success)
         {
-            await Message.ErrorAsync("保存失败");
+            Toast.Error("保存失败");
             return;
         }
 
         _modalVisible = false;
-        await Message.SuccessAsync(_isEdit ? "更新成功" : "创建成功");
+        Toast.Success(_isEdit ? "更新成功" : "创建成功");
 
         if (!_isEdit)
         {
@@ -192,14 +192,14 @@
         tpl.PublishStatus = publish ? 1 : 0;
         await PageTemplateAppService.SaveAsync(tpl);
         await LoadTemplatesAsync();
-        await Message.SuccessAsync(publish ? "已发布" : "已取消发布");
+        Toast.Success(publish ? "已发布" : "已取消发布");
     }
 
     private async Task DeleteTemplate(string templateId)
     {
         await PageTemplateAppService.DeleteAsync(templateId);
         await LoadTemplatesAsync();
-        await Message.SuccessAsync("删除成功");
+        Toast.Success("删除成功");
     }
 
     private static string GetCategoryName(PageTemplateCategoryEnum category) => category switch

@@ -4,6 +4,7 @@
 @inject IOrgInviteAppService InviteService
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
+@inject H.Util.Blazor.HToastService Toast
 
 <div style="display:flex; justify-content:center; padding-top:48px;">
     <HCard Title="加入组织" Style="width:420px;">
@@ -89,7 +90,7 @@
         }
         catch (Exception ex)
         {
-            await JS.InvokeVoidAsync("alert", ex.Message);
+            Toast.Error(ex.Message);
         }
         finally
         {

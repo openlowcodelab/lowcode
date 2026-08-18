@@ -4,6 +4,7 @@
 @inject IBackgroundJobAppService JobService
 @inject NavigationManager Nav
 @inject IJSRuntime JS
+@inject H.Util.Blazor.HToastService Toast
 
 <HCard Title="任务管理">
     <div class="h-toolbar">
@@ -213,7 +214,7 @@
             var result = (await JobService.GetListAsync(input)).Data;
             jobs = result?.Items.ToList() ?? new();
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"加载失败：{ex.Message}"); }
         finally { loading = false; }
     }
 
@@ -257,7 +258,7 @@
         {
             if (string.IsNullOrWhiteSpace(current.Name))
             {
-                await JS.InvokeVoidAsync("alert", "任务名称不能为空");
+                Toast.Warning("任务名称不能为空");
                 return;
             }
 
@@ -299,7 +300,7 @@
             CloseModal();
             await LoadData();
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"保存失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"保存失败：{ex.Message}"); }
         finally { saving = false; }
     }
 
@@ -310,21 +311,21 @@
         try
         {
             await JobService.TriggerAsync(id);
-            await JS.InvokeVoidAsync("alert", "已提交执行请求，稍后可在“执行记录”中查看结果");
+            Toast.Info("已提交执行请求，稍后可在执行记录中查看结果");
         }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"触发失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"触发失败：{ex.Message}"); }
     }
 
     private async Task Enable(Guid id)
     {
         try { await JobService.EnableAsync(id); await LoadData(); }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"启用失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"启用失败：{ex.Message}"); }
     }
 
     private async Task Disable(Guid id)
     {
         try { await JobService.DisableAsync(id); await LoadData(); }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"停用失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"停用失败：{ex.Message}"); }
     }
 
     private async Task ConfirmDelete(Guid id)

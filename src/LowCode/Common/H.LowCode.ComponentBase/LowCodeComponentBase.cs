@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using H.Util.Blazor;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
@@ -19,15 +20,12 @@ public abstract class LowCodeComponentBase : Microsoft.AspNetCore.Components.Com
 
     [Inject] private ILoggerFactory LoggerFactory { get; set; }
 
-    private ILogger _logger;
-
     /// <summary>
     /// 日志记录器（按实际组件类型创建）
     /// </summary>
-    protected ILogger Logger => _logger ??= LoggerFactory.CreateLogger(GetType());
+    protected ILogger Logger => LoggerFactory.CreateLogger(GetType());
 
-    protected LowCodeMessageService Message => new(JSRuntime);
-
+    [Inject] protected HToastService Toast { get; set; }
 
     /// <summary>
     /// 组件状态标识 (用于 ShouldRender 判断)
@@ -43,15 +41,6 @@ public abstract class LowCodeComponentBase : Microsoft.AspNetCore.Components.Com
         {
             return LowCodeAppState.IsDesign;
         }
-    }
-
-    public class LowCodeMessageService(IJSRuntime js)
-    {
-        public async Task SuccessAsync(string msg) => await js.InvokeVoidAsync("alert", msg);
-        public async Task ErrorAsync(string msg) => await js.InvokeVoidAsync("alert", "错误: " + msg);
-        public async Task WarningAsync(string msg) => await js.InvokeVoidAsync("alert", "警告: " + msg);
-        public async Task InfoAsync(string msg) => await js.InvokeVoidAsync("alert", msg);
-        public void Warning(string msg) => js.InvokeVoidAsync("alert", "警告: " + msg);
     }
 
     protected Uri GetBaseUri()

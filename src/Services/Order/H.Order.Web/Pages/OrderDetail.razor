@@ -2,6 +2,7 @@
 @layout OrderLayout
 @inject IOrderAppService OrderService
 @inject IJSRuntime JS
+@inject H.Util.Blazor.HToastService Toast
 
 <div class="page-fill">
 <h2 style="margin-top:0;">订单详情</h2>
@@ -70,13 +71,13 @@ else
     private async Task Reload()
     {
         try { detail = (await OrderService.GetDetailAsync(OrderId)).Data!; }
-        catch (Exception ex) { await JS.InvokeVoidAsync("alert", $"加载失败：{ex.Message}"); }
+        catch (Exception ex) { Toast.Error($"加载失败：{ex.Message}"); }
     }
 
     private async Task TriggerDispatch()
     {
         var r = (await OrderService.TriggerDispatchAsync(OrderId)).Data!;
-        await JS.InvokeVoidAsync("alert", r.Success ? "下发成功" : $"下发失败：{r.Message}");
+        if (r.Success) Toast.Success("下发成功"); else Toast.Error($"下发失败：{r.Message}");
         await Reload();
     }
 }

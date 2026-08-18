@@ -92,7 +92,7 @@
         PagePartsSchema pageSchema = CreatePageSchema();
         if (pageSchema.Components.Count == 0)
         {
-            await Message.WarningAsync("没有任何组件，禁止保存！");
+            Toast.Warning("没有任何组件，禁止保存！");
             return;
         }
 
@@ -107,17 +107,17 @@
                     base.NavigateTo($"/designengine/designer/{pageSchema.AppId}/{pageSchema.Id}");
                 }
 
-                await Message.SuccessAsync("保存成功");
+                Toast.Success("保存成功");
             }
             else
             {
-                await Message.ErrorAsync($"保存失败");
+                Toast.Error($"保存失败");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, $"保存页面失败，{ex.Message}");
-            await Message.ErrorAsync($"保存失败");
+            Toast.Error($"保存失败");
         }
     }
 

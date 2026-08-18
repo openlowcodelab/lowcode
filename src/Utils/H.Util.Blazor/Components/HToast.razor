@@ -1,0 +1,44 @@
+@namespace H.Util.Blazor
+@implements IDisposable
+
+<div class="h-toast-container">
+    @foreach (var msg in _messages)
+    {
+        <div class="h-toast h-toast-@msg.Type.ToString().ToLower()">
+            <span class="h-toast-icon">@GetIcon(msg.Type)</span>
+            <span class="h-toast-content">@msg.Content</span>
+        </div>
+    }
+</div>
+
+@code {
+    [Inject] private HToastService ToastService { get; set; } = default!;
+
+    private List<HToastMessage> _messages = [];
+
+    protected override void OnInitialized()
+    {
+        ToastService.OnChange += HandleChange;
+        _messages = [.. ToastService.Messages];
+    }
+
+    private void HandleChange()
+    {
+        _messages = [.. ToastService.Messages];
+        InvokeAsync(StateHasChanged);
+    }
+
+    private static string GetIcon(HToastType type) => type switch
+    {
+        HToastType.Success => "✓",
+        HToastType.Error => "✕",
+        HToastType.Warning => "⚠",
+        HToastType.Info => "ℹ",
+        _ => "ℹ"
+    };
+
+    public void Dispose()
+    {
+        ToastService.OnChange -= HandleChange;
+    }
+}
