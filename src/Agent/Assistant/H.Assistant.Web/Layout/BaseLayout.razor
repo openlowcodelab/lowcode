@@ -1,0 +1,125 @@
+@namespace H.Assistant.Web
+
+@layout AssistantLayout
+@inherits LayoutComponentBase
+@inject NavigationManager Navigation
+
+<div class="base-layout">
+    @* 左侧子菜单 *@
+    <div class="base-side-menu">
+        <div class="base-menu-title">基础</div>
+        <div class="base-menu-list">
+            @foreach (var item in SubMenuItems)
+            {
+                <div class="base-menu-item @(IsMenuActive(item.Url) ? "base-menu-item-active" : "")"
+                     @onclick="@(() => Navigation.NavigateTo(item.Url))">
+                    <span class="base-menu-icon">@item.Icon</span>
+                    <span class="base-menu-text">@item.Name</span>
+                </div>
+            }
+        </div>
+    </div>
+
+    @* 右侧内容区 *@
+    <div class="base-content">
+        @Body
+    </div>
+</div>
+
+@code {
+    private static List<AppMenuItem> SubMenuItems => new()
+    {
+        new AppMenuItem { Name = "智能体", Url = "/assistant/base/agents", Icon = "🤖" },
+        new AppMenuItem { Name = "模型", Url = "/assistant/base/llms", Icon = "🧠" },
+        new AppMenuItem { Name = "技能", Url = "/assistant/base/skills", Icon = "⚡" },
+        new AppMenuItem { Name = "MCP", Url = "/assistant/base/mcps", Icon = "🔌" }
+    };
+
+    private bool IsMenuActive(string url)
+    {
+        var currentPath = Navigation.ToBaseRelativePath(Navigation.Uri).TrimEnd('/');
+        var menuPath = url.TrimStart('/').TrimEnd('/');
+        if (currentPath.Equals(menuPath, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        // 默认入口 /assistant/base 展示智能体页，同步高亮智能体菜单
+        return menuPath == "assistant/base/agents"
+            && currentPath.Equals("assistant/base", StringComparison.OrdinalIgnoreCase);
+    }
+}
+
+<style>
+    .base-layout {
+        display: flex;
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+    }
+
+    /* ========== 左侧子菜单 ========== */
+    .base-side-menu {
+        width: 180px;
+        flex-shrink: 0;
+        background: #fafafa;
+        border-right: 1px solid #e8e8e8;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+    }
+
+    .base-menu-title {
+        padding: 16px 16px 8px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #262626;
+    }
+
+    .base-menu-list {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        padding: 4px 8px;
+    }
+
+    .base-menu-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 14px;
+        color: #595959;
+        cursor: pointer;
+        transition: background 0.2s;
+        user-select: none;
+    }
+
+    .base-menu-item:hover {
+        background: #f0f0f0;
+        color: #262626;
+    }
+
+    .base-menu-item-active,
+    .base-menu-item-active:hover {
+        background: #f0f0f0;
+        color: #262626;
+        font-weight: 500;
+    }
+
+    .base-menu-icon {
+        font-size: 16px;
+        line-height: 1;
+    }
+
+    /* ========== 右侧内容区 ========== */
+    .base-content {
+        flex: 1;
+        min-width: 0;
+        min-height: 0;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+</style>
