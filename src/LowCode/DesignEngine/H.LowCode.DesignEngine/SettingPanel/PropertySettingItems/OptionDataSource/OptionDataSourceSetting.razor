@@ -7,6 +7,7 @@
         <label>数据源类型：</label>
         <div class="radio-group">
             <label class="radio-label"><input type="radio" name="option-datasource-type" checked='@(DataSource.DataSourceType == ComponentDataSourceTypeEnum.Fiexd)' @onchange='() => DataSource.DataSourceType = ComponentDataSourceTypeEnum.Fiexd' /> 固定值</label>
+            <label class="radio-label"><input type="radio" name="option-datasource-type" checked='@(DataSource.DataSourceType == ComponentDataSourceTypeEnum.Expression)' @onchange='() => DataSource.DataSourceType = ComponentDataSourceTypeEnum.Expression' /> 表达式</label>
             <label class="radio-label"><input type="radio" name="option-datasource-type" checked='@(DataSource.DataSourceType == ComponentDataSourceTypeEnum.API)' @onchange='() => DataSource.DataSourceType = ComponentDataSourceTypeEnum.API' /> API</label>
             <label class="radio-label"><input type="radio" name="option-datasource-type" checked='@(DataSource.DataSourceType == ComponentDataSourceTypeEnum.SQL)' @onchange='() => DataSource.DataSourceType = ComponentDataSourceTypeEnum.SQL' /> SQL</label>
         </div>
@@ -15,6 +16,16 @@
     if (DataSource.DataSourceType == ComponentDataSourceTypeEnum.Fiexd)
     {
         <FiexdForOptionDataSource @bind-DataSource="DataSource.FiexdOptionDataSource"></FiexdForOptionDataSource>
+    }
+    else if (DataSource.DataSourceType == ComponentDataSourceTypeEnum.Expression)
+    {
+        <div class="alert alert-info" style="margin-bottom: 8px;">
+            <p>选项来自表达式求值结果（按换行拆分为选项）。如 $(item.f_options_json)。</p>
+        </div>
+        <div class="propertysetting-item">
+            <label>选项表达式：</label>
+            <input class="inp" @bind="@DataSource.DynamicOptionExpr" placeholder="如 $(item.f_options_json)" />
+        </div>
     }
     else if (DataSource.DataSourceType == ComponentDataSourceTypeEnum.API)
     {

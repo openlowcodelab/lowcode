@@ -1,7 +1,40 @@
 @namespace H.LowCode.Components.Defaults
 
-<HcPlaceholder Label="列表组件" Style="@Style" />
+<div class="hc-list" style="@Style">
+    @if (ChildContent is RenderFragment<object> itemTemplate)
+    {
+        // 列表项模板渲染：逐行渲染数据源
+        if (_items != null)
+        {
+            foreach (var item in _items)
+            {
+                @itemTemplate(item)
+            }
+        }
+    }
+    else if (ChildContent is RenderFragment fragment)
+    {
+        @fragment
+    }
+</div>
 
 @code {
     [Parameter] public string Style { get; set; }
+
+    /// <summary>
+    /// 列表数据（由渲染引擎数据源注入）
+    /// </summary>
+    [Parameter] public object DataSource { get; set; }
+
+    /// <summary>
+    /// 子内容（普通内容或列表项模板 RenderFragment&lt;object&gt;）
+    /// </summary>
+    [Parameter] public object ChildContent { get; set; }
+
+    private IEnumerable<object> _items;
+
+    protected override void OnParametersSet()
+    {
+        _items = DataSource as IEnumerable<object>;
+    }
 }

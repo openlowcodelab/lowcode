@@ -119,8 +119,29 @@
                     <label class="radio-label"><input type="radio" name="data-action" checked='@(_currentEvent.EventDataActionType == EventDataActionTypeEnum.CancelEdit)' @onchange='() => _currentEvent.EventDataActionType = EventDataActionTypeEnum.CancelEdit' /> 取消编辑</label>
                     <label class="radio-label"><input type="radio" name="data-action" checked='@(_currentEvent.EventDataActionType == EventDataActionTypeEnum.AddRow)' @onchange='() => _currentEvent.EventDataActionType = EventDataActionTypeEnum.AddRow' /> 添加行</label>
                     <label class="radio-label"><input type="radio" name="data-action" checked='@(_currentEvent.EventDataActionType == EventDataActionTypeEnum.RefreshData)' @onchange='() => _currentEvent.EventDataActionType = EventDataActionTypeEnum.RefreshData' /> 刷新数据</label>
+                    <label class="radio-label"><input type="radio" name="data-action" checked='@(_currentEvent.EventDataActionType == EventDataActionTypeEnum.MoveUp)' @onchange='() => _currentEvent.EventDataActionType = EventDataActionTypeEnum.MoveUp' /> 上移</label>
+                    <label class="radio-label"><input type="radio" name="data-action" checked='@(_currentEvent.EventDataActionType == EventDataActionTypeEnum.MoveDown)' @onchange='() => _currentEvent.EventDataActionType = EventDataActionTypeEnum.MoveDown' /> 下移</label>
+                    <label class="radio-label"><input type="radio" name="data-action" checked='@(_currentEvent.EventDataActionType == EventDataActionTypeEnum.CopyRow)' @onchange='() => _currentEvent.EventDataActionType = EventDataActionTypeEnum.CopyRow' /> 复制行</label>
+                    <label class="radio-label"><input type="radio" name="data-action" checked='@(_currentEvent.EventDataActionType == EventDataActionTypeEnum.SaveForm)' @onchange='() => _currentEvent.EventDataActionType = EventDataActionTypeEnum.SaveForm' /> 保存表单</label>
+                    <label class="radio-label"><input type="radio" name="data-action" checked='@(_currentEvent.EventDataActionType == EventDataActionTypeEnum.SaveList)' @onchange='() => _currentEvent.EventDataActionType = EventDataActionTypeEnum.SaveList' /> 保存列表</label>
+                    <label class="radio-label"><input type="radio" name="data-action" checked='@(_currentEvent.EventDataActionType == EventDataActionTypeEnum.UpdateRow)' @onchange='() => _currentEvent.EventDataActionType = EventDataActionTypeEnum.UpdateRow' /> 更新行字段</label>
+                    <label class="radio-label"><input type="radio" name="data-action" checked='@(_currentEvent.EventDataActionType == EventDataActionTypeEnum.ShowDetail)' @onchange='() => _currentEvent.EventDataActionType = EventDataActionTypeEnum.ShowDetail' /> 查看详情</label>
                 </div>
             </div>
+
+            @if (_currentEvent.EventDataActionType == EventDataActionTypeEnum.UpdateRow)
+            {
+                <div class="alert alert-info" style="margin-bottom: 8px;">
+                    <p>在事件参数中配置要更新的字段名与目标值（值支持表达式）。</p>
+                </div>
+            }
+
+            @if (_currentEvent.EventDataActionType is EventDataActionTypeEnum.SaveList or EventDataActionTypeEnum.AddRow or EventDataActionTypeEnum.RefreshData)
+            {
+                <div class="alert alert-info" style="margin-bottom: 8px;">
+                    <p>列表操作默认作用于当前列表；跨组件时可在事件参数中配置 listid = 目标列表组件 Id。</p>
+                </div>
+            }
         }
         else if (_currentEvent.EventHandlerType == EventTargetTypeEnum.Custom)
         {

@@ -44,6 +44,13 @@ public abstract class ComponentDataSourceSchemaBase : StateHasChangeSchema
     public SQLDataSourceSchema? SQLOptionDataSource { get; set; }
 
     /// <summary>
+    /// 动态选项表达式
+    /// </summary>
+    /// <remarks>如 $(item.f_options_json)，运行时解析字段值并按换行拆分为选项</remarks>
+    [JsonPropertyName("dynopexpr")]
+    public string? DynamicOptionExpr { get; set; }
+
+    /// <summary>
     /// List 循环数据源配置
     /// </summary>
     [JsonPropertyName("listds")]

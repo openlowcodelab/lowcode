@@ -14,4 +14,10 @@ public enum EventDataActionTypeEnum
     MoveUp = 70, // 上移
     MoveDown = 80, // 下移
     CopyRow = 90, // 复制行
+
+    // 表单/列表持久化操作
+    SaveForm = 100, // 收集表单状态写入页面数据源
+    SaveList = 110, // List 数据按保存映射持久化
+    UpdateRow = 120, // 按事件参数更新当前行字段
+    ShowDetail = 130, // 弹窗查看行数据详情
 }

@@ -15,17 +15,20 @@ public class RenderEngineEntityFrameworkCoreModule : AbpModule
 
         context.Services.AddScoped(typeof(EntityTypeManager));
 
+        // 解析连接串：优先 RenderEngineDb，回退 Default
+        var configuration = context.Services.GetConfiguration();
+        var connectionString = configuration.GetConnectionString("RenderEngineDb")
+            ?? configuration.GetConnectionString("Default");
+
         // 注册 DbContext 工厂，确保每次使用都创建新的实例，避免并发访问问题
         context.Services.AddDbContextFactory<RenderEngineDbContext>(options =>
         {
-            var connectionString = context.Services.GetConfiguration().GetConnectionString("Default");
             options.UseSqlServer(connectionString);
         });
 
         // 保持原有的 DbContext 注册方式作为备用
         context.Services.AddDbContext<RenderEngineDbContext>(options =>
         {
-            var connectionString = context.Services.GetConfiguration().GetConnectionString("Default");
             options.UseSqlServer(connectionString);
         });
     }

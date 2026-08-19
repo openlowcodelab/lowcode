@@ -2,7 +2,7 @@
 @inherits RenderEngineLowCodeComponentBase
 
 @inject IFormDataAppService FormDataAppService
-@inject IFormValidationAppService FormValidationAppService
+@inject PageFormStateService FormState
 
 @if (_formDto != null)
 {
@@ -12,14 +12,17 @@
             <FormComponentRender Component="@component" IsInRootContainer="true"></FormComponentRender>
         }
 
-        <div class="form-item" style="clear:both; padding-top: 15px;">
-            <button class="btn btn-primary" type="submit">
-                保存
-            </button>
-            <button class="btn btn-default" type="button" style="margin: 0 8px">
-                取消
-            </button>
-        </div>
+        @if (!_hasCustomActions)
+        {
+            <div class="form-item" style="clear:both; padding-top: 15px;">
+                <button class="btn btn-primary" type="submit">
+                    保存
+                </button>
+                <button class="btn btn-default" type="button" style="margin: 0 8px">
+                    取消
+                </button>
+            </div>
+        }
     </form>
 }
 
@@ -33,18 +36,34 @@
     private string? Id;
     public Dictionary<string, object?> _fieldDictData;
 
+    // 页面已配置自定义操作按钮时，隐藏默认保存/取消按钮
+    private bool _hasCustomActions;
+
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
 
+        _hasCustomActions = HasCustomActions(Page?.Components);
+
         Id = GetQueryValue("id");
-        if (string.IsNullOrEmpty(Id))
+        var templateId = GetQueryValue("templateId");
+        if (!string.IsNullOrEmpty(Id))
+        {
+            _formDto = (await FormDataAppService.GetAsync(Page.AppId, Page.Id, Id)).Data;
+        }
+        else if (!string.IsNullOrEmpty(templateId))
+        {
+            // 从已有记录复制创建：加载源记录作为初始值，但移除主键以新记录保存
+            _formDto = (await FormDataAppService.GetAsync(Page.AppId, Page.Id, templateId)).Data;
+            RemovePrimaryKeyField();
+        }
+        else
         {
             _formDto = new FormDataDto
             {
-                Name = Page?.DataSource?.DataSourceValue,
+                Name = PageCascading?.DataSourceName ?? Page?.DataSource?.DataSourceValue,
                 Fields = Page.Components
-                    .Where(t => t.IsContainer == false)
+                    .Where(t => t.IsContainer == false && !string.IsNullOrEmpty(t.Fragment?.ValueType))
                     .Select(t => new FormFieldDto
                     {
                         Name = t.Name,
@@ -53,14 +72,58 @@
                     }).ToList()
             };
         }
-        else
-        {
-            _formDto = (await FormDataAppService.GetAsync(Page.AppId, Page.Id, Id)).Data;
-        }
 
         _fieldDictData = (_formDto.Fields == null)
             ? new Dictionary<string, object?>()
             : _formDto.Fields.ToDictionary(x => x.Name, x => x.Value);
+
+        // 将初始值回填到表单状态，供组件值绑定与提交收集使用
+        foreach (var kv in _fieldDictData)
+        {
+            FormState.SetValueSilently(kv.Key, kv.Value);
+        }
+    }
+
+    /// <summary>
+    /// 移除主键字段（从已有记录复制创建时以新记录保存）
+    /// </summary>
+    private void RemovePrimaryKeyField()
+    {
+        if (_formDto?.Fields == null)
+            return;
+
+        var pkField = _formDto.Fields.FirstOrDefault(f => f.Name == "f_id");
+        if (pkField != null)
+            _formDto.Fields.Remove(pkField);
+    }
+
+    /// <summary>
+    /// 判断页面组件树中是否存在已配置事件的组件
+    /// </summary>
+    private static bool HasCustomActions(IList<ComponentSchema>? components)
+    {
+        if (components == null)
+            return false;
+
+        foreach (var component in components)
+        {
+            if (component.Events != null && component.Events.Count > 0)
+                return true;
+
+            if (component.Childrens != null && HasCustomActions(component.Childrens.ToList()))
+                return true;
+
+            if (component.DataSource?.ItemTemplate != null)
+            {
+                var itemTemplate = component.DataSource.ItemTemplate;
+                if (itemTemplate.Events != null && itemTemplate.Events.Count > 0)
+                    return true;
+                if (itemTemplate.Childrens != null && HasCustomActions(itemTemplate.Childrens.ToList()))
+                    return true;
+            }
+        }
+
+        return false;
     }
 
     private async Task OnFinishAsync()
@@ -68,12 +131,19 @@
         if (_formDto == null)
             return;
 
-        // 执行表单校验
-        var validationResult = FormValidationAppService.ValidateForm(_fieldDictData, Page.Components.Cast<ComponentSchemaBase>().ToList()).Data!;
-        if (!validationResult.IsValid)
+        // 提交前从表单状态收集用户输入值
+        foreach (var kv in _fieldDictData.Keys.ToList())
         {
-            var errorMessage = string.Join("\n", validationResult.ErrorMessages);
-            Toast.Error($"表单校验失败：\n{errorMessage}");
+            if (FormState.HasValue(kv))
+                _fieldDictData[kv] = FormState.GetValue(kv);
+        }
+
+        // 执行表单校验（逐字段调用校验服务）
+        var validationErrors = new List<string>();
+        await ValidateComponentsAsync(Page.Components, validationErrors);
+        if (validationErrors.Count > 0)
+        {
+            Toast.Error($"表单校验失败：\n{string.Join("\n", validationErrors)}");
             return;
         }
 
@@ -87,8 +157,8 @@
         
         try
         {
-            var success = (await FormDataAppService.SaveAsync(_formDto)).Data == true;
-            if (success)
+            var savedId = (await FormDataAppService.SaveAsync(_formDto)).Data;
+            if (!string.IsNullOrEmpty(savedId))
                 Toast.Success("保存成功");
             else
                 Toast.Error("保存失败");
@@ -102,6 +172,34 @@
     private void OnFinishFailed(EditContext editContext)
     {
 
+    }
+
+    /// <summary>
+    /// 递归校验组件树（字段值优先取表单状态）
+    /// </summary>
+    private async Task ValidateComponentsAsync(IEnumerable<ComponentSchema> components, List<string> errors)
+    {
+        foreach (var component in components)
+        {
+            if (component.ValidationRules != null && component.ValidationRules.Count > 0)
+            {
+                var key = component.Name ?? component.Id;
+                object? value = FormState.HasValue(key)
+                    ? FormState.GetValue(key)
+                    : (_fieldDictData.TryGetValue(key, out var fieldValue) ? fieldValue : null);
+
+                var result = FieldValidator.Validate(value, component.ValidationRules);
+                if (!result.IsValid)
+                {
+                    errors.Add($"{component.Label ?? key}: {result.ErrorMessage}");
+                }
+            }
+
+            if (component.Childrens != null && component.Childrens.Length > 0)
+            {
+                await ValidateComponentsAsync(component.Childrens, errors);
+            }
+        }
     }
 
     /// <summary>

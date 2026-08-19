@@ -96,6 +96,12 @@ public abstract class ComponentSchemaBase : StateHasChangeSchema
     [JsonPropertyName("valrules")]
     public IList<ValidationRuleSchema>? ValidationRules { get; set; }
 
+    /// <summary>
+    /// 显示条件（条件为真时才渲染组件，用于组件显隐联动）
+    /// </summary>
+    [JsonPropertyName("vcond")]
+    public VisibleConditionSchema? VisibleCondition { get; set; }
+
     [JsonPropertyName("desc")]
     public string? Description { get; set; }
 

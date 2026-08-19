@@ -15,4 +15,9 @@ public class PageCascadingModel
     /// </summary>
     [JsonPropertyName("playout")]
     public int PageLayout { get; set; } = 2;
+
+    /// <summary>
+    /// 页面数据源名称（表名，用于表单保存等数据操作）
+    /// </summary>
+    public string? DataSourceName { get; set; }
 }

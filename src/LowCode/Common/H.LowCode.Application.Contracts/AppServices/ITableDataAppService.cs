@@ -22,4 +22,9 @@ public interface ITableDataAppService : IAppService
     /// 更新数据
     /// </summary>
     Task<BaseOutput> UpdateAsync(TableDataUpdateInput request);
+
+    /// <summary>
+    /// 保存数据（按主键新增或更新）
+    /// </summary>
+    Task<BaseOutput<string>> SaveAsync(TableDataSaveInput request);
 }

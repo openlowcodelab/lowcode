@@ -87,6 +87,33 @@
             <button class="btn btn-sm" disabled="@(_pageIndex >= Math.Ceiling((double)_total / _pageSize))" @onclick="() => OnChange(_pageIndex + 1, _pageSize)">下一页</button>
         </div>
     }
+
+    <!-- 行数据详情弹窗 -->
+    @if (_detailRow != null)
+    {
+        <div style="position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:1000; display:flex; align-items:center; justify-content:center;"
+             @onclick="CloseRowDetail">
+            <div style="background:#fff; border-radius:8px; min-width:420px; max-width:720px; max-height:80vh; overflow:auto; box-shadow:0 6px 30px rgba(0,0,0,0.15);"
+                 @onclick:stopPropagation="true">
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-bottom:1px solid #E5E6EB;">
+                    <span style="font-weight:600;">详情</span>
+                    <a style="cursor:pointer; color:#86909C;" @onclick="CloseRowDetail">关闭</a>
+                </div>
+                <table class="data-table" style="margin:0;">
+                    <tbody>
+                        @foreach (var kv in _detailRow)
+                        {
+                            var detailColumn = (_tableSchema.Columns ?? []).FirstOrDefault(t => string.Equals(t.Name, kv.Key, StringComparison.OrdinalIgnoreCase));
+                            <tr>
+                                <td style="width:180px; color:#86909C;">@(detailColumn?.Title ?? kv.Key)</td>
+                                <td>@(kv.Value?.ToString())</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
 </div>
 }
 
@@ -110,6 +137,9 @@
     // 编辑状态管理
     private Dictionary<string, Dictionary<string, object>> _editingRows = new();
     private Dictionary<string, Dictionary<string, object>> _originalRows = new();
+
+    // 详情弹窗行数据
+    private Dictionary<string, object>? _detailRow;
 
     protected override async Task OnInitializedAsync()
     {
@@ -204,7 +234,7 @@
             DataSourceId = DataSource.DataSourceId,
             SkipCount = (_pageIndex - 1) * _pageSize,
             MaxResultCount = _pageSize,
-            Filters = new Dictionary<string, object>()
+            Filters = BuildQueryFilters()
         };
 
         try
@@ -219,6 +249,35 @@
             _data = new List<Dictionary<string, object>>();
             _total = 0;
         }
+    }
+
+    /// <summary>
+    /// 从 URL 参数构建过滤条件（约定：flt_字段名=值）
+    /// </summary>
+    private Dictionary<string, object> BuildQueryFilters()
+    {
+        var filters = new Dictionary<string, object>();
+
+        var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+        var queryString = uri.Query?.TrimStart('?');
+        if (string.IsNullOrEmpty(queryString))
+            return filters;
+
+        foreach (var pair in queryString.Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var separatorIndex = pair.IndexOf('=');
+            if (separatorIndex <= 0)
+                continue;
+
+            var key = Uri.UnescapeDataString(pair.Substring(0, separatorIndex));
+            var value = Uri.UnescapeDataString(pair.Substring(separatorIndex + 1));
+
+            const string filterPrefix = "flt_";
+            if (key.StartsWith(filterPrefix) && key.Length > filterPrefix.Length)
+                filters[key.Substring(filterPrefix.Length)] = value;
+        }
+
+        return filters;
     }
 
     public async Task ButtonActionAsync(TableButtonSchema btn, Dictionary<string, object> rowData = null)
@@ -240,7 +299,7 @@
                 switch (pageHandler)
                 {
                     case EventPageHandlerTypeEnum.Refresh:
-                        
+                        NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
                         break;
                     case EventPageHandlerTypeEnum.Modal:
                         await ButtonActionToWithModalAsync(e, rowData);
@@ -265,7 +324,7 @@
             }
             else if (e.EventHandlerType == EventTargetTypeEnum.Data)
             {
-                await HandleDataActionAsync(e.EventDataActionType, rowData);
+                await HandleDataActionAsync(e, rowData);
             }
         }
     }
@@ -277,21 +336,37 @@
 
     private async Task ButtonActionToWithSelfAsync(EventSchema e, Dictionary<string, object> rowData = null)
     {
+        string pageUrl = BuildTargetPageUrl(e);
 
+        // 添加URL参数
+        pageUrl = BuildUrlWithParameters(pageUrl, e, rowData);
+
+        NavigationManager.NavigateTo(pageUrl);
+
+        await Task.CompletedTask;
     }
 
     private async Task ButtonActionToWithBlankAsync(EventSchema e, Dictionary<string, object> rowData = null)
     {
-        string pageUrl = string.Empty;
-        if (IsDesign)
-            pageUrl = $"/designer/{PageCascading.AppId}/{e.EventTargetId}";
-        else
-            pageUrl = $"/{PageCascading.AppId}/{e.EventTargetId}";
+        string pageUrl = BuildTargetPageUrl(e);
 
         // 添加URL参数
         pageUrl = BuildUrlWithParameters(pageUrl, e, rowData);
 
         await JS.InvokeVoidAsync("open", pageUrl, "_blank");
+    }
+
+    /// <summary>
+    /// 构建目标页面 URL（按当前路由判断设计态与运行态前缀）
+    /// </summary>
+    private string BuildTargetPageUrl(EventSchema e)
+    {
+        var currentPath = NavigationManager.ToAbsoluteUri(NavigationManager.Uri).AbsolutePath;
+        var prefix = currentPath.StartsWith("/designer", StringComparison.OrdinalIgnoreCase)
+            ? "/designer"
+            : "/app";
+
+        return $"{prefix}/{PageCascading.AppId}/{e.EventTargetId}";
     }
 
     private string BuildUrlWithParameters(string baseUrl, EventSchema eventSchema, Dictionary<string, object> rowData)
@@ -336,9 +411,9 @@
         return baseUrl;
     }
 
-    private async Task HandleDataActionAsync(EventDataActionTypeEnum actionType, Dictionary<string, object> rowData)
+    private async Task HandleDataActionAsync(EventSchema e, Dictionary<string, object> rowData)
     {
-        switch (actionType)
+        switch (e.EventDataActionType)
         {
             case EventDataActionTypeEnum.EditRow:
                 await EditRowAsync(rowData);
@@ -358,9 +433,72 @@
             case EventDataActionTypeEnum.RefreshData:
                 await RefreshDataAsync();
                 break;
+            case EventDataActionTypeEnum.UpdateRow:
+                await UpdateRowAsync(e, rowData);
+                break;
+            case EventDataActionTypeEnum.ShowDetail:
+                ShowRowDetail(rowData);
+                break;
             default:
                 break;
         }
+    }
+
+    /// <summary>
+    /// 按事件参数更新当前行字段
+    /// </summary>
+    private async Task UpdateRowAsync(EventSchema e, Dictionary<string, object> rowData)
+    {
+        try
+        {
+            if (rowData == null || e.EventArgs == null || e.EventArgs.Count == 0)
+                return;
+
+            var primaryKeyColumn = _tableSchema.Columns.FirstOrDefault(t => t.IsPrimaryKey);
+            if (primaryKeyColumn == null || !rowData.ContainsKey(primaryKeyColumn.Name))
+            {
+                Logger.LogWarning("更新行失败: 未找到主键");
+                return;
+            }
+
+            var primaryKeyValue = rowData[primaryKeyColumn.Name]?.ToString();
+            if (string.IsNullOrEmpty(primaryKeyValue))
+                return;
+
+            var updateRequest = new TableDataUpdateInput
+            {
+                AppId = PageCascading?.AppId,
+                PageId = PageCascading?.PageId,
+                DataSourceId = DataSource?.DataSourceId,
+                Id = primaryKeyValue,
+                RowData = rowData,
+                UpdateData = new Dictionary<string, object>(e.EventArgs.ToDictionary(kv => kv.Key, kv => (object)kv.Value))
+            };
+
+            await TableDataAppService.UpdateAsync(updateRequest);
+            await LoadDataAsync();
+            _ = InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning($"更新行失败: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 弹窗查看行数据详情
+    /// </summary>
+    private void ShowRowDetail(Dictionary<string, object> rowData)
+    {
+        if (rowData == null)
+            return;
+
+        _detailRow = new Dictionary<string, object>(rowData);
+    }
+
+    private void CloseRowDetail()
+    {
+        _detailRow = null;
     }
 
     private async Task EditRowAsync(Dictionary<string, object> rowData)

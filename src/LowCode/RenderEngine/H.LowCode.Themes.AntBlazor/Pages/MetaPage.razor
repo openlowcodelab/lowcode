@@ -72,6 +72,11 @@
     {
         _pageCascadingModel.PageName = pageSchema.Name!;
         _pageCascadingModel.PageLayout = pageSchema.PageProperty.PageLayout;
+
+        // 页面数据源名称（优先取页面属性中的数据源配置）
+        _pageCascadingModel.DataSourceName = pageSchema.PageProperty?.DataSource?.DataSourceName
+            ?? pageSchema.DataSource?.DataSourceName
+            ?? pageSchema.DataSource?.DataSourceValue;
     }
 
     /// <summary>

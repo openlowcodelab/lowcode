@@ -34,4 +34,9 @@ public class TableDataAppService : ApplicationService, ITableDataAppService
         await _tableDataRepository.UpdateAsync(request);
         return new();
     }
+
+    public async Task<BaseOutput<string>> SaveAsync(TableDataSaveInput request)
+    {
+        return new(await _tableDataRepository.SaveAsync(request));
+    }
 }

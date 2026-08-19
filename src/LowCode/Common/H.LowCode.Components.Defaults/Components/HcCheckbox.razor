@@ -1,19 +1,68 @@
 @namespace H.LowCode.Components.Defaults
 
-<div class="hc-checkbox-group @(Direction == "vertical" ? "hc-checkbox-vertical" : "hc-checkbox-horizontal")" style="@Style">
-    @if (ChildContent != null)
-    {
-        @ChildContent
-    }
-    else
-    {
-        <span class="hc-checkbox-empty">暂无选项</span>
-    }
-</div>
+<CascadingValue Value="this" IsFixed="true">
+    <div class="hc-checkbox-group @(Direction == "vertical" ? "hc-checkbox-vertical" : "hc-checkbox-horizontal")" style="@Style">
+        @if (ChildContent != null)
+        {
+            @ChildContent
+        }
+        else
+        {
+            <span class="hc-checkbox-empty">暂无选项</span>
+        }
+    </div>
+</CascadingValue>
 
 @code {
     [Parameter] public bool Disabled { get; set; }
     [Parameter] public string Direction { get; set; } = "horizontal";
     [Parameter] public RenderFragment ChildContent { get; set; }
     [Parameter] public string Style { get; set; }
+
+    /// <summary>
+    /// 选中值集合（以英文逗号分隔的字符串形式对外绑定）
+    /// </summary>
+    [Parameter] public string Value { get; set; }
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+
+    private readonly List<string> _selectedValues = new();
+
+    protected override void OnParametersSet()
+    {
+        // 外部值变化时同步内部选中集合
+        var current = string.Join(",", _selectedValues);
+        var outer = Value ?? string.Empty;
+        if (!string.Equals(current, outer, StringComparison.Ordinal))
+        {
+            _selectedValues.Clear();
+            _selectedValues.AddRange(outer.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+        }
+    }
+
+    /// <summary>
+    /// 判断选项是否选中
+    /// </summary>
+    internal bool IsChecked(object optionValue)
+    {
+        return _selectedValues.Contains(optionValue?.ToString() ?? string.Empty);
+    }
+
+    /// <summary>
+    /// 切换选项选中状态
+    /// </summary>
+    internal async Task ToggleOptionAsync(object optionValue)
+    {
+        if (Disabled)
+            return;
+
+        var valueStr = optionValue?.ToString() ?? string.Empty;
+        if (_selectedValues.Contains(valueStr))
+            _selectedValues.Remove(valueStr);
+        else
+            _selectedValues.Add(valueStr);
+
+        Value = string.Join(",", _selectedValues);
+        await ValueChanged.InvokeAsync(Value);
+        StateHasChanged();
+    }
 }

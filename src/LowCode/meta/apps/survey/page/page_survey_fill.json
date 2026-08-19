@@ -1,1 +1,232 @@
-﻿{"comps":[{"libid":"antdesign","partsId":"card","ct":1,"frag":{"dt":"H.LowCode.Components.Defaults.HcCard, H.LowCode.Components.Defaults","childs":[],"attrs":[{"attrn":"Title","attrt":"System.String","attrv":"满意度调查问卷"}],"content":"$(DraggableContainer)"},"ds":{},"attrdefgroups":[{"gn":"基础属性","attrdefs":[{"disn":"标题","pt":1,"attrn":"Title","attrt":"System.String","attrv":"满意度调查问卷"}]}],"childs":[{"libid":"antdesign","partsId":"radio","ct":1,"frag":{"dt":"H.LowCode.Components.Defaults.HcRadio, H.LowCode.Components.Defaults","childs":[],"attrs":[]},"ds":{"dsgt":1,"dst":8,"fxopds":[{"l":"非常满意","v":"5"},{"l":"满意","v":"4"},{"l":"一般","v":"3"},{"l":"不满意","v":"2"}]},"attrdefgroups":[],"childs":[],"evdefs":[],"stydefs":[],"order":1,"pub":1,"mt":"2026-07-21T00:00:00Z","id":"q1","pid":"fill_card","n":"q1_answer","lb":"1. 您对本次服务的总体满意度？","sptds":true,"stl":{"itemw":24,"itemh":85,"labelw":300},"valrules":[{"id":"q1_req","cid":"q1","enabled":true,"type":1,"errmsg":"请选择满意度","trigger":1,"order":1}],"v":"0.0.1"},{"libid":"antdesign","partsId":"checkbox","ct":1,"frag":{"dt":"H.LowCode.Components.Defaults.HcCheckbox, H.LowCode.Components.Defaults","childs":[],"attrs":[]},"ds":{"dsgt":1,"dst":8,"fxopds":[{"l":"响应速度","v":"speed"},{"l":"服务态度","v":"attitude"},{"l":"专业程度","v":"pro"},{"l":"问题解决","v":"solve"}]},"attrdefgroups":[],"childs":[],"evdefs":[],"stydefs":[],"order":2,"pub":1,"mt":"2026-07-21T00:00:00Z","id":"q2","pid":"fill_card","n":"q2_answer","lb":"2. 您最认可哪些方面？（多选）","sptds":true,"stl":{"itemw":24,"itemh":85,"labelw":300},"v":"0.0.1"},{"libid":"antdesign","partsId":"textarea","ct":1,"frag":{"dt":"H.LowCode.Components.Defaults.HcTextarea, H.LowCode.Components.Defaults","childs":[],"attrs":[]},"ds":{"dsgt":1},"attrdefgroups":[{"gn":"基础属性","attrdefs":[{"disn":"输入提示","pt":1,"attrn":"Placeholder","attrt":"System.String","attrv":"请填写您的建议"}]},{"gn":"样式属性","attrdefs":[{"disn":"行数","pt":2,"attrn":"Rows","attrt":"System.Int32","attrv":4}]}],"childs":[],"evdefs":[],"stydefs":[],"order":3,"pub":1,"mt":"2026-07-21T00:00:00Z","id":"q3","pid":"fill_card","n":"q3_answer","lb":"3. 您的其他建议","stl":{"itemw":24,"itemh":120,"labelw":300},"v":"0.0.1"},{"libid":"antdesign","partsId":"button","ct":1,"frag":{"dt":"H.LowCode.Components.Defaults.HcButton, H.LowCode.Components.Defaults","childs":[],"attrs":[{"attrn":"Text","attrt":"System.String","attrv":"提交问卷"},{"attrn":"Type","attrt":"System.String","attrv":"primary"}]},"ds":{},"attrdefgroups":[],"childs":[],"sptevs":["OnClick"],"evdefs":[],"stydefs":[],"order":4,"pub":1,"mt":"2026-07-21T00:00:00Z","id":"q_submit","pid":"fill_card","n":"submit","lb":"提交","hlb":true,"stl":{"itemw":4,"itemh":50,"labelw":180},"v":"0.0.1"}],"evdefs":[],"stydefs":[],"order":1,"pub":1,"mt":"2026-07-21T00:00:00Z","id":"fill_card","pid":"","n":"survey_fill","lb":"填写问卷","container":true,"hlb":true,"stl":{"itemw":24,"itemh":85,"labelw":180},"v":"0.0.1"}],"sptevs":["OnLoad"],"aid":"survey","id":"page_survey_fill","n":"问卷填写","order":2,"pt":1,"pageprop":{"playout":1,"ds":{"dsid":"ds_answer","dsn":"tb_answer"}},"ds":{"dst":1},"mt":"2026-07-21T00:00:00Z"}
+﻿{
+  "comps": [
+    {
+      "libid": "antdesign",
+      "partsId": "list",
+      "ct": 1,
+      "frag": {
+        "t": "H.LowCode.Components.Defaults.HcList, H.LowCode.Components.Defaults",
+        "childs": [],
+        "attrs": [
+          { "attrn": "Style", "attrt": "System.String", "attrv": "width:100%;" }
+        ]
+      },
+      "ds": {
+        "dsgt": 4,
+        "dst": 1,
+        "dsid": "ds_question",
+        "listds": {
+          "tbdsid": "ds_question",
+          "flts": { "f_survey_id": "$query(surveyId)" },
+          "orderby": "f_order"
+        },
+        "itemtpl": {
+          "id": "q_item_fill",
+          "pid": "q_list",
+          "n": "q_item_fill",
+          "ct": 2,
+          "container": true,
+          "hlb": true,
+          "frag": {
+            "t": "H.LowCode.Components.Defaults.HcCard, H.LowCode.Components.Defaults",
+            "childs": [],
+            "attrs": [
+              { "attrn": "Title", "attrt": "System.String", "attrv": "$(item.f_order). $(item.f_title)" },
+              { "attrn": "Style", "attrt": "System.String", "attrv": "margin-bottom:12px;" }
+            ]
+          },
+          "ds": {},
+          "vcond": { "vexpr": "$(form[q_list|$(item.f_link_qid)|answer])", "op": 0, "eexpr": "$(item.f_link_value)" },
+          "childs": [
+            {
+              "libid": "antdesign",
+              "partsId": "radio",
+              "ct": 1,
+              "frag": {
+                "t": "H.LowCode.Components.Defaults.HcRadio, H.LowCode.Components.Defaults",
+                "childs": [],
+                "attrs": [
+                  { "attrn": "Value", "attrt": "System.Object", "attrv": "" }
+                ]
+              },
+              "ds": {
+                "dsgt": 1,
+                "dst": 7,
+                "dynopexpr": "$(item.f_options_json)",
+                "dsfrag": {
+                  "t": "H.LowCode.Components.Defaults.HcRadioOption, H.LowCode.Components.Defaults",
+                  "attrs": [ { "attrn": "Value", "attrt": "System.String", "attrv": "" } ]
+                }
+              },
+              "vcond": { "vexpr": "$(item.f_question_type)", "op": 0, "eexpr": "1" },
+              "order": 1,
+              "pub": 1,
+              "id": "af_radio",
+              "pid": "q_item_fill",
+              "n": "answer",
+              "lb": "",
+              "hlb": true,
+              "sptds": true,
+              "stl": { "itemw": 24, "itemh": 50, "labelw": 120 },
+              "v": "0.0.1"
+            },
+            {
+              "libid": "antdesign",
+              "partsId": "checkbox",
+              "ct": 1,
+              "frag": {
+                "t": "H.LowCode.Components.Defaults.HcCheckbox, H.LowCode.Components.Defaults",
+                "childs": [],
+                "attrs": [
+                  { "attrn": "Value", "attrt": "System.String", "attrv": "" }
+                ]
+              },
+              "ds": {
+                "dsgt": 1,
+                "dst": 7,
+                "dynopexpr": "$(item.f_options_json)",
+                "dsfrag": {
+                  "t": "H.LowCode.Components.Defaults.HcCheckboxOption, H.LowCode.Components.Defaults",
+                  "attrs": [ { "attrn": "Value", "attrt": "System.String", "attrv": "" } ]
+                }
+              },
+              "vcond": { "vexpr": "$(item.f_question_type)", "op": 0, "eexpr": "2" },
+              "order": 2,
+              "pub": 1,
+              "id": "af_checkbox",
+              "pid": "q_item_fill",
+              "n": "answer",
+              "lb": "",
+              "hlb": true,
+              "sptds": true,
+              "stl": { "itemw": 24, "itemh": 50, "labelw": 120 },
+              "v": "0.0.1"
+            },
+            {
+              "libid": "antdesign",
+              "partsId": "textarea",
+              "ct": 1,
+              "frag": {
+                "t": "H.LowCode.Components.Defaults.HcTextarea, H.LowCode.Components.Defaults",
+                "childs": [],
+                "attrs": [
+                  { "attrn": "Value", "attrt": "System.String", "attrv": "" },
+                  { "attrn": "Placeholder", "attrt": "System.String", "attrv": "请输入您的答案" },
+                  { "attrn": "Rows", "attrt": "System.Int32", "attrv": 3 }
+                ]
+              },
+              "ds": { "dsgt": 0 },
+              "vcond": { "vexpr": "$(item.f_question_type)", "op": 0, "eexpr": "3" },
+              "order": 3,
+              "pub": 1,
+              "id": "af_textarea",
+              "pid": "q_item_fill",
+              "n": "answer",
+              "lb": "",
+              "hlb": true,
+              "stl": { "itemw": 24, "itemh": 90, "labelw": 120 },
+              "v": "0.0.1"
+            }
+          ],
+          "order": 1,
+          "pub": 1,
+          "v": "0.0.1"
+        }
+      },
+      "attrdefgroups": [],
+      "childs": [],
+      "evdefs": [],
+      "stydefs": [],
+      "order": 1,
+      "pub": 1,
+      "mt": "2026-08-18T00:00:00Z",
+      "id": "q_list",
+      "pid": "",
+      "n": "q_list",
+      "lb": "题目",
+      "hlb": true,
+      "sptds": true,
+      "stl": { "itemw": 24, "itemh": 300, "labelw": 120 },
+      "v": "0.0.1"
+    },
+    {
+      "libid": "antdesign",
+      "partsId": "list",
+      "ct": 1,
+      "frag": {
+        "t": "H.LowCode.Components.Defaults.HcList, H.LowCode.Components.Defaults",
+        "childs": [],
+        "attrs": [
+          { "attrn": "Style", "attrt": "System.String", "attrv": "display:none;" }
+        ]
+      },
+      "ds": {
+        "dsgt": 4,
+        "dst": 8,
+        "listds": {
+          "fxdata": [ { "k": "1" } ],
+          "saveto": "ds_submission",
+          "savemode": 0,
+          "savemap": {
+            "f_survey_id": "$query(surveyId)",
+            "f_submit_time": "$(now)",
+            "f_answers_json": "$(formjson(q_list,answer))"
+          }
+        }
+      },
+      "attrdefgroups": [],
+      "childs": [],
+      "evdefs": [],
+      "stydefs": [],
+      "order": 2,
+      "pub": 1,
+      "mt": "2026-08-18T00:00:00Z",
+      "id": "submit_list",
+      "pid": "",
+      "n": "submit_list",
+      "hlb": true,
+      "sptds": true,
+      "stl": { "itemw": 24, "itemh": 1, "labelw": 120 },
+      "v": "0.0.1"
+    },
+    {
+      "libid": "antdesign",
+      "partsId": "button",
+      "ct": 1,
+      "frag": {
+        "t": "H.LowCode.Components.Defaults.HcButton, H.LowCode.Components.Defaults",
+        "childs": [],
+        "attrs": [
+          { "attrn": "Text", "attrt": "System.String", "attrv": "提交问卷" },
+          { "attrn": "Type", "attrt": "System.String", "attrv": "primary" }
+        ]
+      },
+      "ds": {},
+      "attrdefgroups": [],
+      "childs": [],
+      "sptevs": ["OnClick"],
+      "evs": [
+        { "en": "OnClick", "eht": 40, "edat": 110, "eventArgs": { "listid": "submit_list" } },
+        { "en": "OnClick", "eht": 10, "etid": "page_submission_records", "eta": "13", "eventArgs": { "flt_f_survey_id": "$query(surveyId)" } }
+      ],
+      "order": 3,
+      "pub": 1,
+      "mt": "2026-08-18T00:00:00Z",
+      "id": "btn_submit",
+      "pid": "",
+      "n": "btn_submit",
+      "hlb": true,
+      "stl": { "itemw": 24, "itemh": 55, "labelw": 120 },
+      "v": "0.0.1"
+    }
+  ],
+  "sptevs": ["OnLoad"],
+  "aid": "survey",
+  "id": "page_survey_fill",
+  "n": "问卷填写",
+  "order": 5,
+  "pt": 0,
+  "pageprop": { "playout": 1 },
+  "ds": {},
+  "mt": "2026-08-18T00:00:00Z"
+}

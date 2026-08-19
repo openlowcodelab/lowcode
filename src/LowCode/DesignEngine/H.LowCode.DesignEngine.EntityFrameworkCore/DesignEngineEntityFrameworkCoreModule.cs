@@ -15,9 +15,13 @@ public class DesignEngineEntityFrameworkCoreModule : AbpModule
 
         context.Services.AddScoped(typeof(EntityTypeManager));
 
+        // 解析连接串：优先 DesignEngineDb，回退 Default
+        var configuration = context.Services.GetConfiguration();
+        var connectionString = configuration.GetConnectionString("DesignEngineDb")
+            ?? configuration.GetConnectionString("Default");
+
         context.Services.AddDbContext<DesignEngineDbContext>(options =>
         {
-            var connectionString = context.Services.GetConfiguration().GetConnectionString("Default");
             options.UseSqlServer(connectionString);
         });
     }

@@ -62,6 +62,7 @@ public static class ClientServices
         // 使 Blazor WASM 的 fetch 请求携带认证 Cookie
         services.AddHttpClient();
         services.AddTransient<CookieHandler>();
+        services.AddTransient<AppIdHeaderHandler>();
 
         string[] serviceNames =
         [
@@ -77,7 +78,9 @@ public static class ClientServices
 
         foreach (var name in serviceNames)
         {
-            services.AddHttpClient(name).AddHttpMessageHandler<CookieHandler>();
+            services.AddHttpClient(name)
+                .AddHttpMessageHandler<CookieHandler>()
+                .AddHttpMessageHandler<AppIdHeaderHandler>();
         }
 
         // 首页（Portal）仅依赖默认 HttpClient（AppDrawer、企业选择/创建页均直接调用 API），

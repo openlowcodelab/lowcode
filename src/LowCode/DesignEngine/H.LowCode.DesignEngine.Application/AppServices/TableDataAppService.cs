@@ -9,7 +9,8 @@ namespace H.LowCode.ComponentBase.Services;
 /// <summary>
 /// 默认表格数据提供者（提供模拟数据）
 /// </summary>
-[RemoteService]
+/// <remarks>禁用远程 API 暴露，避免与渲染引擎的 ITableDataAppService 实现在单体宿主中产生路由歧义</remarks>
+[RemoteService(IsEnabled = false)]
 public class TableDataAppService : ApplicationService, ITableDataAppService
 {
     public async Task<BaseOutput<PagedResultDto<Dictionary<string, object>>>> GetListAsync(TableDataInput request)
@@ -57,5 +58,22 @@ public class TableDataAppService : ApplicationService, ITableDataAppService
         Console.WriteLine($"模拟更新数据: AppId={request.AppId}, PageId={request.PageId}, DataSourceId={request.DataSourceId}, Id={request.Id}");
         Console.WriteLine($"更新字段: {string.Join(", ", request.UpdateData?.Select(kv => $"{kv.Key}={kv.Value}") ?? new string[0])}");
         return new();
+    }
+
+    public async Task<BaseOutput<string>> SaveAsync(TableDataSaveInput request)
+    {
+        await Task.Delay(100); // 模拟异步操作
+
+        // 在设计引擎中，这只是模拟保存操作，返回行数据中的主键或新生成的主键
+        string primaryKey = Guid.NewGuid().ToString();
+        if (request.RowData != null
+            && request.RowData.TryGetValue("f_id", out var pkValue)
+            && !string.IsNullOrEmpty(pkValue?.ToString()))
+        {
+            primaryKey = pkValue.ToString();
+        }
+
+        Console.WriteLine($"模拟保存数据: AppId={request.AppId}, DataSourceId={request.DataSourceId}, Id={primaryKey}");
+        return new(primaryKey);
     }
 }

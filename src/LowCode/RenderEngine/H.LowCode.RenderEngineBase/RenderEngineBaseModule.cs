@@ -11,6 +11,12 @@ public static class RenderEngineBaseModule
     {
         // 注册 List 数据操作管理器（使用 Singleton 确保 WebAssembly 中状态保持）
         services.AddSingleton<ListDataOperationManager>();
+
+        // 页面表单状态服务（按会话隔离）
+        services.AddScoped<PageFormStateService>();
+
+        // 页面组件注册表（按会话隔离）
+        services.AddScoped<PageComponentRegistry>();
         return services;
     }
 }

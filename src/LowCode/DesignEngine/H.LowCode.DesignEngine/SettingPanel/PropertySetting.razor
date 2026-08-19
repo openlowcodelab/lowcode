@@ -9,6 +9,48 @@
         @* 基础属性 *@
         <BasicPropertyItem Component="@Component"></BasicPropertyItem>
 
+        @* 显示条件（组件显隐联动） *@
+        <div class="setting-group-title">
+            <span class="setting-group-title-icon">◎</span>显示条件
+        </div>
+
+        <div class="propertysetting-item">
+            <label>启用显示条件：</label>
+            <label class="switch"><input type="checkbox" @bind="@_isVisibleConditionEnabled" @bind:after="() => OnVisibleConditionEnabledChange(_isVisibleConditionEnabled)" /></label>
+        </div>
+
+        @if (_isVisibleConditionEnabled && Component.VisibleCondition != null)
+        {
+            <div class="propertysetting-item">
+                <label>值来源：</label>
+                <input class="inp" @bind="@Component.VisibleCondition.ValueExpr" @bind:after="OnVisibleConditionChange"
+                       placeholder="如 $(item.f_x) 或 $(form.key)" />
+            </div>
+
+            <div class="propertysetting-item">
+                <label>比较符：</label>
+                <select class="sel" @bind="@Component.VisibleCondition.Op" @bind:after="OnVisibleConditionChange">
+                    <option value="@VisibleConditionOpEnum.Equals">等于</option>
+                    <option value="@VisibleConditionOpEnum.NotEquals">不等于</option>
+                    <option value="@VisibleConditionOpEnum.Contains">包含</option>
+                    <option value="@VisibleConditionOpEnum.In">在列表中</option>
+                    <option value="@VisibleConditionOpEnum.NotEmpty">非空</option>
+                    <option value="@VisibleConditionOpEnum.IsEmpty">为空</option>
+                </select>
+            </div>
+
+            @if (Component.VisibleCondition.Op is VisibleConditionOpEnum.Equals
+                or VisibleConditionOpEnum.NotEquals or VisibleConditionOpEnum.Contains
+                or VisibleConditionOpEnum.In)
+            {
+                <div class="propertysetting-item">
+                    <label>期望值：</label>
+                    <input class="inp" @bind="@Component.VisibleCondition.ExpectExpr" @bind:after="OnVisibleConditionChange"
+                           placeholder="支持表达式，如 $(item.f_x)" />
+                </div>
+            }
+        }
+
         @* 数据源属性 *@
         <DataSourcePropertyItem Component="@Component"></DataSourcePropertyItem>
 
@@ -142,16 +184,45 @@
     public ComponentPartsSchema Component { get; set; }
 
     private bool _isValidationEnabled;
+    private bool _isVisibleConditionEnabled;
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
         InitializeValidationState();
+        InitializeVisibleConditionState();
     }
 
     protected override void OnParametersSet()
     {
         InitializeValidationState();
+        InitializeVisibleConditionState();
+    }
+
+    private void InitializeVisibleConditionState()
+    {
+        _isVisibleConditionEnabled = Component?.VisibleCondition != null;
+    }
+
+    private void OnVisibleConditionEnabledChange(bool enabled)
+    {
+        _isVisibleConditionEnabled = enabled;
+
+        if (enabled)
+        {
+            Component.VisibleCondition ??= new VisibleConditionSchema();
+        }
+        else
+        {
+            Component.VisibleCondition = null;
+        }
+
+        OnPropertyChange();
+    }
+
+    private void OnVisibleConditionChange()
+    {
+        OnPropertyChange();
     }
 
     private void InitializeValidationState()

@@ -40,11 +40,18 @@ public class EntityTypeManager
         var entities = _dataSourceRepository.GetAllEntities(appId);
         foreach (var entity in entities)
         {
-            var fields = entity.TableFields.Select(f => new DynamicEntityField()
+            var fields = entity.TableFields.Select(f =>
             {
-                Name = f.Name,
-                ClrType = FieldTypeMapping.GetFieldType(f.Type, f.IsNullable),
-                IsNullable = f.IsNullable
+                var field = new DynamicEntityField()
+                {
+                    Name = f.Name,
+                    ClrType = FieldTypeMapping.GetFieldType(f.Type, f.IsNullable),
+                    IsNullable = f.IsNullable
+                };
+
+                // 解析类型中的长度声明（如 varchar(2000)），text 类型默认长文本
+                field.MaxLength = ResolveFieldMaxLength(f.Type);
+                return field;
             });
 
             var primaryField = entity.TableFields.FirstOrDefault(t => t.IsPrimaryKey);
@@ -68,6 +75,35 @@ public class EntityTypeManager
         _dynamicEntitiesDic[appId] = dynamicEntities;
 
         return dynamicEntities;
+    }
+
+    /// <summary>
+    /// 解析字段类型的长度声明（如 varchar(2000) 返回 2000；text 类型返回长文本默认长度）
+    /// </summary>
+    private static int? ResolveFieldMaxLength(string? fieldType)
+    {
+        if (string.IsNullOrWhiteSpace(fieldType))
+            return null;
+
+        var raw = fieldType.Trim().ToLowerInvariant();
+
+        int parenIndex = raw.IndexOf('(');
+        if (parenIndex > 0)
+        {
+            var closeIndex = raw.IndexOf(')', parenIndex);
+            if (closeIndex > parenIndex)
+            {
+                var lengthText = raw.Substring(parenIndex + 1, closeIndex - parenIndex - 1).Split(',')[0].Trim();
+                if (int.TryParse(lengthText, out var length))
+                    return length;
+            }
+        }
+
+        var baseType = parenIndex >= 0 ? raw[..parenIndex].Trim() : raw;
+        if (baseType == "text")
+            return 4000;
+
+        return null;
     }
 
     private static void InitDynamicAssembly()

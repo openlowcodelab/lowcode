@@ -1,12 +1,14 @@
 ﻿@namespace H.LowCode.Themes.AntBlazor
 @inherits RenderEngineDynamicComponentBase
 
-@if (Component.IsContainer || Component.ComponentType == 2)
+@if (Component != null && IsComponentVisible(Component))
 {
-    <ContainerComponentRender ContainerComponent="@Component"></ContainerComponentRender>
-}
-else
-{
+    @if (Component.IsContainer || Component.ComponentType == 2)
+    {
+        <ContainerComponentRender ContainerComponent="@Component"></ContainerComponentRender>
+    }
+    else
+    {
     <div class="renderengine-componentitem-box" style="float:left;
             width: @((Component.Style.ItemWidth > 4 ? Component.Style.ItemWidth : (IsInRootContainer ? 24 / PageCascading.PageLayout : 24)) / 24 * 100)%;
             min-width:85px; min-height: @(Component.Style.ItemHeight)px;
@@ -26,6 +28,7 @@ else
         <div class="renderengine-componentitem-div-component">@_renderFragment</div>
         }
     </div>
+    }
 }
 
 @code {

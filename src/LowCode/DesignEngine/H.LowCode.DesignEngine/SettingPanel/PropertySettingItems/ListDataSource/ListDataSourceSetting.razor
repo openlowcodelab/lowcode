@@ -1,5 +1,6 @@
-@namespace H.LowCode.DesignEngine
+﻿@namespace H.LowCode.DesignEngine
 @inherits LowCodeComponentBase
+@inject IDataSourceAppService DataSourceAppService
 
 @if (DataSource != null)
 {
@@ -14,15 +15,94 @@
                 <div class="propertysetting-item">
                     <label>数据源类型：</label>
                     <div class="radio-group">
-                        <label class="radio-label"><input type="radio" name="dsType" value="ComponentDataSourceTypeEnum.Fiexd" checked="@(DataSource.DataSourceType == ComponentDataSourceTypeEnum.Fiexd)" @onchange='() => DataSource.DataSourceType = ComponentDataSourceTypeEnum.Fiexd' /> 固定值</label>
-                        <label class="radio-label"><input type="radio" name="dsType" value="ComponentDataSourceTypeEnum.API" checked="@(DataSource.DataSourceType == ComponentDataSourceTypeEnum.API)" @onchange='() => DataSource.DataSourceType = ComponentDataSourceTypeEnum.API' /> API</label>
-                        <label class="radio-label"><input type="radio" name="dsType" value="ComponentDataSourceTypeEnum.SQL" checked="@(DataSource.DataSourceType == ComponentDataSourceTypeEnum.SQL)" @onchange='() => DataSource.DataSourceType = ComponentDataSourceTypeEnum.SQL' /> SQL</label>
+                        <label class="radio-label"><input type="radio" name="dsType" checked="@(DataSource.DataSourceType == ComponentDataSourceTypeEnum.Fiexd)" @onchange='() => DataSource.DataSourceType = ComponentDataSourceTypeEnum.Fiexd' /> 固定值</label>
+                        <label class="radio-label"><input type="radio" name="dsType" checked="@(DataSource.DataSourceType == ComponentDataSourceTypeEnum.DB)" @onchange='() => DataSource.DataSourceType = ComponentDataSourceTypeEnum.DB' /> 表数据源</label>
+                        <label class="radio-label"><input type="radio" name="dsType" checked="@(DataSource.DataSourceType == ComponentDataSourceTypeEnum.API)" @onchange='() => DataSource.DataSourceType = ComponentDataSourceTypeEnum.API' /> API</label>
+                        <label class="radio-label"><input type="radio" name="dsType" checked="@(DataSource.DataSourceType == ComponentDataSourceTypeEnum.SQL)" @onchange='() => DataSource.DataSourceType = ComponentDataSourceTypeEnum.SQL' /> SQL</label>
                     </div>
                 </div>
 
                 @if (DataSource.DataSourceType == ComponentDataSourceTypeEnum.Fiexd)
                 {
                     <FixedListDataSource @bind-DataSource="DataSource.ListDataSource"></FixedListDataSource>
+                }
+                else if (DataSource.DataSourceType == ComponentDataSourceTypeEnum.DB)
+                {
+                    <div class="propertysetting-item">
+                        <label>加载数据表：</label>
+                        <select class="sel" @bind="@_loadDataSourceId" @bind:after="OnListConfigChanged" style="width: 100%;">
+                            <option value="">请选择数据表</option>
+                            @foreach (var ds in _tableDataSourceList)
+                            {
+                                <option value="@ds.Id">@(ds.DisplayName ?? ds.Name)</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="propertysetting-item">
+                        <label>排序字段：</label>
+                        <input class="inp" @bind="@DataSource.ListDataSource.OrderBy" @bind:after="OnListConfigChanged" placeholder="如 f_order" />
+                    </div>
+
+                    <div class="propertysetting-item">
+                        <label>倒序：</label>
+                        <label class="switch"><input type="checkbox" @bind="@DataSource.ListDataSource.OrderDesc" @bind:after="OnListConfigChanged" /></label>
+                    </div>
+
+                    <div class="setting-group-title setting-group-title-sub">加载过滤条件</div>
+                    <div class="alert alert-info" style="margin-bottom: 8px;">
+                        <p>字段名 -> 表达式，如 $query(id)、$(item.f_x)</p>
+                    </div>
+                    @if (_filterRows != null)
+                    {
+                        @for (int i = 0; i < _filterRows.Count; i++)
+                        {
+                            var index = i;
+                            <div class="propertysetting-item" style="display:flex; gap:4px; align-items:center;">
+                                <input class="inp" style="flex:1;" placeholder="字段名" @bind="@_filterRows[index].Key" @bind:after="OnListConfigChanged" />
+                                <input class="inp" style="flex:2;" placeholder="表达式" @bind="@_filterRows[index].Value" @bind:after="OnListConfigChanged" />
+                                <button class="btn btn-text btn-danger btn-sm" @onclick="() => RemoveFilterRow(index)">删除</button>
+                            </div>
+                        }
+                    }
+                    <button class="btn btn-dashed" @onclick="AddFilterRow">添加过滤条件</button>
+
+                    <div class="setting-group-title setting-group-title-sub">保存配置</div>
+                    <div class="propertysetting-item">
+                        <label>保存目标表：</label>
+                        <select class="sel" @bind="@_saveToDataSourceId" @bind:after="OnListConfigChanged" style="width: 100%;">
+                            <option value="">同加载数据表</option>
+                            @foreach (var ds in _tableDataSourceList)
+                            {
+                                <option value="@ds.Id">@(ds.DisplayName ?? ds.Name)</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="propertysetting-item">
+                        <label>保存模式：</label>
+                        <select class="sel" @bind="@DataSource.ListDataSource.SaveMode" @bind:after="OnListConfigChanged">
+                            <option value="@ListSaveModeEnum.Upsert">按主键新增或更新</option>
+                            <option value="@ListSaveModeEnum.InsertNew">重新生成主键后新增</option>
+                        </select>
+                    </div>
+
+                    <div class="alert alert-info" style="margin-bottom: 8px;">
+                        <p>保存字段映射：目标字段 -> 表达式。支持 $(item.f_x)、$(form.key)、$query(x)、$(now)、$(form.__lastid)、$(formjson(列表Id,组件名))。不配置时直接保存行数据。</p>
+                    </div>
+                    @if (_saveMapRows != null)
+                    {
+                        @for (int i = 0; i < _saveMapRows.Count; i++)
+                        {
+                            var index = i;
+                            <div class="propertysetting-item" style="display:flex; gap:4px; align-items:center;">
+                                <input class="inp" style="flex:1;" placeholder="目标字段" @bind="@_saveMapRows[index].Key" @bind:after="OnListConfigChanged" />
+                                <input class="inp" style="flex:2;" placeholder="表达式" @bind="@_saveMapRows[index].Value" @bind:after="OnListConfigChanged" />
+                                <button class="btn btn-text btn-danger btn-sm" @onclick="() => RemoveSaveMapRow(index)">删除</button>
+                            </div>
+                        }
+                    }
+                    <button class="btn btn-dashed" @onclick="AddSaveMapRow">添加字段映射</button>
                 }
                 else if (DataSource.DataSourceType == ComponentDataSourceTypeEnum.API)
                 {
@@ -85,10 +165,16 @@
     [Parameter]
     public EventCallback<ComponentPartsDataSourceSchema> DataSourceChanged { get; set; }
 
+    private IList<DataSourceListModel> _tableDataSourceList = new List<DataSourceListModel>();
+    private string _loadDataSourceId;
+    private string _saveToDataSourceId;
+    private List<DictEntryRow> _filterRows = new();
+    private List<DictEntryRow> _saveMapRows = new();
+
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
-        
+
         // 初始化 ListDataSource
         if (DataSource != null && DataSource.ListDataSource == null)
         {
@@ -96,6 +182,87 @@
             {
                 FixedData = new List<Dictionary<string, object>>()
             };
+        }
+
+        await LoadTableDataSourcesAsync();
+        InitListConfigState();
+    }
+
+    private async Task LoadTableDataSourcesAsync()
+    {
+        try
+        {
+            var input = new DataSourceInput
+            {
+                DataSourceType = ComponentDataSourceTypeEnum.DB
+            };
+            _tableDataSourceList = (await DataSourceAppService.GetListAsync(AppId, input)).Data ?? new List<DataSourceListModel>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"加载表数据源列表失败: {ex.Message}");
+            _tableDataSourceList = new List<DataSourceListModel>();
+        }
+    }
+
+    private void InitListConfigState()
+    {
+        var listDs = DataSource?.ListDataSource;
+        if (listDs == null)
+            return;
+
+        _loadDataSourceId = listDs.TableDataSourceId ?? string.Empty;
+        _saveToDataSourceId = listDs.SaveToDataSourceId ?? string.Empty;
+
+        _filterRows = (listDs.Filters ?? new Dictionary<string, string>())
+            .Select(kv => new DictEntryRow { Key = kv.Key, Value = kv.Value }).ToList();
+        _saveMapRows = (listDs.SaveMap ?? new Dictionary<string, string>())
+            .Select(kv => new DictEntryRow { Key = kv.Key, Value = kv.Value }).ToList();
+    }
+
+    private async Task OnListConfigChanged()
+    {
+        var listDs = DataSource?.ListDataSource;
+        if (listDs == null)
+            return;
+
+        listDs.TableDataSourceId = string.IsNullOrEmpty(_loadDataSourceId) ? null : _loadDataSourceId;
+        listDs.SaveToDataSourceId = string.IsNullOrEmpty(_saveToDataSourceId) ? null : _saveToDataSourceId;
+        listDs.Filters = _filterRows
+            .Where(r => !string.IsNullOrWhiteSpace(r.Key))
+            .ToDictionary(r => r.Key.Trim(), r => r.Value ?? string.Empty);
+        listDs.SaveMap = _saveMapRows
+            .Where(r => !string.IsNullOrWhiteSpace(r.Key))
+            .ToDictionary(r => r.Key.Trim(), r => r.Value ?? string.Empty);
+
+        await DataSourceChanged.InvokeAsync(DataSource);
+    }
+
+    private void AddFilterRow()
+    {
+        _filterRows.Add(new DictEntryRow());
+    }
+
+    private async Task RemoveFilterRow(int index)
+    {
+        if (index >= 0 && index < _filterRows.Count)
+        {
+            _filterRows.RemoveAt(index);
+            await OnListConfigChanged();
+        }
+    }
+
+    private void AddSaveMapRow()
+    {
+        _saveMapRows.Add(new DictEntryRow());
+    }
+
+    private async Task RemoveSaveMapRow(int index)
+    {
+        if (index >= 0 && index < _saveMapRows.Count)
+        {
+            _saveMapRows.RemoveAt(index);
+            await OnListConfigChanged();
         }
     }
 

@@ -12,18 +12,7 @@ public interface IFormValidationAppService : IAppService
     /// <summary>
     /// 校验单个字段值
     /// </summary>
-    /// <param name="value">字段值</param>
-    /// <param name="validationRules">校验规则</param>
-    /// <returns>校验结果</returns>
-    BaseOutput<ValidationResult> ValidateField(object? value, IList<ValidationRuleSchema>? validationRules);
-
-    /// <summary>
-    /// 校验表单数据
-    /// </summary>
-    /// <param name="formData">表单数据</param>
-    /// <param name="components">组件列表</param>
-    /// <returns>校验结果</returns>
-    BaseOutput<FormValidationResult> ValidateForm(Dictionary<string, object?> formData, IList<ComponentSchemaBase> components);
+    Task<BaseOutput<ValidationResult>> ValidateFieldAsync(FieldValidationInput input);
 
     /// <summary>
     /// 获取字段的校验规则
@@ -31,7 +20,23 @@ public interface IFormValidationAppService : IAppService
     /// <param name="componentId">组件ID</param>
     /// <param name="components">组件列表</param>
     /// <returns>校验规则</returns>
-    BaseOutput<IList<ValidationRuleSchema>> GetValidationRules(string componentId, IList<ComponentSchemaBase> components);
+    Task<BaseOutput<IList<ValidationRuleSchema>>> GetValidationRulesAsync(string componentId, IList<ComponentSchemaBase> components);
+}
+
+/// <summary>
+/// 字段校验入参
+/// </summary>
+public class FieldValidationInput
+{
+    /// <summary>
+    /// 字段值
+    /// </summary>
+    public object? Value { get; set; }
+
+    /// <summary>
+    /// 校验规则
+    /// </summary>
+    public IList<ValidationRuleSchema>? ValidationRules { get; set; }
 }
 
 /// <summary>

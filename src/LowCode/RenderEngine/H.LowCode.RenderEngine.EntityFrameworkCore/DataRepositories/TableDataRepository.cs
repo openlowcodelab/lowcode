@@ -55,21 +55,47 @@ public class TableDataRepository : ITableDataRepository
             return new();
         }
 
-        // 应用筛选条件
+        // 应用筛选条件（等值过滤）
         if (input.Filters != null && input.Filters.Any())
         {
-            // 这里可以根据需要实现更复杂的筛选逻辑
-            // 暂时跳过筛选实现
+            foreach (var filter in input.Filters)
+            {
+                var property = entityType.GetProperty(filter.Key);
+                if (property == null || filter.Value == null)
+                    continue;
+
+                var filterValue = ConvertValue(filter.Value, property.PropertyType);
+                if (filterValue == null)
+                    continue;
+
+                var parameter = System.Linq.Expressions.Expression.Parameter(entityType, "x");
+                var member = System.Linq.Expressions.Expression.Property(parameter, property);
+                var equal = System.Linq.Expressions.Expression.Equal(
+                    member, System.Linq.Expressions.Expression.Constant(filterValue, property.PropertyType));
+                var lambda = System.Linq.Expressions.Expression.Lambda(equal, parameter);
+
+                var whereExpression = System.Linq.Expressions.Expression.Call(
+                    typeof(Queryable), "Where",
+                    new Type[] { entityType },
+                    dbSet.Expression,
+                    System.Linq.Expressions.Expression.Quote(lambda));
+
+                dbSet = dbSet.Provider.CreateQuery<object>(whereExpression);
+            }
         }
 
-        // 应用排序
+        // 应用排序（格式：字段名 或 "字段名 desc"）
         if (!string.IsNullOrEmpty(input.Sorting))
         {
+            var sortingParts = input.Sorting.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var sortField = sortingParts[0];
+            var sortDesc = sortingParts.Length > 1 && sortingParts[1].Equals("desc", StringComparison.OrdinalIgnoreCase);
+
             var parameter = System.Linq.Expressions.Expression.Parameter(entityType, "x");
-            var property = System.Linq.Expressions.Expression.Property(parameter, input.Sorting);
+            var property = System.Linq.Expressions.Expression.Property(parameter, sortField);
             var lambda = System.Linq.Expressions.Expression.Lambda(property, parameter);
 
-            var orderByMethod = input.Sorting?.ToLower() == "desc" ? "OrderByDescending" : "OrderBy";
+            var orderByMethod = sortDesc ? "OrderByDescending" : "OrderBy";
             var orderByExpression = System.Linq.Expressions.Expression.Call(
                 typeof(Queryable),
                 orderByMethod,
@@ -166,37 +192,122 @@ public class TableDataRepository : ITableDataRepository
         }
 
         // 更新实体属性
-        if (request.UpdateData != null && request.UpdateData.Any())
-        {
-            var properties = entityType.GetProperties();
-            foreach (var updateField in request.UpdateData)
-            {
-                var property = properties.FirstOrDefault(p =>
-                    string.Equals(p.Name, updateField.Key, StringComparison.OrdinalIgnoreCase));
-
-                if (property != null && property.CanWrite)
-                {
-                    // 类型转换
-                    var value = updateField.Value;
-                    if (value != null && value.GetType() != property.PropertyType)
-                    {
-                        try
-                        {
-                            value = Convert.ChangeType(value, property.PropertyType);
-                        }
-                        catch
-                        {
-                            // 转换失败时跳过该字段
-                            continue;
-                        }
-                    }
-
-                    property.SetValue(entity, value);
-                }
-            }
-        }
+        ApplyRowDataToEntity(entity, entityType, request.UpdateData);
 
         // 保存更改
         await dbContext.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// 保存行数据（按主键新增或更新），返回主键值
+    /// </summary>
+    public async Task<string> SaveAsync(TableDataSaveInput request)
+    {
+        var dataSource = await _dataSourceRepository.GetAsync(request.AppId, request.DataSourceId);
+        if (dataSource == null)
+        {
+            throw new ArgumentException($"数据源不存在: {request.DataSourceId}");
+        }
+
+        var primaryKeyField = dataSource.TableFields?.FirstOrDefault(t => t.IsPrimaryKey);
+        var primaryKeyName = primaryKeyField?.Name ?? "f_id";
+
+        using var dbContext = await _dbContextFactory.CreateDbContextAsync();
+        var entityType = dbContext.GetEntityType(dataSource.Name);
+
+        // 解析主键值，主键为空或强制新增时自动生成
+        string? primaryKey = null;
+        if (!request.ForceInsert
+            && request.RowData != null
+            && request.RowData.TryGetValue(primaryKeyName, out var pkValue))
+        {
+            primaryKey = pkValue?.ToString();
+        }
+
+        if (string.IsNullOrEmpty(primaryKey))
+        {
+            primaryKey = Guid.NewGuid().ToString();
+            request.RowData ??= new Dictionary<string, object>();
+            request.RowData[primaryKeyName] = primaryKey;
+        }
+
+        // 主键存在则更新，否则新增
+        var entity = await dbContext.FindAsync(entityType, primaryKey);
+        if (entity == null)
+        {
+            entity = Activator.CreateInstance(entityType);
+            ApplyRowDataToEntity(entity, entityType, request.RowData);
+            dbContext.Add(entity);
+        }
+        else
+        {
+            ApplyRowDataToEntity(entity, entityType, request.RowData);
+            dbContext.Update(entity);
+        }
+
+        await dbContext.SaveChangesAsync();
+        return primaryKey;
+    }
+
+    /// <summary>
+    /// 将行数据字典写入实体属性（按属性实际类型转换）
+    /// </summary>
+    private static void ApplyRowDataToEntity(object entity, Type entityType, Dictionary<string, object>? rowData)
+    {
+        if (rowData == null || rowData.Count == 0)
+            return;
+
+        var properties = entityType.GetProperties();
+        foreach (var field in rowData)
+        {
+            var property = properties.FirstOrDefault(p =>
+                string.Equals(p.Name, field.Key, StringComparison.OrdinalIgnoreCase));
+
+            if (property == null || !property.CanWrite)
+                continue;
+
+            var value = ConvertValue(field.Value, property.PropertyType);
+            if (value == null && property.PropertyType.IsValueType
+                && Nullable.GetUnderlyingType(property.PropertyType) == null)
+            {
+                continue;
+            }
+
+            property.SetValue(entity, value);
+        }
+    }
+
+    /// <summary>
+    /// 值类型转换（兼容字符串形式的布尔/数值等）
+    /// </summary>
+    private static object? ConvertValue(object? value, Type targetType)
+    {
+        if (value == null)
+            return null;
+
+        var underlyingType = Nullable.GetUnderlyingType(targetType) ?? targetType;
+
+        try
+        {
+            if (value.GetType() == underlyingType)
+                return value;
+
+            if (underlyingType == typeof(bool))
+            {
+                var str = value.ToString();
+                if (str == "1" || str == "0")
+                    return str == "1";
+                return bool.Parse(str);
+            }
+
+            if (underlyingType.IsEnum)
+                return Enum.Parse(underlyingType, value.ToString()!);
+
+            return Convert.ChangeType(value, underlyingType);
+        }
+        catch
+        {
+            return null;
+        }
     }
 }

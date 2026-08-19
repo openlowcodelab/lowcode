@@ -38,7 +38,16 @@ public class FormDataAppService : ApplicationService, IFormDataAppService
                         Value = t.Fragment.GetDefaultValue()
                     }).ToList()
             };
-            var defaultDto = ObjectMapper.Map<FormEntity, FormDataDto>(defaultEntity);
+            var defaultDto = new FormDataDto
+            {
+                Name = defaultEntity.Name,
+                Fields = defaultEntity.Fields.Select(f => new FormFieldDto
+                {
+                    Name = f.Name,
+                    TypeName = f.TypeName,
+                    Value = f.Value
+                }).ToList()
+            };
             return new(defaultDto);
         }
 
@@ -46,16 +55,35 @@ public class FormDataAppService : ApplicationService, IFormDataAppService
         if (entity == null)
             throw new EntityNotFoundException($"Entity {entityName} Not Found: {id}");
 
-        var dto = ObjectMapper.Map<FormEntity, FormDataDto>(entity);
+        var dto = new FormDataDto
+        {
+            Name = entity.Name,
+            Fields = entity.Fields.Select(f => new FormFieldDto
+            {
+                Name = f.Name,
+                TypeName = f.TypeName,
+                Value = f.Value
+            }).ToList()
+        };
         return new(dto);
     }
 
-    public async Task<BaseOutput<bool>> SaveAsync(FormDataDto dto)
+    public async Task<BaseOutput<string>> SaveAsync(FormDataDto dto)
     {
         if (dto == null)
             throw new ArgumentNullException(nameof(dto));
 
-        var entity = ObjectMapper.Map<FormDataDto, FormEntity>(dto);
+        // 手工映射 DTO 到 Entity（规避 ABP Mapperly 未配置的问题）
+        var entity = new FormEntity
+        {
+            Name = dto.Name ?? string.Empty,
+            Fields = dto.Fields?.Select(f => new FormFieldEntity
+            {
+                Name = f.Name ?? string.Empty,
+                TypeName = f.TypeName ?? string.Empty,
+                Value = f.Value
+            }).ToList() ?? new List<FormFieldEntity>()
+        };
 
         // 验证字段
         if (entity.Fields == null || !entity.Fields.Any())
@@ -110,7 +138,7 @@ public class FormDataAppService : ApplicationService, IFormDataAppService
                 // 更新记录
                 await _formDataRepository.UpdateAsync(entity);
             }
-            return new(true);
+            return new(primaryKeyField.Value?.ToString() ?? string.Empty);
         }
         catch (Exception ex)
         {
