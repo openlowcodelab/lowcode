@@ -1445,11 +1445,8 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
             var result = (await TableDataAppService.GetListAsync(input)).Data;
             var items = result?.Items?.Cast<object>().ToList() ?? new List<object>();
 
-            // 若用户在加载期间已添加行，保留内存数据不覆盖
-            if (ListDataManager.GetListData(componentId).Count == 0)
-            {
-                ListDataManager.RegisterListData(componentId, items, fromDatabase: true);
-            }
+            // 始终以 DB 数据为准，覆盖可能残留的旧会话数据（ListDataManager 为单例，跨页面导航不会重置）
+            ListDataManager.RegisterListData(componentId, items, fromDatabase: true);
             _loadedListIds.Add(componentId);
 
             await InvokeAsync(StateHasChanged);
