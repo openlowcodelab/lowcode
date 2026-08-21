@@ -29,10 +29,10 @@
 @code {
     private static List<AppMenuItem> SubMenuItems => new()
     {
-        new AppMenuItem { Name = "智能体", Url = "/assistant/base/agents", Icon = "🤖" },
-        new AppMenuItem { Name = "模型", Url = "/assistant/base/llms", Icon = "🧠" },
-        new AppMenuItem { Name = "技能", Url = "/assistant/base/skills", Icon = "⚡" },
-        new AppMenuItem { Name = "MCP", Url = "/assistant/base/mcps", Icon = "🔌" }
+        new AppMenuItem { Name = "智能体", Url = "/assistant/agent", Icon = "🤖" },
+        new AppMenuItem { Name = "模型", Url = "/assistant/agent/llms", Icon = "🧠" },
+        new AppMenuItem { Name = "技能", Url = "/assistant/agent/skills", Icon = "⚡" },
+        new AppMenuItem { Name = "MCP", Url = "/assistant/agent/mcps", Icon = "🔌" }
     };
 
     private bool IsMenuActive(string url)
@@ -44,9 +44,9 @@
             return true;
         }
 
-        // 默认入口 /assistant/base 展示智能体页，同步高亮智能体菜单
-        return menuPath == "assistant/base/agents"
-            && currentPath.Equals("assistant/base", StringComparison.OrdinalIgnoreCase);
+        // 默认入口 /assistant/agent 展示智能体页，同步高亮智能体菜单
+        return menuPath == "assistant/agent/agents"
+            && currentPath.Equals("assistant/agent", StringComparison.OrdinalIgnoreCase);
     }
 }
 
