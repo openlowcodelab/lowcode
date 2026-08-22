@@ -5,7 +5,7 @@ namespace H.LowCode.MetaSchema.DesignEngine;
 public class ComponentPartsFragmentSchema : ComponentFragmentSchemaBase
 {
     /// <summary>
-    /// 默认组件类型名，如 "AntDesign.Input`1[System.String], AntDesign"
+    /// 默认组件类型名，如 "H.LowCode.Components.Defaults.HcInput, H.LowCode.Components.Defaults"
     /// </summary>
     [JsonPropertyName("dt")]
     public string? DefaultTypeName { get; set; }

@@ -279,7 +279,7 @@ PageDataSourceSchema ..> ComponentDataSourceSchema : "在组件中使用"
 - [ComponentDataSourceSchema.cs:1-22](file://src/LowCode/Common/H.LowCode.MetaSchema.RenderEngine/DataSourceSchemas/ComponentDataSourceSchema.cs#L1-L22)
 
 ### 动态渲染与组件加载机制
-- 动态组件基类：解析组件类型名，兼容旧版 AntDesign 类型到 Hc 组件映射；支持属性绑定、事件回调、RenderFragment 子内容。
+- 动态组件基类：解析组件类型名；支持属性绑定、事件回调、RenderFragment 子内容。
 - 渲染流程：从元数据中读取组件片段，递归构建组件树，注入数据源与事件处理器。
 - 扩展点：
   - 自定义组件类型映射（在基类中维护映射表）

@@ -9,45 +9,7 @@ namespace H.LowCode.ComponentBase;
 public abstract class LowCodeDynamicComponentBase : LowCodeComponentBase
 {
     /// <summary>
-    /// 旧版 AntDesign 组件类型名 -> 现行 Hc 组件类型名 映射。
-    /// 早期页面数据保存的是 AntDesign 原生类型（如 "AntDesign.Input`1[System.String], AntDesign"），
-    /// 项目已迁移到自研 Hc 组件且不再引用 AntDesign 程序集，故在类型解析时做兼容映射。
-    /// Key 为 AntDesign 短类名（去除泛型与程序集），Value 为 Hc 组件完整类型名。
-    /// </summary>
-    private static readonly Dictionary<string, string> _legacyAntDesignTypeMap = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ["Input"] = "H.LowCode.Components.Defaults.HcInput, H.LowCode.Components.Defaults",
-        ["InputNumber"] = "H.LowCode.Components.Defaults.HcInputNumber, H.LowCode.Components.Defaults",
-        ["TextArea"] = "H.LowCode.Components.Defaults.HcTextarea, H.LowCode.Components.Defaults",
-        ["Select"] = "H.LowCode.Components.Defaults.HcSelect, H.LowCode.Components.Defaults",
-        ["RadioGroup"] = "H.LowCode.Components.Defaults.HcRadio, H.LowCode.Components.Defaults",
-        ["Radio"] = "H.LowCode.Components.Defaults.HcRadioOption, H.LowCode.Components.Defaults",
-        ["CheckboxGroup"] = "H.LowCode.Components.Defaults.HcCheckbox, H.LowCode.Components.Defaults",
-        ["Checkbox"] = "H.LowCode.Components.Defaults.HcCheckboxOption, H.LowCode.Components.Defaults",
-        ["Switch"] = "H.LowCode.Components.Defaults.HcSwitch, H.LowCode.Components.Defaults",
-        ["DatePicker"] = "H.LowCode.Components.Defaults.HcDatePicker, H.LowCode.Components.Defaults",
-        ["TimePicker"] = "H.LowCode.Components.Defaults.HcTimePicker, H.LowCode.Components.Defaults",
-        ["AutoComplete"] = "H.LowCode.Components.Defaults.HcAutoComplete, H.LowCode.Components.Defaults",
-        ["Cascader"] = "H.LowCode.Components.Defaults.HcCascader, H.LowCode.Components.Defaults",
-        ["TreeSelect"] = "H.LowCode.Components.Defaults.HcTreeSelect, H.LowCode.Components.Defaults",
-        ["Tree"] = "H.LowCode.Components.Defaults.HcTree, H.LowCode.Components.Defaults",
-        ["Tabs"] = "H.LowCode.Components.Defaults.HcTabs, H.LowCode.Components.Defaults",
-        ["TabPane"] = "H.LowCode.Components.Defaults.HcPlaceholder, H.LowCode.Components.Defaults",
-        ["Card"] = "H.LowCode.Components.Defaults.HcCard, H.LowCode.Components.Defaults",
-        ["Flex"] = "H.LowCode.Components.Defaults.HcFlex, H.LowCode.Components.Defaults",
-        ["Row"] = "H.LowCode.Components.Defaults.HcRow, H.LowCode.Components.Defaults",
-        ["Col"] = "H.LowCode.Components.Defaults.HcCol, H.LowCode.Components.Defaults",
-        ["Layout"] = "H.LowCode.Components.Defaults.HcLayout, H.LowCode.Components.Defaults",
-        ["Sider"] = "H.LowCode.Components.Defaults.HcSider, H.LowCode.Components.Defaults",
-        ["Content"] = "H.LowCode.Components.Defaults.HcContent, H.LowCode.Components.Defaults",
-        ["Button"] = "H.LowCode.Components.Defaults.HcButton, H.LowCode.Components.Defaults",
-        ["Image"] = "H.LowCode.Components.Defaults.HcImage, H.LowCode.Components.Defaults",
-        ["List"] = "H.LowCode.Components.Defaults.HcList, H.LowCode.Components.Defaults",
-        ["Upload"] = "H.LowCode.Components.Defaults.HcUpload, H.LowCode.Components.Defaults",
-    };
-
-    /// <summary>
-    /// 解析组件类型名为 Type。优先直接解析；无法解析且为 AntDesign 旧类型时，回退到 Hc 组件映射。
+    /// 解析组件类型名为 Type。
     /// 解析失败返回 null（调用方应跳过该节点渲染，避免整页崩溃）。
     /// </summary>
     protected static Type ResolveComponentType(string typeName)
@@ -58,16 +20,6 @@ public abstract class LowCodeDynamicComponentBase : LowCodeComponentBase
         var type = Type.GetType(typeName, throwOnError: false);
         if (type != null)
             return type;
-
-        const string antDesignPrefix = "AntDesign.";
-        if (typeName.StartsWith(antDesignPrefix, StringComparison.OrdinalIgnoreCase))
-        {
-            var afterNs = typeName.Substring(antDesignPrefix.Length);
-            var cut = afterNs.IndexOfAny(new[] { '`', '[', ',', ' ' });
-            var shortName = cut >= 0 ? afterNs.Substring(0, cut) : afterNs;
-            if (_legacyAntDesignTypeMap.TryGetValue(shortName, out var mappedTypeName))
-                return Type.GetType(mappedTypeName, throwOnError: false);
-        }
 
         return null;
     }

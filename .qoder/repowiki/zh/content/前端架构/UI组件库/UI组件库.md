@@ -16,9 +16,9 @@
 - [HcLayout.razor](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcLayout.razor)
 - [HcRow.razor](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcRow.razor)
 - [HcCol.razor](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcCol.razor)
-- [card.json](file://src/LowCode/meta/parts/componentParts/antdesign/card.json)
-- [datepicker.json](file://src/LowCode/meta/parts/componentParts/antdesign/datepicker.json)
-- [tree.json](file://src/LowCode/meta/parts/componentParts/antdesign/tree.json)
+- [card.json](file://src/LowCode/meta/parts/componentParts/default/card.json)
+- [datepicker.json](file://src/LowCode/meta/parts/componentParts/default/datepicker.json)
+- [tree.json](file://src/LowCode/meta/parts/componentParts/default/tree.json)
 </cite>
 
 ## 目录
@@ -47,13 +47,13 @@
 - 组件库工程：H.LowCode.Components.Defaults（Razor 组件集合）
 - 公共导入：_Imports.razor 统一引入命名空间与常用类型
 - 组件清单：Components 目录下按功能分类存放各 Hc* 组件
-- 元数据定义：meta/parts/componentParts/antdesign/*.json 描述组件属性、事件与样式等元信息，供设计器渲染与配置
+- 元数据定义：meta/parts/componentParts/default/*.json 描述组件属性、事件与样式等元信息，供设计器渲染与配置
 
 ```mermaid
 graph TB
 A["H.LowCode.Components.Defaults<br/>组件库工程"] --> B["Components<br/>Hc* 组件"]
 A --> C["_Imports.razor<br/>统一导入"]
-D["meta/parts/componentParts/antdesign/*.json<br/>组件元数据"] --> E["设计器/渲染引擎<br/>解析属性/事件/样式"]
+D["meta/parts/componentParts/default/*.json<br/>组件元数据"] --> E["设计器/渲染引擎<br/>解析属性/事件/样式"]
 B --> E
 ```
 
@@ -122,9 +122,9 @@ Runtime-->>Dev : 页面交互反馈
 ```
 
 图表来源
-- [card.json:1-1](file://src/LowCode/meta/parts/componentParts/antdesign/card.json#L1-L1)
-- [datepicker.json:1-1](file://src/LowCode/meta/parts/componentParts/antdesign/datepicker.json#L1-L1)
-- [tree.json:1-1](file://src/LowCode/meta/parts/componentParts/antdesign/tree.json#L1-L1)
+- [card.json:1-1](file://src/LowCode/meta/parts/componentParts/default/card.json#L1-L1)
+- [datepicker.json:1-1](file://src/LowCode/meta/parts/componentParts/default/datepicker.json#L1-L1)
+- [tree.json:1-1](file://src/LowCode/meta/parts/componentParts/default/tree.json#L1-L1)
 
 ## 详细组件分析
 
@@ -274,7 +274,7 @@ Input-->>User : 刷新显示
 
 章节来源
 - [HcDatePicker.razor:1-200](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcDatePicker.razor#L1-L200)
-- [datepicker.json:1-1](file://src/LowCode/meta/parts/componentParts/antdesign/datepicker.json#L1-L1)
+- [datepicker.json:1-1](file://src/LowCode/meta/parts/componentParts/default/datepicker.json#L1-L1)
 
 ### 数据展示组件
 
@@ -311,7 +311,7 @@ Input-->>User : 刷新显示
 
 章节来源
 - [HcTree.razor:1-15](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcTree.razor#L1-L15)
-- [tree.json:1-1](file://src/LowCode/meta/parts/componentParts/antdesign/tree.json#L1-L1)
+- [tree.json:1-1](file://src/LowCode/meta/parts/componentParts/default/tree.json#L1-L1)
 
 ### 布局组件
 
@@ -415,14 +415,14 @@ AppLab 默认 UI 组件库以 Blazor 为基础，提供了覆盖基础、表单�
   - 优先使用样式类，其次通过 Style 覆盖
   - 保持与现有组件一致的类名风格
 - 元数据定义
-  - 在 meta/parts/componentParts/antdesign/*.json 中声明属性组、默认值、类型与说明
+  - 在 meta/parts/componentParts/default/*.json 中声明属性组、默认值、类型与说明
   - 确保 attrn 与组件 Parameter 名称一致，attrt 与 .NET 类型一致
 
 章节来源
 - [_Imports.razor:1-10](file://src/LowCode/Common/H.LowCode.Components.Defaults/_Imports.razor#L1-L10)
-- [card.json:1-1](file://src/LowCode/meta/parts/componentParts/antdesign/card.json#L1-L1)
-- [datepicker.json:1-1](file://src/LowCode/meta/parts/componentParts/antdesign/datepicker.json#L1-L1)
-- [tree.json:1-1](file://src/LowCode/meta/parts/componentParts/antdesign/tree.json#L1-L1)
+- [card.json:1-1](file://src/LowCode/meta/parts/componentParts/default/card.json#L1-L1)
+- [datepicker.json:1-1](file://src/LowCode/meta/parts/componentParts/default/datepicker.json#L1-L1)
+- [tree.json:1-1](file://src/LowCode/meta/parts/componentParts/default/tree.json#L1-L1)
 
 ### 响应式设计与可访问性建议
 - 响应式
