@@ -5,7 +5,9 @@ namespace H.LowCode.MetaSchema.DesignEngine;
 public class ComponentPartsFragmentSchema : ComponentFragmentSchemaBase
 {
     /// <summary>
-    /// 默认组件类型名，如 "H.LowCode.Components.Defaults.HcInput, H.LowCode.Components.Defaults"
+    /// 默认组件类型名。
+    /// 原生 html 元素用 "html:{tag}" 形式（如 "html:button"、"html:input"）；
+    /// .NET 组件为类型全名（如 "H.LowCode.Components.Defaults.HcSelect, H.LowCode.Components.Defaults"）
     /// </summary>
     [JsonPropertyName("dt")]
     public string? DefaultTypeName { get; set; }

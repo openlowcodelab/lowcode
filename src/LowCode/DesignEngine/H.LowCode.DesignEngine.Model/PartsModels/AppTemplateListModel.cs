@@ -19,5 +19,5 @@ public class AppTemplateListModel
     [JsonPropertyName("pub")]
     public int PublishStatus { get; set; }
 
-    public DateTime ModifiedTime { get; set; }
+    public DateTime? ModifiedTime { get; set; }
 }

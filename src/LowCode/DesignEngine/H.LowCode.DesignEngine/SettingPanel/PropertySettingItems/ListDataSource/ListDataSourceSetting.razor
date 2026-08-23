@@ -272,9 +272,12 @@
         {
             DataSource.DataSourceFragment = new ComponentPartsFragmentSchema
             {
-                TypeName = "H.LowCode.Components.Defaults.HcPlaceholder, H.LowCode.Components.Defaults",
-                DefaultTypeName = "H.LowCode.Components.Defaults.HcPlaceholder, H.LowCode.Components.Defaults",
-                Attributes = Array.Empty<ComponentAttributeFragmentSchema>(),
+                TypeName = "html:div",
+                DefaultTypeName = "html:div",
+                Attributes = new[]
+                {
+                    new ComponentAttributeFragmentSchema { AttributeName = "class", AttributeClrType = "System.String", AttributeValue = "hc-placeholder" }
+                },
                 ChildFragments = Array.Empty<ComponentPartsFragmentSchema>()
             };
             StateHasChanged();

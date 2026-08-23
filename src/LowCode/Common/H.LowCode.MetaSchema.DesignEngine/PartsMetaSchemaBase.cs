@@ -1,12 +1,18 @@
-﻿namespace H.LowCode.MetaSchema.DesignEngine;
+﻿using System.Text.Json.Serialization;
+
+namespace H.LowCode.MetaSchema.DesignEngine;
 
 public abstract class PartsMetaSchemaBase
 {
+    [JsonPropertyName("cu")]
     public string CreatedUser { get; set; }
 
+    [JsonPropertyName("ct")]
     public DateTime CreatedTime { get; set; }
 
-    public string ModifiedUser { get; set; }
+    [JsonPropertyName("mu")]
+    public string? ModifiedUser { get; set; }
 
-    public DateTime ModifiedTime { get; set; }
+    [JsonPropertyName("mt")]
+    public DateTime? ModifiedTime { get; set; }
 }

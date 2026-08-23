@@ -144,9 +144,14 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
         ComponentDataSourceSchema dataSource,
         ComponentFragmentSchema componentFragment,
         RenderTreeBuilder builder, int index,
-        object? dataContext = null)
+        object? dataContext = null,
+        InnerContainerCursor? sharedCursor = null)
     {
         ArgumentNullException.ThrowIfNull(componentFragment);
+
+        //TypeName 为空时，使用 DefaultTypeName（dt）
+        if (string.IsNullOrEmpty(componentFragment.TypeName))
+            componentFragment.TypeName = componentFragment.DefaultTypeName;
 
         if (string.IsNullOrEmpty(componentFragment.TypeName))
             throw new NullReferenceException($"componentId={componentId}, {nameof(componentFragment.TypeName)}");
@@ -162,6 +167,18 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
         if (IsConditionalComponent(componentFragment.TypeName) && component.Cases != null)
         {
             RenderConditionalComponent(componentId, component, dataSource, builder, index, dataContext);
+            return;
+        }
+
+        // 原生 html 元素（frag.t = "html:{tag}"）：直接渲染原生标签
+        if (NativeHtmlElement.IsNativeHtml(componentFragment.TypeName))
+        {
+            ComponentRegistry?.Register(component);
+
+            var nativeFormValueKey = GetFormValueKey(component, dataContext);
+            var cursor = sharedCursor ?? new InnerContainerCursor(component);
+            RenderNativeHtmlFragment(componentId, component, componentFragment, builder,
+                string.Empty, componentFragment, dataContext, nativeFormValueKey, cursor, null);
             return;
         }
 
@@ -186,7 +203,7 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
         if (isSupportDataSource)
         {
             //渲染数据源
-            RenderDataSource(componentId, component, dataSource, builder, index, dataContext);
+            RenderDataSource(componentId, component, dataSource, builder, index, dataContext, formValueKey);
         }
         else if (componentFragment.HasChildren)
         {
@@ -338,6 +355,431 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
 
         // 支持数据绑定表达式
         return ResolveAttributeValue(conditionAttr, dataContext);
+    }
+
+    #endregion
+
+    #region 原生 html 元素渲染
+
+    /// <summary>
+    /// 内部容器游标：按声明顺序消费组件的内部容器（IsInnerContainer），
+    /// 将拖入的子组件内联渲染到带 $(DraggableContainer) 标记的原生元素中
+    /// </summary>
+    private sealed class InnerContainerCursor
+    {
+        private readonly Queue<ComponentSchema> _containers;
+
+        public InnerContainerCursor(ComponentSchema? component)
+        {
+            _containers = new Queue<ComponentSchema>(
+                component?.Childrens?.Where(c => c is { IsInnerContainer: true })
+                ?? Enumerable.Empty<ComponentSchema>());
+        }
+
+        public ComponentSchema? TakeNext()
+            => _containers.Count > 0 ? _containers.Dequeue() : null;
+    }
+
+    /// <summary>
+    /// 渲染原生 html 元素 Fragment（frag.t = "html:{tag}"）。
+    /// 属性约定：attrn 为 html 属性名（小写）；"class" 多条自动合并；"content" 表示文本内容；
+    /// 嵌套子元素属性用 "childs.{i}..." 路径定位。
+    /// </summary>
+    private void RenderNativeHtmlFragment(string componentId,
+        ComponentSchema component,
+        ComponentFragmentSchema fragment,
+        RenderTreeBuilder builder,
+        string path, ComponentFragmentSchema rootFragment,
+        object? dataContext, string? formValueKey,
+        InnerContainerCursor? cursor,
+        (string? OptionValue, string? OptionLabel)? option)
+    {
+        var tagName = NativeHtmlElement.GetTagName(fragment.TypeName);
+        if (string.IsNullOrEmpty(tagName))
+            return;
+
+        builder.OpenElement(0, tagName);
+
+        var state = RenderNativeHtmlAttributes(fragment, rootFragment, path, builder, dataContext, option);
+
+        // 组件级事件（仅根元素）：事件名映射为元素事件（OnClick → onclick）
+        if (option == null && path.Length == 0)
+            RenderNativeHtmlComponentEvents(component, builder, dataContext);
+
+        // Fragment 级事件（列表模板内按钮等）
+        if (option == null)
+            RenderNativeHtmlFragmentEvents(fragment, builder, dataContext);
+
+        // 表单值双向绑定（根元素为表单控件时）
+        if (option == null && path.Length == 0 && !string.IsNullOrEmpty(formValueKey))
+            RenderNativeHtmlValueBinding(builder, tagName, state.InputType, formValueKey, state.StaticValue, state.IsChecked);
+
+        // 选项 input（radio/checkbox 组的选项）：按组值计算选中状态并绑定变更
+        if (option != null && tagName == "input"
+            && (state.InputType == "radio" || state.InputType == "checkbox")
+            && !string.IsNullOrEmpty(formValueKey))
+        {
+            RenderNativeHtmlOptionInputBinding(builder, state.InputType, state.OptionValue, formValueKey);
+        }
+
+        // 内容：$(DraggableContainer) 标记 → 内联渲染内部容器中的子组件；否则渲染文本内容
+        var content = state.ContentOverride ?? fragment.Content;
+        if (string.Equals(content, NativeHtmlElement.DraggableContainerToken, StringComparison.OrdinalIgnoreCase))
+        {
+            var inner = cursor?.TakeNext();
+            if (inner?.Childrens != null)
+            {
+                foreach (var child in inner.Childrens)
+                {
+                    RenderInlineComponent(componentId, child, builder, dataContext);
+                }
+            }
+        }
+        else if (string.IsNullOrWhiteSpace(content) == false)
+        {
+            var text = content;
+            if (option.HasValue)
+                text = NativeHtmlElement.SubstituteOptionToken(text, option.Value.OptionValue, option.Value.OptionLabel);
+            builder.AddContent(0, text);
+        }
+
+        // 递归渲染子元素
+        if (fragment.HasChildren)
+        {
+            for (var i = 0; i < fragment.ChildFragments.Length; i++)
+            {
+                RenderNativeHtmlChildFragment(componentId, component, fragment.ChildFragments[i],
+                    builder, NativeHtmlElement.ChildPath(path, i), rootFragment,
+                    dataContext, formValueKey, cursor, option);
+            }
+        }
+
+        builder.CloseElement();
+    }
+
+    /// <summary>
+    /// 渲染子 Fragment：原生 html 走元素渲染，.NET 类型走组件渲染
+    /// </summary>
+    private void RenderNativeHtmlChildFragment(string componentId,
+        ComponentSchema component,
+        ComponentFragmentSchema fragment,
+        RenderTreeBuilder builder,
+        string path, ComponentFragmentSchema rootFragment,
+        object? dataContext, string? formValueKey,
+        InnerContainerCursor? cursor,
+        (string? OptionValue, string? OptionLabel)? option)
+    {
+        if (NativeHtmlElement.IsNativeHtml(fragment.TypeName))
+        {
+            RenderNativeHtmlFragment(componentId, component, fragment, builder, path, rootFragment,
+                dataContext, formValueKey, cursor, option);
+            return;
+        }
+
+        RenderComponentRecursive(componentId, false, component, null, fragment, builder, 0, dataContext);
+    }
+
+    /// <summary>
+    /// 内联渲染组件（内部容器的子组件、容器组件自身不再产生包裹）
+    /// </summary>
+    private void RenderInlineComponent(string componentId, ComponentSchema component,
+        RenderTreeBuilder builder, object? dataContext)
+    {
+        if (component == null)
+            return;
+
+        if (component.IsContainer && component.Fragment == null)
+        {
+            if (component.Childrens != null)
+            {
+                foreach (var child in component.Childrens)
+                    RenderInlineComponent(componentId, child, builder, dataContext);
+            }
+            return;
+        }
+
+        if (component.Fragment != null)
+        {
+            RenderComponentRecursive(component.Id, component.IsSupportDataSource,
+                component, component.DataSource, component.Fragment, builder, 0, dataContext);
+        }
+    }
+
+    private sealed class NativeHtmlAttributeState
+    {
+        public string? InputType { get; set; }
+        public string? StaticValue { get; set; }
+        public bool IsChecked { get; set; }
+        public string? OptionValue { get; set; }
+        public string? ContentOverride { get; set; }
+    }
+
+    /// <summary>
+    /// 渲染原生 html 元素属性（支持表达式解析与选项占位符替换），返回属性状态
+    /// </summary>
+    private NativeHtmlAttributeState RenderNativeHtmlAttributes(
+        ComponentFragmentSchema fragment,
+        ComponentFragmentSchema rootFragment,
+        string path, RenderTreeBuilder builder,
+        object? dataContext, (string? OptionValue, string? OptionLabel)? option)
+    {
+        var state = new NativeHtmlAttributeState();
+        var classes = new List<string>();
+        var isRoot = ReferenceEquals(fragment, rootFragment);
+
+        void Apply(ComponentAttributeFragmentSchema attr, string attrName)
+        {
+            // 表达式解析（$(form.x)、$(item.x)、$query(x) 等）
+            var resolved = ResolveAttributeValue(attr, dataContext);
+            var value = resolved?.ToString();
+
+            if (option.HasValue)
+                value = NativeHtmlElement.SubstituteOptionToken(value, option.Value.OptionValue, option.Value.OptionLabel);
+
+            if (string.Equals(attrName, "class", StringComparison.OrdinalIgnoreCase))
+            {
+                if (!string.IsNullOrWhiteSpace(value))
+                    classes.Add(value);
+                return;
+            }
+
+            if (string.Equals(attrName, "content", StringComparison.OrdinalIgnoreCase))
+            {
+                state.ContentOverride = value;
+                return;
+            }
+
+            if (string.IsNullOrEmpty(attrName))
+                return;
+
+            var lowerName = attrName.ToLowerInvariant();
+
+            // 记录 input 类型与静态值/选中态（供表单绑定使用）
+            if (lowerName == "type" && string.Equals(GetTagNameOf(fragment), "input", StringComparison.Ordinal))
+                state.InputType = value?.ToLowerInvariant();
+            if (lowerName == "value")
+            {
+                state.StaticValue = value;
+                state.OptionValue = value;
+            }
+            if (lowerName == "checked" && bool.TryParse(value, out var checkedValue))
+                state.IsChecked = checkedValue;
+
+            // maxlength/rows 为 0 表示不限制，跳过渲染
+            if ((lowerName == "maxlength" || lowerName == "rows") && value == "0")
+                return;
+
+            // 布尔属性：true 渲染、false 省略
+            if (string.Equals(attr.AttributeClrType, "System.Boolean", StringComparison.Ordinal))
+            {
+                if (bool.TryParse(value, out var boolValue) && boolValue)
+                    builder.AddAttribute(0, lowerName, true);
+                return;
+            }
+
+            if (value == null)
+                return;
+
+            builder.AddAttribute(0, lowerName, value);
+        }
+
+        foreach (var attr in fragment.Attributes)
+        {
+            if (string.IsNullOrEmpty(attr?.AttributeName))
+                continue;
+
+            var (attrPath, attrName) = NativeHtmlElement.ParseAttributePath(attr.AttributeName);
+
+            if (isRoot && attrPath.Length > 0)
+                continue;
+            if (!isRoot && attrPath.Length > 0 && attrPath != path)
+                continue;
+
+            Apply(attr, attrName);
+        }
+
+        if (!isRoot)
+        {
+            foreach (var attr in rootFragment.Attributes)
+            {
+                if (string.IsNullOrEmpty(attr?.AttributeName))
+                    continue;
+
+                var (attrPath, attrName) = NativeHtmlElement.ParseAttributePath(attr.AttributeName);
+                if (attrPath != path)
+                    continue;
+
+                Apply(attr, attrName);
+            }
+        }
+
+        if (classes.Count > 0)
+            builder.AddAttribute(0, "class", string.Join(" ", classes));
+
+        return state;
+    }
+
+    private static string? GetTagNameOf(ComponentFragmentSchema fragment)
+        => NativeHtmlElement.GetTagName(fragment.TypeName);
+
+    /// <summary>
+    /// 组件级事件绑定到根元素（事件名转小写：OnClick → onclick）
+    /// </summary>
+    private void RenderNativeHtmlComponentEvents(ComponentSchema component,
+        RenderTreeBuilder builder, object? dataContext)
+    {
+        if (component.Events == null || component.Events.Count == 0)
+            return;
+
+        var eventGroups = component.Events
+            .Where(e => !string.IsNullOrEmpty(e.EventName))
+            .GroupBy(e => e.EventName);
+
+        foreach (var eventGroup in eventGroups)
+        {
+            var elementEventName = NativeHtmlElement.ToElementEventName(eventGroup.Key);
+            if (string.IsNullOrEmpty(elementEventName))
+                continue;
+
+            var events = eventGroup.ToList();
+            builder.AddAttribute(0, elementEventName,
+                EventCallback.Factory.Create(this, () => HandleEventChainAsync(component, events, dataContext)));
+        }
+    }
+
+    /// <summary>
+    /// Fragment 级事件绑定（列表模板内的按钮等，仅 Data 类动作）
+    /// </summary>
+    private void RenderNativeHtmlFragmentEvents(ComponentFragmentSchema fragment,
+        RenderTreeBuilder builder, object? dataContext)
+    {
+        if (fragment.Events == null || fragment.Events.Count == 0)
+            return;
+
+        foreach (var ev in fragment.Events)
+        {
+            if (ev.EventHandlerType != EventTargetTypeEnum.Data)
+                continue;
+            if (ev.EventName != "OnClick")
+                continue;
+
+            var listId = CurrentListId;
+            var itemIndex = 0;
+            if (dataContext is ListItemContext ctx)
+            {
+                listId = ctx.ListId;
+                itemIndex = ctx.Index;
+            }
+
+            builder.AddAttribute(0, "onclick",
+                CreateButtonClickHandler(ev.EventDataActionType, listId, itemIndex));
+        }
+    }
+
+    /// <summary>
+    /// 根元素表单控件值双向绑定：value/checked 来自 FormState（用户已输入值优先），
+    /// oninput/onchange 回写 FormState（驱动显示条件联动与表单提交收集）
+    /// </summary>
+    private void RenderNativeHtmlValueBinding(RenderTreeBuilder builder,
+        string tagName, string? inputType, string formValueKey,
+        string? staticValue, bool staticChecked)
+    {
+        if (FormState == null)
+            return;
+
+        // input[checkbox]/input[radio]：布尔/单值选中绑定
+        if (tagName == "input" && (inputType == "checkbox" || inputType == "radio"))
+        {
+            var current = FormState.HasValue(formValueKey)
+                ? FormState.GetValue(formValueKey)?.ToString()
+                : (staticChecked ? "true" : "false");
+            if (!FormState.HasValue(formValueKey))
+                FormState.SetValueSilently(formValueKey, current ?? "false");
+
+            var isChecked = string.Equals(current, "true", StringComparison.OrdinalIgnoreCase);
+            if (isChecked)
+                builder.AddAttribute(0, "checked", true);
+
+            builder.AddAttribute(0, "onchange",
+                EventCallback.Factory.Create<ChangeEventArgs>(this, e =>
+                {
+                    var value = e.Value?.ToString() ?? string.Empty;
+                    var newValue = value.Contains("true", StringComparison.OrdinalIgnoreCase) || value == "1"
+                        ? "true" : "false";
+                    FormState.SetValue(formValueKey, newValue);
+                }));
+            return;
+        }
+
+        if (!NativeHtmlElement.IsFormControl(tagName, inputType))
+            return;
+
+        // 文本类控件：value 绑定
+        var currentValue = FormState.HasValue(formValueKey)
+            ? FormState.GetValue(formValueKey)?.ToString()
+            : staticValue;
+        if (!FormState.HasValue(formValueKey) && currentValue != null)
+            FormState.SetValueSilently(formValueKey, currentValue);
+
+        builder.AddAttribute(0, "value", currentValue ?? string.Empty);
+
+        // 连续输入类用 oninput，提交类（date/time/number 等）用 onchange
+        var eventName = inputType is null or "text" or "search" or "password" or "email" or "tel" or "url"
+            || tagName == "textarea"
+            ? "oninput" : "onchange";
+
+        builder.AddAttribute(0, eventName,
+            EventCallback.Factory.Create<ChangeEventArgs>(this, e =>
+            {
+                FormState.SetValue(formValueKey, e.Value?.ToString() ?? string.Empty);
+            }));
+    }
+
+    /// <summary>
+    /// 选项 input（radio/checkbox 组）绑定：按组当前值计算选中状态，变更时回写组值
+    /// </summary>
+    private void RenderNativeHtmlOptionInputBinding(RenderTreeBuilder builder,
+        string inputType, string? optionValue, string formValueKey)
+    {
+        if (FormState == null || string.IsNullOrEmpty(optionValue))
+            return;
+
+        var groupValue = FormState.HasValue(formValueKey)
+            ? FormState.GetValue(formValueKey)?.ToString()
+            : null;
+
+        bool isChecked;
+        if (inputType == "radio")
+            isChecked = string.Equals(groupValue, optionValue, StringComparison.Ordinal);
+        else
+            isChecked = (groupValue ?? string.Empty)
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Contains(optionValue);
+
+        if (isChecked)
+            builder.AddAttribute(0, "checked", true);
+
+        builder.AddAttribute(0, "onchange",
+            EventCallback.Factory.Create<ChangeEventArgs>(this, e =>
+            {
+                if (inputType == "radio")
+                {
+                    FormState.SetValue(formValueKey, optionValue);
+                    return;
+                }
+
+                // checkbox 组：值以英文逗号分隔
+                var current = FormState.HasValue(formValueKey)
+                    ? FormState.GetValue(formValueKey)?.ToString()
+                    : string.Empty;
+                var selected = current?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    .ToList() ?? new List<string>();
+                if (selected.Contains(optionValue))
+                    selected.Remove(optionValue);
+                else
+                    selected.Add(optionValue);
+                FormState.SetValue(formValueKey, string.Join(",", selected));
+            }));
     }
 
     #endregion
@@ -965,7 +1407,7 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
         ComponentSchema component,
         ComponentDataSourceSchema dataSource,
         RenderTreeBuilder builder, int index,
-        object? dataContext)
+        object? dataContext, string? formValueKey)
     {
         if (dataSource == null)
             return;
@@ -975,10 +1417,10 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
             switch (dataSource.DataSourceType)
             {
                 case ComponentDataSourceTypeEnum.Fiexd:
-                    RenderOptionDataSource(componentId, dataSource, builder, index);
+                    RenderOptionDataSource(componentId, dataSource, builder, index, dataContext, formValueKey);
                     break;
                 case ComponentDataSourceTypeEnum.Expression:
-                    RenderDynamicOptionDataSource(componentId, dataSource, builder, index, dataContext);
+                    RenderDynamicOptionDataSource(componentId, dataSource, builder, index, dataContext, formValueKey);
                     break;
                 case ComponentDataSourceTypeEnum.SQL:
                     break;
@@ -987,9 +1429,9 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
                 default:
                     // 未显式指定类型时，按已配置的内容渲染
                     if (!string.IsNullOrEmpty(dataSource.DynamicOptionExpr))
-                        RenderDynamicOptionDataSource(componentId, dataSource, builder, index, dataContext);
+                        RenderDynamicOptionDataSource(componentId, dataSource, builder, index, dataContext, formValueKey);
                     else if (dataSource.FiexdOptionDataSource != null && dataSource.FiexdOptionDataSource.Count > 0)
-                        RenderOptionDataSource(componentId, dataSource, builder, index);
+                        RenderOptionDataSource(componentId, dataSource, builder, index, dataContext, formValueKey);
                     break;
             }
         }
@@ -1005,14 +1447,16 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
 
     private void RenderOptionDataSource(string componentId,
         ComponentDataSourceSchema dataSource,
-        RenderTreeBuilder builder, int index)
+        RenderTreeBuilder builder, int index,
+        object? dataContext, string? formValueKey)
     {
         if (dataSource.FiexdOptionDataSource == null
             || dataSource.FiexdOptionDataSource.Count == 0)
             return;
 
         RenderOptionItems(componentId, dataSource, builder, index,
-            dataSource.FiexdOptionDataSource.Select(o => (o.Value, o.Label)).ToList());
+            dataSource.FiexdOptionDataSource.Select(o => (o.Value, o.Label)).ToList(),
+            dataContext, formValueKey);
     }
 
     /// <summary>
@@ -1021,7 +1465,7 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
     private void RenderDynamicOptionDataSource(string componentId,
         ComponentDataSourceSchema dataSource,
         RenderTreeBuilder builder, int index,
-        object? dataContext)
+        object? dataContext, string? formValueKey)
     {
         if (string.IsNullOrEmpty(dataSource.DynamicOptionExpr))
             return;
@@ -1036,7 +1480,7 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
             .Select(line => ((string?)line, (string?)line))
             .ToList();
 
-        RenderOptionItems(componentId, dataSource, builder, index, options);
+        RenderOptionItems(componentId, dataSource, builder, index, options, dataContext, formValueKey);
     }
 
     /// <summary>
@@ -1045,7 +1489,8 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
     private void RenderOptionItems(string componentId,
         ComponentDataSourceSchema dataSource,
         RenderTreeBuilder builder, int index,
-        IList<(string? Value, string? Label)> options)
+        IList<(string? Value, string? Label)> options,
+        object? dataContext, string? formValueKey)
     {
         if (options.Count == 0)
             return;
@@ -1053,6 +1498,23 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
         // 无 DataSourceFragment（Hc 风格选项组件）时不渲染选项，避免空引用
         if (dataSource.DataSourceFragment == null)
             return;
+
+        // 原生 html 选项 Fragment（如 label > input[radio] + span）：按选项逐个渲染，
+        // 替换 $(value)/$(label) 占位符，radio/checkbox 选项绑定组值
+        if (NativeHtmlElement.IsNativeHtml(dataSource.DataSourceFragment.TypeName))
+        {
+            builder.AddAttribute(index++, "ChildContent", (RenderFragment)(childBuilder =>
+            {
+                foreach (var option in options)
+                {
+                    RenderNativeHtmlFragment(componentId, null, dataSource.DataSourceFragment,
+                        childBuilder, string.Empty, dataSource.DataSourceFragment,
+                        dataContext, formValueKey, null,
+                        (option.Value?.ToString(), option.Label));
+                }
+            }));
+            return;
+        }
 
         builder.AddAttribute(index++, "ChildContent", (RenderFragment)(childBuilder =>
         {
@@ -1094,10 +1556,12 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
 
         builder.AddAttribute(index++, "ChildContent", (RenderFragment)(childBuilder =>
         {
+            // 同一组件的多个子元素共享内部容器游标（按声明顺序逐个消费）
+            var cursor = new InnerContainerCursor(component);
             foreach (var childFragment in componentFragment.ChildFragments)
             {
                 RenderComponentRecursive(componentId, false,
-                    component, null, childFragment, childBuilder, index);
+                    component, null, childFragment, childBuilder, index, null, cursor);
             }
         }));
     }
@@ -1188,6 +1652,23 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
         IList<object> listData,
         RenderTreeBuilder builder, int index)
     {
+        // 原生 html 列表项模板：逐行渲染原生元素树（支持 $(item.x) 表达式）
+        if (NativeHtmlElement.IsNativeHtml(fragment.TypeName))
+        {
+            builder.AddAttribute(index++, "ChildContent", (RenderFragment<object>)((item) => (childBuilder) =>
+            {
+                var itemContext = new ListItemContext
+                {
+                    Item = item,
+                    Index = listData.IndexOf(item),
+                    ListId = componentId
+                };
+                RenderNativeHtmlFragment(componentId, null, fragment, childBuilder,
+                    string.Empty, fragment, itemContext, null, null, null);
+            }));
+            return;
+        }
+
         builder.AddAttribute(index++, "ChildContent", (RenderFragment<object>)((item) => (childBuilder) =>
         {
             if (string.IsNullOrEmpty(fragment.TypeName))
@@ -1259,6 +1740,14 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
     {
         if (fragment == null || string.IsNullOrEmpty(fragment.TypeName))
             return;
+
+        // 原生 html 元素：直接渲染原生标签（含 Fragment 级事件与 $(item.x) 表达式）
+        if (NativeHtmlElement.IsNativeHtml(fragment.TypeName))
+        {
+            RenderNativeHtmlFragment(componentId, null, fragment, builder,
+                string.Empty, fragment, dataContext, null, null, null);
+            return;
+        }
 
         Type componentType = fragment.TypeName.ResolveType();
         if (componentType == null)

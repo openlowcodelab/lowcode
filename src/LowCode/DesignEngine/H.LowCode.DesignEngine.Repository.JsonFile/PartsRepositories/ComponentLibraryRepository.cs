@@ -33,9 +33,15 @@ public class ComponentLibraryRepository : PartsFileRepositoryBase, IComponentLib
 
             var librarySchemaJson = ReadAllText(fileName) ?? throw new FileNotFoundException(fileName);
             var librarySchema = librarySchemaJson.FromJson<ComponentLibrarySchema>();
+            if (librarySchema == null)
+                continue;
+
             list.Add(librarySchema);
         }
-        return await Task.FromResult(list);
+
+        var librarySchemas = list.OrderBy(t => t.CreatedTime).ToList();
+
+        return librarySchemas;
     }
 
     public async Task<ComponentLibrarySchema> GetByIdAsync(string libraryId)

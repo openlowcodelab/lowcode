@@ -24,7 +24,7 @@
                                 <span class="tag tag-blue">@tpl.PageCount 个页面</span>
                             </div>
                             <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span style="font-size: 12px; color: #86909C;">@tpl.ModifiedTime.ToString("MM-dd HH:mm")</span>
+                                <span style="font-size: 12px; color: #86909C;">@tpl.ModifiedTime?.ToString("MM-dd HH:mm")</span>
                                 <div style="display: flex; gap: 8px;">
                                     <button class="btn btn-link btn-sm" @onclick="@(() => ShowUseModal(tpl))">使用</button>
                                     <button class="btn btn-link btn-sm btn-danger" @onclick="@(() => DeleteTemplate(tpl.TemplateId))">删除</button>

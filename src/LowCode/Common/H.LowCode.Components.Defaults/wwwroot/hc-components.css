@@ -69,8 +69,6 @@
 .hc-input:focus { border-color: var(--hc-primary); box-shadow: 0 0 0 2px rgba(22,93,255,0.12); }
 .hc-input:hover:not(:disabled) { border-color: var(--hc-primary); }
 .hc-input-disabled { background: var(--hc-bg-disabled); cursor: not-allowed; }
-.hc-input-clear { position: absolute; right: 8px; cursor: pointer; color: var(--hc-text-secondary); font-size: 14px; }
-.hc-input-clear:hover { color: var(--hc-text); }
 
 /* ========================================
  * Textarea
@@ -94,21 +92,6 @@
 .hc-textarea:focus { border-color: var(--hc-primary); box-shadow: 0 0 0 2px rgba(22,93,255,0.12); }
 .hc-textarea-disabled { background: var(--hc-bg-disabled); cursor: not-allowed; }
 .hc-textarea-count { display: block; text-align: right; font-size: 12px; color: var(--hc-text-secondary); margin-top: 2px; }
-
-/* ========================================
- * InputNumber
- * ======================================== */
-.hc-inputnumber-wrapper { display: inline-flex; align-items: center; border: 1px solid var(--hc-border); border-radius: var(--hc-border-radius); overflow: hidden; }
-.hc-inputnumber-btn {
-    width: 32px; height: 32px;
-    display: flex; align-items: center; justify-content: center;
-    border: none; background: var(--hc-bg-hover); cursor: pointer;
-    font-size: 16px; color: var(--hc-text-secondary);
-    transition: all 0.2s;
-}
-.hc-inputnumber-btn:hover:not(:disabled) { background: var(--hc-border); color: var(--hc-text); }
-.hc-inputnumber-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.hc-inputnumber-input { width: 60px; text-align: center; border: none; border-left: 1px solid var(--hc-border); border-right: 1px solid var(--hc-border); outline: none; padding: 6px 4px; font-size: 14px; }
 
 /* ========================================
  * Select
@@ -152,31 +135,26 @@
 .hc-checkbox-empty, .hc-radio-empty { color: var(--hc-text-placeholder); font-size: 14px; }
 
 /* ========================================
- * Switch
+ * Switch（原生 checkbox 实现，appearance:none）
  * ======================================== */
 .hc-switch {
-    position: relative; display: inline-flex; align-items: center;
-    width: 44px; height: 22px;
-    padding: 0; border: none; border-radius: 11px;
+    appearance: none; -webkit-appearance: none;
+    position: relative; display: inline-block;
+    width: 44px; height: 22px; margin: 0;
+    border: none; border-radius: 11px;
     background: #C9CDD4; cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.2s; vertical-align: middle;
 }
-.hc-switch-checked { background: var(--hc-primary); }
-.hc-switch-disabled { opacity: 0.5; cursor: not-allowed; }
-.hc-switch-small { width: 28px; height: 16px; border-radius: 8px; }
-.hc-switch-handle {
-    position: absolute; top: 2px; left: 2px;
+.hc-switch:checked { background: var(--hc-primary); }
+.hc-switch:disabled { opacity: 0.5; cursor: not-allowed; }
+.hc-switch::before {
+    content: ''; position: absolute; top: 2px; left: 2px;
     width: 18px; height: 18px;
     background: #fff; border-radius: 50%;
     transition: transform 0.2s;
-    display: flex; align-items: center; justify-content: center;
 }
-.hc-switch-checked .hc-switch-handle { transform: translateX(22px); }
-.hc-switch-small .hc-switch-handle { width: 12px; height: 12px; }
-.hc-switch-checked.hc-switch-small .hc-switch-handle { transform: translateX(12px); }
-.hc-switch-inner { font-size: 12px; color: #fff; margin-left: 24px; }
-.hc-switch-checked .hc-switch-inner { margin-left: 0; margin-right: 24px; }
-.hc-switch-loading { width: 10px; height: 10px; border: 2px solid var(--hc-primary); border-top-color: transparent; border-radius: 50%; animation: hc-spin 0.6s linear infinite; }
+.hc-switch:checked::before { transform: translateX(22px); }
+.hc-switch:focus-visible { outline: 2px solid rgba(22,93,255,0.35); outline-offset: 1px; }
 
 /* ========================================
  * DatePicker / TimePicker
@@ -335,3 +313,10 @@
 }
 .hc-radio-option input, .hc-checkbox-option input { cursor: pointer; }
 .hc-radio-option-disabled, .hc-checkbox-option-disabled { color: var(--hc-text-placeholder); cursor: not-allowed; }
+
+/* ========================================
+ * 原生 html 物料补充样式
+ * ======================================== */
+.hc-tab-pane { min-height: 80px; }
+input.hc-input[type="number"], input.hc-input[type="date"], input.hc-input[type="time"], input.hc-input[type="month"], input.hc-input[type="week"] { width: 100%; }
+img.hc-image { max-width: 100%; }

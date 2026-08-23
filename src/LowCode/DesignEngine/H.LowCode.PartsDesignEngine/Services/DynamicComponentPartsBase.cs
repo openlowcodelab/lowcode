@@ -34,6 +34,14 @@ public abstract class DynamicComponentPartsBase : LowCodeDynamicComponentBase
         if (string.IsNullOrEmpty(componentFragment.TypeName))
             throw new NullReferenceException($"componentId={componentId}, {nameof(componentFragment.TypeName)}");
 
+        // 原生 html 元素（frag.dt = "html:{tag}"）：直接渲染原生标签
+        if (NativeHtmlElement.IsNativeHtml(componentFragment.TypeName))
+        {
+            RenderNativeHtmlFragment(componentId, component, componentFragment, builder,
+                string.Empty, componentFragment);
+            return;
+        }
+
         Type componentType = ResolveComponentType(componentFragment.TypeName);
         if (componentType == null)
             return; // 无法解析的类型跳过渲染，避免整页崩溃
@@ -60,6 +68,178 @@ public abstract class DynamicComponentPartsBase : LowCodeDynamicComponentBase
 
         builder.CloseComponent();
     }
+
+    #region 渲染原生 html 元素
+    /// <summary>
+    /// 渲染原生 html 元素 Fragment（frag.dt = "html:{tag}"）。
+    /// 属性约定：attrn 为 html 属性名（小写）；"class" 多条自动合并；"content" 表示文本内容；
+    /// 嵌套子元素属性用 "childs.{i}..." 路径定位。
+    /// </summary>
+    private void RenderNativeHtmlFragment(string componentId,
+        ComponentPartsSchema component,
+        ComponentPartsFragmentSchema fragment,
+        RenderTreeBuilder builder,
+        string path, ComponentPartsFragmentSchema rootFragment,
+        (string? OptionValue, string? OptionLabel)? option = null)
+    {
+        var tagName = NativeHtmlElement.GetTagName(fragment.TypeName);
+        if (string.IsNullOrEmpty(tagName))
+            return;
+
+        builder.OpenElement(0, tagName);
+
+        var contentOverride = RenderNativeHtmlAttributes(fragment, rootFragment,
+            path, builder, option);
+
+        // 内容：$(DraggableContainer) 标记 → 注入可拖拽子容器；否则渲染文本内容
+        var content = contentOverride ?? fragment.Content;
+        if (string.Equals(content, NativeHtmlElement.DraggableContainerToken, StringComparison.OrdinalIgnoreCase))
+        {
+            var containerKey = $"container-{component.Id}-{(string.IsNullOrEmpty(path) ? "root" : path)}";
+            var (containerComponent, needAdd) = RenderContainerComponent(component, containerKey);
+            if (needAdd)
+            {
+                builder.OpenComponent<DraggableContainer>(0);
+                builder.AddAttribute(1, "ContainerComponent", containerComponent);
+                builder.CloseComponent();
+            }
+        }
+        else if (string.IsNullOrWhiteSpace(content) == false)
+        {
+            var text = content;
+            if (option.HasValue)
+                text = NativeHtmlElement.SubstituteOptionToken(text, option.Value.OptionValue, option.Value.OptionLabel);
+            builder.AddContent(0, text);
+        }
+
+        // 递归渲染子元素
+        if (fragment.HasChildFragment)
+        {
+            for (var i = 0; i < fragment.ChildFragments.Length; i++)
+            {
+                RenderNativeHtmlChildFragment(componentId, component, fragment.ChildFragments[i],
+                    builder, NativeHtmlElement.ChildPath(path, i), rootFragment, option);
+            }
+        }
+
+        builder.CloseElement();
+    }
+
+    /// <summary>
+    /// 渲染子 Fragment：原生 html 走元素渲染，.NET 类型走组件渲染
+    /// </summary>
+    private void RenderNativeHtmlChildFragment(string componentId,
+        ComponentPartsSchema component,
+        ComponentPartsFragmentSchema fragment,
+        RenderTreeBuilder builder,
+        string path, ComponentPartsFragmentSchema rootFragment,
+        (string? OptionValue, string? OptionLabel)? option = null)
+    {
+        if (NativeHtmlElement.IsNativeHtml(fragment.TypeName))
+        {
+            RenderNativeHtmlFragment(componentId, component, fragment, builder, path, rootFragment, option);
+            return;
+        }
+
+        RenderComponentRecursive(componentId, false, component, null, fragment, builder, 0);
+    }
+
+    /// <summary>
+    /// 渲染原生 html 元素属性，返回 content 覆盖值（无则为 null）
+    /// </summary>
+    private string? RenderNativeHtmlAttributes(
+        ComponentPartsFragmentSchema fragment,
+        ComponentPartsFragmentSchema rootFragment,
+        string path, RenderTreeBuilder builder,
+        (string? OptionValue, string? OptionLabel)? option)
+    {
+        string? contentOverride = null;
+        var classes = new List<string>();
+        var isRoot = ReferenceEquals(fragment, rootFragment);
+
+        foreach (var attr in fragment.Attributes)
+        {
+            if (string.IsNullOrEmpty(attr?.AttributeName))
+                continue;
+
+            var (attrPath, attrName) = NativeHtmlElement.ParseAttributePath(attr.AttributeName);
+
+            if (isRoot && attrPath.Length > 0)
+                continue;
+            if (!isRoot && attrPath.Length > 0 && attrPath != path)
+                continue;
+
+            ApplyNativeHtmlAttribute(attr, attrName, builder,
+                classes, ref contentOverride, option);
+        }
+
+        if (!isRoot)
+        {
+            foreach (var attr in rootFragment.Attributes)
+            {
+                if (string.IsNullOrEmpty(attr?.AttributeName))
+                    continue;
+
+                var (attrPath, attrName) = NativeHtmlElement.ParseAttributePath(attr.AttributeName);
+                if (attrPath != path)
+                    continue;
+
+                ApplyNativeHtmlAttribute(attr, attrName, builder,
+                    classes, ref contentOverride, option);
+            }
+        }
+
+        if (classes.Count > 0)
+            builder.AddAttribute(0, "class", string.Join(" ", classes));
+
+        return contentOverride;
+    }
+
+    private void ApplyNativeHtmlAttribute(
+        ComponentAttributeFragmentSchema attr, string attrName,
+        RenderTreeBuilder builder, List<string> classes,
+        ref string? contentOverride,
+        (string? OptionValue, string? OptionLabel)? option)
+    {
+        var value = attr.AttributeValue?.ToString();
+
+        if (option.HasValue)
+            value = NativeHtmlElement.SubstituteOptionToken(value, option.Value.OptionValue, option.Value.OptionLabel);
+
+        if (string.Equals(attrName, "class", StringComparison.OrdinalIgnoreCase))
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+                classes.Add(value);
+            return;
+        }
+
+        if (string.Equals(attrName, "content", StringComparison.OrdinalIgnoreCase))
+        {
+            contentOverride = value;
+            return;
+        }
+
+        if (string.IsNullOrEmpty(attrName))
+            return;
+
+        var lowerName = attrName.ToLowerInvariant();
+        // maxlength/rows 为 0 表示不限制，跳过渲染
+        if ((lowerName == "maxlength" || lowerName == "rows") && value == "0")
+            return;
+
+        if (string.Equals(attr.AttributeClrType, "System.Boolean", StringComparison.Ordinal))
+        {
+            if (bool.TryParse(value, out var boolValue) && boolValue)
+                builder.AddAttribute(0, lowerName, true);
+            return;
+        }
+
+        if (value == null)
+            return;
+
+        builder.AddAttribute(0, lowerName, value);
+    }
+    #endregion
 
     #region 渲染数据源
     private void RenderDataSource(string componentId,
@@ -112,6 +292,21 @@ public abstract class DynamicComponentPartsBase : LowCodeDynamicComponentBase
         // 无 DataSourceFragment（Hc 风格选项组件）时不渲染选项，避免空引用
         if (dataSource.DataSourceFragment == null)
             return;
+
+        // 原生 html 选项 Fragment（如 label > input[radio] + span）：按选项逐个渲染并替换 $(value)/$(label) 占位符
+        if (NativeHtmlElement.IsNativeHtml(dataSource.DataSourceFragment.TypeName))
+        {
+            builder.AddAttribute(index++, "ChildContent", (RenderFragment)(childBuilder =>
+            {
+                foreach (var option in dataSource.FiexdOptionDataSource)
+                {
+                    RenderNativeHtmlFragment(componentId, null, dataSource.DataSourceFragment,
+                        childBuilder, string.Empty, dataSource.DataSourceFragment,
+                        (option.Value?.ToString(), option.Label));
+                }
+            }));
+            return;
+        }
 
         builder.AddAttribute(index++, "ChildContent", (RenderFragment)(childBuilder =>
         {
