@@ -398,6 +398,13 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
         if (string.IsNullOrEmpty(tagName))
             return;
 
+        // 资源挂载片段（声明了 js/css 资源或初始化函数）：交由资源挂载点加载（编辑器等纯物料组件）
+        if (option == null && HasResourceMount(fragment))
+        {
+            RenderNativeResourceMount(componentId, fragment, builder, dataContext);
+            return;
+        }
+
         builder.OpenElement(0, tagName);
 
         var state = RenderNativeHtmlAttributes(fragment, rootFragment, path, builder, dataContext, option);
@@ -455,6 +462,53 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
         }
 
         builder.CloseElement();
+    }
+
+    /// <summary>
+    /// 判断片段是否声明了资源挂载（js/css 资源清单或初始化函数）
+    /// </summary>
+    private static bool HasResourceMount(ComponentFragmentSchema fragment)
+        => (fragment.Resources != null && fragment.Resources.Length > 0)
+           || !string.IsNullOrWhiteSpace(fragment.InitFunction);
+
+    /// <summary>
+    /// 渲染资源挂载点：提取片段的样式属性与组件选项，交由 NativeResourceMount 加载资源并初始化
+    /// </summary>
+    private void RenderNativeResourceMount(string componentId,
+        ComponentFragmentSchema fragment,
+        RenderTreeBuilder builder, object? dataContext)
+    {
+        string? classValue = null;
+        string? styleValue = null;
+        var options = new Dictionary<string, object?>();
+
+        foreach (var attr in fragment.Attributes)
+        {
+            if (string.IsNullOrEmpty(attr?.AttributeName))
+                continue;
+            // 嵌套路径属性不作为挂载选项
+            if (attr.AttributeName.Contains('.'))
+                continue;
+
+            var resolved = ResolveAttributeValue(attr, dataContext)?.ToString();
+            var name = attr.AttributeName.ToLowerInvariant();
+
+            if (name == "class")
+                classValue = string.IsNullOrEmpty(classValue) ? resolved : $"{classValue} {resolved}";
+            else if (name == "style")
+                styleValue = resolved;
+            else if (name != "id")
+                options[attr.AttributeName] = resolved;
+        }
+
+        builder.OpenComponent<NativeResourceMount>(0);
+        builder.AddAttribute(1, "MountId", $"res-{componentId}");
+        builder.AddAttribute(2, "Class", classValue);
+        builder.AddAttribute(3, "Style", styleValue);
+        builder.AddAttribute(4, "Resources", fragment.Resources);
+        builder.AddAttribute(5, "InitFunction", fragment.InitFunction);
+        builder.AddAttribute(6, "Options", options);
+        builder.CloseComponent();
     }
 
     /// <summary>
@@ -535,6 +589,14 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
 
             if (option.HasValue)
                 value = NativeHtmlElement.SubstituteOptionToken(value, option.Value.OptionValue, option.Value.OptionLabel);
+
+            // 类开关（class:片段 + 布尔）：为 true 时合并 class 片段
+            if (NativeHtmlElement.IsClassToggle(attrName))
+            {
+                if (bool.TryParse(value, out var toggleOn) && toggleOn)
+                    classes.Add(NativeHtmlElement.GetClassToggleFragment(attrName));
+                return;
+            }
 
             if (string.Equals(attrName, "class", StringComparison.OrdinalIgnoreCase))
             {

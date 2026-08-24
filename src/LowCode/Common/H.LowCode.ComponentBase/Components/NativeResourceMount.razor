@@ -1,0 +1,98 @@
+@namespace H.LowCode.ComponentBase
+@using Microsoft.JSInterop
+@inject IJSRuntime JSRuntime
+@inject ILogger<NativeResourceMount> Logger
+@implements IAsyncDisposable
+
+@*
+    原生资源挂载点：渲染一个带 id 的元素，并按声明的资源清单加载 css / js，
+    加载完成后调用声明的初始化函数（以挂载点 id + 组件选项调用）。
+    供"纯物料"编辑器等需要外部 js/css 的组件使用。
+*@
+
+@foreach (var css in _cssResources)
+{
+    <link rel="stylesheet" href="@css" />
+}
+
+<div id="@MountId" class="@Class" style="@Style">@ChildContent</div>
+
+@code {
+    /// <summary>挂载点元素 id（唯一）</summary>
+    [Parameter] public string? MountId { get; set; }
+
+    [Parameter] public string? Class { get; set; }
+
+    [Parameter] public string? Style { get; set; }
+
+    /// <summary>静态资源清单（css / js，按序）</summary>
+    [Parameter] public IReadOnlyList<ResourceItemSchema>? Resources { get; set; }
+
+    /// <summary>初始化函数名（js 模块导出）</summary>
+    [Parameter] public string? InitFunction { get; set; }
+
+    /// <summary>传给初始化函数的组件选项（序列化为 JS 对象）</summary>
+    [Parameter] public IReadOnlyDictionary<string, object?>? Options { get; set; }
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private List<string> _cssResources = [];
+    private List<string> _jsResources = [];
+    private IJSObjectReference? _initModule;
+
+    protected override void OnParametersSet()
+    {
+        _cssResources = (Resources ?? [])
+            .Where(r => string.Equals(r.Type, "css", StringComparison.OrdinalIgnoreCase)
+                        && !string.IsNullOrWhiteSpace(r.Url))
+            .Select(r => r.Url!)
+            .ToList();
+
+        _jsResources = (Resources ?? [])
+            .Where(r => string.Equals(r.Type, "js", StringComparison.OrdinalIgnoreCase)
+                        && !string.IsNullOrWhiteSpace(r.Url))
+            .Select(r => r.Url!)
+            .ToList();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _jsResources.Count == 0)
+            return;
+
+        try
+        {
+            // 按序以 ES module 导入；约定由最后一个模块导出初始化函数
+            foreach (var js in _jsResources)
+            {
+                _initModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import", js);
+            }
+
+            if (_initModule != null && !string.IsNullOrWhiteSpace(InitFunction))
+            {
+                await _initModule.InvokeVoidAsync(InitFunction, MountId,
+                    Options ?? new Dictionary<string, object?>());
+            }
+        }
+        catch (Exception ex)
+        {
+            // 资源加载/初始化失败不应阻断页面渲染
+            Logger.LogWarning(ex, "资源挂载点初始化失败: mountId={MountId}", MountId);
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_initModule != null)
+        {
+            try
+            {
+                await _initModule.DisposeAsync();
+            }
+            catch
+            {
+                // 模块释放失败忽略
+            }
+        }
+    }
+}

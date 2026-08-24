@@ -68,12 +68,23 @@ public class PageAppService : ApplicationService, IPageAppService
     /// <returns></returns>
     private async Task MergeComponentPartsDefineRecursive(ComponentPartsSchema component)
     {
-        //组件定义 Schema
-        var componentPartsDefine = (await _componentPartsAppService.GetByIdAsync(component.LibraryId,
-            component.PartsId)).Data;
+        //组件定义 Schema（内联组件可能没有对应物料部件，如资源挂载点，找不到时跳过定义合并）
+        ComponentPartsSchema? componentPartsDefine = null;
+        try
+        {
+            componentPartsDefine = (await _componentPartsAppService.GetByIdAsync(component.LibraryId,
+                component.PartsId)).Data;
+        }
+        catch
+        {
+            // 未找到对应物料部件：内联组件，跳过定义合并，保留实例自身的 frag/childs
+        }
 
-        //组件实例与组件定义合并,保证历史组件实例升级到最新组件特性
-        component.MergeComponentPartsDefine(componentPartsDefine);
+        if (componentPartsDefine != null)
+        {
+            //组件实例与组件定义合并,保证历史组件实例升级到最新组件特性
+            component.MergeComponentPartsDefine(componentPartsDefine);
+        }
 
         if (component.Childrens != null && component.Childrens.Count > 0)
         {

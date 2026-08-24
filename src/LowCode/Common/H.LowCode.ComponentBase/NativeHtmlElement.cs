@@ -26,6 +26,18 @@ public static class NativeHtmlElement
     /// </summary>
     public const string DraggableContainerToken = "$(DraggableContainer)";
 
+    /// <summary>
+    /// 类开关属性前缀：attrn 形如 "class:hc-card-bordered"、attrt 为 System.Boolean，
+    /// 布尔值为 true 时将前缀后的 class 片段合并到元素 class，用于原生元素的条件样式（如卡片边框/悬浮）。
+    /// </summary>
+    public const string ClassTogglePrefix = "class:";
+
+    public static bool IsClassToggle(string? attributeName)
+        => attributeName?.StartsWith(ClassTogglePrefix, StringComparison.OrdinalIgnoreCase) == true;
+
+    public static string GetClassToggleFragment(string attributeName)
+        => attributeName[ClassTogglePrefix.Length..];
+
     public static bool IsNativeHtml(string? typeName)
         => typeName?.StartsWith(Prefix, StringComparison.OrdinalIgnoreCase) == true;
 

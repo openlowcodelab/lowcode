@@ -25,7 +25,8 @@ public abstract class DynamicComponentBase : LowCodeDynamicComponentBase
         ComponentPartsSchema component,
         ComponentPartsDataSourceSchema dataSource,
         ComponentPartsFragmentSchema componentFragment,
-        RenderTreeBuilder builder, int index)
+        RenderTreeBuilder builder, int index,
+        string path = "")
     {
         //TypeName 为空时，使用 DefaultTypeName
         if (string.IsNullOrEmpty(componentFragment.TypeName))
@@ -38,7 +39,7 @@ public abstract class DynamicComponentBase : LowCodeDynamicComponentBase
         if (NativeHtmlElement.IsNativeHtml(componentFragment.TypeName))
         {
             RenderNativeHtmlFragment(componentId, component, componentFragment, builder,
-                string.Empty, componentFragment);
+                path, componentFragment);
             return;
         }
 
@@ -59,11 +60,11 @@ public abstract class DynamicComponentBase : LowCodeDynamicComponentBase
         }
         else if (componentFragment.HasChildFragment)
         {
-            RenderChildFragments(componentId, component, componentFragment, builder, index);
+            RenderChildFragments(componentId, component, componentFragment, builder, index, path);
         }
         else if (string.IsNullOrWhiteSpace(componentFragment.Content) == false)
         {
-            RenderContent(componentId, component, componentFragment, builder, index);
+            RenderContent(componentId, component, componentFragment, builder, index, path);
         }
 
         builder.CloseComponent();
@@ -85,6 +86,13 @@ public abstract class DynamicComponentBase : LowCodeDynamicComponentBase
         var tagName = NativeHtmlElement.GetTagName(fragment.TypeName);
         if (string.IsNullOrEmpty(tagName))
             return;
+
+        // 资源挂载片段（编辑器等纯物料组件）：设计时渲染占位，不加载真实资源
+        if (option == null && HasResourceMount(fragment))
+        {
+            RenderResourceMountPlaceholder(builder, fragment.InitFunction);
+            return;
+        }
 
         builder.OpenElement(0, tagName);
 
@@ -126,6 +134,25 @@ public abstract class DynamicComponentBase : LowCodeDynamicComponentBase
     }
 
     /// <summary>
+    /// 判断片段是否声明了资源挂载（js/css 资源清单或初始化函数）
+    /// </summary>
+    private static bool HasResourceMount(ComponentPartsFragmentSchema fragment)
+        => (fragment.Resources != null && fragment.Resources.Length > 0)
+           || !string.IsNullOrWhiteSpace(fragment.InitFunction);
+
+    /// <summary>
+    /// 资源挂载片段的设计时占位渲染（不加载真实资源）
+    /// </summary>
+    private static void RenderResourceMountPlaceholder(RenderTreeBuilder builder, string? initFunction)
+    {
+        builder.OpenElement(0, "div");
+        builder.AddAttribute(1, "class", "hc-placeholder");
+        builder.AddAttribute(2, "style", "height:100%;min-height:120px;");
+        builder.AddContent(3, $"⬚ {initFunction ?? "资源组件"}（运行时加载）");
+        builder.CloseElement();
+    }
+
+    /// <summary>
     /// 渲染子 Fragment：原生 html 走元素渲染，.NET 类型走组件渲染
     /// </summary>
     private void RenderNativeHtmlChildFragment(string componentId,
@@ -141,7 +168,7 @@ public abstract class DynamicComponentBase : LowCodeDynamicComponentBase
             return;
         }
 
-        RenderComponentRecursive(componentId, false, component, null, fragment, builder, 0);
+        RenderComponentRecursive(componentId, false, component, null, fragment, builder, 0, path);
     }
 
     /// <summary>
@@ -208,6 +235,14 @@ public abstract class DynamicComponentBase : LowCodeDynamicComponentBase
 
         if (option.HasValue)
             value = NativeHtmlElement.SubstituteOptionToken(value, option.Value.OptionValue, option.Value.OptionLabel);
+
+        // 类开关（class:片段 + 布尔）：为 true 时合并 class 片段
+        if (NativeHtmlElement.IsClassToggle(attrName))
+        {
+            if (bool.TryParse(value, out var toggleOn) && toggleOn)
+                classes.Add(NativeHtmlElement.GetClassToggleFragment(attrName));
+            return;
+        }
 
         if (string.Equals(attrName, "class", StringComparison.OrdinalIgnoreCase))
         {
@@ -342,17 +377,19 @@ public abstract class DynamicComponentBase : LowCodeDynamicComponentBase
     private void RenderChildFragments(string componentId,
         ComponentPartsSchema component,
         ComponentPartsFragmentSchema componentFragment,
-        RenderTreeBuilder builder, int index)
+        RenderTreeBuilder builder, int index,
+        string path = "")
     {
         if (componentFragment.HasChildFragment == false)
             return;
 
         builder.AddAttribute(index++, "ChildContent", (RenderFragment)(childBuilder =>
         {
-            foreach (var childFragment in componentFragment.ChildFragments)
+            for (var i = 0; i < componentFragment.ChildFragments.Length; i++)
             {
                 RenderComponentRecursive(componentId, false,
-                    component, null, childFragment, childBuilder, index);
+                    component, null, componentFragment.ChildFragments[i], childBuilder, index,
+                    NativeHtmlElement.ChildPath(path, i));
             }
         }));
     }
@@ -496,7 +533,8 @@ public abstract class DynamicComponentBase : LowCodeDynamicComponentBase
     private void RenderContent(string componentId,
         ComponentPartsSchema component,
         ComponentPartsFragmentSchema componentFragment,
-        RenderTreeBuilder builder, int index)
+        RenderTreeBuilder builder, int index,
+        string path = "")
     {
         if (string.IsNullOrWhiteSpace(componentFragment.Content))
             return;
@@ -504,8 +542,8 @@ public abstract class DynamicComponentBase : LowCodeDynamicComponentBase
         if (string.Equals(componentFragment.Content, $"$({nameof(DraggableContainer)})",
             StringComparison.OrdinalIgnoreCase))
         {
-            //TODO: 此处 containerComponentId 不能保证唯一性, 待优化
-            var containerComponentId = $"container-{component.Id}-{componentFragment.DefaultTypeName.GetHashCode()}";
+            // 容器 key 与原生片段保持一致的路径式命名：根级为 root，嵌套为 childs.N...
+            var containerComponentId = $"container-{component.Id}-{(string.IsNullOrEmpty(path) ? "root" : path)}";
             var (containerComponent, needAdd) = RenderContainerComponent(component, containerComponentId);
             if (needAdd == false)
                 return;
