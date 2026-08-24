@@ -6,13 +6,13 @@
 - 属性通过反射 `GetProperty(名称)` 绑定，未知属性会被静默跳过(见 [LowCodeDynamicComponentBase.cs](file:///d:/H/code/my/applab/src/LowCode/Common/H.LowCode.ComponentBase/LowCodeDynamicComponentBase.cs#L45-L47))，故自定义组件只需实现需要生效的参数名即可，不会因多余属性报错。
 
 ## 方案概述
-在已存在的 Razor 库 `H.LowCode.Components.Defaults` 中新建一套原生(纯 HTML+CSS，现代扁平风)低代码组件，改写全部 meta JSON 的类型名指向它们；不改渲染管线(设计器与渲染引擎都靠 `frag.dt` 反射解析，改数据即可)。
+在已存在的 Razor 库 `H.LowCode.Components` 中新建一套原生(纯 HTML+CSS，现代扁平风)低代码组件，改写全部 meta JSON 的类型名指向它们；不改渲染管线(设计器与渲染引擎都靠 `frag.dt` 反射解析，改数据即可)。
 
 ## Phase 1 — 原生组件库与解析链路(修复 Bug1 核心)
-- 组件位置/命名：`H.LowCode.Components.Defaults`,命名空间 `H.LowCode.Components.Defaults`,前缀 `Hc`。
+- 组件位置/命名：`H.LowCode.Components`,命名空间 `H.LowCode.Components`,前缀 `Hc`。
 - 工程接线：
-  - 在 [H.LowCode.DesignEngine.csproj](file:///d:/H/code/my/applab/src/LowCode/DesignEngine/H.LowCode.DesignEngine/H.LowCode.DesignEngine.csproj) 增加对 `H.LowCode.Components.Defaults` 的 ProjectReference(渲染引擎侧已引用)。
-  - 在两个 WASM 宿主客户端(`H.AppLab.Host.All.Client`、`H.LowCode.RenderEngine.Host.Client`)的 csproj 增加 `<TrimmerRootAssembly Include="H.LowCode.Components.Defaults" />`,避免 Release/AOT 裁剪掉仅被字符串反射引用的组件类型(Debug 运行不裁剪，故开发期本就可用)。
+  - 在 [H.LowCode.DesignEngine.csproj](file:///d:/H/code/my/applab/src/LowCode/DesignEngine/H.LowCode.DesignEngine/H.LowCode.DesignEngine.csproj) 增加对 `H.LowCode.Components` 的 ProjectReference(渲染引擎侧已引用)。
+  - 在两个 WASM 宿主客户端(`H.AppLab.Host.All.Client`、`H.LowCode.RenderEngine.Host.Client`)的 csproj 增加 `<TrimmerRootAssembly Include="H.LowCode.Components" />`,避免 Release/AOT 裁剪掉仅被字符串反射引用的组件类型(Debug 运行不裁剪，故开发期本就可用)。
 - 先实现最小闭环验证：`HcButton`、`HcInput`,改写 `button.json`、`input.json` 的 `dt`,浏览器确认拖入后正常显示、无 `TypeLoadException`。
 
 ## Phase 2 — 原生组件实现 + 全量 meta 改写
@@ -21,7 +21,7 @@
 - 容器类(实现 `Style`+`ChildContent`,配合 `content:"$(DraggableContainer)"` 机制)：`HcCard`(Title/Bordered)、`HcLayout`/`HcSider`/`HcContent`、`HcFlex`、`HcRow`/`HcCol`、`HcImage`。
 - 复杂类(先做简洁可用的占位/降级实现，后续可增强)：`HcAutoComplete`/`HcCascader`/`HcTreeSelect`→复用 `HcSelect` 外观；`HcTree`/`HcTable`/`HcTabs`/`HcUpload`/`HcList`/`行政区划`→统一 `HcPlaceholder`(渲染带标签的规范占位框，不再崩溃)。
 - 逐一改写 `meta/parts/componentParts/**/*.json`：
-  - `frag.dt`(含嵌套 `childs[].dt`)→ `"H.LowCode.Components.Defaults.<Hc组件>, H.LowCode.Components.Defaults"`。
+  - `frag.dt`(含嵌套 `childs[].dt`)→ `"H.LowCode.Components.<Hc组件>, H.LowCode.Components"`。
   - 审查 `frag.attrs` 及嵌套 `attrs` 中的 `attrt`(渲染期会 `Type.GetType(attrt,true)`),将任何 `AntDesign.*` CLR 类型替换为 BCL 类型或移除；移除 `input.json` 等中的泛型 `TValue` 相关项。
   - `attrdefgroups`(属性面板定义)中出现的 `AntDesign.*` 类型(如 `card.json` 的 `AntDesign.CardSize`)一并清理，避免属性面板异常。
 - `common/conditional.json`(ComponentType=2)按现有“低代码组件渲染子节点”路径处理，无需 `dt`。

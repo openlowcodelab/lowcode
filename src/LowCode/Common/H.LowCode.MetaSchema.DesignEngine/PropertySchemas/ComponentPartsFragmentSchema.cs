@@ -7,7 +7,7 @@ public class ComponentPartsFragmentSchema : ComponentFragmentSchemaBase
     /// <summary>
     /// 默认组件类型名。
     /// 原生 html 元素用 "html:{tag}" 形式（如 "html:button"、"html:input"）；
-    /// .NET 组件为类型全名（如 "H.LowCode.Components.Defaults.HcSelect, H.LowCode.Components.Defaults"）
+    /// .NET 组件为类型全名（如 "H.LowCode.Components.LcSelect, H.LowCode.Components"）
     /// </summary>
     [JsonPropertyName("dt")]
     public string? DefaultTypeName { get; set; }

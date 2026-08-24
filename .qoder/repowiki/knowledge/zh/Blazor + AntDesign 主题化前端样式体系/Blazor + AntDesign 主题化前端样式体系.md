@@ -10,7 +10,7 @@ source_files:
     - src/Components/AppDrawer/H.AppDrawer.Components/wwwroot/css/AppDrawer.css
     - src/Components/AppDrawer/H.AppDrawer.Components/Components/DefaultLayoutComponent.razor
     - src/Host/H.AppLab.Host.All/H.AppLab.Host.All/Components/App.razor
-    - src/LowCode/Common/H.LowCode.Components.Defaults/ExtraComponents/LcLakexEditor.razor
+    - src/LowCode/Common/H.LowCode.Components/ExtraComponents/LcLakexEditor.razor
 ---
 
 AppLab 平台采用 .NET Blazor WebAssembly 作为前端框架，基于 ABP Framework 模块化架构，形成可插拔的主题化渲染引擎。
@@ -23,7 +23,7 @@ AppLab 平台采用 .NET Blazor WebAssembly 作为前端框架，基于 ABP Fram
 **设计系统与组件库：**
 - **主 UI 框架**：内置自定义企业级组件，包括表单、表格、布局等基础控件
 - **自定义组件库**：`H.Util.Blazor` 封装通用业务组件，统一样式规范（`h-components.css`）
-- **低代码组件**：`H.LowCode.Components.Defaults` 内置 36+ 个默认组件，支持 LaTeX、Monaco 编辑器等扩展
+- **低代码组件**：`H.LowCode.Components` 内置 36+ 个默认组件，支持 LaTeX、Monaco 编辑器等扩展
 - **第三方样式集成**：集成 antd-4.24.13、LakexEditor 等外部样式资源
 
 **布局与响应式策略：**

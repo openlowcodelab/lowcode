@@ -13,7 +13,7 @@
 - [ComponentDataSourceSchema.cs（渲染引擎）](file://src/LowCode/Common/H.LowCode.MetaSchema.RenderEngine/DataSourceSchemas/ComponentDataSourceSchema.cs)
 - [IDataSourceRepository.cs](file://src/LowCode/DesignEngine/H.LowCode.DesignEngine.Domain/MetaRepositories/IDataSourceRepository.cs)
 - [DataSourceRemoteServiceRepository.cs](file://src/LowCode/DesignEngine/H.LowCode.DesignEngine.Repository.RemoteService/Repositories/DataSourceRemoteServiceRepository.cs)
-- [LcTable.razor](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/LcTable.razor)
+- [LcTable.razor](file://src/LowCode/Common/H.LowCode.Components/Components/LcTable.razor)
 - [TableDataSourceSetting.razor](file://src/LowCode/DesignEngine/H.LowCode.DesignEngine/SettingPanel/PropertySettingItems/TableDataSource/TableDataSourceSetting.razor)
 - [OptionDataSourceSetting.razor](file://src/LowCode/DesignEngine/H.LowCode.DesignEngine/SettingPanel/PropertySettingItems/OptionDataSource/OptionDataSourceSetting.razor)
 - [SQLForOptionDataSource.razor](file://src/LowCode/DesignEngine/H.LowCode.DesignEngine/SettingPanel/PropertySettingItems/OptionDataSource/SQLForOptionDataSource.razor)
@@ -126,7 +126,7 @@ participant 服务 as "远程服务/后端"
 - [OptionDataSourceSetting.razor:1-46](file://src/LowCode/DesignEngine/H.LowCode.DesignEngine/SettingPanel/PropertySettingItems/OptionDataSource/OptionDataSourceSetting.razor#L1-L46)
 - [ListDataSourceSetting.razor:19-40](file://src/LowCode/DesignEngine/H.LowCode.DesignEngine/SettingPanel/PropertySettingItems/ListDataSource/ListDataSourceSetting.razor#L19-L40)
 - [IDataSourceRepository.cs:1-16](file://src/LowCode/DesignEngine/H.LowCode.DesignEngine.Domain/MetaRepositories/IDataSourceRepository.cs#L1-L16)
-- [LcTable.razor:168-207](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/LcTable.razor#L168-L207)
+- [LcTable.razor:168-207](file://src/LowCode/Common/H.LowCode.Components/Components/LcTable.razor#L168-L207)
 
 ## 详细组件分析
 
@@ -209,10 +209,10 @@ Render --> End
 ```
 
 图表来源 
-- [LcTable.razor:168-207](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/LcTable.razor#L168-L207)
+- [LcTable.razor:168-207](file://src/LowCode/Common/H.LowCode.Components/Components/LcTable.razor#L168-L207)
 
 章节来源
-- [LcTable.razor:168-207](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/LcTable.razor#L168-L207)
+- [LcTable.razor:168-207](file://src/LowCode/Common/H.LowCode.Components/Components/LcTable.razor#L168-L207)
 
 ## 依赖关系分析
 - 设计时：设置面板依赖各 Schema 类型，负责生成/更新 Schema；仓储接口负责持久化。
@@ -279,7 +279,7 @@ IDataSourceRepository <|-- DataSourceRemoteServiceRepository : "实现"
 
 章节来源
 - [APIDataSourceList.razor:114-163](file://src/LowCode/DesignEngine/H.LowCode.MyApp/Pages/DataSource/APIDataSourceList.razor#L114-L163)
-- [LcTable.razor:168-207](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/LcTable.razor#L168-L207)
+- [LcTable.razor:168-207](file://src/LowCode/Common/H.LowCode.Components/Components/LcTable.razor#L168-L207)
 - [DataSourceRemoteServiceRepository.cs:1-39](file://src/LowCode/DesignEngine/H.LowCode.DesignEngine.Repository.RemoteService/Repositories/DataSourceRemoteServiceRepository.cs#L1-L39)
 
 ## 结论
@@ -296,7 +296,7 @@ IDataSourceRepository <|-- DataSourceRemoteServiceRepository : "实现"
 - 参考路径：
   - Schema 定义参考：[APIDataSourceSchema.cs:1-65](file://src/LowCode/Common/H.LowCode.MetaSchema/DataSourceSchemas/APIDataSourceSchema.cs#L1-L65)、[SQLDataSourceSchema.cs:1-18](file://src/LowCode/Common/H.LowCode.MetaSchema/DataSourceSchemas/SQLDataSourceSchema.cs#L1-L18)、[ListDataSourceSchema.cs:1-51](file://src/LowCode/Common/H.LowCode.MetaSchema/DataSourceSchemas/ListDataSourceSchema.cs#L1-L51)、[OptionDataSourceSchema.cs:1-34](file://src/LowCode/Common/H.LowCode.MetaSchema/DataSourceSchemas/OptionDataSourceSchema.cs#L1-L34)。
   - 设计时编辑器参考：[TableDataSourceSetting.razor:1-23](file://src/LowCode/DesignEngine/H.LowCode.DesignEngine/SettingPanel/PropertySettingItems/TableDataSource/TableDataSourceSetting.razor#L1-L23)、[OptionDataSourceSetting.razor:1-46](file://src/LowCode/DesignEngine/H.LowCode.DesignEngine/SettingPanel/PropertySettingItems/OptionDataSource/OptionDataSourceSetting.razor#L1-L46)、[SQLForOptionDataSource.razor:1-25](file://src/LowCode/DesignEngine/H.LowCode.DesignEngine/SettingPanel/PropertySettingItems/OptionDataSource/SQLForOptionDataSource.razor#L1-L25)、[ListDataSourceSetting.razor:19-40](file://src/LowCode/DesignEngine/H.LowCode.DesignEngine/SettingPanel/PropertySettingItems/ListDataSource/ListDataSourceSetting.razor#L19-L40)。
-  - 渲染时消费参考：[LcTable.razor:168-207](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/LcTable.razor#L168-L207)。
+  - 渲染时消费参考：[LcTable.razor:168-207](file://src/LowCode/Common/H.LowCode.Components/Components/LcTable.razor#L168-L207)。
   - 仓储接口与实现参考：[IDataSourceRepository.cs:1-16](file://src/LowCode/DesignEngine/H.LowCode.DesignEngine.Domain/MetaRepositories/IDataSourceRepository.cs#L1-L16)、[DataSourceRemoteServiceRepository.cs:1-39](file://src/LowCode/DesignEngine/H.LowCode.DesignEngine.Repository.RemoteService/Repositories/DataSourceRemoteServiceRepository.cs#L1-L39)。
 
 [本节为通用指导，不直接分析具体文件]

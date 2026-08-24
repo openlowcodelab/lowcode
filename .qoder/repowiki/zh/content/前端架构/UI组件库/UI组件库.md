@@ -2,20 +2,20 @@
 
 <cite>
 **本文引用的文件**
-- [H.LowCode.Components.Defaults.csproj](file://src/LowCode/Common/H.LowCode.Components.Defaults/H.LowCode.Components.Defaults.csproj)
-- [_Imports.razor](file://src/LowCode/Common/H.LowCode.Components.Defaults/_Imports.razor)
-- [HcButton.razor](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcButton.razor)
-- [HcCard.razor](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcCard.razor)
-- [HcTag.razor](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcTag.razor)
-- [HcInput.razor](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcInput.razor)
-- [HcSelect.razor](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcSelect.razor)
-- [HcDatePicker.razor](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcDatePicker.razor)
-- [HcTable.razor](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcTable.razor)
-- [HcList.razor](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcList.razor)
-- [HcTree.razor](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcTree.razor)
-- [HcLayout.razor](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcLayout.razor)
-- [HcRow.razor](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcRow.razor)
-- [HcCol.razor](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcCol.razor)
+- [H.LowCode.Components.csproj](file://src/LowCode/Common/H.LowCode.Components/H.LowCode.Components.csproj)
+- [_Imports.razor](file://src/LowCode/Common/H.LowCode.Components/_Imports.razor)
+- [HcButton.razor](file://src/LowCode/Common/H.LowCode.Components/Components/HcButton.razor)
+- [HcCard.razor](file://src/LowCode/Common/H.LowCode.Components/Components/HcCard.razor)
+- [HcTag.razor](file://src/LowCode/Common/H.LowCode.Components/Components/HcTag.razor)
+- [HcInput.razor](file://src/LowCode/Common/H.LowCode.Components/Components/HcInput.razor)
+- [HcSelect.razor](file://src/LowCode/Common/H.LowCode.Components/Components/HcSelect.razor)
+- [HcDatePicker.razor](file://src/LowCode/Common/H.LowCode.Components/Components/HcDatePicker.razor)
+- [HcTable.razor](file://src/LowCode/Common/H.LowCode.Components/Components/HcTable.razor)
+- [HcList.razor](file://src/LowCode/Common/H.LowCode.Components/Components/HcList.razor)
+- [HcTree.razor](file://src/LowCode/Common/H.LowCode.Components/Components/HcTree.razor)
+- [HcLayout.razor](file://src/LowCode/Common/H.LowCode.Components/Components/HcLayout.razor)
+- [HcRow.razor](file://src/LowCode/Common/H.LowCode.Components/Components/HcRow.razor)
+- [HcCol.razor](file://src/LowCode/Common/H.LowCode.Components/Components/HcCol.razor)
 - [card.json](file://src/LowCode/meta/parts/componentParts/default/card.json)
 - [datepicker.json](file://src/LowCode/meta/parts/componentParts/default/datepicker.json)
 - [tree.json](file://src/LowCode/meta/parts/componentParts/default/tree.json)
@@ -41,29 +41,29 @@
 - 响应式设计与可访问性支持建议
 - 性能优化建议与常见问题解决方案
 
-该组件库基于 Blazor 实现，位于 H.LowCode.Components.Defaults 项目中，并通过 meta/schema 定义在低代码设计器中暴露属性与行为。
+该组件库基于 Blazor 实现，位于 H.LowCode.Components 项目中，并通过 meta/schema 定义在低代码设计器中暴露属性与行为。
 
 ## 项目结构
-- 组件库工程：H.LowCode.Components.Defaults（Razor 组件集合）
+- 组件库工程：H.LowCode.Components（Razor 组件集合）
 - 公共导入：_Imports.razor 统一引入命名空间与常用类型
 - 组件清单：Components 目录下按功能分类存放各 Hc* 组件
 - 元数据定义：meta/parts/componentParts/default/*.json 描述组件属性、事件与样式等元信息，供设计器渲染与配置
 
 ```mermaid
 graph TB
-A["H.LowCode.Components.Defaults<br/>组件库工程"] --> B["Components<br/>Hc* 组件"]
+A["H.LowCode.Components<br/>组件库工程"] --> B["Components<br/>Hc* 组件"]
 A --> C["_Imports.razor<br/>统一导入"]
 D["meta/parts/componentParts/default/*.json<br/>组件元数据"] --> E["设计器/渲染引擎<br/>解析属性/事件/样式"]
 B --> E
 ```
 
 图表来源
-- [H.LowCode.Components.Defaults.csproj:1-16](file://src/LowCode/Common/H.LowCode.Components.Defaults/H.LowCode.Components.Defaults.csproj#L1-L16)
-- [_Imports.razor:1-10](file://src/LowCode/Common/H.LowCode.Components.Defaults/_Imports.razor#L1-L10)
+- [H.LowCode.Components.csproj:1-16](file://src/LowCode/Common/H.LowCode.Components/H.LowCode.Components.csproj#L1-L16)
+- [_Imports.razor:1-10](file://src/LowCode/Common/H.LowCode.Components/_Imports.razor#L1-L10)
 
 章节来源
-- [H.LowCode.Components.Defaults.csproj:1-16](file://src/LowCode/Common/H.LowCode.Components.Defaults/H.LowCode.Components.Defaults.csproj#L1-L16)
-- [_Imports.razor:1-10](file://src/LowCode/Common/H.LowCode.Components.Defaults/_Imports.razor#L1-L10)
+- [H.LowCode.Components.csproj:1-16](file://src/LowCode/Common/H.LowCode.Components/H.LowCode.Components.csproj#L1-L16)
+- [_Imports.razor:1-10](file://src/LowCode/Common/H.LowCode.Components/_Imports.razor#L1-L10)
 
 ## 核心组件
 本节概述四类核心组件及其典型用法要点。
@@ -89,18 +89,18 @@ B --> E
   - HcCol：列容器
 
 章节来源
-- [HcButton.razor:1-29](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcButton.razor#L1-L29)
-- [HcCard.razor:1-30](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcCard.razor#L1-L30)
-- [HcTag.razor:1-11](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcTag.razor#L1-L11)
-- [HcInput.razor:1-54](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcInput.razor#L1-L54)
-- [HcSelect.razor:1-62](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcSelect.razor#L1-L62)
-- [HcDatePicker.razor:1-200](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcDatePicker.razor#L1-L200)
-- [HcTable.razor:1-8](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcTable.razor#L1-L8)
-- [HcList.razor:1-8](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcList.razor#L1-L8)
-- [HcTree.razor:1-15](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcTree.razor#L1-L15)
-- [HcLayout.razor:1-11](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcLayout.razor#L1-L11)
-- [HcRow.razor:1-11](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcRow.razor#L1-L11)
-- [HcCol.razor:1-11](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcCol.razor#L1-L11)
+- [HcButton.razor:1-29](file://src/LowCode/Common/H.LowCode.Components/Components/HcButton.razor#L1-L29)
+- [HcCard.razor:1-30](file://src/LowCode/Common/H.LowCode.Components/Components/HcCard.razor#L1-L30)
+- [HcTag.razor:1-11](file://src/LowCode/Common/H.LowCode.Components/Components/HcTag.razor#L1-L11)
+- [HcInput.razor:1-54](file://src/LowCode/Common/H.LowCode.Components/Components/HcInput.razor#L1-L54)
+- [HcSelect.razor:1-62](file://src/LowCode/Common/H.LowCode.Components/Components/HcSelect.razor#L1-L62)
+- [HcDatePicker.razor:1-200](file://src/LowCode/Common/H.LowCode.Components/Components/HcDatePicker.razor#L1-L200)
+- [HcTable.razor:1-8](file://src/LowCode/Common/H.LowCode.Components/Components/HcTable.razor#L1-L8)
+- [HcList.razor:1-8](file://src/LowCode/Common/H.LowCode.Components/Components/HcList.razor#L1-L8)
+- [HcTree.razor:1-15](file://src/LowCode/Common/H.LowCode.Components/Components/HcTree.razor#L1-L15)
+- [HcLayout.razor:1-11](file://src/LowCode/Common/H.LowCode.Components/Components/HcLayout.razor#L1-L11)
+- [HcRow.razor:1-11](file://src/LowCode/Common/H.LowCode.Components/Components/HcRow.razor#L1-L11)
+- [HcCol.razor:1-11](file://src/LowCode/Common/H.LowCode.Components/Components/HcCol.razor#L1-L11)
 
 ## 架构总览
 组件库通过 Razor 组件提供 UI 能力，并通过 JSON 元数据向设计器暴露属性、事件与样式。渲染时由设计器或运行时根据元数据生成页面并绑定参数。
@@ -155,10 +155,10 @@ Invoke --> End(["结束"])
 ```
 
 图表来源
-- [HcButton.razor:1-29](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcButton.razor#L1-L29)
+- [HcButton.razor:1-29](file://src/LowCode/Common/H.LowCode.Components/Components/HcButton.razor#L1-L29)
 
 章节来源
-- [HcButton.razor:1-29](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcButton.razor#L1-L29)
+- [HcButton.razor:1-29](file://src/LowCode/Common/H.LowCode.Components/Components/HcButton.razor#L1-L29)
 
 #### HcCard（卡片）
 - 属性
@@ -188,10 +188,10 @@ class HcCard {
 ```
 
 图表来源
-- [HcCard.razor:1-30](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcCard.razor#L1-L30)
+- [HcCard.razor:1-30](file://src/LowCode/Common/H.LowCode.Components/Components/HcCard.razor#L1-L30)
 
 章节来源
-- [HcCard.razor:1-30](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcCard.razor#L1-L30)
+- [HcCard.razor:1-30](file://src/LowCode/Common/H.LowCode.Components/Components/HcCard.razor#L1-L30)
 
 #### HcTag（标签）
 - 属性
@@ -205,7 +205,7 @@ class HcCard {
   - 用于状态、分类、筛选等场景
 
 章节来源
-- [HcTag.razor:1-11](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcTag.razor#L1-L11)
+- [HcTag.razor:1-11](file://src/LowCode/Common/H.LowCode.Components/Components/HcTag.razor#L1-L11)
 
 ### 表单组件
 
@@ -236,10 +236,10 @@ Input-->>User : 刷新显示
 ```
 
 图表来源
-- [HcInput.razor:1-54](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcInput.razor#L1-L54)
+- [HcInput.razor:1-54](file://src/LowCode/Common/H.LowCode.Components/Components/HcInput.razor#L1-L54)
 
 章节来源
-- [HcInput.razor:1-54](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcInput.razor#L1-L54)
+- [HcInput.razor:1-54](file://src/LowCode/Common/H.LowCode.Components/Components/HcInput.razor#L1-L54)
 
 #### HcSelect（选择器）
 - 属性
@@ -259,7 +259,7 @@ Input-->>User : 刷新显示
   - 使用 ChildContent 承载 HcSelectOption 等选项组件
 
 章节来源
-- [HcSelect.razor:1-62](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcSelect.razor#L1-L62)
+- [HcSelect.razor:1-62](file://src/LowCode/Common/H.LowCode.Components/Components/HcSelect.razor#L1-L62)
 
 #### HcDatePicker（日期选择器）
 - 属性（依据元数据）
@@ -273,7 +273,7 @@ Input-->>User : 刷新显示
   - 多语言环境注意本地化
 
 章节来源
-- [HcDatePicker.razor:1-200](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcDatePicker.razor#L1-L200)
+- [HcDatePicker.razor:1-200](file://src/LowCode/Common/H.LowCode.Components/Components/HcDatePicker.razor#L1-L200)
 - [datepicker.json:1-1](file://src/LowCode/meta/parts/componentParts/default/datepicker.json#L1-L1)
 
 ### 数据展示组件
@@ -287,13 +287,13 @@ Input-->>User : 刷新显示
   - Events：行点击、选择等事件
 
 章节来源
-- [HcTable.razor:1-8](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcTable.razor#L1-L8)
+- [HcTable.razor:1-8](file://src/LowCode/Common/H.LowCode.Components/Components/HcTable.razor#L1-L8)
 
 #### HcList（列表）
 - 当前为占位实现，后续可扩展项渲染、虚拟滚动、骨架屏等
 
 章节来源
-- [HcList.razor:1-8](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcList.razor#L1-L8)
+- [HcList.razor:1-8](file://src/LowCode/Common/H.LowCode.Components/Components/HcList.razor#L1-L8)
 
 #### HcTree（树）
 - 属性（预留）
@@ -310,7 +310,7 @@ Input-->>User : 刷新显示
   - 拖拽需配合数据层同步
 
 章节来源
-- [HcTree.razor:1-15](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcTree.razor#L1-L15)
+- [HcTree.razor:1-15](file://src/LowCode/Common/H.LowCode.Components/Components/HcTree.razor#L1-L15)
 - [tree.json:1-1](file://src/LowCode/meta/parts/componentParts/default/tree.json#L1-L1)
 
 ### 布局组件
@@ -321,7 +321,7 @@ Input-->>User : 刷新显示
   - ChildContent：子内容插槽
 
 章节来源
-- [HcLayout.razor:1-11](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcLayout.razor#L1-L11)
+- [HcLayout.razor:1-11](file://src/LowCode/Common/H.LowCode.Components/Components/HcLayout.razor#L1-L11)
 
 #### HcRow（行）与 HcCol（列）
 - 属性
@@ -332,8 +332,8 @@ Input-->>User : 刷新显示
   - 移动端优先，逐步增强桌面端体验
 
 章节来源
-- [HcRow.razor:1-11](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcRow.razor#L1-L11)
-- [HcCol.razor:1-11](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcCol.razor#L1-L11)
+- [HcRow.razor:1-11](file://src/LowCode/Common/H.LowCode.Components/Components/HcRow.razor#L1-L11)
+- [HcCol.razor:1-11](file://src/LowCode/Common/H.LowCode.Components/Components/HcCol.razor#L1-L11)
 
 ## 依赖关系分析
 - 组件库工程引用了 Blazor WebAssembly、Util.Blazor、ComponentBase、MetaSchema 与 RenderEngine.Application.Contracts 等模块
@@ -342,7 +342,7 @@ Input-->>User : 刷新显示
 
 ```mermaid
 graph LR
-Proj["H.LowCode.Components.Defaults.csproj"] --> Ref1["Microsoft.AspNetCore.Components.WebAssembly"]
+Proj["H.LowCode.Components.csproj"] --> Ref1["Microsoft.AspNetCore.Components.WebAssembly"]
 Proj --> Ref2["H.Util.Blazor"]
 Proj --> Ref3["H.LowCode.ComponentBase"]
 Proj --> Ref4["H.LowCode.MetaSchema"]
@@ -357,12 +357,12 @@ Imports --> NS7["H.Util.Blazor"]
 ```
 
 图表来源
-- [H.LowCode.Components.Defaults.csproj:1-16](file://src/LowCode/Common/H.LowCode.Components.Defaults/H.LowCode.Components.Defaults.csproj#L1-L16)
-- [_Imports.razor:1-10](file://src/LowCode/Common/H.LowCode.Components.Defaults/_Imports.razor#L1-L10)
+- [H.LowCode.Components.csproj:1-16](file://src/LowCode/Common/H.LowCode.Components/H.LowCode.Components.csproj#L1-L16)
+- [_Imports.razor:1-10](file://src/LowCode/Common/H.LowCode.Components/_Imports.razor#L1-L10)
 
 章节来源
-- [H.LowCode.Components.Defaults.csproj:1-16](file://src/LowCode/Common/H.LowCode.Components.Defaults/H.LowCode.Components.Defaults.csproj#L1-L16)
-- [_Imports.razor:1-10](file://src/LowCode/Common/H.LowCode.Components.Defaults/_Imports.razor#L1-L10)
+- [H.LowCode.Components.csproj:1-16](file://src/LowCode/Common/H.LowCode.Components/H.LowCode.Components.csproj#L1-L16)
+- [_Imports.razor:1-10](file://src/LowCode/Common/H.LowCode.Components/_Imports.razor#L1-L10)
 
 ## 性能考虑
 - 减少不必要的重渲染
@@ -392,10 +392,10 @@ Imports --> NS7["H.Util.Blazor"]
   - 核对 JSON 中的 attrn/attrt/dftval 与组件 Parameter 名称、类型、默认值一致
 
 章节来源
-- [HcButton.razor:1-29](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcButton.razor#L1-L29)
-- [HcInput.razor:1-54](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcInput.razor#L1-L54)
-- [HcSelect.razor:1-62](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcSelect.razor#L1-L62)
-- [HcCard.razor:1-30](file://src/LowCode/Common/H.LowCode.Components.Defaults/Components/HcCard.razor#L1-L30)
+- [HcButton.razor:1-29](file://src/LowCode/Common/H.LowCode.Components/Components/HcButton.razor#L1-L29)
+- [HcInput.razor:1-54](file://src/LowCode/Common/H.LowCode.Components/Components/HcInput.razor#L1-L54)
+- [HcSelect.razor:1-62](file://src/LowCode/Common/H.LowCode.Components/Components/HcSelect.razor#L1-L62)
+- [HcCard.razor:1-30](file://src/LowCode/Common/H.LowCode.Components/Components/HcCard.razor#L1-L30)
 
 ## 结论
 AppLab 默认 UI 组件库以 Blazor 为基础，提供了覆盖基础、表单、数据展示与布局的常用组件，并通过元数据驱动设计器与渲染引擎。当前部分组件仍为占位实现，后续可按需扩展。遵循本文档的使用规范与最佳实践，可在保证一致性与可维护性的同时提升用户体验与性能。
@@ -419,7 +419,7 @@ AppLab 默认 UI 组件库以 Blazor 为基础，提供了覆盖基础、表单�
   - 确保 attrn 与组件 Parameter 名称一致，attrt 与 .NET 类型一致
 
 章节来源
-- [_Imports.razor:1-10](file://src/LowCode/Common/H.LowCode.Components.Defaults/_Imports.razor#L1-L10)
+- [_Imports.razor:1-10](file://src/LowCode/Common/H.LowCode.Components/_Imports.razor#L1-L10)
 - [card.json:1-1](file://src/LowCode/meta/parts/componentParts/default/card.json#L1-L1)
 - [datepicker.json:1-1](file://src/LowCode/meta/parts/componentParts/default/datepicker.json#L1-L1)
 - [tree.json:1-1](file://src/LowCode/meta/parts/componentParts/default/tree.json#L1-L1)
