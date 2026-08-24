@@ -15,7 +15,6 @@
         <button class='tab-btn @(_tabKey == "componentlibraries" ? "active" : "")' @onclick='() => _tabKey = "componentlibraries"'>组件库</button>
         <button class='tab-btn @(_tabKey == "pagelibraries" ? "active" : "")' @onclick='() => _tabKey = "pagelibraries"'>页面库</button>
         <button class='tab-btn @(_tabKey == "apptemplates" ? "active" : "")' @onclick='() => _tabKey = "apptemplates"'>应用模板</button>
-        <button class='tab-btn @(_tabKey == "themes" ? "active" : "")' @onclick='() => _tabKey = "themes"'>主题</button>
     </div>
     <div class="myparts-body">
         @if (_tabKey == "componentlibraries")
@@ -29,10 +28,6 @@
         @if (_tabKey == "apptemplates")
         {
             <AppPartsList></AppPartsList>
-        }
-        @if (_tabKey == "themes")
-        {
-            <ThemePartsList></ThemePartsList>
         }
     </div>
 </div>

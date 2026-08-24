@@ -65,19 +65,25 @@
                     <div class="library-item @(library.LibraryId == _selectedLibraryId ? "selected" : "")" 
                          @onclick="@(() => SelectLibraryAsync(library))"
                          style="padding: 12px; margin: 4px 0; border-radius: 4px; cursor: pointer;">
-                        <div style="display: flex; align-items: center; justify-content: space-between;">
-                            <div style="flex: 1;">
-                                <div style="font-weight: 500; margin-bottom: 4px;">@library.LibraryName</div>
+                        <div style="display: flex; align-items: flex-start; justify-content: space-between;">
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="display: flex; align-items: end; gap: 8px; margin-bottom: 4px;">
+                                    <span style="font-weight: 500;">@library.LibraryName</span>
+                                    <span style="font-size: 12px; color: #86909C;">@library.LibraryId</span>
+                                </div>
                                 <div style="font-size: 12px; color: #4E5969; line-height: 1.4;">@library.Description</div>
                             </div>
-                            <div style="margin-left: 8px;">
-                                <details class="dropdown">
-                                    <summary class="btn btn-text btn-sm">...</summary>
-                                    <ul>
-                                        <li @onclick="@(() => EditLibrary(library.LibraryId))">编辑</li>
-                                        <li @onclick="@(() => DeleteLibrary(library.LibraryId))">删除</li>
-                                    </ul>
-                                </details>
+                            <div style="margin-left: 8px; position: relative;">
+                                <button class="btn btn-text btn-sm" @onclick="e => ToggleLibraryDropdown(library.LibraryId, e)" @onclick:stopPropagation>⋯</button>
+                                @if (_openLibraryDropdownId == library.LibraryId)
+                                {
+                                    <div class="h-dropdown-mask" @onclick="CloseLibraryDropdown" @onclick:stopPropagation></div>
+                                    <div class="h-dropdown-panel h-dropdown-panel-fixed" style="@GetLibraryDropdownStyle()">
+                                        <div class="h-dropdown-item" @onclick="() => { CloseLibraryDropdown(); EditLibrary(library.LibraryId); }">编辑</div>
+                                        <div class="h-dropdown-divider"></div>
+                                        <div class="h-dropdown-item danger" @onclick="async () => { CloseLibraryDropdown(); await DeleteLibrary(library.LibraryId); }">删除</div>
+                                    </div>
+                                }
                             </div>
                         </div>
                     </div>
@@ -225,6 +231,10 @@
     private ComponentLibrarySchema _selectedLibrary;
     private bool _componentPartsLoading = false;
 
+    // 组件库卡片下拉菜单
+    private string? _openLibraryDropdownId;
+    private (double X, double Y) _libraryDropdownPosition;
+
     // 搜索
     private string _librarySearchText = "";
     private string _componentSearchText = "";
@@ -276,9 +286,36 @@
 
     private async Task SelectLibraryAsync(ComponentLibrarySchema library)
     {
+        _openLibraryDropdownId = null;
         _selectedLibraryId = library.LibraryId;
         await LoadComponentPartsAsync();
         //StateHasChanged();
+    }
+
+    private void ToggleLibraryDropdown(string libraryId, MouseEventArgs e)
+    {
+        if (_openLibraryDropdownId == libraryId)
+        {
+            _openLibraryDropdownId = null;
+            return;
+        }
+
+        _libraryDropdownPosition = (e.ClientX, e.ClientY);
+        _openLibraryDropdownId = libraryId;
+    }
+
+    private void CloseLibraryDropdown()
+    {
+        _openLibraryDropdownId = null;
+    }
+
+    // 面板用 fixed 定位脱离左侧列表滚动容器, 避免展开时计入滚动溢出导致出现滚动条
+    private string GetLibraryDropdownStyle()
+    {
+        var (x, y) = _libraryDropdownPosition;
+        var top = y + 4;
+        return FormattableString.Invariant(
+            $"left: {x}px; top: {top}px; transform: translateX(-100%); max-height: calc(100vh - {top}px - 8px); overflow-y: auto;");
     }
 
     private async Task LoadComponentPartsAsync()
