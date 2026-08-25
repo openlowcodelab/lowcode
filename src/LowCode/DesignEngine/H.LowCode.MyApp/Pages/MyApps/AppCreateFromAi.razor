@@ -1,0 +1,218 @@
+@namespace H.LowCode.MyApp
+@inherits LowCodeComponentBase
+
+@inject IAppAiGenerateAppService AppAiGenerateAppService
+
+@if (_generated == null)
+{
+    <div style="padding: 8px 16px;">
+        <div style="margin-bottom: 8px; font-weight: 500;">用口语描述你想创建的应用</div>
+        <textarea class="ta" rows="6" style="width:100%;" @bind="_description" disabled="@_generating"
+                  placeholder="例如：帮我创建一个客户管理系统，包含客户信息列表、新增编辑客户的表单页和跟进记录管理"></textarea>
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <div style="color:#F53F3F; margin-top: 8px;">@_error</div>
+        }
+        <div style="color:#86909C; font-size:12px; margin-top: 8px;">
+            AI 将根据描述自动生成应用、页面、菜单与数据源，生成后可预览确认。
+        </div>
+        <div style="text-align:right; padding-top: 16px; margin-top: 16px; border-top:1px solid var(--h-border-light);">
+            <button class="btn" style="background:#722ED1; border-color:#722ED1; color:#fff;" @onclick="GenerateAsync" disabled="@_generating">
+                @(_generating ? "⏳ AI 生成中..." : "✨ 生成")
+            </button>
+        </div>
+    </div>
+}
+else
+{
+    <div style="padding: 8px 16px; max-height: 480px; overflow-y:auto;">
+        <div style="margin-bottom: 12px;">
+            <strong style="font-size:16px;">@_generated.Name</strong>
+            @if (!string.IsNullOrEmpty(_generated.Description))
+            {
+                <div style="color:#4E5969; margin-top:4px;">@_generated.Description</div>
+            }
+        </div>
+
+        @if (_generated.DataSources.Count > 0)
+        {
+            <div style="margin-bottom: 12px;">
+                <div style="font-weight:500; margin-bottom:6px;">🗃 数据源 (@_generated.DataSources.Count)</div>
+                @foreach (var ds in _generated.DataSources)
+                {
+                    <div style="padding-left:24px; color:#4E5969; font-size:13px; margin-top:2px;">
+                        @ds.DisplayName (@ds.Name)
+                        <span style="color:#86909C;">- @(ds.Fields.Count) 个字段</span>
+                    </div>
+                }
+            </div>
+        }
+
+        @if (_generated.Pages.Count > 0)
+        {
+            <div style="margin-bottom: 12px;">
+                <div style="font-weight:500; margin-bottom:6px;">📄 页面 (@_generated.Pages.Count)</div>
+                @foreach (var page in _generated.Pages)
+                {
+                    <div style="padding-left:24px; color:#4E5969; font-size:13px; margin-top:2px;">
+                        @(page.Name)
+                        <span class="tag tag-blue">@GetPageTypeName(page.PageType)</span>
+                        <span style="color:#86909C;">(@(page.Components.Count) 个组件)</span>
+                        @foreach (var comp in FlattenComponentSummary(page.Components))
+                        {
+                            <div style="color:#86909C; padding-left:16px;">· @comp</div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+
+        @if (GetMenuDisplayList().Count > 0)
+        {
+            <div style="margin-bottom: 12px;">
+                <div style="font-weight:500; margin-bottom:6px;">🧭 菜单</div>
+                @foreach (var (menu, depth) in GetMenuDisplayList())
+                {
+                    <div style="padding-left:@(depth * 20 + 24)px; color:#4E5969; font-size:13px; margin-top:2px;">
+                        @(menu.MenuType == 1 ? "📁" : "🔗") @menu.Title
+                    </div>
+                }
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <div style="color:#F53F3F; margin-top:8px;">@_error</div>
+        }
+    </div>
+
+    <div style="text-align:right; padding: 12px 16px 16px; border-top:1px solid var(--h-border-light);">
+        <button class="btn" style="margin-right:8px;" @onclick='() => { _generated = null; _error = null; }'>上一步</button>
+        <button class="btn btn-primary" @onclick="CreateAsync" disabled="@_creating">
+            @(_creating ? "⏳ 创建中..." : "✔ 确认创建")
+        </button>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Action OnSubmit { get; set; }
+
+    private string _description = "";
+    private bool _generating;
+    private bool _creating;
+    private string? _error;
+    private AiGeneratedAppDto? _generated;
+
+    private async Task GenerateAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_description))
+        {
+            _error = "请输入需求描述";
+            return;
+        }
+
+        _generating = true;
+        _error = null;
+        StateHasChanged();
+
+        try
+        {
+            _generated = (await AppAiGenerateAppService.GenerateAppAsync(new AiGenerateInputDto { Description = _description })).Data;
+        }
+        catch (Exception ex)
+        {
+            _error = $"生成失败：{ex.Message}";
+        }
+        finally
+        {
+            _generating = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CreateAsync()
+    {
+        if (_generated == null) return;
+
+        _creating = true;
+        _error = null;
+        StateHasChanged();
+
+        try
+        {
+            await AppAiGenerateAppService.CreateAppFromAiAsync(_generated);
+
+            Toast.Success("AI 应用创建成功！");
+            _generated = null;
+            _description = "";
+
+            if (OnSubmit != null)
+                OnSubmit();
+        }
+        catch (Exception ex)
+        {
+            _error = $"创建失败：{ex.Message}";
+        }
+        finally
+        {
+            _creating = false;
+            StateHasChanged();
+        }
+    }
+
+    private static string GetPageTypeName(string? type) => (type ?? "").Trim().ToLowerInvariant() switch
+    {
+        "form" => "表单",
+        "table" or "list" => "列表",
+        "report" => "报表",
+        _ => "普通"
+    };
+
+    /// <summary>
+    /// 组件树摘要（缩进文本）
+    /// </summary>
+    private static List<string> FlattenComponentSummary(List<AiGeneratedComponentDto> components, int depth = 0)
+    {
+        var result = new List<string>();
+        foreach (var component in components ?? [])
+        {
+            var title = string.IsNullOrWhiteSpace(component.Label) ? component.PartsId : component.Label;
+            result.Add($"{new string(' ', depth * 2)}{title}");
+            result.AddRange(FlattenComponentSummary(component.Children, depth + 1));
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// 菜单平铺展示列表（带层级深度）
+    /// </summary>
+    private List<(AiGeneratedMenuDto Menu, int Depth)> GetMenuDisplayList()
+    {
+        var result = new List<(AiGeneratedMenuDto, int)>();
+        if (_generated == null) return result;
+
+        var visited = new HashSet<string>();
+        void Add(string parent, int depth)
+        {
+            foreach (var menu in _generated.Menus)
+            {
+                if (!visited.Add(menu.TempId))
+                    continue;
+
+                var menuParent = string.IsNullOrWhiteSpace(menu.ParentTempId) ? "" : menu.ParentTempId.Trim();
+                if (!string.Equals(menuParent, parent, StringComparison.OrdinalIgnoreCase))
+                {
+                    visited.Remove(menu.TempId);
+                    continue;
+                }
+
+                result.Add((menu, depth));
+                Add(menu.TempId, depth + 1);
+            }
+        }
+
+        Add("", 0);
+        return result;
+    }
+}

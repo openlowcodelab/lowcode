@@ -4,6 +4,7 @@
 @layout DesignEngineLayout
 
 @inject IPageAppService PageAppService
+@inject IAppAiGenerateAppService AppAiGenerateAppService
 
 <PageTitle>@($"{_pageCascadingModel.PageName} - 页面设计器")</PageTitle>
 
@@ -23,6 +24,7 @@
                     <span style="font-size:12px; color:#86909C; margin-left:8px;">页面设计器</span>
                 </div>
                 <div style="display:flex; align-items:center; gap:4px;">
+                    <button class="btn btn-ai" type="button" @onclick="ShowAiModal" disabled="@_aiGenerating">✨ AI 生成</button>
                     <button class="btn" type="button" @onclick="PreviewPage">&#128065; 预览</button>
                     <button class="btn btn-primary" type="button" @onclick="SavePageSchemaAsync">&#128190; 保存</button>
                 </div>
@@ -43,6 +45,55 @@
         </div>
     }
 </CascadingValue>
+
+<style>
+    .btn-ai { background: #722ED1; border-color: #722ED1; color: #fff; font-weight: 600; }
+    .btn-ai:hover { background: #5b1fae; }
+    .ai-comp-item { color:#4E5969; font-size:13px; margin-top:2px; padding-left:24px; }
+</style>
+
+<HModal Title="✨ AI 生成页面设计" Visible="@_aiModalVisible" ShowFooter="false" Style="width:800px;" OnCancel='() => _aiModalVisible = false'>
+    @if (_aiComponents == null)
+    {
+        <div style="padding: 8px 0;">
+            <div style="margin-bottom: 8px; font-weight: 500;">用口语描述你想设计的页面内容，AI 将生成组件布局并应用到画布</div>
+            <textarea class="ta" rows="6" style="width:100%;" @bind="_aiDescription" disabled="@_aiGenerating"
+                      placeholder="例如：设计一个客户信息登记页面，上方是基本信息卡片（姓名、手机号、邮箱、地址），下方是跟进记录表格和一个提交按钮"></textarea>
+            @if (!string.IsNullOrEmpty(_aiError))
+            {
+                <div style="color:#F53F3F; margin-top: 8px;">@_aiError</div>
+            }
+            <div style="color:#86909C; font-size:12px; margin-top: 8px;">
+                注意：应用到画布将替换当前页面的全部组件（可先保存当前设计），应用后可继续手动调整并保存。
+            </div>
+        </div>
+        <div style="text-align:right; padding-top:16px; margin-top:16px; border-top:1px solid var(--h-border-light);">
+            <button class="btn" @onclick='() => _aiModalVisible = false' style="margin-right:8px;">取消</button>
+            <button class="btn btn-ai" @onclick="GenerateComponentsAsync" disabled="@_aiGenerating">
+                @(_aiGenerating ? "⏳ AI 生成中..." : "✨ 生成")
+            </button>
+        </div>
+    }
+    else
+    {
+        <div style="padding: 8px 0; max-height: 480px; overflow-y:auto;">
+            <div style="font-weight:500; margin-bottom:6px;">AI 已生成 @_aiComponents.Count 个顶层组件：</div>
+            @foreach (var line in GetComponentTreeSummary(_aiComponents))
+            {
+                <div class="ai-comp-item">@line</div>
+            }
+            @if (!string.IsNullOrEmpty(_aiError))
+            {
+                <div style="color:#F53F3F; margin-top:8px;">@_aiError</div>
+            }
+        </div>
+
+        <div style="text-align:right; padding: 12px 0 4px; border-top:1px solid var(--h-border-light);">
+            <button class="btn" @onclick='() => { _aiComponents = null; _aiError = null; }' style="margin-right:8px;">上一步</button>
+            <button class="btn btn-primary" @onclick="ApplyToCanvasAsync">✔ 应用到画布</button>
+        </div>
+    }
+</HModal>
 
 @code
 {
@@ -160,4 +211,132 @@
     {
         return $"{base.ToString()}-{AppId}-{PageId}";
     }
+
+    #region AI 生成页面设计
+
+    private bool _aiModalVisible = false;
+    private string _aiDescription = "";
+    private bool _aiGenerating = false;
+    private string? _aiError;
+    private List<ComponentPartsSchema>? _aiComponents;
+
+    private void ShowAiModal()
+    {
+        _aiDescription = "";
+        _aiComponents = null;
+        _aiError = null;
+        _aiModalVisible = true;
+    }
+
+    private async Task GenerateComponentsAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_aiDescription))
+        {
+            _aiError = "请输入需求描述";
+            return;
+        }
+
+        _aiGenerating = true;
+        _aiError = null;
+        StateHasChanged();
+
+        try
+        {
+            _aiComponents = (await AppAiGenerateAppService.GeneratePageComponentsAsync(AppId, new AiGenerateInputDto { Description = _aiDescription })).Data;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, $"AI 生成页面组件失败，{ex.Message}");
+            _aiError = $"生成失败：{ex.Message}";
+        }
+        finally
+        {
+            _aiGenerating = false;
+            StateHasChanged();
+        }
+    }
+
+    /// <summary>
+    /// 将 AI 生成的组件树应用到画布（替换当前画布全部组件，用户可继续调整后手动保存）
+    /// </summary>
+    private void ApplyComponentsToCanvas(List<ComponentPartsSchema> components)
+    {
+        var rootComponent = DragDropStateService.GetRootComponent(AppId, PageId);
+        if (rootComponent == null)
+        {
+            //与 DesignPanel 保持一致的根容器初始化
+            rootComponent = new ComponentPartsSchema
+            {
+                Id = "root",
+                PartsId = "root"
+            };
+            rootComponent.Name = "root";
+            DragDropStateService.SetRootComponent(AppId, PageId, rootComponent);
+        }
+
+        foreach (var component in components)
+        {
+            component.ParentId = rootComponent.Id;
+            WireRefreshRecursive(component);
+        }
+
+        rootComponent.Childrens = components;
+
+        //重置选中/拖拽状态
+        DragDropStateService.ResetDragStyle(AppId, PageId);
+
+        Toast.Success("已应用到画布，请检查并保存");
+        _aiModalVisible = false;
+
+        rootComponent.RefreshState();
+        StateHasChanged();
+    }
+
+    private async Task ApplyToCanvasAsync()
+    {
+        if (_aiComponents == null || _aiComponents.Count == 0) return;
+
+        try
+        {
+            ApplyComponentsToCanvas(_aiComponents);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, $"AI 组件应用画布失败，{ex.Message}");
+            _aiError = $"应用失败：{ex.Message}";
+            StateHasChanged();
+        }
+
+        await Task.CompletedTask;
+    }
+
+    private void WireRefreshRecursive(ComponentPartsSchema component)
+    {
+        component.DesignState.IsSelected = false;
+        component.DesignState.IsDroppedFromComponentPanel = false;
+        component.Refresh = () => InvokeAsync(StateHasChanged);
+
+        foreach (var child in component.Childrens)
+        {
+            child.ParentId = component.Id;
+            WireRefreshRecursive(child);
+        }
+    }
+
+    /// <summary>
+    /// 组件树摘要（缩进文本）
+    /// </summary>
+    private static List<string> GetComponentTreeSummary(IList<ComponentPartsSchema> components, int depth = 0)
+    {
+        var result = new List<string>();
+        foreach (var component in components ?? [])
+        {
+            var title = string.IsNullOrWhiteSpace(component.Label) ? component.PartsId : component.Label;
+            result.Add($"{new string('　', depth)}· {title}");
+            result.AddRange(GetComponentTreeSummary(component.Childrens, depth + 1));
+        }
+        return result;
+    }
+
+    #endregion
 }

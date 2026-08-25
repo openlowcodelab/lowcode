@@ -5,6 +5,7 @@
 
 @inject IPageAppService PageAppService
 @inject IPageTemplateAppService PageTemplateAppService
+@inject IAppAiGenerateAppService AppAiGenerateAppService
 
 <PageTitle>页面管理 - 我的应用</PageTitle>
 
@@ -14,7 +15,10 @@
             <input type="search" class="inp" placeholder="搜索页面名称" />
         </div>
     </div>
-    <button class="btn btn-primary" @onclick='() => CreateAsync(string.Empty)'>+ 新建页面</button>
+    <div style="display:flex; gap:8px;">
+        <button class="btn btn-ai" @onclick="CreateByAiAsync" disabled="@_aiVisible">✨ AI 生成</button>
+        <button class="btn btn-primary" @onclick='() => CreateAsync(string.Empty)'>+ 新建页面</button>
+    </div>
 </div>
 
 <table class="data-table">
@@ -54,6 +58,15 @@
         }
     </tbody>
 </table>
+
+<style>
+    .btn-ai { background: #722ED1; border-color: #722ED1; color: #fff; font-weight: 600; }
+    .btn-ai:hover { background: #5b1fae; }
+    .ai-preview-section { margin-bottom: 12px; }
+    .ai-preview-title { font-weight: 500; margin-bottom: 6px; }
+    .ai-preview-item { padding-left: 24px; color: #4E5969; font-size: 13px; margin-top: 2px; }
+    .ai-preview-sub { color: #86909C; padding-left: 16px; }
+</style>
 
 <HModal Title="新建页面" Visible="@_visible" OnOk="OnConfirmAsync" OnCancel='() => _visible = false'>
     <form>
@@ -107,6 +120,88 @@
     </form>
 </HModal>
 
+<HModal Title="✨ AI 生成页面" Visible="@_aiVisible" ShowFooter="false" Style="width:800px;" OnCancel='() => _aiVisible = false'>
+    @if (_aiGenerated == null)
+    {
+        <div style="padding: 8px 0;">
+            <div style="margin-bottom: 8px; font-weight: 500;">用口语描述你想为当前应用新增的页面</div>
+            <textarea class="ta" rows="6" style="width:100%;" @bind="_aiDescription" disabled="@_aiGenerating"
+                      placeholder="例如：帮我新增一个客户跟进记录页面，用表格展示跟进记录，并提供一个新增跟进记录的表单页"></textarea>
+            @if (!string.IsNullOrEmpty(_aiError))
+            {
+                <div style="color:#F53F3F; margin-top: 8px;">@_aiError</div>
+            }
+            <div style="color:#86909C; font-size:12px; margin-top: 8px;">
+                AI 将根据描述自动生成页面、菜单与数据源（自动避开已有页面），生成后可预览确认。
+            </div>
+        </div>
+        <div style="text-align:right; padding-top:16px; margin-top:16px; border-top:1px solid var(--h-border-light);">
+            <button class="btn" style="background:#722ED1; border-color:#722ED1; color:#fff;" @onclick="GeneratePagesAsync" disabled="@_aiGenerating">
+                @(_aiGenerating ? "⏳ AI 生成中..." : "✨ 生成")
+            </button>
+        </div>
+    }
+    else
+    {
+        <div style="padding: 8px 0; max-height: 480px; overflow-y:auto;">
+            @if (_aiGenerated.DataSources.Count > 0)
+            {
+                <div class="ai-preview-section">
+                    <div class="ai-preview-title">🗃 数据源 (@_aiGenerated.DataSources.Count)</div>
+                    @foreach (var ds in _aiGenerated.DataSources)
+                    {
+                        <div class="ai-preview-item">
+                            @(string.IsNullOrEmpty(ds.DisplayName) ? ds.Name : ds.DisplayName) (@ds.Name)
+                            <span style="color:#86909C;">- @(ds.Fields.Count) 个字段</span>
+                        </div>
+                    }
+                </div>
+            }
+            @if (_aiGenerated.Pages.Count > 0)
+            {
+                <div class="ai-preview-section">
+                    <div class="ai-preview-title">📄 页面 (@_aiGenerated.Pages.Count)</div>
+                    @foreach (var page in _aiGenerated.Pages)
+                    {
+                        <div class="ai-preview-item">
+                            @(page.Name)
+                            <span class="tag tag-blue">@GetAiPageTypeName(page.PageType)</span>
+                            <span style="color:#86909C;">(@(page.Components.Count) 个组件)</span>
+                            @foreach (var comp in FlattenAiComponents(page.Components))
+                            {
+                                <div class="ai-preview-sub">· @comp</div>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+            @if (GetAiMenuDisplayList().Count > 0)
+            {
+                <div class="ai-preview-section">
+                    <div class="ai-preview-title">🧭 菜单</div>
+                    @foreach (var (menu, depth) in GetAiMenuDisplayList())
+                    {
+                        <div class="ai-preview-item" style="padding-left:@(depth * 20 + 24)px;">
+                            @(menu.MenuType == 1 ? "📁" : "🔗") @menu.Title
+                        </div>
+                    }
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(_aiError))
+            {
+                <div style="color:#F53F3F; margin-top:8px;">@_aiError</div>
+            }
+        </div>
+
+        <div style="text-align:right; padding: 12px 0 4px; border-top:1px solid var(--h-border-light);">
+            <button class="btn" style="margin-right:8px;" @onclick='() => { _aiGenerated = null; _aiError = null; }'>上一步</button>
+            <button class="btn btn-primary" @onclick="CreatePagesAsync" disabled="@_aiCreating">
+                @(_aiCreating ? "⏳ 创建中..." : "✔ 确认创建")
+            </button>
+        </div>
+    }
+</HModal>
+
 @code {
     [PersistentState]
     public IList<PageListModel> _pageList { get; set; }
@@ -120,6 +215,14 @@
     private string _createMode = "blank";
     private string _selectedTemplateId = "";
     private IList<PageTemplateListModel> _templates = new List<PageTemplateListModel>();
+
+    //AI 生成
+    private bool _aiVisible = false;
+    private string _aiDescription = "";
+    private bool _aiGenerating = false;
+    private bool _aiCreating = false;
+    private string? _aiError;
+    private AiGeneratedAppDto? _aiGenerated;
 
     protected override async Task OnInitializedAsync()
     {
@@ -218,4 +321,126 @@
     {
         return (await PageAppService.SaveAsync(_pageSchema)).Data == true;
     }
+
+    #region AI 生成页面
+
+    private void CreateByAiAsync()
+    {
+        _aiDescription = "";
+        _aiGenerated = null;
+        _aiError = null;
+        _aiVisible = true;
+        StateHasChanged();
+    }
+
+    private async Task GeneratePagesAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_aiDescription))
+        {
+            _aiError = "请输入需求描述";
+            return;
+        }
+
+        _aiGenerating = true;
+        _aiError = null;
+        StateHasChanged();
+
+        try
+        {
+            _aiGenerated = (await AppAiGenerateAppService.GenerateAppContentAsync(AppId, new AiGenerateInputDto { Description = _aiDescription })).Data;
+        }
+        catch (Exception ex)
+        {
+            _aiError = $"生成失败：{ex.Message}";
+        }
+        finally
+        {
+            _aiGenerating = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CreatePagesAsync()
+    {
+        if (_aiGenerated == null) return;
+
+        _aiCreating = true;
+        _aiError = null;
+        StateHasChanged();
+
+        try
+        {
+            var isSuccess = (await AppAiGenerateAppService.CreateAppContentFromAiAsync(AppId, _aiGenerated)).Data == true;
+            if (isSuccess)
+            {
+                _aiVisible = false;
+                Toast.Success("AI 页面创建成功！");
+                _pageList = await LoadPagesAsync(1, 50);
+            }
+            else
+            {
+                _aiError = "创建失败";
+            }
+        }
+        catch (Exception ex)
+        {
+            _aiError = $"创建失败：{ex.Message}";
+        }
+        finally
+        {
+            _aiCreating = false;
+            StateHasChanged();
+        }
+    }
+
+    private static string GetAiPageTypeName(string? type) => (type ?? "").Trim().ToLowerInvariant() switch
+    {
+        "form" => "表单",
+        "table" or "list" => "列表",
+        "report" => "报表",
+        _ => "普通"
+    };
+
+    private static List<string> FlattenAiComponents(List<AiGeneratedComponentDto> components, int depth = 0)
+    {
+        var result = new List<string>();
+        foreach (var component in components ?? [])
+        {
+            var title = string.IsNullOrWhiteSpace(component.Label) ? component.PartsId : component.Label;
+            result.Add($"{new string(' ', depth * 2)}{title}");
+            result.AddRange(FlattenAiComponents(component.Children, depth + 1));
+        }
+        return result;
+    }
+
+    private List<(AiGeneratedMenuDto Menu, int Depth)> GetAiMenuDisplayList()
+    {
+        var result = new List<(AiGeneratedMenuDto, int)>();
+        if (_aiGenerated == null) return result;
+
+        var visited = new HashSet<string>();
+        void Add(string parent, int depth)
+        {
+            foreach (var menu in _aiGenerated.Menus)
+            {
+                if (!visited.Add(menu.TempId))
+                    continue;
+
+                var menuParent = string.IsNullOrWhiteSpace(menu.ParentTempId) ? "" : menu.ParentTempId.Trim();
+                if (!string.Equals(menuParent, parent, StringComparison.OrdinalIgnoreCase))
+                {
+                    visited.Remove(menu.TempId);
+                    continue;
+                }
+
+                result.Add((menu, depth));
+                Add(menu.TempId, depth + 1);
+            }
+        }
+
+        Add("", 0);
+        return result;
+    }
+
+    #endregion
 }

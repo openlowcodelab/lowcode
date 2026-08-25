@@ -20,6 +20,8 @@
     .myapps-banner-sub { font-size: 13px; opacity: 0.85; margin-top: 6px; }
     .myapps-banner .btn-create { background: #fff; color: #165DFF; border: none; font-weight: 600; height: 38px; padding: 0 22px; border-radius: 8px; }
     .myapps-banner .btn-create:hover { background: #f0f4ff; color: #4080FF; }
+    .myapps-banner .btn-ai { background: rgba(255,255,255,0.18); color: #fff; border: 1px solid rgba(255,255,255,0.65); font-weight: 600; height: 38px; padding: 0 22px; border-radius: 8px; }
+    .myapps-banner .btn-ai:hover { background: rgba(255,255,255,0.3); }
 
     .myapp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
     .myapp-card-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--h-border-light); }
@@ -31,7 +33,10 @@
             <div class="myapps-banner-title">你好，欢迎回来</div>
             <div class="myapps-banner-sub">从这里开始创建与管理你的低代码应用</div>
         </div>
-        <button class="btn btn-create" @onclick="CreateApp">+ 创建应用</button>
+        <div style="display:flex; gap:12px;">
+            <button class="btn btn-ai" @onclick="CreateAppByAi" disabled="@_aiVisible">✨ AI 生成</button>
+            <button class="btn btn-create" @onclick="CreateApp">+ 创建应用</button>
+        </div>
     </div>
 </div>
 
@@ -91,6 +96,10 @@
     <AppCreateFromTemplate OnSubmit="ReloadApps"></AppCreateFromTemplate>
 </HModal>
 
+<HModal Title="✨ AI 生成应用" Visible="@_aiVisible" ShowFooter="false" Style="width:800px;" OnCancel='() => _aiVisible = false'>
+    <AppCreateFromAi OnSubmit="ReloadAppsAfterAi"></AppCreateFromAi>
+</HModal>
+
 <HModal Title="编辑应用" Visible="@_editVisible" OnOk="OnConfirm" OnCancel='() => _editVisible = false'>
     <AppForm AppSchema="_currentApp" OnSubmit="ReloadApps" @ref="@_appForm"></AppForm>
 </HModal>
@@ -115,6 +124,7 @@
     private AppPartsSchema _currentApp;
 
     private bool _createVisible = false;
+    private bool _aiVisible = false;
     private bool _editVisible = false;
     private AppForm _appForm;
 
@@ -149,6 +159,14 @@
         StateHasChanged();
     }
 
+    private async void ReloadAppsAfterAi()
+    {
+        _aiVisible = false;
+        _appList = await LoadAppsAsync();
+
+        StateHasChanged();
+    }
+
     private void CreateApp()
     {
         _currentApp = new()
@@ -156,6 +174,12 @@
             Id = ShortIdGenerator.Generate()
         };
         _createVisible = true;
+        StateHasChanged();
+    }
+
+    private void CreateAppByAi()
+    {
+        _aiVisible = true;
         StateHasChanged();
     }
 
