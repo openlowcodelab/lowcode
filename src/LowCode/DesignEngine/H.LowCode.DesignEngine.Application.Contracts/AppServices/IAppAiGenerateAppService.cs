@@ -34,4 +34,9 @@ public interface IAppAiGenerateAppService : IAppService
     /// 页面设计器：根据口语化描述生成页面组件树（返回真实组件实例，不落库）
     /// </summary>
     Task<BaseOutput<List<ComponentPartsSchema>>> GeneratePageComponentsAsync(string appId, AiGenerateInputDto input);
+
+    /// <summary>
+    /// 我的物料-组件库：根据口语化描述生成组件物料修改草稿（返回完整 ComponentPartsSchema，不落库）
+    /// </summary>
+    Task<BaseOutput<ComponentPartsSchema>> GenerateComponentPartsAsync(string libraryId, string partsId, AiGenerateInputDto input);
 }

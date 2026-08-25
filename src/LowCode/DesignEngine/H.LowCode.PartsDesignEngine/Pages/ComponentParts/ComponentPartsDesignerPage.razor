@@ -7,6 +7,11 @@
 
 <PageTitle>@($"{_partsCascading.PartsName} - 组件物料设计器")</PageTitle>
 
+<style>
+    .btn-ai { background: #722ED1; border-color: #722ED1; color: #fff; font-weight: 600; }
+    .btn-ai:hover { background: #5b1fae; }
+</style>
+
 @if (_loading)
 {
     <div style="display: flex; justify-content: center; align-items: center; height: 100vh;">
@@ -25,6 +30,7 @@ else
                     <h3 style="margin: 0; line-height: 64px;">组件物料设计器</h3>
                 </div>
                 <div>
+                    <button class="btn btn-ai" @onclick="ShowAiModal" disabled="@_aiModalVisible">✨ AI 生成</button>
                     <button class="btn" @onclick="PreviewComponent">预览</button>
                     <button class="btn btn-primary" @onclick="SaveComponentPartsSchemaAsync" disabled="@_saving">保存</button>
                 </div>
@@ -68,6 +74,17 @@ else
     </CascadingValue>
 }
 
+<HModal Title="✨ AI 生成组件物料" Visible="@_aiModalVisible" ShowFooter="false" Style="width:800px;" OnCancel='() => _aiModalVisible = false'>
+    @if (!_loading && _partsSchema != null)
+    {
+        <PartsAiGenerateModal LibraryId="@LibraryId"
+                              PartsId="@PartsId"
+                              PartsLabel="@(string.IsNullOrEmpty(_partsSchema.Label) ? _partsSchema.PartsId : _partsSchema.Label)"
+                              OnApply="ApplyAiDraftAsync"
+                              OnClose='() => _aiModalVisible = false' />
+    }
+</HModal>
+
 @code
 {
     [Parameter]
@@ -83,6 +100,8 @@ else
 
     private bool _loading = true;
     private bool _saving = false;
+
+    private bool _aiModalVisible = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -205,4 +224,37 @@ else
         // TODO: 实现组件预览功能
         Toast.Info("预览功能开发中...");
     }
+
+    #region AI 生成物料
+
+    private void ShowAiModal()
+    {
+        _aiModalVisible = true;
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// 应用 AI 生成的物料草稿（仅替换设计器中的物料，由用户检查后手动保存）
+    /// </summary>
+    private async Task ApplyAiDraftAsync(ComponentPartsSchema draft)
+    {
+        _aiModalVisible = false;
+
+        if (draft == null) return;
+
+        if (draft.Childrens == null)
+        {
+            draft.Childrens = [];
+        }
+
+        _partsSchema = draft;
+        _partsCascading.PartsName = draft.Name ?? draft.PartsId;
+
+        Toast.Success("AI 草稿已应用到设计器，请检查后保存");
+
+        StateHasChanged();
+        await Task.CompletedTask;
+    }
+
+    #endregion
 }

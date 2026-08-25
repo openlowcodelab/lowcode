@@ -20,6 +20,7 @@
                 </div>
             </div>
             <div style="display: flex; gap: 8px;">
+                <button class="btn btn-ai" @onclick="ShowAiModal" disabled="@_aiModalVisible">✨ AI 生成</button>
                 <button class="btn" @onclick="RefreshPreview">刷新预览</button>
                 <button class="btn btn-primary" @onclick="Save" disabled="@_saving">保存</button>
             </div>
@@ -60,6 +61,17 @@
     }
 </div>
 
+<HModal Title="✨ AI 生成组件物料" Visible="@_aiModalVisible" ShowFooter="false" Style="width:800px;" OnCancel='() => _aiModalVisible = false'>
+    @if (_componentParts != null)
+    {
+        <PartsAiGenerateModal LibraryId="@LibraryId"
+                              PartsId="@ComponentId"
+                              PartsLabel="@(string.IsNullOrEmpty(_componentParts.Label) ? _componentParts.PartsId : _componentParts.Label)"
+                              OnApply="ApplyAiDraftAsync"
+                              OnClose='() => _aiModalVisible = false' />
+    }
+</HModal>
+
 @code {
     [Parameter]
     public string LibraryId { get; set; }
@@ -71,6 +83,8 @@
     private ComponentPartsPreview _preview;
     private bool _loading = true;
     private bool _saving = false;
+
+    private bool _aiModalVisible = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -119,6 +133,32 @@
         //配置变更时实时刷新右侧预览
         _preview?.RefreshPreview();
     }
+
+    #region AI 生成物料
+
+    private void ShowAiModal()
+    {
+        _aiModalVisible = true;
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// 应用 AI 生成的物料草稿（仅替换编辑器中的物料，由用户检查后手动保存）
+    /// </summary>
+    private async Task ApplyAiDraftAsync(ComponentPartsSchema draft)
+    {
+        _aiModalVisible = false;
+
+        if (draft == null) return;
+
+        _componentParts = draft;
+        Toast.Success("AI 草稿已应用到编辑器，请检查后保存");
+
+        StateHasChanged();
+        await Task.CompletedTask;
+    }
+
+    #endregion
 
     private void RefreshPreview()
     {
@@ -208,5 +248,16 @@
         font-weight: 600;
         margin-bottom: 16px;
         color: #1D2129;
+    }
+
+    .btn-ai {
+        background: #722ED1;
+        border-color: #722ED1;
+        color: #fff;
+        font-weight: 600;
+    }
+
+    .btn-ai:hover {
+        background: #5b1fae;
     }
 </style>

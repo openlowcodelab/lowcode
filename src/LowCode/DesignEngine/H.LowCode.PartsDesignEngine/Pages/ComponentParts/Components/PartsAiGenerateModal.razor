@@ -1,0 +1,150 @@
+@namespace H.LowCode.PartsDesignEngine
+@inherits LowCodeComponentBase
+
+@inject IAppAiGenerateAppService AppAiGenerateAppService
+
+@if (_draft == null)
+{
+    <div style="padding: 8px 0;">
+        <div style="margin-bottom: 8px; font-weight: 500;">用口语描述你想如何修改组件物料「@(PartsLabel ?? PartsId)」</div>
+        <textarea class="ta" rows="6" style="width:100%;" @bind="_description" disabled="@_generating"
+                  placeholder="例如：把按钮改成主要样式（蓝色背景白字），并增加一个 loading 属性用于显示加载中状态"></textarea>
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <div style="color:#F53F3F; margin-top: 8px;">@_error</div>
+        }
+        <div style="color:#86909C; font-size:12px; margin-top: 8px;">
+            AI 将基于当前物料定义生成修改草稿，应用后可在编辑器中检查并手动保存。
+        </div>
+    </div>
+    <div style="text-align:right; padding-top:16px; margin-top:16px; border-top:1px solid var(--h-border-light, #E5E6EB);">
+        <button class="btn" @onclick='() => OnClose.InvokeAsync()' style="margin-right:8px;">取消</button>
+        <button class="btn btn-ai" @onclick="GenerateAsync" disabled="@_generating">
+            @(_generating ? "⏳ AI 生成中..." : "✨ 生成")
+        </button>
+    </div>
+}
+else
+{
+    <div style="padding: 8px 0; max-height: 420px; overflow-y:auto;">
+        <div style="font-weight:500; margin-bottom:6px;">AI 已生成物料修改草稿：</div>
+        <div class="ai-part-item">名称：@(string.IsNullOrEmpty(_draft.Label) ? "-" : _draft.Label)</div>
+        <div class="ai-part-item">渲染类型：@(GetFragmentTypeName())</div>
+        <div class="ai-part-item">元素属性：@(_draft.Fragment?.Attributes?.Length ?? 0) 个</div>
+        <div class="ai-part-item">属性定义分组：@(_draft.AttributeDefineGroups?.Count() ?? 0) 组 / @(CountAttributeDefines()) 个设置项</div>
+        <div class="ai-part-item">事件定义：@(_draft.EventDefines?.Count ?? 0) 个</div>
+        <div class="ai-part-item">样式定义：@(_draft.StyleDefines?.Count ?? 0) 个</div>
+        @if (_draft.Childrens is { Count: > 0 })
+        {
+            <div class="ai-part-item">子组件：@_draft.Childrens.Count 个</div>
+            @foreach (var line in GetChildrenSummary(_draft.Childrens))
+            {
+                <div style="color:#86909C; font-size:13px; padding-left:40px; margin-top:2px;">@line</div>
+            }
+        }
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <div style="color:#F53F3F; margin-top:8px;">@_error</div>
+        }
+    </div>
+
+    <div style="text-align:right; padding: 12px 0 4px; border-top:1px solid var(--h-border-light, #E5E6EB);">
+        <button class="btn" style="margin-right:8px;" @onclick='() => { _draft = null; _error = null; }'>上一步</button>
+        <button class="btn btn-primary" @onclick="ApplyAsync">✔ 应用到编辑器</button>
+    </div>
+}
+
+<style>
+    .btn-ai { background: #722ED1; border-color: #722ED1; color: #fff; font-weight: 600; }
+    .btn-ai:hover { background: #5b1fae; }
+    .ai-part-item { color:#4E5969; font-size:13px; margin-top:4px; padding-left:24px; }
+</style>
+
+@code {
+    [Parameter]
+    public string LibraryId { get; set; }
+
+    [Parameter]
+    public string PartsId { get; set; }
+
+    [Parameter]
+    public string PartsLabel { get; set; }
+
+    /// <summary>应用到编辑器（仅替换内存中的物料，由用户手动保存）</summary>
+    [Parameter]
+    public EventCallback<ComponentPartsSchema> OnApply { get; set; }
+
+    /// <summary>关闭弹窗</summary>
+    [Parameter]
+    public EventCallback OnClose { get; set; }
+
+    private string _description = "";
+    private bool _generating = false;
+    private string? _error;
+    private ComponentPartsSchema? _draft;
+
+    private async Task GenerateAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_description))
+        {
+            _error = "请输入修改需求描述";
+            return;
+        }
+
+        _generating = true;
+        _error = null;
+        StateHasChanged();
+
+        try
+        {
+            _draft = (await AppAiGenerateAppService.GenerateComponentPartsAsync(
+                LibraryId,
+                PartsId,
+                new AiGenerateInputDto { Description = _description })).Data;
+        }
+        catch (Exception ex)
+        {
+            _error = $"生成失败：{ex.Message}";
+        }
+        finally
+        {
+            _generating = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ApplyAsync()
+    {
+        if (_draft == null) return;
+
+        await OnApply.InvokeAsync(_draft);
+
+        _draft = null;
+        _description = "";
+        _error = null;
+    }
+
+    private string GetFragmentTypeName()
+    {
+        var dt = _draft?.Fragment?.DefaultTypeName;
+        if (string.IsNullOrEmpty(dt)) return "-";
+        return dt.StartsWith("html:", StringComparison.OrdinalIgnoreCase)
+            ? dt
+            : dt.Split(',')[0].Split('.').LastOrDefault() ?? dt;
+    }
+
+    private int CountAttributeDefines() =>
+        (_draft?.AttributeDefineGroups ?? []).Sum(g => g.AttributeDefines?.Length ?? 0);
+
+    private static List<string> GetChildrenSummary(IList<ComponentPartsSchema> childrens, int depth = 0)
+    {
+        var result = new List<string>();
+        foreach (var child in childrens ?? [])
+        {
+            var title = string.IsNullOrWhiteSpace(child.Label) ? child.PartsId : child.Label;
+            result.Add($"{new string(' ', depth * 2)}· {title}");
+            result.AddRange(GetChildrenSummary(child.Childrens, depth + 1));
+        }
+        return result;
+    }
+}

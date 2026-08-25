@@ -191,6 +191,49 @@ public class AppAiGenerateAppService : ApplicationService, IAppAiGenerateAppServ
         return new(components);
     }
 
+    /// <inheritdoc />
+    public async Task<BaseOutput<ComponentPartsSchema>> GenerateComponentPartsAsync(string libraryId, string partsId, AiGenerateInputDto input)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(libraryId);
+        ArgumentException.ThrowIfNullOrEmpty(partsId);
+        EnsureDescription(input);
+
+        var current = await _componentPartsRepository.GetByIdAsync(libraryId, partsId)
+            ?? throw new UserFriendlyException($"组件物料不存在：{partsId}");
+
+        //当前物料 JSON 作为修改上下文
+        var currentJson = current.ToJson();
+
+        var result = (await _aiCompletion.CompleteAsync(new AiCompletionInputDto
+        {
+            SystemPrompt = ComponentPartsSystemPrompt,
+            UserMessage = $"当前组件物料 JSON：\n{currentJson}\n\n修改需求：\n{input.Description}",
+            Temperature = 0.3f,
+            MaxTokens = 16384
+        })).Data;
+
+        var draft = ParseJson<ComponentPartsSchema>(result!.Content)
+            ?? throw new UserFriendlyException("AI 返回的组件结构无效，请调整描述后重试");
+
+        if (draft.Fragment == null)
+        {
+            throw new UserFriendlyException("AI 返回的组件缺少渲染片段（frag），请调整描述后重试");
+        }
+
+        //身份字段不允许 AI 修改，强制回写
+        draft.LibraryId = libraryId;
+        draft.PartsId = partsId;
+        draft.Id = current.Id;
+        draft.ComponentType = current.ComponentType;
+
+        if (string.IsNullOrWhiteSpace(draft.Label))
+        {
+            draft.Label = current.Label;
+        }
+
+        return new(draft);
+    }
+
     #endregion
 
     #region 落库（页面/菜单/数据源）
@@ -584,6 +627,32 @@ public class AppAiGenerateAppService : ApplicationService, IAppAiGenerateAppServ
             - 所有名称、描述使用中文；不要生成 description 中未提及的多余页面。
             """;
     }
+
+    /// <summary>
+    /// 组件物料修改系统提示词（输入当前物料 JSON，输出修改后的完整 JSON）
+    /// </summary>
+    private static string ComponentPartsSystemPrompt => """
+        你是一名资深低代码组件物料工程师。用户会提供一个组件物料的当前 JSON 定义与口语化修改需求，请按需求修改物料定义。
+        输出要求：
+        1. 只输出一个 JSON 对象（即修改后的完整组件物料定义），不要输出任何解释文字，也不要使用 markdown 代码块标记。
+        2. 物料 JSON 结构说明：
+        - partsId：组件物料唯一标识；libid：所属组件库Id；id：物料实例Id；ct：1-原子组件 2-组合组件 —— 这四个字段以及 v(版本) 必须原样保留，禁止修改。
+        - lb：物料显示名称；desc：物料描述；order：排序；pub：发布状态(1-发布)。
+        - frag：渲染片段。dt 为 "html:{标签}" 形式（如 "html:button"、"html:div"）或 .NET 组件类型全名（如 "H.LowCode.Components.LcTable, H.LowCode.Components"）——非必要不要修改 dt。
+          frag.attrs：元素属性数组 [{ "attrn": "属性名", "attrt": "System.String|System.Boolean|System.Int32", "attrv": 属性值 }]；
+          frag.childs：子片段数组（结构与 frag 相同，用于构建内部 HTML 结构）；frag.content：文本内容（如按钮文字）；frag.evs：元素事件配置。
+        - attrdefgroups：设置面板属性定义分组 [{ "gn": "分组名", "attrdefs": [{ "attrn": "属性名", "disn": "显示名", "pt": 1, "dftval": 默认值, "attrt": "类型全名", "attrv": 当前值, "desc": "描述", "ops": {"选项值":"选项文本"} }] }]，
+          其中 pt 为设置控件类型：1-Input 2-InputNumber 3-Radio 4-Checkbox 5-Select 6-Switch 7-Date 8-Textarea 9-Options 10-Table。
+          attrdefs[].attrn 必须与 frag.attrs[].attrn 或 frag 内部子片段的属性对应，修改默认值时 attrv 要同步更新。
+        - evdefs：事件定义 [{ "en": "OnClick", "disn": "点击事件", "desc": "描述" }]；stydefs：样式定义 [{ "sn": "样式名", "disn": "显示名", "cssprop": "css属性", "st": "类型", "dftval": "默认值" }]。
+        - stl：设计器画布尺寸 { "itemw": 栅格宽0~24, "itemh": 高度px, "labelw": 标签宽 }。
+        - childs：子组件实例数组（组合组件的可视化结构，每个子项结构与物料相同）。
+        3. 规则：
+        - 只修改与需求相关的部分，其余内容原样保留；保持 JSON 结构合法、字段名不变、类型一致（布尔/数字/字符串）。
+        - 新增视觉样式优先通过 frag.attrs 的 class/style 属性实现（项目使用 hc-* 工具类，如 hc-btn-primary、hc-tag-blue）。
+        - 新增可配置能力时：先在 frag.attrs 加属性（或复用已有属性），再在 attrdefgroups 对应分组加 attrdefs 定义，两者 attrn 一致。
+        - 显示名称、描述使用中文；不要删除需求未提及的已有功能。
+        """;
 
     /// <summary>
     /// 构建页面组件树系统提示词（附可用物料清单）
