@@ -101,7 +101,7 @@ app.MapRazorComponents<App>()
         typeof(H.LowCode.DesignEngine._Imports).Assembly,
         typeof(H.LowCode.MyApp._Imports).Assembly,
         typeof(H.LowCode.PartsDesignEngine._Imports).Assembly,
-        typeof(H.LowCode.Themes.AntBlazor._Imports).Assembly,
+        typeof(H.LowCode.RenderEngine._Imports).Assembly,
         typeof(H.Util.Blazor._Imports).Assembly,
         typeof(H.Testing.Web._Imports).Assembly,
         typeof(H.Notification.Web._Imports).Assembly,

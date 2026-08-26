@@ -1,4 +1,4 @@
-﻿@namespace H.LowCode.Themes.AntBlazor
+@namespace H.LowCode.RenderEngine
 @inherits RenderEngineLowCodeComponentBase
 
 <div class="renderengine-componentcontainer" style="@ContainerComponent.Style.DefaultStyle @ContainerComponent.Style.CustomStyle">
@@ -10,9 +10,10 @@
                 width: @((comp.Style.ItemWidth > 4 ? comp.Style.ItemWidth : 24) /24 * 100)%;
                 box-sizing: border-box;
                 @comp.Style.DefaultStyle @comp.Style.CustomStyle">
-                <FormComponentRender Component="@comp"></FormComponentRender>
+                <ComponentRender Component="@comp"></ComponentRender>
             </div>
         }
+
     }
 </div>
 

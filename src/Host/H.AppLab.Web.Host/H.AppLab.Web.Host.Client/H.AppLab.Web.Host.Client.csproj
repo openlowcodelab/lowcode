@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
   <Import Project="..\..\..\common.props" />
   <PropertyGroup>
     <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
@@ -31,7 +31,7 @@
     <BlazorWebAssemblyLazyLoad Include="H.LowCode.DesignEngine.dll" />
     <BlazorWebAssemblyLazyLoad Include="H.LowCode.MyApp.dll" />
     <BlazorWebAssemblyLazyLoad Include="H.LowCode.PartsDesignEngine.dll" />
-    <BlazorWebAssemblyLazyLoad Include="H.LowCode.Themes.AntBlazor.dll" />
+    <BlazorWebAssemblyLazyLoad Include="H.LowCode.RenderEngine.dll" />
     <!-- 各模块 Application.Contracts（代理在导航时延迟注册，见 ClientServices.RegisterLazyModule） -->
     <BlazorWebAssemblyLazyLoad Include="H.Organization.Application.Contracts.dll" />
     <BlazorWebAssemblyLazyLoad Include="H.Approval.Application.Contracts.dll" />
@@ -79,7 +79,7 @@
     <BlazorWebAssemblyLazyLoad Include="H.LowCode.DesignEngine.pdb" />
     <BlazorWebAssemblyLazyLoad Include="H.LowCode.MyApp.pdb" />
     <BlazorWebAssemblyLazyLoad Include="H.LowCode.PartsDesignEngine.pdb" />
-    <BlazorWebAssemblyLazyLoad Include="H.LowCode.Themes.AntBlazor.pdb" />
+    <BlazorWebAssemblyLazyLoad Include="H.LowCode.RenderEngine.pdb" />
     <BlazorWebAssemblyLazyLoad Include="H.Organization.Application.Contracts.pdb" />
     <BlazorWebAssemblyLazyLoad Include="H.Approval.Application.Contracts.pdb" />
     <BlazorWebAssemblyLazyLoad Include="H.Testing.Application.Contracts.pdb" />
@@ -122,7 +122,7 @@
     <!-- DesignEngine -->
     <ProjectReference Include="..\..\..\LowCode\DesignEngine\H.LowCode.Workbench\H.LowCode.Workbench.csproj" />
     <!-- RenderEngine -->
-    <ProjectReference Include="..\..\..\LowCode\RenderEngine\H.LowCode.Themes.AntBlazor\H.LowCode.Themes.AntBlazor.csproj" />
+    <ProjectReference Include="..\..\..\LowCode\RenderEngine\H.LowCode.RenderEngine\H.LowCode.RenderEngine.csproj" />
     <!-- Approval -->
     <ProjectReference Include="..\..\..\Services\Approval\H.Approval.Web\H.Approval.Web.csproj" />
     <!-- Testing -->
