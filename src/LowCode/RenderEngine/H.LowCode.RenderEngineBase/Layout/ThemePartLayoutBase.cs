@@ -10,7 +10,7 @@ namespace H.LowCode.RenderEngineBase;
 public abstract class ThemePartLayoutBase : LowCodeLayoutComponentBase
 {
     [Inject]
-    private IMetaAppService MetaAppService { get; set; }
+    protected IMetaAppService MetaAppService { get; set; }
 
     [Inject]
     private NavigationManager NavigationManager { get; set; }
@@ -30,7 +30,8 @@ public abstract class ThemePartLayoutBase : LowCodeLayoutComponentBase
                 AppId = appId,
                 Id = ShortIdGenerator.Generate(),
                 MenuUrl = IndexUrl,
-                Title = "首页"
+                Title = "首页",
+                Icon = "home"
             });
         }
         return menus;

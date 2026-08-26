@@ -2,6 +2,21 @@
     height: 100%;
 }
 
+/* ====================== 页面根容器 ========================== */
+/* 栅格布局根容器: 组件按栅格宽度并排 + 自动换行; 白色卡片承载, 与灰色页面底色区分 */
+.renderengine-page-root {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    align-content: flex-start;
+    width: 100%;
+    min-height: 100%;
+    padding: 16px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-sizing: border-box;
+}
+
 /* ====================== 覆盖默认样式 ========================== */
 .renderengine .ant-pro-basicLayout-content {
     margin: 8px !important;

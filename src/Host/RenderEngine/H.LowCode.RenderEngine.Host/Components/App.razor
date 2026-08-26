@@ -9,6 +9,9 @@
     <link rel="apple-touch-icon" sizes="512x512" href="@Assets["logo.png"]" />
     <!-- 所有项目的razor文件中的 css -->
     <link rel="stylesheet" href="@Assets["H.LowCode.RenderEngine.Host.styles.css"]" />
+    @* 类库 scoped CSS 隔离包（组件 .razor.css 编译产物，缺失将导致组件样式失效） *@
+    <link rel="stylesheet" href="@Assets["_content/H.Util.Blazor/H.Util.Blazor.bundle.scp.css"]" />
+    <link rel="stylesheet" href="@Assets["_content/H.LowCode.Themes.AntBlazor/H.LowCode.Themes.AntBlazor.bundle.scp.css"]" />
 
     <!-- abp -->
     <script src="@Assets["_content/Volo.Abp.AspNetCore.Components.Web/libs/abp/js/abp.js"]"></script>

@@ -9,14 +9,13 @@
     }
     else
     {
-    <div class="renderengine-componentitem-box" style="float:left;
-            width: @((Component.Style.ItemWidth > 4 ? Component.Style.ItemWidth : (IsInRootContainer ? 24 / PageCascading.PageLayout : 24)) / 24 * 100)%;
+    <div class="renderengine-componentitem-box" style="width: @GetComponentWidthPercent(Component, IsInRootContainer)%;
             min-width:85px; min-height: @(Component.Style.ItemHeight)px;
             @Component.Style.DefaultStyle @Component.Style.CustomStyle">
 
-        @if (Component.IsHiddenLabel == false && Component.IsContainer == false)
+        @if (Component.IsHiddenLabel == false && !string.IsNullOrEmpty(Component.Label))
         {
-            <div class="renderengine-componentitem-title">@Component.Label ：</div>
+            <div class="renderengine-componentitem-title" style="@(Component.Style.LabelWidth > 0 ? $"width:{Component.Style.LabelWidth}px;" : "")">@Component.Label：</div>
         }
 
         @if (Component.IsContainer)

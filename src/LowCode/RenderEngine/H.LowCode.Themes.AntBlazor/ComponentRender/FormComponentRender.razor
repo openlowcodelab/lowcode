@@ -9,23 +9,22 @@
     }
     else
     {
-    <div class="renderengine-componentitem-box" style="float:left;
-            width: @((Component.Style.ItemWidth > 4 ? Component.Style.ItemWidth : (IsInRootContainer ? 24 / PageCascading.PageLayout : 24)) / 24 * 100)%;
+    <div class="renderengine-componentitem-box" style="width: @GetComponentWidthPercent(Component, IsInRootContainer)%;
             min-width:85px; min-height: @(Component.Style.ItemHeight)px;
             @Component.Style.DefaultStyle @Component.Style.CustomStyle">
 
-        <div class="form-item" style="width:100%">
-            @if (!string.IsNullOrEmpty(Component.Label) && !Component.IsHiddenLabel)
-            {
-                <label>@Component.Label</label>
-            }
+        @if (!string.IsNullOrEmpty(Component.Label) && !Component.IsHiddenLabel)
+        {
+            <div class="renderengine-componentitem-title" style="@(Component.Style.LabelWidth > 0 ? $"width:{Component.Style.LabelWidth}px;" : "")">@Component.Label：</div>
+        }
+
+        <div class="renderengine-componentitem-div-component">
+            @_renderFragment
+
             @if (_helpMessage != null)
             {
-                <span class="help-text">@_helpMessage</span>
+                <span class="renderengine-help-text">@_helpMessage</span>
             }
-
-            <div class="renderengine-componentitem-div-component">@_renderFragment</div>
-
         </div>
     </div>
     }

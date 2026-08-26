@@ -7,10 +7,12 @@
 @if (_formDto != null)
 {
     <form @onsubmit="OnFinishAsync" @onsubmit:preventDefault>
+        <div class="renderengine-page-root" style="@(Page.PageProperty?.DefaultStyle) @(Page.PageProperty?.CustomStyle)">
         @foreach (var component in Page.Components)
         {
             <FormComponentRender Component="@component" IsInRootContainer="true"></FormComponentRender>
         }
+        </div>
 
         @if (!_hasCustomActions)
         {

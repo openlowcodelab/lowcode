@@ -40,7 +40,7 @@
 <div class="toolbar">
     <div class="toolbar-left">
         <div style="width:250px;">
-            <input type="search" class="inp" placeholder="搜索菜单名称" />
+            <input type="search" class="inp" placeholder="搜索菜单名称" @bind="_keyword" @bind:after="() => _ = InvokeAsync(StateHasChanged)" />
         </div>
     </div>
     <button class="btn btn-primary" @onclick='() => CreateAsync(string.Empty)'>+ 新建菜单</button>
@@ -60,7 +60,7 @@
             </tr>
         </thead>
         <tbody>
-            @RenderFlatMenuRows(_menuList, 0)
+            @RenderFlatMenuRows(GetFilteredMenus(), 0)
         </tbody>
     </table>
 </div>
@@ -100,8 +100,9 @@
                         <div class="dropdown-menu icon-select-menu" style="max-width:480px;">
                             @foreach (var icon in _iconList)
                             {
-                                <div class="dropdown-item" @onclick='() => SelectIcon(icon)'>
-                                    <span>@icon</span>
+                                <div class="dropdown-item" title="@icon" @onclick='() => SelectIcon(icon)'>
+                                    <span style="font-size:16px; line-height:1;">@MenuIcons.GetSvg(icon)</span>
+                                    <span class="icon-label">@icon</span>
                                 </div>
                             }
                         </div>
@@ -129,6 +130,7 @@
 
     private bool _visible = false;
     private bool _iconDropdownOpen = false;
+    private string? _keyword;
 
     private MenuSchema _menuSchema;
 
@@ -170,6 +172,8 @@
     {
         await MenuAppService.DeleteAsync(AppId, id);
 
+        await OnFinishAsync();
+
         Toast.Success("删除成功！");
     }
 
@@ -179,6 +183,7 @@
         if (isSuccess)
         {
             _visible = false;
+            await OnFinishAsync();
             Toast.Success("保存成功");
         }
         else
@@ -191,6 +196,56 @@
     private async Task OnFinishAsync()
     {
         _menuList = await GetMenuListAsync();
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// 按名称关键字过滤菜单（保留命中项及其祖先链）
+    /// </summary>
+    private IList<MenuSchema> GetFilteredMenus()
+    {
+        if (string.IsNullOrWhiteSpace(_keyword))
+            return _menuList;
+
+        var keyword = _keyword.Trim();
+        var result = new List<MenuSchema>();
+
+        void Scan(IEnumerable<MenuSchema> nodes)
+        {
+            foreach (var n in nodes)
+            {
+                var selfMatch = n.Title?.Contains(keyword, StringComparison.OrdinalIgnoreCase) == true;
+                if (selfMatch)
+                {
+                    result.Add(n);
+                }
+                else if (n.Childrens != null && n.Childrens.Count > 0)
+                {
+                    // 未命中的目录: 若子级有命中项则保留目录本身并继续下钻
+                    var hitChild = ContainsHit(n.Childrens, keyword);
+                    if (hitChild)
+                    {
+                        result.Add(n);
+                        Scan(n.Childrens);
+                    }
+                }
+            }
+        }
+
+        Scan(_menuList ?? []);
+        return result;
+    }
+
+    private static bool ContainsHit(IEnumerable<MenuSchema> nodes, string keyword)
+    {
+        foreach (var n in nodes)
+        {
+            if (n.Title?.Contains(keyword, StringComparison.OrdinalIgnoreCase) == true)
+                return true;
+            if (n.Childrens != null && n.Childrens.Count > 0 && ContainsHit(n.Childrens, keyword))
+                return true;
+        }
+        return false;
     }
 
     private async Task<bool> SaveMenuSchemaAsync()
@@ -200,8 +255,9 @@
 
     private readonly string[] _iconList = new[]
     {
-        "home","appstore","menu","bars","database","setting","tool","api",
-        "user","team","cloud-upload","deployment-unit","bar-chart"
+        "home","dashboard","appstore","menu","bars","database","setting","tool",
+        "api","user","team","clock-circle","schedule","contacts","swap",
+        "shopping","cloud-upload","deployment-unit","bar-chart"
     };
 
     private void SelectIcon(string icon)
@@ -279,7 +335,7 @@
             builder.AddContent(5, m.Order);
             builder.CloseElement();
             builder.OpenElement(6, "td");
-            builder.AddContent(7, m.Icon);
+            builder.AddContent(7, MenuIcons.GetSvg(m.Icon));
             builder.CloseElement();
             builder.OpenElement(8, "td");
             builder.AddContent(9, m.MenuType == 0 ? "菜单" : "目录");

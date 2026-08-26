@@ -1,13 +1,14 @@
 ﻿@namespace H.LowCode.Themes.AntBlazor
 @inherits RenderEngineLowCodeComponentBase
 
-<div class="renderengine-componentcontainer" style="@ContainerComponent.Style.DefaultStyle">
+<div class="renderengine-componentcontainer" style="@ContainerComponent.Style.DefaultStyle @ContainerComponent.Style.CustomStyle">
     @if (ContainerComponent.Childrens != null)
     {
         foreach (var comp in ContainerComponent.Childrens)
         {
-            <div style="min-height: @(comp.Style.ItemHeight)px;
-                width: @((comp.Style.ItemWidth > 4 ? comp.Style.ItemWidth : 24)  /24 * 100)%;
+            <div class="renderengine-componentcontainer-item" style="min-height: @(comp.Style.ItemHeight)px;
+                width: @((comp.Style.ItemWidth > 4 ? comp.Style.ItemWidth : 24) /24 * 100)%;
+                box-sizing: border-box;
                 @comp.Style.DefaultStyle @comp.Style.CustomStyle">
                 <ComponentRender Component="@comp"></ComponentRender>
             </div>

@@ -123,6 +123,34 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
 
     #endregion
 
+    #region 栅格宽度
+
+    /// <summary>
+    /// 计算组件宽度百分比（栅格 24 列）
+    /// </summary>
+    /// <remarks>ItemWidth 未配置(<=4)时按页面布局均分：playout=N 表示每行 N 个字段，即每项占 24/N 列</remarks>
+    protected double GetComponentWidthPercent(ComponentSchema component, bool isInRootContainer)
+    {
+        double columns;
+        if (component.Style.ItemWidth > 4)
+        {
+            columns = component.Style.ItemWidth;
+        }
+        else if (isInRootContainer)
+        {
+            var pageLayout = Math.Max(1, PageCascading?.PageLayout ?? 1);
+            columns = Math.Max(1, 24d / pageLayout);
+        }
+        else
+        {
+            columns = 24;
+        }
+
+        return columns / 24d * 100;
+    }
+
+    #endregion
+
     #region 组件渲染
 
     protected virtual RenderFragment RenderComponent(ComponentSchema component)
@@ -177,8 +205,34 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
 
             var nativeFormValueKey = GetFormValueKey(component, dataContext);
             var cursor = sharedCursor ?? new InnerContainerCursor(component);
+
+            // 选项数据源（radio/checkbox 选项组等）：选项模板为原生 html 时，
+            // 将各选项内联渲染到原生容器元素内（原生元素不走组件属性/ChildContent 通道）
+            RenderFragment? optionChildren = null;
+            if (component.IsSupportDataSource
+                && dataSource != null
+                && dataSource.DataSourceGroupType == ComponentDataSourceGroupTypeEnum.Option
+                && dataSource.DataSourceFragment != null
+                && NativeHtmlElement.IsNativeHtml(dataSource.DataSourceFragment.TypeName))
+            {
+                var options = GetOptionItems(dataSource, dataContext);
+                if (options.Count > 0)
+                {
+                    optionChildren = childBuilder =>
+                    {
+                        foreach (var opt in options)
+                        {
+                            RenderNativeHtmlFragment(componentId, null, dataSource.DataSourceFragment,
+                                childBuilder, string.Empty, dataSource.DataSourceFragment,
+                                dataContext, nativeFormValueKey, null, opt);
+                        }
+                    };
+                }
+            }
+
             RenderNativeHtmlFragment(componentId, component, componentFragment, builder,
-                string.Empty, componentFragment, dataContext, nativeFormValueKey, cursor, null);
+                string.Empty, componentFragment, dataContext, nativeFormValueKey, cursor, null,
+                optionChildren);
             return;
         }
 
@@ -392,7 +446,8 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
         string path, ComponentFragmentSchema rootFragment,
         object? dataContext, string? formValueKey,
         InnerContainerCursor? cursor,
-        (string? OptionValue, string? OptionLabel)? option)
+        (string? OptionValue, string? OptionLabel)? option,
+        RenderFragment? extraChildren = null)
     {
         var tagName = NativeHtmlElement.GetTagName(fragment.TypeName);
         if (string.IsNullOrEmpty(tagName))
@@ -459,6 +514,12 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
                     builder, NativeHtmlElement.ChildPath(path, i), rootFragment,
                     dataContext, formValueKey, cursor, option);
             }
+        }
+
+        // 附加子内容（如选项数据源生成的选项元素）
+        if (extraChildren != null)
+        {
+            extraChildren(builder);
         }
 
         builder.CloseElement();
@@ -1512,13 +1573,39 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
         RenderTreeBuilder builder, int index,
         object? dataContext, string? formValueKey)
     {
-        if (dataSource.FiexdOptionDataSource == null
-            || dataSource.FiexdOptionDataSource.Count == 0)
+        var options = GetOptionItems(dataSource, dataContext);
+        if (options.Count == 0)
             return;
 
-        RenderOptionItems(componentId, dataSource, builder, index,
-            dataSource.FiexdOptionDataSource.Select(o => (o.Value, o.Label)).ToList(),
-            dataContext, formValueKey);
+        RenderOptionItems(componentId, dataSource, builder, index, options, dataContext, formValueKey);
+    }
+
+    /// <summary>
+    /// 解析选项数据源的选项列表（固定值或表达式）
+    /// </summary>
+    private List<(string? Value, string? Label)> GetOptionItems(ComponentDataSourceSchema dataSource, object? dataContext)
+    {
+        if (dataSource.DataSourceType == ComponentDataSourceTypeEnum.Expression
+            || (dataSource.DataSourceType == ComponentDataSourceTypeEnum.None
+                && !string.IsNullOrEmpty(dataSource.DynamicOptionExpr)))
+        {
+            var rawValue = LowCodeExpressionResolver.ResolveAsString(
+                dataSource.DynamicOptionExpr, CreateExpressionContext(dataContext));
+            if (string.IsNullOrWhiteSpace(rawValue))
+                return [];
+
+            return rawValue
+                .Split(new[] { "\r\n", "\n", "\r" }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(line => ((string? Value, string? Label))(line, line))
+                .ToList();
+        }
+
+        if (dataSource.FiexdOptionDataSource == null)
+            return [];
+
+        return dataSource.FiexdOptionDataSource
+            .Select(o => (o.Value, o.Label))
+            .ToList();
     }
 
     /// <summary>
@@ -1529,18 +1616,9 @@ public abstract class RenderEngineDynamicComponentBase : LowCodeDynamicComponent
         RenderTreeBuilder builder, int index,
         object? dataContext, string? formValueKey)
     {
-        if (string.IsNullOrEmpty(dataSource.DynamicOptionExpr))
+        var options = GetOptionItems(dataSource, dataContext);
+        if (options.Count == 0)
             return;
-
-        var rawValue = LowCodeExpressionResolver.ResolveAsString(
-            dataSource.DynamicOptionExpr, CreateExpressionContext(dataContext));
-        if (string.IsNullOrWhiteSpace(rawValue))
-            return;
-
-        var options = rawValue
-            .Split(new[] { "\r\n", "\n", "\r" }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select(line => ((string?)line, (string?)line))
-            .ToList();
 
         RenderOptionItems(componentId, dataSource, builder, index, options, dataContext, formValueKey);
     }

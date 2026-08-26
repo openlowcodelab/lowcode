@@ -48,10 +48,15 @@
         var separatorIndex = currentPath.IndexOfAny(new[] { '?', '#' });
         if (separatorIndex >= 0)
             currentPath = currentPath.Substring(0, separatorIndex);
+        currentPath = currentPath.Trim('/');
 
-        // 菜单 Url 可能带前导斜杠，统一去除后比较
-        var target = url.TrimStart('/');
-        return currentPath.StartsWith(target, StringComparison.OrdinalIgnoreCase);
+        // 菜单 Url 可能带前导斜杠，统一去除后比较（按路径段精确匹配，避免前缀误判）
+        var target = url.TrimStart('/').Trim('/');
+        if (string.IsNullOrEmpty(target))
+            return false;
+
+        return currentPath.Equals(target, StringComparison.OrdinalIgnoreCase)
+            || currentPath.StartsWith(target + "/", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>

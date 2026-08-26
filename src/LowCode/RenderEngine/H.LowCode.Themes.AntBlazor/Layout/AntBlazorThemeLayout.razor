@@ -16,7 +16,7 @@
         }
 </style>
 
-<DefaultLayoutComponent AppName="@AppName" Logo="_content/H.LowCode.Themes.AntBlazor/logo.png"
+<DefaultLayoutComponent AppName="@(_appName ?? AppId)" Logo="_content/H.LowCode.Themes.AntBlazor/logo.png"
     MenuItems="@_menuItems" AuthMode="AuthenticationMode.None">
     @Body
 </DefaultLayoutComponent>
@@ -26,19 +26,44 @@
     [PersistentState]
     public List<AppMenuItem>? _menuItems { get; set; }
 
+    [PersistentState]
+    public string? _appName { get; set; }
+
+    // 已加载菜单的应用 Id（跨应用导航时需重新加载菜单）
+    [PersistentState]
+    public string? _loadedAppId { get; set; }
+
     private ErrorBoundary? errorBoundary;
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
 
-        var menus = await base.GetMenusAsync(AppId);
-        _menuItems = ConvertMenus(AppId, menus);
+        await LoadMenusAsync();
     }
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
+        await base.OnParametersSetAsync();
+
         errorBoundary?.Recover();
+
+        // AppId 变化时（不同应用间导航）重新加载菜单，避免显示上一个应用的菜单
+        if (!string.Equals(_loadedAppId, AppId, StringComparison.OrdinalIgnoreCase))
+        {
+            await LoadMenusAsync();
+        }
+    }
+
+    private async Task LoadMenusAsync()
+    {
+        _loadedAppId = AppId;
+
+        var menus = await base.GetMenusAsync(AppId);
+        _menuItems = ConvertMenus(AppId, menus);
+
+        var appResult = (await MetaAppService.GetAppAsync(AppId)).Data;
+        _appName = appResult?.Name ?? AppId;
     }
 
     private List<AppMenuItem> ConvertMenus(string appId, IList<MenuSchema> menuList)

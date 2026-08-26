@@ -39,6 +39,8 @@
 
     private HashSet<string> _expandedKeys = new();
     private string? _bestMatchUrl;
+    // 已自动展开过的 URL（避免覆盖用户手动折叠状态）
+    private string? _autoExpandedForUrl;
 
     protected override void OnInitialized()
     {
@@ -81,7 +83,47 @@
         }
 
         Scan(MenuItems);
+        AutoExpandActiveBranch(currentPath);
         return _bestMatchUrl;
+    }
+
+    /// <summary>
+    /// 自动展开当前激活菜单的所有祖先目录（首次进入或切换页面时）
+    /// </summary>
+    private void AutoExpandActiveBranch(string currentPath)
+    {
+        if (_autoExpandedForUrl == currentPath)
+            return;
+        _autoExpandedForUrl = currentPath;
+
+        var chain = new List<string>();
+
+        bool Scan(List<AppMenuItem> items, List<string> ancestors)
+        {
+            foreach (var item in items)
+            {
+                if (!string.IsNullOrEmpty(item.Url) && IsMatch(currentPath, NormalizePath(item.Url)))
+                {
+                    chain.AddRange(ancestors);
+                    if (!string.IsNullOrEmpty(item.Key))
+                        _expandedKeys.Add(item.Key);
+                    return true;
+                }
+                if (item.Children != null && item.Children.Any())
+                {
+                    var next = new List<string>(ancestors);
+                    if (!string.IsNullOrEmpty(item.Key))
+                        next.Add(item.Key);
+                    if (Scan(item.Children, next))
+                        return true;
+                }
+            }
+            return false;
+        }
+
+        Scan(MenuItems, []);
+        foreach (var key in chain)
+            _expandedKeys.Add(key);
     }
 
     private static string NormalizePath(string path)

@@ -9,6 +9,8 @@ public interface IMetaAppService : IAppService
 {
     Task<BaseOutput<IList<MenuSchema>>> GetMenusAsync(string appId);
 
+    Task<BaseOutput<AppSchema>> GetAppAsync(string appId);
+
     Task<BaseOutput<PageSchema>> GetPageAsync(string appId, string pageId);
 
     Task<BaseOutput<PageSchema>> GetPageWithDefineAsync(string appId, string pageId);

@@ -14,10 +14,16 @@ public class MetaAppService : ApplicationService, IMetaAppService
 {
     private IMenuRepository _menuRepository => LazyServiceProvider.GetRequiredService<IMenuRepository>();
     private IPageRepository _pageRepository => LazyServiceProvider.GetRequiredService<IPageRepository>();
+    private IAppRepository _appRepository => LazyServiceProvider.GetRequiredService<IAppRepository>();
 
     public async Task<BaseOutput<IList<MenuSchema>>> GetMenusAsync(string appId)
     {
         return new(await _menuRepository.GetListAsync(appId));
+    }
+
+    public async Task<BaseOutput<AppSchema>> GetAppAsync(string appId)
+    {
+        return new(await _appRepository.GetAsync(appId));
     }
 
     public async Task<BaseOutput<PageSchema>> GetPageAsync(string appId, string pageId)

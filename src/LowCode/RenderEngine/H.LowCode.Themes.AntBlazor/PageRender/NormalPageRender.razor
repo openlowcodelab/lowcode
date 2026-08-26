@@ -1,13 +1,17 @@
 ﻿@namespace H.LowCode.Themes.AntBlazor
 @inherits RenderEngineLowCodeComponentBase
 
+<div class="renderengine-page-root" style="@GetPageStyle()">
 @foreach (var component in Page.Components)
 {
     <ComponentRender Component="@component" IsInRootContainer="true"></ComponentRender>
 }
+</div>
 
 @code {
     [Parameter]
     public PageSchema Page { get; set; }
 
+    private string? GetPageStyle()
+        => $"{Page.PageProperty?.DefaultStyle} {Page.PageProperty?.CustomStyle}";
 }

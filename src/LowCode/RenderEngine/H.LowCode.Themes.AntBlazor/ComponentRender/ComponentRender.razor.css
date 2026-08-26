@@ -1,23 +1,30 @@
-﻿.renderengine-componentitem-box {
-    height: 85px;
-    border: #ffffff solid 2px;
+﻿/* 与 FormComponentRender / DesignEngine 画布保持一致: label 与组件同一行, 垂直居中 */
+.renderengine-componentitem-box {
     position: relative;
     display: flex;
-    padding: 20px 8px 5px 8px;
-    background-color: #ffffff;
+    align-items: center;
+    padding: 8px;
+    box-sizing: border-box;
 }
 
+/* 标签宽度由组件配置(stl.labelw)以内联样式控制, 未配置时自适应 */
 .renderengine-componentitem-title {
-    width: 180px;
+    flex: 0 0 auto;
     padding-left: 5px;
+    font-weight: 600;
+    font-size: 13px;
+    color: #1D2129;
+    white-space: nowrap;
 }
 
 .renderengine-componentitem-div-component {
-    width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
     padding-right: 5px;
 }
 
 .renderengine-componentitem-div-container {
-    width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
     height: 100%;
 }
