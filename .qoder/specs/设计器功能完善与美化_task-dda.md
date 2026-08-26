@@ -1,7 +1,7 @@
 # 设计器 DesignPage 功能完善与美化
 
 ## 背景与根因
-- 组件元数据(`src/LowCode/meta/parts/componentParts/**/*.json`)的 `frag.dt` 仍指向已从解决方案移除的 AntDesign 类型(如 `AntDesign.Input\`1[System.String], AntDesign`)。拖入/单击都会把组件加入模型，但渲染时 `Type.GetType(frag.dt, true)`(位于 [DynamicComponentBase.cs:37](file:///d:/H/code/my/applab/src/LowCode/DesignEngine/H.LowCode.DesignEngine/Services/DynamicComponentBase.cs#L37))抛 `TypeLoadException` → 组件不显示(Bug1)。渲染引擎 [ComponentRender.razor](file:///d:/H/code/my/applab/src/LowCode/RenderEngine/H.LowCode.Themes.AntBlazor/ComponentRender/ComponentRender.razor) 走同一机制，同样受影响。
+- 组件元数据(`src/LowCode/meta/parts/componentParts/**/*.json`)的 `frag.dt` 仍指向已从解决方案移除的 AntDesign 类型(如 `AntDesign.Input\`1[System.String], AntDesign`)。拖入/单击都会把组件加入模型，但渲染时 `Type.GetType(frag.dt, true)`(位于 [DynamicComponentBase.cs:37](file:///d:/H/code/my/applab/src/LowCode/DesignEngine/H.LowCode.DesignEngine/Services/DynamicComponentBase.cs#L37))抛 `TypeLoadException` → 组件不显示(Bug1)。渲染引擎 [ComponentRender.razor](file:///d:/H/code/my/applab/src/LowCode/RenderEngine/H.LowCode.RenderEngine/ComponentRender/ComponentRender.razor) 走同一机制，同样受影响。
 - Bug2(画布内拖拽无效)当前被 Bug1 掩盖(无组件可拖)；且画布项 `draggable="@Component.DesignState.IsSelected"`,需先选中才能拖。修复 Bug1 后再定位。
 - 属性通过反射 `GetProperty(名称)` 绑定，未知属性会被静默跳过(见 [LowCodeDynamicComponentBase.cs](file:///d:/H/code/my/applab/src/LowCode/Common/H.LowCode.ComponentBase/LowCodeDynamicComponentBase.cs#L45-L47))，故自定义组件只需实现需要生效的参数名即可，不会因多余属性报错。
 

@@ -14,7 +14,7 @@
 - [IMenuRepository.cs](file://src/LowCode/DesignEngine/H.LowCode.DesignEngine.Domain/MetaRepositories/IMenuRepository.cs)
 - [MenuRemoteServiceRepository.cs（设计端远程仓储）](file://src/LowCode/DesignEngine/H.LowCode.DesignEngine.Repository.RemoteService/Repositories/MenuRemoteServiceRepository.cs)
 - [MenuRemoteServiceRepository.cs（渲染端远程仓储）](file://src/LowCode/RenderEngine/H.LowCode.RenderEngine.Repository.RemoteService/Repositories/MenuRemoteServiceRepository.cs)
-- [AntBlazorThemeLayout.razor](file://src/LowCode/RenderEngine/H.LowCode.Themes.AntBlazor/Layout/AntBlazorThemeLayout.razor)
+- [AntBlazorThemeLayout.razor](file://src/LowCode/RenderEngine/H.LowCode.RenderEngine/Layout/AntBlazorThemeLayout.razor)
 - [ListDataSourceSetting.razor](file://src/LowCode/DesignEngine/H.LowCode.DesignEngine/SettingPanel/PropertySettingItems/ListDataSource/ListDataSourceSetting.razor)
 - [ComponentDataSourceEditor.razor](file://src/LowCode/DesignEngine/H.LowCode.PartsDesignEngine/Pages/ComponentParts/Components/ComponentDataSourceEditor.razor)
 - [DataSourceSchema.cs](file://src/LowCode/Common/H.LowCode.MetaSchema/DataSourceSchema.cs)
@@ -98,7 +98,7 @@ Tools --> HostAll
 - [MenuSchema.cs:1-39](file://src/LowCode/Common/H.LowCode.MetaSchema/MenuSchema.cs#L1-L39)
 - [IMenuAppService.cs:1-15](file://src/LowCode/DesignEngine/H.LowCode.DesignEngine.Application.Contracts/AppServices/IMenuAppService.cs#L1-L15)
 - [MenuAppService.cs:1-39](file://src/LowCode/DesignEngine/H.LowCode.DesignEngine.Application/AppServices/MenuAppService.cs#L1-L39)
-- [AntBlazorThemeLayout.razor:9-60](file://src/LowCode/RenderEngine/H.LowCode.Themes.AntBlazor/Layout/AntBlazorThemeLayout.razor#L9-L60)
+- [AntBlazorThemeLayout.razor:9-60](file://src/LowCode/RenderEngine/H.LowCode.RenderEngine/Layout/AntBlazorThemeLayout.razor#L9-L60)
 - [ListDataSourceSetting.razor:19-40](file://src/LowCode/DesignEngine/H.LowCode.DesignEngine/SettingPanel/PropertySettingItems/ListDataSource/ListDataSourceSetting.razor#L19-L40)
 - [ComponentDataSourceEditor.razor:42-69](file://src/LowCode/DesignEngine/H.LowCode.PartsDesignEngine/Pages/ComponentParts/Components/ComponentDataSourceEditor.razor#L42-L69)
 
@@ -132,7 +132,7 @@ Note over Render,Theme : 渲染端加载应用元数据并转换菜单
 图表来源
 - [AppPublish.razor:1-181](file://src/LowCode/DesignEngine/H.LowCode.MyApp/Pages/AppPublish.razor#L1-L181)
 - [MenuAppService.cs:1-39](file://src/LowCode/DesignEngine/H.LowCode.DesignEngine.Application/AppServices/MenuAppService.cs#L1-L39)
-- [AntBlazorThemeLayout.razor:9-60](file://src/LowCode/RenderEngine/H.LowCode.Themes.AntBlazor/Layout/AntBlazorThemeLayout.razor#L9-L60)
+- [AntBlazorThemeLayout.razor:9-60](file://src/LowCode/RenderEngine/H.LowCode.RenderEngine/Layout/AntBlazorThemeLayout.razor#L9-L60)
 
 ## 详细组件分析
 
@@ -240,7 +240,7 @@ IMenuAppService <|.. MenuAppService : "实现"
 - [MenuSchema.cs:1-39](file://src/LowCode/Common/H.LowCode.MetaSchema/MenuSchema.cs#L1-L39)
 - [IMenuAppService.cs:1-15](file://src/LowCode/DesignEngine/H.LowCode.DesignEngine.Application.Contracts/AppServices/IMenuAppService.cs#L1-L15)
 - [MenuAppService.cs:1-39](file://src/LowCode/DesignEngine/H.LowCode.DesignEngine.Application/AppServices/MenuAppService.cs#L1-L39)
-- [AntBlazorThemeLayout.razor:9-60](file://src/LowCode/RenderEngine/H.LowCode.Themes.AntBlazor/Layout/AntBlazorThemeLayout.razor#L9-L60)
+- [AntBlazorThemeLayout.razor:9-60](file://src/LowCode/RenderEngine/H.LowCode.RenderEngine/Layout/AntBlazorThemeLayout.razor#L9-L60)
 
 ### 数据源管理器（API、SQL、静态数据）
 - 类型枚举：ComponentDataSourceTypeEnum 支持 Fiexd（固定/静态）、API、SQL。
@@ -332,14 +332,14 @@ RenderProgram["RenderEngine Program"] --> Middleware["认证/授权/静态资源
 - [IMenuRepository.cs:1-15](file://src/LowCode/DesignEngine/H.LowCode.DesignEngine.Domain/MetaRepositories/IMenuRepository.cs#L1-L15)
 - [MenuRemoteServiceRepository.cs（设计端远程仓储）:1-36](file://src/LowCode/DesignEngine/H.LowCode.DesignEngine.Repository.RemoteService/Repositories/MenuRemoteServiceRepository.cs#L1-L36)
 - [MenuRemoteServiceRepository.cs（渲染端远程仓储）:1-26](file://src/LowCode/RenderEngine/H.LowCode.RenderEngine.Repository.RemoteService/Repositories/MenuRemoteServiceRepository.cs#L1-L26)
-- [AntBlazorThemeLayout.razor:9-60](file://src/LowCode/RenderEngine/H.LowCode.Themes.AntBlazor/Layout/AntBlazorThemeLayout.razor#L9-L60)
+- [AntBlazorThemeLayout.razor:9-60](file://src/LowCode/RenderEngine/H.LowCode.RenderEngine/Layout/AntBlazorThemeLayout.razor#L9-L60)
 - [HostAllModule.cs:115-139](file://src/Host/H.AppLab.Host.All/H.AppLab.Host.All/HostAllModule.cs#L115-L139)
 - [Program.cs（渲染引擎宿主）:44-79](file://src/Host/RenderEngine/H.LowCode.RenderEngine.Host/Program.cs#L44-L79)
 
 章节来源
 - [MenuAppService.cs:1-39](file://src/LowCode/DesignEngine/H.LowCode.DesignEngine.Application/AppServices/MenuAppService.cs#L1-L39)
 - [IMenuRepository.cs:1-15](file://src/LowCode/DesignEngine/H.LowCode.DesignEngine.Domain/MetaRepositories/IMenuRepository.cs#L1-L15)
-- [AntBlazorThemeLayout.razor:9-60](file://src/LowCode/RenderEngine/H.LowCode.Themes.AntBlazor/Layout/AntBlazorThemeLayout.razor#L9-L60)
+- [AntBlazorThemeLayout.razor:9-60](file://src/LowCode/RenderEngine/H.LowCode.RenderEngine/Layout/AntBlazorThemeLayout.razor#L9-L60)
 - [HostAllModule.cs:115-139](file://src/Host/H.AppLab.Host.All/H.AppLab.Host.All/HostAllModule.cs#L115-L139)
 - [Program.cs（渲染引擎宿主）:44-79](file://src/Host/RenderEngine/H.LowCode.RenderEngine.Host/Program.cs#L44-L79)
 
@@ -363,7 +363,7 @@ RenderProgram["RenderEngine Program"] --> Middleware["认证/授权/静态资源
 
 章节来源
 - [HostAllModule.cs:115-139](file://src/Host/H.AppLab.Host.All/H.AppLab.Host.All/HostAllModule.cs#L115-L139)
-- [AntBlazorThemeLayout.razor:9-60](file://src/LowCode/RenderEngine/H.LowCode.Themes.AntBlazor/Layout/AntBlazorThemeLayout.razor#L9-L60)
+- [AntBlazorThemeLayout.razor:9-60](file://src/LowCode/RenderEngine/H.LowCode.RenderEngine/Layout/AntBlazorThemeLayout.razor#L9-L60)
 - [ListDataSourceSetting.razor:19-40](file://src/LowCode/DesignEngine/H.LowCode.DesignEngine/SettingPanel/PropertySettingItems/ListDataSource/ListDataSourceSetting.razor#L19-L40)
 - [AppPublish.razor:1-181](file://src/LowCode/DesignEngine/H.LowCode.MyApp/Pages/AppPublish.razor#L1-L181)
 

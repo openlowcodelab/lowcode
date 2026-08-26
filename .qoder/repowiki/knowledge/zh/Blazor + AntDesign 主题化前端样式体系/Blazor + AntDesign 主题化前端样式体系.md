@@ -5,8 +5,8 @@ category: frontend_style
 scope:
     - '**'
 source_files:
-    - src/LowCode/RenderEngine/H.LowCode.Themes.AntBlazor/AntBlazorThemeModule.cs
-    - src/LowCode/RenderEngine/H.LowCode.Themes.AntBlazor/Layout/AntBlazorThemeLayout.razor
+    - src/LowCode/RenderEngine/H.LowCode.RenderEngine/AntBlazorThemeModule.cs
+    - src/LowCode/RenderEngine/H.LowCode.RenderEngine/Layout/AntBlazorThemeLayout.razor
     - src/Components/AppDrawer/H.AppDrawer.Components/wwwroot/css/AppDrawer.css
     - src/Components/AppDrawer/H.AppDrawer.Components/Components/DefaultLayoutComponent.razor
     - src/Host/H.AppLab.Host.All/H.AppLab.Host.All/Components/App.razor
@@ -16,7 +16,7 @@ source_files:
 AppLab 平台采用 .NET Blazor WebAssembly 作为前端框架，基于 ABP Framework 模块化架构，形成可插拔的主题化渲染引擎。
 
 **核心样式系统：**
-- **主题包模式**：通过 `H.LowCode.Themes.AntBlazor` 主题包实现样式隔离与替换，支持运行时懒加载主题资源（`BlazorWebAssemblyLazyLoad`）
+- **主题包模式**：通过 `H.LowCode.RenderEngine` 主题包实现样式隔离与替换，支持运行时懒加载主题资源（`BlazorWebAssemblyLazyLoad`）
 - **CSS 组织方式**：各组件包在 `wwwroot/css/` 目录下维护独立样式文件，如 `AppDrawer.css`、`h-components.css`、`renderengine.css` 等
 - **样式引用策略**：通过 Razor 组件中的 `<link>` 标签按需引入样式，使用 `@Assets["..."]` 辅助方法解析静态资源路径
 
