@@ -24,7 +24,7 @@ public class MenuQueryDto
 public class MenuItemDto
 {
     /// <summary>商品ID</summary>
-    public Guid ProductId { get; set; }
+    public long ProductId { get; set; }
 
     /// <summary>商品编码</summary>
     public string ProductCode { get; set; } = string.Empty;

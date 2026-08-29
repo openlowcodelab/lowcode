@@ -128,7 +128,7 @@
     private bool showModal;
     private bool saving;
     private bool isEdit;
-    private Guid? editId;
+    private string? editId;
     private CreateSupplierDto current = new();
 
     protected override async Task OnInitializedAsync() => await LoadData();
@@ -184,9 +184,9 @@
                 return;
             }
 
-            if (isEdit && editId.HasValue)
+            if (isEdit && !string.IsNullOrEmpty(editId))
             {
-                await SupplierService.UpdateAsync(editId.Value, new UpdateSupplierDto
+                await SupplierService.UpdateAsync(editId, new UpdateSupplierDto
                 {
                     Name = current.Name,
                     DisplayName = current.DisplayName,
@@ -215,7 +215,7 @@
 
     private void CloseModal() { showModal = false; current = new(); editId = null; isEdit = false; }
 
-    private async Task Delete(Guid id)
+    private async Task Delete(string id)
     {
         var ok = await JS.InvokeAsync<bool>("confirm", "确定删除该供应商？");
         if (!ok) return;

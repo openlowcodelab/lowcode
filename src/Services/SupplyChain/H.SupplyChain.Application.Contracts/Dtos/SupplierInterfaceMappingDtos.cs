@@ -6,16 +6,16 @@ namespace H.SupplyChain.Application.Contracts;
 /// 供应商接口映射 DTO。
 /// 基于接口定义，配置对应供应商的请求参数映射与返回值字段映射。
 /// </summary>
-public class SupplierInterfaceMappingDto : AuditedEntityDto<Guid>
+public class SupplierInterfaceMappingDto : AuditedEntityDto<long>
 {
     /// <summary>供应商ID</summary>
-    public Guid SupplierId { get; set; }
+    public string SupplierId { get; set; }
 
     /// <summary>供应商编码</summary>
     public string SupplierCode { get; set; } = string.Empty;
 
     /// <summary>接口定义ID</summary>
-    public Guid InterfaceId { get; set; }
+    public long InterfaceId { get; set; }
 
     /// <summary>接口编码（冗余便于展示）</summary>
     public string InterfaceCode { get; set; } = string.Empty;
@@ -42,10 +42,10 @@ public class SupplierInterfaceMappingDto : AuditedEntityDto<Guid>
 public class CreateSupplierInterfaceMappingDto
 {
     /// <summary>供应商ID</summary>
-    public Guid SupplierId { get; set; }
+    public required string SupplierId { get; set; }
 
     /// <summary>接口定义ID</summary>
-    public Guid InterfaceId { get; set; }
+    public long InterfaceId { get; set; }
 
     /// <summary>供应商接口地址</summary>
     public string? SupplierApiUrl { get; set; }
@@ -90,10 +90,10 @@ public class UpdateSupplierInterfaceMappingDto
 public class SupplierInterfaceMappingQueryDto : PagedResultRequestDto
 {
     /// <summary>供应商ID</summary>
-    public Guid? SupplierId { get; set; }
+    public string? SupplierId { get; set; }
 
     /// <summary>接口定义ID</summary>
-    public Guid? InterfaceId { get; set; }
+    public long? InterfaceId { get; set; }
 
     /// <summary>是否启用</summary>
     public bool? IsEnabled { get; set; }

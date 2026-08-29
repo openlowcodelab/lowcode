@@ -6,13 +6,13 @@ namespace H.SupplyChain.EntityFrameworkCore;
 /// <summary>
 /// 商品 SKU 表（存储商品 SKU 信息）
 /// </summary>
-public class ProductSkuEntity : AuditedEntity<Guid>, IMultiTenant
+public class ProductSkuEntity : AuditedEntity<long>, IMultiTenant
 {
     /// <summary>租户ID（多租户）</summary>
     public virtual Guid? TenantId { get; set; }
 
     /// <summary>商品ID（多对一）</summary>
-    public Guid ProductId { get; set; }
+    public long ProductId { get; set; }
 
     /// <summary>SKU 编码（唯一）</summary>
     public string SkuCode { get; set; } = string.Empty;
@@ -34,7 +34,4 @@ public class ProductSkuEntity : AuditedEntity<Guid>, IMultiTenant
 
     /// <summary>备注</summary>
     public string? Remark { get; set; }
-
-    /// <summary>关联商品</summary>
-    public virtual ProductEntity? Product { get; set; }
 }

@@ -15,11 +15,11 @@ public class SupplyChainSupplierAppService
     : ApplicationService,
       ISupplyChainSupplierAppService
 {
-    protected readonly IRepository<SupplierEntity, Guid> Repository;
+    protected readonly IRepository<SupplierEntity, string> Repository;
 
-    public SupplyChainSupplierAppService(IRepository<SupplierEntity, Guid> repository) { Repository = repository; }
+    public SupplyChainSupplierAppService(IRepository<SupplierEntity, string> repository) { Repository = repository; }
 
-    public async Task<BaseOutput<SupplierDto>> GetAsync(Guid id)
+    public async Task<BaseOutput<SupplierDto>> GetAsync(string id)
     {
         var entity = await Repository.GetAsync(id);
         return new(entity.ToDto());
@@ -57,7 +57,7 @@ public class SupplyChainSupplierAppService
         return new(entity.ToDto());
     }
 
-    public async Task<BaseOutput<SupplierDto>> UpdateAsync(Guid id, UpdateSupplierDto input)
+    public async Task<BaseOutput<SupplierDto>> UpdateAsync(string id, UpdateSupplierDto input)
     {
         var entity = await Repository.GetAsync(id);
         input.Apply(entity);
@@ -66,7 +66,7 @@ public class SupplyChainSupplierAppService
         return new(entity.ToDto());
     }
 
-    public async Task<BaseOutput> DeleteAsync(Guid id)
+    public async Task<BaseOutput> DeleteAsync(string id)
     {
         await Repository.DeleteAsync(id);
         return new();
@@ -80,18 +80,18 @@ public class ProductAppService
     : ApplicationService,
       IProductAppService
 {
-    protected readonly IRepository<ProductEntity, Guid> Repository;
-    private readonly IRepository<ProductSkuEntity, Guid> _skuRepo;
+    protected readonly IRepository<ProductEntity, long> Repository;
+    private readonly IRepository<ProductSkuEntity, long> _skuRepo;
 
     public ProductAppService(
-        IRepository<ProductEntity, Guid> repository,
-        IRepository<ProductSkuEntity, Guid> skuRepo)
+        IRepository<ProductEntity, long> repository,
+        IRepository<ProductSkuEntity, long> skuRepo)
     {
         Repository = repository;
         _skuRepo = skuRepo;
     }
 
-    public async Task<BaseOutput<ProductDto>> GetAsync(Guid id)
+    public async Task<BaseOutput<ProductDto>> GetAsync(long id)
     {
         var entity = await Repository.GetAsync(id);
         return new(entity.ToDto());
@@ -131,7 +131,7 @@ public class ProductAppService
         return new(entity.ToDto());
     }
 
-    public async Task<BaseOutput<ProductDto>> UpdateAsync(Guid id, UpdateProductDto input)
+    public async Task<BaseOutput<ProductDto>> UpdateAsync(long id, UpdateProductDto input)
     {
         var entity = await Repository.GetAsync(id);
         input.Apply(entity);
@@ -140,14 +140,14 @@ public class ProductAppService
         return new(entity.ToDto());
     }
 
-    public async Task<BaseOutput> DeleteAsync(Guid id)
+    public async Task<BaseOutput> DeleteAsync(long id)
     {
         await Repository.DeleteAsync(id);
         return new();
     }
 
     /// <summary>商品详情：主表信息 + SKU 列表</summary>
-    public async Task<BaseOutput<ProductDetailDto>> GetDetailAsync(Guid id)
+    public async Task<BaseOutput<ProductDetailDto>> GetDetailAsync(long id)
     {
         var entity = await Repository.GetAsync(id);
 
@@ -167,11 +167,11 @@ public class ProductSkuAppService
     : ApplicationService,
       IProductSkuAppService
 {
-    protected readonly IRepository<ProductSkuEntity, Guid> Repository;
+    protected readonly IRepository<ProductSkuEntity, long> Repository;
 
-    public ProductSkuAppService(IRepository<ProductSkuEntity, Guid> repository) { Repository = repository; }
+    public ProductSkuAppService(IRepository<ProductSkuEntity, long> repository) { Repository = repository; }
 
-    public async Task<BaseOutput<ProductSkuDto>> GetAsync(Guid id)
+    public async Task<BaseOutput<ProductSkuDto>> GetAsync(long id)
     {
         var entity = await Repository.GetAsync(id);
         return new(entity.ToDto());
@@ -211,7 +211,7 @@ public class ProductSkuAppService
         return new(entity.ToDto());
     }
 
-    public async Task<BaseOutput<ProductSkuDto>> UpdateAsync(Guid id, UpdateProductSkuDto input)
+    public async Task<BaseOutput<ProductSkuDto>> UpdateAsync(long id, UpdateProductSkuDto input)
     {
         var entity = await Repository.GetAsync(id);
         input.Apply(entity);
@@ -220,7 +220,7 @@ public class ProductSkuAppService
         return new(entity.ToDto());
     }
 
-    public async Task<BaseOutput> DeleteAsync(Guid id)
+    public async Task<BaseOutput> DeleteAsync(long id)
     {
         await Repository.DeleteAsync(id);
         return new();

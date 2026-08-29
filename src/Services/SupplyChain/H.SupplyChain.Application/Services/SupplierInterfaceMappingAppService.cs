@@ -16,14 +16,14 @@ public class SupplierInterfaceMappingAppService
     : ApplicationService,
       ISupplierInterfaceMappingAppService
 {
-    protected readonly IRepository<SupplierInterfaceMappingEntity, Guid> Repository;
-    private readonly IRepository<SupplierEntity, Guid> _supplierRepo;
-    private readonly IRepository<ApiInterfaceEntity, Guid> _interfaceRepo;
+    protected readonly IRepository<SupplierInterfaceMappingEntity, long> Repository;
+    private readonly IRepository<SupplierEntity, string> _supplierRepo;
+    private readonly IRepository<ApiInterfaceEntity, long> _interfaceRepo;
 
     public SupplierInterfaceMappingAppService(
-        IRepository<SupplierInterfaceMappingEntity, Guid> repository,
-        IRepository<SupplierEntity, Guid> supplierRepo,
-        IRepository<ApiInterfaceEntity, Guid> interfaceRepo)
+        IRepository<SupplierInterfaceMappingEntity, long> repository,
+        IRepository<SupplierEntity, string> supplierRepo,
+        IRepository<ApiInterfaceEntity, long> interfaceRepo)
     {
         Repository = repository;
         _supplierRepo = supplierRepo;
@@ -33,8 +33,8 @@ public class SupplierInterfaceMappingAppService
     public async Task<BaseOutput<PagedResultDto<SupplierInterfaceMappingDto>>> GetListAsync(SupplierInterfaceMappingQueryDto input)
     {
         var query = await Repository.GetQueryableAsync();
-        if (input.SupplierId.HasValue)
-            query = query.Where(x => x.SupplierId == input.SupplierId!.Value);
+        if (string.IsNullOrEmpty(input.SupplierId))
+            query = query.Where(x => x.SupplierId == input.SupplierId);
         if (input.InterfaceId.HasValue)
             query = query.Where(x => x.InterfaceId == input.InterfaceId!.Value);
         if (input.IsEnabled.HasValue)
@@ -49,7 +49,7 @@ public class SupplierInterfaceMappingAppService
         return new(new PagedResultDto<SupplierInterfaceMappingDto>(totalCount, dtos));
     }
 
-    public async Task<BaseOutput<SupplierInterfaceMappingDto>> GetAsync(Guid id)
+    public async Task<BaseOutput<SupplierInterfaceMappingDto>> GetAsync(long id)
     {
         var entity = await Repository.GetAsync(id);
         return new((await BuildDtosAsync(new[] { entity }))[0]);
@@ -71,7 +71,7 @@ public class SupplierInterfaceMappingAppService
         return new((await BuildDtosAsync(new[] { entity }))[0]);
     }
 
-    public async Task<BaseOutput<SupplierInterfaceMappingDto>> UpdateAsync(Guid id, UpdateSupplierInterfaceMappingDto input)
+    public async Task<BaseOutput<SupplierInterfaceMappingDto>> UpdateAsync(long id, UpdateSupplierInterfaceMappingDto input)
     {
         var entity = await Repository.GetAsync(id);
         input.Apply(entity);
@@ -80,7 +80,7 @@ public class SupplierInterfaceMappingAppService
         return new((await BuildDtosAsync(new[] { entity }))[0]);
     }
 
-    public async Task<BaseOutput> DeleteAsync(Guid id)
+    public async Task<BaseOutput> DeleteAsync(long id)
     {
         await Repository.DeleteAsync(id);
         return new();

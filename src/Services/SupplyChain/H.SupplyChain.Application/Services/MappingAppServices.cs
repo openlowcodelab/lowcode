@@ -15,14 +15,14 @@ public class SupplierSkuMappingAppService
     : ApplicationService,
       ISupplierSkuMappingAppService
 {
-    protected readonly IRepository<SupplierSkuMappingEntity, Guid> Repository;
-    private readonly IRepository<ProductSkuEntity, Guid> _skuRepo;
-    private readonly IRepository<SupplierEntity, Guid> _supplierRepo;
+    protected readonly IRepository<SupplierSkuMappingEntity, long> Repository;
+    private readonly IRepository<ProductSkuEntity, long> _skuRepo;
+    private readonly IRepository<SupplierEntity, string> _supplierRepo;
 
     public SupplierSkuMappingAppService(
-        IRepository<SupplierSkuMappingEntity, Guid> repository,
-        IRepository<ProductSkuEntity, Guid> skuRepo,
-        IRepository<SupplierEntity, Guid> supplierRepo)
+        IRepository<SupplierSkuMappingEntity, long> repository,
+        IRepository<ProductSkuEntity, long> skuRepo,
+        IRepository<SupplierEntity, string> supplierRepo)
     {
         Repository = repository;
         _skuRepo = skuRepo;
@@ -34,8 +34,8 @@ public class SupplierSkuMappingAppService
         var query = await Repository.GetQueryableAsync();
         if (input.SkuId.HasValue)
             query = query.Where(x => x.SkuId == input.SkuId!.Value);
-        if (input.SupplierId.HasValue)
-            query = query.Where(x => x.SupplierId == input.SupplierId!.Value);
+        if (!string.IsNullOrEmpty(input.SupplierId))
+            query = query.Where(x => x.SupplierId == input.SupplierId);
         if (input.IsEnabled.HasValue)
             query = query.Where(x => x.IsEnabled == input.IsEnabled!.Value);
 
@@ -48,10 +48,10 @@ public class SupplierSkuMappingAppService
         return new(new PagedResultDto<SupplierSkuMappingDto>(totalCount, dtos));
     }
 
-    public async Task<BaseOutput<SupplierSkuMappingDto>> GetAsync(Guid id)
+    public async Task<BaseOutput<SupplierSkuMappingDto>> GetAsync(long id)
     {
         var entity = await Repository.GetAsync(id);
-        return new((await BuildDtosAsync(new[] { entity }))[0]);
+        return new((await BuildDtosAsync([entity]))[0]);
     }
 
     public async Task<BaseOutput<SupplierSkuMappingDto>> CreateAsync(CreateSupplierSkuMappingDto input)
@@ -70,16 +70,16 @@ public class SupplierSkuMappingAppService
         return new((await BuildDtosAsync(new[] { entity }))[0]);
     }
 
-    public async Task<BaseOutput<SupplierSkuMappingDto>> UpdateAsync(Guid id, UpdateSupplierSkuMappingDto input)
+    public async Task<BaseOutput<SupplierSkuMappingDto>> UpdateAsync(long id, UpdateSupplierSkuMappingDto input)
     {
         var entity = await Repository.GetAsync(id);
         input.Apply(entity);
         entity = await Repository.UpdateAsync(entity);
         await CurrentUnitOfWork.SaveChangesAsync();
-        return new((await BuildDtosAsync(new[] { entity }))[0]);
+        return new((await BuildDtosAsync([entity]))[0]);
     }
 
-    public async Task<BaseOutput> DeleteAsync(Guid id)
+    public async Task<BaseOutput> DeleteAsync(long id)
     {
         await Repository.DeleteAsync(id);
         return new();
@@ -116,11 +116,11 @@ public class ApiInterfaceAppService
     : ApplicationService,
       IApiInterfaceAppService
 {
-    protected readonly IRepository<ApiInterfaceEntity, Guid> Repository;
+    protected readonly IRepository<ApiInterfaceEntity, long> Repository;
 
-    public ApiInterfaceAppService(IRepository<ApiInterfaceEntity, Guid> repository) { Repository = repository; }
+    public ApiInterfaceAppService(IRepository<ApiInterfaceEntity, long> repository) { Repository = repository; }
 
-    public async Task<BaseOutput<ApiInterfaceDto>> GetAsync(Guid id)
+    public async Task<BaseOutput<ApiInterfaceDto>> GetAsync(long id)
     {
         var entity = await Repository.GetAsync(id);
         return new(entity.ToDto());
@@ -160,7 +160,7 @@ public class ApiInterfaceAppService
         return new(entity.ToDto());
     }
 
-    public async Task<BaseOutput<ApiInterfaceDto>> UpdateAsync(Guid id, UpdateApiInterfaceDto input)
+    public async Task<BaseOutput<ApiInterfaceDto>> UpdateAsync(long id, UpdateApiInterfaceDto input)
     {
         var entity = await Repository.GetAsync(id);
         input.Apply(entity);
@@ -169,7 +169,7 @@ public class ApiInterfaceAppService
         return new(entity.ToDto());
     }
 
-    public async Task<BaseOutput> DeleteAsync(Guid id)
+    public async Task<BaseOutput> DeleteAsync(long id)
     {
         await Repository.DeleteAsync(id);
         return new();

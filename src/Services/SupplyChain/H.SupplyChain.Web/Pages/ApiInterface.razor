@@ -134,7 +134,7 @@
 
         @* ==================== 右侧：供应商字段映射配置 ==================== *@
         <div style="flex:1;">
-            @if (!selectedSupplierId.HasValue)
+            @if (string.IsNullOrEmpty(selectedSupplierId))
             {
                 <div style="border:1px solid #E5E6EB;border-radius:6px;color:#86909C;text-align:center;padding:48px 0;">请在顶部选择一个供应商</div>
             }
@@ -358,8 +358,8 @@
     private bool interfaceLoading;
 
     // 选中状态
-    private Guid? selectedSupplierId;
-    private Guid? selectedInterfaceId;
+    private string? selectedSupplierId;
+    private long? selectedInterfaceId;
     private ApiInterfaceDto? selectedInterface;
     private string selectedInterfaceCode = string.Empty;
 
@@ -371,14 +371,14 @@
     private List<FieldMapping> requestMappings = new();
     private List<FieldMapping> responseMappings = new();
     private MappingForm mappingForm = new();
-    private Guid? currentMappingId;
+    private long? currentMappingId;
     private bool mappingLoading;
 
     // 接口编辑弹窗
     private bool showModal;
     private bool saving;
     private bool isEdit;
-    private Guid? editId;
+    private long? editId;
     private CreateApiInterfaceDto current = new();
 
     protected override async Task OnInitializedAsync()
@@ -419,7 +419,7 @@
     }
 
     // ===== 选中接口 =====
-    private async Task SelectInterface(Guid interfaceId)
+    private async Task SelectInterface(long interfaceId)
     {
         selectedInterfaceId = interfaceId;
         selectedInterface = interfaces.FirstOrDefault(x => x.Id == interfaceId);
@@ -435,7 +435,7 @@
     // ===== 加载供应商映射 =====
     private async Task LoadMapping()
     {
-        if (!selectedSupplierId.HasValue || !selectedInterfaceId.HasValue)
+        if (string.IsNullOrEmpty(selectedSupplierId) || !selectedInterfaceId.HasValue)
         {
             ClearMappingForm();
             return;
@@ -444,7 +444,7 @@
         mappingLoading = true;
         try
         {
-            var query = new SupplierInterfaceMappingQueryDto { SupplierId = selectedSupplierId.Value, InterfaceId = selectedInterfaceId.Value, MaxResultCount = 1 };
+            var query = new SupplierInterfaceMappingQueryDto { SupplierId = selectedSupplierId, InterfaceId = selectedInterfaceId.Value, MaxResultCount = 1 };
             var r = (await MappingService.GetListAsync(query)).Data!;
             var existing = r.Items.FirstOrDefault();
 
@@ -534,7 +534,7 @@
     private async Task OnSupplierChanged(ChangeEventArgs e)
     {
         var val = e.Value?.ToString();
-        selectedSupplierId = string.IsNullOrWhiteSpace(val) ? null : Guid.Parse(val);
+        selectedSupplierId = val;
         await LoadMapping();
     }
 
@@ -621,7 +621,7 @@
 
     private void CloseModal() { showModal = false; current = new(); editId = null; isEdit = false; }
 
-    private async Task Delete(Guid id)
+    private async Task Delete(long id)
     {
         var ok = await JS.InvokeAsync<bool>("confirm", "确定删除该接口定义（含供应商映射将一并删除）？");
         if (!ok) return;
@@ -646,7 +646,7 @@
     // ===== 供应商映射保存/删除 =====
     private async Task SaveMapping()
     {
-        if (!selectedSupplierId.HasValue || !selectedInterfaceId.HasValue) return;
+        if (string.IsNullOrEmpty(selectedSupplierId) || !selectedInterfaceId.HasValue) return;
         try
         {
             var requestJson = FieldMappingHelper.ToJson(requestMappings);
@@ -668,7 +668,7 @@
             {
                 var createDto = new CreateSupplierInterfaceMappingDto
                 {
-                    SupplierId = selectedSupplierId.Value,
+                    SupplierId = selectedSupplierId,
                     InterfaceId = selectedInterfaceId.Value,
                     SupplierApiUrl = mappingForm.SupplierApiUrl,
                     RequestMappingJson = requestJson,

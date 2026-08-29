@@ -40,6 +40,7 @@ public class SupplyChainDbContext : AbpDbContext<SupplyChainDbContext>
         {
             b.ToTable("Suppliers");
             b.HasKey(x => x.Id);
+
             b.Property(x => x.Code).IsRequired().HasMaxLength(64);
             b.Property(x => x.Name).IsRequired().HasMaxLength(128);
             b.Property(x => x.DisplayName).HasMaxLength(128);
@@ -55,6 +56,8 @@ public class SupplyChainDbContext : AbpDbContext<SupplyChainDbContext>
         {
             b.ToTable("Products");
             b.HasKey(x => x.Id);
+
+            b.Property(x => x.Id).UseIdentityColumn(10000, 1);
             b.Property(x => x.ProductCode).IsRequired().HasMaxLength(64);
             b.Property(x => x.Name).IsRequired().HasMaxLength(256);
             b.Property(x => x.Category).HasMaxLength(128);
@@ -70,6 +73,8 @@ public class SupplyChainDbContext : AbpDbContext<SupplyChainDbContext>
         {
             b.ToTable("ProductSkus");
             b.HasKey(x => x.Id);
+
+            b.Property(x => x.Id).UseIdentityColumn(200000, 1);
             b.Property(x => x.SkuCode).IsRequired().HasMaxLength(64);
             b.Property(x => x.SkuName).IsRequired().HasMaxLength(256);
             b.Property(x => x.SpecsJson).HasColumnType("nvarchar(max)");
@@ -78,17 +83,14 @@ public class SupplyChainDbContext : AbpDbContext<SupplyChainDbContext>
 
             b.HasIndex(x => x.SkuCode).IsUnique();
             b.HasIndex(x => x.ProductId);
-
-            b.HasOne(x => x.Product)
-                .WithMany()
-                .HasForeignKey(x => x.ProductId)
-                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<SupplierSkuMappingEntity>(b =>
         {
             b.ToTable("SupplierSkuMappings");
             b.HasKey(x => x.Id);
+
+            b.Property(x => x.Id).UseIdentityColumn(3000000, 1);
             b.Property(x => x.SupplierSkuCode).IsRequired().HasMaxLength(128);
             b.Property(x => x.SupplierSkuName).HasMaxLength(256);
             b.Property(x => x.SupplierPrice).HasColumnType("decimal(18,2)");
@@ -98,22 +100,14 @@ public class SupplyChainDbContext : AbpDbContext<SupplyChainDbContext>
             b.HasIndex(x => new { x.SkuId, x.SupplierId }).IsUnique();
             b.HasIndex(x => x.SkuId);
             b.HasIndex(x => x.SupplierId);
-
-            b.HasOne(x => x.Sku)
-                .WithMany()
-                .HasForeignKey(x => x.SkuId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            b.HasOne(x => x.Supplier)
-                .WithMany()
-                .HasForeignKey(x => x.SupplierId)
-                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<ApiInterfaceEntity>(b =>
         {
             b.ToTable("ApiInterfaces");
             b.HasKey(x => x.Id);
+
+            b.Property(x => x.Id).UseIdentityColumn(100000, 1);
             b.Property(x => x.Code).IsRequired().HasMaxLength(64);
             b.Property(x => x.Name).IsRequired().HasMaxLength(128);
             b.Property(x => x.HttpMethod).HasMaxLength(16);
@@ -131,6 +125,8 @@ public class SupplyChainDbContext : AbpDbContext<SupplyChainDbContext>
         {
             b.ToTable("SupplierInterfaceMappings");
             b.HasKey(x => x.Id);
+
+            b.Property(x => x.Id).UseIdentityColumn(100000, 1);
             b.Property(x => x.SupplierApiUrl).HasMaxLength(500);
             b.Property(x => x.RequestMappingJson).HasColumnType("nvarchar(max)");
             b.Property(x => x.ResponseMappingJson).HasColumnType("nvarchar(max)");
@@ -140,16 +136,6 @@ public class SupplyChainDbContext : AbpDbContext<SupplyChainDbContext>
             b.HasIndex(x => new { x.SupplierId, x.InterfaceId }).IsUnique();
             b.HasIndex(x => x.SupplierId);
             b.HasIndex(x => x.InterfaceId);
-
-            b.HasOne(x => x.Supplier)
-                .WithMany()
-                .HasForeignKey(x => x.SupplierId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            b.HasOne(x => x.Interface)
-                .WithMany()
-                .HasForeignKey(x => x.InterfaceId)
-                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

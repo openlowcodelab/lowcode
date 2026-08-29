@@ -6,16 +6,16 @@ namespace H.SupplyChain.Application.Contracts;
 /// 供应商 SKU 映射 DTO。
 /// 一个内部 SKU 可映射多个供应商，用于向不同供应商下单。
 /// </summary>
-public class SupplierSkuMappingDto : AuditedEntityDto<Guid>
+public class SupplierSkuMappingDto : AuditedEntityDto<long>
 {
     /// <summary>内部 SKU ID</summary>
-    public Guid SkuId { get; set; }
+    public long SkuId { get; set; }
 
     /// <summary>内部 SKU 编码（冗余便于展示）</summary>
     public string SkuCode { get; set; } = string.Empty;
 
     /// <summary>供应商ID</summary>
-    public Guid SupplierId { get; set; }
+    public string SupplierId { get; set; } = string.Empty;
 
     /// <summary>供应商编码</summary>
     public string SupplierCode { get; set; } = string.Empty;
@@ -42,10 +42,10 @@ public class SupplierSkuMappingDto : AuditedEntityDto<Guid>
 public class CreateSupplierSkuMappingDto
 {
     /// <summary>内部 SKU ID</summary>
-    public Guid SkuId { get; set; }
+    public long SkuId { get; set; }
 
     /// <summary>供应商ID</summary>
-    public Guid SupplierId { get; set; }
+    public string SupplierId { get; set; } = string.Empty;
 
     /// <summary>供应商商品编码</summary>
     public string SupplierSkuCode { get; set; } = string.Empty;
@@ -90,10 +90,10 @@ public class UpdateSupplierSkuMappingDto
 public class SupplierSkuMappingQueryDto : PagedResultRequestDto
 {
     /// <summary>内部 SKU ID</summary>
-    public Guid? SkuId { get; set; }
+    public long? SkuId { get; set; }
 
     /// <summary>供应商ID</summary>
-    public Guid? SupplierId { get; set; }
+    public string? SupplierId { get; set; }
 
     /// <summary>是否启用</summary>
     public bool? IsEnabled { get; set; }

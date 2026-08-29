@@ -26,8 +26,11 @@ namespace H.SupplyChain.DbMigrator.Migrations
 
             modelBuilder.Entity("H.SupplyChain.EntityFrameworkCore.ApiInterfaceEntity", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 100000L);
 
                     b.Property<string>("Code")
                         .IsRequired()
@@ -101,8 +104,11 @@ namespace H.SupplyChain.DbMigrator.Migrations
 
             modelBuilder.Entity("H.SupplyChain.EntityFrameworkCore.ProductEntity", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 10000L);
 
                     b.Property<string>("Category")
                         .HasMaxLength(128)
@@ -162,8 +168,11 @@ namespace H.SupplyChain.DbMigrator.Migrations
 
             modelBuilder.Entity("H.SupplyChain.EntityFrameworkCore.ProductSkuEntity", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 200000L);
 
                     b.Property<DateTime>("CreationTime")
                         .HasColumnType("datetime2")
@@ -187,8 +196,8 @@ namespace H.SupplyChain.DbMigrator.Migrations
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<Guid>("ProductId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<long>("ProductId")
+                        .HasColumnType("bigint");
 
                     b.Property<string>("Remark")
                         .HasMaxLength(500)
@@ -226,8 +235,8 @@ namespace H.SupplyChain.DbMigrator.Migrations
 
             modelBuilder.Entity("H.SupplyChain.EntityFrameworkCore.SupplierEntity", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("ApiUrl")
                         .HasMaxLength(500)
@@ -296,8 +305,11 @@ namespace H.SupplyChain.DbMigrator.Migrations
 
             modelBuilder.Entity("H.SupplyChain.EntityFrameworkCore.SupplierInterfaceMappingEntity", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 100000L);
 
                     b.Property<DateTime>("CreationTime")
                         .HasColumnType("datetime2")
@@ -307,8 +319,8 @@ namespace H.SupplyChain.DbMigrator.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("CreatorId");
 
-                    b.Property<Guid>("InterfaceId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<long>("InterfaceId")
+                        .HasColumnType("bigint");
 
                     b.Property<bool>("IsEnabled")
                         .HasColumnType("bit");
@@ -335,8 +347,9 @@ namespace H.SupplyChain.DbMigrator.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
-                    b.Property<Guid>("SupplierId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<string>("SupplierId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<Guid?>("TenantId")
                         .HasColumnType("uniqueidentifier")
@@ -356,8 +369,11 @@ namespace H.SupplyChain.DbMigrator.Migrations
 
             modelBuilder.Entity("H.SupplyChain.EntityFrameworkCore.SupplierSkuMappingEntity", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"), 3000000L);
 
                     b.Property<DateTime>("CreationTime")
                         .HasColumnType("datetime2")
@@ -382,11 +398,12 @@ namespace H.SupplyChain.DbMigrator.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
-                    b.Property<Guid>("SkuId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<long>("SkuId")
+                        .HasColumnType("bigint");
 
-                    b.Property<Guid>("SupplierId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<string>("SupplierId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<decimal>("SupplierPrice")
                         .HasColumnType("decimal(18,2)");
@@ -415,55 +432,6 @@ namespace H.SupplyChain.DbMigrator.Migrations
                         .IsUnique();
 
                     b.ToTable("SupplierSkuMappings", (string)null);
-                });
-
-            modelBuilder.Entity("H.SupplyChain.EntityFrameworkCore.ProductSkuEntity", b =>
-                {
-                    b.HasOne("H.SupplyChain.EntityFrameworkCore.ProductEntity", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Product");
-                });
-
-            modelBuilder.Entity("H.SupplyChain.EntityFrameworkCore.SupplierInterfaceMappingEntity", b =>
-                {
-                    b.HasOne("H.SupplyChain.EntityFrameworkCore.ApiInterfaceEntity", "Interface")
-                        .WithMany()
-                        .HasForeignKey("InterfaceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("H.SupplyChain.EntityFrameworkCore.SupplierEntity", "Supplier")
-                        .WithMany()
-                        .HasForeignKey("SupplierId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Interface");
-
-                    b.Navigation("Supplier");
-                });
-
-            modelBuilder.Entity("H.SupplyChain.EntityFrameworkCore.SupplierSkuMappingEntity", b =>
-                {
-                    b.HasOne("H.SupplyChain.EntityFrameworkCore.ProductSkuEntity", "Sku")
-                        .WithMany()
-                        .HasForeignKey("SkuId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("H.SupplyChain.EntityFrameworkCore.SupplierEntity", "Supplier")
-                        .WithMany()
-                        .HasForeignKey("SupplierId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Sku");
-
-                    b.Navigation("Supplier");
                 });
 #pragma warning restore 612, 618
         }

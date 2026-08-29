@@ -14,12 +14,12 @@ namespace H.SupplyChain.Application.Services;
 /// </summary>
 public class SupplyChainApiAppService : ApplicationService, ISupplyChainApiAppService
 {
-    private readonly IRepository<ProductEntity, Guid> _productRepo;
-    private readonly IRepository<ProductSkuEntity, Guid> _skuRepo;
-    private readonly IRepository<SupplierEntity, Guid> _supplierRepo;
-    private readonly IRepository<SupplierSkuMappingEntity, Guid> _skuMappingRepo;
-    private readonly IRepository<ApiInterfaceEntity, Guid> _interfaceRepo;
-    private readonly IRepository<SupplierInterfaceMappingEntity, Guid> _interfaceMappingRepo;
+    private readonly IRepository<ProductEntity, long> _productRepo;
+    private readonly IRepository<ProductSkuEntity, long> _skuRepo;
+    private readonly IRepository<SupplierEntity, string> _supplierRepo;
+    private readonly IRepository<SupplierSkuMappingEntity, long> _skuMappingRepo;
+    private readonly IRepository<ApiInterfaceEntity, long> _interfaceRepo;
+    private readonly IRepository<SupplierInterfaceMappingEntity, long> _interfaceMappingRepo;
     private readonly ISupplierApiInvokerFactory _invokerFactory;
 
     // 标准接口编码常量（与 InterfaceTypeEnum 对应）
@@ -28,12 +28,12 @@ public class SupplyChainApiAppService : ApplicationService, ISupplyChainApiAppSe
     private const string PlaceOrderInterfaceCode = "place-order";
 
     public SupplyChainApiAppService(
-        IRepository<ProductEntity, Guid> productRepo,
-        IRepository<ProductSkuEntity, Guid> skuRepo,
-        IRepository<SupplierEntity, Guid> supplierRepo,
-        IRepository<SupplierSkuMappingEntity, Guid> skuMappingRepo,
-        IRepository<ApiInterfaceEntity, Guid> interfaceRepo,
-        IRepository<SupplierInterfaceMappingEntity, Guid> interfaceMappingRepo,
+        IRepository<ProductEntity, long> productRepo,
+        IRepository<ProductSkuEntity, long> skuRepo,
+        IRepository<SupplierEntity, string> supplierRepo,
+        IRepository<SupplierSkuMappingEntity, long> skuMappingRepo,
+        IRepository<ApiInterfaceEntity, long> interfaceRepo,
+        IRepository<SupplierInterfaceMappingEntity, long> interfaceMappingRepo,
         ISupplierApiInvokerFactory invokerFactory)
     {
         _productRepo = productRepo;
@@ -69,16 +69,16 @@ public class SupplyChainApiAppService : ApplicationService, ISupplyChainApiAppSe
             skuQuery.Where(x => productIds.Contains(x.ProductId) && x.IsEnabled).OrderBy(x => x.SkuCode));
 
         // 若指定供应商，加载该供应商对内部 SKU 的映射，附加供应商侧 SKU 编码
-        Dictionary<Guid, string>? supplierSkuMap = null;
+        Dictionary<long, string>? supplierSkuMap = null;
         if (!string.IsNullOrWhiteSpace(input.SupplierCode))
         {
             var supplierId = await GetSupplierIdByCodeAsync(input.SupplierCode);
-            if (supplierId.HasValue)
+            if (!string.IsNullOrEmpty(supplierId))
             {
                 var skuIds = skuList.Select(s => s.Id).ToList();
                 var mappingQuery = await _skuMappingRepo.GetQueryableAsync();
                 var mappings = await AsyncExecuter.ToListAsync(
-                    mappingQuery.Where(x => x.SupplierId == supplierId.Value && x.IsEnabled && skuIds.Contains(x.SkuId))
+                    mappingQuery.Where(x => x.SupplierId == supplierId && x.IsEnabled && skuIds.Contains(x.SkuId))
                                 .Select(x => new { x.SkuId, x.SupplierSkuCode }));
                 supplierSkuMap = mappings.ToDictionary(x => x.SkuId, x => x.SupplierSkuCode);
 
@@ -312,7 +312,7 @@ public class SupplyChainApiAppService : ApplicationService, ISupplyChainApiAppSe
     }
 
     private async Task<(ApiInterfaceEntity? Interface, SupplierInterfaceMappingEntity? Mapping)> LoadInterfaceMappingAsync(
-        Guid supplierId, string interfaceCode)
+        string supplierId, string interfaceCode)
     {
         var interfaceQuery = await _interfaceRepo.GetQueryableAsync();
         var apiInterface = await AsyncExecuter.FirstOrDefaultAsync(
@@ -333,7 +333,7 @@ public class SupplyChainApiAppService : ApplicationService, ISupplyChainApiAppSe
         return await AsyncExecuter.FirstOrDefaultAsync(query.Where(x => x.Code == code));
     }
 
-    private async Task<Guid?> GetSupplierIdByCodeAsync(string code)
+    private async Task<string?> GetSupplierIdByCodeAsync(string code)
     {
         var supplier = await GetSupplierByCodeAsync(code);
         return supplier?.Id;

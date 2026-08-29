@@ -5,10 +5,10 @@ namespace H.SupplyChain.Application.Contracts;
 /// <summary>
 /// 商品 SKU DTO（商品最小可售卖单元）
 /// </summary>
-public class ProductSkuDto : AuditedEntityDto<Guid>
+public class ProductSkuDto : AuditedEntityDto<long>
 {
     /// <summary>商品ID</summary>
-    public Guid ProductId { get; set; }
+    public long ProductId { get; set; }
 
     /// <summary>SKU 编码（唯一）</summary>
     public string SkuCode { get; set; } = string.Empty;
@@ -38,7 +38,7 @@ public class ProductSkuDto : AuditedEntityDto<Guid>
 public class CreateProductSkuDto
 {
     /// <summary>商品ID</summary>
-    public Guid ProductId { get; set; }
+    public long ProductId { get; set; }
 
     /// <summary>SKU 编码</summary>
     public string SkuCode { get; set; } = string.Empty;
@@ -92,7 +92,7 @@ public class UpdateProductSkuDto
 public class ProductSkuQueryDto : PagedResultRequestDto
 {
     /// <summary>商品ID</summary>
-    public Guid? ProductId { get; set; }
+    public long? ProductId { get; set; }
 
     /// <summary>关键词（编码或名称）</summary>
     public string? Filter { get; set; }

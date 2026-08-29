@@ -303,7 +303,7 @@
 
 @code {
     private List<ProductDto> products = new();
-    private Dictionary<Guid, int> skuCounts = new();
+    private Dictionary<long, int> skuCounts = new();
     private bool loading;
     private string filter = string.Empty;
     private string categoryFilter = string.Empty;
@@ -312,16 +312,16 @@
     private bool showModal;
     private bool saving;
     private bool isEdit;
-    private Guid? editId;
+    private long? editId;
     private CreateProductDto current = new();
 
     // SKU 管理弹窗
     private bool showSkuModal;
-    private Guid skuModalProductId;
+    private long skuModalProductId;
     private string skuModalProductName = string.Empty;
     private List<ProductSkuDto> skus = new();
     private bool skuLoading;
-    private Guid? selectedSkuId;
+    private long? selectedSkuId;
     private string selectedSkuCode = string.Empty;
     private List<SupplierSkuMappingDto> skuMappings = new();
     private bool mappingLoading;
@@ -330,14 +330,14 @@
     // SKU 编辑子弹窗
     private bool showSkuEditModal;
     private bool isSkuEdit;
-    private Guid? skuEditId;
+    private long? skuEditId;
     private bool skuSaving;
     private CreateProductSkuDto currentSku = new();
 
     // 供应商映射编辑子弹窗
     private bool showMappingEditModal;
     private bool isMappingEdit;
-    private Guid? mappingEditId;
+    private long? mappingEditId;
     private bool mappingSaving;
     private CreateSupplierSkuMappingDto currentMapping = new();
 
@@ -440,7 +440,7 @@
 
     private void CloseModal() { showModal = false; current = new(); editId = null; isEdit = false; }
 
-    private async Task Delete(Guid id)
+    private async Task Delete(long id)
     {
         var ok = await JS.InvokeAsync<bool>("confirm", "确定删除该商品（含 SKU 将一并删除）？");
         if (!ok) return;
@@ -490,7 +490,7 @@
         finally { skuLoading = false; }
     }
 
-    private async Task SelectSku(Guid skuId)
+    private async Task SelectSku(long skuId)
     {
         selectedSkuId = skuId;
         var sku = skus.FirstOrDefault(x => x.Id == skuId);
@@ -581,7 +581,7 @@
 
     private void CloseSkuEditModal() { showSkuEditModal = false; currentSku = new(); skuEditId = null; isSkuEdit = false; }
 
-    private async Task DeleteSku(Guid id)
+    private async Task DeleteSku(long id)
     {
         var ok = await JS.InvokeAsync<bool>("confirm", "确定删除该 SKU（含供应商映射将一并删除）？");
         if (!ok) return;
@@ -633,7 +633,7 @@
         mappingSaving = true;
         try
         {
-            if (currentMapping.SupplierId == Guid.Empty || string.IsNullOrWhiteSpace(currentMapping.SupplierSkuCode))
+            if (string.IsNullOrEmpty(currentMapping.SupplierId) || string.IsNullOrWhiteSpace(currentMapping.SupplierSkuCode))
             {
                 Toast.Warning("供应商和供应商 SKU 编码不能为空");
                 return;
@@ -665,7 +665,7 @@
 
     private void CloseMappingEditModal() { showMappingEditModal = false; currentMapping = new(); mappingEditId = null; isMappingEdit = false; }
 
-    private async Task DeleteMapping(Guid id)
+    private async Task DeleteMapping(long id)
     {
         var ok = await JS.InvokeAsync<bool>("confirm", "确定删除该供应商映射？");
         if (!ok) return;
