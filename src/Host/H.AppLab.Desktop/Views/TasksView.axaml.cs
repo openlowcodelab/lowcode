@@ -24,4 +24,20 @@ public partial class TasksView : UserControl
             vm.ConfirmAddCategoryCommand.Execute(null);
         }
     }
+
+    private void OnAiOverlayPressed(object? sender, PointerPressedEventArgs e)
+    {
+        // 点击遮罩关闭（生成中由 CloseAiGenerate 内部拦截）
+        (DataContext as TasksViewModel)?.CloseAiGenerateCommand.Execute(null);
+    }
+
+    private void OnAiDescriptionKeyDown(object? sender, KeyEventArgs e)
+    {
+        // 多行输入框普通 Enter 为换行，用 Ctrl+Enter 提交
+        if (e.Key == Key.Enter && e.KeyModifiers.HasFlag(KeyModifiers.Control)
+            && DataContext is TasksViewModel vm)
+        {
+            vm.GenerateTaskFromAiCommand.Execute(null);
+        }
+    }
 }

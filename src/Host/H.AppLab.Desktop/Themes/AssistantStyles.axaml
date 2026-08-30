@@ -2,46 +2,40 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <!-- Assistant 应用样式（由 AssistantAppView 引入，随应用接入宿主生效） -->
 
-  <!-- ========== 基础按钮（对应 Web .btn） ========== -->
+  <!-- ========== 基础按钮（无边框浅灰实底，与应用页 appOpen 一致） ========== -->
   <Style Selector="Button.btn">
     <Setter Property="Padding" Value="16,6" />
     <Setter Property="FontSize" Value="14" />
     <Setter Property="CornerRadius" Value="6" />
-    <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="BorderBrush" Value="#d9d9d9" />
-    <Setter Property="Background" Value="#fafafa" />
-    <Setter Property="Foreground" Value="#595959" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="Background" Value="#e0e0e0" />
+    <Setter Property="Foreground" Value="#262626" />
     <Setter Property="HorizontalContentAlignment" Value="Center" />
     <Setter Property="VerticalContentAlignment" Value="Center" />
   </Style>
   <Style Selector="Button.btn:pointerover /template/ ContentPresenter#PART_ContentPresenter">
     <Setter Property="Foreground" Value="#262626" />
-    <Setter Property="BorderBrush" Value="#595959" />
-    <Setter Property="Background" Value="#fafafa" />
+    <Setter Property="Background" Value="#d5d5d5" />
   </Style>
 
-  <!-- 主按钮（深灰） -->
+  <!-- 主按钮（与应用页 appOpen 一致，当前与基础按钮同色） -->
   <Style Selector="Button.primary">
-    <Setter Property="Background" Value="#595959" />
-    <Setter Property="BorderBrush" Value="#595959" />
-    <Setter Property="Foreground" Value="#ffffff" />
+    <Setter Property="Background" Value="#e0e0e0" />
+    <Setter Property="Foreground" Value="#262626" />
   </Style>
   <Style Selector="Button.primary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="Background" Value="#404040" />
-    <Setter Property="BorderBrush" Value="#404040" />
-    <Setter Property="Foreground" Value="#ffffff" />
+    <Setter Property="Background" Value="#d5d5d5" />
+    <Setter Property="Foreground" Value="#262626" />
   </Style>
 
-  <!-- 灰色系 primary（对应 assistant-btn-primary） -->
+  <!-- 灰色系 primary（对应 assistant-btn-primary，选中态比基础按钮更深） -->
   <Style Selector="Button.assistantPrimary">
-    <Setter Property="Background" Value="#a6a6a6" />
-    <Setter Property="BorderBrush" Value="#a6a6a6" />
-    <Setter Property="Foreground" Value="#ffffff" />
+    <Setter Property="Background" Value="#d5d5d5" />
+    <Setter Property="Foreground" Value="#262626" />
   </Style>
   <Style Selector="Button.assistantPrimary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="Background" Value="#bfbfbf" />
-    <Setter Property="BorderBrush" Value="#bfbfbf" />
-    <Setter Property="Foreground" Value="#ffffff" />
+    <Setter Property="Background" Value="#c9c9c9" />
+    <Setter Property="Foreground" Value="#262626" />
   </Style>
 
   <!-- 链接按钮 -->
@@ -103,20 +97,31 @@
     <Setter Property="Foreground" Value="#595959" />
   </Style>
 
-  <!-- 模态框主按钮（深黑 #262626） -->
+  <!-- 模态框主按钮（浅灰） -->
   <Style Selector="Button.modalPrimary">
     <Setter Property="Height" Value="36" />
     <Setter Property="MinWidth" Value="80" />
     <Setter Property="Padding" Value="20,4" />
     <Setter Property="CornerRadius" Value="6" />
     <Setter Property="BorderThickness" Value="0" />
-    <Setter Property="Background" Value="#262626" />
-    <Setter Property="Foreground" Value="#ffffff" />
+    <Setter Property="Background" Value="#e0e0e0" />
+    <Setter Property="Foreground" Value="#262626" />
     <Setter Property="FontSize" Value="14" />
     <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
   </Style>
   <Style Selector="Button.modalPrimary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="Background" Value="#404040" />
+    <Setter Property="Background" Value="#d5d5d5" />
+    <Setter Property="Foreground" Value="#262626" />
+  </Style>
+
+  <!-- 模态框危险按钮（红色，定义在 modalPrimary 之后以覆盖其颜色） -->
+  <Style Selector="Button.modalDanger">
+    <Setter Property="Background" Value="#ff4d4f" />
+    <Setter Property="Foreground" Value="#ffffff" />
+  </Style>
+  <Style Selector="Button.modalDanger:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Setter Property="Background" Value="#ff7875" />
     <Setter Property="Foreground" Value="#ffffff" />
   </Style>
 
@@ -127,16 +132,17 @@
     <Setter Property="Padding" Value="20,4" />
     <Setter Property="CornerRadius" Value="6" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="BorderBrush" Value="#d9d9d9" />
+    <Setter Property="BorderBrush" Value="#e5e5e5" />
     <Setter Property="Background" Value="#ffffff" />
     <Setter Property="Foreground" Value="#595959" />
     <Setter Property="FontSize" Value="14" />
     <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
   </Style>
   <Style Selector="Button.modalCancel:pointerover /template/ ContentPresenter#PART_ContentPresenter">
     <Setter Property="Foreground" Value="#262626" />
-    <Setter Property="BorderBrush" Value="#262626" />
-    <Setter Property="Background" Value="#ffffff" />
+    <Setter Property="BorderBrush" Value="#bfbfbf" />
+    <Setter Property="Background" Value="#f5f5f5" />
   </Style>
 
   <!-- ========== 标签 tag ========== -->
@@ -182,7 +188,7 @@
     <Setter Property="MinHeight" Value="36" />
     <Setter Property="Padding" Value="11,6" />
     <Setter Property="CornerRadius" Value="6" />
-    <Setter Property="BorderBrush" Value="#d9d9d9" />
+    <Setter Property="BorderBrush" Value="#e5e5e5" />
     <Setter Property="Background" Value="#ffffff" />
     <Setter Property="FontSize" Value="14" />
     <Setter Property="Foreground" Value="#262626" />
@@ -190,20 +196,29 @@
   <Style Selector="TextBox.modalInput:focus /template/ Border#PART_BorderElement">
     <Setter Property="BorderBrush" Value="#a6a6a6" />
   </Style>
+  <Style Selector="TextBox.modalInput:pointerover /template/ Border#PART_BorderElement">
+    <Setter Property="BorderBrush" Value="#e5e5e5" />
+  </Style>
   <Style Selector="ComboBox.modalSelect">
     <Setter Property="MinHeight" Value="36" />
     <Setter Property="CornerRadius" Value="6" />
-    <Setter Property="BorderBrush" Value="#d9d9d9" />
+    <Setter Property="BorderBrush" Value="#e5e5e5" />
     <Setter Property="Background" Value="#ffffff" />
     <Setter Property="FontSize" Value="14" />
     <Setter Property="HorizontalAlignment" Value="Stretch" />
   </Style>
+  <Style Selector="ComboBox.modalSelect:pointerover /template/ Border#PART_BorderElement">
+    <Setter Property="BorderBrush" Value="#e5e5e5" />
+  </Style>
   <Style Selector="NumericUpDown.modalInput">
     <Setter Property="MinHeight" Value="36" />
     <Setter Property="CornerRadius" Value="6" />
-    <Setter Property="BorderBrush" Value="#d9d9d9" />
+    <Setter Property="BorderBrush" Value="#e5e5e5" />
     <Setter Property="Background" Value="#ffffff" />
     <Setter Property="FontSize" Value="14" />
+  </Style>
+  <Style Selector="NumericUpDown.modalInput:pointerover /template/ Border#PART_Background">
+    <Setter Property="BorderBrush" Value="#e5e5e5" />
   </Style>
 
   <!-- ========== 下拉菜单项 ========== -->
@@ -343,25 +358,26 @@
     <Setter Property="FontSize" Value="13" />
     <Setter Property="CornerRadius" Value="6" />
     <Setter Property="BorderThickness" Value="1" />
-    <Setter Property="BorderBrush" Value="#d9d9d9" />
+    <Setter Property="BorderBrush" Value="#e5e5e5" />
     <Setter Property="Background" Value="#ffffff" />
     <Setter Property="Foreground" Value="#595959" />
     <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
   </Style>
   <Style Selector="Button.segBtn:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-    <Setter Property="BorderBrush" Value="#a6a6a6" />
+    <Setter Property="BorderBrush" Value="#bfbfbf" />
     <Setter Property="Foreground" Value="#262626" />
     <Setter Property="Background" Value="#ffffff" />
   </Style>
   <Style Selector="Button.segBtnActive">
     <Setter Property="Background" Value="#f0f5ff" />
-    <Setter Property="BorderBrush" Value="#595959" />
+    <Setter Property="BorderBrush" Value="#bfbfbf" />
     <Setter Property="Foreground" Value="#262626" />
     <Setter Property="FontWeight" Value="Medium" />
   </Style>
   <Style Selector="Button.segBtnActive:pointerover /template/ ContentPresenter#PART_ContentPresenter">
     <Setter Property="Background" Value="#f0f5ff" />
-    <Setter Property="BorderBrush" Value="#595959" />
+    <Setter Property="BorderBrush" Value="#bfbfbf" />
     <Setter Property="Foreground" Value="#262626" />
   </Style>
 </Styles>

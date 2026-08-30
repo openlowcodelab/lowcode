@@ -17,6 +17,7 @@ public partial class TasksViewModel : ObservableObject
     private readonly IChatMessageAppService _chatMessageAppService;
     private readonly ToastService _toast;
     private readonly CategoryService _categoryService;
+    private readonly IAiCompletionAppService _aiCompletionAppService;
 
     private bool _initialized;
 
@@ -83,6 +84,21 @@ public partial class TasksViewModel : ObservableObject
     [ObservableProperty]
     private bool showTaskDialog;
 
+    /// <summary>是否显示 AI 生成任务对话框</summary>
+    [ObservableProperty]
+    private bool showAiDialog;
+
+    /// <summary>AI 生成：用户输入的口语化描述</summary>
+    [ObservableProperty]
+    private string aiDescription = string.Empty;
+
+    /// <summary>AI 生成：是否正在调用 AI 解析</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(AiGenerateButtonText))]
+    private bool isAiGenerating;
+
+    public string AiGenerateButtonText => IsAiGenerating ? "生成中..." : "生成";
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(DialogTitle))]
     [NotifyPropertyChangedFor(nameof(DialogSaveText))]
@@ -125,13 +141,15 @@ public partial class TasksViewModel : ObservableObject
     public string SelectAllText => TaskLogs.Count > 0 && TaskLogs.All(l => l.IsChecked) ? "取消全选" : "全选";
 
     public TasksViewModel(ITaskAppService taskAppService, ITaskLogAppService taskLogAppService,
-        IChatMessageAppService chatMessageAppService, ToastService toast, CategoryService categoryService)
+        IChatMessageAppService chatMessageAppService, ToastService toast, CategoryService categoryService,
+        IAiCompletionAppService aiCompletionAppService)
     {
         _taskAppService = taskAppService;
         _taskLogAppService = taskLogAppService;
         _chatMessageAppService = chatMessageAppService;
         _toast = toast;
         _categoryService = categoryService;
+        _aiCompletionAppService = aiCompletionAppService;
     }
 
     public async Task InitializeAsync()
@@ -488,6 +506,250 @@ public partial class TasksViewModel : ObservableObject
             task.IsMenuOpen = false;
         }
     }
+
+    #endregion
+
+    #region AI 生成任务
+
+    /// <summary>打开 AI 生成任务对话框</summary>
+    [RelayCommand]
+    private void OpenAiGenerate()
+    {
+        AiDescription = string.Empty;
+        ShowAiDialog = true;
+    }
+
+    /// <summary>关闭 AI 生成任务对话框（生成中禁止关闭）</summary>
+    [RelayCommand]
+    private void CloseAiGenerate()
+    {
+        if (IsAiGenerating)
+        {
+            return;
+        }
+        ShowAiDialog = false;
+    }
+
+    /// <summary>调用 AI 解析口语描述并直接创建任务</summary>
+    [RelayCommand]
+    private async Task GenerateTaskFromAiAsync()
+    {
+        var description = AiDescription?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(description))
+        {
+            _toast.Show("请输入任务描述", "error");
+            return;
+        }
+        if (IsAiGenerating)
+        {
+            return;
+        }
+
+        IsAiGenerating = true;
+        try
+        {
+            // 已有分类列表随用户消息传入，约束 AI 只能从中选择分类
+            var categoryHint = CategoryOptions.Count > 0
+                ? string.Join("、", CategoryOptions)
+                : "（暂无分类）";
+            var userMessage =
+                $"已有任务分类（category 只能从中选择，都不合适则输出空字符串）：{categoryHint}\n\n" +
+                $"用户描述：\n{description}";
+
+            var result = (await _aiCompletionAppService.CompleteAsync(new AiCompletionInputDto
+            {
+                SystemPrompt = AiGenerateTaskSystemPrompt,
+                UserMessage = userMessage,
+                Temperature = 0.3f,
+                MaxTokens = 2048
+            })).Data;
+
+            var config = ParseAiTaskConfig(result?.Content ?? string.Empty);
+            if (config == null || string.IsNullOrWhiteSpace(config.TaskName))
+            {
+                _toast.Show("AI 返回内容无法解析，请调整描述后重试", "error");
+                return;
+            }
+
+            var dto = BuildCreateTaskDto(config, description);
+            if (dto == null)
+            {
+                return;
+            }
+
+            await _taskAppService.CreateAsync(dto);
+            _toast.Show("任务已创建", "success");
+            ShowAiDialog = false;
+            AiDescription = string.Empty;
+            await LoadTasksAsync();
+        }
+        catch (Exception ex)
+        {
+            _toast.Show($"AI 生成失败: {ex.Message}", "error");
+        }
+        finally
+        {
+            IsAiGenerating = false;
+        }
+    }
+
+    /// <summary>将 AI 解析结果归一化并组装为 CreateTaskDto，校验失败返回 null（已 toast）</summary>
+    private CreateTaskDto? BuildCreateTaskDto(AiTaskConfig config, string fallbackPrompt)
+    {
+        // 仅明确识别为 Manual 才是手动任务，其余按自动处理
+        var executionMode = string.Equals(config.ExecutionMode?.Trim(), "Manual", StringComparison.OrdinalIgnoreCase)
+            ? "Manual"
+            : "Auto";
+
+        // 调度类型白名单归一化；手动任务不参与调度，用应用默认值 Daily 占位
+        var scheduleType = (config.ScheduleType ?? string.Empty).Trim();
+        if (executionMode == "Manual")
+        {
+            scheduleType = "Daily";
+        }
+        if (scheduleType is not ("Once" or "Daily" or "Weekly" or "Monthly" or "Cron"))
+        {
+            scheduleType = "Daily";
+        }
+
+        // 数值范围过滤，越界视为未提供
+        int? hour = config.Hour is >= 0 and <= 23 ? config.Hour : null;
+        int? minute = config.Minute is >= 0 and <= 59 ? config.Minute : null;
+        int? dayOfWeek = config.DayOfWeek is >= 0 and <= 6 ? config.DayOfWeek : null;
+        int? dayOfMonth = config.DayOfMonth is >= 1 and <= 31 ? config.DayOfMonth : null;
+
+        // 自动任务按调度类型校验必填项
+        if (executionMode == "Auto")
+        {
+            switch (scheduleType)
+            {
+                case "Cron" when string.IsNullOrWhiteSpace(config.CronExpression):
+                    _toast.Show("未能从描述中识别出调度规则，请写得更具体（如：每 2 小时一次）", "error");
+                    return null;
+                case "Weekly" when dayOfWeek == null:
+                    _toast.Show("未能识别星期几，请明确说明（如：每周一早上 9 点）", "error");
+                    return null;
+            }
+        }
+
+        // 时间兜底
+        hour ??= 9;
+        minute ??= 0;
+        dayOfMonth ??= 1;
+
+        // 分类必须命中已有分类（忽略大小写），否则置空落入"其它"分组
+        var category = CategoryOptions.FirstOrDefault(c =>
+            string.Equals(c, config.Category?.Trim(), StringComparison.OrdinalIgnoreCase)) ?? string.Empty;
+
+        return new CreateTaskDto
+        {
+            TaskName = Truncate(config.TaskName!.Trim(), 100),
+            TaskDescription = Truncate(config.TaskDescription, 500),
+            Category = category,
+            SourceType = "Prompt",
+            WorkflowContent = null,
+            ExecutionMode = executionMode,
+            PromptContent = string.IsNullOrWhiteSpace(config.PromptContent)
+                ? fallbackPrompt
+                : config.PromptContent.Trim(),
+            AgentType = AvailableAgents.FirstOrDefault()?.AgentType ?? string.Empty,
+            ModelConfigId = null,
+            ScheduleType = scheduleType,
+            CronExpression = scheduleType == "Cron" ? config.CronExpression?.Trim() : null,
+            Hour = scheduleType == "Cron" ? null : hour,
+            Minute = scheduleType == "Cron" ? null : minute,
+            DayOfWeek = scheduleType == "Weekly" ? dayOfWeek : null,
+            DayOfMonth = scheduleType == "Monthly" ? dayOfMonth : null,
+            IsEnabled = true
+        };
+    }
+
+    private static string Truncate(string? value, int maxLength)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+        value = value.Trim();
+        return value.Length <= maxLength ? value : value[..maxLength];
+    }
+
+    private static readonly JsonSerializerOptions AiJsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        // 容忍 AI 把数字输出成字符串（如 "9"）
+        NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString
+    };
+
+    /// <summary>解析 AI 返回文本中的任务配置，失败返回 null</summary>
+    private static AiTaskConfig? ParseAiTaskConfig(string content)
+    {
+        var json = ExtractJson(content);
+        if (json.Length == 0)
+        {
+            return null;
+        }
+        try
+        {
+            return JsonSerializer.Deserialize<AiTaskConfig>(json, AiJsonOptions);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>从 AI 返回文本中提取 JSON（去 markdown 代码块，取第一个 { 到最后一个 }）</summary>
+    private static string ExtractJson(string content)
+    {
+        var text = (content ?? string.Empty).Trim();
+        if (text.StartsWith("```", StringComparison.Ordinal))
+        {
+            var firstNewline = text.IndexOf('\n');
+            if (firstNewline > 0)
+            {
+                text = text[(firstNewline + 1)..];
+            }
+            var lastFence = text.LastIndexOf("```", StringComparison.Ordinal);
+            if (lastFence > 0)
+            {
+                text = text[..lastFence];
+            }
+        }
+        var start = text.IndexOf('{');
+        var end = text.LastIndexOf('}');
+        return start < 0 || end <= start ? string.Empty : text[start..(end + 1)];
+    }
+
+    private const string AiGenerateTaskSystemPrompt = """
+        你是一个定时任务规划助手。请根据用户的口语化描述，生成一个定时任务的配置。
+        输出要求：
+        1. 只输出一个 JSON 对象，不要输出任何解释文字，也不要使用 markdown 代码块标记。
+        2. JSON 结构如下：
+        {
+          "taskName": "任务名称（简洁概括，不超过20字）",
+          "taskDescription": "任务描述（用户意图的一句话总结）",
+          "category": "任务分类（从用户给出的已有分类列表中选择，没有合适的则输出空字符串）",
+          "promptContent": "任务执行时给 Agent 的提示词（完整、明确、可直接执行的指令）",
+          "executionMode": "Auto 或 Manual",
+          "scheduleType": "Once、Daily、Weekly、Monthly 或 Cron",
+          "cronExpression": "Cron 表达式（仅 scheduleType 为 Cron 时填写，否则为 null）",
+          "hour": 9,
+          "minute": 0,
+          "dayOfWeek": 1,
+          "dayOfMonth": 1
+        }
+        3. 规则：
+        - executionMode：用户描述了定时或周期执行时用 Auto；仅当用户明确表示手动触发、或完全未提及执行时间时用 Manual。
+        - scheduleType：只执行一次用 Once；每天执行用 Daily；每周执行用 Weekly；每月执行用 Monthly；更复杂的周期（如每 2 小时、仅工作日、每 3 天）用 Cron 并填写 cronExpression。
+        - hour 为 0-23 的整数，minute 为 0-59 的整数。用户未说具体时间时按语义推断：早上=9:00，中午=12:00，下午=15:00，晚上=20:00；未提及分钟时 minute 为 0。
+        - dayOfWeek 仅 Weekly 时填写，取值 0-6，其中 0=周日、1=周一、2=周二、3=周三、4=周四、5=周五、6=周六；非 Weekly 时为 null。
+        - dayOfMonth 仅 Monthly 时填写，取值 1-31；非 Monthly 时为 null。
+        - cronExpression 为 5 段格式"分 时 日 月 周"，例如每个工作日 9 点为 "0 9 * * 1-5"，每 2 小时为 "0 */2 * * *"。
+        - category 必须严格从用户消息中给出的已有分类列表里选择最匹配的一个（原样输出分类名）；列表为空或都不合适时输出空字符串，严禁创造新分类。
+        - promptContent 基于用户描述整理成一条完整的执行指令，聚焦"做什么"，不要包含时间或调度信息；保留用户提到的关键对象、范围与要求。
+        - taskName、taskDescription、promptContent 使用中文。
+        """;
 
     #endregion
 
@@ -1085,4 +1347,22 @@ public partial class WorkflowStepEditModel : ObservableObject
 
     [ObservableProperty]
     private string prompt = string.Empty;
+}
+
+/// <summary>
+/// AI 生成的任务配置（字段名对应系统提示词中的 JSON，反序列化大小写不敏感）
+/// </summary>
+public class AiTaskConfig
+{
+    public string? TaskName { get; set; }
+    public string? TaskDescription { get; set; }
+    public string? Category { get; set; }
+    public string? PromptContent { get; set; }
+    public string? ExecutionMode { get; set; }
+    public string? ScheduleType { get; set; }
+    public string? CronExpression { get; set; }
+    public int? Hour { get; set; }
+    public int? Minute { get; set; }
+    public int? DayOfWeek { get; set; }
+    public int? DayOfMonth { get; set; }
 }

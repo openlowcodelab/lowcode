@@ -49,6 +49,7 @@ public partial class ChatView : UserControl
         if (TopLevel.GetTopLevel(this) is Window window &&
             e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
         {
+            e.Handled = true;
             window.BeginMoveDrag(e);
         }
     }
