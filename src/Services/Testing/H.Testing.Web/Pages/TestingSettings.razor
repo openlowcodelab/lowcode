@@ -1,0 +1,190 @@
+@page "/testing/settings"
+
+@layout TestingLayout
+
+@inject ITestingSettingsAppService TestingSettingsService
+@inject H.Util.Blazor.HToastService Toast
+
+<PageTitle>设置</PageTitle>
+
+<style>
+    .h-cat-item:hover { background: #F2F3F5; }
+    .h-cat-item.active { background: #E8F3FF; color: #165DFF; font-weight: 600; }
+
+    .detected-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        border: 1px solid #E5E6EB;
+        border-radius: 6px;
+        margin-bottom: 6px;
+        cursor: pointer;
+        transition: all .2s;
+        background: #fff;
+    }
+
+    .detected-item:hover {
+        border-color: #4080FF;
+        box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    }
+
+    .detected-item-selected {
+        border-color: #0d6efd !important;
+        background: #F0F5FF;
+    }
+</style>
+
+<div class="h-split-page">
+    <!-- 左侧分类目录 -->
+    <HCard Title="分类" Style="width:220px;flex-shrink:0;">
+        <ChildContent>
+            <ul style="list-style:none;padding:0;margin:0;">
+                @foreach (var cat in categories)
+                {
+                    var category = cat;
+                    <li class="@(activeCategory == category.Key ? "h-cat-item active" : "h-cat-item")"
+                        style="padding:8px 10px;border-radius:4px;cursor:pointer;"
+                        @onclick="() => activeCategory = category.Key">
+                        @category.Icon @category.Name
+                    </li>
+                }
+            </ul>
+        </ChildContent>
+    </HCard>
+
+    <!-- 右侧内容 -->
+    @if (activeCategory == "browser")
+    {
+        <HCard Title="浏览器配置" Style="flex:1;" Description="测试用例执行与 Playwright 录制时使用此浏览器。留空则回退到项目自带浏览器或 Playwright 内置浏览器。">
+            <ChildContent>
+                @if (loading)
+                {
+                    <div style="text-align: center; padding: 40px;">
+                        <div class="h-spin"><span class="h-spin-dot"></span><span class="h-spin-text">加载中...</span></div>
+                    </div>
+                }
+                else
+                {
+                    <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
+                        <input class="h-input" style="flex: 1;" @bind-value="browserPath" @bind-value:event="oninput" placeholder="浏览器可执行文件路径，如 C:\Program Files\Google\Chrome\Application\chrome.exe" />
+                        <button class="h-btn" @onclick="DetectBrowsers" disabled="@detecting">🔍 自动检测</button>
+                        <button class="h-btn h-btn-primary" @onclick="Save" disabled="@saving">💾 保存</button>
+                    </div>
+
+                    @if (detecting)
+                    {
+                        <div style="color: #86909C; font-size: 12px;">正在检测本机浏览器...</div>
+                    }
+                    else if (detectedBrowsers.Any())
+                    {
+                        <div style="margin-top: 12px;">
+                            <div style="color: #4E5969; font-size: 12px; margin-bottom: 6px;">检测到以下浏览器，点击选择：</div>
+                            @foreach (var browser in detectedBrowsers)
+                            {
+                                <div class="detected-item @(browser.Path == browserPath ? "detected-item-selected" : "")"
+                                     @onclick="() => SelectBrowser(browser)">
+                                    <span class="h-tag @(browser.Name == "Chrome" ? "h-tag-blue" : "h-tag-green")">@browser.Name</span>
+                                    <span style="color: #4E5969; font-size: 12px; word-break: break-all;">@browser.Path</span>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else if (detectAttempted)
+                    {
+                        <div style="color: #86909C; font-size: 12px; margin-top: 12px;">未在常见位置检测到 Chrome 或 Edge，请手动输入路径。</div>
+                    }
+                }
+            </ChildContent>
+        </HCard>
+    }
+</div>
+
+@code {
+    private record SettingsCategory(string Key, string Name, string Icon);
+
+    private static readonly List<SettingsCategory> categories = new()
+    {
+        new("browser", "浏览器配置", "🌐")
+    };
+
+    private string activeCategory = "browser";
+
+    private bool loading = true;
+    private bool saving = false;
+    private bool detecting = false;
+    private bool detectAttempted = false;
+    private string browserPath = string.Empty;
+    private List<DetectedBrowserDto> detectedBrowsers = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var result = await TestingSettingsService.GetBrowserPathAsync();
+            browserPath = result.Data?.BrowserPath ?? string.Empty;
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"加载设置失败: {ex.Message}");
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private void SelectBrowser(DetectedBrowserDto browser)
+    {
+        browserPath = browser.Path;
+    }
+
+    private async Task DetectBrowsers()
+    {
+        detecting = true;
+        detectAttempted = true;
+        try
+        {
+            var result = await TestingSettingsService.DetectBrowsersAsync();
+            detectedBrowsers = result.Data ?? new List<DetectedBrowserDto>();
+            if (!detectedBrowsers.Any())
+            {
+                Toast.Warning("未在常见位置检测到 Chrome 或 Edge");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"检测失败: {ex.Message}");
+        }
+        finally
+        {
+            detecting = false;
+        }
+    }
+
+    private async Task Save()
+    {
+        saving = true;
+        try
+        {
+            var settings = new TestingSettingsDto { BrowserPath = browserPath.Trim() };
+            var result = await TestingSettingsService.UpdateAsync(settings);
+            if (result.Data)
+            {
+                Toast.Success("设置已保存");
+            }
+            else
+            {
+                Toast.Error("保存失败");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"保存出错: {ex.Message}");
+        }
+        finally
+        {
+            saving = false;
+        }
+    }
+}

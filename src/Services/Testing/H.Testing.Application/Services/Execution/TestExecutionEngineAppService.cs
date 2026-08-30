@@ -1,6 +1,7 @@
 using H.Testing.Application.Contracts;
 using H.Util.Base;
 using H.Util.Ids;
+using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
 using System.Diagnostics;
 using System.Text;
@@ -21,6 +22,7 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
     private readonly ICaseAppService _projectCaseService;
     private readonly ICaseStepAppService _caseStepService;
     private readonly ITestExecutionEventNotifier _eventNotifier;
+    private readonly ITestingSettingsAppService _testingSettingsService;
     private readonly Dictionary<string, string> _variables;
 
     public TestExecutionEngineAppService(
@@ -29,7 +31,8 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
         IEnvironmentAppService environmentService,
         ICaseAppService projectCaseService,
         ICaseStepAppService caseStepService,
-        ITestExecutionEventNotifier eventNotifier)
+        ITestExecutionEventNotifier eventNotifier,
+        ITestingSettingsAppService testingSettingsService)
     {
         _httpClient = httpClient;
         _executionRecordService = executionRecordService;
@@ -37,6 +40,7 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
         _projectCaseService = projectCaseService;
         _caseStepService = caseStepService;
         _eventNotifier = eventNotifier;
+        _testingSettingsService = testingSettingsService;
         _variables = new Dictionary<string, string>();
     }
 
@@ -114,11 +118,11 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
                     }
                 };
 
-                // 优先使用随项目携带的本地浏览器（data 目录），避免依赖 Playwright 浏览器下载
-                var localChromePath = ResolveLocalChromePath();
-                if (localChromePath != null)
+                // 浏览器解析顺序：设置中配置的浏览器地址 → Playwright 内置浏览器
+                var browserPath = await ResolveBrowserExecutablePathAsync();
+                if (browserPath != null)
                 {
-                    launchOptions.ExecutablePath = localChromePath;
+                    launchOptions.ExecutablePath = browserPath;
                 }
 
                 browser = await playwright.Chromium.LaunchAsync(launchOptions);
@@ -1027,18 +1031,19 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
     }
 
     /// <summary>
-    /// 解析 Testing 项目 data 目录中随项目携带的本地浏览器可执行文件
-    /// 优先 data/chrome/chrome.exe（完整浏览器目录），其次 data/chrome.exe；不存在时返回 null 回退 Playwright 内置浏览器
+    /// 解析执行时使用的浏览器可执行文件地址
     /// </summary>
-    private static string? ResolveLocalChromePath()
+    private async Task<string?> ResolveBrowserExecutablePathAsync()
     {
-        var candidates = new[]
-        {
-            Path.Combine(AppContext.BaseDirectory, "data", "chrome", "chrome.exe"),
-            Path.Combine(AppContext.BaseDirectory, "data", "chrome.exe")
-        };
+        var settings = (await _testingSettingsService.GetBrowserPathAsync()).Data;
+        var configuredPath = settings?.BrowserPath;
 
-        return candidates.FirstOrDefault(File.Exists);
+        if (!string.IsNullOrWhiteSpace(configuredPath) && File.Exists(configuredPath))
+        {
+            return configuredPath;
+        }
+
+        return null;
     }
 
     /// <summary>

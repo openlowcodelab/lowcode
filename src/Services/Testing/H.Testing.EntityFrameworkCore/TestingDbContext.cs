@@ -17,6 +17,7 @@ public class TestingDbContext : AbpDbContext<TestingDbContext>
     public DbSet<CaseEntity> ProjectCases { get; set; } = null!;
     public DbSet<CaseStepEntity> CaseSteps { get; set; } = null!;
     public DbSet<CaseRecordEntity> ExecutionRecords { get; set; } = null!;
+    public DbSet<SettingsEntity> Settings { get; set; } = null!;
 
     public TestingDbContext(DbContextOptions<TestingDbContext> options) : base(options)
     {
@@ -126,6 +127,16 @@ public class TestingDbContext : AbpDbContext<TestingDbContext>
             b.Property(x => x.ExecutedBy).HasMaxLength(36).IsUnicode(false);
 
             b.HasIndex(x => x.CaseId);
+        });
+
+        modelBuilder.Entity<SettingsEntity>(b =>
+        {
+            b.ToTable("Settings");
+            b.HasKey(x => x.Id);
+
+            b.Property(x => x.Id).UseIdentityColumn(1000, 1);
+            b.Property(x => x.Key).HasMaxLength(50).IsRequired().IsUnicode(false);
+            b.Property(x => x.Value).HasMaxLength(500);
         });
     }
 }

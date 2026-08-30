@@ -14,6 +14,7 @@ namespace H.Testing.Application;
 public class PlaywrightRecorderAppService : ApplicationService, IPlaywrightRecorderAppService
 {
     private readonly ILogger<PlaywrightRecorderAppService> _logger;
+    private readonly ITestingSettingsAppService _testingSettingsService;
     private IPlaywright? _playwright;
     private IBrowser? _browser;
     private IBrowserContext? _context;
@@ -22,9 +23,12 @@ public class PlaywrightRecorderAppService : ApplicationService, IPlaywrightRecor
     private readonly List<string> _recordedActions = new();
     private bool _isRecording = false;
 
-    public PlaywrightRecorderAppService(ILogger<PlaywrightRecorderAppService> logger)
+    public PlaywrightRecorderAppService(
+        ILogger<PlaywrightRecorderAppService> logger,
+        ITestingSettingsAppService testingSettingsService)
     {
         _logger = logger;
+        _testingSettingsService = testingSettingsService;
     }
 
     /// <summary>
@@ -66,6 +70,21 @@ public class PlaywrightRecorderAppService : ApplicationService, IPlaywrightRecor
             arguments += " --viewport-size=1280,720";  // 设置固定的视口大小
             arguments += " --timeout=30000";           // 设置30秒超时
             arguments += " --ignore-https-errors";     // 忽略HTTPS错误
+
+            // 使用"设置"中配置的浏览器地址（若已配置且有效），保证录制与执行使用同一浏览器
+            var settings = (await _testingSettingsService.GetBrowserPathAsync()).Data;
+            var browserPath = settings?.BrowserPath;
+            if (!string.IsNullOrWhiteSpace(browserPath))
+            {
+                if (File.Exists(browserPath))
+                {
+                    arguments += $" --executable-path=\"{browserPath}\"";
+                }
+                else
+                {
+                    _logger.LogWarning($"配置的浏览器地址无效，录制器回退默认浏览器：{browserPath}");
+                }
+            }
 
             // 如果有起始URL，添加到参数中
             if (!string.IsNullOrEmpty(startUrl))
