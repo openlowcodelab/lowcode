@@ -22,4 +22,14 @@ public interface ITestingSettingsAppService : IAppService
     /// 自动检测本机已安装的浏览器（Chrome/Edge）
     /// </summary>
     Task<BaseOutput<List<DetectedBrowserDto>>> DetectBrowsersAsync();
+
+    /// <summary>
+    /// 获取 CI 接入令牌（首次访问自动生成）
+    /// </summary>
+    Task<BaseOutput<string>> GetCiTokenAsync();
+
+    /// <summary>
+    /// 重新生成 CI 接入令牌（旧令牌立即失效）
+    /// </summary>
+    Task<BaseOutput<string>> RegenerateCiTokenAsync();
 }

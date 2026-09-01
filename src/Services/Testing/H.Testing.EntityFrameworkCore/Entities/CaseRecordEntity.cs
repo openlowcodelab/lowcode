@@ -48,6 +48,9 @@ public class CaseRecordEntity : AuditedEntity<long>, IMultiTenant
 
     public string? ExecutedBy { get; set; }
 
+    /// <summary>执行标签（数据驱动数据行/浏览器标识）</summary>
+    public string? DataTag { get; set; }
+
     /// <summary>环境配置快照（Dictionary 序列化）</summary>
     public string? EnvSnapshotJson { get; set; }
 }

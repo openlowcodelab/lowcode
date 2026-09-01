@@ -20,5 +20,6 @@ public interface ITestExecutionEngineAppService : IAppService
     Task<BaseOutput<CaseExecutionRecordDto>> ExecuteTestCaseAsync(
         CaseDto testCase,
         long environmentId,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default,
+        ExecutionOptions? options = null);
 }

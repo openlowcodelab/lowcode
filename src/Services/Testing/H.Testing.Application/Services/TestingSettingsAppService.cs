@@ -14,6 +14,9 @@ public class TestingSettingsAppService : ApplicationService, ITestingSettingsApp
     /// <summary>浏览器可执行文件路径配置键</summary>
     public const string BrowserPathKey = "BrowserPath";
 
+    /// <summary>CI 接入令牌配置键</summary>
+    public const string CiTokenKey = "CiToken";
+
     private readonly IRepository<SettingsEntity, long> _repository;
 
     public TestingSettingsAppService(IRepository<SettingsEntity, long> repository)
@@ -39,6 +42,27 @@ public class TestingSettingsAppService : ApplicationService, ITestingSettingsApp
     {
         return await Task.FromResult(new BaseOutput<List<DetectedBrowserDto>>(DetectInstalledBrowsers()));
     }
+
+    public async Task<BaseOutput<string>> GetCiTokenAsync()
+    {
+        var token = await GetValueAsync(CiTokenKey);
+        if (string.IsNullOrEmpty(token))
+        {
+            token = GenerateToken();
+            await SetValueAsync(CiTokenKey, token);
+        }
+
+        return new(token);
+    }
+
+    public async Task<BaseOutput<string>> RegenerateCiTokenAsync()
+    {
+        var token = GenerateToken();
+        await SetValueAsync(CiTokenKey, token);
+        return new(token);
+    }
+
+    private static string GenerateToken() => Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N");
 
     /// <summary>
     /// 读取指定键的设置值，不存在时返回 null

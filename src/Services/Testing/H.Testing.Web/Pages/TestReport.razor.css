@@ -1,0 +1,57 @@
+/* 测试报告页布局: 顶部筛选栏 + 内容区垂直滚动 */
+.report-page {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    height: 100%;
+}
+
+.report-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 每日趋势图 */
+.trend-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 180px;
+}
+
+.trend-col {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    cursor: default;
+}
+
+.trend-bar-wrap {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.trend-bar {
+    width: 70%;
+    max-width: 36px;
+    min-height: 4px;
+    border-radius: 3px 3px 0 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.trend-label {
+    text-align: center;
+    color: #86909C;
+    font-size: 11px;
+    margin-top: 4px;
+    white-space: nowrap;
+}

@@ -3,6 +3,7 @@
 @layout TestingLayout
 
 @inject ITestingSettingsAppService TestingSettingsService
+@inject NavigationManager Navigation
 @inject H.Util.Blazor.HToastService Toast
 
 <PageTitle>设置</PageTitle>
@@ -98,6 +99,37 @@
             </ChildContent>
         </HCard>
     }
+    else if (activeCategory == "ci")
+    {
+        <HCard Title="CI 集成" Style="flex:1;" Description="流水线通过 HTTP 接口触发执行并轮询结果，调用时需携带下方接入令牌。">
+            <ChildContent>
+                <div style="margin-bottom:12px;">
+                    <div style="margin-bottom:4px;font-weight:500;">接入令牌</div>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <input class="h-input" style="flex:1;font-family:monospace;" readonly
+                               value="@(showCiToken ? ciToken : MaskToken(ciToken))" />
+                        <button class="h-btn" @onclick="() => showCiToken = !showCiToken">@(showCiToken ? "隐藏" : "显示")</button>
+                        <button class="h-btn" disabled="@regenerating" @onclick="RegenerateToken">@(regenerating ? "重置中..." : "重置令牌")</button>
+                    </div>
+                    <div style="color:#FF7D00;font-size:12px;margin-top:4px;">重置令牌后，旧令牌立即失效，请同步更新流水线配置</div>
+                </div>
+
+                <div style="margin-bottom:12px;">
+                    <div style="margin-bottom:4px;font-weight:500;">1. 触发执行（返回运行ID）</div>
+                    <pre style="background:#1e1e1e;color:#d4d4d4;padding:10px;border-radius:4px;font-size:12px;overflow-x:auto;"><code>curl -X POST "@(apiBase)api/app/ci/trigger" ^
+  -H "Content-Type: application/json" ^
+  -d "{\"token\":\"@ciToken\",\"projectId\":项目ID,\"envId\":环境ID,\"headless\":true}"</code></pre>
+                    <div style="color:#86909C;font-size:12px;">可选参数：caseIds（用例ID数组，缺省执行全部用例）、browsers（如 ["chromium","firefox"]）、webhookUrl（完成后回调）</div>
+                </div>
+
+                <div>
+                    <div style="margin-bottom:4px;font-weight:500;">2. 轮询执行结果</div>
+                    <pre style="background:#1e1e1e;color:#d4d4d4;padding:10px;border-radius:4px;font-size:12px;overflow-x:auto;"><code>curl "@(apiBase)api/app/ci/run/运行ID?token=@ciToken"</code></pre>
+                    <div style="color:#86909C;font-size:12px;">status 为 Pending/Running 时继续轮询，Success/Failed 时读取 successCases/failedCases 与 caseResults</div>
+                </div>
+            </ChildContent>
+        </HCard>
+    }
 </div>
 
 @code {
@@ -105,7 +137,8 @@
 
     private static readonly List<SettingsCategory> categories = new()
     {
-        new("browser", "浏览器配置", "🌐")
+        new("browser", "浏览器配置", "🌐"),
+        new("ci", "CI 集成", "🔗")
     };
 
     private string activeCategory = "browser";
@@ -117,12 +150,19 @@
     private string browserPath = string.Empty;
     private List<DetectedBrowserDto> detectedBrowsers = new();
 
+    private string ciToken = string.Empty;
+    private bool showCiToken = false;
+    private bool regenerating = false;
+    private string apiBase => Navigation.BaseUri;
+
     protected override async Task OnInitializedAsync()
     {
         try
         {
             var result = await TestingSettingsService.GetBrowserPathAsync();
             browserPath = result.Data?.BrowserPath ?? string.Empty;
+
+            ciToken = (await TestingSettingsService.GetCiTokenAsync()).Data ?? string.Empty;
         }
         catch (Exception ex)
         {
@@ -131,6 +171,29 @@
         finally
         {
             loading = false;
+        }
+    }
+
+    private static string MaskToken(string token)
+        => string.IsNullOrEmpty(token) || token.Length <= 8
+            ? token
+            : token[..4] + new string('*', 16) + token[^4..];
+
+    private async Task RegenerateToken()
+    {
+        regenerating = true;
+        try
+        {
+            ciToken = (await TestingSettingsService.RegenerateCiTokenAsync()).Data ?? string.Empty;
+            Toast.Success("令牌已重置");
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"重置令牌失败: {ex.Message}");
+        }
+        finally
+        {
+            regenerating = false;
         }
     }
 

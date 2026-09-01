@@ -1,0 +1,490 @@
+@page "/testing/defects"
+@page "/testing/defects/{projectId:long}"
+
+@namespace H.Testing.Web
+@layout TestingLayout
+
+@inject IProjectAppService ProjectService
+@inject IDefectAppService DefectService
+@inject ICaseAppService ProjectCaseService
+@inject IExecutionRecordAppService ExecutionRecordService
+@inject NavigationManager Navigation
+@inject H.Util.Blazor.HToastService Toast
+
+<PageTitle>缺陷管理</PageTitle>
+
+<div class="defects-page">
+    <div class="page-fill" style="flex-shrink:0;padding:12px 16px;">
+        <div style="display:flex;gap:16px;align-items:center;">
+            <div style="display:flex;align-items:center;gap:8px;">
+                <span>选择项目:</span>
+                <select class="h-select" style="width:200px;" value="@selectedProjectId" @onchange="OnProjectChanged">
+                    @foreach (var project in projects)
+                    {
+                        <option value="@project.Id">@project.Name</option>
+                    }
+                </select>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+                <span>状态:</span>
+                <select class="h-select" style="width:110px;" value="@statusFilter" @onchange="OnStatusFilterChanged">
+                    <option value="">全部</option>
+                    <option value="1">打开</option>
+                    <option value="2">已解决</option>
+                    <option value="3">已关闭</option>
+                </select>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+                <span>严重程度:</span>
+                <select class="h-select" style="width:110px;" value="@severityFilter" @onchange="OnSeverityFilterChanged">
+                    <option value="">全部</option>
+                    <option value="1">致命</option>
+                    <option value="2">严重</option>
+                    <option value="3">一般</option>
+                    <option value="4">轻微</option>
+                </select>
+            </div>
+            <button class="h-btn" disabled="@(selectedProjectId == 0)" @onclick="OpenCreateModal">＋ 新建缺陷</button>
+            @if (loading)
+            {
+                <span class="h-spin"><span class="h-spin-dot"></span><span class="h-spin-text">加载中...</span></span>
+            }
+        </div>
+    </div>
+
+    <div class="defects-body">
+        <div class="page-fill">
+            <HCard Title="🐞 缺陷列表">
+                <Body>
+                    @if (selectedProjectId == 0)
+                    {
+                        <div class="h-empty" style="padding:60px 0;">暂无项目，请先创建测试项目</div>
+                    }
+                    else if (!defects.Any())
+                    {
+                        <div class="h-empty" style="padding:60px 0;">
+                            暂无缺陷。可在执行历史中对失败记录一键提交缺陷，或手动新建
+                        </div>
+                    }
+                    else
+                    {
+                        <table class="h-table">
+                            <thead>
+                                <tr>
+                                    <th>缺陷标题</th>
+                                    <th style="width:90px;">严重程度</th>
+                                    <th style="width:80px;">状态</th>
+                                    <th style="width:160px;">关联用例</th>
+                                    <th style="width:120px;">负责人</th>
+                                    <th style="width:120px;">创建时间</th>
+                                    <th style="width:110px;">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var defect in defects)
+                                {
+                                    <tr>
+                                        <td>
+                                            <span>@defect.Title</span>
+                                            @if (!string.IsNullOrEmpty(defect.Description))
+                                            {
+                                                <div style="color:#86909C;font-size:12px;max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="@defect.Description">@defect.Description</div>
+                                            }
+                                        </td>
+                                        <td><span class="h-tag h-tag-@GetSeverityTagClass(defect.Severity)">@GetSeverityDisplayName(defect.Severity)</span></td>
+                                        <td><span class="h-tag h-tag-@GetStatusTagClass(defect.Status)">@GetStatusDisplayName(defect.Status)</span></td>
+                                        <td>
+                                            @if (defect.CaseId.HasValue)
+                                            {
+                                                <a class="link-action" @onclick="() => GoToCaseHistory(defect.CaseId.Value)">@(defect.CaseName ?? "-")</a>
+                                            }
+                                            else
+                                            {
+                                                <span style="color:#86909C;">-</span>
+                                            }
+                                        </td>
+                                        <td style="color:#4E5969;">@(string.IsNullOrEmpty(defect.Assignee) ? "-" : defect.Assignee)</td>
+                                        <td style="color:#86909C;font-size:12px;">@defect.CreationTime.ToString("yyyy-MM-dd")</td>
+                                        <td>
+                                            <span class="row-actions">
+                                                <a class="link-action" @onclick="() => OpenEditModal(defect)">编辑</a>
+                                                <a class="link-action-danger" @onclick="() => DeleteDefect(defect.Id)">删除</a>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                </Body>
+            </HCard>
+        </div>
+    </div>
+</div>
+
+<HModal Visible="@showModal"
+        Title="@(editingDefectId == 0 ? "新建缺陷" : "编辑缺陷")"
+        OnCancel="CloseModal"
+        ShowFooter="false"
+        Style="width:640px;">
+    <div style="margin-bottom:12px;">
+        <div style="margin-bottom:4px;">缺陷标题 <span style="color:#F53F3F;">*</span></div>
+        <input class="h-input" style="width:100%;" @bind="form.Title" maxlength="100" placeholder="简要描述问题现象" />
+    </div>
+
+    <div style="margin-bottom:12px;">
+        <div style="margin-bottom:4px;">缺陷描述</div>
+        <textarea class="h-input" style="width:100%;min-height:96px;resize:vertical;" @bind="form.Description" maxlength="2000"
+                  placeholder="复现步骤、预期结果、实际结果、错误信息等"></textarea>
+    </div>
+
+    <div style="display:flex;gap:12px;margin-bottom:12px;">
+        <div style="flex:1;">
+            <div style="margin-bottom:4px;">严重程度</div>
+            <select class="h-select" style="width:100%;" value="@((int)form.Severity)"
+                    @onchange="@((ChangeEventArgs e) => form.Severity = int.TryParse(e.Value?.ToString(), out var v) ? (DefectSeverity)v : DefectSeverity.Major)">
+                <option value="1">致命</option>
+                <option value="2">严重</option>
+                <option value="3">一般</option>
+                <option value="4">轻微</option>
+            </select>
+        </div>
+        <div style="flex:1;">
+            <div style="margin-bottom:4px;">状态</div>
+            <select class="h-select" style="width:100%;" value="@((int)form.Status)"
+                    @onchange="@((ChangeEventArgs e) => form.Status = int.TryParse(e.Value?.ToString(), out var v) ? (DefectStatus)v : DefectStatus.Open)">
+                <option value="1">打开</option>
+                <option value="2">已解决</option>
+                <option value="3">已关闭</option>
+            </select>
+        </div>
+    </div>
+
+    <div style="display:flex;gap:12px;margin-bottom:12px;">
+        <div style="flex:1;">
+            <div style="margin-bottom:4px;">关联用例</div>
+            <select class="h-select" style="width:100%;" value="@(form.CaseId ?? 0)"
+                    @onchange="@((ChangeEventArgs e) => form.CaseId = long.TryParse(e.Value?.ToString(), out var v) && v != 0 ? v : null)">
+                <option value="0">不关联</option>
+                @foreach (var testCase in projectCases)
+                {
+                    <option value="@testCase.Id">@testCase.Name</option>
+                }
+            </select>
+        </div>
+        <div style="flex:1;">
+            <div style="margin-bottom:4px;">负责人</div>
+            <input class="h-input" style="width:100%;" @bind="form.Assignee" placeholder="指派给" />
+        </div>
+    </div>
+
+    @if (form.RecordId.HasValue)
+    {
+        <div class="h-alert h-alert-info" style="margin-bottom:12px;">
+            该缺陷关联执行记录 #@form.RecordId，可在执行历史中查看执行详情
+        </div>
+    }
+
+    <div style="text-align:right;padding-top:12px;border-top:1px solid #F2F3F5;">
+        <button class="h-btn" style="margin-right:8px;" @onclick="CloseModal">取消</button>
+        <button class="h-btn" style="background-color:#165DFF;border-color:#165DFF;color:white;" disabled="@saving" @onclick="SaveDefect">
+            @(saving ? "保存中..." : "保存")
+        </button>
+    </div>
+</HModal>
+
+@code {
+    [Parameter] public long ProjectId { get; set; }
+
+    private List<ProjectDto> projects = new();
+    private long selectedProjectId;
+    private List<DefectDto> defects = new();
+    private List<CaseDto> projectCases = new();
+    private bool loading = true;
+    private string statusFilter = string.Empty;
+    private string severityFilter = string.Empty;
+
+    private bool showModal;
+    private bool saving;
+    private long editingDefectId;
+    private DefectDto form = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProjects();
+        await HandleCreateFromRecordQuery();
+    }
+
+    private async Task LoadProjects()
+    {
+        try
+        {
+            projects = (await ProjectService.GetAllAsync()).Data ?? [];
+
+            if (projects.Count == 0)
+            {
+                loading = false;
+                return;
+            }
+
+            selectedProjectId = ProjectId != 0 && projects.Any(p => p.Id == ProjectId)
+                ? ProjectId
+                : projects[0].Id;
+
+            await LoadDefects();
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"加载项目失败: {ex.Message}");
+            loading = false;
+        }
+    }
+
+    /// <summary>
+    /// 从执行历史跳转携带 fromRecord 参数时，自动打开新建弹窗并预填
+    /// </summary>
+    private async Task HandleCreateFromRecordQuery()
+    {
+        try
+        {
+            var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+            var queryParameters = System.Web.HttpUtility.ParseQueryString(uri.Query);
+
+            if (!long.TryParse(queryParameters["fromRecord"], out var recordId) || selectedProjectId == 0)
+            {
+                return;
+            }
+
+            var record = (await ExecutionRecordService.GetByIdAsync(selectedProjectId, recordId)).Data;
+            if (record == null)
+            {
+                return;
+            }
+
+            editingDefectId = 0;
+            form = new DefectDto
+            {
+                ProjectId = selectedProjectId,
+                Title = $"[执行失败] {record.CaseName}",
+                Description = BuildPrefillDescription(record),
+                Severity = DefectSeverity.Major,
+                Status = DefectStatus.Open,
+                CaseId = record.CaseId,
+                RecordId = record.Id
+            };
+            showModal = true;
+        }
+        catch
+        {
+            // 预填失败不影响页面正常使用
+        }
+    }
+
+    private static string BuildPrefillDescription(CaseExecutionRecordDto record)
+    {
+        var lines = new List<string>
+        {
+            $"失败用例: {record.CaseName}",
+            $"执行环境: {record.EnvName}",
+            $"执行时间: {record.StartTime:yyyy-MM-dd HH:mm:ss}",
+            $"步骤统计: 成功 {record.SuccessSteps} / 失败 {record.FailedSteps} / 共 {record.TotalSteps}"
+        };
+
+        if (!string.IsNullOrEmpty(record.ErrorMessage))
+        {
+            lines.Add("");
+            lines.Add($"错误信息: {record.ErrorMessage}");
+        }
+
+        return string.Join("\n", lines);
+    }
+
+    private async Task LoadDefects()
+    {
+        if (selectedProjectId == 0)
+        {
+            defects = new List<DefectDto>();
+            loading = false;
+            return;
+        }
+
+        try
+        {
+            loading = true;
+
+            int? status = int.TryParse(statusFilter, out var s) ? s : null;
+            int? severity = int.TryParse(severityFilter, out var v) ? v : null;
+
+            defects = (await DefectService.GetByProjectIdAsync(selectedProjectId, status, severity)).Data ?? [];
+            projectCases = ((await ProjectCaseService.GetByProjectIdAsync(selectedProjectId)).Data ?? [])
+                .Where(c => !c.IsTemplate)
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"加载缺陷失败: {ex.Message}");
+        }
+        finally
+        {
+            loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnProjectChanged(ChangeEventArgs e)
+    {
+        if (long.TryParse(e.Value?.ToString(), out var projectId))
+        {
+            selectedProjectId = projectId;
+            await LoadDefects();
+        }
+    }
+
+    private async Task OnStatusFilterChanged(ChangeEventArgs e)
+    {
+        statusFilter = e.Value?.ToString() ?? string.Empty;
+        await LoadDefects();
+    }
+
+    private async Task OnSeverityFilterChanged(ChangeEventArgs e)
+    {
+        severityFilter = e.Value?.ToString() ?? string.Empty;
+        await LoadDefects();
+    }
+
+    private void OpenCreateModal()
+    {
+        editingDefectId = 0;
+        form = new DefectDto { ProjectId = selectedProjectId };
+        showModal = true;
+    }
+
+    private void OpenEditModal(DefectDto defect)
+    {
+        editingDefectId = defect.Id;
+        form = new DefectDto
+        {
+            ProjectId = defect.ProjectId,
+            Title = defect.Title,
+            Description = defect.Description,
+            Severity = defect.Severity,
+            Status = defect.Status,
+            CaseId = defect.CaseId,
+            RecordId = defect.RecordId,
+            Assignee = defect.Assignee
+        };
+        showModal = true;
+    }
+
+    private void CloseModal() => showModal = false;
+
+    private async Task SaveDefect()
+    {
+        if (string.IsNullOrWhiteSpace(form.Title))
+        {
+            Toast.Error("请输入缺陷标题");
+            return;
+        }
+
+        try
+        {
+            saving = true;
+
+            if (editingDefectId == 0)
+            {
+                var created = await DefectService.CreateAsync(form);
+                if (created.Success)
+                {
+                    Toast.Success("缺陷创建成功");
+                    showModal = false;
+                    await LoadDefects();
+                }
+                else
+                {
+                    Toast.Error(created.Message ?? "创建失败");
+                }
+            }
+            else
+            {
+                var updated = await DefectService.UpdateAsync(editingDefectId, form);
+                if (updated.Success && updated.Data)
+                {
+                    Toast.Success("缺陷已更新");
+                    showModal = false;
+                    await LoadDefects();
+                }
+                else
+                {
+                    Toast.Error(updated.Message ?? "更新失败");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"保存失败: {ex.Message}");
+        }
+        finally
+        {
+            saving = false;
+        }
+    }
+
+    private async Task DeleteDefect(long defectId)
+    {
+        try
+        {
+            var result = await DefectService.DeleteAsync(defectId);
+            if (result.Success && result.Data)
+            {
+                Toast.Success("缺陷已删除");
+                await LoadDefects();
+            }
+            else
+            {
+                Toast.Error(result.Message ?? "删除失败");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"删除失败: {ex.Message}");
+        }
+    }
+
+    private void GoToCaseHistory(long caseId)
+    {
+        Navigation.NavigateTo($"/testing/execution-history/{caseId}?returnProjectId={selectedProjectId}");
+    }
+
+    private static string GetSeverityTagClass(DefectSeverity severity) => severity switch
+    {
+        DefectSeverity.Critical => "red",
+        DefectSeverity.Major => "orange",
+        DefectSeverity.Minor => "blue",
+        _ => "default"
+    };
+
+    private static string GetSeverityDisplayName(DefectSeverity severity) => severity switch
+    {
+        DefectSeverity.Critical => "致命",
+        DefectSeverity.Major => "严重",
+        DefectSeverity.Minor => "一般",
+        DefectSeverity.Trivial => "轻微",
+        _ => "未知"
+    };
+
+    private static string GetStatusTagClass(DefectStatus status) => status switch
+    {
+        DefectStatus.Open => "red",
+        DefectStatus.Resolved => "blue",
+        DefectStatus.Closed => "green",
+        _ => "default"
+    };
+
+    private static string GetStatusDisplayName(DefectStatus status) => status switch
+    {
+        DefectStatus.Open => "打开",
+        DefectStatus.Resolved => "已解决",
+        DefectStatus.Closed => "已关闭",
+        _ => "未知"
+    };
+}

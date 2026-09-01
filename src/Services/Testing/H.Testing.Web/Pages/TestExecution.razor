@@ -11,6 +11,8 @@
 @inject IEnvironmentAppService EnvironmentService
 @inject ITestExecutionEventNotifier ExecutionEventNotifier
 @inject IBatchExecutionAppService BatchExecutionService
+@inject ITestPlanAppService TestPlanService
+@inject ITestDatasetAppService DatasetService
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
 @inject H.Util.Blazor.HToastService Toast
@@ -116,6 +118,56 @@ else
                                 <div style="color:#86909C;font-size:12px;margin-top:4px;">@selectedEnv.Description</div>
                             }
                         }
+                    </div>
+
+                    <div style="margin-top:16px;">
+                        <div style="margin-bottom:6px;">失败重试次数</div>
+                        <input type="number" class="h-input" style="width:100%;" @bind="retryCount" min="0" max="10" />
+                        <div style="color:#86909C;font-size:12px;margin-top:4px;">用例执行失败后自动重试的次数，0 表示不重试</div>
+                    </div>
+
+                    <div style="margin-top:16px;">
+                        <div style="margin-bottom:6px;">🧪 执行策略</div>
+                        <div style="background:#F7F8FA;border:1px solid #F2F3F5;border-radius:4px;padding:12px;">
+                            <div style="margin-bottom:8px;">
+                                <div style="color:#4E5969;font-size:12px;margin-bottom:4px;">执行浏览器（可多选，按顺序依次执行）</div>
+                                <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                                    @foreach (var b in BrowserOptions)
+                                    {
+                                        <label style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;font-size:13px;">
+                                            <input type="checkbox" checked="@selectedBrowsers.Contains(b.Key)"
+                                                   @onchange="@((ChangeEventArgs e) => ToggleBrowser(b.Key, (bool)(e.Value ?? false)))" />
+                                            @b.Value
+                                        </label>
+                                    }
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom:8px;">
+                                <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
+                                    <input type="checkbox" @bind="headless" />
+                                    无头模式（不打开可见浏览器窗口）
+                                </label>
+                            </div>
+
+                            <div>
+                                <div style="color:#4E5969;font-size:12px;margin-bottom:4px;">数据驱动（数据集）</div>
+                                <select class="h-select" style="width:100%;" value="@(selectedDatasetId ?? 0)"
+                                        @onchange="@((ChangeEventArgs e) => selectedDatasetId = long.TryParse(e.Value?.ToString(), out var v) && v != 0 ? v : null)">
+                                    <option value="0">不使用数据集</option>
+                                    @foreach (var ds in datasets)
+                                    {
+                                        <option value="@ds.Id">@($"{ds.Name}（{ds.RowCount} 行）")</option>
+                                    }
+                                </select>
+                                @if (executionUnitMultiplier > 1)
+                                {
+                                    <div style="color:#FF7D00;font-size:12px;margin-top:4px;">
+                                        每个用例将执行 @executionUnitMultiplier 次（@selectedBrowsers.Count 个浏览器 × @(selectedDatasetId.HasValue ? GetDatasetRowCount(selectedDatasetId.Value) : 1) 行数据）
+                                    </div>
+                                }
+                            </div>
+                        </div>
                     </div>
 
                     <div style="margin-top:16px;">
@@ -398,9 +450,44 @@ else
     private HashSet<long> selectedTestCaseIds = new();
     private CancellationTokenSource? cancellationTokenSource;
     private Dictionary<long, CaseExecutionRecordDto> currentExecutionRecords = new();
+    private long executionPlanId;
 
     private PerformanceTestSettingsDto performanceSettings = new();
     private bool showPerformanceSettings = false;
+    private int retryCount = 0;
+
+    private static readonly Dictionary<string, string> BrowserOptions = new()
+    {
+        ["chromium"] = "Chromium（内置）",
+        ["chrome"] = "Chrome",
+        ["msedge"] = "Edge",
+        ["firefox"] = "Firefox",
+        ["webkit"] = "WebKit"
+    };
+    private readonly List<string> selectedBrowsers = new() { "chromium" };
+    private bool headless = false;
+    private List<TestDatasetDto> datasets = new();
+    private long? selectedDatasetId;
+
+    private int executionUnitMultiplier => selectedBrowsers.Count * (selectedDatasetId.HasValue ? GetDatasetRowCount(selectedDatasetId.Value) : 1);
+
+    private void ToggleBrowser(string browser, bool selected)
+    {
+        if (selected)
+        {
+            if (!selectedBrowsers.Contains(browser))
+            {
+                selectedBrowsers.Add(browser);
+            }
+        }
+        else
+        {
+            selectedBrowsers.Remove(browser);
+        }
+    }
+
+    private int GetDatasetRowCount(long datasetId)
+        => datasets.FirstOrDefault(d => d.Id == datasetId)?.RowCount ?? 1;
 
     private bool IsBatchMode => ProjectId != 0;
 
@@ -426,6 +513,11 @@ else
                     .Select(s => long.TryParse(s, out var v) ? v : 0)
                     .Where(v => v != 0)
                     .ToHashSet();
+            }
+
+            if (long.TryParse(queryParameters["planId"], out var planId))
+            {
+                executionPlanId = planId;
             }
         }
 
@@ -453,6 +545,7 @@ else
                 caseStepCounts = ((await CaseStepService.GetByCaseIdsAsync(testCases.Select(tc => tc.Id))).Data ?? [])
                     .ToDictionary(kv => kv.Key, kv => kv.Value.Count);
                 environments = (await EnvironmentService.GetByProjectIdAsync(testCases[0].ProjectId)).Data ?? [];
+                datasets = (await DatasetService.GetByProjectIdAsync(testCases[0].ProjectId)).Data ?? [];
 
                 if (environments.Count > 0)
                 {
@@ -513,7 +606,11 @@ else
                 SelectedTestCaseIds = selectedTestCaseIds.ToList(),
                 PerformanceSettings = performanceSettings,
                 IsParallelExecution = false,
-                ContinueOnFailure = true
+                ContinueOnFailure = true,
+                RetryCount = Math.Clamp(retryCount, 0, 10),
+                DatasetId = selectedDatasetId,
+                Browsers = selectedBrowsers.Count > 0 ? selectedBrowsers.ToList() : new List<string> { "chromium" },
+                Headless = headless
             };
 
             var batchResult = (await BatchExecutionService.ExecuteBatchAsync(
@@ -545,6 +642,19 @@ else
             }
             StateHasChanged();
 
+            // 来自测试计划的执行：回写计划内用例状态
+            if (executionPlanId != 0)
+            {
+                try
+                {
+                    await TestPlanService.ApplyResultsAsync(executionPlanId, batchResult.ExecutionRecords);
+                }
+                catch (Exception ex)
+                {
+                    Toast.Error($"执行结果回写测试计划失败: {ex.Message}");
+                }
+            }
+
             var message = $"执行完成！\n" +
                           $"总用例数: {batchResult.TotalTestCases}\n" +
                           $"成功: {batchResult.SuccessfulTestCases}\n" +
@@ -574,6 +684,12 @@ else
 
     private void GoBack()
     {
+        if (executionPlanId != 0)
+        {
+            Navigation.NavigateTo($"/testing/plans/detail/{executionPlanId}");
+            return;
+        }
+
         var projectId = ProjectId != 0 ? ProjectId : testCases.FirstOrDefault()?.ProjectId ?? 0;
         if (projectId != 0)
         {

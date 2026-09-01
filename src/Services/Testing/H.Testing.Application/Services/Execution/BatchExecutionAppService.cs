@@ -6,20 +6,32 @@ using Volo.Abp.Application.Services;
 namespace H.Testing.Application;
 
 /// <summary>
-/// 批量执行服务
+/// 批量执行服务：支持串行/并行/性能模式，以及数据驱动与多浏览器执行矩阵
 /// </summary>
 public class BatchExecutionAppService : ApplicationService, IBatchExecutionAppService
 {
     private readonly ITestExecutionEngineAppService _testExecutionEngine;
     private readonly ICaseAppService _projectCaseService;
+    private readonly ITestDatasetAppService _datasetService;
 
     public BatchExecutionAppService(
         ITestExecutionEngineAppService testExecutionEngine,
-        ICaseAppService projectCaseService)
+        ICaseAppService projectCaseService,
+        ITestDatasetAppService datasetService)
     {
         _testExecutionEngine = testExecutionEngine;
         _projectCaseService = projectCaseService;
+        _datasetService = datasetService;
     }
+
+    /// <summary>
+    /// 执行单元：用例 × 浏览器 × 数据行
+    /// </summary>
+    private sealed record ExecutionUnit(
+        CaseDto Case,
+        string Browser,
+        Dictionary<string, string>? DataVariables,
+        string? DataTag);
 
     /// <summary>
     /// 批量执行测试用例
@@ -50,22 +62,31 @@ public class BatchExecutionAppService : ApplicationService, IBatchExecutionAppSe
                 }
             }
 
-            result.TotalTestCases = testCases.Count;
+            var browsers = NormalizeBrowsers(settings.Browsers);
 
             if (settings.PerformanceSettings.IsPerformanceTestEnabled)
             {
-                // 性能测试模式
-                await ExecutePerformanceTestAsync(testCases, settings, environmentId, result, cancellationToken);
-            }
-            else if (settings.IsParallelExecution)
-            {
-                // 并行执行模式
-                await ExecuteParallelAsync(testCases, settings, environmentId, result, cancellationToken);
+                // 性能测试模式（不使用数据集，取第一个浏览器）
+                result.TotalTestCases = testCases.Count;
+                await ExecutePerformanceTestAsync(testCases, settings, environmentId, result, browsers[0], cancellationToken);
             }
             else
             {
-                // 串行执行模式
-                await ExecuteSerialAsync(testCases, settings, environmentId, result, cancellationToken);
+                var dataRows = await LoadDatasetRowsAsync(settings, result);
+                var units = BuildUnits(testCases, browsers, dataRows);
+
+                result.TotalTestCases = units.Count;
+
+                if (settings.IsParallelExecution)
+                {
+                    // 并行执行模式
+                    await ExecuteParallelAsync(units, settings, environmentId, result, cancellationToken);
+                }
+                else
+                {
+                    // 串行执行模式
+                    await ExecuteSerialAsync(units, settings, environmentId, result, cancellationToken);
+                }
             }
 
             result.EndTime = DateTime.Now;
@@ -83,48 +104,123 @@ public class BatchExecutionAppService : ApplicationService, IBatchExecutionAppSe
         return new(result);
     }
 
+    private static List<string> NormalizeBrowsers(List<string>? browsers)
+    {
+        var normalized = (browsers ?? [])
+            .Where(b => !string.IsNullOrWhiteSpace(b))
+            .Select(b => b.Trim().ToLowerInvariant())
+            .Distinct()
+            .ToList();
+
+        if (normalized.Count == 0)
+        {
+            normalized.Add("chromium");
+        }
+
+        return normalized;
+    }
+
     /// <summary>
-    /// 串行执行测试用例
+    /// 加载数据集的数据行；数据集缺失或为空时记录提示并按无数据集处理
+    /// </summary>
+    private async Task<List<Dictionary<string, string>>?> LoadDatasetRowsAsync(
+        BatchExecutionSettings settings, BatchExecutionResult result)
+    {
+        if (!settings.DatasetId.HasValue)
+        {
+            return null;
+        }
+
+        var dataset = (await _datasetService.GetByIdAsync(settings.DatasetId.Value)).Data;
+        if (dataset == null)
+        {
+            result.Errors.Add("指定的数据集不存在，将不使用数据集执行");
+            return null;
+        }
+
+        if (dataset.Rows.Count == 0)
+        {
+            result.Errors.Add($"数据集 {dataset.Name} 没有数据行，将不使用数据集执行");
+            return null;
+        }
+
+        return dataset.Rows;
+    }
+
+    /// <summary>
+    /// 构建执行矩阵：浏览器 × 用例 × 数据行
+    /// </summary>
+    private static List<ExecutionUnit> BuildUnits(
+        List<CaseDto> testCases,
+        List<string> browsers,
+        List<Dictionary<string, string>>? dataRows)
+    {
+        var units = new List<ExecutionUnit>();
+
+        foreach (var browser in browsers)
+        {
+            foreach (var testCase in testCases)
+            {
+                if (dataRows == null)
+                {
+                    var tag = browsers.Count > 1 ? browser : null;
+                    units.Add(new ExecutionUnit(testCase, browser, null, tag));
+                    continue;
+                }
+
+                for (var i = 0; i < dataRows.Count; i++)
+                {
+                    var rowTag = $"数据行 {i + 1}/{dataRows.Count}";
+                    var tag = browsers.Count > 1 ? $"{browser} · {rowTag}" : rowTag;
+                    units.Add(new ExecutionUnit(testCase, browser, dataRows[i], tag));
+                }
+            }
+        }
+
+        return units;
+    }
+
+    /// <summary>
+    /// 串行执行执行单元
     /// </summary>
     private async Task ExecuteSerialAsync(
-        List<CaseDto> testCases,
+        List<ExecutionUnit> units,
         BatchExecutionSettings settings,
         long environmentId,
         BatchExecutionResult result,
         CancellationToken cancellationToken)
     {
-        foreach (var testCase in testCases)
+        var lockObject = new object();
+
+        foreach (var unit in units)
         {
             if (cancellationToken.IsCancellationRequested)
                 break;
 
-            try
-            {
-                var executionRecord = (await _testExecutionEngine.ExecuteTestCaseAsync(
-                    testCase, environmentId, cancellationToken)).Data!;
+            var executionRecord = await ExecuteWithRetryAsync(
+                unit, settings, environmentId, result, lockObject, cancellationToken);
 
-                result.ExecutionRecords.Add(executionRecord);
-
-                if (executionRecord.Status == ExecutionStatus.Success)
-                {
-                    result.SuccessfulTestCases++;
-                }
-                else
-                {
-                    result.FailedTestCases++;
-
-                    // 如果设置为失败时不继续执行，则停止
-                    if (!settings.ContinueOnFailure)
-                    {
-                        break;
-                    }
-                }
-            }
-            catch (Exception ex)
+            if (executionRecord == null)
             {
                 result.FailedTestCases++;
-                result.Errors.Add($"测试用例 {testCase.Name} 执行失败: {ex.Message}");
+                if (!settings.ContinueOnFailure)
+                {
+                    break;
+                }
+                continue;
+            }
 
+            result.ExecutionRecords.Add(executionRecord);
+
+            if (executionRecord.Status == ExecutionStatus.Success)
+            {
+                result.SuccessfulTestCases++;
+            }
+            else
+            {
+                result.FailedTestCases++;
+
+                // 如果设置为失败时不继续执行，则停止
                 if (!settings.ContinueOnFailure)
                 {
                     break;
@@ -134,10 +230,10 @@ public class BatchExecutionAppService : ApplicationService, IBatchExecutionAppSe
     }
 
     /// <summary>
-    /// 并行执行测试用例
+    /// 并行执行执行单元
     /// </summary>
     private async Task ExecuteParallelAsync(
-        List<CaseDto> testCases,
+        List<ExecutionUnit> units,
         BatchExecutionSettings settings,
         long environmentId,
         BatchExecutionResult result,
@@ -147,18 +243,24 @@ public class BatchExecutionAppService : ApplicationService, IBatchExecutionAppSe
         var tasks = new List<Task>();
         var lockObject = new object();
 
-        foreach (var testCase in testCases)
+        foreach (var unit in units)
         {
             tasks.Add(Task.Run(async () =>
             {
                 await semaphore.WaitAsync(cancellationToken);
                 try
                 {
-                    var executionRecord = (await _testExecutionEngine.ExecuteTestCaseAsync(
-                        testCase, environmentId, cancellationToken)).Data!;
+                    var executionRecord = await ExecuteWithRetryAsync(
+                        unit, settings, environmentId, result, lockObject, cancellationToken);
 
                     lock (lockObject)
                     {
+                        if (executionRecord == null)
+                        {
+                            result.FailedTestCases++;
+                            return;
+                        }
+
                         result.ExecutionRecords.Add(executionRecord);
 
                         if (executionRecord.Status == ExecutionStatus.Success)
@@ -169,14 +271,6 @@ public class BatchExecutionAppService : ApplicationService, IBatchExecutionAppSe
                         {
                             result.FailedTestCases++;
                         }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    lock (lockObject)
-                    {
-                        result.FailedTestCases++;
-                        result.Errors.Add($"测试用例 {testCase.Name} 执行失败: {ex.Message}");
                     }
                 }
                 finally
@@ -190,6 +284,59 @@ public class BatchExecutionAppService : ApplicationService, IBatchExecutionAppSe
     }
 
     /// <summary>
+    /// 执行单个单元并在失败时按配置重试
+    /// </summary>
+    private async Task<CaseExecutionRecordDto?> ExecuteWithRetryAsync(
+        ExecutionUnit unit,
+        BatchExecutionSettings settings,
+        long environmentId,
+        BatchExecutionResult result,
+        object lockObject,
+        CancellationToken cancellationToken)
+    {
+        var maxAttempts = Math.Max(settings.RetryCount, 0) + 1;
+        CaseExecutionRecordDto? executionRecord = null;
+
+        var options = new ExecutionOptions
+        {
+            Browser = unit.Browser,
+            Headless = settings.Headless,
+            DataVariables = unit.DataVariables,
+            DataTag = unit.DataTag
+        };
+
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
+        {
+            if (cancellationToken.IsCancellationRequested)
+                break;
+
+            try
+            {
+                executionRecord = (await _testExecutionEngine.ExecuteTestCaseAsync(
+                    unit.Case, environmentId, cancellationToken, options)).Data;
+            }
+            catch (Exception ex)
+            {
+                lock (lockObject)
+                {
+                    result.Errors.Add($"测试用例 {unit.Case.Name} 执行失败: {ex.Message}");
+                }
+                executionRecord = null;
+            }
+
+            if (executionRecord?.Status == ExecutionStatus.Success || attempt >= maxAttempts)
+                break;
+
+            lock (lockObject)
+            {
+                result.Errors.Add($"测试用例 {unit.Case.Name} 第 {attempt} 次执行失败，即将重试（{attempt}/{settings.RetryCount}）");
+            }
+        }
+
+        return executionRecord;
+    }
+
+    /// <summary>
     /// 性能测试执行
     /// </summary>
     private async Task ExecutePerformanceTestAsync(
@@ -197,12 +344,19 @@ public class BatchExecutionAppService : ApplicationService, IBatchExecutionAppSe
         BatchExecutionSettings settings,
         long environmentId,
         BatchExecutionResult result,
+        string browser,
         CancellationToken cancellationToken)
     {
         var performanceSettings = settings.PerformanceSettings;
         var startTime = DateTime.Now;
         var endTime = startTime.AddSeconds(performanceSettings.DurationSeconds);
         var rampUpEndTime = startTime.AddSeconds(performanceSettings.RampUpSeconds);
+
+        var options = new ExecutionOptions
+        {
+            Browser = browser,
+            Headless = settings.Headless
+        };
 
         var activeTasks = new ConcurrentBag<Task>();
         var semaphore = new SemaphoreSlim(1); // 开始时只有1个并发
@@ -260,7 +414,7 @@ public class BatchExecutionAppService : ApplicationService, IBatchExecutionAppSe
                     var testCase = testCases[random.Next(testCases.Count)];
 
                     var executionRecord = (await _testExecutionEngine.ExecuteTestCaseAsync(
-                        testCase, environmentId, cancellationToken)).Data!;
+                        testCase, environmentId, cancellationToken, options)).Data!;
 
                     lock (lockObject)
                     {

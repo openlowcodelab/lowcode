@@ -1,0 +1,351 @@
+@page "/testing/plans"
+@page "/testing/plans/{projectId:long}"
+
+@namespace H.Testing.Web
+@layout TestingLayout
+
+@inject IProjectAppService ProjectService
+@inject ITestPlanAppService TestPlanService
+@inject NavigationManager Navigation
+@inject H.Util.Blazor.HToastService Toast
+
+<PageTitle>测试计划</PageTitle>
+
+<div class="plans-page">
+    <div class="page-fill" style="flex-shrink:0;padding:12px 16px;">
+        <div style="display:flex;gap:16px;align-items:center;">
+            <div style="display:flex;align-items:center;gap:8px;">
+                <span>选择项目:</span>
+                <select class="h-select" style="width:200px;" value="@selectedProjectId" @onchange="OnProjectChanged">
+                    @foreach (var project in projects)
+                    {
+                        <option value="@project.Id">@project.Name</option>
+                    }
+                </select>
+            </div>
+            <button class="h-btn" disabled="@(selectedProjectId == 0)" @onclick="OpenCreateModal">＋ 新建测试计划</button>
+            @if (loading)
+            {
+                <span class="h-spin"><span class="h-spin-dot"></span><span class="h-spin-text">加载中...</span></span>
+            }
+        </div>
+    </div>
+
+    <div class="plans-body">
+        <div class="page-fill">
+            <HCard Title="🗓️ 测试计划列表">
+                <Body>
+                    @if (selectedProjectId == 0)
+                    {
+                        <div class="h-empty" style="padding:60px 0;">暂无项目，请先创建测试项目</div>
+                    }
+                    else if (!plans.Any())
+                    {
+                        <div class="h-empty" style="padding:60px 0;">
+                            暂无测试计划。测试计划用于把用例组织成一轮测试活动，指派负责人并跟踪通过进度
+                        </div>
+                    }
+                    else
+                    {
+                        <table class="h-table">
+                            <thead>
+                                <tr>
+                                    <th>计划名称</th>
+                                    <th style="width:180px;">起止日期</th>
+                                    <th style="width:90px;">状态</th>
+                                    <th style="width:70px;">用例数</th>
+                                    <th style="width:220px;">通过进度</th>
+                                    <th style="width:150px;">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var plan in plans)
+                                {
+                                    <tr>
+                                        <td>
+                                            <a class="link-action" @onclick="() => GoToDetail(plan.Id)">@plan.Name</a>
+                                            @if (!string.IsNullOrEmpty(plan.Description))
+                                            {
+                                                <div style="color:#86909C;font-size:12px;">@plan.Description</div>
+                                            }
+                                        </td>
+                                        <td style="color:#4E5969;font-size:13px;">
+                                            @(plan.StartDate?.ToString("yyyy-MM-dd") ?? "-") ~ @(plan.DueDate?.ToString("yyyy-MM-dd") ?? "-")
+                                        </td>
+                                        <td>
+                                            <span class="h-tag h-tag-@GetPlanStatusTagClass(plan.Status)">@GetPlanStatusDisplayName(plan.Status)</span>
+                                        </td>
+                                        <td>@plan.TotalCases</td>
+                                        <td>
+                                            <div style="display:flex;align-items:center;gap:8px;">
+                                                <div style="flex:1;background:#F2F3F5;border-radius:4px;height:8px;overflow:hidden;">
+                                                    <div style="background:#00B42A;height:100%;width:@(plan.PassRate.ToString("F1"))%;"></div>
+                                                </div>
+                                                <span style="width:96px;text-align:right;color:#86909C;font-size:12px;">
+                                                    @plan.PassedCases/@plan.TotalCases (@plan.PassRate.ToString("F0")%)
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="row-actions">
+                                                <a class="link-action" @onclick="() => GoToDetail(plan.Id)">详情</a>
+                                                <a class="link-action" @onclick="() => OpenEditModal(plan)">编辑</a>
+                                                <a class="link-action-danger" @onclick="() => DeletePlan(plan.Id)">删除</a>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                </Body>
+            </HCard>
+        </div>
+    </div>
+</div>
+
+<HModal Visible="@showModal"
+        Title="@(editingPlanId == 0 ? "新建测试计划" : "编辑测试计划")"
+        OnCancel="CloseModal"
+        ShowFooter="false"
+        Style="width:560px;">
+    <div style="margin-bottom:12px;">
+        <div style="margin-bottom:4px;">计划名称 <span style="color:#F53F3F;">*</span></div>
+        <input class="h-input" style="width:100%;" @bind="form.Name" placeholder="如：V1.2 版本回归测试" maxlength="50" />
+    </div>
+
+    <div style="margin-bottom:12px;">
+        <div style="margin-bottom:4px;">计划描述</div>
+        <textarea class="h-input" style="width:100%;min-height:64px;resize:vertical;" @bind="form.Description" maxlength="200" placeholder="本轮测试的目标与范围说明"></textarea>
+    </div>
+
+    <div style="display:flex;gap:12px;margin-bottom:12px;">
+        <div style="flex:1;">
+            <div style="margin-bottom:4px;">开始日期</div>
+            <input type="date" class="h-input" style="width:100%;" @bind="form.StartDate" @bind:format="yyyy-MM-dd" />
+        </div>
+        <div style="flex:1;">
+            <div style="margin-bottom:4px;">截止日期</div>
+            <input type="date" class="h-input" style="width:100%;" @bind="form.DueDate" @bind:format="yyyy-MM-dd" />
+        </div>
+    </div>
+
+    @if (editingPlanId != 0)
+    {
+        <div style="margin-bottom:16px;">
+            <div style="margin-bottom:4px;">状态</div>
+            <select class="h-select" style="width:100%;" value="@((int)form.Status)"
+                    @onchange="@((ChangeEventArgs e) => form.Status = int.TryParse(e.Value?.ToString(), out var v) ? (TestPlanStatus)v : TestPlanStatus.NotStarted)">
+                <option value="1">未开始</option>
+                <option value="2">进行中</option>
+                <option value="3">已完成</option>
+                <option value="4">已归档</option>
+            </select>
+        </div>
+    }
+
+    <div style="text-align:right;padding-top:12px;border-top:1px solid #F2F3F5;">
+        <button class="h-btn" style="margin-right:8px;" @onclick="CloseModal">取消</button>
+        <button class="h-btn" style="background-color:#165DFF;border-color:#165DFF;color:white;" disabled="@saving" @onclick="SavePlan">
+            @(saving ? "保存中..." : "保存")
+        </button>
+    </div>
+</HModal>
+
+@code {
+    [Parameter] public long ProjectId { get; set; }
+
+    private List<ProjectDto> projects = new();
+    private long selectedProjectId;
+    private List<TestPlanDto> plans = new();
+    private bool loading = true;
+
+    private bool showModal;
+    private bool saving;
+    private long editingPlanId;
+    private TestPlanDto form = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProjects();
+    }
+
+    private async Task LoadProjects()
+    {
+        try
+        {
+            projects = (await ProjectService.GetAllAsync()).Data ?? [];
+
+            if (projects.Count == 0)
+            {
+                loading = false;
+                return;
+            }
+
+            selectedProjectId = ProjectId != 0 && projects.Any(p => p.Id == ProjectId)
+                ? ProjectId
+                : projects[0].Id;
+
+            await LoadPlans();
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"加载项目失败: {ex.Message}");
+            loading = false;
+        }
+    }
+
+    private async Task LoadPlans()
+    {
+        if (selectedProjectId == 0)
+        {
+            plans = new List<TestPlanDto>();
+            loading = false;
+            return;
+        }
+
+        try
+        {
+            loading = true;
+            plans = (await TestPlanService.GetByProjectIdAsync(selectedProjectId)).Data ?? [];
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"加载测试计划失败: {ex.Message}");
+        }
+        finally
+        {
+            loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnProjectChanged(ChangeEventArgs e)
+    {
+        if (long.TryParse(e.Value?.ToString(), out var projectId))
+        {
+            selectedProjectId = projectId;
+            await LoadPlans();
+        }
+    }
+
+    private void OpenCreateModal()
+    {
+        editingPlanId = 0;
+        form = new TestPlanDto
+        {
+            ProjectId = selectedProjectId,
+            StartDate = DateTime.Today,
+            Status = TestPlanStatus.NotStarted
+        };
+        showModal = true;
+    }
+
+    private void OpenEditModal(TestPlanDto plan)
+    {
+        editingPlanId = plan.Id;
+        form = new TestPlanDto
+        {
+            ProjectId = plan.ProjectId,
+            Name = plan.Name,
+            Description = plan.Description,
+            StartDate = plan.StartDate,
+            DueDate = plan.DueDate,
+            Status = plan.Status
+        };
+        showModal = true;
+    }
+
+    private void CloseModal() => showModal = false;
+
+    private async Task SavePlan()
+    {
+        if (string.IsNullOrWhiteSpace(form.Name))
+        {
+            Toast.Error("请输入计划名称");
+            return;
+        }
+
+        try
+        {
+            saving = true;
+
+            if (editingPlanId == 0)
+            {
+                var created = await TestPlanService.CreateAsync(form);
+                if (created.Success)
+                {
+                    Toast.Success("测试计划创建成功");
+                    showModal = false;
+                    await LoadPlans();
+                }
+                else
+                {
+                    Toast.Error(created.Message ?? "创建失败");
+                }
+            }
+            else
+            {
+                var updated = await TestPlanService.UpdateAsync(editingPlanId, form);
+                if (updated.Success && updated.Data)
+                {
+                    Toast.Success("测试计划已更新");
+                    showModal = false;
+                    await LoadPlans();
+                }
+                else
+                {
+                    Toast.Error(updated.Message ?? "更新失败");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"保存失败: {ex.Message}");
+        }
+        finally
+        {
+            saving = false;
+        }
+    }
+
+    private async Task DeletePlan(long planId)
+    {
+        try
+        {
+            var result = await TestPlanService.DeleteAsync(planId);
+            if (result.Success && result.Data)
+            {
+                Toast.Success("测试计划已删除");
+                await LoadPlans();
+            }
+            else
+            {
+                Toast.Error(result.Message ?? "删除失败");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"删除失败: {ex.Message}");
+        }
+    }
+
+    private void GoToDetail(long planId) => Navigation.NavigateTo($"/testing/plans/detail/{planId}");
+
+    private static string GetPlanStatusTagClass(TestPlanStatus status) => status switch
+    {
+        TestPlanStatus.InProgress => "blue",
+        TestPlanStatus.Completed => "green",
+        TestPlanStatus.Archived => "default",
+        _ => "orange"
+    };
+
+    private static string GetPlanStatusDisplayName(TestPlanStatus status) => status switch
+    {
+        TestPlanStatus.NotStarted => "未开始",
+        TestPlanStatus.InProgress => "进行中",
+        TestPlanStatus.Completed => "已完成",
+        TestPlanStatus.Archived => "已归档",
+        _ => "未知"
+    };
+}

@@ -18,6 +18,14 @@ public class TestingDbContext : AbpDbContext<TestingDbContext>
     public DbSet<CaseStepEntity> CaseSteps { get; set; } = null!;
     public DbSet<CaseRecordEntity> ExecutionRecords { get; set; } = null!;
     public DbSet<SettingsEntity> Settings { get; set; } = null!;
+    public DbSet<TestScheduleEntity> TestSchedules { get; set; } = null!;
+    public DbSet<TestDatasetEntity> TestDatasets { get; set; } = null!;
+    public DbSet<CiRunEntity> CiRuns { get; set; } = null!;
+    public DbSet<RequirementEntity> Requirements { get; set; } = null!;
+    public DbSet<CaseRequirementLinkEntity> CaseRequirementLinks { get; set; } = null!;
+    public DbSet<TestPlanEntity> TestPlans { get; set; } = null!;
+    public DbSet<PlanCaseEntity> PlanCases { get; set; } = null!;
+    public DbSet<DefectEntity> Defects { get; set; } = null!;
 
     public TestingDbContext(DbContextOptions<TestingDbContext> options) : base(options)
     {
@@ -125,6 +133,7 @@ public class TestingDbContext : AbpDbContext<TestingDbContext>
             b.Property(x => x.EnvSnapshotJson).HasMaxLength(4000);
             b.Property(x => x.ErrorMessage).HasMaxLength(1000);
             b.Property(x => x.ExecutedBy).HasMaxLength(36).IsUnicode(false);
+            b.Property(x => x.DataTag).HasMaxLength(100);
 
             b.HasIndex(x => x.CaseId);
         });
@@ -137,6 +146,105 @@ public class TestingDbContext : AbpDbContext<TestingDbContext>
             b.Property(x => x.Id).UseIdentityColumn(1000, 1);
             b.Property(x => x.Key).HasMaxLength(50).IsRequired().IsUnicode(false);
             b.Property(x => x.Value).HasMaxLength(500);
+        });
+
+        modelBuilder.Entity<TestScheduleEntity>(b =>
+        {
+            b.ToTable("TestSchedule");
+            b.HasKey(x => x.Id);
+
+            b.Property(x => x.Id).UseIdentityColumn(9500000, 1);
+            b.Property(x => x.Name).IsRequired().HasMaxLength(50);
+            b.Property(x => x.CaseScope).HasMaxLength(20).IsRequired();
+            b.Property(x => x.SelectedCaseIdsJson).HasMaxLength(4000);
+            b.Property(x => x.CronExpression).HasMaxLength(100).IsRequired();
+
+            b.HasIndex(x => x.ProjectId);
+        });
+
+        modelBuilder.Entity<RequirementEntity>(b =>
+        {
+            b.ToTable("Requirement");
+            b.HasKey(x => x.Id);
+
+            b.Property(x => x.Id).UseIdentityColumn(9600000, 1);
+            b.Property(x => x.Title).IsRequired().HasMaxLength(100);
+            b.Property(x => x.Description).HasMaxLength(500);
+
+            b.HasIndex(x => x.ProjectId);
+        });
+
+        modelBuilder.Entity<CaseRequirementLinkEntity>(b =>
+        {
+            b.ToTable("CaseRequirementLink");
+            b.HasKey(x => x.Id);
+
+            b.Property(x => x.Id).UseIdentityColumn(9610000, 1);
+
+            b.HasIndex(x => new { x.RequirementId, x.CaseId }).IsUnique();
+        });
+
+        modelBuilder.Entity<TestPlanEntity>(b =>
+        {
+            b.ToTable("TestPlan");
+            b.HasKey(x => x.Id);
+
+            b.Property(x => x.Id).UseIdentityColumn(9700000, 1);
+            b.Property(x => x.Name).IsRequired().HasMaxLength(50);
+            b.Property(x => x.Description).HasMaxLength(200);
+
+            b.HasIndex(x => x.ProjectId);
+        });
+
+        modelBuilder.Entity<PlanCaseEntity>(b =>
+        {
+            b.ToTable("PlanCase");
+            b.HasKey(x => x.Id);
+
+            b.Property(x => x.Id).UseIdentityColumn(9710000, 1);
+            b.Property(x => x.Assignee).HasMaxLength(36);
+
+            b.HasIndex(x => new { x.PlanId, x.CaseId }).IsUnique();
+        });
+
+        modelBuilder.Entity<DefectEntity>(b =>
+        {
+            b.ToTable("Defect");
+            b.HasKey(x => x.Id);
+
+            b.Property(x => x.Id).UseIdentityColumn(9800000, 1);
+            b.Property(x => x.Title).IsRequired().HasMaxLength(100);
+            b.Property(x => x.Description).HasMaxLength(2000);
+            b.Property(x => x.Assignee).HasMaxLength(36);
+
+            b.HasIndex(x => x.ProjectId);
+        });
+
+        modelBuilder.Entity<TestDatasetEntity>(b =>
+        {
+            b.ToTable("TestDataset");
+            b.HasKey(x => x.Id);
+
+            b.Property(x => x.Id).UseIdentityColumn(9850000, 1);
+            b.Property(x => x.Name).IsRequired().HasMaxLength(50);
+            b.Property(x => x.ColumnsJson).HasMaxLength(2000);
+            b.Property(x => x.RowsJson).HasColumnType("nvarchar(max)");
+
+            b.HasIndex(x => x.ProjectId);
+        });
+
+        modelBuilder.Entity<CiRunEntity>(b =>
+        {
+            b.ToTable("CiRun");
+            b.HasKey(x => x.Id);
+
+            b.Property(x => x.Id).UseIdentityColumn(9900000, 1);
+            b.Property(x => x.CaseIdsJson).HasMaxLength(4000);
+            b.Property(x => x.BrowsersJson).HasMaxLength(200);
+            b.Property(x => x.WebhookUrl).HasMaxLength(500);
+            b.Property(x => x.ErrorMessage).HasMaxLength(1000);
+
+            b.HasIndex(x => x.ProjectId);
         });
     }
 }

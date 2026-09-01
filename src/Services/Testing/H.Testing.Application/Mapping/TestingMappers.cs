@@ -236,6 +236,7 @@ public static class TestingMappers
         StepRecords = DeserializeList<StepExecutionRecord>(e.StepRecordsJson),
         ErrorMessage = e.ErrorMessage,
         ExecutedBy = e.ExecutedBy ?? "System",
+        DataTag = e.DataTag,
         EnvSnapshot = DeserializeDict<object>(e.EnvSnapshotJson)
     };
 
@@ -257,6 +258,7 @@ public static class TestingMappers
         e.StepRecordsJson = Serialize(dto.StepRecords);
         e.ErrorMessage = dto.ErrorMessage;
         e.ExecutedBy = dto.ExecutedBy;
+        e.DataTag = dto.DataTag;
         e.EnvSnapshotJson = Serialize(dto.EnvSnapshot);
     }
 }

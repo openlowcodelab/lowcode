@@ -1,6 +1,7 @@
 using H.Testing.Application.Contracts;
 using H.Util.Base;
 using H.Util.Ids;
+using Jint;
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
 using System.Diagnostics;
@@ -57,7 +58,8 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
     public async Task<BaseOutput<CaseExecutionRecordDto>> ExecuteTestCaseAsync(
         CaseDto testCase,
         long environmentId,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        ExecutionOptions? options = null)
     {
         var environment = (await _environmentService.GetByIdAsync(testCase.ProjectId, environmentId)).Data;
         if (environment == null)
@@ -87,7 +89,8 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
             EnvName = environment.Name,
             Status = ExecutionStatus.Running,
             TotalSteps = executionSteps.Count,
-            EnvSnapshot = environment.Config
+            EnvSnapshot = environment.Config,
+            DataTag = options?.DataTag
         };
 
         // 创建执行记录（必须接收返回值，否则 Id 保持 0，后续 UpdateAsync 无法定位记录，步骤详情将不会持久化）
@@ -101,8 +104,11 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
 
         try
         {
-            // 初始化变量
-            InitializeVariables(environment);
+            // 初始化变量（数据驱动变量覆盖同名环境变量）
+            InitializeVariables(environment, options?.DataVariables);
+
+            var headless = options?.Headless ?? false;
+            var browserKind = (options?.Browser ?? "chromium").ToLowerInvariant();
 
             // 初始化 Playwright（仅对包含 UI 步骤的测试用例）
             if (executionSteps.Any(s => IsUiStepType(s.Type)))
@@ -110,39 +116,76 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
                 playwright = await Playwright.CreateAsync();
                 var launchOptions = new BrowserTypeLaunchOptions
                 {
-                    Headless = false, // 设置为false可以看到浏览器操作
-                    Args = new[] {
+                    Headless = headless
+                };
+
+                if (!headless)
+                {
+                    launchOptions.Args = new[] {
                         "--start-maximized", // 最大化浏览器窗口
                         "--activate", // 激活窗口（macOS）
                         "--foreground" // 前台运行
-                    }
-                };
-
-                // 浏览器解析顺序：设置中配置的浏览器地址 → Playwright 内置浏览器
-                var browserPath = await ResolveBrowserExecutablePathAsync();
-                if (browserPath != null)
-                {
-                    launchOptions.ExecutablePath = browserPath;
+                    };
                 }
 
-                browser = await playwright.Chromium.LaunchAsync(launchOptions);
+                IBrowserType browserType;
+                switch (browserKind)
+                {
+                    case "firefox":
+                        browserType = playwright.Firefox;
+                        break;
+                    case "webkit":
+                        browserType = playwright.Webkit;
+                        break;
+                    case "chrome":
+                        browserType = playwright.Chromium;
+                        launchOptions.Channel = "chrome"; // 使用本机安装的 Chrome
+                        break;
+                    case "msedge":
+                        browserType = playwright.Chromium;
+                        launchOptions.Channel = "msedge"; // 使用本机安装的 Edge
+                        break;
+                    default:
+                        browserType = playwright.Chromium;
+                        // 浏览器解析顺序：设置中配置的浏览器地址 → Playwright 内置浏览器
+                        var browserPath = await ResolveBrowserExecutablePathAsync();
+                        if (browserPath != null)
+                        {
+                            launchOptions.ExecutablePath = browserPath;
+                        }
+                        break;
+                }
+
+                try
+                {
+                    browser = await browserType.LaunchAsync(launchOptions);
+                }
+                catch (Exception ex)
+                {
+                    throw new InvalidOperationException(
+                        $"浏览器 '{browserKind}' 启动失败（firefox/webkit 需先执行 'playwright install {browserKind}' 安装）: {ex.Message}", ex);
+                }
+
                 context = await browser.NewContextAsync(new BrowserNewContextOptions
                 {
                     ViewportSize = null // 使用最大视口尺寸
                 });
                 page = await context.NewPageAsync();
 
-                // 多重确保浏览器窗口处于前台
-                await page.BringToFrontAsync(); // 将页面窗口带到前台
-                await page.EvaluateAsync("() => { window.focus(); }");
+                if (!headless)
+                {
+                    // 多重确保浏览器窗口处于前台
+                    await page.BringToFrontAsync(); // 将页面窗口带到前台
+                    await page.EvaluateAsync("() => { window.focus(); }");
 
-                // 添加额外的焦点设置以确保窗口置顶
-                await page.EvaluateAsync(@"() => {
+                    // 添加额外的焦点设置以确保窗口置顶
+                    await page.EvaluateAsync(@"() => {
                         window.focus();
                         window.addEventListener('blur', () => {
                             setTimeout(() => window.focus(), 100);
                         });
                     }");
+                }
             }
 
             var stopwatch = Stopwatch.StartNew();
@@ -778,11 +821,11 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
 
             if (step.Type == StepType.JavascriptScript)
             {
-                result = await ExecuteJavaScriptAsync(step.ScriptConfig, cancellationToken);
+                result = await ExecuteJavaScriptAsync(step.ScriptConfig, environment, stepRecord, cancellationToken);
             }
             else if (step.Type == StepType.CSharpScript)
             {
-                result = await ExecuteCSharpScriptAsync(step.ScriptConfig, cancellationToken);
+                result = await ExecuteCSharpScriptAsync(step.ScriptConfig, environment, stepRecord, cancellationToken);
             }
             else
             {
@@ -791,14 +834,16 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
 
             stepRecord.Logs.Add($"Script execution completed. Result: {result}");
 
-            // 提取变量
+            // 提取变量：语法与 API 步骤一致（$.jsonPath / 正则），表达式为空时取整个返回值
             if (step.ScriptConfig.VariableExtractions.Any())
             {
                 foreach (var extraction in step.ScriptConfig.VariableExtractions)
                 {
-                    // 简单的变量提取，实际实现可能需要更复杂的逻辑
-                    var value = result; // 这里简化处理，实际可能需要解析JSON或其他格式
+                    var value = string.IsNullOrWhiteSpace(extraction.Value)
+                        ? result
+                        : ExtractVariable(extraction.Value, result);
                     _variables[extraction.Key] = value;
+                    stepRecord.ExtractedVariables[extraction.Key] = value;
                     stepRecord.Logs.Add($"Extracted variable {extraction.Key}: {value}");
                 }
             }
@@ -831,9 +876,9 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
     }
 
     /// <summary>
-    /// 初始化变量
+    /// 初始化变量（数据驱动变量覆盖同名环境变量）
     /// </summary>
-    private void InitializeVariables(EnvironmentDto environment)
+    private void InitializeVariables(EnvironmentDto environment, Dictionary<string, string>? dataVariables = null)
     {
         _variables.Clear();
 
@@ -841,6 +886,15 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
         foreach (var config in environment.Config)
         {
             _variables[config.Key] = config.Value?.ToString() ?? "";
+        }
+
+        // 叠加数据驱动变量
+        if (dataVariables != null)
+        {
+            foreach (var kv in dataVariables)
+            {
+                _variables[kv.Key] = kv.Value ?? string.Empty;
+            }
         }
     }
 
@@ -1056,31 +1110,126 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
     }
 
     /// <summary>
-    /// 执行JavaScript脚本
+    /// 执行JavaScript脚本（Jint 引擎）
     /// </summary>
-    private async Task<string> ExecuteJavaScriptAsync(ScriptStepConfig config, CancellationToken cancellationToken)
+    /// <remarks>
+    /// 脚本上下文：
+    /// - vars: 执行变量（读写，修改会供后续步骤使用）
+    /// - env: 环境配置（只读用途）
+    /// - parameters: 脚本参数
+    /// - log(msg) / console.log(msg): 输出到步骤日志
+    /// 脚本最后一个表达式的值作为返回结果
+    /// </remarks>
+    private async Task<string> ExecuteJavaScriptAsync(
+        ScriptStepConfig config,
+        EnvironmentDto environment,
+        StepExecutionRecord stepRecord,
+        CancellationToken cancellationToken)
     {
-        // 这里是JavaScript执行的占位符实现
-        // 实际实现可能需要集成JavaScript引擎，如V8或Jint
-        await Task.Delay(100, cancellationToken); // 模拟执行时间
+        var script = ReplaceVariables(config.ScriptContent ?? string.Empty);
+        if (string.IsNullOrWhiteSpace(script))
+        {
+            throw new InvalidOperationException("脚本内容不能为空");
+        }
 
-        // 简单的模拟执行结果
-        var result = $"JavaScript executed: {config.ScriptContent.Substring(0, Math.Min(50, config.ScriptContent.Length))}...";
-        return result;
+        return await Task.Run(() =>
+        {
+            var engine = new Engine(options =>
+            {
+                options.TimeoutInterval(TimeSpan.FromMilliseconds(Math.Max(config.TimeoutMs, 1000)));
+                options.CancellationToken(cancellationToken);
+                options.LimitMemory(128 * 1024 * 1024);
+            });
+
+            Action<object?> log = message => stepRecord.Logs.Add(message?.ToString() ?? string.Empty);
+            engine.SetValue("vars", _variables);
+            engine.SetValue("env", environment.Config);
+            engine.SetValue("parameters", config.Parameters);
+            engine.SetValue("log", log);
+            engine.SetValue("console", new ScriptConsole(log));
+
+            var result = engine.Evaluate(script);
+            return result.IsUndefined() || result.IsNull() ? string.Empty : result.ToString();
+        }, cancellationToken);
     }
 
     /// <summary>
-    /// 执行C#脚本
+    /// C# 脚本编译缓存（按脚本内容缓存，避免重复编译）
     /// </summary>
-    private async Task<string> ExecuteCSharpScriptAsync(ScriptStepConfig config, CancellationToken cancellationToken)
-    {
-        // 这里是C#脚本执行的占位符实现
-        // 实际实现可能需要集成Roslyn编译器或其他C#脚本引擎
-        await Task.Delay(100, cancellationToken); // 模拟执行时间
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, Microsoft.CodeAnalysis.Scripting.Script<object>> CSharpScriptCache = new();
 
-        // 简单的模拟执行结果
-        var result = $"C# script executed: {config.ScriptContent.Substring(0, Math.Min(50, config.ScriptContent.Length))}...";
-        return result;
+    /// <summary>
+    /// 执行C#脚本（Roslyn Scripting）
+    /// </summary>
+    /// <remarks>
+    /// 脚本上下文（全局对象 <see cref="CSharpScriptGlobals"/>）：
+    /// - Vars: 执行变量（读写，修改会供后续步骤使用）
+    /// - Env: 环境配置
+    /// - Parameters: 脚本参数
+    /// - Log(msg): 输出到步骤日志
+    /// 可用 return 返回结果，也可省略（取最后一个表达式的值）
+    /// </remarks>
+    private async Task<string> ExecuteCSharpScriptAsync(
+        ScriptStepConfig config,
+        EnvironmentDto environment,
+        StepExecutionRecord stepRecord,
+        CancellationToken cancellationToken)
+    {
+        var script = ReplaceVariables(config.ScriptContent ?? string.Empty);
+        if (string.IsNullOrWhiteSpace(script))
+        {
+            throw new InvalidOperationException("脚本内容不能为空");
+        }
+
+        var options = Microsoft.CodeAnalysis.Scripting.ScriptOptions.Default
+            .AddReferences(
+                typeof(object).Assembly,
+                typeof(System.Linq.Enumerable).Assembly,
+                typeof(System.Text.Json.JsonSerializer).Assembly,
+                typeof(System.Text.RegularExpressions.Regex).Assembly,
+                typeof(CSharpScriptGlobals).Assembly)
+            .AddImports(
+                "System",
+                "System.Linq",
+                "System.Collections.Generic",
+                "System.Text",
+                "System.Text.Json",
+                "System.Text.RegularExpressions");
+
+        var compiled = CSharpScriptCache.GetOrAdd(script, code =>
+        {
+            var created = Microsoft.CodeAnalysis.CSharp.Scripting.CSharpScript.Create<object>(
+                code, options, globalsType: typeof(CSharpScriptGlobals));
+            var errors = created.Compile()
+                .Where(d => d.Severity == Microsoft.CodeAnalysis.DiagnosticSeverity.Error)
+                .ToList();
+            if (errors.Count > 0)
+            {
+                throw new InvalidOperationException("C# 脚本编译失败: " + string.Join("; ", errors.Select(e => e.GetMessage())));
+            }
+            return created;
+        });
+
+        var globals = new CSharpScriptGlobals
+        {
+            Vars = _variables,
+            Env = environment.Config,
+            Parameters = config.Parameters,
+            Log = message => stepRecord.Logs.Add(message?.ToString() ?? string.Empty)
+        };
+
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutCts.CancelAfter(Math.Max(config.TimeoutMs, 1000));
+
+        try
+        {
+            var state = await compiled.RunAsync(globals, timeoutCts.Token);
+            return state.ReturnValue?.ToString() ?? string.Empty;
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw new TimeoutException($"C# 脚本执行超时（超过 {config.TimeoutMs}ms）");
+        }
     }
 
     /// <summary>

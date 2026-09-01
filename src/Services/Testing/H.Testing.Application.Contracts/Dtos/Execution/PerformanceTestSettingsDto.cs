@@ -72,4 +72,25 @@ public class BatchExecutionSettings
     /// 失败时是否继续执行其他用例
     /// </summary>
     public bool ContinueOnFailure { get; set; } = true;
+
+    /// <summary>
+    /// 用例失败后的重试次数（0 表示不重试）
+    /// </summary>
+    [Range(0, 10, ErrorMessage = "重试次数必须在0-10之间")]
+    public int RetryCount { get; set; } = 0;
+
+    /// <summary>
+    /// 数据驱动：数据集ID（为空表示不使用数据集）
+    /// </summary>
+    public long? DatasetId { get; set; }
+
+    /// <summary>
+    /// 执行浏览器列表（chromium / chrome / msedge / firefox / webkit），按顺序依次执行
+    /// </summary>
+    public List<string> Browsers { get; set; } = new() { "chromium" };
+
+    /// <summary>
+    /// 是否无头模式执行（不打开可见浏览器窗口）
+    /// </summary>
+    public bool Headless { get; set; } = false;
 }

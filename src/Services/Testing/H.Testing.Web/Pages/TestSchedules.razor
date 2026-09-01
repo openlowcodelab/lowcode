@@ -1,0 +1,457 @@
+@page "/testing/schedules"
+@page "/testing/schedules/{projectId:long}"
+
+@namespace H.Testing.Web
+@layout TestingLayout
+
+@inject IProjectAppService ProjectService
+@inject IEnvironmentAppService EnvironmentService
+@inject ICaseAppService ProjectCaseService
+@inject ITestScheduleAppService ScheduleService
+@inject NavigationManager Navigation
+@inject H.Util.Blazor.HToastService Toast
+
+<PageTitle>定时任务</PageTitle>
+
+<div class="schedules-page">
+    <div class="page-fill" style="flex-shrink:0;padding:12px 16px;">
+        <div style="display:flex;gap:16px;align-items:center;">
+            <div style="display:flex;align-items:center;gap:8px;">
+                <span>选择项目:</span>
+                <select class="h-select" style="width:200px;" value="@selectedProjectId" @onchange="OnProjectChanged">
+                    @foreach (var project in projects)
+                    {
+                        <option value="@project.Id">@project.Name</option>
+                    }
+                </select>
+            </div>
+            <button class="h-btn" disabled="@(selectedProjectId == 0)" @onclick="OpenCreateModal">＋ 新建定时计划</button>
+            @if (loading)
+            {
+                <span class="h-spin"><span class="h-spin-dot"></span><span class="h-spin-text">加载中...</span></span>
+            }
+        </div>
+    </div>
+
+    <div class="schedules-body">
+        <div class="page-fill">
+            <HCard Title="⏰ 定时执行计划">
+                <Body>
+                    @if (selectedProjectId == 0)
+                    {
+                        <div class="h-empty" style="padding:60px 0;">暂无项目，请先创建测试项目</div>
+                    }
+                    else if (!schedules.Any())
+                    {
+                        <div class="h-empty" style="padding:60px 0;">
+                            暂无定时计划，点击"新建定时计划"创建一个周期性自动执行的计划
+                        </div>
+                    }
+                    else
+                    {
+                        <table class="h-table">
+                            <thead>
+                                <tr>
+                                    <th>计划名称</th>
+                                    <th style="width:120px;">执行环境</th>
+                                    <th style="width:130px;">用例范围</th>
+                                    <th style="width:140px;">Cron 表达式</th>
+                                    <th style="width:80px;">状态</th>
+                                    <th style="width:200px;">最近执行</th>
+                                    <th style="width:200px;">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var schedule in schedules)
+                                {
+                                    <tr>
+                                        <td>@schedule.Name</td>
+                                        <td>@GetEnvName(schedule.EnvId)</td>
+                                        <td>@(schedule.CaseScope == "Selected" ? $"指定 {schedule.SelectedCaseIds.Count} 个用例" : "全部用例")</td>
+                                        <td><code style="font-size:12px;">@schedule.CronExpression</code></td>
+                                        <td>
+                                            <span class="h-tag h-tag-@(schedule.IsEnabled ? "green" : "default")"
+                                                  style="cursor:pointer;"
+                                                  @onclick="() => ToggleEnabled(schedule)"
+                                                  title="点击切换启用状态">
+                                                @(schedule.IsEnabled ? "已启用" : "已停用")
+                                            </span>
+                                        </td>
+                                        <td>
+                                            @if (schedule.LastExecutionTime.HasValue)
+                                            {
+                                                <span style="color:#86909C;font-size:12px;">@schedule.LastExecutionTime.Value.ToString("MM-dd HH:mm")</span>
+                                                <span class="h-tag h-tag-@GetStatusTagClass(schedule.LastExecutionStatus)" style="margin-left:6px;">
+                                                    @GetStatusDisplayName(schedule.LastExecutionStatus)
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span style="color:#86909C;">未执行</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <span class="row-actions">
+                                                <a class="link-action" @onclick="() => RunNow(schedule.Id)">立即执行</a>
+                                                <a class="link-action" @onclick="() => OpenEditModal(schedule)">编辑</a>
+                                                <a class="link-action-danger" @onclick="() => DeleteSchedule(schedule.Id)">删除</a>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                        <div style="color:#86909C;font-size:12px;margin-top:12px;">
+                            Cron 格式：分 时 日 月 周（如 <code>0 2 * * *</code> 表示每天 2:00，<code>0 9 * * 1</code> 表示每周一 9:00）
+                        </div>
+                    }
+                </Body>
+            </HCard>
+        </div>
+    </div>
+</div>
+
+<HModal Visible="@showModal"
+        Title="@(editingScheduleId == 0 ? "新建定时计划" : "编辑定时计划")"
+        OnCancel="CloseModal"
+        ShowFooter="false"
+        Style="width:640px;">
+    <div style="margin-bottom:12px;">
+        <div style="margin-bottom:4px;">计划名称 <span style="color:#F53F3F;">*</span></div>
+        <input class="h-input" style="width:100%;" @bind="form.Name" placeholder="如：每日凌晨回归测试" maxlength="50" />
+    </div>
+
+    <div style="margin-bottom:12px;">
+        <div style="margin-bottom:4px;">执行环境 <span style="color:#F53F3F;">*</span></div>
+        <select class="h-select" style="width:100%;" value="@form.EnvId"
+                @onchange="@((ChangeEventArgs e) => form.EnvId = long.TryParse(e.Value?.ToString(), out var v) ? v : 0)">
+            <option value="0">请选择环境</option>
+            @foreach (var env in environments)
+            {
+                <option value="@env.Id">@env.Name</option>
+            }
+        </select>
+    </div>
+
+    <div style="margin-bottom:12px;">
+        <div style="margin-bottom:4px;">用例范围 <span style="color:#F53F3F;">*</span></div>
+        <div style="display:flex;gap:16px;margin-bottom:8px;">
+            <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
+                <input type="radio" name="caseScope" checked="@(form.CaseScope == "All")" @onchange='() => form.CaseScope = "All"' />
+                全部用例
+            </label>
+            <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
+                <input type="radio" name="caseScope" checked="@(form.CaseScope == "Selected")" @onchange='() => form.CaseScope = "Selected"' />
+                指定用例
+            </label>
+        </div>
+        @if (form.CaseScope == "Selected")
+        {
+            <div style="max-height:180px;overflow-y:auto;border:1px solid #F2F3F5;border-radius:4px;padding:8px;">
+                @if (!projectCases.Any())
+                {
+                    <div style="color:#86909C;">该项目暂无测试用例</div>
+                }
+                @foreach (var testCase in projectCases)
+                {
+                    <div style="margin-bottom:4px;">
+                        <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
+                            <input type="checkbox" checked="@form.SelectedCaseIds.Contains(testCase.Id)"
+                                   @onchange="@((ChangeEventArgs e) => ToggleCaseSelection(testCase.Id, (bool)(e.Value ?? false)))" />
+                            @testCase.Name
+                        </label>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <div style="margin-bottom:12px;">
+        <div style="margin-bottom:4px;">Cron 表达式 <span style="color:#F53F3F;">*</span></div>
+        <input class="h-input" style="width:100%;" @bind="form.CronExpression" placeholder="0 2 * * *" />
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+            <button class="h-btn h-btn-sm" @onclick='() => form.CronExpression = "0 2 * * *"'>每天 2:00</button>
+            <button class="h-btn h-btn-sm" @onclick='() => form.CronExpression = "0 8 * * *"'>每天 8:00</button>
+            <button class="h-btn h-btn-sm" @onclick='() => form.CronExpression = "0 */2 * * *"'>每 2 小时</button>
+            <button class="h-btn h-btn-sm" @onclick='() => form.CronExpression = "0 9 * * 1"'>每周一 9:00</button>
+        </div>
+    </div>
+
+    <div style="margin-bottom:16px;">
+        <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
+            <input type="checkbox" @bind="form.IsEnabled" />
+            创建后立即启用
+        </label>
+    </div>
+
+    <div style="text-align:right;padding-top:12px;border-top:1px solid #F2F3F5;">
+        <button class="h-btn" style="margin-right:8px;" @onclick="CloseModal">取消</button>
+        <button class="h-btn" style="background-color:#165DFF;border-color:#165DFF;color:white;" disabled="@saving" @onclick="SaveSchedule">
+            @(saving ? "保存中..." : "保存")
+        </button>
+    </div>
+</HModal>
+
+@code {
+    [Parameter] public long ProjectId { get; set; }
+
+    private List<ProjectDto> projects = new();
+    private long selectedProjectId;
+    private List<TestScheduleDto> schedules = new();
+    private List<EnvironmentDto> environments = new();
+    private List<CaseDto> projectCases = new();
+    private bool loading = true;
+
+    private bool showModal;
+    private bool saving;
+    private long editingScheduleId;
+    private TestScheduleDto form = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProjects();
+    }
+
+    private async Task LoadProjects()
+    {
+        try
+        {
+            projects = (await ProjectService.GetAllAsync()).Data ?? [];
+
+            if (projects.Count == 0)
+            {
+                loading = false;
+                return;
+            }
+
+            selectedProjectId = ProjectId != 0 && projects.Any(p => p.Id == ProjectId)
+                ? ProjectId
+                : projects[0].Id;
+
+            await LoadSchedules();
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"加载项目失败: {ex.Message}");
+            loading = false;
+        }
+    }
+
+    private async Task LoadSchedules()
+    {
+        if (selectedProjectId == 0)
+        {
+            schedules = new List<TestScheduleDto>();
+            loading = false;
+            return;
+        }
+
+        try
+        {
+            loading = true;
+            schedules = (await ScheduleService.GetByProjectIdAsync(selectedProjectId)).Data ?? [];
+            environments = (await EnvironmentService.GetByProjectIdAsync(selectedProjectId)).Data ?? [];
+            projectCases = ((await ProjectCaseService.GetByProjectIdAsync(selectedProjectId)).Data ?? [])
+                .Where(c => !c.IsTemplate)
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"加载定时计划失败: {ex.Message}");
+        }
+        finally
+        {
+            loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnProjectChanged(ChangeEventArgs e)
+    {
+        if (long.TryParse(e.Value?.ToString(), out var projectId))
+        {
+            selectedProjectId = projectId;
+            await LoadSchedules();
+        }
+    }
+
+    private void OpenCreateModal()
+    {
+        editingScheduleId = 0;
+        form = new TestScheduleDto
+        {
+            ProjectId = selectedProjectId,
+            CaseScope = "All",
+            CronExpression = "0 2 * * *",
+            IsEnabled = true
+        };
+        showModal = true;
+    }
+
+    private void OpenEditModal(TestScheduleDto schedule)
+    {
+        editingScheduleId = schedule.Id;
+        form = new TestScheduleDto
+        {
+            ProjectId = schedule.ProjectId,
+            Name = schedule.Name,
+            EnvId = schedule.EnvId,
+            CaseScope = schedule.CaseScope,
+            SelectedCaseIds = new List<long>(schedule.SelectedCaseIds),
+            CronExpression = schedule.CronExpression,
+            IsEnabled = schedule.IsEnabled
+        };
+        showModal = true;
+    }
+
+    private void CloseModal()
+    {
+        showModal = false;
+    }
+
+    private void ToggleCaseSelection(long caseId, bool selected)
+    {
+        if (selected)
+        {
+            form.SelectedCaseIds.Add(caseId);
+        }
+        else
+        {
+            form.SelectedCaseIds.Remove(caseId);
+        }
+    }
+
+    private async Task SaveSchedule()
+    {
+        if (string.IsNullOrWhiteSpace(form.Name))
+        {
+            Toast.Error("请输入计划名称");
+            return;
+        }
+        if (form.EnvId == 0)
+        {
+            Toast.Error("请选择执行环境");
+            return;
+        }
+
+        try
+        {
+            saving = true;
+
+            if (editingScheduleId == 0)
+            {
+                var created = await ScheduleService.CreateAsync(form);
+                if (created.Success)
+                {
+                    Toast.Success("定时计划创建成功");
+                    showModal = false;
+                    await LoadSchedules();
+                }
+                else
+                {
+                    Toast.Error(created.Message ?? "创建失败");
+                }
+            }
+            else
+            {
+                var updated = await ScheduleService.UpdateAsync(editingScheduleId, form);
+                if (updated.Success && updated.Data)
+                {
+                    Toast.Success("定时计划已更新");
+                    showModal = false;
+                    await LoadSchedules();
+                }
+                else
+                {
+                    Toast.Error(updated.Message ?? "更新失败");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"保存失败: {ex.Message}");
+        }
+        finally
+        {
+            saving = false;
+        }
+    }
+
+    private async Task ToggleEnabled(TestScheduleDto schedule)
+    {
+        try
+        {
+            var result = await ScheduleService.SetEnabledAsync(schedule.Id, !schedule.IsEnabled);
+            if (result.Success && result.Data)
+            {
+                Toast.Success(!schedule.IsEnabled ? "定时计划已启用" : "定时计划已停用");
+                await LoadSchedules();
+            }
+            else
+            {
+                Toast.Error(result.Message ?? "操作失败");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"操作失败: {ex.Message}");
+        }
+    }
+
+    private async Task RunNow(long scheduleId)
+    {
+        try
+        {
+            var result = await ScheduleService.RunNowAsync(scheduleId);
+            Toast.Info(result.Data ?? "已加入执行队列");
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"执行失败: {ex.Message}");
+        }
+    }
+
+    private async Task DeleteSchedule(long scheduleId)
+    {
+        try
+        {
+            var result = await ScheduleService.DeleteAsync(scheduleId);
+            if (result.Success && result.Data)
+            {
+                Toast.Success("定时计划已删除");
+                await LoadSchedules();
+            }
+            else
+            {
+                Toast.Error(result.Message ?? "删除失败");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"删除失败: {ex.Message}");
+        }
+    }
+
+    private string GetEnvName(long envId)
+        => environments.FirstOrDefault(e => e.Id == envId)?.Name ?? "-";
+
+    private static string GetStatusTagClass(int? status)
+        => (ExecutionStatus?)status switch
+        {
+            ExecutionStatus.Success => "green",
+            ExecutionStatus.Failed => "red",
+            ExecutionStatus.Running => "blue",
+            ExecutionStatus.Cancelled => "orange",
+            _ => "default"
+        };
+
+    private static string GetStatusDisplayName(int? status)
+        => (ExecutionStatus?)status switch
+        {
+            ExecutionStatus.Success => "成功",
+            ExecutionStatus.Failed => "失败",
+            ExecutionStatus.Running => "执行中",
+            ExecutionStatus.Cancelled => "已取消",
+            _ => "未知"
+        };
+}

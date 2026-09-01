@@ -127,6 +127,10 @@ else
                                             <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
                                                 <span class="h-tag h-tag-@GetExecutionStatusTagClass(record.Status)">@GetExecutionStatusDisplayName(record.Status)</span>
                                                 <strong>@record.EnvName</strong>
+                                                @if (!string.IsNullOrEmpty(record.DataTag))
+                                                {
+                                                    <span class="h-tag h-tag-blue">@record.DataTag</span>
+                                                }
                                                 <span style="color:#86909C;font-size:12px;">@record.StartTime.ToString("yyyy-MM-dd HH:mm:ss")</span>
                                             </div>
                                             <div style="color:#4E5969;font-size:12px;">
@@ -149,6 +153,14 @@ else
                                                @onclick="() => SelectRecord(record.Id)">
                                                 查看详情
                                             </a>
+                                            @if (record.Status == ExecutionStatus.Failed && testCase != null)
+                                            {
+                                                <a class="link-action"
+                                                   @onclick:stopPropagation
+                                                   @onclick="() => SubmitDefect(record.Id)">
+                                                    提交缺陷
+                                                </a>
+                                            }
                                             <a class="link-action-danger"
                                                @onclick:stopPropagation
                                                @onclick="@(async (MouseEventArgs e) => await DeleteRecord(record.Id))">
@@ -219,6 +231,10 @@ else
                 <Body>
                     <table class="h-descriptions">
                         <tr><th>执行人</th><td>@selectedRecord.ExecutedBy</td></tr>
+                        @if (!string.IsNullOrEmpty(selectedRecord.DataTag))
+                        {
+                            <tr><th>执行标签</th><td>@selectedRecord.DataTag</td></tr>
+                        }
                         <tr><th>开始时间</th><td>@selectedRecord.StartTime.ToString("yyyy-MM-dd HH:mm:ss")</td></tr>
                         <tr><th>结束时间</th><td>@(selectedRecord.EndTime?.ToString("yyyy-MM-dd HH:mm:ss") ?? "-")</td></tr>
                         <tr><th>总耗时</th><td>@(selectedRecord.Duration)ms</td></tr>
@@ -502,6 +518,12 @@ else
         selectedRecordId = 0;
         selectedRecord = null;
         StateHasChanged();
+    }
+
+    private void SubmitDefect(long recordId)
+    {
+        if (testCase == null) return;
+        Navigation.NavigateTo($"/testing/defects/{testCase.ProjectId}?fromRecord={recordId}");
     }
 
     private void GoBack()

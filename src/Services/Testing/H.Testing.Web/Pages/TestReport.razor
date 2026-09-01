@@ -1,0 +1,310 @@
+@page "/testing/report"
+@page "/testing/report/{projectId:long}"
+
+@namespace H.Testing.Web
+@layout TestingLayout
+
+@inject IProjectAppService ProjectService
+@inject ITestReportAppService ReportService
+@inject NavigationManager Navigation
+@inject H.Util.Blazor.HToastService Toast
+
+<PageTitle>测试报告</PageTitle>
+
+<div class="report-page">
+    <div class="page-fill" style="flex-shrink:0;padding:12px 16px;">
+        <div style="display:flex;gap:16px;align-items:center;">
+            <div style="display:flex;align-items:center;gap:8px;">
+                <span>选择项目:</span>
+                <select class="h-select" style="width:200px;" value="@selectedProjectId" @onchange="OnProjectChanged">
+                    @foreach (var project in projects)
+                    {
+                        <option value="@project.Id">@project.Name</option>
+                    }
+                </select>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+                <span>统计范围:</span>
+                <select class="h-select" style="width:120px;" value="@days" @onchange="OnDaysChanged">
+                    <option value="7">近 7 天</option>
+                    <option value="14">近 14 天</option>
+                    <option value="30">近 30 天</option>
+                </select>
+            </div>
+            @if (loading)
+            {
+                <span class="h-spin"><span class="h-spin-dot"></span><span class="h-spin-text">加载中...</span></span>
+            }
+        </div>
+    </div>
+
+    <div class="report-body">
+        @if (selectedProjectId == 0)
+        {
+            <div class="h-empty" style="padding:60px 0;">暂无项目，请先创建测试项目</div>
+        }
+        else if (report == null)
+        {
+            <div class="h-empty" style="padding:60px 0;">暂无报告数据</div>
+        }
+        else
+        {
+            var overview = report.Overview;
+            var successRateColor = overview.SuccessRate >= 80 ? "#00B42A" : overview.SuccessRate >= 60 ? "#FF7D00" : "#F53F3F";
+
+            <HCard Title="📊 总体概览" Style="margin-bottom:2px;">
+                <Body>
+                    <div style="display:flex;gap:8px;">
+                        <div style="flex:1;text-align:center;">
+                            <div style="font-size:24px;color:#165DFF;font-weight:500;">@overview.TotalExecutions</div>
+                            <div style="color:#86909C;font-size:12px;">总执行次数</div>
+                        </div>
+                        <div style="flex:1;text-align:center;">
+                            <div style="font-size:24px;color:@successRateColor;font-weight:500;">@overview.SuccessRate.ToString("F1")%</div>
+                            <div style="color:#86909C;font-size:12px;">成功率</div>
+                        </div>
+                        <div style="flex:1;text-align:center;">
+                            <div style="font-size:24px;color:#00B42A;font-weight:500;">@overview.SuccessExecutions</div>
+                            <div style="color:#86909C;font-size:12px;">成功</div>
+                        </div>
+                        <div style="flex:1;text-align:center;">
+                            <div style="font-size:24px;color:#F53F3F;font-weight:500;">@overview.FailedExecutions</div>
+                            <div style="color:#86909C;font-size:12px;">失败</div>
+                        </div>
+                        <div style="flex:1;text-align:center;">
+                            <div style="font-size:24px;color:#FF7D00;font-weight:500;">@overview.CancelledExecutions</div>
+                            <div style="color:#86909C;font-size:12px;">已取消</div>
+                        </div>
+                        <div style="flex:1;text-align:center;">
+                            <div style="font-size:24px;color:#13c2c2;font-weight:500;">@FormatDuration(overview.AverageDuration)</div>
+                            <div style="color:#86909C;font-size:12px;">平均耗时</div>
+                        </div>
+                    </div>
+                </Body>
+            </HCard>
+
+            <HCard Title="📈 每日执行趋势" Style="margin-bottom:2px;">
+                <Body>
+                    @if (report.DailyTrend.All(d => d.Total == 0))
+                    {
+                        <div class="h-empty">统计范围内暂无执行记录</div>
+                    }
+                    else
+                    {
+                        var maxTotal = report.DailyTrend.Max(d => d.Total);
+                        <div class="trend-chart">
+                            @foreach (var day in report.DailyTrend)
+                            {
+                                var heightPercent = maxTotal > 0 && day.Total > 0 ? (double)day.Total / maxTotal * 100 : 0;
+                                <div class="trend-col" title="@($"{day.Date}\n总计: {day.Total}\n成功: {day.Success}\n失败: {day.Failed}\n取消: {day.Cancelled}\n平均耗时: {FormatDuration(day.AverageDuration)}")">
+                                    <div class="trend-bar-wrap">
+                                        @if (day.Total > 0)
+                                        {
+                                            <div class="trend-bar" style="height:@(heightPercent.ToString("F1"))%;">
+                                                @if (day.Success > 0)
+                                                {
+                                                    <div style="flex:@day.Success;background:#00B42A;"></div>
+                                                }
+                                                @if (day.Failed > 0)
+                                                {
+                                                    <div style="flex:@day.Failed;background:#F53F3F;"></div>
+                                                }
+                                                @if (day.Cancelled > 0)
+                                                {
+                                                    <div style="flex:@day.Cancelled;background:#FF7D00;"></div>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                    <div class="trend-label">@day.Date.Substring(5)</div>
+                                </div>
+                            }
+                        </div>
+                        <div style="display:flex;gap:16px;margin-top:8px;justify-content:flex-end;">
+                            <span style="font-size:12px;color:#86909C;display:inline-flex;align-items:center;gap:4px;"><i style="width:10px;height:10px;background:#00B42A;border-radius:2px;display:inline-block;"></i>成功</span>
+                            <span style="font-size:12px;color:#86909C;display:inline-flex;align-items:center;gap:4px;"><i style="width:10px;height:10px;background:#F53F3F;border-radius:2px;display:inline-block;"></i>失败</span>
+                            <span style="font-size:12px;color:#86909C;display:inline-flex;align-items:center;gap:4px;"><i style="width:10px;height:10px;background:#FF7D00;border-radius:2px;display:inline-block;"></i>取消</span>
+                        </div>
+                    }
+                </Body>
+            </HCard>
+
+            <HCard Title="🔥 失败用例榜（Top 10）" Style="margin-bottom:2px;">
+                <Body>
+                    @if (!report.TopFailedCases.Any())
+                    {
+                        <div class="h-empty">统计范围内没有失败的用例 🎉</div>
+                    }
+                    else
+                    {
+                        <table class="h-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:40px;">#</th>
+                                    <th>用例名称</th>
+                                    <th style="width:90px;">执行次数</th>
+                                    <th style="width:90px;">失败次数</th>
+                                    <th style="width:90px;">成功率</th>
+                                    <th style="width:160px;">最近执行时间</th>
+                                    <th>最近失败原因</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (var i = 0; i < report.TopFailedCases.Count; i++)
+                                {
+                                    var item = report.TopFailedCases[i];
+                                    <tr>
+                                        <td>@(i + 1)</td>
+                                        <td>
+                                            <a class="link-action" @onclick="() => GoToCaseHistory(item.CaseId)">@item.CaseName</a>
+                                        </td>
+                                        <td>@item.Total</td>
+                                        <td style="color:#F53F3F;">@item.Failed</td>
+                                        <td>@item.SuccessRate.ToString("F1")%</td>
+                                        <td>@item.LastExecutionTime.ToString("yyyy-MM-dd HH:mm")</td>
+                                        <td style="color:#86909C;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="@item.LastErrorMessage">
+                                            @(string.IsNullOrEmpty(item.LastErrorMessage) ? "-" : item.LastErrorMessage)
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                </Body>
+            </HCard>
+
+            <HCard Title="🌍 环境执行统计">
+                <Body>
+                    @if (!report.EnvironmentStats.Any())
+                    {
+                        <div class="h-empty">统计范围内暂无执行记录</div>
+                    }
+                    else
+                    {
+                        <table class="h-table">
+                            <thead>
+                                <tr>
+                                    <th>环境</th>
+                                    <th style="width:120px;">执行次数</th>
+                                    <th style="width:120px;">成功</th>
+                                    <th style="width:120px;">失败</th>
+                                    <th style="width:200px;">成功率</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var env in report.EnvironmentStats)
+                                {
+                                    <tr>
+                                        <td>@(string.IsNullOrEmpty(env.EnvName) ? "-" : env.EnvName)</td>
+                                        <td>@env.Total</td>
+                                        <td style="color:#00B42A;">@env.Success</td>
+                                        <td style="color:#F53F3F;">@env.Failed</td>
+                                        <td>
+                                            <div style="display:flex;align-items:center;gap:8px;">
+                                                <div style="flex:1;background:#F2F3F5;border-radius:4px;height:8px;overflow:hidden;">
+                                                    <div style="background:#00B42A;height:100%;width:@(env.SuccessRate.ToString("F1"))%;"></div>
+                                                </div>
+                                                <span style="width:48px;text-align:right;">@env.SuccessRate.ToString("F1")%</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                </Body>
+            </HCard>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public long ProjectId { get; set; }
+
+    private List<ProjectDto> projects = new();
+    private long selectedProjectId;
+    private int days = 14;
+    private bool loading = true;
+    private TestReportDto? report;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProjects();
+    }
+
+    private async Task LoadProjects()
+    {
+        try
+        {
+            projects = (await ProjectService.GetAllAsync()).Data ?? [];
+
+            if (projects.Count == 0)
+            {
+                loading = false;
+                return;
+            }
+
+            selectedProjectId = ProjectId != 0 && projects.Any(p => p.Id == ProjectId)
+                ? ProjectId
+                : projects[0].Id;
+
+            await LoadReport();
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"加载项目失败: {ex.Message}");
+            loading = false;
+        }
+    }
+
+    private async Task LoadReport()
+    {
+        if (selectedProjectId == 0)
+        {
+            report = null;
+            loading = false;
+            return;
+        }
+
+        try
+        {
+            loading = true;
+            report = (await ReportService.GetReportAsync(selectedProjectId, days)).Data;
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"加载报告失败: {ex.Message}");
+        }
+        finally
+        {
+            loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnProjectChanged(ChangeEventArgs e)
+    {
+        if (long.TryParse(e.Value?.ToString(), out var projectId))
+        {
+            selectedProjectId = projectId;
+            await LoadReport();
+        }
+    }
+
+    private async Task OnDaysChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var value))
+        {
+            days = value;
+            await LoadReport();
+        }
+    }
+
+    private void GoToCaseHistory(long caseId)
+    {
+        Navigation.NavigateTo($"/testing/execution-history/{caseId}?returnProjectId={selectedProjectId}");
+    }
+
+    private static string FormatDuration(double ms)
+        => ms >= 1000 ? $"{(ms / 1000):F1}s" : $"{ms:F0}ms";
+}

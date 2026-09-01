@@ -79,6 +79,11 @@ public class CaseExecutionRecordDto
     public string ExecutedBy { get; set; } = "System";
 
     /// <summary>
+    /// 执行标签（数据驱动数据行 / 浏览器标识，如 "chrome · 数据行 2/5"）
+    /// </summary>
+    public string? DataTag { get; set; }
+
+    /// <summary>
     /// 执行环境配置快照
     /// </summary>
     public Dictionary<string, object> EnvSnapshot { get; set; } = new();
@@ -195,4 +200,22 @@ public enum StepExecutionStatus
     Success = 3,
     Failed = 4,
     Skipped = 5
+}
+
+/// <summary>
+/// 用例执行选项（数据驱动、多浏览器等）
+/// </summary>
+public class ExecutionOptions
+{
+    /// <summary>浏览器：chromium / chrome / msedge / firefox / webkit</summary>
+    public string Browser { get; set; } = "chromium";
+
+    /// <summary>是否无头模式执行</summary>
+    public bool Headless { get; set; }
+
+    /// <summary>数据驱动变量（覆盖同名环境变量）</summary>
+    public Dictionary<string, string>? DataVariables { get; set; }
+
+    /// <summary>执行标签（记录到执行记录，标识数据行/浏览器）</summary>
+    public string? DataTag { get; set; }
 }
