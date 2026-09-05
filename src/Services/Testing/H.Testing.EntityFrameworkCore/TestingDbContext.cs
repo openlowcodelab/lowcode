@@ -21,8 +21,6 @@ public class TestingDbContext : AbpDbContext<TestingDbContext>
     public DbSet<TestScheduleEntity> TestSchedules { get; set; } = null!;
     public DbSet<TestDatasetEntity> TestDatasets { get; set; } = null!;
     public DbSet<CiRunEntity> CiRuns { get; set; } = null!;
-    public DbSet<RequirementEntity> Requirements { get; set; } = null!;
-    public DbSet<CaseRequirementLinkEntity> CaseRequirementLinks { get; set; } = null!;
     public DbSet<TestPlanEntity> TestPlans { get; set; } = null!;
     public DbSet<PlanCaseEntity> PlanCases { get; set; } = null!;
     public DbSet<DefectEntity> Defects { get; set; } = null!;
@@ -160,28 +158,6 @@ public class TestingDbContext : AbpDbContext<TestingDbContext>
             b.Property(x => x.CronExpression).HasMaxLength(100).IsRequired();
 
             b.HasIndex(x => x.ProjectId);
-        });
-
-        modelBuilder.Entity<RequirementEntity>(b =>
-        {
-            b.ToTable("Requirement");
-            b.HasKey(x => x.Id);
-
-            b.Property(x => x.Id).UseIdentityColumn(9600000, 1);
-            b.Property(x => x.Title).IsRequired().HasMaxLength(100);
-            b.Property(x => x.Description).HasMaxLength(500);
-
-            b.HasIndex(x => x.ProjectId);
-        });
-
-        modelBuilder.Entity<CaseRequirementLinkEntity>(b =>
-        {
-            b.ToTable("CaseRequirementLink");
-            b.HasKey(x => x.Id);
-
-            b.Property(x => x.Id).UseIdentityColumn(9610000, 1);
-
-            b.HasIndex(x => new { x.RequirementId, x.CaseId }).IsUnique();
         });
 
         modelBuilder.Entity<TestPlanEntity>(b =>

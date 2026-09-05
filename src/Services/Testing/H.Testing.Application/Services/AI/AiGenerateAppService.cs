@@ -556,7 +556,7 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
             var type = (aiStep.Type ?? string.Empty).Trim().ToLowerInvariant();
             if (type is "api" or "http" or "httprequest")
             {
-                step.Type = StepType.HttpRequest;
+                step.Type = StepTypeEnum.Api;
                 step.ApiConfig = new ApiStepConfig
                 {
                     Method = NormalizeHttpMethod(aiStep.Method),
@@ -583,20 +583,7 @@ public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
         return steps;
     }
 
-    private static StepType MapUiAction(string action) => action switch
-    {
-        "navigate" or "open" => StepType.Navigate,
-        "click" => StepType.Click,
-        "input" or "type" => StepType.Input,
-        "select" => StepType.Select,
-        "wait" => StepType.Wait,
-        "assert" or "verify" => StepType.Assert,
-        "screenshot" => StepType.Screenshot,
-        "scroll" => StepType.Scroll,
-        "hover" => StepType.Hover,
-        "keypress" or "key" => StepType.KeyPress,
-        _ => StepType.Assert
-    };
+    private static StepTypeEnum MapUiAction(string action) => StepTypeEnum.Ui;
 
     private static string NormalizeHttpMethod(string? method)
     {

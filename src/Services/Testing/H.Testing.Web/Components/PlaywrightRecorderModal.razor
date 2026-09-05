@@ -322,20 +322,15 @@
         await OnHide.InvokeAsync();
     }
 
-    private string GetStepTypeDisplayName(StepType stepType)
+    private string GetStepTypeDisplayName(StepTypeEnum stepType)
     {
         return stepType switch
         {
-            StepType.Navigate => "页面导航",
-            StepType.Click => "点击操作",
-            StepType.Input => "输入文本",
-            StepType.Select => "选择操作",
-            StepType.Wait => "等待操作",
-            StepType.Assert => "断言验证",
-            StepType.Screenshot => "截图",
-            StepType.Scroll => "滚动操作",
-            StepType.Hover => "悬停操作",
-            StepType.KeyPress => "按键操作",
+            StepTypeEnum.Api => "HTTP请求",
+            StepTypeEnum.Ui => "UI操作",
+            StepTypeEnum.Script => "脚本执行",
+            StepTypeEnum.App => "APP",
+            StepTypeEnum.Desktop => "桌面",
             _ => stepType.ToString()
         };
     }

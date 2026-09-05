@@ -168,30 +168,12 @@
                             <div style="margin-bottom: 12px;">
                                 <div style="margin-bottom: 4px;">步骤类型</div>
                                 <select class="h-select" style="width: 100%; height: 32px;"
-                                        value="@selectedStep.Type" @onchange="OnStepTypeChanged">
-                                    <optgroup label="API测试步骤">
-                                        <option value="@StepType.HttpRequest">HTTP请求</option>
-                                        <option value="@StepType.ApiAssertion">API断言</option>
-                                        <option value="@StepType.VariableExtraction">变量提取</option>
-                                    </optgroup>
-                                    <optgroup label="UI测试步骤">
-                                        <option value="@StepType.Navigate">页面导航</option>
-                                        <option value="@StepType.Click">点击操作</option>
-                                        <option value="@StepType.Input">输入文本</option>
-                                        <option value="@StepType.Select">选择操作</option>
-                                        <option value="@StepType.Wait">等待操作</option>
-                                        <option value="@StepType.Assert">UI断言</option>
-                                        <option value="@StepType.Screenshot">截图</option>
-                                    </optgroup>
-                                    <optgroup label="通用步骤">
-                                        <option value="@StepType.Script">脚本执行</option>
-                                        <option value="@StepType.Delay">延时等待</option>
-                                        <option value="@StepType.SetVariable">设置变量</option>
-                                    </optgroup>
-                                    <optgroup label="脚本步骤">
-                                        <option value="@StepType.JavascriptScript">JavaScript脚本</option>
-                                        <option value="@StepType.CSharpScript">C#脚本</option>
-                                    </optgroup>
+                                        value="@GetStepCategory(selectedStep.Type)" @onchange="OnStepCategoryChanged">
+                                    <option value="http">HTTP</option>
+                                    <option value="ui">UI</option>
+                                    <option value="app">APP</option>
+                                    <option value="desktop">Desktop</option>
+                                    <option value="script">脚本</option>
                                 </select>
                             </div>
                         </div>
@@ -221,15 +203,23 @@
                 <!-- 步骤配置 -->
                 @if (selectedStep != null)
                 {
-                    @if (IsApiStep(selectedStep.Type))
+                    @if (selectedStep.Type == StepTypeEnum.Api)
                     {
                         @RenderApiStepConfig(selectedStep)
                     }
-                    else if (IsUiStep(selectedStep.Type))
+                    else if (selectedStep.Type == StepTypeEnum.Ui)
                     {
                         @RenderUiStepConfig(selectedStep)
                     }
-                    else if (IsScriptStep(selectedStep.Type))
+                    else if (selectedStep.Type == StepTypeEnum.App)
+                    {
+                        @RenderAppStepConfig(selectedStep)
+                    }
+                    else if (selectedStep.Type == StepTypeEnum.Desktop)
+                    {
+                        @RenderDesktopStepConfig(selectedStep)
+                    }
+                    else if (selectedStep.Type == StepTypeEnum.Script)
                     {
                         @RenderScriptStepConfig(selectedStep)
                     }
@@ -364,15 +354,15 @@
         selectedStep = step;
         
         // 确保步骤有正确的配置对象
-        if (IsApiStep(step.Type) && step.ApiConfig == null)
+        if (step.Type == StepTypeEnum.Api && step.ApiConfig == null)
         {
             step.ApiConfig = new ApiStepConfig();
         }
-        else if (IsUiStep(step.Type) && step.UiConfig == null)
+        else if (step.Type == StepTypeEnum.Ui && step.UiConfig == null)
         {
             step.UiConfig = new UiStepConfig();
         }
-        else if (IsScriptStep(step.Type) && step.ScriptConfig == null)
+        else if (step.Type == StepTypeEnum.Script && step.ScriptConfig == null)
         {
             step.ScriptConfig = new ScriptStepConfig();
         }
@@ -386,7 +376,7 @@
         {
             Name = $"步骤 {steps.Count + 1}",
             Order = steps.Count + 1,
-            Type = StepType.HttpRequest,
+            Type = StepTypeEnum.Api,
             ApiConfig = new ApiStepConfig()
         };
         
@@ -446,40 +436,67 @@
         }
     }
     
-    private void OnStepTypeChanged(ChangeEventArgs e)
+    private string GetStepCategory(StepTypeEnum type)
     {
-        if (selectedStep != null && Enum.TryParse<StepType>(e.Value?.ToString(), out var stepType))
+        if (type == StepTypeEnum.Api) return "http";
+        if (type == StepTypeEnum.Ui) return "ui";
+        if (type == StepTypeEnum.App) return "app";
+        if (type == StepTypeEnum.Desktop) return "desktop";
+        return "script";
+    }
+
+    private void OnStepCategoryChanged(ChangeEventArgs e)
+    {
+        if (selectedStep == null) return;
+
+        var category = e.Value?.ToString() ?? "";
+        var type = selectedStep.Type;
+
+        switch (category)
         {
-            selectedStep.Type = stepType;
-            
-            // 根据步骤类型初始化相应的配置
-            if (IsApiStep(stepType))
-            {
+            case "http":
+                if (selectedStep.Type != StepTypeEnum.Api)
+                {
+                    selectedStep.Type = StepTypeEnum.Api;
+                }
                 selectedStep.ApiConfig = selectedStep.ApiConfig ?? new ApiStepConfig();
                 selectedStep.UiConfig = null;
                 selectedStep.ScriptConfig = null;
-            }
-            else if (IsUiStep(stepType))
-            {
-                selectedStep.UiConfig = selectedStep.UiConfig ?? new UiStepConfig();
+                break;
+
+            case "ui":
+                if (selectedStep.Type != StepTypeEnum.Ui)
+                {
+                    selectedStep.Type = StepTypeEnum.Ui;
+                }
+                selectedStep.UiConfig = selectedStep.UiConfig ?? new UiStepConfig { Action = "navigate" };
                 selectedStep.ApiConfig = null;
                 selectedStep.ScriptConfig = null;
-            }
-            else if (IsScriptStep(stepType))
-            {
+                break;
+
+            case "app":
+                selectedStep.Type = StepTypeEnum.App;
+                selectedStep.UiConfig = selectedStep.UiConfig ?? new UiStepConfig { Action = "launch" };
+                selectedStep.ApiConfig = null;
+                selectedStep.ScriptConfig = null;
+                break;
+
+            case "desktop":
+                selectedStep.Type = StepTypeEnum.Desktop;
+                selectedStep.UiConfig = selectedStep.UiConfig ?? new UiStepConfig { Action = "launch" };
+                selectedStep.ApiConfig = null;
+                selectedStep.ScriptConfig = null;
+                break;
+
+            case "script":
+                selectedStep.Type = StepTypeEnum.Script;
                 selectedStep.ScriptConfig = selectedStep.ScriptConfig ?? new ScriptStepConfig();
                 selectedStep.ApiConfig = null;
                 selectedStep.UiConfig = null;
-            }
-            else
-            {
-                selectedStep.ApiConfig = null;
-                selectedStep.UiConfig = null;
-                selectedStep.ScriptConfig = null;
-            }
-            
-            StateHasChanged();
+                break;
         }
+
+        StateHasChanged();
     }
     
     private async Task SaveTestCase()
@@ -525,30 +542,13 @@
         }
     }
     
-    // 辅助方法
-    private bool IsApiStep(StepType type) => type == StepType.HttpRequest || type == StepType.ApiAssertion || type == StepType.VariableExtraction;
-    
-    private bool IsUiStep(StepType type) => type >= StepType.Navigate && type <= StepType.KeyPress;
-    
-    private bool IsScriptStep(StepType type) => type == StepType.JavascriptScript || type == StepType.CSharpScript;
-    
-    private string GetStepTypeDisplayName(StepType type) => type switch
+    private string GetStepTypeDisplayName(StepTypeEnum type) => type switch
     {
-        StepType.HttpRequest => "HTTP请求",
-        StepType.ApiAssertion => "API断言",
-        StepType.VariableExtraction => "变量提取",
-        StepType.Navigate => "页面导航",
-        StepType.Click => "点击操作",
-        StepType.Input => "输入文本",
-        StepType.Select => "选择操作",
-        StepType.Wait => "等待操作",
-        StepType.Assert => "UI断言",
-        StepType.Screenshot => "截图",
-        StepType.Script => "脚本执行",
-        StepType.Delay => "延时等待",
-        StepType.SetVariable => "设置变量",
-        StepType.JavascriptScript => "JavaScript脚本",
-        StepType.CSharpScript => "C#脚本",
+        StepTypeEnum.Api => "HTTP请求",
+        StepTypeEnum.Ui => "UI操作",
+        StepTypeEnum.Script => "脚本执行",
+        StepTypeEnum.App => "APP",
+        StepTypeEnum.Desktop => "桌面",
         _ => "未知"
     };
     
@@ -700,6 +700,280 @@
             sequence += 3;
         }
     }
+
+    // UI 操作类型变更：同步 step.Type，保证左侧列表子标签一致
+    private void OnUiActionChanged(CaseStepDto step, ChangeEventArgs e)
+    {
+        if (step.UiConfig == null) return;
+
+        var action = e.Value?.ToString() ?? "";
+        step.UiConfig.Action = action;
+        step.Type = StepTypeEnum.Ui;
+        StateHasChanged();
+    }
+
+    // HTTP 大类具体类型下拉
+    private void RenderApiSubTypeOptions(RenderTreeBuilder builder, int sequence)
+    {
+        // 简化后只有 Http 类型，无需子类型下拉
+    }
+
+    private void OnApiSubTypeChanged(CaseStepDto step, ChangeEventArgs e)
+    {
+        // 简化后无需处理子类型切换
+    }
+
+    // 脚本大类具体类型下拉
+    private void RenderScriptSubTypeOptions(RenderTreeBuilder builder, int sequence, StepTypeEnum current)
+    {
+        // 简化后只有 Script 类型，无需子类型下拉
+    }
+
+    private void OnScriptSubTypeChanged(CaseStepDto step, ChangeEventArgs e)
+    {
+        if (!Enum.TryParse<StepTypeEnum>(e.Value?.ToString(), out var subType)) return;
+
+        step.Type = subType;
+        step.ScriptConfig = step.ScriptConfig ?? new ScriptStepConfig();
+        StateHasChanged();
+    }
+
+    private void RenderApiCardHeader(RenderTreeBuilder builder, CaseStepDto step, int sequence)
+    {
+        builder.OpenElement(sequence, "div");
+        builder.AddAttribute(sequence + 1, "class", "card-header");
+        builder.AddAttribute(sequence + 2, "style", "display:flex;align-items:center;justify-content:space-between;");
+        builder.OpenElement(sequence + 3, "h6");
+        builder.AddAttribute(sequence + 4, "class", "mb-0");
+        builder.AddContent(sequence + 5, "🌐 HTTP配置");
+        builder.CloseElement();
+        builder.OpenElement(sequence + 6, "select");
+        builder.AddAttribute(sequence + 7, "class", "form-select form-select-sm");
+        builder.AddAttribute(sequence + 8, "style", "width:auto;min-width:140px;");
+        builder.AddAttribute(sequence + 9, "value", step.Type.ToString());
+        builder.AddAttribute(sequence + 10, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => OnApiSubTypeChanged(step, e)));
+        RenderApiSubTypeOptions(builder, sequence + 11);
+        builder.CloseElement();
+        builder.CloseElement();
+    }
+
+    private void RenderScriptCardHeader(RenderTreeBuilder builder, CaseStepDto step, int sequence)
+    {
+        builder.OpenElement(sequence, "div");
+        builder.AddAttribute(sequence + 1, "class", "card-header");
+        builder.AddAttribute(sequence + 2, "style", "display:flex;align-items:center;justify-content:space-between;");
+        builder.OpenElement(sequence + 3, "h6");
+        builder.AddAttribute(sequence + 4, "class", "mb-0");
+        builder.AddContent(sequence + 5, "📜 脚本配置");
+        builder.CloseElement();
+        builder.OpenElement(sequence + 6, "select");
+        builder.AddAttribute(sequence + 7, "class", "form-select form-select-sm");
+        builder.AddAttribute(sequence + 8, "style", "width:auto;min-width:140px;");
+        builder.AddAttribute(sequence + 9, "value", step.Type.ToString());
+        builder.AddAttribute(sequence + 10, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => OnScriptSubTypeChanged(step, e)));
+        RenderScriptSubTypeOptions(builder, sequence + 11, step.Type);
+        builder.CloseElement();
+        builder.CloseElement();
+    }
+
+    // APP/Desktop 大类配置（占位，复用 UiStepConfig 存储）
+    private Dictionary<string, string> GetAppActions() => new()
+    {
+        { "launch", "启动应用" },
+        { "click", "点击元素" },
+        { "input", "输入文本" },
+        { "swipe", "滑动" },
+        { "assert", "断言检查" },
+        { "screenshot", "截图" },
+        { "close", "关闭应用" }
+    };
+
+    private Dictionary<string, string> GetDesktopActions() => new()
+    {
+        { "launch", "启动应用" },
+        { "click", "点击元素" },
+        { "double_click", "双击元素" },
+        { "input", "输入文本" },
+        { "keyboard", "按键输入" },
+        { "wait", "等待元素" },
+        { "assert", "断言检查" },
+        { "screenshot", "截图" }
+    };
+
+    private bool AppDesktopNeedsSelector(string action) => action is not ("launch" or "close" or "screenshot");
+
+    private bool AppDesktopNeedsValue(string action) => action is "launch" or "input" or "keyboard" or "swipe" or "wait" or "assert";
+
+    private string GetAppDesktopValueLabel(string action) => action switch
+    {
+        "launch" => "📱 应用标识（包名/路径）",
+        "input" => "📝 输入内容",
+        "keyboard" => "⌨️ 按键内容",
+        "swipe" => "↔️ 滑动方向/坐标",
+        "wait" => "⏱️ 等待时间(毫秒)",
+        "assert" => "✅ 期望值",
+        _ => "🔧 操作值"
+    };
+
+    private RenderFragment RenderAppStepConfig(CaseStepDto step) => RenderAppDesktopStepConfig(step, "📱 APP操作配置", GetAppActions());
+
+    private RenderFragment RenderDesktopStepConfig(CaseStepDto step) => RenderAppDesktopStepConfig(step, "🖥️ Desktop操作配置", GetDesktopActions());
+
+    private RenderFragment RenderAppDesktopStepConfig(CaseStepDto step, string title, Dictionary<string, string> actions) => builder =>
+    {
+        if (step.UiConfig == null) return;
+
+        builder.OpenElement(0, "div");
+        builder.AddAttribute(1, "class", "card mb-3");
+
+        builder.OpenElement(2, "div");
+        builder.AddAttribute(3, "class", "card-header");
+        builder.AddAttribute(4, "style", "display:flex;align-items:center;justify-content:space-between;");
+        builder.OpenElement(5, "h6");
+        builder.AddAttribute(6, "class", "mb-0");
+        builder.AddContent(7, title);
+        builder.CloseElement();
+        builder.OpenElement(8, "span");
+        builder.AddAttribute(9, "style", "font-size:12px;color:#86909C;");
+        builder.AddContent(10, "执行引擎暂不支持，仅保存配置");
+        builder.CloseElement();
+        builder.CloseElement();
+
+        builder.OpenElement(11, "div");
+        builder.AddAttribute(12, "class", "card-body");
+
+        var seq = 13;
+        builder.OpenElement(seq, "div");
+        builder.AddAttribute(seq + 1, "class", "row mb-3");
+
+        // 操作类型
+        builder.OpenElement(seq + 2, "div");
+        builder.AddAttribute(seq + 3, "class", "col-md-4");
+        builder.OpenElement(seq + 4, "label");
+        builder.AddAttribute(seq + 5, "class", "form-label");
+        builder.AddContent(seq + 6, "🎯 操作类型");
+        builder.CloseElement();
+        builder.OpenElement(seq + 7, "select");
+        builder.AddAttribute(seq + 8, "class", "form-select");
+        builder.AddAttribute(seq + 9, "value", step.UiConfig.Action);
+        builder.AddAttribute(seq + 10, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => { step.UiConfig.Action = e.Value?.ToString() ?? ""; StateHasChanged(); }));
+        foreach (var action in actions)
+        {
+            builder.OpenElement(seq + 11, "option");
+            builder.AddAttribute(seq + 12, "value", action.Key);
+            builder.AddContent(seq + 13, action.Value);
+            builder.CloseElement();
+            seq += 3;
+        }
+        seq += 11;
+        builder.CloseElement();
+        builder.CloseElement();
+
+        // 选择器类型
+        builder.OpenElement(seq, "div");
+        builder.AddAttribute(seq + 1, "class", "col-md-4");
+        builder.OpenElement(seq + 2, "label");
+        builder.AddAttribute(seq + 3, "class", "form-label");
+        builder.AddContent(seq + 4, "🎯 选择器类型");
+        builder.CloseElement();
+        builder.OpenElement(seq + 5, "select");
+        builder.AddAttribute(seq + 6, "class", "form-select");
+        builder.AddAttribute(seq + 7, "value", step.UiConfig.SelectorType);
+        builder.AddAttribute(seq + 8, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => step.UiConfig.SelectorType = e.Value?.ToString() ?? "css"));
+        builder.OpenElement(seq + 9, "option");
+        builder.AddAttribute(seq + 10, "value", "css");
+        builder.AddContent(seq + 11, "CSS选择器");
+        builder.CloseElement();
+        builder.OpenElement(seq + 12, "option");
+        builder.AddAttribute(seq + 13, "value", "xpath");
+        builder.AddContent(seq + 14, "XPath");
+        builder.CloseElement();
+        builder.OpenElement(seq + 15, "option");
+        builder.AddAttribute(seq + 16, "value", "id");
+        builder.AddContent(seq + 17, "ID");
+        builder.CloseElement();
+        builder.OpenElement(seq + 18, "option");
+        builder.AddAttribute(seq + 19, "value", "name");
+        builder.AddContent(seq + 20, "Name");
+        builder.CloseElement();
+        builder.CloseElement();
+        builder.CloseElement();
+
+        // 超时时间
+        builder.OpenElement(seq + 21, "div");
+        builder.AddAttribute(seq + 22, "class", "col-md-4");
+        builder.OpenElement(seq + 23, "label");
+        builder.AddAttribute(seq + 24, "class", "form-label");
+        builder.AddContent(seq + 25, "⏱️ 超时(毫秒)");
+        builder.CloseElement();
+        builder.OpenElement(seq + 26, "input");
+        builder.AddAttribute(seq + 27, "type", "number");
+        builder.AddAttribute(seq + 28, "class", "form-control");
+        builder.AddAttribute(seq + 29, "value", step.UiConfig.TimeoutMs.ToString());
+        builder.AddAttribute(seq + 30, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => { if (int.TryParse(e.Value?.ToString(), out var timeout)) step.UiConfig.TimeoutMs = timeout; }));
+        builder.CloseElement();
+        builder.CloseElement();
+
+        builder.CloseElement(); // row
+        seq += 31;
+
+        // 选择器表达式
+        if (AppDesktopNeedsSelector(step.UiConfig.Action))
+        {
+            builder.OpenElement(seq, "div");
+            builder.AddAttribute(seq + 1, "class", "mb-3");
+            builder.OpenElement(seq + 2, "label");
+            builder.AddAttribute(seq + 3, "class", "form-label");
+            builder.AddContent(seq + 4, "🎯 选择器表达式");
+            builder.CloseElement();
+            builder.OpenElement(seq + 5, "input");
+            builder.AddAttribute(seq + 6, "type", "text");
+            builder.AddAttribute(seq + 7, "class", "form-control");
+            builder.AddAttribute(seq + 8, "placeholder", "元素定位表达式");
+            builder.AddAttribute(seq + 9, "value", step.UiConfig.Selector);
+            builder.AddAttribute(seq + 10, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => step.UiConfig.Selector = e.Value?.ToString() ?? ""));
+            builder.CloseElement();
+            builder.CloseElement();
+            seq += 11;
+        }
+
+        // 操作值
+        if (AppDesktopNeedsValue(step.UiConfig.Action))
+        {
+            builder.OpenElement(seq, "div");
+            builder.AddAttribute(seq + 1, "class", "mb-3");
+            builder.OpenElement(seq + 2, "label");
+            builder.AddAttribute(seq + 3, "class", "form-label");
+            builder.AddContent(seq + 4, GetAppDesktopValueLabel(step.UiConfig.Action));
+            builder.CloseElement();
+            builder.OpenElement(seq + 5, "input");
+            builder.AddAttribute(seq + 6, "type", "text");
+            builder.AddAttribute(seq + 7, "class", "form-control");
+            builder.AddAttribute(seq + 8, "value", step.UiConfig.Value);
+            builder.AddAttribute(seq + 9, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => step.UiConfig.Value = e.Value?.ToString() ?? ""));
+            builder.CloseElement();
+            builder.CloseElement();
+            seq += 10;
+        }
+
+        // 执行后截图
+        builder.OpenElement(seq, "div");
+        builder.AddAttribute(seq + 1, "class", "form-check");
+        builder.OpenElement(seq + 2, "input");
+        builder.AddAttribute(seq + 3, "class", "form-check-input");
+        builder.AddAttribute(seq + 4, "type", "checkbox");
+        builder.AddAttribute(seq + 5, "checked", step.UiConfig.TakeScreenshot);
+        builder.AddAttribute(seq + 6, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => step.UiConfig.TakeScreenshot = (bool)(e.Value ?? false)));
+        builder.CloseElement();
+        builder.OpenElement(seq + 7, "label");
+        builder.AddAttribute(seq + 8, "class", "form-check-label");
+        builder.AddContent(seq + 9, "📷 执行后截图");
+        builder.CloseElement();
+        builder.CloseElement();
+
+        builder.CloseElement(); // card-body
+        builder.CloseElement(); // card
+    };
     
     private string GetSelectorPlaceholder(string selectorType) => selectorType switch
     {
@@ -1011,19 +1285,13 @@
     {
         if (step.ApiConfig == null) return;
         
-        // HTTP请求配置
-        if (step.Type == StepType.HttpRequest)
+        // HTTP配置（具体类型：HTTP请求/API断言/变量提取）
+        if (step.Type == StepTypeEnum.Api)
         {
             builder.OpenElement(0, "div");
             builder.AddAttribute(1, "class", "card mb-3");
             
-            builder.OpenElement(2, "div");
-            builder.AddAttribute(3, "class", "card-header");
-            builder.OpenElement(4, "h6");
-            builder.AddAttribute(5, "class", "mb-0");
-            builder.AddContent(6, "🌐 HTTP请求配置");
-            builder.CloseElement();
-            builder.CloseElement();
+            RenderApiCardHeader(builder, step, 2);
             
             builder.OpenElement(7, "div");
             builder.AddAttribute(8, "class", "card-body");
@@ -2133,8 +2401,26 @@
              builder.CloseElement(); // card-body
              builder.CloseElement(); // card
         }
+        else
+        {
+            // 历史遗留 API 类型（API断言/变量提取）：仅提供具体类型切换
+            builder.OpenElement(0, "div");
+            builder.AddAttribute(1, "class", "card mb-3");
+
+            RenderApiCardHeader(builder, step, 2);
+
+            builder.OpenElement(7, "div");
+            builder.AddAttribute(8, "class", "card-body");
+            builder.OpenElement(9, "div");
+            builder.AddAttribute(10, "class", "text-muted");
+            builder.AddContent(11, "此类型暂无独立配置，可切换为 HTTP请求 后配置请求、断言与变量提取。");
+            builder.CloseElement();
+            builder.CloseElement();
+            builder.CloseElement(); // card-body
+            builder.CloseElement(); // card
+        }
     };
-    
+
     private RenderFragment RenderUiStepConfig(CaseStepDto step) => builder =>
     {
         if (step.UiConfig == null) return;
@@ -2166,7 +2452,7 @@
         builder.OpenElement(16, "select");
         builder.AddAttribute(17, "class", "form-select");
         builder.AddAttribute(18, "value", step.UiConfig.Action);
-        builder.AddAttribute(19, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => step.UiConfig.Action = e.Value?.ToString() ?? ""));
+        builder.AddAttribute(19, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => OnUiActionChanged(step, e)));
         RenderUiActionOptions(builder, 20);
         builder.CloseElement();
         builder.CloseElement();
@@ -2304,75 +2590,13 @@
     {
         builder.OpenElement(0, "div");
         builder.AddAttribute(1, "class", "card mb-3");
-        
-        builder.OpenElement(2, "div");
-        builder.AddAttribute(3, "class", "card-header");
-        builder.OpenElement(4, "h6");
-        builder.AddAttribute(5, "class", "mb-0");
-        builder.AddContent(6, "🔧 通用配置");
-        builder.CloseElement();
-        builder.CloseElement();
+
+        RenderScriptCardHeader(builder, step, 2);
         
         builder.OpenElement(7, "div");
         builder.AddAttribute(8, "class", "card-body");
         
-        if (step.Type == StepType.Delay)
-        {
-            // 延时等待配置
-            builder.OpenElement(9, "div");
-            builder.AddAttribute(10, "class", "mb-3");
-            builder.OpenElement(11, "label");
-            builder.AddAttribute(12, "class", "form-label");
-            builder.AddContent(13, "⏱️ 延时时间 (毫秒)");
-            builder.CloseElement();
-            builder.OpenElement(14, "input");
-            builder.AddAttribute(15, "type", "number");
-            builder.AddAttribute(16, "class", "form-control");
-            builder.AddAttribute(17, "placeholder", "1000");
-            builder.AddAttribute(18, "value", step.Parameters.ContainsKey("delay") ? step.Parameters["delay"].ToString() : "1000");
-            builder.AddAttribute(19, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => step.Parameters["delay"] = int.TryParse(e.Value?.ToString(), out var delay) ? delay : 1000));
-            builder.CloseElement();
-            builder.CloseElement();
-        }
-        else if (step.Type == StepType.SetVariable)
-        {
-            // 设置变量配置
-            builder.OpenElement(20, "div");
-            builder.AddAttribute(21, "class", "row mb-3");
-            
-            builder.OpenElement(22, "div");
-            builder.AddAttribute(23, "class", "col-md-6");
-            builder.OpenElement(24, "label");
-            builder.AddAttribute(25, "class", "form-label");
-            builder.AddContent(26, "🏷️ 变量名");
-            builder.CloseElement();
-            builder.OpenElement(27, "input");
-            builder.AddAttribute(28, "type", "text");
-            builder.AddAttribute(29, "class", "form-control");
-            builder.AddAttribute(30, "placeholder", "variableName");
-            builder.AddAttribute(31, "value", step.Parameters.ContainsKey("variableName") ? step.Parameters["variableName"].ToString() : "");
-            builder.AddAttribute(32, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => step.Parameters["variableName"] = e.Value?.ToString() ?? ""));
-            builder.CloseElement();
-            builder.CloseElement();
-            
-            builder.OpenElement(33, "div");
-            builder.AddAttribute(34, "class", "col-md-6");
-            builder.OpenElement(35, "label");
-            builder.AddAttribute(36, "class", "form-label");
-            builder.AddContent(37, "📝 变量值");
-            builder.CloseElement();
-            builder.OpenElement(38, "input");
-            builder.AddAttribute(39, "type", "text");
-            builder.AddAttribute(40, "class", "form-control");
-            builder.AddAttribute(41, "placeholder", "variableValue");
-            builder.AddAttribute(42, "value", step.Parameters.ContainsKey("variableValue") ? step.Parameters["variableValue"].ToString() : "");
-            builder.AddAttribute(43, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => step.Parameters["variableValue"] = e.Value?.ToString() ?? ""));
-            builder.CloseElement();
-            builder.CloseElement();
-            
-            builder.CloseElement();
-        }
-        else if (step.Type == StepType.Script)
+        if (step.Type == StepTypeEnum.Script)
         {
             // 脚本执行配置
             builder.OpenElement(44, "div");
@@ -2398,45 +2622,18 @@
     private RenderFragment RenderScriptStepConfig(CaseStepDto step) => builder =>
     {
         if (step.ScriptConfig == null) return;
-        
+
         builder.OpenElement(0, "div");
         builder.AddAttribute(1, "class", "card mb-3");
-        
-        builder.OpenElement(2, "div");
-        builder.AddAttribute(3, "class", "card-header");
-        builder.OpenElement(4, "h6");
-        builder.AddAttribute(5, "class", "mb-0");
-        builder.AddContent(6, "📜 脚本配置");
-        builder.CloseElement();
-        builder.CloseElement();
+
+        RenderScriptCardHeader(builder, step, 2);
         
         builder.OpenElement(7, "div");
         builder.AddAttribute(8, "class", "card-body");
         
-        // 脚本类型
         builder.OpenElement(9, "div");
         builder.AddAttribute(10, "class", "row mb-3");
-        builder.OpenElement(11, "div");
-        builder.AddAttribute(12, "class", "col-md-4");
-        builder.OpenElement(13, "label");
-        builder.AddAttribute(14, "class", "form-label");
-        builder.AddContent(15, "🔧 脚本类型");
-        builder.CloseElement();
-        builder.OpenElement(16, "select");
-        builder.AddAttribute(17, "class", "form-select");
-        builder.AddAttribute(18, "value", step.ScriptConfig.ScriptType);
-        builder.AddAttribute(19, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => step.ScriptConfig.ScriptType = e.Value?.ToString() ?? ""));
-        builder.OpenElement(20, "option");
-        builder.AddAttribute(21, "value", "javascript");
-        builder.AddContent(22, "JavaScript");
-        builder.CloseElement();
-        builder.OpenElement(23, "option");
-        builder.AddAttribute(24, "value", "csharp");
-        builder.AddContent(25, "C#");
-        builder.CloseElement();
-        builder.CloseElement();
-        builder.CloseElement();
-        
+
         // 超时时间
         builder.OpenElement(26, "div");
         builder.AddAttribute(27, "class", "col-md-4");

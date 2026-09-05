@@ -179,7 +179,7 @@ public static class TestingMappers
     {
         Id = e.Id.ToString(),
         Name = e.Name,
-        Type = (StepType)e.Type,
+        Type = (StepTypeEnum)e.Type,
         Parameters = DeserializeDict<object>(e.ParametersJson),
         ExpectedResult = e.ExpectedResult ?? string.Empty,
         Order = e.Order,

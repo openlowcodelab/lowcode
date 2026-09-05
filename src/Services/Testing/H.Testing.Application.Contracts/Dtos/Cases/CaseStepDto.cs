@@ -13,7 +13,7 @@ public class CaseStepDto
     public string Name { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "步骤类型不能为空")]
-    public StepType Type { get; set; }
+    public StepTypeEnum Type { get; set; }
 
     public Dictionary<string, object> Parameters { get; set; } = new();
 
@@ -206,32 +206,12 @@ public class ScriptStepConfig
 /// <summary>
 /// 步骤类型
 /// </summary>
-public enum StepType
+public enum StepTypeEnum
 {
-    // API项目步骤
-    HttpRequest = 1,
-    ApiAssertion = 2,
-    VariableExtraction = 3,
-
-    // UI项目步骤
-    Navigate = 10,
-    Click = 11,
-    Input = 12,
-    Select = 13,
-    Wait = 14,
-    Assert = 15,
-    Screenshot = 16,
-    Scroll = 17,
-    Hover = 18,
-    KeyPress = 19,
-
-    // 通用步骤
-    Script = 20,
-    Delay = 21,
-    SetVariable = 22,
-    Condition = 23,
-
-    // 脚本步骤
-    JavascriptScript = 30,
-    CSharpScript = 31
+    Unknown = 0,
+    Api = 1,
+    Ui = 2,
+    App = 3,
+    Desktop = 4,
+    Script = 5
 }

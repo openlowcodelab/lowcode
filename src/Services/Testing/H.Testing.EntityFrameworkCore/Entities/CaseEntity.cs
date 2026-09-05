@@ -41,3 +41,21 @@ public class CaseEntity : AuditedEntity<long>, IMultiTenant
     /// <summary>上一次执行时间</summary>
     public DateTime? LastExecutionTime { get; set; }
 }
+
+/// <summary>
+/// 测试用例分类（树形，自引用 ParentId）
+/// </summary>
+public class CaseCategoryEntity : AuditedEntity<long>, IMultiTenant
+{
+    public virtual Guid? TenantId { get; set; }
+
+    /// <summary>所属项目ID</summary>
+    public long ProjectId { get; set; }
+
+    /// <summary>父分类ID（根为 null）</summary>
+    public long? ParentId { get; set; }
+
+    public string Name { get; set; } = string.Empty;
+
+    public int Order { get; set; }
+}

@@ -100,7 +100,7 @@ public class StepExecutionRecord
 
     public string StepName { get; set; } = string.Empty;
 
-    public StepType StepType { get; set; }
+    public StepTypeEnum StepType { get; set; }
 
     public int Order { get; set; }
 

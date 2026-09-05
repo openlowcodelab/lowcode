@@ -333,7 +333,7 @@ public class PlaywrightRecorderAppService : ApplicationService, IPlaywrightRecor
                     {
                         Id = Guid.NewGuid().ToString(),
                         Name = $"导航到页面",
-                        Type = StepType.Navigate,
+                        Type = StepTypeEnum.Ui,
                         Order = order,
                         IsEnabled = true,
                         ExpectedResult = "成功导航到指定页面",
@@ -358,7 +358,7 @@ public class PlaywrightRecorderAppService : ApplicationService, IPlaywrightRecor
                     {
                         Id = Guid.NewGuid().ToString(),
                         Name = $"点击元素",
-                        Type = StepType.Click,
+                        Type = StepTypeEnum.Ui,
                         Order = order,
                         IsEnabled = true,
                         ExpectedResult = "成功点击指定元素",
@@ -385,7 +385,7 @@ public class PlaywrightRecorderAppService : ApplicationService, IPlaywrightRecor
                     {
                         Id = Guid.NewGuid().ToString(),
                         Name = $"输入文本",
-                        Type = StepType.Input,
+                        Type = StepTypeEnum.Ui,
                         Order = order,
                         IsEnabled = true,
                         ExpectedResult = "成功输入文本",
@@ -413,7 +413,7 @@ public class PlaywrightRecorderAppService : ApplicationService, IPlaywrightRecor
                     {
                         Id = Guid.NewGuid().ToString(),
                         Name = $"选择选项",
-                        Type = StepType.Select,
+                        Type = StepTypeEnum.Ui,
                         Order = order,
                         IsEnabled = true,
                         ExpectedResult = "成功选择指定选项",
@@ -440,7 +440,7 @@ public class PlaywrightRecorderAppService : ApplicationService, IPlaywrightRecor
                     {
                         Id = Guid.NewGuid().ToString(),
                         Name = $"等待元素出现",
-                        Type = StepType.Wait,
+                        Type = StepTypeEnum.Ui,
                         Order = order,
                         IsEnabled = true,
                         ExpectedResult = "元素成功出现",
@@ -466,7 +466,7 @@ public class PlaywrightRecorderAppService : ApplicationService, IPlaywrightRecor
                     {
                         Id = Guid.NewGuid().ToString(),
                         Name = $"验证文本内容",
-                        Type = StepType.Assert,
+                        Type = StepTypeEnum.Ui,
                         Order = order,
                         IsEnabled = true,
                         ExpectedResult = "文本内容符合预期",

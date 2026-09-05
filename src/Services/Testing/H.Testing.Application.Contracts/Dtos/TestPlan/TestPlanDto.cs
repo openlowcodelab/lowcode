@@ -3,66 +3,6 @@ using System.ComponentModel.DataAnnotations;
 namespace H.Testing.Application.Contracts;
 
 /// <summary>
-/// 测试需求
-/// </summary>
-public class RequirementDto
-{
-    public long Id { get; set; }
-
-    [Required(ErrorMessage = "所属项目不能为空")]
-    public long ProjectId { get; set; }
-
-    [Required(ErrorMessage = "需求标题不能为空")]
-    [StringLength(100, ErrorMessage = "需求标题长度不能超过100个字符")]
-    public string Title { get; set; } = string.Empty;
-
-    [StringLength(500, ErrorMessage = "需求描述长度不能超过500个字符")]
-    public string Description { get; set; } = string.Empty;
-
-    public RequirementPriority Priority { get; set; } = RequirementPriority.P1;
-
-    public RequirementStatus Status { get; set; } = RequirementStatus.Active;
-
-    /// <summary>关联用例数（列表展示用）</summary>
-    public int LinkedCaseCount { get; set; }
-
-    public DateTime CreationTime { get; set; }
-}
-
-/// <summary>
-/// 需求追溯视图：需求关联的用例执行情况与相关缺陷
-/// </summary>
-public class RequirementTraceDto
-{
-    public RequirementDto Requirement { get; set; } = new();
-
-    /// <summary>关联用例（含最近执行结果）</summary>
-    public List<RequirementTraceCase> Cases { get; set; } = new();
-
-    /// <summary>关联用例对应的缺陷</summary>
-    public List<DefectDto> Defects { get; set; } = new();
-}
-
-/// <summary>
-/// 需求追溯中的用例行
-/// </summary>
-public class RequirementTraceCase
-{
-    public long CaseId { get; set; }
-
-    public string CaseName { get; set; } = string.Empty;
-
-    public CaseLevel Level { get; set; }
-
-    public ExecutionStatus? LastExecutionResult { get; set; }
-
-    public DateTime? LastExecutionTime { get; set; }
-
-    /// <summary>该用例的缺陷数</summary>
-    public int DefectCount { get; set; }
-}
-
-/// <summary>
 /// 测试计划
 /// </summary>
 public class TestPlanDto

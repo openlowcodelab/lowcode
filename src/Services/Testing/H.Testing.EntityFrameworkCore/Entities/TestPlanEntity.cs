@@ -4,41 +4,6 @@ using Volo.Abp.MultiTenancy;
 namespace H.Testing.EntityFrameworkCore;
 
 /// <summary>
-/// 测试需求
-/// </summary>
-public class RequirementEntity : AuditedEntity<long>, IMultiTenant
-{
-    public virtual Guid? TenantId { get; set; }
-
-    /// <summary>所属项目ID</summary>
-    public long ProjectId { get; set; }
-
-    /// <summary>需求标题</summary>
-    public string Title { get; set; } = string.Empty;
-
-    /// <summary>需求描述</summary>
-    public string? Description { get; set; }
-
-    /// <summary>优先级（对应 RequirementPriority）</summary>
-    public int Priority { get; set; }
-
-    /// <summary>状态（对应 RequirementStatus）</summary>
-    public int Status { get; set; }
-}
-
-/// <summary>
-/// 需求-用例关联
-/// </summary>
-public class CaseRequirementLinkEntity : AuditedEntity<long>, IMultiTenant
-{
-    public virtual Guid? TenantId { get; set; }
-
-    public long RequirementId { get; set; }
-
-    public long CaseId { get; set; }
-}
-
-/// <summary>
 /// 测试计划
 /// </summary>
 public class TestPlanEntity : AuditedEntity<long>, IMultiTenant

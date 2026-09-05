@@ -111,7 +111,7 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
             var browserKind = (options?.Browser ?? "chromium").ToLowerInvariant();
 
             // 初始化 Playwright（仅对包含 UI 步骤的测试用例）
-            if (executionSteps.Any(s => IsUiStepType(s.Type)))
+            if (executionSteps.Any(s => s.Type == StepTypeEnum.Ui))
             {
                 playwright = await Playwright.CreateAsync();
                 var launchOptions = new BrowserTypeLaunchOptions
@@ -311,11 +311,11 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
         try
         {
             // 根据步骤类型执行相应的逻辑
-            if (IsApiStepType(step.Type))
+            if (step.Type == StepTypeEnum.Api)
             {
                 await ExecuteApiStepAsync(step, stepRecord, environment, cancellationToken);
             }
-            else if (IsUiStepType(step.Type))
+            else if (step.Type == StepTypeEnum.Ui)
             {
                 await ExecuteUiStepAsync(step, stepRecord, environment, page, cancellationToken, testCase);
             }
@@ -323,9 +323,9 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
             {
                 await ExecuteScriptStepAsync(step, stepRecord, environment, cancellationToken);
             }
-            else if (step.Type == StepType.Delay)
+            else if (step.Type == StepTypeEnum.App || step.Type == StepTypeEnum.Desktop)
             {
-                await ExecuteDelayStepAsync(step, stepRecord, cancellationToken);
+                throw new NotSupportedException($"{(step.Type == StepTypeEnum.App ? "APP" : "Desktop")} 步骤执行暂不支持");
             }
             else
             {
@@ -819,17 +819,13 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
         {
             string result;
 
-            if (step.Type == StepType.JavascriptScript)
-            {
-                result = await ExecuteJavaScriptAsync(step.ScriptConfig, environment, stepRecord, cancellationToken);
-            }
-            else if (step.Type == StepType.CSharpScript)
+            if (step.Type == StepTypeEnum.Script && step.ScriptConfig.ScriptType == "csharp")
             {
                 result = await ExecuteCSharpScriptAsync(step.ScriptConfig, environment, stepRecord, cancellationToken);
             }
             else
             {
-                throw new NotSupportedException($"Script type {step.Type} is not supported");
+                result = await ExecuteJavaScriptAsync(step.ScriptConfig, environment, stepRecord, cancellationToken);
             }
 
             stepRecord.Logs.Add($"Script execution completed. Result: {result}");
@@ -1030,33 +1026,6 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
     }
 
     /// <summary>
-    /// 判断是否为API步骤类型
-    /// </summary>
-    private static bool IsApiStepType(StepType stepType)
-    {
-        return stepType == StepType.HttpRequest ||
-               stepType == StepType.ApiAssertion ||
-               stepType == StepType.VariableExtraction;
-    }
-
-    /// <summary>
-    /// 判断是否为UI步骤类型
-    /// </summary>
-    private static bool IsUiStepType(StepType stepType)
-    {
-        return stepType == StepType.Navigate ||
-               stepType == StepType.Click ||
-               stepType == StepType.Input ||
-               stepType == StepType.Select ||
-               stepType == StepType.Wait ||
-               stepType == StepType.Assert ||
-               stepType == StepType.Screenshot ||
-               stepType == StepType.Scroll ||
-               stepType == StepType.Hover ||
-               stepType == StepType.KeyPress;
-    }
-
-    /// <summary>
     /// 判断断言预期值是否为可见性描述词（如 visible/可见）；这类值表示验证元素可见而非匹配文本
     /// </summary>
     private static bool IsVisibilityAssertion(string? value) => value != null
@@ -1103,10 +1072,9 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
     /// <summary>
     /// 判断是否为脚本步骤类型
     /// </summary>
-    private static bool IsScriptStepType(StepType stepType)
+    private static bool IsScriptStepType(StepTypeEnum stepType)
     {
-        return stepType == StepType.JavascriptScript ||
-               stepType == StepType.CSharpScript;
+        return stepType == StepTypeEnum.Script;
     }
 
     /// <summary>
