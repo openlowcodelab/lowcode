@@ -149,6 +149,11 @@ public class UiStepConfig
 {
     public string Action { get; set; } = string.Empty; // navigate, click, type, wait, assert, etc.
 
+    /// <summary>
+    /// 关联服务ID（与 API 步骤逻辑一致）：选择服务后 navigate 地址填相对路径（按服务端点拼接）；为 0 时填完整 URL
+    /// </summary>
+    public long ServiceId { get; set; } = 0;
+
     public string Selector { get; set; } = string.Empty; // CSS选择器或XPath
 
     public string SelectorType { get; set; } = "css"; // css, xpath, id, name, etc.

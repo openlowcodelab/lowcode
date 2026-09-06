@@ -1,0 +1,24 @@
+@namespace H.Testing.Web
+
+<HModal Visible="ShowModal"
+        Title="🧪 数据集管理"
+        OnCancel="CloseModal"
+        ShowFooter="false"
+        Style="width:900px;">
+    @if (ProjectId == 0)
+    {
+        <div class="h-empty" style="padding:40px 0;">请先保存测试用例后再管理数据集</div>
+    }
+    else
+    {
+        <Datasets ProjectId="ProjectId" />
+    }
+</HModal>
+
+@code {
+    [Parameter] public bool ShowModal { get; set; }
+    [Parameter] public long ProjectId { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private void CloseModal() => OnClose.InvokeAsync();
+}

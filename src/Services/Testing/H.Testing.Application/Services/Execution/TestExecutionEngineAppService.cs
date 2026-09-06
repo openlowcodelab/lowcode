@@ -369,10 +369,20 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
 
         var config = step.ApiConfig;
 
-        // 构建请求URL
-        var baseUrl = GetServiceEndpoint(environment, config.ServiceId);
-        var url = baseUrl.TrimEnd('/') + '/' + config.Url.TrimStart('/');
-        url = ReplaceVariables(url);
+        // 构建请求URL（与 UI 步骤逻辑一致）：选择了服务时 Url 为相对路径，按服务端点拼接；未选择服务时 Url 为完整地址
+        var url = ReplaceVariables(config.Url)?.Trim() ?? "";
+        if (config.ServiceId != 0
+            && !(Uri.TryCreate(url, UriKind.Absolute, out var absolute)
+                && (absolute.Scheme == Uri.UriSchemeHttp || absolute.Scheme == Uri.UriSchemeHttps)))
+        {
+            var baseUrl = GetServiceEndpoint(environment, config.ServiceId);
+            url = baseUrl.TrimEnd('/') + '/' + url.TrimStart('/');
+        }
+
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            throw new InvalidOperationException("API 请求地址不能为空");
+        }
 
         // 添加查询参数
         if (config.Params.Any())
@@ -523,12 +533,16 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
             switch (config.Action.ToLower())
             {
                 case "navigate":
+                    // 导航地址解析逻辑与 API 步骤一致：选服务→相对路径拼服务端点，未选服务→完整 URL
+                    var navUrl = ResolveNavigationUrl(config, environment);
+                    stepRecord.Parameters["ServiceId"] = config.ServiceId;
+                    stepRecord.Parameters["Url"] = navUrl;
                     // 导航到页面并等待网络空闲状态
-                    await page.GotoAsync(config.Value, new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle });
+                    await page.GotoAsync(navUrl, new PageGotoOptions { WaitUntil = WaitUntilState.NetworkIdle });
                     // 添加额外等待时间确保页面完全加载
                     await page.WaitForLoadStateAsync(LoadState.DOMContentLoaded);
                     await page.WaitForTimeoutAsync(2000); // 额外等待2秒确保页面元素完全渲染
-                    stepRecord.Logs.Add($"Navigated to {config.Value} and waited for page to load");
+                    stepRecord.Logs.Add($"Navigated to {navUrl} and waited for page to load");
                     break;
 
                 case "type":
@@ -757,8 +771,27 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
                     break;
 
                 case "wait":
-                    await page.WaitForTimeoutAsync(int.Parse(config.Value));
-                    stepRecord.Logs.Add($"Waited for {config.Value} milliseconds");
+                    // 配置了选择器时等待元素出现，否则按毫秒等待（未指定时使用 TimeoutMs）
+                    if (!string.IsNullOrWhiteSpace(config.Selector))
+                    {
+                        var waitLocator = page.Locator(config.Selector);
+                        await waitLocator.WaitForAsync(new LocatorWaitForOptions
+                        {
+                            State = WaitForSelectorState.Visible,
+                            Timeout = config.TimeoutMs
+                        });
+                        stepRecord.Logs.Add($"Waited for element '{config.Selector}' to be visible");
+                    }
+                    else if (int.TryParse(config.Value, out var waitMs))
+                    {
+                        await page.WaitForTimeoutAsync(waitMs);
+                        stepRecord.Logs.Add($"Waited for {waitMs} milliseconds");
+                    }
+                    else
+                    {
+                        await page.WaitForTimeoutAsync(config.TimeoutMs);
+                        stepRecord.Logs.Add($"Waited for default {config.TimeoutMs} milliseconds");
+                    }
                     break;
 
                 case "screenshot":
@@ -1023,6 +1056,52 @@ public class TestExecutionEngineAppService : ApplicationService, ITestExecutionE
         {
             return "";
         }
+    }
+
+    /// <summary>
+    /// 解析导航地址（与 API 步骤逻辑一致）：选择了服务时地址为相对路径，按服务端点拼接；未选择服务时为完整 URL，直接使用
+    /// </summary>
+    private string ResolveNavigationUrl(UiStepConfig config, EnvironmentDto environment)
+    {
+        var url = ReplaceVariables(config.Value)?.Trim();
+        if (string.IsNullOrEmpty(url))
+        {
+            throw new InvalidOperationException("导航地址不能为空");
+        }
+
+        if (Uri.TryCreate(url, UriKind.Absolute, out var absolute)
+            && (absolute.Scheme == Uri.UriSchemeHttp || absolute.Scheme == Uri.UriSchemeHttps))
+        {
+            return url;
+        }
+
+        if (config.ServiceId == 0)
+        {
+            throw new InvalidOperationException(
+                $"导航地址 '{url}' 为相对路径：请为步骤选择服务（相对地址按服务端点拼接），或直接填写完整 URL");
+        }
+
+        var baseUrl = GetServiceEndpoint(environment, config.ServiceId);
+        if (string.IsNullOrWhiteSpace(baseUrl))
+        {
+            throw new InvalidOperationException($"服务 {config.ServiceId} 在环境中未配置端点地址，无法拼接相对路径 '{url}'");
+        }
+
+        return new Uri(new Uri(EnsureHttpScheme(baseUrl)), url).ToString();
+    }
+
+    /// <summary>
+    /// 为缺少协议的服务端点地址补全 https://
+    /// </summary>
+    private static string EnsureHttpScheme(string baseUrl)
+    {
+        if (baseUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+            || baseUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        {
+            return baseUrl;
+        }
+
+        return "https://" + baseUrl;
     }
 
     /// <summary>

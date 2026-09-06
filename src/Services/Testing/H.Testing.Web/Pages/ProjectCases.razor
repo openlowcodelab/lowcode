@@ -192,9 +192,10 @@
                                                 {
                                                     <div class="h-dropdown-mask" @onclick="() => openTestCaseDropdownId = null"></div>
                                                     <div class="h-dropdown-panel h-dropdown-panel-fixed" style="@GetDropdownPanelStyle()">
+                                                        <div class="h-dropdown-item" @onclick="() => { openTestCaseDropdownId = null; ShowEditBasicInfoModal(context); }">编辑</div>
+                                                        <div class="h-dropdown-divider"></div>
                                                         <div class="h-dropdown-item" @onclick="() => { openTestCaseDropdownId = null; ShowTemplateSettingsModal(context); }">模板设置</div>
                                                         <div class="h-dropdown-item" @onclick="() => { openTestCaseDropdownId = null; CopyTestCase(context); }">复制</div>
-                                                        <div class="h-dropdown-item" @onclick="() => { openTestCaseDropdownId = null; ShowEditBasicInfoModal(context); }">编辑</div>
                                                         <div class="h-dropdown-divider"></div>
                                                         <div class="h-dropdown-item danger" @onclick="() => { openTestCaseDropdownId = null; DeleteTestCase(context.Id); }">删除</div>
                                                     </div>

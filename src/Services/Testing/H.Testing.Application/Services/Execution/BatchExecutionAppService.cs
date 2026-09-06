@@ -2,6 +2,7 @@ using H.Testing.Application.Contracts;
 using H.Util.Base;
 using System.Collections.Concurrent;
 using Volo.Abp.Application.Services;
+using Volo.Abp.Uow;
 
 namespace H.Testing.Application;
 
@@ -36,6 +37,11 @@ public class BatchExecutionAppService : ApplicationService, IBatchExecutionAppSe
     /// <summary>
     /// 批量执行测试用例
     /// </summary>
+    /// <remarks>
+    /// 执行耗时长（UI 用例逐步骤驱动浏览器），不能包在单个数据库事务里：
+    /// 非事务 UoW 让每个用例的执行记录在创建时即持久化，即使请求中途被取消，已完成的记录也不会整体回滚
+    /// </remarks>
+    [UnitOfWork(isTransactional: false)]
     public async Task<BaseOutput<BatchExecutionResult>> ExecuteBatchAsync(
         BatchExecutionSettings settings,
         long environmentId,

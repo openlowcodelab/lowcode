@@ -1,0 +1,573 @@
+@namespace H.Testing.Web
+
+@inject IProjectAppService ProjectService
+@inject ITestDatasetAppService DatasetService
+@inject H.Util.Blazor.HToastService Toast
+@inject IJSRuntime JSRuntime
+
+<div class="datasets-panel">
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+        @if (ProjectId is null or 0)
+        {
+            <div style="display:flex;align-items:center;gap:8px;">
+                <span>选择项目:</span>
+                <select class="h-select" style="width:200px;" value="@selectedProjectId" @onchange="OnProjectChanged">
+                    @foreach (var project in projects)
+                    {
+                        <option value="@project.Id">@project.Name</option>
+                    }
+                </select>
+            </div>
+        }
+        <button class="h-btn h-btn-sm h-btn-primary" disabled="@(!HasProject)" @onclick="OpenCreate">＋ 新建数据集</button>
+        <span style="color:#86909C;font-size:12px;">
+            数据驱动测试：执行时为每一行数据运行一次用例，列值以 <code>@("{{列名}}")</code> 注入为执行变量（点击变量标签可复制）
+        </span>
+        @if (loading)
+        {
+            <span class="h-spin"><span class="h-spin-dot"></span><span class="h-spin-text">加载中...</span></span>
+        }
+    </div>
+
+    @if (!HasProject)
+    {
+        <div class="h-empty" style="padding:40px 0;">暂无项目，请先创建测试项目</div>
+    }
+    else if (viewIsEdit)
+    {
+        <a class="link-action" style="display:inline-block;margin-bottom:12px;" @onclick="BackToList">← 返回列表</a>
+
+        <div style="margin-bottom:12px;">
+            <div style="margin-bottom:4px;">数据集名称 <span style="color:#F53F3F;">*</span></div>
+            <input class="h-input" style="width:100%;" @bind="formName" maxlength="50" placeholder="如：登录账号数据集" />
+        </div>
+
+        <div style="background:#F7F8FA;border:1px solid #F2F3F5;border-radius:4px;padding:12px;margin-bottom:12px;">
+            <div style="margin-bottom:4px;">从 CSV 导入（可选，解析后覆盖下方表格数据）</div>
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+                <InputFile OnChange="OnFileSelected" style="font-size:12px;" />
+                <button class="h-btn h-btn-sm" @onclick="FillFromCsv">解析并填充</button>
+                <span style="color:#86909C;font-size:12px;">首行为列名，示例：username,password</span>
+            </div>
+            <textarea class="h-input" style="width:100%;min-height:100px;resize:vertical;font-family:monospace;font-size:12px;"
+                      @bind="csvText" placeholder="username,password&#10;user1,pass1&#10;user2,pass2"></textarea>
+            @if (csvParseFailed)
+            {
+                <div class="h-alert h-alert-error" style="margin-top:8px;">未能解析出数据，请检查 CSV 格式（首行为列名，至少两行）</div>
+            }
+        </div>
+
+        @if (editColumns.Count == 0)
+        {
+            <div class="h-empty" style="padding:24px 0;">
+                暂无数据列。可使用上方 CSV 导入，或直接添加数据列、数据行手工录入
+            </div>
+        }
+        else
+        {
+            <div style="margin-bottom:8px;">
+                <div style="margin-bottom:4px;font-size:12px;color:#4E5969;">可用变量：</div>
+                @foreach (var column in editColumns)
+                {
+                    <span class="h-tag h-tag-blue" style="cursor:pointer;margin:1px 4px 1px 0;"
+                          title="点击复制变量 @ToVariable(column)"
+                          @onclick="() => CopyVariable(column)">@ToVariable(column)</span>
+                }
+            </div>
+
+            <div style="max-height:320px;overflow:auto;border:1px solid #F2F3F5;border-radius:4px;margin-bottom:8px;">
+                <table class="h-table">
+                    <thead>
+                        <tr>
+                            @for (var c = 0; c < editColumns.Count; c++)
+                            {
+                                var columnIndex = c;
+                                <th style="white-space:nowrap;">
+                                    <input class="h-input" style="width:120px;height:26px;padding:2px 6px;"
+                                           value="@editColumns[columnIndex]"
+                                           @onchange="e => RenameColumn(columnIndex, e.Value?.ToString() ?? string.Empty)"
+                                           title="可修改列名" />
+                                    <a class="link-action-danger" style="margin-left:4px;cursor:pointer;"
+                                       title="删除此列" @onclick="() => RemoveColumn(columnIndex)">×</a>
+                                </th>
+                            }
+                            <th style="width:50px;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (var r = 0; r < editRows.Count && r < MaxEditableRows; r++)
+                        {
+                            var rowIndex = r;
+                            var row = editRows[rowIndex];
+                            <tr>
+                                @foreach (var column in editColumns)
+                                {
+                                    <td>
+                                        <input class="h-input" style="width:100%;min-width:110px;height:28px;"
+                                               value="@(row.GetValueOrDefault(column, string.Empty))"
+                                               @onchange="e => SetCellValue(row, column, e.Value)" />
+                                    </td>
+                                }
+                                <td style="text-align:center;">
+                                    <a class="link-action-danger" style="cursor:pointer;" @onclick="() => RemoveRow(rowIndex)">删除</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            @if (editRows.Count > MaxEditableRows)
+            {
+                <div style="color:#86909C;font-size:12px;margin-bottom:8px;">
+                    表格仅展示前 @MaxEditableRows 行，共 @editRows.Count 行，未展示的行仍会保存
+                </div>
+            }
+        }
+
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+            <button class="h-btn h-btn-sm" disabled="@(editColumns.Count == 0)" @onclick="AddRow">＋ 添加行</button>
+            <input class="h-input" style="width:150px;height:28px;" placeholder="新列名（可留空自动命名）"
+                   @bind="newColumnName" maxlength="50" />
+            <button class="h-btn h-btn-sm" @onclick="AddColumn">＋ 添加列</button>
+            @if (editColumns.Count > 0)
+            {
+                <span style="color:#86909C;font-size:12px;">共 @editRows.Count 行 × @editColumns.Count 列</span>
+            }
+        </div>
+
+        <div style="text-align:right;padding-top:12px;border-top:1px solid #F2F3F5;">
+            <button class="h-btn" style="margin-right:8px;" @onclick="BackToList">取消</button>
+            <button class="h-btn h-btn-primary" disabled="@saving" @onclick="SaveDataset">
+                @(saving ? "保存中..." : "保存")
+            </button>
+        </div>
+    }
+    else if (!datasets.Any())
+    {
+        <div class="h-empty" style="padding:40px 0;">
+            暂无数据集。新建数据集（支持 CSV 粘贴/导入）后，可在执行页选择数据集进行数据驱动执行
+        </div>
+    }
+    else
+    {
+        <div style="max-height:420px;overflow:auto;border:1px solid #F2F3F5;border-radius:4px;">
+            <table class="h-table">
+                <thead>
+                    <tr>
+                        <th style="width:160px;">名称</th>
+                        <th>变量（列名）</th>
+                        <th style="width:60px;">行数</th>
+                        <th style="width:100px;">创建时间</th>
+                        <th style="width:100px;">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var dataset in datasets)
+                    {
+                        <tr>
+                            <td>@dataset.Name</td>
+                            <td>
+                                @if (dataset.Columns.Count == 0)
+                                {
+                                    <span style="color:#86909C;font-size:12px;">无数据列</span>
+                                }
+                                else
+                                {
+                                    foreach (var column in dataset.Columns.Take(6))
+                                    {
+                                        <span class="h-tag h-tag-blue" style="cursor:pointer;margin:1px 4px 1px 0;"
+                                              title="点击复制变量 @ToVariable(column)"
+                                              @onclick="() => CopyVariable(column)">@ToVariable(column)</span>
+                                    }
+                                    @if (dataset.Columns.Count > 6)
+                                    {
+                                        <span style="color:#86909C;font-size:12px;">+@(dataset.Columns.Count - 6)</span>
+                                    }
+                                }
+                            </td>
+                            <td>@dataset.RowCount</td>
+                            <td style="color:#86909C;font-size:12px;">@dataset.CreationTime.ToString("yyyy-MM-dd")</td>
+                            <td>
+                                <span class="row-actions">
+                                    <a class="link-action" @onclick="() => OpenEdit(dataset.Id)">编辑</a>
+                                    <a class="link-action-danger" @onclick="() => DeleteDataset(dataset.Id)">删除</a>
+                                </span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    /// <summary>
+    /// 固定项目ID：设置后隐藏项目选择器、仅管理该项目的数据集；为空时内置项目选择器
+    /// </summary>
+    [Parameter] public long? ProjectId { get; set; }
+
+    private List<ProjectDto> projects = new();
+    private long selectedProjectId;
+    private List<TestDatasetDto> datasets = new();
+    private bool loading;
+    private bool saving;
+    private bool projectsLoaded;
+    private bool viewIsEdit;
+
+    /// <summary>表格最多展示的行数（超出部分仍会保存，避免大量输入控件影响渲染性能）</summary>
+    private const int MaxEditableRows = 200;
+
+    // 编辑表单状态
+    private long editingDatasetId;
+    private string formName = string.Empty;
+    private string csvText = string.Empty;
+    private bool csvParseFailed;
+    private string newColumnName = string.Empty;
+    private List<string> editColumns = new();
+    private List<Dictionary<string, string>> editRows = new();
+
+    private long? lastProjectId;
+
+    private bool HasProject => EffectiveProjectId > 0;
+
+    private long EffectiveProjectId => ProjectId ?? selectedProjectId;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (ProjectId is > 0)
+        {
+            // 固定项目模式：项目变化时重新加载
+            if (lastProjectId != ProjectId)
+            {
+                lastProjectId = ProjectId;
+                await LoadDatasetsAsync();
+            }
+            return;
+        }
+
+        // 独立模式：首次加载项目列表并默认选中第一个
+        if (!projectsLoaded)
+        {
+            projectsLoaded = true;
+            await LoadProjectsAsync();
+        }
+    }
+
+    private async Task LoadProjectsAsync()
+    {
+        try
+        {
+            loading = true;
+            projects = (await ProjectService.GetAllAsync()).Data ?? [];
+            selectedProjectId = projects.Count > 0 ? projects[0].Id : 0;
+            await LoadDatasetsAsync();
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"加载项目失败: {ex.Message}");
+            loading = false;
+        }
+    }
+
+    private async Task LoadDatasetsAsync()
+    {
+        if (!HasProject)
+        {
+            datasets = [];
+            loading = false;
+            StateHasChanged();
+            return;
+        }
+
+        try
+        {
+            loading = true;
+            datasets = (await DatasetService.GetByProjectIdAsync(EffectiveProjectId)).Data ?? [];
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"加载数据集失败: {ex.Message}");
+        }
+        finally
+        {
+            loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnProjectChanged(ChangeEventArgs e)
+    {
+        if (long.TryParse(e.Value?.ToString(), out var projectId))
+        {
+            selectedProjectId = projectId;
+            await LoadDatasetsAsync();
+        }
+    }
+
+    private void BackToList()
+    {
+        viewIsEdit = false;
+        ResetForm();
+    }
+
+    private void OpenCreate()
+    {
+        ResetForm();
+        viewIsEdit = true;
+    }
+
+    private async Task OpenEdit(long datasetId)
+    {
+        try
+        {
+            var detail = (await DatasetService.GetByIdAsync(datasetId)).Data;
+            if (detail == null)
+            {
+                Toast.Error("数据集不存在");
+                return;
+            }
+
+            editingDatasetId = datasetId;
+            formName = detail.Name;
+            csvText = DatasetCsv.ToCsv(detail.Columns, detail.Rows);
+            FillFromCsv();
+            viewIsEdit = true;
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"加载数据集失败: {ex.Message}");
+        }
+    }
+
+    private void ResetForm()
+    {
+        editingDatasetId = 0;
+        formName = string.Empty;
+        csvText = string.Empty;
+        csvParseFailed = false;
+        newColumnName = string.Empty;
+        editColumns = [];
+        editRows = [];
+    }
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            var file = e.File;
+            if (file.Size > 2 * 1024 * 1024)
+            {
+                Toast.Error("文件过大，请选择不超过 2MB 的 CSV 文件");
+                return;
+            }
+
+            using var reader = new StreamReader(file.OpenReadStream(2 * 1024 * 1024));
+            csvText = await reader.ReadToEndAsync();
+            FillFromCsv();
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"读取文件失败: {ex.Message}");
+        }
+    }
+
+    private void FillFromCsv()
+    {
+        csvParseFailed = false;
+
+        if (DatasetCsv.TryParse(csvText, out var columns, out var rows))
+        {
+            editColumns = columns;
+            editRows = rows;
+        }
+        else
+        {
+            csvParseFailed = true;
+        }
+    }
+
+    private void AddRow()
+    {
+        editRows.Add(editColumns.ToDictionary(c => c, _ => string.Empty));
+    }
+
+    private void AddColumn()
+    {
+        var baseName = string.IsNullOrWhiteSpace(newColumnName) ? $"列{editColumns.Count + 1}" : newColumnName.Trim();
+        var name = baseName;
+        for (var i = 2; editColumns.Contains(name); i++)
+        {
+            name = $"{baseName}{i}";
+        }
+
+        editColumns.Add(name);
+        foreach (var row in editRows)
+        {
+            row[name] = string.Empty;
+        }
+        newColumnName = string.Empty;
+    }
+
+    private void RenameColumn(int index, string newName)
+    {
+        newName = newName.Trim();
+        var oldName = editColumns[index];
+        if (string.IsNullOrWhiteSpace(newName) || newName == oldName)
+        {
+            return;
+        }
+
+        if (editColumns.Contains(newName))
+        {
+            Toast.Error($"列名 {newName} 已存在");
+            return;
+        }
+
+        editColumns[index] = newName;
+        foreach (var row in editRows)
+        {
+            var value = row.GetValueOrDefault(oldName, string.Empty);
+            row.Remove(oldName);
+            row[newName] = value;
+        }
+    }
+
+    private void RemoveColumn(int index)
+    {
+        var name = editColumns[index];
+        editColumns.RemoveAt(index);
+        foreach (var row in editRows)
+        {
+            row.Remove(name);
+        }
+    }
+
+    private void RemoveRow(int index) => editRows.RemoveAt(index);
+
+    private static void SetCellValue(Dictionary<string, string> row, string column, object? value)
+        => row[column] = value?.ToString() ?? string.Empty;
+
+    private async Task SaveDataset()
+    {
+        if (string.IsNullOrWhiteSpace(formName))
+        {
+            Toast.Error("请输入数据集名称");
+            return;
+        }
+
+        if (editColumns.Count == 0)
+        {
+            Toast.Error("请至少添加一列数据");
+            return;
+        }
+
+        if (editColumns.Any(string.IsNullOrWhiteSpace))
+        {
+            Toast.Error("列名不能为空，请修改后保存");
+            return;
+        }
+
+        var duplicatedColumns = editColumns.GroupBy(c => c).Where(g => g.Count() > 1).Select(g => g.Key).ToList();
+        if (duplicatedColumns.Count > 0)
+        {
+            Toast.Error($"列名不能重复：{string.Join("、", duplicatedColumns)}");
+            return;
+        }
+
+        if (editRows.Count == 0)
+        {
+            Toast.Error("请至少添加一行数据");
+            return;
+        }
+
+        var dto = new TestDatasetDto
+        {
+            ProjectId = EffectiveProjectId,
+            Name = formName.Trim(),
+            Columns = editColumns,
+            Rows = editRows
+        };
+
+        try
+        {
+            saving = true;
+
+            if (editingDatasetId == 0)
+            {
+                var created = await DatasetService.CreateAsync(dto);
+                if (created.Success)
+                {
+                    Toast.Success($"数据集创建成功（{editRows.Count} 行）");
+                    viewIsEdit = false;
+                    ResetForm();
+                    await LoadDatasetsAsync();
+                }
+                else
+                {
+                    Toast.Error(created.Message ?? "创建失败");
+                }
+            }
+            else
+            {
+                var updated = await DatasetService.UpdateAsync(editingDatasetId, dto);
+                if (updated.Success && updated.Data)
+                {
+                    Toast.Success("数据集已更新");
+                    viewIsEdit = false;
+                    ResetForm();
+                    await LoadDatasetsAsync();
+                }
+                else
+                {
+                    Toast.Error(updated.Message ?? "更新失败");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"保存失败: {ex.Message}");
+        }
+        finally
+        {
+            saving = false;
+        }
+    }
+
+    private async Task DeleteDataset(long datasetId)
+    {
+        try
+        {
+            var result = await DatasetService.DeleteAsync(datasetId);
+            if (result.Success && result.Data)
+            {
+                Toast.Success("数据集已删除");
+                await LoadDatasetsAsync();
+            }
+            else
+            {
+                Toast.Error(result.Message ?? "删除失败");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"删除失败: {ex.Message}");
+        }
+    }
+
+    private async Task CopyVariable(string column)
+    {
+        var variable = ToVariable(column);
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", variable);
+            Toast.Success($"已复制变量 {variable}");
+        }
+        catch (Exception)
+        {
+            Toast.Error("复制失败，请手动复制：" + variable);
+        }
+    }
+
+    private static string ToVariable(string column) => $"{{{{{column}}}}}";
+}

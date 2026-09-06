@@ -78,7 +78,14 @@ public static class ClientServices
 
         foreach (var name in serviceNames)
         {
-            services.AddHttpClient(name)
+            services.AddHttpClient(name, client =>
+                {
+                    // 批量执行 UI 测试用例可能持续数分钟，默认 100s 超时会中途取消执行并导致结果丢失
+                    if (name == TestingRemoteServiceName)
+                    {
+                        client.Timeout = Timeout.InfiniteTimeSpan;
+                    }
+                })
                 .AddHttpMessageHandler<CookieHandler>()
                 .AddHttpMessageHandler<AppIdHeaderHandler>();
         }

@@ -95,6 +95,11 @@
                         @onclick="ShowRecorderModal">
                     🎥 录制
                 </button>
+                <button class="h-btn h-btn-sm"
+                        disabled="@(currentTestCase.ProjectId == 0)"
+                        @onclick="OpenDatasetModal">
+                    🧪 数据集
+                </button>
                 <button class="h-btn h-btn-sm" @onclick="SaveTestCase">✓ 保存</button>
             </span>
         </div>
@@ -2532,7 +2537,7 @@
             builder.AddAttribute(76, "class", "mb-3");
             builder.OpenElement(77, "label");
             builder.AddAttribute(78, "class", "form-label");
-            builder.AddContent(79, GetValueLabel(step.UiConfig.Action));
+            builder.AddContent(79, step.UiConfig.Action == "navigate" && step.UiConfig.ServiceId != 0 ? "🌐 相对路径" : GetValueLabel(step.UiConfig.Action));
             builder.CloseElement();
             
             if (step.UiConfig.Action == "type")
@@ -2547,13 +2552,42 @@
             }
             else if (step.UiConfig.Action == "navigate")
             {
-                builder.OpenElement(86, "input");
-                builder.AddAttribute(87, "type", "url");
-                builder.AddAttribute(88, "class", "form-control");
-                builder.AddAttribute(89, "placeholder", "https://example.com/page");
-                builder.AddAttribute(90, "value", step.UiConfig.Value);
-                builder.AddAttribute(91, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => step.UiConfig.Value = e.Value?.ToString() ?? ""));
+                // 服务选择 + 地址输入（与 API 步骤一致：选服务→相对路径，未选服务→完整URL）
+                builder.OpenElement(86, "div");
+                builder.AddAttribute(87, "class", "row g-2");
+
+                builder.OpenElement(88, "div");
+                builder.AddAttribute(89, "class", "col-md-4");
+                builder.OpenElement(90, "select");
+                builder.AddAttribute(91, "class", "form-select");
+                builder.AddAttribute(92, "value", step.UiConfig.ServiceId == 0 ? "" : step.UiConfig.ServiceId.ToString());
+                builder.AddAttribute(93, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => { step.UiConfig.ServiceId = long.TryParse(e.Value?.ToString(), out var sid) ? sid : 0; }));
+                builder.OpenElement(94, "option");
+                builder.AddAttribute(95, "value", "");
+                builder.AddContent(96, "-- 直接输入完整URL --");
                 builder.CloseElement();
+                foreach (var service in projectServices)
+                {
+                    builder.OpenElement(97, "option");
+                    builder.AddAttribute(98, "value", service.Id.ToString());
+                    builder.AddContent(99, service.Name);
+                    builder.CloseElement();
+                }
+                builder.CloseElement();
+                builder.CloseElement();
+
+                builder.OpenElement(100, "div");
+                builder.AddAttribute(101, "class", "col-md-8");
+                builder.OpenElement(102, "input");
+                builder.AddAttribute(103, "type", "text");
+                builder.AddAttribute(104, "class", "form-control");
+                builder.AddAttribute(105, "placeholder", step.UiConfig.ServiceId == 0 ? "https://www.example.com/page" : "/page?query=1");
+                builder.AddAttribute(106, "value", step.UiConfig.Value);
+                builder.AddAttribute(107, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e => step.UiConfig.Value = e.Value?.ToString() ?? ""));
+                builder.CloseElement();
+                builder.CloseElement();
+
+                builder.CloseElement(); // row
             }
             else
             {
@@ -2772,10 +2806,16 @@
 }
 
 <!-- Playwright 录制模态框 -->
-<Testing.Components.PlaywrightRecorderModal 
-    ShowModal="@showRecorderModal" 
+<Testing.Components.PlaywrightRecorderModal
+    ShowModal="@showRecorderModal"
     OnHide="@HideRecorderModal"
     OnStepsGenerated="@OnRecordedStepsGenerated" />
+
+<!-- 数据集管理模态框 -->
+<DatasetManagerModal
+    ShowModal="@showDatasetModal"
+    ProjectId="currentTestCase.ProjectId"
+    OnClose="HideDatasetModal" />
 
 @code {
     private bool showRecorderModal = false;
@@ -2789,6 +2829,20 @@
     private void HideRecorderModal()
     {
         showRecorderModal = false;
+        StateHasChanged();
+    }
+
+    private bool showDatasetModal = false;
+
+    private void OpenDatasetModal()
+    {
+        showDatasetModal = true;
+        StateHasChanged();
+    }
+
+    private void HideDatasetModal()
+    {
+        showDatasetModal = false;
         StateHasChanged();
     }
 
