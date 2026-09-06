@@ -96,26 +96,26 @@ else if (filteredProjects.Any())
         {
             <div style="flex: 0 0 calc(25% - 12px); min-width: 280px; margin-bottom: 16px;">
                 <HCard>
-                    <Extra>
-                        <div style="position: relative; display: inline-block;">
-                            <button class="h-btn h-btn-sm h-btn-ghost" @onclick="() => ToggleProjectDropdown(project.Id)" @onclick:stopPropagation>⋯</button>
-                            @if (openProjectDropdownId == project.Id)
-                            {
-                                <div class="h-dropdown-mask" @onclick="() => openProjectDropdownId = null" @onclick:stopPropagation></div>
-                                <div class="h-dropdown-panel">
-                                    <div class="h-dropdown-item" @onclick="() => { openProjectDropdownId = null; ShowEditProjectModal(project); }">编辑</div>
-                                    <div class="h-dropdown-item" @onclick="() => { openProjectDropdownId = null; ShowSaveAsTemplateModal(project); }">另存为模板</div>
-                                    <div class="h-dropdown-divider"></div>
-                                    <div class="h-dropdown-item danger" @onclick="() => { openProjectDropdownId = null; DeleteProject(project.Id); }">删除</div>
-                                </div>
-                            }
-                        </div>
-                    </Extra>
                     <ChildContent>
                     <div @onclick="async () => await NavigateToProjectCases(project.Id)" style="cursor: pointer;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                             <strong style="font-size: 16px;">@project.Name</strong>
-                            <span class="h-tag h-tag-@GetStatusTagClass(project.Status)">@GetStatusDisplayName(project.Status)</span>
+                            <div style="display: flex; align-items: center; gap: 4px;">
+                                <span class="h-tag h-tag-@GetStatusTagClass(project.Status)">@GetStatusDisplayName(project.Status)</span>
+                                <div style="position: relative; display: inline-block;" @onclick:stopPropagation>
+                                    <button class="h-btn h-btn-sm h-btn-ghost" @onclick="() => ToggleProjectDropdown(project.Id)" @onclick:stopPropagation>⋯</button>
+                                    @if (openProjectDropdownId == project.Id)
+                                    {
+                                        <div class="h-dropdown-mask" @onclick="() => openProjectDropdownId = null" @onclick:stopPropagation></div>
+                                        <div class="h-dropdown-panel">
+                                            <div class="h-dropdown-item" @onclick="() => { openProjectDropdownId = null; ShowEditProjectModal(project); }">编辑</div>
+                                            <div class="h-dropdown-item" @onclick="() => { openProjectDropdownId = null; ShowSaveAsTemplateModal(project); }">另存为模板</div>
+                                            <div class="h-dropdown-divider"></div>
+                                            <div class="h-dropdown-item danger" @onclick="() => { openProjectDropdownId = null; DeleteProject(project.Id); }">删除</div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
                         </div>
                         <p style="color: #4E5969; margin-bottom: 12px; min-height: 40px;">@(string.IsNullOrEmpty(project.Description) ? "暂无描述" : project.Description)</p>
                         <div style="color: #86909C; font-size: 13px; margin-bottom: 12px;">🌍 环境数量：@GetProjectEnvironments(project.Id).Count 个</div>
@@ -123,9 +123,8 @@ else if (filteredProjects.Any())
                     <div style="display: flex; gap: 8px; padding-top: 12px; border-top: 1px solid #F2F3F5; flex-wrap: wrap;">
                         <button class="h-btn h-btn-sm" @onclick="() => ManageProjectServices(project)">⚙️ 服务</button>
                         <button class="h-btn h-btn-sm" @onclick="async () => await ManageEnvironments(project)">🌐 环境</button>
-                        <button class="h-btn h-btn-sm" @onclick="async () => await ManageKnowledge(project)">📚 知识库</button>
                         <button class="h-btn h-btn-sm" @onclick="() => ManageProjectDatasets(project)">🧪 数据集</button>
-                        <button class="h-btn h-btn-sm h-btn-primary" @onclick="async () => await NavigateToProjectCases(project.Id)">📝 用例</button>
+                        <button class="h-btn h-btn-sm" @onclick="async () => await ManageKnowledge(project)">📚 知识库</button>
                     </div>
                     </ChildContent>
                 </HCard>
