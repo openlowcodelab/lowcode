@@ -27,6 +27,24 @@ public class TestPlanEntity : AuditedEntity<long>, IMultiTenant
 
     /// <summary>状态（对应 TestPlanStatus）</summary>
     public int Status { get; set; }
+
+    /// <summary>执行方式（对应 TestPlanTriggerType，默认手动）</summary>
+    public int TriggerType { get; set; }
+
+    /// <summary>定时执行的执行环境ID（TriggerType=Scheduled 时有效）</summary>
+    public long EnvId { get; set; }
+
+    /// <summary>Cron 表达式（如 0 2 * * * 表示每天 2 点）</summary>
+    public string? CronExpression { get; set; }
+
+    /// <summary>定时执行是否启用</summary>
+    public bool IsEnabled { get; set; }
+
+    /// <summary>最近一次定时执行时间</summary>
+    public DateTime? LastExecutionTime { get; set; }
+
+    /// <summary>最近一次定时执行状态（对应 ExecutionStatus）</summary>
+    public int? LastExecutionStatus { get; set; }
 }
 
 /// <summary>

@@ -54,6 +54,11 @@ public class CaseDto
     /// 上一次执行时间
     /// </summary>
     public DateTime? LastExecutionTime { get; set; }
+
+    /// <summary>
+    /// 关联的数据集ID列表（数据驱动执行时按行执行）
+    /// </summary>
+    public List<long> DatasetIds { get; set; } = new();
 }
 
 /// <summary>

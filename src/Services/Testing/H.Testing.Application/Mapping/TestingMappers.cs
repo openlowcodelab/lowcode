@@ -156,7 +156,8 @@ public static class TestingMappers
         Order = e.Order,
         Status = (CaseStatus)e.Status,
         LastExecutionResult = e.LastExecutionResult.HasValue ? (ExecutionStatus)e.LastExecutionResult.Value : null,
-        LastExecutionTime = e.LastExecutionTime
+        LastExecutionTime = e.LastExecutionTime,
+        DatasetIds = DeserializeList<long>(e.DatasetIdsJson)
     };
 
     public static void Apply(this CaseDto dto, CaseEntity e)
@@ -172,6 +173,7 @@ public static class TestingMappers
         e.Status = (int)dto.Status;
         e.LastExecutionResult = dto.LastExecutionResult.HasValue ? (int)dto.LastExecutionResult.Value : null;
         e.LastExecutionTime = dto.LastExecutionTime;
+        e.DatasetIdsJson = Serialize(dto.DatasetIds);
     }
 
     // === CaseStep ===

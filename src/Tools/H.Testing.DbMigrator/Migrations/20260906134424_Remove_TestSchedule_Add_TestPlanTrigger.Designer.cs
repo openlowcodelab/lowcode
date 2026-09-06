@@ -4,6 +4,7 @@ using H.Testing.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Volo.Abp.EntityFrameworkCore;
 
@@ -12,9 +13,11 @@ using Volo.Abp.EntityFrameworkCore;
 namespace H.Testing.DbMigrator.Migrations
 {
     [DbContext(typeof(TestingDbContext))]
-    partial class TestingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260906134424_Remove_TestSchedule_Add_TestPlanTrigger")]
+    partial class Remove_TestSchedule_Add_TestPlanTrigger
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

@@ -19,19 +19,29 @@ public interface ITestPlanAppService : IAppService
     Task<BaseOutput<TestPlanDetailDto?>> GetDetailAsync(long planId);
 
     /// <summary>
-    /// 创建计划
+    /// 创建计划（TriggerType=Scheduled 时同时注册 Hangfire 周期作业）
     /// </summary>
     Task<BaseOutput<long>> CreateAsync(TestPlanDto dto);
 
     /// <summary>
-    /// 更新计划
+    /// 更新计划（同步更新 Hangfire 调度）
     /// </summary>
     Task<BaseOutput<bool>> UpdateAsync(long id, TestPlanDto dto);
 
     /// <summary>
-    /// 删除计划（同时移除计划内用例）
+    /// 删除计划（同时移除计划内用例与 Hangfire 作业）
     /// </summary>
     Task<BaseOutput<bool>> DeleteAsync(long id);
+
+    /// <summary>
+    /// 启用/停用计划的定时执行
+    /// </summary>
+    Task<BaseOutput<bool>> SetScheduleEnabledAsync(long id, bool enabled);
+
+    /// <summary>
+    /// 立即执行一次计划（不影响周期调度）
+    /// </summary>
+    Task<BaseOutput<string>> RunNowAsync(long id);
 
     /// <summary>
     /// 向计划添加用例（忽略已存在的）

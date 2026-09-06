@@ -25,6 +25,24 @@ public class TestPlanDto
 
     public TestPlanStatus Status { get; set; } = TestPlanStatus.NotStarted;
 
+    /// <summary>执行方式：手动 / 定时（默认手动）</summary>
+    public TestPlanTriggerType TriggerType { get; set; } = TestPlanTriggerType.Manual;
+
+    /// <summary>定时执行的执行环境ID（TriggerType=Scheduled 时有效）</summary>
+    public long EnvId { get; set; }
+
+    /// <summary>Cron 表达式（TriggerType=Scheduled 时有效，如 0 2 * * * 表示每天 2 点）</summary>
+    [StringLength(100, ErrorMessage = "Cron 表达式长度不能超过100个字符")]
+    public string? CronExpression { get; set; }
+
+    /// <summary>定时执行是否启用（TriggerType=Scheduled 时有效）</summary>
+    public bool IsEnabled { get; set; }
+
+    public DateTime? LastExecutionTime { get; set; }
+
+    /// <summary>最近一次定时执行状态（对应 ExecutionStatus）</summary>
+    public int? LastExecutionStatus { get; set; }
+
     // 以下为列表统计字段（服务端计算）
 
     /// <summary>计划内用例总数</summary>

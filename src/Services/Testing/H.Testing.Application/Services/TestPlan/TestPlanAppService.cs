@@ -1,28 +1,38 @@
+using Hangfire;
 using H.Testing.Application.Contracts;
 using H.Testing.EntityFrameworkCore;
 using H.Util.Base;
+using Volo.Abp;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 
 namespace H.Testing.Application;
 
 /// <summary>
-/// 测试计划服务：计划增删改查、计划内用例管理与执行结果回写
+/// 测试计划服务：计划增删改查、计划内用例管理、执行结果回写，以及定时执行与 Hangfire 调度联动
 /// </summary>
 public class TestPlanAppService : ApplicationService, ITestPlanAppService
 {
+    private const string RecurringJobPrefix = "testing-plan:";
+
     private readonly IRepository<TestPlanEntity, long> _repository;
     private readonly IRepository<PlanCaseEntity, long> _planCaseRepository;
     private readonly IRepository<CaseEntity, long> _caseRepository;
+    private readonly IRecurringJobManager _recurringJobManager;
+    private readonly IBackgroundJobClient _backgroundJobClient;
 
     public TestPlanAppService(
         IRepository<TestPlanEntity, long> repository,
         IRepository<PlanCaseEntity, long> planCaseRepository,
-        IRepository<CaseEntity, long> caseRepository)
+        IRepository<CaseEntity, long> caseRepository,
+        IRecurringJobManager recurringJobManager,
+        IBackgroundJobClient backgroundJobClient)
     {
         _repository = repository;
         _planCaseRepository = planCaseRepository;
         _caseRepository = caseRepository;
+        _recurringJobManager = recurringJobManager;
+        _backgroundJobClient = backgroundJobClient;
     }
 
     public async Task<BaseOutput<List<TestPlanDto>>> GetByProjectIdAsync(long projectId)
@@ -100,9 +110,13 @@ public class TestPlanAppService : ApplicationService, ITestPlanAppService
 
     public async Task<BaseOutput<long>> CreateAsync(TestPlanDto dto)
     {
+        ValidatePlan(dto);
+
         var entity = new TestPlanEntity { ProjectId = dto.ProjectId };
         ApplyDto(entity, dto);
         entity = await _repository.InsertAsync(entity, autoSave: true);
+
+        SyncHangfireJob(entity);
         return new(entity.Id);
     }
 
@@ -114,8 +128,11 @@ public class TestPlanAppService : ApplicationService, ITestPlanAppService
             return new(false);
         }
 
+        ValidatePlan(dto);
         ApplyDto(entity, dto);
         await _repository.UpdateAsync(entity, autoSave: true);
+
+        SyncHangfireJob(entity);
         return new(true);
     }
 
@@ -127,12 +144,42 @@ public class TestPlanAppService : ApplicationService, ITestPlanAppService
             return new(false);
         }
 
+        _recurringJobManager.RemoveIfExists(RecurringJobId(id));
+
         var planCaseQuery = await _planCaseRepository.GetQueryableAsync();
         var planCases = await AsyncExecuter.ToListAsync(planCaseQuery.Where(pc => pc.PlanId == id));
         await _planCaseRepository.DeleteManyAsync(planCases, autoSave: true);
 
         await _repository.DeleteAsync(entity, autoSave: true);
         return new(true);
+    }
+
+    public async Task<BaseOutput<bool>> SetScheduleEnabledAsync(long id, bool enabled)
+    {
+        var entity = await _repository.FindAsync(id);
+        if (entity == null || entity.TriggerType != (int)TestPlanTriggerType.Scheduled)
+        {
+            return new(false);
+        }
+
+        entity.IsEnabled = enabled;
+        await _repository.UpdateAsync(entity, autoSave: true);
+
+        SyncHangfireJob(entity);
+        return new(true);
+    }
+
+    public async Task<BaseOutput<string>> RunNowAsync(long id)
+    {
+        var entity = await _repository.FindAsync(id);
+        if (entity == null)
+        {
+            return new("测试计划不存在");
+        }
+
+        // 入队后台执行，不阻塞当前请求
+        _backgroundJobClient.Enqueue<ITestPlanScheduleExecutor>(x => x.ExecuteAsync(id));
+        return new("已加入执行队列，执行结果可在计划详情中查看");
     }
 
     public async Task<BaseOutput<int>> AddCasesAsync(long planId, List<long> caseIds)
@@ -253,6 +300,124 @@ public class TestPlanAppService : ApplicationService, ITestPlanAppService
         return new(true);
     }
 
+    /// <summary>
+    /// 按约定生成 recurring job id
+    /// </summary>
+    private static string RecurringJobId(long planId) => $"{RecurringJobPrefix}{planId}";
+
+    /// <summary>
+    /// 同步 Hangfire 周期作业：定时执行且启用则注册/更新，否则移除
+    /// </summary>
+    private void SyncHangfireJob(TestPlanEntity entity)
+    {
+        var recurringId = RecurringJobId(entity.Id);
+
+        if (entity.TriggerType != (int)TestPlanTriggerType.Scheduled || !entity.IsEnabled)
+        {
+            _recurringJobManager.RemoveIfExists(recurringId);
+            return;
+        }
+
+        _recurringJobManager.AddOrUpdate<ITestPlanScheduleExecutor>(
+            recurringId,
+            x => x.ExecuteAsync(entity.Id),
+            entity.CronExpression!);
+    }
+
+    private static void ValidatePlan(TestPlanDto dto)
+    {
+        if (dto.TriggerType != TestPlanTriggerType.Scheduled)
+        {
+            return;
+        }
+
+        if (dto.EnvId == 0)
+        {
+            throw new UserFriendlyException("定时执行必须选择执行环境");
+        }
+
+        if (string.IsNullOrWhiteSpace(dto.CronExpression))
+        {
+            throw new UserFriendlyException("Cron 表达式不能为空");
+        }
+
+        if (!IsValidCron(dto.CronExpression))
+        {
+            throw new UserFriendlyException($"Cron 表达式无效：{dto.CronExpression}（示例：0 2 * * * 表示每天 2 点）");
+        }
+    }
+
+    /// <summary>
+    /// 校验标准 5 字段 Cron 表达式（支持 *、逗号列表、范围 a-b、步长 /n）
+    /// </summary>
+    private static bool IsValidCron(string cron)
+    {
+        var fields = cron.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (fields.Length != 5)
+        {
+            return false;
+        }
+
+        (int Min, int Max)[] ranges = [(0, 59), (0, 23), (1, 31), (1, 12), (0, 7)];
+
+        for (var i = 0; i < 5; i++)
+        {
+            if (!IsValidCronField(fields[i], ranges[i].Min, ranges[i].Max))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool IsValidCronField(string field, int min, int max)
+    {
+        foreach (var part in field.Split(','))
+        {
+            if (string.IsNullOrEmpty(part))
+            {
+                return false;
+            }
+
+            var rangePart = part;
+            var slash = part.IndexOf('/');
+            if (slash >= 0)
+            {
+                rangePart = part[..slash];
+                if (!int.TryParse(part[(slash + 1)..], out var step) || step < 1)
+                {
+                    return false;
+                }
+            }
+
+            if (rangePart == "*")
+            {
+                continue;
+            }
+
+            var dash = rangePart.IndexOf('-');
+            if (dash >= 0)
+            {
+                if (!int.TryParse(rangePart[..dash], out var from) ||
+                    !int.TryParse(rangePart[(dash + 1)..], out var to) ||
+                    from < min || to > max || from > to)
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                if (!int.TryParse(rangePart, out var value) || value < min || value > max)
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
     private static void ApplyDto(TestPlanEntity entity, TestPlanDto dto)
     {
         entity.Name = dto.Name;
@@ -260,6 +425,12 @@ public class TestPlanAppService : ApplicationService, ITestPlanAppService
         entity.StartDate = dto.StartDate;
         entity.DueDate = dto.DueDate;
         entity.Status = (int)dto.Status;
+        entity.TriggerType = (int)dto.TriggerType;
+        entity.EnvId = dto.EnvId;
+        entity.CronExpression = dto.TriggerType == TestPlanTriggerType.Scheduled
+            ? dto.CronExpression
+            : null;
+        entity.IsEnabled = dto.TriggerType == TestPlanTriggerType.Scheduled && dto.IsEnabled;
     }
 
     private static TestPlanDto ToDto(TestPlanEntity entity) => new()
@@ -270,6 +441,12 @@ public class TestPlanAppService : ApplicationService, ITestPlanAppService
         Description = entity.Description ?? string.Empty,
         StartDate = entity.StartDate,
         DueDate = entity.DueDate,
-        Status = (TestPlanStatus)entity.Status
+        Status = (TestPlanStatus)entity.Status,
+        TriggerType = (TestPlanTriggerType)entity.TriggerType,
+        EnvId = entity.EnvId,
+        CronExpression = entity.CronExpression,
+        IsEnabled = entity.IsEnabled,
+        LastExecutionTime = entity.LastExecutionTime,
+        LastExecutionStatus = entity.LastExecutionStatus
     };
 }

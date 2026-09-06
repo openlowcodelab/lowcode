@@ -12,6 +12,18 @@ public enum TestPlanStatus
 }
 
 /// <summary>
+/// 测试计划执行方式
+/// </summary>
+public enum TestPlanTriggerType
+{
+    /// <summary>手动执行（默认）</summary>
+    Manual = 0,
+
+    /// <summary>定时执行（按 Cron 表达式自动触发）</summary>
+    Scheduled = 1
+}
+
+/// <summary>
 /// 计划内用例状态
 /// </summary>
 public enum PlanCaseStatus

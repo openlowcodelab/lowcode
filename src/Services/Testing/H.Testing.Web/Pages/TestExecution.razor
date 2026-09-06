@@ -157,7 +157,7 @@ else
                                     <option value="0">不使用数据集</option>
                                     @foreach (var ds in datasets)
                                     {
-                                        <option value="@ds.Id">@($"{ds.Name}（{ds.RowCount} 行）")</option>
+                                        <option value="@ds.Id">@GetDatasetOptionText(ds)</option>
                                     }
                                 </select>
                                 @if (executionUnitMultiplier > 1)
@@ -488,6 +488,17 @@ else
 
     private int GetDatasetRowCount(long datasetId)
         => datasets.FirstOrDefault(d => d.Id == datasetId)?.RowCount ?? 1;
+
+    /// <summary>当前勾选用例所关联的数据集ID集合</summary>
+    private HashSet<long> AssociatedDatasetIds => testCases
+        .Where(tc => selectedTestCaseIds.Contains(tc.Id))
+        .SelectMany(tc => tc.DatasetIds)
+        .ToHashSet();
+
+    private string GetDatasetOptionText(TestDatasetDto dataset)
+        => AssociatedDatasetIds.Contains(dataset.Id)
+            ? $"{dataset.Name}（{dataset.RowCount} 行）· ★已关联"
+            : $"{dataset.Name}（{dataset.RowCount} 行）";
 
     private bool IsBatchMode => ProjectId != 0;
 

@@ -5,6 +5,7 @@
 
 @inject ITestPlanAppService TestPlanService
 @inject ICaseAppService ProjectCaseService
+@inject IEnvironmentAppService EnvironmentService
 @inject NavigationManager Navigation
 @inject H.Util.Blazor.HToastService Toast
 
@@ -51,6 +52,24 @@ else
                         }
                         <div style="color:#86909C;">
                             起止：@(plan.StartDate?.ToString("yyyy-MM-dd") ?? "-") ~ @(plan.DueDate?.ToString("yyyy-MM-dd") ?? "-")
+                        </div>
+                        @if (plan.TriggerType == TestPlanTriggerType.Scheduled)
+                        {
+                            <div style="display:flex;align-items:center;gap:6px;color:#86909C;">
+                                <span>⏰ 定时执行：</span>
+                                <code style="font-size:12px;">@plan.CronExpression</code>
+                                <span>@GetEnvName(plan.EnvId)</span>
+                                <span class="h-tag h-tag-@(plan.IsEnabled ? "green" : "default")">@(plan.IsEnabled ? "已启用" : "已停用")</span>
+                            </div>
+                        }
+                        <div style="color:#86909C;">
+                            最近执行：@(plan.LastExecutionTime?.ToString("yyyy-MM-dd HH:mm") ?? "未执行")
+                            @if (plan.LastExecutionTime.HasValue)
+                            {
+                                <span class="h-tag h-tag-@GetExecutionStatusTagClass(plan.LastExecutionStatus)" style="margin-left:4px;">
+                                    @GetExecutionStatusDisplayName(plan.LastExecutionStatus)
+                                </span>
+                            }
                         </div>
                     </div>
 
@@ -185,6 +204,7 @@ else
 
     private bool loading = true;
     private TestPlanDetailDto? detail;
+    private List<EnvironmentDto> environments = new();
 
     private bool showAddCasesModal;
     private List<CaseDto> availableCases = new();
@@ -203,6 +223,11 @@ else
         {
             loading = true;
             detail = (await TestPlanService.GetDetailAsync(PlanId)).Data;
+
+            if (detail != null)
+            {
+                environments = (await EnvironmentService.GetByProjectIdAsync(detail.Plan.ProjectId)).Data ?? [];
+            }
         }
         catch (Exception ex)
         {
@@ -336,6 +361,29 @@ else
     }
 
     private void GoBack() => Navigation.NavigateTo($"/testing/plans/{detail?.Plan.ProjectId ?? 0}");
+
+    private string GetEnvName(long envId)
+        => environments.FirstOrDefault(e => e.Id == envId)?.Name ?? "-";
+
+    private static string GetExecutionStatusTagClass(int? status)
+        => (ExecutionStatus?)status switch
+        {
+            ExecutionStatus.Success => "green",
+            ExecutionStatus.Failed => "red",
+            ExecutionStatus.Running => "blue",
+            ExecutionStatus.Cancelled => "orange",
+            _ => "default"
+        };
+
+    private static string GetExecutionStatusDisplayName(int? status)
+        => (ExecutionStatus?)status switch
+        {
+            ExecutionStatus.Success => "成功",
+            ExecutionStatus.Failed => "失败",
+            ExecutionStatus.Running => "执行中",
+            ExecutionStatus.Cancelled => "已取消",
+            _ => "未知"
+        };
 
     private static string GetLevelTagClass(string level) => level switch
     {

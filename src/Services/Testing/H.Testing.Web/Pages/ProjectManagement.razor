@@ -120,10 +120,11 @@ else if (filteredProjects.Any())
                         <p style="color: #4E5969; margin-bottom: 12px; min-height: 40px;">@(string.IsNullOrEmpty(project.Description) ? "暂无描述" : project.Description)</p>
                         <div style="color: #86909C; font-size: 13px; margin-bottom: 12px;">🌍 环境数量：@GetProjectEnvironments(project.Id).Count 个</div>
                     </div>
-                    <div style="display: flex; gap: 8px; padding-top: 12px; border-top: 1px solid #F2F3F5;">
+                    <div style="display: flex; gap: 8px; padding-top: 12px; border-top: 1px solid #F2F3F5; flex-wrap: wrap;">
                         <button class="h-btn h-btn-sm" @onclick="() => ManageProjectServices(project)">⚙️ 服务</button>
                         <button class="h-btn h-btn-sm" @onclick="async () => await ManageEnvironments(project)">🌐 环境</button>
                         <button class="h-btn h-btn-sm" @onclick="async () => await ManageKnowledge(project)">📚 知识库</button>
+                        <button class="h-btn h-btn-sm" @onclick="() => ManageProjectDatasets(project)">🧪 数据集</button>
                         <button class="h-btn h-btn-sm h-btn-primary" @onclick="async () => await NavigateToProjectCases(project.Id)">📝 用例</button>
                     </div>
                     </ChildContent>
@@ -665,6 +666,12 @@ else
 @{
     var serviceModalTitle = selectedProjectForServices != null ? $"{selectedProjectForServices.Name} - 服务管理" : "服务管理";
 }
+<HModal Visible="showDatasetManagementModal" Title="@(selectedProjectForDatasets != null ? $"{selectedProjectForDatasets.Name} - 数据集管理" : "数据集管理")" OnCancel="HideDatasetManagementModal" ShowFooter="false" Style="width: 900px;">
+    @if (selectedProjectForDatasets != null)
+    {
+        <Datasets ProjectId="selectedProjectForDatasets.Id" />
+    }
+</HModal>
 <HModal Visible="showProjectServiceManagementModal" Title="@serviceModalTitle" OnCancel="HideProjectServiceManagementModal" ShowFooter="false" Style="width: 900px;">
     <div Style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
         <span Style="font-weight: 500;">项目服务列表</span>
@@ -920,6 +927,8 @@ else
     private List<ServiceConfigView> serviceConfigViews = new();
     private ProjectServiceDto currentProjectService = new();
     private ProjectDto? selectedProjectForServices;
+    private bool showDatasetManagementModal = false;
+    private ProjectDto? selectedProjectForDatasets;
     private ProjectEnvConfigDto currentServiceConfig = new();
     private bool showServiceConfigModal = false;
     private bool isEditingServiceConfig = false;
@@ -1378,6 +1387,9 @@ else
     
     private async Task ManageProjectServices(ProjectDto project) { selectedProjectForServices = project; projectServices = (await ProjectServiceConfigService.GetProjectServicesAsync(project.Id)).Data ?? []; showProjectServiceManagementModal = true; }
     private void HideProjectServiceManagementModal() { showProjectServiceManagementModal = false; selectedProjectForServices = null; projectServices.Clear(); }
+
+    private void ManageProjectDatasets(ProjectDto project) { selectedProjectForDatasets = project; showDatasetManagementModal = true; }
+    private void HideDatasetManagementModal() { showDatasetManagementModal = false; selectedProjectForDatasets = null; }
     private void ShowAddProjectServiceModal() { currentProjectService = new ProjectServiceDto { ProjectId = selectedProjectForServices?.Id ?? 0 }; isEditingProjectService = false; showProjectServiceModal = true; }
     
     private void EditProjectService(ProjectServiceDto service)

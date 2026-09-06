@@ -6,6 +6,7 @@
 
 @inject IProjectAppService ProjectService
 @inject ITestPlanAppService TestPlanService
+@inject IEnvironmentAppService EnvironmentService
 @inject NavigationManager Navigation
 @inject H.Util.Blazor.HToastService Toast
 
@@ -42,7 +43,7 @@
                     else if (!plans.Any())
                     {
                         <div class="h-empty" style="padding:60px 0;">
-                            暂无测试计划。测试计划用于把用例组织成一轮测试活动，指派负责人并跟踪通过进度
+                            暂无测试计划。测试计划用于把用例组织成一轮测试活动，支持手动执行或定时自动执行，并跟踪通过进度
                         </div>
                     }
                     else
@@ -51,11 +52,13 @@
                             <thead>
                                 <tr>
                                     <th>计划名称</th>
-                                    <th style="width:180px;">起止日期</th>
+                                    <th style="width:150px;">起止日期</th>
+                                    <th style="width:190px;">执行方式</th>
                                     <th style="width:90px;">状态</th>
                                     <th style="width:70px;">用例数</th>
-                                    <th style="width:220px;">通过进度</th>
-                                    <th style="width:150px;">操作</th>
+                                    <th style="width:200px;">通过进度</th>
+                                    <th style="width:160px;">最近执行</th>
+                                    <th style="width:170px;">操作</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -73,6 +76,24 @@
                                             @(plan.StartDate?.ToString("yyyy-MM-dd") ?? "-") ~ @(plan.DueDate?.ToString("yyyy-MM-dd") ?? "-")
                                         </td>
                                         <td>
+                                            @if (plan.TriggerType == TestPlanTriggerType.Scheduled)
+                                            {
+                                                <span class="h-tag h-tag-@(plan.IsEnabled ? "blue" : "default")"
+                                                      style="cursor:pointer;"
+                                                      @onclick="() => ToggleScheduleEnabled(plan)"
+                                                      title="点击切换定时执行启用状态">
+                                                    @(plan.IsEnabled ? "定时执行" : "已停用")
+                                                </span>
+                                                <div style="color:#86909C;font-size:12px;">
+                                                    <code style="font-size:12px;">@plan.CronExpression</code> · @GetEnvName(plan.EnvId)
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <span class="h-tag h-tag-default">手动执行</span>
+                                            }
+                                        </td>
+                                        <td>
                                             <span class="h-tag h-tag-@GetPlanStatusTagClass(plan.Status)">@GetPlanStatusDisplayName(plan.Status)</span>
                                         </td>
                                         <td>@plan.TotalCases</td>
@@ -87,8 +108,25 @@
                                             </div>
                                         </td>
                                         <td>
+                                            @if (plan.LastExecutionTime.HasValue)
+                                            {
+                                                <span style="color:#86909C;font-size:12px;">@plan.LastExecutionTime.Value.ToString("MM-dd HH:mm")</span>
+                                                <span class="h-tag h-tag-@GetExecutionStatusTagClass(plan.LastExecutionStatus)" style="margin-left:6px;">
+                                                    @GetExecutionStatusDisplayName(plan.LastExecutionStatus)
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span style="color:#86909C;">未执行</span>
+                                            }
+                                        </td>
+                                        <td>
                                             <span class="row-actions">
                                                 <a class="link-action" @onclick="() => GoToDetail(plan.Id)">详情</a>
+                                                @if (plan.TriggerType == TestPlanTriggerType.Scheduled)
+                                                {
+                                                    <a class="link-action" @onclick="() => RunNow(plan.Id)">立即执行</a>
+                                                }
                                                 <a class="link-action" @onclick="() => OpenEditModal(plan)">编辑</a>
                                                 <a class="link-action-danger" @onclick="() => DeletePlan(plan.Id)">删除</a>
                                             </span>
@@ -108,7 +146,7 @@
         Title="@(editingPlanId == 0 ? "新建测试计划" : "编辑测试计划")"
         OnCancel="CloseModal"
         ShowFooter="false"
-        Style="width:560px;">
+        Style="width:600px;">
     <div style="margin-bottom:12px;">
         <div style="margin-bottom:4px;">计划名称 <span style="color:#F53F3F;">*</span></div>
         <input class="h-input" style="width:100%;" @bind="form.Name" placeholder="如：V1.2 版本回归测试" maxlength="50" />
@@ -132,7 +170,7 @@
 
     @if (editingPlanId != 0)
     {
-        <div style="margin-bottom:16px;">
+        <div style="margin-bottom:12px;">
             <div style="margin-bottom:4px;">状态</div>
             <select class="h-select" style="width:100%;" value="@((int)form.Status)"
                     @onchange="@((ChangeEventArgs e) => form.Status = int.TryParse(e.Value?.ToString(), out var v) ? (TestPlanStatus)v : TestPlanStatus.NotStarted)">
@@ -141,6 +179,58 @@
                 <option value="3">已完成</option>
                 <option value="4">已归档</option>
             </select>
+        </div>
+    }
+
+    <div style="margin-bottom:12px;">
+        <div style="margin-bottom:4px;">执行方式</div>
+        <div style="display:flex;gap:16px;">
+            <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
+                <input type="radio" name="triggerType" checked="@(form.TriggerType == TestPlanTriggerType.Manual)"
+                       @onchange='() => SetTriggerType(TestPlanTriggerType.Manual)' />
+                手动执行
+            </label>
+            <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
+                <input type="radio" name="triggerType" checked="@(form.TriggerType == TestPlanTriggerType.Scheduled)"
+                       @onchange='() => SetTriggerType(TestPlanTriggerType.Scheduled)' />
+                定时执行
+            </label>
+        </div>
+    </div>
+
+    @if (form.TriggerType == TestPlanTriggerType.Scheduled)
+    {
+        <div style="margin-bottom:12px;">
+            <div style="margin-bottom:4px;">执行环境 <span style="color:#F53F3F;">*</span></div>
+            <select class="h-select" style="width:100%;" value="@form.EnvId"
+                    @onchange="@((ChangeEventArgs e) => form.EnvId = long.TryParse(e.Value?.ToString(), out var v) ? v : 0)">
+                <option value="0">请选择环境</option>
+                @foreach (var env in environments)
+                {
+                    <option value="@env.Id">@env.Name</option>
+                }
+            </select>
+        </div>
+
+        <div style="margin-bottom:12px;">
+            <div style="margin-bottom:4px;">Cron 表达式 <span style="color:#F53F3F;">*</span></div>
+            <input class="h-input" style="width:100%;" @bind="form.CronExpression" placeholder="0 2 * * *" />
+            <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+                <button class="h-btn h-btn-sm" @onclick='() => form.CronExpression = "0 2 * * *"'>每天 2:00</button>
+                <button class="h-btn h-btn-sm" @onclick='() => form.CronExpression = "0 8 * * *"'>每天 8:00</button>
+                <button class="h-btn h-btn-sm" @onclick='() => form.CronExpression = "0 */2 * * *"'>每 2 小时</button>
+                <button class="h-btn h-btn-sm" @onclick='() => form.CronExpression = "0 9 * * 1"'>每周一 9:00</button>
+            </div>
+            <div style="color:#86909C;font-size:12px;margin-top:8px;">
+                Cron 格式：分 时 日 月 周（如 <code>0 2 * * *</code> 表示每天 2:00，<code>0 9 * * 1</code> 表示每周一 9:00）
+            </div>
+        </div>
+
+        <div style="margin-bottom:16px;">
+            <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
+                <input type="checkbox" @bind="form.IsEnabled" />
+                启用定时执行
+            </label>
         </div>
     }
 
@@ -158,6 +248,7 @@
     private List<ProjectDto> projects = new();
     private long selectedProjectId;
     private List<TestPlanDto> plans = new();
+    private List<EnvironmentDto> environments = new();
     private bool loading = true;
 
     private bool showModal;
@@ -208,6 +299,7 @@
         {
             loading = true;
             plans = (await TestPlanService.GetByProjectIdAsync(selectedProjectId)).Data ?? [];
+            environments = (await EnvironmentService.GetByProjectIdAsync(selectedProjectId)).Data ?? [];
         }
         catch (Exception ex)
         {
@@ -236,7 +328,10 @@
         {
             ProjectId = selectedProjectId,
             StartDate = DateTime.Today,
-            Status = TestPlanStatus.NotStarted
+            Status = TestPlanStatus.NotStarted,
+            TriggerType = TestPlanTriggerType.Manual,
+            CronExpression = "0 2 * * *",
+            IsEnabled = true
         };
         showModal = true;
     }
@@ -251,9 +346,22 @@
             Description = plan.Description,
             StartDate = plan.StartDate,
             DueDate = plan.DueDate,
-            Status = plan.Status
+            Status = plan.Status,
+            TriggerType = plan.TriggerType,
+            EnvId = plan.EnvId,
+            CronExpression = plan.CronExpression,
+            IsEnabled = plan.IsEnabled
         };
         showModal = true;
+    }
+
+    private void SetTriggerType(TestPlanTriggerType type)
+    {
+        form.TriggerType = type;
+        if (type == TestPlanTriggerType.Scheduled && string.IsNullOrWhiteSpace(form.CronExpression))
+        {
+            form.CronExpression = "0 2 * * *";
+        }
     }
 
     private void CloseModal() => showModal = false;
@@ -264,6 +372,20 @@
         {
             Toast.Error("请输入计划名称");
             return;
+        }
+
+        if (form.TriggerType == TestPlanTriggerType.Scheduled)
+        {
+            if (form.EnvId == 0)
+            {
+                Toast.Error("定时执行需要选择执行环境");
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(form.CronExpression))
+            {
+                Toast.Error("请输入 Cron 表达式");
+                return;
+            }
         }
 
         try
@@ -309,6 +431,40 @@
         }
     }
 
+    private async Task ToggleScheduleEnabled(TestPlanDto plan)
+    {
+        try
+        {
+            var result = await TestPlanService.SetScheduleEnabledAsync(plan.Id, !plan.IsEnabled);
+            if (result.Success && result.Data)
+            {
+                Toast.Success(!plan.IsEnabled ? "定时执行已启用" : "定时执行已停用");
+                await LoadPlans();
+            }
+            else
+            {
+                Toast.Error(result.Message ?? "操作失败");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"操作失败: {ex.Message}");
+        }
+    }
+
+    private async Task RunNow(long planId)
+    {
+        try
+        {
+            var result = await TestPlanService.RunNowAsync(planId);
+            Toast.Info(result.Data ?? "已加入执行队列");
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"执行失败: {ex.Message}");
+        }
+    }
+
     private async Task DeletePlan(long planId)
     {
         try
@@ -332,6 +488,9 @@
 
     private void GoToDetail(long planId) => Navigation.NavigateTo($"/testing/plans/detail/{planId}");
 
+    private string GetEnvName(long envId)
+        => environments.FirstOrDefault(e => e.Id == envId)?.Name ?? "-";
+
     private static string GetPlanStatusTagClass(TestPlanStatus status) => status switch
     {
         TestPlanStatus.InProgress => "blue",
@@ -348,4 +507,24 @@
         TestPlanStatus.Archived => "已归档",
         _ => "未知"
     };
+
+    private static string GetExecutionStatusTagClass(int? status)
+        => (ExecutionStatus?)status switch
+        {
+            ExecutionStatus.Success => "green",
+            ExecutionStatus.Failed => "red",
+            ExecutionStatus.Running => "blue",
+            ExecutionStatus.Cancelled => "orange",
+            _ => "default"
+        };
+
+    private static string GetExecutionStatusDisplayName(int? status)
+        => (ExecutionStatus?)status switch
+        {
+            ExecutionStatus.Success => "成功",
+            ExecutionStatus.Failed => "失败",
+            ExecutionStatus.Running => "执行中",
+            ExecutionStatus.Cancelled => "已取消",
+            _ => "未知"
+        };
 }

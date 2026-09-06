@@ -18,7 +18,6 @@ public class TestingDbContext : AbpDbContext<TestingDbContext>
     public DbSet<CaseStepEntity> CaseSteps { get; set; } = null!;
     public DbSet<CaseRecordEntity> ExecutionRecords { get; set; } = null!;
     public DbSet<SettingsEntity> Settings { get; set; } = null!;
-    public DbSet<TestScheduleEntity> TestSchedules { get; set; } = null!;
     public DbSet<TestDatasetEntity> TestDatasets { get; set; } = null!;
     public DbSet<CiRunEntity> CiRuns { get; set; } = null!;
     public DbSet<TestPlanEntity> TestPlans { get; set; } = null!;
@@ -95,6 +94,7 @@ public class TestingDbContext : AbpDbContext<TestingDbContext>
             b.Property(x => x.CaseName).IsRequired().HasMaxLength(50);
             b.Property(x => x.Description).HasMaxLength(200);
             b.Property(x => x.Level);
+            b.Property(x => x.DatasetIdsJson).HasMaxLength(2000);
 
             b.HasIndex(x => x.ProjectId);
         });
@@ -146,20 +146,6 @@ public class TestingDbContext : AbpDbContext<TestingDbContext>
             b.Property(x => x.Value).HasMaxLength(500);
         });
 
-        modelBuilder.Entity<TestScheduleEntity>(b =>
-        {
-            b.ToTable("TestSchedule");
-            b.HasKey(x => x.Id);
-
-            b.Property(x => x.Id).UseIdentityColumn(9500000, 1);
-            b.Property(x => x.Name).IsRequired().HasMaxLength(50);
-            b.Property(x => x.CaseScope).HasMaxLength(20).IsRequired();
-            b.Property(x => x.SelectedCaseIdsJson).HasMaxLength(4000);
-            b.Property(x => x.CronExpression).HasMaxLength(100).IsRequired();
-
-            b.HasIndex(x => x.ProjectId);
-        });
-
         modelBuilder.Entity<TestPlanEntity>(b =>
         {
             b.ToTable("TestPlan");
@@ -168,6 +154,7 @@ public class TestingDbContext : AbpDbContext<TestingDbContext>
             b.Property(x => x.Id).UseIdentityColumn(9700000, 1);
             b.Property(x => x.Name).IsRequired().HasMaxLength(50);
             b.Property(x => x.Description).HasMaxLength(200);
+            b.Property(x => x.CronExpression).HasMaxLength(100);
 
             b.HasIndex(x => x.ProjectId);
         });

@@ -40,6 +40,9 @@ public class CaseEntity : AuditedEntity<long>, IMultiTenant
 
     /// <summary>上一次执行时间</summary>
     public DateTime? LastExecutionTime { get; set; }
+
+    /// <summary>关联的数据集ID列表（JSON 数组，数据驱动执行时使用）</summary>
+    public string? DatasetIdsJson { get; set; }
 }
 
 /// <summary>
