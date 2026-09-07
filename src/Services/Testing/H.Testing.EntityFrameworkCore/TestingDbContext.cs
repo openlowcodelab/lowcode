@@ -144,6 +144,10 @@ public class TestingDbContext : AbpDbContext<TestingDbContext>
             b.Property(x => x.Id).UseIdentityColumn(1000, 1);
             b.Property(x => x.Key).HasMaxLength(50).IsRequired().IsUnicode(false);
             b.Property(x => x.Value).HasMaxLength(500);
+            b.Property(x => x.ProviderName).HasMaxLength(1).IsRequired().IsUnicode(false);
+            b.Property(x => x.ProviderKey).HasMaxLength(64).IsUnicode(false);
+
+            b.HasIndex(x => new { x.Key, x.ProviderName, x.ProviderKey }).IsUnique();
         });
 
         modelBuilder.Entity<TestPlanEntity>(b =>

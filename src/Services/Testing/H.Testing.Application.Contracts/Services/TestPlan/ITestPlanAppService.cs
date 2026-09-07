@@ -9,9 +9,9 @@ namespace H.Testing.Application.Contracts;
 public interface ITestPlanAppService : IAppService
 {
     /// <summary>
-    /// 获取项目的测试计划列表（含用例进度统计）
+    /// 获取项目的测试计划列表（含用例进度统计）；status 为空时返回全部状态（不含已归档），传 Archived 时仅返回已归档
     /// </summary>
-    Task<BaseOutput<List<TestPlanDto>>> GetByProjectIdAsync(long projectId);
+    Task<BaseOutput<List<TestPlanDto>>> GetByProjectIdAsync(long projectId, TestPlanStatus? status = null);
 
     /// <summary>
     /// 获取计划详情（含计划内用例）

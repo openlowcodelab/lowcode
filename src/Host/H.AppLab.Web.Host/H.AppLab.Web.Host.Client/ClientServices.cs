@@ -1,4 +1,5 @@
 using H.Abp.HttpClientProxy;
+using Microsoft.JSInterop;
 using H.Account.Application.Contracts;
 using H.Approval.Application.Contracts;
 using H.Assistant.Application.Contracts;
@@ -18,6 +19,7 @@ using H.Setting.Application.Contracts;
 using H.SupplyChain.Application.Contracts;
 using H.SystemPortal.Application.Contracts;
 using H.Testing.Application.Contracts;
+using H.Testing.Web.Services;
 
 namespace H.AppLab.Web.Host.Client;
 
@@ -122,6 +124,8 @@ public static class ClientServices
             s.AddHttpClientProxies(typeof(TestingApplicationContractsModule).Assembly, TestingRemoteServiceName);
             // Testing 测试执行事件通知器
             s.AddSingleton<ITestExecutionEventNotifier, TestExecutionEventNotifier>();
+            // 「当前选中项目」共享状态（顶栏选择器与各页面共用）
+            s.AddScoped<CurrentProjectSelection>();
         },
         ["notification"] = (s, _) =>
             s.AddHttpClientProxies(typeof(NotificationApplicationContractsModule).Assembly, NotificationRemoteServiceName),
@@ -179,6 +183,8 @@ public static class ClientServices
                 // 转发根容器的基础服务，供代理工厂在模块子容器内解析
                 services.AddSingleton(root.GetRequiredService<RemoteServiceOptions>());
                 services.AddSingleton(root.GetRequiredService<IHttpClientFactory>());
+                // 模块内共享状态服务可能依赖 IJSRuntime（如 localStorage），一并转发
+                services.AddSingleton(root.GetRequiredService<IJSRuntime>());
                 configure(services, root);
             });
         }

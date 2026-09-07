@@ -3,34 +3,25 @@
 
 @namespace H.Testing.Web
 @layout TestingLayout
+@implements IDisposable
+@using H.Testing.Web.Components
 
 <link href="_content/H.Testing.Web/css/category-tree.css" rel="stylesheet" />
 
-@inject IProjectAppService ProjectService
 @inject ICaseCategoryAppService CaseCategoryAppService
 @inject ICaseAppService ProjectCaseService
 @inject IAiGenerateAppService TestingAiService
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
 @inject H.Util.Blazor.HToastService Toast
+@inject H.Testing.Web.Services.CurrentProjectSelection Selection
 
 <PageTitle>用例库</PageTitle>
 
 <div class="cases-page">
 <div class="page-fill" style="flex-shrink: 0; padding: 12px 16px;">
     <div style="display: flex; gap: 16px; align-items: center;">
-        <div style="flex: 0 0 25%;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <span>选择项目:</span>
-                <select class="h-select" style="width: 200px;" value="@selectedProjectId" @onchange="@(async e => await OnProjectChanged(e.Value?.ToString() ?? ""))">
-                    @foreach (var project in projects)
-                    {
-                        <option value="@project.Id">@project.Name</option>
-                    }
-                </select>
-            </div>
-        </div>
-        
+        <ProjectSelect />
         <div style="flex: 1;">
             <div style="display: flex; justify-content: space-around;">
                 <div style="text-align: center;">
@@ -416,7 +407,6 @@
                         OnSaveOnly="SaveBasicInfoOnly" />
 
 @code {
-    private List<ProjectDto> projects = new();
     private List<CaseDto> testCases = new();
     private List<CaseDto> filteredTestCases = new();
     private List<CaseDto> displayTestCases = new();
@@ -436,7 +426,7 @@
     [Parameter]
     public long? ProjectId { get; set; }
 
-    private long selectedProjectId = 0;
+    private long selectedProjectId => Selection.ProjectId;
     private long selectedCategoryId = 0;
     private string searchTerm = "";
     private long? openTestCaseDropdownId = null;
@@ -572,31 +562,31 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadData();
-    }
-
-    private async Task LoadData()
-    {
-        loading = true;
-        projects = (await ProjectService.GetAllAsync()).Data ?? [];
-
-        if (ProjectId.HasValue && projects.Any(p => p.Id == ProjectId.Value))
+        Selection.Changed += OnSelectionChanged;
+        await Selection.InitializeAsync();
+        if (ProjectId.HasValue && ProjectId.Value != 0)
         {
-            selectedProjectId = ProjectId.Value;
+            await Selection.SelectProjectAsync(ProjectId.Value);
         }
-        else if (projects.Any())
-        {
-            selectedProjectId = projects.First().Id;
-        }
-        else
-        {
-            selectedProjectId = 0;
-        }
-
         await LoadProjectData();
 
         loading = false;
         StateHasChanged();
+    }
+
+    private void OnSelectionChanged()
+    {
+        _ = InvokeAsync(async () =>
+        {
+            selectedCategoryId = 0;
+            await LoadProjectData();
+            StateHasChanged();
+        });
+    }
+
+    public void Dispose()
+    {
+        Selection.Changed -= OnSelectionChanged;
     }
 
     private async Task LoadProjectData()
@@ -619,25 +609,6 @@
         }
 
         selectedTestCases.Clear();
-        StateHasChanged();
-    }
-
-    private async Task OnProjectChanged(string? projectIdStr)
-    {
-        if (string.IsNullOrEmpty(projectIdStr) || !long.TryParse(projectIdStr, out var projectId))
-        {
-            return;
-        }
-
-        if (projectId == selectedProjectId)
-        {
-            return;
-        }
-
-        selectedProjectId = projectId;
-        selectedCategoryId = 0;
-
-        await LoadProjectData();
         StateHasChanged();
     }
 

@@ -32,4 +32,14 @@ public interface ITestingSettingsAppService : IAppService
     /// 重新生成 CI 接入令牌（旧令牌立即失效）
     /// </summary>
     Task<BaseOutput<string>> RegenerateCiTokenAsync();
+
+    /// <summary>
+    /// 读取当前用户的某项设置（不存在返回 null）
+    /// </summary>
+    Task<BaseOutput<string?>> GetUserSettingAsync(string name);
+
+    /// <summary>
+    /// 写入当前用户的某项设置（值为空表示清除）
+    /// </summary>
+    Task<BaseOutput> SetUserSettingAsync(SettingUserValueInput input);
 }

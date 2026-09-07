@@ -35,11 +35,14 @@ public class TestPlanAppService : ApplicationService, ITestPlanAppService
         _backgroundJobClient = backgroundJobClient;
     }
 
-    public async Task<BaseOutput<List<TestPlanDto>>> GetByProjectIdAsync(long projectId)
+    public async Task<BaseOutput<List<TestPlanDto>>> GetByProjectIdAsync(long projectId, TestPlanStatus? status = null)
     {
         var planQuery = await _repository.GetQueryableAsync();
         var plans = await AsyncExecuter.ToListAsync(
-            planQuery.Where(e => e.ProjectId == projectId).OrderByDescending(e => e.CreationTime));
+            planQuery.Where(e => e.ProjectId == projectId && (status.HasValue
+                    ? e.Status == (int)status.Value
+                    : e.Status != (int)TestPlanStatus.Archived))
+                .OrderByDescending(e => e.CreationTime));
 
         var planCaseQuery = await _planCaseRepository.GetQueryableAsync();
         var planIds = plans.Select(p => p.Id).ToList();

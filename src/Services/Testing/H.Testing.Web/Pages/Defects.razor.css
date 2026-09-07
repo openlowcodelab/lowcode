@@ -9,5 +9,27 @@
 .defects-body {
     flex: 1;
     min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 让列表白卡铺满剩余高度，表格在卡片内部滚动 */
+.defects-body > .page-fill {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.defects-body ::deep .h-card {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.defects-body ::deep .h-card-body {
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
 }

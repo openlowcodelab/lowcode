@@ -3,26 +3,20 @@
 
 @namespace H.Testing.Web
 @layout TestingLayout
+@implements IDisposable
+@using H.Testing.Web.Components
 
-@inject IProjectAppService ProjectService
 @inject ITestReportAppService ReportService
 @inject NavigationManager Navigation
 @inject H.Util.Blazor.HToastService Toast
+@inject H.Testing.Web.Services.CurrentProjectSelection Selection
 
 <PageTitle>测试报告</PageTitle>
 
 <div class="report-page">
     <div class="page-fill" style="flex-shrink:0;padding:12px 16px;">
         <div style="display:flex;gap:16px;align-items:center;">
-            <div style="display:flex;align-items:center;gap:8px;">
-                <span>选择项目:</span>
-                <select class="h-select" style="width:200px;" value="@selectedProjectId" @onchange="OnProjectChanged">
-                    @foreach (var project in projects)
-                    {
-                        <option value="@project.Id">@project.Name</option>
-                    }
-                </select>
-            </div>
+            <ProjectSelect />
             <div style="display:flex;align-items:center;gap:8px;">
                 <span>统计范围:</span>
                 <select class="h-select" style="width:120px;" value="@days" @onchange="OnDaysChanged">
@@ -221,40 +215,34 @@
 @code {
     [Parameter] public long ProjectId { get; set; }
 
-    private List<ProjectDto> projects = new();
-    private long selectedProjectId;
+    private long selectedProjectId => Selection.ProjectId;
     private int days = 14;
     private bool loading = true;
     private TestReportDto? report;
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadProjects();
+        Selection.Changed += OnSelectionChanged;
+        await Selection.InitializeAsync();
+        if (ProjectId != 0)
+        {
+            await Selection.SelectProjectAsync(ProjectId);
+        }
+        await LoadReport();
     }
 
-    private async Task LoadProjects()
+    private void OnSelectionChanged()
     {
-        try
+        _ = InvokeAsync(async () =>
         {
-            projects = (await ProjectService.GetAllAsync()).Data ?? [];
-
-            if (projects.Count == 0)
-            {
-                loading = false;
-                return;
-            }
-
-            selectedProjectId = ProjectId != 0 && projects.Any(p => p.Id == ProjectId)
-                ? ProjectId
-                : projects[0].Id;
-
             await LoadReport();
-        }
-        catch (Exception ex)
-        {
-            Toast.Error($"加载项目失败: {ex.Message}");
-            loading = false;
-        }
+            StateHasChanged();
+        });
+    }
+
+    public void Dispose()
+    {
+        Selection.Changed -= OnSelectionChanged;
     }
 
     private async Task LoadReport()
@@ -279,15 +267,6 @@
         {
             loading = false;
             StateHasChanged();
-        }
-    }
-
-    private async Task OnProjectChanged(ChangeEventArgs e)
-    {
-        if (long.TryParse(e.Value?.ToString(), out var projectId))
-        {
-            selectedProjectId = projectId;
-            await LoadReport();
         }
     }
 

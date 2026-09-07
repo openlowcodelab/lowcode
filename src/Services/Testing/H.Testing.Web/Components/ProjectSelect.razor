@@ -1,0 +1,65 @@
+@namespace H.Testing.Web.Components
+@implements IDisposable
+@inject IProjectAppService ProjectService
+@inject H.Testing.Web.Services.CurrentProjectSelection Selection
+
+@if (projects.Count > 0)
+{
+    <div style="display:flex;align-items:center;gap:8px;">
+        <span>选择项目:</span>
+        <select class="h-select" style="width:200px;" value="@Selection.ProjectId" @onchange="OnSelectedChanged">
+            @foreach (var project in projects)
+            {
+                <option value="@project.Id">@project.Name</option>
+            }
+        </select>
+    </div>
+}
+
+@code {
+    private List<ProjectDto> projects = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Selection.Changed += OnSelectionChanged;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            projects = (await ProjectService.GetAllAsync()).Data ?? [];
+            await Selection.InitializeAsync();
+
+            if (projects.Count > 0 && !projects.Any(p => p.Id == Selection.ProjectId))
+            {
+                await Selection.FallbackToAsync(projects[0].Id);
+            }
+
+            StateHasChanged();
+        }
+        catch
+        {
+            // 项目列表加载失败时不显示选择器
+        }
+    }
+
+    private async Task OnSelectedChanged(ChangeEventArgs e)
+    {
+        if (long.TryParse(e.Value?.ToString(), out var projectId))
+        {
+            await Selection.SelectProjectAsync(projectId);
+        }
+    }
+
+    private void OnSelectionChanged()
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        Selection.Changed -= OnSelectionChanged;
+    }
+}

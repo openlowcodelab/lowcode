@@ -12,6 +12,7 @@
 @inject IJSRuntime JSRuntime
 @inject NavigationManager NavigationManager
 @inject H.Util.Blazor.HToastService Toast
+@inject H.Testing.Web.Services.CurrentProjectSelection Selection
 
 <PageTitle>项目管理</PageTitle>
 
@@ -1022,7 +1023,7 @@ else
             var projectId = (await TestingAiService.CreateProjectFromAiAsync(aiGenerated)).Data;
             showAiModal = false;
             await LoadData();
-            await JSRuntime.InvokeVoidAsync("localStorage.setItem", "lastSelectedProjectId", projectId.ToString());
+            await Selection.SelectProjectAsync(projectId);
             NavigationManager.NavigateTo($"/testing/project-cases/{projectId}");
         }
         catch (Exception ex)
@@ -1142,7 +1143,7 @@ else
                 var projectId = (await ProjectTemplateService.CreateProjectFromTemplateAsync(selectedTemplateId, currentProject.Name, currentProject.Description)).Data;
                 HideProjectModal();
                 await LoadData();
-                await JSRuntime.InvokeVoidAsync("localStorage.setItem", "lastSelectedProjectId", projectId.ToString());
+                await Selection.SelectProjectAsync(projectId);
                 NavigationManager.NavigateTo($"/testing/project-cases/{projectId}");
             }
             else
@@ -1245,7 +1246,7 @@ else
 
     private async Task NavigateToProjectCases(long projectId)
     {
-        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "lastSelectedProjectId", projectId.ToString());
+        await Selection.SelectProjectAsync(projectId);
         NavigationManager.NavigateTo($"/testing/project-cases/{projectId}");
     }
 

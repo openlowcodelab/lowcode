@@ -3,28 +3,22 @@
 
 @namespace H.Testing.Web
 @layout TestingLayout
+@implements IDisposable
+@using H.Testing.Web.Components
 
-@inject IProjectAppService ProjectService
 @inject IDefectAppService DefectService
 @inject ICaseAppService ProjectCaseService
 @inject IExecutionRecordAppService ExecutionRecordService
 @inject NavigationManager Navigation
 @inject H.Util.Blazor.HToastService Toast
+@inject H.Testing.Web.Services.CurrentProjectSelection Selection
 
 <PageTitle>缺陷管理</PageTitle>
 
 <div class="defects-page">
     <div class="page-fill" style="flex-shrink:0;padding:12px 16px;">
         <div style="display:flex;gap:16px;align-items:center;">
-            <div style="display:flex;align-items:center;gap:8px;">
-                <span>选择项目:</span>
-                <select class="h-select" style="width:200px;" value="@selectedProjectId" @onchange="OnProjectChanged">
-                    @foreach (var project in projects)
-                    {
-                        <option value="@project.Id">@project.Name</option>
-                    }
-                </select>
-            </div>
+            <ProjectSelect />
             <div style="display:flex;align-items:center;gap:8px;">
                 <span>状态:</span>
                 <select class="h-select" style="width:110px;" value="@statusFilter" @onchange="OnStatusFilterChanged">
@@ -196,8 +190,7 @@
 @code {
     [Parameter] public long ProjectId { get; set; }
 
-    private List<ProjectDto> projects = new();
-    private long selectedProjectId;
+    private long selectedProjectId => Selection.ProjectId;
     private List<DefectDto> defects = new();
     private List<CaseDto> projectCases = new();
     private bool loading = true;
@@ -211,33 +204,28 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadProjects();
+        Selection.Changed += OnSelectionChanged;
+        await Selection.InitializeAsync();
+        if (ProjectId != 0)
+        {
+            await Selection.SelectProjectAsync(ProjectId);
+        }
+        await LoadDefects();
         await HandleCreateFromRecordQuery();
     }
 
-    private async Task LoadProjects()
+    private void OnSelectionChanged()
     {
-        try
+        _ = InvokeAsync(async () =>
         {
-            projects = (await ProjectService.GetAllAsync()).Data ?? [];
-
-            if (projects.Count == 0)
-            {
-                loading = false;
-                return;
-            }
-
-            selectedProjectId = ProjectId != 0 && projects.Any(p => p.Id == ProjectId)
-                ? ProjectId
-                : projects[0].Id;
-
             await LoadDefects();
-        }
-        catch (Exception ex)
-        {
-            Toast.Error($"加载项目失败: {ex.Message}");
-            loading = false;
-        }
+            StateHasChanged();
+        });
+    }
+
+    public void Dispose()
+    {
+        Selection.Changed -= OnSelectionChanged;
     }
 
     /// <summary>
@@ -328,15 +316,6 @@
         {
             loading = false;
             StateHasChanged();
-        }
-    }
-
-    private async Task OnProjectChanged(ChangeEventArgs e)
-    {
-        if (long.TryParse(e.Value?.ToString(), out var projectId))
-        {
-            selectedProjectId = projectId;
-            await LoadDefects();
         }
     }
 

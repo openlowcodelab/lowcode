@@ -3,38 +3,47 @@
 
 @namespace H.Testing.Web
 @layout TestingLayout
+@implements IDisposable
+@using H.Testing.Web.Components
 
-@inject IProjectAppService ProjectService
 @inject ITestPlanAppService TestPlanService
 @inject IEnvironmentAppService EnvironmentService
 @inject NavigationManager Navigation
 @inject H.Util.Blazor.HToastService Toast
+@inject H.Testing.Web.Services.CurrentProjectSelection Selection
 
 <PageTitle>测试计划</PageTitle>
 
 <div class="plans-page">
     <div class="page-fill" style="flex-shrink:0;padding:12px 16px;">
         <div style="display:flex;gap:16px;align-items:center;">
-            <div style="display:flex;align-items:center;gap:8px;">
-                <span>选择项目:</span>
-                <select class="h-select" style="width:200px;" value="@selectedProjectId" @onchange="OnProjectChanged">
-                    @foreach (var project in projects)
-                    {
-                        <option value="@project.Id">@project.Name</option>
-                    }
-                </select>
-            </div>
+            <ProjectSelect />
+            @if (!showArchived)
+            {
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span>状态:</span>
+                    <select class="h-select" style="width:110px;" value="@statusFilter" @onchange="OnStatusFilterChanged">
+                        <option value="">全部状态</option>
+                        <option value="1">未开始</option>
+                        <option value="2">进行中</option>
+                        <option value="3">已完成</option>
+                    </select>
+                </div>
+            }
             <button class="h-btn" disabled="@(selectedProjectId == 0)" @onclick="OpenCreateModal">＋ 新建测试计划</button>
             @if (loading)
             {
                 <span class="h-spin"><span class="h-spin-dot"></span><span class="h-spin-text">加载中...</span></span>
             }
+            <button class="h-btn" style="margin-left:auto;" @onclick="ToggleArchivedView">
+                @(showArchived ? "返回列表" : "已归档")
+            </button>
         </div>
     </div>
 
     <div class="plans-body">
         <div class="page-fill">
-            <HCard Title="🗓️ 测试计划列表">
+            <HCard Title="@(showArchived ? "🗓️ 已归档测试计划" : "🗓️ 测试计划列表")">
                 <Body>
                     @if (selectedProjectId == 0)
                     {
@@ -43,7 +52,9 @@
                     else if (!plans.Any())
                     {
                         <div class="h-empty" style="padding:60px 0;">
-                            暂无测试计划。测试计划用于把用例组织成一轮测试活动，支持手动执行或定时自动执行，并跟踪通过进度
+                            @(showArchived
+                                ? "暂无已归档的测试计划"
+                                : "暂无测试计划。测试计划用于把用例组织成一轮测试活动，支持手动执行或定时自动执行，并跟踪通过进度")
                         </div>
                     }
                     else
@@ -245,11 +256,12 @@
 @code {
     [Parameter] public long ProjectId { get; set; }
 
-    private List<ProjectDto> projects = new();
-    private long selectedProjectId;
+    private long selectedProjectId => Selection.ProjectId;
     private List<TestPlanDto> plans = new();
     private List<EnvironmentDto> environments = new();
     private bool loading = true;
+    private string statusFilter = string.Empty;
+    private bool showArchived;
 
     private bool showModal;
     private bool saving;
@@ -258,32 +270,27 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadProjects();
+        Selection.Changed += OnSelectionChanged;
+        await Selection.InitializeAsync();
+        if (ProjectId != 0)
+        {
+            await Selection.SelectProjectAsync(ProjectId);
+        }
+        await LoadPlans();
     }
 
-    private async Task LoadProjects()
+    private void OnSelectionChanged()
     {
-        try
+        _ = InvokeAsync(async () =>
         {
-            projects = (await ProjectService.GetAllAsync()).Data ?? [];
-
-            if (projects.Count == 0)
-            {
-                loading = false;
-                return;
-            }
-
-            selectedProjectId = ProjectId != 0 && projects.Any(p => p.Id == ProjectId)
-                ? ProjectId
-                : projects[0].Id;
-
             await LoadPlans();
-        }
-        catch (Exception ex)
-        {
-            Toast.Error($"加载项目失败: {ex.Message}");
-            loading = false;
-        }
+            StateHasChanged();
+        });
+    }
+
+    public void Dispose()
+    {
+        Selection.Changed -= OnSelectionChanged;
     }
 
     private async Task LoadPlans()
@@ -298,7 +305,10 @@
         try
         {
             loading = true;
-            plans = (await TestPlanService.GetByProjectIdAsync(selectedProjectId)).Data ?? [];
+            var status = showArchived
+                ? TestPlanStatus.Archived
+                : int.TryParse(statusFilter, out var s) ? (TestPlanStatus?)s : null;
+            plans = (await TestPlanService.GetByProjectIdAsync(selectedProjectId, status)).Data ?? [];
             environments = (await EnvironmentService.GetByProjectIdAsync(selectedProjectId)).Data ?? [];
         }
         catch (Exception ex)
@@ -312,13 +322,16 @@
         }
     }
 
-    private async Task OnProjectChanged(ChangeEventArgs e)
+    private async Task OnStatusFilterChanged(ChangeEventArgs e)
     {
-        if (long.TryParse(e.Value?.ToString(), out var projectId))
-        {
-            selectedProjectId = projectId;
-            await LoadPlans();
-        }
+        statusFilter = e.Value?.ToString() ?? string.Empty;
+        await LoadPlans();
+    }
+
+    private async Task ToggleArchivedView()
+    {
+        showArchived = !showArchived;
+        await LoadPlans();
     }
 
     private void OpenCreateModal()

@@ -1,6 +1,7 @@
 using H.Testing.Application.Contracts;
 using H.Testing.EntityFrameworkCore;
 using H.Util.Base;
+using Volo.Abp;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 
@@ -62,30 +63,76 @@ public class TestingSettingsAppService : ApplicationService, ITestingSettingsApp
         return new(token);
     }
 
+    public async Task<BaseOutput<string?>> GetUserSettingAsync(string name)
+    {
+        var userKey = ResolveCurrentUserKey();
+        return new(await GetValueAsync(name, SettingProviders.User, userKey));
+    }
+
+    public async Task<BaseOutput> SetUserSettingAsync(SettingUserValueInput input)
+    {
+        var userKey = ResolveCurrentUserKey();
+        await SetValueAsync(input.Name, input.Value, SettingProviders.User, userKey);
+        return new();
+    }
+
+    /// <summary>
+    /// 解析当前登录用户标识作为用户级设置的 ProviderKey；未登录抛异常
+    /// </summary>
+    private string ResolveCurrentUserKey()
+    {
+        var userKey = CurrentUser?.Id?.ToString() ?? CurrentUser?.UserName;
+        if (string.IsNullOrWhiteSpace(userKey))
+        {
+            throw new UserFriendlyException("用户未登录，无法读写用户级设置");
+        }
+        return userKey;
+    }
+
     private static string GenerateToken() => Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N");
 
     /// <summary>
-    /// 读取指定键的设置值，不存在时返回 null
+    /// 读取全局设置值，不存在时返回 null
     /// </summary>
-    private async Task<string?> GetValueAsync(string key)
+    private Task<string?> GetValueAsync(string key)
+        => GetValueAsync(key, SettingProviders.Global, string.Empty);
+
+    /// <summary>
+    /// 写入全局设置值（不存在则新增，空值存为 null）
+    /// </summary>
+    private Task SetValueAsync(string key, string? value)
+        => SetValueAsync(key, value, SettingProviders.Global, string.Empty);
+
+    /// <summary>
+    /// 读取指定提供者作用域的设置值，不存在时返回 null
+    /// </summary>
+    private async Task<string?> GetValueAsync(string key, string providerName, string? providerKey)
     {
         var query = await _repository.GetQueryableAsync();
-        var entity = await AsyncExecuter.FirstOrDefaultAsync(query.Where(e => e.Key == key));
+        var entity = await AsyncExecuter.FirstOrDefaultAsync(
+            query.Where(e => e.Key == key && e.ProviderName == providerName && e.ProviderKey == providerKey));
         return entity?.Value;
     }
 
     /// <summary>
-    /// 写入指定键的设置值（不存在则新增，空值存为 null）
+    /// 写入指定提供者作用域的设置值（不存在则新增，空值存为 null）
     /// </summary>
-    private async Task SetValueAsync(string key, string? value)
+    private async Task SetValueAsync(string key, string? value, string providerName, string? providerKey)
     {
         var normalized = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
         var query = await _repository.GetQueryableAsync();
-        var entity = await AsyncExecuter.FirstOrDefaultAsync(query.Where(e => e.Key == key));
+        var entity = await AsyncExecuter.FirstOrDefaultAsync(
+            query.Where(e => e.Key == key && e.ProviderName == providerName && e.ProviderKey == providerKey));
         if (entity == null)
         {
-            entity = new SettingsEntity { Key = key, Value = normalized };
+            entity = new SettingsEntity
+            {
+                Key = key,
+                Value = normalized,
+                ProviderName = providerName,
+                ProviderKey = providerKey
+            };
             await _repository.InsertAsync(entity, autoSave: true);
         }
         else
