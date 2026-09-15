@@ -74,6 +74,36 @@ public class AgentSkillDataSeeder : IDataSeedContributor, ITransientDependency
                 ImplementationClass = "H.Assistant.Core.Tools.HttpClientTool",
                 IsEnabled = true,
                 RequiresApproval = false
+            },
+            new()
+            {
+                SkillName = "git",
+                DisplayName = "Git 工具",
+                Description = "克隆仓库、创建分支、提交推送、合并分支、查看提交记录（需要助手运行时的资源上下文）",
+                SkillType = "Function",
+                ImplementationClass = "H.Assistant.Core.Tools.GitTool",
+                IsEnabled = true,
+                RequiresApproval = false
+            },
+            new()
+            {
+                SkillName = "workspace_file",
+                DisplayName = "工作区文件工具",
+                Description = "在 git 资源的本地克隆内列出/读取/写入文件",
+                SkillType = "Function",
+                ImplementationClass = "H.Assistant.Core.Tools.WorkspaceFileTool",
+                IsEnabled = true,
+                RequiresApproval = false
+            },
+            new()
+            {
+                SkillName = "pipeline",
+                DisplayName = "流水线工具",
+                Description = "触发 DevOps 流水线、查询流水线状态、调用资源 HTTP API（需要助手运行时的资源上下文）",
+                SkillType = "Function",
+                ImplementationClass = "H.Assistant.Core.Tools.PipelineTool",
+                IsEnabled = true,
+                RequiresApproval = false
             }
         };
 

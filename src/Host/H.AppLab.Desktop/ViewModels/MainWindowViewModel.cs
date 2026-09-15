@@ -8,13 +8,12 @@ using System.Collections.ObjectModel;
 namespace H.AppLab.Desktop.ViewModels;
 
 /// <summary>
-/// 宿主外壳主窗口 ViewModel：左侧快捷菜单（各应用 / 任务 / 应用）+ 内容区。
+/// 宿主外壳主窗口 ViewModel：左侧快捷菜单 + 内容区。
 /// 插件应用视图按需创建并缓存，切换菜单时保留应用内状态。
 /// </summary>
 public partial class MainWindowViewModel : ObservableObject
 {
     private const string TasksMenuId = "tasks";
-    private const string AppsMenuId = "apps";
     private const string KnowledgeMenuId = "knowledge";
     private const string SettingsMenuId = "settings";
 
@@ -22,7 +21,6 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly Dictionary<string, Control> _appViews = [];
 
     private Control? _tasksView;
-    private AppsView? _appsView;
     private Control? _knowledgeView;
     private Control? _settingsView;
 
@@ -35,7 +33,7 @@ public partial class MainWindowViewModel : ObservableObject
     /// <summary>底部设置入口（仅展示图标）</summary>
     public NavItemViewModel SettingsNav { get; }
 
-    /// <summary>已接入的全部插件应用（应用中心/首页展示）</summary>
+    /// <summary>已接入的全部插件应用</summary>
     public ObservableCollection<AppCardViewModel> Apps { get; } = [];
 
     [ObservableProperty]
@@ -47,16 +45,15 @@ public partial class MainWindowViewModel : ObservableObject
 
         foreach (var app in apps)
         {
-            Apps.Add(new AppCardViewModel(app, this));
+            Apps.Add(new AppCardViewModel(app));
         }
 
-        // 快捷菜单：各插件应用 + 任务 + 应用
+        // 快捷菜单：各插件应用 + 助手 + 任务
         foreach (var card in Apps)
         {
             NavItems.Add(new NavItemViewModel(card.App.Id, card.App.Name, card.App.Icon, this) { AppId = card.App.Id });
         }
         NavItems.Add(new NavItemViewModel(TasksMenuId, "任务", "🗓", this));
-        NavItems.Add(new NavItemViewModel(AppsMenuId, "应用", "🧩", this));
 
         // 底部知识中心 / 设置入口（仅展示图标）
         KnowledgeNav = new NavItemViewModel(KnowledgeMenuId, "知识中心", "📖", this);
@@ -89,11 +86,7 @@ public partial class MainWindowViewModel : ObservableObject
 
         CurrentContent = item.AppId is not null
             ? GetAppView(item.AppId)
-            : item.Id switch
-            {
-                TasksMenuId => GetTasksView(),
-                _ => _appsView ??= new AppsView { DataContext = this }
-            };
+            : GetTasksView();
     }
 
     /// <summary>
@@ -137,21 +130,6 @@ public partial class MainWindowViewModel : ObservableObject
 
         (_settingsView.DataContext as SettingsViewModel)?.SelectMenu("general");
         return _settingsView;
-    }
-
-    /// <summary>
-    /// 从首页 / 应用中心打开应用：有对应快捷菜单则联动选中
-    /// </summary>
-    public void OpenApp(IDesktopApp app)
-    {
-        var navItem = NavItems.FirstOrDefault(n => n.AppId == app.Id);
-        if (navItem is not null)
-        {
-            Navigate(navItem);
-            return;
-        }
-
-        CurrentContent = GetAppView(app.Id);
     }
 
     private Control GetAppView(string appId)
@@ -198,16 +176,13 @@ public partial class NavItemViewModel : ObservableObject
 }
 
 /// <summary>
-/// 应用卡片（首页快捷入口与应用中心共用）
+/// 插件应用条目（用于构建快捷菜单）
 /// </summary>
 public partial class AppCardViewModel : ObservableObject
 {
-    private readonly MainWindowViewModel _owner;
-
-    public AppCardViewModel(IDesktopApp app, MainWindowViewModel owner)
+    public AppCardViewModel(IDesktopApp app)
     {
         App = app;
-        _owner = owner;
     }
 
     public IDesktopApp App { get; }
@@ -217,7 +192,4 @@ public partial class AppCardViewModel : ObservableObject
     public string Icon => App.Icon;
 
     public string Description => App.Description;
-
-    [RelayCommand]
-    private void Open() => _owner.OpenApp(App);
 }
