@@ -15,13 +15,16 @@ public class AgentAppService : ApplicationService, IAgentAppService
 {
     private readonly IRepository<AgentEntity, Guid> _agentRepository;
     private readonly IRepository<SkillEntity, Guid> _skillRepository;
+    private readonly IRepository<AgentTemplateEntity, Guid> _templateRepository;
 
     public AgentAppService(
         IRepository<AgentEntity, Guid> agentRepository,
-        IRepository<SkillEntity, Guid> skillRepository)
+        IRepository<SkillEntity, Guid> skillRepository,
+        IRepository<AgentTemplateEntity, Guid> templateRepository)
     {
         _agentRepository = agentRepository;
         _skillRepository = skillRepository;
+        _templateRepository = templateRepository;
     }
 
     public async Task<BaseOutput<AgentDto>> GetAsync(Guid id)
@@ -76,7 +79,11 @@ public class AgentAppService : ApplicationService, IAgentAppService
             MaxTokens = input.MaxTokens,
             DefaultModelConfigId = input.DefaultModelConfigId,
             Metadata = input.Metadata,
-            SkillIds = input.SkillIds.Any() ? JsonSerializer.Serialize(input.SkillIds) : null
+            Role = input.Role,
+            SkillIds = SerializeIds(input.SkillIds),
+            ConnectorIds = SerializeIds(input.ConnectorIds),
+            KnowledgeBaseIds = SerializeIds(input.KnowledgeBaseIds),
+            ProjectIds = SerializeIds(input.ProjectIds)
         };
 
         entity = await _agentRepository.InsertAsync(entity);
@@ -97,7 +104,11 @@ public class AgentAppService : ApplicationService, IAgentAppService
         entity.MaxTokens = input.MaxTokens;
         entity.DefaultModelConfigId = input.DefaultModelConfigId;
         entity.Metadata = input.Metadata;
-        entity.SkillIds = input.SkillIds.Any() ? JsonSerializer.Serialize(input.SkillIds) : null;
+        entity.Role = input.Role;
+        entity.SkillIds = SerializeIds(input.SkillIds);
+        entity.ConnectorIds = SerializeIds(input.ConnectorIds);
+        entity.KnowledgeBaseIds = SerializeIds(input.KnowledgeBaseIds);
+        entity.ProjectIds = SerializeIds(input.ProjectIds);
 
         entity = await _agentRepository.UpdateAsync(entity);
         return new(MapToDto(entity));
@@ -168,16 +179,68 @@ public class AgentAppService : ApplicationService, IAgentAppService
         return new(skills.Select(MapSkillToDto).ToList());
     }
 
-    private static List<Guid> GetSkillIds(AgentEntity agent)
+    public async Task<BaseOutput<AgentDto>> CreateFromTemplateAsync(CreateAgentFromTemplateDto input)
     {
-        if (string.IsNullOrWhiteSpace(agent.SkillIds))
+        var template = await _templateRepository.GetAsync(input.TemplateId);
+
+        var query = await _agentRepository.GetQueryableAsync();
+        if (await AsyncExecuter.AnyAsync(query.Where(x => x.DisplayName == input.DisplayName)))
+        {
+            throw new InvalidOperationException($"员工 '{input.DisplayName}' 已存在");
+        }
+
+        var entity = new AgentEntity
+        {
+            AgentType = $"waker-{Guid.NewGuid():N}"[..18],
+            DisplayName = input.DisplayName,
+            Description = template.Description,
+            SystemPrompt = template.SystemPrompt,
+            IsEnabled = true,
+            Role = string.IsNullOrWhiteSpace(input.Role) ? template.Role : input.Role,
+            SkillIds = template.SkillIds,
+            ConnectorIds = template.ConnectorIds,
+            KnowledgeBaseIds = template.KnowledgeBaseIds,
+            ProjectIds = template.ProjectIds
+        };
+
+        entity = await _agentRepository.InsertAsync(entity);
+        return new(MapToDto(entity));
+    }
+
+    public async Task<BaseOutput<AgentTemplateDto>> SaveAsTemplateAsync(SaveAgentTemplateDto input)
+    {
+        var agent = await _agentRepository.GetAsync(input.AgentId);
+
+        var entity = new AgentTemplateEntity
+        {
+            TemplateName = input.TemplateName,
+            Role = agent.Role,
+            Description = agent.Description,
+            SystemPrompt = agent.SystemPrompt,
+            SkillIds = agent.SkillIds,
+            ConnectorIds = agent.ConnectorIds,
+            KnowledgeBaseIds = agent.KnowledgeBaseIds,
+            ProjectIds = agent.ProjectIds,
+            IsBuiltin = false
+        };
+
+        entity = await _templateRepository.InsertAsync(entity);
+        return new(MapTemplateToDto(entity));
+    }
+
+    private static string? SerializeIds(List<Guid> ids)
+        => ids.Any() ? JsonSerializer.Serialize(ids) : null;
+
+    private static List<Guid> ParseIds(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
         {
             return new List<Guid>();
         }
 
         try
         {
-            return JsonSerializer.Deserialize<List<Guid>>(agent.SkillIds) ?? new List<Guid>();
+            return JsonSerializer.Deserialize<List<Guid>>(json) ?? new List<Guid>();
         }
         catch
         {
@@ -185,11 +248,32 @@ public class AgentAppService : ApplicationService, IAgentAppService
         }
     }
 
+    private static AgentTemplateDto MapTemplateToDto(AgentTemplateEntity entity)
+    {
+        return new AgentTemplateDto
+        {
+            Id = entity.Id,
+            TemplateName = entity.TemplateName,
+            Role = entity.Role,
+            Description = entity.Description,
+            SystemPrompt = entity.SystemPrompt,
+            SkillIds = ParseIds(entity.SkillIds),
+            ConnectorIds = ParseIds(entity.ConnectorIds),
+            KnowledgeBaseIds = ParseIds(entity.KnowledgeBaseIds),
+            ProjectIds = ParseIds(entity.ProjectIds),
+            IsBuiltin = entity.IsBuiltin,
+            CreationTime = entity.CreationTime,
+            CreatorId = entity.CreatorId,
+            LastModificationTime = entity.LastModificationTime,
+            LastModifierId = entity.LastModifierId
+        };
+    }
+
+    private static List<Guid> GetSkillIds(AgentEntity agent) => ParseIds(agent.SkillIds);
+
     private static AgentDto MapToDto(AgentEntity entity)
     {
-        var skillIds = string.IsNullOrWhiteSpace(entity.SkillIds)
-            ? new List<Guid>()
-            : JsonSerializer.Deserialize<List<Guid>>(entity.SkillIds) ?? new List<Guid>();
+        var skillIds = ParseIds(entity.SkillIds);
 
         return new AgentDto
         {
@@ -204,7 +288,12 @@ public class AgentAppService : ApplicationService, IAgentAppService
             MaxTokens = entity.MaxTokens,
             DefaultModelConfigId = entity.DefaultModelConfigId,
             Metadata = entity.Metadata,
+            Role = entity.Role,
             Skills = skillIds.Select(x => x.ToString()).ToList(),
+            SkillIdList = skillIds,
+            ConnectorIds = ParseIds(entity.ConnectorIds),
+            KnowledgeBaseIds = ParseIds(entity.KnowledgeBaseIds),
+            ProjectIds = ParseIds(entity.ProjectIds),
             CreationTime = entity.CreationTime,
             CreatorId = entity.CreatorId,
             LastModificationTime = entity.LastModificationTime,

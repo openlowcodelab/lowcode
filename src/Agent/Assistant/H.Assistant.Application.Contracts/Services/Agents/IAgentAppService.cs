@@ -15,4 +15,6 @@ public interface IAgentAppService : IAppService
     Task<BaseOutput> AddSkillAsync(Guid agentId, Guid skillId);
     Task<BaseOutput> RemoveSkillAsync(Guid agentId, Guid skillId);
     Task<BaseOutput<List<SkillDto>>> GetAgentSkillsAsync(Guid agentId);
+    Task<BaseOutput<AgentDto>> CreateFromTemplateAsync(CreateAgentFromTemplateDto input);
+    Task<BaseOutput<AgentTemplateDto>> SaveAsTemplateAsync(SaveAgentTemplateDto input);
 }

@@ -19,6 +19,9 @@ public class AssistantDbContext : AbpDbContext<AssistantDbContext>
     public DbSet<KnowledgeBaseEntity> KnowledgeBases { get; set; } = null!;
     public DbSet<McpServerEntity> McpServers { get; set; } = null!;
     public DbSet<CategoryEntity> Categories { get; set; } = null!;
+    public DbSet<ProjectEntity> Projects { get; set; } = null!;
+    public DbSet<ConnectorEntity> Connectors { get; set; } = null!;
+    public DbSet<AgentTemplateEntity> AgentTemplates { get; set; } = null!;
 
     public AssistantDbContext(DbContextOptions<AssistantDbContext> options)
         : base(options)
@@ -91,6 +94,7 @@ public class AssistantDbContext : AbpDbContext<AssistantDbContext>
             b.HasIndex(x => new { x.IsEnabled, x.Status });
             b.HasIndex(x => x.NextExecutionTime);
             b.HasIndex(x => x.Category);
+            b.HasIndex(x => x.ProjectId);
         });
 
         modelBuilder.Entity<TaskLogEntity>(b =>
@@ -115,7 +119,11 @@ public class AssistantDbContext : AbpDbContext<AssistantDbContext>
             b.Property(x => x.Description).HasMaxLength(1000);
             b.Property(x => x.SystemPrompt).IsRequired().HasMaxLength(4000);
             b.Property(x => x.Metadata).HasMaxLength(4000);
+            b.Property(x => x.Role).HasMaxLength(100);
             b.Property(x => x.SkillIds).HasMaxLength(2000);
+            b.Property(x => x.ConnectorIds).HasMaxLength(2000);
+            b.Property(x => x.KnowledgeBaseIds).HasMaxLength(2000);
+            b.Property(x => x.ProjectIds).HasMaxLength(2000);
 
             b.HasIndex(x => x.AgentType).IsUnique();
             b.HasIndex(x => x.IsEnabled);
@@ -191,6 +199,43 @@ public class AssistantDbContext : AbpDbContext<AssistantDbContext>
             b.Property(x => x.Sort).HasDefaultValue(0);
 
             b.HasIndex(x => x.Name).IsUnique();
+        });
+
+        modelBuilder.Entity<ProjectEntity>(b =>
+        {
+            b.ToTable("Project");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.ProjectName).IsRequired().HasMaxLength(200);
+            b.Property(x => x.Description).HasMaxLength(1000);
+        });
+
+        modelBuilder.Entity<ConnectorEntity>(b =>
+        {
+            b.ToTable("Connector");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.ConnectorKey).IsRequired().HasMaxLength(100);
+            b.Property(x => x.ConnectorName).IsRequired().HasMaxLength(200);
+            b.Property(x => x.Description).HasMaxLength(1000);
+            b.Property(x => x.Source).IsRequired().HasMaxLength(20).HasDefaultValue("Custom");
+            b.Property(x => x.Icon).HasMaxLength(100);
+            b.Property(x => x.Config).HasMaxLength(4000);
+
+            b.HasIndex(x => x.ConnectorKey).IsUnique();
+            b.HasIndex(x => x.Source);
+        });
+
+        modelBuilder.Entity<AgentTemplateEntity>(b =>
+        {
+            b.ToTable("AgentTemplate");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.TemplateName).IsRequired().HasMaxLength(200);
+            b.Property(x => x.Role).HasMaxLength(100);
+            b.Property(x => x.Description).HasMaxLength(1000);
+            b.Property(x => x.SystemPrompt).HasMaxLength(4000);
+            b.Property(x => x.SkillIds).HasMaxLength(2000);
+            b.Property(x => x.ConnectorIds).HasMaxLength(2000);
+            b.Property(x => x.KnowledgeBaseIds).HasMaxLength(2000);
+            b.Property(x => x.ProjectIds).HasMaxLength(2000);
         });
     }
 }

@@ -42,5 +42,8 @@ public class AssistantApplicationModule : AbpModule
 
         // 注册定时任务 Worker
         context.Services.AddHostedService<TaskWorker>();
+
+        // 注册启动种子数据 Worker
+        context.Services.AddHostedService<AssistantDataSeedWorker>();
     }
 }

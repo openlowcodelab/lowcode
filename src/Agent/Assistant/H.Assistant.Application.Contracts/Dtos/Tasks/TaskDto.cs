@@ -25,6 +25,7 @@ public class TaskDto : AuditedEntityDto<Guid>
 
     public string PromptContent { get; set; } = string.Empty;
     public string AgentType { get; set; } = string.Empty;
+    public Guid? ProjectId { get; set; }
     public Guid? ModelConfigId { get; set; }
     public string ScheduleType { get; set; } = string.Empty;
     public string? CronExpression { get; set; }

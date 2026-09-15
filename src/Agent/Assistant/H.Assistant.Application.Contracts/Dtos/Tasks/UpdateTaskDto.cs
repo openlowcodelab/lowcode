@@ -31,6 +31,9 @@ public class UpdateTaskDto
 
     public string AgentType { get; set; } = string.Empty;
 
+    /// <summary>归属项目 ID（可选）</summary>
+    public Guid? ProjectId { get; set; }
+
     public Guid? ModelConfigId { get; set; }
 
     [Required(ErrorMessage = "调度类型不能为空")]

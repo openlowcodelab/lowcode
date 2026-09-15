@@ -58,7 +58,27 @@ public class AgentEntity : AuditedEntity<Guid>
     public string? Metadata { get; set; }
 
     /// <summary>
+    /// 角色（如：研发工程师）
+    /// </summary>
+    public string Role { get; set; } = string.Empty;
+
+    /// <summary>
     /// 关联的技能 ID 列表（JSON 格式）
     /// </summary>
     public string? SkillIds { get; set; }
+
+    /// <summary>
+    /// 关联的连接器 ID 列表（JSON 格式）
+    /// </summary>
+    public string? ConnectorIds { get; set; }
+
+    /// <summary>
+    /// 关联的知识库 ID 列表（JSON 格式）
+    /// </summary>
+    public string? KnowledgeBaseIds { get; set; }
+
+    /// <summary>
+    /// 关联的项目 ID 列表（JSON 格式）
+    /// </summary>
+    public string? ProjectIds { get; set; }
 }

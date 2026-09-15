@@ -18,7 +18,12 @@ public class AgentDto : AuditedEntityDto<Guid>
     public int MaxTokens { get; set; }
     public Guid? DefaultModelConfigId { get; set; }
     public string? Metadata { get; set; }
+    public string Role { get; set; } = string.Empty;
     public List<string> Skills { get; set; } = new();
+    public List<Guid> SkillIdList { get; set; } = new();
+    public List<Guid> ConnectorIds { get; set; } = new();
+    public List<Guid> KnowledgeBaseIds { get; set; } = new();
+    public List<Guid> ProjectIds { get; set; } = new();
 }
 
 public class CreateAgentDto
@@ -47,7 +52,11 @@ public class CreateAgentDto
     public int MaxTokens { get; set; } = 2000;
     public Guid? DefaultModelConfigId { get; set; }
     public string? Metadata { get; set; }
+    public string Role { get; set; } = string.Empty;
     public List<Guid> SkillIds { get; set; } = new();
+    public List<Guid> ConnectorIds { get; set; } = new();
+    public List<Guid> KnowledgeBaseIds { get; set; } = new();
+    public List<Guid> ProjectIds { get; set; } = new();
 }
 
 public class UpdateAgentDto
@@ -72,7 +81,11 @@ public class UpdateAgentDto
     public int MaxTokens { get; set; } = 2000;
     public Guid? DefaultModelConfigId { get; set; }
     public string? Metadata { get; set; }
+    public string Role { get; set; } = string.Empty;
     public List<Guid> SkillIds { get; set; } = new();
+    public List<Guid> ConnectorIds { get; set; } = new();
+    public List<Guid> KnowledgeBaseIds { get; set; } = new();
+    public List<Guid> ProjectIds { get; set; } = new();
 }
 
 public class AgentQueryDto : PagedAndSortedResultRequestDto

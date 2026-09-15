@@ -48,6 +48,11 @@ public class TaskEntity : AuditedEntity<Guid>
     public string PromptContent { get; set; } = string.Empty;
 
     /// <summary>
+    /// 归属项目 ID（可选）
+    /// </summary>
+    public Guid? ProjectId { get; set; }
+
+    /// <summary>
     /// Agent类型
     /// </summary>
     public string AgentType { get; set; } = string.Empty;

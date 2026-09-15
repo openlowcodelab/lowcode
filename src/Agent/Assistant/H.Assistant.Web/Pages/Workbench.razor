@@ -1,0 +1,812 @@
+@page "/assistant"
+@page "/assistant/home"
+
+@layout AssistantLayout
+@implements IDisposable
+@inject ITaskAppService TaskAppService
+@inject IAssistantProjectAppService ProjectAppService
+@inject NavigationManager Navigation
+
+<PageTitle>AI 工作台</PageTitle>
+
+@if (!string.IsNullOrEmpty(toastMessage))
+{
+    <div class="toast-notification toast-@toastType @(toastVisible ? "toast-show" : "")">@toastMessage</div>
+}
+
+<div class="wb-home">
+    <!-- ========== 中栏：员工任务记录 ========== -->
+    <div class="wb-task-col">
+        @if (_agent is null)
+        {
+            <div class="empty-state">
+                <div class="empty-icon">👥</div>
+                <div class="empty-text">暂无员工，<a href="/assistant/employees">去新建</a></div>
+            </div>
+        }
+        else
+        {
+            <div class="wb-task-head">
+                <span class="wb-agent-avatar">@_agent.DisplayName.Substring(0, 1)</span>
+                <span class="wb-task-head-name">@_agent.DisplayName</span>
+                <button class="btn btn-text btn-small"
+                        @onclick='() => Navigation.NavigateTo($"/assistant/employees/{_agent.Id}/settings")'>管理</button>
+            </div>
+
+            <div class="wb-seg">
+                <div class="wb-seg-item @(_tab == "manual" ? "wb-seg-active" : "")" @onclick='() => SwitchTab("manual")'>对话任务</div>
+                <div class="wb-seg-item @(_tab == "scheduled" ? "wb-seg-active" : "")" @onclick='() => SwitchTab("scheduled")'>自动任务</div>
+            </div>
+
+            <div class="wb-task-count">
+                <span>共 @_tasks.Count 个任务</span>
+                <button class="btn btn-text btn-small" @onclick="ShowCreateDialog">＋ 新建</button>
+            </div>
+
+            <div class="wb-task-list">
+                @foreach (var task in _tasks)
+                {
+                    <div class="wb-task-item" @onclick="() => ShowTaskDetail(task)">
+                        <div class="wb-task-item-name">@task.TaskName</div>
+                        <div class="wb-task-item-meta">
+                            <span class="wb-task-status wb-status-@task.Status.ToLower()">@task.Status</span>
+                            <span>@FormatTime(task)</span>
+                        </div>
+                    </div>
+                }
+                @if (!_loadingTasks && !_tasks.Any())
+                {
+                    <div class="wb-task-empty">@(_tab == "manual" ? "暂无对话任务" : "暂无自动任务")</div>
+                }
+            </div>
+        }
+    </div>
+
+    <!-- ========== 右栏：新建任务 ========== -->
+    <div class="wb-main-col">
+        <div class="wb-main-head">新建任务</div>
+
+        <div class="wb-hero">
+            <div class="wb-hero-avatar">@(_agent?.DisplayName.Substring(0, 1) ?? "？")</div>
+            <div class="wb-hero-title">你好，今天我能帮你什么？</div>
+            <div class="wb-hero-sub">@(_agent is null ? "请先在左侧选择或新建员工。" : $"我是{_agent.DisplayName}，{_agent.Description}")</div>
+
+            <div class="wb-suggests">
+                @foreach (var suggest in Suggests)
+                {
+                    <div class="wb-suggest" @onclick="() => _input = suggest">
+                        <span class="wb-suggest-icon">✦</span>
+                        <span>@suggest</span>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="wb-input-card">
+            <textarea class="wb-input" placeholder="输入消息，@@ 选择当前工作区上下文..."
+                      @bind="_input"></textarea>
+            <div class="wb-input-bar">
+                <select class="wb-project-select" @bind="_inputProjectId">
+                    <option value="">选择项目</option>
+                    @foreach (var project in _projects)
+                    {
+                        <option value="@project.Id">@project.ProjectName</option>
+                    }
+                </select>
+                <button class="wb-send" disabled="@(_sending || string.IsNullOrWhiteSpace(_input) || _agent is null)"
+                        @onclick="SendAsync">↑</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== 新建任务对话框 ========== -->
+@if (_showCreate)
+{
+    <div class="modal-overlay" @onclick="CloseCreateDialog">
+        <div class="modal-dialog" style="width:520px;" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h3>新建任务</h3>
+                <button class="btn btn-text modal-close-btn" @onclick="CloseCreateDialog">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-item required">
+                    <label>* 任务名称</label>
+                    <input class="modal-input" @bind="_editTaskName" placeholder="如：登录模块单元测试" />
+                </div>
+                <div class="form-item required">
+                    <label>* 任务内容（提示词）</label>
+                    <textarea class="modal-input modal-textarea" @bind="_editPrompt" style="min-height:100px;"
+                              placeholder="描述要完成的任务"></textarea>
+                </div>
+                <div class="form-item">
+                    <label>执行方式</label>
+                    <div class="wb-radio-row">
+                        <label class="checkbox-label">
+                            <input type="radio" name="execMode" checked="@(_editMode == "Manual")" @onchange='() => _editMode = "Manual"' /> 手动执行
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="radio" name="execMode" checked="@(_editMode == "Auto")" @onchange='() => _editMode = "Auto"' /> 自动执行
+                        </label>
+                    </div>
+                </div>
+                @if (_editMode == "Auto")
+                {
+                    <div class="form-row">
+                        <div class="form-item">
+                            <label>调度类型</label>
+                            <select class="modal-select" @bind="_editScheduleType">
+                                <option value="Once">单次</option>
+                                <option value="Daily">每天</option>
+                            </select>
+                        </div>
+                        @if (_editScheduleType == "Daily")
+                        {
+                            <div class="form-item">
+                                <label>执行时间</label>
+                                <input class="modal-input" type="time" @bind="_editTime" />
+                            </div>
+                        }
+                    </div>
+                }
+                <div class="form-item">
+                    <label>归属项目（可选）</label>
+                    <select class="modal-select" @bind="_editProjectId">
+                        <option value="">无</option>
+                        @foreach (var project in _projects)
+                        {
+                            <option value="@project.Id">@project.ProjectName</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn-cancel" @onclick="CloseCreateDialog">取消</button>
+                <button class="modal-btn-primary" disabled="@_saving" @onclick="CreateTaskAsync">创建</button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- ========== 任务详情对话框 ========== -->
+@if (_detail is not null)
+{
+    <div class="modal-overlay" @onclick="() => _detail = null">
+        <div class="modal-dialog" style="width:560px;" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h3>@_detail.TaskName</h3>
+                <button class="btn btn-text modal-close-btn" @onclick="() => _detail = null">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="model-info-row"><span class="info-label">类型:</span><span>@(_detail.TaskType == "manual" ? "对话任务" : "自动任务")</span>
+                    <span class="info-label" style="margin-left:16px;">状态:</span><span>@_detail.Status</span>
+                    <span class="info-label" style="margin-left:16px;">调度:</span><span>@_detail.ScheduleDisplayText</span></div>
+                <div class="model-info-row"><span class="info-label">内容:</span><span>@_detail.PromptContent</span></div>
+                <div class="model-info-row"><span class="info-label">最近运行:</span><span>@(_detail.LastExecutionTime?.ToString("yyyy-MM-dd HH:mm") ?? "暂无")</span></div>
+
+                <h4 style="margin:16px 0 8px;font-size:14px;">执行记录</h4>
+                @if (_detailLogs.Any())
+                {
+                    foreach (var log in _detailLogs)
+                    {
+                        <div class="wb-log-row">
+                            <span class="wb-task-status wb-status-@log.Status.ToLower()">@log.Status</span>
+                            <span>@log.StartTime.ToString("yyyy-MM-dd HH:mm:ss")</span>
+                            <span class="wb-log-msg">@log.ErrorMessage</span>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="wb-task-empty">暂无执行记录</div>
+                }
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn-cancel btn-danger" @onclick="DeleteDetailAsync">删除任务</button>
+                <button class="modal-btn-cancel" @onclick="ExecuteDetailAsync">立即执行</button>
+                <button class="modal-btn-primary" @onclick="() => _detail = null">关闭</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [CascadingParameter]
+    public WorkbenchState State { get; set; } = default!;
+
+    private static readonly string[] Suggests =
+    [
+        "帮我配置一个 Node.js 项目的 CI/CD 流水线，包括构建、测试和自动部署",
+        "为这个用户登录模块编写单元测试，确保覆盖正常登录、异常密码和边界场景",
+        "我的 API 接口返回 500 错误，帮我排查日志并修复这个 Bug"
+    ];
+
+    private AgentDto? _agent;
+    private string _tab = "manual";
+    private List<TaskDto> _tasks = [];
+    private bool _loadingTasks;
+    private List<AssistantProjectDto> _projects = [];
+
+    private string _input = "";
+    private string _inputProjectId = "";
+    private bool _sending;
+
+    private bool _showCreate;
+    private bool _saving;
+    private string _editTaskName = "";
+    private string _editPrompt = "";
+    private string _editMode = "Manual";
+    private string _editScheduleType = "Once";
+    private TimeOnly _editTime = new(9, 0);
+    private string _editProjectId = "";
+
+    private TaskDto? _detail;
+    private List<TaskLogDto> _detailLogs = [];
+
+    private string toastMessage = "";
+    private string toastType = "info";
+    private bool toastVisible;
+
+    protected override async Task OnInitializedAsync()
+    {
+        State.Changed += OnStateChanged;
+        _agent = State.SelectedAgent;
+        await LoadProjectsAsync();
+        await LoadTasksAsync();
+    }
+
+    public void Dispose() => State.Changed -= OnStateChanged;
+
+    private async void OnStateChanged()
+    {
+        _agent = State.SelectedAgent;
+        await InvokeAsync(async () =>
+        {
+            await LoadTasksAsync();
+            StateHasChanged();
+        });
+    }
+
+    private async Task LoadProjectsAsync()
+    {
+        try
+        {
+            _projects = (await ProjectAppService.GetListAsync(new AssistantProjectQueryDto { MaxResultCount = 100 })).Data?.Items.ToList() ?? [];
+        }
+        catch { }
+    }
+
+    private async Task LoadTasksAsync()
+    {
+        if (_agent is null)
+        {
+            _tasks = [];
+            return;
+        }
+
+        _loadingTasks = true;
+        try
+        {
+            var result = (await TaskAppService.GetListAsync(new TaskQueryDto
+            {
+                AgentType = _agent.AgentType,
+                TaskType = _tab,
+                MaxResultCount = 100
+            })).Data;
+            _tasks = result?.Items.ToList() ?? [];
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"加载任务失败: {ex.Message}", "error");
+        }
+        finally
+        {
+            _loadingTasks = false;
+        }
+    }
+
+    private async Task SwitchTab(string tab)
+    {
+        _tab = tab;
+        await LoadTasksAsync();
+    }
+
+    private void ShowCreateDialog()
+    {
+        _editTaskName = "";
+        _editPrompt = "";
+        _editMode = _tab == "scheduled" ? "Auto" : "Manual";
+        _editScheduleType = "Once";
+        _editTime = new TimeOnly(9, 0);
+        _editProjectId = "";
+        _showCreate = true;
+    }
+
+    private void CloseCreateDialog() => _showCreate = false;
+
+    private async Task CreateTaskAsync()
+    {
+        if (_agent is null) return;
+        if (string.IsNullOrWhiteSpace(_editTaskName)) { ShowToast("请输入任务名称", "warning"); return; }
+        if (string.IsNullOrWhiteSpace(_editPrompt)) { ShowToast("请输入任务内容", "warning"); return; }
+
+        _saving = true;
+        try
+        {
+            var (hour, minute) = (_editTime.Hour, _editTime.Minute);
+            await TaskAppService.CreateAsync(new CreateTaskDto
+            {
+                TaskName = _editTaskName.Trim(),
+                PromptContent = _editPrompt.Trim(),
+                ExecutionMode = _editMode,
+                AgentType = _agent.AgentType,
+                ProjectId = ParseGuid(_editProjectId),
+                ScheduleType = _editMode == "Manual" ? "Once" : _editScheduleType,
+                Hour = _editMode == "Auto" && _editScheduleType == "Daily" ? hour : null,
+                Minute = _editMode == "Auto" && _editScheduleType == "Daily" ? minute : null,
+                IsEnabled = true
+            });
+            ShowToast("任务已创建", "success");
+            _showCreate = false;
+            await LoadTasksAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"创建失败: {ex.Message}", "error");
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private async Task SendAsync()
+    {
+        if (_agent is null || string.IsNullOrWhiteSpace(_input)) return;
+
+        _sending = true;
+        try
+        {
+            var prompt = _input.Trim();
+            var name = prompt.Length > 30 ? prompt[..30] + "…" : prompt;
+            await TaskAppService.CreateAsync(new CreateTaskDto
+            {
+                TaskName = name,
+                PromptContent = prompt,
+                ExecutionMode = "Manual",
+                AgentType = _agent.AgentType,
+                ProjectId = ParseGuid(_inputProjectId),
+                ScheduleType = "Once",
+                IsEnabled = true
+            });
+            _input = "";
+            ShowToast("对话任务已创建", "success");
+            _tab = "manual";
+            await LoadTasksAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"创建失败: {ex.Message}", "error");
+        }
+        finally
+        {
+            _sending = false;
+        }
+    }
+
+    private async Task ShowTaskDetail(TaskDto task)
+    {
+        _detail = task;
+        _detailLogs = [];
+        try
+        {
+            _detailLogs = (await TaskAppService.GetExecutionLogsAsync(task.Id, 20)).Data ?? [];
+        }
+        catch { }
+    }
+
+    private async Task ExecuteDetailAsync()
+    {
+        if (_detail is null) return;
+        try
+        {
+            await TaskAppService.ExecuteNowAsync(_detail.Id);
+            ShowToast("已触发执行", "success");
+            _detail = null;
+            await LoadTasksAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"执行失败: {ex.Message}", "error");
+        }
+    }
+
+    private async Task DeleteDetailAsync()
+    {
+        if (_detail is null) return;
+        try
+        {
+            await TaskAppService.DeleteAsync(_detail.Id);
+            ShowToast("任务已删除", "success");
+            _detail = null;
+            await LoadTasksAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"删除失败: {ex.Message}", "error");
+        }
+    }
+
+    private static string FormatTime(TaskDto task)
+        => (task.LastExecutionTime ?? task.CreationTime).ToString("MM-dd HH:mm");
+
+    private static Guid? ParseGuid(string? value)
+        => Guid.TryParse(value, out var id) ? id : null;
+
+    private void ShowToast(string message, string type = "info")
+    {
+        toastMessage = message;
+        toastType = type;
+        toastVisible = true;
+        StateHasChanged();
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(3000);
+            toastVisible = false;
+            await InvokeAsync(StateHasChanged);
+        });
+    }
+}
+
+<style>
+    .wb-home {
+        display: flex;
+        height: 100%;
+        min-height: 0;
+        background: #fff;
+    }
+
+    /* ========== 中栏 ========== */
+    .wb-task-col {
+        width: 280px;
+        flex-shrink: 0;
+        border-right: 1px solid #f0f0f0;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        padding: 16px 12px;
+        box-sizing: border-box;
+    }
+
+    .wb-task-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+
+    .wb-task-head-name {
+        flex: 1;
+        font-size: 15px;
+        font-weight: 600;
+        color: #262626;
+    }
+
+    .wb-seg {
+        display: flex;
+        background: #f5f5f5;
+        border-radius: 8px;
+        padding: 3px;
+        margin-bottom: 12px;
+    }
+
+    .wb-seg-item {
+        flex: 1;
+        text-align: center;
+        font-size: 13px;
+        color: #8c8c8c;
+        padding: 6px 0;
+        border-radius: 6px;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .wb-seg-active {
+        background: #fff;
+        color: #262626;
+        font-weight: 500;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+    }
+
+    .wb-task-count {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 12px;
+        color: #8c8c8c;
+        margin-bottom: 8px;
+    }
+
+    .wb-task-list {
+        flex: 1;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .wb-task-item {
+        padding: 8px 10px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+
+    .wb-task-item:hover {
+        background: #f7f8fa;
+    }
+
+    .wb-task-item-name {
+        font-size: 13px;
+        color: #262626;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .wb-task-item-meta {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        font-size: 12px;
+        color: #8c8c8c;
+        margin-top: 2px;
+    }
+
+    .wb-task-status {
+        padding: 0 6px;
+        border-radius: 4px;
+        font-size: 11px;
+        background: #f5f5f5;
+        color: #8c8c8c;
+    }
+
+    .wb-status-active {
+        background: #f6ffed;
+        color: #52c41a;
+    }
+
+    .wb-status-paused {
+        background: #fffbe6;
+        color: #faad14;
+    }
+
+    .wb-status-completed,
+    .wb-status-success {
+        background: #f6ffed;
+        color: #52c41a;
+    }
+
+    .wb-status-failed {
+        background: #fff1f0;
+        color: #ff4d4f;
+    }
+
+    .wb-task-empty {
+        text-align: center;
+        color: #bfbfbf;
+        font-size: 13px;
+        padding: 40px 0;
+    }
+
+    /* ========== 右栏 ========== */
+    .wb-main-col {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+
+    .wb-main-head {
+        padding: 14px 24px;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 14px;
+        color: #262626;
+    }
+
+    .wb-hero {
+        flex: 1;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 48px 24px 24px;
+    }
+
+    .wb-hero-avatar {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: #ececec;
+        color: #595959;
+        font-size: 24px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+    }
+
+    .wb-hero-title {
+        font-size: 22px;
+        font-weight: 600;
+        color: #262626;
+        margin-bottom: 10px;
+    }
+
+    .wb-hero-sub {
+        font-size: 13px;
+        color: #8c8c8c;
+        margin-bottom: 32px;
+    }
+
+    .wb-suggests {
+        width: 100%;
+        max-width: 640px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .wb-suggest {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        border: 1px solid #f0f0f0;
+        border-radius: 10px;
+        padding: 14px 16px;
+        font-size: 13px;
+        color: #595959;
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+
+    .wb-suggest:hover {
+        border-color: #d9d9d9;
+        background: #fafafa;
+        color: #262626;
+    }
+
+    .wb-suggest-icon {
+        color: #bfbfbf;
+    }
+
+    /* ========== 输入区 ========== */
+    .wb-input-card {
+        margin: 0 24px 24px;
+        border: 1px solid #e8e8e8;
+        border-radius: 12px;
+        padding: 12px;
+        background: #fff;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+    }
+
+    .wb-input {
+        width: 100%;
+        border: none;
+        outline: none;
+        resize: none;
+        min-height: 56px;
+        max-height: 160px;
+        font-size: 14px;
+        font-family: inherit;
+        color: #262626;
+        box-sizing: border-box;
+    }
+
+    .wb-input::placeholder {
+        color: #bfbfbf;
+    }
+
+    .wb-input-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 8px;
+    }
+
+    .wb-project-select {
+        border: 1px solid #e8e8e8;
+        background: #fafafa;
+        border-radius: 6px;
+        height: 28px;
+        font-size: 12px;
+        color: #595959;
+        padding: 0 8px;
+        outline: none;
+        max-width: 200px;
+    }
+
+    .wb-send {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: none;
+        background: #8c8c8c;
+        color: #fff;
+        font-size: 15px;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+
+    .wb-send:hover:not(:disabled) {
+        background: #595959;
+    }
+
+    .wb-send:disabled {
+        background: #d9d9d9;
+        cursor: not-allowed;
+    }
+
+    /* ========== 对话框内复用 ========== */
+    .wb-radio-row {
+        display: flex;
+        gap: 20px;
+    }
+
+    .wb-log-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        font-size: 12px;
+        color: #595959;
+        padding: 4px 0;
+    }
+
+    .wb-log-msg {
+        color: #ff4d4f;
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .modal-textarea {
+        min-height: 60px;
+        resize: vertical;
+        font-family: inherit;
+        font-size: 13px;
+    }
+
+    .toast-notification {
+        position: fixed;
+        top: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 8px 20px;
+        border-radius: 6px;
+        font-size: 14px;
+        color: #fff;
+        background: #595959;
+        z-index: 2000;
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+
+    .toast-show {
+        opacity: 1;
+    }
+
+    .toast-error {
+        background: #ff4d4f;
+    }
+
+    .toast-warning {
+        background: #faad14;
+    }
+
+    .toast-success {
+        background: #52c41a;
+    }
+</style>

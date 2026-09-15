@@ -65,6 +65,21 @@ public class TaskAppService : ApplicationService, ITaskAppService
             query = query.Where(t => t.Category == input.Category);
         }
 
+        if (!string.IsNullOrWhiteSpace(input.AgentType))
+        {
+            query = query.Where(t => t.AgentType == input.AgentType);
+        }
+
+        if (!string.IsNullOrWhiteSpace(input.TaskType))
+        {
+            query = query.Where(t => t.TaskType == input.TaskType);
+        }
+
+        if (input.ProjectId.HasValue)
+        {
+            query = query.Where(t => t.ProjectId == input.ProjectId.Value);
+        }
+
         var totalCount = await AsyncExecuter.CountAsync(query);
 
         query = query.OrderByDescending(t => t.CreationTime);
@@ -107,6 +122,7 @@ public class TaskAppService : ApplicationService, ITaskAppService
             ExecutionMode = isManual ? "Manual" : "Auto",
             PromptContent = input.PromptContent,
             AgentType = input.AgentType,
+            ProjectId = input.ProjectId,
             ModelConfigId = input.ModelConfigId,
             ScheduleType = input.ScheduleType,
             CronExpression = input.CronExpression,
@@ -146,6 +162,7 @@ public class TaskAppService : ApplicationService, ITaskAppService
         task.ExecutionMode = isManual ? "Manual" : "Auto";
         task.PromptContent = input.PromptContent;
         task.AgentType = input.AgentType;
+        task.ProjectId = input.ProjectId;
         task.ModelConfigId = input.ModelConfigId;
         task.ScheduleType = input.ScheduleType;
         task.CronExpression = input.CronExpression;

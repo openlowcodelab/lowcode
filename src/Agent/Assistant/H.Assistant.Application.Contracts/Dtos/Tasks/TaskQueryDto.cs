@@ -13,4 +13,13 @@ public class TaskQueryDto : PagedResultRequestDto
 
     /// <summary>按任务分类过滤</summary>
     public string? Category { get; set; }
+
+    /// <summary>按 Agent 类型过滤</summary>
+    public string? AgentType { get; set; }
+
+    /// <summary>按任务类型过滤（instant/scheduled）</summary>
+    public string? TaskType { get; set; }
+
+    /// <summary>按归属项目过滤</summary>
+    public Guid? ProjectId { get; set; }
 }

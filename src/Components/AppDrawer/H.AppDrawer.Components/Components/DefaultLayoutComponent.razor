@@ -32,7 +32,11 @@
     </TopNavbar>
 
     <div class="menu-container">
-        @if (MenuPosition != MenuPosition.Top)
+        @if (SideContent != null)
+        {
+            @SideContent
+        }
+        else if (MenuPosition != MenuPosition.Top)
         {
             <SideMenu MenuItems="@MenuItems" />
         }
@@ -65,6 +69,12 @@
     /// </summary>
     [Parameter]
     public List<AppMenuItem>? MenuItems { get; set; }
+
+    /// <summary>
+    /// 自定义侧栏内容（提供时替代默认 SideMenu）
+    /// </summary>
+    [Parameter]
+    public RenderFragment? SideContent { get; set; }
 
     /// <summary>
     /// 菜单位置（默认左侧）
