@@ -1,0 +1,18 @@
+﻿@namespace H.LowCode.DesignEngineBase
+@inherits LayoutComponentBase
+
+<DefaultLayoutComponent AppName="LowCode" MenuItems="@MenuItems" MenuPosition="MenuPosition.Top">
+    @Body
+</DefaultLayoutComponent>
+
+@code {
+    private static List<AppMenuItem> MenuItems => new()
+    {
+        new AppMenuItem { Name = "首页", Url = "/devhome", Icon = "home" },
+        new AppMenuItem { Name = "我的应用", Url = "/devhome/myapps", Icon = "appstore" },
+        new AppMenuItem { Name = "我的物料", Url = "/devhome/myparts", Icon = "api" },
+        new AppMenuItem { Name = "生态中心", Url = "/devhome/ecosystems", Icon = "cloud" },
+        new AppMenuItem { Name = "解决方案", Url = "/devhome/solutions", Icon = "deployment-unit" },
+        new AppMenuItem { Name = "文档中心", Url = "/devhome/docs", Icon = "question-circle" }
+    };
+}

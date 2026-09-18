@@ -101,6 +101,7 @@ public static class ClientServices
     /// </summary>
     private static readonly Dictionary<string, string[]> RouteModuleKeys = new(StringComparer.OrdinalIgnoreCase)
     {
+        ["devhome"] = ["lowcode-render", "lowcode-design"],
         ["designengine"] = ["lowcode-render", "lowcode-design"],
         ["app"] = ["lowcode-render"],
     };

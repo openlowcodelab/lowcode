@@ -40,24 +40,46 @@
     /// </summary>
     private bool IsActiveMenu(string? url)
     {
-        if (string.IsNullOrEmpty(url))
+        var target = NormalizePath(url);
+        if (target.Length == 0)
             return false;
 
-        // 使用 ToBaseRelativePath 获取不带前导斜杠的相对路径，并去除 query/hash
-        var currentPath = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
-        var separatorIndex = currentPath.IndexOfAny(new[] { '?', '#' });
-        if (separatorIndex >= 0)
-            currentPath = currentPath.Substring(0, separatorIndex);
-        currentPath = currentPath.Trim('/');
-
-        // 菜单 Url 可能带前导斜杠，统一去除后比较（按路径段精确匹配，避免前缀误判）
-        var target = url.TrimStart('/').Trim('/');
-        if (string.IsNullOrEmpty(target))
+        var currentPath = CurrentPath;
+        if (!PathMatches(currentPath, target))
             return false;
 
-        return currentPath.Equals(target, StringComparison.OrdinalIgnoreCase)
-            || currentPath.StartsWith(target + "/", StringComparison.OrdinalIgnoreCase);
+        // 多个菜单项同时命中时只高亮匹配段最长（最精确）的一项，避免父级路由（如 /devhome）吞掉子级菜单（如 /devhome/solutions）
+        if (MenuItems != null)
+        {
+            foreach (var other in MenuItems)
+            {
+                var otherTarget = NormalizePath(other.Url);
+                if (otherTarget.Length > target.Length && PathMatches(currentPath, otherTarget))
+                    return false;
+            }
+        }
+
+        return true;
     }
+
+    private string CurrentPath
+    {
+        get
+        {
+            // 使用 ToBaseRelativePath 获取不带前导斜杠的相对路径，并去除 query/hash
+            var currentPath = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+            var separatorIndex = currentPath.IndexOfAny(new[] { '?', '#' });
+            if (separatorIndex >= 0)
+                currentPath = currentPath.Substring(0, separatorIndex);
+            return currentPath.Trim('/');
+        }
+    }
+
+    private static string NormalizePath(string? url) => url?.Trim().Trim('/') ?? "";
+
+    private static bool PathMatches(string currentPath, string target) =>
+        currentPath.Equals(target, StringComparison.OrdinalIgnoreCase)
+        || currentPath.StartsWith(target + "/", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
     /// 导航到菜单项
