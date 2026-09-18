@@ -1,51 +1,688 @@
 @page "/assistant/tasks"
 
 @layout AssistantLayout
+@inject ITaskAppService TaskAppService
+@inject IAgentAppService AgentAppService
+@inject IAssistantProjectAppService ProjectAppService
 
-<PageTitle>任务 - Agent 助手</PageTitle>
+<PageTitle>任务 - AI 工作台</PageTitle>
 
-<div class="settings-container">
-    <div class="settings-content">
-        <div class="content-header">
-            <h2>任务</h2>
+@if (!string.IsNullOrEmpty(toastMessage))
+{
+    <div class="toast-notification toast-@toastType @(toastVisible ? "toast-show" : "")">@toastMessage</div>
+}
+
+<div class="tk-page">
+    <div class="tk-header">
+        <h2>任务</h2>
+        <button class="btn btn-primary assistant-btn-primary btn-small" @onclick="ShowCreate">＋ 新建任务</button>
+    </div>
+
+    <div class="tk-filters">
+        <input class="tk-search" placeholder="搜索任务名称或描述..." @bind="_filter" @bind:event="oninput" @onkeyup="EnterKeyAsync" />
+        <div class="wb-seg tk-seg">
+            <div class="wb-seg-item @(_type == "all" ? "wb-seg-active" : "")" @onclick='() => SwitchType("all")'>全部</div>
+            <div class="wb-seg-item @(_type == "manual" ? "wb-seg-active" : "")" @onclick='() => SwitchType("manual")'>对话任务</div>
+            <div class="wb-seg-item @(_type == "scheduled" ? "wb-seg-active" : "")" @onclick='() => SwitchType("scheduled")'>自动任务</div>
         </div>
-        <div class="empty-state">
-            <div class="empty-icon">📋</div>
-            <div class="empty-text">任务功能建设中，敬请期待</div>
-        </div>
+        <select class="tk-select" @bind="_status" @bind:after="LoadTasksAsync">
+            <option value="">全部状态</option>
+            <option value="Active">进行中</option>
+            <option value="Paused">已暂停</option>
+            <option value="Completed">已完成</option>
+        </select>
+        <select class="tk-select" @bind="_agentType" @bind:after="LoadTasksAsync">
+            <option value="">全部员工</option>
+            @foreach (var agent in _agents)
+            {
+                <option value="@agent.AgentType">@agent.DisplayName</option>
+            }
+        </select>
+    </div>
+
+    <div class="tk-table-wrap">
+        <table class="tk-table">
+            <thead>
+                <tr>
+                    <th style="min-width:220px;">任务</th>
+                    <th>员工</th>
+                    <th>类型</th>
+                    <th>调度</th>
+                    <th>状态</th>
+                    <th>最近运行</th>
+                    <th class="tk-col-actions">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (_loading)
+                {
+                    <tr><td colspan="7" class="tk-empty">加载中...</td></tr>
+                }
+                else if (!_tasks.Any())
+                {
+                    <tr><td colspan="7" class="tk-empty">暂无任务</td></tr>
+                }
+                else
+                {
+                    foreach (var task in _tasks)
+                    {
+                        <tr>
+                            <td>
+                                <div class="tk-name" @onclick="() => ShowDetailAsync(task)">@task.TaskName</div>
+                                @if (!string.IsNullOrWhiteSpace(task.TaskDescription))
+                                {
+                                    <div class="tk-desc">@task.TaskDescription</div>
+                                }
+                            </td>
+                            <td>@AgentName(task.AgentType)</td>
+                            <td><span class="em-role">@(task.TaskType == "manual" ? "对话任务" : "自动任务")</span></td>
+                            <td class="tk-schedule">@task.ScheduleDisplayText</td>
+                            <td><span class="wb-task-status wb-status-@task.Status.ToLower()">@StatusText(task)</span></td>
+                            <td>@(task.LastExecutionTime?.ToString("MM-dd HH:mm") ?? "暂无")</td>
+                            <td class="tk-col-actions">
+                                <button class="btn btn-link btn-small" @onclick="() => ExecuteAsync(task)">执行</button>
+                                <button class="btn btn-link btn-small" @onclick="() => ShowEdit(task)">编辑</button>
+                                <button class="btn btn-link btn-small" @onclick="() => ToggleEnableAsync(task)">@(task.IsEnabled ? "停用" : "启用")</button>
+                                <button class="btn btn-link btn-small btn-danger" @onclick="() => DeleteAsync(task)">删除</button>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
     </div>
 </div>
 
-<style>
-    .settings-container {
-        display: flex;
-        height: 100%;
-        width: 100%;
+<!-- ========== 新建/编辑任务对话框 ========== -->
+@if (_showDialog)
+{
+    <div class="modal-overlay" @onclick="CloseDialog">
+        <div class="modal-dialog" style="width:540px;" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h3>@(_editId is null ? "新建任务" : "编辑任务")</h3>
+                <button class="btn btn-text modal-close-btn" @onclick="CloseDialog">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-item required">
+                    <label>* 任务名称</label>
+                    <input class="modal-input" @bind="_editName" placeholder="如：登录模块单元测试" />
+                </div>
+                <div class="form-item">
+                    <label>任务描述</label>
+                    <input class="modal-input" @bind="_editDescription" placeholder="可选" />
+                </div>
+                <div class="form-item required">
+                    <label>* 任务内容（提示词）</label>
+                    <textarea class="modal-input modal-textarea" @bind="_editPrompt" style="min-height:100px;" placeholder="描述要完成的任务"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-item required">
+                        <label>* 执行员工</label>
+                        <select class="modal-select" @bind="_editAgentType">
+                            @foreach (var agent in _agents)
+                            {
+                                <option value="@agent.AgentType">@agent.DisplayName</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-item">
+                        <label>归属项目（可选）</label>
+                        <select class="modal-select" @bind="_editProjectId">
+                            <option value="">无</option>
+                            @foreach (var project in _projects)
+                            {
+                                <option value="@project.Id">@project.ProjectName</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="form-item">
+                    <label>执行方式</label>
+                    <div class="wb-radio-row">
+                        <label class="checkbox-label">
+                            <input type="radio" name="tkExecMode" checked="@(_editMode == "Manual")" @onchange='() => _editMode = "Manual"' /> 手动执行
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="radio" name="tkExecMode" checked="@(_editMode == "Auto")" @onchange='() => _editMode = "Auto"' /> 自动执行
+                        </label>
+                    </div>
+                </div>
+                @if (_editMode == "Auto")
+                {
+                    <div class="form-row">
+                        <div class="form-item">
+                            <label>调度类型</label>
+                            <select class="modal-select" @bind="_editScheduleType">
+                                <option value="Once">单次</option>
+                                <option value="Daily">每天</option>
+                            </select>
+                        </div>
+                        @if (_editScheduleType == "Daily")
+                        {
+                            <div class="form-item">
+                                <label>执行时间</label>
+                                <input class="modal-input" type="time" @bind="_editTime" />
+                            </div>
+                        }
+                    </div>
+                }
+                @if (_editId is not null)
+                {
+                    <div class="form-item">
+                        <label class="checkbox-label"><input type="checkbox" @bind="_editEnabled" /> 启用任务</label>
+                    </div>
+                }
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn-cancel" @onclick="CloseDialog">取消</button>
+                <button class="modal-btn-primary" disabled="@_saving" @onclick="SaveAsync">@(_editId is null ? "创建" : "保存")</button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- ========== 任务详情对话框 ========== -->
+@if (_detail is not null)
+{
+    <div class="modal-overlay" @onclick="() => _detail = null">
+        <div class="modal-dialog" style="width:560px;" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h3>@_detail.TaskName</h3>
+                <button class="btn btn-text modal-close-btn" @onclick="() => _detail = null">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="model-info-row">
+                    <span class="info-label">员工:</span><span>@AgentName(_detail.AgentType)</span>
+                    <span class="info-label" style="margin-left:16px;">类型:</span><span>@(_detail.TaskType == "manual" ? "对话任务" : "自动任务")</span>
+                    <span class="info-label" style="margin-left:16px;">状态:</span><span>@StatusText(_detail)</span>
+                </div>
+                <div class="model-info-row"><span class="info-label">调度:</span><span>@_detail.ScheduleDisplayText</span></div>
+                <div class="model-info-row"><span class="info-label">内容:</span><span>@_detail.PromptContent</span></div>
+                <div class="model-info-row">
+                    <span class="info-label">最近运行:</span><span>@(_detail.LastExecutionTime?.ToString("yyyy-MM-dd HH:mm") ?? "暂无")</span>
+                    <span class="info-label" style="margin-left:16px;">执行次数:</span><span>@_detail.ExecutionCount</span>
+                </div>
+
+                <h4 style="margin:16px 0 8px;font-size:14px;">执行记录</h4>
+                @if (_detailLogs.Any())
+                {
+                    foreach (var log in _detailLogs)
+                    {
+                        <div class="tk-log-row">
+                            <span class="wb-task-status wb-status-@log.Status.ToLower()">@log.Status</span>
+                            <span>@log.StartTime.ToString("yyyy-MM-dd HH:mm:ss")</span>
+                            @if (log.DurationSeconds is not null)
+                            {
+                                <span>@log.DurationSeconds 秒</span>
+                            }
+                            <span class="tk-log-msg">@log.ErrorMessage</span>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="tk-empty" style="padding:12px 0;">暂无执行记录</div>
+                }
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn-cancel" @onclick="ExecuteFromDetailAsync">立即执行</button>
+                <button class="modal-btn-primary" @onclick="() => _detail = null">关闭</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<TaskDto> _tasks = [];
+    private List<AgentDto> _agents = [];
+    private List<AssistantProjectDto> _projects = [];
+    private bool _loading;
+
+    private string _filter = "";
+    private string _type = "all";
+    private string _status = "";
+    private string _agentType = "";
+
+    private bool _showDialog;
+    private bool _saving;
+    private Guid? _editId;
+    private string _editName = "";
+    private string _editDescription = "";
+    private string _editPrompt = "";
+    private string _editAgentType = "";
+    private string _editProjectId = "";
+    private string _editMode = "Manual";
+    private string _editScheduleType = "Once";
+    private TimeOnly _editTime = new(9, 0);
+    private bool _editEnabled = true;
+    private string _editCategory = "";
+
+    private TaskDto? _detail;
+    private List<TaskLogDto> _detailLogs = [];
+
+    private string toastMessage = "";
+    private string toastType = "info";
+    private bool toastVisible;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAgentsAsync();
+        await LoadProjectsAsync();
+        await LoadTasksAsync();
     }
 
-    .settings-content {
-        flex: 1;
-        overflow-y: auto;
+    private async Task LoadAgentsAsync()
+    {
+        try
+        {
+            _agents = (await AgentAppService.GetListAsync(new AgentQueryDto { MaxResultCount = 100 })).Data?.Items.ToList() ?? [];
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"加载员工失败: {ex.Message}", "error");
+        }
+    }
+
+    private async Task LoadProjectsAsync()
+    {
+        try
+        {
+            _projects = (await ProjectAppService.GetListAsync(new AssistantProjectQueryDto { MaxResultCount = 100 })).Data?.Items.ToList() ?? [];
+        }
+        catch { }
+    }
+
+    private async Task LoadTasksAsync()
+    {
+        _loading = true;
+        try
+        {
+            var result = (await TaskAppService.GetListAsync(new TaskQueryDto
+            {
+                Filter = string.IsNullOrWhiteSpace(_filter) ? null : _filter,
+                TaskType = _type == "all" ? null : _type,
+                Status = string.IsNullOrWhiteSpace(_status) ? null : _status,
+                AgentType = string.IsNullOrWhiteSpace(_agentType) ? null : _agentType,
+                MaxResultCount = 100
+            })).Data;
+            _tasks = result?.Items.ToList() ?? [];
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"加载任务失败: {ex.Message}", "error");
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task EnterKeyAsync() => await LoadTasksAsync();
+
+    private async Task SwitchType(string type)
+    {
+        _type = type;
+        await LoadTasksAsync();
+    }
+
+    private string AgentName(string agentType)
+    {
+        if (string.IsNullOrWhiteSpace(agentType))
+        {
+            return "未分配";
+        }
+
+        return _agents.FirstOrDefault(x => x.AgentType == agentType)?.DisplayName ?? agentType;
+    }
+
+    private static string StatusText(TaskDto task)
+        => task.Status switch
+        {
+            "Active" => "进行中",
+            "Paused" => "已暂停",
+            "Completed" => "已完成",
+            _ => task.Status
+        };
+
+    private void ShowCreate()
+    {
+        if (!_agents.Any())
+        {
+            ShowToast("请先创建员工", "warning");
+            return;
+        }
+
+        _editId = null;
+        _editName = "";
+        _editDescription = "";
+        _editPrompt = "";
+        _editAgentType = _agents[0].AgentType;
+        _editProjectId = "";
+        _editMode = _type == "scheduled" ? "Auto" : "Manual";
+        _editScheduleType = "Once";
+        _editTime = new TimeOnly(9, 0);
+        _editEnabled = true;
+        _editCategory = "";
+        _showDialog = true;
+    }
+
+    private void ShowEdit(TaskDto task)
+    {
+        _editId = task.Id;
+        _editName = task.TaskName;
+        _editDescription = task.TaskDescription;
+        _editPrompt = task.PromptContent;
+        _editAgentType = task.AgentType;
+        _editProjectId = task.ProjectId?.ToString() ?? "";
+        _editMode = task.ExecutionMode;
+        _editScheduleType = task.ScheduleType is "Once" or "Daily" ? task.ScheduleType : "Once";
+        _editTime = new TimeOnly(task.Hour ?? 9, task.Minute ?? 0);
+        _editEnabled = task.IsEnabled;
+        _editCategory = task.Category;
+        _showDialog = true;
+    }
+
+    private void CloseDialog() => _showDialog = false;
+
+    private async Task SaveAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_editName)) { ShowToast("请输入任务名称", "warning"); return; }
+        if (string.IsNullOrWhiteSpace(_editPrompt)) { ShowToast("请输入任务内容", "warning"); return; }
+        if (string.IsNullOrWhiteSpace(_editAgentType)) { ShowToast("请选择执行员工", "warning"); return; }
+
+        _saving = true;
+        try
+        {
+            var scheduleType = _editMode == "Manual" ? "Once" : _editScheduleType;
+            var hour = _editMode == "Auto" && _editScheduleType == "Daily" ? _editTime.Hour : (int?)null;
+            var minute = _editMode == "Auto" && _editScheduleType == "Daily" ? _editTime.Minute : (int?)null;
+            var projectId = Guid.TryParse(_editProjectId, out var pid) ? pid : (Guid?)null;
+
+            if (_editId is null)
+            {
+                await TaskAppService.CreateAsync(new CreateTaskDto
+                {
+                    TaskName = _editName.Trim(),
+                    TaskDescription = _editDescription.Trim(),
+                    Category = _editCategory,
+                    PromptContent = _editPrompt.Trim(),
+                    AgentType = _editAgentType,
+                    ProjectId = projectId,
+                    ExecutionMode = _editMode,
+                    ScheduleType = scheduleType,
+                    Hour = hour,
+                    Minute = minute,
+                    IsEnabled = true
+                });
+                ShowToast("任务已创建", "success");
+            }
+            else
+            {
+                await TaskAppService.UpdateAsync(_editId.Value, new UpdateTaskDto
+                {
+                    TaskName = _editName.Trim(),
+                    TaskDescription = _editDescription.Trim(),
+                    Category = _editCategory,
+                    PromptContent = _editPrompt.Trim(),
+                    AgentType = _editAgentType,
+                    ProjectId = projectId,
+                    ExecutionMode = _editMode,
+                    ScheduleType = scheduleType,
+                    Hour = hour,
+                    Minute = minute,
+                    IsEnabled = _editEnabled
+                });
+                ShowToast("任务已更新", "success");
+            }
+
+            _showDialog = false;
+            await LoadTasksAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"保存失败: {ex.Message}", "error");
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private async Task ShowDetailAsync(TaskDto task)
+    {
+        _detail = task;
+        _detailLogs = [];
+        try
+        {
+            _detailLogs = (await TaskAppService.GetExecutionLogsAsync(task.Id, 20)).Data ?? [];
+        }
+        catch { }
+    }
+
+    private async Task ExecuteAsync(TaskDto task)
+    {
+        try
+        {
+            await TaskAppService.ExecuteNowAsync(task.Id);
+            ShowToast("已触发执行", "success");
+            await LoadTasksAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"执行失败: {ex.Message}", "error");
+        }
+    }
+
+    private async Task ExecuteFromDetailAsync()
+    {
+        if (_detail is null) return;
+        var taskId = _detail.Id;
+        _detail = null;
+        var task = _tasks.FirstOrDefault(t => t.Id == taskId);
+        if (task is not null)
+        {
+            await ExecuteAsync(task);
+        }
+    }
+
+    private async Task ToggleEnableAsync(TaskDto task)
+    {
+        try
+        {
+            await TaskAppService.ToggleEnableAsync(task.Id);
+            ShowToast(task.IsEnabled ? "任务已停用" : "任务已启用", "success");
+            await LoadTasksAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"操作失败: {ex.Message}", "error");
+        }
+    }
+
+    private async Task DeleteAsync(TaskDto task)
+    {
+        try
+        {
+            await TaskAppService.DeleteAsync(task.Id);
+            ShowToast("任务已删除", "success");
+            await LoadTasksAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"删除失败: {ex.Message}", "error");
+        }
+    }
+
+    private void ShowToast(string message, string type = "info")
+    {
+        toastMessage = message;
+        toastType = type;
+        toastVisible = true;
+        StateHasChanged();
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(3000);
+            toastVisible = false;
+            await InvokeAsync(StateHasChanged);
+        });
+    }
+}
+
+<style>
+    .tk-page {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        min-height: 0;
         padding: 24px;
         background: #fff;
+        box-sizing: border-box;
     }
 
-    .content-header {
+    .tk-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 24px;
-        padding-bottom: 16px;
-        border-bottom: 1px solid #e8e8e8;
+        margin-bottom: 16px;
     }
 
-    .content-header h2 {
+    .tk-header h2 {
         margin: 0;
         font-size: 20px;
     }
 
-    .empty-icon {
-        font-size: 48px;
-        line-height: 1;
+    .tk-filters {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+    }
+
+    .tk-search {
+        width: 240px;
+        height: 32px;
+        padding: 2px 12px;
+        border: 1px solid #e8e8e8;
+        border-radius: 6px;
+        font-size: 13px;
+        outline: none;
+    }
+
+    .tk-search:focus {
+        border-color: #a6a6a6;
+    }
+
+    .tk-filters .tk-seg {
+        margin: 0;
+        padding: 2px;
+        width: 280px;
+        height: 32px;
+        box-sizing: border-box;
+    }
+
+    .tk-filters .tk-seg .wb-seg-item {
+        padding: 0 8px;
+        line-height: 28px;
+    }
+
+    .tk-select {
+        height: 32px;
+        padding: 0 8px;
+        border: 1px solid #e8e8e8;
+        border-radius: 6px;
+        font-size: 13px;
+        color: #595959;
+        background: #fff;
+        outline: none;
+        cursor: pointer;
+    }
+
+    .tk-table-wrap {
+        flex: 1;
+        overflow: auto;
+        border: 1px solid #f0f0f0;
+        border-radius: 10px;
+    }
+
+    .tk-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+
+    .tk-table thead th {
+        position: sticky;
+        top: 0;
+        background: #fafafa;
+        color: #8c8c8c;
+        font-weight: 500;
+        text-align: left;
+        padding: 10px 14px;
+        border-bottom: 1px solid #f0f0f0;
+        white-space: nowrap;
+    }
+
+    .tk-table tbody td {
+        padding: 10px 14px;
+        border-bottom: 1px solid #f5f5f5;
+        color: #595959;
+        vertical-align: middle;
+    }
+
+    .tk-table tbody tr:hover td {
+        background: #fafafa;
+    }
+
+    .tk-name {
+        color: #262626;
+        font-weight: 500;
+        cursor: pointer;
+    }
+
+    .tk-name:hover {
+        text-decoration: underline;
+    }
+
+    .tk-desc {
+        font-size: 12px;
+        color: #8c8c8c;
+        margin-top: 2px;
+        max-width: 320px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .tk-schedule {
+        white-space: nowrap;
+    }
+
+    .tk-col-actions {
+        white-space: nowrap;
+        text-align: right;
+    }
+
+    .tk-empty {
+        text-align: center;
+        color: #bfbfbf;
+        padding: 40px 0;
+    }
+
+    .tk-log-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        font-size: 12px;
+        color: #595959;
+        padding: 4px 0;
+    }
+
+    .tk-log-msg {
+        color: #ff4d4f;
+        flex: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 </style>

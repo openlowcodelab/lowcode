@@ -4,6 +4,7 @@
 @inject ISkillAppService SkillAppService
 @inject IConnectorAppService ConnectorAppService
 @inject IKnowledgeBaseAppService KnowledgeBaseAppService
+@inject IMcpServerAppService McpServerAppService
 @inject NavigationManager Navigation
 
 <PageTitle>能力与资源 - AI 工作台</PageTitle>
@@ -20,8 +21,9 @@
                 @onclick='() => Navigation.NavigateTo("/assistant/employees")'>员工管理</button>
     </div>
 
-    <div class="wb-seg" style="max-width:360px;margin-bottom:20px;">
+    <div class="wb-seg" style="max-width:440px;margin-bottom:20px;">
         <div class="wb-seg-item @(_tab == "skill" ? "wb-seg-active" : "")" @onclick='() => SwitchTab("skill")'>Skill</div>
+        <div class="wb-seg-item @(_tab == "mcp" ? "wb-seg-active" : "")" @onclick='() => SwitchTab("mcp")'>MCP</div>
         <div class="wb-seg-item @(_tab == "connector" ? "wb-seg-active" : "")" @onclick='() => SwitchTab("connector")'>连接器</div>
         <div class="wb-seg-item @(_tab == "knowledge" ? "wb-seg-active" : "")" @onclick='() => SwitchTab("knowledge")'>知识库</div>
     </div>
@@ -30,7 +32,7 @@
     {
         <div class="rs-section-head">
             <span>技能列表</span>
-            <button class="btn btn-link btn-small" @onclick='() => Navigation.NavigateTo("/assistant/agent/skills")'>前往技能管理 →</button>
+            <button class="btn btn-link btn-small" @onclick='() => Navigation.NavigateTo("/assistant/skills")'>前往技能管理 →</button>
         </div>
         <div class="rs-rows">
             @foreach (var skill in _skills)
@@ -50,6 +52,33 @@
             @if (!_skills.Any())
             {
                 <div class="empty-state"><div class="empty-text">暂无技能</div></div>
+            }
+        </div>
+    }
+    else if (_tab == "mcp")
+    {
+        <div class="rs-section-head">
+            <span>MCP 服务列表</span>
+            <button class="btn btn-link btn-small" @onclick='() => Navigation.NavigateTo("/assistant/mcps")'>前往 MCP 管理 →</button>
+        </div>
+        <div class="rs-rows">
+            @foreach (var server in _mcpServers)
+            {
+                <div class="rs-row">
+                    <span class="rs-row-icon">🔌</span>
+                    <div class="rs-row-info">
+                        <div class="rs-row-name">@server.DisplayName <span class="em-role">@server.TransportType</span></div>
+                        <div class="rs-row-desc">@server.Endpoint</div>
+                    </div>
+                    <label class="rs-switch">
+                        <input type="checkbox" checked="@server.IsEnabled" @onchange="e => ToggleMcpAsync(server, e)" />
+                        <span class="rs-slider"></span>
+                    </label>
+                </div>
+            }
+            @if (!_mcpServers.Any())
+            {
+                <div class="empty-state"><div class="empty-text">暂无 MCP 服务</div></div>
             }
         </div>
     }
@@ -174,6 +203,7 @@
     private List<SkillDto> _skills = [];
     private List<ConnectorDto> _connectors = [];
     private List<KnowledgeBaseDto> _knowledgeBases = [];
+    private List<McpServerDto> _mcpServers = [];
 
     private bool _showConnectorDialog;
     private bool _saving;
@@ -203,6 +233,10 @@
             {
                 _skills = (await SkillAppService.GetListAsync(new SkillDefinitionQueryDto { MaxResultCount = 100 })).Data?.Items.ToList() ?? [];
             }
+            else if (_tab == "mcp")
+            {
+                _mcpServers = (await McpServerAppService.GetAllAsync()).Data ?? [];
+            }
             else if (_tab == "connector")
             {
                 _connectors = (await ConnectorAppService.GetListAsync(new ConnectorQueryDto { MaxResultCount = 100 })).Data?.Items.ToList() ?? [];
@@ -223,6 +257,19 @@
         try
         {
             await SkillAppService.ToggleEnabledAsync(skill.Id, (bool)(e.Value ?? false));
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"操作失败: {ex.Message}", "error");
+        }
+    }
+
+    private async Task ToggleMcpAsync(McpServerDto server, ChangeEventArgs e)
+    {
+        try
+        {
+            await McpServerAppService.ToggleEnabledAsync(server.Id, (bool)(e.Value ?? false));
             await LoadAsync();
         }
         catch (Exception ex)
