@@ -11,7 +11,7 @@ namespace H.AppLab.Desktop;
 /// </summary>
 public interface IDesktopApp
 {
-    /// <summary>应用唯一标识（如 assistant）</summary>
+    /// <summary>应用唯一标识（如 workbench）</summary>
     string Id { get; }
 
     /// <summary>应用显示名称（用于菜单与应用中心）</summary>

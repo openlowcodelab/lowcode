@@ -1,0 +1,565 @@
+@page "/workbench/employees"
+
+@layout WorkbenchLayout
+@inject IAgentAppService AgentAppService
+@inject IAgentTemplateAppService TemplateAppService
+@inject ITaskAppService TaskAppService
+@inject NavigationManager Navigation
+
+<PageTitle>员工管理 - AI 工作台</PageTitle>
+
+@if (!string.IsNullOrEmpty(toastMessage))
+{
+    <div class="toast-notification toast-@toastType @(toastVisible ? "toast-show" : "")">@toastMessage</div>
+}
+
+<div class="em-page">
+    <div class="em-header">
+        <h2>员工管理</h2>
+        <button class="btn btn-primary workbench-btn-primary btn-small" @onclick="ShowCreate">＋ 新建员工</button>
+    </div>
+
+    <div class="em-search">
+        <input placeholder="搜索名称或角色..." @bind="_filter" />
+    </div>
+
+    @if (_loading)
+    {
+        <div class="empty-state"><div class="empty-text">加载中...</div></div>
+    }
+    else if (FilteredAgents.Any())
+    {
+        <div class="em-grid">
+            @foreach (var agent in FilteredAgents)
+            {
+                <div class="em-card" @onclick="() => GoSettings(agent)">
+                    <div class="em-card-top">
+                        <span class="em-avatar">@agent.DisplayName.Substring(0, 1)</span>
+                    </div>
+                    <div class="em-card-name">
+                        <strong>@agent.DisplayName</strong>
+                        @if (!string.IsNullOrWhiteSpace(agent.Role))
+                        {
+                            <span class="em-role">📄 @agent.Role</span>
+                        }
+                    </div>
+                    <div class="em-card-desc">@agent.Description</div>
+                    <div class="em-card-foot">
+                        <span>任务数 @_stats.GetValueOrDefault(agent.Id).TaskCount</span>
+                        <span>最近运行 @_stats.GetValueOrDefault(agent.Id).LastRunText</span>
+                    </div>
+                    <div class="em-card-actions" @onclick:stopPropagation="true">
+                        <button class="btn btn-link btn-small" @onclick="() => GoSettings(agent)">设置</button>
+                        <button class="btn btn-link btn-small" @onclick="() => ShowSaveTemplate(agent)">存为模板</button>
+                        <button class="btn btn-link btn-small btn-danger" @onclick="() => DeleteAsync(agent)">删除</button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <div class="empty-icon">👥</div>
+            <div class="empty-text">暂无员工，点击新建按钮新增</div>
+        </div>
+    }
+</div>
+
+<!-- ========== 新建员工对话框 ========== -->
+@if (_showCreate)
+{
+    <div class="modal-overlay" @onclick="CloseCreate">
+        <div class="modal-dialog" style="width:560px;" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h3>新建员工</h3>
+                <button class="btn btn-text modal-close-btn" @onclick="CloseCreate">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="wb-seg" style="margin-bottom:16px;">
+                    <div class="wb-seg-item @(_createMode == "template" ? "wb-seg-active" : "")" @onclick='() => _createMode = "template"'>从模板新建</div>
+                    <div class="wb-seg-item @(_createMode == "custom" ? "wb-seg-active" : "")" @onclick='() => _createMode = "custom"'>自定义</div>
+                </div>
+
+                @if (_createMode == "template")
+                {
+                    <div class="em-template-list">
+                        @foreach (var template in _templates)
+                        {
+                            <div class="em-template-item @(_selectedTemplateId == template.Id ? "em-template-active" : "")"
+                                 @onclick="() => SelectTemplate(template)">
+                                <div class="em-template-name">
+                                    @template.TemplateName
+                                    @if (template.IsBuiltin)
+                                    {
+                                        <span class="em-role">内置</span>
+                                    }
+                                </div>
+                                <div class="em-template-desc">@template.Role · @template.Description</div>
+                            </div>
+                        }
+                        @if (!_templates.Any())
+                        {
+                            <div class="empty-text" style="padding:12px;">暂无模板</div>
+                        }
+                    </div>
+                    <div class="form-row" style="margin-top:16px;">
+                        <div class="form-item required">
+                            <label>* 员工名称</label>
+                            <input class="modal-input" @bind="_createName" placeholder="如：点餐开发" />
+                        </div>
+                        <div class="form-item">
+                            <label>角色</label>
+                            <input class="modal-input" @bind="_createRole" placeholder="如：研发工程师" />
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="form-row">
+                        <div class="form-item required">
+                            <label>* 员工名称</label>
+                            <input class="modal-input" @bind="_createName" placeholder="如：点餐开发" />
+                        </div>
+                        <div class="form-item">
+                            <label>角色</label>
+                            <input class="modal-input" @bind="_createRole" placeholder="如：研发工程师" />
+                        </div>
+                    </div>
+                    <div class="form-item">
+                        <label>描述</label>
+                        <textarea class="modal-input modal-textarea" @bind="_createDescription" placeholder="负责前后端研发、测试、CI/CD 流水线部署"></textarea>
+                    </div>
+                    <div class="form-item required">
+                        <label>* 系统提示词</label>
+                        <textarea class="modal-input modal-textarea" @bind="_createPrompt" style="min-height:100px;" placeholder="定义员工的职责与行为准则"></textarea>
+                    </div>
+                }
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn-cancel" @onclick="CloseCreate">取消</button>
+                <button class="modal-btn-primary" disabled="@_saving" @onclick="CreateAsync">创建</button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- ========== 存为模板对话框 ========== -->
+@if (_saveTemplateAgent is not null)
+{
+    <div class="modal-overlay" @onclick="CloseSaveTemplate">
+        <div class="modal-dialog" style="width:420px;" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h3>保存为模板</h3>
+                <button class="btn btn-text modal-close-btn" @onclick="CloseSaveTemplate">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-item required">
+                    <label>* 模板名称</label>
+                    <input class="modal-input" @bind="_templateName" />
+                </div>
+                <div class="empty-text" style="padding:0;text-align:left;">
+                    将保存 @_saveTemplateAgent.DisplayName 的角色、描述、系统提示词与资源绑定。
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn-cancel" @onclick="CloseSaveTemplate">取消</button>
+                <button class="modal-btn-primary" disabled="@_saving" @onclick="SaveTemplateAsync">保存</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [CascadingParameter]
+    public WorkbenchState State { get; set; } = default!;
+
+    private record AgentStats(int TaskCount, string LastRunText);
+
+    private List<AgentDto> _agents = [];
+    private Dictionary<Guid, AgentStats> _stats = [];
+    private bool _loading;
+    private string _filter = "";
+
+    private bool _showCreate;
+    private string _createMode = "template";
+    private List<AgentTemplateDto> _templates = [];
+    private Guid? _selectedTemplateId;
+    private string _createName = "";
+    private string _createRole = "";
+    private string _createDescription = "";
+    private string _createPrompt = "";
+
+    private AgentDto? _saveTemplateAgent;
+    private string _templateName = "";
+
+    private bool _saving;
+
+    private string toastMessage = "";
+    private string toastType = "info";
+    private bool toastVisible;
+
+    private IEnumerable<AgentDto> FilteredAgents => string.IsNullOrWhiteSpace(_filter)
+        ? _agents
+        : _agents.Where(x =>
+            x.DisplayName.Contains(_filter, StringComparison.OrdinalIgnoreCase) ||
+            x.Role.Contains(_filter, StringComparison.OrdinalIgnoreCase));
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        if (uri.Query.Contains("new=1", StringComparison.OrdinalIgnoreCase))
+        {
+            await ShowCreate();
+        }
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            var result = (await AgentAppService.GetListAsync(new AgentQueryDto { MaxResultCount = 100 })).Data;
+            _agents = result?.Items.ToList() ?? [];
+            State.SetAgents(_agents);
+
+            _stats = [];
+            foreach (var agent in _agents)
+            {
+                try
+                {
+                    var tasks = (await TaskAppService.GetListAsync(new TaskQueryDto
+                    {
+                        AgentType = agent.AgentType,
+                        MaxResultCount = 50
+                    })).Data;
+                    var items = tasks?.Items ?? [];
+                    var lastRun = items.Where(x => x.LastExecutionTime.HasValue).MaxBy(x => x.LastExecutionTime)?.LastExecutionTime;
+                    _stats[agent.Id] = new AgentStats((int)(tasks?.TotalCount ?? 0), lastRun?.ToString("MM-dd HH:mm") ?? "暂无");
+                }
+                catch
+                {
+                    _stats[agent.Id] = new AgentStats(0, "暂无");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"加载员工失败: {ex.Message}", "error");
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void GoSettings(AgentDto agent)
+        => Navigation.NavigateTo($"/workbench/employees/{agent.Id}/settings");
+
+    private async Task ShowCreate()
+    {
+        _createMode = "template";
+        _selectedTemplateId = null;
+        _createName = "";
+        _createRole = "";
+        _createDescription = "";
+        _createPrompt = "";
+        _showCreate = true;
+        try
+        {
+            _templates = (await TemplateAppService.GetListAsync(new AgentTemplateQueryDto { MaxResultCount = 50 })).Data?.Items.ToList() ?? [];
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"加载模板失败: {ex.Message}", "error");
+        }
+    }
+
+    private void CloseCreate() => _showCreate = false;
+
+    private void SelectTemplate(AgentTemplateDto template)
+    {
+        _selectedTemplateId = template.Id;
+        if (string.IsNullOrWhiteSpace(_createName))
+        {
+            _createName = template.TemplateName;
+        }
+
+        _createRole = template.Role;
+    }
+
+    private async Task CreateAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_createName))
+        {
+            ShowToast("请输入员工名称", "warning");
+            return;
+        }
+
+        _saving = true;
+        try
+        {
+            if (_createMode == "template")
+            {
+                if (_selectedTemplateId is null)
+                {
+                    ShowToast("请选择模板", "warning");
+                    return;
+                }
+
+                await AgentAppService.CreateFromTemplateAsync(new CreateAgentFromTemplateDto
+                {
+                    TemplateId = _selectedTemplateId.Value,
+                    DisplayName = _createName.Trim(),
+                    Role = _createRole.Trim()
+                });
+            }
+            else
+            {
+                if (string.IsNullOrWhiteSpace(_createPrompt))
+                {
+                    ShowToast("请输入系统提示词", "warning");
+                    return;
+                }
+
+                await AgentAppService.CreateAsync(new CreateAgentDto
+                {
+                    AgentType = $"waker-{Guid.NewGuid():N}"[..18],
+                    DisplayName = _createName.Trim(),
+                    Role = _createRole.Trim(),
+                    Description = _createDescription.Trim(),
+                    SystemPrompt = _createPrompt.Trim()
+                });
+            }
+
+            ShowToast("员工已创建", "success");
+            _showCreate = false;
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"创建失败: {ex.Message}", "error");
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private void ShowSaveTemplate(AgentDto agent)
+    {
+        _saveTemplateAgent = agent;
+        _templateName = agent.DisplayName;
+    }
+
+    private void CloseSaveTemplate() => _saveTemplateAgent = null;
+
+    private async Task SaveTemplateAsync()
+    {
+        if (_saveTemplateAgent is null) return;
+        if (string.IsNullOrWhiteSpace(_templateName))
+        {
+            ShowToast("请输入模板名称", "warning");
+            return;
+        }
+
+        _saving = true;
+        try
+        {
+            await AgentAppService.SaveAsTemplateAsync(new SaveAgentTemplateDto
+            {
+                AgentId = _saveTemplateAgent.Id,
+                TemplateName = _templateName.Trim()
+            });
+            ShowToast("已保存为模板", "success");
+            _saveTemplateAgent = null;
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"保存失败: {ex.Message}", "error");
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private async Task DeleteAsync(AgentDto agent)
+    {
+        try
+        {
+            await AgentAppService.DeleteAsync(agent.Id);
+            ShowToast("员工已删除", "success");
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"删除失败: {ex.Message}", "error");
+        }
+    }
+
+    private void ShowToast(string message, string type = "info")
+    {
+        toastMessage = message;
+        toastType = type;
+        toastVisible = true;
+        StateHasChanged();
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(3000);
+            toastVisible = false;
+            await InvokeAsync(StateHasChanged);
+        });
+    }
+}
+
+<style>
+    .em-page {
+        height: 100%;
+        overflow-y: auto;
+        padding: 24px;
+        background: #fff;
+        box-sizing: border-box;
+    }
+
+    .em-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+
+    .em-header h2 {
+        margin: 0;
+        font-size: 20px;
+    }
+
+    .em-search {
+        margin-bottom: 16px;
+    }
+
+    .em-search input {
+        width: 280px;
+        height: 32px;
+        padding: 2px 12px;
+        border: 1px solid #e8e8e8;
+        border-radius: 6px;
+        font-size: 13px;
+        outline: none;
+    }
+
+    .em-search input:focus {
+        border-color: #a6a6a6;
+    }
+
+    .em-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 16px;
+    }
+
+    .em-card {
+        border: 1px solid #e8e8e8;
+        border-radius: 10px;
+        padding: 20px 16px 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+
+    .em-card:hover {
+        border-color: #d9d9d9;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .em-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: #ececec;
+        color: #595959;
+        font-size: 18px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .em-card-name {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 15px;
+        color: #262626;
+    }
+
+    .em-card-desc {
+        font-size: 13px;
+        color: #8c8c8c;
+        text-align: center;
+        min-height: 20px;
+    }
+
+    .em-card-foot {
+        width: 100%;
+        display: flex;
+        justify-content: space-around;
+        font-size: 12px;
+        color: #8c8c8c;
+        border-top: 1px solid #f0f0f0;
+        padding-top: 10px;
+        margin-top: 4px;
+    }
+
+    .em-card-actions {
+        display: flex;
+        gap: 4px;
+    }
+
+    /* ========== 模板选择 ========== */
+    .em-template-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        max-height: 240px;
+        overflow-y: auto;
+    }
+
+    .em-template-item {
+        border: 1px solid #e8e8e8;
+        border-radius: 8px;
+        padding: 10px 12px;
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+
+    .em-template-item:hover {
+        border-color: #d9d9d9;
+    }
+
+    .em-template-active,
+    .em-template-active:hover {
+        border-color: #262626;
+        background: #fafafa;
+    }
+
+    .em-template-name {
+        font-size: 14px;
+        font-weight: 500;
+        color: #262626;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .em-template-desc {
+        font-size: 12px;
+        color: #8c8c8c;
+        margin-top: 2px;
+    }
+</style>

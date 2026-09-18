@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../../../common.props" />
+  <PropertyGroup>
+    <RootNamespace>H.Workbench.Application</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Agents.AI" />
+    <PackageReference Include="Microsoft.Agents.AI.OpenAI" />
+    <PackageReference Include="Volo.Abp.AutoMapper" />
+    <PackageReference Include="Volo.Abp.AspNetCore.Mvc" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Utils\H.Util.Base\H.Util.Base.csproj" />
+    <ProjectReference Include="..\H.Workbench.Application.Contracts\H.Workbench.Application.Contracts.csproj" />
+    <ProjectReference Include="..\H.Workbench.Core\H.Workbench.Core.csproj" />
+    <ProjectReference Include="..\H.Workbench.EntityFrameworkCore\H.Workbench.EntityFrameworkCore.csproj" />
+  </ItemGroup>
+
+</Project>

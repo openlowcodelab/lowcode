@@ -90,7 +90,7 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 任务页（复用 H.Assistant.UI 的任务中心视图，按需创建并缓存）
+    /// 任务页（复用 H.Workbench.UI 的任务中心视图，按需创建并缓存）
     /// </summary>
     private Control GetTasksView()
     {
@@ -118,7 +118,7 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 设置页（来自 H.Assistant.UI，按需创建并缓存）：每次进入重置到“通用”页。
+    /// 设置页（来自 H.Workbench.UI，按需创建并缓存）：每次进入重置到“通用”页。
     /// </summary>
     private Control GetSettingsView()
     {

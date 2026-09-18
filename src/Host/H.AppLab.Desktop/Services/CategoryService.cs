@@ -1,4 +1,4 @@
-using H.Assistant.Application.Contracts;
+using H.Workbench.Application.Contracts;
 using System.Collections.ObjectModel;
 
 namespace H.AppLab.Desktop.Services;

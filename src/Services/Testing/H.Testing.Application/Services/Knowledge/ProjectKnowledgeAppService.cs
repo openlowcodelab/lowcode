@@ -1,4 +1,4 @@
-using H.Assistant.Application.Contracts;
+using H.Workbench.Application.Contracts;
 using H.Testing.Application.Contracts;
 using H.Util.Base;
 using System.Text;
@@ -10,7 +10,7 @@ namespace H.Testing.Application;
 
 /// <summary>
 /// 测试项目知识库应用服务
-/// 每个测试项目绑定一个 Assistant 知识库（懒创建），通过 Assistant 接口读写，描述项目功能与逻辑以辅助编写测试用例
+/// 每个测试项目绑定一个 Workbench 知识库（懒创建），通过 Workbench 接口读写，描述项目功能与逻辑以辅助编写测试用例
 /// </summary>
 public class ProjectKnowledgeAppService : ApplicationService, IProjectKnowledgeAppService
 {

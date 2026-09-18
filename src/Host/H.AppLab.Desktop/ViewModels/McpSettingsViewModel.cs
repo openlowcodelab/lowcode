@@ -1,12 +1,12 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using H.AppLab.Desktop.Services;
-using H.Assistant.Application.Contracts;
+using H.Workbench.Application.Contracts;
 using System.Collections.ObjectModel;
 
 namespace H.AppLab.Desktop.ViewModels;
 
 /// <summary>
-/// MCP 管理 ViewModel（只读列表，数据统一由 Assistant.Web 维护）
+/// MCP 管理 ViewModel（只读列表，数据统一由 Workbench.Web 维护）
 /// </summary>
 public partial class McpSettingsViewModel : ObservableObject
 {

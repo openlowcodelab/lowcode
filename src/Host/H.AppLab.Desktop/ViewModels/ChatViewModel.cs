@@ -1,7 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using H.AppLab.Desktop.Services;
-using H.Assistant.Application.Contracts;
+using H.Workbench.Application.Contracts;
 using System.Collections.ObjectModel;
 using System.Text.Encodings.Web;
 using System.Text.Json;
@@ -204,10 +204,10 @@ public partial class ChatViewModel : ObservableObject
             HistoricalAnswer = string.Empty;
 
             // 检查最后一条助手消息是否包含嵌入的 ReAct 步骤数据（富内容格式）
-            var lastAssistantMsg = messages.LastOrDefault(m => m.Role == "assistant");
-            if (lastAssistantMsg != null && !string.IsNullOrEmpty(lastAssistantMsg.Content))
+            var lastWorkbenchMsg = messages.LastOrDefault(m => m.Role == "assistant");
+            if (lastWorkbenchMsg != null && !string.IsNullOrEmpty(lastWorkbenchMsg.Content))
             {
-                TryParseReactHistory(lastAssistantMsg);
+                TryParseReactHistory(lastWorkbenchMsg);
             }
 
             Messages.Clear();
@@ -231,11 +231,11 @@ public partial class ChatViewModel : ObservableObject
         }
     }
 
-    private void TryParseReactHistory(ChatMessageDto lastAssistantMsg)
+    private void TryParseReactHistory(ChatMessageDto lastWorkbenchMsg)
     {
         try
         {
-            using var doc = JsonDocument.Parse(lastAssistantMsg.Content);
+            using var doc = JsonDocument.Parse(lastWorkbenchMsg.Content);
             var root = doc.RootElement;
             if (!root.TryGetProperty("answer", out var answerProp) ||
                 !root.TryGetProperty("reactSteps", out var reactStepsProp))
@@ -286,7 +286,7 @@ public partial class ChatViewModel : ObservableObject
             HistoricalAnswer = answerContent;
 
             // 更新消息内容为纯文本答案（防止列表中渲染 JSON）
-            lastAssistantMsg.Content = answerContent;
+            lastWorkbenchMsg.Content = answerContent;
 
             // 兜底：有 ReAct 步骤但没有最终回答时降级为普通消息显示
             if (HasReactSteps && string.IsNullOrEmpty(HistoricalAnswer))

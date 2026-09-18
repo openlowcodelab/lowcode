@@ -5,7 +5,7 @@ namespace H.Testing.Application.Contracts;
 
 /// <summary>
 /// 测试项目 AI 服务接口
-/// 基于口语化描述生成/变更测试项目（分类、用例），AI 基础能力依赖 Assistant 应用
+/// 基于口语化描述生成/变更测试项目（分类、用例），AI 基础能力依赖 Workbench 应用
 /// </summary>
 public interface IAiGenerateAppService : IAppService
 {

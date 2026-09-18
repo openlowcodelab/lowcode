@@ -1,5 +1,5 @@
 ﻿using H.Abp.HttpClientProxy;
-using H.Assistant.Application.Contracts;
+using H.Workbench.Application.Contracts;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
@@ -8,7 +8,7 @@ using System.Text.Json;
 namespace H.AppLab.Desktop.Services;
 
 /// <summary>
-/// 聊天 SSE 流式客户端，对接 /api/assistant/chat/stream（与 Web 端 JS fetch 流实现一致）
+/// 聊天 SSE 流式客户端，对接 /api/workbench/chat/stream（与 Web 端 JS fetch 流实现一致）
 /// </summary>
 public class ChatStreamClient(IHttpClientFactory httpClientFactory, RemoteServiceOptions remoteServiceOptions)
 {
@@ -23,9 +23,9 @@ public class ChatStreamClient(IHttpClientFactory httpClientFactory, RemoteServic
     /// </summary>
     public async IAsyncEnumerable<string> StreamAsync(SendChatMessageInputDto input, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var client = httpClientFactory.CreateClient(AssistantApp.AssistantRemoteServiceName);
-        var baseUrl = remoteServiceOptions.GetBaseUrl(AssistantApp.AssistantRemoteServiceName).TrimEnd('/');
-        using var request = new HttpRequestMessage(HttpMethod.Post, $"{baseUrl}/api/assistant/chat/stream")
+        var client = httpClientFactory.CreateClient(WorkbenchApp.WorkbenchRemoteServiceName);
+        var baseUrl = remoteServiceOptions.GetBaseUrl(WorkbenchApp.WorkbenchRemoteServiceName).TrimEnd('/');
+        using var request = new HttpRequestMessage(HttpMethod.Post, $"{baseUrl}/api/workbench/chat/stream")
         {
             Content = JsonContent.Create(input, options: JsonOptions)
         };

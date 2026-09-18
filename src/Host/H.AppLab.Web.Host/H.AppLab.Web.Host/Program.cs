@@ -105,7 +105,7 @@ app.MapRazorComponents<App>()
         typeof(H.Util.Blazor._Imports).Assembly,
         typeof(H.Testing.Web._Imports).Assembly,
         typeof(H.Notification.Web._Imports).Assembly,
-        typeof(H.Assistant.Web._Imports).Assembly,
+        typeof(H.Workbench.Web._Imports).Assembly,
         typeof(H.Order.Web._Imports).Assembly,
         typeof(H.SupplyChain.Web._Imports).Assembly,
         typeof(H.BackgroundTask.Web._Imports).Assembly);

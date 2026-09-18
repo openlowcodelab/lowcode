@@ -1,4 +1,4 @@
-using H.Assistant.Application.Contracts;
+using H.Workbench.Application.Contracts;
 using H.Testing.Application.Contracts;
 using H.Testing.Application.Mapping;
 using H.Testing.EntityFrameworkCore;

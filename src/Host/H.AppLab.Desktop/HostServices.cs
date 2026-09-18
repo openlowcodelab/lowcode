@@ -15,7 +15,7 @@ public static class HostServices
     /// </summary>
     private static IReadOnlyList<IDesktopApp> CreateApps() =>
     [
-        new AssistantApp()
+        new WorkbenchApp()
     ];
 
     public static IServiceProvider Build()

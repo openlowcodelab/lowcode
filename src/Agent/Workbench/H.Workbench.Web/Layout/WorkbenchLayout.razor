@@ -1,0 +1,761 @@
+@namespace H.Workbench.Web
+
+@inherits LayoutComponentBase
+@implements IDisposable
+@using Microsoft.AspNetCore.Components.Routing
+@inject IAgentAppService AgentAppService
+@inject NavigationManager Navigation
+
+<DefaultLayoutComponent AppName="AI 工作台" AuthMode="AuthenticationMode.Optional">
+    <SideContent>
+        <div class="wb-side">
+            <div class="wb-side-scroll">
+                <div class="wb-group-title">工作资料</div>
+                <div class="wb-menu-item @(IsActive("/workbench/tasks") ? "wb-menu-active" : "")"
+                     @onclick='() => Navigation.NavigateTo("/workbench/tasks")'>
+                    <span class="wb-menu-icon">📋</span><span class="wb-menu-text">任务</span>
+                </div>
+                <div class="wb-menu-item @(IsActive("/workbench/projects") ? "wb-menu-active" : "")"
+                     @onclick='() => Navigation.NavigateTo("/workbench/projects")'>
+                    <span class="wb-menu-icon">🗂</span><span class="wb-menu-text">项目</span>
+                </div>
+                <div class="wb-menu-item @(IsActive("/workbench/knowledge") ? "wb-menu-active" : "")"
+                     @onclick='() => Navigation.NavigateTo("/workbench/knowledge")'>
+                    <span class="wb-menu-icon">📚</span><span class="wb-menu-text">知识库</span>
+                </div>
+
+                <div class="wb-group-title">员工资源</div>
+                <div class="wb-menu-item @(IsActive("/workbench/employees") ? "wb-menu-active" : "")"
+                     @onclick='() => Navigation.NavigateTo("/workbench/employees")'>
+                    <span class="wb-menu-icon">👥</span><span class="wb-menu-text">员工管理</span>
+                </div>
+                <div class="wb-menu-item @(IsActive("/workbench/resources") ? "wb-menu-active" : "")"
+                     @onclick='() => Navigation.NavigateTo("/workbench/resources")'>
+                    <span class="wb-menu-icon">🧩</span><span class="wb-menu-text">能力与资源</span>
+                </div>
+                <div class="wb-menu-item @(IsActive("/workbench/settings") ? "wb-menu-active" : "")"
+                     @onclick='() => Navigation.NavigateTo("/workbench/settings")'>
+                    <span class="wb-menu-icon">⚙️</span><span class="wb-menu-text">设置</span>
+                </div>
+
+                <div class="wb-agent-section">
+                    <div class="wb-agent-header">
+                        <span class="wb-agent-tab">员工 (@_state.Agents.Count)</span>
+                        <button class="wb-agent-add" title="新建员工"
+                                @onclick='() => Navigation.NavigateTo("/workbench/employees?new=1")'>＋</button>
+                    </div>
+                    <div class="wb-agent-search">
+                        <input placeholder="搜索员工..." @bind="_agentFilter" />
+                    </div>
+                    <div class="wb-agent-list">
+                        @foreach (var agent in FilteredAgents)
+                        {
+                            <div class="wb-agent-item @(_state.SelectedAgent?.Id == agent.Id ? "wb-agent-active" : "")"
+                                 @onclick="() => SelectAgent(agent)">
+                                <span class="wb-agent-avatar">@agent.DisplayName.Substring(0, 1)</span>
+                                <span class="wb-agent-info">
+                                    <span class="wb-agent-name">@agent.DisplayName</span>
+                                    <span class="wb-agent-desc">@agent.Description</span>
+                                </span>
+                            </div>
+                        }
+                        @if (_state.Loaded && !FilteredAgents.Any())
+                        {
+                            <div class="wb-agent-empty">暂无员工</div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </SideContent>
+    <ChildContent>
+        <CascadingValue Value="_state" IsFixed="true">@Body</CascadingValue>
+    </ChildContent>
+</DefaultLayoutComponent>
+
+@code {
+    private readonly WorkbenchState _state = new();
+    private string _agentFilter = "";
+
+    private IEnumerable<AgentDto> FilteredAgents => string.IsNullOrWhiteSpace(_agentFilter)
+        ? _state.Agents
+        : _state.Agents.Where(x =>
+            x.DisplayName.Contains(_agentFilter, StringComparison.OrdinalIgnoreCase) ||
+            x.Role.Contains(_agentFilter, StringComparison.OrdinalIgnoreCase));
+
+    protected override async Task OnInitializedAsync()
+    {
+        Navigation.LocationChanged += OnLocationChanged;
+        _state.Changed += OnStateChanged;
+        await LoadAgentsAsync();
+    }
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= OnLocationChanged;
+        _state.Changed -= OnStateChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+        => InvokeAsync(StateHasChanged);
+
+    private void OnStateChanged()
+        => InvokeAsync(StateHasChanged);
+
+    private async Task LoadAgentsAsync()
+    {
+        try
+        {
+            var result = (await AgentAppService.GetListAsync(new AgentQueryDto { MaxResultCount = 100 })).Data;
+            _state.SetAgents(result?.Items ?? []);
+        }
+        catch
+        {
+            _state.SetAgents([]);
+        }
+    }
+
+    private void SelectAgent(AgentDto agent)
+    {
+        _state.Select(agent);
+        Navigation.NavigateTo("/workbench/");
+    }
+
+    private bool IsActive(string url)
+    {
+        var current = Navigation.ToBaseRelativePath(Navigation.Uri).Trim('/');
+        var target = url.Trim('/');
+        return current.Equals(target, StringComparison.OrdinalIgnoreCase);
+    }
+}
+
+<style>
+    /* ========== 工作台侧栏 ========== */
+    .wb-side {
+        width: 232px;
+        flex-shrink: 0;
+        background: #fff;
+        border-right: 1px solid var(--h-border-light, #F2F3F5);
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+
+    .wb-side-scroll {
+        flex: 1;
+        overflow-y: auto;
+        padding: 8px 10px 12px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .wb-group-title {
+        font-size: 12px;
+        color: #8c8c8c;
+        padding: 12px 8px 6px;
+    }
+
+    .wb-menu-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        border-radius: 6px;
+        font-size: 14px;
+        color: #4e5969;
+        cursor: pointer;
+        user-select: none;
+        transition: background 0.15s;
+    }
+
+    .wb-menu-item:hover {
+        background: #f7f8fa;
+        color: #1d2129;
+    }
+
+    .wb-menu-active,
+    .wb-menu-active:hover {
+        background: #f0f0f0;
+        color: #262626;
+        font-weight: 500;
+    }
+
+    .wb-menu-icon {
+        font-size: 15px;
+        line-height: 1;
+        width: 18px;
+        text-align: center;
+    }
+
+    .wb-menu-text {
+        flex: 1;
+    }
+
+    /* ========== 员工列表区 ========== */
+    .wb-agent-section {
+        margin-top: 12px;
+        border-top: 1px solid #f0f0f0;
+        padding-top: 8px;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+
+    .wb-agent-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 4px 8px;
+    }
+
+    .wb-agent-tab {
+        font-size: 13px;
+        font-weight: 500;
+        color: #262626;
+        border-bottom: 2px solid #262626;
+        padding-bottom: 2px;
+    }
+
+    .wb-agent-add {
+        border: none;
+        background: transparent;
+        color: #595959;
+        font-size: 15px;
+        cursor: pointer;
+        border-radius: 4px;
+        padding: 2px 6px;
+    }
+
+    .wb-agent-add:hover {
+        background: #f0f0f0;
+        color: #262626;
+    }
+
+    .wb-agent-search {
+        padding: 6px 4px;
+    }
+
+    .wb-agent-search input {
+        width: 100%;
+        height: 28px;
+        padding: 2px 10px;
+        border: 1px solid #e8e8e8;
+        border-radius: 6px;
+        font-size: 12px;
+        outline: none;
+        box-sizing: border-box;
+        background: #fafafa;
+    }
+
+    .wb-agent-search input:focus {
+        border-color: #a6a6a6;
+        background: #fff;
+    }
+
+    .wb-agent-list {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .wb-agent-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+
+    .wb-agent-item:hover {
+        background: #f7f8fa;
+    }
+
+    .wb-agent-active,
+    .wb-agent-active:hover {
+        background: #f0f0f0;
+    }
+
+    .wb-agent-avatar {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: #ececec;
+        color: #595959;
+        font-size: 13px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .wb-agent-info {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    .wb-agent-name {
+        font-size: 13px;
+        font-weight: 500;
+        color: #262626;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .wb-agent-desc {
+        font-size: 12px;
+        color: #8c8c8c;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .wb-agent-empty {
+        font-size: 12px;
+        color: #bfbfbf;
+        text-align: center;
+        padding: 16px 0;
+    }
+</style>
+
+<style>
+    /* ========== Buttons (shared by Settings and other pages) ========== */
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 6px 16px;
+        font-size: 14px;
+        line-height: 1.5;
+        border: 1px solid #d9d9d9;
+        border-radius: 6px;
+        background: #fafafa;
+        color: #595959;
+        cursor: pointer;
+        transition: all 0.2s;
+        outline: none;
+        font-family: inherit;
+        white-space: nowrap;
+    }
+
+    .btn:hover:not(:disabled) {
+        color: #262626;
+        border-color: #595959;
+    }
+
+    .btn:disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
+    }
+
+    .btn:active:not(:disabled) {
+        opacity: 0.8;
+    }
+
+    .btn-primary {
+        color: #fff;
+        background: #595959;
+        border-color: #595959;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+        background: #404040;
+        border-color: #404040;
+        color: #fff;
+    }
+
+    /* 灰色系 primary 按钮 */
+    .workbench-btn-primary {
+        background: #a6a6a6;
+        border-color: #a6a6a6;
+        color: #fff;
+    }
+
+    .workbench-btn-primary:hover:not(:disabled) {
+        background: #bfbfbf;
+        border-color: #bfbfbf;
+        color: #fff;
+    }
+
+    /* 返回按钮 */
+    .back-btn {
+        color: #262626;
+    }
+
+    .back-btn:hover {
+        background: #f0f0f0;
+        color: #262626;
+    }
+
+    .btn-link {
+        border-color: transparent;
+        background: transparent;
+        color: #595959;
+        padding: 4px 8px;
+    }
+
+    .btn-link:hover:not(:disabled) {
+        background: transparent;
+        color: #262626;
+        border-color: transparent;
+    }
+
+    .btn-text {
+        border-color: transparent;
+        background: transparent;
+        padding: 4px 8px;
+    }
+
+    .btn-text:hover:not(:disabled) {
+        background: #f5f5f5;
+        border-color: transparent;
+    }
+
+    .btn-danger {
+        color: #ff4d4f;
+    }
+
+    .btn-danger:hover:not(:disabled) {
+        color: #ff4d4f;
+        background: #fff1f0;
+        border-color: transparent;
+    }
+
+    .btn-small {
+        padding: 2px 8px;
+        font-size: 12px;
+    }
+
+    /* ========== SVG Icons (shared by Settings and other pages) ========== */
+    .btn svg {
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+    }
+
+    /* ========== Empty State ========== */
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .empty-icon svg {
+        width: 48px;
+        height: 48px;
+        color: #d9d9d9;
+    }
+
+    .empty-text {
+        color: #8c8c8c;
+        font-size: 14px;
+    }
+
+    /* ========== Modal（共享） ========== */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.45);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+
+    .modal-dialog {
+        background: white;
+        border-radius: 8px;
+        width: 520px;
+        max-height: 80vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 24px;
+        border-bottom: 1px solid #e8e8e8;
+    }
+
+    .modal-header h3 {
+        margin: 0;
+        font-size: 16px;
+    }
+
+    .modal-body {
+        padding: 24px;
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    .modal-footer {
+        padding: 16px 24px;
+        border-top: 1px solid #e8e8e8;
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+    }
+
+    .modal-close-btn {
+        padding: 4px;
+    }
+
+    .modal-close-btn:hover {
+        background: #f5f5f5;
+    }
+
+    .modal-btn-primary {
+        height: 36px;
+        padding: 4px 20px;
+        border: none;
+        border-radius: 6px;
+        background: #262626;
+        color: #fff;
+        font-size: 14px;
+        cursor: pointer;
+        min-width: 80px;
+    }
+
+    .modal-btn-primary:hover:not(:disabled) {
+        background: #404040;
+    }
+
+    .modal-btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .modal-btn-cancel {
+        height: 36px;
+        padding: 4px 20px;
+        border: 1px solid #d9d9d9;
+        border-radius: 6px;
+        background: #fff;
+        color: #595959;
+        font-size: 14px;
+        cursor: pointer;
+        min-width: 80px;
+    }
+
+    .modal-btn-cancel:hover {
+        color: #262626;
+        border-color: #262626;
+    }
+
+    .modal-input {
+        width: 100%;
+        height: 36px;
+        padding: 4px 11px;
+        border: 1px solid #d9d9d9;
+        border-radius: 6px;
+        font-size: 14px;
+        color: #262626;
+        background: #fff;
+        outline: none;
+        box-sizing: border-box;
+    }
+
+    .modal-input:focus {
+        border-color: #a6a6a6;
+        box-shadow: 0 0 0 2px rgba(166, 166, 166, 0.1);
+    }
+
+    .modal-input::placeholder {
+        color: #bfbfbf;
+    }
+
+    textarea.modal-input {
+        height: auto;
+    }
+
+    .modal-select {
+        width: 100%;
+        height: 36px;
+        padding: 4px 11px;
+        border: 1px solid #d9d9d9;
+        border-radius: 6px;
+        font-size: 14px;
+        color: #262626;
+        background: #fff;
+        outline: none;
+        cursor: pointer;
+    }
+
+    .modal-textarea {
+        min-height: 60px;
+        resize: vertical;
+        font-family: inherit;
+        font-size: 13px;
+    }
+
+    /* ========== Form（共享） ========== */
+    .form-item {
+        margin-bottom: 16px;
+    }
+
+    .form-item label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 14px;
+        color: #595959;
+        font-weight: 500;
+    }
+
+    .form-item.required label::before {
+        content: "*";
+        color: #ff4d4f;
+        margin-right: 4px;
+    }
+
+    .form-row {
+        display: flex;
+        gap: 16px;
+    }
+
+    .form-row .form-item {
+        flex: 1;
+    }
+
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        color: #333;
+    }
+
+    .checkbox-label input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        accent-color: #1677ff;
+        cursor: pointer;
+    }
+
+    .model-info-row {
+        font-size: 13px;
+        color: #595959;
+        margin-bottom: 4px;
+    }
+
+    .info-label {
+        color: #8c8c8c;
+        margin-right: 4px;
+    }
+
+    /* ========== Toast（共享） ========== */
+    .toast-notification {
+        position: fixed;
+        top: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 8px 20px;
+        border-radius: 6px;
+        font-size: 14px;
+        color: #fff;
+        background: #595959;
+        z-index: 2000;
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+
+    .toast-show {
+        opacity: 1;
+    }
+
+    .toast-error {
+        background: #ff4d4f;
+    }
+
+    .toast-warning {
+        background: #faad14;
+    }
+
+    .toast-success {
+        background: #52c41a;
+    }
+
+    /* ========== 分段控件（共享） ========== */
+    .wb-seg {
+        display: flex;
+        background: #f5f5f5;
+        border-radius: 8px;
+        padding: 3px;
+        margin-bottom: 12px;
+    }
+
+    .wb-seg-item {
+        flex: 1;
+        text-align: center;
+        font-size: 13px;
+        color: #8c8c8c;
+        padding: 6px 0;
+        border-radius: 6px;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .wb-seg-active {
+        background: #fff;
+        color: #262626;
+        font-weight: 500;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+    }
+
+    /* ========== 状态标签（共享） ========== */
+    .wb-task-status {
+        padding: 0 6px;
+        border-radius: 4px;
+        font-size: 11px;
+        background: #f5f5f5;
+        color: #8c8c8c;
+        white-space: nowrap;
+    }
+
+    .wb-status-active,
+    .wb-status-completed,
+    .wb-status-success {
+        background: #f6ffed;
+        color: #52c41a;
+    }
+
+    .wb-status-paused {
+        background: #fffbe6;
+        color: #faad14;
+    }
+
+    .wb-status-failed {
+        background: #fff1f0;
+        color: #ff4d4f;
+    }
+
+    /* ========== 角色/类型小标签（共享） ========== */
+    .em-role {
+        font-size: 12px;
+        color: #8c8c8c;
+        background: #fafafa;
+        border: 1px solid #f0f0f0;
+        border-radius: 4px;
+        padding: 0 6px;
+        white-space: nowrap;
+    }
+
+    /* ========== 单选行（共享） ========== */
+    .wb-radio-row {
+        display: flex;
+        gap: 20px;
+    }
+</style>

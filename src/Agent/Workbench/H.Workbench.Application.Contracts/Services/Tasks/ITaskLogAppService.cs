@@ -1,0 +1,25 @@
+using H.Abp.Application.Contracts;
+using H.Util.Base;
+
+namespace H.Workbench.Application.Contracts;
+
+/// <summary>
+/// 任务执行日志查询服务接口
+/// </summary>
+public interface ITaskLogAppService : IAppService
+{
+    /// <summary>
+    /// 获取执行日志列表（分页）
+    /// </summary>
+    Task<BaseOutput<PagedResultDto<TaskLogDto>>> GetListAsync(TaskLogQueryDto input);
+
+    /// <summary>
+    /// 获取单个执行日志
+    /// </summary>
+    Task<BaseOutput<TaskLogDto>> GetAsync(Guid id);
+
+    /// <summary>
+    /// 删除执行日志
+    /// </summary>
+    Task<BaseOutput> DeleteAsync(Guid id);
+}

@@ -1,4 +1,4 @@
-using H.Assistant.Application.Contracts;
+using H.Workbench.Application.Contracts;
 using H.Testing.Application.Contracts;
 using H.Util.Base;
 using System.Text.Json;
@@ -9,7 +9,7 @@ namespace H.Testing.Application;
 
 /// <summary>
 /// 测试项目 AI 服务
-/// 基于口语化描述生成/变更测试项目（分类、用例），AI 基础能力依赖 Assistant 应用
+/// 基于口语化描述生成/变更测试项目（分类、用例），AI 基础能力依赖 Workbench 应用
 /// </summary>
 public class AiGenerateAppService : ApplicationService, IAiGenerateAppService
 {

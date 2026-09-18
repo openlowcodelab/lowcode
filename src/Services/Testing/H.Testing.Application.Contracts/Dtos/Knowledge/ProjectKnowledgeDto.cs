@@ -1,11 +1,11 @@
 namespace H.Testing.Application.Contracts;
 
 /// <summary>
-/// 测试项目知识库信息（与 Assistant 知识库一对一绑定）
+/// 测试项目知识库信息（与 Workbench 知识库一对一绑定）
 /// </summary>
 public class ProjectKnowledgeDto
 {
-    /// <summary> 关联的 Assistant 知识库 ID </summary>
+    /// <summary> 关联的 Workbench 知识库 ID </summary>
     public Guid KnowledgeBaseId { get; set; }
 
     /// <summary> 知识库名称 </summary>

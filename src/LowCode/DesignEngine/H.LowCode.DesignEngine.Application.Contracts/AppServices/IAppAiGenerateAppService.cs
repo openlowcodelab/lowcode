@@ -6,7 +6,7 @@ namespace H.LowCode.DesignEngine.Application.Contracts;
 
 /// <summary>
 /// 应用 AI 生成服务接口
-/// 基于口语化描述生成应用/页面/菜单/数据源，AI 基础能力依赖 Assistant 应用
+/// 基于口语化描述生成应用/页面/菜单/数据源，AI 基础能力依赖 Workbench 应用
 /// </summary>
 public interface IAppAiGenerateAppService : IAppService
 {

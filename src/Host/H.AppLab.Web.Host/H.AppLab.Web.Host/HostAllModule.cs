@@ -1,6 +1,6 @@
 using H.Account.Application;
 using H.Approval.Application;
-using H.Assistant.Application;
+using H.Workbench.Application;
 using H.BackgroundTask.Application;
 using H.Enterprise.Application;
 using H.Enterprise.EntityFrameworkCore;
@@ -51,8 +51,8 @@ namespace H.AppLab.Web.Host;
     typeof(RenderEngineJsonFileRepositoryModule),
     // Account
     typeof(AccountApplicationModule),
-    // Assistant
-    typeof(AssistantApplicationModule),
+    // Workbench
+    typeof(WorkbenchApplicationModule),
     // Organization
     typeof(OrganizationApplicationModule),
     // Approval
@@ -145,7 +145,7 @@ public class HostAllModule : AbpModule
         {
             // 注册所有模块的控制器
             options.ConventionalControllers.Create(typeof(AccountApplicationModule).Assembly);
-            options.ConventionalControllers.Create(typeof(AssistantApplicationModule).Assembly);
+            options.ConventionalControllers.Create(typeof(WorkbenchApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(OrganizationApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(DesignEngineApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(RenderEngineApplicationModule).Assembly);

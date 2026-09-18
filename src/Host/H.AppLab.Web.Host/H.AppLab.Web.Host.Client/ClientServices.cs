@@ -2,7 +2,7 @@ using H.Abp.HttpClientProxy;
 using Microsoft.JSInterop;
 using H.Account.Application.Contracts;
 using H.Approval.Application.Contracts;
-using H.Assistant.Application.Contracts;
+using H.Workbench.Application.Contracts;
 using H.BackgroundTask.Application.Contracts;
 using H.Enterprise.Application.Contracts;
 using H.File.Application.Contracts;
@@ -44,7 +44,7 @@ public static class ClientServices
     public const string FileRemoteServiceName = "File";
     public const string EnterpriseRemoteServiceName = "Enterprise";
     public const string SystemPortalRemoteServiceName = "SystemPortal";
-    public const string AssistantRemoteServiceName = "Assistant";
+    public const string WorkbenchRemoteServiceName = "Workbench";
 
     public static void Configure(IServiceCollection services, IConfiguration configuration, string baseAddress)
     {
@@ -72,7 +72,7 @@ public static class ClientServices
             AccountRemoteServiceName, OrganizationRemoteServiceName,
             ApprovalRemoteServiceName, TestingRemoteServiceName,
             PortalRemoteServiceName, NotificationRemoteServiceName,
-            AssistantRemoteServiceName, EnterpriseRemoteServiceName,
+            WorkbenchRemoteServiceName, EnterpriseRemoteServiceName,
             SystemPortalRemoteServiceName, OrderRemoteServiceName,
             SettingRemoteServiceName, SupplyChainRemoteServiceName,
             BackgroundTaskRemoteServiceName, FileRemoteServiceName
@@ -141,8 +141,8 @@ public static class ClientServices
             s.AddHttpClientProxies(typeof(FileApplicationContractsModule).Assembly, FileRemoteServiceName),
         ["account"] = (s, _) =>
             s.AddHttpClientProxies(typeof(AccountApplicationContractsModule).Assembly, AccountRemoteServiceName),
-        ["assistant"] = (s, _) =>
-            s.AddHttpClientProxies(typeof(AssistantApplicationContractsModule).Assembly, AssistantRemoteServiceName),
+        ["workbench"] = (s, _) =>
+            s.AddHttpClientProxies(typeof(WorkbenchApplicationContractsModule).Assembly, WorkbenchRemoteServiceName),
         ["system"] = (s, _) =>
         {
             s.AddHttpClientProxies(typeof(SystemPortalApplicationContractsModule).Assembly, SystemPortalRemoteServiceName);

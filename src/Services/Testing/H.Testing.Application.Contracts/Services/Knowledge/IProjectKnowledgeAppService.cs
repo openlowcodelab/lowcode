@@ -5,7 +5,7 @@ namespace H.Testing.Application.Contracts;
 
 /// <summary>
 /// 测试项目知识库应用服务
-/// 每个测试项目绑定一个 Assistant 知识库（懒创建），描述项目功能与逻辑，辅助编写测试用例
+/// 每个测试项目绑定一个 Workbench 知识库（懒创建），描述项目功能与逻辑，辅助编写测试用例
 /// </summary>
 public interface IProjectKnowledgeAppService : IAppService
 {
