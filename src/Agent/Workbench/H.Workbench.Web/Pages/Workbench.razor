@@ -1,5 +1,4 @@
-@page "/workbench"
-@page "/workbench/home"
+@page "/workbench/conversations"
 
 @layout WorkbenchLayout
 @implements IDisposable
@@ -30,7 +29,7 @@
                 <span class="wb-agent-avatar">@_agent.DisplayName.Substring(0, 1)</span>
                 <span class="wb-task-head-name">@_agent.DisplayName</span>
                 <button class="btn btn-text btn-small"
-                        @onclick='() => Navigation.NavigateTo($"/workbench/employees/{_agent.Id}/settings")'>管理</button>
+                        @onclick='() => Navigation.NavigateTo($"/workbench/employees/{_agent.Id}/settings")'>设置</button>
             </div>
 
             <div class="wb-seg">
@@ -678,7 +677,7 @@
         height: 32px;
         border-radius: 50%;
         border: none;
-        background: #8c8c8c;
+        background: #165DFF;
         color: #fff;
         font-size: 15px;
         cursor: pointer;
@@ -686,7 +685,7 @@
     }
 
     .wb-send:hover:not(:disabled) {
-        background: #595959;
+        background: #4080FF;
     }
 
     .wb-send:disabled {
