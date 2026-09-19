@@ -151,6 +151,10 @@
                                                 TraceLoaded="@msg.TraceLoaded"
                                                 LoadedArtifacts="@msg.Artifacts" />
                         }
+                        @if (msg.Role == "assistant" && msg.Artifacts.Count > 0)
+                        {
+                            <ArtifactList Artifacts="@msg.Artifacts" />
+                        }
                         @if (!string.IsNullOrEmpty(msg.Content))
                         {
                             <div class="wb-msg-time">@msg.Time.ToString("MM-dd HH:mm:ss")</div>
@@ -282,6 +286,7 @@
                         @if (_logTraceOpenId == log.Id)
                         {
                             <ExecutionTraceView Steps="@_logTraceSteps" DefaultOpen="true" />
+                            <ArtifactList Artifacts="@_logTraceArtifacts" />
                         }
                     }
                 }
@@ -333,6 +338,7 @@
     private List<TaskLogDto> _detailLogs = [];
     private Guid? _logTraceOpenId;
     private List<ExecutionStepDto> _logTraceSteps = [];
+    private List<ArtifactDto> _logTraceArtifacts = [];
 
     private TaskDto? _chatTask;
     private List<ConvMessage> _chatMessages = [];
@@ -568,7 +574,15 @@
                 foreach (var log in ordered)
                 {
                     _chatMessages.Add(new ConvMessage { Role = "user", Content = log.Prompt ?? task.PromptContent, Time = log.StartTime });
-                    _chatMessages.Add(LogToMessage(log));
+                    var answer = LogToMessage(log);
+                    if (log.ArtifactCount > 0)
+                    {
+                        // 产物需要免展开直接可见：预拉一次完整轨迹（步骤同时缓存）
+                        var trace = await LoadTraceAsync(answer);
+                        answer.Steps = trace?.Steps ?? [];
+                        answer.Artifacts = trace?.Artifacts ?? [];
+                    }
+                    _chatMessages.Add(answer);
                 }
             }
         }
@@ -732,6 +746,26 @@
             live.TraceLoaded = true;
             _executing = false;
             _streamStatus = null;
+
+            // 服务端还会落库思考合并行与产物，取一次最新日志补齐（产物需直接可见）
+            if (live.Role == "assistant")
+            {
+                try
+                {
+                    var logs = (await TaskAppService.GetExecutionLogsAsync(task.Id, 1)).Data;
+                    var newest = logs?.OrderBy(l => l.StartTime).LastOrDefault();
+                    if (newest is not null && newest.ArtifactCount > 0)
+                    {
+                        live.LogId = newest.Id;
+                        live.StepCount = newest.StepCount;
+                        var trace = await LoadTraceAsync(live);
+                        live.Steps = trace?.Steps ?? live.Steps;
+                        live.Artifacts = trace?.Artifacts ?? [];
+                    }
+                }
+                catch { }
+            }
+
             await LoadTasksAsync();
             ScrollConversationToBottom();
             StateHasChanged();
@@ -835,6 +869,7 @@
         {
             var trace = (await TaskAppService.GetLogTraceAsync(log.Id)).Data;
             _logTraceSteps = trace?.Steps ?? [];
+            _logTraceArtifacts = trace?.Artifacts ?? [];
             _logTraceOpenId = log.Id;
         }
         catch (Exception ex)

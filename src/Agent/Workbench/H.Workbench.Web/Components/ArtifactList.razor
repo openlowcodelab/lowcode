@@ -1,0 +1,147 @@
+@namespace H.Workbench.Web
+@* 执行产物卡片：git 提交/推送/克隆、文件变更、命令执行；同文件多次写按路径去重展示 *@
+@if (Artifacts is { Count: > 0 })
+{
+    <div class="wb-artifacts">
+        <div class="wb-artifacts-title">工作成果（@Artifacts.Count）</div>
+        @foreach (var group in DisplayGroups)
+        {
+            <div class="wb-artifact wb-artifact-@group.Kind.ToLowerInvariant() @(group.Success ? "" : "wb-artifact-fail")">
+                <span class="wb-artifact-icon">@Icon(group.Kind)</span>
+                <span class="wb-artifact-title">@group.Title</span>
+                @if (group.Meta.Count > 0)
+                {
+                    <span class="wb-artifact-meta">@string.Join(" · ", group.Meta)</span>
+                }
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public List<ArtifactDto> Artifacts { get; set; } = [];
+
+    private record DisplayArtifact(string Kind, string Title, List<string> Meta, bool Success);
+
+    private List<DisplayArtifact> DisplayGroups { get; set; } = [];
+
+    protected override void OnParametersSet()
+    {
+        var groups = new List<DisplayArtifact>();
+        var fileIndex = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var a in Artifacts.OrderBy(x => x.CreationTime))
+        {
+            if (a.Kind == "FileChange" && !string.IsNullOrEmpty(a.FilePath))
+            {
+                if (fileIndex.TryGetValue(a.FilePath, out var idx))
+                {
+                    // 同文件多次写：合并为一条，保留最新变更类型
+                    var old = groups[idx];
+                    groups[idx] = old with { Title = $"{ChangeWord(a.ChangeType)} {a.FilePath}", Meta = BuildMeta(a), Success = a.Success };
+                    continue;
+                }
+                fileIndex[a.FilePath] = groups.Count;
+            }
+
+            groups.Add(new DisplayArtifact(a.Kind, BuildTitle(a), BuildMeta(a), a.Success));
+        }
+
+        DisplayGroups = groups;
+    }
+
+    private static string BuildTitle(ArtifactDto a) => a.Kind switch
+    {
+        "GitCommit" => $"代码提交 {(a.CommitHash is not null ? a.CommitHash : "")}".Trim(),
+        "GitPush" => "推送到远端",
+        "Clone" => $"克隆/更新仓库 {a.Repo}".Trim(),
+        "FileChange" => $"{ChangeWord(a.ChangeType)} {a.FilePath}",
+        "ShellCommand" => a.Title,
+        _ => a.Title
+    };
+
+    private static string ChangeWord(string? changeType) => changeType == "Created" ? "新建文件" : "修改文件";
+
+    private static List<string> BuildMeta(ArtifactDto a)
+    {
+        var meta = new List<string>();
+        if (!string.IsNullOrEmpty(a.Repo)) meta.Add(a.Repo!);
+        if (!string.IsNullOrEmpty(a.Branch)) meta.Add(a.Branch!);
+        if (a.PushResult == "Pushed") meta.Add("已推送");
+        else if (a.PushResult == "PushFailed") meta.Add("推送失败");
+        else if (a.PushResult == "NotPushed") meta.Add("未推送");
+        var exitCode = ParseExitCode(a.Payload);
+        if (exitCode is not null) meta.Add($"退出码 {exitCode}");
+        return meta;
+    }
+
+    private static int? ParseExitCode(string? payload)
+    {
+        if (string.IsNullOrEmpty(payload)) return null;
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(payload);
+            return doc.RootElement.TryGetProperty("exitCode", out var e) && e.TryGetInt32(out var v) ? v : null;
+        }
+        catch { return null; }
+    }
+
+    private static string Icon(string kind) => kind switch
+    {
+        "GitCommit" => "📦",
+        "GitPush" => "🚀",
+        "Clone" => "📥",
+        "FileChange" => "📝",
+        "ShellCommand" => "⌨️",
+        _ => "📌"
+    };
+}
+
+<style>
+    .wb-artifacts {
+        margin-top: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        width: 100%;
+    }
+
+    .wb-artifacts-title {
+        font-size: 12px;
+        color: #8c8c8c;
+        margin-bottom: 2px;
+    }
+
+    .wb-artifact {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        border: 1px solid #f0f0f0;
+        border-radius: 8px;
+        background: #fff;
+        font-size: 12px;
+    }
+
+    .wb-artifact-fail {
+        border-color: #ffccc7;
+        background: #fffafa;
+    }
+
+    .wb-artifact-title {
+        color: #262626;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .wb-artifact-fail .wb-artifact-title {
+        color: #ff4d4f;
+    }
+
+    .wb-artifact-meta {
+        margin-left: auto;
+        color: #8c8c8c;
+        flex-shrink: 0;
+    }
+</style>

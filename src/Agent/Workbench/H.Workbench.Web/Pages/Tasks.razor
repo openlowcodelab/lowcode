@@ -260,6 +260,7 @@
                         @if (_logTraceOpenId == log.Id)
                         {
                             <ExecutionTraceView Steps="@_logTraceSteps" DefaultOpen="true" />
+                            <ArtifactList Artifacts="@_logTraceArtifacts" />
                         }
                     }
                 }
@@ -308,6 +309,7 @@
     private List<TaskLogDto> _detailLogs = [];
     private Guid? _logTraceOpenId;
     private List<ExecutionStepDto> _logTraceSteps = [];
+    private List<ArtifactDto> _logTraceArtifacts = [];
 
     private string toastMessage = "";
     private string toastType = "info";
@@ -541,6 +543,7 @@
         {
             var trace = (await TaskAppService.GetLogTraceAsync(log.Id)).Data;
             _logTraceSteps = trace?.Steps ?? [];
+            _logTraceArtifacts = trace?.Artifacts ?? [];
             _logTraceOpenId = log.Id;
         }
         catch (Exception ex)
