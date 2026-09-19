@@ -26,6 +26,7 @@ public class AgentFactory
     private readonly IKnowledgeRetrievalAppService _knowledgeRetrievalAppService;
     private readonly IToolRegistry _toolRegistry;
     private readonly McpClientManager _mcpClientManager;
+    private readonly ApprovalGateway _approvalGateway;
     private readonly WorkbenchToolOptions _options;
     private readonly ILogger<AgentFactory> _logger;
     private readonly ILogger<ReactAgent> _reactLogger;
@@ -60,6 +61,7 @@ public class AgentFactory
         IKnowledgeRetrievalAppService knowledgeRetrievalAppService,
         IToolRegistry toolRegistry,
         McpClientManager mcpClientManager,
+        ApprovalGateway approvalGateway,
         IOptions<WorkbenchToolOptions> options,
         ILogger<AgentFactory> logger,
         ILogger<ReactAgent> reactLogger,
@@ -73,6 +75,7 @@ public class AgentFactory
         _knowledgeRetrievalAppService = knowledgeRetrievalAppService;
         _toolRegistry = toolRegistry;
         _mcpClientManager = mcpClientManager;
+        _approvalGateway = approvalGateway;
         _options = options.Value;
         _logger = logger;
         _reactLogger = reactLogger;
@@ -213,9 +216,17 @@ public class AgentFactory
         var toolDefs = scopedRegistry.GetToolDefinitions();
         var toolExecutor = new ToolExecutor(scopedRegistry, _toolExecutorLogger, _options.ToolTimeoutSeconds);
 
-        _logger.LogInformation("创建 ReactAgent: {AgentName}, 可用工具数: {ToolCount}{ScopeNote}",
+        // 工具名 → 归属技能；需审批工具集 = 技能 RequiresApproval 命中者（员工隔离视图内计算）
+        var toolOwners = toolDefs
+            .Select(d => d.Function.Name)
+            .Where(n => scopedRegistry.GetToolOwner(n) is not null)
+            .ToDictionary(n => n, n => scopedRegistry.GetToolOwner(n)!, StringComparer.OrdinalIgnoreCase);
+        var approval = BuildApprovalContext(runContext, scopedRegistry, enabledSkills, toolOwners);
+
+        _logger.LogInformation("创建 ReactAgent: {AgentName}, 可用工具数: {ToolCount}{ScopeNote}{ApprovalNote}",
             definition.DisplayName, toolDefs.Count,
-            ReferenceEquals(scopedRegistry, _toolRegistry) ? "（全量，未隔离）" : "（按员工技能隔离）");
+            ReferenceEquals(scopedRegistry, _toolRegistry) ? "（全量，未隔离）" : "（按员工技能隔离）",
+            approval is null ? "" : $"（审批模式 {approval.Mode}，需审批工具 {approval.ApprovalTools.Count} 个）");
 
         // 运行时上下文注入（知识库检索 + 项目仓库清单）
         Func<string, Task<string>>? augmentor = null;
@@ -231,7 +242,45 @@ public class AgentFactory
 
         return new ReactAgentInstance(
             llmProvider, definition, toolExecutor, toolDefs,
-            _reactLogger, _reactInstanceLogger, augmentor);
+            _reactLogger, _reactInstanceLogger, augmentor, toolOwners, approval);
+    }
+
+    /// <summary>
+    /// 审批门上下文：仅当调用方声明了审批模式（Task 路径）且全局开关开启时构建；
+    /// MCP 工具无技能归属默认免审批（本轮不做 server 级授权）。
+    /// </summary>
+    private AgentApprovalContext? BuildApprovalContext(
+        AgentRunContext? runContext,
+        IToolRegistry scopedRegistry,
+        List<SkillDto> enabledSkills,
+        Dictionary<string, string> toolOwners)
+    {
+        var mode = runContext?.ApprovalMode;
+        if (string.IsNullOrEmpty(mode) || mode == "None" || !_options.Approval.Enabled)
+        {
+            return null;
+        }
+
+        var skillApproval = enabledSkills
+            .Where(s => s.IsEnabled && s.RequiresApproval)
+            .Select(s => s.SkillName)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var approvalTools = toolOwners
+            .Where(kv => skillApproval.Contains(kv.Value))
+            .Select(kv => kv.Key)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        return new AgentApprovalContext(
+            _approvalGateway,
+            approvalTools,
+            mode,
+            _options.Approval.TimeoutSeconds,
+            _options.Approval.MaxPerExecution,
+            string.Equals(_options.Approval.NonInteractivePolicy, "Allow", StringComparison.OrdinalIgnoreCase),
+            runContext.TaskId ?? Guid.Empty,
+            runContext.TaskLogId ?? Guid.Empty,
+            runContext.UserId);
     }
 
     /// <summary>
@@ -426,6 +475,13 @@ public class AgentFactory
 }
 
 /// <summary>
-/// 单次运行的上下文（任务级项目归属等）
+/// 单次运行的上下文（任务级项目归属、审批门参数等）
 /// </summary>
-public sealed record AgentRunContext(Guid? ProjectId = null, string? ExtraInstruction = null);
+public sealed record AgentRunContext(
+    Guid? ProjectId = null,
+    string? ExtraInstruction = null,
+    // None/null=不启用审批（Chat 路径）；Interactive=SSE 可回传裁决；NonInteractive=按策略自动裁决
+    string? ApprovalMode = null,
+    Guid? TaskId = null,
+    Guid? TaskLogId = null,
+    string? UserId = null);

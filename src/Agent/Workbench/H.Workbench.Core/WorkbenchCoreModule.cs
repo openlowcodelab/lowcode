@@ -18,6 +18,8 @@ public class WorkbenchCoreModule : AbpModule
         // 工具实例被单例 ToolRegistry 捕获，只能是单例（红线：不得依赖 scoped 服务）
         context.Services.AddSingleton<GitTool>();
         context.Services.AddSingleton<WorkspaceFileTool>();
+        context.Services.AddSingleton<Tools.WorkspaceShellTool>();
         context.Services.AddSingleton<Tools.Internal.GitWorkspaceLocks>();
+        context.Services.AddSingleton<Agents.ApprovalGateway>();
     }
 }

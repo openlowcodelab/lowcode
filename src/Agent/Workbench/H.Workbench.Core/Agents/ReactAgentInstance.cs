@@ -28,6 +28,11 @@ public class ReactAgentInstance : IAgentInstance, IStreamingAgent
     /// </summary>
     private readonly IReadOnlyDictionary<string, string>? _toolOwners;
 
+    /// <summary>
+    /// 审批门上下文（每次执行一个实例，TaskLogId 已确定）；null=不启用
+    /// </summary>
+    private readonly AgentApprovalContext? _approval;
+
     private static readonly JsonSerializerOptions EventJsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -42,7 +47,8 @@ public class ReactAgentInstance : IAgentInstance, IStreamingAgent
         ILogger<ReactAgent> reactLogger,
         ILogger<ReactAgentInstance> logger,
         Func<string, Task<string>>? systemPromptAugmentor = null,
-        IReadOnlyDictionary<string, string>? toolOwners = null)
+        IReadOnlyDictionary<string, string>? toolOwners = null,
+        AgentApprovalContext? approval = null)
     {
         _llmProvider = llmProvider;
         _definition = definition;
@@ -52,6 +58,7 @@ public class ReactAgentInstance : IAgentInstance, IStreamingAgent
         _logger = logger;
         _systemPromptAugmentor = systemPromptAugmentor;
         _toolOwners = toolOwners;
+        _approval = approval;
     }
 
     public string Name => _definition.DisplayName;
@@ -86,7 +93,7 @@ public class ReactAgentInstance : IAgentInstance, IStreamingAgent
     {
         var history = BuildHistory(conversationHistory);
         var systemPrompt = await BuildSystemPromptAsync(message);
-        var agent = new ReactAgent(_llmProvider, _toolExecutor, _toolDefs, _reactLogger, _toolOwners);
+        var agent = new ReactAgent(_llmProvider, _toolExecutor, _toolDefs, _reactLogger, _toolOwners, _approval);
 
         var finalAnswer = string.Empty;
 
@@ -128,15 +135,18 @@ public class ReactAgentInstance : IAgentInstance, IStreamingAgent
     }
 
     /// <summary>
-    /// 流式处理：将 ReactEvent 序列化为 JSON 字符串逐块返回
+    /// 流式处理：将 ReactEvent 序列化为 JSON 字符串逐块返回；ct 取消（如客户端断连）时中止 ReAct 循环
     /// </summary>
-    public async IAsyncEnumerable<string> ProcessMessageStreamAsync(string message, List<string>? conversationHistory = null)
+    public async IAsyncEnumerable<string> ProcessMessageStreamAsync(
+        string message,
+        List<string>? conversationHistory = null,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
     {
         var history = BuildHistory(conversationHistory);
         var systemPrompt = await BuildSystemPromptAsync(message);
-        var agent = new ReactAgent(_llmProvider, _toolExecutor, _toolDefs, _reactLogger, _toolOwners);
+        var agent = new ReactAgent(_llmProvider, _toolExecutor, _toolDefs, _reactLogger, _toolOwners, _approval);
 
-        await foreach (var evt in agent.RunAsync(message, history, systemPrompt, GetMaxIterations()))
+        await foreach (var evt in agent.RunAsync(message, history, systemPrompt, GetMaxIterations(), ct))
         {
             yield return SerializeEvent(evt);
         }
@@ -153,7 +163,7 @@ public class ReactAgentInstance : IAgentInstance, IStreamingAgent
             ToolCallingEvent tc => new { type = tc.Type, toolName = tc.ToolName, toolCallId = tc.ToolCallId, arguments = tc.Arguments, skillName = tc.SkillName, iteration = tc.Iteration },
             ToolResultEvent tr => new { type = tr.Type, toolName = tr.ToolName, toolCallId = tr.ToolCallId, result = tr.Result, isError = tr.IsError, skillName = tr.SkillName, truncated = tr.Truncated, durationMs = tr.DurationMs, iteration = tr.Iteration },
             ApprovalRequiredEvent ar => new { type = ar.Type, approvalId = ar.ApprovalId, toolName = ar.ToolName, skillName = ar.SkillName, toolCallId = ar.ToolCallId, arguments = ar.Arguments, timeoutSeconds = ar.TimeoutSeconds, iteration = ar.Iteration },
-            ApprovalResolvedEvent ao => new { type = ao.Type, approvalId = ao.ApprovalId, toolName = ao.ToolName, decision = ao.Decision, waitMs = ao.WaitMs, iteration = ao.Iteration },
+            ApprovalResolvedEvent ao => new { type = ao.Type, approvalId = ao.ApprovalId, toolName = ao.ToolName, decision = ao.Decision, approverId = ao.ApproverId, waitMs = ao.WaitMs, iteration = ao.Iteration },
             FinalAnswerEvent a => new { type = a.Type, content = a.Content, iteration = a.Iteration },
             ErrorEvent e => new { type = e.Type, message = e.Message, isFatal = e.IsFatal, iteration = e.Iteration },
             _ => new { type = evt.Type, iteration = evt.Iteration }

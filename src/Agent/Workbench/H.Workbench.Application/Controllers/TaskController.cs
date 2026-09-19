@@ -53,9 +53,17 @@ public class TaskController : ControllerBase
         }
         catch (Exception ex)
         {
-            var errorJson = JsonSerializer.Serialize(new { type = "error", message = ex.Message, isFatal = true });
-            await Response.Body.WriteAsync(Encoding.UTF8.GetBytes($"data: {errorJson}\n\n"));
-            await Response.Body.FlushAsync();
+            // 客户端断开时错误也无法写回，静默终止；iterator 的 finally 已把日志落成 Cancelled
+            try
+            {
+                var errorJson = JsonSerializer.Serialize(new { type = "error", message = ex.Message, isFatal = true });
+                await Response.Body.WriteAsync(Encoding.UTF8.GetBytes($"data: {errorJson}\n\n"));
+                await Response.Body.FlushAsync();
+            }
+            catch (Exception)
+            {
+                // ignored: connection already aborted
+            }
         }
     }
 }

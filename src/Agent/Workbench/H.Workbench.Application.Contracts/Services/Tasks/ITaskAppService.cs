@@ -62,4 +62,9 @@ public interface ITaskAppService : IAppService
     /// 获取一次执行的完整轨迹（步骤时间线 + 产物），历史回放用
     /// </summary>
     Task<BaseOutput<TaskLogTraceDto>> GetLogTraceAsync(Guid logId, int maxStepCount = 200);
+
+    /// <summary>
+    /// 回传工具审批裁决（立即返回，不等待执行结果；幂等：过期/重复裁决返回失败提示）
+    /// </summary>
+    Task<BaseOutput<ApprovalOutcomeDto>> ResumeApprovalAsync(ResumeApprovalInputDto input);
 }

@@ -32,6 +32,7 @@ public sealed class DecodedEvent
     public int? DurationMs { get; init; }
     public Guid ApprovalId { get; init; }
     public string? Decision { get; init; }
+    public string? ApproverId { get; init; }
     public long? WaitMs { get; init; }
     public string? Message { get; init; }
     public bool IsFatal { get; init; } = true;
@@ -109,6 +110,7 @@ public static class StreamEventDecoder
                     ApprovalId = GetGuid(root, "approvalId"),
                     ToolName = GetString(root, "toolName"),
                     Decision = GetString(root, "decision"),
+                    ApproverId = GetString(root, "approverId"),
                     WaitMs = root.TryGetProperty("waitMs", out var w) && w.TryGetInt64(out var wv) ? wv : null
                 },
                 "answer" => new DecodedEvent

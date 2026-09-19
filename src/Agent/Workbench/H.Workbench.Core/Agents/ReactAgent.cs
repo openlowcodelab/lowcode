@@ -21,6 +21,12 @@ public class ReactAgent
     private readonly IReadOnlyDictionary<string, string>? _toolOwners;
 
     /// <summary>
+    /// 审批门上下文；null 或 Mode=None 时行为与阶段A一致（零新事件）
+    /// </summary>
+    private readonly AgentApprovalContext? _approval;
+    private int _approvalRequests;
+
+    /// <summary>
     /// 默认最大迭代次数
     /// </summary>
     private const int DefaultMaxIterations = 10;
@@ -30,13 +36,15 @@ public class ReactAgent
         ToolExecutor toolExecutor,
         List<ToolDefinition> toolDefs,
         ILogger<ReactAgent> logger,
-        IReadOnlyDictionary<string, string>? toolOwners = null)
+        IReadOnlyDictionary<string, string>? toolOwners = null,
+        AgentApprovalContext? approval = null)
     {
         _provider = provider;
         _toolExecutor = toolExecutor;
         _toolDefs = toolDefs;
         _logger = logger;
         _toolOwners = toolOwners;
+        _approval = approval is null || approval.Mode == "None" ? null : approval;
     }
 
     /// <summary>
@@ -222,6 +230,80 @@ public class ReactAgent
                     SkillName = skillName,
                     Iteration = iteration
                 };
+
+                // 审批门：需人工批准的工具先挂起等待裁决。
+                // 注意 OpenAI 协议硬约束：拒绝/超时也必须补 role=tool 消息，
+                // 否则悬空 tool_calls 会让下一轮 LLM 请求 400。
+                if (_approval is not null && _approval.ApprovalTools.Contains(toolCall.Function.Name))
+                {
+                    ApprovalResult approval;
+                    // 自动裁决也发事件对（真实 id 供轨迹配对），只是不登记等待
+                    var approvalId = Guid.NewGuid();
+
+                    if (_approval.Mode == "Interactive" && _approvalRequests < _approval.MaxPerExecution)
+                    {
+                        _approvalRequests++;
+                        approvalId = _approval.Gateway.Register(new ApprovalGateway.PendingRequest(
+                                _approval.TaskId, _approval.TaskLogId, toolCall.Function.Name, skillName,
+                                toolCall.Function.Arguments, iteration, _approval.UserId),
+                            _approval.TimeoutSeconds);
+
+                        yield return new ApprovalRequiredEvent
+                        {
+                            ApprovalId = approvalId,
+                            ToolName = toolCall.Function.Name,
+                            SkillName = skillName,
+                            ToolCallId = toolCall.Id,
+                            Arguments = toolCall.Function.Arguments,
+                            TimeoutSeconds = _approval.TimeoutSeconds,
+                            Iteration = iteration
+                        };
+
+                        approval = await _approval.Gateway.WaitAsync(approvalId, ct);
+                    }
+                    else
+                    {
+                        // 非交互路径（定时任务）或超出打扰预算：按策略自动裁决并留痕
+                        var allow = _approval.Mode == "NonInteractive" && _approval.NonInteractiveAllow;
+                        approval = new ApprovalResult(
+                            allow ? ApprovalOutcome.Approved : ApprovalOutcome.SkippedNonInteractive, null, 0);
+                    }
+
+                    yield return new ApprovalResolvedEvent
+                    {
+                        ApprovalId = approvalId,
+                        ToolName = toolCall.Function.Name,
+                        Decision = approval.Outcome.ToString(),
+                        ApproverId = approval.ApproverId,
+                        WaitMs = approval.WaitMs,
+                        Iteration = iteration
+                    };
+
+                    if (approval.Outcome != ApprovalOutcome.Approved)
+                    {
+                        var denial = System.Text.Json.JsonSerializer.Serialize(new
+                        {
+                            success = false,
+                            error = $"该工具（{toolCall.Function.Name}）需要人工审批，本次结果：{approval.Outcome}，未执行。请换其他方式或向用户说明。"
+                        });
+                        messages.Add(new Message
+                        {
+                            Role = "tool",
+                            Content = denial,
+                            ToolCallId = toolCall.Id
+                        });
+                        yield return new ToolResultEvent
+                        {
+                            ToolName = toolCall.Function.Name,
+                            ToolCallId = toolCall.Id,
+                            Result = denial,
+                            IsError = true,
+                            SkillName = skillName,
+                            Iteration = iteration
+                        };
+                        continue;
+                    }
+                }
 
                 var execResult = await _toolExecutor.ExecuteAsync(
                     toolCall.Function.Name,

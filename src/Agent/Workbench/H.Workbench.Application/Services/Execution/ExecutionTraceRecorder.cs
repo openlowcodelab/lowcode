@@ -28,7 +28,9 @@ public class ExecutionTraceRecorder
     private readonly System.Text.StringBuilder _thinkingBuf = new();
     private int _stepCount;
     private int _artifactCount;
-    private string? _approvalAggregate;
+    private int _activeApprovals;
+    private int _worstTerminalRank = -1;
+    private string? _worstTerminal;
 
     public ExecutionTraceRecorder(
         ExecutionTraceStore store,
@@ -118,7 +120,7 @@ public class ExecutionTraceRecorder
             _logger.LogWarning(ex, "执行轨迹收尾失败 TaskLogId={TaskLogId}", _taskLogId);
         }
 
-        return (_stepCount, _artifactCount, _approvalAggregate);
+        return (_stepCount, _artifactCount, AggregateApprovalState());
     }
 
     private Task OnThinkingAsync(DecodedEvent e)
@@ -174,6 +176,7 @@ public class ExecutionTraceRecorder
         };
         _pending.Add(row);
         _approvalRows[e.ApprovalId] = row;
+        _activeApprovals++;
         MergeApprovalAggregate("Pending");
     }
 
@@ -185,7 +188,12 @@ public class ExecutionTraceRecorder
         }
 
         row.ApprovalState = MapDecision(e.Decision);
+        row.ApproverId = e.ApproverId ?? (e.Decision == "SkippedNonInteractive" ? "auto-policy" : row.ApproverId);
         row.WaitMs = e.WaitMs.HasValue ? (int)Math.Min(e.WaitMs.Value, int.MaxValue) : null;
+        if (_approvalRows.Remove(e.ApprovalId))
+        {
+            _activeApprovals = Math.Max(0, _activeApprovals - 1);
+        }
         MergeApprovalAggregate(row.ApprovalState);
 
         if (_pending.Contains(row))
@@ -210,33 +218,30 @@ public class ExecutionTraceRecorder
     };
 
     /// <summary>
-    /// 审批聚合徽标优先级：Timeout > Denied > SkippedNonInteractive > Pending > Approved
+    /// 聚合徽标：有进行中的审批时=Pending；全部裁决后取最差终态（Timeout > Denied > Skipped > Approved）
     /// </summary>
     private void MergeApprovalAggregate(string state)
     {
-        var rank = state switch
+        if (state == "Pending") return;
+
+        var rank = ApprovalRank(state);
+        if (rank > _worstTerminalRank)
         {
-            "Timeout" => 5,
-            "Denied" => 4,
-            "SkippedNonInteractive" => 3,
-            "Pending" => 2,
-            "Approved" => 1,
-            _ => 0
-        };
-        var currentRank = _approvalAggregate switch
-        {
-            "Timeout" => 5,
-            "Denied" => 4,
-            "SkippedNonInteractive" => 3,
-            "Pending" => 2,
-            "Approved" => 1,
-            _ => -1
-        };
-        if (rank > currentRank)
-        {
-            _approvalAggregate = state;
+            _worstTerminalRank = rank;
+            _worstTerminal = state;
         }
     }
+
+    private static int ApprovalRank(string? state) => state switch
+    {
+        "Timeout" => 5,
+        "Denied" => 4,
+        "SkippedNonInteractive" => 3,
+        "Approved" => 1,
+        _ => -1
+    };
+
+    private string? AggregateApprovalState() => _activeApprovals > 0 ? "Pending" : _worstTerminal;
 
     private void FlushThinkingAs(int iteration, string kind)
     {

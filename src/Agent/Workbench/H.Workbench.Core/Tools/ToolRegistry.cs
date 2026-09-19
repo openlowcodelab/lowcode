@@ -173,6 +173,9 @@ public class ToolRegistry : IToolRegistry
 
     internal IReadOnlyDictionary<string, string> ToolOwners => _toolOwners;
 
+    public string? GetToolOwner(string toolName)
+        => _toolOwners.TryGetValue(toolName, out var owner) ? owner : null;
+
     private static ToolDefinition ToDefinition(AIFunction f)
     {
         var toolDef = new ToolDefinition
@@ -227,6 +230,11 @@ public class ToolRegistry : IToolRegistry
             => allowedOwners == null
                 ? this
                 : new ScopedToolRegistry(_parent, new HashSet<string>(allowedOwners, StringComparer.OrdinalIgnoreCase));
+
+        public string? GetToolOwner(string toolName)
+            => _parent._toolOwners.TryGetValue(toolName, out var owner) && _allowedOwners.Contains(owner)
+                ? owner
+                : null;
 
         private bool IsAllowed(string toolName)
             => _parent._toolOwners.TryGetValue(toolName, out var owner) && _allowedOwners.Contains(owner);

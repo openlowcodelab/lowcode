@@ -37,6 +37,11 @@ public interface IToolRegistry
     /// 创建按归属技能过滤的工具视图；allowedOwners 为 null 表示全量视图（不过滤）
     /// </summary>
     IToolRegistry CreateScoped(IReadOnlyCollection<string>? allowedOwners);
+
+    /// <summary>
+    /// 查询工具归属的技能名（内置=技能名、MCP="mcp"）；未注册的工具返回 null
+    /// </summary>
+    string? GetToolOwner(string toolName);
 }
 
 /// <summary>

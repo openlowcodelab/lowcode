@@ -165,6 +165,24 @@
                 {
                     <div class="wb-stream-status">@_streamStatus</div>
                 }
+                @foreach (var pa in _pendingApprovals)
+                {
+                    <div class="wb-approval">
+                        <div class="wb-approval-head">🔐 该操作需要你的批准</div>
+                        <div class="wb-approval-tool">@pa.ToolName</div>
+                        @if (!string.IsNullOrEmpty(pa.Arguments))
+                        {
+                            <pre class="wb-approval-args">@(pa.Arguments.Length > 500 ? pa.Arguments[..500] + "…" : pa.Arguments)</pre>
+                        }
+                        <div class="wb-approval-foot">
+                            <span class="wb-approval-count">@RemainingText(pa)</span>
+                            <span class="wb-approval-actions">
+                                <button class="modal-btn-cancel" disabled="@pa.Busy" @onclick="() => ResumeApprovalAsync(pa, false)">拒绝</button>
+                                <button class="modal-btn-primary" disabled="@pa.Busy" @onclick="() => ResumeApprovalAsync(pa, true)">批准</button>
+                            </span>
+                        </div>
+                    </div>
+                }
             </div>
 
             <div class="wb-input-card">
@@ -345,6 +363,18 @@
     private bool _executing;
     private string? _streamStatus;
 
+    private sealed class PendingApprovalVm
+    {
+        public Guid ApprovalId { get; set; }
+        public string ToolName { get; set; } = "";
+        public string Arguments { get; set; } = "";
+        public DateTime ExpireAt { get; set; }
+        public bool Busy;
+    }
+
+    private readonly List<PendingApprovalVm> _pendingApprovals = [];
+    private System.Threading.Timer? _approvalTimer;
+
     private class ConvMessage
     {
         public string Role { get; set; } = "user";
@@ -372,7 +402,59 @@
         await LoadTasksAsync();
     }
 
-    public void Dispose() => State.Changed -= OnStateChanged;
+    public void Dispose()
+    {
+        State.Changed -= OnStateChanged;
+        _approvalTimer?.Dispose();
+    }
+
+    private async Task ResumeApprovalAsync(PendingApprovalVm pa, bool approved)
+    {
+        if (pa.Busy) return;
+        pa.Busy = true;
+        try
+        {
+            var res = await TaskAppService.ResumeApprovalAsync(new ResumeApprovalInputDto
+            {
+                ApprovalId = pa.ApprovalId,
+                Approved = approved
+            });
+            if (!res.Success)
+            {
+                _pendingApprovals.Remove(pa);
+                ShowToast(res.Message ?? "审批请求已过期", "warning");
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"裁决回传失败: {ex.Message}", "error");
+        }
+        finally
+        {
+            pa.Busy = false;
+        }
+    }
+
+    private static string RemainingText(PendingApprovalVm pa)
+    {
+        var left = (int)(pa.ExpireAt - DateTime.Now).TotalSeconds;
+        return left > 0 ? $"剩余 {left}s，超时自动拒绝" : "等待超时…";
+    }
+
+    private void EnsureApprovalTimer()
+    {
+        if (_approvalTimer is not null) return;
+        _approvalTimer = new System.Threading.Timer(_ =>
+        {
+            if (_pendingApprovals.Count == 0)
+            {
+                _approvalTimer?.Dispose();
+                _approvalTimer = null;
+                return;
+            }
+            InvokeAsync(StateHasChanged);
+        }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+    }
 
     private async void OnStateChanged()
     {
@@ -643,6 +725,7 @@
 
         _executing = true;
         _streamStatus = null;
+        _pendingApprovals.Clear();
         if (prompt is not null)
         {
             _chatMessages.Add(new ConvMessage { Role = "user", Content = prompt, Time = DateTime.Now });
@@ -664,7 +747,8 @@
             {
                 string? type = null, content = null, message = null, toolName = null,
                     toolCallId = null, arguments = null, result = null;
-                int iteration = 0, durationMs = 0;
+                int iteration = 0, durationMs = 0, timeoutSeconds = 0;
+                Guid approvalId = Guid.Empty;
                 bool isError = false;
                 var isFatal = true;
                 try
@@ -681,6 +765,8 @@
                     if (root.TryGetProperty("isError", out var ie)) isError = ie.GetBoolean();
                     if (root.TryGetProperty("durationMs", out var dm) && dm.TryGetInt32(out var dmv)) durationMs = dmv;
                     if (root.TryGetProperty("iteration", out var it) && it.TryGetInt32(out var itv)) iteration = itv;
+                    if (root.TryGetProperty("approvalId", out var aid) && aid.TryGetGuid(out var aidv)) approvalId = aidv;
+                    if (root.TryGetProperty("timeoutSeconds", out var ts) && ts.TryGetInt32(out var tsv)) timeoutSeconds = tsv;
                     if (root.TryGetProperty("isFatal", out var f)) isFatal = f.GetBoolean();
                 }
                 catch
@@ -713,6 +799,24 @@
                             Iteration = iteration, Seq = live.Steps.Count
                         });
                         _streamStatus = null;
+                        break;
+                    case "approval_required":
+                        _pendingApprovals.Add(new PendingApprovalVm
+                        {
+                            ApprovalId = approvalId,
+                            ToolName = toolName ?? "?",
+                            Arguments = arguments ?? "",
+                            ExpireAt = DateTime.Now.AddSeconds(Math.Max(5, timeoutSeconds))
+                        });
+                        EnsureApprovalTimer();
+                        _streamStatus = null;
+                        break;
+                    case "approval_resolved":
+                        var pa = _pendingApprovals.FirstOrDefault(p => p.ApprovalId == approvalId);
+                        if (pa is not null)
+                        {
+                            _pendingApprovals.Remove(pa);
+                        }
                         break;
                     case "error":
                         if (isFatal) error = message;
@@ -1303,6 +1407,60 @@
         font-size: 12px;
         color: #8c8c8c;
         padding: 2px 4px;
+    }
+
+    /* ========== 审批卡片 ========== */
+    .wb-approval {
+        align-self: stretch;
+        max-width: 520px;
+        border: 1px solid #ffe58f;
+        background: #fffbe6;
+        border-radius: 10px;
+        padding: 12px 14px;
+        font-size: 13px;
+    }
+
+    .wb-approval-head {
+        color: #ad6800;
+        font-weight: 600;
+        margin-bottom: 6px;
+    }
+
+    .wb-approval-tool {
+        color: #262626;
+        font-family: Consolas, Menlo, monospace;
+    }
+
+    .wb-approval-args {
+        margin: 6px 0;
+        padding: 6px 8px;
+        background: #fff;
+        border: 1px solid #f0f0f0;
+        border-radius: 6px;
+        max-height: 120px;
+        overflow: auto;
+        white-space: pre-wrap;
+        word-break: break-word;
+        color: #595959;
+        font-size: 12px;
+        font-family: Consolas, Menlo, monospace;
+    }
+
+    .wb-approval-foot {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 8px;
+    }
+
+    .wb-approval-count {
+        color: #8c8c8c;
+        font-size: 12px;
+    }
+
+    .wb-approval-actions {
+        display: flex;
+        gap: 8px;
     }
 
     .wb-conv-hint {

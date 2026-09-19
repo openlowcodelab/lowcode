@@ -81,6 +81,7 @@ public class ApprovalResolvedEvent : ReactEvent
     public Guid ApprovalId { get; set; }
     public string ToolName { get; set; } = string.Empty;
     public string Decision { get; set; } = string.Empty;
+    public string? ApproverId { get; set; }
     public long WaitMs { get; set; }
 }
 

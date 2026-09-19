@@ -22,7 +22,8 @@ public static class WorkbenchToolCatalog
             ["database"] = "H.Workbench.Core.Tools.DbTool",
             ["http_client"] = "H.Workbench.Core.Tools.HttpClientTool",
             ["git"] = "H.Workbench.Core.Tools.GitTool",
-            ["workspace_file"] = "H.Workbench.Core.Tools.WorkspaceFileTool"
+            ["workspace_file"] = "H.Workbench.Core.Tools.WorkspaceFileTool",
+            ["workspace_shell"] = "H.Workbench.Core.Tools.WorkspaceShellTool"
         };
 
     /// <summary>

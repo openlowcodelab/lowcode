@@ -195,6 +195,15 @@ public class AgentSkillDataSeeder : IDataSeedContributor, ITransientDependency
             },
             new()
             {
+                SkillName = "workspace_shell",
+                DisplayName = "工作区命令行",
+                Description = "在已克隆仓库目录内执行 shell 命令（构建/测试等）；目录白名单+超时+输出截断，默认需人工审批后执行",
+                SkillType = "Function",
+                ImplementationClass = "H.Workbench.Core.Tools.WorkspaceShellTool",
+                RequiresApproval = true
+            },
+            new()
+            {
                 // 云效等 DevOps 流水线 API 尚未接入，明确标记为待实现，避免幽灵注册
                 SkillName = "pipeline",
                 DisplayName = "流水线工具",
@@ -227,7 +236,8 @@ public class AgentSkillDataSeeder : IDataSeedContributor, ITransientDependency
                 def.IsEnabled = false;
             }
 
-            def.RequiresApproval = false;
+            // RequiresApproval 由各技能定义自带（workspace_shell=true）；
+            // 更新分支不回写该字段，保留用户在技能页的手动选择
 
             var existing = existingSkills.FirstOrDefault(s => s.SkillName == def.SkillName);
             if (existing is null)

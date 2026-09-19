@@ -3,8 +3,10 @@ using H.Abp.Application.Contracts;
 using H.Workbench.Application.Contracts;
 using H.Workbench.Application.Services.Execution;
 using H.Workbench.Core;
+using H.Workbench.Core.Agents;
 using H.Workbench.EntityFrameworkCore;
 using H.Util.Base;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Linq.Dynamic.Core;
@@ -30,6 +32,8 @@ public class TaskAppService : ApplicationService, ITaskAppService
     private readonly IAsyncQueryableExecuter _asyncExecuter;
     private readonly AgentFactory _agentFactory;
     private readonly ExecutionTraceStore _traceStore;
+    private readonly ApprovalGateway _approvalGateway;
+    private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly WorkbenchToolOptions _toolOptions;
 
     public TaskAppService(
@@ -41,6 +45,8 @@ public class TaskAppService : ApplicationService, ITaskAppService
         IAsyncQueryableExecuter asyncExecuter,
         AgentFactory agentFactory,
         ExecutionTraceStore traceStore,
+        ApprovalGateway approvalGateway,
+        IHttpContextAccessor httpContextAccessor,
         IOptions<WorkbenchToolOptions> toolOptions)
     {
         _taskRepository = taskRepository;
@@ -51,6 +57,8 @@ public class TaskAppService : ApplicationService, ITaskAppService
         _asyncExecuter = asyncExecuter;
         _agentFactory = agentFactory;
         _traceStore = traceStore;
+        _approvalGateway = approvalGateway;
+        _httpContextAccessor = httpContextAccessor;
         _toolOptions = toolOptions.Value;
     }
 
@@ -275,27 +283,13 @@ public class TaskAppService : ApplicationService, ITaskAppService
 
         var prompt = string.IsNullOrWhiteSpace(input.Prompt) ? task.PromptContent : input.Prompt.Trim();
 
-        IAgentInstance? agent = null;
-        string? agentError = null;
-        try
-        {
-            agent = await _agentFactory.CreateAgentAsync(task.AgentType, task.ModelConfigId, new AgentRunContext(task.ProjectId));
-        }
-        catch (Exception ex)
-        {
-            agentError = ex.Message;
-        }
-
-        if (agent == null)
-        {
-            yield return SerializeError(agentError ?? $"无法创建员工实例: {task.AgentType}");
-            yield break;
-        }
-
         var startTime = DateTime.Now;
         var thinking = new StringBuilder();
         var answer = new StringBuilder();
         string? failure = null;
+
+        // 客户端断连检测：SSE 连接断开后终止 ReAct 循环，防审批挂到超时
+        var ct = _httpContextAccessor.HttpContext?.RequestAborted ?? CancellationToken.None;
 
         // 续聊上下文：带最近若干次成功执行的问答对（必须在 Running 日志插入前构建，
         // 且只取 Status=Success 行，轨迹落库不影响该口径）
@@ -312,113 +306,155 @@ public class TaskAppService : ApplicationService, ITaskAppService
             Logger.LogError(ex, "插入 Running 执行日志失败 TaskId={TaskId}", task.Id);
         }
 
-        var recorder = new ExecutionTraceRecorder(_traceStore, _toolOptions.Trace, Logger, logId, task.Id);
+        // 审批模式：流式对话任务可回传裁决；工作流分支整体执行无法增量送事件，降级自动裁决
+        var isWorkflow = task.SourceType == "Workflow" && !string.IsNullOrWhiteSpace(task.WorkflowContent);
+        var approvalMode = isWorkflow ? "NonInteractive" : "Interactive";
 
-        if (task.SourceType == "Workflow" && !string.IsNullOrWhiteSpace(task.WorkflowContent))
+        IAgentInstance? agent = null;
+        string? agentError = null;
+        try
         {
-            // 工作流任务无法增量输出，整体执行后以单个 answer 事件返回
-            string? response = null;
+            agent = await _agentFactory.CreateAgentAsync(task.AgentType, task.ModelConfigId,
+                new AgentRunContext(task.ProjectId, null, approvalMode, task.Id, logId, CurrentUser.Id?.ToString()));
+        }
+        catch (Exception ex)
+        {
+            agentError = ex.Message;
+        }
+
+        if (agent == null)
+        {
+            agentError ??= $"无法创建员工实例: {task.AgentType}";
             try
             {
-                response = await ExecuteTaskContentAsync(agent, task, recorder.Tap);
+                await _traceStore.CompleteLogAsync(logId, "Failed", null, agentError, 0, 0, null);
             }
             catch (Exception ex)
             {
-                failure = ex.Message;
+                Logger.LogError(ex, "回写失败日志出错 TaskId={TaskId}", task.Id);
             }
-
-            if (response is not null)
-            {
-                answer.Append(response);
-                yield return SerializeAnswer(response);
-            }
+            yield return SerializeError(agentError);
+            yield break;
         }
-        else if (agent is IStreamingAgent streamingAgent)
+
+        var recorder = new ExecutionTraceRecorder(_traceStore, _toolOptions.Trace, Logger, logId, task.Id);
+        var completedNormally = false;
+
+        // 迭代器规则：yield 不得位于带 catch 的 try 内；收尾放 finally，
+        // 客户端断连（消费者 DisposeAsync）时也能执行，把 Running 行落成 Cancelled
+        try
         {
-            await using var enumerator = streamingAgent.ProcessMessageStreamAsync(prompt, history).GetAsyncEnumerator();
-            while (true)
+            if (isWorkflow)
             {
-                bool hasNext;
-                string? chunk = null;
+                // 工作流任务无法增量输出，整体执行后以单个 answer 事件返回
+                string? response = null;
                 try
                 {
-                    hasNext = await enumerator.MoveNextAsync();
-                    if (hasNext)
-                    {
-                        chunk = enumerator.Current;
-                    }
+                    response = await ExecuteTaskContentAsync(agent, task, recorder.Tap);
                 }
                 catch (Exception ex)
                 {
                     failure = ex.Message;
-                    hasNext = false;
                 }
 
-                if (!hasNext)
+                if (response is not null)
                 {
-                    break;
+                    answer.Append(response);
+                    yield return SerializeAnswer(response);
+                }
+            }
+            else if (agent is IStreamingAgent streamingAgent)
+            {
+                await using var enumerator = streamingAgent.ProcessMessageStreamAsync(prompt, history, ct).GetAsyncEnumerator();
+                while (true)
+                {
+                    bool hasNext;
+                    string? chunk = null;
+                    try
+                    {
+                        hasNext = await enumerator.MoveNextAsync();
+                        if (hasNext)
+                        {
+                            chunk = enumerator.Current;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        failure = ex.Message;
+                        hasNext = false;
+                    }
+
+                    if (!hasNext)
+                    {
+                        break;
+                    }
+
+                    AccumulateStreamEvent(chunk!, thinking, answer, ref failure);
+                    await recorder.HandleAsync(chunk!);
+                    yield return chunk!;
+                }
+            }
+            else
+            {
+                string? response = null;
+                try
+                {
+                    response = await agent.ProcessMessageAsync(prompt, new List<string>(), recorder.Tap);
+                }
+                catch (Exception ex)
+                {
+                    failure = ex.Message;
                 }
 
-                AccumulateStreamEvent(chunk!, thinking, answer, ref failure);
-                await recorder.HandleAsync(chunk!);
-                yield return chunk!;
+                if (response is not null)
+                {
+                    answer.Append(response);
+                    yield return SerializeAnswer(response);
+                }
             }
+
+            if (failure is not null && !ct.IsCancellationRequested)
+            {
+                yield return SerializeError(failure);
+            }
+
+            completedNormally = true;
         }
-        else
+        finally
         {
-            string? response = null;
+            // 与同步执行口径一致：answer 优先，否则回退累积的 thinking 增量
+            var finalAnswer = answer.Length > 0 ? answer.ToString() : thinking.ToString();
+            var aborted = !completedNormally || ct.IsCancellationRequested;
+            var succeeded = !aborted && failure is null && finalAnswer.Length > 0;
+
             try
             {
-                response = await agent.ProcessMessageAsync(prompt, new List<string>(), recorder.Tap);
+                var (stepCount, artifactCount, approvalState) = await recorder.FinishAsync();
+
+                await _traceStore.CompleteLogAsync(
+                    logId,
+                    aborted ? "Cancelled" : succeeded ? "Success" : "Failed",
+                    succeeded ? finalAnswer : null,
+                    aborted ? "客户端断开，执行中止" : failure,
+                    stepCount,
+                    artifactCount,
+                    approvalState);
+
+                if (succeeded)
+                {
+                    task.LastExecutionTime = DateTime.Now;
+                    task.ExecutionCount++;
+                    if (task.ExecutionMode == "Manual")
+                    {
+                        task.NextExecutionTime = null;
+                    }
+                    await _taskRepository.UpdateAsync(task);
+                }
             }
             catch (Exception ex)
             {
-                failure = ex.Message;
+                Logger.LogError(ex, "流式任务执行结果落库失败 TaskId={TaskId}", task.Id);
             }
-
-            if (response is not null)
-            {
-                answer.Append(response);
-                yield return SerializeAnswer(response);
-            }
-        }
-
-        // 与同步执行口径一致：answer 优先，否则回退累积的 thinking 增量
-        var finalAnswer = answer.Length > 0 ? answer.ToString() : thinking.ToString();
-        var succeeded = failure is null && finalAnswer.Length > 0;
-
-        if (failure is not null)
-        {
-            yield return SerializeError(failure);
-        }
-
-        try
-        {
-            var (stepCount, artifactCount, approvalState) = await recorder.FinishAsync();
-
-            await _traceStore.CompleteLogAsync(
-                logId,
-                succeeded ? "Success" : "Failed",
-                succeeded ? finalAnswer : null,
-                failure,
-                stepCount,
-                artifactCount,
-                approvalState);
-
-            if (succeeded)
-            {
-                task.LastExecutionTime = DateTime.Now;
-                task.ExecutionCount++;
-                if (task.ExecutionMode == "Manual")
-                {
-                    task.NextExecutionTime = null;
-                }
-                await _taskRepository.UpdateAsync(task);
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "流式任务执行结果落库失败 TaskId={TaskId}", task.Id);
         }
     }
 
@@ -544,6 +580,26 @@ public class TaskAppService : ApplicationService, ITaskAppService
         return new(trace);
     }
 
+    public async Task<BaseOutput<ApprovalOutcomeDto>> ResumeApprovalAsync(ResumeApprovalInputDto input)
+    {
+        var userId = CurrentUser.Id?.ToString();
+        var completed = _approvalGateway.TryComplete(input.ApprovalId, input.Approved, userId, out var result);
+
+        var dto = new ApprovalOutcomeDto
+        {
+            ApprovalId = input.ApprovalId,
+            Decision = completed ? result.Outcome.ToString() : ApprovalOutcome.Unknown.ToString()
+        };
+
+        if (!completed)
+        {
+            dto.Message = "审批请求已过期或已被裁决，请重新执行任务";
+            return new(dto) { Success = false, Code = 1 };
+        }
+
+        return new(dto);
+    }
+
     /// <summary>
     /// 执行单个任务
     /// </summary>
@@ -584,9 +640,10 @@ public class TaskAppService : ApplicationService, ITaskAppService
 
         try
         {
-            // 获取 Agent 实例（携带任务级项目上下文，用于注入仓库清单）
+            // 获取 Agent 实例（携带任务级项目上下文与审批策略：后台执行无法人工裁决，按配置自动裁决）
             IAgentInstance? agent = await _agentFactory.CreateAgentAsync(
-                task.AgentType, task.ModelConfigId, new AgentRunContext(task.ProjectId));
+                task.AgentType, task.ModelConfigId,
+                new AgentRunContext(task.ProjectId, null, "NonInteractive", taskId, logId, CurrentUser.Id?.ToString()));
 
             if (agent == null)
             {

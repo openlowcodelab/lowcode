@@ -44,7 +44,10 @@ public class FrameworkAgentInstance : IAgentInstance, IStreamingAgent
         return await _frameworkAgent.RunAsync(message);
     }
 
-    public async IAsyncEnumerable<string> ProcessMessageStreamAsync(string message, List<string>? conversationHistory = null)
+    public async IAsyncEnumerable<string> ProcessMessageStreamAsync(
+        string message,
+        List<string>? conversationHistory = null,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct = default)
     {
         if (_definition.SupportsStreaming)
         {
