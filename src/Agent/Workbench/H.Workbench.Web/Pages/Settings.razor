@@ -143,7 +143,8 @@
                 </div>
                 <div class="form-item required">
                     <label>* API 密钥</label>
-                    <input class="modal-input" @bind="@editModel.ApiKey" placeholder="API密钥" />
+                    <input class="modal-input" @bind="@editModel.ApiKey"
+                           placeholder="@(isEditing && editModel.ApiKeyConfigured ? "已配置，留空表示不修改" : "API密钥")" />
                     @if (currentApiKeyUrl != null)
                     {
                         <a href="@currentApiKeyUrl" target="_blank">获取 API 密钥</a>
@@ -282,8 +283,10 @@
             Id = config.Id,
             ProviderName = config.ProviderName,
             ProviderDisplayName = config.ProviderDisplayName,
-            ApiKey = config.ApiKey,
-            ApiSecret = config.ApiSecret ?? "",
+            // 后端已改为掩码输出：不回填明文/掩码，留空表示不修改
+            ApiKey = "",
+            ApiKeyConfigured = config.ApiKeyConfigured,
+            ApiSecret = "",
             Model = config.Model,
             BaseUrl = config.BaseUrl ?? "",
             MaxTokens = config.MaxTokens,
@@ -299,7 +302,7 @@
     {
         if (string.IsNullOrWhiteSpace(editModel.ProviderName)) { ShowToast("请选择提供商", "warning"); return; }
         if (string.IsNullOrWhiteSpace(editModel.Model)) { ShowToast("请输入模型名称", "warning"); return; }
-        if (string.IsNullOrWhiteSpace(editModel.ApiKey)) { ShowToast("请输入 API 密钥", "warning"); return; }
+        if (!isEditing && string.IsNullOrWhiteSpace(editModel.ApiKey)) { ShowToast("请输入 API 密钥", "warning"); return; }
 
         savingModel = true;
         try
@@ -367,6 +370,8 @@
     private string MaskApiKey(string apiKey)
     {
         if (string.IsNullOrEmpty(apiKey)) return "(未设置)";
+        // 后端已返回掩码（****xxxx），直接透传
+        if (apiKey.Contains("****")) return apiKey;
         if (apiKey.Length <= 8) return "****";
         return apiKey[..4] + "****" + apiKey[^4..];
     }
@@ -378,6 +383,7 @@
         public string ProviderDisplayName { get; set; } = "";
         public string PlanType { get; set; } = "";
         public string ApiKey { get; set; } = "";
+        public bool ApiKeyConfigured { get; set; }
         public string? ApiSecret { get; set; }
         public string Model { get; set; } = "";
         public string? BaseUrl { get; set; }

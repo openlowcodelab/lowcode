@@ -49,6 +49,7 @@
                     <th>类型</th>
                     <th>调度</th>
                     <th>状态</th>
+                    <th>下次执行</th>
                     <th>最近运行</th>
                     <th class="tk-col-actions">操作</th>
                 </tr>
@@ -56,11 +57,11 @@
             <tbody>
                 @if (_loading)
                 {
-                    <tr><td colspan="7" class="tk-empty">加载中...</td></tr>
+                    <tr><td colspan="8" class="tk-empty">加载中...</td></tr>
                 }
                 else if (!_tasks.Any())
                 {
-                    <tr><td colspan="7" class="tk-empty">暂无任务</td></tr>
+                    <tr><td colspan="8" class="tk-empty">暂无任务</td></tr>
                 }
                 else
                 {
@@ -78,6 +79,7 @@
                             <td><span class="em-role">@(task.TaskType == "manual" ? "对话任务" : "自动任务")</span></td>
                             <td class="tk-schedule">@task.ScheduleDisplayText</td>
                             <td><span class="wb-task-status wb-status-@task.Status.ToLower()">@StatusText(task)</span></td>
+                            <td>@(task.NextExecutionTime?.ToString("MM-dd HH:mm") ?? (task.ExecutionMode == "Auto" ? "执行中" : "—"))</td>
                             <td>@(task.LastExecutionTime?.ToString("MM-dd HH:mm") ?? "暂无")</td>
                             <td class="tk-col-actions">
                                 <button class="btn btn-link btn-small" @onclick="() => ExecuteAsync(task)">执行</button>
@@ -155,9 +157,34 @@
                             <select class="modal-select" @bind="_editScheduleType">
                                 <option value="Once">单次</option>
                                 <option value="Daily">每天</option>
+                                <option value="Weekly">每周</option>
+                                <option value="Monthly">每月</option>
+                                <option value="Cron">Cron 表达式</option>
                             </select>
                         </div>
-                        @if (_editScheduleType == "Daily")
+                        @if (_editScheduleType == "Weekly")
+                        {
+                            <div class="form-item">
+                                <label>星期</label>
+                                <select class="modal-select" @bind="_editDayOfWeek">
+                                    <option value="1">周一</option>
+                                    <option value="2">周二</option>
+                                    <option value="3">周三</option>
+                                    <option value="4">周四</option>
+                                    <option value="5">周五</option>
+                                    <option value="6">周六</option>
+                                    <option value="0">周日</option>
+                                </select>
+                            </div>
+                        }
+                        @if (_editScheduleType == "Monthly")
+                        {
+                            <div class="form-item">
+                                <label>日期(1-31)</label>
+                                <input class="modal-input" type="number" min="1" max="31" @bind="_editDayOfMonth" />
+                            </div>
+                        }
+                        @if (_editScheduleType is "Daily" or "Weekly" or "Monthly")
                         {
                             <div class="form-item">
                                 <label>执行时间</label>
@@ -165,6 +192,13 @@
                             </div>
                         }
                     </div>
+                    @if (_editScheduleType == "Cron")
+                    {
+                        <div class="form-item">
+                            <label>Cron 表达式（5 段：分 时 日 月 周，如 */30 9-18 * * 1-5）</label>
+                            <input class="modal-input" @bind="_editCron" placeholder="*/2 * * * *" />
+                        </div>
+                    }
                 }
                 @if (_editId is not null)
                 {
@@ -254,6 +288,9 @@
     private string _editMode = "Manual";
     private string _editScheduleType = "Once";
     private TimeOnly _editTime = new(9, 0);
+    private int _editDayOfWeek = 1;
+    private int _editDayOfMonth = 1;
+    private string _editCron = "";
     private bool _editEnabled = true;
     private string _editCategory = "";
 
@@ -361,6 +398,9 @@
         _editMode = _type == "scheduled" ? "Auto" : "Manual";
         _editScheduleType = "Once";
         _editTime = new TimeOnly(9, 0);
+        _editDayOfWeek = 1;
+        _editDayOfMonth = 1;
+        _editCron = "";
         _editEnabled = true;
         _editCategory = "";
         _showDialog = true;
@@ -375,8 +415,13 @@
         _editAgentType = task.AgentType;
         _editProjectId = task.ProjectId?.ToString() ?? "";
         _editMode = task.ExecutionMode;
-        _editScheduleType = task.ScheduleType is "Once" or "Daily" ? task.ScheduleType : "Once";
+        // 原样回填调度配置（非法值才回退 Once），不再把 Weekly/Monthly/Cron 静默折叠
+        _editScheduleType = task.ScheduleType is "Once" or "Daily" or "Weekly" or "Monthly" or "Cron"
+            ? task.ScheduleType : "Once";
         _editTime = new TimeOnly(task.Hour ?? 9, task.Minute ?? 0);
+        _editDayOfWeek = task.DayOfWeek ?? 1;
+        _editDayOfMonth = task.DayOfMonth ?? 1;
+        _editCron = task.CronExpression ?? "";
         _editEnabled = task.IsEnabled;
         _editCategory = task.Category;
         _showDialog = true;
@@ -394,8 +439,13 @@
         try
         {
             var scheduleType = _editMode == "Manual" ? "Once" : _editScheduleType;
-            var hour = _editMode == "Auto" && _editScheduleType == "Daily" ? _editTime.Hour : (int?)null;
-            var minute = _editMode == "Auto" && _editScheduleType == "Daily" ? _editTime.Minute : (int?)null;
+            var usesTime = _editMode == "Auto" && _editScheduleType is "Daily" or "Weekly" or "Monthly";
+            var hour = usesTime ? _editTime.Hour : (int?)null;
+            var minute = usesTime ? _editTime.Minute : (int?)null;
+            var dayOfWeek = _editMode == "Auto" && _editScheduleType == "Weekly" ? _editDayOfWeek : (int?)null;
+            var dayOfMonth = _editMode == "Auto" && _editScheduleType == "Monthly"
+                ? Math.Clamp(_editDayOfMonth, 1, 31) : (int?)null;
+            var cron = _editMode == "Auto" && _editScheduleType == "Cron" ? _editCron.Trim() : null;
             var projectId = Guid.TryParse(_editProjectId, out var pid) ? pid : (Guid?)null;
 
             if (_editId is null)
@@ -410,8 +460,11 @@
                     ProjectId = projectId,
                     ExecutionMode = _editMode,
                     ScheduleType = scheduleType,
+                    CronExpression = cron,
                     Hour = hour,
                     Minute = minute,
+                    DayOfWeek = dayOfWeek,
+                    DayOfMonth = dayOfMonth,
                     IsEnabled = true
                 });
                 ShowToast("任务已创建", "success");
@@ -428,8 +481,11 @@
                     ProjectId = projectId,
                     ExecutionMode = _editMode,
                     ScheduleType = scheduleType,
+                    CronExpression = cron,
                     Hour = hour,
                     Minute = minute,
+                    DayOfWeek = dayOfWeek,
+                    DayOfMonth = dayOfMonth,
                     IsEnabled = _editEnabled
                 });
                 ShowToast("任务已更新", "success");

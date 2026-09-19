@@ -17,15 +17,16 @@ public class ToolExecutor
     /// </summary>
     private const int MaxResultLength = 4000;
 
-    /// <summary>
-    /// 单次工具执行超时（秒）
-    /// </summary>
-    private const int ExecutionTimeoutSeconds = 60;
+    private readonly int _executionTimeoutSeconds;
 
-    public ToolExecutor(IToolRegistry toolRegistry, ILogger<ToolExecutor> logger)
+    /// <param name="executionTimeoutSeconds">
+    /// 兜底超时（秒），须大于各工具内部超时（如 git clone 600s），否则会提前掐断长操作
+    /// </param>
+    public ToolExecutor(IToolRegistry toolRegistry, ILogger<ToolExecutor> logger, int executionTimeoutSeconds = 660)
     {
         _toolRegistry = toolRegistry;
         _logger = logger;
+        _executionTimeoutSeconds = executionTimeoutSeconds > 0 ? executionTimeoutSeconds : 660;
     }
 
     /// <summary>
@@ -47,7 +48,7 @@ public class ToolExecutor
             var arguments = ParseArguments(argumentsJson);
 
             using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            timeoutCts.CancelAfter(TimeSpan.FromSeconds(ExecutionTimeoutSeconds));
+            timeoutCts.CancelAfter(TimeSpan.FromSeconds(_executionTimeoutSeconds));
 
             _logger.LogInformation("执行工具: {ToolName}, 参数: {Args}", toolName,
                 argumentsJson.Length > 200 ? argumentsJson[..200] + "..." : argumentsJson);
@@ -69,7 +70,7 @@ public class ToolExecutor
         }
         catch (OperationCanceledException) when (!ct.IsCancellationRequested)
         {
-            var msg = $"工具 '{toolName}' 执行超时（{ExecutionTimeoutSeconds}秒）";
+            var msg = $"工具 '{toolName}' 执行超时（{_executionTimeoutSeconds}秒）";
             _logger.LogWarning(msg);
             return (msg, true);
         }

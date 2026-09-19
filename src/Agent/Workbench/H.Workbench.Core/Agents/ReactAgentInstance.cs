@@ -18,13 +18,19 @@ public class ReactAgentInstance : IAgentInstance, IStreamingAgent
     private readonly ILogger<ReactAgent> _reactLogger;
     private readonly ILogger<ReactAgentInstance> _logger;
 
+    /// <summary>
+    /// 按当前用户问题动态增强 SystemPrompt（知识库检索/仓库清单注入）；null 表示不增强
+    /// </summary>
+    private readonly Func<string, Task<string>>? _systemPromptAugmentor;
+
     public ReactAgentInstance(
         ILLMProvider llmProvider,
         AgentDto definition,
         ToolExecutor toolExecutor,
         List<ToolDefinition> toolDefs,
         ILogger<ReactAgent> reactLogger,
-        ILogger<ReactAgentInstance> logger)
+        ILogger<ReactAgentInstance> logger,
+        Func<string, Task<string>>? systemPromptAugmentor = null)
     {
         _llmProvider = llmProvider;
         _definition = definition;
@@ -32,10 +38,30 @@ public class ReactAgentInstance : IAgentInstance, IStreamingAgent
         _toolDefs = toolDefs;
         _reactLogger = reactLogger;
         _logger = logger;
+        _systemPromptAugmentor = systemPromptAugmentor;
     }
 
     public string Name => _definition.DisplayName;
     public string SystemPrompt => _definition.SystemPrompt;
+
+    /// <summary>
+    /// 组合本轮实际使用的 SystemPrompt；增强失败时降级为原始提示词
+    /// </summary>
+    private async Task<string> BuildSystemPromptAsync(string userMessage)
+    {
+        if (_systemPromptAugmentor is null) return SystemPrompt;
+
+        try
+        {
+            var extra = await _systemPromptAugmentor(userMessage);
+            return string.IsNullOrWhiteSpace(extra) ? SystemPrompt : SystemPrompt + "\n\n" + extra;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "运行时上下文注入失败，降级为原始提示词");
+            return SystemPrompt;
+        }
+    }
 
     /// <summary>
     /// 非流式处理：收集所有事件，返回最终答案
@@ -43,11 +69,12 @@ public class ReactAgentInstance : IAgentInstance, IStreamingAgent
     public async Task<string> ProcessMessageAsync(string message, List<string>? conversationHistory = null)
     {
         var history = BuildHistory(conversationHistory);
+        var systemPrompt = await BuildSystemPromptAsync(message);
         var agent = new ReactAgent(_llmProvider, _toolExecutor, _toolDefs, _reactLogger);
 
         var finalAnswer = string.Empty;
 
-        await foreach (var evt in agent.RunAsync(message, history, SystemPrompt, GetMaxIterations()))
+        await foreach (var evt in agent.RunAsync(message, history, systemPrompt, GetMaxIterations()))
         {
             if (evt is ThinkingEvent thinking)
             {
@@ -78,6 +105,7 @@ public class ReactAgentInstance : IAgentInstance, IStreamingAgent
     public async IAsyncEnumerable<string> ProcessMessageStreamAsync(string message, List<string>? conversationHistory = null)
     {
         var history = BuildHistory(conversationHistory);
+        var systemPrompt = await BuildSystemPromptAsync(message);
         var agent = new ReactAgent(_llmProvider, _toolExecutor, _toolDefs, _reactLogger);
 
         var jsonOptions = new JsonSerializerOptions
@@ -86,7 +114,7 @@ public class ReactAgentInstance : IAgentInstance, IStreamingAgent
             Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
         };
 
-        await foreach (var evt in agent.RunAsync(message, history, SystemPrompt, GetMaxIterations()))
+        await foreach (var evt in agent.RunAsync(message, history, systemPrompt, GetMaxIterations()))
         {
             // 按事件类型序列化，只包含相关字段（避免 null 污染）
             object payload = evt switch

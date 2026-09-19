@@ -47,4 +47,19 @@ public interface ILLMAppService : IAppService
     /// 设置为默认 Provider
     /// </summary>
     Task<BaseOutput> SetDefaultAsync(string providerName);
+
+    /// <summary>
+    /// 获取含真实密钥的配置（仅限服务端进程内使用，不对外暴露 HTTP 端点）
+    /// </summary>
+    Task<BaseOutput<LLMDto?>> GetCredentialAsync(Guid id);
+
+    /// <summary>
+    /// 按 Provider 名称获取含真实密钥的配置（仅限服务端进程内使用）
+    /// </summary>
+    Task<BaseOutput<LLMDto?>> GetCredentialByProviderAsync(string providerName, CancellationToken ct = default);
+
+    /// <summary>
+    /// 获取默认配置的明文凭据（仅限服务端进程内使用）
+    /// </summary>
+    Task<BaseOutput<LLMDto?>> GetDefaultCredentialAsync(CancellationToken ct = default);
 }

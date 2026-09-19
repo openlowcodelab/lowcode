@@ -19,6 +19,12 @@ public class SkillDto : AuditedEntityDto<Guid>
     public bool RequiresApproval { get; set; }
     public int UsageCount { get; set; }
     public DateTime? LastUsedTime { get; set; }
+
+    /// <summary>服务端实现类是否可加载（Function 类型才有意义；Planned/不可加载为 false）</summary>
+    public bool ImplementationAvailable { get; set; } = true;
+
+    /// <summary>实现类注册的工具方法名列表</summary>
+    public List<string> ToolNames { get; set; } = new();
 }
 
 /// <summary>

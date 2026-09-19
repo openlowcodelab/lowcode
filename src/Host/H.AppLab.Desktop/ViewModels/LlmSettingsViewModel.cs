@@ -72,6 +72,8 @@ public class LlmCardItem(LLMDto dto)
     internal static string Mask(string value)
     {
         if (string.IsNullOrEmpty(value)) return "(未设置)";
+        // 后端已返回掩码（****xxxx），直接透传
+        if (value.Contains("****")) return value;
         if (value.Length <= 8) return "****";
         return value[..4] + "****" + value[^4..];
     }

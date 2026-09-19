@@ -2,11 +2,14 @@ using H.Workbench.Application.Contracts;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using ModelContextProtocol.Client;
+using System.Text;
 
 namespace H.Workbench.Core.Mcp;
 
 /// <summary>
-/// MCP Client 管理器 - 管理到 MCP Server 的连接和工具发现
+/// MCP Client 管理器 - 管理到 MCP Server 的连接和工具发现。
+/// 以启用服务器配置指纹判断是否需要（重）初始化：配置改动后无需重启进程即可生效；
+/// 已知限制：删除/改名服务器后其已注册工具仍留在 ToolRegistry（调用会报错），阶段B 治理。
 /// </summary>
 public class McpClientManager : IAsyncDisposable
 {
@@ -14,7 +17,8 @@ public class McpClientManager : IAsyncDisposable
     private readonly ILogger<McpClientManager> _logger;
     private readonly Dictionary<string, McpClient> _clients = new();
     private readonly Dictionary<string, List<McpClientTool>> _serverTools = new();
-    private bool _initialized;
+    private readonly SemaphoreSlim _initLock = new(1, 1);
+    private string? _lastFingerprint;
 
     public McpClientManager(
         IMcpServerAppService mcpServerAppService,
@@ -25,16 +29,20 @@ public class McpClientManager : IAsyncDisposable
     }
 
     /// <summary>
-    /// 初始化：连接到所有已启用的 MCP Server 并发现工具
+    /// 初始化/按需重连：配置指纹未变则直接返回
     /// </summary>
     public async Task InitializeAsync(CancellationToken ct = default)
     {
-        if (_initialized) return;
-
+        await _initLock.WaitAsync(ct);
         try
         {
-            var servers = (await _mcpServerAppService.GetAllAsync()).Data ?? [];
+            var servers = (await _mcpServerAppService.GetRawListAsync()).Data ?? [];
             var enabledServers = servers.Where(s => s.IsEnabled).ToList();
+            var fingerprint = ComputeFingerprint(enabledServers);
+            if (_lastFingerprint != null && _lastFingerprint == fingerprint) return;
+
+            // 配置已变更：释放旧连接后全量重连
+            await DisposeClientsCoreAsync();
 
             foreach (var server in enabledServers)
             {
@@ -48,13 +56,32 @@ public class McpClientManager : IAsyncDisposable
                 }
             }
 
-            _initialized = true;
+            _lastFingerprint = fingerprint;
             _logger.LogInformation("MCP Client 初始化完成，已连接 {Count} 个服务器", _clients.Count);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "MCP Client 初始化失败");
         }
+        finally
+        {
+            _initLock.Release();
+        }
+    }
+
+    private static string ComputeFingerprint(List<McpServerDto> servers)
+    {
+        var sb = new StringBuilder();
+        foreach (var s in servers.OrderBy(s => s.Name, StringComparer.Ordinal))
+        {
+            sb.Append(s.Name).Append('|')
+              .Append(s.Endpoint).Append('|')
+              .Append(s.TransportType).Append('|')
+              .Append(s.Headers).Append('|')
+              .Append(s.AuthToken?.Length ?? 0).Append('|')
+              .Append(s.ApiKey?.Length ?? 0).Append(';');
+        }
+        return sb.ToString();
     }
 
     /// <summary>
@@ -85,7 +112,7 @@ public class McpClientManager : IAsyncDisposable
                 Endpoint = new Uri(server.Endpoint),
                 Name = server.DisplayName ?? server.Name,
                 ConnectionTimeout = TimeSpan.FromSeconds(timeoutSeconds),
-                AdditionalHeaders = ParseHeaders(server.Headers)
+                AdditionalHeaders = BuildHeaders(server)
             })
         };
 
@@ -101,6 +128,27 @@ public class McpClientManager : IAsyncDisposable
 
         _logger.LogInformation("MCP Server {ServerName} 已连接，发现 {ToolCount} 个工具",
             server.Name, tools.Count);
+    }
+
+    /// <summary>
+    /// 组装请求头：自定义 Headers + AuthToken（Authorization: Bearer）+ ApiKey（X-API-Key）
+    /// </summary>
+    private static IDictionary<string, string>? BuildHeaders(McpServerDto server)
+    {
+        var headers = ParseHeaders(server.Headers);
+        if (string.IsNullOrWhiteSpace(server.AuthToken) && string.IsNullOrWhiteSpace(server.ApiKey))
+            return headers;
+
+        var merged = headers != null
+            ? new Dictionary<string, string>(headers)
+            : new Dictionary<string, string>();
+
+        if (!string.IsNullOrWhiteSpace(server.AuthToken))
+            merged["Authorization"] = $"Bearer {server.AuthToken.Trim()}";
+        if (!string.IsNullOrWhiteSpace(server.ApiKey))
+            merged["X-API-Key"] = server.ApiKey.Trim();
+
+        return merged;
     }
 
     /// <summary>
@@ -170,6 +218,20 @@ public class McpClientManager : IAsyncDisposable
     }
 
     public async ValueTask DisposeAsync()
+    {
+        await _initLock.WaitAsync();
+        try
+        {
+            await DisposeClientsCoreAsync();
+        }
+        finally
+        {
+            _initLock.Release();
+        }
+        _initLock.Dispose();
+    }
+
+    private async ValueTask DisposeClientsCoreAsync()
     {
         foreach (var client in _clients.Values)
         {

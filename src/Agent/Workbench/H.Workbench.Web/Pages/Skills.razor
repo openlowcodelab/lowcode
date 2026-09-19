@@ -58,6 +58,10 @@
                                 {
                                     <span class="tag tag-default">已禁用</span>
                                 }
+                                @if (!ImplementationOk(skill))
+                                {
+                                    <span class="tag tag-orange">@(skill.SkillType == "Planned" ? "待实现" : "实现类不可用")</span>
+                                }
                             </div>
                             <div class="model-actions">
                                 <button class="btn btn-link btn-small" @onclick="@(() => ToggleSkill(skill))">
@@ -81,6 +85,10 @@
                                 <div class="model-info-row">
                                     <span class="info-label">实现类:</span>
                                     <span class="code-text">@skill.ImplementationClass</span>
+                                </div>
+                                <div class="model-info-row">
+                                    <span class="info-label">实现状态:</span>
+                                    <span>@(ImplementationOk(skill) ? $"已加载 · {skill.ToolNames.Count} 个工具方法" : (skill.SkillType == "Planned" ? "规划中，尚未实现" : "服务端类型不可加载"))</span>
                                 </div>
                             }
                             <div class="model-info-row">
@@ -194,7 +202,7 @@
                         </div>
                         <div class="form-item">
                             <label>实现类</label>
-                            <input class="modal-input" @bind="@editSkill.ImplementationClass" placeholder="完整类名，如 H.Workbench.Core.Tools.WeatherTool" />
+                            <input class="modal-input" @bind="@editSkill.ImplementationClass" placeholder="完整类名，仅支持服务端已部署的类（如 H.Workbench.Core.Tools.GitTool）" />
                         </div>
                         <div class="form-item">
                             <label>配置 (JSON)</label>
@@ -261,6 +269,9 @@
     {
         await LoadSkills();
     }
+
+    private static bool ImplementationOk(SkillDto skill) =>
+        skill.ImplementationAvailable && skill.SkillType != "Planned";
 
     private async Task LoadSkills()
     {
@@ -601,6 +612,12 @@
         background: #fafafa;
         color: #595959;
         border: 1px solid #d9d9d9;
+    }
+
+    .tag-orange {
+        background: #fff7e6;
+        color: #fa8c16;
+        border: 1px solid #ffd591;
     }
 
     /* ========== Modal ========== */

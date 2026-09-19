@@ -135,7 +135,7 @@ public class TaskAppService : ApplicationService, ITaskAppService
             Status = "Active",
             NextExecutionTime = isManual
                 ? null
-                : CalculateNextExecutionTime(
+                : CalculateAndValidateNext(
                     input.ScheduleType, input.CronExpression, input.Hour, input.Minute, input.DayOfWeek, input.DayOfMonth)
         };
 
@@ -173,7 +173,7 @@ public class TaskAppService : ApplicationService, ITaskAppService
         task.IsEnabled = input.IsEnabled;
         task.NextExecutionTime = isManual
             ? null
-            : CalculateNextExecutionTime(
+            : CalculateAndValidateNext(
                 input.ScheduleType, input.CronExpression, input.Hour, input.Minute, input.DayOfWeek, input.DayOfMonth);
 
         task = await _taskRepository.UpdateAsync(task);
@@ -282,8 +282,9 @@ public class TaskAppService : ApplicationService, ITaskAppService
 
         try
         {
-            // 获取 Agent 实例
-            IAgentInstance? agent = await _agentFactory.CreateAgentAsync(task.AgentType, task.ModelConfigId);
+            // 获取 Agent 实例（携带任务级项目上下文，用于注入仓库清单）
+            IAgentInstance? agent = await _agentFactory.CreateAgentAsync(
+                task.AgentType, task.ModelConfigId, new AgentRunContext(task.ProjectId));
 
             if (agent == null)
             {
@@ -342,6 +343,59 @@ public class TaskAppService : ApplicationService, ITaskAppService
             {
                 Logger.LogError(logEx, "记录任务失败日志时出错 TaskId={TaskId}", taskId);
             }
+
+            await RescheduleAfterFailureAsync(task);
+        }
+    }
+
+    /// <summary>
+    /// 失败后重排：NextExecutionTime 为空说明已被 Worker 抢占（或 Once 首跑），
+    /// 必须重新给出下次时间，否则任务静默丢失；Once 连续 3 次失败后停用。
+    /// </summary>
+    private async Task RescheduleAfterFailureAsync(TaskEntity task)
+    {
+        if (task.ExecutionMode != "Auto" || task.NextExecutionTime != null) return;
+
+        try
+        {
+            if (task.ScheduleType == "Once")
+            {
+                var successQuery = await _logRepository.GetQueryableAsync();
+                var lastSuccess = await _asyncExecuter.FirstOrDefaultAsync(
+                    successQuery.Where(l => l.TaskId == task.Id && l.Status == "Success")
+                        .OrderByDescending(l => l.StartTime)
+                        .Select(l => (DateTime?)l.StartTime));
+
+                var failedQuery = await _logRepository.GetQueryableAsync();
+                var previousFailures = await _asyncExecuter.CountAsync(
+                    failedQuery.Where(l => l.TaskId == task.Id && l.Status == "Failed"
+                                        && l.StartTime > (lastSuccess ?? DateTime.MinValue)));
+
+                // 本次失败尚未落库可见，计 +1
+                if (previousFailures + 1 >= 3)
+                {
+                    task.Status = "Failed";
+                    task.IsEnabled = false;
+                    task.NextExecutionTime = null;
+                    Logger.LogWarning("Once 任务连续 {Count} 次失败，已停用: {TaskName} (Id={TaskId})",
+                        previousFailures + 1, task.TaskName, task.Id);
+                }
+                else
+                {
+                    task.NextExecutionTime = DateTime.Now.AddMinutes(5);
+                }
+            }
+            else
+            {
+                // 周期任务失败：5 分钟后退避重试一次，成功后恢复原周期
+                task.NextExecutionTime = DateTime.Now.AddMinutes(5);
+            }
+
+            await _taskRepository.UpdateAsync(task);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "任务失败后重排下次执行时间出错 TaskId={TaskId}", task.Id);
         }
     }
 
@@ -382,6 +436,29 @@ public class TaskAppService : ApplicationService, ITaskAppService
 
         // 提示词任务：直接执行提示词
         return await agent.ProcessMessageAsync(task.PromptContent, new List<string>());
+    }
+
+    /// <summary>
+    /// 计算下次执行时间；算不出即抛校验异常（保存时立即报错，而不是运行时静默）
+    /// </summary>
+    private DateTime? CalculateAndValidateNext(
+        string scheduleType,
+        string? cronExpression,
+        int? hour,
+        int? minute,
+        int? dayOfWeek,
+        int? dayOfMonth)
+    {
+        var next = CalculateNextExecutionTime(scheduleType, cronExpression, hour, minute, dayOfWeek, dayOfMonth);
+        if (next == null)
+        {
+            throw new Volo.Abp.Validation.AbpValidationException(
+                $"无法计算下次执行时间，请检查调度配置（类型: {scheduleType}" +
+                (scheduleType == "Cron" ? $"，表达式: {cronExpression}" : "") + "）",
+                new List<System.ComponentModel.DataAnnotations.ValidationResult>());
+        }
+
+        return next;
     }
 
     /// <summary>
@@ -467,10 +544,22 @@ public class TaskAppService : ApplicationService, ITaskAppService
         return result;
     }
 
-    private DateTime? ParseCronNextRun(string cronExpression, DateTime now)
+    private DateTime? ParseCronNextRun(string? cronExpression, DateTime now)
     {
-        // 简化实现：假设标准 Cron 格式，使用 NCrontab 库解析
-        // 这里返回一个占位时间，实际应由后台 Worker 处理
-        return now.AddMinutes(1);
+        if (string.IsNullOrWhiteSpace(cronExpression)) return null;
+
+        var trimmed = cronExpression.Trim();
+        if (!Cronos.CronExpression.TryParse(trimmed, out var cron) &&
+            !Cronos.CronExpression.TryParse(trimmed, Cronos.CronFormat.IncludeSeconds, out cron))
+        {
+            Logger.LogWarning("非法 Cron 表达式: {Cron}", cronExpression);
+            return null;
+        }
+
+        // 起点 +1 秒：避免"当前时刻恰好命中"导致同一分钟内连续触发；
+        // Cronos 约定 zone 重载必须传 UTC，结果转回本地时间与其余调度字段口径一致
+        var fromUtc = now.AddSeconds(1).ToUniversalTime();
+        var nextUtc = cron!.GetNextOccurrence(fromUtc, TimeZoneInfo.Local);
+        return nextUtc?.ToLocalTime();
     }
 }

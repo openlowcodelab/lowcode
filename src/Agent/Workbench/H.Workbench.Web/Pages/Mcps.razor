@@ -124,11 +124,13 @@
                         </div>
                         <div class="form-item">
                             <label>Token</label>
-                            <input class="modal-input" @bind="@editServer.AuthToken" placeholder="Bearer Token（可选）" />
+                            <input class="modal-input" @bind="@editServer.AuthToken"
+                                   placeholder="@(isEditing && editServer.AuthTokenConfigured ? "已配置，留空表示不修改" : "Bearer Token（可选，将作为 Authorization 头发送）")" />
                         </div>
                         <div class="form-item">
                             <label>API Key</label>
-                            <input class="modal-input" @bind="@editServer.ApiKey" placeholder="API Key（可选）" />
+                            <input class="modal-input" @bind="@editServer.ApiKey"
+                                   placeholder="@(isEditing && editServer.ApiKeyConfigured ? "已配置，留空表示不修改" : "API Key（可选，将作为 X-API-Key 头发送）")" />
                         </div>
                         <div class="form-item">
                             <label>自定义请求头 (JSON)</label>
@@ -227,8 +229,11 @@
             DisplayName = server.DisplayName,
             Endpoint = server.Endpoint,
             TransportType = server.TransportType,
-            AuthToken = server.AuthToken ?? "",
-            ApiKey = server.ApiKey ?? "",
+            // 后端已改为掩码输出：不回填，留空表示不修改
+            AuthToken = "",
+            AuthTokenConfigured = !string.IsNullOrEmpty(server.AuthToken),
+            ApiKey = "",
+            ApiKeyConfigured = !string.IsNullOrEmpty(server.ApiKey),
             Headers = server.Headers ?? "",
             TimeoutSeconds = server.TimeoutSeconds,
             IsEnabled = server.IsEnabled
@@ -310,6 +315,8 @@
     private string MaskToken(string token)
     {
         if (string.IsNullOrEmpty(token)) return "(未设置)";
+        // 后端已返回掩码（****xxxx），直接透传
+        if (token.Contains("****")) return token;
         if (token.Length <= 8) return "****";
         return token[..4] + "****" + token[^4..];
     }
@@ -322,7 +329,9 @@
         public string Endpoint { get; set; } = "";
         public string TransportType { get; set; } = "SSE";
         public string AuthToken { get; set; } = "";
+        public bool AuthTokenConfigured { get; set; }
         public string ApiKey { get; set; } = "";
+        public bool ApiKeyConfigured { get; set; }
         public string Headers { get; set; } = "";
         public int TimeoutSeconds { get; set; } = 30;
         public bool IsEnabled { get; set; } = true;

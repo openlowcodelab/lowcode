@@ -6,6 +6,7 @@
 @inject IConnectorAppService ConnectorAppService
 @inject IKnowledgeBaseAppService KnowledgeBaseAppService
 @inject IWorkbenchProjectAppService ProjectAppService
+@inject ILLMAppService LlmAppService
 @inject ITaskAppService TaskAppService
 @inject NavigationManager Navigation
 
@@ -68,6 +69,16 @@ else
                         </div>
                     </div>
                     <div class="form-item">
+                        <label>默认模型</label>
+                        <select class="modal-input" @bind="_editDefaultModelId">
+                            <option value="">（使用全局默认模型）</option>
+                            @foreach (var m in _models.Where(x => x.IsEnabled))
+                            {
+                                <option value="@m.Id">@m.ProviderDisplayName / @m.Model</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-item">
                         <label class="checkbox-label"><input type="checkbox" @bind="_editStreaming" /> 支持流式响应</label>
                     </div>
                     <div class="form-item">
@@ -103,16 +114,25 @@ else
             else if (_section == "skills")
             {
                 <h2 class="es-title">Skill</h2>
+                <div class="es-note">员工运行时只能使用已勾选技能提供的工具（MCP 工具始终可用）；未勾选任何技能则不限制。</div>
                 <div class="rs-rows">
                     @foreach (var skill in _skills)
                     {
+                        var planned = skill.SkillType == "Planned" || !skill.ImplementationAvailable;
                         <div class="rs-row">
                             <div class="rs-row-info">
-                                <div class="rs-row-name">@skill.DisplayName <span class="em-role">@skill.SkillType</span></div>
+                                <div class="rs-row-name">@skill.DisplayName <span class="em-role">@skill.SkillType</span>
+                                    @if (planned)
+                                    {
+                                        <span class="es-badge-planned">@(skill.SkillType == "Planned" ? "待实现" : "实现类不可用")</span>
+                                    }
+                                </div>
                                 <div class="rs-row-desc">@skill.Description</div>
                             </div>
                             <label class="checkbox-label">
-                                <input type="checkbox" checked="@_agent.SkillIdList.Contains(skill.Id)"
+                                @* 未绑定的待实现技能禁止新绑；已绑定的允许解绑 *@
+                                <input type="checkbox" disabled="@(planned && !_agent.SkillIdList.Contains(skill.Id))"
+                                       checked="@_agent.SkillIdList.Contains(skill.Id)"
                                        @onchange='e => ToggleBindingAsync("skill", skill.Id, e)' />
                             </label>
                         </div>
@@ -126,6 +146,7 @@ else
             else if (_section == "connectors")
             {
                 <h2 class="es-title">连接器</h2>
+                <div class="es-note">连接器为规划中的设备能力，当前版本仅登记配置，不参与员工运行时。</div>
                 <div class="rs-rows">
                     @foreach (var connector in _connectors.Where(x => x.IsEnabled))
                     {
@@ -150,6 +171,7 @@ else
             else if (_section == "knowledge")
             {
                 <h2 class="es-title">知识库</h2>
+                <div class="es-note">每轮对话会按问题关键词在勾选的知识库中检索，并将最相关的片段（最多 4 段）注入提示词。</div>
                 <div class="rs-rows">
                     @foreach (var kb in _knowledgeBases)
                     {
@@ -173,13 +195,23 @@ else
             else
             {
                 <h2 class="es-title">项目</h2>
+                <div class="es-note">勾选后，项目配置的代码仓库将作为"可操作仓库"注入员工提示词，git 工具只能操作清单内仓库。</div>
                 <div class="rs-rows">
                     @foreach (var project in _projects)
                     {
                         <div class="rs-row">
                             <div class="rs-row-info">
                                 <div class="rs-row-name">@project.ProjectName</div>
-                                <div class="rs-row-desc">@project.Description</div>
+                                <div class="rs-row-desc">
+                                    @if (!string.IsNullOrEmpty(project.RepoUrl))
+                                    {
+                                        <span>📦 @project.RepoUrl@(string.IsNullOrEmpty(project.DefaultBranch) ? "" : $"（{project.DefaultBranch}）")</span>
+                                    }
+                                    else
+                                    {
+                                        @project.Description
+                                    }
+                                </div>
                             </div>
                             <label class="checkbox-label">
                                 <input type="checkbox" checked="@_agent.ProjectIds.Contains(project.Id)"
@@ -231,6 +263,8 @@ else
     private int _editMaxTokens;
     private bool _editStreaming;
     private bool _editEnabled;
+    private string _editDefaultModelId = "";
+    private List<LLMDto> _models = [];
 
     private bool _saving;
 
@@ -255,6 +289,7 @@ else
                 _editMaxTokens = _agent.MaxTokens;
                 _editStreaming = _agent.SupportsStreaming;
                 _editEnabled = _agent.IsEnabled;
+                _editDefaultModelId = _agent.DefaultModelConfigId?.ToString() ?? "";
             }
         }
         catch (Exception ex)
@@ -277,6 +312,9 @@ else
         {
             switch (_section)
             {
+                case "overview":
+                    _models = (await LlmAppService.GetAllAsync()).Data ?? [];
+                    break;
                 case "tasks":
                     _tasks = (await TaskAppService.GetListAsync(new TaskQueryDto
                     {
@@ -304,23 +342,27 @@ else
         }
     }
 
-    private UpdateAgentDto BuildUpdateDto() => new()
+    private UpdateAgentDto BuildUpdateDto()
     {
-        DisplayName = _editName.Trim(),
-        Role = _editRole.Trim(),
-        Description = _editDescription.Trim(),
-        SystemPrompt = _editPrompt,
-        Temperature = _editTemperature,
-        MaxTokens = _editMaxTokens,
-        SupportsStreaming = _editStreaming,
-        IsEnabled = _editEnabled,
-        DefaultModelConfigId = _agent?.DefaultModelConfigId,
-        Metadata = _agent?.Metadata,
-        SkillIds = _agent?.SkillIdList ?? [],
-        ConnectorIds = _agent?.ConnectorIds ?? [],
-        KnowledgeBaseIds = _agent?.KnowledgeBaseIds ?? [],
-        ProjectIds = _agent?.ProjectIds ?? []
-    };
+        var defaultModelId = Guid.TryParse(_editDefaultModelId, out var mid) ? mid : (Guid?)null;
+        return new UpdateAgentDto
+        {
+            DisplayName = _editName.Trim(),
+            Role = _editRole.Trim(),
+            Description = _editDescription.Trim(),
+            SystemPrompt = _editPrompt,
+            Temperature = _editTemperature,
+            MaxTokens = _editMaxTokens,
+            SupportsStreaming = _editStreaming,
+            IsEnabled = _editEnabled,
+            DefaultModelConfigId = defaultModelId,
+            Metadata = _agent?.Metadata,
+            SkillIds = _agent?.SkillIdList ?? [],
+            ConnectorIds = _agent?.ConnectorIds ?? [],
+            KnowledgeBaseIds = _agent?.KnowledgeBaseIds ?? [],
+            ProjectIds = _agent?.ProjectIds ?? []
+        };
+    }
 
     private async Task SaveOverviewAsync()
     {
@@ -498,5 +540,79 @@ else
     .es-title {
         margin: 0 0 20px;
         font-size: 20px;
+    }
+
+    .es-note {
+        background: #fffbe6;
+        border: 1px solid #ffe58f;
+        color: #874d00;
+        font-size: 12px;
+        border-radius: 6px;
+        padding: 8px 12px;
+        margin-bottom: 12px;
+    }
+
+    .es-badge-planned {
+        font-size: 11px;
+        color: #fa8c16;
+        border: 1px solid #ffd591;
+        background: #fff7e6;
+        border-radius: 4px;
+        padding: 0 6px;
+        line-height: 18px;
+    }
+
+    .rs-rows {
+        display: flex;
+        flex-direction: column;
+        border: 1px solid #f0f0f0;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .rs-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 16px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .rs-row:last-child {
+        border-bottom: none;
+    }
+
+    .rs-row-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        background: #f5f5f5;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        flex-shrink: 0;
+    }
+
+    .rs-row-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .rs-row-name {
+        font-size: 14px;
+        color: #262626;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .rs-row-desc {
+        font-size: 12px;
+        color: #8c8c8c;
+        margin-top: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 </style>

@@ -29,7 +29,17 @@ public interface IToolRegistry
     void RegisterMcpTool(AIFunction tool);
 
     /// <summary>
-    /// 从技能定义注册工具
+    /// 从技能定义注册工具，返回成功/失败统计
     /// </summary>
-    void RegisterSkillTools(List<SkillDto> skills);
+    SkillRegistrationReport RegisterSkillTools(List<SkillDto> skills);
+
+    /// <summary>
+    /// 创建按归属技能过滤的工具视图；allowedOwners 为 null 表示全量视图（不过滤）
+    /// </summary>
+    IToolRegistry CreateScoped(IReadOnlyCollection<string>? allowedOwners);
 }
+
+/// <summary>
+/// 技能工具注册结果
+/// </summary>
+public sealed record SkillRegistrationReport(int Ok, int Failed, IReadOnlyList<string> Errors);

@@ -137,7 +137,7 @@ public class SkillAppService : ApplicationService, ISkillAppService
 
     private static SkillDto MapToDto(SkillEntity entity)
     {
-        return new SkillDto
+        var dto = new SkillDto
         {
             Id = entity.Id,
             SkillName = entity.SkillName,
@@ -156,5 +156,18 @@ public class SkillAppService : ApplicationService, ISkillAppService
             LastModificationTime = entity.LastModificationTime,
             LastModifierId = entity.LastModifierId
         };
+
+        if (entity.SkillType == "Planned")
+        {
+            dto.ImplementationAvailable = false;
+        }
+        else if (entity.SkillType == "Function" && !string.IsNullOrWhiteSpace(entity.ImplementationClass))
+        {
+            dto.ImplementationAvailable = H.Workbench.Core.Tools.WorkbenchToolCatalog
+                .TryValidate(entity.ImplementationClass, out var toolNames, out _);
+            dto.ToolNames = toolNames.ToList();
+        }
+
+        return dto;
     }
 }

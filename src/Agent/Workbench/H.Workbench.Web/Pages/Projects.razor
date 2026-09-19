@@ -35,6 +35,10 @@
                         <strong class="pg-card-name">@project.ProjectName</strong>
                     </div>
                     <div class="pg-card-desc">@project.Description</div>
+                    @if (!string.IsNullOrEmpty(project.RepoUrl))
+                    {
+                        <div class="pg-card-repo" title="@project.RepoUrl">📦 @project.RepoUrl@(string.IsNullOrEmpty(project.DefaultBranch) ? "" : $"（{project.DefaultBranch}）")</div>
+                    }
                     <div class="pg-card-foot">
                         <span>任务数 @project.TaskCount</span>
                         <span>@project.CreationTime.ToString("yyyy-MM-dd")</span>
@@ -73,6 +77,14 @@
                     <label>项目描述</label>
                     <textarea class="modal-input modal-textarea" @bind="_editDescription" placeholder="描述项目目标与范围"></textarea>
                 </div>
+                <div class="form-item">
+                    <label>仓库地址</label>
+                    <input class="modal-input" @bind="_editRepoUrl" placeholder="https://... （员工绑定此项目后可操作的 Git 仓库）" />
+                </div>
+                <div class="form-item">
+                    <label>默认分支</label>
+                    <input class="modal-input" @bind="_editDefaultBranch" placeholder="如 dev / main，留空使用远端默认分支" />
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="modal-btn-cancel" @onclick="CloseDialog">取消</button>
@@ -92,6 +104,8 @@
     private Guid? _editId;
     private string _editName = "";
     private string _editDescription = "";
+    private string _editRepoUrl = "";
+    private string _editDefaultBranch = "";
 
     private string toastMessage = "";
     private string toastType = "info";
@@ -126,6 +140,8 @@
         _editId = null;
         _editName = "";
         _editDescription = "";
+        _editRepoUrl = "";
+        _editDefaultBranch = "";
         _showDialog = true;
     }
 
@@ -134,6 +150,8 @@
         _editId = project.Id;
         _editName = project.ProjectName;
         _editDescription = project.Description;
+        _editRepoUrl = project.RepoUrl ?? "";
+        _editDefaultBranch = project.DefaultBranch ?? "";
         _showDialog = true;
     }
 
@@ -155,7 +173,9 @@
                 await ProjectAppService.CreateAsync(new CreateWorkbenchProjectDto
                 {
                     ProjectName = _editName.Trim(),
-                    Description = _editDescription.Trim()
+                    Description = _editDescription.Trim(),
+                    RepoUrl = _editRepoUrl.Trim(),
+                    DefaultBranch = _editDefaultBranch.Trim()
                 });
                 ShowToast("项目已创建", "success");
             }
@@ -164,7 +184,9 @@
                 await ProjectAppService.UpdateAsync(_editId.Value, new UpdateWorkbenchProjectDto
                 {
                     ProjectName = _editName.Trim(),
-                    Description = _editDescription.Trim()
+                    Description = _editDescription.Trim(),
+                    RepoUrl = _editRepoUrl.Trim(),
+                    DefaultBranch = _editDefaultBranch.Trim()
                 });
                 ShowToast("项目已更新", "success");
             }
@@ -290,6 +312,17 @@
         font-size: 13px;
         color: #8c8c8c;
         min-height: 20px;
+    }
+
+    .pg-card-repo {
+        font-size: 12px;
+        color: #595959;
+        background: #fafafa;
+        border-radius: 6px;
+        padding: 4px 8px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .pg-card-foot {

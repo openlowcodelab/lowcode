@@ -15,11 +15,11 @@ public class LLMProviderFactory
     }
 
     /// <summary>
-    /// 根据 configId 创建 Provider
+    /// 根据 configId 创建 Provider（经凭据接口取真实密钥）
     /// </summary>
     public async Task<ILLMProvider?> CreateProviderAsync(Guid configId, CancellationToken ct = default)
     {
-        var config = (await _configService.GetAsync(configId)).Data;
+        var config = (await _configService.GetCredentialAsync(configId)).Data;
         return CreateFromConfig(config);
     }
 
@@ -28,7 +28,7 @@ public class LLMProviderFactory
     /// </summary>
     public async Task<ILLMProvider?> CreateProviderAsync(string providerName, CancellationToken ct = default)
     {
-        var config = (await _configService.GetConfigAsync(providerName, ct)).Data;
+        var config = (await _configService.GetCredentialByProviderAsync(providerName, ct)).Data;
         return CreateFromConfig(config);
     }
 
@@ -37,7 +37,7 @@ public class LLMProviderFactory
     /// </summary>
     public async Task<ILLMProvider?> GetDefaultProviderAsync(CancellationToken ct = default)
     {
-        var defaultConfig = (await _configService.GetDefaultConfigAsync(ct)).Data;
+        var defaultConfig = (await _configService.GetDefaultCredentialAsync(ct)).Data;
         return CreateFromConfig(defaultConfig);
     }
 
@@ -53,7 +53,8 @@ public class LLMProviderFactory
         {
             "bailian" => new BaiLianLLMProvider(config.ApiKey, config.BaseUrl!, config.Model),
             "deepseek" => new DeepSeekLLMProvider(config.ApiKey, config.BaseUrl!, config.Model),
-            _ => throw new ArgumentException($"不支持的 Provider: {config.ProviderName}")
+            // 未知/已移除的 Provider 不抛异常，交给上层回落链处理
+            _ => null
         };
     }
 

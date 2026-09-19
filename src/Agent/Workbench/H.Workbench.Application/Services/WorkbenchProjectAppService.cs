@@ -50,6 +50,8 @@ public class WorkbenchProjectAppService : ApplicationService, IWorkbenchProjectA
             Id = x.Id,
             ProjectName = x.ProjectName,
             Description = x.Description,
+            RepoUrl = x.RepoUrl,
+            DefaultBranch = x.DefaultBranch,
             TaskCount = taskCounts.FirstOrDefault(c => c.ProjectId == x.Id)?.Count ?? 0,
             CreationTime = x.CreationTime,
             CreatorId = x.CreatorId,
@@ -58,6 +60,23 @@ public class WorkbenchProjectAppService : ApplicationService, IWorkbenchProjectA
         }).ToList();
 
         return new(new PagedResultDto<WorkbenchProjectDto>(totalCount, dtos));
+    }
+
+    public async Task<BaseOutput<List<WorkbenchProjectDto>>> GetByIdsAsync(List<Guid> ids)
+    {
+        if (ids == null || ids.Count == 0) return new(new List<WorkbenchProjectDto>());
+
+        var query = await _projectRepository.GetQueryableAsync();
+        var entities = await AsyncExecuter.ToListAsync(query.Where(x => ids.Contains(x.Id)));
+
+        return new(entities.Select(x => new WorkbenchProjectDto
+        {
+            Id = x.Id,
+            ProjectName = x.ProjectName,
+            Description = x.Description,
+            RepoUrl = x.RepoUrl,
+            DefaultBranch = x.DefaultBranch
+        }).ToList());
     }
 
     public async Task<BaseOutput<WorkbenchProjectDto>> GetAsync(Guid id)
@@ -73,6 +92,8 @@ public class WorkbenchProjectAppService : ApplicationService, IWorkbenchProjectA
             Id = entity.Id,
             ProjectName = entity.ProjectName,
             Description = entity.Description,
+            RepoUrl = entity.RepoUrl,
+            DefaultBranch = entity.DefaultBranch,
             CreationTime = entity.CreationTime,
             CreatorId = entity.CreatorId,
             LastModificationTime = entity.LastModificationTime,
@@ -85,7 +106,9 @@ public class WorkbenchProjectAppService : ApplicationService, IWorkbenchProjectA
         var entity = new ProjectEntity
         {
             ProjectName = input.ProjectName,
-            Description = input.Description
+            Description = input.Description,
+            RepoUrl = input.RepoUrl?.Trim(),
+            DefaultBranch = input.DefaultBranch?.Trim()
         };
 
         entity = await _projectRepository.InsertAsync(entity);
@@ -94,6 +117,8 @@ public class WorkbenchProjectAppService : ApplicationService, IWorkbenchProjectA
             Id = entity.Id,
             ProjectName = entity.ProjectName,
             Description = entity.Description,
+            RepoUrl = entity.RepoUrl,
+            DefaultBranch = entity.DefaultBranch,
             CreationTime = entity.CreationTime
         });
     }
@@ -103,6 +128,8 @@ public class WorkbenchProjectAppService : ApplicationService, IWorkbenchProjectA
         var entity = await _projectRepository.GetAsync(id);
         entity.ProjectName = input.ProjectName;
         entity.Description = input.Description;
+        entity.RepoUrl = input.RepoUrl?.Trim();
+        entity.DefaultBranch = input.DefaultBranch?.Trim();
 
         entity = await _projectRepository.UpdateAsync(entity);
         return new(new WorkbenchProjectDto
@@ -110,6 +137,8 @@ public class WorkbenchProjectAppService : ApplicationService, IWorkbenchProjectA
             Id = entity.Id,
             ProjectName = entity.ProjectName,
             Description = entity.Description,
+            RepoUrl = entity.RepoUrl,
+            DefaultBranch = entity.DefaultBranch,
             CreationTime = entity.CreationTime
         });
     }

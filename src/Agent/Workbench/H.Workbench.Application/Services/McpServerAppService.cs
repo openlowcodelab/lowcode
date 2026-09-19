@@ -1,13 +1,15 @@
 using H.Workbench.Application.Contracts;
 using H.Workbench.EntityFrameworkCore;
 using H.Util.Base;
+using Volo.Abp;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 
 namespace H.Workbench.Application;
 
 /// <summary>
-/// MCP 服务管理实现
+/// MCP 服务管理实现。约定：对外输出 AuthToken/ApiKey 为掩码，
+/// 真实凭据只经 GetRawListAsync（已禁用远程暴露）供服务端 MCP 客户端使用。
 /// </summary>
 public class McpServerAppService : ApplicationService, IMcpServerAppService
 {
@@ -22,7 +24,15 @@ public class McpServerAppService : ApplicationService, IMcpServerAppService
     {
         var query = await _repository.GetQueryableAsync();
         var entities = await AsyncExecuter.ToListAsync(query.OrderBy(x => x.Name));
-        return new(entities.Select(MapToDto).ToList());
+        return new(entities.Select(e => MapToDto(e, mask: true)).ToList());
+    }
+
+    [RemoteService(IsEnabled = false)]
+    public async Task<BaseOutput<List<McpServerDto>>> GetRawListAsync()
+    {
+        var query = await _repository.GetQueryableAsync();
+        var entities = await AsyncExecuter.ToListAsync(query.OrderBy(x => x.Name));
+        return new(entities.Select(e => MapToDto(e, mask: false)).ToList());
     }
 
     public async Task<BaseOutput<McpServerDto>> CreateAsync(CreateMcpServerDto input)
@@ -47,7 +57,7 @@ public class McpServerAppService : ApplicationService, IMcpServerAppService
         };
 
         entity = await _repository.InsertAsync(entity);
-        return new(MapToDto(entity));
+        return new(MapToDto(entity, mask: true));
     }
 
     public async Task<BaseOutput<McpServerDto>> UpdateAsync(Guid id, UpdateMcpServerDto input)
@@ -57,14 +67,17 @@ public class McpServerAppService : ApplicationService, IMcpServerAppService
         entity.DisplayName = input.DisplayName;
         entity.Endpoint = input.Endpoint;
         entity.TransportType = input.TransportType;
-        entity.AuthToken = input.AuthToken;
-        entity.ApiKey = input.ApiKey;
+        // 空或掩码回传视为未修改，避免前端把掩码写回库
+        if (IsRealSecretSubmitted(input.AuthToken))
+            entity.AuthToken = input.AuthToken;
+        if (IsRealSecretSubmitted(input.ApiKey))
+            entity.ApiKey = input.ApiKey;
         entity.Headers = input.Headers;
         entity.TimeoutSeconds = input.TimeoutSeconds;
         entity.IsEnabled = input.IsEnabled;
 
         entity = await _repository.UpdateAsync(entity);
-        return new(MapToDto(entity));
+        return new(MapToDto(entity, mask: true));
     }
 
     public async Task<BaseOutput> DeleteAsync(Guid id)
@@ -81,7 +94,7 @@ public class McpServerAppService : ApplicationService, IMcpServerAppService
         return new();
     }
 
-    private static McpServerDto MapToDto(McpServerEntity entity)
+    private static McpServerDto MapToDto(McpServerEntity entity, bool mask)
     {
         return new McpServerDto
         {
@@ -90,12 +103,16 @@ public class McpServerAppService : ApplicationService, IMcpServerAppService
             DisplayName = entity.DisplayName,
             Endpoint = entity.Endpoint,
             TransportType = entity.TransportType,
-            AuthToken = entity.AuthToken,
-            ApiKey = entity.ApiKey,
+            AuthToken = mask ? MaskSecret(entity.AuthToken) : entity.AuthToken,
+            ApiKey = mask ? MaskSecret(entity.ApiKey) : entity.ApiKey,
             Headers = entity.Headers,
             TimeoutSeconds = entity.TimeoutSeconds,
             IsEnabled = entity.IsEnabled,
             CreationTime = entity.CreationTime
         };
     }
+
+    private static string? MaskSecret(string? value) => LLMAppService.MaskSecret(value);
+
+    private static bool IsRealSecretSubmitted(string? value) => LLMAppService.IsRealSecretSubmitted(value);
 }

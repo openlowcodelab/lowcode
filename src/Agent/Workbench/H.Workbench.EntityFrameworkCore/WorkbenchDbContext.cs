@@ -207,6 +207,8 @@ public class WorkbenchDbContext : AbpDbContext<WorkbenchDbContext>
             b.HasKey(x => x.Id);
             b.Property(x => x.ProjectName).IsRequired().HasMaxLength(200);
             b.Property(x => x.Description).HasMaxLength(1000);
+            b.Property(x => x.RepoUrl).HasMaxLength(500);
+            b.Property(x => x.DefaultBranch).HasMaxLength(100);
         });
 
         modelBuilder.Entity<ConnectorEntity>(b =>
