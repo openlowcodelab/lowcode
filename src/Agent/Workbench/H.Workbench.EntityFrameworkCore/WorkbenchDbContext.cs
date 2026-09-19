@@ -23,6 +23,8 @@ public class WorkbenchDbContext : AbpDbContext<WorkbenchDbContext>
     public DbSet<ProjectResourceEntity> ProjectResources { get; set; } = null!;
     public DbSet<ConnectorEntity> Connectors { get; set; } = null!;
     public DbSet<AgentTemplateEntity> AgentTemplates { get; set; } = null!;
+    public DbSet<TaskExecutionStepEntity> TaskExecutionSteps { get; set; } = null!;
+    public DbSet<ArtifactEntity> Artifacts { get; set; } = null!;
 
     public WorkbenchDbContext(DbContextOptions<WorkbenchDbContext> options)
         : base(options)
@@ -104,11 +106,54 @@ public class WorkbenchDbContext : AbpDbContext<WorkbenchDbContext>
             b.HasKey(x => x.Id);
             b.Property(x => x.TaskId).IsRequired();
             b.Property(x => x.Status).IsRequired().HasMaxLength(20);
+            b.Property(x => x.ApprovalState).HasMaxLength(20);
+            b.Property(x => x.StepCount).HasDefaultValue(0);
+            b.Property(x => x.ArtifactCount).HasDefaultValue(0);
             b.Property(x => x.Result).HasMaxLength(8000);
             b.Property(x => x.ErrorMessage).HasMaxLength(2000);
 
             b.HasIndex(x => x.TaskId);
             b.HasIndex(x => x.StartTime);
+        });
+
+        modelBuilder.Entity<TaskExecutionStepEntity>(b =>
+        {
+            b.ToTable("TaskExecutionStep");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.TaskLogId).IsRequired();
+            b.Property(x => x.Kind).IsRequired().HasMaxLength(20);
+            b.Property(x => x.ToolName).HasMaxLength(100);
+            b.Property(x => x.SkillName).HasMaxLength(100);
+            b.Property(x => x.ToolCallId).HasMaxLength(64);
+            b.Property(x => x.ApprovalState).HasMaxLength(20);
+            b.Property(x => x.ApproverId).HasMaxLength(64);
+            b.Property(x => x.Content).HasMaxLength(8000);
+            b.Property(x => x.Arguments).HasMaxLength(4000);
+            b.Property(x => x.Result).HasMaxLength(4000);
+
+            b.HasIndex(x => new { x.TaskLogId, x.Iteration, x.Seq });
+            b.HasIndex(x => new { x.TaskId, x.StartedAt });
+        });
+
+        modelBuilder.Entity<ArtifactEntity>(b =>
+        {
+            b.ToTable("Artifact");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Kind).IsRequired().HasMaxLength(30);
+            b.Property(x => x.Title).IsRequired().HasMaxLength(200);
+            b.Property(x => x.Repo).HasMaxLength(200);
+            b.Property(x => x.RepoUrl).HasMaxLength(500);
+            b.Property(x => x.Branch).HasMaxLength(100);
+            b.Property(x => x.CommitHash).HasMaxLength(64);
+            b.Property(x => x.PushResult).HasMaxLength(20);
+            b.Property(x => x.FilePath).HasMaxLength(500);
+            b.Property(x => x.ChangeType).HasMaxLength(20);
+            b.Property(x => x.ToolCallId).HasMaxLength(64);
+            b.Property(x => x.Payload).HasMaxLength(4000);
+
+            b.HasIndex(x => x.TaskLogId);
+            b.HasIndex(x => new { x.TaskId, x.CreationTime });
+            b.HasIndex(x => x.Kind);
         });
 
         modelBuilder.Entity<AgentEntity>(b =>

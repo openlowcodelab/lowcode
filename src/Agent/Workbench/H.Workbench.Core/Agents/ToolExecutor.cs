@@ -5,6 +5,11 @@ using System.Text.Json;
 namespace H.Workbench.Core.Agents;
 
 /// <summary>
+/// 工具执行结构化结果（轨迹落库与产物派生消费）
+/// </summary>
+public record ToolExecutionResult(string Text, bool IsError, bool Truncated, int DurationMs);
+
+/// <summary>
 /// 工具执行器 - 负责查找、解析参数并执行工具
 /// </summary>
 public class ToolExecutor
@@ -32,15 +37,18 @@ public class ToolExecutor
     /// <summary>
     /// 执行工具调用
     /// </summary>
-    public async Task<(string result, bool isError)> ExecuteAsync(
+    public async Task<ToolExecutionResult> ExecuteAsync(
         string toolName,
         string argumentsJson,
         CancellationToken ct = default)
     {
+        var startedAt = DateTime.UtcNow;
         var tool = _toolRegistry.GetTool(toolName);
         if (tool == null)
         {
-            return ($"工具 '{toolName}' 未找到。可用工具: {string.Join(", ", _toolRegistry.GetAllTools().Select(t => t.Name))}", true);
+            return new ToolExecutionResult(
+                $"工具 '{toolName}' 未找到。可用工具: {string.Join(", ", _toolRegistry.GetAllTools().Select(t => t.Name))}",
+                true, false, (int)(DateTime.UtcNow - startedAt).TotalMilliseconds);
         }
 
         try
@@ -60,27 +68,30 @@ public class ToolExecutor
             var resultText = result?.ToString() ?? "(无返回结果)";
 
             // 截断过长的结果
-            if (resultText.Length > MaxResultLength)
+            var truncated = resultText.Length > MaxResultLength;
+            if (truncated)
             {
                 resultText = resultText[..MaxResultLength] + "\n...[结果已截断]";
             }
 
             _logger.LogInformation("工具 {ToolName} 执行成功, 结果长度: {Len}", toolName, resultText.Length);
-            return (resultText, false);
+            return new ToolExecutionResult(resultText, false, truncated, Elapsed(startedAt));
         }
         catch (OperationCanceledException) when (!ct.IsCancellationRequested)
         {
             var msg = $"工具 '{toolName}' 执行超时（{_executionTimeoutSeconds}秒）";
             _logger.LogWarning(msg);
-            return (msg, true);
+            return new ToolExecutionResult(msg, true, false, Elapsed(startedAt));
         }
         catch (Exception ex)
         {
             var msg = $"工具 '{toolName}' 执行失败: {ex.Message}";
             _logger.LogWarning(ex, "工具 {ToolName} 执行异常", toolName);
-            return (msg, true);
+            return new ToolExecutionResult(msg, true, false, Elapsed(startedAt));
         }
     }
+
+    private static int Elapsed(DateTime startedAtUtc) => (int)(DateTime.UtcNow - startedAtUtc).TotalMilliseconds;
 
     /// <summary>
     /// 解析 JSON 参数为字典

@@ -28,6 +28,10 @@ public class ToolCallingEvent : ReactEvent
     public string ToolName { get; set; } = string.Empty;
     public string ToolCallId { get; set; } = string.Empty;
     public string Arguments { get; set; } = string.Empty;
+    /// <summary>
+    /// 工具归属技能名（技能隔离上下文中有值，用于审批归属与轨迹展示）
+    /// </summary>
+    public string? SkillName { get; set; }
 }
 
 /// <summary>
@@ -40,6 +44,9 @@ public class ToolResultEvent : ReactEvent
     public string ToolCallId { get; set; } = string.Empty;
     public string Result { get; set; } = string.Empty;
     public bool IsError { get; set; }
+    public string? SkillName { get; set; }
+    public bool Truncated { get; set; }
+    public int DurationMs { get; set; }
 }
 
 /// <summary>
@@ -49,6 +56,32 @@ public class FinalAnswerEvent : ReactEvent
 {
     public FinalAnswerEvent() { Type = "answer"; }
     public string Content { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// 审批请求事件：需人工批准的工具在执行前发出，前端展示批准/拒绝按钮
+/// </summary>
+public class ApprovalRequiredEvent : ReactEvent
+{
+    public ApprovalRequiredEvent() { Type = "approval_required"; }
+    public Guid ApprovalId { get; set; }
+    public string ToolName { get; set; } = string.Empty;
+    public string? SkillName { get; set; }
+    public string ToolCallId { get; set; } = string.Empty;
+    public string Arguments { get; set; } = string.Empty;
+    public int TimeoutSeconds { get; set; }
+}
+
+/// <summary>
+/// 审批裁决事件：批准/拒绝/超时/跳过后发出
+/// </summary>
+public class ApprovalResolvedEvent : ReactEvent
+{
+    public ApprovalResolvedEvent() { Type = "approval_resolved"; }
+    public Guid ApprovalId { get; set; }
+    public string ToolName { get; set; } = string.Empty;
+    public string Decision { get; set; } = string.Empty;
+    public long WaitMs { get; set; }
 }
 
 /// <summary>

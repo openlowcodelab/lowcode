@@ -57,4 +57,9 @@ public interface ITaskAppService : IAppService
     /// 获取任务的执行日志
     /// </summary>
     Task<BaseOutput<List<TaskLogDto>>> GetExecutionLogsAsync(Guid taskId, int maxResultCount = 10);
+
+    /// <summary>
+    /// 获取一次执行的完整轨迹（步骤时间线 + 产物），历史回放用
+    /// </summary>
+    Task<BaseOutput<TaskLogTraceDto>> GetLogTraceAsync(Guid logId, int maxStepCount = 200);
 }

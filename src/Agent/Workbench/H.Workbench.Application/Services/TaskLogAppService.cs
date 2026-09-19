@@ -17,15 +17,21 @@ public class TaskLogAppService : ApplicationService, ITaskLogAppService
 {
     private readonly IRepository<TaskLogEntity, Guid> _logRepository;
     private readonly IRepository<TaskEntity, Guid> _taskRepository;
+    private readonly IRepository<TaskExecutionStepEntity, Guid> _stepRepository;
+    private readonly IRepository<ArtifactEntity, Guid> _artifactRepository;
     private readonly IMapper _objectMapper;
 
     public TaskLogAppService(
         IRepository<TaskLogEntity, Guid> logRepository,
         IRepository<TaskEntity, Guid> taskRepository,
+        IRepository<TaskExecutionStepEntity, Guid> stepRepository,
+        IRepository<ArtifactEntity, Guid> artifactRepository,
         IMapper objectMapper)
     {
         _logRepository = logRepository;
         _taskRepository = taskRepository;
+        _stepRepository = stepRepository;
+        _artifactRepository = artifactRepository;
         _objectMapper = objectMapper;
     }
 
@@ -105,6 +111,21 @@ public class TaskLogAppService : ApplicationService, ITaskLogAppService
 
     public async Task<BaseOutput> DeleteAsync(Guid id)
     {
+        // 无 FK，级联清子表防孤儿行
+        var stepQueryable = await _stepRepository.GetQueryableAsync();
+        var steps = await AsyncExecuter.ToListAsync(stepQueryable.Where(s => s.TaskLogId == id));
+        if (steps.Count > 0)
+        {
+            await _stepRepository.DeleteManyAsync(steps, autoSave: true);
+        }
+
+        var artifactQueryable = await _artifactRepository.GetQueryableAsync();
+        var artifacts = await AsyncExecuter.ToListAsync(artifactQueryable.Where(a => a.TaskLogId == id));
+        if (artifacts.Count > 0)
+        {
+            await _artifactRepository.DeleteManyAsync(artifacts, autoSave: true);
+        }
+
         await _logRepository.DeleteAsync(id);
         return new();
     }

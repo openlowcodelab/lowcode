@@ -11,6 +11,9 @@ public class TaskLogDto : CreationAuditedEntityDto<Guid>
     public string TaskName { get; set; } = string.Empty;
     public string? Prompt { get; set; }
     public string Status { get; set; } = string.Empty;
+    public int StepCount { get; set; }
+    public int ArtifactCount { get; set; }
+    public string? ApprovalState { get; set; }
     public string? Result { get; set; }
     public string? ErrorMessage { get; set; }
     public DateTime StartTime { get; set; }

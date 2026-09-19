@@ -7,6 +7,17 @@ namespace H.Workbench.EntityFrameworkCore;
 /// </summary>
 public class TaskLogEntity : CreationAuditedEntity<Guid>
 {
+    public TaskLogEntity()
+    {
+    }
+
+    /// <summary>
+    /// 预分配主键场景：流式执行开始时即确定 logId，供轨迹/产物行挂宿主
+    /// </summary>
+    public TaskLogEntity(Guid id)
+    {
+        Id = id;
+    }
     /// <summary>
     /// 任务ID
     /// </summary>
@@ -18,9 +29,24 @@ public class TaskLogEntity : CreationAuditedEntity<Guid>
     public string? Prompt { get; set; }
 
     /// <summary>
-    /// 执行状态：Success/Failed/Cancelled
+    /// 执行状态：Running/Success/Failed/Cancelled/Abandoned
     /// </summary>
     public string Status { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 本次执行落库的轨迹步骤数
+    /// </summary>
+    public int StepCount { get; set; }
+
+    /// <summary>
+    /// 本次执行产出的产物数
+    /// </summary>
+    public int ArtifactCount { get; set; }
+
+    /// <summary>
+    /// 审批聚合徽标：null（无审批）/Pending/Approved/Denied/Timeout
+    /// </summary>
+    public string? ApprovalState { get; set; }
 
     /// <summary>
     /// 执行结果

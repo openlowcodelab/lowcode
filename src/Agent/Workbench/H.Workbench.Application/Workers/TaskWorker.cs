@@ -39,9 +39,12 @@ public class TaskWorker : BackgroundService
                 if (!_startupSweepDone)
                 {
                     await SweepDanglingAsync(dbContext, logger, stoppingToken);
+                    await SweepAbandonedRunningLogsAsync(dbContext, logger, staleBefore: DateTime.Now.AddMinutes(-2), ct: stoppingToken);
                     _startupSweepDone = true;
                 }
 
+                // 每轮兜底：回收"进程活着但流静默死掉"的超长 Running 行（断连/异常未走到收尾）
+                await SweepAbandonedRunningLogsAsync(dbContext, logger, staleBefore: DateTime.Now.AddMinutes(-15), ct: stoppingToken);
                 var now = DateTime.Now;
 
                 // 查找待执行的任务（已启用且下次执行时间已到），AsNoTracking 避免干扰后续条件更新
@@ -120,6 +123,26 @@ public class TaskWorker : BackgroundService
         if (danglingIds.Count > 0)
         {
             logger.LogWarning("发现 {Count} 个悬空任务（执行中被中断），已重新排期", danglingIds.Count);
+        }
+    }
+
+    /// <summary>
+    /// 回收悬挂的 Running 执行日志：进程重启/流静默中断后无人回写收尾，
+    /// 置为 Abandoned 保留已落库的轨迹，避免列表永远显示"执行中"
+    /// </summary>
+    private static async Task SweepAbandonedRunningLogsAsync(
+        WorkbenchDbContext dbContext, ILogger logger, DateTime staleBefore, CancellationToken ct)
+    {
+        var abandoned = await dbContext.TaskLogs
+            .Where(l => l.Status == "Running" && l.StartTime < staleBefore)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(l => l.Status, "Abandoned")
+                .SetProperty(l => l.EndTime, DateTime.Now)
+                .SetProperty(l => l.ErrorMessage, "执行中断（进程重启或连接断开，未经收尾）"), ct);
+
+        if (abandoned > 0)
+        {
+            logger.LogWarning("回收 {Count} 条悬挂的执行中日志为 Abandoned", abandoned);
         }
     }
 

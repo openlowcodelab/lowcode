@@ -18,6 +18,8 @@ public class WorkbenchMapperProfile : Profile
         // Scheduled task mapping
         CreateMap<TaskEntity, TaskDto>();
         CreateMap<TaskLogEntity, TaskLogDto>();
+        CreateMap<TaskExecutionStepEntity, ExecutionStepDto>();
+        CreateMap<ArtifactEntity, ArtifactDto>();
 
         // Knowledge base mapping
         CreateMap<KnowledgeBaseEntity, KnowledgeBaseDto>();

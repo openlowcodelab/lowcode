@@ -21,6 +21,70 @@ public class WorkbenchToolOptions
     /// 员工级工具隔离开关：true 时绑定了技能的员工只看到自己的技能工具 + MCP 工具
     /// </summary>
     public bool ToolIsolationEnabled { get; set; } = true;
+
+    public ApprovalOptions Approval { get; set; } = new();
+
+    public ShellToolOptions Shell { get; set; } = new();
+
+    public TraceOptions Trace { get; set; } = new();
+}
+
+/// <summary>
+/// 工具审批门配置
+/// </summary>
+public class ApprovalOptions
+{
+    /// <summary>
+    /// 审批门总开关；false 时回退到阶段A行为（需审批工具直接执行）
+    /// </summary>
+    public bool Enabled { get; set; } = true;
+
+    public int TimeoutSeconds { get; set; } = 120;
+
+    /// <summary>
+    /// 单次执行最多打扰用户几次，超出后按 SkippedNonInteractive 处理
+    /// </summary>
+    public int MaxPerExecution { get; set; } = 3;
+
+    /// <summary>
+    /// 非交互路径（定时任务/立即执行）遇需审批工具的裁决：Deny | Allow
+    /// </summary>
+    public string NonInteractivePolicy { get; set; } = "Deny";
+}
+
+/// <summary>
+/// workspace_shell 工具配置
+/// </summary>
+public class ShellToolOptions
+{
+    /// <summary>
+    /// 远程命令执行总开关（高危能力，一键关停）
+    /// </summary>
+    public bool Enabled { get; set; } = true;
+
+    public int DefaultTimeoutSeconds { get; set; } = 120;
+
+    /// <summary>
+    /// 命令超时上限（秒），必须小于 ToolTimeoutSeconds，否则被兜底超时先掐
+    /// </summary>
+    public int MaxTimeoutSeconds { get; set; } = 600;
+
+    public int MaxOutputChars { get; set; } = 8000;
+}
+
+/// <summary>
+/// 执行轨迹落库配置
+/// </summary>
+public class TraceOptions
+{
+    /// <summary>
+    /// false 时关闭轨迹/产物落库，仅保留 SSE 推送（排障用）
+    /// </summary>
+    public bool Enabled { get; set; } = true;
+
+    public int MaxArgumentsChars { get; set; } = 4000;
+
+    public int MaxContentChars { get; set; } = 8000;
 }
 
 public class GitToolOptions

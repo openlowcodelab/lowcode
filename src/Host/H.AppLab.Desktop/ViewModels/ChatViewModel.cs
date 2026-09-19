@@ -454,6 +454,10 @@ public partial class ChatViewModel : ObservableObject
                             }
                             _toast.Show(errMsg, "warning");
                             return;
+
+                        // 未来新增的事件类型不得落入下方纯文本兜底，否则会污染回答
+                        default:
+                            return;
                     }
                 }
 

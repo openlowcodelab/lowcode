@@ -16,6 +16,11 @@ public class ReactAgent
     private readonly ILogger<ReactAgent> _logger;
 
     /// <summary>
+    /// 工具名 → 归属技能名（可空；用于轨迹展示与审批归属）
+    /// </summary>
+    private readonly IReadOnlyDictionary<string, string>? _toolOwners;
+
+    /// <summary>
     /// 默认最大迭代次数
     /// </summary>
     private const int DefaultMaxIterations = 10;
@@ -24,12 +29,14 @@ public class ReactAgent
         ILLMProvider provider,
         ToolExecutor toolExecutor,
         List<ToolDefinition> toolDefs,
-        ILogger<ReactAgent> logger)
+        ILogger<ReactAgent> logger,
+        IReadOnlyDictionary<string, string>? toolOwners = null)
     {
         _provider = provider;
         _toolExecutor = toolExecutor;
         _toolDefs = toolDefs;
         _logger = logger;
+        _toolOwners = toolOwners;
     }
 
     /// <summary>
@@ -201,28 +208,38 @@ public class ReactAgent
 
                 _logger.LogInformation("执行工具: {ToolName}", toolCall.Function.Name);
 
+                string? skillName = null;
+                if (_toolOwners is not null)
+                {
+                    _toolOwners.TryGetValue(toolCall.Function.Name, out skillName);
+                }
+
                 yield return new ToolCallingEvent
                 {
                     ToolName = toolCall.Function.Name,
                     ToolCallId = toolCall.Id,
                     Arguments = toolCall.Function.Arguments,
+                    SkillName = skillName,
                     Iteration = iteration
                 };
 
-                var (result, isError) = await _toolExecutor.ExecuteAsync(
+                var execResult = await _toolExecutor.ExecuteAsync(
                     toolCall.Function.Name,
                     toolCall.Function.Arguments,
                     ct);
 
                 _logger.LogInformation("工具执行完成: {ToolName}, IsError={IsError}, ResultLen={Len}",
-                    toolCall.Function.Name, isError, result.Length);
+                    toolCall.Function.Name, execResult.IsError, execResult.Text.Length);
 
                 yield return new ToolResultEvent
                 {
                     ToolName = toolCall.Function.Name,
                     ToolCallId = toolCall.Id,
-                    Result = result,
-                    IsError = isError,
+                    Result = execResult.Text,
+                    IsError = execResult.IsError,
+                    SkillName = skillName,
+                    Truncated = execResult.Truncated,
+                    DurationMs = execResult.DurationMs,
                     Iteration = iteration
                 };
 
@@ -230,7 +247,7 @@ public class ReactAgent
                 messages.Add(new Message
                 {
                     Role = "tool",
-                    Content = result,
+                    Content = execResult.Text,
                     ToolCallId = toolCall.Id
                 });
             }

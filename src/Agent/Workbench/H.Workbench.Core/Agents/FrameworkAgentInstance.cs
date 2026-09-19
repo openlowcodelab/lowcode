@@ -25,8 +25,14 @@ public class FrameworkAgentInstance : IAgentInstance, IStreamingAgent
     public string Name => _definition.DisplayName;
     public string SystemPrompt => _definition.SystemPrompt;
 
-    public async Task<string> ProcessMessageAsync(string message, List<string>? conversationHistory = null)
+    public async Task<string> ProcessMessageAsync(
+        string message,
+        List<string>? conversationHistory = null,
+        Func<string, Task>? onEventJson = null)
     {
+        // 该实现无逐事件轨迹可上报，回调不消费
+        _ = onEventJson;
+
         // 如果有会话历史，使用会话管理
         if (conversationHistory != null && conversationHistory.Any())
         {

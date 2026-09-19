@@ -23,6 +23,17 @@ public class ReactAgentInstance : IAgentInstance, IStreamingAgent
     /// </summary>
     private readonly Func<string, Task<string>>? _systemPromptAugmentor;
 
+    /// <summary>
+    /// 工具名 → 归属技能名（透传给 ReactAgent，供轨迹与审批消费）
+    /// </summary>
+    private readonly IReadOnlyDictionary<string, string>? _toolOwners;
+
+    private static readonly JsonSerializerOptions EventJsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+    };
+
     public ReactAgentInstance(
         ILLMProvider llmProvider,
         AgentDto definition,
@@ -30,7 +41,8 @@ public class ReactAgentInstance : IAgentInstance, IStreamingAgent
         List<ToolDefinition> toolDefs,
         ILogger<ReactAgent> reactLogger,
         ILogger<ReactAgentInstance> logger,
-        Func<string, Task<string>>? systemPromptAugmentor = null)
+        Func<string, Task<string>>? systemPromptAugmentor = null,
+        IReadOnlyDictionary<string, string>? toolOwners = null)
     {
         _llmProvider = llmProvider;
         _definition = definition;
@@ -39,6 +51,7 @@ public class ReactAgentInstance : IAgentInstance, IStreamingAgent
         _reactLogger = reactLogger;
         _logger = logger;
         _systemPromptAugmentor = systemPromptAugmentor;
+        _toolOwners = toolOwners;
     }
 
     public string Name => _definition.DisplayName;
@@ -64,18 +77,33 @@ public class ReactAgentInstance : IAgentInstance, IStreamingAgent
     }
 
     /// <summary>
-    /// 非流式处理：收集所有事件，返回最终答案
+    /// 非流式处理：收集所有事件，返回最终答案；onEventJson 逐事件回调（与流式路径同构负载），供轨迹落库
     /// </summary>
-    public async Task<string> ProcessMessageAsync(string message, List<string>? conversationHistory = null)
+    public async Task<string> ProcessMessageAsync(
+        string message,
+        List<string>? conversationHistory = null,
+        Func<string, Task>? onEventJson = null)
     {
         var history = BuildHistory(conversationHistory);
         var systemPrompt = await BuildSystemPromptAsync(message);
-        var agent = new ReactAgent(_llmProvider, _toolExecutor, _toolDefs, _reactLogger);
+        var agent = new ReactAgent(_llmProvider, _toolExecutor, _toolDefs, _reactLogger, _toolOwners);
 
         var finalAnswer = string.Empty;
 
         await foreach (var evt in agent.RunAsync(message, history, systemPrompt, GetMaxIterations()))
         {
+            if (onEventJson is not null)
+            {
+                try
+                {
+                    await onEventJson(SerializeEvent(evt));
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "执行轨迹事件回调失败，不影响主执行");
+                }
+            }
+
             if (evt is ThinkingEvent thinking)
             {
                 // 思考内容累积为最终回答（因为 FinalAnswerEvent 现在为空）
@@ -106,29 +134,32 @@ public class ReactAgentInstance : IAgentInstance, IStreamingAgent
     {
         var history = BuildHistory(conversationHistory);
         var systemPrompt = await BuildSystemPromptAsync(message);
-        var agent = new ReactAgent(_llmProvider, _toolExecutor, _toolDefs, _reactLogger);
-
-        var jsonOptions = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-        };
+        var agent = new ReactAgent(_llmProvider, _toolExecutor, _toolDefs, _reactLogger, _toolOwners);
 
         await foreach (var evt in agent.RunAsync(message, history, systemPrompt, GetMaxIterations()))
         {
-            // 按事件类型序列化，只包含相关字段（避免 null 污染）
-            object payload = evt switch
-            {
-                ThinkingEvent t => new { type = t.Type, content = t.Content, iteration = t.Iteration },
-                ToolCallingEvent tc => new { type = tc.Type, toolName = tc.ToolName, toolCallId = tc.ToolCallId, arguments = tc.Arguments, iteration = tc.Iteration },
-                ToolResultEvent tr => new { type = tr.Type, toolName = tr.ToolName, toolCallId = tr.ToolCallId, result = tr.Result, isError = tr.IsError, iteration = tr.Iteration },
-                FinalAnswerEvent a => new { type = a.Type, content = a.Content, iteration = a.Iteration },
-                ErrorEvent e => new { type = e.Type, message = e.Message, isFatal = e.IsFatal, iteration = e.Iteration },
-                _ => new { type = evt.Type, iteration = evt.Iteration }
-            };
-
-            yield return JsonSerializer.Serialize(payload, jsonOptions);
+            yield return SerializeEvent(evt);
         }
+    }
+
+    /// <summary>
+    /// 按事件类型序列化，只包含相关字段（避免 null 污染）；流式与非流式两条路径共用同一负载口径
+    /// </summary>
+    private static string SerializeEvent(ReactEvent evt)
+    {
+        object payload = evt switch
+        {
+            ThinkingEvent t => new { type = t.Type, content = t.Content, iteration = t.Iteration },
+            ToolCallingEvent tc => new { type = tc.Type, toolName = tc.ToolName, toolCallId = tc.ToolCallId, arguments = tc.Arguments, skillName = tc.SkillName, iteration = tc.Iteration },
+            ToolResultEvent tr => new { type = tr.Type, toolName = tr.ToolName, toolCallId = tr.ToolCallId, result = tr.Result, isError = tr.IsError, skillName = tr.SkillName, truncated = tr.Truncated, durationMs = tr.DurationMs, iteration = tr.Iteration },
+            ApprovalRequiredEvent ar => new { type = ar.Type, approvalId = ar.ApprovalId, toolName = ar.ToolName, skillName = ar.SkillName, toolCallId = ar.ToolCallId, arguments = ar.Arguments, timeoutSeconds = ar.TimeoutSeconds, iteration = ar.Iteration },
+            ApprovalResolvedEvent ao => new { type = ao.Type, approvalId = ao.ApprovalId, toolName = ao.ToolName, decision = ao.Decision, waitMs = ao.WaitMs, iteration = ao.Iteration },
+            FinalAnswerEvent a => new { type = a.Type, content = a.Content, iteration = a.Iteration },
+            ErrorEvent e => new { type = e.Type, message = e.Message, isFatal = e.IsFatal, iteration = e.Iteration },
+            _ => new { type = evt.Type, iteration = evt.Iteration }
+        };
+
+        return JsonSerializer.Serialize(payload, EventJsonOptions);
     }
 
     public List<string> GetAvailableTools()

@@ -1,10 +1,12 @@
 using AutoMapper;
 using H.Abp.Application.Contracts;
 using H.Workbench.Application.Contracts;
+using H.Workbench.Application.Services.Execution;
 using H.Workbench.Core;
 using H.Workbench.EntityFrameworkCore;
 using H.Util.Base;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System.Linq.Dynamic.Core;
 using System.Text;
 using System.Text.Json;
@@ -22,22 +24,34 @@ public class TaskAppService : ApplicationService, ITaskAppService
 {
     private readonly IRepository<TaskEntity, Guid> _taskRepository;
     private readonly IRepository<TaskLogEntity, Guid> _logRepository;
+    private readonly IRepository<TaskExecutionStepEntity, Guid> _stepRepository;
+    private readonly IRepository<ArtifactEntity, Guid> _artifactRepository;
     private readonly IMapper _objectMapper;
     private readonly IAsyncQueryableExecuter _asyncExecuter;
     private readonly AgentFactory _agentFactory;
+    private readonly ExecutionTraceStore _traceStore;
+    private readonly WorkbenchToolOptions _toolOptions;
 
     public TaskAppService(
         IRepository<TaskEntity, Guid> taskRepository,
         IRepository<TaskLogEntity, Guid> logRepository,
+        IRepository<TaskExecutionStepEntity, Guid> stepRepository,
+        IRepository<ArtifactEntity, Guid> artifactRepository,
         IMapper objectMapper,
         IAsyncQueryableExecuter asyncExecuter,
-        AgentFactory agentFactory)
+        AgentFactory agentFactory,
+        ExecutionTraceStore traceStore,
+        IOptions<WorkbenchToolOptions> toolOptions)
     {
         _taskRepository = taskRepository;
         _logRepository = logRepository;
+        _stepRepository = stepRepository;
+        _artifactRepository = artifactRepository;
         _objectMapper = objectMapper;
         _asyncExecuter = asyncExecuter;
         _agentFactory = agentFactory;
+        _traceStore = traceStore;
+        _toolOptions = toolOptions.Value;
     }
 
     public async Task<BaseOutput<PagedResultDto<TaskDto>>> GetListAsync(TaskQueryDto input)
@@ -184,17 +198,35 @@ public class TaskAppService : ApplicationService, ITaskAppService
 
     public async Task<BaseOutput> DeleteAsync(Guid id)
     {
-        // 删除关联的执行日志
+        // 删除关联的执行日志及其轨迹/产物（表间无 FK，级联由应用层负责）
         var logQueryable = await _logRepository.GetQueryableAsync();
         var logs = await AsyncExecuter.ToListAsync(logQueryable.Where(l => l.TaskId == id));
         foreach (var log in logs)
         {
+            await DeleteTraceAndArtifactsAsync(log.Id);
             await _logRepository.DeleteAsync(log);
         }
 
         await _taskRepository.DeleteAsync(id);
 
         return new();
+    }
+
+    private async Task DeleteTraceAndArtifactsAsync(Guid taskLogId)
+    {
+        var stepQueryable = await _stepRepository.GetQueryableAsync();
+        var steps = await AsyncExecuter.ToListAsync(stepQueryable.Where(s => s.TaskLogId == taskLogId));
+        if (steps.Count > 0)
+        {
+            await _stepRepository.DeleteManyAsync(steps, autoSave: true);
+        }
+
+        var artifactQueryable = await _artifactRepository.GetQueryableAsync();
+        var artifacts = await AsyncExecuter.ToListAsync(artifactQueryable.Where(a => a.TaskLogId == taskLogId));
+        if (artifacts.Count > 0)
+        {
+            await _artifactRepository.DeleteManyAsync(artifacts, autoSave: true);
+        }
     }
 
     public async Task<BaseOutput> ToggleEnableAsync(Guid id)
@@ -265,8 +297,22 @@ public class TaskAppService : ApplicationService, ITaskAppService
         var answer = new StringBuilder();
         string? failure = null;
 
-        // 续聊上下文：带最近若干次成功执行的问答对
+        // 续聊上下文：带最近若干次成功执行的问答对（必须在 Running 日志插入前构建，
+        // 且只取 Status=Success 行，轨迹落库不影响该口径）
         var history = await BuildConversationHistoryAsync(task);
+
+        // 起始即插 Running 行（独立短 UoW 立即提交，见 StartLogAsync 注释）：轨迹/产物需要立即存在的宿主
+        var logId = Guid.NewGuid();
+        try
+        {
+            await _traceStore.StartLogAsync(logId, task.Id, prompt, startTime);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "插入 Running 执行日志失败 TaskId={TaskId}", task.Id);
+        }
+
+        var recorder = new ExecutionTraceRecorder(_traceStore, _toolOptions.Trace, Logger, logId, task.Id);
 
         if (task.SourceType == "Workflow" && !string.IsNullOrWhiteSpace(task.WorkflowContent))
         {
@@ -274,7 +320,7 @@ public class TaskAppService : ApplicationService, ITaskAppService
             string? response = null;
             try
             {
-                response = await ExecuteTaskContentAsync(agent, task);
+                response = await ExecuteTaskContentAsync(agent, task, recorder.Tap);
             }
             catch (Exception ex)
             {
@@ -314,6 +360,7 @@ public class TaskAppService : ApplicationService, ITaskAppService
                 }
 
                 AccumulateStreamEvent(chunk!, thinking, answer, ref failure);
+                await recorder.HandleAsync(chunk!);
                 yield return chunk!;
             }
         }
@@ -322,7 +369,7 @@ public class TaskAppService : ApplicationService, ITaskAppService
             string? response = null;
             try
             {
-                response = await agent.ProcessMessageAsync(prompt, new List<string>());
+                response = await agent.ProcessMessageAsync(prompt, new List<string>(), recorder.Tap);
             }
             catch (Exception ex)
             {
@@ -347,16 +394,16 @@ public class TaskAppService : ApplicationService, ITaskAppService
 
         try
         {
-            await _logRepository.InsertAsync(new TaskLogEntity
-            {
-                TaskId = task.Id,
-                Prompt = prompt,
-                StartTime = startTime,
-                EndTime = DateTime.Now,
-                Status = succeeded ? "Success" : "Failed",
-                Result = succeeded ? finalAnswer : null,
-                ErrorMessage = failure
-            });
+            var (stepCount, artifactCount, approvalState) = await recorder.FinishAsync();
+
+            await _traceStore.CompleteLogAsync(
+                logId,
+                succeeded ? "Success" : "Failed",
+                succeeded ? finalAnswer : null,
+                failure,
+                stepCount,
+                artifactCount,
+                approvalState);
 
             if (succeeded)
             {
@@ -463,6 +510,40 @@ public class TaskAppService : ApplicationService, ITaskAppService
             .ToList());
     }
 
+    public async Task<BaseOutput<TaskLogTraceDto>> GetLogTraceAsync(Guid logId, int maxStepCount = 200)
+    {
+        var log = await _logRepository.FindAsync(logId);
+        if (log == null)
+        {
+            return new BaseOutput<TaskLogTraceDto>
+            {
+                Code = 1,
+                Success = false,
+                Message = "执行记录不存在"
+            };
+        }
+
+        var stepQueryable = await _stepRepository.GetQueryableAsync();
+        var steps = await AsyncExecuter.ToListAsync(
+            stepQueryable.Where(s => s.TaskLogId == logId)
+                .OrderBy(s => s.Iteration).ThenBy(s => s.Seq)
+                .Take(maxStepCount));
+
+        var artifactQueryable = await _artifactRepository.GetQueryableAsync();
+        var artifacts = await AsyncExecuter.ToListAsync(
+            artifactQueryable.Where(a => a.TaskLogId == logId)
+                .OrderBy(a => a.CreationTime));
+
+        var trace = new TaskLogTraceDto
+        {
+            Status = log.Status,
+            Steps = steps.Select(s => _objectMapper.Map<TaskExecutionStepEntity, ExecutionStepDto>(s)).ToList(),
+            Artifacts = artifacts.Select(a => _objectMapper.Map<ArtifactEntity, ArtifactDto>(a)).ToList()
+        };
+
+        return new(trace);
+    }
+
     /// <summary>
     /// 执行单个任务
     /// </summary>
@@ -487,6 +568,20 @@ public class TaskAppService : ApplicationService, ITaskAppService
 
         Logger.LogInformation("开始执行定时任务 {TaskName} (Id={TaskId})", taskName, taskId);
 
+        // 后台执行同样先立 Running 行（独立短 UoW，避免外层事务性 UoW 导致收尾时查不到行）
+        var logId = Guid.NewGuid();
+        ExecutionTraceRecorder? recorder = null;
+        try
+        {
+            await _traceStore.StartLogAsync(logId, taskId, task.PromptContent, startTime);
+
+            recorder = new ExecutionTraceRecorder(_traceStore, _toolOptions.Trace, Logger, logId, taskId);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "插入 Running 执行日志失败 TaskId={TaskId}", taskId);
+        }
+
         try
         {
             // 获取 Agent 实例（携带任务级项目上下文，用于注入仓库清单）
@@ -498,19 +593,15 @@ public class TaskAppService : ApplicationService, ITaskAppService
                 throw new InvalidOperationException($"无法创建 Agent 实例: {task.AgentType}");
             }
 
-            // 执行任务内容（提示词或工作流）
-            var response = await ExecuteTaskContentAsync(agent, task);
+            // 执行任务内容（提示词或工作流），事件流经 recorder 落轨迹
+            var response = await ExecuteTaskContentAsync(agent, task, recorder?.Tap);
 
-            // 插入成功日志
-            await _logRepository.InsertAsync(new TaskLogEntity
-            {
-                TaskId = taskId,
-                Prompt = task.PromptContent,
-                StartTime = startTime,
-                EndTime = DateTime.Now,
-                Status = "Success",
-                Result = response
-            });
+            var (stepCount, artifactCount, approvalState) = recorder is not null
+                ? await recorder.FinishAsync()
+                : (StepCount: 0, ArtifactCount: 0, ApprovalState: (string?)null);
+
+            await _traceStore.CompleteLogAsync(logId, "Success", response, null,
+                stepCount, artifactCount, approvalState);
 
             // 更新任务执行统计
             task.LastExecutionTime = DateTime.Now;
@@ -535,18 +626,15 @@ public class TaskAppService : ApplicationService, ITaskAppService
         {
             Logger.LogError(ex, "定时任务执行失败: {TaskName} (Id={TaskId}), 错误: {Error}", taskName, taskId, ex.Message);
 
-            // 插入失败日志
+            // 回写失败日志
             try
             {
-                await _logRepository.InsertAsync(new TaskLogEntity
-                {
-                    TaskId = taskId,
-                    Prompt = task.PromptContent,
-                    StartTime = startTime,
-                    EndTime = DateTime.Now,
-                    Status = "Failed",
-                    ErrorMessage = ex.Message
-                });
+                var failCounts = recorder is not null
+                    ? await recorder.FinishAsync()
+                    : (StepCount: 0, ArtifactCount: 0, ApprovalState: (string?)null);
+
+                await _traceStore.CompleteLogAsync(logId, "Failed", null, ex.Message,
+                    failCounts.StepCount, failCounts.ArtifactCount, failCounts.ApprovalState);
             }
             catch (Exception logEx)
             {
@@ -609,9 +697,9 @@ public class TaskAppService : ApplicationService, ITaskAppService
     }
 
     /// <summary>
-    /// 执行任务内容：根据创建方式选择提示词或工作流执行
+    /// 执行任务内容：根据创建方式选择提示词或工作流执行；onEventJson 转交轨迹记录器
     /// </summary>
-    private async Task<string> ExecuteTaskContentAsync(IAgentInstance agent, TaskEntity task)
+    private async Task<string> ExecuteTaskContentAsync(IAgentInstance agent, TaskEntity task, Func<string, Task>? onEventJson = null)
     {
         // 工作流任务：按顺序执行各步骤，上一步结果作为下一步的上下文
         if (task.SourceType == "Workflow" && !string.IsNullOrWhiteSpace(task.WorkflowContent))
@@ -637,14 +725,14 @@ public class TaskAppService : ApplicationService, ITaskAppService
 
                 Logger.LogInformation("执行工作流步骤 {Index}/{Count}: {StepName} (TaskId={TaskId})",
                     i + 1, steps.Count, step.Name, task.Id);
-                lastResult = await agent.ProcessMessageAsync(stepPrompt, history);
+                lastResult = await agent.ProcessMessageAsync(stepPrompt, history, onEventJson);
             }
 
             return lastResult;
         }
 
         // 提示词任务：直接执行提示词
-        return await agent.ProcessMessageAsync(task.PromptContent, new List<string>());
+        return await agent.ProcessMessageAsync(task.PromptContent, new List<string>(), onEventJson);
     }
 
     /// <summary>
