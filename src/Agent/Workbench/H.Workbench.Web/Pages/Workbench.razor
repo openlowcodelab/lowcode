@@ -144,6 +144,13 @@
                                 }
                             </div>
                         }
+                        @if (msg.Role == "assistant" && (msg.StepCount > 0 || msg.Steps.Count > 0))
+                        {
+                            <ExecutionTraceView Steps="@msg.Steps"
+                                                Loader="@(() => LoadTraceAsync(msg))"
+                                                TraceLoaded="@msg.TraceLoaded"
+                                                LoadedArtifacts="@msg.Artifacts" />
+                        }
                         @if (!string.IsNullOrEmpty(msg.Content))
                         {
                             <div class="wb-msg-time">@msg.Time.ToString("MM-dd HH:mm:ss")</div>
@@ -264,8 +271,18 @@
                         <div class="wb-log-row">
                             <span class="wb-task-status wb-status-@log.Status.ToLower()">@log.Status</span>
                             <span>@log.StartTime.ToString("yyyy-MM-dd HH:mm:ss")</span>
+                            @if (log.StepCount > 0)
+                            {
+                                <button class="btn btn-text btn-small" @onclick="() => ToggleLogTraceAsync(log)">
+                                    @(_logTraceOpenId == log.Id ? "收起步骤" : $"查看步骤 ({log.StepCount})")
+                                </button>
+                            }
                             <span class="wb-log-msg">@log.ErrorMessage</span>
                         </div>
+                        @if (_logTraceOpenId == log.Id)
+                        {
+                            <ExecutionTraceView Steps="@_logTraceSteps" DefaultOpen="true" />
+                        }
                     }
                 }
                 else
@@ -314,6 +331,8 @@
 
     private TaskDto? _detail;
     private List<TaskLogDto> _detailLogs = [];
+    private Guid? _logTraceOpenId;
+    private List<ExecutionStepDto> _logTraceSteps = [];
 
     private TaskDto? _chatTask;
     private List<ConvMessage> _chatMessages = [];
@@ -325,6 +344,14 @@
         public string Role { get; set; } = "user";
         public string Content { get; set; } = "";
         public DateTime Time { get; set; }
+
+        /// <summary>关联的 TaskLog 主键（历史回放懒加载轨迹用；实时执行中的消息为 null）</summary>
+        public Guid? LogId { get; set; }
+        public int StepCount { get; set; }
+        public int ArtifactCount { get; set; }
+        public bool TraceLoaded { get; set; }
+        public List<ExecutionStepDto> Steps { get; set; } = [];
+        public List<ArtifactDto> Artifacts { get; set; } = [];
     }
 
     private string toastMessage = "";
@@ -616,12 +643,15 @@
         string? error = null;
 
         var client = new TaskStreamClient(HttpClientFactory, RemoteOptions);
-        using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(10));
+        using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(20));
         try
         {
             await foreach (var data in client.StreamAsync(task.Id, prompt, cts.Token))
             {
-                string? type = null, content = null, message = null, toolName = null;
+                string? type = null, content = null, message = null, toolName = null,
+                    toolCallId = null, arguments = null, result = null;
+                int iteration = 0, durationMs = 0;
+                bool isError = false;
                 var isFatal = true;
                 try
                 {
@@ -631,6 +661,12 @@
                     if (root.TryGetProperty("content", out var c)) content = c.GetString();
                     if (root.TryGetProperty("message", out var m)) message = m.GetString();
                     if (root.TryGetProperty("toolName", out var tn)) toolName = tn.GetString();
+                    if (root.TryGetProperty("toolCallId", out var tcid)) toolCallId = tcid.GetString();
+                    if (root.TryGetProperty("arguments", out var ar)) arguments = ar.GetString();
+                    if (root.TryGetProperty("result", out var rr)) result = rr.GetString();
+                    if (root.TryGetProperty("isError", out var ie)) isError = ie.GetBoolean();
+                    if (root.TryGetProperty("durationMs", out var dm) && dm.TryGetInt32(out var dmv)) durationMs = dmv;
+                    if (root.TryGetProperty("iteration", out var it) && it.TryGetInt32(out var itv)) iteration = itv;
                     if (root.TryGetProperty("isFatal", out var f)) isFatal = f.GetBoolean();
                 }
                 catch
@@ -648,9 +684,20 @@
                         answer.Append(content);
                         break;
                     case "tool_call":
+                        live.Steps.Add(new ExecutionStepDto
+                        {
+                            Kind = "ToolCall", ToolName = toolName, ToolCallId = toolCallId,
+                            Arguments = arguments, Iteration = iteration, Seq = live.Steps.Count
+                        });
                         _streamStatus = $"正在调用工具 {toolName}…";
                         break;
                     case "tool_result":
+                        live.Steps.Add(new ExecutionStepDto
+                        {
+                            Kind = "ToolResult", ToolName = toolName, ToolCallId = toolCallId,
+                            Result = result, IsError = isError, DurationMs = durationMs,
+                            Iteration = iteration, Seq = live.Steps.Count
+                        });
                         _streamStatus = null;
                         break;
                     case "error":
@@ -681,6 +728,8 @@
         }
         finally
         {
+            live.StepCount = live.Steps.Count;
+            live.TraceLoaded = true;
             _executing = false;
             _streamStatus = null;
             await LoadTasksAsync();
@@ -695,8 +744,28 @@
         Content = log.Status == "Success"
             ? (string.IsNullOrWhiteSpace(log.Result) ? "（无返回内容）" : log.Result)
             : (log.ErrorMessage ?? log.Status),
-        Time = log.StartTime
+        Time = log.StartTime,
+        LogId = log.Id,
+        StepCount = log.StepCount,
+        ArtifactCount = log.ArtifactCount,
+        TraceLoaded = log.StepCount == 0
     };
+
+    private async Task<TaskLogTraceDto?> LoadTraceAsync(ConvMessage msg)
+    {
+        if (msg.LogId is null) return null;
+        try
+        {
+            var trace = (await TaskAppService.GetLogTraceAsync(msg.LogId.Value)).Data;
+            msg.TraceLoaded = true;
+            return trace;
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"加载执行轨迹失败: {ex.Message}", "error");
+            return null;
+        }
+    }
 
     private bool _pendingScroll;
     private bool _pendingClearInput;
@@ -745,11 +814,33 @@
     {
         _detail = task;
         _detailLogs = [];
+        _logTraceOpenId = null;
+        _logTraceSteps = [];
         try
         {
             _detailLogs = (await TaskAppService.GetExecutionLogsAsync(task.Id, 20)).Data ?? [];
         }
         catch { }
+    }
+
+    private async Task ToggleLogTraceAsync(TaskLogDto log)
+    {
+        if (_logTraceOpenId == log.Id)
+        {
+            _logTraceOpenId = null;
+            return;
+        }
+
+        try
+        {
+            var trace = (await TaskAppService.GetLogTraceAsync(log.Id)).Data;
+            _logTraceSteps = trace?.Steps ?? [];
+            _logTraceOpenId = log.Id;
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"加载执行轨迹失败: {ex.Message}", "error");
+        }
     }
 
     private async Task ExecuteDetailAsync()
