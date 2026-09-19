@@ -21,7 +21,7 @@ public class WorkbenchState
         Loaded = true;
 
         var selectedId = SelectedAgent?.Id;
-        SelectedAgent = Agents.FirstOrDefault(x => x.Id == selectedId) ?? Agents.FirstOrDefault();
+        SelectedAgent = Agents.FirstOrDefault(x => x.Id == selectedId);
         Changed?.Invoke();
     }
 

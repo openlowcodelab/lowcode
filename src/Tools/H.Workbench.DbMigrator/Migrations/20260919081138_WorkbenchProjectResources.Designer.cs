@@ -4,6 +4,7 @@ using H.Workbench.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Volo.Abp.EntityFrameworkCore;
 
@@ -12,9 +13,11 @@ using Volo.Abp.EntityFrameworkCore;
 namespace H.Workbench.DbMigrator.Migrations
 {
     [DbContext(typeof(WorkbenchDbContext))]
-    partial class WorkbenchDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260919081138_WorkbenchProjectResources")]
+    partial class WorkbenchProjectResources
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

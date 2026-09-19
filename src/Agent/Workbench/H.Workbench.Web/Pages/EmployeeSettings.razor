@@ -195,7 +195,7 @@ else
             else
             {
                 <h2 class="es-title">项目</h2>
-                <div class="es-note">勾选后，项目配置的代码仓库将作为"可操作仓库"注入员工提示词，git 工具只能操作清单内仓库。</div>
+                <div class="es-note">勾选后，项目关联的代码仓库类资源将作为"可操作仓库"注入员工提示词，git 工具只能操作清单内仓库。</div>
                 <div class="rs-rows">
                     @foreach (var project in _projects)
                     {
@@ -203,9 +203,9 @@ else
                             <div class="rs-row-info">
                                 <div class="rs-row-name">@project.ProjectName</div>
                                 <div class="rs-row-desc">
-                                    @if (!string.IsNullOrEmpty(project.RepoUrl))
+                                    @if (project.Resources.Any())
                                     {
-                                        <span>📦 @project.RepoUrl@(string.IsNullOrEmpty(project.DefaultBranch) ? "" : $"（{project.DefaultBranch}）")</span>
+                                        <span>@string.Join("；", project.Resources.Select(ResourceSummary))</span>
                                     }
                                     else
                                     {
@@ -254,6 +254,15 @@ else
     private List<ConnectorDto> _connectors = [];
     private List<KnowledgeBaseDto> _knowledgeBases = [];
     private List<WorkbenchProjectDto> _projects = [];
+
+    private static string ResourceSummary(WorkbenchProjectResourceDto resource) => resource.ResourceType switch
+    {
+        WorkbenchResourceTypes.Code => $"📦 {resource.Name}{(string.IsNullOrEmpty(resource.Branch) ? "" : $"（{resource.Branch}）")}",
+        WorkbenchResourceTypes.Design => $"🎨 {resource.Name}",
+        WorkbenchResourceTypes.Document => $"📄 {resource.Name}",
+        WorkbenchResourceTypes.Data => $"📊 {resource.Name}",
+        _ => $"🔗 {resource.Name}"
+    };
 
     private string _editName = "";
     private string _editRole = "";

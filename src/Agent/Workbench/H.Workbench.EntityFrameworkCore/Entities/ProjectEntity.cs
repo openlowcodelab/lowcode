@@ -16,14 +16,4 @@ public class ProjectEntity : AuditedEntity<Guid>
     /// 项目描述
     /// </summary>
     public string Description { get; set; } = string.Empty;
-
-    /// <summary>
-    /// 代码仓库地址（HTTPS），员工绑定项目后 git 工具只能操作清单内的仓库
-    /// </summary>
-    public string? RepoUrl { get; set; }
-
-    /// <summary>
-    /// 默认分支
-    /// </summary>
-    public string? DefaultBranch { get; set; }
 }

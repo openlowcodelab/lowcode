@@ -35,9 +35,11 @@
                         <strong class="pg-card-name">@project.ProjectName</strong>
                     </div>
                     <div class="pg-card-desc">@project.Description</div>
-                    @if (!string.IsNullOrEmpty(project.RepoUrl))
+                    @foreach (var resource in project.Resources)
                     {
-                        <div class="pg-card-repo" title="@project.RepoUrl">📦 @project.RepoUrl@(string.IsNullOrEmpty(project.DefaultBranch) ? "" : $"（{project.DefaultBranch}）")</div>
+                        <div class="pg-card-repo" title="@(resource.Url ?? resource.Name)">
+                            @ResourceIcon(resource.ResourceType) @resource.Name@(resource.ResourceType == WorkbenchResourceTypes.Code && !string.IsNullOrEmpty(resource.Url) ? $"：{resource.Url}" : "")@(resource.ResourceType == WorkbenchResourceTypes.Code && !string.IsNullOrEmpty(resource.Branch) ? $"（{resource.Branch}）" : "")
+                        </div>
                     }
                     <div class="pg-card-foot">
                         <span>任务数 @project.TaskCount</span>
@@ -63,7 +65,7 @@
 @if (_showDialog)
 {
     <div class="modal-overlay" @onclick="CloseDialog">
-        <div class="modal-dialog" style="width:460px;" @onclick:stopPropagation="true">
+        <div class="modal-dialog" style="width:720px;" @onclick:stopPropagation="true">
             <div class="modal-header">
                 <h3>@(_editId is null ? "新建项目" : "编辑项目")</h3>
                 <button class="btn btn-text modal-close-btn" @onclick="CloseDialog">✕</button>
@@ -78,12 +80,27 @@
                     <textarea class="modal-input modal-textarea" @bind="_editDescription" placeholder="描述项目目标与范围"></textarea>
                 </div>
                 <div class="form-item">
-                    <label>仓库地址</label>
-                    <input class="modal-input" @bind="_editRepoUrl" placeholder="https://... （员工绑定此项目后可操作的 Git 仓库）" />
-                </div>
-                <div class="form-item">
-                    <label>默认分支</label>
-                    <input class="modal-input" @bind="_editDefaultBranch" placeholder="如 dev / main，留空使用远端默认分支" />
+                    <label>项目资源</label>
+                    <div class="pg-res-note">项目关联的工作资料（代码仓库、设计文件等）。员工绑定项目后，代码仓库类资源会作为"可操作仓库"注入提示词。</div>
+                    @foreach (var (resource, index) in _editResources.Select((r, i) => (r, i)))
+                    {
+                        <div class="pg-res-row">
+                            <select class="modal-input pg-res-type" @bind="resource.ResourceType" @bind:after='() => OnResourceTypeChanged(resource)'>
+                                @foreach (var type in ResourceTypeOptions)
+                                {
+                                    <option value="@type.Value">@type.Label</option>
+                                }
+                            </select>
+                            <input class="modal-input pg-res-name" @bind="resource.Name" placeholder="名称，如：后端服务" />
+                            <input class="modal-input pg-res-url" @bind="resource.Url" placeholder="地址，如 https://... 或文件链接" />
+                            @if (resource.ResourceType == WorkbenchResourceTypes.Code)
+                            {
+                                <input class="modal-input pg-res-branch" @bind="resource.Branch" placeholder="默认分支，可留空" />
+                            }
+                            <button class="btn btn-link btn-small btn-danger" @onclick="() => RemoveResource(index)">删除</button>
+                        </div>
+                    }
+                    <button class="btn btn-link btn-small" @onclick="AddResource">＋ 添加资源</button>
                 </div>
             </div>
             <div class="modal-footer">
@@ -95,6 +112,15 @@
 }
 
 @code {
+    private static readonly (string Value, string Label)[] ResourceTypeOptions =
+    [
+        (WorkbenchResourceTypes.Code, "代码仓库"),
+        (WorkbenchResourceTypes.Design, "设计文件"),
+        (WorkbenchResourceTypes.Document, "文档"),
+        (WorkbenchResourceTypes.Data, "数据集"),
+        (WorkbenchResourceTypes.Other, "其他")
+    ];
+
     private List<WorkbenchProjectDto> _projects = [];
     private bool _loading;
     private string _filter = "";
@@ -104,14 +130,22 @@
     private Guid? _editId;
     private string _editName = "";
     private string _editDescription = "";
-    private string _editRepoUrl = "";
-    private string _editDefaultBranch = "";
+    private List<WorkbenchProjectResourceInputDto> _editResources = [];
 
     private string toastMessage = "";
     private string toastType = "info";
     private bool toastVisible;
 
     protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private static string ResourceIcon(string resourceType) => resourceType switch
+    {
+        WorkbenchResourceTypes.Code => "📦",
+        WorkbenchResourceTypes.Design => "🎨",
+        WorkbenchResourceTypes.Document => "📄",
+        WorkbenchResourceTypes.Data => "📊",
+        _ => "🔗"
+    };
 
     private async Task LoadAsync()
     {
@@ -140,8 +174,7 @@
         _editId = null;
         _editName = "";
         _editDescription = "";
-        _editRepoUrl = "";
-        _editDefaultBranch = "";
+        _editResources = [];
         _showDialog = true;
     }
 
@@ -150,9 +183,29 @@
         _editId = project.Id;
         _editName = project.ProjectName;
         _editDescription = project.Description;
-        _editRepoUrl = project.RepoUrl ?? "";
-        _editDefaultBranch = project.DefaultBranch ?? "";
+        _editResources = project.Resources.Select(r => new WorkbenchProjectResourceInputDto
+        {
+            ResourceType = r.ResourceType,
+            Name = r.Name,
+            Url = r.Url,
+            Branch = r.Branch
+        }).ToList();
         _showDialog = true;
+    }
+
+    private void AddResource() => _editResources.Add(new WorkbenchProjectResourceInputDto
+    {
+        ResourceType = WorkbenchResourceTypes.Code
+    });
+
+    private void RemoveResource(int index) => _editResources.RemoveAt(index);
+
+    private void OnResourceTypeChanged(WorkbenchProjectResourceInputDto resource)
+    {
+        if (resource.ResourceType != WorkbenchResourceTypes.Code)
+        {
+            resource.Branch = null;
+        }
     }
 
     private void CloseDialog() => _showDialog = false;
@@ -165,6 +218,22 @@
             return;
         }
 
+        var resources = _editResources
+            .Where(r => !string.IsNullOrWhiteSpace(r.Name) || !string.IsNullOrWhiteSpace(r.Url))
+            .Select(r => new WorkbenchProjectResourceInputDto
+            {
+                ResourceType = r.ResourceType,
+                Name = r.Name?.Trim() ?? "",
+                Url = r.Url?.Trim(),
+                Branch = r.Branch?.Trim()
+            })
+            .ToList();
+        if (resources.Any(r => string.IsNullOrWhiteSpace(r.Name)))
+        {
+            ShowToast("请填写每个资源的名称，或删除空资源行", "warning");
+            return;
+        }
+
         _saving = true;
         try
         {
@@ -174,8 +243,7 @@
                 {
                     ProjectName = _editName.Trim(),
                     Description = _editDescription.Trim(),
-                    RepoUrl = _editRepoUrl.Trim(),
-                    DefaultBranch = _editDefaultBranch.Trim()
+                    Resources = resources
                 });
                 ShowToast("项目已创建", "success");
             }
@@ -185,8 +253,7 @@
                 {
                     ProjectName = _editName.Trim(),
                     Description = _editDescription.Trim(),
-                    RepoUrl = _editRepoUrl.Trim(),
-                    DefaultBranch = _editDefaultBranch.Trim()
+                    Resources = resources
                 });
                 ShowToast("项目已更新", "success");
             }
@@ -323,6 +390,46 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+    }
+
+    .pg-res-note {
+        font-size: 12px;
+        color: #8c8c8c;
+        margin-bottom: 8px;
+    }
+
+    .pg-res-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 8px;
+    }
+
+    .pg-res-row .modal-input {
+        height: 32px;
+        min-width: 0;
+    }
+
+    /* 双类选择器提高特异性，避免被其他页面 .modal-input{width:100%} 按加载顺序覆盖 */
+    .pg-res-row .pg-res-type {
+        width: 110px;
+        flex: 0 0 auto;
+    }
+
+    .pg-res-row .pg-res-name {
+        width: 190px;
+        flex: 0 0 auto;
+    }
+
+    .pg-res-row .pg-res-url {
+        flex: 1 1 220px;
+        width: auto;
+        min-width: 180px;
+    }
+
+    .pg-res-row .pg-res-branch {
+        width: 150px;
+        flex: 0 0 auto;
     }
 
     .pg-card-foot {

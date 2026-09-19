@@ -20,6 +20,7 @@ public class WorkbenchDbContext : AbpDbContext<WorkbenchDbContext>
     public DbSet<McpServerEntity> McpServers { get; set; } = null!;
     public DbSet<CategoryEntity> Categories { get; set; } = null!;
     public DbSet<ProjectEntity> Projects { get; set; } = null!;
+    public DbSet<ProjectResourceEntity> ProjectResources { get; set; } = null!;
     public DbSet<ConnectorEntity> Connectors { get; set; } = null!;
     public DbSet<AgentTemplateEntity> AgentTemplates { get; set; } = null!;
 
@@ -207,8 +208,18 @@ public class WorkbenchDbContext : AbpDbContext<WorkbenchDbContext>
             b.HasKey(x => x.Id);
             b.Property(x => x.ProjectName).IsRequired().HasMaxLength(200);
             b.Property(x => x.Description).HasMaxLength(1000);
-            b.Property(x => x.RepoUrl).HasMaxLength(500);
-            b.Property(x => x.DefaultBranch).HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<ProjectResourceEntity>(b =>
+        {
+            b.ToTable("ProjectResource");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.ResourceType).IsRequired().HasMaxLength(20);
+            b.Property(x => x.Name).IsRequired().HasMaxLength(200);
+            b.Property(x => x.Url).HasMaxLength(500);
+            b.Property(x => x.Config).HasMaxLength(1000);
+
+            b.HasIndex(x => x.ProjectId);
         });
 
         modelBuilder.Entity<ConnectorEntity>(b =>

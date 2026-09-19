@@ -269,16 +269,21 @@ public class AgentFactory
         if (projectIds.Count > 0)
         {
             var projects = (await _projectAppService.GetByIdsAsync(projectIds)).Data ?? [];
-            var withRepo = projects.Where(p => !string.IsNullOrWhiteSpace(p.RepoUrl)).Take(5).ToList();
-            withRepoCount = withRepo.Count;
-            if (withRepo.Count > 0)
+            var repos = projects
+                .SelectMany(p => p.Resources
+                    .Where(r => r.ResourceType == WorkbenchResourceTypes.Code && !string.IsNullOrWhiteSpace(r.Url))
+                    .Select(r => (p.ProjectName, Resource: r)))
+                .Take(5)
+                .ToList();
+            withRepoCount = repos.Count;
+            if (repos.Count > 0)
             {
                 sb.AppendLine("## 可操作的代码仓库（仅限以下仓库，禁止操作清单外的地址）");
-                foreach (var p in withRepo)
+                foreach (var (projectName, resource) in repos)
                 {
-                    var url = p.RepoUrl!.Trim();
+                    var url = resource.Url!.Trim();
                     var dir = GitWorkspaceResolver.DeriveDirName(url);
-                    sb.AppendLine($"- {p.ProjectName} | 地址: {url} | 默认分支: {(string.IsNullOrWhiteSpace(p.DefaultBranch) ? "(远端默认)" : p.DefaultBranch)} | 本地目录: {dir}");
+                    sb.AppendLine($"- {projectName} / {resource.Name} | 地址: {url} | 默认分支: {(string.IsNullOrWhiteSpace(resource.Branch) ? "(远端默认)" : resource.Branch)} | 本地目录: {dir}");
                 }
                 sb.AppendLine("克隆时用上述\"本地目录\"作为 dirName；repo 参数传目录名即可。");
             }

@@ -50,7 +50,7 @@
                     <div class="wb-agent-list">
                         @foreach (var agent in FilteredAgents)
                         {
-                            <div class="wb-agent-item @(_state.SelectedAgent?.Id == agent.Id ? "wb-agent-active" : "")"
+                            <div class="wb-agent-item @(IsActive("/workbench/conversations") && _state.SelectedAgent?.Id == agent.Id ? "wb-agent-active" : "")"
                                  @onclick="() => SelectAgent(agent)">
                                 <span class="wb-agent-avatar">@agent.DisplayName.Substring(0, 1)</span>
                                 <span class="wb-agent-info">
@@ -74,7 +74,8 @@
 </DefaultLayoutComponent>
 
 @code {
-    private readonly WorkbenchState _state = new();
+    // 路由切换时 <Navigating> 占位会销毁并重建本布局，状态需静态以保留员工选中项
+    private static readonly WorkbenchState _state = new();
     private string _agentFilter = "";
 
     private IEnumerable<AgentDto> FilteredAgents => string.IsNullOrWhiteSpace(_agentFilter)
