@@ -253,43 +253,109 @@ public class AgentFactory
     }
 
     /// <summary>
-    /// 拼装注入 SystemPrompt 的运行时上下文：员工绑定项目的仓库清单 + 知识库检索片段
+    /// 资源类型的中文标签（供提示词阅读）
+    /// </summary>
+    private static string ResourceTypeLabel(string type) => type switch
+    {
+        WorkbenchResourceTypes.Code => "代码仓库",
+        WorkbenchResourceTypes.Design => "设计文件",
+        WorkbenchResourceTypes.Document => "文档",
+        WorkbenchResourceTypes.Data => "数据集",
+        _ => "其他资源"
+    };
+
+    /// <summary>
+    /// 拼装注入 SystemPrompt 的运行时上下文：当前项目档案（描述+资源）+ 知识库检索片段
     /// </summary>
     private async Task<string> BuildRuntimeContextAsync(AgentDto definition, AgentRunContext? runContext, string userMessage)
     {
         var sb = new StringBuilder();
-        var withRepoCount = 0;
-        var snippetCount = 0;
+        var projectCount = 0;
+        var repoCount = 0;
 
-        // 1) 可操作仓库清单（员工绑定的项目 + 任务所属项目）
-        var projectIds = definition.ProjectIds.ToList();
-        if (runContext?.ProjectId != null && !projectIds.Contains(runContext.ProjectId.Value))
-            projectIds.Add(runContext.ProjectId.Value);
+        // 项目档案：本次任务所属项目置顶，其后是员工绑定的项目
+        var runProjectId = runContext?.ProjectId;
+        var projectIds = new List<Guid>();
+        if (runProjectId.HasValue) projectIds.Add(runProjectId.Value);
+        projectIds.AddRange(definition.ProjectIds.Where(id => id != runProjectId));
+        projectIds = projectIds.Distinct().Take(5).ToList();
 
-        if (projectIds.Count > 0)
+        var projects = projectIds.Count > 0
+            ? (await _projectAppService.GetByIdsAsync(projectIds)).Data ?? []
+            : [];
+        // 按 projectIds 顺序输出，任务项目置顶；已删除的项目自然落空
+        var ordered = projectIds
+            .Select(id => projects.FirstOrDefault(p => p.Id == id))
+            .Where(p => p is not null)
+            .Select(p => p!)
+            .ToList();
+
+        if (ordered.Count == 0)
         {
-            var projects = (await _projectAppService.GetByIdsAsync(projectIds)).Data ?? [];
-            var repos = projects
-                .SelectMany(p => p.Resources
-                    .Where(r => r.ResourceType == WorkbenchResourceTypes.Code && !string.IsNullOrWhiteSpace(r.Url))
-                    .Select(r => (p.ProjectName, Resource: r)))
-                .Take(5)
-                .ToList();
-            withRepoCount = repos.Count;
-            if (repos.Count > 0)
-            {
-                sb.AppendLine("## 可操作的代码仓库（仅限以下仓库，禁止操作清单外的地址）");
-                foreach (var (projectName, resource) in repos)
-                {
-                    var url = resource.Url!.Trim();
-                    var dir = GitWorkspaceResolver.DeriveDirName(url);
-                    sb.AppendLine($"- {projectName} / {resource.Name} | 地址: {url} | 默认分支: {(string.IsNullOrWhiteSpace(resource.Branch) ? "(远端默认)" : resource.Branch)} | 本地目录: {dir}");
-                }
-                sb.AppendLine("克隆时用上述\"本地目录\"作为 dirName；repo 参数传目录名即可。");
-            }
+            sb.AppendLine("## 当前项目上下文");
+            sb.AppendLine("本次任务未关联项目，员工也未绑定任何项目；请勿虚构项目信息，可说明当前无项目上下文。");
+            sb.AppendLine();
+            return await AppendKnowledgeSnippetsAsync(sb, definition, userMessage, 0, 0);
         }
 
-        // 2) 知识库检索片段（以当前问题为查询）
+        projectCount = ordered.Count;
+        sb.AppendLine("## 当前项目上下文（系统内已登记的项目信息，回答项目相关问题时直接依据，勿再向用户索要）");
+        foreach (var project in ordered)
+        {
+            var isRunProject = runProjectId.HasValue && project.Id == runProjectId.Value;
+            sb.AppendLine($"### 项目：{project.ProjectName}{(isRunProject ? "（本次任务所属项目）" : "（员工关联项目）")}");
+            sb.AppendLine(string.IsNullOrWhiteSpace(project.Description)
+                ? "描述: （未填写）"
+                : $"描述: {project.Description.Trim()}");
+
+            if (project.Resources.Count == 0)
+            {
+                sb.AppendLine("关联资源: （无）");
+                sb.AppendLine();
+                continue;
+            }
+
+            sb.AppendLine("关联资源:");
+            foreach (var resource in project.Resources.Take(10))
+            {
+                var line = new StringBuilder($"- {ResourceTypeLabel(resource.ResourceType)}：{resource.Name}");
+                var url = resource.Url?.Trim();
+                if (!string.IsNullOrEmpty(url)) line.Append($" | 地址: {url}");
+
+                if (resource.ResourceType == WorkbenchResourceTypes.Code)
+                {
+                    if (string.IsNullOrEmpty(url))
+                    {
+                        line.Append(" | 未配置仓库地址，不可操作");
+                    }
+                    else
+                    {
+                        line.Append($" | 默认分支: {(string.IsNullOrWhiteSpace(resource.Branch) ? "(远端默认)" : resource.Branch)} | 本地目录: {GitWorkspaceResolver.DeriveDirName(url)}");
+                        repoCount++;
+                    }
+                }
+
+                sb.AppendLine(line.ToString());
+            }
+            sb.AppendLine();
+        }
+
+        sb.AppendLine(repoCount > 0
+            ? "上述\"代码仓库\"即允许操作的仓库清单，禁止操作清单外的地址；克隆时用\"本地目录\"作为 dirName，repo 参数传目录名即可。"
+            : "当前项目未配置代码仓库；涉及代码操作时请告知用户需先在项目资源中登记仓库地址。");
+        sb.AppendLine();
+
+        return await AppendKnowledgeSnippetsAsync(sb, definition, userMessage, projectCount, repoCount);
+    }
+
+    /// <summary>
+    /// 追加知识库检索片段并收尾（超长截断），返回最终注入 SystemPrompt 的上下文字符串
+    /// </summary>
+    private async Task<string> AppendKnowledgeSnippetsAsync(
+        StringBuilder sb, AgentDto definition, string userMessage, int projectCount, int repoCount)
+    {
+        var snippetCount = 0;
+        // 知识库检索片段（以当前问题为查询）
         if (definition.KnowledgeBaseIds.Count > 0 && !string.IsNullOrWhiteSpace(userMessage))
         {
             var search = await _knowledgeRetrievalAppService.SearchAsync(new SearchKnowledgeInput
@@ -314,8 +380,8 @@ public class AgentFactory
         }
 
         var result = sb.ToString().TrimEnd();
-        _logger.LogInformation("运行时上下文构建完成: {Len} 字符（仓库 {Repos} 条 / 知识 {Snips} 段）",
-            result.Length, withRepoCount, snippetCount);
+        _logger.LogInformation("运行时上下文构建完成: {Len} 字符（项目 {Projects} 个 / 仓库 {Repos} 条 / 知识 {Snips} 段）",
+            result.Length, projectCount, repoCount, snippetCount);
         if (result.Length > RuntimeContextMaxChars)
         {
             _logger.LogWarning("运行时上下文超长（{Len}），已截断", result.Length);

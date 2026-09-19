@@ -490,7 +490,7 @@
                 ScheduleType = "Once",
                 IsEnabled = true
             })).Data;
-            _input = "";
+            ResetInput();
             _tab = "manual";
             await LoadTasksAsync();
 
@@ -592,7 +592,7 @@
     {
         if (_chatTask is null || _executing || string.IsNullOrWhiteSpace(_input)) return;
         var prompt = _input.Trim();
-        _input = "";
+        ResetInput();
         await StreamExecuteAsync(_chatTask, prompt);
     }
 
@@ -699,6 +699,17 @@
     };
 
     private bool _pendingScroll;
+    private bool _pendingClearInput;
+
+    /// <summary>
+    /// 清空输入框。Enter 发送时浏览器仍会执行 keydown 默认行为插入换行，
+    /// 此时 _input 已是空串、Blazor diff 不会回写 DOM，故渲染后需显式清掉残留空白。
+    /// </summary>
+    private void ResetInput()
+    {
+        _input = "";
+        _pendingClearInput = true;
+    }
 
     private void ScrollConversationToBottom()
     {
@@ -714,6 +725,17 @@
             {
                 await JS.InvokeVoidAsync("eval",
                     "document.querySelectorAll('.wb-conv-body').forEach(e => e.scrollTop = e.scrollHeight)");
+            }
+            catch { }
+        }
+
+        if (_pendingClearInput)
+        {
+            _pendingClearInput = false;
+            try
+            {
+                await JS.InvokeVoidAsync("eval",
+                    "document.querySelectorAll('textarea.wb-input').forEach(e => { if (!e.value.trim()) e.value = ''; })");
             }
             catch { }
         }
