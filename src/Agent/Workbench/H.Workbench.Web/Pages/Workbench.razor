@@ -54,8 +54,8 @@
                     <div class="wb-task-item @(_chatTask?.Id == task.Id ? "wb-task-item-active" : "")" @onclick="() => OpenTaskAsync(task)">
                         <div class="wb-task-item-name">@task.TaskName</div>
                         <div class="wb-task-item-meta">
-                            <span class="wb-task-status wb-status-@task.Status.ToLower()">@task.Status</span>
-                            <span>@FormatTime(task)</span>
+                            <span>@(ProjectNameOf(task) ?? "未关联项目")</span>
+                            <span class="wb-task-item-time">@FormatTime(task)</span>
                         </div>
                     </div>
                 }
@@ -90,8 +90,8 @@
             </div>
 
             <div class="wb-input-card">
-                <textarea class="wb-input" placeholder="输入消息，@@ 选择当前工作区上下文..."
-                          @bind="_input" @bind:event="oninput"></textarea>
+                <textarea class="wb-input" placeholder="输入消息，回车发送（Shift+Enter 换行），@@ 选择当前工作区上下文..."
+                          @bind="_input" @bind:event="oninput" @onkeydown="OnInputKeyDownAsync"></textarea>
                 <div class="wb-input-bar">
                     <select class="wb-project-select" @bind="_inputProjectId">
                         <option value="">选择项目</option>
@@ -160,6 +160,9 @@
                 <textarea class="wb-input" placeholder="继续对话，回车发送（Shift+Enter 换行）..."
                           @bind="_input" @bind:event="oninput" @onkeydown="OnConvInputKeyDownAsync"></textarea>
                 <div class="wb-input-bar">
+                    <select class="wb-project-select" disabled title="任务项目不可变更">
+                        <option>@(_chatTask.ProjectId is null ? "无项目" : _projects.FirstOrDefault(p => p.Id == _chatTask.ProjectId)?.ProjectName ?? "未知项目")</option>
+                    </select>
                     <span class="wb-conv-hint">继续对话将作为该任务的一次新执行（携带历史上下文）</span>
                     <button class="wb-send" disabled="@(_executing || string.IsNullOrWhiteSpace(_input))"
                             @onclick="SendFollowUpAsync">↑</button>
@@ -460,6 +463,14 @@
         }
     }
 
+    private async Task OnInputKeyDownAsync(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey)
+        {
+            await SendAsync();
+        }
+    }
+
     private async Task SendAsync()
     {
         if (_agent is null || string.IsNullOrWhiteSpace(_input)) return;
@@ -754,6 +765,9 @@
     private static string FormatTime(TaskDto task)
         => (task.LastExecutionTime ?? task.CreationTime).ToString("MM-dd HH:mm");
 
+    private string? ProjectNameOf(TaskDto task)
+        => task.ProjectId is null ? null : _projects.FirstOrDefault(p => p.Id == task.ProjectId)?.ProjectName;
+
     private static Guid? ParseGuid(string? value)
         => Guid.TryParse(value, out var id) ? id : null;
 
@@ -849,6 +863,11 @@
         font-size: 12px;
         color: #8c8c8c;
         margin-top: 2px;
+    }
+
+    .wb-task-item-time {
+        margin-left: auto;
+        flex-shrink: 0;
     }
 
     .wb-task-empty {
