@@ -6,6 +6,7 @@ using H.Workbench.EntityFrameworkCore;
 using H.Util.Base;
 using Microsoft.Extensions.Logging;
 using System.Linq.Dynamic.Core;
+using System.Text;
 using System.Text.Json;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Entities;
@@ -231,6 +232,212 @@ public class TaskAppService : ApplicationService, ITaskAppService
         return new();
     }
 
+    public async IAsyncEnumerable<string> ExecuteStreamAsync(ExecuteTaskStreamInputDto input)
+    {
+        var task = await _taskRepository.FindAsync(input.TaskId);
+        if (task == null)
+        {
+            yield return SerializeError($"任务不存在: {input.TaskId}");
+            yield break;
+        }
+
+        var prompt = string.IsNullOrWhiteSpace(input.Prompt) ? task.PromptContent : input.Prompt.Trim();
+
+        IAgentInstance? agent = null;
+        string? agentError = null;
+        try
+        {
+            agent = await _agentFactory.CreateAgentAsync(task.AgentType, task.ModelConfigId, new AgentRunContext(task.ProjectId));
+        }
+        catch (Exception ex)
+        {
+            agentError = ex.Message;
+        }
+
+        if (agent == null)
+        {
+            yield return SerializeError(agentError ?? $"无法创建员工实例: {task.AgentType}");
+            yield break;
+        }
+
+        var startTime = DateTime.Now;
+        var thinking = new StringBuilder();
+        var answer = new StringBuilder();
+        string? failure = null;
+
+        // 续聊上下文：带最近若干次成功执行的问答对
+        var history = await BuildConversationHistoryAsync(task);
+
+        if (task.SourceType == "Workflow" && !string.IsNullOrWhiteSpace(task.WorkflowContent))
+        {
+            // 工作流任务无法增量输出，整体执行后以单个 answer 事件返回
+            string? response = null;
+            try
+            {
+                response = await ExecuteTaskContentAsync(agent, task);
+            }
+            catch (Exception ex)
+            {
+                failure = ex.Message;
+            }
+
+            if (response is not null)
+            {
+                answer.Append(response);
+                yield return SerializeAnswer(response);
+            }
+        }
+        else if (agent is IStreamingAgent streamingAgent)
+        {
+            await using var enumerator = streamingAgent.ProcessMessageStreamAsync(prompt, history).GetAsyncEnumerator();
+            while (true)
+            {
+                bool hasNext;
+                string? chunk = null;
+                try
+                {
+                    hasNext = await enumerator.MoveNextAsync();
+                    if (hasNext)
+                    {
+                        chunk = enumerator.Current;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    failure = ex.Message;
+                    hasNext = false;
+                }
+
+                if (!hasNext)
+                {
+                    break;
+                }
+
+                AccumulateStreamEvent(chunk!, thinking, answer, ref failure);
+                yield return chunk!;
+            }
+        }
+        else
+        {
+            string? response = null;
+            try
+            {
+                response = await agent.ProcessMessageAsync(prompt, new List<string>());
+            }
+            catch (Exception ex)
+            {
+                failure = ex.Message;
+            }
+
+            if (response is not null)
+            {
+                answer.Append(response);
+                yield return SerializeAnswer(response);
+            }
+        }
+
+        // 与同步执行口径一致：answer 优先，否则回退累积的 thinking 增量
+        var finalAnswer = answer.Length > 0 ? answer.ToString() : thinking.ToString();
+        var succeeded = failure is null && finalAnswer.Length > 0;
+
+        if (failure is not null)
+        {
+            yield return SerializeError(failure);
+        }
+
+        try
+        {
+            await _logRepository.InsertAsync(new TaskLogEntity
+            {
+                TaskId = task.Id,
+                Prompt = prompt,
+                StartTime = startTime,
+                EndTime = DateTime.Now,
+                Status = succeeded ? "Success" : "Failed",
+                Result = succeeded ? finalAnswer : null,
+                ErrorMessage = failure
+            });
+
+            if (succeeded)
+            {
+                task.LastExecutionTime = DateTime.Now;
+                task.ExecutionCount++;
+                if (task.ExecutionMode == "Manual")
+                {
+                    task.NextExecutionTime = null;
+                }
+                await _taskRepository.UpdateAsync(task);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "流式任务执行结果落库失败 TaskId={TaskId}", task.Id);
+        }
+    }
+
+    /// <summary>
+    /// 从最近 10 次成功执行构建 "user:/assistant:" 对话历史（续聊上下文）
+    /// </summary>
+    private async Task<List<string>> BuildConversationHistoryAsync(TaskEntity task)
+    {
+        var history = new List<string>();
+        try
+        {
+            var queryable = await _logRepository.GetQueryableAsync();
+            var recent = await AsyncExecuter.ToListAsync(
+                queryable.Where(l => l.TaskId == task.Id && l.Status == "Success" && l.Result != null)
+                    .OrderByDescending(l => l.StartTime)
+                    .Take(10));
+
+            recent.Reverse();
+            foreach (var log in recent)
+            {
+                history.Add($"user: {log.Prompt ?? task.PromptContent}");
+                history.Add($"assistant: {log.Result}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "构建任务对话历史失败 TaskId={TaskId}", task.Id);
+        }
+
+        return history;
+    }
+
+    private static void AccumulateStreamEvent(string chunk, StringBuilder thinking, StringBuilder answer, ref string? failure)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(chunk);
+            var root = doc.RootElement;
+            var type = root.TryGetProperty("type", out var t) ? t.GetString() : null;
+            switch (type)
+            {
+                case "thinking":
+                    if (root.TryGetProperty("content", out var c)) thinking.Append(c.GetString());
+                    break;
+                case "answer":
+                    if (root.TryGetProperty("content", out var a)) answer.Append(a.GetString());
+                    break;
+                case "error":
+                    var isFatal = !root.TryGetProperty("isFatal", out var f) || f.GetBoolean();
+                    if (isFatal && root.TryGetProperty("message", out var m)) failure = m.GetString();
+                    break;
+            }
+        }
+        catch
+        {
+            // 非 JSON 负载（旧格式）按纯文本增量累积
+            thinking.Append(chunk);
+        }
+    }
+
+    private static string SerializeError(string message)
+        => JsonSerializer.Serialize(new { type = "error", message, isFatal = true });
+
+    private static string SerializeAnswer(string content)
+        => JsonSerializer.Serialize(new { type = "answer", content, iteration = 0 });
+
     public async Task<BaseOutput<List<TaskLogDto>>> GetExecutionLogsAsync(Guid taskId, int maxResultCount = 10)
     {
         var queryable = await _logRepository.GetQueryableAsync();
@@ -298,6 +505,7 @@ public class TaskAppService : ApplicationService, ITaskAppService
             await _logRepository.InsertAsync(new TaskLogEntity
             {
                 TaskId = taskId,
+                Prompt = task.PromptContent,
                 StartTime = startTime,
                 EndTime = DateTime.Now,
                 Status = "Success",
@@ -333,6 +541,7 @@ public class TaskAppService : ApplicationService, ITaskAppService
                 await _logRepository.InsertAsync(new TaskLogEntity
                 {
                     TaskId = taskId,
+                    Prompt = task.PromptContent,
                     StartTime = startTime,
                     EndTime = DateTime.Now,
                     Status = "Failed",

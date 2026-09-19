@@ -9,6 +9,7 @@ public class TaskLogDto : CreationAuditedEntityDto<Guid>
 {
     public Guid TaskId { get; set; }
     public string TaskName { get; set; } = string.Empty;
+    public string? Prompt { get; set; }
     public string Status { get; set; } = string.Empty;
     public string? Result { get; set; }
     public string? ErrorMessage { get; set; }

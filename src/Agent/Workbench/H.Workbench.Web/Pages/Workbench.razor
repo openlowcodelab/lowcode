@@ -2,9 +2,15 @@
 
 @layout WorkbenchLayout
 @implements IDisposable
+@using System.Text
+@using H.Abp.HttpClientProxy
+@using H.Workbench.Web.Services
 @inject ITaskAppService TaskAppService
 @inject IWorkbenchProjectAppService ProjectAppService
 @inject NavigationManager Navigation
+@inject IJSRuntime JS
+@inject IHttpClientFactory HttpClientFactory
+@inject RemoteServiceOptions RemoteOptions
 
 <PageTitle>AI 工作台</PageTitle>
 
@@ -39,13 +45,13 @@
 
             <div class="wb-task-count">
                 <span>共 @_tasks.Count 个任务</span>
-                <button class="btn btn-text btn-small" @onclick="ShowCreateDialog">＋ 新建</button>
+                <button class="btn btn-text btn-small" @onclick="OnCreateClicked">＋ 新建</button>
             </div>
 
             <div class="wb-task-list">
                 @foreach (var task in _tasks)
                 {
-                    <div class="wb-task-item" @onclick="() => ShowTaskDetail(task)">
+                    <div class="wb-task-item @(_chatTask?.Id == task.Id ? "wb-task-item-active" : "")" @onclick="() => OpenTaskAsync(task)">
                         <div class="wb-task-item-name">@task.TaskName</div>
                         <div class="wb-task-item-meta">
                             <span class="wb-task-status wb-status-@task.Status.ToLower()">@task.Status</span>
@@ -61,41 +67,105 @@
         }
     </div>
 
-    <!-- ========== 右栏：新建任务 ========== -->
+    <!-- ========== 右栏：新建任务 / 对话视图 ========== -->
     <div class="wb-main-col">
-        <div class="wb-main-head">新建任务</div>
+        @if (_chatTask is null)
+        {
+            <div class="wb-main-head">新建任务</div>
 
-        <div class="wb-hero">
-            <div class="wb-hero-avatar">@(_agent?.DisplayName.Substring(0, 1) ?? "？")</div>
-            <div class="wb-hero-title">你好，今天我能帮你什么？</div>
-            <div class="wb-hero-sub">@(_agent is null ? "请先在左侧选择或新建员工。" : $"我是{_agent.DisplayName}，{_agent.Description}")</div>
+            <div class="wb-hero">
+                <div class="wb-hero-avatar">@(_agent?.DisplayName.Substring(0, 1) ?? "？")</div>
+                <div class="wb-hero-title">你好，今天我能帮你什么？</div>
+                <div class="wb-hero-sub">@(_agent is null ? "请先在左侧选择或新建员工。" : $"我是{_agent.DisplayName}，{_agent.Description}")</div>
 
-            <div class="wb-suggests">
-                @foreach (var suggest in Suggests)
+                <div class="wb-suggests">
+                    @foreach (var suggest in Suggests)
+                    {
+                        <div class="wb-suggest" @onclick="() => _input = suggest">
+                            <span class="wb-suggest-icon">✦</span>
+                            <span>@suggest</span>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="wb-input-card">
+                <textarea class="wb-input" placeholder="输入消息，@@ 选择当前工作区上下文..."
+                          @bind="_input" @bind:event="oninput"></textarea>
+                <div class="wb-input-bar">
+                    <select class="wb-project-select" @bind="_inputProjectId">
+                        <option value="">选择项目</option>
+                        @foreach (var project in _projects)
+                        {
+                            <option value="@project.Id">@project.ProjectName</option>
+                        }
+                    </select>
+                    <button class="wb-send" disabled="@(_sending || string.IsNullOrWhiteSpace(_input) || _agent is null)"
+                            @onclick="SendAsync">↑</button>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="wb-main-head wb-conv-head">
+                <button class="btn btn-text btn-small" @onclick="CloseConversation">← 返回</button>
+                <span class="wb-conv-title">@_chatTask.TaskName</span>
+                <span class="wb-conv-actions">
+                    <button class="btn btn-text btn-small" disabled="@_executing" @onclick="RerunConversationAsync">重新执行</button>
+                    <button class="btn btn-text btn-small btn-danger" @onclick="DeleteConversationAsync">删除任务</button>
+                </span>
+            </div>
+
+            <div class="wb-conv-body">
+                @foreach (var msg in _chatMessages)
                 {
-                    <div class="wb-suggest" @onclick="() => _input = suggest">
-                        <span class="wb-suggest-icon">✦</span>
-                        <span>@suggest</span>
+                    <div class="wb-msg wb-msg-@msg.Role">
+                        @if (msg.Role is "assistant" or "error")
+                        {
+                            <div class="wb-msg-agent">
+                                <span class="wb-msg-agent-avatar">@(_agent?.DisplayName.Substring(0, 1) ?? "AI")</span>
+                                <span>@(_agent?.DisplayName ?? "员工")</span>
+                            </div>
+                        }
+                        @if (msg.Role == "user")
+                        {
+                            <div class="wb-msg-bubble">@msg.Content</div>
+                        }
+                        else
+                        {
+                            <div class="wb-msg-bubble wb-msg-bubble-md">
+                                @if (string.IsNullOrEmpty(msg.Content))
+                                {
+                                    <span>…</span>
+                                }
+                                else
+                                {
+                                    <MarkdownRenderer Content="@msg.Content" />
+                                }
+                            </div>
+                        }
+                        @if (!string.IsNullOrEmpty(msg.Content))
+                        {
+                            <div class="wb-msg-time">@msg.Time.ToString("MM-dd HH:mm:ss")</div>
+                        }
                     </div>
                 }
+                @if (_streamStatus is not null)
+                {
+                    <div class="wb-stream-status">@_streamStatus</div>
+                }
             </div>
-        </div>
 
-        <div class="wb-input-card">
-            <textarea class="wb-input" placeholder="输入消息，@@ 选择当前工作区上下文..."
-                      @bind="_input"></textarea>
-            <div class="wb-input-bar">
-                <select class="wb-project-select" @bind="_inputProjectId">
-                    <option value="">选择项目</option>
-                    @foreach (var project in _projects)
-                    {
-                        <option value="@project.Id">@project.ProjectName</option>
-                    }
-                </select>
-                <button class="wb-send" disabled="@(_sending || string.IsNullOrWhiteSpace(_input) || _agent is null)"
-                        @onclick="SendAsync">↑</button>
+            <div class="wb-input-card">
+                <textarea class="wb-input" placeholder="继续对话，回车发送（Shift+Enter 换行）..."
+                          @bind="_input" @bind:event="oninput" @onkeydown="OnConvInputKeyDownAsync"></textarea>
+                <div class="wb-input-bar">
+                    <span class="wb-conv-hint">继续对话将作为该任务的一次新执行（携带历史上下文）</span>
+                    <button class="wb-send" disabled="@(_executing || string.IsNullOrWhiteSpace(_input))"
+                            @onclick="SendFollowUpAsync">↑</button>
+                </div>
             </div>
-        </div>
+        }
     </div>
 </div>
 
@@ -242,6 +312,18 @@
     private TaskDto? _detail;
     private List<TaskLogDto> _detailLogs = [];
 
+    private TaskDto? _chatTask;
+    private List<ConvMessage> _chatMessages = [];
+    private bool _executing;
+    private string? _streamStatus;
+
+    private class ConvMessage
+    {
+        public string Role { get; set; } = "user";
+        public string Content { get; set; } = "";
+        public DateTime Time { get; set; }
+    }
+
     private string toastMessage = "";
     private string toastType = "info";
     private bool toastVisible;
@@ -261,6 +343,7 @@
         _agent = State.SelectedAgent;
         await InvokeAsync(async () =>
         {
+            CloseConversation();
             await LoadTasksAsync();
             StateHasChanged();
         });
@@ -293,6 +376,10 @@
                 MaxResultCount = 100
             })).Data;
             _tasks = result?.Items.ToList() ?? [];
+            if (_chatTask is not null)
+            {
+                _chatTask = _tasks.FirstOrDefault(t => t.Id == _chatTask.Id) ?? _chatTask;
+            }
         }
         catch (Exception ex)
         {
@@ -307,7 +394,21 @@
     private async Task SwitchTab(string tab)
     {
         _tab = tab;
+        CloseConversation();
         await LoadTasksAsync();
+    }
+
+    private void OnCreateClicked()
+    {
+        // 对话任务走右栏"新建任务"态；自动任务保留表单弹窗
+        if (_tab == "manual")
+        {
+            CloseConversation();
+        }
+        else
+        {
+            ShowCreateDialog();
+        }
     }
 
     private void ShowCreateDialog()
@@ -368,7 +469,7 @@
         {
             var prompt = _input.Trim();
             var name = prompt.Length > 30 ? prompt[..30] + "…" : prompt;
-            await TaskAppService.CreateAsync(new CreateTaskDto
+            var created = (await TaskAppService.CreateAsync(new CreateTaskDto
             {
                 TaskName = name,
                 PromptContent = prompt,
@@ -377,11 +478,17 @@
                 ProjectId = ParseGuid(_inputProjectId),
                 ScheduleType = "Once",
                 IsEnabled = true
-            });
+            })).Data;
             _input = "";
-            ShowToast("对话任务已创建", "success");
             _tab = "manual";
             await LoadTasksAsync();
+
+            if (created is not null)
+            {
+                await OpenConversationAsync(created);
+                StateHasChanged();
+                await StreamExecuteAsync(created);
+            }
         }
         catch (Exception ex)
         {
@@ -390,6 +497,214 @@
         finally
         {
             _sending = false;
+        }
+    }
+
+    private async Task OpenTaskAsync(TaskDto task)
+    {
+        if (task.TaskType == "manual")
+        {
+            await OpenConversationAsync(task);
+        }
+        else
+        {
+            await ShowTaskDetail(task);
+        }
+    }
+
+    private async Task OpenConversationAsync(TaskDto task)
+    {
+        _chatTask = task;
+        _chatMessages = [];
+        try
+        {
+            var logs = (await TaskAppService.GetExecutionLogsAsync(task.Id, 50)).Data ?? [];
+            var ordered = logs.OrderBy(l => l.StartTime).ToList();
+            if (ordered.Count == 0)
+            {
+                _chatMessages.Add(new ConvMessage { Role = "user", Content = task.PromptContent, Time = task.CreationTime });
+            }
+            else
+            {
+                // 每次执行渲染为一对 用户提问 + 员工回复；旧日志无 Prompt 时回退任务默认提示词
+                foreach (var log in ordered)
+                {
+                    _chatMessages.Add(new ConvMessage { Role = "user", Content = log.Prompt ?? task.PromptContent, Time = log.StartTime });
+                    _chatMessages.Add(LogToMessage(log));
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"加载执行记录失败: {ex.Message}", "error");
+        }
+        ScrollConversationToBottom();
+    }
+
+    private void CloseConversation()
+    {
+        _chatTask = null;
+        _chatMessages = [];
+    }
+
+    private async Task RerunConversationAsync()
+    {
+        if (_chatTask is null || _executing) return;
+        await StreamExecuteAsync(_chatTask);
+    }
+
+    private async Task DeleteConversationAsync()
+    {
+        if (_chatTask is null) return;
+        try
+        {
+            await TaskAppService.DeleteAsync(_chatTask.Id);
+            ShowToast("任务已删除", "success");
+            CloseConversation();
+            await LoadTasksAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"删除失败: {ex.Message}", "error");
+        }
+    }
+
+    private async Task OnConvInputKeyDownAsync(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey)
+        {
+            await SendFollowUpAsync();
+        }
+    }
+
+    private async Task SendFollowUpAsync()
+    {
+        if (_chatTask is null || _executing || string.IsNullOrWhiteSpace(_input)) return;
+        var prompt = _input.Trim();
+        _input = "";
+        await StreamExecuteAsync(_chatTask, prompt);
+    }
+
+    private async Task StreamExecuteAsync(TaskDto task, string? prompt = null)
+    {
+        if (_chatTask is null || _executing) return;
+
+        _executing = true;
+        _streamStatus = null;
+        if (prompt is not null)
+        {
+            _chatMessages.Add(new ConvMessage { Role = "user", Content = prompt, Time = DateTime.Now });
+        }
+        var live = new ConvMessage { Role = "assistant", Content = "", Time = DateTime.Now };
+        _chatMessages.Add(live);
+        ScrollConversationToBottom();
+        StateHasChanged();
+
+        var thinking = new StringBuilder();
+        var answer = new StringBuilder();
+        string? error = null;
+
+        var client = new TaskStreamClient(HttpClientFactory, RemoteOptions);
+        using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(10));
+        try
+        {
+            await foreach (var data in client.StreamAsync(task.Id, prompt, cts.Token))
+            {
+                string? type = null, content = null, message = null, toolName = null;
+                var isFatal = true;
+                try
+                {
+                    using var doc = JsonDocument.Parse(data);
+                    var root = doc.RootElement;
+                    type = root.TryGetProperty("type", out var t) ? t.GetString() : null;
+                    if (root.TryGetProperty("content", out var c)) content = c.GetString();
+                    if (root.TryGetProperty("message", out var m)) message = m.GetString();
+                    if (root.TryGetProperty("toolName", out var tn)) toolName = tn.GetString();
+                    if (root.TryGetProperty("isFatal", out var f)) isFatal = f.GetBoolean();
+                }
+                catch
+                {
+                    content = data;
+                }
+
+                switch (type)
+                {
+                    case "thinking":
+                        thinking.Append(content);
+                        _streamStatus = null;
+                        break;
+                    case "answer":
+                        answer.Append(content);
+                        break;
+                    case "tool_call":
+                        _streamStatus = $"正在调用工具 {toolName}…";
+                        break;
+                    case "tool_result":
+                        _streamStatus = null;
+                        break;
+                    case "error":
+                        if (isFatal) error = message;
+                        break;
+                }
+
+                live.Content = answer.Length > 0 ? answer.ToString() : thinking.ToString();
+                if (error is not null)
+                {
+                    live.Role = "error";
+                    live.Content = error;
+                }
+                ScrollConversationToBottom();
+                StateHasChanged();
+            }
+
+            if (live.Role == "assistant" && string.IsNullOrEmpty(live.Content))
+            {
+                live.Content = "（无返回内容）";
+            }
+        }
+        catch (Exception ex)
+        {
+            live.Role = "error";
+            live.Content = ex.Message;
+            ShowToast($"执行失败: {ex.Message}", "error");
+        }
+        finally
+        {
+            _executing = false;
+            _streamStatus = null;
+            await LoadTasksAsync();
+            ScrollConversationToBottom();
+            StateHasChanged();
+        }
+    }
+
+    private static ConvMessage LogToMessage(TaskLogDto log) => new()
+    {
+        Role = log.Status == "Success" ? "assistant" : "error",
+        Content = log.Status == "Success"
+            ? (string.IsNullOrWhiteSpace(log.Result) ? "（无返回内容）" : log.Result)
+            : (log.ErrorMessage ?? log.Status),
+        Time = log.StartTime
+    };
+
+    private bool _pendingScroll;
+
+    private void ScrollConversationToBottom()
+    {
+        _pendingScroll = true;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_pendingScroll)
+        {
+            _pendingScroll = false;
+            try
+            {
+                await JS.InvokeVoidAsync("eval",
+                    "document.querySelectorAll('.wb-conv-body').forEach(e => e.scrollTop = e.scrollHeight)");
+            }
+            catch { }
         }
     }
 
@@ -691,6 +1006,147 @@
     .wb-send:disabled {
         background: #d9d9d9;
         cursor: not-allowed;
+    }
+
+    /* ========== 任务选中态 ========== */
+    .wb-task-item-active {
+        background: #f0f4ff;
+    }
+
+    .wb-task-item-active:hover {
+        background: #f0f4ff;
+    }
+
+    /* ========== 对话视图 ========== */
+    .wb-conv-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .wb-conv-title {
+        flex: 1;
+        min-width: 0;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .wb-conv-actions {
+        display: flex;
+        gap: 4px;
+        flex-shrink: 0;
+    }
+
+    .wb-conv-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .wb-msg {
+        max-width: 72%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .wb-msg-user {
+        align-self: flex-end;
+        align-items: flex-end;
+    }
+
+    .wb-msg-assistant,
+    .wb-msg-error {
+        align-self: flex-start;
+        align-items: flex-start;
+        max-width: 85%;
+    }
+
+    .wb-msg-bubble {
+        padding: 10px 14px;
+        border-radius: 12px;
+        font-size: 14px;
+        line-height: 1.6;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    /* Markdown 渲染的气泡：HTML 块自带换行，取消 pre-wrap 避免双重空行 */
+    .wb-msg-bubble-md {
+        white-space: normal;
+        max-width: 100%;
+        overflow-x: auto;
+    }
+
+    .wb-msg-bubble-md .markdown-content > :first-child {
+        margin-top: 0;
+    }
+
+    .wb-msg-bubble-md .markdown-content > :last-child {
+        margin-bottom: 0;
+    }
+
+    .wb-msg-user .wb-msg-bubble {
+        background: #165DFF;
+        color: #fff;
+        border-bottom-right-radius: 4px;
+    }
+
+    .wb-msg-assistant .wb-msg-bubble {
+        background: #f5f6f7;
+        color: #262626;
+        border-bottom-left-radius: 4px;
+    }
+
+    .wb-msg-error .wb-msg-bubble {
+        background: #fff2f0;
+        color: #ff4d4f;
+        border: 1px solid #ffccc7;
+        border-bottom-left-radius: 4px;
+    }
+
+    .wb-msg-agent {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: #8c8c8c;
+        margin-bottom: 4px;
+    }
+
+    .wb-msg-agent-avatar {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #ececec;
+        color: #595959;
+        font-size: 11px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .wb-stream-status {
+        align-self: flex-start;
+        font-size: 12px;
+        color: #8c8c8c;
+        padding: 2px 4px;
+    }
+
+    .wb-conv-hint {
+        font-size: 12px;
+        color: #bfbfbf;
+    }
+
+    .wb-msg-time {
+        font-size: 11px;
+        color: #bfbfbf;
+        margin-top: 4px;
     }
 
     /* ========== 对话框内复用 ========== */

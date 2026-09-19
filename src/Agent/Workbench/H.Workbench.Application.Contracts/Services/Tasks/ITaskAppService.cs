@@ -42,6 +42,12 @@ public interface ITaskAppService : IAppService
     /// 立即执行任务
     /// </summary>
     Task<BaseOutput> ExecuteNowAsync(Guid id);
+
+    /// <summary>
+    /// 流式执行任务（SSE 事件负载：thinking/tool_call/tool_result/answer/error）
+    /// </summary>
+    IAsyncEnumerable<string> ExecuteStreamAsync(ExecuteTaskStreamInputDto input);
+
     /// <summary>
     /// 执行单个任务（由后台Worker调用）
     /// </summary>

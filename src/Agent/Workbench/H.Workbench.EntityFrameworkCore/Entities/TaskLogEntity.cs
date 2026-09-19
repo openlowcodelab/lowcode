@@ -13,6 +13,11 @@ public class TaskLogEntity : CreationAuditedEntity<Guid>
     public Guid TaskId { get; set; }
 
     /// <summary>
+    /// 本次执行的提示词（对话续聊时与任务默认提示词不同，需随日志保存以还原对话）
+    /// </summary>
+    public string? Prompt { get; set; }
+
+    /// <summary>
     /// 执行状态：Success/Failed/Cancelled
     /// </summary>
     public string Status { get; set; } = string.Empty;
