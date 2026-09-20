@@ -93,7 +93,8 @@ public class ReactAgentInstance : IAgentInstance, IStreamingAgent
     {
         var history = BuildHistory(conversationHistory);
         var systemPrompt = await BuildSystemPromptAsync(message);
-        var agent = new ReactAgent(_llmProvider, _toolExecutor, _toolDefs, _reactLogger, _toolOwners, _approval);
+        var agent = new ReactAgent(_llmProvider, _toolExecutor, _toolDefs, _reactLogger, _toolOwners, _approval,
+            _definition.Temperature, _definition.MaxTokens);
 
         var finalAnswer = string.Empty;
 
@@ -144,7 +145,8 @@ public class ReactAgentInstance : IAgentInstance, IStreamingAgent
     {
         var history = BuildHistory(conversationHistory);
         var systemPrompt = await BuildSystemPromptAsync(message);
-        var agent = new ReactAgent(_llmProvider, _toolExecutor, _toolDefs, _reactLogger, _toolOwners, _approval);
+        var agent = new ReactAgent(_llmProvider, _toolExecutor, _toolDefs, _reactLogger, _toolOwners, _approval,
+            _definition.Temperature, _definition.MaxTokens);
 
         await foreach (var evt in agent.RunAsync(message, history, systemPrompt, GetMaxIterations(), ct))
         {

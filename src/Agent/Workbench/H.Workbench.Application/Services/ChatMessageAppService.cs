@@ -13,18 +13,18 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
 {
     private readonly IChatAppService _sessionAppService;
     private readonly AgentFactory _agentFactory;
-    private readonly IServiceProvider _serviceProvider;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<ChatMessageAppService> _logger;
 
     public ChatMessageAppService(
         IChatAppService sessionAppService,
         AgentFactory agentFactory,
-        IServiceProvider serviceProvider,
+        IServiceScopeFactory scopeFactory,
         ILogger<ChatMessageAppService> logger)
     {
         _sessionAppService = sessionAppService;
         _agentFactory = agentFactory;
-        _serviceProvider = serviceProvider;
+        _scopeFactory = scopeFactory;
         _logger = logger;
     }
 
@@ -316,7 +316,7 @@ public class ChatMessageAppService : ApplicationService, IChatMessageAppService
     {
         try
         {
-            using var scope = _serviceProvider.CreateScope();
+            using var scope = _scopeFactory.CreateScope();
             var llmFactory = scope.ServiceProvider.GetRequiredService<LLMProviderFactory>();
             var memoryService = scope.ServiceProvider.GetRequiredService<IMemoryAppService>();
             var chatService = scope.ServiceProvider.GetRequiredService<IChatAppService>();

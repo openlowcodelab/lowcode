@@ -27,6 +27,23 @@ public class WorkbenchToolOptions
     public ShellToolOptions Shell { get; set; } = new();
 
     public TraceOptions Trace { get; set; } = new();
+
+    public MemoryInjectionOptions Memory { get; set; } = new();
+}
+
+/// <summary>
+/// 历史经验记忆运行时注入配置（记忆由会话自动抽取，检索回填形成学习闭环）
+/// </summary>
+public class MemoryInjectionOptions
+{
+    /// <summary>
+    /// 默认开启：符合"默认即产出"原则；关闭仅用于排障
+    /// </summary>
+    public bool Enabled { get; set; } = true;
+
+    public int TopN { get; set; } = 4;
+
+    public int MaxCharsPerMemory { get; set; } = 300;
 }
 
 /// <summary>

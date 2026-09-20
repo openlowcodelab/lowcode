@@ -128,6 +128,81 @@ public class KnowledgeRetrievalAppService : ApplicationService, IKnowledgeRetrie
         return list.ToDictionary(x => x.Id, x => x.Name);
     }
 
+    public async Task<BaseOutput<List<KnowledgeSnippetDto>>> SearchMemoryAsync(SearchMemoryInput input)
+    {
+        var empty = new List<KnowledgeSnippetDto>();
+        if (string.IsNullOrWhiteSpace(input.Query)) return new(empty);
+
+        var terms = Tokenize(input.Query);
+        if (terms.Count == 0) return new(empty);
+
+        // 记忆条目 = OwnerType=Memory 的 Document 节点（父目录即分类）；只取最近 500 条参与召回
+        var nodeQuery = await _nodeRepository.GetQueryableAsync();
+        var nodes = await _asyncExecuter.ToListAsync(
+            nodeQuery.Where(n => n.OwnerType == OwnerTypes.Memory && n.NodeType == "Document")
+                .OrderByDescending(n => n.CreationTime)
+                .Take(500)
+                .Select(n => new { n.Id, n.Title, n.ParentId }));
+
+        if (nodes.Count == 0) return new(empty);
+
+        var nodeIds = nodes.Select(n => n.Id).ToList();
+        var nodeById = nodes.ToDictionary(n => n.Id);
+
+        var docQuery = await _documentRepository.GetQueryableAsync();
+        Expression<Func<KnowledgeDocumentEntity, bool>> like = BuildLikePredicate(terms);
+        var candidates = await _asyncExecuter.ToListAsync(
+            docQuery.Where(d => d.NodeId != null && nodeIds.Contains(d.NodeId.Value)
+                                && d.Content != null && d.Content != "")
+                .Where(like)
+                .Select(d => new { d.NodeId, d.Content })
+                .Take(RecallLimit));
+
+        if (candidates.Count == 0) return new(empty);
+
+        // 分类名 = 父目录标题
+        var parentIds = nodes.Where(n => n.ParentId != null).Select(n => n.ParentId!.Value).Distinct().ToHashSet();
+        var categoryNames = new Dictionary<Guid, string>();
+        if (parentIds.Count > 0)
+        {
+            var pq = await _nodeRepository.GetQueryableAsync();
+            var parents = await _asyncExecuter.ToListAsync(
+                pq.Where(n => parentIds.Contains(n.Id)).Select(n => new { n.Id, n.Title }));
+            categoryNames = parents.ToDictionary(p => p.Id, p => p.Title);
+        }
+
+        var scored = new List<(KnowledgeSnippetDto dto, double score)>();
+        foreach (var c in candidates)
+        {
+            if (c.NodeId == null || !nodeById.TryGetValue(c.NodeId.Value, out var node)) continue;
+            var content = c.Content ?? string.Empty;
+
+            double score = 0;
+            foreach (var term in terms)
+            {
+                score += CountOccurrences(node.Title, term) * 10 + Math.Min(CountOccurrences(content, term), 20);
+            }
+            if (score <= 0) continue;
+
+            scored.Add((new KnowledgeSnippetDto
+            {
+                NodeId = node.Id,
+                KnowledgeBaseName = node.ParentId != null && categoryNames.TryGetValue(node.ParentId.Value, out var cat) ? cat : "其他",
+                Title = node.Title,
+                Snippet = ExtractSnippet(content, terms, input.SnippetMaxChars),
+                Score = score
+            }, score));
+        }
+
+        var top = scored
+            .OrderByDescending(x => x.score)
+            .Take(Math.Clamp(input.TopN, 1, 10))
+            .Select(x => x.dto)
+            .ToList();
+
+        return new(top);
+    }
+
     private static Expression<Func<KnowledgeDocumentEntity, bool>> BuildLikePredicate(List<string> terms)
     {
         var param = Expression.Parameter(typeof(KnowledgeDocumentEntity), "d");

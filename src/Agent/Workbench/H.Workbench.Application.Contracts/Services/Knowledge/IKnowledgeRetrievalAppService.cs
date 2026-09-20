@@ -9,6 +9,11 @@ namespace H.Workbench.Application.Contracts;
 public interface IKnowledgeRetrievalAppService : IAppService
 {
     Task<BaseOutput<List<KnowledgeSnippetDto>>> SearchAsync(SearchKnowledgeInput input);
+
+    /// <summary>
+    /// 检索"历史经验记忆"（自动抽取的会话记忆，OwnerType=Memory），供运行时提示词注入
+    /// </summary>
+    Task<BaseOutput<List<KnowledgeSnippetDto>>> SearchMemoryAsync(SearchMemoryInput input);
 }
 
 public class SearchKnowledgeInput
@@ -17,6 +22,13 @@ public class SearchKnowledgeInput
     public string Query { get; set; } = string.Empty;
     public int TopN { get; set; } = 4;
     public int SnippetMaxChars { get; set; } = 900;
+}
+
+public class SearchMemoryInput
+{
+    public string Query { get; set; } = string.Empty;
+    public int TopN { get; set; } = 4;
+    public int SnippetMaxChars { get; set; } = 300;
 }
 
 public class KnowledgeSnippetDto

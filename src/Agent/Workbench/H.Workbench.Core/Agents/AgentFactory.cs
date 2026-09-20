@@ -228,11 +228,12 @@ public class AgentFactory
             ReferenceEquals(scopedRegistry, _toolRegistry) ? "（全量，未隔离）" : "（按员工技能隔离）",
             approval is null ? "" : $"（审批模式 {approval.Mode}，需审批工具 {approval.ApprovalTools.Count} 个）");
 
-        // 运行时上下文注入（知识库检索 + 项目仓库清单）
+        // 运行时上下文注入（知识库检索 + 项目仓库清单 + 历史经验记忆）
         Func<string, Task<string>>? augmentor = null;
         var hasContext = definition.KnowledgeBaseIds.Count > 0
                          || definition.ProjectIds.Count > 0
-                         || runContext?.ProjectId != null;
+                         || runContext?.ProjectId != null
+                         || _options.Memory.Enabled;
         if (hasContext)
         {
             _logger.LogInformation("运行时上下文注入启用: kb={KbCount}, project={ProjCount}",
@@ -403,40 +404,80 @@ public class AgentFactory
     private async Task<string> AppendKnowledgeSnippetsAsync(
         StringBuilder sb, AgentDto definition, string userMessage, int projectCount, int repoCount)
     {
-        var snippetCount = 0;
-        // 知识库检索片段（以当前问题为查询）
-        if (definition.KnowledgeBaseIds.Count > 0 && !string.IsNullOrWhiteSpace(userMessage))
+        var snippetCount = await AppendKnowledgeSnippetsCoreAsync(sb, definition, userMessage);
+
+        // 历史经验记忆：跨会话自动抽取的经验条目按当前问题检索回填（阶段C学习闭环的"读"侧）
+        var memoryCount = 0;
+        if (_options.Memory.Enabled && !string.IsNullOrWhiteSpace(userMessage))
         {
-            var search = await _knowledgeRetrievalAppService.SearchAsync(new SearchKnowledgeInput
+            try
             {
-                KnowledgeBaseIds = definition.KnowledgeBaseIds,
-                Query = userMessage,
-                TopN = 4
-            });
-            var snippets = search.Data ?? [];
-            snippetCount = snippets.Count;
-            if (snippets.Count > 0)
-            {
-                sb.AppendLine("## 参考资料（来自员工绑定的知识库，按关键词检索）");
-                for (var i = 0; i < snippets.Count; i++)
+                var memories = await _knowledgeRetrievalAppService.SearchMemoryAsync(new SearchMemoryInput
                 {
-                    var s = snippets[i];
-                    sb.AppendLine($"### [{i + 1}] {s.Title}（知识库：{s.KnowledgeBaseName}）");
-                    sb.AppendLine(s.Snippet);
+                    Query = userMessage,
+                    TopN = _options.Memory.TopN,
+                    SnippetMaxChars = _options.Memory.MaxCharsPerMemory
+                });
+                var items = memories.Data ?? [];
+                memoryCount = items.Count;
+                if (items.Count > 0)
+                {
+                    sb.AppendLine();
+                    sb.AppendLine("## 历史经验（你过去会话中记住的要点，可信度低于知识库资料，与当前事实冲突时以当前为准）");
+                    foreach (var m in items)
+                    {
+                        sb.AppendLine($"- [{m.KnowledgeBaseName}] {m.Title}：{m.Snippet}");
+                    }
                 }
-                sb.AppendLine("回答时优先依据上述参考资料；与问题无关时可忽略。");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "记忆检索失败，跳过注入");
             }
         }
 
         var result = sb.ToString().TrimEnd();
-        _logger.LogInformation("运行时上下文构建完成: {Len} 字符（项目 {Projects} 个 / 仓库 {Repos} 条 / 知识 {Snips} 段）",
-            result.Length, projectCount, repoCount, snippetCount);
+        _logger.LogInformation("运行时上下文构建完成: {Len} 字符（项目 {Projects} 个 / 仓库 {Repos} 条 / 知识 {Snips} 段 / 记忆 {Mems} 条）",
+            result.Length, projectCount, repoCount, snippetCount, memoryCount);
         if (result.Length > RuntimeContextMaxChars)
         {
             _logger.LogWarning("运行时上下文超长（{Len}），已截断", result.Length);
             result = result[..RuntimeContextMaxChars];
         }
         return result;
+    }
+
+    /// <summary>
+    /// 追加知识库检索片段，返回注入段数
+    /// </summary>
+    private async Task<int> AppendKnowledgeSnippetsCoreAsync(
+        StringBuilder sb, AgentDto definition, string userMessage)
+    {
+        if (definition.KnowledgeBaseIds.Count == 0 || string.IsNullOrWhiteSpace(userMessage))
+        {
+            return 0;
+        }
+
+        var search = await _knowledgeRetrievalAppService.SearchAsync(new SearchKnowledgeInput
+        {
+            KnowledgeBaseIds = definition.KnowledgeBaseIds,
+            Query = userMessage,
+            TopN = 4
+        });
+        var snippets = search.Data ?? [];
+        if (snippets.Count > 0)
+        {
+            sb.AppendLine("## 参考资料（来自员工绑定的知识库，按关键词检索）");
+            for (var i = 0; i < snippets.Count; i++)
+            {
+                var s = snippets[i];
+                sb.AppendLine($"### [{i + 1}] {s.Title}（知识库：{s.KnowledgeBaseName}）");
+                sb.AppendLine(s.Snippet);
+            }
+            sb.AppendLine("回答时优先依据上述参考资料；与问题无关时可忽略。");
+        }
+
+        return snippets.Count;
     }
 
     /// <summary>

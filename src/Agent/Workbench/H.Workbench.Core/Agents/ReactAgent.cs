@@ -27,6 +27,12 @@ public class ReactAgent
     private int _approvalRequests;
 
     /// <summary>
+    /// 员工配置的采样参数；ReAct 路径此前漏传（LLMRequest 恒为默认值），现随定义生效
+    /// </summary>
+    private readonly float _temperature;
+    private readonly int _maxTokens;
+
+    /// <summary>
     /// 默认最大迭代次数
     /// </summary>
     private const int DefaultMaxIterations = 10;
@@ -37,7 +43,9 @@ public class ReactAgent
         List<ToolDefinition> toolDefs,
         ILogger<ReactAgent> logger,
         IReadOnlyDictionary<string, string>? toolOwners = null,
-        AgentApprovalContext? approval = null)
+        AgentApprovalContext? approval = null,
+        float temperature = 0.7f,
+        int maxTokens = 2000)
     {
         _provider = provider;
         _toolExecutor = toolExecutor;
@@ -45,6 +53,8 @@ public class ReactAgent
         _logger = logger;
         _toolOwners = toolOwners;
         _approval = approval is null || approval.Mode == "None" ? null : approval;
+        _temperature = temperature;
+        _maxTokens = maxTokens;
     }
 
     /// <summary>
@@ -82,7 +92,9 @@ public class ReactAgent
             var request = new LLMRequest
             {
                 Messages = messages,
-                Tools = _toolDefs.Count > 0 ? _toolDefs : null
+                Tools = _toolDefs.Count > 0 ? _toolDefs : null,
+                Temperature = _temperature,
+                MaxTokens = _maxTokens
             };
 
             _logger.LogDebug("LLM 请求: 消息数={MsgCount}, 工具数={ToolCount}",
