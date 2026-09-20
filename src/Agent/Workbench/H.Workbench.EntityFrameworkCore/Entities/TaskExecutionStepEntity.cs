@@ -19,6 +19,11 @@ public class TaskExecutionStepEntity : CreationAuditedEntity<Guid>
     public Guid TaskId { get; set; }
 
     /// <summary>
+    /// 工作流步骤序号（非工作流任务恒为 0；Kind=Step 行为该步头部行）
+    /// </summary>
+    public int StepIndex { get; set; }
+
+    /// <summary>
     /// ReAct 迭代轮次
     /// </summary>
     public int Iteration { get; set; }

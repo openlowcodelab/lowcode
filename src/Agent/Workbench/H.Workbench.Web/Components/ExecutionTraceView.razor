@@ -15,8 +15,8 @@
             }
             @foreach (var item in _items)
             {
-                <div class="wb-step wb-step-@item.State">
-                    <div class="wb-step-row" @onclick="() => ToggleExpand(item)">
+                <div class="wb-step wb-step-@item.State @(item.Kind == "Step" ? "wb-step-group" : "")">
+                    <div class="wb-step-row @(item.Indent ? "wb-step-child" : "")" @onclick="() => ToggleExpand(item)">
                         <span class="wb-step-icon">@Icon(item.Kind)</span>
                         <span class="wb-step-name">@DisplayName(item)</span>
                         @if (item.StateText is not null)
@@ -88,6 +88,8 @@
         /// <summary>ok | error | running | pending | approved | denied | timeout</summary>
         public string State { get; set; } = "ok";
         public string? StateText { get; set; }
+        /// <summary>工作流步骤内的子行缩进</summary>
+        public bool Indent { get; set; }
         public bool HasDetail => !string.IsNullOrEmpty(Arguments) || !string.IsNullOrEmpty(Detail);
     }
 
@@ -143,11 +145,24 @@
         var items = new List<StepItem>();
         var pending = new List<(ExecutionStepDto Call, StepItem Item)>();
         long totalMs = 0;
+        var inWorkflow = false;
 
-        foreach (var s in steps.OrderBy(x => x.Iteration).ThenBy(x => x.Seq))
+        foreach (var s in steps.OrderBy(x => x.StepIndex).ThenBy(x => x.Iteration).ThenBy(x => x.Seq))
         {
             switch (s.Kind)
             {
+                case "Step":
+                    // 工作流步骤头部行（其后的子行缩进）
+                    inWorkflow = true;
+                    items.Add(new StepItem
+                    {
+                        Kind = "Step",
+                        ToolName = s.ToolName,
+                        Iteration = s.Iteration,
+                        State = s.Content == "执行中" ? "running" : s.IsError ? "error" : "ok",
+                        StateText = Short(s.Content)
+                    });
+                    continue;
                 case "Thinking":
                     items.Add(new StepItem { Kind = "Thinking", Iteration = s.Iteration, Detail = s.Content, Truncated = s.Truncated });
                     break;
@@ -208,10 +223,24 @@
             }
         }
 
+        // 工作流步骤内的子行统一缩进
+        if (inWorkflow)
+        {
+            var seenStep = false;
+            foreach (var it in items)
+            {
+                if (it.Kind == "Step") { seenStep = true; continue; }
+                if (seenStep) it.Indent = true;
+            }
+        }
+
         _items = items;
         _totalMs = totalMs;
         _expanded.RemoveAll(e => !items.Contains(e));
     }
+
+    private static string Short(string? text) =>
+        string.IsNullOrEmpty(text) ? text! : text.Length <= 60 ? text : text[..60] + "…";
 
     private void ToggleExpand(StepItem item)
     {
@@ -224,6 +253,7 @@
 
     private static string DisplayName(StepItem item) => item.Kind switch
     {
+        "Step" => item.ToolName ?? "步骤",
         "Thinking" => $"思考（第 {item.Iteration} 轮）",
         "Answer" => "回答",
         "Error" => "错误",
@@ -233,6 +263,7 @@
 
     private static string Icon(string kind) => kind switch
     {
+        "Step" => "🧩",
         "Thinking" => "💭",
         "Answer" => "✉️",
         "Error" => "⚠️",
@@ -297,6 +328,20 @@
 
     .wb-step-row:hover {
         background: #f0f2f5;
+    }
+
+    .wb-step-group {
+        border-top: 1px dashed #f0f0f0;
+        margin-top: 2px;
+    }
+
+    .wb-step-group .wb-step-name {
+        font-weight: 600;
+        color: #165DFF;
+    }
+
+    .wb-step-child {
+        padding-left: 28px;
     }
 
     .wb-step-icon {

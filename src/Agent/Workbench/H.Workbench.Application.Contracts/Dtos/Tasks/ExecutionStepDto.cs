@@ -9,6 +9,7 @@ public class ExecutionStepDto : CreationAuditedEntityDto<Guid>
 {
     public Guid TaskLogId { get; set; }
     public Guid TaskId { get; set; }
+    public int StepIndex { get; set; }
     public int Iteration { get; set; }
     public int Seq { get; set; }
     public string Kind { get; set; } = string.Empty;

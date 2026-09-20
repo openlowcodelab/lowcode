@@ -746,8 +746,8 @@
             await foreach (var data in client.StreamAsync(task.Id, prompt, cts.Token))
             {
                 string? type = null, content = null, message = null, toolName = null,
-                    toolCallId = null, arguments = null, result = null;
-                int iteration = 0, durationMs = 0, timeoutSeconds = 0;
+                    toolCallId = null, arguments = null, result = null, state = null, preview = null;
+                int iteration = 0, durationMs = 0, timeoutSeconds = 0, stepIndex = -1;
                 Guid approvalId = Guid.Empty;
                 bool isError = false;
                 var isFatal = true;
@@ -767,6 +767,10 @@
                     if (root.TryGetProperty("iteration", out var it) && it.TryGetInt32(out var itv)) iteration = itv;
                     if (root.TryGetProperty("approvalId", out var aid) && aid.TryGetGuid(out var aidv)) approvalId = aidv;
                     if (root.TryGetProperty("timeoutSeconds", out var ts) && ts.TryGetInt32(out var tsv)) timeoutSeconds = tsv;
+                    if (root.TryGetProperty("stepIndex", out var si) && si.TryGetInt32(out var siv)) stepIndex = siv;
+                    if (root.TryGetProperty("stepName", out var sn)) toolName ??= sn.GetString();
+                    if (root.TryGetProperty("state", out var st)) state = st.GetString();
+                    if (root.TryGetProperty("preview", out var pv)) preview = pv.GetString();
                     if (root.TryGetProperty("isFatal", out var f)) isFatal = f.GetBoolean();
                 }
                 catch
@@ -818,6 +822,23 @@
                             _pendingApprovals.Remove(pa);
                         }
                         break;
+                    case "step_start":
+                        live.Steps.Add(new ExecutionStepDto
+                        {
+                            Kind = "Step", ToolName = toolName, Content = "执行中",
+                            StepIndex = stepIndex, Iteration = stepIndex, Seq = live.Steps.Count
+                        });
+                        _streamStatus = $"步骤 {stepIndex + 1}·{toolName} 执行中…";
+                        break;
+                    case "step_end":
+                        var stepRow = live.Steps.LastOrDefault(s => s.Kind == "Step" && s.StepIndex == stepIndex);
+                        if (stepRow is not null)
+                        {
+                            stepRow.Content = string.IsNullOrEmpty(preview) ? state : $"{state}：{preview}";
+                            stepRow.IsError = state == "Failed";
+                        }
+                        _streamStatus = null;
+                        break;
                     case "error":
                         if (isFatal) error = message;
                         break;
@@ -851,14 +872,14 @@
             _executing = false;
             _streamStatus = null;
 
-            // 服务端还会落库思考合并行与产物，取一次最新日志补齐（产物需直接可见）
+            // 服务端还会落库思考合并行、步骤头与产物，取一次最新日志补齐（产物需直接可见）
             if (live.Role == "assistant")
             {
                 try
                 {
                     var logs = (await TaskAppService.GetExecutionLogsAsync(task.Id, 1)).Data;
                     var newest = logs?.OrderBy(l => l.StartTime).LastOrDefault();
-                    if (newest is not null && newest.ArtifactCount > 0)
+                    if (newest is not null && (newest.ArtifactCount > 0 || newest.StepCount > live.Steps.Count))
                     {
                         live.LogId = newest.Id;
                         live.StepCount = newest.StepCount;

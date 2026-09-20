@@ -58,6 +58,22 @@ public class ExecutionTraceStore : ITransientDependency
         await uow.CompleteAsync();
     }
 
+    /// <summary>
+    /// 工作流步骤头部行状态回填（执行中→Success/Failed/Skipped）
+    /// </summary>
+    public async Task UpdateStepOutcomeAsync(Guid stepId, string? content, bool isError)
+    {
+        using var uow = _unitOfWorkManager.Begin(requiresNew: true, isTransactional: false);
+        var step = await _stepRepository.FindAsync(stepId);
+        if (step != null)
+        {
+            step.Content = content;
+            step.IsError = isError;
+            await _stepRepository.UpdateAsync(step, autoSave: true);
+        }
+        await uow.CompleteAsync();
+    }
+
     public async Task AddArtifactsAsync(IEnumerable<ArtifactEntity> artifacts)
     {
         using var uow = _unitOfWorkManager.Begin(requiresNew: true, isTransactional: false);

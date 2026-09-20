@@ -25,6 +25,9 @@ public class ExecutionTraceRecorder
 
     private int _seq;
     private int? _bufferIteration;
+    private int _currentStepIndex;
+    private TaskExecutionStepEntity? _activeStepHeader;
+    private bool _stepHeaderPersisted;
     private readonly System.Text.StringBuilder _thinkingBuf = new();
     private int _stepCount;
     private int _artifactCount;
@@ -121,6 +124,65 @@ public class ExecutionTraceRecorder
         }
 
         return (_stepCount, _artifactCount, AggregateApprovalState());
+    }
+
+    /// <summary>
+    /// 工作流步骤开始：插入 Kind=Step 头部行，后续所有行归属该步骤
+    /// </summary>
+    public async Task BeginStepAsync(int stepIndex, string stepName)
+    {
+        _currentStepIndex = stepIndex;
+        FlushThinkingAs(_bufferIteration ?? 0, "Thinking");
+        await FlushAsync();
+
+        _stepHeaderPersisted = false;
+        _activeStepHeader = new TaskExecutionStepEntity
+        {
+            TaskLogId = _taskLogId,
+            TaskId = _taskId,
+            StepIndex = stepIndex,
+            Iteration = stepIndex,
+            Seq = ++_seq,
+            Kind = "Step",
+            ToolName = stepName,
+            Content = "执行中",
+            StartedAt = DateTime.Now
+        };
+        _pending.Add(_activeStepHeader);
+    }
+
+    /// <summary>
+    /// 工作流步骤收尾：回填头部行状态（未落库则原地改，已落库则短 UoW 更新）
+    /// </summary>
+    public async Task EndStepAsync(string state, string? error = null)
+    {
+        if (_activeStepHeader is null) return;
+
+        var header = _activeStepHeader;
+        _activeStepHeader = null;
+        FlushThinkingAs(_bufferIteration ?? header.Iteration, "Thinking");
+
+        header.Content = error is null ? state : $"{state}：{Truncate(error, 500, out _)}";
+        header.IsError = state != "Success";
+
+        if (_pending.Contains(header))
+        {
+            return; // 随下一次 flush 落库
+        }
+
+        if (_stepHeaderPersisted)
+        {
+            try
+            {
+                await _store.UpdateStepOutcomeAsync(header.Id, header.Content, header.IsError);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "步骤头部行状态回填失败 TaskLogId={TaskLogId}", _taskLogId);
+            }
+        }
+
+        await FlushAsync();
     }
 
     private Task OnThinkingAsync(DecodedEvent e)
@@ -280,6 +342,7 @@ public class ExecutionTraceRecorder
         {
             TaskLogId = _taskLogId,
             TaskId = _taskId,
+            StepIndex = _currentStepIndex,
             Iteration = iteration,
             Seq = ++_seq,
             Kind = kind,
@@ -320,6 +383,10 @@ public class ExecutionTraceRecorder
             if (row.Kind == "Approval")
             {
                 _flushedApprovalIds.Add(row.Id);
+            }
+            if (ReferenceEquals(row, _activeStepHeader))
+            {
+                _stepHeaderPersisted = true;
             }
         }
 

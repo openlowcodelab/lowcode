@@ -306,9 +306,14 @@ public class TaskAppService : ApplicationService, ITaskAppService
             Logger.LogError(ex, "插入 Running 执行日志失败 TaskId={TaskId}", task.Id);
         }
 
-        // 审批模式：流式对话任务可回传裁决；工作流分支整体执行无法增量送事件，降级自动裁决
+        // 审批模式：流式对话任务可回传裁决；工作流卡点同样走审批通道
         var isWorkflow = task.SourceType == "Workflow" && !string.IsNullOrWhiteSpace(task.WorkflowContent);
-        var approvalMode = isWorkflow ? "NonInteractive" : "Interactive";
+        var approvalMode = isWorkflow ? "Interactive" : "Interactive";
+        List<WorkflowStepDto>? steps = null;
+        if (isWorkflow)
+        {
+            steps = ParseWorkflowSteps(task.WorkflowContent!);
+        }
 
         IAgentInstance? agent = null;
         string? agentError = null;
@@ -346,21 +351,49 @@ public class TaskAppService : ApplicationService, ITaskAppService
         {
             if (isWorkflow)
             {
-                // 工作流任务无法增量输出，整体执行后以单个 answer 事件返回
-                string? response = null;
-                try
+                // 工作流：引擎在后台跑（步骤边界/卡点审批事件经 Channel 桥接实时转发），
+                // 步骤过程由 recorder 直接落库，前端据 step 事件构建分组时间线
+                var channel = System.Threading.Channels.Channel.CreateUnbounded<string>();
+                WorkflowRunSummaryDto? wfSummary = null;
+                Exception? wfError = null;
+
+                async Task RunEngineAsync()
                 {
-                    response = await ExecuteTaskContentAsync(agent, task, recorder.Tap);
-                }
-                catch (Exception ex)
-                {
-                    failure = ex.Message;
+                    try
+                    {
+                        wfSummary = await RunWorkflowAsync(
+                            task, steps!, recorder,
+                            BuildStepAgentResolver(task, agent, logId, "Interactive"),
+                            async json => await channel.Writer.WriteAsync(json, ct),
+                            interactive: true, logId, ct);
+                    }
+                    catch (Exception ex)
+                    {
+                        wfError = ex;
+                    }
+                    finally
+                    {
+                        channel.Writer.TryComplete();
+                    }
                 }
 
-                if (response is not null)
+                var engine = RunEngineAsync();
+                await foreach (var evt in channel.Reader.ReadAllAsync())
                 {
-                    answer.Append(response);
-                    yield return SerializeAnswer(response);
+                    await recorder.HandleAsync(evt);
+                    yield return evt;
+                }
+
+                await Task.WhenAll(engine);
+                if (wfError is not null)
+                {
+                    failure = wfError.Message;
+                }
+                else if (wfSummary is not null)
+                {
+                    var md = BuildWorkflowAnswer(wfSummary);
+                    answer.Append(md);
+                    yield return SerializeAnswer(md);
                 }
             }
             else if (agent is IStreamingAgent streamingAgent)
@@ -651,14 +684,43 @@ public class TaskAppService : ApplicationService, ITaskAppService
             }
 
             // 执行任务内容（提示词或工作流），事件流经 recorder 落轨迹
-            var response = await ExecuteTaskContentAsync(agent, task, recorder?.Tap);
+            string response;
+            string? workflowFailure = null;
+            if (task.SourceType == "Workflow" && !string.IsNullOrWhiteSpace(task.WorkflowContent))
+            {
+                var steps = ParseWorkflowSteps(task.WorkflowContent);
+                if (steps.Count == 0)
+                {
+                    throw new InvalidOperationException("工作流任务未配置有效步骤");
+                }
+
+                var wf = await RunWorkflowAsync(task, steps, recorder,
+                    BuildStepAgentResolver(task, agent, logId, "NonInteractive"),
+                    null, interactive: false, logId, CancellationToken.None);
+                response = BuildWorkflowAnswer(wf);
+                if (!wf.Success)
+                {
+                    workflowFailure = wf.Error ?? "工作流存在失败步骤";
+                }
+            }
+            else
+            {
+                response = await agent.ProcessMessageAsync(task.PromptContent, new List<string>(), recorder?.Tap);
+            }
 
             var (stepCount, artifactCount, approvalState) = recorder is not null
                 ? await recorder.FinishAsync()
                 : (StepCount: 0, ArtifactCount: 0, ApprovalState: (string?)null);
 
-            await _traceStore.CompleteLogAsync(logId, "Success", response, null,
-                stepCount, artifactCount, approvalState);
+            await _traceStore.CompleteLogAsync(logId, workflowFailure is null ? "Success" : "Failed",
+                response, workflowFailure, stepCount, artifactCount, approvalState);
+
+            if (workflowFailure is not null)
+            {
+                Logger.LogWarning("定时工作流执行失败: {TaskName} (Id={TaskId}): {Error}", taskName, taskId, workflowFailure);
+                await RescheduleAfterFailureAsync(task);
+                return;
+            }
 
             // 更新任务执行统计
             task.LastExecutionTime = DateTime.Now;
@@ -754,43 +816,281 @@ public class TaskAppService : ApplicationService, ITaskAppService
     }
 
     /// <summary>
-    /// 执行任务内容：根据创建方式选择提示词或工作流执行；onEventJson 转交轨迹记录器
+    /// 工作流引擎：步骤状态机 + 多员工接力 + 人工卡点 + 失败策略。
+    /// 每步以指派的员工实例执行（空=任务默认员工），全部前序结果注入后续提示词；
+    /// 步骤边界与卡点审批经 forward 实时转发（Channel 桥到 SSE）。
     /// </summary>
-    private async Task<string> ExecuteTaskContentAsync(IAgentInstance agent, TaskEntity task, Func<string, Task>? onEventJson = null)
+    private async Task<WorkflowRunSummaryDto> RunWorkflowAsync(
+        TaskEntity task,
+        List<WorkflowStepDto> steps,
+        ExecutionTraceRecorder? recorder,
+        Func<string?, Task<IAgentInstance?>> resolveAgent,
+        Func<string, Task>? forward,
+        bool interactive,
+        Guid logId,
+        CancellationToken ct)
     {
-        // 工作流任务：按顺序执行各步骤，上一步结果作为下一步的上下文
-        if (task.SourceType == "Workflow" && !string.IsNullOrWhiteSpace(task.WorkflowContent))
+        var summary = new WorkflowRunSummaryDto();
+        var completed = new List<(int Index, string Name, string Result)>();
+        var userId = CurrentUser.Id?.ToString();
+
+        for (var i = 0; i < steps.Count; i++)
         {
-            var steps = JsonSerializer.Deserialize<List<WorkflowStepDto>>(task.WorkflowContent)
-                ?? new List<WorkflowStepDto>();
+            ct.ThrowIfCancellationRequested();
+            var step = steps[i];
+            var stepName = string.IsNullOrWhiteSpace(step.Name) ? $"步骤 {i + 1}" : step.Name.Trim();
 
-            if (steps.Count == 0)
+            if (recorder is not null)
             {
-                throw new InvalidOperationException("工作流任务未配置有效步骤");
+                await recorder.BeginStepAsync(i, stepName);
             }
+            await ForwardAsync(forward, SerializeStepEvent("step_start", i, stepName, step.AgentType, null, null));
 
-            var history = new List<string>();
-            var lastResult = string.Empty;
-            for (var i = 0; i < steps.Count; i++)
+            string state = "Success";
+            string? error = null;
+            string? result = null;
+
+            // 人工卡点：交互执行暂停等裁决（复用审批门通道与前端卡片）；定时执行自动通过
+            if (step.RequireApproval && error is null && interactive && _toolOptions.Approval.Enabled)
             {
-                var step = steps[i];
-                var stepPrompt = string.IsNullOrWhiteSpace(step.Prompt) ? step.Name : step.Prompt;
-                if (i > 0 && !string.IsNullOrEmpty(lastResult))
+                var gateOutcome = await RequestStepGateAsync(task, logId, i, stepName, step.Prompt, userId, forward);
+                if (gateOutcome != ApprovalOutcome.Approved)
                 {
-                    stepPrompt = $"上一步骤「{steps[i - 1].Name}」的执行结果如下：\n{lastResult}\n\n请基于上述结果，继续执行当前步骤：{stepPrompt}";
+                    // 卡点被拒/超时=人工评审不通过，按失败处理（OnFailure=Skip 才可继续）
+                    state = "Failed";
+                    error = $"人工卡点未通过（{gateOutcome}）";
+                    await FinishStepAsync(recorder, forward, i, stepName, state, error, null);
+                    AddStepResult(summary, i, stepName, step.AgentType, state, null, error, completed);
+                    if (state == "Failed" && step.OnFailure != "Skip")
+                    {
+                        return CompleteSummary(summary, error);
+                    }
+                    continue;
                 }
-
-                Logger.LogInformation("执行工作流步骤 {Index}/{Count}: {StepName} (TaskId={TaskId})",
-                    i + 1, steps.Count, step.Name, task.Id);
-                lastResult = await agent.ProcessMessageAsync(stepPrompt, history, onEventJson);
             }
 
-            return lastResult;
+            if (error is null)
+            {
+                try
+                {
+                    var agent = await resolveAgent(step.AgentType)
+                        ?? throw new InvalidOperationException($"步骤「{stepName}」指派员工 {step.AgentType} 不可用");
+                    var stepPrompt = BuildStepPrompt(step, i, stepName, completed);
+                    result = await agent.ProcessMessageAsync(stepPrompt, new List<string>(), recorder?.Tap);
+
+                    if (result.StartsWith("执行出错:"))
+                    {
+                        error = result["执行出错:".Length..].Trim();
+                        state = "Failed";
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    error = ex.Message;
+                    state = "Failed";
+                }
+            }
+
+            await FinishStepAsync(recorder, forward, i, stepName, state, error, result);
+            AddStepResult(summary, i, stepName, step.AgentType, state, result, error, completed);
+
+            if (state != "Success" && step.OnFailure != "Skip")
+            {
+                return CompleteSummary(summary, $"步骤 {i + 1}「{stepName}」失败：{TruncateText(error, 200)}");
+            }
         }
 
-        // 提示词任务：直接执行提示词
-        return await agent.ProcessMessageAsync(task.PromptContent, new List<string>(), onEventJson);
+        summary.Success = summary.FailedSteps == 0;
+        return summary;
     }
+
+    private static List<WorkflowStepDto> ParseWorkflowSteps(string json)
+    {
+        try
+        {
+            // Web 编辑器存 camelCase、桌面端存 PascalCase——大小写不敏感统一兼容
+            return JsonSerializer.Deserialize<List<WorkflowStepDto>>(json,
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? [];
+        }
+        catch (JsonException)
+        {
+            return [];
+        }
+    }
+
+    private static WorkflowRunSummaryDto CompleteSummary(WorkflowRunSummaryDto summary, string error)
+    {
+        summary.Success = false;
+        summary.Error = error;
+        return summary;
+    }
+
+    private async Task<ApprovalOutcome> RequestStepGateAsync(
+        TaskEntity task, Guid logId, int stepIndex, string stepName, string stepPrompt,
+        string? userId, Func<string, Task>? forward)
+    {
+        var toolName = $"人工卡点·{stepName}";
+        var arguments = TruncateText(stepPrompt, 500);
+        var timeout = _toolOptions.Approval.TimeoutSeconds;
+        var approvalId = _approvalGateway.Register(
+            new ApprovalGateway.PendingRequest(task.Id, logId, toolName, null, arguments, stepIndex, userId),
+            timeout);
+
+        await ForwardAsync(forward, JsonSerializer.Serialize(new
+        {
+            type = "approval_required",
+            approvalId,
+            toolName,
+            skillName = (string?)null,
+            toolCallId = "",
+            arguments,
+            timeoutSeconds = timeout,
+            iteration = stepIndex
+        }, StreamJsonOptions));
+
+        var result = await _approvalGateway.WaitAsync(approvalId);
+
+        await ForwardAsync(forward, JsonSerializer.Serialize(new
+        {
+            type = "approval_resolved",
+            approvalId,
+            toolName,
+            decision = result.Outcome.ToString(),
+            approverId = result.ApproverId,
+            waitMs = result.WaitMs,
+            iteration = stepIndex
+        }, StreamJsonOptions));
+
+        return result.Outcome;
+    }
+
+    private Func<string?, Task<IAgentInstance?>> BuildStepAgentResolver(
+        TaskEntity task, IAgentInstance defaultAgent, Guid logId, string mode)
+    {
+        var cache = new Dictionary<string, IAgentInstance?>(StringComparer.OrdinalIgnoreCase);
+        return async t =>
+        {
+            if (string.IsNullOrWhiteSpace(t) || t == task.AgentType) return defaultAgent;
+            if (cache.TryGetValue(t, out var cached)) return cached;
+            var instance = await _agentFactory.CreateAgentAsync(t, null,
+                new AgentRunContext(task.ProjectId, null, mode, task.Id, logId, CurrentUser.Id?.ToString()));
+            cache[t] = instance;
+            return instance;
+        };
+    }
+
+    private static async Task ForwardAsync(Func<string, Task>? forward, string json)
+    {
+        if (forward is null) return;
+        try
+        {
+            await forward(json);
+        }
+        catch (OperationCanceledException)
+        {
+            // 客户端断开：转发通道失效，引擎继续把轨迹写库
+        }
+    }
+
+    private static async Task FinishStepAsync(
+        ExecutionTraceRecorder? recorder, Func<string, Task>? forward,
+        int stepIndex, string stepName, string state, string? error, string? result)
+    {
+        if (recorder is not null)
+        {
+            await recorder.EndStepAsync(state, error);
+        }
+        await ForwardAsync(forward, SerializeStepEvent("step_end", stepIndex, stepName, null, state, TruncateText(result ?? error, 200)));
+    }
+
+    private static void AddStepResult(
+        WorkflowRunSummaryDto summary, int index, string stepName, string? agentType, string state,
+        string? result, string? error, List<(int Index, string Name, string Result)> completed)
+    {
+        summary.Steps.Add(new WorkflowStepResultDto
+        {
+            Index = index,
+            Name = stepName,
+            AgentType = agentType,
+            State = state,
+            Preview = TruncateText(result, 400),
+            Error = error is null ? null : TruncateText(error, 200)
+        });
+
+        switch (state)
+        {
+            case "Success":
+                summary.CompletedSteps++;
+                summary.FinalOutput = result;
+                if (result is not null) completed.Add((index, stepName, result));
+                break;
+            case "Skipped":
+                summary.SkippedSteps++;
+                break;
+            default:
+                summary.FailedSteps++;
+                break;
+        }
+    }
+
+    private static string BuildStepPrompt(
+        WorkflowStepDto step, int index, string stepName, List<(int Index, string Name, string Result)> completed)
+    {
+        var body = string.IsNullOrWhiteSpace(step.Prompt) ? stepName : step.Prompt.Trim();
+        if (completed.Count == 0) return body;
+
+        var sb = new StringBuilder("已完成步骤的结果如下（请基于它们继续，勿重复已完成的工作）：\n");
+        foreach (var c in completed)
+        {
+            sb.Append($"### 步骤{c.Index + 1}·{c.Name}\n").Append(TruncateText(c.Result, 4000)).Append("\n\n");
+        }
+        sb.Append("---\n").Append($"当前步骤「{stepName}」任务：").Append(body);
+        return sb.ToString();
+    }
+
+    private static string BuildWorkflowAnswer(WorkflowRunSummaryDto s)
+    {
+        var head = s.Error is not null ? $"⛔ 工作流中止：{s.Error}"
+            : s.Success ? "✅ 工作流执行成功"
+            : $"⚠️ 工作流结束（成功 {s.CompletedSteps} / 失败 {s.FailedSteps} / 跳过 {s.SkippedSteps}）";
+
+        var sb = new StringBuilder(head).AppendLine().AppendLine();
+        sb.AppendLine("| 步骤 | 状态 | 摘要 |");
+        sb.AppendLine("|---|---|---|");
+        foreach (var st in s.Steps)
+        {
+            var brief = EscapeTableCell(SingleLine(st.Error ?? st.Preview));
+            sb.AppendLine($"| {st.Index + 1}·{EscapeTableCell(st.Name)} | {st.State} | {brief} |");
+        }
+
+        if (s.Success && !string.IsNullOrWhiteSpace(s.FinalOutput))
+        {
+            sb.AppendLine().AppendLine("### 最终步骤输出").AppendLine(s.FinalOutput);
+        }
+
+        return TruncateText(sb.ToString(), 7800)!;
+    }
+
+    private static string EscapeTableCell(string? text) =>
+        (text ?? string.Empty).Replace("|", "\\|");
+
+    private static string SingleLine(string? text) =>
+        (text ?? string.Empty).Replace('\r', ' ').Replace('\n', ' ').Trim();
+
+    private static string? TruncateText(string? text, int max) =>
+        text is null || text.Length <= max ? text : text[..max] + "…";
+
+    private static string SerializeStepEvent(string type, int stepIndex, string? stepName, string? agentType, string? state, string? preview) =>
+        JsonSerializer.Serialize(new { type, stepIndex, stepName, agentType, state, preview }, StreamJsonOptions);
+
+    private static readonly JsonSerializerOptions StreamJsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
 
     /// <summary>
     /// 计算下次执行时间；算不出即抛校验异常（保存时立即报错，而不是运行时静默）

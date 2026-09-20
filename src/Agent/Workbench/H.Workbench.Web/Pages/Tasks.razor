@@ -114,9 +114,64 @@
                     <input class="modal-input" @bind="_editDescription" placeholder="可选" />
                 </div>
                 <div class="form-item required">
-                    <label>* 任务内容（提示词）</label>
-                    <textarea class="modal-input modal-textarea" @bind="_editPrompt" style="min-height:100px;" placeholder="描述要完成的任务"></textarea>
+                    <label>* 创建方式</label>
+                    <div class="wb-radio-row">
+                        <label class="checkbox-label">
+                            <input type="radio" name="tkSrcType" checked="@(_editSourceType == "Prompt")" @onchange='() => _editSourceType = "Prompt"' /> 单提示词
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="radio" name="tkSrcType" checked="@(_editSourceType == "Workflow")" @onchange="OnSwitchToWorkflow" /> 工作流（多员工接力 + 人工卡点）
+                        </label>
+                    </div>
                 </div>
+                @if (_editSourceType == "Prompt")
+                {
+                    <div class="form-item required">
+                        <label>* 任务内容（提示词）</label>
+                        <textarea class="modal-input modal-textarea" @bind="_editPrompt" style="min-height:100px;" placeholder="描述要完成的任务"></textarea>
+                    </div>
+                }
+                else
+                {
+                    <div class="tk-steps">
+                        @for (var i = 0; i < _editSteps.Count; i++)
+                        {
+                            var idx = i;
+                            var step = _editSteps[idx];
+                            <div class="tk-step-card">
+                                <div class="tk-step-head">
+                                    <span class="tk-step-no">步骤 @(idx + 1)</span>
+                                    <input class="modal-input tk-step-name" @bind="step.Name" placeholder="步骤名称" />
+                                    <select class="modal-select tk-step-agent" @bind="step.AgentType">
+                                        <option value="">默认员工</option>
+                                        @foreach (var agent in _agents)
+                                        {
+                                            <option value="@agent.AgentType">@agent.DisplayName</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="tk-step-head tk-step-opts">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" @bind="step.RequireApproval" /> 人工卡点（对话执行时暂停待批准）
+                                    </label>
+                                    <span class="tk-step-failure">失败时
+                                        <select class="modal-select" @bind="step.OnFailure">
+                                            <option value="Stop">中止</option>
+                                            <option value="Skip">跳过继续</option>
+                                        </select>
+                                    </span>
+                                    <span class="tk-step-actions">
+                                        <button class="btn btn-link btn-small" disabled="@(idx == 0)" @onclick="() => MoveStep(idx, -1)">↑</button>
+                                        <button class="btn btn-link btn-small" disabled="@(idx == _editSteps.Count - 1)" @onclick="() => MoveStep(idx, 1)">↓</button>
+                                        <button class="btn btn-link btn-small btn-danger" @onclick="() => _editSteps.RemoveAt(idx)">✕</button>
+                                    </span>
+                                </div>
+                                <textarea class="modal-input modal-textarea" @bind="step.Prompt" style="min-height:64px;" placeholder="该步骤的任务提示词（自动获得前序步骤结果）"></textarea>
+                            </div>
+                        }
+                        <button class="btn btn-text btn-small" @onclick="AddStep">＋ 添加步骤</button>
+                    </div>
+                }
                 <div class="form-row">
                     <div class="form-item required">
                         <label>* 执行员工</label>
@@ -231,7 +286,35 @@
                     <span class="info-label" style="margin-left:16px;">状态:</span><span>@StatusText(_detail)</span>
                 </div>
                 <div class="model-info-row"><span class="info-label">调度:</span><span>@_detail.ScheduleDisplayText</span></div>
-                <div class="model-info-row"><span class="info-label">内容:</span><span>@_detail.PromptContent</span></div>
+                @if (_detail.SourceType == "Workflow" && ParseWorkflowSteps(_detail.WorkflowContent).Count > 0)
+                {
+                    <div class="model-info-row" style="flex-direction:column;align-items:flex-start;gap:4px;">
+                        <span><span class="info-label">工作流（@ParseWorkflowSteps(_detail.WorkflowContent).Count 步）:</span></span>
+                        @{ var si = 0; }
+                        @foreach (var ws in ParseWorkflowSteps(_detail.WorkflowContent))
+                        {
+                            si++;
+                            <span style="font-size:12px;color:#595959;">@si. @ws.Name
+                                @if (!string.IsNullOrWhiteSpace(ws.AgentType))
+                                {
+                                    <span style="color:#165DFF;">[@AgentName(ws.AgentType)]</span>
+                                }
+                                @if (ws.RequireApproval)
+                                {
+                                    <span style="color:#ad6800;">·人工卡点</span>
+                                }
+                                @if (ws.OnFailure == "Skip")
+                                {
+                                    <span style="color:#8c8c8c;">·失败跳过</span>
+                                }
+                            </span>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="model-info-row"><span class="info-label">内容:</span><span>@_detail.PromptContent</span></div>
+                }
                 <div class="model-info-row">
                     <span class="info-label">最近运行:</span><span>@(_detail.LastExecutionTime?.ToString("yyyy-MM-dd HH:mm") ?? "暂无")</span>
                     <span class="info-label" style="margin-left:16px;">执行次数:</span><span>@_detail.ExecutionCount</span>
@@ -310,6 +393,9 @@
     private Guid? _logTraceOpenId;
     private List<ExecutionStepDto> _logTraceSteps = [];
     private List<ArtifactDto> _logTraceArtifacts = [];
+
+    private string _editSourceType = "Prompt";
+    private List<WorkflowStepDto> _editSteps = [];
 
     private string toastMessage = "";
     private string toastType = "info";
@@ -417,6 +503,8 @@
         _editCron = "";
         _editEnabled = true;
         _editCategory = "";
+        _editSourceType = "Prompt";
+        _editSteps = [];
         _showDialog = true;
     }
 
@@ -438,7 +526,54 @@
         _editCron = task.CronExpression ?? "";
         _editEnabled = task.IsEnabled;
         _editCategory = task.Category;
+        _editSourceType = task.SourceType == "Workflow" ? "Workflow" : "Prompt";
+        _editSteps = ParseWorkflowSteps(task.WorkflowContent);
         _showDialog = true;
+    }
+
+    private static List<WorkflowStepDto> ParseWorkflowSteps(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return [];
+        try
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<List<WorkflowStepDto>>(json,
+                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? [];
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    private void OnSwitchToWorkflow()
+    {
+        _editSourceType = "Workflow";
+        if (_editSteps.Count == 0)
+        {
+            _editSteps.Add(NewStep());
+            if (!string.IsNullOrWhiteSpace(_editPrompt))
+            {
+                _editSteps[0].Name = "步骤 1";
+                _editSteps[0].Prompt = _editPrompt.Trim();
+            }
+        }
+    }
+
+    private static WorkflowStepDto NewStep() => new()
+    {
+        Id = Guid.NewGuid().ToString("N")[..8],
+        Name = "",
+        Prompt = "",
+        OnFailure = "Stop"
+    };
+
+    private void AddStep() => _editSteps.Add(NewStep());
+
+    private void MoveStep(int index, int delta)
+    {
+        var target = index + delta;
+        if (target < 0 || target >= _editSteps.Count) return;
+        (_editSteps[index], _editSteps[target]) = (_editSteps[target], _editSteps[index]);
     }
 
     private void CloseDialog() => _showDialog = false;
@@ -446,8 +581,26 @@
     private async Task SaveAsync()
     {
         if (string.IsNullOrWhiteSpace(_editName)) { ShowToast("请输入任务名称", "warning"); return; }
-        if (string.IsNullOrWhiteSpace(_editPrompt)) { ShowToast("请输入任务内容", "warning"); return; }
         if (string.IsNullOrWhiteSpace(_editAgentType)) { ShowToast("请选择执行员工", "warning"); return; }
+
+        string promptContent;
+        string? workflowContent = null;
+        if (_editSourceType == "Workflow")
+        {
+            if (_editSteps.Count == 0 || _editSteps.Any(s => string.IsNullOrWhiteSpace(s.Name) || string.IsNullOrWhiteSpace(s.Prompt)))
+            {
+                ShowToast("工作流每个步骤都需要名称与任务提示词", "warning");
+                return;
+            }
+            workflowContent = System.Text.Json.JsonSerializer.Serialize(_editSteps,
+                new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase });
+            promptContent = string.Join(" → ", _editSteps.Select(s => s.Name.Trim()));
+        }
+        else
+        {
+            if (string.IsNullOrWhiteSpace(_editPrompt)) { ShowToast("请输入任务内容", "warning"); return; }
+            promptContent = _editPrompt.Trim();
+        }
 
         _saving = true;
         try
@@ -469,7 +622,9 @@
                     TaskName = _editName.Trim(),
                     TaskDescription = _editDescription.Trim(),
                     Category = _editCategory,
-                    PromptContent = _editPrompt.Trim(),
+                    SourceType = _editSourceType,
+                    WorkflowContent = workflowContent,
+                    PromptContent = promptContent,
                     AgentType = _editAgentType,
                     ProjectId = projectId,
                     ExecutionMode = _editMode,
@@ -490,7 +645,9 @@
                     TaskName = _editName.Trim(),
                     TaskDescription = _editDescription.Trim(),
                     Category = _editCategory,
-                    PromptContent = _editPrompt.Trim(),
+                    SourceType = _editSourceType,
+                    WorkflowContent = workflowContent,
+                    PromptContent = promptContent,
                     AgentType = _editAgentType,
                     ProjectId = projectId,
                     ExecutionMode = _editMode,
@@ -777,5 +934,67 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+    }
+
+    /* ========== 工作流步骤编辑器 ========== */
+    .tk-steps {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 12px;
+        max-height: 340px;
+        overflow-y: auto;
+        padding-right: 4px;
+    }
+
+    .tk-step-card {
+        border: 1px solid #e8e8e8;
+        border-radius: 8px;
+        padding: 10px;
+        background: #fafbfc;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .tk-step-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .tk-step-no {
+        flex-shrink: 0;
+        font-size: 12px;
+        color: #8c8c8c;
+    }
+
+    .tk-step-name {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .tk-step-agent {
+        flex-shrink: 0;
+        max-width: 130px;
+    }
+
+    .tk-step-opts {
+        font-size: 12px;
+        color: #595959;
+        justify-content: flex-start;
+        gap: 12px;
+    }
+
+    .tk-step-failure {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .tk-step-actions {
+        margin-left: auto;
+        display: inline-flex;
+        gap: 2px;
     }
 </style>
