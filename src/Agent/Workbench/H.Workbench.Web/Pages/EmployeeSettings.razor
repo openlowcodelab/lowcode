@@ -8,6 +8,7 @@
 @inject IWorkbenchProjectAppService ProjectAppService
 @inject ILLMAppService LlmAppService
 @inject ITaskAppService TaskAppService
+@inject IWorkflowAppService WorkflowAppService
 @inject NavigationManager Navigation
 
 <PageTitle>员工设置 - AI 工作台</PageTitle>
@@ -108,6 +109,103 @@ else
                     @if (!_tasks.Any())
                     {
                         <div class="empty-state"><div class="empty-text">暂无任务</div></div>
+                    }
+                </div>
+            }
+            else if (_section == "workflows")
+            {
+                <div class="es-wf-bar">
+                    <h2 class="es-title">工作流</h2>
+                    <button class="btn btn-primary workbench-btn-primary btn-small" @onclick="AddWorkflow">＋ 新建工作流</button>
+                </div>
+                <div class="es-note">工作流是该员工可复用的多步流程模板：每步可指派其他员工（多员工接力）、设置人工卡点与失败策略；在任务页以「工作流」方式创建任务时可直接选用。</div>
+                <div class="rs-rows">
+                    @foreach (var wf in _workflows)
+                    {
+                        <div class="es-wf-card">
+                            @if (!wf.Editing)
+                            {
+                                <div class="es-wf-row">
+                                    <div class="rs-row-info">
+                                        <div class="rs-row-name">@wf.Name
+                                            @if (!wf.Enabled)
+                                            {
+                                                <span class="em-role">已停用</span>
+                                            }
+                                            <span class="es-wf-count">@wf.Steps.Count 步</span>
+                                        </div>
+                                        <div class="rs-row-desc">@(string.IsNullOrWhiteSpace(wf.Description) ? wf.Chain : wf.Description)</div>
+                                        <div class="es-wf-chain">@wf.Chain</div>
+                                    </div>
+                                    <button class="btn btn-link btn-small" @onclick="() => wf.Editing = true">编辑</button>
+                                    <button class="btn btn-link btn-small btn-danger" @onclick="() => DeleteWorkflowAsync(wf)">删除</button>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="es-wf-form">
+                                    <div class="form-row">
+                                        <div class="form-item required">
+                                            <label>* 名称</label>
+                                            <input class="modal-input" @bind="wf.Name" placeholder="如：需求到发布" />
+                                        </div>
+                                        <div class="form-item">
+                                            <label>描述</label>
+                                            <input class="modal-input" @bind="wf.Description" placeholder="可选" />
+                                        </div>
+                                    </div>
+                                    <div class="es-wf-steps">
+                                        @for (var i = 0; i < wf.Steps.Count; i++)
+                                        {
+                                            var idx = i;
+                                            var step = wf.Steps[idx];
+                                            <div class="es-step-card">
+                                                <div class="es-step-head">
+                                                    <span class="es-step-no">步骤 @(idx + 1)</span>
+                                                    <input class="modal-input es-step-name" @bind="step.Name" placeholder="步骤名称" />
+                                                    <select class="modal-select es-step-agent" @bind="step.AgentType">
+                                                        <option value="">默认员工</option>
+                                                        @foreach (var agent in _allAgents)
+                                                        {
+                                                            <option value="@agent.AgentType">@agent.DisplayName</option>
+                                                        }
+                                                    </select>
+                                                </div>
+                                                <div class="es-step-head es-step-opts">
+                                                    <label class="checkbox-label">
+                                                        <input type="checkbox" @bind="step.RequireApproval" /> 人工卡点（对话执行时暂停待批准）
+                                                    </label>
+                                                    <span class="es-step-failure">失败时
+                                                        <select class="modal-select" @bind="step.OnFailure">
+                                                            <option value="Stop">中止</option>
+                                                            <option value="Skip">跳过继续</option>
+                                                        </select>
+                                                    </span>
+                                                    <span class="es-step-actions">
+                                                        <button class="btn btn-link btn-small" disabled="@(idx == 0)" @onclick="() => MoveStep(wf, idx, -1)">↑</button>
+                                                        <button class="btn btn-link btn-small" disabled="@(idx == wf.Steps.Count - 1)" @onclick="() => MoveStep(wf, idx, 1)">↓</button>
+                                                        <button class="btn btn-link btn-small btn-danger" @onclick="() => wf.Steps.RemoveAt(idx)">✕</button>
+                                                    </span>
+                                                </div>
+                                                <textarea class="modal-input modal-textarea" @bind="step.Prompt" style="min-height:64px;" placeholder="该步骤的任务提示词（自动获得前序步骤结果）"></textarea>
+                                            </div>
+                                        }
+                                        <button class="btn btn-text btn-small" @onclick="() => wf.Steps.Add(NewStep())">＋ 添加步骤</button>
+                                    </div>
+                                    <div class="es-wf-foot">
+                                        <label class="checkbox-label"><input type="checkbox" @bind="wf.Enabled" /> 启用</label>
+                                        <span class="es-wf-foot-actions">
+                                            <button class="btn btn-text btn-small" @onclick="() => CancelWorkflow(wf)">取消</button>
+                                            <button class="btn btn-primary workbench-btn-primary btn-small" disabled="@_wfSaving" @onclick="() => SaveWorkflowAsync(wf)">保存</button>
+                                        </span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    @if (!_workflows.Any())
+                    {
+                        <div class="empty-state"><div class="empty-text">暂无工作流，点右上「新建工作流」开始编排</div></div>
                     }
                 </div>
             }
@@ -240,6 +338,7 @@ else
     [
         ("overview", "概览"),
         ("tasks", "任务"),
+        ("workflows", "工作流"),
         ("skills", "Skill"),
         ("connectors", "连接器"),
         ("knowledge", "知识库"),
@@ -250,6 +349,8 @@ else
 
     private AgentDto? _agent;
     private List<TaskDto> _tasks = [];
+    private List<WfCard> _workflows = [];
+    private List<AgentDto> _allAgents = [];
     private List<SkillDto> _skills = [];
     private List<ConnectorDto> _connectors = [];
     private List<KnowledgeBaseDto> _knowledgeBases = [];
@@ -276,6 +377,7 @@ else
     private List<LLMDto> _models = [];
 
     private bool _saving;
+    private bool _wfSaving;
 
     private string toastMessage = "";
     private string toastType = "info";
@@ -330,6 +432,14 @@ else
                         AgentType = _agent?.AgentType,
                         MaxResultCount = 100
                     })).Data?.Items.ToList() ?? [];
+                    break;
+                case "workflows":
+                    _allAgents = (await AgentAppService.GetListAsync(new AgentQueryDto { MaxResultCount = 100 })).Data?.Items.ToList() ?? [];
+                    _workflows = (await WorkflowAppService.GetListAsync(new WorkflowQueryDto
+                    {
+                        AgentType = _agent?.AgentType,
+                        MaxResultCount = 100
+                    })).Data?.Items.Select(WfCard.From).ToList() ?? [];
                     break;
                 case "skills":
                     _skills = (await SkillAppService.GetListAsync(new SkillDefinitionQueryDto { MaxResultCount = 100 })).Data?.Items.ToList() ?? [];
@@ -471,6 +581,113 @@ else
         }
     }
 
+    private void AddWorkflow()
+    {
+        var card = new WfCard { Editing = true };
+        card.Steps.Add(NewStep());
+        _workflows.Insert(0, card);
+    }
+
+    private static WorkflowStepDto NewStep() => new()
+    {
+        Id = Guid.NewGuid().ToString("N")[..8],
+        Name = "",
+        Prompt = "",
+        OnFailure = "Stop"
+    };
+
+    private static void MoveStep(WfCard wf, int index, int delta)
+    {
+        var target = index + delta;
+        if (target < 0 || target >= wf.Steps.Count) return;
+        (wf.Steps[index], wf.Steps[target]) = (wf.Steps[target], wf.Steps[index]);
+    }
+
+    private async Task CancelWorkflow(WfCard wf)
+    {
+        if (wf.Id is null)
+        {
+            _workflows.Remove(wf);
+            return;
+        }
+
+        wf.Editing = false;
+        await LoadSectionAsync();
+    }
+
+    private async Task SaveWorkflowAsync(WfCard wf)
+    {
+        if (_agent is null) return;
+        if (string.IsNullOrWhiteSpace(wf.Name))
+        {
+            ShowToast("请输入工作流名称", "warning");
+            return;
+        }
+
+        if (wf.Steps.Count == 0 || wf.Steps.Any(s => string.IsNullOrWhiteSpace(s.Name) || string.IsNullOrWhiteSpace(s.Prompt)))
+        {
+            ShowToast("工作流每个步骤都需要名称与任务提示词", "warning");
+            return;
+        }
+
+        _wfSaving = true;
+        try
+        {
+            if (wf.Id is null)
+            {
+                await WorkflowAppService.CreateAsync(new CreateWorkflowDto
+                {
+                    AgentType = _agent.AgentType,
+                    WorkflowName = wf.Name.Trim(),
+                    Description = wf.Description.Trim(),
+                    IsEnabled = wf.Enabled,
+                    Steps = wf.Steps
+                });
+            }
+            else
+            {
+                await WorkflowAppService.UpdateAsync(wf.Id.Value, new UpdateWorkflowDto
+                {
+                    WorkflowName = wf.Name.Trim(),
+                    Description = wf.Description.Trim(),
+                    IsEnabled = wf.Enabled,
+                    Steps = wf.Steps
+                });
+            }
+
+            ShowToast("工作流已保存", "success");
+            await LoadSectionAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"保存失败: {ex.Message}", "error");
+        }
+        finally
+        {
+            _wfSaving = false;
+        }
+    }
+
+    private async Task DeleteWorkflowAsync(WfCard wf)
+    {
+        if (wf.Id is null)
+        {
+            _workflows.Remove(wf);
+            return;
+        }
+
+        try
+        {
+            await WorkflowAppService.DeleteAsync(wf.Id.Value);
+            ShowToast("工作流已删除", "success");
+            await LoadSectionAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"删除失败: {ex.Message}", "error");
+        }
+    }
+
     private void ShowToast(string message, string type = "info")
     {
         toastMessage = message;
@@ -483,6 +700,33 @@ else
             toastVisible = false;
             await InvokeAsync(StateHasChanged);
         });
+    }
+
+    /// <summary>
+    /// 工作流卡片视图模型：Editing 时该卡片原地展开为内联编辑器
+    /// </summary>
+    private sealed class WfCard
+    {
+        public Guid? Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public bool Enabled { get; set; } = true;
+        public List<WorkflowStepDto> Steps { get; set; } = [];
+        public bool Editing { get; set; }
+
+        public string Chain => Steps.Count == 0
+            ? "暂无步骤"
+            : string.Join(" → ", Steps.Select((s, i) =>
+                string.IsNullOrWhiteSpace(s.Name) ? $"步骤 {i + 1}" : s.Name.Trim()));
+
+        public static WfCard From(WorkflowDto dto) => new()
+        {
+            Id = dto.Id,
+            Name = dto.WorkflowName,
+            Description = dto.Description,
+            Enabled = dto.IsEnabled,
+            Steps = dto.Steps
+        };
     }
 }
 
@@ -623,5 +867,130 @@ else
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+    }
+
+    /* ========== 工作流（内联步骤编辑器） ========== */
+    .es-wf-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .es-wf-bar .es-title {
+        margin-bottom: 0;
+    }
+
+    .es-wf-bar + .es-note {
+        margin-top: 12px;
+    }
+
+    .es-wf-card {
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .es-wf-card:last-child {
+        border-bottom: none;
+    }
+
+    .es-wf-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 16px;
+    }
+
+    .es-wf-count {
+        font-size: 11px;
+        color: #165DFF;
+        border: 1px solid #adc6ff;
+        background: #f0f5ff;
+        border-radius: 4px;
+        padding: 0 6px;
+        line-height: 18px;
+    }
+
+    .es-wf-chain {
+        font-size: 12px;
+        color: #bfbfbf;
+        margin-top: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .es-wf-form {
+        padding: 14px 16px;
+        background: #fafbfc;
+    }
+
+    .es-wf-steps {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 12px;
+    }
+
+    .es-step-card {
+        border: 1px solid #e8e8e8;
+        border-radius: 8px;
+        padding: 10px;
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .es-step-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .es-step-no {
+        flex-shrink: 0;
+        font-size: 12px;
+        color: #8c8c8c;
+    }
+
+    .es-step-name {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .es-step-agent {
+        flex-shrink: 0;
+        max-width: 130px;
+    }
+
+    .es-step-opts {
+        font-size: 12px;
+        color: #595959;
+        justify-content: flex-start;
+        gap: 12px;
+    }
+
+    .es-step-failure {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .es-step-actions {
+        margin-left: auto;
+        display: inline-flex;
+        gap: 2px;
+    }
+
+    .es-wf-foot {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .es-wf-foot-actions {
+        margin-left: auto;
+        display: inline-flex;
+        gap: 8px;
     }
 </style>

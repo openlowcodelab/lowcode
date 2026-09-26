@@ -4,6 +4,7 @@
 @inject ITaskAppService TaskAppService
 @inject IAgentAppService AgentAppService
 @inject IWorkbenchProjectAppService ProjectAppService
+@inject IWorkflowAppService WorkflowAppService
 
 <PageTitle>任务 - AI 工作台</PageTitle>
 
@@ -133,6 +134,16 @@
                 }
                 else
                 {
+                    <div class="form-item">
+                        <label>从员工工作流导入</label>
+                        <select class="modal-select" @bind="_editTemplateId" @bind:after="ApplyWorkflowTemplate">
+                            <option value="">（手动编排步骤）</option>
+                            @foreach (var tpl in _workflowTemplates)
+                            {
+                                <option value="@tpl.Id">@AgentName(tpl.AgentType) · @tpl.WorkflowName（@tpl.Steps.Count 步）</option>
+                            }
+                        </select>
+                    </div>
                     <div class="tk-steps">
                         @for (var i = 0; i < _editSteps.Count; i++)
                         {
@@ -396,6 +407,8 @@
 
     private string _editSourceType = "Prompt";
     private List<WorkflowStepDto> _editSteps = [];
+    private List<WorkflowDto> _workflowTemplates = [];
+    private string _editTemplateId = "";
 
     private string toastMessage = "";
     private string toastType = "info";
@@ -405,6 +418,7 @@
     {
         await LoadAgentsAsync();
         await LoadProjectsAsync();
+        await LoadWorkflowTemplatesAsync();
         await LoadTasksAsync();
     }
 
@@ -427,6 +441,45 @@
             _projects = (await ProjectAppService.GetListAsync(new WorkbenchProjectQueryDto { MaxResultCount = 100 })).Data?.Items.ToList() ?? [];
         }
         catch { }
+    }
+
+    private async Task LoadWorkflowTemplatesAsync()
+    {
+        try
+        {
+            _workflowTemplates = (await WorkflowAppService.GetListAsync(new WorkflowQueryDto
+            {
+                IsEnabled = true,
+                MaxResultCount = 100
+            })).Data?.Items.ToList() ?? [];
+        }
+        catch { }
+    }
+
+    /// <summary>
+    /// 选用员工工作流模板：深拷贝步骤进编辑器，改任务不影响模板本身
+    /// </summary>
+    private void ApplyWorkflowTemplate()
+    {
+        if (!Guid.TryParse(_editTemplateId, out var id)) return;
+        var template = _workflowTemplates.FirstOrDefault(t => t.Id == id);
+        if (template is null) return;
+
+        _editSteps = template.Steps.Select(s => new WorkflowStepDto
+        {
+            Id = string.IsNullOrWhiteSpace(s.Id) ? Guid.NewGuid().ToString("N")[..8] : s.Id,
+            Name = s.Name,
+            Prompt = s.Prompt,
+            AgentType = s.AgentType,
+            RequireApproval = s.RequireApproval,
+            OnFailure = s.OnFailure,
+            OutputVar = s.OutputVar
+        }).ToList();
+
+        if (!string.IsNullOrWhiteSpace(template.AgentType))
+        {
+            _editAgentType = template.AgentType;
+        }
     }
 
     private async Task LoadTasksAsync()
@@ -505,6 +558,7 @@
         _editCategory = "";
         _editSourceType = "Prompt";
         _editSteps = [];
+        _editTemplateId = "";
         _showDialog = true;
     }
 
@@ -528,6 +582,7 @@
         _editCategory = task.Category;
         _editSourceType = task.SourceType == "Workflow" ? "Workflow" : "Prompt";
         _editSteps = ParseWorkflowSteps(task.WorkflowContent);
+        _editTemplateId = "";
         _showDialog = true;
     }
 

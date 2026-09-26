@@ -25,6 +25,7 @@ public class WorkbenchDbContext : AbpDbContext<WorkbenchDbContext>
     public DbSet<AgentTemplateEntity> AgentTemplates { get; set; } = null!;
     public DbSet<TaskExecutionStepEntity> TaskExecutionSteps { get; set; } = null!;
     public DbSet<ArtifactEntity> Artifacts { get; set; } = null!;
+    public DbSet<WorkflowEntity> Workflows { get; set; } = null!;
 
     public WorkbenchDbContext(DbContextOptions<WorkbenchDbContext> options)
         : base(options)
@@ -294,6 +295,19 @@ public class WorkbenchDbContext : AbpDbContext<WorkbenchDbContext>
             b.Property(x => x.ConnectorIds).HasMaxLength(2000);
             b.Property(x => x.KnowledgeBaseIds).HasMaxLength(2000);
             b.Property(x => x.ProjectIds).HasMaxLength(2000);
+        });
+
+        modelBuilder.Entity<WorkflowEntity>(b =>
+        {
+            b.ToTable("Workflow");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.AgentType).IsRequired().HasMaxLength(100);
+            b.Property(x => x.WorkflowName).IsRequired().HasMaxLength(200);
+            b.Property(x => x.Description).HasMaxLength(1000);
+            b.Property(x => x.Steps).IsRequired().HasMaxLength(8000);
+
+            b.HasIndex(x => new { x.AgentType, x.WorkflowName }).IsUnique();
+            b.HasIndex(x => x.IsEnabled);
         });
     }
 }
