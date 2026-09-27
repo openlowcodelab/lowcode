@@ -187,6 +187,14 @@
                 }
             </div>
 
+            @if (_attachableRunId is not null && !_executing)
+            {
+                <div class="wb-attach">
+                    <span>员工仍在后台执行这次任务</span>
+                    <button class="btn btn-text btn-small" @onclick="AttachRunningAsync">接着看</button>
+                </div>
+            }
+
             <div class="wb-input-card">
                 <textarea class="wb-input" placeholder="继续对话，回车发送（Shift+Enter 换行）..."
                           @bind="_input" @bind:event="oninput" @onkeydown="OnConvInputKeyDownAsync"></textarea>
@@ -195,6 +203,11 @@
                         <option>@(_chatTask.ProjectId is null ? "无项目" : _projects.FirstOrDefault(p => p.Id == _chatTask.ProjectId)?.ProjectName ?? "未知项目")</option>
                     </select>
                     <span class="wb-conv-hint">继续对话将作为该任务的一次新执行（携带历史上下文）</span>
+                    @if (_executing && _runningRunId is not null)
+                    {
+                        <button class="wb-send wb-stop" title="停止执行（离开页面不会中断执行，只有这里会）"
+                                @onclick="StopRunAsync">■</button>
+                    }
                     <button class="wb-send" disabled="@(_executing || string.IsNullOrWhiteSpace(_input))"
                             @onclick="SendFollowUpAsync">↑</button>
                 </div>
@@ -363,6 +376,12 @@
     private TaskDto? _chatTask;
     private List<ConvMessage> _chatMessages = [];
     private bool _executing;
+
+    /// <summary>当前订阅的运行 id；停止按钮凭它取消，关掉页面不影响它继续跑</summary>
+    private Guid? _runningRunId;
+
+    /// <summary>打开对话时发现仍在跑的运行，供"接着看"续订</summary>
+    private Guid? _attachableRunId;
     private string? _streamStatus;
 
     private sealed class PendingApprovalVm
@@ -645,10 +664,13 @@
     {
         _chatTask = task;
         _chatMessages = [];
+        _attachableRunId = null;
         try
         {
             var logs = (await TaskAppService.GetExecutionLogsAsync(task.Id, 50)).Data ?? [];
             var ordered = logs.OrderBy(l => l.StartTime).ToList();
+            // 执行已脱离浏览器连接，刷新后常见"仍在跑"的运行——记住它以便续订
+            _attachableRunId = ordered.LastOrDefault(l => l.Status == "Running")?.Id;
             if (ordered.Count == 0)
             {
                 _chatMessages.Add(new ConvMessage { Role = "user", Content = task.PromptContent, Time = task.CreationTime });
@@ -722,7 +744,7 @@
         await StreamExecuteAsync(_chatTask, prompt);
     }
 
-    private async Task StreamExecuteAsync(TaskDto task, string? prompt = null)
+    private async Task StreamExecuteAsync(TaskDto task, string? prompt = null, Guid? attachRunId = null)
     {
         if (_chatTask is null || _executing) return;
 
@@ -746,7 +768,7 @@
         using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(20));
         try
         {
-            await foreach (var data in client.StreamAsync(task.Id, prompt, cts.Token))
+            await foreach (var data in StreamSourceAsync(client, task, prompt, attachRunId, cts.Token))
             {
                 string? type = null, content = null, message = null, toolName = null,
                     toolCallId = null, arguments = null, result = null, state = null, preview = null,
@@ -875,12 +897,17 @@
         }
         catch (Exception ex)
         {
-            live.Role = "error";
-            live.Content = ex.Message;
-            ShowToast($"执行失败: {ex.Message}", "error");
+            // 订阅断开不等于执行失败：宿主还在跑，这里只说明"看不到直播了"
+            live.Role = "assistant";
+            live.Content = string.IsNullOrEmpty(live.Content)
+                ? $"实时连接中断（{ex.Message}），员工仍在后台执行，稍后回来可看到结果。"
+                : live.Content;
+            ShowToast("实时连接中断，员工仍在后台执行", "warning");
         }
         finally
         {
+            _runningRunId = null;
+            _attachableRunId = null;
             live.StepCount = live.Steps.Count;
             live.TraceLoaded = true;
             _executing = false;
@@ -909,6 +936,56 @@
             ScrollConversationToBottom();
             StateHasChanged();
         }
+    }
+
+    /// <summary>
+    /// 事件来源：给了 attachRunId 就直接续订那次运行，否则先提交再订阅。
+    /// 提交与订阅分成两步，页面才拿得到 runId 去按“停止”。
+    /// </summary>
+    private async IAsyncEnumerable<string> StreamSourceAsync(
+        TaskStreamClient client, TaskDto task, string? prompt, Guid? attachRunId,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken ct)
+    {
+        var runId = attachRunId ?? Guid.Empty;
+        if (runId == Guid.Empty)
+        {
+            runId = await client.StartAsync(task.Id, prompt, ct);
+        }
+
+        if (runId == Guid.Empty)
+        {
+            yield return "{\"type\":\"error\",\"message\":\"任务启动失败\",\"isFatal\":true}";
+            yield break;
+        }
+
+        _runningRunId = runId;
+        StateHasChanged();
+
+        await foreach (var data in client.SubscribeAsync(runId, ct))
+        {
+            yield return data;
+        }
+    }
+
+    private async Task StopRunAsync()
+    {
+        if (_runningRunId is not { } runId) return;
+
+        _streamStatus = "正在停止…";
+        try
+        {
+            await new TaskStreamClient(HttpClientFactory, RemoteOptions).CancelAsync(runId);
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"停止请求失败: {ex.Message}", "error");
+        }
+    }
+
+    private async Task AttachRunningAsync()
+    {
+        if (_chatTask is null || _attachableRunId is not { } runId || _executing) return;
+        await StreamExecuteAsync(_chatTask, null, runId);
     }
 
     private static ConvMessage LogToMessage(TaskLogDto log) => new()
@@ -1315,6 +1392,29 @@
     .wb-send:disabled {
         background: #d9d9d9;
         cursor: not-allowed;
+    }
+
+    /* 停止执行：沿用发送按钮的形状，只换底色，不引入新样式语言 */
+    .wb-stop {
+        background: #f2f3f5;
+        color: #595959;
+    }
+
+        .wb-stop:hover:not(:disabled) {
+            background: #e5e6eb;
+        }
+
+    .wb-attach {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin: 0 0 8px;
+        padding: 6px 10px;
+        border-radius: 6px;
+        background: #f7f8fa;
+        color: #595959;
+        font-size: 13px;
     }
 
     /* ========== 任务选中态 ========== */
