@@ -48,6 +48,12 @@ public class TaskEntity : AuditedEntity<Guid>
     public string PromptContent { get; set; } = string.Empty;
 
     /// <summary>
+    /// 验收标准：员工声称完成后由 Verifier 据此裁决 Pass/Fail/Unclear。
+    /// 为空则不裁决（无判据的裁决只是第二个幻觉）
+    /// </summary>
+    public string? AcceptanceCriteria { get; set; }
+
+    /// <summary>
     /// 归属项目 ID（可选）
     /// </summary>
     public Guid? ProjectId { get; set; }

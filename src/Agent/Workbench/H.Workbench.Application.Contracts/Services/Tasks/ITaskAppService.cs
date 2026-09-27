@@ -67,4 +67,19 @@ public interface ITaskAppService : IAppService
     /// 回传工具审批裁决（立即返回，不等待执行结果；幂等：过期/重复裁决返回失败提示）
     /// </summary>
     Task<BaseOutput<ApprovalOutcomeDto>> ResumeApprovalAsync(ResumeApprovalInputDto input);
+
+    /// <summary>
+    /// 人工验收一次执行产出的全部产物，返回被更新的条数
+    /// </summary>
+    Task<BaseOutput<int>> ReviewArtifactsAsync(ReviewArtifactsInputDto input);
+
+    /// <summary>
+    /// 跨任务聚合的审批队列。state 为空时只回待裁决（Pending），否则按指定终态过滤
+    /// </summary>
+    Task<BaseOutput<List<ApprovalQueueItemDto>>> GetApprovalQueueAsync(string? state = null, int maxCount = 50);
+
+    /// <summary>
+    /// 运行看板：按时间窗聚合成功率、验收裁决、token 成本与按员工/任务的分布
+    /// </summary>
+    Task<BaseOutput<RuntimeStatsDto>> GetRuntimeStatsAsync(int days = 7);
 }

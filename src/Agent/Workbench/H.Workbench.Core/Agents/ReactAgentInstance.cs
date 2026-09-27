@@ -33,6 +33,11 @@ public class ReactAgentInstance : IAgentInstance, IStreamingAgent
     /// </summary>
     private readonly AgentApprovalContext? _approval;
 
+    /// <summary>
+    /// 运行预算（token 累计 / 挂钟），由 AgentFactory 按 Workbench:Budget 配置注入
+    /// </summary>
+    private readonly RunBudget _budget;
+
     private static readonly JsonSerializerOptions EventJsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -48,7 +53,8 @@ public class ReactAgentInstance : IAgentInstance, IStreamingAgent
         ILogger<ReactAgentInstance> logger,
         Func<string, Task<string>>? systemPromptAugmentor = null,
         IReadOnlyDictionary<string, string>? toolOwners = null,
-        AgentApprovalContext? approval = null)
+        AgentApprovalContext? approval = null,
+        RunBudget? budget = null)
     {
         _llmProvider = llmProvider;
         _definition = definition;
@@ -59,6 +65,7 @@ public class ReactAgentInstance : IAgentInstance, IStreamingAgent
         _systemPromptAugmentor = systemPromptAugmentor;
         _toolOwners = toolOwners;
         _approval = approval;
+        _budget = budget ?? RunBudget.Unlimited;
     }
 
     public string Name => _definition.DisplayName;
@@ -94,7 +101,7 @@ public class ReactAgentInstance : IAgentInstance, IStreamingAgent
         var history = BuildHistory(conversationHistory);
         var systemPrompt = await BuildSystemPromptAsync(message);
         var agent = new ReactAgent(_llmProvider, _toolExecutor, _toolDefs, _reactLogger, _toolOwners, _approval,
-            _definition.Temperature, _definition.MaxTokens);
+            _definition.Temperature, _definition.MaxTokens, _budget);
 
         var finalAnswer = string.Empty;
 
@@ -146,7 +153,7 @@ public class ReactAgentInstance : IAgentInstance, IStreamingAgent
         var history = BuildHistory(conversationHistory);
         var systemPrompt = await BuildSystemPromptAsync(message);
         var agent = new ReactAgent(_llmProvider, _toolExecutor, _toolDefs, _reactLogger, _toolOwners, _approval,
-            _definition.Temperature, _definition.MaxTokens);
+            _definition.Temperature, _definition.MaxTokens, _budget);
 
         await foreach (var evt in agent.RunAsync(message, history, systemPrompt, GetMaxIterations(), ct))
         {
@@ -167,6 +174,7 @@ public class ReactAgentInstance : IAgentInstance, IStreamingAgent
             ApprovalRequiredEvent ar => new { type = ar.Type, approvalId = ar.ApprovalId, toolName = ar.ToolName, skillName = ar.SkillName, toolCallId = ar.ToolCallId, arguments = ar.Arguments, timeoutSeconds = ar.TimeoutSeconds, iteration = ar.Iteration },
             ApprovalResolvedEvent ao => new { type = ao.Type, approvalId = ao.ApprovalId, toolName = ao.ToolName, decision = ao.Decision, approverId = ao.ApproverId, waitMs = ao.WaitMs, iteration = ao.Iteration },
             FinalAnswerEvent a => new { type = a.Type, content = a.Content, iteration = a.Iteration },
+            UsageEvent u => new { type = u.Type, promptTokens = u.PromptTokens, completionTokens = u.CompletionTokens, totalTokens = u.TotalTokens, iteration = u.Iteration },
             ErrorEvent e => new { type = e.Type, message = e.Message, isFatal = e.IsFatal, iteration = e.Iteration },
             _ => new { type = evt.Type, iteration = evt.Iteration }
         };

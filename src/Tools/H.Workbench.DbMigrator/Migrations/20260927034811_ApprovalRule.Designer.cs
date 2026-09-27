@@ -4,6 +4,7 @@ using H.Workbench.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Volo.Abp.EntityFrameworkCore;
 
@@ -12,9 +13,11 @@ using Volo.Abp.EntityFrameworkCore;
 namespace H.Workbench.DbMigrator.Migrations
 {
     [DbContext(typeof(WorkbenchDbContext))]
-    partial class WorkbenchDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260927034811_ApprovalRule")]
+    partial class ApprovalRule
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1056,9 +1059,6 @@ namespace H.Workbench.DbMigrator.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("ApprovalId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<string>("ApprovalState")
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
@@ -1135,8 +1135,6 @@ namespace H.Workbench.DbMigrator.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("Kind", "ApprovalState");
 
                     b.HasIndex("TaskId", "StartedAt");
 

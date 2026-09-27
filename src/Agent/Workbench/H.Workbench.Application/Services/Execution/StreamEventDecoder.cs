@@ -11,6 +11,8 @@ public enum StreamEventKind
     ApprovalRequired,
     ApprovalResolved,
     Answer,
+    Usage,
+    Verify,
     Error
 }
 
@@ -36,6 +38,11 @@ public sealed class DecodedEvent
     public long? WaitMs { get; init; }
     public string? Message { get; init; }
     public bool IsFatal { get; init; } = true;
+    public int PromptTokens { get; init; }
+    public int CompletionTokens { get; init; }
+    public int TotalTokens { get; init; }
+    public string? Verdict { get; init; }
+    public string? Reason { get; init; }
 }
 
 /// <summary>
@@ -118,6 +125,21 @@ public static class StreamEventDecoder
                     Kind = StreamEventKind.Answer,
                     Iteration = iteration,
                     Content = GetString(root, "content")
+                },
+                "usage" => new DecodedEvent
+                {
+                    Kind = StreamEventKind.Usage,
+                    Iteration = iteration,
+                    PromptTokens = GetInt(root, "promptTokens"),
+                    CompletionTokens = GetInt(root, "completionTokens"),
+                    TotalTokens = GetInt(root, "totalTokens")
+                },
+                "verify" => new DecodedEvent
+                {
+                    Kind = StreamEventKind.Verify,
+                    Iteration = iteration,
+                    Verdict = GetString(root, "verdict"),
+                    Reason = GetString(root, "reason")
                 },
                 "error" => new DecodedEvent
                 {

@@ -217,6 +217,17 @@
                 case "Answer" when ShowAnswer:
                     items.Add(new StepItem { Kind = "Answer", Iteration = s.Iteration, Detail = s.Content, Truncated = s.Truncated });
                     break;
+                case "Verify":
+                    items.Add(new StepItem
+                    {
+                        Kind = "Verify",
+                        ToolName = s.ToolName,
+                        Iteration = s.Iteration,
+                        Detail = s.Content,
+                        State = s.IsError ? "error" : "ok",
+                        StateText = VerdictText(s.ToolName)
+                    });
+                    break;
                 case "Error":
                     items.Add(new StepItem { Kind = "Error", Iteration = s.Iteration, Detail = s.Content, State = "error", StateText = s.IsError ? "失败" : null });
                     break;
@@ -258,6 +269,7 @@
         "Answer" => "回答",
         "Error" => "错误",
         "Approval" => $"审批：{item.ToolName}",
+        "Verify" => "验收裁决",
         _ => item.ToolName ?? "工具"
     };
 
@@ -268,7 +280,16 @@
         "Answer" => "✉️",
         "Error" => "⚠️",
         "Approval" => "🔐",
+        "Verify" => "🧪",
         _ => "🔧"
+    };
+
+    private static string? VerdictText(string? verdict) => verdict switch
+    {
+        "Pass" => "通过",
+        "Fail" => "未通过",
+        "Unclear" => "证据不足",
+        _ => verdict
     };
 
     private static string? ApprovalText(string? state) => state switch

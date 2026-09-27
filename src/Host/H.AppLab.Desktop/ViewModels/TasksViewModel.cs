@@ -1145,6 +1145,9 @@ public partial class TaskEditModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsAutoMode))]
     private string executionMode = "Auto";
 
+    /// <summary>验收标准：桌面编辑器暂不暴露，仅为往返保留 Web 端配置，避免保存时清空</summary>
+    public string? AcceptanceCriteria { get; set; }
+
     [ObservableProperty]
     private string promptContent = string.Empty;
 
@@ -1212,6 +1215,7 @@ public partial class TaskEditModel : ObservableObject
         SourceType = "Prompt";
         ExecutionMode = "Auto";
         PromptContent = string.Empty;
+        AcceptanceCriteria = null;
         AgentType = defaultAgentType;
         ModelConfigId = null;
         WorkflowSteps.Clear();
@@ -1233,6 +1237,7 @@ public partial class TaskEditModel : ObservableObject
         SourceType = string.IsNullOrWhiteSpace(task.SourceType) ? "Prompt" : task.SourceType;
         ExecutionMode = string.IsNullOrWhiteSpace(task.ExecutionMode) ? "Auto" : task.ExecutionMode;
         PromptContent = task.PromptContent;
+        AcceptanceCriteria = task.AcceptanceCriteria;
         AgentType = task.AgentType;
         ModelConfigId = task.ModelConfigId;
         WorkflowSteps.Clear();
@@ -1240,12 +1245,21 @@ public partial class TaskEditModel : ObservableObject
         {
             try
             {
-                var steps = JsonSerializer.Deserialize<List<WorkflowStepDto>>(task.WorkflowContent);
+                var steps = JsonSerializer.Deserialize<List<WorkflowStepDto>>(task.WorkflowContent, WorkflowJsonOptions);
                 if (steps != null)
                 {
                     foreach (var step in steps)
                     {
-                        WorkflowSteps.Add(new WorkflowStepEditModel { Name = step.Name, Prompt = step.Prompt });
+                        WorkflowSteps.Add(new WorkflowStepEditModel
+                        {
+                            Name = step.Name,
+                            Prompt = step.Prompt,
+                            StepId = step.Id,
+                            StepAgentType = step.AgentType,
+                            RequireApproval = step.RequireApproval,
+                            OnFailure = step.OnFailure,
+                            OutputVar = step.OutputVar
+                        });
                     }
                 }
             }
@@ -1282,6 +1296,17 @@ public partial class TaskEditModel : ObservableObject
         _ => ""
     };
 
+    /// <summary>
+    /// 与 Web 端步骤编辑器同构：camelCase 写、大小写不敏感读。
+    /// 未在桌面编辑器暴露的字段（指派员工/卡点/失败策略/输出变量）必须原样回写，
+    /// 否则桌面保存一次就会清空 Web 端配置的工作流
+    /// </summary>
+    private static readonly JsonSerializerOptions WorkflowJsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        PropertyNameCaseInsensitive = true
+    };
+
     /// <summary>序列化工作流步骤为 JSON（非工作流任务返回 null）</summary>
     private string? BuildWorkflowContent()
     {
@@ -1291,9 +1316,18 @@ public partial class TaskEditModel : ObservableObject
         }
         var steps = WorkflowSteps
             .Where(s => !string.IsNullOrWhiteSpace(s.Name) || !string.IsNullOrWhiteSpace(s.Prompt))
-            .Select(s => new WorkflowStepDto { Name = s.Name, Prompt = s.Prompt })
+            .Select(s => new WorkflowStepDto
+            {
+                Id = string.IsNullOrWhiteSpace(s.StepId) ? Guid.NewGuid().ToString("N")[..8] : s.StepId,
+                Name = s.Name,
+                Prompt = s.Prompt,
+                AgentType = s.StepAgentType,
+                RequireApproval = s.RequireApproval,
+                OnFailure = string.IsNullOrWhiteSpace(s.OnFailure) ? "Stop" : s.OnFailure,
+                OutputVar = s.OutputVar
+            })
             .ToList();
-        return JsonSerializer.Serialize(steps);
+        return JsonSerializer.Serialize(steps, WorkflowJsonOptions);
     }
 
     public CreateTaskDto ToCreateDto() => new()
@@ -1305,6 +1339,7 @@ public partial class TaskEditModel : ObservableObject
         WorkflowContent = BuildWorkflowContent(),
         ExecutionMode = ExecutionMode,
         PromptContent = PromptContent,
+        AcceptanceCriteria = AcceptanceCriteria,
         AgentType = AgentType,
         ModelConfigId = ModelConfigId,
         ScheduleType = ScheduleType?.Value ?? "Daily",
@@ -1325,6 +1360,7 @@ public partial class TaskEditModel : ObservableObject
         WorkflowContent = BuildWorkflowContent(),
         ExecutionMode = ExecutionMode,
         PromptContent = PromptContent,
+        AcceptanceCriteria = AcceptanceCriteria,
         AgentType = AgentType,
         ModelConfigId = ModelConfigId,
         ScheduleType = ScheduleType?.Value ?? "Daily",
@@ -1347,6 +1383,17 @@ public partial class WorkflowStepEditModel : ObservableObject
 
     [ObservableProperty]
     private string prompt = string.Empty;
+
+    /// <summary>以下字段桌面编辑器暂不暴露，仅为往返保留 Web 端配置</summary>
+    public string StepId { get; set; } = string.Empty;
+
+    public string? StepAgentType { get; set; }
+
+    public bool RequireApproval { get; set; }
+
+    public string OnFailure { get; set; } = "Stop";
+
+    public string? OutputVar { get; set; }
 }
 
 /// <summary>

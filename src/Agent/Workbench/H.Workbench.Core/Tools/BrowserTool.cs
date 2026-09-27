@@ -1,3 +1,4 @@
+using H.Workbench.Core.Tools.Internal;
 using System.ComponentModel;
 using System.Net;
 using System.Text;
@@ -68,30 +69,27 @@ public class BrowserTool
             using var response = await _httpClient.SendAsync(request, cts.Token).ConfigureAwait(false);
             var content = await response.Content.ReadAsStringAsync(cts.Token).ConfigureAwait(false);
 
-            var result = new
+            var payload = new
             {
-                StatusCode = (int)response.StatusCode,
-                StatusDescription = response.StatusCode.ToString(),
-                Content = content,
-                Url = response.RequestMessage?.RequestUri?.ToString()
+                statusCode = (int)response.StatusCode,
+                statusDescription = response.StatusCode.ToString(),
+                content,
+                url = response.RequestMessage?.RequestUri?.ToString()
             };
 
-            return JsonSerializer.Serialize(result, new JsonSerializerOptions
-            {
-                WriteIndented = false,
-                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-            });
+            return response.IsSuccessStatusCode
+                ? ToolEnvelope.Ok(payload)
+                : ToolEnvelope.Fail($"访问 {url} 返回 HTTP {(int)response.StatusCode} ({response.StatusCode})");
         }
         catch (Exception ex)
         {
-            return $"❌ 访问网页失败: {ex.Message}";
+            return ToolEnvelope.Fail($"访问网页失败: {ex.Message}");
         }
     }
 
-    [Description("提取网页的文本内容。参数：url, selector（可选 CSS 选择器）, timeoutSeconds, cancellationToken。")]
+    [Description("提取网页的纯文本内容（已移除脚本与标签，最长 10000 字）。参数：url, timeoutSeconds, cancellationToken。")]
     public static async Task<string> ExtractTextAsync(
         [Description("目标网页 URL")] string url,
-        [Description("CSS 选择器，用于提取特定区域的文本，可为 null")] string? selector = null,
         [Description("请求超时（秒），默认 30 秒")] int timeoutSeconds = 30,
         CancellationToken cancellationToken = default)
     {
@@ -105,33 +103,24 @@ public class BrowserTool
             using var response = await _httpClient.GetAsync(url, cts.Token).ConfigureAwait(false);
             var html = await response.Content.ReadAsStringAsync(cts.Token).ConfigureAwait(false);
 
+            if (!response.IsSuccessStatusCode)
+            {
+                return ToolEnvelope.Fail($"提取文本失败：{url} 返回 HTTP {(int)response.StatusCode}");
+            }
+
             // 简单 HTML 转文本（移除标签）
             var text = HtmlToText(html);
 
-            if (!string.IsNullOrWhiteSpace(selector))
+            return ToolEnvelope.Ok(new
             {
-                // 简化版：尝试提取包含 selector 关键字的内容
-                // 完整实现需要 HTML 解析器，这里使用简单的字符串匹配
-                text = $"⚠️ CSS 选择器 '{selector}' 需要完整的 HTML 解析器支持，返回全文内容";
-            }
-
-            var result = new
-            {
-                Success = true,
-                Text = text.Length > 10000 ? text[..10000] + "..." : text,
-                Url = url
-            };
-
-            // 禁用非 ASCII 字符转义，确保中文等字符正常显示
-            return JsonSerializer.Serialize(result, new JsonSerializerOptions
-            {
-                WriteIndented = false,
-                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                url,
+                text = text.Length > 10000 ? text[..10000] + "..." : text,
+                truncated = text.Length > 10000
             });
         }
         catch (Exception ex)
         {
-            return $"❌ 提取文本失败: {ex.Message}";
+            return ToolEnvelope.Fail($"提取文本失败: {ex.Message}");
         }
     }
 
@@ -151,27 +140,24 @@ public class BrowserTool
             using var response = await _httpClient.GetAsync(url, cts.Token).ConfigureAwait(false);
             var html = await response.Content.ReadAsStringAsync(cts.Token).ConfigureAwait(false);
 
+            if (!response.IsSuccessStatusCode)
+            {
+                return ToolEnvelope.Fail($"提取链接失败：{url} 返回 HTTP {(int)response.StatusCode}");
+            }
+
             // 简单提取链接
             var links = ExtractLinksFromHtml(html, url);
 
-            var result = new
+            return ToolEnvelope.Ok(new
             {
-                Success = true,
-                LinkCount = links.Count,
-                Links = links.Take(100).ToList(), // 限制返回数量
-                Url = url
-            };
-
-            // 禁用非 ASCII 字符转义，确保中文等字符正常显示
-            return JsonSerializer.Serialize(result, new JsonSerializerOptions
-            {
-                WriteIndented = false,
-                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                url,
+                linkCount = links.Count,
+                links = links.Take(100).ToList() // 限制返回数量
             });
         }
         catch (Exception ex)
         {
-            return $"❌ 提取链接失败: {ex.Message}";
+            return ToolEnvelope.Fail($"提取链接失败: {ex.Message}");
         }
     }
 
@@ -191,32 +177,23 @@ public class BrowserTool
             var request = new HttpRequestMessage(HttpMethod.Head, url);
             using var response = await _httpClient.SendAsync(request, cts.Token).ConfigureAwait(false);
 
-            var result = new
+            // "不可达"是本工具要回报的结论，不是工具自身失败，故不占用 success=false 语义
+            return ToolEnvelope.Ok(new
             {
-                Success = response.IsSuccessStatusCode,
-                StatusCode = (int)response.StatusCode,
-                StatusDescription = response.StatusCode.ToString(),
-                Url = url
-            };
-
-            // 禁用非 ASCII 字符转义，确保中文等字符正常显示
-            return JsonSerializer.Serialize(result, new JsonSerializerOptions
-            {
-                WriteIndented = false,
-                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                url,
+                reachable = response.IsSuccessStatusCode,
+                statusCode = (int)response.StatusCode,
+                statusDescription = response.StatusCode.ToString()
             });
         }
         catch (Exception ex)
         {
-            return JsonSerializer.Serialize(new
+            return ToolEnvelope.Ok(new
             {
-                Success = false,
-                Error = ex.Message,
-                Url = url
-            }, new JsonSerializerOptions
-            {
-                WriteIndented = false,
-                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                url,
+                reachable = false,
+                statusCode = 0,
+                statusDescription = ex.Message
             });
         }
     }

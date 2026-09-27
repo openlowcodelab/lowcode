@@ -29,6 +29,65 @@ public class WorkbenchToolOptions
     public TraceOptions Trace { get; set; } = new();
 
     public MemoryInjectionOptions Memory { get; set; } = new();
+
+    public BudgetOptions Budget { get; set; } = new();
+
+    public VerificationOptions Verification { get; set; } = new();
+
+    /// <summary>
+    /// 数据库工具可引用的数据源白名单：模型只能按名字引用，不能自带连接串。
+    /// 连接串目前仍是明文配置（AES 加密/凭据库属后续项），因此这里只应放低权限账号。
+    /// </summary>
+    public List<DataSourceOptions> DataSources { get; set; } = new();
+}
+
+/// <summary>
+/// 登记给数据库工具使用的数据源
+/// </summary>
+public class DataSourceOptions
+{
+    /// <summary>模型引用它时用的名字（如 orderdb）</summary>
+    public string Name { get; set; } = string.Empty;
+
+    public string ConnectionString { get; set; } = string.Empty;
+
+    /// <summary>只读源会拒绝 ExecuteCommandAsync 的写操作</summary>
+    public bool ReadOnly { get; set; } = true;
+}
+
+/// <summary>
+/// 单次运行预算与配额：无人值守执行（定时任务/工作流）失控时的兜底闸门
+/// </summary>
+public class BudgetOptions
+{
+    /// <summary>
+    /// 单次执行的 token 上限（输入+输出累计），0=不限。
+    /// 默认给足正常工作的余量，只拦失控循环
+    /// </summary>
+    public int MaxTokensPerRun { get; set; } = 400000;
+
+    /// <summary>
+    /// 单次执行挂钟上限（秒），须大于 ToolTimeoutSeconds，否则长工具被提前掐
+    /// </summary>
+    public int MaxWallClockSeconds { get; set; } = 3600;
+
+    /// <summary>
+    /// 宿主内并发执行上限（含工作流与定时任务）
+    /// </summary>
+    public int MaxConcurrentRuns { get; set; } = 4;
+}
+
+/// <summary>
+/// 结果验收（Verifier）配置：员工自评为什么默认开——没有裁决的"完成"只是员工的说法
+/// </summary>
+public class VerificationOptions
+{
+    public bool Enabled { get; set; } = true;
+
+    /// <summary>
+    /// 送审的结果/证据截断长度，控制验收本身的 token 成本
+    /// </summary>
+    public int MaxEvidenceChars { get; set; } = 4000;
 }
 
 /// <summary>

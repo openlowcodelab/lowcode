@@ -45,6 +45,7 @@ public class TaskWorker : BackgroundService
 
                 // 每轮兜底：回收"进程活着但流静默死掉"的超长 Running 行（断连/异常未走到收尾）
                 await SweepAbandonedRunningLogsAsync(dbContext, logger, staleBefore: DateTime.Now.AddMinutes(-15), ct: stoppingToken);
+                await SweepOrphanedApprovalsAsync(dbContext, logger, stoppingToken);
                 var now = DateTime.Now;
 
                 // 查找待执行的任务（已启用且下次执行时间已到），AsNoTracking 避免干扰后续条件更新
@@ -143,6 +144,23 @@ public class TaskWorker : BackgroundService
         if (abandoned > 0)
         {
             logger.LogWarning("回收 {Count} 条悬挂的执行中日志为 Abandoned", abandoned);
+        }
+    }
+
+    /// <summary>
+    /// 审批等待者是进程内对象，宿主重启即失效。把所属执行已结束/消失的 Pending 裁决行标成 Orphaned，
+    /// 否则审批收件箱里会永远挂着点不动的条目。
+    /// </summary>
+    private static async Task SweepOrphanedApprovalsAsync(WorkbenchDbContext dbContext, ILogger logger, CancellationToken ct)
+    {
+        var orphans = await dbContext.TaskExecutionSteps
+            .Where(s => s.Kind == "Approval" && s.ApprovalState == "Pending"
+                        && dbContext.TaskLogs.Any(l => l.Id == s.TaskLogId && l.Status != "Running"))
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.ApprovalState, "Orphaned"), ct);
+
+        if (orphans > 0)
+        {
+            logger.LogWarning("{Count} 条待审批裁决因所属执行已结束，标记为失效", orphans);
         }
     }
 

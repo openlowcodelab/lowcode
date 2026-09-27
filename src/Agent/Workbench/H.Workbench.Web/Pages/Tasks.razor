@@ -183,6 +183,11 @@
                         <button class="btn btn-text btn-small" @onclick="AddStep">＋ 添加步骤</button>
                     </div>
                 }
+                <div class="form-item">
+                    <label>验收标准（可选）</label>
+                    <textarea class="modal-input modal-textarea" @bind="_editAcceptance" style="min-height:56px;"
+                              placeholder="写清「怎样算做完了」。执行结束后由一次不带工具的模型复核据此裁决 Pass/Fail；留空则不验收"></textarea>
+                </div>
                 <div class="form-row">
                     <div class="form-item required">
                         <label>* 执行员工</label>
@@ -326,6 +331,12 @@
                 {
                     <div class="model-info-row"><span class="info-label">内容:</span><span>@_detail.PromptContent</span></div>
                 }
+                @if (!string.IsNullOrWhiteSpace(_detail.AcceptanceCriteria))
+                {
+                    <div class="model-info-row">
+                        <span class="info-label">验收标准:</span><span>@_detail.AcceptanceCriteria</span>
+                    </div>
+                }
                 <div class="model-info-row">
                     <span class="info-label">最近运行:</span><span>@(_detail.LastExecutionTime?.ToString("yyyy-MM-dd HH:mm") ?? "暂无")</span>
                     <span class="info-label" style="margin-left:16px;">执行次数:</span><span>@_detail.ExecutionCount</span>
@@ -388,6 +399,7 @@
     private string _editName = "";
     private string _editDescription = "";
     private string _editPrompt = "";
+    private string _editAcceptance = "";
     private string _editAgentType = "";
     private string _editProjectId = "";
     private string _editMode = "Manual";
@@ -546,6 +558,7 @@
         _editName = "";
         _editDescription = "";
         _editPrompt = "";
+        _editAcceptance = "";
         _editAgentType = _agents[0].AgentType;
         _editProjectId = "";
         _editMode = _type == "scheduled" ? "Auto" : "Manual";
@@ -568,6 +581,7 @@
         _editName = task.TaskName;
         _editDescription = task.TaskDescription;
         _editPrompt = task.PromptContent;
+        _editAcceptance = task.AcceptanceCriteria ?? "";
         _editAgentType = task.AgentType;
         _editProjectId = task.ProjectId?.ToString() ?? "";
         _editMode = task.ExecutionMode;
@@ -680,6 +694,7 @@
                     SourceType = _editSourceType,
                     WorkflowContent = workflowContent,
                     PromptContent = promptContent,
+                    AcceptanceCriteria = string.IsNullOrWhiteSpace(_editAcceptance) ? null : _editAcceptance.Trim(),
                     AgentType = _editAgentType,
                     ProjectId = projectId,
                     ExecutionMode = _editMode,
@@ -703,6 +718,7 @@
                     SourceType = _editSourceType,
                     WorkflowContent = workflowContent,
                     PromptContent = promptContent,
+                    AcceptanceCriteria = string.IsNullOrWhiteSpace(_editAcceptance) ? null : _editAcceptance.Trim(),
                     AgentType = _editAgentType,
                     ProjectId = projectId,
                     ExecutionMode = _editMode,

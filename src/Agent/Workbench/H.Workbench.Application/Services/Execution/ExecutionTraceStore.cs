@@ -44,20 +44,6 @@ public class ExecutionTraceStore : ITransientDependency
         await uow.CompleteAsync();
     }
 
-    public async Task UpdateApprovalStepAsync(Guid stepId, string state, string? approverId, int? waitMs)
-    {
-        using var uow = _unitOfWorkManager.Begin(requiresNew: true, isTransactional: false);
-        var step = await _stepRepository.FindAsync(stepId);
-        if (step != null)
-        {
-            step.ApprovalState = state;
-            step.ApproverId = approverId;
-            step.WaitMs = waitMs;
-            await _stepRepository.UpdateAsync(step, autoSave: true);
-        }
-        await uow.CompleteAsync();
-    }
-
     /// <summary>
     /// 工作流步骤头部行状态回填（执行中→Success/Failed/Skipped）
     /// </summary>
@@ -80,6 +66,28 @@ public class ExecutionTraceStore : ITransientDependency
         foreach (var artifact in artifacts)
         {
             await _artifactRepository.InsertAsync(artifact, autoSave: true);
+        }
+        await uow.CompleteAsync();
+    }
+
+    /// <summary>
+    /// 按 approvalId 回填裁决结果。审批中心与对话页都不依赖执行侧的内存簿记，
+    /// 裁决一旦生效就立刻把行状态写死——否则刷新后同一请求还会显示"待裁决"。
+    /// </summary>
+    public async Task UpdateApprovalByIdAsync(Guid approvalId, string state, string? approverId, int? waitMs)
+    {
+        using var uow = _unitOfWorkManager.Begin(requiresNew: true, isTransactional: false);
+        var step = await _stepRepository.FindAsync(s => s.Kind == "Approval" && s.ApprovalId == approvalId);
+        if (step != null)
+        {
+            step.ApprovalState = state;
+            if (approverId is not null) step.ApproverId = approverId;
+            if (waitMs is not null) step.WaitMs = waitMs;
+            await _stepRepository.UpdateAsync(step, autoSave: true);
+        }
+        else
+        {
+            _logger.LogWarning("未找到 approvalId={ApprovalId} 对应的审批轨迹行，裁决结果无法回填", approvalId);
         }
         await uow.CompleteAsync();
     }
@@ -108,7 +116,11 @@ public class ExecutionTraceStore : ITransientDependency
         string? errorMessage,
         int stepCount,
         int artifactCount,
-        string? approvalState)
+        string? approvalState,
+        int promptTokens = 0,
+        int completionTokens = 0,
+        string? verdict = null,
+        string? verdictReason = null)
     {
         using var uow = _unitOfWorkManager.Begin(requiresNew: true, isTransactional: false);
         var log = await _logRepository.FindAsync(logId);
@@ -120,6 +132,10 @@ public class ExecutionTraceStore : ITransientDependency
             log.StepCount = stepCount;
             log.ArtifactCount = artifactCount;
             log.ApprovalState = approvalState;
+            log.PromptTokens = promptTokens;
+            log.CompletionTokens = completionTokens;
+            log.Verdict = verdict;
+            log.VerdictReason = verdictReason;
             log.EndTime = DateTime.Now;
             await _logRepository.UpdateAsync(log);
         }

@@ -1,9 +1,31 @@
 @namespace H.Workbench.Web
+@using H.Workbench.Application.Contracts
+@inject ITaskAppService TaskAppService
 @* 执行产物卡片：git 提交/推送/克隆、文件变更、命令执行；同文件多次写按路径去重展示 *@
 @if (Artifacts is { Count: > 0 })
 {
     <div class="wb-artifacts">
-        <div class="wb-artifacts-title">工作成果（@Artifacts.Count）</div>
+        <div class="wb-artifacts-title">
+            <span>工作成果（@Artifacts.Count）@(_reviewLabel is null ? "" : $" · {_reviewLabel}")</span>
+            @if (_taskLogId != Guid.Empty)
+            {
+                <span class="wb-artifact-actions">
+                    @if (_reviewing)
+                    {
+                        <span class="wb-artifact-meta">提交中…</span>
+                    }
+                    else if (_reviewStatus == "Pending")
+                    {
+                        <button class="btn btn-link btn-small" @onclick='() => ReviewAsync("Accepted")'>接受</button>
+                        <button class="btn btn-link btn-small btn-danger" @onclick='() => ReviewAsync("Rejected")'>不认可</button>
+                    }
+                    else
+                    {
+                        <button class="btn btn-link btn-small" @onclick='() => ReviewAsync("Pending")'>退回待验收</button>
+                    }
+                </span>
+            }
+        </div>
         @foreach (var group in DisplayGroups)
         {
             <div class="wb-artifact wb-artifact-@group.Kind.ToLowerInvariant() @(group.Success ? "" : "wb-artifact-fail")">
@@ -24,9 +46,24 @@
     private record DisplayArtifact(string Kind, string Title, List<string> Meta, bool Success);
 
     private List<DisplayArtifact> DisplayGroups { get; set; } = [];
+    private Guid _taskLogId;
+    private string _reviewStatus = "Pending";
+    private bool _reviewing;
+
+    private string? _reviewLabel => _reviewStatus switch
+    {
+        "Accepted" => "已接受",
+        "Rejected" => "未认可",
+        _ => null
+    };
 
     protected override void OnParametersSet()
     {
+        _taskLogId = Artifacts.FirstOrDefault()?.TaskLogId ?? Guid.Empty;
+        _reviewStatus = Artifacts.Any(a => a.ReviewStatus == "Rejected") ? "Rejected"
+            : Artifacts.All(a => a.ReviewStatus == "Accepted") ? "Accepted"
+            : "Pending";
+
         var groups = new List<DisplayArtifact>();
         var fileIndex = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
@@ -48,6 +85,28 @@
         }
 
         DisplayGroups = groups;
+    }
+
+    private async Task ReviewAsync(string status)
+    {
+        if (_taskLogId == Guid.Empty || _reviewing) return;
+
+        _reviewing = true;
+        var res = await TaskAppService.ReviewArtifactsAsync(new ReviewArtifactsInputDto
+        {
+            TaskLogId = _taskLogId,
+            Status = status
+        });
+        _reviewing = false;
+
+        if (res.Success)
+        {
+            foreach (var a in Artifacts)
+            {
+                a.ReviewStatus = status;
+            }
+            _reviewStatus = status;
+        }
     }
 
     private static string BuildTitle(ArtifactDto a) => a.Kind switch
@@ -107,9 +166,20 @@
     }
 
     .wb-artifacts-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
         font-size: 12px;
         color: #8c8c8c;
         margin-bottom: 2px;
+    }
+
+    .wb-artifact-actions {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-weight: normal;
     }
 
     .wb-artifact {

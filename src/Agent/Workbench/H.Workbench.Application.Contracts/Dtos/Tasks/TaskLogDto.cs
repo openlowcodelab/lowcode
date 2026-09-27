@@ -14,6 +14,12 @@ public class TaskLogDto : CreationAuditedEntityDto<Guid>
     public int StepCount { get; set; }
     public int ArtifactCount { get; set; }
     public string? ApprovalState { get; set; }
+    public int PromptTokens { get; set; }
+    public int CompletionTokens { get; set; }
+
+    /// <summary>验收裁决：Pass/Fail/Unclear，null=未验收</summary>
+    public string? Verdict { get; set; }
+    public string? VerdictReason { get; set; }
     public string? Result { get; set; }
     public string? ErrorMessage { get; set; }
     public DateTime StartTime { get; set; }

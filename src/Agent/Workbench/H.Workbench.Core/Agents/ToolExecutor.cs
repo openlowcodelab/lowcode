@@ -1,3 +1,4 @@
+using H.Workbench.Core.Tools.Internal;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
@@ -67,15 +68,28 @@ public class ToolExecutor
 
             var resultText = result?.ToString() ?? "(无返回结果)";
 
-            // 截断过长的结果
+            // 未抛异常不等于成功：工具以 {success:false} 信封返回的业务失败同样标记为错误，
+            // 否则失败会以正常内容进入下一轮对话、并被模型当作事实继续加工
+            var failed = ToolEnvelope.IsFailure(resultText, out var failureReason);
+
+            // 截断过长的结果（含后缀必须留在 MaxResultLength 内：该长度与轨迹表
+            // TaskExecutionStep.Result 的列宽一致，超一个字符整批 INSERT 就会失败）
+            const string suffix = "\n...[结果已截断]";
             var truncated = resultText.Length > MaxResultLength;
             if (truncated)
             {
-                resultText = resultText[..MaxResultLength] + "\n...[结果已截断]";
+                resultText = resultText[..Math.Max(0, MaxResultLength - suffix.Length)] + suffix;
             }
 
-            _logger.LogInformation("工具 {ToolName} 执行成功, 结果长度: {Len}", toolName, resultText.Length);
-            return new ToolExecutionResult(resultText, false, truncated, Elapsed(startedAt));
+            if (failed)
+            {
+                _logger.LogWarning("工具 {ToolName} 返回失败: {Reason}", toolName, failureReason);
+            }
+            else
+            {
+                _logger.LogInformation("工具 {ToolName} 执行成功, 结果长度: {Len}", toolName, resultText.Length);
+            }
+            return new ToolExecutionResult(resultText, failed, truncated, Elapsed(startedAt));
         }
         catch (OperationCanceledException) when (!ct.IsCancellationRequested)
         {

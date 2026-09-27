@@ -4,6 +4,7 @@ using H.Workbench.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Volo.Abp.EntityFrameworkCore;
 
@@ -12,9 +13,11 @@ using Volo.Abp.EntityFrameworkCore;
 namespace H.Workbench.DbMigrator.Migrations
 {
     [DbContext(typeof(WorkbenchDbContext))]
-    partial class WorkbenchDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260926142219_ArtifactReview")]
+    partial class ArtifactReview
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -178,67 +181,6 @@ namespace H.Workbench.DbMigrator.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("AgentTemplate", (string)null);
-                });
-
-            modelBuilder.Entity("H.Workbench.EntityFrameworkCore.ApprovalRuleEntity", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("AgentType")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("ArgPattern")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("CreationTime");
-
-                    b.Property<Guid?>("CreatorId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("CreatorId");
-
-                    b.Property<string>("Effect")
-                        .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)")
-                        .HasDefaultValue("Require");
-
-                    b.Property<bool>("IsEnabled")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime?>("LastModificationTime")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("LastModificationTime");
-
-                    b.Property<Guid?>("LastModifierId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("LastModifierId");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<int>("Priority")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ToolPattern")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AgentType");
-
-                    b.HasIndex("IsEnabled", "Priority");
-
-                    b.ToTable("ApprovalRule", (string)null);
                 });
 
             modelBuilder.Entity("H.Workbench.EntityFrameworkCore.ArtifactEntity", b =>
@@ -1056,9 +998,6 @@ namespace H.Workbench.DbMigrator.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("ApprovalId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<string>("ApprovalState")
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
@@ -1135,8 +1074,6 @@ namespace H.Workbench.DbMigrator.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("Kind", "ApprovalState");
 
                     b.HasIndex("TaskId", "StartedAt");
 

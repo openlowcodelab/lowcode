@@ -33,6 +33,11 @@ public class ReactAgent
     private readonly int _maxTokens;
 
     /// <summary>
+    /// 运行预算：无人值守执行时拦失控（token 累计 / 挂钟超时）
+    /// </summary>
+    private readonly RunBudget _budget;
+
+    /// <summary>
     /// 默认最大迭代次数
     /// </summary>
     private const int DefaultMaxIterations = 10;
@@ -45,7 +50,8 @@ public class ReactAgent
         IReadOnlyDictionary<string, string>? toolOwners = null,
         AgentApprovalContext? approval = null,
         float temperature = 0.7f,
-        int maxTokens = 2000)
+        int maxTokens = 2000,
+        RunBudget? budget = null)
     {
         _provider = provider;
         _toolExecutor = toolExecutor;
@@ -55,6 +61,7 @@ public class ReactAgent
         _approval = approval is null || approval.Mode == "None" ? null : approval;
         _temperature = temperature;
         _maxTokens = maxTokens;
+        _budget = budget ?? RunBudget.Unlimited;
     }
 
     /// <summary>
@@ -83,9 +90,23 @@ public class ReactAgent
 
         _logger.LogInformation("ReAct 循环开始: 总消息数={Count}, 最大迭代={MaxIter}", messages.Count, maxIterations);
 
+        var startedAt = DateTime.UtcNow;
+        var spentTokens = 0;
+
         for (int iteration = 1; iteration <= maxIterations; iteration++)
         {
             if (ct.IsCancellationRequested) yield break;
+
+            if (_budget.HasWallClockLimit && DateTime.UtcNow - startedAt > _budget.WallClockLimit)
+            {
+                yield return new ErrorEvent
+                {
+                    Message = $"已运行 {(int)(DateTime.UtcNow - startedAt).TotalSeconds} 秒，超出单次运行预算（{_budget.WallClockLimit!.Value.TotalSeconds:0} 秒），执行中止",
+                    IsFatal = true,
+                    Iteration = iteration
+                };
+                yield break;
+            }
 
             _logger.LogInformation("=== ReAct 迭代 {Iteration} ===", iteration);
 
@@ -106,6 +127,7 @@ public class ReactAgent
             var toolCallsMap = new Dictionary<int, AccumulatedToolCall>();
             var chunkChannel = Channel.CreateUnbounded<LLMStreamChunk>();
             Exception? llmException = null;
+            var tokenBudgetExceeded = false;
 
             // 后台任务：流式读取 LLM 响应并写入 Channel
             _ = Task.Run(async () =>
@@ -168,10 +190,40 @@ public class ReactAgent
                         if (delta.FunctionArgumentsDelta != null) acc.FunctionArguments += delta.FunctionArgumentsDelta;
                     }
                 }
+
+                // token 用量增量（流末尾）→ 透出给成本账与预算闸门
+                if (chunk.Usage is { } usage)
+                {
+                    spentTokens += usage.TotalTokens;
+
+                    yield return new UsageEvent
+                    {
+                        PromptTokens = usage.PromptTokens,
+                        CompletionTokens = usage.CompletionTokens,
+                        TotalTokens = usage.TotalTokens,
+                        Iteration = iteration
+                    };
+
+                    if (_budget.HasTokenLimit && spentTokens > _budget.MaxTotalTokens)
+                    {
+                        tokenBudgetExceeded = true;
+                    }
+                }
             }
 
             _logger.LogInformation("LLM 响应完成: ContentLen={Len}, ToolCalls={Count}",
                 contentBuffer.Length, toolCallsMap.Count);
+
+            if (tokenBudgetExceeded)
+            {
+                yield return new ErrorEvent
+                {
+                    Message = $"已消耗 {spentTokens} tokens，超出单次运行预算（{_budget.MaxTotalTokens}），执行中止",
+                    IsFatal = true,
+                    Iteration = iteration
+                };
+                yield break;
+            }
 
             // LLM 调用失败处理
             if (llmException != null)
@@ -246,13 +298,21 @@ public class ReactAgent
                 // 审批门：需人工批准的工具先挂起等待裁决。
                 // 注意 OpenAI 协议硬约束：拒绝/超时也必须补 role=tool 消息，
                 // 否则悬空 tool_calls 会让下一轮 LLM 请求 400。
-                if (_approval is not null && _approval.ApprovalTools.Contains(toolCall.Function.Name))
+                // 审批判定顺序：本次运行已预授权 > 审批规则（工具+参数） > 技能级 RequiresApproval
+                var effect = ResolveToolEffect(toolCall.Function.Name, toolCall.Function.Arguments);
+
+                if (_approval is not null && effect is "Require" or "Deny")
                 {
                     ApprovalResult approval;
                     // 自动裁决也发事件对（真实 id 供轨迹配对），只是不登记等待
                     var approvalId = Guid.NewGuid();
+                    var deniedByRule = effect == "Deny";
 
-                    if (_approval.Mode == "Interactive" && _approvalRequests < _approval.MaxPerExecution)
+                    if (deniedByRule)
+                    {
+                        approval = new ApprovalResult(ApprovalOutcome.DeniedByUser, "policy-rule", 0);
+                    }
+                    else if (_approval.Mode == "Interactive" && _approvalRequests < _approval.MaxPerExecution)
                     {
                         _approvalRequests++;
                         approvalId = _approval.Gateway.Register(new ApprovalGateway.PendingRequest(
@@ -272,6 +332,10 @@ public class ReactAgent
                         };
 
                         approval = await _approval.Gateway.WaitAsync(approvalId, ct);
+                        if (approval.GrantForRun)
+                        {
+                            _approval.RunGrants.Add(toolCall.Function.Name);
+                        }
                     }
                     else
                     {
@@ -285,7 +349,7 @@ public class ReactAgent
                     {
                         ApprovalId = approvalId,
                         ToolName = toolCall.Function.Name,
-                        Decision = approval.Outcome.ToString(),
+                        Decision = deniedByRule ? "DeniedByRule" : approval.Outcome.ToString(),
                         ApproverId = approval.ApproverId,
                         WaitMs = approval.WaitMs,
                         Iteration = iteration
@@ -293,10 +357,13 @@ public class ReactAgent
 
                     if (approval.Outcome != ApprovalOutcome.Approved)
                     {
+                        var reason = deniedByRule
+                            ? $"审批策略禁止该操作（{toolCall.Function.Name}）"
+                            : $"该工具（{toolCall.Function.Name}）需要人工审批，本次结果：{approval.Outcome}";
                         var denial = System.Text.Json.JsonSerializer.Serialize(new
                         {
                             success = false,
-                            error = $"该工具（{toolCall.Function.Name}）需要人工审批，本次结果：{approval.Outcome}，未执行。请换其他方式或向用户说明。"
+                            error = $"{reason}，未执行。请换其他方式或向用户说明。"
                         });
                         messages.Add(new Message
                         {
@@ -355,6 +422,19 @@ public class ReactAgent
             IsFatal = true,
             Iteration = maxIterations
         };
+    }
+
+    /// <summary>
+    /// 工具放行判定：本次运行预授权 &gt; 审批规则（工具+参数） &gt; 技能级 RequiresApproval。
+    /// 规则未命中时必须回落到技能级，否则一条 Auto 规则会意外放行它没覆盖的工具。
+    /// </summary>
+    private string ResolveToolEffect(string toolName, string? arguments)
+    {
+        if (_approval is null) return "Auto";
+        if (_approval.RunGrants.Contains(toolName)) return "Auto";
+
+        return _approval.Rules?.Evaluate(toolName, arguments)
+               ?? (_approval.ApprovalTools.Contains(toolName) ? "Require" : "Auto");
     }
 
     /// <summary>

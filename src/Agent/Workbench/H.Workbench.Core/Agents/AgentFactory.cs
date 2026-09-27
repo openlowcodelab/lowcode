@@ -27,6 +27,7 @@ public class AgentFactory
     private readonly IToolRegistry _toolRegistry;
     private readonly McpClientManager _mcpClientManager;
     private readonly ApprovalGateway _approvalGateway;
+    private readonly IApprovalRuleAppService _approvalRuleAppService;
     private readonly WorkbenchToolOptions _options;
     private readonly ILogger<AgentFactory> _logger;
     private readonly ILogger<ReactAgent> _reactLogger;
@@ -62,6 +63,7 @@ public class AgentFactory
         IToolRegistry toolRegistry,
         McpClientManager mcpClientManager,
         ApprovalGateway approvalGateway,
+        IApprovalRuleAppService approvalRuleAppService,
         IOptions<WorkbenchToolOptions> options,
         ILogger<AgentFactory> logger,
         ILogger<ReactAgent> reactLogger,
@@ -76,6 +78,7 @@ public class AgentFactory
         _toolRegistry = toolRegistry;
         _mcpClientManager = mcpClientManager;
         _approvalGateway = approvalGateway;
+        _approvalRuleAppService = approvalRuleAppService;
         _options = options.Value;
         _logger = logger;
         _reactLogger = reactLogger;
@@ -221,7 +224,7 @@ public class AgentFactory
             .Select(d => d.Function.Name)
             .Where(n => scopedRegistry.GetToolOwner(n) is not null)
             .ToDictionary(n => n, n => scopedRegistry.GetToolOwner(n)!, StringComparer.OrdinalIgnoreCase);
-        var approval = BuildApprovalContext(runContext, scopedRegistry, enabledSkills, toolOwners);
+        var approval = await BuildApprovalContextAsync(runContext, scopedRegistry, enabledSkills, toolOwners, definition.AgentType);
 
         _logger.LogInformation("创建 ReactAgent: {AgentName}, 可用工具数: {ToolCount}{ScopeNote}{ApprovalNote}",
             definition.DisplayName, toolDefs.Count,
@@ -243,18 +246,27 @@ public class AgentFactory
 
         return new ReactAgentInstance(
             llmProvider, definition, toolExecutor, toolDefs,
-            _reactLogger, _reactInstanceLogger, augmentor, toolOwners, approval);
+            _reactLogger, _reactInstanceLogger, augmentor, toolOwners, approval,
+            new RunBudget(_options.Budget.MaxTokensPerRun, TimeSpan.FromSeconds(_options.Budget.MaxWallClockSeconds)));
     }
+
+    /// <summary>
+    /// 解析一个裸 LLM Provider 供"无工具复核"使用（验收裁决不该有动手 capabilities）。
+    /// 无可用配置时返回 null，调用方按"无法验收"降级处理。
+    /// </summary>
+    public Task<ILLMProvider?> CreateReviewProviderAsync(Guid? modelConfigId = null) =>
+        ResolveProviderAsync(modelConfigId, providerName: null, agentDefaultId: null);
 
     /// <summary>
     /// 审批门上下文：仅当调用方声明了审批模式（Task 路径）且全局开关开启时构建；
     /// MCP 工具无技能归属默认免审批（本轮不做 server 级授权）。
     /// </summary>
-    private AgentApprovalContext? BuildApprovalContext(
+    private async Task<AgentApprovalContext?> BuildApprovalContextAsync(
         AgentRunContext? runContext,
         IToolRegistry scopedRegistry,
         List<SkillDto> enabledSkills,
-        Dictionary<string, string> toolOwners)
+        Dictionary<string, string> toolOwners,
+        string agentType)
     {
         var mode = runContext?.ApprovalMode;
         if (string.IsNullOrEmpty(mode) || mode == "None" || !_options.Approval.Enabled)
@@ -272,6 +284,22 @@ public class AgentFactory
             .Select(kv => kv.Key)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
+        // 审批规则取不到时按"无规则"降级：技能级 RequiresApproval 仍然生效，
+        // 宁多问一次也不要静默放行
+        ApprovalRuleEvaluator? rules = null;
+        try
+        {
+            var effective = await _approvalRuleAppService.GetEffectiveRulesAsync(agentType);
+            if (effective.Success && effective.Data is { Count: > 0 })
+            {
+                rules = new ApprovalRuleEvaluator(effective.Data);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "审批规则加载失败，本轮仅按技能级判定");
+        }
+
         return new AgentApprovalContext(
             _approvalGateway,
             approvalTools,
@@ -281,7 +309,8 @@ public class AgentFactory
             string.Equals(_options.Approval.NonInteractivePolicy, "Allow", StringComparison.OrdinalIgnoreCase),
             runContext.TaskId ?? Guid.Empty,
             runContext.TaskLogId ?? Guid.Empty,
-            runContext.UserId);
+            runContext.UserId,
+            rules);
     }
 
     /// <summary>

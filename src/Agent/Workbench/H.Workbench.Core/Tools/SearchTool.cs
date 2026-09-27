@@ -1,6 +1,6 @@
+using H.Workbench.Core.Tools.Internal;
 using System.ComponentModel;
 using System.Net;
-using System.Text.Json;
 
 namespace H.Workbench.Core.Tools;
 
@@ -57,25 +57,24 @@ public class SearchTool
                 _ => ParseBingResults(html)
             };
 
-            var result = new
+            // 解析不出结果就是失败：此前会塞一条"注意：HTML 解析限制"占位项当成功返回，
+            // 模型据此以为搜到了东西
+            if (results.Count == 0)
             {
-                Success = true,
-                Query = query,
-                Engine = searchEngine,
-                ResultCount = results.Count,
-                Results = results
-            };
+                return ToolEnvelope.Fail($"搜索引擎 {searchEngine} 返回的页面结构无法解析出任何结果，请换用其他检索方式");
+            }
 
-            // 禁用非 ASCII 字符转义，确保中文等字符正常显示
-            return JsonSerializer.Serialize(result, new JsonSerializerOptions
+            return ToolEnvelope.Ok(new
             {
-                WriteIndented = false,
-                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                query,
+                engine = searchEngine,
+                resultCount = results.Count,
+                results
             });
         }
         catch (Exception ex)
         {
-            return $"❌ 搜索失败: {ex.Message}";
+            return ToolEnvelope.Fail($"搜索失败: {ex.Message}");
         }
     }
 
@@ -100,25 +99,22 @@ public class SearchTool
             var html = await _httpClient.GetStringAsync(url, cts.Token).ConfigureAwait(false);
             var results = ParseBingNewsResults(html);
 
-            var result = new
+            if (results.Count == 0)
             {
-                Success = true,
-                Query = query,
-                Language = language,
-                ResultCount = results.Count,
-                Results = results
-            };
+                return ToolEnvelope.Fail("新闻源返回的页面结构无法解析出任何结果，请换用其他检索方式");
+            }
 
-            // 禁用非 ASCII 字符转义，确保中文等字符正常显示
-            return JsonSerializer.Serialize(result, new JsonSerializerOptions
+            return ToolEnvelope.Ok(new
             {
-                WriteIndented = false,
-                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                query,
+                language,
+                resultCount = results.Count,
+                results
             });
         }
         catch (Exception ex)
         {
-            return $"❌ 搜索新闻失败: {ex.Message}";
+            return ToolEnvelope.Fail($"搜索新闻失败: {ex.Message}");
         }
     }
 
@@ -180,18 +176,7 @@ public class SearchTool
         }
         catch
         {
-            // 解析失败时返回空列表
-        }
-
-        // 如果正则解析失败，返回提示信息
-        if (results.Count == 0)
-        {
-            results.Add(new SearchResult
-            {
-                Title = "搜索结果",
-                Url = "",
-                Snippet = "注意：由于 HTML 解析限制，建议配合专用搜索引擎 API 使用"
-            });
+            // 解析失败时返回空列表，由调用方判定为失败
         }
 
         return results;
@@ -233,16 +218,6 @@ public class SearchTool
         {
         }
 
-        if (results.Count == 0)
-        {
-            results.Add(new SearchResult
-            {
-                Title = "搜索结果",
-                Url = "",
-                Snippet = "注意：由于 HTML 解析限制，建议配合专用搜索引擎 API 使用"
-            });
-        }
-
         return results;
     }
 
@@ -278,16 +253,6 @@ public class SearchTool
         }
         catch
         {
-        }
-
-        if (results.Count == 0)
-        {
-            results.Add(new SearchResult
-            {
-                Title = "搜索结果",
-                Url = "",
-                Snippet = "注意：由于 HTML 解析限制，建议配合专用搜索引擎 API 使用"
-            });
         }
 
         return results;
@@ -326,16 +291,6 @@ public class SearchTool
         }
         catch
         {
-        }
-
-        if (results.Count == 0)
-        {
-            results.Add(new SearchResult
-            {
-                Title = "新闻搜索结果",
-                Url = "",
-                Snippet = "注意：由于 HTML 解析限制，建议配合专用新闻 API 使用"
-            });
         }
 
         return results;

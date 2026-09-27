@@ -16,9 +16,12 @@ public enum ApprovalOutcome
     Unknown
 }
 
-/// <summary>审批裁决结果（等待时长毫秒；ApproverId 为裁决用户）</summary>
-public sealed record ApprovalResult(ApprovalOutcome Outcome, string? ApproverId, long WaitMs);
+/// <summary>审批裁决结果（等待时长毫秒；ApproverId 为裁决用户；GrantForRun=本次运行内该工具后续免批）</summary>
+public sealed record ApprovalResult(ApprovalOutcome Outcome, string? ApproverId, long WaitMs, bool GrantForRun = false);
 
+/// <summary>
+/// 审批门上下文。Rules 为空时行为与阶段B一致（只看技能级 RequiresApproval）。
+/// </summary>
 public sealed record AgentApprovalContext(
     ApprovalGateway Gateway,
     IReadOnlySet<string> ApprovalTools,
@@ -29,7 +32,12 @@ public sealed record AgentApprovalContext(
     bool NonInteractiveAllow,
     Guid TaskId,
     Guid TaskLogId,
-    string? UserId);
+    string? UserId,
+    ApprovalRuleEvaluator? Rules = null)
+{
+    /// <summary>本次运行内的预授权工具集（用户点"本次都允许"后，同名工具不再打扰）</summary>
+    public HashSet<string> RunGrants { get; } = new(StringComparer.OrdinalIgnoreCase);
+}
 
 /// <summary>
 /// 工具审批门（进程内）：ReactAgent 执行需人工批准的工具前登记请求并挂起，
@@ -63,6 +71,12 @@ public sealed class ApprovalGateway : IDisposable
         _logger = logger;
         _stoppingRegistration = lifetime.ApplicationStopping.Register(CompleteAllWithCancelled);
     }
+
+    /// <summary>
+    /// 该审批是否仍有执行体在等。日志行可能因 Kestrel 检测不到响应侧断连而长期停在 Running，
+    /// 所以"能不能裁决"只能问网关本身，不能看日志状态。
+    /// </summary>
+    public bool IsWaiting(Guid approvalId) => _pending.ContainsKey(approvalId);
 
     /// <summary>
     /// 登记审批请求，返回 approvalId（不可枚举 GUID，随事件下发给前端）
@@ -115,7 +129,7 @@ public sealed class ApprovalGateway : IDisposable
     /// 回传裁决。未知/已过期 id 返回 false（幂等：重复裁决第二次失败）；
     /// userId 与登记时不一致返回 false（防跨用户猜 id）。
     /// </summary>
-    public bool TryComplete(Guid approvalId, bool approved, string? userId, out ApprovalResult result)
+    public bool TryComplete(Guid approvalId, bool approved, string? userId, out ApprovalResult result, bool grantForRun = false)
     {
         if (_pending.TryRemove(approvalId, out var pending))
         {
@@ -133,7 +147,8 @@ public sealed class ApprovalGateway : IDisposable
             result = new ApprovalResult(
                 approved ? ApprovalOutcome.Approved : ApprovalOutcome.DeniedByUser,
                 userId,
-                Elapsed(pending));
+                Elapsed(pending),
+                approved && grantForRun);
             pending.Tcs.TrySetResult(result);
             DisposeCts(pending);
             _logger.LogInformation("审批 {ApprovalId} 已裁决: {Outcome}（by {UserId}）",

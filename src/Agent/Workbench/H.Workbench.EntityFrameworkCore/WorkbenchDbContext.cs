@@ -26,6 +26,7 @@ public class WorkbenchDbContext : AbpDbContext<WorkbenchDbContext>
     public DbSet<TaskExecutionStepEntity> TaskExecutionSteps { get; set; } = null!;
     public DbSet<ArtifactEntity> Artifacts { get; set; } = null!;
     public DbSet<WorkflowEntity> Workflows { get; set; } = null!;
+    public DbSet<ApprovalRuleEntity> ApprovalRules { get; set; } = null!;
 
     public WorkbenchDbContext(DbContextOptions<WorkbenchDbContext> options)
         : base(options)
@@ -89,6 +90,7 @@ public class WorkbenchDbContext : AbpDbContext<WorkbenchDbContext>
             b.Property(x => x.WorkflowContent).HasMaxLength(8000);
             b.Property(x => x.ExecutionMode).IsRequired().HasMaxLength(20).HasDefaultValue("Auto");
             b.Property(x => x.PromptContent).HasMaxLength(8000);
+            b.Property(x => x.AcceptanceCriteria).HasMaxLength(2000);
             b.Property(x => x.AgentType).IsRequired().HasMaxLength(50);
             b.Property(x => x.ScheduleType).IsRequired().HasMaxLength(20);
             b.Property(x => x.CronExpression).HasMaxLength(100);
@@ -108,6 +110,8 @@ public class WorkbenchDbContext : AbpDbContext<WorkbenchDbContext>
             b.Property(x => x.TaskId).IsRequired();
             b.Property(x => x.Status).IsRequired().HasMaxLength(20);
             b.Property(x => x.ApprovalState).HasMaxLength(20);
+            b.Property(x => x.Verdict).HasMaxLength(20);
+            b.Property(x => x.VerdictReason).HasMaxLength(2000);
             b.Property(x => x.StepCount).HasDefaultValue(0);
             b.Property(x => x.ArtifactCount).HasDefaultValue(0);
             b.Property(x => x.Result).HasMaxLength(8000);
@@ -134,6 +138,7 @@ public class WorkbenchDbContext : AbpDbContext<WorkbenchDbContext>
 
             b.HasIndex(x => new { x.TaskLogId, x.Iteration, x.Seq });
             b.HasIndex(x => new { x.TaskId, x.StartedAt });
+            b.HasIndex(x => new { x.Kind, x.ApprovalState });
         });
 
         modelBuilder.Entity<ArtifactEntity>(b =>
@@ -151,10 +156,14 @@ public class WorkbenchDbContext : AbpDbContext<WorkbenchDbContext>
             b.Property(x => x.ChangeType).HasMaxLength(20);
             b.Property(x => x.ToolCallId).HasMaxLength(64);
             b.Property(x => x.Payload).HasMaxLength(4000);
+            b.Property(x => x.ReviewStatus).IsRequired().HasMaxLength(20).HasDefaultValue("Pending");
+            b.Property(x => x.ReviewNote).HasMaxLength(500);
+            b.Property(x => x.ReviewerId).HasMaxLength(64);
 
             b.HasIndex(x => x.TaskLogId);
             b.HasIndex(x => new { x.TaskId, x.CreationTime });
             b.HasIndex(x => x.Kind);
+            b.HasIndex(x => x.ReviewStatus);
         });
 
         modelBuilder.Entity<AgentEntity>(b =>
@@ -308,6 +317,20 @@ public class WorkbenchDbContext : AbpDbContext<WorkbenchDbContext>
 
             b.HasIndex(x => new { x.AgentType, x.WorkflowName }).IsUnique();
             b.HasIndex(x => x.IsEnabled);
+        });
+
+        modelBuilder.Entity<ApprovalRuleEntity>(b =>
+        {
+            b.ToTable("ApprovalRule");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.Name).IsRequired().HasMaxLength(100);
+            b.Property(x => x.AgentType).HasMaxLength(100);
+            b.Property(x => x.ToolPattern).IsRequired().HasMaxLength(100);
+            b.Property(x => x.ArgPattern).HasMaxLength(500);
+            b.Property(x => x.Effect).IsRequired().HasMaxLength(20).HasDefaultValue("Require");
+
+            b.HasIndex(x => new { x.IsEnabled, x.Priority });
+            b.HasIndex(x => x.AgentType);
         });
     }
 }

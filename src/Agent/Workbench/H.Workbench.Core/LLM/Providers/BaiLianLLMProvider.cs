@@ -49,6 +49,8 @@ public class BaiLianLLMProvider : ILLMProvider
             Content = choice?.Message?.Content ?? string.Empty,
             Model = result?.Model ?? string.Empty,
             UsageTokens = result?.Usage?.TotalTokens ?? 0,
+            PromptTokens = result?.Usage?.PromptTokens ?? 0,
+            CompletionTokens = result?.Usage?.CompletionTokens ?? 0,
             ToolCalls = choice?.Message?.ToolCalls
         };
     }
@@ -86,7 +88,24 @@ public class BaiLianLLMProvider : ILLMProvider
                 {
                     var chunk = json.FromJson<QwenStreamChunk>();
                     var choice = chunk?.Choices?.FirstOrDefault();
-                    if (choice == null) continue;
+
+                    // usage chunk：choices 为空数组、只带 token 用量（需请求侧开启 include_usage）
+                    if (choice == null)
+                    {
+                        if (chunk?.Usage is { } u)
+                        {
+                            yield return new LLMStreamChunk
+                            {
+                                Usage = new LLMUsage
+                                {
+                                    PromptTokens = u.PromptTokens,
+                                    CompletionTokens = u.CompletionTokens,
+                                    TotalTokens = u.TotalTokens
+                                }
+                            };
+                        }
+                        continue;
+                    }
 
                     var streamChunk = new LLMStreamChunk
                     {
@@ -121,14 +140,16 @@ public class BaiLianLLMProvider : ILLMProvider
             ["messages"] = request.Messages
         };
 
-        if (!stream)
-        {
-            payload["temperature"] = request.Temperature;
-            payload["max_tokens"] = request.MaxTokens;
-        }
-        else
+        // 采样参数对两种模式都必须生效：此前只写非流式分支，导致 ReAct（流式）主路径
+        // 的员工人设 temperature/maxTokens 从未到达 API
+        payload["temperature"] = request.Temperature;
+        payload["max_tokens"] = request.MaxTokens;
+
+        if (stream)
         {
             payload["stream"] = true;
+            // 末尾 usage chunk 携带 token 用量，是 agent 运行成本账的唯一来源
+            payload["stream_options"] = new Dictionary<string, object> { ["include_usage"] = true };
         }
 
         if (request.Tools is { Count: > 0 })
@@ -178,6 +199,12 @@ public class QwenMessage
 
 public class QwenUsage
 {
+    [JsonPropertyName("prompt_tokens")]
+    public int PromptTokens { get; set; }
+
+    [JsonPropertyName("completion_tokens")]
+    public int CompletionTokens { get; set; }
+
     [JsonPropertyName("total_tokens")]
     public int TotalTokens { get; set; }
 }
@@ -186,6 +213,9 @@ public class QwenStreamChunk
 {
     [JsonPropertyName("choices")]
     public List<QwenStreamChoice> Choices { get; set; } = new();
+
+    [JsonPropertyName("usage")]
+    public QwenUsage? Usage { get; set; }
 }
 
 public class QwenStreamChoice

@@ -29,6 +29,9 @@ public class UpdateTaskDto
 
     public string PromptContent { get; set; } = string.Empty;
 
+    /// <summary>验收标准（可选）：执行结果据此被裁决，留空则不验收</summary>
+    public string? AcceptanceCriteria { get; set; }
+
     public string AgentType { get; set; } = string.Empty;
 
     /// <summary>归属项目 ID（可选）</summary>

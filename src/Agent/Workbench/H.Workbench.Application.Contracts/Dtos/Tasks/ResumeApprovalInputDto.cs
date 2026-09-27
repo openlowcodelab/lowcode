@@ -8,6 +8,9 @@ public class ResumeApprovalInputDto
     public Guid ApprovalId { get; set; }
     public bool Approved { get; set; }
     public string? Reason { get; set; }
+
+    /// <summary>批准的同时授予"本次运行内该工具免批"（只在当次执行内有效，不落库）</summary>
+    public bool GrantForRun { get; set; }
 }
 
 /// <summary>

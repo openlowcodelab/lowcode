@@ -24,6 +24,10 @@ public class TaskDto : AuditedEntityDto<Guid>
     public string ExecutionMode { get; set; } = "Auto";
 
     public string PromptContent { get; set; } = string.Empty;
+
+    /// <summary>验收标准：非空时执行结束由 Verifier 裁决 Pass/Fail/Unclear</summary>
+    public string? AcceptanceCriteria { get; set; }
+
     public string AgentType { get; set; } = string.Empty;
     public Guid? ProjectId { get; set; }
     public Guid? ModelConfigId { get; set; }

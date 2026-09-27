@@ -64,4 +64,16 @@ public class ArtifactEntity : CreationAuditedEntity<Guid>
     /// 附加信息 JSON：exitCode/command/truncated/bytes/changes/durationMs 等
     /// </summary>
     public string? Payload { get; set; }
+
+    /// <summary>
+    /// 人工验收状态：Pending(默认)/Accepted/Rejected。
+    /// 提交已推远端，拒绝不能撤销事实，但它把"这批成果未被认可"记下来
+    /// </summary>
+    public string ReviewStatus { get; set; } = "Pending";
+
+    public string? ReviewNote { get; set; }
+
+    public string? ReviewerId { get; set; }
+
+    public DateTime? ReviewedAt { get; set; }
 }

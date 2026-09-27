@@ -20,6 +20,7 @@ public class AgentSkillDataSeeder : IDataSeedContributor, ITransientDependency
     private readonly IRepository<SkillEntity, Guid> _skillRepository;
     private readonly IRepository<ConnectorEntity, Guid> _connectorRepository;
     private readonly IRepository<AgentTemplateEntity, Guid> _templateRepository;
+    private readonly IRepository<ApprovalRuleEntity, Guid> _approvalRuleRepository;
     private readonly ILogger<AgentSkillDataSeeder> _logger;
 
     public AgentSkillDataSeeder(
@@ -27,12 +28,14 @@ public class AgentSkillDataSeeder : IDataSeedContributor, ITransientDependency
         IRepository<SkillEntity, Guid> skillRepository,
         IRepository<ConnectorEntity, Guid> connectorRepository,
         IRepository<AgentTemplateEntity, Guid> templateRepository,
+        IRepository<ApprovalRuleEntity, Guid> approvalRuleRepository,
         ILogger<AgentSkillDataSeeder> logger)
     {
         _agentRepository = agentRepository;
         _skillRepository = skillRepository;
         _connectorRepository = connectorRepository;
         _templateRepository = templateRepository;
+        _approvalRuleRepository = approvalRuleRepository;
         _logger = logger;
     }
 
@@ -41,6 +44,47 @@ public class AgentSkillDataSeeder : IDataSeedContributor, ITransientDependency
         var skills = await SeedSkillsAsync();
         await SeedConnectorsAsync();
         await SeedTemplatesAsync(skills);
+        await SeedApprovalRulesAsync();
+    }
+
+    /// <summary>
+    /// 默认审批规则：技能级布尔只能"整个技能要不要批"，这几条把闸门收到真正会外溢影响的动作上
+    /// （推远端、写库）。用户可在规则里改，已存在的同名规则不覆盖。
+    /// </summary>
+    private async Task SeedApprovalRulesAsync()
+    {
+        var defaults = new List<ApprovalRuleEntity>
+        {
+            new()
+            {
+                Name = "推送远端需人工批准",
+                ToolPattern = "GitPushAsync",
+                Effect = "Require",
+                Priority = 20
+            },
+            new()
+            {
+                Name = "提交并推送需人工批准",
+                ToolPattern = "GitCommitPushAsync",
+                Effect = "Require",
+                Priority = 20
+            },
+            new()
+            {
+                Name = "写数据库需人工批准",
+                ToolPattern = "ExecuteCommandAsync",
+                Effect = "Require",
+                Priority = 20
+            }
+        };
+
+        var existing = (await _approvalRuleRepository.GetListAsync()).Select(x => x.Name).ToHashSet();
+
+        foreach (var rule in defaults.Where(r => !existing.Contains(r.Name)))
+        {
+            await _approvalRuleRepository.InsertAsync(rule, autoSave: true);
+            _logger.LogInformation("种子审批规则: {Name} ({ToolPattern} → {Effect})", rule.Name, rule.ToolPattern, rule.Effect);
+        }
     }
 
     private async Task SeedConnectorsAsync()
@@ -165,7 +209,7 @@ public class AgentSkillDataSeeder : IDataSeedContributor, ITransientDependency
             {
                 SkillName = "database",
                 DisplayName = "数据库工具",
-                Description = "执行 SQL 查询、数据操作、获取表信息，支持 SQL Server",
+                Description = "执行 SQL 查询、数据操作、获取表信息（SQL Server）。只能引用服务端登记的数据源名（Workbench:DataSources），不接受连接串；写操作默认需人工批准",
                 SkillType = "Function",
                 ImplementationClass = "H.Workbench.Core.Tools.DbTool"
             },

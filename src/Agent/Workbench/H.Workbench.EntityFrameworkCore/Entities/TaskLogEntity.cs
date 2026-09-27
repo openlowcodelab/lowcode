@@ -49,6 +49,26 @@ public class TaskLogEntity : CreationAuditedEntity<Guid>
     public string? ApprovalState { get; set; }
 
     /// <summary>
+    /// 本次执行累计输入 token（由各轮 usage 事件累加，供应商未回 usage 时为 0）
+    /// </summary>
+    public int PromptTokens { get; set; }
+
+    /// <summary>
+    /// 本次执行累计输出 token
+    /// </summary>
+    public int CompletionTokens { get; set; }
+
+    /// <summary>
+    /// 验收裁决：Pass/Fail/Unclear；null=未设验收标准或验收未启用
+    /// </summary>
+    public string? Verdict { get; set; }
+
+    /// <summary>
+    /// 裁决理由（Verifier 给出，人读）
+    /// </summary>
+    public string? VerdictReason { get; set; }
+
+    /// <summary>
     /// 执行结果
     /// </summary>
     public string? Result { get; set; }

@@ -72,6 +72,12 @@ public class TaskExecutionStepEntity : CreationAuditedEntity<Guid>
     /// </summary>
     public string? ApprovalState { get; set; }
 
+    /// <summary>
+    /// 审批请求 id（仅 Approval 行）。收件箱要能凭它回传裁决，
+    /// 但 waiter 仍在进程内——执行已结束时该 id 失效，由清扫器标 Orphaned
+    /// </summary>
+    public Guid? ApprovalId { get; set; }
+
     public string? ApproverId { get; set; }
 
     /// <summary>

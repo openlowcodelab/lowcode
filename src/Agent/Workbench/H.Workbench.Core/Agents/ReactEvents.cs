@@ -86,6 +86,18 @@ public class ApprovalResolvedEvent : ReactEvent
 }
 
 /// <summary>
+/// token 用量事件：每轮 LLM 调用结束后由 provider 的 usage chunk 发出，
+/// 是运行成本账与预算闸门的唯一数据来源
+/// </summary>
+public class UsageEvent : ReactEvent
+{
+    public UsageEvent() { Type = "usage"; }
+    public int PromptTokens { get; set; }
+    public int CompletionTokens { get; set; }
+    public int TotalTokens { get; set; }
+}
+
+/// <summary>
 /// 错误事件
 /// </summary>
 public class ErrorEvent : ReactEvent

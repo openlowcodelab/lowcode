@@ -1,3 +1,4 @@
+using H.Workbench.Core.Tools.Internal;
 using System.ComponentModel;
 using System.Net;
 using System.Text;
@@ -27,11 +28,18 @@ public class HttpClientTool
 
             using var resp = await http.GetAsync(fullUrl, cancellationToken).ConfigureAwait(false);
             var text = await resp.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-            return text ?? string.Empty;
+
+            // 状态码必须参与成败判定：此前 4xx/5xx 的响应体被当作正常结果返回
+            if (!resp.IsSuccessStatusCode)
+            {
+                return ToolEnvelope.Fail($"GET {fullUrl} 返回 HTTP {(int)resp.StatusCode}：{Trim(text)}");
+            }
+
+            return ToolEnvelope.Ok(new { url = fullUrl, statusCode = (int)resp.StatusCode, body = text });
         }
         catch (Exception ex)
         {
-            return $"❌ 请求失败: {ex.Message}";
+            return ToolEnvelope.Fail($"请求失败: {ex.Message}");
         }
     }
 
@@ -62,12 +70,26 @@ public class HttpClientTool
 
             using var resp = await http.PostAsync(fullUrl, content, cancellationToken).ConfigureAwait(false);
             var text = await resp.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-            return text ?? string.Empty;
+
+            if (!resp.IsSuccessStatusCode)
+            {
+                return ToolEnvelope.Fail($"POST {fullUrl} 返回 HTTP {(int)resp.StatusCode}：{Trim(text)}");
+            }
+
+            return ToolEnvelope.Ok(new { url = fullUrl, statusCode = (int)resp.StatusCode, body = text });
         }
         catch (Exception ex)
         {
-            return $"❌ 请求失败: {ex.Message}";
+            return ToolEnvelope.Fail($"请求失败: {ex.Message}");
         }
+    }
+
+    /// <summary>响应体只回传前 500 字，避免错误页把工具结果撑爆</summary>
+    private static string Trim(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return "(空响应体)";
+        var oneLine = text.Replace("\r", " ").Replace("\n", " ").Trim();
+        return oneLine.Length > 500 ? oneLine[..500] + "…" : oneLine;
     }
 
     private static HttpClient CreateHttpClient(int timeoutSeconds)

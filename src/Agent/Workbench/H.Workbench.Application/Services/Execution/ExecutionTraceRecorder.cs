@@ -21,7 +21,6 @@ public class ExecutionTraceRecorder
     private readonly List<TaskExecutionStepEntity> _pending = new();
     private readonly List<ArtifactEntity> _pendingArtifacts = new();
     private readonly Dictionary<Guid, TaskExecutionStepEntity> _approvalRows = new();
-    private readonly HashSet<Guid> _flushedApprovalIds = new();
 
     private int _seq;
     private int? _bufferIteration;
@@ -34,6 +33,12 @@ public class ExecutionTraceRecorder
     private int _activeApprovals;
     private int _worstTerminalRank = -1;
     private string? _worstTerminal;
+    private int _promptTokens;
+    private int _completionTokens;
+
+    /// <summary>本次执行累计 token 用量（供应商未回 usage 时保持 0）</summary>
+    public int PromptTokens => _promptTokens;
+    public int CompletionTokens => _completionTokens;
 
     public ExecutionTraceRecorder(
         ExecutionTraceStore store,
@@ -84,12 +89,27 @@ public class ExecutionTraceRecorder
                 case StreamEventKind.ApprovalRequired:
                     FlushThinkingAs(e.Iteration, "Thinking");
                     OnApprovalRequired(e);
+                    // 必须立刻落库：从这一刻起执行就在等人裁决，行还留在内存里
+                    // 意味着审批中心看不到、进程一挂这条待裁决记录就凭空消失
+                    await FlushAsync();
                     break;
                 case StreamEventKind.ApprovalResolved:
                     await OnApprovalResolvedAsync(e);
                     break;
                 case StreamEventKind.Answer:
                     OnAnswer(e);
+                    await FlushAsync();
+                    break;
+                case StreamEventKind.Usage:
+                    // 用量不落轨迹行（前端无意义），只累计成运行成本账
+                    _promptTokens += e.PromptTokens;
+                    _completionTokens += e.CompletionTokens;
+                    break;
+                case StreamEventKind.Verify:
+                    FlushThinkingAs(e.Iteration, "Thinking");
+                    // Kind=Verify 行的 ToolName 存裁决结论（Pass/Fail/Unclear），Content 存理由
+                    AddRow("Verify", e.Iteration, toolName: e.Verdict, content: e.Reason,
+                        isError: e.Verdict == "Fail");
                     await FlushAsync();
                     break;
                 case StreamEventKind.Error:
@@ -232,6 +252,7 @@ public class ExecutionTraceRecorder
             ToolName = e.ToolName,
             SkillName = e.SkillName,
             ToolCallId = e.ToolCallId,
+            ApprovalId = e.ApprovalId,
             Arguments = Truncate(e.Arguments, _options.MaxArgumentsChars, out _),
             ApprovalState = "Pending",
             StartedAt = DateTime.Now
@@ -244,14 +265,25 @@ public class ExecutionTraceRecorder
 
     private async Task OnApprovalResolvedAsync(DecodedEvent e)
     {
+        var state = MapDecision(e.Decision);
+        var waitMs = e.WaitMs.HasValue
+            ? (int?)Math.Min(e.WaitMs.Value, int.MaxValue)
+            : null;
+
         if (!_approvalRows.TryGetValue(e.ApprovalId, out var row))
         {
+            // 内存配对丢了（重启、跨请求裁决）也要把终态写回库里，
+            // 否则这条审批永远停在 Pending
+            if (e.ApprovalId != Guid.Empty)
+            {
+                await _store.UpdateApprovalByIdAsync(e.ApprovalId, state, e.ApproverId, waitMs);
+            }
             return;
         }
 
-        row.ApprovalState = MapDecision(e.Decision);
+        row.ApprovalState = state;
         row.ApproverId = e.ApproverId ?? (e.Decision == "SkippedNonInteractive" ? "auto-policy" : row.ApproverId);
-        row.WaitMs = e.WaitMs.HasValue ? (int)Math.Min(e.WaitMs.Value, int.MaxValue) : null;
+        row.WaitMs = waitMs;
         if (_approvalRows.Remove(e.ApprovalId))
         {
             _activeApprovals = Math.Max(0, _activeApprovals - 1);
@@ -263,10 +295,7 @@ public class ExecutionTraceRecorder
             return; // 尚未落库，Flush 时随行写入
         }
 
-        if (_flushedApprovalIds.Contains(row.Id))
-        {
-            await _store.UpdateApprovalStepAsync(row.Id, row.ApprovalState!, row.ApproverId, row.WaitMs);
-        }
+        await _store.UpdateApprovalByIdAsync(e.ApprovalId, state, row.ApproverId, row.WaitMs);
     }
 
     private static string MapDecision(string? decision) => decision switch
@@ -359,6 +388,12 @@ public class ExecutionTraceRecorder
         });
     }
 
+    private const string TruncSuffix = "\n...[已截断]";
+
+    /// <summary>
+    /// 截断到 max 以内（含后缀）。此前先切满 max 再拼后缀，落库时长度超过列宽，
+    /// 整批 INSERT 报"String or binary data would be truncated"、轨迹行静默消失
+    /// </summary>
     private static string? Truncate(string? text, int max, out bool truncated)
     {
         truncated = false;
@@ -368,7 +403,8 @@ public class ExecutionTraceRecorder
         }
 
         truncated = true;
-        return text[..max] + "\n...[已截断]";
+        var keep = Math.Max(0, max - TruncSuffix.Length);
+        return text[..keep] + TruncSuffix;
     }
 
     private async Task FlushAsync()
@@ -380,10 +416,6 @@ public class ExecutionTraceRecorder
 
         foreach (var row in rows)
         {
-            if (row.Kind == "Approval")
-            {
-                _flushedApprovalIds.Add(row.Id);
-            }
             if (ReferenceEquals(row, _activeStepHeader))
             {
                 _stepHeaderPersisted = true;

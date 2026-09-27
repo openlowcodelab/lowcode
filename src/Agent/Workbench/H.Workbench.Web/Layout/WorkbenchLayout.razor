@@ -19,6 +19,14 @@
                      @onclick='() => Navigation.NavigateTo("/workbench/projects")'>
                     <span class="wb-menu-icon">🗂</span><span class="wb-menu-text">项目</span>
                 </div>
+                <div class="wb-menu-item @(IsActive("/workbench/approvals") ? "wb-menu-active" : "")"
+                     @onclick='() => Navigation.NavigateTo("/workbench/approvals")'>
+                    <span class="wb-menu-icon">🔐</span><span class="wb-menu-text">审批中心</span>
+                </div>
+                <div class="wb-menu-item @(IsActive("/workbench/stats") ? "wb-menu-active" : "")"
+                     @onclick='() => Navigation.NavigateTo("/workbench/stats")'>
+                    <span class="wb-menu-icon">📊</span><span class="wb-menu-text">运行看板</span>
+                </div>
                 <div class="wb-menu-item @(IsActive("/workbench/knowledge") ? "wb-menu-active" : "")"
                      @onclick='() => Navigation.NavigateTo("/workbench/knowledge")'>
                     <span class="wb-menu-icon">📚</span><span class="wb-menu-text">知识库</span>

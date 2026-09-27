@@ -35,6 +35,8 @@ public class TaskAppService : ApplicationService, ITaskAppService
     private readonly ApprovalGateway _approvalGateway;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly WorkbenchToolOptions _toolOptions;
+    private readonly WorkbenchVerifier _verifier;
+    private readonly RunQuotaGate _runQuota;
 
     public TaskAppService(
         IRepository<TaskEntity, Guid> taskRepository,
@@ -47,7 +49,9 @@ public class TaskAppService : ApplicationService, ITaskAppService
         ExecutionTraceStore traceStore,
         ApprovalGateway approvalGateway,
         IHttpContextAccessor httpContextAccessor,
-        IOptions<WorkbenchToolOptions> toolOptions)
+        IOptions<WorkbenchToolOptions> toolOptions,
+        WorkbenchVerifier verifier,
+        RunQuotaGate runQuota)
     {
         _taskRepository = taskRepository;
         _logRepository = logRepository;
@@ -60,6 +64,8 @@ public class TaskAppService : ApplicationService, ITaskAppService
         _approvalGateway = approvalGateway;
         _httpContextAccessor = httpContextAccessor;
         _toolOptions = toolOptions.Value;
+        _verifier = verifier;
+        _runQuota = runQuota;
     }
 
     public async Task<BaseOutput<PagedResultDto<TaskDto>>> GetListAsync(TaskQueryDto input)
@@ -144,6 +150,7 @@ public class TaskAppService : ApplicationService, ITaskAppService
             WorkflowContent = input.WorkflowContent,
             ExecutionMode = isManual ? "Manual" : "Auto",
             PromptContent = input.PromptContent,
+            AcceptanceCriteria = string.IsNullOrWhiteSpace(input.AcceptanceCriteria) ? null : input.AcceptanceCriteria.Trim(),
             AgentType = input.AgentType,
             ProjectId = input.ProjectId,
             ModelConfigId = input.ModelConfigId,
@@ -184,6 +191,7 @@ public class TaskAppService : ApplicationService, ITaskAppService
         task.WorkflowContent = input.WorkflowContent;
         task.ExecutionMode = isManual ? "Manual" : "Auto";
         task.PromptContent = input.PromptContent;
+        task.AcceptanceCriteria = string.IsNullOrWhiteSpace(input.AcceptanceCriteria) ? null : input.AcceptanceCriteria.Trim();
         task.AgentType = input.AgentType;
         task.ProjectId = input.ProjectId;
         task.ModelConfigId = input.ModelConfigId;
@@ -283,10 +291,19 @@ public class TaskAppService : ApplicationService, ITaskAppService
 
         var prompt = string.IsNullOrWhiteSpace(input.Prompt) ? task.PromptContent : input.Prompt.Trim();
 
+        // 并发配额：迭代器内的 using 在枚举结束或消费者放弃时释放，断连不会漏名额
+        using var slot = _runQuota.TryAcquire();
+        if (slot is null)
+        {
+            yield return SerializeError($"并发执行已达上限（{_runQuota.MaxConcurrentRuns}），请待当前执行结束后重试");
+            yield break;
+        }
+
         var startTime = DateTime.Now;
         var thinking = new StringBuilder();
         var answer = new StringBuilder();
         string? failure = null;
+        VerificationOutcome? verdict = null;
 
         // 客户端断连检测：SSE 连接断开后终止 ReAct 循环，防审批挂到超时
         var ct = _httpContextAccessor.HttpContext?.RequestAborted ?? CancellationToken.None;
@@ -451,6 +468,19 @@ public class TaskAppService : ApplicationService, ITaskAppService
                 yield return SerializeError(failure);
             }
 
+            // 验收：员工声称完成之后，按任务登记的验收标准复核再定成败
+            var candidateAnswer = answer.Length > 0 ? answer.ToString() : thinking.ToString();
+            if (failure is null && candidateAnswer.Length > 0)
+            {
+                verdict = await VerifyResultAsync(task, prompt, logId, candidateAnswer);
+                if (verdict is not null)
+                {
+                    var verifyEvent = SerializeVerifyEvent(verdict);
+                    await recorder.HandleAsync(verifyEvent);
+                    yield return verifyEvent;
+                }
+            }
+
             completedNormally = true;
         }
         finally
@@ -464,14 +494,22 @@ public class TaskAppService : ApplicationService, ITaskAppService
             {
                 var (stepCount, artifactCount, approvalState) = await recorder.FinishAsync();
 
+                var verified = verdict is null || verdict.Verdict != "Fail";
                 await _traceStore.CompleteLogAsync(
                     logId,
-                    aborted ? "Cancelled" : succeeded ? "Success" : "Failed",
+                    aborted ? "Cancelled" : succeeded && verified ? "Success" : "Failed",
+                    // 验收未通过也要留下员工实际产出的文本：裁决是评价，不是删除证据
                     succeeded ? finalAnswer : null,
-                    aborted ? "客户端断开，执行中止" : failure,
+                    aborted ? "客户端断开，执行中止"
+                        : succeeded && !verified ? $"验收未通过：{verdict!.Reason}"
+                        : failure,
                     stepCount,
                     artifactCount,
-                    approvalState);
+                    approvalState,
+                    recorder.PromptTokens + (verdict?.PromptTokens ?? 0),
+                    recorder.CompletionTokens + (verdict?.CompletionTokens ?? 0),
+                    verdict?.Verdict,
+                    verdict?.Reason);
 
                 if (succeeded)
                 {
@@ -554,6 +592,38 @@ public class TaskAppService : ApplicationService, ITaskAppService
     private static string SerializeAnswer(string content)
         => JsonSerializer.Serialize(new { type = "answer", content, iteration = 0 });
 
+    private static string SerializeVerifyEvent(VerificationOutcome verdict)
+        => JsonSerializer.Serialize(new { type = "verify", verdict = verdict.Verdict, reason = verdict.Reason, iteration = 0 });
+
+    /// <summary>
+    /// 结果验收：只在任务登记了验收标准时进行，证据=本次执行落库的产物（含失败标记）。
+    /// 返回 null 表示"未裁决"，调用方不得视为通过。
+    /// </summary>
+    private async Task<VerificationOutcome?> VerifyResultAsync(
+        TaskEntity task, string prompt, Guid logId, string result)
+    {
+        if (!_toolOptions.Verification.Enabled || string.IsNullOrWhiteSpace(task.AcceptanceCriteria))
+        {
+            return null;
+        }
+
+        var evidence = new List<string>();
+        try
+        {
+            var queryable = await _artifactRepository.GetQueryableAsync();
+            evidence = await AsyncExecuter.ToListAsync(
+                queryable.Where(a => a.TaskLogId == logId)
+                    .OrderBy(a => a.CreationTime)
+                    .Select(a => a.Success ? a.Title : a.Title + "（失败）"));
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "验收证据收集失败 TaskLogId={LogId}", logId);
+        }
+
+        return await _verifier.VerifyAsync(task.AcceptanceCriteria, prompt, result, evidence);
+    }
+
     public async Task<BaseOutput<List<TaskLogDto>>> GetExecutionLogsAsync(Guid taskId, int maxResultCount = 10)
     {
         var queryable = await _logRepository.GetQueryableAsync();
@@ -577,6 +647,159 @@ public class TaskAppService : ApplicationService, ITaskAppService
                 return dto;
             })
             .ToList());
+    }
+
+    /// <summary>
+    /// 人工验收：把一次执行产出的全部产物整体标记为认可/不认可。
+    /// 提交已推远端，"不认可"撤销不了事实，但它让成果有了可追溯的判断，
+    /// 而不是只留下一行没人消费的 CommitHash。
+    /// </summary>
+    public async Task<BaseOutput<int>> ReviewArtifactsAsync(ReviewArtifactsInputDto input)
+    {
+        var status = input.Status switch
+        {
+            "Accepted" or "Rejected" or "Pending" => input.Status,
+            _ => throw new Volo.Abp.Validation.AbpValidationException($"未知验收状态: {input.Status}")
+        };
+
+        var queryable = await _artifactRepository.GetQueryableAsync();
+        var artifacts = await AsyncExecuter.ToListAsync(queryable.Where(a => a.TaskLogId == input.TaskLogId));
+        if (artifacts.Count == 0) return new(0);
+
+        var reviewerId = CurrentUser.Id?.ToString();
+        var now = DateTime.Now;
+        var note = string.IsNullOrWhiteSpace(input.Note) ? null : input.Note.Trim();
+
+        foreach (var artifact in artifacts)
+        {
+            artifact.ReviewStatus = status;
+            artifact.ReviewNote = status == "Pending" ? null : note;
+            artifact.ReviewerId = status == "Pending" ? null : reviewerId;
+            artifact.ReviewedAt = status == "Pending" ? null : now;
+            await _artifactRepository.UpdateAsync(artifact, autoSave: true);
+        }
+
+        return new(artifacts.Count);
+    }
+
+    /// <summary>
+    /// 跨任务审批队列：审批散落在各对话页的内联卡里时，用户根本不知道有多少在等他。
+    /// Live=false 表示所属执行已结束，条目只是留痕、无法再裁决。
+    /// </summary>
+    public async Task<BaseOutput<List<ApprovalQueueItemDto>>> GetApprovalQueueAsync(string? state = null, int maxCount = 50)
+    {
+        var wanted = string.IsNullOrWhiteSpace(state) ? "Pending" : state.Trim();
+
+        var stepQueryable = await _stepRepository.GetQueryableAsync();
+        var logQueryable = await _logRepository.GetQueryableAsync();
+        var taskQueryable = await _taskRepository.GetQueryableAsync();
+
+        var query = stepQueryable
+                .Where(s => s.Kind == "Approval" && s.ApprovalState == wanted)
+                .Join(logQueryable, s => s.TaskLogId, l => l.Id, (s, l) => new { Step = s, Log = l })
+                .Join(taskQueryable, x => x.Log.TaskId, t => t.Id, (x, t) => new { x.Step, x.Log, Task = t });
+
+        var rows = await AsyncExecuter.ToListAsync(
+            query.OrderByDescending(x => x.Step.StartedAt).Take(Math.Clamp(maxCount, 1, 200)));
+
+        return new(rows.Select(x => new ApprovalQueueItemDto
+        {
+            Id = x.Step.Id,
+            ApprovalId = x.Step.ApprovalId,
+            TaskLogId = x.Step.TaskLogId,
+            TaskId = x.Log.TaskId,
+            TaskName = x.Task.TaskName,
+            AgentType = x.Task.AgentType,
+            ToolName = x.Step.ToolName,
+            SkillName = x.Step.SkillName,
+            Arguments = x.Step.Arguments,
+            ApprovalState = x.Step.ApprovalState ?? wanted,
+            LogStatus = x.Log.Status,
+            // 有执行体真的在等才算可裁决：僵尸 Running 日志里的 Pending 行点不动
+            Live = x.Log.Status == "Running" && x.Step.ApprovalId is { } aid && _approvalGateway.IsWaiting(aid),
+            StartedAt = x.Step.StartedAt,
+            ApproverId = x.Step.ApproverId,
+            WaitMs = x.Step.WaitMs
+        }).ToList());
+    }
+
+    /// <summary>
+    /// 运行看板。窗口内的执行量不大（按任务日志行数级），一次取回内存聚合，
+    /// 避免为了分组把 SQL 写成不可读的表达式树。
+    /// </summary>
+    public async Task<BaseOutput<RuntimeStatsDto>> GetRuntimeStatsAsync(int days = 7)
+    {
+        var window = Math.Clamp(days, 1, 90);
+        var from = DateTime.Now.AddDays(-window);
+
+        var logQueryable = await _logRepository.GetQueryableAsync();
+        var taskQueryable = await _taskRepository.GetQueryableAsync();
+
+        var rows = await AsyncExecuter.ToListAsync(
+            logQueryable.Where(l => l.StartTime >= from)
+                .Join(taskQueryable, l => l.TaskId, t => t.Id, (l, t) => new { Log = l, t.TaskName, t.AgentType }));
+
+        var stats = new RuntimeStatsDto
+        {
+            Days = window,
+            From = from,
+            TotalRuns = rows.Count,
+            SuccessRuns = rows.Count(x => x.Log.Status == "Success"),
+            FailedRuns = rows.Count(x => x.Log.Status == "Failed"),
+            OtherRuns = rows.Count(x => x.Log.Status != "Success" && x.Log.Status != "Failed"),
+            VerdictPass = rows.Count(x => x.Log.Verdict == "Pass"),
+            VerdictFail = rows.Count(x => x.Log.Verdict == "Fail"),
+            VerdictUnclear = rows.Count(x => x.Log.Verdict == "Unclear"),
+            UnverifiedRuns = rows.Count(x => string.IsNullOrEmpty(x.Log.Verdict)),
+            PromptTokens = rows.Sum(x => (long)x.Log.PromptTokens),
+            CompletionTokens = rows.Sum(x => (long)x.Log.CompletionTokens)
+        };
+
+        var judged = stats.SuccessRuns + stats.FailedRuns;
+        stats.SuccessRate = judged == 0 ? 0 : Math.Round(stats.SuccessRuns * 100.0 / judged, 1);
+        stats.AvgDurationSeconds = Math.Round(
+            rows.Where(x => x.Log.EndTime.HasValue).Average(x => (x.Log.EndTime!.Value - x.Log.StartTime).TotalSeconds), 1);
+
+        stats.ByAgent = rows.GroupBy(x => x.AgentType ?? "")
+            .Select(g => new AgentRuntimeStat
+            {
+                AgentType = g.Key,
+                Runs = g.Count(),
+                Success = g.Count(x => x.Log.Status == "Success"),
+                Failed = g.Count(x => x.Log.Status == "Failed"),
+                VerdictFail = g.Count(x => x.Log.Verdict == "Fail"),
+                Tokens = g.Sum(x => (long)x.Log.PromptTokens + x.Log.CompletionTokens),
+                AvgDurationSeconds = Math.Round(
+                    g.Where(x => x.Log.EndTime.HasValue)
+                     .Select(x => (x.Log.EndTime!.Value - x.Log.StartTime).TotalSeconds)
+                     .DefaultIfEmpty(0).Average(), 1)
+            })
+            .OrderByDescending(a => a.Tokens)
+            .ToList();
+
+        stats.TopTasks = rows.GroupBy(x => new { x.Log.TaskId, x.TaskName, x.AgentType })
+            .Select(g => new TaskRuntimeStat
+            {
+                TaskId = g.Key.TaskId,
+                TaskName = g.Key.TaskName,
+                AgentType = g.Key.AgentType,
+                Runs = g.Count(),
+                Failed = g.Count(x => x.Log.Status == "Failed"),
+                Tokens = g.Sum(x => (long)x.Log.PromptTokens + x.Log.CompletionTokens)
+            })
+            .OrderByDescending(t => t.Tokens)
+            .Take(10)
+            .ToList();
+
+        var stepQueryable = await _stepRepository.GetQueryableAsync();
+        stats.PendingApprovals = await AsyncExecuter.CountAsync(
+            stepQueryable.Where(s => s.Kind == "Approval" && s.ApprovalState == "Pending"));
+
+        var artifactQueryable = await _artifactRepository.GetQueryableAsync();
+        stats.PendingArtifactReviews = await AsyncExecuter.CountAsync(
+            artifactQueryable.Where(a => a.ReviewStatus == "Pending"));
+
+        return new(stats);
     }
 
     public async Task<BaseOutput<TaskLogTraceDto>> GetLogTraceAsync(Guid logId, int maxStepCount = 200)
@@ -616,7 +839,8 @@ public class TaskAppService : ApplicationService, ITaskAppService
     public async Task<BaseOutput<ApprovalOutcomeDto>> ResumeApprovalAsync(ResumeApprovalInputDto input)
     {
         var userId = CurrentUser.Id?.ToString();
-        var completed = _approvalGateway.TryComplete(input.ApprovalId, input.Approved, userId, out var result);
+        var completed = _approvalGateway.TryComplete(
+            input.ApprovalId, input.Approved, userId, out var result, input.GrantForRun);
 
         var dto = new ApprovalOutcomeDto
         {
@@ -629,6 +853,14 @@ public class TaskAppService : ApplicationService, ITaskAppService
             dto.Message = "审批请求已过期或已被裁决，请重新执行任务";
             return new(dto) { Success = false, Code = 1 };
         }
+
+        // 裁决生效即回写轨迹行：不依赖执行侧 recorder 的内存配对，
+        // 否则审批中心与刷新后的对话页会一直显示"待裁决"
+        await _traceStore.UpdateApprovalByIdAsync(
+            input.ApprovalId,
+            input.Approved ? "Approved" : "Denied",
+            userId,
+            (int)Math.Min(result.WaitMs, int.MaxValue));
 
         return new(dto);
     }
@@ -651,6 +883,9 @@ public class TaskAppService : ApplicationService, ITaskAppService
 
     private async Task ExecuteTaskInternalAsync(TaskEntity task)
     {
+        using var slot = _runQuota.TryAcquire()
+            ?? throw new InvalidOperationException($"并发执行已达上限（{_runQuota.MaxConcurrentRuns}），请稍后重试");
+
         var startTime = DateTime.Now;
         var taskId = task.Id;
         var taskName = task.TaskName;
@@ -708,16 +943,38 @@ public class TaskAppService : ApplicationService, ITaskAppService
                 response = await agent.ProcessMessageAsync(task.PromptContent, new List<string>(), recorder?.Tap);
             }
 
+            // 无人值守执行更需要验收：没有人在屏幕前读结果，裁决是拦住"看起来完成了"的唯一关口
+            var verdict = workflowFailure is null
+                ? await VerifyResultAsync(task, task.PromptContent, logId, response)
+                : null;
+            var verified = verdict is null || verdict.Verdict != "Fail";
+
+            // 后台执行没有 SSE 通道，裁决同样要进时间线，否则回放时看不出成败判据
+            if (verdict is not null && recorder is not null)
+            {
+                await recorder.HandleAsync(SerializeVerifyEvent(verdict));
+            }
+
             var (stepCount, artifactCount, approvalState) = recorder is not null
                 ? await recorder.FinishAsync()
                 : (StepCount: 0, ArtifactCount: 0, ApprovalState: (string?)null);
 
-            await _traceStore.CompleteLogAsync(logId, workflowFailure is null ? "Success" : "Failed",
-                response, workflowFailure, stepCount, artifactCount, approvalState);
+            await _traceStore.CompleteLogAsync(logId,
+                workflowFailure is null && verified ? "Success" : "Failed",
+                workflowFailure is null ? response : null,
+                workflowFailure ?? (verified ? null : $"验收未通过：{verdict!.Reason}"),
+                stepCount,
+                artifactCount,
+                approvalState,
+                (recorder?.PromptTokens ?? 0) + (verdict?.PromptTokens ?? 0),
+                (recorder?.CompletionTokens ?? 0) + (verdict?.CompletionTokens ?? 0),
+                verdict?.Verdict,
+                verdict?.Reason);
 
-            if (workflowFailure is not null)
+            if (workflowFailure is not null || !verified)
             {
-                Logger.LogWarning("定时工作流执行失败: {TaskName} (Id={TaskId}): {Error}", taskName, taskId, workflowFailure);
+                Logger.LogWarning("定时任务未通过验收或执行失败: {TaskName} (Id={TaskId}): {Error}",
+                    taskName, taskId, workflowFailure ?? verdict!.Reason);
                 await RescheduleAfterFailureAsync(task);
                 return;
             }

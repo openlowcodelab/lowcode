@@ -19,6 +19,12 @@ public class LLMStreamChunk
     /// 完成原因: "stop" | "tool_calls"
     /// </summary>
     public string? FinishReason { get; set; }
+
+    /// <summary>
+    /// token 用量。仅在请求带 stream_options.include_usage 时，由末尾的
+    /// usage chunk 携带（该 chunk 的 choices 为空数组）
+    /// </summary>
+    public LLMUsage? Usage { get; set; }
 }
 
 /// <summary>

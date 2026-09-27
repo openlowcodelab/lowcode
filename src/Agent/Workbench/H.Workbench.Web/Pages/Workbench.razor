@@ -178,6 +178,8 @@
                             <span class="wb-approval-count">@RemainingText(pa)</span>
                             <span class="wb-approval-actions">
                                 <button class="modal-btn-cancel" disabled="@pa.Busy" @onclick="() => ResumeApprovalAsync(pa, false)">拒绝</button>
+                                <button class="modal-btn-cancel" disabled="@pa.Busy" title="本次执行内该工具后续不再询问"
+                                        @onclick='() => ResumeApprovalAsync(pa, true, true)'>本次都允许</button>
                                 <button class="modal-btn-primary" disabled="@pa.Busy" @onclick="() => ResumeApprovalAsync(pa, true)">批准</button>
                             </span>
                         </div>
@@ -408,7 +410,7 @@
         _approvalTimer?.Dispose();
     }
 
-    private async Task ResumeApprovalAsync(PendingApprovalVm pa, bool approved)
+    private async Task ResumeApprovalAsync(PendingApprovalVm pa, bool approved, bool grantForRun = false)
     {
         if (pa.Busy) return;
         pa.Busy = true;
@@ -417,7 +419,8 @@
             var res = await TaskAppService.ResumeApprovalAsync(new ResumeApprovalInputDto
             {
                 ApprovalId = pa.ApprovalId,
-                Approved = approved
+                Approved = approved,
+                GrantForRun = grantForRun
             });
             if (!res.Success)
             {
@@ -746,7 +749,8 @@
             await foreach (var data in client.StreamAsync(task.Id, prompt, cts.Token))
             {
                 string? type = null, content = null, message = null, toolName = null,
-                    toolCallId = null, arguments = null, result = null, state = null, preview = null;
+                    toolCallId = null, arguments = null, result = null, state = null, preview = null,
+                    verdict = null, reason = null;
                 int iteration = 0, durationMs = 0, timeoutSeconds = 0, stepIndex = -1;
                 Guid approvalId = Guid.Empty;
                 bool isError = false;
@@ -771,6 +775,8 @@
                     if (root.TryGetProperty("stepName", out var sn)) toolName ??= sn.GetString();
                     if (root.TryGetProperty("state", out var st)) state = st.GetString();
                     if (root.TryGetProperty("preview", out var pv)) preview = pv.GetString();
+                    if (root.TryGetProperty("verdict", out var vd)) verdict = vd.GetString();
+                    if (root.TryGetProperty("reason", out var rsn)) reason = rsn.GetString();
                     if (root.TryGetProperty("isFatal", out var f)) isFatal = f.GetBoolean();
                 }
                 catch
@@ -837,6 +843,14 @@
                             stepRow.Content = string.IsNullOrEmpty(preview) ? state : $"{state}：{preview}";
                             stepRow.IsError = state == "Failed";
                         }
+                        _streamStatus = null;
+                        break;
+                    case "verify":
+                        live.Steps.Add(new ExecutionStepDto
+                        {
+                            Kind = "Verify", ToolName = verdict, Content = reason,
+                            IsError = verdict == "Fail", Iteration = iteration, Seq = live.Steps.Count
+                        });
                         _streamStatus = null;
                         break;
                     case "error":
