@@ -10,6 +10,11 @@ namespace H.Workbench.Application.Services.Execution;
 /// </summary>
 public static class ArtifactExtractor
 {
+    private static readonly JsonSerializerOptions PayloadJsonOptions = new()
+    {
+        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+    };
+
     public static List<ArtifactEntity> TryExtract(string? toolName, string? argumentsJson, string? resultJson)
     {
         var artifacts = new List<ArtifactEntity>();
@@ -106,6 +111,32 @@ public static class ArtifactExtractor
                         ChangeType = created ? "Created" : "Modified",
                         Success = true,
                         Payload = $"{{\"bytes\":{bytes}}}"
+                    });
+                    break;
+                }
+                case "WorkspaceEditFileAsync":
+                {
+                    var file = GetString(data, "file");
+                    var changed = data.TryGetProperty("changed", out var ch) && ch.ValueKind == JsonValueKind.True;
+                    var applied = data.TryGetProperty("editsApplied", out var ap) && ap.TryGetInt32(out var apv) ? apv : 0;
+                    var diff = GetString(data, "diff");
+
+                    artifacts.Add(new ArtifactEntity
+                    {
+                        Kind = "FileChange",
+                        Title = changed ? $"编辑 {file}（{applied} 处替换）" : $"编辑未产生变更 {file}",
+                        Repo = GetString(data, "repo"),
+                        FilePath = file,
+                        ChangeType = "Modified",
+                        Success = true,
+                        // diff 必须走序列化转义：里面全是引号与换行，插值拼字符串会写出非法 JSON。
+                        // 关掉宽松转义以外的默认行为，否则 '+' 变成 \u002B 没法读
+                        Payload = JsonSerializer.Serialize(new
+                        {
+                            editsApplied = applied,
+                            changed,
+                            diff = diff is { Length: > 3000 } ? diff[..3000] + "\n…[已截断]" : diff
+                        }, PayloadJsonOptions)
                     });
                     break;
                 }

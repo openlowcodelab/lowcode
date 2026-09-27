@@ -35,6 +35,21 @@
                 {
                     <span class="wb-artifact-meta">@string.Join(" · ", group.Meta)</span>
                 }
+                @if (group.Diff is not null)
+                {
+                    <button class="btn btn-link btn-small wb-artifact-diff-toggle"
+                            @onclick="() => ToggleDiff(group)">
+                        @(_open.Contains(group) ? "收起改动 ▲" : "查看改动 ▼")
+                    </button>
+                    @if (_open.Contains(group))
+                    {
+                        <pre class="wb-artifact-diff">@foreach (var line in group.Diff.Split('\n'))
+                        {
+                            <span class="@DiffLineClass(line)">@line
+</span>                        }
+                        </pre>
+                    }
+                }
             </div>
         }
     </div>
@@ -43,9 +58,43 @@
 @code {
     [Parameter] public List<ArtifactDto> Artifacts { get; set; } = [];
 
-    private record DisplayArtifact(string Kind, string Title, List<string> Meta, bool Success);
+    private record DisplayArtifact(string Kind, string Title, List<string> Meta, bool Success, string? Diff);
 
     private List<DisplayArtifact> DisplayGroups { get; set; } = [];
+    private readonly HashSet<DisplayArtifact> _open = [];
+
+    private void ToggleDiff(DisplayArtifact group)
+    {
+        if (!_open.Add(group)) _open.Remove(group);
+    }
+
+    private static string DiffLineClass(string line) => line.Length switch
+    {
+        0 => "wb-diff-ctx",
+        _ when line.StartsWith("+++") || line.StartsWith("---") => "wb-diff-head",
+        _ when line.StartsWith('+') => "wb-diff-add",
+        _ when line.StartsWith('-') => "wb-diff-del",
+        _ when line.StartsWith("@@") => "wb-diff-hunk",
+        _ => "wb-diff-ctx"
+    };
+
+    private static string? ParseDiff(string? payload)
+    {
+        if (string.IsNullOrEmpty(payload)) return null;
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(payload);
+            if (doc.RootElement.TryGetProperty("diff", out var d) && d.ValueKind == System.Text.Json.JsonValueKind.String)
+            {
+                var text = d.GetString();
+                return string.IsNullOrWhiteSpace(text) ? null : text;
+            }
+        }
+        catch (System.Text.Json.JsonException)
+        {
+        }
+        return null;
+    }
     private Guid _taskLogId;
     private string _reviewStatus = "Pending";
     private bool _reviewing;
@@ -75,13 +124,13 @@
                 {
                     // 同文件多次写：合并为一条，保留最新变更类型
                     var old = groups[idx];
-                    groups[idx] = old with { Title = $"{ChangeWord(a.ChangeType)} {a.FilePath}", Meta = BuildMeta(a), Success = a.Success };
+                    groups[idx] = old with { Title = $"{ChangeWord(a.ChangeType)} {a.FilePath}", Meta = BuildMeta(a), Success = a.Success, Diff = ParseDiff(a.Payload) ?? old.Diff };
                     continue;
                 }
                 fileIndex[a.FilePath] = groups.Count;
             }
 
-            groups.Add(new DisplayArtifact(a.Kind, BuildTitle(a), BuildMeta(a), a.Success));
+            groups.Add(new DisplayArtifact(a.Kind, BuildTitle(a), BuildMeta(a), a.Success, ParseDiff(a.Payload)));
         }
 
         DisplayGroups = groups;
@@ -181,6 +230,27 @@
         gap: 4px;
         font-weight: normal;
     }
+
+    .wb-artifact-diff-toggle { flex: 0 0 auto; }
+
+    .wb-artifact-diff {
+        width: 100%;
+        margin: 6px 0 0;
+        padding: 8px;
+        background: #fafafa;
+        border: 1px solid #f0f0f0;
+        border-radius: 4px;
+        font-size: 12px;
+        line-height: 1.5;
+        overflow-x: auto;
+        white-space: pre;
+    }
+
+    .wb-diff-add { color: #389e0d; background: #f6ffed; display: inline-block; width: 100%; }
+    .wb-diff-del { color: #cf1322; background: #fff1f0; display: inline-block; width: 100%; }
+    .wb-diff-hunk { color: #1f6feb; }
+    .wb-diff-head { color: #8c8c8c; font-weight: 600; }
+    .wb-diff-ctx { color: #595959; }
 
     .wb-artifact {
         display: flex;

@@ -133,6 +133,126 @@ public class WorkspaceFileTool
         });
     }
 
+    /// <summary>
+    /// 精确替换。此前只有整文件覆盖，等于要求模型每次把整个文件重打一遍——
+    /// 大文件既烧 token，又会悄悄丢掉它没抄到的部分。
+    /// </summary>
+    [Description("对仓库内已存在的文本文件做精确替换（按原文匹配，不用行号）。参数：repo, relativePath, edits（JSON 数组，每项 {oldText,newText,replaceAll}）。任一条匹配失败则整笔不写入。")]
+    public async Task<string> WorkspaceEditFileAsync(
+        [Description("仓库地址或已克隆的目录名")] string repo,
+        [Description("仓库内相对路径")] string relativePath,
+        [Description("""替换指令 JSON 数组，如 [{"oldText":"原片段","newText":"新片段","replaceAll":false}]""")] string edits,
+        CancellationToken cancellationToken = default)
+    {
+        if (!ResolveRepoDir(repo, out var repoDir, out var error)) return Fail(error!);
+        if (string.IsNullOrWhiteSpace(relativePath)) return Fail("relativePath 不能为空");
+        if (!GitWorkspaceResolver.TryResolveInRepo(repoDir!, relativePath, out var file, out error)) return Fail(error!);
+        if (GitWorkspaceResolver.IsInsideGitDir(file!, repoDir!)) return Fail("拒绝改写 .git 目录");
+        if (!File.Exists(file)) return Fail($"文件不存在；新增文件请用 WorkspaceWriteFileAsync：{relativePath}");
+
+        List<EditOp>? ops;
+        try
+        {
+            ops = JsonSerializer.Deserialize<List<EditOp>>(edits, EditJsonOptions);
+        }
+        catch (JsonException ex)
+        {
+            return Fail($"edits 不是合法 JSON 数组：{ex.Message}");
+        }
+
+        if (ops is null or { Count: 0 }) return Fail("edits 不能为空");
+
+        var original = await File.ReadAllTextAsync(file!, cancellationToken);
+        var working = original;
+        var applied = 0;
+
+        for (var i = 0; i < ops.Count; i++)
+        {
+            var op = ops[i];
+            if (string.IsNullOrEmpty(op.OldText)) return Fail($"第 {i + 1} 条 edit 的 oldText 为空");
+            if (op.NewText is null) return Fail($"第 {i + 1} 条 edit 缺少 newText（要删除片段请把 newText 设为空字符串）");
+
+            // 模型给的片段常是 \n，而 Windows 仓库里是 \r\n：按两种换行都试一次，
+            // 否则会出现"内容明明在却报未找到"
+            var needle = ResolveNewlineVariant(working, op.OldText);
+            if (needle is null) return Fail($"第 {i + 1} 条 edit 未找到匹配文本，整笔未写入");
+
+            var matches = CountOccurrences(working, needle);
+            if (matches > 1 && !op.ReplaceAll)
+            {
+                return Fail($"第 {i + 1} 条 edit 匹配到 {matches} 处，需要多带几行上下文使其唯一，或显式设 replaceAll=true；整笔未写入");
+            }
+
+            working = op.ReplaceAll
+                ? working.Replace(needle, op.NewText)
+                : ReplaceFirst(working, needle, op.NewText);
+            applied++;
+        }
+
+        var repoName = Path.GetFileName(repoDir!);
+        if (working == original)
+        {
+            return Ok(new { repo = repoName, file = relativePath, editsApplied = applied, changed = false, note = "替换后内容与原文件相同，未写入" });
+        }
+
+        var diff = LineDiff.Unified(relativePath.Replace('\\', '/'), original, working);
+        await File.WriteAllTextAsync(file!, working, cancellationToken);
+        _logger.LogInformation("工作区精确编辑: {File}（{Count} 处替换）", GitRunner.MaskCredentials(relativePath), applied);
+
+        return Ok(new
+        {
+            repo = repoName,
+            file = relativePath,
+            editsApplied = applied,
+            changed = true,
+            bytes = working.Length,
+            diff
+        });
+    }
+
+    private sealed record EditOp
+    {
+        public string? OldText { get; set; }
+        public string? NewText { get; set; }
+        public bool ReplaceAll { get; set; }
+    }
+
+    private static readonly JsonSerializerOptions EditJsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        ReadCommentHandling = JsonCommentHandling.Skip,
+        AllowTrailingCommas = true
+    };
+
+    private static string? ResolveNewlineVariant(string haystack, string needle)
+    {
+        if (haystack.Contains(needle)) return needle;
+
+        var lf = needle.Replace("\r\n", "\n");
+        if (haystack.Contains(lf)) return lf;
+
+        var crlf = lf.Replace("\n", "\r\n");
+        return haystack.Contains(crlf) ? crlf : null;
+    }
+
+    private static int CountOccurrences(string text, string value)
+    {
+        var count = 0;
+        var index = 0;
+        while ((index = text.IndexOf(value, index, StringComparison.Ordinal)) >= 0)
+        {
+            count++;
+            index += value.Length;
+        }
+        return count;
+    }
+
+    private static string ReplaceFirst(string text, string value, string replacement)
+    {
+        var index = text.IndexOf(value, StringComparison.Ordinal);
+        return index < 0 ? text : text[..index] + replacement + text[(index + value.Length)..];
+    }
+
     [Description("在仓库内按关键字搜索文件内容（不区分大小写）。参数：repo, keyword, filePattern, maxResults。")]
     public async Task<string> WorkspaceSearchAsync(
         [Description("仓库地址或已克隆的目录名")] string repo,
