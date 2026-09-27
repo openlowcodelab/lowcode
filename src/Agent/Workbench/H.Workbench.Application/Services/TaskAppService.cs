@@ -325,6 +325,57 @@ public class TaskAppService : ApplicationService, ITaskAppService
         return new(runId);
     }
 
+    /// <summary>
+    /// 工作流续跑：从第一次失败执行里"第一个没成功的步骤"起重跑，前面已成功的步骤不重做，
+    /// 它们上一次的产出作为前序结果注入。产生一次新的运行（新 runId），旧记录保持不动——
+    /// 续跑不是抹掉失败，那会让"这个任务失败过"这件事消失。
+    /// </summary>
+    public async Task<BaseOutput<Guid>> ResumeRunAsync(Guid runId)
+    {
+        var oldLog = await _logRepository.FindAsync(runId);
+        if (oldLog is null) return Fail("原执行记录不存在");
+        if (oldLog.Status == "Running") return Fail("该执行仍在运行，请先停止");
+        if (oldLog.Status == "Success") return Fail("该执行已全部完成，无需续跑");
+
+        var task = await _taskRepository.FindAsync(oldLog.TaskId);
+        if (task is null) return Fail("任务已不存在");
+        if (task.SourceType != "Workflow" || string.IsNullOrWhiteSpace(task.WorkflowContent))
+            return Fail("只有工作流任务支持按步骤续跑");
+
+        var steps = ParseWorkflowSteps(task.WorkflowContent);
+        if (steps.Count == 0) return Fail("工作流未配置有效步骤");
+
+        var stepQueryable = await _stepRepository.GetQueryableAsync();
+        var rows = await AsyncExecuter.ToListAsync(
+            stepQueryable.Where(s => s.TaskLogId == runId && (s.Kind == "Step" || s.Kind == "Answer")));
+
+        var succeeded = rows.Where(s => s.Kind == "Step" && !s.IsError && (s.Content ?? "").StartsWith("Success"))
+            .Select(s => s.StepIndex).ToHashSet();
+
+        var startFrom = 0;
+        while (startFrom < steps.Count && succeeded.Contains(startFrom)) startFrom++;
+
+        if (startFrom >= steps.Count) return Fail("所有步骤都已完成，无需续跑");
+
+        var carried = new Dictionary<int, string>();
+        for (var i = 0; i < startFrom; i++)
+        {
+            var output = rows.Where(s => s.Kind == "Answer" && s.StepIndex == i && !string.IsNullOrEmpty(s.Content))
+                .OrderByDescending(s => s.Seq).FirstOrDefault()?.Content;
+            if (!string.IsNullOrEmpty(output)) carried[i] = output!;
+        }
+
+        var newRunId = Guid.NewGuid();
+        _runHub.Open(newRunId);
+        _runQueue.Enqueue(new RunRequest(task.Id, newRunId, oldLog.Prompt, CurrentUser.Id?.ToString(),
+            StartFromStep: startFrom, CarriedResults: carried));
+
+        return new(newRunId);
+
+        static BaseOutput<Guid> Fail(string message) =>
+            new() { Code = 1, Success = false, Message = message };
+    }
+
     public Task<BaseOutput> CancelRunAsync(Guid runId) =>
         Task.FromResult(_runQueue.TryCancel(runId)
             ? new BaseOutput()
@@ -402,6 +453,7 @@ public class TaskAppService : ApplicationService, ITaskAppService
 
         var isWorkflow = task.SourceType == "Workflow" && !string.IsNullOrWhiteSpace(task.WorkflowContent);
         var steps = isWorkflow ? ParseWorkflowSteps(task.WorkflowContent!) : null;
+        var resumePlan = _runQueue.PeekResumePlan(runId);
 
         IAgentInstance? agent = null;
         try
@@ -444,7 +496,9 @@ public class TaskAppService : ApplicationService, ITaskAppService
                 {
                     var summary = await RunWorkflowAsync(task, steps!, recorder,
                         BuildStepAgentResolver(task, agent, runId, approvalMode),
-                        Forward, interactive: approvalMode == "Interactive", runId, ct);
+                        Forward, interactive: approvalMode == "Interactive", runId, ct,
+                        startFromStep: resumePlan?.StartFromStep ?? 0,
+                        carriedResults: resumePlan?.Carried);
 
                     var md = BuildWorkflowAnswer(summary);
                     answer.Append(md);
@@ -1051,13 +1105,34 @@ public class TaskAppService : ApplicationService, ITaskAppService
         Func<string, Task>? forward,
         bool interactive,
         Guid logId,
-        CancellationToken ct)
+        CancellationToken ct,
+        int startFromStep = 0,
+        IReadOnlyDictionary<int, string>? carriedResults = null)
     {
         var summary = new WorkflowRunSummaryDto();
         var completed = new List<(int Index, string Name, string Result)>();
         var userId = CurrentUser.Id?.ToString();
 
-        for (var i = 0; i < steps.Count; i++)
+        // 续跑：失败之前的步骤不重做，直接把它上一次的产出当作前序结果注入后续步骤。
+        // 不这么做的话，从中间重试等于让后面的步骤失去上下文，只能拿到空 prompt 前缀。
+        for (var i = 0; i < startFromStep && i < steps.Count; i++)
+        {
+            var name = string.IsNullOrWhiteSpace(steps[i].Name) ? $"步骤 {i + 1}" : steps[i].Name.Trim();
+            var carried = carriedResults is not null && carriedResults.TryGetValue(i, out var c) ? c : string.Empty;
+
+            completed.Add((i, name, carried));
+            summary.Steps.Add(new WorkflowStepResultDto
+            {
+                Index = i,
+                Name = name,
+                AgentType = steps[i].AgentType,
+                State = "Success",
+                Preview = TruncateText(string.IsNullOrEmpty(carried) ? "（续跑：沿用上次结果）" : carried, 400)
+            });
+            summary.CompletedSteps++;
+        }
+
+        for (var i = startFromStep; i < steps.Count; i++)
         {
             ct.ThrowIfCancellationRequested();
             var step = steps[i];

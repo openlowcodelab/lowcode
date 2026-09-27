@@ -94,6 +94,11 @@ public interface ITaskAppService : IAppService
     Task<BaseOutput<Guid>> StartRunAsync(StartRunInputDto input);
 
     /// <summary>
+    /// 工作流续跑：跳过已成功的步骤，从第一个未成功的步骤起重跑，返回新的 runId
+    /// </summary>
+    Task<BaseOutput<Guid>> ResumeRunAsync(Guid runId);
+
+    /// <summary>
     /// 取消一次仍在排队的运行。已结束的返回失败。
     /// </summary>
     Task<BaseOutput> CancelRunAsync(Guid runId);

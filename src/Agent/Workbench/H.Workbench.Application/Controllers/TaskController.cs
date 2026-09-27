@@ -55,6 +55,10 @@ public class TaskController : ControllerBase
     [HttpGet("stream/{runId}")]
     public Task StreamByRunAsync(Guid runId) => StreamAsync(runId);
 
+    /// <summary>续跑一次失败的工作流：已成功的步骤不重做，返回新的 runId</summary>
+    [HttpPost("resume/{runId}")]
+    public Task<BaseOutput<Guid>> ResumeAsync(Guid runId) => _taskAppService.ResumeRunAsync(runId);
+
     /// <summary>显式取消一次运行（此前“关页面”即取消，现在必须明说）</summary>
     [HttpPost("cancel/{runId}")]
     public Task<BaseOutput> CancelAsync(Guid runId) => _taskAppService.CancelRunAsync(runId);

@@ -12,8 +12,15 @@ namespace H.Workbench.Application.Workers;
 /// 一次脱离 HTTP 请求的运行请求。
 /// UserId 必须在提交时捕获：宿主里没有 HttpContext，ABP 的 CurrentUser 取不到值，
 /// 而审批归属校验要用它——不传就会导致"发起者裁决自己被拒"。
+/// StartFromStep/CarriedResults 只在工作流续跑时有值：失败之前的步骤不重做。
 /// </summary>
-public sealed record RunRequest(Guid TaskId, Guid RunId, string? Prompt, string? UserId);
+public sealed record RunRequest(
+    Guid TaskId,
+    Guid RunId,
+    string? Prompt,
+    string? UserId,
+    int StartFromStep = 0,
+    IReadOnlyDictionary<int, string>? CarriedResults = null);
 
 /// <summary>
 /// 运行队列与取消登记（单例）。执行宿主从这里取任务跑。
@@ -39,6 +46,12 @@ public class WorkbenchRunQueue
     /// 所以只能在这里（有请求上下文的时刻）取一次。
     /// </summary>
     public string? PeekUser(Guid runId) => _requests.TryGetValue(runId, out var r) ? r.UserId : null;
+
+    /// <summary>续跑计划：非空表示这次运行从第 N 步开始，前序步骤沿用旧结果</summary>
+    public (int StartFromStep, IReadOnlyDictionary<int, string>? Carried)? PeekResumePlan(Guid runId) =>
+        _requests.TryGetValue(runId, out var r) && r.StartFromStep > 0
+            ? (r.StartFromStep, r.CarriedResults)
+            : null;
 
     public bool TryCancel(Guid runId)
     {
