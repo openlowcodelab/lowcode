@@ -347,28 +347,41 @@ public class TaskAppService : ApplicationService, ITaskAppService
         _runHub.SubscribeAsync(runId, ct);
 
     /// <summary>
-    /// 执行内核：一次运行的完整生命周期（Running 行 → ReAct/工作流 → 验收 → 收尾落库）。
-    /// 事件经 Forward 回调外发，内核不知道“谁在听”；ct 来自宿主的运行令牌
-    /// （显式取消或宿主关闭），不再是浏览器连接。
+    /// 一次运行的结果。SkippedByQuota 让调用方（定时 Worker）能区分"没跑成"和"根本没起跑"。
     /// </summary>
-    public async Task ExecuteDetachedAsync(Guid taskId, Guid runId, string? promptOverride, CancellationToken ct)
+    private sealed record RunOutcome(string Status, bool Succeeded, string? Error, bool SkippedByQuota = false);
+
+    public Task ExecuteDetachedAsync(Guid taskId, Guid runId, string? promptOverride, CancellationToken ct) =>
+        RunCoreAsync(taskId, runId, promptOverride, "Interactive",
+            json => { _runHub.Publish(runId, json); return Task.CompletedTask; }, ct);
+
+    /// <summary>
+    /// 执行内核：一次运行的完整生命周期（Running 行 → ReAct/工作流 → 验收 → 收尾落库）。
+    /// 事件先落轨迹再交给 sink（sink 为空表示无人收听，如定时执行）；
+    /// ct 来自宿主的运行令牌（显式取消或宿主关闭），不再是浏览器连接。
+    /// </summary>
+    private async Task<RunOutcome> RunCoreAsync(
+        Guid taskId, Guid runId, string? promptOverride, string approvalMode,
+        Func<string, Task>? sink, CancellationToken ct)
     {
         var task = await _taskRepository.FindAsync(taskId);
         if (task == null)
         {
-            _runHub.Publish(runId, SerializeError($"任务不存在: {taskId}"));
-            return;
+            const string msg = "任务不存在";
+            sink?.Invoke(SerializeError($"{msg}: {taskId}"));
+            return new("Failed", false, $"{msg}: {taskId}");
         }
 
         var slot = _runQuota.TryAcquire();
         if (slot is null)
         {
-            _runHub.Publish(runId, SerializeError($"并发执行已达上限（{_runQuota.MaxConcurrentRuns}），请稍后重试"));
-            return;
+            var quotaMsg = $"并发执行已达上限（{_runQuota.MaxConcurrentRuns}），请稍后重试";
+            sink?.Invoke(SerializeError(quotaMsg));
+            return new("Failed", false, quotaMsg, SkippedByQuota: true);
         }
 
         var prompt = string.IsNullOrWhiteSpace(promptOverride) ? task.PromptContent : promptOverride.Trim();
-        var userId = _runQueue.PeekUser(runId);
+        var userId = _runQueue.PeekUser(runId) ?? CurrentUser.Id?.ToString();
         var startTime = DateTime.Now;
         var thinking = new StringBuilder();
         var answer = new StringBuilder();
@@ -394,7 +407,7 @@ public class TaskAppService : ApplicationService, ITaskAppService
         try
         {
             agent = await _agentFactory.CreateAgentAsync(task.AgentType, task.ModelConfigId,
-                new AgentRunContext(task.ProjectId, null, "Interactive", task.Id, runId, userId));
+                new AgentRunContext(task.ProjectId, null, approvalMode, task.Id, runId, userId));
         }
         catch (Exception ex)
         {
@@ -405,19 +418,22 @@ public class TaskAppService : ApplicationService, ITaskAppService
         {
             failure ??= $"无法创建员工实例: {task.AgentType}";
             await _traceStore.CompleteLogAsync(runId, "Failed", null, failure, 0, 0, null);
-            _runHub.Publish(runId, SerializeError(failure));
+            sink?.Invoke(SerializeError(failure));
             slot.Dispose();
-            return;
+            return new("Failed", false, failure);
         }
 
         var recorder = new ExecutionTraceRecorder(_traceStore, _toolOptions.Trace, Logger, runId, task.Id);
         var completedNormally = false;
+        var outcomeStatus = "Failed";
+        var outcomeSucceeded = false;
+        string? outcomeError = null;
 
-        // 一份事件两个去处：先推给订阅者再落轨迹，两者都不能抛出去打断执行
+        // 一份事件两个去处：先落轨迹再交给订阅者，两者都不能抛出去打断执行
         async Task Forward(string json)
         {
-            _runHub.Publish(runId, json);
             await recorder.HandleAsync(json);
+            if (sink is not null) await sink(json);
         }
 
         try
@@ -427,8 +443,8 @@ public class TaskAppService : ApplicationService, ITaskAppService
                 try
                 {
                     var summary = await RunWorkflowAsync(task, steps!, recorder,
-                        BuildStepAgentResolver(task, agent, runId, "Interactive"),
-                        Forward, interactive: true, runId, ct);
+                        BuildStepAgentResolver(task, agent, runId, approvalMode),
+                        Forward, interactive: approvalMode == "Interactive", runId, ct);
 
                     var md = BuildWorkflowAnswer(summary);
                     answer.Append(md);
@@ -495,14 +511,18 @@ public class TaskAppService : ApplicationService, ITaskAppService
                 var (stepCount, artifactCount, approvalState) = await recorder.FinishAsync();
                 var verified = verdict is null || verdict.Verdict != "Fail";
 
+                outcomeStatus = aborted ? "Cancelled" : succeeded && verified ? "Success" : "Failed";
+                outcomeSucceeded = outcomeStatus == "Success";
+                outcomeError = aborted ? "运行被取消（用户停止或宿主关闭）"
+                    : succeeded && !verified ? $"验收未通过：{verdict!.Reason}"
+                    : failure;
+
                 await _traceStore.CompleteLogAsync(
                     runId,
-                    aborted ? "Cancelled" : succeeded && verified ? "Success" : "Failed",
+                    outcomeStatus,
                     // 验收未通过也要留下员工实际产出的文本：裁决是评价，不是删除证据
                     succeeded ? finalAnswer : null,
-                    aborted ? "运行被取消（用户停止或宿主关闭）"
-                        : succeeded && !verified ? $"验收未通过：{verdict!.Reason}"
-                        : failure,
+                    outcomeError,
                     stepCount,
                     artifactCount,
                     approvalState,
@@ -529,6 +549,8 @@ public class TaskAppService : ApplicationService, ITaskAppService
 
             slot.Dispose();
         }
+
+        return new(outcomeStatus, outcomeSucceeded, outcomeError);
     }
 
     /// <summary>
@@ -883,144 +905,47 @@ public class TaskAppService : ApplicationService, ITaskAppService
         return new();
     }
 
+    /// <summary>
+    /// 定时/立即执行：跑内核，然后只做调度才需要的收尾（重排下次执行、Once 完成、失败退避）。
+    /// 执行逻辑与对话路径共用同一个内核，避免两条路径各自演化出不同行为。
+    /// </summary>
     private async Task ExecuteTaskInternalAsync(TaskEntity task)
     {
-        using var slot = _runQuota.TryAcquire()
-            ?? throw new InvalidOperationException($"并发执行已达上限（{_runQuota.MaxConcurrentRuns}），请稍后重试");
+        Logger.LogInformation("开始执行定时任务 {TaskName} (Id={TaskId})", task.TaskName, task.Id);
 
-        var startTime = DateTime.Now;
-        var taskId = task.Id;
-        var taskName = task.TaskName;
+        var runId = Guid.NewGuid();
+        var outcome = await RunCoreAsync(task.Id, runId, null, "NonInteractive", null, CancellationToken.None);
 
-        Logger.LogInformation("开始执行定时任务 {TaskName} (Id={TaskId})", taskName, taskId);
-
-        // 后台执行同样先立 Running 行（独立短 UoW，避免外层事务性 UoW 导致收尾时查不到行）
-        var logId = Guid.NewGuid();
-        ExecutionTraceRecorder? recorder = null;
-        try
+        if (outcome.SkippedByQuota)
         {
-            await _traceStore.StartLogAsync(logId, taskId, task.PromptContent, startTime);
-
-            recorder = new ExecutionTraceRecorder(_traceStore, _toolOptions.Trace, Logger, logId, taskId);
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "插入 Running 执行日志失败 TaskId={TaskId}", taskId);
+            throw new InvalidOperationException(outcome.Error ?? "并发执行已达上限");
         }
 
-        try
+        var fresh = await _taskRepository.FindAsync(task.Id);
+        if (fresh is null) return;
+
+        if (!outcome.Succeeded)
         {
-            // 获取 Agent 实例（携带任务级项目上下文与审批策略：后台执行无法人工裁决，按配置自动裁决）
-            IAgentInstance? agent = await _agentFactory.CreateAgentAsync(
-                task.AgentType, task.ModelConfigId,
-                new AgentRunContext(task.ProjectId, null, "NonInteractive", taskId, logId, CurrentUser.Id?.ToString()));
-
-            if (agent == null)
-            {
-                throw new InvalidOperationException($"无法创建 Agent 实例: {task.AgentType}");
-            }
-
-            // 执行任务内容（提示词或工作流），事件流经 recorder 落轨迹
-            string response;
-            string? workflowFailure = null;
-            if (task.SourceType == "Workflow" && !string.IsNullOrWhiteSpace(task.WorkflowContent))
-            {
-                var steps = ParseWorkflowSteps(task.WorkflowContent);
-                if (steps.Count == 0)
-                {
-                    throw new InvalidOperationException("工作流任务未配置有效步骤");
-                }
-
-                var wf = await RunWorkflowAsync(task, steps, recorder,
-                    BuildStepAgentResolver(task, agent, logId, "NonInteractive"),
-                    null, interactive: false, logId, CancellationToken.None);
-                response = BuildWorkflowAnswer(wf);
-                if (!wf.Success)
-                {
-                    workflowFailure = wf.Error ?? "工作流存在失败步骤";
-                }
-            }
-            else
-            {
-                response = await agent.ProcessMessageAsync(task.PromptContent, new List<string>(), recorder?.Tap);
-            }
-
-            // 无人值守执行更需要验收：没有人在屏幕前读结果，裁决是拦住"看起来完成了"的唯一关口
-            var verdict = workflowFailure is null
-                ? await VerifyResultAsync(task, task.PromptContent, logId, response)
-                : null;
-            var verified = verdict is null || verdict.Verdict != "Fail";
-
-            // 后台执行没有 SSE 通道，裁决同样要进时间线，否则回放时看不出成败判据
-            if (verdict is not null && recorder is not null)
-            {
-                await recorder.HandleAsync(SerializeVerifyEvent(verdict));
-            }
-
-            var (stepCount, artifactCount, approvalState) = recorder is not null
-                ? await recorder.FinishAsync()
-                : (StepCount: 0, ArtifactCount: 0, ApprovalState: (string?)null);
-
-            await _traceStore.CompleteLogAsync(logId,
-                workflowFailure is null && verified ? "Success" : "Failed",
-                workflowFailure is null ? response : null,
-                workflowFailure ?? (verified ? null : $"验收未通过：{verdict!.Reason}"),
-                stepCount,
-                artifactCount,
-                approvalState,
-                (recorder?.PromptTokens ?? 0) + (verdict?.PromptTokens ?? 0),
-                (recorder?.CompletionTokens ?? 0) + (verdict?.CompletionTokens ?? 0),
-                verdict?.Verdict,
-                verdict?.Reason);
-
-            if (workflowFailure is not null || !verified)
-            {
-                Logger.LogWarning("定时任务未通过验收或执行失败: {TaskName} (Id={TaskId}): {Error}",
-                    taskName, taskId, workflowFailure ?? verdict!.Reason);
-                await RescheduleAfterFailureAsync(task);
-                return;
-            }
-
-            // 更新任务执行统计
-            task.LastExecutionTime = DateTime.Now;
-            task.ExecutionCount++;
-            // 手动任务不参与调度，保持下次执行时间为空
-            task.NextExecutionTime = task.ExecutionMode == "Manual"
-                ? null
-                : CalculateNextExecutionTime(
-                    task.ScheduleType, task.CronExpression, task.Hour, task.Minute, task.DayOfWeek, task.DayOfMonth);
-
-            if (task.ExecutionMode == "Auto" && task.ScheduleType == "Once")
-            {
-                task.Status = "Completed";
-                task.IsEnabled = false;
-            }
-
-            await _taskRepository.UpdateAsync(task);
-
-            Logger.LogInformation("定时任务执行成功: {TaskName} (Id={TaskId})", taskName, taskId);
+            Logger.LogWarning("定时任务未通过验收或执行失败: {TaskName} (Id={TaskId}): {Error}",
+                task.TaskName, task.Id, outcome.Error);
+            await RescheduleAfterFailureAsync(fresh);
+            return;
         }
-        catch (Exception ex)
+
+        // 手动任务不参与调度，保持下次执行时间为空
+        fresh.NextExecutionTime = fresh.ExecutionMode == "Manual"
+            ? null
+            : CalculateNextExecutionTime(
+                fresh.ScheduleType, fresh.CronExpression, fresh.Hour, fresh.Minute, fresh.DayOfWeek, fresh.DayOfMonth);
+
+        if (fresh.ExecutionMode == "Auto" && fresh.ScheduleType == "Once")
         {
-            Logger.LogError(ex, "定时任务执行失败: {TaskName} (Id={TaskId}), 错误: {Error}", taskName, taskId, ex.Message);
-
-            // 回写失败日志
-            try
-            {
-                var failCounts = recorder is not null
-                    ? await recorder.FinishAsync()
-                    : (StepCount: 0, ArtifactCount: 0, ApprovalState: (string?)null);
-
-                await _traceStore.CompleteLogAsync(logId, "Failed", null, ex.Message,
-                    failCounts.StepCount, failCounts.ArtifactCount, failCounts.ApprovalState);
-            }
-            catch (Exception logEx)
-            {
-                Logger.LogError(logEx, "记录任务失败日志时出错 TaskId={TaskId}", taskId);
-            }
-
-            await RescheduleAfterFailureAsync(task);
+            fresh.Status = "Completed";
+            fresh.IsEnabled = false;
         }
+
+        await _taskRepository.UpdateAsync(fresh);
+        Logger.LogInformation("定时任务执行完成: {TaskName} (Id={TaskId})", task.TaskName, task.Id);
     }
 
     /// <summary>
