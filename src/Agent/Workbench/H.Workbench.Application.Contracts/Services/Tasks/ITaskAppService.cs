@@ -74,6 +74,11 @@ public interface ITaskAppService : IAppService
     Task<BaseOutput<int>> ReviewArtifactsAsync(ReviewArtifactsInputDto input);
 
     /// <summary>
+    /// 待人工验收的产物（跨任务聚合）。默认只回 Pending，status 传 Accepted/Rejected 看历史
+    /// </summary>
+    Task<BaseOutput<List<PendingReviewItemDto>>> GetPendingReviewsAsync(string? status = null, int maxCount = 50);
+
+    /// <summary>
     /// 跨任务聚合的审批队列。state 为空时只回待裁决（Pending），否则按指定终态过滤
     /// </summary>
     Task<BaseOutput<List<ApprovalQueueItemDto>>> GetApprovalQueueAsync(string? state = null, int maxCount = 50);

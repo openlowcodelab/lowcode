@@ -707,6 +707,45 @@ public class TaskAppService : ApplicationService, ITaskAppService
     }
 
     /// <summary>
+    /// 待验收产物。放在审批中心而不是埋在对话气泡里——验收是"等你处理"的事，
+    /// 埋在要翻很久才能看到的卡片里等于没人处理。
+    /// </summary>
+    public async Task<BaseOutput<List<PendingReviewItemDto>>> GetPendingReviewsAsync(string? status = null, int maxCount = 50)
+    {
+        var wanted = string.IsNullOrWhiteSpace(status) ? "Pending" : status.Trim();
+
+        var artifactQueryable = await _artifactRepository.GetQueryableAsync();
+        var logQueryable = await _logRepository.GetQueryableAsync();
+        var taskQueryable = await _taskRepository.GetQueryableAsync();
+
+        var rows = await AsyncExecuter.ToListAsync(
+            artifactQueryable
+                .Where(a => a.ReviewStatus == wanted)
+                .Join(logQueryable, a => a.TaskLogId, l => l.Id, (a, l) => new { Artifact = a, Log = l })
+                .Join(taskQueryable, x => x.Log.TaskId, t => t.Id, (x, t) => new { x.Artifact, x.Log, t.TaskName })
+                .OrderByDescending(x => x.Artifact.CreationTime)
+                .Take(Math.Clamp(maxCount, 1, 200)));
+
+        return new(rows.Select(x => new PendingReviewItemDto
+        {
+            Id = x.Artifact.Id,
+            TaskLogId = x.Artifact.TaskLogId,
+            TaskId = x.Log.TaskId,
+            TaskName = x.TaskName,
+            Kind = x.Artifact.Kind,
+            Title = x.Artifact.Title,
+            Repo = x.Artifact.Repo,
+            Branch = x.Artifact.Branch,
+            CommitHash = x.Artifact.CommitHash,
+            FilePath = x.Artifact.FilePath,
+            Success = x.Artifact.Success,
+            Verdict = x.Log.Verdict,
+            LogStatus = x.Log.Status,
+            CreationTime = x.Artifact.CreationTime
+        }).ToList());
+    }
+
+    /// <summary>
     /// 跨任务审批队列：审批散落在各对话页的内联卡里时，用户根本不知道有多少在等他。
     /// Live=false 表示所属执行已结束，条目只是留痕、无法再裁决。
     /// </summary>

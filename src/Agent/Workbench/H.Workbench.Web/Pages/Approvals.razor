@@ -20,8 +20,50 @@
 
         <div class="ap-tabs">
             <div class="ap-tab @(_tab == "queue" ? "ap-tab-active" : "")" @onclick='() => SwitchTab("queue")'>待裁决队列</div>
+            <div class="ap-tab @(_tab == "reviews" ? "ap-tab-active" : "")" @onclick='() => SwitchTab("reviews")'>待验收产物@(_reviewCount > 0 ? $"（{_reviewCount}）" : "")</div>
             <div class="ap-tab @(_tab == "rules" ? "ap-tab-active" : "")" @onclick='() => SwitchTab("rules")'>审批规则</div>
         </div>
+
+        @if (_tab == "reviews")
+        {
+            <div class="ap-filter">
+                @foreach (var opt in ReviewStates)
+                {
+                    <span class="ap-chip @(_reviewState == opt.Value ? "ap-chip-active" : "")"
+                          @onclick='() => LoadReviewsAsync(opt.Value)'>@opt.Text</span>
+                }
+            </div>
+
+            @if (_reviews.Count == 0)
+            {
+                <div class="ap-empty">没有该验收状态的产物</div>
+            }
+            else
+            {
+                @foreach (var group in ReviewGroups)
+                {
+                    <div class="ap-card">
+                        <div class="ap-head">
+                            <span class="ap-tool">@group.Key</span>
+                            <span class="ap-state @(group.Any(r => !r.Success) ? "ap-state-denied" : "ap-state-pending")">
+                                @group.Count() 项
+                            </span>
+                        </div>
+                        <div class="ap-meta">
+                            任务：@group.First().TaskName ｜ 执行裁决：@VerdictText(group.First().Verdict) ｜ @group.First().CreationTime.ToString("MM-dd HH:mm")
+                        </div>
+                        @foreach (var r in group)
+                        {
+                            <div class="ap-review-line">· @r.Title @(string.IsNullOrEmpty(r.Repo) ? "" : $"（{r.Repo}）")</div>
+                        }
+                        <div class="ap-actions">
+                            <button class="modal-btn-cancel" @onclick='() => ReviewLogAsync(group.First().TaskLogId, "Rejected")'>不认可</button>
+                            <button class="modal-btn-primary" @onclick='() => ReviewLogAsync(group.First().TaskLogId, "Accepted")'>接受</button>
+                        </div>
+                    </div>
+                }
+            }
+        }
 
         @if (_tab == "queue")
         {
@@ -76,7 +118,7 @@
                 }
             }
         }
-        else
+        else if (_tab == "rules")
         {
             <div class="ap-note">
                 判定顺序：本次运行预授权 &gt; 下方规则（按优先级取首条命中） &gt; 技能级「需人工审批」。
@@ -136,6 +178,29 @@
     private readonly List<QueueRow> _queue = [];
     private List<ApprovalRuleDto> _rules = [];
 
+    private static readonly StateOption[] ReviewStates =
+    [
+        new("Pending", "待验收"),
+        new("Accepted", "已接受"),
+        new("Rejected", "未认可")
+    ];
+
+    private List<PendingReviewItemDto> _reviews = [];
+    private string _reviewState = "Pending";
+    private int _reviewCount;
+
+    /// <summary>同一次执行的产物是一批，逐条点验收没人会有耐心</summary>
+    private IEnumerable<IGrouping<string, PendingReviewItemDto>> ReviewGroups =>
+        _reviews.GroupBy(r => $"{r.Title}｜{r.TaskName}");
+
+    private static string VerdictText(string? verdict) => verdict switch
+    {
+        "Pass" => "模型复核通过",
+        "Fail" => "模型复核未通过",
+        "Unclear" => "模型认为证据不足",
+        _ => "未设验收标准"
+    };
+
     private string _ruleName = "";
     private string _ruleToolPattern = "";
     private string _ruleArgPattern = "";
@@ -154,6 +219,7 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadQueueAsync("Pending");
+        await LoadReviewsAsync("Pending");
         _rules = (await ApprovalRuleAppService.GetListAsync())?.Data ?? [];
     }
 
@@ -164,6 +230,31 @@
         {
             _ = LoadRulesAsync();
         }
+        else if (tab == "reviews")
+        {
+            _ = LoadReviewsAsync(_reviewState);
+        }
+    }
+
+    private async Task LoadReviewsAsync(string state)
+    {
+        _reviewState = state;
+        var res = await TaskAppService.GetPendingReviewsAsync(state, 100);
+        _reviews = res.Data ?? [];
+        if (state == "Pending") _reviewCount = _reviews.Count;
+    }
+
+    private async Task ReviewLogAsync(Guid taskLogId, string status)
+    {
+        var res = await TaskAppService.ReviewArtifactsAsync(new ReviewArtifactsInputDto
+        {
+            TaskLogId = taskLogId,
+            Status = status
+        });
+
+        ShowToast(res.Success ? (status == "Accepted" ? "已接受该批产物" : "已标记为不认可") : "验收提交失败",
+            res.Success ? "success" : "error");
+        await LoadReviewsAsync(_reviewState);
     }
 
     private async Task LoadRulesAsync()
