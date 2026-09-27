@@ -913,8 +913,11 @@
 
     private static ConvMessage LogToMessage(TaskLogDto log) => new()
     {
-        Role = log.Status == "Success" ? "assistant" : "error",
-        Content = log.Status == "Success"
+        // 执行已脱离浏览器连接，刷新时经常遇到仍在跑的运行；它不是错误
+        Role = log.Status == "Success" || log.Status == "Running" ? "assistant" : "error",
+        Content = log.Status == "Running"
+            ? "员工正在执行中…（关掉页面不会中断执行，稍后回来即可看到结果）"
+            : log.Status == "Success"
             ? (string.IsNullOrWhiteSpace(log.Result) ? "（无返回内容）" : log.Result)
             : (log.ErrorMessage ?? log.Status),
         Time = log.StartTime,

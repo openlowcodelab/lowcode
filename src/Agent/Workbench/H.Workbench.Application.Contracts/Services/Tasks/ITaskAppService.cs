@@ -82,4 +82,31 @@ public interface ITaskAppService : IAppService
     /// 运行看板：按时间窗聚合成功率、验收裁决、token 成本与按员工/任务的分布
     /// </summary>
     Task<BaseOutput<RuntimeStatsDto>> GetRuntimeStatsAsync(int days = 7);
+
+    /// <summary>
+    /// 提交一次后台运行，返回 runId（= TaskLog 主键）。浏览器断开不影响执行。
+    /// </summary>
+    Task<BaseOutput<Guid>> StartRunAsync(StartRunInputDto input);
+
+    /// <summary>
+    /// 取消一次仍在排队的运行。已结束的返回失败。
+    /// </summary>
+    Task<BaseOutput> CancelRunAsync(Guid runId);
+
+    /// <summary>
+    /// 运行状态（是否仍在跟踪、当前步数、裁决）
+    /// </summary>
+    Task<BaseOutput<RunStatusDto>> GetRunStatusAsync(Guid runId);
+
+    /// <summary>
+    /// 由执行宿主调用：跑完整个运行并把事件推给 RunEventHub。
+    /// 发起人身份不在签名里——它由提交时登记在运行队列中，避免多出一个可伪造 userId
+    /// 的 HTTP 入口（审批归属校验要用这个 id）。
+    /// </summary>
+    Task ExecuteDetachedAsync(Guid taskId, Guid runId, string? prompt, CancellationToken ct);
+
+    /// <summary>
+    /// 订阅某次运行的事件流（先回放缓冲再接实时）。断连只是退订。
+    /// </summary>
+    IAsyncEnumerable<string> SubscribeRunAsync(Guid runId, CancellationToken ct = default);
 }

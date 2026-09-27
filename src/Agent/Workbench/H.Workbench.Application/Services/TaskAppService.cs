@@ -2,6 +2,7 @@ using AutoMapper;
 using H.Abp.Application.Contracts;
 using H.Workbench.Application.Contracts;
 using H.Workbench.Application.Services.Execution;
+using H.Workbench.Application.Workers;
 using H.Workbench.Core;
 using H.Workbench.Core.Agents;
 using H.Workbench.EntityFrameworkCore;
@@ -37,6 +38,8 @@ public class TaskAppService : ApplicationService, ITaskAppService
     private readonly WorkbenchToolOptions _toolOptions;
     private readonly WorkbenchVerifier _verifier;
     private readonly RunQuotaGate _runQuota;
+    private readonly WorkbenchRunQueue _runQueue;
+    private readonly RunEventHub _runHub;
 
     public TaskAppService(
         IRepository<TaskEntity, Guid> taskRepository,
@@ -51,7 +54,9 @@ public class TaskAppService : ApplicationService, ITaskAppService
         IHttpContextAccessor httpContextAccessor,
         IOptions<WorkbenchToolOptions> toolOptions,
         WorkbenchVerifier verifier,
-        RunQuotaGate runQuota)
+        RunQuotaGate runQuota,
+        WorkbenchRunQueue runQueue,
+        RunEventHub runHub)
     {
         _taskRepository = taskRepository;
         _logRepository = logRepository;
@@ -66,6 +71,8 @@ public class TaskAppService : ApplicationService, ITaskAppService
         _toolOptions = toolOptions.Value;
         _verifier = verifier;
         _runQuota = runQuota;
+        _runQueue = runQueue;
+        _runHub = runHub;
     }
 
     public async Task<BaseOutput<PagedResultDto<TaskDto>>> GetListAsync(TaskQueryDto input)
@@ -280,212 +287,205 @@ public class TaskAppService : ApplicationService, ITaskAppService
         return new();
     }
 
+    /// <summary>
+    /// 兼容既有前端的“提交即订阅”：把运行交给宿主，然后订阅它的事件流。
+    /// 与阶段B的本质差别——这条连接断开不再取消执行。
+    /// </summary>
     public async IAsyncEnumerable<string> ExecuteStreamAsync(ExecuteTaskStreamInputDto input)
+    {
+        var started = await StartRunAsync(new StartRunInputDto
+        {
+            TaskId = input.TaskId,
+            Prompt = input.Prompt
+        });
+
+        if (!started.Success || started.Data == Guid.Empty)
+        {
+            yield return SerializeError(started.Message ?? "任务无法启动");
+            yield break;
+        }
+
+        await foreach (var evt in _runHub.SubscribeAsync(started.Data))
+        {
+            yield return evt;
+        }
+    }
+
+    public async Task<BaseOutput<Guid>> StartRunAsync(StartRunInputDto input)
     {
         var task = await _taskRepository.FindAsync(input.TaskId);
         if (task == null)
         {
-            yield return SerializeError($"任务不存在: {input.TaskId}");
-            yield break;
+            return new BaseOutput<Guid> { Code = 1, Success = false, Message = $"任务不存在: {input.TaskId}" };
         }
 
-        var prompt = string.IsNullOrWhiteSpace(input.Prompt) ? task.PromptContent : input.Prompt.Trim();
+        var runId = Guid.NewGuid();
+        _runHub.Open(runId);
+        _runQueue.Enqueue(new RunRequest(task.Id, runId, input.Prompt, CurrentUser.Id?.ToString()));
+        return new(runId);
+    }
 
-        // 并发配额：迭代器内的 using 在枚举结束或消费者放弃时释放，断连不会漏名额
-        using var slot = _runQuota.TryAcquire();
+    public Task<BaseOutput> CancelRunAsync(Guid runId) =>
+        Task.FromResult(_runQueue.TryCancel(runId)
+            ? new BaseOutput()
+            : new BaseOutput { Code = 1, Success = false, Message = "该运行已结束或不存在" });
+
+    public async Task<BaseOutput<RunStatusDto>> GetRunStatusAsync(Guid runId)
+    {
+        var log = await _logRepository.FindAsync(runId);
+        return new(new RunStatusDto
+        {
+            RunId = runId,
+            Status = log?.Status ?? "NotFound",
+            Tracked = _runHub.IsTracked(runId),
+            StepCount = log?.StepCount ?? 0,
+            Verdict = log?.Verdict
+        });
+    }
+
+    public IAsyncEnumerable<string> SubscribeRunAsync(Guid runId, CancellationToken ct = default) =>
+        _runHub.SubscribeAsync(runId, ct);
+
+    /// <summary>
+    /// 执行内核：一次运行的完整生命周期（Running 行 → ReAct/工作流 → 验收 → 收尾落库）。
+    /// 事件经 Forward 回调外发，内核不知道“谁在听”；ct 来自宿主的运行令牌
+    /// （显式取消或宿主关闭），不再是浏览器连接。
+    /// </summary>
+    public async Task ExecuteDetachedAsync(Guid taskId, Guid runId, string? promptOverride, CancellationToken ct)
+    {
+        var task = await _taskRepository.FindAsync(taskId);
+        if (task == null)
+        {
+            _runHub.Publish(runId, SerializeError($"任务不存在: {taskId}"));
+            return;
+        }
+
+        var slot = _runQuota.TryAcquire();
         if (slot is null)
         {
-            yield return SerializeError($"并发执行已达上限（{_runQuota.MaxConcurrentRuns}），请待当前执行结束后重试");
-            yield break;
+            _runHub.Publish(runId, SerializeError($"并发执行已达上限（{_runQuota.MaxConcurrentRuns}），请稍后重试"));
+            return;
         }
 
+        var prompt = string.IsNullOrWhiteSpace(promptOverride) ? task.PromptContent : promptOverride.Trim();
+        var userId = _runQueue.PeekUser(runId);
         var startTime = DateTime.Now;
         var thinking = new StringBuilder();
         var answer = new StringBuilder();
         string? failure = null;
         VerificationOutcome? verdict = null;
 
-        // 客户端断连检测：SSE 连接断开后终止 ReAct 循环，防审批挂到超时
-        var ct = _httpContextAccessor.HttpContext?.RequestAborted ?? CancellationToken.None;
-
-        // 续聊上下文：带最近若干次成功执行的问答对（必须在 Running 日志插入前构建，
-        // 且只取 Status=Success 行，轨迹落库不影响该口径）
+        // 续聊上下文只取 Status=Success 行，且必须在 Running 行插入前构建
         var history = await BuildConversationHistoryAsync(task);
 
-        // 起始即插 Running 行（独立短 UoW 立即提交，见 StartLogAsync 注释）：轨迹/产物需要立即存在的宿主
-        var logId = Guid.NewGuid();
         try
         {
-            await _traceStore.StartLogAsync(logId, task.Id, prompt, startTime);
+            await _traceStore.StartLogAsync(runId, task.Id, prompt, startTime);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "插入 Running 执行日志失败 TaskId={TaskId}", task.Id);
         }
 
-        // 审批模式：流式对话任务可回传裁决；工作流卡点同样走审批通道
         var isWorkflow = task.SourceType == "Workflow" && !string.IsNullOrWhiteSpace(task.WorkflowContent);
-        var approvalMode = isWorkflow ? "Interactive" : "Interactive";
-        List<WorkflowStepDto>? steps = null;
-        if (isWorkflow)
-        {
-            steps = ParseWorkflowSteps(task.WorkflowContent!);
-        }
+        var steps = isWorkflow ? ParseWorkflowSteps(task.WorkflowContent!) : null;
 
         IAgentInstance? agent = null;
-        string? agentError = null;
         try
         {
             agent = await _agentFactory.CreateAgentAsync(task.AgentType, task.ModelConfigId,
-                new AgentRunContext(task.ProjectId, null, approvalMode, task.Id, logId, CurrentUser.Id?.ToString()));
+                new AgentRunContext(task.ProjectId, null, "Interactive", task.Id, runId, userId));
         }
         catch (Exception ex)
         {
-            agentError = ex.Message;
+            failure = ex.Message;
         }
 
-        if (agent == null)
+        if (agent is null)
         {
-            agentError ??= $"无法创建员工实例: {task.AgentType}";
-            try
-            {
-                await _traceStore.CompleteLogAsync(logId, "Failed", null, agentError, 0, 0, null);
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "回写失败日志出错 TaskId={TaskId}", task.Id);
-            }
-            yield return SerializeError(agentError);
-            yield break;
+            failure ??= $"无法创建员工实例: {task.AgentType}";
+            await _traceStore.CompleteLogAsync(runId, "Failed", null, failure, 0, 0, null);
+            _runHub.Publish(runId, SerializeError(failure));
+            slot.Dispose();
+            return;
         }
 
-        var recorder = new ExecutionTraceRecorder(_traceStore, _toolOptions.Trace, Logger, logId, task.Id);
+        var recorder = new ExecutionTraceRecorder(_traceStore, _toolOptions.Trace, Logger, runId, task.Id);
         var completedNormally = false;
 
-        // 迭代器规则：yield 不得位于带 catch 的 try 内；收尾放 finally，
-        // 客户端断连（消费者 DisposeAsync）时也能执行，把 Running 行落成 Cancelled
+        // 一份事件两个去处：先推给订阅者再落轨迹，两者都不能抛出去打断执行
+        async Task Forward(string json)
+        {
+            _runHub.Publish(runId, json);
+            await recorder.HandleAsync(json);
+        }
+
         try
         {
             if (isWorkflow)
             {
-                // 工作流：引擎在后台跑（步骤边界/卡点审批事件经 Channel 桥接实时转发），
-                // 步骤过程由 recorder 直接落库，前端据 step 事件构建分组时间线
-                var channel = System.Threading.Channels.Channel.CreateUnbounded<string>();
-                WorkflowRunSummaryDto? wfSummary = null;
-                Exception? wfError = null;
-
-                async Task RunEngineAsync()
-                {
-                    try
-                    {
-                        wfSummary = await RunWorkflowAsync(
-                            task, steps!, recorder,
-                            BuildStepAgentResolver(task, agent, logId, "Interactive"),
-                            async json => await channel.Writer.WriteAsync(json, ct),
-                            interactive: true, logId, ct);
-                    }
-                    catch (Exception ex)
-                    {
-                        wfError = ex;
-                    }
-                    finally
-                    {
-                        channel.Writer.TryComplete();
-                    }
-                }
-
-                var engine = RunEngineAsync();
-                await foreach (var evt in channel.Reader.ReadAllAsync())
-                {
-                    await recorder.HandleAsync(evt);
-                    yield return evt;
-                }
-
-                await Task.WhenAll(engine);
-                if (wfError is not null)
-                {
-                    failure = wfError.Message;
-                }
-                else if (wfSummary is not null)
-                {
-                    var md = BuildWorkflowAnswer(wfSummary);
-                    answer.Append(md);
-                    yield return SerializeAnswer(md);
-                }
-            }
-            else if (agent is IStreamingAgent streamingAgent)
-            {
-                await using var enumerator = streamingAgent.ProcessMessageStreamAsync(prompt, history, ct).GetAsyncEnumerator();
-                while (true)
-                {
-                    bool hasNext;
-                    string? chunk = null;
-                    try
-                    {
-                        hasNext = await enumerator.MoveNextAsync();
-                        if (hasNext)
-                        {
-                            chunk = enumerator.Current;
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        failure = ex.Message;
-                        hasNext = false;
-                    }
-
-                    if (!hasNext)
-                    {
-                        break;
-                    }
-
-                    AccumulateStreamEvent(chunk!, thinking, answer, ref failure);
-                    await recorder.HandleAsync(chunk!);
-                    yield return chunk!;
-                }
-            }
-            else
-            {
-                string? response = null;
                 try
                 {
-                    response = await agent.ProcessMessageAsync(prompt, new List<string>(), recorder.Tap);
+                    var summary = await RunWorkflowAsync(task, steps!, recorder,
+                        BuildStepAgentResolver(task, agent, runId, "Interactive"),
+                        Forward, interactive: true, runId, ct);
+
+                    var md = BuildWorkflowAnswer(summary);
+                    answer.Append(md);
+                    if (!summary.Success)
+                    {
+                        failure = summary.Error ?? "工作流存在失败步骤";
+                    }
+                    await Forward(SerializeAnswer(md));
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
                 }
                 catch (Exception ex)
                 {
                     failure = ex.Message;
                 }
-
-                if (response is not null)
+            }
+            else if (agent is IStreamingAgent streamingAgent)
+            {
+                await foreach (var chunk in streamingAgent.ProcessMessageStreamAsync(prompt, history, ct))
                 {
-                    answer.Append(response);
-                    yield return SerializeAnswer(response);
+                    AccumulateStreamEvent(chunk, thinking, answer, ref failure);
+                    await Forward(chunk);
                 }
+            }
+            else
+            {
+                var response = await agent.ProcessMessageAsync(prompt, new List<string>(), recorder.Tap);
+                answer.Append(response);
+                await Forward(SerializeAnswer(response));
             }
 
             if (failure is not null && !ct.IsCancellationRequested)
             {
-                yield return SerializeError(failure);
+                await Forward(SerializeError(failure));
             }
 
             // 验收：员工声称完成之后，按任务登记的验收标准复核再定成败
             var candidateAnswer = answer.Length > 0 ? answer.ToString() : thinking.ToString();
-            if (failure is null && candidateAnswer.Length > 0)
+            if (failure is null && candidateAnswer.Length > 0 && !ct.IsCancellationRequested)
             {
-                verdict = await VerifyResultAsync(task, prompt, logId, candidateAnswer);
+                verdict = await VerifyResultAsync(task, prompt, runId, candidateAnswer);
                 if (verdict is not null)
                 {
-                    var verifyEvent = SerializeVerifyEvent(verdict);
-                    await recorder.HandleAsync(verifyEvent);
-                    yield return verifyEvent;
+                    await Forward(SerializeVerifyEvent(verdict));
                 }
             }
 
             completedNormally = true;
         }
+        catch (OperationCanceledException)
+        {
+            // 显式取消/宿主关闭：不算失败，收尾按 Cancelled 记
+        }
         finally
         {
-            // 与同步执行口径一致：answer 优先，否则回退累积的 thinking 增量
             var finalAnswer = answer.Length > 0 ? answer.ToString() : thinking.ToString();
             var aborted = !completedNormally || ct.IsCancellationRequested;
             var succeeded = !aborted && failure is null && finalAnswer.Length > 0;
@@ -493,14 +493,14 @@ public class TaskAppService : ApplicationService, ITaskAppService
             try
             {
                 var (stepCount, artifactCount, approvalState) = await recorder.FinishAsync();
-
                 var verified = verdict is null || verdict.Verdict != "Fail";
+
                 await _traceStore.CompleteLogAsync(
-                    logId,
+                    runId,
                     aborted ? "Cancelled" : succeeded && verified ? "Success" : "Failed",
                     // 验收未通过也要留下员工实际产出的文本：裁决是评价，不是删除证据
                     succeeded ? finalAnswer : null,
-                    aborted ? "客户端断开，执行中止"
+                    aborted ? "运行被取消（用户停止或宿主关闭）"
                         : succeeded && !verified ? $"验收未通过：{verdict!.Reason}"
                         : failure,
                     stepCount,
@@ -524,8 +524,10 @@ public class TaskAppService : ApplicationService, ITaskAppService
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "流式任务执行结果落库失败 TaskId={TaskId}", task.Id);
+                Logger.LogError(ex, "运行结果落库失败 TaskId={TaskId} RunId={RunId}", task.Id, runId);
             }
+
+            slot.Dispose();
         }
     }
 

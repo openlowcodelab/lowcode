@@ -1,3 +1,4 @@
+using H.Workbench.Application.Services.Execution;
 using H.Workbench.Application.Workers;
 using H.Workbench.Core;
 using H.Workbench.Core.Mcp;
@@ -42,6 +43,12 @@ public class WorkbenchApplicationModule : AbpModule
 
         // 注册定时任务 Worker
         context.Services.AddHostedService<TaskWorker>();
+
+        // 执行宿主：运行队列 + 事件中枢都必须是单例，
+        // 执行体（宿主）与订阅者（SSE 请求）要看到同一个实例
+        context.Services.AddSingleton<WorkbenchRunQueue>();
+        context.Services.AddSingleton<RunEventHub>();
+        context.Services.AddHostedService<WorkbenchRunHost>();
 
         // 注册启动种子数据 Worker
         context.Services.AddHostedService<WorkbenchDataSeedWorker>();
