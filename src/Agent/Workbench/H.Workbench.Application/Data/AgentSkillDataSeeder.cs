@@ -248,6 +248,15 @@ public class AgentSkillDataSeeder : IDataSeedContributor, ITransientDependency
             },
             new()
             {
+                SkillName = "test_runner",
+                DisplayName = "测试自检",
+                Description = "在已克隆仓库内执行 dotnet test 并回传通过/失败计数（命令由服务端拼装，不接受自由命令）。默认免审批——改完能不能跑是要先回答的问题",
+                SkillType = "Function",
+                ImplementationClass = "H.Workbench.Core.Tools.TestRunnerTool",
+                RequiresApproval = false
+            },
+            new()
+            {
                 // 云效等 DevOps 流水线 API 尚未接入，明确标记为待实现，避免幽灵注册
                 SkillName = "pipeline",
                 DisplayName = "流水线工具",

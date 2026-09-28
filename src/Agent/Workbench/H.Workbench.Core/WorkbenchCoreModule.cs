@@ -19,6 +19,7 @@ public class WorkbenchCoreModule : AbpModule
         context.Services.AddSingleton<GitTool>();
         context.Services.AddSingleton<WorkspaceFileTool>();
         context.Services.AddSingleton<Tools.WorkspaceShellTool>();
+        context.Services.AddSingleton<Tools.TestRunnerTool>();
         context.Services.AddSingleton<Tools.Internal.GitWorkspaceLocks>();
         context.Services.AddSingleton<Agents.ApprovalGateway>();
     }

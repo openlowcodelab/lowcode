@@ -23,7 +23,8 @@ public static class WorkbenchToolCatalog
             ["http_client"] = "H.Workbench.Core.Tools.HttpClientTool",
             ["git"] = "H.Workbench.Core.Tools.GitTool",
             ["workspace_file"] = "H.Workbench.Core.Tools.WorkspaceFileTool",
-            ["workspace_shell"] = "H.Workbench.Core.Tools.WorkspaceShellTool"
+            ["workspace_shell"] = "H.Workbench.Core.Tools.WorkspaceShellTool",
+            ["test_runner"] = "H.Workbench.Core.Tools.TestRunnerTool"
         };
 
     /// <summary>

@@ -140,6 +140,24 @@ public static class ArtifactExtractor
                     });
                     break;
                 }
+                case "WorkspaceRunTestsAsync":
+                {
+                    int Num(string key) => data.TryGetProperty(key, out var v) && v.TryGetInt32(out var nv) ? nv : 0;
+                    var passed = Num("passed");
+                    var failed = Num("failed");
+                    var skipped = Num("skipped");
+                    var exitCode = data.TryGetProperty("exitCode", out var ec) && ec.TryGetInt32(out var ev) ? ev : (int?)null;
+
+                    artifacts.Add(new ArtifactEntity
+                    {
+                        Kind = "TestRun",
+                        Title = $"测试 {passed} 通过 / {failed} 失败 / {skipped} 跳过",
+                        Repo = GetString(data, "repo"),
+                        Success = failed == 0 && exitCode == 0,
+                        Payload = JsonSerializer.Serialize(new { passed, failed, skipped, exitCode })
+                    });
+                    break;
+                }
                 case "WorkspaceRunShellAsync":
                 {
                     var exitCode = data.TryGetProperty("exitCode", out var ec) && ec.TryGetInt32(out var ev) ? ev : (int?)null;
