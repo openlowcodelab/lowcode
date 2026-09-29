@@ -19,10 +19,6 @@
                      @onclick='() => Navigation.NavigateTo("/workbench/projects")'>
                     <span class="wb-menu-icon">🗂</span><span class="wb-menu-text">项目</span>
                 </div>
-                <div class="wb-menu-item @(IsActive("/workbench/approvals") ? "wb-menu-active" : "")"
-                     @onclick='() => Navigation.NavigateTo("/workbench/approvals")'>
-                    <span class="wb-menu-icon">🔐</span><span class="wb-menu-text">审批中心</span>
-                </div>
                 <div class="wb-menu-item @(IsActive("/workbench/stats") ? "wb-menu-active" : "")"
                      @onclick='() => Navigation.NavigateTo("/workbench/stats")'>
                     <span class="wb-menu-icon">📊</span><span class="wb-menu-text">运行看板</span>
@@ -132,7 +128,8 @@
 
     private bool IsActive(string url)
     {
-        var current = Navigation.ToBaseRelativePath(Navigation.Uri).Trim('/');
+        // 带查询串直达时（如 /workbench/settings?section=approvals）仍要命中菜单项
+        var current = Navigation.ToBaseRelativePath(Navigation.Uri).Split('?')[0].Trim('/');
         var target = url.Trim('/');
         return current.Equals(target, StringComparison.OrdinalIgnoreCase);
     }
