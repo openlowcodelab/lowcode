@@ -14,55 +14,66 @@
 }
 
 <div class="em-page">
-    <div class="em-header">
-        <h2>员工管理</h2>
-        <button class="btn btn-primary workbench-btn-primary btn-small" @onclick="ShowCreate">＋ 新建员工</button>
+    @* 原左栏「运行看板」页面并入此处，与员工列表用 Tab 分开 *@
+    <div class="em-tabs">
+        <div class="em-tab @(_tab == "list" ? "em-tab-active" : "")" @onclick='() => _tab = "list"'>员工列表</div>
+        <div class="em-tab @(_tab == "stats" ? "em-tab-active" : "")" @onclick='() => _tab = "stats"'>运行看板</div>
     </div>
 
-    <div class="em-search">
-        <input placeholder="搜索名称或角色..." @bind="_filter" />
-    </div>
-
-    @if (_loading)
+    @if (_tab == "list")
     {
-        <div class="empty-state"><div class="empty-text">加载中...</div></div>
-    }
-    else if (FilteredAgents.Any())
-    {
-        <div class="em-grid">
-            @foreach (var agent in FilteredAgents)
-            {
-                <div class="em-card" @onclick="() => GoSettings(agent)">
-                    <div class="em-card-top">
-                        <span class="em-avatar">@agent.DisplayName.Substring(0, 1)</span>
-                    </div>
-                    <div class="em-card-name">
-                        <strong>@agent.DisplayName</strong>
-                        @if (!string.IsNullOrWhiteSpace(agent.Role))
-                        {
-                            <span class="em-role">📄 @agent.Role</span>
-                        }
-                    </div>
-                    <div class="em-card-desc">@agent.Description</div>
-                    <div class="em-card-foot">
-                        <span>任务数 @_stats.GetValueOrDefault(agent.Id).TaskCount</span>
-                        <span>最近运行 @_stats.GetValueOrDefault(agent.Id).LastRunText</span>
-                    </div>
-                    <div class="em-card-actions" @onclick:stopPropagation="true">
-                        <button class="btn btn-link btn-small" @onclick="() => GoSettings(agent)">设置</button>
-                        <button class="btn btn-link btn-small" @onclick="() => ShowSaveTemplate(agent)">存为模板</button>
-                        <button class="btn btn-link btn-small btn-danger" @onclick="() => DeleteAsync(agent)">删除</button>
-                    </div>
-                </div>
-            }
+        <div class="em-toolbar">
+            <div class="em-search">
+                <input placeholder="搜索名称或角色..." @bind="_filter" />
+            </div>
+            <button class="btn btn-primary workbench-btn-primary btn-small" @onclick="ShowCreate">＋ 新建员工</button>
         </div>
+
+        @if (_loading)
+        {
+            <div class="empty-state"><div class="empty-text">加载中...</div></div>
+        }
+        else if (FilteredAgents.Any())
+        {
+            <div class="em-grid">
+                @foreach (var agent in FilteredAgents)
+                {
+                    <div class="em-card" @onclick="() => GoSettings(agent)">
+                        <div class="em-card-top">
+                            <span class="em-avatar">@agent.DisplayName.Substring(0, 1)</span>
+                        </div>
+                        <div class="em-card-name">
+                            <strong>@agent.DisplayName</strong>
+                            @if (!string.IsNullOrWhiteSpace(agent.Role))
+                            {
+                                <span class="em-role">📄 @agent.Role</span>
+                            }
+                        </div>
+                        <div class="em-card-desc">@agent.Description</div>
+                        <div class="em-card-foot">
+                            <span>任务数 @_stats.GetValueOrDefault(agent.Id).TaskCount</span>
+                            <span>最近运行 @_stats.GetValueOrDefault(agent.Id).LastRunText</span>
+                        </div>
+                        <div class="em-card-actions" @onclick:stopPropagation="true">
+                            <button class="btn btn-link btn-small" @onclick="() => GoSettings(agent)">设置</button>
+                            <button class="btn btn-link btn-small" @onclick="() => ShowSaveTemplate(agent)">存为模板</button>
+                            <button class="btn btn-link btn-small btn-danger" @onclick="() => DeleteAsync(agent)">删除</button>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <div class="empty-icon">👥</div>
+                <div class="empty-text">暂无员工，点击新建按钮新增</div>
+            </div>
+        }
     }
     else
     {
-        <div class="empty-state">
-            <div class="empty-icon">👥</div>
-            <div class="empty-text">暂无员工，点击新建按钮新增</div>
-        </div>
+        <RuntimeStatsPanel />
     }
 </div>
 
@@ -180,6 +191,7 @@
     private Dictionary<Guid, AgentStats> _stats = [];
     private bool _loading;
     private string _filter = "";
+    private string _tab = "list";
 
     private bool _showCreate;
     private string _createMode = "template";
@@ -207,9 +219,15 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        // 支持 ?tab=stats 直达看板（左栏已无该菜单入口）
+        if (uri.Query.Contains("tab=stats", StringComparison.OrdinalIgnoreCase))
+        {
+            _tab = "stats";
+        }
+
         await LoadAsync();
 
-        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
         if (uri.Query.Contains("new=1", StringComparison.OrdinalIgnoreCase))
         {
             await ShowCreate();
@@ -419,24 +437,43 @@
     .em-page {
         height: 100%;
         overflow-y: auto;
-        padding: 24px;
+        padding: 12px;
         background: #fff;
         box-sizing: border-box;
     }
 
-    .em-header {
+    /* ========== Tab（员工列表 / 运行看板） ========== */
+    .em-tabs {
         display: flex;
-        justify-content: space-between;
-        align-items: center;
+        gap: 4px;
+        border-bottom: 1px solid #e8e8e8;
         margin-bottom: 16px;
     }
 
-    .em-header h2 {
-        margin: 0;
-        font-size: 20px;
+    .em-tab {
+        padding: 8px 14px;
+        font-size: 13px;
+        color: #595959;
+        cursor: pointer;
+        user-select: none;
+        border-bottom: 2px solid transparent;
     }
 
-    .em-search {
+    .em-tab:hover {
+        color: #262626;
+    }
+
+    .em-tab-active {
+        color: #1f6feb;
+        border-bottom-color: #1f6feb;
+        font-weight: 600;
+    }
+
+    .em-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
         margin-bottom: 16px;
     }
 

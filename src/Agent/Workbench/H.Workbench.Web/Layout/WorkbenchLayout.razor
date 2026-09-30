@@ -19,10 +19,6 @@
                      @onclick='() => Navigation.NavigateTo("/workbench/projects")'>
                     <span class="wb-menu-icon">🗂</span><span class="wb-menu-text">项目</span>
                 </div>
-                <div class="wb-menu-item @(IsActive("/workbench/stats") ? "wb-menu-active" : "")"
-                     @onclick='() => Navigation.NavigateTo("/workbench/stats")'>
-                    <span class="wb-menu-icon">📊</span><span class="wb-menu-text">运行看板</span>
-                </div>
                 <div class="wb-menu-item @(IsActive("/workbench/knowledge") ? "wb-menu-active" : "")"
                      @onclick='() => Navigation.NavigateTo("/workbench/knowledge")'>
                     <span class="wb-menu-icon">📚</span><span class="wb-menu-text">知识库</span>
@@ -36,10 +32,6 @@
                 <div class="wb-menu-item @(IsActive("/workbench/resources") ? "wb-menu-active" : "")"
                      @onclick='() => Navigation.NavigateTo("/workbench/resources")'>
                     <span class="wb-menu-icon">🧩</span><span class="wb-menu-text">能力与资源</span>
-                </div>
-                <div class="wb-menu-item @(IsActive("/workbench/settings") ? "wb-menu-active" : "")"
-                     @onclick='() => Navigation.NavigateTo("/workbench/settings")'>
-                    <span class="wb-menu-icon">⚙️</span><span class="wb-menu-text">设置</span>
                 </div>
 
                 <div class="wb-agent-section">
@@ -68,6 +60,12 @@
                             <div class="wb-agent-empty">暂无员工</div>
                         }
                     </div>
+                </div>
+            </div>
+            <div class="wb-side-footer">
+                <div class="wb-menu-item @(IsActive("/workbench/settings") ? "wb-menu-active" : "")"
+                     @onclick='() => Navigation.NavigateTo("/workbench/settings")'>
+                    <span class="wb-menu-icon">⚙️</span><span class="wb-menu-text">设置</span>
                 </div>
             </div>
         </div>
@@ -159,6 +157,13 @@
         font-size: 12px;
         color: #8c8c8c;
         padding: 12px 8px 6px;
+    }
+
+    /* 设置常驻左下角：不随菜单滚动，与 VS Code / Slack 侧栏习惯一致 */
+    .wb-side-footer {
+        flex-shrink: 0;
+        border-top: 1px solid #f0f0f0;
+        padding: 8px 10px;
     }
 
     .wb-menu-item {
