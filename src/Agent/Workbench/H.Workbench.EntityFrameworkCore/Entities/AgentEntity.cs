@@ -81,4 +81,9 @@ public class AgentEntity : AuditedEntity<Guid>
     /// 关联的项目 ID 列表（JSON 格式）
     /// </summary>
     public string? ProjectIds { get; set; }
+
+    /// <summary>
+    /// 关联的插件 ID 列表（JSON 格式）
+    /// </summary>
+    public string? PluginIds { get; set; }
 }

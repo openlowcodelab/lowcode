@@ -23,6 +23,7 @@ public class AgentFactory
     private readonly IAgentAppService _agentDefinitionAppService;
     private readonly ISkillAppService _skillDefinitionAppService;
     private readonly IConnectorAppService _connectorAppService;
+    private readonly IWorkbenchPluginAppService _pluginAppService;
     private readonly IWorkbenchProjectAppService _projectAppService;
     private readonly IKnowledgeRetrievalAppService _knowledgeRetrievalAppService;
     private readonly IToolRegistry _toolRegistry;
@@ -60,6 +61,7 @@ public class AgentFactory
         IAgentAppService agentDefinitionAppService,
         ISkillAppService skillDefinitionAppService,
         IConnectorAppService connectorAppService,
+        IWorkbenchPluginAppService pluginAppService,
         IWorkbenchProjectAppService projectAppService,
         IKnowledgeRetrievalAppService knowledgeRetrievalAppService,
         IToolRegistry toolRegistry,
@@ -76,6 +78,7 @@ public class AgentFactory
         _agentDefinitionAppService = agentDefinitionAppService;
         _skillDefinitionAppService = skillDefinitionAppService;
         _connectorAppService = connectorAppService;
+        _pluginAppService = pluginAppService;
         _projectAppService = projectAppService;
         _knowledgeRetrievalAppService = knowledgeRetrievalAppService;
         _toolRegistry = toolRegistry;
@@ -232,7 +235,18 @@ public class AgentFactory
             }
         }
 
-        var scopedRegistry = ResolveScopedRegistry(definition, agentSkills, connectorSkills);
+        // 插件（能力包）：绑定且启用的插件，把它登记的技能整体授予该员工
+        var pluginSkills = new List<string>();
+        if (definition.PluginIds.Count > 0)
+        {
+            var plugins = (await _pluginAppService.ListByIdsAsync(definition.PluginIds)).Data ?? [];
+            foreach (var plugin in plugins.Where(p => p.IsEnabled))
+            {
+                pluginSkills.AddRange(plugin.SkillKeys);
+            }
+        }
+
+        var scopedRegistry = ResolveScopedRegistry(definition, agentSkills, connectorSkills.Concat(pluginSkills).ToList());
         var toolDefs = scopedRegistry.GetToolDefinitions();
         var toolExecutor = new ToolExecutor(scopedRegistry, _toolExecutorLogger, _options.ToolTimeoutSeconds);
 

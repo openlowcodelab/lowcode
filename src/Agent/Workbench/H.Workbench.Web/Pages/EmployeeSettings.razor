@@ -4,6 +4,7 @@
 @inject IAgentAppService AgentAppService
 @inject ISkillAppService SkillAppService
 @inject IConnectorAppService ConnectorAppService
+@inject IWorkbenchPluginAppService PluginAppService
 @inject IKnowledgeBaseAppService KnowledgeBaseAppService
 @inject IWorkbenchProjectAppService ProjectAppService
 @inject ILLMAppService LlmAppService
@@ -209,6 +210,32 @@ else
                     }
                 </div>
             }
+            else if (_section == "plugins")
+            {
+                <h2 class="es-title">插件</h2>
+                <div class="es-note">插件是打包好的技能组合：勾选即把这些技能的工具授予这名员工（只做加法，不收回已有技能）。插件要先在「能力 → 插件」里启用。</div>
+                <div class="rs-rows">
+                    @foreach (var plugin in _plugins.Where(x => x.IsEnabled))
+                    {
+                        <div class="rs-row">
+                            <span class="rs-row-icon">@plugin.Icon</span>
+                            <div class="rs-row-info">
+                                <div class="rs-row-name">@plugin.PluginName</div>
+                                <div class="rs-row-desc">@plugin.Description</div>
+                            </div>
+                            <span class="em-role">@plugin.SkillKeys.Count 项技能</span>
+                            <label class="checkbox-label">
+                                <input type="checkbox" checked="@_agent.PluginIds.Contains(plugin.Id)"
+                                       @onchange='e => ToggleBindingAsync("plugin", plugin.Id, e)' />
+                            </label>
+                        </div>
+                    }
+                    @if (!_plugins.Any(x => x.IsEnabled))
+                    {
+                        <div class="empty-state"><div class="empty-text">暂无已启用的插件，请到 能力 → 插件 启用</div></div>
+                    }
+                </div>
+            }
             else if (_section == "skills")
             {
                 <h2 class="es-title">Skill</h2>
@@ -262,7 +289,7 @@ else
                     }
                     @if (!_connectors.Any(x => x.IsEnabled))
                     {
-                        <div class="empty-state"><div class="empty-text">暂无已启用的连接器，请到 能力与资源 启用</div></div>
+                        <div class="empty-state"><div class="empty-text">暂无已启用的连接器，请到 能力 启用</div></div>
                     }
                 </div>
             }
@@ -339,6 +366,7 @@ else
         ("overview", "概览"),
         ("tasks", "任务"),
         ("workflows", "工作流"),
+        ("plugins", "插件"),
         ("skills", "Skill"),
         ("connectors", "连接器"),
         ("knowledge", "知识库"),
@@ -353,6 +381,7 @@ else
     private List<AgentDto> _allAgents = [];
     private List<SkillDto> _skills = [];
     private List<ConnectorDto> _connectors = [];
+    private List<WorkbenchPluginDto> _plugins = [];
     private List<KnowledgeBaseDto> _knowledgeBases = [];
     private List<WorkbenchProjectDto> _projects = [];
 
@@ -441,6 +470,9 @@ else
                         MaxResultCount = 100
                     })).Data?.Items.Select(WfCard.From).ToList() ?? [];
                     break;
+                case "plugins":
+                    _plugins = (await PluginAppService.GetListAsync(new WorkbenchPluginQueryDto { MaxResultCount = 100 })).Data?.Items.ToList() ?? [];
+                    break;
                 case "skills":
                     _skills = (await SkillAppService.GetListAsync(new SkillDefinitionQueryDto { MaxResultCount = 100 })).Data?.Items.ToList() ?? [];
                     break;
@@ -479,7 +511,8 @@ else
             SkillIds = _agent?.SkillIdList ?? [],
             ConnectorIds = _agent?.ConnectorIds ?? [],
             KnowledgeBaseIds = _agent?.KnowledgeBaseIds ?? [],
-            ProjectIds = _agent?.ProjectIds ?? []
+            ProjectIds = _agent?.ProjectIds ?? [],
+            PluginIds = _agent?.PluginIds ?? []
         };
     }
 
@@ -518,6 +551,7 @@ else
         var connectorIds = new List<Guid>(_agent.ConnectorIds);
         var knowledgeIds = new List<Guid>(_agent.KnowledgeBaseIds);
         var projectIds = new List<Guid>(_agent.ProjectIds);
+        var pluginIds = new List<Guid>(_agent.PluginIds);
 
         switch (kind)
         {
@@ -533,6 +567,9 @@ else
             case "project":
                 if (checkedValue) { if (!projectIds.Contains(id)) projectIds.Add(id); } else projectIds.Remove(id);
                 break;
+            case "plugin":
+                if (checkedValue) { if (!pluginIds.Contains(id)) pluginIds.Add(id); } else pluginIds.Remove(id);
+                break;
         }
 
         var dto = BuildUpdateDto();
@@ -540,6 +577,7 @@ else
         dto.ConnectorIds = connectorIds;
         dto.KnowledgeBaseIds = knowledgeIds;
         dto.ProjectIds = projectIds;
+        dto.PluginIds = pluginIds;
 
         try
         {

@@ -1,0 +1,1036 @@
+@page "/workbench/capabilities"
+
+@layout WorkbenchLayout
+@inject ISkillAppService SkillAppService
+@inject IConnectorAppService ConnectorAppService
+@inject IWorkbenchPluginAppService PluginAppService
+@inject IMcpServerAppService McpServerAppService
+@inject NavigationManager Navigation
+
+<PageTitle>能力 - AI 工作台</PageTitle>
+
+@if (!string.IsNullOrEmpty(toastMessage))
+{
+    <div class="toast-notification toast-@toastType @(toastVisible ? "toast-show" : "")">@toastMessage</div>
+}
+
+<div class="cp-page">
+    <div class="cp-header">
+        <h2>能力</h2>
+        <button class="btn btn-primary workbench-btn-primary btn-small"
+                @onclick='() => Navigation.NavigateTo("/workbench/employees")'>员工管理</button>
+    </div>
+
+    <div class="wb-seg" style="max-width:330px;margin-bottom:20px;">
+        <div class="wb-seg-item @(_tab == "plugin" ? "wb-seg-active" : "")" @onclick='() => SwitchTab("plugin")'>插件</div>
+        <div class="wb-seg-item @(_tab == "skill" ? "wb-seg-active" : "")" @onclick='() => SwitchTab("skill")'>Skill</div>
+        <div class="wb-seg-item @(_tab == "connector" ? "wb-seg-active" : "")" @onclick='() => SwitchTab("connector")'>连接器</div>
+    </div>
+
+    @if (_tab == "plugin")
+    {
+        <div class="cp-note">插件是打包好的技能组合：这里开启只是让插件可用，还要在「员工设置 → 插件」里勾选，才会把这些技能的工具授予该员工。自定义插件可自选技能组合。</div>
+        <div class="cp-section-head">
+            <span>自定义</span>
+            <button class="btn btn-primary workbench-btn-primary btn-small" @onclick="() => ShowPluginDialog()">＋ 手动添加</button>
+        </div>
+        @if (_plugins.Any(x => x.Source == "Custom"))
+        {
+            <div class="cp-grid">
+                @foreach (var plugin in _plugins.Where(x => x.Source == "Custom"))
+                {
+                    <div class="cp-card" @onclick="() => OpenPluginDetail(plugin)">
+                        <div class="cp-card-head">
+                            <span class="cp-card-icon">@plugin.Icon</span>
+                            <span class="cp-card-name">@plugin.PluginName</span>
+                        </div>
+                        <div class="cp-card-desc">@plugin.Description</div>
+                        @if (plugin.SkillKeys.Any())
+                        {
+                            <div class="cp-card-meta">授予 @plugin.SkillKeys.Count 项技能：@string.Join(" · ", plugin.SkillKeys)</div>
+                        }
+                        else
+                        {
+                            <div class="cp-card-meta cp-meta-empty">未勾选技能，绑定后不会授予任何工具</div>
+                        }
+                        <div class="cp-card-foot">
+                            <div class="cp-card-actions">
+                                <button class="btn btn-link btn-small" @onclick="() => ShowPluginDialog(plugin)" @onclick:stopPropagation="true">编辑</button>
+                                <button class="btn btn-link btn-small btn-danger" @onclick="() => DeletePluginAsync(plugin)" @onclick:stopPropagation="true">删除</button>
+                            </div>
+                            <label class="cp-switch" title="启用/停用" @onclick:stopPropagation="true">
+                                <input type="checkbox" checked="@plugin.IsEnabled" @onchange="e => TogglePluginAsync(plugin, e)" />
+                                <span class="cp-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <div class="empty-icon">🧰</div>
+                <div class="empty-text">暂无自定义插件，可点击右上方"手动添加"。</div>
+            </div>
+        }
+
+        <div class="cp-section-head" style="margin-top:24px;">
+            <span>来自插件市场</span>
+        </div>
+        <div class="cp-grid">
+            @foreach (var plugin in _plugins.Where(x => x.Source == "Market"))
+            {
+                <div class="cp-card" @onclick="() => OpenPluginDetail(plugin)">
+                    <div class="cp-card-head">
+                        <span class="cp-card-icon">@plugin.Icon</span>
+                        <span class="cp-card-name">@plugin.PluginName</span>
+                    </div>
+                    <div class="cp-card-desc">@plugin.Description</div>
+                    <div class="cp-card-meta">授予 @plugin.SkillKeys.Count 项技能：@string.Join(" · ", plugin.SkillKeys)</div>
+                    <div class="cp-card-foot">
+                        <div class="cp-card-actions">
+                            <span class="cp-card-tag">插件市场</span>
+                        </div>
+                        <label class="cp-switch" title="启用/停用" @onclick:stopPropagation="true">
+                            <input type="checkbox" checked="@plugin.IsEnabled" @onchange="e => TogglePluginAsync(plugin, e)" />
+                            <span class="cp-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else if (_tab == "skill")
+    {
+        <div class="cp-section-head">
+            <span>技能列表</span>
+            <button class="btn btn-link btn-small" @onclick='() => Navigation.NavigateTo("/workbench/skills")'>前往技能管理 →</button>
+        </div>
+        @if (_skills.Any())
+        {
+            <div class="cp-grid">
+                @foreach (var skill in _skills)
+                {
+                    <div class="cp-card" @onclick="() => OpenSkillDetail(skill)">
+                        <div class="cp-card-head">
+                            <span class="cp-card-icon">⚡</span>
+                            <span class="cp-card-name">@skill.DisplayName <span class="em-role">@skill.SkillType</span></span>
+                        </div>
+                        <div class="cp-card-desc">@skill.Description</div>
+                        @if (skill.SkillType == "Planned" || !skill.ImplementationAvailable)
+                        {
+                            <div class="cp-card-meta cp-meta-empty">@(skill.SkillType == "Planned" ? "待实现：尚无执行体" : "实现类不可用")</div>
+                        }
+                        <div class="cp-card-foot">
+                            <div class="cp-card-actions">
+                                <span class="cp-card-tag">@skill.SkillName</span>
+                            </div>
+                            <label class="cp-switch" title="启用/停用" @onclick:stopPropagation="true">
+                                <input type="checkbox" checked="@skill.IsEnabled" @onchange="e => ToggleSkillAsync(skill, e)" />
+                                <span class="cp-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="empty-state"><div class="empty-text">暂无技能</div></div>
+        }
+    }
+    else
+    {
+        <div class="cp-note">连接器授予设备级能力：浏览器=Playwright 真实浏览器（打开网页、点击、输入、读取渲染后文本、截图存盘）；计算机控制=本机截屏、窗口激活与键鼠输入，默认每个动作需人工批准。这里关闭开关即收回授予；员工还需在「员工设置 → 连接器」里勾选。</div>
+        <div class="cp-section-head">
+            <span>自定义</span>
+            <button class="btn btn-primary workbench-btn-primary btn-small" @onclick="() => ShowConnectorDialog()">＋ 手动添加</button>
+        </div>
+        @if (_connectors.Any(x => x.Source == "Custom"))
+        {
+            <div class="cp-grid">
+                @foreach (var connector in _connectors.Where(x => x.Source == "Custom"))
+                {
+                    <div class="cp-card" @onclick="() => OpenConnectorDetail(connector)">
+                        <div class="cp-card-head">
+                            <span class="cp-card-icon">@connector.Icon</span>
+                            <span class="cp-card-name">@connector.ConnectorName</span>
+                        </div>
+                        <div class="cp-card-desc">@connector.Description</div>
+                        <div class="cp-card-foot">
+                            <div class="cp-card-actions">
+                                <button class="btn btn-link btn-small" @onclick="() => ShowConnectorDialog(connector)" @onclick:stopPropagation="true">编辑</button>
+                                <button class="btn btn-link btn-small btn-danger" @onclick="() => DeleteConnectorAsync(connector)" @onclick:stopPropagation="true">删除</button>
+                            </div>
+                            <label class="cp-switch" title="启用/停用" @onclick:stopPropagation="true">
+                                <input type="checkbox" checked="@connector.IsEnabled" @onchange="e => ToggleConnectorAsync(connector, e)" />
+                                <span class="cp-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <div class="empty-icon">🔗</div>
+                <div class="empty-text">暂无自定义连接器，可点击右上方"手动添加"。</div>
+            </div>
+        }
+
+        <div class="cp-section-head" style="margin-top:24px;">
+            <span>来自连接器市场</span>
+        </div>
+        <div class="cp-grid">
+            @foreach (var connector in _connectors.Where(x => x.Source == "Market"))
+            {
+                <div class="cp-card" @onclick="() => OpenConnectorDetail(connector)">
+                    <div class="cp-card-head">
+                        <span class="cp-card-icon">@connector.Icon</span>
+                        <span class="cp-card-name">@connector.ConnectorName</span>
+                    </div>
+                    <div class="cp-card-desc">@connector.Description</div>
+                    <div class="cp-card-foot">
+                        <div class="cp-card-actions">
+                            <span class="cp-card-tag">连接器市场</span>
+                        </div>
+                        <label class="cp-switch" title="启用/停用" @onclick:stopPropagation="true">
+                            <input type="checkbox" checked="@connector.IsEnabled" @onchange="e => ToggleConnectorAsync(connector, e)" />
+                            <span class="cp-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="cp-section-head" style="margin-top:24px;">
+            <span>MCP 服务</span>
+            <button class="btn btn-link btn-small" @onclick='() => Navigation.NavigateTo("/workbench/mcps")'>前往 MCP 管理 →</button>
+        </div>
+        @if (_mcpServers.Any())
+        {
+            <div class="cp-grid">
+                @foreach (var server in _mcpServers)
+                {
+                    <div class="cp-card" @onclick="() => OpenMcpDetail(server)">
+                        <div class="cp-card-head">
+                            <span class="cp-card-icon">🔌</span>
+                            <span class="cp-card-name">@server.DisplayName <span class="em-role">@server.TransportType</span></span>
+                        </div>
+                        <div class="cp-card-desc">服务标识 @server.Name，工具调用超时 @server.TimeoutSeconds 秒</div>
+                        <div class="cp-card-meta">@server.Endpoint</div>
+                        <div class="cp-card-foot">
+                            <div class="cp-card-actions">
+                                <span class="cp-card-tag">MCP</span>
+                            </div>
+                            <label class="cp-switch" title="启用/停用" @onclick:stopPropagation="true">
+                                <input type="checkbox" checked="@server.IsEnabled" @onchange="e => ToggleMcpAsync(server, e)" />
+                                <span class="cp-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="empty-state"><div class="empty-text">暂无 MCP 服务</div></div>
+        }
+    }
+</div>
+
+<!-- ========== 详情弹窗 ========== -->
+@if (_showDetail)
+{
+    <div class="modal-overlay" @onclick="CloseDetail">
+        <div class="modal-dialog" style="width:600px;" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h3><span class="cp-detail-icon">@_detailIcon</span>@_detailTitle</h3>
+                <button class="btn btn-text modal-close-btn" @onclick="CloseDetail">✕</button>
+            </div>
+            <div class="modal-body">
+                <CapabilityDetail Rows="@_detailRows" />
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn-cancel" @onclick="CloseDetail">关闭</button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- ========== 插件对话框 ========== -->
+@if (_showPluginDialog)
+{
+    <div class="modal-overlay" @onclick="ClosePluginDialog">
+        <div class="modal-dialog" style="width:560px;" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h3>@(_editPluginId is null ? "手动添加插件" : "编辑插件")</h3>
+                <button class="btn btn-text modal-close-btn" @onclick="ClosePluginDialog">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-item required">
+                    <label>* 名称</label>
+                    <input class="modal-input" @bind="_editPluginName" placeholder="如：研发助手包" />
+                </div>
+                <div class="form-row">
+                    <div class="form-item">
+                        <label>图标</label>
+                        <input class="modal-input" @bind="_editPluginIcon" placeholder="emoji，如 🧰" />
+                    </div>
+                </div>
+                <div class="form-item">
+                    <label>描述</label>
+                    <textarea class="modal-input modal-textarea" @bind="_editPluginDescription" placeholder="插件面向的岗位或任务类型"></textarea>
+                </div>
+                <div class="form-item">
+                    <label>授予的技能</label>
+                    <div class="cp-res-note">勾选后，绑定该插件的员工会获得这些技能的工具。未启用的技能不会生效。</div>
+                    <div class="cp-skill-pick">
+                        @foreach (var skill in _skillOptions)
+                        {
+                            <label class="cp-skill-item">
+                                <input type="checkbox" checked="@_editPluginSkillKeys.Contains(skill.SkillName)"
+                                       @onchange="e => TogglePluginSkill(skill.SkillName, (bool)(e.Value ?? false))" />
+                                <span>@skill.DisplayName</span>
+                                <span class="cp-skill-key">@skill.SkillName</span>
+                            </label>
+                        }
+                        @if (!_skillOptions.Any())
+                        {
+                            <div class="cp-skill-empty">暂无可选技能</div>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn-cancel" @onclick="ClosePluginDialog">取消</button>
+                <button class="modal-btn-primary" disabled="@_savingPlugin" @onclick="SavePluginAsync">保存</button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- ========== 连接器对话框 ========== -->
+@if (_showConnectorDialog)
+{
+    <div class="modal-overlay" @onclick="CloseConnectorDialog">
+        <div class="modal-dialog" style="width:480px;" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h3>@(_editConnectorId is null ? "手动添加连接器" : "编辑连接器")</h3>
+                <button class="btn btn-text modal-close-btn" @onclick="CloseConnectorDialog">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-item required">
+                    <label>* 名称</label>
+                    <input class="modal-input" @bind="_editConnectorName" placeholder="如：钉钉" />
+                </div>
+                <div class="form-row">
+                    <div class="form-item">
+                        <label>图标</label>
+                        <input class="modal-input" @bind="_editConnectorIcon" placeholder="emoji，如 📨" />
+                    </div>
+                </div>
+                <div class="form-item">
+                    <label>描述</label>
+                    <textarea class="modal-input modal-textarea" @bind="_editConnectorDescription" placeholder="连接器的用途说明"></textarea>
+                </div>
+                <div class="form-item">
+                    <label>配置（JSON）</label>
+                    <textarea class="modal-input modal-textarea" @bind="_editConnectorConfig" style="min-height:100px;" placeholder='{ "endpoint": "..." }'></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn-cancel" @onclick="CloseConnectorDialog">取消</button>
+                <button class="modal-btn-primary" disabled="@_saving" @onclick="SaveConnectorAsync">保存</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private string _tab = "plugin";
+    private bool _showDetail;
+    private string _detailIcon = "";
+    private string _detailTitle = "";
+    private List<(string Label, string Value, bool IsCode)> _detailRows = [];
+
+    private List<WorkbenchPluginDto> _plugins = [];
+    private List<SkillDto> _skills = [];
+    private List<ConnectorDto> _connectors = [];
+    private List<McpServerDto> _mcpServers = [];
+
+    private bool _showPluginDialog;
+    private bool _savingPlugin;
+    private Guid? _editPluginId;
+    private string _editPluginName = "";
+    private string _editPluginIcon = "";
+    private string _editPluginDescription = "";
+    private List<string> _editPluginSkillKeys = [];
+    private List<SkillDto> _skillOptions = [];
+
+    private bool _showConnectorDialog;
+    private bool _saving;
+    private Guid? _editConnectorId;
+    private string _editConnectorName = "";
+    private string _editConnectorIcon = "";
+    private string _editConnectorDescription = "";
+    private string _editConnectorConfig = "";
+
+    private string toastMessage = "";
+    private string toastType = "info";
+    private bool toastVisible;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task SwitchTab(string tab)
+    {
+        _tab = tab;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            if (_tab == "plugin")
+            {
+                _plugins = (await PluginAppService.GetListAsync(new WorkbenchPluginQueryDto { MaxResultCount = 100 })).Data?.Items.ToList() ?? [];
+            }
+            else if (_tab == "skill")
+            {
+                _skills = (await SkillAppService.GetListAsync(new SkillDefinitionQueryDto { MaxResultCount = 100 })).Data?.Items.ToList() ?? [];
+            }
+            else
+            {
+                _connectors = (await ConnectorAppService.GetListAsync(new ConnectorQueryDto { MaxResultCount = 100 })).Data?.Items.ToList() ?? [];
+                _mcpServers = (await McpServerAppService.GetAllAsync()).Data ?? [];
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"加载失败: {ex.Message}", "error");
+        }
+    }
+
+    private async Task TogglePluginAsync(WorkbenchPluginDto plugin, ChangeEventArgs e)
+    {
+        try
+        {
+            await PluginAppService.ToggleEnabledAsync(plugin.Id, (bool)(e.Value ?? false));
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"操作失败: {ex.Message}", "error");
+        }
+    }
+
+    private async Task ShowPluginDialog(WorkbenchPluginDto? plugin = null)
+    {
+        _editPluginId = plugin?.Id;
+        _editPluginName = plugin?.PluginName ?? "";
+        _editPluginIcon = plugin?.Icon ?? "";
+        _editPluginDescription = plugin?.Description ?? "";
+        _editPluginSkillKeys = plugin?.SkillKeys.ToList() ?? [];
+
+        // 技能清单是对话框的勾选项，单独取一次，避免用户切 Tab 前打开弹窗时空列表
+        try
+        {
+            _skillOptions = (await SkillAppService.GetListAsync(new SkillDefinitionQueryDto { MaxResultCount = 200 })).Data?.Items.ToList() ?? [];
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"加载技能失败: {ex.Message}", "error");
+        }
+
+        _showPluginDialog = true;
+    }
+
+    private void ClosePluginDialog() => _showPluginDialog = false;
+
+    private void TogglePluginSkill(string skillName, bool isChecked)
+    {
+        if (isChecked)
+        {
+            if (!_editPluginSkillKeys.Contains(skillName)) _editPluginSkillKeys.Add(skillName);
+        }
+        else
+        {
+            _editPluginSkillKeys.Remove(skillName);
+        }
+    }
+
+    private async Task SavePluginAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_editPluginName))
+        {
+            ShowToast("请输入插件名称", "warning");
+            return;
+        }
+
+        _savingPlugin = true;
+        try
+        {
+            if (_editPluginId is null)
+            {
+                await PluginAppService.CreateAsync(new CreateWorkbenchPluginDto
+                {
+                    PluginName = _editPluginName.Trim(),
+                    Icon = _editPluginIcon.Trim(),
+                    Description = _editPluginDescription.Trim(),
+                    SkillKeys = _editPluginSkillKeys.ToList()
+                });
+                ShowToast("插件已添加", "success");
+            }
+            else
+            {
+                await PluginAppService.UpdateAsync(_editPluginId.Value, new UpdateWorkbenchPluginDto
+                {
+                    PluginName = _editPluginName.Trim(),
+                    Icon = _editPluginIcon.Trim(),
+                    Description = _editPluginDescription.Trim(),
+                    SkillKeys = _editPluginSkillKeys.ToList()
+                });
+                ShowToast("插件已更新", "success");
+            }
+
+            _showPluginDialog = false;
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"保存失败: {ex.Message}", "error");
+        }
+        finally
+        {
+            _savingPlugin = false;
+        }
+    }
+
+    private async Task DeletePluginAsync(WorkbenchPluginDto plugin)
+    {
+        try
+        {
+            await PluginAppService.DeleteAsync(plugin.Id);
+            ShowToast("插件已删除", "success");
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"删除失败: {ex.Message}", "error");
+        }
+    }
+
+    private async Task ToggleSkillAsync(SkillDto skill, ChangeEventArgs e)
+    {
+        try
+        {
+            await SkillAppService.ToggleEnabledAsync(skill.Id, (bool)(e.Value ?? false));
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"操作失败: {ex.Message}", "error");
+        }
+    }
+
+    private async Task ToggleMcpAsync(McpServerDto server, ChangeEventArgs e)
+    {
+        try
+        {
+            await McpServerAppService.ToggleEnabledAsync(server.Id, (bool)(e.Value ?? false));
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"操作失败: {ex.Message}", "error");
+        }
+    }
+
+    private async Task ToggleConnectorAsync(ConnectorDto connector, ChangeEventArgs e)
+    {
+        try
+        {
+            await ConnectorAppService.ToggleEnabledAsync(connector.Id, (bool)(e.Value ?? false));
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"操作失败: {ex.Message}", "error");
+        }
+    }
+
+    private void ShowConnectorDialog(ConnectorDto? connector = null)
+    {
+        _editConnectorId = connector?.Id;
+        _editConnectorName = connector?.ConnectorName ?? "";
+        _editConnectorIcon = connector?.Icon ?? "";
+        _editConnectorDescription = connector?.Description ?? "";
+        _editConnectorConfig = connector?.Config ?? "";
+        _showConnectorDialog = true;
+    }
+
+    private void CloseConnectorDialog() => _showConnectorDialog = false;
+
+    private async Task SaveConnectorAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_editConnectorName))
+        {
+            ShowToast("请输入连接器名称", "warning");
+            return;
+        }
+
+        _saving = true;
+        try
+        {
+            if (_editConnectorId is null)
+            {
+                await ConnectorAppService.CreateAsync(new CreateConnectorDto
+                {
+                    ConnectorName = _editConnectorName.Trim(),
+                    Icon = _editConnectorIcon.Trim(),
+                    Description = _editConnectorDescription.Trim(),
+                    Config = string.IsNullOrWhiteSpace(_editConnectorConfig) ? null : _editConnectorConfig
+                });
+                ShowToast("连接器已添加", "success");
+            }
+            else
+            {
+                await ConnectorAppService.UpdateAsync(_editConnectorId.Value, new UpdateConnectorDto
+                {
+                    ConnectorName = _editConnectorName.Trim(),
+                    Icon = _editConnectorIcon.Trim(),
+                    Description = _editConnectorDescription.Trim(),
+                    Config = string.IsNullOrWhiteSpace(_editConnectorConfig) ? null : _editConnectorConfig
+                });
+                ShowToast("连接器已更新", "success");
+            }
+
+            _showConnectorDialog = false;
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"保存失败: {ex.Message}", "error");
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private async Task DeleteConnectorAsync(ConnectorDto connector)
+    {
+        try
+        {
+            await ConnectorAppService.DeleteAsync(connector.Id);
+            ShowToast("连接器已删除", "success");
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowToast($"删除失败: {ex.Message}", "error");
+        }
+    }
+
+    private void OpenDetail(string icon, string title, List<(string Label, string Value, bool IsCode)> rows)
+    {
+        _detailIcon = icon;
+        _detailTitle = title;
+        _detailRows = rows;
+        _showDetail = true;
+    }
+
+    private void CloseDetail() => _showDetail = false;
+
+    private void OpenPluginDetail(WorkbenchPluginDto plugin) => OpenDetail(plugin.Icon, plugin.PluginName, PluginDetailRows(plugin));
+
+    private void OpenSkillDetail(SkillDto skill) => OpenDetail("⚡", skill.DisplayName, SkillDetailRows(skill));
+
+    private void OpenConnectorDetail(ConnectorDto connector) => OpenDetail(connector.Icon, connector.ConnectorName, ConnectorDetailRows(connector));
+
+    private void OpenMcpDetail(McpServerDto server) => OpenDetail("🔌", server.DisplayName, McpDetailRows(server));
+
+    private static List<(string Label, string Value, bool IsCode)> PluginDetailRows(WorkbenchPluginDto plugin)
+    {
+        var rows = new List<(string, string, bool)>
+        {
+            ("标识", plugin.PluginKey, false),
+            ("来源", plugin.IsMarket ? "插件市场" : "自定义", false),
+            ("状态", plugin.IsEnabled ? "已启用" : "已停用", false),
+            ("授予技能", plugin.SkillKeys.Any() ? string.Join("、", plugin.SkillKeys) : "（未勾选，不授予任何工具）", false),
+            ("描述", plugin.Description, false),
+            ("创建时间", plugin.CreationTime.ToString("yyyy-MM-dd HH:mm"), false)
+        };
+        return rows;
+    }
+
+    private static List<(string Label, string Value, bool IsCode)> SkillDetailRows(SkillDto skill)
+    {
+        return new List<(string, string, bool)>
+        {
+            ("技能名", skill.SkillName, false),
+            ("类型", skill.SkillType, false),
+            ("状态", skill.IsEnabled ? "已启用" : "已停用", false),
+            ("需审批", skill.RequiresApproval ? "是" : "否", false),
+            ("调用", $"{skill.UsageCount} 次{(skill.LastUsedTime is null ? "" : $" · 最近 {skill.LastUsedTime:yyyy-MM-dd HH:mm}")}", false),
+            ("工具方法", skill.ToolNames.Any() ? string.Join("、", skill.ToolNames) : "（无）", false),
+            ("实现类", skill.ImplementationClass ?? "（未指定）", true),
+            ("实现可用", skill.ImplementationAvailable ? "可加载" : "不可加载（不会注册为工具）", false),
+            ("描述", skill.Description, false),
+            ("参数 Schema", string.IsNullOrWhiteSpace(skill.ParameterSchema) ? "（无）" : PrettyJson(skill.ParameterSchema), true),
+            ("配置", string.IsNullOrWhiteSpace(skill.Config) ? "（无）" : PrettyJson(skill.Config), true)
+        };
+    }
+
+    private static List<(string Label, string Value, bool IsCode)> ConnectorDetailRows(ConnectorDto connector)
+    {
+        return new List<(string, string, bool)>
+        {
+            ("标识", connector.ConnectorKey, false),
+            ("来源", connector.IsMarket ? "连接器市场" : "自定义", false),
+            ("状态", connector.IsEnabled ? "已启用" : "已停用", false),
+            ("描述", connector.Description, false),
+            ("配置", string.IsNullOrWhiteSpace(connector.Config) ? "（无）" : PrettyJson(connector.Config), true),
+            ("创建时间", connector.CreationTime.ToString("yyyy-MM-dd HH:mm"), false)
+        };
+    }
+
+    private static List<(string Label, string Value, bool IsCode)> McpDetailRows(McpServerDto server)
+    {
+        var credentials = new List<string>();
+        if (!string.IsNullOrWhiteSpace(server.AuthToken)) credentials.Add($"AuthToken: {server.AuthToken}");
+        if (!string.IsNullOrWhiteSpace(server.ApiKey)) credentials.Add($"ApiKey: {server.ApiKey}");
+
+        return new List<(string, string, bool)>
+        {
+            ("服务标识", server.Name, false),
+            ("传输方式", server.TransportType, false),
+            ("端点", server.Endpoint, true),
+            ("超时", $"{server.TimeoutSeconds} 秒", false),
+            ("状态", server.IsEnabled ? "已启用" : "已停用", false),
+            ("凭据", credentials.Any() ? string.Join(" · ", credentials) : "（未配置）", false),
+            ("请求头", string.IsNullOrWhiteSpace(server.Headers) ? "（无）" : PrettyJson(server.Headers), true),
+            ("创建时间", server.CreationTime.ToString("yyyy-MM-dd HH:mm"), false)
+        };
+    }
+
+    private static string PrettyJson(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return "（无）";
+
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            return System.Text.Json.JsonSerializer.Serialize(doc.RootElement,
+                new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+        }
+        catch
+        {
+            return json;
+        }
+    }
+
+    private void ShowToast(string message, string type = "info")
+    {
+        toastMessage = message;
+        toastType = type;
+        toastVisible = true;
+        StateHasChanged();
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(3000);
+            toastVisible = false;
+            await InvokeAsync(StateHasChanged);
+        });
+    }
+}
+
+<style>
+    .cp-page {
+        height: 100%;
+        overflow-y: auto;
+        padding: 12px;
+        background: #fff;
+        box-sizing: border-box;
+    }
+
+    .cp-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+
+    .cp-header h2 {
+        margin: 0;
+        font-size: 20px;
+    }
+
+    .cp-section-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 14px;
+        font-weight: 500;
+        color: #262626;
+        margin-bottom: 12px;
+    }
+
+    /* ========== 能力卡片：与资源页的 pg-card / kb-card 同一套视觉 ========== */
+    .cp-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+        gap: 16px;
+    }
+
+    .cp-card {
+        border: 1px solid #e8e8e8;
+        border-radius: 10px;
+        padding: 14px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        cursor: pointer;
+    }
+
+    .cp-card:hover {
+        border-color: #d9d9d9;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .cp-card-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .cp-card-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        background: #f5f5f5;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        flex-shrink: 0;
+    }
+
+    .cp-card-name {
+        font-size: 14px;
+        font-weight: 500;
+        color: #262626;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+        min-width: 0;
+    }
+
+    .cp-card-desc {
+        font-size: 12px;
+        color: #8c8c8c;
+        line-height: 1.6;
+        min-height: 38px;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .cp-card-meta {
+        font-size: 11px;
+        color: #595959;
+        background: #fafafa;
+        border-radius: 6px;
+        padding: 4px 8px;
+        word-break: break-all;
+        max-height: 46px;
+        overflow: hidden;
+    }
+
+    .cp-meta-empty {
+        color: #fa8c16;
+        background: #fff7e6;
+    }
+
+    .cp-card-foot {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        border-top: 1px solid #f0f0f0;
+        padding-top: 8px;
+        margin-top: auto;
+    }
+
+    .cp-card-tag {
+        font-size: 11px;
+        color: #8c8c8c;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .cp-card-actions {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+    }
+
+    /* ========== 详情弹窗 ========== */
+    .cp-detail-icon {
+        margin-right: 8px;
+    }
+
+    /* ========== 详情字段面板 ========== */
+    .cp-card-detail {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        border: 1px solid #f0f0f0;
+        border-radius: 8px;
+        background: #fafafa;
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+
+    .cp-dl {
+        display: flex;
+        gap: 8px;
+        align-items: baseline;
+    }
+
+    .cp-dl span {
+        width: 58px;
+        flex-shrink: 0;
+        color: #8c8c8c;
+    }
+
+    .cp-dl em {
+        font-style: normal;
+        color: #262626;
+        word-break: break-all;
+        min-width: 0;
+    }
+
+    .cp-dl em.cp-dl-code {
+        font-family: ui-monospace, Consolas, monospace;
+        font-size: 11px;
+        color: #595959;
+        background: #fff;
+        border: 1px solid #f0f0f0;
+        border-radius: 6px;
+        padding: 4px 6px;
+        white-space: pre-wrap;
+        max-height: 150px;
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    /* ========== 开关 ========== */
+    .cp-switch {
+        position: relative;
+        display: inline-block;
+        width: 36px;
+        height: 20px;
+        flex-shrink: 0;
+    }
+
+    .cp-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .cp-slider {
+        position: absolute;
+        cursor: pointer;
+        inset: 0;
+        background: #e8e8e8;
+        border-radius: 20px;
+        transition: 0.2s;
+    }
+
+    .cp-slider::before {
+        content: "";
+        position: absolute;
+        height: 16px;
+        width: 16px;
+        left: 2px;
+        top: 2px;
+        background: #fff;
+        border-radius: 50%;
+        transition: 0.2s;
+    }
+
+    .cp-switch input:checked + .cp-slider {
+        background: #52c41a;
+    }
+
+    .cp-switch input:checked + .cp-slider::before {
+        transform: translateX(16px);
+    }
+
+    .cp-note {
+        background: #fffbe6;
+        border: 1px solid #ffe58f;
+        color: #874d00;
+        font-size: 12px;
+        border-radius: 6px;
+        padding: 8px 12px;
+        margin-bottom: 12px;
+    }
+
+    /* ========== 插件对话框：技能勾选 ========== */
+    .cp-res-note {
+        font-size: 12px;
+        color: #8c8c8c;
+        margin-bottom: 8px;
+    }
+
+    .cp-skill-pick {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 4px 12px;
+        max-height: 220px;
+        overflow-y: auto;
+        border: 1px solid #f0f0f0;
+        border-radius: 8px;
+        padding: 8px 10px;
+    }
+
+    .cp-skill-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: #262626;
+        cursor: pointer;
+        font-weight: 400;
+        margin: 0;
+    }
+
+    .cp-skill-item input {
+        width: 14px;
+        height: 14px;
+        accent-color: #165DFF;
+        flex-shrink: 0;
+    }
+
+    .cp-skill-key {
+        font-size: 11px;
+        color: #bfbfbf;
+    }
+
+    .cp-skill-empty {
+        grid-column: 1 / -1;
+        font-size: 12px;
+        color: #bfbfbf;
+        text-align: center;
+        padding: 12px 0;
+    }
+</style>

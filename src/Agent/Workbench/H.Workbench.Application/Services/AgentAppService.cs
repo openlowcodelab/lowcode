@@ -83,7 +83,8 @@ public class AgentAppService : ApplicationService, IAgentAppService
             SkillIds = SerializeIds(input.SkillIds),
             ConnectorIds = SerializeIds(input.ConnectorIds),
             KnowledgeBaseIds = SerializeIds(input.KnowledgeBaseIds),
-            ProjectIds = SerializeIds(input.ProjectIds)
+            ProjectIds = SerializeIds(input.ProjectIds),
+            PluginIds = SerializeIds(input.PluginIds)
         };
 
         entity = await _agentRepository.InsertAsync(entity);
@@ -109,6 +110,7 @@ public class AgentAppService : ApplicationService, IAgentAppService
         entity.ConnectorIds = SerializeIds(input.ConnectorIds);
         entity.KnowledgeBaseIds = SerializeIds(input.KnowledgeBaseIds);
         entity.ProjectIds = SerializeIds(input.ProjectIds);
+        entity.PluginIds = SerializeIds(input.PluginIds);
 
         entity = await _agentRepository.UpdateAsync(entity);
         return new(MapToDto(entity));
@@ -294,6 +296,7 @@ public class AgentAppService : ApplicationService, IAgentAppService
             ConnectorIds = ParseIds(entity.ConnectorIds),
             KnowledgeBaseIds = ParseIds(entity.KnowledgeBaseIds),
             ProjectIds = ParseIds(entity.ProjectIds),
+            PluginIds = ParseIds(entity.PluginIds),
             CreationTime = entity.CreationTime,
             CreatorId = entity.CreatorId,
             LastModificationTime = entity.LastModificationTime,

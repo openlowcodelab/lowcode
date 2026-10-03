@@ -15,13 +15,9 @@
                      @onclick='() => Navigation.NavigateTo("/workbench/tasks")'>
                     <span class="wb-menu-icon">📋</span><span class="wb-menu-text">任务</span>
                 </div>
-                <div class="wb-menu-item @(IsActive("/workbench/projects") ? "wb-menu-active" : "")"
-                     @onclick='() => Navigation.NavigateTo("/workbench/projects")'>
-                    <span class="wb-menu-icon">🗂</span><span class="wb-menu-text">项目</span>
-                </div>
-                <div class="wb-menu-item @(IsActive("/workbench/knowledge") ? "wb-menu-active" : "")"
-                     @onclick='() => Navigation.NavigateTo("/workbench/knowledge")'>
-                    <span class="wb-menu-icon">📚</span><span class="wb-menu-text">知识库</span>
+                <div class="wb-menu-item @(IsActive("/workbench/resources") ? "wb-menu-active" : "")"
+                     @onclick='() => Navigation.NavigateTo("/workbench/resources")'>
+                    <span class="wb-menu-icon">🗂</span><span class="wb-menu-text">资源</span>
                 </div>
 
                 <div class="wb-group-title">员工资源</div>
@@ -29,9 +25,9 @@
                      @onclick='() => Navigation.NavigateTo("/workbench/employees")'>
                     <span class="wb-menu-icon">👥</span><span class="wb-menu-text">员工管理</span>
                 </div>
-                <div class="wb-menu-item @(IsActive("/workbench/resources") ? "wb-menu-active" : "")"
-                     @onclick='() => Navigation.NavigateTo("/workbench/resources")'>
-                    <span class="wb-menu-icon">🧩</span><span class="wb-menu-text">能力与资源</span>
+                <div class="wb-menu-item @(IsActive("/workbench/capabilities") ? "wb-menu-active" : "")"
+                     @onclick='() => Navigation.NavigateTo("/workbench/capabilities")'>
+                    <span class="wb-menu-icon">🧩</span><span class="wb-menu-text">能力</span>
                 </div>
 
                 <div class="wb-agent-section">

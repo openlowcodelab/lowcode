@@ -20,6 +20,7 @@ public class AgentSkillDataSeeder : IDataSeedContributor, ITransientDependency
     private readonly IRepository<AgentEntity, Guid> _agentRepository;
     private readonly IRepository<SkillEntity, Guid> _skillRepository;
     private readonly IRepository<ConnectorEntity, Guid> _connectorRepository;
+    private readonly IRepository<WorkbenchPluginEntity, Guid> _pluginRepository;
     private readonly IRepository<AgentTemplateEntity, Guid> _templateRepository;
     private readonly IRepository<ApprovalRuleEntity, Guid> _approvalRuleRepository;
     private readonly IRepository<McpServerEntity, Guid> _mcpServerRepository;
@@ -30,6 +31,7 @@ public class AgentSkillDataSeeder : IDataSeedContributor, ITransientDependency
         IRepository<AgentEntity, Guid> agentRepository,
         IRepository<SkillEntity, Guid> skillRepository,
         IRepository<ConnectorEntity, Guid> connectorRepository,
+        IRepository<WorkbenchPluginEntity, Guid> pluginRepository,
         IRepository<AgentTemplateEntity, Guid> templateRepository,
         IRepository<ApprovalRuleEntity, Guid> approvalRuleRepository,
         IRepository<McpServerEntity, Guid> mcpServerRepository,
@@ -39,6 +41,7 @@ public class AgentSkillDataSeeder : IDataSeedContributor, ITransientDependency
         _agentRepository = agentRepository;
         _skillRepository = skillRepository;
         _connectorRepository = connectorRepository;
+        _pluginRepository = pluginRepository;
         _templateRepository = templateRepository;
         _approvalRuleRepository = approvalRuleRepository;
         _mcpServerRepository = mcpServerRepository;
@@ -50,6 +53,7 @@ public class AgentSkillDataSeeder : IDataSeedContributor, ITransientDependency
     {
         var skills = await SeedSkillsAsync();
         await SeedConnectorsAsync();
+        await SeedPluginsAsync();
         await SeedMcpServersAsync();
         await SeedTemplatesAsync(skills);
         await SeedApprovalRulesAsync();
@@ -198,6 +202,96 @@ public class AgentSkillDataSeeder : IDataSeedContributor, ITransientDependency
 
             await _connectorRepository.UpdateAsync(matched);
         }
+    }
+
+    /// <summary>
+    /// 插件（能力包）登记。插件只是把已有技能打包成一个可勾选的授予单位，
+    /// 员工绑定并启用后才真正获得这些技能的工具，因此默认全部启用。
+    /// 技能名一律以 WorkbenchToolCatalog 为真源校验，目录里没有的名字直接丢掉。
+    /// 已存在的 Market 行刷新名称/描述/图标/技能清单，开关状态归用户。
+    /// </summary>
+    private async Task SeedPluginsAsync()
+    {
+        var query = await _pluginRepository.GetQueryableAsync();
+        var existing = await query.ToListAsync();
+
+        var definitions = new List<WorkbenchPluginEntity>
+        {
+            new()
+            {
+                PluginKey = "dev_engineering",
+                PluginName = "研发工程",
+                Description = "仓库操作、工作区读写与命令行、构建脚手架、测试自检：覆盖从改代码到自检的研发链路。",
+                Source = "Market",
+                Icon = "🛠",
+                IsEnabled = true,
+                SkillKeys = Keys("git", "workspace_file", "workspace_shell", "workspace_build", "test_runner")
+            },
+            new()
+            {
+                PluginKey = "web_research",
+                PluginName = "网络调研",
+                Description = "真实浏览器操作 + 搜索引擎 + HTTP 抓取，用于查资料、读网页、比对竞品。",
+                Source = "Market",
+                Icon = "🔎",
+                IsEnabled = true,
+                SkillKeys = Keys("browser", "search", "http_client")
+            },
+            new()
+            {
+                PluginKey = "office_suite",
+                PluginName = "办公文档",
+                Description = "Word/Excel 文档生成与解析、通知邮件发送，适合汇报材料与流程性交付。",
+                Source = "Market",
+                Icon = "📄",
+                IsEnabled = true,
+                SkillKeys = Keys("office_document", "spreadsheet", "notify")
+            },
+            new()
+            {
+                PluginKey = "data_analysis",
+                PluginName = "数据分析",
+                Description = "数据库查询 + 表格处理 + 检索，用于取数、清洗与报表输出。",
+                Source = "Market",
+                Icon = "📊",
+                IsEnabled = true,
+                SkillKeys = Keys("database", "spreadsheet", "search")
+            }
+        };
+
+        foreach (var definition in definitions)
+        {
+            var matched = existing.FirstOrDefault(x => x.PluginKey == definition.PluginKey);
+            if (matched is null)
+            {
+                await _pluginRepository.InsertAsync(definition);
+                continue;
+            }
+
+            if (matched.Source != "Market") continue;
+
+            matched.PluginName = definition.PluginName;
+            matched.Description = definition.Description;
+            matched.Icon = definition.Icon;
+            matched.SkillKeys = definition.SkillKeys;
+
+            if (definition.IsEnabled && matched.LastModificationTime is null)
+            {
+                matched.IsEnabled = true;
+            }
+
+            await _pluginRepository.UpdateAsync(matched);
+        }
+    }
+
+    private static string Keys(params string[] skillNames)
+    {
+        var valid = skillNames
+            .Where(WorkbenchToolCatalog.BuiltinSkillClasses.ContainsKey)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        return valid.Count > 0 ? JsonSerializer.Serialize(valid) : null;
     }
 
     private async Task SeedTemplatesAsync(List<SkillEntity> skills)

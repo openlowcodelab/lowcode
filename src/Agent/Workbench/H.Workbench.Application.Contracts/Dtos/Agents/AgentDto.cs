@@ -24,6 +24,7 @@ public class AgentDto : AuditedEntityDto<Guid>
     public List<Guid> ConnectorIds { get; set; } = new();
     public List<Guid> KnowledgeBaseIds { get; set; } = new();
     public List<Guid> ProjectIds { get; set; } = new();
+    public List<Guid> PluginIds { get; set; } = new();
 }
 
 public class CreateAgentDto
@@ -57,6 +58,7 @@ public class CreateAgentDto
     public List<Guid> ConnectorIds { get; set; } = new();
     public List<Guid> KnowledgeBaseIds { get; set; } = new();
     public List<Guid> ProjectIds { get; set; } = new();
+    public List<Guid> PluginIds { get; set; } = new();
 }
 
 public class UpdateAgentDto
@@ -86,6 +88,7 @@ public class UpdateAgentDto
     public List<Guid> ConnectorIds { get; set; } = new();
     public List<Guid> KnowledgeBaseIds { get; set; } = new();
     public List<Guid> ProjectIds { get; set; } = new();
+    public List<Guid> PluginIds { get; set; } = new();
 }
 
 public class AgentQueryDto : PagedAndSortedResultRequestDto

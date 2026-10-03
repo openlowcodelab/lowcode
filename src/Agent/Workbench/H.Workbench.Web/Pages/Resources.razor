@@ -1,13 +1,11 @@
 @page "/workbench/resources"
 
 @layout WorkbenchLayout
-@inject ISkillAppService SkillAppService
-@inject IConnectorAppService ConnectorAppService
+@inject IWorkbenchProjectAppService ProjectAppService
 @inject IKnowledgeBaseAppService KnowledgeBaseAppService
-@inject IMcpServerAppService McpServerAppService
 @inject NavigationManager Navigation
 
-<PageTitle>能力与资源 - AI 工作台</PageTitle>
+<PageTitle>资源 - AI 工作台</PageTitle>
 
 @if (!string.IsNullOrEmpty(toastMessage))
 {
@@ -16,336 +14,396 @@
 
 <div class="rs-page">
     <div class="rs-header">
-        <h2>能力与资源</h2>
-        <button class="btn btn-primary workbench-btn-primary btn-small"
-                @onclick='() => Navigation.NavigateTo("/workbench/employees")'>员工管理</button>
+        <h2>资源</h2>
+        @if (_tab == "project")
+        {
+            <button class="btn btn-primary workbench-btn-primary btn-small" @onclick="ShowProjectCreate">＋ 新建项目</button>
+        }
+        else
+        {
+            <button class="btn btn-primary workbench-btn-primary btn-small" @onclick="ShowKbAddDialog">＋ 新建知识库</button>
+        }
     </div>
 
-    <div class="wb-seg" style="max-width:440px;margin-bottom:20px;">
-        <div class="wb-seg-item @(_tab == "skill" ? "wb-seg-active" : "")" @onclick='() => SwitchTab("skill")'>Skill</div>
-        <div class="wb-seg-item @(_tab == "mcp" ? "wb-seg-active" : "")" @onclick='() => SwitchTab("mcp")'>MCP</div>
-        <div class="wb-seg-item @(_tab == "connector" ? "wb-seg-active" : "")" @onclick='() => SwitchTab("connector")'>连接器</div>
+    <div class="wb-seg" style="max-width:200px;margin-bottom:20px;">
+        <div class="wb-seg-item @(_tab == "project" ? "wb-seg-active" : "")" @onclick='() => SwitchTab("project")'>项目</div>
         <div class="wb-seg-item @(_tab == "knowledge" ? "wb-seg-active" : "")" @onclick='() => SwitchTab("knowledge")'>知识库</div>
     </div>
 
-    @if (_tab == "skill")
+    @if (_tab == "project")
     {
-        <div class="rs-section-head">
-            <span>技能列表</span>
-            <button class="btn btn-link btn-small" @onclick='() => Navigation.NavigateTo("/workbench/skills")'>前往技能管理 →</button>
-        </div>
-        <div class="rs-rows">
-            @foreach (var skill in _skills)
-            {
-                <div class="rs-row">
-                    <span class="rs-row-icon">⚡</span>
-                    <div class="rs-row-info">
-                        <div class="rs-row-name">@skill.DisplayName
-                            <span class="em-role">@skill.SkillType</span>
-                            @if (skill.SkillType == "Planned" || !skill.ImplementationAvailable)
-                            {
-                                <span class="rs-badge-planned">@(skill.SkillType == "Planned" ? "待实现" : "实现类不可用")</span>
-                            }
-                        </div>
-                        <div class="rs-row-desc">@skill.Description</div>
-                    </div>
-                    <label class="rs-switch">
-                        <input type="checkbox" checked="@skill.IsEnabled" @onchange="e => ToggleSkillAsync(skill, e)" />
-                        <span class="rs-slider"></span>
-                    </label>
-                </div>
-            }
-            @if (!_skills.Any())
-            {
-                <div class="empty-state"><div class="empty-text">暂无技能</div></div>
-            }
-        </div>
-    }
-    else if (_tab == "mcp")
-    {
-        <div class="rs-section-head">
-            <span>MCP 服务列表</span>
-            <button class="btn btn-link btn-small" @onclick='() => Navigation.NavigateTo("/workbench/mcps")'>前往 MCP 管理 →</button>
-        </div>
-        <div class="rs-rows">
-            @foreach (var server in _mcpServers)
-            {
-                <div class="rs-row">
-                    <span class="rs-row-icon">🔌</span>
-                    <div class="rs-row-info">
-                        <div class="rs-row-name">@server.DisplayName <span class="em-role">@server.TransportType</span></div>
-                        <div class="rs-row-desc">@server.Endpoint</div>
-                    </div>
-                    <label class="rs-switch">
-                        <input type="checkbox" checked="@server.IsEnabled" @onchange="e => ToggleMcpAsync(server, e)" />
-                        <span class="rs-slider"></span>
-                    </label>
-                </div>
-            }
-            @if (!_mcpServers.Any())
-            {
-                <div class="empty-state"><div class="empty-text">暂无 MCP 服务</div></div>
-            }
-        </div>
-    }
-    else if (_tab == "connector")
-    {
-        <div class="rs-note">连接器授予设备级能力：浏览器=Playwright 真实浏览器（打开网页、点击、输入、读取渲染后文本、截图存盘）；计算机控制=本机截屏、窗口激活与键鼠输入，默认每个动作需人工批准。这里关闭开关即收回授予；员工还需在「员工设置 → 连接器」里勾选。</div>
-        <div class="rs-section-head">
-            <span>自定义</span>
-            <button class="btn btn-primary workbench-btn-primary btn-small" @onclick="() => ShowConnectorDialog()">＋ 手动添加</button>
-        </div>
-        <div class="rs-rows">
-            @foreach (var connector in _connectors.Where(x => x.Source == "Custom"))
-            {
-                <div class="rs-row">
-                    <span class="rs-row-icon">@connector.Icon</span>
-                    <div class="rs-row-info">
-                        <div class="rs-row-name">@connector.ConnectorName</div>
-                        <div class="rs-row-desc">@connector.Description</div>
-                    </div>
-                    <button class="btn btn-link btn-small" @onclick="() => ShowConnectorDialog(connector)">编辑</button>
-                    <button class="btn btn-link btn-small btn-danger" @onclick="() => DeleteConnectorAsync(connector)">删除</button>
-                    <label class="rs-switch">
-                        <input type="checkbox" checked="@connector.IsEnabled" @onchange="e => ToggleConnectorAsync(connector, e)" />
-                        <span class="rs-slider"></span>
-                    </label>
-                </div>
-            }
-            @if (!_connectors.Any(x => x.Source == "Custom"))
-            {
-                <div class="empty-state">
-                    <div class="empty-icon">🔗</div>
-                    <div class="empty-text">暂无自定义连接器，可点击右上方"手动添加"。</div>
-                </div>
-            }
+        <div class="pg-search">
+            <input placeholder="搜索项目名称或描述..." @bind="_projectFilter" @bind:after="LoadProjectsAsync" />
         </div>
 
-        <div class="rs-section-head" style="margin-top:24px;">
-            <span>来自连接器市场</span>
-        </div>
-        <div class="rs-rows">
-            @foreach (var connector in _connectors.Where(x => x.Source == "Market"))
-            {
-                <div class="rs-row">
-                    <span class="rs-row-icon">@connector.Icon</span>
-                    <div class="rs-row-info">
-                        <div class="rs-row-name">@connector.ConnectorName</div>
-                        <div class="rs-row-desc">@connector.Description</div>
+        @if (_projectLoading)
+        {
+            <div class="loading-spinner"><div class="spinner"></div><span>加载中...</span></div>
+        }
+        else if (_projects.Any())
+        {
+            <div class="pg-grid">
+                @foreach (var project in _projects)
+                {
+                    <div class="pg-card">
+                        <div class="pg-card-head">
+                            <span class="pg-card-icon">🗂</span>
+                            <strong class="pg-card-name">@project.ProjectName</strong>
+                        </div>
+                        <div class="pg-card-desc">@project.Description</div>
+                        @foreach (var resource in project.Resources)
+                        {
+                            <div class="pg-card-repo" title="@(resource.Url ?? resource.Name)">
+                                @ResourceIcon(resource.ResourceType) @resource.Name@(resource.ResourceType == WorkbenchResourceTypes.Code && !string.IsNullOrEmpty(resource.Url) ? $"：{resource.Url}" : "")@(resource.ResourceType == WorkbenchResourceTypes.Code && !string.IsNullOrEmpty(resource.Branch) ? $"（{resource.Branch}）" : "")
+                            </div>
+                        }
+                        <div class="pg-card-foot">
+                            <span>任务数 @project.TaskCount</span>
+                            <span>@project.CreationTime.ToString("yyyy-MM-dd")</span>
+                        </div>
+                        <div class="pg-card-actions">
+                            <button class="btn btn-link btn-small" @onclick="() => ShowProjectEdit(project)">编辑</button>
+                            <button class="btn btn-link btn-small btn-danger" @onclick="() => DeleteProjectAsync(project)">删除</button>
+                        </div>
                     </div>
-                    <label class="rs-switch">
-                        <input type="checkbox" checked="@connector.IsEnabled" @onchange="e => ToggleConnectorAsync(connector, e)" />
-                        <span class="rs-slider"></span>
-                    </label>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <div class="empty-icon">🗂</div>
+                <div class="empty-text">暂无项目，点击新建按钮新增</div>
+            </div>
+        }
+    }
+    else if (_kbLoading)
+    {
+        <div class="loading-spinner"><div class="spinner"></div><span>加载中...</span></div>
+    }
+    else if (_knowledgeBases.Any())
+    {
+        <div class="kb-grid">
+            @foreach (var kb in _knowledgeBases)
+            {
+                <div class="kb-card" @onclick="() => OpenKbDetail(kb)">
+                    <div class="kb-card-header">
+                        <div class="kb-name">
+                            <span class="kb-icon">📚</span>
+                            <strong>@kb.Name</strong>
+                        </div>
+                        <div class="kb-actions" @onclick:stopPropagation="true">
+                            <button class="btn btn-link btn-small" @onclick="() => ShowKbEditDialog(kb)">编辑</button>
+                            @if (_confirmDeleteKbId == kb.Id)
+                            {
+                                <button class="btn btn-link btn-small btn-danger" @onclick="() => DeleteKnowledgeBaseAsync(kb)">确认删除</button>
+                                <button class="btn btn-link btn-small" @onclick="CancelKbDelete">取消</button>
+                            }
+                            else
+                            {
+                                <button class="btn btn-link btn-small btn-danger" @onclick="() => RequestKbDelete(kb.Id)">删除</button>
+                            }
+                        </div>
+                    </div>
+                    <div class="kb-desc">@(string.IsNullOrWhiteSpace(kb.Description) ? "暂无描述" : kb.Description)</div>
+                    <div class="kb-footer">
+                        <span class="tag tag-blue">@kb.DocumentCount 个文档</span>
+                        <span class="kb-time">创建于 @kb.CreationTime.ToString("yyyy-MM-dd")</span>
+                    </div>
                 </div>
             }
         </div>
     }
     else
     {
-        <div class="rs-section-head">
-            <span>知识库列表</span>
-            <button class="btn btn-link btn-small" @onclick='() => Navigation.NavigateTo("/workbench/knowledge")'>前往知识库管理 →</button>
-        </div>
-        <div class="rs-rows">
-            @foreach (var kb in _knowledgeBases)
-            {
-                <div class="rs-row" style="cursor:pointer;" @onclick='() => Navigation.NavigateTo($"/workbench/knowledge/{kb.Id}")'>
-                    <span class="rs-row-icon">📚</span>
-                    <div class="rs-row-info">
-                        <div class="rs-row-name">@kb.Name</div>
-                        <div class="rs-row-desc">@kb.Description</div>
-                    </div>
-                    <span class="em-role">@kb.DocumentCount 文档</span>
-                </div>
-            }
-            @if (!_knowledgeBases.Any())
-            {
-                <div class="empty-state"><div class="empty-text">暂无知识库</div></div>
-            }
+        <div class="empty-state">
+            <div class="empty-icon">📚</div>
+            <div class="empty-text">暂无知识库,点击右上角新建</div>
         </div>
     }
 </div>
 
-<!-- ========== 连接器对话框 ========== -->
-@if (_showConnectorDialog)
+<!-- ========== 项目对话框 ========== -->
+@if (_showProjectDialog)
 {
-    <div class="modal-overlay" @onclick="CloseConnectorDialog">
-        <div class="modal-dialog" style="width:480px;" @onclick:stopPropagation="true">
+    <div class="modal-overlay" @onclick="CloseProjectDialog">
+        <div class="modal-dialog" style="width:720px;" @onclick:stopPropagation="true">
             <div class="modal-header">
-                <h3>@(_editConnectorId is null ? "手动添加连接器" : "编辑连接器")</h3>
-                <button class="btn btn-text modal-close-btn" @onclick="CloseConnectorDialog">✕</button>
+                <h3>@(_editProjectId is null ? "新建项目" : "编辑项目")</h3>
+                <button class="btn btn-text modal-close-btn" @onclick="CloseProjectDialog">✕</button>
             </div>
             <div class="modal-body">
                 <div class="form-item required">
-                    <label>* 名称</label>
-                    <input class="modal-input" @bind="_editConnectorName" placeholder="如：钉钉" />
-                </div>
-                <div class="form-row">
-                    <div class="form-item">
-                        <label>图标</label>
-                        <input class="modal-input" @bind="_editConnectorIcon" placeholder="emoji，如 📨" />
-                    </div>
+                    <label>* 项目名称</label>
+                    <input class="modal-input" @bind="_editProjectName" placeholder="如：点餐系统" />
                 </div>
                 <div class="form-item">
-                    <label>描述</label>
-                    <textarea class="modal-input modal-textarea" @bind="_editConnectorDescription" placeholder="连接器的用途说明"></textarea>
+                    <label>项目描述</label>
+                    <textarea class="modal-input modal-textarea" @bind="_editProjectDescription" placeholder="描述项目目标与范围"></textarea>
                 </div>
                 <div class="form-item">
-                    <label>配置（JSON）</label>
-                    <textarea class="modal-input modal-textarea" @bind="_editConnectorConfig" style="min-height:100px;" placeholder='{ "endpoint": "..." }'></textarea>
+                    <label>项目资源</label>
+                    <div class="pg-res-note">项目关联的工作资料（代码仓库、设计文件等）。员工绑定项目后，代码仓库类资源会作为"可操作仓库"注入提示词。</div>
+                    @foreach (var (resource, index) in _editProjectResources.Select((r, i) => (r, i)))
+                    {
+                        <div class="pg-res-row">
+                            <select class="modal-input pg-res-type" @bind="resource.ResourceType" @bind:after='() => OnResourceTypeChanged(resource)'>
+                                @foreach (var type in ResourceTypeOptions)
+                                {
+                                    <option value="@type.Value">@type.Label</option>
+                                }
+                            </select>
+                            <input class="modal-input pg-res-name" @bind="resource.Name" placeholder="名称，如：后端服务" />
+                            <input class="modal-input pg-res-url" @bind="resource.Url" placeholder="地址，如 https://... 或文件链接" />
+                            @if (resource.ResourceType == WorkbenchResourceTypes.Code)
+                            {
+                                <input class="modal-input pg-res-branch" @bind="resource.Branch" placeholder="默认分支，可留空" />
+                            }
+                            <button class="btn btn-link btn-small btn-danger" @onclick="() => RemoveResource(index)">删除</button>
+                        </div>
+                    }
+                    <button class="btn btn-link btn-small" @onclick="AddResource">＋ 添加资源</button>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="modal-btn-cancel" @onclick="CloseConnectorDialog">取消</button>
-                <button class="modal-btn-primary" disabled="@_saving" @onclick="SaveConnectorAsync">保存</button>
+                <button class="modal-btn-cancel" @onclick="CloseProjectDialog">取消</button>
+                <button class="modal-btn-primary" disabled="@_savingProject" @onclick="SaveProjectAsync">保存</button>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- ========== 知识库对话框 ========== -->
+@if (_showKbDialog)
+{
+    <div class="modal-overlay" @onclick="CloseKbDialog">
+        <div class="modal-dialog kb-dialog" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h3>@(_kbEditingId is null ? "新建知识库" : "编辑知识库")</h3>
+                <button class="btn btn-text modal-close-btn" @onclick="CloseKbDialog">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-item required">
+                    <label>名称</label>
+                    <input class="modal-input" @bind="_kbName" placeholder="如: 产品文档库" />
+                </div>
+                <div class="form-item">
+                    <label>描述</label>
+                    <textarea class="modal-input modal-textarea" @bind="_kbDescription" placeholder="知识库用途说明(可选)"></textarea>
+                </div>
+                <div class="form-item">
+                    <label>排序</label>
+                    <input class="modal-input" type="number" @bind="_kbSortOrder" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn-cancel" @onclick="CloseKbDialog">取消</button>
+                <button class="modal-btn-primary" @onclick="SaveKnowledgeBaseAsync" disabled="@_savingKb">
+                    @(_savingKb ? "保存中..." : "保存")
+                </button>
             </div>
         </div>
     </div>
 }
 
 @code {
-    private string _tab = "skill";
+    private static readonly (string Value, string Label)[] ResourceTypeOptions =
+    [
+        (WorkbenchResourceTypes.Code, "代码仓库"),
+        (WorkbenchResourceTypes.Design, "设计文件"),
+        (WorkbenchResourceTypes.Document, "文档"),
+        (WorkbenchResourceTypes.Data, "数据集"),
+        (WorkbenchResourceTypes.Other, "其他")
+    ];
 
-    private List<SkillDto> _skills = [];
-    private List<ConnectorDto> _connectors = [];
+    private string _tab = "project";
+
+    private List<WorkbenchProjectDto> _projects = [];
+    private bool _projectLoading;
+    private string _projectFilter = "";
+
+    private bool _showProjectDialog;
+    private bool _savingProject;
+    private Guid? _editProjectId;
+    private string _editProjectName = "";
+    private string _editProjectDescription = "";
+    private List<WorkbenchProjectResourceInputDto> _editProjectResources = [];
+
     private List<KnowledgeBaseDto> _knowledgeBases = [];
-    private List<McpServerDto> _mcpServers = [];
-
-    private bool _showConnectorDialog;
-    private bool _saving;
-    private Guid? _editConnectorId;
-    private string _editConnectorName = "";
-    private string _editConnectorIcon = "";
-    private string _editConnectorDescription = "";
-    private string _editConnectorConfig = "";
+    private bool _kbLoading;
+    private bool _showKbDialog;
+    private bool _savingKb;
+    private Guid? _kbEditingId;
+    private string _kbName = "";
+    private string _kbDescription = "";
+    private int _kbSortOrder;
+    private Guid? _confirmDeleteKbId;
 
     private string toastMessage = "";
     private string toastType = "info";
     private bool toastVisible;
 
-    protected override async Task OnInitializedAsync() => await LoadAsync();
+    protected override async Task OnInitializedAsync()
+    {
+        ApplyTabFromUrl();
+        await LoadTabAsync();
+    }
 
     private async Task SwitchTab(string tab)
     {
         _tab = tab;
-        await LoadAsync();
+        await LoadTabAsync();
     }
 
-    private async Task LoadAsync()
+    /// <summary>按 ?tab=knowledge 定位分段，非法值回落「项目」</summary>
+    private void ApplyTabFromUrl()
     {
+        var raw = Navigation.Uri;
+        var mark = raw.IndexOf('?');
+        if (mark < 0) return;
+
+        foreach (var pair in raw[(mark + 1)..].Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var kv = pair.Split('=', 2);
+            if (kv.Length == 2 && kv[0].Equals("tab", StringComparison.OrdinalIgnoreCase)
+                && kv[1].Equals("knowledge", StringComparison.OrdinalIgnoreCase))
+            {
+                _tab = "knowledge";
+                return;
+            }
+        }
+    }
+
+    private async Task LoadTabAsync()
+    {
+        if (_tab == "project") await LoadProjectsAsync();
+        else await LoadKnowledgeBasesAsync();
+    }
+
+    private static string ResourceIcon(string resourceType) => resourceType switch
+    {
+        WorkbenchResourceTypes.Code => "📦",
+        WorkbenchResourceTypes.Design => "🎨",
+        WorkbenchResourceTypes.Document => "📄",
+        WorkbenchResourceTypes.Data => "📊",
+        _ => "🔗"
+    };
+
+    #region 项目
+
+    private async Task LoadProjectsAsync()
+    {
+        _projectLoading = true;
         try
         {
-            if (_tab == "skill")
+            var result = (await ProjectAppService.GetListAsync(new WorkbenchProjectQueryDto
             {
-                _skills = (await SkillAppService.GetListAsync(new SkillDefinitionQueryDto { MaxResultCount = 100 })).Data?.Items.ToList() ?? [];
-            }
-            else if (_tab == "mcp")
-            {
-                _mcpServers = (await McpServerAppService.GetAllAsync()).Data ?? [];
-            }
-            else if (_tab == "connector")
-            {
-                _connectors = (await ConnectorAppService.GetListAsync(new ConnectorQueryDto { MaxResultCount = 100 })).Data?.Items.ToList() ?? [];
-            }
-            else
-            {
-                _knowledgeBases = (await KnowledgeBaseAppService.GetListAsync()).Data ?? [];
-            }
+                Filter = string.IsNullOrWhiteSpace(_projectFilter) ? null : _projectFilter,
+                MaxResultCount = 100
+            })).Data;
+            _projects = result?.Items.ToList() ?? [];
         }
         catch (Exception ex)
         {
-            ShowToast($"加载失败: {ex.Message}", "error");
+            ShowToast($"加载项目失败: {ex.Message}", "error");
+        }
+        finally
+        {
+            _projectLoading = false;
         }
     }
 
-    private async Task ToggleSkillAsync(SkillDto skill, ChangeEventArgs e)
+    private void ShowProjectCreate()
     {
-        try
+        _editProjectId = null;
+        _editProjectName = "";
+        _editProjectDescription = "";
+        _editProjectResources = [];
+        _showProjectDialog = true;
+    }
+
+    private void ShowProjectEdit(WorkbenchProjectDto project)
+    {
+        _editProjectId = project.Id;
+        _editProjectName = project.ProjectName;
+        _editProjectDescription = project.Description;
+        _editProjectResources = project.Resources.Select(r => new WorkbenchProjectResourceInputDto
         {
-            await SkillAppService.ToggleEnabledAsync(skill.Id, (bool)(e.Value ?? false));
-            await LoadAsync();
-        }
-        catch (Exception ex)
+            ResourceType = r.ResourceType,
+            Name = r.Name,
+            Url = r.Url,
+            Branch = r.Branch
+        }).ToList();
+        _showProjectDialog = true;
+    }
+
+    private void AddResource() => _editProjectResources.Add(new WorkbenchProjectResourceInputDto
+    {
+        ResourceType = WorkbenchResourceTypes.Code
+    });
+
+    private void RemoveResource(int index) => _editProjectResources.RemoveAt(index);
+
+    private void OnResourceTypeChanged(WorkbenchProjectResourceInputDto resource)
+    {
+        if (resource.ResourceType != WorkbenchResourceTypes.Code)
         {
-            ShowToast($"操作失败: {ex.Message}", "error");
+            resource.Branch = null;
         }
     }
 
-    private async Task ToggleMcpAsync(McpServerDto server, ChangeEventArgs e)
-    {
-        try
-        {
-            await McpServerAppService.ToggleEnabledAsync(server.Id, (bool)(e.Value ?? false));
-            await LoadAsync();
-        }
-        catch (Exception ex)
-        {
-            ShowToast($"操作失败: {ex.Message}", "error");
-        }
-    }
+    private void CloseProjectDialog() => _showProjectDialog = false;
 
-    private async Task ToggleConnectorAsync(ConnectorDto connector, ChangeEventArgs e)
+    private async Task SaveProjectAsync()
     {
-        try
+        if (string.IsNullOrWhiteSpace(_editProjectName))
         {
-            await ConnectorAppService.ToggleEnabledAsync(connector.Id, (bool)(e.Value ?? false));
-            await LoadAsync();
-        }
-        catch (Exception ex)
-        {
-            ShowToast($"操作失败: {ex.Message}", "error");
-        }
-    }
-
-    private void ShowConnectorDialog(ConnectorDto? connector = null)
-    {
-        _editConnectorId = connector?.Id;
-        _editConnectorName = connector?.ConnectorName ?? "";
-        _editConnectorIcon = connector?.Icon ?? "";
-        _editConnectorDescription = connector?.Description ?? "";
-        _editConnectorConfig = connector?.Config ?? "";
-        _showConnectorDialog = true;
-    }
-
-    private void CloseConnectorDialog() => _showConnectorDialog = false;
-
-    private async Task SaveConnectorAsync()
-    {
-        if (string.IsNullOrWhiteSpace(_editConnectorName))
-        {
-            ShowToast("请输入连接器名称", "warning");
+            ShowToast("请输入项目名称", "warning");
             return;
         }
 
-        _saving = true;
+        var resources = _editProjectResources
+            .Where(r => !string.IsNullOrWhiteSpace(r.Name) || !string.IsNullOrWhiteSpace(r.Url))
+            .Select(r => new WorkbenchProjectResourceInputDto
+            {
+                ResourceType = r.ResourceType,
+                Name = r.Name?.Trim() ?? "",
+                Url = r.Url?.Trim(),
+                Branch = r.Branch?.Trim()
+            })
+            .ToList();
+        if (resources.Any(r => string.IsNullOrWhiteSpace(r.Name)))
+        {
+            ShowToast("请填写每个资源的名称，或删除空资源行", "warning");
+            return;
+        }
+
+        _savingProject = true;
         try
         {
-            if (_editConnectorId is null)
+            if (_editProjectId is null)
             {
-                await ConnectorAppService.CreateAsync(new CreateConnectorDto
+                await ProjectAppService.CreateAsync(new CreateWorkbenchProjectDto
                 {
-                    ConnectorName = _editConnectorName.Trim(),
-                    Icon = _editConnectorIcon.Trim(),
-                    Description = _editConnectorDescription.Trim(),
-                    Config = string.IsNullOrWhiteSpace(_editConnectorConfig) ? null : _editConnectorConfig
+                    ProjectName = _editProjectName.Trim(),
+                    Description = _editProjectDescription.Trim(),
+                    Resources = resources
                 });
-                ShowToast("连接器已添加", "success");
+                ShowToast("项目已创建", "success");
             }
             else
             {
-                await ConnectorAppService.UpdateAsync(_editConnectorId.Value, new UpdateConnectorDto
+                await ProjectAppService.UpdateAsync(_editProjectId.Value, new UpdateWorkbenchProjectDto
                 {
-                    ConnectorName = _editConnectorName.Trim(),
-                    Icon = _editConnectorIcon.Trim(),
-                    Description = _editConnectorDescription.Trim(),
-                    Config = string.IsNullOrWhiteSpace(_editConnectorConfig) ? null : _editConnectorConfig
+                    ProjectName = _editProjectName.Trim(),
+                    Description = _editProjectDescription.Trim(),
+                    Resources = resources
                 });
-                ShowToast("连接器已更新", "success");
+                ShowToast("项目已更新", "success");
             }
 
-            _showConnectorDialog = false;
-            await LoadAsync();
+            _showProjectDialog = false;
+            await LoadProjectsAsync();
         }
         catch (Exception ex)
         {
@@ -353,23 +411,135 @@
         }
         finally
         {
-            _saving = false;
+            _savingProject = false;
         }
     }
 
-    private async Task DeleteConnectorAsync(ConnectorDto connector)
+    private async Task DeleteProjectAsync(WorkbenchProjectDto project)
     {
         try
         {
-            await ConnectorAppService.DeleteAsync(connector.Id);
-            ShowToast("连接器已删除", "success");
-            await LoadAsync();
+            await ProjectAppService.DeleteAsync(project.Id);
+            ShowToast("项目已删除", "success");
+            await LoadProjectsAsync();
         }
         catch (Exception ex)
         {
             ShowToast($"删除失败: {ex.Message}", "error");
         }
     }
+
+    #endregion
+
+    #region 知识库
+
+    private async Task LoadKnowledgeBasesAsync()
+    {
+        _kbLoading = true;
+        try
+        {
+            _knowledgeBases = (await KnowledgeBaseAppService.GetListAsync()).Data ?? [];
+        }
+        catch (Exception ex)
+        {
+            ShowToast("加载知识库失败: " + ex.Message, "error");
+        }
+        finally
+        {
+            _kbLoading = false;
+        }
+    }
+
+    private void OpenKbDetail(KnowledgeBaseDto kb)
+    {
+        Navigation.NavigateTo($"/workbench/knowledge/{kb.Id}");
+    }
+
+    private void ShowKbAddDialog()
+    {
+        _kbEditingId = null;
+        _kbName = "";
+        _kbDescription = "";
+        _kbSortOrder = _knowledgeBases.Count;
+        _showKbDialog = true;
+    }
+
+    private void ShowKbEditDialog(KnowledgeBaseDto kb)
+    {
+        _kbEditingId = kb.Id;
+        _kbName = kb.Name;
+        _kbDescription = kb.Description ?? "";
+        _kbSortOrder = kb.SortOrder;
+        _showKbDialog = true;
+    }
+
+    private void CloseKbDialog() => _showKbDialog = false;
+
+    private async Task SaveKnowledgeBaseAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_kbName))
+        {
+            ShowToast("请输入知识库名称", "error");
+            return;
+        }
+
+        _savingKb = true;
+        try
+        {
+            if (_kbEditingId.HasValue)
+            {
+                await KnowledgeBaseAppService.UpdateAsync(_kbEditingId.Value, new UpdateKnowledgeBaseDto
+                {
+                    Name = _kbName.Trim(),
+                    Description = string.IsNullOrWhiteSpace(_kbDescription) ? null : _kbDescription.Trim(),
+                    SortOrder = _kbSortOrder
+                });
+                ShowToast("知识库已更新", "success");
+            }
+            else
+            {
+                await KnowledgeBaseAppService.CreateAsync(new CreateKnowledgeBaseDto
+                {
+                    Name = _kbName.Trim(),
+                    Description = string.IsNullOrWhiteSpace(_kbDescription) ? null : _kbDescription.Trim(),
+                    SortOrder = _kbSortOrder
+                });
+                ShowToast("知识库已创建", "success");
+            }
+
+            _showKbDialog = false;
+            await LoadKnowledgeBasesAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowToast("保存失败: " + ex.Message, "error");
+        }
+        finally
+        {
+            _savingKb = false;
+        }
+    }
+
+    private void RequestKbDelete(Guid id) => _confirmDeleteKbId = id;
+
+    private void CancelKbDelete() => _confirmDeleteKbId = null;
+
+    private async Task DeleteKnowledgeBaseAsync(KnowledgeBaseDto kb)
+    {
+        try
+        {
+            await KnowledgeBaseAppService.DeleteAsync(kb.Id);
+            _confirmDeleteKbId = null;
+            ShowToast($"知识库「{kb.Name}」已删除", "success");
+            await LoadKnowledgeBasesAsync();
+        }
+        catch (Exception ex)
+        {
+            ShowToast("删除失败: " + ex.Message, "error");
+        }
+    }
+
+    #endregion
 
     private void ShowToast(string message, string type = "info")
     {
@@ -407,135 +577,254 @@
         font-size: 20px;
     }
 
-    .rs-section-head {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-size: 14px;
-        font-weight: 500;
-        color: #262626;
-        margin-bottom: 12px;
+    /* ========== 项目卡片 ========== */
+    .pg-search {
+        margin-bottom: 16px;
     }
 
-    .rs-rows {
+    .pg-search input {
+        width: 280px;
+        height: 32px;
+        padding: 2px 12px;
+        border: 1px solid #e8e8e8;
+        border-radius: 6px;
+        font-size: 13px;
+        outline: none;
+    }
+
+    .pg-search input:focus {
+        border-color: #a6a6a6;
+    }
+
+    .pg-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 16px;
+    }
+
+    .pg-card {
+        border: 1px solid #e8e8e8;
+        border-radius: 10px;
+        padding: 16px;
         display: flex;
         flex-direction: column;
-        border: 1px solid #f0f0f0;
-        border-radius: 10px;
-        overflow: hidden;
+        gap: 8px;
+        position: relative;
     }
 
-    .rs-row {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 14px 16px;
-        border-bottom: 1px solid #f0f0f0;
+    .pg-card:hover {
+        border-color: #d9d9d9;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     }
 
-    .rs-row:last-child {
-        border-bottom: none;
-    }
-
-    .rs-row:hover {
-        background: #fafafa;
-    }
-
-    .rs-row-icon {
-        width: 34px;
-        height: 34px;
-        border-radius: 8px;
-        background: #f5f5f5;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 16px;
-        flex-shrink: 0;
-    }
-
-    .rs-row-info {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .rs-row-name {
-        font-size: 14px;
-        color: #262626;
+    .pg-card-head {
         display: flex;
         align-items: center;
         gap: 8px;
     }
 
-    .rs-row-desc {
-        font-size: 12px;
+    .pg-card-icon {
+        font-size: 18px;
+    }
+
+    .pg-card-name {
+        font-size: 15px;
+        color: #262626;
+    }
+
+    .pg-card-desc {
+        font-size: 13px;
         color: #8c8c8c;
-        margin-top: 2px;
+        min-height: 20px;
+    }
+
+    .pg-card-repo {
+        font-size: 12px;
+        color: #595959;
+        background: #fafafa;
+        border-radius: 6px;
+        padding: 4px 8px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }
 
-    /* ========== 开关 ========== */
-    .rs-switch {
-        position: relative;
-        display: inline-block;
-        width: 36px;
-        height: 20px;
+    .pg-res-note {
+        font-size: 12px;
+        color: #8c8c8c;
+        margin-bottom: 8px;
+    }
+
+    .pg-res-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 8px;
+    }
+
+    .pg-res-row .modal-input {
+        height: 32px;
+        min-width: 0;
+    }
+
+    /* 双类选择器提高特异性，避免被其他页面 .modal-input{width:100%} 按加载顺序覆盖 */
+    .pg-res-row .pg-res-type {
+        width: 110px;
+        flex: 0 0 auto;
+    }
+
+    .pg-res-row .pg-res-name {
+        width: 190px;
+        flex: 0 0 auto;
+    }
+
+    .pg-res-row .pg-res-url {
+        flex: 1 1 220px;
+        width: auto;
+        min-width: 180px;
+    }
+
+    .pg-res-row .pg-res-branch {
+        width: 150px;
+        flex: 0 0 auto;
+    }
+
+    .pg-card-foot {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        color: #8c8c8c;
+        border-top: 1px solid #f0f0f0;
+        padding-top: 8px;
+    }
+
+    .pg-card-actions {
+        display: flex;
+        gap: 4px;
+        justify-content: flex-end;
+    }
+
+    /* ========== 知识库卡片 ========== */
+    .kb-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 16px;
+    }
+
+    .kb-card {
+        border: 1px solid #e8e8e8;
+        border-radius: 8px;
+        padding: 16px;
+        background: #fff;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .kb-card:hover {
+        border-color: #1677ff;
+        box-shadow: 0 2px 8px rgba(22,119,255,0.12);
+    }
+
+    .kb-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .kb-name {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 15px;
+        color: #262626;
+        word-break: break-all;
+    }
+
+    .kb-icon {
+        font-size: 18px;
+    }
+
+    .kb-actions {
+        display: flex;
+        gap: 4px;
         flex-shrink: 0;
     }
 
-    .rs-switch input {
-        opacity: 0;
-        width: 0;
-        height: 0;
+    .kb-desc {
+        font-size: 13px;
+        color: #8c8c8c;
+        line-height: 1.5;
+        min-height: 20px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
     }
 
-    .rs-slider {
-        position: absolute;
-        cursor: pointer;
-        inset: 0;
-        background: #e8e8e8;
-        border-radius: 20px;
-        transition: 0.2s;
+    .kb-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: auto;
     }
 
-    .rs-slider::before {
-        content: "";
-        position: absolute;
-        height: 16px;
-        width: 16px;
-        left: 2px;
-        top: 2px;
-        background: #fff;
-        border-radius: 50%;
-        transition: 0.2s;
-    }
-
-    .rs-switch input:checked + .rs-slider {
-        background: #52c41a;
-    }
-
-    .rs-switch input:checked + .rs-slider::before {
-        transform: translateX(16px);
-    }
-
-    .rs-note {
-        background: #fffbe6;
-        border: 1px solid #ffe58f;
-        color: #874d00;
+    .kb-time {
         font-size: 12px;
-        border-radius: 6px;
-        padding: 8px 12px;
-        margin-bottom: 12px;
+        color: #bfbfbf;
     }
 
-    .rs-badge-planned {
-        font-size: 11px;
-        color: #fa8c16;
-        border: 1px solid #ffd591;
-        background: #fff7e6;
+    .kb-dialog {
+        width: 460px;
+    }
+
+    .kb-dialog .modal-body {
+        padding: 20px 24px 12px;
+    }
+
+    .kb-dialog .modal-footer {
+        padding: 0 24px 20px;
+        border-top: none;
+    }
+
+    /* ========== Tag / Loading ========== */
+    .tag {
+        display: inline-block;
+        padding: 2px 8px;
         border-radius: 4px;
-        padding: 0 6px;
-        line-height: 18px;
+        font-size: 12px;
+        line-height: 1.5;
+    }
+
+    .tag-blue {
+        background: #e6f7ff;
+        color: #1890ff;
+        border: 1px solid #91d5ff;
+    }
+
+    .loading-spinner {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 60px 0;
+        color: #8c8c8c;
+        font-size: 14px;
+    }
+
+    .spinner {
+        width: 20px;
+        height: 20px;
+        border: 2px solid #e8e8e8;
+        border-top-color: #262626;
+        border-radius: 50%;
+        animation: rs-spin 0.8s linear infinite;
+    }
+
+    @@keyframes rs-spin {
+        to { transform: rotate(360deg); }
     }
 </style>

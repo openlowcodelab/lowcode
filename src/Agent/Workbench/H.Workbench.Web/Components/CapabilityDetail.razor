@@ -1,0 +1,24 @@
+@namespace H.Workbench.Web
+
+<div class="cp-card-detail">
+    @foreach (var (label, value, isCode) in Rows)
+    {
+        <div class="cp-dl">
+            <span>@label</span>
+            @if (isCode)
+            {
+                <em class="cp-dl-code">@value</em>
+            }
+            else
+            {
+                <em>@value</em>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    /// <summary>详情字段清单，IsCode 为真时按等宽块展示（JSON、类名、端点）</summary>
+    [Parameter]
+    public List<(string Label, string Value, bool IsCode)> Rows { get; set; } = new();
+}

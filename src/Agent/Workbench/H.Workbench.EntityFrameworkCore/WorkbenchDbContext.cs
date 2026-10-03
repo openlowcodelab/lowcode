@@ -27,6 +27,7 @@ public class WorkbenchDbContext : AbpDbContext<WorkbenchDbContext>
     public DbSet<ArtifactEntity> Artifacts { get; set; } = null!;
     public DbSet<WorkflowEntity> Workflows { get; set; } = null!;
     public DbSet<ApprovalRuleEntity> ApprovalRules { get; set; } = null!;
+    public DbSet<WorkbenchPluginEntity> Plugins { get; set; } = null!;
 
     public WorkbenchDbContext(DbContextOptions<WorkbenchDbContext> options)
         : base(options)
@@ -180,6 +181,7 @@ public class WorkbenchDbContext : AbpDbContext<WorkbenchDbContext>
             b.Property(x => x.ConnectorIds).HasMaxLength(2000);
             b.Property(x => x.KnowledgeBaseIds).HasMaxLength(2000);
             b.Property(x => x.ProjectIds).HasMaxLength(2000);
+            b.Property(x => x.PluginIds).HasMaxLength(2000);
 
             b.HasIndex(x => x.AgentType).IsUnique();
             b.HasIndex(x => x.IsEnabled);
@@ -289,6 +291,21 @@ public class WorkbenchDbContext : AbpDbContext<WorkbenchDbContext>
             b.Property(x => x.Config).HasMaxLength(4000);
 
             b.HasIndex(x => x.ConnectorKey).IsUnique();
+            b.HasIndex(x => x.Source);
+        });
+
+        modelBuilder.Entity<WorkbenchPluginEntity>(b =>
+        {
+            b.ToTable("WorkbenchPlugin");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.PluginKey).IsRequired().HasMaxLength(100);
+            b.Property(x => x.PluginName).IsRequired().HasMaxLength(200);
+            b.Property(x => x.Description).HasMaxLength(1000);
+            b.Property(x => x.Source).IsRequired().HasMaxLength(20).HasDefaultValue("Custom");
+            b.Property(x => x.Icon).HasMaxLength(100);
+            b.Property(x => x.SkillKeys).HasMaxLength(2000);
+
+            b.HasIndex(x => x.PluginKey).IsUnique();
             b.HasIndex(x => x.Source);
         });
 
