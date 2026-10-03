@@ -118,13 +118,14 @@
 
         foreach (var a in Artifacts.OrderBy(x => x.CreationTime))
         {
-            if (a.Kind == "FileChange" && !string.IsNullOrEmpty(a.FilePath))
+            var isFileArtifact = a.Kind is "FileChange" or "Document" or "Table" or "Screenshot";
+            if (isFileArtifact && !string.IsNullOrEmpty(a.FilePath))
             {
                 if (fileIndex.TryGetValue(a.FilePath, out var idx))
                 {
-                    // 同文件多次写：合并为一条，保留最新变更类型
+                    // 同一文件多次写：合并为一条，标题按最新一次的动作给
                     var old = groups[idx];
-                    groups[idx] = old with { Title = $"{ChangeWord(a.ChangeType)} {a.FilePath}", Meta = BuildMeta(a), Success = a.Success, Diff = ParseDiff(a.Payload) ?? old.Diff };
+                    groups[idx] = old with { Title = BuildTitle(a), Meta = BuildMeta(a), Success = a.Success, Diff = ParseDiff(a.Payload) ?? old.Diff };
                     continue;
                 }
                 fileIndex[a.FilePath] = groups.Count;
@@ -164,6 +165,9 @@
         "GitPush" => "推送到远端",
         "Clone" => $"克隆/更新仓库 {a.Repo}".Trim(),
         "FileChange" => $"{ChangeWord(a.ChangeType)} {a.FilePath}",
+        "Document" => $"生成文档 {a.FilePath}",
+        "Table" => $"生成表格 {a.FilePath}",
+        "Screenshot" => $"截图 {a.FilePath}",
         "ShellCommand" => a.Title,
         _ => a.Title
     };
@@ -201,6 +205,11 @@
         "Clone" => "📥",
         "FileChange" => "📝",
         "ShellCommand" => "⌨️",
+        "Document" => "📄",
+        "Table" => "📊",
+        "Screenshot" => "🖼",
+        "Message" => "📨",
+        "Email" => "✉️",
         _ => "📌"
     };
 }

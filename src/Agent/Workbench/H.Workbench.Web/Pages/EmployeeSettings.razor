@@ -212,7 +212,7 @@ else
             else if (_section == "skills")
             {
                 <h2 class="es-title">Skill</h2>
-                <div class="es-note">员工运行时只能使用已勾选技能提供的工具（MCP 工具始终可用）；未勾选任何技能则不限制。</div>
+                <div class="es-note">员工运行时只能使用已勾选技能提供的工具（MCP 工具始终可用）；未勾选任何技能则不限制。勾选下方连接器会额外授予它映射的技能。</div>
                 <div class="rs-rows">
                     @foreach (var skill in _skills)
                     {
@@ -244,7 +244,7 @@ else
             else if (_section == "connectors")
             {
                 <h2 class="es-title">连接器</h2>
-                <div class="es-note">连接器为规划中的设备能力，当前版本仅登记配置，不参与员工运行时。</div>
+                <div class="es-note">勾选即把该连接器的设备能力授予这名员工（浏览器→真实浏览器操作，计算机控制→截屏与键鼠，后者默认每步需人工批准）。连接器只在开启状态授予能力；未启用的连接器不出现在这里。</div>
                 <div class="rs-rows">
                     @foreach (var connector in _connectors.Where(x => x.IsEnabled))
                     {

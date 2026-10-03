@@ -22,6 +22,7 @@ public class AgentFactory
     private readonly LLMProviderFactory _llmProviderFactory;
     private readonly IAgentAppService _agentDefinitionAppService;
     private readonly ISkillAppService _skillDefinitionAppService;
+    private readonly IConnectorAppService _connectorAppService;
     private readonly IWorkbenchProjectAppService _projectAppService;
     private readonly IKnowledgeRetrievalAppService _knowledgeRetrievalAppService;
     private readonly IToolRegistry _toolRegistry;
@@ -58,6 +59,7 @@ public class AgentFactory
         LLMProviderFactory llmProviderFactory,
         IAgentAppService agentDefinitionAppService,
         ISkillAppService skillDefinitionAppService,
+        IConnectorAppService connectorAppService,
         IWorkbenchProjectAppService projectAppService,
         IKnowledgeRetrievalAppService knowledgeRetrievalAppService,
         IToolRegistry toolRegistry,
@@ -73,6 +75,7 @@ public class AgentFactory
         _llmProviderFactory = llmProviderFactory;
         _agentDefinitionAppService = agentDefinitionAppService;
         _skillDefinitionAppService = skillDefinitionAppService;
+        _connectorAppService = connectorAppService;
         _projectAppService = projectAppService;
         _knowledgeRetrievalAppService = knowledgeRetrievalAppService;
         _toolRegistry = toolRegistry;
@@ -215,7 +218,21 @@ public class AgentFactory
             foreach (var error in report.Errors) _logger.LogWarning("技能注册失败: {Error}", error);
         }
 
-        var scopedRegistry = ResolveScopedRegistry(definition, agentSkills);
+        // 连接器授予的设备能力：只有"已绑定 + 已启用"的连接器才映射成技能名
+        var connectorSkills = new List<string>();
+        if (definition.ConnectorIds.Count > 0)
+        {
+            var connectors = (await _connectorAppService.ListByIdsAsync(definition.ConnectorIds)).Data ?? [];
+            foreach (var connector in connectors.Where(c => c.IsEnabled))
+            {
+                if (WorkbenchToolCatalog.ConnectorSkillKeys.TryGetValue(connector.ConnectorKey, out var granted))
+                {
+                    connectorSkills.AddRange(granted);
+                }
+            }
+        }
+
+        var scopedRegistry = ResolveScopedRegistry(definition, agentSkills, connectorSkills);
         var toolDefs = scopedRegistry.GetToolDefinitions();
         var toolExecutor = new ToolExecutor(scopedRegistry, _toolExecutorLogger, _options.ToolTimeoutSeconds);
 
@@ -228,7 +245,7 @@ public class AgentFactory
 
         _logger.LogInformation("创建 ReactAgent: {AgentName}, 可用工具数: {ToolCount}{ScopeNote}{ApprovalNote}",
             definition.DisplayName, toolDefs.Count,
-            ReferenceEquals(scopedRegistry, _toolRegistry) ? "（全量，未隔离）" : "（按员工技能隔离）",
+            ReferenceEquals(scopedRegistry, _toolRegistry) ? "（全量，未隔离）" : "（按员工技能/连接器隔离）",
             approval is null ? "" : $"（审批模式 {approval.Mode}，需审批工具 {approval.ApprovalTools.Count} 个）");
 
         // 运行时上下文注入（知识库检索 + 项目仓库清单 + 历史经验记忆）
@@ -314,21 +331,25 @@ public class AgentFactory
     }
 
     /// <summary>
-    /// 员工级工具隔离：绑定了技能的员工只见自己的技能工具 + MCP；
-    /// 未绑定技能的员工保持全量（避免存量员工失能），可用 Workbench:ToolIsolationEnabled 一键回退。
+    /// 员工级工具隔离：绑定了技能或连接器的员工只见自己的工具集 + MCP；
+    /// 两者都没绑的员工保持全量（避免存量员工失能），可用 Workbench:ToolIsolationEnabled 一键回退。
+    /// 连接器只做加法——启用后把映射的技能授予该员工，不从任何存量员工手里拿走工具。
     /// </summary>
-    private IToolRegistry ResolveScopedRegistry(AgentDto definition, List<SkillDto> agentSkills)
+    private IToolRegistry ResolveScopedRegistry(
+        AgentDto definition, List<SkillDto> agentSkills, List<string> connectorSkillNames)
     {
-        if (!_options.ToolIsolationEnabled || definition.SkillIdList.Count == 0)
+        if (!_options.ToolIsolationEnabled ||
+            (definition.SkillIdList.Count == 0 && connectorSkillNames.Count == 0))
             return _toolRegistry;
 
         var allowed = agentSkills
             .Where(s => s.IsEnabled && s.SkillType != "Planned")
             .Select(s => s.SkillName)
             .ToList();
+        allowed.AddRange(connectorSkillNames);
         allowed.Add(WorkbenchToolCatalog.McpOwner);
 
-        return _toolRegistry.CreateScoped(allowed);
+        return _toolRegistry.CreateScoped(allowed.Distinct(StringComparer.OrdinalIgnoreCase).ToList());
     }
 
     /// <summary>

@@ -158,6 +158,58 @@ public class GitWorkspaceResolver
     }
 
     /// <summary>
+    /// 解析"产物落盘"路径：给了 repo 就落在该仓库副本内，没给则落在 WorkDir 的 outputs 目录。
+    /// 两种情况都强制留在 WorkDir 内——办公文档是二进制，不能像文本那样只靠调用方自律。
+    /// </summary>
+    public bool TryResolveOutputPath(string? repo, string relativePath, out string fullPath, out string? error)
+    {
+        fullPath = "";
+        error = null;
+
+        if (!TryGetRoot(out var root, out error)) return false;
+
+        string baseDir;
+        if (!string.IsNullOrWhiteSpace(repo))
+        {
+            if (!TryResolveRepo(repo, requireExisting: true, out var repoDir, out var repoError))
+            {
+                error = repoError ?? $"仓库不存在或越出工作目录: {repo}";
+                return false;
+            }
+
+            baseDir = repoDir!;
+        }
+        else
+        {
+            baseDir = Path.Combine(root, "outputs");
+            try
+            {
+                Directory.CreateDirectory(baseDir);
+            }
+            catch (Exception ex)
+            {
+                error = $"产物目录不可用: {ex.Message}";
+                return false;
+            }
+        }
+
+        if (!TryResolveInRepo(baseDir, relativePath, out var combined, out var pathError))
+        {
+            error = pathError!;
+            return false;
+        }
+
+        if (!IsInsideRoot(combined!, root))
+        {
+            error = "拒绝写到工作目录之外";
+            return false;
+        }
+
+        fullPath = combined!;
+        return true;
+    }
+
+    /// <summary>
     /// 把仓库内相对路径解析为绝对路径（限定在仓库目录内，拒 .. 与符号链接逃逸）
     /// </summary>
     public static bool TryResolveInRepo(string repoDir, string relativePath, out string fullPath, out string? error)

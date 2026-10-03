@@ -172,6 +172,104 @@ public static class ArtifactExtractor
                     });
                     break;
                 }
+                case "OfficeWriteDocumentAsync":
+                {
+                    var file = GetString(data, "file");
+                    artifacts.Add(new ArtifactEntity
+                    {
+                        Kind = "Document",
+                        Title = $"生成文档 {file}",
+                        Repo = GetArg(argumentsJson, "repo"),
+                        FilePath = file,
+                        ChangeType = "Created",
+                        Success = true,
+                        Payload = JsonSerializer.Serialize(new
+                        {
+                            blocks = Int(data, "blocks"),
+                            paragraphs = Int(data, "paragraphs"),
+                            tables = Int(data, "tables"),
+                            sizeBytes = Int(data, "sizeBytes")
+                        }, PayloadJsonOptions)
+                    });
+                    break;
+                }
+                case "SheetWriteAsync":
+                {
+                    var file = GetString(data, "file");
+                    artifacts.Add(new ArtifactEntity
+                    {
+                        Kind = "Table",
+                        Title = $"生成表格 {file}",
+                        Repo = GetArg(argumentsJson, "repo"),
+                        FilePath = file,
+                        ChangeType = "Created",
+                        Success = true,
+                        Payload = JsonSerializer.Serialize(new
+                        {
+                            format = GetString(data, "format"),
+                            sheets = ArrayLength(data, "sheets"),
+                            rows = Int(data, "rows"),
+                            sizeBytes = Int(data, "sizeBytes")
+                        }, PayloadJsonOptions)
+                    });
+                    break;
+                }
+                case "BrowserScreenshotAsync":
+                case "ScreenCaptureAsync":
+                {
+                    var file = GetString(data, "file");
+                    var wholeScreen = toolName == "ScreenCaptureAsync";
+                    artifacts.Add(new ArtifactEntity
+                    {
+                        Kind = "Screenshot",
+                        Title = wholeScreen ? $"屏幕截图 {file}" : $"页面截图 {file}",
+                        FilePath = file,
+                        ChangeType = "Created",
+                        Success = true,
+                        Payload = JsonSerializer.Serialize(new
+                        {
+                            sizeBytes = Int(data, "sizeBytes"),
+                            width = Int(data, "width"),
+                            height = Int(data, "height"),
+                            url = GetString(data, "url")
+                        }, PayloadJsonOptions)
+                    });
+                    break;
+                }
+                case "NotifySendAsync":
+                {
+                    artifacts.Add(new ArtifactEntity
+                    {
+                        Kind = "Message",
+                        Title = $"推送消息到 {GetString(data, "channel")}",
+                        Success = true,
+                        Payload = JsonSerializer.Serialize(new
+                        {
+                            channel = GetString(data, "channel"),
+                            kind = GetString(data, "kind"),
+                            title = GetString(data, "title"),
+                            contentChars = Int(data, "contentChars")
+                        }, PayloadJsonOptions)
+                    });
+                    break;
+                }
+                case "EmailSendAsync":
+                {
+                    artifacts.Add(new ArtifactEntity
+                    {
+                        Kind = "Email",
+                        Title = $"发送邮件《{GetString(data, "subject")}》",
+                        Success = true,
+                        Payload = JsonSerializer.Serialize(new
+                        {
+                            channel = GetString(data, "channel"),
+                            recipients = Int(data, "recipients"),
+                            ccCount = Int(data, "ccCount"),
+                            isHtml = data.TryGetProperty("isHtml", out var h) && h.ValueKind == JsonValueKind.True
+                        }, PayloadJsonOptions)
+                    });
+                    break;
+                }
             }
         }
         catch (JsonException)
@@ -186,6 +284,16 @@ public static class ArtifactExtractor
         root.ValueKind == JsonValueKind.Object && root.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.String
             ? v.GetString()
             : null;
+
+    private static int Int(JsonElement root, string name) =>
+        root.ValueKind == JsonValueKind.Object && root.TryGetProperty(name, out var v) && v.TryGetInt32(out var value)
+            ? value
+            : 0;
+
+    private static int ArrayLength(JsonElement root, string name) =>
+        root.ValueKind == JsonValueKind.Object && root.TryGetProperty(name, out var v) && v.ValueKind == JsonValueKind.Array
+            ? v.GetArrayLength()
+            : 0;
 
     private static string? GetArg(string? argumentsJson, string name)
     {

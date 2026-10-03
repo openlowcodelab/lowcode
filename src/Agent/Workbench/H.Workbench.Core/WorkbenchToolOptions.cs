@@ -39,6 +39,95 @@ public class WorkbenchToolOptions
     /// 连接串目前仍是明文配置（AES 加密/凭据库属后续项），因此这里只应放低权限账号。
     /// </summary>
     public List<DataSourceOptions> DataSources { get; set; } = new();
+
+    /// <summary>
+    /// 通知渠道白名单（IM 机器人 webhook 与邮箱账号）。与 DataSources 同一口径：
+    /// 模型只给登记名，URL/密钥/密码一律留在服务端配置里，未登记即失败关闭。
+    /// </summary>
+    public NotifyOptions Notify { get; set; } = new();
+
+    /// <summary>
+    /// 浏览器连接器（Playwright）配置
+    /// </summary>
+    public BrowserToolOptions Browser { get; set; } = new();
+}
+
+/// <summary>
+/// 浏览器连接器配置
+/// </summary>
+public class BrowserToolOptions
+{
+    /// <summary>
+    /// 默认有头：员工在你机器上点开网页时，你应该看得见它在做什么
+    /// </summary>
+    public bool Headless { get; set; } = false;
+
+    /// <summary>
+    /// 指定浏览器渠道（chrome / msedge）；留空则依次尝试 chrome、msedge、内置 Chromium
+    /// </summary>
+    public string Channel { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 导航默认超时（秒），模型可覆盖但上限 120
+    /// </summary>
+    public int NavigationTimeoutSeconds { get; set; } = 30;
+
+    /// <summary>
+    /// 同时存活的会话上限。要大于等于 Budget.MaxConcurrentRuns，否则并发执行会互相抢不到浏览器
+    /// </summary>
+    public int MaxSessions { get; set; } = 6;
+
+    /// <summary>
+    /// 空闲多久回收会话（秒）
+    /// </summary>
+    public int IdleTimeoutSeconds { get; set; } = 600;
+}
+
+/// <summary>
+/// 通知能力配置
+/// </summary>
+public class NotifyOptions
+{
+    public List<NotifyChannelOptions> Channels { get; set; } = new();
+}
+
+/// <summary>
+/// 登记给通知工具使用的渠道
+/// </summary>
+public class NotifyChannelOptions
+{
+    /// <summary>模型引用它时用的名字（如 ops-group、report-mailbox）</summary>
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>dingtalk | feishu | wecom | email</summary>
+    public string Kind { get; set; } = "dingtalk";
+
+    /// <summary>群机器人 webhook 地址（IM 渠道）</summary>
+    public string WebhookUrl { get; set; } = string.Empty;
+
+    /// <summary>加签密钥（钉钉/飞书开启签名校验时必填）</summary>
+    public string Secret { get; set; } = string.Empty;
+
+    public string SmtpHost { get; set; } = string.Empty;
+
+    public int SmtpPort { get; set; } = 465;
+
+    /// <summary>465 用隐式 SSL，587 用 STARTTLS；两者都置 true 由 MailKit 按端口选择</summary>
+    public bool UseSsl { get; set; } = true;
+
+    public string UserName { get; set; } = string.Empty;
+
+    public string Password { get; set; } = string.Empty;
+
+    /// <summary>发件地址，留空则用 UserName</summary>
+    public string From { get; set; } = string.Empty;
+
+    public string FromDisplayName { get; set; } = "数字员工";
+
+    /// <summary>收件（IMAP）服务器，留空表示该渠道不支持读信</summary>
+    public string ImapHost { get; set; } = string.Empty;
+
+    public int ImapPort { get; set; } = 993;
 }
 
 /// <summary>

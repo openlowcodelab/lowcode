@@ -36,4 +36,40 @@ public class YunXiaoMcpTools
     {
         return await _apiClient.ListProjectsAsync();
     }
+
+    [McpServerTool, Description("列出云效 Flow 流水线（只读）。返回流水线 ID 与名称，可按名称和最近状态筛选；后续用 ListPipelineRuns/GetLatestPipelineRun 看运行情况。")]
+    public async Task<string> ListPipelines(
+        [Description("流水线名称模糊筛选，可空")] string? pipelineName = null,
+        [Description("最近状态筛选，逗号分隔：SUCCESS,RUNNING,FAIL,CANCELED,WAITING，可空")] string? statusList = null,
+        [Description("页码，从 1 开始")] int page = 1,
+        [Description("每页条数，云效上限 30")] int perPage = 10)
+    {
+        return await _apiClient.ListPipelinesAsync(pipelineName, statusList, page, perPage);
+    }
+
+    [McpServerTool, Description("查询某条云效流水线的运行历史（只读）。参数：pipelineId（数字 ID）、可选 status 与 triggerMode 筛选。返回每次运行的 ID、状态、触发方式与起止时间。")]
+    public async Task<string> ListPipelineRuns(
+        [Description("流水线 ID（数字，先用 ListPipelines 查）")] string pipelineId,
+        [Description("状态筛选 FAIL / SUCCESS / RUNNING，可空")] string? status = null,
+        [Description("触发方式筛选：1 手动、2 定时、3 代码提交、5 流水线触发、6 Webhook，可空")] int? triggerMode = null,
+        [Description("页码，从 1 开始")] int page = 1,
+        [Description("每页条数，云效上限 30")] int perPage = 10)
+    {
+        return await _apiClient.ListPipelineRunsAsync(pipelineId, status, triggerMode, page, perPage);
+    }
+
+    [McpServerTool, Description("查看某次流水线运行的详情（只读）：状态、触发方式、代码源分支/仓库、每个阶段与任务的执行状态。参数：pipelineId, pipelineRunId。")]
+    public async Task<string> GetPipelineRun(
+        [Description("流水线 ID（数字）")] string pipelineId,
+        [Description("运行实例 ID（数字，来自 ListPipelineRuns）")] string pipelineRunId)
+    {
+        return await _apiClient.GetPipelineRunAsync(pipelineId, pipelineRunId);
+    }
+
+    [McpServerTool, Description("查看流水线最近一次运行的详情（只读）。想知道“现在这条流水线挂没挂、卡在哪一步”，用这个最省事。参数：pipelineId。")]
+    public async Task<string> GetLatestPipelineRun(
+        [Description("流水线 ID（数字）")] string pipelineId)
+    {
+        return await _apiClient.GetLatestPipelineRunAsync(pipelineId);
+    }
 }

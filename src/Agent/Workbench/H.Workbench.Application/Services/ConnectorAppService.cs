@@ -2,6 +2,7 @@ using H.Abp.Application.Contracts;
 using H.Workbench.Application.Contracts;
 using H.Workbench.EntityFrameworkCore;
 using H.Util.Base;
+using Volo.Abp;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
@@ -52,6 +53,19 @@ public class ConnectorAppService : ApplicationService, IConnectorAppService
         }
 
         return new(MapToDto(entity));
+    }
+
+    [RemoteService(IsEnabled = false)]
+    public async Task<BaseOutput<List<ConnectorDto>>> ListByIdsAsync(List<Guid> ids)
+    {
+        if (ids.Count == 0)
+        {
+            return new(new List<ConnectorDto>());
+        }
+
+        var query = await _connectorRepository.GetQueryableAsync();
+        var entities = await AsyncExecuter.ToListAsync(query.Where(x => ids.Contains(x.Id)));
+        return new(entities.Select(MapToDto).ToList());
     }
 
     public async Task<BaseOutput<ConnectorDto>> CreateAsync(CreateConnectorDto input)

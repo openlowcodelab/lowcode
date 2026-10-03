@@ -24,7 +24,24 @@ public static class WorkbenchToolCatalog
             ["git"] = "H.Workbench.Core.Tools.GitTool",
             ["workspace_file"] = "H.Workbench.Core.Tools.WorkspaceFileTool",
             ["workspace_shell"] = "H.Workbench.Core.Tools.WorkspaceShellTool",
-            ["test_runner"] = "H.Workbench.Core.Tools.TestRunnerTool"
+            ["test_runner"] = "H.Workbench.Core.Tools.TestRunnerTool",
+            ["workspace_build"] = "H.Workbench.Core.Tools.WorkspaceBuildTool",
+            ["office_document"] = "H.Workbench.Core.Tools.OfficeDocumentTool",
+            ["spreadsheet"] = "H.Workbench.Core.Tools.SpreadsheetTool",
+            ["notify"] = "H.Workbench.Core.Tools.NotifyTool",
+            ["computer_control"] = "H.Workbench.Core.Tools.ComputerControlTool"
+        };
+
+    /// <summary>
+    /// 连接器 → 技能的授予关系：绑定并启用某连接器时，这些技能的工具额外授予该员工。
+    /// 刻意只做"加法"——若把它当减法，存量绑了 browser 技能却没绑连接器的员工会静默失能。
+    /// 新增连接器时在这里加一行即可，无需改运行时。
+    /// </summary>
+    public static readonly IReadOnlyDictionary<string, string[]> ConnectorSkillKeys =
+        new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["browser"] = ["browser"],
+            ["computer"] = ["computer_control"]
         };
 
     /// <summary>
