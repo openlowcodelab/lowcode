@@ -21,17 +21,38 @@ public class AppManageAppService : ApplicationService, IAppManageAppService
     }
 
     /// <summary>
-    /// 查找 apps.json 文件
+    /// 定位 apps.json 文件：宿主可能从项目目录(dotnet run)或输出目录(直接运行 exe)启动，
+    /// 仅依赖工作目录会静默取不到应用列表，故按候选位置逐级向上探测。
+    /// 与 AppQueryAppService 使用同一套规则，保证管理页读写的文件与应用抽屉读到的是同一份
     /// </summary>
-    private string FindAppsJsonFile()
+    private static string FindAppsJsonFile()
     {
-#if DEBUG
-        var jsonFilePath = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "..", "System", "SystemPortal", "data", "apps.json");
-        return jsonFilePath;
-#else
-        var jsonFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "data", "apps.json");
-        return jsonFilePath;
-#endif
+        var startDirectories = new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory };
+
+        // 发布布局：data 目录与可执行文件同级
+        foreach (var start in startDirectories)
+        {
+            var besideExecutable = Path.Combine(start, "data", "apps.json");
+            if (File.Exists(besideExecutable))
+            {
+                return besideExecutable;
+            }
+        }
+
+        // 仓库布局：向上查找 System/SystemPortal/data/apps.json
+        foreach (var start in startDirectories)
+        {
+            for (var dir = new DirectoryInfo(start); dir is not null; dir = dir.Parent)
+            {
+                var inRepository = Path.Combine(dir.FullName, "System", "SystemPortal", "data", "apps.json");
+                if (File.Exists(inRepository))
+                {
+                    return inRepository;
+                }
+            }
+        }
+
+        return Path.Combine(Directory.GetCurrentDirectory(), "System", "SystemPortal", "data", "apps.json");
     }
 
     /// <summary>
@@ -263,6 +284,7 @@ public class AppManageAppService : ApplicationService, IAppManageAppService
         {
             if (!File.Exists(_jsonFilePath))
             {
+                Console.WriteLine($"未找到 apps.json，应用列表为空: {_jsonFilePath}");
                 return [];
             }
 

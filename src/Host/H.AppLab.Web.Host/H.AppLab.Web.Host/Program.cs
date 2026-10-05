@@ -84,7 +84,6 @@ app.UseAuthorization();
 app.UseAntiforgery();
 
 app.MapControllers();
-app.MapMcp("/yunxiao").AllowAnonymous();
 
 // Hangfire 后台任务仪表盘
 app.UseHangfireDashboard("/hangfire");
@@ -105,7 +104,7 @@ app.MapRazorComponents<App>()
         typeof(H.Util.Blazor._Imports).Assembly,
         typeof(H.Testing.Web._Imports).Assembly,
         typeof(H.Notification.Web._Imports).Assembly,
-        typeof(H.Workbench.Web._Imports).Assembly,
+        typeof(H.AI.Web._Imports).Assembly,
         typeof(H.Order.Web._Imports).Assembly,
         typeof(H.SupplyChain.Web._Imports).Assembly,
         typeof(H.BackgroundTask.Web._Imports).Assembly);

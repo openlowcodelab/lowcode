@@ -14,14 +14,14 @@
 * LowCode
   * 低代码核心项目, 包含核心服务和领域模型
   * Common：元数据 Schema (MetaSchema)、组件基类、默认组件库、实体与应用契约等公共部分
-  * DesignEngine：设计引擎，负责页面/组件的可视化设计，产出应用元数据；包含 Workbench、MyApp 等设计端应用
+  * DesignEngine：设计引擎，负责页面/组件的可视化设计，产出应用元数据；包含 MyApp、PartsDesignEngine 等设计端应用
   * RenderEngine：渲染引擎，根据元数据动态渲染出可运行的应用；主题基于 Ant Design Blazor
   * meta：应用与组件的元数据 (JSON) 存放目录
   * 元数据仓储支持 JsonFile / EntityFrameworkCore / RemoteService 多种实现
 
 * Services 基础服务（企业级应用）
   * 按限界上下文划分的业务模块，每个模块遵循 Application.Contracts / Application / EntityFrameworkCore / Web 分层
-  * 包含：Account、Organization、Approval、Assistant、Notification、Order、Portal、Setting、SupplyChain、BackgroundTask、Testing
+  * 包含：Account、Organization、Approval、AI、Notification、Order、Portal、Setting、SupplyChain、BackgroundTask、Testing
 
 * System 系统级应用
   * Enterprise、SystemPortal，面向平台运营侧

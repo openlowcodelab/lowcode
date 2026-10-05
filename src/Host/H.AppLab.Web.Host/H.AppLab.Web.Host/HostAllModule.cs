@@ -1,6 +1,6 @@
 using H.Account.Application;
 using H.Approval.Application;
-using H.Workbench.Application;
+using H.AI.Application;
 using H.BackgroundTask.Application;
 using H.Enterprise.Application;
 using H.Enterprise.EntityFrameworkCore;
@@ -13,7 +13,6 @@ using H.LowCode.DesignEngine.Repository.JsonFile;
 using H.LowCode.RenderEngine.Application;
 using H.LowCode.RenderEngine.EntityFrameworkCore;
 using H.LowCode.RenderEngine.Repository.JsonFile;
-using H.Mcp.YunXiao;
 using H.Notification.Application;
 using H.Order.Application;
 using H.Organization.Application;
@@ -51,8 +50,8 @@ namespace H.AppLab.Web.Host;
     typeof(RenderEngineJsonFileRepositoryModule),
     // Account
     typeof(AccountApplicationModule),
-    // Workbench
-    typeof(WorkbenchApplicationModule),
+    // AI
+    typeof(AIApplicationModule),
     // Organization
     typeof(OrganizationApplicationModule),
     // Approval
@@ -76,9 +75,7 @@ namespace H.AppLab.Web.Host;
     // BackgroundTask
     typeof(BackgroundTaskApplicationModule),
     // File（文件管理）
-    typeof(FileApplicationModule),
-    // YunXiao MCP Server
-    typeof(YunXiaoMcpServerModule)
+    typeof(FileApplicationModule)
 )]
 public class HostAllModule : AbpModule
 {
@@ -145,7 +142,7 @@ public class HostAllModule : AbpModule
         {
             // 注册所有模块的控制器
             options.ConventionalControllers.Create(typeof(AccountApplicationModule).Assembly);
-            options.ConventionalControllers.Create(typeof(WorkbenchApplicationModule).Assembly);
+            options.ConventionalControllers.Create(typeof(AIApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(OrganizationApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(DesignEngineApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(RenderEngineApplicationModule).Assembly);

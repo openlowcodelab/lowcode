@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../../../common.props" />
+  <PropertyGroup>
+    <RootNamespace>H.AI.Application</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Volo.Abp.AutoMapper" />
+    <PackageReference Include="Volo.Abp.AspNetCore.Mvc" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Utils\H.Util.Base\H.Util.Base.csproj" />
+    <ProjectReference Include="..\H.AI.Application.Contracts\H.AI.Application.Contracts.csproj" />
+    <ProjectReference Include="..\H.AI.EntityFrameworkCore\H.AI.EntityFrameworkCore.csproj" />
+  </ItemGroup>
+
+</Project>
