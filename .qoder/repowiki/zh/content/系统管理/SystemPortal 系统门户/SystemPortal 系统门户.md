@@ -17,6 +17,9 @@
 - [SystemPortalWebModule.cs](file://src/System/SystemPortal/H.SystemPortal.Web/SystemPortalWebModule.cs)
 - [apps.json](file://src/System/SystemPortal/data/apps.json)
 - [system-users.json](file://src/System/SystemPortal/data/system-users.json)
+- [Settings.razor](file://src/Agent/Workbench/H.Workbench.Web/Pages/Settings.razor)
+- [ApprovalPanel.razor](file://src/Agent/Workbench/H.Workbench.Web/Components/ApprovalPanel.razor)
+- [WorkbenchLayout.razor](file://src/Agent/Workbench/H.Workbench.Web/Layout/WorkbenchLayout.razor)
 </cite>
 
 ## 目录
@@ -35,7 +38,7 @@
 SystemPortal 是 AppLab 的系统级门户子系统，负责平台运营侧的统一入口、应用聚合导航、系统账户登录与会话管理、以及系统用户与角色管理。它与应用抽屉（AppDrawer）配合，把组织管理、审批、通知、配置、后台任务、文件、供应链、订单、低代码开发、AI 工作台、自动化测试等各个业务应用统一接入到系统门户中，提供统一的导航、权限控制与管理界面。
 
 从职责边界看：
-- SystemPortal 负责“系统级”配置与管理：系统账户认证、系统用户与角色、应用菜单与分类的维护。
+- SystemPortal 负责"系统级"配置与管理：系统账户认证、系统用户与角色、应用菜单与分类的维护。
 - 各 Services 下的企业级应用专注于领域功能：如 Order、Approval、SupplyChain、Organization 等。
 - 前端通过 Blazor 页面组件展示管理界面；后端通过 ABP Application Service 暴露接口；数据目前以 JSON 文件作为轻量持久化实现。
 
@@ -220,7 +223,7 @@ classDiagram
 ### 系统账户管理（SystemAccountAppService）
 SystemAccountAppService 负责系统管理员的登录、当前用户信息获取与登出：
 - SystemLoginAsync 支持用户名、邮箱、手机号三种账号输入，校验用户存在性、启用状态、密码正确性，并要求具备 SuperAdmin 或 Admin 角色。
-- 成功后更新 LastLoginAt，并以 ClaimsIdentity 写入名为 SystemCookies 的 Cookie 认证信息，支持“记住我”。
+- 成功后更新 LastLoginAt，并以 ClaimsIdentity 写入名为 SystemCookies 的 Cookie 认证信息，支持"记住我"。
 - GetCurrentUserAsync 显式验证 SystemCookies 方案，解析用户标识并返回系统管理员的用户信息。
 - SystemLogoutAsync 执行登出。
 
@@ -258,20 +261,146 @@ sequenceDiagram
 - [UserDto.cs:1-186](file://src/System/SystemPortal/H.SystemPortal.Application.Contracts/Dtos/UserDto.cs#L1-L186)
 - [SystemRoleNames.cs:1-29](file://src/System/SystemPortal/H.SystemPortal.Application.Contracts/Constants/SystemRoleNames.cs#L1-L29)
 
+### 设置页面架构重组
+
+**更新说明**：审批中心已从独立顶级菜单项重组为设置页面中的分类区块，优化了导航结构与用户体验。
+
+#### 新的设置页面结构
+
+设置页面（`/workbench/settings`）现在采用左右分栏布局，左侧为导航栏，右侧为内容区。左侧导航包含两个主要分类：
+
+1. **模型**：LLM 模型配置管理
+2. **审批**：审批中心功能区块
+
+这种设计将原本分散的设置相关功能整合到统一的设置页面中，提升了功能的可发现性和操作的连贯性。
+
+```mermaid
+graph LR
+    Settings["设置页面 /workbench/settings"] --> Models["模型管理"]
+    Settings --> Approvals["审批中心"]
+    
+    Models --> LLMConfig["LLM 配置"]
+    Models --> ProviderDef["提供商定义"]
+    
+    Approvals --> Queue["待裁决队列"]
+    Approvals --> Reviews["待验收产物"]
+    Approvals --> Rules["审批规则"]
+```
+
+**图表来源**
+- [Settings.razor:1-100](file://src/Agent/Workbench/H.Workbench.Web/Pages/Settings.razor#L1-L100)
+- [ApprovalPanel.razor:1-80](file://src/Agent/Workbench/H.Workbench.Web/Components/ApprovalPanel.razor#L1-L80)
+
+#### URL 参数导航支持
+
+设置页面支持通过 URL 参数 `?section=approvals` 直接导航至审批板块。这种设计允许：
+
+- 从其他页面（如看板）直接链接到特定的设置分类
+- 书签特定设置页面状态
+- 支持深度链接和分享
+
+实现机制：
+- 监听 `Navigation.LocationChanged` 事件，捕获 URL 变化
+- 解析 URL 查询字符串中的 `section` 参数
+- 自动切换到对应的分类标签
+- 非法参数值会回落到默认的"模型"分类
+
+**章节来源**
+- [Settings.razor:240-280](file://src/Agent/Workbench/H.Workbench.Web/Pages/Settings.razor#L240-L280)
+- [Settings.razor:1-50](file://src/Agent/Workbench/H.Workbench.Web/Pages/Settings.razor#L1-L50)
+
+#### 审批面板组件（ApprovalPanel.razor）
+
+审批中心现在作为独立的 Blazor 组件 `ApprovalPanel.razor` 实现，嵌入到设置页面中。该组件包含三个主要标签页：
+
+1. **待裁决队列**：显示需要人工批准的 AI 工具调用请求
+   - 支持按状态筛选（待裁决、已批准、已拒绝、已超时、已失效）
+   - 显示任务名称、员工类型、技能名称、参数等信息
+   - 提供批准/拒绝操作按钮
+
+2. **待验收产物**：显示需要验收的执行结果
+   - 支持按验收状态筛选（待验收、已接受、未认可）
+   - 按任务分组显示相关产物
+   - 批量验收功能，提升操作效率
+
+3. **审批规则**：管理自动化审批规则
+   - 显示现有规则列表（规则名、工具匹配模式、参数正则、员工类型、优先级）
+   - 支持新增规则（规则名、工具匹配、参数正则、效果、优先级）
+   - 支持删除规则
+   - 判定顺序说明：本次运行预授权 > 规则（按优先级取首条命中）> 技能级需人工审批
+
+```mermaid
+flowchart TD
+    Start["打开审批面板"] --> TabSelect{"选择标签页"}
+    
+    TabSelect --> Queue["待裁决队列"]
+    TabSelect --> Reviews["待验收产物"]
+    TabSelect --> Rules["审批规则"]
+    
+    Queue --> FilterState["按状态筛选"]
+    FilterState --> DisplayQueue["显示队列项"]
+    DisplayQueue --> Action{"是否有活跃请求?"}
+    Action -->|是| ShowButtons["显示批准/拒绝按钮"]
+    Action -->|否| ShowDead["显示已失效提示"]
+    
+    Reviews --> FilterReview["按验收状态筛选"]
+    FilterReview --> GroupByTask["按任务分组"]
+    GroupByTask --> BatchReview["批量验收操作"]
+    
+    Rules --> ListRules["显示规则列表"]
+    ListRules --> AddRule["新增规则表单"]
+    AddRule --> SaveRule["保存规则"]
+    SaveRule --> ReloadRules["重新加载规则"]
+```
+
+**图表来源**
+- [ApprovalPanel.razor:1-150](file://src/Agent/Workbench/H.Workbench.Web/Components/ApprovalPanel.razor#L1-L150)
+- [ApprovalPanel.razor:200-350](file://src/Agent/Workbench/H.Workbench.Web/Components/ApprovalPanel.razor#L200-L350)
+
+#### 左侧导航栏集成
+
+在工作台布局（WorkbenchLayout.razor）中，设置菜单项位于侧栏底部，与其他菜单项（任务、资源、员工管理、能力等）并列。点击设置菜单项会导航到 `/workbench/settings` 路径。
+
+导航激活状态判断逻辑：
+- 忽略 URL 查询字符串，只比较路径部分
+- 确保带参数的 URL（如 `/workbench/settings?section=approvals`）仍能正确高亮设置菜单项
+
+**章节来源**
+- [WorkbenchLayout.razor:1-80](file://src/Agent/Workbench/H.Workbench.Web/Layout/WorkbenchLayout.razor#L1-L80)
+- [WorkbenchLayout.razor:100-130](file://src/Agent/Workbench/H.Workbench.Web/Layout/WorkbenchLayout.razor#L100-L130)
+
+#### 与旧版审批中心的对比
+
+原有的独立审批中心页面（`/approval/center`）仍然存在，但功能重点有所不同：
+
+- **新版审批面板**（设置在 AI 工作台中）：专注于 AI 执行过程中的工具调用审批和产物验收，面向 AI 工作台的管理员
+- **旧版审批中心**（独立页面）：传统的业务流程审批，包括待处理、已处理、我发起的、抄送我的等标签页，面向一般用户
+
+两者服务于不同的业务场景，新版更侧重于 AI 自动化流程的人工干预点管理。
+
+**章节来源**
+- [ApprovalCenter.razor:1-50](file://src/Services/Approval/H.Approval.Web/Pages/ApprovalCenter.razor#L1-L50)
+- [ApprovalPanel.razor:1-30](file://src/Agent/Workbench/H.Workbench.Web/Components/ApprovalPanel.razor#L1-L30)
+
 ### 页面组件与使用指南
 - AppManagement.razor：用于查看和维护应用分类与应用项，调用 IAppManageAppService 的 GetAllCategoriesAsync、AddAppAsync、UpdateAppAsync、DeleteAppAsync、AddCategoryAsync、DeleteCategoryAsync。
 - UsersList.razor：列出系统用户，支持分页、关键词、用户类型、启用状态筛选，调用 IUserAppService.GetPagedUsersAsync。
 - UsersEdit.razor：编辑用户基本信息与角色，调用 IUserAppService.UpdateUserAsync、AssignRolesToUserAsync。
 - EnterpriseList.razor：企业列表页面，通常与系统门户的企业维度管理相关（具体实现可参考该项目中的页面文件）。
+- Settings.razor：设置页面，整合模型管理和审批中心功能，支持通过 URL 参数切换分类。
+- ApprovalPanel.razor：审批面板组件，嵌入设置页面，提供待裁决队列、待验收产物、审批规则三大功能模块。
 
 使用建议：
 - 所有增删改操作需结合 ABP 权限系统控制可见性与可操作性。
 - 对于敏感操作（重置密码、删除用户、分配角色）应增加二次确认与审计日志。
 - 前端表单应与 DTO 字段保持一致，确保必填、长度、格式校验与后端一致。
+- 设置页面的 URL 参数导航功能可用于创建快捷入口，提升操作效率。
 
 **章节来源**
 - [IAppManageAppService.cs:1-41](file://src/System/SystemPortal/H.SystemPortal.Application.Contracts/Services/IAppManageAppService.cs#L1-L41)
 - [IUserAppService.cs:1-30](file://src/System/SystemPortal/H.SystemPortal.Application.Contracts/Services/IUserAppService.cs#L1-L30)
+- [Settings.razor:1-100](file://src/Agent/Workbench/H.Workbench.Web/Pages/Settings.razor#L1-L100)
+- [ApprovalPanel.razor:1-80](file://src/Agent/Workbench/H.Workbench.Web/Components/ApprovalPanel.razor#L1-L80)
 
 ## 依赖关系分析
 SystemPortal 的关键依赖如下：
@@ -280,6 +409,7 @@ SystemPortal 的关键依赖如下：
 - SystemAccountAppService 依赖 IHttpContextAccessor 进行 Cookie 认证。
 - SystemPortalApplicationModule 注册 SystemUserStore 为单例。
 - SystemPortalWebModule 作为 Web 模块标记类，便于宿主程序发现与组合。
+- Workbench 模块依赖 Approval 服务的 Application Contracts，实现审批队列和规则管理。
 
 ```mermaid
 graph LR
@@ -289,17 +419,21 @@ graph LR
     Application --> Store["SystemUserStore"]
     Application --> HttpContext["IHttpContextAccessor"]
     Application --> ABP["Volo.Abp.Application.Services"]
+    Workbench["H.Workbench.Web"] --> ApprovalContracts["H.Approval.Application.Contracts"]
+    Settings["Settings.razor"] --> ApprovalPanel["ApprovalPanel.razor"]
 ```
 
 **图表来源**
 - [SystemPortalApplicationModule.cs:1-12](file://src/System/SystemPortal/H.SystemPortal.Application/SystemPortalApplicationModule.cs#L1-L12)
 - [SystemPortalWebModule.cs:1-8](file://src/System/SystemPortal/H.SystemPortal.Web/SystemPortalWebModule.cs#L1-L8)
 - [SystemAccountAppService.cs:1-176](file://src/System/SystemPortal/H.SystemPortal.Application/Services/SystemAccountAppService.cs#L1-L176)
+- [Settings.razor:1-30](file://src/Agent/Workbench/H.Workbench.Web/Pages/Settings.razor#L1-L30)
 
 **章节来源**
 - [SystemPortalApplicationModule.cs:1-12](file://src/System/SystemPortal/H.SystemPortal.Application/SystemPortalApplicationModule.cs#L1-L12)
 - [SystemPortalWebModule.cs:1-8](file://src/System/SystemPortal/H.SystemPortal.Web/SystemPortalWebModule.cs#L1-L8)
 - [SystemAccountAppService.cs:1-176](file://src/System/SystemPortal/H.SystemPortal.Application/Services/SystemAccountAppService.cs#L1-L176)
+- [Settings.razor:1-50](file://src/Agent/Workbench/H.Workbench.Web/Pages/Settings.razor#L1-L50)
 
 ## 性能与扩展性
 当前实现以 JSON 文件作为数据存储：
@@ -324,7 +458,7 @@ graph LR
 
 步骤：
 1. 打开应用管理页面（AppManagement.razor）。
-2. 选择或新建一个应用分类（例如“基础应用”、“业务应用”）。
+2. 选择或新建一个应用分类（例如"基础应用"、"业务应用"）。
 3. 点击添加应用，填写应用的 Id、名称、图标、URL、打开方式、描述、排序等信息。
 4. 保存后，刷新门户即可在新分类中看到该应用。
 
@@ -396,9 +530,81 @@ graph LR
 - [AppManageAppService.cs:1-280](file://src/System/SystemPortal/H.SystemPortal.Application/Services/AppManageAppService.cs#L1-L280)
 - [apps.json:1-155](file://src/System/SystemPortal/data/apps.json#L1-L155)
 
+### 应用场景五：管理 AI 工作台审批规则
+目标：配置 AI 工具调用的自动化审批规则，减少人工干预频率。
+
+步骤：
+1. 打开设置页面（`/workbench/settings`）。
+2. 点击左侧导航栏的"审批"分类，或直接访问 `/workbench/settings?section=approvals`。
+3. 切换到"审批规则"标签页。
+4. 查看现有规则列表，了解当前判定逻辑。
+5. 新增规则：
+   - 填写规则名（如："推送到 main 分支需批准"）
+   - 设置工具匹配模式（精确名称或通配符，如：Git*）
+   - 可选：设置参数正则表达式，进一步细化匹配条件
+   - 选择效果：需人工批准、直接放行、直接拒绝
+   - 设置优先级（数字越小优先级越高）
+6. 点击"新增规则"保存。
+7. 测试规则是否按预期生效。
+
+注意事项：
+- 规则判定顺序：本次运行预授权 > 规则（按优先级取首条命中）> 技能级需人工审批
+- 规则未命中时不会自动放行，只会回落到技能级配置
+- 优先级数字越小，优先级越高
+- 工具匹配支持精确名称或通配符模式
+
+**章节来源**
+- [ApprovalPanel.razor:120-180](file://src/Agent/Workbench/H.Workbench.Web/Components/ApprovalPanel.razor#L120-L180)
+- [ApprovalPanel.razor:280-350](file://src/Agent/Workbench/H.Workbench.Web/Components/ApprovalPanel.razor#L280-L350)
+
+### 应用场景六：处理 AI 工具调用审批请求
+目标：审查和批准/拒绝 AI 员工的工具调用请求。
+
+步骤：
+1. 打开设置页面，进入"审批"分类。
+2. 切换到"待裁决队列"标签页。
+3. 按状态筛选（默认显示"待裁决"）。
+4. 查看队列中的审批请求，关注以下信息：
+   - 任务名称和执行上下文
+   - 员工类型和技能名称
+   - 工具名称和调用参数
+   - 等待时长
+5. 对于活跃的请求（Live=true），点击"批准"或"拒绝"按钮。
+6. 对于已失效的请求（所属执行已结束），无法再进行裁决。
+
+注意事项：
+- 只有 Live=true 的请求才能进行裁决
+- 批准后，AI 执行会继续进行
+- 拒绝后，该工具调用会被跳过
+- 超时或失效的请求无法再处理
+
+**章节来源**
+- [ApprovalPanel.razor:60-120](file://src/Agent/Workbench/H.Workbench.Web/Components/ApprovalPanel.razor#L60-L120)
+- [ApprovalPanel.razor:250-280](file://src/Agent/Workbench/H.Workbench.Web/Components/ApprovalPanel.razor#L250-L280)
+
+### 应用场景七：验收 AI 执行产物
+目标：审查和验收 AI 执行生成的产物（如代码提交、文件修改等）。
+
+步骤：
+1. 打开设置页面，进入"审批"分类。
+2. 切换到"待验收产物"标签页。
+3. 按验收状态筛选（默认显示"待验收"）。
+4. 查看待验收的产物列表，系统会按任务分组显示。
+5. 对于同一任务的多个产物，可以批量验收。
+6. 点击"接受"标记产物为已验收，或点击"不认可"标记为未通过。
+
+注意事项：
+- 产物按任务分组，支持批量操作
+- 验收状态会影响后续的执行流程
+- 模型复核结果会显示在产物信息中（通过/未通过/证据不足/未设标准）
+
+**章节来源**
+- [ApprovalPanel.razor:30-60](file://src/Agent/Workbench/H.Workbench.Web/Components/ApprovalPanel.razor#L30-L60)
+- [ApprovalPanel.razor:220-250](file://src/Agent/Workbench/H.Workbench.Web/Components/ApprovalPanel.razor#L220-L250)
+
 ## 常见问题排查
 
-### 问题一：登录提示“用户名或密码错误”
+### 问题一：登录提示"用户名或密码错误"
 可能原因：
 - 输入的账号不存在。
 - 密码不正确。
@@ -442,9 +648,47 @@ graph LR
 - [AppManageAppService.cs:1-280](file://src/System/SystemPortal/H.SystemPortal.Application/Services/AppManageAppService.cs#L1-L280)
 - [apps.json:1-155](file://src/System/SystemPortal/data/apps.json#L1-L155)
 
+### 问题四：设置页面审批分类无法加载
+可能原因：
+- URL 参数格式不正确。
+- ApprovalPanel 组件依赖的服务未正确注入。
+- 网络连接问题导致 API 调用失败。
+
+排查建议：
+- 确认 URL 格式为 `/workbench/settings?section=approvals`。
+- 检查浏览器控制台是否有 JavaScript 错误。
+- 确认 ITaskAppService 和 IApprovalRuleAppService 服务已正确注册。
+- 检查网络请求是否成功返回数据。
+
+**章节来源**
+- [Settings.razor:240-280](file://src/Agent/Workbench/H.Workbench.Web/Pages/Settings.razor#L240-L280)
+- [ApprovalPanel.razor:200-230](file://src/Agent/Workbench/H.Workbench.Web/Components/ApprovalPanel.razor#L200-L230)
+
+### 问题五：审批请求无法批准或拒绝
+可能原因：
+- 请求已失效（Live=false）。
+- 所属执行已结束。
+- 网络连接中断。
+
+排查建议：
+- 检查队列项的 Live 属性是否为 true。
+- 确认 LogStatus 状态，如果显示"已失效"则无法再处理。
+- 刷新页面重新加载队列数据。
+- 检查后端 API 是否正常响应。
+
+**章节来源**
+- [ApprovalPanel.razor:100-120](file://src/Agent/Workbench/H.Workbench.Web/Components/ApprovalPanel.razor#L100-L120)
+- [ApprovalPanel.razor:280-310](file://src/Agent/Workbench/H.Workbench.Web/Components/ApprovalPanel.razor#L280-L310)
+
 ## 结论
 SystemPortal 作为 AppLab 的平台运营入口，承担应用聚合导航、系统账户认证与会话管理、系统用户与角色管理职责。其当前实现采用 JSON 文件作为轻量存储，适合演示与小型系统。随着规模增长，建议迁移至数据库并提供更完善的权限体系、审计机制与高可用设计。
 
 在与 ABP Framework 的集成方面：
 - 多租户：SystemPortal 目前未直接体现租户上下文；如需扩展，可在 SystemUserStore 与 AppManageAppService 中引入 TenantId 维度。
 - 权限系统：通过 SystemRoleNames 与 ABP IdentityRole 名称对齐，结合角色进行访问控制。后续可进一步与 ABP Permission 系统整合，实现细粒度权限控制。
+
+**架构演进亮点**：
+- 设置页面架构重组将审批中心从独立顶级菜单整合到设置页面中，提升了功能的组织性和可发现性。
+- 通过 URL 参数导航支持，实现了深度链接和快捷入口，增强了用户体验。
+- ApprovalPanel 组件化设计使得审批功能可以灵活嵌入不同页面，提高了代码复用性。
+- 左侧导航栏的"模型"和"审批"双分类设计，清晰区分了不同类型的配置管理功能。

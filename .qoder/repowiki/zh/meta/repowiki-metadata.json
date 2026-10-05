@@ -5,10 +5,10 @@
     "progress_status": "completed",
     "wiki_present_status": "COMPLETED",
     "recovery_checkpoint": "wiki_generation_completed",
-    "last_commit_id": "0f45c60bde51f56003dead284ef60f0a2cfbb0d1",
-    "last_commit_update": "2026-09-29T15:05:03Z",
-    "gmt_create": "2026-09-29T15:05:03Z",
-    "gmt_modified": "2026-09-29T15:05:03Z",
+    "last_commit_id": "4b97a0b46809bf61b0a3ceef4fcee554e024c5ce",
+    "last_commit_update": "2026-10-04T05:07:16Z",
+    "gmt_create": "2026-10-04T05:07:16Z",
+    "gmt_modified": "2026-10-04T05:07:16Z",
     "extend_info": "{\"language\":\"zh\",\"active\":true,\"branch\":\"dev\"}"
   },
   "wiki_catalogs": [
@@ -19,15 +19,17 @@
       "description": "system-portal",
       "prompt": "为 AppLab 的 SystemPortal（系统门户）子系统创建详细文档。重点介绍其作为统一管理入口的设计：如何聚合各个业务应用的菜单和功能，提供统一的导航、权限控制和用户管理界面。详细说明应用管理（AppManageAppService）、用户管理（UserAppService）、系统账户管理（SystemAccountAppService）等核心服务的功能和接口。解释系统门户与业务应用的关系：门户负责系统级配置和管理，业务应用专注于领域功能。包含页面组件如 AppManagement.razor、UsersList.razor、UsersEdit.razor、EnterpriseList.razor 等的实现细节和使用指南。提供管理员视角的操作手册，包括应用注册、用户权限分配、系统配置等常见场景。说明与 ABP Framework 的多租户、权限系统的集成方式。",
       "progress_status": "completed",
-      "dependent_files": "src/System/SystemPortal/H.SystemPortal.Application/,src/System/SystemPortal/H.SystemPortal.Application.Contracts/,src/System/SystemPortal/H.SystemPortal.Web/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "dependent_files": "src/System/SystemPortal/H.SystemPortal.Application/,src/System/SystemPortal/H.SystemPortal.Application.Contracts/,src/System/SystemPortal/H.SystemPortal.Web/,src/Agent/Workbench/H.Workbench.Web/Pages/Settings.razor,src/Agent/Workbench/H.Workbench.Web/Components/ApprovalPanel.razor",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "d825767d-225c-4351-ade7-bec385f446ec",
       "layer_level": 1,
       "kk_dependent_files": [
         "src/System/SystemPortal/H.SystemPortal.Application/",
         "src/System/SystemPortal/H.SystemPortal.Application.Contracts/",
-        "src/System/SystemPortal/H.SystemPortal.Web/"
+        "src/System/SystemPortal/H.SystemPortal.Web/",
+        "src/Agent/Workbench/H.Workbench.Web/Pages/Settings.razor",
+        "src/Agent/Workbench/H.Workbench.Web/Components/ApprovalPanel.razor"
       ]
     },
     {
@@ -38,8 +40,8 @@
       "prompt": "为 AppLab 的数据库迁移工具链创建详细文档。解释各服务的 DbMigrator 控制台程序的架构和启动流程，包括 Program.cs 入口点、DbContextFactory 工厂类的作用、appsettings.json 配置文件的组织方式。详细说明 EF Core 迁移的管理和维护策略：迁移文件命名规范、版本控制、回滚机制。重点介绍 H.LowCode.DbMigrator 的特殊性：动态迁移生成器（MigrationGenerator）、DbMigrationService 服务实现、LowCodeDbMigratorModule 模块注册。提供迁移命令的使用示例，包括首次初始化、增量更新、回滚操作的命令行参数。说明多租户环境下的迁移策略和数据隔离方案。包含常见迁移问题的排查方法和解决方案。",
       "progress_status": "completed",
       "dependent_files": "src/Tools/H.Account.DbMigrator/,src/Tools/H.Organization.DbMigrator/,src/Tools/H.Approval.DbMigrator/,src/Tools/H.Order.DbMigrator/,src/Tools/H.BackgroundTask.DbMigrator/,src/Tools/H.File.DbMigrator/,src/Tools/H.Notification.DbMigrator/,src/Tools/H.Setting.DbMigrator/,src/Tools/H.SupplyChain.DbMigrator/,src/Tools/H.Testing.DbMigrator/,src/Tools/H.Enterprise.DbMigrator/,src/Tools/H.Workbench.DbMigrator/,src/Tools/H.LowCode.DbMigrator/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "c778fa4d-6f27-4ac5-8a5c-e3125df639ab",
       "layer_level": 1,
       "kk_dependent_files": [
@@ -66,8 +68,8 @@
       "prompt": "为 H.Abp.Application.Contracts 工具库创建详细文档。深入解释通用 DTO 基类的设计体系：EntityDto 作为基础实体标识、AuditedEntityDto 添加审计字段、CreationAuditedEntityDto 增加创建信息、FullAuditedEntityDto 提供完整审计信息的继承层次结构。详细说明 IAppService 和 ICrudAppService 接口的契约设计模式，包括泛型参数约束、CRUD 操作约定、分页查询接口规范。解释 PagedResultDto 的分页响应模型和 PagedResultRequestDto 的分页请求参数设计。提供实际代码示例展示如何在业务服务中继承这些基类和实现接口，包括数据验证、错误处理和性能优化的最佳实践。",
       "progress_status": "completed",
       "dependent_files": "src/Utils/H.Abp.Application.Contracts/IAppService.cs,src/Utils/H.Abp.Application.Contracts/ICrudAppService.cs,src/Utils/H.Abp.Application.Contracts/EntityDto.cs,src/Utils/H.Abp.Application.Contracts/AuditedEntityDto.cs,src/Utils/H.Abp.Application.Contracts/CreationAuditedEntityDto.cs,src/Utils/H.Abp.Application.Contracts/FullAuditedEntityDto.cs,src/Utils/H.Abp.Application.Contracts/PagedResultDto.cs,src/Utils/H.Abp.Application.Contracts/PagedResultRequestDto.cs,src/Utils/H.Abp.Application.Contracts/PagedAndSortedResultRequestDto.cs",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "ca69e922-eb11-4e04-9fda-138a010f4590",
       "layer_level": 2,
       "kk_dependent_files": [
@@ -90,8 +92,8 @@
       "prompt": "为 AppLab 平台创建整体架构概览文档。描述系统的高层组成：宿主程序（Web Host + Desktop Host）、低代码核心（MetaSchema/DesignEngine/RenderEngine）、企业级应用服务（Account/Organization/Approval/Order/SupplyChain 等）、系统管理应用（Portal/Enterprise/SystemPortal）和工具库（Utils）。解释模块化边界：每个限界上下文独立部署，模块间通过 HTTP API 通信。说明技术栈选择：.NET 10、Blazor Web App、ABP Framework、Avalonia、Elsa、RabbitMQ、Redis、MinIO、SQL Server。提供系统上下文图和组件分解图，展示各层职责和依赖关系。包含部署拓扑：单体模式与微服务模式的区别，容器化部署策略。",
       "progress_status": "completed",
       "dependent_files": "src/Host/H.AppLab.Web.Host/H.AppLab.Web.Host/Program.cs,src/AppLab.slnx,src/global.json,src/Directory.Packages.props",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "8b28368e-d1d0-4d06-8a44-790c012fe852",
       "layer_level": 1,
       "kk_dependent_files": [
@@ -109,8 +111,8 @@
       "prompt": "为 AppLab 平台创建仓储实现扩展文档。详细说明低代码设计引擎和渲染引擎的存储抽象层：JsonFile 仓储实现（基于 JSON 文件的本地存储）、RemoteService 仓储实现（基于远程服务的分布式存储）。解释 IAppService 接口作为统一契约的设计模式，以及如何在不同宿主环境中选择合适的仓储实现。包含自定义仓储实现的开发指南：如何继承基类、实现数据持久化逻辑、处理并发访问和错误恢复。说明仓储选择策略：根据部署环境自动切换仓储实现、支持混合存储架构。提供仓储扩展的最佳实践：性能优化、数据一致性保证、迁移策略。包含具体的代码示例展示如何实现新的仓储提供者。",
       "progress_status": "completed",
       "dependent_files": "src/LowCode/DesignEngine/H.LowCode.DesignEngine.Repository.JsonFile/,src/LowCode/DesignEngine/H.LowCode.DesignEngine.Repository.RemoteService/,src/LowCode/RenderEngine/H.LowCode.RenderEngine.Repository.JsonFile/,src/LowCode/RenderEngine/H.LowCode.RenderEngine.Repository.RemoteService/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "9c5762c8-c259-4bd0-b8d6-9e91b08b7803",
       "layer_level": 2,
       "kk_dependent_files": [
@@ -128,8 +130,8 @@
       "prompt": "为 JsonFile 本地文件仓储创建详细文档。解释 FileRepositoryBase 基类的设计：MetaOption 配置注入、绝对路径解析、UTF-8 编码的文件读写封装。详细说明各实体文件仓储的实现：AppFileRepository 管理应用元数据文件、PageFileRepository 管理页面元数据文件、MenuFileRepository 管理菜单配置、DataSourceFileRepository 管理数据源定义。阐述文件存储策略：基于 appId/pageId 的目录规划、JSON 序列化格式约定、文件名命名规范。说明并发控制机制：IsChangeTrackingEnabled 变更跟踪开关、文件锁实现、读写同步策略。解释性能优化：大文件的流式读取、文件缓存策略、增量更新机制。包含配置示例：如何在 appsettings.json 中配置 AppsFilePath、如何启用变更跟踪、如何自定义文件编码。提供使用示例：如何通过依赖注入获取 IAppRepository/IPageRepository 接口并执行 CRUD 操作。说明错误处理：FileNotFoundException 异常处理、文件权限问题、磁盘空间不足等场景的处理方式。",
       "progress_status": "completed",
       "dependent_files": "src/LowCode/RenderEngine/H.LowCode.RenderEngine.Repository.JsonFile/Base/FileRepositoryBase.cs,src/LowCode/RenderEngine/H.LowCode.RenderEngine.Repository.JsonFile/Repositories/AppFileRepository.cs,src/LowCode/RenderEngine/H.LowCode.RenderEngine.Repository.JsonFile/Repositories/PageFileRepository.cs,src/LowCode/RenderEngine/H.LowCode.RenderEngine.Repository.JsonFile/Repositories/MenuFileRepository.cs,src/LowCode/RenderEngine/H.LowCode.RenderEngine.Repository.JsonFile/Repositories/DataSourceFileRepository.cs,src/LowCode/RenderEngine/H.LowCode.RenderEngine.Repository.JsonFile/RenderEngineJsonFileRepositoryModule.cs",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "bd0c193e-38d0-414b-a171-e213f2fa2e20",
       "layer_level": 3,
       "kk_dependent_files": [
@@ -149,8 +151,8 @@
       "prompt": "为 AppLab 低代码平台的元数据 Schema 设计创建详细文档。深入解释 MetaSchemaBase、ComponentSchemaBase、PageSchemaBase、AppSchemaBase、MenuSchema、DataSourceSchema 等核心基类的设计理念和字段语义，包括组件实例 Id、父节点关系、组件类型（原子/组合）、容器标识、样式结构、事件定义、事件消费、校验规则、显示条件、版本控制等关键字段。阐述 JSON 序列化契约中的紧凑命名约定（如 cid、ct、n、lb、stl、evs、evcs、valrules、vcond 等）及其在传输优化中的作用。说明 StateHasChangeSchema 与 ABP 状态管理的集成方式。提供完整的元数据 JSON 示例，展示一个包含表单组件、列表组件和布局容器的完整页面 Schema。解释如何扩展自定义组件的 Schema，包括新增属性、事件、校验规则和可视化配置项。说明元数据的生命周期管理：创建、修改、发布、版本控制。包含 Schema 验证规则、向后兼容性策略和数据迁移方案。",
       "progress_status": "completed",
       "dependent_files": "src/LowCode/Common/H.LowCode.MetaSchema/MetaSchemaBase.cs,src/LowCode/Common/H.LowCode.MetaSchema/ComponentSchemaBase.cs,src/LowCode/Common/H.LowCode.MetaSchema/PageSchemaBase.cs,src/LowCode/Common/H.LowCode.MetaSchema/AppSchemaBase.cs,src/LowCode/Common/H.LowCode.MetaSchema/MenuSchema.cs,src/LowCode/Common/H.LowCode.MetaSchema/DataSourceSchema.cs,src/LowCode/Common/H.LowCode.MetaSchema/StateHasChangeSchema.cs",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "1cbe62bf-7815-4ed1-b2f4-b37befa98428",
       "layer_level": 1,
       "kk_dependent_files": [
@@ -171,8 +173,8 @@
       "prompt": "为 Account 账户管理服务创建详细文档。深入解释用户身份认证、权限管理、角色授权等核心功能。详细说明应用服务的分层架构，包括 Application.Contracts 中的 IAppService 接口定义、Application 层的服务实现、EntityFrameworkCore 层的数据库访问和 Web 层的 API 暴露。文档应涵盖用户实体模型、角色权限模型、会话管理等核心领域概念。提供具体的 API 调用示例，展示如何注册用户、登录认证、权限验证等操作。说明与 ABP Framework 的集成方式，以及如何在其他应用中引用 Account 服务的能力。包含常见的扩展点和定制场景，如自定义用户属性、第三方登录集成等。",
       "progress_status": "completed",
       "dependent_files": "src/Services/Account/,src/Services/Account/src/Services/Account/H.Account.Application/,src/Services/Account/src/Services/Account/H.Account.Application.Contracts/,src/Services/Account/src/Services/Account/H.Account.EntityFrameworkCore/,src/Services/Account/src/Services/Account/H.Account.Web/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "db9d8bda-1d87-4e28-9bcc-7ffbc79b469c",
       "layer_level": 1,
       "kk_dependent_files": [
@@ -184,6 +186,38 @@
       ]
     },
     {
+      "id": "53ab9519-5aaa-4cef-9bbf-83ab3171e98f",
+      "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
+      "name": "计算机控制工具",
+      "description": "computer-control-tool",
+      "prompt": "",
+      "progress_status": "completed",
+      "dependent_files": "src/Agent/Workbench/H.Workbench.Core/Tools/ComputerControlTool.cs",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
+      "parent_id": "8bb199a9-10d4-49d3-8d84-18ac152008dc",
+      "layer_level": 3,
+      "kk_dependent_files": [
+        "src/Agent/Workbench/H.Workbench.Core/Tools/ComputerControlTool.cs"
+      ]
+    },
+    {
+      "id": "61d3fc39-786d-41d9-ae62-6b7a1bd0d7d0",
+      "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
+      "name": "能力管理中心",
+      "description": "capabilities-management",
+      "prompt": "",
+      "progress_status": "completed",
+      "dependent_files": "src/Agent/Workbench/H.Workbench.Web/Pages/Capabilities.razor",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
+      "parent_id": "0f4a08f2-068d-4c98-b5e9-fd9367edad57",
+      "layer_level": 2,
+      "kk_dependent_files": [
+        "src/Agent/Workbench/H.Workbench.Web/Pages/Capabilities.razor"
+      ]
+    },
+    {
       "id": "70b6213b-c0a5-416e-ae33-1f2225000c3b",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "name": "动态组件渲染",
@@ -191,8 +225,8 @@
       "prompt": "为低代码渲染引擎的动态组件渲染机制创建详细文档。深入解释 RenderEngineDynamicComponentBase 如何根据 ComponentSchema 元数据动态创建 Blazor 组件树，包括 RenderComponentRecursive 的递归渲染算法、条件渲染分支处理、容器组件与表单组件的差异化渲染逻辑。说明 PageComponentRegistry 的组件注册表机制：如何在渲染过程中登记页面组件树，支持按 Id 查找组件配置，供事件处理和显隐联动使用。阐述 RenderEngineLowCodeComponentBase 作为所有低代码组件基类的作用：提供 PageCascading 级联参数、生命周期钩子等通用能力。详细说明组件属性解析过程：如何将 ComponentFragmentSchema 中的属性映射到目标 Blazor 组件的参数，包括类型转换、表达式求值、默认值处理。解释组件可见性控制机制：VisibleCondition 表达式的求值、条件渲染组件（If/Switch）的实现原理。包含具体的代码示例，展示如何开发自定义 Blazor 组件并注册到渲染引擎，如何通过 ComponentSchema 元数据驱动组件实例化。说明性能优化策略：组件懒加载、虚拟滚动、渲染缓存等最佳实践。",
       "progress_status": "completed",
       "dependent_files": "src/LowCode/RenderEngine/H.LowCode.RenderEngineBase/RenderEngineDynamicComponentBase.cs,src/LowCode/RenderEngine/H.LowCode.RenderEngineBase/PageComponentRegistry.cs,src/LowCode/RenderEngine/H.LowCode.RenderEngineBase/RenderEngineLowCodeComponentBase.cs",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "1d5bbeca-e090-4003-85e8-db9f1f7f15de",
       "layer_level": 2,
       "kk_dependent_files": [
@@ -209,8 +243,8 @@
       "prompt": "为 AppLab 的 Blazor 混合渲染模式创建详细的技术文档。重点说明项目如何使用 Blazor Web App 的 Server + WebAssembly 混合渲染策略，解释哪些页面在服务器端渲染以利用 SignalR 实时通信，哪些页面编译为 WebAssembly 以实现离线能力和更好的性能。详细说明混合渲染的配置方式、路由分发机制、状态管理策略。包含实际代码示例展示如何在 Razor 组件中处理两种渲染模式的差异，如何处理跨渲染模式的数据传递和事件冒泡。解释混合渲染对用户体验的影响，包括首屏加载时间、交互响应性、网络依赖等。提供最佳实践建议，帮助开发者选择合适的渲染模式。",
       "progress_status": "completed",
       "dependent_files": "src/Host/H.AppLab.Web.Host/H.AppLab.Web.Host/Program.cs,src/Host/H.AppLab.Desktop/Program.cs",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "2395bb26-4daf-4108-b7ca-2b668a88b51d",
       "layer_level": 1,
       "kk_dependent_files": [
@@ -225,9 +259,9 @@
       "description": "design-engine-architecture",
       "prompt": "为 AppLab 低代码设计引擎的架构创建综合性文档。详细阐述 DesignEngineBase 基座层提供的核心抽象：IPageRepository、IMenuRepository、IDataSourceRepository 等仓储接口，以及领域模型（Domain）中 Page、Menu、DataSource、App 等实体的关系定义。解释三层分层架构：Domain 领域层（实体与领域规则）、Application 应用层（AppService 编排业务用例）、Infrastructure 基础设施层（EntityFrameworkCore / JsonFile / RemoteService 多种仓储实现）。说明设计引擎与应用引擎、渲染引擎之间的边界和交互契约。包含架构图展示各模块依赖方向，解释为什么采用这种分层与插件化设计，以及在单体部署与按服务独立部署两种模式下的差异。提供仓储实现的切换配置示例，并说明扩展新仓储的步骤。",
       "progress_status": "completed",
-      "dependent_files": "src/LowCode/DesignEngine/H.LowCode.DesignEngineBase/,src/LowCode/DesignEngine/H.LowCode.DesignEngine.Domain/,src/LowCode/DesignEngine/H.LowCode.DesignEngine.Model/,src/LowCode/DesignEngine/H.LowCode.DesignEngine.EntityFrameworkCore/,src/LowCode/DesignEngine/H.LowCode.DesignEngine.Repository.JsonFile/,src/LowCode/DesignEngine/H.LowCode.DesignEngine.Repository.RemoteService/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "dependent_files": "src/LowCode/DesignEngine/H.LowCode.DesignEngineBase/,src/LowCode/DesignEngine/H.LowCode.DesignEngine.Domain/,src/LowCode/DesignEngine/H.LowCode.DesignEngine.Model/,src/LowCode/DesignEngine/H.LowCode.DesignEngine.EntityFrameworkCore/,src/LowCode/DesignEngine/H.LowCode.DesignEngine.Repository.JsonFile/,src/LowCode/DesignEngine/H.LowCode.DesignEngine.Repository.RemoteService/,src/Agent/Workbench/H.Workbench.Core/Tools/Internal/BrowserSessionPool.cs,src/Agent/Workbench/H.Workbench.Core/Tools/Internal/GitWorkspaceResolver.cs",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "d23c19dd-1267-4317-bfd9-ffdf1ec9cc85",
       "layer_level": 2,
       "kk_dependent_files": [
@@ -236,7 +270,27 @@
         "src/LowCode/DesignEngine/H.LowCode.DesignEngine.Model/",
         "src/LowCode/DesignEngine/H.LowCode.DesignEngine.EntityFrameworkCore/",
         "src/LowCode/DesignEngine/H.LowCode.DesignEngine.Repository.JsonFile/",
-        "src/LowCode/DesignEngine/H.LowCode.DesignEngine.Repository.RemoteService/"
+        "src/LowCode/DesignEngine/H.LowCode.DesignEngine.Repository.RemoteService/",
+        "src/Agent/Workbench/H.Workbench.Core/Tools/Internal/BrowserSessionPool.cs",
+        "src/Agent/Workbench/H.Workbench.Core/Tools/Internal/GitWorkspaceResolver.cs"
+      ]
+    },
+    {
+      "id": "a0f4f9d1-ec8e-409c-86b7-9a5d34a94798",
+      "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
+      "name": "插件管理体系",
+      "description": "plugin-management-system",
+      "prompt": "",
+      "progress_status": "completed",
+      "dependent_files": "src/Agent/Workbench/H.Workbench.EntityFrameworkCore/Entities/WorkbenchPluginEntity.cs,src/Agent/Workbench/H.Workbench.Application.Contracts/Dtos/Plugins/WorkbenchPluginDto.cs,src/Agent/Workbench/H.Workbench.Application/Services/WorkbenchPluginAppService.cs",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
+      "parent_id": "f051c38c-33da-4e73-bae6-1044dcfeaad1",
+      "layer_level": 3,
+      "kk_dependent_files": [
+        "src/Agent/Workbench/H.Workbench.EntityFrameworkCore/Entities/WorkbenchPluginEntity.cs",
+        "src/Agent/Workbench/H.Workbench.Application.Contracts/Dtos/Plugins/WorkbenchPluginDto.cs",
+        "src/Agent/Workbench/H.Workbench.Application/Services/WorkbenchPluginAppService.cs"
       ]
     },
     {
@@ -247,8 +301,8 @@
       "prompt": "为 AppLab 全栈应用开发平台创建项目概述文档。阐述项目的核心目标——作为基于 .NET + Blazor 的实验性应用开发平台，同时承担业务应用运行时和低代码设计/渲染引擎双重角色。说明技术架构总览，包括 ABP Framework、Blazor Web App、Avalonia 桌面宿主、低代码元数据驱动等关键技术选型。介绍解决方案的整体组织方式：Host（宿主程序）、Components（共享 UI 组件）、LowCode（低代码核心）、Services（企业级应用服务）、System（系统级应用）、Tools（数据库迁移工具）、Utils（工具类库）。提供快速开始指南，包括环境要求（.NET 10 SDK）、依赖服务（SQL Server、Redis、RabbitMQ、MinIO）和启动步骤。使用与代码库一致的术语，面向初学者解释基本概念，同时为有经验的开发者提供足够的技术深度。",
       "progress_status": "completed",
       "dependent_files": "README.md,src/AppLab.slnx,src/global.json,src/Directory.Packages.props",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "kk_dependent_files": [
         "README.md",
         "src/AppLab.slnx",
@@ -264,8 +318,8 @@
       "prompt": "为 AppLab 低代码平台的元数据 Schema 体系创建详细文档。深入解释 MetaSchemaBase 抽象基类的设计，包括 CreatorId、CreationTime、ModifierId、ModificationTime 等审计字段；AppSchemaBase 与 PageSchemaBase 的层次结构；ComponentSchemaBase 如何定义组件元数据契约。详细说明属性 Schema 体系：PagePropertySchema 页面属性、ComponentAttributeDefineSchemaBase 组件属性定义、EventSchema 事件定义、ValidationRuleSchema 校验规则、ComponentStyleSchema 样式定义、VisibleConditionSchema 可见性条件。解释数据源 Schema：DataSourceSchema 抽象基类及 APIDataSourceSchema、SQLDataSourceSchema、ListDataSourceSchema、OptionDataSourceSchema 等具体实现。说明枚举类型：PageTypeEnum、ComponentValueTypeEnum、EventTargetTypeEnum、PublishStatusEnum 等的作用。提供 Schema 扩展指南和最佳实践。",
       "progress_status": "completed",
       "dependent_files": "src/LowCode/Common/H.LowCode.MetaSchema/MetaSchemaBase.cs,src/LowCode/Common/H.LowCode.MetaSchema/AppSchemaBase.cs,src/LowCode/Common/H.LowCode.MetaSchema/PageSchemaBase.cs,src/LowCode/Common/H.LowCode.MetaSchema/ComponentSchemaBase.cs,src/LowCode/Common/H.LowCode.MetaSchema/PropertySchemas/PagePropertySchema.cs,src/LowCode/Common/H.LowCode.MetaSchema/PropertySchemas/ComponentAttributeDefineSchemaBase.cs,src/LowCode/Common/H.LowCode.MetaSchema/PropertySchemas/EventSchema.cs,src/LowCode/Common/H.LowCode.MetaSchema/PropertySchemas/ValidationRuleSchema.cs,src/LowCode/Common/H.LowCode.MetaSchema/DataSourceSchema.cs,src/LowCode/Common/H.LowCode.MetaSchema/MenuSchema.cs",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "07ee2bcd-0521-4ee2-a002-a4901e08ed21",
       "layer_level": 2,
       "kk_dependent_files": [
@@ -289,8 +343,8 @@
       "prompt": "为 AppLab 平台创建 API 概览与规范文档。详细说明基于 ABP Framework 的 RESTful API 设计规范：URL 模式约定、HTTP 方法使用规范、请求响应格式标准、错误码定义和统一响应结构。重点介绍动态 HTTP 代理机制：如何通过 IAppService 接口自动生成客户端代码，HttpClientProxyInterceptor 的工作原理，AbpUrlConvention 的路由解析规则。说明认证授权机制（JWT Token、权限验证）、全局异常处理、分页查询参数规范、排序过滤语法。提供完整的 API 调用示例，展示从接口定义到客户端调用的完整流程。包含最佳实践建议和常见问题解决方案。",
       "progress_status": "completed",
       "dependent_files": "src/Utils/H.Abp.Application.Contracts/IAppService.cs,src/Utils/H.Abp.HttpClientProxy/HttpClientProxyInterceptor.cs,src/Utils/H.Abp.HttpClientProxy/AbpUrlConvention.cs",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "1b79d1d5-ba4e-4086-9769-8a0f913d8875",
       "layer_level": 1,
       "kk_dependent_files": [
@@ -307,8 +361,8 @@
       "prompt": "为 H.AppLab.Web.Host（基于 Blazor Web App 的 Web 宿主）创建详细文档。解释 Program.cs 中的服务注册与管道配置，包括 AddRazorComponents + AddInteractiveWebAssemblyComponents 的混合渲染模式、SignalR 配置、JSON 序列化设置、响应压缩（Brotli/Gzip）优化 WASM 传输等。详细说明静态资源托管策略，特别是 MapStaticAssets 对 WASM 程序集内容指纹化缓存的处理机制，以及为何不能将 /_framework 整体标记为 immutable。说明中间件管道顺序：UseExceptionHandler → UseHsts → UseStatusCodePagesWithReExecute → UseHttpsRedirection → UseResponseCompression → MapStaticAssets → UseRouting → UseAuthentication → UseMultiTenancy → UseAuthorization → UseAntiforgery → MapControllers → MapMcp(\"/yunxiao\") → UseHangfireDashboard(\"/hangfire\") → MapRazorComponents。解释 AddAdditionalAssemblies 中注册的多个模块程序集（Portal、Account、Organization、Approval、LowCode.*、Util.Blazor、Testing、Notification、Workbench、Order、SupplyChain、BackgroundTask）如何参与 WebAssembly 懒加载。包含生产环境部署注意事项、性能调优建议及常见问题排查。",
       "progress_status": "completed",
       "dependent_files": "src/Host/H.AppLab.Web.Host/H.AppLab.Web.Host/Program.cs,src/Host/H.AppLab.Web.Host/H.AppLab.Web.Host/H.AppLab.Web.Host.csproj,src/Host/H.AppLab.Web.Host/H.AppLab.Web.Host.Client/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "a9de80a7-108a-49ef-8391-f289c33cd8eb",
       "layer_level": 1,
       "kk_dependent_files": [
@@ -325,8 +379,8 @@
       "prompt": "为 AppLab 低代码平台创建详细的架构设计文档。深入解释元数据驱动的核心范式：MetaSchema 定义组件属性、事件、布局、校验规则；DesignEngine 负责可视化设计和元数据编辑；RenderEngine 根据元数据动态生成 Blazor 应用。详细说明组件体系：ComponentBase 基类设计、组件注册机制、Props 传递、事件冒泡。解释渲染引擎的工作原理：元数据解析 → 组件树构建 → Blazor 动态编译 → 运行时渲染。包含组件开发指南：如何扩展自定义组件、主题定制、样式覆盖。提供架构图表展示 MetaSchema → DesignEngine → RenderEngine 的数据流转过程。",
       "progress_status": "completed",
       "dependent_files": "src/LowCode/Common/H.LowCode.MetaSchema/MetaSchema.cs,src/LowCode/DesignEngine/H.LowCode.DesignEngine/,src/LowCode/RenderEngine/H.LowCode.RenderEngine/,src/LowCode/Common/H.LowCode.ComponentBase/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "8b28368e-d1d0-4d06-8a44-790c012fe852",
       "layer_level": 1,
       "order": 1,
@@ -345,8 +399,8 @@
       "prompt": "为 EntityFrameworkCore 数据库仓储创建详细文档。解释 RenderEngineEntityFrameworkCoreModule 模块注册：DbContext 配置、仓储服务注册、依赖注入容器绑定。详细说明数据库上下文设计：连接字符串配置、实体映射关系、迁移脚本管理。阐述各数据仓储的实现：TableDataRepository 管理表格数据存储、FormDataRepository 管理表单提交数据。说明查询构建器模式：LINQ 查询优化、分页查询实现、复杂条件组合。解释事务管理：分布式事务支持、悲观锁和乐观锁配置、批量操作的事务边界。包含配置示例：如何在 appsettings.json 中配置 SQL Server 连接字符串、EF Core 日志级别、连接池参数。提供性能优化指南：N+1 查询问题避免、索引设计建议、查询缓存策略、异步查询最佳实践。说明数据迁移流程：首次部署初始化、版本升级脚本、数据备份恢复方案。解释错误处理：DbUpdateException 异常处理、连接超时重试、数据库不可用降级策略。",
       "progress_status": "completed",
       "dependent_files": "src/LowCode/RenderEngine/H.LowCode.RenderEngine.EntityFrameworkCore/RenderEngineEntityFrameworkCoreModule.cs,src/LowCode/RenderEngine/H.LowCode.RenderEngine.EntityFrameworkCore/DataRepositories/TableDataRepository.cs,src/LowCode/RenderEngine/H.LowCode.RenderEngine.EntityFrameworkCore/DataRepositories/FormDaraRepository.cs",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "bd0c193e-38d0-414b-a171-e213f2fa2e20",
       "layer_level": 3,
       "order": 1,
@@ -364,8 +418,8 @@
       "prompt": "为 AppLab 的动态 HTTP 代理机制创建全面的技术文档。深入解释 HttpClientProxyInterceptor<TService> 如何通过 System.Reflection.DispatchProxy 拦截 IAppService 接口的方法调用，并将其自动转换为 HTTP 请求。详细说明 AbpUrlConvention 如何将接口名和方法名映射到 ABP 风格的 RESTful URL，包括 kebab-case 转换、HTTP 动词映射（GetList→GET、Create→POST 等）、参数位置约定（id 参数作为路径段）。解释复杂参数的序列化策略：简单类型转为查询参数，复杂类型在 POST/PUT 时放入请求体。包含完整的代码示例展示如何定义 IAppService 接口、如何注入代理实例、如何处理异步调用和错误。说明代理的性能考虑、连接池管理、超时配置等高级特性。",
       "progress_status": "completed",
       "dependent_files": "src/Utils/H.Abp.HttpClientProxy/HttpClientProxyInterceptor.cs,src/Utils/H.Abp.HttpClientProxy/AbpUrlConvention.cs,src/Utils/H.Abp.Application.Contracts/IAppService.cs",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "2395bb26-4daf-4108-b7ca-2b668a88b51d",
       "layer_level": 1,
       "order": 1,
@@ -382,9 +436,9 @@
       "description": "page-designer",
       "prompt": "为页面设计器创建详细文档。以 DesignPage.razor 为入口，逐步说明页面加载流程：从路由参数解析、调用 PageAppService 获取页面 Schema，到动态组件树在 DesignPanel.razor 中的渲染过程。详细解释拖拽体系：DragItem.razor 如何暴露组件元数据，DraggableContainer.razor 如何实现容器嵌套，DragDropStateService.cs 如何维护拖拽状态（选中项、插入位置、撤销重做栈）。说明属性面板 SettingPanel.razor 的动态绑定机制：PropertySetting.razor 根据组件 MetaSchema 动态生成 BasicPropertyItem、EventPropertyItem、ExtensionPropertyItem、DataSourcePropertyItem 等设置项。解释样式设置、校验规则、页面级设置的编辑与回写策略。说明事件系统的设计：页面级事件如何在 EventPropertyItem 中定义、保存，并在运行时通过事件总线触发。包含完整示例：在设计器中添加一个按钮、绑定 Click 事件、添加表单字段、配置 SQL 数据源。解释设计器的撤销重做实现思路，以及与 RenderEngine 渲染结果的差异。",
       "progress_status": "completed",
-      "dependent_files": "src/LowCode/DesignEngine/H.LowCode.DesignEngine/Pages/DesignPage.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine/Layout/DesignEngineLayout.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine/DesignPanel/DesignPanel.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine/ComponentPanel/ComponentPanel.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine/SettingPanel/SettingPanel.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine/SettingPanel/PropertySetting.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine/SettingPanel/PageSetting.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine/SettingPanel/StyleSetting.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine/SettingPanel/ValidationSetting.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine/DraggableComponents/DraggableItem.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine/DraggableComponents/DraggableContainer.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine/DraggableComponents/DynamicComponentItem.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine/Services/DragDropStateService.cs,src/LowCode/DesignEngine/H.LowCode.DesignEngine/Services/DynamicComponentBase.cs",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "dependent_files": "src/LowCode/DesignEngine/H.LowCode.DesignEngine/Pages/DesignPage.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine/Layout/DesignEngineLayout.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine/DesignPanel/DesignPanel.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine/ComponentPanel/ComponentPanel.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine/SettingPanel/SettingPanel.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine/SettingPanel/PropertySetting.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine/SettingPanel/PageSetting.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine/SettingPanel/StyleSetting.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine/SettingPanel/ValidationSetting.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine/DraggableComponents/DraggableItem.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine/DraggableComponents/DraggableContainer.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine/DraggableComponents/DynamicComponentItem.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine/Services/DragDropStateService.cs,src/LowCode/DesignEngine/H.LowCode.DesignEngine/Services/DynamicComponentBase.cs,src/Agent/Workbench/H.Workbench.Web/Pages/Resources.razor",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "d23c19dd-1267-4317-bfd9-ffdf1ec9cc85",
       "layer_level": 2,
       "order": 1,
@@ -402,7 +456,25 @@
         "src/LowCode/DesignEngine/H.LowCode.DesignEngine/DraggableComponents/DraggableContainer.razor",
         "src/LowCode/DesignEngine/H.LowCode.DesignEngine/DraggableComponents/DynamicComponentItem.razor",
         "src/LowCode/DesignEngine/H.LowCode.DesignEngine/Services/DragDropStateService.cs",
-        "src/LowCode/DesignEngine/H.LowCode.DesignEngine/Services/DynamicComponentBase.cs"
+        "src/LowCode/DesignEngine/H.LowCode.DesignEngine/Services/DynamicComponentBase.cs",
+        "src/Agent/Workbench/H.Workbench.Web/Pages/Resources.razor"
+      ]
+    },
+    {
+      "id": "47c30f06-25eb-4aa8-a28c-0997535edcbb",
+      "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
+      "name": "通知推送工具",
+      "description": "notify-tool",
+      "prompt": "",
+      "progress_status": "completed",
+      "dependent_files": "src/Agent/Workbench/H.Workbench.Core/Tools/NotifyTool.cs",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
+      "parent_id": "8bb199a9-10d4-49d3-8d84-18ac152008dc",
+      "layer_level": 3,
+      "order": 1,
+      "kk_dependent_files": [
+        "src/Agent/Workbench/H.Workbench.Core/Tools/NotifyTool.cs"
       ]
     },
     {
@@ -413,8 +485,8 @@
       "prompt": "为 AppLab 的 Enterprise（企业管理）子系统创建详细文档。重点介绍企业租户管理的领域模型和设计：企业实体、部门结构、用户权限等基础管理能力。详细说明 EnterpriseAppService 和 EnterpriseUserAppService 的核心功能：企业信息的 CRUD 操作、用户与企业关联管理、多租户隔离机制等。解释企业数据在 EF Core 中的持久化设计：EnterpriseDbContext、实体关系映射、数据迁移策略。说明与其他服务的集成：如何与 Organization、Account 等服务协作提供完整的企业管理能力。包含数据库表结构设计、API 接口定义、DTO 模型等技术细节。提供企业初始化和配置的使用示例，包括多租户环境下的部署和配置指南。",
       "progress_status": "completed",
       "dependent_files": "src/System/Enterprise/H.Enterprise.Application/,src/System/Enterprise/H.Enterprise.Application.Contracts/,src/System/Enterprise/H.Enterprise.EntityFrameworkCore/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "d825767d-225c-4351-ade7-bec385f446ec",
       "layer_level": 1,
       "order": 1,
@@ -432,8 +504,8 @@
       "prompt": "为 AppLab 平台创建架构设计文档。描述高层设计原则：模块化架构（限界上下文隔离）、分层架构（Application.Contracts / Application / EntityFrameworkCore / Web）、插件化设计（仓储实现、主题、组件的可插拔）。详细说明核心架构模式：ABP DDD 分层、低代码元数据驱动（MetaSchema → DesignEngine → RenderEngine）、WebAssembly 懒加载模块注册（LazyModuleRegistry + CompositeServiceProvider）、动态 HTTP 代理（HttpClientProxyInterceptor + AbpUrlConvention）。解释组件交互关系和数据流：UI 层通过 IAppService 契约调用后端服务，低代码设计器产出元数据由渲染引擎动态生成应用。包含系统边界定义、部署拓扑（单体 vs 微服务）、扩展点设计和跨领域关注点（安全、监控、配置管理）。提供架构图表和组件分解图，帮助开发者理解整体设计决策和权衡。",
       "progress_status": "completed",
       "dependent_files": "src/Host/H.AppLab.Web.Host/H.AppLab.Web.Host/Program.cs,src/Host/H.AppLab.Desktop/WorkbenchApp.cs,src/LowCode/Common/H.LowCode.MetaSchema/MetaSchema.cs",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "order": 1,
       "kk_dependent_files": [
         "src/Host/H.AppLab.Web.Host/H.AppLab.Web.Host/Program.cs",
@@ -449,8 +521,8 @@
       "prompt": "为 AppLab 平台创建 UI 组件扩展文档。详细说明低代码平台的组件体系架构：MetaSchema 元数据定义、ComponentSchemaBase 基类、RenderEngineDynamicComponentBase 动态渲染机制。解释组件注册系统：PageComponentRegistry 的工作机制、组件发现与加载流程、生命周期管理。包含自定义 Blazor 组件的开发指南：如何继承 RenderEngineLowCodeComponentBase、定义组件属性 Schema、实现事件回调处理、处理组件状态管理。说明组件元数据设计：属性类型映射、验证规则配置、样式定制选项。提供组件扩展的最佳实践：性能优化、可访问性支持、响应式设计。包含完整的扩展示例：从元数据定义到运行时渲染的全流程代码示例。",
       "progress_status": "completed",
       "dependent_files": "src/LowCode/Common/H.LowCode.MetaSchema/,src/LowCode/Common/H.LowCode.Components/,src/LowCode/RenderEngine/H.LowCode.RenderEngineBase/PageComponentRegistry.cs,src/LowCode/RenderEngine/H.LowCode.RenderEngineBase/RenderEngineDynamicComponentBase.cs",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "9c5762c8-c259-4bd0-b8d6-9e91b08b7803",
       "layer_level": 2,
       "order": 1,
@@ -469,8 +541,8 @@
       "prompt": "为 Organization 组织管理服务创建详细文档。深入解释组织架构管理、部门层级、员工管理等核心业务功能。详细说明树形组织结构的数据模型设计，包括部门、岗位、员工等实体的关系映射。文档应涵盖组织单元的 CRUD 操作、层级关系的维护、人员分配与调整等业务流程。提供具体的 API 调用示例，展示如何创建组织架构、查询部门树、管理员工信息等操作。说明组织数据的多租户隔离机制，以及与 Account 服务的权限集成方式。包含组织架构的常见扩展场景，如虚拟部门、项目团队等自定义组织类型的实现指导。",
       "progress_status": "completed",
       "dependent_files": "src/Services/Organization/,src/Services/Organization/src/Services/Organization/H.Organization.Application/,src/Services/Organization/src/Services/Organization/H.Organization.Application.Contracts/,src/Services/Organization/src/Services/Organization/H.Organization.EntityFrameworkCore/,src/Services/Organization/src/Services/Organization/H.Organization.Web/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "db9d8bda-1d87-4e28-9bcc-7ffbc79b469c",
       "layer_level": 1,
       "order": 1,
@@ -490,8 +562,8 @@
       "prompt": "为 H.Abp.HttpClientProxy 动态 HTTP 代理库创建技术文档。详细解释 HttpClientProxyInterceptor 基于 DispatchProxy 的动态代理实现原理，包括方法拦截、参数序列化、响应反序列化的完整流程。深入分析 AbpUrlConvention 的 ABP 路由约定解析器，说明如何将 .NET 方法签名映射到 RESTful URL 路径，包括控制器名称、动作名称、参数绑定的转换规则。介绍 RemoteServiceOptions 的配置选项，涵盖基础地址、超时设置、认证头配置等。解释 ServiceCollectionExtensions 的服务注册机制和 DI 容器集成方式。提供客户端调用示例，展示如何通过简单的接口声明自动生成 HTTP 客户端，包括异步调用、异常处理、重试机制的实现细节。",
       "progress_status": "completed",
       "dependent_files": "src/Utils/H.Abp.HttpClientProxy/HttpClientProxyInterceptor.cs,src/Utils/H.Abp.HttpClientProxy/AbpUrlConvention.cs,src/Utils/H.Abp.HttpClientProxy/RemoteServiceOptions.cs,src/Utils/H.Abp.HttpClientProxy/ServiceCollectionExtensions.cs",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "ca69e922-eb11-4e04-9fda-138a010f4590",
       "layer_level": 2,
       "order": 1,
@@ -510,8 +582,8 @@
       "prompt": "为 AppLab 的工具类库创建综合性文档。详细介绍 H.Abp.Application.Contracts 中的通用 DTO 基类：EntityDto、AuditedEntityDto、CreationAuditedEntityDto、FullAuditedEntityDto 的继承关系和使用场景，以及 IAppService、ICrudAppService 接口的约定设计。深入解释 H.Abp.HttpClientProxy 的动态代理机制：HttpClientProxyInterceptor 的 DispatchProxy 实现原理、AbpUrlConvention 的路由解析逻辑、RemoteServiceOptions 的配置选项。说明 H.Util.Base 的基础扩展方法：JsonExtension 的 JSON 处理、ObjectExtension 的对象操作、TypeExtension 的类型反射、EnumExtension 的枚举处理。介绍 H.Util.Blazor 的 Blazor 辅助组件：HToastService 的消息提示、BlazorEventDispatcher 的事件分发机制。解释 H.Util.Ids 的 ID 生成策略：ShortIdGenerator 和 SnowflakeIdGenerator 的实现差异和适用场景。提供每个工具类的代码示例和最佳实践。",
       "progress_status": "completed",
       "dependent_files": "src/Utils/H.Abp.Application.Contracts/,src/Utils/H.Abp.HttpClientProxy/,src/Utils/H.Util.Base/,src/Utils/H.Util.Blazor/,src/Utils/H.Util.Ids/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "c778fa4d-6f27-4ac5-8a5c-e3125df639ab",
       "layer_level": 1,
       "order": 1,
@@ -531,8 +603,8 @@
       "prompt": "为 H.AppLab.Desktop（基于 Avalonia 12 的跨平台桌面宿主）创建详细文档。解释 Program.cs 中 BuildAvaloniaApp() 的配置：UsePlatformDetect() 自动检测运行平台、WithInterFont() 引入系统字体、LogToTrace() 启用日志追踪、StartWithClassicDesktopLifetime() 管理桌面生命周期。说明 App.axaml 和 App.axaml.cs 中的应用程序入口点，以及 Views/ 目录下各个窗口视图的组织结构。详细介绍 ViewModel 层（ViewModels/）如何承载业务逻辑，Controls/ 自定义控件，Services/ 服务层，Themes/ 主题定义。解释桌面宿主如何承载多个客户端应用，以及与 Web 版本在架构上的差异。包含 Avalonia 跨平台编译配置、Windows/Linux/macOS 部署方式、调试技巧及常见 UI 问题排查。",
       "progress_status": "completed",
       "dependent_files": "src/Host/H.AppLab.Desktop/Program.cs,src/Host/H.AppLab.Desktop/App.axaml,src/Host/H.AppLab.Desktop/App.axaml.cs,src/Host/H.AppLab.Desktop/Views/,src/Host/H.AppLab.Desktop/ViewModels/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "a9de80a7-108a-49ef-8391-f289c33cd8eb",
       "layer_level": 1,
       "order": 1,
@@ -552,8 +624,8 @@
       "prompt": "为 AppLab 低代码平台的设计引擎创建综合性文档。详细阐述 DesignEngine 的整体架构：Domain 领域模型、Application 应用服务、Repository 仓储抽象（JsonFile / EntityFrameworkCore / RemoteService）的分层设计。解释设计器页面的工作原理：DesignPage.razor 如何加载和保存页面 Schema，支持拖拽组件、编辑属性、绑定数据源、处理事件的交互流程。说明 AI 生成应用功能（AppAiGenerateAppService）的实现机制：如何通过 AI 辅助快速生成页面、菜单和数据源结构。阐述 PartsDesignEngine（部件设计器）与 MyApplication（我的应用管理）的区别和适用场景。详细说明组件树的操作：添加、删除、移动、复制、撤销重做、层级调整。解释事件系统的设计：EventList.razor 中事件定义、页面级事件、组件间事件通信的注册和触发机制。说明数据源绑定：表单数据绑定、列表数据加载、分页查询、筛选排序的实现。包含具体的代码示例，展示如何在设计器中注册自定义组件、配置属性面板、实现事件回调。解释设计器的持久化策略：JSON 文件存储 vs EF Core 数据库存储 vs 远程服务调用的选择和使用场景。",
       "progress_status": "completed",
       "dependent_files": "src/LowCode/DesignEngine/H.LowCode.DesignEngine/,src/LowCode/DesignEngine/H.LowCode.DesignEngine.Application/,src/LowCode/DesignEngine/H.LowCode.DesignEngine.Domain/,src/LowCode/DesignEngine/H.LowCode.DesignEngine.Model/,src/LowCode/DesignEngine/H.LowCode.DesignEngine.EntityFrameworkCore/,src/LowCode/DesignEngine/H.LowCode.DesignEngine.Repository.JsonFile/,src/LowCode/DesignEngine/H.LowCode.DesignEngine.Repository.RemoteService/,src/LowCode/DesignEngine/H.LowCode.DesignEngineBase/,src/LowCode/DesignEngine/H.LowCode.MyApp/,src/LowCode/DesignEngine/H.LowCode.PartsDesignEngine/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "1cbe62bf-7815-4ed1-b2f4-b37befa98428",
       "layer_level": 1,
       "order": 1,
@@ -578,8 +650,8 @@
       "prompt": "为 Account 服务创建详细的 API 文档。涵盖用户认证相关接口：登录、登出、Token 刷新、密码重置；用户管理接口：用户 CRUD 操作、角色分配、权限控制；会话管理接口：当前用户信息获取、会话状态检查。详细说明每个接口的 HTTP 方法、URL 路径、请求参数、响应数据结构、错误码含义。提供完整的请求响应示例，包括成功响应和各类错误响应的 JSON 格式。说明身份验证流程、权限验证机制、密码加密策略。包含安全最佳实践和常见集成问题的解决方案。",
       "progress_status": "completed",
       "dependent_files": "src/Services/Account/,src/Services/Account/src/Services/Account/H.Account.Application.Contracts/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "1b79d1d5-ba4e-4086-9769-8a0f913d8875",
       "layer_level": 1,
       "order": 1,
@@ -596,8 +668,8 @@
       "prompt": "为 AppLab 低代码设计引擎创建架构文档。解释 DesignEngine 的整体架构：基于 Blazor WebAssembly 的可视化设计器，支持拖拽式页面设计和组件编排。详细说明设计引擎的分层结构：H.LowCode.DesignEngine（Web 界面）、H.LowCode.DesignEngineBase（核心逻辑）、H.LowCode.DesignEngine.Application.Contracts（应用接口）、H.LowCode.DesignEngine.Model（领域模型）。解释设计器的主要功能：页面画布、组件面板、属性编辑器、预览模式、元数据导出。说明 H.LowCode.MyApp 和 H.LowCode.PartsDesignEngine 的具体用途：MyApp 用于应用级设计，PartsDesignEngine 用于部件级设计。包含设计器与渲染引擎的数据交换协议，以及设计器中使用的 MetaSchema 设计模式。",
       "progress_status": "completed",
       "dependent_files": "src/LowCode/DesignEngine/H.LowCode.DesignEngine/H.LowCode.DesignEngine.csproj,src/LowCode/DesignEngine/H.LowCode.DesignEngineBase/,src/LowCode/DesignEngine/H.LowCode.DesignEngine.Application.Contracts/,src/LowCode/DesignEngine/H.LowCode.MyApp/,src/LowCode/DesignEngine/H.LowCode.PartsDesignEngine/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "07ee2bcd-0521-4ee2-a002-a4901e08ed21",
       "layer_level": 2,
       "order": 1,
@@ -617,13 +689,30 @@
       "prompt": "为低代码平台的表达式解析器创建全面文档。详细解释 LowCodeExpressionResolver 的工作原理：基于字符串扫描的词法分析，识别 $(...) 和 $query(...) 两种表达式语法。说明支持的表达式类型：$(item.field) 访问当前行数据字段、$(form.key) 读取表单状态值、$(form[innerExpr]) 动态键访问、$(formjson(listId,compName)) 聚合列表表单值为 JSON 数组、$(now) 获取当前时间、$query(name|fallback) URL 参数回退取值。阐述表达式上下文 LowCodeExpressionContext 的设计：Item 提供行数据、FormState 提供表单状态、QueryProvider 提供 URL 参数访问。解释混合文本求值机制：当表达式与普通文本混合时返回拼接后的字符串，单一表达式时返回原始类型值。说明布尔值和 DateTime 的格式化规则：true/false 字符串、yyyy-MM-dd HH:mm:ss 时间格式。详细说明成员访问机制 GetMemberValue：支持 Dictionary<string,object>、IDictionary<string,object> 和反射属性的字段访问。包含具体的语法示例和使用场景，如条件显示、动态标题、表单联动等。解释错误处理策略：未识别表达式保留原文、空值处理、异常捕获等。",
       "progress_status": "completed",
       "dependent_files": "src/LowCode/RenderEngine/H.LowCode.RenderEngineBase/LowCodeExpressionResolver.cs",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "1d5bbeca-e090-4003-85e8-db9f1f7f15de",
       "layer_level": 2,
       "order": 1,
       "kk_dependent_files": [
         "src/LowCode/RenderEngine/H.LowCode.RenderEngineBase/LowCodeExpressionResolver.cs"
+      ]
+    },
+    {
+      "id": "0bd32ed9-3f93-4686-9ab3-690e888e57df",
+      "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
+      "name": "Office 文档生成工具",
+      "description": "office-document-tool",
+      "prompt": "",
+      "progress_status": "completed",
+      "dependent_files": "src/Agent/Workbench/H.Workbench.Core/Tools/OfficeDocumentTool.cs",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
+      "parent_id": "8bb199a9-10d4-49d3-8d84-18ac152008dc",
+      "layer_level": 3,
+      "order": 2,
+      "kk_dependent_files": [
+        "src/Agent/Workbench/H.Workbench.Core/Tools/OfficeDocumentTool.cs"
       ]
     },
     {
@@ -634,8 +723,8 @@
       "prompt": "为低代码渲染引擎的事件回调系统创建详细文档。深入解释 EventCallbackHelper 如何实现 Blazor EventCallback 的动态创建：通过反射查找 EventCallbackFactory.Create 方法，支持 EventCallback 和 EventCallback<T> 两种类型。说明有参事件处理 CreateWithArg：将统一的事件处理器 Action<object?> 适配为目标类型的强类型回调，用于 ValueChanged 等双向绑定场景。阐述无参事件处理 CreateWithoutArg：忽略事件参数的处理方法，用于 OnClick、OnMouseEnter 等简单事件。解释跨组件事件通信机制：如何在不同组件之间传递事件，支持父子组件、兄弟组件、祖先-后代组件的事件冒泡和捕获。详细说明事件绑定过程：如何将元数据中定义的事件处理器映射到实际的 Blazor 事件，包括事件名称映射、参数类型推断、异步任务处理。包含具体的代码示例，展示如何定义自定义事件、注册事件处理器、实现复杂的事件流。解释事件生命周期：事件触发时机、异常处理、性能优化策略。说明与表单状态服务的集成：事件处理如何更新 PageFormStateService，触发显隐联动和数据刷新。",
       "progress_status": "completed",
       "dependent_files": "src/LowCode/RenderEngine/H.LowCode.RenderEngineBase/EventCallbackHelper.cs,src/LowCode/RenderEngine/H.LowCode.RenderEngineBase/RenderEngineDynamicComponentBase.cs",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "1d5bbeca-e090-4003-85e8-db9f1f7f15de",
       "layer_level": 2,
       "order": 2,
@@ -652,8 +741,8 @@
       "prompt": "为 AppLab 低代码平台创建综合性文档。详细阐述低代码的核心概念：元数据驱动的页面构建机制，从可视化设计器到最终可运行应用的完整流程。解释 MetaSchema 元数据契约设计，包括组件属性、事件、布局、校验规则的 Schema 定义。说明 DesignEngine（设计引擎）的工作原理：如何解析用户操作、生成和验证元数据、支持组件拖拽和属性编辑。阐述 RenderEngine（渲染引擎）的实现：如何将元数据动态转换为 Blazor 组件树，支持主题切换和运行时配置。包含具体的代码示例，展示如何定义自定义组件、扩展元数据类型、集成第三方 Blazor 组件。解释低代码平台与企业级应用的集成方式，以及如何通过低代码快速构建业务界面。提供性能优化建议和最佳实践。",
       "progress_status": "completed",
       "dependent_files": "src/LowCode/Common/H.LowCode.MetaSchema/,src/LowCode/DesignEngine/,src/LowCode/RenderEngine/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "order": 2,
       "kk_dependent_files": [
         "src/LowCode/Common/H.LowCode.MetaSchema/",
@@ -669,8 +758,8 @@
       "prompt": "为 AppLab 低代码平台的渲染引擎创建综合性文档。深入解释 RenderEngine 的核心机制：如何将 MetaSchema 动态转换为 Blazor 组件树，包括 RenderEngineDynamicComponentBase 的动态组件创建、RenderEngineLowCodeComponentBase 的低代码组件基类、PageComponentRegistry 的组件注册表。阐述表达式解析器 LowCodeExpressionResolver 的工作原理：支持的数据源引用、函数调用、条件表达式语法。说明事件回调机制 EventCallbackHelper 的实现：如何将元数据中的事件定义映射到 Blazor 的事件处理器，支持跨组件事件通信。解释数据操作管理器 ListDataOperationManager：如何处理列表组件的数据加载、分页、筛选、排序等操作。详细说明主题系统和样式注入机制，包括 AntBlazor 主题支持和运行时样式定制。阐述渲染引擎的仓储抽象：JsonFile 本地存储、EntityFrameworkCore 数据库持久化、RemoteService 远程服务调用的实现差异。说明 PageFormStateService 的页面状态管理：表单状态持久化、脏标记检测、自动保存机制。包含具体的代码示例，展示如何开发自定义渲染组件、注册事件处理器、集成第三方 Blazor 库。解释性能优化策略：组件懒加载、虚拟滚动、缓存策略、内存管理等最佳实践。",
       "progress_status": "completed",
       "dependent_files": "src/LowCode/RenderEngine/H.LowCode.RenderEngine/,src/LowCode/RenderEngine/H.LowCode.RenderEngine.Application/,src/LowCode/RenderEngine/H.LowCode.RenderEngine.Domain/,src/LowCode/RenderEngine/H.LowCode.RenderEngine.Application.Contracts/,src/LowCode/RenderEngine/H.LowCode.RenderEngine.EntityFrameworkCore/,src/LowCode/RenderEngine/H.LowCode.RenderEngine.Repository.JsonFile/,src/LowCode/RenderEngine/H.LowCode.RenderEngine.Repository.RemoteService/,src/LowCode/RenderEngine/H.LowCode.RenderEngineBase/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "1cbe62bf-7815-4ed1-b2f4-b37befa98428",
       "layer_level": 1,
       "order": 2,
@@ -693,8 +782,8 @@
       "prompt": "为 AppLab 平台创建 HTTP 代理扩展文档。详细说明基于 DispatchProxy 的动态 HTTP 客户端生成机制：HttpClientProxyInterceptor 的实现原理、IAppService 接口的自动代理生成、ABP URL 约定解析器。解释依赖注入容器的扩展点：ServiceCollectionExtensions 提供的 AddRemoteServices 和 AddHttpClientProxies 方法、服务注册的自动化流程。包含自定义 HTTP 拦截器的开发指南：如何添加请求/响应拦截器、实现认证令牌注入、添加日志记录和性能监控。说明远程服务配置：RemoteServiceOptions 的配置方式、多服务路由策略、负载均衡支持。提供 HTTP 代理扩展的最佳实践：连接池管理、超时配置、错误重试机制、熔断降级。包含具体的扩展示例：自定义拦截器实现和服务配置示例。",
       "progress_status": "completed",
       "dependent_files": "src/Utils/H.Abp.HttpClientProxy/HttpClientProxyInterceptor.cs,src/Utils/H.Abp.HttpClientProxy/ServiceCollectionExtensions.cs,src/Utils/H.Abp.HttpClientProxy/AbpUrlConvention.cs,src/Utils/H.Abp.Application.Contracts/IAppService.cs",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "9c5762c8-c259-4bd0-b8d6-9e91b08b7803",
       "layer_level": 2,
       "order": 2,
@@ -713,8 +802,8 @@
       "prompt": "为设计引擎的属性系统与事件系统创建详细文档。解释 PropertySetting.razor 如何根据组件 MetaSchema 动态选择并渲染不同的 PropertySettingItem：BasicPropertyItem 处理基础文本、数字、布尔值，EventPropertyItem 管理事件定义与回调绑定，ExtensionPropertyItem 支持扩展属性，DataSourcePropertyItem 统一封装列表与选项数据源的配置。详细说明 ListDataSource 与 OptionDataSource 的区别：前者用于表格/列表数据绑定，后者用于下拉框等选项来源；FixedListDataSource、SQLForOptionDataSource、TableDataSourceSetting 等子组件的职责。解释事件系统的结构：事件名称、参数类型、是否冒泡、是否在页面事件中注册；说明事件在页面 Schema 中的存储格式，以及运行时由 RenderEngine 触发的约定。提供自定义属性项的扩展指南：继承现有 PropertySettingItem、注册到 MetaSchema、在渲染时消费该属性。包含代码示例，展示如何为一个自定义 Blazor 组件定义属性、绑定数据源、声明事件。",
       "progress_status": "completed",
       "dependent_files": "src/LowCode/DesignEngine/H.LowCode.DesignEngine/SettingPanel/PropertySettingItems/BasicPropertyItem.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine/SettingPanel/PropertySettingItems/EventPropertyItem.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine/SettingPanel/PropertySettingItems/ExtensionPropertyItem.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine/SettingPanel/PropertySettingItems/DataSourcePropertyItem.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine/SettingPanel/PropertySettingItems/ListDataSource/FixedListDataSource.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine/SettingPanel/PropertySettingItems/ListDataSource/ListDataSourceSetting.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine/SettingPanel/PropertySettingItems/OptionDataSource/OptionDataSourceSetting.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine/SettingPanel/PropertySettingItems/OptionDataSource/FiexdForOptionDataSource.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine/SettingPanel/PropertySettingItems/OptionDataSource/SQLForOptionDataSource.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine/SettingPanel/PropertySettingItems/TableDataSource/TableDataSourceSetting.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine/SettingPanel/PropertySettingItems/TableDataSource/TableDataSourceSelector.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine/SettingPanel/PropertySettingItems/ComponentPropertyItems/TablePropertyItem.razor",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "d23c19dd-1267-4317-bfd9-ffdf1ec9cc85",
       "layer_level": 2,
       "order": 2,
@@ -741,8 +830,8 @@
       "prompt": "为 Approval 审批流程服务创建详细文档。深入解释工作流引擎的集成、审批节点配置、流程实例管理等核心功能。详细说明基于 Elsa 3.8 的工作流编排能力，包括流程定义、节点类型、条件分支、并行审批等高级特性。文档应涵盖审批表单的动态渲染、审批意见的流转、审批状态的追踪等关键业务流程。提供具体的 API 调用示例，展示如何启动审批流程、处理审批任务、查看审批历史等操作。说明审批流程与业务数据的关联方式，以及如何实现复杂的多级审批逻辑。包含审批流程的扩展点，如自定义审批节点、外部系统审批集成等场景的实现指导。",
       "progress_status": "completed",
       "dependent_files": "src/Services/Approval/,src/Services/Approval/src/Services/Approval/H.Approval.Application/,src/Services/Approval/src/Services/Approval/H.Approval.Application.Contracts/,src/Services/Approval/src/Services/Approval/H.Approval.EntityFrameworkCore/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "db9d8bda-1d87-4e28-9bcc-7ffbc79b469c",
       "layer_level": 1,
       "order": 2,
@@ -761,8 +850,8 @@
       "prompt": "为 AppLab 的 Docker 容器化部署创建全面文档。详细解释 cd/docker-compose.yml 中定义的依赖服务：Redis（redis:8.8-alpine，端口 6379，密码保护）、RabbitMQ（rabbitmq:4.0-management-alpine，端口 5672 和 15672 管理界面，用户名 root/密码 123456）、MinIO（端口 9000 API 和 9001 控制台，默认 minioadmin/minioadmin）。说明各服务的启动参数、环境变量配置、数据卷持久化（rabbitmq_data、minio_data）和安全最佳实践。提供完整的 .NET 应用 Dockerfile 编写指南，包括多阶段构建、Alpine 基础镜像、依赖注入配置。详细说明 appsettings.json 中数据库连接字符串、Redis 配置、RabbitMQ 连接、MinIO 端点的配置格式。包含生产环境部署建议：反向代理配置（Nginx/Apache）、SSL 证书配置、负载均衡、健康检查端点、监控集成（Prometheus/Grafana）、日志收集（ELK/EFK）等。提供故障排查指南和性能调优建议。",
       "progress_status": "completed",
       "dependent_files": "cd/docker-compose.yml,src/Host/H.AppLab.Web.Host/H.AppLab.Web.Host/appsettings.json,src/Host/H.AppLab.Desktop/appsettings.json",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "a9de80a7-108a-49ef-8391-f289c33cd8eb",
       "layer_level": 1,
       "order": 2,
@@ -780,8 +869,8 @@
       "prompt": "为 RemoteService 远程服务仓储创建详细文档。解释 RemoteServiceRepositoryBase 基类架构：HTTP 客户端封装、统一请求头设置、认证令牌传递。详细说明各实体远程仓储的实现：AppRemoteServiceRepository 调用远端应用管理服务、PageRemoteServiceRepository 调用页面管理服务、MenuRemoteServiceRepository 调用菜单管理服务、DataSourceRemoteServiceRepository 调用数据源管理服务。阐述网络通信机制：RESTful API 调用约定、JSON 请求响应序列化、超时和重试配置。说明负载均衡策略：多实例发现机制、健康检查、故障转移。解释缓存策略：本地缓存与远端数据的同步、缓存失效机制、一致性保证。包含配置示例：如何在 appsettings.json 中配置远端服务地址、超时时间、重试次数、认证信息。提供错误处理指南：网络异常处理、HTTP 状态码处理、服务降级策略、熔断器模式实现。说明监控和诊断：请求链路追踪、性能指标收集、错误日志记录。解释安全考虑：HTTPS 证书验证、API 密钥管理、请求签名验证。",
       "progress_status": "completed",
       "dependent_files": "src/LowCode/RenderEngine/H.LowCode.RenderEngine.Repository.RemoteService/Base/RemoteServiceRepositoryBase.cs,src/LowCode/RenderEngine/H.LowCode.RenderEngine.Repository.RemoteService/Repositories/AppRemoteServiceRepository.cs,src/LowCode/RenderEngine/H.LowCode.RenderEngine.Repository.RemoteService/Repositories/PageRemoteServiceRepository.cs,src/LowCode/RenderEngine/H.LowCode.RenderEngine.Repository.RemoteService/Repositories/MenuRemoteServiceRepository.cs,src/LowCode/RenderEngine/H.LowCode.RenderEngine.Repository.RemoteService/Repositories/DataSourceRemoteServiceRepository.cs,src/LowCode/RenderEngine/H.LowCode.RenderEngine.Repository.RemoteService/RenderEngineRemoteServiceRepositoryModule.cs",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "bd0c193e-38d0-414b-a171-e213f2fa2e20",
       "layer_level": 3,
       "order": 2,
@@ -802,8 +891,8 @@
       "prompt": "为 AppLab 模块化架构创建详细的设计文档。解释基于 ABP Framework 的限界上下文划分：Account、Organization、Approval、Order、SupplyChain、Notification、BackgroundTask、File、Setting 等服务各自独立的领域模型和数据存储。详细说明模块化原则：高内聚低耦合、接口契约优先、依赖倒置。解释模块间通信机制：同步 HTTP API 调用、异步事件总线（CAP + RabbitMQ）、共享配置中心。包含模块生命周期管理：启动顺序、依赖注入、健康检查。提供模块依赖图和服务发现机制。说明跨模块事务处理和分布式一致性考虑。",
       "progress_status": "completed",
       "dependent_files": "src/Services/Account/,src/Services/Organization/,src/Services/Approval/,src/Utils/H.Abp.Application.Contracts/IAppService.cs",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "8b28368e-d1d0-4d06-8a44-790c012fe852",
       "layer_level": 1,
       "order": 2,
@@ -822,8 +911,8 @@
       "prompt": "为 H.Util.Base 基础工具库创建综合文档。详细介绍 BaseOutput 统一输出响应模型的设计，包括成功状态码、错误信息封装、数据包装的标准格式。深入解释 JsonExtension 的 JSON 扩展方法，涵盖对象序列化、反序列化、JSON 字符串操作的实用方法。说明 ObjectExtension 的对象操作扩展，包括属性复制、空值检查、类型转换等常用操作。介绍 TypeExtension 的类型反射扩展，涵盖类型判断、泛型处理、程序集扫描等功能。解释 EnumExtension 的枚举处理扩展，包括枚举值获取、描述符提取、值转换等方法。提供每个扩展类的具体使用示例，展示在业务代码中的实际应用模式和性能优化建议。",
       "progress_status": "completed",
       "dependent_files": "src/Utils/H.Util.Base/BaseOutput.cs,src/Utils/H.Util.Base/JsonExtension.cs,src/Utils/H.Util.Base/ObjectExtension.cs,src/Utils/H.Util.Base/TypeExtension.cs,src/Utils/H.Util.Base/EnumExtension.cs",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "ca69e922-eb11-4e04-9fda-138a010f4590",
       "layer_level": 2,
       "order": 2,
@@ -843,8 +932,8 @@
       "prompt": "为 Organization 服务创建详细的 API 文档。涵盖组织架构管理接口：部门 CRUD 操作、树形结构维护、层级关系管理；人员管理接口：员工信息管理、部门成员管理、岗位分配；组织权限接口：组织级权限控制、数据范围限制、访问权限验证。详细说明每个接口的 HTTP 方法、URL 路径、请求参数、响应数据结构。提供完整的请求响应示例，包括复杂树形结构的 JSON 格式。说明组织架构的数据模型、继承关系、缓存策略。包含批量操作、性能优化和并发处理的注意事项。",
       "progress_status": "completed",
       "dependent_files": "src/Services/Organization/,src/Services/Organization/src/Services/Organization/H.Organization.Application.Contracts/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "1b79d1d5-ba4e-4086-9769-8a0f913d8875",
       "layer_level": 1,
       "order": 2,
@@ -861,8 +950,8 @@
       "prompt": "为 AppLab 的外部服务集成创建详细文档。说明 Redis 分布式缓存的配置和使用：连接字符串设置、缓存策略、会话管理。详细介绍 RabbitMQ 消息队列的集成：CAP 框架的配置、消息发布订阅模式、死信队列处理。解释 MinIO 对象存储的配置：连接参数、桶策略、文件上传下载接口。说明 Hangfire 后台任务调度的配置：Dashboard 访问、任务持久化、并发控制。介绍 Elsa 工作流引擎的集成：流程定义、执行上下文、状态管理。提供 Docker Compose 中各依赖服务的配置说明：端口映射、环境变量、数据卷挂载。包含各服务的健康检查、监控指标和故障恢复策略。提供连接失败的错误处理和重试机制的实现示例。",
       "progress_status": "completed",
       "dependent_files": "cd/docker-compose.yml,src/Host/H.AppLab.Web.Host/H.AppLab.Web.Host/Program.cs,src/Services/BackgroundTask/,src/Services/File/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "c778fa4d-6f27-4ac5-8a5c-e3125df639ab",
       "layer_level": 1,
       "order": 2,
@@ -881,8 +970,8 @@
       "prompt": "为 AppLab 低代码渲染引擎创建详细的架构文档。深入解释 RenderEngine 的工作原理：从 MetaSchema 到运行时 Blazor 组件的动态转换过程。详细说明渲染引擎的核心流程：元数据解析 → 组件树构建 → 动态组件实例化 → Blazor 渲染。解释 H.LowCode.RenderEngineBase 提供的核心能力：组件注册机制、Props 映射、事件绑定、生命周期管理。说明 H.LowCode.RenderEngine.Application.Contracts 暴露的应用接口。详细介绍主题系统：H.LowCode.Themes.AntBlazor 基于 Ant Design Blazor 的主题实现，以及如何扩展自定义主题。包含性能优化策略：组件懒加载、虚拟滚动、状态管理等。提供渲染引擎的扩展点和定制指南。",
       "progress_status": "completed",
       "dependent_files": "src/LowCode/RenderEngine/H.LowCode.RenderEngine/H.LowCode.RenderEngine.csproj,src/LowCode/RenderEngine/H.LowCode.RenderEngineBase/,src/LowCode/RenderEngine/H.LowCode.RenderEngine.Application.Contracts/,src/LowCode/RenderEngine/H.LowCode.Themes.AntBlazor/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "07ee2bcd-0521-4ee2-a002-a4901e08ed21",
       "layer_level": 2,
       "order": 2,
@@ -901,8 +990,8 @@
       "prompt": "为 AppLab 的 WebAssembly 懒加载机制创建详细的技术文档。解释 LazyModuleRegistry 如何实现程序集的按需下载和模块注册，包括模块清单管理、依赖解析、版本控制等核心功能。详细说明 CompositeServiceProvider 如何组合多个模块的服务提供者，支持运行时动态发现和服务解析。阐述懒加载的生命周期：从导航触发、程序集下载、IL 解析、服务注册到最终实例化的完整流程。包含实际代码示例展示如何声明可懒加载的模块、如何配置模块依赖关系、如何处理加载失败和重试机制。解释懒加载对应用启动性能的影响，以及如何通过合理的模块划分优化用户体验。提供调试技巧和问题排查指南。",
       "progress_status": "completed",
       "dependent_files": "src/Host/H.AppLab.Web.Host/H.AppLab.Web.Host.Client/LazyModuleRegistry.cs,src/Host/H.AppLab.Web.Host/H.AppLab.Web.Host.Client/CompositeServiceProvider.cs",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "2395bb26-4daf-4108-b7ca-2b668a88b51d",
       "layer_level": 1,
       "order": 2,
@@ -919,8 +1008,8 @@
       "prompt": "为 AppLab 的配置管理系统创建详细文档。解释 appsettings.json 的组织结构和分层配置策略：基础配置、环境特定配置、敏感信息分离。详细说明 ABP Framework 的配置系统：IConfiguration 的使用、配置绑定、配置验证。介绍敏感信息的安全处理：环境变量注入、密钥管理服务集成、配置文件加密。说明不同宿主环境的配置差异：Web Host、Desktop Host、DbMigrator 工具的配置重点。提供配置热重载的实现方式和最佳实践。包含配置默认值、配置继承、配置覆盖的规则说明。提供常见配置错误的排查方法和调试技巧。说明生产环境的配置部署策略和安全加固措施。",
       "progress_status": "completed",
       "dependent_files": "src/Host/H.AppLab.Web.Host/H.AppLab.Web.Host/appsettings.json,src/Host/H.AppLab.Desktop/appsettings.json,src/Tools/*/appsettings.json",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "c778fa4d-6f27-4ac5-8a5c-e3125df639ab",
       "layer_level": 1,
       "order": 3,
@@ -938,8 +1027,8 @@
       "prompt": "为低代码平台的列表数据管理子系统创建全面文档。详细解释 ListDataOperationManager 的核心职责：管理多个列表组件的数据增删改查操作，维护内存中的数据字典 _listDataStore。说明列表数据的注册机制 RegisterListData：区分数据库同步列表和非数据库列表，记录被删除行的主键以便保存时同步删除。阐述列表操作方法：MoveUp/MoveDown 调整项目顺序、DeleteItem 删除项目并记录主键、AddItem/AddDefaultItem 添加新项目、CopyItem 复制项目、UpdateOrderFields 更新排序字段。解释数据库同步机制：_dbSyncedListIds 跟踪需要持久化的列表，_deletedIdsStore 记录编辑过程中的删除操作。说明与 TableDataAppService 的集成：通过 ITableDataAppService 接口调用远程服务进行分页查询、批量更新、新增保存等操作。详细描述主键管理机制：约定 f_id 为主键字段，自动生成 Guid 值，支持从字典或反射属性获取主键值。包含具体的使用场景：表格组件的数据绑定、拖拽排序、批量操作、与后端数据库的同步策略。解释性能优化策略：增量更新、虚拟滚动、内存管理等最佳实践。说明事件通知机制：OnChange 事件驱动视图重新渲染，确保 UI 与数据的一致性。",
       "progress_status": "completed",
       "dependent_files": "src/LowCode/RenderEngine/H.LowCode.RenderEngineBase/ListDataOperationManager.cs,src/LowCode/RenderEngine/H.LowCode.RenderEngine/Application/DataAppServices/TableDataAppService.cs",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "1d5bbeca-e090-4003-85e8-db9f1f7f15de",
       "layer_level": 2,
       "order": 3,
@@ -956,8 +1045,8 @@
       "prompt": "为 Order 订单管理服务创建详细文档。深入解释订单生命周期管理、订单状态机、订单明细处理等核心业务功能。详细说明订单实体模型的设计，包括主订单、订单项、价格计算、库存扣减等业务规则。文档应涵盖订单的创建、修改、取消、完成等完整生命周期，以及与审批流程的集成方式。提供具体的 API 调用示例，展示如何创建订单、查询订单详情、处理订单变更等操作。说明订单数据的事务一致性保证，以及与供应链管理、财务系统等下游系统的集成模式。包含订单业务的常见扩展场景，如折扣策略、促销规则、多币种支持等功能的实现指导。",
       "progress_status": "completed",
       "dependent_files": "src/Services/Order/,src/Services/Order/src/Services/Order/H.Order.Application/,src/Services/Order/src/Services/Order/H.Order.Application.Contracts/,src/Services/Order/src/Services/Order/H.Order.EntityFrameworkCore/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "db9d8bda-1d87-4e28-9bcc-7ffbc79b469c",
       "layer_level": 1,
       "order": 3,
@@ -976,8 +1065,8 @@
       "prompt": "为 AppLab 平台创建全面的数据流设计文档。详细说明前端到后端的数据流：UI 组件 → HttpClientProxyInterceptor → AbpUrlConvention → RESTful API → Application Service → Domain Service → Entity Framework。解释低代码数据流：Designer → Storage (JSON) → Renderer → Runtime Application。说明实时通信机制：Blazor EventDispatcher 的事件分发、WebSocket 连接管理。包含数据转换层：DTO 映射、序列化/反序列化、错误处理。提供数据流图表展示关键路径上的数据变换过程。说明缓存策略：Redis 分布式缓存、本地内存缓存、浏览器缓存。包含性能优化建议：请求合并、响应压缩、懒加载策略。",
       "progress_status": "completed",
       "dependent_files": "src/Utils/H.Abp.HttpClientProxy/HttpClientProxyInterceptor.cs,src/Utils/H.Abp.HttpClientProxy/AbpUrlConvention.cs,src/LowCode/Common/H.LowCode.MetaSchema/MetaSchema.cs,src/Utils/H.Util.Blazor/BlazorEventDispatcher.cs",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "8b28368e-d1d0-4d06-8a44-790c012fe852",
       "layer_level": 1,
       "order": 3,
@@ -996,8 +1085,8 @@
       "prompt": "为 AppLab 平台创建主题扩展文档。详细说明低代码渲染引擎的主题架构：ThemePartLayoutBase 基类设计、Ant Design Blazor 主题集成、CSS 变量系统和样式覆盖机制。解释主题组件的注册和加载机制：如何通过依赖注入注册自定义主题、主题组件的发现与优先级处理。包含自定义主题的完整开发指南：如何继承 ThemePartLayoutBase、定义主题特定的布局组件、实现响应式样式适配、支持深色模式切换。说明主题配置系统：主题选项的配置方式、动态主题切换机制、主题资源的懒加载。提供主题扩展的最佳实践：样式隔离、性能优化、浏览器兼容性。包含具体的扩展示例：从零开始创建一个自定义主题，包括布局组件、颜色变量、字体配置的完整实现。",
       "progress_status": "completed",
       "dependent_files": "src/LowCode/RenderEngine/H.LowCode.Themes.AntBlazor/,src/LowCode/RenderEngine/H.LowCode.RenderEngineBase/Layout/ThemePartLayoutBase.cs,src/Components/AppDrawer/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "9c5762c8-c259-4bd0-b8d6-9e91b08b7803",
       "layer_level": 2,
       "order": 3,
@@ -1015,8 +1104,8 @@
       "prompt": "为 Approval 服务创建详细的 API 文档。涵盖审批流程管理接口：流程定义、流程实例创建、任务分配；审批操作接口：审批通过、驳回、转交、加签；待办事项接口：待办列表查询、历史审批记录、统计报表。详细说明每个接口的 HTTP 方法、URL 路径、请求参数、响应数据结构。提供完整的请求响应示例，包括复杂的审批工作流 JSON 格式。说明审批状态机、流转规则、条件分支处理。包含审批审计日志、超时处理、异常流程恢复的机制说明。",
       "progress_status": "completed",
       "dependent_files": "src/Services/Approval/,src/Services/Approval/src/Services/Approval/H.Approval.Application.Contracts/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "1b79d1d5-ba4e-4086-9769-8a0f913d8875",
       "layer_level": 1,
       "order": 3,
@@ -1033,8 +1122,8 @@
       "prompt": "为 AppLab 低代码组件体系创建详细的技术文档。深入解释组件基类层次结构：LowCodeComponentBase 提供最基础的注入服务和工具方法；LowCodeLayoutComponentBase 提供布局相关能力；LowCodeDynamicComponentBase 支持动态组件渲染；LowCodePageComponentBase 提供页面级功能。详细说明级联模型设计：AppCascadingModel 应用上下文、PageCascadingModel 页面上下文、PartsCascadingModel 部件上下文的作用域和数据传递。解释 LowCodeAppState 的状态管理机制，包括 IsDesign 标识、导航管理、JS 互操作集成。说明组件的生命周期、Props 传递机制、事件冒泡处理、样式继承规则。提供自定义组件开发指南：如何继承基类、注册组件、定义属性、处理事件、实现响应式更新。包含组件性能优化建议和最佳实践。",
       "progress_status": "completed",
       "dependent_files": "src/LowCode/Common/H.LowCode.ComponentBase/LowCodeComponentBase.cs,src/LowCode/Common/H.LowCode.ComponentBase/LowCodeLayoutComponentBase.cs,src/LowCode/Common/H.LowCode.ComponentBase/LowCodeDynamicComponentBase.cs,src/LowCode/Common/H.LowCode.ComponentBase/LowCodePageComponentBase.cs,src/LowCode/Common/H.LowCode.ComponentBase/CascadingModels/AppCascadingModel.cs,src/LowCode/Common/H.LowCode.ComponentBase/CascadingModels/PageCascadingModel.cs,src/LowCode/Common/H.LowCode.ComponentBase/CascadingModels/PartsCascadingModel.cs,src/LowCode/Common/H.LowCode.ComponentBase/LowCodeAppState.cs",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "07ee2bcd-0521-4ee2-a002-a4901e08ed21",
       "layer_level": 2,
       "order": 3,
@@ -1057,8 +1146,8 @@
       "prompt": "为 H.Util.Blazor Blazor 辅助工具库创建详细文档。深入介绍 HToastService 消息提示服务的实现机制，包括 Toast 消息的显示控制、样式定制、生命周期管理、多实例管理等核心功能。详细说明 BlazorEventDispatcher 的事件分发机制，涵盖组件间通信、事件订阅发布、异步事件处理、事件冒泡等特性。介绍 Components 目录下的可复用 Blazor 组件，包括组件的属性绑定、事件回调、样式覆盖、国际化支持等。解释 _Imports.razor 的自动导入机制和服务注册方式。提供具体的使用示例，展示如何在 Blazor 页面中集成 Toast 提示、实现组件间通信、自定义组件样式和行为的最佳实践。",
       "progress_status": "completed",
       "dependent_files": "src/Utils/H.Util.Blazor/HToastService.cs,src/Utils/H.Util.Blazor/BlazorEventDispatcher.cs,src/Utils/H.Util.Blazor/Components/,src/Utils/H.Util.Blazor/_Imports.razor",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "ca69e922-eb11-4e04-9fda-138a010f4590",
       "layer_level": 2,
       "order": 3,
@@ -1077,8 +1166,8 @@
       "prompt": "为设计引擎的数据源绑定功能创建详细文档。解释 DataSourceAppService 提供的数据源 CRUD 能力，以及 TableDataAppService 如何执行分页查询、筛选、排序并将结果返回给前端。说明三种主要数据源类型：固定列表（FixedListDataSource）、API 数据源（APIDataSource）、SQL 数据源（SQLForOptionDataSource / TableDataSource），以及它们各自支持的查询参数、分页模型和返回结构。详细阐述数据绑定流程：页面 Schema 中的 dataSource 配置如何被 RenderEngine 解析，如何通过 HttpClientProxy 或本地服务调用后端 IAppService，如何将结果映射到表格列、下拉选项或表单字段。解释 TableDataSourceSelector 如何选择已定义的数据源，以及新增数据源时的表单校验（如 SQL 语法、API 路径、权限）。包含实际示例：创建一个表数据源、在页面表格中绑定该数据源、实现带分页和搜索的查询。说明性能优化建议：避免在列表渲染中重复请求、合理使用缓存、避免 N+1 查询。",
       "progress_status": "completed",
       "dependent_files": "src/LowCode/DesignEngine/H.LowCode.DesignEngine.Application/AppServices/DataSourceAppService.cs,src/LowCode/DesignEngine/H.LowCode.DesignEngine.Application/AppServices/TableDataAppService.cs,src/LowCode/DesignEngine/H.LowCode.DesignEngine/SettingPanel/PropertySettingItems/DataSourcePropertyItem.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine/SettingPanel/PropertySettingItems/ListDataSource/ListDataSourceSetting.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine/SettingPanel/PropertySettingItems/OptionDataSource/OptionDataSourceSetting.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine/SettingPanel/PropertySettingItems/TableDataSource/TableDataSourceSetting.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine/SettingPanel/PropertySettingItems/TableDataSource/TableDataSourceSelector.razor",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "d23c19dd-1267-4317-bfd9-ffdf1ec9cc85",
       "layer_level": 2,
       "order": 3,
@@ -1100,8 +1189,8 @@
       "prompt": "为 AppLab 的 UI 组件开发创建全面的规范和指南文档。基于 AppDrawer 组件库的实际实现，详细说明 Blazor 组件的开发模式：组件属性设计（[Parameter]）、事件处理（[EventHandler]）、样式定制（CSS isolation）、主题支持等。解释组件的生命周期管理、状态同步、父子组件通信的最佳实践。详细说明 AppDrawer 的核心组件架构，包括菜单项渲染、抽屉面板切换、用户认证集成等功能模块。提供组件测试策略，包括单元测试、集成测试、UI 自动化测试的实现方法。包含响应式设计指南，确保组件在不同屏幕尺寸和设备上的良好表现。说明组件的可访问性（a11y）要求和无障碍性支持。提供组件 API 文档模板和命名约定规范。",
       "progress_status": "completed",
       "dependent_files": "src/Components/AppDrawer/H.AppDrawer.Components/Components/,src/Components/AppDrawer/H.AppDrawer.Model/,src/Utils/H.Util.Blazor/Components/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "2395bb26-4daf-4108-b7ca-2b668a88b51d",
       "layer_level": 1,
       "order": 3,
@@ -1112,6 +1201,23 @@
       ]
     },
     {
+      "id": "d2bb74c8-2d10-499d-ab65-49c675faf0af",
+      "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
+      "name": "电子表格处理工具",
+      "description": "spreadsheet-tool",
+      "prompt": "",
+      "progress_status": "completed",
+      "dependent_files": "src/Agent/Workbench/H.Workbench.Core/Tools/SpreadsheetTool.cs",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
+      "parent_id": "8bb199a9-10d4-49d3-8d84-18ac152008dc",
+      "layer_level": 3,
+      "order": 3,
+      "kk_dependent_files": [
+        "src/Agent/Workbench/H.Workbench.Core/Tools/SpreadsheetTool.cs"
+      ]
+    },
+    {
       "id": "db9d8bda-1d87-4e28-9bcc-7ffbc79b469c",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "name": "企业级应用",
@@ -1119,8 +1225,8 @@
       "prompt": "为 AppLab 企业级应用套件创建综合文档。介绍按限界上下文划分的业务应用领域：Account（账户管理）、Organization（组织管理）、Approval（审批流程）、Order（订单管理）、SupplyChain（供应链管理）、Notification（通知中心）、BackgroundTask（后台任务）、File（文件服务）、Setting（设置管理）。每个应用都遵循 ABP 标准分层架构，包含 Application.Contracts、Application、EntityFrameworkCore、Web 四个层次。说明这些应用如何作为独立的服务运行，又如何在主应用中组合使用。解释应用间的依赖关系和集成方式，包括 API 调用、事件总线通信、共享模型定义。提供各领域的核心业务流程、数据模型概览和关键接口说明。展示如何使用这些现成的业务能力快速构建业务应用，以及如何进行领域扩展和定制。",
       "progress_status": "completed",
       "dependent_files": "src/Services/Account/,src/Services/Organization/,src/Services/Approval/,src/Services/Order/,src/Services/SupplyChain/,src/Services/Notification/,src/Services/BackgroundTask/,src/Services/File/,src/Services/Setting/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "order": 3,
       "kk_dependent_files": [
         "src/Services/Account/",
@@ -1135,6 +1241,23 @@
       ]
     },
     {
+      "id": "05229458-e2e0-49db-8427-7aea8cecc490",
+      "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
+      "name": "工作区构建工具",
+      "description": "workspace-build-tool",
+      "prompt": "",
+      "progress_status": "completed",
+      "dependent_files": "src/Agent/Workbench/H.Workbench.Core/Tools/WorkspaceBuildTool.cs",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
+      "parent_id": "8bb199a9-10d4-49d3-8d84-18ac152008dc",
+      "layer_level": 3,
+      "order": 4,
+      "kk_dependent_files": [
+        "src/Agent/Workbench/H.Workbench.Core/Tools/WorkspaceBuildTool.cs"
+      ]
+    },
+    {
       "id": "10904053-ac21-4f57-be83-da83492a00ab",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "name": "H.Util.Ids",
@@ -1142,8 +1265,8 @@
       "prompt": "为 H.Util.Ids ID 生成工具库创建技术文档。详细对比 ShortIdGenerator 和 SnowflakeIdGenerator 两种 ID 生成策略的实现差异和适用场景。深入解释 ShortIdGenerator 的短 ID 生成算法，包括字符集选择、随机性保证、冲突避免机制、性能优化策略。详细说明 SnowflakeIdGenerator 的雪花算法实现，涵盖时间戳分配、机器 ID 配置、序列号生成、分布式唯一性保证等核心原理。比较两种方案的优缺点：ShortId 的简洁性与可读性 vs Snowflake 的有序性和分布式特性。提供具体的使用示例，展示如何在不同业务场景下选择合适的 ID 生成策略，包括数据库索引优化、缓存键设计、日志追踪等应用场景的最佳实践。",
       "progress_status": "completed",
       "dependent_files": "src/Utils/H.Util.Ids/ShortIdGenerator.cs,src/Utils/H.Util.Ids/SnowflakeIdGenerator.cs",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "ca69e922-eb11-4e04-9fda-138a010f4590",
       "layer_level": 2,
       "order": 4,
@@ -1160,8 +1283,8 @@
       "prompt": "为 SupplyChain 供应链管理服务创建详细文档。深入解释供应商管理、采购流程、库存管理、物流跟踪等核心业务功能。详细说明供应链各参与方的角色定义，包括供应商、仓库、物流公司等实体的关系建模。文档应涵盖采购申请、供应商选择、入库出库、库存盘点等完整的供应链业务流程。提供具体的 API 调用示例，展示如何管理供应商信息、创建采购订单、查询库存状态等操作。说明供应链数据与其他业务系统的集成方式，如与订单系统的自动对接、与财务系统的结算同步等。包含供应链管理的常见扩展场景，如多级供应商体系、智能补货算法、供应链可视化等功能的实现指导。",
       "progress_status": "completed",
       "dependent_files": "src/Services/SupplyChain/,src/Services/SupplyChain/src/Services/SupplyChain/H.SupplyChain.Application/,src/Services/SupplyChain/src/Services/SupplyChain/H.SupplyChain.Application.Contracts/,src/Services/SupplyChain/src/Services/SupplyChain/H.SupplyChain.EntityFrameworkCore/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "db9d8bda-1d87-4e28-9bcc-7ffbc79b469c",
       "layer_level": 1,
       "order": 4,
@@ -1180,8 +1303,8 @@
       "prompt": "为 AppLab 的监控与日志系统创建详细文档。说明 Serilog 日志框架的配置：日志级别、输出目标、结构化日志格式。详细介绍性能监控的实现：请求跟踪、慢查询检测、内存使用监控。解释 Hangfire Dashboard 的监控功能：任务执行历史、失败重试、手动干预。介绍应用健康检查端点的实现：数据库连接、Redis 连接、MinIO 连接的可用性检测。说明分布式追踪的配置：请求链路跟踪、跨服务调用监控。提供自定义指标收集和 Prometheus 集成方案。包含日志轮转、归档策略和磁盘空间管理。提供常见性能瓶颈的识别方法和优化建议。说明生产环境的日志收集和分析平台集成方案。",
       "progress_status": "completed",
       "dependent_files": "src/Host/H.AppLab.Web.Host/H.AppLab.Web.Host/Program.cs,src/Tools/H.LowCode.DbMigrator/appsettings.serilog.json",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "c778fa4d-6f27-4ac5-8a5c-e3125df639ab",
       "layer_level": 1,
       "order": 4,
@@ -1198,8 +1321,8 @@
       "prompt": "为 Order 服务创建详细的 API 文档。涵盖订单基础操作接口：订单创建、查询、修改、删除；订单状态管理接口：订单确认、发货、收货、取消、退款；订单明细管理接口：商品添加、数量修改、价格计算。详细说明每个接口的 HTTP 方法、URL 路径、请求参数、响应数据结构。提供完整的请求响应示例，包括复杂的订单对象和状态流转 JSON 格式。说明订单事务处理、库存扣减、支付集成的业务流程。包含订单幂等性保证、并发控制、分布式事务的处理方案。",
       "progress_status": "completed",
       "dependent_files": "src/Services/Order/,src/Services/Order/src/Services/Order/H.Order.Application.Contracts/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "1b79d1d5-ba4e-4086-9769-8a0f913d8875",
       "layer_level": 1,
       "order": 4,
@@ -1216,8 +1339,8 @@
       "prompt": "为低代码平台的表单状态管理系统创建详细文档。深入解释 PageFormStateService 的设计：统一管理页面内所有输入组件的值，使用 Dictionary<string, object?> 存储键值对。说明状态键命名约定：普通组件使用 Name/Id，列表实例组件使用 \"{listId}|{itemPrimaryKey}|{componentName}\" 复合键，特殊键 \"__lastid\" 保存最近一次保存生成的主键。阐述状态操作方法：SetValue 设置值并触发变更通知、SetValueSilently 静默设值用于初始化回填、GetValue 获取值、HasValue 检查存在性、Clear 清空所有状态。详细说明列表实例状态管理：GetListInstanceValues 按列表 ID 和组件名筛选出该列表下所有实例的状态值，返回 key: 行主键, value: 组件值的字典。解释与表单持久化的集成：FormDataAppService 如何将表单状态序列化为 FormEntity 保存到数据库，支持新增和更新两种模式。说明状态变更通知机制：OnChange 事件驱动依赖组件重新求值，实现显隐联动、计算字段更新等交互效果。包含具体的使用场景：表单验证、条件显示、动态计算、数据回显等。解释性能优化策略：值比较避免重复通知、批量更新优化、内存管理等最佳实践。",
       "progress_status": "completed",
       "dependent_files": "src/LowCode/RenderEngine/H.LowCode.RenderEngineBase/PageFormStateService.cs,src/LowCode/RenderEngine/H.LowCode.RenderEngine/Application/DataAppServices/FormDataAppService.cs",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "1d5bbeca-e090-4003-85e8-db9f1f7f15de",
       "layer_level": 2,
       "order": 4,
@@ -1234,8 +1357,8 @@
       "prompt": "为 AppLab 平台创建扩展点设计文档。详细说明系统的可插拔架构：仓储实现扩展（JsonFile / EntityFrameworkCore / RemoteService）、主题扩展（Ant Design Blazor 主题支持）、组件扩展（自定义 Blazor 组件注册）、HTTP 代理拦截器扩展。解释扩展机制的技术实现：依赖注入容器扩展、约定优于配置、插件发现机制。包含扩展开发指南：如何编写自定义仓储、扩展组件库、添加新的 UI 主题。说明扩展点的最佳实践：接口设计原则、向后兼容性保证、版本管理策略。提供扩展示例代码和集成步骤。包含扩展点的安全考虑和权限控制机制。",
       "progress_status": "completed",
       "dependent_files": "src/LowCode/Common/H.LowCode.MetaSchema/,src/LowCode/Common/H.LowCode.Components/,src/Utils/H.Abp.HttpClientProxy/ServiceCollectionExtensions.cs,src/LowCode/RenderEngine/H.LowCode.RenderEngineBase/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "8b28368e-d1d0-4d06-8a44-790c012fe852",
       "layer_level": 1,
       "order": 4,
@@ -1254,8 +1377,8 @@
       "prompt": "为 AI 辅助生成应用功能创建详细文档。解释 AppAiGenerateAppService 的核心职责：接收用户的自然语言需求描述，调用 AI 服务生成页面 Schema、菜单结构、数据源定义，并将结果持久化到当前应用。说明 AppCreateFromAi.razor 的交互流程：用户输入需求 → 调用 AI 生成 → 预览生成的页面 → 确认创建或调整。说明 PartsAiGenerateModal 在部件设计器中的作用：根据组件描述生成组件 Fragment、属性定义、事件定义。解释 AI 生成产物与标准 MetaSchema 的映射关系：生成的页面节点、组件节点、属性值如何保证可被 RenderEngine 正常渲染。包含提示词工程建议：如何编写高质量的需求描述以获得更好的生成结果。说明错误处理：当 AI 返回非法 Schema 时如何降级、回滚或提示用户修正。提供扩展点：如何接入新的 AI 提供商或替换生成模板。",
       "progress_status": "completed",
       "dependent_files": "src/LowCode/DesignEngine/H.LowCode.DesignEngine.Application/AppServices/AppAiGenerateAppService.cs,src/LowCode/DesignEngine/H.LowCode.MyApp/Pages/MyApps/AppCreateFromAi.razor,src/LowCode/DesignEngine/H.LowCode.PartsDesignEngine/Pages/ComponentParts/Components/PartsAiGenerateModal.razor",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "d23c19dd-1267-4317-bfd9-ffdf1ec9cc85",
       "layer_level": 2,
       "order": 4,
@@ -1273,8 +1396,8 @@
       "prompt": "为 AppLab 系统管理功能创建详细文档。重点介绍 SystemPortal（系统门户）作为统一入口的设计：如何聚合各个业务应用的菜单和功能，提供统一的导航和权限控制。说明 Enterprise（企业管理）的领域模型：企业租户、部门结构、用户权限等基础管理能力。解释系统管理与业务应用的关系：系统管理为所有业务应用提供基础设施能力，如用户认证、权限控制、多租户支持等。包含配置管理、系统监控、日志管理等运维相关功能的说明。提供管理员视角的使用指南，包括用户管理、权限分配、系统配置等常见操作场景。",
       "progress_status": "completed",
       "dependent_files": "src/System/SystemPortal/,src/System/Enterprise/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "order": 4,
       "kk_dependent_files": [
         "src/System/SystemPortal/",
@@ -1289,8 +1412,8 @@
       "prompt": "为 AppLab 平台创建依赖注入扩展文档。详细说明 ABP Framework 模块系统的扩展机制：RenderEngineBaseModule 的模块化设计、服务注册的层次结构、模块间的依赖关系管理。解释动态模块加载：LazyModuleRegistry 的工作原理、程序集发现机制、运行时服务注册。包含自定义模块的扩展指南：如何继承 AbpModule、定义模块依赖、实现 Initialize 和 Shutdown 生命周期方法。说明服务容器的高级用法：条件服务注册、装饰器模式应用、服务替换机制。提供依赖注入扩展的最佳实践：循环依赖检测、性能优化、内存泄漏防护。包含具体的扩展示例：创建一个独立的业务模块，包含服务定义、配置注入和生命周期管理的完整实现。",
       "progress_status": "completed",
       "dependent_files": "src/LowCode/RenderEngine/H.LowCode.RenderEngineBase/RenderEngineBaseModule.cs,src/LowCode/DesignEngine/H.LowCode.DesignEngineBase/,src/Host/H.AppLab.Web.Host/H.AppLab.Web.Host/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "9c5762c8-c259-4bd0-b8d6-9e91b08b7803",
       "layer_level": 2,
       "order": 4,
@@ -1308,8 +1431,8 @@
       "prompt": "为 SupplyChain 服务创建详细的 API 文档。涵盖供应链基础数据接口：供应商管理、产品目录、采购合同；采购流程接口：采购申请、采购订单、到货验收；库存管理接口：库存查询、出入库操作、库存预警；物流跟踪接口：运输单管理、位置跟踪、签收确认。详细说明每个接口的 HTTP 方法、URL 路径、请求参数、响应数据结构。提供完整的请求响应示例，包括供应链业务流程的复杂 JSON 格式。说明供应链各参与方的权限控制、数据同步机制、状态一致性保证。包含供应链可视化、数据分析接口的使用说明。",
       "progress_status": "completed",
       "dependent_files": "src/Services/SupplyChain/,src/Services/SupplyChain/src/Services/SupplyChain/H.SupplyChain.Application.Contracts/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "1b79d1d5-ba4e-4086-9769-8a0f913d8875",
       "layer_level": 1,
       "order": 5,
@@ -1326,8 +1449,8 @@
       "prompt": "为 Notification 通知中心服务创建详细文档。深入解释多渠道通知发送、消息模板管理、用户偏好设置等核心功能。详细说明通知的分发机制，包括站内信、邮件、短信、推送等多种渠道的统一抽象。文档应涵盖通知的创建、路由、发送、回执等完整处理流程，以及与业务事件的解耦集成方式。提供具体的 API 调用示例，展示如何发送通知、查询通知历史、管理用户订阅等操作。说明通知中心的性能优化策略，如异步发送、批量处理、失败重试等机制。包含通知中心的扩展点，如自定义通知渠道、智能路由规则、消息去重等功能的实现指导。",
       "progress_status": "completed",
       "dependent_files": "src/Services/Notification/,src/Services/Notification/src/Services/Notification/H.Notification.Application/,src/Services/Notification/src/Services/Notification/H.Notification.Application.Contracts/,src/Services/Notification/src/Services/Notification/H.Notification.EntityFrameworkCore/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "db9d8bda-1d87-4e28-9bcc-7ffbc79b469c",
       "layer_level": 1,
       "order": 5,
@@ -1346,8 +1469,8 @@
       "prompt": "为部件设计器创建详细文档。解释 PartsDesignEngine 与页面设计器的区别：页面设计器面向最终应用页面，部件设计器面向可复用的组件 Fragment、组件库条目、页面模板。说明 MyParts.razor、ComponentLibraryManager.razor、ComponentPartsDesignerPage.razor、ComponentPartsEditorPage.razor 的职责划分：组件库管理、组件片段编辑、页面模板设计、预览与发布。详细解释 ComponentPartsEditor.razor 如何编辑组件的属性定义（AttributeDefineGroupEditor）、事件定义（FragmentEventEditor）、样式定义（FragmentStyleEditor）、API 数据源（APIDataSourceEditor）、参数（ParametersEditor）和选项（OptionsEditor）。说明 DynamicComponentPartsBase 与 PartsDynamicComponentBase 的作用：在部件设计器中动态渲染待编辑的组件片段，并与 PartsDragDropStateService 协同完成拖拽。解释部件与页面的关系：部件产出 Fragment 元数据，页面设计器可以引用这些 Fragment 进行组合。包含示例：从零创建一个自定义组件部件，定义其属性、事件和数据源，然后在页面设计器中拖拽使用。说明部件的版本管理和发布流程。",
       "progress_status": "completed",
       "dependent_files": "src/LowCode/DesignEngine/H.LowCode.PartsDesignEngine/Layout/PartsDesignEngineLayout.razor,src/LowCode/DesignEngine/H.LowCode.PartsDesignEngine/DesignPanel/PageDesignPanel.razor,src/LowCode/DesignEngine/H.LowCode.PartsDesignEngine/DesignPanel/ComponentDesignPanel.razor,src/LowCode/DesignEngine/H.LowCode.PartsDesignEngine/ComponentPanel/ComponentPanel.razor,src/LowCode/DesignEngine/H.LowCode.PartsDesignEngine/SettingPanel/PartsSettingPanel.razor,src/LowCode/DesignEngine/H.LowCode.PartsDesignEngine/SettingPanel/PropertySetting.razor,src/LowCode/DesignEngine/H.LowCode.PartsDesignEngine/SettingPanel/EventSetting.razor,src/LowCode/DesignEngine/H.LowCode.PartsDesignEngine/Pages/MyParts.razor,src/LowCode/DesignEngine/H.LowCode.PartsDesignEngine/Pages/ComponentParts/ComponentLibraryManager.razor,src/LowCode/DesignEngine/H.LowCode.PartsDesignEngine/Pages/ComponentParts/ComponentPartsDesignerPage.razor,src/LowCode/DesignEngine/H.LowCode.PartsDesignEngine/Pages/ComponentParts/ComponentPartsEditorPage.razor,src/LowCode/DesignEngine/H.LowCode.PartsDesignEngine/Pages/ComponentParts/Components/FragmentEventEditor.razor,src/LowCode/DesignEngine/H.LowCode.PartsDesignEngine/Pages/ComponentParts/Components/FragmentStyleEditor.razor,src/LowCode/DesignEngine/H.LowCode.PartsDesignEngine/Pages/ComponentParts/Components/APIDataSourceEditor.razor,src/LowCode/DesignEngine/H.LowCode.PartsDesignEngine/Pages/ComponentParts/Components/ComponentPartsEditor.razor,src/LowCode/DesignEngine/H.LowCode.PartsDesignEngine/Pages/ComponentParts/Components/ComponentPartsPreview.razor,src/LowCode/DesignEngine/H.LowCode.PartsDesignEngine/Pages/PageParts/PagePartsDesigner.razor,src/LowCode/DesignEngine/H.LowCode.PartsDesignEngine/Services/DynamicComponentPartsBase.cs,src/LowCode/DesignEngine/H.LowCode.PartsDesignEngine/Services/PartsDynamicComponentBase.cs,src/LowCode/DesignEngine/H.LowCode.PartsDesignEngine/Services/PartsDragDropStateService.cs",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "d23c19dd-1267-4317-bfd9-ffdf1ec9cc85",
       "layer_level": 2,
       "order": 5,
@@ -1382,8 +1505,8 @@
       "prompt": "为低代码渲染引擎的数据应用服务层创建详细文档。深入解释 TableDataAppService 的职责：作为表格数据提供者，封装 ITableDataRepository 的 CRUD 操作，对外暴露标准化的 API 接口。说明支持的表格操作：GetListAsync 分页查询、DeleteAsync 删除操作、UpdateAsync 批量更新、SaveAsync 按主键新增或更新。阐述 FormDataAppService 的表单数据处理：GetAsync 获取表单数据（新建默认值或编辑已有数据）、SaveAsync 保存表单数据（自动判断新增/更新模式）。详细说明数据验证机制：ApplyFieldValidationAndDefaults 方法负责字段类型验证、默认值填充、业务规则校验。解释实体映射过程：DTO 到 Entity 的手工映射逻辑，规避 ABP Mapperly 未配置的问题。说明主键处理策略：f_id 字段的自动生成、新增记录的主键分配、更新记录的标识符匹配。包含具体的 API 使用示例：前端如何调用这些服务进行数据操作，错误处理策略和异常信息传递。解释与仓储层的解耦设计：通过 IRepository 接口抽象不同的数据源实现。说明事务处理和并发控制：多用户环境下的数据一致性保障机制。",
       "progress_status": "completed",
       "dependent_files": "src/LowCode/RenderEngine/H.LowCode.RenderEngine.Application/DataAppServices/TableDataAppService.cs,src/LowCode/RenderEngine/H.LowCode.RenderEngine.Application/DataAppServices/FormDataAppService.cs,src/LowCode/RenderEngine/H.LowCode.RenderEngine.Domain/DataRepositories/ITableDataRepository.cs",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "1d5bbeca-e090-4003-85e8-db9f1f7f15de",
       "layer_level": 2,
       "order": 5,
@@ -1401,8 +1524,8 @@
       "prompt": "为 AppLab 的宿主程序和部署方案创建全面文档。详细说明两种宿主模式：H.AppLab.Web.Host（基于 Blazor Web App 的 Web 宿主）和 H.AppLab.Desktop（基于 Avalonia 的桌面宿主）。解释 Web 宿主的混合渲染模式（Server + WebAssembly），包括静态资源托管、API 路由配置、中间件管道等。说明桌面宿主如何通过 Avalonia 承载多个客户端应用，以及与 Web 版本的差异。详细介绍 Docker 容器化部署方案，包括 docker-compose.yml 中定义的依赖服务配置（SQL Server、Redis、RabbitMQ、MinIO）。提供生产环境的部署建议、负载均衡配置、健康检查和监控集成。包含故障排查指南和性能调优建议。",
       "progress_status": "completed",
       "dependent_files": "src/Host/H.AppLab.Web.Host/,src/Host/H.AppLab.Desktop/,cd/docker-compose.yml",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "order": 5,
       "kk_dependent_files": [
         "src/Host/H.AppLab.Web.Host/",
@@ -1418,8 +1541,8 @@
       "prompt": "为 Notification 服务创建详细的 API 文档。涵盖通知发送接口：邮件发送、短信发送、站内消息推送；订阅管理接口：用户订阅配置、主题分类管理、订阅偏好设置；通知查询接口：通知历史记录、未读消息统计、通知模板管理。详细说明每个接口的 HTTP 方法、URL 路径、请求参数、响应数据结构。提供完整的请求响应示例，包括多种通知类型的 JSON 格式。说明通知异步处理机制、重试策略、失败处理。包含通知渠道配置、模板引擎、批量发送的性能优化建议。",
       "progress_status": "completed",
       "dependent_files": "src/Services/Notification/,src/Services/Notification/src/Services/Notification/H.Notification.Application.Contracts/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "1b79d1d5-ba4e-4086-9769-8a0f913d8875",
       "layer_level": 1,
       "order": 6,
@@ -1436,8 +1559,8 @@
       "prompt": "为“我的应用”管理功能创建详细文档。说明 MyAppLayout.razor 的导航结构与权限控制，以及 MyApps.razor 作为应用列表与入口页的职责。详细解释 AppForm.razor 的应用创建流程，包括从模板创建（AppCreateFromTemplate.razor / AppPopularTemplates.razor）和从 AI 生成（AppCreateFromAi.razor）两条路径。说明应用生命周期管理：应用基本信息、页面管理（PageManager）、菜单管理（MenuManager）、数据源管理（DataSourceManager）、发布流程（AppPublish.razor）、应用设置（AppSettings.razor）、成员权限（AppMembers.razor）、集成配置（AppIntegration.razor）和自动工作流（AutoFlow.razor）。解释 AppApplicationService、MenuAppService、AppPublishAppService、AppRbacAppService 的职责边界：应用 CRUD、菜单树管理、发布版本控制、RBAC 权限分配。说明应用与低代码元数据的关系：每个应用拥有独立的页面、菜单、数据源集合，发布后由 RenderEngine 加载运行。包含示例：创建一个空白应用、导入模板应用、添加页面和菜单、配置成员权限并发布。说明多租户或企业场景下应用隔离的实现方式。",
       "progress_status": "completed",
       "dependent_files": "src/LowCode/DesignEngine/H.LowCode.MyApp/Layout/MyAppLayout.razor,src/LowCode/DesignEngine/H.LowCode.MyApp/Pages/MyApps.razor,src/LowCode/DesignEngine/H.LowCode.MyApp/Pages/MyApps/AppForm.razor,src/LowCode/DesignEngine/H.LowCode.MyApp/Pages/MyApps/AppCreateFromTemplate.razor,src/LowCode/DesignEngine/H.LowCode.MyApp/Pages/MyApps/AppPopularTemplates.razor,src/LowCode/DesignEngine/H.LowCode.MyApp/Pages/MyApps/AppCreateFromAi.razor,src/LowCode/DesignEngine/H.LowCode.MyApp/Pages/PageManager.razor,src/LowCode/DesignEngine/H.LowCode.MyApp/Pages/MenuManager.razor,src/LowCode/DesignEngine/H.LowCode.MyApp/Pages/DataSourceManager.razor,src/LowCode/DesignEngine/H.LowCode.MyApp/Pages/AppPublish.razor,src/LowCode/DesignEngine/H.LowCode.MyApp/Pages/AppSettings.razor,src/LowCode/DesignEngine/H.LowCode.MyApp/Pages/AppMembers.razor,src/LowCode/DesignEngine/H.LowCode.MyApp/Pages/AppIntegration.razor,src/LowCode/DesignEngine/H.LowCode.MyApp/Pages/AutoFlow.razor,src/LowCode/DesignEngine/H.LowCode.DesignEngine.Application/AppServices/AppApplicationService.cs,src/LowCode/DesignEngine/H.LowCode.DesignEngine.Application/AppServices/MenuAppService.cs,src/LowCode/DesignEngine/H.LowCode.DesignEngine.Application/AppServices/AppPublishAppService.cs,src/LowCode/DesignEngine/H.LowCode.DesignEngine.Application/AppServices/AppRbacAppService.cs",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "d23c19dd-1267-4317-bfd9-ffdf1ec9cc85",
       "layer_level": 2,
       "order": 6,
@@ -1470,8 +1593,8 @@
       "prompt": "为 AppLab 前端开发创建详细的技术文档。重点说明 Blazor Web App 的混合渲染模式（Server + WebAssembly）在该项目中的实现方式。详细介绍动态 HTTP 代理机制：HttpClientProxyInterceptor 如何通过 DispatchProxy 自动将 IAppService 接口调用转换为 HTTP 请求，AbpUrlConvention 如何解析 ABP 路由约定。解释 WebAssembly 懒加载机制：LazyModuleRegistry 如何实现程序集按需下载和模块注册，CompositeServiceProvider 如何组合多个模块的服务提供者。说明 AppDrawer 等共享 UI 组件的使用方法，包括组件属性、事件处理、样式定制等。提供前端组件开发规范，包括命名约定、代码风格、测试策略等。包含实际的代码示例，展示如何调用后端服务、处理异步操作、实现响应式界面。",
       "progress_status": "completed",
       "dependent_files": "src/Utils/H.Abp.HttpClientProxy/HttpClientProxyInterceptor.cs,src/Utils/H.Abp.Application.Contracts/IAppService.cs,src/Components/AppDrawer/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "order": 6,
       "kk_dependent_files": [
         "src/Utils/H.Abp.HttpClientProxy/HttpClientProxyInterceptor.cs",
@@ -1487,8 +1610,8 @@
       "prompt": "为 BackgroundTask 后台任务服务创建详细文档。深入解释任务调度引擎、任务执行器、任务监控等核心功能。详细说明基于 Hangfire 的任务队列管理，包括延迟任务、定时任务、周期性任务等不同类型的任务调度。文档应涵盖任务的创建、调度、执行、监控、重试等完整生命周期管理。提供具体的 API 调用示例，展示如何注册任务处理器、触发任务执行、查询任务状态等操作。说明任务执行的分布式支持，如集群部署下的任务分发、故障转移等机制。包含后台任务的常见扩展场景，如任务优先级管理、资源限制、性能监控等功能的实现指导。",
       "progress_status": "completed",
       "dependent_files": "src/Services/BackgroundTask/,src/Services/BackgroundTask/src/Services/BackgroundTask/H.BackgroundTask.Application/,src/Services/BackgroundTask/src/Services/BackgroundTask/H.BackgroundTask.Application.Contracts/,src/Services/BackgroundTask/src/Services/BackgroundTask/H.BackgroundTask.EntityFrameworkCore/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "db9d8bda-1d87-4e28-9bcc-7ffbc79b469c",
       "layer_level": 1,
       "order": 6,
@@ -1507,8 +1630,8 @@
       "prompt": "为低代码平台的元数据应用服务创建详细文档。深入解释 MetaAppService 的核心职责：作为元数据的统一入口，提供菜单、应用、页面等元数据的读取操作。说明支持的元数据类型：MenuSchema 菜单结构、AppSchema 应用配置、PageSchema 页面定义及其组件树。阐述 GetMenusAsync 方法的实现：按 appId 查询菜单层级结构，支持多级菜单的树形组织。解释 GetPageWithDefineAsync 的高级功能：在返回页面元数据的同时，将组件的定义属性合并到 Fragment 中，简化前端的组件渲染逻辑。详细说明仓储层抽象：IPageRepository、IMenuRepository、IAppRepository 定义的元数据访问接口，支持不同的存储后端实现。解释元数据的版本管理和向后兼容性：如何处理 Schema 的版本演进和新旧版本的兼容。包含具体的使用场景：应用启动时加载菜单树、页面渲染前获取完整的组件定义、动态路由生成等。说明缓存策略：元数据的缓存机制和失效策略，避免频繁查询数据库。解释权限控制：基于用户角色的菜单过滤、页面访问控制等安全机制。",
       "progress_status": "completed",
       "dependent_files": "src/LowCode/RenderEngine/H.LowCode.RenderEngine.Application/RenderAppServices/MetaAppService.cs,src/LowCode/RenderEngine/H.LowCode.RenderEngine.Application.Contracts/RenderAppServices/IMetaAppService.cs,src/LowCode/RenderEngine/H.LowCode.RenderEngine.Domain/MetaRepositories/IPageRepository.cs,src/LowCode/RenderEngine/H.LowCode.RenderEngine.Domain/MetaRepositories/IMenuRepository.cs,src/LowCode/RenderEngine/H.LowCode.RenderEngine.Domain/MetaRepositories/IAppRepository.cs",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "1d5bbeca-e090-4003-85e8-db9f1f7f15de",
       "layer_level": 2,
       "order": 6,
@@ -1527,16 +1650,17 @@
       "description": "repository-implementations",
       "prompt": "为设计引擎的仓储实现创建详细文档。对比三种 IPageRepository、IMenuRepository、IDataSourceRepository 的实现：JsonFile 仓储（基于文件系统 JSON 序列化）、EntityFrameworkCore 仓储（基于 SQL Server 数据库）、RemoteService 仓储（通过 HTTP 调用远程设计服务）。解释每种实现的适用场景：JsonFile 适合单机开发、快速原型和轻量部署；EntityFrameworkCore 适合生产环境、多用户并发和审计追踪；RemoteService 适合微服务架构、跨进程共享设计资产。详细说明 JsonFile 仓储的文件目录结构、命名约定、并发写入策略和文件锁机制。说明 EF Core 仓储的 DbContext 配置、实体映射、迁移文件和索引策略。说明 RemoteService 仓储的客户端代理、认证传递、重试和错误处理。提供切换仓储的配置示例，并给出扩展新仓储（如 Redis、对象存储）的步骤。包含性能对比与选型建议，以及从 JsonFile 迁移到 EF Core 的注意事项。",
       "progress_status": "completed",
-      "dependent_files": "src/LowCode/DesignEngine/H.LowCode.DesignEngine.EntityFrameworkCore/,src/LowCode/DesignEngine/H.LowCode.DesignEngine.Repository.JsonFile/,src/LowCode/DesignEngine/H.LowCode.DesignEngine.Repository.RemoteService/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "dependent_files": "src/LowCode/DesignEngine/H.LowCode.DesignEngine.EntityFrameworkCore/,src/LowCode/DesignEngine/H.LowCode.DesignEngine.Repository.JsonFile/,src/LowCode/DesignEngine/H.LowCode.DesignEngine.Repository.RemoteService/,src/Tools/H.Workbench.DbMigrator/Migrations/20261003123911_WorkbenchPlugin.cs",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "d23c19dd-1267-4317-bfd9-ffdf1ec9cc85",
       "layer_level": 2,
       "order": 7,
       "kk_dependent_files": [
         "src/LowCode/DesignEngine/H.LowCode.DesignEngine.EntityFrameworkCore/",
         "src/LowCode/DesignEngine/H.LowCode.DesignEngine.Repository.JsonFile/",
-        "src/LowCode/DesignEngine/H.LowCode.DesignEngine.Repository.RemoteService/"
+        "src/LowCode/DesignEngine/H.LowCode.DesignEngine.Repository.RemoteService/",
+        "src/Tools/H.Workbench.DbMigrator/Migrations/20261003123911_WorkbenchPlugin.cs"
       ]
     },
     {
@@ -1547,8 +1671,8 @@
       "prompt": "为 File 服务创建详细的 API 文档。涵盖文件上传接口：分块上传、断点续传、进度回调；文件下载接口：直接下载、流式下载、预览链接生成；文件管理接口：文件元数据管理、批量操作、存储位置管理；权限控制接口：文件访问权限、分享链接管理、防盗链配置。详细说明每个接口的 HTTP 方法、URL 路径、请求参数、响应数据结构。提供完整的请求响应示例，包括大文件上传的分块数据传输格式。说明 MinIO 存储集成、文件类型验证、病毒扫描、存储空间配额管理。包含性能优化、CDN 集成、安全访问的最佳实践。",
       "progress_status": "completed",
       "dependent_files": "src/Services/File/,src/Services/File/src/Services/File/H.File.Application.Contracts/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "1b79d1d5-ba4e-4086-9769-8a0f913d8875",
       "layer_level": 1,
       "order": 7,
@@ -1565,8 +1689,8 @@
       "prompt": "为 File 文件服务创建详细文档。深入解释文件上传下载、存储管理、访问控制等核心功能。详细说明基于 MinIO 的对象存储服务集成，包括文件分片上传、断点续传、大文件处理等高级特性。文档应涵盖文件的元数据管理、版本控制、安全加密、访问日志等关键功能。提供具体的 API 调用示例，展示如何上传文件、获取文件信息、生成临时访问链接等操作。说明文件服务的性能优化策略，如 CDN 加速、缓存策略、负载均衡等机制。包含文件服务的扩展点，如自定义存储后端、文件转码处理、病毒扫描等功能的实现指导。",
       "progress_status": "completed",
       "dependent_files": "src/Services/File/,src/Services/File/src/Services/File/H.File.Application/,src/Services/File/src/Services/File/H.File.Application.Contracts/,src/Services/File/src/Services/File/H.File.EntityFrameworkCore/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "db9d8bda-1d87-4e28-9bcc-7ffbc79b469c",
       "layer_level": 1,
       "order": 7,
@@ -1585,8 +1709,8 @@
       "prompt": "为低代码渲染引擎的数据存储仓储层创建全面文档。详细解释三种仓储实现的架构设计：JsonFile 本地文件存储、EntityFrameworkCore 数据库持久化、RemoteService 远程服务调用。阐述 JsonFile 仓储的实现：基于文件系统的路径规划、JSON 序列化/反序列化、文件锁机制保证并发安全。说明 EntityFrameworkCore 仓储的设计：DbContext 配置、实体映射、查询构建器、事务管理、并发控制。解释 RemoteService 仓储的代理机制：通过 HTTP 客户端调用远端服务，处理网络异常、重试机制、超时控制。详细说明仓储接口抽象：IPageRepository、IMenuRepository、IAppRepository 等统一的数据访问接口，确保不同实现的互换性。阐述数据迁移策略：JsonFile 到数据库的迁移工具、版本升级脚本、数据备份恢复机制。包含具体的配置示例：如何选择合适的仓储实现、连接字符串配置、文件路径设置等。解释性能优化策略：JsonFile 的文件缓存、EF Core 的查询缓存、远程服务的负载均衡。说明错误处理和日志记录：各仓储统一的异常处理模式、错误码定义、调试信息输出。",
       "progress_status": "completed",
       "dependent_files": "src/LowCode/RenderEngine/H.LowCode.RenderEngine.Repository.JsonFile/,src/LowCode/RenderEngine/H.LowCode.RenderEngine.EntityFrameworkCore/,src/LowCode/RenderEngine/H.LowCode.RenderEngine.Repository.RemoteService/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "1d5bbeca-e090-4003-85e8-db9f1f7f15de",
       "layer_level": 2,
       "order": 7,
@@ -1604,8 +1728,8 @@
       "prompt": "为 AppLab 的基础设施层创建综合性文档。详细说明数据库迁移工具链：各服务的 DbMigrator 控制台程序如何工作，EF Core 迁移的管理和维护。介绍 Utils 工具库的核心组件：H.Abp.Application.Contracts（通用 DTO 基类）、H.Abp.HttpClientProxy（HTTP 客户端代理）、H.Util.Base（基础扩展方法）、H.Util.Blazor（Blazor 辅助组件）、H.Util.Ids（ID 生成器）。解释外部依赖服务的集成：Redis 分布式缓存、RabbitMQ 消息队列、MinIO 对象存储、Hangfire 后台任务调度、Elsa 工作流引擎。说明配置管理策略，包括 appsettings.json 的组织方式和敏感信息的安全处理。提供基础设施的监控、日志记录、错误处理等横切关注点的实现方式。包含性能优化建议和容量规划指导。",
       "progress_status": "completed",
       "dependent_files": "src/Tools/,src/Utils/,cd/docker-compose.yml",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "order": 7,
       "kk_dependent_files": [
         "src/Tools/",
@@ -1621,8 +1745,8 @@
       "prompt": "为 AppLab 平台创建完整的 API 参考文档。重点说明基于 ABP Framework 的 RESTful API 设计规范：URL 模式、HTTP 方法约定、请求响应格式、错误码定义。详细介绍动态 HTTP 代理生成的 API 调用方式：如何通过 IAppService 接口自动生成客户端代码，无需手动编写 HTTP 请求。分类整理各业务领域的 API 端点：Account（用户认证、权限管理）、Organization（组织架构、部门管理）、Approval（审批流程、待办事项）、Order（订单 CRUD、状态流转）、SupplyChain（供应链业务）、Notification（通知发送、订阅管理）、File（文件上传下载）、Setting（系统设置）。为每个 API 提供详细的参数说明、返回数据结构、使用示例和错误处理指南。包含认证授权机制、限流策略、版本管理等非功能性需求的说明。",
       "progress_status": "completed",
       "dependent_files": "src/Services/Account/,src/Services/Organization/,src/Services/Approval/,src/Utils/H.Abp.Application.Contracts/IAppService.cs",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "order": 8,
       "kk_dependent_files": [
         "src/Services/Account/",
@@ -1639,8 +1763,8 @@
       "prompt": "为 Setting 设置管理服务创建详细文档。深入解释系统配置管理、动态配置加载、配置热更新等核心功能。详细说明配置的层次结构，包括全局设置、租户设置、用户设置等不同粒度的配置范围。文档应涵盖配置的 CRUD 操作、配置分组管理、配置验证等关键功能。提供具体的 API 调用示例，展示如何读取配置、修改设置、刷新缓存等操作。说明配置在微服务架构中的传播机制，如配置中心集成、实时同步等方案。包含设置管理的常见扩展场景，如配置审计、配置模板、配置迁移等功能的实现指导。",
       "progress_status": "completed",
       "dependent_files": "src/Services/Setting/,src/Services/Setting/src/Services/Setting/H.Setting.Application/,src/Services/Setting/src/Services/Setting/H.Setting.Application.Contracts/,src/Services/Setting/src/Services/Setting/H.Setting.EntityFrameworkCore/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "db9d8bda-1d87-4e28-9bcc-7ffbc79b469c",
       "layer_level": 1,
       "order": 8,
@@ -1659,8 +1783,8 @@
       "prompt": "为 Setting 服务创建详细的 API 文档。涵盖系统配置接口：全局设置 CRUD、配置分组管理、默认值管理；应用配置接口：模块开关控制、功能特性配置、环境变量映射；用户设置接口：个人偏好设置、界面主题配置、语言区域设置。详细说明每个接口的 HTTP 方法、URL 路径、请求参数、响应数据结构。提供完整的请求响应示例，包括嵌套配置对象的 JSON 格式。说明配置缓存机制、热更新支持、配置版本管理。包含配置安全性、敏感信息加密、审计日志的记录策略。",
       "progress_status": "completed",
       "dependent_files": "src/Services/Setting/,src/Services/Setting/src/Services/Setting/H.Setting.Application.Contracts/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "1b79d1d5-ba4e-4086-9769-8a0f913d8875",
       "layer_level": 1,
       "order": 8,
@@ -1677,8 +1801,8 @@
       "prompt": "为 AppLab 项目创建全面的开发指南。详细说明开发环境搭建：.NET 10 SDK 安装、SQL Server 本地实例配置、Redis/RabbitMQ/MinIO 依赖服务启动。解释项目的包管理机制：Directory.Packages.props 集中式包版本管理、NuGet.config 源配置、common.props 公共属性定义。介绍编码规范和最佳实践：C# 代码风格、命名约定、注释规范、单元测试编写。说明调试技巧：Web 宿主和桌面宿主的调试配置、断点调试、日志查看。提供新功能开发的工作流程：从需求分析到代码实现的完整步骤，包括领域建模、应用服务编写、前端页面开发、数据库迁移等。包含代码审查清单、发布流程和版本管理策略。为新加入的开发者提供上手路径和学习资源推荐。",
       "progress_status": "completed",
       "dependent_files": "src/global.json,src/NuGet.config,src/Directory.Packages.props,src/common.props",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "order": 9,
       "kk_dependent_files": [
         "src/global.json",
@@ -1695,8 +1819,8 @@
       "prompt": "为 BackgroundTask 服务创建详细的 API 文档。涵盖任务调度接口：定时任务创建、Cron 表达式配置、任务优先级设置；任务执行接口：立即执行、暂停任务、恢复任务、终止任务；任务监控接口：执行状态查询、执行日志查看、失败重试、统计分析。详细说明每个接口的 HTTP 方法、URL 路径、请求参数、响应数据结构。提供完整的请求响应示例，包括任务执行状态变化的 JSON 格式。说明 Hangfire 集成机制、任务持久化、分布式执行、故障恢复策略。包含任务性能监控、资源占用分析、队列管理的最佳实践。",
       "progress_status": "completed",
       "dependent_files": "src/Services/BackgroundTask/,src/Services/BackgroundTask/src/Services/BackgroundTask/H.BackgroundTask.Application.Contracts/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "1b79d1d5-ba4e-4086-9769-8a0f913d8875",
       "layer_level": 1,
       "order": 9,
@@ -1713,8 +1837,8 @@
       "prompt": "为 Testing 服务创建详细的 API 文档。涵盖测试用例管理接口：用例创建、编辑、删除、导入导出；测试执行接口：单元测试运行、集成测试执行、自动化测试流水线；测试结果接口：测试结果查看、报告生成、覆盖率统计；测试环境接口：测试数据库管理、Mock 服务配置、环境变量管理。详细说明每个接口的 HTTP 方法、URL 路径、请求参数、响应数据结构。提供完整的请求响应示例，包括测试报告和结果的 JSON 格式。说明测试框架的扩展机制、自定义测试类型、CI/CD 集成方案。包含测试性能优化、并行执行、结果聚合的最佳实践。",
       "progress_status": "completed",
       "dependent_files": "src/Services/Testing/,src/Services/Testing/src/Services/Testing/H.Testing.Application.Contracts/",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z",
       "parent_id": "1b79d1d5-ba4e-4086-9769-8a0f913d8875",
       "layer_level": 1,
       "order": 10,
@@ -1734,8 +1858,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "1329ef0c-c52a-4e7c-abbe-d17ba21bb726",
@@ -1746,8 +1870,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "2674c95e-3a6a-45ab-a119-2af2f26d4496",
@@ -1758,8 +1882,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "352fcbc7-bcb8-4a4e-9732-9bc54ded4606",
@@ -1770,8 +1894,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "3734443e-392e-4505-8c6e-867a3d92ee58",
@@ -1782,8 +1906,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "4b154f20-733e-48ae-90e6-e69a079a8434",
@@ -1794,8 +1918,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "4c3f18a2-c0f5-4994-895b-bc1bc9c2b95a",
@@ -1806,8 +1930,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "4de49fde-96f9-4ede-b8da-c6e56e9114e1",
@@ -1818,8 +1942,32 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
+    },
+    {
+      "id": "53ab9519-5aaa-4cef-9bbf-83ab3171e98f",
+      "catalog_id": "53ab9519-5aaa-4cef-9bbf-83ab3171e98f",
+      "title": "计算机控制工具",
+      "description": "computer-control-tool",
+      "extend": "{}",
+      "progress_status": "completed",
+      "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
+      "reference_count": 0,
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
+    },
+    {
+      "id": "61d3fc39-786d-41d9-ae62-6b7a1bd0d7d0",
+      "catalog_id": "61d3fc39-786d-41d9-ae62-6b7a1bd0d7d0",
+      "title": "能力管理中心",
+      "description": "capabilities-management",
+      "extend": "{}",
+      "progress_status": "completed",
+      "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
+      "reference_count": 0,
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "70b6213b-c0a5-416e-ae33-1f2225000c3b",
@@ -1830,8 +1978,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "811438d0-5914-408f-8f70-27aa020be475",
@@ -1842,8 +1990,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "8da9478d-695c-42b0-932f-ccbc3b445e09",
@@ -1854,8 +2002,20 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
+    },
+    {
+      "id": "a0f4f9d1-ec8e-409c-86b7-9a5d34a94798",
+      "catalog_id": "a0f4f9d1-ec8e-409c-86b7-9a5d34a94798",
+      "title": "插件管理体系",
+      "description": "plugin-management-system",
+      "extend": "{}",
+      "progress_status": "completed",
+      "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
+      "reference_count": 0,
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "bd52dfd0-e3a1-43a4-accf-5b3e4182f9f9",
@@ -1866,8 +2026,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "bebaf1f9-bfdf-4142-ab62-6d31ecb997f1",
@@ -1878,8 +2038,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "deeb62ab-ffec-4777-818c-83d49a9a0d7e",
@@ -1890,8 +2050,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "e2f1136d-0410-4c58-9a98-a90fc6b7d534",
@@ -1902,8 +2062,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "07ee2bcd-0521-4ee2-a002-a4901e08ed21",
@@ -1914,8 +2074,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "1a4fec86-ff83-40cf-b189-26d50b0c34a3",
@@ -1926,8 +2086,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "28fd0c3b-3933-4129-be22-ad851d8ee7bd",
@@ -1938,8 +2098,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "37aa7753-26b2-4f82-b47b-afdbadf2c666",
@@ -1950,8 +2110,20 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
+    },
+    {
+      "id": "47c30f06-25eb-4aa8-a28c-0997535edcbb",
+      "catalog_id": "47c30f06-25eb-4aa8-a28c-0997535edcbb",
+      "title": "通知推送工具",
+      "description": "notify-tool",
+      "extend": "{}",
+      "progress_status": "completed",
+      "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
+      "reference_count": 0,
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "6d116f35-b9a3-421c-b57a-5a76a494bb26",
@@ -1962,8 +2134,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "8b28368e-d1d0-4d06-8a44-790c012fe852",
@@ -1974,8 +2146,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "8bb199a9-10d4-49d3-8d84-18ac152008dc",
@@ -1986,8 +2158,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "b5a1ce3a-02b1-4838-92e7-88bd51e144a7",
@@ -1998,8 +2170,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "c9edd730-985c-4d45-ac3f-955a720eefa5",
@@ -2010,8 +2182,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "ca69e922-eb11-4e04-9fda-138a010f4590",
@@ -2022,8 +2194,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "caeb8fae-91f9-46c3-a49d-ad1c49922ef2",
@@ -2034,8 +2206,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "d23c19dd-1267-4317-bfd9-ffdf1ec9cc85",
@@ -2046,8 +2218,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "d6cd0cba-2bec-4e4c-acd7-97e1d128ed71",
@@ -2058,8 +2230,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "d7fcdf39-a2f2-4389-8084-fa80db4f95ce",
@@ -2070,8 +2242,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "e8555c3c-d728-438c-aee8-cd3c9dc59937",
@@ -2082,8 +2254,20 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
+    },
+    {
+      "id": "0bd32ed9-3f93-4686-9ab3-690e888e57df",
+      "catalog_id": "0bd32ed9-3f93-4686-9ab3-690e888e57df",
+      "title": "Office 文档生成工具",
+      "description": "office-document-tool",
+      "extend": "{}",
+      "progress_status": "completed",
+      "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
+      "reference_count": 0,
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "14c125ac-57af-49e8-9c8a-2117e36ada69",
@@ -2094,8 +2278,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "1cbe62bf-7815-4ed1-b2f4-b37befa98428",
@@ -2106,8 +2290,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "1d5bbeca-e090-4003-85e8-db9f1f7f15de",
@@ -2118,8 +2302,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "1eceabeb-0439-485d-bc46-b5d1ff29dd56",
@@ -2130,8 +2314,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "23f9a317-7151-4b8b-9080-64a4aa35ef3c",
@@ -2142,8 +2326,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "2c49702b-e210-41d7-8013-9cf32604538f",
@@ -2154,8 +2338,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "4a5fe125-f781-4623-831e-52e21b3da0c6",
@@ -2166,8 +2350,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "4ff522a0-7c18-4d6c-98ec-3ac9d9ae671a",
@@ -2178,8 +2362,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "970f91e0-1e82-42a9-b34a-5b7a2fc8d1e6",
@@ -2190,8 +2374,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "9b740d6e-72ae-45a7-865f-3a4bd0617aa2",
@@ -2202,8 +2386,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "b9fe07f7-4cac-448e-91ac-33ba4a6af012",
@@ -2214,8 +2398,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "bef87d84-f3c5-4474-aef1-703fe9e02ad4",
@@ -2226,8 +2410,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "f2c0cff7-baf0-4d89-a2dc-63ecdf98e0b5",
@@ -2238,8 +2422,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "f336b534-ad73-45cd-a22c-d0cf6878aee5",
@@ -2250,8 +2434,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "11fac209-891b-4d72-b4dc-72615f8f16b5",
@@ -2262,8 +2446,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "284e27ea-a53d-49eb-bfe8-aa1466e88606",
@@ -2274,8 +2458,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "386dad19-46e9-4ee7-9637-5c15be96670f",
@@ -2286,8 +2470,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "62683956-aa42-4288-b847-221681b0b337",
@@ -2298,8 +2482,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "97b4e2e5-25b7-4b81-a124-83d8daa49cc9",
@@ -2310,8 +2494,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "9ce733fe-da48-4c94-9162-92f00a9a1405",
@@ -2322,8 +2506,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "9ff8b478-8f93-41f7-87d0-a1599a212f9f",
@@ -2334,8 +2518,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "b5b9958b-e197-42f1-b7d6-bd2f3271e0d5",
@@ -2346,8 +2530,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "ba2a6fdc-58be-4420-9c31-90a31c48941e",
@@ -2358,8 +2542,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "d299b140-22f3-438a-a019-6ecc5d425faf",
@@ -2370,8 +2554,20 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
+    },
+    {
+      "id": "d2bb74c8-2d10-499d-ab65-49c675faf0af",
+      "catalog_id": "d2bb74c8-2d10-499d-ab65-49c675faf0af",
+      "title": "电子表格处理工具",
+      "description": "spreadsheet-tool",
+      "extend": "{}",
+      "progress_status": "completed",
+      "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
+      "reference_count": 0,
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "db9d8bda-1d87-4e28-9bcc-7ffbc79b469c",
@@ -2382,8 +2578,20 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
+    },
+    {
+      "id": "05229458-e2e0-49db-8427-7aea8cecc490",
+      "catalog_id": "05229458-e2e0-49db-8427-7aea8cecc490",
+      "title": "工作区构建工具",
+      "description": "workspace-build-tool",
+      "extend": "{}",
+      "progress_status": "completed",
+      "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
+      "reference_count": 0,
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "10904053-ac21-4f57-be83-da83492a00ab",
@@ -2394,8 +2602,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "19180171-1e47-4281-b747-f46bbaaf74d9",
@@ -2406,8 +2614,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "1b6e5b95-1baa-46c9-816a-0f8853497d75",
@@ -2418,8 +2626,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "624e0d53-c9a0-4090-83b0-b28fe9785b6d",
@@ -2430,8 +2638,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "83f3cc1a-aa69-4ad1-9702-77be44c0e34b",
@@ -2442,8 +2650,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "9c5762c8-c259-4bd0-b8d6-9e91b08b7803",
@@ -2454,8 +2662,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "a61e1292-5d93-478b-b5dd-fbffad70d0e1",
@@ -2466,8 +2674,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "d825767d-225c-4351-ade7-bec385f446ec",
@@ -2478,8 +2686,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "f051c38c-33da-4e73-bae6-1044dcfeaad1",
@@ -2490,8 +2698,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "315b5c8e-ef6f-46fd-bca8-6a1b1640b1b3",
@@ -2502,8 +2710,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "504b124a-f740-4245-8569-a215169ed691",
@@ -2514,8 +2722,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "6f3a95fe-5481-476f-9966-1a9f8e05fa4c",
@@ -2526,8 +2734,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "a5813512-cbea-4625-8a07-f00163d68bce",
@@ -2538,8 +2746,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "a9de80a7-108a-49ef-8391-f289c33cd8eb",
@@ -2550,8 +2758,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "0815333f-25f1-47b1-8d4f-399f2f57c0d4",
@@ -2562,8 +2770,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "14f75828-3478-414d-8f81-66a7d80a878f",
@@ -2574,8 +2782,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "2395bb26-4daf-4108-b7ca-2b668a88b51d",
@@ -2586,8 +2794,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "6b9c8ce3-4561-4a73-931f-d18521c57c49",
@@ -2598,8 +2806,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "8a4e44f9-d11d-40fb-8cc1-ec11b34c211e",
@@ -2610,8 +2818,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "2d9819fa-1f6b-4c5d-ad96-eca3e10c58c1",
@@ -2622,8 +2830,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "4557c3d3-a28c-4a24-9cf4-95e206e7df42",
@@ -2634,8 +2842,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "b7cdc40a-975b-47f9-8b0f-bf4aff59dd1b",
@@ -2646,8 +2854,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "bd0c193e-38d0-414b-a171-e213f2fa2e20",
@@ -2658,8 +2866,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "c778fa4d-6f27-4ac5-8a5c-e3125df639ab",
@@ -2670,8 +2878,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "1b79d1d5-ba4e-4086-9769-8a0f913d8875",
@@ -2682,8 +2890,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "dde6e161-cfd0-44c1-9823-21f5cc3ce881",
@@ -2694,8 +2902,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "fc217d84-7cd0-4d80-83cb-b79c5246de4e",
@@ -2706,8 +2914,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "ada3f4be-d48e-454b-a1b5-e2b08169bf6b",
@@ -2718,8 +2926,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "f0678d38-4657-4303-8248-21d929528ab4",
@@ -2730,8 +2938,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": "6ba58a5f-276a-4014-9da2-093e050834e6",
@@ -2742,8 +2950,8 @@
       "progress_status": "completed",
       "repo_id": "c352ab17-a617-8be3-2de1-e28bfb6210f8",
       "reference_count": 0,
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     }
   ],
   "knowledge_relations": [
@@ -2754,8 +2962,8 @@
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": 2,
@@ -2764,8 +2972,8 @@
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": 3,
@@ -2774,8 +2982,8 @@
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": 4,
@@ -2784,8 +2992,8 @@
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": 5,
@@ -2794,8 +3002,8 @@
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": 6,
@@ -2804,8 +3012,8 @@
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": 7,
@@ -2814,8 +3022,8 @@
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": 8,
@@ -2824,678 +3032,748 @@
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
       "id": 9,
+      "source_id": "8bb199a9-10d4-49d3-8d84-18ac152008dc",
+      "target_id": "53ab9519-5aaa-4cef-9bbf-83ab3171e98f",
+      "source_type": "WIKI_ITEM",
+      "target_type": "WIKI_ITEM",
+      "relationship_type": "PARENT_CHILD",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
+    },
+    {
+      "id": 10,
+      "source_id": "0f4a08f2-068d-4c98-b5e9-fd9367edad57",
+      "target_id": "61d3fc39-786d-41d9-ae62-6b7a1bd0d7d0",
+      "source_type": "WIKI_ITEM",
+      "target_type": "WIKI_ITEM",
+      "relationship_type": "PARENT_CHILD",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
+    },
+    {
+      "id": 11,
       "source_id": "1d5bbeca-e090-4003-85e8-db9f1f7f15de",
       "target_id": "70b6213b-c0a5-416e-ae33-1f2225000c3b",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 10,
+      "id": 12,
       "source_id": "2395bb26-4daf-4108-b7ca-2b668a88b51d",
       "target_id": "811438d0-5914-408f-8f70-27aa020be475",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 11,
+      "id": 13,
       "source_id": "d23c19dd-1267-4317-bfd9-ffdf1ec9cc85",
       "target_id": "8da9478d-695c-42b0-932f-ccbc3b445e09",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 12,
+      "id": 14,
+      "source_id": "f051c38c-33da-4e73-bae6-1044dcfeaad1",
+      "target_id": "a0f4f9d1-ec8e-409c-86b7-9a5d34a94798",
+      "source_type": "WIKI_ITEM",
+      "target_type": "WIKI_ITEM",
+      "relationship_type": "PARENT_CHILD",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
+    },
+    {
+      "id": 15,
       "source_id": "07ee2bcd-0521-4ee2-a002-a4901e08ed21",
       "target_id": "bebaf1f9-bfdf-4142-ab62-6d31ecb997f1",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 13,
+      "id": 16,
       "source_id": "1b79d1d5-ba4e-4086-9769-8a0f913d8875",
       "target_id": "deeb62ab-ffec-4777-818c-83d49a9a0d7e",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 14,
+      "id": 17,
       "source_id": "a9de80a7-108a-49ef-8391-f289c33cd8eb",
       "target_id": "e2f1136d-0410-4c58-9a98-a90fc6b7d534",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 15,
+      "id": 18,
       "source_id": "8b28368e-d1d0-4d06-8a44-790c012fe852",
       "target_id": "07ee2bcd-0521-4ee2-a002-a4901e08ed21",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 16,
+      "id": 19,
       "source_id": "bd0c193e-38d0-414b-a171-e213f2fa2e20",
       "target_id": "1a4fec86-ff83-40cf-b189-26d50b0c34a3",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 17,
+      "id": 20,
       "source_id": "2395bb26-4daf-4108-b7ca-2b668a88b51d",
       "target_id": "28fd0c3b-3933-4129-be22-ad851d8ee7bd",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 18,
+      "id": 21,
       "source_id": "d23c19dd-1267-4317-bfd9-ffdf1ec9cc85",
       "target_id": "37aa7753-26b2-4f82-b47b-afdbadf2c666",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 19,
+      "id": 22,
+      "source_id": "8bb199a9-10d4-49d3-8d84-18ac152008dc",
+      "target_id": "47c30f06-25eb-4aa8-a28c-0997535edcbb",
+      "source_type": "WIKI_ITEM",
+      "target_type": "WIKI_ITEM",
+      "relationship_type": "PARENT_CHILD",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
+    },
+    {
+      "id": 23,
       "source_id": "d825767d-225c-4351-ade7-bec385f446ec",
       "target_id": "6d116f35-b9a3-421c-b57a-5a76a494bb26",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 20,
+      "id": 24,
       "source_id": "9c5762c8-c259-4bd0-b8d6-9e91b08b7803",
       "target_id": "8bb199a9-10d4-49d3-8d84-18ac152008dc",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 21,
+      "id": 25,
       "source_id": "db9d8bda-1d87-4e28-9bcc-7ffbc79b469c",
       "target_id": "b5a1ce3a-02b1-4838-92e7-88bd51e144a7",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 22,
+      "id": 26,
       "source_id": "ca69e922-eb11-4e04-9fda-138a010f4590",
       "target_id": "c9edd730-985c-4d45-ac3f-955a720eefa5",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 23,
+      "id": 27,
       "source_id": "c778fa4d-6f27-4ac5-8a5c-e3125df639ab",
       "target_id": "ca69e922-eb11-4e04-9fda-138a010f4590",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 24,
+      "id": 28,
       "source_id": "a9de80a7-108a-49ef-8391-f289c33cd8eb",
       "target_id": "caeb8fae-91f9-46c3-a49d-ad1c49922ef2",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 25,
+      "id": 29,
       "source_id": "1cbe62bf-7815-4ed1-b2f4-b37befa98428",
       "target_id": "d23c19dd-1267-4317-bfd9-ffdf1ec9cc85",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 26,
+      "id": 30,
       "source_id": "1b79d1d5-ba4e-4086-9769-8a0f913d8875",
       "target_id": "d6cd0cba-2bec-4e4c-acd7-97e1d128ed71",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 27,
+      "id": 31,
       "source_id": "07ee2bcd-0521-4ee2-a002-a4901e08ed21",
       "target_id": "d7fcdf39-a2f2-4389-8084-fa80db4f95ce",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 28,
+      "id": 32,
       "source_id": "1d5bbeca-e090-4003-85e8-db9f1f7f15de",
       "target_id": "e8555c3c-d728-438c-aee8-cd3c9dc59937",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 29,
+      "id": 33,
+      "source_id": "8bb199a9-10d4-49d3-8d84-18ac152008dc",
+      "target_id": "0bd32ed9-3f93-4686-9ab3-690e888e57df",
+      "source_type": "WIKI_ITEM",
+      "target_type": "WIKI_ITEM",
+      "relationship_type": "PARENT_CHILD",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
+    },
+    {
+      "id": 34,
       "source_id": "1d5bbeca-e090-4003-85e8-db9f1f7f15de",
       "target_id": "14c125ac-57af-49e8-9c8a-2117e36ada69",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 30,
+      "id": 35,
       "source_id": "1cbe62bf-7815-4ed1-b2f4-b37befa98428",
       "target_id": "1d5bbeca-e090-4003-85e8-db9f1f7f15de",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 31,
+      "id": 36,
       "source_id": "9c5762c8-c259-4bd0-b8d6-9e91b08b7803",
       "target_id": "1eceabeb-0439-485d-bc46-b5d1ff29dd56",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 32,
+      "id": 37,
       "source_id": "d23c19dd-1267-4317-bfd9-ffdf1ec9cc85",
       "target_id": "23f9a317-7151-4b8b-9080-64a4aa35ef3c",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 33,
+      "id": 38,
       "source_id": "db9d8bda-1d87-4e28-9bcc-7ffbc79b469c",
       "target_id": "2c49702b-e210-41d7-8013-9cf32604538f",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 34,
+      "id": 39,
       "source_id": "a9de80a7-108a-49ef-8391-f289c33cd8eb",
       "target_id": "4a5fe125-f781-4623-831e-52e21b3da0c6",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 35,
+      "id": 40,
       "source_id": "bd0c193e-38d0-414b-a171-e213f2fa2e20",
       "target_id": "4ff522a0-7c18-4d6c-98ec-3ac9d9ae671a",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 36,
+      "id": 41,
       "source_id": "8b28368e-d1d0-4d06-8a44-790c012fe852",
       "target_id": "970f91e0-1e82-42a9-b34a-5b7a2fc8d1e6",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 37,
+      "id": 42,
       "source_id": "ca69e922-eb11-4e04-9fda-138a010f4590",
       "target_id": "9b740d6e-72ae-45a7-865f-3a4bd0617aa2",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 38,
+      "id": 43,
       "source_id": "1b79d1d5-ba4e-4086-9769-8a0f913d8875",
       "target_id": "b9fe07f7-4cac-448e-91ac-33ba4a6af012",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 39,
+      "id": 44,
       "source_id": "c778fa4d-6f27-4ac5-8a5c-e3125df639ab",
       "target_id": "bef87d84-f3c5-4474-aef1-703fe9e02ad4",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 40,
+      "id": 45,
       "source_id": "07ee2bcd-0521-4ee2-a002-a4901e08ed21",
       "target_id": "f2c0cff7-baf0-4d89-a2dc-63ecdf98e0b5",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 41,
+      "id": 46,
       "source_id": "2395bb26-4daf-4108-b7ca-2b668a88b51d",
       "target_id": "f336b534-ad73-45cd-a22c-d0cf6878aee5",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 42,
+      "id": 47,
       "source_id": "c778fa4d-6f27-4ac5-8a5c-e3125df639ab",
       "target_id": "11fac209-891b-4d72-b4dc-72615f8f16b5",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 43,
+      "id": 48,
       "source_id": "1d5bbeca-e090-4003-85e8-db9f1f7f15de",
       "target_id": "284e27ea-a53d-49eb-bfe8-aa1466e88606",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 44,
+      "id": 49,
       "source_id": "db9d8bda-1d87-4e28-9bcc-7ffbc79b469c",
       "target_id": "386dad19-46e9-4ee7-9637-5c15be96670f",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 45,
+      "id": 50,
       "source_id": "8b28368e-d1d0-4d06-8a44-790c012fe852",
       "target_id": "62683956-aa42-4288-b847-221681b0b337",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 46,
+      "id": 51,
       "source_id": "9c5762c8-c259-4bd0-b8d6-9e91b08b7803",
       "target_id": "97b4e2e5-25b7-4b81-a124-83d8daa49cc9",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 47,
+      "id": 52,
       "source_id": "1b79d1d5-ba4e-4086-9769-8a0f913d8875",
       "target_id": "9ce733fe-da48-4c94-9162-92f00a9a1405",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 48,
+      "id": 53,
       "source_id": "07ee2bcd-0521-4ee2-a002-a4901e08ed21",
       "target_id": "9ff8b478-8f93-41f7-87d0-a1599a212f9f",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 49,
+      "id": 54,
       "source_id": "ca69e922-eb11-4e04-9fda-138a010f4590",
       "target_id": "b5b9958b-e197-42f1-b7d6-bd2f3271e0d5",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 50,
+      "id": 55,
       "source_id": "d23c19dd-1267-4317-bfd9-ffdf1ec9cc85",
       "target_id": "ba2a6fdc-58be-4420-9c31-90a31c48941e",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 51,
+      "id": 56,
       "source_id": "2395bb26-4daf-4108-b7ca-2b668a88b51d",
       "target_id": "d299b140-22f3-438a-a019-6ecc5d425faf",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 52,
+      "id": 57,
+      "source_id": "8bb199a9-10d4-49d3-8d84-18ac152008dc",
+      "target_id": "d2bb74c8-2d10-499d-ab65-49c675faf0af",
+      "source_type": "WIKI_ITEM",
+      "target_type": "WIKI_ITEM",
+      "relationship_type": "PARENT_CHILD",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
+    },
+    {
+      "id": 58,
+      "source_id": "8bb199a9-10d4-49d3-8d84-18ac152008dc",
+      "target_id": "05229458-e2e0-49db-8427-7aea8cecc490",
+      "source_type": "WIKI_ITEM",
+      "target_type": "WIKI_ITEM",
+      "relationship_type": "PARENT_CHILD",
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
+    },
+    {
+      "id": 59,
       "source_id": "ca69e922-eb11-4e04-9fda-138a010f4590",
       "target_id": "10904053-ac21-4f57-be83-da83492a00ab",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 53,
+      "id": 60,
       "source_id": "db9d8bda-1d87-4e28-9bcc-7ffbc79b469c",
       "target_id": "19180171-1e47-4281-b747-f46bbaaf74d9",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 54,
+      "id": 61,
       "source_id": "c778fa4d-6f27-4ac5-8a5c-e3125df639ab",
       "target_id": "1b6e5b95-1baa-46c9-816a-0f8853497d75",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 55,
+      "id": 62,
       "source_id": "1b79d1d5-ba4e-4086-9769-8a0f913d8875",
       "target_id": "624e0d53-c9a0-4090-83b0-b28fe9785b6d",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 56,
+      "id": 63,
       "source_id": "1d5bbeca-e090-4003-85e8-db9f1f7f15de",
       "target_id": "83f3cc1a-aa69-4ad1-9702-77be44c0e34b",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 57,
+      "id": 64,
       "source_id": "8b28368e-d1d0-4d06-8a44-790c012fe852",
       "target_id": "9c5762c8-c259-4bd0-b8d6-9e91b08b7803",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 58,
+      "id": 65,
       "source_id": "d23c19dd-1267-4317-bfd9-ffdf1ec9cc85",
       "target_id": "a61e1292-5d93-478b-b5dd-fbffad70d0e1",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 59,
+      "id": 66,
       "source_id": "9c5762c8-c259-4bd0-b8d6-9e91b08b7803",
       "target_id": "f051c38c-33da-4e73-bae6-1044dcfeaad1",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 60,
+      "id": 67,
       "source_id": "1b79d1d5-ba4e-4086-9769-8a0f913d8875",
       "target_id": "315b5c8e-ef6f-46fd-bca8-6a1b1640b1b3",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 61,
+      "id": 68,
       "source_id": "db9d8bda-1d87-4e28-9bcc-7ffbc79b469c",
       "target_id": "504b124a-f740-4245-8569-a215169ed691",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 62,
+      "id": 69,
       "source_id": "d23c19dd-1267-4317-bfd9-ffdf1ec9cc85",
       "target_id": "6f3a95fe-5481-476f-9966-1a9f8e05fa4c",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 63,
+      "id": 70,
       "source_id": "1d5bbeca-e090-4003-85e8-db9f1f7f15de",
       "target_id": "a5813512-cbea-4625-8a07-f00163d68bce",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 64,
+      "id": 71,
       "source_id": "1b79d1d5-ba4e-4086-9769-8a0f913d8875",
       "target_id": "0815333f-25f1-47b1-8d4f-399f2f57c0d4",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 65,
+      "id": 72,
       "source_id": "d23c19dd-1267-4317-bfd9-ffdf1ec9cc85",
       "target_id": "14f75828-3478-414d-8f81-66a7d80a878f",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 66,
+      "id": 73,
       "source_id": "db9d8bda-1d87-4e28-9bcc-7ffbc79b469c",
       "target_id": "6b9c8ce3-4561-4a73-931f-d18521c57c49",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 67,
+      "id": 74,
       "source_id": "1d5bbeca-e090-4003-85e8-db9f1f7f15de",
       "target_id": "8a4e44f9-d11d-40fb-8cc1-ec11b34c211e",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 68,
+      "id": 75,
       "source_id": "d23c19dd-1267-4317-bfd9-ffdf1ec9cc85",
       "target_id": "2d9819fa-1f6b-4c5d-ad96-eca3e10c58c1",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 69,
+      "id": 76,
       "source_id": "1b79d1d5-ba4e-4086-9769-8a0f913d8875",
       "target_id": "4557c3d3-a28c-4a24-9cf4-95e206e7df42",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 70,
+      "id": 77,
       "source_id": "db9d8bda-1d87-4e28-9bcc-7ffbc79b469c",
       "target_id": "b7cdc40a-975b-47f9-8b0f-bf4aff59dd1b",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 71,
+      "id": 78,
       "source_id": "1d5bbeca-e090-4003-85e8-db9f1f7f15de",
       "target_id": "bd0c193e-38d0-414b-a171-e213f2fa2e20",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 72,
+      "id": 79,
       "source_id": "db9d8bda-1d87-4e28-9bcc-7ffbc79b469c",
       "target_id": "dde6e161-cfd0-44c1-9823-21f5cc3ce881",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 73,
+      "id": 80,
       "source_id": "1b79d1d5-ba4e-4086-9769-8a0f913d8875",
       "target_id": "fc217d84-7cd0-4d80-83cb-b79c5246de4e",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 74,
+      "id": 81,
       "source_id": "1b79d1d5-ba4e-4086-9769-8a0f913d8875",
       "target_id": "f0678d38-4657-4303-8248-21d929528ab4",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     },
     {
-      "id": 75,
+      "id": 82,
       "source_id": "1b79d1d5-ba4e-4086-9769-8a0f913d8875",
       "target_id": "6ba58a5f-276a-4014-9da2-093e050834e6",
       "source_type": "WIKI_ITEM",
       "target_type": "WIKI_ITEM",
       "relationship_type": "PARENT_CHILD",
-      "gmt_create": "2026-09-29T15:05:03Z",
-      "gmt_modified": "2026-09-29T15:05:03Z"
+      "gmt_create": "2026-10-04T05:07:16Z",
+      "gmt_modified": "2026-10-04T05:07:16Z"
     }
   ]
 }
