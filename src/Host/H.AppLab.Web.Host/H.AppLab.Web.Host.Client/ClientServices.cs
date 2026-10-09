@@ -18,8 +18,6 @@ using H.Organization.Application.Contracts;
 using H.Setting.Application.Contracts;
 using H.SupplyChain.Application.Contracts;
 using H.SystemPortal.Application.Contracts;
-using H.Testing.Application.Contracts;
-using H.Testing.Web.Services;
 
 namespace H.AppLab.Web.Host.Client;
 
@@ -34,7 +32,6 @@ public static class ClientServices
     public const string OrganizationRemoteServiceName = "Organization";
     public const string DesignEngineRemoteServiceName = "DesignEngine";
     public const string RenderEngineRemoteServiceName = "RenderEngine";
-    public const string TestingRemoteServiceName = "Testing";
     public const string PortalRemoteServiceName = "Portal";
     public const string NotificationRemoteServiceName = "Notification";
     public const string OrderRemoteServiceName = "Order";
@@ -70,7 +67,7 @@ public static class ClientServices
         [
             DesignEngineRemoteServiceName, RenderEngineRemoteServiceName,
             AccountRemoteServiceName, OrganizationRemoteServiceName,
-            ApprovalRemoteServiceName, TestingRemoteServiceName,
+            ApprovalRemoteServiceName,
             PortalRemoteServiceName, NotificationRemoteServiceName,
             AIRemoteServiceName, EnterpriseRemoteServiceName,
             SystemPortalRemoteServiceName, OrderRemoteServiceName,
@@ -80,14 +77,7 @@ public static class ClientServices
 
         foreach (var name in serviceNames)
         {
-            services.AddHttpClient(name, client =>
-                {
-                    // 批量执行 UI 测试用例可能持续数分钟，默认 100s 超时会中途取消执行并导致结果丢失
-                    if (name == TestingRemoteServiceName)
-                    {
-                        client.Timeout = Timeout.InfiniteTimeSpan;
-                    }
-                })
+            services.AddHttpClient(name)
                 .AddHttpMessageHandler<CookieHandler>()
                 .AddHttpMessageHandler<AppIdHeaderHandler>();
         }
@@ -119,14 +109,6 @@ public static class ClientServices
             // Approval.Web 交叉引用了 Organization 的 Contracts
             s.AddHttpClientProxies(typeof(ApprovalApplicationContractsModule).Assembly, ApprovalRemoteServiceName);
             s.AddHttpClientProxies(typeof(OrganizationApplicationContractsModule).Assembly, OrganizationRemoteServiceName);
-        },
-        ["testing"] = (s, _) =>
-        {
-            s.AddHttpClientProxies(typeof(TestingApplicationContractsModule).Assembly, TestingRemoteServiceName);
-            // Testing 测试执行事件通知器
-            s.AddSingleton<ITestExecutionEventNotifier, TestExecutionEventNotifier>();
-            // 「当前选中项目」共享状态（顶栏选择器与各页面共用）
-            s.AddScoped<CurrentProjectSelection>();
         },
         ["notification"] = (s, _) =>
             s.AddHttpClientProxies(typeof(NotificationApplicationContractsModule).Assembly, NotificationRemoteServiceName),

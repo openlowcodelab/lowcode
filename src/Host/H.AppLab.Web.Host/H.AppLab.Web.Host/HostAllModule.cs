@@ -20,7 +20,6 @@ using H.Portal.Application;
 using H.Setting.Application;
 using H.SupplyChain.Application;
 using H.SystemPortal.Application;
-using H.Testing.Application;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Volo.Abp.AspNetCore.MultiTenancy;
@@ -56,8 +55,6 @@ namespace H.AppLab.Web.Host;
     typeof(OrganizationApplicationModule),
     // Approval
     typeof(ApprovalApplicationModule),
-    // Testing
-    typeof(TestingApplicationModule),
     // Portal
     typeof(PortalApplicationModule),
     // SystemPortal
@@ -147,7 +144,6 @@ public class HostAllModule : AbpModule
             options.ConventionalControllers.Create(typeof(DesignEngineApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(RenderEngineApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(ApprovalApplicationModule).Assembly);
-            options.ConventionalControllers.Create(typeof(TestingApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(PortalApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(SystemPortalApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(NotificationApplicationModule).Assembly);

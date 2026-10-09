@@ -21,7 +21,7 @@
 
 * Services 基础服务（企业级应用）
   * 按限界上下文划分的业务模块，每个模块遵循 Application.Contracts / Application / EntityFrameworkCore / Web 分层
-  * 包含：Account、Organization、Approval、AI、Notification、Order、Portal、Setting、SupplyChain、BackgroundTask、Testing
+  * 包含：Account、Organization、Approval、AI、Notification、Order、Portal、Setting、SupplyChain、BackgroundTask
 
 * System 系统级应用
   * Enterprise、SystemPortal，面向平台运营侧
