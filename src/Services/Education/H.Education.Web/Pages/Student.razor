@@ -1,0 +1,275 @@
+@page "/education/student"
+
+@layout EducationLayout
+@inject IStudentAppService StudentService
+@inject IJSRuntime JS
+@inject HToastService Toast
+
+<HCard Title="学生名单" Description="答题与趣味练习都从这里选学生；删除档案不会删除已有的答卷与练习记录">
+    <div class="h-toolbar">
+        <input type="text" @bind="filter" class="h-input" style="width:200px;" placeholder="姓名或学号" />
+        <select class="h-input" style="width:120px;" @bind="gradeFilter">
+            <option value="">全部年级</option>
+            @foreach (var grade in GradeOptions.All)
+            {
+                <option value="@grade">@grade</option>
+            }
+        </select>
+        <select class="h-input" style="width:110px;" @bind="genderFilter">
+            <option value="">全部性别</option>
+            <option value="Male">男</option>
+            <option value="Female">女</option>
+        </select>
+        <button class="h-btn" @onclick="LoadData">查询</button>
+        <button class="h-btn" @onclick="LoadData">刷新</button>
+        <button class="h-btn h-btn-primary" @onclick="ShowCreateDialog">新增学生</button>
+    </div>
+
+    <HTable Loading="@loading" ShowEmpty="@(!loading && !students.Any())">
+        <thead>
+            <tr>
+                <th>学号</th>
+                <th>姓名</th>
+                <th>性别</th>
+                <th>年级</th>
+                <th>班级</th>
+                <th>家长</th>
+                <th>答题数</th>
+                <th>平均得分率</th>
+                <th>练习数</th>
+                <th style="width:110px;">操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var student in students)
+            {
+                <tr>
+                    <td>@(string.IsNullOrWhiteSpace(student.StudentNo) ? "-" : student.StudentNo)</td>
+                    <td>@student.Name</td>
+                    <td>@student.Gender.GetGenderName()</td>
+                    <td>@student.Grade</td>
+                    <td>@(string.IsNullOrWhiteSpace(student.ClassName) ? "-" : student.ClassName)</td>
+                    <td>
+                        @if (string.IsNullOrWhiteSpace(student.GuardianName) && string.IsNullOrWhiteSpace(student.GuardianPhone))
+                        {
+                            <span>-</span>
+                        }
+                        else
+                        {
+                            <div>@(string.IsNullOrWhiteSpace(student.GuardianName) ? "-" : student.GuardianName)</div>
+                            <div class="edu-score-label">@(student.GuardianPhone)</div>
+                        }
+                    </td>
+                    <td>@student.AnswerCount</td>
+                    <td>@(student.AnswerCount == 0 ? "-" : $"{student.AvgAccuracyRate:0.#}%")</td>
+                    <td>@student.PracticeCount</td>
+                    <td>
+                        <span class="row-actions">
+                            <a @onclick="@(() => ShowEditDialog(student))">编辑</a>
+                            <a class="link-action-muted" @onclick="@(() => ConfirmDelete(student))">删除</a>
+                        </span>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </HTable>
+
+    @if (!loading && students.Any())
+    {
+        <div class="h-pagination">
+            <span class="h-pagination-info">共 @totalCount 名学生，当前页 @students.Count 名</span>
+        </div>
+    }
+</HCard>
+
+<HModal Title="@(editingId == null ? "新增学生" : "编辑学生")" Visible="@modalVisible" VisibleChanged="OnModalVisibleChanged"
+        OnOk="Save" ConfirmLoading="@saving" OkText="@(editingId == null ? "新增" : "保存")" Style="width:560px;">
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">姓名</label>
+        <div class="h-form-control">
+            <input type="text" class="h-input" @bind="form.Name" placeholder="如：李明" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">年级</label>
+        <div class="h-form-control">
+            <select class="h-input" @bind="form.Grade">
+                @foreach (var grade in GradeOptions.All)
+                {
+                    <option value="@grade">@grade</option>
+                }
+            </select>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">性别</label>
+        <div class="h-form-control">
+            <select class="h-input" @bind="form.Gender">
+                <option value="Unknown">未填写</option>
+                <option value="Male">男</option>
+                <option value="Female">女</option>
+            </select>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">学号</label>
+        <div class="h-form-control">
+            <input type="text" class="h-input" @bind="form.StudentNo" placeholder="可留空；填写后不可重复" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">班级</label>
+        <div class="h-form-control">
+            <input type="text" class="h-input" @bind="form.ClassName" placeholder="如：三班" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">家长姓名</label>
+        <div class="h-form-control">
+            <input type="text" class="h-input" @bind="form.GuardianName" placeholder="可选" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">家长电话</label>
+        <div class="h-form-control">
+            <input type="text" class="h-input" @bind="form.GuardianPhone" placeholder="可选" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">备注</label>
+        <div class="h-form-control">
+            <textarea class="h-textarea" rows="2" @bind="form.Remark" placeholder="如：课代表、需要课后辅导"></textarea>
+        </div>
+    </div>
+</HModal>
+
+@code {
+    private List<StudentDto> students = [];
+    private int totalCount;
+    private bool loading;
+
+    private string filter = string.Empty;
+    private string gradeFilter = string.Empty;
+    private string genderFilter = string.Empty;
+
+    private bool modalVisible;
+    private bool saving;
+    private Guid? editingId;
+
+    // UpdateStudentDto 继承自 CreateStudentDto，新增与编辑复用同一份表单
+    private UpdateStudentDto form = new();
+
+    protected override async Task OnInitializedAsync() => await LoadData();
+
+    private async Task LoadData()
+    {
+        loading = true;
+        try
+        {
+            var result = await StudentService.GetListAsync(new StudentQueryDto
+            {
+                MaxResultCount = 100,
+                Filter = string.IsNullOrWhiteSpace(filter) ? null : filter.Trim(),
+                Grade = string.IsNullOrWhiteSpace(gradeFilter) ? null : gradeFilter,
+                Gender = Enum.TryParse<GenderEnum>(genderFilter, out var gender) ? gender : null
+            });
+            students = result.Data?.Items.ToList() ?? [];
+            totalCount = (int)(result.Data?.TotalCount ?? 0);
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"加载学生名单失败：{ex.Message}");
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private void ShowCreateDialog()
+    {
+        editingId = null;
+        form = new UpdateStudentDto { Grade = "一年级", Gender = GenderEnum.Unknown };
+        modalVisible = true;
+    }
+
+    private void ShowEditDialog(StudentDto student)
+    {
+        editingId = student.Id;
+        form = new UpdateStudentDto
+        {
+            Name = student.Name,
+            StudentNo = student.StudentNo,
+            Gender = student.Gender,
+            Grade = student.Grade,
+            ClassName = student.ClassName,
+            GuardianName = student.GuardianName,
+            GuardianPhone = student.GuardianPhone,
+            Remark = student.Remark
+        };
+        modalVisible = true;
+    }
+
+    private void OnModalVisibleChanged(bool visible) => modalVisible = visible;
+
+    private async Task Save()
+    {
+        if (string.IsNullOrWhiteSpace(form.Name))
+        {
+            Toast.Warning("请填写姓名");
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(form.Grade))
+        {
+            Toast.Warning("请选择年级");
+            return;
+        }
+
+        saving = true;
+        try
+        {
+            if (editingId is null)
+            {
+                await StudentService.CreateAsync(form);
+                Toast.Success($"已添加学生 {form.Name.Trim()}");
+            }
+            else
+            {
+                await StudentService.UpdateAsync(editingId.Value, form);
+                Toast.Success("学生信息已更新");
+            }
+
+            modalVisible = false;
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"保存失败：{ex.Message}", 6000);
+        }
+        finally
+        {
+            saving = false;
+        }
+    }
+
+    private async Task ConfirmDelete(StudentDto student)
+    {
+        var impact = student.AnswerCount + student.PracticeCount > 0
+            ? $"其 {student.AnswerCount} 份答卷与 {student.PracticeCount} 条练习记录会保留。"
+            : "该学生还没有答题与练习记录。";
+        var confirmed = await JS.InvokeAsync<bool>("confirm",
+            $"删除学生「{student.Name}」（{student.Grade}）？{impact}");
+        if (!confirmed) return;
+
+        try
+        {
+            await StudentService.DeleteAsync(student.Id);
+            Toast.Success("已删除");
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"删除失败：{ex.Message}");
+        }
+    }
+}

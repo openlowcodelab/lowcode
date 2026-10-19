@@ -5,6 +5,7 @@ using H.Approval.Application.Contracts;
 using H.AI.Application.Contracts;
 using H.BackgroundTask.Application.Contracts;
 using H.Enterprise.Application.Contracts;
+using H.Education.Application.Contracts;
 using H.File.Application.Contracts;
 using H.LowCode.Application.Contracts;
 using H.LowCode.ComponentBase;
@@ -35,6 +36,7 @@ public static class ClientServices
     public const string PortalRemoteServiceName = "Portal";
     public const string NotificationRemoteServiceName = "Notification";
     public const string OrderRemoteServiceName = "Order";
+    public const string EducationRemoteServiceName = "Education";
     public const string SettingRemoteServiceName = "Setting";
     public const string SupplyChainRemoteServiceName = "SupplyChain";
     public const string BackgroundTaskRemoteServiceName = "BackgroundTask";
@@ -71,6 +73,7 @@ public static class ClientServices
             PortalRemoteServiceName, NotificationRemoteServiceName,
             AIRemoteServiceName, EnterpriseRemoteServiceName,
             SystemPortalRemoteServiceName, OrderRemoteServiceName,
+            EducationRemoteServiceName,
             SettingRemoteServiceName, SupplyChainRemoteServiceName,
             BackgroundTaskRemoteServiceName, FileRemoteServiceName
         ];
@@ -114,6 +117,8 @@ public static class ClientServices
             s.AddHttpClientProxies(typeof(NotificationApplicationContractsModule).Assembly, NotificationRemoteServiceName),
         ["order"] = (s, _) =>
             s.AddHttpClientProxies(typeof(OrderApplicationContractsModule).Assembly, OrderRemoteServiceName),
+        ["education"] = (s, _) =>
+            s.AddHttpClientProxies(typeof(EducationApplicationContractsModule).Assembly, EducationRemoteServiceName),
         ["setting"] = (s, _) =>
             s.AddHttpClientProxies(typeof(SettingApplicationContractsModule).Assembly, SettingRemoteServiceName),
         ["supply-chain"] = (s, _) =>

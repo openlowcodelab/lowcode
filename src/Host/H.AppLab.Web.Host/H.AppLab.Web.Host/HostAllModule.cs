@@ -4,6 +4,7 @@ using H.AI.Application;
 using H.BackgroundTask.Application;
 using H.Enterprise.Application;
 using H.Enterprise.EntityFrameworkCore;
+using H.Education.Application;
 using H.File.Application;
 using H.LowCode.ComponentBase;
 using H.Util.Blazor;
@@ -65,6 +66,8 @@ namespace H.AppLab.Web.Host;
     typeof(EnterpriseApplicationModule),
     // Order
     typeof(OrderApplicationModule),
+    // Education（中小学教育：试卷、答题、趣味练习）
+    typeof(EducationApplicationModule),
     // Setting（配置管理）
     typeof(SettingApplicationModule),
     // SupplyChain
@@ -149,6 +152,7 @@ public class HostAllModule : AbpModule
             options.ConventionalControllers.Create(typeof(NotificationApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(EnterpriseApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(OrderApplicationModule).Assembly);
+            options.ConventionalControllers.Create(typeof(EducationApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(SettingApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(SupplyChainApplicationModule).Assembly);
             options.ConventionalControllers.Create(typeof(BackgroundTaskApplicationModule).Assembly);

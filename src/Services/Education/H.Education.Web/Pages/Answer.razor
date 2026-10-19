@@ -1,0 +1,222 @@
+@page "/education/answer"
+
+@layout EducationLayout
+@inject IAnswerSheetAppService AnswerService
+@inject IExamPaperAppService PaperService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@inject HToastService Toast
+
+<HCard Title="开始答题" Description="选择已发布的试卷开始答题，进入答题页后可随时保存进度，交卷即自动评分">
+    <div class="h-form-row">
+        <div class="h-form-item h-form-col">
+            <label class="h-form-label">试卷</label>
+            <select class="h-input" @bind="selectedPaperId">
+                <option value="">请选择试卷</option>
+                @foreach (var paper in publishedPapers)
+                {
+                    <option value="@paper.Id">@paper.Title（@paper.Subject.GetSubjectName() · @paper.Grade · @paper.TotalScore.ToString("0.#")分）</option>
+                }
+            </select>
+        </div>
+        <div class="h-form-item" style="max-width:140px;">
+            <label class="h-form-label">&nbsp;</label>
+            <button class="h-btn h-btn-primary h-btn-block" @onclick="Start" disabled="@starting">
+                @if (starting)
+                {
+                    <span class="h-btn-loading"></span>
+                }
+                开始答题
+            </button>
+        </div>
+    </div>
+    @if (publishedPapers.Count == 0)
+    {
+        <div class="h-alert h-alert-warning" style="margin-top:8px;">
+            还没有已发布的试卷，请先在「试卷管理」生成试卷并发布。
+        </div>
+    }
+</HCard>
+
+<HCard Title="答卷记录" Style="margin-top:12px;">
+    <div class="h-toolbar">
+        <input type="text" @bind="filter" class="h-input" style="width:200px;" placeholder="试卷标题" />
+        <select class="h-input" style="width:140px;" @bind="statusFilter">
+            <option value="">全部状态</option>
+            <option value="Answering">答题中</option>
+            <option value="Saved">已保存</option>
+            <option value="Graded">已批改</option>
+        </select>
+        <button class="h-btn" @onclick="LoadData">查询</button>
+        <button class="h-btn" @onclick="LoadData">刷新</button>
+        <span class="edu-timer" style="margin-left:auto;">共 @sheets.Count 条</span>
+    </div>
+
+    <HTable Loading="@loading" ShowEmpty="@(!loading && !sheets.Any())">
+        <thead>
+            <tr>
+                <th style="width:28%">试卷</th>
+                <th>状态</th>
+                <th>得分</th>
+                <th>得分率</th>
+                <th>正确题数</th>
+                <th>用时</th>
+                <th>开始时间</th>
+                <th style="width:160px;">操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var sheet in sheets)
+            {
+                <tr>
+                    <td>@sheet.PaperTitle</td>
+                    <td><span class="h-tag @StatusTagClass(sheet.Status)">@sheet.Status.GetStatusName()</span></td>
+                    <td>@sheet.TotalScore.ToString("0.#") / @sheet.FullScore.ToString("0.#")</td>
+                    <td>@(sheet.Status == AnswerSheetStatusEnum.Graded ? $"{sheet.AccuracyRate:0.#}%" : "-")</td>
+                    <td>@(sheet.Status == AnswerSheetStatusEnum.Graded ? $"{sheet.CorrectCount}/{sheet.QuestionCount}" : "-")</td>
+                    <td>@FormatDuration(sheet.DurationSeconds)</td>
+                    <td>@sheet.StartTime.ToString("MM-dd HH:mm")</td>
+                    <td>
+                        <span class="row-actions">
+                            <a @onclick="@(() => Nav.NavigateTo($"/education/answer/{sheet.Id}"))">
+                                @(sheet.Status == AnswerSheetStatusEnum.Graded ? "查看批改" : "继续作答")
+                            </a>
+                            <a class="link-action-muted" @onclick="@(() => ConfirmDelete(sheet))">删除</a>
+                        </span>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </HTable>
+</HCard>
+
+@code {
+    private List<AnswerSheetDto> sheets = [];
+    private List<ExamPaperDto> publishedPapers = [];
+    private bool loading;
+    private bool starting;
+
+    private string filter = string.Empty;
+    private string statusFilter = string.Empty;
+    private string selectedPaperId = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+        await LoadPublishedPapers();
+
+        var paperId = QueryValue("paper");
+        if (!string.IsNullOrWhiteSpace(paperId))
+        {
+            selectedPaperId = paperId;
+        }
+    }
+
+    private async Task LoadData()
+    {
+        loading = true;
+        try
+        {
+            var result = await AnswerService.GetListAsync(new AnswerSheetQueryDto
+            {
+                MaxResultCount = 50,
+                Filter = string.IsNullOrWhiteSpace(filter) ? null : filter.Trim(),
+                Status = Enum.TryParse<AnswerSheetStatusEnum>(statusFilter, out var status) ? status : null
+            });
+            sheets = result.Data?.Items.ToList() ?? [];
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"加载答卷失败：{ex.Message}");
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private async Task LoadPublishedPapers()
+    {
+        try
+        {
+            var result = await PaperService.GetListAsync(new ExamPaperQueryDto
+            {
+                MaxResultCount = 100,
+                Status = PaperStatusEnum.Published
+            });
+            publishedPapers = result.Data?.Items.ToList() ?? [];
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"加载试卷列表失败：{ex.Message}");
+        }
+    }
+
+    private async Task Start()
+    {
+        if (!Guid.TryParse(selectedPaperId, out var paperId))
+        {
+            Toast.Warning("请选择要作答的试卷");
+            return;
+        }
+
+        starting = true;
+        try
+        {
+            var result = await AnswerService.StartAsync(new StartAnswerInputDto { PaperId = paperId });
+            var sheet = result.Data!.Sheet;
+            Nav.NavigateTo($"/education/answer/{sheet.Id}");
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"开始答题失败：{ex.Message}", 6000);
+        }
+        finally
+        {
+            starting = false;
+        }
+    }
+
+    private async Task ConfirmDelete(AnswerSheetDto sheet)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm",
+            $"删除《{sheet.PaperTitle}》的答卷记录（{sheet.StartTime:MM-dd HH:mm}）？");
+        if (!confirmed) return;
+
+        try
+        {
+            await AnswerService.DeleteAsync(sheet.Id);
+            Toast.Success("已删除");
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"删除失败：{ex.Message}");
+        }
+    }
+
+    private string? QueryValue(string key)
+    {
+        var raw = new Uri(Nav.Uri).Query.TrimStart('?');
+        foreach (var pair in raw.Split('&', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var parts = pair.Split('=', 2);
+            if (parts.Length == 2 &&
+                string.Equals(Uri.UnescapeDataString(parts[0]), key, StringComparison.OrdinalIgnoreCase))
+            {
+                return Uri.UnescapeDataString(parts[1]);
+            }
+        }
+        return null;
+    }
+
+    private static string FormatDuration(int seconds) =>
+        seconds <= 0 ? "-" : seconds < 60 ? $"{seconds} 秒" : $"{seconds / 60} 分 {seconds % 60} 秒";
+
+    private static string StatusTagClass(AnswerSheetStatusEnum status) => status switch
+    {
+        AnswerSheetStatusEnum.Graded => "h-tag-green",
+        AnswerSheetStatusEnum.Saved => "h-tag-blue",
+        _ => "h-tag-default"
+    };
+}

@@ -1,0 +1,214 @@
+@page "/education/paper/detail/{Id}"
+
+@layout EducationLayout
+@inject IExamPaperAppService PaperService
+@inject NavigationManager Nav
+@inject HToastService Toast
+
+@if (loadError is not null)
+{
+    <HCard Title="试卷预览">
+        <div class="h-alert h-alert-error">@loadError</div>
+        <button class="h-btn" style="margin-top:12px;" @onclick="@(() => Nav.NavigateTo("/education/paper"))">返回试卷列表</button>
+    </HCard>
+}
+else if (paper is null)
+{
+    <HCard Title="试卷">
+        <div class="h-spin"><span class="h-spin-dot"></span><span class="h-spin-text">加载中...</span></div>
+    </HCard>
+}
+else if (paper.GenerateState == PaperGenerateStateEnum.Generating)
+{
+    <HCard Title="@paper.Title">
+        <div class="h-alert h-alert-info">
+            AI 正在后台命制这份试卷（整卷通常要几分钟）。可以回列表看进度，或在这里点「刷新进度」。
+        </div>
+        <div class="h-space" style="margin-top:12px;">
+            <button class="h-btn h-btn-primary" @onclick="LoadAsync">刷新进度</button>
+            <button class="h-btn" @onclick="@(() => Nav.NavigateTo("/education/paper"))">返回试卷列表</button>
+        </div>
+    </HCard>
+}
+else if (paper.GenerateState == PaperGenerateStateEnum.Failed)
+{
+    <HCard Title="@paper.Title">
+        <div class="h-alert h-alert-error">
+            生成失败：@(string.IsNullOrWhiteSpace(paper.GenerateError) ? "未知原因" : paper.GenerateError)
+        </div>
+        <div class="h-space" style="margin-top:12px;">
+            <button class="h-btn h-btn-primary" @onclick="Retry">重新生成</button>
+            <button class="h-btn" @onclick="@(() => Nav.NavigateTo("/education/paper"))">返回试卷列表</button>
+        </div>
+    </HCard>
+}
+else
+{
+    <HCard Title="@paper.Title">
+        <Extra>
+            <div class="h-space">
+                <label class="chk-label">
+                    <input type="checkbox" @bind="showAnswer" /> 显示答案与解析
+                </label>
+                <button class="h-btn h-btn-sm" @onclick="@(() => Nav.NavigateTo("/education/paper"))">返回列表</button>
+                @if (paper.Status == PaperStatusEnum.Published)
+                {
+                    <button class="h-btn h-btn-sm h-btn-primary"
+                            @onclick="@(() => Nav.NavigateTo($"/education/answer?paper={paper.Id}"))">去答题</button>
+                }
+            </div>
+        </Extra>
+
+        <ChildContent>
+            <table class="h-descriptions">
+                <tr>
+                    <th>学科</th>
+                    <td>@paper.Subject.GetSubjectName()</td>
+                    <th>年级</th>
+                    <td>@paper.Grade @(paper.Term)</td>
+                    <th>状态</th>
+                    <td><span class="h-tag @StatusTagClass(paper.Status)">@paper.Status.GetStatusName()</span></td>
+                </tr>
+                <tr>
+                    <th>题量</th>
+                    <td>@paper.QuestionCount 题</td>
+                    <th>总分</th>
+                    <td>@paper.TotalScore.ToString("0.#") 分</td>
+                    <th>时长</th>
+                    <td>@paper.DurationMinutes 分钟</td>
+                </tr>
+                <tr>
+                    <th>来源</th>
+                    <td>@(paper.Source == PaperSourceEnum.Ai ? "AI 生成" : "内置样卷")</td>
+                    <th>试卷类型</th>
+                    <td>@paper.Kind.GetKindName()@(string.IsNullOrWhiteSpace(paper.Unit) ? "" : $" · {paper.Unit}")</td>
+                    <th>命题模型</th>
+                    <td>@(string.IsNullOrWhiteSpace(paper.AiModel) ? "-" : paper.AiModel)</td>
+                </tr>
+                <tr>
+                    <th>教材版本</th>
+                    <td>@(string.IsNullOrWhiteSpace(paper.Textbook) ? "-" : paper.Textbook)</td>
+                    <th>创建时间</th>
+                    <td colspan="3">@paper.CreationTime.ToString("yyyy-MM-dd HH:mm")</td>
+                </tr>
+                <tr>
+                    <th>命题要求</th>
+                    <td colspan="5">@(string.IsNullOrWhiteSpace(paper.Description) ? "-" : paper.Description)</td>
+                </tr>
+            </table>
+        </ChildContent>
+    </HCard>
+
+    @foreach (var section in Sections)
+    {
+        <HCard Title="@section.Key" Style="margin-top:12px;">
+            @foreach (var question in section)
+            {
+                <div class="edu-question">
+                    <div class="edu-question-head">
+                        <span class="edu-question-index">@question.Sort.</span>
+                        <span class="h-tag h-tag-blue">@question.Type.GetQuestionTypeName()</span>
+                        <span class="edu-score-label">@question.Score.ToString("0.#") 分</span>
+                    </div>
+                    <div class="edu-question-stem">@question.Content</div>
+
+                    @if (question.Options.Count > 0)
+                    {
+                        <div class="edu-options">
+                            @foreach (var option in question.Options)
+                            {
+                                <div class="edu-answer-option">
+                                    <span>@option.Key.</span>
+                                    <span>@option.Text</span>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    @if (showAnswer)
+                    {
+                        <div class="edu-answer-box">参考答案：@question.Answer</div>
+                        @if (!string.IsNullOrWhiteSpace(question.Analysis))
+                        {
+                            <div class="edu-analysis-box">解析：@question.Analysis</div>
+                        }
+                    }
+                </div>
+            }
+        </HCard>
+    }
+
+    @if (showPrompt && !string.IsNullOrWhiteSpace(paper.AiPrompt))
+    {
+        <HCard Title="命题提示词" Style="margin-top:12px;" Description="生成该试卷时的命题要求，便于复现与调整命题方向">
+            <div class="edu-analysis-box" style="margin-top:0;">@paper.AiPrompt</div>
+        </HCard>
+    }
+
+    <div style="margin-top:12px;">
+        @if (!string.IsNullOrWhiteSpace(paper.AiPrompt))
+        {
+            <button class="h-btn h-btn-text" @onclick="@(() => showPrompt = !showPrompt)">
+                @(showPrompt ? "收起命题提示词" : "查看命题提示词")
+            </button>
+        }
+    </div>
+}
+
+@code {
+    // 路由参数只会以字符串传入，声明成 Guid 会在赋值时抛 InvalidCastException，这里收到字符串再解析
+    [Parameter] public string? Id { get; set; }
+
+    private ExamPaperDetailDto? paper;
+    private string? loadError;
+    private bool showAnswer;
+    private bool showPrompt;
+
+    protected override async Task OnParametersSetAsync() => await LoadAsync();
+
+    private async Task Retry()
+    {
+        if (paper is null) return;
+
+        try
+        {
+            await PaperService.RetryGenerateAsync(paper.Id);
+            Toast.Success("已重新排队生成");
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"重试失败：{ex.Message}", 6000);
+        }
+    }
+
+    private async Task LoadAsync()
+    {
+        paper = null;
+        loadError = null;
+
+        if (!Guid.TryParse(Id, out var paperId))
+        {
+            loadError = "试卷地址无效，请从试卷列表点「预览」进入。";
+            return;
+        }
+
+        try
+        {
+            var result = await PaperService.GetDetailAsync(paperId);
+            paper = result.Data;
+            showPrompt = false;
+        }
+        catch (Exception ex)
+        {
+            loadError = $"加载试卷失败：{ex.Message}";
+        }
+    }
+
+    private List<IGrouping<string, ExamQuestionDto>> Sections =>        paper?.Questions
+            .GroupBy(x => string.IsNullOrWhiteSpace(x.Section) ? "试题" : x.Section!)
+            .ToList() ?? [];
+
+    private static string StatusTagClass(PaperStatusEnum status) =>
+        status == PaperStatusEnum.Published ? "h-tag-green" : "h-tag-default";
+}

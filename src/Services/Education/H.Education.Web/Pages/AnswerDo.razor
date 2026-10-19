@@ -1,0 +1,394 @@
+@page "/education/answer/{Id}"
+
+@layout EducationLayout
+@implements IDisposable
+@inject IAnswerSheetAppService AnswerService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@inject HToastService Toast
+
+@if (loading)
+{
+    <HCard Title="答题">
+        <div class="h-spin"><span class="h-spin-dot"></span><span class="h-spin-text">加载试卷...</span></div>
+    </HCard>
+}
+else if (loadError is not null)
+{
+    <HCard Title="答题失败">
+        <div class="h-alert h-alert-error">@loadError</div>
+        <button class="h-btn" style="margin-top:12px;" @onclick="@(() => Nav.NavigateTo("/education/answer"))">返回答卷记录</button>
+    </HCard>
+}
+else if (result is not null)
+{
+    <HCard Title="@($"{result.PaperTitle} · 批改结果")">
+        <Extra>
+            <button class="h-btn h-btn-sm" @onclick="@(() => Nav.NavigateTo("/education/answer"))">返回列表</button>
+        </Extra>
+        <ChildContent>
+
+        <div class="edu-score-panel">
+            <div class="edu-score-item">
+                <span class="edu-score-value">@result.TotalScore.ToString("0.#")</span>
+                <span class="edu-score-label">总得分 / @result.FullScore.ToString("0.#") 分</span>
+            </div>
+            <div class="edu-score-item">
+                <span class="edu-score-value">@result.AccuracyRate.ToString("0.#")%</span>
+                <span class="edu-score-label">得分率</span>
+            </div>
+            <div class="edu-score-item">
+                <span class="edu-score-value">@result.CorrectCount / @result.QuestionCount</span>
+                <span class="edu-score-label">答对题数</span>
+            </div>
+            <div class="edu-score-item">
+                <span class="edu-score-value">@result.ObjectiveScore.ToString("0.#")</span>
+                <span class="edu-score-label">客观题得分</span>
+            </div>
+            <div class="edu-score-item">
+                <span class="edu-score-value">@result.SubjectiveScore.ToString("0.#")</span>
+                <span class="edu-score-label">主观题得分</span>
+            </div>
+            <div class="edu-score-item">
+                <span class="edu-score-value">@FormatDuration(result.DurationSeconds)</span>
+                <span class="edu-score-label">用时</span>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(result.GradeNote))
+        {
+            <div class="h-alert h-alert-warning" style="margin-bottom:12px;">@result.GradeNote</div>
+        }
+
+        @foreach (var detail in result.Details)
+        {
+            <div class="edu-question @(detail.IsCorrect == true ? "edu-right" : detail.IsCorrect == false ? "edu-wrong" : "")">
+                <div class="edu-question-head">
+                    <span class="edu-question-index">@detail.Sort.</span>
+                    <span class="h-tag h-tag-blue">@detail.QuestionType.GetQuestionTypeName()</span>
+                    <span class="edu-score-label">@detail.AwardedScore.ToString("0.#") / @detail.Score.ToString("0.#") 分</span>
+                    <span class="h-tag @JudgeTagClass(detail.JudgeMode)">@JudgeModeText(detail.JudgeMode)</span>
+                </div>
+                <div class="edu-question-stem">@detail.QuestionContent</div>
+
+                @if (detail.Options.Count > 0)
+                {
+                    <div class="edu-options">
+                        @foreach (var option in detail.Options)
+                        {
+                            <div class="edu-answer-option">
+                                <span>@option.Key.</span>
+                                <span>@option.Text</span>
+                            </div>
+                        }
+                    </div>
+                }
+
+                <div class="edu-answer-box">我的答案：@(string.IsNullOrWhiteSpace(detail.StudentAnswer) ? "（未作答）" : detail.StudentAnswer)</div>
+                <div class="edu-analysis-box">参考答案：@detail.CorrectAnswer</div>
+                @if (!string.IsNullOrWhiteSpace(detail.Analysis))
+                {
+                    <div class="edu-analysis-box">解析：@detail.Analysis</div>
+                }
+                @if (!string.IsNullOrWhiteSpace(detail.Feedback))
+                {
+                    <div class="edu-analysis-box">评语：@detail.Feedback</div>
+                }
+            </div>
+        }
+        </ChildContent>
+    </HCard>
+}
+else if (start is not null)
+{
+    <HCard Title="@start.Sheet.PaperTitle">
+        <Extra>
+            <div class="h-space">
+                <span class="edu-timer">已用时 @FormatDuration(elapsedSeconds)</span>
+                <button class="h-btn h-btn-sm" @onclick="SaveProgress" disabled="@saving">保存进度</button>
+                <button class="h-btn h-btn-sm h-btn-primary" @onclick="Submit" disabled="@submitting">
+                    @if (submitting)
+                    {
+                        <span class="h-btn-loading"></span>
+                    }
+                    交卷
+                </button>
+            </div>
+        </Extra>
+        <ChildContent>
+
+        <div class="h-toolbar">
+            <span class="edu-score-label">@start.Sheet.QuestionCount 题 / @start.Sheet.FullScore.ToString("0.#") 分 · 建议 @start.Sheet.DurationMinutes 分钟</span>
+            <span class="edu-timer" style="margin-left:auto;">已答 @answeredCount / @drafts.Count</span>
+        </div>
+        <div class="edu-quiz-progress">
+            <div class="edu-quiz-progress-bar" style="width:@(Percent)%"></div>
+        </div>
+        </ChildContent>
+    </HCard>
+
+    @foreach (var group in Groups)
+    {
+        <HCard Title="@group.Key" Style="margin-top:12px;">
+            @foreach (var draft in group)
+            {
+                var question = draft.Question;
+                <div class="edu-question">
+                    <div class="edu-question-head">
+                        <span class="edu-question-index">@question.Sort.</span>
+                        <span class="h-tag h-tag-blue">@question.Type.GetQuestionTypeName()</span>
+                        <span class="edu-score-label">@question.Score.ToString("0.#") 分</span>
+                    </div>
+                    <div class="edu-question-stem">@question.Content</div>
+
+                    @if (question.Type == QuestionTypeEnum.SingleChoice)
+                    {
+                        <div class="edu-options" style="grid-template-columns:1fr;">
+                            @foreach (var option in question.Options)
+                            {
+                                <label class="edu-answer-option">
+                                    <input type="radio" name="@($"q-{question.QuestionId}")" value="@option.Key"
+                                           checked="@draft.Choices.Contains(option.Key)"
+                                           @onchange="@(() => PickSingle(draft, option.Key))" />
+                                    <span>@option.Key. @option.Text</span>
+                                </label>
+                            }
+                        </div>
+                    }
+                    else if (question.Type == QuestionTypeEnum.MultipleChoice)
+                    {
+                        <div class="edu-options" style="grid-template-columns:1fr;">
+                            @foreach (var option in question.Options)
+                            {
+                                <label class="edu-answer-option">
+                                    <input type="checkbox" value="@option.Key"
+                                           checked="@draft.Choices.Contains(option.Key)"
+                                           @onchange="@(() => ToggleChoice(draft, option.Key))" />
+                                    <span>@option.Key. @option.Text</span>
+                                </label>
+                            }
+                        </div>
+                    }
+                    else if (question.Type == QuestionTypeEnum.TrueFalse)
+                    {
+                        <div class="h-space" style="margin-top:8px;">
+                            <button class="h-btn edu-judge-btn @(draft.Choices.Contains("对") ? "edu-judge-selected" : "")"
+                                    @onclick="@(() => PickSingle(draft, "对"))">对</button>
+                            <button class="h-btn edu-judge-btn @(draft.Choices.Contains("错") ? "edu-judge-selected" : "")"
+                                    @onclick="@(() => PickSingle(draft, "错"))">错</button>
+                        </div>
+                    }
+                    else if (question.Type == QuestionTypeEnum.Composition)
+                    {
+                        <textarea class="h-textarea" rows="8" style="margin-top:8px;" placeholder="在这里写作文"
+                                  @bind="draft.Text" @bind:event="oninput"></textarea>
+                    }
+                    else if (question.Type is QuestionTypeEnum.ShortAnswer or QuestionTypeEnum.Calculation)
+                    {
+                        <textarea class="h-textarea" rows="3" style="margin-top:8px;" placeholder="写出你的解答过程与得数"
+                                  @bind="draft.Text" @bind:event="oninput"></textarea>
+                    }
+                    else
+                    {
+                        <input type="text" class="h-input" style="margin-top:8px;" placeholder="填写答案"
+                               @bind="draft.Text" @bind:event="oninput" />
+                    }
+                </div>
+            }
+        </HCard>
+    }
+}
+
+@code {
+    // 路由参数只会以字符串传入，声明成 Guid 会在赋值时抛 InvalidCastException，这里收到字符串再解析
+    [Parameter] public string? Id { get; set; }
+
+    private Guid sheetId;
+
+    private AnswerStartDto? start;
+    private AnswerResultDto? result;
+    private List<Draft> drafts = [];
+    private bool loading = true;
+    private bool saving;
+    private bool submitting;
+    private string? loadError;
+    private int elapsedSeconds;
+    private System.Threading.Timer? timer;
+
+    private class Draft
+    {
+        public AnswerQuestionDto Question { get; set; } = new();
+        public string? Text { get; set; }
+        public HashSet<string> Choices { get; } = new(StringComparer.Ordinal);
+    }
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        loading = true;
+        loadError = null;
+        try
+        {
+            if (!Guid.TryParse(Id, out sheetId))
+            {
+                loadError = "答卷地址无效，请从「答题管理」的答卷记录进入。";
+                return;
+            }
+
+            start = (await AnswerService.GetAnsweringAsync(sheetId)).Data;
+
+            if (start?.Sheet.Status == AnswerSheetStatusEnum.Graded)
+            {
+                // 已交卷的答卷直接进入批改结果视图
+                result = (await AnswerService.GetResultAsync(sheetId)).Data;
+                start = null;
+                return;
+            }
+
+            drafts = (start?.Questions ?? []).Select(question => new Draft { Question = question }).ToList();
+            foreach (var draft in drafts)
+            {
+                if (draft.Question.Type is QuestionTypeEnum.SingleChoice or QuestionTypeEnum.MultipleChoice or QuestionTypeEnum.TrueFalse)
+                {
+                    foreach (var key in (draft.Question.StudentAnswer ?? string.Empty)
+                                 .Split(['|', '；', ';', ',', '，'], StringSplitOptions.RemoveEmptyEntries))
+                    {
+                        draft.Choices.Add(key.Trim());
+                    }
+                }
+                else
+                {
+                    draft.Text = draft.Question.StudentAnswer;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            loadError = ex.Message;
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender && start is not null)
+        {
+            elapsedSeconds = start.Sheet.DurationSeconds;
+            timer = new System.Threading.Timer(_ => _ = InvokeAsync(() =>
+            {
+                elapsedSeconds++;
+                StateHasChanged();
+            }), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+        }
+    }
+
+    private List<IGrouping<string, Draft>> Groups =>
+        drafts.GroupBy(x => string.IsNullOrWhiteSpace(x.Question.Section) ? "试题" : x.Question.Section!).ToList();
+
+    private int answeredCount => drafts.Count(IsAnswered);
+
+    private int Percent => drafts.Count == 0 ? 0 : answeredCount * 100 / drafts.Count;
+
+    private static bool IsAnswered(Draft draft) =>
+        draft.Question.Type is QuestionTypeEnum.SingleChoice or QuestionTypeEnum.MultipleChoice or QuestionTypeEnum.TrueFalse
+            ? draft.Choices.Count > 0
+            : !string.IsNullOrWhiteSpace(draft.Text);
+
+    private void PickSingle(Draft draft, string key)
+    {
+        draft.Choices.Clear();
+        draft.Choices.Add(key);
+    }
+
+    private void ToggleChoice(Draft draft, string key)
+    {
+        if (!draft.Choices.Add(key)) draft.Choices.Remove(key);
+    }
+
+    private static string BuildAnswer(Draft draft) =>
+        draft.Question.Type is QuestionTypeEnum.SingleChoice or QuestionTypeEnum.MultipleChoice or QuestionTypeEnum.TrueFalse
+            ? string.Concat(draft.Choices.OrderBy(x => x, StringComparer.Ordinal))
+            : draft.Text?.Trim() ?? string.Empty;
+
+    private List<AnswerInputItemDto> CollectItems() =>
+        drafts.Select(draft => new AnswerInputItemDto
+        {
+            QuestionId = draft.Question.QuestionId,
+            Answer = BuildAnswer(draft)
+        }).ToList();
+
+    private async Task SaveProgress()
+    {
+        saving = true;
+        try
+        {
+            await AnswerService.SaveAsync(sheetId, new SaveAnswerInputDto { Items = CollectItems() });
+            Toast.Success($"已保存进度，答对题数待交卷后判定（已答 {answeredCount}/{drafts.Count}）");
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"保存失败：{ex.Message}");
+        }
+        finally
+        {
+            saving = false;
+        }
+    }
+
+    private async Task Submit()
+    {
+        var blank = drafts.Count - answeredCount;
+        var message = blank == 0
+            ? "确认交卷？交卷后将自动评分，作答内容不能再修改。"
+            : $"还有 {blank} 题未作答，未作答按 0 分计。确认交卷？";
+
+        if (!await JS.InvokeAsync<bool>("confirm", message)) return;
+
+        submitting = true;
+        try
+        {
+            timer?.Dispose();
+            var response = await AnswerService.SubmitAsync(sheetId, new SubmitAnswerInputDto
+            {
+                Items = CollectItems(),
+                DurationSeconds = elapsedSeconds
+            });
+            result = response.Data;
+            start = null;
+            Toast.Success($"批改完成：{result!.TotalScore:0.#} 分 / {result.FullScore:0.#} 分");
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"交卷失败：{ex.Message}", 6000);
+        }
+        finally
+        {
+            submitting = false;
+        }
+    }
+
+    private static string FormatDuration(int seconds) =>
+        seconds < 60 ? $"{seconds} 秒" : $"{seconds / 60} 分 {seconds % 60} 秒";
+
+    private static string JudgeModeText(JudgeModeEnum mode) => mode switch
+    {
+        JudgeModeEnum.Auto => "自动判定",
+        JudgeModeEnum.Ai => "AI 批改",
+        JudgeModeEnum.Keyword => "要点估算",
+        _ => "未作答"
+    };
+
+    private static string JudgeTagClass(JudgeModeEnum mode) => mode switch
+    {
+        JudgeModeEnum.Ai => "h-tag-green",
+        JudgeModeEnum.Keyword => "h-tag-default",
+        JudgeModeEnum.None => "h-tag-red",
+        _ => "h-tag-blue"
+    };
+
+    public void Dispose() => timer?.Dispose();
+}

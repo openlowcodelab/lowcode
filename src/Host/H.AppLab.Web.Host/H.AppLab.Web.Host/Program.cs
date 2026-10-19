@@ -105,6 +105,7 @@ app.MapRazorComponents<App>()
         typeof(H.Notification.Web._Imports).Assembly,
         typeof(H.AI.Web._Imports).Assembly,
         typeof(H.Order.Web._Imports).Assembly,
+        typeof(H.Education.Web._Imports).Assembly,
         typeof(H.SupplyChain.Web._Imports).Assembly,
         typeof(H.BackgroundTask.Web._Imports).Assembly);
 

@@ -188,16 +188,64 @@ public class HttpClientProxyInterceptor<TService> : DispatchProxy where TService
         return char.ToLowerInvariant(name[0]) + name[1..];
     }
 
+    /// <summary>
+    /// 失败响应优先取服务端下发的错误信息（ABP 的 error.message / 统一的 message），
+    /// 否则调用方只能看到 "Response status code does not indicate success: 403"，
+    /// 把「AI 模型 Key 无效」这类业务提示全部吞掉。
+    /// </summary>
+    private static async Task EnsureSuccessAsync(HttpResponseMessage response)
+    {
+        if (response.IsSuccessStatusCode) return;
+
+        var body = await response.Content.ReadAsStringAsync();
+        var message = ReadErrorMessage(body) ?? $"{(int)response.StatusCode} {response.ReasonPhrase}";
+        throw new RemoteServiceException(response.StatusCode, message);
+    }
+
+    private static string? ReadErrorMessage(string body)
+    {
+        if (string.IsNullOrWhiteSpace(body)) return null;
+
+        try
+        {
+            using var document = JsonDocument.Parse(body);
+            var root = document.RootElement;
+
+            if (root.TryGetProperty("error", out var error) &&
+                error.TryGetProperty("message", out var errorMessage) &&
+                errorMessage.ValueKind == JsonValueKind.String)
+            {
+                var text = errorMessage.GetString();
+                if (!string.IsNullOrWhiteSpace(text)) return Truncate(text);
+            }
+
+            if (root.TryGetProperty("message", out var direct) && direct.ValueKind == JsonValueKind.String)
+            {
+                var text = direct.GetString();
+                if (!string.IsNullOrWhiteSpace(text)) return Truncate(text);
+            }
+        }
+        catch (JsonException)
+        {
+            // 非 JSON 响应体（如网关返回的 HTML）不暴露给调用方
+        }
+
+        return null;
+    }
+
+    private static string Truncate(string message) =>
+        message.Length <= 500 ? message : message[..500] + "…";
+
     private async Task SendAsync(HttpRequestMessage request)
     {
         var response = await _httpClient.SendAsync(request);
-        response.EnsureSuccessStatusCode();
+        await EnsureSuccessAsync(response);
     }
 
     private async Task<T?> SendWithResultAsync<T>(HttpRequestMessage request)
     {
         var response = await _httpClient.SendAsync(request);
-        response.EnsureSuccessStatusCode();
+        await EnsureSuccessAsync(response);
 
         if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
             return default;

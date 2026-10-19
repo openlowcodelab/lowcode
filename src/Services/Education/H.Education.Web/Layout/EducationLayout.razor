@@ -1,0 +1,351 @@
+@namespace H.Education.Web
+
+@inherits LayoutComponentBase
+
+<DefaultLayoutComponent
+    AppName="中小学教育"
+    AuthMode="AuthenticationMode.Optional"
+    MenuItems="@MenuItems">
+    @Body
+</DefaultLayoutComponent>
+
+<style>
+    /* 试卷预览 */
+    .edu-section {
+        margin-bottom: 16px;
+    }
+
+    .edu-section-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: #1d2129;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--h-border-light, #e5e6eb);
+        margin-bottom: 12px;
+    }
+
+    .edu-question {
+        border: 1px solid var(--h-border-2, #e5e6eb);
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin-bottom: 10px;
+        background: #fff;
+    }
+
+    .edu-question-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+        flex-wrap: wrap;
+    }
+
+    .edu-question-index {
+        font-weight: 600;
+        color: var(--h-text-2, #4e5969);
+    }
+
+    .edu-question-stem {
+        font-size: 14px;
+        color: #1d2129;
+        line-height: 1.7;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    .edu-options {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 6px 16px;
+        margin: 8px 0;
+    }
+
+    .edu-answer-box {
+        margin-top: 8px;
+        padding: 8px 12px;
+        border-radius: 6px;
+        background: #f2fff2;
+        border: 1px solid #b9f5c5;
+        font-size: 13px;
+        color: #16803a;
+        line-height: 1.7;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    .edu-analysis-box {
+        margin-top: 6px;
+        padding: 8px 12px;
+        border-radius: 6px;
+        background: var(--h-fill-1, #f7f8fa);
+        font-size: 13px;
+        color: var(--h-text-2, #4e5969);
+        line-height: 1.7;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    /* 答题 */
+    .edu-answer-option {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+    }
+
+    .edu-answer-option:hover {
+        background: var(--h-fill-1, #f7f8fa);
+    }
+
+    .edu-judge-btn {
+        min-width: 90px;
+    }
+
+    .edu-judge-selected {
+        border-color: var(--h-primary, #165dff);
+        color: var(--h-primary, #165dff);
+        background: #f2f7ff;
+    }
+
+    .edu-timer {
+        font-variant-numeric: tabular-nums;
+        color: var(--h-text-2, #4e5969);
+        font-size: 13px;
+    }
+
+    /* 批改结果 */
+    .edu-score-panel {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 24px;
+        align-items: center;
+        padding: 16px;
+        border-radius: 8px;
+        background: var(--h-fill-1, #f7f8fa);
+        margin-bottom: 16px;
+    }
+
+    .edu-score-value {
+        font-size: 28px;
+        font-weight: 600;
+        color: var(--h-primary, #165dff);
+        line-height: 1.2;
+    }
+
+    .edu-score-item {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .edu-score-label {
+        font-size: 12px;
+        color: var(--h-text-3, #86909c);
+    }
+
+    .edu-wrong {
+        border-color: #f7bac2;
+        background: #fff8f8;
+    }
+
+    .edu-right {
+        border-color: #b9f5c5;
+    }
+
+    /* 趣味练习 */
+    .edu-game-card {
+        width: 240px;
+        display: flex;
+        cursor: pointer;
+        transition: box-shadow .15s, transform .15s;
+    }
+
+    /* 卡片等高：网格按最长的一张拉伸容器，卡片填满，按钮固定贴底 */
+    .edu-game-card > .h-card {
+        flex: 1;
+    }
+
+    .edu-game-card > .h-card > .h-card-body {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .edu-game-card-action {
+        margin-top: auto;
+        padding-top: 10px;
+    }
+
+    .edu-game-card:hover {
+        box-shadow: 0 4px 14px rgba(22, 93, 255, .12);
+        transform: translateY(-2px);
+    }
+
+    .edu-game-icon {
+        font-size: 28px;
+        line-height: 1;
+    }
+
+    .edu-game-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .edu-quiz-option {
+        display: block;
+        width: 100%;
+        text-align: left;
+        padding: 10px 14px;
+        margin-bottom: 8px;
+        border: 1px solid var(--h-border-2, #e5e6eb);
+        border-radius: 8px;
+        background: #fff;
+        font-size: 15px;
+        color: #1d2129;
+        cursor: pointer;
+        transition: all .12s;
+        font-family: inherit;
+    }
+
+    .edu-quiz-option:hover:not(:disabled) {
+        border-color: var(--h-primary, #165dff);
+        color: var(--h-primary, #165dff);
+    }
+
+    .edu-quiz-picked {
+        border-color: var(--h-primary, #165dff);
+        background: #f2f7ff;
+        color: var(--h-primary, #165dff);
+        font-weight: 500;
+    }
+
+    .edu-quiz-progress {
+        height: 6px;
+        border-radius: 3px;
+        background: var(--h-fill-2, #f2f3f5);
+        overflow: hidden;
+        margin-bottom: 12px;
+    }
+
+    .edu-quiz-progress-bar {
+        height: 100%;
+        background: var(--h-primary, #165dff);
+        transition: width .2s;
+    }
+
+    /* 练习题干分两段：第一行「要做什么」，材料（病句、对话上句）单独成块，否则读不出题意 */
+    .edu-stem {
+        margin-bottom: 6px;
+    }
+
+    .edu-stem-ask {
+        font-size: 18px;
+        font-weight: 500;
+        line-height: 1.6;
+        color: var(--h-text-2, #4e5969);
+        word-break: break-word;
+    }
+
+    .edu-stem-material {
+        margin-top: 8px;
+        padding: 10px 14px;
+        background: var(--h-fill-1, #f7f8fa);
+        border-left: 3px solid var(--h-primary, #165dff);
+        border-radius: 0 4px 4px 0;
+        font-size: 18px;
+        line-height: 1.7;
+        color: var(--h-text, #1d2129);
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    .edu-stem-compact .edu-stem-ask,
+    .edu-stem-compact .edu-stem-material {
+        font-size: 14px;
+        font-weight: 400;
+    }
+
+    .edu-stem-compact .edu-stem-material {
+        margin-top: 6px;
+        padding: 8px 12px;
+    }
+
+    .edu-quiz-hint {
+        font-size: 13px;
+        color: var(--h-text-3, #86909c);
+        margin-bottom: 14px;
+    }
+
+    .edu-quiz-answer-input {
+        font-size: 18px;
+        height: 44px;
+        letter-spacing: 1px;
+    }
+
+    /* 对话题：一词一道横线 */
+    .edu-blanks {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 12px;
+        margin-top: 14px;
+    }
+
+    .edu-blank-input {
+        width: 130px;
+        max-width: 100%;
+        height: 40px;
+        padding: 2px 6px;
+        border: 0;
+        border-bottom: 2px solid #c9cdd4;
+        border-radius: 0;
+        background: transparent;
+        font-size: 18px;
+        text-align: center;
+        color: #1d2129;
+        font-family: inherit;
+        box-sizing: border-box;
+        transition: border-color .15s;
+    }
+
+    .edu-blank-input:focus {
+        outline: none;
+        border-bottom-color: var(--h-primary, #165dff);
+    }
+
+    .edu-blank-input:disabled {
+        opacity: .6;
+    }
+
+    .edu-feedback {
+        padding: 10px 14px;
+        border-radius: 8px;
+        font-size: 15px;
+        margin-bottom: 12px;
+    }
+
+    .edu-feedback-right {
+        background: #f2fff2;
+        border: 1px solid #b9f5c5;
+        color: #16803a;
+    }
+
+    .edu-feedback-wrong {
+        background: #fff8f8;
+        border: 1px solid #f7bac2;
+        color: #cb2634;
+    }
+</style>
+
+@code {
+    private static List<AppMenuItem> MenuItems => new()
+    {
+        new AppMenuItem { Name = "教材管理", Url = "/education/textbook", Icon = "📚" },
+        new AppMenuItem { Name = "试卷管理", Url = "/education/paper", Icon = "📝" },
+        new AppMenuItem { Name = "答题管理", Url = "/education/answer", Icon = "✍️" },
+        new AppMenuItem { Name = "专项练习", Url = "/education/topic", Icon = "🎯" },
+        new AppMenuItem { Name = "趣味练习", Url = "/education/practice", Icon = "🎮" }
+    };
+}

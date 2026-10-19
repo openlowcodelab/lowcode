@@ -1,0 +1,630 @@
+@page "/education/practice/{Game}"
+@page "/education/practice/history/{Id}"
+
+@layout EducationLayout
+@implements IAsyncDisposable
+@inject IPracticeAppService PracticeService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@inject HToastService Toast
+
+@if (error is not null)
+{
+    <HCard Title="趣味练习">
+        <div class="h-alert h-alert-error">@error</div>
+        <button class="h-btn" style="margin-top:12px;" @onclick="@(() => Nav.NavigateTo("/education/practice"))">返回练习列表</button>
+    </HCard>
+}
+else if (stage == Stage.Config && gameInfo is not null)
+{
+    <HCard Title="@GameTitle" Description="@gameInfo.Description">
+        <Extra>
+            <button class="h-btn h-btn-sm" @onclick="@(() => Nav.NavigateTo("/education/practice"))">返回列表</button>
+        </Extra>
+        <ChildContent>
+
+        <div class="h-form-row">
+            <div class="h-form-item" style="max-width:140px;">
+                <label class="h-form-label">年级</label>
+                <select class="h-input" @bind="grade">
+                    @foreach (var item in GradeOptions.All)
+                    {
+                        <option value="@item">@item</option>
+                    }
+                </select>
+            </div>
+            <div class="h-form-item" style="max-width:140px;">
+                <label class="h-form-label">关卡</label>
+                <select class="h-input" @bind="level">
+                    @foreach (var item in Levels)
+                    {
+                        <option value="@item">第 @item 关</option>
+                    }
+                </select>
+            </div>
+            <div class="h-form-item" style="max-width:140px;">
+                <label class="h-form-label">题量</label>
+                <select class="h-input" @bind="count">
+                    @foreach (var item in gameInfo.CountOptions)
+                    {
+                        <option value="@item">@item 题</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="h-space" style="margin-top:8px;">
+            <button class="h-btn h-btn-primary" @onclick="StartSession" disabled="@busy">
+                @if (busy)
+                {
+                    <span class="h-btn-loading"></span>
+                }
+                开始闯关
+            </button>
+            <span class="edu-score-label">@ConfigHint</span>
+        </div>
+        </ChildContent>
+    </HCard>
+}
+else if (stage == Stage.Playing && current is not null)
+{
+    <HCard Title="@PlayTitle">
+        <Extra>
+            <div class="h-space">
+                <span class="edu-timer">用时 @FormatDuration(elapsedSeconds)</span>
+                <span class="h-tag h-tag-green">答对 @correctCount</span>
+                <span class="h-tag h-tag-blue">连对 @combo</span>
+                <button class="h-btn h-btn-sm" @onclick="Finish" disabled="@busy">结束并结算</button>
+            </div>
+        </Extra>
+        <ChildContent>
+
+        <div class="h-toolbar">
+            <span class="edu-score-label">第 @(index + 1) / @questions.Count 题</span>
+            <span class="edu-timer" style="margin-left:auto;">@(current.InputType == PracticeInputTypeEnum.Choice ? "点选答案" : "输入答案")</span>
+        </div>
+        <div class="edu-quiz-progress">
+            <div class="edu-quiz-progress-bar" style="width:@((index * 100) / Math.Max(1, questions.Count))%"></div>
+        </div>
+        </ChildContent>
+    </HCard>
+
+    <HCard Style="margin-top:12px;">
+        <PracticeStem Content="@current.Content" />
+        @if (!string.IsNullOrWhiteSpace(current.Hint))
+        {
+            <div class="edu-quiz-hint">提示：@current.Hint</div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(current.AudioText))
+        {
+            <div class="h-space" style="margin-bottom:14px;">
+                <button class="h-btn h-btn-primary" @onclick="@(() => PlayAsync(current.AudioText, 0.9))">🔊 播放录音</button>
+                <button class="h-btn" @onclick="@(() => PlayAsync(current.AudioText, 0.55))">🐢 慢速一遍</button>
+                <button class="h-btn h-btn-text" @onclick="ToggleScript">@(showScript ? "隐藏原文" : "看原文")</button>
+            </div>
+            @if (showScript)
+            {
+                <div class="edu-answer-box" style="margin-top:0;">原文：@current.AudioText</div>
+            }
+        }
+
+        @if (feedback is null)
+        {
+            @if (current.Options.Count > 0)
+            {
+                <div style="margin-top:12px;">
+                    @foreach (var option in current.Options)
+                    {
+                        <button class="edu-quiz-option" disabled="@busy" @onclick="@(() => Answer(option))">@option</button>
+                    }
+                </div>
+            }
+            else if (current.BlankCount > 0)
+            {
+                <div class="edu-quiz-hint" style="margin:10px 0 0;">一词一格，共 @current.BlankCount 个词，写完按回车提交</div>
+                <div class="edu-blanks">
+                    @foreach (var slot in Slots)
+                    {
+                        var index = slot;
+                        <input @key="BlankKey(index)" type="text" class="edu-blank-input" maxlength="24" autocomplete="off"
+                               aria-label="@($"第 {index + 1} 个单词")" disabled="@busy"
+                               @oninput="e => OnBlankInput(index, e)" @onkeyup="OnBlankKeyUp" />
+                    }
+                </div>
+                <button class="h-btn h-btn-primary" style="margin-top:12px;" @onclick="SubmitBlanks" disabled="@(busy || string.IsNullOrWhiteSpace(JoinedBlanks))">
+                    @if (busy)
+                    {
+                        <span class="h-btn-loading"></span>
+                    }
+                    提交答案
+                </button>
+            }
+            else
+            {
+                <input type="text" class="h-input edu-quiz-answer-input" placeholder="输入答案后按回车"
+                       @bind="typingAnswer" @bind:event="oninput" @onkeyup="OnTypingKeyUp" disabled="@busy" />
+                <button class="h-btn h-btn-primary" style="margin-top:12px;" @onclick="SubmitTyped" disabled="@(busy || string.IsNullOrWhiteSpace(typingAnswer))">
+                    @if (busy)
+                    {
+                        <span class="h-btn-loading"></span>
+                    }
+                    提交答案
+                </button>
+            }
+        }
+        else
+        {
+            <div class="edu-feedback @(feedback.IsCorrect ? "edu-feedback-right" : "edu-feedback-wrong")">
+                @if (feedback.IsCorrect)
+                {
+                    <div>回答正确！当前连对 @feedback.Combo 题</div>
+                }
+                else
+                {
+                    <div>回答错误，正确答案：@feedback.Answer</div>
+                }
+                <div class="edu-score-label" style="margin-top:4px;">
+                    已判 @feedback.AnsweredCount / @questions.Count 题 · 已答对 @feedback.CorrectCount 题
+                </div>
+            </div>
+            <button class="h-btn h-btn-primary" @onclick="Next">
+                @(index + 1 >= questions.Count ? "看成绩" : "下一题")
+            </button>
+        }
+    </HCard>
+}
+else if (outcome is not null)
+{
+    <HCard Title="本局成绩">
+        <Extra>
+            <div class="h-space">
+                <button class="h-btn h-btn-sm" @onclick="Restart">再来一局</button>
+                <button class="h-btn h-btn-sm" @onclick="@(() => Nav.NavigateTo("/education/practice"))">返回练习列表</button>
+            </div>
+        </Extra>
+        <ChildContent>
+
+        <div class="edu-score-panel">
+            <div class="edu-score-item">
+                <span class="edu-score-value">@outcome.Score</span>
+                <span class="edu-score-label">得分</span>
+            </div>
+            <div class="edu-score-item">
+                <span class="edu-score-value">@outcome.CorrectCount / @outcome.TotalCount</span>
+                <span class="edu-score-label">答对题数</span>
+            </div>
+            <div class="edu-score-item">
+                <span class="edu-score-value">@outcome.AccuracyRate.ToString("0.#")%</span>
+                <span class="edu-score-label">正确率</span>
+            </div>
+            <div class="edu-score-item">
+                <span class="edu-score-value">@outcome.MaxCombo</span>
+                <span class="edu-score-label">最长连对</span>
+            </div>
+            <div class="edu-score-item">
+                <span class="edu-score-value">@FormatDuration(outcome.DurationSeconds)</span>
+                <span class="edu-score-label">用时</span>
+            </div>
+        </div>
+
+        <div class="h-alert h-alert-info">
+            得分规则：每题答对得 10 分，最长连对超过 3 题的部分额外加 5 分/题。
+        </div>
+
+        @foreach (var item in outcome.Items)
+        {
+            <div class="edu-question @(item.IsCorrect ? "edu-right" : "edu-wrong")">
+                <div class="edu-question-head">
+                    <span class="edu-question-index">@item.Sort.</span>
+                    <span class="h-tag @(item.IsCorrect ? "h-tag-green" : "h-tag-red")">@(item.IsCorrect ? "答对" : "答错")</span>
+                </div>
+                <PracticeStem Content="@item.Content" Compact="true" />
+                @if (item.Options.Count > 0)
+                {
+                    <div class="edu-options">
+                        @foreach (var option in item.Options)
+                        {
+                            <div class="edu-answer-option">
+                                <span>@(option == item.Answer ? "✓" : option == item.StudentAnswer ? "✕" : "·")</span>
+                                <span>@option</span>
+                            </div>
+                        }
+                    </div>
+                }
+                <div class="edu-analysis-box">
+                    我的答案：@(string.IsNullOrWhiteSpace(item.StudentAnswer) ? "（未作答）" : item.StudentAnswer) · 正确答案：@item.Answer
+                    @if (!string.IsNullOrWhiteSpace(item.Hint))
+                    {
+                        <div>@item.Hint</div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(item.AudioText))
+                    {
+                        <div class="h-space" style="margin-top:6px;align-items:center;">
+                            <button class="h-btn h-btn-sm" @onclick="@(() => PlayAsync(item.AudioText, 0.9))">🔊 上句</button>
+                            @if (item.InputType == PracticeInputTypeEnum.Typing)
+                            {
+                                <button class="h-btn h-btn-sm" @onclick="@(() => PlayAsync(item.Answer, 0.9))">🔊 参考答案</button>
+                            }
+                            <span>原文：@item.AudioText</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+        </ChildContent>
+    </HCard>
+}
+
+@code {
+    [Parameter] public string? Game { get; set; }
+
+    // 路由参数只会以字符串传入，声明成 Guid 会在赋值时抛 InvalidCastException，这里收到字符串再解析
+    [Parameter] public string? Id { get; set; }
+
+    private enum Stage { Config, Playing, Finished }
+
+    private Stage stage = Stage.Config;
+    private PracticeGameDto? gameInfo;
+    private PracticeGameTypeEnum gameType;
+    private int level = 1;
+    private int count = 10;
+    private string grade = "三年级";
+    private bool busy;
+    private string? error;
+
+    private string ConfigHint => $"{gameInfo?.Name} 按 {grade} 出题，共 {gameInfo?.MaxLevel} 关，关卡越高题目越难";
+
+    private Guid sessionId;
+    private List<PracticeQuestionDto> questions = [];
+    private int index;
+    private int combo;
+    private int correctCount;
+    private string typingAnswer = string.Empty;
+    private PracticeItemResultDto? feedback;
+    private Dictionary<Guid, string> answers = new();
+    private int elapsedSeconds;
+    private System.Threading.Timer? timer;
+    private PracticeResultDto? outcome;
+
+    private IJSObjectReference? ttsModule;
+    private bool showScript;
+    private Guid autoPlayedItemId;
+
+    private PracticeQuestionDto? current =>
+        index >= 0 && index < questions.Count ? questions[index] : null;
+
+    private string GameTitle => gameInfo is null ? "趣味练习" : gameInfo.Icon + " " + gameInfo.Name;
+
+    private string PlayTitle => $"{GameTitle} · 第 {level} 关";
+
+    private IEnumerable<int> Levels => Enumerable.Range(1, Math.Max(1, gameInfo?.MaxLevel ?? 1));
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Guid.TryParse(Id, out var sessionId))
+        {
+            await LoadHistoryAsync(sessionId);
+            return;
+        }
+
+        if (!string.IsNullOrWhiteSpace(Id))
+        {
+            error = "练习记录地址无效，请从「趣味练习」的记录里点「回顾」进入。";
+            return;
+        }
+
+        var parsed = PracticeSlugs.FromSlug(Game);
+        if (parsed is null)
+        {
+            error = $"未识别的练习游戏「{Game}」";
+            return;
+        }
+
+        gameType = parsed.Value;
+        error = null;
+        outcome = null;
+        stage = Stage.Config;
+
+        try
+        {
+            var games = (await PracticeService.GetGamesAsync()).Data ?? [];
+            gameInfo = games.FirstOrDefault(g => g.GameType == gameType);
+            level = 1;
+
+            if (gameInfo is not null)
+            {
+                count = gameInfo.CountOptions.FirstOrDefault(x => x >= 10);
+                if (count <= 0) count = gameInfo.CountOptions.FirstOrDefault(x => x > 0);
+                if (count <= 0) count = 10;
+            }
+        }
+        catch (Exception ex)
+        {
+            error = $"加载游戏信息失败：{ex.Message}";
+        }
+    }
+
+    private async Task LoadHistoryAsync(Guid historyId)
+    {
+        try
+        {
+            outcome = (await PracticeService.GetResultAsync(historyId)).Data;
+            gameInfo = (await PracticeService.GetGamesAsync()).Data?
+                .FirstOrDefault(g => g.GameType == outcome?.GameType);
+            gameType = outcome?.GameType ?? default;
+            stage = Stage.Finished;
+        }
+        catch (Exception ex)
+        {
+            error = $"加载练习结果失败：{ex.Message}";
+        }
+    }
+
+    private async Task StartSession()
+    {
+        busy = true;
+        try
+        {
+            var result = await PracticeService.StartAsync(new StartPracticeInputDto
+            {
+                GameType = gameType,
+                Grade = grade,
+                Level = level,
+                Count = count
+            });
+
+            var start = result.Data!;
+            sessionId = start.SessionId;
+            questions = start.Questions;
+            answers = new Dictionary<Guid, string>();
+            index = 0;
+            combo = 0;
+            correctCount = 0;
+            feedback = null;
+            typingAnswer = string.Empty;
+            EnsureBlanks();
+            showScript = false;
+            autoPlayedItemId = Guid.Empty;
+            elapsedSeconds = 0;
+            outcome = null;
+            stage = Stage.Playing;
+
+            timer = new System.Threading.Timer(_ => _ = InvokeAsync(() =>
+            {
+                elapsedSeconds++;
+                StateHasChanged();
+            }), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"开始练习失败：{ex.Message}", 6000);
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+
+    private async Task OnTypingKeyUp(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter" && !busy && !string.IsNullOrWhiteSpace(typingAnswer))
+        {
+            await SubmitTyped();
+        }
+    }
+
+    private Task SubmitTyped() => Answer(typingAnswer.Trim());
+
+    /// <summary>对话题的空格：一词一格，格子数由服务端按参考答案词数给出</summary>
+    private string[] blankAnswers = [];
+
+    private IEnumerable<int> Slots => Enumerable.Range(0, current?.BlankCount ?? 0);
+
+    private string BlankKey(int index) => $"{current?.Id}-{index}";
+
+    private string JoinedBlanks => string.Join(' ', blankAnswers
+        .Where(x => !string.IsNullOrWhiteSpace(x))
+        .Select(x => x.Trim()));
+
+    private void EnsureBlanks()
+    {
+        var need = current?.BlankCount ?? 0;
+        if (blankAnswers.Length != need)
+        {
+            Array.Resize(ref blankAnswers, need);
+        }
+        else
+        {
+            Array.Clear(blankAnswers);
+        }
+    }
+
+    private void OnBlankInput(int index, ChangeEventArgs args)
+    {
+        if (index < blankAnswers.Length)
+        {
+            blankAnswers[index] = args.Value?.ToString() ?? string.Empty;
+        }
+    }
+
+    private async Task OnBlankKeyUp(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter" && !busy && !string.IsNullOrWhiteSpace(JoinedBlanks))
+        {
+            await SubmitBlanks();
+        }
+    }
+
+    private Task SubmitBlanks() => Answer(JoinedBlanks);
+
+    private async Task Answer(string answer)
+    {
+        if (current is null) return;
+
+        busy = true;
+        try
+        {
+            var result = await PracticeService.SubmitItemAsync(new SubmitPracticeItemInputDto
+            {
+                SessionId = sessionId,
+                ItemId = current.Id,
+                Answer = answer
+            });
+
+            feedback = result.Data;
+            answers[current.Id] = answer;
+
+            if (feedback is not null)
+            {
+                combo = feedback.Combo;
+                correctCount = feedback.CorrectCount;
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"提交失败：{ex.Message}");
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+
+    private async Task Next()
+    {
+        feedback = null;
+        typingAnswer = string.Empty;
+        showScript = false;
+
+        if (index + 1 >= questions.Count)
+        {
+            await Finish();
+            return;
+        }
+
+        index++;
+        EnsureBlanks();
+    }
+
+    private async Task Finish()
+    {
+        timer?.Dispose();
+        timer = null;
+        busy = true;
+
+        try
+        {
+            var input = new SubmitPracticeInputDto
+            {
+                DurationSeconds = elapsedSeconds,
+                Items = questions.Select(question => new PracticeAnswerInputDto
+                {
+                    ItemId = question.Id,
+                    Answer = answers.TryGetValue(question.Id, out var answer) ? answer : null
+                }).ToList()
+            };
+
+            outcome = (await PracticeService.SubmitAsync(sessionId, input)).Data;
+            stage = Stage.Finished;
+            Toast.Success($"本局得分 {outcome?.Score ?? 0} 分，答对 {outcome?.CorrectCount ?? 0}/{outcome?.TotalCount ?? 0} 题");
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"结算失败：{ex.Message}", 6000);
+        }
+        finally
+        {
+            busy = false;
+        }
+    }
+
+    private void Restart()
+    {
+        stage = Stage.Config;
+        outcome = null;
+        showScript = false;
+        autoPlayedItemId = Guid.Empty;
+        questions = [];
+        index = 0;
+        combo = 0;
+        correctCount = 0;
+        feedback = null;
+        answers = new Dictionary<Guid, string>();
+        elapsedSeconds = 0;
+        StateHasChanged();
+    }
+
+    private static string FormatDuration(int seconds) =>
+        seconds < 60 ? $"{seconds} 秒" : $"{seconds / 60} 分 {seconds % 60} 秒";
+
+    private void ToggleScript() => showScript = !showScript;
+
+    /// <summary>
+    /// 用浏览器 Web Speech 朗读。语音引擎在部分浏览器里可能缺失或没英文音色，
+    /// 失败时静默降级——界面上还有「看原文」可以用。
+    /// </summary>
+    private async Task PlayAsync(string? text, double rate)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return;
+
+        try
+        {
+            ttsModule ??= await JS.InvokeAsync<IJSObjectReference>(
+                "import", "./_content/H.Education.Web/js/tts.js");
+            await ttsModule.InvokeAsync<bool>("speak", text, rate);
+        }
+        catch (Exception ex) when (ex is JSException or InvalidOperationException or OperationCanceledException)
+        {
+            // 不弹错误打断答题，孩子点「看原文」即可
+        }
+    }
+
+    private async Task StopSpeechAsync()
+    {
+        if (ttsModule is null) return;
+
+        try
+        {
+            await ttsModule.InvokeVoidAsync("stop");
+        }
+        catch (Exception ex) when (ex is JSException or InvalidOperationException or OperationCanceledException)
+        {
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // 进入新的一题自动放一遍录音；已经作答（显示反馈）后不再重复播
+        if (stage != Stage.Playing || current is null || feedback is not null) return;
+
+        if (!string.IsNullOrWhiteSpace(current.AudioText) && current.Id != autoPlayedItemId)
+        {
+            autoPlayedItemId = current.Id;
+            await PlayAsync(current.AudioText, 0.9);
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        timer?.Dispose();
+        timer = null;
+
+        await StopSpeechAsync();
+
+        if (ttsModule is not null)
+        {
+            try
+            {
+                await ttsModule.DisposeAsync();
+            }
+            catch (Exception ex) when (ex is JSException or InvalidOperationException or OperationCanceledException)
+            {
+            }
+
+            ttsModule = null;
+        }
+
+        GC.SuppressFinalize(this);
+    }
+}

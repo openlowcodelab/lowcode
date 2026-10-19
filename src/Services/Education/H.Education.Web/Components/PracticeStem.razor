@@ -1,0 +1,24 @@
+@namespace H.Education.Web.Components
+
+@* 出题器把「要做什么」和「题目给的材料」用换行分开（病句、对话上句都在第二行）。
+   HTML 会把换行吞掉，两段挤成一行就读不出题意，所以这里拆开分块显示。 *@
+<div class="edu-stem @(Compact ? "edu-stem-compact" : null)">
+    <div class="edu-stem-ask">@Ask</div>
+    @if (!string.IsNullOrEmpty(Material))
+    {
+        <div class="edu-stem-material">@Material</div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string? Content { get; set; }
+
+    /// <summary>结算回顾里排版更窄，用小题干字号</summary>
+    [Parameter] public bool Compact { get; set; }
+
+    private string[] Parts => (Content ?? string.Empty).Split('\n', StringSplitOptions.RemoveEmptyEntries);
+
+    private string Ask => Parts.Length > 0 ? Parts[0] : string.Empty;
+
+    private string? Material => Parts.Length > 1 ? string.Join(Environment.NewLine, Parts[1..]) : null;
+}

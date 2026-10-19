@@ -19,6 +19,8 @@ public class BaiLianLLMProvider : ILLMProvider
     public BaiLianLLMProvider(string apiKey, string baseUrl, string model)
     {
         _httpClient = new HttpClient();
+        // 整卷命题这类长生成会跑数分钟，默认 100 秒超时会导致请求被掐断
+        _httpClient.Timeout = TimeSpan.FromMinutes(10);
         _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
 
         // 确保 BaseAddress 以 '/' 结尾，避免相对路径拼接时丢失 BaseUrl 中的路径部分

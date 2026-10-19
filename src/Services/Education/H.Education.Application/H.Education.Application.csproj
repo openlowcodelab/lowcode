@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../../../common.props" />
+  <PropertyGroup>
+    <RootNamespace>H.Education.Application</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Volo.Abp.AspNetCore.Mvc" />
+    <!-- AI 命题走 Hangfire 后台任务：整卷生成要跑数分钟，不能占着 HTTP 请求 -->
+    <PackageReference Include="Hangfire.Core" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\H.Education.Application.Contracts\H.Education.Application.Contracts.csproj" />
+    <ProjectReference Include="..\H.Education.EntityFrameworkCore\H.Education.EntityFrameworkCore.csproj" />
+    <!-- 复用 AI 应用的统一文本生成能力（进程内实现，跨应用只依赖契约） -->
+    <ProjectReference Include="..\..\AI\H.AI.Application.Contracts\H.AI.Application.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

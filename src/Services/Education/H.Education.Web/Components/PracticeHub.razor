@@ -1,0 +1,159 @@
+@namespace H.Education.Web.Components
+@inject IPracticeAppService PracticeService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@inject HToastService Toast
+
+<HCard Title="@Title" Description="@Description">
+    <div class="edu-game-grid">
+        @foreach (var game in games)
+        {
+            <div class="edu-game-card" @onclick="@(() => Nav.NavigateTo($"/education/practice/{PracticeSlugs.ToSlug(game.GameType)}"))">
+                <HCard>
+                    <div class="h-space" style="align-items:flex-start;">
+                        <span class="edu-game-icon">@game.Icon</span>
+                        <div>
+                            <div style="font-size:16px;font-weight:600;">@game.Name</div>
+                            <div class="h-space gap-2" style="margin-top:6px;">
+                                <span class="h-tag h-tag-blue">@game.Subject.GetSubjectName()</span>
+                                <span class="h-tag h-tag-default">@game.MaxLevel 关</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="edu-score-label" style="margin-top:10px;line-height:1.6;">@game.Description</div>
+                    <div class="edu-game-card-action">
+                        <button class="h-btn h-btn-sm h-btn-primary h-btn-block">开始练习</button>
+                    </div>
+                </HCard>
+            </div>
+        }
+    </div>
+</HCard>
+
+<HCard Title="@(Category == PracticeCategoryEnum.Topic ? "专项练习记录" : "练习记录")" Style="margin-top:12px;">
+    <div class="h-toolbar">
+        <input type="text" @bind="filter" class="h-input" style="width:200px;" placeholder="年级" />
+        <select class="h-input" style="width:150px;" @bind="gameFilter">
+            <option value="">全部项目</option>
+            @foreach (var game in games)
+            {
+                <option value="@game.GameType">@game.Name</option>
+            }
+        </select>
+        <button class="h-btn" @onclick="LoadRecords">查询</button>
+        <button class="h-btn" @onclick="LoadRecords">刷新</button>
+    </div>
+
+    <HTable Loading="@loading" ShowEmpty="@(!loading && !records.Any())">
+        <thead>
+            <tr>
+                <th>项目</th>
+                <th>学科</th>
+                <th>年级</th>
+                <th>关卡</th>
+                <th>答对</th>
+                <th>最长连对</th>
+                <th>得分</th>
+                <th>用时</th>
+                <th>时间</th>
+                <th style="width:120px;">操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var record in records)
+            {
+                <tr>
+                    <td>@record.GameType.GetGameName()</td>
+                    <td>@record.Subject.GetSubjectName()</td>
+                    <td>@record.Grade</td>
+                    <td>第 @record.Level 关</td>
+                    <td>@record.CorrectCount / @record.TotalCount</td>
+                    <td>@record.MaxCombo</td>
+                    <td>@record.Score</td>
+                    <td>@FormatDuration(record.DurationSeconds)</td>
+                    <td>@record.CreationTime.ToString("MM-dd HH:mm")</td>
+                    <td>
+                        <span class="row-actions">
+                            <a @onclick="@(() => Nav.NavigateTo($"/education/practice/history/{record.Id}"))">回顾</a>
+                            <a class="link-action-muted" @onclick="@(() => ConfirmDelete(record))">删除</a>
+                        </span>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </HTable>
+</HCard>
+
+@code {
+    [Parameter] public PracticeCategoryEnum Category { get; set; }
+
+    [Parameter] public string Title { get; set; } = "练习";
+
+    [Parameter] public string Description { get; set; } = string.Empty;
+
+    private List<PracticeGameDto> games = [];
+    private List<PracticeRecordDto> records = [];
+    private bool loading;
+    private string filter = string.Empty;
+    private string gameFilter = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var all = (await PracticeService.GetGamesAsync()).Data ?? [];
+            games = all.Where(g => g.Category == Category).ToList();
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"加载练习目录失败：{ex.Message}");
+        }
+
+        await LoadRecords();
+    }
+
+    private async Task LoadRecords()
+    {
+        loading = true;
+        try
+        {
+            var result = await PracticeService.GetListAsync(new PracticeRecordQueryDto
+            {
+                MaxResultCount = 50,
+                Filter = string.IsNullOrWhiteSpace(filter) ? null : filter.Trim(),
+                Category = Category,
+                GameType = Enum.TryParse<PracticeGameTypeEnum>(gameFilter, out var game) ? game : null
+            });
+            records = result.Data?.Items.ToList() ?? [];
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"加载练习记录失败：{ex.Message}");
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private async Task ConfirmDelete(PracticeRecordDto record)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm",
+            $"删除「{record.GameType.GetGameName()}」第 {record.Level} 关的练习记录？");
+        if (!confirmed) return;
+
+        try
+        {
+            await PracticeService.DeleteAsync(record.Id);
+            Toast.Success("已删除");
+            await LoadRecords();
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"删除失败：{ex.Message}");
+        }
+    }
+
+    private static string FormatDuration(int seconds) =>
+        seconds < 60 ? $"{seconds} 秒" : $"{seconds / 60} 分 {seconds % 60} 秒";
+}

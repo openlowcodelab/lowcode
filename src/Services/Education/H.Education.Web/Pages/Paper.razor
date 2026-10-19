@@ -1,0 +1,465 @@
+@page "/education/paper"
+
+@layout EducationLayout
+@implements IDisposable
+@inject IExamPaperAppService PaperService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@inject HToastService Toast
+
+<HCard Title="学科概览" Description="按学科统计试卷数量、已批改答卷数与平均得分率">
+    @if (stats.Count == 0)
+    {
+        <div class="h-empty">还没有试卷，先用「AI 生成试卷」出一份试试</div>
+    }
+    else
+    {
+        <div class="stat-grid">
+            @foreach (var stat in stats)
+            {
+                <div class="stat-card">
+                    <div class="stat-card-label">@stat.Subject.GetSubjectName()</div>
+                    <div class="stat-card-value">@stat.PaperCount 份试卷</div>
+                    <div class="edu-score-label">
+                        已批改 @stat.AnswerCount 份 · 平均得分率 @(stat.AnswerCount == 0 ? "-" : $"{stat.AvgAccuracyRate:F1}%")
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</HCard>
+
+<HCard Title="试卷列表" Style="margin-top:12px;">
+    <div class="h-toolbar">
+        <input type="text" @bind="filter" class="h-input" style="width:200px;" placeholder="试卷标题或年级" />
+        <select class="h-input" style="width:120px;" @bind="subjectFilter">
+            <option value="">全部学科</option>
+            <option value="Chinese">语文</option>
+            <option value="Math">数学</option>
+            <option value="English">英语</option>
+        </select>
+        <select class="h-input" style="width:130px;" @bind="kindFilter">
+            <option value="">全部类型</option>
+            <option value="Normal">普通练习卷</option>
+            <option value="UnitTest">单元测试卷</option>
+        </select>
+        <select class="h-input" style="width:120px;" @bind="statusFilter">
+            <option value="">全部状态</option>
+            <option value="Draft">草稿</option>
+            <option value="Published">已发布</option>
+        </select>
+        <button class="h-btn" @onclick="@(() => LoadData())">查询</button>
+        <button class="h-btn" @onclick="@(() => LoadData())">刷新</button>
+        <button class="h-btn h-btn-primary" @onclick="ShowGenerateDialog">生成试卷</button>
+    </div>
+
+    <HTable Loading="@loading" ShowEmpty="@(!loading && !papers.Any())">
+        <thead>
+            <tr>
+                <th style="width:30%">试卷标题</th>
+                <th>学科</th>
+                <th>年级</th>
+                <th>题量</th>
+                <th>总分</th>
+                <th>时长</th>
+                <th>状态</th>
+                <th>来源</th>
+                <th>创建时间</th>
+                <th style="width:180px;">操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var paper in papers)
+            {
+                <tr>
+                    <td>
+                        <div>
+                            @paper.Title
+                            @if (paper.Kind == PaperKindEnum.UnitTest)
+                            {
+                                <span class="h-tag h-tag-blue" style="margin-left:6px;">单元卷</span>
+                            }
+                        </div>
+                        <div class="edu-score-label">@paper.Description</div>
+                        @if (paper.GenerateState == PaperGenerateStateEnum.Failed && !string.IsNullOrWhiteSpace(paper.GenerateError))
+                        {
+                            <div class="h-tag h-tag-red" style="margin-top:4px;max-width:420px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
+                                 title="@paper.GenerateError">@paper.GenerateError</div>
+                        }
+                    </td>
+                    <td>@paper.Subject.GetSubjectName()</td>
+                    <td>@paper.Grade</td>
+                    <td>@paper.QuestionCount</td>
+                    <td>@paper.TotalScore.ToString("0.#")</td>
+                    <td>@paper.DurationMinutes 分钟</td>
+                    <td>
+                        @if (paper.GenerateState == PaperGenerateStateEnum.Generating)
+                        {
+                            <span class="h-tag h-tag-blue">生成中</span>
+                        }
+                        else if (paper.GenerateState == PaperGenerateStateEnum.Failed)
+                        {
+                            <span class="h-tag h-tag-red">生成失败</span>
+                        }
+                        else
+                        {
+                            <span class="h-tag @StatusTagClass(paper.Status)">@paper.Status.GetStatusName()</span>
+                        }
+                    </td>
+                    <td>
+                        <span class="h-tag @(paper.Source == PaperSourceEnum.Ai ? "h-tag-blue" : "h-tag-default")">
+                            @(paper.Source == PaperSourceEnum.Ai ? "AI 生成" : "内置样卷")
+                        </span>
+                    </td>
+                    <td>@paper.CreationTime.ToString("MM-dd HH:mm")</td>
+                    <td>
+                        <span class="row-actions">
+                            @if (paper.GenerateState == PaperGenerateStateEnum.Generating)
+                            {
+                                <span class="edu-score-label">排队生成中</span>
+                            }
+                            else if (paper.GenerateState == PaperGenerateStateEnum.Failed)
+                            {
+                                <a @onclick="@(() => Retry(paper))">重试</a>
+                            }
+                            else
+                            {
+                                <a @onclick="@(() => Nav.NavigateTo($"/education/paper/detail/{paper.Id}"))">预览</a>
+                                <a @onclick="@(() => TogglePublish(paper))">@(paper.Status == PaperStatusEnum.Published ? "撤回" : "发布")</a>
+                                @if (paper.Status == PaperStatusEnum.Published)
+                                {
+                                    <a @onclick="@(() => Nav.NavigateTo($"/education/answer?paper={paper.Id}"))">答题</a>
+                                }
+                            }
+                            <a class="link-action-muted" @onclick="@(() => ConfirmDelete(paper))">删除</a>
+                        </span>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </HTable>
+</HCard>
+
+<HModal Title="生成试卷" Visible="@generateVisible" VisibleChanged="@OnGenerateVisibleChanged"
+        OnOk="@Generate" ConfirmLoading="@generating"
+        OkText="@GenerateOkText"
+        Style="width:640px;">
+    <div class="h-alert h-alert-info" style="margin-bottom:16px;">
+        @if (isUnitTest)
+        {
+            <text>单元测试卷按 53 天天练的体例组卷（固定大题顺序与分值配比），只能由 AI 命题并提交后台任务生成；后台按大题逐个命题再拼成整卷，通常要 5~15 分钟，提交后列表里会出现一张"生成中"的卷子并自动刷新进度。</text>
+        }
+        else
+        {
+            <text>AI 生成会提交给后台任务执行（调用「AI 应用」配置的默认模型，整卷通常要几分钟），提交后列表里先出现一张"生成中"的卷子并自动刷新进度；失败可点「重试」。想立刻看到题目请选「内置样卷」。</text>
+        }
+    </div>
+
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">学科</label>
+        <div class="h-form-control">
+            <select class="h-input" @bind="genInput.Subject">
+                <option value="Chinese">语文</option>
+                <option value="Math">数学</option>
+                <option value="English">英语</option>
+            </select>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">试卷类型</label>
+        <div class="h-form-control">
+            <select class="h-input" @bind="genInput.Kind">
+                <option value="Normal">普通练习卷</option>
+                <option value="UnitTest">单元测试卷（53 天天练体例）</option>
+            </select>
+        </div>
+    </div>
+    @if (isUnitTest)
+    {
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">教材版本</label>
+            <div class="h-form-control">
+                <input type="text" class="h-input" @bind="genInput.Textbook" placeholder="如：人教版 / 部编版 / 北师大版" />
+            </div>
+        </div>
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">单元</label>
+            <div class="h-form-control">
+                <input type="text" class="h-input" @bind="genInput.Unit" placeholder="如：第三单元" />
+            </div>
+        </div>
+    }
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">年级</label>
+        <div class="h-form-control">
+            <select class="h-input" @bind="genInput.Grade">
+                @foreach (var grade in gradeOptions)
+                {
+                    <option value="@grade">@grade</option>
+                }
+            </select>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">学期</label>
+        <div class="h-form-control">
+            <select class="h-input" @bind="genTerm">
+                <option value="">不限</option>
+                <option value="上学期">上学期</option>
+                <option value="下学期">下学期</option>
+            </select>
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">难度</label>
+        <div class="h-form-control">
+            <select class="h-input" @bind="genInput.Difficulty">
+                <option value="Easy">基础（基础达标）</option>
+                <option value="Normal">提高（能力提升）</option>
+                <option value="Hard">挑战（尖子培优）</option>
+            </select>
+        </div>
+    </div>
+    @if (!isUnitTest)
+    {
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">题目数量</label>
+            <div class="h-form-control">
+                <input type="number" class="h-input" min="5" max="30" @bind="genInput.QuestionCount" />
+            </div>
+        </div>
+    }
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">答题时长</label>
+        <div class="h-form-control">
+            <input type="number" class="h-input" min="20" max="180" step="10" @bind="genInput.DurationMinutes" />
+        </div>
+    </div>
+    <div class="h-form-item h-form-horizontal">
+        <label class="h-form-label">知识点范围</label>
+        <div class="h-form-control">
+            <textarea class="h-textarea" rows="2" @bind="genInput.KnowledgePoints"
+                      placeholder="@(isUnitTest ? "留空则覆盖本单元全部考点；也可写「重点：第三课词语、古诗默写」" : "如：分数的加减法、长方体表面积；留空则由模型覆盖该年级常见考点")"></textarea>
+        </div>
+    </div>
+    @if (!isUnitTest)
+    {
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">生成方式</label>
+            <div class="h-form-control">
+                <div class="radio-group">
+                    <label class="radio-label">
+                        <input type="radio" name="edu-paper-source" checked="@isAiSource" @onchange="PickAi" /> AI 生成
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="edu-paper-source" checked="@(!isAiSource)" @onchange="PickBuiltIn" /> 内置样卷
+                    </label>
+                </div>
+            </div>
+        </div>
+    }
+</HModal>
+
+@code {
+    private List<ExamPaperDto> papers = [];
+    private List<ExamPaperStatDto> stats = [];
+    private bool loading;
+    private bool refreshing;
+    private System.Threading.Timer? pollTimer;
+
+    private string filter = string.Empty;
+    private string subjectFilter = string.Empty;
+    private string statusFilter = string.Empty;
+    private string kindFilter = string.Empty;
+
+    private bool generateVisible;
+    private bool generating;
+    private GeneratePaperInputDto genInput = new();
+    private string genTerm = string.Empty;
+    private bool isAiSource = true;
+
+    private static readonly string[] gradeOptions = GradeOptions.All;
+
+    private string GenerateOkText => isUnitTest
+        ? "生成单元测试卷"
+        : isAiSource ? "AI 生成" : "生成内置样卷";
+
+    private bool isUnitTest => genInput.Kind == PaperKindEnum.UnitTest;
+
+    private void PickAi() => isAiSource = true;
+
+    private void PickBuiltIn() => isAiSource = false;
+
+    protected override async Task OnInitializedAsync() => await LoadData();
+
+    /// <summary>
+    /// AI 命题在后台跑，列表里出现"生成中"时每 5 秒静默刷新一次，全部结束就停掉轮询
+    /// </summary>
+    private void EnsurePolling()
+    {
+        var pending = papers.Any(x => x.GenerateState == PaperGenerateStateEnum.Generating);
+
+        if (pending && pollTimer is null)
+        {
+            pollTimer = new System.Threading.Timer(async _ =>
+            {
+                if (refreshing) return;
+                await InvokeAsync(async () => await LoadData(silent: true));
+            }, null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
+        }
+        else if (!pending && pollTimer is not null)
+        {
+            pollTimer.Dispose();
+            pollTimer = null;
+        }
+    }
+
+    private async Task LoadData(bool silent = false)
+    {
+        if (refreshing) return;
+
+        refreshing = true;
+        if (!silent) loading = true;
+        try
+        {
+            var input = new ExamPaperQueryDto
+            {
+                MaxResultCount = 50,
+                Filter = string.IsNullOrWhiteSpace(filter) ? null : filter.Trim(),
+                Subject = ParseEnum<EducationSubjectEnum>(subjectFilter),
+                Status = ParseEnum<PaperStatusEnum>(statusFilter),
+                Kind = ParseEnum<PaperKindEnum>(kindFilter)
+            };
+            var result = await PaperService.GetListAsync(input);
+            papers = result.Data?.Items.ToList() ?? [];
+            stats = (await PaperService.GetStatisticsAsync()).Data ?? [];
+        }
+        catch (Exception ex)
+        {
+            if (!silent) Toast.Error($"加载失败：{ex.Message}");
+        }
+        finally
+        {
+            refreshing = false;
+            if (!silent) loading = false;
+            EnsurePolling();
+        }
+    }
+
+    private void ShowGenerateDialog()
+    {
+        genInput = new GeneratePaperInputDto
+        {
+            Subject = EducationSubjectEnum.Chinese,
+            Kind = PaperKindEnum.Normal,
+            Grade = "四年级",
+            Difficulty = DifficultyEnum.Normal,
+            QuestionCount = 12,
+            DurationMinutes = 90,
+            Source = PaperSourceEnum.Ai
+        };
+        genTerm = string.Empty;
+        isAiSource = true;
+        generateVisible = true;
+    }
+
+    private void OnGenerateVisibleChanged(bool visible) => generateVisible = visible;
+
+    private async Task Generate()
+    {
+        if (string.IsNullOrWhiteSpace(genInput.Grade))
+        {
+            Toast.Warning("请填写年级，例如「四年级」");
+            return;
+        }
+        if (genInput.Kind == PaperKindEnum.UnitTest && string.IsNullOrWhiteSpace(genInput.Unit))
+        {
+            Toast.Warning("单元测试卷要填单元，例如「第三单元」");
+            return;
+        }
+
+        generating = true;
+        try
+        {
+            genInput.Term = string.IsNullOrWhiteSpace(genTerm) ? null : genTerm;
+            genInput.Source = isUnitTest || isAiSource ? PaperSourceEnum.Ai : PaperSourceEnum.BuiltIn;
+
+            var result = await PaperService.GenerateAsync(genInput);
+            var paper = result.Data!;
+
+            generateVisible = false;
+            if (paper.GenerateState == PaperGenerateStateEnum.Generating)
+            {
+                Toast.Success($"已提交后台生成《{paper.Title}》，AI 命题通常要几分钟，列表会自动刷新", 5000);
+            }
+            else
+            {
+                Toast.Success($"已生成《{paper.Title}》，共 {paper.QuestionCount} 题 / {paper.TotalScore:0.#} 分");
+            }
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"生成失败：{ex.Message}", 6000);
+        }
+        finally
+        {
+            generating = false;
+        }
+    }
+
+    private async Task Retry(ExamPaperDto paper)
+    {
+        try
+        {
+            await PaperService.RetryGenerateAsync(paper.Id);
+            Toast.Success($"《{paper.Title}》已重新排队生成");
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"重试失败：{ex.Message}", 6000);
+        }
+    }
+
+    private async Task TogglePublish(ExamPaperDto paper)
+    {
+        var next = paper.Status == PaperStatusEnum.Published ? PaperStatusEnum.Draft : PaperStatusEnum.Published;
+        try
+        {
+            await PaperService.PublishAsync(paper.Id, new PublishPaperInputDto { Status = next });
+            Toast.Success(next == PaperStatusEnum.Published ? "试卷已发布，可在「答题管理」开始答题" : "试卷已撤回为草稿");
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"操作失败：{ex.Message}");
+        }
+    }
+
+    private async Task ConfirmDelete(ExamPaperDto paper)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm",
+            $"删除《{paper.Title}》？该试卷的 {paper.QuestionCount} 道题目与对应的答题记录会一并删除。");
+        if (!confirmed) return;
+
+        try
+        {
+            await PaperService.DeleteAsync(paper.Id);
+            Toast.Success("已删除");
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"删除失败：{ex.Message}");
+        }
+    }
+
+    private static string StatusTagClass(PaperStatusEnum status) =>
+        status == PaperStatusEnum.Published ? "h-tag-green" : "h-tag-default";
+
+    private static T? ParseEnum<T>(string? value) where T : struct =>
+        Enum.TryParse<T>(value, out var parsed) ? parsed : null;
+
+    public void Dispose() => pollTimer?.Dispose();
+}
