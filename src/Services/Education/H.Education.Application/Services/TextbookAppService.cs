@@ -65,8 +65,9 @@ public class TextbookAppService : ApplicationService, ITextbookAppService
 
         var totalCount = await AsyncExecuter.CountAsync(query);
         var maxResult = input.MaxResultCount > 0 ? input.MaxResultCount : 20;
+        // Sort 存的是年级序号（一年级 1…九年级 9、高一 10），直接按它排才是"一→九→高"的读法，字典序会把"九年级"排到"一年级"前
         var entities = await AsyncExecuter.ToListAsync(
-            query.OrderBy(x => x.Stage).ThenBy(x => x.Subject).ThenBy(x => x.Sort).ThenBy(x => x.Volume)
+            query.OrderBy(x => x.Sort).ThenBy(x => x.Stage).ThenBy(x => x.Subject).ThenBy(x => x.Volume)
                 .Skip(input.SkipCount).Take(maxResult));
 
         var dtos = entities.Select(x => x.ToDto()).ToList();
@@ -263,18 +264,30 @@ public class TextbookAppService : ApplicationService, ITextbookAppService
     {
         var query = await _textbookRepository.GetQueryableAsync();
         var existing = await AsyncExecuter.ToListAsync(
-            query.Select(x => new { x.Subject, x.Version, x.Grade, x.Volume }));
+            query.Select(x => new { x.Id, x.Subject, x.Version, x.Grade, x.Volume, x.BookUrl }));
 
         var result = new TextbookImportResultDto();
         foreach (var seed in TextbookCatalogData.All)
         {
-            var hit = existing.Any(x => x.Subject == (int)seed.Subject
+            var ebookUrl = seed.EbookPath is null ? null : TextbookLinks.EbookUrl(seed.EbookPath);
+            var hit = existing.FirstOrDefault(x => x.Subject == (int)seed.Subject
                 && x.Version == seed.Version
                 && x.Grade == seed.Grade
                 && x.Volume == (int)seed.Volume);
-            if (hit)
+            if (hit is not null)
             {
                 result.SkippedTextbookCount++;
+
+                // 早先导入的册次只记了平台频道入口，这里把电子课本直链补上，其余字段保持不动
+                if (ebookUrl is not null
+                    && (string.IsNullOrWhiteSpace(hit.BookUrl) || hit.BookUrl == TextbookChannels.MaterialUrl))
+                {
+                    var stored = await _textbookRepository.GetAsync(hit.Id);
+                    stored.BookUrl = ebookUrl;
+                    await _textbookRepository.UpdateAsync(stored, autoSave: true);
+                    result.UpdatedLinkCount++;
+                }
+
                 continue;
             }
 
@@ -289,7 +302,7 @@ public class TextbookAppService : ApplicationService, ITextbookAppService
                 Publisher = seed.Publisher,
                 UnitCount = seed.UnitCount,
                 UnitLabel = seed.UnitLabel,
-                BookUrl = TextbookChannels.MaterialUrl,
+                BookUrl = ebookUrl ?? TextbookChannels.MaterialUrl,
                 CourseUrl = TextbookChannels.CourseUrl,
                 Source = (int)TextbookSourceEnum.BuiltIn,
                 Sort = EducationGrades.Parse(seed.Grade),
@@ -301,9 +314,13 @@ public class TextbookAppService : ApplicationService, ITextbookAppService
             result.InsertedResourceCount += await SyncUnitResourcesAsync(entity);
         }
 
-        result.Message = result.InsertedTextbookCount == 0
+        var message = result.InsertedTextbookCount == 0
             ? $"{result.SkippedTextbookCount} 册教材已在目录中，未重复导入"
             : $"新增 {result.InsertedTextbookCount} 册教材、{result.InsertedResourceCount} 条课时资源，跳过 {result.SkippedTextbookCount} 册";
+
+        result.Message = result.UpdatedLinkCount > 0
+            ? $"{message}；补录 {result.UpdatedLinkCount} 册电子课本直链"
+            : message;
 
         return new(result);
     }

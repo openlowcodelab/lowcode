@@ -243,6 +243,9 @@ public class TextbookImportResultDto
     /// <summary>已存在而跳过的教材册数</summary>
     public int SkippedTextbookCount { get; set; }
 
+    /// <summary>为已存在的教材补录电子课本直链的册数</summary>
+    public int UpdatedLinkCount { get; set; }
+
     /// <summary>结果说明</summary>
     public string Message { get; set; } = string.Empty;
 }

@@ -13,14 +13,14 @@ public class EnglishDialogueGenerator : IPracticeItemGenerator
 
     public EducationSubjectEnum Subject => EducationSubjectEnum.English;
 
-    public List<GeneratedPracticeItem> Generate(string grade, int level, int count)
+    public List<GeneratedPracticeItem> Generate(PracticeGenerateRequest request)
     {
-        var band = Math.Clamp(EducationGrades.Band(grade), 0, 2);
+        var band = Math.Clamp(EducationGrades.Band(request.Grade), 0, 2);
         var pool = PracticeContentBanks.EnglishDialogues[band];
-        var showChinese = Math.Clamp(level, 1, 6) <= 3;
+        var showChinese = Math.Clamp(request.Level, 1, 6) <= 3;
 
-        var items = new List<GeneratedPracticeItem>(count);
-        for (var i = 0; i < count; i++)
+        var items = new List<GeneratedPracticeItem>(request.Count);
+        for (var i = 0; i < request.Count; i++)
         {
             var picked = pool[Random.Shared.Next(pool.Length)];
             var blankCount = picked.Reply.Split('|', StringSplitOptions.RemoveEmptyEntries)

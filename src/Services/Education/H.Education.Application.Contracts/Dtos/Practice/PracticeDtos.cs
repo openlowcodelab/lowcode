@@ -4,6 +4,18 @@ using H.Abp.Application.Contracts;
 namespace H.Education.Application.Contracts;
 
 /// <summary>
+/// 趣味练习的一种可选模式（如听力的「单词 / 句子 / 短文」）
+/// </summary>
+public class PracticeModeDto
+{
+    /// <summary>传给服务端的模式值</summary>
+    public string Value { get; set; } = string.Empty;
+
+    /// <summary>下拉框里的显示名</summary>
+    public string Name { get; set; } = string.Empty;
+}
+
+/// <summary>
 /// 趣味练习游戏信息
 /// </summary>
 public class PracticeGameDto
@@ -21,6 +33,12 @@ public class PracticeGameDto
     public List<int> CountOptions { get; set; } = [];
     /// <summary>关卡数</summary>
     public int MaxLevel { get; set; }
+    /// <summary>可选模式；为空表示这个练习不分模式</summary>
+    public List<PracticeModeDto> Modes { get; set; } = [];
+    /// <summary>是否需要学生自己输入关键字或词（飞花令）</summary>
+    public bool NeedsKeyword { get; set; }
+    /// <summary>关键字输入框的占位提示</summary>
+    public string KeywordHint { get; set; } = string.Empty;
 }
 
 /// <summary>
@@ -80,6 +98,13 @@ public class StartPracticeInputDto
     /// <summary>题目数量</summary>
     [Range(5, 20, ErrorMessage = "题目数量需在 5~20 之间")]
     public int Count { get; set; } = 10;
+
+    /// <summary>关键字或词，飞花令用；其余游戏忽略</summary>
+    [StringLength(12, ErrorMessage = "关键字或词不要超过 12 个字")]
+    public string? Keyword { get; set; }
+
+    /// <summary>模式值，如听力的 word/sentence/passage；其余游戏忽略</summary>
+    public string? Mode { get; set; }
 }
 
 /// <summary>

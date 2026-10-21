@@ -4,7 +4,7 @@ using H.Util.Base;
 namespace H.Education.Application.Contracts;
 
 /// <summary>
-/// 趣味练习应用服务：口算闯关、单词闯关、诗词填空。
+/// 趣味练习应用服务：单词闯关、诗词填空、飞花令、听力与对话。
 /// 题目由服务端生成并落库（答案不下发到前端），交卷时服务端判定得分与连对。
 /// ABP 约定控制器生成的端点：
 ///  - GET    /api/app/practice            分页查询练习记录

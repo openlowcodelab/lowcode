@@ -57,13 +57,10 @@ public static class EducationEnumExtensions
 
     public static string GetGameName(this PracticeGameTypeEnum game) => game switch
     {
-        PracticeGameTypeEnum.MathSprint => "口算闯关",
         PracticeGameTypeEnum.EnglishWord => "单词闯关",
         PracticeGameTypeEnum.ChinesePoem => "诗词填空",
         PracticeGameTypeEnum.EnglishListening => "听力练习",
         PracticeGameTypeEnum.EnglishDialogue => "对话练习",
-        PracticeGameTypeEnum.SentenceFix => "修改病句",
-        PracticeGameTypeEnum.UnitConvert => "单位换算",
         PracticeGameTypeEnum.FeihuaLing => "飞花令",
         _ => "练习"
     };

@@ -12,16 +12,17 @@ public class EnglishWordGenerator : IPracticeItemGenerator
 
     public EducationSubjectEnum Subject => EducationSubjectEnum.English;
 
-    public List<GeneratedPracticeItem> Generate(string grade, int level, int count)
+    public List<GeneratedPracticeItem> Generate(PracticeGenerateRequest request)
     {
-        var bank = PracticeContentBanks.EnglishWords[Math.Clamp(EducationGrades.Band(grade), 0, 2)];
-        var picked = bank.OrderBy(_ => Random.Shared.Next()).Take(count).ToList();
-        var typingRatio = Math.Min(0.6, 0.12 * Math.Clamp(level, 1, 6));
+        var bank = PracticeContentBanks.EnglishWords[Math.Clamp(EducationGrades.Band(request.Grade), 0, 2)];
+        var picked = bank.OrderBy(_ => Random.Shared.Next()).Take(request.Count).ToList();
+        var typingRatio = Math.Min(0.6, 0.12 * Math.Clamp(request.Level, 1, 6));
 
         var items = new List<GeneratedPracticeItem>(picked.Count);
         for (var i = 0; i < picked.Count; i++)
         {
-            var (word, meaning) = picked[i];
+            var word = picked[i].Word;
+            var meaning = picked[i].Meaning;
             var others = bank
                 .Where(entry => entry.Word != word)
                 .OrderBy(_ => Random.Shared.Next())

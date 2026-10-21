@@ -1,0 +1,328 @@
+@namespace H.Education.Web.Components
+@inject ITextbookAppService TextbookService
+@inject ITeachingResourceAppService ResourceService
+@inject IJSRuntime JS
+@inject HToastService Toast
+
+@if (loadError is not null)
+{
+    <div class="h-alert h-alert-error">@loadError</div>
+}
+else if (book is null)
+{
+    <div class="h-spin"><span class="h-spin-dot"></span><span class="h-spin-text">加载中...</span></div>
+}
+else
+{
+    <div class="h-alert h-alert-info">
+        平台内定位：@book.LocatePath 。未挂直链的资源按这条路径就能在平台里找到对应单元，把课时页地址复制进「补录直链」即可。
+    </div>
+
+    <div class="h-toolbar">
+        <select class="h-input" style="width:130px;" @bind="typeFilter">
+            <option value="">全部类型</option>
+            @foreach (var type in EducationEnumExtensions.AllResourceTypes)
+            {
+                <option value="@type">@type.GetResourceTypeName()</option>
+            }
+        </select>
+        <input type="text" @bind="unitFilter" class="h-input" style="width:160px;" placeholder="单元或课时名称" />
+        <label class="h-form-label" style="display:flex;align-items:center;gap:6px;font-weight:400;">
+            <input type="checkbox" @bind="onlyMissing" />
+            只看待补录
+        </label>
+        <button class="h-btn h-btn-primary" style="margin-left:auto;" @onclick="@(() => ShowCreateDialog(null, 0))">新增资源</button>
+    </div>
+
+    @if (!VisibleUnits.Any())
+    {
+        <div class="h-empty">
+            没有符合条件的课时资源。可以点「新增资源」手工登记，或编辑教材的单元数量后自动补齐。
+        </div>
+    }
+    else
+    {
+        @foreach (var unit in VisibleUnits)
+        {
+            <div class="edu-section" style="overflow-x:auto;">
+                <div class="edu-section-title">
+                    @unit.Name
+                    <span class="h-tag @(unit.MissingTypes == 0 ? "h-tag-green" : "h-tag-blue")" style="margin-left:8px;">
+                        @(unit.MissingTypes == 0 ? "五类齐全" : $"缺 {unit.MissingTypes} 类")
+                    </span>
+                    <button class="h-btn h-btn-sm" style="float:right;"
+                            @onclick="@(() => ShowCreateDialog(unit.Name, unit.Sort))">补一条</button>
+                </div>
+
+                <table class="h-table" style="min-width:660px;">
+                    <thead>
+                        <tr>
+                            <th style="width:110px;">类型</th>
+                            <th>标题</th>
+                            <th style="width:170px;">课时</th>
+                            <th style="width:100px;">直链</th>
+                            <th style="width:180px;">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in unit.Items)
+                        {
+                            <tr>
+                                <td>@item.Type.GetResourceTypeIcon() @item.Type.GetResourceTypeName()</td>
+                                <td>
+                                    @item.Title
+                                    @if (!string.IsNullOrWhiteSpace(item.SourceName))
+                                    {
+                                        <div class="edu-score-label">@item.SourceName</div>
+                                    }
+                                </td>
+                                <td>@(string.IsNullOrWhiteSpace(item.Lesson) ? "-" : item.Lesson)</td>
+                                <td>
+                                    <span class="h-tag @(string.IsNullOrWhiteSpace(item.Url) ? "h-tag-default" : "h-tag-green")">
+                                        @(string.IsNullOrWhiteSpace(item.Url) ? "待补录" : "已挂链")
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="row-actions">
+                                        @if (!string.IsNullOrWhiteSpace(item.Url))
+                                        {
+                                            <a class="link-action" href="@item.Url" target="_blank" rel="noopener noreferrer">打开</a>
+                                        }
+                                        <a @onclick="@(() => ShowEditDialog(item))">@(string.IsNullOrWhiteSpace(item.Url) ? "补录直链" : "编辑")</a>
+                                        <a class="link-action-muted" @onclick="@(() => ConfirmDelete(item))">删除</a>
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    }
+
+    <HModal Title="@(editingId is null ? "新增课时资源" : "编辑课时资源")" Visible="@modalVisible"
+            VisibleChanged="OnModalVisibleChanged" OnOk="Save" ConfirmLoading="@saving"
+            OkText="@(editingId is null ? "新增" : "保存")" Style="width:620px;">
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">资源类型</label>
+            <div class="h-form-control">
+                <select class="h-input" @bind="form.Type">
+                    @foreach (var type in EducationEnumExtensions.AllResourceTypes)
+                    {
+                        <option value="@type">@type.GetResourceTypeName()</option>
+                    }
+                </select>
+            </div>
+        </div>
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">单元</label>
+            <div class="h-form-control">
+                <input type="text" class="h-input" @bind="form.Unit" placeholder="如：第三单元 / Unit 2" />
+            </div>
+        </div>
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">单元序号</label>
+            <div class="h-form-control">
+                <input type="number" class="h-input" min="0" @bind="form.UnitSort" placeholder="留 0 则自动排在末尾" />
+            </div>
+        </div>
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">课时</label>
+            <div class="h-form-control">
+                <input type="text" class="h-input" @bind="form.Lesson" placeholder="如：第 5 课 搭船的鸟，可留空" />
+            </div>
+        </div>
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">标题</label>
+            <div class="h-form-control">
+                <input type="text" class="h-input" @bind="form.Title" placeholder="资源标题" />
+            </div>
+        </div>
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">资源直链</label>
+            <div class="h-form-control">
+                <input type="text" class="h-input" @bind="form.Url" placeholder="https:// 开头的资源页地址，可留空" />
+            </div>
+        </div>
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">来源</label>
+            <div class="h-form-control">
+                <input type="text" class="h-input" @bind="form.SourceName" placeholder="留空则记为平台课程教学频道" />
+            </div>
+        </div>
+        <div class="h-form-item h-form-horizontal">
+            <label class="h-form-label">备注</label>
+            <div class="h-form-control">
+                <textarea class="h-textarea" rows="2" @bind="form.Remark" placeholder="如时长、页数、需登录"></textarea>
+            </div>
+        </div>
+    </HModal>
+}
+
+@code {
+    [Parameter] public Guid TextbookId { get; set; }
+
+    /// <summary>资源增删会改变教材的条数与直链进度，通知列表页重新取一次</summary>
+    [Parameter] public EventCallback OnChanged { get; set; }
+
+    private TextbookDetailDto? book;
+    private string? loadError;
+
+    private string typeFilter = string.Empty;
+    private string unitFilter = string.Empty;
+    private bool onlyMissing;
+
+    private bool modalVisible;
+    private bool saving;
+    private Guid? editingId;
+
+    // UpdateTeachingResourceDto 继承自 CreateTeachingResourceDto，新增与编辑复用同一份表单
+    private UpdateTeachingResourceDto form = new();
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    /// <summary>按单元分组后的展示数据，已套用类型与关键词筛选</summary>
+    private sealed record UnitGroup(string Name, int Sort, List<TeachingResourceDto> Items, int MissingTypes);
+
+    private List<UnitGroup> VisibleUnits
+    {
+        get
+        {
+            if (book is null) return [];
+
+            var selected = Enum.TryParse<TeachingResourceTypeEnum>(typeFilter, out var type) ? type : (TeachingResourceTypeEnum?)null;
+            var keyword = string.IsNullOrWhiteSpace(unitFilter) ? null : unitFilter.Trim();
+
+            var rows = book.Resources
+                .Where(x => selected is null || x.Type == selected)
+                .Where(x => !onlyMissing || string.IsNullOrWhiteSpace(x.Url))
+                .Where(x => keyword is null
+                    || x.Unit.Contains(keyword, StringComparison.OrdinalIgnoreCase)
+                    || x.Title.Contains(keyword, StringComparison.OrdinalIgnoreCase)
+                    || (x.Lesson?.Contains(keyword, StringComparison.OrdinalIgnoreCase) ?? false))
+                .ToList();
+
+            return rows
+                .GroupBy(x => new { x.Unit, x.UnitSort })
+                .OrderBy(g => g.Key.UnitSort)
+                .ThenBy(g => g.Key.Unit)
+                .Select(g => new UnitGroup(
+                    g.Key.Unit,
+                    g.Key.UnitSort,
+                    g.OrderBy(x => (int)x.Type).ToList(),
+                    EducationEnumExtensions.AllResourceTypes.Length - g.Select(x => x.Type).Distinct().Count()))
+                .ToList();
+        }
+    }
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            book = (await TextbookService.GetDetailAsync(TextbookId)).Data;
+            loadError = book is null ? "未找到这本教材" : null;
+        }
+        catch (Exception ex)
+        {
+            book = null;
+            loadError = $"加载课时资源失败：{ex.Message}";
+        }
+    }
+
+    private void ShowCreateDialog(string? unit, int unitSort)
+    {
+        if (book is null) return;
+
+        editingId = null;
+        form = new UpdateTeachingResourceDto
+        {
+            TextbookId = book.Id,
+            Unit = unit ?? string.Empty,
+            UnitSort = unitSort,
+            Type = TeachingResourceTypeEnum.VideoCourse,
+            Title = string.IsNullOrWhiteSpace(unit) ? string.Empty : $"{unit} 视频课程",
+            SourceName = $"{TextbookChannels.PlatformName}·课程教学"
+        };
+        modalVisible = true;
+    }
+
+    private void ShowEditDialog(TeachingResourceDto item)
+    {
+        editingId = item.Id;
+        form = new UpdateTeachingResourceDto
+        {
+            TextbookId = item.TextbookId,
+            Unit = item.Unit,
+            UnitSort = item.UnitSort,
+            Lesson = item.Lesson,
+            Type = item.Type,
+            Title = item.Title,
+            Url = item.Url,
+            SourceName = item.SourceName,
+            Remark = item.Remark
+        };
+        modalVisible = true;
+    }
+
+    private void OnModalVisibleChanged(bool visible) => modalVisible = visible;
+
+    private async Task Save()
+    {
+        if (string.IsNullOrWhiteSpace(form.Unit))
+        {
+            Toast.Warning("请填写单元名称，如「第三单元」");
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(form.Title))
+        {
+            Toast.Warning("请填写资源标题");
+            return;
+        }
+
+        saving = true;
+        try
+        {
+            if (editingId is null)
+            {
+                await ResourceService.CreateAsync(form);
+                Toast.Success($"已登记「{form.Unit}」的一条{form.Type.GetResourceTypeName()}");
+            }
+            else
+            {
+                await ResourceService.UpdateAsync(editingId.Value, form);
+                Toast.Success("资源信息已更新");
+            }
+
+            modalVisible = false;
+            await LoadAsync();
+            await OnChanged.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"保存失败：{ex.Message}", 6000);
+        }
+        finally
+        {
+            saving = false;
+        }
+    }
+
+    private async Task ConfirmDelete(TeachingResourceDto item)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm",
+            $"删除「{item.Unit} {item.Type.GetResourceTypeName()}」？这条资源的直链也会一并删除。");
+        if (!confirmed) return;
+
+        try
+        {
+            await ResourceService.DeleteAsync(item.Id);
+            Toast.Success("已删除");
+            await LoadAsync();
+            await OnChanged.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"删除失败：{ex.Message}");
+        }
+    }
+}

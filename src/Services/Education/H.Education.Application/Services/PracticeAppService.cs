@@ -87,15 +87,21 @@ public class PracticeAppService : ApplicationService, IPracticeAppService
 
         var student = input.StudentId is Guid studentId ? await _studentRepository.FindAsync(studentId) : null;
         var count = Math.Clamp(input.Count, 5, 20);
-        var level = Math.Clamp(input.Level, 1, PracticeGameCatalog.Get(input.GameType).MaxLevel);
-        var generated = generator.Generate(grade, level, count);
+        var game = PracticeGameCatalog.Get(input.GameType);
+        var level = Math.Clamp(input.Level, 1, game.MaxLevel);
+        var keyword = input.Keyword?.Trim();
+        if (game.NeedsKeyword && string.IsNullOrWhiteSpace(keyword))
+        {
+            throw new UserFriendlyException($"「{game.Name}」需要先输入一个关键字或词");
+        }
+
+        var generated = generator.Generate(new PracticeGenerateRequest(
+            grade, level, count, keyword, ModeOf(game, input.Mode)));
 
         if (generated.Count == 0)
         {
             throw new UserFriendlyException("本期题目生成失败，请调整关卡或题目数量后重试");
         }
-
-        var game = PracticeGameCatalog.Get(input.GameType);
 
         var session = new PracticeSessionEntity
         {
@@ -294,4 +300,13 @@ public class PracticeAppService : ApplicationService, IPracticeAppService
     /// <summary>参考答案可能有多种写法（用 | 分隔），讲解时只展示最规范的一条</summary>
     private static string DisplayAnswer(string answer) =>
         answer.Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).FirstOrDefault() ?? answer;
+
+    /// <summary>模式只认目录里登记过的取值，不传或传错时退回第一项，保证出题器拿到的一定是有效模式</summary>
+    private static string? ModeOf(PracticeGameDto game, string? mode)
+    {
+        if (game.Modes.Count == 0) return null;
+
+        var value = mode?.Trim();
+        return game.Modes.Any(x => x.Value == value) ? value : game.Modes[0].Value;
+    }
 }

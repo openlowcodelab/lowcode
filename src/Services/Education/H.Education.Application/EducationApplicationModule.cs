@@ -21,13 +21,10 @@ public class EducationApplicationModule : AbpModule
         context.Services.AddTransient<PaperGenerationJob>();
 
         // 趣味练习出题器：新增游戏只需实现 IPracticeItemGenerator 并在此注册
-        context.Services.AddTransient<IPracticeItemGenerator, MathSprintGenerator>();
         context.Services.AddTransient<IPracticeItemGenerator, EnglishWordGenerator>();
         context.Services.AddTransient<IPracticeItemGenerator, ChinesePoemGenerator>();
         context.Services.AddTransient<IPracticeItemGenerator, FeihuaLingGenerator>();
         context.Services.AddTransient<IPracticeItemGenerator, EnglishListeningGenerator>();
         context.Services.AddTransient<IPracticeItemGenerator, EnglishDialogueGenerator>();
-        context.Services.AddTransient<IPracticeItemGenerator, SentenceFixGenerator>();
-        context.Services.AddTransient<IPracticeItemGenerator, UnitConvertGenerator>();
     }
 }

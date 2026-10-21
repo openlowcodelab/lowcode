@@ -4,9 +4,10 @@ namespace H.Education.Application.Practice;
 
 /// <summary>
 /// 练习题答案比对。
-/// 选择题与拼写、默写类按归一化后的完全一致判定（忽略大小写、空白与标点差异）；
-/// 对话练习是学生自己组织英文句子，只要求参考答案的关键词全部出现（缩写先展开、语气词不参与），
-/// 否则 "You're welcome." 与 "welcome" 之类都会被判错，孩子根本做不了。
+/// 选择题与拼写、挖字类按归一化后的完全一致判定（忽略大小写、空白与标点差异）；
+/// 宽松判定（LooseMatch）分两种语言：
+/// 英文用于对话，学生自己组织句子，只要求参考答案的关键词全部出现（缩写先展开、语气词不参与）；
+/// 中文用于默写与飞花令接句，孩子习惯把整联一起写下来，作答里包含参考答案就算对。
 /// </summary>
 internal static class PracticeAnswerMatcher
 {
@@ -49,8 +50,19 @@ internal static class PracticeAnswerMatcher
         var alternatives = expected.Split('|', StringSplitOptions.RemoveEmptyEntries);
         if (alternatives.Any(alt => alt.Equals(actual, StringComparison.OrdinalIgnoreCase))) return true;
 
-        return looseMatch && LooseEnglishMatches(reference, studentAnswer!);
+        if (!looseMatch) return false;
+
+        // 中文默写：把整联都写下来也算对，只要作答里包含参考答案
+        if (HasChinese(expected))
+        {
+            return alternatives.Any(alt => alt.Length > 0 && actual.Contains(alt, StringComparison.OrdinalIgnoreCase));
+        }
+
+        return LooseEnglishMatches(reference, studentAnswer!);
     }
+
+    private static bool HasChinese(string value) =>
+        value.Any(c => c is >= '一' and <= '鿿');
 
     /// <summary>
     /// 参考答案的关键词全部出现在学生作答里即算对（允许额外成分与个别拼写偏差）。

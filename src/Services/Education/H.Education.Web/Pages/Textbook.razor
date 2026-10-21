@@ -2,165 +2,169 @@
 
 @layout EducationLayout
 @inject ITextbookAppService TextbookService
-@inject NavigationManager Nav
+@inject IJSRuntime JS
 @inject HToastService Toast
 
-<HCard Title="公开资源总览"
-       Description="教材目录取自公开教材信息，每册按单元登记视频课程、课件、教学设计、学习任务单、课后练习五类资源；点开可直达国家中小学智慧教育平台对应频道">
-    @if (statistics is not null && statistics.TextbookCount > 0)
-    {
-        <div class="stat-grid">
-            <div class="stat-card">
-                <div class="stat-card-label">教材册数</div>
-                <div class="stat-card-value">@statistics.TextbookCount 册</div>
-                <div class="edu-score-label">覆盖 @statistics.BySubject.Count(x => x.TextbookCount > 0) 个学科</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-card-label">课时资源</div>
-                <div class="stat-card-value">@statistics.ResourceCount 条</div>
-                <div class="edu-score-label">平均每册 @AveragePerBook 条</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-card-label">待补录直链</div>
-                <div class="stat-card-value">@statistics.MissingUrlCount 条</div>
-                <div class="edu-score-label">补录后点击即可直达资源页</div>
-            </div>
-        </div>
-
-        <div class="h-space" style="margin-top:12px;flex-wrap:wrap;">
-            @foreach (var type in statistics.ByType)
-            {
-                <span class="h-tag @(type.Count == 0 ? "h-tag-default" : "h-tag-blue")">
-                    @type.Type.GetResourceTypeIcon() @type.Type.GetResourceTypeName() @type.Count
-                    @if (type.LinkedCount > 0)
+<div class="h-split-page edu-textbook-split">
+    <HCard Title="年级" Style="width:260px;flex-shrink:0;">
+        <Extra>
+            <div class="h-space">
+                <button class="h-btn h-btn-sm" disabled="@importing" @onclick="ImportBuiltIn">
+                    @if (importing)
                     {
-                        <span>·已挂链 @type.LinkedCount</span>
+                        <span class="h-btn-loading"></span>
                     }
-                </span>
-            }
-        </div>
-    }
-    else
-    {
-        <div class="h-alert h-alert-info">
-            教材目录还是空的。点下面的「导入公开教材目录」，会把内置的 18 册中小学教材与它们的五类课时资源一次登记进来。
-        </div>
-    }
-</HCard>
+                    导入目录
+                </button>
+                <button class="h-btn h-btn-sm h-btn-primary" @onclick="ShowCreateDialog">新增教材</button>
+            </div>
+        </Extra>
 
-<HCard Title="教材目录" Style="margin-top:12px;">
-    <div class="h-toolbar">
-        <input type="text" @bind="filter" class="h-input" style="width:190px;" placeholder="教材名称、版本或出版社" />
-        <select class="h-input" style="width:100px;" @bind="stageFilter">
-            <option value="">全部学段</option>
-            <option value="@SchoolStageEnum.Primary">小学</option>
-            <option value="@SchoolStageEnum.JuniorHigh">初中</option>
-            <option value="@SchoolStageEnum.SeniorHigh">高中</option>
-        </select>
-        <select class="h-input" style="width:110px;" @bind="subjectFilter">
-            <option value="">全部学科</option>
-            @foreach (var subject in Enum.GetValues<TextbookSubjectEnum>())
+        <ChildContent>
+            <div class="h-input-group" style="margin-bottom:12px;">
+                <input type="text" @bind="filter" class="h-input" placeholder="教材名称、版本或出版社" />
+                <button class="h-btn" style="flex-shrink:0;" @onclick="LoadData">查询</button>
+            </div>
+
+            @if (loading)
             {
-                <option value="@subject">@subject.GetSubjectName()</option>
+                <div class="h-spin"><span class="h-spin-dot"></span><span class="h-spin-text">加载中...</span></div>
             }
-        </select>
-        <select class="h-input" style="width:110px;" @bind="versionFilter">
-            <option value="">全部版本</option>
-            @foreach (var version in options.Versions)
+            else if (!grades.Any())
             {
-                <option value="@version">@version</option>
+                <div class="h-empty">
+                    @if (!string.IsNullOrWhiteSpace(filter))
+                    {
+                        <text>没有符合条件的教材，换个关键词试试。</text>
+                    }
+                    else
+                    {
+                        <text>教材目录还是空的。点上面的「导入目录」，会把内置的 18 册中小学教材与它们的五类课时资源一次登记进来。</text>
+                    }
+                </div>
             }
-        </select>
-        <select class="h-input" style="width:100px;" @bind="gradeFilter">
-            <option value="">全部年级</option>
-            @foreach (var grade in options.Grades)
+            else
             {
-                <option value="@grade">@grade</option>
+                <div class="edu-book-list">
+                    @foreach (var group in grades)
+                    {
+                        <div class="edu-book-item @(group.Grade == selectedGrade ? "active" : "")"
+                             @onclick="@(() => SelectGrade(group.Grade))">
+                            <div class="edu-book-item-name">@group.Grade</div>
+                            <div class="edu-score-label" style="margin-top:6px;">
+                                @group.Stage · @group.SubjectCount 个学科 · @group.Books.Count 册
+                            </div>
+                            <div class="edu-score-label">
+                                课时资源 @group.ResourceCount 条 · 已挂直链 @group.LinkedCount 条
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="h-pagination">
+                    <span class="h-pagination-info">共 @grades.Count 个年级、@totalCount 册教材</span>
+                </div>
             }
-        </select>
-        <select class="h-input" style="width:100px;" @bind="volumeFilter">
-            <option value="">全部册次</option>
-            <option value="@TextbookVolumeEnum.First">上册</option>
-            <option value="@TextbookVolumeEnum.Second">下册</option>
-            <option value="@TextbookVolumeEnum.Whole">全一册</option>
-        </select>
-        <button class="h-btn" @onclick="LoadData">查询</button>
-        <div class="h-space" style="margin-left:auto;">
-            <button class="h-btn" disabled="@importing" @onclick="ImportBuiltIn">
-                @if (importing)
+        </ChildContent>
+    </HCard>
+
+    <HCard Title="@(selectedGrade is null ? "教材详情" : $"{selectedGrade} · {SubjectTitle}")" Style="flex:1;">
+        <Extra>
+            @if (selected is not null)
+            {
+                var cur = selected;
+                <div class="h-space">
+                    @if (!string.IsNullOrWhiteSpace(cur.CourseUrl))
+                    {
+                        <a class="h-btn h-btn-sm" href="@cur.CourseUrl" target="_blank" rel="noopener noreferrer">课程教学频道</a>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(cur.BookUrl))
+                    {
+                        <a class="h-btn h-btn-sm" href="@cur.BookUrl" target="_blank" rel="noopener noreferrer">电子课本</a>
+                    }
+                    <button class="h-btn h-btn-sm" @onclick="@(() => ShowEditDialog(cur))">编辑教材</button>
+                    <button class="h-btn h-btn-sm h-btn-danger" @onclick="@(() => ConfirmDeleteTextbook(cur))">删除教材</button>
+                </div>
+            }
+        </Extra>
+
+        <ChildContent>
+            @if (selectedGrade is null)
+            {
+                <div class="h-empty">左边选一个年级，这里按学科分标签页展示它的教材。</div>
+            }
+            else
+            {
+                <div class="edu-book-tabs">
+                    @foreach (var subject in subjects)
+                    {
+                        <div class="edu-book-tab @(subject == selectedSubject ? "active" : "")"
+                             @onclick="@(() => SelectSubject(subject))">
+                            @subject.GetSubjectName()
+                            <span class="edu-book-tab-count">@CountOfSubject(subject) 册</span>
+                        </div>
+                    }
+                </div>
+
+                @if (subjectBooks.Count > 1)
                 {
-                    <span class="h-btn-loading"></span>
-                }
-                导入公开教材目录
-            </button>
-            <button class="h-btn h-btn-primary" @onclick="ShowCreateDialog">新增教材</button>
-        </div>
-    </div>
-
-    <HTable Loading="@loading" ShowEmpty="@(!loading && !textbooks.Any())">
-        <thead>
-            <tr>
-                <th style="width:26%">教材名称</th>
-                <th>学段</th>
-                <th>学科</th>
-                <th>版本</th>
-                <th>年级·册次</th>
-                <th style="width:140px;">单元</th>
-                <th>资源</th>
-                <th>直链进度</th>
-                <th>来源</th>
-                <th style="width:110px;">操作</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var book in textbooks)
-            {
-                <tr>
-                    <td>
-                        <a class="link-action" @onclick="@(() => Nav.NavigateTo($"/education/textbook/detail/{book.Id}"))">@book.Name</a>
-                        @if (!string.IsNullOrWhiteSpace(book.Remark))
+                    <div class="h-space gap-2" style="margin-bottom:16px;flex-wrap:wrap;">
+                        @foreach (var book in subjectBooks)
                         {
-                            <div class="edu-score-label" style="max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">@book.Remark</div>
+                            <button class="h-btn h-btn-sm @(book.Id == selectedId ? "h-btn-primary" : "")"
+                                    @onclick="@(() => SelectBook(book.Id))">
+                                @book.Version @book.Volume.GetVolumeName()
+                            </button>
                         }
-                    </td>
-                    <td>@book.Stage.GetStageName()</td>
-                    <td>@book.Subject.GetSubjectName()</td>
-                    <td>@book.Version</td>
-                    <td>@book.Grade · @book.Volume.GetVolumeName()</td>
-                    <td>
-                        <div>@book.UnitCount 个单元</div>
-                        <div class="edu-score-label">@UnitPreview(book)</div>
-                    </td>
-                    <td>
-                        <div>@book.ResourceCount 条</div>
-                        <div class="edu-score-label">视频课程 @book.VideoCourseCount</div>
-                    </td>
-                    <td>
-                        <span class="h-tag @LinkedTagClass(book)">@book.LinkedResourceCount / @book.ResourceCount</span>
-                    </td>
-                    <td>
-                        <span class="h-tag @(book.Source == TextbookSourceEnum.BuiltIn ? "h-tag-default" : "h-tag-green")">
-                            @(book.Source == TextbookSourceEnum.BuiltIn ? "内置目录" : "手工录入")
-                        </span>
-                    </td>
-                    <td>
-                        <span class="row-actions">
-                            <a @onclick="@(() => Nav.NavigateTo($"/education/textbook/detail/{book.Id}"))">资源</a>
-                            <a class="link-action-muted" @onclick="@(() => ShowEditDialog(book))">编辑</a>
-                        </span>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </HTable>
+                    </div>
+                }
 
-    @if (!loading && textbooks.Any())
-    {
-        <div class="h-pagination">
-            <span class="h-pagination-info">共 @totalCount 册教材，当前页 @textbooks.Count 册</span>
-        </div>
-    }
-</HCard>
+                @if (selected is null)
+                {
+                    <div class="h-empty">这个学科还没有登记教材，点左上「新增教材」补一本。</div>
+                }
+                else
+                {
+                    <table class="h-descriptions">
+                        <tr>
+                            <th>教材</th>
+                            <td colspan="3">@selected.Name</td>
+                        </tr>
+                        <tr>
+                            <th>学段</th>
+                            <td>@selected.Stage.GetStageName()</td>
+                            <th>册次</th>
+                            <td>@selected.Volume.GetVolumeName()</td>
+                        </tr>
+                        <tr>
+                            <th>版本</th>
+                            <td>@selected.Version</td>
+                            <th>出版社</th>
+                            <td>@(string.IsNullOrWhiteSpace(selected.Publisher) ? "-" : selected.Publisher)</td>
+                        </tr>
+                        <tr>
+                            <th>单元</th>
+                            <td>@selected.UnitCount 个（样式 @(string.IsNullOrWhiteSpace(selected.UnitLabel) ? "第{0}单元" : selected.UnitLabel)）</td>
+                            <th>来源</th>
+                            <td>@(selected.Source == TextbookSourceEnum.BuiltIn ? "内置公开目录" : "手工录入")</td>
+                        </tr>
+                        <tr>
+                            <th>资源条数</th>
+                            <td colspan="3">@selected.ResourceCount 条，已挂直链 @selected.LinkedResourceCount 条</td>
+                        </tr>
+                    </table>
+
+                    @if (!string.IsNullOrWhiteSpace(selected.Remark))
+                    {
+                        <div class="edu-score-label" style="margin:-8px 0 16px;">@selected.Remark</div>
+                    }
+
+                    <TextbookDetailPanel @key="@($"{selectedId}-{detailToken}")" TextbookId="@selectedId" OnChanged="OnResourceChanged" />
+                }
+            }
+        </ChildContent>
+    </HCard>
+</div>
 
 <HModal Title="@(editingId is null ? "新增教材" : "编辑教材")" Visible="@modalVisible"
         VisibleChanged="OnModalVisibleChanged" OnOk="Save" ConfirmLoading="@saving"
@@ -265,18 +269,15 @@
 
 @code {
     private List<TextbookDto> textbooks = [];
-    private TextbookStatisticsDto? statistics;
-    private TextbookFilterOptionsDto options = new();
+    private int detailToken;
     private int totalCount;
     private bool loading;
     private bool importing;
 
     private string filter = string.Empty;
-    private string stageFilter = string.Empty;
-    private string subjectFilter = string.Empty;
-    private string versionFilter = string.Empty;
-    private string gradeFilter = string.Empty;
-    private string volumeFilter = string.Empty;
+    private string? selectedGrade;
+    private TextbookSubjectEnum? selectedSubject;
+    private Guid selectedId;
 
     private bool modalVisible;
     private bool saving;
@@ -285,15 +286,41 @@
     // UpdateTextbookDto 继承自 CreateTextbookDto，新增与编辑复用同一份表单
     private UpdateTextbookDto form = new();
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync() => await LoadData();
+
+    /// <summary>左栏的一项：一个年级及其全部教材册</summary>
+    private sealed record GradeGroup(string Grade, string Stage, int SubjectCount, List<TextbookDto> Books)
     {
-        await LoadOptions();
-        await LoadData();
+        public int ResourceCount => Books.Sum(x => x.ResourceCount);
+
+        public int LinkedCount => Books.Sum(x => x.LinkedResourceCount);
     }
 
-    private int AveragePerBook => statistics is null || statistics.TextbookCount == 0
-        ? 0
-        : statistics.ResourceCount / statistics.TextbookCount;
+    private TextbookDto? selected => textbooks.FirstOrDefault(x => x.Id == selectedId);
+
+    /// <summary>服务端已按年级序号排好，这里按首次出现顺序分组即可保持 一→九→高一</summary>
+    private List<GradeGroup> grades => textbooks
+        .GroupBy(x => x.Grade)
+        .Select(g => new GradeGroup(
+            g.Key,
+            g.First().Stage.GetStageName(),
+            g.Select(x => x.Subject).Distinct().Count(),
+            g.ToList()))
+        .ToList();
+
+    private List<TextbookDto> gradeBooks => grades.FirstOrDefault(x => x.Grade == selectedGrade)?.Books ?? [];
+
+    private List<TextbookSubjectEnum> subjects => gradeBooks.Select(x => x.Subject).Distinct().ToList();
+
+    private List<TextbookDto> subjectBooks => selectedSubject is null
+        ? []
+        : gradeBooks.Where(x => x.Subject == selectedSubject).ToList();
+
+    private string SubjectTitle => selectedSubject is null
+        ? string.Empty
+        : selectedSubject.Value.GetSubjectName();
+
+    private int CountOfSubject(TextbookSubjectEnum subject) => gradeBooks.Count(x => x.Subject == subject);
 
     private async Task LoadData()
     {
@@ -303,17 +330,11 @@
             var result = await TextbookService.GetListAsync(new TextbookQueryDto
             {
                 MaxResultCount = 200,
-                Filter = EmptyToNull(filter),
-                Stage = ParseEnum<SchoolStageEnum>(stageFilter),
-                Subject = ParseEnum<TextbookSubjectEnum>(subjectFilter),
-                Version = EmptyToNull(versionFilter),
-                Grade = EmptyToNull(gradeFilter),
-                Volume = ParseEnum<TextbookVolumeEnum>(volumeFilter)
+                Filter = string.IsNullOrWhiteSpace(filter) ? null : filter.Trim()
             });
             textbooks = result.Data?.Items.ToList() ?? [];
             totalCount = (int)(result.Data?.TotalCount ?? 0);
-
-            statistics = (await TextbookService.GetStatisticsAsync()).Data;
+            SyncSelection();
         }
         catch (Exception ex)
         {
@@ -325,25 +346,54 @@
         }
     }
 
-    private async Task LoadOptions()
+    /// <summary>筛选或增删后原选中项可能已不在列表里，逐级回落到第一项</summary>
+    private void SyncSelection()
     {
-        try
+        var groups = grades;
+        if (selectedGrade is null || groups.All(x => x.Grade != selectedGrade))
         {
-            options = (await TextbookService.GetFilterOptionsAsync()).Data ?? new TextbookFilterOptionsDto();
+            selectedGrade = groups.FirstOrDefault()?.Grade;
+            selectedSubject = null;
+            selectedId = Guid.Empty;
         }
-        catch (Exception ex)
+
+        var books = groups.FirstOrDefault(x => x.Grade == selectedGrade)?.Books ?? [];
+        var subjectList = books.Select(x => x.Subject).Distinct().ToList();
+        if (selectedSubject is null || subjectList.All(x => x != selectedSubject))
         {
-            Toast.Error($"加载筛选项失败：{ex.Message}");
+            selectedSubject = subjectList.FirstOrDefault();
+            selectedId = Guid.Empty;
         }
+
+        if (selected is not null) return;
+
+        selectedId = books
+            .Where(x => selectedSubject is null || x.Subject == selectedSubject)
+            .FirstOrDefault()?.Id ?? Guid.Empty;
     }
+
+    private void SelectGrade(string grade)
+    {
+        selectedGrade = grade;
+        selectedSubject = null;
+        selectedId = Guid.Empty;
+        SyncSelection();
+    }
+
+    private void SelectSubject(TextbookSubjectEnum subject)
+    {
+        selectedSubject = subject;
+        selectedId = subjectBooks.FirstOrDefault()?.Id ?? Guid.Empty;
+    }
+
+    private void SelectBook(Guid id) => selectedId = id;
 
     private async Task ImportBuiltIn()
     {
         importing = true;
         try
         {
-            var result = await TextbookService.ImportBuiltInAsync();
-            var data = result.Data;
+            var data = (await TextbookService.ImportBuiltInAsync()).Data;
             if (data is null)
             {
                 Toast.Warning("导入未返回结果");
@@ -354,10 +404,9 @@
             }
             else
             {
-                Toast.Success($"{data.Message}（资源只登记到单元级，直链需在详情页核对补录）", 6000);
+                Toast.Success($"{data.Message}（资源只登记到单元级，直链需在右侧详情里逐条补录）", 6000);
             }
 
-            await LoadOptions();
             await LoadData();
         }
         catch (Exception ex)
@@ -378,7 +427,7 @@
             Stage = SchoolStageEnum.Primary,
             Subject = TextbookSubjectEnum.Chinese,
             Version = "统编版",
-            Grade = "一年级",
+            Grade = selectedGrade ?? "一年级",
             Volume = TextbookVolumeEnum.First,
             Publisher = "人民教育出版社",
             UnitCount = 8,
@@ -386,6 +435,17 @@
             CourseUrl = TextbookChannels.CourseUrl,
             BookUrl = TextbookChannels.MaterialUrl
         };
+
+        var current = selected;
+        if (current is not null)
+        {
+            form.Stage = current.Stage;
+            form.Subject = current.Subject;
+            form.Grade = current.Grade;
+            form.Version = current.Version;
+            form.Publisher = current.Publisher;
+        }
+
         modalVisible = true;
     }
 
@@ -430,7 +490,13 @@
         {
             if (editingId is null)
             {
-                await TextbookService.CreateAsync(form);
+                var created = (await TextbookService.CreateAsync(form)).Data;
+                if (created is not null)
+                {
+                    selectedGrade = created.Grade;
+                    selectedSubject = created.Subject;
+                    selectedId = created.Id;
+                }
                 Toast.Success("教材已加入目录");
             }
             else
@@ -440,7 +506,7 @@
             }
 
             modalVisible = false;
-            await LoadOptions();
+            detailToken++;
             await LoadData();
         }
         catch (Exception ex)
@@ -453,26 +519,27 @@
         }
     }
 
-    /// <summary>单元名称预览，让"第{0}章"这类样式在列表里就能看出实际效果</summary>
-    private static string UnitPreview(TextbookDto book)
+    private async Task ConfirmDeleteTextbook(TextbookDto book)
     {
-        if (book.UnitCount == 0) return "未登记单元";
-        var label = string.IsNullOrWhiteSpace(book.UnitLabel) ? "第{0}单元" : book.UnitLabel!;
-        var chinese = label.Contains('第');
-        var last = chinese && book.UnitCount <= 20 ? "一二三四五六七八九十"[book.UnitCount - 1].ToString() : book.UnitCount.ToString();
-        return $"首末：{string.Format(label, chinese ? "一" : "1")} ~ {string.Format(label, last)}";
+        var confirmed = await JS.InvokeAsync<bool>("confirm",
+            $"删除《{book.Name}》？其 {book.ResourceCount} 条课时资源（含已补录的 {book.LinkedResourceCount} 条直链）会一起删除，同年级其它学科的教材不受影响。");
+        if (!confirmed) return;
+
+        try
+        {
+            await TextbookService.DeleteAsync(book.Id);
+            Toast.Success("教材已删除");
+
+            selectedId = Guid.Empty;
+            detailToken++;
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Toast.Error($"删除失败：{ex.Message}");
+        }
     }
 
-    private static string LinkedTagClass(TextbookDto book) => book.ResourceCount switch
-    {
-        0 => "h-tag-default",
-        var total when book.LinkedResourceCount == 0 => "h-tag-default",
-        var total when book.LinkedResourceCount >= total => "h-tag-green",
-        _ => "h-tag-blue"
-    };
-
-    private static string? EmptyToNull(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
-
-    private static T? ParseEnum<T>(string? value) where T : struct, Enum =>
-        Enum.TryParse<T>(value, out var parsed) ? parsed : null;
+    /// <summary>资源增删后重新取一次，左栏年级的直链进度才是最新的</summary>
+    private async Task OnResourceChanged() => await LoadData();
 }

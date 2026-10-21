@@ -155,6 +155,92 @@
         border-color: #b9f5c5;
     }
 
+    /* 教材目录：左栏年级列表，右栏按学科分标签页 */
+    .edu-book-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .edu-book-item {
+        border: 1px solid var(--h-border-2, #e5e6eb);
+        border-radius: 8px;
+        padding: 10px 12px;
+        background: #fff;
+        cursor: pointer;
+        transition: border-color .15s, background .15s, box-shadow .15s;
+    }
+
+    .edu-book-item:hover {
+        border-color: var(--h-primary, #165dff);
+        box-shadow: 0 2px 8px rgba(22, 93, 255, .10);
+    }
+
+    .edu-book-item.active {
+        border-color: var(--h-primary, #165dff);
+        background: #f7fbff;
+    }
+
+    .edu-book-item-name {
+        font-size: 15px;
+        font-weight: 600;
+        color: #1d2129;
+        line-height: 1.5;
+    }
+
+    .edu-book-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        border-bottom: 1px solid var(--h-border-light, #e5e6eb);
+        margin-bottom: 16px;
+    }
+
+    .edu-book-tab {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 8px 14px;
+        margin-bottom: -1px;
+        font-size: 14px;
+        color: var(--h-text-2, #4e5969);
+        border-bottom: 2px solid transparent;
+        cursor: pointer;
+        transition: color .15s, border-color .15s;
+    }
+
+    .edu-book-tab:hover {
+        color: var(--h-primary, #165dff);
+    }
+
+    .edu-book-tab.active {
+        color: var(--h-primary, #165dff);
+        border-bottom-color: var(--h-primary, #165dff);
+        font-weight: 500;
+    }
+
+    .edu-book-tab-count {
+        font-size: 12px;
+        color: var(--h-text-3, #86909c);
+    }
+
+    .edu-book-tab.active .edu-book-tab-count {
+        color: var(--h-primary, #165dff);
+    }
+
+    /* 窗口不够宽时左栏的固定宽度会把右栏挤没，改成上下堆叠 */
+    @@media (max-width: 1180px) {
+        .edu-textbook-split {
+            flex-direction: column;
+            height: auto;
+        }
+
+        .edu-textbook-split > .h-card {
+            width: 100% !important;
+            height: auto;
+        }
+    }
+
     /* 趣味练习 */
     .edu-game-card {
         width: 240px;

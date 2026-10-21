@@ -23,7 +23,7 @@ else if (stage == Stage.Config && gameInfo is not null)
         </Extra>
         <ChildContent>
 
-        <div class="h-form-row">
+        <div class="h-form-row" style="flex-wrap:wrap;">
             <div class="h-form-item" style="max-width:140px;">
                 <label class="h-form-label">年级</label>
                 <select class="h-input" @bind="grade">
@@ -33,6 +33,18 @@ else if (stage == Stage.Config && gameInfo is not null)
                     }
                 </select>
             </div>
+            @if (gameInfo.Modes.Count > 0)
+            {
+                <div class="h-form-item" style="max-width:140px;">
+                    <label class="h-form-label">模式</label>
+                    <select class="h-input" @bind="mode">
+                        @foreach (var item in gameInfo.Modes)
+                        {
+                            <option value="@item.Value">@item.Name</option>
+                        }
+                    </select>
+                </div>
+            }
             <div class="h-form-item" style="max-width:140px;">
                 <label class="h-form-label">关卡</label>
                 <select class="h-input" @bind="level">
@@ -51,6 +63,15 @@ else if (stage == Stage.Config && gameInfo is not null)
                     }
                 </select>
             </div>
+            @if (gameInfo.NeedsKeyword)
+            {
+                <div class="h-form-item" style="max-width:220px;">
+                    <label class="h-form-label">关键字或词</label>
+                    <input type="text" class="h-input" maxlength="8" autocomplete="off"
+                           placeholder="@gameInfo.KeywordHint" @bind="keyword" @bind:event="oninput"
+                           @onkeyup="OnKeywordKeyUp" />
+                </div>
+            }
         </div>
 
         <div class="h-space" style="margin-top:8px;">
@@ -270,10 +291,29 @@ else if (outcome is not null)
     private int level = 1;
     private int count = 10;
     private string grade = "三年级";
+    private string mode = string.Empty;
+    private string keyword = string.Empty;
     private bool busy;
     private string? error;
 
-    private string ConfigHint => $"{gameInfo?.Name} 按 {grade} 出题，共 {gameInfo?.MaxLevel} 关，关卡越高题目越难";
+    private string ModeName => gameInfo?.Modes.FirstOrDefault(m => m.Value == mode)?.Name ?? string.Empty;
+
+    private string ConfigHint
+    {
+        get
+        {
+            if (gameInfo is null) return string.Empty;
+
+            if (gameInfo.NeedsKeyword)
+            {
+                var term = string.IsNullOrWhiteSpace(keyword) ? "关键字" : $"「{keyword.Trim()}」";
+                return $"按{term}出含它的课内诗句填空，共 {gameInfo.MaxLevel} 关，第 3 关起要自己想一句";
+            }
+
+            var modeNote = ModeName.Length == 0 ? string.Empty : $"（{ModeName}模式）";
+            return $"{gameInfo.Name}{modeNote} 按 {grade} 出题，共 {gameInfo.MaxLevel} 关，关卡越高题目越难";
+        }
+    }
 
     private Guid sessionId;
     private List<PracticeQuestionDto> questions = [];
@@ -296,7 +336,15 @@ else if (outcome is not null)
 
     private string GameTitle => gameInfo is null ? "趣味练习" : gameInfo.Icon + " " + gameInfo.Name;
 
-    private string PlayTitle => $"{GameTitle} · 第 {level} 关";
+    /// <summary>做题时把令字或模式写在标题上，孩子知道自己在玩哪一种</summary>
+    private string PlayTitle
+    {
+        get
+        {
+            var note = string.IsNullOrWhiteSpace(keyword) ? ModeName : $"「{keyword.Trim()}」";
+            return note.Length == 0 ? $"{GameTitle} · 第 {level} 关" : $"{GameTitle} · {note} · 第 {level} 关";
+        }
+    }
 
     private IEnumerable<int> Levels => Enumerable.Range(1, Math.Max(1, gameInfo?.MaxLevel ?? 1));
 
@@ -325,12 +373,14 @@ else if (outcome is not null)
         error = null;
         outcome = null;
         stage = Stage.Config;
+        keyword = string.Empty;
 
         try
         {
             var games = (await PracticeService.GetGamesAsync()).Data ?? [];
             gameInfo = games.FirstOrDefault(g => g.GameType == gameType);
             level = 1;
+            mode = gameInfo?.Modes.FirstOrDefault()?.Value ?? string.Empty;
 
             if (gameInfo is not null)
             {
@@ -363,6 +413,12 @@ else if (outcome is not null)
 
     private async Task StartSession()
     {
+        if (gameInfo?.NeedsKeyword == true && string.IsNullOrWhiteSpace(keyword))
+        {
+            Toast.Warning($"请先输入一个关键字或词，例如「{gameInfo.KeywordHint.Replace("如：", string.Empty)}」");
+            return;
+        }
+
         busy = true;
         try
         {
@@ -371,7 +427,9 @@ else if (outcome is not null)
                 GameType = gameType,
                 Grade = grade,
                 Level = level,
-                Count = count
+                Count = count,
+                Keyword = keyword.Trim(),
+                Mode = mode
             });
 
             var start = result.Data!;
@@ -403,6 +461,15 @@ else if (outcome is not null)
         finally
         {
             busy = false;
+        }
+    }
+
+    /// <summary>配置页输入完令字直接回车就能开局，省一次点击</summary>
+    private async Task OnKeywordKeyUp(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter" && !busy && !string.IsNullOrWhiteSpace(keyword))
+        {
+            await StartSession();
         }
     }
 

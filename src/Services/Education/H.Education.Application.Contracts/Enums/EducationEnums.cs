@@ -92,11 +92,9 @@ public enum JudgeModeEnum
     Keyword = 3
 }
 
-/// <summary>趣味练习游戏</summary>
+/// <summary>趣味练习游戏。1（口算闯关）、6（修改病句）、7（单位换算）已下架，空号保留不重排，免得历史练习记录串位</summary>
 public enum PracticeGameTypeEnum
 {
-    /// <summary>数学口算闯关</summary>
-    MathSprint = 1,
     /// <summary>英语单词闯关</summary>
     EnglishWord = 2,
     /// <summary>语文诗词填空</summary>
@@ -105,10 +103,6 @@ public enum PracticeGameTypeEnum
     EnglishListening = 4,
     /// <summary>英语对话练习</summary>
     EnglishDialogue = 5,
-    /// <summary>语文专项：修改病句</summary>
-    SentenceFix = 6,
-    /// <summary>数学专项：单位换算</summary>
-    UnitConvert = 7,
     /// <summary>语文趣味：飞花令</summary>
     FeihuaLing = 8
 }
