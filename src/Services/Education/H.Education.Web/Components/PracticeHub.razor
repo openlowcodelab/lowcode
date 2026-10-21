@@ -17,7 +17,7 @@
         <div class="edu-game-grid">
             @foreach (var game in games)
             {
-                <div class="edu-game-card" @onclick="@(() => Nav.NavigateTo($"/education/practice/{PracticeSlugs.ToSlug(game.GameType)}"))">
+                <div class="edu-game-card" @onclick="@(() => Nav.NavigateTo($"{BasePath}/{PracticeSlugs.ToSlug(game.GameType)}"))">
                     <HCard>
                         <div class="h-space" style="align-items:flex-start;">
                             <span class="edu-game-icon">@game.Icon</span>
@@ -83,7 +83,7 @@
                         <td>@record.CreationTime.ToString("MM-dd HH:mm")</td>
                         <td>
                             <span class="row-actions">
-                                <a @onclick="@(() => Nav.NavigateTo($"/education/practice/history/{record.Id}"))">回顾</a>
+                                <a @onclick="@(() => Nav.NavigateTo($"{BasePath}/history/{record.Id}"))">回顾</a>
                                 <a class="link-action-muted" @onclick="@(() => ConfirmDelete(record))">删除</a>
                             </span>
                         </td>
@@ -134,6 +134,9 @@
     [Parameter] public string Title { get; set; } = "趣味练习";
 
     private enum TabKind { Games, Records }
+
+    // 闯关页要落在自己分类的菜单下，否则侧边栏按 URL 前缀高亮会指到另一个分区
+    private string BasePath => Category == PracticeCategoryEnum.Topic ? "/education/topic" : "/education/practice";
 
     private TabKind tab = TabKind.Games;
     private List<PracticeGameDto> games = [];

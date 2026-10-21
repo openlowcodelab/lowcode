@@ -1,5 +1,7 @@
 @page "/education/practice/{Game}"
 @page "/education/practice/history/{Id}"
+@page "/education/topic/{Game}"
+@page "/education/topic/history/{Id}"
 
 @layout EducationLayout
 @implements IAsyncDisposable
@@ -10,16 +12,16 @@
 
 @if (error is not null)
 {
-    <HCard Title="趣味练习">
+    <HCard Title="练习">
         <div class="h-alert h-alert-error">@error</div>
-        <button class="h-btn" style="margin-top:12px;" @onclick="@(() => Nav.NavigateTo("/education/practice"))">返回练习列表</button>
+        <button class="h-btn" style="margin-top:12px;" @onclick="@(() => Nav.NavigateTo(ListUrl))">返回练习列表</button>
     </HCard>
 }
 else if (stage == Stage.Config && gameInfo is not null)
 {
     <HCard Title="@GameTitle" Description="@gameInfo.Description">
         <Extra>
-            <button class="h-btn h-btn-sm" @onclick="@(() => Nav.NavigateTo("/education/practice"))">返回列表</button>
+            <button class="h-btn h-btn-sm" @onclick="@(() => Nav.NavigateTo(ListUrl))">返回列表</button>
         </Extra>
         <ChildContent>
 
@@ -201,7 +203,7 @@ else if (outcome is not null)
         <Extra>
             <div class="h-space">
                 <button class="h-btn h-btn-sm" @onclick="Restart">再来一局</button>
-                <button class="h-btn h-btn-sm" @onclick="@(() => Nav.NavigateTo("/education/practice"))">返回练习列表</button>
+                <button class="h-btn h-btn-sm" @onclick="@(() => Nav.NavigateTo(ListUrl))">返回练习列表</button>
             </div>
         </Extra>
         <ChildContent>
@@ -334,7 +336,13 @@ else if (outcome is not null)
     private PracticeQuestionDto? current =>
         index >= 0 && index < questions.Count ? questions[index] : null;
 
-    private string GameTitle => gameInfo is null ? "趣味练习" : gameInfo.Icon + " " + gameInfo.Name;
+    private string GameTitle => gameInfo is null ? "练习" : gameInfo.Icon + " " + gameInfo.Name;
+
+    /// <summary>从当前地址判断属于哪个分区，保证「返回列表」和侧边栏高亮落在同一处</summary>
+    private string ListUrl =>
+        Nav.ToBaseRelativePath(Nav.Uri).StartsWith("education/topic", StringComparison.OrdinalIgnoreCase)
+            ? "/education/topic"
+            : "/education/practice";
 
     /// <summary>做题时把令字或模式写在标题上，孩子知道自己在玩哪一种</summary>
     private string PlayTitle
@@ -358,7 +366,7 @@ else if (outcome is not null)
 
         if (!string.IsNullOrWhiteSpace(Id))
         {
-            error = "练习记录地址无效，请从「趣味练习」的记录里点「回顾」进入。";
+            error = "练习记录地址无效，请从「练习记录」里点「回顾」进入。";
             return;
         }
 
